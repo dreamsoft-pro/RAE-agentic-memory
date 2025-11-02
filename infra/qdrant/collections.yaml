@@ -1,0 +1,24 @@
+collections:
+  - name: agentic_memory
+    vectors:
+      - name: dense
+        size: 384
+        distance: Cosine
+      - name: sparse
+        on_disk: true
+    hnsw_config:
+      m: 32
+      ef_construct: 200
+    optimizers_config:
+      default_segment_number: 4
+    payload_schema:
+      tenant_id: { type: keyword }
+      agent_id:  { type: keyword }
+      memory_type: { type: keyword }
+      created_at: { type: integer }
+      last_accessed_at: { type: integer }
+      saliency_score: { type: float }
+      uncertainty_score: { type: float }
+      source_id: { type: keyword }
+      keywords: { type: keyword }
+      is_summary: { type: bool }

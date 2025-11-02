@@ -1,0 +1,4 @@
+queries:
+  - id: q1
+    query: "Jak wdrożyć RLS w Postgres?"
+    expected_source_ids: ["doc_rls_pg"]
