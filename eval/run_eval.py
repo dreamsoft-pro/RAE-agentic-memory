@@ -20,8 +20,23 @@ def main():
         expected = set(q.get("expected_source_ids", []))
         got = {item.get("source_id") for item in data.get("results", []) if item.get("source_id")}
         hits.append(1 if expected & got else 0)
+    ranks = []
+    for q in gs.get("queries", []):
+        # ... (reszta kodu bez zmian)
+
+        rank = 0
+        for i, item in enumerate(data.get("results", [])):
+            if item.get("source_id") in expected:
+                rank = i + 1
+                break
+        if rank > 0:
+            ranks.append(1/rank)
+        else:
+            ranks.append(0)
+
+    mrr = sum(ranks) / len(ranks) if ranks else 0
     p95 = sorted(latencies)[int(0.95*len(latencies))-1] if latencies else 0
-    print({"hit_rate@5": sum(hits)/len(hits) if hits else 0, "p95_ms": p95})
+    print({"hit_rate@5": sum(hits)/len(hits) if hits else 0, "mrr": mrr, "p95_ms": p95})
 
 if __name__ == "__main__":
     main()

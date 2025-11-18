@@ -18,5 +18,6 @@ class RerankResponse(BaseModel):
 
 @app.post("/rerank", response_model=RerankResponse)
 def rerank(req: RerankRequest):
-    # STUB: zwróć w tej samej kolejności; implementacja modelu do uzupełnienia
-    return RerankResponse(items=req.items)
+    # v1: sortowanie po score lub identity
+    sorted_items = sorted(req.items, key=lambda x: x.score if x.score is not None else 0, reverse=True)
+    return RerankResponse(items=sorted_items)

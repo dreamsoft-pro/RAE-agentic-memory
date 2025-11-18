@@ -1,4 +1,3 @@
-version: "3.9"
 services:
   postgres:
     image: postgres:16
@@ -10,6 +9,21 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./postgres/ddl:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U memory -d memory"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  reranker:
+    build: ../apps/reranker-service
+    ports: ["8001:8001"]
+    depends_on: [memory-api]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   qdrant:
     image: qdrant/qdrant:latest
@@ -17,6 +31,11 @@ services:
     volumes:
       - qdrant_storage:/qdrant/storage
       - ./qdrant:/qdrant/config:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   memory-api:
     build: ../apps/memory-api
@@ -24,12 +43,11 @@ services:
       MEMORY_API_URL: http://memory-api:8000
     ports: ["8000:8000"]
     depends_on: [postgres, qdrant]
-
-  reranker:
-    build: ../apps/reranker-service
-    ports: ["8001:8001"]
-    depends_on: [memory-api]
-
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
   prometheus:
     image: prom/prometheus:latest
     ports: ["9090:9090"]

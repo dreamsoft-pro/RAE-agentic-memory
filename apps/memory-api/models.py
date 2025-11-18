@@ -1,6 +1,7 @@
 from typing import List, Optional, Any
 from pydantic import BaseModel, Field
 from enum import Enum
+from datetime import datetime
 
 class MemoryType(str, Enum):
     episodic = "episodic"
@@ -13,7 +14,8 @@ class AddMemoryRequest(BaseModel):
     memory_type: MemoryType
     content: str
     source_id: Optional[str] = None
-    created_at: Optional[str] = None
+    created_at: Optional[datetime] = None
+    tags: Optional[List[str]] = None
     metadata: Optional[dict] = None
 
 class AddMemoryResponse(BaseModel):
@@ -22,7 +24,7 @@ class AddMemoryResponse(BaseModel):
 class QueryFilters(BaseModel):
     memory_type: Optional[MemoryType] = None
     min_saliency: Optional[float] = None
-    since: Optional[str] = None
+    since: Optional[datetime] = None
 
 class QueryRequest(BaseModel):
     tenant_id: str
@@ -60,7 +62,7 @@ class AgentExecuteResponse(BaseModel):
 
 class TimelineItem(BaseModel):
     memory_id: str
-    created_at: str
+    created_at: datetime
     content: str
     memory_type: MemoryType
     saliency_score: float
