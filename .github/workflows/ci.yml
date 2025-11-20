@@ -1,0 +1,172 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    name: Test (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+
+    services:
+      postgres:
+        image: ankane/pgvector:latest
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: test_rae
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+      qdrant:
+        image: qdrant/qdrant:latest
+        ports:
+          - 6333:6333
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install -r apps/memory_api/requirements.txt
+          pip install -r apps/memory_api/requirements-test.txt
+          pip install -e sdk/python/rae_memory_sdk
+
+      - name: Run unit tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_rae
+          REDIS_URL: redis://localhost:6379/0
+          QDRANT_URL: http://localhost:6333
+          RAE_VECTOR_BACKEND: qdrant
+        run: |
+          pytest -m "not integration" --cov --cov-report=xml --cov-report=term
+
+      - name: Run integration tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_rae
+          REDIS_URL: redis://localhost:6379/0
+          QDRANT_URL: http://localhost:6333
+          RAE_VECTOR_BACKEND: qdrant
+        run: |
+          pytest -m "integration" --cov --cov-append --cov-report=xml --cov-report=term
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install linters
+        run: |
+          pip install black isort ruff mypy
+
+      - name: Run black
+        run: |
+          black --check apps/ sdk/ integrations/
+
+      - name: Run isort
+        run: |
+          isort --check apps/ sdk/ integrations/
+
+      - name: Run ruff
+        run: |
+          ruff check apps/ sdk/ integrations/
+
+      - name: Run mypy (optional, continue on error)
+        continue-on-error: true
+        run: |
+          mypy apps/ sdk/ || true
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install safety bandit
+
+      - name: Run safety check
+        continue-on-error: true
+        run: |
+          safety check --file requirements-dev.txt || true
+
+      - name: Run bandit
+        continue-on-error: true
+        run: |
+          bandit -r apps/ sdk/ -ll || true
+
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          tags: rae-api:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

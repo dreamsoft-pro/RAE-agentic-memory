@@ -1,0 +1,373 @@
+from typing import List, Optional
+
+from apps.memory_api.dependencies import get_api_key
+from apps.memory_api.models import (
+    StoreMemoryRequest,
+    StoreMemoryResponse,
+    QueryMemoryRequest,
+    QueryMemoryResponse,
+    DeleteMemoryResponse,
+    ScoredMemoryRecord,
+    MemoryRecord, # NEW
+    RebuildReflectionsRequest, # NEW
+)
+from apps.memory_api.services import pii_scrubber, scoring
+from apps.memory_api.services.vector_store import get_vector_store # NEW
+from apps.memory_api.services.embedding import get_embedding_service # NEW
+from apps.memory_api.services.hybrid_search import HybridSearchService  # NEW
+from apps.memory_api.metrics import memory_store_counter, memory_query_counter, memory_delete_counter, deduplication_hit_counter
+from apps.memory_api.tasks.background_tasks import generate_reflection_for_project # NEW
+from qdrant_client import models
+from fastapi import APIRouter, Request, HTTPException, Query, Depends, Body
+import structlog
+
+logger = structlog.get_logger(__name__)
+
+router = APIRouter(
+    prefix="/memory",
+    tags=["memory-protocol"],
+    dependencies=[Depends(get_api_key)]
+)
+
+@router.post("/store", response_model=StoreMemoryResponse)
+async def store_memory(req: StoreMemoryRequest, request: Request):
+    """
+    Stores a new memory record in the database and vector store.
+    """
+    tenant_id = request.headers.get("X-Tenant-Id")
+    if not tenant_id:
+        raise HTTPException(status_code=400, detail="X-Tenant-Id header is required.")
+
+    content = pii_scrubber.scrub_text(req.content)
+    
+    try:
+        # 1. Store metadata in Postgres and get an ID
+        async with request.app.state.pool.acquire() as conn:
+            async with conn.transaction():
+                await conn.execute("SET app.tenant_id = $1", tenant_id)
+
+                columns = ["tenant_id", "content", "source", "importance", "layer", "tags", "timestamp", "project"]
+                values = [
+                    tenant_id, content, req.source, req.importance, 
+                    req.layer.value if req.layer else None, 
+                    req.tags, req.timestamp, req.project
+                ]
+
+                columns_str = ", ".join(columns)
+                placeholders_str = ", ".join([f"${i+1}" for i in range(len(values))])
+
+                sql = f"INSERT INTO memories ({columns_str}) VALUES ({placeholders_str}) RETURNING id, created_at, last_accessed_at, usage_count"
+                
+                row = await conn.fetchrow(sql, *values)
+                if not row:
+                    raise HTTPException(status_code=500, detail="Failed to store memory in database.")
+                
+                memory_record = MemoryRecord(
+                    id=str(row["id"]),
+                    content=content,
+                    source=req.source,
+                    importance=req.importance,
+                    layer=req.layer,
+                    tags=req.tags,
+                    timestamp=row["created_at"],
+                    last_accessed_at=row["last_accessed_at"],
+                    usage_count=row["usage_count"],
+                    project=req.project
+                )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+
+    try:
+        # 2. Generate embedding
+        embedding_service = get_embedding_service()
+        embedding = embedding_service.generate_embeddings([content])[0]
+
+        # 3. Upsert to vector store
+        vector_store = get_vector_store(pool=request.app.state.pool)
+        await vector_store.upsert([memory_record], [embedding])
+
+    except Exception as e:
+        # Here you might want to handle the case where the DB insert succeeded
+        # but the vector store upsert failed (e.g., by scheduling a retry).
+        # For now, we'll just raise an error.
+        raise HTTPException(status_code=502, detail=f"Vector store error: {e}")
+
+    memory_store_counter.labels(tenant_id=tenant_id).inc() # Increment store counter
+    return StoreMemoryResponse(id=memory_record.id)
+
+@router.post("/query", response_model=QueryMemoryResponse)
+async def query_memory(req: QueryMemoryRequest, request: Request):
+    """
+    Queries the memory for relevant records based on a query text.
+
+    Supports two modes:
+    1. Standard vector search (use_graph=False)
+    2. Hybrid search with graph traversal (use_graph=True)
+
+    Hybrid search combines semantic similarity with knowledge graph relationships
+    to provide richer, more contextual results.
+    """
+    tenant_id = request.headers.get("X-Tenant-Id")
+    if not tenant_id:
+        raise HTTPException(status_code=400, detail="X-Tenant-Id header is required.")
+
+    # Check if hybrid search is requested
+    if req.use_graph:
+        # Validate project parameter for graph search
+        if not req.project:
+            raise HTTPException(
+                status_code=400,
+                detail="project parameter is required when use_graph=True"
+            )
+
+        logger.info(
+            "hybrid_search_requested",
+            tenant_id=tenant_id,
+            project=req.project,
+            graph_depth=req.graph_depth
+        )
+
+        try:
+            # Initialize hybrid search service
+            hybrid_search = HybridSearchService(request.app.state.pool)
+
+            # Perform hybrid search
+            hybrid_result = await hybrid_search.search(
+                query=req.query_text,
+                tenant_id=tenant_id,
+                project_id=req.project,
+                top_k_vector=req.k,
+                graph_depth=req.graph_depth,
+                use_graph=True,
+                filters=req.filters
+            )
+
+            # Rescore vector results
+            rescored_results = scoring.rescore_memories(hybrid_result.vector_matches)
+
+            memory_query_counter.labels(tenant_id=tenant_id).inc()
+
+            return QueryMemoryResponse(
+                results=rescored_results,
+                synthesized_context=hybrid_result.synthesized_context,
+                graph_statistics=hybrid_result.statistics
+            )
+
+        except Exception as e:
+            logger.exception(
+                "hybrid_search_failed",
+                tenant_id=tenant_id,
+                error=str(e)
+            )
+            raise HTTPException(
+                status_code=502,
+                detail=f"Hybrid search error: {e}"
+            )
+
+    # Standard vector search (original implementation)
+    # 1. Generate embedding for the query text
+    embedding_service = get_embedding_service()
+    query_embedding = embedding_service.generate_embeddings([req.query_text])[0]
+
+    # 2. Build filters
+    # This part needs to be adapted to be backend-agnostic.
+    # For now, we'll create a dictionary that can be interpreted by the stores.
+    query_filters = {"must": [{"key": "tenant_id", "match": {"value": tenant_id}}]}
+    if req.filters:
+        # A more robust implementation would map API filters to backend-specific filters.
+        # This is a simplified example.
+        for key, value in req.filters.items():
+            if key == "tags" and isinstance(value, list):
+                query_filters["must"].append({"key": "tags", "match": {"any": value}})
+
+    # 3. Query the vector store
+    try:
+        vector_store = get_vector_store(pool=request.app.state.pool)
+        raw_results = await vector_store.query(
+            query_embedding=query_embedding,
+            top_k=req.k,
+            filters=query_filters,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Vector store query error: {e}")
+
+    # 4. Rescore memories using additional heuristics (optional)
+    rescored_results = scoring.rescore_memories(raw_results)
+
+    memory_query_counter.labels(tenant_id=tenant_id).inc() # Increment query counter
+    return QueryMemoryResponse(results=rescored_results)
+
+@router.delete("/delete", response_model=DeleteMemoryResponse)
+async def delete_memory(memory_id: str, request: Request):
+    """
+    Deletes a memory record from the database and vector store.
+    """
+    tenant_id = request.headers.get("X-Tenant-Id")
+    if not tenant_id:
+        raise HTTPException(status_code=400, detail="X-Tenant-Id header is required.")
+
+    # 1. Delete from database
+    try:
+        async with request.app.state.pool.acquire() as conn:
+            async with conn.transaction():
+                await conn.execute("SET app.tenant_id = $1", tenant_id)
+                result = await conn.execute("DELETE FROM memories WHERE id = $1", memory_id)
+                if result == "DELETE 0":
+                    raise HTTPException(status_code=404, detail="Memory not found.")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Database error: {e}")
+
+    # 2. Delete from vector store
+    try:
+        vector_store = get_vector_store(pool=request.app.state.pool)
+        await vector_store.delete(memory_id)
+    except Exception as e:
+        # Log the error but don't fail the request, as the DB part succeeded.
+        # The record will be out of sync, but this is a decision to make.
+        # For now, we'll just log it.
+        print(f"Vector store deletion error: {e}")
+
+    memory_delete_counter.labels(tenant_id=tenant_id).inc() # Increment delete counter
+    return DeleteMemoryResponse(message=f"Memory {memory_id} deleted successfully.")
+
+
+@router.post("/rebuild-reflections", status_code=202)
+async def rebuild_reflections(req: RebuildReflectionsRequest):
+    """
+    Triggers a background task to rebuild reflections for a specific project.
+    """
+    generate_reflection_for_project.delay(project=req.project, tenant_id=req.tenant_id)
+    return {"message": f"Reflection rebuild task dispatched for project {req.project}."}
+
+@router.get("/reflection-stats")
+async def get_reflection_stats(request: Request, project: Optional[str] = None):
+    """
+    Gets statistics about reflective memories.
+    """
+    tenant_id = request.headers.get("X-Tenant-Id")
+    if not tenant_id:
+        raise HTTPException(status_code=400, detail="X-Tenant-Id header is required.")
+
+    async with request.app.state.pool.acquire() as conn:
+        if project:
+            count = await conn.fetchval(
+                "SELECT COUNT(*) FROM memories WHERE layer = 'rm' AND project = $1 AND tenant_id = $2",
+                project, tenant_id
+            )
+            avg_strength = await conn.fetchval(
+                "SELECT AVG(strength) FROM memories WHERE layer = 'rm' AND project = $1 AND tenant_id = $2",
+                project, tenant_id
+            )
+        else:
+            count = await conn.fetchval("SELECT COUNT(*) FROM memories WHERE layer = 'rm' AND tenant_id = $1", tenant_id)
+            avg_strength = await conn.fetchval("SELECT AVG(strength) FROM memories WHERE layer = 'rm' AND tenant_id = $1", tenant_id)
+
+    return {"reflective_memory_count": count, "average_strength": avg_strength}
+
+
+@router.post("/reflection/hierarchical")
+async def generate_hierarchical_reflection(
+    request: Request,
+    project: str = Query(..., description="Project identifier"),
+    bucket_size: int = Query(10, description="Number of episodes per bucket", ge=1, le=100),
+    max_episodes: Optional[int] = Query(None, description="Maximum episodes to process", ge=1)
+):
+    """
+    Generate hierarchical (Map-Reduce) summarization of episodic memories.
+
+    This enterprise-grade endpoint handles large numbers of episodes by recursively
+    summarizing them using a map-reduce pattern. This approach scales to handle
+    thousands of episodes without hitting context window limits.
+
+    Features:
+    - Hierarchical map-reduce summarization
+    - Configurable bucket size for chunking
+    - Optional episode limit for testing
+    - Full error handling and logging
+    - Prometheus metrics integration
+
+    Args:
+        project: Project identifier
+        bucket_size: Number of episodes per summarization bucket (default: 10)
+        max_episodes: Optional maximum number of episodes to process
+
+    Returns:
+        JSON response with:
+        - summary: Final hierarchical reflection summary
+        - statistics: Processing statistics (episode count, bucket count, etc.)
+
+    Example:
+        POST /v1/memory/reflection/hierarchical?project=my-project&bucket_size=15
+    """
+    tenant_id = request.headers.get("X-Tenant-Id")
+    if not tenant_id:
+        raise HTTPException(status_code=400, detail="X-Tenant-Id header is required.")
+
+    logger.info(
+        "hierarchical_reflection_requested",
+        tenant_id=tenant_id,
+        project=project,
+        bucket_size=bucket_size,
+        max_episodes=max_episodes
+    )
+
+    try:
+        # Import ReflectionEngine
+        from apps.memory_api.services.reflection_engine import ReflectionEngine
+
+        # Initialize reflection engine
+        reflection_engine = ReflectionEngine(request.app.state.pool)
+
+        # Generate hierarchical reflection
+        summary = await reflection_engine.generate_hierarchical_reflection(
+            project=project,
+            tenant_id=tenant_id,
+            bucket_size=bucket_size,
+            max_episodes=max_episodes
+        )
+
+        # Fetch statistics
+        async with request.app.state.pool.acquire() as conn:
+            episode_count = await conn.fetchval(
+                """
+                SELECT COUNT(*) FROM memories
+                WHERE tenant_id = $1 AND project = $2 AND layer = 'em'
+                """,
+                tenant_id,
+                project
+            )
+
+        logger.info(
+            "hierarchical_reflection_completed",
+            tenant_id=tenant_id,
+            project=project,
+            episode_count=episode_count,
+            summary_length=len(summary)
+        )
+
+        return {
+            "summary": summary,
+            "statistics": {
+                "project": project,
+                "tenant_id": tenant_id,
+                "episode_count": episode_count,
+                "bucket_size": bucket_size,
+                "max_episodes_processed": max_episodes or episode_count,
+                "summary_length": len(summary)
+            }
+        }
+
+    except Exception as e:
+        logger.exception(
+            "hierarchical_reflection_failed",
+            tenant_id=tenant_id,
+            project=project,
+            error=str(e)
+        )
+        raise HTTPException(
+            status_code=500,
+            detail=f"Hierarchical reflection generation failed: {str(e)}"
+        )

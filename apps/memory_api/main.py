@@ -1,0 +1,234 @@
+from fastapi import FastAPI, Request, Depends
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from fastapi import HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.utils import get_openapi
+import asyncpg
+import os
+from prometheus_fastapi_instrumentator import Instrumentator
+from apps.memory_api.middleware.tenant import TenantContextMiddleware
+from apps.memory_api.api.v1 import memory, agent, cache, graph
+from apps.memory_api.api.v1 import health as health_router
+from apps.memory_api import metrics
+from apps.memory_api.config import settings
+from apps.memory_api.services.context_cache import rebuild_full_cache
+from apps.memory_api.logging_config import setup_logging
+from apps.memory_api.security import auth
+from apps.memory_api.security.rate_limit import rate_limit_middleware
+import structlog
+
+# Setup structured logging
+setup_logging()
+logger = structlog.get_logger(__name__)
+
+# --- App Initialization ---
+app = FastAPI(
+    title="RAE Memory API",
+    version="1.0.0",
+    description="""
+    ## The Cognitive Memory Engine for AI Agents
+
+    RAE provides a sophisticated memory system that allows AI agents to:
+    - 🧠 Remember past interactions
+    - 🔍 Learn from experience
+    - 📊 Build knowledge graphs
+    - 🎯 Make context-aware decisions
+
+    ### Quick Links
+    - [Python SDK](https://github.com/dreamsoft-pro/RAE-agentic-memory/tree/main/sdk/python)
+    - [MCP Integration](https://github.com/dreamsoft-pro/RAE-agentic-memory/tree/main/integrations/mcp-server)
+    - [Examples](https://github.com/dreamsoft-pro/RAE-agentic-memory/tree/main/examples)
+    """,
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
+    dependencies=[Depends(auth.verify_token)] if settings.ENABLE_API_KEY_AUTH or settings.ENABLE_JWT_AUTH else []
+)
+
+
+# Custom OpenAPI schema
+def custom_openapi():
+    """Customize OpenAPI schema with enhanced documentation."""
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    openapi_schema = get_openapi(
+        title="RAE Memory API",
+        version="1.0.0",
+        description=app.description,
+        routes=app.routes,
+    )
+
+    # Add security schemes
+    openapi_schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+            "description": "JWT token authentication"
+        },
+        "ApiKeyAuth": {
+            "type": "apiKey",
+            "in": "header",
+            "name": "X-API-Key",
+            "description": "API key authentication"
+        }
+    }
+
+    # Add tags descriptions
+    openapi_schema["tags"] = [
+        {
+            "name": "Memory",
+            "description": "Store and query memories across different memory layers"
+        },
+        {
+            "name": "Agent",
+            "description": "Agent-specific operations and context management"
+        },
+        {
+            "name": "Cache",
+            "description": "Context cache operations for cost optimization"
+        },
+        {
+            "name": "Graph",
+            "description": "Knowledge graph operations (GraphRAG)"
+        },
+        {
+            "name": "Health",
+            "description": "Health checks and system metrics"
+        }
+    ]
+
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi
+
+# --- Exception Handlers ---
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    logger.warning(
+        "http_exception",
+        status_code=exc.status_code,
+        detail=exc.detail,
+        path=request.url.path,
+        method=request.method,
+    )
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": {
+                "code": str(exc.status_code),
+                "message": exc.detail
+            }
+        },
+    )
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    logger.warning(
+        "validation_error",
+        errors=exc.errors(),
+        path=request.url.path,
+        method=request.method,
+    )
+    return JSONResponse(
+        status_code=422,
+        content={
+            "error": {
+                "code": "422",
+                "message": "Validation Error",
+                "details": exc.errors(),
+            }
+        },
+    )
+
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception):
+    logger.exception("unhandled_exception", exc_info=exc)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "error": {
+                "code": "500",
+                "message": "Internal Server Error"
+            }
+        },
+    )
+
+
+@app.on_event("startup")
+async def startup():
+    logger.info("Starting up RAE Memory API...")
+    logger.info("security_settings",
+                api_key_auth=settings.ENABLE_API_KEY_AUTH,
+                jwt_auth=settings.ENABLE_JWT_AUTH,
+                rate_limiting=settings.ENABLE_RATE_LIMITING)
+
+    app.state.pool = await asyncpg.create_pool(
+        host=settings.POSTGRES_HOST,
+        database=settings.POSTGRES_DB,
+        user=settings.POSTGRES_USER,
+        password=settings.POSTGRES_PASSWORD,
+    )
+    Instrumentator().instrument(app).expose(app)
+    await rebuild_full_cache()
+
+
+@app.on_event("shutdown")
+async def shutdown():
+    logger.info("Shutting down RAE Memory API...")
+    await app.state.pool.close()
+
+
+# --- Middleware Configuration ---
+
+# CORS Middleware - must be added before other middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Rate limiting middleware
+if settings.ENABLE_RATE_LIMITING:
+    app.middleware("http")(rate_limit_middleware)
+    logger.info("rate_limiting_enabled",
+                max_requests=settings.RATE_LIMIT_REQUESTS,
+                window_seconds=settings.RATE_LIMIT_WINDOW)
+
+# Tenant context middleware
+app.add_middleware(TenantContextMiddleware)
+
+
+# --- API Routes ---
+
+# Health and monitoring endpoints (no auth required)
+app.include_router(health_router.router, tags=["Health"])
+
+# API v1 endpoints
+app.include_router(memory.router, prefix="/v1", tags=["Memory"])
+app.include_router(agent.router, prefix="/v1", tags=["Agent"])
+app.include_router(cache.router, prefix="/v1", tags=["Cache"])
+app.include_router(graph.router, prefix="/v1", tags=["Graph"])
+
+
+# Root endpoint
+@app.get("/", tags=["Root"])
+async def root():
+    """
+    API root endpoint with basic information.
+    """
+    return {
+        "name": "RAE Memory API",
+        "version": "1.0.0",
+        "description": "Reflective Agentic Memory Engine - Cognitive memory system for AI agents",
+        "docs": "/docs",
+        "health": "/health",
+        "metrics": "/metrics"
+    }

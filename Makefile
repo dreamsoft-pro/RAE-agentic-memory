@@ -1,0 +1,238 @@
+.PHONY: help start stop restart logs clean install lint test format db-init demo dev
+
+# ==============================================================================
+# HELP
+# ==============================================================================
+
+help:  ## Show this help message
+	@echo "RAE - Reflective Agentic Memory Engine"
+	@echo ""
+	@echo "Usage: make <target>"
+	@echo ""
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-15s\033[0m %s\n", $$1, $$2}'
+
+# ==============================================================================
+# QUICK START
+# ==============================================================================
+
+start:  ## Start all services with Docker Compose
+	@echo "🚀 Starting RAE..."
+	docker-compose up -d
+	@echo "✅ RAE is running!"
+	@echo "📖 API Documentation: http://localhost:8000/docs"
+	@echo "📊 Dashboard: http://localhost:8501"
+	@echo "🔍 Health check: curl http://localhost:8000/health"
+
+stop:  ## Stop all services
+	@echo "🛑 Stopping RAE..."
+	docker-compose down
+	@echo "✅ Services stopped"
+
+restart:  ## Restart all services
+	@echo "🔄 Restarting RAE..."
+	docker-compose restart
+	@echo "✅ Services restarted"
+
+logs:  ## Show logs from all services
+	docker-compose logs -f
+
+logs-api:  ## Show API logs only
+	docker-compose logs -f rae-api
+
+logs-worker:  ## Show Celery worker logs
+	docker-compose logs -f celery-worker
+
+clean:  ## Clean up volumes and containers
+	@echo "🧹 Cleaning up..."
+	docker-compose down -v
+	rm -rf __pycache__ .pytest_cache .coverage htmlcov
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	find . -type f -name "*.pyc" -delete
+	@echo "✅ Cleanup complete"
+
+# ==============================================================================
+# DEVELOPMENT
+# ==============================================================================
+
+VENV_PYTHON = .venv/bin/python
+VENV_PIP = .venv/bin/pip
+VENV_ACTIVATE = . .venv/bin/activate
+
+install:  ## Install all Python dependencies
+	@echo "📦 Installing dependencies..."
+	@if [ ! -d ".venv" ]; then \
+		python3 -m venv .venv; \
+	fi
+	@$(VENV_PIP) install --upgrade pip
+	@$(VENV_PIP) install -r requirements-dev.txt
+	@$(VENV_PIP) install -r apps/memory_api/requirements.txt
+	@$(VENV_PIP) install -e sdk/python/rae_memory_sdk
+	@echo "✅ Installation complete"
+
+install-all:  ## Install all dependencies (including integrations)
+	@echo "📦 Installing all dependencies..."
+	@if [ ! -d ".venv" ]; then \
+		python3 -m venv .venv; \
+	fi
+	@$(VENV_PIP) install --upgrade pip
+	@$(VENV_PIP) install -r requirements-dev.txt
+	@$(VENV_PIP) install -r apps/memory_api/requirements.txt
+	@$(VENV_PIP) install -r apps/reranker-service/requirements.txt || true
+	@$(VENV_PIP) install -r cli/agent-cli/requirements.txt || true
+	@$(VENV_PIP) install -r eval/requirements.txt || true
+	@$(VENV_PIP) install -r integrations/langchain/requirements.txt || true
+	@$(VENV_PIP) install -r integrations/llama_index/requirements.txt || true
+	@$(VENV_PIP) install -r integrations/mcp-server/requirements.txt || true
+	@$(VENV_PIP) install -r integrations/ollama-wrapper/requirements.txt || true
+	@$(VENV_PIP) install -e sdk/python/rae_memory_sdk
+	@echo "✅ All dependencies installed"
+
+dev:  ## Start API in development mode (with auto-reload)
+	@echo "🔧 Starting development server..."
+	@$(VENV_ACTIVATE) && uvicorn apps.memory_api.main:app --reload --host 0.0.0.0 --port 8000
+
+demo:  ## Run interactive quickstart demo
+	@echo "🎬 Running interactive demo..."
+	@$(VENV_PYTHON) examples/quickstart.py
+
+# ==============================================================================
+# CODE QUALITY
+# ==============================================================================
+
+format:  ## Format code with black and isort
+	@echo "🎨 Formatting code..."
+	@$(VENV_ACTIVATE) && black apps/ sdk/ integrations/
+	@$(VENV_ACTIVATE) && isort apps/ sdk/ integrations/
+	@echo "✅ Code formatted"
+
+lint:  ## Run linters (ruff, black, isort)
+	@echo "🔍 Running linters..."
+	@$(VENV_ACTIVATE) && ruff check apps/ sdk/ integrations/
+	@$(VENV_ACTIVATE) && black --check apps/ sdk/ integrations/
+	@$(VENV_ACTIVATE) && isort --check apps/ sdk/ integrations/
+	@echo "✅ Linting complete"
+
+typecheck:  ## Run type checking with mypy
+	@echo "🔍 Running type checking..."
+	@$(VENV_ACTIVATE) && mypy apps/ sdk/
+	@echo "✅ Type checking complete"
+
+# ==============================================================================
+# TESTING
+# ==============================================================================
+
+test:  ## Run all tests
+	@echo "🧪 Running tests..."
+	@PYTHONPATH=. $(VENV_PYTHON) -m pytest
+
+test-unit:  ## Run unit tests only
+	@echo "🧪 Running unit tests..."
+	@PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "not integration" -v
+
+test-integration:  ## Run integration tests only
+	@echo "🧪 Running integration tests..."
+	@PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "integration" -v
+
+test-cov:  ## Run tests with coverage report
+	@echo "🧪 Running tests with coverage..."
+	@PYTHONPATH=. $(VENV_PYTHON) -m pytest --cov=apps --cov=sdk --cov-report=html --cov-report=term-missing
+	@echo "📊 Coverage report generated at htmlcov/index.html"
+
+test-watch:  ## Run tests in watch mode
+	@echo "🧪 Running tests in watch mode..."
+	@PYTHONPATH=. $(VENV_PYTHON) -m pytest-watch
+
+# ==============================================================================
+# DATABASE
+# ==============================================================================
+
+db-init:  ## Initialize database with migrations
+	@echo "🗄️  Initializing database..."
+	@$(VENV_ACTIVATE) && alembic upgrade head
+	@echo "✅ Database initialized"
+
+db-migrate:  ## Create a new migration
+	@echo "🗄️  Creating migration..."
+	@read -p "Migration name: " name; \
+	$(VENV_ACTIVATE) && alembic revision --autogenerate -m "$$name"
+
+db-reset:  ## Reset database (WARNING: deletes all data)
+	@echo "⚠️  WARNING: This will delete all data!"
+	@read -p "Are you sure? (yes/no): " confirm; \
+	if [ "$$confirm" = "yes" ]; then \
+		docker-compose down -v; \
+		docker-compose up -d postgres redis qdrant; \
+		sleep 5; \
+		$(VENV_ACTIVATE) && alembic upgrade head; \
+		echo "✅ Database reset complete"; \
+	else \
+		echo "❌ Cancelled"; \
+	fi
+
+db-shell:  ## Open PostgreSQL shell
+	@docker-compose exec postgres psql -U rae -d rae
+
+# ==============================================================================
+# PRE-COMMIT
+# ==============================================================================
+
+pre-commit-install:  ## Install pre-commit hooks
+	@echo "🪝 Installing pre-commit hooks..."
+	@$(VENV_ACTIVATE) && pre-commit install
+	@echo "✅ Pre-commit hooks installed"
+
+pre-commit-run:  ## Run pre-commit on all files
+	@echo "🪝 Running pre-commit..."
+	@$(VENV_ACTIVATE) && pre-commit run --all-files
+
+# ==============================================================================
+# DOCKER SHORTCUTS
+# ==============================================================================
+
+build:  ## Build Docker images
+	@echo "🏗️  Building Docker images..."
+	docker-compose build
+	@echo "✅ Build complete"
+
+ps:  ## Show running containers
+	@docker-compose ps
+
+shell-api:  ## Open shell in API container
+	@docker-compose exec rae-api /bin/bash
+
+shell-postgres:  ## Open shell in Postgres container
+	@docker-compose exec postgres /bin/bash
+
+# ==============================================================================
+# DEPLOYMENT
+# ==============================================================================
+
+deploy-prod:  ## Deploy to production (placeholder)
+	@echo "🚀 Deploying to production..."
+	@echo "⚠️  Not implemented yet. See docs/guides/production-deployment.md"
+
+health:  ## Check health of all services
+	@echo "🏥 Checking service health..."
+	@curl -s http://localhost:8000/health | python -m json.tool || echo "❌ API not responding"
+	@curl -s http://localhost:6333/ | python -m json.tool || echo "❌ Qdrant not responding"
+	@docker-compose exec -T postgres pg_isready -U rae || echo "❌ Postgres not responding"
+	@docker-compose exec -T redis redis-cli ping || echo "❌ Redis not responding"
+
+# ==============================================================================
+# UTILITIES
+# ==============================================================================
+
+version:  ## Show version information
+	@echo "RAE - Reflective Agentic Memory Engine"
+	@echo "Version: 1.0.0"
+	@echo "Python: $(shell python --version)"
+	@echo "Docker: $(shell docker --version)"
+
+env-example:  ## Create .env from .env.example
+	@if [ ! -f .env ]; then \
+		cp .env.example .env; \
+		echo "✅ Created .env from .env.example"; \
+		echo "⚠️  Please edit .env and add your API keys"; \
+	else \
+		echo "⚠️  .env already exists"; \
+	fi
