@@ -1,147 +1,110 @@
-Plan naprawczy dla projektu RAE (Reflective Agentic-mode Engine)
-Po szczegółowej analizie dostarczonych plików projektu RAE, zidentyfikowałem szereg obszarów wymagających poprawy, optymalizacji lub dalszego rozwoju. Poniższy plan naprawczy został podzielony na sekcje tematyczne, z wyszczególnieniem konkretnych działań (Action Items) oraz uzasadnieniem ich konieczności.
+Oto szczegółowy plan techniczny podzielony na trzy filary: Jakość Danych (Entity Resolution), Głębia Wnioskowania (Wisdom) oraz Optymalizacja Ekonomiczna (Cost/Speed).
 
-1. Poprawa Testów i Code Coverage
-Analiza raportu pokrycia kodu (coverage.xml) ujawniła, że obecne pokrycie wynosi około 49%, co jest wynikiem poniżej standardów produkcyjnych (zwykle >80%). Wiele kluczowych modułów ma zerowe lub bardzo niskie pokrycie.
+FILAR 1: Eliminacja Duplikatów (Entity Resolution & Canonicalization)
+Problem: System traktuje "Jan Kowalski", "Jan K." i "J. Kowalski" jako trzy osobne węzły. Rozwiązanie: Wdrożenie wieloetapowego potoku deduplikacji działającego w tle (background job).
 
-Problem: Niskie pokrycie testami (apps/memory_api/services/graph_algorithms.py - 0%, apps/memory_api/services/temporal_graph.py - 0%, apps/memory_api/services/analytics.py - 0%). Brak testów integracyjnych dla kluczowych ścieżek (e2e).
+Plan Implementacji:
 
-Rozwiązanie:
+Etap Normalizacji (Pre-processing):
 
-Napisanie testów jednostkowych: Priorytetowo dla modułów graph_algorithms.py, temporal_graph.py, analytics.py oraz importance_scoring.py. Należy dążyć do minimum 80% pokrycia w każdym module.
+Zanim encja trafi do bazy, przepuść ją przez prosty filtr tekstowy:
 
-Testy integracyjne: Rozbudowa tests/test_api_e2e.py o scenariusze obejmujące pełen cykl życia pamięci: dodanie -> refleksja -> zapytanie -> graf -> usunięcie.
+Lowercase, usunięcie znaków specjalnych.
 
-Mockowanie serwisów zewnętrznych: Upewnienie się, że wszystkie testy jednostkowe używają mocków dla baz danych (Postgres, Redis, Qdrant) oraz API LLM, aby były szybkie i deterministyczne.
+Lemmatyzacja (sprowadzenie do formy podstawowej, np. "psami" -> "pies").
 
-2. Optymalizacja Zarządzania Konfiguracją i Sekretami
-W plikach konfiguracyjnych i dokumentacji widoczne są pewne nieścisłości oraz potencjalne ryzyka bezpieczeństwa.
+Koszt: Zerowy (biblioteki Python: spacy lub nltk).
 
-Problem: Przykłady w dokumentacji (np. examples/simple-refactor-agent/README.md) sugerują używanie curl z kluczami API wprost w komendzie, co może prowadzić do ich wycieku w historii shella. Konfiguracja pydantic w config.py jest poprawna, ale brakuje walidacji niektórych kluczowych zmiennych.
+Klasteryzacja Semantyczna (Vector-based Clustering):
 
-Rozwiązanie:
+Dla każdej nazwy węzła (Node Name) generuj mały embedding (np. modelem all-MiniLM-L6-v2 – jest darmowy, szybki i lokalny).
 
-Walidacja konfiguracji: W apps/memory_api/config.py dodać walidatory pydantic sprawdzające poprawność formatu kluczowych zmiennych (np. czy URL-e są poprawne, czy klucze API nie są puste, jeśli backend ich wymaga).
+Użyj algorytmu klasteryzacji (np. DBSCAN lub Agglomerative Clustering), aby grupować węzły, które są semantycznie bliskie (np. odległość cosinusowa > 0.90).
 
-Bezpieczne przykłady: Zaktualizować dokumentację, aby w przykładach curl używać zmiennych środowiskowych (np. $RAE_API_KEY) zamiast hardcodowanych wartości lub placeholderów, które mogą zostać przypadkowo skopiowane.
+Wykryjesz wtedy, że "Apple Inc." i "Apple Company" to to samo.
 
-Secrets Management: W docker-compose.prod.yml rozważyć użycie Docker Secrets zamiast zmiennych środowiskowych dla haseł i kluczy API w środowisku produkcyjnym.
+Agent "Konserwator" (The Janitor Agent):
 
-3. Ulepszenie Obsługi Błędów i Logowania
-Obecna obsługa błędów w niektórych miejscach jest zbyt ogólna, a logowanie nie zawsze dostarcza wystarczającego kontekstu.
+Stwórz zadanie Celery uruchamiane np. raz na godzinę.
 
-Problem: W apps/memory_api/api/v1/agent.py i innych endpointach zdarzają się bloki except Exception as e, które logują błąd i zwracają generyczny kod 500 lub 502. Brakuje ustrukturyzowanych logów w formacie JSON dla łatwiejszego parsowania przez systemy logowania (np. ELK, Loki), mimo użycia structlog.
+Prompt dla LLM: Podajesz mu listę kandydatów do scalenia wykrytą w kroku 2.
 
-Rozwiązanie:
+Zadanie: "Decyduj: czy 'Java' (wyspa) i 'Java' (język) to to samo? Jeśli tak -> Scal. Jeśli nie -> Oznacz jako różne".
 
-Szczegółowe kody błędów: Zdefiniować niestandardowe wyjątki biznesowe i mapować je na odpowiednie kody HTTP (np. MemoryNotFoundException -> 404, QuotaExceededException -> 429).
+To radykalnie zmniejsza liczbę zapytań do LLM – pytasz tylko o niejasne przypadki.
 
-Ustrukturyzowane logowanie: Upewnić się, że structlog jest skonfigurowany tak, aby zawsze produkować logi w formacie JSON na produkcji. Dodać context_id (np. request_id) do wszystkich logów w ramach jednego żądania, aby ułatwić śledzenie przepływu.
+FILAR 2: Poprawa "Mądrości" (Od Faktów do Wniosków)
+Problem: Obecnie graf to "Worek Faktów" (Memory Dump). Brakuje syntezy. Rozwiązanie: Wdrożenie Hierarchicznego GraphRAG (inspirowanego badaniami Microsoftu).
 
-Sentry/Monitoring: Dodać integrację z Sentry lub innym narzędziem do monitorowania błędów w main.py (opcjonalnie, za flagą feature flag).
+Plan Implementacji:
 
-4. Rozwój Funkcjonalności GraphRAG i Refleksji
-Moduły graph_extraction.py i reflection_engine.py są kluczowe dla RAE, ale wymagają dopracowania pod kątem wydajności i jakości.
+Wykrywanie Społeczności (Community Detection):
 
-Problem: Ekstrakcja grafu wiedzy (GraphExtractionService) opiera się na LLM i może być kosztowna oraz wolna. Brak mechanizmu deduplikacji węzłów na poziomie logicznym (np. "User Authentication" vs "Auth").
+Użyj algorytmu Leiden lub Louvain na grafie wiedzy. Pozwoli to wykryć "skupiska" tematów (np. klaster węzłów związanych z "Projektem X", klaster węzłów "Preferencje Użytkownika").
 
-Rozwiązanie:
+Synteza Poziomu Wyższego (Summarization):
 
-Entity Resolution: Zaimplementować prosty mechanizm Entity Resolution (może być oparty na embeddingach nazw węzłów lub regułach), aby łączyć podobne byty przed zapisaniem ich do bazy grafowej.
+Zamiast pytać o poszczególne krawędzie, LLM generuje opis klastra.
 
-Batch Processing: Upewnić się, że ekstrakcja grafu i refleksja działają w trybie wsadowym (batch) i asynchronicznie (już częściowo zrobione przez Celery, ale warto zweryfikować wydajność dla dużych wsadów).
+Przykład: Zamiast pamiętać 50 faktów o tym, co lubisz jeść, system tworzy jeden "Węzeł Meta": "Użytkownik preferuje kuchnię azjatycką, unika nabiału i dba o niski indeks glikemiczny".
 
-Cache dla LLM: Rozważyć agresywniejsze cache'owanie odpowiedzi LLM dla identycznych fragmentów tekstu w ReflectionEngine, aby obniżyć koszty.
+To jest ta "mądrość" – generalizacja na podstawie detali.
 
-5. Dokumentacja i Developer Experience (DX)
-Dokumentacja jest obszerna, ale w kilku miejscach może być nieaktualna lub myląca dla nowych użytkowników.
+Refleksja Czasowa (Temporal Wisdom):
 
-Problem: CONTRIBUTING.md odwołuje się do make install-all, ale Makefile ma target install-all instalujący zależności, które mogą być niepotrzebne dla każdego deva. Brak jasnej ścieżki "Zero to Hero" dla lokalnego uruchomienia bez Dockera (dla szybkiego debugowania).
+Wykorzystaj temporal_graph.py. Jeśli system widzi, że w każdy piątek pytasz o "status report", tworzy regułę proaktywną.
 
-Rozwiązanie:
+Kod: Dodanie atrybutu frequency i last_accessed do krawędzi grafu. Wygaszanie (decay) starych, nieistotnych wspomnień.
 
-Uproszczenie Makefile: Rozdzielić make install na make install-dev (podstawowe) i make install-full (wszystkie integracje).
+FILAR 3: Radykalna Optymalizacja Kosztów (Model Routing)
+Problem: Używanie GPT-4/Claude 3.5 Opus do wszystkiego to palenie pieniędzmi. Rozwiązanie: Architektura Kaskadowa (Tiered Architecture).
 
-Aktualizacja README: Dodać sekcję "Troubleshooting" do głównego README z najczęstszymi problemami (np. problemy z połączeniem do Postgresa w Dockerze).
+Plan Implementacji:
 
-API Specs: Upewnić się, że docs/OPENAPI.md jest automatycznie generowane lub synchronizowane z kodem FastAPI, aby uniknąć rozbieżności.
+Model "Robotnik" (Extraction Model):
 
-6. Architektura i Skalowalność
-Projekt wykorzystuje asyncpg i Celery, co jest dobre, ale struktura katalogów i zależności między modułami mogą utrudniać skalowanie.
+Do prostego wyciągania encji z tekstu ("Kto? Co? Kiedy?") NIE używaj modeli flagowych.
 
-Problem: apps/memory_api staje się monolitem. Logika biznesowa (serwisy) jest wymieszana z logiką API (routery).
+Rekomendacja: Użyj Gemini 1.5 Flash (bardzo tani, ogromne okno kontekstowe) lub GPT-4o-mini.
 
-Rozwiązanie:
+Opcja darmowa (Radykalna): Użyj lokalnego modelu przez Ollama (np. Llama-3-8B-Instruct z wymuszonym formatem JSON). Jakość wystarczająca w 90% przypadków ekstrakcji.
 
-Czysta Architektura: Wyraźniejsze oddzielenie warstwy serwisów (logika biznesowa) od warstwy API (kontrolery). Rozważenie wydzielenia graph_service jako osobnego mikroserwisu w przyszłości, jeśli obciążenie wzrośnie.
+Model "Mędrzec" (Reflection Model):
 
-Kolejki: Monitorowanie długości kolejek Celery. Dodać metryki Prometheus dla zadań w kolejce, aby móc skalować workery (HPA w K8s).
+Drogiego modelu (Claude 3.5 Sonnet / GPT-4o) używaj TYLKO do etapu syntezy (Filar 2 - tworzenie podsumowań klastrów) oraz do pisania finalnej odpowiedzi dla użytkownika.
 
-Podsumowanie Planu Naprawczego (plik .md)
-Poniżej znajduje się gotowa zawartość pliku PLAN_NAPRAWCZY.md, którą możesz zapisać w repozytorium.
+Proporcja zapytań powinna wynosić 10:1 (10 ekstrakcji tanim modelem na 1 refleksję drogim).
+
+Agresywne Filtrowanie (The Gatekeeper):
+
+Przed uruchomieniem pipeline'u RAE, mały model (lub nawet klasyfikator BERT) ocenia: "Czy to zdanie zawiera nowe fakty?".
+
+Jeśli użytkownik pisze "Dzięki, super!" -> Ignoruj. Koszt 0$.
+
+Jeśli użytkownik pisze "Mój pesel to..." -> Szyfruj i zapamiętaj.
+
+PLAN DZIAŁANIA (Roadmap w pliku .md)
+Zaktualizujmy Twój PLAN_NAPRAWCZY.md o te konkretne techniki.
 
 Markdown
 
-# Plan Naprawczy RAE (Reflective Agentic-mode Engine)
+# PLAN OPTYMALIZACJI RAE v2.0 (Deep Wisdom & Low Cost)
 
-Data sporządzenia: 2025-11-21
-Status: Draft
+## FAZA 1: Cięcie Kosztów (Tydzień 1)
+- [ ] **Wdrożenie Model Routera:**
+    - Zmiana w `config.py`: Dodanie `EXTRACTION_MODEL` (np. gpt-4o-mini/gemini-flash) i `SYNTHESIS_MODEL` (gpt-4o).
+    - Refaktoring `graph_extraction.py`: Użycie taniego modelu do parsowania tekstu na JSON.
+- [ ] **Bramka wejściowa (Gatekeeper):**
+    - Dodanie prostego promptu sprawdzającego `is_factual_content(text) -> bool` przed uruchomieniem ciężkiej maszyny RAE.
 
-## Cel
-Celem tego planu jest podniesienie jakości kodu, stabilności, bezpieczeństwa oraz pokrycia testami projektu RAE do poziomu "Enterprise Grade", przygotowując go do szerszego wdrożenia produkcyjnego.
+## FAZA 2: Entity Resolution (Tydzień 2)
+- [ ] **Normalizacja:** Zaimplementowanie funkcji czyszczących w `GraphExtractionService`.
+- [ ] **Klasteryzacja:** Dodanie serwisu w tle (`cron`), który pobiera wszystkie węzły, liczy ich embeddingi (lokalnie!) i scala te o podobieństwie > 0.95 automatycznie.
+- [ ] **Interfejs konfliktów:** (Opcjonalnie) Jeśli podobieństwo jest między 0.85 a 0.95, zapytaj taniego LLM o decyzję.
 
-## 1. Jakość Kodu i Testy (Priorytet: Wysoki)
-
-- [ ] **Zwiększenie Code Coverage:**
-    - Cel: Minimum 80% pokrycia dla kluczowych modułów (`services/*`).
-    - Akcja: Napisać brakujące testy jednostkowe dla `graph_algorithms.py` (obecnie 0%), `temporal_graph.py` (0%), `analytics.py` (0%).
-    - Akcja: Naprawić testy w `test_api_e2e.py` i `test_background_tasks.py`, aby były niezależne od zewnętrznych usług (pełne mockowanie).
-- [ ] **Refaktoryzacja Testów:**
-    - Akcja: Wydzielić wspólne fixtury (np. dla bazy danych, Redis) do `conftest.py` w sposób modularny.
-    - Akcja: Usunąć/naprawić "flaky tests" (testy dające losowe wyniki), jeśli takie istnieją (analiza logów CI).
-
-## 2. Bezpieczeństwo i Konfiguracja (Priorytet: Wysoki)
-
-- [ ] **Zarządzanie Sekretami:**
-    - Akcja: Audyt kodu pod kątem hardcodowanych sekretów (np. w testach lub domyślnych wartościach `config.py`).
-    - Akcja: Wdrożenie obsługi Docker Secrets w `docker-compose.prod.yml` dla środowisk produkcyjnych.
-- [ ] **Walidacja Konfiguracji:**
-    - Akcja: Dodać walidatory w `apps/memory_api/config.py` dla kluczowych zmiennych (URL-e baz danych, klucze API). Aplikacja powinna "fail fast" przy starcie, jeśli konfiguracja jest błędna.
-- [ ] **Bezpieczeństwo API:**
-    - Akcja: Zweryfikować i zaostrzyć politykę CORS w `main.py` (obecnie przykłady mogą być zbyt permisywne).
-    - Akcja: Upewnić się, że rate limiting (`security/rate_limit.py`) działa poprawnie i jest skonfigurowany dla wszystkich endpointów publicznych.
-
-## 3. Wydajność i Optymalizacja (Priorytet: Średni)
-
-- [ ] **Optymalizacja GraphRAG:**
-    - Akcja: Zaimplementować mechanizm "Entity Resolution" w `GraphExtractionService` w celu redukcji duplikatów węzłów w grafie wiedzy.
-    - Akcja: Dodać indeksy w bazie danych dla zapytań grafowych (sprawdzić `alembic` migrations czy są optymalne).
-- [ ] **Zarządzanie Zasobami:**
-    - Akcja: Przejrzeć konfigurację puli połączeń (`asyncpg`, `redis`) pod kątem wycieków i optymalnych rozmiarów dla środowiska produkcyjnego.
-
-## 4. Dokumentacja i DX (Priorytet: Średni)
-
-- [ ] **Aktualizacja README i Guide'ów:**
-    - Akcja: Zaktualizować instrukcje "Quick Start", aby były idiotoodporne (np. sprawdzenie wersji Dockera, Pythona).
-    - Akcja: Dodać sekcję "Troubleshooting" z rozwiązaniami typowych problemów.
-- [ ] **Przykłady Użycia:**
-    - Akcja: Zaktualizować przykłady w `examples/` tak, aby korzystały z najnowszej wersji SDK i były zgodne z obecnym API.
-
-## 5. Architektura (Priorytet: Niski/Długoterminowy)
-
-- [ ] **Modularność:**
-    - Akcja: Rozważyć wydzielenie `graph_service` jako osobnego modułu/mikroserwisu, aby odciążyć główne API pamięci.
-- [ ] **Observability:**
-    - Akcja: Dodać `Tracing` (np. OpenTelemetry) do śledzenia zapytań przechodzących przez różne serwisy (API -> Redis -> Postgres -> LLM).
-
-## Harmonogram Wdrożenia
-
-1. **Tydzień 1:** Testy jednostkowe i Code Coverage (Sekcja 1).
-2. **Tydzień 2:** Bezpieczeństwo i Konfiguracja (Sekcja 2).
-3. **Tydzień 3:** Optymalizacja GraphRAG i Refaktoryzacja (Sekcja 3 & 5).
-4. **Tydzień 4:** Dokumentacja i finalne testy E2E (Sekcja 4).
-Poniżej znajduje się link do filmu na YouTube, który luźno nawiązuje do tematu zarządzania pamięcią i systemami, co może być inspirujące w kontekście budowy "pamięci" dla AI.
-https://www.youtube.com/watch?v=fpnE6UAfbtU
-Jak działa pamięć komputera?
-
-Film ten jest relewantny, ponieważ w prosty sposób wyjaśnia mechanizmy pamięci komputerowej, co jest dobrą analogią dla warstwowej architektury pamięci (Episodic, Semantic, Working) zastosowanej w projekcie RAE.
+## FAZA 3: Implementacja "Mądrości" (Tydzień 3)
+- [ ] **Community Summaries:**
+    - Użycie biblioteki `networkx` lub procedur w Neo4j/Memgraph do wykrycia klastrów.
+    - Generowanie opisów klastrów i zapisywanie ich jako "Super-Węzły" w bazie wektorowej.
+- [ ] **Wyszukiwanie Hybrydowe:**
+    - Przy pytaniu użytkownika, przeszukujemy najpierw "Super-Węzły" (kontekst ogólny), a dopiero potem wchodzimy w detale grafu.
