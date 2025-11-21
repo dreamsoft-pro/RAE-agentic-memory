@@ -109,6 +109,7 @@ def extract_graph_lazy(self, memory_ids: list, tenant_id: str, use_mini_model: b
     1. Processing in background (non-blocking)
     2. Using cheaper LLM model (gpt-4o-mini instead of gpt-4)
     3. Batching memories efficiently
+    4. Rate limiting to prevent API saturation
 
     Args:
         memory_ids: List of memory IDs to process
@@ -116,8 +117,14 @@ def extract_graph_lazy(self, memory_ids: list, tenant_id: str, use_mini_model: b
         use_mini_model: Use cheaper model (gpt-4o-mini) for extraction
     """
     import asyncio
+    import random
 
     async def main():
+        # Rate limiting: Add initial delay to spread out workers and prevent herd behavior
+        # This helps avoid hitting API rate limits when multiple tasks start simultaneously
+        delay = random.uniform(0.5, 2.0)
+        logger.info("extract_graph_lazy_rate_limit_delay", delay=delay, tenant_id=tenant_id)
+        await asyncio.sleep(delay)
         pool = await get_pool()
         try:
             # Initialize service with mini model if requested
