@@ -6,6 +6,7 @@ transforming unstructured episodic memories into structured knowledge graphs.
 """
 
 from typing import List, Dict, Optional, Any
+import re
 from pydantic import BaseModel, Field, field_validator
 import asyncpg
 import structlog
@@ -65,23 +66,9 @@ class GraphTriple(BaseModel):
         """
         Normalize entity names to prevent fuzzy duplicates.
 
-        Transformations:
-        - Convert to lowercase for case-insensitive matching
-        - Replace hyphens and spaces with underscores
-        - Strip whitespace
-        - Remove duplicate underscores
-
-        Examples:
-            "AuthService" -> "authservice"
-            "auth-service" -> "auth_service"
-            "Auth Service" -> "auth_service"
+        Uses _normalize_entity_name helper.
         """
-        normalized = v.strip().lower()
-        normalized = normalized.replace(' ', '_').replace('-', '_')
-        # Remove duplicate underscores
-        while '__' in normalized:
-            normalized = normalized.replace('__', '_')
-        return normalized.strip('_')
+        return _normalize_entity_name(v)
 
     @field_validator('relation')
     @classmethod
@@ -121,6 +108,33 @@ class GraphExtractionResult(BaseModel):
         default_factory=dict,
         description="Extraction statistics (memories_processed, entities_count, etc.)"
     )
+
+
+def _normalize_entity_name(name: str) -> str:
+    """
+    Normalize entity names to prevent fuzzy duplicates.
+
+    Transformations:
+    - Convert to lowercase for case-insensitive matching
+    - Strip whitespace
+    - Replace hyphens and underscores with spaces
+    - Remove extra spaces
+
+    Args:
+        name: The entity name to normalize.
+
+    Returns:
+        Normalized entity name.
+    """
+    # 1. Lowercase
+    name = name.lower()
+    # 2. Replace hyphens and underscores with spaces
+    name = name.replace('-', ' ').replace('_', ' ')
+    # 3. Strip whitespace
+    name = name.strip()
+    # 4. Remove extra spaces
+    name = re.sub(r'\s+', ' ', name)
+    return name
 
 
 # Enterprise-grade extraction prompt with detailed instructions

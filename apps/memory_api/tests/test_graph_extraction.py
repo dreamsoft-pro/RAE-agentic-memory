@@ -11,7 +11,8 @@ from datetime import datetime
 from apps.memory_api.services.graph_extraction import (
     GraphExtractionService,
     GraphTriple,
-    GraphExtractionResult
+    GraphExtractionResult,
+    _normalize_entity_name
 )
 
 
@@ -59,6 +60,38 @@ class TestGraphTriple:
         assert triple.relation == "RELATES_TO"
         assert triple.target == "entity2"
         assert triple.confidence == 0.9
+
+    def test_entity_normalization_helper(self):
+        """Test the _normalize_entity_name helper function."""
+        # Basic lowercase
+        assert _normalize_entity_name("Docker") == "docker"
+
+        # Strip whitespace
+        assert _normalize_entity_name(" docker ") == "docker"
+
+        # Hyphens and underscores to spaces
+        assert _normalize_entity_name("auth-service") == "auth service"
+        assert _normalize_entity_name("auth_service") == "auth service"
+
+        # Multiple spaces
+        assert _normalize_entity_name("auth   service") == "auth service"
+
+        # Mixed
+        assert _normalize_entity_name("  Auth-Service  ") == "auth service"
+
+        # CamelCase (just lowercases it based on current logic)
+        assert _normalize_entity_name("AuthService") == "authservice"
+
+    def test_triple_normalization_integration(self):
+        """Test normalization via GraphTriple validator."""
+        triple = GraphTriple(
+            source="  Auth-Service ",
+            relation="USES",
+            target="Docker_Container "
+        )
+
+        assert triple.source == "auth service"
+        assert triple.target == "docker container"
 
     def test_relation_normalization(self):
         """Test that relation is normalized to uppercase."""
