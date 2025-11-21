@@ -388,14 +388,13 @@ RAE is currently in **beta** and actively developed.
 - 🚧 Memory consolidation/pruning
 - 🚧 Enterprise features (SSO, RBAC)
 
-See [RAE_10_10_ROADMAP.md](RAE_10_10_ROADMAP.md) for detailed roadmap.
+
 
 ---
 
 ## Community & Support
 
 - 📖 **[Documentation](docs/)** - Comprehensive guides
-- 💬 **[Discord](https://discord.gg/rae)** - Community discussions
 - 🐛 **[GitHub Issues](https://github.com/dreamsoft-pro/RAE-agentic-memory/issues)** - Bug reports and features
 - 🤝 **[Contributing Guide](CONTRIBUTING.md)** - How to contribute
 - 📧 **[Contact](mailto:lesniowskig@gmail.com)** - Direct support
