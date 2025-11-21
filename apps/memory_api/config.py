@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     OLLAMA_API_URL: str = "http://localhost:11434"
     RAE_LLM_BACKEND: str = "ollama"
     RAE_LLM_MODEL_DEFAULT: str = "llama3"
+    EXTRACTION_MODEL: str = "gpt-4o-mini"
+    SYNTHESIS_MODEL: str = "gpt-4o"
     RAE_VECTOR_BACKEND: str = "qdrant"
     ONNX_EMBEDDER_PATH: str | None = None
     

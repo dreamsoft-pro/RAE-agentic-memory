@@ -304,7 +304,60 @@ class HybridSearchService:
             filters=query_filters
         )
 
+        # --- Pillar 2 Implementation: Hybrid Search with Super-Nodes ---
+        # Search specifically for "community" nodes (Super-Nodes) in the graph
+        # that might be relevant to the query.
+        # This is a basic implementation that text-matches the query against super-node labels/summaries.
+        # Ideally, Super-Nodes should also have vector embeddings in a separate collection or marked index.
+        # For now, we search for them using SQL fuzzy match or just append them if found in the vector results
+        # (if vector store indexes graph nodes too).
+
+        # Assumption: "Super-Nodes" are stored in knowledge_graph_nodes with type='community'.
+        # We perform a side-query to DB to find relevant communities.
+
+        # Note: This is an additive search step.
+        relevant_communities = await self._find_relevant_communities(query, tenant_id, project_id)
+
+        # Create synthetic memory records for these communities so they are included in the synthesis
+        for comm in relevant_communities:
+            # Check if this community is already in results (unlikely if vector store doesn't index them)
+            # Create a high-scoring record
+            synthetic_record = ScoredMemoryRecord(
+                id=str(comm['id']),
+                content=f"COMMUNITY WISDOM: {comm['label']}. Summary: {comm['properties'].get('summary', '')}",
+                score=0.95, # Give high priority to wisdom
+                source="community_wisdom",
+                tags=["wisdom", "community"],
+                metadata=comm['properties']
+            )
+            # Prepend to results
+            results.insert(0, synthetic_record)
+
         return results
+
+    async def _find_relevant_communities(self, query: str, tenant_id: str, project_id: str) -> List[Dict]:
+        """
+        Find community nodes relevant to the query.
+        """
+        async with self.pool.acquire() as conn:
+            # Simple keyword matching for now.
+            # In a full implementation, we would embed the query and search against community embeddings.
+            records = await conn.fetch(
+                """
+                SELECT id, label, properties
+                FROM knowledge_graph_nodes
+                WHERE tenant_id = $1 AND project_id = $2
+                AND (properties->>'type') = 'community'
+                AND (
+                    label ILIKE '%' || $3 || '%'
+                    OR (properties->>'summary') ILIKE '%' || $3 || '%'
+                    OR (properties->>'themes')::text ILIKE '%' || $3 || '%'
+                )
+                LIMIT 3
+                """,
+                tenant_id, project_id, query
+            )
+            return [dict(r) for r in records]
 
     async def _map_memories_to_nodes(
         self,

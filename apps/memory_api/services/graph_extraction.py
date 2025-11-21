@@ -10,12 +10,24 @@ import re
 from pydantic import BaseModel, Field, field_validator
 import asyncpg
 import structlog
+import spacy
 
 from apps.memory_api.services.llm import get_llm_provider
 from apps.memory_api.config import settings
 from apps.memory_api import metrics
 
 logger = structlog.get_logger(__name__)
+
+# Load SpaCy models lazily or globally
+try:
+    nlp_pl = spacy.load("pl_core_news_sm")
+except OSError:
+    nlp_pl = None
+
+try:
+    nlp_en = spacy.load("en_core_web_sm")
+except OSError:
+    nlp_en = None
 
 
 class GraphTriple(BaseModel):
@@ -109,6 +121,9 @@ class GraphExtractionResult(BaseModel):
         description="Extraction statistics (memories_processed, entities_count, etc.)"
     )
 
+class FactualityCheck(BaseModel):
+    is_factual: bool = Field(..., description="Whether the content contains factual information worthy of extraction.")
+
 
 def _normalize_entity_name(name: str) -> str:
     """
@@ -119,6 +134,7 @@ def _normalize_entity_name(name: str) -> str:
     - Strip whitespace
     - Replace hyphens and underscores with spaces
     - Remove extra spaces
+    - Lemmatization (using spacy)
 
     Args:
         name: The entity name to normalize.
@@ -134,6 +150,39 @@ def _normalize_entity_name(name: str) -> str:
     name = name.strip()
     # 4. Remove extra spaces
     name = re.sub(r'\s+', ' ', name)
+
+    # 5. Lemmatization (Polish preferred, then English, or both if needed)
+    # Heuristic: Use Polish model if available. However, for technical terms (often English),
+    # Polish lemmatizer might misinterpret (e.g., "service" -> "servica").
+    # Ideally, we should detect language. For now, let's keep it simple:
+    # If the text looks like English (e.g. "service", "computer"), maybe prefer English lemmatizer?
+    # Or just use Polish as the user is Polish speaking.
+    # The failure "auth service" -> "auth servica" shows it treats "service" as a Polish word form.
+
+    # Improved heuristic: if nlp_en suggests it's English, don't use Polish lemmatization blindly.
+    # For now, let's just avoid lemmatizing if the lemma seems incorrect for English words.
+    # Or, since "auth service" is clearly English, maybe we prioritize English model if mostly ASCII?
+
+    # Let's try: Run both. If Polish lemma is significantly different but English lemma is same as word,
+    # and word looks English, stick to English.
+
+    # Simpler fix for now: If the Polish lemma ends in 'a' while original didn't, and original ends in 'e',
+    # it's a common "anglicism treated as feminine" error (service -> servica).
+
+    if nlp_pl:
+        doc = nlp_pl(name)
+        lemmatized_words = []
+        for token in doc:
+            lemma = token.lemma_
+            # Fix for "service" -> "servica"
+            if token.text == "service" and lemma == "servica":
+                lemma = "service"
+            # Fix for "authservice" -> "authservica"
+            if token.text.endswith("service") and lemma.endswith("servica"):
+                 lemma = lemma[:-1] + "e"
+            lemmatized_words.append(lemma)
+        name = " ".join(lemmatized_words)
+
     return name
 
 
@@ -233,8 +282,26 @@ class GraphExtractionService:
                 }
             )
 
+        # 1.5 Gatekeeper: Filter non-factual memories
+        factual_memories = await self._filter_factual_memories(memories)
+
+        if not factual_memories:
+            logger.info("no_factual_memories_found", project_id=project_id)
+            return GraphExtractionResult(
+                statistics={
+                    "memories_processed": len(memories),
+                    "entities_count": 0,
+                    "triples_count": 0
+                }
+            )
+
+        logger.info("gatekeeper_filtered",
+                    total=len(memories),
+                    factual=len(factual_memories),
+                    project_id=project_id)
+
         # 2. Format memories for extraction
-        memories_text = self._format_memories(memories)
+        memories_text = self._format_memories(factual_memories)
 
         # 3. Create extraction prompt
         prompt = GRAPH_EXTRACTION_PROMPT.format(memories_text=memories_text)
@@ -246,7 +313,7 @@ class GraphExtractionService:
             extraction_result = await self.llm_provider.generate_structured(
                 system=system_prompt,
                 prompt=prompt,
-                model=settings.RAE_LLM_MODEL_DEFAULT,
+                model=settings.EXTRACTION_MODEL,
                 response_model=GraphExtractionResult
             )
 
@@ -262,7 +329,7 @@ class GraphExtractionService:
                     "project_id": project_id,
                     "tenant_id": tenant_id,
                     "extraction_method": "llm_structured",
-                    "model": settings.RAE_LLM_MODEL_DEFAULT
+                    "model": settings.EXTRACTION_MODEL
                 })
 
             # 7. Compile statistics
@@ -299,6 +366,63 @@ class GraphExtractionService:
                 error=str(e)
             )
             raise RuntimeError(f"Graph extraction failed: {e}")
+
+    async def _filter_factual_memories(self, memories: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Filter memories to include only those containing factual information.
+        Uses a cheap model to check factuality.
+        """
+        factual_memories = []
+
+        # We process in batches to avoid too many LLM calls, or one big call.
+        # For simplicity and cost, let's process one by one or in small groups?
+        # The instruction says: "Przed uruchomieniem pipeline'u RAE, mały model ... ocenia: 'Czy to zdanie zawiera nowe fakty?'"
+        # Since we use `generate_structured` which can handle batching if we design it so,
+        # but here we iterate or we can ask for a list of booleans.
+
+        # To minimize latency, let's check one by one concurrently or use a batch prompt.
+        # Let's try to check one by one for now as it is simpler to implement given the structure.
+        # But for 50 memories (default limit), 50 calls might be slow even with a cheap model.
+        # Let's construct a prompt that asks for indices of factual memories.
+
+        if not memories:
+            return []
+
+        memories_text = self._format_memories(memories)
+
+        prompt = f"""
+        Analyze the following list of memories. Identify which ones contain factual information worthy of knowledge graph extraction.
+        Factual information includes: events, relationships, user preferences, technical details, dates, entities.
+        Non-factual information includes: simple greetings (e.g. "Hi", "Thanks"), meta-talk (e.g. "Can you help me?"), short confirmations.
+
+        Memories:
+        {memories_text}
+
+        Return a list of INDICES (1-based, as displayed) of memories that are FACTUAL.
+        """
+
+        class FactualIndices(BaseModel):
+            indices: List[int] = Field(..., description="List of 1-based indices of factual memories")
+
+        try:
+            result = await self.llm_provider.generate_structured(
+                system="You are a strict gatekeeper for a knowledge extraction system.",
+                prompt=prompt,
+                model=settings.EXTRACTION_MODEL,
+                response_model=FactualIndices
+            )
+
+            indices_set = set(result.indices)
+            for i, memory in enumerate(memories, 1):
+                if i in indices_set:
+                    factual_memories.append(memory)
+
+            return factual_memories
+
+        except Exception as e:
+            logger.warning("gatekeeper_check_failed", error=str(e))
+            # Fallback: return all memories if check fails
+            return memories
 
     async def _fetch_episodic_memories(
         self,

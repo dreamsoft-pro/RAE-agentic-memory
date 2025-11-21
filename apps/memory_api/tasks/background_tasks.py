@@ -2,6 +2,8 @@ from apps.memory_api.celery_app import celery_app
 from apps.memory_api.services.reflection_engine import ReflectionEngine
 from apps.memory_api.services.context_cache import rebuild_full_cache
 from apps.memory_api.services.graph_extraction import GraphExtractionService
+from apps.memory_api.services.entity_resolution import EntityResolutionService
+from apps.memory_api.services.community_detection import CommunityDetectionService
 from apps.memory_api.config import settings
 import asyncpg
 import structlog
@@ -230,6 +232,37 @@ def process_graph_extraction_queue():
 
     asyncio.run(main())
 
+@celery_app.task
+def run_entity_resolution_task(project_id: str = "default", tenant_id: str = "default"):
+    """
+    Periodic task for Pillar 1: Entity Resolution.
+    Clusters and merges duplicate nodes.
+    """
+    import asyncio
+    async def main():
+        pool = await get_pool()
+        try:
+            service = EntityResolutionService(pool)
+            await service.run_clustering_and_merging(project_id, tenant_id)
+        finally:
+            await pool.close()
+    asyncio.run(main())
+
+@celery_app.task
+def run_community_detection_task(project_id: str = "default", tenant_id: str = "default"):
+    """
+    Periodic task for Pillar 2: Community Detection & Summarization.
+    Generates 'Wisdom' by summarizing clusters.
+    """
+    import asyncio
+    async def main():
+        pool = await get_pool()
+        try:
+            service = CommunityDetectionService(pool)
+            await service.run_community_detection_and_summarization(project_id, tenant_id)
+        finally:
+            await pool.close()
+    asyncio.run(main())
 
 # --- Celery Beat Schedule ---
 @celery_app.on_after_configure.connect
@@ -242,3 +275,7 @@ def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(86400.0, prune_old_memories.s(), name='prune old memories daily')
     # Schedule graph extraction queue processing every 10 minutes
     sender.add_periodic_task(600.0, process_graph_extraction_queue.s(), name='process graph extraction queue every 10 mins')
+    # Schedule Entity Resolution every hour
+    sender.add_periodic_task(3600.0, run_entity_resolution_task.s(), name='run entity resolution every hour')
+    # Schedule Community Detection every 6 hours
+    sender.add_periodic_task(21600.0, run_community_detection_task.s(), name='run community detection every 6 hours')

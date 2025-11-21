@@ -17,3 +17,8 @@
 
 # For development, also install:
 # -r requirements-test.txt
+spacy
+scikit-learn
+sentence-transformers
+networkx
+python-louvain
