@@ -10,7 +10,7 @@ from typing import Dict, Any
 import asyncpg
 from redis import Redis
 import httpx
-from datetime import datetime
+from datetime import datetime, timezone
 from apps.memory_api.config import settings
 import structlog
 
@@ -46,13 +46,13 @@ class MetricsResponse(BaseModel):
 
 
 # Application start time for uptime calculation
-_start_time = datetime.utcnow()
+_start_time = datetime.now(timezone.utc)
 
 
 async def check_database() -> ComponentHealth:
     """Check PostgreSQL database health."""
     try:
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         # Create a temporary connection
         conn = await asyncpg.connect(
@@ -67,7 +67,7 @@ async def check_database() -> ComponentHealth:
         result = await conn.fetchval("SELECT 1")
         await conn.close()
 
-        response_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+        response_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
 
         if result == 1:
             return ComponentHealth(
@@ -99,7 +99,7 @@ async def check_database() -> ComponentHealth:
 async def check_redis() -> ComponentHealth:
     """Check Redis cache health."""
     try:
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         redis_client = Redis.from_url(
             settings.REDIS_URL,
@@ -114,7 +114,7 @@ async def check_redis() -> ComponentHealth:
         info = redis_client.info()
         redis_client.close()
 
-        response_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+        response_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
 
         return ComponentHealth(
             status="healthy",
@@ -138,7 +138,7 @@ async def check_redis() -> ComponentHealth:
 async def check_vector_store() -> ComponentHealth:
     """Check vector store (Qdrant) health."""
     try:
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
 
         # Check Qdrant health endpoint
         qdrant_url = f"http://{settings.QDRANT_HOST}:{settings.QDRANT_PORT}/"
@@ -146,7 +146,7 @@ async def check_vector_store() -> ComponentHealth:
         async with httpx.AsyncClient() as client:
             response = await client.get(qdrant_url, timeout=3.0)
 
-        response_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+        response_time = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
 
         if response.status_code == 200:
             data = response.json()
@@ -253,7 +253,7 @@ async def health_check() -> HealthCheckResponse:
 
     response = HealthCheckResponse(
         status=overall_status,
-        timestamp=datetime.utcnow().isoformat() + "Z",
+        timestamp=datetime.now(timezone.utc).isoformat() + "Z",
         version="1.0.0",
         components=components
     )
@@ -299,7 +299,7 @@ async def liveness_check() -> Dict[str, str]:
     Always returns 200 if the service is running.
     Used by Kubernetes liveness probes.
     """
-    return {"status": "alive", "timestamp": datetime.utcnow().isoformat() + "Z"}
+    return {"status": "alive", "timestamp": datetime.now(timezone.utc).isoformat() + "Z"}
 
 
 @router.get(
@@ -318,7 +318,7 @@ async def metrics() -> MetricsResponse:
     import psutil
 
     # Calculate uptime
-    uptime = (datetime.utcnow() - _start_time).total_seconds()
+    uptime = (datetime.now(timezone.utc) - _start_time).total_seconds()
 
     # Get memory usage
     process = psutil.Process()
@@ -343,7 +343,7 @@ async def metrics() -> MetricsResponse:
         pass
 
     return MetricsResponse(
-        timestamp=datetime.utcnow().isoformat() + "Z",
+        timestamp=datetime.now(timezone.utc).isoformat() + "Z",
         uptime_seconds=uptime,
         memory_usage_mb=memory_mb,
         database=db_stats,

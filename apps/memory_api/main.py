@@ -7,8 +7,10 @@ from fastapi.openapi.utils import get_openapi
 import asyncpg
 import os
 from prometheus_fastapi_instrumentator import Instrumentator
+from slowapi.errors import RateLimitExceeded
 from apps.memory_api.middleware.tenant import TenantContextMiddleware
-from apps.memory_api.api.v1 import memory, agent, cache, graph
+from apps.memory_api.middleware.rate_limiter import limiter, rate_limit_exceeded_handler
+from apps.memory_api.api.v1 import memory, agent, cache, graph, governance
 from apps.memory_api.api.v1 import health as health_router
 from apps.memory_api import metrics
 from apps.memory_api.config import settings
@@ -16,16 +18,21 @@ from apps.memory_api.services.context_cache import rebuild_full_cache
 from apps.memory_api.logging_config import setup_logging
 from apps.memory_api.security import auth
 from apps.memory_api.security.rate_limit import rate_limit_middleware
+from apps.memory_api.observability import setup_opentelemetry, instrument_fastapi, instrument_libraries
 import structlog
 
 # Setup structured logging
 setup_logging()
 logger = structlog.get_logger(__name__)
 
+# Setup OpenTelemetry (before app creation)
+setup_opentelemetry()
+instrument_libraries()
+
 # --- App Initialization ---
 app = FastAPI(
     title="RAE Memory API",
-    version="1.0.0",
+    version="2.0.0-enterprise",
     description="""
     ## The Cognitive Memory Engine for AI Agents
 
@@ -46,6 +53,12 @@ app = FastAPI(
     dependencies=[Depends(auth.verify_token)] if settings.ENABLE_API_KEY_AUTH or settings.ENABLE_JWT_AUTH else []
 )
 
+# Add rate limiter to app state
+app.state.limiter = limiter
+
+# Add rate limit exception handler
+app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+
 
 # Custom OpenAPI schema
 def custom_openapi():
@@ -55,7 +68,7 @@ def custom_openapi():
 
     openapi_schema = get_openapi(
         title="RAE Memory API",
-        version="1.0.0",
+        version="2.0.0-enterprise",
         description=app.description,
         routes=app.routes,
     )
@@ -205,6 +218,9 @@ if settings.ENABLE_RATE_LIMITING:
 # Tenant context middleware
 app.add_middleware(TenantContextMiddleware)
 
+# OpenTelemetry instrumentation
+instrument_fastapi(app)
+
 
 # --- API Routes ---
 
@@ -216,6 +232,7 @@ app.include_router(memory.router, prefix="/v1", tags=["Memory"])
 app.include_router(agent.router, prefix="/v1", tags=["Agent"])
 app.include_router(cache.router, prefix="/v1", tags=["Cache"])
 app.include_router(graph.router, prefix="/v1", tags=["Graph"])
+app.include_router(governance.router, tags=["Governance"])
 
 
 # Root endpoint

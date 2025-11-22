@@ -48,8 +48,10 @@ async def test_fetch_episodic_memories_uses_repository(db_pool, use_real_db):
             project_id
         )
 
-    # Act: Initialize service and fetch memories
-    service = GraphExtractionService(db_pool)
+    # Act: Initialize repositories and service
+    memory_repo = MemoryRepository(db_pool)
+    graph_repo = GraphRepository(db_pool)
+    service = GraphExtractionService(memory_repo, graph_repo)
     memories = await service._fetch_episodic_memories(
         project_id=project_id,
         tenant_id=tenant_id,
@@ -72,7 +74,9 @@ async def test_store_graph_triples_creates_nodes_and_edges(db_pool, use_real_db)
     tenant_id = "test-tenant-triples"
     project_id = "test-project-triples"
 
-    service = GraphExtractionService(db_pool)
+    memory_repo = MemoryRepository(db_pool)
+    graph_repo = GraphRepository(db_pool)
+    service = GraphExtractionService(memory_repo, graph_repo)
 
     # Create test triples
     # Note: Entity names will be normalized (underscores -> spaces)
@@ -182,7 +186,9 @@ async def test_store_triples_handles_duplicates_gracefully(db_pool, use_real_db)
     tenant_id = "test-tenant-duplicates"
     project_id = "test-project-duplicates"
 
-    service = GraphExtractionService(db_pool)
+    memory_repo = MemoryRepository(db_pool)
+    graph_repo = GraphRepository(db_pool)
+    service = GraphExtractionService(memory_repo, graph_repo)
 
     triple = GraphTriple(
         source="alice",
@@ -396,7 +402,9 @@ async def test_end_to_end_triple_storage_workflow(db_pool, use_real_db):
     ]
 
     # Act: Store triples
-    service = GraphExtractionService(db_pool)
+    memory_repo = MemoryRepository(db_pool)
+    graph_repo = GraphRepository(db_pool)
+    service = GraphExtractionService(memory_repo, graph_repo)
     result = await service.store_graph_triples(
         triples=mock_triples,
         project_id=project_id,

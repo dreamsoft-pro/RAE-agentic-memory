@@ -13,7 +13,7 @@ import asyncpg
 import structlog
 from typing import List, Dict, Any, Optional
 from uuid import UUID, uuid4
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import asyncio
 import re
 
@@ -349,7 +349,7 @@ class RulesEngine:
             return True
 
         # Check if we're in a new hour window
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         if trigger.hour_window_start is None or \
            (now - trigger.hour_window_start).total_seconds() >= 3600:
             # Reset counter for new hour
@@ -385,7 +385,7 @@ class RulesEngine:
         if not trigger.last_executed_at:
             return True
 
-        elapsed = (datetime.utcnow() - trigger.last_executed_at).total_seconds()
+        elapsed = (datetime.now(timezone.utc) - trigger.last_executed_at).total_seconds()
         return elapsed >= trigger.condition.cooldown_seconds
 
     # ========================================================================
@@ -433,7 +433,7 @@ class RulesEngine:
                 executions_this_hour = executions_this_hour + 1
             WHERE trigger_id = $2
             """,
-            datetime.utcnow(), trigger.trigger_id
+            datetime.now(timezone.utc), trigger.trigger_id
         )
 
         return executions
@@ -464,7 +464,7 @@ class RulesEngine:
             ActionExecution record
         """
         execution_id = uuid4()
-        started_at = datetime.utcnow()
+        started_at = datetime.now(timezone.utc)
 
         logger.info(
             "executing_action",
@@ -482,7 +482,7 @@ class RulesEngine:
                 trigger
             )
 
-            completed_at = datetime.utcnow()
+            completed_at = datetime.now(timezone.utc)
             duration_ms = int((completed_at - started_at).total_seconds() * 1000)
 
             # Create successful execution record
@@ -530,7 +530,7 @@ class RulesEngine:
                 )
 
             # Create failed execution record
-            completed_at = datetime.utcnow()
+            completed_at = datetime.now(timezone.utc)
             duration_ms = int((completed_at - started_at).total_seconds() * 1000)
 
             execution = ActionExecution(

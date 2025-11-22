@@ -2,7 +2,7 @@
 Tenant models for multi-tenancy support
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from enum import Enum
 from typing import Optional
@@ -81,8 +81,8 @@ class Tenant(BaseModel):
     subscription_start: Optional[datetime] = None
     subscription_end: Optional[datetime] = None
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "id": "123e4567-e89b-12d3-a456-426614174000",
                 "name": "Acme Corp",
@@ -95,6 +95,7 @@ class Tenant(BaseModel):
                 }
             }
         }
+    )
 
     @staticmethod
     def get_default_config_for_tier(tier: TenantTier) -> TenantConfig:

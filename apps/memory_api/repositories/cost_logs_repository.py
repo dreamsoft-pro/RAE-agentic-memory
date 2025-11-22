@@ -13,7 +13,7 @@ Features:
 """
 
 import asyncpg
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field
 import structlog
@@ -370,8 +370,8 @@ async def get_daily_cost(
     Returns:
         Total cost in USD for today
     """
-    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-    today_end = datetime.utcnow()
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    today_end = datetime.now(timezone.utc)
 
     stats = await get_cost_statistics(pool, tenant_id, project_id, today_start, today_end)
     return stats.total_cost_usd
@@ -395,7 +395,7 @@ async def get_monthly_cost(
     Returns:
         Total cost in USD for current month
     """
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     month_end = now
 
@@ -421,8 +421,8 @@ async def get_daily_tokens(
     Returns:
         Total tokens (input + output) for today
     """
-    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
-    today_end = datetime.utcnow()
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    today_end = datetime.now(timezone.utc)
 
     stats = await get_cost_statistics(pool, tenant_id, project_id, today_start, today_end)
     return stats.total_tokens
@@ -446,7 +446,7 @@ async def get_monthly_tokens(
     Returns:
         Total tokens (input + output) for current month
     """
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     month_end = now
 

@@ -5,7 +5,7 @@ Base Plugin System - Core plugin infrastructure
 from typing import Any, Dict, List, Optional, Callable, Type
 from abc import ABC, abstractmethod
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 import structlog
 import importlib
@@ -380,7 +380,7 @@ class PluginRegistry:
             )
 
         self._plugins[metadata.name] = plugin
-        metadata.loaded_at = datetime.utcnow()
+        metadata.loaded_at = datetime.now(timezone.utc)
 
         # Register plugin for its hooks
         for hook in metadata.hooks:

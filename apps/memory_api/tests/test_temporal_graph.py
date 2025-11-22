@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from apps.memory_api.services.temporal_graph import (
     TemporalGraphService, GraphSnapshot, GraphChange, ChangeType
 )
@@ -35,7 +35,7 @@ async def test_create_snapshot(temporal_service, sample_graph):
 @pytest.mark.asyncio
 async def test_get_snapshot_at_time(temporal_service, sample_graph):
     tenant_id = uuid4()
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     # Create snapshots at different times
     s1 = GraphSnapshot(tenant_id, now - timedelta(hours=2), sample_graph)
@@ -58,7 +58,7 @@ async def test_get_snapshot_at_time(temporal_service, sample_graph):
 @pytest.mark.asyncio
 async def test_get_latest_snapshot(temporal_service, sample_graph):
     tenant_id = uuid4()
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     s1 = GraphSnapshot(tenant_id, now - timedelta(hours=2), sample_graph)
     s2 = GraphSnapshot(tenant_id, now - timedelta(hours=1), sample_graph)
@@ -73,7 +73,7 @@ async def test_record_change(temporal_service):
     tenant_id = uuid4()
     change = GraphChange(
         ChangeType.NODE_ADDED,
-        datetime.utcnow(),
+        datetime.now(timezone.utc),
         "n1",
         "Person",
         new_value={"properties": {"name": "Alice"}}
@@ -87,7 +87,7 @@ async def test_record_change(temporal_service):
 @pytest.mark.asyncio
 async def test_get_changes_filters(temporal_service):
     tenant_id = uuid4()
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     c1 = GraphChange(ChangeType.NODE_ADDED, now - timedelta(hours=2), "n1", "Person")
     c2 = GraphChange(ChangeType.EDGE_ADDED, now - timedelta(hours=1), "n1->n2", "Relation")
@@ -117,8 +117,8 @@ async def test_get_changes_filters(temporal_service):
 @pytest.mark.asyncio
 async def test_get_entity_history(temporal_service):
     tenant_id = uuid4()
-    c1 = GraphChange(ChangeType.NODE_ADDED, datetime.utcnow(), "n1", "Person")
-    c2 = GraphChange(ChangeType.NODE_UPDATED, datetime.utcnow(), "n1", "Person")
+    c1 = GraphChange(ChangeType.NODE_ADDED, datetime.now(timezone.utc), "n1", "Person")
+    c2 = GraphChange(ChangeType.NODE_UPDATED, datetime.now(timezone.utc), "n1", "Person")
     temporal_service._changes[tenant_id] = [c1, c2]
 
     history = await temporal_service.get_entity_history(tenant_id, "n1")
@@ -127,7 +127,7 @@ async def test_get_entity_history(temporal_service):
 @pytest.mark.asyncio
 async def test_reconstruct_graph_at_time(temporal_service, sample_graph):
     tenant_id = uuid4()
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     # Snapshot at T-2h
     snapshot = GraphSnapshot(tenant_id, now - timedelta(hours=2), sample_graph)
@@ -169,7 +169,7 @@ async def test_apply_change_logic(temporal_service):
 
     # Add node
     c1 = GraphChange(
-        ChangeType.NODE_ADDED, datetime.utcnow(), "n1", "Person",
+        ChangeType.NODE_ADDED, datetime.now(timezone.utc), "n1", "Person",
         new_value={"entity_type": "Person", "properties": {"a": 1}}
     )
     graph = temporal_service._apply_change(graph, c1)
@@ -178,7 +178,7 @@ async def test_apply_change_logic(temporal_service):
 
     # Update node
     c2 = GraphChange(
-        ChangeType.NODE_UPDATED, datetime.utcnow(), "n1", "Person",
+        ChangeType.NODE_UPDATED, datetime.now(timezone.utc), "n1", "Person",
         new_value={"properties": {"b": 2}}
     )
     graph = temporal_service._apply_change(graph, c2)
@@ -186,7 +186,7 @@ async def test_apply_change_logic(temporal_service):
     assert graph.nodes["n1"].properties["b"] == 2
 
     # Remove node
-    c3 = GraphChange(ChangeType.NODE_REMOVED, datetime.utcnow(), "n1", "Person")
+    c3 = GraphChange(ChangeType.NODE_REMOVED, datetime.now(timezone.utc), "n1", "Person")
     graph = temporal_service._apply_change(graph, c3)
     assert "n1" not in graph.nodes
 
@@ -211,7 +211,7 @@ async def test_compare_graphs(temporal_service):
 @pytest.mark.asyncio
 async def test_get_evolution_timeline(temporal_service):
     tenant_id = uuid4()
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     # 3 changes in same hour
     c1 = GraphChange(ChangeType.NODE_ADDED, now.replace(minute=10), "n1", "A")
@@ -229,7 +229,7 @@ async def test_get_evolution_timeline(temporal_service):
 @pytest.mark.asyncio
 async def test_get_growth_metrics(temporal_service, sample_graph):
     tenant_id = uuid4()
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     # Start: empty graph
     s1 = GraphSnapshot(tenant_id, now - timedelta(days=30), KnowledgeGraph())
@@ -258,7 +258,7 @@ async def test_get_growth_metrics(temporal_service, sample_graph):
 @pytest.mark.asyncio
 async def test_find_emerging_patterns(temporal_service):
     tenant_id = uuid4()
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     # n1 gets many new edges
     changes = []
@@ -284,7 +284,7 @@ async def test_find_emerging_patterns(temporal_service):
 @pytest.mark.asyncio
 async def test_cleanup_old_snapshots(temporal_service, sample_graph):
     tenant_id = uuid4()
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     # Old snapshot
     s1 = GraphSnapshot(tenant_id, now - timedelta(days=100), sample_graph)

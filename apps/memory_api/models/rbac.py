@@ -2,8 +2,8 @@
 Role-Based Access Control (RBAC) models
 """
 
-from pydantic import BaseModel, Field
-from datetime import datetime
+from pydantic import BaseModel, Field, ConfigDict
+from datetime import datetime, timezone
 from enum import Enum
 from typing import List, Optional
 from uuid import UUID
@@ -90,8 +90,8 @@ class UserRole(BaseModel):
     assigned_by: Optional[str] = Field(None, description="Who assigned this role")
     expires_at: Optional[datetime] = Field(None, description="Role expiration (optional)")
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "id": "123e4567-e89b-12d3-a456-426614174000",
                 "user_id": "user_123",
@@ -100,12 +100,13 @@ class UserRole(BaseModel):
                 "project_ids": []
             }
         }
+    )
 
     def is_expired(self) -> bool:
         """Check if role assignment has expired"""
         if self.expires_at is None:
             return False
-        return datetime.utcnow() > self.expires_at
+        return datetime.now(timezone.utc) > self.expires_at
 
     def has_access_to_project(self, project_id: str) -> bool:
         """Check if user has access to specific project"""

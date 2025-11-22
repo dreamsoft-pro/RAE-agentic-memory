@@ -9,7 +9,7 @@ This module defines Pydantic models for the semantic memory layer including:
 """
 
 from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from enum import Enum
 from datetime import datetime
 from uuid import UUID
@@ -126,8 +126,7 @@ class SemanticNode(BaseModel):
     last_accessed_at: datetime
     accessed_count: int = Field(0, ge=0)
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SemanticRelationship(BaseModel):
@@ -156,8 +155,7 @@ class SemanticRelationship(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class SemanticIndexEntry(BaseModel):
@@ -178,8 +176,7 @@ class SemanticIndexEntry(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ============================================================================

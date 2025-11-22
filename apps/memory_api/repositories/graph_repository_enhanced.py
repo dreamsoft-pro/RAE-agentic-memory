@@ -13,7 +13,7 @@ knowledge graph with temporal, weighted, and versioned features including:
 
 from typing import List, Tuple, Optional, Dict, Any
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 import asyncpg
 import structlog
 
@@ -257,7 +257,7 @@ class EnhancedGraphRepository:
         """
         properties = properties or {}
         metadata = metadata or {}
-        valid_from = valid_from or datetime.utcnow()
+        valid_from = valid_from or datetime.now(timezone.utc)
 
         record = await self.pool.fetchrow(
             """
@@ -457,7 +457,7 @@ class EnhancedGraphRepository:
         Returns:
             Tuple of (nodes, edges) discovered in traversal
         """
-        at_timestamp = at_timestamp or datetime.utcnow()
+        at_timestamp = at_timestamp or datetime.now(timezone.utc)
 
         # Call temporal traversal function
         records = await self.pool.fetch(
@@ -538,7 +538,7 @@ class EnhancedGraphRepository:
         Returns:
             GraphPath if found, None otherwise
         """
-        at_timestamp = at_timestamp or datetime.utcnow()
+        at_timestamp = at_timestamp or datetime.now(timezone.utc)
 
         record = await self.pool.fetchrow(
             "SELECT * FROM find_shortest_path_weighted($1, $2, $3, $4, $5, $6)",

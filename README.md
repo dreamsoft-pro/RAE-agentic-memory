@@ -8,7 +8,7 @@
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)]()
 [![Build Status](https://img.shields.io/badge/build-stable-brightgreen.svg)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![Version](https://img.shields.io/badge/version-1.0.0--beta-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.0.0--enterprise-blue.svg)](docs/VERSION_MATRIX.md)
 
 [📖 Documentation](#documentation) | [🚀 Quick Start](#quick-start-5-minutes) | [💬 Community](#community--support) | [🎯 Examples](#real-world-examples)
 
@@ -368,7 +368,7 @@ reflection = await client.generate_reflection()
 
 ```bash
 # Store a memory
-curl -X POST http://localhost:8000/v1/memory/store \
+curl -X POST http://localhost:8000/v1/memories/create \
   -H "Content-Type: application/json" \
   -H "X-Tenant-ID: demo-tenant" \
   -d '{

@@ -12,7 +12,7 @@ This module provides FastAPI routes for dashboard operations including:
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, Query
 from typing import List, Optional
 import structlog
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import asyncio
 from uuid import uuid4, UUID
 
@@ -221,7 +221,7 @@ async def get_metric_timeseries(
     """
     try:
         # Calculate time range
-        end_time = datetime.utcnow()
+        end_time = datetime.now(timezone.utc)
         if period == MetricPeriod.LAST_HOUR:
             start_time = end_time - timedelta(hours=1)
         elif period == MetricPeriod.LAST_24H:
@@ -392,7 +392,7 @@ async def simple_health_check(pool=Depends(get_pool)):
 
         return {
             "status": "healthy",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "service": "dashboard_api"
         }
 
@@ -709,7 +709,7 @@ async def _generate_memory_timeline(
     try:
         # Default time range if not specified
         if end_time is None:
-            end_time = datetime.utcnow()
+            end_time = datetime.now(timezone.utc)
         if start_time is None:
             start_time = end_time - timedelta(days=7)
 
@@ -764,7 +764,7 @@ async def _generate_quality_trend(
     """Generate quality metrics trend."""
     # Placeholder - would fetch from metrics table
     if end_time is None:
-        end_time = datetime.utcnow()
+        end_time = datetime.now(timezone.utc)
     if start_time is None:
         start_time = end_time - timedelta(days=7)
 

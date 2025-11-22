@@ -13,6 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from typing import List
 import structlog
 from uuid import uuid4
+from datetime import datetime, timedelta, timezone
 
 from apps.memory_api.db import get_pool
 from apps.memory_api.services.rules_engine import RulesEngine
@@ -339,8 +340,8 @@ async def get_trigger_executions(
         summary = TriggerExecutionSummary(
             trigger_id=request.trigger_id,
             trigger_name="Example Trigger",
-            period_start=datetime.utcnow() - timedelta(days=7),
-            period_end=datetime.utcnow()
+            period_start=datetime.now(timezone.utc) - timedelta(days=7),
+            period_end=datetime.now(timezone.utc)
         )
 
         return GetTriggerExecutionsResponse(

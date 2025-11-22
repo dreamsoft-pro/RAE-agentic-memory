@@ -4,7 +4,7 @@ Temporal Graph Service - Track knowledge graph evolution over time
 
 from typing import List, Dict, Optional, Any, Tuple
 from uuid import UUID
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 import structlog
 
@@ -120,7 +120,7 @@ class TemporalGraphService:
         """
         snapshot = GraphSnapshot(
             tenant_id=tenant_id,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             graph=graph,
             metadata=metadata
         )
@@ -482,7 +482,7 @@ class TemporalGraphService:
         Returns:
             Growth metrics including rates and trends
         """
-        end_time = datetime.utcnow()
+        end_time = datetime.now(timezone.utc)
         start_time = end_time - timedelta(days=period_days)
 
         # Get snapshots at start and end
@@ -558,7 +558,7 @@ class TemporalGraphService:
         Returns:
             List of emerging patterns
         """
-        end_time = datetime.utcnow()
+        end_time = datetime.now(timezone.utc)
         start_time = end_time - timedelta(days=window_days)
 
         changes = await self.get_changes(tenant_id, start_time, end_time)
@@ -611,7 +611,7 @@ class TemporalGraphService:
         Returns:
             Number of snapshots deleted
         """
-        cutoff_time = datetime.utcnow() - timedelta(days=retention_days)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(days=retention_days)
         snapshots = self._snapshots.get(tenant_id, [])
 
         # Keep snapshots after cutoff

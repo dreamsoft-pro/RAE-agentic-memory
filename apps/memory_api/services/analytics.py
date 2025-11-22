@@ -4,7 +4,7 @@ Analytics Service - Usage statistics and insights for tenants
 
 from typing import Optional, Dict, List, Any
 from uuid import UUID
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import structlog
 from collections import defaultdict
 
@@ -65,8 +65,8 @@ class AnalyticsService:
         stats = {
             "tenant_id": str(tenant_id),
             "period": {
-                "start": (datetime.utcnow() - timedelta(days=period_days)).isoformat(),
-                "end": datetime.utcnow().isoformat(),
+                "start": (datetime.now(timezone.utc) - timedelta(days=period_days)).isoformat(),
+                "end": datetime.now(timezone.utc).isoformat(),
                 "days": period_days
             },
             "memories": await self._get_memory_stats(tenant_id, period_days),
@@ -656,7 +656,7 @@ class AnalyticsService:
         Used for monitoring dashboards and alerts
         """
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "tenant_id": str(tenant_id),
             "current_active_requests": 0,
             "requests_per_second": 0.0,

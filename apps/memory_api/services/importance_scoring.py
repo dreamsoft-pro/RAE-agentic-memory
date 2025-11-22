@@ -4,7 +4,7 @@ Importance Scoring Service - Automatic memory prioritization
 
 from typing import Dict, List, Optional, Any
 from uuid import UUID
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 import math
 import structlog
@@ -194,7 +194,7 @@ class ImportanceScoringService:
 
         Recent memories score higher, with exponential decay over time.
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         age_seconds = (now - memory.created_at).total_seconds()
 
         # Decay parameters
@@ -221,7 +221,7 @@ class ImportanceScoringService:
         frequency_component = min(math.log10(memory.access_count + 1) / math.log10(100), 0.8)
 
         # Recency of last access component
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         days_since_access = (now - memory.accessed_at).days
 
         # Decay over 30 days
@@ -571,12 +571,12 @@ class ImportanceScoringService:
             "factors": {
                 "recency": {
                     "weight": self.scoring_factors.recency,
-                    "days_old": (datetime.utcnow() - memory.created_at).days
+                    "days_old": (datetime.now(timezone.utc) - memory.created_at).days
                 },
                 "access_frequency": {
                     "weight": self.scoring_factors.access_frequency,
                     "access_count": memory.access_count,
-                    "days_since_access": (datetime.utcnow() - memory.accessed_at).days
+                    "days_since_access": (datetime.now(timezone.utc) - memory.accessed_at).days
                 },
                 "graph_centrality": {
                     "weight": self.scoring_factors.graph_centrality,
@@ -607,7 +607,7 @@ class ImportanceScoringService:
                 "Memory has low access count. Consider if it's still relevant."
             )
 
-        if (datetime.utcnow() - memory.accessed_at).days > 30:
+        if (datetime.now(timezone.utc) - memory.accessed_at).days > 30:
             recommendations.append(
                 "Memory hasn't been accessed recently. Consider archival."
             )

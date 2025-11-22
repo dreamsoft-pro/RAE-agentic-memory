@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-from pydantic import model_validator
+from pydantic import model_validator, ConfigDict
 import os
 
 class Settings(BaseSettings):
@@ -80,8 +80,9 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "WARNING"  # For external libraries (uvicorn, asyncpg, etc.)
     RAE_APP_LOG_LEVEL: str = "INFO"  # For RAE application logs
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
+    model_config = ConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8"
+    )
 
 settings = Settings()

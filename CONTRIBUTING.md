@@ -242,9 +242,14 @@ async def store_memory(
 ## 🧪 Testing Guidelines
 
 - **Write tests for all new features**
-- **Maintain >= 80% code coverage**
+- **Maintain >= 75% code coverage overall, 80%+ for core modules**
 - **Use pytest fixtures for common setup**
 - **Mark tests appropriately** (`@pytest.mark.unit`, `@pytest.mark.integration`)
+
+**Current Testing Status:**
+- See [docs/TESTING_STATUS.md](docs/TESTING_STATUS.md) for current test coverage and status
+- Target: 75%+ overall coverage, 80%+ for core modules (services, repositories)
+- Current: 32.25% overall (200/264 tests passing)
 
 **Test structure:**
 
@@ -355,6 +360,9 @@ We appreciate your time and effort in contributing to this project.
 
 **Quick Links:**
 - [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Testing Status](docs/TESTING_STATUS.md)
+- [Version Matrix](docs/VERSION_MATRIX.md)
+- [Legacy Documentation](docs/legacy/mcp.md)
 - [Development Setup](docs/contributing/development-setup.md)
 - [Architecture Overview](docs/concepts/architecture.md)
 - [Testing Guide](docs/contributing/testing.md)

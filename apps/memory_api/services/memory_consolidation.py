@@ -4,7 +4,7 @@ Memory Consolidation Service - Automatic memory layer transitions
 
 from typing import List, Dict, Optional, Any, Tuple
 from uuid import UUID
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 import structlog
 
@@ -40,7 +40,7 @@ class ConsolidationResult:
         self.consolidated_content = consolidated_content
         self.metadata = metadata or {}
         self.error = error
-        self.timestamp = datetime.utcnow()
+        self.timestamp = datetime.now(timezone.utc)
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
@@ -167,7 +167,7 @@ class MemoryConsolidationService:
         results = []
 
         # Get working memories ready for semantic consolidation
-        cutoff_date = datetime.utcnow() - timedelta(days=min_age_days)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=min_age_days)
 
         candidate_memories = await self._get_consolidation_candidates(
             tenant_id=tenant_id,
@@ -232,7 +232,7 @@ class MemoryConsolidationService:
 
         results = []
 
-        cutoff_date = datetime.utcnow() - timedelta(days=min_age_days)
+        cutoff_date = datetime.now(timezone.utc) - timedelta(days=min_age_days)
 
         candidate_memories = await self._get_consolidation_candidates(
             tenant_id=tenant_id,
@@ -596,7 +596,7 @@ Consolidated Memory:"""
 
         summary = {
             "tenant_id": str(tenant_id),
-            "started_at": datetime.utcnow().isoformat(),
+            "started_at": datetime.now(timezone.utc).isoformat(),
             "episodic_to_working": [],
             "working_to_semantic": [],
             "semantic_to_ltm": [],
@@ -632,7 +632,7 @@ Consolidated Memory:"""
             logger.error("automatic_consolidation_failed", error=str(e))
             summary["errors"].append({"error": str(e)})
 
-        summary["completed_at"] = datetime.utcnow().isoformat()
+        summary["completed_at"] = datetime.now(timezone.utc).isoformat()
 
         logger.info(
             "automatic_consolidation_complete",

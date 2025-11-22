@@ -4,7 +4,7 @@ Tests for Phase 2 Models (Multi-tenancy and RBAC)
 
 import pytest
 from uuid import uuid4
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from apps.memory_api.models.tenant import Tenant, TenantTier, TenantConfig
 from apps.memory_api.models.rbac import (
@@ -226,7 +226,7 @@ class TestRBACModels:
             user_id="user_123",
             tenant_id=uuid4(),
             role=Role.DEVELOPER,
-            expires_at=datetime.utcnow() - timedelta(days=1)
+            expires_at=datetime.now(timezone.utc) - timedelta(days=1)
         )
         assert expired_role.is_expired() is True
 
@@ -236,7 +236,7 @@ class TestRBACModels:
             user_id="user_123",
             tenant_id=uuid4(),
             role=Role.DEVELOPER,
-            expires_at=datetime.utcnow() + timedelta(days=30)
+            expires_at=datetime.now(timezone.utc) + timedelta(days=30)
         )
         assert active_role.is_expired() is False
 

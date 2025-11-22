@@ -11,7 +11,7 @@ This service implements:
 import structlog
 from typing import List, Dict, Any, Set
 from uuid import UUID, uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 import numpy as np
 from scipy import stats
 
@@ -72,7 +72,7 @@ class EvaluationService:
         Returns:
             EvaluationResult with computed metrics
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         k_values = k_values or [1, 3, 5, 10]
 
         logger.info(
@@ -159,7 +159,7 @@ class EvaluationService:
             if metric_scores else 0.0
         )
 
-        end_time = datetime.utcnow()
+        end_time = datetime.now(timezone.utc)
         duration_ms = int((end_time - start_time).total_seconds() * 1000)
 
         result = EvaluationResult(

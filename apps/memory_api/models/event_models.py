@@ -9,7 +9,7 @@ This module defines models for the event trigger system including:
 """
 
 from typing import List, Optional, Dict, Any, Union
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from enum import Enum
 from datetime import datetime
 from uuid import UUID
@@ -131,8 +131,7 @@ class Event(BaseModel):
     # Timestamps
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ============================================================================
@@ -177,7 +176,7 @@ class TriggerCondition(BaseModel):
 
     Defines when a trigger should fire.
     """
-    event_types: List[EventType] = Field(..., min_items=1, description="Events to match")
+    event_types: List[EventType] = Field(..., min_length=1, description="Events to match")
 
     # Condition logic (optional - fires on any matching event if not specified)
     condition_group: Optional[ConditionGroup] = None
@@ -252,7 +251,7 @@ class Workflow(BaseModel):
     description: Optional[str] = None
 
     # Steps
-    steps: List[WorkflowStep] = Field(..., min_items=1)
+    steps: List[WorkflowStep] = Field(..., min_length=1)
 
     # Execution mode
     stop_on_failure: bool = Field(True, description="Stop if any step fails")
@@ -318,8 +317,7 @@ class TriggerRule(BaseModel):
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ============================================================================
@@ -363,8 +361,7 @@ class ActionExecution(BaseModel):
     tenant_id: str
     project_id: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class TriggerExecutionSummary(BaseModel):
@@ -408,7 +405,7 @@ class CreateTriggerRequest(BaseModel):
     description: Optional[str] = None
 
     condition: TriggerCondition
-    actions: List[ActionConfig] = Field(..., min_items=1)
+    actions: List[ActionConfig] = Field(..., min_length=1)
 
     priority: int = Field(5, ge=1, le=10)
     is_enabled: bool = Field(True)
@@ -474,7 +471,7 @@ class CreateWorkflowRequest(BaseModel):
     project_id: str
     workflow_name: str
     description: Optional[str] = None
-    steps: List[WorkflowStep] = Field(..., min_items=1)
+    steps: List[WorkflowStep] = Field(..., min_length=1)
     stop_on_failure: bool = Field(True)
     parallel_execution: bool = Field(False)
     created_by: str

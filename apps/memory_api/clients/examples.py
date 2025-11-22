@@ -6,7 +6,7 @@ with various resilience patterns.
 """
 
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 from apps.memory_api.clients.rae_api import RAEAPIClient
@@ -273,7 +273,7 @@ async def evaluation_workflow():
         print(f"  NDCG@10: {evaluation['evaluation_result']['metrics']['ndcg@10']:.3f}")
 
         # Detect drift
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         baseline_start = now - timedelta(days=14)
         baseline_end = now - timedelta(days=7)
         current_start = now - timedelta(days=7)

@@ -10,7 +10,7 @@ This service analyzes user queries to:
 
 import structlog
 from typing import List, Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 from apps.memory_api.services.llm import get_llm_provider
 from apps.memory_api.config import settings
@@ -174,7 +174,7 @@ class QueryAnalyzer:
                 requires_graph_traversal=result.requires_graph_traversal,
                 suggested_depth=result.suggested_depth,
                 original_query=query,
-                analyzed_at=datetime.utcnow()
+                analyzed_at=datetime.now(timezone.utc)
             )
 
             logger.info(

@@ -11,7 +11,7 @@ Tests cover:
 
 import pytest
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, patch, Mock
 import httpx
 
@@ -112,7 +112,7 @@ async def test_circuit_breaker_rejects_when_open(circuit_breaker):
     """Test circuit breaker rejects calls when OPEN"""
     # Force circuit to OPEN state
     circuit_breaker.state = CircuitState.OPEN
-    circuit_breaker.last_failure_time = datetime.utcnow()
+    circuit_breaker.last_failure_time = datetime.now(timezone.utc)
 
     async def test_func():
         return "should not execute"
@@ -126,7 +126,7 @@ async def test_circuit_breaker_half_open_recovery(circuit_breaker):
     """Test circuit breaker transitions to HALF_OPEN and recovers"""
     # Force circuit to OPEN state but past timeout
     circuit_breaker.state = CircuitState.OPEN
-    circuit_breaker.last_failure_time = datetime.utcnow() - timedelta(seconds=35)
+    circuit_breaker.last_failure_time = datetime.now(timezone.utc) - timedelta(seconds=35)
 
     async def success_func():
         return "success"
@@ -164,12 +164,12 @@ def test_cache_expiration(response_cache):
     """Test cache expiration"""
     response = {"data": "test"}
 
-    # Set with very short TTL
-    response_cache.set("GET", "/test", response, ttl_seconds=0)
+    # Set with very short TTL (1 second)
+    response_cache.set("GET", "/test", response, ttl_seconds=1)
 
-    # Wait and try to get
+    # Wait longer than TTL and try to get
     import time
-    time.sleep(0.1)
+    time.sleep(1.2)
 
     cached = response_cache.get("GET", "/test")
     assert cached is None

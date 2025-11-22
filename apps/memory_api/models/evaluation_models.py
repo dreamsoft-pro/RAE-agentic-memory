@@ -390,7 +390,7 @@ class EvaluateSearchRequest(BaseModel):
     project_id: str
 
     # Ground truth
-    relevance_judgments: List[RelevanceJudgment] = Field(..., min_items=1)
+    relevance_judgments: List[RelevanceJudgment] = Field(..., min_length=1)
 
     # System results to evaluate
     search_results: Dict[str, List[RankedResult]] = Field(

@@ -6,7 +6,7 @@ Tracks memory operations for analytics and insights.
 
 from typing import Dict, Any, List
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 from collections import defaultdict
 
 from apps.memory_api.plugins.base import Plugin, PluginMetadata, PluginHook
@@ -72,7 +72,7 @@ class AnalyticsTrackerPlugin(Plugin):
             return
 
         self._creates_count[tenant_id] += 1
-        self._create_timestamps.append(datetime.utcnow())
+        self._create_timestamps.append(datetime.now(timezone.utc))
 
         # Track layer distribution
         layer = memory_data.get("layer", "unknown")
@@ -101,7 +101,7 @@ class AnalyticsTrackerPlugin(Plugin):
             return
 
         self._queries_count[tenant_id] += 1
-        self._query_timestamps.append(datetime.utcnow())
+        self._query_timestamps.append(datetime.now(timezone.utc))
 
         # Track query performance (would need timing info from context)
         # For now, just track count

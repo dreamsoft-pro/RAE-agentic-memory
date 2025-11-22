@@ -15,7 +15,7 @@ import httpx
 import asyncio
 import structlog
 from typing import Optional, Dict, Any, List, Callable
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 import hashlib
 import json
@@ -175,7 +175,7 @@ class CircuitBreaker:
         if self.state == CircuitState.OPEN:
             # Check if timeout expired
             if self.last_failure_time:
-                time_since_failure = (datetime.utcnow() - self.last_failure_time).total_seconds()
+                time_since_failure = (datetime.now(timezone.utc) - self.last_failure_time).total_seconds()
                 if time_since_failure >= self.timeout_seconds:
                     logger.info("circuit_breaker_half_open")
                     self.state = CircuitState.HALF_OPEN
@@ -227,7 +227,7 @@ class CircuitBreaker:
 
     async def _on_failure(self, error: Exception):
         """Handle failed call."""
-        self.last_failure_time = datetime.utcnow()
+        self.last_failure_time = datetime.now(timezone.utc)
 
         if self.state == CircuitState.HALF_OPEN:
             # Immediately open on failure in half-open
@@ -305,7 +305,7 @@ class ResponseCache:
             response, expires_at = self._cache[key]
 
             # Check if expired
-            if datetime.utcnow() < expires_at:
+            if datetime.now(timezone.utc) < expires_at:
                 logger.debug("cache_hit", key=key)
                 return response
             else:
@@ -336,7 +336,7 @@ class ResponseCache:
         """
         key = self._generate_key(method, url, params)
         ttl = ttl_seconds or self.default_ttl_seconds
-        expires_at = datetime.utcnow() + timedelta(seconds=ttl)
+        expires_at = datetime.now(timezone.utc) + timedelta(seconds=ttl)
 
         self._cache[key] = (response, expires_at)
         logger.debug("cache_set", key=key, ttl_seconds=ttl)
@@ -356,7 +356,7 @@ class ResponseCache:
 
     def cleanup_expired(self):
         """Remove expired entries."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         expired_keys = [
             key for key, (_, expires_at) in self._cache.items()
             if now >= expires_at
