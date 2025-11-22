@@ -3,9 +3,12 @@
 > Give your AI agents human-like memory: Learn, remember, and improve over time.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Docker](https://img.shields.io/badge/docker-required-blue.svg)](https://docs.docker.com/get-docker/)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)]()
+[![Build Status](https://img.shields.io/badge/build-stable-brightgreen.svg)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Version](https://img.shields.io/badge/version-1.0.0--beta-blue.svg)](CHANGELOG.md)
 
 [📖 Documentation](#documentation) | [🚀 Quick Start](#quick-start-5-minutes) | [💬 Community](#community--support) | [🎯 Examples](#real-world-examples)
 
@@ -35,19 +38,31 @@ Current AI agents are **stateless** - they forget everything after each conversa
 
 ## Quick Start (< 5 minutes)
 
+**One-line install:**
+
 ```bash
-# 1. Clone & setup
+git clone https://github.com/dreamsoft-pro/RAE-agentic-memory && cd RAE-agentic-memory && ./scripts/quickstart.sh
+```
+
+Or step by step:
+
+```bash
+# 1. Clone the repository
 git clone https://github.com/dreamsoft-pro/RAE-agentic-memory
 cd RAE-agentic-memory
 
-# 2. Start services (one command!)
-make start
+# 2. Run quickstart script (handles everything!)
+./scripts/quickstart.sh
 
-# 3. Try it out
-python examples/quickstart.py
+# 3. Seed demo data (optional)
+python3 scripts/seed_demo_data.py
 ```
 
-That's it! RAE is now running at `http://localhost:8000`
+That's it! 🎉
+
+- **API Documentation**: http://localhost:8000/docs
+- **Dashboard**: http://localhost:8501
+- **Health Check**: http://localhost:8000/health
 
 ---
 
@@ -95,7 +110,7 @@ RAE implements a **4-layer cognitive memory system** inspired by human cognition
 ┌─────────────────────────────────────────────────────────┐
 │  EPISODIC MEMORY (EM)                                   │
 │  Raw events, observations, conversations                │
-│  "User fixed bug in auth.py on Jan 5"                  │
+│  "User fixed bug in auth.py on Jan 5"                   │
 └──────────────────┬──────────────────────────────────────┘
                    │ Reflection Engine
                    ▼
@@ -109,7 +124,7 @@ RAE implements a **4-layer cognitive memory system** inspired by human cognition
 ┌─────────────────────────────────────────────────────────┐
 │  SEMANTIC MEMORY (SM)                                   │
 │  Facts, rules, patterns extracted from episodes         │
-│  "auth.py frequently has bugs"                         │
+│  "auth.py frequently has bugs"                          │
 └──────────────────┬──────────────────────────────────────┘
                    │ Knowledge Graph (GraphRAG)
                    ▼
@@ -126,16 +141,16 @@ RAE implements a **4-layer cognitive memory system** inspired by human cognition
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                      RAE Memory API (Port 8000)                  │
+│                      RAE Memory API (Port 8000)                 │
 │  ┌──────────────────────────────────────────────────────────┐   │
-│  │  API Layer (FastAPI)                                      │   │
+│  │  API Layer (FastAPI)                                     │   │
 │  ├──────────────────────────────────────────────────────────┤   │
-│  │  Services (Business Logic)                                │   │
-│  │  • HybridSearchService  • ReflectionEngine                │   │
-│  │  • EntityResolution (orchestrator)                        │   │
+│  │  Services (Business Logic)                               │   │
+│  │  • HybridSearchService  • ReflectionEngine               │   │
+│  │  • EntityResolution (orchestrator)                       │   │
 │  ├──────────────────────────────────────────────────────────┤   │
-│  │  Repositories (Data Access Layer - DAO Pattern)           │   │
-│  │  • GraphRepository  • MemoryRepository                    │   │
+│  │  Repositories (Data Access Layer - DAO Pattern)          │   │
+│  │  • GraphRepository  • MemoryRepository                   │   │
 │  └──────────────────────────────────────────────────────────┘   │
 └───────────────────────────┬─────────────────────────────────────┘
                             │
@@ -143,7 +158,7 @@ RAE implements a **4-layer cognitive memory system** inspired by human cognition
                 │                       │
                 ▼                       ▼
 ┌───────────────────────────┐  ┌──────────────────────────────┐
-│   ML Service (Port 8001)   │  │   Storage Layer              │
+│   ML Service (Port 8001)  │  │   Storage Layer              │
 │  ┌────────────────────────┤  │ • PostgreSQL (pgvector)      │
 │  │  Heavy ML Operations:  │  │ • Qdrant Vector DB           │
 │  │  • Entity Resolution   │  │ • Redis Cache                │
@@ -207,10 +222,18 @@ RAE implements a **4-layer cognitive memory system** inspired by human cognition
 - Configurable reflection schedules
 
 ### 🔌 IDE Integration
-- Model Context Protocol (MCP) server
-- Works with Cursor, VSCode, Claude Desktop
-- Save/search memories directly from your editor
-- Auto-context injection
+
+RAE provides two complementary integration methods:
+
+| Integration | Protocol | Use Case | Documentation |
+|-------------|----------|----------|---------------|
+| **MCP Server** (IDE) | Model Context Protocol (JSON-RPC/STDIO) | AI assistant tools in Claude Desktop, Cursor, Cline | [docs/integrations/mcp_protocol_server.md](docs/integrations/mcp_protocol_server.md) |
+| **Context Watcher** | HTTP + File Watcher | Automatic file sync to RAE memory | [docs/integrations/context_watcher_daemon.md](docs/integrations/context_watcher_daemon.md) |
+
+**Key Features**:
+- **MCP Server**: Save/search memories directly from your editor, automatic context injection
+- **Context Watcher**: Monitors file changes and automatically stores them in RAE
+- **Works Together**: Use both for comprehensive context capture
 
 ### 💰 Cost-Aware Caching
 - Redis-based intelligent caching
@@ -316,8 +339,11 @@ reflection = await client.generate_reflection()
 - **`apps/memory_api`** - Main FastAPI service exposing the memory engine
 - **`apps/reranker-service`** - Optional re-ranking service for improved relevance
 - **`sdk/python/rae_memory_sdk`** - Python client library
-- **`integrations/mcp-server`** - Model Context Protocol server for IDEs
-- **`integrations/ollama-wrapper`** - Local LLM integration
+- **`integrations/mcp/`** - Model Context Protocol (MCP) server for IDE integration
+- **`integrations/context-watcher/`** - HTTP daemon for automatic file watching
+- **`integrations/ollama-wrapper/`** - Local LLM integration
+- **`integrations/langchain/`** - LangChain RAE retriever
+- **`integrations/llama_index/`** - LlamaIndex RAE integration
 - **`tools/memory-dashboard`** - Streamlit dashboard for visualization
 - **`infra/`** - Docker infrastructure (Postgres, Qdrant, Redis, monitoring)
 - **`examples/`** - Real-world example projects

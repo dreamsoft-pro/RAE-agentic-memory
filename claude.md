@@ -1,212 +1,300 @@
-# RAE – Polishing Before Public Release (Release Candidate Plan)
+# MCP Improvement Plan for RAE
+### (Model Context Protocol Integration Hardening & Cleanup)
 
-Ten dokument zawiera precyzyjną listę tego, co warto poprawić przed dużą publiczną publikacją RAE Reflective Agentic-Memory Engine.
+Ten dokument opisuje kompletny proces uporządkowania, doprecyzowania i wzmocnienia obsługi protokołu **MCP (Model Context Protocol)** w projekcie RAE.
 
-Repozytorium jest już **stabilne, czyste i technicznie wartościowe**, jednak ostatni polishing zwiększy wiarygodność i odbiór przez społeczność Open Source.
+Aktualna implementacja MCP jest dobra architektonicznie, ale wymaga dopracowania w obszarach:
+- nazewnictwa,
+- struktury katalogów,
+- spójności dokumentacji,
+- rozdzielenia dwóch różnych serwisów,
+- testów,
+- payloadów API i enumów,
+- UX integracji z IDE (Claude, Cursor, Cline).
 
----
-
-# 1. Wyrównać jakość dokumentacji (READMEs + OpenAPI)
-### Status: 80% kompletne — wymaga finalnej synchronizacji
-
-**Do zrobienia:**
-- [ ] Dodać komplet przykładów OpenAPI dla wszystkich modeli (część już jest, część jeszcze bez examples).
-- [ ] Ujednolicić nazewnictwo:
-  - „RAE Reflective Agentic-Memory Engine”
-  - „memory-api”, „ml-service”
-  - „GraphRAG”, „Hybrid Search”
-- [ ] Dodać diagram request-flow:
-  - client → memory-api → ML-service → repositories → PostgreSQL → vector store
-- [ ] W README dopisać sekcję:
-  - „Scaling ML Service horizontally”
-  - „Why microservices?” (masz to w rozmowie, warto przenieść do dokumentacji)
+Celem jest uzyskanie **krystalicznie jasnej**, w pełni udokumentowanej i produkcyjnie spójnej implementacji MCP.
 
 ---
 
-# 2. GraphExtractionService — refaktoryzacja do pełnego Repository Pattern
-### Status: ✅ COMPLETED
+# 1. Executive Summary – Co trzeba poprawić
 
-**Problem rozwiązany:**
-Moduł extraction został całkowicie zrefaktoryzowany do czystej architektury Repository/DAO.
+1. **Rozdzielić dwa różne serwisy**, które dziś są myląco nazwane „MCP”:
+   - właściwy MCP dla IDE (STDIO JSON-RPC)  
+   - file-watcher / context-provider (HTTP)
 
-**Wykonano:**
-- [x] Przeniesiono logikę odczytu/wstawiania do `GraphRepository`
-  - `create_node()` - wstawianie węzłów z ON CONFLICT DO NOTHING
-  - `create_edge()` - wstawianie krawędzi z obsługą duplikatów
-  - `get_node_internal_id()` - pobieranie wewnętrznych ID węzłów
-  - `store_graph_triples()` - kompletna logika zapisu trójek
-- [x] Ujednolicono obsługę JSONB (json.dumps() przed INSERT, json.loads() przy SELECT)
-- [x] Dodano 7 testów integracyjnych z testcontainers (wszystkie przechodzą)
-  - test_fetch_episodic_memories_uses_repository
-  - test_store_graph_triples_creates_nodes_and_edges
-  - test_store_triples_handles_duplicates_gracefully
-  - test_graph_repository_jsonb_serialization
-  - test_memory_repository_returns_source_field
-  - test_graph_repository_get_node_internal_id
-  - test_end_to_end_triple_storage_workflow
-- [x] Dodano UNIQUE constraint dla edges (tenant_id, project_id, source_node_id, target_node_id, relation)
-- [x] GraphExtractionService używa teraz MemoryRepository i GraphRepository
+2. **Uporządkować dokumentację**:
+   - osobny dokument dla IDE MCP server  
+   - osobny dokument dla file-watcher daemon  
+   - spójna terminologia: MCP = *tylko Model Context Protocol*
 
-**Architektura jest teraz w pełni czysta - zero bezpośrednich zapytań SQL w warstwie service.**
+3. **Ujednolicić nazwy katalogów i modułów**:
+   - `integrations/mcp-server` → tylko MCP (IDE)  
+   - `integrations/context-watcher` → HTTP daemon (przeniesiony z mcp-server/main.py)
+
+4. **Ujednolicić endpointy API** (`/v1/memory/...`)
+
+5. **Dodać testy MCP**:
+   - JSON-RPC → narzędzia (tools) → RAE API  
+   - test integracji end-to-end
+
+6. **Naprawić placeholders w README**  
+   (linki „your-org”, placeholder docs, nieistniejące domeny)
 
 ---
 
-# 3. MLServiceClient — resilience layer (circuit breaker & retries)
-### Status: ✅ COMPLETED
+# 2. Ujednolicenie Nazewnictwa i Architektury
 
-**Problem rozwiązany:**
-MLServiceClient jest teraz enterprise-grade z pełną odpornością na błędy.
+## 2.1. Obecny stan (problem)
 
-**Wykonano:**
-- [x] Dodano retry logic (3 próby, exponential backoff 200/400/800 ms) używając biblioteki tenacity
-- [x] Wprowadzono circuit breaker pattern (otwiera się po 5 błędach, resetuje po 30s)
-  - Stany: CLOSED (normalna praca), OPEN (blokowanie żądań), HALF_OPEN (testowanie)
-- [x] Zapis awarii ML Service przez structlog (gotowe do integracji z ELK/Grafana)
-- [x] Health check z automatycznym resetowaniem circuit breakera
-- [x] Wszystkie 4 endpointy ML Service używają warstwy resilience:
-  - resolve_entities()
-  - extract_triples()
-  - generate_embeddings()
-  - extract_keywords()
+W katalogu `integrations/mcp-server/` znajdują się dwa różne byty, oba nazywane „MCP”:
 
-**RAE jest teraz gotowy do długich zadań produkcyjnych - resilience jest kluczowy.**
+### 1. MCP STDIO Server (prawdziwy Model Context Protocol)
+Lokalizacja:
+integrations/mcp-server/src/rae_mcp_server/
 
----
+yaml
+Skopiuj kod
+To serwer MCP używany przez:
+- Claude Desktop
+- Cursor IDE
+- Cline
 
-# 4. Code Coverage — poprawa kluczowych modułów
-### Status: realne 11% (bo duża część kodu nie jest instrumentowana)
-
-**Plan minimum przed release:**
-- [ ] Dodać testy unit (nie integracyjne) dla:
-  - HybridSearchService (mocks)
-  - GraphRepository traversal fallback
-  - MemoryRepository filtering
-  - MLServiceClient (mock responses)
-- [ ] Osiągnąć 35–40% pokrycia (realne w 1 dzień)
-- [ ] Usunąć z repo katalog `htmlcov/`
-
-Nie trzeba 80%.  
-Zespół open-source chętnie kontrybuuje w testy, jeśli projekt ma solidne core.
+Komunikacja: **STDIO JSON-RPC**  
+→ To jest **właściwy MCP** i powinien zachować skrót MCP.
 
 ---
 
-# 5. Docker / Deployment – ostatnie wygładzenie
-### Status: ✅ COMPLETED
+### 2. HTTP File-Watcher (Memory Context Provider)
+Lokalizacja:
+integrations/mcp-server/main.py
 
-**Problem rozwiązany:**
-Docker Compose jest teraz w pełni production-ready z parametryzacją i health checks.
+yaml
+Skopiuj kod
+To jest:
+- daemon HTTP
+- endpoint `/projects`
+- watcher zmian plików
+- wysyła treści plików do RAE API przez RAEClient
 
-**Wykonano:**
-- [x] Wszystkie serwisy mają `restart: unless-stopped` (production-ready)
-- [x] Healthchecks dla wszystkich serwisów już istnieją (postgres, redis, qdrant, ml-service, rae-api)
-- [x] Sparametryzowano `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` przez zmienne środowiskowe:
-  - `${POSTGRES_USER:-rae}`
-  - `${POSTGRES_PASSWORD:-rae_password}`
-  - `${POSTGRES_DB:-rae}`
-- [x] DATABASE_URL używa parametrów środowiskowych we wszystkich serwisach
-
----
-
-# 6. Stabilizacja OpenAPI / Versioning
-### Status: dobre — wymaga drobnego ujednolicenia
-
-**Do zrobienia:**
-- [ ] Ustawić stałą wersję API: `v1` (ustabilizowane)
-- [ ] Dodać datę generacji OpenAPI do dokumentu
-- [ ] Dodać w README sekcję:
-  - „Breaking changes policy”
-  - „Planned v2 improvements (optional)”
+To **nie jest Model Context Protocol**.
 
 ---
 
-# 7. Dodanie 1–2 E2E Workflow Examples
-### Status: brakuje gotowego „jak tego użyć w realnym projekcie”
+## 2.2. Proponowany nowy układ katalogów
 
-**Warto dodać:**
-- [ ] `examples/python/basic_workflow.py`:  
-  - store memory → embed → hybrid search → get reflection → store result
-- [ ] `examples/python/graph_workflow.py`:  
-  - add nodes → create edges → traverse BFS/DFS → GraphRAG search
+### 🔵 MCP (Model Context Protocol, STDIO JSON-RPC)
+integrations/mcp/
+├── README.md
+├── pyproject.toml
+└── src/
+└── rae_mcp/
+├── main.py
+├── server.py
+├── client.py
+├── tools/
+└── resources/
 
-Użytkownicy lubią od razu uruchomić przykład.
+shell
+Skopiuj kod
 
----
+### 🟡 Context Watcher (HTTP File Watcher)
+integrations/context-watcher/
+├── README.md
+├── pyproject.toml (opcjonalnie)
+└── src/context_watcher/
+├── main.py
+├── api.py (FastAPI)
+├── watcher.py
+└── rae_client.py
 
-# 8. Release Engineering (przed ogłoszeniem)
-### Status: ✅ PARTIALLY COMPLETED
+markdown
+Skopiuj kod
 
-**Problem rozwiązany:**
-CHANGELOG.md utworzony z pełną dokumentacją wersji.
-
-**Wykonano:**
-- [x] Dodano `CHANGELOG.md` z dokumentacją:
-  - v1.0.0-rc.1 - Production readiness (MLService resilience, GraphExtraction refactor, Docker improvements)
-  - v0.9.0 - Microservices architecture
-  - v0.8.0 - Core features
-  - Release naming conventions
-  - Linki do repozytorium i issue trackera
-
-**Do dokończenia (opcjonalne):**
-- [ ] Dodać GitHub Release z opisem zmian (po finalnym review)
-- [ ] Podpiąć realny badge do CI (test + build)
-- [ ] Ustawić draft na PyPI dla `rae-memory-sdk`
-
----
-
-# 9. Dokumentacja ML Service
-### Status: dobra — wymaga pełnego opisania kontraktów
-
-Masz:
-- embeddings,
-- keywords,
-- triples,
-- entity-resolution.
-
-**Do zrobienia:**
-- [ ] Dodać tabelę „Performance & timeouts”
-- [ ] Dodać przykłady request+response dla każdego endpointu
-- [ ] Dodać sekcję „Load Balancing ML Service”
+### 🔴 Migracja
+- przenieść `integrations/mcp-server/main.py` → `integrations/context-watcher/api.py`
+- przenieść cały watcher logic → `watcher.py`
+- pozostawić w MCP tylko STDIO JSON-RPC server
 
 ---
 
-# 10. Oznaczenie projektu jako „Beta / Release Candidate”
-### Status: wymagane przed public announcement
+# 3. Standaryzacja Dokumentacji
 
-**Do zrobienia:**
-- [ ] W README dopisać:
-  - „Status: Beta / Release Candidate”
-  - „Core architecture stable”
-  - „Public API stable (v1)”
-- [ ] Zachęcić community do PR-ów:
-  - testy,
-  - research integrations,
-  - optymalizacje GraphRAG,
-  - wektorowe indeksy alternatywne.
+Obecnie dokumenty „mieszają” dwa różne protokoły.
 
----
+## 3.1. Nowe dokumenty
 
-# 11. Techniczna higiena repo (ostatni punkt)
-### Status: ✅ COMPLETED
+### **docs/integrations/mcp_protocol_server.md**
+Zawiera:
+- co to jest MCP
+- jak działa STDIO JSON-RPC
+- jak działa `rae_mcp` server
+- lista tools / resources
+- konfiguracja Claude / Cursor / Cline
+- jak uruchomić (`rae-mcp-server`)
+- troubleshooting dla IDE
 
-**Problem rozwiązany:**
-Repozytorium jest teraz czyste i profesjonalne.
+### **docs/integrations/context_watcher_daemon.md**
+Zawiera:
+- czym jest watcher
+- endpoint `/projects`
+- struktura JSON dla projektów
+- sekwencje: file update → RAE → memory API
+- jak uruchomić: `python -m context_watcher`
+- integracje CI/FS watcher
 
-**Wykonano:**
-- [x] Usunięto `.coverage` i `htmlcov/` z repozytorium
-- [x] Zaktualizowano `.gitignore` z kompletnymi wykluczeniami:
-  - `.coverage` i `.coverage.*`
-  - `htmlcov/`
-  - `.pytest_cache/`
-  - `.tox/`
-  - `coverage.xml`
-  - `.hypothesis/`
-- [x] Struktura katalogów jest już w snake_case (apps/memory_api)
+## 3.2. README główne
+Dodać tabelę:
 
----
-
-# 12. Proponowany Release Tag
-- v0.9.0 – „Microservices + Testcontainers + DAO”
-- v1.0.0-rc.1 – po wykonaniu tej checklisty
+| Integracja | Protokół | Lokalizacja | Dokument |
+|-----------|----------|-------------|----------|
+| MCP Server (IDE) | Model Context Protocol (JSON-RPC/STDIO) | `integrations/mcp/` | `mcp_protocol_server.md` |
+| Context Watcher | HTTP + FileWatcher | `integrations/context-watcher/` | `context_watcher_daemon.md` |
 
 ---
 
+# 4. Uporządkowanie API i payloadów
+
+## 4.1. Endpointy
+Sprawdzić, czy wszystkie wywołania z MCP używają najnowszych endpointów:
+
+### Powinno być:
+POST /v1/memory/store
+POST /v1/memory/query
+POST /v1/memory/delete
+POST /v1/graph/extract
+
+shell
+Skopiuj kod
+
+### W dokumentacji nadal występują:
+/memory/store
+/memory/add
+
+yaml
+Skopiuj kod
+→ naprawić w docs, README, przykładach Claude/Cursor.
+
+---
+
+# 5. Testy – MCP End-to-End
+
+Obecnie testy MCP testują tylko częściowo klienta i bibliotekę. Brakuje testów, które symulują prawdziwe wywołanie MCP.
+
+## 5.1. Dodać test MCP JSON-RPC
+
+Nowy katalog:
+integrations/mcp/tests/test_mcp_e2e.py
+
+yaml
+Skopiuj kod
+
+### Testy do dodania:
+1. **`test_mcp_save_memory()`**
+   - JSON-RPC input: `{"method": "tool/save_memory", ...}`
+   - symuluje STDIO input
+   - oczekuje wywołania RAE API i poprawnego outputu
+
+2. **`test_mcp_search_memory()`**
+   - wywołanie `tool/search_memory`
+   - mock MLServiceClient + MemoryRepository
+
+3. **`test_mcp_get_related_context()`**
+
+4. **test zasobów MCP (`/resources/*`)**
+
+---
+
+# 6. Usunięcie placeholderów
+
+Z README i docs:
+
+- `your-org/rae-agentic-memory` → `dreamsoft-pro/RAE-agentic-memory`
+- `https://docs.rae-memory.dev` → poprawny link (lub usuń)
+- `support@rae-memory.dev` → jeśli maila nie ma → wyrzucić
+
+---
+
+# 7. Poprawa UX integracji z IDE
+
+## 7.1. Claude Desktop
+
+Dodać pełną przykładową konfigurację:
+{
+"mcpServers": {
+"rae": {
+"command": "rae-mcp-server",
+"args": ["--config", "/home/user/.rae/config.json"]
+}
+}
+}
+
+yaml
+Skopiuj kod
+
+## 7.2. Cursor IDE
+
+Dodać przykład z absolutnymi ścieżkami.
+
+## 7.3. Cline
+
+Dodać informację, że Cline wymaga nazwy servera zgodnej z `providerId`.
+
+---
+
+# 8. Prometheus / Logging
+
+## 8.1. MCP Server
+Dodać:
+- log połączeń JSON-RPC,
+- licznik `mcp_tools_called_total`,
+- licznik błędów MCP-json.
+
+## 8.2. Context Watcher
+- logi watchera (plik zwięzłych zmian),
+- metryka: `files_synced_total`,
+- metryka: `watched_projects_total`.
+
+---
+
+# 9. Final Checklist (Ready for MCP v1.1)
+
+## Architektura
+- [ ] MCP i watcher rozdzielone katalogowo  
+- [ ] MCP dokumentacja jednoznaczna  
+- [ ] watcher dokumentacja jednoznaczna  
+
+## Kod
+- [ ] MCP STDIO server w `integrations/mcp/`  
+- [ ] watcher w `integrations/context-watcher/`  
+- [ ] poprawione ścieżki `/v1/...`  
+
+## Testy
+- [ ] testy JSON-RPC E2E  
+- [ ] testy zasobów MCP  
+- [ ] testy file watcher → RAE API  
+
+## Dokumentacja
+- [ ] dwa nowe pliki docs  
+- [ ] README z tabelą integracji  
+- [ ] usunięte placeholders  
+
+## Release
+- [ ] tag `v1.1.0-mcp`  
+- [ ] pełny opis w RELEASE_NOTES  
+- [ ] gotowe konfigi dla IDE  
+
+---
+
+# 10. Podsumowanie
+
+Po wdrożeniu wszystkich elementów z tego dokumentu będziesz miał:
+
+### ✔ Najbardziej kompletne wdrożenie Model Context Protocol w świecie OSS  
+### ✔ Idealną przejrzystość dla developerów (brak pomyłek MCP vs watcher)  
+### ✔ Wysokiej jakości dokumentację integracji z Claude/Cursor/Cline  
+### ✔ Testy E2E zapewniające stabilność  
+### ✔ Produkcyjne, skalowalne, czyste integracje  
+
+RAE stanie się wtedy **referencyjnym wdrożeniem MCP** — nie tylko działającym, ale **wzorcowym**.
+
+Jeśli chcesz, mogę teraz przygotować:

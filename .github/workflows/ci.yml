@@ -170,3 +170,84 @@ jobs:
           tags: rae-api:test
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  publish:
+    name: Publish Docker Images
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [test, lint, docker]
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+
+      - name: Build and push RAE API image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/rae-api:latest
+            ghcr.io/${{ github.repository_owner }}/rae-api:${{ steps.version.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+      - name: Build and push ML Service image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./apps/ml_service
+          file: ./apps/ml_service/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/rae-ml-service:latest
+            ghcr.io/${{ github.repository_owner }}/rae-ml-service:${{ steps.version.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+      - name: Build and push Dashboard image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./tools/memory-dashboard
+          file: ./tools/memory-dashboard/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/rae-dashboard:latest
+            ghcr.io/${{ github.repository_owner }}/rae-dashboard:${{ steps.version.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          platforms: linux/amd64,linux/arm64
+
+      - name: Summary
+        run: |
+          echo "✅ Published Docker images for version ${{ steps.version.outputs.version }}"
+          echo ""
+          echo "Images published to GitHub Container Registry:"
+          echo "  - ghcr.io/${{ github.repository_owner }}/rae-api:${{ steps.version.outputs.version }}"
+          echo "  - ghcr.io/${{ github.repository_owner }}/rae-ml-service:${{ steps.version.outputs.version }}"
+          echo "  - ghcr.io/${{ github.repository_owner }}/rae-dashboard:${{ steps.version.outputs.version }}"
+          echo ""
+          echo "Also tagged as 'latest'"
