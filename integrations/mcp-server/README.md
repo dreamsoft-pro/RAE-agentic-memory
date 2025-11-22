@@ -1,6 +1,6 @@
 # RAE MCP Server
 
-Enterprise-grade Model Context Protocol (MCP) server for RAE (Reflective Agentic-memory Engine).
+Enterprise-grade Model Context Protocol (MCP) server for RAE (Reflective Agentic Memory Engine).
 
 ## Features
 

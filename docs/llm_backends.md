@@ -25,9 +25,9 @@ To use Mistral's `mistral-large-latest` model:
 1.  Set the environment variables in your `.env` file:
     ```dotenv
     # .env
-    RAE_LLM_BACKEND="mistral"
-    RAE_LLM_MODEL_DEFAULT="mistral/mistral-large-latest"
-    MISTRAL_API_KEY="your-mistral-api-key"
+    RAE_LLM_BACKEND=mistral
+    RAE_LLM_MODEL_DEFAULT=mistral/mistral-large-latest
+    MISTRAL_API_KEY=your-mistral-api-key
     ```
 
 2.  That's it! `litellm` will automatically use the Mistral provider and authenticate with your API key.
@@ -38,9 +38,9 @@ To use DeepSeek's `deepseek/deepseek-chat` model:
 1.  Set the environment variables:
     ```dotenv
     # .env
-    RAE_LLM_BACKEND="deepseek"
-    RAE_LLM_MODEL_DEFAULT="deepseek/deepseek-chat"
-    DEEPSEEK_API_KEY="your-deepseek-api-key"
+    RAE_LLM_BACKEND=deepseek
+    RAE_LLM_MODEL_DEFAULT=deepseek/deepseek-chat
+    DEEPSEEK_API_KEY=your-deepseek-api-key
     ```
 
 ### Example 3: Using Qwen (Alibaba Cloud)
@@ -49,9 +49,9 @@ To use Qwen's `qwen/qwen-long` model:
 1.  Set the environment variables:
     ```dotenv
     # .env
-    RAE_LLM_BACKEND="qwen"
-    RAE_LLM_MODEL_DEFAULT="qwen/qwen-long"
-    DASHSCOPE_API_KEY="your-dashscope-api-key"
+    RAE_LLM_BACKEND=qwen
+    RAE_LLM_MODEL_DEFAULT=qwen/qwen-long
+    DASHSCOPE_API_KEY=your-dashscope-api-key
     ```
     *(Note: `litellm` uses `DASHSCOPE_API_KEY` for Qwen)*
 
@@ -66,9 +66,9 @@ Bielik is a Polish model. The easiest way to run it is with Ollama.
 2.  Set the environment variables to use the `ollama` backend:
     ```dotenv
     # .env
-    RAE_LLM_BACKEND="ollama"
-    RAE_LLM_MODEL_DEFAULT="bielik"
-    OLLAMA_API_URL="http://localhost:11434" # Or your Ollama instance URL
+    RAE_LLM_BACKEND=ollama
+    RAE_LLM_MODEL_DEFAULT=bielik
+    OLLAMA_API_URL=http://localhost:11434  # Or your Ollama instance URL
     ```
 
 ### Example 5: Using an OpenAI-Compatible Endpoint
@@ -84,10 +84,10 @@ For example, if you are serving a `bielik` model locally with a server that mimi
 
 ```dotenv
 # .env
-RAE_LLM_BACKEND="openai"
-RAE_LLM_MODEL_DEFAULT="bielik"
-LITELLM_API_BASE="http://localhost:1234/v1"
-OPENAI_API_KEY="any-string-will-do"
+RAE_LLM_BACKEND=openai
+RAE_LLM_MODEL_DEFAULT=bielik
+LITELLM_API_BASE=http://localhost:1234/v1
+OPENAI_API_KEY=any-string-will-do
 ```
 
 ## Adding a New Model Cost

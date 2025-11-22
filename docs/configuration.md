@@ -26,7 +26,7 @@ Below are the most important configuration variables for running RAE.
 
 ### Vector Store Settings
 
--   `VECTOR_STORE_BACKEND`: The vector store to use. Can be `qdrant` or `pgvector`. Defaults to `qdrant`.
+-   `RAE_VECTOR_BACKEND`: The vector store to use. Can be `qdrant` or `pgvector`. Defaults to `qdrant`.
 -   `QDRANT_HOST`: The hostname of the Qdrant vector store. Defaults to `localhost`. In Docker, this is `qdrant`.
 -   `QDRANT_PORT`: The port for the Qdrant vector store. Defaults to `6333`.
 
@@ -67,14 +67,14 @@ POSTGRES_HOST=postgres
 # --- LLM ---
 RAE_LLM_BACKEND=openai
 RAE_LLM_MODEL_DEFAULT=gpt-4o-mini
-OPENAI_API_KEY="your-openai-api-key"
+OPENAI_API_KEY=your-openai-api-key
 
 # --- SECURITY ---
 OAUTH_ENABLED=True
-OAUTH_DOMAIN="your-tenant.us.auth0.com"
-OAUTH_AUDIENCE="https://your-api-audience.com"
+OAUTH_DOMAIN=your-tenant.us.auth0.com
+OAUTH_AUDIENCE=https://your-api-audience.com
 TENANCY_ENABLED=True
-ALLOWED_ORIGINS="http://localhost:3000"
+ALLOWED_ORIGINS=http://localhost:3000
 
 # --- MEMORY LIFECYCLE ---
 MEMORY_RETENTION_DAYS=30

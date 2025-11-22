@@ -15,6 +15,7 @@ from apps.memory_api.services import pii_scrubber, scoring
 from apps.memory_api.services.vector_store import get_vector_store # NEW
 from apps.memory_api.services.embedding import get_embedding_service # NEW
 from apps.memory_api.services.hybrid_search import HybridSearchService  # NEW
+from apps.memory_api.repositories.memory_repository import MemoryRepository  # NEW
 from apps.memory_api.metrics import memory_store_counter, memory_query_counter, memory_delete_counter, deduplication_hit_counter
 from apps.memory_api.tasks.background_tasks import generate_reflection_for_project # NEW
 from qdrant_client import models
@@ -39,42 +40,40 @@ async def store_memory(req: StoreMemoryRequest, request: Request):
         raise HTTPException(status_code=400, detail="X-Tenant-Id header is required.")
 
     content = pii_scrubber.scrub_text(req.content)
-    
+
     try:
-        # 1. Store metadata in Postgres and get an ID
-        async with request.app.state.pool.acquire() as conn:
-            async with conn.transaction():
-                await conn.execute("SET app.tenant_id = $1", tenant_id)
+        # 1. Store metadata in Postgres using repository
+        memory_repository = MemoryRepository(request.app.state.pool)
 
-                columns = ["tenant_id", "content", "source", "importance", "layer", "tags", "timestamp", "project"]
-                values = [
-                    tenant_id, content, req.source, req.importance, 
-                    req.layer.value if req.layer else None, 
-                    req.tags, req.timestamp, req.project
-                ]
+        row_data = await memory_repository.insert_memory(
+            tenant_id=tenant_id,
+            content=content,
+            source=req.source,
+            importance=req.importance,
+            layer=req.layer.value if req.layer else None,
+            tags=req.tags,
+            timestamp=req.timestamp,
+            project=req.project
+        )
 
-                columns_str = ", ".join(columns)
-                placeholders_str = ", ".join([f"${i+1}" for i in range(len(values))])
+        if not row_data:
+            raise HTTPException(status_code=500, detail="Failed to store memory in database.")
 
-                sql = f"INSERT INTO memories ({columns_str}) VALUES ({placeholders_str}) RETURNING id, created_at, last_accessed_at, usage_count"
-                
-                row = await conn.fetchrow(sql, *values)
-                if not row:
-                    raise HTTPException(status_code=500, detail="Failed to store memory in database.")
-                
-                memory_record = MemoryRecord(
-                    id=str(row["id"]),
-                    content=content,
-                    source=req.source,
-                    importance=req.importance,
-                    layer=req.layer,
-                    tags=req.tags,
-                    timestamp=row["created_at"],
-                    last_accessed_at=row["last_accessed_at"],
-                    usage_count=row["usage_count"],
-                    project=req.project
-                )
+        memory_record = MemoryRecord(
+            id=row_data["id"],
+            content=content,
+            source=req.source,
+            importance=req.importance,
+            layer=req.layer,
+            tags=req.tags,
+            timestamp=row_data["created_at"],
+            last_accessed_at=row_data["last_accessed_at"],
+            usage_count=row_data["usage_count"],
+            project=req.project
+        )
 
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database error: {e}")
 
@@ -207,14 +206,14 @@ async def delete_memory(memory_id: str, request: Request):
     if not tenant_id:
         raise HTTPException(status_code=400, detail="X-Tenant-Id header is required.")
 
-    # 1. Delete from database
+    # 1. Delete from database using repository
     try:
-        async with request.app.state.pool.acquire() as conn:
-            async with conn.transaction():
-                await conn.execute("SET app.tenant_id = $1", tenant_id)
-                result = await conn.execute("DELETE FROM memories WHERE id = $1", memory_id)
-                if result == "DELETE 0":
-                    raise HTTPException(status_code=404, detail="Memory not found.")
+        memory_repository = MemoryRepository(request.app.state.pool)
+        deleted = await memory_repository.delete_memory(memory_id, tenant_id)
+
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Memory not found.")
+
     except HTTPException:
         raise
     except Exception as e:
@@ -251,19 +250,19 @@ async def get_reflection_stats(request: Request, project: Optional[str] = None):
     if not tenant_id:
         raise HTTPException(status_code=400, detail="X-Tenant-Id header is required.")
 
-    async with request.app.state.pool.acquire() as conn:
-        if project:
-            count = await conn.fetchval(
-                "SELECT COUNT(*) FROM memories WHERE layer = 'rm' AND project = $1 AND tenant_id = $2",
-                project, tenant_id
-            )
-            avg_strength = await conn.fetchval(
-                "SELECT AVG(strength) FROM memories WHERE layer = 'rm' AND project = $1 AND tenant_id = $2",
-                project, tenant_id
-            )
-        else:
-            count = await conn.fetchval("SELECT COUNT(*) FROM memories WHERE layer = 'rm' AND tenant_id = $1", tenant_id)
-            avg_strength = await conn.fetchval("SELECT AVG(strength) FROM memories WHERE layer = 'rm' AND tenant_id = $1", tenant_id)
+    memory_repository = MemoryRepository(request.app.state.pool)
+
+    count = await memory_repository.count_memories_by_layer(
+        tenant_id=tenant_id,
+        layer='rm',
+        project=project
+    )
+
+    avg_strength = await memory_repository.get_average_strength(
+        tenant_id=tenant_id,
+        layer='rm',
+        project=project
+    )
 
     return {"reflective_memory_count": count, "average_strength": avg_strength}
 
@@ -329,16 +328,13 @@ async def generate_hierarchical_reflection(
             max_episodes=max_episodes
         )
 
-        # Fetch statistics
-        async with request.app.state.pool.acquire() as conn:
-            episode_count = await conn.fetchval(
-                """
-                SELECT COUNT(*) FROM memories
-                WHERE tenant_id = $1 AND project = $2 AND layer = 'em'
-                """,
-                tenant_id,
-                project
-            )
+        # Fetch statistics using repository
+        memory_repository = MemoryRepository(request.app.state.pool)
+        episode_count = await memory_repository.count_memories_by_layer(
+            tenant_id=tenant_id,
+            layer='em',
+            project=project
+        )
 
         logger.info(
             "hierarchical_reflection_completed",

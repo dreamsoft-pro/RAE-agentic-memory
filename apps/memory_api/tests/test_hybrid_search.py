@@ -10,12 +10,10 @@ from typing import List
 
 from apps.memory_api.services.hybrid_search import (
     HybridSearchService,
-    HybridSearchResult,
-    GraphNode,
-    GraphEdge,
-    TraversalStrategy
+    HybridSearchResult
 )
 from apps.memory_api.models import ScoredMemoryRecord
+from apps.memory_api.models.graph import GraphNode, GraphEdge, TraversalStrategy
 
 
 @pytest.fixture
@@ -183,9 +181,10 @@ class TestHybridSearchService:
         with patch('apps.memory_api.services.hybrid_search.get_vector_store') as mock_vs:
             mock_vs.return_value.query = AsyncMock(return_value=sample_vector_results)
 
-            # Mock node mapping
+            # Mock node mapping and graph traversal
             conn = mock_pool._test_conn
             conn.fetch = AsyncMock(side_effect=[
+                [],  # _find_relevant_communities (empty result)
                 [{"node_id": "Module_A"}],  # First memory mapping
                 [{"node_id": "Module_B"}],  # Second memory mapping
                 # BFS traversal results (nodes)
@@ -216,7 +215,7 @@ class TestHybridSearchService:
             assert result.graph_enabled is True
 
     async def test_bfs_traversal(self, hybrid_search, mock_pool):
-        """Test breadth-first search traversal."""
+        """Test breadth-first search traversal via repository."""
         conn = mock_pool._test_conn
         conn.fetch = AsyncMock(side_effect=[
             # BFS query results
@@ -231,7 +230,8 @@ class TestHybridSearchService:
             ]
         ])
 
-        nodes, edges = await hybrid_search._traverse_bfs(
+        # Use repository directly since _traverse_bfs was removed
+        nodes, edges = await hybrid_search.graph_repository.traverse_graph_bfs(
             start_node_ids=["A"],
             tenant_id="tenant1",
             project_id="proj1",
@@ -298,7 +298,8 @@ class TestHybridSearchService:
             []  # Edges
         ])
 
-        nodes, edges = await hybrid_search._traverse_bfs(
+        # Use repository directly since _traverse_bfs was removed
+        nodes, edges = await hybrid_search.graph_repository.traverse_graph_bfs(
             start_node_ids=["A"],
             tenant_id="tenant1",
             project_id="proj1",
@@ -335,6 +336,7 @@ class TestHybridSearchIntegration:
             # Mock database operations
             conn = mock_pool._test_conn
             conn.fetch = AsyncMock(side_effect=[
+                [],  # _find_relevant_communities (empty result)
                 [{"node_id": "UserService"}],  # Node mapping
                 # BFS results
                 [
@@ -372,6 +374,335 @@ class TestHybridSearchIntegration:
             assert "User Service" in result.synthesized_context or "UserService" in result.synthesized_context
             assert result.statistics["vector_results"] == 1
             assert result.statistics["graph_nodes"] >= 2
+
+
+@pytest.mark.asyncio
+class TestHybridSearchWithRealDatabase:
+    """Integration tests using real PostgreSQL database via testcontainers.
+
+    These tests verify that the recursive CTE queries and graph traversal
+    work correctly with actual database operations.
+
+    Implements Faza 3.2 requirements: Real database integration tests.
+    """
+
+    async def test_bfs_traversal_real_db(self, db_pool):
+        """Test BFS traversal with real database operations.
+
+        This test:
+        1. Creates actual graph nodes and edges in PostgreSQL
+        2. Executes the real recursive CTE query
+        3. Verifies the traversal results
+        """
+        import json
+        tenant_id = "test-tenant-bfs"
+        project_id = "test-project-bfs"
+
+        async with db_pool.acquire() as conn:
+            # Insert test graph: A -> B -> C
+            node_a_id = await conn.fetchval(
+                """
+                INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label, properties)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING id
+                """,
+                tenant_id, project_id, "NodeA", "Node A", json.dumps({})
+            )
+
+            node_b_id = await conn.fetchval(
+                """
+                INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label, properties)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING id
+                """,
+                tenant_id, project_id, "NodeB", "Node B", json.dumps({})
+            )
+
+            node_c_id = await conn.fetchval(
+                """
+                INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label, properties)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING id
+                """,
+                tenant_id, project_id, "NodeC", "Node C", json.dumps({})
+            )
+
+            # Create edges: A -> B -> C
+            await conn.execute(
+                """
+                INSERT INTO knowledge_graph_edges (tenant_id, project_id, source_node_id, target_node_id, relation, properties)
+                VALUES ($1, $2, $3, $4, $5, $6)
+                """,
+                tenant_id, project_id, node_a_id, node_b_id, "CONNECTS_TO", json.dumps({})
+            )
+
+            await conn.execute(
+                """
+                INSERT INTO knowledge_graph_edges (tenant_id, project_id, source_node_id, target_node_id, relation, properties)
+                VALUES ($1, $2, $3, $4, $5, $6)
+                """,
+                tenant_id, project_id, node_b_id, node_c_id, "LEADS_TO", json.dumps({})
+            )
+
+        # Create repository and test BFS traversal
+        from apps.memory_api.repositories.graph_repository import GraphRepository
+        repo = GraphRepository(db_pool)
+
+        nodes, edges = await repo.traverse_graph_bfs(
+            start_node_ids=["NodeA"],
+            tenant_id=tenant_id,
+            project_id=project_id,
+            max_depth=2
+        )
+
+        # Verify results
+        assert len(nodes) == 3
+        assert {node.node_id for node in nodes} == {"NodeA", "NodeB", "NodeC"}
+        assert nodes[0].node_id == "NodeA"
+        assert nodes[0].depth == 0
+
+        # Find NodeB and NodeC
+        node_b = next(n for n in nodes if n.node_id == "NodeB")
+        node_c = next(n for n in nodes if n.node_id == "NodeC")
+        assert node_b.depth == 1
+        assert node_c.depth == 2
+
+        # Verify edges
+        assert len(edges) == 2
+        edge_relations = {edge.relation for edge in edges}
+        assert "CONNECTS_TO" in edge_relations
+        assert "LEADS_TO" in edge_relations
+
+    async def test_dfs_traversal_real_db(self, db_pool):
+        """Test DFS traversal with real database operations."""
+        import json
+        tenant_id = "test-tenant-dfs"
+        project_id = "test-project-dfs"
+
+        async with db_pool.acquire() as conn:
+            # Create a diamond-shaped graph: A -> B, A -> C, B -> D, C -> D
+            node_a_id = await conn.fetchval(
+                """
+                INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label, properties)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING id
+                """,
+                tenant_id, project_id, "NodeA", "Node A", json.dumps({})
+            )
+
+            node_b_id = await conn.fetchval(
+                """
+                INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label, properties)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING id
+                """,
+                tenant_id, project_id, "NodeB", "Node B", json.dumps({})
+            )
+
+            node_c_id = await conn.fetchval(
+                """
+                INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label, properties)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING id
+                """,
+                tenant_id, project_id, "NodeC", "Node C", json.dumps({})
+            )
+
+            node_d_id = await conn.fetchval(
+                """
+                INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label, properties)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING id
+                """,
+                tenant_id, project_id, "NodeD", "Node D", json.dumps({})
+            )
+
+            # Create edges
+            await conn.execute(
+                """
+                INSERT INTO knowledge_graph_edges (tenant_id, project_id, source_node_id, target_node_id, relation, properties)
+                VALUES
+                    ($1, $2, $3, $4, 'LINKS', $6),
+                    ($1, $2, $3, $5, 'LINKS', $6),
+                    ($1, $2, $4, $7, 'LINKS', $6),
+                    ($1, $2, $5, $7, 'LINKS', $6)
+                """,
+                tenant_id, project_id, node_a_id, node_b_id, node_c_id, json.dumps({}), node_d_id
+            )
+
+        # Test DFS traversal
+        from apps.memory_api.repositories.graph_repository import GraphRepository
+        repo = GraphRepository(db_pool)
+
+        nodes, edges = await repo.traverse_graph_dfs(
+            start_node_ids=["NodeA"],
+            tenant_id=tenant_id,
+            project_id=project_id,
+            max_depth=2
+        )
+
+        # Verify all nodes are found
+        assert len(nodes) == 4
+        assert {node.node_id for node in nodes} == {"NodeA", "NodeB", "NodeC", "NodeD"}
+
+        # Verify edges
+        assert len(edges) == 4
+
+    async def test_traversal_depth_limits_real_db(self, db_pool):
+        """Test that traversal depth limiting works with real recursive CTE.
+
+        Creates a chain: A -> B -> C -> D -> E
+        Tests that max_depth=2 only returns nodes A, B, C
+        """
+        import json
+        tenant_id = "test-tenant-depth"
+        project_id = "test-project-depth"
+
+        async with db_pool.acquire() as conn:
+            # Create chain of 5 nodes
+            node_ids = {}
+            for node_name in ["A", "B", "C", "D", "E"]:
+                node_id = await conn.fetchval(
+                    """
+                    INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label, properties)
+                    VALUES ($1, $2, $3, $4, $5)
+                    RETURNING id
+                    """,
+                    tenant_id, project_id, f"Node{node_name}", f"Node {node_name}", json.dumps({})
+                )
+                node_ids[node_name] = node_id
+
+            # Create edges: A -> B -> C -> D -> E
+            for i, (source, target) in enumerate([("A", "B"), ("B", "C"), ("C", "D"), ("D", "E")]):
+                await conn.execute(
+                    """
+                    INSERT INTO knowledge_graph_edges (tenant_id, project_id, source_node_id, target_node_id, relation, properties)
+                    VALUES ($1, $2, $3, $4, $5, $6)
+                    """,
+                    tenant_id, project_id, node_ids[source], node_ids[target], "NEXT", json.dumps({})
+                )
+
+        # Test with max_depth=2
+        from apps.memory_api.repositories.graph_repository import GraphRepository
+        repo = GraphRepository(db_pool)
+
+        nodes, edges = await repo.traverse_graph_bfs(
+            start_node_ids=["NodeA"],
+            tenant_id=tenant_id,
+            project_id=project_id,
+            max_depth=2
+        )
+
+        # Should only return nodes A (depth=0), B (depth=1), C (depth=2)
+        # Nodes D and E are beyond max_depth
+        assert len(nodes) == 3
+        assert {node.node_id for node in nodes} == {"NodeA", "NodeB", "NodeC"}
+        assert all(node.depth <= 2 for node in nodes)
+
+        # Verify depths
+        node_depths = {node.node_id: node.depth for node in nodes}
+        assert node_depths["NodeA"] == 0
+        assert node_depths["NodeB"] == 1
+        assert node_depths["NodeC"] == 2
+
+    async def test_hybrid_search_with_real_graph(self, db_pool):
+        """Test complete hybrid search with real graph database operations.
+
+        This is the most comprehensive integration test combining:
+        - Real database graph traversal
+        - Mock vector store (for speed)
+        - Real HybridSearchService
+        """
+        import json
+        tenant_id = "test-tenant-hybrid"
+        project_id = "test-project-hybrid"
+
+        # Setup: Create test graph
+        async with db_pool.acquire() as conn:
+            # Create service architecture graph
+            service_id = await conn.fetchval(
+                """
+                INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label, properties)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING id
+                """,
+                tenant_id, project_id, "UserService", "User Service", json.dumps({"type": "service"})
+            )
+
+            auth_id = await conn.fetchval(
+                """
+                INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label, properties)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING id
+                """,
+                tenant_id, project_id, "AuthModule", "Authentication Module", json.dumps({"type": "module"})
+            )
+
+            db_id = await conn.fetchval(
+                """
+                INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label, properties)
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING id
+                """,
+                tenant_id, project_id, "PostgreSQL", "PostgreSQL Database", json.dumps({"type": "database"})
+            )
+
+            # Create edges
+            await conn.execute(
+                """
+                INSERT INTO knowledge_graph_edges (tenant_id, project_id, source_node_id, target_node_id, relation, properties)
+                VALUES
+                    ($1, $2, $3, $4, 'USES', $6),
+                    ($1, $2, $4, $5, 'STORES_IN', $6)
+                """,
+                tenant_id, project_id, service_id, auth_id, db_id, json.dumps({})
+            )
+
+        # Mock embedding service and vector store
+        from unittest.mock import Mock, AsyncMock, patch
+        from apps.memory_api.models import ScoredMemoryRecord
+
+        mock_embedding = Mock()
+        mock_embedding.generate_embeddings = Mock(return_value=[[0.1, 0.2, 0.3]])
+
+        # Create service with real db_pool
+        from apps.memory_api.services.hybrid_search import HybridSearchService
+        service = HybridSearchService(db_pool)
+        service.embedding_service = mock_embedding
+
+        # Mock vector store
+        with patch('apps.memory_api.services.hybrid_search.get_vector_store') as mock_vs:
+            mock_vs.return_value.query = AsyncMock(return_value=[
+                ScoredMemoryRecord(
+                    id="mem1",
+                    content="UserService handles authentication",
+                    score=0.95,
+                    layer="em",
+                    tags=["service"],
+                    source="code",
+                    timestamp="2024-01-01T00:00:00"
+                )
+            ])
+
+            # Execute hybrid search
+            result = await service.search(
+                query="authentication service",
+                tenant_id=tenant_id,
+                project_id=project_id,
+                top_k_vector=5,
+                graph_depth=2,
+                use_graph=True
+            )
+
+            # Verify results
+            assert len(result.vector_matches) == 1
+            # Graph traversal will only work if entity extraction identifies "UserService"
+            # Since we're not running real entity extraction, graph may be empty
+            # Just verify structure is correct
+            assert result.graph_enabled is True
+            assert isinstance(result.graph_nodes, list)
+            assert isinstance(result.graph_edges, list)
+            assert result.synthesized_context != ""
 
 
 if __name__ == "__main__":

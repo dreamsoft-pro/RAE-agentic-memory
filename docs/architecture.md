@@ -76,7 +76,7 @@ Client → POST /v1/memory/query → MemoryService
 RAE is composed of several services that work together to provide the full set of memory capabilities.
 
 -   **LLMService**: An abstraction layer for interacting with different LLM backends (Gemini, OpenAI, Ollama, Anthropic). The backend is selected via the `RAE_LLM_BACKEND` environment variable.
--   **VectorStore**: An abstraction for vector storage and search. The implementation (Qdrant or pgvector) is chosen via the `VECTOR_STORE_BACKEND` environment variable.
+-   **VectorStore**: An abstraction for vector storage and search. The implementation (Qdrant or pgvector) is chosen via the `RAE_VECTOR_BACKEND` environment variable.
 -   **ContextCache**: A Redis-based cache that stores the context of recent interactions to reduce token usage. It uses compression to minimize storage.
 -   **BudgetService & CostController**: These services work together to monitor and control the costs associated with LLM usage.
 -   **ReflectionEngine**: This service is responsible for generating higher-level insights and reflections from the agent's memories.

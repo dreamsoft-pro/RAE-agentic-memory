@@ -257,14 +257,16 @@ docker-compose restart qdrant
 
 ### API Key Issues
 
-Make sure your `.env` file has the correct format:
+Make sure your `.env` file has the correct format (without quotes):
 ```env
 # Correct
 OPENAI_API_KEY=sk-...
 
-# Incorrect (don't use quotes)
+# Incorrect - don't use quotes!
 OPENAI_API_KEY="sk-..."
 ```
+
+**Note:** In `.env` files, values should NOT be wrapped in quotes. Most environment file parsers handle values without quotes correctly.
 
 ## Need Help?
 

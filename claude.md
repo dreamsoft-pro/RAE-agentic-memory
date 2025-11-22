@@ -1,204 +1,101 @@
-## 1. Krytyczne techniczne drobiazgi (do zrobienia najpierw)
+# RAE_V2_OPTIMIZATION_PLAN.md
 
-### 1.1. Spójność Docker / entry pointów
+## 1. Kontekst i Cel
+Celem tego planu jest modernizacja architektury projektu RAE (Reflective Agentic-mode Engine). Projekt osiągnął stabilność funkcjonalną (GraphRAG), ale wymaga refaktoryzacji pod kątem skalowalności, czystości kodu (DAO) i wiarygodności testów.
 
-- [ ] **Naprawić `infra/docker-compose.dev.yml`**:
-  - Teraz jest:  
-    `command: uvicorn apps.memory-api.main:app --reload ...`  
-  - A moduł to: `apps.memory_api.main:app` (podkreślnik, nie myślnik).  
-  - **Plan**:
-    - Ujednolicić do `apps.memory_api.main:app` w dev compose.
-    - Sprawdzić nazwę usług (`memory-api`, `memory-api-worker`) vs nazwy w Makefile/logs.
-
-- [ ] **Ujednolicić historię z dwoma compose’ami**:
-  - Root `docker-compose.yml` (usługa `rae-api`, `rae-postgres`, `rae-redis`, `rae-qdrant`, `celery-worker`, `celery-beat`).  
-  - `infra/docker-compose.yml` (trochę inna nazwa usług / kontekst).  
-  - **Decyzja**:
-    - Albo root `docker-compose.yml` = „oficjalny” sposób,
-    - a `infra/` opisane jako „advanced / infra-only”,
-    - albo wszystko przenieść do `infra/` i w README jasno to napisać.
-  - README/`docs/getting_started.md` powinny wskazywać **jeden kanoniczny** sposób startu.  
-
-### 1.2. Zmienna środowiskowe – nazwy i przykłady
-
-- [ ] **Spójność `RAE_VECTOR_BACKEND` vs `VECTOR_STORE_BACKEND`**:
-  - W Docker Compose: `RAE_VECTOR_BACKEND=qdrant`.  
-  - W docs: `VECTOR_STORE_BACKEND: qdrant | pgvector`.  
-  - **Plan**:
-    - Wybrać jedną nazwę (np. `RAE_VECTOR_BACKEND`),
-    - w kodzie dodać prostą warstwę kompatybilności (czytanie starej nazwy jeśli nowa pusta),
-    - w docs trzymać tylko jedną, docelową nazwę.
-
-- [ ] **API keys – cudzysłowy vs brak cudzysłowów**:
-  - W „troubleshooting” słusznie piszesz: `OPENAI_API_KEY=sk-...` (bez cudzysłowu) i wskazujesz `"sk-..."` jako zły przykład.  
-  - W innym miejscu przykładowy `.env` ma `OPENAI_API_KEY="your-openai-api-key"` (z cudzysłowem).  
-  - **Plan**:
-    - Ujednolicić wszystkie przykłady na **bez cudzysłowów**,
-    - dodać krótką uwagę „w .env nie używamy cudzysłowów” w jednym widocznym miejscu.
-
-### 1.3. requirements – „lekko” vs „ciężko”
-
-- [ ] Przejrzeć `apps/memory_api/requirements*.txt` i upewnić się, że:
-  - `requirements.txt` = minimalny zestaw do odpalenia API,
-  - rzeczy typu `spacy`, `sentence-transformers` i heavy ML lądują w czymś typu `requirements-ml.txt` / `requirements-extra.txt`,
-  - CI instalujące `requirements-test.txt` wie, że to jest superset (nie dubluje).  
+**Główne cele:**
+1. **Separacja odpowiedzialności:** Wydzielenie warstwy dostępu do danych (DAO/Repositories).
+2. **Mikroserwisyzacja:** Wyniesienie ciężkich zależności ML (torch, transformers) do osobnego serwisu.
+3. **Wiarygodność testów:** Wdrożenie `testcontainers` dla testów integracyjnych.
 
 ---
 
-## 2. Porządki repo – „zewnętrzny odbiorca nie musi widzieć Twoich notatek”
+## Faza 1: Warstwa Dostępu do Danych (DAO Pattern)
+**Cel:** Usunięcie surowego SQL z warstwy serwisów biznesowych.
+**Status obecny:** Zapytania SQL są zaszyte w `HybridSearchService` i `GraphExtractionService`.
 
-Masz kilka bardzo wartościowych, ale jednak **wewnętrznych** plików:
+### Zadanie 1.1: Utworzenie `GraphRepository`
+* **Pliki do utworzenia:** `apps/memory_api/repositories/graph_repository.py`
+* **Pliki do modyfikacji:** `apps/memory_api/services/hybrid_search.py`
+* **Instrukcje dla Agenta:**
+    1.  Stwórz klasę `GraphRepository` przyjmującą w `__init__` poolę połączeń asyncpg.
+    2.  Przenieś metodę `get_subgraph` (i jej zapytanie SQL) z `HybridSearchService` do repozytorium.
+    3.  Przenieś logikę trawersowania BFS (zapytanie Recursive CTE) do metody `traverse_graph_bfs` w repozytorium.
+    4.  W `HybridSearchService` wstrzyknij `GraphRepository` i używaj jego metod zamiast wołać `self.db_pool.fetch`.
+* **Kryteria akceptacji:**
+    * `HybridSearchService` nie zawiera żadnego ciągu znaków zaczynającego się od `SELECT`, `WITH RECURSIVE` etc.
+    * Testy w `apps/memory_api/tests/test_hybrid_search.py` przechodzą bez zmian (refactor).
 
-- `PLAN_NAPRAWCZY.md` (stary plan optymalizacji v2.0)  
-- Różne pliki w stylu `KIERUNEK_X`, `VERIFICATION_REPORT.md` – super jako dokumentacja procesu, ale mogą wyglądać chaotycznie dla kogoś z zewnątrz.  
-
-Propozycja:
-
-- [ ] Przenieść je do `docs/internal/` **albo**:
-  - scalić ich treść z:
-    - `ROADMAP.md` (rzeczy strategiczne),
-    - `docs/concepts/architecture.md` (rzeczy techniczne),
-    - `docs/examples/overview.md` (rzeczy „jak używać”).  
-- [ ] W README/`docs/index.md` **nie linkować** do plików „internal”, żeby wchodzili tam tylko zainteresowani.
-
----
-
-## 3. Spójność naming/branding i komunikatów
-
-W repo przewija się kilka nazw:
-
-- „RAE - Reflective Agentic Memory Engine”  
-- „RAE Agentic Memory” (w docs, roadmap, index)  
-- „Reflective Agentic-memory Engine” (z myślnikiem) tu i ówdzie.  
-
-Plan:
-
-- [ ] Wybrać **jedną oficjalną etykietę**, np.  
-  **„RAE – Reflective Agentic Memory Engine”**
-- [ ] Zrobić szybki search&replace w:
-  - README,
-  - `docs/index.md`,
-  - `docs/architecture.md`,
-  - `ROADMAP.md`,
-  - dashboard README.
-- [ ] W README dodać krótką sekcję „Naming” typu:
-  > W dokumentacji używamy skrótów RAE / RAE Engine. Pełna nazwa: Reflective Agentic Memory Engine.
+### Zadanie 1.2: Utworzenie `MemoryRepository`
+* **Pliki do utworzenia:** `apps/memory_api/repositories/memory_repository.py`
+* **Pliki do modyfikacji:** `apps/memory_api/services/memory_service.py`, `apps/memory_api/services/graph_extraction.py`
+* **Instrukcje dla Agenta:**
+    1.  Wydziel operacje CRUD na tabeli `memories` (insert, select by id, vector search) do `MemoryRepository`.
+    2.  Zaktualizuj `MemoryService` oraz `GraphExtractionService` (tam gdzie pobiera wspomnienia do ekstrakcji), aby korzystały z repozytorium.
+* **Kryteria akceptacji:**
+    * Brak surowego SQL w `MemoryService`.
 
 ---
 
-## 4. Dopełnienie dokumentacji „production-grade”
+## Faza 2: Wydzielenie ML Service (Microservice Extraction)
+**Cel:** Odciążenie głównego obrazu Dockera. Główny serwis nie powinien zawierać `sentence-transformers` ani `spacy`.
 
-Masz świetny opis idei i feature’ów, ale kilka drobiazgów „enterprise-owych”, które podnosisz w tekstach, jeszcze nie jest spiętych w jednym miejscu.
+### Zadanie 2.1: Szkielet ML Service
+* **Ścieżka:** `apps/ml_service/`
+* **Instrukcje dla Agenta:**
+    1.  Stwórz nową aplikację FastAPI w folderze `apps/ml_service`.
+    2.  Skopiuj `requirements.txt` z głównego serwisu, ale zostaw TYLKO biblioteki ML: `torch`, `sentence-transformers`, `spacy`, `scikit-learn`, `numpy`.
+    3.  Usuń te biblioteki z `apps/memory_api/requirements.txt` (główny serwis ma być lekki).
+    4.  Stwórz `Dockerfile` dla `apps/ml_service`.
 
-### 4.1. Security & auth
-
-W różnych miejscach pojawiają się:
-
-- API Key auth,
-- OAuth / JWT (Auth0 / domena, audience)  
-- multi-tenancy, RBAC, tiers, quotas (testy `TestRBACModels`, `TestTenantModels`).  
-
-Plan:
-
-- [ ] Osobny plik: `docs/guides/security-and-multi-tenancy.md`, w którym opiszesz:
-  - konfigurację API Key vs OAuth (kiedy co),
-  - model tenantów i ról (z mapką do modeli w kodzie),
-  - domyślne zabezpieczenia (CORS, rate limiting),
-  - rekomendowane ustawienia dla produkcji.
-- [ ] Dodać `SECURITY.md` w root, z linkiem do tego guida (GitHub to lubi).
-
-### 4.2. Cost Controller & Context Cache
-
-W `docs/index.md` już wspominasz o **Cost Controllerze**, context cache, PII scrubber, reflection hook itp.  
-
-Plan:
-
-- [ ] Krótki technical spec w `docs/concepts/cost-controller.md`:
-  - jakie sygnały bierzesz pod uwagę (budżet tokenów, typ zadania, priorytet),
-  - jak decydujesz model (lokalny vs zewnętrzny),
-  - jak integruje się z LLM backendem.
-- [ ] Analogicznie `docs/concepts/context-cache.md`:
-  - różnica między RAE pamięcią a cachem LLM,
-  - kiedy cache jest odświeżany, kiedy inval,
-  - jak to w praktyce wykorzystać (np. „semantic + reflective” → Gemini Context Cache).
+### Zadanie 2.2: Przeniesienie logiki Entity Resolution
+* **Przenieś:** `apps/memory_api/services/entity_resolution.py` -> `apps/ml_service/services/entity_resolution.py`
+* **Przenieś:** `apps/memory_api/services/graph_extraction.py` (tylko część używającą Spacy/NLP) -> `apps/ml_service/services/nlp.py`
+* **Instrukcje dla Agenta:**
+    1.  W `apps/ml_service` wystaw endpointy:
+        * `POST /resolve-entities` (przyjmuje listę węzłów, zwraca grupy do scalenia).
+        * `POST /extract-triples` (opcjonalnie, jeśli lokalne NLP jest używane).
+    2.  W głównym serwisie (`memory_api`) stwórz klienta HTTP `MLServiceClient`, który łączy się z `http://ml-service:8000`.
+* **Kryteria akceptacji:**
+    * Test `apps/memory_api/tests/test_entity_resolution.py` musi zostać zaktualizowany, aby mockować odpowiedzi HTTP od `MLServiceClient` zamiast wołać lokalną klasę.
+    * `docker-compose.yml` zawiera nową usługę `ml-service`.
 
 ---
 
-## 5. UX dla dewelopera: examples, SDK, MCP
+## Faza 3: Hardening Testów (Testcontainers)
+**Cel:** Zastąpienie mocków prawdziwą bazą danych w testach integracyjnych.
 
-### 5.1. SDK Python
+### Zadanie 3.1: Konfiguracja Testcontainers
+* **Pliki do modyfikacji:** `apps/memory_api/tests/conftest.py`, `apps/memory_api/requirements-dev.txt`
+* **Instrukcje dla Agenta:**
+    1.  Dodaj `testcontainers[postgres]` do `requirements-dev.txt`.
+    2.  W `conftest.py` stwórz fixture `postgres_container` (scope session).
+    3.  Skonfiguruj kontener tak, aby używał obrazu `ankane/pgvector`.
+    4.  Nadpisz fixture `db_pool` tak, aby łączył się z dynamicznym portem kontenera, a nie mockiem.
+    5.  Upewnij się, że migracje Alembic uruchamiają się na starcie kontenera testowego.
 
-- README pokazuje proste użycie `MemoryClient` (hybrid_search itd.).  
-- W ROADMAP masz plan SDK dla Go/Node.  
-
-Plan:
-
-- [ ] Upewnić się, że:
-  - `sdk/python/rae_memory_sdk` ma krótki `README.md` z:
-    - instalacją (na razie `pip install -e sdk/python/rae_memory_sdk`),
-    - kilkoma snippetami (store, query, hybrid_search, reflection).
-- [ ] Dodać sekcję „Python SDK” w głównym README z linkiem do tego pliku.
-
-### 5.2. Examples – smoke test
-
-Masz w dokumentach referencje do:
-
-- `examples/quickstart.py`  
-- `examples/graphrag_examples.py`  
-
-Plan:
-
-- [ ] Przelecieć wszystkie pliki z `docs/examples/*.md` i:
-  - potwierdzić, że każdy podany path istnieje,
-  - każda komenda shellowa działa z aktualnym `docker-compose`/Makefile.
-- [ ] Dodać jedno „złote” E2E:
-  - `make start`
-  - `python examples/quickstart.py`
-  - oczekiwany output (krótko opisany w docs).
-
-### 5.3. MCP / edytor
-
-Masz fajnie opisaną integrację MCP w README (konfiguracja mcpServers dla edytora).  
-
-- [ ] Dodać `docs/integrations/mcp.md` z:
-  - minimalnym configiem dla Cursor/VSCode,
-  - jednym scenariuszem: „zapamiętaj decyzję architektoniczną” → „odtwórz ją”.
+### Zadanie 3.2: Aktualizacja Testów Hybrydowych
+* **Pliki do modyfikacji:** `apps/memory_api/tests/test_hybrid_search.py`
+* **Instrukcje dla Agenta:**
+    1.  Usuń mockowanie `pool.fetch` i `pool.execute`.
+    2.  Testy mają zapisywać prawdziwe dane do bazy testowej (INSERT), a następnie wołać `HybridSearchService`.
+    3.  Zweryfikuj, czy testy rekurencyjnego CTE przechodzą na prawdziwej bazie.
+* **Kryteria akceptacji:**
+    * Uruchomienie `pytest apps/memory_api/tests/test_hybrid_search.py` nie zwraca błędów połączenia ani błędów SQL syntax error.
 
 ---
 
-## 6. Komunikat na starcie: „Beta, ale poważne”
+## Faza 4: Dokumentacja i Porządki
+**Cel:** Ułatwienie pracy deweloperom (ludziom).
 
-Na koniec – kosmetycznie, ale ważne dla zaufania:
+### Zadanie 4.1: Aktualizacja OpenAPI
+* **Pliki do modyfikacji:** Modele Pydantic w `apps/memory_api/models/`.
+* **Instrukcje dla Agenta:**
+    1.  Dodaj klasę `Config` z polem `json_schema_extra` (przykłady) do wszystkich modeli requestów/response (np. `GraphQueryRequest`, `AddMemoryRequest`).
+    2.  Sprawdź, czy endpointy mają poprawne `response_model` i opisy (`summary`, `description`).
 
-- [ ] W README dodać małą sekcję np. **Project Status**:
-  - „RAE is currently in **public beta**.”
-  - Co działa stabilnie (core memory/store/query, GraphRAG, SDK, dashboard).
-  - Czego nie obiecujesz (HA/geo-replication/SLAs).
-- [ ] W `ROADMAP.md` dopisać, które punkty z „Near-Term” są już zrobione, żeby nie wyglądało jak czysta teoria.  
-
----
-
-## 7. Kolejność działań (sugerowany sprint)
-
-1. **Techniczne fixy blokujące**:
-   - docker compose dev (moduł `apps.memory_api.main:app`),
-   - env names + przykładowe `.env`,
-   - sanity check requirements (core vs extra).
-
-2. **Porządki repo i nazewnictwo**:
-   - przeniesienie wewnętrznych plików do `docs/internal/`,
-   - ujednolicenie nazwy projektu i prefixów RAE\_*.
-
-3. **Security + Cost/Cache docs**:
-   - `SECURITY.md` + guide w `docs/guides/`,
-   - cost controller + context cache w `docs/concepts/`.
-
-4. **Developer UX**:
-   - README dla SDK,
-   - przetestowane examples, mały E2E flow,
-   - MCP integration guide.
-
-5. **Tag i release**:
-   - oznaczyć repo jako publiczne (jeśli jeszcze nie),
-   - dodać tag, np. `v0.9.0-beta`,
-   - opcjonalnie: przygotować krótkie „Release Notes” w `RELEASE_NOTES.md`.
+### Zadanie 4.2: Update README
+* **Plik:** `README.md`
+* **Instrukcje dla Agenta:**
+    1.  Zaktualizuj instrukcję uruchomienia (dodanie `ml-service` do docker-compose).
+    2.  Opisz architekturę (podział na Memory API i ML Service).

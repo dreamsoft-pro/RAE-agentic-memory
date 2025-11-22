@@ -1,7 +1,7 @@
 """
 RAE MCP Server - Model Context Protocol Integration
 
-Enterprise-grade MCP server for RAE (Reflective Agentic-memory Engine).
+Enterprise-grade MCP server for RAE (Reflective Agentic Memory Engine).
 Provides tools, resources, and prompts for IDE integration.
 """
 

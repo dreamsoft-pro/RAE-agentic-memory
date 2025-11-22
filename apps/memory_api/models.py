@@ -53,6 +53,21 @@ class StoreMemoryRequest(BaseModel):
     timestamp: Optional[datetime] = None
     project: Optional[constr(max_length=255)] = None
 
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "content": "User prefers dark mode UI",
+                    "source": "user_interaction",
+                    "importance": 0.8,
+                    "layer": "em",
+                    "tags": ["preferences", "ui"],
+                    "project": "my-app"
+                }
+            ]
+        }
+    }
+
 class StoreMemoryResponse(BaseModel):
     id: str
     message: str = "Memory stored successfully."
@@ -65,6 +80,26 @@ class QueryMemoryRequest(BaseModel):
     use_graph: bool = Field(default=False, description="Enable hybrid search with graph traversal")
     graph_depth: int = Field(default=2, ge=1, le=5, description="Maximum graph traversal depth")
     project: Optional[constr(max_length=255)] = Field(default=None, description="Project identifier for graph search")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "query_text": "What are the user's UI preferences?",
+                    "k": 5,
+                    "filters": {"tags": ["preferences"]},
+                    "use_graph": False
+                },
+                {
+                    "query_text": "Find related concepts about authentication",
+                    "k": 10,
+                    "use_graph": True,
+                    "graph_depth": 3,
+                    "project": "my-app"
+                }
+            ]
+        }
+    }
 
 class QueryMemoryResponse(BaseModel):
     results: List[ScoredMemoryRecord] = []
@@ -90,6 +125,19 @@ class AgentExecuteRequest(BaseModel):
     prompt: constr(min_length=1, max_length=8192)
     tools_allowed: Optional[List[str]] = None
     budget_tokens: int = Field(default=20000, gt=0, le=100000)
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "tenant_id": "my-tenant",
+                    "project": "my-project",
+                    "prompt": "Summarize what the user learned about Python today",
+                    "budget_tokens": 15000
+                }
+            ]
+        }
+    }
 
 class CostInfo(BaseModel):
     input_tokens: int = 0

@@ -1,4 +1,6 @@
 from pydantic_settings import BaseSettings
+from pydantic import model_validator
+import os
 
 class Settings(BaseSettings):
     """
@@ -9,13 +11,13 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = "memory"
     POSTGRES_USER: str = "memory"
     POSTGRES_PASSWORD: str = "example"
-    
+
     QDRANT_HOST: str = "localhost"
     QDRANT_PORT: int = 6333
-    
+
     RERANKER_API_URL: str = "http://localhost:8001"
     MEMORY_API_URL: str = "http://localhost:8000"
-    
+
     LLM_MODEL: str | None = None
     GEMINI_API_KEY: str | None = None
     OPENAI_API_KEY: str | None = None
@@ -27,6 +29,13 @@ class Settings(BaseSettings):
     SYNTHESIS_MODEL: str = "gpt-4o"
     RAE_VECTOR_BACKEND: str = "qdrant"
     ONNX_EMBEDDER_PATH: str | None = None
+
+    @model_validator(mode='after')
+    def validate_vector_backend(self):
+        """Backward compatibility: Support legacy VECTOR_STORE_BACKEND variable"""
+        if os.getenv('VECTOR_STORE_BACKEND') and not os.getenv('RAE_VECTOR_BACKEND'):
+            self.RAE_VECTOR_BACKEND = os.getenv('VECTOR_STORE_BACKEND')
+        return self
     
     # --- Security Settings ---
     OAUTH_ENABLED: bool = True

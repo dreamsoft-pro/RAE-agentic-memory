@@ -1,0 +1,394 @@
+"""
+GraphRepository - Data Access Layer for Knowledge Graph Operations.
+
+This repository encapsulates all database operations related to the knowledge graph,
+following the Repository/DAO pattern to separate data access from business logic.
+"""
+
+from typing import List, Tuple, Optional, Dict, Any
+import asyncpg
+import structlog
+
+from apps.memory_api.models.graph import GraphNode, GraphEdge
+
+logger = structlog.get_logger(__name__)
+
+
+class GraphRepository:
+    """
+    Repository for knowledge graph data access operations.
+
+    Handles all SQL queries related to knowledge graph nodes and edges,
+    including graph traversal algorithms (BFS/DFS).
+    """
+
+    def __init__(self, pool: asyncpg.Pool):
+        """
+        Initialize graph repository.
+
+        Args:
+            pool: AsyncPG connection pool for database operations
+        """
+        self.pool = pool
+
+    async def traverse_graph_bfs(
+        self,
+        start_node_ids: List[str],
+        tenant_id: str,
+        project_id: str,
+        max_depth: int
+    ) -> Tuple[List[GraphNode], List[GraphEdge]]:
+        """
+        Perform breadth-first search graph traversal using recursive CTE.
+
+        This method uses PostgreSQL's WITH RECURSIVE construct for efficient
+        graph traversal, discovering nodes layer by layer from the start nodes.
+
+        Args:
+            start_node_ids: Node IDs to start traversal from
+            tenant_id: Tenant identifier for data isolation
+            project_id: Project identifier
+            max_depth: Maximum depth to traverse (0 = start nodes only)
+
+        Returns:
+            Tuple of (discovered nodes, edges between discovered nodes)
+        """
+        async with self.pool.acquire() as conn:
+            # Use recursive CTE for efficient BFS traversal
+            node_records = await conn.fetch(
+                """
+                WITH RECURSIVE graph_traverse AS (
+                    -- Base case: start nodes at depth 0
+                    SELECT
+                        n.id,
+                        n.node_id,
+                        n.label,
+                        n.properties,
+                        0 as depth
+                    FROM knowledge_graph_nodes n
+                    WHERE n.tenant_id = $1
+                    AND n.project_id = $2
+                    AND n.node_id = ANY($3)
+
+                    UNION
+
+                    -- Recursive case: traverse outgoing edges
+                    SELECT
+                        n.id,
+                        n.node_id,
+                        n.label,
+                        n.properties,
+                        gt.depth + 1
+                    FROM graph_traverse gt
+                    JOIN knowledge_graph_edges e ON gt.id = e.source_node_id
+                    JOIN knowledge_graph_nodes n ON e.target_node_id = n.id
+                    WHERE gt.depth < $4
+                    AND n.tenant_id = $1
+                    AND n.project_id = $2
+                )
+                SELECT DISTINCT ON (id) * FROM graph_traverse
+                ORDER BY id, depth;
+                """,
+                tenant_id,
+                project_id,
+                start_node_ids,
+                max_depth
+            )
+
+            # Convert database records to GraphNode models
+            import json
+            nodes = [
+                GraphNode(
+                    id=str(record['id']),
+                    node_id=record['node_id'],
+                    label=record['label'],
+                    properties=json.loads(record['properties']) if isinstance(record['properties'], str) else record['properties'],
+                    depth=record['depth']
+                )
+                for record in node_records
+            ]
+
+            # If no nodes found, return empty results
+            if not nodes:
+                logger.warning(
+                    "bfs_traversal_no_nodes_found",
+                    tenant_id=tenant_id,
+                    project_id=project_id,
+                    start_node_ids=start_node_ids
+                )
+                return [], []
+
+            # Get edges between discovered nodes
+            edges = await self.get_edges_between_nodes(
+                node_ids=[node.id for node in nodes],
+                tenant_id=tenant_id,
+                project_id=project_id
+            )
+
+            logger.info(
+                "bfs_traversal_completed",
+                tenant_id=tenant_id,
+                project_id=project_id,
+                nodes_found=len(nodes),
+                edges_found=len(edges),
+                max_depth=max_depth
+            )
+
+            return nodes, edges
+
+    async def traverse_graph_dfs(
+        self,
+        start_node_ids: List[str],
+        tenant_id: str,
+        project_id: str,
+        max_depth: int
+    ) -> Tuple[List[GraphNode], List[GraphEdge]]:
+        """
+        Perform depth-first search graph traversal.
+
+        Note: Current implementation uses the same SQL as BFS (WITH RECURSIVE).
+        A true DFS would require different ordering or iterative processing.
+        This provides the same result set with potentially different traversal order.
+
+        Args:
+            start_node_ids: Node IDs to start traversal from
+            tenant_id: Tenant identifier for data isolation
+            project_id: Project identifier
+            max_depth: Maximum depth to traverse
+
+        Returns:
+            Tuple of (discovered nodes, edges between discovered nodes)
+        """
+        # For now, DFS uses same implementation as BFS
+        # Future enhancement: implement true iterative DFS with stack
+        return await self.traverse_graph_bfs(
+            start_node_ids, tenant_id, project_id, max_depth
+        )
+
+    async def get_edges_between_nodes(
+        self,
+        node_ids: List[str],
+        tenant_id: str,
+        project_id: str
+    ) -> List[GraphEdge]:
+        """
+        Retrieve all edges connecting nodes in the given set.
+
+        Args:
+            node_ids: Internal node IDs to find edges between
+            tenant_id: Tenant identifier for data isolation
+            project_id: Project identifier
+
+        Returns:
+            List of edges where both source and target are in node_ids
+        """
+        async with self.pool.acquire() as conn:
+            edge_records = await conn.fetch(
+                """
+                SELECT
+                    e.id,
+                    e.source_node_id,
+                    e.target_node_id,
+                    e.relation,
+                    e.properties
+                FROM knowledge_graph_edges e
+                WHERE e.tenant_id = $1
+                AND e.project_id = $2
+                AND e.source_node_id::text = ANY($3)
+                AND e.target_node_id::text = ANY($3)
+                """,
+                tenant_id,
+                project_id,
+                node_ids
+            )
+
+            import json
+            edges = [
+                GraphEdge(
+                    source_id=str(record['source_node_id']),
+                    target_id=str(record['target_node_id']),
+                    relation=record['relation'],
+                    properties=json.loads(record['properties']) if isinstance(record['properties'], str) else record['properties']
+                )
+                for record in edge_records
+            ]
+
+            return edges
+
+    async def get_node_by_id(
+        self,
+        node_id: str,
+        tenant_id: str,
+        project_id: str
+    ) -> Optional[GraphNode]:
+        """
+        Retrieve a single node by its node_id.
+
+        Args:
+            node_id: The node identifier
+            tenant_id: Tenant identifier for data isolation
+            project_id: Project identifier
+
+        Returns:
+            GraphNode if found, None otherwise
+        """
+        async with self.pool.acquire() as conn:
+            record = await conn.fetchrow(
+                """
+                SELECT
+                    id,
+                    node_id,
+                    label,
+                    properties
+                FROM knowledge_graph_nodes
+                WHERE tenant_id = $1
+                AND project_id = $2
+                AND node_id = $3
+                """,
+                tenant_id,
+                project_id,
+                node_id
+            )
+
+            if not record:
+                return None
+
+            return GraphNode(
+                id=str(record['id']),
+                node_id=record['node_id'],
+                label=record['label'],
+                properties=record['properties'],
+                depth=0
+            )
+
+    async def get_nodes_by_ids(
+        self,
+        node_ids: List[str],
+        tenant_id: str,
+        project_id: str
+    ) -> List[GraphNode]:
+        """
+        Retrieve multiple nodes by their node_ids.
+
+        Args:
+            node_ids: List of node identifiers
+            tenant_id: Tenant identifier for data isolation
+            project_id: Project identifier
+
+        Returns:
+            List of found GraphNodes
+        """
+        async with self.pool.acquire() as conn:
+            records = await conn.fetch(
+                """
+                SELECT
+                    id,
+                    node_id,
+                    label,
+                    properties
+                FROM knowledge_graph_nodes
+                WHERE tenant_id = $1
+                AND project_id = $2
+                AND node_id = ANY($3)
+                """,
+                tenant_id,
+                project_id,
+                node_ids
+            )
+
+            return [
+                GraphNode(
+                    id=str(record['id']),
+                    node_id=record['node_id'],
+                    label=record['label'],
+                    properties=record['properties'],
+                    depth=0
+                )
+                for record in records
+            ]
+
+    async def find_relevant_communities(
+        self,
+        query: str,
+        tenant_id: str,
+        project_id: str,
+        limit: int = 3
+    ) -> List[Dict[str, Any]]:
+        """
+        Find community nodes (Super-Nodes) relevant to the query using keyword matching.
+
+        Args:
+            query: Search query for keyword matching
+            tenant_id: Tenant identifier for data isolation
+            project_id: Project identifier
+            limit: Maximum number of communities to return
+
+        Returns:
+            List of community node dictionaries
+        """
+        async with self.pool.acquire() as conn:
+            records = await conn.fetch(
+                """
+                SELECT id, label, properties
+                FROM knowledge_graph_nodes
+                WHERE tenant_id = $1 AND project_id = $2
+                AND (properties->>'type') = 'community'
+                AND (
+                    label ILIKE '%' || $3 || '%'
+                    OR (properties->>'summary') ILIKE '%' || $3 || '%'
+                    OR (properties->>'themes')::text ILIKE '%' || $3 || '%'
+                )
+                LIMIT $4
+                """,
+                tenant_id,
+                project_id,
+                query,
+                limit
+            )
+            return [dict(r) for r in records]
+
+    async def find_nodes_by_content_match(
+        self,
+        content: str,
+        tenant_id: str,
+        project_id: str,
+        limit: int = 5
+    ) -> List[str]:
+        """
+        Find graph nodes whose labels match content using fuzzy text matching.
+
+        This method searches for nodes where the label appears in the content
+        or vice versa, useful for entity linking from memory content.
+
+        Args:
+            content: Text content to search for matching entities
+            tenant_id: Tenant identifier for data isolation
+            project_id: Project identifier
+            limit: Maximum number of nodes to return
+
+        Returns:
+            List of node_ids that match the content
+        """
+        async with self.pool.acquire() as conn:
+            # Limit content length for performance
+            content_sample = content[:500]
+
+            nodes = await conn.fetch(
+                """
+                SELECT DISTINCT node_id
+                FROM knowledge_graph_nodes
+                WHERE tenant_id = $1
+                AND project_id = $2
+                AND (
+                    $3 ILIKE '%' || label || '%'
+                    OR label ILIKE '%' || $3 || '%'
+                )
+                LIMIT $4
+                """,
+                tenant_id,
+                project_id,
+                content_sample,
+                limit
+            )
+
+            return [node['node_id'] for node in nodes]

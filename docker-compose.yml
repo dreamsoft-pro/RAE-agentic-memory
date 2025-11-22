@@ -14,6 +14,7 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - RAE_VECTOR_BACKEND=qdrant
       - QDRANT_URL=http://qdrant:6333
+      - ML_SERVICE_URL=http://ml-service:8001
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
@@ -24,12 +25,32 @@ services:
         condition: service_healthy
       qdrant:
         condition: service_started
+      ml-service:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s
+    restart: unless-stopped
+    networks:
+      - rae-network
+
+  # ML Service - Heavy ML operations isolated from main API
+  ml-service:
+    build:
+      context: ./apps/ml_service
+      dockerfile: Dockerfile
+    container_name: rae-ml-service
+    ports:
+      - "8001:8001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
     restart: unless-stopped
     networks:
       - rae-network

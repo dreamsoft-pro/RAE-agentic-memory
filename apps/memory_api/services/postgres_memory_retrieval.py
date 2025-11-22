@@ -1,28 +1,21 @@
 from typing import List, Dict
 import asyncpg
+from apps.memory_api.repositories.memory_repository import MemoryRepository
 
 async def get_semantic_memories(pool: asyncpg.Pool, tenant_id: str, project: str) -> List[Dict]:
     """
     Retrieves all semantic memories for a given tenant and project from Postgres.
+
+    Uses MemoryRepository for data access.
     """
-    async with pool.acquire() as conn:
-        records = await conn.fetch("""
-            SELECT id, content, tags, metadata, layer, created_at
-            FROM memories
-            WHERE tenant_id = $1 AND project = $2 AND layer = 'sm'
-            ORDER BY created_at DESC
-        """, tenant_id, project)
-        return [dict(r) for r in records]
+    repository = MemoryRepository(pool)
+    return await repository.get_semantic_memories(tenant_id, project)
 
 async def get_reflective_memories(pool: asyncpg.Pool, tenant_id: str, project: str) -> List[Dict]:
     """
     Retrieves all reflective memories for a given tenant and project from Postgres.
+
+    Uses MemoryRepository for data access.
     """
-    async with pool.acquire() as conn:
-        records = await conn.fetch("""
-            SELECT id, content, tags, metadata, layer, created_at
-            FROM memories
-            WHERE tenant_id = $1 AND project = $2 AND layer = 'rm'
-            ORDER BY created_at DESC
-        """, tenant_id, project)
-        return [dict(r) for r in records]
+    repository = MemoryRepository(pool)
+    return await repository.get_reflective_memories(tenant_id, project)

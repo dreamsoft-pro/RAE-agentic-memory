@@ -6,6 +6,8 @@ import pytest
 import asyncio
 from typing import Generator, Any
 from unittest.mock import AsyncMock, Mock
+import asyncpg
+import os
 
 
 @pytest.fixture(scope="session")
@@ -113,3 +115,149 @@ def mock_pool():
     pool._test_context = context_manager
 
     return pool
+
+
+# =============================================================================
+# Testcontainers Fixtures (Real Database for Integration Tests)
+# =============================================================================
+
+@pytest.fixture(scope="session")
+def postgres_container():
+    """
+    Start a PostgreSQL container with pgvector extension for integration tests.
+
+    This fixture provides a real PostgreSQL database running in a Docker container,
+    using the ankane/pgvector image which includes the pgvector extension.
+
+    The container is started once per test session and reused across all tests.
+    """
+    # Check if testcontainers is available
+    try:
+        from testcontainers.postgres import PostgresContainer
+    except ImportError:
+        pytest.skip("testcontainers not installed - skipping integration tests")
+
+    # Start PostgreSQL container with pgvector
+    container = PostgresContainer(
+        image="ankane/pgvector:latest",
+        username="test_user",
+        password="test_password",
+        dbname="test_db"
+    )
+    container.start()
+
+    yield container
+
+    # Cleanup
+    container.stop()
+
+
+@pytest.fixture(scope="function")
+async def db_pool(postgres_container):
+    """
+    Create an asyncpg connection pool connected to the test database.
+
+    This fixture:
+    1. Connects to the testcontainer PostgreSQL instance
+    2. Runs Alembic migrations to set up the schema
+    3. Provides a clean database pool for each test
+    4. Cleans up after the test
+
+    Usage:
+        async def test_something(db_pool):
+            async with db_pool.acquire() as conn:
+                result = await conn.fetch("SELECT 1")
+    """
+    # Get connection details from container
+    host = postgres_container.get_container_host_ip()
+    port = postgres_container.get_exposed_port(5432)
+    database = postgres_container.dbname
+    user = postgres_container.username
+    password = postgres_container.password
+
+    # Create connection pool
+    pool = await asyncpg.create_pool(
+        host=host,
+        port=port,
+        database=database,
+        user=user,
+        password=password,
+        min_size=1,
+        max_size=5
+    )
+
+    try:
+        # Run migrations using Alembic
+        # Note: This requires alembic.ini to be configured properly
+        # For now, we'll create minimal schema manually
+        async with pool.acquire() as conn:
+            # Enable pgvector extension
+            await conn.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+
+            # Create minimal schema for tests
+            # In production, this should be replaced with proper Alembic migrations
+            await conn.execute("""
+                CREATE TABLE IF NOT EXISTS memories (
+                    id SERIAL PRIMARY KEY,
+                    tenant_id VARCHAR(255) NOT NULL,
+                    project VARCHAR(255),
+                    content TEXT NOT NULL,
+                    source VARCHAR(255),
+                    importance FLOAT DEFAULT 0.5,
+                    layer VARCHAR(10),
+                    tags TEXT[],
+                    metadata JSONB,
+                    timestamp TIMESTAMP,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    last_accessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    usage_count INTEGER DEFAULT 0,
+                    strength FLOAT DEFAULT 0.5
+                );
+            """)
+
+            await conn.execute("""
+                CREATE TABLE IF NOT EXISTS knowledge_graph_nodes (
+                    id SERIAL PRIMARY KEY,
+                    tenant_id VARCHAR(255) NOT NULL,
+                    project_id VARCHAR(255) NOT NULL,
+                    node_id VARCHAR(255) NOT NULL,
+                    label VARCHAR(500) NOT NULL,
+                    properties JSONB,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(tenant_id, project_id, node_id)
+                );
+            """)
+
+            await conn.execute("""
+                CREATE TABLE IF NOT EXISTS knowledge_graph_edges (
+                    id SERIAL PRIMARY KEY,
+                    tenant_id VARCHAR(255) NOT NULL,
+                    project_id VARCHAR(255) NOT NULL,
+                    source_node_id INTEGER REFERENCES knowledge_graph_nodes(id) ON DELETE CASCADE,
+                    target_node_id INTEGER REFERENCES knowledge_graph_nodes(id) ON DELETE CASCADE,
+                    relation VARCHAR(255) NOT NULL,
+                    properties JSONB,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
+
+        yield pool
+
+    finally:
+        # Cleanup: Close pool
+        await pool.close()
+
+
+@pytest.fixture
+def use_real_db():
+    """
+    Marker fixture to indicate that a test should use real database (testcontainers).
+
+    Tests using this fixture will use db_pool instead of mock_pool.
+
+    Usage:
+        async def test_with_real_db(db_pool, use_real_db):
+            async with db_pool.acquire() as conn:
+                result = await conn.fetch("SELECT 1")
+    """
+    return True

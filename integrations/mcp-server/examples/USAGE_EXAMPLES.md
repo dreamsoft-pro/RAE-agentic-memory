@@ -381,7 +381,7 @@ Welcome to the team! Let me give you a comprehensive overview.
 
 **Project Overview:**
 [From rae://project/reflection]
-This is RAE (Reflective Agentic-memory Engine), an advanced memory system
+This is RAE (Reflective Agentic Memory Engine), an advanced memory system
 for AI agents with multi-layered architecture...
 
 **Key Technologies:**

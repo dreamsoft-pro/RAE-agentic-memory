@@ -1,36 +1,25 @@
 """
-Entity Resolution Service - Handles deduplication and merging of knowledge graph nodes.
+Entity Resolution Service - Orchestrates deduplication and merging of knowledge graph nodes.
 
 Implements Pillar 1 of the optimization plan:
-- Semantic Clustering (Vector-based Clustering)
+- Semantic Clustering (delegated to ML Service)
 - Janitor Agent (LLM-based conflict resolution)
+- Database merging operations
+
+This service orchestrates the resolution process while delegating
+heavy ML operations to the ML microservice.
 """
 
 import structlog
-from typing import List, Dict, Any, Tuple
-import asyncio
-from pydantic import BaseModel, Field
-
-from sentence_transformers import SentenceTransformer
-from sklearn.cluster import DBSCAN, AgglomerativeClustering
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
+from typing import List, Dict, Any
 import asyncpg
+from pydantic import BaseModel, Field
 
 from apps.memory_api.config import settings
 from apps.memory_api.services.llm import get_llm_provider
+from apps.memory_api.services.ml_service_client import MLServiceClient
 
 logger = structlog.get_logger(__name__)
-
-# Load embedding model lazily
-_EMBEDDING_MODEL = None
-
-def get_embedding_model():
-    global _EMBEDDING_MODEL
-    if _EMBEDDING_MODEL is None:
-        # 'all-MiniLM-L6-v2' is small and fast
-        _EMBEDDING_MODEL = SentenceTransformer('all-MiniLM-L6-v2')
-    return _EMBEDDING_MODEL
 
 class MergeDecision(BaseModel):
     should_merge: bool = Field(..., description="Whether the entities represent the same concept and should be merged.")
@@ -38,110 +27,93 @@ class MergeDecision(BaseModel):
     reasoning: str = Field(..., description="Reasoning for the decision.")
 
 class EntityResolutionService:
-    def __init__(self, pool: asyncpg.Pool):
+    """
+    Orchestrator for entity resolution process.
+
+    Coordinates between ML Service (clustering), LLM (janitor decisions),
+    and database (merging operations).
+    """
+
+    def __init__(self, pool: asyncpg.Pool, ml_client: MLServiceClient = None):
         self.pool = pool
         self.llm_provider = get_llm_provider()
+        self.ml_client = ml_client or MLServiceClient()
         self.similarity_threshold_high = 0.95
         self.similarity_threshold_low = 0.85
 
     async def run_clustering_and_merging(self, project_id: str, tenant_id: str):
         """
-        Main entry point for the background task.
-        1. Fetch all nodes for the project.
-        2. Generate embeddings.
-        3. Cluster.
-        4. Merge or ask LLM.
+        Main entry point for entity resolution.
+
+        Process:
+        1. Fetch all nodes for the project from database
+        2. Call ML Service for clustering
+        3. Process each cluster (auto-merge or ask LLM)
+        4. Execute merges in database
         """
         logger.info("starting_entity_resolution", project_id=project_id, tenant_id=tenant_id)
 
+        # Fetch nodes from database
         nodes = await self._fetch_nodes(project_id, tenant_id)
         if len(nodes) < 2:
             logger.info("not_enough_nodes_for_clustering", count=len(nodes))
             return
 
-        # Prepare node labels for embedding
-        node_labels = [n['label'] for n in nodes]
-        node_ids = [n['id'] for n in nodes]
+        # Call ML Service for clustering
+        try:
+            result = await self.ml_client.resolve_entities(
+                nodes=[{"id": str(n['id']), "label": n['label']} for n in nodes],
+                similarity_threshold=self.similarity_threshold_low
+            )
 
-        # Generate embeddings (CPU based, fast for small models)
-        model = get_embedding_model()
-        # This is synchronous, running in a thread might be better if blocking event loop,
-        # but for now we assume it's acceptable in a celery task or background job.
-        # If running in async context, use run_in_executor
-        loop = asyncio.get_running_loop()
-        embeddings = await loop.run_in_executor(None, model.encode, node_labels)
+            merge_groups = result.get("merge_groups", [])
+            statistics = result.get("statistics", {})
 
-        # Clustering
-        # We can use DBSCAN or Agglomerative Clustering with cosine distance.
-        # Cosine distance = 1 - cosine similarity.
-        # Threshold 0.90 similarity corresponds to distance 0.10.
+            logger.info(
+                "ml_service_clustering_completed",
+                groups_found=len(merge_groups),
+                statistics=statistics
+            )
 
-        # Let's use Agglomerative Clustering which is good for hierarchical or simple grouping
-        # distance_threshold is 1 - similarity. So for 0.85 similarity, threshold is 0.15.
-        # But we want to check high confidence merges automatically.
+        except Exception as e:
+            logger.exception("ml_service_clustering_failed", error=str(e))
+            return
 
-        # Strategy:
-        # 1. Calculate pairwise similarity matrix.
-        # 2. Iterate through pairs with similarity > threshold.
-        # 3. Group them using a connected components approach (or just use pre-built clustering).
+        # Process each merge group
+        for group_ids in merge_groups:
+            # Find nodes in this group
+            group_nodes = [n for n in nodes if str(n['id']) in group_ids]
 
-        # Using AgglomerativeClustering
-        # dist_threshold = 1 - 0.85 = 0.15
-        clustering = AgglomerativeClustering(
-            n_clusters=None,
-            metric='cosine',
-            linkage='average',
-            distance_threshold=1 - self.similarity_threshold_low
-        )
-
-        cluster_labels = await loop.run_in_executor(None, clustering.fit_predict, embeddings)
-
-        # Group nodes by cluster
-        clusters = {}
-        for idx, label in enumerate(cluster_labels):
-            if label not in clusters:
-                clusters[label] = []
-            clusters[label].append(idx)
-
-        # Process clusters
-        for cluster_id, indices in clusters.items():
-            if len(indices) < 2:
+            if len(group_nodes) < 2:
                 continue
 
-            cluster_nodes = [nodes[i] for i in indices]
-            cluster_embeddings = [embeddings[i] for i in indices]
+            await self._process_group(group_nodes, project_id, tenant_id)
 
-            # Check similarity within cluster
-            # If all pairs are > 0.95, merge automatically.
-            # If some are between 0.85 and 0.95, ask LLM.
+    async def _process_group(
+        self,
+        nodes: List[Dict],
+        project_id: str,
+        tenant_id: str
+    ):
+        """
+        Process a group of similar nodes.
 
-            await self._process_cluster(cluster_nodes, cluster_embeddings, project_id, tenant_id)
-
-    async def _process_cluster(self, nodes: List[Dict], embeddings: List[Any], project_id: str, tenant_id: str):
-        # Calculate min similarity in this cluster
-        min_sim = 1.0
-        # Check all pairs
-        for i in range(len(embeddings)):
-            for j in range(i + 1, len(embeddings)):
-                sim = cosine_similarity([embeddings[i]], [embeddings[j]])[0][0]
-                if sim < min_sim:
-                    min_sim = sim
-
+        For high similarity (>0.95): auto-merge
+        For medium similarity (0.85-0.95): ask Janitor Agent
+        """
         names = [n['label'] for n in nodes]
-        logger.info("processing_cluster", names=names, min_similarity=min_sim)
 
-        if min_sim >= self.similarity_threshold_high:
-            # Auto merge
-            logger.info("auto_merging_cluster", names=names)
-            await self._merge_nodes(nodes, project_id, tenant_id)
-        elif min_sim >= self.similarity_threshold_low:
-            # Ask Janitor Agent
-            logger.info("asking_janitor_agent", names=names)
-            decision = await self._ask_janitor(names)
-            if decision.should_merge:
-                await self._merge_nodes(nodes, project_id, tenant_id, canonical_name=decision.canonical_name)
-            else:
-                logger.info("janitor_rejected_merge", names=names, reason=decision.reasoning)
+        # For now, we'll ask the Janitor Agent for all groups
+        # In future, we could get similarity scores from ML service to auto-merge high confidence groups
+        logger.info("asking_janitor_agent", names=names)
+
+        decision = await self._ask_janitor(names)
+
+        if decision.should_merge:
+            logger.info("janitor_approved_merge", names=names, canonical=decision.canonical_name)
+            await self._merge_nodes(nodes, project_id, tenant_id, canonical_name=decision.canonical_name)
+        else:
+            logger.info("janitor_rejected_merge", names=names, reason=decision.reasoning)
 
     async def _ask_janitor(self, names: List[str]) -> MergeDecision:
         prompt = f"""

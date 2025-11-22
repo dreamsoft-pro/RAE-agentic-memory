@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: ./apps/memory_api/Dockerfile
-    command: uvicorn apps.memory-api.main:app --reload --host 0.0.0.0 --port 8000
+    command: uvicorn apps.memory_api.main:app --reload --host 0.0.0.0 --port 8000
     volumes:
       - ./apps/memory_api:/app
       - ./sdk/python/rae_memory_sdk:/app/sdk/python/rae_memory_sdk
@@ -25,7 +25,7 @@ services:
     build:
       context: .
       dockerfile: ./apps/reranker-service/Dockerfile
-    command: uvicorn apps.reranker-service.main:app --reload --host 0.0.0.0 --port 8001
+    command: uvicorn main:app --reload --host 0.0.0.0 --port 8001
     volumes:
       - ./apps/reranker-service:/app
     healthcheck:

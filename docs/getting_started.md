@@ -52,7 +52,7 @@ The RAE Memory API is configured using environment variables.
 2.  **Edit the `.env` file**:
     Open the `.env` file and configure it for your setup. The most important variables are:
     -   `DATABASE_URL`: The connection string for the PostgreSQL database. The default should work with the Docker Compose setup.
-    -   `VECTOR_STORE_BACKEND`: The vector store to use. Can be `qdrant` or `pgvector`.
+    -   `RAE_VECTOR_BACKEND`: The vector store to use. Can be `qdrant` or `pgvector`.
     -   `REDIS_URL`: The connection string for Redis. The default should work.
     -   `RAE_LLM_BACKEND`: The LLM backend to use. Options are `gemini`, `openai`, `ollama`, `anthropic`.
     -   `RAE_LLM_MODEL_DEFAULT`: The default model to use for the selected backend.

@@ -121,8 +121,49 @@ RAE implements a **4-layer cognitive memory system** inspired by human cognition
 ```
 
 **Key Components:**
+
+### Microservices Architecture (v2.0)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      RAE Memory API (Port 8000)                  │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │  API Layer (FastAPI)                                      │   │
+│  ├──────────────────────────────────────────────────────────┤   │
+│  │  Services (Business Logic)                                │   │
+│  │  • HybridSearchService  • ReflectionEngine                │   │
+│  │  • EntityResolution (orchestrator)                        │   │
+│  ├──────────────────────────────────────────────────────────┤   │
+│  │  Repositories (Data Access Layer - DAO Pattern)           │   │
+│  │  • GraphRepository  • MemoryRepository                    │   │
+│  └──────────────────────────────────────────────────────────┘   │
+└───────────────────────────┬─────────────────────────────────────┘
+                            │
+                ┌───────────┴───────────┐
+                │                       │
+                ▼                       ▼
+┌───────────────────────────┐  ┌──────────────────────────────┐
+│   ML Service (Port 8001)   │  │   Storage Layer              │
+│  ┌────────────────────────┤  │ • PostgreSQL (pgvector)      │
+│  │  Heavy ML Operations:  │  │ • Qdrant Vector DB           │
+│  │  • Entity Resolution   │  │ • Redis Cache                │
+│  │  • Embeddings          │  └──────────────────────────────┘
+│  │  • NLP Processing      │
+│  └────────────────────────┘
+└────────────────────────────┘
+```
+
+**Architecture Highlights:**
+- **Separation of Concerns**: DAO pattern isolates database operations from business logic
+- **Microservices**: Heavy ML dependencies (PyTorch, transformers) isolated in separate service
+- **Lightweight Main API**: Faster startup, smaller Docker images (~500MB vs 3-5GB)
+- **Scalable**: ML service can be scaled independently based on load
+- **Clean Architecture**: Repository pattern, dependency injection, testable code
+
+**Components:**
 - **Vector Store** (Qdrant/pgvector) - Semantic search across memories
 - **Knowledge Graph** (PostgreSQL) - Entity relationships and connections
+- **ML Service** - Entity resolution, embeddings, NLP processing (isolated)
 - **Reflection Engine** - LLM-powered insight extraction
 - **Context Cache** (Redis) - Cost-aware caching layer
 - **MCP Server** - IDE integration for Cursor, VSCode, Claude Desktop
@@ -204,11 +245,17 @@ cd RAE-agentic-memory
 cp .env.example .env
 # Edit .env with your LLM API keys
 
-# Start all services
+# Start all services (including ML service)
 docker-compose up -d
+
+# Services will be available at:
+# - Memory API: http://localhost:8000
+# - ML Service: http://localhost:8001
+# - Dashboard: http://localhost:8501
 
 # Check health
 curl http://localhost:8000/health
+curl http://localhost:8001/health
 ```
 
 ### Manual Setup

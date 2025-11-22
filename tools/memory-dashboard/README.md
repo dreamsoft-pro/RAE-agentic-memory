@@ -1,6 +1,6 @@
 # RAE Memory Dashboard
 
-Enterprise-grade Streamlit dashboard for visualizing and managing RAE (Reflective Agentic-memory Engine) agent memories.
+Enterprise-grade Streamlit dashboard for visualizing and managing RAE (Reflective Agentic Memory Engine) agent memories.
 
 ![RAE Dashboard](https://img.shields.io/badge/Status-Production-green)
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)

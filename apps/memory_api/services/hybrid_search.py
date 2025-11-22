@@ -14,40 +14,16 @@ between entities in the knowledge graph.
 
 from typing import List, Dict, Any, Optional, Set, Tuple
 from pydantic import BaseModel, Field
-from enum import Enum
 import asyncpg
 import structlog
 
 from apps.memory_api.services.vector_store import get_vector_store
 from apps.memory_api.services.embedding import get_embedding_service
 from apps.memory_api.models import ScoredMemoryRecord
+from apps.memory_api.models.graph import GraphNode, GraphEdge, TraversalStrategy
+from apps.memory_api.repositories.graph_repository import GraphRepository
 
 logger = structlog.get_logger(__name__)
-
-
-class TraversalStrategy(str, Enum):
-    """Graph traversal strategies."""
-    BFS = "bfs"  # Breadth-first search
-    DFS = "dfs"  # Depth-first search
-
-
-class GraphNode(BaseModel):
-    """Represents a node in the knowledge graph."""
-
-    id: str
-    node_id: str
-    label: str
-    properties: Optional[Dict[str, Any]] = None
-    depth: int = 0  # Distance from start node
-
-
-class GraphEdge(BaseModel):
-    """Represents an edge in the knowledge graph."""
-
-    source_id: str
-    target_id: str
-    relation: str
-    properties: Optional[Dict[str, Any]] = None
 
 
 class HybridSearchResult(BaseModel):
@@ -103,6 +79,7 @@ class HybridSearchService:
         """
         self.pool = pool
         self.embedding_service = get_embedding_service()
+        self.graph_repository = GraphRepository(pool)
 
     async def search(
         self,
@@ -338,26 +315,15 @@ class HybridSearchService:
     async def _find_relevant_communities(self, query: str, tenant_id: str, project_id: str) -> List[Dict]:
         """
         Find community nodes relevant to the query.
+
+        Delegates to GraphRepository for database access.
         """
-        async with self.pool.acquire() as conn:
-            # Simple keyword matching for now.
-            # In a full implementation, we would embed the query and search against community embeddings.
-            records = await conn.fetch(
-                """
-                SELECT id, label, properties
-                FROM knowledge_graph_nodes
-                WHERE tenant_id = $1 AND project_id = $2
-                AND (properties->>'type') = 'community'
-                AND (
-                    label ILIKE '%' || $3 || '%'
-                    OR (properties->>'summary') ILIKE '%' || $3 || '%'
-                    OR (properties->>'themes')::text ILIKE '%' || $3 || '%'
-                )
-                LIMIT 3
-                """,
-                tenant_id, project_id, query
-            )
-            return [dict(r) for r in records]
+        return await self.graph_repository.find_relevant_communities(
+            query=query,
+            tenant_id=tenant_id,
+            project_id=project_id,
+            limit=3
+        )
 
     async def _map_memories_to_nodes(
         self,
@@ -371,6 +337,8 @@ class HybridSearchService:
         This attempts to find graph nodes that correspond to the
         content of retrieved memories by matching entity names.
 
+        Delegates to GraphRepository for database access.
+
         Args:
             memory_results: Vector search results
             tenant_id: Tenant identifier
@@ -382,38 +350,21 @@ class HybridSearchService:
         if not memory_results:
             return []
 
-        # Extract memory IDs
-        memory_ids = [result.id for result in memory_results]
+        # Find nodes linked to these memories through content matching
+        node_ids = []
 
-        # Find nodes linked to these memories through metadata or content matching
-        async with self.pool.acquire() as conn:
-            # Simple strategy: find nodes whose labels appear in memory content
-            # More sophisticated approaches could use entity linking
-            node_ids = []
+        for memory in memory_results:
+            # Look for nodes that match entities mentioned in the memory
+            matched_nodes = await self.graph_repository.find_nodes_by_content_match(
+                content=memory.content,
+                tenant_id=tenant_id,
+                project_id=project_id,
+                limit=5
+            )
+            node_ids.extend(matched_nodes)
 
-            for memory in memory_results:
-                # Look for nodes that match entities mentioned in the memory
-                nodes = await conn.fetch(
-                    """
-                    SELECT DISTINCT node_id
-                    FROM knowledge_graph_nodes
-                    WHERE tenant_id = $1
-                    AND project_id = $2
-                    AND (
-                        $3 ILIKE '%' || label || '%'
-                        OR label ILIKE '%' || $3 || '%'
-                    )
-                    LIMIT 5
-                    """,
-                    tenant_id,
-                    project_id,
-                    memory.content[:500]  # Use first 500 chars for matching
-                )
-
-                node_ids.extend([node['node_id'] for node in nodes])
-
-            # Return unique node IDs
-            return list(set(node_ids))
+        # Return unique node IDs
+        return list(set(node_ids))
 
     async def _traverse_graph(
         self,
@@ -426,6 +377,8 @@ class HybridSearchService:
         """
         Traverse the knowledge graph starting from given nodes.
 
+        Delegates to GraphRepository for actual graph traversal operations.
+
         Args:
             start_node_ids: Starting node IDs
             tenant_id: Tenant identifier
@@ -437,146 +390,13 @@ class HybridSearchService:
             Tuple of (discovered nodes, discovered edges)
         """
         if strategy == TraversalStrategy.BFS:
-            return await self._traverse_bfs(
+            return await self.graph_repository.traverse_graph_bfs(
                 start_node_ids, tenant_id, project_id, depth
             )
         else:
-            return await self._traverse_dfs(
+            return await self.graph_repository.traverse_graph_dfs(
                 start_node_ids, tenant_id, project_id, depth
             )
-
-    async def _traverse_bfs(
-        self,
-        start_node_ids: List[str],
-        tenant_id: str,
-        project_id: str,
-        max_depth: int
-    ) -> Tuple[List[GraphNode], List[GraphEdge]]:
-        """
-        Breadth-first search graph traversal.
-
-        Args:
-            start_node_ids: Starting node IDs
-            tenant_id: Tenant identifier
-            project_id: Project identifier
-            max_depth: Maximum depth to traverse
-
-        Returns:
-            Tuple of (discovered nodes, discovered edges)
-        """
-        async with self.pool.acquire() as conn:
-            # Use recursive CTE for efficient graph traversal
-            records = await conn.fetch(
-                """
-                WITH RECURSIVE graph_traverse AS (
-                    -- Base case: start nodes
-                    SELECT
-                        n.id,
-                        n.node_id,
-                        n.label,
-                        n.properties,
-                        0 as depth
-                    FROM knowledge_graph_nodes n
-                    WHERE n.tenant_id = $1
-                    AND n.project_id = $2
-                    AND n.node_id = ANY($3)
-
-                    UNION
-
-                    -- Recursive case: traverse edges
-                    SELECT
-                        n.id,
-                        n.node_id,
-                        n.label,
-                        n.properties,
-                        gt.depth + 1
-                    FROM graph_traverse gt
-                    JOIN knowledge_graph_edges e ON gt.id = e.source_node_id
-                    JOIN knowledge_graph_nodes n ON e.target_node_id = n.id
-                    WHERE gt.depth < $4
-                    AND n.tenant_id = $1
-                    AND n.project_id = $2
-                )
-                SELECT DISTINCT ON (id) * FROM graph_traverse
-                ORDER BY id, depth;
-                """,
-                tenant_id,
-                project_id,
-                start_node_ids,
-                max_depth
-            )
-
-            # Convert to GraphNode objects
-            nodes = [
-                GraphNode(
-                    id=str(record['id']),
-                    node_id=record['node_id'],
-                    label=record['label'],
-                    properties=record['properties'],
-                    depth=record['depth']
-                )
-                for record in records
-            ]
-
-            # Get edges between discovered nodes
-            node_internal_ids = [node.id for node in nodes]
-
-            edge_records = await conn.fetch(
-                """
-                SELECT
-                    e.id,
-                    e.source_node_id,
-                    e.target_node_id,
-                    e.relation,
-                    e.properties
-                FROM knowledge_graph_edges e
-                WHERE e.tenant_id = $1
-                AND e.project_id = $2
-                AND e.source_node_id::text = ANY($3)
-                AND e.target_node_id::text = ANY($3)
-                """,
-                tenant_id,
-                project_id,
-                node_internal_ids
-            )
-
-            edges = [
-                GraphEdge(
-                    source_id=str(record['source_node_id']),
-                    target_id=str(record['target_node_id']),
-                    relation=record['relation'],
-                    properties=record['properties']
-                )
-                for record in edge_records
-            ]
-
-            return nodes, edges
-
-    async def _traverse_dfs(
-        self,
-        start_node_ids: List[str],
-        tenant_id: str,
-        project_id: str,
-        max_depth: int
-    ) -> Tuple[List[GraphNode], List[GraphEdge]]:
-        """
-        Depth-first search graph traversal (iterative implementation).
-
-        Args:
-            start_node_ids: Starting node IDs
-            tenant_id: Tenant identifier
-            project_id: Project identifier
-            max_depth: Maximum depth to traverse
-
-        Returns:
-            Tuple of (discovered nodes, discovered edges)
-        """
-        # For simplicity, DFS uses same SQL as BFS
-        # A true DFS would require different logic or iterative processing
-        # This implementation provides the same result set with different ordering
-        return await self._traverse_bfs(
-            start_node_ids, tenant_id, project_id, max_depth
-        )
 
     async def _synthesize_context(
         self,

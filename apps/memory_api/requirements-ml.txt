@@ -1,5 +1,5 @@
 # ML requirements for RAE Memory API (Heavy - Optional)
-# Only needed if running embeddings/reranking locally instead of using external services
+# Only needed if running embeddings/reranking/graph analysis locally instead of using external services
 # Total size: ~3-4GB
 
 # WARNING: These dependencies make Docker image very large
@@ -11,6 +11,13 @@ sentence-transformers==2.2.2
 # NLP & Entity Recognition
 spacy
 en-core-web-lg @ https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.7.1/en_core_web_lg-3.7.1-py3-none-any.whl
+
+# Machine Learning & Entity Resolution
+scikit-learn
+
+# Graph Analysis & Community Detection
+networkx
+python-louvain
 
 # PII Detection (Local)
 presidio-analyzer
