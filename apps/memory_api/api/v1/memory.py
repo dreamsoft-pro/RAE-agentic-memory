@@ -16,6 +16,7 @@ from apps.memory_api.services.vector_store import get_vector_store # NEW
 from apps.memory_api.services.embedding import get_embedding_service # NEW
 from apps.memory_api.services.hybrid_search import HybridSearchService  # NEW
 from apps.memory_api.repositories.memory_repository import MemoryRepository  # NEW
+from apps.memory_api.dependencies import get_hybrid_search_service  # NEW
 from apps.memory_api.metrics import memory_store_counter, memory_query_counter, memory_delete_counter, deduplication_hit_counter
 from apps.memory_api.tasks.background_tasks import generate_reflection_for_project # NEW
 from qdrant_client import models
@@ -96,7 +97,11 @@ async def store_memory(req: StoreMemoryRequest, request: Request):
     return StoreMemoryResponse(id=memory_record.id)
 
 @router.post("/query", response_model=QueryMemoryResponse)
-async def query_memory(req: QueryMemoryRequest, request: Request):
+async def query_memory(
+    req: QueryMemoryRequest,
+    request: Request,
+    hybrid_search: HybridSearchService = Depends(get_hybrid_search_service)
+):
     """
     Queries the memory for relevant records based on a query text.
 
@@ -106,6 +111,11 @@ async def query_memory(req: QueryMemoryRequest, request: Request):
 
     Hybrid search combines semantic similarity with knowledge graph relationships
     to provide richer, more contextual results.
+
+    Args:
+        req: Query request parameters
+        request: FastAPI request object
+        hybrid_search: HybridSearchService (injected via DI)
     """
     tenant_id = request.headers.get("X-Tenant-Id")
     if not tenant_id:
@@ -128,8 +138,7 @@ async def query_memory(req: QueryMemoryRequest, request: Request):
         )
 
         try:
-            # Initialize hybrid search service
-            hybrid_search = HybridSearchService(request.app.state.pool)
+            # Use injected hybrid search service
 
             # Perform hybrid search
             hybrid_result = await hybrid_search.search(

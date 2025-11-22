@@ -75,7 +75,11 @@ class Settings(BaseSettings):
     # Memory lifecycle settings
     MEMORY_RETENTION_DAYS: int = 30
     MEMORY_DECAY_RATE: float = 0.99
-    
+
+    # Logging configuration
+    LOG_LEVEL: str = "WARNING"  # For external libraries (uvicorn, asyncpg, etc.)
+    RAE_APP_LOG_LEVEL: str = "INFO"  # For RAE application logs
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

@@ -115,21 +115,27 @@ else
 
         case $choice in
             1)
-                read -p "Enter your OpenAI API key: " api_key
+                echo -n "Enter your OpenAI API key (input hidden): "
+                read -s api_key
+                echo ""  # New line after enter
                 if [ -n "$api_key" ]; then
                     sed -i "s/OPENAI_API_KEY=.*/OPENAI_API_KEY=$api_key/" .env
                     log_success "OpenAI API key configured"
                 fi
                 ;;
             2)
-                read -p "Enter your Anthropic API key: " api_key
+                echo -n "Enter your Anthropic API key (input hidden): "
+                read -s api_key
+                echo ""  # New line after enter
                 if [ -n "$api_key" ]; then
                     sed -i "s/ANTHROPIC_API_KEY=.*/ANTHROPIC_API_KEY=$api_key/" .env
                     log_success "Anthropic API key configured"
                 fi
                 ;;
             3)
-                read -p "Enter your Google Gemini API key: " api_key
+                echo -n "Enter your Google Gemini API key (input hidden): "
+                read -s api_key
+                echo ""  # New line after enter
                 if [ -n "$api_key" ]; then
                     sed -i "s/GEMINI_API_KEY=.*/GEMINI_API_KEY=$api_key/" .env
                     log_success "Google Gemini API key configured"
@@ -139,6 +145,12 @@ else
                 log_info "Skipping API key configuration"
                 ;;
         esac
+    fi
+
+    # Set secure permissions on .env file (owner read/write only)
+    if [ -f ".env" ]; then
+        chmod 600 .env
+        log_success "Secure permissions set on .env file (600)"
     fi
 fi
 

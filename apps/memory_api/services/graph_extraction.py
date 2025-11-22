@@ -225,25 +225,24 @@ class GraphExtractionService:
     Architecture:
     - Uses MemoryRepository for memory data access
     - Uses GraphRepository for knowledge graph operations
-    - Follows clean Repository/DAO pattern
+    - Follows clean Repository/DAO pattern with full Dependency Injection
     """
 
-    def __init__(self, pool: asyncpg.Pool):
+    def __init__(
+        self,
+        memory_repo: 'MemoryRepository',
+        graph_repo: 'GraphRepository'
+    ):
         """
         Initialize the graph extraction service.
 
         Args:
-            pool: AsyncPG connection pool for database operations
+            memory_repo: MemoryRepository instance for accessing episodic memories
+            graph_repo: GraphRepository instance for knowledge graph operations
         """
-        self.pool = pool
+        self.memory_repo = memory_repo
+        self.graph_repo = graph_repo
         self.llm_provider = get_llm_provider()
-
-        # Initialize repositories
-        from apps.memory_api.repositories.memory_repository import MemoryRepository
-        from apps.memory_api.repositories.graph_repository import GraphRepository
-
-        self.memory_repo = MemoryRepository(pool)
-        self.graph_repo = GraphRepository(pool)
 
     async def extract_knowledge_graph(
         self,

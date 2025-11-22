@@ -68,18 +68,24 @@ class HybridSearchService:
     - Context synthesis from multiple sources
     - Performance metrics and logging
     - Relevance scoring
+    - Full Dependency Injection for testability
     """
 
-    def __init__(self, pool: asyncpg.Pool):
+    def __init__(
+        self,
+        graph_repo: GraphRepository,
+        pool: asyncpg.Pool  # Still needed for vector store
+    ):
         """
         Initialize hybrid search service.
 
         Args:
-            pool: AsyncPG connection pool for database operations
+            graph_repo: GraphRepository instance for knowledge graph operations
+            pool: AsyncPG connection pool for vector store operations
         """
         self.pool = pool
+        self.graph_repository = graph_repo
         self.embedding_service = get_embedding_service()
-        self.graph_repository = GraphRepository(pool)
 
     async def search(
         self,

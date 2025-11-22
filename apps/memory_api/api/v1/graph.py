@@ -12,7 +12,7 @@ from typing import Optional, List, Dict, Any
 from fastapi import APIRouter, Request, HTTPException, Query, Depends
 from pydantic import BaseModel, Field
 
-from apps.memory_api.dependencies import get_api_key
+from apps.memory_api.dependencies import get_api_key, get_hybrid_search_service
 from apps.memory_api.services.graph_extraction import GraphExtractionResult, GraphTriple
 from apps.memory_api.services.reflection_engine import ReflectionEngine
 from apps.memory_api.services.hybrid_search import HybridSearchService, HybridSearchResult, TraversalStrategy
@@ -588,7 +588,8 @@ async def get_graph_edges(
 @router.post("/query", response_model=HybridSearchResult)
 async def query_knowledge_graph(
     req: GraphSearchRequest,
-    request: Request
+    request: Request,
+    hybrid_search: HybridSearchService = Depends(get_hybrid_search_service)
 ):
     """
     Advanced knowledge graph search with hybrid retrieval.
@@ -608,6 +609,7 @@ async def query_knowledge_graph(
     Args:
         req: Graph search request parameters
         request: FastAPI request object (for tenant context)
+        hybrid_search: HybridSearchService (injected via DI)
 
     Returns:
         HybridSearchResult with vector matches, graph data, and synthesized context
@@ -638,10 +640,7 @@ async def query_knowledge_graph(
     )
 
     try:
-        # Initialize hybrid search service
-        hybrid_search = HybridSearchService(request.app.state.pool)
-
-        # Perform comprehensive hybrid search
+        # Perform comprehensive hybrid search (service injected via DI)
         result = await hybrid_search.search(
             query=req.query,
             tenant_id=tenant_id,
@@ -685,7 +684,8 @@ async def get_subgraph(
     request: Request,
     project_id: str = Query(..., description="Project identifier"),
     node_ids: str = Query(..., description="Comma-separated node IDs to start from"),
-    depth: int = Query(default=1, ge=1, le=5, description="Traversal depth")
+    depth: int = Query(default=1, ge=1, le=5, description="Traversal depth"),
+    hybrid_search: HybridSearchService = Depends(get_hybrid_search_service)
 ):
     """
     Retrieve a subgraph starting from specific nodes.
@@ -700,6 +700,7 @@ async def get_subgraph(
         project_id: Project identifier
         node_ids: Comma-separated list of starting node IDs
         depth: Maximum traversal depth
+        hybrid_search: HybridSearchService (injected via DI)
 
     Returns:
         GraphQueryResponse with nodes and edges in the subgraph
@@ -726,8 +727,7 @@ async def get_subgraph(
     )
 
     try:
-        # Initialize hybrid search for graph traversal
-        hybrid_search = HybridSearchService(request.app.state.pool)
+        # Graph traversal using injected service
 
         # Perform graph traversal
         nodes, edges = await hybrid_search._traverse_bfs(

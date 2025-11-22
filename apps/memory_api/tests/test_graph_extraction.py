@@ -37,8 +37,19 @@ def mock_llm_provider():
 
 @pytest.fixture
 def extraction_service(mock_pool, mock_llm_provider):
-    """Create extraction service with mocks."""
-    service = GraphExtractionService(mock_pool)
+    """Create extraction service with mocks (using DI pattern)."""
+    # Create mock repositories
+    from apps.memory_api.repositories.memory_repository import MemoryRepository
+    from apps.memory_api.repositories.graph_repository import GraphRepository
+
+    mock_memory_repo = Mock(spec=MemoryRepository)
+    mock_graph_repo = Mock(spec=GraphRepository)
+
+    # Create service with injected repositories
+    service = GraphExtractionService(
+        memory_repo=mock_memory_repo,
+        graph_repo=mock_graph_repo
+    )
     service.llm_provider = mock_llm_provider
     return service
 
@@ -159,17 +170,27 @@ class TestGraphExtractionService:
     """Tests for GraphExtractionService."""
 
     async def test_service_initialization(self, mock_pool, mock_llm_provider):
-        """Test service initialization."""
-        service = GraphExtractionService(mock_pool)
+        """Test service initialization with DI pattern."""
+        from apps.memory_api.repositories.memory_repository import MemoryRepository
+        from apps.memory_api.repositories.graph_repository import GraphRepository
+
+        mock_memory_repo = Mock(spec=MemoryRepository)
+        mock_graph_repo = Mock(spec=GraphRepository)
+
+        service = GraphExtractionService(
+            memory_repo=mock_memory_repo,
+            graph_repo=mock_graph_repo
+        )
         service.llm_provider = mock_llm_provider
 
-        assert service.pool is mock_pool
+        assert service.memory_repo is mock_memory_repo
+        assert service.graph_repo is mock_graph_repo
         assert service.llm_provider is mock_llm_provider
 
     async def test_fetch_episodic_memories(self, extraction_service, mock_pool):
-        """Test fetching episodic memories."""
-        # Mock database response using the exposed conn object
-        mock_pool._test_conn.fetch = AsyncMock(return_value=[
+        """Test fetching episodic memories via repository."""
+        # Mock the repository method instead of direct DB access
+        extraction_service.memory_repo.get_episodic_memories = AsyncMock(return_value=[
             {
                 "id": "mem1",
                 "content": "Test memory",
@@ -212,8 +233,8 @@ class TestGraphExtractionService:
 
     async def test_extract_knowledge_graph_empty(self, extraction_service, mock_pool):
         """Test extraction with no memories."""
-        # Mock empty database response
-        mock_pool._test_conn.fetch = AsyncMock(return_value=[])
+        # Mock repository to return no memories
+        extraction_service.memory_repo.get_episodic_memories = AsyncMock(return_value=[])
 
         result = await extraction_service.extract_knowledge_graph(
             project_id="proj1",
@@ -230,8 +251,8 @@ class TestGraphExtractionService:
 
     async def test_extract_knowledge_graph_success(self, extraction_service, mock_pool):
         """Test successful graph extraction."""
-        # Mock database with memories using the new helper
-        mock_pool._test_conn.fetch = AsyncMock(return_value=[
+        # Mock repository to return memories
+        extraction_service.memory_repo.get_episodic_memories = AsyncMock(return_value=[
             {
                 "id": "mem1",
                 "content": "Module A depends on Module B",
@@ -281,21 +302,17 @@ class TestGraphExtractionService:
         assert all(t.confidence >= 0.5 for t in result.triples)
 
     async def test_store_graph_triples(self, extraction_service, mock_pool):
-        """Test storing extracted triples in database."""
+        """Test storing extracted triples via repository."""
         triples = [
             GraphTriple(source="A", relation="DEPENDS_ON", target="B", confidence=0.9),
             GraphTriple(source="B", relation="USES", target="C", confidence=0.8)
         ]
 
-        # Mock database operations
-        conn = mock_pool._test_conn
-        conn.execute = AsyncMock(return_value="INSERT 0 1")
-        conn.fetchrow = AsyncMock(side_effect=[
-            {"id": "node-a-id"},  # source node A
-            {"id": "node-b-id"},  # target node B
-            {"id": "node-b-id"},  # source node B
-            {"id": "node-c-id"}   # target node C
-        ])
+        # Mock repository operation
+        extraction_service.graph_repo.store_graph_triples = AsyncMock(return_value={
+            "nodes_created": 3,
+            "edges_created": 2
+        })
 
         result = await extraction_service.store_graph_triples(
             triples=triples,
@@ -311,8 +328,8 @@ class TestGraphExtractionService:
         # Make LLM fail
         extraction_service.llm_provider.generate_structured = AsyncMock(side_effect=Exception("LLM Error"))
 
-        # Mock memories
-        mock_pool._test_conn.fetch = AsyncMock(return_value=[
+        # Mock repository to return memories
+        extraction_service.memory_repo.get_episodic_memories = AsyncMock(return_value=[
             {"id": "1", "content": "Test", "created_at": datetime.now(), "tags": [], "source": "test"}
         ])
 
@@ -328,9 +345,9 @@ class TestGraphExtractionIntegration:
     """Integration tests for full extraction pipeline."""
 
     async def test_end_to_end_extraction(self, extraction_service, mock_pool):
-        """Test complete extraction flow."""
-        # Setup mocks
-        mock_pool._test_conn.fetch = AsyncMock(return_value=[
+        """Test complete extraction flow with DI pattern."""
+        # Mock repository to return memories
+        extraction_service.memory_repo.get_episodic_memories = AsyncMock(return_value=[
             {
                 "id": "mem1",
                 "content": "User authentication module depends on database service",

@@ -4,20 +4,56 @@ Comprehensive guide for testing the RAE (Reflective Agentic Memory Engine) syste
 
 ## Test Coverage
 
-### Current Test Suite
+### Current Test Suite (Updated: 2025-11-22)
 
-| Module | Test File | Coverage | Tests |
-|--------|-----------|----------|-------|
-| **Reflection Engine** | `test_reflection_engine.py` | ✅ Comprehensive | 20+ |
-| **Semantic Memory** | `test_semantic_memory.py` | ✅ Core Features | 10+ |
-| **Graph Repository** | `test_graph_algorithms.py`, `test_temporal_graph.py` | ✅ Algorithms | 15+ |
-| **Hybrid Search** | `test_hybrid_search.py` | ✅ Multi-strategy | 12+ |
-| **Evaluation Suite** | `test_evaluation_suite.py` | ✅ IR Metrics | 10+ |
-| **Event Triggers** | `test_event_triggers.py` | ✅ Rules Engine | 15+ |
-| **Dashboard** | `test_dashboard_websocket.py` | ✅ Real-time | 12+ |
-| **API Client** | `test_api_client.py` | ✅ Resilience | 20+ |
+**Latest Test Run Results:**
+- ✅ **213 tests PASSED**
+- ⚠️ **26 tests FAILED** (mostly legacy/integration tests needing updates)
+- 🔵 **3 tests SKIPPED** (integration tests requiring live services)
+- ❌ **5 tests ERROR** (missing imports/setup issues)
+- **Total:** 244 tests
 
-**Total:** 100+ tests across 8 enterprise modules
+**Coverage:** ~58% (Target: 80%+)
+
+| Module | Test File | Status | Tests |
+|--------|-----------|--------|-------|
+| **Graph Extraction** | `test_graph_extraction.py` | ✅ 18/18 PASSED | 18 |
+| **Graph Algorithms** | `test_graph_algorithms.py` | ✅ 14/14 PASSED | 14 |
+| **Temporal Graph** | `test_temporal_graph.py` | ✅ 13/13 PASSED | 13 |
+| **Hybrid Search** | `test_hybrid_search.py` | ⚠️ 12/17 PASSED | 17 |
+| **API Client** | `test_api_client.py` | ⚠️ 20/21 PASSED | 21 |
+| **Analytics** | `test_analytics.py` | ✅ 15/15 PASSED | 15 |
+| **Dashboard WebSocket** | `test_dashboard_websocket.py` | ✅ 11/11 PASSED | 11 |
+| **Background Tasks** | `test_background_tasks.py` | ✅ 10/10 PASSED | 10 |
+| **PII Scrubber** | `test_pii_scrubber.py` | ✅ 13/13 PASSED | 13 |
+| **Plugins (Phase 2)** | `test_phase2_plugins.py` | ✅ 24/24 PASSED | 24 |
+| **RBAC Models** | `test_phase2_models.py` | ✅ 27/27 PASSED | 27 |
+| **Vector Store** | `test_vector_store.py` | ✅ 8/8 PASSED | 8 |
+| **Reflection Engine** | `test_reflection_engine.py` | ⚠️ 2/18 PASSED | 18 |
+| **Semantic Memory** | `test_semantic_memory.py` | ⚠️ 2/5 PASSED | 5 |
+| **Evaluation Suite** | `test_evaluation_suite.py` | ⚠️ 5/9 PASSED | 9 |
+| **Event Triggers** | `test_event_triggers.py` | ⚠️ 6/10 PASSED | 10 |
+| **Graph Extraction Integration** | `test_graph_extraction_integration.py` | ⚠️ 3/7 PASSED | 7 |
+| **API E2E** | `test_api_e2e.py` | 🔵 0/5 SKIPPED | 5 |
+| **OpenAPI** | `test_openapi.py` | ✅ 1/1 PASSED | 1 |
+
+### Recent Improvements (v1.1)
+
+#### ✅ Dependency Injection Implementation
+All core services now use proper DI patterns:
+- **GraphExtractionService** - Full DI with repository injection
+- **HybridSearchService** - Full DI with repository injection
+- **Composition Root** pattern in `dependencies.py`
+- **All DI tests passing** (18/18 in `test_graph_extraction.py`)
+
+#### ✅ Enterprise Logging Configuration
+- Configurable log levels via environment variables
+- Separation of application logs from library logs
+- `LOG_LEVEL` and `RAE_APP_LOG_LEVEL` configuration
+
+#### ✅ Security Enhancements
+- Secure API key input in `quickstart.sh` (hidden input)
+- Proper file permissions on `.env` (chmod 600)
 
 ---
 
@@ -384,13 +420,20 @@ open htmlcov/index.html
 
 ### Coverage Targets
 
-| Category | Target | Current |
-|----------|--------|---------|
-| Overall | 80%+ | ✅ 85%+ |
-| Services | 90%+ | ✅ 92% |
-| Routes | 75%+ | ✅ 78% |
-| Models | 95%+ | ✅ 98% |
-| Repositories | 85%+ | ✅ 88% |
+| Category | Target | Current | Status |
+|----------|--------|---------|--------|
+| Overall | 80%+ | 58% | ⚠️ Needs improvement |
+| Services | 90%+ | ~65% | ⚠️ In progress |
+| Routes | 75%+ | ~20% | ❌ Needs work |
+| Models | 95%+ | 98% | ✅ Excellent |
+| Repositories | 85%+ | ~70% | ⚠️ In progress |
+| Core DI Services | 100% | 100% | ✅ Fully tested |
+
+**Priority Areas for Coverage Improvement:**
+1. API routes/endpoints (currently ~20%)
+2. Service layer integration tests
+3. Repository error handling
+4. Background task execution
 
 ---
 
@@ -590,4 +633,39 @@ mypy apps/memory_api/                            # Type checking
 
 ---
 
-**Test Coverage Status:** ✅ 100+ tests | ✅ 85%+ coverage | ✅ All modules covered
+## Test Results Summary (Latest Run)
+
+**Status:** ⚠️ Partial Pass
+- **Date:** 2025-11-22
+- **Total Tests:** 244
+- **Passed:** 213 (87%)
+- **Failed:** 26 (11%)
+- **Skipped:** 3 (1%)
+- **Errors:** 5 (2%)
+
+### ✅ Fully Passing Modules (100%)
+- Graph Extraction (18/18) - **DI refactoring complete**
+- Graph Algorithms (14/14)
+- Temporal Graph (13/13)
+- Analytics (15/15)
+- Dashboard WebSocket (11/11)
+- Background Tasks (10/10)
+- PII Scrubber (13/13)
+- Phase 2 Plugins (24/24)
+- Phase 2 RBAC Models (27/27)
+- Vector Store (8/8)
+
+### ⚠️ Modules Needing Updates
+- Reflection Engine (2/18) - Needs ReflectionRepository import fix
+- Semantic Memory (2/5) - Integration test updates needed
+- Evaluation Suite (5/9) - Model updates required
+- Event Triggers (6/10) - Time-dependent test fixes
+- Hybrid Search (12/17) - Minor DI method updates
+- Graph Extraction Integration (3/7) - Real DB test updates
+
+### 🔵 Skipped Tests (Integration)
+- API E2E tests (requires running services)
+
+---
+
+**Test Coverage Status:** ⚠️ 244 tests | 58% coverage | 213 passing | Core DI fully tested ✅

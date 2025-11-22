@@ -26,8 +26,17 @@ def mock_embedding_service():
 
 @pytest.fixture
 def hybrid_search(mock_pool, mock_embedding_service):
-    """Create hybrid search service with mocks."""
-    service = HybridSearchService(mock_pool)
+    """Create hybrid search service with mocks (using DI pattern)."""
+    # Create mock repository
+    from apps.memory_api.repositories.graph_repository import GraphRepository
+
+    mock_graph_repo = Mock(spec=GraphRepository)
+
+    # Create service with injected repository
+    service = HybridSearchService(
+        graph_repo=mock_graph_repo,
+        pool=mock_pool
+    )
     service.embedding_service = mock_embedding_service
     return service
 
