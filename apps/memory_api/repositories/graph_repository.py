@@ -392,3 +392,223 @@ class GraphRepository:
             )
 
             return [node['node_id'] for node in nodes]
+
+    async def create_node(
+        self,
+        tenant_id: str,
+        project_id: str,
+        node_id: str,
+        label: str,
+        properties: Dict[str, Any]
+    ) -> bool:
+        """
+        Create a knowledge graph node with conflict handling.
+
+        Args:
+            tenant_id: Tenant identifier for data isolation
+            project_id: Project identifier
+            node_id: Unique node identifier
+            label: Node label
+            properties: Node properties as dictionary (will be stored as JSONB)
+
+        Returns:
+            True if node was created, False if it already existed
+        """
+        import json
+
+        async with self.pool.acquire() as conn:
+            # Ensure properties is JSON-serializable
+            properties_json = json.dumps(properties) if properties else '{}'
+
+            result = await conn.execute(
+                """
+                INSERT INTO knowledge_graph_nodes
+                (tenant_id, project_id, node_id, label, properties)
+                VALUES ($1, $2, $3, $4, $5::jsonb)
+                ON CONFLICT (tenant_id, project_id, node_id) DO NOTHING
+                """,
+                tenant_id,
+                project_id,
+                node_id,
+                label,
+                properties_json
+            )
+
+            return result == "INSERT 0 1"
+
+    async def create_edge(
+        self,
+        tenant_id: str,
+        project_id: str,
+        source_node_internal_id: int,
+        target_node_internal_id: int,
+        relation: str,
+        properties: Dict[str, Any]
+    ) -> bool:
+        """
+        Create a knowledge graph edge with conflict handling.
+
+        Args:
+            tenant_id: Tenant identifier for data isolation
+            project_id: Project identifier
+            source_node_internal_id: Internal database ID of source node
+            target_node_internal_id: Internal database ID of target node
+            relation: Relationship type
+            properties: Edge properties as dictionary (will be stored as JSONB)
+
+        Returns:
+            True if edge was created, False if it already existed
+        """
+        import json
+
+        async with self.pool.acquire() as conn:
+            # Ensure properties is JSON-serializable
+            properties_json = json.dumps(properties) if properties else '{}'
+
+            result = await conn.execute(
+                """
+                INSERT INTO knowledge_graph_edges
+                (tenant_id, project_id, source_node_id, target_node_id, relation, properties)
+                VALUES ($1, $2, $3, $4, $5, $6::jsonb)
+                ON CONFLICT DO NOTHING
+                """,
+                tenant_id,
+                project_id,
+                source_node_internal_id,
+                target_node_internal_id,
+                relation,
+                properties_json
+            )
+
+            return result == "INSERT 0 1"
+
+    async def get_node_internal_id(
+        self,
+        tenant_id: str,
+        project_id: str,
+        node_id: str
+    ) -> Optional[int]:
+        """
+        Get internal database ID for a node by its node_id.
+
+        Args:
+            tenant_id: Tenant identifier for data isolation
+            project_id: Project identifier
+            node_id: The node identifier
+
+        Returns:
+            Internal database ID (int) or None if not found
+        """
+        async with self.pool.acquire() as conn:
+            record = await conn.fetchrow(
+                """
+                SELECT id FROM knowledge_graph_nodes
+                WHERE tenant_id = $1 AND project_id = $2 AND node_id = $3
+                """,
+                tenant_id,
+                project_id,
+                node_id
+            )
+
+            return record['id'] if record else None
+
+    async def store_graph_triples(
+        self,
+        triples: List[Dict[str, Any]],
+        tenant_id: str,
+        project_id: str
+    ) -> Dict[str, int]:
+        """
+        Store multiple graph triples (nodes and edges) in a single transaction.
+
+        This method handles the complete triple storage process:
+        1. Creates source and target nodes (if they don't exist)
+        2. Retrieves internal node IDs
+        3. Creates edges between nodes
+
+        Args:
+            triples: List of triple dictionaries with keys: source, target, relation, confidence, metadata
+            tenant_id: Tenant identifier for data isolation
+            project_id: Project identifier
+
+        Returns:
+            Dictionary with counts: {"nodes_created": int, "edges_created": int}
+        """
+        nodes_created = 0
+        edges_created = 0
+
+        async with self.pool.acquire() as conn:
+            async with conn.transaction():
+                for triple in triples:
+                    # Extract triple data
+                    source = triple.get('source')
+                    target = triple.get('target')
+                    relation = triple.get('relation')
+                    confidence = triple.get('confidence', 1.0)
+                    metadata = triple.get('metadata', {})
+
+                    # Create source node
+                    node_created = await self.create_node(
+                        tenant_id=tenant_id,
+                        project_id=project_id,
+                        node_id=source,
+                        label=source,
+                        properties=metadata
+                    )
+                    if node_created:
+                        nodes_created += 1
+
+                    # Create target node
+                    node_created = await self.create_node(
+                        tenant_id=tenant_id,
+                        project_id=project_id,
+                        node_id=target,
+                        label=target,
+                        properties=metadata
+                    )
+                    if node_created:
+                        nodes_created += 1
+
+                    # Get internal node IDs
+                    source_internal_id = await self.get_node_internal_id(
+                        tenant_id=tenant_id,
+                        project_id=project_id,
+                        node_id=source
+                    )
+
+                    target_internal_id = await self.get_node_internal_id(
+                        tenant_id=tenant_id,
+                        project_id=project_id,
+                        node_id=target
+                    )
+
+                    # Create edge if both nodes exist
+                    if source_internal_id and target_internal_id:
+                        edge_properties = {
+                            "confidence": confidence,
+                            **metadata
+                        }
+
+                        edge_created = await self.create_edge(
+                            tenant_id=tenant_id,
+                            project_id=project_id,
+                            source_node_internal_id=source_internal_id,
+                            target_node_internal_id=target_internal_id,
+                            relation=relation,
+                            properties=edge_properties
+                        )
+                        if edge_created:
+                            edges_created += 1
+
+        logger.info(
+            "graph_triples_stored",
+            project_id=project_id,
+            tenant_id=tenant_id,
+            nodes_created=nodes_created,
+            edges_created=edges_created
+        )
+
+        return {
+            "nodes_created": nodes_created,
+            "edges_created": edges_created
+        }

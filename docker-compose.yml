@@ -10,9 +10,9 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://rae:rae_password@postgres:5432/rae
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-rae}:${POSTGRES_PASSWORD:-rae_password}@postgres:5432/${POSTGRES_DB:-rae}
       - REDIS_URL=redis://redis:6379/0
-      - RAE_VECTOR_BACKEND=qdrant
+      - RAE_VECTOR_BACKEND=${RAE_VECTOR_BACKEND:-qdrant}
       - QDRANT_URL=http://qdrant:6333
       - ML_SERVICE_URL=http://ml-service:8001
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
@@ -60,9 +60,9 @@ services:
     image: ankane/pgvector:latest
     container_name: rae-postgres
     environment:
-      POSTGRES_DB: rae
-      POSTGRES_USER: rae
-      POSTGRES_PASSWORD: rae_password
+      POSTGRES_DB: ${POSTGRES_DB:-rae}
+      POSTGRES_USER: ${POSTGRES_USER:-rae}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-rae_password}
       POSTGRES_INITDB_ARGS: "-E UTF8 --locale=en_US.UTF-8"
     volumes:
       - postgres_data:/var/lib/postgresql/data

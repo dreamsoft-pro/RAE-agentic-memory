@@ -237,7 +237,8 @@ async def db_pool(postgres_container):
                     target_node_id INTEGER REFERENCES knowledge_graph_nodes(id) ON DELETE CASCADE,
                     relation VARCHAR(255) NOT NULL,
                     properties JSONB,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    UNIQUE(tenant_id, project_id, source_node_id, target_node_id, relation)
                 );
             """)
 

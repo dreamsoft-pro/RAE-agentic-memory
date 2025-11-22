@@ -248,7 +248,7 @@ class MemoryRepository:
             if limit:
                 records = await conn.fetch(
                     """
-                    SELECT id, content, tags, metadata, layer, created_at, timestamp
+                    SELECT id, content, tags, metadata, layer, created_at, timestamp, source
                     FROM memories
                     WHERE tenant_id = $1 AND project = $2 AND layer = 'em'
                     ORDER BY created_at DESC
@@ -261,7 +261,7 @@ class MemoryRepository:
             else:
                 records = await conn.fetch(
                     """
-                    SELECT id, content, tags, metadata, layer, created_at, timestamp
+                    SELECT id, content, tags, metadata, layer, created_at, timestamp, source
                     FROM memories
                     WHERE tenant_id = $1 AND project = $2 AND layer = 'em'
                     ORDER BY created_at DESC

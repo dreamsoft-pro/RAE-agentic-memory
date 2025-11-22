@@ -221,6 +221,11 @@ class GraphExtractionService:
     - Automatic entity deduplication
     - Performance metrics and logging
     - Error handling and retry logic
+
+    Architecture:
+    - Uses MemoryRepository for memory data access
+    - Uses GraphRepository for knowledge graph operations
+    - Follows clean Repository/DAO pattern
     """
 
     def __init__(self, pool: asyncpg.Pool):
@@ -232,6 +237,13 @@ class GraphExtractionService:
         """
         self.pool = pool
         self.llm_provider = get_llm_provider()
+
+        # Initialize repositories
+        from apps.memory_api.repositories.memory_repository import MemoryRepository
+        from apps.memory_api.repositories.graph_repository import GraphRepository
+
+        self.memory_repo = MemoryRepository(pool)
+        self.graph_repo = GraphRepository(pool)
 
     async def extract_knowledge_graph(
         self,
@@ -431,7 +443,7 @@ class GraphExtractionService:
         limit: int
     ) -> List[Dict[str, Any]]:
         """
-        Fetch recent episodic memories for extraction.
+        Fetch recent episodic memories for extraction using MemoryRepository.
 
         Args:
             project_id: Project identifier
@@ -441,21 +453,11 @@ class GraphExtractionService:
         Returns:
             List of memory dictionaries with id, content, and metadata
         """
-        async with self.pool.acquire() as conn:
-            records = await conn.fetch(
-                """
-                SELECT id, content, created_at, tags, source
-                FROM memories
-                WHERE tenant_id = $1 AND project = $2 AND layer = 'em'
-                ORDER BY created_at DESC
-                LIMIT $3
-                """,
-                tenant_id,
-                project_id,
-                limit
-            )
-
-            return [dict(record) for record in records]
+        return await self.memory_repo.get_episodic_memories(
+            tenant_id=tenant_id,
+            project=project_id,
+            limit=limit
+        )
 
     def _format_memories(self, memories: List[Dict[str, Any]]) -> str:
         """
@@ -494,13 +496,9 @@ class GraphExtractionService:
         tenant_id: str
     ) -> Dict[str, int]:
         """
-        Store extracted graph triples in the database.
+        Store extracted graph triples in the database using GraphRepository.
 
-        This method:
-        1. Inserts nodes (entities) if they don't exist
-        2. Creates edges (relationships) between nodes
-        3. Handles conflicts gracefully
-        4. Returns statistics about inserted records
+        This method delegates to the repository layer for clean separation of concerns.
 
         Args:
             triples: List of GraphTriple objects to store
@@ -510,99 +508,20 @@ class GraphExtractionService:
         Returns:
             Dictionary with counts of nodes_created and edges_created
         """
-        nodes_created = 0
-        edges_created = 0
+        # Convert GraphTriple pydantic models to plain dictionaries for repository
+        triple_dicts = [
+            {
+                "source": triple.source,
+                "target": triple.target,
+                "relation": triple.relation,
+                "confidence": triple.confidence,
+                "metadata": triple.metadata
+            }
+            for triple in triples
+        ]
 
-        async with self.pool.acquire() as conn:
-            async with conn.transaction():
-                for triple in triples:
-                    # Insert source node
-                    result = await conn.execute(
-                        """
-                        INSERT INTO knowledge_graph_nodes
-                        (tenant_id, project_id, node_id, label, properties)
-                        VALUES ($1, $2, $3, $4, $5)
-                        ON CONFLICT (tenant_id, project_id, node_id) DO NOTHING
-                        """,
-                        tenant_id,
-                        project_id,
-                        triple.source,
-                        triple.source,
-                        triple.metadata
-                    )
-                    if result == "INSERT 0 1":
-                        nodes_created += 1
-
-                    # Insert target node
-                    result = await conn.execute(
-                        """
-                        INSERT INTO knowledge_graph_nodes
-                        (tenant_id, project_id, node_id, label, properties)
-                        VALUES ($1, $2, $3, $4, $5)
-                        ON CONFLICT (tenant_id, project_id, node_id) DO NOTHING
-                        """,
-                        tenant_id,
-                        project_id,
-                        triple.target,
-                        triple.target,
-                        triple.metadata
-                    )
-                    if result == "INSERT 0 1":
-                        nodes_created += 1
-
-                    # Get node IDs
-                    source_node = await conn.fetchrow(
-                        """
-                        SELECT id FROM knowledge_graph_nodes
-                        WHERE tenant_id = $1 AND project_id = $2 AND node_id = $3
-                        """,
-                        tenant_id,
-                        project_id,
-                        triple.source
-                    )
-
-                    target_node = await conn.fetchrow(
-                        """
-                        SELECT id FROM knowledge_graph_nodes
-                        WHERE tenant_id = $1 AND project_id = $2 AND node_id = $3
-                        """,
-                        tenant_id,
-                        project_id,
-                        triple.target
-                    )
-
-                    if source_node and target_node:
-                        # Create edge with metadata
-                        edge_properties = {
-                            "confidence": triple.confidence,
-                            **triple.metadata
-                        }
-
-                        result = await conn.execute(
-                            """
-                            INSERT INTO knowledge_graph_edges
-                            (tenant_id, project_id, source_node_id, target_node_id, relation, properties)
-                            VALUES ($1, $2, $3, $4, $5, $6)
-                            ON CONFLICT DO NOTHING
-                            """,
-                            tenant_id,
-                            project_id,
-                            source_node["id"],
-                            target_node["id"],
-                            triple.relation,
-                            edge_properties
-                        )
-                        if result == "INSERT 0 1":
-                            edges_created += 1
-
-        logger.info(
-            "graph_triples_stored",
-            project_id=project_id,
-            nodes_created=nodes_created,
-            edges_created=edges_created
+        return await self.graph_repo.store_graph_triples(
+            triples=triple_dicts,
+            tenant_id=tenant_id,
+            project_id=project_id
         )
-
-        return {
-            "nodes_created": nodes_created,
-            "edges_created": edges_created
-        }

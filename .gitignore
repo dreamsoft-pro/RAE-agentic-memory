@@ -2,6 +2,18 @@
 __pycache__/
 *.pyc
 .venv/
+*.egg-info/
+dist/
+build/
+
+# Testing & Coverage
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+.tox/
+coverage.xml
+.hypothesis/
 # Node
 node_modules/
 # OS
