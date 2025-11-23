@@ -325,7 +325,7 @@ class RAEMemoryClient:
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    f"{self.base_url}/memory/reflection/hierarchical",
+                    f"{self.base_url}/graph/reflection/hierarchical",
                     params={"project": project, "bucket_size": 10},
                     headers=self.headers,
                     timeout=60.0
