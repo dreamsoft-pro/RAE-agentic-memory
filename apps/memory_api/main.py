@@ -12,6 +12,14 @@ from apps.memory_api.middleware.tenant import TenantContextMiddleware
 from apps.memory_api.middleware.rate_limiter import limiter, rate_limit_exceeded_handler
 from apps.memory_api.api.v1 import memory, agent, cache, graph, governance
 from apps.memory_api.api.v1 import health as health_router
+from apps.memory_api.routes import (
+    event_triggers,
+    reflections,
+    hybrid_search,
+    evaluation,
+    dashboard,
+    graph_enhanced
+)
 from apps.memory_api import metrics
 from apps.memory_api.config import settings
 from apps.memory_api.services.context_cache import rebuild_full_cache
@@ -92,6 +100,10 @@ def custom_openapi():
     # Add tags descriptions
     openapi_schema["tags"] = [
         {
+            "name": "Health",
+            "description": "Health checks and system metrics"
+        },
+        {
             "name": "Memory",
             "description": "Store and query memories across different memory layers"
         },
@@ -108,8 +120,32 @@ def custom_openapi():
             "description": "Knowledge graph operations (GraphRAG)"
         },
         {
-            "name": "Health",
-            "description": "Health checks and system metrics"
+            "name": "Governance",
+            "description": "Cost tracking, budgets, and governance"
+        },
+        {
+            "name": "Event Triggers",
+            "description": "Event-driven automation with triggers, conditions, and actions"
+        },
+        {
+            "name": "Reflections",
+            "description": "Hierarchical reflection system with clustering and relationship management"
+        },
+        {
+            "name": "Hybrid Search",
+            "description": "Multi-strategy search combining vector, semantic, graph, and full-text search"
+        },
+        {
+            "name": "Evaluation",
+            "description": "Search quality metrics, A/B testing, and drift detection"
+        },
+        {
+            "name": "Dashboard",
+            "description": "Real-time monitoring, visualizations, and WebSocket updates"
+        },
+        {
+            "name": "Graph Management",
+            "description": "Advanced graph operations: snapshots, traversal, analytics, and batch operations"
         }
     ]
 
@@ -227,12 +263,20 @@ instrument_fastapi(app)
 # Health and monitoring endpoints (no auth required)
 app.include_router(health_router.router, tags=["Health"])
 
-# API v1 endpoints
+# API v1 endpoints - Core
 app.include_router(memory.router, prefix="/v1", tags=["Memory"])
 app.include_router(agent.router, prefix="/v1", tags=["Agent"])
 app.include_router(cache.router, prefix="/v1", tags=["Cache"])
 app.include_router(graph.router, prefix="/v1", tags=["Graph"])
 app.include_router(governance.router, tags=["Governance"])
+
+# API v1 endpoints - Enterprise Features
+app.include_router(event_triggers.router, tags=["Event Triggers"])
+app.include_router(reflections.router, tags=["Reflections"])
+app.include_router(hybrid_search.router, tags=["Hybrid Search"])
+app.include_router(evaluation.router, tags=["Evaluation"])
+app.include_router(dashboard.router, tags=["Dashboard"])
+app.include_router(graph_enhanced.router, tags=["Graph Management"])
 
 
 # Root endpoint

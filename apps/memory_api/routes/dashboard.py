@@ -9,14 +9,12 @@ This module provides FastAPI routes for dashboard operations including:
 - Quality trends
 """
 
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, Query
+from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, Query, Request
 from typing import List, Optional
 import structlog
 from datetime import datetime, timedelta, timezone
 import asyncio
 from uuid import uuid4, UUID
-
-from apps.memory_api.db import get_pool
 from apps.memory_api.services.dashboard_websocket import DashboardWebSocketService
 from apps.memory_api.models.dashboard_models import (
     GetDashboardMetricsRequest,
@@ -50,6 +48,15 @@ router = APIRouter(prefix="/v1/dashboard", tags=["Dashboard"])
 
 # Global WebSocket service instance
 _websocket_service: Optional[DashboardWebSocketService] = None
+
+
+# ============================================================================
+# Dependency Injection
+# ============================================================================
+
+async def get_pool(request: Request):
+    """Get database connection pool from app state"""
+    return request.app.state.pool
 
 
 def get_websocket_service(pool=Depends(get_pool)) -> DashboardWebSocketService:

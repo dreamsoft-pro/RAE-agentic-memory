@@ -10,12 +10,10 @@ This module provides FastAPI routes for enhanced graph operations including:
 - Batch operations
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from typing import List
 import structlog
 from datetime import datetime
-
-from apps.memory_api.db import get_pool
 from apps.memory_api.repositories.graph_repository_enhanced import EnhancedGraphRepository
 from apps.memory_api.models.graph_enhanced_models import (
     # Request/Response models
@@ -53,7 +51,16 @@ from apps.memory_api.models.graph_enhanced_models import (
 
 logger = structlog.get_logger(__name__)
 
-router = APIRouter(prefix="/v1/graph", tags=["Enhanced Graph"])
+router = APIRouter(prefix="/v1/graph-management", tags=["Graph Management"])
+
+
+# ============================================================================
+# Dependency Injection
+# ============================================================================
+
+async def get_pool(request: Request):
+    """Get database connection pool from app state"""
+    return request.app.state.pool
 
 
 # ============================================================================

@@ -8,11 +8,9 @@ This module provides FastAPI routes for hybrid search operations including:
 - Search analytics
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from typing import Dict, Any
 import structlog
-
-from apps.memory_api.db import get_pool
 from apps.memory_api.services.hybrid_search_service import HybridSearchService
 from apps.memory_api.services.query_analyzer import QueryAnalyzer
 from apps.memory_api.models.hybrid_search_models import (
@@ -26,6 +24,15 @@ from apps.memory_api.models.hybrid_search_models import (
 logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/v1/search", tags=["Hybrid Search"])
+
+
+# ============================================================================
+# Dependency Injection
+# ============================================================================
+
+async def get_pool(request: Request):
+    """Get database connection pool from app state"""
+    return request.app.state.pool
 
 
 # ============================================================================

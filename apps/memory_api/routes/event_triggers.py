@@ -9,13 +9,11 @@ This module provides FastAPI routes for event trigger operations including:
 - Trigger templates
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from typing import List
 import structlog
 from uuid import uuid4
 from datetime import datetime, timedelta, timezone
-
-from apps.memory_api.db import get_pool
 from apps.memory_api.services.rules_engine import RulesEngine
 from apps.memory_api.models.event_models import (
     CreateTriggerRequest,
@@ -37,6 +35,15 @@ from apps.memory_api.models.event_models import (
 logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/v1/triggers", tags=["Event Triggers"])
+
+
+# ============================================================================
+# Dependency Injection
+# ============================================================================
+
+async def get_pool(request: Request):
+    """Get database connection pool from app state"""
+    return request.app.state.pool
 
 
 # ============================================================================

@@ -9,11 +9,9 @@ This module provides FastAPI routes for evaluation operations including:
 - Benchmarking
 """
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from typing import List
 import structlog
-
-from apps.memory_api.db import get_pool
 from apps.memory_api.services.evaluation_service import EvaluationService
 from apps.memory_api.services.drift_detector import DriftDetector
 from apps.memory_api.models.evaluation_models import (
@@ -31,6 +29,15 @@ from apps.memory_api.models.evaluation_models import (
 logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/v1/evaluation", tags=["Evaluation"])
+
+
+# ============================================================================
+# Dependency Injection
+# ============================================================================
+
+async def get_pool(request: Request):
+    """Get database connection pool from app state"""
+    return request.app.state.pool
 
 
 # ============================================================================
