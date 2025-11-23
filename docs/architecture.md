@@ -100,6 +100,141 @@ CREATE POLICY tenant_isolation_policy ON memories
   USING (tenant_id = current_setting('app.current_tenant'));
 ```
 
+## Memory Lifecycle & Governance
+
+RAE implements enterprise-grade memory lifecycle management through automated decay, importance scoring, and access tracking systems.
+
+### Access Tracking
+
+Every memory retrieval operation automatically updates two critical tracking fields:
+
+- **`last_accessed_at`**: UTC timestamp of most recent access
+- **`usage_count`**: Cumulative access counter
+
+These fields are updated in batch operations for performance:
+
+```
+Client → /v1/memory/query or /v1/agent/execute
+  ├─ VectorStore.search()
+  ├─ Results returned to client
+  └─ MemoryRepository.update_memory_access_stats(memory_ids[])
+      └─ Batch UPDATE: usage_count++, last_accessed_at = NOW()
+```
+
+**Tracked Operations:**
+- `/v1/memory/query` - Standard vector search
+- `/v1/memory/query` with `use_graph=true` - Hybrid GraphRAG search
+- `/v1/agent/execute` - Agent execution with memory retrieval
+
+**Implementation:** The batch update uses PostgreSQL's `ANY` array operator to avoid N+1 queries:
+
+```sql
+UPDATE memories
+SET usage_count = usage_count + 1,
+    last_accessed_at = $1
+WHERE id = ANY($2::uuid[])
+  AND tenant_id = $3
+```
+
+### Importance Scoring
+
+The `ImportanceScoringService` calculates dynamic importance scores using multiple weighted factors:
+
+| Factor | Weight | Source |
+|--------|--------|--------|
+| Recency | 15% | `created_at` |
+| Access Frequency | 20% | `usage_count` + `last_accessed_at` |
+| Graph Centrality | 15% | Knowledge graph position |
+| Semantic Relevance | 15% | Similarity to recent queries |
+| User Rating | 10% | Explicit ratings |
+| Consolidation | 10% | Reflective memory status |
+| Manual Boost | 15% | Admin adjustments |
+
+**Access Frequency Calculation:**
+- Logarithmic scaling prevents high-volume memories from dominating
+- Recency component: Decays over 30 days since last access
+- Formula: `0.7 * log10(usage_count + 1) / log10(100) + 0.3 * (1 - days_since_access / 30)`
+
+### Temporal Decay
+
+Automated importance decay runs periodically (recommended: daily) to adjust scores based on temporal factors:
+
+**Decay Strategies:**
+1. **Protected Decay** (accessed within 7 days): `effective_rate = base_rate * 0.5`
+2. **Normal Decay** (accessed 7-30 days ago): `effective_rate = base_rate`
+3. **Accelerated Decay** (not accessed 30+ days): `effective_rate = base_rate * (1 + days_since_access / 30)`
+
+**Example Decay Timeline** (base_rate = 0.01):
+
+| Days Since Access | Daily Decay | 30-Day Impact |
+|-------------------|-------------|---------------|
+| 3 days | 0.5% | ~14% reduction |
+| 15 days | 1.0% | ~26% reduction |
+| 60 days | 3.0% | ~60% reduction |
+| 90 days | 4.0% | ~70% reduction |
+
+**Production Implementation:**
+
+```python
+# Celery beat task or cron job
+from apps.memory_api.services.importance_scoring import ImportanceScoringService
+
+scoring_service = ImportanceScoringService(db=pool)
+await scoring_service.decay_importance(
+    tenant_id=tenant_uuid,
+    decay_rate=0.01,  # 1% per day
+    consider_access_stats=True
+)
+```
+
+### Memory Lifecycle States
+
+```
+┌─────────────┐
+│   CREATED   │ importance = user-specified (default 0.5)
+│             │ usage_count = 0
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│   ACTIVE    │ Accessed regularly
+│             │ usage_count++
+│             │ last_accessed_at updated
+│             │ importance maintained/increased
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│   AGING     │ Not accessed recently (7-30 days)
+│             │ importance decays at base rate
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│   STALE     │ Not accessed 30+ days
+│             │ importance decays faster
+│             │ candidate for archival
+└──────┬──────┘
+       │
+       ▼
+┌─────────────┐
+│  ARCHIVED   │ importance < threshold (e.g., 0.1)
+│             │ age > retention period (e.g., 90 days)
+│             │ moved to archive or deleted
+└─────────────┘
+```
+
+### Governance Integration
+
+Memory access stats feed into the enterprise governance system:
+
+- **Cost Tracking**: High `usage_count` memories identified for caching optimization
+- **Budget Management**: Access patterns inform budget projections
+- **Analytics**: Usage trends tracked per tenant/project
+- **Compliance**: Audit trail of memory access for regulatory requirements
+
+See `docs/configuration.md` for decay configuration parameters.
+
 ## Observability
 
 RAE exposes a variety of metrics via a `/metrics` endpoint, which is compatible with Prometheus. These metrics provide insights into the performance and usage of the system.

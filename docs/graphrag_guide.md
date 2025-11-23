@@ -1,5 +1,12 @@
 # GraphRAG - Knowledge Graph Integration Guide
 
+**📚 Quick Links:**
+- [API Reference](../API_DOCUMENTATION.md#graph-api) - Official API endpoint documentation
+- [Memory API with GraphRAG](../API_DOCUMENTATION.md#query-memory) - Hybrid search integration
+- [CHANGELOG](../CHANGELOG_GRAPHRAG.md) - Implementation details and version history
+
+---
+
 ## Overview
 
 GraphRAG extends RAE's memory capabilities by integrating **Knowledge Graph** technology with traditional **Retrieval-Augmented Generation (RAG)**. This hybrid approach provides:
@@ -8,6 +15,8 @@ GraphRAG extends RAE's memory capabilities by integrating **Knowledge Graph** te
 - **Structural Search**: Graph traversal for discovering relationships and dependencies
 - **Context Synthesis**: Merged context from both vector and graph sources
 - **Entity Extraction**: Automatic extraction of entities and relationships from episodic memories
+
+**This guide provides a comprehensive deep-dive into GraphRAG concepts, usage patterns, and best practices. For API endpoint references, see [API_DOCUMENTATION.md](../API_DOCUMENTATION.md#graph-api).**
 
 ## Architecture
 
@@ -600,16 +609,52 @@ agent = create_agent(
 )
 ```
 
+## Design Notes: CRUD vs GraphRAG
+
+### Why GraphRAG Instead of CRUD?
+
+Earlier versions of the documentation described a **low-level CRUD Graph API** with endpoints like:
+- `POST /v1/graph/nodes` (Create Node)
+- `POST /v1/graph/edges` (Create Edge)
+- `POST /v1/graph/traverse` (Traverse)
+- `POST /v1/graph/shortest-path` (Find Shortest Path)
+
+**These endpoints were never implemented.** Instead, RAE implements **GraphRAG**, which provides a higher-level, more intelligent approach:
+
+**CRUD Approach (Not Implemented):**
+- Manual node and edge creation
+- Low-level graph operations
+- Requires explicit graph management
+- More complex for end users
+
+**GraphRAG Approach (Current Implementation):**
+- ✅ Automatic extraction from natural language
+- ✅ LLM-powered entity and relationship detection
+- ✅ Hybrid search combining vector and graph
+- ✅ Context synthesis from multiple sources
+- ✅ Simple, high-level API
+
+**If you need low-level graph operations**, use the provided GraphRAG endpoints:
+- Use `POST /v1/graph/extract` for automatic graph construction
+- Use `POST /v1/graph/query` for advanced graph queries
+- Use `GET /v1/graph/subgraph` for graph traversal
+- Use `GET /v1/graph/nodes` and `GET /v1/graph/edges` for inspection
+
+For most use cases, **GraphRAG provides a more powerful and user-friendly experience** than traditional CRUD operations would.
+
+---
+
 ## Next Steps
 
-- Explore the [API Reference](api_reference.md) for complete endpoint documentation
-- See [Examples](examples/) for more usage patterns
-- Check [Architecture](architecture.md) for system design details
-- Read [Best Practices](best_practices.md) for production deployment guidance
+- **[API Reference](../API_DOCUMENTATION.md)** - Complete endpoint documentation for all GraphRAG APIs
+- **[Graph API Section](../API_DOCUMENTATION.md#graph-api)** - Detailed endpoint specifications
+- **[Memory API with Hybrid Search](../API_DOCUMENTATION.md#query-memory)** - Integration with memory queries
+- **[CHANGELOG_GRAPHRAG.md](../CHANGELOG_GRAPHRAG.md)** - Implementation details and version history
+- **[Architecture Documentation](architecture.md)** - System design and deployment details (if available)
 
 ## Support
 
 For questions and issues:
-- GitHub Issues: https://github.com/dreamsoft-pro/RAE-agentic-memory/issues
-- Documentation: https://rae-docs.example.com
-- Community: https://discord.gg/rae-memory
+- **GitHub Issues:** https://github.com/dreamsoft-pro/RAE-agentic-memory/issues
+- **Documentation:** Official documentation in this repository
+- **API Reference:** [API_DOCUMENTATION.md](../API_DOCUMENTATION.md)

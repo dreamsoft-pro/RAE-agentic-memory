@@ -154,6 +154,23 @@ async def query_memory(
             # Rescore vector results
             rescored_results = scoring.rescore_memories(hybrid_result.vector_matches)
 
+            # Update access statistics for retrieved memories
+            memory_ids = [item.id for item in rescored_results]
+            if memory_ids:
+                try:
+                    memory_repository = MemoryRepository(request.app.state.pool)
+                    await memory_repository.update_memory_access_stats(
+                        memory_ids=memory_ids,
+                        tenant_id=tenant_id
+                    )
+                except Exception as e:
+                    # Log but don't fail the query
+                    logger.warning(
+                        "hybrid_query_access_stats_update_failed",
+                        tenant_id=tenant_id,
+                        error=str(e)
+                    )
+
             memory_query_counter.labels(tenant_id=tenant_id).inc()
 
             return QueryMemoryResponse(
@@ -202,6 +219,23 @@ async def query_memory(
 
     # 4. Rescore memories using additional heuristics (optional)
     rescored_results = scoring.rescore_memories(raw_results)
+
+    # 5. Update access statistics for retrieved memories
+    memory_ids = [item.id for item in rescored_results]
+    if memory_ids:
+        try:
+            memory_repository = MemoryRepository(request.app.state.pool)
+            await memory_repository.update_memory_access_stats(
+                memory_ids=memory_ids,
+                tenant_id=tenant_id
+            )
+        except Exception as e:
+            # Log but don't fail the query
+            logger.warning(
+                "vector_query_access_stats_update_failed",
+                tenant_id=tenant_id,
+                error=str(e)
+            )
 
     memory_query_counter.labels(tenant_id=tenant_id).inc() # Increment query counter
     return QueryMemoryResponse(results=rescored_results)
@@ -276,7 +310,7 @@ async def get_reflection_stats(request: Request, project: Optional[str] = None):
     return {"reflective_memory_count": count, "average_strength": avg_strength}
 
 
-@router.post("/reflection/hierarchical")
+@router.post("/reflection/hierarchical", deprecated=True)
 async def generate_hierarchical_reflection(
     request: Request,
     project: str = Query(..., description="Project identifier"),
@@ -284,42 +318,43 @@ async def generate_hierarchical_reflection(
     max_episodes: Optional[int] = Query(None, description="Maximum episodes to process", ge=1)
 ):
     """
-    Generate hierarchical (Map-Reduce) summarization of episodic memories.
+    **DEPRECATED:** Use `/v1/graph/reflection/hierarchical` instead.
 
-    This enterprise-grade endpoint handles large numbers of episodes by recursively
-    summarizing them using a map-reduce pattern. This approach scales to handle
-    thousands of episodes without hitting context window limits.
+    This endpoint is deprecated and maintained only for backward compatibility.
+    The canonical implementation is now in the Graph API at:
+    `POST /v1/graph/reflection/hierarchical`
 
-    Features:
-    - Hierarchical map-reduce summarization
-    - Configurable bucket size for chunking
-    - Optional episode limit for testing
-    - Full error handling and logging
-    - Prometheus metrics integration
+    The Graph API version uses proper Pydantic models and is better integrated
+    with GraphRAG features.
 
-    Args:
-        project: Project identifier
-        bucket_size: Number of episodes per summarization bucket (default: 10)
-        max_episodes: Optional maximum number of episodes to process
+    **Migration:**
+    Instead of:
+    ```
+    POST /v1/memory/reflection/hierarchical?project=my-project&bucket_size=15
+    ```
 
-    Returns:
-        JSON response with:
-        - summary: Final hierarchical reflection summary
-        - statistics: Processing statistics (episode count, bucket count, etc.)
+    Use:
+    ```
+    POST /v1/graph/reflection/hierarchical
+    Content-Type: application/json
 
-    Example:
-        POST /v1/memory/reflection/hierarchical?project=my-project&bucket_size=15
+    {
+      "project_id": "my-project",
+      "bucket_size": 15
+    }
+    ```
+
+    This endpoint will be removed in a future version.
     """
     tenant_id = request.headers.get("X-Tenant-Id")
     if not tenant_id:
         raise HTTPException(status_code=400, detail="X-Tenant-Id header is required.")
 
-    logger.info(
-        "hierarchical_reflection_requested",
+    logger.warning(
+        "deprecated_endpoint_used",
+        endpoint="/v1/memory/reflection/hierarchical",
         tenant_id=tenant_id,
-        project=project,
-        bucket_size=bucket_size,
-        max_episodes=max_episodes
+        message="Use /v1/graph/reflection/hierarchical instead"
     )
 
     try:
@@ -346,7 +381,7 @@ async def generate_hierarchical_reflection(
         )
 
         logger.info(
-            "hierarchical_reflection_completed",
+            "hierarchical_reflection_completed_deprecated",
             tenant_id=tenant_id,
             project=project,
             episode_count=episode_count,

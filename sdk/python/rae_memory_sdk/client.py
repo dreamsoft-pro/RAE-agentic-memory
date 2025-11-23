@@ -117,26 +117,282 @@ class MemoryClient:
         response_data = self._request("DELETE", f"/memory/delete?memory_id={memory_id}")
         return DeleteMemoryResponse(**response_data)
 
-    def evaluate(self) -> Dict[str, Any]:
-        """
-        (Stub) Evaluates memory performance.
-        """
-        print("Evaluate endpoint is a stub.")
-        return self._request("POST", "/memory/evaluate")
+    # GraphRAG Methods
 
-    def reflect(self) -> Dict[str, Any]:
+    def extract_knowledge_graph(
+        self,
+        project_id: str,
+        limit: int = 50,
+        min_confidence: float = 0.5,
+        auto_store: bool = True
+    ) -> Dict[str, Any]:
         """
-        (Stub) Triggers memory reflection.
-        """
-        print("Reflect endpoint is a stub.")
-        return self._request("POST", "/memory/reflect")
+        Extract knowledge graph from episodic memories.
 
-    def get_tags(self) -> Dict[str, Any]:
+        Args:
+            project_id: Project identifier
+            limit: Maximum number of memories to process
+            min_confidence: Minimum confidence threshold for triples
+            auto_store: Whether to automatically store extracted triples
+
+        Returns:
+            Dict containing extracted triples, entities, and statistics
         """
-        (Stub) Retrieves all available tags.
+        request_body = {
+            "project_id": project_id,
+            "limit": limit,
+            "min_confidence": min_confidence,
+            "auto_store": auto_store
+        }
+        return self._request("POST", "/v1/graph/extract", json=request_body)
+
+    def query_graph(
+        self,
+        query: str,
+        project_id: str,
+        top_k_vector: int = 5,
+        graph_depth: int = 2,
+        traversal_strategy: str = "bfs"
+    ) -> Dict[str, Any]:
         """
-        print("Get tags endpoint is a stub.")
-        return self._request("GET", "/memory/tags")
+        Advanced hybrid search combining vector and graph traversal.
+
+        Args:
+            query: Search query
+            project_id: Project identifier
+            top_k_vector: Number of vector results
+            graph_depth: Maximum graph traversal depth
+            traversal_strategy: 'bfs' or 'dfs'
+
+        Returns:
+            Dict with vector_matches, graph_nodes, graph_edges, and synthesized_context
+        """
+        request_body = {
+            "query": query,
+            "project_id": project_id,
+            "top_k_vector": top_k_vector,
+            "graph_depth": graph_depth,
+            "traversal_strategy": traversal_strategy
+        }
+        return self._request("POST", "/v1/graph/query", json=request_body)
+
+    def get_graph_stats(self, project_id: str) -> Dict[str, Any]:
+        """
+        Get knowledge graph statistics for a project.
+
+        Args:
+            project_id: Project identifier
+
+        Returns:
+            Dict with total_nodes, total_edges, unique_relations, and statistics
+        """
+        return self._request("GET", f"/v1/graph/stats?project_id={project_id}")
+
+    def get_graph_nodes(
+        self,
+        project_id: str,
+        limit: int = 100,
+        use_pagerank: bool = False,
+        min_pagerank_score: float = 0.0
+    ) -> List[Dict[str, Any]]:
+        """
+        Retrieve graph nodes with optional PageRank filtering.
+
+        Args:
+            project_id: Project identifier
+            limit: Maximum nodes to return
+            use_pagerank: Enable PageRank filtering
+            min_pagerank_score: Minimum PageRank threshold
+
+        Returns:
+            List of node dictionaries
+        """
+        params = {
+            "project_id": project_id,
+            "limit": limit,
+            "use_pagerank": use_pagerank,
+            "min_pagerank_score": min_pagerank_score
+        }
+        return self._request("GET", "/v1/graph/nodes", params=params)
+
+    def get_graph_edges(
+        self,
+        project_id: str,
+        limit: int = 100,
+        relation: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """
+        Retrieve graph edges with optional relation filtering.
+
+        Args:
+            project_id: Project identifier
+            limit: Maximum edges to return
+            relation: Filter by relation type
+
+        Returns:
+            List of edge dictionaries
+        """
+        params = {"project_id": project_id, "limit": limit}
+        if relation:
+            params["relation"] = relation
+        return self._request("GET", "/v1/graph/edges", params=params)
+
+    def get_subgraph(
+        self,
+        project_id: str,
+        node_ids: List[str],
+        depth: int = 1
+    ) -> Dict[str, Any]:
+        """
+        Retrieve a subgraph starting from specific nodes.
+
+        Args:
+            project_id: Project identifier
+            node_ids: List of starting node IDs
+            depth: Maximum traversal depth
+
+        Returns:
+            Dict with nodes, edges, and statistics
+        """
+        params = {
+            "project_id": project_id,
+            "node_ids": ",".join(node_ids),
+            "depth": depth
+        }
+        return self._request("GET", "/v1/graph/subgraph", params=params)
+
+    # Agent Methods
+
+    def execute_agent(
+        self,
+        tenant_id: str,
+        project: str,
+        prompt: str
+    ) -> Dict[str, Any]:
+        """
+        Execute an AI agent task with full memory retrieval and context management.
+
+        This orchestrates:
+        1. Retrieval of cached semantic & reflective context
+        2. Vector search for episodic memories
+        3. Reranking of retrieved memories
+        4. LLM inference with full context
+        5. Automatic reflection generation
+        6. Cost tracking
+
+        Args:
+            tenant_id: Tenant identifier
+            project: Project identifier
+            prompt: Agent task prompt
+
+        Returns:
+            Dict with answer, used_memories, and cost breakdown
+        """
+        request_body = {
+            "tenant_id": tenant_id,
+            "project": project,
+            "prompt": prompt
+        }
+        return self._request("POST", "/v1/agent/execute", json=request_body)
+
+    # Governance Methods
+
+    def get_governance_overview(self, days: int = 30) -> Dict[str, Any]:
+        """
+        Get system-wide governance overview (admin only).
+
+        Args:
+            days: Number of days to analyze
+
+        Returns:
+            Dict with total costs, calls, tokens, and top tenants/models
+        """
+        return self._request("GET", f"/v1/governance/overview?days={days}")
+
+    def get_tenant_governance(self, tenant_id: str, days: int = 30) -> Dict[str, Any]:
+        """
+        Get comprehensive governance statistics for a tenant.
+
+        Args:
+            tenant_id: Tenant identifier
+            days: Number of days to analyze
+
+        Returns:
+            Dict with costs, usage, cache stats, breakdowns by project/model/operation
+        """
+        return self._request("GET", f"/v1/governance/tenant/{tenant_id}?days={days}")
+
+    def get_tenant_budget(self, tenant_id: str) -> Dict[str, Any]:
+        """
+        Get current budget status and projections for a tenant.
+
+        Args:
+            tenant_id: Tenant identifier
+
+        Returns:
+            Dict with budget limits, current usage, projections, and alerts
+        """
+        return self._request("GET", f"/v1/governance/tenant/{tenant_id}/budget")
+
+    # Reflection Methods
+
+    def rebuild_reflections(self, tenant_id: str, project: str) -> Dict[str, Any]:
+        """
+        Trigger background task to rebuild reflective memories.
+
+        Args:
+            tenant_id: Tenant identifier
+            project: Project identifier
+
+        Returns:
+            Dict with confirmation message
+        """
+        request_body = {"tenant_id": tenant_id, "project": project}
+        return self._request("POST", "/v1/memory/rebuild-reflections", json=request_body)
+
+    def get_reflection_stats(self, project: str) -> Dict[str, Any]:
+        """
+        Get statistics about reflective memories.
+
+        Args:
+            project: Project identifier
+
+        Returns:
+            Dict with reflective_memory_count and average_strength
+        """
+        return self._request("GET", f"/v1/memory/reflection-stats?project={project}")
+
+    def generate_hierarchical_reflection(
+        self,
+        project: str,
+        bucket_size: int = 10,
+        max_episodes: Optional[int] = None
+    ) -> Dict[str, Any]:
+        """
+        Generate hierarchical (map-reduce) reflection from episodes.
+
+        Args:
+            project: Project identifier
+            bucket_size: Number of episodes per bucket
+            max_episodes: Maximum episodes to process
+
+        Returns:
+            Dict with summary and statistics
+        """
+        params = {"project": project, "bucket_size": bucket_size}
+        if max_episodes:
+            params["max_episodes"] = max_episodes
+        return self._request("POST", f"/v1/memory/reflection/hierarchical", params=params)
+
+    # Health & Cache Methods
+
+    def get_health(self) -> Dict[str, Any]:
+        """Get comprehensive health check of all system components."""
+        return self._request("GET", "/health")
+
+    def rebuild_cache(self) -> Dict[str, Any]:
+        """Trigger background task to rebuild context cache."""
+        return self._request("POST", "/v1/cache/rebuild")
 
     # Async methods for non-blocking operations
 
@@ -208,6 +464,60 @@ class MemoryClient:
         )
         return DeleteMemoryResponse(**response_data)
 
+    # Async GraphRAG Methods
+
+    async def extract_knowledge_graph_async(
+        self,
+        project_id: str,
+        limit: int = 50,
+        min_confidence: float = 0.5,
+        auto_store: bool = True
+    ) -> Dict[str, Any]:
+        """Async version of extract_knowledge_graph."""
+        request_body = {
+            "project_id": project_id,
+            "limit": limit,
+            "min_confidence": min_confidence,
+            "auto_store": auto_store
+        }
+        return await self._async_request("POST", "/v1/graph/extract", json=request_body)
+
+    async def query_graph_async(
+        self,
+        query: str,
+        project_id: str,
+        top_k_vector: int = 5,
+        graph_depth: int = 2,
+        traversal_strategy: str = "bfs"
+    ) -> Dict[str, Any]:
+        """Async version of query_graph."""
+        request_body = {
+            "query": query,
+            "project_id": project_id,
+            "top_k_vector": top_k_vector,
+            "graph_depth": graph_depth,
+            "traversal_strategy": traversal_strategy
+        }
+        return await self._async_request("POST", "/v1/graph/query", json=request_body)
+
+    async def get_graph_stats_async(self, project_id: str) -> Dict[str, Any]:
+        """Async version of get_graph_stats."""
+        return await self._async_request("GET", f"/v1/graph/stats?project_id={project_id}")
+
+    async def execute_agent_async(
+        self,
+        tenant_id: str,
+        project: str,
+        prompt: str
+    ) -> Dict[str, Any]:
+        """Async version of execute_agent."""
+        request_body = {
+            "tenant_id": tenant_id,
+            "project": project,
+            "prompt": prompt
+        }
+        return await self._async_request("POST", "/v1/agent/execute", json=request_body)
+
     async def close(self):
         """Close async HTTP client connections."""
         await self._async_http_client.aclose()
@@ -218,3 +528,8 @@ class MemoryClient:
             self._http_client.close()
         except Exception:
             pass
+
+
+# Aliases for backward compatibility and documentation consistency
+RAEClient = MemoryClient
+AsyncRAEClient = MemoryClient  # Same class, supports both sync and async methods

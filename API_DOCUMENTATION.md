@@ -1,6 +1,6 @@
 # RAE API Documentation
 
-Complete API reference for RAE Memory Engine v2.0
+Complete API reference for RAE Memory Engine v2.0 Enterprise
 
 **Base URL:** `http://localhost:8000` (default)
 **Format:** REST API, JSON
@@ -12,16 +12,14 @@ Complete API reference for RAE Memory Engine v2.0
 
 | Module | Endpoints | Description |
 |--------|-----------|-------------|
-| [Memories](#memories-api) | 15+ | Core memory CRUD operations |
-| [Reflections](#reflections-api) | 8 | Hierarchical reflection generation |
-| [Semantic Memory](#semantic-memory-api) | 6 | Knowledge extraction and search |
-| [Graph Operations](#graph-api) | 18 | Knowledge graph management |
-| [Hybrid Search](#hybrid-search-api) | 10 | Multi-strategy search |
-| [Evaluation](#evaluation-api) | 15 | Metrics and drift detection |
-| [Event Triggers](#event-triggers-api) | 15 | Automation and rules |
-| [Dashboard](#dashboard-api) | 12 | Real-time monitoring |
+| [Memory API](#memory-api) | 6 | Core memory storage and retrieval operations |
+| [Agent API](#agent-api) | 1 | Agent orchestration and execution |
+| [Graph API](#graph-api) | 7 | Knowledge graph operations (GraphRAG) |
+| [Cache API](#cache-api) | 1 | Context cache management |
+| [Governance API](#governance-api) | 3 | Cost tracking and budget management |
+| [Health API](#health-api) | 4 | Health checks and system metrics |
 
-**Total:** 100+ endpoints
+**Total:** 22 enterprise-ready endpoints
 
 ---
 
@@ -44,198 +42,308 @@ curl -H "X-Tenant-ID: your-tenant-id" \
 
 ---
 
-## Memories API
+## Memory API
 
-Base path: `/v1/memories`
+Base path: `/v1/memory`
 
-### Create Memory
+The Memory API provides core memory storage, retrieval, and management operations. It supports hybrid search combining vector similarity with knowledge graph traversal.
+
+**Memory Lifecycle & Decay:**
+
+All memory retrievals automatically track access statistics:
+- **`last_accessed_at`**: Updated to current UTC timestamp on every retrieval
+- **`usage_count`**: Incremented on every retrieval
+
+These statistics power the **importance scoring system**, which calculates dynamic importance based on:
+- Recency (when created)
+- Access frequency (how often used)
+- Graph centrality (knowledge graph position)
+- Semantic relevance (similarity to recent queries)
+- User ratings, consolidation status, and manual adjustments
+
+**Temporal Decay:**
+- Memories decay over time based on access patterns
+- Recently accessed memories (< 7 days): Decay slower
+- Normal memories (7-30 days): Standard decay rate
+- Stale memories (30+ days): Accelerated decay
+
+For configuration and implementation details, see:
+- [Configuration Guide](docs/configuration.md#memory-decay--importance-scoring)
+- [Architecture Documentation](docs/architecture.md#memory-lifecycle--governance)
+
+---
+
+### Store Memory
+
+Store a new memory record in the system.
+
 ```http
-POST /v1/memories
+POST /v1/memory/store
 Content-Type: application/json
+X-Tenant-Id: tenant-1
 
 {
-  "tenant_id": "tenant-1",
-  "project": "project-1",
-  "content": "User prefers dark mode",
+  "content": "User prefers dark mode in the application",
+  "source": "user_preference",
   "importance": 0.8,
+  "layer": "em",
   "tags": ["preference", "ui"],
-  "metadata": {}
+  "project": "project-1",
+  "timestamp": "2025-11-22T10:00:00Z"
 }
 ```
+
+**Memory Layers:**
+- `em` - Episodic Memory (events, interactions)
+- `sm` - Semantic Memory (facts, knowledge)
+- `rm` - Reflective Memory (insights, patterns)
 
 **Response:**
 ```json
 {
-  "id": "uuid",
-  "created_at": "2025-11-22T10:00:00Z",
-  "message": "Memory created successfully"
+  "id": "550e8400-e29b-41d4-a716-446655440000"
 }
 ```
 
-### Search Memories
+---
+
+### Query Memory
+
+Query memories using vector search or hybrid search with graph traversal (GraphRAG).
+
+**Standard Vector Search:**
 ```http
-POST /v1/memories/search
+POST /v1/memory/query
 Content-Type: application/json
+X-Tenant-Id: tenant-1
 
 {
-  "tenant_id": "tenant-1",
+  "query_text": "user interface preferences",
+  "k": 10,
   "project": "project-1",
-  "query": "user preferences",
-  "top_k": 10,
+  "use_graph": false,
   "filters": {
     "tags": ["preference"]
   }
 }
 ```
 
-### Get Memory by ID
+**Hybrid Search with GraphRAG:**
+
+When `use_graph: true` is specified, the query endpoint performs **hybrid search** combining vector similarity with knowledge graph traversal. This provides richer, more contextual results by:
+
+1. Performing vector search to find semantically similar memories
+2. Mapping results to knowledge graph entities
+3. Traversing the graph to discover related entities and relationships
+4. Synthesizing comprehensive context from all sources
+
 ```http
-GET /v1/memories/{memory_id}
+POST /v1/memory/query
+Content-Type: application/json
+X-Tenant-Id: tenant-1
+
+{
+  "query_text": "machine learning concepts",
+  "k": 5,
+  "project": "project-1",
+  "use_graph": true,
+  "graph_depth": 2
+}
 ```
 
-### Update Memory
-```http
-PUT /v1/memories/{memory_id}
+**GraphRAG Parameters:**
+- `use_graph` (default: false) - Enable hybrid search with graph traversal
+- `graph_depth` (default: 2, max: 5) - Maximum depth for graph traversal
+- `project` (required when use_graph=true) - Project identifier for graph context
+
+**Note:** For advanced graph operations (extraction, statistics, subgraph queries), see the [Graph API](#graph-api) section below.
+
+**Response:**
+```json
+{
+  "results": [
+    {
+      "id": "uuid",
+      "score": 0.92,
+      "content": "User prefers dark mode",
+      "source": "user_preference",
+      "importance": 0.8,
+      "layer": "em",
+      "tags": ["preference", "ui"],
+      "timestamp": "2025-11-22T10:00:00Z",
+      "last_accessed_at": "2025-11-23T14:30:00Z",
+      "usage_count": 5,
+      "project": "project-1"
+    }
+  ],
+  "synthesized_context": "Context from graph traversal...",
+  "graph_statistics": {
+    "nodes_traversed": 15,
+    "edges_traversed": 20
+  }
+}
 ```
+
+---
 
 ### Delete Memory
+
+Delete a memory record by ID.
+
 ```http
-DELETE /v1/memories/{memory_id}
+DELETE /v1/memory/delete?memory_id={memory_id}
+X-Tenant-Id: tenant-1
 ```
 
----
-
-## Reflections API
-
-Base path: `/v1/reflections`
-
-### Generate Reflection
-```http
-POST /v1/reflections/generate
-Content-Type: application/json
-
+**Response:**
+```json
 {
-  "tenant_id": "tenant-1",
-  "project_id": "project-1",
-  "memory_ids": ["uuid1", "uuid2"],
-  "reflection_type": "insight",
-  "created_by": "user-1"
-}
-```
-
-**Reflection Types:**
-- `insight` - Basic reflection from memories
-- `analysis` - Deep analytical reflection
-- `pattern` - Pattern detection
-- `meta` - Meta-insight from other reflections
-- `synthesis` - High-level knowledge synthesis
-
-### Generate with Clustering
-```http
-POST /v1/reflections/generate-clustered
-Content-Type: application/json
-
-{
-  "tenant_id": "tenant-1",
-  "project_id": "project-1",
-  "min_cluster_size": 3,
-  "algorithm": "hdbscan",
-  "reflection_type": "pattern"
-}
-```
-
-### Get Reflection
-```http
-GET /v1/reflections/{reflection_id}
-```
-
-### List Reflections
-```http
-GET /v1/reflections?tenant_id=X&project_id=Y&limit=100
-```
-
-### Get Reflection Hierarchy
-```http
-GET /v1/reflections/{reflection_id}/hierarchy?max_depth=5
-```
-
-### Generate Meta-Insight
-```http
-POST /v1/reflections/meta-insight
-Content-Type: application/json
-
-{
-  "reflection_ids": ["uuid1", "uuid2", "uuid3"],
-  "tenant_id": "tenant-1",
-  "project_id": "project-1"
+  "message": "Memory 550e8400-e29b-41d4-a716-446655440000 deleted successfully."
 }
 ```
 
 ---
 
-## Semantic Memory API
+### Rebuild Reflections
 
-Base path: `/v1/semantic`
+Trigger background task to rebuild reflective memories for a project.
 
-### Extract Semantic Nodes
 ```http
-POST /v1/semantic/extract
+POST /v1/memory/rebuild-reflections
 Content-Type: application/json
 
 {
   "tenant_id": "tenant-1",
-  "project_id": "project-1",
-  "memory_id": "uuid"
+  "project": "project-1"
+}
+```
+
+**Response (202 Accepted):**
+```json
+{
+  "message": "Reflection rebuild task dispatched for project project-1."
+}
+```
+
+---
+
+### Get Reflection Statistics
+
+Get statistics about reflective memories in a project.
+
+```http
+GET /v1/memory/reflection-stats?project=project-1
+X-Tenant-Id: tenant-1
+```
+
+**Response:**
+```json
+{
+  "reflective_memory_count": 42,
+  "average_strength": 0.75
+}
+```
+
+---
+
+### Generate Hierarchical Reflection
+
+Generate hierarchical (map-reduce) summarization of episodic memories.
+
+This enterprise endpoint handles large numbers of episodes by recursively summarizing them using a map-reduce pattern, scaling to thousands of episodes without hitting context limits.
+
+```http
+POST /v1/memory/reflection/hierarchical?project=project-1&bucket_size=10
+X-Tenant-Id: tenant-1
+```
+
+**Query Parameters:**
+- `project` (required) - Project identifier
+- `bucket_size` (optional, default: 10) - Number of episodes per bucket
+- `max_episodes` (optional) - Maximum episodes to process
+
+**Response:**
+```json
+{
+  "summary": "Comprehensive hierarchical summary of all episodes...",
+  "statistics": {
+    "project": "project-1",
+    "tenant_id": "tenant-1",
+    "episode_count": 150,
+    "bucket_size": 10,
+    "max_episodes_processed": 150,
+    "summary_length": 2500
+  }
+}
+```
+
+---
+
+## Agent API
+
+Base path: `/v1/agent`
+
+The Agent API provides orchestrated AI agent execution with memory retrieval, context caching, reranking, and cost tracking.
+
+### Execute Agent Task
+
+Execute an AI agent task with full memory retrieval and context management.
+
+This enterprise endpoint orchestrates:
+1. Retrieval of pre-built semantic & reflective context from cache
+2. Vector search for episodic memories
+3. Reranking of retrieved memories
+4. LLM inference with full context
+5. Automatic reflection generation
+6. Cost tracking and governance
+
+```http
+POST /v1/agent/execute
+Content-Type: application/json
+X-Tenant-Id: tenant-1
+
+{
+  "tenant_id": "tenant-1",
+  "project": "project-1",
+  "prompt": "What are the user's preferences for the dashboard layout?"
 }
 ```
 
 **Response:**
 ```json
 {
-  "nodes_created": 5,
-  "nodes": [
-    {
-      "label": "machine learning",
-      "type": "concept",
-      "canonical_form": "machine learning",
-      "importance_score": 0.85
-    }
-  ]
+  "answer": "Based on the user's interactions, they prefer a dark mode interface with a minimalist layout...",
+  "used_memories": {
+    "results": [
+      {
+        "id": "uuid",
+        "score": 0.95,
+        "content": "User prefers dark mode",
+        "source": "user_preference",
+        "importance": 0.8,
+        "layer": "em",
+        "tags": ["preference", "ui"],
+        "timestamp": "2025-11-22T10:00:00Z",
+        "last_accessed_at": "2025-11-23T14:30:00Z",
+        "usage_count": 5,
+        "project": "project-1"
+      }
+    ]
+  },
+  "cost": {
+    "input_tokens": 1250,
+    "output_tokens": 180,
+    "total_estimate": 0.0245
+  }
 }
 ```
 
-### Semantic Search (3-Stage)
-```http
-POST /v1/semantic/search
-Content-Type: application/json
-
-{
-  "tenant_id": "tenant-1",
-  "project_id": "project-1",
-  "query": "artificial intelligence",
-  "k": 10
-}
-```
-
-**Stages:**
-1. Topic Identification → Vector search
-2. Term Normalization → Canonicalization
-3. Semantic Re-ranking → LLM scoring
-
-### Reinforce Node
-```http
-POST /v1/semantic/nodes/{node_id}/reinforce
-```
-
-### Get Node Details
-```http
-GET /v1/semantic/nodes/{node_id}
-```
-
-### List Semantic Nodes
-```http
-GET /v1/semantic/nodes?tenant_id=X&project_id=Y&limit=100
-```
+**Features:**
+- **Context Caching:** Leverages pre-built semantic and reflective context for cost savings
+- **Hybrid Retrieval:** Combines vector search with reranking for optimal results
+- **Automatic Reflection:** Stores agent interactions as reflective memories
+- **Cost Tracking:** Full token and cost breakdown per request
+- **Governance:** Budget enforcement and cost guard middleware
 
 ---
 
@@ -243,517 +351,592 @@ GET /v1/semantic/nodes?tenant_id=X&project_id=Y&limit=100
 
 Base path: `/v1/graph`
 
-### Create Node
+The Graph API provides GraphRAG (Graph-Augmented Retrieval) capabilities for knowledge graph extraction, querying, and analysis. It automatically builds knowledge graphs from episodic memories and enables advanced graph-based retrieval.
+
+**Note:** For full conceptual guide, see `docs/graphrag_guide.md`
+
+### Extract Knowledge Graph
+
+Extract knowledge graph from episodic memories using LLM-powered entity and relationship extraction.
+
 ```http
-POST /v1/graph/nodes
+POST /v1/graph/extract
 Content-Type: application/json
+X-Tenant-Id: tenant-1
 
 {
-  "tenant_id": "tenant-1",
   "project_id": "project-1",
-  "node_id": "ml-1",
-  "label": "Machine Learning",
-  "node_type": "concept",
-  "properties": {}
-}
-```
-
-### Create Edge
-```http
-POST /v1/graph/edges
-Content-Type: application/json
-
-{
-  "tenant_id": "tenant-1",
-  "project_id": "project-1",
-  "source_node_id": "ml-1",
-  "target_node_id": "ai-1",
-  "relation_type": "is_part_of",
-  "edge_weight": 0.9,
-  "confidence": 0.85
-}
-```
-
-### Traverse Graph
-```http
-POST /v1/graph/traverse
-Content-Type: application/json
-
-{
-  "tenant_id": "tenant-1",
-  "project_id": "project-1",
-  "start_node_id": "ml-1",
-  "algorithm": "bfs",
-  "max_depth": 3
-}
-```
-
-**Algorithms:**
-- `bfs` - Breadth-First Search
-- `dfs` - Depth-First Search
-- `dijkstra` - Shortest path (weighted)
-
-### Temporal Traversal
-```http
-POST /v1/graph/traverse/temporal
-Content-Type: application/json
-
-{
-  "tenant_id": "tenant-1",
-  "project_id": "project-1",
-  "start_node_id": "ml-1",
-  "at_timestamp": "2025-11-22T10:00:00Z",
-  "max_depth": 3
-}
-```
-
-### Find Shortest Path
-```http
-POST /v1/graph/shortest-path
-Content-Type: application/json
-
-{
-  "source_node_id": "ml-1",
-  "target_node_id": "ai-1",
-  "algorithm": "dijkstra"
-}
-```
-
-### Detect Cycles
-```http
-POST /v1/graph/detect-cycle
-Content-Type: application/json
-
-{
-  "source_node_id": "ml-1",
-  "target_node_id": "ai-1"
-}
-```
-
-### Create Snapshot
-```http
-POST /v1/graph/snapshots
-Content-Type: application/json
-
-{
-  "tenant_id": "tenant-1",
-  "project_id": "project-1",
-  "snapshot_name": "Q4-2025",
-  "description": "End of quarter snapshot"
-}
-```
-
----
-
-## Hybrid Search API
-
-Base path: `/v1/search`
-
-### Hybrid Multi-Strategy Search
-```http
-POST /v1/search/hybrid
-Content-Type: application/json
-
-{
-  "tenant_id": "tenant-1",
-  "project_id": "project-1",
-  "query": "machine learning optimization",
-  "k": 20,
-  "weight_profile": "quality_focused",
-  "enable_strategies": {
-    "vector": true,
-    "semantic": true,
-    "graph": true,
-    "fulltext": false
-  },
-  "enable_reranking": true
-}
-```
-
-**Weight Profiles:**
-- `balanced` - Equal weights (default)
-- `quality_focused` - Emphasize semantic + graph
-- `speed_focused` - Emphasize vector
-- `comprehensive` - All strategies enabled
-- `exploratory` - High graph traversal depth
-
-### Analyze Query Intent
-```http
-POST /v1/search/analyze
-Content-Type: application/json
-
-{
-  "query": "how does gradient descent work?",
-  "context": ["machine learning", "optimization"]
+  "limit": 50,
+  "min_confidence": 0.5,
+  "auto_store": true
 }
 ```
 
 **Response:**
 ```json
 {
-  "intent": "question_how",
-  "confidence": 0.92,
-  "key_entities": ["gradient descent", "optimization"],
-  "recommended_strategies": ["semantic", "graph"],
-  "strategy_weights": {
-    "vector": 0.3,
-    "semantic": 0.4,
-    "graph": 0.3
-  }
-}
-```
-
-**Intent Types:**
-- `factual_lookup` - Simple fact retrieval
-- `conceptual_search` - Understanding concepts
-- `question_how` - Process/mechanism questions
-- `question_why` - Reasoning/causation
-- `comparison` - Comparing concepts
-- `exploratory` - Open-ended exploration
-
-### Get Weight Profiles
-```http
-GET /v1/search/weight-profiles
-```
-
-### Set Custom Weights
-```http
-POST /v1/search/custom-weights
-Content-Type: application/json
-
-{
-  "vector": 0.4,
-  "semantic": 0.3,
-  "graph": 0.2,
-  "fulltext": 0.1
-}
-```
-
----
-
-## Evaluation API
-
-Base path: `/v1/evaluation`
-
-### Evaluate Search Results
-```http
-POST /v1/evaluation/search
-Content-Type: application/json
-
-{
-  "tenant_id": "tenant-1",
-  "project_id": "project-1",
-  "relevance_judgments": {
-    "query1": {"doc1": 1.0, "doc2": 0.5}
-  },
-  "search_results": {
-    "query1": [
-      {"document_id": "doc1", "rank": 1, "score": 0.95}
-    ]
-  },
-  "metrics_to_compute": ["mrr", "ndcg", "precision", "recall"]
-}
-```
-
-**Metrics:**
-- `mrr` - Mean Reciprocal Rank
-- `ndcg` - Normalized Discounted Cumulative Gain
-- `precision` - Precision@K
-- `recall` - Recall@K
-- `map` - Mean Average Precision
-
-### Detect Drift
-```http
-POST /v1/evaluation/drift/detect
-Content-Type: application/json
-
-{
-  "tenant_id": "tenant-1",
-  "project_id": "project-1",
-  "metric_name": "search_score",
-  "drift_type": "data_drift",
-  "baseline_start": "2025-10-01T00:00:00Z",
-  "baseline_end": "2025-10-31T23:59:59Z",
-  "current_start": "2025-11-01T00:00:00Z",
-  "current_end": "2025-11-30T23:59:59Z",
-  "statistical_test": "ks_test"
-}
-```
-
-**Drift Types:**
-- `data_drift` - Input distribution changed
-- `concept_drift` - Input-output relationship changed
-- `prediction_drift` - Output distribution changed
-
-**Statistical Tests:**
-- `ks_test` - Kolmogorov-Smirnov test
-- `psi` - Population Stability Index
-- `chi_square` - Chi-square test
-
-### Create A/B Test
-```http
-POST /v1/evaluation/ab-test/create
-Content-Type: application/json
-
-{
-  "test_name": "New Search Algorithm",
-  "variants": [
-    {"name": "control", "traffic_percentage": 50.0},
-    {"name": "treatment", "traffic_percentage": 50.0}
-  ],
-  "metrics": ["mrr", "ndcg"],
-  "duration_days": 7
-}
-```
-
-### Get Quality Metrics
-```http
-POST /v1/evaluation/quality/metrics
-Content-Type: application/json
-
-{
-  "tenant_id": "tenant-1",
-  "project_id": "project-1",
-  "period_start": "2025-11-01T00:00:00Z",
-  "period_end": "2025-11-30T23:59:59Z"
-}
-```
-
----
-
-## Event Triggers API
-
-Base path: `/v1/triggers`
-
-### Create Trigger
-```http
-POST /v1/triggers/create
-Content-Type: application/json
-
-{
-  "tenant_id": "tenant-1",
-  "project_id": "project-1",
-  "rule_name": "Auto Reflection on 50 Memories",
-  "condition": {
-    "event_types": ["memory_created"],
-    "condition_group": {
-      "operator": "AND",
-      "conditions": [
-        {
-          "field": "payload.memory_count",
-          "operator": "greater_equal",
-          "value": 50
-        }
-      ]
-    },
-    "cooldown_seconds": 3600,
-    "max_executions_per_hour": 5
-  },
-  "actions": [
+  "triples": [
     {
-      "action_type": "generate_reflection",
-      "config": {"reflection_type": "synthesis"},
-      "retry_on_failure": true,
-      "max_retries": 3
+      "subject": "User",
+      "predicate": "prefers",
+      "object": "dark mode",
+      "confidence": 0.92,
+      "source_memory_id": "uuid"
     }
   ],
-  "priority": 7,
-  "created_by": "user-1"
-}
-```
-
-**Condition Operators (12 total):**
-- `equals`, `not_equals`
-- `greater_than`, `less_than`, `greater_equal`, `less_equal`
-- `contains`, `not_contains`
-- `in`, `not_in`
-- `matches_regex`
-- `is_null`, `is_not_null`
-
-**Action Types (12 total):**
-- `send_notification`, `send_email`, `send_webhook`
-- `create_memory`, `update_memory`, `delete_memory`
-- `generate_reflection`, `extract_semantics`
-- `apply_decay`, `reinforce_node`
-- `create_snapshot`, `run_evaluation`
-
-### Emit Event
-```http
-POST /v1/triggers/events/emit
-Content-Type: application/json
-
-{
-  "tenant_id": "tenant-1",
-  "project_id": "project-1",
-  "event_type": "quality_degraded",
-  "payload": {
-    "quality_score": 0.65,
-    "threshold": 0.70,
-    "metric": "mrr"
-  },
-  "tags": ["quality", "alert"]
-}
-```
-
-### List Triggers
-```http
-GET /v1/triggers/list?tenant_id=X&project_id=Y&status_filter=active
-```
-
-### Get Trigger Execution History
-```http
-POST /v1/triggers/executions
-Content-Type: application/json
-
-{
-  "trigger_id": "uuid",
-  "limit": 100,
-  "status_filter": "completed"
-}
-```
-
-### Create Workflow
-```http
-POST /v1/triggers/workflows/create
-Content-Type: application/json
-
-{
-  "workflow_name": "Quality Recovery Workflow",
-  "steps": [
-    {
-      "step_id": "step1",
-      "step_name": "Run Evaluation",
-      "action": {
-        "action_type": "run_evaluation",
-        "config": {}
-      },
-      "order": 1
-    },
-    {
-      "step_id": "step2",
-      "step_name": "Send Alert",
-      "action": {
-        "action_type": "send_notification",
-        "config": {}
-      },
-      "depends_on": ["step1"],
-      "order": 2
-    }
-  ],
-  "stop_on_failure": true
-}
-```
-
-### Get Trigger Templates
-```http
-GET /v1/triggers/templates
-```
-
-### Instantiate Template
-```http
-POST /v1/triggers/templates/{template_id}/instantiate
-Content-Type: application/json
-
-{
-  "tenant_id": "tenant-1",
-  "project_id": "project-1",
-  "rule_name": "My Auto Reflection",
-  "parameters": {
-    "memory_threshold": 50
+  "entities": ["User", "dark mode", "interface"],
+  "statistics": {
+    "memories_processed": 50,
+    "triples_extracted": 35,
+    "unique_entities": 18
   }
 }
 ```
 
 ---
 
-## Dashboard API
+### Generate Hierarchical Reflection
 
-Base path: `/v1/dashboard`
+Generate hierarchical (map-reduce) reflection from large episode collections.
 
-### WebSocket Connection
-```javascript
-const ws = new WebSocket(
-  'ws://localhost:8000/v1/dashboard/ws?tenant_id=X&project_id=Y&event_types=memory_created,quality_alert'
-);
-
-ws.onmessage = (event) => {
-  const message = JSON.parse(event.data);
-  console.log('Dashboard event:', message);
-};
-```
-
-**Event Types:**
-- `memory_created`, `memory_updated`, `memory_deleted`
-- `reflection_generated`, `semantic_node_created`
-- `quality_alert`, `drift_detected`
-- `trigger_fired`, `action_completed`
-- `metrics_updated`, `health_changed`
-
-### Get Dashboard Metrics
 ```http
-POST /v1/dashboard/metrics
+POST /v1/graph/reflection/hierarchical
 Content-Type: application/json
+X-Tenant-Id: tenant-1
 
 {
-  "tenant_id": "tenant-1",
   "project_id": "project-1",
-  "period": "last_24h"
+  "bucket_size": 10,
+  "max_episodes": 100
 }
 ```
 
 **Response:**
 ```json
 {
-  "system_metrics": {
-    "total_memories": 1000,
-    "memories_last_24h": 50,
-    "total_reflections": 100,
-    "active_triggers": 5,
-    "health_status": "healthy"
+  "project_id": "project-1",
+  "summary": "Comprehensive hierarchical summary...",
+  "episodes_processed": 100
+}
+```
+
+---
+
+### Get Graph Statistics
+
+Get comprehensive statistics about the knowledge graph.
+
+```http
+GET /v1/graph/stats?project_id=project-1
+X-Tenant-Id: tenant-1
+```
+
+**Response:**
+```json
+{
+  "project_id": "project-1",
+  "tenant_id": "tenant-1",
+  "total_nodes": 247,
+  "total_edges": 412,
+  "unique_relations": ["prefers", "relates_to", "is_part_of", "depends_on"],
+  "statistics": {
+    "avg_edges_per_node": 1.67,
+    "total_relation_types": 4
+  }
+}
+```
+
+---
+
+### Get Graph Nodes
+
+Retrieve graph nodes with optional PageRank filtering for large graphs.
+
+```http
+GET /v1/graph/nodes?project_id=project-1&limit=100&use_pagerank=true&min_pagerank_score=0.01
+X-Tenant-Id: tenant-1
+```
+
+**Query Parameters:**
+- `project_id` (required) - Project identifier
+- `limit` (default: 100) - Maximum nodes to return
+- `use_pagerank` (default: false) - Enable PageRank filtering
+- `min_pagerank_score` (default: 0.0) - Minimum PageRank threshold
+
+**Response:**
+```json
+[
+  {
+    "id": "uuid",
+    "node_id": "entity_123",
+    "label": "Machine Learning",
+    "properties": {
+      "pagerank_score": 0.045,
+      "type": "concept"
+    },
+    "created_at": "2025-11-22T10:00:00Z"
+  }
+]
+```
+
+---
+
+### Get Graph Edges
+
+Retrieve graph edges with optional filtering by relation type.
+
+```http
+GET /v1/graph/edges?project_id=project-1&limit=100&relation=prefers
+X-Tenant-Id: tenant-1
+```
+
+**Query Parameters:**
+- `project_id` (required) - Project identifier
+- `limit` (default: 100) - Maximum edges to return
+- `relation` (optional) - Filter by relation type
+
+**Response:**
+```json
+[
+  {
+    "id": "uuid",
+    "source_node_id": "uuid1",
+    "target_node_id": "uuid2",
+    "relation": "prefers",
+    "properties": {
+      "confidence": 0.92
+    },
+    "created_at": "2025-11-22T10:00:00Z"
+  }
+]
+```
+
+---
+
+### Query Knowledge Graph
+
+Advanced hybrid search combining vector retrieval with graph traversal.
+
+```http
+POST /v1/graph/query
+Content-Type: application/json
+X-Tenant-Id: tenant-1
+
+{
+  "query": "machine learning optimization techniques",
+  "project_id": "project-1",
+  "top_k_vector": 5,
+  "graph_depth": 2,
+  "traversal_strategy": "bfs"
+}
+```
+
+**Traversal Strategies:**
+- `bfs` - Breadth-First Search (explores nearby entities first)
+- `dfs` - Depth-First Search (explores deep relationships)
+
+**Response:**
+```json
+{
+  "vector_matches": [
+    {
+      "id": "uuid",
+      "score": 0.92,
+      "content": "Gradient descent optimization...",
+      "layer": "em"
+    }
+  ],
+  "graph_nodes": [
+    {
+      "id": "uuid",
+      "label": "gradient descent"
+    }
+  ],
+  "graph_edges": [
+    {
+      "source_id": "uuid1",
+      "target_id": "uuid2",
+      "relation": "optimizes"
+    }
+  ],
+  "synthesized_context": "Based on the retrieved memories and graph traversal...",
+  "statistics": {
+    "vector_results": 5,
+    "nodes_traversed": 15,
+    "edges_traversed": 22,
+    "traversal_depth_reached": 2
+  }
+}
+```
+
+---
+
+### Get Subgraph
+
+Retrieve a subgraph starting from specific nodes.
+
+```http
+GET /v1/graph/subgraph?project_id=project-1&node_ids=uuid1,uuid2&depth=2
+X-Tenant-Id: tenant-1
+```
+
+**Query Parameters:**
+- `project_id` (required) - Project identifier
+- `node_ids` (required) - Comma-separated node IDs
+- `depth` (default: 1) - Maximum traversal depth
+
+**Response:**
+```json
+{
+  "nodes": [
+    {
+      "id": "uuid",
+      "node_id": "entity_123",
+      "label": "Machine Learning",
+      "properties": {},
+      "created_at": "2025-11-22T10:00:00Z"
+    }
+  ],
+  "edges": [
+    {
+      "id": "uuid",
+      "source_node_id": "uuid1",
+      "target_node_id": "uuid2",
+      "relation": "relates_to",
+      "properties": {},
+      "created_at": "2025-11-22T10:00:00Z"
+    }
+  ],
+  "statistics": {
+    "start_nodes": 2,
+    "depth": 2,
+    "nodes_found": 15,
+    "edges_found": 22
+  }
+}
+```
+
+---
+
+## Cache API
+
+Base path: `/v1/cache`
+
+The Cache API manages the context cache system, which pre-builds and stores semantic and reflective memory contexts for cost optimization in agent execution.
+
+### Rebuild Context Cache
+
+Trigger a background task to rebuild the entire context cache.
+
+This operation:
+- Scans all tenants and projects
+- Rebuilds semantic memory contexts
+- Rebuilds reflective memory contexts
+- Updates Redis cache entries
+
+Use this after:
+- Bulk memory imports
+- Database migrations
+- Major schema changes
+- Cache corruption
+
+```http
+POST /v1/cache/rebuild
+```
+
+**Response (202 Accepted):**
+```json
+{
+  "message": "Cache rebuild task dispatched."
+}
+```
+
+**Note:** This is an asynchronous operation. The cache will be rebuilt in the background via Celery worker. Monitor logs or use metrics endpoints to track progress.
+
+---
+
+## Governance API
+
+Base path: `/v1/governance`
+
+The Governance API provides enterprise-grade cost tracking, budget management, and usage analytics for multi-tenant deployments.
+
+### Get System Overview
+
+Get system-wide cost overview across all tenants (admin only).
+
+```http
+GET /v1/governance/overview?days=30
+```
+
+**Query Parameters:**
+- `days` (default: 30) - Number of days to analyze
+
+**Response:**
+```json
+{
+  "total_cost_usd": 1247.50,
+  "total_calls": 15420,
+  "total_tokens": 8925000,
+  "unique_tenants": 12,
+  "period_start": "2025-10-23T00:00:00Z",
+  "period_end": "2025-11-23T00:00:00Z",
+  "top_tenants": [
+    {
+      "tenant_id": "tenant-1",
+      "calls": 5240,
+      "cost_usd": 425.30,
+      "tokens": 2850000
+    }
+  ],
+  "top_models": [
+    {
+      "model": "claude-3-5-sonnet-20241022",
+      "calls": 8920,
+      "cost_usd": 892.40,
+      "tokens": 5420000
+    }
+  ]
+}
+```
+
+---
+
+### Get Tenant Statistics
+
+Get comprehensive governance statistics for a specific tenant.
+
+```http
+GET /v1/governance/tenant/{tenant_id}?days=30
+```
+
+**Query Parameters:**
+- `days` (default: 30) - Number of days to analyze
+
+**Response:**
+```json
+{
+  "tenant_id": "tenant-1",
+  "total_cost_usd": 425.30,
+  "total_calls": 5240,
+  "total_tokens": 2850000,
+  "average_cost_per_call": 0.081,
+  "cache_hit_rate": 0.35,
+  "cache_savings_usd": 148.85,
+  "period_start": "2025-10-23T00:00:00Z",
+  "period_end": "2025-11-23T00:00:00Z",
+  "by_project": [
+    {
+      "project_id": "project-1",
+      "calls": 3200,
+      "cost_usd": 258.40,
+      "tokens": 1740000
+    }
+  ],
+  "by_model": [
+    {
+      "model": "claude-3-5-sonnet-20241022",
+      "calls": 4100,
+      "cost_usd": 328.00,
+      "tokens": 2100000
+    }
+  ],
+  "by_operation": [
+    {
+      "operation": "agent_execute",
+      "calls": 4200,
+      "cost_usd": 360.50,
+      "tokens": 2400000
+    }
+  ]
+}
+```
+
+**Key Metrics:**
+- **cache_hit_rate:** Percentage of requests using cached context (0.0 - 1.0)
+- **cache_savings_usd:** Estimated cost savings from context caching
+- **by_project:** Cost breakdown by project
+- **by_model:** Usage breakdown by LLM model
+- **by_operation:** Cost breakdown by operation type
+
+---
+
+### Get Tenant Budget Status
+
+Get current budget status and projections for a tenant.
+
+```http
+GET /v1/governance/tenant/{tenant_id}/budget
+```
+
+**Response:**
+```json
+{
+  "tenant_id": "tenant-1",
+  "budget_usd_monthly": 500.00,
+  "budget_tokens_monthly": 5000000,
+  "current_month_cost_usd": 425.30,
+  "current_month_tokens": 2850000,
+  "budget_used_percent": 85.06,
+  "days_remaining": 7,
+  "projected_month_end_cost": 512.85,
+  "alerts": [
+    "Warning: 75% of budget used ($425.30 / $500.00)",
+    "Projected to exceed budget: $512.85 estimated by month end"
+  ],
+  "status": "WARNING"
+}
+```
+
+**Status Levels:**
+- **OK:** Under 75% of budget
+- **WARNING:** 75-90% of budget used, or projected to exceed
+- **CRITICAL:** 90-100% of budget used
+- **EXCEEDED:** Budget limit reached
+
+**Features:**
+- Real-time budget monitoring
+- Projection based on daily average spend
+- Multi-level alert system
+- Token and cost budget tracking
+
+---
+
+## Health API
+
+The Health API provides comprehensive health checks for all system components, designed for Kubernetes probes, monitoring systems, and observability.
+
+### Health Check
+
+Comprehensive health check of all system components.
+
+```http
+GET /health
+```
+
+**Response:**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-11-23T14:30:00Z",
+  "version": "1.0.0",
+  "components": {
+    "database": {
+      "status": "healthy",
+      "response_time_ms": 12.5,
+      "message": "Database connection successful"
+    },
+    "redis": {
+      "status": "healthy",
+      "response_time_ms": 3.2,
+      "message": "Redis connection successful",
+      "details": {
+        "version": "7.0.12",
+        "used_memory_mb": 245.8,
+        "connected_clients": 5
+      }
+    },
+    "vector_store": {
+      "status": "healthy",
+      "response_time_ms": 8.7,
+      "message": "Vector store connection successful",
+      "details": {
+        "version": "1.7.0",
+        "title": "qdrant"
+      }
+    }
+  }
+}
+```
+
+**Overall Status:**
+- **healthy:** All components working normally
+- **degraded:** Some non-critical components have issues
+- **unhealthy:** Critical components are failing
+
+---
+
+### Readiness Probe
+
+Kubernetes readiness probe endpoint.
+
+```http
+GET /health/ready
+```
+
+**Response (200 OK):**
+```json
+{
+  "status": "ready"
+}
+```
+
+**Use Case:** Kubernetes readiness probes to determine if the service can accept traffic.
+
+---
+
+### Liveness Probe
+
+Kubernetes liveness probe endpoint.
+
+```http
+GET /health/live
+```
+
+**Response (200 OK):**
+```json
+{
+  "status": "alive",
+  "timestamp": "2025-11-23T14:30:00Z"
+}
+```
+
+**Use Case:** Kubernetes liveness probes to detect if the service needs to be restarted.
+
+---
+
+### System Metrics
+
+Get detailed system metrics for monitoring and observability.
+
+```http
+GET /metrics
+```
+
+**Response:**
+```json
+{
+  "timestamp": "2025-11-23T14:30:00Z",
+  "uptime_seconds": 345620.5,
+  "memory_usage_mb": 512.4,
+  "database": {},
+  "redis": {
+    "used_memory_mb": 245.8,
+    "connected_clients": 5,
+    "total_commands": 1547920
   },
-  "time_series_metrics": [...],
-  "recent_activity": [...]
+  "vector_store": {}
 }
 ```
 
-### Get Visualization Data
-```http
-POST /v1/dashboard/visualizations
-Content-Type: application/json
+**Note:** This endpoint also exposes Prometheus metrics at `/metrics` in Prometheus format for scraping.
 
-{
-  "tenant_id": "tenant-1",
-  "project_id": "project-1",
-  "visualization_type": "reflection_tree",
-  "root_reflection_id": "uuid",
-  "max_depth": 5
-}
-```
+---
 
-**Visualization Types:**
-- `reflection_tree` - Hierarchical reflection tree
-- `semantic_graph` - Knowledge graph visualization
-- `memory_timeline` - Chronological memory events
-- `quality_trend` - Quality metrics over time
-- `search_heatmap` - Search activity patterns
-- `cluster_map` - Memory cluster visualization
+## Future / Planned APIs
 
-### Get System Health
-```http
-POST /v1/dashboard/health
-Content-Type: application/json
+The following APIs are described in this documentation but **NOT YET IMPLEMENTED** in the current release. They represent the target design for future versions.
 
-{
-  "tenant_id": "tenant-1",
-  "project_id": "project-1",
-  "include_sub_components": true
-}
-```
+### Not Currently Available
 
-### Get Activity Log
-```http
-GET /v1/dashboard/activity?tenant_id=X&project_id=Y&limit=100
-```
+- **Standalone Reflections API** (`/v1/reflections`) - Reflection generation is currently integrated into Memory API and Graph API
+- **Semantic Memory API** (`/v1/semantic`) - Planned for entity extraction and semantic search
+- **Standalone Hybrid Search API** (`/v1/search`) - Hybrid search is currently integrated into Memory API query endpoint
+- **Evaluation API** (`/v1/evaluation`) - Metrics, drift detection, A/B testing
+- **Event Triggers API** (`/v1/triggers`) - Automation, rules, and workflows
+- **Dashboard API** (`/v1/dashboard`) - Real-time monitoring and WebSocket events
+
+**Implementation Status:** These APIs are part of the product roadmap and may be added in future releases. For current capabilities, use the implemented endpoints documented above.
 
 ---
 
@@ -841,19 +1024,40 @@ client = RAEClient(
     project_id="project-1"
 )
 
-# All API methods available
-memory = await client.create_memory(
-    content="Test memory",
-    importance=0.8
+# Store a memory
+memory_id = await client.store(
+    content="User prefers dark mode",
+    importance=0.8,
+    layer="em",
+    tags=["preference", "ui"]
 )
 
-results = await client.hybrid_search(
-    query="machine learning",
+# Query memories (vector search)
+results = await client.query(
+    query_text="user preferences",
     k=10
 )
+
+# Query with graph traversal (hybrid search)
+results = await client.query(
+    query_text="machine learning concepts",
+    k=5,
+    use_graph=True,
+    graph_depth=2
+)
+
+# Delete a memory
+await client.delete(memory_id=memory_id)
 ```
 
-See [apps/memory_api/clients/README.md](apps/memory_api/clients/README.md) for full SDK documentation.
+**Available SDK Methods:**
+- `store()` / `store_async()` - Store memories
+- `query()` / `query_async()` - Query memories (supports hybrid search)
+- `delete()` / `delete_async()` - Delete memories
+
+**Note:** GraphRAG and Agent execution methods are planned for future SDK releases. Currently, use direct API calls for these features.
+
+See [sdk/python/rae_memory_sdk/README.md](sdk/python/rae_memory_sdk/README.md) for full SDK documentation.
 
 ---
 
@@ -863,7 +1067,38 @@ Complete examples in [apps/memory_api/clients/examples.py](apps/memory_api/clien
 
 ---
 
-**API Version:** v2.0
-**Last Updated:** 2025-11-22
-**Endpoints:** 100+
+**API Version:** v2.0 Enterprise
+**Last Updated:** 2025-11-23
+**Implemented Endpoints:** 22
 **Status:** Production Ready ✅
+
+---
+
+## Summary of Changes
+
+This documentation now accurately reflects the **implemented** RAE Memory API endpoints:
+
+### ✅ Implemented APIs (22 endpoints)
+- **Memory API** (6 endpoints) - `/v1/memory/*`
+- **Agent API** (1 endpoint) - `/v1/agent/execute`
+- **Graph API** (7 endpoints) - `/v1/graph/*` (GraphRAG)
+- **Cache API** (1 endpoint) - `/v1/cache/rebuild`
+- **Governance API** (3 endpoints) - `/v1/governance/*`
+- **Health API** (4 endpoints) - `/health*`, `/metrics`
+
+### 🔮 Planned APIs (Future Releases)
+- Standalone Reflections API
+- Semantic Memory API
+- Standalone Hybrid Search API
+- Evaluation API
+- Event Triggers API
+- Dashboard API
+
+### 🔧 Enterprise Features
+- **GraphRAG** - Knowledge graph extraction and traversal
+- **Context Caching** - Cost optimization through cached contexts
+- **Governance** - Cost tracking, budget management, usage analytics
+- **Agent Orchestration** - Full agent execution pipeline with automatic reflection
+- **Health Monitoring** - Kubernetes-ready health probes and metrics
+
+For questions or support, visit: https://github.com/dreamsoft-pro/RAE-agentic-memory

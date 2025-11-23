@@ -163,31 +163,36 @@ results = await client.semantic_search(
 )
 ```
 
-### Graph Operations
+### Graph Operations (GraphRAG)
+
+**Note:** RAE uses GraphRAG for automatic knowledge graph construction.
+Manual CRUD operations (`create_graph_node`, `create_graph_edge`, `traverse_graph`)
+were never implemented.
 
 ```python
-# Create node
-node = await client.create_graph_node(
-    node_id="node-1",
-    label="Machine Learning",
-    node_type="concept"
+# Extract knowledge graph automatically from memories
+extraction = await client.extract_knowledge_graph(
+    limit=50,
+    min_confidence=0.7,
+    auto_store=True
 )
+print(f"Extracted {len(extraction['triples'])} triples")
 
-# Create edge
-edge = await client.create_graph_edge(
-    source_node_id="node-1",
-    target_node_id="node-2",
-    relation_type="related_to",
-    weight=0.8
-)
+# Read existing nodes
+nodes = await client.get_graph_nodes(limit=20)
 
-# Traverse graph
-traversal = await client.traverse_graph(
-    start_node_id="node-1",
-    algorithm="bfs",
-    max_depth=3
+# Read existing edges
+edges = await client.get_graph_edges(limit=50)
+
+# Hybrid search with graph traversal
+results = await client.query_graph(
+    query="machine learning optimization",
+    top_k_vector=5,
+    graph_depth=2
 )
 ```
+
+See `docs/graphrag_guide.md` for details on GraphRAG usage.
 
 ### Hybrid Search
 

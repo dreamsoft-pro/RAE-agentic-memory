@@ -25,6 +25,7 @@ import numpy as np
 from apps.memory_api.services.query_analyzer import QueryAnalyzer
 from apps.memory_api.services.ml_service_client import MLServiceClient
 from apps.memory_api.services.llm import get_llm_provider
+from apps.memory_api.services.hybrid_cache import get_hybrid_cache
 from apps.memory_api.config import settings
 from apps.memory_api.models.hybrid_search_models import (
     QueryAnalysis,
@@ -82,17 +83,20 @@ class HybridSearchService:
     - LLM re-ranking
     """
 
-    def __init__(self, pool: asyncpg.Pool):
+    def __init__(self, pool: asyncpg.Pool, enable_cache: bool = True):
         """
         Initialize hybrid search service.
 
         Args:
             pool: Database connection pool
+            enable_cache: Enable result caching (default: True)
         """
         self.pool = pool
         self.query_analyzer = QueryAnalyzer()
         self.ml_client = MLServiceClient()
         self.llm_provider = get_llm_provider()
+        self.enable_cache = enable_cache
+        self.cache = get_hybrid_cache() if enable_cache else None
 
     async def search(
         self,
@@ -111,7 +115,8 @@ class HybridSearchService:
         tag_filter: List[str] = None,
         min_importance: float = None,
         graph_max_depth: int = 3,
-        conversation_history: List[str] = None
+        conversation_history: List[str] = None,
+        bypass_cache: bool = False
     ) -> HybridSearchResult:
         """
         Execute hybrid multi-strategy search.
@@ -133,6 +138,7 @@ class HybridSearchService:
             min_importance: Minimum importance score
             graph_max_depth: Max depth for graph traversal
             conversation_history: Conversation context
+            bypass_cache: Bypass cache and force fresh search
 
         Returns:
             HybridSearchResult with combined results
@@ -146,6 +152,31 @@ class HybridSearchService:
             query=query,
             k=k
         )
+
+        # Check cache if enabled
+        if self.enable_cache and not bypass_cache:
+            cache_filters = {
+                "k": k,
+                "enable_vector": enable_vector,
+                "enable_semantic": enable_semantic,
+                "enable_graph": enable_graph,
+                "enable_fulltext": enable_fulltext,
+                "enable_reranking": enable_reranking,
+                "temporal_filter": temporal_filter.isoformat() if temporal_filter else None,
+                "tag_filter": tag_filter,
+                "min_importance": min_importance
+            }
+
+            cached_result = await self.cache.get(
+                query=query,
+                tenant_id=tenant_id,
+                project_id=project_id,
+                filters=cache_filters
+            )
+
+            if cached_result:
+                logger.info("returning_cached_result", tenant_id=tenant_id)
+                return HybridSearchResult(**cached_result)
 
         # Stage 1: Query Analysis
         analysis_start = time.time()
@@ -249,7 +280,7 @@ class HybridSearchService:
             reranking_time=reranking_time
         )
 
-        return HybridSearchResult(
+        result = HybridSearchResult(
             results=final_results,
             total_results=len(final_results),
             query_analysis=query_analysis,
@@ -265,6 +296,30 @@ class HybridSearchService:
             reranking_used=enable_reranking,
             reranking_model=reranking_model if enable_reranking else None
         )
+
+        # Cache result if enabled
+        if self.enable_cache and not bypass_cache:
+            cache_filters = {
+                "k": k,
+                "enable_vector": enable_vector,
+                "enable_semantic": enable_semantic,
+                "enable_graph": enable_graph,
+                "enable_fulltext": enable_fulltext,
+                "enable_reranking": enable_reranking,
+                "temporal_filter": temporal_filter.isoformat() if temporal_filter else None,
+                "tag_filter": tag_filter,
+                "min_importance": min_importance
+            }
+
+            await self.cache.set(
+                query=query,
+                tenant_id=tenant_id,
+                project_id=project_id,
+                result=result.dict(),
+                filters=cache_filters
+            )
+
+        return result
 
     # ========================================================================
     # Strategy Implementations
@@ -408,7 +463,7 @@ class HybridSearchService:
         max_depth: int,
         k: int
     ) -> List[Dict[str, Any]]:
-        """Execute graph traversal search"""
+        """Execute graph traversal search with GraphRAG"""
         logger.info("executing_graph_search", entities=len(key_entities), depth=max_depth)
 
         try:
@@ -418,28 +473,120 @@ class HybridSearchService:
             # Find graph nodes matching entities
             node_records = await self.pool.fetch(
                 """
-                SELECT id, node_id FROM knowledge_graph_nodes
+                SELECT id, node_id, label, properties FROM knowledge_graph_nodes
                 WHERE tenant_id = $1 AND project_id = $2
                     AND (
                         label ILIKE ANY($3)
                         OR node_id = ANY($3)
                     )
-                LIMIT 5
+                LIMIT 10
                 """,
                 tenant_id, project_id,
                 [f"%{entity}%" for entity in key_entities]
             )
 
             if not node_records:
+                logger.info("no_graph_nodes_found", entities=key_entities)
                 return []
 
-            # TODO: Traverse graph and find connected memories
-            # For now, return empty (would need memory-graph linkage)
+            # Get start node IDs for traversal
+            start_node_ids = [record['node_id'] for record in node_records]
 
-            return []
+            # Traverse graph using BFS to find connected nodes
+            traversed_nodes = await self.pool.fetch(
+                """
+                WITH RECURSIVE graph_traverse AS (
+                    -- Base case: start nodes
+                    SELECT
+                        n.id,
+                        n.node_id,
+                        n.label,
+                        n.properties,
+                        0 as depth
+                    FROM knowledge_graph_nodes n
+                    WHERE n.tenant_id = $1
+                    AND n.project_id = $2
+                    AND n.node_id = ANY($3)
+
+                    UNION
+
+                    -- Recursive case: traverse edges (both directions)
+                    SELECT
+                        n.id,
+                        n.node_id,
+                        n.label,
+                        n.properties,
+                        gt.depth + 1
+                    FROM graph_traverse gt
+                    JOIN knowledge_graph_edges e ON (
+                        gt.id = e.source_node_id OR gt.id = e.target_node_id
+                    )
+                    JOIN knowledge_graph_nodes n ON (
+                        (e.source_node_id = n.id AND e.source_node_id != gt.id) OR
+                        (e.target_node_id = n.id AND e.target_node_id != gt.id)
+                    )
+                    WHERE gt.depth < $4
+                    AND n.tenant_id = $1
+                    AND n.project_id = $2
+                )
+                SELECT DISTINCT ON (id) id, node_id, label, properties, depth
+                FROM graph_traverse
+                ORDER BY id, depth
+                LIMIT 50
+                """,
+                tenant_id, project_id, start_node_ids, max_depth
+            )
+
+            # Extract memory IDs from graph node properties
+            memory_ids = set()
+            for node in traversed_nodes:
+                properties = node.get('properties', {})
+                if isinstance(properties, str):
+                    import json
+                    properties = json.loads(properties)
+
+                # Check for source_memory_id in properties
+                if 'source_memory_id' in properties:
+                    memory_ids.add(properties['source_memory_id'])
+
+                # Check for memory_ids array
+                if 'memory_ids' in properties and isinstance(properties['memory_ids'], list):
+                    memory_ids.update(properties['memory_ids'])
+
+            if not memory_ids:
+                logger.info("no_memories_linked_to_graph", nodes=len(traversed_nodes))
+                return []
+
+            # Fetch related memories
+            memories = await self.pool.fetch(
+                """
+                SELECT id, content, metadata, created_at, importance
+                FROM memories
+                WHERE tenant_id = $1 AND project = $2 AND id = ANY($3)
+                ORDER BY importance DESC
+                LIMIT $4
+                """,
+                tenant_id, project_id, list(memory_ids), k
+            )
+
+            results = []
+            for mem in memories:
+                results.append({
+                    "memory_id": mem['id'],
+                    "content": mem['content'],
+                    "score": float(mem.get('importance', 0.5)),
+                    "metadata": mem.get('metadata', {}),
+                    "created_at": mem['created_at'],
+                    "source": "graph_traversal"
+                })
+
+            logger.info("graph_search_complete",
+                       nodes_traversed=len(traversed_nodes),
+                       memories_found=len(results))
+            return results
 
         except Exception as e:
-            logger.error("graph_search_failed", error=str(e))
+            logger.error("graph_search_failed", error=str(e), exc_info=True)
             return []
 
     async def _fulltext_search(

@@ -283,17 +283,27 @@ class RAEAPIClient:
         tenant_id: Optional[str] = None,
         project_id: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Create graph node."""
-        data = {
-            "tenant_id": tenant_id or self.tenant_id,
-            "project_id": project_id or self.project_id,
-            "node_id": node_id,
-            "label": label,
-            "node_type": node_type,
-            "properties": properties or {}
-        }
+        """
+        **DEPRECATED - ENDPOINT DOES NOT EXIST**
 
-        return await self.client.post("/v1/graph/nodes", json_data=data)
+        This method calls POST /v1/graph/nodes which was never implemented.
+
+        RAE uses GraphRAG for knowledge graph management, which automatically
+        extracts entities and relationships from memories.
+
+        **Use instead:**
+        - `extract_knowledge_graph()` - Automatic entity/relation extraction
+        - `get_graph_nodes()` - Read existing nodes
+        - `query_graph()` - Hybrid search with graph traversal
+
+        See docs/graphrag_guide.md for details.
+        """
+        raise NotImplementedError(
+            "POST /v1/graph/nodes endpoint does not exist. "
+            "Use extract_knowledge_graph() for automatic graph construction, "
+            "or get_graph_nodes() to read existing nodes. "
+            "See docs/graphrag_guide.md for GraphRAG usage."
+        )
 
     async def create_graph_edge(
         self,
@@ -305,18 +315,27 @@ class RAEAPIClient:
         tenant_id: Optional[str] = None,
         project_id: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Create graph edge."""
-        data = {
-            "tenant_id": tenant_id or self.tenant_id,
-            "project_id": project_id or self.project_id,
-            "source_node_id": source_node_id,
-            "target_node_id": target_node_id,
-            "relation_type": relation_type,
-            "edge_weight": weight,
-            "confidence": confidence
-        }
+        """
+        **DEPRECATED - ENDPOINT DOES NOT EXIST**
 
-        return await self.client.post("/v1/graph/edges", json_data=data)
+        This method calls POST /v1/graph/edges which was never implemented.
+
+        RAE uses GraphRAG for knowledge graph management, which automatically
+        extracts relationships from memories.
+
+        **Use instead:**
+        - `extract_knowledge_graph()` - Automatic entity/relation extraction
+        - `get_graph_edges()` - Read existing edges
+        - `query_graph()` - Hybrid search with graph traversal
+
+        See docs/graphrag_guide.md for details.
+        """
+        raise NotImplementedError(
+            "POST /v1/graph/edges endpoint does not exist. "
+            "Use extract_knowledge_graph() for automatic graph construction, "
+            "or get_graph_edges() to read existing edges. "
+            "See docs/graphrag_guide.md for GraphRAG usage."
+        )
 
     async def traverse_graph(
         self,
@@ -326,16 +345,26 @@ class RAEAPIClient:
         tenant_id: Optional[str] = None,
         project_id: Optional[str] = None
     ) -> Dict[str, Any]:
-        """Traverse graph."""
-        data = {
-            "tenant_id": tenant_id or self.tenant_id,
-            "project_id": project_id or self.project_id,
-            "start_node_id": start_node_id,
-            "algorithm": algorithm,
-            "max_depth": max_depth
-        }
+        """
+        **DEPRECATED - ENDPOINT DOES NOT EXIST**
 
-        return await self.client.post("/v1/graph/traverse", json_data=data)
+        This method calls POST /v1/graph/traverse which was never implemented.
+
+        RAE uses GraphRAG for knowledge graph traversal integrated with
+        semantic search.
+
+        **Use instead:**
+        - `query_graph()` - Hybrid search with automatic graph traversal
+        - `get_subgraph()` - Extract subgraph from specific nodes
+
+        See docs/graphrag_guide.md for details.
+        """
+        raise NotImplementedError(
+            "POST /v1/graph/traverse endpoint does not exist. "
+            "Use query_graph() for hybrid search with graph traversal, "
+            "or get_subgraph() to extract subgraphs. "
+            "See docs/graphrag_guide.md for GraphRAG usage."
+        )
 
     # ========================================================================
     # Hybrid Search Operations

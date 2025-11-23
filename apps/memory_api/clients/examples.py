@@ -214,19 +214,13 @@ async def semantic_memory_workflow():
         )
         print(f"Semantic search found {len(search_results['results'])} results")
 
-        # 4. Create graph relationships
-        if len(search_results['results']) >= 2:
-            node1 = search_results['results'][0]['node_id']
-            node2 = search_results['results'][1]['node_id']
-
-            edge = await client.create_graph_edge(
-                source_node_id=node1,
-                target_node_id=node2,
-                relation_type="related_to",
-                weight=0.8,
-                confidence=0.9
-            )
-            print(f"Created graph edge")
+        # 4. Extract knowledge graph (replaces manual graph CRUD)
+        # Note: create_graph_edge() is deprecated - use GraphRAG instead
+        extraction = await client.extract_knowledge_graph(
+            limit=10,
+            min_confidence=0.7
+        )
+        print(f"Extracted {len(extraction.get('triples', []))} knowledge triples")
 
 
 # ============================================================================

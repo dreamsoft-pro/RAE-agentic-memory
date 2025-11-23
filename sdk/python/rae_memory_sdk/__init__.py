@@ -1,6 +1,6 @@
 # sdk/python/rae_memory_sdk/__init__.py
 
-from .client import MemoryClient
+from .client import MemoryClient, RAEClient, AsyncRAEClient
 from .models import (
     MemoryLayer,
     MemoryRecord,
@@ -14,8 +14,14 @@ from .models import (
 )
 from .decorators import trace_memory
 
+__version__ = "2.0.0"
+
 __all__ = [
-    "MemoryClient",
+    # Client classes
+    "MemoryClient",      # Legacy name
+    "RAEClient",         # Primary name (sync + async)
+    "AsyncRAEClient",    # Alias for documentation
+    # Models
     "MemoryLayer",
     "MemoryRecord",
     "ScoredMemoryRecord",
@@ -25,5 +31,6 @@ __all__ = [
     "QueryMemoryResponse",
     "DeleteMemoryRequest",
     "DeleteMemoryResponse",
+    # Decorators
     "trace_memory",
 ]

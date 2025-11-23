@@ -140,47 +140,65 @@ RAE implements a **4-layer cognitive memory system** inspired by human cognition
 ### Microservices Architecture (v2.0)
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                      RAE Memory API (Port 8000)                 │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │  API Layer (FastAPI)                                     │   │
-│  ├──────────────────────────────────────────────────────────┤   │
-│  │  Services (Business Logic)                               │   │
-│  │  • HybridSearchService  • ReflectionEngine               │   │
-│  │  • EntityResolution (orchestrator)                       │   │
-│  ├──────────────────────────────────────────────────────────┤   │
-│  │  Repositories (Data Access Layer - DAO Pattern)          │   │
-│  │  • GraphRepository  • MemoryRepository                   │   │
-│  └──────────────────────────────────────────────────────────┘   │
-└───────────────────────────┬─────────────────────────────────────┘
-                            │
-                ┌───────────┴───────────┐
-                │                       │
-                ▼                       ▼
-┌───────────────────────────┐  ┌──────────────────────────────┐
-│   ML Service (Port 8001)  │  │   Storage Layer              │
-│  ┌────────────────────────┤  │ • PostgreSQL (pgvector)      │
-│  │  Heavy ML Operations:  │  │ • Qdrant Vector DB           │
-│  │  • Entity Resolution   │  │ • Redis Cache                │
-│  │  • Embeddings          │  └──────────────────────────────┘
-│  │  • NLP Processing      │
-│  └────────────────────────┘
-└────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│                      RAE Memory API (Port 8000)                      │
+│  ┌───────────────────────────────────────────────────────────────┐   │
+│  │  API Layer (FastAPI)                                          │   │
+│  ├───────────────────────────────────────────────────────────────┤   │
+│  │  Core Services (Business Logic)                               │   │
+│  │  • HybridSearchService + Cache  • QueryAnalyzer               │   │
+│  │  • ReflectionEngine  • EntityResolution                       │   │
+│  │  • TemporalGraph  • SemanticExtractor                         │   │
+│  ├───────────────────────────────────────────────────────────────┤   │
+│  │  Enterprise Services                                          │   │
+│  │  • RulesEngine (Event Triggers)  • EvaluationService          │   │
+│  │  • DriftDetector  • PIIScrubber  • CostController             │   │
+│  │  • DashboardWebSocket  • Analytics                            │   │
+│  ├───────────────────────────────────────────────────────────────┤   │
+│  │  Repositories (Data Access Layer - DAO Pattern)               │   │
+│  │  • GraphRepository  • MemoryRepository                        │   │
+│  └───────────────────────────────────────────────────────────────┘   │
+└────────────────────────┬──────────────────┬─────────────────────────┘
+                         │                  │
+          ┌──────────────┴────────┐    ┌────┴─────────┐
+          │                       │    │              │
+          ▼                       ▼    ▼              ▼
+┌──────────────────────┐  ┌────────────────────┐  ┌──────────────────────┐
+│ ML Service (8001)    │  │ Reranker (8002)    │  │   Storage Layer      │
+│ ┌──────────────────┐ │  │ ┌────────────────┐ │  │ • PostgreSQL         │
+│ │ ML Operations:   │ │  │ │ CrossEncoder   │ │  │   (pgvector + RLS)   │
+│ │ • Entity Resol.  │ │  │ │ Re-ranking     │ │  │ • Qdrant Vector DB   │
+│ │ • Embeddings     │ │  │ │ for improved   │ │  │ • Redis Cache        │
+│ │ • NLP Processing │ │  │ │ search results │ │  │ • Celery (async)     │
+│ └──────────────────┘ │  │ └────────────────┘ │  └──────────────────────┘
+└──────────────────────┘  └────────────────────┘
 ```
 
 **Architecture Highlights:**
 - **Separation of Concerns**: DAO pattern isolates database operations from business logic
-- **Microservices**: Heavy ML dependencies (PyTorch, transformers) isolated in separate service
+- **Microservices**: Heavy ML dependencies (PyTorch, transformers) isolated in separate services
 - **Lightweight Main API**: Faster startup, smaller Docker images (~500MB vs 3-5GB)
-- **Scalable**: ML service can be scaled independently based on load
+- **Scalable**: ML and Reranker services can be scaled independently based on load
 - **Clean Architecture**: Repository pattern, dependency injection, testable code
+- **Enterprise Ready**: Built-in PII scrubbing, drift detection, cost control, event automation
 
-**Components:**
+**Core Services:**
+- **HybridSearchService** - Multi-strategy search (vector, semantic, graph, fulltext) with caching
+- **QueryAnalyzer** - LLM-powered query intent classification and dynamic weight calculation
+- **ReflectionEngine** - Automatic insight extraction from episodic memories
+- **RulesEngine** - Event-driven automation with triggers, conditions, and actions
+- **EvaluationService** - Search quality metrics (MRR, NDCG, Precision@K, Recall@K)
+- **TemporalGraph** - Knowledge graph evolution tracking and time-travel queries
+- **PIIScrubber** - Automatic PII detection and anonymization
+- **DriftDetector** - Memory quality and semantic drift monitoring
+- **DashboardWebSocket** - Real-time updates for dashboard visualization
+
+**Storage & Infrastructure:**
 - **Vector Store** (Qdrant/pgvector) - Semantic search across memories
-- **Knowledge Graph** (PostgreSQL) - Entity relationships and connections
+- **Knowledge Graph** (PostgreSQL) - Entity relationships with temporal tracking
 - **ML Service** - Entity resolution, embeddings, NLP processing (isolated)
-- **Reflection Engine** - LLM-powered insight extraction
-- **Context Cache** (Redis) - Cost-aware caching layer
+- **Reranker Service** - CrossEncoder-based result re-ranking for improved relevance
+- **Context Cache** (Redis) - Cost-aware caching layer with hybrid search cache
 - **MCP Server** - IDE integration for Cursor, VSCode, Claude Desktop
 
 ---
@@ -209,17 +227,47 @@ RAE implements a **4-layer cognitive memory system** inspired by human cognition
 - **Semantic**: Extracted facts and patterns
 - **Long-Term**: Consolidated knowledge and insights
 
-### 🔍 Hybrid Search (Vector + Graph)
-- Semantic similarity via embeddings
-- Graph traversal for connected concepts
-- BFS/DFS strategies for knowledge exploration
-- Context synthesis from multiple sources
+### 🔍 Hybrid Search 2.0 (GraphRAG)
+- **Multi-Strategy Search**: Vector similarity, Semantic nodes, Graph traversal, Full-text
+- **Query Analyzer**: LLM-powered intent classification and dynamic weight calculation
+- **Graph Traversal**: BFS graph exploration for discovering connected concepts (GraphRAG)
+- **LLM Re-ranking**: Optional re-ranking with Claude/GPT for contextual relevance
+- **Intelligent Caching**: Hash-based cache with temporal windowing for performance
+- **Adaptive Weighting**: Automatically adjusts search strategy weights based on query intent
 
 ### 🔄 Reflection Engine
 - Automatic insight extraction from episodes
 - Pattern detection across memories
 - LLM-powered knowledge consolidation
 - Configurable reflection schedules
+
+### 🏢 Enterprise Features
+
+#### Event Automation & Rules Engine
+- **Event-Driven Triggers**: React to memory creation, reflections, threshold breaches
+- **Complex Conditions**: AND/OR logic with nested condition groups
+- **Rate Limiting**: Per-trigger execution limits and cooldown periods
+- **Action Execution**: Webhook calls, notifications, automated reflections
+- **Retry Logic**: Automatic retries with exponential backoff
+
+#### Quality & Monitoring
+- **Evaluation Service**: Industry-standard IR metrics (MRR, NDCG, Precision@K, Recall@K, MAP)
+- **Drift Detection**: Automatic detection of semantic drift in memory quality
+- **PII Scrubbing**: Automatic detection and anonymization of sensitive data
+- **Cost Control**: Budget tracking, alerts, and cost optimization
+- **Analytics Dashboard**: Real-time metrics and performance monitoring
+
+#### Temporal Knowledge Graph
+- **Graph Snapshots**: Point-in-time graph state capture
+- **Time Travel**: Query graph state at any historical moment
+- **Change Tracking**: Complete audit trail of graph evolution
+- **Growth Analytics**: Track knowledge graph expansion over time
+
+#### Search Quality
+- **A/B Testing**: Statistical comparison of search variants
+- **Query Analysis**: Automatic query intent classification
+- **Dynamic Weights**: Adaptive search strategy selection
+- **Result Caching**: Intelligent caching with temporal windowing
 
 ### 🔌 IDE Integration
 

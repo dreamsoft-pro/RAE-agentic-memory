@@ -348,3 +348,72 @@ class MemoryRepository:
                     tenant_id
                 )
             return float(avg_strength) if avg_strength is not None else 0.0
+
+    async def update_memory_access_stats(
+        self,
+        memory_ids: List[str],
+        tenant_id: str
+    ) -> int:
+        """
+        Update access statistics for multiple memories in a single batch operation.
+
+        This method implements efficient batch updates for memory access tracking,
+        which is critical for the importance scoring and decay mechanisms.
+
+        Updates performed:
+        - Increments usage_count by 1 for each memory
+        - Sets last_accessed_at to current UTC timestamp
+
+        Args:
+            memory_ids: List of memory IDs to update
+            tenant_id: Tenant identifier for security validation
+
+        Returns:
+            Number of memories successfully updated
+
+        Notes:
+            - Uses batch UPDATE for performance (avoids N queries)
+            - Only updates memories belonging to the specified tenant (security)
+            - Timestamps are in UTC for consistency
+            - Used by agent execution and query flows to track memory usage
+        """
+        if not memory_ids:
+            logger.debug("update_memory_access_stats_skipped", reason="empty_memory_ids")
+            return 0
+
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc)
+
+        async with self.pool.acquire() as conn:
+            async with conn.transaction():
+                # Security: Set tenant context
+                await conn.execute("SET app.tenant_id = $1", tenant_id)
+
+                # Batch update using ANY array
+                result = await conn.execute(
+                    """
+                    UPDATE memories
+                    SET
+                        usage_count = usage_count + 1,
+                        last_accessed_at = $1
+                    WHERE
+                        id = ANY($2::uuid[])
+                        AND tenant_id = $3
+                    """,
+                    now,
+                    memory_ids,
+                    tenant_id
+                )
+
+                # Parse result string "UPDATE N" to get count
+                updated_count = int(result.split()[-1]) if result else 0
+
+                logger.info(
+                    "memory_access_stats_updated",
+                    tenant_id=tenant_id,
+                    memory_ids_count=len(memory_ids),
+                    updated_count=updated_count,
+                    timestamp=now.isoformat()
+                )
+
+                return updated_count
