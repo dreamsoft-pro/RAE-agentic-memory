@@ -612,3 +612,276 @@ class GraphRepository:
             "nodes_created": nodes_created,
             "edges_created": edges_created
         }
+
+    async def get_all_nodes(
+        self,
+        tenant_id: str,
+        project_id: str
+    ) -> List[Dict[str, Any]]:
+        """
+        Retrieve all nodes for a project.
+
+        Used for entity resolution and community detection operations.
+
+        Args:
+            tenant_id: Tenant identifier for data isolation
+            project_id: Project identifier
+
+        Returns:
+            List of node dictionaries with id, node_id, label
+        """
+        async with self.pool.acquire() as conn:
+            records = await conn.fetch(
+                """
+                SELECT id, node_id, label, properties
+                FROM knowledge_graph_nodes
+                WHERE tenant_id = $1 AND project_id = $2
+                """,
+                tenant_id,
+                project_id
+            )
+            return [dict(r) for r in records]
+
+    async def get_all_edges(
+        self,
+        tenant_id: str,
+        project_id: str
+    ) -> List[Dict[str, Any]]:
+        """
+        Retrieve all edges for a project.
+
+        Used for community detection and graph analysis operations.
+
+        Args:
+            tenant_id: Tenant identifier for data isolation
+            project_id: Project identifier
+
+        Returns:
+            List of edge dictionaries with source_node_id, target_node_id, relation
+        """
+        async with self.pool.acquire() as conn:
+            records = await conn.fetch(
+                """
+                SELECT source_node_id, target_node_id, relation, properties
+                FROM knowledge_graph_edges
+                WHERE tenant_id = $1 AND project_id = $2
+                """,
+                tenant_id,
+                project_id
+            )
+            return [dict(r) for r in records]
+
+    async def update_node_label(
+        self,
+        node_internal_id: int,
+        new_label: str
+    ) -> bool:
+        """
+        Update the label of a node.
+
+        Used during entity resolution to update canonical names.
+
+        Args:
+            node_internal_id: Internal database ID of the node
+            new_label: New label to assign
+
+        Returns:
+            True if update was successful
+        """
+        async with self.pool.acquire() as conn:
+            result = await conn.execute(
+                """
+                UPDATE knowledge_graph_nodes
+                SET label = $1
+                WHERE id = $2
+                """,
+                new_label,
+                node_internal_id
+            )
+
+            return result == "UPDATE 1"
+
+    async def merge_node_edges(
+        self,
+        source_node_id: int,
+        target_node_id: int
+    ) -> Dict[str, int]:
+        """
+        Merge edges from source node to target node.
+
+        Moves all edges (incoming and outgoing) from source to target.
+        Uses ON CONFLICT DO NOTHING to handle duplicate edges.
+
+        Args:
+            source_node_id: Internal ID of source node (to be merged)
+            target_node_id: Internal ID of target node (merge destination)
+
+        Returns:
+            Dictionary with counts: {"outgoing_updated": int, "incoming_updated": int}
+        """
+        async with self.pool.acquire() as conn:
+            async with conn.transaction():
+                # Move outgoing edges
+                outgoing_result = await conn.execute(
+                    """
+                    UPDATE knowledge_graph_edges
+                    SET source_node_id = $1
+                    WHERE source_node_id = $2
+                    """,
+                    target_node_id,
+                    source_node_id
+                )
+
+                # Move incoming edges
+                incoming_result = await conn.execute(
+                    """
+                    UPDATE knowledge_graph_edges
+                    SET target_node_id = $1
+                    WHERE target_node_id = $2
+                    """,
+                    target_node_id,
+                    source_node_id
+                )
+
+                # Parse results (format: "UPDATE N")
+                outgoing_count = int(outgoing_result.split()[-1]) if outgoing_result else 0
+                incoming_count = int(incoming_result.split()[-1]) if incoming_result else 0
+
+                logger.info(
+                    "edges_merged",
+                    source_node_id=source_node_id,
+                    target_node_id=target_node_id,
+                    outgoing=outgoing_count,
+                    incoming=incoming_count
+                )
+
+                return {
+                    "outgoing_updated": outgoing_count,
+                    "incoming_updated": incoming_count
+                }
+
+    async def delete_node_edges(
+        self,
+        node_internal_id: int
+    ) -> int:
+        """
+        Delete all edges connected to a node (both incoming and outgoing).
+
+        Args:
+            node_internal_id: Internal database ID of the node
+
+        Returns:
+            Number of edges deleted
+        """
+        async with self.pool.acquire() as conn:
+            result = await conn.execute(
+                """
+                DELETE FROM knowledge_graph_edges
+                WHERE source_node_id = $1 OR target_node_id = $1
+                """,
+                node_internal_id
+            )
+
+            # Parse result (format: "DELETE N")
+            count = int(result.split()[-1]) if result else 0
+
+            logger.info(
+                "node_edges_deleted",
+                node_id=node_internal_id,
+                edges_deleted=count
+            )
+
+            return count
+
+    async def delete_node(
+        self,
+        node_internal_id: int
+    ) -> bool:
+        """
+        Delete a node from the knowledge graph.
+
+        Note: Edges should be deleted first using delete_node_edges().
+
+        Args:
+            node_internal_id: Internal database ID of the node
+
+        Returns:
+            True if node was deleted
+        """
+        async with self.pool.acquire() as conn:
+            result = await conn.execute(
+                """
+                DELETE FROM knowledge_graph_nodes
+                WHERE id = $1
+                """,
+                node_internal_id
+            )
+
+            success = result == "DELETE 1"
+
+            if success:
+                logger.info("node_deleted", node_id=node_internal_id)
+            else:
+                logger.warning("node_deletion_failed", node_id=node_internal_id)
+
+            return success
+
+    async def upsert_node(
+        self,
+        tenant_id: str,
+        project_id: str,
+        node_id: str,
+        label: str,
+        properties: Dict[str, Any]
+    ) -> int:
+        """
+        Insert or update a node (upsert operation).
+
+        If node exists, updates label and properties.
+        If node doesn't exist, creates it.
+
+        Args:
+            tenant_id: Tenant identifier for data isolation
+            project_id: Project identifier
+            node_id: Unique node identifier
+            label: Node label
+            properties: Node properties as dictionary
+
+        Returns:
+            Internal database ID of the node
+        """
+        import json
+
+        async with self.pool.acquire() as conn:
+            # Ensure properties is JSON-serializable
+            properties_json = json.dumps(properties) if properties else '{}'
+
+            record = await conn.fetchrow(
+                """
+                INSERT INTO knowledge_graph_nodes
+                (tenant_id, project_id, node_id, label, properties)
+                VALUES ($1, $2, $3, $4, $5::jsonb)
+                ON CONFLICT (tenant_id, project_id, node_id)
+                DO UPDATE SET
+                    label = EXCLUDED.label,
+                    properties = EXCLUDED.properties
+                RETURNING id
+                """,
+                tenant_id,
+                project_id,
+                node_id,
+                label,
+                properties_json
+            )
+
+            internal_id = record['id']
+
+            logger.info(
+                "node_upserted",
+                tenant_id=tenant_id,
+                project_id=project_id,
+                node_id=node_id,
+                internal_id=internal_id
+            )
+
+            return internal_id

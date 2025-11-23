@@ -1,5 +1,7 @@
 # RAE Architecture
 
+> **Latest Update**: RAE now implements the Repository/DAO pattern for improved separation of concerns and testability. See [Repository Pattern Documentation](../architecture/repository-pattern.md) for details.
+
 Complete architectural overview of the Reflective Agentic Memory Engine.
 
 ## System Overview
@@ -28,7 +30,7 @@ RAE is a sophisticated cognitive memory system for AI agents, consisting of mult
 └──────────────────────────┬───────────────────────────────────────┘
                            │
 ┌──────────────────────────┴───────────────────────────────────────┐
-│                      SERVICE LAYER                               │
+│                      SERVICE LAYER (Business Logic)              │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐         │
 │  │   Memory     │  │  Reflection  │  │    Graph     │         │
 │  │   Service    │  │   Engine     │  │   Service    │         │
@@ -41,6 +43,16 @@ RAE is a sophisticated cognitive memory system for AI agents, consisting of mult
 └──────────────────────────┬───────────────────────────────────────┘
                            │
 ┌──────────────────────────┴───────────────────────────────────────┐
+│                  REPOSITORY LAYER (Data Access)                  │
+│  ┌──────────────────┐  ┌──────────────────┐                    │
+│  │ GraphRepository  │  │ MemoryRepository │                    │
+│  │ - Node CRUD      │  │ - Memory CRUD    │                    │
+│  │ - Edge CRUD      │  │ - Query ops      │                    │
+│  │ - Traversal      │  │ - Batch ops      │                    │
+│  └────────┬─────────┘  └────────┬─────────┘                    │
+└───────────┼──────────────────────┼──────────────────────────────┘
+            │                      │
+┌───────────┴──────────────────────┴──────────────────────────────┐
 │                      DATA LAYER                                  │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐         │
 │  │  PostgreSQL  │  │    Qdrant    │  │    Redis     │         │
@@ -97,7 +109,25 @@ class MemoryService:
     async def consolidate_memories(min_age_days)
 ```
 
-### 3. Reflection Engine
+### 3. Repository Layer (NEW)
+
+**Locations**: `apps/memory_api/repositories/`
+
+**Purpose**: Implements the Repository/DAO pattern to separate data access from business logic.
+
+**Key Repositories**:
+- **GraphRepository** - All knowledge graph operations (nodes, edges, traversal)
+- **MemoryRepository** - Memory storage and retrieval operations
+
+**Benefits**:
+- **Separation of Concerns**: Business logic in services, SQL in repositories
+- **Testability**: Services can be unit tested with mocked repositories
+- **Maintainability**: Database changes isolated to repository layer
+- **Consistency**: Standardized data access patterns
+
+See [Repository Pattern Documentation](../architecture/repository-pattern.md) for implementation details.
+
+### 4. Reflection Engine
 
 **Location**: `apps/memory_api/services/reflection_service.py`
 

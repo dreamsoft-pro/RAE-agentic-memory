@@ -9,6 +9,7 @@ from apps.memory_api.services.graph_extraction import (
 )
 from apps.memory_api.models import StoreMemoryRequest, MemoryLayer
 from apps.memory_api.config import settings
+from apps.memory_api.repositories.graph_repository import GraphRepository
 import httpx  # For calling the memory store endpoint
 from apps.memory_api import metrics
 import structlog
@@ -75,8 +76,9 @@ class ReflectionEngine:
     - Integration with GraphExtractionService
     """
 
-    def __init__(self, pool: asyncpg.Pool):
+    def __init__(self, pool: asyncpg.Pool, graph_repository: GraphRepository = None):
         self.pool = pool
+        self.graph_repo = graph_repository or GraphRepository(pool)
         self.llm_provider = get_llm_provider()
         self.graph_extractor = GraphExtractionService(pool)
 
@@ -119,60 +121,40 @@ class ReflectionEngine:
         return f"Generated reflection for project {project}: {extracted_triples.model_dump_json()}"
 
     async def _store_triples(self, triples: List[Triple], project: str, tenant_id: str):
-        async with self.pool.acquire() as conn:
-            for triple in triples:
-                # Insert source node
-                await conn.execute(
-                    """
-                    INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label)
-                    VALUES ($1, $2, $3, $4)
-                    ON CONFLICT (tenant_id, project_id, node_id) DO NOTHING
-                    """,
-                    tenant_id,
-                    project,
-                    triple.source,
-                    triple.source,
-                )
-                # Insert target node
-                await conn.execute(
-                    """
-                    INSERT INTO knowledge_graph_nodes (tenant_id, project_id, node_id, label)
-                    VALUES ($1, $2, $3, $4)
-                    ON CONFLICT (tenant_id, project_id, node_id) DO NOTHING
-                    """,
-                    tenant_id,
-                    project,
-                    triple.target,
-                    triple.target,
-                )
+        """
+        Store triples in knowledge graph using repository pattern.
 
-                # Get source and target node IDs
-                source_node = await conn.fetchrow(
-                    "SELECT id FROM knowledge_graph_nodes WHERE tenant_id = $1 AND project_id = $2 AND node_id = $3",
-                    tenant_id,
-                    project,
-                    triple.source,
-                )
-                target_node = await conn.fetchrow(
-                    "SELECT id FROM knowledge_graph_nodes WHERE tenant_id = $1 AND project_id = $2 AND node_id = $3",
-                    tenant_id,
-                    project,
-                    triple.target,
-                )
+        Args:
+            triples: List of Triple objects with source, target, relation
+            project: Project identifier
+            tenant_id: Tenant identifier
+        """
+        # Convert legacy Triple objects to repository format
+        triple_dicts = [
+            {
+                "source": triple.source,
+                "target": triple.target,
+                "relation": triple.relation,
+                "confidence": 1.0,  # Legacy triples have full confidence
+                "metadata": {}
+            }
+            for triple in triples
+        ]
 
-                if source_node and target_node:
-                    await conn.execute(
-                        """
-                        INSERT INTO knowledge_graph_edges (tenant_id, project_id, source_node_id, target_node_id, relation)
-                        VALUES ($1, $2, $3, $4, $5)
-                        ON CONFLICT DO NOTHING
-                        """,
-                        tenant_id,
-                        project,
-                        source_node["id"],
-                        target_node["id"],
-                        triple.relation,
-                    )
+        # Use repository's batch storage method
+        stats = await self.graph_repo.store_graph_triples(
+            triples=triple_dicts,
+            tenant_id=tenant_id,
+            project_id=project
+        )
+
+        logger.info(
+            "triples_stored",
+            project=project,
+            tenant_id=tenant_id,
+            nodes_created=stats["nodes_created"],
+            edges_created=stats["edges_created"]
+        )
 
     async def _get_recent_episodes(self, project: str, tenant_id: str) -> List[Dict]:
         """

@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field
 from apps.memory_api.config import settings
 from apps.memory_api.services.llm import get_llm_provider
 from apps.memory_api.services.ml_service_client import MLServiceClient
+from apps.memory_api.repositories.graph_repository import GraphRepository
 
 logger = structlog.get_logger(__name__)
 
@@ -34,8 +35,9 @@ class EntityResolutionService:
     and database (merging operations).
     """
 
-    def __init__(self, pool: asyncpg.Pool, ml_client: MLServiceClient = None):
+    def __init__(self, pool: asyncpg.Pool, ml_client: MLServiceClient = None, graph_repository: GraphRepository = None):
         self.pool = pool
+        self.graph_repo = graph_repository or GraphRepository(pool)
         self.llm_provider = get_llm_provider()
         self.ml_client = ml_client or MLServiceClient()
         self.similarity_threshold_high = 0.95
@@ -144,79 +146,80 @@ class EntityResolutionService:
 
     async def _merge_nodes(self, nodes: List[Dict], project_id: str, tenant_id: str, canonical_name: str = None):
         """
-        Merges multiple nodes into one.
-        1. Pick a target node (or create new, but better to pick one to keep ID stable if possible).
-        2. If canonical_name is provided, update target node.
-        3. Rewire edges: Move edges from source nodes to target node.
-        4. Delete source nodes.
+        Merges multiple nodes into one using repository pattern.
+
+        Process:
+        1. Pick a target node (or rename if canonical name provided)
+        2. Update target node label if needed
+        3. Move edges from source nodes to target node
+        4. Delete source nodes
+
+        Args:
+            nodes: List of nodes to merge
+            project_id: Project identifier
+            tenant_id: Tenant identifier
+            canonical_name: Optional canonical name for merged entity
         """
         if not nodes:
             return
 
         # Pick target node: The one with the canonical name if present, or the first one,
-        # or the one with most edges (simplification: pick first or by length of label)
-
+        # or the one with longest label (heuristic)
         if canonical_name:
             # Find if any node already has this name
             target_node = next((n for n in nodes if n['label'] == canonical_name), None)
             if not target_node:
                 # Rename the first node
                 target_node = nodes[0]
-                # Update label in DB
-                async with self.pool.acquire() as conn:
-                    await conn.execute(
-                        "UPDATE knowledge_graph_nodes SET label = $1 WHERE id = $2",
-                        canonical_name, target_node['id']
-                    )
+                # Update label using repository
+                await self.graph_repo.update_node_label(
+                    node_internal_id=target_node['id'],
+                    new_label=canonical_name
+                )
+                target_node['label'] = canonical_name  # Update local reference
         else:
-             # Heuristic: longest name is usually more descriptive? Or shortest?
-             # Let's pick longest.
-             target_node = max(nodes, key=lambda n: len(n['label']))
+            # Heuristic: longest name is usually more descriptive
+            target_node = max(nodes, key=lambda n: len(n['label']))
 
         sources = [n for n in nodes if n['id'] != target_node['id']]
 
-        async with self.pool.acquire() as conn:
-            async with conn.transaction():
-                for source in sources:
-                    # Move outgoing edges: Update source_node_id to target_node['id']
-                    await conn.execute(
-                        """
-                        UPDATE knowledge_graph_edges
-                        SET source_node_id = $1
-                        WHERE source_node_id = $2
-                        ON CONFLICT DO NOTHING
-                        """,
-                        target_node['id'], source['id']
-                    )
+        # Process each source node
+        for source in sources:
+            # Move edges from source to target using repository
+            await self.graph_repo.merge_node_edges(
+                source_node_id=source['id'],
+                target_node_id=target_node['id']
+            )
 
-                    # Move incoming edges: Update target_node_id to target_node['id']
-                    await conn.execute(
-                        """
-                        UPDATE knowledge_graph_edges
-                        SET target_node_id = $1
-                        WHERE target_node_id = $2
-                        ON CONFLICT DO NOTHING
-                        """,
-                        target_node['id'], source['id']
-                    )
+            # Delete remaining edges (handles duplicates that couldn't be moved)
+            await self.graph_repo.delete_node_edges(
+                node_internal_id=source['id']
+            )
 
-                    # Delete source node (edges should be gone or moved, but ON CONFLICT DO NOTHING might leave some if duplicate edges existed.
-                    # If ON CONFLICT DO NOTHING skipped update, it means the edge already existed on target.
-                    # So we should delete the remaining edges on source before deleting node.)
+            # Delete source node
+            await self.graph_repo.delete_node(
+                node_internal_id=source['id']
+            )
 
-                    await conn.execute("DELETE FROM knowledge_graph_edges WHERE source_node_id = $1 OR target_node_id = $1", source['id'])
-                    await conn.execute("DELETE FROM knowledge_graph_nodes WHERE id = $1", source['id'])
-
-        logger.info("nodes_merged", target=target_node['label'], merged_count=len(sources))
+        logger.info(
+            "nodes_merged",
+            target=target_node['label'],
+            merged_count=len(sources),
+            target_id=target_node['id']
+        )
 
     async def _fetch_nodes(self, project_id: str, tenant_id: str) -> List[Dict]:
-        async with self.pool.acquire() as conn:
-            records = await conn.fetch(
-                """
-                SELECT id, node_id, label
-                FROM knowledge_graph_nodes
-                WHERE tenant_id = $1 AND project_id = $2
-                """,
-                tenant_id, project_id
-            )
-            return [dict(r) for r in records]
+        """
+        Fetch all nodes for a project using repository pattern.
+
+        Args:
+            project_id: Project identifier
+            tenant_id: Tenant identifier
+
+        Returns:
+            List of node dictionaries
+        """
+        return await self.graph_repo.get_all_nodes(
+            tenant_id=tenant_id,
+            project_id=project_id
+        )
