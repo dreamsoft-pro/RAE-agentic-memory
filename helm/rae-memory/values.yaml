@@ -5,6 +5,30 @@
 global:
   imagePullSecrets: []
 
+# Secrets management
+secrets:
+  # Standard Kubernetes secrets (used when externalSecrets.enabled = false)
+  openaiApiKey: ""
+  anthropicApiKey: ""
+  geminiApiKey: ""
+  jwtSecret: ""
+  apiMasterKey: ""
+
+# External Secrets Operator integration
+externalSecrets:
+  enabled: false
+  refreshInterval: "1h"
+  secretStore: "aws-secrets-manager"  # or "vault", "gcpsm", etc.
+  secretStoreKind: "SecretStore"  # or "ClusterSecretStore"
+  keys:
+    databaseUrl: "rae/database-url"
+    redisUrl: "rae/redis-url"
+    openaiApiKey: "rae/openai-api-key"
+    anthropicApiKey: "rae/anthropic-api-key"
+    geminiApiKey: "rae/gemini-api-key"
+    jwtSecret: "rae/jwt-secret"
+    apiMasterKey: "rae/api-master-key"
+
 # Memory API configuration
 memoryApi:
   replicaCount: 2
@@ -190,11 +214,16 @@ celeryWorker:
       cpu: 500m
       memory: 1Gi
 
+  # Celery worker settings
+  concurrency: 4
+  maxTasksPerChild: 1000
+
   autoscaling:
     enabled: true
     minReplicas: 2
     maxReplicas: 10
     targetCPUUtilizationPercentage: 80
+    targetMemoryUtilizationPercentage: 75
 
 # Ingress configuration
 ingress:
@@ -223,6 +252,11 @@ monitoring:
   enabled: true
   serviceMonitor:
     enabled: true
+    interval: "30s"
+    scrapeTimeout: "10s"
+    labels: {}
+    relabelings: []
+    metricRelabelings: []
   grafanaDashboard:
     enabled: true
 
