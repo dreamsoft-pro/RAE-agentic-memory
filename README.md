@@ -250,11 +250,20 @@ RAE implements a **4-layer cognitive memory system** inspired by human cognition
 - **Action Execution**: Webhook calls, notifications, automated reflections
 - **Retry Logic**: Automatic retries with exponential backoff
 
+#### Cost Control & Budget Management
+- **Real-time Cost Tracking**: Track LLM API costs across all providers (OpenAI, Anthropic, Google)
+- **Budget Enforcement**: Daily and monthly limits with automatic HTTP 402 responses when exceeded
+- **Multi-tenant Isolation**: Per-tenant and per-project cost tracking
+- **Budget Alerts**: Configurable thresholds (default: 80%, 95%) with notifications
+- **Cost Analytics**: Detailed cost logs, usage trends, and optimization recommendations
+- **Model Selection**: Cost-aware model selection based on budget availability
+
+See [Cost Controller Documentation](docs/concepts/cost-controller.md) for implementation details.
+
 #### Quality & Monitoring
 - **Evaluation Service**: Industry-standard IR metrics (MRR, NDCG, Precision@K, Recall@K, MAP)
 - **Drift Detection**: Automatic detection of semantic drift in memory quality
 - **PII Scrubbing**: Automatic detection and anonymization of sensitive data
-- **Cost Control**: Budget tracking, alerts, and cost optimization
 - **Analytics Dashboard**: Real-time metrics and performance monitoring
 
 #### Temporal Knowledge Graph
@@ -283,11 +292,15 @@ RAE provides two complementary integration methods:
 - **Context Watcher**: Monitors file changes and automatically stores them in RAE
 - **Works Together**: Use both for comprehensive context capture
 
-### 💰 Cost-Aware Caching
-- Redis-based intelligent caching
-- Embedding deduplication
-- Budget tracking and alerts
-- Compression for large contexts
+### 💰 Cost Control & Budget Management
+- **Real-time cost tracking** for all LLM providers (OpenAI, Anthropic, Google)
+- **Budget enforcement** with daily/monthly limits (HTTP 402 when exceeded)
+- **Multi-tenant cost isolation** for accurate per-project tracking
+- **Redis-based intelligent caching** to minimize LLM API calls
+- **Embedding deduplication** to avoid redundant computations
+- **Budget alerts** and notifications at configurable thresholds
+
+See [Cost Controller Documentation](docs/concepts/cost-controller.md) for detailed usage.
 
 ### 🔒 Production-Ready
 - Multi-tenant with Row Level Security (RLS)
@@ -305,7 +318,7 @@ RAE provides two complementary integration methods:
 
 ## Installation
 
-### Docker Compose (Recommended)
+### Docker Compose (Recommended for Development)
 
 ```bash
 # Clone repository
@@ -328,6 +341,34 @@ docker-compose up -d
 curl http://localhost:8000/health
 curl http://localhost:8001/health
 ```
+
+### Kubernetes (Recommended for Production)
+
+Enterprise-grade deployment with cost control, auto-scaling, and monitoring:
+
+```bash
+# Quick install
+helm install rae-memory ./helm/rae-memory \
+  --namespace rae-memory \
+  --create-namespace \
+  --set ingress.hosts[0].host=rae-api.yourdomain.com
+
+# With cost control
+helm install rae-memory ./helm/rae-memory \
+  --namespace rae-memory \
+  --set configMap.ENABLE_COST_TRACKING=true \
+  --set configMap.DEFAULT_MONTHLY_LIMIT=500.00
+```
+
+**Features:**
+- Auto-scaling (HPA) for API, ML Service, and Celery Workers
+- Cost tracking and budget enforcement
+- NetworkPolicy for security
+- Prometheus monitoring with Grafana dashboards
+- External Secrets Operator support
+- TLS with cert-manager
+
+See [Kubernetes Deployment Guide](docs/deployment/kubernetes.md) for complete documentation.
 
 ### Manual Setup
 
@@ -401,12 +442,30 @@ reflection = await client.generate_reflection()
 
 ## Documentation
 
+### Getting Started
 - 📖 **[Getting Started Guide](docs/getting-started/)** - Installation and first steps
-- 🏗️ **[Architecture Overview](docs/concepts/architecture.md)** - System design
-- 🔧 **[API Reference](http://localhost:8000/docs)** - Interactive API docs
+- 🚀 **[Quick Start](docs/getting-started/)** - 5-minute setup guide
 - 🎓 **[Tutorials](docs/guides/)** - Step-by-step guides
-- 💡 **[Examples](examples/)** - Real-world use cases
-- 🤝 **[Contributing](CONTRIBUTING.md)** - How to contribute
+
+### Architecture & Concepts
+- 🏗️ **[Architecture Overview](docs/concepts/architecture.md)** - System design and components
+- 💰 **[Cost Controller](docs/concepts/cost-controller.md)** - Budget management and cost tracking
+- 🔄 **[Reflection Engine](docs/concepts/)** - Automatic insight extraction
+- 🔍 **[Hybrid Search](docs/concepts/)** - Multi-strategy search with GraphRAG
+
+### Deployment
+- 🐳 **[Docker Compose Setup](docs/getting-started/)** - Local development
+- ☸️ **[Kubernetes Deployment](docs/deployment/kubernetes.md)** - Enterprise production deployment
+- 📊 **[Helm Chart Configuration](helm/rae-memory/README.md)** - Detailed Helm values reference
+
+### API Documentation
+- 🔧 **[REST API Reference](docs/api/rest-api.md)** - Complete API documentation
+- 📚 **[Interactive API Docs](http://localhost:8000/docs)** - Swagger UI (when running)
+- 🔌 **[MCP Integration](docs/integrations/mcp_protocol_server.md)** - IDE integration guide
+
+### Examples & Use Cases
+- 💡 **[Examples](examples/)** - Real-world use cases and code samples
+- 🤝 **[Contributing](CONTRIBUTING.md)** - How to contribute to RAE
 
 ---
 
