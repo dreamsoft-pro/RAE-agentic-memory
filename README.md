@@ -442,6 +442,11 @@ reflection = await client.generate_reflection()
 
 ## Documentation
 
+### Project Status & Progress
+- 📊 **[Project Status](STATUS.md)** - Current implementation status and features
+- ✅ **[TODO List](TODO.md)** - Upcoming features and improvements
+- 🧪 **[Testing Guide](TESTING.md)** - Test coverage, running tests, and writing new tests
+
 ### Getting Started
 - 📖 **[Getting Started Guide](docs/getting-started/)** - Installation and first steps
 - 🚀 **[Quick Start](docs/getting-started/)** - 5-minute setup guide
@@ -449,6 +454,7 @@ reflection = await client.generate_reflection()
 
 ### Architecture & Concepts
 - 🏗️ **[Architecture Overview](docs/concepts/architecture.md)** - System design and components
+- 🏛️ **[Repository Pattern](docs/architecture/repository-pattern.md)** - Data access layer design
 - 💰 **[Cost Controller](docs/concepts/cost-controller.md)** - Budget management and cost tracking
 - 🔄 **[Reflection Engine](docs/concepts/)** - Automatic insight extraction
 - 🔍 **[Hybrid Search](docs/concepts/)** - Multi-strategy search with GraphRAG
