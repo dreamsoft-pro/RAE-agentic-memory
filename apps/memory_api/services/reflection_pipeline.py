@@ -11,14 +11,28 @@ This module implements the complete reflection generation pipeline with:
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 from uuid import UUID
 
 import asyncpg
 import numpy as np
 import structlog
-from sklearn.cluster import HDBSCAN, KMeans
-from sklearn.preprocessing import StandardScaler
+
+# Optional scikit-learn imports for clustering
+try:  # pragma: no cover
+    from sklearn.cluster import HDBSCAN, KMeans
+    from sklearn.preprocessing import StandardScaler
+
+    SKLEARN_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    HDBSCAN = None  # type: ignore[assignment,misc]
+    KMeans = None  # type: ignore[assignment,misc]
+    StandardScaler = None  # type: ignore[assignment,misc]
+    SKLEARN_AVAILABLE = False
+
+if TYPE_CHECKING:
+    from sklearn.cluster import HDBSCAN, KMeans  # noqa: F401
+    from sklearn.preprocessing import StandardScaler  # noqa: F401
 
 from apps.memory_api.config import settings
 from apps.memory_api.models.reflection_models import (
@@ -112,6 +126,15 @@ class ReflectionPipeline:
         self.pool = pool
         self.llm_provider = get_llm_provider()
         self.ml_client = MLServiceClient()
+
+    def _ensure_sklearn_available(self) -> None:
+        """Ensure scikit-learn is available for clustering operations."""
+        if not SKLEARN_AVAILABLE:
+            raise RuntimeError(
+                "Reflection clustering requires scikit-learn. "
+                "Install ML extras: `pip install -r apps/memory_api/requirements-ml.txt` "
+                "or run: `pip install scikit-learn`."
+            )
 
     async def generate_reflections(
         self, request: GenerateReflectionRequest
@@ -279,6 +302,9 @@ class ReflectionPipeline:
         Returns:
             Dictionary mapping cluster_id to list of memories
         """
+        # Ensure scikit-learn is available for clustering
+        self._ensure_sklearn_available()
+
         logger.info(
             "clustering_memories", count=len(memories), min_size=min_cluster_size
         )
