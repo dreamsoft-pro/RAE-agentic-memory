@@ -6,8 +6,9 @@ Provides functions for validating and sanitizing user input.
 
 import re
 from typing import List, Optional
-from fastapi import HTTPException, status
+
 import structlog
+from fastapi import HTTPException, status
 
 logger = structlog.get_logger(__name__)
 
@@ -18,8 +19,8 @@ MAX_TAGS_COUNT = 20
 MAX_QUERY_LENGTH = 1000
 
 # Patterns for validation
-TAG_PATTERN = re.compile(r'^[a-zA-Z0-9_-]+$')
-SAFE_STRING_PATTERN = re.compile(r'^[a-zA-Z0-9\s\-_.,!?()\'\"]+$')
+TAG_PATTERN = re.compile(r"^[a-zA-Z0-9_-]+$")
+SAFE_STRING_PATTERN = re.compile(r"^[a-zA-Z0-9\s\-_.,!?()\'\"]+$")
 
 
 def sanitize_input(text: str, max_length: Optional[int] = None) -> str:
@@ -43,14 +44,14 @@ def sanitize_input(text: str, max_length: Optional[int] = None) -> str:
     if max_length and len(text) > max_length:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Input exceeds maximum length of {max_length} characters"
+            detail=f"Input exceeds maximum length of {max_length} characters",
         )
 
     # Remove null bytes
-    text = text.replace('\x00', '')
+    text = text.replace("\x00", "")
 
     # Remove control characters (except newlines and tabs)
-    text = ''.join(char for char in text if char.isprintable() or char in ['\n', '\t'])
+    text = "".join(char for char in text if char.isprintable() or char in ["\n", "\t"])
 
     return text.strip()
 
@@ -70,18 +71,17 @@ def validate_content(content: str) -> str:
     """
     if not content or not content.strip():
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Content cannot be empty"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Content cannot be empty"
         )
 
     if len(content) > MAX_CONTENT_LENGTH:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Content exceeds maximum length of {MAX_CONTENT_LENGTH} characters"
+            detail=f"Content exceeds maximum length of {MAX_CONTENT_LENGTH} characters",
         )
 
     # Check for potential XSS attempts
-    dangerous_patterns = ['<script', 'javascript:', 'onerror=', 'onclick=']
+    dangerous_patterns = ["<script", "javascript:", "onerror=", "onclick="]
     content_lower = content.lower()
 
     for pattern in dangerous_patterns:
@@ -89,7 +89,7 @@ def validate_content(content: str) -> str:
             logger.warning("potential_xss_attempt", pattern=pattern)
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Content contains potentially dangerous patterns"
+                detail="Content contains potentially dangerous patterns",
             )
 
     return sanitize_input(content, MAX_CONTENT_LENGTH)
@@ -114,7 +114,7 @@ def validate_tags(tags: List[str]) -> List[str]:
     if len(tags) > MAX_TAGS_COUNT:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Maximum {MAX_TAGS_COUNT} tags allowed"
+            detail=f"Maximum {MAX_TAGS_COUNT} tags allowed",
         )
 
     validated_tags = []
@@ -128,21 +128,21 @@ def validate_tags(tags: List[str]) -> List[str]:
         if len(tag) > MAX_TAG_LENGTH:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Tag '{tag[:20]}...' exceeds maximum length of {MAX_TAG_LENGTH} characters"
+                detail=f"Tag '{tag[:20]}...' exceeds maximum length of {MAX_TAG_LENGTH} characters",
             )
 
         # Check for dangerous characters
-        if '<' in tag or '>' in tag or ';' in tag or '"' in tag or "'" in tag:
+        if "<" in tag or ">" in tag or ";" in tag or '"' in tag or "'" in tag:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Tag '{tag}' contains invalid characters"
+                detail=f"Tag '{tag}' contains invalid characters",
             )
 
         # Validate tag pattern (alphanumeric, underscore, hyphen only)
         if not TAG_PATTERN.match(tag):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Tag '{tag}' must contain only alphanumeric characters, underscores, and hyphens"
+                detail=f"Tag '{tag}' must contain only alphanumeric characters, underscores, and hyphens",
             )
 
         validated_tags.append(tag.lower())
@@ -165,14 +165,13 @@ def validate_query(query: str) -> str:
     """
     if not query or not query.strip():
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Query cannot be empty"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Query cannot be empty"
         )
 
     if len(query) > MAX_QUERY_LENGTH:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Query exceeds maximum length of {MAX_QUERY_LENGTH} characters"
+            detail=f"Query exceeds maximum length of {MAX_QUERY_LENGTH} characters",
         )
 
     return sanitize_input(query, MAX_QUERY_LENGTH)
@@ -191,14 +190,14 @@ def validate_layer(layer: str) -> str:
     Raises:
         HTTPException: If layer is invalid
     """
-    valid_layers = ['episodic', 'working', 'semantic', 'ltm']
+    valid_layers = ["episodic", "working", "semantic", "ltm"]
 
     layer = layer.lower().strip()
 
     if layer not in valid_layers:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid memory layer. Must be one of: {', '.join(valid_layers)}"
+            detail=f"Invalid memory layer. Must be one of: {', '.join(valid_layers)}",
         )
 
     return layer
@@ -224,15 +223,14 @@ def validate_tenant_id(tenant_id: Optional[str]) -> Optional[str]:
 
     if len(tenant_id) > 100:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Tenant ID too long"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Tenant ID too long"
         )
 
     # Allow alphanumeric, hyphens, underscores
-    if not re.match(r'^[a-zA-Z0-9_-]+$', tenant_id):
+    if not re.match(r"^[a-zA-Z0-9_-]+$", tenant_id):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Tenant ID contains invalid characters"
+            detail="Tenant ID contains invalid characters",
         )
 
     return tenant_id
@@ -258,15 +256,14 @@ def validate_project_id(project_id: Optional[str]) -> Optional[str]:
 
     if len(project_id) > 100:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Project ID too long"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Project ID too long"
         )
 
     # Allow alphanumeric, hyphens, underscores
-    if not re.match(r'^[a-zA-Z0-9_-]+$', project_id):
+    if not re.match(r"^[a-zA-Z0-9_-]+$", project_id):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Project ID contains invalid characters"
+            detail="Project ID contains invalid characters",
         )
 
     return project_id
@@ -292,13 +289,13 @@ def validate_limit(limit: Optional[int], max_limit: int = 100) -> int:
     if not isinstance(limit, int) or limit < 1:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Limit must be a positive integer"
+            detail="Limit must be a positive integer",
         )
 
     if limit > max_limit:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Limit cannot exceed {max_limit}"
+            detail=f"Limit cannot exceed {max_limit}",
         )
 
     return limit

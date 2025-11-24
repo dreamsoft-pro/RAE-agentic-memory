@@ -1,11 +1,12 @@
 from typing import Type
-from pydantic import BaseModel
-import google.generativeai as genai
-from tenacity import retry, stop_after_attempt, wait_exponential
-import instructor
 
-from .base import LLMProvider, LLMResult, LLMResultUsage
+import google.generativeai as genai
+import instructor
+from pydantic import BaseModel
+from tenacity import retry, stop_after_attempt, wait_exponential
+
 from ...config import settings
+from .base import LLMProvider, LLMResult, LLMResultUsage
 
 
 class GeminiProvider(LLMProvider):
@@ -20,7 +21,9 @@ class GeminiProvider(LLMProvider):
         genai.configure(api_key=key)
         self.client = instructor.patch(genai.GenerativeModel)
 
-    @retry(wait=wait_exponential(multiplier=1, min=4, max=10), stop=stop_after_attempt(3))
+    @retry(
+        wait=wait_exponential(multiplier=1, min=4, max=10), stop=stop_after_attempt(3)
+    )
     async def generate(self, *, system: str, prompt: str, model: str) -> LLMResult:
         """
         Generates content using the Gemini model.
@@ -48,7 +51,9 @@ class GeminiProvider(LLMProvider):
             print(f"Gemini API call failed: {e}")
             raise  # Re-raise after logging/handling, tenacity will handle retries
 
-    @retry(wait=wait_exponential(multiplier=1, min=4, max=10), stop=stop_after_attempt(3))
+    @retry(
+        wait=wait_exponential(multiplier=1, min=4, max=10), stop=stop_after_attempt(3)
+    )
     async def generate_structured(
         self, *, system: str, prompt: str, model: str, response_model: Type[BaseModel]
     ) -> BaseModel:

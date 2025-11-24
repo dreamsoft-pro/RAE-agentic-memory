@@ -9,15 +9,17 @@ Tests cover:
 - A/B testing
 """
 
-import pytest
-import numpy as np
 from datetime import datetime, timedelta, timezone
-from uuid import uuid4
 from unittest.mock import AsyncMock
+from uuid import uuid4
 
-from apps.memory_api.services.evaluation_service import EvaluationService
+import numpy as np
+import pytest
+
+from apps.memory_api.models.evaluation_models import (DriftSeverity, DriftType,
+                                                      RankedResult)
 from apps.memory_api.services.drift_detector import DriftDetector
-from apps.memory_api.models.evaluation_models import DriftType, DriftSeverity, RankedResult
+from apps.memory_api.services.evaluation_service import EvaluationService
 
 
 @pytest.fixture
@@ -42,10 +44,12 @@ async def test_mrr_calculation(evaluation_service):
     doc1_id = uuid4()
     doc2_id = uuid4()
     relevance = {"q1": {str(doc1_id): 1.0, str(doc2_id): 0.5}}
-    results = {"q1": [
-        RankedResult(document_id=doc2_id, rank=1, score=0.9),
-        RankedResult(document_id=doc1_id, rank=2, score=0.8)
-    ]}
+    results = {
+        "q1": [
+            RankedResult(document_id=doc2_id, rank=1, score=0.9),
+            RankedResult(document_id=doc1_id, rank=2, score=0.8),
+        ]
+    }
 
     mrr = evaluation_service._calculate_mrr(relevance, results)
     assert 0 <= mrr <= 1
@@ -58,10 +62,12 @@ async def test_ndcg_calculation(evaluation_service):
     doc2_id = uuid4()
     doc3_id = uuid4()
     relevance = {"q1": {str(doc1_id): 1.0, str(doc2_id): 0.5, str(doc3_id): 0.0}}
-    results = {"q1": [
-        RankedResult(document_id=doc1_id, rank=1, score=0.95),
-        RankedResult(document_id=doc2_id, rank=2, score=0.85)
-    ]}
+    results = {
+        "q1": [
+            RankedResult(document_id=doc1_id, rank=1, score=0.95),
+            RankedResult(document_id=doc2_id, rank=2, score=0.85),
+        ]
+    }
 
     ndcg = evaluation_service._calculate_ndcg(relevance, results, k=10)
     assert 0 <= ndcg <= 1
@@ -74,10 +80,12 @@ async def test_precision_recall(evaluation_service):
     doc2_id = uuid4()
     doc3_id = uuid4()
     relevance = {"q1": {str(doc1_id): 1.0, str(doc2_id): 1.0, str(doc3_id): 0.0}}
-    results = {"q1": [
-        RankedResult(document_id=doc1_id, rank=1, score=0.9),
-        RankedResult(document_id=doc3_id, rank=2, score=0.8)
-    ]}
+    results = {
+        "q1": [
+            RankedResult(document_id=doc1_id, rank=1, score=0.9),
+            RankedResult(document_id=doc3_id, rank=2, score=0.8),
+        ]
+    }
 
     precision = evaluation_service._calculate_precision_at_k(relevance, results, k=2)
     recall = evaluation_service._calculate_recall_at_k(relevance, results, k=2)
@@ -130,11 +138,13 @@ async def test_drift_severity_classification(drift_detector):
 async def test_drift_detection_no_data(drift_detector, mock_pool):
     """Test drift detection with minimal data (no significant drift)"""
     # Mock returns data in correct format (list of dicts with metric_value key)
-    mock_pool.fetch = AsyncMock(return_value=[
-        {"metric_value": 0.8},
-        {"metric_value": 0.85},
-        {"metric_value": 0.82}
-    ])
+    mock_pool.fetch = AsyncMock(
+        return_value=[
+            {"metric_value": 0.8},
+            {"metric_value": 0.85},
+            {"metric_value": 0.82},
+        ]
+    )
 
     result = await drift_detector.detect_drift(
         tenant_id="test",
@@ -144,7 +154,7 @@ async def test_drift_detection_no_data(drift_detector, mock_pool):
         baseline_start=datetime.now(timezone.utc) - timedelta(days=14),
         baseline_end=datetime.now(timezone.utc) - timedelta(days=7),
         current_start=datetime.now(timezone.utc) - timedelta(days=7),
-        current_end=datetime.now(timezone.utc)
+        current_end=datetime.now(timezone.utc),
     )
 
     # With identical data for both periods, no drift should be detected
@@ -158,7 +168,7 @@ async def test_ab_test_traffic_validation():
     # Valid allocation
     variants = [
         {"name": "A", "traffic_percentage": 50.0},
-        {"name": "B", "traffic_percentage": 50.0}
+        {"name": "B", "traffic_percentage": 50.0},
     ]
     total = sum(v["traffic_percentage"] for v in variants)
     assert 99.0 <= total <= 101.0  # Allow floating point error
@@ -166,7 +176,7 @@ async def test_ab_test_traffic_validation():
     # Invalid allocation
     variants_invalid = [
         {"name": "A", "traffic_percentage": 40.0},
-        {"name": "B", "traffic_percentage": 40.0}
+        {"name": "B", "traffic_percentage": 40.0},
     ]
     total_invalid = sum(v["traffic_percentage"] for v in variants_invalid)
     assert not (99.0 <= total_invalid <= 101.0)

@@ -8,3 +8,9 @@ anyio>=3.7.1
 
 # Testcontainers for integration tests with real database
 testcontainers[postgres]>=3.7.0
+
+# Additional dependencies needed by tests
+instructor>=1.0.0
+slowapi>=0.1.9
+scipy>=1.11.0
+mcp>=1.0.0

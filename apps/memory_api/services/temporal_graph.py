@@ -2,23 +2,22 @@
 Temporal Graph Service - Track knowledge graph evolution over time
 """
 
-from typing import List, Dict, Optional, Any, Tuple
-from uuid import UUID
 from datetime import datetime, timedelta, timezone
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
+from uuid import UUID
+
 import structlog
 
-from apps.memory_api.services.graph_algorithms import (
-    GraphNode,
-    GraphEdge,
-    KnowledgeGraph
-)
+from apps.memory_api.services.graph_algorithms import (GraphEdge, GraphNode,
+                                                       KnowledgeGraph)
 
 logger = structlog.get_logger(__name__)
 
 
 class ChangeType(str, Enum):
     """Types of graph changes"""
+
     NODE_ADDED = "node_added"
     NODE_REMOVED = "node_removed"
     NODE_UPDATED = "node_updated"
@@ -35,7 +34,7 @@ class GraphSnapshot:
         tenant_id: UUID,
         timestamp: datetime,
         graph: KnowledgeGraph,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         self.tenant_id = tenant_id
         self.timestamp = timestamp
@@ -57,7 +56,7 @@ class GraphChange:
         entity_type: str,
         old_value: Optional[Any] = None,
         new_value: Optional[Any] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         self.change_type = change_type
         self.timestamp = timestamp
@@ -76,7 +75,7 @@ class GraphChange:
             "entity_type": self.entity_type,
             "old_value": self.old_value,
             "new_value": self.new_value,
-            "metadata": self.metadata
+            "metadata": self.metadata,
         }
 
     def __repr__(self):
@@ -105,7 +104,7 @@ class TemporalGraphService:
         self,
         tenant_id: UUID,
         graph: KnowledgeGraph,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> GraphSnapshot:
         """
         Create a snapshot of the current graph state
@@ -122,7 +121,7 @@ class TemporalGraphService:
             tenant_id=tenant_id,
             timestamp=datetime.now(timezone.utc),
             graph=graph,
-            metadata=metadata
+            metadata=metadata,
         )
 
         # Store snapshot
@@ -135,15 +134,13 @@ class TemporalGraphService:
             tenant_id=str(tenant_id),
             timestamp=snapshot.timestamp.isoformat(),
             nodes=graph.node_count(),
-            edges=graph.edge_count()
+            edges=graph.edge_count(),
         )
 
         return snapshot
 
     async def get_snapshot_at_time(
-        self,
-        tenant_id: UUID,
-        timestamp: datetime
+        self, tenant_id: UUID, timestamp: datetime
     ) -> Optional[GraphSnapshot]:
         """
         Get graph snapshot at or before specified time
@@ -166,10 +163,7 @@ class TemporalGraphService:
         # Return most recent valid snapshot
         return max(valid_snapshots, key=lambda s: s.timestamp)
 
-    async def get_latest_snapshot(
-        self,
-        tenant_id: UUID
-    ) -> Optional[GraphSnapshot]:
+    async def get_latest_snapshot(self, tenant_id: UUID) -> Optional[GraphSnapshot]:
         """
         Get most recent snapshot
 
@@ -186,11 +180,7 @@ class TemporalGraphService:
 
         return max(snapshots, key=lambda s: s.timestamp)
 
-    async def record_change(
-        self,
-        tenant_id: UUID,
-        change: GraphChange
-    ):
+    async def record_change(self, tenant_id: UUID, change: GraphChange):
         """
         Record a graph change
 
@@ -207,7 +197,7 @@ class TemporalGraphService:
             "change_recorded",
             tenant_id=str(tenant_id),
             change_type=change.change_type.value,
-            entity_id=change.entity_id
+            entity_id=change.entity_id,
         )
 
     async def get_changes(
@@ -216,7 +206,7 @@ class TemporalGraphService:
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
         change_types: Optional[List[ChangeType]] = None,
-        entity_id: Optional[str] = None
+        entity_id: Optional[str] = None,
     ) -> List[GraphChange]:
         """
         Get graph changes with optional filters
@@ -251,9 +241,7 @@ class TemporalGraphService:
         return sorted(filtered, key=lambda c: c.timestamp)
 
     async def get_entity_history(
-        self,
-        tenant_id: UUID,
-        entity_id: str
+        self, tenant_id: UUID, entity_id: str
     ) -> List[GraphChange]:
         """
         Get complete change history for an entity
@@ -268,9 +256,7 @@ class TemporalGraphService:
         return await self.get_changes(tenant_id, entity_id=entity_id)
 
     async def reconstruct_graph_at_time(
-        self,
-        tenant_id: UUID,
-        timestamp: datetime
+        self, tenant_id: UUID, timestamp: datetime
     ) -> Optional[KnowledgeGraph]:
         """
         Reconstruct the knowledge graph as it existed at a specific time
@@ -294,9 +280,7 @@ class TemporalGraphService:
 
         # Apply changes between snapshot and target time
         changes = await self.get_changes(
-            tenant_id,
-            start_time=snapshot.timestamp,
-            end_time=timestamp
+            tenant_id, start_time=snapshot.timestamp, end_time=timestamp
         )
 
         # Apply changes chronologically
@@ -306,9 +290,7 @@ class TemporalGraphService:
         return graph
 
     def _apply_change(
-        self,
-        graph: KnowledgeGraph,
-        change: GraphChange
+        self, graph: KnowledgeGraph, change: GraphChange
     ) -> KnowledgeGraph:
         """
         Apply a change to a graph
@@ -325,7 +307,7 @@ class TemporalGraphService:
                 node = GraphNode(
                     id=change.entity_id,
                     entity_type=change.new_value.get("entity_type", "unknown"),
-                    properties=change.new_value.get("properties", {})
+                    properties=change.new_value.get("properties", {}),
                 )
                 graph.add_node(node)
 
@@ -346,24 +328,25 @@ class TemporalGraphService:
                     target_id=change.new_value.get("target_id", ""),
                     relation_type=change.new_value.get("relation_type", "unknown"),
                     weight=change.new_value.get("weight", 1.0),
-                    properties=change.new_value.get("properties", {})
+                    properties=change.new_value.get("properties", {}),
                 )
                 graph.add_edge(edge)
 
         elif change.change_type == ChangeType.EDGE_REMOVED:
             # Remove edge from graph.edges list
             graph.edges = [
-                e for e in graph.edges
-                if not (e.source_id == change.entity_id.split("->")[0] and
-                        e.target_id == change.entity_id.split("->")[1])
+                e
+                for e in graph.edges
+                if not (
+                    e.source_id == change.entity_id.split("->")[0]
+                    and e.target_id == change.entity_id.split("->")[1]
+                )
             ]
 
         return graph
 
     async def compare_graphs(
-        self,
-        graph1: KnowledgeGraph,
-        graph2: KnowledgeGraph
+        self, graph1: KnowledgeGraph, graph2: KnowledgeGraph
     ) -> Dict[str, Any]:
         """
         Compare two graphs and identify differences
@@ -393,23 +376,24 @@ class TemporalGraphService:
             "nodes_added_count": len(nodes_added),
             "nodes_removed_count": len(nodes_removed),
             "edges_added": [
-                {"source": s, "target": t, "relation": r}
-                for s, t, r in edges_added
+                {"source": s, "target": t, "relation": r} for s, t, r in edges_added
             ],
             "edges_removed": [
-                {"source": s, "target": t, "relation": r}
-                for s, t, r in edges_removed
+                {"source": s, "target": t, "relation": r} for s, t, r in edges_removed
             ],
             "edges_added_count": len(edges_added),
             "edges_removed_count": len(edges_removed),
-            "total_changes": len(nodes_added) + len(nodes_removed) + len(edges_added) + len(edges_removed)
+            "total_changes": len(nodes_added)
+            + len(nodes_removed)
+            + len(edges_added)
+            + len(edges_removed),
         }
 
     async def get_evolution_timeline(
         self,
         tenant_id: UUID,
         start_time: Optional[datetime] = None,
-        end_time: Optional[datetime] = None
+        end_time: Optional[datetime] = None,
     ) -> List[Dict[str, Any]]:
         """
         Get timeline of graph evolution
@@ -436,7 +420,9 @@ class TemporalGraphService:
             if current_bucket != bucket_time:
                 # Save previous bucket
                 if current_bucket and bucket_changes:
-                    timeline.append(self._summarize_bucket(current_bucket, bucket_changes))
+                    timeline.append(
+                        self._summarize_bucket(current_bucket, bucket_changes)
+                    )
 
                 current_bucket = bucket_time
                 bucket_changes = []
@@ -450,9 +436,7 @@ class TemporalGraphService:
         return timeline
 
     def _summarize_bucket(
-        self,
-        bucket_time: datetime,
-        changes: List[GraphChange]
+        self, bucket_time: datetime, changes: List[GraphChange]
     ) -> Dict[str, Any]:
         """Summarize changes in a time bucket"""
         change_type_counts = {}
@@ -464,13 +448,11 @@ class TemporalGraphService:
             "timestamp": bucket_time.isoformat(),
             "total_changes": len(changes),
             "by_type": change_type_counts,
-            "entities_affected": len(set(c.entity_id for c in changes))
+            "entities_affected": len(set(c.entity_id for c in changes)),
         }
 
     async def get_growth_metrics(
-        self,
-        tenant_id: UUID,
-        period_days: int = 30
+        self, tenant_id: UUID, period_days: int = 30
     ) -> Dict[str, Any]:
         """
         Calculate graph growth metrics over a period
@@ -490,9 +472,7 @@ class TemporalGraphService:
         end_graph = await self.reconstruct_graph_at_time(tenant_id, end_time)
 
         if not start_graph or not end_graph:
-            return {
-                "error": "Insufficient data for growth analysis"
-            }
+            return {"error": "Insufficient data for growth analysis"}
 
         # Calculate growth
         start_nodes = start_graph.node_count()
@@ -512,19 +492,19 @@ class TemporalGraphService:
                 "end": end_nodes,
                 "growth": node_growth,
                 "growth_rate": node_growth / start_nodes if start_nodes > 0 else 0,
-                "daily_growth": node_growth / period_days
+                "daily_growth": node_growth / period_days,
             },
             "edges": {
                 "start": start_edges,
                 "end": end_edges,
                 "growth": edge_growth,
                 "growth_rate": edge_growth / start_edges if start_edges > 0 else 0,
-                "daily_growth": edge_growth / period_days
+                "daily_growth": edge_growth / period_days,
             },
             "density": {
                 "start": await self._calculate_density(start_graph),
-                "end": await self._calculate_density(end_graph)
-            }
+                "end": await self._calculate_density(end_graph),
+            },
         }
 
     async def _calculate_density(self, graph: KnowledgeGraph) -> float:
@@ -539,9 +519,7 @@ class TemporalGraphService:
         return num_edges / max_edges if max_edges > 0 else 0.0
 
     async def find_emerging_patterns(
-        self,
-        tenant_id: UUID,
-        window_days: int = 7
+        self, tenant_id: UUID, window_days: int = 7
     ) -> List[Dict[str, Any]]:
         """
         Find emerging patterns in graph evolution
@@ -574,32 +552,34 @@ class TemporalGraphService:
                     target = change.new_value.get("target_id")
 
                     if source:
-                        entity_connection_count[source] = entity_connection_count.get(source, 0) + 1
+                        entity_connection_count[source] = (
+                            entity_connection_count.get(source, 0) + 1
+                        )
                     if target:
-                        entity_connection_count[target] = entity_connection_count.get(target, 0) + 1
+                        entity_connection_count[target] = (
+                            entity_connection_count.get(target, 0) + 1
+                        )
 
         # Identify top growing entities
         if entity_connection_count:
             sorted_entities = sorted(
-                entity_connection_count.items(),
-                key=lambda x: x[1],
-                reverse=True
+                entity_connection_count.items(), key=lambda x: x[1], reverse=True
             )[:10]
 
             for entity_id, connection_count in sorted_entities:
-                patterns.append({
-                    "type": "rapidly_growing_entity",
-                    "entity_id": entity_id,
-                    "new_connections": connection_count,
-                    "confidence": min(connection_count / 10.0, 1.0)
-                })
+                patterns.append(
+                    {
+                        "type": "rapidly_growing_entity",
+                        "entity_id": entity_id,
+                        "new_connections": connection_count,
+                        "confidence": min(connection_count / 10.0, 1.0),
+                    }
+                )
 
         return patterns
 
     async def cleanup_old_snapshots(
-        self,
-        tenant_id: UUID,
-        retention_days: int = 90
+        self, tenant_id: UUID, retention_days: int = 90
     ) -> int:
         """
         Clean up old snapshots beyond retention period
@@ -624,7 +604,7 @@ class TemporalGraphService:
             "snapshots_cleaned",
             tenant_id=str(tenant_id),
             removed=removed_count,
-            retained=len(kept_snapshots)
+            retained=len(kept_snapshots),
         )
 
         return removed_count

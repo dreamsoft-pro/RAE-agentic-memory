@@ -1,14 +1,17 @@
-from apps.memory_api.celery_app import celery_app
-from apps.memory_api.services.reflection_engine import ReflectionEngine
-from apps.memory_api.services.context_cache import rebuild_full_cache
-from apps.memory_api.services.graph_extraction import GraphExtractionService
-from apps.memory_api.services.entity_resolution import EntityResolutionService
-from apps.memory_api.services.community_detection import CommunityDetectionService
-from apps.memory_api.config import settings
 import asyncpg
 import structlog
 
+from apps.memory_api.celery_app import celery_app
+from apps.memory_api.config import settings
+from apps.memory_api.services.community_detection import \
+    CommunityDetectionService
+from apps.memory_api.services.context_cache import rebuild_full_cache
+from apps.memory_api.services.entity_resolution import EntityResolutionService
+from apps.memory_api.services.graph_extraction import GraphExtractionService
+from apps.memory_api.services.reflection_engine import ReflectionEngine
+
 logger = structlog.get_logger(__name__)
+
 
 # --- Helper to create a DB pool for tasks ---
 # Celery tasks run in a separate process, so we need to manage the DB pool.
@@ -20,18 +23,22 @@ async def get_pool():
         password=settings.POSTGRES_PASSWORD,
     )
 
+
 @celery_app.task
 def generate_reflection_for_project(project: str, tenant_id: str):
     """
     Celery task to generate a reflection for a specific project.
     """
     import asyncio
+
     async def main():
         pool = await get_pool()
         engine = ReflectionEngine(pool)
         await engine.generate_reflection(project, tenant_id)
         await pool.close()
+
     asyncio.run(main())
+
 
 @celery_app.task
 def schedule_reflections():
@@ -39,33 +46,46 @@ def schedule_reflections():
     Periodically finds projects with recent activity and schedules reflection tasks.
     """
     import asyncio
+
     async def main():
         pool = await get_pool()
         # Find unique project/tenant pairs with recent episodic memories
         # A real implementation would be more sophisticated.
-        records = await pool.fetch("""
+        records = await pool.fetch(
+            """
             SELECT DISTINCT project, tenant_id
             FROM memories
             WHERE layer = 'em' AND created_at > NOW() - INTERVAL '1 hour'
-        """)
+        """
+        )
         for record in records:
-            generate_reflection_for_project.delay(record['project'], record['tenant_id'])
+            generate_reflection_for_project.delay(
+                record["project"], record["tenant_id"]
+            )
         await pool.close()
+
     asyncio.run(main())
-    
+
+
 @celery_app.task
 def apply_memory_decay():
     """
     Periodically applies decay to memory strength and deletes expired memories.
     """
     import asyncio
+
     async def main():
         pool = await get_pool()
         # Apply decay
-        await pool.execute("UPDATE memories SET strength = strength * $1", settings.MEMORY_DECAY_RATE)
+        await pool.execute(
+            "UPDATE memories SET strength = strength * $1", settings.MEMORY_DECAY_RATE
+        )
         # Delete expired memories
-        await pool.execute("DELETE FROM memories WHERE expires_at IS NOT NULL AND expires_at < NOW()")
+        await pool.execute(
+            "DELETE FROM memories WHERE expires_at IS NOT NULL AND expires_at < NOW()"
+        )
         await pool.close()
+
     asyncio.run(main())
 
 
@@ -75,9 +95,10 @@ def prune_old_memories():
     Periodically deletes old episodic memories to manage data lifecycle.
     """
     import asyncio
+
     async def main():
         if settings.MEMORY_RETENTION_DAYS <= 0:
-            return # Pruning is disabled
+            return  # Pruning is disabled
 
         pool = await get_pool()
         try:
@@ -85,13 +106,15 @@ def prune_old_memories():
             # We only prune episodic memories, as semantic/reflective are meant to be long-term.
             result = await pool.execute(
                 "DELETE FROM memories WHERE layer = 'em' AND created_at < NOW() - $1::interval",
-                interval
+                interval,
             )
             # A structured logger would be better here, but for now, print.
             print(f"Pruned old memories: {result}")
         finally:
             await pool.close()
+
     asyncio.run(main())
+
 
 @celery_app.task
 def rebuild_cache():
@@ -99,11 +122,14 @@ def rebuild_cache():
     Celery task to perform a full rebuild of the context cache.
     """
     import asyncio
+
     asyncio.run(rebuild_full_cache())
 
 
 @celery_app.task(bind=True, max_retries=3)
-def extract_graph_lazy(self, memory_ids: list, tenant_id: str, use_mini_model: bool = True):
+def extract_graph_lazy(
+    self, memory_ids: list, tenant_id: str, use_mini_model: bool = True
+):
     """
     Celery task to extract knowledge graph from memories in background.
 
@@ -125,7 +151,9 @@ def extract_graph_lazy(self, memory_ids: list, tenant_id: str, use_mini_model: b
         # Rate limiting: Add initial delay to spread out workers and prevent herd behavior
         # This helps avoid hitting API rate limits when multiple tasks start simultaneously
         delay = random.uniform(0.5, 2.0)
-        logger.info("extract_graph_lazy_rate_limit_delay", delay=delay, tenant_id=tenant_id)
+        logger.info(
+            "extract_graph_lazy_rate_limit_delay", delay=delay, tenant_id=tenant_id
+        )
         await asyncio.sleep(delay)
         pool = await get_pool()
         try:
@@ -133,20 +161,20 @@ def extract_graph_lazy(self, memory_ids: list, tenant_id: str, use_mini_model: b
             service = GraphExtractionService(pool)
 
             # Override LLM model if using mini model
-            if use_mini_model and hasattr(service, 'llm_provider'):
+            if use_mini_model and hasattr(service, "llm_provider"):
                 original_model = service.llm_provider.model
                 service.llm_provider.model = "gpt-4o-mini"  # Cheaper model
                 logger.info(
                     "using_mini_model_for_extraction",
                     model="gpt-4o-mini",
-                    memory_count=len(memory_ids)
+                    memory_count=len(memory_ids),
                 )
 
             # Extract graph
             result = await service.extract_knowledge_graph(
                 tenant_id=tenant_id,
                 min_confidence=0.7,  # Higher threshold for background processing
-                batch_size=50
+                batch_size=50,
             )
 
             logger.info(
@@ -154,13 +182,13 @@ def extract_graph_lazy(self, memory_ids: list, tenant_id: str, use_mini_model: b
                 tenant_id=tenant_id,
                 memory_count=len(memory_ids),
                 triples_extracted=len(result.triples),
-                entities_found=len(result.extracted_entities)
+                entities_found=len(result.extracted_entities),
             )
 
             return {
                 "success": True,
                 "triples": len(result.triples),
-                "entities": len(result.extracted_entities)
+                "entities": len(result.extracted_entities),
             }
 
         except Exception as e:
@@ -168,10 +196,10 @@ def extract_graph_lazy(self, memory_ids: list, tenant_id: str, use_mini_model: b
                 "lazy_graph_extraction_failed",
                 tenant_id=tenant_id,
                 error=str(e),
-                memory_ids=memory_ids
+                memory_ids=memory_ids,
             )
             # Retry with exponential backoff
-            raise self.retry(exc=e, countdown=60 * (2 ** self.request.retries))
+            raise self.retry(exc=e, countdown=60 * (2**self.request.retries))
 
         finally:
             await pool.close()
@@ -197,7 +225,8 @@ def process_graph_extraction_queue():
         pool = await get_pool()
         try:
             # Find memories without graph extraction
-            records = await pool.fetch("""
+            records = await pool.fetch(
+                """
                 SELECT DISTINCT tenant_id, ARRAY_AGG(id) as memory_ids
                 FROM memories m
                 WHERE layer = 'em'
@@ -208,29 +237,29 @@ def process_graph_extraction_queue():
                   )
                 GROUP BY tenant_id
                 LIMIT 100
-            """)
+            """
+            )
 
             for record in records:
-                tenant_id = record['tenant_id']
-                memory_ids = record['memory_ids']
+                tenant_id = record["tenant_id"]
+                memory_ids = record["memory_ids"]
 
                 # Schedule lazy extraction
                 extract_graph_lazy.delay(
-                    memory_ids=memory_ids,
-                    tenant_id=tenant_id,
-                    use_mini_model=True
+                    memory_ids=memory_ids, tenant_id=tenant_id, use_mini_model=True
                 )
 
                 logger.info(
                     "scheduled_lazy_extraction",
                     tenant_id=tenant_id,
-                    memory_count=len(memory_ids)
+                    memory_count=len(memory_ids),
                 )
 
         finally:
             await pool.close()
 
     asyncio.run(main())
+
 
 @celery_app.task
 def run_entity_resolution_task(project_id: str = "default", tenant_id: str = "default"):
@@ -239,6 +268,7 @@ def run_entity_resolution_task(project_id: str = "default", tenant_id: str = "de
     Clusters and merges duplicate nodes.
     """
     import asyncio
+
     async def main():
         pool = await get_pool()
         try:
@@ -246,36 +276,61 @@ def run_entity_resolution_task(project_id: str = "default", tenant_id: str = "de
             await service.run_clustering_and_merging(project_id, tenant_id)
         finally:
             await pool.close()
+
     asyncio.run(main())
 
+
 @celery_app.task
-def run_community_detection_task(project_id: str = "default", tenant_id: str = "default"):
+def run_community_detection_task(
+    project_id: str = "default", tenant_id: str = "default"
+):
     """
     Periodic task for Pillar 2: Community Detection & Summarization.
     Generates 'Wisdom' by summarizing clusters.
     """
     import asyncio
+
     async def main():
         pool = await get_pool()
         try:
             service = CommunityDetectionService(pool)
-            await service.run_community_detection_and_summarization(project_id, tenant_id)
+            await service.run_community_detection_and_summarization(
+                project_id, tenant_id
+            )
         finally:
             await pool.close()
+
     asyncio.run(main())
+
 
 # --- Celery Beat Schedule ---
 @celery_app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
     # Schedule reflection checks every 5 minutes
-    sender.add_periodic_task(300.0, schedule_reflections.s(), name='check for reflections every 5 mins')
+    sender.add_periodic_task(
+        300.0, schedule_reflections.s(), name="check for reflections every 5 mins"
+    )
     # Schedule memory decay every hour
-    sender.add_periodic_task(3600.0, apply_memory_decay.s(), name='apply memory decay every hour')
+    sender.add_periodic_task(
+        3600.0, apply_memory_decay.s(), name="apply memory decay every hour"
+    )
     # Schedule memory pruning once a day (86400 seconds)
-    sender.add_periodic_task(86400.0, prune_old_memories.s(), name='prune old memories daily')
+    sender.add_periodic_task(
+        86400.0, prune_old_memories.s(), name="prune old memories daily"
+    )
     # Schedule graph extraction queue processing every 10 minutes
-    sender.add_periodic_task(600.0, process_graph_extraction_queue.s(), name='process graph extraction queue every 10 mins')
+    sender.add_periodic_task(
+        600.0,
+        process_graph_extraction_queue.s(),
+        name="process graph extraction queue every 10 mins",
+    )
     # Schedule Entity Resolution every hour
-    sender.add_periodic_task(3600.0, run_entity_resolution_task.s(), name='run entity resolution every hour')
+    sender.add_periodic_task(
+        3600.0, run_entity_resolution_task.s(), name="run entity resolution every hour"
+    )
     # Schedule Community Detection every 6 hours
-    sender.add_periodic_task(21600.0, run_community_detection_task.s(), name='run community detection every 6 hours')
+    sender.add_periodic_task(
+        21600.0,
+        run_community_detection_task.s(),
+        name="run community detection every 6 hours",
+    )

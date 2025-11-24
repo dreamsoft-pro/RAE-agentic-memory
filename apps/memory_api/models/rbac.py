@@ -2,20 +2,22 @@
 Role-Based Access Control (RBAC) models
 """
 
-from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime, timezone
 from enum import Enum
 from typing import List, Optional
 from uuid import UUID
 
+from pydantic import BaseModel, ConfigDict, Field
+
 
 class Role(str, Enum):
     """User roles in order of privilege"""
-    OWNER = "owner"          # Full access, can delete tenant
-    ADMIN = "admin"          # Manage users, settings, billing
+
+    OWNER = "owner"  # Full access, can delete tenant
+    ADMIN = "admin"  # Manage users, settings, billing
     DEVELOPER = "developer"  # Full API access, read/write memories
-    ANALYST = "analyst"      # Analytics and read-only access
-    VIEWER = "viewer"        # Read-only access
+    ANALYST = "analyst"  # Analytics and read-only access
+    VIEWER = "viewer"  # Read-only access
 
     @property
     def level(self) -> int:
@@ -25,7 +27,7 @@ class Role(str, Enum):
             Role.ADMIN: 4,
             Role.DEVELOPER: 3,
             Role.ANALYST: 2,
-            Role.VIEWER: 1
+            Role.VIEWER: 1,
         }
         return levels[self]
 
@@ -34,26 +36,30 @@ class Role(str, Enum):
         permissions = {
             Role.OWNER: ["*"],  # All actions
             Role.ADMIN: [
-                "users:read", "users:write", "users:delete",
-                "settings:read", "settings:write",
-                "billing:read", "billing:write",
-                "memories:read", "memories:write", "memories:delete",
-                "analytics:read"
+                "users:read",
+                "users:write",
+                "users:delete",
+                "settings:read",
+                "settings:write",
+                "billing:read",
+                "billing:write",
+                "memories:read",
+                "memories:write",
+                "memories:delete",
+                "analytics:read",
             ],
             Role.DEVELOPER: [
-                "memories:read", "memories:write", "memories:delete",
-                "graph:read", "graph:write",
-                "reflections:read", "reflections:write",
-                "analytics:read"
-            ],
-            Role.ANALYST: [
                 "memories:read",
+                "memories:write",
+                "memories:delete",
+                "graph:read",
+                "graph:write",
+                "reflections:read",
+                "reflections:write",
                 "analytics:read",
-                "graph:read"
             ],
-            Role.VIEWER: [
-                "memories:read"
-            ]
+            Role.ANALYST: ["memories:read", "analytics:read", "graph:read"],
+            Role.VIEWER: ["memories:read"],
         }
 
         role_perms = permissions.get(self, [])
@@ -67,7 +73,10 @@ class Role(str, Enum):
 
 class Permission(BaseModel):
     """Individual permission"""
-    resource: str = Field(..., description="Resource type (memories, users, settings, etc.)")
+
+    resource: str = Field(
+        ..., description="Resource type (memories, users, settings, etc.)"
+    )
     action: str = Field(..., description="Action (read, write, delete)")
 
     def __str__(self) -> str:
@@ -83,12 +92,16 @@ class UserRole(BaseModel):
     role: Role = Field(..., description="Assigned role")
 
     # Scope restrictions (optional)
-    project_ids: List[str] = Field(default_factory=list, description="Restrict to specific projects (empty = all)")
+    project_ids: List[str] = Field(
+        default_factory=list, description="Restrict to specific projects (empty = all)"
+    )
 
     # Metadata
     assigned_at: datetime = Field(default_factory=datetime.utcnow)
     assigned_by: Optional[str] = Field(None, description="Who assigned this role")
-    expires_at: Optional[datetime] = Field(None, description="Role expiration (optional)")
+    expires_at: Optional[datetime] = Field(
+        None, description="Role expiration (optional)"
+    )
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -97,7 +110,7 @@ class UserRole(BaseModel):
                 "user_id": "user_123",
                 "tenant_id": "tenant_abc",
                 "role": "developer",
-                "project_ids": []
+                "project_ids": [],
             }
         }
     )
@@ -182,10 +195,7 @@ class AccessLog(BaseModel):
 
 
 async def check_permission(
-    user_id: str,
-    tenant_id: UUID,
-    action: str,
-    project_id: Optional[str] = None
+    user_id: str, tenant_id: UUID, action: str, project_id: Optional[str] = None
 ) -> tuple[bool, Optional[str]]:
     """
     Check if user has permission to perform action.
@@ -215,10 +225,7 @@ async def check_permission(
 
 
 async def require_permission(
-    user_id: str,
-    tenant_id: UUID,
-    action: str,
-    project_id: Optional[str] = None
+    user_id: str, tenant_id: UUID, action: str, project_id: Optional[str] = None
 ):
     """
     Decorator/function to require permission.
@@ -230,6 +237,5 @@ async def require_permission(
 
     if not allowed:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Permission denied: {reason}"
+            status_code=status.HTTP_403_FORBIDDEN, detail=f"Permission denied: {reason}"
         )

@@ -1,15 +1,15 @@
-from typing import List, Any, Optional
-from llama_index.vector_stores.types import (
-    VectorStore,
-    VectorStoreQuery,
-    VectorStoreQueryResult,
-)
-from llama_index.schema import TextNode, BaseNode
-import httpx
 import os
+from typing import Any, List, Optional
+
+import httpx
+from llama_index.schema import BaseNode, TextNode
+from llama_index.vector_stores.types import (VectorStore, VectorStoreQuery,
+                                             VectorStoreQueryResult)
+
 
 class _RAEAPIClient:
     """A simple client for the RAE Memory API."""
+
     def __init__(self, tenant_id: str, api_key: str, base_url: str):
         self.tenant_id = tenant_id
         self.headers = {"X-API-Key": api_key, "X-Tenant-Id": tenant_id}
@@ -26,7 +26,11 @@ class _RAEAPIClient:
             }
             try:
                 with httpx.Client() as client:
-                    client.post(f"{self.base_url}/memory/store", json=payload, headers=self.headers).raise_for_status()
+                    client.post(
+                        f"{self.base_url}/memory/store",
+                        json=payload,
+                        headers=self.headers,
+                    ).raise_for_status()
             except Exception as e:
                 print(f"Error storing node {node.node_id}: {e}")
 
@@ -34,7 +38,10 @@ class _RAEAPIClient:
         """Deletes a document by its ID."""
         try:
             with httpx.Client() as client:
-                client.delete(f"{self.base_url}/memory/delete?memory_id={ref_doc_id}", headers=self.headers).raise_for_status()
+                client.delete(
+                    f"{self.base_url}/memory/delete?memory_id={ref_doc_id}",
+                    headers=self.headers,
+                ).raise_for_status()
         except Exception as e:
             print(f"Error deleting memory {ref_doc_id}: {e}")
 
@@ -43,26 +50,34 @@ class _RAEAPIClient:
         payload = {"query_text": query.query_str, "k": query.similarity_top_k}
         try:
             with httpx.Client() as client:
-                response = client.post(f"{self.base_url}/memory/query", json=payload, headers=self.headers)
+                response = client.post(
+                    f"{self.base_url}/memory/query", json=payload, headers=self.headers
+                )
                 response.raise_for_status()
-                
+
                 results = response.json().get("results", [])
                 nodes, similarities, ids = [], [], []
                 for res in results:
                     metadata = {"source": res.get("source"), "layer": res.get("layer")}
-                    nodes.append(TextNode(text=res.get("content", ""), metadata=metadata))
+                    nodes.append(
+                        TextNode(text=res.get("content", ""), metadata=metadata)
+                    )
                     similarities.append(res.get("score"))
                     ids.append(res.get("id"))
-                
-                return VectorStoreQueryResult(nodes=nodes, similarities=similarities, ids=ids)
+
+                return VectorStoreQueryResult(
+                    nodes=nodes, similarities=similarities, ids=ids
+                )
         except Exception as e:
             print(f"Error querying RAE API: {e}")
         return VectorStoreQueryResult(nodes=[], similarities=[], ids=[])
+
 
 class RAEVectorStore(VectorStore):
     """
     A LlamaIndex VectorStore that uses the RAE Memory Engine as a backend.
     """
+
     stores_text: bool = True
 
     def __init__(
@@ -75,7 +90,7 @@ class RAEVectorStore(VectorStore):
         self._client = _RAEAPIClient(
             tenant_id=tenant_id,
             api_key=api_key or os.environ.get("RAE_API_KEY", ""),
-            base_url=base_url or os.environ.get("RAE_API_URL", "http://localhost:8000")
+            base_url=base_url or os.environ.get("RAE_API_URL", "http://localhost:8000"),
         )
 
     @property

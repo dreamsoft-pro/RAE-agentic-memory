@@ -4,15 +4,17 @@ Health Check and Monitoring Endpoints
 Provides comprehensive health checks for all system components.
 """
 
+from datetime import datetime, timezone
+from typing import Any, Dict
+
+import asyncpg
+import httpx
+import structlog
 from fastapi import APIRouter, status
 from pydantic import BaseModel
-from typing import Dict, Any
-import asyncpg
 from redis import Redis
-import httpx
-from datetime import datetime, timezone
+
 from apps.memory_api.config import settings
-import structlog
 
 logger = structlog.get_logger(__name__)
 
@@ -21,6 +23,7 @@ router = APIRouter(tags=["Health"])
 
 class ComponentHealth(BaseModel):
     """Health status of a single component."""
+
     status: str  # healthy, degraded, unhealthy
     response_time_ms: float | None = None
     message: str | None = None
@@ -29,6 +32,7 @@ class ComponentHealth(BaseModel):
 
 class HealthCheckResponse(BaseModel):
     """Overall health check response."""
+
     status: str  # healthy, degraded, unhealthy
     timestamp: str
     version: str
@@ -37,6 +41,7 @@ class HealthCheckResponse(BaseModel):
 
 class MetricsResponse(BaseModel):
     """System metrics response."""
+
     timestamp: str
     uptime_seconds: float
     memory_usage_mb: float
@@ -60,7 +65,7 @@ async def check_database() -> ComponentHealth:
             database=settings.POSTGRES_DB,
             user=settings.POSTGRES_USER,
             password=settings.POSTGRES_PASSWORD,
-            timeout=3.0
+            timeout=3.0,
         )
 
         # Run a simple query
@@ -73,26 +78,22 @@ async def check_database() -> ComponentHealth:
             return ComponentHealth(
                 status="healthy",
                 response_time_ms=response_time,
-                message="Database connection successful"
+                message="Database connection successful",
             )
         else:
             return ComponentHealth(
                 status="unhealthy",
                 response_time_ms=response_time,
-                message="Unexpected query result"
+                message="Unexpected query result",
             )
 
     except asyncpg.exceptions.PostgresError as e:
         logger.error("database_health_check_failed", error=str(e))
-        return ComponentHealth(
-            status="unhealthy",
-            message=f"Database error: {str(e)}"
-        )
+        return ComponentHealth(status="unhealthy", message=f"Database error: {str(e)}")
     except Exception as e:
         logger.error("database_health_check_failed", error=str(e))
         return ComponentHealth(
-            status="unhealthy",
-            message=f"Connection failed: {str(e)}"
+            status="unhealthy", message=f"Connection failed: {str(e)}"
         )
 
 
@@ -102,9 +103,7 @@ async def check_redis() -> ComponentHealth:
         start_time = datetime.now(timezone.utc)
 
         redis_client = Redis.from_url(
-            settings.REDIS_URL,
-            socket_connect_timeout=3,
-            decode_responses=True
+            settings.REDIS_URL, socket_connect_timeout=3, decode_responses=True
         )
 
         # Ping Redis
@@ -122,16 +121,19 @@ async def check_redis() -> ComponentHealth:
             message="Redis connection successful",
             details={
                 "version": info.get("redis_version"),
-                "used_memory_mb": info.get("used_memory") / 1024 / 1024 if info.get("used_memory") else None,
-                "connected_clients": info.get("connected_clients")
-            }
+                "used_memory_mb": (
+                    info.get("used_memory") / 1024 / 1024
+                    if info.get("used_memory")
+                    else None
+                ),
+                "connected_clients": info.get("connected_clients"),
+            },
         )
 
     except Exception as e:
         logger.error("redis_health_check_failed", error=str(e))
         return ComponentHealth(
-            status="unhealthy",
-            message=f"Redis connection failed: {str(e)}"
+            status="unhealthy", message=f"Redis connection failed: {str(e)}"
         )
 
 
@@ -154,28 +156,23 @@ async def check_vector_store() -> ComponentHealth:
                 status="healthy",
                 response_time_ms=response_time,
                 message="Vector store connection successful",
-                details={
-                    "version": data.get("version"),
-                    "title": data.get("title")
-                }
+                details={"version": data.get("version"), "title": data.get("title")},
             )
         else:
             return ComponentHealth(
                 status="unhealthy",
                 response_time_ms=response_time,
-                message=f"Unexpected status code: {response.status_code}"
+                message=f"Unexpected status code: {response.status_code}",
             )
 
     except httpx.TimeoutException:
         return ComponentHealth(
-            status="unhealthy",
-            message="Vector store connection timeout"
+            status="unhealthy", message="Vector store connection timeout"
         )
     except Exception as e:
         logger.error("vector_store_health_check_failed", error=str(e))
         return ComponentHealth(
-            status="unhealthy",
-            message=f"Vector store connection failed: {str(e)}"
+            status="unhealthy", message=f"Vector store connection failed: {str(e)}"
         )
 
 
@@ -196,7 +193,11 @@ def determine_overall_status(components: Dict[str, ComponentHealth]) -> str:
     elif any(s == "unhealthy" for s in statuses):
         # If critical components are unhealthy, system is unhealthy
         critical_components = ["database", "redis"]
-        if any(components[comp].status == "unhealthy" for comp in critical_components if comp in components):
+        if any(
+            components[comp].status == "unhealthy"
+            for comp in critical_components
+            if comp in components
+        ):
             return "unhealthy"
         return "degraded"
     else:
@@ -208,7 +209,7 @@ def determine_overall_status(components: Dict[str, ComponentHealth]) -> str:
     response_model=HealthCheckResponse,
     status_code=status.HTTP_200_OK,
     summary="Health Check",
-    description="Check the health of all system components including database, cache, and vector store."
+    description="Check the health of all system components including database, cache, and vector store.",
 )
 async def health_check() -> HealthCheckResponse:
     """
@@ -228,11 +229,9 @@ async def health_check() -> HealthCheckResponse:
 
     # Check all components in parallel
     import asyncio
+
     db_health, redis_health, vector_health = await asyncio.gather(
-        check_database(),
-        check_redis(),
-        check_vector_store(),
-        return_exceptions=True
+        check_database(), check_redis(), check_vector_store(), return_exceptions=True
     )
 
     # Handle exceptions from health checks
@@ -246,7 +245,7 @@ async def health_check() -> HealthCheckResponse:
     components = {
         "database": db_health,
         "redis": redis_health,
-        "vector_store": vector_health
+        "vector_store": vector_health,
     }
 
     overall_status = determine_overall_status(components)
@@ -255,11 +254,13 @@ async def health_check() -> HealthCheckResponse:
         status=overall_status,
         timestamp=datetime.now(timezone.utc).isoformat() + "Z",
         version="1.0.0",
-        components=components
+        components=components,
     )
 
     if overall_status != "healthy":
-        logger.warning("health_check_degraded", status=overall_status, components=components)
+        logger.warning(
+            "health_check_degraded", status=overall_status, components=components
+        )
 
     return response
 
@@ -268,7 +269,7 @@ async def health_check() -> HealthCheckResponse:
     "/health/ready",
     status_code=status.HTTP_200_OK,
     summary="Readiness Check",
-    description="Check if the service is ready to accept requests (for Kubernetes readiness probes)."
+    description="Check if the service is ready to accept requests (for Kubernetes readiness probes).",
 )
 async def readiness_check() -> Dict[str, str]:
     """
@@ -290,7 +291,7 @@ async def readiness_check() -> Dict[str, str]:
     "/health/live",
     status_code=status.HTTP_200_OK,
     summary="Liveness Check",
-    description="Check if the service is alive (for Kubernetes liveness probes)."
+    description="Check if the service is alive (for Kubernetes liveness probes).",
 )
 async def liveness_check() -> Dict[str, str]:
     """
@@ -299,7 +300,10 @@ async def liveness_check() -> Dict[str, str]:
     Always returns 200 if the service is running.
     Used by Kubernetes liveness probes.
     """
-    return {"status": "alive", "timestamp": datetime.now(timezone.utc).isoformat() + "Z"}
+    return {
+        "status": "alive",
+        "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
+    }
 
 
 @router.get(
@@ -307,7 +311,7 @@ async def liveness_check() -> Dict[str, str]:
     response_model=MetricsResponse,
     status_code=status.HTTP_200_OK,
     summary="System Metrics",
-    description="Get system metrics including uptime, memory usage, and component statistics."
+    description="Get system metrics including uptime, memory usage, and component statistics.",
 )
 async def metrics() -> MetricsResponse:
     """
@@ -334,9 +338,11 @@ async def metrics() -> MetricsResponse:
         redis_client = Redis.from_url(settings.REDIS_URL, socket_connect_timeout=1)
         info = redis_client.info()
         redis_stats = {
-            "used_memory_mb": info.get("used_memory") / 1024 / 1024 if info.get("used_memory") else 0,
+            "used_memory_mb": (
+                info.get("used_memory") / 1024 / 1024 if info.get("used_memory") else 0
+            ),
             "connected_clients": info.get("connected_clients", 0),
-            "total_commands": info.get("total_commands_processed", 0)
+            "total_commands": info.get("total_commands_processed", 0),
         }
         redis_client.close()
     except:
@@ -348,5 +354,5 @@ async def metrics() -> MetricsResponse:
         memory_usage_mb=memory_mb,
         database=db_stats,
         redis=redis_stats,
-        vector_store=vector_stats
+        vector_store=vector_stats,
     )

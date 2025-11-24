@@ -4,11 +4,12 @@ Slack Notifier Plugin
 Sends notifications to Slack when important events occur.
 """
 
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
 from uuid import UUID
+
 import aiohttp
 
-from apps.memory_api.plugins.base import Plugin, PluginMetadata, PluginHook
+from apps.memory_api.plugins.base import Plugin, PluginHook, PluginMetadata
 
 
 class SlackNotifierPlugin(Plugin):
@@ -35,9 +36,9 @@ class SlackNotifierPlugin(Plugin):
                 PluginHook.AFTER_MEMORY_CREATE,
                 PluginHook.AFTER_REFLECTION,
                 PluginHook.AFTER_CONSOLIDATION,
-                PluginHook.ALERT
+                PluginHook.ALERT,
             ],
-            config=self.config
+            config=self.config,
         )
 
     async def initialize(self):
@@ -57,10 +58,7 @@ class SlackNotifierPlugin(Plugin):
             self.logger.warning("slack_webhook_not_configured")
 
     async def on_after_memory_create(
-        self,
-        tenant_id: UUID,
-        memory_id: str,
-        memory_data: Dict[str, Any]
+        self, tenant_id: UUID, memory_id: str, memory_data: Dict[str, Any]
     ):
         """Notify on memory creation"""
         if not self.notify_on_create:
@@ -77,10 +75,7 @@ class SlackNotifierPlugin(Plugin):
         await self._send_slack_message(message, color="good")
 
     async def on_after_reflection(
-        self,
-        tenant_id: UUID,
-        reflection_id: str,
-        reflection_data: Dict[str, Any]
+        self, tenant_id: UUID, reflection_id: str, reflection_data: Dict[str, Any]
     ):
         """Notify on reflection generation"""
         if not self.notify_on_reflection:
@@ -101,9 +96,7 @@ class SlackNotifierPlugin(Plugin):
         await self._send_slack_message(message, color=color)
 
     async def on_after_consolidation(
-        self,
-        tenant_id: UUID,
-        consolidation_result: Dict[str, Any]
+        self, tenant_id: UUID, consolidation_result: Dict[str, Any]
     ):
         """Notify on memory consolidation"""
         if not self.notify_on_consolidation:
@@ -129,14 +122,14 @@ class SlackNotifierPlugin(Plugin):
         alert_type: str,
         severity: str,
         message: str,
-        data: Dict[str, Any]
+        data: Dict[str, Any],
     ):
         """Send alerts to Slack"""
         color_map = {
             "info": "good",
             "warning": "warning",
             "error": "danger",
-            "critical": "danger"
+            "critical": "danger",
         }
 
         slack_message = (
@@ -147,15 +140,10 @@ class SlackNotifierPlugin(Plugin):
         )
 
         await self._send_slack_message(
-            slack_message,
-            color=color_map.get(severity, "warning")
+            slack_message, color=color_map.get(severity, "warning")
         )
 
-    async def _send_slack_message(
-        self,
-        message: str,
-        color: Optional[str] = None
-    ):
+    async def _send_slack_message(self, message: str, color: Optional[str] = None):
         """
         Send message to Slack
 
@@ -171,12 +159,8 @@ class SlackNotifierPlugin(Plugin):
             "username": self.username,
             "icon_emoji": self.icon_emoji,
             "attachments": [
-                {
-                    "text": message,
-                    "color": color or "good",
-                    "mrkdwn_in": ["text"]
-                }
-            ]
+                {"text": message, "color": color or "good", "mrkdwn_in": ["text"]}
+            ],
         }
 
         try:
@@ -186,7 +170,7 @@ class SlackNotifierPlugin(Plugin):
                         self.logger.error(
                             "slack_send_failed",
                             status=resp.status,
-                            response=await resp.text()
+                            response=await resp.text(),
                         )
         except Exception as e:
             self.logger.error("slack_error", error=str(e))

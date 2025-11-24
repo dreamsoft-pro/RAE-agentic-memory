@@ -5,7 +5,8 @@ This service handles keyword extraction, named entity recognition,
 and other NLP tasks for the ML microservice.
 """
 
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -36,6 +37,7 @@ class NLPService:
         if self._nlp is None:
             try:
                 import spacy
+
                 logger.info("loading_spacy_model", language=language)
 
                 # Try to load language-specific model
@@ -48,34 +50,39 @@ class NLPService:
                         except OSError:
                             try:
                                 self._nlp = spacy.load("en_core_web_md")
-                                logger.info("spacy_model_loaded", model="en_core_web_md")
+                                logger.info(
+                                    "spacy_model_loaded", model="en_core_web_md"
+                                )
                             except OSError:
                                 self._nlp = spacy.load("en_core_web_sm")
-                                logger.info("spacy_model_loaded", model="en_core_web_sm")
+                                logger.info(
+                                    "spacy_model_loaded", model="en_core_web_sm"
+                                )
                     else:
                         # For other languages, load the specified model
                         self._nlp = spacy.load(f"{language}_core_news_sm")
-                        logger.info("spacy_model_loaded", model=f"{language}_core_news_sm")
+                        logger.info(
+                            "spacy_model_loaded", model=f"{language}_core_news_sm"
+                        )
 
                 except OSError as e:
                     logger.warning(
                         "spacy_model_not_found",
                         language=language,
                         error=str(e),
-                        fallback="blank"
+                        fallback="blank",
                     )
                     # Fall back to blank spaCy model with basic tokenization
                     self._nlp = spacy.blank(language)
 
             except ImportError as e:
                 logger.error("spacy_not_installed", error=str(e))
-                raise RuntimeError("spaCy is not installed. Please install it: pip install spacy")
+                raise RuntimeError(
+                    "spaCy is not installed. Please install it: pip install spacy"
+                )
 
     def extract_keywords(
-        self,
-        text: str,
-        max_keywords: int = 10,
-        language: str = "en"
+        self, text: str, max_keywords: int = 10, language: str = "en"
     ) -> List[Dict[str, Any]]:
         """
         Extract keywords and key phrases from text.
@@ -106,23 +113,30 @@ class NLPService:
 
             # Extract named entities (high priority)
             for ent in doc.ents:
-                keywords.append({
-                    "text": ent.text,
-                    "type": "entity",
-                    "label": ent.label_,
-                    "score": 1.0  # Entities get highest score
-                })
+                keywords.append(
+                    {
+                        "text": ent.text,
+                        "type": "entity",
+                        "label": ent.label_,
+                        "score": 1.0,  # Entities get highest score
+                    }
+                )
 
             # Extract noun chunks (medium priority)
             for chunk in doc.noun_chunks:
                 # Skip if already in entities
-                if not any(kw["text"].lower() == chunk.text.lower() and kw["type"] == "entity" for kw in keywords):
-                    keywords.append({
-                        "text": chunk.text,
-                        "type": "noun_phrase",
-                        "label": "NOUN_CHUNK",
-                        "score": 0.7
-                    })
+                if not any(
+                    kw["text"].lower() == chunk.text.lower() and kw["type"] == "entity"
+                    for kw in keywords
+                ):
+                    keywords.append(
+                        {
+                            "text": chunk.text,
+                            "type": "noun_phrase",
+                            "label": "NOUN_CHUNK",
+                            "score": 0.7,
+                        }
+                    )
 
             # Extract important individual tokens (lower priority)
             for token in doc:
@@ -133,22 +147,24 @@ class NLPService:
                 # Focus on nouns, proper nouns, adjectives
                 if token.pos_ in ["NOUN", "PROPN", "ADJ"]:
                     # Skip if already in keywords
-                    if not any(kw["text"].lower() == token.text.lower() for kw in keywords):
-                        keywords.append({
-                            "text": token.text,
-                            "type": "token",
-                            "label": token.pos_,
-                            "score": 0.5
-                        })
+                    if not any(
+                        kw["text"].lower() == token.text.lower() for kw in keywords
+                    ):
+                        keywords.append(
+                            {
+                                "text": token.text,
+                                "type": "token",
+                                "label": token.pos_,
+                                "score": 0.5,
+                            }
+                        )
 
             # Sort by score (descending) and limit
             keywords.sort(key=lambda x: x["score"], reverse=True)
             keywords = keywords[:max_keywords]
 
             logger.info(
-                "keywords_extracted",
-                keyword_count=len(keywords),
-                text_length=len(text)
+                "keywords_extracted", keyword_count=len(keywords), text_length=len(text)
             )
 
             return keywords
@@ -175,12 +191,14 @@ class NLPService:
 
             entities = []
             for ent in doc.ents:
-                entities.append({
-                    "text": ent.text,
-                    "label": ent.label_,
-                    "start": ent.start_char,
-                    "end": ent.end_char
-                })
+                entities.append(
+                    {
+                        "text": ent.text,
+                        "label": ent.label_,
+                        "start": ent.start_char,
+                        "end": ent.end_char,
+                    }
+                )
 
             return entities
 

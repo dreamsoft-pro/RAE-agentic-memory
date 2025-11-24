@@ -24,8 +24,10 @@ Usage:
     print(f"Input rate: ${cost_info['input_cost_per_million']}/M tokens")
 """
 
-from typing import Dict, Any, Optional
+from typing import Any, Dict, Optional
+
 import structlog
+
 from .. import cost_model
 
 logger = structlog.get_logger(__name__)
@@ -35,11 +37,9 @@ logger = structlog.get_logger(__name__)
 # Cost Calculation Functions
 # ============================================================================
 
+
 def calculate_cost(
-    model_name: str,
-    input_tokens: int,
-    output_tokens: int,
-    cache_hit: bool = False
+    model_name: str, input_tokens: int, output_tokens: int, cache_hit: bool = False
 ) -> Dict[str, Any]:
     """
     Calculates the estimated cost for an LLM API call across all providers.
@@ -81,7 +81,7 @@ def calculate_cost(
         model_name=model_name,
         input_tokens=input_tokens,
         output_tokens=output_tokens,
-        cache_hit=cache_hit
+        cache_hit=cache_hit,
     )
 
     # Get cost rates from cost model
@@ -92,7 +92,7 @@ def calculate_cost(
             "unknown_model_cost",
             model_name=model_name,
             message=f"Model '{model_name}' not found in cost database. Cost will be $0.00. "
-                    f"Add this model to apps/memory_api/cost_model.py"
+            f"Add this model to apps/memory_api/cost_model.py",
         )
         return {
             "total_cost_usd": 0.0,
@@ -103,7 +103,7 @@ def calculate_cost(
             "total_tokens": input_tokens + output_tokens,
             "model_name": model_name,
             "cache_hit": cache_hit,
-            "cost_known": False
+            "cost_known": False,
         }
 
     input_cost_per_million = costs.get("input", 0.0)
@@ -120,7 +120,7 @@ def calculate_cost(
         logger.info(
             "cache_hit_zero_cost",
             model_name=model_name,
-            tokens_saved=input_tokens + output_tokens
+            tokens_saved=input_tokens + output_tokens,
         )
 
     cost_info = {
@@ -132,7 +132,7 @@ def calculate_cost(
         "total_tokens": input_tokens + output_tokens,
         "model_name": model_name,
         "cache_hit": cache_hit,
-        "cost_known": True
+        "cost_known": True,
     }
 
     logger.info(
@@ -140,16 +140,14 @@ def calculate_cost(
         model_name=model_name,
         total_cost_usd=total_cost,
         total_tokens=input_tokens + output_tokens,
-        cost_known=True
+        cost_known=True,
     )
 
     return cost_info
 
 
 def estimate_cost(
-    model_name: str,
-    estimated_input_tokens: int,
-    estimated_output_tokens: int
+    model_name: str, estimated_input_tokens: int, estimated_output_tokens: int
 ) -> float:
     """
     Estimates cost for pre-flight budget checks.
@@ -170,7 +168,9 @@ def estimate_cost(
         >>> if estimated_cost > budget_remaining:
         ...     raise HTTPException(402, "Budget exceeded")
     """
-    cost_info = calculate_cost(model_name, estimated_input_tokens, estimated_output_tokens)
+    cost_info = calculate_cost(
+        model_name, estimated_input_tokens, estimated_output_tokens
+    )
     return cost_info["total_cost_usd"]
 
 
@@ -197,16 +197,11 @@ def get_model_rates(model_name: str) -> Optional[Dict[str, float]]:
         logger.warning("model_rates_not_found", model_name=model_name)
         return None
 
-    return {
-        "input": costs.get("input", 0.0),
-        "output": costs.get("output", 0.0)
-    }
+    return {"input": costs.get("input", 0.0), "output": costs.get("output", 0.0)}
 
 
 def calculate_cache_savings(
-    model_name: str,
-    tokens_saved: int,
-    token_type: str = "input"
+    model_name: str, tokens_saved: int, token_type: str = "input"
 ) -> float:
     """
     Calculates estimated cost savings from cache hits.
@@ -240,7 +235,7 @@ def calculate_cache_savings(
         model_name=model_name,
         tokens_saved=tokens_saved,
         token_type=token_type,
-        savings_usd=savings
+        savings_usd=savings,
     )
 
     return savings
@@ -270,7 +265,10 @@ def is_model_known(model_name: str) -> bool:
 # Legacy Function (for backwards compatibility)
 # ============================================================================
 
-def calculate_gemini_cost(model_name: str, input_tokens: int, output_tokens: int) -> float:
+
+def calculate_gemini_cost(
+    model_name: str, input_tokens: int, output_tokens: int
+) -> float:
     """
     DEPRECATED: Use calculate_cost() instead.
 
@@ -279,7 +277,7 @@ def calculate_gemini_cost(model_name: str, input_tokens: int, output_tokens: int
     logger.warning(
         "deprecated_function_used",
         function="calculate_gemini_cost",
-        message="Use calculate_cost() instead for unified cost calculation"
+        message="Use calculate_cost() instead for unified cost calculation",
     )
 
     cost_info = calculate_cost(model_name, input_tokens, output_tokens)
@@ -289,6 +287,7 @@ def calculate_gemini_cost(model_name: str, input_tokens: int, output_tokens: int
 # ============================================================================
 # Cost Summary Utilities
 # ============================================================================
+
 
 def format_cost_summary(cost_info: Dict[str, Any]) -> str:
     """
@@ -320,7 +319,7 @@ def validate_cost_calculation(
     input_tokens: int,
     output_tokens: int,
     llm_reported_cost: float,
-    tolerance: float = 0.0001
+    tolerance: float = 0.0001,
 ) -> bool:
     """
     Validates LLM-reported cost against our cost model.
@@ -354,7 +353,7 @@ def validate_cost_calculation(
             our_cost=our_cost,
             llm_reported_cost=llm_reported_cost,
             difference=difference,
-            tolerance=tolerance
+            tolerance=tolerance,
         )
 
     return is_valid

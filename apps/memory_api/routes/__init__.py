@@ -16,5 +16,5 @@ __all__ = [
     "hybrid_search",
     "evaluation",
     "dashboard",
-    "graph_enhanced"
+    "graph_enhanced",
 ]

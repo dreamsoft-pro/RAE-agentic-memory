@@ -4,12 +4,12 @@ Analytics Tracker Plugin
 Tracks memory operations for analytics and insights.
 """
 
-from typing import Dict, Any, List
-from uuid import UUID
-from datetime import datetime, timezone
 from collections import defaultdict
+from datetime import datetime, timezone
+from typing import Any, Dict, List
+from uuid import UUID
 
-from apps.memory_api.plugins.base import Plugin, PluginMetadata, PluginHook
+from apps.memory_api.plugins.base import Plugin, PluginHook, PluginMetadata
 
 
 class AnalyticsTrackerPlugin(Plugin):
@@ -33,9 +33,9 @@ class AnalyticsTrackerPlugin(Plugin):
                 PluginHook.AFTER_MEMORY_CREATE,
                 PluginHook.AFTER_QUERY,
                 PluginHook.AFTER_REFLECTION,
-                PluginHook.METRICS_COLLECTED
+                PluginHook.METRICS_COLLECTED,
             ],
-            config=self.config
+            config=self.config,
         )
 
     async def initialize(self):
@@ -62,10 +62,7 @@ class AnalyticsTrackerPlugin(Plugin):
         self.logger.info("analytics_tracker_initialized")
 
     async def on_after_memory_create(
-        self,
-        tenant_id: UUID,
-        memory_id: str,
-        memory_data: Dict[str, Any]
+        self, tenant_id: UUID, memory_id: str, memory_data: Dict[str, Any]
     ):
         """Track memory creation"""
         if not self.track_creates:
@@ -84,17 +81,11 @@ class AnalyticsTrackerPlugin(Plugin):
             self._tag_usage[tag] += 1
 
         self.logger.debug(
-            "create_tracked",
-            tenant_id=str(tenant_id),
-            layer=layer,
-            num_tags=len(tags)
+            "create_tracked", tenant_id=str(tenant_id), layer=layer, num_tags=len(tags)
         )
 
     async def on_after_query(
-        self,
-        tenant_id: UUID,
-        query: str,
-        results: List[Dict[str, Any]]
+        self, tenant_id: UUID, query: str, results: List[Dict[str, Any]]
     ):
         """Track query execution"""
         if not self.track_queries:
@@ -107,16 +98,11 @@ class AnalyticsTrackerPlugin(Plugin):
         # For now, just track count
 
         self.logger.debug(
-            "query_tracked",
-            tenant_id=str(tenant_id),
-            results_count=len(results)
+            "query_tracked", tenant_id=str(tenant_id), results_count=len(results)
         )
 
     async def on_after_reflection(
-        self,
-        tenant_id: UUID,
-        reflection_id: str,
-        reflection_data: Dict[str, Any]
+        self, tenant_id: UUID, reflection_id: str, reflection_data: Dict[str, Any]
     ):
         """Track reflection generation"""
         if not self.track_reflections:
@@ -127,14 +113,10 @@ class AnalyticsTrackerPlugin(Plugin):
         self.logger.debug(
             "reflection_tracked",
             tenant_id=str(tenant_id),
-            quality=reflection_data.get("quality_score", 0.0)
+            quality=reflection_data.get("quality_score", 0.0),
         )
 
-    async def on_metrics_collected(
-        self,
-        tenant_id: UUID,
-        metrics: Dict[str, Any]
-    ):
+    async def on_metrics_collected(self, tenant_id: UUID, metrics: Dict[str, Any]):
         """Handle metrics collection event"""
         # Add our tracked metrics to the collection
         metrics.update(await self.get_analytics())
@@ -155,25 +137,39 @@ class AnalyticsTrackerPlugin(Plugin):
             "totals": {
                 "creates": total_creates,
                 "queries": total_queries,
-                "reflections": total_reflections
+                "reflections": total_reflections,
             },
             "by_tenant": {
                 "creates": dict(self._creates_count),
                 "queries": dict(self._queries_count),
-                "reflections": dict(self._reflections_count)
+                "reflections": dict(self._reflections_count),
             },
             "layer_distribution": dict(self._layer_distribution),
-            "tag_usage": dict(sorted(
-                self._tag_usage.items(),
-                key=lambda x: x[1],
-                reverse=True
-            )[:20]),  # Top 20 tags
+            "tag_usage": dict(
+                sorted(self._tag_usage.items(), key=lambda x: x[1], reverse=True)[:20]
+            ),  # Top 20 tags
             "timestamps": {
-                "first_create": self._create_timestamps[0].isoformat() if self._create_timestamps else None,
-                "latest_create": self._create_timestamps[-1].isoformat() if self._create_timestamps else None,
-                "first_query": self._query_timestamps[0].isoformat() if self._query_timestamps else None,
-                "latest_query": self._query_timestamps[-1].isoformat() if self._query_timestamps else None
-            }
+                "first_create": (
+                    self._create_timestamps[0].isoformat()
+                    if self._create_timestamps
+                    else None
+                ),
+                "latest_create": (
+                    self._create_timestamps[-1].isoformat()
+                    if self._create_timestamps
+                    else None
+                ),
+                "first_query": (
+                    self._query_timestamps[0].isoformat()
+                    if self._query_timestamps
+                    else None
+                ),
+                "latest_query": (
+                    self._query_timestamps[-1].isoformat()
+                    if self._query_timestamps
+                    else None
+                ),
+            },
         }
 
     def get_tenant_analytics(self, tenant_id: UUID) -> Dict[str, Any]:
@@ -190,7 +186,7 @@ class AnalyticsTrackerPlugin(Plugin):
             "tenant_id": str(tenant_id),
             "creates": self._creates_count.get(tenant_id, 0),
             "queries": self._queries_count.get(tenant_id, 0),
-            "reflections": self._reflections_count.get(tenant_id, 0)
+            "reflections": self._reflections_count.get(tenant_id, 0),
         }
 
     def reset_analytics(self):
@@ -214,11 +210,13 @@ class AnalyticsTrackerPlugin(Plugin):
             "total_creates": sum(self._creates_count.values()),
             "total_queries": sum(self._queries_count.values()),
             "total_reflections": sum(self._reflections_count.values()),
-            "unique_tenants": len(set(
-                list(self._creates_count.keys()) +
-                list(self._queries_count.keys()) +
-                list(self._reflections_count.keys())
-            ))
+            "unique_tenants": len(
+                set(
+                    list(self._creates_count.keys())
+                    + list(self._queries_count.keys())
+                    + list(self._reflections_count.keys())
+                )
+            ),
         }
 
         return status

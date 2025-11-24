@@ -4,11 +4,11 @@ Memory Validator Plugin
 Validates and enriches memories before creation.
 """
 
-from typing import Dict, Any
-from uuid import UUID
 import re
+from typing import Any, Dict
+from uuid import UUID
 
-from apps.memory_api.plugins.base import Plugin, PluginMetadata, PluginHook
+from apps.memory_api.plugins.base import Plugin, PluginHook, PluginMetadata
 
 
 class MemoryValidatorPlugin(Plugin):
@@ -30,11 +30,8 @@ class MemoryValidatorPlugin(Plugin):
             version="1.0.0",
             author="RAE Team",
             description="Validate and enrich memories before creation",
-            hooks=[
-                PluginHook.BEFORE_MEMORY_CREATE,
-                PluginHook.BEFORE_MEMORY_UPDATE
-            ],
-            config=self.config
+            hooks=[PluginHook.BEFORE_MEMORY_CREATE, PluginHook.BEFORE_MEMORY_UPDATE],
+            config=self.config,
         )
 
     async def initialize(self):
@@ -52,9 +49,7 @@ class MemoryValidatorPlugin(Plugin):
         self.profanity_words = set(["spam", "badword"])  # Expand as needed
 
     async def on_before_memory_create(
-        self,
-        tenant_id: UUID,
-        memory_data: Dict[str, Any]
+        self, tenant_id: UUID, memory_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         Validate and enrich memory before creation
@@ -83,9 +78,7 @@ class MemoryValidatorPlugin(Plugin):
             )
 
         if len(content) > self.max_content_length:
-            raise ValueError(
-                f"Content too long (max: {self.max_content_length} chars)"
-            )
+            raise ValueError(f"Content too long (max: {self.max_content_length} chars)")
 
         # Profanity filter
         if self.profanity_filter:
@@ -107,18 +100,13 @@ class MemoryValidatorPlugin(Plugin):
         memory_data["metadata"]["validator_version"] = self.metadata.version
 
         self.logger.info(
-            "memory_validated",
-            tenant_id=str(tenant_id),
-            content_length=len(content)
+            "memory_validated", tenant_id=str(tenant_id), content_length=len(content)
         )
 
         return memory_data
 
     async def on_before_memory_update(
-        self,
-        tenant_id: UUID,
-        memory_id: str,
-        update_data: Dict[str, Any]
+        self, tenant_id: UUID, memory_id: str, update_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         Validate memory updates
@@ -151,10 +139,7 @@ class MemoryValidatorPlugin(Plugin):
 
         return update_data
 
-    async def _filter_profanity(
-        self,
-        memory_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _filter_profanity(self, memory_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Filter profanity from content
 
@@ -177,10 +162,7 @@ class MemoryValidatorPlugin(Plugin):
 
         return memory_data
 
-    async def _auto_tag(
-        self,
-        memory_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _auto_tag(self, memory_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Automatically add tags based on content
 
@@ -201,7 +183,7 @@ class MemoryValidatorPlugin(Plugin):
             "api": ["api", "endpoint", "request", "response"],
             "database": ["database", "sql", "query", "table", "schema"],
             "security": ["security", "auth", "permission", "vulnerability"],
-            "performance": ["performance", "optimization", "speed", "latency"]
+            "performance": ["performance", "optimization", "speed", "latency"],
         }
 
         existing_tags = set(memory_data.get("tags", []))
@@ -214,10 +196,7 @@ class MemoryValidatorPlugin(Plugin):
 
         return memory_data
 
-    async def _detect_language(
-        self,
-        memory_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def _detect_language(self, memory_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Detect content language
 
@@ -233,7 +212,9 @@ class MemoryValidatorPlugin(Plugin):
         # Check for common words in different languages
         if any(word in content.lower() for word in ["the", "is", "and", "in", "to"]):
             detected_lang = "en"
-        elif any(word in content.lower() for word in ["der", "die", "das", "und", "ist"]):
+        elif any(
+            word in content.lower() for word in ["der", "die", "das", "und", "ist"]
+        ):
             detected_lang = "de"
         elif any(word in content.lower() for word in ["le", "la", "les", "et", "est"]):
             detected_lang = "fr"
@@ -255,7 +236,7 @@ class MemoryValidatorPlugin(Plugin):
             "min_content_length": self.min_content_length,
             "max_content_length": self.max_content_length,
             "auto_tag": self.auto_tag,
-            "profanity_filter": self.profanity_filter
+            "profanity_filter": self.profanity_filter,
         }
 
         return status

@@ -9,22 +9,17 @@ This module provides FastAPI routes for evaluation operations including:
 - Benchmarking
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Request
 from typing import List
+
 import structlog
-from apps.memory_api.services.evaluation_service import EvaluationService
-from apps.memory_api.services.drift_detector import DriftDetector
+from fastapi import APIRouter, Depends, HTTPException, Request
+
 from apps.memory_api.models.evaluation_models import (
-    EvaluateSearchRequest,
-    EvaluateSearchResponse,
-    DetectDriftRequest,
-    DetectDriftResponse,
-    CreateABTestRequest,
-    CreateABTestResponse,
-    GetQualityMetricsRequest,
-    GetQualityMetricsResponse,
-    MetricType
-)
+    CreateABTestRequest, CreateABTestResponse, DetectDriftRequest,
+    DetectDriftResponse, EvaluateSearchRequest, EvaluateSearchResponse,
+    GetQualityMetricsRequest, GetQualityMetricsResponse, MetricType)
+from apps.memory_api.services.drift_detector import DriftDetector
+from apps.memory_api.services.evaluation_service import EvaluationService
 
 logger = structlog.get_logger(__name__)
 
@@ -35,6 +30,7 @@ router = APIRouter(prefix="/v1/evaluation", tags=["Evaluation"])
 # Dependency Injection
 # ============================================================================
 
+
 async def get_pool(request: Request):
     """Get database connection pool from app state"""
     return request.app.state.pool
@@ -44,10 +40,10 @@ async def get_pool(request: Request):
 # Search Evaluation
 # ============================================================================
 
+
 @router.post("/search", response_model=EvaluateSearchResponse)
 async def evaluate_search_results(
-    request: EvaluateSearchRequest,
-    pool=Depends(get_pool)
+    request: EvaluateSearchRequest, pool=Depends(get_pool)
 ):
     """
     Evaluate search results against ground truth relevance judgments.
@@ -70,18 +66,18 @@ async def evaluate_search_results(
             relevance_judgments=request.relevance_judgments,
             search_results=request.search_results,
             metrics_to_compute=request.metrics_to_compute,
-            k_values=request.k_values
+            k_values=request.k_values,
         )
 
         logger.info(
             "search_evaluation_complete",
             queries=result.num_queries_evaluated,
-            overall_quality=result.overall_quality_score
+            overall_quality=result.overall_quality_score,
         )
 
         return EvaluateSearchResponse(
             evaluation_result=result,
-            message=f"Evaluated {result.num_queries_evaluated} queries with {len(result.metrics)} metrics"
+            message=f"Evaluated {result.num_queries_evaluated} queries with {len(result.metrics)} metrics",
         )
 
     except Exception as e:
@@ -103,36 +99,36 @@ async def get_supported_metrics():
                 "description": "Average of reciprocal ranks of first relevant result",
                 "parameters": [],
                 "range": [0.0, 1.0],
-                "higher_is_better": True
+                "higher_is_better": True,
             },
             "ndcg": {
                 "name": "Normalized Discounted Cumulative Gain",
                 "description": "Position-aware ranking quality metric",
                 "parameters": ["k"],
                 "range": [0.0, 1.0],
-                "higher_is_better": True
+                "higher_is_better": True,
             },
             "precision": {
                 "name": "Precision at K",
                 "description": "Fraction of retrieved documents that are relevant",
                 "parameters": ["k"],
                 "range": [0.0, 1.0],
-                "higher_is_better": True
+                "higher_is_better": True,
             },
             "recall": {
                 "name": "Recall at K",
                 "description": "Fraction of relevant documents that are retrieved",
                 "parameters": ["k"],
                 "range": [0.0, 1.0],
-                "higher_is_better": True
+                "higher_is_better": True,
             },
             "map": {
                 "name": "Mean Average Precision",
                 "description": "Mean of average precision across queries",
                 "parameters": [],
                 "range": [0.0, 1.0],
-                "higher_is_better": True
-            }
+                "higher_is_better": True,
+            },
         }
     }
 
@@ -141,11 +137,9 @@ async def get_supported_metrics():
 # Drift Detection
 # ============================================================================
 
+
 @router.post("/drift/detect", response_model=DetectDriftResponse)
-async def detect_drift(
-    request: DetectDriftRequest,
-    pool=Depends(get_pool)
-):
+async def detect_drift(request: DetectDriftRequest, pool=Depends(get_pool)):
     """
     Detect distribution drift between baseline and current periods.
 
@@ -172,24 +166,23 @@ async def detect_drift(
             current_start=request.current_start,
             current_end=request.current_end,
             p_value_threshold=request.p_value_threshold,
-            statistical_test=request.statistical_test
+            statistical_test=request.statistical_test,
         )
 
         logger.info(
             "drift_detection_complete",
             detected=result.drift_detected,
             severity=result.severity.value,
-            metric=request.metric_name
+            metric=request.metric_name,
         )
 
         message = f"Drift {'detected' if result.drift_detected else 'not detected'}"
         if result.drift_detected:
-            message += f" (severity: {result.severity.value}, p-value: {result.p_value:.4f})"
+            message += (
+                f" (severity: {result.severity.value}, p-value: {result.p_value:.4f})"
+            )
 
-        return DetectDriftResponse(
-            drift_result=result,
-            message=message
-        )
+        return DetectDriftResponse(drift_result=result, message=message)
 
     except Exception as e:
         logger.error("drift_detection_failed", error=str(e))
@@ -208,34 +201,30 @@ async def get_drift_severity_levels():
             "none": {
                 "description": "No significant drift detected",
                 "magnitude_range": [0.0, 0.0],
-                "action": "Continue monitoring"
+                "action": "Continue monitoring",
             },
             "low": {
                 "description": "Minor drift detected",
                 "magnitude_range": [0.0, 0.1],
-                "action": "Monitor closely, no immediate action required"
+                "action": "Monitor closely, no immediate action required",
             },
             "medium": {
                 "description": "Moderate drift detected",
                 "magnitude_range": [0.1, 0.25],
-                "action": "Investigate data sources, review recent changes"
+                "action": "Investigate data sources, review recent changes",
             },
             "high": {
                 "description": "Severe drift detected",
                 "magnitude_range": [0.25, 0.5],
-                "action": "Immediate investigation required, consider retraining"
+                "action": "Immediate investigation required, consider retraining",
             },
             "critical": {
                 "description": "Critical drift requiring immediate action",
                 "magnitude_range": [0.5, 1.0],
-                "action": "URGENT: System validation and immediate remediation"
-            }
+                "action": "URGENT: System validation and immediate remediation",
+            },
         },
-        "thresholds": {
-            "p_value": 0.05,
-            "psi_warning": 0.1,
-            "psi_critical": 0.25
-        }
+        "thresholds": {"p_value": 0.05, "psi_warning": 0.1, "psi_critical": 0.25},
     }
 
 
@@ -243,11 +232,9 @@ async def get_drift_severity_levels():
 # A/B Testing
 # ============================================================================
 
+
 @router.post("/ab-test/create", response_model=CreateABTestResponse, status_code=201)
-async def create_ab_test(
-    request: CreateABTestRequest,
-    pool=Depends(get_pool)
-):
+async def create_ab_test(request: CreateABTestRequest, pool=Depends(get_pool)):
     """
     Create a new A/B test to compare variants.
 
@@ -264,7 +251,7 @@ async def create_ab_test(
         if not (99.0 <= total_traffic <= 101.0):  # Allow small floating point error
             raise HTTPException(
                 status_code=400,
-                detail=f"Traffic allocation must sum to 100% (got {total_traffic}%)"
+                detail=f"Traffic allocation must sum to 100% (got {total_traffic}%)",
             )
 
         test_id = uuid4()
@@ -274,12 +261,12 @@ async def create_ab_test(
             "ab_test_created",
             test_id=test_id,
             test_name=request.test_name,
-            variants=len(request.variants)
+            variants=len(request.variants),
         )
 
         return CreateABTestResponse(
             test_id=test_id,
-            message=f"A/B test '{request.test_name}' created with {len(request.variants)} variants"
+            message=f"A/B test '{request.test_name}' created with {len(request.variants)} variants",
         )
 
     except HTTPException:
@@ -290,10 +277,7 @@ async def create_ab_test(
 
 
 @router.post("/ab-test/{test_id}/compare")
-async def compare_ab_test_variants(
-    test_id: str,
-    pool=Depends(get_pool)
-):
+async def compare_ab_test_variants(test_id: str, pool=Depends(get_pool)):
     """
     Compare A/B test variants and determine winner.
 
@@ -315,8 +299,8 @@ async def compare_ab_test_variants(
             "comparison": {
                 "message": "A/B test comparison requires actual test data",
                 "status": "pending",
-                "note": "Submit evaluation results for each variant to compare"
-            }
+                "note": "Submit evaluation results for each variant to compare",
+            },
         }
 
     except Exception as e:
@@ -328,10 +312,10 @@ async def compare_ab_test_variants(
 # Quality Monitoring
 # ============================================================================
 
+
 @router.post("/quality/metrics", response_model=GetQualityMetricsResponse)
 async def get_quality_metrics(
-    request: GetQualityMetricsRequest,
-    pool=Depends(get_pool)
+    request: GetQualityMetricsRequest, pool=Depends(get_pool)
 ):
     """
     Get quality metrics for a time period.
@@ -351,19 +335,19 @@ async def get_quality_metrics(
             tenant_id=request.tenant_id,
             project_id=request.project_id,
             period_start=request.period_start,
-            period_end=request.period_end
+            period_end=request.period_end,
         )
 
         logger.info(
             "quality_metrics_retrieved",
             tenant_id=request.tenant_id,
-            period=f"{request.period_start} to {request.period_end}"
+            period=f"{request.period_start} to {request.period_end}",
         )
 
         return GetQualityMetricsResponse(
             quality_metrics=quality_metrics,
             alerts=[],
-            message="Quality metrics retrieved successfully"
+            message="Quality metrics retrieved successfully",
         )
 
     except Exception as e:
@@ -383,19 +367,19 @@ async def get_quality_thresholds():
             "min_mrr": 0.5,
             "min_ndcg": 0.6,
             "min_precision": 0.7,
-            "description": "Minimum acceptable retrieval quality metrics"
+            "description": "Minimum acceptable retrieval quality metrics",
         },
         "performance": {
             "max_response_time_ms": 1000,
             "max_p95_response_time_ms": 2000,
             "max_error_rate": 0.05,
-            "description": "Maximum acceptable performance degradation"
+            "description": "Maximum acceptable performance degradation",
         },
         "drift": {
             "p_value_threshold": 0.05,
             "max_acceptable_magnitude": 0.25,
-            "description": "Drift detection sensitivity"
-        }
+            "description": "Drift detection sensitivity",
+        },
     }
 
 
@@ -403,12 +387,10 @@ async def get_quality_thresholds():
 # Benchmarking
 # ============================================================================
 
+
 @router.post("/benchmark/run")
 async def run_benchmark_suite(
-    suite_name: str,
-    tenant_id: str,
-    project_id: str,
-    pool=Depends(get_pool)
+    suite_name: str, tenant_id: str, project_id: str, pool=Depends(get_pool)
 ):
     """
     Run a predefined benchmark suite.
@@ -425,7 +407,7 @@ async def run_benchmark_suite(
             "suite_name": suite_name,
             "status": "pending",
             "message": "Benchmark suite execution requires predefined test data",
-            "note": "Create benchmark suites with ground truth first"
+            "note": "Create benchmark suites with ground truth first",
         }
 
     except Exception as e:
@@ -434,10 +416,7 @@ async def run_benchmark_suite(
 
 
 @router.get("/benchmark/suites")
-async def list_benchmark_suites(
-    tenant_id: str,
-    project_id: str
-):
+async def list_benchmark_suites(tenant_id: str, project_id: str):
     """
     List available benchmark suites.
 
@@ -449,14 +428,14 @@ async def list_benchmark_suites(
                 "name": "standard_retrieval",
                 "description": "Standard retrieval quality benchmark",
                 "num_queries": 50,
-                "metrics": ["mrr", "ndcg", "precision", "recall"]
+                "metrics": ["mrr", "ndcg", "precision", "recall"],
             },
             {
                 "name": "performance",
                 "description": "Performance and latency benchmark",
                 "num_queries": 100,
-                "metrics": ["response_time", "throughput"]
-            }
+                "metrics": ["response_time", "throughput"],
+            },
         ]
     }
 
@@ -464,6 +443,7 @@ async def list_benchmark_suites(
 # ============================================================================
 # System Information
 # ============================================================================
+
 
 @router.get("/health")
 async def health_check():
@@ -477,20 +457,10 @@ async def health_check():
             "drift_detection",
             "ab_testing",
             "quality_monitoring",
-            "benchmarking"
+            "benchmarking",
         ],
-        "supported_metrics": [
-            "mrr",
-            "ndcg",
-            "precision",
-            "recall",
-            "map"
-        ],
-        "statistical_tests": [
-            "ks_test",
-            "psi",
-            "chi_square"
-        ]
+        "supported_metrics": ["mrr", "ndcg", "precision", "recall", "map"],
+        "statistical_tests": ["ks_test", "psi", "chi_square"],
     }
 
 
@@ -508,33 +478,33 @@ async def get_evaluation_info():
             "precision": "Precision@K - Relevant fraction of retrieved",
             "recall": "Recall@K - Retrieved fraction of relevant",
             "map": "Mean Average Precision - Average across queries",
-            "f1": "F1 Score - Harmonic mean of precision and recall"
+            "f1": "F1 Score - Harmonic mean of precision and recall",
         },
         "drift_detection": {
             "tests": {
                 "ks_test": "Kolmogorov-Smirnov two-sample test",
                 "psi": "Population Stability Index",
-                "chi_square": "Chi-square test for categorical data"
+                "chi_square": "Chi-square test for categorical data",
             },
             "severity_levels": ["none", "low", "medium", "high", "critical"],
-            "drift_types": ["data_drift", "concept_drift", "prediction_drift"]
+            "drift_types": ["data_drift", "concept_drift", "prediction_drift"],
         },
         "ab_testing": {
             "max_variants": 10,
             "min_sample_size": 100,
-            "confidence_levels": [0.90, 0.95, 0.99]
+            "confidence_levels": [0.90, 0.95, 0.99],
         },
         "quality_monitoring": {
             "monitored_metrics": [
                 "avg_mrr",
                 "avg_ndcg",
                 "avg_response_time",
-                "error_rate"
+                "error_rate",
             ],
             "alert_types": [
                 "quality_degradation",
                 "performance_degradation",
-                "drift_detected"
-            ]
-        }
+                "drift_detected",
+            ],
+        },
     }

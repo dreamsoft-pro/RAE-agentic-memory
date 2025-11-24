@@ -4,33 +4,28 @@ End-to-end tests for RAE MCP Server.
 These tests verify the complete flow from JSON-RPC requests to RAE API calls.
 """
 
-import pytest
 import asyncio
 import json
-from unittest.mock import patch, AsyncMock, MagicMock
-import httpx
-
 # Import the server components
 import sys
 from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import httpx
+import pytest
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from rae_mcp.server import (
-    handle_list_tools,
-    handle_call_tool,
-    handle_list_resources,
-    handle_read_resource,
-    handle_list_prompts,
-    handle_get_prompt,
-    RAEMemoryClient,
-)
-
+from rae_mcp.server import (RAEMemoryClient, handle_call_tool,
+                            handle_get_prompt, handle_list_prompts,
+                            handle_list_resources, handle_list_tools,
+                            handle_read_resource)
 
 # =============================================================================
 # FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def mock_rae_api():
@@ -46,15 +41,14 @@ def mock_rae_api():
 def rae_client():
     """Create a RAE Memory Client instance for testing."""
     return RAEMemoryClient(
-        api_url="http://localhost:8000",
-        api_key="test-api-key",
-        tenant_id="test-tenant"
+        api_url="http://localhost:8000", api_key="test-api-key", tenant_id="test-tenant"
     )
 
 
 # =============================================================================
 # TOOL TESTS
 # =============================================================================
+
 
 @pytest.mark.asyncio
 async def test_list_tools():
@@ -93,8 +87,8 @@ async def test_save_memory_tool_success(mock_rae_api):
             "content": "Test memory content",
             "source": "test-source",
             "tags": ["test", "e2e"],
-            "layer": "episodic"
-        }
+            "layer": "episodic",
+        },
     )
 
     # Verify response
@@ -109,10 +103,7 @@ async def test_save_memory_tool_success(mock_rae_api):
 async def test_save_memory_tool_missing_content():
     """Test save_memory tool with missing required content parameter."""
     result = await handle_call_tool(
-        name="save_memory",
-        arguments={
-            "source": "test-source"
-        }
+        name="save_memory", arguments={"source": "test-source"}
     )
 
     assert len(result) == 1
@@ -123,10 +114,7 @@ async def test_save_memory_tool_missing_content():
 async def test_save_memory_tool_missing_source():
     """Test save_memory tool with missing required source parameter."""
     result = await handle_call_tool(
-        name="save_memory",
-        arguments={
-            "content": "Test content"
-        }
+        name="save_memory", arguments={"content": "Test content"}
     )
 
     assert len(result) == 1
@@ -144,14 +132,14 @@ async def test_search_memory_tool_success(mock_rae_api):
                 "content": "Memory content 1",
                 "source": "source-1",
                 "score": 0.95,
-                "tags": ["tag1"]
+                "tags": ["tag1"],
             },
             {
                 "content": "Memory content 2",
                 "source": "source-2",
                 "score": 0.85,
-                "tags": ["tag2"]
-            }
+                "tags": ["tag2"],
+            },
         ]
     }
     mock_response.raise_for_status = MagicMock()
@@ -159,11 +147,7 @@ async def test_search_memory_tool_success(mock_rae_api):
 
     # Call tool
     result = await handle_call_tool(
-        name="search_memory",
-        arguments={
-            "query": "test query",
-            "top_k": 5
-        }
+        name="search_memory", arguments={"query": "test query", "top_k": 5}
     )
 
     # Verify response
@@ -185,10 +169,7 @@ async def test_search_memory_tool_no_results(mock_rae_api):
 
     # Call tool
     result = await handle_call_tool(
-        name="search_memory",
-        arguments={
-            "query": "nonexistent query"
-        }
+        name="search_memory", arguments={"query": "nonexistent query"}
     )
 
     # Verify response
@@ -206,13 +187,13 @@ async def test_get_related_context_tool_success(mock_rae_api):
             {
                 "content": "File modification 1",
                 "timestamp": "2025-01-15T10:30:00Z",
-                "source": "src/auth.py"
+                "source": "src/auth.py",
             },
             {
                 "content": "File modification 2",
                 "timestamp": "2025-01-14T15:20:00Z",
-                "source": "src/auth.py"
-            }
+                "source": "src/auth.py",
+            },
         ]
     }
     mock_response.raise_for_status = MagicMock()
@@ -221,10 +202,7 @@ async def test_get_related_context_tool_success(mock_rae_api):
     # Call tool
     result = await handle_call_tool(
         name="get_related_context",
-        arguments={
-            "file_path": "src/auth.py",
-            "include_count": 10
-        }
+        arguments={"file_path": "src/auth.py", "include_count": 10},
     )
 
     # Verify response
@@ -238,10 +216,7 @@ async def test_get_related_context_tool_success(mock_rae_api):
 @pytest.mark.asyncio
 async def test_unknown_tool():
     """Test calling an unknown tool."""
-    result = await handle_call_tool(
-        name="unknown_tool",
-        arguments={}
-    )
+    result = await handle_call_tool(name="unknown_tool", arguments={})
 
     assert len(result) == 1
     assert "Error: Unknown tool 'unknown_tool'" in result[0].text
@@ -250,6 +225,7 @@ async def test_unknown_tool():
 # =============================================================================
 # RESOURCE TESTS
 # =============================================================================
+
 
 @pytest.mark.asyncio
 async def test_list_resources():
@@ -263,7 +239,9 @@ async def test_list_resources():
     assert "rae://project/guidelines" in resource_uris
 
     # Verify resource metadata
-    reflection_resource = next(r for r in resources if r.uri == "rae://project/reflection")
+    reflection_resource = next(
+        r for r in resources if r.uri == "rae://project/reflection"
+    )
     assert reflection_resource.name == "Project Reflection"
     assert reflection_resource.mimeType == "text/plain"
 
@@ -293,12 +271,8 @@ async def test_read_guidelines_resource(mock_rae_api):
     mock_response = MagicMock()
     mock_response.json.return_value = {
         "results": [
-            {
-                "content": "Always use type hints in Python code"
-            },
-            {
-                "content": "Write tests for all business logic"
-            }
+            {"content": "Always use type hints in Python code"},
+            {"content": "Write tests for all business logic"},
         ]
     }
     mock_response.raise_for_status = MagicMock()
@@ -325,6 +299,7 @@ async def test_read_unknown_resource():
 # PROMPT TESTS
 # =============================================================================
 
+
 @pytest.mark.asyncio
 async def test_list_prompts():
     """Test that list_prompts returns all expected prompts."""
@@ -343,10 +318,7 @@ async def test_get_project_guidelines_prompt(mock_rae_api):
     # Mock successful API response
     mock_response = MagicMock()
     mock_response.json.return_value = {
-        "results": [
-            {"content": "Guideline 1"},
-            {"content": "Guideline 2"}
-        ]
+        "results": [{"content": "Guideline 1"}, {"content": "Guideline 2"}]
     }
     mock_response.raise_for_status = MagicMock()
     mock_rae_api.post = AsyncMock(return_value=mock_response)
@@ -368,10 +340,7 @@ async def test_get_recent_context_prompt(mock_rae_api):
     mock_response = MagicMock()
     mock_response.json.return_value = {
         "results": [
-            {
-                "content": "Recent activity 1",
-                "timestamp": "2025-01-15T10:00:00Z"
-            }
+            {"content": "Recent activity 1", "timestamp": "2025-01-15T10:00:00Z"}
         ]
     }
     mock_response.raise_for_status = MagicMock()
@@ -390,6 +359,7 @@ async def test_get_recent_context_prompt(mock_rae_api):
 # RAE CLIENT TESTS
 # =============================================================================
 
+
 @pytest.mark.asyncio
 async def test_rae_client_store_memory(mock_rae_api):
     """Test RAEMemoryClient.store_memory method."""
@@ -401,17 +371,12 @@ async def test_rae_client_store_memory(mock_rae_api):
 
     # Create client
     client = RAEMemoryClient(
-        api_url="http://localhost:8000",
-        api_key="test-key",
-        tenant_id="test-tenant"
+        api_url="http://localhost:8000", api_key="test-key", tenant_id="test-tenant"
     )
 
     # Store memory
     result = await client.store_memory(
-        content="Test content",
-        source="test-source",
-        layer="episodic",
-        tags=["test"]
+        content="Test content", source="test-source", layer="episodic", tags=["test"]
     )
 
     # Verify result
@@ -427,7 +392,7 @@ async def test_rae_client_search_memory(mock_rae_api):
     mock_response.json.return_value = {
         "results": [
             {"content": "Result 1", "score": 0.9},
-            {"content": "Result 2", "score": 0.8}
+            {"content": "Result 2", "score": 0.8},
         ]
     }
     mock_response.raise_for_status = MagicMock()
@@ -435,9 +400,7 @@ async def test_rae_client_search_memory(mock_rae_api):
 
     # Create client
     client = RAEMemoryClient(
-        api_url="http://localhost:8000",
-        api_key="test-key",
-        tenant_id="test-tenant"
+        api_url="http://localhost:8000", api_key="test-key", tenant_id="test-tenant"
     )
 
     # Search memory
@@ -456,30 +419,24 @@ async def test_rae_client_http_error(mock_rae_api):
     mock_response = MagicMock()
     mock_response.status_code = 500
     mock_response.raise_for_status.side_effect = httpx.HTTPStatusError(
-        "Internal Server Error",
-        request=MagicMock(),
-        response=mock_response
+        "Internal Server Error", request=MagicMock(), response=mock_response
     )
     mock_rae_api.post = AsyncMock(return_value=mock_response)
 
     # Create client
     client = RAEMemoryClient(
-        api_url="http://localhost:8000",
-        api_key="test-key",
-        tenant_id="test-tenant"
+        api_url="http://localhost:8000", api_key="test-key", tenant_id="test-tenant"
     )
 
     # Attempt to store memory (should raise exception)
     with pytest.raises(httpx.HTTPStatusError):
-        await client.store_memory(
-            content="Test",
-            source="test"
-        )
+        await client.store_memory(content="Test", source="test")
 
 
 # =============================================================================
 # INTEGRATION TEST (if RAE API is available)
 # =============================================================================
+
 
 @pytest.mark.integration
 @pytest.mark.asyncio
@@ -492,9 +449,7 @@ async def test_full_mcp_flow():
     """
     # Create real client
     client = RAEMemoryClient(
-        api_url="http://localhost:8000",
-        api_key="test-api-key",
-        tenant_id="test-tenant"
+        api_url="http://localhost:8000", api_key="test-api-key", tenant_id="test-tenant"
     )
 
     # 1. Store memory
@@ -502,27 +457,23 @@ async def test_full_mcp_flow():
         content="Integration test memory content",
         source="test-e2e",
         layer="episodic",
-        tags=["integration", "test"]
+        tags=["integration", "test"],
     )
 
     assert "id" in store_result
     memory_id = store_result["id"]
 
     # 2. Search memory
-    search_results = await client.search_memory(
-        query="integration test",
-        top_k=5
-    )
+    search_results = await client.search_memory(query="integration test", top_k=5)
 
     assert len(search_results) > 0
-    assert any("integration test" in result.get("content", "").lower()
-               for result in search_results)
+    assert any(
+        "integration test" in result.get("content", "").lower()
+        for result in search_results
+    )
 
     # 3. Get file context (should return empty or existing context)
-    context_results = await client.get_file_context(
-        file_path="test-file.py",
-        top_k=10
-    )
+    context_results = await client.get_file_context(file_path="test-file.py", top_k=10)
 
     # Results may be empty, but should not error
     assert isinstance(context_results, list)

@@ -2,11 +2,12 @@
 Importance Scoring Service - Automatic memory prioritization
 """
 
-from typing import Dict, List, Optional, Any
-from uuid import UUID
+import math
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-import math
+from typing import Any, Dict, List, Optional
+from uuid import UUID
+
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -14,11 +15,12 @@ logger = structlog.get_logger(__name__)
 
 class ImportanceLevel(str, Enum):
     """Memory importance levels"""
-    CRITICAL = "critical"      # Score > 0.8
-    HIGH = "high"             # Score > 0.6
-    MEDIUM = "medium"         # Score > 0.4
-    LOW = "low"               # Score > 0.2
-    MINIMAL = "minimal"       # Score <= 0.2
+
+    CRITICAL = "critical"  # Score > 0.8
+    HIGH = "high"  # Score > 0.6
+    MEDIUM = "medium"  # Score > 0.4
+    LOW = "low"  # Score > 0.2
+    MINIMAL = "minimal"  # Score <= 0.2
 
 
 class ScoringFactors:
@@ -32,7 +34,7 @@ class ScoringFactors:
         semantic_relevance: float = 0.15,
         user_rating: float = 0.10,
         consolidation: float = 0.10,
-        manual_boost: float = 0.15
+        manual_boost: float = 0.15,
     ):
         """
         Initialize scoring factor weights
@@ -57,15 +59,22 @@ class ScoringFactors:
         self.manual_boost = manual_boost
 
         # Validate weights sum to 1.0
-        total = sum([
-            recency, access_frequency, graph_centrality, semantic_relevance,
-            user_rating, consolidation, manual_boost
-        ])
+        total = sum(
+            [
+                recency,
+                access_frequency,
+                graph_centrality,
+                semantic_relevance,
+                user_rating,
+                consolidation,
+                manual_boost,
+            ]
+        )
         if not math.isclose(total, 1.0, rel_tol=1e-5):
             logger.warning(
                 "scoring_weights_not_normalized",
                 total=total,
-                message="Scoring factor weights should sum to 1.0"
+                message="Scoring factor weights should sum to 1.0",
             )
 
 
@@ -85,7 +94,7 @@ class Memory:
         user_rating: Optional[float] = None,
         is_consolidated: bool = False,
         manual_importance: Optional[float] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         self.id = id
         self.content = content
@@ -112,7 +121,7 @@ class ImportanceScoringService:
         self,
         db=None,
         vector_store=None,
-        scoring_factors: Optional[ScoringFactors] = None
+        scoring_factors: Optional[ScoringFactors] = None,
     ):
         """
         Initialize importance scoring service
@@ -127,9 +136,7 @@ class ImportanceScoringService:
         self.scoring_factors = scoring_factors or ScoringFactors()
 
     async def calculate_importance(
-        self,
-        memory: Memory,
-        context: Optional[Dict[str, Any]] = None
+        self, memory: Memory, context: Optional[Dict[str, Any]] = None
     ) -> float:
         """
         Calculate importance score for a memory
@@ -154,13 +161,13 @@ class ImportanceScoringService:
 
         # Weighted combination
         importance = (
-            self.scoring_factors.recency * recency_score +
-            self.scoring_factors.access_frequency * access_score +
-            self.scoring_factors.graph_centrality * centrality_score +
-            self.scoring_factors.semantic_relevance * relevance_score +
-            self.scoring_factors.user_rating * rating_score +
-            self.scoring_factors.consolidation * consolidation_score +
-            self.scoring_factors.manual_boost * manual_score
+            self.scoring_factors.recency * recency_score
+            + self.scoring_factors.access_frequency * access_score
+            + self.scoring_factors.graph_centrality * centrality_score
+            + self.scoring_factors.semantic_relevance * relevance_score
+            + self.scoring_factors.user_rating * rating_score
+            + self.scoring_factors.consolidation * consolidation_score
+            + self.scoring_factors.manual_boost * manual_score
         )
 
         # Ensure score is in [0, 1]
@@ -182,8 +189,8 @@ class ImportanceScoringService:
                 "relevance": relevance_score,
                 "rating": rating_score,
                 "consolidated": consolidation_score,
-                "manual": manual_score
-            }
+                "manual": manual_score,
+            },
         )
 
         return importance
@@ -218,7 +225,9 @@ class ImportanceScoringService:
 
         # Access frequency component (logarithmic to prevent dominance)
         # Score reaches 0.8 at 100 accesses
-        frequency_component = min(math.log10(memory.access_count + 1) / math.log10(100), 0.8)
+        frequency_component = min(
+            math.log10(memory.access_count + 1) / math.log10(100), 0.8
+        )
 
         # Recency of last access component
         now = datetime.now(timezone.utc)
@@ -233,9 +242,7 @@ class ImportanceScoringService:
         return min(score, 1.0)
 
     async def _calculate_relevance_score(
-        self,
-        memory: Memory,
-        context: Dict[str, Any]
+        self, memory: Memory, context: Dict[str, Any]
     ) -> float:
         """
         Calculate semantic relevance to recent queries/context
@@ -283,9 +290,7 @@ class ImportanceScoringService:
             return ImportanceLevel.MINIMAL
 
     async def recalculate_all_scores(
-        self,
-        tenant_id: UUID,
-        batch_size: int = 100
+        self, tenant_id: UUID, batch_size: int = 100
     ) -> Dict[str, int]:
         """
         Recalculate importance scores for all memories
@@ -298,24 +303,18 @@ class ImportanceScoringService:
             Statistics about recalculation
         """
         logger.info(
-            "recalculating_all_scores",
-            tenant_id=str(tenant_id),
-            batch_size=batch_size
+            "recalculating_all_scores", tenant_id=str(tenant_id), batch_size=batch_size
         )
 
         stats = {
             "total_processed": 0,
-            "by_level": {level.value: 0 for level in ImportanceLevel}
+            "by_level": {level.value: 0 for level in ImportanceLevel},
         }
 
         # In production, fetch memories in batches from database
         # For now, return empty stats
 
-        logger.info(
-            "recalculation_complete",
-            tenant_id=str(tenant_id),
-            stats=stats
-        )
+        logger.info("recalculation_complete", tenant_id=str(tenant_id), stats=stats)
 
         return stats
 
@@ -324,7 +323,7 @@ class ImportanceScoringService:
         tenant_id: UUID,
         limit: int = 20,
         layer: Optional[str] = None,
-        min_score: float = 0.0
+        min_score: float = 0.0,
     ) -> List[Memory]:
         """
         Get most important memories for tenant
@@ -344,10 +343,7 @@ class ImportanceScoringService:
         return []
 
     async def boost_importance(
-        self,
-        memory_id: str,
-        boost_amount: float = 0.2,
-        reason: Optional[str] = None
+        self, memory_id: str, boost_amount: float = 0.2, reason: Optional[str] = None
     ):
         """
         Manually boost a memory's importance
@@ -361,7 +357,7 @@ class ImportanceScoringService:
             "importance_boosted",
             memory_id=memory_id,
             boost_amount=boost_amount,
-            reason=reason
+            reason=reason,
         )
 
         # In production, update memory.manual_importance
@@ -371,7 +367,7 @@ class ImportanceScoringService:
         self,
         tenant_id: UUID,
         decay_rate: float = 0.01,
-        consider_access_stats: bool = True
+        consider_access_stats: bool = True,
     ) -> int:
         """
         Apply time-based decay to all memories with temporal considerations.
@@ -422,14 +418,14 @@ class ImportanceScoringService:
             "applying_importance_decay",
             tenant_id=str(tenant_id),
             decay_rate=decay_rate,
-            consider_access_stats=consider_access_stats
+            consider_access_stats=consider_access_stats,
         )
 
         if not self.db:
             logger.warning(
                 "decay_importance_skipped",
                 tenant_id=str(tenant_id),
-                reason="no_database_connection"
+                reason="no_database_connection",
             )
             return 0
 
@@ -459,23 +455,18 @@ class ImportanceScoringService:
             logger.info(
                 "importance_decay_complete",
                 tenant_id=str(tenant_id),
-                updated_count=updated_count
+                updated_count=updated_count,
             )
 
             return updated_count
 
         except Exception as e:
             logger.error(
-                "importance_decay_failed",
-                tenant_id=str(tenant_id),
-                error=str(e)
+                "importance_decay_failed", tenant_id=str(tenant_id), error=str(e)
             )
             return 0
 
-    async def get_importance_distribution(
-        self,
-        tenant_id: UUID
-    ) -> Dict[str, Any]:
+    async def get_importance_distribution(self, tenant_id: UUID) -> Dict[str, Any]:
         """
         Get distribution of importance scores for analysis
 
@@ -493,13 +484,11 @@ class ImportanceScoringService:
             "median_score": 0.0,
             "min_score": 0.0,
             "max_score": 0.0,
-            "score_histogram": []
+            "score_histogram": [],
         }
 
     async def identify_undervalued_memories(
-        self,
-        tenant_id: UUID,
-        threshold: float = 0.3
+        self, tenant_id: UUID, threshold: float = 0.3
     ) -> List[Dict[str, Any]]:
         """
         Identify memories that might be more important than their score suggests
@@ -526,8 +515,7 @@ class ImportanceScoringService:
         return undervalued
 
     async def suggest_importance_adjustments(
-        self,
-        tenant_id: UUID
+        self, tenant_id: UUID
     ) -> List[Dict[str, Any]]:
         """
         Suggest manual importance adjustments
@@ -547,22 +535,21 @@ class ImportanceScoringService:
         undervalued = await self.identify_undervalued_memories(tenant_id)
 
         for memory_info in undervalued:
-            suggestions.append({
-                "memory_id": memory_info["memory_id"],
-                "action": "boost",
-                "current_score": memory_info["current_score"],
-                "suggested_score": memory_info["suggested_score"],
-                "reason": memory_info["reason"],
-                "confidence": memory_info["confidence"]
-            })
+            suggestions.append(
+                {
+                    "memory_id": memory_info["memory_id"],
+                    "action": "boost",
+                    "current_score": memory_info["current_score"],
+                    "suggested_score": memory_info["suggested_score"],
+                    "reason": memory_info["reason"],
+                    "confidence": memory_info["confidence"],
+                }
+            )
 
         return suggestions
 
     async def auto_archive_low_importance(
-        self,
-        tenant_id: UUID,
-        threshold: float = 0.1,
-        min_age_days: int = 90
+        self, tenant_id: UUID, threshold: float = 0.1, min_age_days: int = 90
     ) -> List[str]:
         """
         Automatically archive very low importance memories
@@ -579,7 +566,7 @@ class ImportanceScoringService:
             "auto_archiving_low_importance",
             tenant_id=str(tenant_id),
             threshold=threshold,
-            min_age_days=min_age_days
+            min_age_days=min_age_days,
         )
 
         archived = []
@@ -592,15 +579,13 @@ class ImportanceScoringService:
         logger.info(
             "auto_archive_complete",
             tenant_id=str(tenant_id),
-            archived_count=len(archived)
+            archived_count=len(archived),
         )
 
         return archived
 
     async def get_importance_trends(
-        self,
-        tenant_id: UUID,
-        period_days: int = 30
+        self, tenant_id: UUID, period_days: int = 30
     ) -> Dict[str, Any]:
         """
         Analyze importance score trends over time
@@ -616,16 +601,13 @@ class ImportanceScoringService:
         return {
             "period_days": period_days,
             "avg_score_change": 0.0,
-            "trending_up": [],      # Memories gaining importance
-            "trending_down": [],    # Memories losing importance
-            "stable": [],           # Memories with stable importance
-            "volatility": 0.0       # Score volatility measure
+            "trending_up": [],  # Memories gaining importance
+            "trending_down": [],  # Memories losing importance
+            "stable": [],  # Memories with stable importance
+            "volatility": 0.0,  # Score volatility measure
         }
 
-    def get_scoring_explanation(
-        self,
-        memory: Memory
-    ) -> Dict[str, Any]:
+    def get_scoring_explanation(self, memory: Memory) -> Dict[str, Any]:
         """
         Get detailed explanation of importance score
 
@@ -647,31 +629,33 @@ class ImportanceScoringService:
             "factors": {
                 "recency": {
                     "weight": self.scoring_factors.recency,
-                    "days_old": (datetime.now(timezone.utc) - memory.created_at).days
+                    "days_old": (datetime.now(timezone.utc) - memory.created_at).days,
                 },
                 "access_frequency": {
                     "weight": self.scoring_factors.access_frequency,
                     "access_count": memory.access_count,
-                    "days_since_access": (datetime.now(timezone.utc) - memory.accessed_at).days
+                    "days_since_access": (
+                        datetime.now(timezone.utc) - memory.accessed_at
+                    ).days,
                 },
                 "graph_centrality": {
                     "weight": self.scoring_factors.graph_centrality,
-                    "score": memory.graph_centrality
+                    "score": memory.graph_centrality,
                 },
                 "user_rating": {
                     "weight": self.scoring_factors.user_rating,
-                    "rating": memory.user_rating
+                    "rating": memory.user_rating,
                 },
                 "consolidated": {
                     "weight": self.scoring_factors.consolidation,
-                    "is_consolidated": memory.is_consolidated
+                    "is_consolidated": memory.is_consolidated,
                 },
                 "manual": {
                     "weight": self.scoring_factors.manual_boost,
-                    "manual_score": memory.manual_importance
-                }
+                    "manual_score": memory.manual_importance,
+                },
             },
-            "recommendations": self._generate_recommendations(memory)
+            "recommendations": self._generate_recommendations(memory),
         }
 
     def _generate_recommendations(self, memory: Memory) -> List[str]:

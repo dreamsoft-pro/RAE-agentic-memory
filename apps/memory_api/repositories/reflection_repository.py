@@ -15,23 +15,22 @@ Implements enterprise features:
 - Analytics and statistics
 """
 
-import asyncpg
-from typing import List, Optional, Dict, Any, Tuple
-from uuid import UUID
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
+from uuid import UUID
+
+import asyncpg
 import structlog
 
-from apps.memory_api.models.reflection_models import (
-    ReflectionUnit,
-    ReflectionRelationship,
-    ReflectionCluster,
-    ReflectionType,
-    ReflectionRelationType,
-    ReflectionScoring,
-    ReflectionTelemetry,
-    ReflectionStatistics,
-    ReflectionUsageLog
-)
+from apps.memory_api.models.reflection_models import (ReflectionCluster,
+                                                      ReflectionRelationship,
+                                                      ReflectionRelationType,
+                                                      ReflectionScoring,
+                                                      ReflectionStatistics,
+                                                      ReflectionTelemetry,
+                                                      ReflectionType,
+                                                      ReflectionUnit,
+                                                      ReflectionUsageLog)
 
 logger = structlog.get_logger(__name__)
 
@@ -39,6 +38,7 @@ logger = structlog.get_logger(__name__)
 # ============================================================================
 # Reflection CRUD Operations
 # ============================================================================
+
 
 async def create_reflection(
     pool: asyncpg.Pool,
@@ -55,7 +55,7 @@ async def create_reflection(
     cluster_id: Optional[str] = None,
     tags: List[str] = None,
     telemetry: Optional[ReflectionTelemetry] = None,
-    metadata: Dict[str, Any] = None
+    metadata: Dict[str, Any] = None,
 ) -> ReflectionUnit:
     """
     Create a new reflection in the database.
@@ -85,7 +85,7 @@ async def create_reflection(
         tenant_id=tenant_id,
         project_id=project_id,
         reflection_type=reflection_type,
-        priority=priority
+        priority=priority,
     )
 
     source_memory_ids = source_memory_ids or []
@@ -97,8 +97,7 @@ async def create_reflection(
     depth_level = 0
     if parent_reflection_id:
         parent_depth = await pool.fetchval(
-            "SELECT depth_level FROM reflections WHERE id = $1",
-            parent_reflection_id
+            "SELECT depth_level FROM reflections WHERE id = $1", parent_reflection_id
         )
         if parent_depth is not None:
             depth_level = parent_depth + 1
@@ -129,24 +128,37 @@ async def create_reflection(
         )
         RETURNING *
         """,
-        tenant_id, project_id, content, reflection_type.value, priority,
-        scoring.composite_score, scoring.novelty_score, scoring.importance_score,
-        scoring.utility_score, scoring.confidence_score,
-        parent_reflection_id, depth_level,
-        source_memory_ids, source_reflection_ids,
-        embedding, cluster_id, tags, metadata,
-        generation_model, generation_duration_ms, generation_tokens_used, generation_cost_usd
+        tenant_id,
+        project_id,
+        content,
+        reflection_type.value,
+        priority,
+        scoring.composite_score,
+        scoring.novelty_score,
+        scoring.importance_score,
+        scoring.utility_score,
+        scoring.confidence_score,
+        parent_reflection_id,
+        depth_level,
+        source_memory_ids,
+        source_reflection_ids,
+        embedding,
+        cluster_id,
+        tags,
+        metadata,
+        generation_model,
+        generation_duration_ms,
+        generation_tokens_used,
+        generation_cost_usd,
     )
 
-    logger.info("reflection_created", reflection_id=str(record['id']))
+    logger.info("reflection_created", reflection_id=str(record["id"]))
 
     return _record_to_reflection_unit(record)
 
 
 async def get_reflection_by_id(
-    pool: asyncpg.Pool,
-    reflection_id: UUID,
-    increment_access: bool = True
+    pool: asyncpg.Pool, reflection_id: UUID, increment_access: bool = True
 ) -> Optional[ReflectionUnit]:
     """
     Get a reflection by ID.
@@ -161,14 +173,10 @@ async def get_reflection_by_id(
     """
     if increment_access:
         # Increment access count
-        await pool.execute(
-            "SELECT increment_reflection_access($1)",
-            reflection_id
-        )
+        await pool.execute("SELECT increment_reflection_access($1)", reflection_id)
 
     record = await pool.fetchrow(
-        "SELECT * FROM reflections WHERE id = $1",
-        reflection_id
+        "SELECT * FROM reflections WHERE id = $1", reflection_id
     )
 
     if not record:
@@ -189,7 +197,7 @@ async def query_reflections(
     cluster_id: Optional[str] = None,
     parent_reflection_id: Optional[UUID] = None,
     since: Optional[datetime] = None,
-    until: Optional[datetime] = None
+    until: Optional[datetime] = None,
 ) -> Tuple[List[ReflectionUnit], int]:
     """
     Query reflections with filters and optional semantic search.
@@ -216,7 +224,7 @@ async def query_reflections(
         tenant_id=tenant_id,
         project_id=project_id,
         k=k,
-        has_embedding=query_embedding is not None
+        has_embedding=query_embedding is not None,
     )
 
     # Build query conditions
@@ -272,7 +280,9 @@ async def query_reflections(
         params.extend([query_embedding, k])
     else:
         # Sort by score and priority
-        order_clause = f"ORDER BY score DESC, priority DESC, created_at DESC LIMIT ${param_idx}"
+        order_clause = (
+            f"ORDER BY score DESC, priority DESC, created_at DESC LIMIT ${param_idx}"
+        )
         params.append(k)
 
     query = f"SELECT * FROM reflections WHERE {where_clause} {order_clause}"
@@ -286,9 +296,7 @@ async def query_reflections(
 
 
 async def get_child_reflections(
-    pool: asyncpg.Pool,
-    parent_reflection_id: UUID,
-    recursive: bool = False
+    pool: asyncpg.Pool, parent_reflection_id: UUID, recursive: bool = False
 ) -> List[ReflectionUnit]:
     """
     Get child reflections of a parent.
@@ -313,13 +321,13 @@ async def get_child_reflections(
             )
             SELECT * FROM descendants ORDER BY depth_level, created_at
             """,
-            parent_reflection_id
+            parent_reflection_id,
         )
     else:
         # Direct children only
         records = await pool.fetch(
             "SELECT * FROM reflections WHERE parent_reflection_id = $1 ORDER BY created_at DESC",
-            parent_reflection_id
+            parent_reflection_id,
         )
 
     return [_record_to_reflection_unit(r) for r in records]
@@ -328,6 +336,7 @@ async def get_child_reflections(
 # ============================================================================
 # Reflection Relationship Operations
 # ============================================================================
+
 
 async def create_reflection_relationship(
     pool: asyncpg.Pool,
@@ -339,7 +348,7 @@ async def create_reflection_relationship(
     strength: float,
     confidence: float,
     supporting_evidence: List[str] = None,
-    check_cycles: bool = True
+    check_cycles: bool = True,
 ) -> ReflectionRelationship:
     """
     Create a relationship between two reflections.
@@ -366,7 +375,7 @@ async def create_reflection_relationship(
         "create_reflection_relationship",
         source=str(source_reflection_id),
         target=str(target_reflection_id),
-        relation_type=relation_type
+        relation_type=relation_type,
     )
 
     supporting_evidence = supporting_evidence or []
@@ -376,7 +385,7 @@ async def create_reflection_relationship(
         has_cycle = await pool.fetchval(
             "SELECT detect_reflection_cycle($1, $2)",
             source_reflection_id,
-            target_reflection_id
+            target_reflection_id,
         )
 
         if has_cycle:
@@ -396,13 +405,17 @@ async def create_reflection_relationship(
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING *
         """,
-        tenant_id, project_id,
-        source_reflection_id, target_reflection_id,
-        relation_type.value, strength, confidence,
-        supporting_evidence
+        tenant_id,
+        project_id,
+        source_reflection_id,
+        target_reflection_id,
+        relation_type.value,
+        strength,
+        confidence,
+        supporting_evidence,
     )
 
-    logger.info("reflection_relationship_created", relationship_id=str(record['id']))
+    logger.info("reflection_relationship_created", relationship_id=str(record["id"]))
 
     return _record_to_reflection_relationship(record)
 
@@ -412,7 +425,7 @@ async def get_reflection_relationships(
     reflection_id: UUID,
     direction: str = "outgoing",  # "outgoing", "incoming", "both"
     relation_types: Optional[List[ReflectionRelationType]] = None,
-    min_strength: Optional[float] = None
+    min_strength: Optional[float] = None,
 ) -> List[ReflectionRelationship]:
     """
     Get relationships for a reflection.
@@ -463,7 +476,7 @@ async def get_reflection_graph(
     reflection_id: UUID,
     max_depth: int = 3,
     relation_types: Optional[List[ReflectionRelationType]] = None,
-    min_strength: Optional[float] = None
+    min_strength: Optional[float] = None,
 ) -> Tuple[List[ReflectionUnit], List[ReflectionRelationship]]:
     """
     Get reflection graph starting from a reflection.
@@ -479,9 +492,7 @@ async def get_reflection_graph(
         Tuple of (nodes, edges)
     """
     logger.info(
-        "get_reflection_graph",
-        reflection_id=str(reflection_id),
-        max_depth=max_depth
+        "get_reflection_graph", reflection_id=str(reflection_id), max_depth=max_depth
     )
 
     # Build relation type filter
@@ -529,13 +540,12 @@ async def get_reflection_graph(
     """
 
     params = [max_depth] + relation_params
-    node_ids = [r['id'] for r in await pool.fetch(query, *params)]
+    node_ids = [r["id"] for r in await pool.fetch(query, *params)]
 
     # Fetch all nodes
     if node_ids:
         nodes_records = await pool.fetch(
-            "SELECT * FROM reflections WHERE id = ANY($1)",
-            node_ids
+            "SELECT * FROM reflections WHERE id = ANY($1)", node_ids
         )
         nodes = [_record_to_reflection_unit(r) for r in nodes_records]
 
@@ -563,10 +573,9 @@ async def get_reflection_graph(
 # Statistics and Analytics
 # ============================================================================
 
+
 async def get_reflection_statistics(
-    pool: asyncpg.Pool,
-    tenant_id: str,
-    project_id: str
+    pool: asyncpg.Pool, tenant_id: str, project_id: str
 ) -> ReflectionStatistics:
     """
     Get reflection statistics for a project.
@@ -581,7 +590,8 @@ async def get_reflection_statistics(
     """
     record = await pool.fetchrow(
         "SELECT * FROM reflection_statistics WHERE tenant_id = $1 AND project_id = $2",
-        tenant_id, project_id
+        tenant_id,
+        project_id,
     )
 
     if not record:
@@ -601,7 +611,7 @@ async def log_reflection_usage(
     rank_position: Optional[int] = None,
     user_id: Optional[str] = None,
     session_id: Optional[str] = None,
-    metadata: Dict[str, Any] = None
+    metadata: Dict[str, Any] = None,
 ) -> UUID:
     """
     Log reflection usage for analytics.
@@ -634,79 +644,90 @@ async def log_reflection_usage(
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING id
         """,
-        tenant_id, project_id, reflection_id,
-        usage_type, query_text,
-        relevance_score, rank_position,
-        user_id, session_id, metadata
+        tenant_id,
+        project_id,
+        reflection_id,
+        usage_type,
+        query_text,
+        relevance_score,
+        rank_position,
+        user_id,
+        session_id,
+        metadata,
     )
 
-    return record['id']
+    return record["id"]
 
 
 # ============================================================================
 # Helper Functions
 # ============================================================================
 
+
 def _record_to_reflection_unit(record) -> ReflectionUnit:
     """Convert database record to ReflectionUnit"""
     scoring = ReflectionScoring(
-        novelty_score=float(record['novelty_score'] or 0.5),
-        importance_score=float(record['importance_score'] or 0.5),
-        utility_score=float(record['utility_score'] or 0.5),
-        confidence_score=float(record['confidence_score'] or 0.5)
+        novelty_score=float(record["novelty_score"] or 0.5),
+        importance_score=float(record["importance_score"] or 0.5),
+        utility_score=float(record["utility_score"] or 0.5),
+        confidence_score=float(record["confidence_score"] or 0.5),
     )
 
     telemetry = None
-    if record.get('generation_model'):
+    if record.get("generation_model"):
         telemetry = ReflectionTelemetry(
-            generation_model=record['generation_model'],
-            generation_duration_ms=record.get('generation_duration_ms'),
-            generation_tokens_used=record.get('generation_tokens_used'),
-            generation_cost_usd=float(record['generation_cost_usd']) if record.get('generation_cost_usd') else None
+            generation_model=record["generation_model"],
+            generation_duration_ms=record.get("generation_duration_ms"),
+            generation_tokens_used=record.get("generation_tokens_used"),
+            generation_cost_usd=(
+                float(record["generation_cost_usd"])
+                if record.get("generation_cost_usd")
+                else None
+            ),
         )
 
     return ReflectionUnit(
-        id=record['id'],
-        tenant_id=record['tenant_id'],
-        project_id=record['project_id'],
-        content=record['content'],
-        summary=record.get('summary'),
-        type=ReflectionType(record['type']),
-        priority=record['priority'],
-        score=float(record['score']),
+        id=record["id"],
+        tenant_id=record["tenant_id"],
+        project_id=record["project_id"],
+        content=record["content"],
+        summary=record.get("summary"),
+        type=ReflectionType(record["type"]),
+        priority=record["priority"],
+        score=float(record["score"]),
         scoring=scoring,
-        parent_reflection_id=record.get('parent_reflection_id'),
-        depth_level=record['depth_level'],
-        source_memory_ids=record.get('source_memory_ids', []),
-        source_reflection_ids=record.get('source_reflection_ids', []),
-        embedding=record.get('embedding'),
-        cluster_id=record.get('cluster_id'),
-        cluster_centroid=record.get('cluster_centroid'),
-        cache_key=record.get('cache_key'),
-        reuse_count=record.get('reuse_count', 0),
+        parent_reflection_id=record.get("parent_reflection_id"),
+        depth_level=record["depth_level"],
+        source_memory_ids=record.get("source_memory_ids", []),
+        source_reflection_ids=record.get("source_reflection_ids", []),
+        embedding=record.get("embedding"),
+        cluster_id=record.get("cluster_id"),
+        cluster_centroid=record.get("cluster_centroid"),
+        cache_key=record.get("cache_key"),
+        reuse_count=record.get("reuse_count", 0),
         telemetry=telemetry,
-        tags=record.get('tags', []),
-        metadata=record.get('metadata', {}),
-        created_at=record['created_at'],
-        updated_at=record['updated_at'],
-        last_accessed_at=record['last_accessed_at'],
-        accessed_count=record.get('accessed_count', 0)
+        tags=record.get("tags", []),
+        metadata=record.get("metadata", {}),
+        created_at=record["created_at"],
+        updated_at=record["updated_at"],
+        last_accessed_at=record["last_accessed_at"],
+        accessed_count=record.get("accessed_count", 0),
     )
 
 
 def _record_to_reflection_relationship(record) -> ReflectionRelationship:
     """Convert database record to ReflectionRelationship"""
     return ReflectionRelationship(
-        id=record['id'],
-        tenant_id=record['tenant_id'],
-        project_id=record['project_id'],
-        source_reflection_id=record['source_reflection_id'],
-        target_reflection_id=record['target_reflection_id'],
-        relation_type=ReflectionRelationType(record['relation_type']),
-        strength=float(record['strength']),
-        confidence=float(record['confidence']),
-        supporting_evidence=record.get('supporting_evidence', []),
-        metadata=record.get('metadata', {}),
-        created_at=record['created_at'],
-        updated_at=record['updated_at']
+        id=record["id"],
+        tenant_id=record["tenant_id"],
+        project_id=record["project_id"],
+        source_reflection_id=record["source_reflection_id"],
+        target_reflection_id=record["target_reflection_id"],
+        relation_type=ReflectionRelationType(record["relation_type"]),
+        strength=float(record["strength"]),
+        confidence=float(record["confidence"]),
+        supporting_evidence=record.get("supporting_evidence", []),
+        metadata=record.get("metadata", {}),
+        created_at=record["created_at"],
+        updated_at=record["updated_at"],
     )

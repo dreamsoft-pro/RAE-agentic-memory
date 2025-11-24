@@ -1,11 +1,16 @@
-from typing import Protocol, List, Any, Dict
+from typing import Any, Dict, List, Protocol
+
 from ...models import MemoryRecord, ScoredMemoryRecord
+
 
 class MemoryVectorStore(Protocol):
     """
     A protocol defining the interface for a vector database store.
     """
-    async def upsert(self, memories: List[MemoryRecord], embeddings: List[List[float]]) -> None:
+
+    async def upsert(
+        self, memories: List[MemoryRecord], embeddings: List[List[float]]
+    ) -> None:
         """
         Upserts a list of memories into the vector store.
 
@@ -15,7 +20,9 @@ class MemoryVectorStore(Protocol):
         """
         ...
 
-    async def query(self, query_embedding: List[float], top_k: int, filters: Dict[str, Any]) -> List[ScoredMemoryRecord]:
+    async def query(
+        self, query_embedding: List[float], top_k: int, filters: Dict[str, Any]
+    ) -> List[ScoredMemoryRecord]:
         """
         Queries the vector store for similar memories.
 

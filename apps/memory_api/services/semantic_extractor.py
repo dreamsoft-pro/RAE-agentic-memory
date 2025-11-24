@@ -9,25 +9,24 @@ This service extracts semantic knowledge from memories:
 - Automatic embedding generation
 """
 
-import asyncpg
-from typing import List, Dict, Any, Optional
-from uuid import UUID
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+from uuid import UUID
+
+import asyncpg
 import structlog
 
+from apps.memory_api.config import settings
+from apps.memory_api.models.semantic_models import (ExtractedRelation,
+                                                    ExtractedTerm,
+                                                    ExtractedTopic,
+                                                    SemanticDefinition,
+                                                    SemanticExtractionResult,
+                                                    SemanticNode,
+                                                    SemanticNodeType,
+                                                    SemanticRelationType)
 from apps.memory_api.services.llm import get_llm_provider
 from apps.memory_api.services.ml_service_client import MLServiceClient
-from apps.memory_api.models.semantic_models import (
-    SemanticNode,
-    SemanticNodeType,
-    SemanticRelationType,
-    SemanticDefinition,
-    SemanticExtractionResult,
-    ExtractedTopic,
-    ExtractedTerm,
-    ExtractedRelation
-)
-from apps.memory_api.config import settings
 
 logger = structlog.get_logger(__name__)
 
@@ -100,6 +99,7 @@ Return ONLY the canonical form, nothing else.
 # Semantic Extractor
 # ============================================================================
 
+
 class SemanticExtractor:
     """
     Enterprise semantic knowledge extraction pipeline.
@@ -123,7 +123,7 @@ class SemanticExtractor:
         project_id: str,
         memory_ids: Optional[List[UUID]] = None,
         max_memories: int = 100,
-        min_confidence: float = 0.5
+        min_confidence: float = 0.5,
     ) -> Dict[str, Any]:
         """
         Extract semantic nodes from memories.
@@ -142,7 +142,7 @@ class SemanticExtractor:
             "semantic_extraction_started",
             tenant_id=tenant_id,
             project_id=project_id,
-            max_memories=max_memories
+            max_memories=max_memories,
         )
 
         # Fetch memories
@@ -155,7 +155,7 @@ class SemanticExtractor:
             return {
                 "nodes_extracted": 0,
                 "relationships_created": 0,
-                "memories_processed": 0
+                "memories_processed": 0,
             }
 
         logger.info("memories_fetched", count=len(memories))
@@ -177,13 +177,15 @@ class SemanticExtractor:
                         normalized_topic=topic.normalized_topic,
                         node_type=SemanticNodeType.TOPIC,
                         confidence=topic.confidence,
-                        source_memory_ids=[UUID(m['id']) for m in memories],
+                        source_memory_ids=[UUID(m["id"]) for m in memories],
                         domain=extraction.domain,
-                        categories=extraction.categories
+                        categories=extraction.categories,
                     )
                     nodes_created += 1
                 except Exception as e:
-                    logger.error("topic_creation_failed", topic=topic.topic, error=str(e))
+                    logger.error(
+                        "topic_creation_failed", topic=topic.topic, error=str(e)
+                    )
 
         # Process terms
         for term in extraction.terms:
@@ -196,14 +198,16 @@ class SemanticExtractor:
                         normalized_topic=term.canonical,
                         node_type=SemanticNodeType.TERM,
                         confidence=term.confidence,
-                        source_memory_ids=[UUID(m['id']) for m in memories],
+                        source_memory_ids=[UUID(m["id"]) for m in memories],
                         domain=extraction.domain,
                         categories=extraction.categories,
-                        definition=term.definition
+                        definition=term.definition,
                     )
                     nodes_created += 1
                 except Exception as e:
-                    logger.error("term_creation_failed", term=term.original, error=str(e))
+                    logger.error(
+                        "term_creation_failed", term=term.original, error=str(e)
+                    )
 
         # Process relationships
         for relation in extraction.relations:
@@ -215,7 +219,7 @@ class SemanticExtractor:
                         source=relation.source,
                         relation_type=relation.relation,
                         target=relation.target,
-                        confidence=relation.confidence
+                        confidence=relation.confidence,
                     )
                     if created:
                         relationships_created += 1
@@ -230,7 +234,7 @@ class SemanticExtractor:
             "terms_found": len(extraction.terms),
             "relations_found": len(extraction.relations),
             "domain": extraction.domain,
-            "categories": extraction.categories
+            "categories": extraction.categories,
         }
 
         logger.info("semantic_extraction_complete", statistics=statistics)
@@ -253,7 +257,7 @@ class SemanticExtractor:
             result = await self.llm_provider.generate(
                 system="You are a terminology standardization expert.",
                 prompt=prompt,
-                model=settings.RAE_LLM_MODEL_DEFAULT
+                model=settings.RAE_LLM_MODEL_DEFAULT,
             )
 
             canonical = result.text.strip()
@@ -271,7 +275,7 @@ class SemanticExtractor:
         tenant_id: str,
         project_id: str,
         memory_ids: Optional[List[UUID]],
-        max_memories: int
+        max_memories: int,
     ) -> List[Dict[str, Any]]:
         """Fetch memories for extraction"""
         if memory_ids:
@@ -283,7 +287,10 @@ class SemanticExtractor:
                 WHERE tenant_id = $1 AND project = $2 AND id = ANY($3)
                 LIMIT $4
                 """,
-                tenant_id, project_id, memory_ids, max_memories
+                tenant_id,
+                project_id,
+                memory_ids,
+                max_memories,
             )
         else:
             # Fetch recent memories
@@ -295,14 +302,15 @@ class SemanticExtractor:
                 ORDER BY created_at DESC
                 LIMIT $3
                 """,
-                tenant_id, project_id, max_memories
+                tenant_id,
+                project_id,
+                max_memories,
             )
 
         return [dict(r) for r in records]
 
     async def _extract_semantic_knowledge(
-        self,
-        memories: List[Dict[str, Any]]
+        self, memories: List[Dict[str, Any]]
     ) -> SemanticExtractionResult:
         """
         Extract semantic knowledge using LLM.
@@ -329,14 +337,14 @@ class SemanticExtractor:
                 system="You are a semantic knowledge extraction expert.",
                 prompt=prompt,
                 model=settings.RAE_LLM_MODEL_DEFAULT,
-                response_model=SemanticExtractionResult
+                response_model=SemanticExtractionResult,
             )
 
             logger.info(
                 "semantic_extraction_llm_complete",
                 topics=len(result.topics),
                 terms=len(result.terms),
-                relations=len(result.relations)
+                relations=len(result.relations),
             )
 
             return result
@@ -357,7 +365,7 @@ class SemanticExtractor:
         source_memory_ids: List[UUID],
         domain: Optional[str] = None,
         categories: List[str] = None,
-        definition: Optional[str] = None
+        definition: Optional[str] = None,
     ) -> Optional[UUID]:
         """Create or update a semantic node"""
         categories = categories or []
@@ -372,18 +380,22 @@ class SemanticExtractor:
             FROM semantic_nodes
             WHERE tenant_id = $1 AND project_id = $2 AND node_id = $3
             """,
-            tenant_id, project_id, node_id
+            tenant_id,
+            project_id,
+            node_id,
         )
 
         if existing:
             # Update existing node (reinforce it)
-            updated_memory_ids = list(set(existing['source_memory_ids'] + source_memory_ids))
+            updated_memory_ids = list(
+                set(existing["source_memory_ids"] + source_memory_ids)
+            )
 
             await self.pool.execute(
                 """
                 SELECT reinforce_semantic_node($1)
                 """,
-                existing['id']
+                existing["id"],
             )
 
             # Update source memory IDs
@@ -394,11 +406,11 @@ class SemanticExtractor:
                 WHERE id = $2
                 """,
                 updated_memory_ids,
-                existing['id']
+                existing["id"],
             )
 
             logger.info("semantic_node_reinforced", node_id=node_id)
-            return existing['id']
+            return existing["id"]
 
         else:
             # Create new node
@@ -414,13 +426,22 @@ class SemanticExtractor:
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                 RETURNING id
                 """,
-                tenant_id, project_id, node_id, topic, node_type.value,
-                normalized_topic, definition, domain, categories,
-                embedding, confidence, source_memory_ids
+                tenant_id,
+                project_id,
+                node_id,
+                topic,
+                node_type.value,
+                normalized_topic,
+                definition,
+                domain,
+                categories,
+                embedding,
+                confidence,
+                source_memory_ids,
             )
 
             logger.info("semantic_node_created", node_id=node_id)
-            return record['id']
+            return record["id"]
 
     async def _create_semantic_relationship(
         self,
@@ -429,7 +450,7 @@ class SemanticExtractor:
         source: str,
         relation_type: str,
         target: str,
-        confidence: float
+        confidence: float,
     ) -> bool:
         """Create a semantic relationship between nodes"""
         # Normalize node IDs
@@ -444,19 +465,23 @@ class SemanticExtractor:
         # Get node UUIDs
         source_uuid = await self.pool.fetchval(
             "SELECT id FROM semantic_nodes WHERE tenant_id = $1 AND project_id = $2 AND node_id = $3",
-            tenant_id, project_id, source_node_id
+            tenant_id,
+            project_id,
+            source_node_id,
         )
 
         target_uuid = await self.pool.fetchval(
             "SELECT id FROM semantic_nodes WHERE tenant_id = $1 AND project_id = $2 AND node_id = $3",
-            tenant_id, project_id, target_node_id
+            tenant_id,
+            project_id,
+            target_node_id,
         )
 
         if not source_uuid or not target_uuid:
             logger.warning(
                 "relationship_nodes_not_found",
                 source=source_node_id,
-                target=target_node_id
+                target=target_node_id,
             )
             return False
 
@@ -471,16 +496,19 @@ class SemanticExtractor:
                 ) VALUES ($1, $2, $3, $4, $5, $6)
                 ON CONFLICT DO NOTHING
                 """,
-                tenant_id, project_id,
-                source_uuid, target_uuid,
-                relation_type_enum.value, confidence
+                tenant_id,
+                project_id,
+                source_uuid,
+                target_uuid,
+                relation_type_enum.value,
+                confidence,
             )
 
             logger.info(
                 "semantic_relationship_created",
                 source=source,
                 relation=relation_type,
-                target=target
+                target=target,
             )
             return True
 
@@ -509,7 +537,7 @@ class SemanticExtractor:
             "uses": SemanticRelationType.USES,
             "similar_to": SemanticRelationType.SIMILAR_TO,
             "implements": SemanticRelationType.IMPLEMENTS,
-            "derives_from": SemanticRelationType.DERIVES_FROM
+            "derives_from": SemanticRelationType.DERIVES_FROM,
         }
 
         return mapping.get(relation_str.lower())

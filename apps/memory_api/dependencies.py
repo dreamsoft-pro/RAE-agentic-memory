@@ -12,14 +12,15 @@ Enterprise Architecture Benefits:
 - No hidden dependencies
 """
 
-from fastapi import Security, HTTPException, Request
-from fastapi.security import APIKeyHeader
-import asyncpg
 from typing import AsyncGenerator
 
+import asyncpg
+from fastapi import HTTPException, Request, Security
+from fastapi.security import APIKeyHeader
+
 from .config import settings
-from .repositories.memory_repository import MemoryRepository
 from .repositories.graph_repository import GraphRepository
+from .repositories.memory_repository import MemoryRepository
 from .services.graph_extraction import GraphExtractionService
 from .services.hybrid_search import HybridSearchService
 
@@ -30,6 +31,7 @@ api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 # Authentication Dependencies
 # ==========================================
 
+
 async def get_api_key(api_key: str = Security(api_key_header)):
     """
     Dependency to validate the API key provided in the X-API-Key header.
@@ -38,15 +40,14 @@ async def get_api_key(api_key: str = Security(api_key_header)):
     if settings.API_KEY:  # Only enforce if an API_KEY is configured
         if api_key and api_key == settings.API_KEY:
             return api_key
-        raise HTTPException(
-            status_code=403, detail="Could not validate credentials"
-        )
+        raise HTTPException(status_code=403, detail="Could not validate credentials")
     return None  # Authentication disabled
 
 
 # ==========================================
 # Database Connection Pool
 # ==========================================
+
 
 def get_db_pool(request: Request) -> asyncpg.Pool:
     """
@@ -65,6 +66,7 @@ def get_db_pool(request: Request) -> asyncpg.Pool:
 # Repository Layer Dependencies
 # ==========================================
 
+
 def get_memory_repository(pool: asyncpg.Pool = None) -> MemoryRepository:
     """
     Factory for MemoryRepository.
@@ -76,10 +78,7 @@ def get_memory_repository(pool: asyncpg.Pool = None) -> MemoryRepository:
         Configured MemoryRepository instance
     """
     if pool is None:
-        raise HTTPException(
-            status_code=500,
-            detail="Database pool not available"
-        )
+        raise HTTPException(status_code=500, detail="Database pool not available")
     return MemoryRepository(pool)
 
 
@@ -94,10 +93,7 @@ def get_graph_repository(pool: asyncpg.Pool = None) -> GraphRepository:
         Configured GraphRepository instance
     """
     if pool is None:
-        raise HTTPException(
-            status_code=500,
-            detail="Database pool not available"
-        )
+        raise HTTPException(status_code=500, detail="Database pool not available")
     return GraphRepository(pool)
 
 
@@ -105,9 +101,8 @@ def get_graph_repository(pool: asyncpg.Pool = None) -> GraphRepository:
 # Service Layer Dependencies
 # ==========================================
 
-def get_graph_extraction_service(
-    request: Request
-) -> GraphExtractionService:
+
+def get_graph_extraction_service(request: Request) -> GraphExtractionService:
     """
     Factory for GraphExtractionService with full dependency injection.
 
@@ -127,15 +122,10 @@ def get_graph_extraction_service(
     graph_repo = get_graph_repository(pool)
 
     # Inject repositories into service
-    return GraphExtractionService(
-        memory_repo=memory_repo,
-        graph_repo=graph_repo
-    )
+    return GraphExtractionService(memory_repo=memory_repo, graph_repo=graph_repo)
 
 
-def get_hybrid_search_service(
-    request: Request
-) -> HybridSearchService:
+def get_hybrid_search_service(request: Request) -> HybridSearchService:
     """
     Factory for HybridSearchService with full dependency injection.
 
@@ -155,6 +145,5 @@ def get_hybrid_search_service(
 
     # Inject dependencies into service
     return HybridSearchService(
-        graph_repo=graph_repo,
-        pool=pool  # Still needed for vector store
+        graph_repo=graph_repo, pool=pool  # Still needed for vector store
     )

@@ -11,15 +11,16 @@ This module provides an enhanced API client for the RAE Memory API with:
 - Rate limiting
 """
 
-import httpx
 import asyncio
-import structlog
-from typing import Optional, Dict, Any, List, Callable
-from datetime import datetime, timedelta, timezone
-from enum import Enum
 import hashlib
 import json
+from datetime import datetime, timedelta, timezone
+from enum import Enum
 from functools import wraps
+from typing import Any, Callable, Dict, List, Optional
+
+import httpx
+import structlog
 
 logger = structlog.get_logger(__name__)
 
@@ -28,8 +29,10 @@ logger = structlog.get_logger(__name__)
 # Enums and Constants
 # ============================================================================
 
+
 class CircuitState(str, Enum):
     """Circuit breaker states"""
+
     CLOSED = "closed"  # Normal operation
     OPEN = "open"  # Failing, reject requests
     HALF_OPEN = "half_open"  # Testing if recovered
@@ -37,6 +40,7 @@ class CircuitState(str, Enum):
 
 class ErrorCategory(str, Enum):
     """Error categories for classification"""
+
     NETWORK = "network"
     TIMEOUT = "timeout"
     SERVER_ERROR = "server_error"
@@ -66,6 +70,7 @@ DEFAULT_CACHE_TTL_SECONDS = 300  # 5 minutes
 # Error Classification
 # ============================================================================
 
+
 class RAEClientError(Exception):
     """Base exception for RAE client errors."""
 
@@ -74,7 +79,7 @@ class RAEClientError(Exception):
         message: str,
         category: ErrorCategory = ErrorCategory.UNKNOWN,
         original_error: Optional[Exception] = None,
-        status_code: Optional[int] = None
+        status_code: Optional[int] = None,
     ):
         super().__init__(message)
         self.message = message
@@ -83,7 +88,9 @@ class RAEClientError(Exception):
         self.status_code = status_code
 
 
-def classify_error(error: Exception, status_code: Optional[int] = None) -> ErrorCategory:
+def classify_error(
+    error: Exception, status_code: Optional[int] = None
+) -> ErrorCategory:
     """
     Classify error into category.
 
@@ -117,6 +124,7 @@ def classify_error(error: Exception, status_code: Optional[int] = None) -> Error
 # Circuit Breaker
 # ============================================================================
 
+
 class CircuitBreaker:
     """
     Circuit breaker implementation.
@@ -129,7 +137,7 @@ class CircuitBreaker:
         failure_threshold: int = DEFAULT_FAILURE_THRESHOLD,
         success_threshold: int = DEFAULT_SUCCESS_THRESHOLD,
         timeout_seconds: int = DEFAULT_TIMEOUT_SECONDS,
-        half_open_timeout_seconds: int = DEFAULT_HALF_OPEN_TIMEOUT_SECONDS
+        half_open_timeout_seconds: int = DEFAULT_HALF_OPEN_TIMEOUT_SECONDS,
     ):
         """
         Initialize circuit breaker.
@@ -153,7 +161,7 @@ class CircuitBreaker:
         logger.info(
             "circuit_breaker_initialized",
             failure_threshold=failure_threshold,
-            success_threshold=success_threshold
+            success_threshold=success_threshold,
         )
 
     async def call(self, func: Callable, *args, **kwargs):
@@ -175,7 +183,9 @@ class CircuitBreaker:
         if self.state == CircuitState.OPEN:
             # Check if timeout expired
             if self.last_failure_time:
-                time_since_failure = (datetime.now(timezone.utc) - self.last_failure_time).total_seconds()
+                time_since_failure = (
+                    datetime.now(timezone.utc) - self.last_failure_time
+                ).total_seconds()
                 if time_since_failure >= self.timeout_seconds:
                     logger.info("circuit_breaker_half_open")
                     self.state = CircuitState.HALF_OPEN
@@ -183,7 +193,7 @@ class CircuitBreaker:
                 else:
                     raise RAEClientError(
                         f"Circuit breaker is OPEN (failing fast). Retry in {self.timeout_seconds - time_since_failure:.1f}s",
-                        category=ErrorCategory.SERVER_ERROR
+                        category=ErrorCategory.SERVER_ERROR,
                     )
 
         try:
@@ -191,8 +201,7 @@ class CircuitBreaker:
             if self.state == CircuitState.HALF_OPEN:
                 # Apply stricter timeout in half-open state
                 result = await asyncio.wait_for(
-                    func(*args, **kwargs),
-                    timeout=self.half_open_timeout_seconds
+                    func(*args, **kwargs), timeout=self.half_open_timeout_seconds
                 )
             else:
                 result = await func(*args, **kwargs)
@@ -212,7 +221,7 @@ class CircuitBreaker:
             logger.info(
                 "circuit_breaker_success_in_half_open",
                 success_count=self.success_count,
-                threshold=self.success_threshold
+                threshold=self.success_threshold,
             )
 
             if self.success_count >= self.success_threshold:
@@ -240,7 +249,7 @@ class CircuitBreaker:
             logger.warning(
                 "circuit_breaker_failure",
                 failure_count=self.failure_count,
-                threshold=self.failure_threshold
+                threshold=self.failure_threshold,
             )
 
             if self.failure_count >= self.failure_threshold:
@@ -253,13 +262,16 @@ class CircuitBreaker:
             "state": self.state.value,
             "failure_count": self.failure_count,
             "success_count": self.success_count,
-            "last_failure_time": self.last_failure_time.isoformat() if self.last_failure_time else None
+            "last_failure_time": (
+                self.last_failure_time.isoformat() if self.last_failure_time else None
+            ),
         }
 
 
 # ============================================================================
 # Response Cache
 # ============================================================================
+
 
 class ResponseCache:
     """
@@ -278,7 +290,9 @@ class ResponseCache:
 
         logger.info("response_cache_initialized", ttl_seconds=default_ttl_seconds)
 
-    def _generate_key(self, method: str, url: str, params: Optional[Dict] = None) -> str:
+    def _generate_key(
+        self, method: str, url: str, params: Optional[Dict] = None
+    ) -> str:
         """Generate cache key from request details."""
         key_parts = [method.upper(), url]
         if params:
@@ -287,7 +301,9 @@ class ResponseCache:
         key_string = "|".join(key_parts)
         return hashlib.md5(key_string.encode()).hexdigest()
 
-    def get(self, method: str, url: str, params: Optional[Dict] = None) -> Optional[Any]:
+    def get(
+        self, method: str, url: str, params: Optional[Dict] = None
+    ) -> Optional[Any]:
         """
         Get cached response.
 
@@ -322,7 +338,7 @@ class ResponseCache:
         url: str,
         response: Any,
         params: Optional[Dict] = None,
-        ttl_seconds: Optional[int] = None
+        ttl_seconds: Optional[int] = None,
     ):
         """
         Cache response.
@@ -358,8 +374,7 @@ class ResponseCache:
         """Remove expired entries."""
         now = datetime.now(timezone.utc)
         expired_keys = [
-            key for key, (_, expires_at) in self._cache.items()
-            if now >= expires_at
+            key for key, (_, expires_at) in self._cache.items() if now >= expires_at
         ]
 
         for key in expired_keys:
@@ -372,6 +387,7 @@ class ResponseCache:
 # ============================================================================
 # RAE API Client
 # ============================================================================
+
 
 class RAEClient:
     """
@@ -406,7 +422,7 @@ class RAEClient:
         # Connection configuration
         timeout: float = 30.0,
         max_connections: int = 100,
-        max_keepalive_connections: int = 20
+        max_keepalive_connections: int = 20,
     ):
         """
         Initialize RAE client.
@@ -429,7 +445,7 @@ class RAEClient:
             max_connections: Maximum number of connections
             max_keepalive_connections: Maximum keepalive connections
         """
-        self.base_url = base_url.rstrip('/')
+        self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.tenant_id = tenant_id
         self.project_id = project_id
@@ -444,8 +460,7 @@ class RAEClient:
         self.enable_circuit_breaker = enable_circuit_breaker
         if enable_circuit_breaker:
             self.circuit_breaker = CircuitBreaker(
-                failure_threshold=failure_threshold,
-                success_threshold=success_threshold
+                failure_threshold=failure_threshold, success_threshold=success_threshold
             )
         else:
             self.circuit_breaker = None
@@ -460,14 +475,14 @@ class RAEClient:
         # Initialize HTTP client with connection pooling
         limits = httpx.Limits(
             max_connections=max_connections,
-            max_keepalive_connections=max_keepalive_connections
+            max_keepalive_connections=max_keepalive_connections,
         )
 
         self.client = httpx.AsyncClient(
             base_url=self.base_url,
             timeout=timeout,
             limits=limits,
-            follow_redirects=True
+            follow_redirects=True,
         )
 
         # Statistics
@@ -477,7 +492,7 @@ class RAEClient:
             "failed_requests": 0,
             "retried_requests": 0,
             "cache_hits": 0,
-            "cache_misses": 0
+            "cache_misses": 0,
         }
 
         logger.info(
@@ -485,7 +500,7 @@ class RAEClient:
             base_url=base_url,
             max_retries=max_retries,
             circuit_breaker_enabled=enable_circuit_breaker,
-            cache_enabled=enable_cache
+            cache_enabled=enable_cache,
         )
 
     async def close(self):
@@ -514,7 +529,7 @@ class RAEClient:
         headers: Optional[Dict] = None,
         use_cache: bool = True,
         cache_ttl: Optional[int] = None,
-        retry_on_errors: Optional[List[ErrorCategory]] = None
+        retry_on_errors: Optional[List[ErrorCategory]] = None,
     ) -> Dict[str, Any]:
         """
         Make HTTP request with retry and circuit breaker.
@@ -538,7 +553,7 @@ class RAEClient:
         self.stats["total_requests"] += 1
 
         # Build full URL
-        url = path if path.startswith('http') else f"{self.base_url}{path}"
+        url = path if path.startswith("http") else f"{self.base_url}{path}"
 
         # Check cache for GET requests
         if method.upper() == "GET" and use_cache and self.cache:
@@ -556,7 +571,7 @@ class RAEClient:
             retry_on_errors = [
                 ErrorCategory.NETWORK,
                 ErrorCategory.TIMEOUT,
-                ErrorCategory.SERVER_ERROR
+                ErrorCategory.SERVER_ERROR,
             ]
 
         # Execute with retry and circuit breaker
@@ -564,13 +579,16 @@ class RAEClient:
             if self.circuit_breaker:
                 response = await self.circuit_breaker.call(
                     self._request_with_retry,
-                    method, url, params, json_data, request_headers,
-                    retry_on_errors
+                    method,
+                    url,
+                    params,
+                    json_data,
+                    request_headers,
+                    retry_on_errors,
                 )
             else:
                 response = await self._request_with_retry(
-                    method, url, params, json_data, request_headers,
-                    retry_on_errors
+                    method, url, params, json_data, request_headers, retry_on_errors
                 )
 
             # Cache successful GET responses
@@ -587,7 +605,7 @@ class RAEClient:
             raise RAEClientError(
                 f"Request failed: {str(e)}",
                 category=classify_error(e),
-                original_error=e
+                original_error=e,
             )
 
     async def _request_with_retry(
@@ -597,7 +615,7 @@ class RAEClient:
         params: Optional[Dict],
         json_data: Optional[Dict],
         headers: Dict,
-        retry_on_errors: List[ErrorCategory]
+        retry_on_errors: List[ErrorCategory],
     ) -> Dict[str, Any]:
         """Execute request with exponential backoff retry."""
         last_error = None
@@ -611,7 +629,7 @@ class RAEClient:
                     url=url,
                     params=params,
                     json=json_data,
-                    headers=headers
+                    headers=headers,
                 )
 
                 # Check response status
@@ -638,7 +656,7 @@ class RAEClient:
                     max_attempts=self.max_retries + 1,
                     error=str(e),
                     category=error_category.value,
-                    status_code=status_code
+                    status_code=status_code,
                 )
 
                 # Check if should retry
@@ -648,16 +666,13 @@ class RAEClient:
 
                     # Increase backoff
                     backoff_ms = min(
-                        int(backoff_ms * self.backoff_multiplier),
-                        self.max_backoff_ms
+                        int(backoff_ms * self.backoff_multiplier), self.max_backoff_ms
                     )
 
                     self.stats["retried_requests"] += 1
 
                     logger.info(
-                        "retrying_request",
-                        attempt=attempt + 1,
-                        backoff_ms=backoff_ms
+                        "retrying_request", attempt=attempt + 1, backoff_ms=backoff_ms
                     )
                 else:
                     # Don't retry
@@ -672,20 +687,20 @@ class RAEClient:
                 f"Request failed with status {status_code}: {last_error.response.text}",
                 category=error_category,
                 original_error=last_error,
-                status_code=status_code
+                status_code=status_code,
             )
         else:
             raise RAEClientError(
                 f"Request failed after {self.max_retries + 1} attempts: {str(last_error)}",
                 category=classify_error(last_error),
-                original_error=last_error
+                original_error=last_error,
             )
 
     def _prepare_headers(self, additional_headers: Optional[Dict] = None) -> Dict:
         """Prepare request headers."""
         headers = {
             "Content-Type": "application/json",
-            "User-Agent": "RAE-Python-Client/1.0"
+            "User-Agent": "RAE-Python-Client/1.0",
         }
 
         if self.api_key:
@@ -706,17 +721,27 @@ class RAEClient:
     # Convenience Methods
     # ========================================================================
 
-    async def get(self, path: str, params: Optional[Dict] = None, **kwargs) -> Dict[str, Any]:
+    async def get(
+        self, path: str, params: Optional[Dict] = None, **kwargs
+    ) -> Dict[str, Any]:
         """Make GET request."""
         return await self.request("GET", path, params=params, **kwargs)
 
-    async def post(self, path: str, json_data: Optional[Dict] = None, **kwargs) -> Dict[str, Any]:
+    async def post(
+        self, path: str, json_data: Optional[Dict] = None, **kwargs
+    ) -> Dict[str, Any]:
         """Make POST request."""
-        return await self.request("POST", path, json_data=json_data, use_cache=False, **kwargs)
+        return await self.request(
+            "POST", path, json_data=json_data, use_cache=False, **kwargs
+        )
 
-    async def put(self, path: str, json_data: Optional[Dict] = None, **kwargs) -> Dict[str, Any]:
+    async def put(
+        self, path: str, json_data: Optional[Dict] = None, **kwargs
+    ) -> Dict[str, Any]:
         """Make PUT request."""
-        return await self.request("PUT", path, json_data=json_data, use_cache=False, **kwargs)
+        return await self.request(
+            "PUT", path, json_data=json_data, use_cache=False, **kwargs
+        )
 
     async def delete(self, path: str, **kwargs) -> Dict[str, Any]:
         """Make DELETE request."""
@@ -736,12 +761,16 @@ class RAEClient:
 
         # Calculate derived metrics
         if stats["total_requests"] > 0:
-            stats["success_rate"] = stats["successful_requests"] / stats["total_requests"]
+            stats["success_rate"] = (
+                stats["successful_requests"] / stats["total_requests"]
+            )
             stats["failure_rate"] = stats["failed_requests"] / stats["total_requests"]
             stats["retry_rate"] = stats["retried_requests"] / stats["total_requests"]
 
         if (stats["cache_hits"] + stats["cache_misses"]) > 0:
-            stats["cache_hit_rate"] = stats["cache_hits"] / (stats["cache_hits"] + stats["cache_misses"])
+            stats["cache_hit_rate"] = stats["cache_hits"] / (
+                stats["cache_hits"] + stats["cache_misses"]
+            )
 
         return stats
 
@@ -753,7 +782,7 @@ class RAEClient:
             "failed_requests": 0,
             "retried_requests": 0,
             "cache_hits": 0,
-            "cache_misses": 0
+            "cache_misses": 0,
         }
         logger.info("stats_reset")
 

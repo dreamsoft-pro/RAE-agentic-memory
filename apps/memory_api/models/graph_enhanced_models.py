@@ -10,35 +10,39 @@ This module defines comprehensive Pydantic models for the enhanced knowledge gra
 - Path finding results
 """
 
-from typing import List, Optional, Dict, Any, Tuple
-from pydantic import BaseModel, Field
-from enum import Enum
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
 
+from pydantic import BaseModel, Field
 
 # ============================================================================
 # Enums
 # ============================================================================
 
+
 class TraversalAlgorithm(str, Enum):
     """Graph traversal algorithms"""
-    BFS = "BFS"              # Breadth-First Search
-    DFS = "DFS"              # Depth-First Search
-    DIJKSTRA = "DIJKSTRA"    # Dijkstra's shortest path
-    A_STAR = "A_STAR"        # A* search algorithm
+
+    BFS = "BFS"  # Breadth-First Search
+    DFS = "DFS"  # Depth-First Search
+    DIJKSTRA = "DIJKSTRA"  # Dijkstra's shortest path
+    A_STAR = "A_STAR"  # A* search algorithm
 
 
 class EdgeDirection(str, Enum):
     """Edge directionality"""
-    FORWARD = "forward"      # Follow edges forward (source → target)
-    BACKWARD = "backward"    # Follow edges backward (target → source)
-    BOTH = "both"            # Follow edges in both directions
+
+    FORWARD = "forward"  # Follow edges forward (source → target)
+    BACKWARD = "backward"  # Follow edges backward (target → source)
+    BOTH = "both"  # Follow edges in both directions
 
 
 # ============================================================================
 # Core Enhanced Models
 # ============================================================================
+
 
 class EnhancedGraphNode(BaseModel):
     """
@@ -46,6 +50,7 @@ class EnhancedGraphNode(BaseModel):
 
     Extends basic node with connectivity metrics and temporal info.
     """
+
     id: UUID
     tenant_id: str
     project_id: str
@@ -55,7 +60,9 @@ class EnhancedGraphNode(BaseModel):
     label: str = Field(..., max_length=255, description="Human-readable label")
 
     # Properties
-    properties: Dict[str, Any] = Field(default_factory=dict, description="Flexible node properties")
+    properties: Dict[str, Any] = Field(
+        default_factory=dict, description="Flexible node properties"
+    )
 
     # Connectivity metrics (calculated on demand)
     in_degree: Optional[int] = Field(None, description="Number of incoming edges")
@@ -79,6 +86,7 @@ class EnhancedGraphEdge(BaseModel):
     - Temporal validity windows
     - Bidirectional edges
     """
+
     id: UUID
     tenant_id: str
     project_id: str
@@ -90,11 +98,15 @@ class EnhancedGraphEdge(BaseModel):
 
     # Weights and confidence
     edge_weight: float = Field(1.0, ge=0.0, le=1.0, description="Edge strength/weight")
-    confidence: float = Field(0.8, ge=0.0, le=1.0, description="Confidence in relationship")
+    confidence: float = Field(
+        0.8, ge=0.0, le=1.0, description="Confidence in relationship"
+    )
 
     # Temporal validity
     valid_from: datetime = Field(..., description="Start of validity period")
-    valid_to: Optional[datetime] = Field(None, description="End of validity (NULL = ongoing)")
+    valid_to: Optional[datetime] = Field(
+        None, description="End of validity (NULL = ongoing)"
+    )
     is_active: bool = Field(True, description="Whether edge is currently active")
 
     # Properties
@@ -116,14 +128,21 @@ class GraphPath(BaseModel):
 
     Represents a sequence of nodes connected by edges.
     """
+
     nodes: List[UUID] = Field(..., description="Ordered list of node IDs in path")
-    node_labels: List[str] = Field(default_factory=list, description="Labels for readability")
-    edges: List[UUID] = Field(default_factory=list, description="Ordered list of edge IDs")
+    node_labels: List[str] = Field(
+        default_factory=list, description="Labels for readability"
+    )
+    edges: List[UUID] = Field(
+        default_factory=list, description="Ordered list of edge IDs"
+    )
 
     # Path metrics
     length: int = Field(..., description="Number of edges in path")
     total_weight: float = Field(0.0, description="Sum of edge weights")
-    avg_confidence: float = Field(0.0, ge=0.0, le=1.0, description="Average edge confidence")
+    avg_confidence: float = Field(
+        0.0, ge=0.0, le=1.0, description="Average edge confidence"
+    )
 
     # Metadata
     algorithm_used: Optional[TraversalAlgorithm] = None
@@ -136,8 +155,11 @@ class CycleDetectionResult(BaseModel):
 
     Indicates whether a cycle exists and provides the cycle path.
     """
+
     has_cycle: bool = Field(..., description="True if cycle detected")
-    cycle_path: List[UUID] = Field(default_factory=list, description="Node IDs forming the cycle")
+    cycle_path: List[UUID] = Field(
+        default_factory=list, description="Node IDs forming the cycle"
+    )
     cycle_length: int = Field(0, description="Number of nodes in cycle")
 
     # Context
@@ -153,6 +175,7 @@ class GraphSnapshot(BaseModel):
     Captures complete graph topology at a point in time for versioning,
     rollback, and historical analysis.
     """
+
     id: UUID
     tenant_id: str
     project_id: str
@@ -191,6 +214,7 @@ class GraphTraversal(BaseModel):
 
     Logs traversal operations for analytics and debugging.
     """
+
     id: UUID
     tenant_id: str
     project_id: str
@@ -231,22 +255,29 @@ class NodeDegreeMetrics(BaseModel):
 
     Provides in-degree, out-degree, and total connectivity.
     """
+
     node_id: UUID
     in_degree: int = Field(0, ge=0, description="Number of incoming edges")
     out_degree: int = Field(0, ge=0, description="Number of outgoing edges")
     total_degree: int = Field(0, ge=0, description="Total connectivity")
 
     # Weighted metrics
-    weighted_in_degree: Optional[float] = Field(None, description="Sum of incoming edge weights")
-    weighted_out_degree: Optional[float] = Field(None, description="Sum of outgoing edge weights")
+    weighted_in_degree: Optional[float] = Field(
+        None, description="Sum of incoming edge weights"
+    )
+    weighted_out_degree: Optional[float] = Field(
+        None, description="Sum of outgoing edge weights"
+    )
 
 
 # ============================================================================
 # Request/Response Models
 # ============================================================================
 
+
 class CreateGraphNodeRequest(BaseModel):
     """Request to create a graph node"""
+
     tenant_id: str
     project_id: str
     node_id: str = Field(..., max_length=255)
@@ -256,6 +287,7 @@ class CreateGraphNodeRequest(BaseModel):
 
 class CreateGraphEdgeRequest(BaseModel):
     """Request to create a graph edge"""
+
     tenant_id: str
     project_id: str
     source_node_id: UUID
@@ -276,6 +308,7 @@ class CreateGraphEdgeRequest(BaseModel):
 
 class TraverseGraphRequest(BaseModel):
     """Request for temporal graph traversal"""
+
     tenant_id: str
     project_id: str
     start_node_id: UUID
@@ -285,10 +318,14 @@ class TraverseGraphRequest(BaseModel):
     max_depth: int = Field(3, gt=0, le=10)
 
     # Temporal filter
-    at_timestamp: Optional[datetime] = Field(None, description="Point in time for temporal query")
+    at_timestamp: Optional[datetime] = Field(
+        None, description="Point in time for temporal query"
+    )
 
     # Edge filters
-    relation_filter: Optional[List[str]] = Field(None, description="Filter by relation types")
+    relation_filter: Optional[List[str]] = Field(
+        None, description="Filter by relation types"
+    )
     min_weight: float = Field(0.0, ge=0.0, le=1.0, description="Minimum edge weight")
     min_confidence: float = Field(0.0, ge=0.0, le=1.0, description="Minimum confidence")
 
@@ -298,6 +335,7 @@ class TraverseGraphRequest(BaseModel):
 
 class TraverseGraphResponse(BaseModel):
     """Response from graph traversal"""
+
     nodes: List[EnhancedGraphNode] = Field(default_factory=list)
     edges: List[EnhancedGraphEdge] = Field(default_factory=list)
 
@@ -316,6 +354,7 @@ class TraverseGraphResponse(BaseModel):
 
 class FindPathRequest(BaseModel):
     """Request to find path between two nodes"""
+
     tenant_id: str
     project_id: str
     start_node_id: UUID
@@ -335,6 +374,7 @@ class FindPathRequest(BaseModel):
 
 class FindPathResponse(BaseModel):
     """Response with found path"""
+
     path_found: bool
     path: Optional[GraphPath] = None
 
@@ -349,6 +389,7 @@ class FindPathResponse(BaseModel):
 
 class DetectCycleRequest(BaseModel):
     """Request to detect cycle"""
+
     tenant_id: str
     project_id: str
     source_node_id: UUID
@@ -358,12 +399,14 @@ class DetectCycleRequest(BaseModel):
 
 class DetectCycleResponse(BaseModel):
     """Response from cycle detection"""
+
     result: CycleDetectionResult
     message: str = "Cycle detection completed"
 
 
 class CreateSnapshotRequest(BaseModel):
     """Request to create graph snapshot"""
+
     tenant_id: str
     project_id: str
     snapshot_name: str = Field(..., max_length=255)
@@ -374,6 +417,7 @@ class CreateSnapshotRequest(BaseModel):
 
 class CreateSnapshotResponse(BaseModel):
     """Response from snapshot creation"""
+
     snapshot_id: UUID
     node_count: int
     edge_count: int
@@ -383,12 +427,16 @@ class CreateSnapshotResponse(BaseModel):
 
 class RestoreSnapshotRequest(BaseModel):
     """Request to restore graph from snapshot"""
+
     snapshot_id: UUID
-    clear_existing: bool = Field(False, description="Clear existing graph before restore")
+    clear_existing: bool = Field(
+        False, description="Clear existing graph before restore"
+    )
 
 
 class RestoreSnapshotResponse(BaseModel):
     """Response from snapshot restoration"""
+
     nodes_restored: int
     edges_restored: int
     message: str = "Snapshot restored successfully"
@@ -396,6 +444,7 @@ class RestoreSnapshotResponse(BaseModel):
 
 class GetNodeMetricsRequest(BaseModel):
     """Request to get node metrics"""
+
     tenant_id: str
     project_id: str
     node_id: UUID
@@ -403,6 +452,7 @@ class GetNodeMetricsRequest(BaseModel):
 
 class GetNodeMetricsResponse(BaseModel):
     """Response with node metrics"""
+
     node_id: UUID
     metrics: NodeDegreeMetrics
     connected_nodes: List[UUID] = Field(default_factory=list)
@@ -411,6 +461,7 @@ class GetNodeMetricsResponse(BaseModel):
 
 class FindConnectedNodesRequest(BaseModel):
     """Request to find nodes connected to a given node"""
+
     tenant_id: str
     project_id: str
     node_id: UUID
@@ -419,16 +470,17 @@ class FindConnectedNodesRequest(BaseModel):
 
 class FindConnectedNodesResponse(BaseModel):
     """Response with connected nodes"""
+
     node_id: UUID
     connected_nodes: List[Tuple[UUID, int]] = Field(
-        default_factory=list,
-        description="List of (node_id, distance) tuples"
+        default_factory=list, description="List of (node_id, distance) tuples"
     )
     total_connected: int = Field(0)
 
 
 class GraphStatistics(BaseModel):
     """Aggregated statistics for a knowledge graph"""
+
     tenant_id: str
     project_id: str
 
@@ -455,18 +507,21 @@ class GraphStatistics(BaseModel):
 
 class GetGraphStatisticsRequest(BaseModel):
     """Request to get graph statistics"""
+
     tenant_id: str
     project_id: str
 
 
 class GetGraphStatisticsResponse(BaseModel):
     """Response with graph statistics"""
+
     statistics: GraphStatistics
     message: str = "Graph statistics retrieved"
 
 
 class UpdateEdgeWeightRequest(BaseModel):
     """Request to update edge weight"""
+
     edge_id: UUID
     new_weight: float = Field(..., ge=0.0, le=1.0)
     new_confidence: Optional[float] = Field(None, ge=0.0, le=1.0)
@@ -474,17 +529,20 @@ class UpdateEdgeWeightRequest(BaseModel):
 
 class DeactivateEdgeRequest(BaseModel):
     """Request to deactivate an edge (soft delete)"""
+
     edge_id: UUID
     reason: Optional[str] = None
 
 
 class ActivateEdgeRequest(BaseModel):
     """Request to reactivate a deactivated edge"""
+
     edge_id: UUID
 
 
 class SetEdgeTemporalValidityRequest(BaseModel):
     """Request to set temporal validity for an edge"""
+
     edge_id: UUID
     valid_from: datetime
     valid_to: Optional[datetime] = None
@@ -494,8 +552,10 @@ class SetEdgeTemporalValidityRequest(BaseModel):
 # Batch Operations
 # ============================================================================
 
+
 class BatchCreateNodesRequest(BaseModel):
     """Request to create multiple nodes"""
+
     tenant_id: str
     project_id: str
     nodes: List[Dict[str, Any]] = Field(..., min_items=1, max_items=1000)
@@ -503,6 +563,7 @@ class BatchCreateNodesRequest(BaseModel):
 
 class BatchCreateEdgesRequest(BaseModel):
     """Request to create multiple edges"""
+
     tenant_id: str
     project_id: str
     edges: List[CreateGraphEdgeRequest] = Field(..., min_items=1, max_items=1000)
@@ -510,6 +571,7 @@ class BatchCreateEdgesRequest(BaseModel):
 
 class BatchOperationResponse(BaseModel):
     """Response from batch operations"""
+
     successful: int = Field(0, ge=0)
     failed: int = Field(0, ge=0)
     errors: List[str] = Field(default_factory=list)

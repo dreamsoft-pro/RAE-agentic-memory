@@ -9,7 +9,9 @@ Or after installation:
 """
 
 import sys
+
 import uvicorn
+
 from .api import app
 
 

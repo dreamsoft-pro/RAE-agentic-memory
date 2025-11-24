@@ -10,12 +10,12 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 from apps.memory_api.clients.rae_api import RAEAPIClient
-from apps.memory_api.clients.rae_client import RAEClientError, ErrorCategory
-
+from apps.memory_api.clients.rae_client import ErrorCategory, RAEClientError
 
 # ============================================================================
 # Basic Usage
 # ============================================================================
+
 
 async def basic_usage_example():
     """Basic client usage with automatic retry and circuit breaker."""
@@ -25,28 +25,22 @@ async def basic_usage_example():
         base_url="http://localhost:8000",
         api_key="your-api-key",
         tenant_id="example-tenant",
-        project_id="example-project"
+        project_id="example-project",
     ) as client:
 
         # Create a memory
         memory = await client.create_memory(
-            content="This is a test memory",
-            importance=0.8,
-            tags=["test", "example"]
+            content="This is a test memory", importance=0.8, tags=["test", "example"]
         )
         print(f"Created memory: {memory['id']}")
 
         # Search memories
-        results = await client.search_memories(
-            query="test memory",
-            k=10
-        )
+        results = await client.search_memories(query="test memory", k=10)
         print(f"Found {len(results['results'])} memories")
 
         # Generate reflection
         reflection = await client.generate_reflection(
-            memory_ids=[memory['id']],
-            reflection_type="insight"
+            memory_ids=[memory["id"]], reflection_type="insight"
         )
         print(f"Generated reflection: {reflection['reflection_id']}")
 
@@ -54,6 +48,7 @@ async def basic_usage_example():
 # ============================================================================
 # Advanced Configuration
 # ============================================================================
+
 
 async def advanced_configuration_example():
     """Client with custom retry and circuit breaker configuration."""
@@ -63,25 +58,21 @@ async def advanced_configuration_example():
         api_key="your-api-key",
         tenant_id="example-tenant",
         project_id="example-project",
-
         # Retry configuration
         max_retries=5,
         initial_backoff_ms=200,
         max_backoff_ms=30000,
         backoff_multiplier=2.5,
-
         # Circuit breaker configuration
         enable_circuit_breaker=True,
         failure_threshold=3,
         success_threshold=2,
-
         # Cache configuration
         enable_cache=True,
         cache_ttl_seconds=600,
-
         # Connection configuration
         timeout=60.0,
-        max_connections=200
+        max_connections=200,
     ) as client:
 
         # Use client normally
@@ -90,7 +81,7 @@ async def advanced_configuration_example():
             query="machine learning optimization",
             k=20,
             weight_profile="quality_focused",
-            enable_reranking=True
+            enable_reranking=True,
         )
 
         print(f"Hybrid search returned {len(results['results'])} results")
@@ -104,6 +95,7 @@ async def advanced_configuration_example():
 # Error Handling
 # ============================================================================
 
+
 async def error_handling_example():
     """Proper error handling with error classification."""
 
@@ -111,7 +103,7 @@ async def error_handling_example():
         base_url="http://localhost:8000",
         api_key="your-api-key",
         tenant_id="example-tenant",
-        project_id="example-project"
+        project_id="example-project",
     ) as client:
 
         try:
@@ -142,6 +134,7 @@ async def error_handling_example():
 # Caching Examples
 # ============================================================================
 
+
 async def caching_example():
     """Using response cache for GET requests."""
 
@@ -151,22 +144,16 @@ async def caching_example():
         tenant_id="example-tenant",
         project_id="example-project",
         enable_cache=True,
-        cache_ttl_seconds=300
+        cache_ttl_seconds=300,
     ) as client:
 
         # First call - cache miss
         print("First call (cache miss)")
-        results1 = await client.search_memories(
-            query="machine learning",
-            k=10
-        )
+        results1 = await client.search_memories(query="machine learning", k=10)
 
         # Second call - cache hit (instant)
         print("Second call (cache hit)")
-        results2 = await client.search_memories(
-            query="machine learning",
-            k=10
-        )
+        results2 = await client.search_memories(query="machine learning", k=10)
 
         # Check stats to see cache hit
         stats = client.get_stats()
@@ -183,6 +170,7 @@ async def caching_example():
 # Semantic Memory Workflow
 # ============================================================================
 
+
 async def semantic_memory_workflow():
     """Complete semantic memory workflow."""
 
@@ -190,42 +178,37 @@ async def semantic_memory_workflow():
         base_url="http://localhost:8000",
         api_key="your-api-key",
         tenant_id="example-tenant",
-        project_id="example-project"
+        project_id="example-project",
     ) as client:
 
         # 1. Create memory
         memory = await client.create_memory(
             content="Python is a high-level programming language with dynamic semantics",
             importance=0.9,
-            tags=["programming", "python"]
+            tags=["programming", "python"],
         )
         print(f"Created memory: {memory['id']}")
 
         # 2. Extract semantic nodes
-        extraction = await client.extract_semantics(
-            memory_id=memory['id']
-        )
+        extraction = await client.extract_semantics(memory_id=memory["id"])
         print(f"Extracted {extraction['nodes_created']} semantic nodes")
 
         # 3. Semantic search
         search_results = await client.semantic_search(
-            query="programming languages",
-            k=10
+            query="programming languages", k=10
         )
         print(f"Semantic search found {len(search_results['results'])} results")
 
         # 4. Extract knowledge graph (replaces manual graph CRUD)
         # Note: create_graph_edge() is deprecated - use GraphRAG instead
-        extraction = await client.extract_knowledge_graph(
-            limit=10,
-            min_confidence=0.7
-        )
+        extraction = await client.extract_knowledge_graph(limit=10, min_confidence=0.7)
         print(f"Extracted {len(extraction.get('triples', []))} knowledge triples")
 
 
 # ============================================================================
 # Evaluation Workflow
 # ============================================================================
+
 
 async def evaluation_workflow():
     """Search evaluation and drift detection."""
@@ -234,7 +217,7 @@ async def evaluation_workflow():
         base_url="http://localhost:8000",
         api_key="your-api-key",
         tenant_id="example-tenant",
-        project_id="example-project"
+        project_id="example-project",
     ) as client:
 
         # Define relevance judgments (ground truth)
@@ -242,7 +225,7 @@ async def evaluation_workflow():
             "query1": {
                 "doc1": 1.0,  # Highly relevant
                 "doc2": 0.5,  # Somewhat relevant
-                "doc3": 0.0   # Not relevant
+                "doc3": 0.0,  # Not relevant
             }
         }
 
@@ -251,7 +234,7 @@ async def evaluation_workflow():
             "query1": [
                 {"document_id": "doc1", "rank": 1, "score": 0.95},
                 {"document_id": "doc3", "rank": 2, "score": 0.80},
-                {"document_id": "doc2", "rank": 3, "score": 0.75}
+                {"document_id": "doc2", "rank": 3, "score": 0.75},
             ]
         }
 
@@ -259,7 +242,7 @@ async def evaluation_workflow():
         evaluation = await client.evaluate_search(
             relevance_judgments=relevance_judgments,
             search_results=search_results,
-            metrics=["mrr", "ndcg", "precision", "recall"]
+            metrics=["mrr", "ndcg", "precision", "recall"],
         )
 
         print(f"Search quality metrics:")
@@ -279,10 +262,10 @@ async def evaluation_workflow():
             baseline_start=baseline_start,
             baseline_end=baseline_end,
             current_start=current_start,
-            current_end=current_end
+            current_end=current_end,
         )
 
-        if drift_result['drift_result']['drift_detected']:
+        if drift_result["drift_result"]["drift_detected"]:
             print(f"Drift detected!")
             print(f"  Severity: {drift_result['drift_result']['severity']}")
             print(f"  Actions: {drift_result['drift_result']['recommended_actions']}")
@@ -292,6 +275,7 @@ async def evaluation_workflow():
 # Event Triggers and Automation
 # ============================================================================
 
+
 async def event_triggers_example():
     """Creating and using event triggers."""
 
@@ -299,7 +283,7 @@ async def event_triggers_example():
         base_url="http://localhost:8000",
         api_key="your-api-key",
         tenant_id="example-tenant",
-        project_id="example-project"
+        project_id="example-project",
     ) as client:
 
         # Create trigger: Generate reflection when 50 memories created
@@ -309,9 +293,7 @@ async def event_triggers_example():
             actions=[
                 {
                     "action_type": "generate_reflection",
-                    "config": {
-                        "reflection_type": "synthesis"
-                    }
+                    "config": {"reflection_type": "synthesis"},
                 }
             ],
             condition_group={
@@ -320,23 +302,19 @@ async def event_triggers_example():
                     {
                         "field": "payload.memory_count",
                         "operator": "greater_equal",
-                        "value": 50
+                        "value": 50,
                     }
-                ]
+                ],
             },
-            priority=7
+            priority=7,
         )
         print(f"Created trigger: {trigger['trigger_id']}")
 
         # Emit custom event
         event_result = await client.emit_event(
             event_type="quality_degraded",
-            payload={
-                "quality_score": 0.65,
-                "threshold": 0.70,
-                "metric": "mrr"
-            },
-            tags=["quality", "alert"]
+            payload={"quality_score": 0.65, "threshold": 0.70, "metric": "mrr"},
+            tags=["quality", "alert"],
         )
         print(f"Event emitted: {event_result['event_id']}")
         print(f"Triggers matched: {event_result['triggers_matched']}")
@@ -350,6 +328,7 @@ async def event_triggers_example():
 # Dashboard and Monitoring
 # ============================================================================
 
+
 async def dashboard_monitoring_example():
     """Using dashboard and monitoring features."""
 
@@ -357,7 +336,7 @@ async def dashboard_monitoring_example():
         base_url="http://localhost:8000",
         api_key="your-api-key",
         tenant_id="example-tenant",
-        project_id="example-project"
+        project_id="example-project",
     ) as client:
 
         # Get dashboard metrics
@@ -370,48 +349,44 @@ async def dashboard_monitoring_example():
 
         # Get visualization data - Reflection tree
         reflection_tree = await client.get_visualization(
-            visualization_type="reflection_tree",
-            max_depth=5,
-            limit=100
+            visualization_type="reflection_tree", max_depth=5, limit=100
         )
 
-        if reflection_tree['reflection_tree']:
-            tree = reflection_tree['reflection_tree']
+        if reflection_tree["reflection_tree"]:
+            tree = reflection_tree["reflection_tree"]
             print(f"Reflection tree root: {tree['content'][:50]}...")
             print(f"Children: {len(tree['children'])}")
 
         # Get visualization data - Semantic graph
         semantic_graph = await client.get_visualization(
-            visualization_type="semantic_graph",
-            limit=50
+            visualization_type="semantic_graph", limit=50
         )
 
-        if semantic_graph['semantic_graph']:
-            graph = semantic_graph['semantic_graph']
+        if semantic_graph["semantic_graph"]:
+            graph = semantic_graph["semantic_graph"]
             print(f"Semantic graph:")
             print(f"  Nodes: {graph['node_count']}")
             print(f"  Edges: {graph['edge_count']}")
             print(f"  Avg degree: {graph['avg_degree']:.2f}")
 
         # Check system health
-        health = await client.get_system_health(
-            include_sub_components=True
-        )
+        health = await client.get_system_health(include_sub_components=True)
 
         print(f"System health: {health['system_health']['overall_status']}")
         print(f"Components:")
-        for component in health['system_health']['components']:
+        for component in health["system_health"]["components"]:
             print(f"  {component['component_name']}: {component['status']}")
 
-        if health['recommendations']:
+        if health["recommendations"]:
             print("Recommendations:")
-            for rec in health['recommendations']:
+            for rec in health["recommendations"]:
                 print(f"  - {rec}")
 
 
 # ============================================================================
 # Bulk Operations
 # ============================================================================
+
 
 async def bulk_operations_example():
     """Performing bulk operations efficiently."""
@@ -421,7 +396,7 @@ async def bulk_operations_example():
         api_key="your-api-key",
         tenant_id="example-tenant",
         project_id="example-project",
-        max_connections=50  # Higher connection pool for parallel requests
+        max_connections=50,  # Higher connection pool for parallel requests
     ) as client:
 
         # Create multiple memories in parallel
@@ -430,16 +405,12 @@ async def bulk_operations_example():
             "Second memory about data science",
             "Third memory about artificial intelligence",
             "Fourth memory about neural networks",
-            "Fifth memory about deep learning"
+            "Fifth memory about deep learning",
         ]
 
         # Create tasks
         tasks = [
-            client.create_memory(
-                content=content,
-                importance=0.7,
-                tags=["bulk_import"]
-            )
+            client.create_memory(content=content, importance=0.7, tags=["bulk_import"])
             for content in memory_contents
         ]
 
@@ -449,18 +420,18 @@ async def bulk_operations_example():
 
         # Extract semantics from all memories in parallel
         extraction_tasks = [
-            client.extract_semantics(memory_id=memory['id'])
-            for memory in memories
+            client.extract_semantics(memory_id=memory["id"]) for memory in memories
         ]
 
         extractions = await asyncio.gather(*extraction_tasks)
-        total_nodes = sum(e['nodes_created'] for e in extractions)
+        total_nodes = sum(e["nodes_created"] for e in extractions)
         print(f"Extracted {total_nodes} semantic nodes in total")
 
 
 # ============================================================================
 # Main Example Runner
 # ============================================================================
+
 
 async def main():
     """Run all examples."""
@@ -477,13 +448,13 @@ async def main():
         ("Evaluation Workflow", evaluation_workflow),
         ("Event Triggers", event_triggers_example),
         ("Dashboard Monitoring", dashboard_monitoring_example),
-        ("Bulk Operations", bulk_operations_example)
+        ("Bulk Operations", bulk_operations_example),
     ]
 
     for name, example_func in examples:
         print(f"\n{'=' * 80}")
         print(f"Example: {name}")
-        print('=' * 80)
+        print("=" * 80)
 
         try:
             await example_func()

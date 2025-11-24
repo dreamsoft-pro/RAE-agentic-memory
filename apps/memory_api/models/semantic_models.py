@@ -8,51 +8,58 @@ This module defines Pydantic models for the semantic memory layer including:
 - TTL/LTM priority decay system
 """
 
-from typing import List, Optional, Dict, Any
-from pydantic import BaseModel, Field, ConfigDict
-from enum import Enum
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
+from pydantic import BaseModel, ConfigDict, Field
 
 # ============================================================================
 # Enums
 # ============================================================================
 
+
 class SemanticNodeType(str, Enum):
     """Types of semantic nodes"""
-    CONCEPT = "concept"         # Abstract concept
-    TOPIC = "topic"             # Domain topic
-    ENTITY = "entity"           # Named entity
-    TERM = "term"               # Technical term
-    CATEGORY = "category"       # Category/classification
-    RELATION = "relation"       # Relationship type
+
+    CONCEPT = "concept"  # Abstract concept
+    TOPIC = "topic"  # Domain topic
+    ENTITY = "entity"  # Named entity
+    TERM = "term"  # Technical term
+    CATEGORY = "category"  # Category/classification
+    RELATION = "relation"  # Relationship type
 
 
 class SemanticRelationType(str, Enum):
     """Types of semantic relationships"""
-    IS_A = "is_a"               # Hyponymy (X is a type of Y)
-    PART_OF = "part_of"         # Meronymy (X is part of Y)
-    RELATED_TO = "related_to"   # Generic relation
-    SYNONYM_OF = "synonym_of"   # Synonymy
-    ANTONYM_OF = "antonym_of"   # Antonymy
-    CAUSES = "causes"           # Causation
-    REQUIRES = "requires"       # Dependency
-    SIMILAR_TO = "similar_to"   # Similarity
+
+    IS_A = "is_a"  # Hyponymy (X is a type of Y)
+    PART_OF = "part_of"  # Meronymy (X is part of Y)
+    RELATED_TO = "related_to"  # Generic relation
+    SYNONYM_OF = "synonym_of"  # Synonymy
+    ANTONYM_OF = "antonym_of"  # Antonymy
+    CAUSES = "causes"  # Causation
+    REQUIRES = "requires"  # Dependency
+    SIMILAR_TO = "similar_to"  # Similarity
     DERIVES_FROM = "derives_from"  # Etymology/derivation
-    IMPLEMENTS = "implements"   # Implementation
-    USES = "uses"               # Usage relation
+    IMPLEMENTS = "implements"  # Implementation
+    USES = "uses"  # Usage relation
 
 
 # ============================================================================
 # Core Models
 # ============================================================================
 
+
 class SemanticDefinition(BaseModel):
     """A definition with source attribution"""
+
     text: str = Field(..., description="Definition text")
     source: Optional[str] = Field(None, description="Source of definition")
-    confidence: float = Field(0.8, ge=0.0, le=1.0, description="Confidence in definition")
+    confidence: float = Field(
+        0.8, ge=0.0, le=1.0, description="Confidence in definition"
+    )
 
 
 class SemanticNode(BaseModel):
@@ -66,6 +73,7 @@ class SemanticNode(BaseModel):
     - Priority decay (TTL/LTM model)
     - Reinforcement tracking
     """
+
     id: UUID
     tenant_id: str
     project_id: str
@@ -73,26 +81,36 @@ class SemanticNode(BaseModel):
     # Core identification
     node_id: str = Field(..., max_length=500, description="Canonical identifier")
     label: str = Field(..., max_length=500, description="Human-readable label")
-    node_type: SemanticNodeType = Field(SemanticNodeType.CONCEPT, description="Type of node")
+    node_type: SemanticNodeType = Field(
+        SemanticNodeType.CONCEPT, description="Type of node"
+    )
 
     # Canonical form
     canonical_form: str = Field(..., description="Standardized representation")
-    aliases: List[str] = Field(default_factory=list, description="Alternative names/synonyms")
+    aliases: List[str] = Field(
+        default_factory=list, description="Alternative names/synonyms"
+    )
 
     # Definitions
     definition: Optional[str] = Field(None, description="Primary definition")
-    definitions: List[SemanticDefinition] = Field(default_factory=list, description="Multiple definitions")
+    definitions: List[SemanticDefinition] = Field(
+        default_factory=list, description="Multiple definitions"
+    )
     context: Optional[str] = Field(None, description="Contextual information")
     examples: List[str] = Field(default_factory=list, description="Usage examples")
 
     # Ontological classification
-    categories: List[str] = Field(default_factory=list, description="Categories this node belongs to")
-    domain: Optional[str] = Field(None, max_length=255, description="Domain (e.g., security, architecture)")
+    categories: List[str] = Field(
+        default_factory=list, description="Categories this node belongs to"
+    )
+    domain: Optional[str] = Field(
+        None, max_length=255, description="Domain (e.g., security, architecture)"
+    )
 
     # Relations
     relations: Dict[str, List[str]] = Field(
         default_factory=dict,
-        description="Related nodes: {'related_to': ['node1', 'node2'], ...}"
+        description="Related nodes: {'related_to': ['node1', 'node2'], ...}",
     )
 
     # Embeddings
@@ -109,7 +127,9 @@ class SemanticNode(BaseModel):
 
     # Decay status
     is_degraded: bool = Field(False, description="True if node has decayed")
-    degradation_timestamp: Optional[datetime] = Field(None, description="When node was degraded")
+    degradation_timestamp: Optional[datetime] = Field(
+        None, description="When node was degraded"
+    )
 
     # Source tracking
     source_memory_ids: List[UUID] = Field(default_factory=list)
@@ -131,6 +151,7 @@ class SemanticNode(BaseModel):
 
 class SemanticRelationship(BaseModel):
     """Typed relationship between semantic nodes"""
+
     id: UUID
     tenant_id: str
     project_id: str
@@ -160,6 +181,7 @@ class SemanticRelationship(BaseModel):
 
 class SemanticIndexEntry(BaseModel):
     """Fast lookup index entry for topic → semantic node mapping"""
+
     id: UUID
     tenant_id: str
     project_id: str
@@ -183,22 +205,33 @@ class SemanticIndexEntry(BaseModel):
 # Request/Response Models
 # ============================================================================
 
+
 class ExtractSemanticNodesRequest(BaseModel):
     """Request to extract semantic nodes from memories"""
+
     tenant_id: str
     project: str
 
-    memory_ids: Optional[List[UUID]] = Field(None, description="Specific memory IDs to extract from")
-    max_memories: int = Field(100, gt=0, le=1000, description="Maximum memories to process")
-    min_confidence: float = Field(0.5, ge=0.0, le=1.0, description="Minimum extraction confidence")
+    memory_ids: Optional[List[UUID]] = Field(
+        None, description="Specific memory IDs to extract from"
+    )
+    max_memories: int = Field(
+        100, gt=0, le=1000, description="Maximum memories to process"
+    )
+    min_confidence: float = Field(
+        0.5, ge=0.0, le=1.0, description="Minimum extraction confidence"
+    )
 
     # Filters
-    since: Optional[datetime] = Field(None, description="Only process memories after this timestamp")
+    since: Optional[datetime] = Field(
+        None, description="Only process memories after this timestamp"
+    )
     domains: Optional[List[str]] = Field(None, description="Filter by domains")
 
 
 class ExtractSemanticNodesResponse(BaseModel):
     """Response from semantic extraction"""
+
     nodes_extracted: int
     relationships_created: int
     nodes: List[SemanticNode] = Field(default_factory=list)
@@ -208,6 +241,7 @@ class ExtractSemanticNodesResponse(BaseModel):
 
 class SemanticSearchRequest(BaseModel):
     """Request for 3-stage semantic search"""
+
     tenant_id: str
     project: str
 
@@ -215,10 +249,14 @@ class SemanticSearchRequest(BaseModel):
     k: int = Field(10, gt=0, le=100, description="Number of results")
 
     # Stage 1: Topic identification
-    enable_topic_matching: bool = Field(True, description="Enable topic → vector search")
+    enable_topic_matching: bool = Field(
+        True, description="Enable topic → vector search"
+    )
 
     # Stage 2: Term normalization
-    enable_canonicalization: bool = Field(True, description="Enable term canonicalization")
+    enable_canonicalization: bool = Field(
+        True, description="Enable term canonicalization"
+    )
 
     # Stage 3: Semantic re-ranking
     enable_reranking: bool = Field(True, description="Enable semantic re-ranking")
@@ -232,6 +270,7 @@ class SemanticSearchRequest(BaseModel):
 
 class SemanticSearchResponse(BaseModel):
     """Response from semantic search"""
+
     nodes: List[SemanticNode] = Field(default_factory=list)
     total_count: int
 
@@ -249,6 +288,7 @@ class SemanticSearchResponse(BaseModel):
 
 class ReinforceSemanticNodeRequest(BaseModel):
     """Request to reinforce a semantic node"""
+
     tenant_id: str
     project: str
     node_id: UUID
@@ -256,6 +296,7 @@ class ReinforceSemanticNodeRequest(BaseModel):
 
 class ApplySemanticDecayRequest(BaseModel):
     """Request to apply decay to semantic nodes"""
+
     tenant_id: str
     project: str
     decay_threshold_days: int = Field(60, gt=0, le=365, description="Days before decay")
@@ -263,6 +304,7 @@ class ApplySemanticDecayRequest(BaseModel):
 
 class ApplySemanticDecayResponse(BaseModel):
     """Response from decay application"""
+
     degraded_count: int = Field(0, description="Newly degraded nodes")
     total_degraded: int = Field(0, description="Total degraded nodes")
     message: str = "Decay applied successfully"
@@ -270,6 +312,7 @@ class ApplySemanticDecayResponse(BaseModel):
 
 class CreateSemanticRelationshipRequest(BaseModel):
     """Request to create semantic relationship"""
+
     tenant_id: str
     project: str
 
@@ -284,6 +327,7 @@ class CreateSemanticRelationshipRequest(BaseModel):
 
 class SemanticNodeStatistics(BaseModel):
     """Statistics for semantic nodes"""
+
     tenant_id: str
     project_id: str
 
@@ -306,8 +350,10 @@ class SemanticNodeStatistics(BaseModel):
 # Extraction Models
 # ============================================================================
 
+
 class ExtractedTopic(BaseModel):
     """A topic extracted from text"""
+
     topic: str
     normalized_topic: str
     confidence: float = Field(ge=0.0, le=1.0)
@@ -315,6 +361,7 @@ class ExtractedTopic(BaseModel):
 
 class ExtractedTerm(BaseModel):
     """A term with canonical form"""
+
     original: str
     canonical: str
     definition: Optional[str] = None
@@ -323,6 +370,7 @@ class ExtractedTerm(BaseModel):
 
 class ExtractedRelation(BaseModel):
     """An extracted semantic relation"""
+
     source: str
     relation: str
     target: str
@@ -331,6 +379,7 @@ class ExtractedRelation(BaseModel):
 
 class SemanticExtractionResult(BaseModel):
     """Complete extraction result from LLM"""
+
     topics: List[ExtractedTopic] = Field(default_factory=list)
     terms: List[ExtractedTerm] = Field(default_factory=list)
     relations: List[ExtractedRelation] = Field(default_factory=list)

@@ -12,11 +12,12 @@ Features:
 - Multi-tenant isolation via tenant_id filtering
 """
 
-import asyncpg
 from datetime import datetime, timedelta, timezone
-from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field
+from typing import Any, Dict, List, Optional
+
+import asyncpg
 import structlog
+from pydantic import BaseModel, Field
 
 logger = structlog.get_logger(__name__)
 
@@ -25,8 +26,10 @@ logger = structlog.get_logger(__name__)
 # Data Models
 # ============================================================================
 
+
 class LLMCallLog(BaseModel):
     """Complete LLM API call log entry"""
+
     id: str
     tenant_id: str
     project_id: str
@@ -68,6 +71,7 @@ class LLMCallLog(BaseModel):
 
 class LogLLMCallParams(BaseModel):
     """Parameters for logging an LLM API call"""
+
     tenant_id: str
     project_id: str
     model: str
@@ -93,6 +97,7 @@ class LogLLMCallParams(BaseModel):
 
 class CostStatistics(BaseModel):
     """Aggregated cost statistics for a time period"""
+
     tenant_id: str
     project_id: str
 
@@ -126,6 +131,7 @@ class CostStatistics(BaseModel):
 
 class ModelBreakdown(BaseModel):
     """Cost breakdown by model"""
+
     model: str
     provider: str
     total_calls: int
@@ -139,10 +145,8 @@ class ModelBreakdown(BaseModel):
 # Repository Functions
 # ============================================================================
 
-async def log_llm_call(
-    pool: asyncpg.Pool,
-    params: LogLLMCallParams
-) -> str:
+
+async def log_llm_call(pool: asyncpg.Pool, params: LogLLMCallParams) -> str:
     """
     Logs a single LLM API call to the cost_logs table.
 
@@ -179,7 +183,7 @@ async def log_llm_call(
         input_tokens=params.input_tokens,
         output_tokens=params.output_tokens,
         total_cost_usd=params.total_cost_usd,
-        cache_hit=params.cache_hit
+        cache_hit=params.cache_hit,
     )
 
     try:
@@ -222,10 +226,10 @@ async def log_llm_call(
             params.user_id,
             params.latency_ms,
             params.error,
-            params.error_message
+            params.error_message,
         )
 
-        log_id = str(record['id'])
+        log_id = str(record["id"])
         logger.info("llm_call_logged", log_id=log_id, tenant_id=params.tenant_id)
         return log_id
 
@@ -234,7 +238,7 @@ async def log_llm_call(
             "log_llm_call_failed",
             error=str(e),
             tenant_id=params.tenant_id,
-            model=params.model
+            model=params.model,
         )
         raise
 
@@ -244,7 +248,7 @@ async def get_cost_statistics(
     tenant_id: str,
     project_id: str,
     period_start: datetime,
-    period_end: datetime
+    period_end: datetime,
 ) -> CostStatistics:
     """
     Retrieves aggregated cost statistics for a tenant/project over a time period.
@@ -278,7 +282,7 @@ async def get_cost_statistics(
         tenant_id=tenant_id,
         project_id=project_id,
         period_start=period_start,
-        period_end=period_end
+        period_end=period_end,
     )
 
     record = await pool.fetchrow(
@@ -308,37 +312,39 @@ async def get_cost_statistics(
         tenant_id,
         project_id,
         period_start,
-        period_end
+        period_end,
     )
 
     # Calculate derived metrics
-    total_calls = record['total_calls'] or 0
-    cache_hits = record['cache_hits'] or 0
+    total_calls = record["total_calls"] or 0
+    cache_hits = record["cache_hits"] or 0
     cache_hit_rate = (cache_hits / total_calls * 100) if total_calls > 0 else 0.0
 
     # Estimate cost saved from cache (rough approximation)
-    total_tokens_saved = record['total_tokens_saved'] or 0
-    avg_cost_per_token = (record['total_cost_usd'] or 0) / (record['total_tokens'] or 1)
+    total_tokens_saved = record["total_tokens_saved"] or 0
+    avg_cost_per_token = (record["total_cost_usd"] or 0) / (record["total_tokens"] or 1)
     estimated_cost_saved = total_tokens_saved * avg_cost_per_token
 
     stats = CostStatistics(
         tenant_id=tenant_id,
         project_id=project_id,
         total_calls=total_calls,
-        successful_calls=record['successful_calls'] or 0,
-        failed_calls=record['failed_calls'] or 0,
-        total_input_tokens=record['total_input_tokens'] or 0,
-        total_output_tokens=record['total_output_tokens'] or 0,
-        total_tokens=record['total_tokens'] or 0,
-        total_cost_usd=float(record['total_cost_usd'] or 0),
-        avg_cost_per_call=float(record['avg_cost_per_call'] or 0),
+        successful_calls=record["successful_calls"] or 0,
+        failed_calls=record["failed_calls"] or 0,
+        total_input_tokens=record["total_input_tokens"] or 0,
+        total_output_tokens=record["total_output_tokens"] or 0,
+        total_tokens=record["total_tokens"] or 0,
+        total_cost_usd=float(record["total_cost_usd"] or 0),
+        avg_cost_per_call=float(record["avg_cost_per_call"] or 0),
         cache_hits=cache_hits,
         cache_hit_rate=cache_hit_rate,
         total_tokens_saved=total_tokens_saved,
         estimated_cost_saved_usd=float(estimated_cost_saved),
-        avg_latency_ms=float(record['avg_latency_ms']) if record['avg_latency_ms'] else None,
+        avg_latency_ms=(
+            float(record["avg_latency_ms"]) if record["avg_latency_ms"] else None
+        ),
         period_start=period_start,
-        period_end=period_end
+        period_end=period_end,
     )
 
     logger.info(
@@ -346,17 +352,13 @@ async def get_cost_statistics(
         tenant_id=tenant_id,
         total_calls=stats.total_calls,
         total_cost_usd=stats.total_cost_usd,
-        cache_hit_rate=stats.cache_hit_rate
+        cache_hit_rate=stats.cache_hit_rate,
     )
 
     return stats
 
 
-async def get_daily_cost(
-    pool: asyncpg.Pool,
-    tenant_id: str,
-    project_id: str
-) -> float:
+async def get_daily_cost(pool: asyncpg.Pool, tenant_id: str, project_id: str) -> float:
     """
     Gets total cost for current day (UTC).
 
@@ -370,17 +372,19 @@ async def get_daily_cost(
     Returns:
         Total cost in USD for today
     """
-    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = datetime.now(timezone.utc).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
     today_end = datetime.now(timezone.utc)
 
-    stats = await get_cost_statistics(pool, tenant_id, project_id, today_start, today_end)
+    stats = await get_cost_statistics(
+        pool, tenant_id, project_id, today_start, today_end
+    )
     return stats.total_cost_usd
 
 
 async def get_monthly_cost(
-    pool: asyncpg.Pool,
-    tenant_id: str,
-    project_id: str
+    pool: asyncpg.Pool, tenant_id: str, project_id: str
 ) -> float:
     """
     Gets total cost for current month (UTC).
@@ -399,15 +403,13 @@ async def get_monthly_cost(
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     month_end = now
 
-    stats = await get_cost_statistics(pool, tenant_id, project_id, month_start, month_end)
+    stats = await get_cost_statistics(
+        pool, tenant_id, project_id, month_start, month_end
+    )
     return stats.total_cost_usd
 
 
-async def get_daily_tokens(
-    pool: asyncpg.Pool,
-    tenant_id: str,
-    project_id: str
-) -> int:
+async def get_daily_tokens(pool: asyncpg.Pool, tenant_id: str, project_id: str) -> int:
     """
     Gets total tokens used for current day (UTC).
 
@@ -421,17 +423,19 @@ async def get_daily_tokens(
     Returns:
         Total tokens (input + output) for today
     """
-    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = datetime.now(timezone.utc).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
     today_end = datetime.now(timezone.utc)
 
-    stats = await get_cost_statistics(pool, tenant_id, project_id, today_start, today_end)
+    stats = await get_cost_statistics(
+        pool, tenant_id, project_id, today_start, today_end
+    )
     return stats.total_tokens
 
 
 async def get_monthly_tokens(
-    pool: asyncpg.Pool,
-    tenant_id: str,
-    project_id: str
+    pool: asyncpg.Pool, tenant_id: str, project_id: str
 ) -> int:
     """
     Gets total tokens used for current month (UTC).
@@ -450,7 +454,9 @@ async def get_monthly_tokens(
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     month_end = now
 
-    stats = await get_cost_statistics(pool, tenant_id, project_id, month_start, month_end)
+    stats = await get_cost_statistics(
+        pool, tenant_id, project_id, month_start, month_end
+    )
     return stats.total_tokens
 
 
@@ -459,7 +465,7 @@ async def get_model_breakdown(
     tenant_id: str,
     project_id: str,
     period_start: datetime,
-    period_end: datetime
+    period_end: datetime,
 ) -> List[ModelBreakdown]:
     """
     Gets per-model cost breakdown for optimization analysis.
@@ -490,7 +496,7 @@ async def get_model_breakdown(
         tenant_id=tenant_id,
         project_id=project_id,
         period_start=period_start,
-        period_end=period_end
+        period_end=period_end,
     )
 
     records = await pool.fetch(
@@ -515,26 +521,24 @@ async def get_model_breakdown(
         tenant_id,
         project_id,
         period_start,
-        period_end
+        period_end,
     )
 
     breakdowns = [
         ModelBreakdown(
-            model=r['model'],
-            provider=r['provider'],
-            total_calls=r['total_calls'],
-            total_tokens=r['total_tokens'],
-            total_cost_usd=float(r['total_cost_usd']),
-            avg_cost_per_call=float(r['avg_cost_per_call']),
-            avg_latency_ms=float(r['avg_latency_ms']) if r['avg_latency_ms'] else None
+            model=r["model"],
+            provider=r["provider"],
+            total_calls=r["total_calls"],
+            total_tokens=r["total_tokens"],
+            total_cost_usd=float(r["total_cost_usd"]),
+            avg_cost_per_call=float(r["avg_cost_per_call"]),
+            avg_latency_ms=float(r["avg_latency_ms"]) if r["avg_latency_ms"] else None,
         )
         for r in records
     ]
 
     logger.info(
-        "model_breakdown_retrieved",
-        tenant_id=tenant_id,
-        model_count=len(breakdowns)
+        "model_breakdown_retrieved", tenant_id=tenant_id, model_count=len(breakdowns)
     )
 
     return breakdowns
@@ -545,7 +549,7 @@ async def get_cache_savings(
     tenant_id: str,
     project_id: str,
     period_start: datetime,
-    period_end: datetime
+    period_end: datetime,
 ) -> Dict[str, Any]:
     """
     Calculates cost savings from cache hits.
@@ -576,7 +580,7 @@ async def get_cache_savings(
         tenant_id=tenant_id,
         project_id=project_id,
         period_start=period_start,
-        period_end=period_end
+        period_end=period_end,
     )
 
     record = await pool.fetchrow(
@@ -597,13 +601,13 @@ async def get_cache_savings(
         tenant_id,
         project_id,
         period_start,
-        period_end
+        period_end,
     )
 
-    total_calls = record['total_calls'] or 0
-    cache_hits = record['cache_hits'] or 0
-    total_tokens_saved = record['total_tokens_saved'] or 0
-    avg_cost_per_call = float(record['avg_cost_per_call'] or 0)
+    total_calls = record["total_calls"] or 0
+    cache_hits = record["cache_hits"] or 0
+    total_tokens_saved = record["total_tokens_saved"] or 0
+    avg_cost_per_call = float(record["avg_cost_per_call"] or 0)
 
     # Estimate cost savings (assuming cache hits would have cost avg_cost_per_call)
     estimated_cost_saved = cache_hits * avg_cost_per_call
@@ -617,7 +621,7 @@ async def get_cache_savings(
         "estimated_cost_saved_usd": estimated_cost_saved,
         "avg_cost_per_call": avg_cost_per_call,
         "period_start": period_start.isoformat(),
-        "period_end": period_end.isoformat()
+        "period_end": period_end.isoformat(),
     }
 
     logger.info(
@@ -625,7 +629,7 @@ async def get_cache_savings(
         tenant_id=tenant_id,
         cache_hits=cache_hits,
         cache_hit_rate=cache_hit_rate,
-        estimated_cost_saved_usd=estimated_cost_saved
+        estimated_cost_saved_usd=estimated_cost_saved,
     )
 
     return savings
@@ -636,7 +640,7 @@ async def get_recent_logs(
     tenant_id: str,
     project_id: str,
     limit: int = 100,
-    include_errors: bool = True
+    include_errors: bool = True,
 ) -> List[LLMCallLog]:
     """
     Retrieves recent LLM call logs for debugging and monitoring.
@@ -656,7 +660,7 @@ async def get_recent_logs(
         tenant_id=tenant_id,
         project_id=project_id,
         limit=limit,
-        include_errors=include_errors
+        include_errors=include_errors,
     )
 
     error_filter = "" if include_errors else "AND error = FALSE"
@@ -673,7 +677,7 @@ async def get_recent_logs(
         """,
         tenant_id,
         project_id,
-        limit
+        limit,
     )
 
     logs = [LLMCallLog(**dict(r)) for r in records]

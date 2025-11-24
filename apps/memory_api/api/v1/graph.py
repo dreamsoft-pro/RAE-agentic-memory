@@ -8,23 +8,25 @@ This module provides endpoints for:
 - Managing graph nodes and edges
 """
 
-from typing import Optional, List, Dict, Any
-from fastapi import APIRouter, Request, HTTPException, Query, Depends
+from typing import Any, Dict, List, Optional
+
+import structlog
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
 from apps.memory_api.dependencies import get_api_key, get_hybrid_search_service
-from apps.memory_api.services.graph_extraction import GraphExtractionResult, GraphTriple
-from apps.memory_api.services.reflection_engine import ReflectionEngine
-from apps.memory_api.services.hybrid_search import HybridSearchService, HybridSearchResult, TraversalStrategy
 from apps.memory_api.metrics import memory_query_counter
-import structlog
+from apps.memory_api.services.graph_extraction import (GraphExtractionResult,
+                                                       GraphTriple)
+from apps.memory_api.services.hybrid_search import (HybridSearchResult,
+                                                    HybridSearchService,
+                                                    TraversalStrategy)
+from apps.memory_api.services.reflection_engine import ReflectionEngine
 
 logger = structlog.get_logger(__name__)
 
 router = APIRouter(
-    prefix="/graph",
-    tags=["knowledge-graph"],
-    dependencies=[Depends(get_api_key)]
+    prefix="/graph", tags=["knowledge-graph"], dependencies=[Depends(get_api_key)]
 )
 
 
@@ -33,16 +35,24 @@ class GraphExtractionRequest(BaseModel):
 
     project_id: str = Field(..., description="Project identifier")
     limit: int = Field(default=50, ge=1, le=1000, description="Max memories to process")
-    min_confidence: float = Field(default=0.5, ge=0.0, le=1.0, description="Minimum confidence threshold")
-    auto_store: bool = Field(default=True, description="Automatically store extracted triples")
+    min_confidence: float = Field(
+        default=0.5, ge=0.0, le=1.0, description="Minimum confidence threshold"
+    )
+    auto_store: bool = Field(
+        default=True, description="Automatically store extracted triples"
+    )
 
 
 class HierarchicalReflectionRequest(BaseModel):
     """Request model for hierarchical reflection generation."""
 
     project_id: str = Field(..., description="Project identifier")
-    bucket_size: int = Field(default=10, ge=2, le=100, description="Bucket size for hierarchical processing")
-    max_episodes: Optional[int] = Field(default=None, description="Max episodes to process")
+    bucket_size: int = Field(
+        default=10, ge=2, le=100, description="Bucket size for hierarchical processing"
+    )
+    max_episodes: Optional[int] = Field(
+        default=None, description="Max episodes to process"
+    )
 
 
 class HierarchicalReflectionResponse(BaseModel):
@@ -98,20 +108,22 @@ class GraphSearchRequest(BaseModel):
 
     query: str = Field(..., description="Search query", min_length=1, max_length=1024)
     project_id: str = Field(..., description="Project identifier")
-    top_k_vector: int = Field(default=5, ge=1, le=50, description="Number of vector search results")
-    graph_depth: int = Field(default=2, ge=1, le=5, description="Maximum graph traversal depth")
-    traversal_strategy: str = Field(
-        default="bfs",
-        description="Graph traversal strategy: 'bfs' or 'dfs'"
+    top_k_vector: int = Field(
+        default=5, ge=1, le=50, description="Number of vector search results"
     )
-    filters: Optional[Dict[str, Any]] = Field(default=None, description="Optional search filters")
+    graph_depth: int = Field(
+        default=2, ge=1, le=5, description="Maximum graph traversal depth"
+    )
+    traversal_strategy: str = Field(
+        default="bfs", description="Graph traversal strategy: 'bfs' or 'dfs'"
+    )
+    filters: Optional[Dict[str, Any]] = Field(
+        default=None, description="Optional search filters"
+    )
 
 
 @router.post("/extract", response_model=GraphExtractionResult)
-async def extract_knowledge_graph(
-    req: GraphExtractionRequest,
-    request: Request
-):
+async def extract_knowledge_graph(req: GraphExtractionRequest, request: Request):
     """
     Extract knowledge graph from episodic memories.
 
@@ -142,7 +154,7 @@ async def extract_knowledge_graph(
         "graph_extraction_requested",
         tenant_id=tenant_id,
         project_id=req.project_id,
-        limit=req.limit
+        limit=req.limit,
     )
 
     try:
@@ -155,14 +167,14 @@ async def extract_knowledge_graph(
             tenant_id=tenant_id,
             limit=req.limit,
             min_confidence=req.min_confidence,
-            auto_store=req.auto_store
+            auto_store=req.auto_store,
         )
 
         logger.info(
             "graph_extraction_completed",
             tenant_id=tenant_id,
             project_id=req.project_id,
-            triples_count=len(result.triples)
+            triples_count=len(result.triples),
         )
 
         return result
@@ -172,18 +184,16 @@ async def extract_knowledge_graph(
             "graph_extraction_failed",
             tenant_id=tenant_id,
             project_id=req.project_id,
-            error=str(e)
+            error=str(e),
         )
         raise HTTPException(
-            status_code=500,
-            detail=f"Graph extraction failed: {str(e)}"
+            status_code=500, detail=f"Graph extraction failed: {str(e)}"
         )
 
 
 @router.post("/reflection/hierarchical", response_model=HierarchicalReflectionResponse)
 async def generate_hierarchical_reflection(
-    req: HierarchicalReflectionRequest,
-    request: Request
+    req: HierarchicalReflectionRequest, request: Request
 ):
     """
     Generate hierarchical (map-reduce) reflection from large episode collections.
@@ -212,7 +222,7 @@ async def generate_hierarchical_reflection(
     logger.info(
         "hierarchical_reflection_requested",
         tenant_id=tenant_id,
-        project_id=req.project_id
+        project_id=req.project_id,
     )
 
     try:
@@ -224,7 +234,7 @@ async def generate_hierarchical_reflection(
             project=req.project_id,
             tenant_id=tenant_id,
             bucket_size=req.bucket_size,
-            max_episodes=req.max_episodes
+            max_episodes=req.max_episodes,
         )
 
         # Get episode count for response
@@ -235,20 +245,20 @@ async def generate_hierarchical_reflection(
                 WHERE tenant_id = $1 AND project = $2 AND layer = 'em'
                 """,
                 tenant_id,
-                req.project_id
+                req.project_id,
             )
 
         logger.info(
             "hierarchical_reflection_completed",
             tenant_id=tenant_id,
             project_id=req.project_id,
-            episodes_processed=episode_count
+            episodes_processed=episode_count,
         )
 
         return HierarchicalReflectionResponse(
             project_id=req.project_id,
             summary=summary,
-            episodes_processed=episode_count or 0
+            episodes_processed=episode_count or 0,
         )
 
     except Exception as e:
@@ -256,18 +266,16 @@ async def generate_hierarchical_reflection(
             "hierarchical_reflection_failed",
             tenant_id=tenant_id,
             project_id=req.project_id,
-            error=str(e)
+            error=str(e),
         )
         raise HTTPException(
-            status_code=500,
-            detail=f"Hierarchical reflection failed: {str(e)}"
+            status_code=500, detail=f"Hierarchical reflection failed: {str(e)}"
         )
 
 
 @router.get("/stats", response_model=GraphStatsResponse)
 async def get_graph_statistics(
-    request: Request,
-    project_id: str = Query(..., description="Project identifier")
+    request: Request, project_id: str = Query(..., description="Project identifier")
 ):
     """
     Get statistics about the knowledge graph for a project.
@@ -297,7 +305,7 @@ async def get_graph_statistics(
                 WHERE tenant_id = $1 AND project_id = $2
                 """,
                 tenant_id,
-                project_id
+                project_id,
             )
 
             # Get edge count
@@ -307,7 +315,7 @@ async def get_graph_statistics(
                 WHERE tenant_id = $1 AND project_id = $2
                 """,
                 tenant_id,
-                project_id
+                project_id,
             )
 
             # Get unique relations
@@ -318,15 +326,17 @@ async def get_graph_statistics(
                 ORDER BY relation
                 """,
                 tenant_id,
-                project_id
+                project_id,
             )
 
-            unique_relations = [r['relation'] for r in relations]
+            unique_relations = [r["relation"] for r in relations]
 
             # Additional statistics
             statistics = {
-                "avg_edges_per_node": round(edge_count / node_count, 2) if node_count > 0 else 0,
-                "total_relation_types": len(unique_relations)
+                "avg_edges_per_node": (
+                    round(edge_count / node_count, 2) if node_count > 0 else 0
+                ),
+                "total_relation_types": len(unique_relations),
             }
 
             return GraphStatsResponse(
@@ -335,7 +345,7 @@ async def get_graph_statistics(
                 total_nodes=node_count or 0,
                 total_edges=edge_count or 0,
                 unique_relations=unique_relations,
-                statistics=statistics
+                statistics=statistics,
             )
 
     except Exception as e:
@@ -343,11 +353,10 @@ async def get_graph_statistics(
             "graph_stats_failed",
             tenant_id=tenant_id,
             project_id=project_id,
-            error=str(e)
+            error=str(e),
         )
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to retrieve graph statistics: {str(e)}"
+            status_code=500, detail=f"Failed to retrieve graph statistics: {str(e)}"
         )
 
 
@@ -358,14 +367,14 @@ async def get_graph_nodes(
     limit: int = Query(default=100, ge=1, le=1000, description="Max nodes to return"),
     use_pagerank: bool = Query(
         default=False,
-        description="Use PageRank to filter most important nodes (recommended for large graphs)"
+        description="Use PageRank to filter most important nodes (recommended for large graphs)",
     ),
     min_pagerank_score: float = Query(
         default=0.0,
         ge=0.0,
         le=1.0,
-        description="Minimum PageRank score to include (only used with use_pagerank=true)"
-    )
+        description="Minimum PageRank score to include (only used with use_pagerank=true)",
+    ),
 ):
     """
     Retrieve graph nodes for a project.
@@ -394,21 +403,23 @@ async def get_graph_nodes(
     try:
         if use_pagerank:
             # Import here to avoid circular dependency
-            from apps.memory_api.services.graph_algorithms import GraphAlgorithmsService
             from uuid import UUID
+
+            from apps.memory_api.services.graph_algorithms import \
+                GraphAlgorithmsService
 
             # Calculate PageRank scores
             graph_service = GraphAlgorithmsService(db=request.app.state.pool)
             pagerank_scores = await graph_service.pagerank(
                 tenant_id=UUID(tenant_id) if isinstance(tenant_id, str) else tenant_id,
-                project_id=project_id
+                project_id=project_id,
             )
 
             if not pagerank_scores:
                 logger.warning(
                     "pagerank_returned_empty",
                     tenant_id=tenant_id,
-                    project_id=project_id
+                    project_id=project_id,
                 )
                 # Fall back to regular query
                 use_pagerank = False
@@ -416,7 +427,8 @@ async def get_graph_nodes(
             else:
                 # Filter nodes by PageRank score
                 filtered_node_ids = [
-                    node_id for node_id, score in pagerank_scores.items()
+                    node_id
+                    for node_id, score in pagerank_scores.items()
                     if score >= min_pagerank_score
                 ]
 
@@ -424,7 +436,7 @@ async def get_graph_nodes(
                 sorted_node_ids = sorted(
                     filtered_node_ids,
                     key=lambda nid: pagerank_scores[nid],
-                    reverse=True
+                    reverse=True,
                 )[:limit]
 
                 logger.info(
@@ -433,7 +445,7 @@ async def get_graph_nodes(
                     project_id=project_id,
                     total_nodes=len(pagerank_scores),
                     filtered_nodes=len(filtered_node_ids),
-                    returned_nodes=len(sorted_node_ids)
+                    returned_nodes=len(sorted_node_ids),
                 )
 
                 # Fetch filtered nodes from database
@@ -446,21 +458,23 @@ async def get_graph_nodes(
                             FROM knowledge_graph_nodes
                             WHERE id = $1::uuid
                             """,
-                            node_id
+                            node_id,
                         )
                         if node:
                             nodes.append(node)
 
                 return [
                     GraphNodeResponse(
-                        id=str(node['id']),
-                        node_id=node['node_id'],
-                        label=node['label'],
+                        id=str(node["id"]),
+                        node_id=node["node_id"],
+                        label=node["label"],
                         properties={
-                            **(node['properties'] or {}),
-                            "pagerank_score": round(pagerank_scores.get(str(node['id']), 0.0), 6)
+                            **(node["properties"] or {}),
+                            "pagerank_score": round(
+                                pagerank_scores.get(str(node["id"]), 0.0), 6
+                            ),
                         },
-                        created_at=str(node['created_at'])
+                        created_at=str(node["created_at"]),
                     )
                     for node in nodes
                 ]
@@ -477,30 +491,26 @@ async def get_graph_nodes(
                 """,
                 tenant_id,
                 project_id,
-                limit
+                limit,
             )
 
             return [
                 GraphNodeResponse(
-                    id=str(node['id']),
-                    node_id=node['node_id'],
-                    label=node['label'],
-                    properties=node['properties'],
-                    created_at=str(node['created_at'])
+                    id=str(node["id"]),
+                    node_id=node["node_id"],
+                    label=node["label"],
+                    properties=node["properties"],
+                    created_at=str(node["created_at"]),
                 )
                 for node in nodes
             ]
 
     except Exception as e:
         logger.exception(
-            "get_nodes_failed",
-            tenant_id=tenant_id,
-            project_id=project_id,
-            error=str(e)
+            "get_nodes_failed", tenant_id=tenant_id, project_id=project_id, error=str(e)
         )
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to retrieve graph nodes: {str(e)}"
+            status_code=500, detail=f"Failed to retrieve graph nodes: {str(e)}"
         )
 
 
@@ -509,7 +519,9 @@ async def get_graph_edges(
     request: Request,
     project_id: str = Query(..., description="Project identifier"),
     limit: int = Query(default=100, ge=1, le=1000, description="Max edges to return"),
-    relation: Optional[str] = Query(default=None, description="Filter by relation type")
+    relation: Optional[str] = Query(
+        default=None, description="Filter by relation type"
+    ),
 ):
     """
     Retrieve graph edges for a project.
@@ -544,7 +556,7 @@ async def get_graph_edges(
                     tenant_id,
                     project_id,
                     relation,
-                    limit
+                    limit,
                 )
             else:
                 edges = await conn.fetch(
@@ -557,31 +569,27 @@ async def get_graph_edges(
                     """,
                     tenant_id,
                     project_id,
-                    limit
+                    limit,
                 )
 
             return [
                 GraphEdgeResponse(
-                    id=str(edge['id']),
-                    source_node_id=str(edge['source_node_id']),
-                    target_node_id=str(edge['target_node_id']),
-                    relation=edge['relation'],
-                    properties=edge['properties'],
-                    created_at=str(edge['created_at'])
+                    id=str(edge["id"]),
+                    source_node_id=str(edge["source_node_id"]),
+                    target_node_id=str(edge["target_node_id"]),
+                    relation=edge["relation"],
+                    properties=edge["properties"],
+                    created_at=str(edge["created_at"]),
                 )
                 for edge in edges
             ]
 
     except Exception as e:
         logger.exception(
-            "get_edges_failed",
-            tenant_id=tenant_id,
-            project_id=project_id,
-            error=str(e)
+            "get_edges_failed", tenant_id=tenant_id, project_id=project_id, error=str(e)
         )
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to retrieve graph edges: {str(e)}"
+            status_code=500, detail=f"Failed to retrieve graph edges: {str(e)}"
         )
 
 
@@ -589,7 +597,7 @@ async def get_graph_edges(
 async def query_knowledge_graph(
     req: GraphSearchRequest,
     request: Request,
-    hybrid_search: HybridSearchService = Depends(get_hybrid_search_service)
+    hybrid_search: HybridSearchService = Depends(get_hybrid_search_service),
 ):
     """
     Advanced knowledge graph search with hybrid retrieval.
@@ -627,7 +635,7 @@ async def query_knowledge_graph(
     except ValueError:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid traversal_strategy. Must be 'bfs' or 'dfs', got '{req.traversal_strategy}'"
+            detail=f"Invalid traversal_strategy. Must be 'bfs' or 'dfs', got '{req.traversal_strategy}'",
         )
 
     logger.info(
@@ -636,7 +644,7 @@ async def query_knowledge_graph(
         project_id=req.project_id,
         query=req.query,
         graph_depth=req.graph_depth,
-        strategy=strategy.value
+        strategy=strategy.value,
     )
 
     try:
@@ -649,7 +657,7 @@ async def query_knowledge_graph(
             graph_depth=req.graph_depth,
             traversal_strategy=strategy,
             use_graph=True,
-            filters=req.filters
+            filters=req.filters,
         )
 
         logger.info(
@@ -658,7 +666,7 @@ async def query_knowledge_graph(
             project_id=req.project_id,
             vector_results=len(result.vector_matches),
             graph_nodes=len(result.graph_nodes),
-            graph_edges=len(result.graph_edges)
+            graph_edges=len(result.graph_edges),
         )
 
         # Update metrics
@@ -671,12 +679,9 @@ async def query_knowledge_graph(
             "graph_query_failed",
             tenant_id=tenant_id,
             project_id=req.project_id,
-            error=str(e)
+            error=str(e),
         )
-        raise HTTPException(
-            status_code=500,
-            detail=f"Graph query failed: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Graph query failed: {str(e)}")
 
 
 @router.get("/subgraph", response_model=GraphQueryResponse)
@@ -685,7 +690,7 @@ async def get_subgraph(
     project_id: str = Query(..., description="Project identifier"),
     node_ids: str = Query(..., description="Comma-separated node IDs to start from"),
     depth: int = Query(default=1, ge=1, le=5, description="Traversal depth"),
-    hybrid_search: HybridSearchService = Depends(get_hybrid_search_service)
+    hybrid_search: HybridSearchService = Depends(get_hybrid_search_service),
 ):
     """
     Retrieve a subgraph starting from specific nodes.
@@ -723,7 +728,7 @@ async def get_subgraph(
         tenant_id=tenant_id,
         project_id=project_id,
         start_nodes=start_nodes,
-        depth=depth
+        depth=depth,
     )
 
     try:
@@ -734,7 +739,7 @@ async def get_subgraph(
             start_node_ids=start_nodes,
             tenant_id=tenant_id,
             project_id=project_id,
-            max_depth=depth
+            max_depth=depth,
         )
 
         # Convert to response format
@@ -748,17 +753,19 @@ async def get_subgraph(
                     FROM knowledge_graph_nodes
                     WHERE id = $1::uuid
                     """,
-                    node.id
+                    node.id,
                 )
 
                 if node_data:
-                    node_responses.append(GraphNodeResponse(
-                        id=str(node_data['id']),
-                        node_id=node_data['node_id'],
-                        label=node_data['label'],
-                        properties=node_data['properties'],
-                        created_at=str(node_data['created_at'])
-                    ))
+                    node_responses.append(
+                        GraphNodeResponse(
+                            id=str(node_data["id"]),
+                            node_id=node_data["node_id"],
+                            label=node_data["label"],
+                            properties=node_data["properties"],
+                            created_at=str(node_data["created_at"]),
+                        )
+                    )
 
         edge_responses = []
         async with request.app.state.pool.acquire() as conn:
@@ -771,47 +778,43 @@ async def get_subgraph(
                     WHERE source_node_id = $1::uuid AND target_node_id = $2::uuid
                     """,
                     edge.source_id,
-                    edge.target_id
+                    edge.target_id,
                 )
 
                 if edge_data:
-                    edge_responses.append(GraphEdgeResponse(
-                        id=str(edge_data['id']),
-                        source_node_id=str(edge_data['source_node_id']),
-                        target_node_id=str(edge_data['target_node_id']),
-                        relation=edge_data['relation'],
-                        properties=edge_data['properties'],
-                        created_at=str(edge_data['created_at'])
-                    ))
+                    edge_responses.append(
+                        GraphEdgeResponse(
+                            id=str(edge_data["id"]),
+                            source_node_id=str(edge_data["source_node_id"]),
+                            target_node_id=str(edge_data["target_node_id"]),
+                            relation=edge_data["relation"],
+                            properties=edge_data["properties"],
+                            created_at=str(edge_data["created_at"]),
+                        )
+                    )
 
         statistics = {
             "start_nodes": len(start_nodes),
             "depth": depth,
             "nodes_found": len(node_responses),
-            "edges_found": len(edge_responses)
+            "edges_found": len(edge_responses),
         }
 
         logger.info(
             "subgraph_retrieved",
             tenant_id=tenant_id,
             project_id=project_id,
-            statistics=statistics
+            statistics=statistics,
         )
 
         return GraphQueryResponse(
-            nodes=node_responses,
-            edges=edge_responses,
-            statistics=statistics
+            nodes=node_responses, edges=edge_responses, statistics=statistics
         )
 
     except Exception as e:
         logger.exception(
-            "subgraph_failed",
-            tenant_id=tenant_id,
-            project_id=project_id,
-            error=str(e)
+            "subgraph_failed", tenant_id=tenant_id, project_id=project_id, error=str(e)
         )
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to retrieve subgraph: {str(e)}"
+            status_code=500, detail=f"Failed to retrieve subgraph: {str(e)}"
         )

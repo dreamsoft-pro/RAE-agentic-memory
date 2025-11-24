@@ -1,12 +1,15 @@
-from pydantic_settings import BaseSettings
-from pydantic import model_validator, ConfigDict
 import os
+
+from pydantic import ConfigDict, model_validator
+from pydantic_settings import BaseSettings
+
 
 class Settings(BaseSettings):
     """
     Configuration settings for the Memory API service.
     Settings are loaded from environment variables and/or a .env file.
     """
+
     POSTGRES_HOST: str = "localhost"
     POSTGRES_DB: str = "memory"
     POSTGRES_USER: str = "memory"
@@ -30,17 +33,17 @@ class Settings(BaseSettings):
     RAE_VECTOR_BACKEND: str = "qdrant"
     ONNX_EMBEDDER_PATH: str | None = None
 
-    @model_validator(mode='after')
+    @model_validator(mode="after")
     def validate_vector_backend(self):
         """Backward compatibility: Support legacy VECTOR_STORE_BACKEND variable"""
-        if os.getenv('VECTOR_STORE_BACKEND') and not os.getenv('RAE_VECTOR_BACKEND'):
-            self.RAE_VECTOR_BACKEND = os.getenv('VECTOR_STORE_BACKEND')
+        if os.getenv("VECTOR_STORE_BACKEND") and not os.getenv("RAE_VECTOR_BACKEND"):
+            self.RAE_VECTOR_BACKEND = os.getenv("VECTOR_STORE_BACKEND")
         return self
-    
+
     # --- Security Settings ---
     OAUTH_ENABLED: bool = True
-    OAUTH_DOMAIN: str = "" # e.g., "your-tenant.us.auth0.com"
-    OAUTH_AUDIENCE: str = "" # e.g., "https://yourapi.com"
+    OAUTH_DOMAIN: str = ""  # e.g., "your-tenant.us.auth0.com"
+    OAUTH_AUDIENCE: str = ""  # e.g., "https://yourapi.com"
     TENANCY_ENABLED: bool = True
     API_KEY: str = "secret"
 
@@ -56,7 +59,7 @@ class Settings(BaseSettings):
 
     # CORS
     ALLOWED_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:8501"]
-    
+
     # --- LLM Provider API Keys ---
     # These are loaded from environment variables automatically by pydantic-settings.
     # Add any new provider keys here for awareness, even if not defined as a field.
@@ -64,11 +67,11 @@ class Settings(BaseSettings):
     # MISTRAL_API_KEY: str | None = None
     # DEEPSEEK_API_KEY: str | None = None
     # DASHSCOPE_API_KEY: str | None = None (for Qwen)
-    
+
     # Celery settings
     CELERY_BROKER_URL: str = "redis://localhost:6379/1"
     CELERY_RESULT_BACKEND: str = "redis://localhost:6379/2"
-    
+
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"
 
@@ -80,9 +83,7 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "WARNING"  # For external libraries (uvicorn, asyncpg, etc.)
     RAE_APP_LOG_LEVEL: str = "INFO"  # For RAE application logs
 
-    model_config = ConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8"
-    )
+    model_config = ConfigDict(env_file=".env", env_file_encoding="utf-8")
+
 
 settings = Settings()

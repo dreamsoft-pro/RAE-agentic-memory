@@ -4,17 +4,16 @@ Simplified Reflection Engine Tests
 Tests the actual reflection pipeline API with proper mocks.
 """
 
-import pytest
 from datetime import datetime
-from uuid import uuid4
-import numpy as np
 from unittest.mock import AsyncMock, Mock
+from uuid import uuid4
 
-from apps.memory_api.services.reflection_pipeline import ReflectionPipeline
+import numpy as np
+import pytest
+
 from apps.memory_api.models.reflection_models import (
-    GenerateReflectionRequest,
-    ReflectionType
-)
+    GenerateReflectionRequest, ReflectionType)
+from apps.memory_api.services.reflection_pipeline import ReflectionPipeline
 
 
 @pytest.fixture
@@ -33,15 +32,15 @@ def sample_memories():
             "content": "Machine learning is a subset of artificial intelligence",
             "importance": 0.8,
             "embedding": np.random.rand(384).tolist(),
-            "created_at": datetime.now()
+            "created_at": datetime.now(),
         },
         {
             "id": uuid4(),
             "content": "Deep learning uses neural networks with multiple layers",
             "importance": 0.85,
             "embedding": np.random.rand(384).tolist(),
-            "created_at": datetime.now()
-        }
+            "created_at": datetime.now(),
+        },
     ]
 
 
@@ -64,30 +63,35 @@ async def test_generate_reflections_basic(mock_pool, sample_memories):
     mock_conn.fetchrow = AsyncMock(return_value={"id": uuid4()})
     mock_conn.execute = AsyncMock()
 
-    mock_pool.acquire = AsyncMock(return_value=AsyncMock(
-        __aenter__=AsyncMock(return_value=mock_conn),
-        __aexit__=AsyncMock()
-    ))
+    mock_pool.acquire = AsyncMock(
+        return_value=AsyncMock(
+            __aenter__=AsyncMock(return_value=mock_conn), __aexit__=AsyncMock()
+        )
+    )
 
     pipeline = ReflectionPipeline(mock_pool)
 
     # Mock LLM provider
     pipeline.llm_provider.generate = AsyncMock(return_value="Test insight")
-    pipeline.llm_provider.generate_structured = AsyncMock(return_value={
-        "novelty": 0.8,
-        "importance": 0.9,
-        "utility": 0.85,
-        "confidence": 0.9
-    })
+    pipeline.llm_provider.generate_structured = AsyncMock(
+        return_value={
+            "novelty": 0.8,
+            "importance": 0.9,
+            "utility": 0.85,
+            "confidence": 0.9,
+        }
+    )
 
     # Mock ML client
-    pipeline.ml_client.get_embedding = AsyncMock(return_value=np.random.rand(384).tolist())
+    pipeline.ml_client.get_embedding = AsyncMock(
+        return_value=np.random.rand(384).tolist()
+    )
 
     request = GenerateReflectionRequest(
         tenant_id="test-tenant",
         project="test-project",
         reflection_type=ReflectionType.INSIGHT,
-        max_memories=10
+        max_memories=10,
     )
 
     reflections, stats = await pipeline.generate_reflections(request)
@@ -103,17 +107,18 @@ async def test_generate_reflections_returns_stats(mock_pool):
     mock_conn = AsyncMock()
     mock_conn.fetch = AsyncMock(return_value=[])
 
-    mock_pool.acquire = AsyncMock(return_value=AsyncMock(
-        __aenter__=AsyncMock(return_value=mock_conn),
-        __aexit__=AsyncMock()
-    ))
+    mock_pool.acquire = AsyncMock(
+        return_value=AsyncMock(
+            __aenter__=AsyncMock(return_value=mock_conn), __aexit__=AsyncMock()
+        )
+    )
 
     pipeline = ReflectionPipeline(mock_pool)
 
     request = GenerateReflectionRequest(
         tenant_id="test-tenant",
         project="test-project",
-        reflection_type=ReflectionType.INSIGHT
+        reflection_type=ReflectionType.INSIGHT,
     )
 
     reflections, stats = await pipeline.generate_reflections(request)

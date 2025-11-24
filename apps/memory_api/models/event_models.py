@@ -8,19 +8,21 @@ This module defines models for the event trigger system including:
 - Automation chains
 """
 
-from typing import List, Optional, Dict, Any, Union
-from pydantic import BaseModel, Field, ConfigDict
-from enum import Enum
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
 
+from pydantic import BaseModel, ConfigDict, Field
 
 # ============================================================================
 # Enums
 # ============================================================================
 
+
 class EventType(str, Enum):
     """Types of system events"""
+
     MEMORY_CREATED = "memory_created"
     MEMORY_UPDATED = "memory_updated"
     MEMORY_DELETED = "memory_deleted"
@@ -42,6 +44,7 @@ class EventType(str, Enum):
 
 class ConditionOperator(str, Enum):
     """Operators for condition evaluation"""
+
     EQUALS = "equals"
     NOT_EQUALS = "not_equals"
     GREATER_THAN = "greater_than"
@@ -59,6 +62,7 @@ class ConditionOperator(str, Enum):
 
 class ActionType(str, Enum):
     """Types of automated actions"""
+
     SEND_NOTIFICATION = "send_notification"
     SEND_EMAIL = "send_email"
     SEND_WEBHOOK = "send_webhook"
@@ -82,6 +86,7 @@ class ActionType(str, Enum):
 
 class TriggerStatus(str, Enum):
     """Status of trigger"""
+
     ACTIVE = "active"
     INACTIVE = "inactive"
     PAUSED = "paused"
@@ -90,6 +95,7 @@ class TriggerStatus(str, Enum):
 
 class ExecutionStatus(str, Enum):
     """Status of action execution"""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -101,6 +107,7 @@ class ExecutionStatus(str, Enum):
 # Core Event Models
 # ============================================================================
 
+
 class Event(BaseModel):
     """
     A system event that can trigger automation rules.
@@ -108,6 +115,7 @@ class Event(BaseModel):
     Events are emitted by various system components and evaluated
     against trigger conditions.
     """
+
     event_id: UUID
     event_type: EventType
 
@@ -117,7 +125,9 @@ class Event(BaseModel):
     source_service: str = Field(..., description="Service that emitted the event")
 
     # Event data
-    payload: Dict[str, Any] = Field(default_factory=dict, description="Event-specific data")
+    payload: Dict[str, Any] = Field(
+        default_factory=dict, description="Event-specific data"
+    )
 
     # Context
     user_id: Optional[str] = None
@@ -138,12 +148,14 @@ class Event(BaseModel):
 # Trigger Condition Models
 # ============================================================================
 
+
 class Condition(BaseModel):
     """
     A single condition in a trigger rule.
 
     Evaluates a field against a value using an operator.
     """
+
     field: str = Field(..., description="Field to evaluate (supports dot notation)")
     operator: ConditionOperator
     value: Any = Field(..., description="Value to compare against")
@@ -159,6 +171,7 @@ class ConditionGroup(BaseModel):
 
     Supports nested condition groups for complex logic.
     """
+
     operator: str = Field(..., description="'AND' or 'OR'")
     conditions: List[Union[Condition, "ConditionGroup"]] = Field(default_factory=list)
 
@@ -176,14 +189,21 @@ class TriggerCondition(BaseModel):
 
     Defines when a trigger should fire.
     """
-    event_types: List[EventType] = Field(..., min_length=1, description="Events to match")
+
+    event_types: List[EventType] = Field(
+        ..., min_length=1, description="Events to match"
+    )
 
     # Condition logic (optional - fires on any matching event if not specified)
     condition_group: Optional[ConditionGroup] = None
 
     # Time-based conditions
-    time_window_seconds: Optional[int] = Field(None, description="Only fire within time window")
-    cooldown_seconds: Optional[int] = Field(None, description="Min time between firings")
+    time_window_seconds: Optional[int] = Field(
+        None, description="Only fire within time window"
+    )
+    cooldown_seconds: Optional[int] = Field(
+        None, description="Min time between firings"
+    )
 
     # Rate limiting
     max_executions_per_hour: Optional[int] = None
@@ -193,12 +213,14 @@ class TriggerCondition(BaseModel):
 # Action Models
 # ============================================================================
 
+
 class ActionConfig(BaseModel):
     """
     Configuration for an automated action.
 
     Defines what should happen when a trigger fires.
     """
+
     action_type: ActionType
 
     # Action-specific configuration
@@ -223,6 +245,7 @@ class WorkflowStep(BaseModel):
 
     Workflows allow multiple actions to be executed in sequence.
     """
+
     step_id: str = Field(..., max_length=100)
     step_name: str
     description: Optional[str] = None
@@ -231,7 +254,9 @@ class WorkflowStep(BaseModel):
     action: ActionConfig
 
     # Dependencies
-    depends_on: List[str] = Field(default_factory=list, description="Step IDs that must complete first")
+    depends_on: List[str] = Field(
+        default_factory=list, description="Step IDs that must complete first"
+    )
 
     # Conditional execution
     skip_if: Optional[ConditionGroup] = None
@@ -246,6 +271,7 @@ class Workflow(BaseModel):
 
     Supports sequential and parallel execution with dependencies.
     """
+
     workflow_id: UUID
     workflow_name: str
     description: Optional[str] = None
@@ -255,7 +281,9 @@ class Workflow(BaseModel):
 
     # Execution mode
     stop_on_failure: bool = Field(True, description="Stop if any step fails")
-    parallel_execution: bool = Field(False, description="Execute steps in parallel when possible")
+    parallel_execution: bool = Field(
+        False, description="Execute steps in parallel when possible"
+    )
 
     # Metadata
     tags: List[str] = Field(default_factory=list)
@@ -270,12 +298,14 @@ class Workflow(BaseModel):
 # Trigger Definition Models
 # ============================================================================
 
+
 class TriggerRule(BaseModel):
     """
     Complete trigger rule definition.
 
     Defines conditions and actions for event-based automation.
     """
+
     trigger_id: UUID
     tenant_id: str
     project_id: str
@@ -324,12 +354,14 @@ class TriggerRule(BaseModel):
 # Execution Models
 # ============================================================================
 
+
 class ActionExecution(BaseModel):
     """
     Record of an action execution.
 
     Tracks execution history and results for debugging and auditing.
     """
+
     execution_id: UUID
     trigger_id: UUID
 
@@ -370,6 +402,7 @@ class TriggerExecutionSummary(BaseModel):
 
     Provides statistics for monitoring and debugging.
     """
+
     trigger_id: UUID
     trigger_name: str
 
@@ -397,8 +430,10 @@ class TriggerExecutionSummary(BaseModel):
 # Request/Response Models
 # ============================================================================
 
+
 class CreateTriggerRequest(BaseModel):
     """Request to create a trigger rule"""
+
     tenant_id: str
     project_id: str
     rule_name: str = Field(..., max_length=200)
@@ -416,12 +451,14 @@ class CreateTriggerRequest(BaseModel):
 
 class CreateTriggerResponse(BaseModel):
     """Response from trigger creation"""
+
     trigger_id: UUID
     message: str = "Trigger rule created successfully"
 
 
 class UpdateTriggerRequest(BaseModel):
     """Request to update a trigger"""
+
     rule_name: Optional[str] = None
     description: Optional[str] = None
     condition: Optional[TriggerCondition] = None
@@ -433,6 +470,7 @@ class UpdateTriggerRequest(BaseModel):
 
 class EmitEventRequest(BaseModel):
     """Request to emit a custom event"""
+
     tenant_id: str
     project_id: str
     event_type: EventType
@@ -443,6 +481,7 @@ class EmitEventRequest(BaseModel):
 
 class EmitEventResponse(BaseModel):
     """Response from event emission"""
+
     event_id: UUID
     triggers_matched: int = Field(0, ge=0)
     actions_queued: int = Field(0, ge=0)
@@ -451,6 +490,7 @@ class EmitEventResponse(BaseModel):
 
 class GetTriggerExecutionsRequest(BaseModel):
     """Request to get trigger execution history"""
+
     trigger_id: UUID
     limit: int = Field(100, gt=0, le=1000)
     status_filter: Optional[ExecutionStatus] = None
@@ -460,6 +500,7 @@ class GetTriggerExecutionsRequest(BaseModel):
 
 class GetTriggerExecutionsResponse(BaseModel):
     """Response with trigger executions"""
+
     executions: List[ActionExecution]
     total_count: int
     summary: TriggerExecutionSummary
@@ -467,6 +508,7 @@ class GetTriggerExecutionsResponse(BaseModel):
 
 class CreateWorkflowRequest(BaseModel):
     """Request to create a workflow"""
+
     tenant_id: str
     project_id: str
     workflow_name: str
@@ -479,6 +521,7 @@ class CreateWorkflowRequest(BaseModel):
 
 class CreateWorkflowResponse(BaseModel):
     """Response from workflow creation"""
+
     workflow_id: UUID
     message: str = "Workflow created successfully"
 
@@ -487,16 +530,20 @@ class CreateWorkflowResponse(BaseModel):
 # Pre-configured Trigger Templates
 # ============================================================================
 
+
 class TriggerTemplate(BaseModel):
     """
     Pre-configured trigger template for common use cases.
 
     Templates can be instantiated with minimal configuration.
     """
+
     template_id: str = Field(..., max_length=100)
     template_name: str
     description: str
-    category: str = Field(..., description="Template category (e.g., 'quality', 'automation')")
+    category: str = Field(
+        ..., description="Template category (e.g., 'quality', 'automation')"
+    )
 
     # Template parameters
     parameters: Dict[str, Any] = Field(default_factory=dict)
@@ -520,16 +567,11 @@ DEFAULT_TEMPLATES = {
         category="automation",
         parameters={"memory_threshold": 50},
         required_parameters=["memory_threshold"],
-        default_condition=TriggerCondition(
-            event_types=[EventType.MEMORY_CREATED]
-        ),
+        default_condition=TriggerCondition(event_types=[EventType.MEMORY_CREATED]),
         default_actions=[
-            ActionConfig(
-                action_type=ActionType.GENERATE_REFLECTION,
-                config={}
-            )
+            ActionConfig(action_type=ActionType.GENERATE_REFLECTION, config={})
         ],
-        use_cases=["Periodic knowledge consolidation", "Automatic insight generation"]
+        use_cases=["Periodic knowledge consolidation", "Automatic insight generation"],
     ),
     "quality_alert": TriggerTemplate(
         template_id="quality_alert",
@@ -538,15 +580,12 @@ DEFAULT_TEMPLATES = {
         category="quality",
         parameters={"min_quality_score": 0.7},
         required_parameters=["min_quality_score"],
-        default_condition=TriggerCondition(
-            event_types=[EventType.QUALITY_DEGRADED]
-        ),
+        default_condition=TriggerCondition(event_types=[EventType.QUALITY_DEGRADED]),
         default_actions=[
             ActionConfig(
-                action_type=ActionType.SEND_NOTIFICATION,
-                config={"channel": "email"}
+                action_type=ActionType.SEND_NOTIFICATION, config={"channel": "email"}
             )
         ],
-        use_cases=["Quality monitoring", "Alert on degradation"]
-    )
+        use_cases=["Quality monitoring", "Alert on degradation"],
+    ),
 }

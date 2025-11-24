@@ -10,22 +10,18 @@ Tests cover:
 - Circuit breaker for actions
 """
 
-import pytest
 from datetime import datetime, timezone
-from uuid import uuid4
 from unittest.mock import AsyncMock, patch
+from uuid import uuid4
 
+import pytest
+
+from apps.memory_api.models.event_models import (ActionType, Condition,
+                                                 ConditionGroup,
+                                                 ConditionOperator, Event,
+                                                 EventType, TriggerRule,
+                                                 TriggerStatus)
 from apps.memory_api.services.rules_engine import RulesEngine
-from apps.memory_api.models.event_models import (
-    Event,
-    EventType,
-    Condition,
-    ConditionGroup,
-    ConditionOperator,
-    ActionType,
-    TriggerRule,
-    TriggerStatus
-)
 
 
 @pytest.fixture
@@ -46,7 +42,7 @@ def sample_event():
         tenant_id="test",
         project_id="test",
         source_service="api",
-        payload={"importance": 0.9, "memory_count": 55}
+        payload={"importance": 0.9, "memory_count": 55},
     )
 
 
@@ -67,9 +63,7 @@ async def test_process_event(rules_engine, sample_event, mock_pool):
 async def test_evaluate_simple_condition(rules_engine):
     """Test simple condition evaluation"""
     condition = Condition(
-        field="payload.importance",
-        operator=ConditionOperator.GREATER_THAN,
-        value=0.8
+        field="payload.importance", operator=ConditionOperator.GREATER_THAN, value=0.8
     )
 
     data = {"payload": {"importance": 0.9}}
@@ -84,9 +78,17 @@ async def test_evaluate_condition_group_and(rules_engine):
     group = ConditionGroup(
         operator="AND",
         conditions=[
-            Condition(field="payload.importance", operator=ConditionOperator.GREATER_THAN, value=0.8),
-            Condition(field="payload.memory_count", operator=ConditionOperator.GREATER_EQUAL, value=50)
-        ]
+            Condition(
+                field="payload.importance",
+                operator=ConditionOperator.GREATER_THAN,
+                value=0.8,
+            ),
+            Condition(
+                field="payload.memory_count",
+                operator=ConditionOperator.GREATER_EQUAL,
+                value=50,
+            ),
+        ],
     )
 
     data = {"payload": {"importance": 0.9, "memory_count": 55}}
@@ -101,9 +103,17 @@ async def test_evaluate_condition_group_or(rules_engine):
     group = ConditionGroup(
         operator="OR",
         conditions=[
-            Condition(field="payload.importance", operator=ConditionOperator.GREATER_THAN, value=0.95),
-            Condition(field="payload.memory_count", operator=ConditionOperator.GREATER_EQUAL, value=50)
-        ]
+            Condition(
+                field="payload.importance",
+                operator=ConditionOperator.GREATER_THAN,
+                value=0.95,
+            ),
+            Condition(
+                field="payload.memory_count",
+                operator=ConditionOperator.GREATER_EQUAL,
+                value=50,
+            ),
+        ],
     )
 
     data = {"payload": {"importance": 0.7, "memory_count": 55}}
@@ -118,17 +128,29 @@ async def test_nested_condition_groups(rules_engine):
     group = ConditionGroup(
         operator="AND",
         conditions=[
-            Condition(field="payload.importance", operator=ConditionOperator.GREATER_THAN, value=0.5)
+            Condition(
+                field="payload.importance",
+                operator=ConditionOperator.GREATER_THAN,
+                value=0.5,
+            )
         ],
         groups=[
             ConditionGroup(
                 operator="OR",
                 conditions=[
-                    Condition(field="payload.type", operator=ConditionOperator.EQUALS, value="critical"),
-                    Condition(field="payload.priority", operator=ConditionOperator.GREATER_THAN, value=7)
-                ]
+                    Condition(
+                        field="payload.type",
+                        operator=ConditionOperator.EQUALS,
+                        value="critical",
+                    ),
+                    Condition(
+                        field="payload.priority",
+                        operator=ConditionOperator.GREATER_THAN,
+                        value=7,
+                    ),
+                ],
             )
-        ]
+        ],
     )
 
     data = {"payload": {"importance": 0.8, "type": "critical", "priority": 5}}
@@ -141,12 +163,7 @@ async def test_nested_condition_groups(rules_engine):
 @pytest.mark.asyncio
 async def test_condition_operators(rules_engine):
     """Test all condition operators"""
-    data = {
-        "value": 10,
-        "text": "hello world",
-        "items": [1, 2, 3],
-        "null_value": None
-    }
+    data = {"value": 10, "text": "hello world", "items": [1, 2, 3], "null_value": None}
 
     # EQUALS
     assert rules_engine._evaluate_condition(
@@ -155,17 +172,20 @@ async def test_condition_operators(rules_engine):
 
     # CONTAINS
     assert rules_engine._evaluate_condition(
-        Condition(field="text", operator=ConditionOperator.CONTAINS, value="world"), data
+        Condition(field="text", operator=ConditionOperator.CONTAINS, value="world"),
+        data,
     )
 
     # IN
     assert rules_engine._evaluate_condition(
-        Condition(field="value", operator=ConditionOperator.IN, value=[10, 20, 30]), data
+        Condition(field="value", operator=ConditionOperator.IN, value=[10, 20, 30]),
+        data,
     )
 
     # IS_NULL
     assert rules_engine._evaluate_condition(
-        Condition(field="null_value", operator=ConditionOperator.IS_NULL, value=None), data
+        Condition(field="null_value", operator=ConditionOperator.IS_NULL, value=None),
+        data,
     )
 
 
@@ -181,13 +201,12 @@ async def test_rate_limiting(rules_engine, mock_pool):
         project_id="test",
         rule_name="test",
         condition=TriggerCondition(
-            event_types=[EventType.MEMORY_CREATED],
-            max_executions_per_hour=5
+            event_types=[EventType.MEMORY_CREATED], max_executions_per_hour=5
         ),
         actions=[],
         executions_this_hour=5,  # Already at limit
         hour_window_start=datetime.now(timezone.utc),
-        created_by="test"
+        created_by="test",
     )
 
     # Should be rate limited (returns False when at limit)
@@ -201,6 +220,7 @@ async def test_rate_limiting(rules_engine, mock_pool):
 async def test_cooldown_period(rules_engine):
     """Test cooldown period between executions"""
     from datetime import timedelta
+
     from apps.memory_api.models.event_models import TriggerCondition
 
     trigger = TriggerRule(
@@ -209,12 +229,12 @@ async def test_cooldown_period(rules_engine):
         project_id="test",
         rule_name="test",
         condition=TriggerCondition(
-            event_types=[EventType.MEMORY_CREATED],
-            cooldown_seconds=60
+            event_types=[EventType.MEMORY_CREATED], cooldown_seconds=60
         ),
         actions=[],
-        last_executed_at=datetime.now(timezone.utc) - timedelta(seconds=30),  # Executed 30s ago
-        created_by="test"
+        last_executed_at=datetime.now(timezone.utc)
+        - timedelta(seconds=30),  # Executed 30s ago
+        created_by="test",
     )
 
     # Should be in cooldown (don't await - _check_cooldown is not async)
@@ -226,7 +246,8 @@ async def test_cooldown_period(rules_engine):
 @pytest.mark.asyncio
 async def test_execute_action(rules_engine, sample_event, mock_pool):
     """Test action execution"""
-    from apps.memory_api.models.event_models import ActionConfig, TriggerCondition
+    from apps.memory_api.models.event_models import (ActionConfig,
+                                                     TriggerCondition)
 
     trigger = TriggerRule(
         trigger_id=uuid4(),
@@ -235,19 +256,17 @@ async def test_execute_action(rules_engine, sample_event, mock_pool):
         rule_name="test",
         condition=TriggerCondition(event_types=[EventType.MEMORY_CREATED]),
         actions=[],
-        created_by="test"
+        created_by="test",
     )
 
     action_config = ActionConfig(
         action_type=ActionType.SEND_NOTIFICATION,
-        config={"channel": "email", "message": "Test"}
+        config={"channel": "email", "message": "Test"},
     )
 
     mock_pool.execute = AsyncMock()
 
-    result = await rules_engine._execute_action(
-        trigger, sample_event, action_config
-    )
+    result = await rules_engine._execute_action(trigger, sample_event, action_config)
 
     # _execute_action returns ActionExecution object
     assert result is not None
@@ -257,34 +276,29 @@ async def test_execute_action(rules_engine, sample_event, mock_pool):
 @pytest.mark.asyncio
 async def test_workflow_execution(rules_engine, mock_pool):
     """Test workflow model and step dependencies"""
-    from apps.memory_api.models.event_models import (
-        WorkflowStep,
-        ActionConfig,
-        ActionType,
-        CreateWorkflowRequest
-    )
+    from apps.memory_api.models.event_models import (ActionConfig, ActionType,
+                                                     CreateWorkflowRequest,
+                                                     WorkflowStep)
 
     # Create workflow with multiple steps
     step1 = WorkflowStep(
         step_id="step_1",
         step_name="Generate Reflection",
         action=ActionConfig(
-            action_type=ActionType.GENERATE_REFLECTION,
-            config={"model": "gpt-4"}
+            action_type=ActionType.GENERATE_REFLECTION, config={"model": "gpt-4"}
         ),
         depends_on=[],
-        order=1
+        order=1,
     )
 
     step2 = WorkflowStep(
         step_id="step_2",
         step_name="Extract Semantics",
         action=ActionConfig(
-            action_type=ActionType.EXTRACT_SEMANTICS,
-            config={"threshold": 0.8}
+            action_type=ActionType.EXTRACT_SEMANTICS, config={"threshold": 0.8}
         ),
         depends_on=["step_1"],  # Depends on step 1
-        order=2
+        order=2,
     )
 
     step3 = WorkflowStep(
@@ -292,10 +306,10 @@ async def test_workflow_execution(rules_engine, mock_pool):
         step_name="Send Notification",
         action=ActionConfig(
             action_type=ActionType.SEND_NOTIFICATION,
-            config={"channel": "slack", "message": "Processing complete"}
+            config={"channel": "slack", "message": "Processing complete"},
         ),
         depends_on=["step_1", "step_2"],  # Depends on both steps
-        order=3
+        order=3,
     )
 
     # Create workflow request
@@ -307,7 +321,7 @@ async def test_workflow_execution(rules_engine, mock_pool):
         steps=[step1, step2, step3],
         stop_on_failure=True,
         parallel_execution=False,
-        created_by="test_user"
+        created_by="test_user",
     )
 
     # Verify workflow structure

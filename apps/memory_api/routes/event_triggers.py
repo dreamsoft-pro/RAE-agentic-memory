@@ -9,28 +9,26 @@ This module provides FastAPI routes for event trigger operations including:
 - Trigger templates
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Request
-from typing import List
-import structlog
-from uuid import uuid4
 from datetime import datetime, timedelta, timezone
+from typing import List
+from uuid import uuid4
+
+import structlog
+from fastapi import APIRouter, Depends, HTTPException, Request
+
+from apps.memory_api.models.event_models import (DEFAULT_TEMPLATES,
+                                                 CreateTriggerRequest,
+                                                 CreateTriggerResponse,
+                                                 CreateWorkflowRequest,
+                                                 CreateWorkflowResponse,
+                                                 EmitEventRequest,
+                                                 EmitEventResponse, Event,
+                                                 EventType,
+                                                 GetTriggerExecutionsRequest,
+                                                 GetTriggerExecutionsResponse,
+                                                 TriggerRule, TriggerStatus,
+                                                 UpdateTriggerRequest)
 from apps.memory_api.services.rules_engine import RulesEngine
-from apps.memory_api.models.event_models import (
-    CreateTriggerRequest,
-    CreateTriggerResponse,
-    UpdateTriggerRequest,
-    EmitEventRequest,
-    EmitEventResponse,
-    GetTriggerExecutionsRequest,
-    GetTriggerExecutionsResponse,
-    CreateWorkflowRequest,
-    CreateWorkflowResponse,
-    TriggerRule,
-    Event,
-    EventType,
-    TriggerStatus,
-    DEFAULT_TEMPLATES
-)
 
 logger = structlog.get_logger(__name__)
 
@@ -41,6 +39,7 @@ router = APIRouter(prefix="/v1/triggers", tags=["Event Triggers"])
 # Dependency Injection
 # ============================================================================
 
+
 async def get_pool(request: Request):
     """Get database connection pool from app state"""
     return request.app.state.pool
@@ -50,11 +49,9 @@ async def get_pool(request: Request):
 # Trigger Management
 # ============================================================================
 
+
 @router.post("/create", response_model=CreateTriggerResponse, status_code=201)
-async def create_trigger(
-    request: CreateTriggerRequest,
-    pool=Depends(get_pool)
-):
+async def create_trigger(request: CreateTriggerRequest, pool=Depends(get_pool)):
     """
     Create a new event trigger rule.
 
@@ -73,7 +70,7 @@ async def create_trigger(
             "trigger_created",
             trigger_id=trigger_id,
             rule_name=request.rule_name,
-            tenant_id=request.tenant_id
+            tenant_id=request.tenant_id,
         )
 
         # In production, would store in database
@@ -81,7 +78,7 @@ async def create_trigger(
 
         return CreateTriggerResponse(
             trigger_id=trigger_id,
-            message=f"Trigger rule '{request.rule_name}' created successfully"
+            message=f"Trigger rule '{request.rule_name}' created successfully",
         )
 
     except Exception as e:
@@ -90,10 +87,7 @@ async def create_trigger(
 
 
 @router.get("/{trigger_id}", response_model=TriggerRule)
-async def get_trigger(
-    trigger_id: str,
-    pool=Depends(get_pool)
-):
+async def get_trigger(trigger_id: str, pool=Depends(get_pool)):
     """Get trigger rule by ID"""
     try:
         from uuid import UUID
@@ -103,7 +97,7 @@ async def get_trigger(
 
         raise HTTPException(
             status_code=404,
-            detail="Trigger not found (database storage not yet implemented)"
+            detail="Trigger not found (database storage not yet implemented)",
         )
 
     except HTTPException:
@@ -115,9 +109,7 @@ async def get_trigger(
 
 @router.put("/{trigger_id}")
 async def update_trigger(
-    trigger_id: str,
-    request: UpdateTriggerRequest,
-    pool=Depends(get_pool)
+    trigger_id: str, request: UpdateTriggerRequest, pool=Depends(get_pool)
 ):
     """
     Update trigger rule configuration.
@@ -137,7 +129,7 @@ async def update_trigger(
         return {
             "trigger_id": trigger_id,
             "message": "Trigger updated successfully",
-            "status": "pending_implementation"
+            "status": "pending_implementation",
         }
 
     except Exception as e:
@@ -146,20 +138,14 @@ async def update_trigger(
 
 
 @router.delete("/{trigger_id}")
-async def delete_trigger(
-    trigger_id: str,
-    pool=Depends(get_pool)
-):
+async def delete_trigger(trigger_id: str, pool=Depends(get_pool)):
     """Delete trigger rule"""
     try:
         logger.info("delete_trigger_requested", trigger_id=trigger_id)
 
         # In production, delete from database
 
-        return {
-            "trigger_id": trigger_id,
-            "message": "Trigger deleted successfully"
-        }
+        return {"trigger_id": trigger_id, "message": "Trigger deleted successfully"}
 
     except Exception as e:
         logger.error("delete_trigger_failed", error=str(e))
@@ -167,10 +153,7 @@ async def delete_trigger(
 
 
 @router.post("/{trigger_id}/enable")
-async def enable_trigger(
-    trigger_id: str,
-    pool=Depends(get_pool)
-):
+async def enable_trigger(trigger_id: str, pool=Depends(get_pool)):
     """Enable a trigger rule"""
     try:
         logger.info("enable_trigger_requested", trigger_id=trigger_id)
@@ -178,7 +161,7 @@ async def enable_trigger(
         return {
             "trigger_id": trigger_id,
             "status": TriggerStatus.ACTIVE,
-            "message": "Trigger enabled"
+            "message": "Trigger enabled",
         }
 
     except Exception as e:
@@ -187,10 +170,7 @@ async def enable_trigger(
 
 
 @router.post("/{trigger_id}/disable")
-async def disable_trigger(
-    trigger_id: str,
-    pool=Depends(get_pool)
-):
+async def disable_trigger(trigger_id: str, pool=Depends(get_pool)):
     """Disable a trigger rule"""
     try:
         logger.info("disable_trigger_requested", trigger_id=trigger_id)
@@ -198,7 +178,7 @@ async def disable_trigger(
         return {
             "trigger_id": trigger_id,
             "status": TriggerStatus.INACTIVE,
-            "message": "Trigger disabled"
+            "message": "Trigger disabled",
         }
 
     except Exception as e:
@@ -212,7 +192,7 @@ async def list_triggers(
     project_id: str,
     status_filter: str = None,
     limit: int = 100,
-    pool=Depends(get_pool)
+    pool=Depends(get_pool),
 ):
     """
     List trigger rules.
@@ -221,9 +201,7 @@ async def list_triggers(
     """
     try:
         logger.info(
-            "list_triggers_requested",
-            tenant_id=tenant_id,
-            project_id=project_id
+            "list_triggers_requested", tenant_id=tenant_id, project_id=project_id
         )
 
         # In production, query database
@@ -231,7 +209,7 @@ async def list_triggers(
         return {
             "triggers": [],
             "total_count": 0,
-            "message": "No triggers found (database storage not yet implemented)"
+            "message": "No triggers found (database storage not yet implemented)",
         }
 
     except Exception as e:
@@ -243,11 +221,9 @@ async def list_triggers(
 # Event Emission
 # ============================================================================
 
+
 @router.post("/events/emit", response_model=EmitEventResponse)
-async def emit_event(
-    request: EmitEventRequest,
-    pool=Depends(get_pool)
-):
+async def emit_event(request: EmitEventRequest, pool=Depends(get_pool)):
     """
     Emit a custom event to trigger automation rules.
 
@@ -266,13 +242,11 @@ async def emit_event(
             source_service="api",
             payload=request.payload,
             tags=request.tags,
-            user_id=request.user_id
+            user_id=request.user_id,
         )
 
         logger.info(
-            "event_emitted",
-            event_id=event.event_id,
-            event_type=event.event_type.value
+            "event_emitted", event_id=event.event_id, event_type=event.event_type.value
         )
 
         # Process event with rules engine
@@ -283,7 +257,7 @@ async def emit_event(
             event_id=event.event_id,
             triggers_matched=result["triggers_matched"],
             actions_queued=result["actions_executed"],
-            message=f"Event processed: {result['triggers_matched']} triggers matched"
+            message=f"Event processed: {result['triggers_matched']} triggers matched",
         )
 
     except Exception as e:
@@ -312,7 +286,7 @@ async def get_event_types():
             "drift_detected": "Distribution drift detected",
             "quality_degraded": "Quality metrics degraded",
             "threshold_exceeded": "Metric threshold exceeded",
-            "schedule_triggered": "Scheduled event fired"
+            "schedule_triggered": "Scheduled event fired",
         }
     }
 
@@ -321,10 +295,10 @@ async def get_event_types():
 # Execution History
 # ============================================================================
 
+
 @router.post("/executions", response_model=GetTriggerExecutionsResponse)
 async def get_trigger_executions(
-    request: GetTriggerExecutionsRequest,
-    pool=Depends(get_pool)
+    request: GetTriggerExecutionsRequest, pool=Depends(get_pool)
 ):
     """
     Get execution history for a trigger.
@@ -334,27 +308,23 @@ async def get_trigger_executions(
     **Use Case:** Debug trigger behavior, monitor automation performance.
     """
     try:
-        logger.info(
-            "get_executions_requested",
-            trigger_id=request.trigger_id
-        )
+        logger.info("get_executions_requested", trigger_id=request.trigger_id)
 
         # In production, query from database
 
-        from apps.memory_api.models.event_models import TriggerExecutionSummary
         from datetime import datetime, timedelta
+
+        from apps.memory_api.models.event_models import TriggerExecutionSummary
 
         summary = TriggerExecutionSummary(
             trigger_id=request.trigger_id,
             trigger_name="Example Trigger",
             period_start=datetime.now(timezone.utc) - timedelta(days=7),
-            period_end=datetime.now(timezone.utc)
+            period_end=datetime.now(timezone.utc),
         )
 
         return GetTriggerExecutionsResponse(
-            executions=[],
-            total_count=0,
-            summary=summary
+            executions=[], total_count=0, summary=summary
         )
 
     except Exception as e:
@@ -366,11 +336,11 @@ async def get_trigger_executions(
 # Workflows
 # ============================================================================
 
-@router.post("/workflows/create", response_model=CreateWorkflowResponse, status_code=201)
-async def create_workflow(
-    request: CreateWorkflowRequest,
-    pool=Depends(get_pool)
-):
+
+@router.post(
+    "/workflows/create", response_model=CreateWorkflowResponse, status_code=201
+)
+async def create_workflow(request: CreateWorkflowRequest, pool=Depends(get_pool)):
     """
     Create a workflow (chain of actions).
 
@@ -388,12 +358,12 @@ async def create_workflow(
             "workflow_created",
             workflow_id=workflow_id,
             workflow_name=request.workflow_name,
-            steps=len(request.steps)
+            steps=len(request.steps),
         )
 
         return CreateWorkflowResponse(
             workflow_id=workflow_id,
-            message=f"Workflow '{request.workflow_name}' created with {len(request.steps)} steps"
+            message=f"Workflow '{request.workflow_name}' created with {len(request.steps)} steps",
         )
 
     except Exception as e:
@@ -402,17 +372,14 @@ async def create_workflow(
 
 
 @router.get("/workflows/{workflow_id}")
-async def get_workflow(
-    workflow_id: str,
-    pool=Depends(get_pool)
-):
+async def get_workflow(workflow_id: str, pool=Depends(get_pool)):
     """Get workflow definition by ID"""
     try:
         logger.info("get_workflow_requested", workflow_id=workflow_id)
 
         raise HTTPException(
             status_code=404,
-            detail="Workflow not found (database storage not yet implemented)"
+            detail="Workflow not found (database storage not yet implemented)",
         )
 
     except HTTPException:
@@ -424,20 +391,13 @@ async def get_workflow(
 
 @router.get("/workflows")
 async def list_workflows(
-    tenant_id: str,
-    project_id: str,
-    limit: int = 100,
-    pool=Depends(get_pool)
+    tenant_id: str, project_id: str, limit: int = 100, pool=Depends(get_pool)
 ):
     """List workflows"""
     try:
         logger.info("list_workflows_requested", tenant_id=tenant_id)
 
-        return {
-            "workflows": [],
-            "total_count": 0,
-            "message": "No workflows found"
-        }
+        return {"workflows": [], "total_count": 0, "message": "No workflows found"}
 
     except Exception as e:
         logger.error("list_workflows_failed", error=str(e))
@@ -447,6 +407,7 @@ async def list_workflows(
 # ============================================================================
 # Templates
 # ============================================================================
+
 
 @router.get("/templates")
 async def get_trigger_templates():
@@ -464,7 +425,7 @@ async def get_trigger_templates():
                 "category": template.category,
                 "parameters": template.parameters,
                 "required_parameters": template.required_parameters,
-                "use_cases": template.use_cases
+                "use_cases": template.use_cases,
             }
             for template in DEFAULT_TEMPLATES.values()
         ]
@@ -477,15 +438,14 @@ async def get_trigger_template(template_id: str):
     try:
         if template_id not in DEFAULT_TEMPLATES:
             raise HTTPException(
-                status_code=404,
-                detail=f"Template '{template_id}' not found"
+                status_code=404, detail=f"Template '{template_id}' not found"
             )
 
         template = DEFAULT_TEMPLATES[template_id]
 
         return {
             "template": template.dict(),
-            "message": "Template retrieved successfully"
+            "message": "Template retrieved successfully",
         }
 
     except HTTPException:
@@ -495,7 +455,9 @@ async def get_trigger_template(template_id: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/templates/{template_id}/instantiate", response_model=CreateTriggerResponse)
+@router.post(
+    "/templates/{template_id}/instantiate", response_model=CreateTriggerResponse
+)
 async def instantiate_template(
     template_id: str,
     tenant_id: str,
@@ -503,7 +465,7 @@ async def instantiate_template(
     rule_name: str,
     parameters: dict,
     created_by: str,
-    pool=Depends(get_pool)
+    pool=Depends(get_pool),
 ):
     """
     Create a trigger from template.
@@ -515,8 +477,7 @@ async def instantiate_template(
     try:
         if template_id not in DEFAULT_TEMPLATES:
             raise HTTPException(
-                status_code=404,
-                detail=f"Template '{template_id}' not found"
+                status_code=404, detail=f"Template '{template_id}' not found"
             )
 
         template = DEFAULT_TEMPLATES[template_id]
@@ -525,8 +486,7 @@ async def instantiate_template(
         for param in template.required_parameters:
             if param not in parameters:
                 raise HTTPException(
-                    status_code=400,
-                    detail=f"Required parameter '{param}' missing"
+                    status_code=400, detail=f"Required parameter '{param}' missing"
                 )
 
         trigger_id = uuid4()
@@ -535,12 +495,12 @@ async def instantiate_template(
             "trigger_instantiated_from_template",
             trigger_id=trigger_id,
             template_id=template_id,
-            rule_name=rule_name
+            rule_name=rule_name,
         )
 
         return CreateTriggerResponse(
             trigger_id=trigger_id,
-            message=f"Trigger created from template '{template.template_name}'"
+            message=f"Trigger created from template '{template.template_name}'",
         )
 
     except HTTPException:
@@ -553,6 +513,7 @@ async def instantiate_template(
 # ============================================================================
 # System Information
 # ============================================================================
+
 
 @router.get("/health")
 async def health_check():
@@ -567,7 +528,7 @@ async def health_check():
             "workflows",
             "templates",
             "condition_evaluation",
-            "action_execution"
+            "action_execution",
         ],
         "supported_events": [e.value for e in EventType],
         "supported_actions": [
@@ -577,8 +538,8 @@ async def health_check():
             "extract_semantics",
             "apply_decay",
             "create_snapshot",
-            "run_evaluation"
-        ]
+            "run_evaluation",
+        ],
     }
 
 
@@ -603,7 +564,7 @@ async def get_triggers_info():
             "not_in": "Not in list",
             "matches_regex": "Matches regex pattern",
             "is_null": "Is null/None",
-            "is_not_null": "Is not null/None"
+            "is_not_null": "Is not null/None",
         },
         "event_types": [e.value for e in EventType],
         "action_types": {
@@ -618,21 +579,21 @@ async def get_triggers_info():
             "apply_decay": "Apply decay to semantic nodes",
             "reinforce_node": "Reinforce semantic node",
             "create_snapshot": "Create graph snapshot",
-            "run_evaluation": "Run evaluation suite"
+            "run_evaluation": "Run evaluation suite",
         },
         "templates": list(DEFAULT_TEMPLATES.keys()),
         "examples": {
             "simple_condition": {
                 "field": "importance",
                 "operator": "greater_than",
-                "value": 0.8
+                "value": 0.8,
             },
             "condition_group": {
                 "operator": "AND",
                 "conditions": [
                     {"field": "importance", "operator": "greater_than", "value": 0.7},
-                    {"field": "tags", "operator": "contains", "value": "critical"}
-                ]
-            }
-        }
+                    {"field": "tags", "operator": "contains", "value": "critical"},
+                ],
+            },
+        },
     }

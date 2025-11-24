@@ -9,29 +9,22 @@ This service implements:
 - Rate limiting and cooldowns
 """
 
-import asyncpg
-import structlog
-from typing import List, Dict, Any, Optional
-from uuid import UUID, uuid4
-from datetime import datetime, timedelta, timezone
 import asyncio
 import re
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional
+from uuid import UUID, uuid4
 
-from apps.memory_api.models.event_models import (
-    Event,
-    EventType,
-    TriggerRule,
-    TriggerCondition,
-    Condition,
-    ConditionGroup,
-    ConditionOperator,
-    ActionConfig,
-    ActionType,
-    ActionExecution,
-    ExecutionStatus,
-    TriggerStatus,
-    WorkflowStep
-)
+import asyncpg
+import structlog
+
+from apps.memory_api.models.event_models import (ActionConfig, ActionExecution,
+                                                 ActionType, Condition,
+                                                 ConditionGroup,
+                                                 ConditionOperator, Event,
+                                                 EventType, ExecutionStatus,
+                                                 TriggerCondition, TriggerRule,
+                                                 TriggerStatus, WorkflowStep)
 
 logger = structlog.get_logger(__name__)
 
@@ -39,6 +32,7 @@ logger = structlog.get_logger(__name__)
 # ============================================================================
 # Rules Engine
 # ============================================================================
+
 
 class RulesEngine:
     """
@@ -62,10 +56,7 @@ class RulesEngine:
         """
         self.pool = pool
 
-    async def process_event(
-        self,
-        event: Event
-    ) -> Dict[str, Any]:
+    async def process_event(self, event: Event) -> Dict[str, Any]:
         """
         Process an event and execute matching triggers.
 
@@ -79,14 +70,12 @@ class RulesEngine:
             "processing_event",
             event_id=event.event_id,
             event_type=event.event_type.value,
-            tenant_id=event.tenant_id
+            tenant_id=event.tenant_id,
         )
 
         # Fetch active trigger rules for this tenant/project
         triggers = await self._fetch_active_triggers(
-            event.tenant_id,
-            event.project_id,
-            event.event_type
+            event.tenant_id, event.project_id, event.event_type
         )
 
         if not triggers:
@@ -94,7 +83,7 @@ class RulesEngine:
             return {
                 "event_id": event.event_id,
                 "triggers_matched": 0,
-                "actions_executed": 0
+                "actions_executed": 0,
             }
 
         # Evaluate each trigger
@@ -115,18 +104,14 @@ class RulesEngine:
             "event_id": event.event_id,
             "triggers_matched": len(matched_triggers),
             "actions_executed": len(execution_results),
-            "executions": execution_results
+            "executions": execution_results,
         }
 
     # ========================================================================
     # Condition Evaluation
     # ========================================================================
 
-    async def _evaluate_trigger(
-        self,
-        trigger: TriggerRule,
-        event: Event
-    ) -> bool:
+    async def _evaluate_trigger(self, trigger: TriggerRule, event: Event) -> bool:
         """
         Evaluate if a trigger should fire for an event.
 
@@ -156,14 +141,11 @@ class RulesEngine:
         # Evaluate conditions
         if trigger.condition.condition_group:
             result = self._evaluate_condition_group(
-                trigger.condition.condition_group,
-                event.payload
+                trigger.condition.condition_group, event.payload
             )
 
             logger.info(
-                "condition_evaluated",
-                trigger_id=trigger.trigger_id,
-                result=result
+                "condition_evaluated", trigger_id=trigger.trigger_id, result=result
             )
 
             return result
@@ -172,9 +154,7 @@ class RulesEngine:
         return True
 
     def _evaluate_condition_group(
-        self,
-        group: ConditionGroup,
-        data: Dict[str, Any]
+        self, group: ConditionGroup, data: Dict[str, Any]
     ) -> bool:
         """
         Evaluate a condition group with AND/OR logic.
@@ -211,11 +191,7 @@ class RulesEngine:
             logger.warning("unknown_operator", operator=group.operator)
             return False
 
-    def _evaluate_condition(
-        self,
-        condition: Condition,
-        data: Dict[str, Any]
-    ) -> bool:
+    def _evaluate_condition(self, condition: Condition, data: Dict[str, Any]) -> bool:
         """
         Evaluate a single condition.
 
@@ -302,11 +278,7 @@ class RulesEngine:
 
         return result
 
-    def _get_nested_value(
-        self,
-        data: Dict[str, Any],
-        field_path: str
-    ) -> Any:
+    def _get_nested_value(self, data: Dict[str, Any], field_path: str) -> Any:
         """
         Get value from nested dictionary using dot notation.
 
@@ -317,7 +289,7 @@ class RulesEngine:
         Returns:
             Field value or None
         """
-        keys = field_path.split('.')
+        keys = field_path.split(".")
         value = data
 
         for key in keys:
@@ -332,10 +304,7 @@ class RulesEngine:
     # Rate Limiting and Cooldown
     # ========================================================================
 
-    async def _check_rate_limit(
-        self,
-        trigger: TriggerRule
-    ) -> bool:
+    async def _check_rate_limit(self, trigger: TriggerRule) -> bool:
         """
         Check if trigger is within rate limit.
 
@@ -350,8 +319,10 @@ class RulesEngine:
 
         # Check if we're in a new hour window
         now = datetime.now(timezone.utc)
-        if trigger.hour_window_start is None or \
-           (now - trigger.hour_window_start).total_seconds() >= 3600:
+        if (
+            trigger.hour_window_start is None
+            or (now - trigger.hour_window_start).total_seconds() >= 3600
+        ):
             # Reset counter for new hour
             await self.pool.execute(
                 """
@@ -359,17 +330,15 @@ class RulesEngine:
                 SET executions_this_hour = 0, hour_window_start = $1
                 WHERE trigger_id = $2
                 """,
-                now, trigger.trigger_id
+                now,
+                trigger.trigger_id,
             )
             return True
 
         # Check current count
         return trigger.executions_this_hour < trigger.condition.max_executions_per_hour
 
-    def _check_cooldown(
-        self,
-        trigger: TriggerRule
-    ) -> bool:
+    def _check_cooldown(self, trigger: TriggerRule) -> bool:
         """
         Check if cooldown period has passed.
 
@@ -385,7 +354,9 @@ class RulesEngine:
         if not trigger.last_executed_at:
             return True
 
-        elapsed = (datetime.now(timezone.utc) - trigger.last_executed_at).total_seconds()
+        elapsed = (
+            datetime.now(timezone.utc) - trigger.last_executed_at
+        ).total_seconds()
         return elapsed >= trigger.condition.cooldown_seconds
 
     # ========================================================================
@@ -393,9 +364,7 @@ class RulesEngine:
     # ========================================================================
 
     async def _execute_trigger_actions(
-        self,
-        trigger: TriggerRule,
-        event: Event
+        self, trigger: TriggerRule, event: Event
     ) -> List[ActionExecution]:
         """
         Execute all actions for a triggered rule.
@@ -410,7 +379,7 @@ class RulesEngine:
         logger.info(
             "executing_trigger_actions",
             trigger_id=trigger.trigger_id,
-            actions=len(trigger.actions)
+            actions=len(trigger.actions),
         )
 
         executions = []
@@ -418,9 +387,7 @@ class RulesEngine:
         # Execute each action
         for action_config in trigger.actions:
             execution = await self._execute_action(
-                trigger=trigger,
-                event=event,
-                action_config=action_config
+                trigger=trigger, event=event, action_config=action_config
             )
             executions.append(execution)
 
@@ -433,7 +400,8 @@ class RulesEngine:
                 executions_this_hour = executions_this_hour + 1
             WHERE trigger_id = $2
             """,
-            datetime.now(timezone.utc), trigger.trigger_id
+            datetime.now(timezone.utc),
+            trigger.trigger_id,
         )
 
         return executions
@@ -443,7 +411,7 @@ class RulesEngine:
         trigger: TriggerRule,
         event: Event,
         action_config: ActionConfig,
-        attempt: int = 1
+        attempt: int = 1,
     ) -> ActionExecution:
         """
         Execute a single action.
@@ -470,16 +438,13 @@ class RulesEngine:
             "executing_action",
             execution_id=execution_id,
             action_type=action_config.action_type.value,
-            attempt=attempt
+            attempt=attempt,
         )
 
         try:
             # Execute action based on type
             result = await self._execute_action_by_type(
-                action_config.action_type,
-                action_config.config,
-                event,
-                trigger
+                action_config.action_type, action_config.config, event, trigger
             )
 
             completed_at = datetime.now(timezone.utc)
@@ -502,13 +467,13 @@ class RulesEngine:
                 attempt_number=attempt,
                 max_attempts=action_config.max_retries + 1,
                 tenant_id=trigger.tenant_id,
-                project_id=trigger.project_id
+                project_id=trigger.project_id,
             )
 
             logger.info(
                 "action_executed_successfully",
                 execution_id=execution_id,
-                duration_ms=duration_ms
+                duration_ms=duration_ms,
             )
 
             return execution
@@ -518,7 +483,7 @@ class RulesEngine:
                 "action_execution_failed",
                 execution_id=execution_id,
                 error=str(e),
-                attempt=attempt
+                attempt=attempt,
             )
 
             # Retry if configured
@@ -549,7 +514,7 @@ class RulesEngine:
                 attempt_number=attempt,
                 max_attempts=action_config.max_retries + 1,
                 tenant_id=trigger.tenant_id,
-                project_id=trigger.project_id
+                project_id=trigger.project_id,
             )
 
             return execution
@@ -559,7 +524,7 @@ class RulesEngine:
         action_type: ActionType,
         config: Dict[str, Any],
         event: Event,
-        trigger: TriggerRule
+        trigger: TriggerRule,
     ) -> Dict[str, Any]:
         """
         Execute action based on type.
@@ -603,122 +568,89 @@ class RulesEngine:
     # ========================================================================
 
     async def _action_send_notification(
-        self,
-        config: Dict[str, Any],
-        event: Event
+        self, config: Dict[str, Any], event: Event
     ) -> Dict[str, Any]:
         """Send notification action"""
-        logger.info("sending_notification", channel=config.get('channel'))
+        logger.info("sending_notification", channel=config.get("channel"))
 
         # Placeholder - would integrate with notification service
         return {
             "status": "sent",
-            "channel": config.get('channel', 'default'),
-            "message": config.get('message', 'Notification sent')
+            "channel": config.get("channel", "default"),
+            "message": config.get("message", "Notification sent"),
         }
 
     async def _action_send_webhook(
-        self,
-        config: Dict[str, Any],
-        event: Event
+        self, config: Dict[str, Any], event: Event
     ) -> Dict[str, Any]:
         """Send webhook action"""
         import aiohttp
 
-        url = config.get('url')
+        url = config.get("url")
         if not url:
             raise ValueError("Webhook URL required")
 
         async with aiohttp.ClientSession() as session:
             async with session.post(url, json=event.dict()) as response:
-                return {
-                    "status": "sent",
-                    "status_code": response.status,
-                    "url": url
-                }
+                return {"status": "sent", "status_code": response.status, "url": url}
 
     async def _action_generate_reflection(
-        self,
-        config: Dict[str, Any],
-        event: Event
+        self, config: Dict[str, Any], event: Event
     ) -> Dict[str, Any]:
         """Generate reflection action"""
         logger.info("generating_reflection")
 
         # Would call reflection pipeline
-        return {
-            "status": "queued",
-            "action": "reflection_generation"
-        }
+        return {"status": "queued", "action": "reflection_generation"}
 
     async def _action_extract_semantics(
-        self,
-        config: Dict[str, Any],
-        event: Event
+        self, config: Dict[str, Any], event: Event
     ) -> Dict[str, Any]:
         """Extract semantics action"""
         logger.info("extracting_semantics")
 
         # Would call semantic extractor
-        return {
-            "status": "queued",
-            "action": "semantic_extraction"
-        }
+        return {"status": "queued", "action": "semantic_extraction"}
 
     async def _action_apply_decay(
-        self,
-        config: Dict[str, Any],
-        event: Event
+        self, config: Dict[str, Any], event: Event
     ) -> Dict[str, Any]:
         """Apply decay action"""
         logger.info("applying_decay")
 
-        threshold_days = config.get('threshold_days', 60)
+        threshold_days = config.get("threshold_days", 60)
 
         # Would call decay function
         return {
             "status": "completed",
             "action": "decay_applied",
-            "threshold_days": threshold_days
+            "threshold_days": threshold_days,
         }
 
     async def _action_create_snapshot(
-        self,
-        config: Dict[str, Any],
-        event: Event
+        self, config: Dict[str, Any], event: Event
     ) -> Dict[str, Any]:
         """Create snapshot action"""
         logger.info("creating_snapshot")
 
         # Would call snapshot creation
-        return {
-            "status": "created",
-            "action": "snapshot"
-        }
+        return {"status": "created", "action": "snapshot"}
 
     async def _action_run_evaluation(
-        self,
-        config: Dict[str, Any],
-        event: Event
+        self, config: Dict[str, Any], event: Event
     ) -> Dict[str, Any]:
         """Run evaluation action"""
         logger.info("running_evaluation")
 
         # Would call evaluation service
-        return {
-            "status": "queued",
-            "action": "evaluation"
-        }
+        return {"status": "queued", "action": "evaluation"}
 
     # ========================================================================
     # Data Access
     # ========================================================================
 
     async def _fetch_active_triggers(
-        self,
-        tenant_id: str,
-        project_id: str,
-        event_type: EventType
+        self, tenant_id: str, project_id: str, event_type: EventType
     ) -> List[TriggerRule]:
         """
         Fetch active triggers matching event type.

@@ -1,33 +1,32 @@
-from fastapi import FastAPI, Request, Depends
-from fastapi.responses import JSONResponse
+import os
+
+import asyncpg
+import structlog
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi import HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
-import asyncpg
-import os
+from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from slowapi.errors import RateLimitExceeded
-from apps.memory_api.middleware.tenant import TenantContextMiddleware
-from apps.memory_api.middleware.rate_limiter import limiter, rate_limit_exceeded_handler
-from apps.memory_api.api.v1 import memory, agent, cache, graph, governance
-from apps.memory_api.api.v1 import health as health_router
-from apps.memory_api.routes import (
-    event_triggers,
-    reflections,
-    hybrid_search,
-    evaluation,
-    dashboard,
-    graph_enhanced
-)
+
 from apps.memory_api import metrics
+from apps.memory_api.api.v1 import agent, cache, governance, graph
+from apps.memory_api.api.v1 import health as health_router
+from apps.memory_api.api.v1 import memory
 from apps.memory_api.config import settings
-from apps.memory_api.services.context_cache import rebuild_full_cache
 from apps.memory_api.logging_config import setup_logging
+from apps.memory_api.middleware.rate_limiter import (
+    limiter, rate_limit_exceeded_handler)
+from apps.memory_api.middleware.tenant import TenantContextMiddleware
+from apps.memory_api.observability import (instrument_fastapi,
+                                           instrument_libraries,
+                                           setup_opentelemetry)
+from apps.memory_api.routes import (dashboard, evaluation, event_triggers,
+                                    graph_enhanced, hybrid_search, reflections)
 from apps.memory_api.security import auth
 from apps.memory_api.security.rate_limit import rate_limit_middleware
-from apps.memory_api.observability import setup_opentelemetry, instrument_fastapi, instrument_libraries
-import structlog
+from apps.memory_api.services.context_cache import rebuild_full_cache
 
 # Setup structured logging
 setup_logging()
@@ -58,7 +57,11 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
-    dependencies=[Depends(auth.verify_token)] if settings.ENABLE_API_KEY_AUTH or settings.ENABLE_JWT_AUTH else []
+    dependencies=(
+        [Depends(auth.verify_token)]
+        if settings.ENABLE_API_KEY_AUTH or settings.ENABLE_JWT_AUTH
+        else []
+    ),
 )
 
 # Add rate limiter to app state
@@ -87,66 +90,57 @@ def custom_openapi():
             "type": "http",
             "scheme": "bearer",
             "bearerFormat": "JWT",
-            "description": "JWT token authentication"
+            "description": "JWT token authentication",
         },
         "ApiKeyAuth": {
             "type": "apiKey",
             "in": "header",
             "name": "X-API-Key",
-            "description": "API key authentication"
-        }
+            "description": "API key authentication",
+        },
     }
 
     # Add tags descriptions
     openapi_schema["tags"] = [
-        {
-            "name": "Health",
-            "description": "Health checks and system metrics"
-        },
+        {"name": "Health", "description": "Health checks and system metrics"},
         {
             "name": "Memory",
-            "description": "Store and query memories across different memory layers"
+            "description": "Store and query memories across different memory layers",
         },
         {
             "name": "Agent",
-            "description": "Agent-specific operations and context management"
+            "description": "Agent-specific operations and context management",
         },
         {
             "name": "Cache",
-            "description": "Context cache operations for cost optimization"
+            "description": "Context cache operations for cost optimization",
         },
-        {
-            "name": "Graph",
-            "description": "Knowledge graph operations (GraphRAG)"
-        },
-        {
-            "name": "Governance",
-            "description": "Cost tracking, budgets, and governance"
-        },
+        {"name": "Graph", "description": "Knowledge graph operations (GraphRAG)"},
+        {"name": "Governance", "description": "Cost tracking, budgets, and governance"},
         {
             "name": "Event Triggers",
-            "description": "Event-driven automation with triggers, conditions, and actions"
+            "description": "Event-driven automation with triggers, conditions, and actions",
         },
         {
             "name": "Reflections",
-            "description": "Hierarchical reflection system with clustering and relationship management"
+            "description": "Hierarchical reflection system with clustering and relationship management",
         },
         {
             "name": "Hybrid Search",
-            "description": "Multi-strategy search combining vector, semantic, graph, and full-text search"
+            "description": "Multi-strategy search combining vector, semantic, graph, and full-text search",
         },
         {
             "name": "Evaluation",
-            "description": "Search quality metrics, A/B testing, and drift detection"
+            "description": "Search quality metrics, A/B testing, and drift detection",
         },
         {
             "name": "Dashboard",
-            "description": "Real-time monitoring, visualizations, and WebSocket updates"
+            "description": "Real-time monitoring, visualizations, and WebSocket updates",
         },
         {
             "name": "Graph Management",
-            "description": "Advanced graph operations: snapshots, traversal, analytics, and batch operations"
-        }
+            "description": "Advanced graph operations: snapshots, traversal, analytics, and batch operations",
+        },
     ]
 
     app.openapi_schema = openapi_schema
@@ -156,6 +150,7 @@ def custom_openapi():
 app.openapi = custom_openapi
 
 # --- Exception Handlers ---
+
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
@@ -168,13 +163,9 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     )
     return JSONResponse(
         status_code=exc.status_code,
-        content={
-            "error": {
-                "code": str(exc.status_code),
-                "message": exc.detail
-            }
-        },
+        content={"error": {"code": str(exc.status_code), "message": exc.detail}},
     )
+
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
@@ -195,27 +186,25 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         },
     )
 
+
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: Request, exc: Exception):
     logger.exception("unhandled_exception", exc_info=exc)
     return JSONResponse(
         status_code=500,
-        content={
-            "error": {
-                "code": "500",
-                "message": "Internal Server Error"
-            }
-        },
+        content={"error": {"code": "500", "message": "Internal Server Error"}},
     )
 
 
 @app.on_event("startup")
 async def startup():
     logger.info("Starting up RAE Memory API...")
-    logger.info("security_settings",
-                api_key_auth=settings.ENABLE_API_KEY_AUTH,
-                jwt_auth=settings.ENABLE_JWT_AUTH,
-                rate_limiting=settings.ENABLE_RATE_LIMITING)
+    logger.info(
+        "security_settings",
+        api_key_auth=settings.ENABLE_API_KEY_AUTH,
+        jwt_auth=settings.ENABLE_JWT_AUTH,
+        rate_limiting=settings.ENABLE_RATE_LIMITING,
+    )
 
     app.state.pool = await asyncpg.create_pool(
         host=settings.POSTGRES_HOST,
@@ -247,9 +236,11 @@ app.add_middleware(
 # Rate limiting middleware
 if settings.ENABLE_RATE_LIMITING:
     app.middleware("http")(rate_limit_middleware)
-    logger.info("rate_limiting_enabled",
-                max_requests=settings.RATE_LIMIT_REQUESTS,
-                window_seconds=settings.RATE_LIMIT_WINDOW)
+    logger.info(
+        "rate_limiting_enabled",
+        max_requests=settings.RATE_LIMIT_REQUESTS,
+        window_seconds=settings.RATE_LIMIT_WINDOW,
+    )
 
 # Tenant context middleware
 app.add_middleware(TenantContextMiddleware)
@@ -291,5 +282,5 @@ async def root():
         "description": "Reflective Agentic Memory Engine - Cognitive memory system for AI agents",
         "docs": "/docs",
         "health": "/health",
-        "metrics": "/metrics"
+        "metrics": "/metrics",
     }

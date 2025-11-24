@@ -11,24 +11,23 @@ knowledge graph with temporal, weighted, and versioned features including:
 - Node metrics and analytics
 """
 
-from typing import List, Tuple, Optional, Dict, Any
-from uuid import UUID
 from datetime import datetime, timezone
+from typing import Any, Dict, List, Optional, Tuple
+from uuid import UUID
+
 import asyncpg
 import structlog
 
-from apps.memory_api.models.graph_enhanced_models import (
-    EnhancedGraphNode,
-    EnhancedGraphEdge,
-    GraphPath,
-    CycleDetectionResult,
-    GraphSnapshot,
-    GraphTraversal,
-    NodeDegreeMetrics,
-    GraphStatistics,
-    TraversalAlgorithm,
-    EdgeDirection
-)
+from apps.memory_api.models.graph_enhanced_models import (CycleDetectionResult,
+                                                          EdgeDirection,
+                                                          EnhancedGraphEdge,
+                                                          EnhancedGraphNode,
+                                                          GraphPath,
+                                                          GraphSnapshot,
+                                                          GraphStatistics,
+                                                          GraphTraversal,
+                                                          NodeDegreeMetrics,
+                                                          TraversalAlgorithm)
 
 logger = structlog.get_logger(__name__)
 
@@ -36,6 +35,7 @@ logger = structlog.get_logger(__name__)
 # ============================================================================
 # Enhanced Graph Repository
 # ============================================================================
+
 
 class EnhancedGraphRepository:
     """
@@ -69,7 +69,7 @@ class EnhancedGraphRepository:
         project_id: str,
         node_id: str,
         label: str,
-        properties: Dict[str, Any] = None
+        properties: Dict[str, Any] = None,
     ) -> EnhancedGraphNode:
         """
         Create a knowledge graph node.
@@ -96,7 +96,11 @@ class EnhancedGraphRepository:
             ) VALUES ($1, $2, $3, $4, $5)
             RETURNING *
             """,
-            tenant_id, project_id, node_id, label, properties
+            tenant_id,
+            project_id,
+            node_id,
+            label,
+            properties,
         )
 
         logger.info("graph_node_created", node_id=node_id, label=label)
@@ -104,10 +108,7 @@ class EnhancedGraphRepository:
         return self._record_to_node(record)
 
     async def get_node_by_id(
-        self,
-        tenant_id: str,
-        project_id: str,
-        node_id: UUID
+        self, tenant_id: str, project_id: str, node_id: UUID
     ) -> Optional[EnhancedGraphNode]:
         """Get node by UUID"""
         record = await self.pool.fetchrow(
@@ -115,7 +116,9 @@ class EnhancedGraphRepository:
             SELECT * FROM knowledge_graph_nodes
             WHERE tenant_id = $1 AND project_id = $2 AND id = $3
             """,
-            tenant_id, project_id, node_id
+            tenant_id,
+            project_id,
+            node_id,
         )
 
         if not record:
@@ -124,10 +127,7 @@ class EnhancedGraphRepository:
         return self._record_to_node(record)
 
     async def get_node_by_node_id(
-        self,
-        tenant_id: str,
-        project_id: str,
-        node_id: str
+        self, tenant_id: str, project_id: str, node_id: str
     ) -> Optional[EnhancedGraphNode]:
         """Get node by string node_id"""
         record = await self.pool.fetchrow(
@@ -135,7 +135,9 @@ class EnhancedGraphRepository:
             SELECT * FROM knowledge_graph_nodes
             WHERE tenant_id = $1 AND project_id = $2 AND node_id = $3
             """,
-            tenant_id, project_id, node_id
+            tenant_id,
+            project_id,
+            node_id,
         )
 
         if not record:
@@ -144,10 +146,7 @@ class EnhancedGraphRepository:
         return self._record_to_node(record)
 
     async def get_node_metrics(
-        self,
-        tenant_id: str,
-        project_id: str,
-        node_id: UUID
+        self, tenant_id: str, project_id: str, node_id: UUID
     ) -> NodeDegreeMetrics:
         """
         Calculate connectivity metrics for a node.
@@ -162,7 +161,9 @@ class EnhancedGraphRepository:
         """
         record = await self.pool.fetchrow(
             "SELECT * FROM calculate_node_degree($1, $2, $3)",
-            tenant_id, project_id, node_id
+            tenant_id,
+            project_id,
+            node_id,
         )
 
         # Calculate weighted degrees
@@ -175,24 +176,22 @@ class EnhancedGraphRepository:
             WHERE tenant_id = $1 AND project_id = $2 AND is_active = TRUE
                 AND (source_node_id = $3 OR target_node_id = $3)
             """,
-            tenant_id, project_id, node_id
+            tenant_id,
+            project_id,
+            node_id,
         )
 
         return NodeDegreeMetrics(
             node_id=node_id,
-            in_degree=record['in_degree'],
-            out_degree=record['out_degree'],
-            total_degree=record['total_degree'],
-            weighted_in_degree=float(weighted_record['weighted_in']),
-            weighted_out_degree=float(weighted_record['weighted_out'])
+            in_degree=record["in_degree"],
+            out_degree=record["out_degree"],
+            total_degree=record["total_degree"],
+            weighted_in_degree=float(weighted_record["weighted_in"]),
+            weighted_out_degree=float(weighted_record["weighted_out"]),
         )
 
     async def find_connected_nodes(
-        self,
-        tenant_id: str,
-        project_id: str,
-        node_id: UUID,
-        max_depth: int = 5
+        self, tenant_id: str, project_id: str, node_id: UUID, max_depth: int = 5
     ) -> List[Tuple[UUID, int]]:
         """
         Find all nodes connected to given node.
@@ -208,10 +207,13 @@ class EnhancedGraphRepository:
         """
         records = await self.pool.fetch(
             "SELECT * FROM find_connected_nodes($1, $2, $3, $4)",
-            tenant_id, project_id, node_id, max_depth
+            tenant_id,
+            project_id,
+            node_id,
+            max_depth,
         )
 
-        return [(record['connected_node_id'], record['distance']) for record in records]
+        return [(record["connected_node_id"], record["distance"]) for record in records]
 
     # ========================================================================
     # Edge Operations
@@ -230,7 +232,7 @@ class EnhancedGraphRepository:
         properties: Dict[str, Any] = None,
         metadata: Dict[str, Any] = None,
         valid_from: datetime = None,
-        valid_to: datetime = None
+        valid_to: datetime = None,
     ) -> EnhancedGraphEdge:
         """
         Create a weighted, temporal knowledge graph edge.
@@ -270,11 +272,18 @@ class EnhancedGraphRepository:
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, TRUE)
             RETURNING *
             """,
-            tenant_id, project_id,
-            source_node_id, target_node_id, relation,
-            edge_weight, confidence, bidirectional,
-            properties, metadata,
-            valid_from, valid_to
+            tenant_id,
+            project_id,
+            source_node_id,
+            target_node_id,
+            relation,
+            edge_weight,
+            confidence,
+            bidirectional,
+            properties,
+            metadata,
+            valid_from,
+            valid_to,
         )
 
         logger.info(
@@ -282,16 +291,13 @@ class EnhancedGraphRepository:
             source=source_node_id,
             target=target_node_id,
             relation=relation,
-            weight=edge_weight
+            weight=edge_weight,
         )
 
         return self._record_to_edge(record)
 
     async def update_edge_weight(
-        self,
-        edge_id: UUID,
-        new_weight: float,
-        new_confidence: float = None
+        self, edge_id: UUID, new_weight: float, new_confidence: float = None
     ) -> EnhancedGraphEdge:
         """Update edge weight and confidence"""
         if new_confidence is not None:
@@ -302,7 +308,9 @@ class EnhancedGraphRepository:
                 WHERE id = $1
                 RETURNING *
                 """,
-                edge_id, new_weight, new_confidence
+                edge_id,
+                new_weight,
+                new_confidence,
             )
         else:
             record = await self.pool.fetchrow(
@@ -312,7 +320,8 @@ class EnhancedGraphRepository:
                 WHERE id = $1
                 RETURNING *
                 """,
-                edge_id, new_weight
+                edge_id,
+                new_weight,
             )
 
         logger.info("edge_weight_updated", edge_id=edge_id, new_weight=new_weight)
@@ -320,9 +329,7 @@ class EnhancedGraphRepository:
         return self._record_to_edge(record)
 
     async def deactivate_edge(
-        self,
-        edge_id: UUID,
-        reason: str = None
+        self, edge_id: UUID, reason: str = None
     ) -> EnhancedGraphEdge:
         """Soft delete edge by setting is_active to False"""
         metadata_update = {"deactivation_reason": reason} if reason else {}
@@ -334,7 +341,8 @@ class EnhancedGraphRepository:
             WHERE id = $1
             RETURNING *
             """,
-            edge_id, metadata_update
+            edge_id,
+            metadata_update,
         )
 
         logger.info("edge_deactivated", edge_id=edge_id, reason=reason)
@@ -350,7 +358,7 @@ class EnhancedGraphRepository:
             WHERE id = $1
             RETURNING *
             """,
-            edge_id
+            edge_id,
         )
 
         logger.info("edge_activated", edge_id=edge_id)
@@ -358,10 +366,7 @@ class EnhancedGraphRepository:
         return self._record_to_edge(record)
 
     async def set_edge_temporal_validity(
-        self,
-        edge_id: UUID,
-        valid_from: datetime,
-        valid_to: datetime = None
+        self, edge_id: UUID, valid_from: datetime, valid_to: datetime = None
     ) -> EnhancedGraphEdge:
         """Set temporal validity window for edge"""
         record = await self.pool.fetchrow(
@@ -371,7 +376,9 @@ class EnhancedGraphRepository:
             WHERE id = $1
             RETURNING *
             """,
-            edge_id, valid_from, valid_to
+            edge_id,
+            valid_from,
+            valid_to,
         )
 
         logger.info("edge_temporal_validity_set", edge_id=edge_id)
@@ -388,7 +395,7 @@ class EnhancedGraphRepository:
         project_id: str,
         source_node_id: UUID,
         target_node_id: UUID,
-        max_depth: int = 50
+        max_depth: int = 50,
     ) -> CycleDetectionResult:
         """
         Detect if adding an edge would create a cycle using DFS.
@@ -405,21 +412,25 @@ class EnhancedGraphRepository:
         """
         record = await self.pool.fetchrow(
             "SELECT * FROM detect_graph_cycle_dfs($1, $2, $3, $4, $5)",
-            tenant_id, project_id, source_node_id, target_node_id, max_depth
+            tenant_id,
+            project_id,
+            source_node_id,
+            target_node_id,
+            max_depth,
         )
 
         result = CycleDetectionResult(
-            has_cycle=record['has_cycle'],
-            cycle_path=record['cycle_path'] or [],
-            cycle_length=record['cycle_length'] or 0,
+            has_cycle=record["has_cycle"],
+            cycle_path=record["cycle_path"] or [],
+            cycle_length=record["cycle_length"] or 0,
             source_node_id=source_node_id,
-            target_node_id=target_node_id
+            target_node_id=target_node_id,
         )
 
         logger.info(
             "cycle_detection_complete",
             has_cycle=result.has_cycle,
-            cycle_length=result.cycle_length
+            cycle_length=result.cycle_length,
         )
 
         return result
@@ -438,7 +449,7 @@ class EnhancedGraphRepository:
         at_timestamp: datetime = None,
         relation_filter: List[str] = None,
         min_weight: float = 0.0,
-        min_confidence: float = 0.0
+        min_confidence: float = 0.0,
     ) -> Tuple[List[EnhancedGraphNode], List[EnhancedGraphEdge]]:
         """
         Perform temporal graph traversal with time-based filtering.
@@ -462,13 +473,18 @@ class EnhancedGraphRepository:
         # Call temporal traversal function
         records = await self.pool.fetch(
             "SELECT * FROM traverse_graph_temporal($1, $2, $3, $4, $5, $6, $7, $8)",
-            tenant_id, project_id, start_node_id,
-            at_timestamp, max_depth, relation_filter, min_weight,
-            algorithm.value
+            tenant_id,
+            project_id,
+            start_node_id,
+            at_timestamp,
+            max_depth,
+            relation_filter,
+            min_weight,
+            algorithm.value,
         )
 
         # Extract unique node IDs from traversal
-        node_ids = list(set(record['node_id'] for record in records))
+        node_ids = list(set(record["node_id"] for record in records))
 
         # Fetch full node data
         nodes = []
@@ -478,7 +494,9 @@ class EnhancedGraphRepository:
                 SELECT * FROM knowledge_graph_nodes
                 WHERE tenant_id = $1 AND project_id = $2 AND id = ANY($3)
                 """,
-                tenant_id, project_id, node_ids
+                tenant_id,
+                project_id,
+                node_ids,
             )
             nodes = [self._record_to_node(r) for r in node_records]
 
@@ -497,8 +515,12 @@ class EnhancedGraphRepository:
                     AND edge_weight >= $5
                     AND confidence >= $6
                 """,
-                tenant_id, project_id, node_ids,
-                at_timestamp, min_weight, min_confidence
+                tenant_id,
+                project_id,
+                node_ids,
+                at_timestamp,
+                min_weight,
+                min_confidence,
             )
             edges = [self._record_to_edge(r) for r in edge_records]
 
@@ -506,7 +528,7 @@ class EnhancedGraphRepository:
             "temporal_traversal_complete",
             algorithm=algorithm.value,
             nodes_found=len(nodes),
-            edges_found=len(edges)
+            edges_found=len(edges),
         )
 
         return nodes, edges
@@ -522,7 +544,7 @@ class EnhancedGraphRepository:
         start_node_id: UUID,
         end_node_id: UUID,
         at_timestamp: datetime = None,
-        max_depth: int = 10
+        max_depth: int = 10,
     ) -> Optional[GraphPath]:
         """
         Find weighted shortest path using Dijkstra algorithm.
@@ -542,29 +564,29 @@ class EnhancedGraphRepository:
 
         record = await self.pool.fetchrow(
             "SELECT * FROM find_shortest_path_weighted($1, $2, $3, $4, $5, $6)",
-            tenant_id, project_id, start_node_id, end_node_id,
-            at_timestamp, max_depth
+            tenant_id,
+            project_id,
+            start_node_id,
+            end_node_id,
+            at_timestamp,
+            max_depth,
         )
 
-        if not record or not record['path_nodes']:
+        if not record or not record["path_nodes"]:
             logger.info("no_path_found", start=start_node_id, end=end_node_id)
             return None
 
         path = GraphPath(
-            nodes=record['path_nodes'],
-            node_labels=record['path_labels'],
+            nodes=record["path_nodes"],
+            node_labels=record["path_labels"],
             edges=[],  # Could fetch edge IDs if needed
-            length=record['edge_count'],
-            total_weight=float(record['total_distance']),
+            length=record["edge_count"],
+            total_weight=float(record["total_distance"]),
             avg_confidence=0.0,  # Could calculate if needed
-            algorithm_used=TraversalAlgorithm.DIJKSTRA
+            algorithm_used=TraversalAlgorithm.DIJKSTRA,
         )
 
-        logger.info(
-            "shortest_path_found",
-            length=path.length,
-            weight=path.total_weight
-        )
+        logger.info("shortest_path_found", length=path.length, weight=path.total_weight)
 
         return path
 
@@ -578,7 +600,7 @@ class EnhancedGraphRepository:
         project_id: str,
         snapshot_name: str,
         description: str = None,
-        created_by: str = None
+        created_by: str = None,
     ) -> UUID:
         """
         Create a snapshot of current graph state.
@@ -595,25 +617,23 @@ class EnhancedGraphRepository:
         """
         snapshot_id = await self.pool.fetchval(
             "SELECT create_graph_snapshot($1, $2, $3, $4, $5)",
-            tenant_id, project_id, snapshot_name, description, created_by
+            tenant_id,
+            project_id,
+            snapshot_name,
+            description,
+            created_by,
         )
 
         logger.info(
-            "snapshot_created",
-            snapshot_id=snapshot_id,
-            snapshot_name=snapshot_name
+            "snapshot_created", snapshot_id=snapshot_id, snapshot_name=snapshot_name
         )
 
         return snapshot_id
 
-    async def get_snapshot(
-        self,
-        snapshot_id: UUID
-    ) -> Optional[GraphSnapshot]:
+    async def get_snapshot(self, snapshot_id: UUID) -> Optional[GraphSnapshot]:
         """Get snapshot by ID"""
         record = await self.pool.fetchrow(
-            "SELECT * FROM knowledge_graph_snapshots WHERE id = $1",
-            snapshot_id
+            "SELECT * FROM knowledge_graph_snapshots WHERE id = $1", snapshot_id
         )
 
         if not record:
@@ -622,10 +642,7 @@ class EnhancedGraphRepository:
         return self._record_to_snapshot(record)
 
     async def list_snapshots(
-        self,
-        tenant_id: str,
-        project_id: str,
-        limit: int = 10
+        self, tenant_id: str, project_id: str, limit: int = 10
     ) -> List[GraphSnapshot]:
         """List recent snapshots"""
         records = await self.pool.fetch(
@@ -635,15 +652,15 @@ class EnhancedGraphRepository:
             ORDER BY created_at DESC
             LIMIT $3
             """,
-            tenant_id, project_id, limit
+            tenant_id,
+            project_id,
+            limit,
         )
 
         return [self._record_to_snapshot(r) for r in records]
 
     async def restore_snapshot(
-        self,
-        snapshot_id: UUID,
-        clear_existing: bool = False
+        self, snapshot_id: UUID, clear_existing: bool = False
     ) -> Tuple[int, int]:
         """
         Restore graph from snapshot.
@@ -656,18 +673,17 @@ class EnhancedGraphRepository:
             Tuple of (nodes_restored, edges_restored)
         """
         record = await self.pool.fetchrow(
-            "SELECT * FROM restore_graph_snapshot($1, $2)",
-            snapshot_id, clear_existing
+            "SELECT * FROM restore_graph_snapshot($1, $2)", snapshot_id, clear_existing
         )
 
-        nodes_restored = record['nodes_restored']
-        edges_restored = record['edges_restored']
+        nodes_restored = record["nodes_restored"]
+        edges_restored = record["edges_restored"]
 
         logger.info(
             "snapshot_restored",
             snapshot_id=snapshot_id,
             nodes=nodes_restored,
-            edges=edges_restored
+            edges=edges_restored,
         )
 
         return nodes_restored, edges_restored
@@ -677,9 +693,7 @@ class EnhancedGraphRepository:
     # ========================================================================
 
     async def get_graph_statistics(
-        self,
-        tenant_id: str,
-        project_id: str
+        self, tenant_id: str, project_id: str
     ) -> GraphStatistics:
         """
         Get aggregated graph statistics.
@@ -696,15 +710,13 @@ class EnhancedGraphRepository:
             SELECT * FROM knowledge_graph_statistics
             WHERE tenant_id = $1 AND project_id = $2
             """,
-            tenant_id, project_id
+            tenant_id,
+            project_id,
         )
 
         if not record:
             # Return empty statistics if no graph exists
-            return GraphStatistics(
-                tenant_id=tenant_id,
-                project_id=project_id
-            )
+            return GraphStatistics(tenant_id=tenant_id, project_id=project_id)
 
         # Get snapshot count
         snapshot_count = await self.pool.fetchval(
@@ -712,7 +724,8 @@ class EnhancedGraphRepository:
             SELECT COUNT(*) FROM knowledge_graph_snapshots
             WHERE tenant_id = $1 AND project_id = $2
             """,
-            tenant_id, project_id
+            tenant_id,
+            project_id,
         )
 
         latest_snapshot = await self.pool.fetchval(
@@ -720,23 +733,28 @@ class EnhancedGraphRepository:
             SELECT MAX(created_at) FROM knowledge_graph_snapshots
             WHERE tenant_id = $1 AND project_id = $2
             """,
-            tenant_id, project_id
+            tenant_id,
+            project_id,
         )
 
         return GraphStatistics(
             tenant_id=tenant_id,
             project_id=project_id,
-            total_nodes=record['total_nodes'],
-            total_edges=record['total_edges'],
-            active_edges=record['active_edges'],
-            unique_relations=record['unique_relations'],
-            bidirectional_edges=record['bidirectional_edges'],
-            avg_edge_weight=float(record['avg_edge_weight']) if record['avg_edge_weight'] else None,
-            avg_confidence=float(record['avg_confidence']) if record['avg_confidence'] else None,
-            latest_node_created=record['latest_node_created'],
-            latest_edge_created=record['latest_edge_created'],
+            total_nodes=record["total_nodes"],
+            total_edges=record["total_edges"],
+            active_edges=record["active_edges"],
+            unique_relations=record["unique_relations"],
+            bidirectional_edges=record["bidirectional_edges"],
+            avg_edge_weight=(
+                float(record["avg_edge_weight"]) if record["avg_edge_weight"] else None
+            ),
+            avg_confidence=(
+                float(record["avg_confidence"]) if record["avg_confidence"] else None
+            ),
+            latest_node_created=record["latest_node_created"],
+            latest_edge_created=record["latest_edge_created"],
             snapshot_count=snapshot_count or 0,
-            latest_snapshot=latest_snapshot
+            latest_snapshot=latest_snapshot,
         )
 
     # ========================================================================
@@ -744,10 +762,7 @@ class EnhancedGraphRepository:
     # ========================================================================
 
     async def batch_create_nodes(
-        self,
-        tenant_id: str,
-        project_id: str,
-        nodes: List[Dict[str, Any]]
+        self, tenant_id: str, project_id: str, nodes: List[Dict[str, Any]]
     ) -> Tuple[int, List[str]]:
         """
         Create multiple nodes in batch.
@@ -770,15 +785,17 @@ class EnhancedGraphRepository:
                         await self.create_node(
                             tenant_id=tenant_id,
                             project_id=project_id,
-                            node_id=node_data['node_id'],
-                            label=node_data['label'],
-                            properties=node_data.get('properties', {})
+                            node_id=node_data["node_id"],
+                            label=node_data["label"],
+                            properties=node_data.get("properties", {}),
                         )
                         successful += 1
                     except Exception as e:
                         errors.append(f"Node {node_data.get('node_id')}: {str(e)}")
 
-        logger.info("batch_create_nodes_complete", successful=successful, failed=len(errors))
+        logger.info(
+            "batch_create_nodes_complete", successful=successful, failed=len(errors)
+        )
 
         return successful, errors
 
@@ -789,52 +806,52 @@ class EnhancedGraphRepository:
     def _record_to_node(self, record) -> EnhancedGraphNode:
         """Convert database record to EnhancedGraphNode"""
         return EnhancedGraphNode(
-            id=record['id'],
-            tenant_id=record['tenant_id'],
-            project_id=record['project_id'],
-            node_id=record['node_id'],
-            label=record['label'],
-            properties=record.get('properties', {}),
-            created_at=record['created_at']
+            id=record["id"],
+            tenant_id=record["tenant_id"],
+            project_id=record["project_id"],
+            node_id=record["node_id"],
+            label=record["label"],
+            properties=record.get("properties", {}),
+            created_at=record["created_at"],
         )
 
     def _record_to_edge(self, record) -> EnhancedGraphEdge:
         """Convert database record to EnhancedGraphEdge"""
         return EnhancedGraphEdge(
-            id=record['id'],
-            tenant_id=record['tenant_id'],
-            project_id=record['project_id'],
-            source_node_id=record['source_node_id'],
-            target_node_id=record['target_node_id'],
-            relation=record['relation'],
-            edge_weight=float(record.get('edge_weight', 1.0)),
-            confidence=float(record.get('confidence', 0.8)),
-            valid_from=record.get('valid_from'),
-            valid_to=record.get('valid_to'),
-            is_active=record.get('is_active', True),
-            properties=record.get('properties', {}),
-            bidirectional=record.get('bidirectional', False),
-            metadata=record.get('metadata', {}),
-            created_at=record['created_at'],
-            updated_at=record.get('updated_at', record['created_at'])
+            id=record["id"],
+            tenant_id=record["tenant_id"],
+            project_id=record["project_id"],
+            source_node_id=record["source_node_id"],
+            target_node_id=record["target_node_id"],
+            relation=record["relation"],
+            edge_weight=float(record.get("edge_weight", 1.0)),
+            confidence=float(record.get("confidence", 0.8)),
+            valid_from=record.get("valid_from"),
+            valid_to=record.get("valid_to"),
+            is_active=record.get("is_active", True),
+            properties=record.get("properties", {}),
+            bidirectional=record.get("bidirectional", False),
+            metadata=record.get("metadata", {}),
+            created_at=record["created_at"],
+            updated_at=record.get("updated_at", record["created_at"]),
         )
 
     def _record_to_snapshot(self, record) -> GraphSnapshot:
         """Convert database record to GraphSnapshot"""
         return GraphSnapshot(
-            id=record['id'],
-            tenant_id=record['tenant_id'],
-            project_id=record['project_id'],
-            snapshot_name=record['snapshot_name'],
-            description=record.get('description'),
-            node_count=record['node_count'],
-            edge_count=record['edge_count'],
-            snapshot_size_bytes=record.get('snapshot_size_bytes'),
-            nodes_snapshot=record.get('nodes_snapshot', []),
-            edges_snapshot=record.get('edges_snapshot', []),
-            statistics=record.get('statistics', {}),
-            tags=record.get('tags', []),
-            metadata=record.get('metadata', {}),
-            created_at=record['created_at'],
-            created_by=record.get('created_by')
+            id=record["id"],
+            tenant_id=record["tenant_id"],
+            project_id=record["project_id"],
+            snapshot_name=record["snapshot_name"],
+            description=record.get("description"),
+            node_count=record["node_count"],
+            edge_count=record["edge_count"],
+            snapshot_size_bytes=record.get("snapshot_size_bytes"),
+            nodes_snapshot=record.get("nodes_snapshot", []),
+            edges_snapshot=record.get("edges_snapshot", []),
+            statistics=record.get("statistics", {}),
+            tags=record.get("tags", []),
+            metadata=record.get("metadata", {}),
+            created_at=record["created_at"],
+            created_by=record.get("created_by"),
         )

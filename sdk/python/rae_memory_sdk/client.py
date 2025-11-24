@@ -1,24 +1,21 @@
-import httpx
-from typing import Optional, List, Dict, Any
-from pydantic_settings import BaseSettings
-import structlog
+from typing import Any, Dict, List, Optional
 
-from .models import (
-    StoreMemoryRequest,
-    StoreMemoryResponse,
-    QueryMemoryRequest,
-    QueryMemoryResponse,
-    DeleteMemoryResponse,
-    MemoryRecord,
-    ScoredMemoryRecord,
-)
+import httpx
+import structlog
+from pydantic_settings import BaseSettings
+
+from .models import (DeleteMemoryResponse, MemoryRecord, QueryMemoryRequest,
+                     QueryMemoryResponse, ScoredMemoryRecord,
+                     StoreMemoryRequest, StoreMemoryResponse)
 
 logger = structlog.get_logger(__name__)
+
 
 class RAEClientConfig(BaseSettings):
     """
     Configuration settings for the RAE Memory Client.
     """
+
     RAE_API_URL: str = "http://localhost:8000"
     RAE_API_KEY: str = "your-rae-api-key"
     RAE_TENANT_ID: str = "default-tenant"
@@ -27,6 +24,7 @@ class RAEClientConfig(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
         extra = "ignore"  # Ignore extra fields from .env file
+
 
 class MemoryClient:
     """
@@ -40,7 +38,7 @@ class MemoryClient:
         api_url: Optional[str] = None,
         api_key: Optional[str] = None,
         tenant_id: Optional[str] = None,
-        config: Optional[RAEClientConfig] = None
+        config: Optional[RAEClientConfig] = None,
     ):
         if config:
             self.config = config
@@ -62,7 +60,9 @@ class MemoryClient:
     def _request(self, method: str, url: str, **kwargs) -> Dict[str, Any]:
         """Synchronous HTTP request wrapper."""
         try:
-            response = self._http_client.request(method, url, headers=self._headers, **kwargs)
+            response = self._http_client.request(
+                method, url, headers=self._headers, **kwargs
+            )
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as e:
@@ -70,7 +70,7 @@ class MemoryClient:
                 "http_error",
                 url=url,
                 status_code=e.response.status_code,
-                response_text=e.response.text
+                response_text=e.response.text,
             )
             raise
         except httpx.RequestError as e:
@@ -80,7 +80,9 @@ class MemoryClient:
     async def _async_request(self, method: str, url: str, **kwargs) -> Dict[str, Any]:
         """Asynchronous HTTP request wrapper."""
         try:
-            response = await self._async_http_client.request(method, url, headers=self._headers, **kwargs)
+            response = await self._async_http_client.request(
+                method, url, headers=self._headers, **kwargs
+            )
             response.raise_for_status()
             return response.json()
         except httpx.HTTPStatusError as e:
@@ -88,7 +90,7 @@ class MemoryClient:
                 "async_http_error",
                 url=url,
                 status_code=e.response.status_code,
-                response_text=e.response.text
+                response_text=e.response.text,
             )
             raise
         except httpx.RequestError as e:
@@ -99,15 +101,21 @@ class MemoryClient:
         """
         Stores a new memory record.
         """
-        response_data = self._request("POST", "/memory/store", json=memory.dict(exclude_none=True))
+        response_data = self._request(
+            "POST", "/memory/store", json=memory.dict(exclude_none=True)
+        )
         return StoreMemoryResponse(**response_data)
 
-    def query(self, query_text: str, k: int = 10, filters: Optional[Dict[str, Any]] = None) -> QueryMemoryResponse:
+    def query(
+        self, query_text: str, k: int = 10, filters: Optional[Dict[str, Any]] = None
+    ) -> QueryMemoryResponse:
         """
         Queries the memory for relevant records.
         """
         request_body = QueryMemoryRequest(query_text=query_text, k=k, filters=filters)
-        response_data = self._request("POST", "/memory/query", json=request_body.dict(exclude_none=True))
+        response_data = self._request(
+            "POST", "/memory/query", json=request_body.dict(exclude_none=True)
+        )
         return QueryMemoryResponse(**response_data)
 
     def delete(self, memory_id: str) -> DeleteMemoryResponse:
@@ -124,7 +132,7 @@ class MemoryClient:
         project_id: str,
         limit: int = 50,
         min_confidence: float = 0.5,
-        auto_store: bool = True
+        auto_store: bool = True,
     ) -> Dict[str, Any]:
         """
         Extract knowledge graph from episodic memories.
@@ -142,7 +150,7 @@ class MemoryClient:
             "project_id": project_id,
             "limit": limit,
             "min_confidence": min_confidence,
-            "auto_store": auto_store
+            "auto_store": auto_store,
         }
         return self._request("POST", "/v1/graph/extract", json=request_body)
 
@@ -152,7 +160,7 @@ class MemoryClient:
         project_id: str,
         top_k_vector: int = 5,
         graph_depth: int = 2,
-        traversal_strategy: str = "bfs"
+        traversal_strategy: str = "bfs",
     ) -> Dict[str, Any]:
         """
         Advanced hybrid search combining vector and graph traversal.
@@ -172,7 +180,7 @@ class MemoryClient:
             "project_id": project_id,
             "top_k_vector": top_k_vector,
             "graph_depth": graph_depth,
-            "traversal_strategy": traversal_strategy
+            "traversal_strategy": traversal_strategy,
         }
         return self._request("POST", "/v1/graph/query", json=request_body)
 
@@ -193,7 +201,7 @@ class MemoryClient:
         project_id: str,
         limit: int = 100,
         use_pagerank: bool = False,
-        min_pagerank_score: float = 0.0
+        min_pagerank_score: float = 0.0,
     ) -> List[Dict[str, Any]]:
         """
         Retrieve graph nodes with optional PageRank filtering.
@@ -211,15 +219,12 @@ class MemoryClient:
             "project_id": project_id,
             "limit": limit,
             "use_pagerank": use_pagerank,
-            "min_pagerank_score": min_pagerank_score
+            "min_pagerank_score": min_pagerank_score,
         }
         return self._request("GET", "/v1/graph/nodes", params=params)
 
     def get_graph_edges(
-        self,
-        project_id: str,
-        limit: int = 100,
-        relation: Optional[str] = None
+        self, project_id: str, limit: int = 100, relation: Optional[str] = None
     ) -> List[Dict[str, Any]]:
         """
         Retrieve graph edges with optional relation filtering.
@@ -238,10 +243,7 @@ class MemoryClient:
         return self._request("GET", "/v1/graph/edges", params=params)
 
     def get_subgraph(
-        self,
-        project_id: str,
-        node_ids: List[str],
-        depth: int = 1
+        self, project_id: str, node_ids: List[str], depth: int = 1
     ) -> Dict[str, Any]:
         """
         Retrieve a subgraph starting from specific nodes.
@@ -257,17 +259,14 @@ class MemoryClient:
         params = {
             "project_id": project_id,
             "node_ids": ",".join(node_ids),
-            "depth": depth
+            "depth": depth,
         }
         return self._request("GET", "/v1/graph/subgraph", params=params)
 
     # Agent Methods
 
     def execute_agent(
-        self,
-        tenant_id: str,
-        project: str,
-        prompt: str
+        self, tenant_id: str, project: str, prompt: str
     ) -> Dict[str, Any]:
         """
         Execute an AI agent task with full memory retrieval and context management.
@@ -288,11 +287,7 @@ class MemoryClient:
         Returns:
             Dict with answer, used_memories, and cost breakdown
         """
-        request_body = {
-            "tenant_id": tenant_id,
-            "project": project,
-            "prompt": prompt
-        }
+        request_body = {"tenant_id": tenant_id, "project": project, "prompt": prompt}
         return self._request("POST", "/v1/agent/execute", json=request_body)
 
     # Governance Methods
@@ -348,7 +343,9 @@ class MemoryClient:
             Dict with confirmation message
         """
         request_body = {"tenant_id": tenant_id, "project": project}
-        return self._request("POST", "/v1/memory/rebuild-reflections", json=request_body)
+        return self._request(
+            "POST", "/v1/memory/rebuild-reflections", json=request_body
+        )
 
     def get_reflection_stats(self, project: str) -> Dict[str, Any]:
         """
@@ -363,10 +360,7 @@ class MemoryClient:
         return self._request("GET", f"/v1/memory/reflection-stats?project={project}")
 
     def generate_hierarchical_reflection(
-        self,
-        project: str,
-        bucket_size: int = 10,
-        max_episodes: Optional[int] = None
+        self, project: str, bucket_size: int = 10, max_episodes: Optional[int] = None
     ) -> Dict[str, Any]:
         """
         Generate hierarchical (map-reduce) reflection from episodes.
@@ -382,7 +376,9 @@ class MemoryClient:
         params = {"project": project, "bucket_size": bucket_size}
         if max_episodes:
             params["max_episodes"] = max_episodes
-        return self._request("POST", f"/v1/memory/reflection/hierarchical", params=params)
+        return self._request(
+            "POST", f"/v1/memory/reflection/hierarchical", params=params
+        )
 
     # Health & Cache Methods
 
@@ -417,17 +413,12 @@ class MemoryClient:
             ```
         """
         response_data = await self._async_request(
-            "POST",
-            "/memory/store",
-            json=memory.dict(exclude_none=True)
+            "POST", "/memory/store", json=memory.dict(exclude_none=True)
         )
         return StoreMemoryResponse(**response_data)
 
     async def query_async(
-        self,
-        query_text: str,
-        k: int = 10,
-        filters: Optional[Dict[str, Any]] = None
+        self, query_text: str, k: int = 10, filters: Optional[Dict[str, Any]] = None
     ) -> QueryMemoryResponse:
         """
         Asynchronously queries the memory for relevant records.
@@ -442,9 +433,7 @@ class MemoryClient:
         """
         request_body = QueryMemoryRequest(query_text=query_text, k=k, filters=filters)
         response_data = await self._async_request(
-            "POST",
-            "/memory/query",
-            json=request_body.dict(exclude_none=True)
+            "POST", "/memory/query", json=request_body.dict(exclude_none=True)
         )
         return QueryMemoryResponse(**response_data)
 
@@ -459,8 +448,7 @@ class MemoryClient:
             DeleteMemoryResponse with confirmation
         """
         response_data = await self._async_request(
-            "DELETE",
-            f"/memory/delete?memory_id={memory_id}"
+            "DELETE", f"/memory/delete?memory_id={memory_id}"
         )
         return DeleteMemoryResponse(**response_data)
 
@@ -471,14 +459,14 @@ class MemoryClient:
         project_id: str,
         limit: int = 50,
         min_confidence: float = 0.5,
-        auto_store: bool = True
+        auto_store: bool = True,
     ) -> Dict[str, Any]:
         """Async version of extract_knowledge_graph."""
         request_body = {
             "project_id": project_id,
             "limit": limit,
             "min_confidence": min_confidence,
-            "auto_store": auto_store
+            "auto_store": auto_store,
         }
         return await self._async_request("POST", "/v1/graph/extract", json=request_body)
 
@@ -488,7 +476,7 @@ class MemoryClient:
         project_id: str,
         top_k_vector: int = 5,
         graph_depth: int = 2,
-        traversal_strategy: str = "bfs"
+        traversal_strategy: str = "bfs",
     ) -> Dict[str, Any]:
         """Async version of query_graph."""
         request_body = {
@@ -496,26 +484,21 @@ class MemoryClient:
             "project_id": project_id,
             "top_k_vector": top_k_vector,
             "graph_depth": graph_depth,
-            "traversal_strategy": traversal_strategy
+            "traversal_strategy": traversal_strategy,
         }
         return await self._async_request("POST", "/v1/graph/query", json=request_body)
 
     async def get_graph_stats_async(self, project_id: str) -> Dict[str, Any]:
         """Async version of get_graph_stats."""
-        return await self._async_request("GET", f"/v1/graph/stats?project_id={project_id}")
+        return await self._async_request(
+            "GET", f"/v1/graph/stats?project_id={project_id}"
+        )
 
     async def execute_agent_async(
-        self,
-        tenant_id: str,
-        project: str,
-        prompt: str
+        self, tenant_id: str, project: str, prompt: str
     ) -> Dict[str, Any]:
         """Async version of execute_agent."""
-        request_body = {
-            "tenant_id": tenant_id,
-            "project": project,
-            "prompt": prompt
-        }
+        request_body = {"tenant_id": tenant_id, "project": project, "prompt": prompt}
         return await self._async_request("POST", "/v1/agent/execute", json=request_body)
 
     async def close(self):

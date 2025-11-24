@@ -1,12 +1,15 @@
+import os
 from typing import List
+
+import httpx
 from langchain_core.callbacks import CallbackManagerForRetrieverRun
 from langchain_core.documents import Document
 from langchain_core.retrievers import BaseRetriever
-import httpx
-import os
+
 
 class _RAEAPIClient:
     """A simple client for the RAE Memory API."""
+
     def __init__(self, tenant_id: str, api_key: str, base_url: str):
         self.tenant_id = tenant_id
         self.headers = {"X-API-Key": api_key, "X-Tenant-Id": tenant_id}
@@ -17,9 +20,11 @@ class _RAEAPIClient:
         payload = {"query_text": query, "k": k}
         try:
             with httpx.Client() as client:
-                response = client.post(f"{self.base_url}/memory/query", json=payload, headers=self.headers)
+                response = client.post(
+                    f"{self.base_url}/memory/query", json=payload, headers=self.headers
+                )
                 response.raise_for_status()
-                
+
                 results = response.json().get("results", [])
                 documents = []
                 for res in results:
@@ -29,7 +34,9 @@ class _RAEAPIClient:
                         "layer": res.get("layer"),
                         "timestamp": res.get("timestamp"),
                     }
-                    documents.append(Document(page_content=res.get("content", ""), metadata=metadata))
+                    documents.append(
+                        Document(page_content=res.get("content", ""), metadata=metadata)
+                    )
                 return documents
         except httpx.HTTPStatusError as e:
             print(f"Error querying RAE API: {e.response.text}")
@@ -37,12 +44,14 @@ class _RAEAPIClient:
             print(f"An unexpected error occurred: {e}")
         return []
 
+
 class RAERetriever(BaseRetriever):
     """
     A LangChain retriever that fetches relevant documents from the RAE Memory Engine.
     """
+
     client: _RAEAPIClient
-    k: int = 4 # Number of documents to retrieve
+    k: int = 4  # Number of documents to retrieve
 
     class Config:
         arbitrary_types_allowed = True
@@ -52,7 +61,7 @@ class RAERetriever(BaseRetriever):
     ) -> List[Document]:
         """
         Retrieves relevant documents from the RAE API.
-        
+
         Args:
             query: The user's query text.
 

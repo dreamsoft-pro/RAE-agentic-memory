@@ -8,19 +8,17 @@ This service implements drift detection using statistical tests:
 - Automated severity classification
 """
 
-import structlog
-import asyncpg
-from typing import List, Tuple, Optional
 from datetime import datetime, timedelta
+from typing import List, Optional, Tuple
+
+import asyncpg
 import numpy as np
+import structlog
 from scipy import stats
 
-from apps.memory_api.models.evaluation_models import (
-    DriftDetectionResult,
-    DriftType,
-    DriftSeverity,
-    DistributionStatistics
-)
+from apps.memory_api.models.evaluation_models import (DistributionStatistics,
+                                                      DriftDetectionResult,
+                                                      DriftSeverity, DriftType)
 
 logger = structlog.get_logger(__name__)
 
@@ -28,6 +26,7 @@ logger = structlog.get_logger(__name__)
 # ============================================================================
 # Drift Detector
 # ============================================================================
+
 
 class DriftDetector:
     """
@@ -59,7 +58,7 @@ class DriftDetector:
         current_start: datetime,
         current_end: datetime,
         p_value_threshold: float = 0.05,
-        statistical_test: str = "ks_test"
+        statistical_test: str = "ks_test",
     ) -> DriftDetectionResult:
         """
         Detect drift between baseline and current distributions.
@@ -83,31 +82,30 @@ class DriftDetector:
             "drift_detection_started",
             metric=metric_name,
             drift_type=drift_type.value,
-            test=statistical_test
+            test=statistical_test,
         )
 
         # Fetch baseline data
         baseline_data = await self._fetch_metric_data(
-            tenant_id, project_id, metric_name,
-            baseline_start, baseline_end
+            tenant_id, project_id, metric_name, baseline_start, baseline_end
         )
 
         # Fetch current data
         current_data = await self._fetch_metric_data(
-            tenant_id, project_id, metric_name,
-            current_start, current_end
+            tenant_id, project_id, metric_name, current_start, current_end
         )
 
         if len(baseline_data) == 0 or len(current_data) == 0:
             logger.warning("insufficient_data_for_drift_detection")
             # Return no drift detected if insufficient data
             return self._create_no_drift_result(
-                drift_type, baseline_start, baseline_end,
-                current_start, current_end
+                drift_type, baseline_start, baseline_end, current_start, current_end
             )
 
         # Calculate distribution statistics
-        baseline_stats = self._calculate_distribution_stats(baseline_data, baseline_start)
+        baseline_stats = self._calculate_distribution_stats(
+            baseline_data, baseline_start
+        )
         current_stats = self._calculate_distribution_stats(current_data, current_start)
 
         # Perform statistical test
@@ -133,7 +131,9 @@ class DriftDetector:
 
         # Determine actions
         action_required = severity in [DriftSeverity.HIGH, DriftSeverity.CRITICAL]
-        recommended_actions = self._recommend_actions(severity, drift_type, drift_magnitude)
+        recommended_actions = self._recommend_actions(
+            severity, drift_type, drift_magnitude
+        )
 
         result = DriftDetectionResult(
             drift_detected=drift_detected,
@@ -149,14 +149,14 @@ class DriftDetector:
             action_required=action_required,
             recommended_actions=recommended_actions,
             baseline_period=(baseline_start, baseline_end),
-            current_period=(current_start, current_end)
+            current_period=(current_start, current_end),
         )
 
         logger.info(
             "drift_detection_complete",
             detected=drift_detected,
             severity=severity.value,
-            p_value=p_value
+            p_value=p_value,
         )
 
         return result
@@ -166,9 +166,7 @@ class DriftDetector:
     # ========================================================================
 
     def _kolmogorov_smirnov_test(
-        self,
-        baseline: np.ndarray,
-        current: np.ndarray
+        self, baseline: np.ndarray, current: np.ndarray
     ) -> Tuple[float, float]:
         """
         Perform 2-sample Kolmogorov-Smirnov test.
@@ -186,10 +184,7 @@ class DriftDetector:
         return float(p_value), float(statistic)
 
     def _population_stability_index(
-        self,
-        baseline: np.ndarray,
-        current: np.ndarray,
-        bins: int = 10
+        self, baseline: np.ndarray, current: np.ndarray, bins: int = 10
     ) -> Tuple[float, float]:
         """
         Calculate Population Stability Index (PSI).
@@ -234,9 +229,7 @@ class DriftDetector:
     # ========================================================================
 
     def _calculate_distribution_stats(
-        self,
-        data: np.ndarray,
-        timestamp: datetime
+        self, data: np.ndarray, timestamp: datetime
     ) -> DistributionStatistics:
         """
         Calculate comprehensive distribution statistics.
@@ -250,9 +243,15 @@ class DriftDetector:
         """
         if len(data) == 0:
             return DistributionStatistics(
-                mean=0.0, std=0.0, min=0.0, max=0.0,
-                median=0.0, q25=0.0, q75=0.0,
-                sample_size=0, timestamp=timestamp
+                mean=0.0,
+                std=0.0,
+                min=0.0,
+                max=0.0,
+                median=0.0,
+                q25=0.0,
+                q75=0.0,
+                sample_size=0,
+                timestamp=timestamp,
             )
 
         return DistributionStatistics(
@@ -266,13 +265,13 @@ class DriftDetector:
             skewness=float(stats.skew(data)) if len(data) > 2 else None,
             kurtosis=float(stats.kurtosis(data)) if len(data) > 2 else None,
             sample_size=len(data),
-            timestamp=timestamp
+            timestamp=timestamp,
         )
 
     def _calculate_drift_magnitude(
         self,
         baseline_stats: DistributionStatistics,
-        current_stats: DistributionStatistics
+        current_stats: DistributionStatistics,
     ) -> float:
         """
         Calculate magnitude of drift between distributions.
@@ -290,12 +289,16 @@ class DriftDetector:
             return 0.0
 
         # Relative change in mean
-        mean_change = abs(current_stats.mean - baseline_stats.mean) / abs(baseline_stats.mean)
+        mean_change = abs(current_stats.mean - baseline_stats.mean) / abs(
+            baseline_stats.mean
+        )
 
         # Relative change in std
         std_change = 0.0
         if baseline_stats.std > 0:
-            std_change = abs(current_stats.std - baseline_stats.std) / baseline_stats.std
+            std_change = (
+                abs(current_stats.std - baseline_stats.std) / baseline_stats.std
+            )
 
         # Combined magnitude (weighted average)
         magnitude = 0.7 * mean_change + 0.3 * std_change
@@ -303,11 +306,7 @@ class DriftDetector:
         # Cap at 1.0
         return min(1.0, magnitude)
 
-    def _classify_severity(
-        self,
-        magnitude: float,
-        p_value: float
-    ) -> DriftSeverity:
+    def _classify_severity(self, magnitude: float, p_value: float) -> DriftSeverity:
         """
         Classify drift severity based on magnitude and significance.
 
@@ -333,10 +332,7 @@ class DriftDetector:
             return DriftSeverity.CRITICAL
 
     def _recommend_actions(
-        self,
-        severity: DriftSeverity,
-        drift_type: DriftType,
-        magnitude: float
+        self, severity: DriftSeverity, drift_type: DriftType, magnitude: float
     ) -> List[str]:
         """
         Recommend actions based on drift severity.
@@ -383,7 +379,7 @@ class DriftDetector:
         project_id: str,
         metric_name: str,
         start_time: datetime,
-        end_time: datetime
+        end_time: datetime,
     ) -> np.ndarray:
         """
         Fetch metric data from database for given time period.
@@ -412,10 +408,13 @@ class DriftDetector:
                         AND created_at BETWEEN $3 AND $4
                     ORDER BY created_at
                     """,
-                    tenant_id, project_id, start_time, end_time
+                    tenant_id,
+                    project_id,
+                    start_time,
+                    end_time,
                 )
 
-                values = [float(r['metric_value']) for r in records]
+                values = [float(r["metric_value"]) for r in records]
                 return np.array(values)
 
             elif metric_name == "response_time":
@@ -437,7 +436,7 @@ class DriftDetector:
         baseline_start: datetime,
         baseline_end: datetime,
         current_start: datetime,
-        current_end: datetime
+        current_end: datetime,
     ) -> DriftDetectionResult:
         """Create a no-drift result when data is insufficient"""
         return DriftDetectionResult(
@@ -448,19 +447,31 @@ class DriftDetector:
             test_statistic=0.0,
             test_name="No Test (Insufficient Data)",
             baseline_stats=DistributionStatistics(
-                mean=0.0, std=0.0, min=0.0, max=0.0,
-                median=0.0, q25=0.0, q75=0.0,
-                sample_size=0, timestamp=baseline_start
+                mean=0.0,
+                std=0.0,
+                min=0.0,
+                max=0.0,
+                median=0.0,
+                q25=0.0,
+                q75=0.0,
+                sample_size=0,
+                timestamp=baseline_start,
             ),
             current_stats=DistributionStatistics(
-                mean=0.0, std=0.0, min=0.0, max=0.0,
-                median=0.0, q25=0.0, q75=0.0,
-                sample_size=0, timestamp=current_start
+                mean=0.0,
+                std=0.0,
+                min=0.0,
+                max=0.0,
+                median=0.0,
+                q25=0.0,
+                q75=0.0,
+                sample_size=0,
+                timestamp=current_start,
             ),
             drift_magnitude=0.0,
             confidence=0.0,
             action_required=False,
             recommended_actions=["Collect more data"],
             baseline_period=(baseline_start, baseline_end),
-            current_period=(current_start, current_end)
+            current_period=(current_start, current_end),
         )

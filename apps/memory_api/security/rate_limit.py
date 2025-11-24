@@ -6,10 +6,12 @@ Provides rate limiting functionality using Redis.
 
 import time
 from typing import Optional
-from fastapi import Request, HTTPException, status
-from redis import Redis
-from apps.memory_api.config import settings
+
 import structlog
+from fastapi import HTTPException, Request, status
+from redis import Redis
+
+from apps.memory_api.config import settings
 
 logger = structlog.get_logger(__name__)
 
@@ -37,8 +39,7 @@ class RateLimiter:
         if self.redis_client is None:
             try:
                 self.redis_client = Redis.from_url(
-                    settings.REDIS_URL,
-                    decode_responses=True
+                    settings.REDIS_URL, decode_responses=True
                 )
             except Exception as e:
                 logger.error("redis_connection_failed", error=str(e))
@@ -61,7 +62,9 @@ class RateLimiter:
         # Try to get API key from header
         api_key = request.headers.get("X-API-Key")
         if api_key:
-            return f"api_key:{api_key[:20]}"  # Use first 20 chars to avoid very long keys
+            return (
+                f"api_key:{api_key[:20]}"  # Use first 20 chars to avoid very long keys
+            )
 
         # Try to get user ID from auth
         if hasattr(request.state, "user"):
@@ -77,7 +80,7 @@ class RateLimiter:
         self,
         request: Request,
         max_requests: Optional[int] = None,
-        window_seconds: Optional[int] = None
+        window_seconds: Optional[int] = None,
     ) -> dict:
         """
         Check if request is within rate limit.
@@ -94,21 +97,13 @@ class RateLimiter:
             HTTPException: If rate limit exceeded
         """
         if not self.enabled:
-            return {
-                "allowed": True,
-                "remaining": -1,
-                "reset_at": -1
-            }
+            return {"allowed": True, "remaining": -1, "reset_at": -1}
 
         redis_client = self.get_redis_client()
         if not redis_client:
             # If Redis is unavailable, allow request but log warning
             logger.warning("rate_limit_check_skipped_redis_unavailable")
-            return {
-                "allowed": True,
-                "remaining": -1,
-                "reset_at": -1
-            }
+            return {"allowed": True, "remaining": -1, "reset_at": -1}
 
         # Use provided limits or defaults from settings
         max_requests = max_requests or settings.RATE_LIMIT_REQUESTS
@@ -131,13 +126,17 @@ class RateLimiter:
             if request_count >= max_requests:
                 # Get oldest request time to calculate reset time
                 oldest = redis_client.zrange(key, 0, 0, withscores=True)
-                reset_at = int(oldest[0][1]) + window_seconds if oldest else current_time + window_seconds
+                reset_at = (
+                    int(oldest[0][1]) + window_seconds
+                    if oldest
+                    else current_time + window_seconds
+                )
 
                 logger.warning(
                     "rate_limit_exceeded",
                     identifier=identifier,
                     count=request_count,
-                    limit=max_requests
+                    limit=max_requests,
                 )
 
                 raise HTTPException(
@@ -146,14 +145,14 @@ class RateLimiter:
                         "error": "Rate limit exceeded",
                         "limit": max_requests,
                         "window": window_seconds,
-                        "reset_at": reset_at
+                        "reset_at": reset_at,
                     },
                     headers={
                         "X-RateLimit-Limit": str(max_requests),
                         "X-RateLimit-Remaining": "0",
                         "X-RateLimit-Reset": str(reset_at),
-                        "Retry-After": str(reset_at - current_time)
-                    }
+                        "Retry-After": str(reset_at - current_time),
+                    },
                 )
 
             # Add current request
@@ -169,7 +168,7 @@ class RateLimiter:
                 "allowed": True,
                 "remaining": remaining,
                 "limit": max_requests,
-                "reset_at": reset_at
+                "reset_at": reset_at,
             }
 
         except HTTPException:
@@ -177,11 +176,7 @@ class RateLimiter:
         except Exception as e:
             logger.error("rate_limit_check_failed", error=str(e))
             # On error, allow request but log
-            return {
-                "allowed": True,
-                "remaining": -1,
-                "reset_at": -1
-            }
+            return {"allowed": True, "remaining": -1, "reset_at": -1}
 
 
 # Global rate limiter instance

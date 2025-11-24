@@ -1,8 +1,9 @@
-
 from fastapi.testclient import TestClient
+
 from apps.memory_api.main import app
 
 client = TestClient(app)
+
 
 def test_openapi_schema():
     response = client.get("/openapi.json")

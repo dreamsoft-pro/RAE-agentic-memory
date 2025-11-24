@@ -8,23 +8,21 @@ This service implements:
 - Quality monitoring
 """
 
-import structlog
-from typing import List, Dict, Any, Set
-from uuid import UUID, uuid4
 from datetime import datetime, timezone
+from typing import Any, Dict, List, Set
+from uuid import UUID, uuid4
+
 import numpy as np
+import structlog
 from scipy import stats
 
-from apps.memory_api.models.evaluation_models import (
-    RelevanceJudgment,
-    RankedResult,
-    MetricScore,
-    MetricType,
-    EvaluationResult,
-    EvaluationStatus,
-    ABTestResult,
-    ABTestVariant
-)
+from apps.memory_api.models.evaluation_models import (ABTestResult,
+                                                      ABTestVariant,
+                                                      EvaluationResult,
+                                                      EvaluationStatus,
+                                                      MetricScore, MetricType,
+                                                      RankedResult,
+                                                      RelevanceJudgment)
 
 logger = structlog.get_logger(__name__)
 
@@ -32,6 +30,7 @@ logger = structlog.get_logger(__name__)
 # ============================================================================
 # Evaluation Service
 # ============================================================================
+
 
 class EvaluationService:
     """
@@ -56,7 +55,7 @@ class EvaluationService:
         relevance_judgments: List[RelevanceJudgment],
         search_results: Dict[str, List[RankedResult]],
         metrics_to_compute: List[MetricType],
-        k_values: List[int] = None
+        k_values: List[int] = None,
     ) -> EvaluationResult:
         """
         Evaluate search results against ground truth relevance judgments.
@@ -79,7 +78,7 @@ class EvaluationService:
             "evaluation_started",
             tenant_id=tenant_id,
             queries=len(search_results),
-            metrics=len(metrics_to_compute)
+            metrics=len(metrics_to_compute),
         )
 
         # Organize relevance judgments by query
@@ -93,49 +92,63 @@ class EvaluationService:
         for metric_type in metrics_to_compute:
             if metric_type == MetricType.MRR:
                 score = self._calculate_mrr(relevance_by_query, search_results)
-                metric_scores.append(MetricScore(
-                    metric_type=MetricType.MRR,
-                    score=score,
-                    num_queries=len(search_results)
-                ))
+                metric_scores.append(
+                    MetricScore(
+                        metric_type=MetricType.MRR,
+                        score=score,
+                        num_queries=len(search_results),
+                    )
+                )
 
             elif metric_type == MetricType.NDCG:
                 for k in k_values:
                     score = self._calculate_ndcg(relevance_by_query, search_results, k)
-                    metric_scores.append(MetricScore(
-                        metric_type=MetricType.NDCG,
-                        score=score,
-                        k=k,
-                        num_queries=len(search_results)
-                    ))
+                    metric_scores.append(
+                        MetricScore(
+                            metric_type=MetricType.NDCG,
+                            score=score,
+                            k=k,
+                            num_queries=len(search_results),
+                        )
+                    )
 
             elif metric_type == MetricType.PRECISION:
                 for k in k_values:
-                    score = self._calculate_precision_at_k(relevance_by_query, search_results, k)
-                    metric_scores.append(MetricScore(
-                        metric_type=MetricType.PRECISION,
-                        score=score,
-                        k=k,
-                        num_queries=len(search_results)
-                    ))
+                    score = self._calculate_precision_at_k(
+                        relevance_by_query, search_results, k
+                    )
+                    metric_scores.append(
+                        MetricScore(
+                            metric_type=MetricType.PRECISION,
+                            score=score,
+                            k=k,
+                            num_queries=len(search_results),
+                        )
+                    )
 
             elif metric_type == MetricType.RECALL:
                 for k in k_values:
-                    score = self._calculate_recall_at_k(relevance_by_query, search_results, k)
-                    metric_scores.append(MetricScore(
-                        metric_type=MetricType.RECALL,
-                        score=score,
-                        k=k,
-                        num_queries=len(search_results)
-                    ))
+                    score = self._calculate_recall_at_k(
+                        relevance_by_query, search_results, k
+                    )
+                    metric_scores.append(
+                        MetricScore(
+                            metric_type=MetricType.RECALL,
+                            score=score,
+                            k=k,
+                            num_queries=len(search_results),
+                        )
+                    )
 
             elif metric_type == MetricType.MAP:
                 score = self._calculate_map(relevance_by_query, search_results)
-                metric_scores.append(MetricScore(
-                    metric_type=MetricType.MAP,
-                    score=score,
-                    num_queries=len(search_results)
-                ))
+                metric_scores.append(
+                    MetricScore(
+                        metric_type=MetricType.MAP,
+                        score=score,
+                        num_queries=len(search_results),
+                    )
+                )
 
         # Calculate summary statistics
         for query_id, results in search_results.items():
@@ -145,18 +158,22 @@ class EvaluationService:
                     total_retrieval_time += result.retrieval_time_ms
 
         avg_retrieval_time = (
-            total_retrieval_time / len(search_results)
-            if search_results else 0
+            total_retrieval_time / len(search_results) if search_results else 0
         )
 
         # Find best and worst metrics
-        best_metric = max(metric_scores, key=lambda m: m.score) if metric_scores else None
-        worst_metric = min(metric_scores, key=lambda m: m.score) if metric_scores else None
+        best_metric = (
+            max(metric_scores, key=lambda m: m.score) if metric_scores else None
+        )
+        worst_metric = (
+            min(metric_scores, key=lambda m: m.score) if metric_scores else None
+        )
 
         # Calculate overall quality score (average of all metrics)
         overall_quality = (
             sum(m.score for m in metric_scores) / len(metric_scores)
-            if metric_scores else 0.0
+            if metric_scores
+            else 0.0
         )
 
         end_time = datetime.now(timezone.utc)
@@ -176,13 +193,13 @@ class EvaluationService:
             started_at=start_time,
             completed_at=end_time,
             evaluation_duration_ms=duration_ms,
-            status=EvaluationStatus.COMPLETED
+            status=EvaluationStatus.COMPLETED,
         )
 
         logger.info(
             "evaluation_complete",
             overall_quality=overall_quality,
-            duration_ms=duration_ms
+            duration_ms=duration_ms,
         )
 
         return result
@@ -194,7 +211,7 @@ class EvaluationService:
     def _calculate_mrr(
         self,
         relevance_by_query: Dict[str, Dict[UUID, float]],
-        search_results: Dict[str, List[RankedResult]]
+        search_results: Dict[str, List[RankedResult]],
     ) -> float:
         """
         Calculate Mean Reciprocal Rank.
@@ -209,7 +226,10 @@ class EvaluationService:
 
             # Find rank of first relevant document
             for result in results:
-                if result.document_id in relevance and relevance[result.document_id] > 0.5:
+                if (
+                    result.document_id in relevance
+                    and relevance[result.document_id] > 0.5
+                ):
                     reciprocal_ranks.append(1.0 / result.rank)
                     break
             else:
@@ -223,7 +243,7 @@ class EvaluationService:
         self,
         relevance_by_query: Dict[str, Dict[UUID, float]],
         search_results: Dict[str, List[RankedResult]],
-        k: int
+        k: int,
     ) -> float:
         """
         Calculate Normalized Discounted Cumulative Gain at K.
@@ -244,7 +264,9 @@ class EvaluationService:
 
             # Calculate IDCG@K (ideal DCG)
             ideal_rels = sorted(relevance.values(), reverse=True)[:k]
-            idcg = sum(rel / np.log2(i + 1) for i, rel in enumerate(ideal_rels, start=1))
+            idcg = sum(
+                rel / np.log2(i + 1) for i, rel in enumerate(ideal_rels, start=1)
+            )
 
             # NDCG
             if idcg > 0:
@@ -259,7 +281,7 @@ class EvaluationService:
         self,
         relevance_by_query: Dict[str, Dict[UUID, float]],
         search_results: Dict[str, List[RankedResult]],
-        k: int
+        k: int,
     ) -> float:
         """
         Calculate Precision at K.
@@ -273,8 +295,10 @@ class EvaluationService:
 
             # Count relevant documents in top K
             relevant_in_k = sum(
-                1 for result in results[:k]
-                if result.document_id in relevance and relevance[result.document_id] > 0.5
+                1
+                for result in results[:k]
+                if result.document_id in relevance
+                and relevance[result.document_id] > 0.5
             )
 
             precision = relevant_in_k / min(k, len(results)) if results else 0.0
@@ -287,7 +311,7 @@ class EvaluationService:
         self,
         relevance_by_query: Dict[str, Dict[UUID, float]],
         search_results: Dict[str, List[RankedResult]],
-        k: int
+        k: int,
     ) -> float:
         """
         Calculate Recall at K.
@@ -307,8 +331,10 @@ class EvaluationService:
 
             # Count relevant documents in top K
             relevant_in_k = sum(
-                1 for result in results[:k]
-                if result.document_id in relevance and relevance[result.document_id] > 0.5
+                1
+                for result in results[:k]
+                if result.document_id in relevance
+                and relevance[result.document_id] > 0.5
             )
 
             recall = relevant_in_k / total_relevant
@@ -320,7 +346,7 @@ class EvaluationService:
     def _calculate_map(
         self,
         relevance_by_query: Dict[str, Dict[UUID, float]],
-        search_results: Dict[str, List[RankedResult]]
+        search_results: Dict[str, List[RankedResult]],
     ) -> float:
         """
         Calculate Mean Average Precision.
@@ -344,7 +370,10 @@ class EvaluationService:
             sum_precisions = 0.0
 
             for i, result in enumerate(results, start=1):
-                if result.document_id in relevance and relevance[result.document_id] > 0.5:
+                if (
+                    result.document_id in relevance
+                    and relevance[result.document_id] > 0.5
+                ):
                     relevant_found += 1
                     precision_at_i = relevant_found / i
                     sum_precisions += precision_at_i
@@ -363,7 +392,7 @@ class EvaluationService:
         self,
         variant_a_metrics: List[MetricScore],
         variant_b_metrics: List[MetricScore],
-        confidence_level: float = 0.95
+        confidence_level: float = 0.95,
     ) -> Dict[str, Any]:
         """
         Compare two A/B test variants for statistical significance.
@@ -399,7 +428,9 @@ class EvaluationService:
                 "variant_a": score_a,
                 "variant_b": score_b,
                 "improvement_percent": improvement,
-                "winner": "B" if score_b > score_a else "A" if score_a > score_b else "TIE"
+                "winner": (
+                    "B" if score_b > score_a else "A" if score_a > score_b else "TIE"
+                ),
             }
 
         # Overall winner (majority of metrics)
@@ -411,7 +442,7 @@ class EvaluationService:
         return {
             "comparisons": comparisons,
             "overall_winner": overall_winner,
-            "is_significant": overall_winner != "TIE"  # Simplified
+            "is_significant": overall_winner != "TIE",  # Simplified
         }
 
     # ========================================================================
@@ -419,8 +450,7 @@ class EvaluationService:
     # ========================================================================
 
     def _organize_relevance_judgments(
-        self,
-        judgments: List[RelevanceJudgment]
+        self, judgments: List[RelevanceJudgment]
     ) -> Dict[str, Dict[UUID, float]]:
         """
         Organize relevance judgments by query ID.
@@ -437,6 +467,8 @@ class EvaluationService:
             if judgment.query_id not in organized:
                 organized[judgment.query_id] = {}
 
-            organized[judgment.query_id][judgment.document_id] = judgment.relevance_score
+            organized[judgment.query_id][
+                judgment.document_id
+            ] = judgment.relevance_score
 
         return organized

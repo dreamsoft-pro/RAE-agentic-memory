@@ -2,10 +2,11 @@
 Graph Algorithms Service - Advanced graph analysis for knowledge graphs
 """
 
-from typing import List, Dict, Set, Optional, Tuple, Any
-from uuid import UUID
-from collections import defaultdict, deque
 import math
+from collections import defaultdict, deque
+from typing import Any, Dict, List, Optional, Set, Tuple
+from uuid import UUID
+
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -15,17 +16,14 @@ class GraphNode:
     """Represents a node in the knowledge graph"""
 
     def __init__(
-        self,
-        id: str,
-        entity_type: str,
-        properties: Optional[Dict[str, Any]] = None
+        self, id: str, entity_type: str, properties: Optional[Dict[str, Any]] = None
     ):
         self.id = id
         self.entity_type = entity_type
         self.properties = properties or {}
-        self.edges: List['GraphEdge'] = []
+        self.edges: List["GraphEdge"] = []
 
-    def add_edge(self, edge: 'GraphEdge'):
+    def add_edge(self, edge: "GraphEdge"):
         """Add an outgoing edge"""
         self.edges.append(edge)
 
@@ -46,7 +44,7 @@ class GraphEdge:
         target_id: str,
         relation_type: str,
         weight: float = 1.0,
-        properties: Optional[Dict[str, Any]] = None
+        properties: Optional[Dict[str, Any]] = None,
     ):
         self.source_id = source_id
         self.target_id = target_id
@@ -110,7 +108,9 @@ class GraphAlgorithmsService:
         self.db = db
         self.vector_store = vector_store
 
-    async def load_tenant_graph(self, tenant_id: UUID, project_id: Optional[str] = None) -> KnowledgeGraph:
+    async def load_tenant_graph(
+        self, tenant_id: UUID, project_id: Optional[str] = None
+    ) -> KnowledgeGraph:
         """
         Load tenant's knowledge graph from storage
 
@@ -150,9 +150,9 @@ class GraphAlgorithmsService:
                 # Add nodes to graph
                 for node_row in nodes:
                     node = GraphNode(
-                        id=str(node_row['id']),
-                        entity_type=node_row['label'],
-                        properties=node_row['properties'] or {}
+                        id=str(node_row["id"]),
+                        entity_type=node_row["label"],
+                        properties=node_row["properties"] or {},
                     )
                     graph.add_node(node)
 
@@ -175,10 +175,10 @@ class GraphAlgorithmsService:
                 # Add edges to graph
                 for edge_row in edges:
                     edge = GraphEdge(
-                        source_id=str(edge_row['source_node_id']),
-                        target_id=str(edge_row['target_node_id']),
-                        relation_type=edge_row['relation'],
-                        properties=edge_row['properties'] or {}
+                        source_id=str(edge_row["source_node_id"]),
+                        target_id=str(edge_row["target_node_id"]),
+                        relation_type=edge_row["relation"],
+                        properties=edge_row["properties"] or {},
                     )
                     graph.add_edge(edge)
 
@@ -186,7 +186,7 @@ class GraphAlgorithmsService:
                     "graph_loaded",
                     tenant_id=str(tenant_id),
                     nodes=graph.node_count(),
-                    edges=graph.edge_count()
+                    edges=graph.edge_count(),
                 )
 
         except Exception as e:
@@ -201,7 +201,7 @@ class GraphAlgorithmsService:
         project_id: Optional[str] = None,
         damping: float = 0.85,
         max_iterations: int = 100,
-        tolerance: float = 1e-6
+        tolerance: float = 1e-6,
     ) -> Dict[str, float]:
         """
         Calculate PageRank scores for all nodes
@@ -223,7 +223,7 @@ class GraphAlgorithmsService:
             "calculating_pagerank",
             tenant_id=str(tenant_id),
             project_id=project_id,
-            damping=damping
+            damping=damping,
         )
 
         graph = await self.load_tenant_graph(tenant_id, project_id)
@@ -265,19 +265,13 @@ class GraphAlgorithmsService:
 
             # Check convergence
             if diff < tolerance:
-                logger.info(
-                    "pagerank_converged",
-                    iteration=iteration,
-                    diff=diff
-                )
+                logger.info("pagerank_converged", iteration=iteration, diff=diff)
                 break
 
         return scores
 
     async def community_detection(
-        self,
-        tenant_id: UUID,
-        algorithm: str = "louvain"
+        self, tenant_id: UUID, algorithm: str = "louvain"
     ) -> Dict[str, int]:
         """
         Detect communities (clusters) in the knowledge graph
@@ -293,9 +287,7 @@ class GraphAlgorithmsService:
             Dictionary mapping node_id -> community_id
         """
         logger.info(
-            "detecting_communities",
-            tenant_id=str(tenant_id),
-            algorithm=algorithm
+            "detecting_communities", tenant_id=str(tenant_id), algorithm=algorithm
         )
 
         graph = await self.load_tenant_graph(tenant_id)
@@ -307,10 +299,7 @@ class GraphAlgorithmsService:
         else:
             raise ValueError(f"Unknown algorithm: {algorithm}")
 
-    async def _louvain_communities(
-        self,
-        graph: KnowledgeGraph
-    ) -> Dict[str, int]:
+    async def _louvain_communities(self, graph: KnowledgeGraph) -> Dict[str, int]:
         """
         Louvain method for community detection
 
@@ -325,17 +314,12 @@ class GraphAlgorithmsService:
         # Simplified Louvain implementation
         # In production, use networkx or igraph for full implementation
 
-        logger.info(
-            "louvain_complete",
-            num_communities=len(set(communities.values()))
-        )
+        logger.info("louvain_complete", num_communities=len(set(communities.values())))
 
         return communities
 
     async def _label_propagation(
-        self,
-        graph: KnowledgeGraph,
-        max_iterations: int = 100
+        self, graph: KnowledgeGraph, max_iterations: int = 100
     ) -> Dict[str, int]:
         """
         Label Propagation Algorithm for community detection
@@ -354,6 +338,7 @@ class GraphAlgorithmsService:
 
             # Random order to avoid bias
             import random
+
             random.shuffle(node_list)
 
             for node_id in node_list:
@@ -383,11 +368,7 @@ class GraphAlgorithmsService:
         return labels
 
     async def shortest_path(
-        self,
-        tenant_id: UUID,
-        source_id: str,
-        target_id: str,
-        max_hops: int = 10
+        self, tenant_id: UUID, source_id: str, target_id: str, max_hops: int = 10
     ) -> Optional[List[str]]:
         """
         Find shortest path between two nodes using BFS
@@ -405,7 +386,7 @@ class GraphAlgorithmsService:
             "finding_shortest_path",
             tenant_id=str(tenant_id),
             source=source_id,
-            target=target_id
+            target=target_id,
         )
 
         graph = await self.load_tenant_graph(tenant_id)
@@ -426,11 +407,7 @@ class GraphAlgorithmsService:
 
             # Found target
             if current_id == target_id:
-                logger.info(
-                    "path_found",
-                    length=len(path),
-                    path=path
-                )
+                logger.info("path_found", length=len(path), path=path)
                 return path
 
             # Explore neighbors
@@ -448,7 +425,7 @@ class GraphAlgorithmsService:
         source_id: str,
         target_id: str,
         max_hops: int = 5,
-        max_paths: int = 10
+        max_paths: int = 10,
     ) -> List[List[str]]:
         """
         Find all paths between two nodes (up to max_paths)
@@ -494,11 +471,7 @@ class GraphAlgorithmsService:
         return paths
 
     async def find_related_entities(
-        self,
-        tenant_id: UUID,
-        entity_id: str,
-        max_distance: int = 2,
-        limit: int = 20
+        self, tenant_id: UUID, entity_id: str, max_distance: int = 2, limit: int = 20
     ) -> List[Dict[str, Any]]:
         """
         Find entities related to given entity within max_distance hops
@@ -535,22 +508,22 @@ class GraphAlgorithmsService:
                     visited.add(neighbor_id)
                     neighbor = graph.nodes[neighbor_id]
 
-                    related.append({
-                        "entity_id": neighbor_id,
-                        "entity_type": neighbor.entity_type,
-                        "distance": distance + 1,
-                        "relation": edge.relation_type,
-                        "path_from_source": distance + 1
-                    })
+                    related.append(
+                        {
+                            "entity_id": neighbor_id,
+                            "entity_type": neighbor.entity_type,
+                            "distance": distance + 1,
+                            "relation": edge.relation_type,
+                            "path_from_source": distance + 1,
+                        }
+                    )
 
                     queue.append((neighbor_id, distance + 1))
 
         return related[:limit]
 
     async def calculate_centrality(
-        self,
-        tenant_id: UUID,
-        method: str = "degree"
+        self, tenant_id: UUID, method: str = "degree"
     ) -> Dict[str, float]:
         """
         Calculate node centrality measures
@@ -591,10 +564,7 @@ class GraphAlgorithmsService:
 
         return centrality
 
-    async def _betweenness_centrality(
-        self,
-        graph: KnowledgeGraph
-    ) -> Dict[str, float]:
+    async def _betweenness_centrality(self, graph: KnowledgeGraph) -> Dict[str, float]:
         """
         Calculate betweenness centrality
 
@@ -610,10 +580,7 @@ class GraphAlgorithmsService:
 
         return centrality
 
-    async def _closeness_centrality(
-        self,
-        graph: KnowledgeGraph
-    ) -> Dict[str, float]:
+    async def _closeness_centrality(self, graph: KnowledgeGraph) -> Dict[str, float]:
         """
         Calculate closeness centrality
 
@@ -638,9 +605,7 @@ class GraphAlgorithmsService:
         return centrality
 
     async def _single_source_shortest_paths(
-        self,
-        graph: KnowledgeGraph,
-        source_id: str
+        self, graph: KnowledgeGraph, source_id: str
     ) -> Dict[str, int]:
         """
         Calculate shortest path distances from source to all reachable nodes
@@ -727,10 +692,7 @@ class GraphAlgorithmsService:
         return articulation_points
 
     async def subgraph_extraction(
-        self,
-        tenant_id: UUID,
-        node_ids: List[str],
-        include_connections: bool = True
+        self, tenant_id: UUID, node_ids: List[str], include_connections: bool = True
     ) -> KnowledgeGraph:
         """
         Extract a subgraph containing specified nodes
@@ -799,5 +761,5 @@ class GraphAlgorithmsService:
             "node_types": dict(type_counts),
             "relation_types": dict(relation_counts),
             "is_connected": num_nodes > 0,  # Simplified
-            "num_components": 1  # Simplified
+            "num_components": 1,  # Simplified
         }

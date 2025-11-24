@@ -1,8 +1,10 @@
 from typing import Type
-from pydantic import BaseModel
-from .base import LLMProvider, LLMResult, LLMResultUsage
-from ...config import settings
+
 import litellm
+from pydantic import BaseModel
+
+from ...config import settings
+from .base import LLMProvider, LLMResult, LLMResultUsage
 
 
 class LiteLLMProvider(LLMProvider):
@@ -17,11 +19,16 @@ class LiteLLMProvider(LLMProvider):
         else:
             self.model = settings.RAE_LLM_MODEL_DEFAULT
 
-    async def generate(self, *, system: str, prompt: str, model: str, **kwargs) -> LLMResult:
+    async def generate(
+        self, *, system: str, prompt: str, model: str, **kwargs
+    ) -> LLMResult:
         """
         Generates a response from the specified LLM model.
         """
-        messages = [{"role": "system", "content": system}, {"role": "user", "content": prompt}]
+        messages = [
+            {"role": "system", "content": system},
+            {"role": "user", "content": prompt},
+        ]
 
         # Call litellm
         response = await litellm.acompletion(model=model, messages=messages, **kwargs)
@@ -41,12 +48,21 @@ class LiteLLMProvider(LLMProvider):
         )
 
     async def generate_structured(
-        self, *, system: str, prompt: str, model: str, response_model: Type[BaseModel], **kwargs
+        self,
+        *,
+        system: str,
+        prompt: str,
+        model: str,
+        response_model: Type[BaseModel],
+        **kwargs
     ) -> BaseModel:
         """
         Generates a structured response from the specified LLM model.
         """
-        messages = [{"role": "system", "content": system}, {"role": "user", "content": prompt}]
+        messages = [
+            {"role": "system", "content": system},
+            {"role": "user", "content": prompt},
+        ]
 
         # Call litellm
         response = await litellm.acompletion(model=model, messages=messages, **kwargs)
@@ -54,5 +70,3 @@ class LiteLLMProvider(LLMProvider):
         # Here we could do more processing, e.g., on usage stats
         # For now, just return the text
         return response.choices[0].message.content
-
-

@@ -1,8 +1,13 @@
-from typing import List, Dict
+from typing import Dict, List
+
 import asyncpg
+
 from apps.memory_api.repositories.memory_repository import MemoryRepository
 
-async def get_semantic_memories(pool: asyncpg.Pool, tenant_id: str, project: str) -> List[Dict]:
+
+async def get_semantic_memories(
+    pool: asyncpg.Pool, tenant_id: str, project: str
+) -> List[Dict]:
     """
     Retrieves all semantic memories for a given tenant and project from Postgres.
 
@@ -11,7 +16,10 @@ async def get_semantic_memories(pool: asyncpg.Pool, tenant_id: str, project: str
     repository = MemoryRepository(pool)
     return await repository.get_semantic_memories(tenant_id, project)
 
-async def get_reflective_memories(pool: asyncpg.Pool, tenant_id: str, project: str) -> List[Dict]:
+
+async def get_reflective_memories(
+    pool: asyncpg.Pool, tenant_id: str, project: str
+) -> List[Dict]:
     """
     Retrieves all reflective memories for a given tenant and project from Postgres.
 

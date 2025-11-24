@@ -13,17 +13,18 @@ Priority: HIGH (Critical module for memory persistence)
 Current Coverage: 52% -> Target: 70%+
 """
 
-import pytest
-from unittest.mock import AsyncMock, Mock
 from typing import List
+from unittest.mock import AsyncMock, Mock
 
-from apps.memory_api.services.vector_store.pgvector_store import PGVectorStore
+import pytest
+
 from apps.memory_api.models import MemoryRecord, ScoredMemoryRecord
-
+from apps.memory_api.services.vector_store.pgvector_store import PGVectorStore
 
 # =============================================================================
 # Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def sample_memories():
@@ -34,25 +35,22 @@ def sample_memories():
             content="Test memory 1",
             layer="em",
             tenant_id="tenant1",
-            project_id="proj1"
+            project_id="proj1",
         ),
         MemoryRecord(
             id="mem2",
             content="Test memory 2",
             layer="em",
             tenant_id="tenant1",
-            project_id="proj1"
-        )
+            project_id="proj1",
+        ),
     ]
 
 
 @pytest.fixture
 def sample_embeddings():
     """Sample embeddings for testing."""
-    return [
-        [0.1, 0.2, 0.3, 0.4],
-        [0.5, 0.6, 0.7, 0.8]
-    ]
+    return [[0.1, 0.2, 0.3, 0.4], [0.5, 0.6, 0.7, 0.8]]
 
 
 @pytest.fixture
@@ -64,6 +62,7 @@ def sample_query_embedding():
 # =============================================================================
 # PGVectorStore Tests
 # =============================================================================
+
 
 @pytest.mark.asyncio
 class TestPGVectorStore:
@@ -117,7 +116,9 @@ class TestPGVectorStore:
         store = PGVectorStore(mock_pool)
 
         # Different lengths should raise ValueError
-        with pytest.raises(ValueError, match="number of memories and embeddings must be the same"):
+        with pytest.raises(
+            ValueError, match="number of memories and embeddings must be the same"
+        ):
             await store.upsert(sample_memories, [[0.1, 0.2]])
 
     async def test_query_success(self, mock_pool, sample_query_embedding):
@@ -131,19 +132,21 @@ class TestPGVectorStore:
         store = PGVectorStore(mock_pool)
 
         # Mock database response
-        mock_pool.fetch = AsyncMock(return_value=[
-            {
-                "id": "mem1",
-                "content": "Similar memory",
-                "score": 0.95,
-                "layer": "em",
-                "tenant_id": "tenant1",
-                "project_id": "proj1",
-                "tags": ["test"],
-                "source": "test",
-                "timestamp": "2024-01-01T00:00:00"
-            }
-        ])
+        mock_pool.fetch = AsyncMock(
+            return_value=[
+                {
+                    "id": "mem1",
+                    "content": "Similar memory",
+                    "score": 0.95,
+                    "layer": "em",
+                    "tenant_id": "tenant1",
+                    "project_id": "proj1",
+                    "tags": ["test"],
+                    "source": "test",
+                    "timestamp": "2024-01-01T00:00:00",
+                }
+            ]
+        )
 
         results = await store.query(sample_query_embedding, top_k=5, filters={})
 

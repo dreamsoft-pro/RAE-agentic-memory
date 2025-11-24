@@ -2,12 +2,13 @@
 Pytest configuration and shared fixtures for RAE Memory API tests.
 """
 
-import pytest
 import asyncio
-from typing import Generator, Any
-from unittest.mock import AsyncMock, Mock
-import asyncpg
 import os
+from typing import Any, Generator
+from unittest.mock import AsyncMock, Mock
+
+import asyncpg
+import pytest
 
 
 @pytest.fixture(scope="session")
@@ -28,6 +29,7 @@ def anyio_backend():
 # Helper Classes for Async Mocking
 # =============================================================================
 
+
 class DummyAsyncContextManager:
     """
     Helper class for mocking async context managers that mimics asyncpg's pool.acquire().
@@ -47,8 +49,10 @@ class DummyAsyncContextManager:
 
     def __await__(self):
         """Make this awaitable - returns self so it can be used as context manager."""
+
         async def _impl():
             return self
+
         return _impl().__await__()
 
     async def __aenter__(self):
@@ -63,6 +67,7 @@ class DummyAsyncContextManager:
 # =============================================================================
 # Common Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def mock_pool():
@@ -121,6 +126,7 @@ def mock_pool():
 # Testcontainers Fixtures (Real Database for Integration Tests)
 # =============================================================================
 
+
 @pytest.fixture(scope="session")
 def postgres_container():
     """
@@ -142,7 +148,7 @@ def postgres_container():
         image="ankane/pgvector:latest",
         username="test_user",
         password="test_password",
-        dbname="test_db"
+        dbname="test_db",
     )
     container.start()
 
@@ -183,7 +189,7 @@ async def db_pool(postgres_container):
         user=user,
         password=password,
         min_size=1,
-        max_size=5
+        max_size=5,
     )
 
     try:
@@ -196,7 +202,8 @@ async def db_pool(postgres_container):
 
             # Create minimal schema for tests
             # In production, this should be replaced with proper Alembic migrations
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS memories (
                     id SERIAL PRIMARY KEY,
                     tenant_id VARCHAR(255) NOT NULL,
@@ -213,9 +220,11 @@ async def db_pool(postgres_container):
                     usage_count INTEGER DEFAULT 0,
                     strength FLOAT DEFAULT 0.5
                 );
-            """)
+            """
+            )
 
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS knowledge_graph_nodes (
                     id SERIAL PRIMARY KEY,
                     tenant_id VARCHAR(255) NOT NULL,
@@ -226,9 +235,11 @@ async def db_pool(postgres_container):
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     UNIQUE(tenant_id, project_id, node_id)
                 );
-            """)
+            """
+            )
 
-            await conn.execute("""
+            await conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS knowledge_graph_edges (
                     id SERIAL PRIMARY KEY,
                     tenant_id VARCHAR(255) NOT NULL,
@@ -240,7 +251,8 @@ async def db_pool(postgres_container):
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     UNIQUE(tenant_id, project_id, source_node_id, target_node_id, relation)
                 );
-            """)
+            """
+            )
 
         yield pool
 

@@ -1,11 +1,12 @@
 from typing import Type
-from pydantic import BaseModel
-from openai import AsyncOpenAI
-from tenacity import retry, stop_after_attempt, wait_exponential
-import instructor
 
-from .base import LLMProvider, LLMResult, LLMResultUsage
+import instructor
+from openai import AsyncOpenAI
+from pydantic import BaseModel
+from tenacity import retry, stop_after_attempt, wait_exponential
+
 from ...config import settings
+from .base import LLMProvider, LLMResult, LLMResultUsage
 
 
 class OpenAIProvider(LLMProvider):
@@ -19,7 +20,9 @@ class OpenAIProvider(LLMProvider):
             raise ValueError("OPENAI_API_KEY is not set.")
         self.client = instructor.patch(AsyncOpenAI(api_key=key))
 
-    @retry(wait=wait_exponential(multiplier=1, min=4, max=10), stop=stop_after_attempt(3))
+    @retry(
+        wait=wait_exponential(multiplier=1, min=4, max=10), stop=stop_after_attempt(3)
+    )
     async def generate(self, *, system: str, prompt: str, model: str) -> LLMResult:
         """
         Generates content using the OpenAI model.
@@ -49,7 +52,9 @@ class OpenAIProvider(LLMProvider):
             print(f"OpenAI API call failed: {e}")
             raise
 
-    @retry(wait=wait_exponential(multiplier=1, min=4, max=10), stop=stop_after_attempt(3))
+    @retry(
+        wait=wait_exponential(multiplier=1, min=4, max=10), stop=stop_after_attempt(3)
+    )
     async def generate_structured(
         self, *, system: str, prompt: str, model: str, response_model: Type[BaseModel]
     ) -> BaseModel:

@@ -5,16 +5,17 @@ This module provides sophisticated entity and relationship extraction capabiliti
 transforming unstructured episodic memories into structured knowledge graphs.
 """
 
-from typing import List, Dict, Optional, Any
 import re
-from pydantic import BaseModel, Field, field_validator
-import asyncpg
-import structlog
-import spacy
+from typing import Any, Dict, List, Optional
 
-from apps.memory_api.services.llm import get_llm_provider
-from apps.memory_api.config import settings
+import asyncpg
+import spacy
+import structlog
+from pydantic import BaseModel, Field, field_validator
+
 from apps.memory_api import metrics
+from apps.memory_api.config import settings
+from apps.memory_api.services.llm import get_llm_provider
 
 logger = structlog.get_logger(__name__)
 
@@ -47,32 +48,32 @@ class GraphTriple(BaseModel):
         ...,
         description="The source entity (subject) in the relationship",
         min_length=1,
-        max_length=500
+        max_length=500,
     )
     relation: str = Field(
         ...,
         description="The relationship type between entities (e.g., REPORTED_BUG, DEPENDS_ON)",
         min_length=1,
-        max_length=200
+        max_length=200,
     )
     target: str = Field(
         ...,
         description="The target entity (object) in the relationship",
         min_length=1,
-        max_length=500
+        max_length=500,
     )
     confidence: float = Field(
         default=1.0,
         description="Confidence score of the extraction (0.0 to 1.0)",
         ge=0.0,
-        le=1.0
+        le=1.0,
     )
     metadata: Dict[str, Any] = Field(
         default_factory=dict,
-        description="Additional metadata about the triple (source_memory_id, extraction_timestamp, etc.)"
+        description="Additional metadata about the triple (source_memory_id, extraction_timestamp, etc.)",
     )
 
-    @field_validator('source', 'target')
+    @field_validator("source", "target")
     @classmethod
     def normalize_entity(cls, v: str) -> str:
         """
@@ -82,11 +83,11 @@ class GraphTriple(BaseModel):
         """
         return _normalize_entity_name(v)
 
-    @field_validator('relation')
+    @field_validator("relation")
     @classmethod
     def normalize_relation(cls, v: str) -> str:
         """Normalize relation names to uppercase with underscores."""
-        return v.upper().replace(' ', '_').replace('-', '_')
+        return v.upper().replace(" ", "_").replace("-", "_")
 
     def __hash__(self) -> int:
         """
@@ -109,20 +110,22 @@ class GraphExtractionResult(BaseModel):
     """
 
     triples: List[GraphTriple] = Field(
-        default_factory=list,
-        description="Extracted relationship triples"
+        default_factory=list, description="Extracted relationship triples"
     )
     extracted_entities: List[str] = Field(
-        default_factory=list,
-        description="Unique entities discovered in the memories"
+        default_factory=list, description="Unique entities discovered in the memories"
     )
     statistics: Dict[str, Any] = Field(
         default_factory=dict,
-        description="Extraction statistics (memories_processed, entities_count, etc.)"
+        description="Extraction statistics (memories_processed, entities_count, etc.)",
     )
 
+
 class FactualityCheck(BaseModel):
-    is_factual: bool = Field(..., description="Whether the content contains factual information worthy of extraction.")
+    is_factual: bool = Field(
+        ...,
+        description="Whether the content contains factual information worthy of extraction.",
+    )
 
 
 def _normalize_entity_name(name: str) -> str:
@@ -145,11 +148,11 @@ def _normalize_entity_name(name: str) -> str:
     # 1. Lowercase
     name = name.lower()
     # 2. Replace hyphens and underscores with spaces
-    name = name.replace('-', ' ').replace('_', ' ')
+    name = name.replace("-", " ").replace("_", " ")
     # 3. Strip whitespace
     name = name.strip()
     # 4. Remove extra spaces
-    name = re.sub(r'\s+', ' ', name)
+    name = re.sub(r"\s+", " ", name)
 
     # 5. Lemmatization (Polish preferred, then English, or both if needed)
     # Heuristic: Use Polish model if available. However, for technical terms (often English),
@@ -179,7 +182,7 @@ def _normalize_entity_name(name: str) -> str:
                 lemma = "service"
             # Fix for "authservice" -> "authservica"
             if token.text.endswith("service") and lemma.endswith("servica"):
-                 lemma = lemma[:-1] + "e"
+                lemma = lemma[:-1] + "e"
             lemmatized_words.append(lemma)
         name = " ".join(lemmatized_words)
 
@@ -228,11 +231,7 @@ class GraphExtractionService:
     - Follows clean Repository/DAO pattern with full Dependency Injection
     """
 
-    def __init__(
-        self,
-        memory_repo: 'MemoryRepository',
-        graph_repo: 'GraphRepository'
-    ):
+    def __init__(self, memory_repo: "MemoryRepository", graph_repo: "GraphRepository"):
         """
         Initialize the graph extraction service.
 
@@ -249,7 +248,7 @@ class GraphExtractionService:
         project_id: str,
         tenant_id: str,
         limit: int = 50,
-        min_confidence: float = 0.5
+        min_confidence: float = 0.5,
     ) -> GraphExtractionResult:
         """
         Extract knowledge graph triples from episodic memories.
@@ -277,7 +276,7 @@ class GraphExtractionService:
             "starting_graph_extraction",
             project_id=project_id,
             tenant_id=tenant_id,
-            limit=limit
+            limit=limit,
         )
 
         # 1. Fetch recent episodic memories
@@ -289,7 +288,7 @@ class GraphExtractionService:
                 statistics={
                     "memories_processed": 0,
                     "entities_count": 0,
-                    "triples_count": 0
+                    "triples_count": 0,
                 }
             )
 
@@ -302,14 +301,16 @@ class GraphExtractionService:
                 statistics={
                     "memories_processed": len(memories),
                     "entities_count": 0,
-                    "triples_count": 0
+                    "triples_count": 0,
                 }
             )
 
-        logger.info("gatekeeper_filtered",
-                    total=len(memories),
-                    factual=len(factual_memories),
-                    project_id=project_id)
+        logger.info(
+            "gatekeeper_filtered",
+            total=len(memories),
+            factual=len(factual_memories),
+            project_id=project_id,
+        )
 
         # 2. Format memories for extraction
         memories_text = self._format_memories(factual_memories)
@@ -325,60 +326,63 @@ class GraphExtractionService:
                 system=system_prompt,
                 prompt=prompt,
                 model=settings.EXTRACTION_MODEL,
-                response_model=GraphExtractionResult
+                response_model=GraphExtractionResult,
             )
 
             # 5. Filter by confidence threshold
             filtered_triples = [
-                triple for triple in extraction_result.triples
+                triple
+                for triple in extraction_result.triples
                 if triple.confidence >= min_confidence
             ]
 
             # 6. Add metadata to triples
             for triple in filtered_triples:
-                triple.metadata.update({
-                    "project_id": project_id,
-                    "tenant_id": tenant_id,
-                    "extraction_method": "llm_structured",
-                    "model": settings.EXTRACTION_MODEL
-                })
+                triple.metadata.update(
+                    {
+                        "project_id": project_id,
+                        "tenant_id": tenant_id,
+                        "extraction_method": "llm_structured",
+                        "model": settings.EXTRACTION_MODEL,
+                    }
+                )
 
             # 7. Compile statistics
             statistics = {
                 "memories_processed": len(memories),
                 "entities_count": len(extraction_result.extracted_entities),
                 "triples_count": len(filtered_triples),
-                "triples_filtered": len(extraction_result.triples) - len(filtered_triples),
-                "min_confidence": min_confidence
+                "triples_filtered": len(extraction_result.triples)
+                - len(filtered_triples),
+                "min_confidence": min_confidence,
             }
 
             logger.info(
                 "graph_extraction_completed",
                 project_id=project_id,
-                statistics=statistics
+                statistics=statistics,
             )
 
             # Update metrics
             metrics.reflection_event_counter.labels(
-                tenant_id=tenant_id,
-                project=project_id
+                tenant_id=tenant_id, project=project_id
             ).inc()
 
             return GraphExtractionResult(
                 triples=filtered_triples,
                 extracted_entities=extraction_result.extracted_entities,
-                statistics=statistics
+                statistics=statistics,
             )
 
         except Exception as e:
             logger.exception(
-                "graph_extraction_failed",
-                project_id=project_id,
-                error=str(e)
+                "graph_extraction_failed", project_id=project_id, error=str(e)
             )
             raise RuntimeError(f"Graph extraction failed: {e}")
 
-    async def _filter_factual_memories(self, memories: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    async def _filter_factual_memories(
+        self, memories: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """
         Filter memories to include only those containing factual information.
         Uses a cheap model to check factuality.
@@ -413,14 +417,16 @@ class GraphExtractionService:
         """
 
         class FactualIndices(BaseModel):
-            indices: List[int] = Field(..., description="List of 1-based indices of factual memories")
+            indices: List[int] = Field(
+                ..., description="List of 1-based indices of factual memories"
+            )
 
         try:
             result = await self.llm_provider.generate_structured(
                 system="You are a strict gatekeeper for a knowledge extraction system.",
                 prompt=prompt,
                 model=settings.EXTRACTION_MODEL,
-                response_model=FactualIndices
+                response_model=FactualIndices,
             )
 
             indices_set = set(result.indices)
@@ -436,10 +442,7 @@ class GraphExtractionService:
             return memories
 
     async def _fetch_episodic_memories(
-        self,
-        project_id: str,
-        tenant_id: str,
-        limit: int
+        self, project_id: str, tenant_id: str, limit: int
     ) -> List[Dict[str, Any]]:
         """
         Fetch recent episodic memories for extraction using MemoryRepository.
@@ -453,9 +456,7 @@ class GraphExtractionService:
             List of memory dictionaries with id, content, and metadata
         """
         return await self.memory_repo.get_episodic_memories(
-            tenant_id=tenant_id,
-            project=project_id,
-            limit=limit
+            tenant_id=tenant_id, project=project_id, limit=limit
         )
 
     def _format_memories(self, memories: List[Dict[str, Any]]) -> str:
@@ -471,10 +472,10 @@ class GraphExtractionService:
         formatted_lines = []
 
         for i, memory in enumerate(memories, 1):
-            content = memory.get('content', '')
-            tags = memory.get('tags', [])
-            source = memory.get('source', 'unknown')
-            created_at = memory.get('created_at', '')
+            content = memory.get("content", "")
+            tags = memory.get("tags", [])
+            source = memory.get("source", "unknown")
+            created_at = memory.get("created_at", "")
 
             line = f"{i}. [{created_at}] {content}"
 
@@ -489,10 +490,7 @@ class GraphExtractionService:
         return "\n".join(formatted_lines)
 
     async def store_graph_triples(
-        self,
-        triples: List[GraphTriple],
-        project_id: str,
-        tenant_id: str
+        self, triples: List[GraphTriple], project_id: str, tenant_id: str
     ) -> Dict[str, int]:
         """
         Store extracted graph triples in the database using GraphRepository.
@@ -514,13 +512,11 @@ class GraphExtractionService:
                 "target": triple.target,
                 "relation": triple.relation,
                 "confidence": triple.confidence,
-                "metadata": triple.metadata
+                "metadata": triple.metadata,
             }
             for triple in triples
         ]
 
         return await self.graph_repo.store_graph_triples(
-            triples=triple_dicts,
-            tenant_id=tenant_id,
-            project_id=project_id
+            triples=triple_dicts, tenant_id=tenant_id, project_id=project_id
         )

@@ -1,26 +1,45 @@
 import time
-from watchdog.observers import Observer
+
 from watchdog.events import PatternMatchingEventHandler
+from watchdog.observers import Observer
+
 
 class FileChangeHandler(PatternMatchingEventHandler):
     """
     Handles file system events and triggers a callback.
     It ignores git files and pycache.
     """
-    def __init__(self, callback, patterns=None, ignore_patterns=None, ignore_directories=True, case_sensitive=False):
+
+    def __init__(
+        self,
+        callback,
+        patterns=None,
+        ignore_patterns=None,
+        ignore_directories=True,
+        case_sensitive=False,
+    ):
         if patterns is None:
-            patterns = ["*.py", "*.js", "*.ts", "*.md", "*.txt", "*.json", "*.yaml", "*.yml"]
-        
+            patterns = [
+                "*.py",
+                "*.js",
+                "*.ts",
+                "*.md",
+                "*.txt",
+                "*.json",
+                "*.yaml",
+                "*.yml",
+            ]
+
         # Add more git-related patterns to ignore
         if ignore_patterns is None:
             ignore_patterns = [
-                "*/.git/*", 
-                "*/__pycache__/*", 
-                "*/.idea/*", 
+                "*/.git/*",
+                "*/__pycache__/*",
+                "*/.idea/*",
                 "*/.vscode/*",
-                "*.log"
+                "*.log",
             ]
-            
+
         super().__init__(patterns, ignore_patterns, ignore_directories, case_sensitive)
         self.callback = callback
 
@@ -34,14 +53,15 @@ class FileChangeHandler(PatternMatchingEventHandler):
         print(f"File created: {event.src_path}")
         self.callback(event.src_path)
 
+
 def start_watching(path: str, callback) -> Observer:
     """
     Starts a file system observer for a given path.
-    
+
     Args:
         path: The directory path to watch.
         callback: The function to call when a file is changed.
-        
+
     Returns:
         The observer instance.
     """

@@ -1,39 +1,41 @@
-from ...config import settings
-from typing import List, Dict, Any
-from sentence_transformers import SentenceTransformer
-from qdrant_client import QdrantClient, models
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_exponential,
-    retry_if_exception_type,
-    before_sleep_log
-)
 import hashlib
 import os
-import onnxruntime
-import numpy as np
-import structlog
+from typing import Any, Dict, List
 
-from .base import MemoryVectorStore
-from ...models import MemoryRecord, ScoredMemoryRecord
+import numpy as np
+import onnxruntime
+import structlog
+from qdrant_client import QdrantClient, models
+from sentence_transformers import SentenceTransformer
+from tenacity import (before_sleep_log, retry, retry_if_exception_type,
+                      stop_after_attempt, wait_exponential)
+
+from ...config import settings
 from ...metrics import vector_query_time_histogram
+from ...models import MemoryRecord, ScoredMemoryRecord
+from .base import MemoryVectorStore
 
 logger = structlog.get_logger(__name__)
+
 
 class QdrantStore(MemoryVectorStore):
     """
     A vector store implementation using Qdrant.
     """
+
     def __init__(self):
-        self.qdrant_client = QdrantClient(host=settings.QDRANT_HOST, port=settings.QDRANT_PORT)
+        self.qdrant_client = QdrantClient(
+            host=settings.QDRANT_HOST, port=settings.QDRANT_PORT
+        )
         if settings.ONNX_EMBEDDER_PATH:
             # In a real scenario, this would be a proper ONNX embedder class
             # For now, it returns dummy embeddings.
             self.embedding_model = self._get_onnx_embedder(settings.ONNX_EMBEDDER_PATH)
-            print(f"Using ONNX embedder (placeholder) from: {settings.ONNX_EMBEDDER_PATH}")
+            print(
+                f"Using ONNX embedder (placeholder) from: {settings.ONNX_EMBEDDER_PATH}"
+            )
         else:
-            self.embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+            self.embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
             print("Using SentenceTransformer 'all-MiniLM-L6-v2'")
 
     def _get_onnx_embedder(self, model_path: str):
@@ -41,24 +43,39 @@ class QdrantStore(MemoryVectorStore):
         class OnnxEmbedder:
             def encode(self, texts: List[str]) -> np.ndarray:
                 return np.random.rand(len(texts), 384).astype(np.float32)
+
         return OnnxEmbedder()
-    
+
     def _get_sparse_vector(self, text: str) -> models.SparseVector:
         """
         Generates a simple sparse vector from text by hashing words.
         """
         words = text.lower().split()
-        stopwords = {"a", "an", "the", "is", "in", "on", "of", "for", "to", "with", "and", "or", "but"}
-        
+        stopwords = {
+            "a",
+            "an",
+            "the",
+            "is",
+            "in",
+            "on",
+            "of",
+            "for",
+            "to",
+            "with",
+            "and",
+            "or",
+            "but",
+        }
+
         indices = []
         values = []
-        
+
         for word in set(words):
             if word not in stopwords:
                 index = int(hashlib.md5(word.encode()).hexdigest(), 16) % 100000
                 indices.append(index)
                 values.append(1.0)
-                
+
         return models.SparseVector(indices=indices, values=values)
 
     @retry(
@@ -66,7 +83,7 @@ class QdrantStore(MemoryVectorStore):
         wait=wait_exponential(multiplier=1, min=2, max=10),
         retry=retry_if_exception_type((ConnectionError, TimeoutError, Exception)),
         before_sleep=before_sleep_log(logger, "warning"),
-        reraise=True
+        reraise=True,
     )
     async def upsert(self, memories: List[MemoryRecord], embeddings: List[List[float]]):
         """
@@ -96,32 +113,29 @@ class QdrantStore(MemoryVectorStore):
                             "dense": dense_vector,
                             "text": sparse_vector,
                         },
-                        payload=memory.dict()
+                        payload=memory.dict(),
                     )
                 )
 
             self.qdrant_client.upsert(
-                collection_name="memories",
-                points=points_to_upsert,
-                wait=True
+                collection_name="memories", points=points_to_upsert, wait=True
             )
 
-            logger.info(
-                "qdrant_upsert_success",
-                memory_count=len(memories)
-            )
+            logger.info("qdrant_upsert_success", memory_count=len(memories))
 
         except Exception as e:
             logger.error(
                 "qdrant_upsert_failed",
                 error=str(e),
                 memory_count=len(memories),
-                memory_ids=[m.id for m in memories]
+                memory_ids=[m.id for m in memories],
             )
             raise
 
     @vector_query_time_histogram.time()
-    async def query(self, query_embedding: List[float], top_k: int, filters: Dict[str, Any]) -> List[ScoredMemoryRecord]:
+    async def query(
+        self, query_embedding: List[float], top_k: int, filters: Dict[str, Any]
+    ) -> List[ScoredMemoryRecord]:
         """
         Queries the Qdrant collection using a dense vector embedding.
         Note: This is a simplified implementation that doesn't include hybrid search for now.
@@ -136,14 +150,17 @@ class QdrantStore(MemoryVectorStore):
             with_payload=True,
         )
 
-        return [ScoredMemoryRecord(id=point.id, score=point.score, **point.payload) for point in search_results]
+        return [
+            ScoredMemoryRecord(id=point.id, score=point.score, **point.payload)
+            for point in search_results
+        ]
 
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
         retry=retry_if_exception_type((ConnectionError, TimeoutError, Exception)),
         before_sleep=before_sleep_log(logger, "warning"),
-        reraise=True
+        reraise=True,
     )
     async def delete(self, memory_id: str):
         """
@@ -157,15 +174,8 @@ class QdrantStore(MemoryVectorStore):
                 points_selector=models.PointIdsList(points=[memory_id]),
             )
 
-            logger.info(
-                "qdrant_delete_success",
-                memory_id=memory_id
-            )
+            logger.info("qdrant_delete_success", memory_id=memory_id)
 
         except Exception as e:
-            logger.error(
-                "qdrant_delete_failed",
-                error=str(e),
-                memory_id=memory_id
-            )
+            logger.error("qdrant_delete_failed", error=str(e), memory_id=memory_id)
             raise

@@ -15,25 +15,24 @@ Includes:
 - LLM-based re-ranking
 """
 
-import asyncpg
-import structlog
-from typing import List, Dict, Any, Tuple
-from uuid import UUID
 from datetime import datetime
-import numpy as np
+from typing import Any, Dict, List, Tuple
+from uuid import UUID
 
-from apps.memory_api.services.query_analyzer import QueryAnalyzer
-from apps.memory_api.services.ml_service_client import MLServiceClient
-from apps.memory_api.services.llm import get_llm_provider
-from apps.memory_api.services.hybrid_cache import get_hybrid_cache
+import asyncpg
+import numpy as np
+import structlog
+
 from apps.memory_api.config import settings
-from apps.memory_api.models.hybrid_search_models import (
-    QueryAnalysis,
-    HybridSearchResult,
-    SearchResultItem,
-    SearchStrategy,
-    RerankingModel
-)
+from apps.memory_api.models.hybrid_search_models import (HybridSearchResult,
+                                                         QueryAnalysis,
+                                                         RerankingModel,
+                                                         SearchResultItem,
+                                                         SearchStrategy)
+from apps.memory_api.services.hybrid_cache import get_hybrid_cache
+from apps.memory_api.services.llm import get_llm_provider
+from apps.memory_api.services.ml_service_client import MLServiceClient
+from apps.memory_api.services.query_analyzer import QueryAnalyzer
 
 logger = structlog.get_logger(__name__)
 
@@ -70,6 +69,7 @@ Return a JSON array with scores:
 # ============================================================================
 # Hybrid Search Service
 # ============================================================================
+
 
 class HybridSearchService:
     """
@@ -116,7 +116,7 @@ class HybridSearchService:
         min_importance: float = None,
         graph_max_depth: int = 3,
         conversation_history: List[str] = None,
-        bypass_cache: bool = False
+        bypass_cache: bool = False,
     ) -> HybridSearchResult:
         """
         Execute hybrid multi-strategy search.
@@ -144,14 +144,10 @@ class HybridSearchService:
             HybridSearchResult with combined results
         """
         import time
+
         start_time = time.time()
 
-        logger.info(
-            "hybrid_search_started",
-            tenant_id=tenant_id,
-            query=query,
-            k=k
-        )
+        logger.info("hybrid_search_started", tenant_id=tenant_id, query=query, k=k)
 
         # Check cache if enabled
         if self.enable_cache and not bypass_cache:
@@ -162,16 +158,18 @@ class HybridSearchService:
                 "enable_graph": enable_graph,
                 "enable_fulltext": enable_fulltext,
                 "enable_reranking": enable_reranking,
-                "temporal_filter": temporal_filter.isoformat() if temporal_filter else None,
+                "temporal_filter": (
+                    temporal_filter.isoformat() if temporal_filter else None
+                ),
                 "tag_filter": tag_filter,
-                "min_importance": min_importance
+                "min_importance": min_importance,
             }
 
             cached_result = await self.cache.get(
                 query=query,
                 tenant_id=tenant_id,
                 project_id=project_id,
-                filters=cache_filters
+                filters=cache_filters,
             )
 
             if cached_result:
@@ -191,12 +189,11 @@ class HybridSearchService:
                 relation_types=[],
                 recommended_strategies=[],
                 strategy_weights=manual_weights,
-                original_query=query
+                original_query=query,
             )
         else:
             query_analysis = await self.query_analyzer.analyze_query(
-                query=query,
-                context=conversation_history
+                query=query, context=conversation_history
             )
 
         analysis_time = int((time.time() - analysis_start) * 1000)
@@ -205,9 +202,13 @@ class HybridSearchService:
         if manual_weights:
             weights = {SearchStrategy(k): v for k, v in manual_weights.items()}
         else:
-            weights = await self.query_analyzer.calculate_dynamic_weights(query_analysis)
+            weights = await self.query_analyzer.calculate_dynamic_weights(
+                query_analysis
+            )
 
-        logger.info("weights_calculated", weights={k.value: v for k, v in weights.items()})
+        logger.info(
+            "weights_calculated", weights={k.value: v for k, v in weights.items()}
+        )
 
         # Stage 3: Execute searches in parallel
         search_start = time.time()
@@ -216,16 +217,20 @@ class HybridSearchService:
         # Vector search
         if enable_vector and weights.get(SearchStrategy.VECTOR, 0) > 0:
             vector_results = await self._vector_search(
-                tenant_id, project_id, query, k * 3,
-                temporal_filter, tag_filter, min_importance
+                tenant_id,
+                project_id,
+                query,
+                k * 3,
+                temporal_filter,
+                tag_filter,
+                min_importance,
             )
             results_by_strategy[SearchStrategy.VECTOR] = vector_results
 
         # Semantic search
         if enable_semantic and weights.get(SearchStrategy.SEMANTIC, 0) > 0:
             semantic_results = await self._semantic_search(
-                tenant_id, project_id, query, k * 2,
-                query_analysis.key_concepts
+                tenant_id, project_id, query, k * 2, query_analysis.key_concepts
             )
             results_by_strategy[SearchStrategy.SEMANTIC] = semantic_results
 
@@ -233,17 +238,19 @@ class HybridSearchService:
         if enable_graph and weights.get(SearchStrategy.GRAPH, 0) > 0:
             if query_analysis.requires_graph_traversal or enable_graph:
                 graph_results = await self._graph_search(
-                    tenant_id, project_id, query,
+                    tenant_id,
+                    project_id,
+                    query,
                     query_analysis.key_entities,
-                    graph_max_depth, k * 2
+                    graph_max_depth,
+                    k * 2,
                 )
                 results_by_strategy[SearchStrategy.GRAPH] = graph_results
 
         # Full-text search
         if enable_fulltext and weights.get(SearchStrategy.FULLTEXT, 0) > 0:
             fulltext_results = await self._fulltext_search(
-                tenant_id, project_id, query, k * 2,
-                temporal_filter, tag_filter
+                tenant_id, project_id, query, k * 2, temporal_filter, tag_filter
             )
             results_by_strategy[SearchStrategy.FULLTEXT] = fulltext_results
 
@@ -257,7 +264,7 @@ class HybridSearchService:
         if enable_reranking and len(fused_results) > 0:
             rerank_start = time.time()
             reranked_results = await self._rerank_results(
-                query, fused_results[:k * 2], reranking_model
+                query, fused_results[: k * 2], reranking_model
             )
             fused_results = reranked_results
             reranking_time = int((time.time() - rerank_start) * 1000)
@@ -277,24 +284,30 @@ class HybridSearchService:
             total_time=total_time,
             analysis_time=analysis_time,
             search_time=search_time,
-            reranking_time=reranking_time
+            reranking_time=reranking_time,
         )
 
         result = HybridSearchResult(
             results=final_results,
             total_results=len(final_results),
             query_analysis=query_analysis,
-            vector_results_count=len(results_by_strategy.get(SearchStrategy.VECTOR, [])),
-            semantic_results_count=len(results_by_strategy.get(SearchStrategy.SEMANTIC, [])),
+            vector_results_count=len(
+                results_by_strategy.get(SearchStrategy.VECTOR, [])
+            ),
+            semantic_results_count=len(
+                results_by_strategy.get(SearchStrategy.SEMANTIC, [])
+            ),
             graph_results_count=len(results_by_strategy.get(SearchStrategy.GRAPH, [])),
-            fulltext_results_count=len(results_by_strategy.get(SearchStrategy.FULLTEXT, [])),
+            fulltext_results_count=len(
+                results_by_strategy.get(SearchStrategy.FULLTEXT, [])
+            ),
             total_time_ms=total_time,
             query_analysis_time_ms=analysis_time,
             search_time_ms=search_time,
             reranking_time_ms=reranking_time,
             applied_weights={k.value: v for k, v in weights.items()},
             reranking_used=enable_reranking,
-            reranking_model=reranking_model if enable_reranking else None
+            reranking_model=reranking_model if enable_reranking else None,
         )
 
         # Cache result if enabled
@@ -306,9 +319,11 @@ class HybridSearchService:
                 "enable_graph": enable_graph,
                 "enable_fulltext": enable_fulltext,
                 "enable_reranking": enable_reranking,
-                "temporal_filter": temporal_filter.isoformat() if temporal_filter else None,
+                "temporal_filter": (
+                    temporal_filter.isoformat() if temporal_filter else None
+                ),
                 "tag_filter": tag_filter,
-                "min_importance": min_importance
+                "min_importance": min_importance,
             }
 
             await self.cache.set(
@@ -316,7 +331,7 @@ class HybridSearchService:
                 tenant_id=tenant_id,
                 project_id=project_id,
                 result=result.dict(),
-                filters=cache_filters
+                filters=cache_filters,
             )
 
         return result
@@ -333,7 +348,7 @@ class HybridSearchService:
         k: int,
         temporal_filter: datetime = None,
         tag_filter: List[str] = None,
-        min_importance: float = None
+        min_importance: float = None,
     ) -> List[Dict[str, Any]]:
         """Execute vector similarity search"""
         logger.info("executing_vector_search", k=k)
@@ -376,11 +391,11 @@ class HybridSearchService:
 
             results = [
                 {
-                    "memory_id": record['id'],
-                    "content": record['content'],
-                    "score": float(record['similarity']),
-                    "metadata": record.get('metadata', {}),
-                    "created_at": record['created_at']
+                    "memory_id": record["id"],
+                    "content": record["content"],
+                    "score": float(record["similarity"]),
+                    "metadata": record.get("metadata", {}),
+                    "created_at": record["created_at"],
                 }
                 for record in records
             ]
@@ -398,7 +413,7 @@ class HybridSearchService:
         project_id: str,
         query: str,
         k: int,
-        key_concepts: List[str]
+        key_concepts: List[str],
     ) -> List[Dict[str, Any]]:
         """Execute semantic node search"""
         logger.info("executing_semantic_search", k=k, concepts=len(key_concepts))
@@ -424,7 +439,7 @@ class HybridSearchService:
             # Expand to source memories
             results = []
             for record in records:
-                memory_ids = record.get('source_memory_ids', [])
+                memory_ids = record.get("source_memory_ids", [])
                 if memory_ids:
                     # Fetch source memories
                     memories = await self.pool.fetch(
@@ -434,18 +449,22 @@ class HybridSearchService:
                         WHERE tenant_id = $1 AND project = $2 AND id = ANY($3)
                         LIMIT 5
                         """,
-                        tenant_id, project_id, memory_ids
+                        tenant_id,
+                        project_id,
+                        memory_ids,
                     )
 
                     for mem in memories:
-                        results.append({
-                            "memory_id": mem['id'],
-                            "content": mem['content'],
-                            "score": float(record['importance_score']),
-                            "metadata": mem.get('metadata', {}),
-                            "created_at": mem['created_at'],
-                            "semantic_node": str(record['id'])
-                        })
+                        results.append(
+                            {
+                                "memory_id": mem["id"],
+                                "content": mem["content"],
+                                "score": float(record["importance_score"]),
+                                "metadata": mem.get("metadata", {}),
+                                "created_at": mem["created_at"],
+                                "semantic_node": str(record["id"]),
+                            }
+                        )
 
             logger.info("semantic_search_complete", results=len(results))
             return results[:k]
@@ -461,10 +480,12 @@ class HybridSearchService:
         query: str,
         key_entities: List[str],
         max_depth: int,
-        k: int
+        k: int,
     ) -> List[Dict[str, Any]]:
         """Execute graph traversal search with GraphRAG"""
-        logger.info("executing_graph_search", entities=len(key_entities), depth=max_depth)
+        logger.info(
+            "executing_graph_search", entities=len(key_entities), depth=max_depth
+        )
 
         try:
             if not key_entities:
@@ -481,8 +502,9 @@ class HybridSearchService:
                     )
                 LIMIT 10
                 """,
-                tenant_id, project_id,
-                [f"%{entity}%" for entity in key_entities]
+                tenant_id,
+                project_id,
+                [f"%{entity}%" for entity in key_entities],
             )
 
             if not node_records:
@@ -490,7 +512,7 @@ class HybridSearchService:
                 return []
 
             # Get start node IDs for traversal
-            start_node_ids = [record['node_id'] for record in node_records]
+            start_node_ids = [record["node_id"] for record in node_records]
 
             # Traverse graph using BFS to find connected nodes
             traversed_nodes = await self.pool.fetch(
@@ -534,24 +556,30 @@ class HybridSearchService:
                 ORDER BY id, depth
                 LIMIT 50
                 """,
-                tenant_id, project_id, start_node_ids, max_depth
+                tenant_id,
+                project_id,
+                start_node_ids,
+                max_depth,
             )
 
             # Extract memory IDs from graph node properties
             memory_ids = set()
             for node in traversed_nodes:
-                properties = node.get('properties', {})
+                properties = node.get("properties", {})
                 if isinstance(properties, str):
                     import json
+
                     properties = json.loads(properties)
 
                 # Check for source_memory_id in properties
-                if 'source_memory_id' in properties:
-                    memory_ids.add(properties['source_memory_id'])
+                if "source_memory_id" in properties:
+                    memory_ids.add(properties["source_memory_id"])
 
                 # Check for memory_ids array
-                if 'memory_ids' in properties and isinstance(properties['memory_ids'], list):
-                    memory_ids.update(properties['memory_ids'])
+                if "memory_ids" in properties and isinstance(
+                    properties["memory_ids"], list
+                ):
+                    memory_ids.update(properties["memory_ids"])
 
             if not memory_ids:
                 logger.info("no_memories_linked_to_graph", nodes=len(traversed_nodes))
@@ -566,23 +594,30 @@ class HybridSearchService:
                 ORDER BY importance DESC
                 LIMIT $4
                 """,
-                tenant_id, project_id, list(memory_ids), k
+                tenant_id,
+                project_id,
+                list(memory_ids),
+                k,
             )
 
             results = []
             for mem in memories:
-                results.append({
-                    "memory_id": mem['id'],
-                    "content": mem['content'],
-                    "score": float(mem.get('importance', 0.5)),
-                    "metadata": mem.get('metadata', {}),
-                    "created_at": mem['created_at'],
-                    "source": "graph_traversal"
-                })
+                results.append(
+                    {
+                        "memory_id": mem["id"],
+                        "content": mem["content"],
+                        "score": float(mem.get("importance", 0.5)),
+                        "metadata": mem.get("metadata", {}),
+                        "created_at": mem["created_at"],
+                        "source": "graph_traversal",
+                    }
+                )
 
-            logger.info("graph_search_complete",
-                       nodes_traversed=len(traversed_nodes),
-                       memories_found=len(results))
+            logger.info(
+                "graph_search_complete",
+                nodes_traversed=len(traversed_nodes),
+                memories_found=len(results),
+            )
             return results
 
         except Exception as e:
@@ -596,7 +631,7 @@ class HybridSearchService:
         query: str,
         k: int,
         temporal_filter: datetime = None,
-        tag_filter: List[str] = None
+        tag_filter: List[str] = None,
     ) -> List[Dict[str, Any]]:
         """Execute full-text keyword search"""
         logger.info("executing_fulltext_search", k=k)
@@ -629,11 +664,11 @@ class HybridSearchService:
 
             results = [
                 {
-                    "memory_id": record['id'],
-                    "content": record['content'],
-                    "score": float(record['rank']),
-                    "metadata": record.get('metadata', {}),
-                    "created_at": record['created_at']
+                    "memory_id": record["id"],
+                    "content": record["content"],
+                    "score": float(record["rank"]),
+                    "metadata": record.get("metadata", {}),
+                    "created_at": record["created_at"],
                 }
                 for record in records
             ]
@@ -653,7 +688,7 @@ class HybridSearchService:
         self,
         results_by_strategy: Dict[SearchStrategy, List[Dict[str, Any]]],
         weights: Dict[SearchStrategy, float],
-        k: int
+        k: int,
     ) -> List[SearchResultItem]:
         """
         Fuse results from multiple strategies using weighted scoring.
@@ -683,25 +718,27 @@ class HybridSearchService:
             if not results:
                 continue
 
-            max_score = max(r['score'] for r in results) or 1.0
+            max_score = max(r["score"] for r in results) or 1.0
 
             for result in results:
-                memory_id = result['memory_id']
-                normalized_score = result['score'] / max_score
+                memory_id = result["memory_id"]
+                normalized_score = result["score"] / max_score
 
                 if memory_id not in result_map:
                     result_map[memory_id] = {
                         "memory_id": memory_id,
-                        "content": result['content'],
-                        "metadata": result.get('metadata', {}),
-                        "created_at": result['created_at'],
+                        "content": result["content"],
+                        "metadata": result.get("metadata", {}),
+                        "created_at": result["created_at"],
                         "strategy_scores": {},
-                        "strategies_used": []
+                        "strategies_used": [],
                     }
 
                 # Add strategy score
-                result_map[memory_id]['strategy_scores'][strategy.value] = normalized_score
-                result_map[memory_id]['strategies_used'].append(strategy)
+                result_map[memory_id]["strategy_scores"][
+                    strategy.value
+                ] = normalized_score
+                result_map[memory_id]["strategies_used"].append(strategy)
 
         # Calculate hybrid scores
         fused_results = []
@@ -709,7 +746,7 @@ class HybridSearchService:
         for memory_id, data in result_map.items():
             # Calculate weighted hybrid score
             hybrid_score = 0.0
-            for strategy, score in data['strategy_scores'].items():
+            for strategy, score in data["strategy_scores"].items():
                 strategy_enum = SearchStrategy(strategy)
                 weight = weights.get(strategy_enum, 0.0)
                 hybrid_score += score * weight
@@ -717,17 +754,17 @@ class HybridSearchService:
             # Create SearchResultItem
             item = SearchResultItem(
                 memory_id=memory_id,
-                content=data['content'],
-                metadata=data['metadata'],
-                vector_score=data['strategy_scores'].get('vector'),
-                semantic_score=data['strategy_scores'].get('semantic'),
-                graph_score=data['strategy_scores'].get('graph'),
-                fulltext_score=data['strategy_scores'].get('fulltext'),
+                content=data["content"],
+                metadata=data["metadata"],
+                vector_score=data["strategy_scores"].get("vector"),
+                semantic_score=data["strategy_scores"].get("semantic"),
+                graph_score=data["strategy_scores"].get("graph"),
+                fulltext_score=data["strategy_scores"].get("fulltext"),
                 hybrid_score=hybrid_score,
                 final_score=hybrid_score,  # Will be updated if re-ranked
                 rank=0,  # Will be assigned later
-                search_strategies_used=data['strategies_used'],
-                created_at=data['created_at']
+                search_strategies_used=data["strategies_used"],
+                created_at=data["created_at"],
             )
 
             fused_results.append(item)
@@ -744,10 +781,7 @@ class HybridSearchService:
     # ========================================================================
 
     async def _rerank_results(
-        self,
-        query: str,
-        results: List[SearchResultItem],
-        model: RerankingModel
+        self, query: str, results: List[SearchResultItem], model: RerankingModel
     ) -> List[SearchResultItem]:
         """
         Re-rank results using LLM for contextual relevance.
@@ -769,7 +803,11 @@ class HybridSearchService:
             # Format results for LLM
             results_formatted = []
             for idx, result in enumerate(results):
-                snippet = result.content[:200] + "..." if len(result.content) > 200 else result.content
+                snippet = (
+                    result.content[:200] + "..."
+                    if len(result.content) > 200
+                    else result.content
+                )
                 results_formatted.append(f"{idx}. {snippet}")
 
             results_text = "\n\n".join(results_formatted)
@@ -780,22 +818,25 @@ class HybridSearchService:
             response = await self.llm_provider.generate(
                 system="You are a search result re-ranking expert.",
                 prompt=prompt,
-                model=model.value
+                model=model.value,
             )
 
             # Parse scores (expect JSON array)
             import json
+
             scores_data = json.loads(response.text.strip())
 
             # Apply re-ranking scores
             for score_item in scores_data:
-                idx = score_item['index']
-                score = score_item['score']
+                idx = score_item["index"]
+                score = score_item["score"]
 
                 if 0 <= idx < len(results):
                     results[idx].rerank_score = score
                     # Combine with hybrid score (70% rerank, 30% hybrid)
-                    results[idx].final_score = score * 0.7 + results[idx].hybrid_score * 0.3
+                    results[idx].final_score = (
+                        score * 0.7 + results[idx].hybrid_score * 0.3
+                    )
 
             # Re-sort by final score
             results.sort(key=lambda x: x.final_score, reverse=True)

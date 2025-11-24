@@ -13,15 +13,13 @@ Priority: HIGH (Critical for async processing)
 Current Coverage: 0% -> Target: 60%+
 """
 
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
+
 import pytest
-from unittest.mock import AsyncMock, Mock, patch, MagicMock
+
 from apps.memory_api.tasks.background_tasks import (
-    extract_graph_lazy,
-    process_graph_extraction_queue,
-    generate_reflection_for_project,
-    apply_memory_decay,
-    prune_old_memories
-)
+    apply_memory_decay, extract_graph_lazy, generate_reflection_for_project,
+    process_graph_extraction_queue, prune_old_memories)
 
 
 class TestExtractGraphLazy:
@@ -31,8 +29,8 @@ class TestExtractGraphLazy:
     with retry logic and cost optimization (mini model).
     """
 
-    @patch('apps.memory_api.tasks.background_tasks.get_pool')
-    @patch('apps.memory_api.tasks.background_tasks.GraphExtractionService')
+    @patch("apps.memory_api.tasks.background_tasks.get_pool")
+    @patch("apps.memory_api.tasks.background_tasks.GraphExtractionService")
     def test_extract_graph_success(self, mock_service_class, mock_get_pool):
         """Test successful graph extraction.
 
@@ -55,9 +53,7 @@ class TestExtractGraphLazy:
 
         # Execute task
         result = extract_graph_lazy(
-            memory_ids=["mem1", "mem2"],
-            tenant_id="tenant-123",
-            use_mini_model=True
+            memory_ids=["mem1", "mem2"], tenant_id="tenant-123", use_mini_model=True
         )
 
         # Verify service was called
@@ -71,8 +67,8 @@ class TestExtractGraphLazy:
         assert result["triples"] == 3
         assert result["entities"] == 2
 
-    @patch('apps.memory_api.tasks.background_tasks.get_pool')
-    @patch('apps.memory_api.tasks.background_tasks.GraphExtractionService')
+    @patch("apps.memory_api.tasks.background_tasks.get_pool")
+    @patch("apps.memory_api.tasks.background_tasks.GraphExtractionService")
     def test_extract_graph_with_mini_model(self, mock_service_class, mock_get_pool):
         """Test that mini model is used when requested.
 
@@ -92,16 +88,14 @@ class TestExtractGraphLazy:
 
         # Execute with mini model
         extract_graph_lazy(
-            memory_ids=["mem1"],
-            tenant_id="tenant-123",
-            use_mini_model=True
+            memory_ids=["mem1"], tenant_id="tenant-123", use_mini_model=True
         )
 
         # Verify model was switched to mini
         assert mock_service.llm_provider.model == "gpt-4o-mini"
 
-    @patch('apps.memory_api.tasks.background_tasks.get_pool')
-    @patch('apps.memory_api.tasks.background_tasks.GraphExtractionService')
+    @patch("apps.memory_api.tasks.background_tasks.get_pool")
+    @patch("apps.memory_api.tasks.background_tasks.GraphExtractionService")
     def test_extract_graph_exception_handling(self, mock_service_class, mock_get_pool):
         """Test that exceptions are logged and trigger retry.
 
@@ -132,14 +126,10 @@ class TestExtractGraphLazy:
             # Bind self to the task
             task = extract_graph_lazy
             task.__self__ = mock_self
-            task(
-                mock_self,
-                memory_ids=["mem1"],
-                tenant_id="tenant-123"
-            )
+            task(mock_self, memory_ids=["mem1"], tenant_id="tenant-123")
 
-    @patch('apps.memory_api.tasks.background_tasks.get_pool')
-    @patch('apps.memory_api.tasks.background_tasks.GraphExtractionService')
+    @patch("apps.memory_api.tasks.background_tasks.get_pool")
+    @patch("apps.memory_api.tasks.background_tasks.GraphExtractionService")
     def test_extract_graph_pool_cleanup(self, mock_service_class, mock_get_pool):
         """Test that pool is closed even on exception.
 
@@ -157,12 +147,9 @@ class TestExtractGraphLazy:
         mock_service_class.return_value = mock_service
 
         # Mock retry to prevent actual retry
-        with patch.object(extract_graph_lazy, 'retry', side_effect=Exception("Retry")):
+        with patch.object(extract_graph_lazy, "retry", side_effect=Exception("Retry")):
             try:
-                extract_graph_lazy(
-                    memory_ids=["mem1"],
-                    tenant_id="tenant-123"
-                )
+                extract_graph_lazy(memory_ids=["mem1"], tenant_id="tenant-123")
             except:
                 pass
 
@@ -173,8 +160,8 @@ class TestExtractGraphLazy:
 class TestProcessGraphExtractionQueue:
     """Tests for periodic graph extraction queue processor."""
 
-    @patch('apps.memory_api.tasks.background_tasks.get_pool')
-    @patch('apps.memory_api.tasks.background_tasks.extract_graph_lazy')
+    @patch("apps.memory_api.tasks.background_tasks.get_pool")
+    @patch("apps.memory_api.tasks.background_tasks.extract_graph_lazy")
     def test_queue_processor_schedules_tasks(self, mock_extract_task, mock_get_pool):
         """Test that queue processor schedules extraction tasks.
 
@@ -185,10 +172,12 @@ class TestProcessGraphExtractionQueue:
         """
         # Mock pool with pending memories
         mock_pool = AsyncMock()
-        mock_pool.fetch = AsyncMock(return_value=[
-            {"tenant_id": "tenant1", "memory_ids": ["mem1", "mem2"]},
-            {"tenant_id": "tenant2", "memory_ids": ["mem3", "mem4", "mem5"]}
-        ])
+        mock_pool.fetch = AsyncMock(
+            return_value=[
+                {"tenant_id": "tenant1", "memory_ids": ["mem1", "mem2"]},
+                {"tenant_id": "tenant2", "memory_ids": ["mem3", "mem4", "mem5"]},
+            ]
+        )
         mock_get_pool.return_value = mock_pool
 
         # Mock the delay method
@@ -206,7 +195,7 @@ class TestProcessGraphExtractionQueue:
         assert first_call[1]["memory_ids"] == ["mem1", "mem2"]
         assert first_call[1]["use_mini_model"] is True
 
-    @patch('apps.memory_api.tasks.background_tasks.get_pool')
+    @patch("apps.memory_api.tasks.background_tasks.get_pool")
     def test_queue_processor_no_pending_memories(self, mock_get_pool):
         """Test queue processor with no pending memories.
 
@@ -227,8 +216,8 @@ class TestProcessGraphExtractionQueue:
 class TestGenerateReflection:
     """Tests for reflection generation task."""
 
-    @patch('apps.memory_api.tasks.background_tasks.get_pool')
-    @patch('apps.memory_api.tasks.background_tasks.ReflectionEngine')
+    @patch("apps.memory_api.tasks.background_tasks.get_pool")
+    @patch("apps.memory_api.tasks.background_tasks.ReflectionEngine")
     def test_generate_reflection_calls_engine(self, mock_engine_class, mock_get_pool):
         """Test that reflection task calls the engine correctly.
 
@@ -244,15 +233,11 @@ class TestGenerateReflection:
         mock_engine_class.return_value = mock_engine
 
         # Execute
-        generate_reflection_for_project(
-            project="my-project",
-            tenant_id="tenant-123"
-        )
+        generate_reflection_for_project(project="my-project", tenant_id="tenant-123")
 
         # Verify engine was called
         mock_engine.generate_reflection.assert_called_once_with(
-            "my-project",
-            "tenant-123"
+            "my-project", "tenant-123"
         )
 
         # Verify cleanup
@@ -262,8 +247,8 @@ class TestGenerateReflection:
 class TestMemoryDecay:
     """Tests for memory decay maintenance task."""
 
-    @patch('apps.memory_api.tasks.background_tasks.get_pool')
-    @patch('apps.memory_api.tasks.background_tasks.settings')
+    @patch("apps.memory_api.tasks.background_tasks.get_pool")
+    @patch("apps.memory_api.tasks.background_tasks.settings")
     def test_apply_decay_updates_strength(self, mock_settings, mock_get_pool):
         """Test that decay is applied to memory strength.
 
@@ -293,8 +278,8 @@ class TestMemoryDecay:
 class TestPruneOldMemories:
     """Tests for memory pruning task."""
 
-    @patch('apps.memory_api.tasks.background_tasks.get_pool')
-    @patch('apps.memory_api.tasks.background_tasks.settings')
+    @patch("apps.memory_api.tasks.background_tasks.get_pool")
+    @patch("apps.memory_api.tasks.background_tasks.settings")
     def test_prune_respects_retention_days(self, mock_settings, mock_get_pool):
         """Test that pruning respects retention setting.
 
@@ -319,7 +304,7 @@ class TestPruneOldMemories:
         assert "DELETE FROM memories" in sql
         assert "layer = 'em'" in sql  # Only episodic
 
-    @patch('apps.memory_api.tasks.background_tasks.settings')
+    @patch("apps.memory_api.tasks.background_tasks.settings")
     def test_prune_disabled_when_retention_zero(self, mock_settings):
         """Test that pruning is disabled when retention is 0.
 
@@ -329,7 +314,7 @@ class TestPruneOldMemories:
         mock_settings.MEMORY_RETENTION_DAYS = 0
 
         # Execute - should return early without creating pool
-        with patch('apps.memory_api.tasks.background_tasks.get_pool') as mock_get_pool:
+        with patch("apps.memory_api.tasks.background_tasks.get_pool") as mock_get_pool:
             prune_old_memories()
 
             # Pool should not be created if disabled

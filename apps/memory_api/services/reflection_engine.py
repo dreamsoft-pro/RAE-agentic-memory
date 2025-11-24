@@ -1,18 +1,18 @@
-from typing import List, Dict, Type, Any, Optional
-from pydantic import BaseModel, Field
+from typing import Any, Dict, List, Optional, Type
+
 import asyncpg
-from apps.memory_api.services.llm import get_llm_provider
-from apps.memory_api.services.graph_extraction import (
-    GraphExtractionService,
-    GraphExtractionResult,
-    GraphTriple
-)
-from apps.memory_api.models import StoreMemoryRequest, MemoryLayer
-from apps.memory_api.config import settings
-from apps.memory_api.repositories.graph_repository import GraphRepository
 import httpx  # For calling the memory store endpoint
-from apps.memory_api import metrics
 import structlog
+from pydantic import BaseModel, Field
+
+from apps.memory_api import metrics
+from apps.memory_api.config import settings
+from apps.memory_api.models import MemoryLayer, StoreMemoryRequest
+from apps.memory_api.repositories.graph_repository import GraphRepository
+from apps.memory_api.services.graph_extraction import (GraphExtractionResult,
+                                                       GraphExtractionService,
+                                                       GraphTriple)
+from apps.memory_api.services.llm import get_llm_provider
 
 logger = structlog.get_logger(__name__)
 
@@ -89,7 +89,9 @@ class ReflectionEngine:
         # 1. Fetch recent, unprocessed episodic memories
         episodes = await self._get_recent_episodes(project, tenant_id)
         if not episodes:
-            logger.info("no_new_episodes_for_reflection", project=project, tenant_id=tenant_id)
+            logger.info(
+                "no_new_episodes_for_reflection", project=project, tenant_id=tenant_id
+            )
             return "No new episodes, skipping."
 
         episode_content = "\n".join([f"- {e['content']}" for e in episodes])
@@ -109,14 +111,18 @@ class ReflectionEngine:
         # 3. Store the new reflective memory (triples)
         await self._store_triples(extracted_triples.triples, project, tenant_id)
 
-        metrics.reflection_event_counter.labels(tenant_id=tenant_id, project=project).inc()
+        metrics.reflection_event_counter.labels(
+            tenant_id=tenant_id, project=project
+        ).inc()
 
         # 4. Mark the processed episodes
         # (This part is omitted for simplicity, but in a real system, you'd
         # have a 'processed_for_reflection' flag in the DB)
 
         logger.info(
-            "reflection_generated", project=project, triples=extracted_triples.model_dump_json()
+            "reflection_generated",
+            project=project,
+            triples=extracted_triples.model_dump_json(),
         )
         return f"Generated reflection for project {project}: {extracted_triples.model_dump_json()}"
 
@@ -136,16 +142,14 @@ class ReflectionEngine:
                 "target": triple.target,
                 "relation": triple.relation,
                 "confidence": 1.0,  # Legacy triples have full confidence
-                "metadata": {}
+                "metadata": {},
             }
             for triple in triples
         ]
 
         # Use repository's batch storage method
         stats = await self.graph_repo.store_graph_triples(
-            triples=triple_dicts,
-            tenant_id=tenant_id,
-            project_id=project
+            triples=triple_dicts, tenant_id=tenant_id, project_id=project
         )
 
         logger.info(
@@ -153,7 +157,7 @@ class ReflectionEngine:
             project=project,
             tenant_id=tenant_id,
             nodes_created=stats["nodes_created"],
-            edges_created=stats["edges_created"]
+            edges_created=stats["edges_created"],
         )
 
     async def _get_recent_episodes(self, project: str, tenant_id: str) -> List[Dict]:
@@ -180,7 +184,7 @@ class ReflectionEngine:
         tenant_id: str,
         limit: int = 50,
         min_confidence: float = 0.5,
-        auto_store: bool = True
+        auto_store: bool = True,
     ) -> GraphExtractionResult:
         """
         Enhanced knowledge graph extraction using the GraphExtractionService.
@@ -205,7 +209,7 @@ class ReflectionEngine:
             "enhanced_graph_extraction_started",
             project=project,
             tenant_id=tenant_id,
-            limit=limit
+            limit=limit,
         )
 
         # Use the dedicated graph extraction service
@@ -213,7 +217,7 @@ class ReflectionEngine:
             project_id=project,
             tenant_id=tenant_id,
             limit=limit,
-            min_confidence=min_confidence
+            min_confidence=min_confidence,
         )
 
         # Optionally store triples in database
@@ -221,7 +225,7 @@ class ReflectionEngine:
             storage_stats = await self.graph_extractor.store_graph_triples(
                 triples=extraction_result.triples,
                 project_id=project,
-                tenant_id=tenant_id
+                tenant_id=tenant_id,
             )
 
             # Update statistics with storage results
@@ -230,7 +234,7 @@ class ReflectionEngine:
             logger.info(
                 "enhanced_graph_extraction_completed",
                 project=project,
-                statistics=extraction_result.statistics
+                statistics=extraction_result.statistics,
             )
 
         return extraction_result
@@ -240,7 +244,7 @@ class ReflectionEngine:
         project: str,
         tenant_id: str,
         bucket_size: int = 10,
-        max_episodes: Optional[int] = None
+        max_episodes: Optional[int] = None,
     ) -> str:
         """
         Generate hierarchical (Map-Reduce) summarization of episodes.
@@ -266,14 +270,12 @@ class ReflectionEngine:
             "hierarchical_reflection_started",
             project=project,
             tenant_id=tenant_id,
-            bucket_size=bucket_size
+            bucket_size=bucket_size,
         )
 
         # 1. Fetch all episodes
         episodes = await self._fetch_all_episodes(
-            project=project,
-            tenant_id=tenant_id,
-            limit=max_episodes
+            project=project, tenant_id=tenant_id, limit=max_episodes
         )
 
         if not episodes:
@@ -281,9 +283,7 @@ class ReflectionEngine:
             return "No episodes available for reflection."
 
         logger.info(
-            "fetched_episodes_for_hierarchical",
-            count=len(episodes),
-            project=project
+            "fetched_episodes_for_hierarchical", count=len(episodes), project=project
         )
 
         # 2. If small enough, summarize directly
@@ -292,14 +292,13 @@ class ReflectionEngine:
 
         # 3. Split into buckets and process hierarchically
         buckets = [
-            episodes[i:i + bucket_size]
-            for i in range(0, len(episodes), bucket_size)
+            episodes[i : i + bucket_size] for i in range(0, len(episodes), bucket_size)
         ]
 
         logger.info(
             "processing_hierarchical_buckets",
             bucket_count=len(buckets),
-            bucket_size=bucket_size
+            bucket_size=bucket_size,
         )
 
         # 4. Map phase: Summarize each bucket
@@ -315,16 +314,13 @@ class ReflectionEngine:
         logger.info(
             "hierarchical_reflection_completed",
             project=project,
-            final_length=len(final_summary)
+            final_length=len(final_summary),
         )
 
         return final_summary
 
     async def _fetch_all_episodes(
-        self,
-        project: str,
-        tenant_id: str,
-        limit: Optional[int] = None
+        self, project: str, tenant_id: str, limit: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         """
         Fetch all episodic memories for hierarchical processing.
@@ -349,7 +345,7 @@ class ReflectionEngine:
                     """,
                     tenant_id,
                     project,
-                    limit
+                    limit,
                 )
             else:
                 records = await conn.fetch(
@@ -360,7 +356,7 @@ class ReflectionEngine:
                     ORDER BY created_at DESC
                     """,
                     tenant_id,
-                    project
+                    project,
                 )
 
             return [dict(r) for r in records]
@@ -375,17 +371,19 @@ class ReflectionEngine:
         Returns:
             Summarized text
         """
-        formatted_episodes = "\n".join([
-            f"- [{ep.get('created_at', 'unknown')}] {ep.get('content', '')}"
-            for ep in episodes
-        ])
+        formatted_episodes = "\n".join(
+            [
+                f"- [{ep.get('created_at', 'unknown')}] {ep.get('content', '')}"
+                for ep in episodes
+            ]
+        )
 
         prompt = HIERARCHICAL_SUMMARY_PROMPT.format(content=formatted_episodes)
 
         result = await self.llm_provider.generate(
             system="You are a helpful assistant that synthesizes insights.",
             prompt=prompt,
-            model=settings.RAE_LLM_MODEL_DEFAULT
+            model=settings.RAE_LLM_MODEL_DEFAULT,
         )
 
         return result.text
@@ -400,26 +398,21 @@ class ReflectionEngine:
         Returns:
             Meta-summary text
         """
-        formatted_summaries = "\n\n---\n\n".join([
-            f"Summary {i+1}:\n{summary}"
-            for i, summary in enumerate(summaries)
-        ])
+        formatted_summaries = "\n\n---\n\n".join(
+            [f"Summary {i+1}:\n{summary}" for i, summary in enumerate(summaries)]
+        )
 
         prompt = HIERARCHICAL_SUMMARY_PROMPT.format(content=formatted_summaries)
 
         result = await self.llm_provider.generate(
             system="You are a helpful assistant that synthesizes insights.",
             prompt=prompt,
-            model=settings.RAE_LLM_MODEL_DEFAULT
+            model=settings.RAE_LLM_MODEL_DEFAULT,
         )
 
         return result.text
 
-    async def _recursive_reduce(
-        self,
-        summaries: List[str],
-        bucket_size: int
-    ) -> str:
+    async def _recursive_reduce(self, summaries: List[str], bucket_size: int) -> str:
         """
         Recursively reduce summaries until we have a single final summary.
 
@@ -436,7 +429,7 @@ class ReflectionEngine:
 
         # Recursive case: split and reduce further
         buckets = [
-            summaries[i:i + bucket_size]
+            summaries[i : i + bucket_size]
             for i in range(0, len(summaries), bucket_size)
         ]
 

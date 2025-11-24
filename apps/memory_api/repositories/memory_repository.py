@@ -5,7 +5,8 @@ This repository encapsulates all database operations related to memories,
 following the Repository/DAO pattern to separate data access from business logic.
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
+
 import asyncpg
 import structlog
 
@@ -39,7 +40,7 @@ class MemoryRepository:
         layer: Optional[str],
         tags: Optional[List[str]],
         timestamp: Any,
-        project: str
+        project: str,
     ) -> Dict[str, Any]:
         """
         Insert a new memory record into the database.
@@ -62,12 +63,24 @@ class MemoryRepository:
                 await conn.execute("SET app.tenant_id = $1", tenant_id)
 
                 columns = [
-                    "tenant_id", "content", "source", "importance",
-                    "layer", "tags", "timestamp", "project"
+                    "tenant_id",
+                    "content",
+                    "source",
+                    "importance",
+                    "layer",
+                    "tags",
+                    "timestamp",
+                    "project",
                 ]
                 values = [
-                    tenant_id, content, source, importance,
-                    layer, tags, timestamp, project
+                    tenant_id,
+                    content,
+                    source,
+                    importance,
+                    layer,
+                    tags,
+                    timestamp,
+                    project,
                 ]
 
                 columns_str = ", ".join(columns)
@@ -79,9 +92,7 @@ class MemoryRepository:
 
                 if not row:
                     logger.error(
-                        "memory_insert_failed",
-                        tenant_id=tenant_id,
-                        project=project
+                        "memory_insert_failed", tenant_id=tenant_id, project=project
                     )
                     return None
 
@@ -89,21 +100,17 @@ class MemoryRepository:
                     "memory_inserted",
                     tenant_id=tenant_id,
                     project=project,
-                    memory_id=str(row["id"])
+                    memory_id=str(row["id"]),
                 )
 
                 return {
                     "id": str(row["id"]),
                     "created_at": row["created_at"],
                     "last_accessed_at": row["last_accessed_at"],
-                    "usage_count": row["usage_count"]
+                    "usage_count": row["usage_count"],
                 }
 
-    async def delete_memory(
-        self,
-        memory_id: str,
-        tenant_id: str
-    ) -> bool:
+    async def delete_memory(self, memory_id: str, tenant_id: str) -> bool:
         """
         Delete a memory record from the database.
 
@@ -118,31 +125,24 @@ class MemoryRepository:
             async with conn.transaction():
                 await conn.execute("SET app.tenant_id = $1", tenant_id)
                 result = await conn.execute(
-                    "DELETE FROM memories WHERE id = $1",
-                    memory_id
+                    "DELETE FROM memories WHERE id = $1", memory_id
                 )
 
                 deleted = result != "DELETE 0"
 
                 if deleted:
                     logger.info(
-                        "memory_deleted",
-                        tenant_id=tenant_id,
-                        memory_id=memory_id
+                        "memory_deleted", tenant_id=tenant_id, memory_id=memory_id
                     )
                 else:
                     logger.warning(
-                        "memory_not_found",
-                        tenant_id=tenant_id,
-                        memory_id=memory_id
+                        "memory_not_found", tenant_id=tenant_id, memory_id=memory_id
                     )
 
                 return deleted
 
     async def get_memory_by_id(
-        self,
-        memory_id: str,
-        tenant_id: str
+        self, memory_id: str, tenant_id: str
     ) -> Optional[Dict[str, Any]]:
         """
         Retrieve a single memory by its ID.
@@ -163,7 +163,7 @@ class MemoryRepository:
                 WHERE id = $1 AND tenant_id = $2
                 """,
                 memory_id,
-                tenant_id
+                tenant_id,
             )
 
             if not record:
@@ -172,9 +172,7 @@ class MemoryRepository:
             return dict(record)
 
     async def get_semantic_memories(
-        self,
-        tenant_id: str,
-        project: str
+        self, tenant_id: str, project: str
     ) -> List[Dict[str, Any]]:
         """
         Retrieve all semantic memories for a tenant and project.
@@ -195,14 +193,12 @@ class MemoryRepository:
                 ORDER BY created_at DESC
                 """,
                 tenant_id,
-                project
+                project,
             )
             return [dict(r) for r in records]
 
     async def get_reflective_memories(
-        self,
-        tenant_id: str,
-        project: str
+        self, tenant_id: str, project: str
     ) -> List[Dict[str, Any]]:
         """
         Retrieve all reflective memories for a tenant and project.
@@ -223,15 +219,12 @@ class MemoryRepository:
                 ORDER BY created_at DESC
                 """,
                 tenant_id,
-                project
+                project,
             )
             return [dict(r) for r in records]
 
     async def get_episodic_memories(
-        self,
-        tenant_id: str,
-        project: str,
-        limit: Optional[int] = None
+        self, tenant_id: str, project: str, limit: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         """
         Retrieve episodic memories for a tenant and project.
@@ -256,7 +249,7 @@ class MemoryRepository:
                     """,
                     tenant_id,
                     project,
-                    limit
+                    limit,
                 )
             else:
                 records = await conn.fetch(
@@ -267,15 +260,12 @@ class MemoryRepository:
                     ORDER BY created_at DESC
                     """,
                     tenant_id,
-                    project
+                    project,
                 )
             return [dict(r) for r in records]
 
     async def count_memories_by_layer(
-        self,
-        tenant_id: str,
-        layer: str,
-        project: Optional[str] = None
+        self, tenant_id: str, layer: str, project: Optional[str] = None
     ) -> int:
         """
         Count memories by layer, optionally filtered by project.
@@ -297,7 +287,7 @@ class MemoryRepository:
                     """,
                     layer,
                     project,
-                    tenant_id
+                    tenant_id,
                 )
             else:
                 count = await conn.fetchval(
@@ -306,15 +296,12 @@ class MemoryRepository:
                     WHERE layer = $1 AND tenant_id = $2
                     """,
                     layer,
-                    tenant_id
+                    tenant_id,
                 )
             return count
 
     async def get_average_strength(
-        self,
-        tenant_id: str,
-        layer: str,
-        project: Optional[str] = None
+        self, tenant_id: str, layer: str, project: Optional[str] = None
     ) -> float:
         """
         Get average strength for memories by layer.
@@ -336,7 +323,7 @@ class MemoryRepository:
                     """,
                     layer,
                     project,
-                    tenant_id
+                    tenant_id,
                 )
             else:
                 avg_strength = await conn.fetchval(
@@ -345,14 +332,12 @@ class MemoryRepository:
                     WHERE layer = $1 AND tenant_id = $2
                     """,
                     layer,
-                    tenant_id
+                    tenant_id,
                 )
             return float(avg_strength) if avg_strength is not None else 0.0
 
     async def update_memory_access_stats(
-        self,
-        memory_ids: List[str],
-        tenant_id: str
+        self, memory_ids: List[str], tenant_id: str
     ) -> int:
         """
         Update access statistics for multiple memories in a single batch operation.
@@ -378,10 +363,13 @@ class MemoryRepository:
             - Used by agent execution and query flows to track memory usage
         """
         if not memory_ids:
-            logger.debug("update_memory_access_stats_skipped", reason="empty_memory_ids")
+            logger.debug(
+                "update_memory_access_stats_skipped", reason="empty_memory_ids"
+            )
             return 0
 
         from datetime import datetime, timezone
+
         now = datetime.now(timezone.utc)
 
         async with self.pool.acquire() as conn:
@@ -402,7 +390,7 @@ class MemoryRepository:
                     """,
                     now,
                     memory_ids,
-                    tenant_id
+                    tenant_id,
                 )
 
                 # Parse result string "UPDATE N" to get count
@@ -413,7 +401,7 @@ class MemoryRepository:
                     tenant_id=tenant_id,
                     memory_ids_count=len(memory_ids),
                     updated_count=updated_count,
-                    timestamp=now.isoformat()
+                    timestamp=now.isoformat(),
                 )
 
                 return updated_count

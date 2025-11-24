@@ -2,11 +2,12 @@
 RBAC Service - Role-Based Access Control
 """
 
-from typing import Optional, List
+from typing import List, Optional
 from uuid import UUID
+
 import structlog
 
-from apps.memory_api.models.rbac import Role, UserRole, AccessLog
+from apps.memory_api.models.rbac import AccessLog, Role, UserRole
 
 logger = structlog.get_logger(__name__)
 
@@ -30,7 +31,7 @@ class RBACService:
         tenant_id: UUID,
         role: Role,
         assigned_by: str,
-        project_ids: List[str] = None
+        project_ids: List[str] = None,
     ) -> UserRole:
         """Assign role to user"""
         from uuid import uuid4
@@ -41,7 +42,7 @@ class RBACService:
             tenant_id=tenant_id,
             role=role,
             assigned_by=assigned_by,
-            project_ids=project_ids or []
+            project_ids=project_ids or [],
         )
 
         key = f"{user_id}:{tenant_id}"
@@ -52,7 +53,7 @@ class RBACService:
             user_id=user_id,
             tenant_id=str(tenant_id),
             role=role.value,
-            assigned_by=assigned_by
+            assigned_by=assigned_by,
         )
 
         return user_role
@@ -63,17 +64,12 @@ class RBACService:
         if key in self._user_roles:
             del self._user_roles[key]
 
-            logger.info(
-                "role_revoked",
-                user_id=user_id,
-                tenant_id=str(tenant_id)
-            )
+            logger.info("role_revoked", user_id=user_id, tenant_id=str(tenant_id))
 
     async def list_tenant_users(self, tenant_id: UUID) -> List[UserRole]:
         """List all users with roles in tenant"""
         return [
-            role for role in self._user_roles.values()
-            if role.tenant_id == tenant_id
+            role for role in self._user_roles.values() if role.tenant_id == tenant_id
         ]
 
     async def log_access(
@@ -83,7 +79,7 @@ class RBACService:
         action: str,
         resource: str,
         allowed: bool,
-        denial_reason: Optional[str] = None
+        denial_reason: Optional[str] = None,
     ):
         """Log access attempt for audit"""
         from uuid import uuid4
@@ -95,7 +91,7 @@ class RBACService:
             action=action,
             resource=resource,
             allowed=allowed,
-            denial_reason=denial_reason
+            denial_reason=denial_reason,
         )
 
         logger.info(
@@ -103,7 +99,7 @@ class RBACService:
             tenant_id=str(tenant_id),
             user_id=user_id,
             action=action,
-            allowed=allowed
+            allowed=allowed,
         )
 
         return log_entry

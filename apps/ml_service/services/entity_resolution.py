@@ -8,12 +8,13 @@ This service handles the computationally expensive parts:
 The main API retains orchestration, database operations, and LLM calls.
 """
 
+from typing import Any, Dict, List, Tuple
+
+import numpy as np
 import structlog
-from typing import List, Dict, Any, Tuple
 from sentence_transformers import SentenceTransformer
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
 
 logger = structlog.get_logger(__name__)
 
@@ -30,7 +31,7 @@ def get_embedding_model():
     global _EMBEDDING_MODEL
     if _EMBEDDING_MODEL is None:
         logger.info("loading_embedding_model", model="all-MiniLM-L6-v2")
-        _EMBEDDING_MODEL = SentenceTransformer('all-MiniLM-L6-v2')
+        _EMBEDDING_MODEL = SentenceTransformer("all-MiniLM-L6-v2")
     return _EMBEDDING_MODEL
 
 
@@ -53,9 +54,7 @@ class EntityResolutionMLService:
         self.model = get_embedding_model()
 
     def resolve_entities(
-        self,
-        nodes: List[Dict[str, Any]],
-        similarity_threshold: float = None
+        self, nodes: List[Dict[str, Any]], similarity_threshold: float = None
     ) -> Tuple[List[List[str]], Dict[str, Any]]:
         """
         Identify groups of similar entities that should potentially be merged.
@@ -74,20 +73,16 @@ class EntityResolutionMLService:
             return [], {
                 "nodes_processed": len(nodes),
                 "groups_found": 0,
-                "reason": "insufficient_nodes"
+                "reason": "insufficient_nodes",
             }
 
         threshold = similarity_threshold or self.similarity_threshold
 
         # Extract labels for embedding
-        node_labels = [node.get('label', '') for node in nodes]
-        node_ids = [node.get('id', '') for node in nodes]
+        node_labels = [node.get("label", "") for node in nodes]
+        node_ids = [node.get("id", "") for node in nodes]
 
-        logger.info(
-            "generating_embeddings",
-            node_count=len(nodes),
-            threshold=threshold
-        )
+        logger.info("generating_embeddings", node_count=len(nodes), threshold=threshold)
 
         # Generate embeddings
         embeddings = self.model.encode(node_labels)
@@ -99,9 +94,9 @@ class EntityResolutionMLService:
 
         clustering = AgglomerativeClustering(
             n_clusters=None,
-            metric='cosine',
-            linkage='average',
-            distance_threshold=distance_threshold
+            metric="cosine",
+            linkage="average",
+            distance_threshold=distance_threshold,
         )
 
         cluster_labels = clustering.fit_predict(embeddings)
@@ -135,7 +130,7 @@ class EntityResolutionMLService:
                 cluster_id=cluster_id,
                 size=len(indices),
                 min_similarity=min_sim,
-                nodes=[node_labels[i] for i in indices]
+                nodes=[node_labels[i] for i in indices],
             )
 
         statistics = {
@@ -143,13 +138,15 @@ class EntityResolutionMLService:
             "groups_found": len(merge_groups),
             "total_clusters": len(clusters),
             "similarity_threshold": threshold,
-            "average_group_similarity": float(np.mean(group_similarities)) if group_similarities else 0.0
+            "average_group_similarity": (
+                float(np.mean(group_similarities)) if group_similarities else 0.0
+            ),
         }
 
         logger.info(
             "entity_resolution_completed",
             groups_found=len(merge_groups),
-            nodes_processed=len(nodes)
+            nodes_processed=len(nodes),
         )
 
         return merge_groups, statistics
@@ -174,10 +171,7 @@ class EntityResolutionMLService:
 
         return float(min_sim)
 
-    def calculate_similarity_matrix(
-        self,
-        labels: List[str]
-    ) -> np.ndarray:
+    def calculate_similarity_matrix(self, labels: List[str]) -> np.ndarray:
         """
         Calculate pairwise similarity matrix for entity labels.
 

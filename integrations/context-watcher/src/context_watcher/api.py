@@ -7,22 +7,29 @@ This is NOT the Model Context Protocol server - this is an HTTP-based file watch
 For MCP (IDE integration), see integrations/mcp/
 """
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
-from pydantic import BaseModel
 import os
-import httpx
-from contextlib import asynccontextmanager
-from prometheus_client import Counter, Gauge, Histogram
 import time
+from contextlib import asynccontextmanager
 
-from .watcher import start_watching
+import httpx
+from fastapi import BackgroundTasks, FastAPI, HTTPException
+from prometheus_client import Counter, Gauge, Histogram
+from pydantic import BaseModel
+
 from .rae_client import RAEClient
+from .watcher import start_watching
 
 # Prometheus Metrics
-FILES_SYNCED = Counter('files_synced_total', 'Total files synced to RAE', ['tenant_id'])
-FILE_SYNC_ERRORS = Counter('file_sync_errors_total', 'Total file sync errors', ['tenant_id', 'error_type'])
-FILE_SYNC_DURATION = Histogram('file_sync_duration_seconds', 'File sync duration in seconds', ['tenant_id'])
-WATCHED_PROJECTS = Gauge('watched_projects_total', 'Number of currently watched projects')
+FILES_SYNCED = Counter("files_synced_total", "Total files synced to RAE", ["tenant_id"])
+FILE_SYNC_ERRORS = Counter(
+    "file_sync_errors_total", "Total file sync errors", ["tenant_id", "error_type"]
+)
+FILE_SYNC_DURATION = Histogram(
+    "file_sync_duration_seconds", "File sync duration in seconds", ["tenant_id"]
+)
+WATCHED_PROJECTS = Gauge(
+    "watched_projects_total", "Number of currently watched projects"
+)
 
 
 # --- Application Lifecycle ---
@@ -53,18 +60,21 @@ app = FastAPI(
 # --- API Models ---
 class Project(BaseModel):
     """Project registration request."""
+
     path: str
     tenant_id: str  # Each project should have its own tenant_id
 
 
 class ProjectRegistrationResponse(BaseModel):
     """Project registration response."""
+
     project_id: str
     message: str
 
 
 class StoreMemoryRequest(BaseModel):
     """Memory storage request."""
+
     content: str
     source: str
     layer: str = "ltm"
@@ -74,12 +84,14 @@ class StoreMemoryRequest(BaseModel):
 
 class QueryMemoryRequest(BaseModel):
     """Memory query request."""
+
     query_text: str
     k: int = 10
 
 
 class DeleteMemoryRequest(BaseModel):
     """Memory deletion request."""
+
     memory_id: str
 
 
@@ -95,6 +107,7 @@ def get_file_update_callback(tenant_id: str):
     Returns:
         Callback function that handles file changes
     """
+
     def callback(file_path: str):
         start_time = time.time()
         print(f"File change detected for tenant {tenant_id}: {file_path}")
@@ -104,7 +117,9 @@ def get_file_update_callback(tenant_id: str):
             rae_client.store_file_memory(file_path)
             FILES_SYNCED.labels(tenant_id=tenant_id).inc()
         except Exception as e:
-            FILE_SYNC_ERRORS.labels(tenant_id=tenant_id, error_type=type(e).__name__).inc()
+            FILE_SYNC_ERRORS.labels(
+                tenant_id=tenant_id, error_type=type(e).__name__
+            ).inc()
             print(f"Error syncing file {file_path}: {e}")
         finally:
             duration = time.time() - start_time
@@ -114,6 +129,7 @@ def get_file_update_callback(tenant_id: str):
 
 
 # --- API Endpoints ---
+
 
 @app.get("/status")
 async def get_status():
@@ -141,11 +157,15 @@ async def register_project(project: Project, background_tasks: BackgroundTasks):
     """
     path = os.path.abspath(project.path)
     if not os.path.isdir(path):
-        raise HTTPException(status_code=400, detail="The provided path is not a valid directory.")
+        raise HTTPException(
+            status_code=400, detail="The provided path is not a valid directory."
+        )
 
     project_id = f"{project.tenant_id}-{os.path.basename(path)}"
     if project_id in app.state.watched_projects:
-        raise HTTPException(status_code=400, detail=f"Project '{project_id}' is already being watched.")
+        raise HTTPException(
+            status_code=400, detail=f"Project '{project_id}' is already being watched."
+        )
 
     callback = get_file_update_callback(tenant_id=project.tenant_id)
     observer = start_watching(path, callback)
@@ -162,8 +182,7 @@ async def register_project(project: Project, background_tasks: BackgroundTasks):
     print(f"Started watching project: {project_id} at {path}")
 
     return ProjectRegistrationResponse(
-        project_id=project_id,
-        message=f"Started watching project '{project_id}'."
+        project_id=project_id, message=f"Started watching project '{project_id}'."
     )
 
 
@@ -214,6 +233,7 @@ async def unregister_project(project_id: str):
 
 # --- RAE API Proxy Endpoints ---
 
+
 @app.post("/memory/store")
 async def store_memory_proxy(req: StoreMemoryRequest, tenant_id: str):
     """
@@ -240,7 +260,7 @@ async def store_memory_proxy(req: StoreMemoryRequest, tenant_id: str):
         response = await client.post(
             f"{rae_client.base_v1_url}/memory/store",
             json=payload,
-            headers=rae_client.headers
+            headers=rae_client.headers,
         )
         response.raise_for_status()
         return response.json()
@@ -280,4 +300,5 @@ async def delete_memory_proxy(req: DeleteMemoryRequest, tenant_id: str):
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(app, host="0.0.0.0", port=8001)

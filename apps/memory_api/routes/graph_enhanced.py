@@ -10,44 +10,25 @@ This module provides FastAPI routes for enhanced graph operations including:
 - Batch operations
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Request
-from typing import List
-import structlog
 from datetime import datetime
-from apps.memory_api.repositories.graph_repository_enhanced import EnhancedGraphRepository
-from apps.memory_api.models.graph_enhanced_models import (
-    # Request/Response models
-    CreateGraphNodeRequest,
-    CreateGraphEdgeRequest,
-    TraverseGraphRequest,
-    TraverseGraphResponse,
-    FindPathRequest,
-    FindPathResponse,
-    DetectCycleRequest,
-    DetectCycleResponse,
-    CreateSnapshotRequest,
-    CreateSnapshotResponse,
-    RestoreSnapshotRequest,
-    RestoreSnapshotResponse,
-    GetNodeMetricsRequest,
-    GetNodeMetricsResponse,
-    FindConnectedNodesRequest,
-    FindConnectedNodesResponse,
-    GetGraphStatisticsRequest,
-    GetGraphStatisticsResponse,
-    UpdateEdgeWeightRequest,
-    DeactivateEdgeRequest,
-    ActivateEdgeRequest,
-    SetEdgeTemporalValidityRequest,
-    BatchCreateNodesRequest,
-    BatchCreateEdgesRequest,
-    BatchOperationResponse,
-    # Data models
-    EnhancedGraphNode,
-    EnhancedGraphEdge,
-    GraphSnapshot,
-    TraversalAlgorithm
-)
+from typing import List
+
+import structlog
+from fastapi import APIRouter, Depends, HTTPException, Request
+
+from apps.memory_api.models.graph_enhanced_models import (  # Request/Response models; Data models
+    ActivateEdgeRequest, BatchCreateEdgesRequest, BatchCreateNodesRequest,
+    BatchOperationResponse, CreateGraphEdgeRequest, CreateGraphNodeRequest,
+    CreateSnapshotRequest, CreateSnapshotResponse, DeactivateEdgeRequest,
+    DetectCycleRequest, DetectCycleResponse, EnhancedGraphEdge,
+    EnhancedGraphNode, FindConnectedNodesRequest, FindConnectedNodesResponse,
+    FindPathRequest, FindPathResponse, GetGraphStatisticsRequest,
+    GetGraphStatisticsResponse, GetNodeMetricsRequest, GetNodeMetricsResponse,
+    GraphSnapshot, RestoreSnapshotRequest, RestoreSnapshotResponse,
+    SetEdgeTemporalValidityRequest, TraversalAlgorithm, TraverseGraphRequest,
+    TraverseGraphResponse, UpdateEdgeWeightRequest)
+from apps.memory_api.repositories.graph_repository_enhanced import \
+    EnhancedGraphRepository
 
 logger = structlog.get_logger(__name__)
 
@@ -58,6 +39,7 @@ router = APIRouter(prefix="/v1/graph-management", tags=["Graph Management"])
 # Dependency Injection
 # ============================================================================
 
+
 async def get_pool(request: Request):
     """Get database connection pool from app state"""
     return request.app.state.pool
@@ -67,11 +49,9 @@ async def get_pool(request: Request):
 # Node Operations
 # ============================================================================
 
+
 @router.post("/nodes", response_model=EnhancedGraphNode, status_code=201)
-async def create_node(
-    request: CreateGraphNodeRequest,
-    pool=Depends(get_pool)
-):
+async def create_node(request: CreateGraphNodeRequest, pool=Depends(get_pool)):
     """
     Create a knowledge graph node.
 
@@ -85,7 +65,7 @@ async def create_node(
             project_id=request.project_id,
             node_id=request.node_id,
             label=request.label,
-            properties=request.properties
+            properties=request.properties,
         )
 
         logger.info("node_created_via_api", node_id=request.node_id)
@@ -98,10 +78,7 @@ async def create_node(
 
 @router.get("/nodes/{node_id}/metrics", response_model=GetNodeMetricsResponse)
 async def get_node_metrics(
-    tenant_id: str,
-    project_id: str,
-    node_id: str,
-    pool=Depends(get_pool)
+    tenant_id: str, project_id: str, node_id: str, pool=Depends(get_pool)
 ):
     """
     Get connectivity metrics for a node.
@@ -110,6 +87,7 @@ async def get_node_metrics(
     """
     try:
         from uuid import UUID
+
         repo = EnhancedGraphRepository(pool)
 
         node_uuid = UUID(node_id)
@@ -118,7 +96,7 @@ async def get_node_metrics(
         return GetNodeMetricsResponse(
             node_id=node_uuid,
             metrics=metrics,
-            message="Node metrics retrieved successfully"
+            message="Node metrics retrieved successfully",
         )
 
     except Exception as e:
@@ -128,8 +106,7 @@ async def get_node_metrics(
 
 @router.post("/nodes/connected", response_model=FindConnectedNodesResponse)
 async def find_connected_nodes(
-    request: FindConnectedNodesRequest,
-    pool=Depends(get_pool)
+    request: FindConnectedNodesRequest, pool=Depends(get_pool)
 ):
     """
     Find all nodes connected to a given node.
@@ -142,13 +119,13 @@ async def find_connected_nodes(
             tenant_id=request.tenant_id,
             project_id=request.project_id,
             node_id=request.node_id,
-            max_depth=request.max_depth
+            max_depth=request.max_depth,
         )
 
         return FindConnectedNodesResponse(
             node_id=request.node_id,
             connected_nodes=connected,
-            total_connected=len(connected)
+            total_connected=len(connected),
         )
 
     except Exception as e:
@@ -160,11 +137,9 @@ async def find_connected_nodes(
 # Edge Operations
 # ============================================================================
 
+
 @router.post("/edges", response_model=EnhancedGraphEdge, status_code=201)
-async def create_edge(
-    request: CreateGraphEdgeRequest,
-    pool=Depends(get_pool)
-):
+async def create_edge(request: CreateGraphEdgeRequest, pool=Depends(get_pool)):
     """
     Create a weighted, temporal knowledge graph edge.
 
@@ -179,7 +154,7 @@ async def create_edge(
             tenant_id=request.tenant_id,
             project_id=request.project_id,
             source_node_id=request.source_node_id,
-            target_node_id=request.target_node_id
+            target_node_id=request.target_node_id,
         )
 
         if cycle_result.has_cycle:
@@ -199,7 +174,7 @@ async def create_edge(
             properties=request.properties,
             metadata=request.metadata,
             valid_from=request.valid_from,
-            valid_to=request.valid_to
+            valid_to=request.valid_to,
         )
 
         logger.info("edge_created_via_api", edge_id=edge.id)
@@ -212,19 +187,18 @@ async def create_edge(
 
 @router.put("/edges/{edge_id}/weight", response_model=EnhancedGraphEdge)
 async def update_edge_weight(
-    edge_id: str,
-    request: UpdateEdgeWeightRequest,
-    pool=Depends(get_pool)
+    edge_id: str, request: UpdateEdgeWeightRequest, pool=Depends(get_pool)
 ):
     """Update edge weight and optionally confidence"""
     try:
         from uuid import UUID
+
         repo = EnhancedGraphRepository(pool)
 
         edge = await repo.update_edge_weight(
             edge_id=UUID(edge_id),
             new_weight=request.new_weight,
-            new_confidence=request.new_confidence
+            new_confidence=request.new_confidence,
         )
 
         return edge
@@ -236,19 +210,15 @@ async def update_edge_weight(
 
 @router.post("/edges/{edge_id}/deactivate", response_model=EnhancedGraphEdge)
 async def deactivate_edge(
-    edge_id: str,
-    request: DeactivateEdgeRequest,
-    pool=Depends(get_pool)
+    edge_id: str, request: DeactivateEdgeRequest, pool=Depends(get_pool)
 ):
     """Deactivate an edge (soft delete)"""
     try:
         from uuid import UUID
+
         repo = EnhancedGraphRepository(pool)
 
-        edge = await repo.deactivate_edge(
-            edge_id=UUID(edge_id),
-            reason=request.reason
-        )
+        edge = await repo.deactivate_edge(edge_id=UUID(edge_id), reason=request.reason)
 
         return edge
 
@@ -259,13 +229,12 @@ async def deactivate_edge(
 
 @router.post("/edges/{edge_id}/activate", response_model=EnhancedGraphEdge)
 async def activate_edge(
-    edge_id: str,
-    request: ActivateEdgeRequest,
-    pool=Depends(get_pool)
+    edge_id: str, request: ActivateEdgeRequest, pool=Depends(get_pool)
 ):
     """Reactivate a deactivated edge"""
     try:
         from uuid import UUID
+
         repo = EnhancedGraphRepository(pool)
 
         edge = await repo.activate_edge(edge_id=UUID(edge_id))
@@ -279,19 +248,18 @@ async def activate_edge(
 
 @router.put("/edges/{edge_id}/temporal", response_model=EnhancedGraphEdge)
 async def set_edge_temporal_validity(
-    edge_id: str,
-    request: SetEdgeTemporalValidityRequest,
-    pool=Depends(get_pool)
+    edge_id: str, request: SetEdgeTemporalValidityRequest, pool=Depends(get_pool)
 ):
     """Set temporal validity window for an edge"""
     try:
         from uuid import UUID
+
         repo = EnhancedGraphRepository(pool)
 
         edge = await repo.set_edge_temporal_validity(
             edge_id=UUID(edge_id),
             valid_from=request.valid_from,
-            valid_to=request.valid_to
+            valid_to=request.valid_to,
         )
 
         return edge
@@ -305,11 +273,9 @@ async def set_edge_temporal_validity(
 # Graph Traversal
 # ============================================================================
 
+
 @router.post("/traverse", response_model=TraverseGraphResponse)
-async def traverse_graph(
-    request: TraverseGraphRequest,
-    pool=Depends(get_pool)
-):
+async def traverse_graph(request: TraverseGraphRequest, pool=Depends(get_pool)):
     """
     Perform temporal graph traversal with BFS or DFS.
 
@@ -321,6 +287,7 @@ async def traverse_graph(
     """
     try:
         import time
+
         start_time = time.time()
 
         repo = EnhancedGraphRepository(pool)
@@ -334,7 +301,7 @@ async def traverse_graph(
             at_timestamp=request.at_timestamp,
             relation_filter=request.relation_filter,
             min_weight=request.min_weight,
-            min_confidence=request.min_confidence
+            min_confidence=request.min_confidence,
         )
 
         execution_time = int((time.time() - start_time) * 1000)
@@ -350,7 +317,7 @@ async def traverse_graph(
             algorithm=request.algorithm.value,
             nodes=len(nodes),
             edges=len(edges),
-            time_ms=execution_time
+            time_ms=execution_time,
         )
 
         return TraverseGraphResponse(
@@ -362,11 +329,13 @@ async def traverse_graph(
             execution_time_ms=execution_time,
             algorithm_used=request.algorithm,
             filters_applied={
-                "at_timestamp": str(request.at_timestamp) if request.at_timestamp else None,
+                "at_timestamp": (
+                    str(request.at_timestamp) if request.at_timestamp else None
+                ),
                 "relation_filter": request.relation_filter,
                 "min_weight": request.min_weight,
-                "min_confidence": request.min_confidence
-            }
+                "min_confidence": request.min_confidence,
+            },
         )
 
     except Exception as e:
@@ -378,11 +347,9 @@ async def traverse_graph(
 # Path Finding
 # ============================================================================
 
+
 @router.post("/path/shortest", response_model=FindPathResponse)
-async def find_shortest_path(
-    request: FindPathRequest,
-    pool=Depends(get_pool)
-):
+async def find_shortest_path(request: FindPathRequest, pool=Depends(get_pool)):
     """
     Find weighted shortest path between two nodes using Dijkstra.
 
@@ -390,6 +357,7 @@ async def find_shortest_path(
     """
     try:
         import time
+
         start_time = time.time()
 
         repo = EnhancedGraphRepository(pool)
@@ -400,7 +368,7 @@ async def find_shortest_path(
             start_node_id=request.start_node_id,
             end_node_id=request.end_node_id,
             at_timestamp=request.at_timestamp,
-            max_depth=request.max_depth
+            max_depth=request.max_depth,
         )
 
         execution_time = int((time.time() - start_time) * 1000)
@@ -409,21 +377,21 @@ async def find_shortest_path(
             return FindPathResponse(
                 path_found=False,
                 algorithm_used=request.algorithm,
-                execution_time_ms=execution_time
+                execution_time_ms=execution_time,
             )
 
         logger.info(
             "shortest_path_found",
             length=path.length,
             weight=path.total_weight,
-            time_ms=execution_time
+            time_ms=execution_time,
         )
 
         return FindPathResponse(
             path_found=True,
             path=path,
             algorithm_used=request.algorithm,
-            execution_time_ms=execution_time
+            execution_time_ms=execution_time,
         )
 
     except Exception as e:
@@ -435,11 +403,9 @@ async def find_shortest_path(
 # Cycle Detection
 # ============================================================================
 
+
 @router.post("/cycles/detect", response_model=DetectCycleResponse)
-async def detect_cycle(
-    request: DetectCycleRequest,
-    pool=Depends(get_pool)
-):
+async def detect_cycle(request: DetectCycleRequest, pool=Depends(get_pool)):
     """
     Detect if adding an edge would create a cycle.
 
@@ -453,7 +419,7 @@ async def detect_cycle(
             project_id=request.project_id,
             source_node_id=request.source_node_id,
             target_node_id=request.target_node_id,
-            max_depth=request.max_depth
+            max_depth=request.max_depth,
         )
 
         message = f"Cycle {'detected' if result.has_cycle else 'not detected'}"
@@ -463,13 +429,10 @@ async def detect_cycle(
         logger.info(
             "cycle_detection_complete",
             has_cycle=result.has_cycle,
-            cycle_length=result.cycle_length
+            cycle_length=result.cycle_length,
         )
 
-        return DetectCycleResponse(
-            result=result,
-            message=message
-        )
+        return DetectCycleResponse(result=result, message=message)
 
     except Exception as e:
         logger.error("cycle_detection_failed", error=str(e))
@@ -480,11 +443,9 @@ async def detect_cycle(
 # Graph Snapshots
 # ============================================================================
 
+
 @router.post("/snapshots", response_model=CreateSnapshotResponse, status_code=201)
-async def create_snapshot(
-    request: CreateSnapshotRequest,
-    pool=Depends(get_pool)
-):
+async def create_snapshot(request: CreateSnapshotRequest, pool=Depends(get_pool)):
     """
     Create a versioned snapshot of the graph.
 
@@ -499,7 +460,7 @@ async def create_snapshot(
             project_id=request.project_id,
             snapshot_name=request.snapshot_name,
             description=request.description,
-            created_by=request.created_by
+            created_by=request.created_by,
         )
 
         # Get snapshot details
@@ -509,7 +470,7 @@ async def create_snapshot(
             "snapshot_created",
             snapshot_id=snapshot_id,
             nodes=snapshot.node_count if snapshot else 0,
-            edges=snapshot.edge_count if snapshot else 0
+            edges=snapshot.edge_count if snapshot else 0,
         )
 
         return CreateSnapshotResponse(
@@ -517,7 +478,7 @@ async def create_snapshot(
             node_count=snapshot.node_count if snapshot else 0,
             edge_count=snapshot.edge_count if snapshot else 0,
             snapshot_size_bytes=snapshot.snapshot_size_bytes if snapshot else None,
-            message="Snapshot created successfully"
+            message="Snapshot created successfully",
         )
 
     except Exception as e:
@@ -526,13 +487,11 @@ async def create_snapshot(
 
 
 @router.get("/snapshots/{snapshot_id}", response_model=GraphSnapshot)
-async def get_snapshot(
-    snapshot_id: str,
-    pool=Depends(get_pool)
-):
+async def get_snapshot(snapshot_id: str, pool=Depends(get_pool)):
     """Get snapshot details by ID"""
     try:
         from uuid import UUID
+
         repo = EnhancedGraphRepository(pool)
 
         snapshot = await repo.get_snapshot(UUID(snapshot_id))
@@ -551,19 +510,14 @@ async def get_snapshot(
 
 @router.get("/snapshots", response_model=List[GraphSnapshot])
 async def list_snapshots(
-    tenant_id: str,
-    project_id: str,
-    limit: int = 10,
-    pool=Depends(get_pool)
+    tenant_id: str, project_id: str, limit: int = 10, pool=Depends(get_pool)
 ):
     """List recent snapshots"""
     try:
         repo = EnhancedGraphRepository(pool)
 
         snapshots = await repo.list_snapshots(
-            tenant_id=tenant_id,
-            project_id=project_id,
-            limit=limit
+            tenant_id=tenant_id, project_id=project_id, limit=limit
         )
 
         return snapshots
@@ -575,9 +529,7 @@ async def list_snapshots(
 
 @router.post("/snapshots/{snapshot_id}/restore", response_model=RestoreSnapshotResponse)
 async def restore_snapshot(
-    snapshot_id: str,
-    request: RestoreSnapshotRequest,
-    pool=Depends(get_pool)
+    snapshot_id: str, request: RestoreSnapshotRequest, pool=Depends(get_pool)
 ):
     """
     Restore graph from snapshot.
@@ -586,24 +538,24 @@ async def restore_snapshot(
     """
     try:
         from uuid import UUID
+
         repo = EnhancedGraphRepository(pool)
 
         nodes_restored, edges_restored = await repo.restore_snapshot(
-            snapshot_id=UUID(snapshot_id),
-            clear_existing=request.clear_existing
+            snapshot_id=UUID(snapshot_id), clear_existing=request.clear_existing
         )
 
         logger.info(
             "snapshot_restored",
             snapshot_id=snapshot_id,
             nodes=nodes_restored,
-            edges=edges_restored
+            edges=edges_restored,
         )
 
         return RestoreSnapshotResponse(
             nodes_restored=nodes_restored,
             edges_restored=edges_restored,
-            message=f"Snapshot restored successfully ({nodes_restored} nodes, {edges_restored} edges)"
+            message=f"Snapshot restored successfully ({nodes_restored} nodes, {edges_restored} edges)",
         )
 
     except Exception as e:
@@ -615,10 +567,10 @@ async def restore_snapshot(
 # Analytics and Statistics
 # ============================================================================
 
+
 @router.post("/statistics", response_model=GetGraphStatisticsResponse)
 async def get_graph_statistics(
-    request: GetGraphStatisticsRequest,
-    pool=Depends(get_pool)
+    request: GetGraphStatisticsRequest, pool=Depends(get_pool)
 ):
     """
     Get comprehensive graph statistics.
@@ -629,19 +581,17 @@ async def get_graph_statistics(
         repo = EnhancedGraphRepository(pool)
 
         statistics = await repo.get_graph_statistics(
-            tenant_id=request.tenant_id,
-            project_id=request.project_id
+            tenant_id=request.tenant_id, project_id=request.project_id
         )
 
         logger.info(
             "statistics_retrieved",
             nodes=statistics.total_nodes,
-            edges=statistics.total_edges
+            edges=statistics.total_edges,
         )
 
         return GetGraphStatisticsResponse(
-            statistics=statistics,
-            message="Graph statistics retrieved successfully"
+            statistics=statistics, message="Graph statistics retrieved successfully"
         )
 
     except Exception as e:
@@ -653,11 +603,9 @@ async def get_graph_statistics(
 # Batch Operations
 # ============================================================================
 
+
 @router.post("/nodes/batch", response_model=BatchOperationResponse, status_code=201)
-async def batch_create_nodes(
-    request: BatchCreateNodesRequest,
-    pool=Depends(get_pool)
-):
+async def batch_create_nodes(request: BatchCreateNodesRequest, pool=Depends(get_pool)):
     """
     Create multiple nodes in batch.
 
@@ -669,20 +617,18 @@ async def batch_create_nodes(
         successful, errors = await repo.batch_create_nodes(
             tenant_id=request.tenant_id,
             project_id=request.project_id,
-            nodes=request.nodes
+            nodes=request.nodes,
         )
 
         logger.info(
-            "batch_create_nodes_complete",
-            successful=successful,
-            failed=len(errors)
+            "batch_create_nodes_complete", successful=successful, failed=len(errors)
         )
 
         return BatchOperationResponse(
             successful=successful,
             failed=len(errors),
             errors=errors,
-            message=f"Batch operation completed: {successful} successful, {len(errors)} failed"
+            message=f"Batch operation completed: {successful} successful, {len(errors)} failed",
         )
 
     except Exception as e:
@@ -691,10 +637,7 @@ async def batch_create_nodes(
 
 
 @router.post("/edges/batch", response_model=BatchOperationResponse, status_code=201)
-async def batch_create_edges(
-    request: BatchCreateEdgesRequest,
-    pool=Depends(get_pool)
-):
+async def batch_create_edges(request: BatchCreateEdgesRequest, pool=Depends(get_pool)):
     """
     Create multiple edges in batch.
 
@@ -722,7 +665,7 @@ async def batch_create_edges(
                     properties=edge_req.properties,
                     metadata=edge_req.metadata,
                     valid_from=edge_req.valid_from,
-                    valid_to=edge_req.valid_to
+                    valid_to=edge_req.valid_to,
                 )
                 successful += 1
                 created_ids.append(edge.id)
@@ -730,18 +673,14 @@ async def batch_create_edges(
                 failed += 1
                 errors.append(str(e))
 
-        logger.info(
-            "batch_create_edges_complete",
-            successful=successful,
-            failed=failed
-        )
+        logger.info("batch_create_edges_complete", successful=successful, failed=failed)
 
         return BatchOperationResponse(
             successful=successful,
             failed=failed,
             errors=errors,
             created_ids=created_ids,
-            message=f"Batch operation completed: {successful} successful, {failed} failed"
+            message=f"Batch operation completed: {successful} successful, {failed} failed",
         )
 
     except Exception as e:
@@ -752,6 +691,7 @@ async def batch_create_edges(
 # ============================================================================
 # Health Check
 # ============================================================================
+
 
 @router.get("/health")
 async def health_check():
@@ -766,6 +706,6 @@ async def health_check():
             "cycle_detection",
             "graph_snapshots",
             "node_metrics",
-            "batch_operations"
-        ]
+            "batch_operations",
+        ],
     }

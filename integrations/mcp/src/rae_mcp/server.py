@@ -12,34 +12,51 @@ The server communicates via STDIO using JSON-RPC protocol.
 import asyncio
 import os
 import re
-from typing import Any, Optional, List, Dict
+import time
 from datetime import datetime
-
-from mcp.server.models import InitializationOptions
-from mcp.server import NotificationOptions, Server
-from mcp.server.stdio import stdio_server
-import mcp.types as types
-import mcp.server.stdio
+from typing import Any, Dict, List, Optional
 
 import httpx
+import mcp.server.stdio
+import mcp.types as types
 import structlog
-from prometheus_client import Counter, Histogram, Gauge
-import time
+from mcp.server import NotificationOptions, Server
+from mcp.server.models import InitializationOptions
+from mcp.server.stdio import stdio_server
+from prometheus_client import Counter, Gauge, Histogram
 
 logger = structlog.get_logger(__name__)
 
 # Prometheus Metrics
-TOOLS_CALLED = Counter('mcp_tools_called_total', 'Total MCP tool invocations', ['tool_name'])
-TOOL_ERRORS = Counter('mcp_tool_errors_total', 'Total MCP tool errors', ['tool_name', 'error_type'])
-TOOL_DURATION = Histogram('mcp_tool_duration_seconds', 'MCP tool execution duration', ['tool_name'])
+TOOLS_CALLED = Counter(
+    "mcp_tools_called_total", "Total MCP tool invocations", ["tool_name"]
+)
+TOOL_ERRORS = Counter(
+    "mcp_tool_errors_total", "Total MCP tool errors", ["tool_name", "error_type"]
+)
+TOOL_DURATION = Histogram(
+    "mcp_tool_duration_seconds", "MCP tool execution duration", ["tool_name"]
+)
 
-RESOURCES_READ = Counter('mcp_resources_read_total', 'Total MCP resource reads', ['resource_uri'])
-RESOURCE_ERRORS = Counter('mcp_resource_errors_total', 'Total MCP resource errors', ['resource_uri'])
-RESOURCE_DURATION = Histogram('mcp_resource_duration_seconds', 'MCP resource read duration', ['resource_uri'])
+RESOURCES_READ = Counter(
+    "mcp_resources_read_total", "Total MCP resource reads", ["resource_uri"]
+)
+RESOURCE_ERRORS = Counter(
+    "mcp_resource_errors_total", "Total MCP resource errors", ["resource_uri"]
+)
+RESOURCE_DURATION = Histogram(
+    "mcp_resource_duration_seconds", "MCP resource read duration", ["resource_uri"]
+)
 
-PROMPTS_REQUESTED = Counter('mcp_prompts_requested_total', 'Total MCP prompt requests', ['prompt_name'])
-PROMPT_ERRORS = Counter('mcp_prompt_errors_total', 'Total MCP prompt errors', ['prompt_name'])
-PROMPT_DURATION = Histogram('mcp_prompt_duration_seconds', 'MCP prompt request duration', ['prompt_name'])
+PROMPTS_REQUESTED = Counter(
+    "mcp_prompts_requested_total", "Total MCP prompt requests", ["prompt_name"]
+)
+PROMPT_ERRORS = Counter(
+    "mcp_prompt_errors_total", "Total MCP prompt errors", ["prompt_name"]
+)
+PROMPT_DURATION = Histogram(
+    "mcp_prompt_duration_seconds", "MCP prompt request duration", ["prompt_name"]
+)
 
 
 # PII Scrubber for Logging
@@ -59,19 +76,33 @@ class PIIScrubber:
 
     # Patterns for PII detection
     PATTERNS = {
-        'api_key': re.compile(r'(?i)(api[_-]?key|token|secret|password|passwd|pwd)[\s:=]+["\']?([a-zA-Z0-9_\-\.]{16,})["\']?'),
-        'email': re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'),
-        'credit_card': re.compile(r'\b\d{4}[\s\-]?\d{4}[\s\-]?\d{4}[\s\-]?\d{4}\b'),
-        'ip_address': re.compile(r'\b(?:\d{1,3}\.){3}\d{1,3}\b'),
-        'phone': re.compile(r'\b(?:\+?1[-.]?)?\(?\d{3}\)?[-.]?\d{3}[-.]?\d{4}\b'),
-        'ssn': re.compile(r'\b\d{3}-\d{2}-\d{4}\b'),
+        "api_key": re.compile(
+            r'(?i)(api[_-]?key|token|secret|password|passwd|pwd)[\s:=]+["\']?([a-zA-Z0-9_\-\.]{16,})["\']?'
+        ),
+        "email": re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"),
+        "credit_card": re.compile(r"\b\d{4}[\s\-]?\d{4}[\s\-]?\d{4}[\s\-]?\d{4}\b"),
+        "ip_address": re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b"),
+        "phone": re.compile(r"\b(?:\+?1[-.]?)?\(?\d{3}\)?[-.]?\d{3}[-.]?\d{4}\b"),
+        "ssn": re.compile(r"\b\d{3}-\d{2}-\d{4}\b"),
     }
 
     # Sensitive field names that should always be masked
     SENSITIVE_FIELDS = {
-        'password', 'passwd', 'pwd', 'secret', 'api_key', 'apikey', 'token',
-        'access_token', 'refresh_token', 'auth_token', 'session_token',
-        'private_key', 'secret_key', 'client_secret', 'api_secret'
+        "password",
+        "passwd",
+        "pwd",
+        "secret",
+        "api_key",
+        "apikey",
+        "token",
+        "access_token",
+        "refresh_token",
+        "auth_token",
+        "session_token",
+        "private_key",
+        "secret_key",
+        "client_secret",
+        "api_secret",
     }
 
     @classmethod
@@ -129,26 +160,32 @@ class PIIScrubber:
 
         # Apply regex patterns
         for pattern_name, pattern in cls.PATTERNS.items():
-            if pattern_name == 'api_key':
+            if pattern_name == "api_key":
                 # Special handling for API keys (mask the value, keep the field name)
-                scrubbed = pattern.sub(r'\1=***REDACTED***', scrubbed)
-            elif pattern_name == 'email':
+                scrubbed = pattern.sub(r"\1=***REDACTED***", scrubbed)
+            elif pattern_name == "email":
                 # Mask email but keep domain
                 def mask_email(match):
                     email = match.group(0)
-                    parts = email.split('@')
+                    parts = email.split("@")
                     if len(parts) == 2:
                         return f"{parts[0][:2]}***@{parts[1]}"
                     return "***@***"
+
                 scrubbed = pattern.sub(mask_email, scrubbed)
-            elif pattern_name == 'credit_card':
-                scrubbed = pattern.sub(lambda m: f"****-****-****-{m.group(0)[-4:]}", scrubbed)
-            elif pattern_name == 'ip_address':
-                scrubbed = pattern.sub(lambda m: f"{'.'.join(m.group(0).split('.')[:2])}.***.**", scrubbed)
+            elif pattern_name == "credit_card":
+                scrubbed = pattern.sub(
+                    lambda m: f"****-****-****-{m.group(0)[-4:]}", scrubbed
+                )
+            elif pattern_name == "ip_address":
+                scrubbed = pattern.sub(
+                    lambda m: f"{'.'.join(m.group(0).split('.')[:2])}.***.**", scrubbed
+                )
             else:
-                scrubbed = pattern.sub('***REDACTED***', scrubbed)
+                scrubbed = pattern.sub("***REDACTED***", scrubbed)
 
         return scrubbed
+
 
 # Configuration from environment
 RAE_API_URL = os.getenv("RAE_API_URL", "http://localhost:8000")
@@ -172,7 +209,7 @@ class RAEMemoryClient:
         self,
         api_url: str = RAE_API_URL,
         api_key: str = RAE_API_KEY,
-        tenant_id: str = RAE_TENANT_ID
+        tenant_id: str = RAE_TENANT_ID,
     ):
         self.api_url = api_url
         self.headers = {
@@ -188,7 +225,7 @@ class RAEMemoryClient:
         source: str,
         layer: str = "episodic",
         tags: Optional[List[str]] = None,
-        project: str = RAE_PROJECT_ID
+        project: str = RAE_PROJECT_ID,
     ) -> Dict[str, Any]:
         """
         Store a memory in RAE.
@@ -208,7 +245,7 @@ class RAEMemoryClient:
             "source": source,
             "layer": layer,
             "tags": tags or [],
-            "project": project
+            "project": project,
         }
 
         try:
@@ -217,7 +254,7 @@ class RAEMemoryClient:
                     f"{self.base_url}/memory/store",
                     json=payload,
                     headers=self.headers,
-                    timeout=30.0
+                    timeout=30.0,
                 )
                 response.raise_for_status()
                 result = response.json()
@@ -226,7 +263,7 @@ class RAEMemoryClient:
                     "memory_stored",
                     memory_id=result.get("id"),
                     source=source,
-                    layer=layer
+                    layer=layer,
                 )
 
                 return result
@@ -235,7 +272,7 @@ class RAEMemoryClient:
             logger.error(
                 "memory_store_http_error",
                 status_code=e.response.status_code,
-                error=str(e)
+                error=str(e),
             )
             raise
         except Exception as e:
@@ -247,7 +284,7 @@ class RAEMemoryClient:
         query: str,
         top_k: int = 5,
         project: Optional[str] = None,
-        filters: Optional[Dict[str, Any]] = None
+        filters: Optional[Dict[str, Any]] = None,
     ) -> List[Dict[str, Any]]:
         """
         Search RAE memory for relevant information.
@@ -265,7 +302,7 @@ class RAEMemoryClient:
             "query_text": query,
             "k": top_k,
             "project": project or RAE_PROJECT_ID,
-            "filters": filters or {}
+            "filters": filters or {},
         }
 
         try:
@@ -274,18 +311,14 @@ class RAEMemoryClient:
                     f"{self.base_url}/memory/query",
                     json=payload,
                     headers=self.headers,
-                    timeout=30.0
+                    timeout=30.0,
                 )
                 response.raise_for_status()
                 result = response.json()
 
                 results = result.get("results", [])
 
-                logger.info(
-                    "memory_searched",
-                    query=query,
-                    result_count=len(results)
-                )
+                logger.info("memory_searched", query=query, result_count=len(results))
 
                 return results
 
@@ -293,7 +326,7 @@ class RAEMemoryClient:
             logger.error(
                 "memory_search_http_error",
                 status_code=e.response.status_code,
-                error=str(e)
+                error=str(e),
             )
             raise
         except Exception as e:
@@ -301,9 +334,7 @@ class RAEMemoryClient:
             raise
 
     async def get_file_context(
-        self,
-        file_path: str,
-        top_k: int = 10
+        self, file_path: str, top_k: int = 10
     ) -> List[Dict[str, Any]]:
         """
         Get historical context about a file or module.
@@ -319,15 +350,10 @@ class RAEMemoryClient:
         query = f"file:{file_path}"
 
         return await self.search_memory(
-            query=query,
-            top_k=top_k,
-            filters={"source": file_path}
+            query=query, top_k=top_k, filters={"source": file_path}
         )
 
-    async def get_latest_reflection(
-        self,
-        project: str = RAE_PROJECT_ID
-    ) -> str:
+    async def get_latest_reflection(self, project: str = RAE_PROJECT_ID) -> str:
         """
         Get the latest project reflection.
 
@@ -343,7 +369,7 @@ class RAEMemoryClient:
                     f"{self.base_url}/graph/reflection/hierarchical",
                     params={"project": project, "bucket_size": 10},
                     headers=self.headers,
-                    timeout=60.0
+                    timeout=60.0,
                 )
                 response.raise_for_status()
                 result = response.json()
@@ -351,9 +377,7 @@ class RAEMemoryClient:
                 summary = result.get("summary", "No reflection available.")
 
                 logger.info(
-                    "reflection_retrieved",
-                    project=project,
-                    summary_length=len(summary)
+                    "reflection_retrieved", project=project, summary_length=len(summary)
                 )
 
                 return summary
@@ -362,7 +386,7 @@ class RAEMemoryClient:
             logger.error(
                 "reflection_http_error",
                 status_code=e.response.status_code,
-                error=str(e)
+                error=str(e),
             )
             return "Error retrieving reflection."
         except Exception as e:
@@ -370,8 +394,7 @@ class RAEMemoryClient:
             return "Error retrieving reflection."
 
     async def get_project_guidelines(
-        self,
-        project: str = RAE_PROJECT_ID
+        self, project: str = RAE_PROJECT_ID
     ) -> List[Dict[str, Any]]:
         """
         Get project guidelines from semantic memory.
@@ -386,7 +409,7 @@ class RAEMemoryClient:
             query="coding guidelines project conventions best practices",
             top_k=10,
             project=project,
-            filters={"layer": "semantic"}
+            filters={"layer": "semantic"},
         )
 
 
@@ -397,6 +420,7 @@ rae_client = RAEMemoryClient()
 # =============================================================================
 # MCP TOOLS IMPLEMENTATION
 # =============================================================================
+
 
 @server.list_tools()
 async def handle_list_tools() -> list[types.Tool]:
@@ -419,16 +443,16 @@ async def handle_list_tools() -> list[types.Tool]:
                 "properties": {
                     "content": {
                         "type": "string",
-                        "description": "The content to remember"
+                        "description": "The content to remember",
                     },
                     "source": {
                         "type": "string",
-                        "description": "Source identifier (e.g., file path, URL, 'user-input')"
+                        "description": "Source identifier (e.g., file path, URL, 'user-input')",
                     },
                     "tags": {
                         "type": "array",
                         "items": {"type": "string"},
-                        "description": "Tags for categorization (e.g., ['bug', 'authentication'])"
+                        "description": "Tags for categorization (e.g., ['bug', 'authentication'])",
                     },
                     "layer": {
                         "type": "string",
@@ -440,11 +464,11 @@ async def handle_list_tools() -> list[types.Tool]:
                             "working (current task context), "
                             "semantic (concepts/guidelines), "
                             "ltm (long-term facts)"
-                        )
-                    }
+                        ),
+                    },
                 },
-                "required": ["content", "source"]
-            }
+                "required": ["content", "source"],
+            },
         ),
         types.Tool(
             name="search_memory",
@@ -458,18 +482,18 @@ async def handle_list_tools() -> list[types.Tool]:
                 "properties": {
                     "query": {
                         "type": "string",
-                        "description": "Search query describing what you're looking for"
+                        "description": "Search query describing what you're looking for",
                     },
                     "top_k": {
                         "type": "integer",
                         "default": 5,
                         "description": "Number of results to return (1-20)",
                         "minimum": 1,
-                        "maximum": 20
-                    }
+                        "maximum": 20,
+                    },
                 },
-                "required": ["query"]
-            }
+                "required": ["query"],
+            },
         ),
         types.Tool(
             name="get_related_context",
@@ -483,24 +507,23 @@ async def handle_list_tools() -> list[types.Tool]:
                 "properties": {
                     "file_path": {
                         "type": "string",
-                        "description": "Path to the file (relative or absolute)"
+                        "description": "Path to the file (relative or absolute)",
                     },
                     "include_count": {
                         "type": "integer",
                         "default": 10,
-                        "description": "Number of context items to include"
-                    }
+                        "description": "Number of context items to include",
+                    },
                 },
-                "required": ["file_path"]
-            }
-        )
+                "required": ["file_path"],
+            },
+        ),
     ]
 
 
 @server.call_tool()
 async def handle_call_tool(
-    name: str,
-    arguments: dict
+    name: str, arguments: dict
 ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
     """
     Handle MCP tool invocations.
@@ -530,35 +553,32 @@ async def handle_call_tool(
 
             # Validate
             if not content:
-                return [types.TextContent(
-                    type="text",
-                    text="Error: 'content' is required"
-                )]
+                return [
+                    types.TextContent(type="text", text="Error: 'content' is required")
+                ]
             if not source:
-                return [types.TextContent(
-                    type="text",
-                    text="Error: 'source' is required"
-                )]
+                return [
+                    types.TextContent(type="text", text="Error: 'source' is required")
+                ]
 
             # Store memory
             result = await rae_client.store_memory(
-                content=content,
-                source=source,
-                layer=layer,
-                tags=tags
+                content=content, source=source, layer=layer, tags=tags
             )
 
             memory_id = result.get("id", "unknown")
 
-            return [types.TextContent(
-                type="text",
-                text=(
-                    f"✓ Memory stored successfully\n"
-                    f"ID: {memory_id}\n"
-                    f"Layer: {layer}\n"
-                    f"Tags: {', '.join(tags) if tags else 'none'}"
+            return [
+                types.TextContent(
+                    type="text",
+                    text=(
+                        f"✓ Memory stored successfully\n"
+                        f"ID: {memory_id}\n"
+                        f"Layer: {layer}\n"
+                        f"Tags: {', '.join(tags) if tags else 'none'}"
+                    ),
                 )
-            )]
+            ]
 
         elif name == "search_memory":
             # Extract arguments
@@ -567,22 +587,19 @@ async def handle_call_tool(
 
             # Validate
             if not query:
-                return [types.TextContent(
-                    type="text",
-                    text="Error: 'query' is required"
-                )]
+                return [
+                    types.TextContent(type="text", text="Error: 'query' is required")
+                ]
 
             # Search memory
-            results = await rae_client.search_memory(
-                query=query,
-                top_k=top_k
-            )
+            results = await rae_client.search_memory(query=query, top_k=top_k)
 
             if not results:
-                return [types.TextContent(
-                    type="text",
-                    text=f"No memories found for query: '{query}'"
-                )]
+                return [
+                    types.TextContent(
+                        type="text", text=f"No memories found for query: '{query}'"
+                    )
+                ]
 
             # Format results
             formatted = f"Found {len(results)} relevant memories:\n\n"
@@ -599,10 +616,7 @@ async def handle_call_tool(
                     formatted += f"   Tags: {', '.join(tags)}\n"
                 formatted += f"   Content: {content[:200]}{'...' if len(content) > 200 else ''}\n\n"
 
-            return [types.TextContent(
-                type="text",
-                text=formatted
-            )]
+            return [types.TextContent(type="text", text=formatted)]
 
         elif name == "get_related_context":
             # Extract arguments
@@ -611,22 +625,23 @@ async def handle_call_tool(
 
             # Validate
             if not file_path:
-                return [types.TextContent(
-                    type="text",
-                    text="Error: 'file_path' is required"
-                )]
+                return [
+                    types.TextContent(
+                        type="text", text="Error: 'file_path' is required"
+                    )
+                ]
 
             # Get context
             results = await rae_client.get_file_context(
-                file_path=file_path,
-                top_k=include_count
+                file_path=file_path, top_k=include_count
             )
 
             if not results:
-                return [types.TextContent(
-                    type="text",
-                    text=f"No context found for file: {file_path}"
-                )]
+                return [
+                    types.TextContent(
+                        type="text", text=f"No context found for file: {file_path}"
+                    )
+                ]
 
             # Format context
             formatted = f"Historical context for: {file_path}\n"
@@ -637,27 +652,26 @@ async def handle_call_tool(
                 content = mem.get("content", "")
 
                 formatted += f"{i}. [{timestamp}]\n"
-                formatted += f"   {content[:300]}{'...' if len(content) > 300 else ''}\n\n"
+                formatted += (
+                    f"   {content[:300]}{'...' if len(content) > 300 else ''}\n\n"
+                )
 
-            return [types.TextContent(
-                type="text",
-                text=formatted
-            )]
+            return [types.TextContent(type="text", text=formatted)]
 
         else:
             TOOL_ERRORS.labels(tool_name=name, error_type="unknown_tool").inc()
-            return [types.TextContent(
-                type="text",
-                text=f"Error: Unknown tool '{name}'"
-            )]
+            return [
+                types.TextContent(type="text", text=f"Error: Unknown tool '{name}'")
+            ]
 
     except Exception as e:
         TOOL_ERRORS.labels(tool_name=name, error_type=type(e).__name__).inc()
         logger.exception("tool_execution_error", tool=name, error=str(e))
-        return [types.TextContent(
-            type="text",
-            text=f"Error executing tool '{name}': {str(e)}"
-        )]
+        return [
+            types.TextContent(
+                type="text", text=f"Error executing tool '{name}': {str(e)}"
+            )
+        ]
     finally:
         # Record execution duration
         duration = time.time() - start_time
@@ -667,6 +681,7 @@ async def handle_call_tool(
 # =============================================================================
 # MCP RESOURCES IMPLEMENTATION
 # =============================================================================
+
 
 @server.list_resources()
 async def handle_list_resources() -> list[types.Resource]:
@@ -685,7 +700,7 @@ async def handle_list_resources() -> list[types.Resource]:
                 "Provides a synthesized summary of recent activities, "
                 "patterns, and key decisions."
             ),
-            mimeType="text/plain"
+            mimeType="text/plain",
         ),
         types.Resource(
             uri="rae://project/guidelines",
@@ -695,8 +710,8 @@ async def handle_list_resources() -> list[types.Resource]:
                 "Includes best practices, patterns, and standards "
                 "specific to this project."
             ),
-            mimeType="text/plain"
-        )
+            mimeType="text/plain",
+        ),
     ]
 
 
@@ -758,6 +773,7 @@ async def handle_read_resource(uri: str) -> str:
 # MCP PROMPTS IMPLEMENTATION
 # =============================================================================
 
+
 @server.list_prompts()
 async def handle_list_prompts() -> list[types.Prompt]:
     """
@@ -774,7 +790,7 @@ async def handle_list_prompts() -> list[types.Prompt]:
                 "Automatically inject coding standards and conventions "
                 "into the conversation context."
             ),
-            arguments=[]
+            arguments=[],
         ),
         types.Prompt(
             name="recent-context",
@@ -782,16 +798,13 @@ async def handle_list_prompts() -> list[types.Prompt]:
                 "Recent project context and activities. "
                 "Provides awareness of what has been happening recently."
             ),
-            arguments=[]
-        )
+            arguments=[],
+        ),
     ]
 
 
 @server.get_prompt()
-async def handle_get_prompt(
-    name: str,
-    arguments: dict
-) -> types.GetPromptResult:
+async def handle_get_prompt(name: str, arguments: dict) -> types.GetPromptResult:
     """
     Get MCP prompt content.
 
@@ -823,10 +836,7 @@ async def handle_get_prompt(
                 messages=[
                     types.PromptMessage(
                         role="user",
-                        content=types.TextContent(
-                            type="text",
-                            text=content
-                        )
+                        content=types.TextContent(type="text", text=content),
                     )
                 ]
             )
@@ -834,8 +844,7 @@ async def handle_get_prompt(
         elif name == "recent-context":
             # Fetch recent episodic memories
             recent = await rae_client.search_memory(
-                query="recent activities changes updates",
-                top_k=10
+                query="recent activities changes updates", top_k=10
             )
 
             if not recent:
@@ -851,10 +860,7 @@ async def handle_get_prompt(
                 messages=[
                     types.PromptMessage(
                         role="user",
-                        content=types.TextContent(
-                            type="text",
-                            text=content
-                        )
+                        content=types.TextContent(type="text", text=content),
                     )
                 ]
             )
@@ -871,9 +877,8 @@ async def handle_get_prompt(
                 types.PromptMessage(
                     role="user",
                     content=types.TextContent(
-                        type="text",
-                        text=f"Error retrieving prompt '{name}': {str(e)}"
-                    )
+                        type="text", text=f"Error retrieving prompt '{name}': {str(e)}"
+                    ),
                 )
             ]
         )
@@ -886,6 +891,7 @@ async def handle_get_prompt(
 # SERVER MAIN ENTRY POINT
 # =============================================================================
 
+
 async def main():
     """
     Main entry point for the RAE MCP Server.
@@ -897,7 +903,7 @@ async def main():
         version="1.0.0",
         api_url=RAE_API_URL,
         project_id=RAE_PROJECT_ID,
-        tenant_id=RAE_TENANT_ID
+        tenant_id=RAE_TENANT_ID,
     )
 
     async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
@@ -910,8 +916,8 @@ async def main():
                 capabilities=server.get_capabilities(
                     notification_options=NotificationOptions(),
                     experimental_capabilities={},
-                )
-            )
+                ),
+            ),
         )
 
 

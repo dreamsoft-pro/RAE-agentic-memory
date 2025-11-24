@@ -2,15 +2,17 @@
 Tenant models for multi-tenancy support
 """
 
-from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 from enum import Enum
 from typing import Optional
 from uuid import UUID
 
+from pydantic import BaseModel, ConfigDict, Field
+
 
 class TenantTier(str, Enum):
     """Tenant subscription tiers"""
+
     FREE = "free"
     PRO = "pro"
     ENTERPRISE = "enterprise"
@@ -22,35 +24,61 @@ class TenantConfig(BaseModel):
     # Resource Limits
     max_memories: int = Field(default=10000, description="Maximum memories allowed")
     max_projects: int = Field(default=5, description="Maximum projects allowed")
-    max_api_calls_per_day: int = Field(default=10000, description="Daily API call limit")
+    max_api_calls_per_day: int = Field(
+        default=10000, description="Daily API call limit"
+    )
     max_storage_mb: int = Field(default=1000, description="Maximum storage in MB")
 
     # Feature Flags
     enable_graphrag: bool = Field(default=False, description="Enable GraphRAG features")
-    enable_analytics: bool = Field(default=False, description="Enable analytics dashboard")
-    enable_reflection: bool = Field(default=True, description="Enable reflection engine")
-    enable_multi_modal: bool = Field(default=False, description="Enable multi-modal memories")
-    custom_embedding_model: bool = Field(default=False, description="Allow custom embedding models")
+    enable_analytics: bool = Field(
+        default=False, description="Enable analytics dashboard"
+    )
+    enable_reflection: bool = Field(
+        default=True, description="Enable reflection engine"
+    )
+    enable_multi_modal: bool = Field(
+        default=False, description="Enable multi-modal memories"
+    )
+    custom_embedding_model: bool = Field(
+        default=False, description="Allow custom embedding models"
+    )
 
     # Security Settings
-    encryption_enabled: bool = Field(default=False, description="Enable data encryption at rest")
+    encryption_enabled: bool = Field(
+        default=False, description="Enable data encryption at rest"
+    )
     audit_log_enabled: bool = Field(default=False, description="Enable audit logging")
     sso_enabled: bool = Field(default=False, description="Enable SSO authentication")
-    require_mfa: bool = Field(default=False, description="Require multi-factor authentication")
+    require_mfa: bool = Field(
+        default=False, description="Require multi-factor authentication"
+    )
 
     # Performance Settings
     cache_ttl_seconds: int = Field(default=3600, description="Cache TTL in seconds")
     max_query_results: int = Field(default=100, description="Maximum query results")
-    enable_batch_operations: bool = Field(default=False, description="Enable batch API operations")
+    enable_batch_operations: bool = Field(
+        default=False, description="Enable batch API operations"
+    )
 
     # LLM Settings
-    llm_provider: Optional[str] = Field(default=None, description="Preferred LLM provider")
-    embedding_model: Optional[str] = Field(default=None, description="Preferred embedding model")
-    max_llm_calls_per_day: Optional[int] = Field(default=None, description="Daily LLM call limit")
+    llm_provider: Optional[str] = Field(
+        default=None, description="Preferred LLM provider"
+    )
+    embedding_model: Optional[str] = Field(
+        default=None, description="Preferred embedding model"
+    )
+    max_llm_calls_per_day: Optional[int] = Field(
+        default=None, description="Daily LLM call limit"
+    )
 
     # Retention Settings
-    memory_retention_days: int = Field(default=365, description="Memory retention period")
-    auto_consolidation: bool = Field(default=False, description="Enable automatic memory consolidation")
+    memory_retention_days: int = Field(
+        default=365, description="Memory retention period"
+    )
+    auto_consolidation: bool = Field(
+        default=False, description="Enable automatic memory consolidation"
+    )
 
 
 class Tenant(BaseModel):
@@ -66,15 +94,21 @@ class Tenant(BaseModel):
     # Metadata
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
-    status: str = Field(default="active", description="Tenant status: active, suspended, deleted")
+    status: str = Field(
+        default="active", description="Tenant status: active, suspended, deleted"
+    )
 
     # Contact Info
     contact_email: Optional[str] = None
     company_name: Optional[str] = None
 
     # Usage Tracking
-    current_memory_count: int = Field(default=0, description="Current number of memories")
-    current_project_count: int = Field(default=0, description="Current number of projects")
+    current_memory_count: int = Field(
+        default=0, description="Current number of memories"
+    )
+    current_project_count: int = Field(
+        default=0, description="Current number of projects"
+    )
     api_calls_today: int = Field(default=0, description="API calls made today")
 
     # Billing
@@ -91,8 +125,8 @@ class Tenant(BaseModel):
                 "config": {
                     "max_memories": 1000000,
                     "enable_graphrag": True,
-                    "enable_analytics": True
-                }
+                    "enable_analytics": True,
+                },
             }
         }
     )
@@ -112,7 +146,7 @@ class Tenant(BaseModel):
                 custom_embedding_model=False,
                 encryption_enabled=False,
                 audit_log_enabled=False,
-                sso_enabled=False
+                sso_enabled=False,
             )
 
         elif tier == TenantTier.PRO:
@@ -126,7 +160,7 @@ class Tenant(BaseModel):
                 custom_embedding_model=True,
                 encryption_enabled=True,
                 audit_log_enabled=False,
-                sso_enabled=False
+                sso_enabled=False,
             )
 
         else:  # ENTERPRISE
@@ -144,7 +178,7 @@ class Tenant(BaseModel):
                 sso_enabled=True,
                 require_mfa=True,
                 enable_batch_operations=True,
-                auto_consolidation=True
+                auto_consolidation=True,
             )
 
     def is_feature_enabled(self, feature: str) -> bool:

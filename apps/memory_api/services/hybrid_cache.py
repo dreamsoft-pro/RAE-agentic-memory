@@ -10,11 +10,12 @@ This service provides:
 """
 
 import hashlib
-import structlog
-from typing import Optional, Dict, Any
-from datetime import datetime, timedelta, timezone
-from uuid import UUID
 import json
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, Optional
+from uuid import UUID
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 
@@ -34,8 +35,8 @@ class HybridSearchCache:
     def __init__(
         self,
         default_ttl_seconds: int = 300,  # 5 minutes default
-        window_size_seconds: int = 60,   # 1 minute window
-        max_cache_size: int = 1000       # Max number of cached entries
+        window_size_seconds: int = 60,  # 1 minute window
+        max_cache_size: int = 1000,  # Max number of cached entries
     ):
         """
         Initialize hybrid search cache.
@@ -63,7 +64,7 @@ class HybridSearchCache:
         tenant_id: str,
         project_id: str,
         filters: Optional[Dict[str, Any]] = None,
-        timestamp: Optional[datetime] = None
+        timestamp: Optional[datetime] = None,
     ) -> str:
         """
         Generate cache key based on query parameters and timestamp window.
@@ -89,7 +90,7 @@ class HybridSearchCache:
             query.lower().strip(),
             tenant_id,
             project_id,
-            str(window_timestamp)
+            str(window_timestamp),
         ]
 
         # Add filters to key if present
@@ -109,7 +110,7 @@ class HybridSearchCache:
         query: str,
         tenant_id: str,
         project_id: str,
-        filters: Optional[Dict[str, Any]] = None
+        filters: Optional[Dict[str, Any]] = None,
     ) -> Optional[Dict[str, Any]]:
         """
         Get cached search results if available and not expired.
@@ -135,7 +136,7 @@ class HybridSearchCache:
                     "cache_hit",
                     cache_key=cache_key,
                     tenant_id=tenant_id,
-                    hit_rate=self.get_hit_rate()
+                    hit_rate=self.get_hit_rate(),
                 )
                 return result
             else:
@@ -148,7 +149,7 @@ class HybridSearchCache:
             "cache_miss",
             cache_key=cache_key,
             tenant_id=tenant_id,
-            hit_rate=self.get_hit_rate()
+            hit_rate=self.get_hit_rate(),
         )
         return None
 
@@ -159,7 +160,7 @@ class HybridSearchCache:
         project_id: str,
         result: Dict[str, Any],
         filters: Optional[Dict[str, Any]] = None,
-        ttl_seconds: Optional[int] = None
+        ttl_seconds: Optional[int] = None,
     ):
         """
         Cache search results with TTL.
@@ -187,14 +188,10 @@ class HybridSearchCache:
             cache_key=cache_key,
             tenant_id=tenant_id,
             ttl=ttl,
-            cache_size=len(self._cache)
+            cache_size=len(self._cache),
         )
 
-    async def invalidate(
-        self,
-        tenant_id: str,
-        project_id: Optional[str] = None
-    ):
+    async def invalidate(self, tenant_id: str, project_id: Optional[str] = None):
         """
         Invalidate cache entries for a tenant/project.
 
@@ -221,7 +218,7 @@ class HybridSearchCache:
             "cache_invalidated",
             tenant_id=tenant_id,
             project_id=project_id,
-            entries_removed=len(keys_to_remove)
+            entries_removed=len(keys_to_remove),
         )
 
     async def clear_expired(self):
@@ -279,7 +276,7 @@ class HybridSearchCache:
             "hit_rate": self.get_hit_rate(),
             "hit_rate_percent": f"{self.get_hit_rate() * 100:.2f}%",
             "default_ttl_seconds": self.default_ttl,
-            "window_size_seconds": self.window_size
+            "window_size_seconds": self.window_size,
         }
 
     async def clear_all(self):

@@ -9,10 +9,11 @@ Tests cover:
 - Reinforcement learning
 """
 
-import pytest
 from datetime import datetime, timedelta, timezone
-from uuid import uuid4
 from unittest.mock import AsyncMock, patch
+from uuid import uuid4
+
+import pytest
 
 from apps.memory_api.services.semantic_extractor import SemanticExtractor
 from apps.memory_api.services.semantic_search import SemanticSearchPipeline
@@ -28,12 +29,22 @@ def mock_pool():
 def mock_llm():
     llm = AsyncMock()
     llm.generate = AsyncMock(return_value="machine learning")  # For canonicalize_term
-    llm.generate_structured = AsyncMock(return_value={
-        "entities": [
-            {"label": "machine learning", "type": "concept", "canonical_form": "machine learning"},
-            {"label": "neural networks", "type": "concept", "canonical_form": "neural network"}
-        ]
-    })
+    llm.generate_structured = AsyncMock(
+        return_value={
+            "entities": [
+                {
+                    "label": "machine learning",
+                    "type": "concept",
+                    "canonical_form": "machine learning",
+                },
+                {
+                    "label": "neural networks",
+                    "type": "concept",
+                    "canonical_form": "neural network",
+                },
+            ]
+        }
+    )
     return llm
 
 
@@ -53,18 +64,18 @@ def semantic_search(mock_pool):
 @pytest.mark.asyncio
 async def test_extract_semantic_nodes(semantic_extractor, mock_pool):
     """Test semantic node extraction from memory"""
-    mock_pool.fetchrow = AsyncMock(return_value={
-        "id": uuid4(),
-        "content": "Machine learning uses neural networks for pattern recognition"
-    })
+    mock_pool.fetchrow = AsyncMock(
+        return_value={
+            "id": uuid4(),
+            "content": "Machine learning uses neural networks for pattern recognition",
+        }
+    )
     mock_pool.fetch = AsyncMock(return_value=[])
     mock_pool.execute = AsyncMock()
 
     # Method is extract_from_memories, not extract_nodes
     result = await semantic_extractor.extract_from_memories(
-        tenant_id="test",
-        project_id="test",
-        memory_ids=[uuid4()]
+        tenant_id="test", project_id="test", memory_ids=[uuid4()]
     )
 
     # Returns SemanticExtractionResult
@@ -87,42 +98,43 @@ async def test_canonicalization(semantic_extractor):
 async def test_semantic_search_3_stages(semantic_search, mock_pool):
     """Test 3-stage semantic search pipeline"""
     from datetime import datetime, timezone
+
     from apps.memory_api.models.semantic_models import SemanticNodeType
 
     # Mock database records for stage 1 (vector search)
     mock_record = {
-        'id': uuid4(),
-        'tenant_id': 'test_tenant',
-        'project_id': 'test_project',
-        'node_id': 'machine_learning_001',
-        'label': 'machine learning',
-        'node_type': 'concept',
-        'canonical_form': 'machine learning',
-        'aliases': ['ML', 'ml'],
-        'definition': 'A field of AI',
-        'definitions': [],
-        'context': None,
-        'examples': [],
-        'categories': ['AI', 'technology'],
-        'domain': 'artificial_intelligence',
-        'relations': {},
-        'embedding': [0.1] * 768,
-        'priority': 4,
-        'importance_score': 0.8,
-        'last_reinforced_at': datetime.now(timezone.utc),
-        'reinforcement_count': 5,
-        'decay_rate': 0.01,
-        'is_degraded': False,
-        'degradation_timestamp': None,
-        'source_memory_ids': [],
-        'extraction_model': 'gpt-4',
-        'extraction_confidence': 0.9,
-        'tags': ['AI'],
-        'metadata': {},
-        'created_at': datetime.now(timezone.utc),
-        'updated_at': datetime.now(timezone.utc),
-        'last_accessed_at': datetime.now(timezone.utc),
-        'accessed_count': 10
+        "id": uuid4(),
+        "tenant_id": "test_tenant",
+        "project_id": "test_project",
+        "node_id": "machine_learning_001",
+        "label": "machine learning",
+        "node_type": "concept",
+        "canonical_form": "machine learning",
+        "aliases": ["ML", "ml"],
+        "definition": "A field of AI",
+        "definitions": [],
+        "context": None,
+        "examples": [],
+        "categories": ["AI", "technology"],
+        "domain": "artificial_intelligence",
+        "relations": {},
+        "embedding": [0.1] * 768,
+        "priority": 4,
+        "importance_score": 0.8,
+        "last_reinforced_at": datetime.now(timezone.utc),
+        "reinforcement_count": 5,
+        "decay_rate": 0.01,
+        "is_degraded": False,
+        "degradation_timestamp": None,
+        "source_memory_ids": [],
+        "extraction_model": "gpt-4",
+        "extraction_confidence": 0.9,
+        "tags": ["AI"],
+        "metadata": {},
+        "created_at": datetime.now(timezone.utc),
+        "updated_at": datetime.now(timezone.utc),
+        "last_accessed_at": datetime.now(timezone.utc),
+        "accessed_count": 10,
     }
 
     # Mock pool.fetch to return mock records
@@ -138,13 +150,13 @@ async def test_semantic_search_3_stages(semantic_search, mock_pool):
 
     # Execute 3-stage search
     results, statistics = await semantic_search.search(
-        tenant_id='test_tenant',
-        project_id='test_project',
-        query='machine learning neural networks',
+        tenant_id="test_tenant",
+        project_id="test_project",
+        query="machine learning neural networks",
         k=10,
         enable_topic_matching=True,
         enable_canonicalization=True,
-        enable_reranking=True
+        enable_reranking=True,
     )
 
     # Verify results
@@ -153,14 +165,14 @@ async def test_semantic_search_3_stages(semantic_search, mock_pool):
 
     # Verify statistics structure
     assert isinstance(statistics, dict)
-    assert 'stage1_results' in statistics
-    assert 'stage2_results' in statistics
-    assert 'stage3_results' in statistics
-    assert 'identified_topics' in statistics
-    assert 'canonical_terms' in statistics
+    assert "stage1_results" in statistics
+    assert "stage2_results" in statistics
+    assert "stage3_results" in statistics
+    assert "identified_topics" in statistics
+    assert "canonical_terms" in statistics
 
     # Verify results are SemanticNode objects
-    assert results[0].label == 'machine learning'
+    assert results[0].label == "machine learning"
     assert results[0].node_type == SemanticNodeType.CONCEPT
     assert results[0].priority == 4
 
@@ -191,9 +203,6 @@ async def test_node_reinforcement(mock_pool):
     # Priority should increase, decay should reset
 
     # This would be called when node is accessed
-    await mock_pool.execute(
-        "SELECT reinforce_semantic_node($1)",
-        node_id
-    )
+    await mock_pool.execute("SELECT reinforce_semantic_node($1)", node_id)
 
     mock_pool.execute.assert_called_once()

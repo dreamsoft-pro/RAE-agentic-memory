@@ -8,18 +8,15 @@ This service analyzes user queries to:
 - Calculate dynamic weights for hybrid search
 """
 
-import structlog
-from typing import List, Dict, Any
 from datetime import datetime, timezone
+from typing import Any, Dict, List
 
-from apps.memory_api.services.llm import get_llm_provider
+import structlog
+
 from apps.memory_api.config import settings
 from apps.memory_api.models.hybrid_search_models import (
-    QueryAnalysis,
-    QueryIntent,
-    SearchStrategy,
-    DEFAULT_WEIGHT_PROFILES
-)
+    DEFAULT_WEIGHT_PROFILES, QueryAnalysis, QueryIntent, SearchStrategy)
+from apps.memory_api.services.llm import get_llm_provider
 
 logger = structlog.get_logger(__name__)
 
@@ -108,6 +105,7 @@ Now analyze this query and return ONLY valid JSON matching the schema:
 # Query Analyzer
 # ============================================================================
 
+
 class QueryAnalyzer:
     """
     LLM-based query analyzer for intent classification and strategy selection.
@@ -129,7 +127,7 @@ class QueryAnalyzer:
         self,
         query: str,
         context: List[str] = None,
-        user_preferences: Dict[str, Any] = None
+        user_preferences: Dict[str, Any] = None,
     ) -> QueryAnalysis:
         """
         Analyze query using LLM to determine intent and optimal strategies.
@@ -157,7 +155,7 @@ class QueryAnalyzer:
                 system="You are a query analysis expert specializing in search optimization.",
                 prompt=full_prompt,
                 model=settings.RAE_LLM_MODEL_DEFAULT,
-                response_model=QueryAnalysisResult
+                response_model=QueryAnalysisResult,
             )
 
             # Convert to QueryAnalysis
@@ -168,20 +166,22 @@ class QueryAnalyzer:
                 key_concepts=result.key_concepts,
                 temporal_markers=result.temporal_markers,
                 relation_types=result.relation_types,
-                recommended_strategies=[SearchStrategy(s) for s in result.recommended_strategies],
+                recommended_strategies=[
+                    SearchStrategy(s) for s in result.recommended_strategies
+                ],
                 strategy_weights=result.strategy_weights,
                 requires_temporal_filtering=result.requires_temporal_filtering,
                 requires_graph_traversal=result.requires_graph_traversal,
                 suggested_depth=result.suggested_depth,
                 original_query=query,
-                analyzed_at=datetime.now(timezone.utc)
+                analyzed_at=datetime.now(timezone.utc),
             )
 
             logger.info(
                 "query_analysis_complete",
                 intent=analysis.intent.value,
                 confidence=analysis.confidence,
-                strategies=len(analysis.recommended_strategies)
+                strategies=len(analysis.recommended_strategies),
             )
 
             return analysis
@@ -192,8 +192,7 @@ class QueryAnalyzer:
             return self._create_fallback_analysis(query)
 
     async def calculate_dynamic_weights(
-        self,
-        query_analysis: QueryAnalysis
+        self, query_analysis: QueryAnalysis
     ) -> Dict[SearchStrategy, float]:
         """
         Calculate dynamic weights based on query analysis.
@@ -214,8 +213,7 @@ class QueryAnalyzer:
         # Use LLM-suggested weights if available and valid
         if query_analysis.strategy_weights:
             weights = {
-                SearchStrategy(k): v
-                for k, v in query_analysis.strategy_weights.items()
+                SearchStrategy(k): v for k, v in query_analysis.strategy_weights.items()
             }
 
             # Validate weights sum to ~1.0
@@ -229,11 +227,17 @@ class QueryAnalyzer:
         # Fallback to intent-based profile
         intent_weights = self._get_weights_for_intent(query_analysis.intent)
 
-        logger.info("using_intent_based_weights", intent=query_analysis.intent.value, weights=intent_weights)
+        logger.info(
+            "using_intent_based_weights",
+            intent=query_analysis.intent.value,
+            weights=intent_weights,
+        )
 
         return intent_weights
 
-    def _get_weights_for_intent(self, intent: QueryIntent) -> Dict[SearchStrategy, float]:
+    def _get_weights_for_intent(
+        self, intent: QueryIntent
+    ) -> Dict[SearchStrategy, float]:
         """
         Get optimal weights for a specific query intent.
 
@@ -251,7 +255,7 @@ class QueryAnalyzer:
             QueryIntent.EXPLORATORY: "balanced",
             QueryIntent.TEMPORAL: "factual",  # Temporal queries benefit from vector + fulltext
             QueryIntent.RELATIONAL: "relational",
-            QueryIntent.AGGREGATIVE: "balanced"
+            QueryIntent.AGGREGATIVE: "balanced",
         }
 
         profile_name = intent_to_profile.get(intent, "balanced")
@@ -279,13 +283,17 @@ class QueryAnalyzer:
         # Detect intent from keywords
         intent = QueryIntent.EXPLORATORY  # Default
 
-        if any(word in query_lower for word in ["how", "relate", "connection", "between"]):
+        if any(
+            word in query_lower for word in ["how", "relate", "connection", "between"]
+        ):
             intent = QueryIntent.RELATIONAL
         elif any(word in query_lower for word in ["what", "when", "who", "specific"]):
             intent = QueryIntent.FACTUAL
         elif any(word in query_lower for word in ["concept", "understand", "explain"]):
             intent = QueryIntent.CONCEPTUAL
-        elif any(word in query_lower for word in ["recent", "last", "yesterday", "ago"]):
+        elif any(
+            word in query_lower for word in ["recent", "last", "yesterday", "ago"]
+        ):
             intent = QueryIntent.TEMPORAL
 
         # Extract simple entities (words in quotes or capitalized sequences)
@@ -307,18 +315,18 @@ class QueryAnalyzer:
                 SearchStrategy.VECTOR,
                 SearchStrategy.SEMANTIC,
                 SearchStrategy.GRAPH,
-                SearchStrategy.FULLTEXT
+                SearchStrategy.FULLTEXT,
             ],
             strategy_weights={
                 "vector": balanced_profile.weights[SearchStrategy.VECTOR],
                 "semantic": balanced_profile.weights[SearchStrategy.SEMANTIC],
                 "graph": balanced_profile.weights[SearchStrategy.GRAPH],
-                "fulltext": balanced_profile.weights[SearchStrategy.FULLTEXT]
+                "fulltext": balanced_profile.weights[SearchStrategy.FULLTEXT],
             },
             requires_temporal_filtering=intent == QueryIntent.TEMPORAL,
             requires_graph_traversal=intent == QueryIntent.RELATIONAL,
             suggested_depth=3 if intent == QueryIntent.RELATIONAL else None,
-            original_query=query
+            original_query=query,
         )
 
     def get_available_profiles(self) -> Dict[str, Dict]:
@@ -332,7 +340,7 @@ class QueryAnalyzer:
             name: {
                 "description": profile.description,
                 "weights": {k.value: v for k, v in profile.weights.items()},
-                "use_cases": profile.use_cases
+                "use_cases": profile.use_cases,
             }
             for name, profile in self.weight_profiles.items()
         }
@@ -376,8 +384,10 @@ class QueryAnalyzer:
 
 from pydantic import BaseModel
 
+
 class QueryAnalysisResult(BaseModel):
     """Structured output from LLM query analysis"""
+
     intent: str
     confidence: float
     key_entities: List[str]

@@ -9,21 +9,17 @@ Tests cover:
 - Timeout handling
 """
 
-import pytest
 import asyncio
 from datetime import datetime, timedelta, timezone
-from unittest.mock import AsyncMock, patch, Mock
-import httpx
+from unittest.mock import AsyncMock, Mock, patch
 
-from apps.memory_api.clients.rae_client import (
-    RAEClient,
-    CircuitBreaker,
-    ResponseCache,
-    RAEClientError,
-    ErrorCategory,
-    CircuitState,
-    classify_error
-)
+import httpx
+import pytest
+
+from apps.memory_api.clients.rae_client import (CircuitBreaker, CircuitState,
+                                                ErrorCategory, RAEClient,
+                                                RAEClientError, ResponseCache,
+                                                classify_error)
 
 
 @pytest.fixture
@@ -35,17 +31,13 @@ def rae_client():
         project_id="test-project",
         max_retries=3,
         enable_circuit_breaker=True,
-        enable_cache=True
+        enable_cache=True,
     )
 
 
 @pytest.fixture
 def circuit_breaker():
-    return CircuitBreaker(
-        failure_threshold=3,
-        success_threshold=2,
-        timeout_seconds=30
-    )
+    return CircuitBreaker(failure_threshold=3, success_threshold=2, timeout_seconds=30)
 
 
 @pytest.fixture
@@ -84,6 +76,7 @@ def test_classify_authentication_error():
 @pytest.mark.asyncio
 async def test_circuit_breaker_closed_success(circuit_breaker):
     """Test circuit breaker in CLOSED state with success"""
+
     async def success_func():
         return "success"
 
@@ -95,6 +88,7 @@ async def test_circuit_breaker_closed_success(circuit_breaker):
 @pytest.mark.asyncio
 async def test_circuit_breaker_opens_on_failures(circuit_breaker):
     """Test circuit breaker opens after threshold failures"""
+
     async def failing_func():
         raise Exception("Service error")
 
@@ -126,7 +120,9 @@ async def test_circuit_breaker_half_open_recovery(circuit_breaker):
     """Test circuit breaker transitions to HALF_OPEN and recovers"""
     # Force circuit to OPEN state but past timeout
     circuit_breaker.state = CircuitState.OPEN
-    circuit_breaker.last_failure_time = datetime.now(timezone.utc) - timedelta(seconds=35)
+    circuit_breaker.last_failure_time = datetime.now(timezone.utc) - timedelta(
+        seconds=35
+    )
 
     async def success_func():
         return "success"
@@ -169,6 +165,7 @@ def test_cache_expiration(response_cache):
 
     # Wait longer than TTL and try to get
     import time
+
     time.sleep(1.2)
 
     cached = response_cache.get("GET", "/test")
@@ -210,7 +207,7 @@ async def test_retry_on_network_error(rae_client):
         side_effect=[
             httpx.NetworkError("Connection failed"),
             httpx.NetworkError("Connection failed"),
-            mock_response
+            mock_response,
         ]
     )
 

@@ -2,21 +2,23 @@
 Base Plugin System - Core plugin infrastructure
 """
 
-from typing import Any, Dict, List, Optional, Callable, Type
-from abc import ABC, abstractmethod
-from enum import Enum
-from datetime import datetime, timezone
-from uuid import UUID
-import structlog
 import importlib
 import inspect
+from abc import ABC, abstractmethod
+from datetime import datetime, timezone
+from enum import Enum
 from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Type
+from uuid import UUID
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 
 
 class PluginHook(str, Enum):
     """Available plugin hooks"""
+
     # Memory lifecycle hooks
     BEFORE_MEMORY_CREATE = "before_memory_create"
     AFTER_MEMORY_CREATE = "after_memory_create"
@@ -67,7 +69,7 @@ class PluginMetadata:
         description: str,
         hooks: List[PluginHook],
         enabled: bool = True,
-        config: Optional[Dict[str, Any]] = None
+        config: Optional[Dict[str, Any]] = None,
     ):
         self.name = name
         self.version = version
@@ -90,7 +92,7 @@ class PluginMetadata:
             "enabled": self.enabled,
             "config": self.config,
             "loaded_at": self.loaded_at.isoformat() if self.loaded_at else None,
-            "error": self.error
+            "error": self.error,
         }
 
 
@@ -160,15 +162,13 @@ class Plugin(ABC):
         return {
             "plugin": self.metadata.name,
             "status": "healthy",
-            "enabled": self.metadata.enabled
+            "enabled": self.metadata.enabled,
         }
 
     # Hook methods - override to implement functionality
 
     async def on_before_memory_create(
-        self,
-        tenant_id: UUID,
-        memory_data: Dict[str, Any]
+        self, tenant_id: UUID, memory_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         Called before creating a memory
@@ -185,10 +185,7 @@ class Plugin(ABC):
         return memory_data
 
     async def on_after_memory_create(
-        self,
-        tenant_id: UUID,
-        memory_id: str,
-        memory_data: Dict[str, Any]
+        self, tenant_id: UUID, memory_id: str, memory_data: Dict[str, Any]
     ):
         """
         Called after creating a memory
@@ -201,10 +198,7 @@ class Plugin(ABC):
         pass
 
     async def on_before_memory_update(
-        self,
-        tenant_id: UUID,
-        memory_id: str,
-        update_data: Dict[str, Any]
+        self, tenant_id: UUID, memory_id: str, update_data: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         Called before updating a memory
@@ -224,7 +218,7 @@ class Plugin(ABC):
         tenant_id: UUID,
         memory_id: str,
         old_data: Dict[str, Any],
-        new_data: Dict[str, Any]
+        new_data: Dict[str, Any],
     ):
         """
         Called after updating a memory
@@ -237,11 +231,7 @@ class Plugin(ABC):
         """
         pass
 
-    async def on_before_memory_delete(
-        self,
-        tenant_id: UUID,
-        memory_id: str
-    ):
+    async def on_before_memory_delete(self, tenant_id: UUID, memory_id: str):
         """
         Called before deleting a memory
 
@@ -251,11 +241,7 @@ class Plugin(ABC):
         """
         pass
 
-    async def on_after_memory_delete(
-        self,
-        tenant_id: UUID,
-        memory_id: str
-    ):
+    async def on_after_memory_delete(self, tenant_id: UUID, memory_id: str):
         """
         Called after deleting a memory
 
@@ -266,10 +252,7 @@ class Plugin(ABC):
         pass
 
     async def on_before_query(
-        self,
-        tenant_id: UUID,
-        query: str,
-        params: Dict[str, Any]
+        self, tenant_id: UUID, query: str, params: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
         Called before executing a query
@@ -285,10 +268,7 @@ class Plugin(ABC):
         return params
 
     async def on_after_query(
-        self,
-        tenant_id: UUID,
-        query: str,
-        results: List[Dict[str, Any]]
+        self, tenant_id: UUID, query: str, results: List[Dict[str, Any]]
     ):
         """
         Called after executing a query
@@ -301,9 +281,7 @@ class Plugin(ABC):
         pass
 
     async def on_query_results_transform(
-        self,
-        tenant_id: UUID,
-        results: List[Dict[str, Any]]
+        self, tenant_id: UUID, results: List[Dict[str, Any]]
     ) -> List[Dict[str, Any]]:
         """
         Transform query results
@@ -318,10 +296,7 @@ class Plugin(ABC):
         return results
 
     async def on_notification(
-        self,
-        tenant_id: UUID,
-        notification_type: str,
-        data: Dict[str, Any]
+        self, tenant_id: UUID, notification_type: str, data: Dict[str, Any]
     ):
         """
         Handle notification event
@@ -339,7 +314,7 @@ class Plugin(ABC):
         alert_type: str,
         severity: str,
         message: str,
-        data: Dict[str, Any]
+        data: Dict[str, Any],
     ):
         """
         Handle alert event
@@ -359,9 +334,7 @@ class PluginRegistry:
 
     def __init__(self):
         self._plugins: Dict[str, Plugin] = {}
-        self._hooks: Dict[PluginHook, List[Plugin]] = {
-            hook: [] for hook in PluginHook
-        }
+        self._hooks: Dict[PluginHook, List[Plugin]] = {hook: [] for hook in PluginHook}
 
     def register(self, plugin: Plugin):
         """
@@ -376,7 +349,7 @@ class PluginRegistry:
             logger.warning(
                 "plugin_already_registered",
                 name=metadata.name,
-                message="Overwriting existing plugin"
+                message="Overwriting existing plugin",
             )
 
         self._plugins[metadata.name] = plugin
@@ -391,7 +364,7 @@ class PluginRegistry:
             "plugin_registered",
             name=metadata.name,
             version=metadata.version,
-            hooks=[h.value for h in metadata.hooks]
+            hooks=[h.value for h in metadata.hooks],
         )
 
     def unregister(self, plugin_name: str):
@@ -447,9 +420,7 @@ class PluginRegistry:
                     await plugin.initialize()
                 except Exception as e:
                     logger.error(
-                        "plugin_init_failed",
-                        name=plugin.metadata.name,
-                        error=str(e)
+                        "plugin_init_failed", name=plugin.metadata.name, error=str(e)
                     )
                     plugin.metadata.error = str(e)
                     plugin.metadata.enabled = False
@@ -463,17 +434,10 @@ class PluginRegistry:
                 await plugin.shutdown()
             except Exception as e:
                 logger.error(
-                    "plugin_shutdown_failed",
-                    name=plugin.metadata.name,
-                    error=str(e)
+                    "plugin_shutdown_failed", name=plugin.metadata.name, error=str(e)
                 )
 
-    async def execute_hook(
-        self,
-        hook: PluginHook,
-        *args,
-        **kwargs
-    ) -> Any:
+    async def execute_hook(self, hook: PluginHook, *args, **kwargs) -> Any:
         """
         Execute a plugin hook
 
@@ -508,7 +472,7 @@ class PluginRegistry:
                     "plugin_hook_failed",
                     plugin=plugin.metadata.name,
                     hook=hook.value,
-                    error=str(e)
+                    error=str(e),
                 )
 
         # For transform hooks, chain results
@@ -516,7 +480,7 @@ class PluginRegistry:
             PluginHook.BEFORE_MEMORY_CREATE,
             PluginHook.BEFORE_MEMORY_UPDATE,
             PluginHook.BEFORE_QUERY,
-            PluginHook.QUERY_RESULTS_TRANSFORM
+            PluginHook.QUERY_RESULTS_TRANSFORM,
         ]:
             # Chain transformations
             data = kwargs.get("data")
@@ -551,27 +515,24 @@ class PluginRegistry:
             try:
                 # Import plugin module
                 spec = importlib.util.spec_from_file_location(
-                    f"plugins.{module_name}",
-                    plugin_file
+                    f"plugins.{module_name}", plugin_file
                 )
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
 
                 # Find Plugin classes in module
                 for name, obj in inspect.getmembers(module):
-                    if (inspect.isclass(obj) and
-                        issubclass(obj, Plugin) and
-                        obj is not Plugin):
+                    if (
+                        inspect.isclass(obj)
+                        and issubclass(obj, Plugin)
+                        and obj is not Plugin
+                    ):
                         # Instantiate and register plugin
                         plugin_instance = obj()
                         self.register(plugin_instance)
 
             except Exception as e:
-                logger.error(
-                    "plugin_load_failed",
-                    module=module_name,
-                    error=str(e)
-                )
+                logger.error("plugin_load_failed", module=module_name, error=str(e))
 
     async def health_check_all(self) -> Dict[str, Any]:
         """
@@ -587,10 +548,7 @@ class PluginRegistry:
                 health = await plugin.health_check()
                 results[plugin.metadata.name] = health
             except Exception as e:
-                results[plugin.metadata.name] = {
-                    "status": "unhealthy",
-                    "error": str(e)
-                }
+                results[plugin.metadata.name] = {"status": "unhealthy", "error": str(e)}
 
         return results
 

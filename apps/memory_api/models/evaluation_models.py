@@ -9,47 +9,52 @@ This module defines models for the evaluation system including:
 - Performance benchmarking
 """
 
-from typing import List, Optional, Dict, Any, Tuple
-from pydantic import BaseModel, Field
-from enum import Enum
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
 
+from pydantic import BaseModel, Field
 
 # ============================================================================
 # Enums
 # ============================================================================
 
+
 class MetricType(str, Enum):
     """Types of evaluation metrics"""
-    MRR = "mrr"                          # Mean Reciprocal Rank
-    NDCG = "ndcg"                        # Normalized Discounted Cumulative Gain
-    PRECISION = "precision"               # Precision at K
-    RECALL = "recall"                     # Recall at K
-    F1 = "f1"                            # F1 Score
-    MAP = "map"                          # Mean Average Precision
-    ACCURACY = "accuracy"                 # Classification accuracy
-    AUC = "auc"                          # Area Under Curve
+
+    MRR = "mrr"  # Mean Reciprocal Rank
+    NDCG = "ndcg"  # Normalized Discounted Cumulative Gain
+    PRECISION = "precision"  # Precision at K
+    RECALL = "recall"  # Recall at K
+    F1 = "f1"  # F1 Score
+    MAP = "map"  # Mean Average Precision
+    ACCURACY = "accuracy"  # Classification accuracy
+    AUC = "auc"  # Area Under Curve
 
 
 class DriftType(str, Enum):
     """Types of distribution drift"""
-    CONCEPT_DRIFT = "concept_drift"       # Target distribution changed
-    DATA_DRIFT = "data_drift"            # Input distribution changed
-    PREDICTION_DRIFT = "prediction_drift" # Output distribution changed
+
+    CONCEPT_DRIFT = "concept_drift"  # Target distribution changed
+    DATA_DRIFT = "data_drift"  # Input distribution changed
+    PREDICTION_DRIFT = "prediction_drift"  # Output distribution changed
 
 
 class DriftSeverity(str, Enum):
     """Severity levels for drift"""
-    NONE = "none"                        # No significant drift
-    LOW = "low"                          # Minor drift detected
-    MEDIUM = "medium"                    # Moderate drift
-    HIGH = "high"                        # Severe drift
-    CRITICAL = "critical"                # Critical drift requiring action
+
+    NONE = "none"  # No significant drift
+    LOW = "low"  # Minor drift detected
+    MEDIUM = "medium"  # Moderate drift
+    HIGH = "high"  # Severe drift
+    CRITICAL = "critical"  # Critical drift requiring action
 
 
 class EvaluationStatus(str, Enum):
     """Status of evaluation run"""
+
     PENDING = "pending"
     RUNNING = "running"
     COMPLETED = "completed"
@@ -60,15 +65,19 @@ class EvaluationStatus(str, Enum):
 # Core Metric Models
 # ============================================================================
 
+
 class RelevanceJudgment(BaseModel):
     """
     Relevance judgment for a query-document pair.
 
     Used as ground truth for evaluation.
     """
+
     query_id: str = Field(..., description="Query identifier")
     document_id: UUID = Field(..., description="Memory/document UUID")
-    relevance_score: float = Field(..., ge=0.0, le=1.0, description="Ground truth relevance")
+    relevance_score: float = Field(
+        ..., ge=0.0, le=1.0, description="Ground truth relevance"
+    )
 
     # Optional metadata
     judged_by: Optional[str] = None
@@ -83,6 +92,7 @@ class RankedResult(BaseModel):
 
     Represents system output to be evaluated against ground truth.
     """
+
     document_id: UUID
     rank: int = Field(..., ge=1)
     score: float = Field(..., ge=0.0, le=1.0)
@@ -98,11 +108,14 @@ class MetricScore(BaseModel):
 
     Single metric evaluation result.
     """
+
     metric_type: MetricType
     score: float = Field(..., ge=0.0, le=1.0)
 
     # Metric-specific parameters
-    k: Optional[int] = Field(None, description="Top-K for Precision@K, Recall@K, NDCG@K")
+    k: Optional[int] = Field(
+        None, description="Top-K for Precision@K, Recall@K, NDCG@K"
+    )
 
     # Metadata
     num_queries: int = Field(0, ge=0, description="Number of queries evaluated")
@@ -116,6 +129,7 @@ class EvaluationResult(BaseModel):
 
     Aggregates multiple metrics for comprehensive evaluation.
     """
+
     evaluation_id: UUID
     tenant_id: str
     project_id: str
@@ -149,12 +163,14 @@ class EvaluationResult(BaseModel):
 # Drift Detection Models
 # ============================================================================
 
+
 class DistributionStatistics(BaseModel):
     """
     Statistical summary of a distribution.
 
     Used for comparing distributions over time.
     """
+
     mean: float
     std: float
     min: float
@@ -178,6 +194,7 @@ class DriftDetectionResult(BaseModel):
 
     Indicates whether distribution has shifted significantly.
     """
+
     drift_detected: bool
     drift_type: DriftType
     severity: DriftSeverity
@@ -193,7 +210,9 @@ class DriftDetectionResult(BaseModel):
 
     # Drift magnitude
     drift_magnitude: float = Field(0.0, ge=0.0, description="Magnitude of drift")
-    confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence in detection")
+    confidence: float = Field(
+        ..., ge=0.0, le=1.0, description="Confidence in detection"
+    )
 
     # Recommendations
     action_required: bool = Field(False)
@@ -211,6 +230,7 @@ class DriftMonitor(BaseModel):
 
     Defines thresholds and monitoring windows.
     """
+
     monitor_id: UUID
     tenant_id: str
     project_id: str
@@ -248,12 +268,14 @@ class DriftMonitor(BaseModel):
 # A/B Testing Models
 # ============================================================================
 
+
 class ABTestVariant(BaseModel):
     """
     A variant in an A/B test.
 
     Represents a specific configuration or model version.
     """
+
     variant_id: str = Field(..., max_length=100)
     variant_name: str
     description: Optional[str] = None
@@ -274,6 +296,7 @@ class ABTestResult(BaseModel):
 
     Compares performance between variants.
     """
+
     test_id: UUID
     tenant_id: str
     project_id: str
@@ -307,12 +330,14 @@ class ABTestResult(BaseModel):
 # Quality Monitoring Models
 # ============================================================================
 
+
 class QualityMetrics(BaseModel):
     """
     Quality metrics for system monitoring.
 
     Tracks overall system health and performance.
     """
+
     tenant_id: str
     project_id: str
 
@@ -353,6 +378,7 @@ class QualityAlert(BaseModel):
 
     Triggered when metrics fall below thresholds.
     """
+
     alert_id: UUID
     tenant_id: str
     project_id: str
@@ -384,8 +410,10 @@ class QualityAlert(BaseModel):
 # Request/Response Models
 # ============================================================================
 
+
 class EvaluateSearchRequest(BaseModel):
     """Request to evaluate search results"""
+
     tenant_id: str
     project_id: str
 
@@ -394,8 +422,7 @@ class EvaluateSearchRequest(BaseModel):
 
     # System results to evaluate
     search_results: Dict[str, List[RankedResult]] = Field(
-        ...,
-        description="Query ID -> ranked results mapping"
+        ..., description="Query ID -> ranked results mapping"
     )
 
     # Metrics to compute
@@ -407,12 +434,14 @@ class EvaluateSearchRequest(BaseModel):
 
 class EvaluateSearchResponse(BaseModel):
     """Response from search evaluation"""
+
     evaluation_result: EvaluationResult
     message: str = "Evaluation completed successfully"
 
 
 class DetectDriftRequest(BaseModel):
     """Request to detect distribution drift"""
+
     tenant_id: str
     project_id: str
 
@@ -433,12 +462,14 @@ class DetectDriftRequest(BaseModel):
 
 class DetectDriftResponse(BaseModel):
     """Response from drift detection"""
+
     drift_result: DriftDetectionResult
     message: str = "Drift detection completed"
 
 
 class CreateABTestRequest(BaseModel):
     """Request to create A/B test"""
+
     tenant_id: str
     project_id: str
     test_name: str
@@ -456,12 +487,14 @@ class CreateABTestRequest(BaseModel):
 
 class CreateABTestResponse(BaseModel):
     """Response from A/B test creation"""
+
     test_id: UUID
     message: str = "A/B test created successfully"
 
 
 class GetQualityMetricsRequest(BaseModel):
     """Request to get quality metrics"""
+
     tenant_id: str
     project_id: str
     period_start: datetime
@@ -470,6 +503,7 @@ class GetQualityMetricsRequest(BaseModel):
 
 class GetQualityMetricsResponse(BaseModel):
     """Response with quality metrics"""
+
     quality_metrics: QualityMetrics
     alerts: List[QualityAlert] = Field(default_factory=list)
     message: str = "Quality metrics retrieved"
@@ -479,12 +513,14 @@ class GetQualityMetricsResponse(BaseModel):
 # Benchmark Models
 # ============================================================================
 
+
 class BenchmarkSuite(BaseModel):
     """
     A suite of benchmark queries and expected results.
 
     Used for consistent system evaluation.
     """
+
     suite_id: UUID
     suite_name: str
     description: Optional[str] = None
@@ -510,6 +546,7 @@ class BenchmarkResult(BaseModel):
 
     Compares current performance to targets.
     """
+
     benchmark_id: UUID
     suite_id: UUID
     tenant_id: str
@@ -521,8 +558,7 @@ class BenchmarkResult(BaseModel):
     # Performance vs targets
     meets_targets: bool
     target_comparison: Dict[str, Dict[str, float]] = Field(
-        default_factory=dict,
-        description="Metric -> {target, actual, difference}"
+        default_factory=dict, description="Metric -> {target, actual, difference}"
     )
 
     # Execution
@@ -535,12 +571,14 @@ class BenchmarkResult(BaseModel):
 # Configuration
 # ============================================================================
 
+
 class EvaluationConfig(BaseModel):
     """
     Global configuration for evaluation system.
 
     Defines default thresholds and monitoring settings.
     """
+
     # Metric thresholds
     min_acceptable_mrr: float = Field(0.5, ge=0.0, le=1.0)
     min_acceptable_ndcg: float = Field(0.6, ge=0.0, le=1.0)
@@ -566,10 +604,12 @@ class EvaluationConfig(BaseModel):
 
 class UpdateEvaluationConfigRequest(BaseModel):
     """Request to update evaluation configuration"""
+
     config: EvaluationConfig
 
 
 class GetEvaluationConfigResponse(BaseModel):
     """Response with evaluation configuration"""
+
     config: EvaluationConfig
     message: str = "Configuration retrieved"

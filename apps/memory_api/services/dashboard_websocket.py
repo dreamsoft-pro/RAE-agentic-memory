@@ -10,28 +10,26 @@ real-time updates including:
 - Health status changes
 """
 
-import structlog
 import asyncio
-import asyncpg
-from typing import Dict, Set, List, Optional
-from datetime import datetime, timedelta
-from uuid import UUID, uuid4
-from fastapi import WebSocket
 import json
+from datetime import datetime, timedelta
+from typing import Dict, List, Optional, Set
+from uuid import UUID, uuid4
 
-from apps.memory_api.models.dashboard_models import (
-    DashboardEventType,
-    WebSocketMessage,
-    MetricsUpdateMessage,
-    HealthChangeMessage,
-    AlertMessage,
-    SystemMetrics,
-    SystemHealth,
-    HealthStatus,
-    ActivityLog,
-    WebSocketSubscription,
-    MetricPeriod
-)
+import asyncpg
+import structlog
+from fastapi import WebSocket
+
+from apps.memory_api.models.dashboard_models import (ActivityLog, AlertMessage,
+                                                     DashboardEventType,
+                                                     HealthChangeMessage,
+                                                     HealthStatus,
+                                                     MetricPeriod,
+                                                     MetricsUpdateMessage,
+                                                     SystemHealth,
+                                                     SystemMetrics,
+                                                     WebSocketMessage,
+                                                     WebSocketSubscription)
 
 logger = structlog.get_logger(__name__)
 
@@ -39,6 +37,7 @@ logger = structlog.get_logger(__name__)
 # ============================================================================
 # Connection Manager
 # ============================================================================
+
 
 class ConnectionManager:
     """
@@ -65,7 +64,7 @@ class ConnectionManager:
         websocket: WebSocket,
         tenant_id: str,
         project_id: str,
-        event_types: List[DashboardEventType] = None
+        event_types: List[DashboardEventType] = None,
     ) -> str:
         """
         Accept WebSocket connection and register subscription.
@@ -92,7 +91,7 @@ class ConnectionManager:
             tenant_id=tenant_id,
             project_id=project_id,
             subscribed_events=event_types or list(DashboardEventType),
-            update_interval_seconds=5
+            update_interval_seconds=5,
         )
         self.subscriptions[connection_id] = subscription
 
@@ -106,7 +105,7 @@ class ConnectionManager:
             "websocket_connected",
             connection_id=connection_id,
             tenant_id=tenant_id,
-            project_id=project_id
+            project_id=project_id,
         )
 
         # Send subscription confirmation
@@ -115,8 +114,8 @@ class ConnectionManager:
             {
                 "type": "subscription_confirmed",
                 "subscription_id": str(subscription.subscription_id),
-                "subscribed_events": [e.value for e in subscription.subscribed_events]
-            }
+                "subscribed_events": [e.value for e in subscription.subscribed_events],
+            },
         )
 
         return connection_id
@@ -146,17 +145,9 @@ class ConnectionManager:
         self.subscriptions.pop(connection_id, None)
         self.active_connections.pop(connection_id, None)
 
-        logger.info(
-            "websocket_disconnected",
-            connection_id=connection_id
-        )
+        logger.info("websocket_disconnected", connection_id=connection_id)
 
-    async def broadcast_to_tenant(
-        self,
-        tenant_id: str,
-        project_id: str,
-        message: Dict
-    ):
+    async def broadcast_to_tenant(self, tenant_id: str, project_id: str, message: Dict):
         """
         Broadcast message to all connections for a tenant/project.
 
@@ -171,7 +162,9 @@ class ConnectionManager:
         # Filter by event type subscription
         event_type = message.get("event_type")
 
-        for conn_id in list(connection_ids):  # Copy to avoid modification during iteration
+        for conn_id in list(
+            connection_ids
+        ):  # Copy to avoid modification during iteration
             subscription = self.subscriptions.get(conn_id)
 
             # Check if subscribed to this event type
@@ -211,9 +204,7 @@ class ConnectionManager:
             await websocket.send_json(message)
         except Exception as e:
             logger.error(
-                "websocket_send_failed",
-                connection_id=connection_id,
-                error=str(e)
+                "websocket_send_failed", connection_id=connection_id, error=str(e)
             )
             # Disconnect on error
             self.disconnect(connection_id)
@@ -222,6 +213,7 @@ class ConnectionManager:
 # ============================================================================
 # Dashboard WebSocket Service
 # ============================================================================
+
 
 class DashboardWebSocketService:
     """
@@ -287,7 +279,7 @@ class DashboardWebSocketService:
         websocket: WebSocket,
         tenant_id: str,
         project_id: str,
-        event_types: List[DashboardEventType] = None
+        event_types: List[DashboardEventType] = None,
     ) -> str:
         """
         Handle new WebSocket connection.
@@ -324,7 +316,7 @@ class DashboardWebSocketService:
         project_id: str,
         memory_id: UUID,
         content: str,
-        importance: float
+        importance: float,
     ):
         """Broadcast memory creation event."""
         message = WebSocketMessage(
@@ -334,8 +326,8 @@ class DashboardWebSocketService:
             payload={
                 "memory_id": str(memory_id),
                 "content": content[:200],  # Truncate
-                "importance": importance
-            }
+                "importance": importance,
+            },
         )
 
         await self.connection_manager.broadcast_to_tenant(
@@ -348,7 +340,7 @@ class DashboardWebSocketService:
         project_id: str,
         reflection_id: UUID,
         content: str,
-        score: float
+        score: float,
     ):
         """Broadcast reflection generation event."""
         message = WebSocketMessage(
@@ -358,8 +350,8 @@ class DashboardWebSocketService:
             payload={
                 "reflection_id": str(reflection_id),
                 "content": content[:200],
-                "score": score
-            }
+                "score": score,
+            },
         )
 
         await self.connection_manager.broadcast_to_tenant(
@@ -367,23 +359,14 @@ class DashboardWebSocketService:
         )
 
     async def broadcast_semantic_node_created(
-        self,
-        tenant_id: str,
-        project_id: str,
-        node_id: UUID,
-        label: str,
-        node_type: str
+        self, tenant_id: str, project_id: str, node_id: UUID, label: str, node_type: str
     ):
         """Broadcast semantic node creation event."""
         message = WebSocketMessage(
             event_type=DashboardEventType.SEMANTIC_NODE_CREATED,
             tenant_id=tenant_id,
             project_id=project_id,
-            payload={
-                "node_id": str(node_id),
-                "label": label,
-                "node_type": node_type
-            }
+            payload={"node_id": str(node_id), "label": label, "node_type": node_type},
         )
 
         await self.connection_manager.broadcast_to_tenant(
@@ -397,7 +380,7 @@ class DashboardWebSocketService:
         severity: str,
         title: str,
         description: str,
-        actions: List[str] = None
+        actions: List[str] = None,
     ):
         """Broadcast quality degradation alert."""
         alert_message = AlertMessage(
@@ -407,7 +390,7 @@ class DashboardWebSocketService:
             severity=severity,
             title=title,
             description=description,
-            actions=actions or []
+            actions=actions or [],
         )
 
         await self.connection_manager.broadcast_to_tenant(
@@ -421,7 +404,7 @@ class DashboardWebSocketService:
         metric_name: str,
         drift_severity: str,
         drift_magnitude: float,
-        actions: List[str] = None
+        actions: List[str] = None,
     ):
         """Broadcast drift detection alert."""
         alert_message = AlertMessage(
@@ -435,8 +418,8 @@ class DashboardWebSocketService:
             payload={
                 "metric_name": metric_name,
                 "drift_severity": drift_severity,
-                "drift_magnitude": drift_magnitude
-            }
+                "drift_magnitude": drift_magnitude,
+            },
         )
 
         await self.connection_manager.broadcast_to_tenant(
@@ -450,7 +433,7 @@ class DashboardWebSocketService:
         trigger_id: UUID,
         trigger_name: str,
         event_type: str,
-        actions_queued: int
+        actions_queued: int,
     ):
         """Broadcast trigger execution event."""
         message = WebSocketMessage(
@@ -461,8 +444,8 @@ class DashboardWebSocketService:
                 "trigger_id": str(trigger_id),
                 "trigger_name": trigger_name,
                 "event_type": event_type,
-                "actions_queued": actions_queued
-            }
+                "actions_queued": actions_queued,
+            },
         )
 
         await self.connection_manager.broadcast_to_tenant(
@@ -494,9 +477,7 @@ class DashboardWebSocketService:
                     if self._metrics_changed_significantly(cached, metrics):
                         # Broadcast update
                         message = MetricsUpdateMessage(
-                            tenant_id=tenant_id,
-                            project_id=project_id,
-                            metrics=metrics
+                            tenant_id=tenant_id, project_id=project_id, metrics=metrics
                         )
 
                         await self.connection_manager.broadcast_to_tenant(
@@ -517,9 +498,7 @@ class DashboardWebSocketService:
                 await asyncio.sleep(5)
 
     async def _collect_system_metrics(
-        self,
-        tenant_id: str,
-        project_id: str
+        self, tenant_id: str, project_id: str
     ) -> SystemMetrics:
         """
         Collect system metrics for a tenant/project.
@@ -543,7 +522,8 @@ class DashboardWebSocketService:
                 FROM memories
                 WHERE tenant_id = $1 AND project = $2
                 """,
-                tenant_id, project_id
+                tenant_id,
+                project_id,
             )
 
             # Reflection metrics
@@ -556,7 +536,8 @@ class DashboardWebSocketService:
                 FROM reflections
                 WHERE tenant_id = $1 AND project_id = $2
                 """,
-                tenant_id, project_id
+                tenant_id,
+                project_id,
             )
 
             # Semantic node metrics
@@ -569,7 +550,8 @@ class DashboardWebSocketService:
                 FROM semantic_nodes
                 WHERE tenant_id = $1 AND project_id = $2
                 """,
-                tenant_id, project_id
+                tenant_id,
+                project_id,
             )
 
             # Graph metrics
@@ -582,7 +564,8 @@ class DashboardWebSocketService:
                 FROM knowledge_graph_nodes
                 WHERE tenant_id = $1 AND project_id = $2
                 """,
-                tenant_id, project_id
+                tenant_id,
+                project_id,
             )
 
             # Trigger metrics
@@ -601,37 +584,35 @@ class DashboardWebSocketService:
                 FROM trigger_rules
                 WHERE tenant_id = $1 AND project_id = $2
                 """,
-                tenant_id, project_id
+                tenant_id,
+                project_id,
             )
 
             # Build metrics object
             metrics = SystemMetrics(
-                total_memories=memory_stats['total_memories'] or 0,
-                memories_last_24h=memory_stats['memories_last_24h'] or 0,
-                avg_memory_importance=float(memory_stats['avg_importance'] or 0.0),
-
-                total_reflections=reflection_stats['total_reflections'] or 0,
-                reflections_last_24h=reflection_stats['reflections_last_24h'] or 0,
-                avg_reflection_score=float(reflection_stats['avg_score'] or 0.0),
-
-                total_semantic_nodes=semantic_stats['total_nodes'] or 0,
-                semantic_nodes_last_24h=semantic_stats['nodes_last_24h'] or 0,
-                degraded_nodes_count=semantic_stats['degraded_count'] or 0,
-
-                total_graph_nodes=graph_stats['total_nodes'] or 0,
-                total_graph_edges=graph_stats['total_edges'] or 0,
+                total_memories=memory_stats["total_memories"] or 0,
+                memories_last_24h=memory_stats["memories_last_24h"] or 0,
+                avg_memory_importance=float(memory_stats["avg_importance"] or 0.0),
+                total_reflections=reflection_stats["total_reflections"] or 0,
+                reflections_last_24h=reflection_stats["reflections_last_24h"] or 0,
+                avg_reflection_score=float(reflection_stats["avg_score"] or 0.0),
+                total_semantic_nodes=semantic_stats["total_nodes"] or 0,
+                semantic_nodes_last_24h=semantic_stats["nodes_last_24h"] or 0,
+                degraded_nodes_count=semantic_stats["degraded_count"] or 0,
+                total_graph_nodes=graph_stats["total_nodes"] or 0,
+                total_graph_edges=graph_stats["total_edges"] or 0,
                 avg_node_degree=(
-                    (2 * graph_stats['total_edges']) / max(1, graph_stats['total_nodes'])
-                    if graph_stats['total_nodes'] else 0.0
+                    (2 * graph_stats["total_edges"])
+                    / max(1, graph_stats["total_nodes"])
+                    if graph_stats["total_nodes"]
+                    else 0.0
                 ),
-
-                active_triggers=trigger_stats['active_triggers'] or 0,
-                trigger_executions_last_24h=trigger_stats['executions_last_24h'] or 0,
-                trigger_success_rate=float(trigger_stats['success_rate'] or 0.0),
-
+                active_triggers=trigger_stats["active_triggers"] or 0,
+                trigger_executions_last_24h=trigger_stats["executions_last_24h"] or 0,
+                trigger_success_rate=float(trigger_stats["success_rate"] or 0.0),
                 health_status=HealthStatus.HEALTHY,
                 error_rate_last_hour=0.0,
-                period=MetricPeriod.LAST_24H
+                period=MetricPeriod.LAST_24H,
             )
 
             return metrics
@@ -641,9 +622,7 @@ class DashboardWebSocketService:
             return SystemMetrics()
 
     def _metrics_changed_significantly(
-        self,
-        old: Optional[SystemMetrics],
-        new: SystemMetrics
+        self, old: Optional[SystemMetrics], new: SystemMetrics
     ) -> bool:
         """
         Check if metrics changed significantly enough to warrant an update.
@@ -665,7 +644,10 @@ class DashboardWebSocketService:
             (abs(new.total_reflections - old.total_reflections) > 2),
             (abs(new.total_semantic_nodes - old.total_semantic_nodes) > 5),
             (abs(new.degraded_nodes_count - old.degraded_nodes_count) > 2),
-            (abs(new.trigger_executions_last_24h - old.trigger_executions_last_24h) > 10),
+            (
+                abs(new.trigger_executions_last_24h - old.trigger_executions_last_24h)
+                > 10
+            ),
             (new.health_status != old.health_status),
         ]
 
@@ -700,7 +682,7 @@ class DashboardWebSocketService:
                             project_id=project_id,
                             old_status=cached.overall_status,
                             new_status=health.overall_status,
-                            reason=f"System health changed to {health.overall_status.value}"
+                            reason=f"System health changed to {health.overall_status.value}",
                         )
 
                         await self.connection_manager.broadcast_to_tenant(
@@ -721,9 +703,7 @@ class DashboardWebSocketService:
                 await asyncio.sleep(10)
 
     async def _check_system_health(
-        self,
-        tenant_id: str,
-        project_id: str
+        self, tenant_id: str, project_id: str
     ) -> SystemHealth:
         """
         Check system health for a tenant/project.
@@ -747,7 +727,7 @@ class DashboardWebSocketService:
                 uptime_seconds=0.0,  # Would track actual uptime
                 total_requests_last_hour=0,
                 avg_response_time_ms=0.0,
-                error_rate=0.0
+                error_rate=0.0,
             )
 
         except Exception as e:
@@ -757,5 +737,5 @@ class DashboardWebSocketService:
                 uptime_seconds=0.0,
                 total_requests_last_hour=0,
                 avg_response_time_ms=0.0,
-                error_rate=1.0
+                error_rate=1.0,
             )

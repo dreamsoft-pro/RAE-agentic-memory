@@ -4,12 +4,12 @@ RAE Memory SDK Decorators
 This module provides decorators for automatic memory tracing of function executions.
 """
 
-import functools
 import asyncio
+import functools
 import inspect
 import json
-from typing import Callable, Optional, List, Any
 from datetime import datetime
+from typing import Any, Callable, List, Optional
 
 import structlog
 
@@ -92,7 +92,9 @@ def trace_memory(
                     module=func.__module__,
                     args=args if capture_args else None,
                     kwargs=kwargs if capture_args else None,
-                    result=result if capture_result and not exception_occurred else None,
+                    result=(
+                        result if capture_result and not exception_occurred else None
+                    ),
                     exception=exception_occurred,
                     duration_ms=duration_ms,
                     is_async=False,
@@ -139,7 +141,9 @@ def trace_memory(
                     module=func.__module__,
                     args=args if capture_args else None,
                     kwargs=kwargs if capture_args else None,
-                    result=result if capture_result and not exception_occurred else None,
+                    result=(
+                        result if capture_result and not exception_occurred else None
+                    ),
                     exception=exception_occurred,
                     duration_ms=duration_ms,
                     is_async=True,
@@ -209,7 +213,9 @@ def _build_memory_content(
         content_parts.append(f"with args={args_str}, kwargs={kwargs_str}")
 
     if exception:
-        content_parts.append(f"⚠️ Exception occurred: {type(exception).__name__}: {str(exception)}")
+        content_parts.append(
+            f"⚠️ Exception occurred: {type(exception).__name__}: {str(exception)}"
+        )
     elif result is not None:
         result_str = _safe_serialize(result)
         content_parts.append(f"Result: {result_str}")

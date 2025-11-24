@@ -2,19 +2,15 @@
 Tests for Phase 2 Models (Multi-tenancy and RBAC)
 """
 
-import pytest
-from uuid import uuid4
 from datetime import datetime, timedelta, timezone
+from uuid import uuid4
 
-from apps.memory_api.models.tenant import Tenant, TenantTier, TenantConfig
-from apps.memory_api.models.rbac import (
-    Role,
-    Permission,
-    UserRole,
-    RoleHierarchy,
-    check_permission,
-    require_permission
-)
+import pytest
+
+from apps.memory_api.models.rbac import (Permission, Role, RoleHierarchy,
+                                         UserRole, check_permission,
+                                         require_permission)
+from apps.memory_api.models.tenant import Tenant, TenantConfig, TenantTier
 
 
 class TestTenantModels:
@@ -41,7 +37,7 @@ class TestTenantModels:
             id=tenant_id,
             name="Test Tenant",
             tier=TenantTier.PRO,
-            contact_email="test@example.com"
+            contact_email="test@example.com",
         )
 
         assert tenant.id == tenant_id
@@ -87,7 +83,7 @@ class TestTenantModels:
             id=uuid4(),
             name="Test",
             tier=TenantTier.FREE,
-            config=TenantConfig(max_memories=100)
+            config=TenantConfig(max_memories=100),
         )
 
         # Below quota
@@ -108,7 +104,7 @@ class TestTenantModels:
             id=uuid4(),
             name="Test",
             tier=TenantTier.ENTERPRISE,
-            config=TenantConfig(max_memories=-1)
+            config=TenantConfig(max_memories=-1),
         )
 
         tenant.current_memory_count = 999999
@@ -116,11 +112,7 @@ class TestTenantModels:
 
     def test_increment_usage(self):
         """Test usage increment"""
-        tenant = Tenant(
-            id=uuid4(),
-            name="Test",
-            tier=TenantTier.FREE
-        )
+        tenant = Tenant(id=uuid4(), name="Test", tier=TenantTier.FREE)
 
         assert tenant.current_memory_count == 0
         tenant.increment_usage("memories", 5)
@@ -135,10 +127,7 @@ class TestTenantModels:
             id=uuid4(),
             name="Test",
             tier=TenantTier.PRO,
-            config=TenantConfig(
-                enable_graphrag=True,
-                enable_analytics=True
-            )
+            config=TenantConfig(enable_graphrag=True, enable_analytics=True),
         )
 
         assert tenant.is_feature_enabled("graphrag") is True
@@ -211,7 +200,7 @@ class TestRBACModels:
             user_id="user_123",
             tenant_id=uuid4(),
             role=Role.DEVELOPER,
-            assigned_by="admin_user"
+            assigned_by="admin_user",
         )
 
         assert user_role.user_id == "user_123"
@@ -226,7 +215,7 @@ class TestRBACModels:
             user_id="user_123",
             tenant_id=uuid4(),
             role=Role.DEVELOPER,
-            expires_at=datetime.now(timezone.utc) - timedelta(days=1)
+            expires_at=datetime.now(timezone.utc) - timedelta(days=1),
         )
         assert expired_role.is_expired() is True
 
@@ -236,16 +225,13 @@ class TestRBACModels:
             user_id="user_123",
             tenant_id=uuid4(),
             role=Role.DEVELOPER,
-            expires_at=datetime.now(timezone.utc) + timedelta(days=30)
+            expires_at=datetime.now(timezone.utc) + timedelta(days=30),
         )
         assert active_role.is_expired() is False
 
         # No expiration
         no_expiry = UserRole(
-            id=uuid4(),
-            user_id="user_123",
-            tenant_id=uuid4(),
-            role=Role.DEVELOPER
+            id=uuid4(), user_id="user_123", tenant_id=uuid4(), role=Role.DEVELOPER
         )
         assert no_expiry.is_expired() is False
 
@@ -257,7 +243,7 @@ class TestRBACModels:
             user_id="user_123",
             tenant_id=uuid4(),
             role=Role.DEVELOPER,
-            project_ids=[]
+            project_ids=[],
         )
         assert user_role.has_access_to_project("any_project") is True
 
@@ -267,7 +253,7 @@ class TestRBACModels:
             user_id="user_123",
             tenant_id=uuid4(),
             role=Role.DEVELOPER,
-            project_ids=["project_1", "project_2"]
+            project_ids=["project_1", "project_2"],
         )
         assert user_role.has_access_to_project("project_1") is True
         assert user_role.has_access_to_project("project_2") is True
@@ -276,10 +262,7 @@ class TestRBACModels:
     def test_user_role_can_perform(self):
         """Test user role permission checking"""
         user_role = UserRole(
-            id=uuid4(),
-            user_id="user_123",
-            tenant_id=uuid4(),
-            role=Role.DEVELOPER
+            id=uuid4(), user_id="user_123", tenant_id=uuid4(), role=Role.DEVELOPER
         )
 
         assert user_role.can_perform("memories:write") is True
@@ -292,7 +275,7 @@ class TestRBACModels:
             user_id="user_123",
             tenant_id=uuid4(),
             role=Role.DEVELOPER,
-            project_ids=["project_1"]
+            project_ids=["project_1"],
         )
 
         # Has permission and project access

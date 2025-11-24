@@ -1,11 +1,13 @@
 from functools import lru_cache
+
+from ...config import settings
+from .anthropic import AnthropicProvider
 from .base import LLMProvider
 from .gemini import GeminiProvider
-from .openai import OpenAIProvider
-from .ollama import OllamaProvider
-from .anthropic import AnthropicProvider
 from .litellm_provider import LiteLLMProvider
-from ...config import settings
+from .ollama import OllamaProvider
+from .openai import OpenAIProvider
+
 
 @lru_cache(maxsize=1)
 def get_llm_provider() -> LLMProvider:
@@ -14,7 +16,7 @@ def get_llm_provider() -> LLMProvider:
     Uses a singleton pattern to ensure only one provider instance is created.
     """
     provider_name = settings.RAE_LLM_BACKEND
-    
+
     if provider_name == "gemini":
         return GeminiProvider()
     elif provider_name == "openai":

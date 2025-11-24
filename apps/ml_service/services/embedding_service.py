@@ -6,8 +6,9 @@ keeping heavy dependencies isolated from the main API.
 """
 
 from typing import List
-from sentence_transformers import SentenceTransformer
+
 import structlog
+from sentence_transformers import SentenceTransformer
 
 logger = structlog.get_logger(__name__)
 
@@ -28,7 +29,7 @@ class EmbeddingMLService:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self, model_name: str = 'all-MiniLM-L6-v2'):
+    def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
         """
         Initialize embedding service with specified model.
 
@@ -64,7 +65,7 @@ class EmbeddingMLService:
         logger.info(
             "embeddings_generated",
             text_count=len(texts),
-            embedding_dim=len(result[0]) if result else 0
+            embedding_dim=len(result[0]) if result else 0,
         )
 
         return result

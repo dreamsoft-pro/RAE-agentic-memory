@@ -12,16 +12,18 @@ both the semantic similarity of content and the structural relationships
 between entities in the knowledge graph.
 """
 
-from typing import List, Dict, Any, Optional, Set, Tuple
-from pydantic import BaseModel, Field
+from typing import Any, Dict, List, Optional, Set, Tuple
+
 import asyncpg
 import structlog
+from pydantic import BaseModel, Field
 
-from apps.memory_api.services.vector_store import get_vector_store
-from apps.memory_api.services.embedding import get_embedding_service
 from apps.memory_api.models import ScoredMemoryRecord
-from apps.memory_api.models.graph import GraphNode, GraphEdge, TraversalStrategy
+from apps.memory_api.models.graph import (GraphEdge, GraphNode,
+                                          TraversalStrategy)
 from apps.memory_api.repositories.graph_repository import GraphRepository
+from apps.memory_api.services.embedding import get_embedding_service
+from apps.memory_api.services.vector_store import get_vector_store
 
 logger = structlog.get_logger(__name__)
 
@@ -30,28 +32,22 @@ class HybridSearchResult(BaseModel):
     """Complete result from hybrid search operation."""
 
     vector_matches: List[ScoredMemoryRecord] = Field(
-        default_factory=list,
-        description="Results from vector similarity search"
+        default_factory=list, description="Results from vector similarity search"
     )
     graph_nodes: List[GraphNode] = Field(
-        default_factory=list,
-        description="Nodes discovered via graph traversal"
+        default_factory=list, description="Nodes discovered via graph traversal"
     )
     graph_edges: List[GraphEdge] = Field(
-        default_factory=list,
-        description="Edges discovered via graph traversal"
+        default_factory=list, description="Edges discovered via graph traversal"
     )
     synthesized_context: str = Field(
-        default="",
-        description="Merged context from all sources"
+        default="", description="Merged context from all sources"
     )
     graph_enabled: bool = Field(
-        default=False,
-        description="Whether graph traversal was enabled for this search"
+        default=False, description="Whether graph traversal was enabled for this search"
     )
     statistics: Dict[str, Any] = Field(
-        default_factory=dict,
-        description="Search statistics"
+        default_factory=dict, description="Search statistics"
     )
 
 
@@ -74,7 +70,7 @@ class HybridSearchService:
     def __init__(
         self,
         graph_repo: GraphRepository,
-        pool: asyncpg.Pool  # Still needed for vector store
+        pool: asyncpg.Pool,  # Still needed for vector store
     ):
         """
         Initialize hybrid search service.
@@ -96,7 +92,7 @@ class HybridSearchService:
         graph_depth: int = 2,
         traversal_strategy: TraversalStrategy = TraversalStrategy.BFS,
         use_graph: bool = True,
-        filters: Optional[Dict[str, Any]] = None
+        filters: Optional[Dict[str, Any]] = None,
     ) -> HybridSearchResult:
         """
         Perform hybrid search combining vector similarity and graph traversal.
@@ -129,7 +125,7 @@ class HybridSearchService:
             tenant_id=tenant_id,
             project_id=project_id,
             query_length=len(query),
-            use_graph=use_graph
+            use_graph=use_graph,
         )
 
         try:
@@ -139,13 +135,10 @@ class HybridSearchService:
                 tenant_id=tenant_id,
                 project_id=project_id,
                 top_k=top_k_vector,
-                filters=filters
+                filters=filters,
             )
 
-            logger.info(
-                "vector_search_completed",
-                results_count=len(vector_results)
-            )
+            logger.info("vector_search_completed", results_count=len(vector_results))
 
             # If graph traversal disabled, return vector results only
             if not use_graph:
@@ -154,22 +147,17 @@ class HybridSearchService:
                     vector_matches=vector_results,
                     synthesized_context=synthesized,
                     graph_enabled=False,
-                    statistics={
-                        "vector_results": len(vector_results)
-                    }
+                    statistics={"vector_results": len(vector_results)},
                 )
 
             # Phase 2: Map vector results to graph nodes
             start_node_ids = await self._map_memories_to_nodes(
                 memory_results=vector_results,
                 tenant_id=tenant_id,
-                project_id=project_id
+                project_id=project_id,
             )
 
-            logger.info(
-                "mapped_to_graph_nodes",
-                start_nodes_count=len(start_node_ids)
-            )
+            logger.info("mapped_to_graph_nodes", start_nodes_count=len(start_node_ids))
 
             # If no graph nodes found, return vector results only
             if not start_node_ids:
@@ -180,8 +168,8 @@ class HybridSearchService:
                     graph_enabled=True,
                     statistics={
                         "vector_results": len(vector_results),
-                        "graph_nodes_found": 0
-                    }
+                        "graph_nodes_found": 0,
+                    },
                 )
 
             # Phase 3: Graph traversal
@@ -190,13 +178,13 @@ class HybridSearchService:
                 tenant_id=tenant_id,
                 project_id=project_id,
                 depth=graph_depth,
-                strategy=traversal_strategy
+                strategy=traversal_strategy,
             )
 
             logger.info(
                 "graph_traversal_completed",
                 nodes_discovered=len(graph_nodes),
-                edges_discovered=len(graph_edges)
+                edges_discovered=len(graph_edges),
             )
 
             # Phase 4: Context synthesis
@@ -204,7 +192,7 @@ class HybridSearchService:
                 vector_results=vector_results,
                 graph_nodes=graph_nodes,
                 graph_edges=graph_edges,
-                query=query
+                query=query,
             )
 
             # Phase 5: Compile statistics
@@ -214,14 +202,14 @@ class HybridSearchService:
                 "graph_edges": len(graph_edges),
                 "graph_depth": graph_depth,
                 "traversal_strategy": traversal_strategy.value,
-                "context_length": len(synthesized_context)
+                "context_length": len(synthesized_context),
             }
 
             logger.info(
                 "hybrid_search_completed",
                 tenant_id=tenant_id,
                 project_id=project_id,
-                statistics=statistics
+                statistics=statistics,
             )
 
             return HybridSearchResult(
@@ -230,7 +218,7 @@ class HybridSearchService:
                 graph_edges=graph_edges,
                 synthesized_context=synthesized_context,
                 graph_enabled=True,
-                statistics=statistics
+                statistics=statistics,
             )
 
         except Exception as e:
@@ -238,7 +226,7 @@ class HybridSearchService:
                 "hybrid_search_failed",
                 tenant_id=tenant_id,
                 project_id=project_id,
-                error=str(e)
+                error=str(e),
             )
             raise RuntimeError(f"Hybrid search failed: {e}")
 
@@ -248,7 +236,7 @@ class HybridSearchService:
         tenant_id: str,
         project_id: str,
         top_k: int,
-        filters: Optional[Dict[str, Any]]
+        filters: Optional[Dict[str, Any]],
     ) -> List[ScoredMemoryRecord]:
         """
         Perform vector similarity search.
@@ -270,21 +258,21 @@ class HybridSearchService:
         query_filters = {
             "must": [
                 {"key": "tenant_id", "match": {"value": tenant_id}},
-                {"key": "project", "match": {"value": project_id}}
+                {"key": "project", "match": {"value": project_id}},
             ]
         }
 
         if filters:
             for key, value in filters.items():
                 if key == "tags" and isinstance(value, list):
-                    query_filters["must"].append({"key": "tags", "match": {"any": value}})
+                    query_filters["must"].append(
+                        {"key": "tags", "match": {"any": value}}
+                    )
 
         # Query vector store
         vector_store = get_vector_store(pool=self.pool)
         results = await vector_store.query(
-            query_embedding=query_embedding,
-            top_k=top_k,
-            filters=query_filters
+            query_embedding=query_embedding, top_k=top_k, filters=query_filters
         )
 
         # --- Pillar 2 Implementation: Hybrid Search with Super-Nodes ---
@@ -299,43 +287,41 @@ class HybridSearchService:
         # We perform a side-query to DB to find relevant communities.
 
         # Note: This is an additive search step.
-        relevant_communities = await self._find_relevant_communities(query, tenant_id, project_id)
+        relevant_communities = await self._find_relevant_communities(
+            query, tenant_id, project_id
+        )
 
         # Create synthetic memory records for these communities so they are included in the synthesis
         for comm in relevant_communities:
             # Check if this community is already in results (unlikely if vector store doesn't index them)
             # Create a high-scoring record
             synthetic_record = ScoredMemoryRecord(
-                id=str(comm['id']),
+                id=str(comm["id"]),
                 content=f"COMMUNITY WISDOM: {comm['label']}. Summary: {comm['properties'].get('summary', '')}",
-                score=0.95, # Give high priority to wisdom
+                score=0.95,  # Give high priority to wisdom
                 source="community_wisdom",
                 tags=["wisdom", "community"],
-                metadata=comm['properties']
+                metadata=comm["properties"],
             )
             # Prepend to results
             results.insert(0, synthetic_record)
 
         return results
 
-    async def _find_relevant_communities(self, query: str, tenant_id: str, project_id: str) -> List[Dict]:
+    async def _find_relevant_communities(
+        self, query: str, tenant_id: str, project_id: str
+    ) -> List[Dict]:
         """
         Find community nodes relevant to the query.
 
         Delegates to GraphRepository for database access.
         """
         return await self.graph_repository.find_relevant_communities(
-            query=query,
-            tenant_id=tenant_id,
-            project_id=project_id,
-            limit=3
+            query=query, tenant_id=tenant_id, project_id=project_id, limit=3
         )
 
     async def _map_memories_to_nodes(
-        self,
-        memory_results: List[ScoredMemoryRecord],
-        tenant_id: str,
-        project_id: str
+        self, memory_results: List[ScoredMemoryRecord], tenant_id: str, project_id: str
     ) -> List[str]:
         """
         Map memory content to knowledge graph nodes.
@@ -365,7 +351,7 @@ class HybridSearchService:
                 content=memory.content,
                 tenant_id=tenant_id,
                 project_id=project_id,
-                limit=5
+                limit=5,
             )
             node_ids.extend(matched_nodes)
 
@@ -378,7 +364,7 @@ class HybridSearchService:
         tenant_id: str,
         project_id: str,
         depth: int,
-        strategy: TraversalStrategy
+        strategy: TraversalStrategy,
     ) -> Tuple[List[GraphNode], List[GraphEdge]]:
         """
         Traverse the knowledge graph starting from given nodes.
@@ -409,7 +395,7 @@ class HybridSearchService:
         vector_results: List[ScoredMemoryRecord],
         graph_nodes: List[GraphNode],
         graph_edges: List[GraphEdge],
-        query: str
+        query: str,
     ) -> str:
         """
         Synthesize unified context from vector and graph results.
@@ -471,12 +457,10 @@ class HybridSearchService:
                 for edge in edges[:10]:  # Limit to 10 per relation
                     # Find node labels
                     source_node = next(
-                        (n for n in graph_nodes if n.id == edge.source_id),
-                        None
+                        (n for n in graph_nodes if n.id == edge.source_id), None
                     )
                     target_node = next(
-                        (n for n in graph_nodes if n.id == edge.target_id),
-                        None
+                        (n for n in graph_nodes if n.id == edge.target_id), None
                     )
 
                     if source_node and target_node:
@@ -486,10 +470,7 @@ class HybridSearchService:
 
         return "\n".join(context_parts)
 
-    def _synthesize_vector_only(
-        self,
-        vector_results: List[ScoredMemoryRecord]
-    ) -> str:
+    def _synthesize_vector_only(self, vector_results: List[ScoredMemoryRecord]) -> str:
         """
         Synthesize context from vector results only.
 

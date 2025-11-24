@@ -9,26 +9,20 @@ These tests validate:
 - RAEMemoryClient operations
 """
 
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
-import sys
 import os
+import sys
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../src"))
 
-from rae_mcp_server.server import (
-    server,
-    rae_client,
-    RAEMemoryClient,
-    handle_list_tools,
-    handle_call_tool,
-    handle_list_resources,
-    handle_read_resource,
-    handle_list_prompts,
-    handle_get_prompt,
-)
 import mcp.types as types
+from rae_mcp_server.server import (RAEMemoryClient, handle_call_tool,
+                                   handle_get_prompt, handle_list_prompts,
+                                   handle_list_resources, handle_list_tools,
+                                   handle_read_resource, rae_client, server)
 
 
 class TestRAEMemoryClient:
@@ -38,9 +32,7 @@ class TestRAEMemoryClient:
     async def test_store_memory_success(self):
         """Test successful memory storage"""
         client = RAEMemoryClient(
-            api_url="http://test:8000",
-            api_key="test-key",
-            tenant_id="test-tenant"
+            api_url="http://test:8000", api_key="test-key", tenant_id="test-tenant"
         )
 
         mock_response = MagicMock()
@@ -57,7 +49,7 @@ class TestRAEMemoryClient:
                 content="Test content",
                 source="test-source",
                 layer="episodic",
-                tags=["test"]
+                tags=["test"],
             )
 
             assert result["id"] == "mem-123"
@@ -67,9 +59,7 @@ class TestRAEMemoryClient:
     async def test_search_memory_success(self):
         """Test successful memory search"""
         client = RAEMemoryClient(
-            api_url="http://test:8000",
-            api_key="test-key",
-            tenant_id="test-tenant"
+            api_url="http://test:8000", api_key="test-key", tenant_id="test-tenant"
         )
 
         mock_response = MagicMock()
@@ -77,7 +67,7 @@ class TestRAEMemoryClient:
         mock_response.json.return_value = {
             "results": [
                 {"content": "Result 1", "score": 0.95},
-                {"content": "Result 2", "score": 0.85}
+                {"content": "Result 2", "score": 0.85},
             ]
         }
         mock_response.raise_for_status = MagicMock()
@@ -97,17 +87,13 @@ class TestRAEMemoryClient:
     async def test_get_file_context(self):
         """Test getting file context"""
         client = RAEMemoryClient(
-            api_url="http://test:8000",
-            api_key="test-key",
-            tenant_id="test-tenant"
+            api_url="http://test:8000", api_key="test-key", tenant_id="test-tenant"
         )
 
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
-            "results": [
-                {"content": "File change 1", "source": "/path/to/file.py"}
-            ]
+            "results": [{"content": "File change 1", "source": "/path/to/file.py"}]
         }
         mock_response.raise_for_status = MagicMock()
 
@@ -117,8 +103,7 @@ class TestRAEMemoryClient:
             )
 
             results = await client.get_file_context(
-                file_path="/path/to/file.py",
-                top_k=10
+                file_path="/path/to/file.py", top_k=10
             )
 
             assert len(results) == 1
@@ -142,7 +127,9 @@ class TestMCPTools:
     @pytest.mark.asyncio
     async def test_save_memory_tool(self):
         """Test save_memory tool invocation"""
-        with patch.object(rae_client, "store_memory", new_callable=AsyncMock) as mock_store:
+        with patch.object(
+            rae_client, "store_memory", new_callable=AsyncMock
+        ) as mock_store:
             mock_store.return_value = {"id": "mem-456"}
 
             result = await handle_call_tool(
@@ -151,8 +138,8 @@ class TestMCPTools:
                     "content": "Test memory",
                     "source": "test",
                     "tags": ["test"],
-                    "layer": "episodic"
-                }
+                    "layer": "episodic",
+                },
             )
 
             assert len(result) == 1
@@ -164,8 +151,7 @@ class TestMCPTools:
     async def test_save_memory_missing_content(self):
         """Test save_memory with missing content"""
         result = await handle_call_tool(
-            name="save_memory",
-            arguments={"source": "test"}
+            name="save_memory", arguments={"source": "test"}
         )
 
         assert len(result) == 1
@@ -175,15 +161,21 @@ class TestMCPTools:
     @pytest.mark.asyncio
     async def test_search_memory_tool(self):
         """Test search_memory tool invocation"""
-        with patch.object(rae_client, "search_memory", new_callable=AsyncMock) as mock_search:
+        with patch.object(
+            rae_client, "search_memory", new_callable=AsyncMock
+        ) as mock_search:
             mock_search.return_value = [
-                {"content": "Result 1", "score": 0.9, "source": "test", "tags": ["tag1"]},
-                {"content": "Result 2", "score": 0.8, "source": "test", "tags": []}
+                {
+                    "content": "Result 1",
+                    "score": 0.9,
+                    "source": "test",
+                    "tags": ["tag1"],
+                },
+                {"content": "Result 2", "score": 0.8, "source": "test", "tags": []},
             ]
 
             result = await handle_call_tool(
-                name="search_memory",
-                arguments={"query": "test query", "top_k": 5}
+                name="search_memory", arguments={"query": "test query", "top_k": 5}
             )
 
             assert len(result) == 1
@@ -194,12 +186,13 @@ class TestMCPTools:
     @pytest.mark.asyncio
     async def test_search_memory_no_results(self):
         """Test search_memory with no results"""
-        with patch.object(rae_client, "search_memory", new_callable=AsyncMock) as mock_search:
+        with patch.object(
+            rae_client, "search_memory", new_callable=AsyncMock
+        ) as mock_search:
             mock_search.return_value = []
 
             result = await handle_call_tool(
-                name="search_memory",
-                arguments={"query": "nonexistent"}
+                name="search_memory", arguments={"query": "nonexistent"}
             )
 
             assert len(result) == 1
@@ -208,15 +201,17 @@ class TestMCPTools:
     @pytest.mark.asyncio
     async def test_get_related_context_tool(self):
         """Test get_related_context tool invocation"""
-        with patch.object(rae_client, "get_file_context", new_callable=AsyncMock) as mock_context:
+        with patch.object(
+            rae_client, "get_file_context", new_callable=AsyncMock
+        ) as mock_context:
             mock_context.return_value = [
                 {"content": "Change 1", "timestamp": "2025-01-01"},
-                {"content": "Change 2", "timestamp": "2025-01-02"}
+                {"content": "Change 2", "timestamp": "2025-01-02"},
             ]
 
             result = await handle_call_tool(
                 name="get_related_context",
-                arguments={"file_path": "/test/file.py", "include_count": 10}
+                arguments={"file_path": "/test/file.py", "include_count": 10},
             )
 
             assert len(result) == 1
@@ -226,10 +221,7 @@ class TestMCPTools:
     @pytest.mark.asyncio
     async def test_unknown_tool(self):
         """Test calling unknown tool"""
-        result = await handle_call_tool(
-            name="unknown_tool",
-            arguments={}
-        )
+        result = await handle_call_tool(name="unknown_tool", arguments={})
 
         assert len(result) == 1
         assert "Unknown tool" in result[0].text
@@ -251,7 +243,9 @@ class TestMCPResources:
     @pytest.mark.asyncio
     async def test_read_reflection_resource(self):
         """Test reading reflection resource"""
-        with patch.object(rae_client, "get_latest_reflection", new_callable=AsyncMock) as mock_ref:
+        with patch.object(
+            rae_client, "get_latest_reflection", new_callable=AsyncMock
+        ) as mock_ref:
             mock_ref.return_value = "Test reflection summary"
 
             content = await handle_read_resource("rae://project/reflection")
@@ -261,10 +255,12 @@ class TestMCPResources:
     @pytest.mark.asyncio
     async def test_read_guidelines_resource(self):
         """Test reading guidelines resource"""
-        with patch.object(rae_client, "get_project_guidelines", new_callable=AsyncMock) as mock_guide:
+        with patch.object(
+            rae_client, "get_project_guidelines", new_callable=AsyncMock
+        ) as mock_guide:
             mock_guide.return_value = [
                 {"content": "Guideline 1"},
-                {"content": "Guideline 2"}
+                {"content": "Guideline 2"},
             ]
 
             content = await handle_read_resource("rae://project/guidelines")
@@ -298,16 +294,15 @@ class TestMCPPrompts:
     @pytest.mark.asyncio
     async def test_get_guidelines_prompt(self):
         """Test getting project guidelines prompt"""
-        with patch.object(rae_client, "get_project_guidelines", new_callable=AsyncMock) as mock_guide:
+        with patch.object(
+            rae_client, "get_project_guidelines", new_callable=AsyncMock
+        ) as mock_guide:
             mock_guide.return_value = [
                 {"content": "Use Python 3.10+"},
-                {"content": "Follow PEP 8"}
+                {"content": "Follow PEP 8"},
             ]
 
-            result = await handle_get_prompt(
-                name="project-guidelines",
-                arguments={}
-            )
+            result = await handle_get_prompt(name="project-guidelines", arguments={})
 
             assert len(result.messages) == 1
             assert result.messages[0].role == "user"
@@ -318,16 +313,15 @@ class TestMCPPrompts:
     @pytest.mark.asyncio
     async def test_get_recent_context_prompt(self):
         """Test getting recent context prompt"""
-        with patch.object(rae_client, "search_memory", new_callable=AsyncMock) as mock_search:
+        with patch.object(
+            rae_client, "search_memory", new_callable=AsyncMock
+        ) as mock_search:
             mock_search.return_value = [
                 {"content": "Recent change 1", "timestamp": "2025-01-01"},
-                {"content": "Recent change 2", "timestamp": "2025-01-02"}
+                {"content": "Recent change 2", "timestamp": "2025-01-02"},
             ]
 
-            result = await handle_get_prompt(
-                name="recent-context",
-                arguments={}
-            )
+            result = await handle_get_prompt(name="recent-context", arguments={})
 
             assert len(result.messages) == 1
             content_text = result.messages[0].content.text
@@ -337,10 +331,7 @@ class TestMCPPrompts:
     @pytest.mark.asyncio
     async def test_get_unknown_prompt(self):
         """Test getting unknown prompt"""
-        result = await handle_get_prompt(
-            name="unknown-prompt",
-            arguments={}
-        )
+        result = await handle_get_prompt(name="unknown-prompt", arguments={})
 
         assert len(result.messages) == 1
         assert "Error" in result.messages[0].content.text
@@ -349,6 +340,7 @@ class TestMCPPrompts:
 # =============================================================================
 # Test Configuration
 # =============================================================================
+
 
 @pytest.fixture
 def mock_env_vars(monkeypatch):

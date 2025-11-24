@@ -1,35 +1,35 @@
 from typing import List, Optional
 
-from apps.memory_api.dependencies import get_api_key
-from apps.memory_api.models import (
-    StoreMemoryRequest,
-    StoreMemoryResponse,
-    QueryMemoryRequest,
-    QueryMemoryResponse,
-    DeleteMemoryResponse,
-    ScoredMemoryRecord,
-    MemoryRecord, # NEW
-    RebuildReflectionsRequest, # NEW
-)
-from apps.memory_api.services import pii_scrubber, scoring
-from apps.memory_api.services.vector_store import get_vector_store # NEW
-from apps.memory_api.services.embedding import get_embedding_service # NEW
-from apps.memory_api.services.hybrid_search import HybridSearchService  # NEW
-from apps.memory_api.repositories.memory_repository import MemoryRepository  # NEW
-from apps.memory_api.dependencies import get_hybrid_search_service  # NEW
-from apps.memory_api.metrics import memory_store_counter, memory_query_counter, memory_delete_counter, deduplication_hit_counter
-from apps.memory_api.tasks.background_tasks import generate_reflection_for_project # NEW
-from qdrant_client import models
-from fastapi import APIRouter, Request, HTTPException, Query, Depends, Body
 import structlog
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request
+from qdrant_client import models
+
+from apps.memory_api.dependencies import get_hybrid_search_service  # NEW
+from apps.memory_api.dependencies import get_api_key
+from apps.memory_api.metrics import (deduplication_hit_counter,
+                                     memory_delete_counter,
+                                     memory_query_counter,
+                                     memory_store_counter)
+from apps.memory_api.models import MemoryRecord  # NEW
+from apps.memory_api.models import RebuildReflectionsRequest  # NEW
+from apps.memory_api.models import (DeleteMemoryResponse, QueryMemoryRequest,
+                                    QueryMemoryResponse, ScoredMemoryRecord,
+                                    StoreMemoryRequest, StoreMemoryResponse)
+from apps.memory_api.repositories.memory_repository import \
+    MemoryRepository  # NEW
+from apps.memory_api.services import pii_scrubber, scoring
+from apps.memory_api.services.embedding import get_embedding_service  # NEW
+from apps.memory_api.services.hybrid_search import HybridSearchService  # NEW
+from apps.memory_api.services.vector_store import get_vector_store  # NEW
+from apps.memory_api.tasks.background_tasks import \
+    generate_reflection_for_project  # NEW
 
 logger = structlog.get_logger(__name__)
 
 router = APIRouter(
-    prefix="/memory",
-    tags=["memory-protocol"],
-    dependencies=[Depends(get_api_key)]
+    prefix="/memory", tags=["memory-protocol"], dependencies=[Depends(get_api_key)]
 )
+
 
 @router.post("/store", response_model=StoreMemoryResponse)
 async def store_memory(req: StoreMemoryRequest, request: Request):
@@ -54,11 +54,13 @@ async def store_memory(req: StoreMemoryRequest, request: Request):
             layer=req.layer.value if req.layer else None,
             tags=req.tags,
             timestamp=req.timestamp,
-            project=req.project
+            project=req.project,
         )
 
         if not row_data:
-            raise HTTPException(status_code=500, detail="Failed to store memory in database.")
+            raise HTTPException(
+                status_code=500, detail="Failed to store memory in database."
+            )
 
         memory_record = MemoryRecord(
             id=row_data["id"],
@@ -70,7 +72,7 @@ async def store_memory(req: StoreMemoryRequest, request: Request):
             timestamp=row_data["created_at"],
             last_accessed_at=row_data["last_accessed_at"],
             usage_count=row_data["usage_count"],
-            project=req.project
+            project=req.project,
         )
 
     except HTTPException:
@@ -93,14 +95,15 @@ async def store_memory(req: StoreMemoryRequest, request: Request):
         # For now, we'll just raise an error.
         raise HTTPException(status_code=502, detail=f"Vector store error: {e}")
 
-    memory_store_counter.labels(tenant_id=tenant_id).inc() # Increment store counter
+    memory_store_counter.labels(tenant_id=tenant_id).inc()  # Increment store counter
     return StoreMemoryResponse(id=memory_record.id)
+
 
 @router.post("/query", response_model=QueryMemoryResponse)
 async def query_memory(
     req: QueryMemoryRequest,
     request: Request,
-    hybrid_search: HybridSearchService = Depends(get_hybrid_search_service)
+    hybrid_search: HybridSearchService = Depends(get_hybrid_search_service),
 ):
     """
     Queries the memory for relevant records based on a query text.
@@ -127,14 +130,14 @@ async def query_memory(
         if not req.project:
             raise HTTPException(
                 status_code=400,
-                detail="project parameter is required when use_graph=True"
+                detail="project parameter is required when use_graph=True",
             )
 
         logger.info(
             "hybrid_search_requested",
             tenant_id=tenant_id,
             project=req.project,
-            graph_depth=req.graph_depth
+            graph_depth=req.graph_depth,
         )
 
         try:
@@ -148,7 +151,7 @@ async def query_memory(
                 top_k_vector=req.k,
                 graph_depth=req.graph_depth,
                 use_graph=True,
-                filters=req.filters
+                filters=req.filters,
             )
 
             # Rescore vector results
@@ -160,15 +163,14 @@ async def query_memory(
                 try:
                     memory_repository = MemoryRepository(request.app.state.pool)
                     await memory_repository.update_memory_access_stats(
-                        memory_ids=memory_ids,
-                        tenant_id=tenant_id
+                        memory_ids=memory_ids, tenant_id=tenant_id
                     )
                 except Exception as e:
                     # Log but don't fail the query
                     logger.warning(
                         "hybrid_query_access_stats_update_failed",
                         tenant_id=tenant_id,
-                        error=str(e)
+                        error=str(e),
                     )
 
             memory_query_counter.labels(tenant_id=tenant_id).inc()
@@ -176,19 +178,12 @@ async def query_memory(
             return QueryMemoryResponse(
                 results=rescored_results,
                 synthesized_context=hybrid_result.synthesized_context,
-                graph_statistics=hybrid_result.statistics
+                graph_statistics=hybrid_result.statistics,
             )
 
         except Exception as e:
-            logger.exception(
-                "hybrid_search_failed",
-                tenant_id=tenant_id,
-                error=str(e)
-            )
-            raise HTTPException(
-                status_code=502,
-                detail=f"Hybrid search error: {e}"
-            )
+            logger.exception("hybrid_search_failed", tenant_id=tenant_id, error=str(e))
+            raise HTTPException(status_code=502, detail=f"Hybrid search error: {e}")
 
     # Standard vector search (original implementation)
     # 1. Generate embedding for the query text
@@ -226,19 +221,19 @@ async def query_memory(
         try:
             memory_repository = MemoryRepository(request.app.state.pool)
             await memory_repository.update_memory_access_stats(
-                memory_ids=memory_ids,
-                tenant_id=tenant_id
+                memory_ids=memory_ids, tenant_id=tenant_id
             )
         except Exception as e:
             # Log but don't fail the query
             logger.warning(
                 "vector_query_access_stats_update_failed",
                 tenant_id=tenant_id,
-                error=str(e)
+                error=str(e),
             )
 
-    memory_query_counter.labels(tenant_id=tenant_id).inc() # Increment query counter
+    memory_query_counter.labels(tenant_id=tenant_id).inc()  # Increment query counter
     return QueryMemoryResponse(results=rescored_results)
+
 
 @router.delete("/delete", response_model=DeleteMemoryResponse)
 async def delete_memory(memory_id: str, request: Request):
@@ -272,7 +267,7 @@ async def delete_memory(memory_id: str, request: Request):
         # For now, we'll just log it.
         print(f"Vector store deletion error: {e}")
 
-    memory_delete_counter.labels(tenant_id=tenant_id).inc() # Increment delete counter
+    memory_delete_counter.labels(tenant_id=tenant_id).inc()  # Increment delete counter
     return DeleteMemoryResponse(message=f"Memory {memory_id} deleted successfully.")
 
 
@@ -283,6 +278,7 @@ async def rebuild_reflections(req: RebuildReflectionsRequest):
     """
     generate_reflection_for_project.delay(project=req.project, tenant_id=req.tenant_id)
     return {"message": f"Reflection rebuild task dispatched for project {req.project}."}
+
 
 @router.get("/reflection-stats")
 async def get_reflection_stats(request: Request, project: Optional[str] = None):
@@ -296,15 +292,11 @@ async def get_reflection_stats(request: Request, project: Optional[str] = None):
     memory_repository = MemoryRepository(request.app.state.pool)
 
     count = await memory_repository.count_memories_by_layer(
-        tenant_id=tenant_id,
-        layer='rm',
-        project=project
+        tenant_id=tenant_id, layer="rm", project=project
     )
 
     avg_strength = await memory_repository.get_average_strength(
-        tenant_id=tenant_id,
-        layer='rm',
-        project=project
+        tenant_id=tenant_id, layer="rm", project=project
     )
 
     return {"reflective_memory_count": count, "average_strength": avg_strength}
@@ -314,8 +306,12 @@ async def get_reflection_stats(request: Request, project: Optional[str] = None):
 async def generate_hierarchical_reflection(
     request: Request,
     project: str = Query(..., description="Project identifier"),
-    bucket_size: int = Query(10, description="Number of episodes per bucket", ge=1, le=100),
-    max_episodes: Optional[int] = Query(None, description="Maximum episodes to process", ge=1)
+    bucket_size: int = Query(
+        10, description="Number of episodes per bucket", ge=1, le=100
+    ),
+    max_episodes: Optional[int] = Query(
+        None, description="Maximum episodes to process", ge=1
+    ),
 ):
     """
     **DEPRECATED:** Use `/v1/graph/reflection/hierarchical` instead.
@@ -354,7 +350,7 @@ async def generate_hierarchical_reflection(
         "deprecated_endpoint_used",
         endpoint="/v1/memory/reflection/hierarchical",
         tenant_id=tenant_id,
-        message="Use /v1/graph/reflection/hierarchical instead"
+        message="Use /v1/graph/reflection/hierarchical instead",
     )
 
     try:
@@ -369,15 +365,13 @@ async def generate_hierarchical_reflection(
             project=project,
             tenant_id=tenant_id,
             bucket_size=bucket_size,
-            max_episodes=max_episodes
+            max_episodes=max_episodes,
         )
 
         # Fetch statistics using repository
         memory_repository = MemoryRepository(request.app.state.pool)
         episode_count = await memory_repository.count_memories_by_layer(
-            tenant_id=tenant_id,
-            layer='em',
-            project=project
+            tenant_id=tenant_id, layer="em", project=project
         )
 
         logger.info(
@@ -385,7 +379,7 @@ async def generate_hierarchical_reflection(
             tenant_id=tenant_id,
             project=project,
             episode_count=episode_count,
-            summary_length=len(summary)
+            summary_length=len(summary),
         )
 
         return {
@@ -396,8 +390,8 @@ async def generate_hierarchical_reflection(
                 "episode_count": episode_count,
                 "bucket_size": bucket_size,
                 "max_episodes_processed": max_episodes or episode_count,
-                "summary_length": len(summary)
-            }
+                "summary_length": len(summary),
+            },
         }
 
     except Exception as e:
@@ -405,9 +399,9 @@ async def generate_hierarchical_reflection(
             "hierarchical_reflection_failed",
             tenant_id=tenant_id,
             project=project,
-            error=str(e)
+            error=str(e),
         )
         raise HTTPException(
             status_code=500,
-            detail=f"Hierarchical reflection generation failed: {str(e)}"
+            detail=f"Hierarchical reflection generation failed: {str(e)}",
         )

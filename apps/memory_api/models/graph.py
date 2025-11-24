@@ -5,13 +5,15 @@ These models represent nodes and edges in the knowledge graph,
 used by both repositories and services.
 """
 
-from typing import Dict, Any, Optional
-from pydantic import BaseModel
 from enum import Enum
+from typing import Any, Dict, Optional
+
+from pydantic import BaseModel
 
 
 class TraversalStrategy(str, Enum):
     """Graph traversal strategies."""
+
     BFS = "bfs"  # Breadth-first search
     DFS = "dfs"  # Depth-first search
 

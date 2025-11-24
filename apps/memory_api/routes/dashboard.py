@@ -9,38 +9,25 @@ This module provides FastAPI routes for dashboard operations including:
 - Quality trends
 """
 
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect, Query, Request
-from typing import List, Optional
-import structlog
-from datetime import datetime, timedelta, timezone
 import asyncio
-from uuid import uuid4, UUID
-from apps.memory_api.services.dashboard_websocket import DashboardWebSocketService
+from datetime import datetime, timedelta, timezone
+from typing import List, Optional
+from uuid import UUID, uuid4
+
+import structlog
+from fastapi import (APIRouter, Depends, HTTPException, Query, Request,
+                     WebSocket, WebSocketDisconnect)
+
 from apps.memory_api.models.dashboard_models import (
-    GetDashboardMetricsRequest,
-    GetDashboardMetricsResponse,
-    GetVisualizationRequest,
-    GetVisualizationResponse,
-    GetSystemHealthRequest,
-    GetSystemHealthResponse,
-    SystemMetrics,
-    TimeSeriesMetric,
-    TimeSeriesPoint,
-    ActivityLog,
-    ReflectionTreeNode,
-    SemanticGraph,
-    SemanticGraphNode,
-    SemanticGraphEdge,
-    MemoryTimeline,
-    MemoryTimelineEvent,
-    QualityTrend,
-    SystemHealth,
-    ComponentHealth,
-    HealthStatus,
-    VisualizationType,
-    MetricPeriod,
-    DashboardEventType
-)
+    ActivityLog, ComponentHealth, DashboardEventType,
+    GetDashboardMetricsRequest, GetDashboardMetricsResponse,
+    GetSystemHealthRequest, GetSystemHealthResponse, GetVisualizationRequest,
+    GetVisualizationResponse, HealthStatus, MemoryTimeline,
+    MemoryTimelineEvent, MetricPeriod, QualityTrend, ReflectionTreeNode,
+    SemanticGraph, SemanticGraphEdge, SemanticGraphNode, SystemHealth,
+    SystemMetrics, TimeSeriesMetric, TimeSeriesPoint, VisualizationType)
+from apps.memory_api.services.dashboard_websocket import \
+    DashboardWebSocketService
 
 logger = structlog.get_logger(__name__)
 
@@ -53,6 +40,7 @@ _websocket_service: Optional[DashboardWebSocketService] = None
 # ============================================================================
 # Dependency Injection
 # ============================================================================
+
 
 async def get_pool(request: Request):
     """Get database connection pool from app state"""
@@ -73,12 +61,13 @@ def get_websocket_service(pool=Depends(get_pool)) -> DashboardWebSocketService:
 # WebSocket Endpoint
 # ============================================================================
 
+
 @router.websocket("/ws")
 async def websocket_endpoint(
     websocket: WebSocket,
     tenant_id: str = Query(...),
     project_id: str = Query(...),
-    event_types: Optional[str] = Query(None, description="Comma-separated event types")
+    event_types: Optional[str] = Query(None, description="Comma-separated event types"),
 ):
     """
     WebSocket endpoint for real-time dashboard updates.
@@ -106,7 +95,7 @@ async def websocket_endpoint(
         try:
             subscribed_events = [
                 DashboardEventType(et.strip())
-                for et in event_types.split(',')
+                for et in event_types.split(",")
                 if et.strip()
             ]
         except ValueError as e:
@@ -126,7 +115,7 @@ async def websocket_endpoint(
             "websocket_connection_established",
             connection_id=connection_id,
             tenant_id=tenant_id,
-            project_id=project_id
+            project_id=project_id,
         )
 
         # Keep connection alive and handle incoming messages
@@ -140,7 +129,9 @@ async def websocket_endpoint(
                     await websocket.send_text("pong")
 
             except WebSocketDisconnect:
-                logger.info("websocket_client_disconnected", connection_id=connection_id)
+                logger.info(
+                    "websocket_client_disconnected", connection_id=connection_id
+                )
                 break
 
     except Exception as e:
@@ -155,10 +146,10 @@ async def websocket_endpoint(
 # Metrics Endpoints
 # ============================================================================
 
+
 @router.post("/metrics", response_model=GetDashboardMetricsResponse)
 async def get_dashboard_metrics(
-    request: GetDashboardMetricsRequest,
-    pool=Depends(get_pool)
+    request: GetDashboardMetricsRequest, pool=Depends(get_pool)
 ):
     """
     Get dashboard metrics for a time period.
@@ -173,8 +164,7 @@ async def get_dashboard_metrics(
 
         # Collect current metrics
         system_metrics = await service._collect_system_metrics(
-            request.tenant_id,
-            request.project_id
+            request.tenant_id, request.project_id
         )
 
         # Get time series metrics
@@ -191,14 +181,14 @@ async def get_dashboard_metrics(
             "dashboard_metrics_retrieved",
             tenant_id=request.tenant_id,
             project_id=request.project_id,
-            period=request.period.value
+            period=request.period.value,
         )
 
         return GetDashboardMetricsResponse(
             system_metrics=system_metrics,
             time_series_metrics=time_series_metrics,
             recent_activity=recent_activity,
-            message="Dashboard metrics retrieved successfully"
+            message="Dashboard metrics retrieved successfully",
         )
 
     except Exception as e:
@@ -212,7 +202,7 @@ async def get_metric_timeseries(
     tenant_id: str,
     project_id: str,
     period: MetricPeriod = MetricPeriod.LAST_24H,
-    pool=Depends(get_pool)
+    pool=Depends(get_pool),
 ):
     """
     Get time series data for a specific metric.
@@ -243,21 +233,19 @@ async def get_metric_timeseries(
         # Fetch metric data (placeholder - would need metrics table)
         time_series = TimeSeriesMetric(
             metric_name=metric_name,
-            metric_label=metric_name.replace('_', ' ').title(),
+            metric_label=metric_name.replace("_", " ").title(),
             data_points=[],
             period_start=start_time,
-            period_end=end_time
+            period_end=end_time,
         )
 
         logger.info(
-            "timeseries_metric_retrieved",
-            metric=metric_name,
-            period=period.value
+            "timeseries_metric_retrieved", metric=metric_name, period=period.value
         )
 
         return {
             "time_series": time_series.dict(),
-            "message": f"Time series for {metric_name} retrieved"
+            "message": f"Time series for {metric_name} retrieved",
         }
 
     except Exception as e:
@@ -269,11 +257,9 @@ async def get_metric_timeseries(
 # Visualization Endpoints
 # ============================================================================
 
+
 @router.post("/visualizations", response_model=GetVisualizationResponse)
-async def get_visualization(
-    request: GetVisualizationRequest,
-    pool=Depends(get_pool)
-):
+async def get_visualization(request: GetVisualizationRequest, pool=Depends(get_pool)):
     """
     Generate visualization data.
 
@@ -293,8 +279,11 @@ async def get_visualization(
 
         if request.visualization_type == VisualizationType.REFLECTION_TREE:
             response.reflection_tree = await _generate_reflection_tree(
-                pool, request.tenant_id, request.project_id,
-                request.root_reflection_id, request.max_depth
+                pool,
+                request.tenant_id,
+                request.project_id,
+                request.root_reflection_id,
+                request.max_depth,
             )
 
         elif request.visualization_type == VisualizationType.SEMANTIC_GRAPH:
@@ -304,26 +293,32 @@ async def get_visualization(
 
         elif request.visualization_type == VisualizationType.MEMORY_TIMELINE:
             response.memory_timeline = await _generate_memory_timeline(
-                pool, request.tenant_id, request.project_id,
-                request.start_time, request.end_time
+                pool,
+                request.tenant_id,
+                request.project_id,
+                request.start_time,
+                request.end_time,
             )
 
         elif request.visualization_type == VisualizationType.QUALITY_TREND:
             response.quality_trend = await _generate_quality_trend(
-                pool, request.tenant_id, request.project_id,
-                request.start_time, request.end_time
+                pool,
+                request.tenant_id,
+                request.project_id,
+                request.start_time,
+                request.end_time,
             )
 
         else:
             raise HTTPException(
                 status_code=400,
-                detail=f"Visualization type {request.visualization_type} not yet implemented"
+                detail=f"Visualization type {request.visualization_type} not yet implemented",
             )
 
         logger.info(
             "visualization_generated",
             type=request.visualization_type.value,
-            tenant_id=request.tenant_id
+            tenant_id=request.tenant_id,
         )
 
         return response
@@ -339,11 +334,9 @@ async def get_visualization(
 # Health Endpoints
 # ============================================================================
 
+
 @router.post("/health", response_model=GetSystemHealthResponse)
-async def get_system_health(
-    request: GetSystemHealthRequest,
-    pool=Depends(get_pool)
-):
+async def get_system_health(request: GetSystemHealthRequest, pool=Depends(get_pool)):
     """
     Get system health status.
 
@@ -356,8 +349,7 @@ async def get_system_health(
         service = get_websocket_service()
 
         system_health = await service._check_system_health(
-            request.tenant_id,
-            request.project_id
+            request.tenant_id, request.project_id
         )
 
         # Add component details if requested
@@ -370,13 +362,13 @@ async def get_system_health(
         logger.info(
             "system_health_retrieved",
             status=system_health.overall_status.value,
-            tenant_id=request.tenant_id
+            tenant_id=request.tenant_id,
         )
 
         return GetSystemHealthResponse(
             system_health=system_health,
             recommendations=recommendations,
-            message="System health retrieved successfully"
+            message="System health retrieved successfully",
         )
 
     except Exception as e:
@@ -400,7 +392,7 @@ async def simple_health_check(pool=Depends(get_pool)):
         return {
             "status": "healthy",
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "service": "dashboard_api"
+            "service": "dashboard_api",
         }
 
     except Exception as e:
@@ -412,13 +404,14 @@ async def simple_health_check(pool=Depends(get_pool)):
 # Activity Log Endpoints
 # ============================================================================
 
+
 @router.get("/activity")
 async def get_activity_log(
     tenant_id: str,
     project_id: str,
     limit: int = 100,
     event_types: Optional[str] = Query(None),
-    pool=Depends(get_pool)
+    pool=Depends(get_pool),
 ):
     """
     Get recent activity log.
@@ -431,22 +424,20 @@ async def get_activity_log(
         # Parse event type filter
         event_type_filter = None
         if event_types:
-            event_type_filter = [et.strip() for et in event_types.split(',')]
+            event_type_filter = [et.strip() for et in event_types.split(",")]
 
         activity_logs = await _get_recent_activity(
             pool, tenant_id, project_id, limit, event_type_filter
         )
 
         logger.info(
-            "activity_log_retrieved",
-            count=len(activity_logs),
-            tenant_id=tenant_id
+            "activity_log_retrieved", count=len(activity_logs), tenant_id=tenant_id
         )
 
         return {
             "activity_logs": [log.dict() for log in activity_logs],
             "total_count": len(activity_logs),
-            "message": "Activity log retrieved successfully"
+            "message": "Activity log retrieved successfully",
         }
 
     except Exception as e:
@@ -458,11 +449,9 @@ async def get_activity_log(
 # Helper Functions
 # ============================================================================
 
+
 async def _get_time_series_metrics(
-    pool,
-    tenant_id: str,
-    project_id: str,
-    period: MetricPeriod
+    pool, tenant_id: str, project_id: str, period: MetricPeriod
 ) -> List[TimeSeriesMetric]:
     """Generate time series metrics for dashboard."""
     # Placeholder - would fetch from metrics table
@@ -474,7 +463,7 @@ async def _get_recent_activity(
     tenant_id: str,
     project_id: str,
     limit: int = 50,
-    event_types: Optional[List[str]] = None
+    event_types: Optional[List[str]] = None,
 ) -> List[ActivityLog]:
     """Fetch recent activity logs."""
     try:
@@ -487,7 +476,9 @@ async def _get_recent_activity(
             ORDER BY created_at DESC
             LIMIT $3
             """,
-            tenant_id, project_id, min(limit, 20)
+            tenant_id,
+            project_id,
+            min(limit, 20),
         )
 
         activity_logs = []
@@ -497,12 +488,12 @@ async def _get_recent_activity(
                 log_id=uuid4(),
                 event_type=DashboardEventType.MEMORY_CREATED,
                 title="Memory Created",
-                description=record['content'][:100],
+                description=record["content"][:100],
                 tenant_id=tenant_id,
                 project_id=project_id,
-                memory_id=record['id'],
+                memory_id=record["id"],
                 severity="info",
-                occurred_at=record['created_at']
+                occurred_at=record["created_at"],
             )
             activity_logs.append(log)
 
@@ -515,7 +506,9 @@ async def _get_recent_activity(
             ORDER BY created_at DESC
             LIMIT $3
             """,
-            tenant_id, project_id, min(limit, 10)
+            tenant_id,
+            project_id,
+            min(limit, 10),
         )
 
         for record in reflection_records:
@@ -523,12 +516,12 @@ async def _get_recent_activity(
                 log_id=uuid4(),
                 event_type=DashboardEventType.REFLECTION_GENERATED,
                 title="Reflection Generated",
-                description=record['content'][:100],
+                description=record["content"][:100],
                 tenant_id=tenant_id,
                 project_id=project_id,
-                reflection_id=record['id'],
+                reflection_id=record["id"],
                 severity="info",
-                occurred_at=record['created_at']
+                occurred_at=record["created_at"],
             )
             activity_logs.append(log)
 
@@ -543,11 +536,7 @@ async def _get_recent_activity(
 
 
 async def _generate_reflection_tree(
-    pool,
-    tenant_id: str,
-    project_id: str,
-    root_id: Optional[UUID],
-    max_depth: int
+    pool, tenant_id: str, project_id: str, root_id: Optional[UUID], max_depth: int
 ) -> Optional[ReflectionTreeNode]:
     """Generate hierarchical reflection tree."""
     try:
@@ -565,7 +554,8 @@ async def _generate_reflection_tree(
                 ORDER BY score DESC, created_at DESC
                 LIMIT 1
                 """,
-                tenant_id, project_id
+                tenant_id,
+                project_id,
             )
             if not records:
                 return None
@@ -580,22 +570,24 @@ async def _generate_reflection_tree(
                 FROM reflections
                 WHERE id = $1 AND tenant_id = $2 AND project_id = $3
                 """,
-                root_id, tenant_id, project_id
+                root_id,
+                tenant_id,
+                project_id,
             )
             if not root_record:
                 return None
 
         # Build tree node
         root_node = ReflectionTreeNode(
-            reflection_id=root_record['id'],
-            content=root_record['content'],
-            type=root_record['type'],
-            score=float(root_record['score']),
-            depth_level=root_record['depth_level'],
-            parent_id=root_record['parent_reflection_id'],
-            cluster_id=root_record['cluster_id'],
-            source_memory_count=root_record['source_count'] or 0,
-            created_at=root_record['created_at']
+            reflection_id=root_record["id"],
+            content=root_record["content"],
+            type=root_record["type"],
+            score=float(root_record["score"]),
+            depth_level=root_record["depth_level"],
+            parent_id=root_record["parent_reflection_id"],
+            cluster_id=root_record["cluster_id"],
+            source_memory_count=root_record["source_count"] or 0,
+            created_at=root_record["created_at"],
         )
 
         # Recursively fetch children if within max depth
@@ -611,13 +603,14 @@ async def _generate_reflection_tree(
                       AND tenant_id = $2 AND project_id = $3
                 ORDER BY score DESC
                 """,
-                root_node.reflection_id, tenant_id, project_id
+                root_node.reflection_id,
+                tenant_id,
+                project_id,
             )
 
             for child_record in children_records:
                 child_node = await _generate_reflection_tree(
-                    pool, tenant_id, project_id,
-                    child_record['id'], max_depth
+                    pool, tenant_id, project_id, child_record["id"], max_depth
                 )
                 if child_node:
                     root_node.children.append(child_node)
@@ -630,10 +623,7 @@ async def _generate_reflection_tree(
 
 
 async def _generate_semantic_graph(
-    pool,
-    tenant_id: str,
-    project_id: str,
-    limit: int
+    pool, tenant_id: str, project_id: str, limit: int
 ) -> Optional[SemanticGraph]:
     """Generate semantic knowledge graph."""
     try:
@@ -647,7 +637,9 @@ async def _generate_semantic_graph(
             ORDER BY importance_score DESC
             LIMIT $3
             """,
-            tenant_id, project_id, limit
+            tenant_id,
+            project_id,
+            limit,
         )
 
         nodes = []
@@ -655,16 +647,16 @@ async def _generate_semantic_graph(
 
         for record in node_records:
             node = SemanticGraphNode(
-                node_id=record['id'],
-                label=record['label'],
-                node_type=record['node_type'],
-                canonical_form=record['canonical_form'],
-                importance_score=float(record['importance_score']),
-                reinforcement_count=record['reinforcement_count'],
-                is_degraded=record['is_degraded']
+                node_id=record["id"],
+                label=record["label"],
+                node_type=record["node_type"],
+                canonical_form=record["canonical_form"],
+                importance_score=float(record["importance_score"]),
+                reinforcement_count=record["reinforcement_count"],
+                is_degraded=record["is_degraded"],
             )
             nodes.append(node)
-            node_ids.add(record['id'])
+            node_ids.add(record["id"])
 
         # Fetch edges between these nodes
         edge_records = await pool.fetch(
@@ -676,17 +668,19 @@ async def _generate_semantic_graph(
                   AND source_node_id = ANY($3)
                   AND target_node_id = ANY($3)
             """,
-            tenant_id, project_id, list(node_ids)
+            tenant_id,
+            project_id,
+            list(node_ids),
         )
 
         edges = []
         for record in edge_records:
             edge = SemanticGraphEdge(
-                source_node_id=record['source_node_id'],
-                target_node_id=record['target_node_id'],
-                relation_type=record['relation_type'],
-                weight=float(record['edge_weight'] or 1.0),
-                confidence=float(record['confidence'] or 0.8)
+                source_node_id=record["source_node_id"],
+                target_node_id=record["target_node_id"],
+                relation_type=record["relation_type"],
+                weight=float(record["edge_weight"] or 1.0),
+                confidence=float(record["confidence"] or 0.8),
             )
             edges.append(edge)
 
@@ -695,7 +689,7 @@ async def _generate_semantic_graph(
             edges=edges,
             node_count=len(nodes),
             edge_count=len(edges),
-            avg_degree=(2 * len(edges)) / max(1, len(nodes))
+            avg_degree=(2 * len(edges)) / max(1, len(nodes)),
         )
 
         return graph
@@ -710,7 +704,7 @@ async def _generate_memory_timeline(
     tenant_id: str,
     project_id: str,
     start_time: Optional[datetime],
-    end_time: Optional[datetime]
+    end_time: Optional[datetime],
 ) -> Optional[MemoryTimeline]:
     """Generate memory timeline."""
     try:
@@ -730,7 +724,10 @@ async def _generate_memory_timeline(
             ORDER BY created_at DESC
             LIMIT 100
             """,
-            tenant_id, project_id, start_time, end_time
+            tenant_id,
+            project_id,
+            start_time,
+            end_time,
         )
 
         events = []
@@ -739,10 +736,10 @@ async def _generate_memory_timeline(
                 event_id=uuid4(),
                 event_type="memory_created",
                 title="Memory Created",
-                description=record['content'][:100],
-                memory_id=record['id'],
-                importance=float(record['importance']),
-                occurred_at=record['created_at']
+                description=record["content"][:100],
+                memory_id=record["id"],
+                importance=float(record["importance"]),
+                occurred_at=record["created_at"],
             )
             events.append(event)
 
@@ -751,7 +748,7 @@ async def _generate_memory_timeline(
             start_time=start_time,
             end_time=end_time,
             total_events=len(events),
-            event_density=len(events) / max(1, (end_time - start_time).days)
+            event_density=len(events) / max(1, (end_time - start_time).days),
         )
 
         return timeline
@@ -766,7 +763,7 @@ async def _generate_quality_trend(
     tenant_id: str,
     project_id: str,
     start_time: Optional[datetime],
-    end_time: Optional[datetime]
+    end_time: Optional[datetime],
 ) -> Optional[QualityTrend]:
     """Generate quality metrics trend."""
     # Placeholder - would fetch from metrics table
@@ -782,7 +779,7 @@ async def _generate_quality_trend(
         trend_direction="stable",
         percent_change=0.0,
         current_value=0.0,
-        is_healthy=True
+        is_healthy=True,
     )
 
     return trend
@@ -798,13 +795,13 @@ async def _get_component_health(pool) -> List[ComponentHealth]:
         db_health = ComponentHealth(
             component_name="database",
             status=HealthStatus.HEALTHY,
-            message="Database connection healthy"
+            message="Database connection healthy",
         )
     except Exception as e:
         db_health = ComponentHealth(
             component_name="database",
             status=HealthStatus.CRITICAL,
-            message=f"Database error: {str(e)}"
+            message=f"Database error: {str(e)}",
         )
     components.append(db_health)
 
@@ -846,6 +843,7 @@ def _generate_health_recommendations(health: SystemHealth) -> List[str]:
 # System Information
 # ============================================================================
 
+
 @router.get("/info")
 async def get_dashboard_info():
     """
@@ -860,7 +858,7 @@ async def get_dashboard_info():
             "memory_timeline": "Chronological timeline of memory events",
             "quality_trend": "Quality metrics trends over time",
             "search_heatmap": "Search activity patterns",
-            "cluster_map": "Memory cluster visualization"
+            "cluster_map": "Memory cluster visualization",
         },
         "metrics": {
             "system_metrics": [
@@ -869,23 +867,23 @@ async def get_dashboard_info():
                 "total_semantic_nodes",
                 "degraded_nodes_count",
                 "active_triggers",
-                "search_quality_mrr"
+                "search_quality_mrr",
             ],
             "time_series_metrics": [
                 "memory_count",
                 "reflection_count",
                 "search_quality",
                 "avg_importance",
-                "trigger_executions"
-            ]
+                "trigger_executions",
+            ],
         },
         "real_time_features": {
             "websocket_endpoint": "/v1/dashboard/ws",
             "event_types": [e.value for e in DashboardEventType],
-            "update_interval_seconds": 5
+            "update_interval_seconds": 5,
         },
         "health_monitoring": {
             "components": ["database", "search", "llm_provider", "cache"],
-            "status_levels": [s.value for s in HealthStatus]
-        }
+            "status_levels": [s.value for s in HealthStatus],
+        },
     }

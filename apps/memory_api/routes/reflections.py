@@ -8,26 +8,21 @@ This module provides FastAPI routes for:
 - Retrieving reflection statistics and analytics
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Request
 from typing import List
 from uuid import UUID
+
 import structlog
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from apps.memory_api.models.reflection_models import (
-    GenerateReflectionRequest,
-    GenerateReflectionResponse,
-    QueryReflectionsRequest,
-    QueryReflectionsResponse,
-    GetReflectionGraphRequest,
-    GetReflectionGraphResponse,
-    CreateReflectionRelationshipRequest,
-    CreateReflectionRelationshipResponse,
-    ReflectionUnit,
-    ReflectionStatistics
-)
-from apps.memory_api.services.reflection_pipeline import ReflectionPipeline
+    CreateReflectionRelationshipRequest, CreateReflectionRelationshipResponse,
+    GenerateReflectionRequest, GenerateReflectionResponse,
+    GetReflectionGraphRequest, GetReflectionGraphResponse,
+    QueryReflectionsRequest, QueryReflectionsResponse, ReflectionStatistics,
+    ReflectionUnit)
 from apps.memory_api.repositories import reflection_repository
 from apps.memory_api.services.ml_service_client import MLServiceClient
+from apps.memory_api.services.reflection_pipeline import ReflectionPipeline
 
 logger = structlog.get_logger(__name__)
 
@@ -38,6 +33,7 @@ router = APIRouter(prefix="/v1/reflections", tags=["Reflections"])
 # Dependency Injection
 # ============================================================================
 
+
 async def get_pool(request: Request):
     """Get database connection pool from app state"""
     return request.app.state.pool
@@ -47,10 +43,10 @@ async def get_pool(request: Request):
 # Reflection Generation
 # ============================================================================
 
+
 @router.post("/generate", response_model=GenerateReflectionResponse)
 async def generate_reflections(
-    request: GenerateReflectionRequest,
-    pool=Depends(get_pool)
+    request: GenerateReflectionRequest, pool=Depends(get_pool)
 ):
     """
     Generate reflections from memories using clustering pipeline.
@@ -81,7 +77,7 @@ async def generate_reflections(
     logger.info(
         "generate_reflections_request",
         tenant_id=request.tenant_id,
-        project=request.project
+        project=request.project,
     )
 
     try:
@@ -94,23 +90,23 @@ async def generate_reflections(
         return GenerateReflectionResponse(
             reflection=primary_reflection,
             statistics=statistics,
-            message=f"Generated {len(reflections)} reflection(s) successfully"
+            message=f"Generated {len(reflections)} reflection(s) successfully",
         )
 
     except Exception as e:
         logger.error("generate_reflections_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Reflection generation failed: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Reflection generation failed: {str(e)}"
+        )
 
 
 # ============================================================================
 # Querying Reflections
 # ============================================================================
 
+
 @router.post("/query", response_model=QueryReflectionsResponse)
-async def query_reflections(
-    request: QueryReflectionsRequest,
-    pool=Depends(get_pool)
-):
+async def query_reflections(request: QueryReflectionsRequest, pool=Depends(get_pool)):
     """
     Query reflections with filters and optional semantic search.
 
@@ -141,7 +137,7 @@ async def query_reflections(
         "query_reflections_request",
         tenant_id=request.tenant_id,
         project=request.project,
-        has_query=request.query_text is not None
+        has_query=request.query_text is not None,
     )
 
     try:
@@ -164,7 +160,7 @@ async def query_reflections(
             cluster_id=request.cluster_id,
             parent_reflection_id=request.parent_reflection_id,
             since=request.since,
-            until=request.until
+            until=request.until,
         )
 
         # Log usage for analytics
@@ -176,10 +172,12 @@ async def query_reflections(
                 reflection_id=reflection.id,
                 usage_type="query",
                 query_text=request.query_text,
-                rank_position=i + 1
+                rank_position=i + 1,
             )
 
-        logger.info("query_reflections_success", count=len(reflections), total=total_count)
+        logger.info(
+            "query_reflections_success", count=len(reflections), total=total_count
+        )
 
         return QueryReflectionsResponse(
             reflections=reflections,
@@ -187,8 +185,8 @@ async def query_reflections(
             statistics={
                 "returned": len(reflections),
                 "total_matching": total_count,
-                "has_more": total_count > len(reflections)
-            }
+                "has_more": total_count > len(reflections),
+            },
         )
 
     except Exception as e:
@@ -200,12 +198,10 @@ async def query_reflections(
 # Reflection Details
 # ============================================================================
 
+
 @router.get("/{reflection_id}", response_model=ReflectionUnit)
 async def get_reflection(
-    reflection_id: UUID,
-    tenant_id: str,
-    project: str,
-    pool=Depends(get_pool)
+    reflection_id: UUID, tenant_id: str, project: str, pool=Depends(get_pool)
 ):
     """
     Get a single reflection by ID.
@@ -223,9 +219,7 @@ async def get_reflection(
     logger.info("get_reflection_request", reflection_id=str(reflection_id))
 
     reflection = await reflection_repository.get_reflection_by_id(
-        pool=pool,
-        reflection_id=reflection_id,
-        increment_access=True
+        pool=pool, reflection_id=reflection_id, increment_access=True
     )
 
     if not reflection:
@@ -241,7 +235,7 @@ async def get_reflection(
         tenant_id=tenant_id,
         project_id=project,
         reflection_id=reflection_id,
-        usage_type="api_call"
+        usage_type="api_call",
     )
 
     return reflection
@@ -251,11 +245,10 @@ async def get_reflection(
 # Hierarchical Reflections
 # ============================================================================
 
+
 @router.get("/{reflection_id}/children", response_model=List[ReflectionUnit])
 async def get_child_reflections(
-    reflection_id: UUID,
-    recursive: bool = False,
-    pool=Depends(get_pool)
+    reflection_id: UUID, recursive: bool = False, pool=Depends(get_pool)
 ):
     """
     Get child reflections of a parent.
@@ -271,13 +264,11 @@ async def get_child_reflections(
     logger.info(
         "get_child_reflections_request",
         reflection_id=str(reflection_id),
-        recursive=recursive
+        recursive=recursive,
     )
 
     children = await reflection_repository.get_child_reflections(
-        pool=pool,
-        parent_reflection_id=reflection_id,
-        recursive=recursive
+        pool=pool, parent_reflection_id=reflection_id, recursive=recursive
     )
 
     logger.info("child_reflections_retrieved", count=len(children))
@@ -289,10 +280,10 @@ async def get_child_reflections(
 # Reflection Graph
 # ============================================================================
 
+
 @router.post("/graph", response_model=GetReflectionGraphResponse)
 async def get_reflection_graph(
-    request: GetReflectionGraphRequest,
-    pool=Depends(get_pool)
+    request: GetReflectionGraphRequest, pool=Depends(get_pool)
 ):
     """
     Get reflection graph starting from a reflection.
@@ -319,7 +310,7 @@ async def get_reflection_graph(
     logger.info(
         "get_reflection_graph_request",
         reflection_id=str(request.reflection_id),
-        max_depth=request.max_depth
+        max_depth=request.max_depth,
     )
 
     try:
@@ -328,7 +319,7 @@ async def get_reflection_graph(
             reflection_id=request.reflection_id,
             max_depth=request.max_depth,
             relation_types=request.relation_types,
-            min_strength=request.min_strength
+            min_strength=request.min_strength,
         )
 
         # Calculate statistics
@@ -341,15 +332,13 @@ async def get_reflection_graph(
             "node_count": len(nodes),
             "edge_count": len(edges),
             "max_depth_reached": max([n.depth_level for n in nodes]) if nodes else 0,
-            "depth_distribution": depth_distribution
+            "depth_distribution": depth_distribution,
         }
 
         logger.info("reflection_graph_retrieved", nodes=len(nodes), edges=len(edges))
 
         return GetReflectionGraphResponse(
-            nodes=nodes,
-            edges=edges,
-            statistics=statistics
+            nodes=nodes, edges=edges, statistics=statistics
         )
 
     except Exception as e:
@@ -361,10 +350,10 @@ async def get_reflection_graph(
 # Reflection Relationships
 # ============================================================================
 
+
 @router.post("/relationships", response_model=CreateReflectionRelationshipResponse)
 async def create_reflection_relationship(
-    request: CreateReflectionRelationshipRequest,
-    pool=Depends(get_pool)
+    request: CreateReflectionRelationshipRequest, pool=Depends(get_pool)
 ):
     """
     Create a relationship between two reflections.
@@ -393,7 +382,7 @@ async def create_reflection_relationship(
         "create_relationship_request",
         source=str(request.source_reflection_id),
         target=str(request.target_reflection_id),
-        relation_type=request.relation_type
+        relation_type=request.relation_type,
     )
 
     try:
@@ -407,14 +396,14 @@ async def create_reflection_relationship(
             strength=request.strength,
             confidence=request.confidence,
             supporting_evidence=request.supporting_evidence,
-            check_cycles=True
+            check_cycles=True,
         )
 
         logger.info("relationship_created", relationship_id=str(relationship.id))
 
         return CreateReflectionRelationshipResponse(
             relationship=relationship,
-            message="Reflection relationship created successfully"
+            message="Reflection relationship created successfully",
         )
 
     except ValueError as e:
@@ -422,18 +411,19 @@ async def create_reflection_relationship(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error("create_relationship_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Relationship creation failed: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Relationship creation failed: {str(e)}"
+        )
 
 
 # ============================================================================
 # Analytics
 # ============================================================================
 
+
 @router.get("/statistics/{tenant_id}/{project}", response_model=ReflectionStatistics)
 async def get_reflection_statistics(
-    tenant_id: str,
-    project: str,
-    pool=Depends(get_pool)
+    tenant_id: str, project: str, pool=Depends(get_pool)
 ):
     """
     Get reflection statistics for a project.
@@ -451,9 +441,7 @@ async def get_reflection_statistics(
     logger.info("get_statistics_request", tenant_id=tenant_id, project=project)
 
     statistics = await reflection_repository.get_reflection_statistics(
-        pool=pool,
-        tenant_id=tenant_id,
-        project_id=project
+        pool=pool, tenant_id=tenant_id, project_id=project
     )
 
     return statistics
@@ -463,12 +451,10 @@ async def get_reflection_statistics(
 # Batch Operations
 # ============================================================================
 
+
 @router.delete("/batch")
 async def delete_reflections_batch(
-    tenant_id: str,
-    project: str,
-    reflection_ids: List[UUID],
-    pool=Depends(get_pool)
+    tenant_id: str, project: str, reflection_ids: List[UUID], pool=Depends(get_pool)
 ):
     """
     Delete multiple reflections in batch.
@@ -490,7 +476,7 @@ async def delete_reflections_batch(
         "delete_batch_request",
         tenant_id=tenant_id,
         project=project,
-        count=len(reflection_ids)
+        count=len(reflection_ids),
     )
 
     try:
@@ -503,7 +489,7 @@ async def delete_reflections_batch(
             """,
             tenant_id,
             project,
-            reflection_ids
+            reflection_ids,
         )
 
         # Parse count from result
@@ -511,10 +497,7 @@ async def delete_reflections_batch(
 
         logger.info("reflections_deleted", count=count)
 
-        return {
-            "message": f"Deleted {count} reflection(s)",
-            "deleted_count": count
-        }
+        return {"message": f"Deleted {count} reflection(s)", "deleted_count": count}
 
     except Exception as e:
         logger.error("delete_batch_failed", error=str(e))

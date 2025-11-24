@@ -17,29 +17,29 @@ Key Improvements over v2.0:
 - Validates and corrects LLM-reported costs
 """
 
+import json
 from functools import wraps
 from typing import Optional
-from fastapi import HTTPException, Request
-import json
-import structlog
 
-from apps.memory_api.services import budget_service
-from apps.memory_api.services.cost_controller import calculate_cost, estimate_cost, validate_cost_calculation
+import structlog
+from fastapi import HTTPException, Request
+
+from apps.memory_api.metrics import (llm_cost_counter,
+                                     rae_cost_budget_rejections_total,
+                                     rae_cost_cache_saved_usd,
+                                     rae_cost_llm_calls_total,
+                                     rae_cost_llm_daily_usd,
+                                     rae_cost_llm_monthly_usd,
+                                     rae_cost_llm_tokens_used,
+                                     rae_cost_llm_total_usd,
+                                     rae_cost_tokens_per_call_histogram)
+from apps.memory_api.models import AgentExecuteRequest, AgentExecuteResponse
 from apps.memory_api.repositories import cost_logs_repository
 from apps.memory_api.repositories.cost_logs_repository import LogLLMCallParams
+from apps.memory_api.services import budget_service
 from apps.memory_api.services.budget_service import BudgetUsageIncrement
-from apps.memory_api.metrics import (
-    llm_cost_counter,
-    rae_cost_llm_total_usd,
-    rae_cost_llm_daily_usd,
-    rae_cost_llm_monthly_usd,
-    rae_cost_llm_tokens_used,
-    rae_cost_cache_saved_usd,
-    rae_cost_budget_rejections_total,
-    rae_cost_llm_calls_total,
-    rae_cost_tokens_per_call_histogram
-)
-from apps.memory_api.models import AgentExecuteResponse, AgentExecuteRequest
+from apps.memory_api.services.cost_controller import (
+    calculate_cost, estimate_cost, validate_cost_calculation)
 
 logger = structlog.get_logger(__name__)
 
@@ -47,6 +47,7 @@ logger = structlog.get_logger(__name__)
 # ============================================================================
 # Helper Functions
 # ============================================================================
+
 
 def extract_model_info(request_body: AgentExecuteRequest) -> dict:
     """
@@ -63,7 +64,7 @@ def extract_model_info(request_body: AgentExecuteRequest) -> dict:
     estimated_output_tokens = 1000  # Conservative estimate
 
     # Extract from request if available
-    if hasattr(request_body, 'model') and request_body.model:
+    if hasattr(request_body, "model") and request_body.model:
         model_name = request_body.model
 
     # Determine provider from model name
@@ -77,15 +78,15 @@ def extract_model_info(request_body: AgentExecuteRequest) -> dict:
         provider = "ollama"
 
     # Determine operation type
-    if hasattr(request_body, 'operation_type') and request_body.operation_type:
+    if hasattr(request_body, "operation_type") and request_body.operation_type:
         operation = request_body.operation_type
-    elif hasattr(request_body, 'query') and request_body.query:
+    elif hasattr(request_body, "query") and request_body.query:
         operation = "query"
 
     # Estimate input tokens from query length (rough: 1 token ≈ 4 chars)
-    if hasattr(request_body, 'query') and request_body.query:
+    if hasattr(request_body, "query") and request_body.query:
         estimated_input_tokens = max(len(request_body.query) // 4, 100)
-    elif hasattr(request_body, 'prompt') and request_body.prompt:
+    elif hasattr(request_body, "prompt") and request_body.prompt:
         estimated_input_tokens = max(len(request_body.prompt) // 4, 100)
 
     return {
@@ -93,7 +94,7 @@ def extract_model_info(request_body: AgentExecuteRequest) -> dict:
         "provider": provider,
         "operation": operation,
         "estimated_input_tokens": estimated_input_tokens,
-        "estimated_output_tokens": estimated_output_tokens
+        "estimated_output_tokens": estimated_output_tokens,
     }
 
 
@@ -108,28 +109,26 @@ def extract_actual_tokens(response: AgentExecuteResponse) -> dict:
     output_tokens = 0
 
     # Try to extract from response.cost if available
-    if hasattr(response, 'cost') and response.cost:
-        if hasattr(response.cost, 'input_tokens'):
+    if hasattr(response, "cost") and response.cost:
+        if hasattr(response.cost, "input_tokens"):
             input_tokens = response.cost.input_tokens or 0
-        if hasattr(response.cost, 'output_tokens'):
+        if hasattr(response.cost, "output_tokens"):
             output_tokens = response.cost.output_tokens or 0
 
     # Fallback: estimate from response length if tokens not provided
     if input_tokens == 0 and output_tokens == 0:
-        if hasattr(response, 'content') and response.content:
+        if hasattr(response, "content") and response.content:
             output_tokens = max(len(str(response.content)) // 4, 50)
-        if hasattr(response, 'result') and response.result:
+        if hasattr(response, "result") and response.result:
             output_tokens = max(len(str(response.result)) // 4, 50)
 
-    return {
-        "input_tokens": input_tokens,
-        "output_tokens": output_tokens
-    }
+    return {"input_tokens": input_tokens, "output_tokens": output_tokens}
 
 
 # ============================================================================
 # Cost Guard Decorator
 # ============================================================================
+
 
 def cost_guard():
     """
@@ -156,6 +155,7 @@ def cost_guard():
         HTTPException(402) - If budget exceeded (USD or tokens)
         HTTPException(400) - If request body invalid
     """
+
     def decorator(func):
         @wraps(func)
         async def wrapper(*args, **kwargs):
@@ -193,7 +193,7 @@ def cost_guard():
                 model=model_name,
                 provider=provider,
                 operation=operation,
-                dry_run=is_dry_run
+                dry_run=is_dry_run,
             )
 
             # ================================================================
@@ -204,29 +204,25 @@ def cost_guard():
             estimated_cost = estimate_cost(
                 model_name,
                 model_info["estimated_input_tokens"],
-                model_info["estimated_output_tokens"]
+                model_info["estimated_output_tokens"],
             )
             estimated_tokens = (
-                model_info["estimated_input_tokens"] +
-                model_info["estimated_output_tokens"]
+                model_info["estimated_input_tokens"]
+                + model_info["estimated_output_tokens"]
             )
 
             logger.info(
                 "cost_guard_estimate",
                 estimated_cost_usd=estimated_cost,
                 estimated_tokens=estimated_tokens,
-                model=model_name
+                model=model_name,
             )
 
             if not is_dry_run:
                 # Check budget (raises HTTPException(402) if exceeded)
                 try:
                     await budget_service.check_budget(
-                        pool,
-                        tenant_id,
-                        project_id,
-                        estimated_cost,
-                        estimated_tokens
+                        pool, tenant_id, project_id, estimated_cost, estimated_tokens
                     )
                     logger.info("cost_guard_budget_check_passed", tenant_id=tenant_id)
                 except HTTPException as e:
@@ -245,9 +241,7 @@ def cost_guard():
 
                     # Track budget rejection in Prometheus
                     rae_cost_budget_rejections_total.labels(
-                        tenant_id=tenant_id,
-                        project=project_id,
-                        limit_type=limit_type
+                        tenant_id=tenant_id, project=project_id, limit_type=limit_type
                     ).inc()
 
                     logger.warning(
@@ -257,7 +251,7 @@ def cost_guard():
                         estimated_cost=estimated_cost,
                         estimated_tokens=estimated_tokens,
                         limit_type=limit_type,
-                        error=e.detail
+                        error=e.detail,
                     )
                     raise
 
@@ -278,7 +272,7 @@ def cost_guard():
 
             # Get LLM-reported cost (often returns 0)
             llm_reported_cost = 0.0
-            if hasattr(response, 'cost') and response.cost:
+            if hasattr(response, "cost") and response.cost:
                 llm_reported_cost = response.cost.total_estimate or 0.0
 
             # Calculate actual cost using our cost model
@@ -286,7 +280,7 @@ def cost_guard():
                 model_name,
                 input_tokens,
                 output_tokens,
-                cache_hit=False  # TODO: Detect cache hits from response
+                cache_hit=False,  # TODO: Detect cache hits from response
             )
 
             actual_cost_usd = cost_info["total_cost_usd"]
@@ -300,7 +294,7 @@ def cost_guard():
                     input_tokens,
                     output_tokens,
                     llm_reported_cost,
-                    tolerance=0.0001
+                    tolerance=0.0001,
                 )
                 if not is_valid:
                     logger.warning(
@@ -308,7 +302,7 @@ def cost_guard():
                         model=model_name,
                         our_cost=actual_cost_usd,
                         llm_reported=llm_reported_cost,
-                        message="Using our cost calculation instead of LLM-reported cost"
+                        message="Using our cost calculation instead of LLM-reported cost",
                     )
             else:
                 # LLM returned 0 (common with litellm) - use our calculation
@@ -316,7 +310,7 @@ def cost_guard():
                     "cost_guard_forced_calculation",
                     model=model_name,
                     calculated_cost=actual_cost_usd,
-                    message="LLM returned $0.00, using our cost model"
+                    message="LLM returned $0.00, using our cost model",
                 )
 
             logger.info(
@@ -326,7 +320,7 @@ def cost_guard():
                 actual_cost_usd=actual_cost_usd,
                 input_tokens=input_tokens,
                 output_tokens=output_tokens,
-                total_tokens=input_tokens + output_tokens
+                total_tokens=input_tokens + output_tokens,
             )
 
             # ================================================================
@@ -351,8 +345,8 @@ def cost_guard():
                         cache_tokens_saved=0,
                         request_id=request_id,
                         error=False,
-                        error_message=None
-                    )
+                        error_message=None,
+                    ),
                 )
                 logger.info("cost_guard_logged", log_id=log_id)
             except Exception as e:
@@ -360,7 +354,7 @@ def cost_guard():
                     "cost_guard_log_failed",
                     error=str(e),
                     tenant_id=tenant_id,
-                    message="Failed to write to cost_logs, but continuing"
+                    message="Failed to write to cost_logs, but continuing",
                 )
                 # Don't fail the request if logging fails
 
@@ -377,21 +371,21 @@ def cost_guard():
                         BudgetUsageIncrement(
                             cost_usd=actual_cost_usd,
                             input_tokens=input_tokens,
-                            output_tokens=output_tokens
-                        )
+                            output_tokens=output_tokens,
+                        ),
                     )
                     logger.info(
                         "cost_guard_budget_incremented",
                         tenant_id=tenant_id,
                         cost_usd=actual_cost_usd,
-                        tokens=input_tokens + output_tokens
+                        tokens=input_tokens + output_tokens,
                     )
                 except Exception as e:
                     logger.error(
                         "cost_guard_increment_failed",
                         error=str(e),
                         tenant_id=tenant_id,
-                        message="Failed to increment budget"
+                        message="Failed to increment budget",
                     )
                     # Don't fail the request if budget increment fails
 
@@ -402,8 +396,7 @@ def cost_guard():
                 try:
                     # Legacy metric (keep for backwards compatibility)
                     llm_cost_counter.labels(
-                        tenant_id=tenant_id,
-                        project=project_id
+                        tenant_id=tenant_id, project=project_id
                     ).inc(actual_cost_usd)
 
                     # 1. Total cumulative LLM costs
@@ -411,7 +404,7 @@ def cost_guard():
                         tenant_id=tenant_id,
                         project=project_id,
                         model=model_name,
-                        provider=provider
+                        provider=provider,
                     ).inc(actual_cost_usd)
 
                     # 2. Total cumulative tokens used
@@ -419,7 +412,7 @@ def cost_guard():
                         tenant_id=tenant_id,
                         project=project_id,
                         model=model_name,
-                        provider=provider
+                        provider=provider,
                     ).inc(input_tokens + output_tokens)
 
                     # 3. LLM call counter
@@ -428,32 +421,37 @@ def cost_guard():
                         project=project_id,
                         model=model_name,
                         provider=provider,
-                        operation=operation
+                        operation=operation,
                     ).inc()
 
                     # 4. Token distribution histogram
                     rae_cost_tokens_per_call_histogram.labels(
-                        model=model_name,
-                        provider=provider
+                        model=model_name, provider=provider
                     ).observe(input_tokens + output_tokens)
 
                     # 5. Daily/Monthly costs (gauges) - fetch from budgets table
                     try:
-                        from apps.memory_api.repositories import cost_logs_repository
-                        daily_cost = await cost_logs_repository.get_daily_cost(pool, tenant_id, project_id)
-                        monthly_cost = await cost_logs_repository.get_monthly_cost(pool, tenant_id, project_id)
+                        from apps.memory_api.repositories import \
+                            cost_logs_repository
+
+                        daily_cost = await cost_logs_repository.get_daily_cost(
+                            pool, tenant_id, project_id
+                        )
+                        monthly_cost = await cost_logs_repository.get_monthly_cost(
+                            pool, tenant_id, project_id
+                        )
 
                         rae_cost_llm_daily_usd.labels(
-                            tenant_id=tenant_id,
-                            project=project_id
+                            tenant_id=tenant_id, project=project_id
                         ).set(daily_cost)
 
                         rae_cost_llm_monthly_usd.labels(
-                            tenant_id=tenant_id,
-                            project=project_id
+                            tenant_id=tenant_id, project=project_id
                         ).set(monthly_cost)
                     except Exception as gauge_error:
-                        logger.warning("cost_guard_gauge_update_failed", error=str(gauge_error))
+                        logger.warning(
+                            "cost_guard_gauge_update_failed", error=str(gauge_error)
+                        )
 
                     # 6. Cache savings (if cache hit detected)
                     # TODO: Implement cache hit detection and savings calculation
@@ -466,16 +464,17 @@ def cost_guard():
                     tenant_id=tenant_id,
                     cost_usd=actual_cost_usd,
                     tokens=input_tokens + output_tokens,
-                    message=f"Logged ${actual_cost_usd:.6f} for project {project_id}"
+                    message=f"Logged ${actual_cost_usd:.6f} for project {project_id}",
                 )
             else:
                 logger.info(
                     "cost_guard_dry_run_complete",
                     estimated_cost=actual_cost_usd,
-                    message=f"Dry Run: Estimated cost is ${actual_cost_usd:.6f}"
+                    message=f"Dry Run: Estimated cost is ${actual_cost_usd:.6f}",
                 )
 
             return response
 
         return wrapper
+
     return decorator

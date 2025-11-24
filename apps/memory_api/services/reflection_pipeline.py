@@ -10,27 +10,23 @@ This module implements the complete reflection generation pipeline with:
 - Full telemetry and cost tracking
 """
 
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional, Tuple
+from uuid import UUID
+
 import asyncpg
 import numpy as np
-from typing import List, Dict, Any, Optional, Tuple
-from uuid import UUID
-from datetime import datetime, timedelta
 import structlog
-
-from sklearn.cluster import KMeans, HDBSCAN
+from sklearn.cluster import HDBSCAN, KMeans
 from sklearn.preprocessing import StandardScaler
 
+from apps.memory_api.config import settings
+from apps.memory_api.models.reflection_models import (
+    GenerateReflectionRequest, ReflectionScoring, ReflectionTelemetry,
+    ReflectionType, ReflectionUnit)
+from apps.memory_api.repositories import reflection_repository
 from apps.memory_api.services.llm import get_llm_provider
 from apps.memory_api.services.ml_service_client import MLServiceClient
-from apps.memory_api.models.reflection_models import (
-    ReflectionUnit,
-    ReflectionType,
-    ReflectionScoring,
-    ReflectionTelemetry,
-    GenerateReflectionRequest
-)
-from apps.memory_api.repositories import reflection_repository
-from apps.memory_api.config import settings
 
 logger = structlog.get_logger(__name__)
 
@@ -93,6 +89,7 @@ Return scores as JSON:
 # Reflection Pipeline
 # ============================================================================
 
+
 class ReflectionPipeline:
     """
     Enterprise reflection generation pipeline with clustering and hierarchical insights.
@@ -113,8 +110,7 @@ class ReflectionPipeline:
         self.ml_client = MLServiceClient()
 
     async def generate_reflections(
-        self,
-        request: GenerateReflectionRequest
+        self, request: GenerateReflectionRequest
     ) -> Tuple[List[ReflectionUnit], Dict[str, Any]]:
         """
         Generate reflections from memories using clustering pipeline.
@@ -129,7 +125,7 @@ class ReflectionPipeline:
             "reflection_pipeline_started",
             tenant_id=request.tenant_id,
             project=request.project,
-            max_memories=request.max_memories
+            max_memories=request.max_memories,
         )
 
         start_time = datetime.now()
@@ -139,7 +135,7 @@ class ReflectionPipeline:
             "insights_generated": 0,
             "meta_insights_generated": 0,
             "total_cost_usd": 0.0,
-            "total_duration_ms": 0
+            "total_duration_ms": 0,
         }
 
         # Step 1: Fetch memories
@@ -148,7 +144,7 @@ class ReflectionPipeline:
             request.project,
             request.max_memories,
             request.memory_filters,
-            request.since
+            request.since,
         )
 
         if not memories:
@@ -176,13 +172,17 @@ class ReflectionPipeline:
                     project_id=request.project,
                     cluster_id=cluster_id,
                     memories=cluster_memories,
-                    parent_reflection_id=request.parent_reflection_id
+                    parent_reflection_id=request.parent_reflection_id,
                 )
                 insights.append(insight)
                 statistics["insights_generated"] += 1
-                statistics["total_cost_usd"] += insight.telemetry.generation_cost_usd or 0.0
+                statistics["total_cost_usd"] += (
+                    insight.telemetry.generation_cost_usd or 0.0
+                )
             except Exception as e:
-                logger.error("cluster_insight_failed", cluster_id=cluster_id, error=str(e))
+                logger.error(
+                    "cluster_insight_failed", cluster_id=cluster_id, error=str(e)
+                )
 
         logger.info("insights_generated", count=len(insights))
 
@@ -194,23 +194,27 @@ class ReflectionPipeline:
                 meta_insight = await self._generate_meta_insight(
                     tenant_id=request.tenant_id,
                     project_id=request.project,
-                    insights=insights
+                    insights=insights,
                 )
                 all_reflections.append(meta_insight)
                 statistics["meta_insights_generated"] += 1
-                statistics["total_cost_usd"] += meta_insight.telemetry.generation_cost_usd or 0.0
+                statistics["total_cost_usd"] += (
+                    meta_insight.telemetry.generation_cost_usd or 0.0
+                )
                 logger.info("meta_insight_generated")
             except Exception as e:
                 logger.error("meta_insight_failed", error=str(e))
 
         # Calculate total duration
         end_time = datetime.now()
-        statistics["total_duration_ms"] = int((end_time - start_time).total_seconds() * 1000)
+        statistics["total_duration_ms"] = int(
+            (end_time - start_time).total_seconds() * 1000
+        )
 
         logger.info(
             "reflection_pipeline_complete",
             reflections=len(all_reflections),
-            statistics=statistics
+            statistics=statistics,
         )
 
         return all_reflections, statistics
@@ -221,7 +225,7 @@ class ReflectionPipeline:
         project_id: str,
         limit: int,
         filters: Optional[Dict[str, Any]],
-        since: Optional[datetime]
+        since: Optional[datetime],
     ) -> List[Dict[str, Any]]:
         """Fetch memories for reflection generation"""
         conditions = ["tenant_id = $1", "project = $2"]
@@ -259,9 +263,7 @@ class ReflectionPipeline:
         return [dict(r) for r in records]
 
     async def _cluster_memories(
-        self,
-        memories: List[Dict[str, Any]],
-        min_cluster_size: int
+        self, memories: List[Dict[str, Any]], min_cluster_size: int
     ) -> Dict[str, List[Dict[str, Any]]]:
         """
         Cluster memories using HDBSCAN or k-means.
@@ -273,19 +275,23 @@ class ReflectionPipeline:
         Returns:
             Dictionary mapping cluster_id to list of memories
         """
-        logger.info("clustering_memories", count=len(memories), min_size=min_cluster_size)
+        logger.info(
+            "clustering_memories", count=len(memories), min_size=min_cluster_size
+        )
 
         # Extract embeddings
         embeddings = []
         valid_memories = []
 
         for memory in memories:
-            if memory.get('embedding'):
-                embeddings.append(memory['embedding'])
+            if memory.get("embedding"):
+                embeddings.append(memory["embedding"])
                 valid_memories.append(memory)
 
         if len(embeddings) < min_cluster_size:
-            logger.warning("insufficient_memories_for_clustering", count=len(embeddings))
+            logger.warning(
+                "insufficient_memories_for_clustering", count=len(embeddings)
+            )
             return {}
 
         embeddings_array = np.array(embeddings)
@@ -299,7 +305,7 @@ class ReflectionPipeline:
             clusterer = HDBSCAN(
                 min_cluster_size=min_cluster_size,
                 min_samples=max(2, min_cluster_size // 2),
-                metric='euclidean'
+                metric="euclidean",
             )
             cluster_labels = clusterer.fit_predict(embeddings_scaled)
 
@@ -332,14 +338,13 @@ class ReflectionPipeline:
 
         # Filter out clusters below minimum size
         clusters = {
-            cid: mems for cid, mems in clusters.items()
-            if len(mems) >= min_cluster_size
+            cid: mems for cid, mems in clusters.items() if len(mems) >= min_cluster_size
         }
 
         logger.info(
             "clustering_complete",
             clusters_found=len(clusters),
-            sizes=[len(mems) for mems in clusters.values()]
+            sizes=[len(mems) for mems in clusters.values()],
         )
 
         return clusters
@@ -350,10 +355,12 @@ class ReflectionPipeline:
         project_id: str,
         cluster_id: str,
         memories: List[Dict[str, Any]],
-        parent_reflection_id: Optional[UUID] = None
+        parent_reflection_id: Optional[UUID] = None,
     ) -> ReflectionUnit:
         """Generate insight for a single cluster of memories"""
-        logger.info("generating_cluster_insight", cluster_id=cluster_id, memories=len(memories))
+        logger.info(
+            "generating_cluster_insight", cluster_id=cluster_id, memories=len(memories)
+        )
 
         generation_start = datetime.now()
 
@@ -371,13 +378,15 @@ class ReflectionPipeline:
             result = await self.llm_provider.generate(
                 system="You are an expert at pattern recognition and insight extraction.",
                 prompt=prompt,
-                model=settings.RAE_LLM_MODEL_DEFAULT
+                model=settings.RAE_LLM_MODEL_DEFAULT,
             )
 
             insight_text = result.text
 
             # Calculate generation metrics
-            generation_duration = int((datetime.now() - generation_start).total_seconds() * 1000)
+            generation_duration = int(
+                (datetime.now() - generation_start).total_seconds() * 1000
+            )
 
             # Score the insight
             scoring = await self._score_reflection(insight_text)
@@ -386,14 +395,18 @@ class ReflectionPipeline:
             embedding = await self._generate_embedding(insight_text)
 
             # Extract source memory IDs
-            source_memory_ids = [UUID(m['id']) for m in memories if m.get('id')]
+            source_memory_ids = [UUID(m["id"]) for m in memories if m.get("id")]
 
             # Create telemetry
             telemetry = ReflectionTelemetry(
                 generation_model=settings.RAE_LLM_MODEL_DEFAULT,
                 generation_duration_ms=generation_duration,
-                generation_tokens_used=result.usage.total_tokens if result.usage else None,
-                generation_cost_usd=result.cost_usd if hasattr(result, 'cost_usd') else None
+                generation_tokens_used=(
+                    result.usage.total_tokens if result.usage else None
+                ),
+                generation_cost_usd=(
+                    result.cost_usd if hasattr(result, "cost_usd") else None
+                ),
             )
 
             # Determine priority based on cluster size and importance
@@ -413,14 +426,14 @@ class ReflectionPipeline:
                 embedding=embedding,
                 cluster_id=cluster_id,
                 tags=["cluster_insight", cluster_id],
-                telemetry=telemetry
+                telemetry=telemetry,
             )
 
             logger.info(
                 "cluster_insight_generated",
                 reflection_id=str(reflection.id),
                 score=reflection.score,
-                priority=priority
+                priority=priority,
             )
 
             return reflection
@@ -430,10 +443,7 @@ class ReflectionPipeline:
             raise
 
     async def _generate_meta_insight(
-        self,
-        tenant_id: str,
-        project_id: str,
-        insights: List[ReflectionUnit]
+        self, tenant_id: str, project_id: str, insights: List[ReflectionUnit]
     ) -> ReflectionUnit:
         """Generate meta-insight from multiple insights"""
         logger.info("generating_meta_insight", insights=len(insights))
@@ -454,13 +464,15 @@ class ReflectionPipeline:
             result = await self.llm_provider.generate(
                 system="You are an expert at synthesizing higher-level patterns from insights.",
                 prompt=prompt,
-                model=settings.RAE_LLM_MODEL_DEFAULT
+                model=settings.RAE_LLM_MODEL_DEFAULT,
             )
 
             meta_insight_text = result.text
 
             # Calculate generation metrics
-            generation_duration = int((datetime.now() - generation_start).total_seconds() * 1000)
+            generation_duration = int(
+                (datetime.now() - generation_start).total_seconds() * 1000
+            )
 
             # Score the meta-insight (typically higher scores for synthesis)
             scoring = await self._score_reflection(meta_insight_text)
@@ -478,8 +490,12 @@ class ReflectionPipeline:
             telemetry = ReflectionTelemetry(
                 generation_model=settings.RAE_LLM_MODEL_DEFAULT,
                 generation_duration_ms=generation_duration,
-                generation_tokens_used=result.usage.total_tokens if result.usage else None,
-                generation_cost_usd=result.cost_usd if hasattr(result, 'cost_usd') else None
+                generation_tokens_used=(
+                    result.usage.total_tokens if result.usage else None
+                ),
+                generation_cost_usd=(
+                    result.cost_usd if hasattr(result, "cost_usd") else None
+                ),
             )
 
             # Meta-insights get high priority
@@ -497,13 +513,13 @@ class ReflectionPipeline:
                 source_reflection_ids=source_reflection_ids,
                 embedding=embedding,
                 tags=["meta_insight", "synthesis"],
-                telemetry=telemetry
+                telemetry=telemetry,
             )
 
             logger.info(
                 "meta_insight_generated",
                 reflection_id=str(reflection.id),
-                score=reflection.score
+                score=reflection.score,
             )
 
             return reflection
@@ -538,14 +554,14 @@ class ReflectionPipeline:
                 system="You are an expert evaluator of insights and reflections.",
                 prompt=prompt,
                 model=settings.RAE_LLM_MODEL_DEFAULT,
-                response_model=ScoreResponse
+                response_model=ScoreResponse,
             )
 
             return ReflectionScoring(
                 novelty_score=result.novelty,
                 importance_score=result.importance,
                 utility_score=result.utility,
-                confidence_score=result.confidence
+                confidence_score=result.confidence,
             )
 
         except Exception as e:
@@ -555,7 +571,7 @@ class ReflectionPipeline:
                 novelty_score=0.5,
                 importance_score=0.5,
                 utility_score=0.5,
-                confidence_score=0.5
+                confidence_score=0.5,
             )
 
     async def _generate_embedding(self, text: str) -> List[float]:

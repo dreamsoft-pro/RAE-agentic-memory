@@ -15,9 +15,10 @@ All API modules are accessible:
 - Dashboard
 """
 
-from typing import Optional, Dict, Any, List
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 from uuid import UUID
+
 import structlog
 
 from apps.memory_api.clients.rae_client import RAEClient
@@ -38,7 +39,7 @@ class RAEAPIClient:
         api_key: Optional[str] = None,
         tenant_id: Optional[str] = None,
         project_id: Optional[str] = None,
-        **client_kwargs
+        **client_kwargs,
     ):
         """
         Initialize RAE API client.
@@ -55,7 +56,7 @@ class RAEAPIClient:
             api_key=api_key,
             tenant_id=tenant_id,
             project_id=project_id,
-            **client_kwargs
+            **client_kwargs,
         )
 
         self.tenant_id = tenant_id
@@ -65,7 +66,7 @@ class RAEAPIClient:
             "rae_api_client_initialized",
             base_url=base_url,
             tenant_id=tenant_id,
-            project_id=project_id
+            project_id=project_id,
         )
 
     async def close(self):
@@ -91,7 +92,7 @@ class RAEAPIClient:
         tags: Optional[List[str]] = None,
         metadata: Optional[Dict] = None,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None
+        project_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Create a new memory.
@@ -113,7 +114,7 @@ class RAEAPIClient:
             "content": content,
             "importance": importance,
             "tags": tags or [],
-            "metadata": metadata or {}
+            "metadata": metadata or {},
         }
 
         return await self.client.post("/v1/memories", json_data=data)
@@ -128,7 +129,7 @@ class RAEAPIClient:
         k: int = 10,
         filters: Optional[Dict] = None,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None
+        project_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Search memories.
@@ -147,7 +148,7 @@ class RAEAPIClient:
             "tenant_id": tenant_id or self.tenant_id,
             "project": project_id or self.project_id,
             "query": query,
-            "k": k
+            "k": k,
         }
 
         if filters:
@@ -165,7 +166,7 @@ class RAEAPIClient:
         cluster_id: Optional[str] = None,
         reflection_type: str = "insight",
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None
+        project_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Generate reflection from memories.
@@ -183,7 +184,7 @@ class RAEAPIClient:
         data = {
             "tenant_id": tenant_id or self.tenant_id,
             "project_id": project_id or self.project_id,
-            "reflection_type": reflection_type
+            "reflection_type": reflection_type,
         }
 
         if memory_ids:
@@ -202,13 +203,13 @@ class RAEAPIClient:
         self,
         tenant_id: Optional[str] = None,
         project_id: Optional[str] = None,
-        limit: int = 100
+        limit: int = 100,
     ) -> Dict[str, Any]:
         """List reflections."""
         params = {
             "tenant_id": tenant_id or self.tenant_id,
             "project_id": project_id or self.project_id,
-            "limit": limit
+            "limit": limit,
         }
 
         return await self.client.get("/v1/reflections", params=params)
@@ -221,7 +222,7 @@ class RAEAPIClient:
         self,
         memory_id: UUID,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None
+        project_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Extract semantic nodes from memory.
@@ -237,7 +238,7 @@ class RAEAPIClient:
         data = {
             "tenant_id": tenant_id or self.tenant_id,
             "project_id": project_id or self.project_id,
-            "memory_id": str(memory_id)
+            "memory_id": str(memory_id),
         }
 
         return await self.client.post("/v1/semantic/extract", json_data=data)
@@ -247,7 +248,7 @@ class RAEAPIClient:
         query: str,
         k: int = 10,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None
+        project_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         3-stage semantic search.
@@ -265,7 +266,7 @@ class RAEAPIClient:
             "tenant_id": tenant_id or self.tenant_id,
             "project_id": project_id or self.project_id,
             "query": query,
-            "k": k
+            "k": k,
         }
 
         return await self.client.post("/v1/semantic/search", json_data=data)
@@ -281,7 +282,7 @@ class RAEAPIClient:
         node_type: str,
         properties: Optional[Dict] = None,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None
+        project_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         **DEPRECATED - ENDPOINT DOES NOT EXIST**
@@ -313,7 +314,7 @@ class RAEAPIClient:
         weight: float = 1.0,
         confidence: float = 0.8,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None
+        project_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         **DEPRECATED - ENDPOINT DOES NOT EXIST**
@@ -343,7 +344,7 @@ class RAEAPIClient:
         algorithm: str = "bfs",
         max_depth: int = 3,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None
+        project_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         **DEPRECATED - ENDPOINT DOES NOT EXIST**
@@ -377,7 +378,7 @@ class RAEAPIClient:
         weight_profile: str = "balanced",
         enable_reranking: bool = True,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None
+        project_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Hybrid multi-strategy search.
@@ -399,15 +400,13 @@ class RAEAPIClient:
             "query": query,
             "k": k,
             "weight_profile": weight_profile,
-            "enable_reranking": enable_reranking
+            "enable_reranking": enable_reranking,
         }
 
         return await self.client.post("/v1/search/hybrid", json_data=data)
 
     async def analyze_query(
-        self,
-        query: str,
-        context: Optional[List[str]] = None
+        self, query: str, context: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """
         Analyze query intent.
@@ -419,10 +418,7 @@ class RAEAPIClient:
         Returns:
             Query analysis
         """
-        data = {
-            "query": query,
-            "context": context or []
-        }
+        data = {"query": query, "context": context or []}
 
         return await self.client.post("/v1/search/analyze", json_data=data)
 
@@ -436,7 +432,7 @@ class RAEAPIClient:
         search_results: Dict,
         metrics: Optional[List[str]] = None,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None
+        project_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Evaluate search results."""
         data = {
@@ -444,7 +440,7 @@ class RAEAPIClient:
             "project_id": project_id or self.project_id,
             "relevance_judgments": relevance_judgments,
             "search_results": search_results,
-            "metrics_to_compute": metrics or ["mrr", "ndcg", "precision", "recall"]
+            "metrics_to_compute": metrics or ["mrr", "ndcg", "precision", "recall"],
         }
 
         return await self.client.post("/v1/evaluation/search", json_data=data)
@@ -458,7 +454,7 @@ class RAEAPIClient:
         current_start: datetime,
         current_end: datetime,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None
+        project_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Detect distribution drift."""
         data = {
@@ -469,7 +465,7 @@ class RAEAPIClient:
             "baseline_start": baseline_start.isoformat(),
             "baseline_end": baseline_end.isoformat(),
             "current_start": current_start.isoformat(),
-            "current_end": current_end.isoformat()
+            "current_end": current_end.isoformat(),
         }
 
         return await self.client.post("/v1/evaluation/drift/detect", json_data=data)
@@ -487,7 +483,7 @@ class RAEAPIClient:
         priority: int = 5,
         tenant_id: Optional[str] = None,
         project_id: Optional[str] = None,
-        created_by: str = "api_client"
+        created_by: str = "api_client",
     ) -> Dict[str, Any]:
         """Create event trigger."""
         data = {
@@ -496,11 +492,11 @@ class RAEAPIClient:
             "rule_name": rule_name,
             "condition": {
                 "event_types": event_types,
-                "condition_group": condition_group
+                "condition_group": condition_group,
             },
             "actions": actions,
             "priority": priority,
-            "created_by": created_by
+            "created_by": created_by,
         }
 
         return await self.client.post("/v1/triggers/create", json_data=data)
@@ -511,7 +507,7 @@ class RAEAPIClient:
         payload: Dict,
         tags: Optional[List[str]] = None,
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None
+        project_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Emit custom event."""
         data = {
@@ -519,7 +515,7 @@ class RAEAPIClient:
             "project_id": project_id or self.project_id,
             "event_type": event_type,
             "payload": payload,
-            "tags": tags or []
+            "tags": tags or [],
         }
 
         return await self.client.post("/v1/triggers/events/emit", json_data=data)
@@ -528,13 +524,13 @@ class RAEAPIClient:
         self,
         tenant_id: Optional[str] = None,
         project_id: Optional[str] = None,
-        limit: int = 100
+        limit: int = 100,
     ) -> Dict[str, Any]:
         """List triggers."""
         params = {
             "tenant_id": tenant_id or self.tenant_id,
             "project_id": project_id or self.project_id,
-            "limit": limit
+            "limit": limit,
         }
 
         return await self.client.get("/v1/triggers/list", params=params)
@@ -547,13 +543,13 @@ class RAEAPIClient:
         self,
         period: str = "last_24h",
         tenant_id: Optional[str] = None,
-        project_id: Optional[str] = None
+        project_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Get dashboard metrics."""
         data = {
             "tenant_id": tenant_id or self.tenant_id,
             "project_id": project_id or self.project_id,
-            "period": period
+            "period": period,
         }
 
         return await self.client.post("/v1/dashboard/metrics", json_data=data)
@@ -563,14 +559,14 @@ class RAEAPIClient:
         visualization_type: str,
         tenant_id: Optional[str] = None,
         project_id: Optional[str] = None,
-        **kwargs
+        **kwargs,
     ) -> Dict[str, Any]:
         """Get visualization data."""
         data = {
             "tenant_id": tenant_id or self.tenant_id,
             "project_id": project_id or self.project_id,
             "visualization_type": visualization_type,
-            **kwargs
+            **kwargs,
         }
 
         return await self.client.post("/v1/dashboard/visualizations", json_data=data)
@@ -579,13 +575,13 @@ class RAEAPIClient:
         self,
         tenant_id: Optional[str] = None,
         project_id: Optional[str] = None,
-        include_sub_components: bool = True
+        include_sub_components: bool = True,
     ) -> Dict[str, Any]:
         """Get system health."""
         data = {
             "tenant_id": tenant_id or self.tenant_id,
             "project_id": project_id or self.project_id,
-            "include_sub_components": include_sub_components
+            "include_sub_components": include_sub_components,
         }
 
         return await self.client.post("/v1/dashboard/health", json_data=data)

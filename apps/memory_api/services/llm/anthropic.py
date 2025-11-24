@@ -1,11 +1,13 @@
 from typing import Type
-from pydantic import BaseModel
-from anthropic import AsyncAnthropic
-from tenacity import retry, stop_after_attempt, wait_exponential
-import instructor
 
-from apps.memory_api.services.llm.base import LLMProvider, LLMResult, LLMResultUsage
+import instructor
+from anthropic import AsyncAnthropic
+from pydantic import BaseModel
+from tenacity import retry, stop_after_attempt, wait_exponential
+
 from apps.memory_api.config import settings
+from apps.memory_api.services.llm.base import (LLMProvider, LLMResult,
+                                               LLMResultUsage)
 
 
 class AnthropicProvider(LLMProvider):
@@ -19,7 +21,9 @@ class AnthropicProvider(LLMProvider):
             raise ValueError("ANTHROPIC_API_KEY is not set.")
         self.client = instructor.patch(AsyncAnthropic(api_key=key))
 
-    @retry(wait=wait_exponential(multiplier=1, min=4, max=10), stop=stop_after_attempt(3))
+    @retry(
+        wait=wait_exponential(multiplier=1, min=4, max=10), stop=stop_after_attempt(3)
+    )
     async def generate(self, *, system: str, prompt: str, model: str) -> LLMResult:
         """
         Generates content using an Anthropic Claude model.
@@ -50,7 +54,9 @@ class AnthropicProvider(LLMProvider):
             print(f"Anthropic API call failed: {e}")
             raise
 
-    @retry(wait=wait_exponential(multiplier=1, min=4, max=10), stop=stop_after_attempt(3))
+    @retry(
+        wait=wait_exponential(multiplier=1, min=4, max=10), stop=stop_after_attempt(3)
+    )
     async def generate_structured(
         self, *, system: str, prompt: str, model: str, response_model: Type[BaseModel]
     ) -> BaseModel:

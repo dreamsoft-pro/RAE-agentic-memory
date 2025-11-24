@@ -9,33 +9,43 @@ This service provides comprehensive budget management including:
 - Integration with cost_logs for audit trail
 """
 
+from datetime import date, datetime
+from typing import Optional
+
 import asyncpg
-from datetime import datetime, date
+import structlog
 from fastapi import HTTPException
 from pydantic import BaseModel, Field
-from typing import Optional
-import structlog
 
 logger = structlog.get_logger(__name__)
 
 
 class Budget(BaseModel):
     """Enhanced Budget model with token tracking"""
+
     id: str
     tenant_id: str
     project_id: str
 
     # USD Limits
-    monthly_limit_usd: Optional[float] = Field(None, description="Monthly USD limit (NULL = unlimited)")
-    daily_limit_usd: Optional[float] = Field(None, description="Daily USD limit (NULL = unlimited)")
+    monthly_limit_usd: Optional[float] = Field(
+        None, description="Monthly USD limit (NULL = unlimited)"
+    )
+    daily_limit_usd: Optional[float] = Field(
+        None, description="Daily USD limit (NULL = unlimited)"
+    )
 
     # USD Usage
     monthly_usage_usd: float = Field(0.0, ge=0, description="Current monthly USD usage")
     daily_usage_usd: float = Field(0.0, ge=0, description="Current daily USD usage")
 
     # Token Limits (NEW)
-    monthly_tokens_limit: Optional[int] = Field(None, description="Monthly token limit (NULL = unlimited)")
-    daily_tokens_limit: Optional[int] = Field(None, description="Daily token limit (NULL = unlimited)")
+    monthly_tokens_limit: Optional[int] = Field(
+        None, description="Monthly token limit (NULL = unlimited)"
+    )
+    daily_tokens_limit: Optional[int] = Field(
+        None, description="Daily token limit (NULL = unlimited)"
+    )
 
     # Token Usage (NEW)
     monthly_tokens_used: int = Field(0, ge=0, description="Current monthly tokens used")
@@ -54,6 +64,7 @@ class Budget(BaseModel):
 
 class BudgetUsageIncrement(BaseModel):
     """Data model for incrementing budget usage"""
+
     cost_usd: float = Field(..., ge=0, description="Cost in USD to increment")
     input_tokens: int = Field(..., ge=0, description="Number of input tokens")
     output_tokens: int = Field(..., ge=0, description="Number of output tokens")
@@ -64,7 +75,9 @@ class BudgetUsageIncrement(BaseModel):
         return self.input_tokens + self.output_tokens
 
 
-async def get_or_create_budget(pool: asyncpg.Pool, tenant_id: str, project_id: str) -> Budget:
+async def get_or_create_budget(
+    pool: asyncpg.Pool, tenant_id: str, project_id: str
+) -> Budget:
     """
     Retrieves the budget for a tenant/project, creating a new one with default limits if it doesn't exist.
 
@@ -88,7 +101,8 @@ async def get_or_create_budget(pool: asyncpg.Pool, tenant_id: str, project_id: s
         SELECT * FROM budgets
         WHERE tenant_id = $1 AND project_id = $2
         """,
-        tenant_id, project_id
+        tenant_id,
+        project_id,
     )
 
     if not record:
@@ -111,19 +125,20 @@ async def get_or_create_budget(pool: asyncpg.Pool, tenant_id: str, project_id: s
             None,  # No daily USD limit by default
             None,  # No monthly USD limit by default
             None,  # No daily token limit by default
-            None   # No monthly token limit by default
+            None,  # No monthly token limit by default
         )
-        logger.info("budget_created", tenant_id=tenant_id, project_id=project_id, budget_id=record['id'])
+        logger.info(
+            "budget_created",
+            tenant_id=tenant_id,
+            project_id=project_id,
+            budget_id=record["id"],
+        )
 
     return Budget(**dict(record))
 
 
 async def check_budget(
-    pool: asyncpg.Pool,
-    tenant_id: str,
-    project_id: str,
-    cost_usd: float,
-    tokens: int
+    pool: asyncpg.Pool, tenant_id: str, project_id: str, cost_usd: float, tokens: int
 ) -> None:
     """
     Checks if a new cost and token usage is within the budget.
@@ -148,7 +163,7 @@ async def check_budget(
         tenant_id=tenant_id,
         project_id=project_id,
         cost_usd=cost_usd,
-        tokens=tokens
+        tokens=tokens,
     )
 
     budget = await get_or_create_budget(pool, tenant_id, project_id)
@@ -156,13 +171,19 @@ async def check_budget(
 
     # Automatic reset handled by database trigger, but we double-check here for safety
     if budget.last_daily_reset.date() < now.date():
-        logger.info("resetting_daily_counters", tenant_id=tenant_id, project_id=project_id)
+        logger.info(
+            "resetting_daily_counters", tenant_id=tenant_id, project_id=project_id
+        )
         budget.daily_usage_usd = 0.0
         budget.daily_tokens_used = 0
 
-    if (budget.last_monthly_reset.year < now.year) or \
-       (budget.last_monthly_reset.year == now.year and budget.last_monthly_reset.month < now.month):
-        logger.info("resetting_monthly_counters", tenant_id=tenant_id, project_id=project_id)
+    if (budget.last_monthly_reset.year < now.year) or (
+        budget.last_monthly_reset.year == now.year
+        and budget.last_monthly_reset.month < now.month
+    ):
+        logger.info(
+            "resetting_monthly_counters", tenant_id=tenant_id, project_id=project_id
+        )
         budget.monthly_usage_usd = 0.0
         budget.monthly_tokens_used = 0
 
@@ -177,7 +198,7 @@ async def check_budget(
                 current_usage=budget.daily_usage_usd,
                 limit=budget.daily_limit_usd,
                 requested_cost=cost_usd,
-                projected=projected_daily_usd
+                projected=projected_daily_usd,
             )
             raise HTTPException(
                 status_code=402,  # Payment Required
@@ -188,8 +209,10 @@ async def check_budget(
                     "daily_limit_usd": float(budget.daily_limit_usd),
                     "requested_cost_usd": float(cost_usd),
                     "projected_usage_usd": float(projected_daily_usd),
-                    "available_usd": float(budget.daily_limit_usd - budget.daily_usage_usd)
-                }
+                    "available_usd": float(
+                        budget.daily_limit_usd - budget.daily_usage_usd
+                    ),
+                },
             )
 
     if budget.monthly_limit_usd is not None:
@@ -202,7 +225,7 @@ async def check_budget(
                 current_usage=budget.monthly_usage_usd,
                 limit=budget.monthly_limit_usd,
                 requested_cost=cost_usd,
-                projected=projected_monthly_usd
+                projected=projected_monthly_usd,
             )
             raise HTTPException(
                 status_code=402,
@@ -213,8 +236,10 @@ async def check_budget(
                     "monthly_limit_usd": float(budget.monthly_limit_usd),
                     "requested_cost_usd": float(cost_usd),
                     "projected_usage_usd": float(projected_monthly_usd),
-                    "available_usd": float(budget.monthly_limit_usd - budget.monthly_usage_usd)
-                }
+                    "available_usd": float(
+                        budget.monthly_limit_usd - budget.monthly_usage_usd
+                    ),
+                },
             )
 
     # Check Token limits (NEW)
@@ -228,7 +253,7 @@ async def check_budget(
                 current_usage=budget.daily_tokens_used,
                 limit=budget.daily_tokens_limit,
                 requested_tokens=tokens,
-                projected=projected_daily_tokens
+                projected=projected_daily_tokens,
             )
             raise HTTPException(
                 status_code=402,
@@ -239,8 +264,9 @@ async def check_budget(
                     "daily_tokens_limit": budget.daily_tokens_limit,
                     "requested_tokens": tokens,
                     "projected_tokens_used": projected_daily_tokens,
-                    "available_tokens": budget.daily_tokens_limit - budget.daily_tokens_used
-                }
+                    "available_tokens": budget.daily_tokens_limit
+                    - budget.daily_tokens_used,
+                },
             )
 
     if budget.monthly_tokens_limit is not None:
@@ -253,7 +279,7 @@ async def check_budget(
                 current_usage=budget.monthly_tokens_used,
                 limit=budget.monthly_tokens_limit,
                 requested_tokens=tokens,
-                projected=projected_monthly_tokens
+                projected=projected_monthly_tokens,
             )
             raise HTTPException(
                 status_code=402,
@@ -264,8 +290,9 @@ async def check_budget(
                     "monthly_tokens_limit": budget.monthly_tokens_limit,
                     "requested_tokens": tokens,
                     "projected_tokens_used": projected_monthly_tokens,
-                    "available_tokens": budget.monthly_tokens_limit - budget.monthly_tokens_used
-                }
+                    "available_tokens": budget.monthly_tokens_limit
+                    - budget.monthly_tokens_used,
+                },
             )
 
     logger.info(
@@ -273,15 +300,12 @@ async def check_budget(
         tenant_id=tenant_id,
         project_id=project_id,
         cost_usd=cost_usd,
-        tokens=tokens
+        tokens=tokens,
     )
 
 
 async def increment_usage(
-    pool: asyncpg.Pool,
-    tenant_id: str,
-    project_id: str,
-    usage: BudgetUsageIncrement
+    pool: asyncpg.Pool, tenant_id: str, project_id: str, usage: BudgetUsageIncrement
 ) -> None:
     """
     Increments the daily and monthly usage for both USD and tokens.
@@ -304,7 +328,7 @@ async def increment_usage(
         cost_usd=usage.cost_usd,
         input_tokens=usage.input_tokens,
         output_tokens=usage.output_tokens,
-        total_tokens=usage.total_tokens
+        total_tokens=usage.total_tokens,
     )
 
     await pool.execute(
@@ -319,7 +343,10 @@ async def increment_usage(
             last_token_update_at = NOW()
         WHERE tenant_id = $1 AND project_id = $2
         """,
-        tenant_id, project_id, usage.cost_usd, usage.total_tokens
+        tenant_id,
+        project_id,
+        usage.cost_usd,
+        usage.total_tokens,
     )
 
     logger.info(
@@ -327,11 +354,13 @@ async def increment_usage(
         tenant_id=tenant_id,
         project_id=project_id,
         cost_usd=usage.cost_usd,
-        tokens=usage.total_tokens
+        tokens=usage.total_tokens,
     )
 
 
-async def get_budget_status(pool: asyncpg.Pool, tenant_id: str, project_id: str) -> dict:
+async def get_budget_status(
+    pool: asyncpg.Pool, tenant_id: str, project_id: str
+) -> dict:
     """
     Returns current budget status including usage percentages.
 
@@ -350,46 +379,83 @@ async def get_budget_status(pool: asyncpg.Pool, tenant_id: str, project_id: str)
     status = {
         "tenant_id": budget.tenant_id,
         "project_id": budget.project_id,
-
         # USD Status
         "usd": {
             "daily": {
                 "usage": float(budget.daily_usage_usd),
-                "limit": float(budget.daily_limit_usd) if budget.daily_limit_usd else None,
-                "percentage": (budget.daily_usage_usd / budget.daily_limit_usd * 100) if budget.daily_limit_usd else 0,
-                "available": float(budget.daily_limit_usd - budget.daily_usage_usd) if budget.daily_limit_usd else None
+                "limit": (
+                    float(budget.daily_limit_usd) if budget.daily_limit_usd else None
+                ),
+                "percentage": (
+                    (budget.daily_usage_usd / budget.daily_limit_usd * 100)
+                    if budget.daily_limit_usd
+                    else 0
+                ),
+                "available": (
+                    float(budget.daily_limit_usd - budget.daily_usage_usd)
+                    if budget.daily_limit_usd
+                    else None
+                ),
             },
             "monthly": {
                 "usage": float(budget.monthly_usage_usd),
-                "limit": float(budget.monthly_limit_usd) if budget.monthly_limit_usd else None,
-                "percentage": (budget.monthly_usage_usd / budget.monthly_limit_usd * 100) if budget.monthly_limit_usd else 0,
-                "available": float(budget.monthly_limit_usd - budget.monthly_usage_usd) if budget.monthly_limit_usd else None
-            }
+                "limit": (
+                    float(budget.monthly_limit_usd)
+                    if budget.monthly_limit_usd
+                    else None
+                ),
+                "percentage": (
+                    (budget.monthly_usage_usd / budget.monthly_limit_usd * 100)
+                    if budget.monthly_limit_usd
+                    else 0
+                ),
+                "available": (
+                    float(budget.monthly_limit_usd - budget.monthly_usage_usd)
+                    if budget.monthly_limit_usd
+                    else None
+                ),
+            },
         },
-
         # Token Status
         "tokens": {
             "daily": {
                 "usage": budget.daily_tokens_used,
                 "limit": budget.daily_tokens_limit,
-                "percentage": (budget.daily_tokens_used / budget.daily_tokens_limit * 100) if budget.daily_tokens_limit else 0,
-                "available": budget.daily_tokens_limit - budget.daily_tokens_used if budget.daily_tokens_limit else None
+                "percentage": (
+                    (budget.daily_tokens_used / budget.daily_tokens_limit * 100)
+                    if budget.daily_tokens_limit
+                    else 0
+                ),
+                "available": (
+                    budget.daily_tokens_limit - budget.daily_tokens_used
+                    if budget.daily_tokens_limit
+                    else None
+                ),
             },
             "monthly": {
                 "usage": budget.monthly_tokens_used,
                 "limit": budget.monthly_tokens_limit,
-                "percentage": (budget.monthly_tokens_used / budget.monthly_tokens_limit * 100) if budget.monthly_tokens_limit else 0,
-                "available": budget.monthly_tokens_limit - budget.monthly_tokens_used if budget.monthly_tokens_limit else None
-            }
+                "percentage": (
+                    (budget.monthly_tokens_used / budget.monthly_tokens_limit * 100)
+                    if budget.monthly_tokens_limit
+                    else 0
+                ),
+                "available": (
+                    budget.monthly_tokens_limit - budget.monthly_tokens_used
+                    if budget.monthly_tokens_limit
+                    else None
+                ),
+            },
         },
-
         # Metadata
         "last_usage_at": budget.last_usage_at.isoformat(),
         "last_daily_reset": budget.last_daily_reset.isoformat(),
         "last_monthly_reset": budget.last_monthly_reset.isoformat(),
     }
 
-    logger.info("get_budget_status", tenant_id=tenant_id, project_id=project_id, status=status)
+    logger.info(
+        "get_budget_status", tenant_id=tenant_id, project_id=project_id, status=status
+    )
     return status
 
 
@@ -400,7 +466,7 @@ async def set_budget_limits(
     daily_limit_usd: Optional[float] = None,
     monthly_limit_usd: Optional[float] = None,
     daily_tokens_limit: Optional[int] = None,
-    monthly_tokens_limit: Optional[int] = None
+    monthly_tokens_limit: Optional[int] = None,
 ) -> Budget:
     """
     Sets or updates budget limits for a tenant/project.
@@ -426,7 +492,7 @@ async def set_budget_limits(
         daily_limit_usd=daily_limit_usd,
         monthly_limit_usd=monthly_limit_usd,
         daily_tokens_limit=daily_tokens_limit,
-        monthly_tokens_limit=monthly_tokens_limit
+        monthly_tokens_limit=monthly_tokens_limit,
     )
 
     # Ensure budget exists
@@ -444,9 +510,12 @@ async def set_budget_limits(
         WHERE tenant_id = $1 AND project_id = $2
         RETURNING *
         """,
-        tenant_id, project_id,
-        daily_limit_usd, monthly_limit_usd,
-        daily_tokens_limit, monthly_tokens_limit
+        tenant_id,
+        project_id,
+        daily_limit_usd,
+        monthly_limit_usd,
+        daily_tokens_limit,
+        monthly_tokens_limit,
     )
 
     logger.info("budget_limits_updated", tenant_id=tenant_id, project_id=project_id)

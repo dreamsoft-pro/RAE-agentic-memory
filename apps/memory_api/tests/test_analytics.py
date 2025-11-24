@@ -1,12 +1,16 @@
-import pytest
+from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
-from datetime import datetime, timedelta
+
+import pytest
+
 from apps.memory_api.services.analytics import AnalyticsService
+
 
 @pytest.fixture
 def analytics_service(mock_pool):
     return AnalyticsService(db=mock_pool, redis=MagicMock(), vector_store=MagicMock())
+
 
 @pytest.mark.asyncio
 async def test_get_tenant_stats_cached(analytics_service):
@@ -19,6 +23,7 @@ async def test_get_tenant_stats_cached(analytics_service):
     stats = await analytics_service.get_tenant_stats(tenant_id, period_days)
     assert stats == {"cached": True}
     analytics_service._get_from_cache.assert_called_once()
+
 
 @pytest.mark.asyncio
 async def test_get_tenant_stats_uncached(analytics_service):
@@ -47,6 +52,7 @@ async def test_get_tenant_stats_uncached(analytics_service):
 
     analytics_service._set_cache.assert_called_once()
 
+
 @pytest.mark.asyncio
 async def test_get_memory_stats(analytics_service):
     tenant_id = uuid4()
@@ -54,12 +60,14 @@ async def test_get_memory_stats(analytics_service):
     assert "total" in stats
     assert "by_layer" in stats
 
+
 @pytest.mark.asyncio
 async def test_get_query_stats(analytics_service):
     tenant_id = uuid4()
     stats = await analytics_service._get_query_stats(tenant_id, 30)
     assert "total_queries" in stats
     assert "avg_latency_ms" in stats
+
 
 @pytest.mark.asyncio
 async def test_get_graph_stats(analytics_service):
@@ -73,11 +81,13 @@ async def test_get_graph_stats(analytics_service):
     assert stats["edges"] == 20
     assert stats["avg_connections_per_node"] == 2.0
 
+
 @pytest.mark.asyncio
 async def test_get_reflection_stats(analytics_service):
     tenant_id = uuid4()
     stats = await analytics_service._get_reflection_stats(tenant_id, 30)
     assert "total_generated" in stats
+
 
 @pytest.mark.asyncio
 async def test_get_api_usage_stats(analytics_service):
@@ -86,17 +96,20 @@ async def test_get_api_usage_stats(analytics_service):
     assert "total_requests" in stats
     assert "by_endpoint" in stats
 
+
 @pytest.mark.asyncio
 async def test_get_performance_stats(analytics_service):
     tenant_id = uuid4()
     stats = await analytics_service._get_performance_stats(tenant_id, 30)
     assert "avg_response_time_ms" in stats
 
+
 @pytest.mark.asyncio
 async def test_get_cost_stats(analytics_service):
     tenant_id = uuid4()
     stats = await analytics_service._get_cost_stats(tenant_id, 30)
     assert "estimated_llm_cost_usd" in stats
+
 
 @pytest.mark.asyncio
 async def test_calculate_graph_density(analytics_service):
@@ -110,6 +123,7 @@ async def test_calculate_graph_density(analytics_service):
     assert await analytics_service._calculate_graph_density(tenant_id, 3, 3) == 1.0
     # 3 nodes, 0 edges -> 0.0
     assert await analytics_service._calculate_graph_density(tenant_id, 3, 0) == 0.0
+
 
 @pytest.mark.asyncio
 async def test_cache_operations(analytics_service):
@@ -127,6 +141,7 @@ async def test_cache_operations(analytics_service):
     await analytics_service._set_cache("key", {"a": 1}, 300)
     assert analytics_service._cache["key"] == {"a": 1}
     assert await analytics_service._get_from_cache("key") == {"a": 1}
+
 
 @pytest.mark.asyncio
 async def test_generate_report(analytics_service):
@@ -149,6 +164,7 @@ async def test_generate_report(analytics_service):
     with pytest.raises(ValueError):
         await analytics_service.generate_report(tenant_id, format="invalid")
 
+
 @pytest.mark.asyncio
 async def test_get_real_time_metrics(analytics_service):
     tenant_id = uuid4()
@@ -156,11 +172,13 @@ async def test_get_real_time_metrics(analytics_service):
     assert metrics["tenant_id"] == str(tenant_id)
     assert "current_active_requests" in metrics
 
+
 @pytest.mark.asyncio
 async def test_get_usage_alerts(analytics_service):
     tenant_id = uuid4()
     alerts = await analytics_service.get_usage_alerts(tenant_id)
     assert isinstance(alerts, list)
+
 
 @pytest.mark.asyncio
 async def test_mock_db_methods(analytics_service):

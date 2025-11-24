@@ -5,10 +5,13 @@ Provides API key authentication and optional JWT token verification.
 """
 
 from typing import Optional
-from fastapi import Security, HTTPException, status, Request
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials, APIKeyHeader
-from apps.memory_api.config import settings
+
 import structlog
+from fastapi import HTTPException, Request, Security, status
+from fastapi.security import (APIKeyHeader, HTTPAuthorizationCredentials,
+                              HTTPBearer)
+
+from apps.memory_api.config import settings
 
 logger = structlog.get_logger(__name__)
 
@@ -41,15 +44,14 @@ async def verify_api_key(
         logger.warning("missing_api_key")
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="API key is required. Please provide X-API-Key header."
+            detail="API key is required. Please provide X-API-Key header.",
         )
 
     # Verify API key
     if api_key != settings.API_KEY:
         logger.warning("invalid_api_key", provided_key=api_key[:10] + "...")
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Invalid API key"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Invalid API key"
         )
 
     return api_key
@@ -108,7 +110,7 @@ async def verify_token(
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Authentication required. Provide either Bearer token or X-API-Key header.",
-        headers={"WWW-Authenticate": "Bearer"}
+        headers={"WWW-Authenticate": "Bearer"},
     )
 
 
@@ -129,8 +131,7 @@ async def get_current_user(request: Request) -> dict:
 
 
 async def check_tenant_access(
-    tenant_id: str,
-    user: dict = Security(get_current_user)
+    tenant_id: str, user: dict = Security(get_current_user)
 ) -> bool:
     """
     Check if user has access to specific tenant.
@@ -150,8 +151,7 @@ async def check_tenant_access(
 
     if not user.get("authenticated"):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied to tenant"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to tenant"
         )
 
     return True

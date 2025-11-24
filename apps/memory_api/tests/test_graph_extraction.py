@@ -4,34 +4,35 @@ Tests for Graph Extraction Service
 Enterprise-grade test suite for knowledge graph extraction from episodic memories.
 """
 
-import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
-from apps.memory_api.services.graph_extraction import (
-    GraphExtractionService,
-    GraphTriple,
-    GraphExtractionResult,
-    _normalize_entity_name
-)
+import pytest
+
+from apps.memory_api.services.graph_extraction import (GraphExtractionResult,
+                                                       GraphExtractionService,
+                                                       GraphTriple,
+                                                       _normalize_entity_name)
 
 
 @pytest.fixture
 def mock_llm_provider():
     """Mock LLM provider."""
     provider = Mock()
-    provider.generate_structured = AsyncMock(return_value=GraphExtractionResult(
-        triples=[
-            GraphTriple(
-                source="Module A",
-                relation="DEPENDS_ON",
-                target="Module B",
-                confidence=0.95
-            )
-        ],
-        extracted_entities=["Module A", "Module B"],
-        statistics={}
-    ))
+    provider.generate_structured = AsyncMock(
+        return_value=GraphExtractionResult(
+            triples=[
+                GraphTriple(
+                    source="Module A",
+                    relation="DEPENDS_ON",
+                    target="Module B",
+                    confidence=0.95,
+                )
+            ],
+            extracted_entities=["Module A", "Module B"],
+            statistics={},
+        )
+    )
     return provider
 
 
@@ -39,16 +40,15 @@ def mock_llm_provider():
 def extraction_service(mock_pool, mock_llm_provider):
     """Create extraction service with mocks (using DI pattern)."""
     # Create mock repositories
-    from apps.memory_api.repositories.memory_repository import MemoryRepository
     from apps.memory_api.repositories.graph_repository import GraphRepository
+    from apps.memory_api.repositories.memory_repository import MemoryRepository
 
     mock_memory_repo = Mock(spec=MemoryRepository)
     mock_graph_repo = Mock(spec=GraphRepository)
 
     # Create service with injected repositories
     service = GraphExtractionService(
-        memory_repo=mock_memory_repo,
-        graph_repo=mock_graph_repo
+        memory_repo=mock_memory_repo, graph_repo=mock_graph_repo
     )
     service.llm_provider = mock_llm_provider
     return service
@@ -60,10 +60,7 @@ class TestGraphTriple:
     def test_triple_creation(self):
         """Test creating a valid triple."""
         triple = GraphTriple(
-            source="Entity1",
-            relation="RELATES_TO",
-            target="Entity2",
-            confidence=0.9
+            source="Entity1", relation="RELATES_TO", target="Entity2", confidence=0.9
         )
 
         # Entity names are normalized to lowercase
@@ -96,9 +93,7 @@ class TestGraphTriple:
     def test_triple_normalization_integration(self):
         """Test normalization via GraphTriple validator."""
         triple = GraphTriple(
-            source="  Auth-Service ",
-            relation="USES",
-            target="Docker_Container "
+            source="  Auth-Service ", relation="USES", target="Docker_Container "
         )
 
         assert triple.source == "auth service"
@@ -106,11 +101,7 @@ class TestGraphTriple:
 
     def test_relation_normalization(self):
         """Test that relation is normalized to uppercase."""
-        triple = GraphTriple(
-            source="A",
-            relation="depends on",
-            target="B"
-        )
+        triple = GraphTriple(source="A", relation="depends on", target="B")
 
         assert triple.relation == "DEPENDS_ON"
 
@@ -155,9 +146,7 @@ class TestGraphExtractionResult:
         """Test extraction result with data."""
         triple = GraphTriple(source="A", relation="R", target="B")
         result = GraphExtractionResult(
-            triples=[triple],
-            extracted_entities=["A", "B"],
-            statistics={"count": 1}
+            triples=[triple], extracted_entities=["A", "B"], statistics={"count": 1}
         )
 
         assert len(result.triples) == 1
@@ -171,15 +160,16 @@ class TestGraphExtractionService:
 
     async def test_service_initialization(self, mock_pool, mock_llm_provider):
         """Test service initialization with DI pattern."""
-        from apps.memory_api.repositories.memory_repository import MemoryRepository
-        from apps.memory_api.repositories.graph_repository import GraphRepository
+        from apps.memory_api.repositories.graph_repository import \
+            GraphRepository
+        from apps.memory_api.repositories.memory_repository import \
+            MemoryRepository
 
         mock_memory_repo = Mock(spec=MemoryRepository)
         mock_graph_repo = Mock(spec=GraphRepository)
 
         service = GraphExtractionService(
-            memory_repo=mock_memory_repo,
-            graph_repo=mock_graph_repo
+            memory_repo=mock_memory_repo, graph_repo=mock_graph_repo
         )
         service.llm_provider = mock_llm_provider
 
@@ -190,17 +180,21 @@ class TestGraphExtractionService:
     async def test_fetch_episodic_memories(self, extraction_service, mock_pool):
         """Test fetching episodic memories via repository."""
         # Mock the repository method instead of direct DB access
-        extraction_service.memory_repo.get_episodic_memories = AsyncMock(return_value=[
-            {
-                "id": "mem1",
-                "content": "Test memory",
-                "created_at": datetime.now(),
-                "tags": ["tag1"],
-                "source": "test"
-            }
-        ])
+        extraction_service.memory_repo.get_episodic_memories = AsyncMock(
+            return_value=[
+                {
+                    "id": "mem1",
+                    "content": "Test memory",
+                    "created_at": datetime.now(),
+                    "tags": ["tag1"],
+                    "source": "test",
+                }
+            ]
+        )
 
-        memories = await extraction_service._fetch_episodic_memories("proj1", "tenant1", 10)
+        memories = await extraction_service._fetch_episodic_memories(
+            "proj1", "tenant1", 10
+        )
 
         assert len(memories) == 1
         assert memories[0]["content"] == "Test memory"
@@ -213,15 +207,15 @@ class TestGraphExtractionService:
                 "content": "Memory 1",
                 "tags": ["tag1"],
                 "source": "test",
-                "created_at": datetime(2024, 1, 1)
+                "created_at": datetime(2024, 1, 1),
             },
             {
                 "id": "2",
                 "content": "Memory 2",
                 "tags": [],
                 "source": "test2",
-                "created_at": datetime(2024, 1, 2)
-            }
+                "created_at": datetime(2024, 1, 2),
+            },
         ]
 
         formatted = extraction_service._format_memories(memories)
@@ -234,12 +228,12 @@ class TestGraphExtractionService:
     async def test_extract_knowledge_graph_empty(self, extraction_service, mock_pool):
         """Test extraction with no memories."""
         # Mock repository to return no memories
-        extraction_service.memory_repo.get_episodic_memories = AsyncMock(return_value=[])
+        extraction_service.memory_repo.get_episodic_memories = AsyncMock(
+            return_value=[]
+        )
 
         result = await extraction_service.extract_knowledge_graph(
-            project_id="proj1",
-            tenant_id="tenant1",
-            limit=10
+            project_id="proj1", tenant_id="tenant1", limit=10
         )
 
         # Verify result structure matches actual GraphExtractionResult contract
@@ -252,21 +246,20 @@ class TestGraphExtractionService:
     async def test_extract_knowledge_graph_success(self, extraction_service, mock_pool):
         """Test successful graph extraction."""
         # Mock repository to return memories
-        extraction_service.memory_repo.get_episodic_memories = AsyncMock(return_value=[
-            {
-                "id": "mem1",
-                "content": "Module A depends on Module B",
-                "created_at": datetime.now(),
-                "tags": ["dependency"],
-                "source": "code_analysis"
-            }
-        ])
+        extraction_service.memory_repo.get_episodic_memories = AsyncMock(
+            return_value=[
+                {
+                    "id": "mem1",
+                    "content": "Module A depends on Module B",
+                    "created_at": datetime.now(),
+                    "tags": ["dependency"],
+                    "source": "code_analysis",
+                }
+            ]
+        )
 
         result = await extraction_service.extract_knowledge_graph(
-            project_id="proj1",
-            tenant_id="tenant1",
-            limit=10,
-            min_confidence=0.5
+            project_id="proj1", tenant_id="tenant1", limit=10, min_confidence=0.5
         )
 
         assert result.statistics["memories_processed"] == 1
@@ -276,25 +269,32 @@ class TestGraphExtractionService:
     async def test_confidence_filtering(self, extraction_service, mock_pool):
         """Test filtering triples by confidence threshold."""
         # Mock LLM to return triples with varying confidence
-        extraction_service.llm_provider.generate_structured = AsyncMock(return_value=GraphExtractionResult(
-            triples=[
-                GraphTriple(source="A", relation="R1", target="B", confidence=0.9),
-                GraphTriple(source="C", relation="R2", target="D", confidence=0.3),
-                GraphTriple(source="E", relation="R3", target="F", confidence=0.7)
-            ],
-            extracted_entities=["A", "B", "C", "D", "E", "F"]
-        ))
+        extraction_service.llm_provider.generate_structured = AsyncMock(
+            return_value=GraphExtractionResult(
+                triples=[
+                    GraphTriple(source="A", relation="R1", target="B", confidence=0.9),
+                    GraphTriple(source="C", relation="R2", target="D", confidence=0.3),
+                    GraphTriple(source="E", relation="R3", target="F", confidence=0.7),
+                ],
+                extracted_entities=["A", "B", "C", "D", "E", "F"],
+            )
+        )
 
         # Mock memories
-        mock_pool._test_conn.fetch = AsyncMock(return_value=[
-            {"id": "1", "content": "Test", "created_at": datetime.now(), "tags": [], "source": "test"}
-        ])
+        mock_pool._test_conn.fetch = AsyncMock(
+            return_value=[
+                {
+                    "id": "1",
+                    "content": "Test",
+                    "created_at": datetime.now(),
+                    "tags": [],
+                    "source": "test",
+                }
+            ]
+        )
 
         result = await extraction_service.extract_knowledge_graph(
-            project_id="proj1",
-            tenant_id="tenant1",
-            limit=10,
-            min_confidence=0.5
+            project_id="proj1", tenant_id="tenant1", limit=10, min_confidence=0.5
         )
 
         # Should only include triples with confidence >= 0.5
@@ -305,19 +305,16 @@ class TestGraphExtractionService:
         """Test storing extracted triples via repository."""
         triples = [
             GraphTriple(source="A", relation="DEPENDS_ON", target="B", confidence=0.9),
-            GraphTriple(source="B", relation="USES", target="C", confidence=0.8)
+            GraphTriple(source="B", relation="USES", target="C", confidence=0.8),
         ]
 
         # Mock repository operation
-        extraction_service.graph_repo.store_graph_triples = AsyncMock(return_value={
-            "nodes_created": 3,
-            "edges_created": 2
-        })
+        extraction_service.graph_repo.store_graph_triples = AsyncMock(
+            return_value={"nodes_created": 3, "edges_created": 2}
+        )
 
         result = await extraction_service.store_graph_triples(
-            triples=triples,
-            project_id="proj1",
-            tenant_id="tenant1"
+            triples=triples, project_id="proj1", tenant_id="tenant1"
         )
 
         assert result["nodes_created"] >= 0
@@ -326,17 +323,26 @@ class TestGraphExtractionService:
     async def test_error_handling(self, extraction_service, mock_pool):
         """Test error handling in extraction."""
         # Make LLM fail
-        extraction_service.llm_provider.generate_structured = AsyncMock(side_effect=Exception("LLM Error"))
+        extraction_service.llm_provider.generate_structured = AsyncMock(
+            side_effect=Exception("LLM Error")
+        )
 
         # Mock repository to return memories
-        extraction_service.memory_repo.get_episodic_memories = AsyncMock(return_value=[
-            {"id": "1", "content": "Test", "created_at": datetime.now(), "tags": [], "source": "test"}
-        ])
+        extraction_service.memory_repo.get_episodic_memories = AsyncMock(
+            return_value=[
+                {
+                    "id": "1",
+                    "content": "Test",
+                    "created_at": datetime.now(),
+                    "tags": [],
+                    "source": "test",
+                }
+            ]
+        )
 
         with pytest.raises(RuntimeError, match="Graph extraction failed"):
             await extraction_service.extract_knowledge_graph(
-                project_id="proj1",
-                tenant_id="tenant1"
+                project_id="proj1", tenant_id="tenant1"
             )
 
 
@@ -347,38 +353,52 @@ class TestGraphExtractionIntegration:
     async def test_end_to_end_extraction(self, extraction_service, mock_pool):
         """Test complete extraction flow with DI pattern."""
         # Mock repository to return memories
-        extraction_service.memory_repo.get_episodic_memories = AsyncMock(return_value=[
-            {
-                "id": "mem1",
-                "content": "User authentication module depends on database service",
-                "created_at": datetime.now(),
-                "tags": ["architecture", "dependency"],
-                "source": "code_review"
-            },
-            {
-                "id": "mem2",
-                "content": "Database service uses PostgreSQL",
-                "created_at": datetime.now(),
-                "tags": ["database", "tech"],
-                "source": "design_doc"
-            }
-        ])
+        extraction_service.memory_repo.get_episodic_memories = AsyncMock(
+            return_value=[
+                {
+                    "id": "mem1",
+                    "content": "User authentication module depends on database service",
+                    "created_at": datetime.now(),
+                    "tags": ["architecture", "dependency"],
+                    "source": "code_review",
+                },
+                {
+                    "id": "mem2",
+                    "content": "Database service uses PostgreSQL",
+                    "created_at": datetime.now(),
+                    "tags": ["database", "tech"],
+                    "source": "design_doc",
+                },
+            ]
+        )
 
-        extraction_service.llm_provider.generate_structured = AsyncMock(return_value=GraphExtractionResult(
-            triples=[
-                GraphTriple(source="UserAuth", relation="DEPENDS_ON", target="Database", confidence=0.95),
-                GraphTriple(source="Database", relation="USES", target="PostgreSQL", confidence=0.9)
-            ],
-            extracted_entities=["UserAuth", "Database", "PostgreSQL"],
-            statistics={}
-        ))
+        extraction_service.llm_provider.generate_structured = AsyncMock(
+            return_value=GraphExtractionResult(
+                triples=[
+                    GraphTriple(
+                        source="UserAuth",
+                        relation="DEPENDS_ON",
+                        target="Database",
+                        confidence=0.95,
+                    ),
+                    GraphTriple(
+                        source="Database",
+                        relation="USES",
+                        target="PostgreSQL",
+                        confidence=0.9,
+                    ),
+                ],
+                extracted_entities=["UserAuth", "Database", "PostgreSQL"],
+                statistics={},
+            )
+        )
 
         # Execute extraction
         result = await extraction_service.extract_knowledge_graph(
             project_id="test-project",
             tenant_id="test-tenant",
             limit=50,
-            min_confidence=0.8
+            min_confidence=0.8,
         )
 
         # Verify results

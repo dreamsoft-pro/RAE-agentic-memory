@@ -2,17 +2,13 @@
 Tests for Phase 2 Plugin System
 """
 
-import pytest
+from typing import Any, Dict
 from uuid import uuid4
-from typing import Dict, Any
 
-from apps.memory_api.plugins.base import (
-    Plugin,
-    PluginMetadata,
-    PluginHook,
-    PluginRegistry,
-    get_plugin_registry
-)
+import pytest
+
+from apps.memory_api.plugins.base import (Plugin, PluginHook, PluginMetadata,
+                                          PluginRegistry, get_plugin_registry)
 
 
 class TestPlugin(Plugin):
@@ -24,7 +20,7 @@ class TestPlugin(Plugin):
             version="1.0.0",
             author="Test Author",
             description="Test plugin",
-            hooks=[PluginHook.AFTER_MEMORY_CREATE, PluginHook.BEFORE_QUERY]
+            hooks=[PluginHook.AFTER_MEMORY_CREATE, PluginHook.BEFORE_QUERY],
         )
 
     def __init__(self, config: Dict[str, Any] = None):
@@ -33,19 +29,12 @@ class TestPlugin(Plugin):
         self.queries = []
 
     async def on_after_memory_create(
-        self,
-        tenant_id,
-        memory_id: str,
-        memory_data: Dict[str, Any]
+        self, tenant_id, memory_id: str, memory_data: Dict[str, Any]
     ):
         self.memory_creates.append((tenant_id, memory_id))
 
     async def on_before_query(
-        self,
-        tenant_id,
-        query: str,
-        params: Dict[str, Any],
-        **kwargs
+        self, tenant_id, query: str, params: Dict[str, Any], **kwargs
     ) -> Dict[str, Any]:
         self.queries.append(query)
         params["modified"] = True
@@ -62,7 +51,7 @@ class TestPluginMetadata:
             version="1.0.0",
             author="Test",
             description="Test plugin",
-            hooks=[PluginHook.AFTER_MEMORY_CREATE]
+            hooks=[PluginHook.AFTER_MEMORY_CREATE],
         )
 
         assert metadata.name == "test"
@@ -78,7 +67,7 @@ class TestPluginMetadata:
             author="Test",
             description="Test plugin",
             hooks=[PluginHook.AFTER_MEMORY_CREATE],
-            config={"key": "value"}
+            config={"key": "value"},
         )
 
         data = metadata.to_dict()
@@ -126,9 +115,7 @@ class TestPluginBase:
 
         # Test after_memory_create hook
         await plugin.on_after_memory_create(
-            tenant_id=tenant_id,
-            memory_id="mem_123",
-            memory_data={"content": "test"}
+            tenant_id=tenant_id, memory_id="mem_123", memory_data={"content": "test"}
         )
 
         assert len(plugin.memory_creates) == 1
@@ -142,9 +129,7 @@ class TestPluginBase:
 
         params = {"query": "test"}
         modified = await plugin.on_before_query(
-            tenant_id=tenant_id,
-            query="search query",
-            params=params
+            tenant_id=tenant_id, query="search query", params=params
         )
 
         assert modified["modified"] is True
@@ -245,7 +230,7 @@ class TestPluginRegistry:
             PluginHook.AFTER_MEMORY_CREATE,
             tenant_id=tenant_id,
             memory_id="mem_123",
-            memory_data={"content": "test"}
+            memory_data={"content": "test"},
         )
 
         # Verify plugin received the hook
@@ -263,10 +248,7 @@ class TestPluginRegistry:
 
         # Execute transform hook
         result = await registry.execute_hook(
-            PluginHook.BEFORE_QUERY,
-            tenant_id=tenant_id,
-            query="test",
-            params=params
+            PluginHook.BEFORE_QUERY, tenant_id=tenant_id, query="test", params=params
         )
 
         # Verify hook was called
@@ -388,7 +370,7 @@ class TestMultiplePlugins:
             PluginHook.AFTER_MEMORY_CREATE,
             tenant_id=tenant_id,
             memory_id="mem_123",
-            memory_data={"content": "test"}
+            memory_data={"content": "test"},
         )
 
         # Both plugins should have received the hook
@@ -426,10 +408,7 @@ class TestMultiplePlugins:
 
         # Execute transform hook
         result = await registry.execute_hook(
-            PluginHook.BEFORE_QUERY,
-            tenant_id=tenant_id,
-            query="test",
-            params=params
+            PluginHook.BEFORE_QUERY, tenant_id=tenant_id, query="test", params=params
         )
 
         # Both plugins should have been called

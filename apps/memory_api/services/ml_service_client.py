@@ -11,18 +11,15 @@ Features:
 - Timeout handling
 """
 
-from typing import List, Dict, Any, Optional
+from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
 import httpx
 import structlog
+from tenacity import (before_sleep_log, retry, retry_if_exception_type,
+                      stop_after_attempt, wait_exponential)
+
 from apps.memory_api.config import settings
-from tenacity import (
-    retry,
-    stop_after_attempt,
-    wait_exponential,
-    retry_if_exception_type,
-    before_sleep_log
-)
-from datetime import datetime, timedelta
 
 logger = structlog.get_logger(__name__)
 
@@ -66,7 +63,7 @@ class CircuitBreaker:
             logger.warning(
                 "circuit_breaker_opened",
                 failure_count=self.failure_count,
-                threshold=self.failure_threshold
+                threshold=self.failure_threshold,
             )
 
     def can_attempt(self) -> bool:
@@ -92,7 +89,9 @@ class CircuitBreaker:
         return {
             "state": self.state,
             "failure_count": self.failure_count,
-            "last_failure": self.last_failure_time.isoformat() if self.last_failure_time else None
+            "last_failure": (
+                self.last_failure_time.isoformat() if self.last_failure_time else None
+            ),
         }
 
 
@@ -118,13 +117,15 @@ class MLServiceClient:
             base_url: Base URL of the ML service (default: from settings)
             enable_circuit_breaker: Enable circuit breaker pattern (default: True)
         """
-        self.base_url = base_url or getattr(settings, 'ML_SERVICE_URL', 'http://ml-service:8001')
+        self.base_url = base_url or getattr(
+            settings, "ML_SERVICE_URL", "http://ml-service:8001"
+        )
         self.client = httpx.AsyncClient(base_url=self.base_url, timeout=30.0)
         self.circuit_breaker = CircuitBreaker() if enable_circuit_breaker else None
         logger.info(
             "ml_service_client_initialized",
             base_url=self.base_url,
-            circuit_breaker_enabled=enable_circuit_breaker
+            circuit_breaker_enabled=enable_circuit_breaker,
         )
 
     async def close(self):
@@ -132,10 +133,7 @@ class MLServiceClient:
         await self.client.aclose()
 
     async def _call_with_resilience(
-        self,
-        method: str,
-        endpoint: str,
-        **kwargs
+        self, method: str, endpoint: str, **kwargs
     ) -> httpx.Response:
         """
         Internal method to make HTTP calls with circuit breaker and retry logic.
@@ -164,7 +162,7 @@ class MLServiceClient:
             stop=stop_after_attempt(3),
             wait=wait_exponential(multiplier=0.2, min=0.2, max=0.8),
             retry=retry_if_exception_type((httpx.TimeoutException, httpx.NetworkError)),
-            before_sleep=before_sleep_log(logger, logging_level="WARNING")
+            before_sleep=before_sleep_log(logger, logging_level="WARNING"),
         )
         async def _make_request():
             if method.upper() == "GET":
@@ -194,14 +192,14 @@ class MLServiceClient:
                 endpoint=endpoint,
                 method=method,
                 error=str(e),
-                circuit_breaker_state=self.circuit_breaker.get_state() if self.circuit_breaker else None
+                circuit_breaker_state=(
+                    self.circuit_breaker.get_state() if self.circuit_breaker else None
+                ),
             )
             raise
 
     async def resolve_entities(
-        self,
-        nodes: List[Dict[str, Any]],
-        similarity_threshold: float = 0.85
+        self, nodes: List[Dict[str, Any]], similarity_threshold: float = 0.85
     ) -> Dict[str, Any]:
         """
         Call ML service to resolve duplicate entities.
@@ -219,24 +217,21 @@ class MLServiceClient:
         logger.info(
             "calling_ml_service_resolve_entities",
             node_count=len(nodes),
-            threshold=similarity_threshold
+            threshold=similarity_threshold,
         )
 
         try:
             response = await self._call_with_resilience(
                 method="POST",
                 endpoint="/resolve-entities",
-                json={
-                    "nodes": nodes,
-                    "similarity_threshold": similarity_threshold
-                }
+                json={"nodes": nodes, "similarity_threshold": similarity_threshold},
             )
 
             result = response.json()
 
             logger.info(
                 "ml_service_resolve_entities_completed",
-                groups_found=len(result.get("merge_groups", []))
+                groups_found=len(result.get("merge_groups", [])),
             )
 
             return result
@@ -245,14 +240,12 @@ class MLServiceClient:
             logger.error(
                 "ml_service_resolve_entities_failed",
                 error=str(e),
-                node_count=len(nodes)
+                node_count=len(nodes),
             )
             raise
 
     async def extract_triples(
-        self,
-        text: str,
-        language: str = "en"
+        self, text: str, language: str = "en"
     ) -> List[Dict[str, str]]:
         """
         Call ML service to extract knowledge triples from text.
@@ -270,41 +263,33 @@ class MLServiceClient:
         logger.info(
             "calling_ml_service_extract_triples",
             text_length=len(text),
-            language=language
+            language=language,
         )
 
         try:
             response = await self._call_with_resilience(
                 method="POST",
                 endpoint="/extract-triples",
-                json={
-                    "text": text,
-                    "language": language
-                }
+                json={"text": text, "language": language},
             )
 
             result = response.json()
             triples = result.get("triples", [])
 
             logger.info(
-                "ml_service_extract_triples_completed",
-                triples_found=len(triples)
+                "ml_service_extract_triples_completed", triples_found=len(triples)
             )
 
             return triples
 
         except Exception as e:
             logger.error(
-                "ml_service_extract_triples_failed",
-                error=str(e),
-                text_length=len(text)
+                "ml_service_extract_triples_failed", error=str(e), text_length=len(text)
             )
             raise
 
     async def generate_embeddings(
-        self,
-        texts: List[str],
-        model: str = "all-MiniLM-L6-v2"
+        self, texts: List[str], model: str = "all-MiniLM-L6-v2"
     ) -> Dict[str, Any]:
         """
         Call ML service to generate embeddings for texts.
@@ -320,19 +305,14 @@ class MLServiceClient:
             httpx.HTTPError: If ML service call fails
         """
         logger.info(
-            "calling_ml_service_generate_embeddings",
-            text_count=len(texts),
-            model=model
+            "calling_ml_service_generate_embeddings", text_count=len(texts), model=model
         )
 
         try:
             response = await self._call_with_resilience(
                 method="POST",
                 endpoint="/embeddings",
-                json={
-                    "texts": texts,
-                    "model": model
-                }
+                json={"texts": texts, "model": model},
             )
 
             result = response.json()
@@ -340,24 +320,19 @@ class MLServiceClient:
             logger.info(
                 "ml_service_embeddings_completed",
                 embedding_count=len(result.get("embeddings", [])),
-                dimension=result.get("dimension", 0)
+                dimension=result.get("dimension", 0),
             )
 
             return result
 
         except Exception as e:
             logger.error(
-                "ml_service_embeddings_failed",
-                error=str(e),
-                text_count=len(texts)
+                "ml_service_embeddings_failed", error=str(e), text_count=len(texts)
             )
             raise
 
     async def extract_keywords(
-        self,
-        text: str,
-        max_keywords: int = 10,
-        language: str = "en"
+        self, text: str, max_keywords: int = 10, language: str = "en"
     ) -> List[Dict[str, Any]]:
         """
         Call ML service to extract keywords from text.
@@ -377,26 +352,21 @@ class MLServiceClient:
             "calling_ml_service_extract_keywords",
             text_length=len(text),
             max_keywords=max_keywords,
-            language=language
+            language=language,
         )
 
         try:
             response = await self._call_with_resilience(
                 method="POST",
                 endpoint="/extract-keywords",
-                json={
-                    "text": text,
-                    "max_keywords": max_keywords,
-                    "language": language
-                }
+                json={"text": text, "max_keywords": max_keywords, "language": language},
             )
 
             result = response.json()
             keywords = result.get("keywords", [])
 
             logger.info(
-                "ml_service_extract_keywords_completed",
-                keywords_found=len(keywords)
+                "ml_service_extract_keywords_completed", keywords_found=len(keywords)
             )
 
             return keywords
@@ -405,7 +375,7 @@ class MLServiceClient:
             logger.error(
                 "ml_service_extract_keywords_failed",
                 error=str(e),
-                text_length=len(text)
+                text_length=len(text),
             )
             raise
 

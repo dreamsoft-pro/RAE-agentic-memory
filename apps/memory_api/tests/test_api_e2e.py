@@ -17,8 +17,9 @@ and are currently skipped pending full integration testing setup.
 For unit/integration tests with real DB, see test_hybrid_search.py which uses testcontainers.
 """
 
-import pytest
 from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 from fastapi.testclient import TestClient
 
 
@@ -26,6 +27,7 @@ from fastapi.testclient import TestClient
 def client():
     """Create test client for API requests."""
     from apps.memory_api.main import app
+
     return TestClient(app)
 
 
@@ -41,7 +43,9 @@ class TestMemoryAPISmoke:
     See test_hybrid_search.py for integration tests with testcontainers.
     """
 
-    @pytest.mark.skip(reason="E2E test requires full infrastructure - use test_hybrid_search.py for integration tests")
+    @pytest.mark.skip(
+        reason="E2E test requires full infrastructure - use test_hybrid_search.py for integration tests"
+    )
     def test_store_and_query_memory_e2e(self, client):
         """Test end-to-end memory storage and retrieval.
 
@@ -54,7 +58,9 @@ class TestMemoryAPISmoke:
         """
         pass
 
-    @pytest.mark.skip(reason="E2E test requires full infrastructure - use test_hybrid_search.py for integration tests")
+    @pytest.mark.skip(
+        reason="E2E test requires full infrastructure - use test_hybrid_search.py for integration tests"
+    )
     def test_hybrid_search_e2e(self, client):
         """Test end-to-end hybrid search (vector + graph).
 
@@ -92,10 +98,7 @@ class TestAPIErrorHandling:
         """
         response = client.post(
             "/v1/memories/create",  # Updated endpoint
-            json={
-                "content": "Test",
-                "layer": "semantic"
-            }
+            json={"content": "Test", "layer": "semantic"},
             # Missing X-Tenant-ID header
         )
 
@@ -107,10 +110,7 @@ class TestAPIErrorHandling:
         response = client.post(
             "/v1/memories/create",  # Updated endpoint
             data="not valid json",
-            headers={
-                "Content-Type": "application/json",
-                "X-Tenant-ID": "test"
-            }
+            headers={"Content-Type": "application/json", "X-Tenant-ID": "test"},
         )
 
         # Should return validation error (422) or 404 if endpoint not found

@@ -23,17 +23,20 @@ Environment Variables:
 """
 
 import os
+
+import structlog
 from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelemetry.sdk.resources import Resource, SERVICE_NAME, SERVICE_VERSION
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import \
+    OTLPSpanExporter
 from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
 from opentelemetry.instrumentation.logging import LoggingInstrumentor
-from opentelemetry.instrumentation.requests import RequestsInstrumentor
 from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
 from opentelemetry.instrumentation.redis import RedisInstrumentor
-import structlog
+from opentelemetry.instrumentation.requests import RequestsInstrumentor
+from opentelemetry.sdk.resources import SERVICE_NAME, SERVICE_VERSION, Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import (BatchSpanProcessor,
+                                            ConsoleSpanExporter)
 
 logger = structlog.get_logger(__name__)
 
@@ -45,13 +48,16 @@ logger = structlog.get_logger(__name__)
 OTEL_ENABLED = os.getenv("OTEL_TRACES_ENABLED", "true").lower() == "true"
 OTEL_SERVICE_NAME = os.getenv("OTEL_SERVICE_NAME", "rae-memory-api")
 OTEL_SERVICE_VERSION = os.getenv("OTEL_SERVICE_VERSION", "2.0.0-enterprise")
-OTEL_EXPORTER_ENDPOINT = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317")
+OTEL_EXPORTER_ENDPOINT = os.getenv(
+    "OTEL_EXPORTER_OTLP_ENDPOINT", "http://localhost:4317"
+)
 OTEL_EXPORTER_TYPE = os.getenv("OTEL_EXPORTER_TYPE", "otlp")  # otlp, console, none
 
 
 # ============================================================================
 # Tracer Provider Setup
 # ============================================================================
+
 
 def setup_opentelemetry():
     """
@@ -66,13 +72,15 @@ def setup_opentelemetry():
 
     try:
         # Create resource with service metadata
-        resource = Resource.create({
-            SERVICE_NAME: OTEL_SERVICE_NAME,
-            SERVICE_VERSION: OTEL_SERVICE_VERSION,
-            "deployment.environment": os.getenv("ENVIRONMENT", "development"),
-            "service.namespace": "rae",
-            "service.instance.id": os.getenv("HOSTNAME", "localhost"),
-        })
+        resource = Resource.create(
+            {
+                SERVICE_NAME: OTEL_SERVICE_NAME,
+                SERVICE_VERSION: OTEL_SERVICE_VERSION,
+                "deployment.environment": os.getenv("ENVIRONMENT", "development"),
+                "service.namespace": "rae",
+                "service.instance.id": os.getenv("HOSTNAME", "localhost"),
+            }
+        )
 
         # Create tracer provider
         tracer_provider = TracerProvider(resource=resource)
@@ -85,22 +93,19 @@ def setup_opentelemetry():
         elif OTEL_EXPORTER_TYPE == "otlp":
             # OTLP exporter (default) for Jaeger, Tempo, etc.
             span_exporter = OTLPSpanExporter(
-                endpoint=OTEL_EXPORTER_ENDPOINT,
-                insecure=True  # Use TLS in production
+                endpoint=OTEL_EXPORTER_ENDPOINT, insecure=True  # Use TLS in production
             )
             logger.info(
                 "opentelemetry_otlp_exporter",
                 service=OTEL_SERVICE_NAME,
-                endpoint=OTEL_EXPORTER_ENDPOINT
+                endpoint=OTEL_EXPORTER_ENDPOINT,
             )
         else:
             logger.warning("opentelemetry_no_exporter", type=OTEL_EXPORTER_TYPE)
             return None
 
         # Add batch span processor (buffers spans for efficiency)
-        tracer_provider.add_span_processor(
-            BatchSpanProcessor(span_exporter)
-        )
+        tracer_provider.add_span_processor(BatchSpanProcessor(span_exporter))
 
         # Set global tracer provider
         trace.set_tracer_provider(tracer_provider)
@@ -109,7 +114,7 @@ def setup_opentelemetry():
             "opentelemetry_initialized",
             service=OTEL_SERVICE_NAME,
             version=OTEL_SERVICE_VERSION,
-            exporter=OTEL_EXPORTER_TYPE
+            exporter=OTEL_EXPORTER_TYPE,
         )
 
         return tracer_provider
@@ -122,6 +127,7 @@ def setup_opentelemetry():
 # ============================================================================
 # Auto-Instrumentation
 # ============================================================================
+
 
 def instrument_fastapi(app):
     """
@@ -185,6 +191,7 @@ def instrument_libraries():
 # Custom Span Helpers
 # ============================================================================
 
+
 def get_tracer(name: str = OTEL_SERVICE_NAME):
     """
     Get a tracer instance for creating custom spans.
@@ -236,6 +243,7 @@ def record_exception(exception: Exception):
 # Custom Instrumentation for LLM Calls
 # ============================================================================
 
+
 class LLMTracer:
     """
     Custom tracer for LLM API calls.
@@ -272,7 +280,7 @@ class LLMTracer:
         add_span_attributes(
             llm_input_tokens=input_tokens,
             llm_output_tokens=output_tokens,
-            llm_total_tokens=input_tokens + output_tokens
+            llm_total_tokens=input_tokens + output_tokens,
         )
 
     @staticmethod

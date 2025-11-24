@@ -2,10 +2,11 @@
 Memory Consolidation Service - Automatic memory layer transitions
 """
 
-from typing import List, Dict, Optional, Any, Tuple
-from uuid import UUID
 from datetime import datetime, timedelta, timezone
 from enum import Enum
+from typing import Any, Dict, List, Optional, Tuple
+from uuid import UUID
+
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -13,11 +14,12 @@ logger = structlog.get_logger(__name__)
 
 class ConsolidationStrategy(str, Enum):
     """Strategies for memory consolidation"""
-    PATTERN_BASED = "pattern_based"       # Look for recurring patterns
-    IMPORTANCE_BASED = "importance_based" # Consolidate high-importance memories
-    TIME_BASED = "time_based"             # Consolidate after time threshold
-    SEMANTIC_CLUSTER = "semantic_cluster" # Group semantically similar memories
-    MANUAL = "manual"                     # User-triggered consolidation
+
+    PATTERN_BASED = "pattern_based"  # Look for recurring patterns
+    IMPORTANCE_BASED = "importance_based"  # Consolidate high-importance memories
+    TIME_BASED = "time_based"  # Consolidate after time threshold
+    SEMANTIC_CLUSTER = "semantic_cluster"  # Group semantically similar memories
+    MANUAL = "manual"  # User-triggered consolidation
 
 
 class ConsolidationResult:
@@ -31,7 +33,7 @@ class ConsolidationResult:
         target_layer: Optional[str] = None,
         consolidated_content: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
-        error: Optional[str] = None
+        error: Optional[str] = None,
     ):
         self.success = success
         self.source_memory_ids = source_memory_ids
@@ -52,19 +54,14 @@ class ConsolidationResult:
             "consolidated_content": self.consolidated_content,
             "metadata": self.metadata,
             "error": self.error,
-            "timestamp": self.timestamp.isoformat()
+            "timestamp": self.timestamp.isoformat(),
         }
 
 
 class MemoryConsolidationService:
     """Service for automatic memory consolidation"""
 
-    def __init__(
-        self,
-        db=None,
-        vector_store=None,
-        llm_client=None
-    ):
+    def __init__(self, db=None, vector_store=None, llm_client=None):
         """
         Initialize memory consolidation service
 
@@ -78,10 +75,7 @@ class MemoryConsolidationService:
         self.llm_client = llm_client
 
     async def consolidate_episodic_to_working(
-        self,
-        tenant_id: UUID,
-        max_memories: int = 100,
-        min_importance: float = 0.5
+        self, tenant_id: UUID, max_memories: int = 100, min_importance: float = 0.5
     ) -> List[ConsolidationResult]:
         """
         Consolidate episodic memories to working memory
@@ -100,7 +94,7 @@ class MemoryConsolidationService:
             "consolidating_episodic_to_working",
             tenant_id=str(tenant_id),
             max_memories=max_memories,
-            min_importance=min_importance
+            min_importance=min_importance,
         )
 
         results = []
@@ -110,7 +104,7 @@ class MemoryConsolidationService:
             tenant_id=tenant_id,
             source_layer="episodic",
             max_memories=max_memories,
-            min_importance=min_importance
+            min_importance=min_importance,
         )
 
         if not candidate_memories:
@@ -126,23 +120,20 @@ class MemoryConsolidationService:
                 tenant_id=tenant_id,
                 memories=group,
                 target_layer="working",
-                strategy=ConsolidationStrategy.SEMANTIC_CLUSTER
+                strategy=ConsolidationStrategy.SEMANTIC_CLUSTER,
             )
             results.append(result)
 
         logger.info(
             "episodic_consolidation_complete",
             total_groups=len(memory_groups),
-            successful=sum(1 for r in results if r.success)
+            successful=sum(1 for r in results if r.success),
         )
 
         return results
 
     async def consolidate_working_to_semantic(
-        self,
-        tenant_id: UUID,
-        max_memories: int = 50,
-        min_age_days: int = 7
+        self, tenant_id: UUID, max_memories: int = 50, min_age_days: int = 7
     ) -> List[ConsolidationResult]:
         """
         Consolidate working memories to semantic memory
@@ -161,7 +152,7 @@ class MemoryConsolidationService:
             "consolidating_working_to_semantic",
             tenant_id=str(tenant_id),
             max_memories=max_memories,
-            min_age_days=min_age_days
+            min_age_days=min_age_days,
         )
 
         results = []
@@ -173,7 +164,7 @@ class MemoryConsolidationService:
             tenant_id=tenant_id,
             source_layer="working",
             max_memories=max_memories,
-            created_before=cutoff_date
+            created_before=cutoff_date,
         )
 
         if not candidate_memories:
@@ -189,14 +180,14 @@ class MemoryConsolidationService:
                 tenant_id=tenant_id,
                 memories=group,
                 target_layer="semantic",
-                strategy=ConsolidationStrategy.PATTERN_BASED
+                strategy=ConsolidationStrategy.PATTERN_BASED,
             )
             results.append(result)
 
         logger.info(
             "working_consolidation_complete",
             total_groups=len(memory_groups),
-            successful=sum(1 for r in results if r.success)
+            successful=sum(1 for r in results if r.success),
         )
 
         return results
@@ -206,7 +197,7 @@ class MemoryConsolidationService:
         tenant_id: UUID,
         max_memories: int = 20,
         min_age_days: int = 30,
-        min_importance: float = 0.7
+        min_importance: float = 0.7,
     ) -> List[ConsolidationResult]:
         """
         Consolidate semantic memories to long-term memory (LTM)
@@ -227,7 +218,7 @@ class MemoryConsolidationService:
             tenant_id=str(tenant_id),
             max_memories=max_memories,
             min_age_days=min_age_days,
-            min_importance=min_importance
+            min_importance=min_importance,
         )
 
         results = []
@@ -239,7 +230,7 @@ class MemoryConsolidationService:
             source_layer="semantic",
             max_memories=max_memories,
             min_importance=min_importance,
-            created_before=cutoff_date
+            created_before=cutoff_date,
         )
 
         if not candidate_memories:
@@ -252,14 +243,14 @@ class MemoryConsolidationService:
                 tenant_id=tenant_id,
                 memory=memory,
                 target_layer="ltm",
-                strategy=ConsolidationStrategy.IMPORTANCE_BASED
+                strategy=ConsolidationStrategy.IMPORTANCE_BASED,
             )
             results.append(result)
 
         logger.info(
             "semantic_consolidation_complete",
             total_processed=len(candidate_memories),
-            successful=sum(1 for r in results if r.success)
+            successful=sum(1 for r in results if r.success),
         )
 
         return results
@@ -270,7 +261,7 @@ class MemoryConsolidationService:
         source_layer: str,
         max_memories: int,
         min_importance: Optional[float] = None,
-        created_before: Optional[datetime] = None
+        created_before: Optional[datetime] = None,
     ) -> List[Dict[str, Any]]:
         """
         Get memories eligible for consolidation
@@ -290,9 +281,7 @@ class MemoryConsolidationService:
         return []
 
     async def _group_similar_memories(
-        self,
-        memories: List[Dict[str, Any]],
-        similarity_threshold: float = 0.7
+        self, memories: List[Dict[str, Any]], similarity_threshold: float = 0.7
     ) -> List[List[Dict[str, Any]]]:
         """
         Group memories by semantic similarity
@@ -320,8 +309,7 @@ class MemoryConsolidationService:
         return groups
 
     async def _group_by_patterns(
-        self,
-        memories: List[Dict[str, Any]]
+        self, memories: List[Dict[str, Any]]
     ) -> List[List[Dict[str, Any]]]:
         """
         Group memories by detected patterns
@@ -350,7 +338,7 @@ class MemoryConsolidationService:
         tenant_id: UUID,
         memories: List[Dict[str, Any]],
         target_layer: str,
-        strategy: ConsolidationStrategy
+        strategy: ConsolidationStrategy,
     ) -> ConsolidationResult:
         """
         Consolidate a group of memories
@@ -366,9 +354,7 @@ class MemoryConsolidationService:
         """
         if not memories:
             return ConsolidationResult(
-                success=False,
-                source_memory_ids=[],
-                error="No memories to consolidate"
+                success=False, source_memory_ids=[], error="No memories to consolidate"
             )
 
         source_ids = [m["id"] for m in memories]
@@ -377,15 +363,13 @@ class MemoryConsolidationService:
             "consolidating_memory_group",
             num_memories=len(memories),
             target_layer=target_layer,
-            strategy=strategy.value
+            strategy=strategy.value,
         )
 
         try:
             # Generate consolidated content using LLM
             consolidated_content = await self._generate_consolidated_content(
-                memories=memories,
-                target_layer=target_layer,
-                strategy=strategy
+                memories=memories, target_layer=target_layer, strategy=strategy
             )
 
             # Create new memory in target layer
@@ -394,7 +378,7 @@ class MemoryConsolidationService:
                 content=consolidated_content,
                 layer=target_layer,
                 source_memory_ids=source_ids,
-                strategy=strategy
+                strategy=strategy,
             )
 
             # Mark source memories as consolidated
@@ -408,20 +392,16 @@ class MemoryConsolidationService:
                 consolidated_content=consolidated_content,
                 metadata={
                     "strategy": strategy.value,
-                    "num_source_memories": len(memories)
-                }
+                    "num_source_memories": len(memories),
+                },
             )
 
         except Exception as e:
             logger.error(
-                "consolidation_failed",
-                error=str(e),
-                num_memories=len(memories)
+                "consolidation_failed", error=str(e), num_memories=len(memories)
             )
             return ConsolidationResult(
-                success=False,
-                source_memory_ids=source_ids,
-                error=str(e)
+                success=False, source_memory_ids=source_ids, error=str(e)
             )
 
     async def _consolidate_single(
@@ -429,7 +409,7 @@ class MemoryConsolidationService:
         tenant_id: UUID,
         memory: Dict[str, Any],
         target_layer: str,
-        strategy: ConsolidationStrategy
+        strategy: ConsolidationStrategy,
     ) -> ConsolidationResult:
         """
         Consolidate a single memory to target layer
@@ -447,14 +427,14 @@ class MemoryConsolidationService:
             tenant_id=tenant_id,
             memories=[memory],
             target_layer=target_layer,
-            strategy=strategy
+            strategy=strategy,
         )
 
     async def _generate_consolidated_content(
         self,
         memories: List[Dict[str, Any]],
         target_layer: str,
-        strategy: ConsolidationStrategy
+        strategy: ConsolidationStrategy,
     ) -> str:
         """
         Generate consolidated content using LLM
@@ -473,9 +453,7 @@ class MemoryConsolidationService:
 
         # Prepare prompt based on target layer and strategy
         prompt = self._build_consolidation_prompt(
-            memories=memories,
-            target_layer=target_layer,
-            strategy=strategy
+            memories=memories, target_layer=target_layer, strategy=strategy
         )
 
         # Call LLM
@@ -489,14 +467,13 @@ class MemoryConsolidationService:
         self,
         memories: List[Dict[str, Any]],
         target_layer: str,
-        strategy: ConsolidationStrategy
+        strategy: ConsolidationStrategy,
     ) -> str:
         """Build LLM prompt for consolidation"""
 
-        memory_contents = "\n\n".join([
-            f"Memory {i+1}:\n{m.get('content', '')}"
-            for i, m in enumerate(memories)
-        ])
+        memory_contents = "\n\n".join(
+            [f"Memory {i+1}:\n{m.get('content', '')}" for i, m in enumerate(memories)]
+        )
 
         if target_layer == "working":
             instruction = (
@@ -533,7 +510,7 @@ Consolidated Memory:"""
         content: str,
         layer: str,
         source_memory_ids: List[str],
-        strategy: ConsolidationStrategy
+        strategy: ConsolidationStrategy,
     ) -> str:
         """
         Create a new consolidated memory
@@ -551,13 +528,14 @@ Consolidated Memory:"""
         # In production, create memory in database
         # For now, return mock ID
         import uuid
+
         new_memory_id = str(uuid.uuid4())
 
         logger.info(
             "consolidated_memory_created",
             memory_id=new_memory_id,
             layer=layer,
-            num_sources=len(source_memory_ids)
+            num_sources=len(source_memory_ids),
         )
 
         return new_memory_id
@@ -573,10 +551,7 @@ Consolidated Memory:"""
         # Set is_consolidated=True, consolidation_timestamp=now
         pass
 
-    async def run_automatic_consolidation(
-        self,
-        tenant_id: UUID
-    ) -> Dict[str, Any]:
+    async def run_automatic_consolidation(self, tenant_id: UUID) -> Dict[str, Any]:
         """
         Run full automatic consolidation pipeline
 
@@ -589,10 +564,7 @@ Consolidated Memory:"""
         Returns:
             Summary of consolidation results
         """
-        logger.info(
-            "starting_automatic_consolidation",
-            tenant_id=str(tenant_id)
-        )
+        logger.info("starting_automatic_consolidation", tenant_id=str(tenant_id))
 
         summary = {
             "tenant_id": str(tenant_id),
@@ -601,7 +573,7 @@ Consolidated Memory:"""
             "working_to_semantic": [],
             "semantic_to_ltm": [],
             "total_consolidated": 0,
-            "errors": []
+            "errors": [],
         }
 
         try:
@@ -637,15 +609,13 @@ Consolidated Memory:"""
         logger.info(
             "automatic_consolidation_complete",
             tenant_id=str(tenant_id),
-            total_consolidated=summary["total_consolidated"]
+            total_consolidated=summary["total_consolidated"],
         )
 
         return summary
 
     async def get_consolidation_stats(
-        self,
-        tenant_id: UUID,
-        period_days: int = 30
+        self, tenant_id: UUID, period_days: int = 30
     ) -> Dict[str, Any]:
         """
         Get consolidation statistics
@@ -665,20 +635,14 @@ Consolidated Memory:"""
             "by_layer": {
                 "episodic_to_working": 0,
                 "working_to_semantic": 0,
-                "semantic_to_ltm": 0
+                "semantic_to_ltm": 0,
             },
-            "by_strategy": {
-                strategy.value: 0
-                for strategy in ConsolidationStrategy
-            },
+            "by_strategy": {strategy.value: 0 for strategy in ConsolidationStrategy},
             "avg_memories_per_consolidation": 0.0,
-            "success_rate": 1.0
+            "success_rate": 1.0,
         }
 
-    async def revert_consolidation(
-        self,
-        consolidated_memory_id: str
-    ) -> bool:
+    async def revert_consolidation(self, consolidated_memory_id: str) -> bool:
         """
         Revert a consolidation operation
 
@@ -690,10 +654,7 @@ Consolidated Memory:"""
         Returns:
             Success status
         """
-        logger.info(
-            "reverting_consolidation",
-            memory_id=consolidated_memory_id
-        )
+        logger.info("reverting_consolidation", memory_id=consolidated_memory_id)
 
         try:
             # In production:
@@ -701,24 +662,17 @@ Consolidated Memory:"""
             # 2. Mark source memories as not consolidated
             # 3. Delete or archive consolidated memory
 
-            logger.info(
-                "consolidation_reverted",
-                memory_id=consolidated_memory_id
-            )
+            logger.info("consolidation_reverted", memory_id=consolidated_memory_id)
             return True
 
         except Exception as e:
             logger.error(
-                "revert_failed",
-                memory_id=consolidated_memory_id,
-                error=str(e)
+                "revert_failed", memory_id=consolidated_memory_id, error=str(e)
             )
             return False
 
     async def preview_consolidation(
-        self,
-        tenant_id: UUID,
-        memory_ids: List[str]
+        self, tenant_id: UUID, memory_ids: List[str]
     ) -> Dict[str, Any]:
         """
         Preview what consolidation would produce
@@ -737,12 +691,12 @@ Consolidated Memory:"""
         preview_content = await self._generate_consolidated_content(
             memories=memories,
             target_layer="semantic",  # Default preview layer
-            strategy=ConsolidationStrategy.SEMANTIC_CLUSTER
+            strategy=ConsolidationStrategy.SEMANTIC_CLUSTER,
         )
 
         return {
             "source_memory_ids": memory_ids,
             "num_memories": len(memory_ids),
             "preview_content": preview_content,
-            "estimated_layer": "semantic"
+            "estimated_layer": "semantic",
         }

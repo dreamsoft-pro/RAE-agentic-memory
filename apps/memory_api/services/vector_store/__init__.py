@@ -1,9 +1,12 @@
 from functools import lru_cache
-from .base import MemoryVectorStore
-from .qdrant_store import QdrantStore
-from .pgvector_store import PGVectorStore
+
+import asyncpg  # Required for PGVectorStore
+
 from ...config import settings
-import asyncpg # Required for PGVectorStore
+from .base import MemoryVectorStore
+from .pgvector_store import PGVectorStore
+from .qdrant_store import QdrantStore
+
 
 @lru_cache(maxsize=1)
 def get_vector_store(pool: asyncpg.Pool = None) -> MemoryVectorStore:
@@ -17,7 +20,9 @@ def get_vector_store(pool: asyncpg.Pool = None) -> MemoryVectorStore:
         return QdrantStore()
     elif backend == "pgvector":
         if not pool:
-            raise ValueError("An asyncpg connection pool is required for the PGVector backend.")
+            raise ValueError(
+                "An asyncpg connection pool is required for the PGVector backend."
+            )
         return PGVectorStore(pool)
     else:
         raise ValueError(f"Unknown vector store backend specified: {backend}")

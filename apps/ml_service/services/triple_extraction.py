@@ -5,7 +5,8 @@ Extracts structured knowledge in the form of (subject, predicate, object) triple
 using spaCy's dependency parsing.
 """
 
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -37,22 +38,31 @@ class TripleExtractionService:
         if self._nlp is None:
             try:
                 import spacy
+
                 logger.info("loading_spacy_for_triples", language=language)
 
                 # Load spaCy model
                 try:
                     if language == "en":
                         # Try models in order of preference
-                        for model_name in ["en_core_web_lg", "en_core_web_md", "en_core_web_sm"]:
+                        for model_name in [
+                            "en_core_web_lg",
+                            "en_core_web_md",
+                            "en_core_web_sm",
+                        ]:
                             try:
                                 self._nlp = spacy.load(model_name)
-                                logger.info("spacy_loaded_for_triples", model=model_name)
+                                logger.info(
+                                    "spacy_loaded_for_triples", model=model_name
+                                )
                                 break
                             except OSError:
                                 continue
                     else:
                         self._nlp = spacy.load(f"{language}_core_news_sm")
-                        logger.info("spacy_loaded_for_triples", model=f"{language}_core_news_sm")
+                        logger.info(
+                            "spacy_loaded_for_triples", model=f"{language}_core_news_sm"
+                        )
 
                     if self._nlp is None:
                         # Fall back to blank model
@@ -94,9 +104,7 @@ class TripleExtractionService:
                 triples.extend(sent_triples)
 
             logger.info(
-                "triples_extracted",
-                triple_count=len(triples),
-                text_length=len(text)
+                "triples_extracted", triple_count=len(triples), text_length=len(text)
             )
 
             return triples
@@ -129,24 +137,28 @@ class TripleExtractionService:
                 obj = self._find_object(token)
 
                 if subject and obj:
-                    triples.append({
-                        "subject": subject,
-                        "predicate": predicate,
-                        "object": obj,
-                        "confidence": 0.8  # Simple heuristic confidence
-                    })
+                    triples.append(
+                        {
+                            "subject": subject,
+                            "predicate": predicate,
+                            "object": obj,
+                            "confidence": 0.8,  # Simple heuristic confidence
+                        }
+                    )
 
                 # Handle conjunctions (e.g., "Bob loves Alice and Charlie")
                 for conj in token.conjuncts:
                     if conj.pos_ == "VERB":
                         conj_obj = self._find_object(conj)
                         if subject and conj_obj:
-                            triples.append({
-                                "subject": subject,
-                                "predicate": conj.lemma_,
-                                "object": conj_obj,
-                                "confidence": 0.7
-                            })
+                            triples.append(
+                                {
+                                    "subject": subject,
+                                    "predicate": conj.lemma_,
+                                    "object": conj_obj,
+                                    "confidence": 0.7,
+                                }
+                            )
 
         return triples
 
@@ -241,16 +253,18 @@ class TripleExtractionService:
                     if verbs:
                         # Create simple triples from entity pairs and verbs
                         for i, subj in enumerate(entities[:-1]):
-                            for obj in entities[i+1:]:
+                            for obj in entities[i + 1 :]:
                                 for verb in verbs:
                                     # Only if verb is between the entities
                                     if subj.end <= verb.i <= obj.start:
-                                        triples.append({
-                                            "subject": subj.text,
-                                            "predicate": verb.lemma_,
-                                            "object": obj.text,
-                                            "confidence": 0.6  # Lower confidence for simple method
-                                        })
+                                        triples.append(
+                                            {
+                                                "subject": subj.text,
+                                                "predicate": verb.lemma_,
+                                                "object": obj.text,
+                                                "confidence": 0.6,  # Lower confidence for simple method
+                                            }
+                                        )
 
             return triples
 

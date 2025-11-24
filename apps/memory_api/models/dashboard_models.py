@@ -8,19 +8,21 @@ This module defines models for the interactive dashboard including:
 - System health indicators
 """
 
-from typing import List, Optional, Dict, Any, Union
-from pydantic import BaseModel, Field
-from enum import Enum
 from datetime import datetime
+from enum import Enum
+from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
 
+from pydantic import BaseModel, Field
 
 # ============================================================================
 # Enums
 # ============================================================================
 
+
 class DashboardEventType(str, Enum):
     """Types of dashboard events pushed via WebSocket"""
+
     MEMORY_CREATED = "memory_created"
     MEMORY_UPDATED = "memory_updated"
     MEMORY_DELETED = "memory_deleted"
@@ -41,6 +43,7 @@ class DashboardEventType(str, Enum):
 
 class VisualizationType(str, Enum):
     """Types of visualizations"""
+
     REFLECTION_TREE = "reflection_tree"
     SEMANTIC_GRAPH = "semantic_graph"
     MEMORY_TIMELINE = "memory_timeline"
@@ -51,6 +54,7 @@ class VisualizationType(str, Enum):
 
 class HealthStatus(str, Enum):
     """System health status levels"""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     WARNING = "warning"
@@ -60,6 +64,7 @@ class HealthStatus(str, Enum):
 
 class MetricPeriod(str, Enum):
     """Time periods for metrics"""
+
     LAST_HOUR = "last_hour"
     LAST_24H = "last_24h"
     LAST_7D = "last_7d"
@@ -71,12 +76,14 @@ class MetricPeriod(str, Enum):
 # Real-time Metrics Models
 # ============================================================================
 
+
 class SystemMetrics(BaseModel):
     """
     Real-time system metrics for dashboard.
 
     Provides overview of system activity and health.
     """
+
     # Memory metrics
     total_memories: int = Field(0, ge=0)
     memories_last_24h: int = Field(0, ge=0)
@@ -118,6 +125,7 @@ class SystemMetrics(BaseModel):
 
 class TimeSeriesPoint(BaseModel):
     """Single point in time series data"""
+
     timestamp: datetime
     value: float
     label: Optional[str] = None
@@ -130,6 +138,7 @@ class TimeSeriesMetric(BaseModel):
 
     Used for charts showing metrics over time.
     """
+
     metric_name: str
     metric_label: str
     unit: Optional[str] = None
@@ -143,7 +152,9 @@ class TimeSeriesMetric(BaseModel):
     avg_value: Optional[float] = None
 
     # Trend
-    trend_direction: Optional[str] = Field(None, description="'up', 'down', or 'stable'")
+    trend_direction: Optional[str] = Field(
+        None, description="'up', 'down', or 'stable'"
+    )
     percent_change: Optional[float] = None
 
     period_start: datetime
@@ -156,6 +167,7 @@ class ActivityLog(BaseModel):
 
     Displayed in dashboard activity feed.
     """
+
     log_id: UUID
     event_type: DashboardEventType
 
@@ -173,7 +185,9 @@ class ActivityLog(BaseModel):
     trigger_id: Optional[UUID] = None
 
     # Severity for alerts
-    severity: Optional[str] = Field(None, description="'info', 'warning', 'error', 'critical'")
+    severity: Optional[str] = Field(
+        None, description="'info', 'warning', 'error', 'critical'"
+    )
 
     # Metadata
     metadata: Dict[str, Any] = Field(default_factory=dict)
@@ -186,12 +200,14 @@ class ActivityLog(BaseModel):
 # Visualization Data Models
 # ============================================================================
 
+
 class ReflectionTreeNode(BaseModel):
     """
     Node in reflection hierarchy tree.
 
     Used for tree visualization of hierarchical reflections.
     """
+
     reflection_id: UUID
     content: str
     type: str
@@ -223,6 +239,7 @@ class SemanticGraphNode(BaseModel):
 
     Used for graph visualization of semantic relationships.
     """
+
     node_id: UUID
     label: str
     node_type: str
@@ -246,6 +263,7 @@ class SemanticGraphEdge(BaseModel):
 
     Represents relationship between semantic nodes.
     """
+
     source_node_id: UUID
     target_node_id: UUID
     relation_type: str
@@ -266,6 +284,7 @@ class SemanticGraph(BaseModel):
 
     Contains nodes and edges with layout information.
     """
+
     nodes: List[SemanticGraphNode]
     edges: List[SemanticGraphEdge]
 
@@ -275,7 +294,9 @@ class SemanticGraph(BaseModel):
     avg_degree: float
 
     # Layout algorithm used
-    layout_algorithm: Optional[str] = Field(None, description="'force', 'hierarchical', 'circular'")
+    layout_algorithm: Optional[str] = Field(
+        None, description="'force', 'hierarchical', 'circular'"
+    )
 
     # Timestamp
     generated_at: datetime = Field(default_factory=datetime.utcnow)
@@ -287,6 +308,7 @@ class MemoryTimelineEvent(BaseModel):
 
     Represents a memory creation or significant event.
     """
+
     event_id: UUID
     event_type: str  # 'memory_created', 'reflection_generated', etc.
 
@@ -313,6 +335,7 @@ class MemoryTimeline(BaseModel):
 
     Displays chronological view of memory creation and processing.
     """
+
     events: List[MemoryTimelineEvent]
 
     # Time range
@@ -330,6 +353,7 @@ class QualityTrend(BaseModel):
 
     Shows how system quality evolves.
     """
+
     metric_name: str  # 'mrr', 'ndcg', 'precision', etc.
 
     # Time series
@@ -355,6 +379,7 @@ class SearchHeatmap(BaseModel):
 
     Shows search patterns by time and query type.
     """
+
     # Grid data
     time_buckets: List[datetime]  # X-axis
     query_types: List[str]  # Y-axis
@@ -372,6 +397,7 @@ class ClusterMapNode(BaseModel):
 
     Represents a cluster of similar memories.
     """
+
     cluster_id: str
     cluster_label: Optional[str] = None
 
@@ -397,6 +423,7 @@ class ClusterMap(BaseModel):
 
     Shows how memories are grouped by similarity.
     """
+
     clusters: List[ClusterMapNode]
 
     # Statistics
@@ -412,13 +439,15 @@ class ClusterMap(BaseModel):
 # WebSocket Message Models
 # ============================================================================
 
+
 class WebSocketMessage(BaseModel):
     """
     Base WebSocket message.
 
     All WebSocket messages follow this structure.
     """
-    message_id: UUID = Field(default_factory=lambda: __import__('uuid').uuid4())
+
+    message_id: UUID = Field(default_factory=lambda: __import__("uuid").uuid4())
     event_type: DashboardEventType
 
     # Payload
@@ -438,6 +467,7 @@ class MetricsUpdateMessage(WebSocketMessage):
 
     Pushed when system metrics change significantly.
     """
+
     event_type: DashboardEventType = DashboardEventType.METRICS_UPDATED
     metrics: SystemMetrics
 
@@ -448,6 +478,7 @@ class HealthChangeMessage(WebSocketMessage):
 
     Pushed when system health status changes.
     """
+
     event_type: DashboardEventType = DashboardEventType.HEALTH_CHANGED
     old_status: HealthStatus
     new_status: HealthStatus
@@ -461,9 +492,10 @@ class AlertMessage(WebSocketMessage):
 
     Pushed for quality degradation, drift detection, etc.
     """
+
     event_type: Union[DashboardEventType, str]
 
-    alert_id: UUID = Field(default_factory=lambda: __import__('uuid').uuid4())
+    alert_id: UUID = Field(default_factory=lambda: __import__("uuid").uuid4())
     severity: str  # 'warning', 'error', 'critical'
     title: str
     description: str
@@ -479,10 +511,12 @@ class AlertMessage(WebSocketMessage):
 # System Health Models
 # ============================================================================
 
+
 class ComponentHealth(BaseModel):
     """
     Health status of a system component.
     """
+
     component_name: str
     status: HealthStatus
 
@@ -509,6 +543,7 @@ class SystemHealth(BaseModel):
 
     Aggregates health from all components.
     """
+
     overall_status: HealthStatus
 
     # Component statuses
@@ -541,8 +576,10 @@ class SystemHealth(BaseModel):
 # Request/Response Models
 # ============================================================================
 
+
 class GetDashboardMetricsRequest(BaseModel):
     """Request to get dashboard metrics"""
+
     tenant_id: str
     project_id: str
     period: MetricPeriod = MetricPeriod.LAST_24H
@@ -552,6 +589,7 @@ class GetDashboardMetricsRequest(BaseModel):
 
 class GetDashboardMetricsResponse(BaseModel):
     """Response with dashboard metrics"""
+
     system_metrics: SystemMetrics
     time_series_metrics: List[TimeSeriesMetric] = Field(default_factory=list)
     recent_activity: List[ActivityLog] = Field(default_factory=list)
@@ -560,6 +598,7 @@ class GetDashboardMetricsResponse(BaseModel):
 
 class GetVisualizationRequest(BaseModel):
     """Request to get visualization data"""
+
     tenant_id: str
     project_id: str
     visualization_type: VisualizationType
@@ -576,6 +615,7 @@ class GetVisualizationRequest(BaseModel):
 
 class GetVisualizationResponse(BaseModel):
     """Response with visualization data"""
+
     visualization_type: VisualizationType
 
     # Polymorphic data - one of these will be populated
@@ -594,6 +634,7 @@ class GetVisualizationResponse(BaseModel):
 
 class GetSystemHealthRequest(BaseModel):
     """Request to get system health"""
+
     tenant_id: str
     project_id: str
     include_sub_components: bool = True
@@ -601,6 +642,7 @@ class GetSystemHealthRequest(BaseModel):
 
 class GetSystemHealthResponse(BaseModel):
     """Response with system health"""
+
     system_health: SystemHealth
     recommendations: List[str] = Field(default_factory=list)
     message: str = "System health retrieved successfully"
@@ -608,6 +650,7 @@ class GetSystemHealthResponse(BaseModel):
 
 class SubscribeWebSocketRequest(BaseModel):
     """Request to subscribe to WebSocket events"""
+
     tenant_id: str
     project_id: str
 
@@ -622,7 +665,8 @@ class SubscribeWebSocketRequest(BaseModel):
 
 class WebSocketSubscription(BaseModel):
     """WebSocket subscription confirmation"""
-    subscription_id: UUID = Field(default_factory=lambda: __import__('uuid').uuid4())
+
+    subscription_id: UUID = Field(default_factory=lambda: __import__("uuid").uuid4())
     tenant_id: str
     project_id: str
 

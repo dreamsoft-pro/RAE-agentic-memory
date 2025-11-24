@@ -1,10 +1,12 @@
-from typing import Type
-from pydantic import BaseModel
-import httpx
-from tenacity import retry, stop_after_attempt, wait_exponential
 import json
-from .base import LLMProvider, LLMResult, LLMResultUsage
+from typing import Type
+
+import httpx
+from pydantic import BaseModel
+from tenacity import retry, stop_after_attempt, wait_exponential
+
 from ...config import settings
+from .base import LLMProvider, LLMResult, LLMResultUsage
 
 
 class OllamaProvider(LLMProvider):
@@ -18,7 +20,9 @@ class OllamaProvider(LLMProvider):
             raise ValueError("OLLAMA_API_URL is not set.")
         self.client = httpx.AsyncClient(base_url=self.api_url, timeout=120.0)
 
-    @retry(wait=wait_exponential(multiplier=1, min=2, max=5), stop=stop_after_attempt(3))
+    @retry(
+        wait=wait_exponential(multiplier=1, min=2, max=5), stop=stop_after_attempt(3)
+    )
     async def generate(self, *, system: str, prompt: str, model: str) -> LLMResult:
         """
         Generates content using the Ollama /api/generate endpoint.
@@ -49,13 +53,17 @@ class OllamaProvider(LLMProvider):
                 finish_reason=result_data.get("done_reason", "stop"),
             )
         except httpx.ConnectError as e:
-            print(f"Could not connect to Ollama server at {self.api_url}. Is it running?")
+            print(
+                f"Could not connect to Ollama server at {self.api_url}. Is it running?"
+            )
             raise
         except Exception as e:
             print(f"Ollama API call failed: {e}")
             raise
 
-    @retry(wait=wait_exponential(multiplier=1, min=2, max=5), stop=stop_after_attempt(3))
+    @retry(
+        wait=wait_exponential(multiplier=1, min=2, max=5), stop=stop_after_attempt(3)
+    )
     async def generate_structured(
         self, *, system: str, prompt: str, model: str, response_model: Type[BaseModel]
     ) -> BaseModel:
@@ -78,7 +86,9 @@ class OllamaProvider(LLMProvider):
             return response_model.model_validate(response_json)
 
         except httpx.ConnectError as e:
-            print(f"Could not connect to Ollama server at {self.api_url}. Is it running?")
+            print(
+                f"Could not connect to Ollama server at {self.api_url}. Is it running?"
+            )
             raise
         except Exception as e:
             print(f"Ollama API call failed: {e}")

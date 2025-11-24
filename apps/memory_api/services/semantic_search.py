@@ -7,19 +7,18 @@ This service implements enterprise semantic search with:
 - Stage 3: Semantic re-ranking
 """
 
-import asyncpg
-from typing import List, Dict, Any, Tuple
+from typing import Any, Dict, List, Tuple
 from uuid import UUID
-import structlog
-import numpy as np
 
+import asyncpg
+import numpy as np
+import structlog
+
+from apps.memory_api.models.semantic_models import (SemanticDefinition,
+                                                    SemanticNode,
+                                                    SemanticNodeType)
 from apps.memory_api.services.ml_service_client import MLServiceClient
 from apps.memory_api.services.semantic_extractor import SemanticExtractor
-from apps.memory_api.models.semantic_models import (
-    SemanticNode,
-    SemanticNodeType,
-    SemanticDefinition
-)
 
 logger = structlog.get_logger(__name__)
 
@@ -27,6 +26,7 @@ logger = structlog.get_logger(__name__)
 # ============================================================================
 # 3-Stage Semantic Search
 # ============================================================================
+
 
 class SemanticSearchPipeline:
     """
@@ -65,7 +65,7 @@ class SemanticSearchPipeline:
         node_types: List[SemanticNodeType] = None,
         domains: List[str] = None,
         min_priority: int = None,
-        exclude_degraded: bool = True
+        exclude_degraded: bool = True,
     ) -> Tuple[List[SemanticNode], Dict[str, Any]]:
         """
         Execute 3-stage semantic search.
@@ -86,19 +86,14 @@ class SemanticSearchPipeline:
         Returns:
             Tuple of (results, statistics)
         """
-        logger.info(
-            "semantic_search_started",
-            tenant_id=tenant_id,
-            query=query,
-            k=k
-        )
+        logger.info("semantic_search_started", tenant_id=tenant_id, query=query, k=k)
 
         statistics = {
             "stage1_results": 0,
             "stage2_results": 0,
             "stage3_results": 0,
             "identified_topics": [],
-            "canonical_terms": []
+            "canonical_terms": [],
         }
 
         results = []
@@ -121,7 +116,9 @@ class SemanticSearchPipeline:
             results.extend(stage2_results)
             statistics["stage2_results"] = len(stage2_results)
             statistics["canonical_terms"] = canonical_terms
-            logger.info("stage2_complete", results=len(stage2_results), terms=canonical_terms)
+            logger.info(
+                "stage2_complete", results=len(stage2_results), terms=canonical_terms
+            )
 
         # Deduplicate results by ID
         unique_results = self._deduplicate_by_id(results)
@@ -132,14 +129,12 @@ class SemanticSearchPipeline:
             node_types=node_types,
             domains=domains,
             min_priority=min_priority,
-            exclude_degraded=exclude_degraded
+            exclude_degraded=exclude_degraded,
         )
 
         # Stage 3: Semantic Re-ranking
         if enable_reranking:
-            reranked_results = await self._stage3_reranking(
-                filtered_results, query, k
-            )
+            reranked_results = await self._stage3_reranking(filtered_results, query, k)
             final_results = reranked_results[:k]
             statistics["stage3_results"] = len(final_results)
             logger.info("stage3_complete", results=len(final_results))
@@ -153,11 +148,7 @@ class SemanticSearchPipeline:
         return final_results, statistics
 
     async def _stage1_topic_matching(
-        self,
-        tenant_id: str,
-        project_id: str,
-        query: str,
-        k: int
+        self, tenant_id: str, project_id: str, query: str, k: int
     ) -> Tuple[List[SemanticNode], List[str]]:
         """
         Stage 1: Topic identification and vector search.
@@ -190,7 +181,10 @@ class SemanticSearchPipeline:
             ORDER BY embedding <=> $3
             LIMIT $4
             """,
-            tenant_id, project_id, query_embedding, k
+            tenant_id,
+            project_id,
+            query_embedding,
+            k,
         )
 
         results = [self._record_to_semantic_node(r) for r in records]
@@ -200,11 +194,7 @@ class SemanticSearchPipeline:
         return results, topics
 
     async def _stage2_canonicalization(
-        self,
-        tenant_id: str,
-        project_id: str,
-        query: str,
-        k: int
+        self, tenant_id: str, project_id: str, query: str, k: int
     ) -> Tuple[List[SemanticNode], List[str]]:
         """
         Stage 2: Term normalization and canonicalization.
@@ -246,23 +236,26 @@ class SemanticSearchPipeline:
                   )
                 LIMIT $5
                 """,
-                tenant_id, project_id,
-                f"%{canonical}%", canonical,
-                k
+                tenant_id,
+                project_id,
+                f"%{canonical}%",
+                canonical,
+                k,
             )
 
             for r in records:
                 results.append(self._record_to_semantic_node(r))
 
-        logger.info("stage2_canonicalization_complete", results=len(results), terms=canonical_terms)
+        logger.info(
+            "stage2_canonicalization_complete",
+            results=len(results),
+            terms=canonical_terms,
+        )
 
         return results, canonical_terms
 
     async def _stage3_reranking(
-        self,
-        nodes: List[SemanticNode],
-        query: str,
-        k: int
+        self, nodes: List[SemanticNode], query: str, k: int
     ) -> List[SemanticNode]:
         """
         Stage 3: Semantic re-ranking with boosting.
@@ -301,10 +294,10 @@ class SemanticSearchPipeline:
 
             # Compute final score
             final_score = (
-                base_score * 0.4 +
-                priority_boost * 0.3 +
-                reinforcement_boost * 0.2 +
-                access_boost * 0.1
+                base_score * 0.4
+                + priority_boost * 0.3
+                + reinforcement_boost * 0.2
+                + access_boost * 0.1
             ) * degradation_penalty
 
             scored_nodes.append((node, final_score))
@@ -329,7 +322,20 @@ class SemanticSearchPipeline:
         terms = query.lower().split()
 
         # Filter out very short terms and common stop words
-        stop_words = {"a", "an", "the", "is", "are", "was", "were", "in", "on", "at", "to", "for"}
+        stop_words = {
+            "a",
+            "an",
+            "the",
+            "is",
+            "are",
+            "was",
+            "were",
+            "in",
+            "on",
+            "at",
+            "to",
+            "for",
+        }
         topics = [t for t in terms if len(t) > 2 and t not in stop_words]
 
         return topics[:5]  # Limit to 5 topics
@@ -352,7 +358,7 @@ class SemanticSearchPipeline:
         node_types: List[SemanticNodeType] = None,
         domains: List[str] = None,
         min_priority: int = None,
-        exclude_degraded: bool = True
+        exclude_degraded: bool = True,
     ) -> List[SemanticNode]:
         """Apply filters to nodes"""
         filtered = nodes
@@ -375,42 +381,46 @@ class SemanticSearchPipeline:
         """Convert database record to SemanticNode"""
         # Parse definitions JSONB
         definitions = []
-        if record.get('definitions'):
-            for defn in record['definitions']:
+        if record.get("definitions"):
+            for defn in record["definitions"]:
                 if isinstance(defn, dict):
                     definitions.append(SemanticDefinition(**defn))
 
         return SemanticNode(
-            id=record['id'],
-            tenant_id=record['tenant_id'],
-            project_id=record['project_id'],
-            node_id=record['node_id'],
-            label=record['label'],
-            node_type=SemanticNodeType(record['node_type']),
-            canonical_form=record['canonical_form'],
-            aliases=record.get('aliases', []),
-            definition=record.get('definition'),
+            id=record["id"],
+            tenant_id=record["tenant_id"],
+            project_id=record["project_id"],
+            node_id=record["node_id"],
+            label=record["label"],
+            node_type=SemanticNodeType(record["node_type"]),
+            canonical_form=record["canonical_form"],
+            aliases=record.get("aliases", []),
+            definition=record.get("definition"),
             definitions=definitions,
-            context=record.get('context'),
-            examples=record.get('examples', []),
-            categories=record.get('categories', []),
-            domain=record.get('domain'),
-            relations=record.get('relations', {}),
-            embedding=record.get('embedding'),
-            priority=record['priority'],
-            importance_score=float(record['importance_score']),
-            last_reinforced_at=record['last_reinforced_at'],
-            reinforcement_count=record['reinforcement_count'],
-            decay_rate=float(record['decay_rate']),
-            is_degraded=record['is_degraded'],
-            degradation_timestamp=record.get('degradation_timestamp'),
-            source_memory_ids=record.get('source_memory_ids', []),
-            extraction_model=record.get('extraction_model'),
-            extraction_confidence=float(record['extraction_confidence']) if record.get('extraction_confidence') else None,
-            tags=record.get('tags', []),
-            metadata=record.get('metadata', {}),
-            created_at=record['created_at'],
-            updated_at=record['updated_at'],
-            last_accessed_at=record['last_accessed_at'],
-            accessed_count=record['accessed_count']
+            context=record.get("context"),
+            examples=record.get("examples", []),
+            categories=record.get("categories", []),
+            domain=record.get("domain"),
+            relations=record.get("relations", {}),
+            embedding=record.get("embedding"),
+            priority=record["priority"],
+            importance_score=float(record["importance_score"]),
+            last_reinforced_at=record["last_reinforced_at"],
+            reinforcement_count=record["reinforcement_count"],
+            decay_rate=float(record["decay_rate"]),
+            is_degraded=record["is_degraded"],
+            degradation_timestamp=record.get("degradation_timestamp"),
+            source_memory_ids=record.get("source_memory_ids", []),
+            extraction_model=record.get("extraction_model"),
+            extraction_confidence=(
+                float(record["extraction_confidence"])
+                if record.get("extraction_confidence")
+                else None
+            ),
+            tags=record.get("tags", []),
+            metadata=record.get("metadata", {}),
+            created_at=record["created_at"],
+            updated_at=record["updated_at"],
+            last_accessed_at=record["last_accessed_at"],
+            accessed_count=record["accessed_count"],
         )

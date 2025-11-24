@@ -23,13 +23,14 @@ Headers Returned:
 - X-RateLimit-Reset: Unix timestamp when limit resets
 """
 
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
+from typing import Optional
+
+import structlog
 from fastapi import Request, Response
 from fastapi.responses import JSONResponse
-import structlog
-from typing import Optional
+from slowapi import Limiter
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 logger = structlog.get_logger(__name__)
 
@@ -37,6 +38,7 @@ logger = structlog.get_logger(__name__)
 # ============================================================================
 # Key Function - Extract tenant_id for rate limiting
 # ============================================================================
+
 
 def get_tenant_key(request: Request) -> str:
     """
@@ -94,7 +96,10 @@ limiter = Limiter(
 # Rate Limit Exception Handler
 # ============================================================================
 
-async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
+
+async def rate_limit_exceeded_handler(
+    request: Request, exc: RateLimitExceeded
+) -> JSONResponse:
     """
     Custom handler for rate limit exceeded errors.
 
@@ -105,7 +110,7 @@ async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded) 
         path=request.url.path,
         method=request.method,
         key=get_tenant_key(request),
-        limit=str(exc.detail)
+        limit=str(exc.detail),
     )
 
     return JSONResponse(
@@ -115,13 +120,13 @@ async def rate_limit_exceeded_handler(request: Request, exc: RateLimitExceeded) 
                 "code": "RATE_LIMIT_EXCEEDED",
                 "message": "Too many requests. Please slow down and try again later.",
                 "detail": str(exc.detail),
-                "retry_after_seconds": 60  # Suggest retry after 1 minute
+                "retry_after_seconds": 60,  # Suggest retry after 1 minute
             }
         },
         headers={
             "Retry-After": "60",
-            "X-RateLimit-Reset": str(exc.detail) if hasattr(exc, 'detail') else "60"
-        }
+            "X-RateLimit-Reset": str(exc.detail) if hasattr(exc, "detail") else "60",
+        },
     )
 
 
@@ -152,6 +157,7 @@ admin_limit = limiter.limit("10/minute")
 # Utility Functions
 # ============================================================================
 
+
 def get_rate_limit_status(request: Request) -> dict:
     """
     Get current rate limit status for debugging/monitoring.
@@ -166,7 +172,7 @@ def get_rate_limit_status(request: Request) -> dict:
             "key": key,
             "limit": "unknown",
             "remaining": "unknown",
-            "reset": "unknown"
+            "reset": "unknown",
         }
     except Exception as e:
         logger.error("get_rate_limit_status_error", error=str(e))

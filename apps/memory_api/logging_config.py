@@ -16,6 +16,7 @@ Operational Excellence:
 """
 import logging
 import sys
+
 import structlog
 from structlog.types import Processor
 
@@ -47,7 +48,8 @@ def setup_logging():
     ]
 
     structlog.configure(
-        processors=shared_processors + [
+        processors=shared_processors
+        + [
             structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
         ],
         logger_factory=structlog.stdlib.LoggerFactory(),
@@ -87,7 +89,7 @@ def setup_logging():
         "celery",
         "celery.worker",
         "kombu",
-        "amqp"
+        "amqp",
     ]
 
     for logger_name in external_loggers:
@@ -101,5 +103,5 @@ def setup_logging():
     structlog.get_logger(__name__).info(
         "logging_configured",
         external_log_level=settings.LOG_LEVEL,
-        app_log_level=settings.RAE_APP_LOG_LEVEL
+        app_log_level=settings.RAE_APP_LOG_LEVEL,
     )
