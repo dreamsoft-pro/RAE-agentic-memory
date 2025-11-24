@@ -1,0 +1,111 @@
+﻿2025-11-24T21:23:08.3668663Z Print service container logs: fdb4c5452d474983a7f9e8196262c7ad_ankanepgvectorlatest_b881e7
+2025-11-24T21:23:08.3673992Z ##[command]/usr/bin/docker logs --details c080b10e56316c5513f515ae7b57de4a478554a101cde672c199e39142b1596e
+2025-11-24T21:23:08.3814524Z  The files belonging to this database system will be owned by user "postgres".
+2025-11-24T21:23:08.3819826Z  initdb: warning: enabling "trust" authentication for local connections
+2025-11-24T21:23:08.3820803Z  initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+2025-11-24T21:23:08.3822034Z  2025-11-24 21:21:47.218 UTC [1] LOG:  starting PostgreSQL 15.4 (Debian 15.4-2.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+2025-11-24T21:23:08.3822885Z  This user must also own the server process.
+2025-11-24T21:23:08.3823261Z  
+2025-11-24T21:23:08.3823633Z  The database cluster will be initialized with locale "en_US.utf8".
+2025-11-24T21:23:08.3824325Z  The default database encoding has accordingly been set to "UTF8".
+2025-11-24T21:23:08.3824970Z  The default text search configuration will be set to "english".
+2025-11-24T21:23:08.3825436Z  
+2025-11-24T21:23:08.3825687Z  Data page checksums are disabled.
+2025-11-24T21:23:08.3826025Z  
+2025-11-24T21:23:08.3826434Z  fixing permissions on existing directory /var/lib/postgresql/data ... ok
+2025-11-24T21:23:08.3827020Z  creating subdirectories ... ok
+2025-11-24T21:23:08.3827516Z  selecting dynamic shared memory implementation ... posix
+2025-11-24T21:23:08.3828023Z  selecting default max_connections ... 100
+2025-11-24T21:23:08.3828443Z  selecting default shared_buffers ... 128MB
+2025-11-24T21:23:08.3849611Z  selecting default time zone ... Etc/UTC
+2025-11-24T21:23:08.3850104Z  creating configuration files ... ok
+2025-11-24T21:23:08.3850537Z  running bootstrap script ... ok
+2025-11-24T21:23:08.3850971Z  performing post-bootstrap initialization ... ok
+2025-11-24T21:23:08.3851474Z  syncing data to disk ... ok
+2025-11-24T21:23:08.3851831Z  
+2025-11-24T21:23:08.3852070Z  
+2025-11-24T21:23:08.3852428Z  Success. You can now start the database server using:
+2025-11-24T21:23:08.3853190Z  
+2025-11-24T21:23:08.3853541Z      pg_ctl -D /var/lib/postgresql/data -l logfile start
+2025-11-24T21:23:08.3854012Z  
+2025-11-24T21:23:08.3854934Z  waiting for server to start....2025-11-24 21:21:46.820 UTC [47] LOG:  starting PostgreSQL 15.4 (Debian 15.4-2.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+2025-11-24T21:23:08.3856242Z  2025-11-24 21:21:46.821 UTC [47] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-11-24T21:23:08.3857085Z  2025-11-24 21:21:46.827 UTC [50] LOG:  database system was shut down at 2025-11-24 21:21:46 UTC
+2025-11-24T21:23:08.3857947Z  2025-11-24 21:21:46.833 UTC [47] LOG:  database system is ready to accept connections
+2025-11-24T21:23:08.3858500Z   done
+2025-11-24T21:23:08.3858765Z  server started
+2025-11-24T21:23:08.3859319Z  CREATE DATABASE
+2025-11-24T21:23:08.3859622Z  
+2025-11-24T21:23:08.3860062Z  2025-11-24 21:21:47.218 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2025-11-24T21:23:08.3860757Z  2025-11-24 21:21:47.218 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2025-11-24T21:23:08.3861508Z  2025-11-24 21:21:47.221 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-11-24T21:23:08.3862365Z  2025-11-24 21:21:47.232 UTC [63] LOG:  database system was shut down at 2025-11-24 21:21:47 UTC
+2025-11-24T21:23:08.3863169Z  2025-11-24 21:21:47.239 UTC [1] LOG:  database system is ready to accept connections
+2025-11-24T21:23:08.3863868Z  2025-11-24 21:21:55.845 UTC [74] FATAL:  role "root" does not exist
+2025-11-24T21:23:08.3864486Z  2025-11-24 21:22:05.958 UTC [82] FATAL:  role "root" does not exist
+2025-11-24T21:23:08.3865093Z  2025-11-24 21:22:16.077 UTC [90] FATAL:  role "root" does not exist
+2025-11-24T21:23:08.3865702Z  2025-11-24 21:22:26.176 UTC [99] FATAL:  role "root" does not exist
+2025-11-24T21:23:08.3866756Z  2025-11-24 21:22:36.277 UTC [106] FATAL:  role "root" does not exist
+2025-11-24T21:23:08.3867395Z  2025-11-24 21:22:46.390 UTC [114] FATAL:  role "root" does not exist
+2025-11-24T21:23:08.3867993Z  2025-11-24 21:22:56.493 UTC [123] FATAL:  role "root" does not exist
+2025-11-24T21:23:08.3868728Z  2025-11-24 21:23:06.581 UTC [131] FATAL:  role "root" does not exist
+2025-11-24T21:23:08.3869478Z  
+2025-11-24T21:23:08.3870012Z  /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+2025-11-24T21:23:08.3870667Z  
+2025-11-24T21:23:08.3871223Z  waiting for server to shut down...2025-11-24 21:21:47.085 UTC [47] LOG:  received fast shutdown request
+2025-11-24T21:23:08.3872038Z  .2025-11-24 21:21:47.085 UTC [47] LOG:  aborting any active transactions
+2025-11-24T21:23:08.3872942Z  2025-11-24 21:21:47.093 UTC [47] LOG:  background worker "logical replication launcher" (PID 53) exited with exit code 1
+2025-11-24T21:23:08.3873785Z  2025-11-24 21:21:47.093 UTC [48] LOG:  shutting down
+2025-11-24T21:23:08.3874436Z  2025-11-24 21:21:47.094 UTC [48] LOG:  checkpoint starting: shutdown immediate
+2025-11-24T21:23:08.3875934Z  2025-11-24 21:21:47.123 UTC [48] LOG:  checkpoint complete: wrote 918 buffers (5.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.023 s, sync=0.004 s, total=0.030 s; sync files=301, longest=0.002 s, average=0.001 s; distance=4223 kB, estimate=4223 kB
+2025-11-24T21:23:08.3877406Z  2025-11-24 21:21:47.137 UTC [47] LOG:  database system is shut down
+2025-11-24T21:23:08.3877934Z   done
+2025-11-24T21:23:08.3878227Z  server stopped
+2025-11-24T21:23:08.3878532Z  
+2025-11-24T21:23:08.3879237Z  PostgreSQL init process complete; ready for start up.
+2025-11-24T21:23:08.3879763Z  
+2025-11-24T21:23:08.3891933Z Stop and remove container: fdb4c5452d474983a7f9e8196262c7ad_ankanepgvectorlatest_b881e7
+2025-11-24T21:23:08.3899045Z ##[command]/usr/bin/docker rm --force c080b10e56316c5513f515ae7b57de4a478554a101cde672c199e39142b1596e
+2025-11-24T21:23:08.5622293Z c080b10e56316c5513f515ae7b57de4a478554a101cde672c199e39142b1596e
+2025-11-24T21:23:08.5661501Z Print service container logs: 36f878fcb641471b84264a133e4cea24_redis7alpine_c287b4
+2025-11-24T21:23:08.5662579Z ##[command]/usr/bin/docker logs --details 225a5b64009ec6b4fefbbb104e5efa596cfa42c53af9509654d8d7c5fccb19c5
+2025-11-24T21:23:08.5794035Z  1:C 24 Nov 2025 21:21:47.487 # WARNING Memory overcommit must be enabled! Without it, a background save or replication may fail under low memory condition. Being disabled, it can also cause failures without low memory condition, see https://github.com/jemalloc/jemalloc/issues/1328. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+2025-11-24T21:23:08.5804304Z  1:C 24 Nov 2025 21:21:47.487 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+2025-11-24T21:23:08.5805702Z  1:C 24 Nov 2025 21:21:47.487 * Redis version=7.4.7, bits=64, commit=00000000, modified=0, pid=1, just started
+2025-11-24T21:23:08.5807587Z  1:C 24 Nov 2025 21:21:47.487 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+2025-11-24T21:23:08.5808702Z  1:M 24 Nov 2025 21:21:47.487 * monotonic clock: POSIX clock_gettime
+2025-11-24T21:23:08.5809409Z  1:M 24 Nov 2025 21:21:47.488 * Running mode=standalone, port=6379.
+2025-11-24T21:23:08.5809758Z  1:M 24 Nov 2025 21:21:47.488 * Server initialized
+2025-11-24T21:23:08.5810073Z  1:M 24 Nov 2025 21:21:47.488 * Ready to accept connections tcp
+2025-11-24T21:23:08.5811055Z Stop and remove container: 36f878fcb641471b84264a133e4cea24_redis7alpine_c287b4
+2025-11-24T21:23:08.5811772Z ##[command]/usr/bin/docker rm --force 225a5b64009ec6b4fefbbb104e5efa596cfa42c53af9509654d8d7c5fccb19c5
+2025-11-24T21:23:08.6982961Z 225a5b64009ec6b4fefbbb104e5efa596cfa42c53af9509654d8d7c5fccb19c5
+2025-11-24T21:23:08.6996205Z Print service container logs: 1628a7d0b0a5496fbd35a1381a98bc1e_qdrantqdrantlatest_d9f119
+2025-11-24T21:23:08.6997169Z ##[command]/usr/bin/docker logs --details 7be5e14956ed84ccfed65fffdfe8981ff8a2b4c97ad72fb65e4f1c6ab29626e3
+2025-11-24T21:23:08.7126500Z             _                 _    
+2025-11-24T21:23:08.7127991Z    __ _  __| |_ __ __ _ _ __ | |_  
+2025-11-24T21:23:08.7128378Z   / _` |/ _` | '__/ _` | '_ \| __| 
+2025-11-24T21:23:08.7128750Z  | (_| | (_| | | | (_| | | | | |_  
+2025-11-24T21:23:08.7129300Z   \__, |\__,_|_|  \__,_|_| |_|\__| 
+2025-11-24T21:23:08.7129650Z      |_|                           
+2025-11-24T21:23:08.7129992Z  
+2025-11-24T21:23:08.7130252Z  Version: 1.16.0, build: 0d795287
+2025-11-24T21:23:08.7130724Z  Access web UI at http://localhost:6333/dashboard
+2025-11-24T21:23:08.7131177Z  
+2025-11-24T21:23:08.7132307Z  2025-11-24T21:21:51.224814Z  WARN qdrant: There is a potential issue with the filesystem for storage path ./storage. Details: Container filesystem detected - storage might be lost with container re-creation
+2025-11-24T21:23:08.7134087Z  2025-11-24T21:21:51.224939Z  INFO storage::content_manager::consensus::persistent: Initializing new raft state at ./storage/raft_state.json
+2025-11-24T21:23:08.7135146Z  2025-11-24T21:21:51.231691Z  INFO qdrant: Distributed mode disabled
+2025-11-24T21:23:08.7136004Z  2025-11-24T21:21:51.231929Z  INFO qdrant: Telemetry reporting enabled, id: 81ae18ae-14e6-4d99-81a1-b084ecf8fc1f
+2025-11-24T21:23:08.7136907Z  2025-11-24T21:21:51.255409Z  INFO qdrant::actix: TLS disabled for REST API
+2025-11-24T21:23:08.7137631Z  2025-11-24T21:21:51.255520Z  INFO qdrant::actix: Qdrant HTTP listening on 6333
+2025-11-24T21:23:08.7138347Z  2025-11-24T21:21:51.255569Z  INFO actix_server::builder: starting 1 workers
+2025-11-24T21:23:08.7139552Z  2025-11-24T21:21:51.255606Z  INFO actix_server::server: Actix runtime found; starting in Actix runtime
+2025-11-24T21:23:08.7142477Z  2025-11-24T21:21:51.255626Z  INFO actix_server::server: starting service: "actix-web-service-0.0.0.0:6333", workers: 1, listening on: 0.0.0.0:6333
+2025-11-24T21:23:08.7143650Z  2025-11-24T21:21:51.265333Z  INFO qdrant::tonic: Qdrant gRPC listening on 6334
+2025-11-24T21:23:08.7144455Z  2025-11-24T21:21:51.265432Z  INFO qdrant::tonic: TLS disabled for gRPC API
+2025-11-24T21:23:08.7146077Z Stop and remove container: 1628a7d0b0a5496fbd35a1381a98bc1e_qdrantqdrantlatest_d9f119
+2025-11-24T21:23:08.7147151Z ##[command]/usr/bin/docker rm --force 7be5e14956ed84ccfed65fffdfe8981ff8a2b4c97ad72fb65e4f1c6ab29626e3
+2025-11-24T21:23:08.8503596Z 7be5e14956ed84ccfed65fffdfe8981ff8a2b4c97ad72fb65e4f1c6ab29626e3
+2025-11-24T21:23:08.8596734Z Remove container network: github_network_d8b5b1629fdb4ec2826eaf8e528c911e
+2025-11-24T21:23:08.8603289Z ##[command]/usr/bin/docker network rm github_network_d8b5b1629fdb4ec2826eaf8e528c911e
+2025-11-24T21:23:08.9550826Z github_network_d8b5b1629fdb4ec2826eaf8e528c911e

@@ -7,6 +7,10 @@ Data models for RAE Memory API
 import importlib.util
 from pathlib import Path
 
+# Import Phase 2 models from submodules (early import to avoid E402)
+from apps.memory_api.models.rbac import Permission, Role, UserRole
+from apps.memory_api.models.tenant import Tenant, TenantConfig, TenantTier
+
 # Load models from the legacy models.py file
 models_file = Path(__file__).parent.parent / "models.py"
 spec = importlib.util.spec_from_file_location("rae_models_legacy", models_file)
@@ -27,11 +31,6 @@ RebuildReflectionsRequest = models_legacy.RebuildReflectionsRequest
 AgentExecuteRequest = models_legacy.AgentExecuteRequest
 CostInfo = models_legacy.CostInfo
 AgentExecuteResponse = models_legacy.AgentExecuteResponse
-
-from apps.memory_api.models.rbac import Permission, Role, UserRole
-
-# Import Phase 2 models from submodules
-from apps.memory_api.models.tenant import Tenant, TenantConfig, TenantTier
 
 __all__ = [
     # Core models

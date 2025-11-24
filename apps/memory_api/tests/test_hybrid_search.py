@@ -14,10 +14,14 @@ sentence_transformers = pytest.importorskip(
     reason="Requires sentence-transformers – heavy ML dependency",
 )
 
-from apps.memory_api.models import ScoredMemoryRecord
-from apps.memory_api.models.graph import GraphEdge, GraphNode, TraversalStrategy
-from apps.memory_api.repositories.graph_repository import GraphRepository
-from apps.memory_api.services.hybrid_search import (
+from apps.memory_api.models import ScoredMemoryRecord  # noqa: E402
+from apps.memory_api.models.graph import (  # noqa: E402
+    GraphEdge,
+    GraphNode,
+    TraversalStrategy,
+)
+from apps.memory_api.repositories.graph_repository import GraphRepository  # noqa: E402
+from apps.memory_api.services.hybrid_search import (  # noqa: E402
     HybridSearchService,
 )
 

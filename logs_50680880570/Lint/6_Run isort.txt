@@ -1,0 +1,11 @@
+﻿2025-11-24T21:21:44.3374432Z ##[group]Run isort --check apps/ sdk/ integrations/
+2025-11-24T21:21:44.3374819Z [36;1misort --check apps/ sdk/ integrations/[0m
+2025-11-24T21:21:44.3407267Z shell: /usr/bin/bash -e {0}
+2025-11-24T21:21:44.3407495Z env:
+2025-11-24T21:21:44.3407728Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:21:44.3408134Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-24T21:21:44.3408512Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:21:44.3408840Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:21:44.3409181Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:21:44.3409509Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-24T21:21:44.3410070Z ##[endgroup]

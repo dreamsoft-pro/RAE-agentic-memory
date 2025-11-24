@@ -1,0 +1,193 @@
+﻿2025-11-24T21:21:44.8348839Z ##[group]Run ruff check apps/ sdk/ integrations/
+2025-11-24T21:21:44.8349445Z [36;1mruff check apps/ sdk/ integrations/[0m
+2025-11-24T21:21:44.8396773Z shell: /usr/bin/bash -e {0}
+2025-11-24T21:21:44.8397155Z env:
+2025-11-24T21:21:44.8397557Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:21:44.8398268Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-24T21:21:44.8398968Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:21:44.8399597Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:21:44.8400499Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:21:44.8401127Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-24T21:21:44.8401646Z ##[endgroup]
+2025-11-24T21:21:44.9024990Z E402 Module level import not at top of file
+2025-11-24T21:21:44.9025666Z   --> apps/memory_api/models/__init__.py:31:1
+2025-11-24T21:21:44.9026653Z    |
+2025-11-24T21:21:44.9039267Z 29 | AgentExecuteResponse = models_legacy.AgentExecuteResponse
+2025-11-24T21:21:44.9040281Z 30 |
+2025-11-24T21:21:44.9040728Z 31 | from apps.memory_api.models.rbac import Permission, Role, UserRole
+2025-11-24T21:21:44.9041325Z    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-24T21:21:44.9041754Z 32 |
+2025-11-24T21:21:44.9042058Z 33 | # Import Phase 2 models from submodules
+2025-11-24T21:21:44.9042479Z    |
+2025-11-24T21:21:44.9042619Z 
+2025-11-24T21:21:44.9042797Z E402 Module level import not at top of file
+2025-11-24T21:21:44.9043244Z   --> apps/memory_api/models/__init__.py:34:1
+2025-11-24T21:21:44.9043670Z    |
+2025-11-24T21:21:44.9043957Z 33 | # Import Phase 2 models from submodules
+2025-11-24T21:21:44.9044562Z 34 | from apps.memory_api.models.tenant import Tenant, TenantConfig, TenantTier
+2025-11-24T21:21:44.9045171Z    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-24T21:21:44.9045740Z 35 |
+2025-11-24T21:21:44.9045993Z 36 | __all__ = [
+2025-11-24T21:21:44.9046343Z    |
+2025-11-24T21:21:44.9046510Z 
+2025-11-24T21:21:44.9046678Z E402 Module level import not at top of file
+2025-11-24T21:21:44.9047217Z   --> apps/memory_api/tests/test_graph_extraction.py:18:1
+2025-11-24T21:21:44.9047679Z    |
+2025-11-24T21:21:44.9047932Z 16 |   )
+2025-11-24T21:21:44.9048195Z 17 |
+2025-11-24T21:21:44.9048587Z 18 | / from apps.memory_api.services.graph_extraction import (
+2025-11-24T21:21:44.9049177Z 19 | |     GraphExtractionResult,
+2025-11-24T21:21:44.9049589Z 20 | |     GraphExtractionService,
+2025-11-24T21:21:44.9050202Z 21 | |     GraphTriple,
+2025-11-24T21:21:44.9050558Z 22 | |     _normalize_entity_name,
+2025-11-24T21:21:44.9050912Z 23 | | )
+2025-11-24T21:21:44.9051187Z    | |_^
+2025-11-24T21:21:44.9051428Z    |
+2025-11-24T21:21:44.9051564Z 
+2025-11-24T21:21:44.9051714Z E402 Module level import not at top of file
+2025-11-24T21:21:44.9052282Z   --> apps/memory_api/tests/test_graph_extraction_integration.py:23:1
+2025-11-24T21:21:44.9053063Z    |
+2025-11-24T21:21:44.9053316Z 21 | )
+2025-11-24T21:21:44.9053590Z 22 |
+2025-11-24T21:21:44.9054027Z 23 | from apps.memory_api.repositories.graph_repository import GraphRepository
+2025-11-24T21:21:44.9054650Z    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-24T21:21:44.9055120Z 24 | from apps.memory_api.repositories.memory_repository import MemoryRepository
+2025-11-24T21:21:44.9055556Z 25 | from apps.memory_api.services.graph_extraction import (
+2025-11-24T21:21:44.9055829Z    |
+2025-11-24T21:21:44.9055914Z 
+2025-11-24T21:21:44.9056012Z E402 Module level import not at top of file
+2025-11-24T21:21:44.9056355Z   --> apps/memory_api/tests/test_graph_extraction_integration.py:24:1
+2025-11-24T21:21:44.9056653Z    |
+2025-11-24T21:21:44.9056926Z 23 | from apps.memory_api.repositories.graph_repository import GraphRepository
+2025-11-24T21:21:44.9057430Z 24 | from apps.memory_api.repositories.memory_repository import MemoryRepository
+2025-11-24T21:21:44.9057803Z    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-24T21:21:44.9058392Z 25 | from apps.memory_api.services.graph_extraction import (
+2025-11-24T21:21:44.9058686Z 26 |     GraphExtractionService,
+2025-11-24T21:21:44.9058895Z    |
+2025-11-24T21:21:44.9058977Z 
+2025-11-24T21:21:44.9059073Z E402 Module level import not at top of file
+2025-11-24T21:21:44.9059409Z   --> apps/memory_api/tests/test_graph_extraction_integration.py:25:1
+2025-11-24T21:21:44.9059967Z    |
+2025-11-24T21:21:44.9060325Z 23 |   from apps.memory_api.repositories.graph_repository import GraphRepository
+2025-11-24T21:21:44.9060855Z 24 |   from apps.memory_api.repositories.memory_repository import MemoryRepository
+2025-11-24T21:21:44.9061276Z 25 | / from apps.memory_api.services.graph_extraction import (
+2025-11-24T21:21:44.9061585Z 26 | |     GraphExtractionService,
+2025-11-24T21:21:44.9061841Z 27 | |     GraphTriple,
+2025-11-24T21:21:44.9062032Z 28 | | )
+2025-11-24T21:21:44.9062351Z    | |_^
+2025-11-24T21:21:44.9062491Z    |
+2025-11-24T21:21:44.9062579Z 
+2025-11-24T21:21:44.9062682Z E402 Module level import not at top of file
+2025-11-24T21:21:44.9062983Z   --> apps/memory_api/tests/test_hybrid_search.py:17:1
+2025-11-24T21:21:44.9063246Z    |
+2025-11-24T21:21:44.9063384Z 15 | )
+2025-11-24T21:21:44.9063570Z 16 |
+2025-11-24T21:21:44.9063782Z 17 | from apps.memory_api.models import ScoredMemoryRecord
+2025-11-24T21:21:44.9064121Z    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-24T21:21:44.9064501Z 18 | from apps.memory_api.models.graph import GraphEdge, GraphNode, TraversalStrategy
+2025-11-24T21:21:44.9064992Z 19 | from apps.memory_api.repositories.graph_repository import GraphRepository
+2025-11-24T21:21:44.9065330Z    |
+2025-11-24T21:21:44.9065411Z 
+2025-11-24T21:21:44.9065505Z E402 Module level import not at top of file
+2025-11-24T21:21:44.9065791Z   --> apps/memory_api/tests/test_hybrid_search.py:18:1
+2025-11-24T21:21:44.9066039Z    |
+2025-11-24T21:21:44.9066278Z 17 | from apps.memory_api.models import ScoredMemoryRecord
+2025-11-24T21:21:44.9066700Z 18 | from apps.memory_api.models.graph import GraphEdge, GraphNode, TraversalStrategy
+2025-11-24T21:21:44.9067072Z    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-24T21:21:44.9067435Z 19 | from apps.memory_api.repositories.graph_repository import GraphRepository
+2025-11-24T21:21:44.9067828Z 20 | from apps.memory_api.services.hybrid_search import (
+2025-11-24T21:21:44.9068093Z    |
+2025-11-24T21:21:44.9068172Z 
+2025-11-24T21:21:44.9068264Z E402 Module level import not at top of file
+2025-11-24T21:21:44.9068545Z   --> apps/memory_api/tests/test_hybrid_search.py:19:1
+2025-11-24T21:21:44.9068791Z    |
+2025-11-24T21:21:44.9068990Z 17 | from apps.memory_api.models import ScoredMemoryRecord
+2025-11-24T21:21:44.9069427Z 18 | from apps.memory_api.models.graph import GraphEdge, GraphNode, TraversalStrategy
+2025-11-24T21:21:44.9070309Z 19 | from apps.memory_api.repositories.graph_repository import GraphRepository
+2025-11-24T21:21:44.9070691Z    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-24T21:21:44.9070984Z 20 | from apps.memory_api.services.hybrid_search import (
+2025-11-24T21:21:44.9071267Z 21 |     HybridSearchService,
+2025-11-24T21:21:44.9071502Z    |
+2025-11-24T21:21:44.9071590Z 
+2025-11-24T21:21:44.9071682Z E402 Module level import not at top of file
+2025-11-24T21:21:44.9071971Z   --> apps/memory_api/tests/test_hybrid_search.py:20:1
+2025-11-24T21:21:44.9072222Z    |
+2025-11-24T21:21:44.9072509Z 18 |   from apps.memory_api.models.graph import GraphEdge, GraphNode, TraversalStrategy
+2025-11-24T21:21:44.9072986Z 19 |   from apps.memory_api.repositories.graph_repository import GraphRepository
+2025-11-24T21:21:44.9073383Z 20 | / from apps.memory_api.services.hybrid_search import (
+2025-11-24T21:21:44.9073696Z 21 | |     HybridSearchService,
+2025-11-24T21:21:44.9073902Z 22 | | )
+2025-11-24T21:21:44.9074050Z    | |_^
+2025-11-24T21:21:44.9074188Z    |
+2025-11-24T21:21:44.9074272Z 
+2025-11-24T21:21:44.9074367Z E402 Module level import not at top of file
+2025-11-24T21:21:44.9074813Z   --> apps/memory_api/tests/test_pii_scrubber.py:25:1
+2025-11-24T21:21:44.9075066Z    |
+2025-11-24T21:21:44.9075201Z 23 | )
+2025-11-24T21:21:44.9075345Z 24 |
+2025-11-24T21:21:44.9075568Z 25 | from apps.memory_api.services.pii_scrubber import scrub_text
+2025-11-24T21:21:44.9075876Z    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-24T21:21:44.9076125Z    |
+2025-11-24T21:21:44.9076215Z 
+2025-11-24T21:21:44.9076305Z E402 Module level import not at top of file
+2025-11-24T21:21:44.9076605Z   --> apps/memory_api/tests/test_reflection_simple.py:20:1
+2025-11-24T21:21:44.9076869Z    |
+2025-11-24T21:21:44.9077010Z 18 |   )
+2025-11-24T21:21:44.9077148Z 19 |
+2025-11-24T21:21:44.9077367Z 20 | / from apps.memory_api.models.reflection_models import (
+2025-11-24T21:21:44.9077664Z 21 | |     GenerateReflectionRequest,
+2025-11-24T21:21:44.9077899Z 22 | |     ReflectionType,
+2025-11-24T21:21:44.9078239Z 23 | | )
+2025-11-24T21:21:44.9078392Z    | |_^
+2025-11-24T21:21:44.9078679Z 24 |   from apps.memory_api.services.reflection_pipeline import ReflectionPipeline
+2025-11-24T21:21:44.9079013Z    |
+2025-11-24T21:21:44.9079095Z 
+2025-11-24T21:21:44.9079193Z E402 Module level import not at top of file
+2025-11-24T21:21:44.9079488Z   --> apps/memory_api/tests/test_reflection_simple.py:24:1
+2025-11-24T21:21:44.9079940Z    |
+2025-11-24T21:21:44.9080102Z 22 |     ReflectionType,
+2025-11-24T21:21:44.9080293Z 23 | )
+2025-11-24T21:21:44.9080578Z 24 | from apps.memory_api.services.reflection_pipeline import ReflectionPipeline
+2025-11-24T21:21:44.9080985Z    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-24T21:21:44.9081222Z    |
+2025-11-24T21:21:44.9081303Z 
+2025-11-24T21:21:44.9081396Z E402 Module level import not at top of file
+2025-11-24T21:21:44.9081703Z   --> apps/memory_api/tests/test_semantic_memory.py:24:1
+2025-11-24T21:21:44.9081961Z    |
+2025-11-24T21:21:44.9082108Z 22 | )
+2025-11-24T21:21:44.9082244Z 23 |
+2025-11-24T21:21:44.9082516Z 24 | from apps.memory_api.services.semantic_extractor import SemanticExtractor
+2025-11-24T21:21:44.9082865Z    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-24T21:21:44.9083262Z 25 | from apps.memory_api.services.semantic_search import SemanticSearchPipeline
+2025-11-24T21:21:44.9083603Z    |
+2025-11-24T21:21:44.9083684Z 
+2025-11-24T21:21:44.9083775Z E402 Module level import not at top of file
+2025-11-24T21:21:44.9084077Z   --> apps/memory_api/tests/test_semantic_memory.py:25:1
+2025-11-24T21:21:44.9084330Z    |
+2025-11-24T21:21:44.9084592Z 24 | from apps.memory_api.services.semantic_extractor import SemanticExtractor
+2025-11-24T21:21:44.9085039Z 25 | from apps.memory_api.services.semantic_search import SemanticSearchPipeline
+2025-11-24T21:21:44.9085398Z    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-24T21:21:44.9085664Z    |
+2025-11-24T21:21:44.9085751Z 
+2025-11-24T21:21:44.9085842Z E402 Module level import not at top of file
+2025-11-24T21:21:44.9086128Z   --> apps/memory_api/tests/test_vector_store.py:26:1
+2025-11-24T21:21:44.9086372Z    |
+2025-11-24T21:21:44.9086514Z 24 | )
+2025-11-24T21:21:44.9086652Z 25 |
+2025-11-24T21:21:44.9086901Z 26 | from apps.memory_api.models import MemoryRecord, ScoredMemoryRecord
+2025-11-24T21:21:44.9087237Z    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-24T21:21:44.9087624Z 27 | from apps.memory_api.services.vector_store.pgvector_store import PGVectorStore
+2025-11-24T21:21:44.9088008Z    |
+2025-11-24T21:21:44.9088090Z 
+2025-11-24T21:21:44.9088181Z E402 Module level import not at top of file
+2025-11-24T21:21:44.9088464Z   --> apps/memory_api/tests/test_vector_store.py:27:1
+2025-11-24T21:21:44.9088710Z    |
+2025-11-24T21:21:44.9088955Z 26 | from apps.memory_api.models import MemoryRecord, ScoredMemoryRecord
+2025-11-24T21:21:44.9089397Z 27 | from apps.memory_api.services.vector_store.pgvector_store import PGVectorStore
+2025-11-24T21:21:44.9090006Z    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-24T21:21:44.9090433Z 28 |
+2025-11-24T21:21:44.9090605Z 29 | # =============================================================================
+2025-11-24T21:21:44.9090852Z    |
+2025-11-24T21:21:44.9090936Z 
+2025-11-24T21:21:44.9091003Z Found 17 errors.
+2025-11-24T21:21:44.9100642Z ##[error]Process completed with exit code 1.

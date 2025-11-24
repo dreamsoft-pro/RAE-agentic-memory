@@ -1,0 +1,129 @@
+﻿2025-11-24T21:22:47.9325058Z ##[group]Run pytest -m "not integration" --cov --cov-report=xml --cov-report=term
+2025-11-24T21:22:47.9325616Z [36;1mpytest -m "not integration" --cov --cov-report=xml --cov-report=term[0m
+2025-11-24T21:22:47.9358382Z shell: /usr/bin/bash -e {0}
+2025-11-24T21:22:47.9358612Z env:
+2025-11-24T21:22:47.9358853Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:22:47.9359513Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-24T21:22:47.9359914Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:22:47.9360259Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:22:47.9360633Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:22:47.9360970Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-24T21:22:47.9361549Z   DATABASE_URL: ***localhost:5432/test_rae
+2025-11-24T21:22:47.9361822Z   REDIS_URL: redis://localhost:6379/0
+2025-11-24T21:22:47.9362088Z   QDRANT_URL: http://localhost:6333
+2025-11-24T21:22:47.9362349Z   RAE_VECTOR_BACKEND: qdrant
+2025-11-24T21:22:47.9362553Z ##[endgroup]
+2025-11-24T21:22:49.0490373Z [1m============================= test session starts ==============================[0m
+2025-11-24T21:22:49.0496775Z platform linux -- Python 3.11.14, pytest-9.0.1, pluggy-1.6.0 -- /opt/hostedtoolcache/Python/3.11.14/x64/bin/python
+2025-11-24T21:22:49.0501460Z cachedir: .pytest_cache
+2025-11-24T21:22:49.0502031Z rootdir: /home/runner/work/RAE-agentic-memory/RAE-agentic-memory
+2025-11-24T21:22:49.0502636Z configfile: pytest.ini
+2025-11-24T21:22:49.0503348Z testpaths: apps/memory_api/tests, sdk/python/rae_memory_sdk/tests, integrations/mcp-server/tests
+2025-11-24T21:22:49.0504292Z plugins: anyio-4.11.0, cov-7.0.0, asyncio-1.3.0, mock-3.15.1
+2025-11-24T21:22:49.0505281Z asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+2025-11-24T21:22:59.3172784Z [1mcollecting ... [0mcollected 176 items / 1 error / 7 skipped
+2025-11-24T21:22:59.3173738Z 
+2025-11-24T21:22:59.3174129Z ==================================== ERRORS ====================================
+2025-11-24T21:22:59.3175358Z [31m[1m____________ ERROR collecting apps/memory_api/tests/test_openapi.py ____________[0m
+2025-11-24T21:22:59.3188201Z [31mImportError while importing test module '/home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/tests/test_openapi.py'.
+2025-11-24T21:22:59.3189665Z Hint: make sure your test modules/packages have valid Python names.
+2025-11-24T21:22:59.3190192Z Traceback:
+2025-11-24T21:22:59.3190861Z /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/importlib/__init__.py:126: in import_module
+2025-11-24T21:22:59.3192014Z     return _bootstrap._gcd_import(name[level:], package, level)
+2025-11-24T21:22:59.3192497Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-24T21:22:59.3192944Z apps/memory_api/tests/test_openapi.py:3: in <module>
+2025-11-24T21:22:59.3193413Z     from apps.memory_api.main import app
+2025-11-24T21:22:59.3193832Z apps/memory_api/main.py:23: in <module>
+2025-11-24T21:22:59.3194204Z     from apps.memory_api.routes import (
+2025-11-24T21:22:59.3194656Z apps/memory_api/routes/reflections.py:31: in <module>
+2025-11-24T21:22:59.3195294Z     from apps.memory_api.services.reflection_pipeline import ReflectionPipeline
+2025-11-24T21:22:59.3195986Z apps/memory_api/services/reflection_pipeline.py:20: in <module>
+2025-11-24T21:22:59.3196507Z     from sklearn.cluster import HDBSCAN, KMeans
+2025-11-24T21:22:59.3197114Z E   ModuleNotFoundError: No module named 'sklearn'[0m
+2025-11-24T21:22:59.3197726Z [33m=============================== warnings summary ===============================[0m
+2025-11-24T21:22:59.3198517Z ../../../../../opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages/starlette/formparsers.py:12
+2025-11-24T21:22:59.3200149Z   /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages/starlette/formparsers.py:12: PendingDeprecationWarning: Please use `import python_multipart` instead.
+2025-11-24T21:22:59.3201573Z     import multipart
+2025-11-24T21:22:59.3201749Z 
+2025-11-24T21:22:59.3201917Z apps/memory_api/models/evaluation_models.py:478
+2025-11-24T21:22:59.3203867Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/evaluation_models.py:478: PydanticDeprecatedSince20: `min_items` is deprecated and will be removed, use `min_length` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3205871Z     variants: List[ABTestVariant] = Field(..., min_items=2, max_items=10)
+2025-11-24T21:22:59.3206295Z 
+2025-11-24T21:22:59.3206469Z apps/memory_api/models/evaluation_models.py:478
+2025-11-24T21:22:59.3208398Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/evaluation_models.py:478: PydanticDeprecatedSince20: `max_items` is deprecated and will be removed, use `max_length` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3217570Z     variants: List[ABTestVariant] = Field(..., min_items=2, max_items=10)
+2025-11-24T21:22:59.3218016Z 
+2025-11-24T21:22:59.3218198Z apps/memory_api/models/evaluation_models.py:529
+2025-11-24T21:22:59.3220343Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/evaluation_models.py:529: PydanticDeprecatedSince20: `min_items` is deprecated and will be removed, use `min_length` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3222300Z     queries: List[str] = Field(..., min_items=1)
+2025-11-24T21:22:59.3222595Z 
+2025-11-24T21:22:59.3222764Z apps/memory_api/models/evaluation_models.py:530
+2025-11-24T21:22:59.3224808Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/evaluation_models.py:530: PydanticDeprecatedSince20: `min_items` is deprecated and will be removed, use `min_length` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3226817Z     relevance_judgments: List[RelevanceJudgment] = Field(..., min_items=1)
+2025-11-24T21:22:59.3227237Z 
+2025-11-24T21:22:59.3227439Z apps/memory_api/repositories/cost_logs_repository.py:30
+2025-11-24T21:22:59.3229924Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/repositories/cost_logs_repository.py:30: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3232167Z     class LLMCallLog(BaseModel):
+2025-11-24T21:22:59.3232407Z 
+2025-11-24T21:22:59.3232567Z apps/memory_api/services/budget_service.py:23
+2025-11-24T21:22:59.3234474Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/services/budget_service.py:23: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3236361Z     class Budget(BaseModel):
+2025-11-24T21:22:59.3236591Z 
+2025-11-24T21:22:59.3236769Z apps/memory_api/models/graph_enhanced_models.py:47
+2025-11-24T21:22:59.3238699Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/graph_enhanced_models.py:47: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3240828Z     class EnhancedGraphNode(BaseModel):
+2025-11-24T21:22:59.3241087Z 
+2025-11-24T21:22:59.3241267Z apps/memory_api/models/graph_enhanced_models.py:79
+2025-11-24T21:22:59.3243419Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/graph_enhanced_models.py:79: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3245355Z     class EnhancedGraphEdge(BaseModel):
+2025-11-24T21:22:59.3245622Z 
+2025-11-24T21:22:59.3245813Z apps/memory_api/models/graph_enhanced_models.py:171
+2025-11-24T21:22:59.3247765Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/graph_enhanced_models.py:171: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3249948Z     class GraphSnapshot(BaseModel):
+2025-11-24T21:22:59.3250198Z 
+2025-11-24T21:22:59.3250398Z apps/memory_api/models/graph_enhanced_models.py:211
+2025-11-24T21:22:59.3252391Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/graph_enhanced_models.py:211: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3254310Z     class GraphTraversal(BaseModel):
+2025-11-24T21:22:59.3254557Z 
+2025-11-24T21:22:59.3254736Z apps/memory_api/models/graph_enhanced_models.py:561
+2025-11-24T21:22:59.3256651Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/graph_enhanced_models.py:561: PydanticDeprecatedSince20: `min_items` is deprecated and will be removed, use `min_length` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3258645Z     nodes: List[Dict[str, Any]] = Field(..., min_items=1, max_items=1000)
+2025-11-24T21:22:59.3259186Z 
+2025-11-24T21:22:59.3259377Z apps/memory_api/models/graph_enhanced_models.py:561
+2025-11-24T21:22:59.3261298Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/graph_enhanced_models.py:561: PydanticDeprecatedSince20: `max_items` is deprecated and will be removed, use `max_length` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3263258Z     nodes: List[Dict[str, Any]] = Field(..., min_items=1, max_items=1000)
+2025-11-24T21:22:59.3263838Z 
+2025-11-24T21:22:59.3264018Z apps/memory_api/models/graph_enhanced_models.py:569
+2025-11-24T21:22:59.3265917Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/graph_enhanced_models.py:569: PydanticDeprecatedSince20: `min_items` is deprecated and will be removed, use `min_length` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3267988Z     edges: List[CreateGraphEdgeRequest] = Field(..., min_items=1, max_items=1000)
+2025-11-24T21:22:59.3268438Z 
+2025-11-24T21:22:59.3268619Z apps/memory_api/models/graph_enhanced_models.py:569
+2025-11-24T21:22:59.3270677Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/graph_enhanced_models.py:569: PydanticDeprecatedSince20: `max_items` is deprecated and will be removed, use `max_length` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3272728Z     edges: List[CreateGraphEdgeRequest] = Field(..., min_items=1, max_items=1000)
+2025-11-24T21:22:59.3273180Z 
+2025-11-24T21:22:59.3273345Z apps/memory_api/models/reflection_models.py:97
+2025-11-24T21:22:59.3275368Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/reflection_models.py:97: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:23:00.1816533Z     class ReflectionUnit(BaseModel):
+2025-11-24T21:23:00.1824196Z 
+2025-11-24T21:23:00.1824524Z apps/memory_api/models/reflection_models.py:184
+2025-11-24T21:23:00.1827106Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/reflection_models.py:184: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:23:00.1829581Z     class ReflectionRelationship(BaseModel):
+2025-11-24T21:23:00.1830212Z 
+2025-11-24T21:23:00.1833723Z apps/memory_api/models/reflection_models.py:227
+2025-11-24T21:23:00.1836195Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/reflection_models.py:227: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:23:00.1838832Z     class ReflectionCluster(BaseModel):
+2025-11-24T21:23:00.1914997Z 
+2025-11-24T21:23:00.1916453Z apps/memory_api/models/reflection_models.py:450
+2025-11-24T21:23:00.1926381Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/reflection_models.py:450: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:23:00.1928379Z     class ReflectionUsageLog(BaseModel):
+2025-11-24T21:23:00.1928659Z 
+2025-11-24T21:23:00.1928830Z apps/memory_api/tests/test_phase2_plugins.py:19
+2025-11-24T21:23:00.1930987Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/tests/test_phase2_plugins.py:19: PytestCollectionWarning: cannot collect test class 'TestPlugin' because it has a __init__ constructor (from: apps/memory_api/tests/test_phase2_plugins.py)
+2025-11-24T21:23:00.1934167Z     class TestPlugin(Plugin):
+2025-11-24T21:23:00.1934397Z 
+2025-11-24T21:23:00.1934683Z -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2025-11-24T21:23:00.1935597Z [36m[1m=========================== short test summary info ============================[0m
+2025-11-24T21:23:00.1936202Z [31mERROR[0m apps/memory_api/tests/test_openapi.py
+2025-11-24T21:23:00.1937158Z !!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+2025-11-24T21:23:00.1938062Z [31m================== [33m7 skipped[0m, [33m20 warnings[0m, [31m[1m1 error[0m[31m in 10.28s[0m[31m ===================[0m
+2025-11-24T21:23:01.0213549Z ##[error]Process completed with exit code 2.

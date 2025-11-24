@@ -1,0 +1,50 @@
+﻿2025-11-24T21:21:33.6714236Z ##[group]Run pip install black isort ruff mypy
+2025-11-24T21:21:33.6714629Z [36;1mpip install black isort ruff mypy[0m
+2025-11-24T21:21:33.6754564Z shell: /usr/bin/bash -e {0}
+2025-11-24T21:21:33.6754815Z env:
+2025-11-24T21:21:33.6755064Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:21:33.6755478Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-24T21:21:33.6755875Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:21:33.6756217Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:21:33.6756559Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:21:33.6756916Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-24T21:21:33.6757206Z ##[endgroup]
+2025-11-24T21:21:34.5461247Z Collecting black
+2025-11-24T21:21:34.6233564Z   Downloading black-25.11.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (85 kB)
+2025-11-24T21:21:34.6940048Z Collecting isort
+2025-11-24T21:21:34.7053953Z   Downloading isort-7.0.0-py3-none-any.whl.metadata (11 kB)
+2025-11-24T21:21:35.1080045Z Collecting ruff
+2025-11-24T21:21:35.1162687Z   Downloading ruff-0.14.6-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (25 kB)
+2025-11-24T21:21:35.2426694Z Collecting mypy
+2025-11-24T21:21:35.2508304Z   Downloading mypy-1.18.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.2 kB)
+2025-11-24T21:21:35.2771070Z Collecting click>=8.0.0 (from black)
+2025-11-24T21:21:35.2850422Z   Downloading click-8.3.1-py3-none-any.whl.metadata (2.6 kB)
+2025-11-24T21:21:35.3004719Z Collecting mypy-extensions>=0.4.3 (from black)
+2025-11-24T21:21:35.3080484Z   Downloading mypy_extensions-1.1.0-py3-none-any.whl.metadata (1.1 kB)
+2025-11-24T21:21:35.3336670Z Collecting packaging>=22.0 (from black)
+2025-11-24T21:21:35.3415017Z   Downloading packaging-25.0-py3-none-any.whl.metadata (3.3 kB)
+2025-11-24T21:21:35.3600087Z Collecting pathspec>=0.9.0 (from black)
+2025-11-24T21:21:35.3676759Z   Downloading pathspec-0.12.1-py3-none-any.whl.metadata (21 kB)
+2025-11-24T21:21:35.3931344Z Collecting platformdirs>=2 (from black)
+2025-11-24T21:21:35.4008800Z   Downloading platformdirs-4.5.0-py3-none-any.whl.metadata (12 kB)
+2025-11-24T21:21:35.4178089Z Collecting pytokens>=0.3.0 (from black)
+2025-11-24T21:21:35.4250096Z   Downloading pytokens-0.3.0-py3-none-any.whl.metadata (2.0 kB)
+2025-11-24T21:21:35.4484976Z Collecting typing_extensions>=4.6.0 (from mypy)
+2025-11-24T21:21:35.4560588Z   Downloading typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+2025-11-24T21:21:35.4711931Z Downloading black-25.11.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (1.6 MB)
+2025-11-24T21:21:35.5889176Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.6/1.6 MB 15.4 MB/s  0:00:00
+2025-11-24T21:21:35.5966903Z Downloading isort-7.0.0-py3-none-any.whl (94 kB)
+2025-11-24T21:21:35.6104285Z Downloading ruff-0.14.6-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (13.9 MB)
+2025-11-24T21:21:35.8501580Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 13.9/13.9 MB 59.8 MB/s  0:00:00
+2025-11-24T21:21:35.8589937Z Downloading mypy-1.18.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (13.2 MB)
+2025-11-24T21:21:35.9651924Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 13.2/13.2 MB 125.8 MB/s  0:00:00
+2025-11-24T21:21:35.9730021Z Downloading click-8.3.1-py3-none-any.whl (108 kB)
+2025-11-24T21:21:35.9851212Z Downloading mypy_extensions-1.1.0-py3-none-any.whl (5.0 kB)
+2025-11-24T21:21:35.9981387Z Downloading packaging-25.0-py3-none-any.whl (66 kB)
+2025-11-24T21:21:36.0093746Z Downloading pathspec-0.12.1-py3-none-any.whl (31 kB)
+2025-11-24T21:21:36.0217077Z Downloading platformdirs-4.5.0-py3-none-any.whl (18 kB)
+2025-11-24T21:21:36.0314646Z Downloading pytokens-0.3.0-py3-none-any.whl (12 kB)
+2025-11-24T21:21:36.0412129Z Downloading typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+2025-11-24T21:21:36.1123764Z Installing collected packages: typing_extensions, ruff, pytokens, platformdirs, pathspec, packaging, mypy-extensions, isort, click, mypy, black
+2025-11-24T21:21:37.8797590Z 
+2025-11-24T21:21:37.8812181Z Successfully installed black-25.11.0 click-8.3.1 isort-7.0.0 mypy-1.18.2 mypy-extensions-1.1.0 packaging-25.0 pathspec-0.12.1 platformdirs-4.5.0 pytokens-0.3.0 ruff-0.14.6 typing_extensions-4.15.0

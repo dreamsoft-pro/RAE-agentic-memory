@@ -22,7 +22,7 @@ presidio_analyzer = pytest.importorskip(
     reason="Requires presidio-analyzer – heavy ML dependency",
 )
 
-from apps.memory_api.services.pii_scrubber import scrub_text
+from apps.memory_api.services.pii_scrubber import scrub_text  # noqa: E402
 
 
 class TestPIIScrubber:

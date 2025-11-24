@@ -1,0 +1,13 @@
+﻿2025-11-24T21:21:38.1062680Z ##[group]Run black --check apps/ sdk/ integrations/
+2025-11-24T21:21:38.1063084Z [36;1mblack --check apps/ sdk/ integrations/[0m
+2025-11-24T21:21:38.1095718Z shell: /usr/bin/bash -e {0}
+2025-11-24T21:21:38.1095946Z env:
+2025-11-24T21:21:38.1096183Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:21:38.1096600Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-24T21:21:38.1096990Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:21:38.1097335Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:21:38.1097677Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:21:38.1098037Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-24T21:21:38.1098327Z ##[endgroup]
+2025-11-24T21:21:44.3120594Z All done! ✨ 🍰 ✨
+2025-11-24T21:21:44.3124667Z 169 files would be left unchanged.

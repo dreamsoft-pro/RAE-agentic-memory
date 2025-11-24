@@ -1,0 +1,1271 @@
+﻿2025-11-24T21:21:35.0445291Z Current runner version: '2.329.0'
+2025-11-24T21:21:35.0479575Z ##[group]Runner Image Provisioner
+2025-11-24T21:21:35.0480807Z Hosted Compute Agent
+2025-11-24T21:21:35.0481634Z Version: 20251016.436
+2025-11-24T21:21:35.0483183Z Commit: 8ab8ac8bfd662a3739dab9fe09456aba92132568
+2025-11-24T21:21:35.0484444Z Build Date: 2025-10-15T20:44:12Z
+2025-11-24T21:21:35.0485429Z ##[endgroup]
+2025-11-24T21:21:35.0486458Z ##[group]Operating System
+2025-11-24T21:21:35.0487326Z Ubuntu
+2025-11-24T21:21:35.0488210Z 24.04.3
+2025-11-24T21:21:35.0489370Z LTS
+2025-11-24T21:21:35.0490119Z ##[endgroup]
+2025-11-24T21:21:35.0490982Z ##[group]Runner Image
+2025-11-24T21:21:35.0491973Z Image: ubuntu-24.04
+2025-11-24T21:21:35.0492916Z Version: 20251112.124.1
+2025-11-24T21:21:35.0494753Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20251112.124/images/ubuntu/Ubuntu2404-Readme.md
+2025-11-24T21:21:35.0497680Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20251112.124
+2025-11-24T21:21:35.0499624Z ##[endgroup]
+2025-11-24T21:21:35.0504225Z ##[group]GITHUB_TOKEN Permissions
+2025-11-24T21:21:35.0507266Z Actions: write
+2025-11-24T21:21:35.0508229Z ArtifactMetadata: write
+2025-11-24T21:21:35.0509394Z Attestations: write
+2025-11-24T21:21:35.0510236Z Checks: write
+2025-11-24T21:21:35.0510944Z Contents: write
+2025-11-24T21:21:35.0511920Z Deployments: write
+2025-11-24T21:21:35.0512840Z Discussions: write
+2025-11-24T21:21:35.0513654Z Issues: write
+2025-11-24T21:21:35.0514573Z Metadata: read
+2025-11-24T21:21:35.0515320Z Models: read
+2025-11-24T21:21:35.0516091Z Packages: write
+2025-11-24T21:21:35.0517005Z Pages: write
+2025-11-24T21:21:35.0517906Z PullRequests: write
+2025-11-24T21:21:35.0518771Z RepositoryProjects: write
+2025-11-24T21:21:35.0520264Z SecurityEvents: write
+2025-11-24T21:21:35.0521162Z Statuses: write
+2025-11-24T21:21:35.0521984Z ##[endgroup]
+2025-11-24T21:21:35.0525031Z Secret source: Actions
+2025-11-24T21:21:35.0526368Z Prepare workflow directory
+2025-11-24T21:21:35.1333813Z Prepare all required actions
+2025-11-24T21:21:35.1390664Z Getting action download info
+2025-11-24T21:21:35.7607158Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2025-11-24T21:21:36.4022120Z Download action repository 'actions/setup-python@v5' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
+2025-11-24T21:21:36.4905797Z Download action repository 'codecov/codecov-action@v4' (SHA:b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238)
+2025-11-24T21:21:37.1121396Z Complete job name: Test (Python 3.11)
+2025-11-24T21:21:37.1576538Z ##[group]Checking docker version
+2025-11-24T21:21:37.1590213Z ##[command]/usr/bin/docker version --format '{{.Server.APIVersion}}'
+2025-11-24T21:21:37.2456469Z '1.48'
+2025-11-24T21:21:37.2472998Z Docker daemon API version: '1.48'
+2025-11-24T21:21:37.2475217Z ##[command]/usr/bin/docker version --format '{{.Client.APIVersion}}'
+2025-11-24T21:21:37.2672957Z '1.48'
+2025-11-24T21:21:37.2677037Z Docker client API version: '1.48'
+2025-11-24T21:21:37.2684624Z ##[endgroup]
+2025-11-24T21:21:37.2689415Z ##[group]Clean up resources from previous jobs
+2025-11-24T21:21:37.2697538Z ##[command]/usr/bin/docker ps --all --quiet --no-trunc --filter "label=47f6bb"
+2025-11-24T21:21:37.2882692Z ##[command]/usr/bin/docker network prune --force --filter "label=47f6bb"
+2025-11-24T21:21:37.3035315Z ##[endgroup]
+2025-11-24T21:21:37.3036212Z ##[group]Create local container network
+2025-11-24T21:21:37.3047204Z ##[command]/usr/bin/docker network create --label 47f6bb github_network_2248604621704f20a0937f2828e7d80d
+2025-11-24T21:21:37.3765584Z d7a9406b9be54af92e7652bfabf2c91a399b1081668c3c4ea7eb1fbc454f2230
+2025-11-24T21:21:37.3775486Z ##[endgroup]
+2025-11-24T21:21:37.3801083Z ##[group]Starting postgres service container
+2025-11-24T21:21:37.3820958Z ##[command]/usr/bin/docker pull ankane/pgvector:latest
+2025-11-24T21:21:38.4084990Z latest: Pulling from ankane/pgvector
+2025-11-24T21:21:38.7118750Z a803e7c4b030: Pulling fs layer
+2025-11-24T21:21:38.7120203Z 12dd3b657e91: Pulling fs layer
+2025-11-24T21:21:38.7121127Z 147adba297eb: Pulling fs layer
+2025-11-24T21:21:38.7121631Z 56ee7c0dd616: Pulling fs layer
+2025-11-24T21:21:38.7122138Z f9aacf30f429: Pulling fs layer
+2025-11-24T21:21:38.7122632Z 7ad57b8030eb: Pulling fs layer
+2025-11-24T21:21:38.7123123Z 786562b3be85: Pulling fs layer
+2025-11-24T21:21:38.7123613Z 04efcdd3a2a4: Pulling fs layer
+2025-11-24T21:21:38.7124073Z 2c35234636c9: Pulling fs layer
+2025-11-24T21:21:38.7124522Z 6e662fa63f18: Pulling fs layer
+2025-11-24T21:21:38.7125020Z f1a157d7d7b0: Pulling fs layer
+2025-11-24T21:21:38.7125482Z bb153abf3802: Pulling fs layer
+2025-11-24T21:21:38.7125957Z 7077e54346e0: Pulling fs layer
+2025-11-24T21:21:38.7126444Z 2e3723549f11: Pulling fs layer
+2025-11-24T21:21:38.7126968Z c5f09b500022: Pulling fs layer
+2025-11-24T21:21:38.7131562Z 56ee7c0dd616: Waiting
+2025-11-24T21:21:38.7131994Z f9aacf30f429: Waiting
+2025-11-24T21:21:38.7132252Z 7ad57b8030eb: Waiting
+2025-11-24T21:21:38.7132487Z 786562b3be85: Waiting
+2025-11-24T21:21:38.7132722Z 04efcdd3a2a4: Waiting
+2025-11-24T21:21:38.7132968Z 2c35234636c9: Waiting
+2025-11-24T21:21:38.7133198Z 6e662fa63f18: Waiting
+2025-11-24T21:21:38.7133443Z f1a157d7d7b0: Waiting
+2025-11-24T21:21:38.7133673Z bb153abf3802: Waiting
+2025-11-24T21:21:38.7133892Z 7077e54346e0: Waiting
+2025-11-24T21:21:38.7134109Z 2e3723549f11: Waiting
+2025-11-24T21:21:38.7134325Z c5f09b500022: Waiting
+2025-11-24T21:21:38.9930135Z 12dd3b657e91: Verifying Checksum
+2025-11-24T21:21:38.9940723Z 12dd3b657e91: Download complete
+2025-11-24T21:21:38.9984028Z 147adba297eb: Verifying Checksum
+2025-11-24T21:21:38.9984578Z 147adba297eb: Download complete
+2025-11-24T21:21:39.2002102Z a803e7c4b030: Verifying Checksum
+2025-11-24T21:21:39.2008495Z a803e7c4b030: Download complete
+2025-11-24T21:21:39.2692083Z 56ee7c0dd616: Verifying Checksum
+2025-11-24T21:21:39.2694794Z 56ee7c0dd616: Download complete
+2025-11-24T21:21:39.4772785Z 7ad57b8030eb: Verifying Checksum
+2025-11-24T21:21:39.4773628Z 7ad57b8030eb: Download complete
+2025-11-24T21:21:39.5030079Z f9aacf30f429: Verifying Checksum
+2025-11-24T21:21:39.5054350Z f9aacf30f429: Download complete
+2025-11-24T21:21:39.5296431Z 786562b3be85: Verifying Checksum
+2025-11-24T21:21:39.5299296Z 786562b3be85: Download complete
+2025-11-24T21:21:39.7827261Z 04efcdd3a2a4: Verifying Checksum
+2025-11-24T21:21:39.7827783Z 04efcdd3a2a4: Download complete
+2025-11-24T21:21:39.8366230Z 6e662fa63f18: Verifying Checksum
+2025-11-24T21:21:39.8366917Z 6e662fa63f18: Download complete
+2025-11-24T21:21:40.0590378Z f1a157d7d7b0: Verifying Checksum
+2025-11-24T21:21:40.0591207Z f1a157d7d7b0: Download complete
+2025-11-24T21:21:40.0945841Z bb153abf3802: Verifying Checksum
+2025-11-24T21:21:40.0949642Z bb153abf3802: Download complete
+2025-11-24T21:21:40.3166280Z 7077e54346e0: Verifying Checksum
+2025-11-24T21:21:40.3177226Z 7077e54346e0: Download complete
+2025-11-24T21:21:40.3570029Z 2e3723549f11: Verifying Checksum
+2025-11-24T21:21:40.3571359Z 2e3723549f11: Download complete
+2025-11-24T21:21:40.4791249Z a803e7c4b030: Pull complete
+2025-11-24T21:21:40.7372334Z c5f09b500022: Verifying Checksum
+2025-11-24T21:21:40.7372852Z c5f09b500022: Download complete
+2025-11-24T21:21:41.1308338Z 12dd3b657e91: Pull complete
+2025-11-24T21:21:41.2994437Z 147adba297eb: Pull complete
+2025-11-24T21:21:41.3576632Z 56ee7c0dd616: Pull complete
+2025-11-24T21:21:41.7246078Z f9aacf30f429: Pull complete
+2025-11-24T21:21:41.8325875Z 7ad57b8030eb: Pull complete
+2025-11-24T21:21:41.8469339Z 786562b3be85: Pull complete
+2025-11-24T21:21:41.8693867Z 04efcdd3a2a4: Pull complete
+2025-11-24T21:21:42.1296606Z 2c35234636c9: Verifying Checksum
+2025-11-24T21:21:42.1307907Z 2c35234636c9: Download complete
+2025-11-24T21:21:45.8717445Z 2c35234636c9: Pull complete
+2025-11-24T21:21:45.9009591Z 6e662fa63f18: Pull complete
+2025-11-24T21:21:45.9174457Z f1a157d7d7b0: Pull complete
+2025-11-24T21:21:45.9340828Z bb153abf3802: Pull complete
+2025-11-24T21:21:45.9488341Z 7077e54346e0: Pull complete
+2025-11-24T21:21:45.9886819Z 2e3723549f11: Pull complete
+2025-11-24T21:21:46.3840821Z c5f09b500022: Pull complete
+2025-11-24T21:21:46.3886140Z Digest: sha256:956744bd14e9cbdf639c61c2a2a7c7c2c48a9c8cdd42f7de4ac034f4e96b90f8
+2025-11-24T21:21:46.3906334Z Status: Downloaded newer image for ankane/pgvector:latest
+2025-11-24T21:21:46.3918625Z docker.io/ankane/pgvector:latest
+2025-11-24T21:21:46.4008322Z ##[command]/usr/bin/docker create --name f18f25751c214a5aaee066e21d8ce3b4_ankanepgvectorlatest_9df432 --label 47f6bb --network github_network_2248604621704f20a0937f2828e7d80d --network-alias postgres -p 5432:5432 --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5 -e "POSTGRES_PASSWORD=postgres" -e "POSTGRES_USER=postgres" -e "POSTGRES_DB=test_rae" -e GITHUB_ACTIONS=true -e CI=true ankane/pgvector:latest
+2025-11-24T21:21:46.4309268Z e2d26b632fa475f3ce68b71d626ba8e49d759907f99d44263ec83654794e3202
+2025-11-24T21:21:46.4335016Z ##[command]/usr/bin/docker start e2d26b632fa475f3ce68b71d626ba8e49d759907f99d44263ec83654794e3202
+2025-11-24T21:21:46.7243513Z e2d26b632fa475f3ce68b71d626ba8e49d759907f99d44263ec83654794e3202
+2025-11-24T21:21:46.7273381Z ##[command]/usr/bin/docker ps --all --filter id=e2d26b632fa475f3ce68b71d626ba8e49d759907f99d44263ec83654794e3202 --filter status=running --no-trunc --format "{{.ID}} {{.Status}}"
+2025-11-24T21:21:46.7454310Z e2d26b632fa475f3ce68b71d626ba8e49d759907f99d44263ec83654794e3202 Up Less than a second (health: starting)
+2025-11-24T21:21:46.7485979Z ##[command]/usr/bin/docker port e2d26b632fa475f3ce68b71d626ba8e49d759907f99d44263ec83654794e3202
+2025-11-24T21:21:46.7670273Z 5432/tcp -> 0.0.0.0:5432
+2025-11-24T21:21:46.7670715Z 5432/tcp -> [::]:5432
+2025-11-24T21:21:46.7730314Z ##[endgroup]
+2025-11-24T21:21:46.7732023Z ##[group]Starting redis service container
+2025-11-24T21:21:46.7733571Z ##[command]/usr/bin/docker pull redis:7-alpine
+2025-11-24T21:21:47.7352467Z 7-alpine: Pulling from library/redis
+2025-11-24T21:21:48.0161481Z f637881d1138: Pulling fs layer
+2025-11-24T21:21:48.0162287Z 60c57c0072ef: Pulling fs layer
+2025-11-24T21:21:48.0162808Z fc4343b4accd: Pulling fs layer
+2025-11-24T21:21:48.0163284Z 380e8aa8b1fd: Pulling fs layer
+2025-11-24T21:21:48.0163680Z c70aae7b5e0d: Pulling fs layer
+2025-11-24T21:21:48.0164138Z 232f7549c9b0: Pulling fs layer
+2025-11-24T21:21:48.0164489Z 4f4fb700ef54: Pulling fs layer
+2025-11-24T21:21:48.0164899Z d75b3becd998: Pulling fs layer
+2025-11-24T21:21:48.0165314Z 380e8aa8b1fd: Waiting
+2025-11-24T21:21:48.0165651Z c70aae7b5e0d: Waiting
+2025-11-24T21:21:48.0165962Z 232f7549c9b0: Waiting
+2025-11-24T21:21:48.0166304Z 4f4fb700ef54: Waiting
+2025-11-24T21:21:48.0166932Z d75b3becd998: Waiting
+2025-11-24T21:21:48.2812276Z 60c57c0072ef: Verifying Checksum
+2025-11-24T21:21:48.2812750Z 60c57c0072ef: Download complete
+2025-11-24T21:21:48.2946469Z fc4343b4accd: Verifying Checksum
+2025-11-24T21:21:48.2946911Z fc4343b4accd: Download complete
+2025-11-24T21:21:48.3209955Z f637881d1138: Verifying Checksum
+2025-11-24T21:21:48.3234125Z f637881d1138: Download complete
+2025-11-24T21:21:48.4357261Z f637881d1138: Pull complete
+2025-11-24T21:21:48.4632768Z 60c57c0072ef: Pull complete
+2025-11-24T21:21:48.5709912Z 380e8aa8b1fd: Verifying Checksum
+2025-11-24T21:21:48.5713752Z 380e8aa8b1fd: Download complete
+2025-11-24T21:21:48.5864020Z 232f7549c9b0: Verifying Checksum
+2025-11-24T21:21:48.5869795Z 232f7549c9b0: Download complete
+2025-11-24T21:21:48.6113597Z fc4343b4accd: Pull complete
+2025-11-24T21:21:48.6600511Z 380e8aa8b1fd: Pull complete
+2025-11-24T21:21:48.6720809Z c70aae7b5e0d: Verifying Checksum
+2025-11-24T21:21:48.6722100Z c70aae7b5e0d: Download complete
+2025-11-24T21:21:48.8833742Z d75b3becd998: Verifying Checksum
+2025-11-24T21:21:48.8838711Z d75b3becd998: Download complete
+2025-11-24T21:21:48.8926250Z c70aae7b5e0d: Pull complete
+2025-11-24T21:21:48.8948594Z 4f4fb700ef54: Verifying Checksum
+2025-11-24T21:21:48.8950374Z 4f4fb700ef54: Download complete
+2025-11-24T21:21:48.9026695Z 232f7549c9b0: Pull complete
+2025-11-24T21:21:48.9144142Z 4f4fb700ef54: Pull complete
+2025-11-24T21:21:48.9272323Z d75b3becd998: Pull complete
+2025-11-24T21:21:48.9310388Z Digest: sha256:ee64a64eaab618d88051c3ade8f6352d11531fcf79d9a4818b9b183d8c1d18ba
+2025-11-24T21:21:48.9324847Z Status: Downloaded newer image for redis:7-alpine
+2025-11-24T21:21:48.9352420Z docker.io/library/redis:7-alpine
+2025-11-24T21:21:48.9361921Z ##[command]/usr/bin/docker create --name 73faa71fff234aa193325a9ff6b08066_redis7alpine_97ef2c --label 47f6bb --network github_network_2248604621704f20a0937f2828e7d80d --network-alias redis -p 6379:6379 --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5 -e GITHUB_ACTIONS=true -e CI=true redis:7-alpine
+2025-11-24T21:21:48.9647785Z d041ede34dd7dd26a992437253b9aeb31726682803dd97f7a79d63c4c2deeecc
+2025-11-24T21:21:48.9662076Z ##[command]/usr/bin/docker start d041ede34dd7dd26a992437253b9aeb31726682803dd97f7a79d63c4c2deeecc
+2025-11-24T21:21:49.1316830Z d041ede34dd7dd26a992437253b9aeb31726682803dd97f7a79d63c4c2deeecc
+2025-11-24T21:21:49.1347660Z ##[command]/usr/bin/docker ps --all --filter id=d041ede34dd7dd26a992437253b9aeb31726682803dd97f7a79d63c4c2deeecc --filter status=running --no-trunc --format "{{.ID}} {{.Status}}"
+2025-11-24T21:21:49.1536701Z d041ede34dd7dd26a992437253b9aeb31726682803dd97f7a79d63c4c2deeecc Up Less than a second (health: starting)
+2025-11-24T21:21:49.1553322Z ##[command]/usr/bin/docker port d041ede34dd7dd26a992437253b9aeb31726682803dd97f7a79d63c4c2deeecc
+2025-11-24T21:21:49.1681840Z 6379/tcp -> 0.0.0.0:6379
+2025-11-24T21:21:49.1683344Z 6379/tcp -> [::]:6379
+2025-11-24T21:21:49.1701182Z ##[endgroup]
+2025-11-24T21:21:49.1702032Z ##[group]Starting qdrant service container
+2025-11-24T21:21:49.1702705Z ##[command]/usr/bin/docker pull qdrant/qdrant:latest
+2025-11-24T21:21:50.1516330Z latest: Pulling from qdrant/qdrant
+2025-11-24T21:21:50.3977360Z d7ecded7702a: Pulling fs layer
+2025-11-24T21:21:50.3977975Z 4f4fb700ef54: Pulling fs layer
+2025-11-24T21:21:50.3979434Z cabbfa1730ef: Pulling fs layer
+2025-11-24T21:21:50.3980502Z 97209c113d4d: Pulling fs layer
+2025-11-24T21:21:50.3981693Z ab2619f9591f: Pulling fs layer
+2025-11-24T21:21:50.3983231Z cd1e37ac7918: Pulling fs layer
+2025-11-24T21:21:50.3984014Z 521f6bd0cd40: Pulling fs layer
+2025-11-24T21:21:50.3984504Z 627517a2547a: Pulling fs layer
+2025-11-24T21:21:50.3984842Z 97209c113d4d: Waiting
+2025-11-24T21:21:50.3985136Z ab2619f9591f: Waiting
+2025-11-24T21:21:50.3985491Z 627517a2547a: Waiting
+2025-11-24T21:21:50.3985778Z cd1e37ac7918: Waiting
+2025-11-24T21:21:50.3986075Z 521f6bd0cd40: Waiting
+2025-11-24T21:21:50.6524584Z 4f4fb700ef54: Verifying Checksum
+2025-11-24T21:21:50.6525112Z 4f4fb700ef54: Download complete
+2025-11-24T21:21:50.7020204Z cabbfa1730ef: Verifying Checksum
+2025-11-24T21:21:50.7020730Z cabbfa1730ef: Download complete
+2025-11-24T21:21:50.9752507Z ab2619f9591f: Verifying Checksum
+2025-11-24T21:21:50.9754406Z ab2619f9591f: Download complete
+2025-11-24T21:21:51.1216807Z d7ecded7702a: Verifying Checksum
+2025-11-24T21:21:51.1222324Z d7ecded7702a: Download complete
+2025-11-24T21:21:51.2156929Z cd1e37ac7918: Verifying Checksum
+2025-11-24T21:21:51.2159060Z cd1e37ac7918: Download complete
+2025-11-24T21:21:51.3851995Z 521f6bd0cd40: Verifying Checksum
+2025-11-24T21:21:51.3853271Z 521f6bd0cd40: Download complete
+2025-11-24T21:21:51.4046363Z 97209c113d4d: Verifying Checksum
+2025-11-24T21:21:51.4047043Z 97209c113d4d: Download complete
+2025-11-24T21:21:51.6439060Z 627517a2547a: Verifying Checksum
+2025-11-24T21:21:51.6440918Z 627517a2547a: Download complete
+2025-11-24T21:21:52.1814195Z d7ecded7702a: Pull complete
+2025-11-24T21:21:52.5817458Z 4f4fb700ef54: Pull complete
+2025-11-24T21:21:52.7697930Z cabbfa1730ef: Pull complete
+2025-11-24T21:21:53.3759262Z 97209c113d4d: Pull complete
+2025-11-24T21:21:53.4437354Z ab2619f9591f: Pull complete
+2025-11-24T21:21:53.4838008Z cd1e37ac7918: Pull complete
+2025-11-24T21:21:53.4944007Z 521f6bd0cd40: Pull complete
+2025-11-24T21:21:53.6388579Z 627517a2547a: Pull complete
+2025-11-24T21:21:53.6531103Z Digest: sha256:1005201498cf927d835383d0f918b17d8c9da7db58550f169f694455e42d78f4
+2025-11-24T21:21:53.6544725Z Status: Downloaded newer image for qdrant/qdrant:latest
+2025-11-24T21:21:53.6557950Z docker.io/qdrant/qdrant:latest
+2025-11-24T21:21:53.6575038Z ##[command]/usr/bin/docker create --name 8f2b6b5a3c594a3b87f619bae8cfcfca_qdrantqdrantlatest_146ef1 --label 47f6bb --network github_network_2248604621704f20a0937f2828e7d80d --network-alias qdrant -p 6333:6333  -e GITHUB_ACTIONS=true -e CI=true qdrant/qdrant:latest
+2025-11-24T21:21:53.6828465Z fbbeeb5acc0d55ac9630d65ca873f5860649e5a4399a1b05607f8b13ec28171f
+2025-11-24T21:21:53.6844713Z ##[command]/usr/bin/docker start fbbeeb5acc0d55ac9630d65ca873f5860649e5a4399a1b05607f8b13ec28171f
+2025-11-24T21:21:53.8387044Z fbbeeb5acc0d55ac9630d65ca873f5860649e5a4399a1b05607f8b13ec28171f
+2025-11-24T21:21:53.8413377Z ##[command]/usr/bin/docker ps --all --filter id=fbbeeb5acc0d55ac9630d65ca873f5860649e5a4399a1b05607f8b13ec28171f --filter status=running --no-trunc --format "{{.ID}} {{.Status}}"
+2025-11-24T21:21:53.8706879Z fbbeeb5acc0d55ac9630d65ca873f5860649e5a4399a1b05607f8b13ec28171f Up Less than a second
+2025-11-24T21:21:53.8758851Z ##[command]/usr/bin/docker port fbbeeb5acc0d55ac9630d65ca873f5860649e5a4399a1b05607f8b13ec28171f
+2025-11-24T21:21:53.8937635Z 6333/tcp -> 0.0.0.0:6333
+2025-11-24T21:21:53.8938601Z 6333/tcp -> [::]:6333
+2025-11-24T21:21:53.8955153Z ##[endgroup]
+2025-11-24T21:21:53.8965923Z ##[group]Waiting for all services to be ready
+2025-11-24T21:21:53.8979370Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" e2d26b632fa475f3ce68b71d626ba8e49d759907f99d44263ec83654794e3202
+2025-11-24T21:21:53.9110369Z starting
+2025-11-24T21:21:53.9131990Z postgres service is starting, waiting 2 seconds before checking again.
+2025-11-24T21:21:55.9134400Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" e2d26b632fa475f3ce68b71d626ba8e49d759907f99d44263ec83654794e3202
+2025-11-24T21:21:55.9265325Z starting
+2025-11-24T21:21:55.9279106Z postgres service is starting, waiting 3 seconds before checking again.
+2025-11-24T21:21:59.7477254Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" e2d26b632fa475f3ce68b71d626ba8e49d759907f99d44263ec83654794e3202
+2025-11-24T21:21:59.7610980Z healthy
+2025-11-24T21:21:59.7627726Z postgres service is healthy.
+2025-11-24T21:21:59.7628556Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" d041ede34dd7dd26a992437253b9aeb31726682803dd97f7a79d63c4c2deeecc
+2025-11-24T21:21:59.7753406Z healthy
+2025-11-24T21:21:59.7766290Z redis service is healthy.
+2025-11-24T21:21:59.7767028Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" fbbeeb5acc0d55ac9630d65ca873f5860649e5a4399a1b05607f8b13ec28171f
+2025-11-24T21:21:59.7899109Z qdrant service is healthy.
+2025-11-24T21:21:59.7899618Z ##[endgroup]
+2025-11-24T21:21:59.8129757Z ##[group]Run actions/checkout@v4
+2025-11-24T21:21:59.8130311Z with:
+2025-11-24T21:21:59.8130534Z   repository: dreamsoft-pro/RAE-agentic-memory
+2025-11-24T21:21:59.8130971Z   token: ***
+2025-11-24T21:21:59.8131145Z   ssh-strict: true
+2025-11-24T21:21:59.8131327Z   ssh-user: git
+2025-11-24T21:21:59.8131513Z   persist-credentials: true
+2025-11-24T21:21:59.8131722Z   clean: true
+2025-11-24T21:21:59.8131910Z   sparse-checkout-cone-mode: true
+2025-11-24T21:21:59.8132133Z   fetch-depth: 1
+2025-11-24T21:21:59.8132301Z   fetch-tags: false
+2025-11-24T21:21:59.8132475Z   show-progress: true
+2025-11-24T21:21:59.8132652Z   lfs: false
+2025-11-24T21:21:59.8132805Z   submodules: false
+2025-11-24T21:21:59.8132984Z   set-safe-directory: true
+2025-11-24T21:21:59.8133366Z ##[endgroup]
+2025-11-24T21:21:59.9279674Z Syncing repository: dreamsoft-pro/RAE-agentic-memory
+2025-11-24T21:21:59.9281533Z ##[group]Getting Git version info
+2025-11-24T21:21:59.9282329Z Working directory is '/home/runner/work/RAE-agentic-memory/RAE-agentic-memory'
+2025-11-24T21:21:59.9283167Z [command]/usr/bin/git version
+2025-11-24T21:21:59.9373222Z git version 2.51.2
+2025-11-24T21:21:59.9411968Z ##[endgroup]
+2025-11-24T21:21:59.9428233Z Temporarily overriding HOME='/home/runner/work/_temp/e88f2985-e011-4551-a653-4aedc2934b15' before making global git config changes
+2025-11-24T21:21:59.9430229Z Adding repository directory to the temporary git global config as a safe directory
+2025-11-24T21:21:59.9437578Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/RAE-agentic-memory/RAE-agentic-memory
+2025-11-24T21:21:59.9477149Z Deleting the contents of '/home/runner/work/RAE-agentic-memory/RAE-agentic-memory'
+2025-11-24T21:21:59.9481941Z ##[group]Initializing the repository
+2025-11-24T21:21:59.9487308Z [command]/usr/bin/git init /home/runner/work/RAE-agentic-memory/RAE-agentic-memory
+2025-11-24T21:21:59.9615865Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-11-24T21:21:59.9617505Z hint: is subject to change. To configure the initial branch name to use in all
+2025-11-24T21:21:59.9618383Z hint: of your new repositories, which will suppress this warning, call:
+2025-11-24T21:21:59.9621150Z hint:
+2025-11-24T21:21:59.9621639Z hint: 	git config --global init.defaultBranch <name>
+2025-11-24T21:21:59.9622175Z hint:
+2025-11-24T21:21:59.9622625Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-11-24T21:21:59.9623460Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-11-24T21:21:59.9624100Z hint:
+2025-11-24T21:21:59.9624443Z hint: 	git branch -m <name>
+2025-11-24T21:21:59.9624840Z hint:
+2025-11-24T21:21:59.9625410Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-11-24T21:21:59.9628197Z Initialized empty Git repository in /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/.git/
+2025-11-24T21:21:59.9638510Z [command]/usr/bin/git remote add origin https://github.com/dreamsoft-pro/RAE-agentic-memory
+2025-11-24T21:21:59.9675081Z ##[endgroup]
+2025-11-24T21:21:59.9676224Z ##[group]Disabling automatic garbage collection
+2025-11-24T21:21:59.9680900Z [command]/usr/bin/git config --local gc.auto 0
+2025-11-24T21:21:59.9713587Z ##[endgroup]
+2025-11-24T21:21:59.9714664Z ##[group]Setting up auth
+2025-11-24T21:21:59.9724181Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-11-24T21:21:59.9759277Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-11-24T21:22:00.0125884Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-11-24T21:22:00.0161871Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-11-24T21:22:00.0405357Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2025-11-24T21:22:00.0447547Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2025-11-24T21:22:00.0716736Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-11-24T21:22:00.0771898Z ##[endgroup]
+2025-11-24T21:22:00.0772589Z ##[group]Fetching the repository
+2025-11-24T21:22:00.0788624Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +0320178eff75bbb04ffeabf43eb667b77d745a65:refs/remotes/origin/main
+2025-11-24T21:22:00.6945380Z From https://github.com/dreamsoft-pro/RAE-agentic-memory
+2025-11-24T21:22:00.6950621Z  * [new ref]         0320178eff75bbb04ffeabf43eb667b77d745a65 -> origin/main
+2025-11-24T21:22:00.6981086Z ##[endgroup]
+2025-11-24T21:22:00.6984024Z ##[group]Determining the checkout info
+2025-11-24T21:22:00.6996673Z ##[endgroup]
+2025-11-24T21:22:00.7000700Z [command]/usr/bin/git sparse-checkout disable
+2025-11-24T21:22:00.7066987Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-11-24T21:22:00.7114296Z ##[group]Checking out the ref
+2025-11-24T21:22:00.7118813Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2025-11-24T21:22:00.7526049Z Switched to a new branch 'main'
+2025-11-24T21:22:00.7530733Z branch 'main' set up to track 'origin/main'.
+2025-11-24T21:22:00.7541115Z ##[endgroup]
+2025-11-24T21:22:00.7582792Z [command]/usr/bin/git log -1 --format=%H
+2025-11-24T21:22:00.7609819Z 0320178eff75bbb04ffeabf43eb667b77d745a65
+2025-11-24T21:22:00.7822014Z ##[group]Run actions/setup-python@v5
+2025-11-24T21:22:00.7822290Z with:
+2025-11-24T21:22:00.7822460Z   python-version: 3.11
+2025-11-24T21:22:00.7822658Z   cache: pip
+2025-11-24T21:22:00.7822827Z   check-latest: false
+2025-11-24T21:22:00.7823133Z   token: ***
+2025-11-24T21:22:00.7823311Z   update-environment: true
+2025-11-24T21:22:00.7823536Z   allow-prereleases: false
+2025-11-24T21:22:00.7823731Z   freethreaded: false
+2025-11-24T21:22:00.7823920Z ##[endgroup]
+2025-11-24T21:22:00.9531140Z ##[group]Installed versions
+2025-11-24T21:22:00.9694694Z Successfully set up CPython (3.11.14)
+2025-11-24T21:22:00.9699133Z ##[endgroup]
+2025-11-24T21:22:01.1329368Z [command]/opt/hostedtoolcache/Python/3.11.14/x64/bin/pip cache dir
+2025-11-24T21:22:02.4038686Z /home/runner/.cache/pip
+2025-11-24T21:22:02.6899764Z pip cache is not found
+2025-11-24T21:22:02.7026733Z ##[group]Run python -m pip install --upgrade pip
+2025-11-24T21:22:02.7027153Z [36;1mpython -m pip install --upgrade pip[0m
+2025-11-24T21:22:02.7027448Z [36;1mpip install -r requirements-dev.txt[0m
+2025-11-24T21:22:02.7027785Z [36;1mpip install -r apps/memory_api/requirements-base.txt[0m
+2025-11-24T21:22:02.7028155Z [36;1mpip install -r apps/memory_api/requirements-test.txt[0m
+2025-11-24T21:22:02.7028487Z [36;1mpip install -e sdk/python/rae_memory_sdk[0m
+2025-11-24T21:22:02.7070827Z shell: /usr/bin/bash -e {0}
+2025-11-24T21:22:02.7071058Z env:
+2025-11-24T21:22:02.7071299Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:22:02.7071726Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-24T21:22:02.7072126Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:22:02.7072466Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:22:02.7072836Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:22:02.7073174Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-24T21:22:02.7073467Z ##[endgroup]
+2025-11-24T21:22:03.8483113Z Requirement already satisfied: pip in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (25.3)
+2025-11-24T21:22:04.8369896Z Collecting ruff (from -r requirements-dev.txt (line 2))
+2025-11-24T21:22:04.8988748Z   Downloading ruff-0.14.6-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (25 kB)
+2025-11-24T21:22:04.9450260Z Collecting pytest (from -r requirements-dev.txt (line 3))
+2025-11-24T21:22:04.9483676Z   Downloading pytest-9.0.1-py3-none-any.whl.metadata (7.6 kB)
+2025-11-24T21:22:04.9707122Z Collecting pytest-asyncio (from -r requirements-dev.txt (line 4))
+2025-11-24T21:22:04.9742704Z   Downloading pytest_asyncio-1.3.0-py3-none-any.whl.metadata (4.1 kB)
+2025-11-24T21:22:04.9923503Z Collecting pytest-cov (from -r requirements-dev.txt (line 5))
+2025-11-24T21:22:04.9958515Z   Downloading pytest_cov-7.0.0-py3-none-any.whl.metadata (31 kB)
+2025-11-24T21:22:05.1153996Z Collecting mypy (from -r requirements-dev.txt (line 6))
+2025-11-24T21:22:05.1189547Z   Downloading mypy-1.18.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.2 kB)
+2025-11-24T21:22:05.1318055Z Collecting iniconfig>=1.0.1 (from pytest->-r requirements-dev.txt (line 3))
+2025-11-24T21:22:05.1351218Z   Downloading iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+2025-11-24T21:22:05.1513175Z Collecting packaging>=22 (from pytest->-r requirements-dev.txt (line 3))
+2025-11-24T21:22:05.1543782Z   Downloading packaging-25.0-py3-none-any.whl.metadata (3.3 kB)
+2025-11-24T21:22:05.1698863Z Collecting pluggy<2,>=1.5 (from pytest->-r requirements-dev.txt (line 3))
+2025-11-24T21:22:05.1730737Z   Downloading pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+2025-11-24T21:22:05.2096171Z Collecting pygments>=2.7.2 (from pytest->-r requirements-dev.txt (line 3))
+2025-11-24T21:22:05.2127555Z   Downloading pygments-2.19.2-py3-none-any.whl.metadata (2.5 kB)
+2025-11-24T21:22:05.2439246Z Collecting typing-extensions>=4.12 (from pytest-asyncio->-r requirements-dev.txt (line 4))
+2025-11-24T21:22:05.2485214Z   Downloading typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+2025-11-24T21:22:05.5854058Z Collecting coverage>=7.10.6 (from coverage[toml]>=7.10.6->pytest-cov->-r requirements-dev.txt (line 5))
+2025-11-24T21:22:05.5891017Z   Downloading coverage-7.12.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (9.1 kB)
+2025-11-24T21:22:05.6155973Z Collecting mypy_extensions>=1.0.0 (from mypy->-r requirements-dev.txt (line 6))
+2025-11-24T21:22:05.6188577Z   Downloading mypy_extensions-1.1.0-py3-none-any.whl.metadata (1.1 kB)
+2025-11-24T21:22:05.6318226Z Collecting pathspec>=0.9.0 (from mypy->-r requirements-dev.txt (line 6))
+2025-11-24T21:22:05.6353194Z   Downloading pathspec-0.12.1-py3-none-any.whl.metadata (21 kB)
+2025-11-24T21:22:05.6469668Z Downloading ruff-0.14.6-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (13.9 MB)
+2025-11-24T21:22:05.7233090Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 13.9/13.9 MB 195.1 MB/s  0:00:00
+2025-11-24T21:22:05.7267094Z Downloading pytest-9.0.1-py3-none-any.whl (373 kB)
+2025-11-24T21:22:05.7341111Z Downloading pluggy-1.6.0-py3-none-any.whl (20 kB)
+2025-11-24T21:22:05.7392666Z Downloading pytest_asyncio-1.3.0-py3-none-any.whl (15 kB)
+2025-11-24T21:22:05.7441795Z Downloading pytest_cov-7.0.0-py3-none-any.whl (22 kB)
+2025-11-24T21:22:05.7498183Z Downloading mypy-1.18.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (13.2 MB)
+2025-11-24T21:22:05.8258724Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 13.2/13.2 MB 182.2 MB/s  0:00:00
+2025-11-24T21:22:05.8293014Z Downloading coverage-7.12.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (250 kB)
+2025-11-24T21:22:05.8362786Z Downloading iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+2025-11-24T21:22:05.8413279Z Downloading mypy_extensions-1.1.0-py3-none-any.whl (5.0 kB)
+2025-11-24T21:22:05.8471333Z Downloading packaging-25.0-py3-none-any.whl (66 kB)
+2025-11-24T21:22:05.8522811Z Downloading pathspec-0.12.1-py3-none-any.whl (31 kB)
+2025-11-24T21:22:05.8577215Z Downloading pygments-2.19.2-py3-none-any.whl (1.2 MB)
+2025-11-24T21:22:05.8660805Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 162.9 MB/s  0:00:00
+2025-11-24T21:22:05.8695759Z Downloading typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+2025-11-24T21:22:05.9393947Z Installing collected packages: typing-extensions, ruff, pygments, pluggy, pathspec, packaging, mypy_extensions, iniconfig, coverage, pytest, mypy, pytest-cov, pytest-asyncio
+2025-11-24T21:22:08.4697338Z 
+2025-11-24T21:22:08.4713300Z Successfully installed coverage-7.12.0 iniconfig-2.3.0 mypy-1.18.2 mypy_extensions-1.1.0 packaging-25.0 pathspec-0.12.1 pluggy-1.6.0 pygments-2.19.2 pytest-9.0.1 pytest-asyncio-1.3.0 pytest-cov-7.0.0 ruff-0.14.6 typing-extensions-4.15.0
+2025-11-24T21:22:09.0486606Z Collecting fastapi==0.115.0 (from -r apps/memory_api/requirements-base.txt (line 6))
+2025-11-24T21:22:09.1046556Z   Downloading fastapi-0.115.0-py3-none-any.whl.metadata (27 kB)
+2025-11-24T21:22:09.1448015Z Collecting uvicorn==0.38.0 (from -r apps/memory_api/requirements-base.txt (line 7))
+2025-11-24T21:22:09.1503160Z   Downloading uvicorn-0.38.0-py3-none-any.whl.metadata (6.8 kB)
+2025-11-24T21:22:09.3028038Z Collecting pydantic==2.12.4 (from -r apps/memory_api/requirements-base.txt (line 8))
+2025-11-24T21:22:09.3072154Z   Downloading pydantic-2.12.4-py3-none-any.whl.metadata (89 kB)
+2025-11-24T21:22:09.3354109Z Collecting pydantic-settings==2.12.0 (from -r apps/memory_api/requirements-base.txt (line 9))
+2025-11-24T21:22:09.3392536Z   Downloading pydantic_settings-2.12.0-py3-none-any.whl.metadata (3.4 kB)
+2025-11-24T21:22:09.3803102Z Collecting asyncpg==0.30.0 (from -r apps/memory_api/requirements-base.txt (line 12))
+2025-11-24T21:22:09.3837397Z   Downloading asyncpg-0.30.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.0 kB)
+2025-11-24T21:22:09.4114702Z Collecting qdrant-client==1.10.1 (from -r apps/memory_api/requirements-base.txt (line 13))
+2025-11-24T21:22:09.4152263Z   Downloading qdrant_client-1.10.1-py3-none-any.whl.metadata (10 kB)
+2025-11-24T21:22:09.4280443Z Collecting pgvector==0.4.1 (from -r apps/memory_api/requirements-base.txt (line 14))
+2025-11-24T21:22:09.4311260Z   Downloading pgvector-0.4.1-py3-none-any.whl.metadata (18 kB)
+2025-11-24T21:22:09.4534378Z Collecting alembic==1.17.2 (from -r apps/memory_api/requirements-base.txt (line 15))
+2025-11-24T21:22:09.4568040Z   Downloading alembic-1.17.2-py3-none-any.whl.metadata (7.2 kB)
+2025-11-24T21:22:09.4751530Z Collecting httpx==0.27.2 (from -r apps/memory_api/requirements-base.txt (line 18))
+2025-11-24T21:22:09.4817060Z   Downloading httpx-0.27.2-py3-none-any.whl.metadata (7.1 kB)
+2025-11-24T21:22:09.5156712Z Collecting celery==5.5.3 (from -r apps/memory_api/requirements-base.txt (line 21))
+2025-11-24T21:22:09.5189320Z   Downloading celery-5.5.3-py3-none-any.whl.metadata (22 kB)
+2025-11-24T21:22:09.5607796Z Collecting redis==7.1.0 (from -r apps/memory_api/requirements-base.txt (line 22))
+2025-11-24T21:22:09.5641068Z   Downloading redis-7.1.0-py3-none-any.whl.metadata (12 kB)
+2025-11-24T21:22:09.5831734Z Collecting opentelemetry-sdk==1.27.0 (from -r apps/memory_api/requirements-base.txt (line 25))
+2025-11-24T21:22:09.5868579Z   Downloading opentelemetry_sdk-1.27.0-py3-none-any.whl.metadata (1.5 kB)
+2025-11-24T21:22:09.6081034Z Collecting opentelemetry-instrumentation-fastapi==0.48b0 (from -r apps/memory_api/requirements-base.txt (line 26))
+2025-11-24T21:22:09.6113928Z   Downloading opentelemetry_instrumentation_fastapi-0.48b0-py3-none-any.whl.metadata (2.1 kB)
+2025-11-24T21:22:09.6263494Z Collecting prometheus-fastapi-instrumentator==7.1.0 (from -r apps/memory_api/requirements-base.txt (line 27))
+2025-11-24T21:22:09.6306647Z   Downloading prometheus_fastapi_instrumentator-7.1.0-py3-none-any.whl.metadata (13 kB)
+2025-11-24T21:22:09.6448765Z Collecting prometheus_client==0.23.1 (from -r apps/memory_api/requirements-base.txt (line 28))
+2025-11-24T21:22:09.6479763Z   Downloading prometheus_client-0.23.1-py3-none-any.whl.metadata (1.9 kB)
+2025-11-24T21:22:09.6621200Z Collecting structlog==25.5.0 (from -r apps/memory_api/requirements-base.txt (line 29))
+2025-11-24T21:22:09.6657210Z   Downloading structlog-25.5.0-py3-none-any.whl.metadata (9.5 kB)
+2025-11-24T21:22:09.8524686Z Collecting litellm==1.80.0 (from -r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:09.8565113Z   Downloading litellm-1.80.0-py3-none-any.whl.metadata (30 kB)
+2025-11-24T21:22:09.9143393Z Collecting openai==2.8.1 (from -r apps/memory_api/requirements-base.txt (line 33))
+2025-11-24T21:22:09.9203326Z   Downloading openai-2.8.1-py3-none-any.whl.metadata (29 kB)
+2025-11-24T21:22:09.9514002Z Collecting anthropic==0.74.1 (from -r apps/memory_api/requirements-base.txt (line 34))
+2025-11-24T21:22:09.9547135Z   Downloading anthropic-0.74.1-py3-none-any.whl.metadata (28 kB)
+2025-11-24T21:22:09.9700627Z Collecting google-generativeai==0.8.5 (from -r apps/memory_api/requirements-base.txt (line 35))
+2025-11-24T21:22:09.9737965Z   Downloading google_generativeai-0.8.5-py3-none-any.whl.metadata (3.9 kB)
+2025-11-24T21:22:09.9897980Z Collecting tenacity==9.1.2 (from -r apps/memory_api/requirements-base.txt (line 38))
+2025-11-24T21:22:09.9929125Z   Downloading tenacity-9.1.2-py3-none-any.whl.metadata (1.2 kB)
+2025-11-24T21:22:10.0052169Z Collecting python-jose==3.5.0 (from python-jose[cryptography]==3.5.0->-r apps/memory_api/requirements-base.txt (line 39))
+2025-11-24T21:22:10.0085977Z   Downloading python_jose-3.5.0-py2.py3-none-any.whl.metadata (5.5 kB)
+2025-11-24T21:22:10.0778449Z Collecting zstandard==0.25.0 (from -r apps/memory_api/requirements-base.txt (line 40))
+2025-11-24T21:22:10.0819745Z   Downloading zstandard-0.25.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (3.3 kB)
+2025-11-24T21:22:10.1130504Z Collecting starlette<0.39.0,>=0.37.2 (from fastapi==0.115.0->-r apps/memory_api/requirements-base.txt (line 6))
+2025-11-24T21:22:10.1177248Z   Downloading starlette-0.38.6-py3-none-any.whl.metadata (6.0 kB)
+2025-11-24T21:22:10.1604048Z Requirement already satisfied: typing-extensions>=4.8.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from fastapi==0.115.0->-r apps/memory_api/requirements-base.txt (line 6)) (4.15.0)
+2025-11-24T21:22:10.1685373Z Collecting annotated-types>=0.6.0 (from pydantic==2.12.4->-r apps/memory_api/requirements-base.txt (line 8))
+2025-11-24T21:22:10.1717283Z   Downloading annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)
+2025-11-24T21:22:10.8341806Z Collecting pydantic-core==2.41.5 (from pydantic==2.12.4->-r apps/memory_api/requirements-base.txt (line 8))
+2025-11-24T21:22:10.8376218Z   Downloading pydantic_core-2.41.5-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.3 kB)
+2025-11-24T21:22:10.8477874Z Collecting typing-inspection>=0.4.2 (from pydantic==2.12.4->-r apps/memory_api/requirements-base.txt (line 8))
+2025-11-24T21:22:10.8517605Z   Downloading typing_inspection-0.4.2-py3-none-any.whl.metadata (2.6 kB)
+2025-11-24T21:22:10.8701514Z Collecting click>=7.0 (from uvicorn==0.38.0->-r apps/memory_api/requirements-base.txt (line 7))
+2025-11-24T21:22:10.8732161Z   Downloading click-8.3.1-py3-none-any.whl.metadata (2.6 kB)
+2025-11-24T21:22:10.9170133Z Collecting h11>=0.8 (from uvicorn==0.38.0->-r apps/memory_api/requirements-base.txt (line 7))
+2025-11-24T21:22:10.9202645Z   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+2025-11-24T21:22:10.9767688Z Collecting python-dotenv>=0.21.0 (from pydantic-settings==2.12.0->-r apps/memory_api/requirements-base.txt (line 9))
+2025-11-24T21:22:10.9800379Z   Downloading python_dotenv-1.2.1-py3-none-any.whl.metadata (25 kB)
+2025-11-24T21:22:11.4907467Z Collecting grpcio>=1.41.0 (from qdrant-client==1.10.1->-r apps/memory_api/requirements-base.txt (line 13))
+2025-11-24T21:22:11.4944435Z   Downloading grpcio-1.76.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (3.7 kB)
+2025-11-24T21:22:12.0287634Z Collecting grpcio-tools>=1.41.0 (from qdrant-client==1.10.1->-r apps/memory_api/requirements-base.txt (line 13))
+2025-11-24T21:22:12.0335556Z   Downloading grpcio_tools-1.76.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (5.3 kB)
+2025-11-24T21:22:12.2056003Z Collecting numpy>=1.21 (from qdrant-client==1.10.1->-r apps/memory_api/requirements-base.txt (line 13))
+2025-11-24T21:22:12.2099764Z   Downloading numpy-2.3.5-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (62 kB)
+2025-11-24T21:22:12.2364175Z Collecting portalocker<3.0.0,>=2.7.0 (from qdrant-client==1.10.1->-r apps/memory_api/requirements-base.txt (line 13))
+2025-11-24T21:22:12.2396827Z   Downloading portalocker-2.10.1-py3-none-any.whl.metadata (8.5 kB)
+2025-11-24T21:22:12.3054478Z Collecting urllib3<3,>=1.26.14 (from qdrant-client==1.10.1->-r apps/memory_api/requirements-base.txt (line 13))
+2025-11-24T21:22:12.3084356Z   Downloading urllib3-2.5.0-py3-none-any.whl.metadata (6.5 kB)
+2025-11-24T21:22:12.5588322Z Collecting SQLAlchemy>=1.4.0 (from alembic==1.17.2->-r apps/memory_api/requirements-base.txt (line 15))
+2025-11-24T21:22:12.5633119Z   Downloading sqlalchemy-2.0.44-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (9.5 kB)
+2025-11-24T21:22:12.5862537Z Collecting Mako (from alembic==1.17.2->-r apps/memory_api/requirements-base.txt (line 15))
+2025-11-24T21:22:12.5946080Z   Downloading mako-1.3.10-py3-none-any.whl.metadata (2.9 kB)
+2025-11-24T21:22:12.6141036Z Collecting anyio (from httpx==0.27.2->-r apps/memory_api/requirements-base.txt (line 18))
+2025-11-24T21:22:12.6173364Z   Downloading anyio-4.11.0-py3-none-any.whl.metadata (4.1 kB)
+2025-11-24T21:22:12.6375496Z Collecting certifi (from httpx==0.27.2->-r apps/memory_api/requirements-base.txt (line 18))
+2025-11-24T21:22:12.6406962Z   Downloading certifi-2025.11.12-py3-none-any.whl.metadata (2.5 kB)
+2025-11-24T21:22:12.6584874Z Collecting httpcore==1.* (from httpx==0.27.2->-r apps/memory_api/requirements-base.txt (line 18))
+2025-11-24T21:22:12.6617729Z   Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+2025-11-24T21:22:12.6760525Z Collecting idna (from httpx==0.27.2->-r apps/memory_api/requirements-base.txt (line 18))
+2025-11-24T21:22:12.6792008Z   Downloading idna-3.11-py3-none-any.whl.metadata (8.4 kB)
+2025-11-24T21:22:12.6888696Z Collecting sniffio (from httpx==0.27.2->-r apps/memory_api/requirements-base.txt (line 18))
+2025-11-24T21:22:12.6951758Z   Downloading sniffio-1.3.1-py3-none-any.whl.metadata (3.9 kB)
+2025-11-24T21:22:12.7139747Z Collecting billiard<5.0,>=4.2.1 (from celery==5.5.3->-r apps/memory_api/requirements-base.txt (line 21))
+2025-11-24T21:22:12.7174155Z   Downloading billiard-4.2.3-py3-none-any.whl.metadata (4.8 kB)
+2025-11-24T21:22:12.8192124Z Collecting kombu<5.6,>=5.5.2 (from celery==5.5.3->-r apps/memory_api/requirements-base.txt (line 21))
+2025-11-24T21:22:12.8232809Z   Downloading kombu-5.5.4-py3-none-any.whl.metadata (3.5 kB)
+2025-11-24T21:22:12.8390135Z Collecting vine<6.0,>=5.1.0 (from celery==5.5.3->-r apps/memory_api/requirements-base.txt (line 21))
+2025-11-24T21:22:12.8428011Z   Downloading vine-5.1.0-py3-none-any.whl.metadata (2.7 kB)
+2025-11-24T21:22:12.8564887Z Collecting click-didyoumean>=0.3.0 (from celery==5.5.3->-r apps/memory_api/requirements-base.txt (line 21))
+2025-11-24T21:22:12.8599565Z   Downloading click_didyoumean-0.3.1-py3-none-any.whl.metadata (3.9 kB)
+2025-11-24T21:22:12.8700958Z Collecting click-repl>=0.2.0 (from celery==5.5.3->-r apps/memory_api/requirements-base.txt (line 21))
+2025-11-24T21:22:12.8733723Z   Downloading click_repl-0.3.0-py3-none-any.whl.metadata (3.6 kB)
+2025-11-24T21:22:12.8834237Z Collecting click-plugins>=1.1.1 (from celery==5.5.3->-r apps/memory_api/requirements-base.txt (line 21))
+2025-11-24T21:22:12.8867698Z   Downloading click_plugins-1.1.1.2-py2.py3-none-any.whl.metadata (6.5 kB)
+2025-11-24T21:22:12.9008833Z Collecting python-dateutil>=2.8.2 (from celery==5.5.3->-r apps/memory_api/requirements-base.txt (line 21))
+2025-11-24T21:22:12.9041385Z   Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+2025-11-24T21:22:12.9257709Z Collecting opentelemetry-api==1.27.0 (from opentelemetry-sdk==1.27.0->-r apps/memory_api/requirements-base.txt (line 25))
+2025-11-24T21:22:12.9312784Z   Downloading opentelemetry_api-1.27.0-py3-none-any.whl.metadata (1.4 kB)
+2025-11-24T21:22:12.9489654Z Collecting opentelemetry-semantic-conventions==0.48b0 (from opentelemetry-sdk==1.27.0->-r apps/memory_api/requirements-base.txt (line 25))
+2025-11-24T21:22:12.9524231Z   Downloading opentelemetry_semantic_conventions-0.48b0-py3-none-any.whl.metadata (2.4 kB)
+2025-11-24T21:22:12.9802655Z Collecting opentelemetry-instrumentation-asgi==0.48b0 (from opentelemetry-instrumentation-fastapi==0.48b0->-r apps/memory_api/requirements-base.txt (line 26))
+2025-11-24T21:22:12.9835651Z   Downloading opentelemetry_instrumentation_asgi-0.48b0-py3-none-any.whl.metadata (2.0 kB)
+2025-11-24T21:22:13.0019556Z Collecting opentelemetry-instrumentation==0.48b0 (from opentelemetry-instrumentation-fastapi==0.48b0->-r apps/memory_api/requirements-base.txt (line 26))
+2025-11-24T21:22:13.0053762Z   Downloading opentelemetry_instrumentation-0.48b0-py3-none-any.whl.metadata (6.1 kB)
+2025-11-24T21:22:13.0220841Z Collecting opentelemetry-util-http==0.48b0 (from opentelemetry-instrumentation-fastapi==0.48b0->-r apps/memory_api/requirements-base.txt (line 26))
+2025-11-24T21:22:13.0264394Z   Downloading opentelemetry_util_http-0.48b0-py3-none-any.whl.metadata (2.5 kB)
+2025-11-24T21:22:13.0410826Z Collecting deprecated>=1.2.6 (from opentelemetry-api==1.27.0->opentelemetry-sdk==1.27.0->-r apps/memory_api/requirements-base.txt (line 25))
+2025-11-24T21:22:13.0442816Z   Downloading deprecated-1.3.1-py2.py3-none-any.whl.metadata (5.9 kB)
+2025-11-24T21:22:13.0746202Z Collecting importlib-metadata<=8.4.0,>=6.0 (from opentelemetry-api==1.27.0->opentelemetry-sdk==1.27.0->-r apps/memory_api/requirements-base.txt (line 25))
+2025-11-24T21:22:13.0781575Z   Downloading importlib_metadata-8.4.0-py3-none-any.whl.metadata (4.7 kB)
+2025-11-24T21:22:13.5601367Z Collecting aiohttp>=3.10 (from litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:13.5638315Z   Downloading aiohttp-3.13.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (8.1 kB)
+2025-11-24T21:22:13.5949472Z Collecting fastuuid>=0.13.0 (from litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:13.5993011Z   Downloading fastuuid-0.14.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (1.1 kB)
+2025-11-24T21:22:13.6257151Z Collecting jinja2<4.0.0,>=3.1.2 (from litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:13.6289740Z   Downloading jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+2025-11-24T21:22:13.6533682Z Collecting jsonschema<5.0.0,>=4.22.0 (from litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:13.6569359Z   Downloading jsonschema-4.25.1-py3-none-any.whl.metadata (7.6 kB)
+2025-11-24T21:22:13.7327272Z Collecting tiktoken>=0.7.0 (from litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:13.7369895Z   Downloading tiktoken-0.12.0-cp311-cp311-manylinux_2_28_x86_64.whl.metadata (6.7 kB)
+2025-11-24T21:22:13.9680586Z Collecting tokenizers (from litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:13.9716920Z   Downloading tokenizers-0.22.1-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.8 kB)
+2025-11-24T21:22:14.0727038Z Collecting distro<2,>=1.7.0 (from openai==2.8.1->-r apps/memory_api/requirements-base.txt (line 33))
+2025-11-24T21:22:14.0762217Z   Downloading distro-1.9.0-py3-none-any.whl.metadata (6.8 kB)
+2025-11-24T21:22:14.1535354Z Collecting jiter<1,>=0.10.0 (from openai==2.8.1->-r apps/memory_api/requirements-base.txt (line 33))
+2025-11-24T21:22:14.1573216Z   Downloading jiter-0.12.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.2 kB)
+2025-11-24T21:22:14.2148150Z Collecting tqdm>4 (from openai==2.8.1->-r apps/memory_api/requirements-base.txt (line 33))
+2025-11-24T21:22:14.2182643Z   Downloading tqdm-4.67.1-py3-none-any.whl.metadata (57 kB)
+2025-11-24T21:22:14.2463643Z Collecting docstring-parser<1,>=0.15 (from anthropic==0.74.1->-r apps/memory_api/requirements-base.txt (line 34))
+2025-11-24T21:22:14.2496345Z   Downloading docstring_parser-0.17.0-py3-none-any.whl.metadata (3.5 kB)
+2025-11-24T21:22:14.2765943Z Collecting google-ai-generativelanguage==0.6.15 (from google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-24T21:22:14.2798622Z   Downloading google_ai_generativelanguage-0.6.15-py3-none-any.whl.metadata (5.7 kB)
+2025-11-24T21:22:14.3152286Z Collecting google-api-core (from google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-24T21:22:14.3184527Z   Downloading google_api_core-2.28.1-py3-none-any.whl.metadata (3.3 kB)
+2025-11-24T21:22:14.3728522Z Collecting google-api-python-client (from google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-24T21:22:14.3763332Z   Downloading google_api_python_client-2.187.0-py3-none-any.whl.metadata (7.0 kB)
+2025-11-24T21:22:14.4120256Z Collecting google-auth>=2.15.0 (from google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-24T21:22:14.4155208Z   Downloading google_auth-2.43.0-py2.py3-none-any.whl.metadata (6.6 kB)
+2025-11-24T21:22:14.5697484Z Collecting protobuf (from google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-24T21:22:14.5731287Z   Downloading protobuf-6.33.1-cp39-abi3-manylinux2014_x86_64.whl.metadata (593 bytes)
+2025-11-24T21:22:14.5896950Z Collecting ecdsa!=0.15 (from python-jose==3.5.0->python-jose[cryptography]==3.5.0->-r apps/memory_api/requirements-base.txt (line 39))
+2025-11-24T21:22:14.5929856Z   Downloading ecdsa-0.19.1-py2.py3-none-any.whl.metadata (29 kB)
+2025-11-24T21:22:14.6115536Z Collecting rsa!=4.1.1,!=4.4,<5.0,>=4.0 (from python-jose==3.5.0->python-jose[cryptography]==3.5.0->-r apps/memory_api/requirements-base.txt (line 39))
+2025-11-24T21:22:14.6145893Z   Downloading rsa-4.9.1-py3-none-any.whl.metadata (5.6 kB)
+2025-11-24T21:22:14.6344258Z Collecting pyasn1>=0.5.0 (from python-jose==3.5.0->python-jose[cryptography]==3.5.0->-r apps/memory_api/requirements-base.txt (line 39))
+2025-11-24T21:22:14.6377302Z   Downloading pyasn1-0.6.1-py3-none-any.whl.metadata (8.4 kB)
+2025-11-24T21:22:14.7861135Z Collecting proto-plus<2.0.0dev,>=1.22.3 (from google-ai-generativelanguage==0.6.15->google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-24T21:22:14.7894381Z   Downloading proto_plus-1.26.1-py3-none-any.whl.metadata (2.2 kB)
+2025-11-24T21:22:14.8714515Z Collecting protobuf (from google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-24T21:22:14.8749323Z   Downloading protobuf-5.29.5-cp38-abi3-manylinux2014_x86_64.whl.metadata (592 bytes)
+2025-11-24T21:22:14.8919794Z Requirement already satisfied: setuptools>=16.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from opentelemetry-instrumentation==0.48b0->opentelemetry-instrumentation-fastapi==0.48b0->-r apps/memory_api/requirements-base.txt (line 26)) (79.0.1)
+2025-11-24T21:22:15.0189900Z Collecting wrapt<2.0.0,>=1.0.0 (from opentelemetry-instrumentation==0.48b0->opentelemetry-instrumentation-fastapi==0.48b0->-r apps/memory_api/requirements-base.txt (line 26))
+2025-11-24T21:22:15.0225306Z   Downloading wrapt-1.17.3-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (6.4 kB)
+2025-11-24T21:22:15.0475615Z Collecting asgiref~=3.0 (from opentelemetry-instrumentation-asgi==0.48b0->opentelemetry-instrumentation-fastapi==0.48b0->-r apps/memory_api/requirements-base.txt (line 26))
+2025-11-24T21:22:15.0513388Z   Downloading asgiref-3.11.0-py3-none-any.whl.metadata (9.3 kB)
+2025-11-24T21:22:15.2364903Z Collecting cryptography>=3.4.0 (from python-jose[cryptography]==3.5.0->-r apps/memory_api/requirements-base.txt (line 39))
+2025-11-24T21:22:15.2407198Z   Downloading cryptography-46.0.3-cp311-abi3-manylinux_2_34_x86_64.whl.metadata (5.7 kB)
+2025-11-24T21:22:15.2785784Z Collecting googleapis-common-protos<2.0.0,>=1.56.2 (from google-api-core->google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-24T21:22:15.2825483Z   Downloading googleapis_common_protos-1.72.0-py3-none-any.whl.metadata (9.4 kB)
+2025-11-24T21:22:15.4530365Z Collecting requests<3.0.0,>=2.18.0 (from google-api-core->google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-24T21:22:15.4569283Z   Downloading requests-2.32.5-py3-none-any.whl.metadata (4.9 kB)
+2025-11-24T21:22:15.5270149Z Collecting grpcio-status<2.0.0,>=1.33.2 (from google-api-core[grpc]!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0dev,>=1.34.1->google-ai-generativelanguage==0.6.15->google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-24T21:22:15.5304791Z   Downloading grpcio_status-1.76.0-py3-none-any.whl.metadata (1.1 kB)
+2025-11-24T21:22:15.5653714Z Collecting cachetools<7.0,>=2.0.0 (from google-auth>=2.15.0->google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-24T21:22:15.5688667Z   Downloading cachetools-6.2.2-py3-none-any.whl.metadata (5.6 kB)
+2025-11-24T21:22:15.5866504Z Collecting pyasn1-modules>=0.2.1 (from google-auth>=2.15.0->google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-24T21:22:15.5899609Z   Downloading pyasn1_modules-0.4.2-py3-none-any.whl.metadata (3.5 kB)
+2025-11-24T21:22:15.6336136Z INFO: pip is looking at multiple versions of grpcio-status to determine which version is compatible with other requirements. This could take a while.
+2025-11-24T21:22:15.6343421Z Collecting grpcio-status<2.0.0,>=1.33.2 (from google-api-core[grpc]!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0dev,>=1.34.1->google-ai-generativelanguage==0.6.15->google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-24T21:22:15.6382878Z   Downloading grpcio_status-1.75.1-py3-none-any.whl.metadata (1.1 kB)
+2025-11-24T21:22:15.6475661Z   Downloading grpcio_status-1.75.0-py3-none-any.whl.metadata (1.1 kB)
+2025-11-24T21:22:15.6569501Z   Downloading grpcio_status-1.74.0-py3-none-any.whl.metadata (1.1 kB)
+2025-11-24T21:22:15.6653072Z   Downloading grpcio_status-1.73.1-py3-none-any.whl.metadata (1.1 kB)
+2025-11-24T21:22:15.7806180Z   Downloading grpcio_status-1.73.0-py3-none-any.whl.metadata (1.1 kB)
+2025-11-24T21:22:15.7907074Z   Downloading grpcio_status-1.72.2-py3-none-any.whl.metadata (1.1 kB)
+2025-11-24T21:22:15.7998842Z   Downloading grpcio_status-1.72.1-py3-none-any.whl.metadata (1.1 kB)
+2025-11-24T21:22:15.8056488Z INFO: pip is still looking at multiple versions of grpcio-status to determine which version is compatible with other requirements. This could take a while.
+2025-11-24T21:22:15.8093156Z   Downloading grpcio_status-1.71.2-py3-none-any.whl.metadata (1.1 kB)
+2025-11-24T21:22:16.0718485Z Collecting zipp>=0.5 (from importlib-metadata<=8.4.0,>=6.0->opentelemetry-api==1.27.0->opentelemetry-sdk==1.27.0->-r apps/memory_api/requirements-base.txt (line 25))
+2025-11-24T21:22:16.0759845Z   Downloading zipp-3.23.0-py3-none-any.whl.metadata (3.6 kB)
+2025-11-24T21:22:16.1309479Z Collecting MarkupSafe>=2.0 (from jinja2<4.0.0,>=3.1.2->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:16.1349507Z   Downloading markupsafe-3.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+2025-11-24T21:22:16.1526410Z Collecting attrs>=22.2.0 (from jsonschema<5.0.0,>=4.22.0->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:16.1558845Z   Downloading attrs-25.4.0-py3-none-any.whl.metadata (10 kB)
+2025-11-24T21:22:16.1698408Z Collecting jsonschema-specifications>=2023.03.6 (from jsonschema<5.0.0,>=4.22.0->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:16.1734009Z   Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+2025-11-24T21:22:16.1975657Z Collecting referencing>=0.28.4 (from jsonschema<5.0.0,>=4.22.0->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:16.2024663Z   Downloading referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+2025-11-24T21:22:16.4586734Z Collecting rpds-py>=0.7.1 (from jsonschema<5.0.0,>=4.22.0->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:16.4620637Z   Downloading rpds_py-0.29.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.1 kB)
+2025-11-24T21:22:16.4812346Z Collecting amqp<6.0.0,>=5.1.1 (from kombu<5.6,>=5.5.2->celery==5.5.3->-r apps/memory_api/requirements-base.txt (line 21))
+2025-11-24T21:22:16.4845070Z   Downloading amqp-5.3.1-py3-none-any.whl.metadata (8.9 kB)
+2025-11-24T21:22:16.5006030Z Collecting tzdata>=2025.2 (from kombu<5.6,>=5.5.2->celery==5.5.3->-r apps/memory_api/requirements-base.txt (line 21))
+2025-11-24T21:22:16.5036579Z   Downloading tzdata-2025.2-py2.py3-none-any.whl.metadata (1.4 kB)
+2025-11-24T21:22:16.5072912Z Requirement already satisfied: packaging in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from kombu<5.6,>=5.5.2->celery==5.5.3->-r apps/memory_api/requirements-base.txt (line 21)) (25.0)
+2025-11-24T21:22:16.6940807Z Collecting charset_normalizer<4,>=2 (from requests<3.0.0,>=2.18.0->google-api-core->google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-24T21:22:16.6976389Z   Downloading charset_normalizer-3.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (37 kB)
+2025-11-24T21:22:16.7608795Z Collecting aiohappyeyeballs>=2.5.0 (from aiohttp>=3.10->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:16.7643252Z   Downloading aiohappyeyeballs-2.6.1-py3-none-any.whl.metadata (5.9 kB)
+2025-11-24T21:22:16.7739596Z Collecting aiosignal>=1.4.0 (from aiohttp>=3.10->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:16.7771664Z   Downloading aiosignal-1.4.0-py3-none-any.whl.metadata (3.7 kB)
+2025-11-24T21:22:16.8470297Z Collecting frozenlist>=1.1.1 (from aiohttp>=3.10->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:16.8506302Z   Downloading frozenlist-1.8.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (20 kB)
+2025-11-24T21:22:17.1291573Z Collecting multidict<7.0,>=4.5 (from aiohttp>=3.10->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:17.1326156Z   Downloading multidict-6.7.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (5.3 kB)
+2025-11-24T21:22:17.1855148Z Collecting propcache>=0.2.0 (from aiohttp>=3.10->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:17.1890644Z   Downloading propcache-0.4.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (13 kB)
+2025-11-24T21:22:17.4317140Z Collecting yarl<2.0,>=1.17.0 (from aiohttp>=3.10->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:17.4348426Z   Downloading yarl-1.22.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (75 kB)
+2025-11-24T21:22:17.5109514Z Collecting prompt-toolkit>=3.0.36 (from click-repl>=0.2.0->celery==5.5.3->-r apps/memory_api/requirements-base.txt (line 21))
+2025-11-24T21:22:17.5144734Z   Downloading prompt_toolkit-3.0.52-py3-none-any.whl.metadata (6.4 kB)
+2025-11-24T21:22:17.7521639Z Collecting cffi>=2.0.0 (from cryptography>=3.4.0->python-jose[cryptography]==3.5.0->-r apps/memory_api/requirements-base.txt (line 39))
+2025-11-24T21:22:17.7556666Z   Downloading cffi-2.0.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.6 kB)
+2025-11-24T21:22:17.7703102Z Collecting pycparser (from cffi>=2.0.0->cryptography>=3.4.0->python-jose[cryptography]==3.5.0->-r apps/memory_api/requirements-base.txt (line 39))
+2025-11-24T21:22:17.7735539Z   Downloading pycparser-2.23-py3-none-any.whl.metadata (993 bytes)
+2025-11-24T21:22:17.7989716Z Collecting six>=1.9.0 (from ecdsa!=0.15->python-jose==3.5.0->python-jose[cryptography]==3.5.0->-r apps/memory_api/requirements-base.txt (line 39))
+2025-11-24T21:22:17.8023994Z   Downloading six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+2025-11-24T21:22:17.8551427Z INFO: pip is looking at multiple versions of grpcio-tools to determine which version is compatible with other requirements. This could take a while.
+2025-11-24T21:22:17.8553946Z Collecting grpcio-tools>=1.41.0 (from qdrant-client==1.10.1->-r apps/memory_api/requirements-base.txt (line 13))
+2025-11-24T21:22:17.8580086Z   Downloading grpcio_tools-1.75.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (5.3 kB)
+2025-11-24T21:22:17.8712449Z   Downloading grpcio_tools-1.75.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (5.3 kB)
+2025-11-24T21:22:17.8845911Z   Downloading grpcio_tools-1.74.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.3 kB)
+2025-11-24T21:22:17.8954101Z   Downloading grpcio_tools-1.73.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.3 kB)
+2025-11-24T21:22:17.9993291Z   Downloading grpcio_tools-1.73.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.3 kB)
+2025-11-24T21:22:18.0099938Z   Downloading grpcio_tools-1.72.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.3 kB)
+2025-11-24T21:22:18.0210606Z   Downloading grpcio_tools-1.72.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.3 kB)
+2025-11-24T21:22:18.0272903Z INFO: pip is still looking at multiple versions of grpcio-tools to determine which version is compatible with other requirements. This could take a while.
+2025-11-24T21:22:18.0315362Z   Downloading grpcio_tools-1.71.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.3 kB)
+2025-11-24T21:22:18.0575691Z Collecting h2<5,>=3 (from httpx[http2]>=0.20.0->qdrant-client==1.10.1->-r apps/memory_api/requirements-base.txt (line 13))
+2025-11-24T21:22:18.0607977Z   Downloading h2-4.3.0-py3-none-any.whl.metadata (5.1 kB)
+2025-11-24T21:22:18.0772701Z Collecting hyperframe<7,>=6.1 (from h2<5,>=3->httpx[http2]>=0.20.0->qdrant-client==1.10.1->-r apps/memory_api/requirements-base.txt (line 13))
+2025-11-24T21:22:18.0804607Z   Downloading hyperframe-6.1.0-py3-none-any.whl.metadata (4.3 kB)
+2025-11-24T21:22:18.0926365Z Collecting hpack<5,>=4.1 (from h2<5,>=3->httpx[http2]>=0.20.0->qdrant-client==1.10.1->-r apps/memory_api/requirements-base.txt (line 13))
+2025-11-24T21:22:18.0958324Z   Downloading hpack-4.1.0-py3-none-any.whl.metadata (4.6 kB)
+2025-11-24T21:22:18.1318413Z Collecting wcwidth (from prompt-toolkit>=3.0.36->click-repl>=0.2.0->celery==5.5.3->-r apps/memory_api/requirements-base.txt (line 21))
+2025-11-24T21:22:18.1351134Z   Downloading wcwidth-0.2.14-py2.py3-none-any.whl.metadata (15 kB)
+2025-11-24T21:22:18.2985584Z Collecting greenlet>=1 (from SQLAlchemy>=1.4.0->alembic==1.17.2->-r apps/memory_api/requirements-base.txt (line 15))
+2025-11-24T21:22:18.3022020Z   Downloading greenlet-3.2.4-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (4.1 kB)
+2025-11-24T21:22:18.6341221Z Collecting regex>=2022.1.18 (from tiktoken>=0.7.0->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:18.6381102Z   Downloading regex-2025.11.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (40 kB)
+2025-11-24T21:22:18.6853016Z Collecting httplib2<1.0.0,>=0.19.0 (from google-api-python-client->google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-24T21:22:18.6891828Z   Downloading httplib2-0.31.0-py3-none-any.whl.metadata (2.2 kB)
+2025-11-24T21:22:18.7257777Z Collecting google-auth-httplib2<1.0.0,>=0.2.0 (from google-api-python-client->google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-24T21:22:18.7292487Z   Downloading google_auth_httplib2-0.2.1-py3-none-any.whl.metadata (3.0 kB)
+2025-11-24T21:22:18.7400213Z Collecting uritemplate<5,>=3.0.1 (from google-api-python-client->google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-24T21:22:18.7434188Z   Downloading uritemplate-4.2.0-py3-none-any.whl.metadata (2.6 kB)
+2025-11-24T21:22:18.7744585Z Collecting pyparsing<4,>=3.0.4 (from httplib2<1.0.0,>=0.19.0->google-api-python-client->google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-24T21:22:18.7775811Z   Downloading pyparsing-3.2.5-py3-none-any.whl.metadata (5.0 kB)
+2025-11-24T21:22:18.8425298Z Collecting huggingface-hub<2.0,>=0.16.4 (from tokenizers->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:18.8460403Z   Downloading huggingface_hub-1.1.5-py3-none-any.whl.metadata (13 kB)
+2025-11-24T21:22:18.8823594Z Collecting filelock (from huggingface-hub<2.0,>=0.16.4->tokenizers->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:18.8856116Z   Downloading filelock-3.20.0-py3-none-any.whl.metadata (2.1 kB)
+2025-11-24T21:22:18.9055117Z Collecting fsspec>=2023.5.0 (from huggingface-hub<2.0,>=0.16.4->tokenizers->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:18.9087566Z   Downloading fsspec-2025.10.0-py3-none-any.whl.metadata (10 kB)
+2025-11-24T21:22:18.9720236Z Collecting hf-xet<2.0.0,>=1.2.0 (from huggingface-hub<2.0,>=0.16.4->tokenizers->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:18.9757074Z   Downloading hf_xet-1.2.0-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+2025-11-24T21:22:19.0149974Z Collecting pyyaml>=5.1 (from huggingface-hub<2.0,>=0.16.4->tokenizers->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:19.0185496Z   Downloading pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+2025-11-24T21:22:19.0319369Z Collecting shellingham (from huggingface-hub<2.0,>=0.16.4->tokenizers->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:19.0351426Z   Downloading shellingham-1.5.4-py2.py3-none-any.whl.metadata (3.5 kB)
+2025-11-24T21:22:19.0594555Z Collecting typer-slim (from huggingface-hub<2.0,>=0.16.4->tokenizers->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-24T21:22:19.0627669Z   Downloading typer_slim-0.20.0-py3-none-any.whl.metadata (16 kB)
+2025-11-24T21:22:19.1061996Z Downloading fastapi-0.115.0-py3-none-any.whl (94 kB)
+2025-11-24T21:22:19.1127434Z Downloading pydantic-2.12.4-py3-none-any.whl (463 kB)
+2025-11-24T21:22:19.1220445Z Downloading uvicorn-0.38.0-py3-none-any.whl (68 kB)
+2025-11-24T21:22:19.1280505Z Downloading pydantic_settings-2.12.0-py3-none-any.whl (51 kB)
+2025-11-24T21:22:19.1363496Z Downloading asyncpg-0.30.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.1 MB)
+2025-11-24T21:22:19.1544779Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.1/3.1 MB 196.0 MB/s  0:00:00
+2025-11-24T21:22:19.1583373Z Downloading qdrant_client-1.10.1-py3-none-any.whl (254 kB)
+2025-11-24T21:22:19.1691960Z Downloading pgvector-0.4.1-py3-none-any.whl (27 kB)
+2025-11-24T21:22:19.1749373Z Downloading alembic-1.17.2-py3-none-any.whl (248 kB)
+2025-11-24T21:22:19.1830124Z Downloading httpx-0.27.2-py3-none-any.whl (76 kB)
+2025-11-24T21:22:19.1886837Z Downloading celery-5.5.3-py3-none-any.whl (438 kB)
+2025-11-24T21:22:19.1976147Z Downloading redis-7.1.0-py3-none-any.whl (354 kB)
+2025-11-24T21:22:19.2050025Z Downloading opentelemetry_sdk-1.27.0-py3-none-any.whl (110 kB)
+2025-11-24T21:22:19.2120896Z Downloading opentelemetry_instrumentation_fastapi-0.48b0-py3-none-any.whl (11 kB)
+2025-11-24T21:22:19.2183053Z Downloading opentelemetry_api-1.27.0-py3-none-any.whl (63 kB)
+2025-11-24T21:22:19.2239482Z Downloading prometheus_fastapi_instrumentator-7.1.0-py3-none-any.whl (19 kB)
+2025-11-24T21:22:19.2299524Z Downloading prometheus_client-0.23.1-py3-none-any.whl (61 kB)
+2025-11-24T21:22:19.2357534Z Downloading structlog-25.5.0-py3-none-any.whl (72 kB)
+2025-11-24T21:22:19.2463072Z Downloading litellm-1.80.0-py3-none-any.whl (10.5 MB)
+2025-11-24T21:22:19.3383198Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 10.5/10.5 MB 120.6 MB/s  0:00:00
+2025-11-24T21:22:19.3420400Z Downloading openai-2.8.1-py3-none-any.whl (1.0 MB)
+2025-11-24T21:22:19.3502815Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.0/1.0 MB 140.7 MB/s  0:00:00
+2025-11-24T21:22:19.3536419Z Downloading anthropic-0.74.1-py3-none-any.whl (371 kB)
+2025-11-24T21:22:19.3638342Z Downloading google_generativeai-0.8.5-py3-none-any.whl (155 kB)
+2025-11-24T21:22:19.3715401Z Downloading tenacity-9.1.2-py3-none-any.whl (28 kB)
+2025-11-24T21:22:19.3786078Z Downloading python_jose-3.5.0-py2.py3-none-any.whl (34 kB)
+2025-11-24T21:22:19.3843040Z Downloading zstandard-0.25.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (5.6 MB)
+2025-11-24T21:22:19.4173533Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.6/5.6 MB 194.5 MB/s  0:00:00
+2025-11-24T21:22:19.4211125Z Downloading google_ai_generativelanguage-0.6.15-py3-none-any.whl (1.3 MB)
+2025-11-24T21:22:19.4363167Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.3/1.3 MB 101.8 MB/s  0:00:00
+2025-11-24T21:22:19.4398516Z Downloading opentelemetry_instrumentation-0.48b0-py3-none-any.whl (29 kB)
+2025-11-24T21:22:19.4466267Z Downloading opentelemetry_instrumentation_asgi-0.48b0-py3-none-any.whl (15 kB)
+2025-11-24T21:22:19.4519510Z Downloading opentelemetry_semantic_conventions-0.48b0-py3-none-any.whl (149 kB)
+2025-11-24T21:22:19.4585975Z Downloading opentelemetry_util_http-0.48b0-py3-none-any.whl (6.9 kB)
+2025-11-24T21:22:19.4646409Z Downloading pydantic_core-2.41.5-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+2025-11-24T21:22:19.4770321Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 182.5 MB/s  0:00:00
+2025-11-24T21:22:19.4803773Z Downloading anyio-4.11.0-py3-none-any.whl (109 kB)
+2025-11-24T21:22:19.4859702Z Downloading asgiref-3.11.0-py3-none-any.whl (24 kB)
+2025-11-24T21:22:19.4915475Z Downloading billiard-4.2.3-py3-none-any.whl (87 kB)
+2025-11-24T21:22:19.5013627Z Downloading click-8.3.1-py3-none-any.whl (108 kB)
+2025-11-24T21:22:19.5070934Z Downloading distro-1.9.0-py3-none-any.whl (20 kB)
+2025-11-24T21:22:19.5123414Z Downloading docstring_parser-0.17.0-py3-none-any.whl (36 kB)
+2025-11-24T21:22:19.5179373Z Downloading google_api_core-2.28.1-py3-none-any.whl (173 kB)
+2025-11-24T21:22:19.5249828Z Downloading google_auth-2.43.0-py2.py3-none-any.whl (223 kB)
+2025-11-24T21:22:19.5319294Z Downloading cachetools-6.2.2-py3-none-any.whl (11 kB)
+2025-11-24T21:22:19.5376415Z Downloading googleapis_common_protos-1.72.0-py3-none-any.whl (297 kB)
+2025-11-24T21:22:19.5445555Z Downloading grpcio-1.76.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (6.6 MB)
+2025-11-24T21:22:19.5895426Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.6/6.6 MB 164.9 MB/s  0:00:00
+2025-11-24T21:22:19.5929822Z Downloading grpcio_status-1.71.2-py3-none-any.whl (14 kB)
+2025-11-24T21:22:19.5992142Z Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+2025-11-24T21:22:19.6048142Z Downloading importlib_metadata-8.4.0-py3-none-any.whl (26 kB)
+2025-11-24T21:22:19.6130945Z Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
+2025-11-24T21:22:19.6200861Z Downloading jiter-0.12.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (364 kB)
+2025-11-24T21:22:19.6278615Z Downloading jsonschema-4.25.1-py3-none-any.whl (90 kB)
+2025-11-24T21:22:19.6343356Z Downloading kombu-5.5.4-py3-none-any.whl (210 kB)
+2025-11-24T21:22:19.6417470Z Downloading vine-5.1.0-py3-none-any.whl (9.6 kB)
+2025-11-24T21:22:19.6476889Z Downloading amqp-5.3.1-py3-none-any.whl (50 kB)
+2025-11-24T21:22:19.6535093Z Downloading portalocker-2.10.1-py3-none-any.whl (18 kB)
+2025-11-24T21:22:19.6586444Z Downloading proto_plus-1.26.1-py3-none-any.whl (50 kB)
+2025-11-24T21:22:19.6645758Z Downloading protobuf-5.29.5-cp38-abi3-manylinux2014_x86_64.whl (319 kB)
+2025-11-24T21:22:19.6718860Z Downloading requests-2.32.5-py3-none-any.whl (64 kB)
+2025-11-24T21:22:19.6778380Z Downloading charset_normalizer-3.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (151 kB)
+2025-11-24T21:22:19.6851406Z Downloading idna-3.11-py3-none-any.whl (71 kB)
+2025-11-24T21:22:19.6915667Z Downloading rsa-4.9.1-py3-none-any.whl (34 kB)
+2025-11-24T21:22:19.6970529Z Downloading starlette-0.38.6-py3-none-any.whl (71 kB)
+2025-11-24T21:22:19.7062453Z Downloading urllib3-2.5.0-py3-none-any.whl (129 kB)
+2025-11-24T21:22:19.7128237Z Downloading wrapt-1.17.3-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (82 kB)
+2025-11-24T21:22:19.7216338Z Downloading aiohttp-3.13.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (1.7 MB)
+2025-11-24T21:22:19.7343299Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.7/1.7 MB 171.1 MB/s  0:00:00
+2025-11-24T21:22:19.7381076Z Downloading multidict-6.7.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (246 kB)
+2025-11-24T21:22:19.7453919Z Downloading yarl-1.22.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (365 kB)
+2025-11-24T21:22:19.7523736Z Downloading aiohappyeyeballs-2.6.1-py3-none-any.whl (15 kB)
+2025-11-24T21:22:19.7579925Z Downloading aiosignal-1.4.0-py3-none-any.whl (7.5 kB)
+2025-11-24T21:22:19.7630225Z Downloading annotated_types-0.7.0-py3-none-any.whl (13 kB)
+2025-11-24T21:22:19.7684028Z Downloading attrs-25.4.0-py3-none-any.whl (67 kB)
+2025-11-24T21:22:19.7745313Z Downloading certifi-2025.11.12-py3-none-any.whl (159 kB)
+2025-11-24T21:22:19.7808678Z Downloading click_didyoumean-0.3.1-py3-none-any.whl (3.6 kB)
+2025-11-24T21:22:19.7871279Z Downloading click_plugins-1.1.1.2-py2.py3-none-any.whl (11 kB)
+2025-11-24T21:22:19.7926244Z Downloading click_repl-0.3.0-py3-none-any.whl (10 kB)
+2025-11-24T21:22:19.7979568Z Downloading cryptography-46.0.3-cp311-abi3-manylinux_2_34_x86_64.whl (4.5 MB)
+2025-11-24T21:22:19.8230171Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.5/4.5 MB 194.2 MB/s  0:00:00
+2025-11-24T21:22:19.8265914Z Downloading cffi-2.0.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (215 kB)
+2025-11-24T21:22:19.8368161Z Downloading deprecated-1.3.1-py2.py3-none-any.whl (11 kB)
+2025-11-24T21:22:19.8435251Z Downloading ecdsa-0.19.1-py2.py3-none-any.whl (150 kB)
+2025-11-24T21:22:19.8515227Z Downloading fastuuid-0.14.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (279 kB)
+2025-11-24T21:22:19.8590412Z Downloading frozenlist-1.8.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (231 kB)
+2025-11-24T21:22:19.8660939Z Downloading grpcio_tools-1.71.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.5 MB)
+2025-11-24T21:22:19.9005511Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.5/2.5 MB 74.0 MB/s  0:00:00
+2025-11-24T21:22:19.9036500Z Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+2025-11-24T21:22:19.9096070Z Downloading h2-4.3.0-py3-none-any.whl (61 kB)
+2025-11-24T21:22:19.9151197Z Downloading hpack-4.1.0-py3-none-any.whl (34 kB)
+2025-11-24T21:22:19.9207871Z Downloading hyperframe-6.1.0-py3-none-any.whl (13 kB)
+2025-11-24T21:22:19.9266697Z Downloading jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+2025-11-24T21:22:19.9336761Z Downloading markupsafe-3.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+2025-11-24T21:22:19.9390583Z Downloading numpy-2.3.5-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.9 MB)
+2025-11-24T21:22:20.0148623Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 16.9/16.9 MB 227.5 MB/s  0:00:00
+2025-11-24T21:22:20.0186381Z Downloading prompt_toolkit-3.0.52-py3-none-any.whl (391 kB)
+2025-11-24T21:22:20.0265079Z Downloading propcache-0.4.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (210 kB)
+2025-11-24T21:22:20.0345730Z Downloading pyasn1-0.6.1-py3-none-any.whl (83 kB)
+2025-11-24T21:22:20.0407131Z Downloading pyasn1_modules-0.4.2-py3-none-any.whl (181 kB)
+2025-11-24T21:22:20.0485348Z Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+2025-11-24T21:22:20.0591586Z Downloading python_dotenv-1.2.1-py3-none-any.whl (21 kB)
+2025-11-24T21:22:20.0649549Z Downloading referencing-0.37.0-py3-none-any.whl (26 kB)
+2025-11-24T21:22:20.0702415Z Downloading rpds_py-0.29.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (392 kB)
+2025-11-24T21:22:20.0784303Z Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+2025-11-24T21:22:20.0836599Z Downloading sniffio-1.3.1-py3-none-any.whl (10 kB)
+2025-11-24T21:22:20.0891438Z Downloading sqlalchemy-2.0.44-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.3 MB)
+2025-11-24T21:22:20.1075583Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 194.6 MB/s  0:00:00
+2025-11-24T21:22:20.1110079Z Downloading greenlet-3.2.4-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (587 kB)
+2025-11-24T21:22:20.1182259Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 587.7/587.7 kB 74.7 MB/s  0:00:00
+2025-11-24T21:22:20.1243660Z Downloading tiktoken-0.12.0-cp311-cp311-manylinux_2_28_x86_64.whl (1.2 MB)
+2025-11-24T21:22:20.1340365Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 125.1 MB/s  0:00:00
+2025-11-24T21:22:20.1382293Z Downloading regex-2025.11.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (800 kB)
+2025-11-24T21:22:20.1459724Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 800.4/800.4 kB 102.9 MB/s  0:00:00
+2025-11-24T21:22:20.1500255Z Downloading tqdm-4.67.1-py3-none-any.whl (78 kB)
+2025-11-24T21:22:20.1557377Z Downloading typing_inspection-0.4.2-py3-none-any.whl (14 kB)
+2025-11-24T21:22:20.1633822Z Downloading tzdata-2025.2-py2.py3-none-any.whl (347 kB)
+2025-11-24T21:22:20.1720645Z Downloading zipp-3.23.0-py3-none-any.whl (10 kB)
+2025-11-24T21:22:20.1779249Z Downloading google_api_python_client-2.187.0-py3-none-any.whl (14.6 MB)
+2025-11-24T21:22:20.2415479Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 14.6/14.6 MB 238.2 MB/s  0:00:00
+2025-11-24T21:22:20.2456906Z Downloading google_auth_httplib2-0.2.1-py3-none-any.whl (9.5 kB)
+2025-11-24T21:22:20.2527013Z Downloading httplib2-0.31.0-py3-none-any.whl (91 kB)
+2025-11-24T21:22:20.2592478Z Downloading pyparsing-3.2.5-py3-none-any.whl (113 kB)
+2025-11-24T21:22:20.2652257Z Downloading uritemplate-4.2.0-py3-none-any.whl (11 kB)
+2025-11-24T21:22:20.2712817Z Downloading mako-1.3.10-py3-none-any.whl (78 kB)
+2025-11-24T21:22:20.2774821Z Downloading pycparser-2.23-py3-none-any.whl (118 kB)
+2025-11-24T21:22:20.2886124Z Downloading tokenizers-0.22.1-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.3 MB)
+2025-11-24T21:22:20.3073563Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 190.3 MB/s  0:00:00
+2025-11-24T21:22:20.3109500Z Downloading huggingface_hub-1.1.5-py3-none-any.whl (516 kB)
+2025-11-24T21:22:20.3190718Z Downloading hf_xet-1.2.0-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.3 MB)
+2025-11-24T21:22:20.3381908Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 3.3/3.3 MB 190.6 MB/s  0:00:00
+2025-11-24T21:22:20.3419506Z Downloading fsspec-2025.10.0-py3-none-any.whl (200 kB)
+2025-11-24T21:22:20.3488852Z Downloading pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (806 kB)
+2025-11-24T21:22:20.3571701Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 806.6/806.6 kB 102.5 MB/s  0:00:00
+2025-11-24T21:22:20.3606485Z Downloading filelock-3.20.0-py3-none-any.whl (16 kB)
+2025-11-24T21:22:20.3672112Z Downloading shellingham-1.5.4-py2.py3-none-any.whl (9.8 kB)
+2025-11-24T21:22:20.3727903Z Downloading typer_slim-0.20.0-py3-none-any.whl (47 kB)
+2025-11-24T21:22:20.3786232Z Downloading wcwidth-0.2.14-py2.py3-none-any.whl (37 kB)
+2025-11-24T21:22:20.7468742Z Installing collected packages: zstandard, zipp, wrapt, wcwidth, vine, urllib3, uritemplate, tzdata, typing-inspection, tqdm, tenacity, structlog, sniffio, six, shellingham, rpds-py, regex, redis, pyyaml, python-dotenv, pyparsing, pydantic-core, pycparser, pyasn1, protobuf, propcache, prometheus_client, portalocker, opentelemetry-util-http, numpy, multidict, MarkupSafe, jiter, idna, hyperframe, hpack, hf-xet, h11, grpcio, greenlet, fsspec, frozenlist, filelock, fastuuid, docstring-parser, distro, click, charset_normalizer, certifi, cachetools, billiard, attrs, asyncpg, asgiref, annotated-types, aiohappyeyeballs, yarl, uvicorn, typer-slim, SQLAlchemy, rsa, requests, referencing, python-dateutil, pydantic, pyasn1-modules, proto-plus, prompt-toolkit, pgvector, Mako, jinja2, importlib-metadata, httplib2, httpcore, h2, grpcio-tools, googleapis-common-protos, ecdsa, deprecated, click-plugins, click-didyoumean, cffi, anyio, amqp, aiosignal, tiktoken, starlette, python-jose, pydantic-settings, opentelemetry-api, kombu, jsonschema-specifications, httpx, grpcio-status, google-auth, cryptography, click-repl, alembic, aiohttp, prometheus-fastapi-instrumentator, opentelemetry-semantic-conventions, opentelemetry-instrumentation, openai, jsonschema, huggingface-hub, google-auth-httplib2, google-api-core, fastapi, celery, anthropic, tokenizers, qdrant-client, opentelemetry-sdk, opentelemetry-instrumentation-asgi, google-api-python-client, opentelemetry-instrumentation-fastapi, litellm, google-ai-generativelanguage, google-generativeai
+2025-11-24T21:22:33.7211553Z 
+2025-11-24T21:22:33.7279284Z Successfully installed Mako-1.3.10 MarkupSafe-3.0.3 SQLAlchemy-2.0.44 aiohappyeyeballs-2.6.1 aiohttp-3.13.2 aiosignal-1.4.0 alembic-1.17.2 amqp-5.3.1 annotated-types-0.7.0 anthropic-0.74.1 anyio-4.11.0 asgiref-3.11.0 asyncpg-0.30.0 attrs-25.4.0 billiard-4.2.3 cachetools-6.2.2 celery-5.5.3 certifi-2025.11.12 cffi-2.0.0 charset_normalizer-3.4.4 click-8.3.1 click-didyoumean-0.3.1 click-plugins-1.1.1.2 click-repl-0.3.0 cryptography-46.0.3 deprecated-1.3.1 distro-1.9.0 docstring-parser-0.17.0 ecdsa-0.19.1 fastapi-0.115.0 fastuuid-0.14.0 filelock-3.20.0 frozenlist-1.8.0 fsspec-2025.10.0 google-ai-generativelanguage-0.6.15 google-api-core-2.28.1 google-api-python-client-2.187.0 google-auth-2.43.0 google-auth-httplib2-0.2.1 google-generativeai-0.8.5 googleapis-common-protos-1.72.0 greenlet-3.2.4 grpcio-1.76.0 grpcio-status-1.71.2 grpcio-tools-1.71.2 h11-0.16.0 h2-4.3.0 hf-xet-1.2.0 hpack-4.1.0 httpcore-1.0.9 httplib2-0.31.0 httpx-0.27.2 huggingface-hub-1.1.5 hyperframe-6.1.0 idna-3.11 importlib-metadata-8.4.0 jinja2-3.1.6 jiter-0.12.0 jsonschema-4.25.1 jsonschema-specifications-2025.9.1 kombu-5.5.4 litellm-1.80.0 multidict-6.7.0 numpy-2.3.5 openai-2.8.1 opentelemetry-api-1.27.0 opentelemetry-instrumentation-0.48b0 opentelemetry-instrumentation-asgi-0.48b0 opentelemetry-instrumentation-fastapi-0.48b0 opentelemetry-sdk-1.27.0 opentelemetry-semantic-conventions-0.48b0 opentelemetry-util-http-0.48b0 pgvector-0.4.1 portalocker-2.10.1 prometheus-fastapi-instrumentator-7.1.0 prometheus_client-0.23.1 prompt-toolkit-3.0.52 propcache-0.4.1 proto-plus-1.26.1 protobuf-5.29.5 pyasn1-0.6.1 pyasn1-modules-0.4.2 pycparser-2.23 pydantic-2.12.4 pydantic-core-2.41.5 pydantic-settings-2.12.0 pyparsing-3.2.5 python-dateutil-2.9.0.post0 python-dotenv-1.2.1 python-jose-3.5.0 pyyaml-6.0.3 qdrant-client-1.10.1 redis-7.1.0 referencing-0.37.0 regex-2025.11.3 requests-2.32.5 rpds-py-0.29.0 rsa-4.9.1 shellingham-1.5.4 six-1.17.0 sniffio-1.3.1 starlette-0.38.6 structlog-25.5.0 tenacity-9.1.2 tiktoken-0.12.0 tokenizers-0.22.1 tqdm-4.67.1 typer-slim-0.20.0 typing-inspection-0.4.2 tzdata-2025.2 uritemplate-4.2.0 urllib3-2.5.0 uvicorn-0.38.0 vine-5.1.0 wcwidth-0.2.14 wrapt-1.17.3 yarl-1.22.0 zipp-3.23.0 zstandard-0.25.0
+2025-11-24T21:22:35.4529268Z Requirement already satisfied: pytest>=7.4.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from -r apps/memory_api/requirements-test.txt (line 3)) (9.0.1)
+2025-11-24T21:22:35.4534344Z Requirement already satisfied: pytest-asyncio>=0.21.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from -r apps/memory_api/requirements-test.txt (line 4)) (1.3.0)
+2025-11-24T21:22:35.4539519Z Requirement already satisfied: pytest-cov>=4.1.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from -r apps/memory_api/requirements-test.txt (line 5)) (7.0.0)
+2025-11-24T21:22:35.5515769Z Collecting pytest-mock>=3.11.1 (from -r apps/memory_api/requirements-test.txt (line 6))
+2025-11-24T21:22:35.6204476Z   Downloading pytest_mock-3.15.1-py3-none-any.whl.metadata (3.9 kB)
+2025-11-24T21:22:35.6411871Z Requirement already satisfied: anyio>=3.7.1 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from -r apps/memory_api/requirements-test.txt (line 7)) (4.11.0)
+2025-11-24T21:22:35.7872933Z Collecting testcontainers>=3.7.0 (from testcontainers[postgres]>=3.7.0->-r apps/memory_api/requirements-test.txt (line 10))
+2025-11-24T21:22:35.7914362Z   Downloading testcontainers-4.13.3-py3-none-any.whl.metadata (8.4 kB)
+2025-11-24T21:22:35.8326661Z Collecting instructor>=1.0.0 (from -r apps/memory_api/requirements-test.txt (line 13))
+2025-11-24T21:22:35.8359128Z   Downloading instructor-1.13.0-py3-none-any.whl.metadata (11 kB)
+2025-11-24T21:22:35.8605833Z Collecting slowapi>=0.1.9 (from -r apps/memory_api/requirements-test.txt (line 14))
+2025-11-24T21:22:35.8638819Z   Downloading slowapi-0.1.9-py3-none-any.whl.metadata (3.0 kB)
+2025-11-24T21:22:35.9964745Z Collecting scipy>=1.11.0 (from -r apps/memory_api/requirements-test.txt (line 15))
+2025-11-24T21:22:36.0002038Z   Downloading scipy-1.16.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (62 kB)
+2025-11-24T21:22:36.0385229Z Collecting mcp>=1.0.0 (from -r apps/memory_api/requirements-test.txt (line 16))
+2025-11-24T21:22:36.0417450Z   Downloading mcp-1.22.0-py3-none-any.whl.metadata (85 kB)
+2025-11-24T21:22:36.0641509Z Collecting python-louvain>=0.16 (from -r apps/memory_api/requirements-test.txt (line 19))
+2025-11-24T21:22:36.0683915Z   Downloading python-louvain-0.16.tar.gz (204 kB)
+2025-11-24T21:22:36.0984346Z   Installing build dependencies: started
+2025-11-24T21:22:37.0562916Z   Installing build dependencies: finished with status 'done'
+2025-11-24T21:22:37.0568337Z   Getting requirements to build wheel: started
+2025-11-24T21:22:37.4526027Z   Getting requirements to build wheel: finished with status 'done'
+2025-11-24T21:22:37.4534185Z   Preparing metadata (pyproject.toml): started
+2025-11-24T21:22:37.6613879Z   Preparing metadata (pyproject.toml): finished with status 'done'
+2025-11-24T21:22:37.6640746Z Requirement already satisfied: iniconfig>=1.0.1 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pytest>=7.4.0->-r apps/memory_api/requirements-test.txt (line 3)) (2.3.0)
+2025-11-24T21:22:37.6646312Z Requirement already satisfied: packaging>=22 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pytest>=7.4.0->-r apps/memory_api/requirements-test.txt (line 3)) (25.0)
+2025-11-24T21:22:37.6652500Z Requirement already satisfied: pluggy<2,>=1.5 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pytest>=7.4.0->-r apps/memory_api/requirements-test.txt (line 3)) (1.6.0)
+2025-11-24T21:22:37.6659409Z Requirement already satisfied: pygments>=2.7.2 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pytest>=7.4.0->-r apps/memory_api/requirements-test.txt (line 3)) (2.19.2)
+2025-11-24T21:22:37.6688800Z Requirement already satisfied: typing-extensions>=4.12 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pytest-asyncio>=0.21.0->-r apps/memory_api/requirements-test.txt (line 4)) (4.15.0)
+2025-11-24T21:22:37.6709658Z Requirement already satisfied: coverage>=7.10.6 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from coverage[toml]>=7.10.6->pytest-cov>=4.1.0->-r apps/memory_api/requirements-test.txt (line 5)) (7.12.0)
+2025-11-24T21:22:37.6738234Z Requirement already satisfied: idna>=2.8 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from anyio>=3.7.1->-r apps/memory_api/requirements-test.txt (line 7)) (3.11)
+2025-11-24T21:22:37.6743699Z Requirement already satisfied: sniffio>=1.1 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from anyio>=3.7.1->-r apps/memory_api/requirements-test.txt (line 7)) (1.3.1)
+2025-11-24T21:22:37.6930509Z Collecting docker (from testcontainers>=3.7.0->testcontainers[postgres]>=3.7.0->-r apps/memory_api/requirements-test.txt (line 10))
+2025-11-24T21:22:37.6965441Z   Downloading docker-7.1.0-py3-none-any.whl.metadata (3.8 kB)
+2025-11-24T21:22:37.7018616Z Requirement already satisfied: python-dotenv in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from testcontainers>=3.7.0->testcontainers[postgres]>=3.7.0->-r apps/memory_api/requirements-test.txt (line 10)) (1.2.1)
+2025-11-24T21:22:37.7026216Z Requirement already satisfied: urllib3 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from testcontainers>=3.7.0->testcontainers[postgres]>=3.7.0->-r apps/memory_api/requirements-test.txt (line 10)) (2.5.0)
+2025-11-24T21:22:37.7031574Z Requirement already satisfied: wrapt in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from testcontainers>=3.7.0->testcontainers[postgres]>=3.7.0->-r apps/memory_api/requirements-test.txt (line 10)) (1.17.3)
+2025-11-24T21:22:37.7043406Z Requirement already satisfied: aiohttp<4.0.0,>=3.9.1 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (3.13.2)
+2025-11-24T21:22:37.7201225Z Collecting diskcache>=5.6.3 (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-24T21:22:37.7236281Z   Downloading diskcache-5.6.3-py3-none-any.whl.metadata (20 kB)
+2025-11-24T21:22:37.7307438Z Requirement already satisfied: docstring-parser<1.0,>=0.16 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (0.17.0)
+2025-11-24T21:22:37.7314380Z Requirement already satisfied: jinja2<4.0.0,>=3.1.4 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (3.1.6)
+2025-11-24T21:22:37.7968851Z Collecting jiter<0.12,>=0.6.1 (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-24T21:22:37.8017298Z   Downloading jiter-0.11.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.2 kB)
+2025-11-24T21:22:37.8058195Z Requirement already satisfied: openai<3.0.0,>=2.0.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (2.8.1)
+2025-11-24T21:22:37.8363302Z Collecting pre-commit>=4.3.0 (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-24T21:22:37.8433036Z   Downloading pre_commit-4.5.0-py2.py3-none-any.whl.metadata (1.2 kB)
+2025-11-24T21:22:37.8470371Z Requirement already satisfied: pydantic-core<3.0.0,>=2.18.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (2.41.5)
+2025-11-24T21:22:37.8475476Z Requirement already satisfied: pydantic<3.0.0,>=2.8.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (2.12.4)
+2025-11-24T21:22:37.8481281Z Requirement already satisfied: requests<3.0.0,>=2.32.3 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (2.32.5)
+2025-11-24T21:22:37.8852951Z Collecting rich<15.0.0,>=13.7.0 (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-24T21:22:37.8886155Z   Downloading rich-14.2.0-py3-none-any.whl.metadata (18 kB)
+2025-11-24T21:22:37.8936190Z Requirement already satisfied: tenacity<10.0.0,>=8.2.3 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (9.1.2)
+2025-11-24T21:22:37.9297437Z Collecting ty>=0.0.1a23 (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-24T21:22:37.9333697Z   Downloading ty-0.0.1a27-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.7 kB)
+2025-11-24T21:22:37.9537878Z Collecting typer<1.0.0,>=0.9.0 (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-24T21:22:37.9569495Z   Downloading typer-0.20.0-py3-none-any.whl.metadata (16 kB)
+2025-11-24T21:22:37.9633739Z Requirement already satisfied: aiohappyeyeballs>=2.5.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from aiohttp<4.0.0,>=3.9.1->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (2.6.1)
+2025-11-24T21:22:37.9640777Z Requirement already satisfied: aiosignal>=1.4.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from aiohttp<4.0.0,>=3.9.1->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (1.4.0)
+2025-11-24T21:22:37.9647970Z Requirement already satisfied: attrs>=17.3.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from aiohttp<4.0.0,>=3.9.1->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (25.4.0)
+2025-11-24T21:22:37.9654441Z Requirement already satisfied: frozenlist>=1.1.1 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from aiohttp<4.0.0,>=3.9.1->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (1.8.0)
+2025-11-24T21:22:37.9660431Z Requirement already satisfied: multidict<7.0,>=4.5 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from aiohttp<4.0.0,>=3.9.1->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (6.7.0)
+2025-11-24T21:22:37.9666744Z Requirement already satisfied: propcache>=0.2.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from aiohttp<4.0.0,>=3.9.1->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (0.4.1)
+2025-11-24T21:22:37.9672781Z Requirement already satisfied: yarl<2.0,>=1.17.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from aiohttp<4.0.0,>=3.9.1->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (1.22.0)
+2025-11-24T21:22:37.9704779Z Requirement already satisfied: MarkupSafe>=2.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from jinja2<4.0.0,>=3.1.4->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (3.0.3)
+2025-11-24T21:22:37.9740070Z Requirement already satisfied: distro<2,>=1.7.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from openai<3.0.0,>=2.0.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (1.9.0)
+2025-11-24T21:22:37.9746574Z Requirement already satisfied: httpx<1,>=0.23.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from openai<3.0.0,>=2.0.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (0.27.2)
+2025-11-24T21:22:37.9772537Z Requirement already satisfied: tqdm>4 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from openai<3.0.0,>=2.0.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (4.67.1)
+2025-11-24T21:22:37.9806983Z Requirement already satisfied: certifi in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from httpx<1,>=0.23.0->openai<3.0.0,>=2.0.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (2025.11.12)
+2025-11-24T21:22:37.9813027Z Requirement already satisfied: httpcore==1.* in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from httpx<1,>=0.23.0->openai<3.0.0,>=2.0.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (1.0.9)
+2025-11-24T21:22:37.9841139Z Requirement already satisfied: h11>=0.16 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from httpcore==1.*->httpx<1,>=0.23.0->openai<3.0.0,>=2.0.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (0.16.0)
+2025-11-24T21:22:37.9863507Z Requirement already satisfied: annotated-types>=0.6.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pydantic<3.0.0,>=2.8.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (0.7.0)
+2025-11-24T21:22:37.9873802Z Requirement already satisfied: typing-inspection>=0.4.2 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pydantic<3.0.0,>=2.8.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (0.4.2)
+2025-11-24T21:22:37.9902923Z Requirement already satisfied: charset_normalizer<4,>=2 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from requests<3.0.0,>=2.32.3->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (3.4.4)
+2025-11-24T21:22:38.0064224Z Collecting markdown-it-py>=2.2.0 (from rich<15.0.0,>=13.7.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-24T21:22:38.0096332Z   Downloading markdown_it_py-4.0.0-py3-none-any.whl.metadata (7.3 kB)
+2025-11-24T21:22:38.0203533Z Requirement already satisfied: click>=8.0.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from typer<1.0.0,>=0.9.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (8.3.1)
+2025-11-24T21:22:38.0211523Z Requirement already satisfied: shellingham>=1.3.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from typer<1.0.0,>=0.9.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (1.5.4)
+2025-11-24T21:22:38.0644176Z Collecting limits>=2.3 (from slowapi>=0.1.9->-r apps/memory_api/requirements-test.txt (line 14))
+2025-11-24T21:22:38.0677406Z   Downloading limits-5.6.0-py3-none-any.whl.metadata (10 kB)
+2025-11-24T21:22:38.0748017Z Requirement already satisfied: numpy<2.6,>=1.25.2 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from scipy>=1.11.0->-r apps/memory_api/requirements-test.txt (line 15)) (2.3.5)
+2025-11-24T21:22:38.0871144Z Collecting httpx-sse>=0.4 (from mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16))
+2025-11-24T21:22:38.0900848Z   Downloading httpx_sse-0.4.3-py3-none-any.whl.metadata (9.7 kB)
+2025-11-24T21:22:38.0940286Z Requirement already satisfied: jsonschema>=4.20.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16)) (4.25.1)
+2025-11-24T21:22:38.0945852Z Requirement already satisfied: pydantic-settings>=2.5.2 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16)) (2.12.0)
+2025-11-24T21:22:38.1074891Z Collecting pyjwt>=2.10.1 (from pyjwt[crypto]>=2.10.1->mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16))
+2025-11-24T21:22:38.1106253Z   Downloading PyJWT-2.10.1-py3-none-any.whl.metadata (4.0 kB)
+2025-11-24T21:22:38.1247776Z Collecting python-multipart>=0.0.9 (from mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16))
+2025-11-24T21:22:38.1279678Z   Downloading python_multipart-0.0.20-py3-none-any.whl.metadata (1.8 kB)
+2025-11-24T21:22:38.1462693Z Collecting sse-starlette>=1.6.1 (from mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16))
+2025-11-24T21:22:38.1497067Z   Downloading sse_starlette-3.0.3-py3-none-any.whl.metadata (12 kB)
+2025-11-24T21:22:38.1562101Z Requirement already satisfied: starlette>=0.27 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16)) (0.38.6)
+2025-11-24T21:22:38.1574863Z Requirement already satisfied: uvicorn>=0.31.1 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16)) (0.38.0)
+2025-11-24T21:22:38.1767751Z Collecting networkx (from python-louvain>=0.16->-r apps/memory_api/requirements-test.txt (line 19))
+2025-11-24T21:22:38.1800243Z   Downloading networkx-3.6-py3-none-any.whl.metadata (6.8 kB)
+2025-11-24T21:22:38.2065260Z Requirement already satisfied: jsonschema-specifications>=2023.03.6 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from jsonschema>=4.20.0->mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16)) (2025.9.1)
+2025-11-24T21:22:38.2071646Z Requirement already satisfied: referencing>=0.28.4 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from jsonschema>=4.20.0->mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16)) (0.37.0)
+2025-11-24T21:22:38.2077227Z Requirement already satisfied: rpds-py>=0.7.1 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from jsonschema>=4.20.0->mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16)) (0.29.0)
+2025-11-24T21:22:38.2122805Z Requirement already satisfied: deprecated>=1.2 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from limits>=2.3->slowapi>=0.1.9->-r apps/memory_api/requirements-test.txt (line 14)) (1.3.1)
+2025-11-24T21:22:38.2241229Z Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich<15.0.0,>=13.7.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-24T21:22:38.2275781Z   Downloading mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
+2025-11-24T21:22:38.2453404Z Collecting cfgv>=2.0.0 (from pre-commit>=4.3.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-24T21:22:38.2489262Z   Downloading cfgv-3.5.0-py2.py3-none-any.whl.metadata (8.9 kB)
+2025-11-24T21:22:38.2914594Z Collecting identify>=1.0.0 (from pre-commit>=4.3.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-24T21:22:38.2949514Z   Downloading identify-2.6.15-py2.py3-none-any.whl.metadata (4.4 kB)
+2025-11-24T21:22:38.3102409Z Collecting nodeenv>=0.11.1 (from pre-commit>=4.3.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-24T21:22:38.3136460Z   Downloading nodeenv-1.9.1-py2.py3-none-any.whl.metadata (21 kB)
+2025-11-24T21:22:38.3188720Z Requirement already satisfied: pyyaml>=5.1 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pre-commit>=4.3.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (6.0.3)
+2025-11-24T21:22:38.3766348Z Collecting virtualenv>=20.10.0 (from pre-commit>=4.3.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-24T21:22:38.3799650Z   Downloading virtualenv-20.35.4-py3-none-any.whl.metadata (4.6 kB)
+2025-11-24T21:22:38.3998493Z Requirement already satisfied: cryptography>=3.4.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pyjwt[crypto]>=2.10.1->mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16)) (46.0.3)
+2025-11-24T21:22:38.4026006Z Requirement already satisfied: cffi>=2.0.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from cryptography>=3.4.0->pyjwt[crypto]>=2.10.1->mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16)) (2.0.0)
+2025-11-24T21:22:38.4067133Z Requirement already satisfied: pycparser in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from cffi>=2.0.0->cryptography>=3.4.0->pyjwt[crypto]>=2.10.1->mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16)) (2.23)
+2025-11-24T21:22:38.4450722Z Collecting distlib<1,>=0.3.7 (from virtualenv>=20.10.0->pre-commit>=4.3.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-24T21:22:38.4484545Z   Downloading distlib-0.4.0-py2.py3-none-any.whl.metadata (5.2 kB)
+2025-11-24T21:22:38.4525817Z Requirement already satisfied: filelock<4,>=3.12.2 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from virtualenv>=20.10.0->pre-commit>=4.3.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (3.20.0)
+2025-11-24T21:22:38.4702378Z Collecting platformdirs<5,>=3.9.1 (from virtualenv>=20.10.0->pre-commit>=4.3.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-24T21:22:38.4735377Z   Downloading platformdirs-4.5.0-py3-none-any.whl.metadata (12 kB)
+2025-11-24T21:22:38.4953401Z Downloading pytest_mock-3.15.1-py3-none-any.whl (10 kB)
+2025-11-24T21:22:38.5007700Z Downloading testcontainers-4.13.3-py3-none-any.whl (124 kB)
+2025-11-24T21:22:38.5071881Z Downloading instructor-1.13.0-py3-none-any.whl (160 kB)
+2025-11-24T21:22:38.5173311Z Downloading jiter-0.11.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (359 kB)
+2025-11-24T21:22:38.5248019Z Downloading rich-14.2.0-py3-none-any.whl (243 kB)
+2025-11-24T21:22:38.5310367Z Downloading typer-0.20.0-py3-none-any.whl (47 kB)
+2025-11-24T21:22:38.5362521Z Downloading slowapi-0.1.9-py3-none-any.whl (14 kB)
+2025-11-24T21:22:38.5412079Z Downloading scipy-1.16.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (35.9 MB)
+2025-11-24T21:22:38.7294782Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 35.9/35.9 MB 195.4 MB/s  0:00:00
+2025-11-24T21:22:38.7332986Z Downloading mcp-1.22.0-py3-none-any.whl (175 kB)
+2025-11-24T21:22:38.7391431Z Downloading diskcache-5.6.3-py3-none-any.whl (45 kB)
+2025-11-24T21:22:38.7444508Z Downloading httpx_sse-0.4.3-py3-none-any.whl (9.0 kB)
+2025-11-24T21:22:38.7501157Z Downloading limits-5.6.0-py3-none-any.whl (60 kB)
+2025-11-24T21:22:38.7558084Z Downloading markdown_it_py-4.0.0-py3-none-any.whl (87 kB)
+2025-11-24T21:22:38.7614749Z Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+2025-11-24T21:22:38.7670863Z Downloading pre_commit-4.5.0-py2.py3-none-any.whl (226 kB)
+2025-11-24T21:22:38.7738593Z Downloading cfgv-3.5.0-py2.py3-none-any.whl (7.4 kB)
+2025-11-24T21:22:38.7792845Z Downloading identify-2.6.15-py2.py3-none-any.whl (99 kB)
+2025-11-24T21:22:38.7849254Z Downloading nodeenv-1.9.1-py2.py3-none-any.whl (22 kB)
+2025-11-24T21:22:38.7906100Z Downloading PyJWT-2.10.1-py3-none-any.whl (22 kB)
+2025-11-24T21:22:38.7958779Z Downloading python_multipart-0.0.20-py3-none-any.whl (24 kB)
+2025-11-24T21:22:38.8014005Z Downloading sse_starlette-3.0.3-py3-none-any.whl (11 kB)
+2025-11-24T21:22:38.8076501Z Downloading ty-0.0.1a27-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (9.5 MB)
+2025-11-24T21:22:38.8555054Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 9.5/9.5 MB 205.7 MB/s  0:00:00
+2025-11-24T21:22:38.8592521Z Downloading virtualenv-20.35.4-py3-none-any.whl (6.0 MB)
+2025-11-24T21:22:38.8896407Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 6.0/6.0 MB 213.5 MB/s  0:00:00
+2025-11-24T21:22:38.8936631Z Downloading distlib-0.4.0-py2.py3-none-any.whl (469 kB)
+2025-11-24T21:22:38.9011109Z Downloading platformdirs-4.5.0-py3-none-any.whl (18 kB)
+2025-11-24T21:22:38.9068774Z Downloading docker-7.1.0-py3-none-any.whl (147 kB)
+2025-11-24T21:22:38.9123832Z Downloading networkx-3.6-py3-none-any.whl (2.1 MB)
+2025-11-24T21:22:38.9268065Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 181.5 MB/s  0:00:00
+2025-11-24T21:22:38.9957197Z Building wheels for collected packages: python-louvain
+2025-11-24T21:22:38.9966834Z   Building wheel for python-louvain (pyproject.toml): started
+2025-11-24T21:22:39.1963807Z   Building wheel for python-louvain (pyproject.toml): finished with status 'done'
+2025-11-24T21:22:39.1969138Z   Created wheel for python-louvain: filename=python_louvain-0.16-py3-none-any.whl size=9460 sha256=be5c2d4c3bb4977e1e8450da539d7a46ddd9fb7dc0b5613255502d08ce9369d1
+2025-11-24T21:22:39.1971707Z   Stored in directory: /home/runner/.cache/pip/wheels/11/c1/e7/f62a211c636275e2da798bf0c307a3ae79aeddaf2524a03ce4
+2025-11-24T21:22:39.1986176Z Successfully built python-louvain
+2025-11-24T21:22:39.3813889Z Installing collected packages: distlib, ty, scipy, python-multipart, pyjwt, platformdirs, nodeenv, networkx, mdurl, jiter, identify, httpx-sse, diskcache, cfgv, virtualenv, sse-starlette, python-louvain, pytest-mock, markdown-it-py, limits, docker, testcontainers, slowapi, rich, pre-commit, typer, mcp, instructor
+2025-11-24T21:22:44.4145304Z   Attempting uninstall: jiter
+2025-11-24T21:22:44.4182411Z     Found existing installation: jiter 0.12.0
+2025-11-24T21:22:44.4200562Z     Uninstalling jiter-0.12.0:
+2025-11-24T21:22:44.4208777Z       Successfully uninstalled jiter-0.12.0
+2025-11-24T21:22:45.3704272Z 
+2025-11-24T21:22:45.3766999Z Successfully installed cfgv-3.5.0 diskcache-5.6.3 distlib-0.4.0 docker-7.1.0 httpx-sse-0.4.3 identify-2.6.15 instructor-1.13.0 jiter-0.11.1 limits-5.6.0 markdown-it-py-4.0.0 mcp-1.22.0 mdurl-0.1.2 networkx-3.6 nodeenv-1.9.1 platformdirs-4.5.0 pre-commit-4.5.0 pyjwt-2.10.1 pytest-mock-3.15.1 python-louvain-0.16 python-multipart-0.0.20 rich-14.2.0 scipy-1.16.3 slowapi-0.1.9 sse-starlette-3.0.3 testcontainers-4.13.3 ty-0.0.1a27 typer-0.20.0 virtualenv-20.35.4
+2025-11-24T21:22:45.8472123Z Obtaining file:///home/runner/work/RAE-agentic-memory/RAE-agentic-memory/sdk/python/rae_memory_sdk
+2025-11-24T21:22:45.8489373Z   Installing build dependencies: started
+2025-11-24T21:22:46.6960364Z   Installing build dependencies: finished with status 'done'
+2025-11-24T21:22:46.6967172Z   Checking if build backend supports build_editable: started
+2025-11-24T21:22:46.9486270Z   Checking if build backend supports build_editable: finished with status 'done'
+2025-11-24T21:22:46.9494805Z   Getting requirements to build editable: started
+2025-11-24T21:22:47.2615273Z   Getting requirements to build editable: finished with status 'done'
+2025-11-24T21:22:47.2639310Z   Preparing editable metadata (pyproject.toml): started
+2025-11-24T21:22:47.4469336Z   Preparing editable metadata (pyproject.toml): finished with status 'done'
+2025-11-24T21:22:47.4526459Z Requirement already satisfied: httpx>=0.27.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from rae-memory-sdk==0.1.0) (0.27.2)
+2025-11-24T21:22:47.4531870Z Requirement already satisfied: pydantic>=2.0.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from rae-memory-sdk==0.1.0) (2.12.4)
+2025-11-24T21:22:47.4537163Z Requirement already satisfied: pydantic-settings>=2.0.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from rae-memory-sdk==0.1.0) (2.12.0)
+2025-11-24T21:22:47.4547219Z Requirement already satisfied: anyio in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from httpx>=0.27.0->rae-memory-sdk==0.1.0) (4.11.0)
+2025-11-24T21:22:47.4552445Z Requirement already satisfied: certifi in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from httpx>=0.27.0->rae-memory-sdk==0.1.0) (2025.11.12)
+2025-11-24T21:22:47.4557910Z Requirement already satisfied: httpcore==1.* in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from httpx>=0.27.0->rae-memory-sdk==0.1.0) (1.0.9)
+2025-11-24T21:22:47.4563344Z Requirement already satisfied: idna in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from httpx>=0.27.0->rae-memory-sdk==0.1.0) (3.11)
+2025-11-24T21:22:47.4568160Z Requirement already satisfied: sniffio in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from httpx>=0.27.0->rae-memory-sdk==0.1.0) (1.3.1)
+2025-11-24T21:22:47.4592843Z Requirement already satisfied: h11>=0.16 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from httpcore==1.*->httpx>=0.27.0->rae-memory-sdk==0.1.0) (0.16.0)
+2025-11-24T21:22:47.4617844Z Requirement already satisfied: annotated-types>=0.6.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pydantic>=2.0.0->rae-memory-sdk==0.1.0) (0.7.0)
+2025-11-24T21:22:47.4624625Z Requirement already satisfied: pydantic-core==2.41.5 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pydantic>=2.0.0->rae-memory-sdk==0.1.0) (2.41.5)
+2025-11-24T21:22:47.4629674Z Requirement already satisfied: typing-extensions>=4.14.1 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pydantic>=2.0.0->rae-memory-sdk==0.1.0) (4.15.0)
+2025-11-24T21:22:47.4636883Z Requirement already satisfied: typing-inspection>=0.4.2 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pydantic>=2.0.0->rae-memory-sdk==0.1.0) (0.4.2)
+2025-11-24T21:22:47.4664207Z Requirement already satisfied: python-dotenv>=0.21.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pydantic-settings>=2.0.0->rae-memory-sdk==0.1.0) (1.2.1)
+2025-11-24T21:22:47.4739307Z Building wheels for collected packages: rae-memory-sdk
+2025-11-24T21:22:47.4746521Z   Building editable for rae-memory-sdk (pyproject.toml): started
+2025-11-24T21:22:47.6609752Z   Building editable for rae-memory-sdk (pyproject.toml): finished with status 'done'
+2025-11-24T21:22:47.6616687Z   Created wheel for rae-memory-sdk: filename=rae_memory_sdk-0.1.0-0.editable-py3-none-any.whl size=6716 sha256=70f03994816829e19ca8d1425c6170e36cd2d5134784c09da1ca8ff5b9119151
+2025-11-24T21:22:47.6620165Z   Stored in directory: /tmp/pip-ephem-wheel-cache-daeh_xgv/wheels/a5/03/93/c8e2af923acbbb83f935a0cc44617824980269c64b52628884
+2025-11-24T21:22:47.6646541Z Successfully built rae-memory-sdk
+2025-11-24T21:22:47.8467086Z Installing collected packages: rae-memory-sdk
+2025-11-24T21:22:47.8593080Z Successfully installed rae-memory-sdk-0.1.0
+2025-11-24T21:22:47.9325071Z ##[group]Run pytest -m "not integration" --cov --cov-report=xml --cov-report=term
+2025-11-24T21:22:47.9325620Z [36;1mpytest -m "not integration" --cov --cov-report=xml --cov-report=term[0m
+2025-11-24T21:22:47.9358387Z shell: /usr/bin/bash -e {0}
+2025-11-24T21:22:47.9358615Z env:
+2025-11-24T21:22:47.9358856Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:22:47.9359516Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-24T21:22:47.9359917Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:22:47.9360262Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:22:47.9360636Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:22:47.9360973Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-24T21:22:47.9361551Z   DATABASE_URL: ***localhost:5432/test_rae
+2025-11-24T21:22:47.9361824Z   REDIS_URL: redis://localhost:6379/0
+2025-11-24T21:22:47.9362118Z   QDRANT_URL: http://localhost:6333
+2025-11-24T21:22:47.9362351Z   RAE_VECTOR_BACKEND: qdrant
+2025-11-24T21:22:47.9362556Z ##[endgroup]
+2025-11-24T21:22:49.0490414Z [1m============================= test session starts ==============================[0m
+2025-11-24T21:22:49.0496791Z platform linux -- Python 3.11.14, pytest-9.0.1, pluggy-1.6.0 -- /opt/hostedtoolcache/Python/3.11.14/x64/bin/python
+2025-11-24T21:22:49.0501472Z cachedir: .pytest_cache
+2025-11-24T21:22:49.0502036Z rootdir: /home/runner/work/RAE-agentic-memory/RAE-agentic-memory
+2025-11-24T21:22:49.0502640Z configfile: pytest.ini
+2025-11-24T21:22:49.0503354Z testpaths: apps/memory_api/tests, sdk/python/rae_memory_sdk/tests, integrations/mcp-server/tests
+2025-11-24T21:22:49.0504298Z plugins: anyio-4.11.0, cov-7.0.0, asyncio-1.3.0, mock-3.15.1
+2025-11-24T21:22:49.0505286Z asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+2025-11-24T21:22:59.3172855Z [1mcollecting ... [0mcollected 176 items / 1 error / 7 skipped
+2025-11-24T21:22:59.3173747Z 
+2025-11-24T21:22:59.3174135Z ==================================== ERRORS ====================================
+2025-11-24T21:22:59.3175366Z [31m[1m____________ ERROR collecting apps/memory_api/tests/test_openapi.py ____________[0m
+2025-11-24T21:22:59.3188222Z [31mImportError while importing test module '/home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/tests/test_openapi.py'.
+2025-11-24T21:22:59.3189673Z Hint: make sure your test modules/packages have valid Python names.
+2025-11-24T21:22:59.3190197Z Traceback:
+2025-11-24T21:22:59.3190866Z /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/importlib/__init__.py:126: in import_module
+2025-11-24T21:22:59.3192027Z     return _bootstrap._gcd_import(name[level:], package, level)
+2025-11-24T21:22:59.3192502Z            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2025-11-24T21:22:59.3192948Z apps/memory_api/tests/test_openapi.py:3: in <module>
+2025-11-24T21:22:59.3193429Z     from apps.memory_api.main import app
+2025-11-24T21:22:59.3193835Z apps/memory_api/main.py:23: in <module>
+2025-11-24T21:22:59.3194209Z     from apps.memory_api.routes import (
+2025-11-24T21:22:59.3194660Z apps/memory_api/routes/reflections.py:31: in <module>
+2025-11-24T21:22:59.3195298Z     from apps.memory_api.services.reflection_pipeline import ReflectionPipeline
+2025-11-24T21:22:59.3195991Z apps/memory_api/services/reflection_pipeline.py:20: in <module>
+2025-11-24T21:22:59.3196510Z     from sklearn.cluster import HDBSCAN, KMeans
+2025-11-24T21:22:59.3197119Z E   ModuleNotFoundError: No module named 'sklearn'[0m
+2025-11-24T21:22:59.3197730Z [33m=============================== warnings summary ===============================[0m
+2025-11-24T21:22:59.3198522Z ../../../../../opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages/starlette/formparsers.py:12
+2025-11-24T21:22:59.3200437Z   /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages/starlette/formparsers.py:12: PendingDeprecationWarning: Please use `import python_multipart` instead.
+2025-11-24T21:22:59.3201577Z     import multipart
+2025-11-24T21:22:59.3201752Z 
+2025-11-24T21:22:59.3201921Z apps/memory_api/models/evaluation_models.py:478
+2025-11-24T21:22:59.3203872Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/evaluation_models.py:478: PydanticDeprecatedSince20: `min_items` is deprecated and will be removed, use `min_length` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3205881Z     variants: List[ABTestVariant] = Field(..., min_items=2, max_items=10)
+2025-11-24T21:22:59.3206298Z 
+2025-11-24T21:22:59.3206472Z apps/memory_api/models/evaluation_models.py:478
+2025-11-24T21:22:59.3208413Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/evaluation_models.py:478: PydanticDeprecatedSince20: `max_items` is deprecated and will be removed, use `max_length` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3217585Z     variants: List[ABTestVariant] = Field(..., min_items=2, max_items=10)
+2025-11-24T21:22:59.3218021Z 
+2025-11-24T21:22:59.3218202Z apps/memory_api/models/evaluation_models.py:529
+2025-11-24T21:22:59.3220350Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/evaluation_models.py:529: PydanticDeprecatedSince20: `min_items` is deprecated and will be removed, use `min_length` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3222304Z     queries: List[str] = Field(..., min_items=1)
+2025-11-24T21:22:59.3222598Z 
+2025-11-24T21:22:59.3222767Z apps/memory_api/models/evaluation_models.py:530
+2025-11-24T21:22:59.3224823Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/evaluation_models.py:530: PydanticDeprecatedSince20: `min_items` is deprecated and will be removed, use `min_length` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3226821Z     relevance_judgments: List[RelevanceJudgment] = Field(..., min_items=1)
+2025-11-24T21:22:59.3227241Z 
+2025-11-24T21:22:59.3227442Z apps/memory_api/repositories/cost_logs_repository.py:30
+2025-11-24T21:22:59.3229932Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/repositories/cost_logs_repository.py:30: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3232171Z     class LLMCallLog(BaseModel):
+2025-11-24T21:22:59.3232410Z 
+2025-11-24T21:22:59.3232570Z apps/memory_api/services/budget_service.py:23
+2025-11-24T21:22:59.3234498Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/services/budget_service.py:23: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3236366Z     class Budget(BaseModel):
+2025-11-24T21:22:59.3236594Z 
+2025-11-24T21:22:59.3236772Z apps/memory_api/models/graph_enhanced_models.py:47
+2025-11-24T21:22:59.3238704Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/graph_enhanced_models.py:47: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3240833Z     class EnhancedGraphNode(BaseModel):
+2025-11-24T21:22:59.3241096Z 
+2025-11-24T21:22:59.3241485Z apps/memory_api/models/graph_enhanced_models.py:79
+2025-11-24T21:22:59.3243423Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/graph_enhanced_models.py:79: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3245361Z     class EnhancedGraphEdge(BaseModel):
+2025-11-24T21:22:59.3245625Z 
+2025-11-24T21:22:59.3245816Z apps/memory_api/models/graph_enhanced_models.py:171
+2025-11-24T21:22:59.3247770Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/graph_enhanced_models.py:171: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3249953Z     class GraphSnapshot(BaseModel):
+2025-11-24T21:22:59.3250214Z 
+2025-11-24T21:22:59.3250401Z apps/memory_api/models/graph_enhanced_models.py:211
+2025-11-24T21:22:59.3252396Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/graph_enhanced_models.py:211: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3254314Z     class GraphTraversal(BaseModel):
+2025-11-24T21:22:59.3254561Z 
+2025-11-24T21:22:59.3254740Z apps/memory_api/models/graph_enhanced_models.py:561
+2025-11-24T21:22:59.3256657Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/graph_enhanced_models.py:561: PydanticDeprecatedSince20: `min_items` is deprecated and will be removed, use `min_length` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3258658Z     nodes: List[Dict[str, Any]] = Field(..., min_items=1, max_items=1000)
+2025-11-24T21:22:59.3259190Z 
+2025-11-24T21:22:59.3259380Z apps/memory_api/models/graph_enhanced_models.py:561
+2025-11-24T21:22:59.3261302Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/graph_enhanced_models.py:561: PydanticDeprecatedSince20: `max_items` is deprecated and will be removed, use `max_length` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3263262Z     nodes: List[Dict[str, Any]] = Field(..., min_items=1, max_items=1000)
+2025-11-24T21:22:59.3263843Z 
+2025-11-24T21:22:59.3264021Z apps/memory_api/models/graph_enhanced_models.py:569
+2025-11-24T21:22:59.3265927Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/graph_enhanced_models.py:569: PydanticDeprecatedSince20: `min_items` is deprecated and will be removed, use `min_length` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3267993Z     edges: List[CreateGraphEdgeRequest] = Field(..., min_items=1, max_items=1000)
+2025-11-24T21:22:59.3268442Z 
+2025-11-24T21:22:59.3268628Z apps/memory_api/models/graph_enhanced_models.py:569
+2025-11-24T21:22:59.3270683Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/graph_enhanced_models.py:569: PydanticDeprecatedSince20: `max_items` is deprecated and will be removed, use `max_length` instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:22:59.3272733Z     edges: List[CreateGraphEdgeRequest] = Field(..., min_items=1, max_items=1000)
+2025-11-24T21:22:59.3273182Z 
+2025-11-24T21:22:59.3273349Z apps/memory_api/models/reflection_models.py:97
+2025-11-24T21:22:59.3275565Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/reflection_models.py:97: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:23:00.1816575Z     class ReflectionUnit(BaseModel):
+2025-11-24T21:23:00.1824217Z 
+2025-11-24T21:23:00.1824534Z apps/memory_api/models/reflection_models.py:184
+2025-11-24T21:23:00.1827118Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/reflection_models.py:184: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:23:00.1829592Z     class ReflectionRelationship(BaseModel):
+2025-11-24T21:23:00.1830219Z 
+2025-11-24T21:23:00.1833730Z apps/memory_api/models/reflection_models.py:227
+2025-11-24T21:23:00.1836225Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/reflection_models.py:227: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:23:00.1838837Z     class ReflectionCluster(BaseModel):
+2025-11-24T21:23:00.1915016Z 
+2025-11-24T21:23:00.1916459Z apps/memory_api/models/reflection_models.py:450
+2025-11-24T21:23:00.1926390Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/models/reflection_models.py:450: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+2025-11-24T21:23:00.1928385Z     class ReflectionUsageLog(BaseModel):
+2025-11-24T21:23:00.1928663Z 
+2025-11-24T21:23:00.1928848Z apps/memory_api/tests/test_phase2_plugins.py:19
+2025-11-24T21:23:00.1930996Z   /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/apps/memory_api/tests/test_phase2_plugins.py:19: PytestCollectionWarning: cannot collect test class 'TestPlugin' because it has a __init__ constructor (from: apps/memory_api/tests/test_phase2_plugins.py)
+2025-11-24T21:23:00.1934174Z     class TestPlugin(Plugin):
+2025-11-24T21:23:00.1934400Z 
+2025-11-24T21:23:00.1934689Z -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2025-11-24T21:23:00.1935602Z [36m[1m=========================== short test summary info ============================[0m
+2025-11-24T21:23:00.1936206Z [31mERROR[0m apps/memory_api/tests/test_openapi.py
+2025-11-24T21:23:00.1937163Z !!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+2025-11-24T21:23:00.1938080Z [31m================== [33m7 skipped[0m, [33m20 warnings[0m, [31m[1m1 error[0m[31m in 10.28s[0m[31m ===================[0m
+2025-11-24T21:23:01.0213593Z ##[error]Process completed with exit code 2.
+2025-11-24T21:23:01.0297575Z Post job cleanup.
+2025-11-24T21:23:01.1280073Z [command]/usr/bin/git version
+2025-11-24T21:23:01.1320615Z git version 2.51.2
+2025-11-24T21:23:01.1367293Z Temporarily overriding HOME='/home/runner/work/_temp/a47a8f65-7f5e-48cb-968b-b6d7ee157b41' before making global git config changes
+2025-11-24T21:23:01.1369543Z Adding repository directory to the temporary git global config as a safe directory
+2025-11-24T21:23:01.1384432Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/RAE-agentic-memory/RAE-agentic-memory
+2025-11-24T21:23:01.1423013Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-11-24T21:23:01.1460144Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-11-24T21:23:01.1706337Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-11-24T21:23:01.1731389Z http.https://github.com/.extraheader
+2025-11-24T21:23:01.1745671Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2025-11-24T21:23:01.1781002Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-11-24T21:23:01.2020003Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2025-11-24T21:23:01.2054715Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2025-11-24T21:23:01.2445065Z Print service container logs: f18f25751c214a5aaee066e21d8ce3b4_ankanepgvectorlatest_9df432
+2025-11-24T21:23:01.2449570Z ##[command]/usr/bin/docker logs --details e2d26b632fa475f3ce68b71d626ba8e49d759907f99d44263ec83654794e3202
+2025-11-24T21:23:01.2582668Z  The files belonging to this database system will be owned by user "postgres".
+2025-11-24T21:23:01.2585352Z  initdb: warning: enabling "trust" authentication for local connections
+2025-11-24T21:23:01.2586478Z  initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+2025-11-24T21:23:01.2587442Z  This user must also own the server process.
+2025-11-24T21:23:01.2587840Z  
+2025-11-24T21:23:01.2588249Z  The database cluster will be initialized with locale "en_US.utf8".
+2025-11-24T21:23:01.2589154Z  The default database encoding has accordingly been set to "UTF8".
+2025-11-24T21:23:01.2589895Z  The default text search configuration will be set to "english".
+2025-11-24T21:23:01.2590393Z  
+2025-11-24T21:23:01.2590710Z  Data page checksums are disabled.
+2025-11-24T21:23:01.2591066Z  
+2025-11-24T21:23:01.2591500Z  fixing permissions on existing directory /var/lib/postgresql/data ... ok
+2025-11-24T21:23:01.2592105Z  creating subdirectories ... ok
+2025-11-24T21:23:01.2592575Z  selecting dynamic shared memory implementation ... posix
+2025-11-24T21:23:01.2593110Z  selecting default max_connections ... 100
+2025-11-24T21:23:01.2593567Z  selecting default shared_buffers ... 128MB
+2025-11-24T21:23:01.2593994Z  selecting default time zone ... Etc/UTC
+2025-11-24T21:23:01.2594413Z  creating configuration files ... ok
+2025-11-24T21:23:01.2594811Z  running bootstrap script ... ok
+2025-11-24T21:23:01.2595235Z  performing post-bootstrap initialization ... ok
+2025-11-24T21:23:01.2595679Z  syncing data to disk ... ok
+2025-11-24T21:23:01.2595989Z  
+2025-11-24T21:23:01.2596216Z  
+2025-11-24T21:23:01.2596903Z  Success. You can now start the database server using:
+2025-11-24T21:23:01.2597347Z  
+2025-11-24T21:23:01.2597672Z      pg_ctl -D /var/lib/postgresql/data -l logfile start
+2025-11-24T21:23:01.2598102Z  
+2025-11-24T21:23:01.2599250Z  waiting for server to start....2025-11-24 21:21:47.470 UTC [47] LOG:  starting PostgreSQL 15.4 (Debian 15.4-2.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+2025-11-24T21:23:01.2600606Z  2025-11-24 21:21:47.471 UTC [47] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-11-24T21:23:01.2601403Z  2025-11-24 21:21:47.474 UTC [50] LOG:  database system was shut down at 2025-11-24 21:21:47 UTC
+2025-11-24T21:23:01.2602087Z  2025-11-24 21:21:47.479 UTC [47] LOG:  database system is ready to accept connections
+2025-11-24T21:23:01.2602580Z   done
+2025-11-24T21:23:01.2602812Z  server started
+2025-11-24T21:23:01.2603076Z  CREATE DATABASE
+2025-11-24T21:23:01.2603326Z  
+2025-11-24T21:23:01.2603543Z  
+2025-11-24T21:23:01.2604056Z  /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+2025-11-24T21:23:01.2604676Z  
+2025-11-24T21:23:01.2605198Z  waiting for server to shut down...2025-11-24 21:21:47.659 UTC [47] LOG:  received fast shutdown request
+2025-11-24T21:23:01.2605954Z  .2025-11-24 21:21:47.659 UTC [47] LOG:  aborting any active transactions
+2025-11-24T21:23:01.2607028Z  2025-11-24 21:21:47.662 UTC [47] LOG:  background worker "logical replication launcher" (PID 53) exited with exit code 1
+2025-11-24T21:23:01.2608794Z  2025-11-24 21:21:47.663 UTC [48] LOG:  shutting down
+2025-11-24T21:23:01.2609527Z  2025-11-24 21:21:47.663 UTC [48] LOG:  checkpoint starting: shutdown immediate
+2025-11-24T21:23:01.2610762Z  2025-11-24 21:21:47.682 UTC [48] LOG:  checkpoint complete: wrote 918 buffers (5.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.014 s, sync=0.004 s, total=0.019 s; sync files=301, longest=0.003 s, average=0.001 s; distance=4223 kB, estimate=4223 kB
+2025-11-24T21:23:01.2611612Z  2025-11-24 21:21:47.688 UTC [47] LOG:  database system is shut down
+2025-11-24T21:23:01.2612147Z   done
+2025-11-24T21:23:01.2612328Z  server stopped
+2025-11-24T21:23:01.2612495Z  
+2025-11-24T21:23:01.2612981Z  2025-11-24 21:21:47.780 UTC [1] LOG:  starting PostgreSQL 15.4 (Debian 15.4-2.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+2025-11-24T21:23:01.2613598Z  2025-11-24 21:21:47.781 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2025-11-24T21:23:01.2614036Z  2025-11-24 21:21:47.781 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2025-11-24T21:23:01.2614509Z  2025-11-24 21:21:47.782 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-11-24T21:23:01.2614992Z  2025-11-24 21:21:47.785 UTC [63] LOG:  database system was shut down at 2025-11-24 21:21:47 UTC
+2025-11-24T21:23:01.2615429Z  2025-11-24 21:21:47.789 UTC [1] LOG:  database system is ready to accept connections
+2025-11-24T21:23:01.2615805Z  2025-11-24 21:21:56.788 UTC [74] FATAL:  role "root" does not exist
+2025-11-24T21:23:01.2616145Z  2025-11-24 21:22:06.884 UTC [82] FATAL:  role "root" does not exist
+2025-11-24T21:23:01.2616469Z  2025-11-24 21:22:16.989 UTC [90] FATAL:  role "root" does not exist
+2025-11-24T21:23:01.2616790Z  2025-11-24 21:22:27.088 UTC [99] FATAL:  role "root" does not exist
+2025-11-24T21:23:01.2617119Z  2025-11-24 21:22:37.191 UTC [106] FATAL:  role "root" does not exist
+2025-11-24T21:23:01.2617445Z  2025-11-24 21:22:47.289 UTC [113] FATAL:  role "root" does not exist
+2025-11-24T21:23:01.2617770Z  2025-11-24 21:22:57.392 UTC [121] FATAL:  role "root" does not exist
+2025-11-24T21:23:01.2618107Z  PostgreSQL init process complete; ready for start up.
+2025-11-24T21:23:01.2618373Z  
+2025-11-24T21:23:01.2623711Z Stop and remove container: f18f25751c214a5aaee066e21d8ce3b4_ankanepgvectorlatest_9df432
+2025-11-24T21:23:01.2628310Z ##[command]/usr/bin/docker rm --force e2d26b632fa475f3ce68b71d626ba8e49d759907f99d44263ec83654794e3202
+2025-11-24T21:23:03.6886541Z e2d26b632fa475f3ce68b71d626ba8e49d759907f99d44263ec83654794e3202
+2025-11-24T21:23:03.6908429Z Print service container logs: 73faa71fff234aa193325a9ff6b08066_redis7alpine_97ef2c
+2025-11-24T21:23:03.6909944Z ##[command]/usr/bin/docker logs --details d041ede34dd7dd26a992437253b9aeb31726682803dd97f7a79d63c4c2deeecc
+2025-11-24T21:23:03.7054170Z  1:C 24 Nov 2025 21:21:49.141 # WARNING Memory overcommit must be enabled! Without it, a background save or replication may fail under low memory condition. Being disabled, it can also cause failures without low memory condition, see https://github.com/jemalloc/jemalloc/issues/1328. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+2025-11-24T21:23:03.7057256Z  1:C 24 Nov 2025 21:21:49.141 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+2025-11-24T21:23:03.7058378Z  1:C 24 Nov 2025 21:21:49.141 * Redis version=7.4.7, bits=64, commit=00000000, modified=0, pid=1, just started
+2025-11-24T21:23:03.7061558Z  1:C 24 Nov 2025 21:21:49.142 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+2025-11-24T21:23:03.7062638Z  1:M 24 Nov 2025 21:21:49.142 * monotonic clock: POSIX clock_gettime
+2025-11-24T21:23:03.7063228Z  1:M 24 Nov 2025 21:21:49.143 * Running mode=standalone, port=6379.
+2025-11-24T21:23:03.7063752Z  1:M 24 Nov 2025 21:21:49.143 * Server initialized
+2025-11-24T21:23:03.7064250Z  1:M 24 Nov 2025 21:21:49.143 * Ready to accept connections tcp
+2025-11-24T21:23:03.7070302Z Stop and remove container: 73faa71fff234aa193325a9ff6b08066_redis7alpine_97ef2c
+2025-11-24T21:23:03.7071726Z ##[command]/usr/bin/docker rm --force d041ede34dd7dd26a992437253b9aeb31726682803dd97f7a79d63c4c2deeecc
+2025-11-24T21:23:03.8206889Z d041ede34dd7dd26a992437253b9aeb31726682803dd97f7a79d63c4c2deeecc
+2025-11-24T21:23:03.8237314Z Print service container logs: 8f2b6b5a3c594a3b87f619bae8cfcfca_qdrantqdrantlatest_146ef1
+2025-11-24T21:23:03.8238249Z ##[command]/usr/bin/docker logs --details fbbeeb5acc0d55ac9630d65ca873f5860649e5a4399a1b05607f8b13ec28171f
+2025-11-24T21:23:03.8369830Z             _                 _    
+2025-11-24T21:23:03.8370445Z    __ _  __| |_ __ __ _ _ __ | |_  
+2025-11-24T21:23:03.8372230Z   / _` |/ _` | '__/ _` | '_ \| __| 
+2025-11-24T21:23:03.8374369Z  | (_| | (_| | | | (_| | | | | |_  
+2025-11-24T21:23:03.8374738Z   \__, |\__,_|_|  \__,_|_| |_|\__| 
+2025-11-24T21:23:03.8375279Z      |_|                           
+2025-11-24T21:23:03.8375745Z  
+2025-11-24T21:23:03.8377131Z  Version: 1.16.0, build: 0d795287
+2025-11-24T21:23:03.8378341Z  Access web UI at http://localhost:6333/dashboard
+2025-11-24T21:23:03.8378788Z  
+2025-11-24T21:23:03.8380185Z  2025-11-24T21:21:53.846840Z  WARN qdrant: There is a potential issue with the filesystem for storage path ./storage. Details: Container filesystem detected - storage might be lost with container re-creation
+2025-11-24T21:23:03.8382002Z  2025-11-24T21:21:53.847000Z  INFO storage::content_manager::consensus::persistent: Initializing new raft state at ./storage/raft_state.json
+2025-11-24T21:23:03.8383077Z  2025-11-24T21:21:53.854995Z  INFO qdrant: Distributed mode disabled
+2025-11-24T21:23:03.8383962Z  2025-11-24T21:21:53.855079Z  INFO qdrant: Telemetry reporting enabled, id: c45f6425-e365-4783-b5b0-2e9a9e40aadc
+2025-11-24T21:23:03.8384876Z  2025-11-24T21:21:53.877274Z  INFO qdrant::actix: TLS disabled for REST API
+2025-11-24T21:23:03.8385585Z  2025-11-24T21:21:53.877402Z  INFO qdrant::actix: Qdrant HTTP listening on 6333
+2025-11-24T21:23:03.8387838Z  2025-11-24T21:21:53.877464Z  INFO actix_server::builder: starting 1 workers
+2025-11-24T21:23:03.8388713Z  2025-11-24T21:21:53.877533Z  INFO actix_server::server: Actix runtime found; starting in Actix runtime
+2025-11-24T21:23:03.8390077Z  2025-11-24T21:21:53.877581Z  INFO actix_server::server: starting service: "actix-web-service-0.0.0.0:6333", workers: 1, listening on: 0.0.0.0:6333
+2025-11-24T21:23:03.8391152Z  2025-11-24T21:21:53.890856Z  INFO qdrant::tonic: Qdrant gRPC listening on 6334
+2025-11-24T21:23:03.8392198Z  2025-11-24T21:21:53.890967Z  INFO qdrant::tonic: TLS disabled for gRPC API
+2025-11-24T21:23:03.8393574Z Stop and remove container: 8f2b6b5a3c594a3b87f619bae8cfcfca_qdrantqdrantlatest_146ef1
+2025-11-24T21:23:03.8394413Z ##[command]/usr/bin/docker rm --force fbbeeb5acc0d55ac9630d65ca873f5860649e5a4399a1b05607f8b13ec28171f
+2025-11-24T21:23:03.9606080Z fbbeeb5acc0d55ac9630d65ca873f5860649e5a4399a1b05607f8b13ec28171f
+2025-11-24T21:23:03.9641963Z Remove container network: github_network_2248604621704f20a0937f2828e7d80d
+2025-11-24T21:23:03.9646213Z ##[command]/usr/bin/docker network rm github_network_2248604621704f20a0937f2828e7d80d
+2025-11-24T21:23:04.0424685Z github_network_2248604621704f20a0937f2828e7d80d
+2025-11-24T21:23:04.0483756Z Cleaning up orphan processes

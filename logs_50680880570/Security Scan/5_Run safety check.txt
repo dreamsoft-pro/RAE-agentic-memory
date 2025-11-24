@@ -1,0 +1,102 @@
+﻿2025-11-24T21:21:46.8601612Z ##[group]Run safety check --file requirements-dev.txt || true
+2025-11-24T21:21:46.8602081Z [36;1msafety check --file requirements-dev.txt || true[0m
+2025-11-24T21:21:46.8636545Z shell: /usr/bin/bash -e {0}
+2025-11-24T21:21:46.8636775Z env:
+2025-11-24T21:21:46.8637013Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:21:46.8637419Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-24T21:21:46.8637818Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:21:46.8638160Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:21:46.8638670Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-24T21:21:46.8639023Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-24T21:21:46.8639308Z ##[endgroup]
+2025-11-24T21:21:48.3031930Z 
+2025-11-24T21:21:48.3032945Z 
+2025-11-24T21:21:48.3034288Z [33m[1m+===========================================================================================================================================================================================+[0m
+2025-11-24T21:21:48.3035793Z 
+2025-11-24T21:21:48.3036082Z 
+2025-11-24T21:21:48.3037042Z [31m[1mDEPRECATED: [0m[33m[1mthis command (`check`) has been DEPRECATED, and will be unsupported beyond 01 June 2024.[0m
+2025-11-24T21:21:48.3037712Z 
+2025-11-24T21:21:48.3037723Z 
+2025-11-24T21:21:48.3038782Z [32mWe highly encourage switching to the new [0m[32m[1m`scan`[0m[32m command which is easier to use, more powerful, and can be set up to mimic the deprecated command if required.[0m
+2025-11-24T21:21:48.3039764Z 
+2025-11-24T21:21:48.3039772Z 
+2025-11-24T21:21:48.3040214Z [33m[1m+===========================================================================================================================================================================================+[0m
+2025-11-24T21:21:48.3040623Z 
+2025-11-24T21:21:48.3040630Z 
+2025-11-24T21:21:49.3116549Z +==============================================================================+
+2025-11-24T21:21:49.3118021Z 
+2025-11-24T21:21:49.3118177Z                                /$$$$$$            /$$
+2025-11-24T21:21:49.3118664Z                               /$$__  $$          | $$
+2025-11-24T21:21:49.3119040Z            /$$$$$$$  /$$$$$$ | $$  \__//$$$$$$  /$$$$$$   /$$   /$$
+2025-11-24T21:21:49.3119419Z           /$$_____/ |____  $$| $$$$   /$$__  $$|_  $$_/  | $$  | $$
+2025-11-24T21:21:49.3119791Z          |  $$$$$$   /$$$$$$$| $$_/  | $$$$$$$$  | $$    | $$  | $$
+2025-11-24T21:21:49.3120154Z           \____  $$ /$$__  $$| $$    | $$_____/  | $$ /$$| $$  | $$
+2025-11-24T21:21:49.3120547Z           /$$$$$$$/|  $$$$$$$| $$    |  $$$$$$$  |  $$$$/|  $$$$$$$
+2025-11-24T21:21:49.3120923Z          |_______/  \_______/|__/     \_______/   \___/   \____  $$
+2025-11-24T21:21:49.3121296Z                                                           /$$  | $$
+2025-11-24T21:21:49.3121656Z                                                          |  $$$$$$/
+2025-11-24T21:21:49.3122100Z   by safetycli.com                                        \______/
+2025-11-24T21:21:49.3122434Z 
+2025-11-24T21:21:49.3122564Z +==============================================================================+
+2025-11-24T21:21:49.3122844Z 
+2025-11-24T21:21:49.3123254Z  [1mANNOUNCEMENTS[0m 
+2025-11-24T21:21:49.3123453Z 
+2025-11-24T21:21:49.3123885Z [33m  * Warning: ruff, pytest, pytest-asyncio, pytest-cov and mypy are unpinned.[0m 
+2025-11-24T21:21:49.3124762Z [33m    Safety by default does not report on potential vulnerabilities in unpinned[0m 
+2025-11-24T21:21:49.3126015Z [33m    packages. It is recommended to pin your dependencies unless this is a[0m 
+2025-11-24T21:21:49.3126870Z [33m    library meant for distribution. To learn more about reporting these,[0m 
+2025-11-24T21:21:49.3127745Z [33m    specifier range handling, and options for scanning unpinned packages visit[0m 
+2025-11-24T21:21:49.3128554Z [33m    https://docs.pyup.io/docs/safety-range-specs[0m 
+2025-11-24T21:21:49.3128912Z 
+2025-11-24T21:21:49.3129382Z +==============================================================================+
+2025-11-24T21:21:49.3129669Z 
+2025-11-24T21:21:49.3129834Z  [1mREPORT[0m 
+2025-11-24T21:21:49.3130001Z 
+2025-11-24T21:21:49.3130358Z   Safety [1mv3.7.0[0m is scanning for [1mVulnerabilities[0m[1m...[0m
+2025-11-24T21:21:49.3130976Z [1m  Scanning dependencies[0m in your [1mfiles:[0m
+2025-11-24T21:21:49.3131281Z 
+2025-11-24T21:21:49.3131408Z   -> requirements-dev.txt
+2025-11-24T21:21:49.3131637Z 
+2025-11-24T21:21:49.3131890Z   Using [1mopen-source vulnerability database[0m
+2025-11-24T21:21:49.3132627Z [1m  Found and scanned 5 packages[0m
+2025-11-24T21:21:49.3133058Z   Timestamp [1m2025-11-24 21:21:49[0m
+2025-11-24T21:21:49.3133501Z [1m  0[0m[1m vulnerabilities reported[0m
+2025-11-24T21:21:49.3133963Z [1m  1[0m[1m vulnerability ignored[0m
+2025-11-24T21:21:49.3134224Z 
+2025-11-24T21:21:49.3134355Z +==============================================================================+
+2025-11-24T21:21:49.3135147Z  [1mVULNERABILITIES REPORTED[0m 
+2025-11-24T21:21:49.3135545Z +==============================================================================+
+2025-11-24T21:21:49.3135823Z 
+2025-11-24T21:21:49.3136280Z [33m-> Warning: 1 known vulnerability matches the pytest-cov versions that could be[0m 
+2025-11-24T21:21:49.3137147Z [33m   installed from your specifier: pytest-cov>=0 (unpinned). These[0m 
+2025-11-24T21:21:49.3138025Z [33m   vulnerabilities are not reported by default. To report these vulnerabilities[0m 
+2025-11-24T21:21:49.3139016Z [33m   set 'ignore-unpinned-requirements' to False under 'security' in your policy[0m 
+2025-11-24T21:21:49.3139979Z [33m   file. See https://docs.pyup.io/docs/safety-20-policy-file for more[0m 
+2025-11-24T21:21:49.3140565Z [33m   information.[0m 
+2025-11-24T21:21:49.3141158Z [33m   It is recommended to pin your dependencies unless this is a library meant[0m 
+2025-11-24T21:21:49.3141974Z [33m   for distribution. To learn more about reporting these, specifier range[0m 
+2025-11-24T21:21:49.3142749Z [33m   handling, and options for scanning unpinned packages visit[0m 
+2025-11-24T21:21:49.3143387Z [33m   https://docs.pyup.io/docs/safety-range-specs[0m 
+2025-11-24T21:21:49.3143865Z 
+2025-11-24T21:21:49.3143875Z 
+2025-11-24T21:21:49.3143881Z 
+2025-11-24T21:21:49.3144010Z +==============================================================================+
+2025-11-24T21:21:49.3144294Z 
+2025-11-24T21:21:49.3144586Z  Scan was completed. 0 vulnerabilities were reported. 1 vulnerability from 1 
+2025-11-24T21:21:49.3153428Z  package was ignored. 
+2025-11-24T21:21:49.3153673Z 
+2025-11-24T21:21:49.3154004Z +==============================================================================+[0m
+2025-11-24T21:21:49.3154330Z 
+2025-11-24T21:21:49.3154337Z 
+2025-11-24T21:21:49.3154967Z [33m[1m+===========================================================================================================================================================================================+[0m
+2025-11-24T21:21:49.3155467Z 
+2025-11-24T21:21:49.3155475Z 
+2025-11-24T21:21:49.3156188Z [31m[1mDEPRECATED: [0m[33m[1mthis command (`check`) has been DEPRECATED, and will be unsupported beyond 01 June 2024.[0m
+2025-11-24T21:21:49.3156896Z 
+2025-11-24T21:21:49.3156904Z 
+2025-11-24T21:21:49.3157925Z [32mWe highly encourage switching to the new [0m[32m[1m`scan`[0m[32m command which is easier to use, more powerful, and can be set up to mimic the deprecated command if required.[0m
+2025-11-24T21:21:49.3158850Z 
+2025-11-24T21:21:49.3158857Z 
+2025-11-24T21:21:49.3159325Z [33m[1m+===========================================================================================================================================================================================+[0m
+2025-11-24T21:21:49.3159712Z 
+2025-11-24T21:21:49.3159720Z 

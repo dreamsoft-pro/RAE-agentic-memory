@@ -15,7 +15,7 @@ spacy = pytest.importorskip(
     reason="Requires spacy – heavy ML dependency, not installed in lightweight CI",
 )
 
-from apps.memory_api.services.graph_extraction import (
+from apps.memory_api.services.graph_extraction import (  # noqa: E402
     GraphExtractionResult,
     GraphExtractionService,
     GraphTriple,
