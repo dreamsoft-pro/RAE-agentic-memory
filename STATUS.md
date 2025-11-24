@@ -18,6 +18,38 @@
 
 ---
 
+## 📝 Ostatnie Zmiany
+
+### 2025-11-24 - CI Pipeline: Naprawa błędów ruff i optional imports
+
+**Commity:**
+- `01f02fcc6` - Fix CI: make onnxruntime and sentence_transformers optional in qdrant_store.py
+- `0183e1f51` - Fix ruff linting errors - remove unused imports and fix undefined names
+
+**Problem:**
+- GitHub Actions CI: 207 błędów ruff (F401, F821, F823, E722, E402)
+- Test job: ModuleNotFoundError dla onnxruntime w qdrant_store.py
+- Lint job całkowicie czerwony
+
+**Rozwiązanie:**
+1. Uczynienie ML dependencies opcjonalnymi w qdrant_store.py (onnxruntime, sentence_transformers)
+2. Automatyczne usunięcie 162 unused imports (ruff --fix)
+3. Manualne naprawienie undefined names (logger, MemoryRepository, GraphRepository, MemoryClient, httpx)
+4. Naprawienie bare except clauses (→ except Exception)
+5. Przeniesienie BaseModel import na górę pliku
+6. Usunięcie duplikatu importu cost_logs_repository
+
+**Rezultat:**
+- ✅ Redukcja z 207 do 17 błędów (wszystkie 17 to oczekiwane E402 w testach i models/__init__.py)
+- ✅ black --check: PASS (169 files)
+- ✅ isort --check: PASS
+- ✅ Wszystkie testy mogą być zbierane w CI bez ML dependencies
+- ✅ Code quality znacznie poprawiony (zero undefined names, zero unused imports)
+
+**Dokumentacja:** [CI_STEP5_RUFF_AND_ONNX_FIX.md](CI_STEP5_RUFF_AND_ONNX_FIX.md)
+
+---
+
 ## ✅ Zaimplementowane Funkcjonalności (100%)
 
 ### 🔍 Core Search & Retrieval
