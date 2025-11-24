@@ -1,5 +1,6 @@
 import asyncpg
 import structlog
+from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -40,10 +41,41 @@ logger = structlog.get_logger(__name__)
 setup_opentelemetry()
 instrument_libraries()
 
+
+# --- Lifespan Handler ---
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifespan (startup and shutdown)."""
+    # Startup
+    logger.info("Starting up RAE Memory API...")
+    logger.info(
+        "security_settings",
+        api_key_auth=settings.ENABLE_API_KEY_AUTH,
+        jwt_auth=settings.ENABLE_JWT_AUTH,
+        rate_limiting=settings.ENABLE_RATE_LIMITING,
+    )
+
+    app.state.pool = await asyncpg.create_pool(
+        host=settings.POSTGRES_HOST,
+        database=settings.POSTGRES_DB,
+        user=settings.POSTGRES_USER,
+        password=settings.POSTGRES_PASSWORD,
+    )
+    Instrumentator().instrument(app).expose(app)
+    await rebuild_full_cache()
+
+    yield  # Application is running
+
+    # Shutdown
+    logger.info("Shutting down RAE Memory API...")
+    await app.state.pool.close()
+
+
 # --- App Initialization ---
 app = FastAPI(
     title="RAE Memory API",
     version="2.0.0-enterprise",
+    lifespan=lifespan,
     description="""
     ## The Cognitive Memory Engine for AI Agents
 
@@ -198,32 +230,6 @@ async def generic_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content={"error": {"code": "500", "message": "Internal Server Error"}},
     )
-
-
-@app.on_event("startup")
-async def startup():
-    logger.info("Starting up RAE Memory API...")
-    logger.info(
-        "security_settings",
-        api_key_auth=settings.ENABLE_API_KEY_AUTH,
-        jwt_auth=settings.ENABLE_JWT_AUTH,
-        rate_limiting=settings.ENABLE_RATE_LIMITING,
-    )
-
-    app.state.pool = await asyncpg.create_pool(
-        host=settings.POSTGRES_HOST,
-        database=settings.POSTGRES_DB,
-        user=settings.POSTGRES_USER,
-        password=settings.POSTGRES_PASSWORD,
-    )
-    Instrumentator().instrument(app).expose(app)
-    await rebuild_full_cache()
-
-
-@app.on_event("shutdown")
-async def shutdown():
-    logger.info("Shutting down RAE Memory API...")
-    await app.state.pool.close()
 
 
 # --- Middleware Configuration ---

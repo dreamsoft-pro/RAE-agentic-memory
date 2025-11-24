@@ -107,7 +107,7 @@ class TestAPIErrorHandling:
         """Test that invalid JSON returns 422."""
         response = client.post(
             "/v1/memories/create",  # Updated endpoint
-            data="not valid json",
+            content="not valid json",
             headers={"Content-Type": "application/json", "X-Tenant-ID": "test"},
         )
 
