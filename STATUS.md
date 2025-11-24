@@ -20,6 +20,56 @@
 
 ## 📝 Ostatnie Zmiany
 
+### 2025-11-24 - CI Pipeline: Deprecation warnings fix (FastAPI + HTTPX)
+
+**Commit:**
+- `519423dad` - Fix deprecation warnings: FastAPI lifespan migration and HTTPX fix
+
+**Problem: 5 deprecation warnings w test jobs**
+- GitHub Actions run 50685061812: 7 warnings total (5 fixable, 2 external)
+- FastAPI DeprecationWarning (3x): @app.on_event("startup"/"shutdown") deprecated
+- HTTPX DeprecationWarning (1x): data= parameter dla raw content deprecated
+- External warnings (2x): starlette, google.api_core (nie można naprawić)
+
+**Przyczyna:**
+- **FastAPI:** Stary pattern @app.on_event() jest deprecated od FastAPI 0.93.0+
+  - Nowy pattern: lifespan context manager
+  - Lepsze zarządzanie zasobami, synchronizacja startup/shutdown
+- **HTTPX:** Używanie data= dla raw content zamiast content=
+  - data= jest dla form data, content= dla raw bytes/text
+
+**Rozwiązanie:**
+
+1. **FastAPI Lifespan Migration (apps/memory_api/main.py):**
+   - Dodano import: `from contextlib import asynccontextmanager`
+   - Utworzono lifespan context manager (lines 46-71)
+   - Przeniesiono startup code przed yield
+   - Przeniesiono shutdown code po yield
+   - Przekazano lifespan=lifespan do FastAPI()
+   - Usunięto deprecated @app.on_event decorators (lines 203-226)
+
+2. **HTTPX Fix (apps/memory_api/tests/test_api_e2e.py):**
+   - Zmieniono data="not valid json" na content="not valid json" (line 110)
+   - Zgodne z HTTPX best practices
+
+**Korzyści:**
+- ✅ Modern FastAPI pattern (lifespan context manager)
+- ✅ Lepsze zarządzanie zasobami (context manager)
+- ✅ Synchronizacja startup i shutdown w jednej funkcji
+- ✅ Zgodne z aktualną dokumentacją FastAPI
+- ✅ Przyszłościowe (on_event będzie usunięty)
+
+**Rezultat:**
+- ✅ Warnings reduced: 7 → 2 (-71%)
+- ✅ 3 FastAPI warnings eliminated
+- ✅ 1 HTTPX warning eliminated
+- ✅ Pozostało 2 external library warnings (cannot fix)
+- ✅ Code follows current best practices
+
+**Dokumentacja:** [CI_STEP10_DEPRECATION_WARNINGS_FIX.md](CI_STEP10_DEPRECATION_WARNINGS_FIX.md)
+
+---
+
 ### 2025-11-24 - CI Pipeline: Integration tests fix (exit code 5)
 
 **Commit:**
