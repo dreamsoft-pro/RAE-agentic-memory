@@ -96,12 +96,43 @@ All Pydantic v1 deprecations eliminated from codebase:
 ### Prerequisites
 
 ```bash
-# Install test dependencies
+# Install core test dependencies
 pip install pytest pytest-asyncio pytest-cov pytest-mock
 
 # Ensure database is running
 docker-compose up -d postgres
 ```
+
+### ML Dependencies (Optional)
+
+**Note:** Some tests require heavy ML libraries. These are automatically skipped in CI to prevent "no space left on device" errors.
+
+**Lightweight CI environment** (GitHub Actions):
+```bash
+pip install -r requirements-dev.txt
+pip install -r apps/memory_api/requirements-base.txt
+pip install -r apps/memory_api/requirements-test.txt
+# ML dependencies NOT installed - tests will be skipped
+```
+
+**Full local environment** (with ML tests):
+```bash
+pip install -r requirements-dev.txt
+pip install -r apps/memory_api/requirements-base.txt
+pip install -r apps/memory_api/requirements-ml.txt  # Heavy ML dependencies
+pip install -r apps/memory_api/requirements-test.txt
+```
+
+**Tests that require ML dependencies:**
+- `test_graph_extraction.py` (spacy)
+- `test_graph_extraction_integration.py` (spacy)
+- `test_hybrid_search.py` (sentence-transformers)
+- `test_pii_scrubber.py` (presidio-analyzer)
+- `test_reflection_simple.py` (sklearn)
+- `test_semantic_memory.py` (spacy)
+- `test_vector_store.py` (sentence-transformers)
+
+These tests use `pytest.importorskip()` to automatically skip when ML libraries are not available.
 
 ### Run All Tests
 
@@ -122,7 +153,7 @@ pytest -v apps/memory_api/tests/
 ### Run Tests by Category
 
 ```bash
-# Unit tests only
+# Unit tests only (lightweight, no integration)
 pytest -m "not integration" apps/memory_api/tests/
 
 # Integration tests only
@@ -475,6 +506,8 @@ open htmlcov/index.html
 
 ### GitHub Actions Workflow
 
+The CI pipeline is optimized to run in a lightweight environment without heavy ML dependencies:
+
 ```yaml
 name: Tests
 
@@ -498,16 +531,30 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install dependencies
+      - name: Install dependencies (without ML)
         run: |
-          pip install -r requirements.txt
-          pip install pytest pytest-asyncio pytest-cov
+          pip install -r requirements-dev.txt
+          pip install -r apps/memory_api/requirements-base.txt
+          pip install -r apps/memory_api/requirements-test.txt
+          # Note: requirements-ml.txt is NOT installed in CI
+          # ML tests will be automatically skipped via pytest.importorskip()
 
       - name: Run tests
-        run: pytest --cov=apps/memory_api apps/memory_api/tests/
+        run: pytest -m "not integration" --cov --cov-report=xml --cov-report=term
 
       - name: Upload coverage
         uses: codecov/codecov-action@v3
+```
+
+**Why we skip ML dependencies in CI:**
+- Prevents "no space left on device" errors on GitHub Actions runners
+- Speeds up CI runs (ML packages can be several GB)
+- Core functionality tests run without ML dependencies
+- ML tests can be run locally with full environment
+
+**ML tests will show as SKIPPED in CI** with messages like:
+```
+SKIPPED [1] test_graph_extraction.py:13: Requires spacy – heavy ML dependency, not installed in lightweight CI
 ```
 
 ---
