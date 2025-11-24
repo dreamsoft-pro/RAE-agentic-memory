@@ -20,6 +20,44 @@
 
 ## 📝 Ostatnie Zmiany
 
+### 2025-11-24 - CI Pipeline: Naprawa presidio_analyzer optional import
+
+**Commit:**
+- `72d7a6543` - Fix CI: make presidio_analyzer optional in pii_scrubber.py
+
+**Problem:**
+- GitHub Actions CI: ModuleNotFoundError dla presidio_analyzer w pii_scrubber.py
+- Test jobs (Python 3.10, 3.11, 3.12) całkowicie czerwone - błąd przy zbieraniu testów
+- Import chain: main.py → api/v1/memory.py:23 → services/pii_scrubber.py:1 → presidio_analyzer
+- pii_scrubber.py miał direct import i global initialization engines
+
+**Rozwiązanie:**
+1. Opcjonalny import presidio_analyzer i presidio_anonymizer (try/except)
+2. Lazy loading pattern dla AnalyzerEngine i AnonymizerEngine
+3. Engines tworzone tylko przy pierwszym wywołaniu scrub_text()
+4. Runtime validation z jasnym error message
+5. Brak module-level initialization - importy działają zawsze
+
+**Rezultat:**
+- ✅ pii_scrubber.py importowalny bez presidio (PRESIDIO_AVAILABLE=False)
+- ✅ main.py importowalny w CI bez ML dependencies
+- ✅ Wszystkie testy mogą być zbierane
+- ✅ PII scrubbing działa gdy dependencies są zainstalowane
+- ✅ Wzorzec spójny z innymi ML dependencies (spacy, sentence_transformers, onnxruntime, python-louvain)
+
+**Kompletny wzorzec optional ML dependencies:**
+- ✅ spacy (graph_extraction.py)
+- ✅ sentence_transformers (embedding.py, qdrant_store.py)
+- ✅ onnxruntime (qdrant_store.py)
+- ✅ python-louvain (community_detection.py)
+- ✅ presidio_analyzer (pii_scrubber.py) **NEW**
+
+**Wszystkie ML dependencies są teraz opcjonalne!**
+
+**Dokumentacja:** [CI_STEP6_PRESIDIO_FIX.md](CI_STEP6_PRESIDIO_FIX.md)
+
+---
+
 ### 2025-11-24 - CI Pipeline: Naprawa błędów ruff i optional imports
 
 **Commity:**

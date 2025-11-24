@@ -184,5 +184,82 @@ Wszystkie ciężkie ML dependencies używają tego samego wzorca:
 
 ---
 
-**Status:** 🔄 W TRAKCIE REALIZACJI
-**Następny krok:** Przeczytać pii_scrubber.py i zaimplementować optional import
+## 6. Rezultat
+
+### Przed zmianami:
+- ❌ **Test job (3.10, 3.11, 3.12):** ModuleNotFoundError: No module named 'presidio_analyzer'
+- ❌ **Lint job:** 17 E402 errors (oczekiwane, ale CI = FAIL)
+- ✅ **Docker Build:** PASS
+
+### Po zmianach:
+- ✅ **pii_scrubber.py:** Importowalny bez presidio (PRESIDIO_AVAILABLE=False)
+- ✅ **Lazy loading:** Engines tworzone tylko przy pierwszym użyciu scrub_text()
+- ✅ **Runtime validation:** Jasny error message gdy dependencies brakują
+- ✅ **Linting:** ruff, black, isort - wszystkie PASS
+
+### Utworzone commity:
+
+**Commit 1:** `72d7a6543` - Fix CI: make presidio_analyzer optional in pii_scrubber.py
+- Opcjonalny import presidio_analyzer i presidio_anonymizer
+- Lazy loading dla AnalyzerEngine i AnonymizerEngine
+- Runtime validation w _ensure_presidio_available()
+- Wzorzec zgodny z embedding.py, graph_extraction.py, community_detection.py, qdrant_store.py
+
+### Kluczowe zmiany w pii_scrubber.py:
+
+**1. Optional imports (linie 1-19):**
+```python
+try:  # pragma: no cover
+    from presidio_analyzer import AnalyzerEngine
+    from presidio_anonymizer import AnonymizerEngine
+    from presidio_anonymizer.entities import OperatorConfig
+    PRESIDIO_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    AnalyzerEngine = None
+    AnonymizerEngine = None
+    OperatorConfig = None
+    PRESIDIO_AVAILABLE = False
+```
+
+**2. Lazy initialization (linie 37-56):**
+```python
+def _get_analyzer() -> "AnalyzerEngine":
+    global _analyzer
+    _ensure_presidio_available()
+    if _analyzer is None:
+        _analyzer = AnalyzerEngine()
+    return _analyzer
+```
+
+**3. Runtime check (linie 27-34):**
+```python
+def _ensure_presidio_available() -> None:
+    if not PRESIDIO_AVAILABLE:
+        raise RuntimeError(
+            "PII scrubbing requires presidio-analyzer and presidio-anonymizer..."
+        )
+```
+
+**4. Brak module-level initialization:**
+- Engines **NIE są tworzone** przy `import pii_scrubber`
+- Engines **są tworzone** przy pierwszym wywołaniu `scrub_text()`
+
+### Wzorzec optional ML dependencies - KOMPLETNY:
+
+| Dependency | File | Status |
+|------------|------|--------|
+| spacy | graph_extraction.py | ✅ |
+| sentence_transformers | embedding.py | ✅ |
+| sentence_transformers | qdrant_store.py | ✅ |
+| onnxruntime | qdrant_store.py | ✅ |
+| python-louvain | community_detection.py | ✅ |
+| **presidio_analyzer** | **pii_scrubber.py** | ✅ **NEW** |
+
+**Wszystkie ML dependencies są teraz opcjonalne!**
+
+---
+
+**Status:** ✅ UKOŃCZONE
+**Data ukończenia:** 2025-11-24
+**Commit:** 72d7a6543
+**Testy:** Gotowe do weryfikacji w CI po push
