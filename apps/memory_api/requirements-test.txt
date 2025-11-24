@@ -14,3 +14,6 @@ instructor>=1.0.0
 slowapi>=0.1.9
 scipy>=1.11.0
 mcp>=1.0.0
+
+# Graph / community detection for tests
+python-louvain>=0.16

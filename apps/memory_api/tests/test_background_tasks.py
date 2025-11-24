@@ -17,6 +17,11 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 
+pytest.importorskip(
+    "community",
+    reason="Requires community (python-louvain) for community detection tests.",
+)
+
 from apps.memory_api.tasks.background_tasks import (
     apply_memory_decay,
     extract_graph_lazy,

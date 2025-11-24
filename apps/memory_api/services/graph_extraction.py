@@ -6,10 +6,9 @@ transforming unstructured episodic memories into structured knowledge graphs.
 """
 
 import re
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import asyncpg
-import spacy
 import structlog
 from pydantic import BaseModel, Field, field_validator
 
@@ -17,18 +16,33 @@ from apps.memory_api import metrics
 from apps.memory_api.config import settings
 from apps.memory_api.services.llm import get_llm_provider
 
+try:  # pragma: no cover
+    import spacy  # type: ignore[import]
+
+    SPACY_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    spacy = None  # type: ignore[assignment]
+    SPACY_AVAILABLE = False
+
+if TYPE_CHECKING:
+    import spacy  # noqa: F401
+
 logger = structlog.get_logger(__name__)
 
 # Load SpaCy models lazily or globally
-try:
-    nlp_pl = spacy.load("pl_core_news_sm")
-except OSError:
-    nlp_pl = None
+nlp_pl = None
+nlp_en = None
 
-try:
-    nlp_en = spacy.load("en_core_web_sm")
-except OSError:
-    nlp_en = None
+if SPACY_AVAILABLE:
+    try:
+        nlp_pl = spacy.load("pl_core_news_sm")  # type: ignore[union-attr]
+    except OSError:
+        nlp_pl = None
+
+    try:
+        nlp_en = spacy.load("en_core_web_sm")  # type: ignore[union-attr]
+    except OSError:
+        nlp_en = None
 
 
 class GraphTriple(BaseModel):
@@ -243,6 +257,14 @@ class GraphExtractionService:
         self.graph_repo = graph_repo
         self.llm_provider = get_llm_provider()
 
+    def _ensure_spacy_available(self) -> None:
+        """Ensure spaCy is available for graph extraction."""
+        if not SPACY_AVAILABLE:
+            raise RuntimeError(
+                "Graph extraction requires spaCy. "
+                "Install ML extras or run: `pip install spacy`."
+            )
+
     async def extract_knowledge_graph(
         self,
         project_id: str,
@@ -272,6 +294,7 @@ class GraphExtractionService:
             ValueError: If project_id or tenant_id is invalid
             RuntimeError: If extraction fails
         """
+        self._ensure_spacy_available()
         logger.info(
             "starting_graph_extraction",
             project_id=project_id,

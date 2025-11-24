@@ -7,10 +7,9 @@ Implements:
 - Super-Node Creation
 """
 
-from typing import Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import asyncpg
-import community.community_louvain as community_louvain
 import networkx as nx
 import structlog
 from pydantic import BaseModel, Field
@@ -18,6 +17,17 @@ from pydantic import BaseModel, Field
 from apps.memory_api.config import settings
 from apps.memory_api.repositories.graph_repository import GraphRepository
 from apps.memory_api.services.llm import get_llm_provider
+
+try:  # pragma: no cover - import guarded
+    import community.community_louvain as community_louvain
+
+    COMMUNITY_DETECTION_AVAILABLE = True
+except ImportError:  # pragma: no cover - optional dependency
+    community_louvain = None  # type: ignore[assignment]
+    COMMUNITY_DETECTION_AVAILABLE = False
+
+if TYPE_CHECKING:  # poprawne typy dla mypy
+    import community.community_louvain as _cl  # noqa: F401
 
 logger = structlog.get_logger(__name__)
 
@@ -39,6 +49,14 @@ class CommunityDetectionService:
         self.graph_repo = graph_repository or GraphRepository(pool)
         self.llm_provider = get_llm_provider()
 
+    def _ensure_available(self) -> None:
+        """Ensure community detection library is available."""
+        if not COMMUNITY_DETECTION_AVAILABLE:
+            raise RuntimeError(
+                "Community detection requires 'python-louvain' "
+                "(`pip install python-louvain`)."
+            )
+
     async def run_community_detection_and_summarization(
         self, project_id: str, tenant_id: str
     ):
@@ -48,6 +66,7 @@ class CommunityDetectionService:
         3. For each community, generate summary.
         4. Store summary as 'Super-Node'.
         """
+        self._ensure_available()
         logger.info(
             "starting_community_detection", project_id=project_id, tenant_id=tenant_id
         )
