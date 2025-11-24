@@ -1,6 +1,6 @@
 # RAE Agentic Memory Engine - Status Projektu
 
-**Ostatnia aktualizacja:** 2025-11-24
+**Ostatnia aktualizacja:** 2025-11-25
 **Wersja:** 2.0.0-enterprise
 **Status:** Production Ready ✅
 
@@ -19,6 +19,49 @@
 ---
 
 ## 📝 Ostatnie Zmiany
+
+### 2025-11-25 - CI Pipeline: isort import ordering fix
+
+**Commit:**
+- `39623f429` - Fix import ordering in main.py - isort compliance
+
+**Problem: Lint job failing with isort error**
+- GitHub Actions run 50686989420: Tests ✅ (174 passed!), Lint ❌ (isort failed)
+- ERROR: apps/memory_api/main.py - Imports are incorrectly sorted and/or formatted
+- isort check failed with exit code 1
+
+**Przyczyna:**
+- W poprzednim commicie (519423dad - FastAPI lifespan migration) dodałem import:
+  `from contextlib import asynccontextmanager`
+- Sprawdziłem składnię (py_compile), linting (ruff), formatting (black)
+- **Zapomniałem uruchomić isort!**
+- Import został dodany w złej kolejności:
+  - Standard library import (contextlib) był PO third-party imports (asyncpg, structlog)
+  - isort wymaga: stdlib PRZED third-party, z pustą linią jako separator
+
+**Rozwiązanie:**
+- Uruchomiono isort na apps/memory_api/main.py
+- Import `from contextlib import asynccontextmanager` przeniesiony do line 1
+- Dodano pustą linię jako separator między stdlib i third-party imports
+- Zgodne z PEP 8 i isort rules
+
+**Weryfikacja lokalna:**
+- ✅ isort --check: PASS
+- ✅ ruff check: PASS (All checks passed!)
+- ✅ black --check: PASS (1 file would be left unchanged)
+
+**Rezultat:**
+- ✅ Lint job będzie zielony w następnym CI run
+- ✅ Import ordering zgodny z PEP 8
+- ✅ Wszystkie CI jobs powinny przejść (Lint + Test + Docker + Security)
+
+**Lekcja na przyszłość:**
+- Zawsze uruchamiać WSZYSTKIE narzędzia: py_compile + **isort** + ruff + black
+- Rozważyć pre-commit hooks dla automatycznego sprawdzania
+
+**Dokumentacja:** [CI_STEP11_ISORT_FIX.md](CI_STEP11_ISORT_FIX.md)
+
+---
 
 ### 2025-11-24 - CI Pipeline: Deprecation warnings fix (FastAPI + HTTPX)
 
