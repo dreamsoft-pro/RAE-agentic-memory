@@ -9,7 +9,7 @@ This service provides comprehensive budget management including:
 - Integration with cost_logs for audit trail
 """
 
-from datetime import date, datetime
+from datetime import datetime
 from typing import Optional
 
 import asyncpg

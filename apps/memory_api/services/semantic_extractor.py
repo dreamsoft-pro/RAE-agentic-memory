@@ -9,7 +9,6 @@ This service extracts semantic knowledge from memories:
 - Automatic embedding generation
 """
 
-from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
@@ -18,12 +17,7 @@ import structlog
 
 from apps.memory_api.config import settings
 from apps.memory_api.models.semantic_models import (
-    ExtractedRelation,
-    ExtractedTerm,
-    ExtractedTopic,
-    SemanticDefinition,
     SemanticExtractionResult,
-    SemanticNode,
     SemanticNodeType,
     SemanticRelationType,
 )
@@ -172,7 +166,7 @@ class SemanticExtractor:
         for topic in extraction.topics:
             if topic.confidence >= min_confidence:
                 try:
-                    node = await self._create_or_update_semantic_node(
+                    await self._create_or_update_semantic_node(
                         tenant_id=tenant_id,
                         project_id=project_id,
                         topic=topic.topic,
@@ -193,7 +187,7 @@ class SemanticExtractor:
         for term in extraction.terms:
             if term.confidence >= min_confidence:
                 try:
-                    node = await self._create_or_update_semantic_node(
+                    await self._create_or_update_semantic_node(
                         tenant_id=tenant_id,
                         project_id=project_id,
                         topic=term.original,

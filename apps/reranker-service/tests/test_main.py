@@ -1,8 +1,6 @@
-import os
 import sys
 from pathlib import Path
 
-import pytest
 from fastapi.testclient import TestClient
 
 current_file = Path(__file__).resolve()

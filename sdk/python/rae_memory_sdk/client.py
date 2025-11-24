@@ -6,10 +6,8 @@ from pydantic_settings import BaseSettings
 
 from .models import (
     DeleteMemoryResponse,
-    MemoryRecord,
     QueryMemoryRequest,
     QueryMemoryResponse,
-    ScoredMemoryRecord,
     StoreMemoryRequest,
     StoreMemoryResponse,
 )
@@ -383,7 +381,7 @@ class MemoryClient:
         if max_episodes:
             params["max_episodes"] = max_episodes
         return self._request(
-            "POST", f"/v1/memory/reflection/hierarchical", params=params
+            "POST", "/v1/memory/reflection/hierarchical", params=params
         )
 
     # Health & Cache Methods

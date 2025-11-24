@@ -4,7 +4,7 @@ Temporal Graph Service - Track knowledge graph evolution over time
 
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 import structlog

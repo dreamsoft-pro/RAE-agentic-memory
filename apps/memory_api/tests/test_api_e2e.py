@@ -17,8 +17,6 @@ and are currently skipped pending full integration testing setup.
 For unit/integration tests with real DB, see test_hybrid_search.py which uses testcontainers.
 """
 
-from unittest.mock import AsyncMock, Mock, patch
-
 import pytest
 from fastapi.testclient import TestClient
 

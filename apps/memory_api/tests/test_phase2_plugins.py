@@ -252,7 +252,7 @@ class TestPluginRegistry:
         params = {"original": True}
 
         # Execute transform hook
-        result = await registry.execute_hook(
+        await registry.execute_hook(
             PluginHook.BEFORE_QUERY, tenant_id=tenant_id, query="test", params=params
         )
 
@@ -412,7 +412,7 @@ class TestMultiplePlugins:
         params = {}
 
         # Execute transform hook
-        result = await registry.execute_hook(
+        await registry.execute_hook(
             PluginHook.BEFORE_QUERY, tenant_id=tenant_id, query="test", params=params
         )
 

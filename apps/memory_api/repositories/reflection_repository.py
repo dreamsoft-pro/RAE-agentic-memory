@@ -23,7 +23,6 @@ import asyncpg
 import structlog
 
 from apps.memory_api.models.reflection_models import (
-    ReflectionCluster,
     ReflectionRelationship,
     ReflectionRelationType,
     ReflectionScoring,
@@ -31,7 +30,6 @@ from apps.memory_api.models.reflection_models import (
     ReflectionTelemetry,
     ReflectionType,
     ReflectionUnit,
-    ReflectionUsageLog,
 )
 
 logger = structlog.get_logger(__name__)

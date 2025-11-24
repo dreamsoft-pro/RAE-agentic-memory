@@ -12,10 +12,6 @@ Prerequisites:
 - testcontainers Python package installed
 """
 
-from typing import Any, Dict, List
-from unittest.mock import AsyncMock, patch
-
-import asyncpg
 import pytest
 
 # Skip tests if spacy is not installed (ML dependency)

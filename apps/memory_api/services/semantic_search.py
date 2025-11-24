@@ -8,7 +8,6 @@ This service implements enterprise semantic search with:
 """
 
 from typing import Any, Dict, List, Tuple
-from uuid import UUID
 
 import asyncpg
 import numpy as np

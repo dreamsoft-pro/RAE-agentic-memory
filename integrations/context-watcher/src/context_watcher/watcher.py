@@ -1,5 +1,3 @@
-import time
-
 from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers import Observer
 

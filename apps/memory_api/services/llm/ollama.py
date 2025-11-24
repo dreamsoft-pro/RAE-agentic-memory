@@ -52,7 +52,7 @@ class OllamaProvider(LLMProvider):
                 model_name=model,
                 finish_reason=result_data.get("done_reason", "stop"),
             )
-        except httpx.ConnectError as e:
+        except httpx.ConnectError:
             print(
                 f"Could not connect to Ollama server at {self.api_url}. Is it running?"
             )
@@ -85,7 +85,7 @@ class OllamaProvider(LLMProvider):
             response_json = json.loads(result_data.get("response", "{}"))
             return response_model.model_validate(response_json)
 
-        except httpx.ConnectError as e:
+        except httpx.ConnectError:
             print(
                 f"Could not connect to Ollama server at {self.api_url}. Is it running?"
             )

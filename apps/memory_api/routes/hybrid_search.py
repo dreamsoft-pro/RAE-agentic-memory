@@ -8,7 +8,7 @@ This module provides FastAPI routes for hybrid search operations including:
 - Search analytics
 """
 
-from typing import Any, Dict
+from typing import Dict
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request

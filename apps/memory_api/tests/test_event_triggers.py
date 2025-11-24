@@ -11,7 +11,7 @@ Tests cover:
 """
 
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
@@ -24,7 +24,6 @@ from apps.memory_api.models.event_models import (
     Event,
     EventType,
     TriggerRule,
-    TriggerStatus,
 )
 from apps.memory_api.services.rules_engine import RulesEngine
 

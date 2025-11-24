@@ -23,10 +23,8 @@ Headers Returned:
 - X-RateLimit-Reset: Unix timestamp when limit resets
 """
 
-from typing import Optional
-
 import structlog
-from fastapi import Request, Response
+from fastapi import Request
 from fastapi.responses import JSONResponse
 from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded

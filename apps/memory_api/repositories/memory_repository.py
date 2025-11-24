@@ -10,8 +10,6 @@ from typing import Any, Dict, List, Optional
 import asyncpg
 import structlog
 
-from apps.memory_api.models import MemoryRecord
-
 logger = structlog.get_logger(__name__)
 
 

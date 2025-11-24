@@ -11,8 +11,6 @@ real-time updates including:
 """
 
 import asyncio
-import json
-from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Set
 from uuid import UUID, uuid4
 
@@ -21,7 +19,6 @@ import structlog
 from fastapi import WebSocket
 
 from apps.memory_api.models.dashboard_models import (
-    ActivityLog,
     AlertMessage,
     DashboardEventType,
     HealthChangeMessage,

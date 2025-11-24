@@ -3,7 +3,7 @@ Importance Scoring Service - Automatic memory prioritization
 """
 
 import math
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
@@ -432,7 +432,7 @@ class ImportanceScoringService:
         try:
             from datetime import datetime, timezone
 
-            now = datetime.now(timezone.utc)
+            datetime.now(timezone.utc)
             updated_count = 0
 
             # In production, this would be implemented as:

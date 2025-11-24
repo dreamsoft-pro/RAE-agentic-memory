@@ -19,7 +19,6 @@ Key Improvements over v2.0:
 
 import json
 from functools import wraps
-from typing import Optional
 
 import structlog
 from fastapi import HTTPException, Request
@@ -27,7 +26,6 @@ from fastapi import HTTPException, Request
 from apps.memory_api.metrics import (
     llm_cost_counter,
     rae_cost_budget_rejections_total,
-    rae_cost_cache_saved_usd,
     rae_cost_llm_calls_total,
     rae_cost_llm_daily_usd,
     rae_cost_llm_monthly_usd,
@@ -436,8 +434,6 @@ def cost_guard():
 
                     # 5. Daily/Monthly costs (gauges) - fetch from budgets table
                     try:
-                        from apps.memory_api.repositories import cost_logs_repository
-
                         daily_cost = await cost_logs_repository.get_daily_cost(
                             pool, tenant_id, project_id
                         )

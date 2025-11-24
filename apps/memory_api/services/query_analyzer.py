@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List
 
 import structlog
+from pydantic import BaseModel
 
 from apps.memory_api.config import settings
 from apps.memory_api.models.hybrid_search_models import (
@@ -367,7 +368,7 @@ class QueryAnalyzer:
         if analysis.key_concepts:
             explanation += f"Key Concepts: {', '.join(analysis.key_concepts)}\n"
 
-        explanation += f"\nRecommended Strategies:\n"
+        explanation += "\nRecommended Strategies:\n"
         for strategy in analysis.recommended_strategies:
             weight = analysis.strategy_weights.get(strategy.value, 0.0)
             explanation += f"  - {strategy.value}: {weight:.2%}\n"
@@ -385,8 +386,6 @@ class QueryAnalyzer:
 # ============================================================================
 # Pydantic Model for LLM Response
 # ============================================================================
-
-from pydantic import BaseModel
 
 
 class QueryAnalysisResult(BaseModel):

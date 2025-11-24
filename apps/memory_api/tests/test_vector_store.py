@@ -13,8 +13,7 @@ Priority: HIGH (Critical module for memory persistence)
 Current Coverage: 52% -> Target: 70%+
 """
 
-from typing import List
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock
 
 import pytest
 

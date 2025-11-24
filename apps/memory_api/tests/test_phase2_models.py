@@ -12,8 +12,6 @@ from apps.memory_api.models.rbac import (
     Role,
     RoleHierarchy,
     UserRole,
-    check_permission,
-    require_permission,
 )
 from apps.memory_api.models.tenant import Tenant, TenantConfig, TenantTier
 

@@ -4,9 +4,6 @@ End-to-end tests for RAE MCP Server.
 These tests verify the complete flow from JSON-RPC requests to RAE API calls.
 """
 
-import asyncio
-import json
-
 # Import the server components
 import sys
 from pathlib import Path
@@ -467,7 +464,7 @@ async def test_full_mcp_flow():
     )
 
     assert "id" in store_result
-    memory_id = store_result["id"]
+    store_result["id"]
 
     # 2. Search memory
     search_results = await client.search_memory(query="integration test", top_k=5)

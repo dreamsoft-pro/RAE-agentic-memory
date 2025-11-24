@@ -9,8 +9,7 @@ This module provides FastAPI routes for event trigger operations including:
 - Trigger templates
 """
 
-from datetime import datetime, timedelta, timezone
-from typing import List
+from datetime import timezone
 from uuid import uuid4
 
 import structlog
@@ -94,7 +93,6 @@ async def create_trigger(request: CreateTriggerRequest, pool=Depends(get_pool)):
 async def get_trigger(trigger_id: str, pool=Depends(get_pool)):
     """Get trigger rule by ID"""
     try:
-        from uuid import UUID
 
         # In production, fetch from database
         logger.info("get_trigger_requested", trigger_id=trigger_id)

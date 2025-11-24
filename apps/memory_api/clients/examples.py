@@ -108,7 +108,7 @@ async def error_handling_example():
 
         try:
             # This might fail
-            result = await client.get_memory(uuid4())
+            await client.get_memory(uuid4())
 
         except RAEClientError as e:
             # Handle specific error categories
@@ -149,11 +149,11 @@ async def caching_example():
 
         # First call - cache miss
         print("First call (cache miss)")
-        results1 = await client.search_memories(query="machine learning", k=10)
+        await client.search_memories(query="machine learning", k=10)
 
         # Second call - cache hit (instant)
         print("Second call (cache hit)")
-        results2 = await client.search_memories(query="machine learning", k=10)
+        await client.search_memories(query="machine learning", k=10)
 
         # Check stats to see cache hit
         stats = client.get_stats()
@@ -245,7 +245,7 @@ async def evaluation_workflow():
             metrics=["mrr", "ndcg", "precision", "recall"],
         )
 
-        print(f"Search quality metrics:")
+        print("Search quality metrics:")
         print(f"  MRR: {evaluation['evaluation_result']['metrics']['mrr']:.3f}")
         print(f"  NDCG@10: {evaluation['evaluation_result']['metrics']['ndcg@10']:.3f}")
 
@@ -266,7 +266,7 @@ async def evaluation_workflow():
         )
 
         if drift_result["drift_result"]["drift_detected"]:
-            print(f"Drift detected!")
+            print("Drift detected!")
             print(f"  Severity: {drift_result['drift_result']['severity']}")
             print(f"  Actions: {drift_result['drift_result']['recommended_actions']}")
 
@@ -341,7 +341,7 @@ async def dashboard_monitoring_example():
 
         # Get dashboard metrics
         metrics = await client.get_dashboard_metrics(period="last_24h")
-        print(f"Dashboard metrics:")
+        print("Dashboard metrics:")
         print(f"  Total memories: {metrics['system_metrics']['total_memories']}")
         print(f"  Total reflections: {metrics['system_metrics']['total_reflections']}")
         print(f"  Active triggers: {metrics['system_metrics']['active_triggers']}")
@@ -364,7 +364,7 @@ async def dashboard_monitoring_example():
 
         if semantic_graph["semantic_graph"]:
             graph = semantic_graph["semantic_graph"]
-            print(f"Semantic graph:")
+            print("Semantic graph:")
             print(f"  Nodes: {graph['node_count']}")
             print(f"  Edges: {graph['edge_count']}")
             print(f"  Avg degree: {graph['avg_degree']:.2f}")
@@ -373,7 +373,7 @@ async def dashboard_monitoring_example():
         health = await client.get_system_health(include_sub_components=True)
 
         print(f"System health: {health['system_health']['overall_status']}")
-        print(f"Components:")
+        print("Components:")
         for component in health["system_health"]["components"]:
             print(f"  {component['component_name']}: {component['status']}")
 

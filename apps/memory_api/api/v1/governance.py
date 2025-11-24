@@ -23,8 +23,6 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from apps.memory_api.dependencies import get_db_pool
-from apps.memory_api.repositories import cost_logs_repository
-from apps.memory_api.services import budget_service
 
 logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/v1/governance", tags=["Governance"])

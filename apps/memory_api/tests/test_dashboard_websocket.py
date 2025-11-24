@@ -9,8 +9,7 @@ Tests cover:
 - Subscription filtering
 """
 
-from datetime import datetime
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
@@ -93,9 +92,7 @@ async def test_subscription_filtering(connection_manager, mock_websocket):
 @pytest.mark.asyncio
 async def test_broadcast_to_tenant(connection_manager, mock_websocket):
     """Test broadcasting message to tenant"""
-    conn_id = await connection_manager.connect(
-        mock_websocket, "test-tenant", "test-project"
-    )
+    await connection_manager.connect(mock_websocket, "test-tenant", "test-project")
 
     message = {"event_type": "memory_created", "payload": {"id": str(uuid4())}}
 

@@ -1,15 +1,10 @@
-import json
-import os
-
 import httpx
-import litellm
-import requests
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
-from qdrant_client import models
 
 from apps.memory_api.config import settings
 from apps.memory_api.dependencies import get_api_key
-from apps.memory_api.metrics import llm_cost_counter, reflection_event_counter
+from apps.memory_api.metrics import reflection_event_counter
 from apps.memory_api.middleware.cost_guard import cost_guard
 from apps.memory_api.models import (
     AgentExecuteRequest,
@@ -19,7 +14,6 @@ from apps.memory_api.models import (
     ScoredMemoryRecord,
     StoreMemoryRequest,
 )
-from apps.memory_api.services import cost_controller
 from apps.memory_api.services.context_cache import get_context_cache  # NEW
 from apps.memory_api.services.embedding import get_embedding_service  # NEW
 from apps.memory_api.services.llm import get_llm_provider  # NEW import
@@ -34,6 +28,8 @@ router = APIRouter(
 router = APIRouter(
     prefix="/agent", tags=["agent", "external"], dependencies=[Depends(get_api_key)]
 )
+
+logger = structlog.get_logger(__name__)
 
 
 @router.post("/execute", response_model=AgentExecuteResponse)
@@ -163,7 +159,7 @@ LESSONS AND META-INSIGHTS (REFLECTIVE MEMORY):
 
         # Estimate token counts for cost_guard
         estimated_static_tokens = estimate_tokens(static_context_block)
-        estimated_dynamic_tokens = max(usage.prompt_tokens - estimated_static_tokens, 0)
+        max(usage.prompt_tokens - estimated_static_tokens, 0)
 
         # For cost calculation, will be handled by cost_guard
         cost = CostInfo(

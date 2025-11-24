@@ -3,7 +3,6 @@ import json
 import httpx
 import typer
 from rich.console import Console
-from rich.markdown import Markdown
 
 from .config import settings
 

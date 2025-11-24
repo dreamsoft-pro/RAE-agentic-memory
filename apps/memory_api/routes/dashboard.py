@@ -45,9 +45,7 @@ from apps.memory_api.models.dashboard_models import (
     SemanticGraphEdge,
     SemanticGraphNode,
     SystemHealth,
-    SystemMetrics,
     TimeSeriesMetric,
-    TimeSeriesPoint,
     VisualizationType,
 )
 from apps.memory_api.services.dashboard_websocket import DashboardWebSocketService

@@ -12,7 +12,7 @@ both the semantic similarity of content and the structural relationships
 between entities in the knowledge graph.
 """
 
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import asyncpg
 import structlog

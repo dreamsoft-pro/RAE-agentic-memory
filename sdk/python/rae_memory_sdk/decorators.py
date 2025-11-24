@@ -6,12 +6,14 @@ This module provides decorators for automatic memory tracing of function executi
 
 import asyncio
 import functools
-import inspect
 import json
 from datetime import datetime
-from typing import Any, Callable, List, Optional
+from typing import TYPE_CHECKING, Any, Callable, List, Optional
 
 import structlog
+
+if TYPE_CHECKING:
+    from rae_memory_sdk.client import MemoryClient
 
 logger = structlog.get_logger(__name__)
 

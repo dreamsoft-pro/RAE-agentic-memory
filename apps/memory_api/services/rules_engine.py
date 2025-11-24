@@ -11,9 +11,9 @@ This service implements:
 
 import asyncio
 import re
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
-from uuid import UUID, uuid4
+from datetime import datetime, timezone
+from typing import Any, Dict, List
+from uuid import uuid4
 
 import asyncpg
 import structlog
@@ -28,10 +28,7 @@ from apps.memory_api.models.event_models import (
     Event,
     EventType,
     ExecutionStatus,
-    TriggerCondition,
     TriggerRule,
-    TriggerStatus,
-    WorkflowStep,
 )
 
 logger = structlog.get_logger(__name__)

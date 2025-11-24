@@ -16,14 +16,11 @@ Includes:
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Tuple
-from uuid import UUID
+from typing import Any, Dict, List
 
 import asyncpg
-import numpy as np
 import structlog
 
-from apps.memory_api.config import settings
 from apps.memory_api.models.hybrid_search_models import (
     HybridSearchResult,
     QueryAnalysis,

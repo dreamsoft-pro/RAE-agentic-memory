@@ -4,7 +4,6 @@ Tests for Hybrid Search Service
 Enterprise-grade test suite for hybrid vector + graph search functionality.
 """
 
-from typing import List
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -19,7 +18,6 @@ from apps.memory_api.models import ScoredMemoryRecord
 from apps.memory_api.models.graph import GraphEdge, GraphNode, TraversalStrategy
 from apps.memory_api.repositories.graph_repository import GraphRepository
 from apps.memory_api.services.hybrid_search import (
-    HybridSearchResult,
     HybridSearchService,
 )
 

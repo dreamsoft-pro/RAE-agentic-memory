@@ -345,7 +345,7 @@ async def metrics() -> MetricsResponse:
             "total_commands": info.get("total_commands_processed", 0),
         }
         redis_client.close()
-    except:
+    except Exception:
         pass
 
     return MetricsResponse(

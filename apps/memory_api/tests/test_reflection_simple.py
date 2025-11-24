@@ -5,7 +5,7 @@ Tests the actual reflection pipeline API with proper mocks.
 """
 
 from datetime import datetime
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import numpy as np

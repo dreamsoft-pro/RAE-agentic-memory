@@ -1,6 +1,7 @@
 import os
 from contextlib import asynccontextmanager
 
+import httpx
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 from pydantic import BaseModel
 

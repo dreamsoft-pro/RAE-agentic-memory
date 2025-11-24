@@ -18,7 +18,6 @@ import pytest
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../src"))
 
-import mcp.types as types
 from rae_mcp_server.server import (
     RAEMemoryClient,
     handle_call_tool,

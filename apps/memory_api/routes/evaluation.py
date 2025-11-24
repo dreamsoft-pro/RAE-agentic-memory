@@ -9,8 +9,6 @@ This module provides FastAPI routes for evaluation operations including:
 - Benchmarking
 """
 
-from typing import List
-
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 
@@ -23,7 +21,6 @@ from apps.memory_api.models.evaluation_models import (
     EvaluateSearchResponse,
     GetQualityMetricsRequest,
     GetQualityMetricsResponse,
-    MetricType,
 )
 from apps.memory_api.services.drift_detector import DriftDetector
 from apps.memory_api.services.evaluation_service import EvaluationService
@@ -294,7 +291,6 @@ async def compare_ab_test_variants(test_id: str, pool=Depends(get_pool)):
     **Returns:** Comparison results with winner determination.
     """
     try:
-        from uuid import UUID
 
         # In production, would fetch from database
         # For now, return structure

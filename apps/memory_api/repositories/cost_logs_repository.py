@@ -12,7 +12,7 @@ Features:
 - Multi-tenant isolation via tenant_id filtering
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 import asyncpg

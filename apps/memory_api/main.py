@@ -1,5 +1,3 @@
-import os
-
 import asyncpg
 import structlog
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -10,7 +8,6 @@ from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from slowapi.errors import RateLimitExceeded
 
-from apps.memory_api import metrics
 from apps.memory_api.api.v1 import agent, cache, governance, graph
 from apps.memory_api.api.v1 import health as health_router
 from apps.memory_api.api.v1 import memory

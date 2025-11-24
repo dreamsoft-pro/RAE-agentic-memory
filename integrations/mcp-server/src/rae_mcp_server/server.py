@@ -21,7 +21,6 @@ import mcp.types as types
 import structlog
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
-from mcp.server.stdio import stdio_server
 
 logger = structlog.get_logger(__name__)
 

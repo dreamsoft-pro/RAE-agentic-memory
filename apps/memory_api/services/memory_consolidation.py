@@ -4,7 +4,7 @@ Memory Consolidation Service - Automatic memory layer transitions
 
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 import structlog
@@ -452,7 +452,7 @@ class MemoryConsolidationService:
             return "\n\n".join(m.get("content", "") for m in memories)
 
         # Prepare prompt based on target layer and strategy
-        prompt = self._build_consolidation_prompt(
+        self._build_consolidation_prompt(
             memories=memories, target_layer=target_layer, strategy=strategy
         )
 

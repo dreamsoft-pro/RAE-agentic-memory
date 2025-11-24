@@ -161,7 +161,6 @@ def extract_graph_lazy(
 
             # Override LLM model if using mini model
             if use_mini_model and hasattr(service, "llm_provider"):
-                original_model = service.llm_provider.model
                 service.llm_provider.model = "gpt-4o-mini"  # Cheaper model
                 logger.info(
                     "using_mini_model_for_extraction",

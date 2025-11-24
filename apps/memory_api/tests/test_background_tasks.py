@@ -13,7 +13,7 @@ Priority: HIGH (Critical for async processing)
 Current Coverage: 0% -> Target: 60%+
 """
 
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -159,7 +159,7 @@ class TestExtractGraphLazy:
         with patch.object(extract_graph_lazy, "retry", side_effect=Exception("Retry")):
             try:
                 extract_graph_lazy(memory_ids=["mem1"], tenant_id="tenant-123")
-            except:
+            except Exception:
                 pass
 
         # Pool close should still be called

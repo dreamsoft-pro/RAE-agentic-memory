@@ -1,13 +1,11 @@
-from typing import List, Optional
+from typing import Optional
 
 import structlog
-from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request
-from qdrant_client import models
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from apps.memory_api.dependencies import get_hybrid_search_service  # NEW
 from apps.memory_api.dependencies import get_api_key
 from apps.memory_api.metrics import (
-    deduplication_hit_counter,
     memory_delete_counter,
     memory_query_counter,
     memory_store_counter,
@@ -18,7 +16,6 @@ from apps.memory_api.models import (
     DeleteMemoryResponse,
     QueryMemoryRequest,
     QueryMemoryResponse,
-    ScoredMemoryRecord,
     StoreMemoryRequest,
     StoreMemoryResponse,
 )

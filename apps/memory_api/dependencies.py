@@ -12,8 +12,6 @@ Enterprise Architecture Benefits:
 - No hidden dependencies
 """
 
-from typing import AsyncGenerator
-
 import asyncpg
 from fastapi import HTTPException, Request, Security
 from fastapi.security import APIKeyHeader

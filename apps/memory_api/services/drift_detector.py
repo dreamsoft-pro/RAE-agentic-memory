@@ -8,8 +8,8 @@ This service implements drift detection using statistical tests:
 - Automated severity classification
 """
 
-from datetime import datetime, timedelta
-from typing import List, Optional, Tuple
+from datetime import datetime
+from typing import List, Tuple
 
 import asyncpg
 import numpy as np

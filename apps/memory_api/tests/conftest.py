@@ -3,7 +3,6 @@ Pytest configuration and shared fixtures for RAE Memory API tests.
 """
 
 import asyncio
-import os
 from typing import Any, Generator
 from unittest.mock import AsyncMock, Mock
 

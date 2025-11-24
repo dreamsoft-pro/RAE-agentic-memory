@@ -16,7 +16,7 @@ from pydantic import BaseModel, Field
 
 from apps.memory_api.dependencies import get_api_key, get_hybrid_search_service
 from apps.memory_api.metrics import memory_query_counter
-from apps.memory_api.services.graph_extraction import GraphExtractionResult, GraphTriple
+from apps.memory_api.services.graph_extraction import GraphExtractionResult
 from apps.memory_api.services.hybrid_search import (
     HybridSearchResult,
     HybridSearchService,

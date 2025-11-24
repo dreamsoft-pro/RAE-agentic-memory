@@ -1,7 +1,5 @@
 from typing import TYPE_CHECKING, List, Optional
 
-import numpy as np
-
 from apps.memory_api.config import settings
 from apps.memory_api.metrics import embedding_time_histogram
 

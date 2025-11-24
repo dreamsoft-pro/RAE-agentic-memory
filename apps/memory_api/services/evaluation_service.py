@@ -9,16 +9,13 @@ This service implements:
 """
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Set
+from typing import Any, Dict, List
 from uuid import UUID, uuid4
 
 import numpy as np
 import structlog
-from scipy import stats
 
 from apps.memory_api.models.evaluation_models import (
-    ABTestResult,
-    ABTestVariant,
     EvaluationResult,
     EvaluationStatus,
     MetricScore,

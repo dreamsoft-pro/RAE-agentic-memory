@@ -10,7 +10,6 @@ This module provides FastAPI routes for enhanced graph operations including:
 - Batch operations
 """
 
-from datetime import datetime
 from typing import List
 
 import structlog
@@ -36,13 +35,11 @@ from apps.memory_api.models.graph_enhanced_models import (  # Request/Response m
     FindPathResponse,
     GetGraphStatisticsRequest,
     GetGraphStatisticsResponse,
-    GetNodeMetricsRequest,
     GetNodeMetricsResponse,
     GraphSnapshot,
     RestoreSnapshotRequest,
     RestoreSnapshotResponse,
     SetEdgeTemporalValidityRequest,
-    TraversalAlgorithm,
     TraverseGraphRequest,
     TraverseGraphResponse,
     UpdateEdgeWeightRequest,

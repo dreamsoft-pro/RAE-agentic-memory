@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 from uuid import uuid4
 
 import pytest
@@ -270,7 +270,7 @@ async def test_get_growth_metrics(temporal_service, sample_graph):
     now = datetime.now(timezone.utc)
 
     # Start: empty graph
-    s1 = GraphSnapshot(tenant_id, now - timedelta(days=30), KnowledgeGraph())
+    GraphSnapshot(tenant_id, now - timedelta(days=30), KnowledgeGraph())
 
     # End: sample graph (2 nodes, 1 edge)
     # Actually, reconstruct_graph_at_time uses get_changes logic if snapshot is old.

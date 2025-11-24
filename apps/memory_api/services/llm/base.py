@@ -1,6 +1,6 @@
 from typing import NamedTuple, Protocol, Type
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class LLMResultUsage(BaseModel):

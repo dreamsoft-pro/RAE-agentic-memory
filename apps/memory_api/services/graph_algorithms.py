@@ -2,7 +2,6 @@
 Graph Algorithms Service - Advanced graph analysis for knowledge graphs
 """
 
-import math
 from collections import defaultdict, deque
 from typing import Any, Dict, List, Optional, Set, Tuple
 from uuid import UUID
@@ -663,7 +662,7 @@ class GraphAlgorithmsService:
         Returns:
             List of edge tuples (source_id, target_id)
         """
-        graph = await self.load_tenant_graph(tenant_id)
+        await self.load_tenant_graph(tenant_id)
         bridges = []
 
         # Tarjan's bridge-finding algorithm would be used here
@@ -683,7 +682,7 @@ class GraphAlgorithmsService:
         Returns:
             List of node IDs that are articulation points
         """
-        graph = await self.load_tenant_graph(tenant_id)
+        await self.load_tenant_graph(tenant_id)
         articulation_points = []
 
         # Tarjan's algorithm would be used here

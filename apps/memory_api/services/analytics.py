@@ -2,14 +2,11 @@
 Analytics Service - Usage statistics and insights for tenants
 """
 
-from collections import defaultdict
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 import structlog
-
-from apps.memory_api.models.tenant import Tenant
 
 logger = structlog.get_logger(__name__)
 

@@ -6,9 +6,8 @@ transforming unstructured episodic memories into structured knowledge graphs.
 """
 
 import re
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List
 
-import asyncpg
 import structlog
 from pydantic import BaseModel, Field, field_validator
 
@@ -26,6 +25,9 @@ except ImportError:  # pragma: no cover
 
 if TYPE_CHECKING:
     import spacy  # noqa: F401
+
+    from apps.memory_api.repositories.graph_repository import GraphRepository
+    from apps.memory_api.repositories.memory_repository import MemoryRepository
 
 logger = structlog.get_logger(__name__)
 

@@ -1,11 +1,10 @@
 # apps/memory-api/security.py
-from typing import List, Optional
 
 import httpx
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, SecurityScopes
 from jose import JWTError, jwt
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from apps.memory_api.config import settings
 
