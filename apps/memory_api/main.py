@@ -1,6 +1,7 @@
+from contextlib import asynccontextmanager
+
 import asyncpg
 import structlog
-from contextlib import asynccontextmanager
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
