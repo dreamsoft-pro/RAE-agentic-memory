@@ -331,7 +331,7 @@ class DashboardWebSocketService:
         )
 
         await self.connection_manager.broadcast_to_tenant(
-            tenant_id, project_id, message.dict()
+            tenant_id, project_id, message.model_dump()
         )
 
     async def broadcast_reflection_generated(
@@ -355,7 +355,7 @@ class DashboardWebSocketService:
         )
 
         await self.connection_manager.broadcast_to_tenant(
-            tenant_id, project_id, message.dict()
+            tenant_id, project_id, message.model_dump()
         )
 
     async def broadcast_semantic_node_created(
@@ -370,7 +370,7 @@ class DashboardWebSocketService:
         )
 
         await self.connection_manager.broadcast_to_tenant(
-            tenant_id, project_id, message.dict()
+            tenant_id, project_id, message.model_dump()
         )
 
     async def broadcast_quality_alert(
@@ -394,7 +394,7 @@ class DashboardWebSocketService:
         )
 
         await self.connection_manager.broadcast_to_tenant(
-            tenant_id, project_id, alert_message.dict()
+            tenant_id, project_id, alert_message.model_dump()
         )
 
     async def broadcast_drift_detected(
@@ -423,7 +423,7 @@ class DashboardWebSocketService:
         )
 
         await self.connection_manager.broadcast_to_tenant(
-            tenant_id, project_id, alert_message.dict()
+            tenant_id, project_id, alert_message.model_dump()
         )
 
     async def broadcast_trigger_fired(
@@ -449,7 +449,7 @@ class DashboardWebSocketService:
         )
 
         await self.connection_manager.broadcast_to_tenant(
-            tenant_id, project_id, message.dict()
+            tenant_id, project_id, message.model_dump()
         )
 
     # ========================================================================
@@ -481,7 +481,7 @@ class DashboardWebSocketService:
                         )
 
                         await self.connection_manager.broadcast_to_tenant(
-                            tenant_id, project_id, message.dict()
+                            tenant_id, project_id, message.model_dump()
                         )
 
                         # Update cache
@@ -686,7 +686,7 @@ class DashboardWebSocketService:
                         )
 
                         await self.connection_manager.broadcast_to_tenant(
-                            tenant_id, project_id, message.dict()
+                            tenant_id, project_id, message.model_dump()
                         )
 
                     # Update cache
