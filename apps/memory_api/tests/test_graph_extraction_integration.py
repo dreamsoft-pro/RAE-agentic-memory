@@ -18,6 +18,12 @@ from unittest.mock import AsyncMock, patch
 import asyncpg
 import pytest
 
+# Skip tests if spacy is not installed (ML dependency)
+spacy = pytest.importorskip(
+    "spacy",
+    reason="Requires spacy – heavy ML dependency, not installed in lightweight CI",
+)
+
 from apps.memory_api.repositories.graph_repository import GraphRepository
 from apps.memory_api.repositories.memory_repository import MemoryRepository
 from apps.memory_api.services.graph_extraction import (GraphExtractionService,

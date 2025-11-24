@@ -16,6 +16,12 @@ Current Coverage: 0% -> Target: 70%+
 
 import pytest
 
+# Skip tests if presidio_analyzer is not installed (ML dependency)
+presidio_analyzer = pytest.importorskip(
+    "presidio_analyzer",
+    reason="Requires presidio-analyzer – heavy ML dependency",
+)
+
 from apps.memory_api.services.pii_scrubber import scrub_text
 
 

@@ -18,6 +18,12 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
+# Skip tests if sentence_transformers is not installed (ML dependency)
+sentence_transformers = pytest.importorskip(
+    "sentence_transformers",
+    reason="Requires sentence-transformers – heavy ML dependency",
+)
+
 from apps.memory_api.models import MemoryRecord, ScoredMemoryRecord
 from apps.memory_api.services.vector_store.pgvector_store import PGVectorStore
 

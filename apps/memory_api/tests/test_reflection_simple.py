@@ -11,6 +11,12 @@ from uuid import uuid4
 import numpy as np
 import pytest
 
+# Skip tests if sklearn is not installed (ML dependency)
+sklearn = pytest.importorskip(
+    "sklearn",
+    reason="Requires scikit-learn – heavy ML dependency",
+)
+
 from apps.memory_api.models.reflection_models import (
     GenerateReflectionRequest, ReflectionType)
 from apps.memory_api.services.reflection_pipeline import ReflectionPipeline

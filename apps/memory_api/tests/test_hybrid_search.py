@@ -9,6 +9,12 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
+# Skip tests if sentence_transformers is not installed (ML dependency)
+sentence_transformers = pytest.importorskip(
+    "sentence_transformers",
+    reason="Requires sentence-transformers – heavy ML dependency",
+)
+
 from apps.memory_api.models import ScoredMemoryRecord
 from apps.memory_api.models.graph import (GraphEdge, GraphNode,
                                           TraversalStrategy)
