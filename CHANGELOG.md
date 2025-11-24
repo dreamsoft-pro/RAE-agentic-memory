@@ -30,8 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - **CI/CD Configuration (2025-11-24)**
   - Updated .github/workflows/ci.yml to include ML dependencies
+  - Changed to use requirements-base.txt explicitly (better clarity)
   - Enhanced requirements-test.txt with additional test dependencies
   - Improved Docker build configuration for better CI integration
+  - Full dependency installation order: dev → base → ml → test → SDK
 
 ### Planned
 - v2.0: Multi-modal memory support (images, audio)

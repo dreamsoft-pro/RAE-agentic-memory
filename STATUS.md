@@ -341,18 +341,20 @@ Funkcje wspomniane w pierwotnych planach, które nie zostały jeszcze zaimplemen
 
 ## 📝 Historia Zmian
 
-### 2025-11-24: CI Pipeline Fixes, Code Quality & Test Fixes
-- ✅ Fixed syntax error in integrations/mcp-server/main.py
+### 2025-11-24: CI Pipeline Complete Repair (Following CI_REPAIR_PLAN.md)
+- ✅ Fixed syntax error in integrations/mcp-server/main.py (line 122)
 - ✅ Applied black formatting to 145 files
 - ✅ Applied isort to 140+ files
 - ✅ Created root-level Dockerfile for proper CI builds
 - ✅ Added missing test dependencies (instructor, slowapi, scipy, mcp)
-- ✅ Updated CI workflow to include ML dependencies
+- ✅ Updated CI workflow to include all ML dependencies
+- ✅ Changed ci.yml to use requirements-base.txt explicitly
 - ✅ Fixed MCP server test (AnyUrl type comparison)
-- ✅ Updated sentence-transformers for compatibility
+- ✅ Updated sentence-transformers to >=2.7.0 for compatibility
 - ✅ All 243 unit tests passing (100% pass rate)
-- **Commits:** `384aa5402` + updates
-- **Impact:** CI pipeline fully functional + all tests passing
+- **Commits:** `384aa5402`, `2f5ada392`, `3a03927cf`
+- **Impact:** CI pipeline fully functional (lint ✅, test ✅, docker ✅)
+- **Plan Followed:** All 5 steps from CI_REPAIR_PLAN.md completed
 
 ### 2025-11-23: Repository Pattern Refactoring
 - ✅ Extended GraphRepository with 8 new methods
