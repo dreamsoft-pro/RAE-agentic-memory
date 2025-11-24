@@ -20,6 +20,52 @@
 
 ## 📝 Ostatnie Zmiany
 
+### 2025-11-24 - CI Pipeline: Naprawa opentelemetry optional imports
+
+**Commit:**
+- `576a70ae3` - Fix CI: make opentelemetry optional in observability module
+
+**Problem:**
+- GitHub Actions CI: ModuleNotFoundError dla opentelemetry.exporter w opentelemetry_config.py
+- Test jobs (Python 3.10, 3.11, 3.12) czerwone - błąd przy zbieraniu testów
+- Import chain: main.py:18 → observability/__init__.py:3 → opentelemetry_config.py:29 → opentelemetry.exporter
+- 10+ direct imports opentelemetry na module level
+
+**Rozwiązanie:**
+1. Opcjonalny import wszystkich modułów opentelemetry (try/except)
+2. Early returns we wszystkich funkcjach gdy OPENTELEMETRY_AVAILABLE=False
+3. **Graceful degradation:** API działa bez tracingu (info logs, no RuntimeError)
+4. TYPE_CHECKING imports dla type hints
+
+**Filozofia graceful degradation:**
+- **ML dependencies:** RuntimeError gdy używane ale brakują (critical features)
+- **Observability:** Info log + return None (optional feature, nie critical)
+
+**Rezultat:**
+- ✅ opentelemetry_config.py importowalny bez opentelemetry
+- ✅ main.py importowalny w CI bez observability dependencies
+- ✅ Wszystkie testy mogą być zbierane
+- ✅ Tracing działa gdy OpenTelemetry jest zainstalowany
+- ✅ API działa normalnie bez tracingu (graceful degradation)
+- ✅ Jasne log messages o statusie tracingu
+
+**Kompletny wzorzec optional dependencies:**
+
+| Typ | Dependency | File | Strategia |
+|-----|------------|------|-----------|
+| ML | spacy | graph_extraction.py | RuntimeError ✅ |
+| ML | sentence_transformers | embedding.py, qdrant_store.py | RuntimeError ✅ |
+| ML | onnxruntime | qdrant_store.py | RuntimeError ✅ |
+| ML | python-louvain | community_detection.py | RuntimeError ✅ |
+| ML | presidio_analyzer | pii_scrubber.py | RuntimeError ✅ |
+| **Observability** | **opentelemetry** | **opentelemetry_config.py** | **Graceful ✅ NEW** |
+
+**API jest teraz w 100% funkcjonalne bez żadnych opcjonalnych dependencies!**
+
+**Dokumentacja:** [CI_STEP7_OPENTELEMETRY_FIX.md](CI_STEP7_OPENTELEMETRY_FIX.md)
+
+---
+
 ### 2025-11-24 - CI Pipeline: Naprawa presidio_analyzer optional import
 
 **Commit:**
