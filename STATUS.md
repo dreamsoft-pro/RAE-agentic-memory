@@ -341,6 +341,23 @@ Funkcje wspomniane w pierwotnych planach, które nie zostały jeszcze zaimplemen
 
 ## 📝 Historia Zmian
 
+### 2025-11-24: CI Step 3 - Optional ML Dependencies + isort Fixes
+**Following CI_STEP3_LINT_AND_TEST_FIXES.md**
+
+**Lint Fixes:**
+- ✅ Fixed isort conflicts with black (using --profile black)
+- ✅ All 169 files pass both isort --check and black --check
+- ✅ Fixed import formatting in 5 files
+
+**Optional ML Dependencies:**
+- ✅ Added python-louvain>=0.16 to requirements-test.txt
+- ✅ Made community_louvain optional in community_detection.py
+- ✅ Made spacy optional in graph_extraction.py
+- ✅ Added runtime checks (_ensure_available methods)
+- ✅ Added pytest.importorskip to test_background_tasks.py
+- **Commits:** `3182b9a4f`
+- **Impact:** CI no longer fails with ModuleNotFoundError for community/spacy
+
 ### 2025-11-24: CI Lint Job Fixed + ML Test Optimization
 **Following CI_LINT_FIX_PLAN.md & CI_ML_OPTIMIZATION_PLAN.md**
 
