@@ -16,10 +16,15 @@ from unittest.mock import AsyncMock, Mock, patch
 import httpx
 import pytest
 
-from apps.memory_api.clients.rae_client import (CircuitBreaker, CircuitState,
-                                                ErrorCategory, RAEClient,
-                                                RAEClientError, ResponseCache,
-                                                classify_error)
+from apps.memory_api.clients.rae_client import (
+    CircuitBreaker,
+    CircuitState,
+    ErrorCategory,
+    RAEClient,
+    RAEClientError,
+    ResponseCache,
+    classify_error,
+)
 
 
 @pytest.fixture

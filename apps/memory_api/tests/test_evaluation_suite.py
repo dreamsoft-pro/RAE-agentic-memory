@@ -16,8 +16,11 @@ from uuid import uuid4
 import numpy as np
 import pytest
 
-from apps.memory_api.models.evaluation_models import (DriftSeverity, DriftType,
-                                                      RankedResult)
+from apps.memory_api.models.evaluation_models import (
+    DriftSeverity,
+    DriftType,
+    RankedResult,
+)
 from apps.memory_api.services.drift_detector import DriftDetector
 from apps.memory_api.services.evaluation_service import EvaluationService
 

@@ -16,8 +16,13 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 import structlog
-from tenacity import (before_sleep_log, retry, retry_if_exception_type,
-                      stop_after_attempt, wait_exponential)
+from tenacity import (
+    before_sleep_log,
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 from apps.memory_api.config import settings
 

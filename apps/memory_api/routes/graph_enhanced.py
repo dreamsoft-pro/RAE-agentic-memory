@@ -17,18 +17,39 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from apps.memory_api.models.graph_enhanced_models import (  # Request/Response models; Data models
-    ActivateEdgeRequest, BatchCreateEdgesRequest, BatchCreateNodesRequest,
-    BatchOperationResponse, CreateGraphEdgeRequest, CreateGraphNodeRequest,
-    CreateSnapshotRequest, CreateSnapshotResponse, DeactivateEdgeRequest,
-    DetectCycleRequest, DetectCycleResponse, EnhancedGraphEdge,
-    EnhancedGraphNode, FindConnectedNodesRequest, FindConnectedNodesResponse,
-    FindPathRequest, FindPathResponse, GetGraphStatisticsRequest,
-    GetGraphStatisticsResponse, GetNodeMetricsRequest, GetNodeMetricsResponse,
-    GraphSnapshot, RestoreSnapshotRequest, RestoreSnapshotResponse,
-    SetEdgeTemporalValidityRequest, TraversalAlgorithm, TraverseGraphRequest,
-    TraverseGraphResponse, UpdateEdgeWeightRequest)
-from apps.memory_api.repositories.graph_repository_enhanced import \
-    EnhancedGraphRepository
+    ActivateEdgeRequest,
+    BatchCreateEdgesRequest,
+    BatchCreateNodesRequest,
+    BatchOperationResponse,
+    CreateGraphEdgeRequest,
+    CreateGraphNodeRequest,
+    CreateSnapshotRequest,
+    CreateSnapshotResponse,
+    DeactivateEdgeRequest,
+    DetectCycleRequest,
+    DetectCycleResponse,
+    EnhancedGraphEdge,
+    EnhancedGraphNode,
+    FindConnectedNodesRequest,
+    FindConnectedNodesResponse,
+    FindPathRequest,
+    FindPathResponse,
+    GetGraphStatisticsRequest,
+    GetGraphStatisticsResponse,
+    GetNodeMetricsRequest,
+    GetNodeMetricsResponse,
+    GraphSnapshot,
+    RestoreSnapshotRequest,
+    RestoreSnapshotResponse,
+    SetEdgeTemporalValidityRequest,
+    TraversalAlgorithm,
+    TraverseGraphRequest,
+    TraverseGraphResponse,
+    UpdateEdgeWeightRequest,
+)
+from apps.memory_api.repositories.graph_repository_enhanced import (
+    EnhancedGraphRepository,
+)
 
 logger = structlog.get_logger(__name__)
 

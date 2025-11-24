@@ -9,9 +9,11 @@ from apps.memory_api import metrics
 from apps.memory_api.config import settings
 from apps.memory_api.models import MemoryLayer, StoreMemoryRequest
 from apps.memory_api.repositories.graph_repository import GraphRepository
-from apps.memory_api.services.graph_extraction import (GraphExtractionResult,
-                                                       GraphExtractionService,
-                                                       GraphTriple)
+from apps.memory_api.services.graph_extraction import (
+    GraphExtractionResult,
+    GraphExtractionService,
+    GraphTriple,
+)
 from apps.memory_api.services.llm import get_llm_provider
 
 logger = structlog.get_logger(__name__)

@@ -8,8 +8,7 @@ from typing import Optional
 
 import structlog
 from fastapi import HTTPException, Request, Security, status
-from fastapi.security import (APIKeyHeader, HTTPAuthorizationCredentials,
-                              HTTPBearer)
+from fastapi.security import APIKeyHeader, HTTPAuthorizationCredentials, HTTPBearer
 
 from apps.memory_api.config import settings
 

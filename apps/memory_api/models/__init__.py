@@ -29,6 +29,7 @@ CostInfo = models_legacy.CostInfo
 AgentExecuteResponse = models_legacy.AgentExecuteResponse
 
 from apps.memory_api.models.rbac import Permission, Role, UserRole
+
 # Import Phase 2 models from submodules
 from apps.memory_api.models.tenant import Tenant, TenantConfig, TenantTier
 

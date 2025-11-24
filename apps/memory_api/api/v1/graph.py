@@ -16,11 +16,12 @@ from pydantic import BaseModel, Field
 
 from apps.memory_api.dependencies import get_api_key, get_hybrid_search_service
 from apps.memory_api.metrics import memory_query_counter
-from apps.memory_api.services.graph_extraction import (GraphExtractionResult,
-                                                       GraphTriple)
-from apps.memory_api.services.hybrid_search import (HybridSearchResult,
-                                                    HybridSearchService,
-                                                    TraversalStrategy)
+from apps.memory_api.services.graph_extraction import GraphExtractionResult, GraphTriple
+from apps.memory_api.services.hybrid_search import (
+    HybridSearchResult,
+    HybridSearchService,
+    TraversalStrategy,
+)
 from apps.memory_api.services.reflection_engine import ReflectionEngine
 
 logger = structlog.get_logger(__name__)
@@ -405,8 +406,7 @@ async def get_graph_nodes(
             # Import here to avoid circular dependency
             from uuid import UUID
 
-            from apps.memory_api.services.graph_algorithms import \
-                GraphAlgorithmsService
+            from apps.memory_api.services.graph_algorithms import GraphAlgorithmsService
 
             # Calculate PageRank scores
             graph_service = GraphAlgorithmsService(db=request.app.state.pool)

@@ -24,22 +24,27 @@ from typing import Optional
 import structlog
 from fastapi import HTTPException, Request
 
-from apps.memory_api.metrics import (llm_cost_counter,
-                                     rae_cost_budget_rejections_total,
-                                     rae_cost_cache_saved_usd,
-                                     rae_cost_llm_calls_total,
-                                     rae_cost_llm_daily_usd,
-                                     rae_cost_llm_monthly_usd,
-                                     rae_cost_llm_tokens_used,
-                                     rae_cost_llm_total_usd,
-                                     rae_cost_tokens_per_call_histogram)
+from apps.memory_api.metrics import (
+    llm_cost_counter,
+    rae_cost_budget_rejections_total,
+    rae_cost_cache_saved_usd,
+    rae_cost_llm_calls_total,
+    rae_cost_llm_daily_usd,
+    rae_cost_llm_monthly_usd,
+    rae_cost_llm_tokens_used,
+    rae_cost_llm_total_usd,
+    rae_cost_tokens_per_call_histogram,
+)
 from apps.memory_api.models import AgentExecuteRequest, AgentExecuteResponse
 from apps.memory_api.repositories import cost_logs_repository
 from apps.memory_api.repositories.cost_logs_repository import LogLLMCallParams
 from apps.memory_api.services import budget_service
 from apps.memory_api.services.budget_service import BudgetUsageIncrement
 from apps.memory_api.services.cost_controller import (
-    calculate_cost, estimate_cost, validate_cost_calculation)
+    calculate_cost,
+    estimate_cost,
+    validate_cost_calculation,
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -431,8 +436,7 @@ def cost_guard():
 
                     # 5. Daily/Monthly costs (gauges) - fetch from budgets table
                     try:
-                        from apps.memory_api.repositories import \
-                            cost_logs_repository
+                        from apps.memory_api.repositories import cost_logs_repository
 
                         daily_cost = await cost_logs_repository.get_daily_cost(
                             pool, tenant_id, project_id

@@ -15,10 +15,12 @@ spacy = pytest.importorskip(
     reason="Requires spacy – heavy ML dependency, not installed in lightweight CI",
 )
 
-from apps.memory_api.services.graph_extraction import (GraphExtractionResult,
-                                                       GraphExtractionService,
-                                                       GraphTriple,
-                                                       _normalize_entity_name)
+from apps.memory_api.services.graph_extraction import (
+    GraphExtractionResult,
+    GraphExtractionService,
+    GraphTriple,
+    _normalize_entity_name,
+)
 
 
 @pytest.fixture
@@ -166,10 +168,8 @@ class TestGraphExtractionService:
 
     async def test_service_initialization(self, mock_pool, mock_llm_provider):
         """Test service initialization with DI pattern."""
-        from apps.memory_api.repositories.graph_repository import \
-            GraphRepository
-        from apps.memory_api.repositories.memory_repository import \
-            MemoryRepository
+        from apps.memory_api.repositories.graph_repository import GraphRepository
+        from apps.memory_api.repositories.memory_repository import MemoryRepository
 
         mock_memory_repo = Mock(spec=MemoryRepository)
         mock_graph_repo = Mock(spec=GraphRepository)

@@ -16,11 +16,12 @@ sentence_transformers = pytest.importorskip(
 )
 
 from apps.memory_api.models import ScoredMemoryRecord
-from apps.memory_api.models.graph import (GraphEdge, GraphNode,
-                                          TraversalStrategy)
+from apps.memory_api.models.graph import GraphEdge, GraphNode, TraversalStrategy
 from apps.memory_api.repositories.graph_repository import GraphRepository
-from apps.memory_api.services.hybrid_search import (HybridSearchResult,
-                                                    HybridSearchService)
+from apps.memory_api.services.hybrid_search import (
+    HybridSearchResult,
+    HybridSearchService,
+)
 
 
 @pytest.fixture
@@ -601,8 +602,7 @@ class TestHybridSearchWithRealDatabase:
             )
 
         # Create repository and test BFS traversal
-        from apps.memory_api.repositories.graph_repository import \
-            GraphRepository
+        from apps.memory_api.repositories.graph_repository import GraphRepository
 
         repo = GraphRepository(db_pool)
 
@@ -712,8 +712,7 @@ class TestHybridSearchWithRealDatabase:
             )
 
         # Test DFS traversal
-        from apps.memory_api.repositories.graph_repository import \
-            GraphRepository
+        from apps.memory_api.repositories.graph_repository import GraphRepository
 
         repo = GraphRepository(db_pool)
 
@@ -778,8 +777,7 @@ class TestHybridSearchWithRealDatabase:
                 )
 
         # Test with max_depth=2
-        from apps.memory_api.repositories.graph_repository import \
-            GraphRepository
+        from apps.memory_api.repositories.graph_repository import GraphRepository
 
         repo = GraphRepository(db_pool)
 

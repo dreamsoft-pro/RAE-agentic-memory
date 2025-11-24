@@ -15,9 +15,16 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from apps.memory_api.models.evaluation_models import (
-    CreateABTestRequest, CreateABTestResponse, DetectDriftRequest,
-    DetectDriftResponse, EvaluateSearchRequest, EvaluateSearchResponse,
-    GetQualityMetricsRequest, GetQualityMetricsResponse, MetricType)
+    CreateABTestRequest,
+    CreateABTestResponse,
+    DetectDriftRequest,
+    DetectDriftResponse,
+    EvaluateSearchRequest,
+    EvaluateSearchResponse,
+    GetQualityMetricsRequest,
+    GetQualityMetricsResponse,
+    MetricType,
+)
 from apps.memory_api.services.drift_detector import DriftDetector
 from apps.memory_api.services.evaluation_service import EvaluationService
 

@@ -7,8 +7,13 @@ from uuid import uuid4
 
 import pytest
 
-from apps.memory_api.plugins.base import (Plugin, PluginHook, PluginMetadata,
-                                          PluginRegistry, get_plugin_registry)
+from apps.memory_api.plugins.base import (
+    Plugin,
+    PluginHook,
+    PluginMetadata,
+    PluginRegistry,
+    get_plugin_registry,
+)
 
 
 class TestPlugin(Plugin):

@@ -19,10 +19,17 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../src"))
 
 import mcp.types as types
-from rae_mcp_server.server import (RAEMemoryClient, handle_call_tool,
-                                   handle_get_prompt, handle_list_prompts,
-                                   handle_list_resources, handle_list_tools,
-                                   handle_read_resource, rae_client, server)
+from rae_mcp_server.server import (
+    RAEMemoryClient,
+    handle_call_tool,
+    handle_get_prompt,
+    handle_list_prompts,
+    handle_list_resources,
+    handle_list_tools,
+    handle_read_resource,
+    rae_client,
+    server,
+)
 
 
 class TestRAEMemoryClient:

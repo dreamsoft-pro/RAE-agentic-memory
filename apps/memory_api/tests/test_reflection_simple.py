@@ -18,7 +18,9 @@ sklearn = pytest.importorskip(
 )
 
 from apps.memory_api.models.reflection_models import (
-    GenerateReflectionRequest, ReflectionType)
+    GenerateReflectionRequest,
+    ReflectionType,
+)
 from apps.memory_api.services.reflection_pipeline import ReflectionPipeline
 
 

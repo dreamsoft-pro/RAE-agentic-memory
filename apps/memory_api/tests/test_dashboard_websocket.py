@@ -15,11 +15,15 @@ from uuid import uuid4
 
 import pytest
 
-from apps.memory_api.models.dashboard_models import (DashboardEventType,
-                                                     HealthStatus,
-                                                     SystemMetrics)
+from apps.memory_api.models.dashboard_models import (
+    DashboardEventType,
+    HealthStatus,
+    SystemMetrics,
+)
 from apps.memory_api.services.dashboard_websocket import (
-    ConnectionManager, DashboardWebSocketService)
+    ConnectionManager,
+    DashboardWebSocketService,
+)
 
 
 @pytest.fixture

@@ -20,16 +20,19 @@ import asyncpg
 import structlog
 from fastapi import WebSocket
 
-from apps.memory_api.models.dashboard_models import (ActivityLog, AlertMessage,
-                                                     DashboardEventType,
-                                                     HealthChangeMessage,
-                                                     HealthStatus,
-                                                     MetricPeriod,
-                                                     MetricsUpdateMessage,
-                                                     SystemHealth,
-                                                     SystemMetrics,
-                                                     WebSocketMessage,
-                                                     WebSocketSubscription)
+from apps.memory_api.models.dashboard_models import (
+    ActivityLog,
+    AlertMessage,
+    DashboardEventType,
+    HealthChangeMessage,
+    HealthStatus,
+    MetricPeriod,
+    MetricsUpdateMessage,
+    SystemHealth,
+    SystemMetrics,
+    WebSocketMessage,
+    WebSocketSubscription,
+)
 
 logger = structlog.get_logger(__name__)
 

@@ -16,11 +16,16 @@ from uuid import uuid4
 
 import pytest
 
-from apps.memory_api.models.event_models import (ActionType, Condition,
-                                                 ConditionGroup,
-                                                 ConditionOperator, Event,
-                                                 EventType, TriggerRule,
-                                                 TriggerStatus)
+from apps.memory_api.models.event_models import (
+    ActionType,
+    Condition,
+    ConditionGroup,
+    ConditionOperator,
+    Event,
+    EventType,
+    TriggerRule,
+    TriggerStatus,
+)
 from apps.memory_api.services.rules_engine import RulesEngine
 
 
@@ -246,8 +251,7 @@ async def test_cooldown_period(rules_engine):
 @pytest.mark.asyncio
 async def test_execute_action(rules_engine, sample_event, mock_pool):
     """Test action execution"""
-    from apps.memory_api.models.event_models import (ActionConfig,
-                                                     TriggerCondition)
+    from apps.memory_api.models.event_models import ActionConfig, TriggerCondition
 
     trigger = TriggerRule(
         trigger_id=uuid4(),
@@ -276,9 +280,12 @@ async def test_execute_action(rules_engine, sample_event, mock_pool):
 @pytest.mark.asyncio
 async def test_workflow_execution(rules_engine, mock_pool):
     """Test workflow model and step dependencies"""
-    from apps.memory_api.models.event_models import (ActionConfig, ActionType,
-                                                     CreateWorkflowRequest,
-                                                     WorkflowStep)
+    from apps.memory_api.models.event_models import (
+        ActionConfig,
+        ActionType,
+        CreateWorkflowRequest,
+        WorkflowStep,
+    )
 
     # Create workflow with multiple steps
     step1 = WorkflowStep(

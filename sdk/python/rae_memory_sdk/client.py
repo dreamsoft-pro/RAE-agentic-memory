@@ -4,9 +4,15 @@ import httpx
 import structlog
 from pydantic_settings import BaseSettings
 
-from .models import (DeleteMemoryResponse, MemoryRecord, QueryMemoryRequest,
-                     QueryMemoryResponse, ScoredMemoryRecord,
-                     StoreMemoryRequest, StoreMemoryResponse)
+from .models import (
+    DeleteMemoryResponse,
+    MemoryRecord,
+    QueryMemoryRequest,
+    QueryMemoryResponse,
+    ScoredMemoryRecord,
+    StoreMemoryRequest,
+    StoreMemoryResponse,
+)
 
 logger = structlog.get_logger(__name__)
 

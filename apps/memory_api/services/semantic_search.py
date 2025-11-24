@@ -14,9 +14,11 @@ import asyncpg
 import numpy as np
 import structlog
 
-from apps.memory_api.models.semantic_models import (SemanticDefinition,
-                                                    SemanticNode,
-                                                    SemanticNodeType)
+from apps.memory_api.models.semantic_models import (
+    SemanticDefinition,
+    SemanticNode,
+    SemanticNodeType,
+)
 from apps.memory_api.services.ml_service_client import MLServiceClient
 from apps.memory_api.services.semantic_extractor import SemanticExtractor
 

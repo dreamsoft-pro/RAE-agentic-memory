@@ -15,7 +15,11 @@ import structlog
 
 from apps.memory_api.config import settings
 from apps.memory_api.models.hybrid_search_models import (
-    DEFAULT_WEIGHT_PROFILES, QueryAnalysis, QueryIntent, SearchStrategy)
+    DEFAULT_WEIGHT_PROFILES,
+    QueryAnalysis,
+    QueryIntent,
+    SearchStrategy,
+)
 from apps.memory_api.services.llm import get_llm_provider
 
 logger = structlog.get_logger(__name__)

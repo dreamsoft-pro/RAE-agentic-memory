@@ -16,14 +16,21 @@ from apps.memory_api.api.v1 import health as health_router
 from apps.memory_api.api.v1 import memory
 from apps.memory_api.config import settings
 from apps.memory_api.logging_config import setup_logging
-from apps.memory_api.middleware.rate_limiter import (
-    limiter, rate_limit_exceeded_handler)
+from apps.memory_api.middleware.rate_limiter import limiter, rate_limit_exceeded_handler
 from apps.memory_api.middleware.tenant import TenantContextMiddleware
-from apps.memory_api.observability import (instrument_fastapi,
-                                           instrument_libraries,
-                                           setup_opentelemetry)
-from apps.memory_api.routes import (dashboard, evaluation, event_triggers,
-                                    graph_enhanced, hybrid_search, reflections)
+from apps.memory_api.observability import (
+    instrument_fastapi,
+    instrument_libraries,
+    setup_opentelemetry,
+)
+from apps.memory_api.routes import (
+    dashboard,
+    evaluation,
+    event_triggers,
+    graph_enhanced,
+    hybrid_search,
+    reflections,
+)
 from apps.memory_api.security import auth
 from apps.memory_api.security.rate_limit import rate_limit_middleware
 from apps.memory_api.services.context_cache import rebuild_full_cache

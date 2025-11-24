@@ -11,15 +11,19 @@ from apps.memory_api.config import settings
 from apps.memory_api.dependencies import get_api_key
 from apps.memory_api.metrics import llm_cost_counter, reflection_event_counter
 from apps.memory_api.middleware.cost_guard import cost_guard
-from apps.memory_api.models import (AgentExecuteRequest, AgentExecuteResponse,
-                                    CostInfo, QueryMemoryResponse,
-                                    ScoredMemoryRecord, StoreMemoryRequest)
+from apps.memory_api.models import (
+    AgentExecuteRequest,
+    AgentExecuteResponse,
+    CostInfo,
+    QueryMemoryResponse,
+    ScoredMemoryRecord,
+    StoreMemoryRequest,
+)
 from apps.memory_api.services import cost_controller
 from apps.memory_api.services.context_cache import get_context_cache  # NEW
 from apps.memory_api.services.embedding import get_embedding_service  # NEW
 from apps.memory_api.services.llm import get_llm_provider  # NEW import
-from apps.memory_api.services.llm.base import \
-    LLMResult  # NEW import - for type hinting
+from apps.memory_api.services.llm.base import LLMResult  # NEW import - for type hinting
 from apps.memory_api.services.token_estimator import estimate_tokens  # NEW
 from apps.memory_api.services.vector_store import get_vector_store  # NEW
 
@@ -251,8 +255,7 @@ async def _update_memory_access_stats(memory_ids: list[str], tenant_id: str, poo
         return
 
     try:
-        from apps.memory_api.repositories.memory_repository import \
-            MemoryRepository
+        from apps.memory_api.repositories.memory_repository import MemoryRepository
 
         repository = MemoryRepository(pool)
         updated_count = await repository.update_memory_access_stats(

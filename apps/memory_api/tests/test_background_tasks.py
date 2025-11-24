@@ -18,8 +18,12 @@ from unittest.mock import AsyncMock, MagicMock, Mock, patch
 import pytest
 
 from apps.memory_api.tasks.background_tasks import (
-    apply_memory_decay, extract_graph_lazy, generate_reflection_for_project,
-    process_graph_extraction_queue, prune_old_memories)
+    apply_memory_decay,
+    extract_graph_lazy,
+    generate_reflection_for_project,
+    process_graph_extraction_queue,
+    prune_old_memories,
+)
 
 
 class TestExtractGraphLazy:

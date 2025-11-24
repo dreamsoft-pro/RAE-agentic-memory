@@ -16,18 +16,22 @@ from uuid import uuid4
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 
-from apps.memory_api.models.event_models import (DEFAULT_TEMPLATES,
-                                                 CreateTriggerRequest,
-                                                 CreateTriggerResponse,
-                                                 CreateWorkflowRequest,
-                                                 CreateWorkflowResponse,
-                                                 EmitEventRequest,
-                                                 EmitEventResponse, Event,
-                                                 EventType,
-                                                 GetTriggerExecutionsRequest,
-                                                 GetTriggerExecutionsResponse,
-                                                 TriggerRule, TriggerStatus,
-                                                 UpdateTriggerRequest)
+from apps.memory_api.models.event_models import (
+    DEFAULT_TEMPLATES,
+    CreateTriggerRequest,
+    CreateTriggerResponse,
+    CreateWorkflowRequest,
+    CreateWorkflowResponse,
+    EmitEventRequest,
+    EmitEventResponse,
+    Event,
+    EventType,
+    GetTriggerExecutionsRequest,
+    GetTriggerExecutionsResponse,
+    TriggerRule,
+    TriggerStatus,
+    UpdateTriggerRequest,
+)
 from apps.memory_api.services.rules_engine import RulesEngine
 
 logger = structlog.get_logger(__name__)

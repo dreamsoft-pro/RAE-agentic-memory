@@ -15,19 +15,42 @@ from typing import List, Optional
 from uuid import UUID, uuid4
 
 import structlog
-from fastapi import (APIRouter, Depends, HTTPException, Query, Request,
-                     WebSocket, WebSocketDisconnect)
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Query,
+    Request,
+    WebSocket,
+    WebSocketDisconnect,
+)
 
 from apps.memory_api.models.dashboard_models import (
-    ActivityLog, ComponentHealth, DashboardEventType,
-    GetDashboardMetricsRequest, GetDashboardMetricsResponse,
-    GetSystemHealthRequest, GetSystemHealthResponse, GetVisualizationRequest,
-    GetVisualizationResponse, HealthStatus, MemoryTimeline,
-    MemoryTimelineEvent, MetricPeriod, QualityTrend, ReflectionTreeNode,
-    SemanticGraph, SemanticGraphEdge, SemanticGraphNode, SystemHealth,
-    SystemMetrics, TimeSeriesMetric, TimeSeriesPoint, VisualizationType)
-from apps.memory_api.services.dashboard_websocket import \
-    DashboardWebSocketService
+    ActivityLog,
+    ComponentHealth,
+    DashboardEventType,
+    GetDashboardMetricsRequest,
+    GetDashboardMetricsResponse,
+    GetSystemHealthRequest,
+    GetSystemHealthResponse,
+    GetVisualizationRequest,
+    GetVisualizationResponse,
+    HealthStatus,
+    MemoryTimeline,
+    MemoryTimelineEvent,
+    MetricPeriod,
+    QualityTrend,
+    ReflectionTreeNode,
+    SemanticGraph,
+    SemanticGraphEdge,
+    SemanticGraphNode,
+    SystemHealth,
+    SystemMetrics,
+    TimeSeriesMetric,
+    TimeSeriesPoint,
+    VisualizationType,
+)
+from apps.memory_api.services.dashboard_websocket import DashboardWebSocketService
 
 logger = structlog.get_logger(__name__)
 

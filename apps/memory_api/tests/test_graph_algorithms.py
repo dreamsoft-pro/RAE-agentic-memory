@@ -3,9 +3,12 @@ from uuid import uuid4
 
 import pytest
 
-from apps.memory_api.services.graph_algorithms import (GraphAlgorithmsService,
-                                                       GraphEdge, GraphNode,
-                                                       KnowledgeGraph)
+from apps.memory_api.services.graph_algorithms import (
+    GraphAlgorithmsService,
+    GraphEdge,
+    GraphNode,
+    KnowledgeGraph,
+)
 
 
 @pytest.mark.asyncio

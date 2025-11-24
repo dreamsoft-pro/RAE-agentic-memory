@@ -6,8 +6,7 @@ from pydantic import BaseModel
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from apps.memory_api.config import settings
-from apps.memory_api.services.llm.base import (LLMProvider, LLMResult,
-                                               LLMResultUsage)
+from apps.memory_api.services.llm.base import LLMProvider, LLMResult, LLMResultUsage
 
 
 class AnthropicProvider(LLMProvider):

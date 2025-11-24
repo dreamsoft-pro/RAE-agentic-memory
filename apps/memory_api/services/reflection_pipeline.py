@@ -22,8 +22,12 @@ from sklearn.preprocessing import StandardScaler
 
 from apps.memory_api.config import settings
 from apps.memory_api.models.reflection_models import (
-    GenerateReflectionRequest, ReflectionScoring, ReflectionTelemetry,
-    ReflectionType, ReflectionUnit)
+    GenerateReflectionRequest,
+    ReflectionScoring,
+    ReflectionTelemetry,
+    ReflectionType,
+    ReflectionUnit,
+)
 from apps.memory_api.repositories import reflection_repository
 from apps.memory_api.services.llm import get_llm_provider
 from apps.memory_api.services.ml_service_client import MLServiceClient

@@ -4,11 +4,17 @@ from uuid import uuid4
 
 import pytest
 
-from apps.memory_api.services.graph_algorithms import (GraphEdge, GraphNode,
-                                                       KnowledgeGraph)
-from apps.memory_api.services.temporal_graph import (ChangeType, GraphChange,
-                                                     GraphSnapshot,
-                                                     TemporalGraphService)
+from apps.memory_api.services.graph_algorithms import (
+    GraphEdge,
+    GraphNode,
+    KnowledgeGraph,
+)
+from apps.memory_api.services.temporal_graph import (
+    ChangeType,
+    GraphChange,
+    GraphSnapshot,
+    TemporalGraphService,
+)
 
 
 @pytest.fixture

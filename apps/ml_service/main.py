@@ -150,8 +150,7 @@ async def generate_embeddings(req: EmbeddingRequest):
 
     try:
         # Import here to avoid loading models at startup
-        from apps.ml_service.services.embedding_service import \
-            EmbeddingMLService
+        from apps.ml_service.services.embedding_service import EmbeddingMLService
 
         # Initialize service (singleton)
         embedding_service = EmbeddingMLService(model_name=req.model)
@@ -188,8 +187,7 @@ async def resolve_entities(req: EntityResolutionRequest):
 
     try:
         # Import here to avoid loading ML models at startup
-        from apps.ml_service.services.entity_resolution import \
-            EntityResolutionMLService
+        from apps.ml_service.services.entity_resolution import EntityResolutionMLService
 
         # Initialize service
         resolution_service = EntityResolutionMLService(
@@ -303,8 +301,7 @@ async def extract_triples(req: ExtractTriplesRequest):
 
     try:
         # Import here to avoid loading models at startup
-        from apps.ml_service.services.triple_extraction import \
-            TripleExtractionService
+        from apps.ml_service.services.triple_extraction import TripleExtractionService
 
         # Initialize service (singleton)
         triple_service = TripleExtractionService(language=req.language)

@@ -7,8 +7,13 @@ import onnxruntime
 import structlog
 from qdrant_client import QdrantClient, models
 from sentence_transformers import SentenceTransformer
-from tenacity import (before_sleep_log, retry, retry_if_exception_type,
-                      stop_after_attempt, wait_exponential)
+from tenacity import (
+    before_sleep_log,
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential,
+)
 
 from ...config import settings
 from ...metrics import vector_query_time_histogram

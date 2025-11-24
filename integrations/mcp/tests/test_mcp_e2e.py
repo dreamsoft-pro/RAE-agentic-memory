@@ -6,6 +6,7 @@ These tests verify the complete flow from JSON-RPC requests to RAE API calls.
 
 import asyncio
 import json
+
 # Import the server components
 import sys
 from pathlib import Path
@@ -17,10 +18,15 @@ import pytest
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-from rae_mcp.server import (RAEMemoryClient, handle_call_tool,
-                            handle_get_prompt, handle_list_prompts,
-                            handle_list_resources, handle_list_tools,
-                            handle_read_resource)
+from rae_mcp.server import (
+    RAEMemoryClient,
+    handle_call_tool,
+    handle_get_prompt,
+    handle_list_prompts,
+    handle_list_resources,
+    handle_list_tools,
+    handle_read_resource,
+)
 
 # =============================================================================
 # FIXTURES

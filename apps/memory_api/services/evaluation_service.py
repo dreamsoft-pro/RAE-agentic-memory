@@ -16,13 +16,16 @@ import numpy as np
 import structlog
 from scipy import stats
 
-from apps.memory_api.models.evaluation_models import (ABTestResult,
-                                                      ABTestVariant,
-                                                      EvaluationResult,
-                                                      EvaluationStatus,
-                                                      MetricScore, MetricType,
-                                                      RankedResult,
-                                                      RelevanceJudgment)
+from apps.memory_api.models.evaluation_models import (
+    ABTestResult,
+    ABTestVariant,
+    EvaluationResult,
+    EvaluationStatus,
+    MetricScore,
+    MetricType,
+    RankedResult,
+    RelevanceJudgment,
+)
 
 logger = structlog.get_logger(__name__)
 

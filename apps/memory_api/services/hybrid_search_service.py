@@ -24,11 +24,13 @@ import numpy as np
 import structlog
 
 from apps.memory_api.config import settings
-from apps.memory_api.models.hybrid_search_models import (HybridSearchResult,
-                                                         QueryAnalysis,
-                                                         RerankingModel,
-                                                         SearchResultItem,
-                                                         SearchStrategy)
+from apps.memory_api.models.hybrid_search_models import (
+    HybridSearchResult,
+    QueryAnalysis,
+    RerankingModel,
+    SearchResultItem,
+    SearchStrategy,
+)
 from apps.memory_api.services.hybrid_cache import get_hybrid_cache
 from apps.memory_api.services.llm import get_llm_provider
 from apps.memory_api.services.ml_service_client import MLServiceClient

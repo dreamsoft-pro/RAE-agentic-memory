@@ -9,8 +9,11 @@ from uuid import UUID
 
 import structlog
 
-from apps.memory_api.services.graph_algorithms import (GraphEdge, GraphNode,
-                                                       KnowledgeGraph)
+from apps.memory_api.services.graph_algorithms import (
+    GraphEdge,
+    GraphNode,
+    KnowledgeGraph,
+)
 
 logger = structlog.get_logger(__name__)
 

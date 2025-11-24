@@ -22,15 +22,17 @@ from uuid import UUID
 import asyncpg
 import structlog
 
-from apps.memory_api.models.reflection_models import (ReflectionCluster,
-                                                      ReflectionRelationship,
-                                                      ReflectionRelationType,
-                                                      ReflectionScoring,
-                                                      ReflectionStatistics,
-                                                      ReflectionTelemetry,
-                                                      ReflectionType,
-                                                      ReflectionUnit,
-                                                      ReflectionUsageLog)
+from apps.memory_api.models.reflection_models import (
+    ReflectionCluster,
+    ReflectionRelationship,
+    ReflectionRelationType,
+    ReflectionScoring,
+    ReflectionStatistics,
+    ReflectionTelemetry,
+    ReflectionType,
+    ReflectionUnit,
+    ReflectionUsageLog,
+)
 
 logger = structlog.get_logger(__name__)
 

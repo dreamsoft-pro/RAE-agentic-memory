@@ -3,8 +3,11 @@ from typing import Any, List, Optional
 
 import httpx
 from llama_index.schema import BaseNode, TextNode
-from llama_index.vector_stores.types import (VectorStore, VectorStoreQuery,
-                                             VectorStoreQueryResult)
+from llama_index.vector_stores.types import (
+    VectorStore,
+    VectorStoreQuery,
+    VectorStoreQueryResult,
+)
 
 
 class _RAEAPIClient:

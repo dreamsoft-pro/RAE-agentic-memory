@@ -2,10 +2,17 @@
 
 from .client import AsyncRAEClient, MemoryClient, RAEClient
 from .decorators import trace_memory
-from .models import (DeleteMemoryRequest, DeleteMemoryResponse, MemoryLayer,
-                     MemoryRecord, QueryMemoryRequest, QueryMemoryResponse,
-                     ScoredMemoryRecord, StoreMemoryRequest,
-                     StoreMemoryResponse)
+from .models import (
+    DeleteMemoryRequest,
+    DeleteMemoryResponse,
+    MemoryLayer,
+    MemoryRecord,
+    QueryMemoryRequest,
+    QueryMemoryResponse,
+    ScoredMemoryRecord,
+    StoreMemoryRequest,
+    StoreMemoryResponse,
+)
 
 __version__ = "2.0.0"
 

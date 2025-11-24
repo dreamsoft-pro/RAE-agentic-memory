@@ -18,13 +18,21 @@ from uuid import UUID, uuid4
 import asyncpg
 import structlog
 
-from apps.memory_api.models.event_models import (ActionConfig, ActionExecution,
-                                                 ActionType, Condition,
-                                                 ConditionGroup,
-                                                 ConditionOperator, Event,
-                                                 EventType, ExecutionStatus,
-                                                 TriggerCondition, TriggerRule,
-                                                 TriggerStatus, WorkflowStep)
+from apps.memory_api.models.event_models import (
+    ActionConfig,
+    ActionExecution,
+    ActionType,
+    Condition,
+    ConditionGroup,
+    ConditionOperator,
+    Event,
+    EventType,
+    ExecutionStatus,
+    TriggerCondition,
+    TriggerRule,
+    TriggerStatus,
+    WorkflowStep,
+)
 
 logger = structlog.get_logger(__name__)
 

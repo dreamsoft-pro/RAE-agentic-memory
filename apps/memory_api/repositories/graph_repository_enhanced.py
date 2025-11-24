@@ -18,16 +18,18 @@ from uuid import UUID
 import asyncpg
 import structlog
 
-from apps.memory_api.models.graph_enhanced_models import (CycleDetectionResult,
-                                                          EdgeDirection,
-                                                          EnhancedGraphEdge,
-                                                          EnhancedGraphNode,
-                                                          GraphPath,
-                                                          GraphSnapshot,
-                                                          GraphStatistics,
-                                                          GraphTraversal,
-                                                          NodeDegreeMetrics,
-                                                          TraversalAlgorithm)
+from apps.memory_api.models.graph_enhanced_models import (
+    CycleDetectionResult,
+    EdgeDirection,
+    EnhancedGraphEdge,
+    EnhancedGraphNode,
+    GraphPath,
+    GraphSnapshot,
+    GraphStatistics,
+    GraphTraversal,
+    NodeDegreeMetrics,
+    TraversalAlgorithm,
+)
 
 logger = structlog.get_logger(__name__)
 

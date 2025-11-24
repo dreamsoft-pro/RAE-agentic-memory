@@ -15,11 +15,17 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from apps.memory_api.models.reflection_models import (
-    CreateReflectionRelationshipRequest, CreateReflectionRelationshipResponse,
-    GenerateReflectionRequest, GenerateReflectionResponse,
-    GetReflectionGraphRequest, GetReflectionGraphResponse,
-    QueryReflectionsRequest, QueryReflectionsResponse, ReflectionStatistics,
-    ReflectionUnit)
+    CreateReflectionRelationshipRequest,
+    CreateReflectionRelationshipResponse,
+    GenerateReflectionRequest,
+    GenerateReflectionResponse,
+    GetReflectionGraphRequest,
+    GetReflectionGraphResponse,
+    QueryReflectionsRequest,
+    QueryReflectionsResponse,
+    ReflectionStatistics,
+    ReflectionUnit,
+)
 from apps.memory_api.repositories import reflection_repository
 from apps.memory_api.services.ml_service_client import MLServiceClient
 from apps.memory_api.services.reflection_pipeline import ReflectionPipeline

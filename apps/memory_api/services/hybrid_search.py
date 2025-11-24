@@ -19,8 +19,7 @@ import structlog
 from pydantic import BaseModel, Field
 
 from apps.memory_api.models import ScoredMemoryRecord
-from apps.memory_api.models.graph import (GraphEdge, GraphNode,
-                                          TraversalStrategy)
+from apps.memory_api.models.graph import GraphEdge, GraphNode, TraversalStrategy
 from apps.memory_api.repositories.graph_repository import GraphRepository
 from apps.memory_api.services.embedding import get_embedding_service
 from apps.memory_api.services.vector_store import get_vector_store

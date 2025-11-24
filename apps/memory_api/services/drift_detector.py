@@ -16,9 +16,12 @@ import numpy as np
 import structlog
 from scipy import stats
 
-from apps.memory_api.models.evaluation_models import (DistributionStatistics,
-                                                      DriftDetectionResult,
-                                                      DriftSeverity, DriftType)
+from apps.memory_api.models.evaluation_models import (
+    DistributionStatistics,
+    DriftDetectionResult,
+    DriftSeverity,
+    DriftType,
+)
 
 logger = structlog.get_logger(__name__)
 

@@ -26,8 +26,10 @@ spacy = pytest.importorskip(
 
 from apps.memory_api.repositories.graph_repository import GraphRepository
 from apps.memory_api.repositories.memory_repository import MemoryRepository
-from apps.memory_api.services.graph_extraction import (GraphExtractionService,
-                                                       GraphTriple)
+from apps.memory_api.services.graph_extraction import (
+    GraphExtractionService,
+    GraphTriple,
+)
 
 
 @pytest.mark.asyncio

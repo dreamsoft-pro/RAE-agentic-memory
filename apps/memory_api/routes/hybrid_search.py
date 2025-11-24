@@ -14,8 +14,12 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from apps.memory_api.models.hybrid_search_models import (
-    DEFAULT_WEIGHT_PROFILES, HybridSearchRequest, HybridSearchResponse,
-    QueryAnalysisRequest, QueryAnalysisResponse)
+    DEFAULT_WEIGHT_PROFILES,
+    HybridSearchRequest,
+    HybridSearchResponse,
+    QueryAnalysisRequest,
+    QueryAnalysisResponse,
+)
 from apps.memory_api.services.hybrid_search_service import HybridSearchService
 from apps.memory_api.services.query_analyzer import QueryAnalyzer
 

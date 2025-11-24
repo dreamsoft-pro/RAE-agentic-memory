@@ -3,8 +3,7 @@ import structlog
 
 from apps.memory_api.celery_app import celery_app
 from apps.memory_api.config import settings
-from apps.memory_api.services.community_detection import \
-    CommunityDetectionService
+from apps.memory_api.services.community_detection import CommunityDetectionService
 from apps.memory_api.services.context_cache import rebuild_full_cache
 from apps.memory_api.services.entity_resolution import EntityResolutionService
 from apps.memory_api.services.graph_extraction import GraphExtractionService

@@ -6,23 +6,30 @@ from qdrant_client import models
 
 from apps.memory_api.dependencies import get_hybrid_search_service  # NEW
 from apps.memory_api.dependencies import get_api_key
-from apps.memory_api.metrics import (deduplication_hit_counter,
-                                     memory_delete_counter,
-                                     memory_query_counter,
-                                     memory_store_counter)
+from apps.memory_api.metrics import (
+    deduplication_hit_counter,
+    memory_delete_counter,
+    memory_query_counter,
+    memory_store_counter,
+)
 from apps.memory_api.models import MemoryRecord  # NEW
 from apps.memory_api.models import RebuildReflectionsRequest  # NEW
-from apps.memory_api.models import (DeleteMemoryResponse, QueryMemoryRequest,
-                                    QueryMemoryResponse, ScoredMemoryRecord,
-                                    StoreMemoryRequest, StoreMemoryResponse)
-from apps.memory_api.repositories.memory_repository import \
-    MemoryRepository  # NEW
+from apps.memory_api.models import (
+    DeleteMemoryResponse,
+    QueryMemoryRequest,
+    QueryMemoryResponse,
+    ScoredMemoryRecord,
+    StoreMemoryRequest,
+    StoreMemoryResponse,
+)
+from apps.memory_api.repositories.memory_repository import MemoryRepository  # NEW
 from apps.memory_api.services import pii_scrubber, scoring
 from apps.memory_api.services.embedding import get_embedding_service  # NEW
 from apps.memory_api.services.hybrid_search import HybridSearchService  # NEW
 from apps.memory_api.services.vector_store import get_vector_store  # NEW
-from apps.memory_api.tasks.background_tasks import \
-    generate_reflection_for_project  # NEW
+from apps.memory_api.tasks.background_tasks import (
+    generate_reflection_for_project,
+)  # NEW
 
 logger = structlog.get_logger(__name__)
 
