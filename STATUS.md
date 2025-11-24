@@ -341,6 +341,22 @@ Funkcje wspomniane w pierwotnych planach, które nie zostały jeszcze zaimplemen
 
 ## 📝 Historia Zmian
 
+### 2025-11-24: CI Step 4 - Final Fix (isort config + embedding.py)
+**Following CI_STEP4_FINAL_FIX.md - Based on logs_50663595170.zip**
+
+**Lint Fix:**
+- ✅ Created `.isort.cfg` with `profile = black` configuration
+- ✅ Fixes 57 files showing "Imports are incorrectly sorted" in CI
+- ✅ CI now automatically uses correct isort config
+
+**Test Fix:**
+- ✅ Made sentence_transformers optional in embedding.py
+- ✅ Implemented lazy loading pattern (load on first use, not on import)
+- ✅ main.py now importable without sentence_transformers
+- ✅ Fixes "ERROR collecting apps/memory_api/tests/test_openapi.py"
+- **Commits:** `f2309575f`, `6acb5f715`
+- **Impact:** CI Lint + Test jobs should now pass
+
 ### 2025-11-24: CI Step 3 - Optional ML Dependencies + isort Fixes
 **Following CI_STEP3_LINT_AND_TEST_FIXES.md**
 

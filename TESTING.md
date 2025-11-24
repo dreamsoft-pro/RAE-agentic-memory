@@ -132,7 +132,13 @@ pip install -r apps/memory_api/requirements-test.txt
 - `test_semantic_memory.py` (spacy)
 - `test_vector_store.py` (sentence-transformers)
 
+**Services with optional ML dependencies:**
+- `embedding.py` - sentence-transformers (lazy loaded on first use)
+- `graph_extraction.py` - spacy (lazy loaded on first use)
+- `community_detection.py` - python-louvain (checked at runtime)
+
 These tests use `pytest.importorskip()` to automatically skip when ML libraries are not available.
+Services use lazy loading pattern - ML dependencies loaded only when actually needed, not on module import.
 
 ### Run All Tests
 
