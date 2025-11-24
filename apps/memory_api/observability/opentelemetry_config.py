@@ -23,18 +23,70 @@ Environment Variables:
 """
 
 import os
+from typing import TYPE_CHECKING
 
 import structlog
-from opentelemetry import trace
-from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
-from opentelemetry.instrumentation.logging import LoggingInstrumentor
-from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
-from opentelemetry.instrumentation.redis import RedisInstrumentor
-from opentelemetry.instrumentation.requests import RequestsInstrumentor
-from opentelemetry.sdk.resources import SERVICE_NAME, SERVICE_VERSION, Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+
+# Optional OpenTelemetry imports
+try:  # pragma: no cover
+    from opentelemetry import trace
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+        OTLPSpanExporter,
+    )
+    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+    from opentelemetry.instrumentation.logging import LoggingInstrumentor
+    from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
+    from opentelemetry.instrumentation.redis import RedisInstrumentor
+    from opentelemetry.instrumentation.requests import RequestsInstrumentor
+    from opentelemetry.sdk.resources import SERVICE_NAME, SERVICE_VERSION, Resource
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+
+    OPENTELEMETRY_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    trace = None  # type: ignore[assignment]
+    OTLPSpanExporter = None  # type: ignore[assignment,misc]
+    FastAPIInstrumentor = None  # type: ignore[assignment,misc]
+    LoggingInstrumentor = None  # type: ignore[assignment,misc]
+    Psycopg2Instrumentor = None  # type: ignore[assignment,misc]
+    RedisInstrumentor = None  # type: ignore[assignment,misc]
+    RequestsInstrumentor = None  # type: ignore[assignment,misc]
+    SERVICE_NAME = None  # type: ignore[assignment]
+    SERVICE_VERSION = None  # type: ignore[assignment]
+    Resource = None  # type: ignore[assignment,misc]
+    TracerProvider = None  # type: ignore[assignment,misc]
+    BatchSpanProcessor = None  # type: ignore[assignment,misc]
+    ConsoleSpanExporter = None  # type: ignore[assignment,misc]
+    OPENTELEMETRY_AVAILABLE = False
+
+if TYPE_CHECKING:
+    from opentelemetry import trace  # noqa: F401
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (  # noqa: F401
+        OTLPSpanExporter,
+    )
+    from opentelemetry.instrumentation.fastapi import (  # noqa: F401
+        FastAPIInstrumentor,
+    )
+    from opentelemetry.instrumentation.logging import (  # noqa: F401
+        LoggingInstrumentor,
+    )
+    from opentelemetry.instrumentation.psycopg2 import (  # noqa: F401
+        Psycopg2Instrumentor,
+    )
+    from opentelemetry.instrumentation.redis import RedisInstrumentor  # noqa: F401
+    from opentelemetry.instrumentation.requests import (  # noqa: F401
+        RequestsInstrumentor,
+    )
+    from opentelemetry.sdk.resources import (  # noqa: F401
+        SERVICE_NAME,
+        SERVICE_VERSION,
+        Resource,
+    )
+    from opentelemetry.sdk.trace import TracerProvider  # noqa: F401
+    from opentelemetry.sdk.trace.export import (  # noqa: F401
+        BatchSpanProcessor,
+        ConsoleSpanExporter,
+    )
 
 logger = structlog.get_logger(__name__)
 
@@ -63,17 +115,34 @@ def setup_opentelemetry():
 
     This function should be called once during application startup,
     before any instrumented code runs.
+
+    Returns:
+        TracerProvider instance if successful, None otherwise
     """
+    if not OPENTELEMETRY_AVAILABLE:
+        logger.info(
+            "opentelemetry_disabled",
+            reason="OpenTelemetry packages not installed. "
+            "Install with: pip install opentelemetry-api opentelemetry-sdk "
+            "opentelemetry-exporter-otlp-proto-grpc "
+            "opentelemetry-instrumentation-fastapi "
+            "opentelemetry-instrumentation-logging "
+            "opentelemetry-instrumentation-psycopg2 "
+            "opentelemetry-instrumentation-redis "
+            "opentelemetry-instrumentation-requests",
+        )
+        return None
+
     if not OTEL_ENABLED:
         logger.info("opentelemetry_disabled", reason="OTEL_TRACES_ENABLED=false")
         return None
 
     try:
         # Create resource with service metadata
-        resource = Resource.create(
+        resource = Resource.create(  # type: ignore[misc]
             {
-                SERVICE_NAME: OTEL_SERVICE_NAME,
-                SERVICE_VERSION: OTEL_SERVICE_VERSION,
+                SERVICE_NAME: OTEL_SERVICE_NAME,  # type: ignore[dict-item]
+                SERVICE_VERSION: OTEL_SERVICE_VERSION,  # type: ignore[dict-item]
                 "deployment.environment": os.getenv("ENVIRONMENT", "development"),
                 "service.namespace": "rae",
                 "service.instance.id": os.getenv("HOSTNAME", "localhost"),
@@ -81,16 +150,16 @@ def setup_opentelemetry():
         )
 
         # Create tracer provider
-        tracer_provider = TracerProvider(resource=resource)
+        tracer_provider = TracerProvider(resource=resource)  # type: ignore[misc]
 
         # Configure exporter based on type
         if OTEL_EXPORTER_TYPE == "console":
             # Console exporter for debugging
-            span_exporter = ConsoleSpanExporter()
+            span_exporter = ConsoleSpanExporter()  # type: ignore[misc]
             logger.info("opentelemetry_console_exporter", service=OTEL_SERVICE_NAME)
         elif OTEL_EXPORTER_TYPE == "otlp":
             # OTLP exporter (default) for Jaeger, Tempo, etc.
-            span_exporter = OTLPSpanExporter(
+            span_exporter = OTLPSpanExporter(  # type: ignore[misc]
                 endpoint=OTEL_EXPORTER_ENDPOINT, insecure=True  # Use TLS in production
             )
             logger.info(
@@ -103,10 +172,10 @@ def setup_opentelemetry():
             return None
 
         # Add batch span processor (buffers spans for efficiency)
-        tracer_provider.add_span_processor(BatchSpanProcessor(span_exporter))
+        tracer_provider.add_span_processor(BatchSpanProcessor(span_exporter))  # type: ignore[arg-type]
 
         # Set global tracer provider
-        trace.set_tracer_provider(tracer_provider)
+        trace.set_tracer_provider(tracer_provider)  # type: ignore[union-attr]
 
         logger.info(
             "opentelemetry_initialized",
@@ -140,11 +209,11 @@ def instrument_fastapi(app):
     Args:
         app: FastAPI application instance
     """
-    if not OTEL_ENABLED:
+    if not OPENTELEMETRY_AVAILABLE or not OTEL_ENABLED:
         return
 
     try:
-        FastAPIInstrumentor.instrument_app(app)
+        FastAPIInstrumentor.instrument_app(app)  # type: ignore[union-attr]
         logger.info("opentelemetry_fastapi_instrumented")
     except Exception as e:
         logger.error("opentelemetry_fastapi_failed", error=str(e))
@@ -160,25 +229,25 @@ def instrument_libraries():
     - Redis operations (redis-py)
     - Python logging (adds trace context to logs)
     """
-    if not OTEL_ENABLED:
+    if not OPENTELEMETRY_AVAILABLE or not OTEL_ENABLED:
         return
 
     try:
         # Instrument requests library (for external HTTP calls)
-        RequestsInstrumentor().instrument()
+        RequestsInstrumentor().instrument()  # type: ignore[misc]
         logger.info("opentelemetry_requests_instrumented")
 
         # Instrument PostgreSQL (psycopg2)
         # Note: For asyncpg, you'll need custom instrumentation
-        Psycopg2Instrumentor().instrument()
+        Psycopg2Instrumentor().instrument()  # type: ignore[misc]
         logger.info("opentelemetry_psycopg2_instrumented")
 
         # Instrument Redis
-        RedisInstrumentor().instrument()
+        RedisInstrumentor().instrument()  # type: ignore[misc]
         logger.info("opentelemetry_redis_instrumented")
 
         # Instrument logging (adds trace_id to logs)
-        LoggingInstrumentor().instrument(set_logging_format=False)
+        LoggingInstrumentor().instrument(set_logging_format=False)  # type: ignore[misc]
         logger.info("opentelemetry_logging_instrumented")
 
     except Exception as e:
@@ -199,8 +268,14 @@ def get_tracer(name: str = OTEL_SERVICE_NAME):
         with tracer.start_as_current_span("my-operation") as span:
             span.set_attribute("custom.key", "value")
             # ... do work ...
+
+    Returns:
+        Tracer instance if OpenTelemetry is available, None otherwise
     """
-    return trace.get_tracer(name, OTEL_SERVICE_VERSION)
+    if not OPENTELEMETRY_AVAILABLE:
+        return None
+
+    return trace.get_tracer(name, OTEL_SERVICE_VERSION)  # type: ignore[union-attr]
 
 
 def add_span_attributes(**attributes):
@@ -214,7 +289,10 @@ def add_span_attributes(**attributes):
             operation="memory_create"
         )
     """
-    span = trace.get_current_span()
+    if not OPENTELEMETRY_AVAILABLE:
+        return
+
+    span = trace.get_current_span()  # type: ignore[union-attr]
     if span.is_recording():
         for key, value in attributes.items():
             span.set_attribute(key, value)
@@ -231,10 +309,13 @@ def record_exception(exception: Exception):
             record_exception(e)
             raise
     """
-    span = trace.get_current_span()
+    if not OPENTELEMETRY_AVAILABLE:
+        return
+
+    span = trace.get_current_span()  # type: ignore[union-attr]
     if span.is_recording():
         span.record_exception(exception)
-        span.set_status(trace.Status(trace.StatusCode.ERROR))
+        span.set_status(trace.Status(trace.StatusCode.ERROR))  # type: ignore[union-attr]
 
 
 # ============================================================================
@@ -264,8 +345,17 @@ class LLMTracer:
     def trace(model: str, operation: str, provider: str = "unknown"):
         """
         Create a span for an LLM operation.
+
+        Returns:
+            Span instance if OpenTelemetry is available, None otherwise
         """
+        if not OPENTELEMETRY_AVAILABLE:
+            return None
+
         tracer = get_tracer("rae.llm")
+        if tracer is None:
+            return None
+
         span = tracer.start_span(f"llm.{operation}")
         span.set_attribute("llm.model", model)
         span.set_attribute("llm.provider", provider)
@@ -275,6 +365,9 @@ class LLMTracer:
     @staticmethod
     def record_tokens(input_tokens: int, output_tokens: int):
         """Record token usage in current span."""
+        if not OPENTELEMETRY_AVAILABLE:
+            return
+
         add_span_attributes(
             llm_input_tokens=input_tokens,
             llm_output_tokens=output_tokens,
@@ -284,11 +377,17 @@ class LLMTracer:
     @staticmethod
     def record_cost(cost_usd: float):
         """Record cost in current span."""
+        if not OPENTELEMETRY_AVAILABLE:
+            return
+
         add_span_attributes(llm_cost_usd=cost_usd)
 
     @staticmethod
     def record_cache_hit(is_hit: bool):
         """Record cache hit/miss."""
+        if not OPENTELEMETRY_AVAILABLE:
+            return
+
         add_span_attributes(llm_cache_hit=is_hit)
 
 
