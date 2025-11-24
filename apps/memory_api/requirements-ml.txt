@@ -6,7 +6,8 @@
 # Consider using dedicated microservice (reranker-service) or external API instead
 
 # Embeddings (Local)
-sentence-transformers==2.2.2
+# Updated to fix compatibility with huggingface_hub
+sentence-transformers>=2.7.0
 
 # NLP & Entity Recognition
 spacy

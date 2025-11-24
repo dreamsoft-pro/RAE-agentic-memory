@@ -1,6 +1,6 @@
 # RAE Agentic Memory Engine - Status Projektu
 
-**Ostatnia aktualizacja:** 2025-11-23
+**Ostatnia aktualizacja:** 2025-11-24
 **Wersja:** 2.0.0-enterprise
 **Status:** Production Ready ✅
 
@@ -177,11 +177,11 @@ Projekt został zrefaktoryzowany do używania Repository/DAO pattern:
 
 ## 📊 Stan Testów
 
-**Data:** 2025-11-23
-**Total:** 229 tests
-**Passed:** 226 (100%)
+**Data:** 2025-11-24
+**Total:** 243 tests (unit + non-integration)
+**Passed:** 243 (100%)
 **Failed:** 0
-**Skipped:** 3 (integration tests)
+**Skipped:** Integration tests (require running services)
 
 ### Pokrycie Testami
 
@@ -341,6 +341,19 @@ Funkcje wspomniane w pierwotnych planach, które nie zostały jeszcze zaimplemen
 
 ## 📝 Historia Zmian
 
+### 2025-11-24: CI Pipeline Fixes, Code Quality & Test Fixes
+- ✅ Fixed syntax error in integrations/mcp-server/main.py
+- ✅ Applied black formatting to 145 files
+- ✅ Applied isort to 140+ files
+- ✅ Created root-level Dockerfile for proper CI builds
+- ✅ Added missing test dependencies (instructor, slowapi, scipy, mcp)
+- ✅ Updated CI workflow to include ML dependencies
+- ✅ Fixed MCP server test (AnyUrl type comparison)
+- ✅ Updated sentence-transformers for compatibility
+- ✅ All 243 unit tests passing (100% pass rate)
+- **Commits:** `384aa5402` + updates
+- **Impact:** CI pipeline fully functional + all tests passing
+
 ### 2025-11-23: Repository Pattern Refactoring
 - ✅ Extended GraphRepository with 8 new methods
 - ✅ Refactored 3 services to eliminate direct SQL
@@ -427,4 +440,4 @@ Wszystkie krytyczne luki zostały zamknięte. System jest gotowy do produkcji.
 
 **Status:** ✅ Production Ready
 **Version:** 2.0.0-enterprise
-**Last Updated:** 2025-11-23
+**Last Updated:** 2025-11-24

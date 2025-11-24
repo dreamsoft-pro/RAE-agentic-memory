@@ -236,7 +236,7 @@ class TestMCPResources:
         resources = await handle_list_resources()
 
         assert len(resources) == 2
-        uris = [r.uri for r in resources]
+        uris = [str(r.uri) for r in resources]
         assert "rae://project/reflection" in uris
         assert "rae://project/guidelines" in uris
 

@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **CI Pipeline Fixes (2025-11-24)**
+  - Created root-level Dockerfile for memory_api service
+  - Multi-stage build with proper SDK installation
+  - Security best practices (non-root user, health checks)
+  - Added missing test dependencies: instructor, slowapi, scipy, mcp
+  - Updated CI workflow to install requirements-ml.txt
+
+### Fixed
+- **Code Quality & Linting (2025-11-24)**
+  - Fixed syntax error in integrations/mcp-server/main.py:122
+  - Corrected indentation and module-level code structure
+  - Applied black formatting to 145 files across apps/, sdk/, and integrations/
+  - Applied isort to fix import ordering in 140+ files
+  - All files now comply with CI linting requirements
+- **Test Fixes (2025-11-24)**
+  - Fixed MCP server test: AnyUrl type comparison issue in test_list_resources
+  - Updated sentence-transformers to >=2.7.0 for huggingface_hub compatibility
+  - All 243 unit tests now passing (100% pass rate)
+
+### Changed
+- **CI/CD Configuration (2025-11-24)**
+  - Updated .github/workflows/ci.yml to include ML dependencies
+  - Enhanced requirements-test.txt with additional test dependencies
+  - Improved Docker build configuration for better CI integration
+
 ### Planned
 - v2.0: Multi-modal memory support (images, audio)
 - Memory consolidation and pruning strategies
