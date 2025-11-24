@@ -341,6 +341,28 @@ Funkcje wspomniane w pierwotnych planach, które nie zostały jeszcze zaimplemen
 
 ## 📝 Historia Zmian
 
+### 2025-11-24: CI Lint Job Fixed + ML Test Optimization
+**Following CI_LINT_FIX_PLAN.md & CI_ML_OPTIMIZATION_PLAN.md**
+
+**Code Formatting (CI_LINT_FIX_PLAN.md):**
+- ✅ Applied black formatter to 57 files
+- ✅ Applied isort to 56 files
+- ✅ All 169 files now pass `black --check` validation
+- ✅ Fixed "Oh no! 57 files would be reformatted" error
+- **Commit:** `718a4fb5b` "Format code with black and isort to satisfy CI lint"
+- **Result:** Lint job now passes ✅
+
+**ML Test Optimization (CI_ML_OPTIMIZATION_PLAN.md):**
+- ✅ Removed requirements-ml.txt from CI pipeline
+- ✅ Added pytest.importorskip to 7 ML-dependent tests
+- ✅ Tests skip gracefully when ML libraries unavailable
+- ✅ Prevents "no space left on device" errors in CI
+- ✅ Updated TESTING.md with ML dependencies documentation
+- **Commits:** `b27e3387a`, `d82ba826e`
+- **Impact:** Lightweight CI pipeline, ML tests run locally
+
+**Combined Result:** CI pipeline fully green (lint ✅, tests ✅, docker ✅)
+
 ### 2025-11-24: CI Pipeline Complete Repair (Following CI_REPAIR_PLAN.md)
 - ✅ Fixed syntax error in integrations/mcp-server/main.py (line 122)
 - ✅ Applied black formatting to 145 files
