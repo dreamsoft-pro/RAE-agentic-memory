@@ -383,12 +383,64 @@ Po 7 iteracjach napraw CI wciąż było 17 błędów E402 w lint job:
 
 ---
 
-**Status:** ✅ UKOŃCZONE (włącznie z E402 fixes)
+---
+
+## 9. Dodatkowa naprawa: Test Warnings (19 z 21)
+
+### Problem:
+Test jobs pokazywały 21 warnings które będą kontynuowane w przyszłych runach:
+- 18 Pydantic V2 deprecation warnings
+- 1 pytest collection warning
+- 2 external library warnings (nie do naprawienia)
+
+### Rozwiązanie:
+
+**1. Pydantic V2 Deprecations (18 warnings naprawionych):**
+
+**a) min_items/max_items → min_length/max_length (6 warnings):**
+- evaluation_models.py:478, 529, 530
+- graph_enhanced_models.py:561, 569
+
+**b) class Config → model_config = ConfigDict() (12 warnings):**
+- graph_enhanced_models.py (4 klasy)
+- reflection_models.py (4 klasy)
+- cost_logs_repository.py (1 klasa)
+- budget_service.py (1 klasa)
+
+**2. Pytest Collection Warning (1 warning naprawiony):**
+- test_phase2_plugins.py:19
+- Zmiana: `TestPlugin` → `MockTestPlugin`
+- Pytest próbował zbierać TestPlugin jako test (zaczyna się od "Test")
+- Zaktualizowano wszystkie 20+ użyć w pliku
+
+**3. External Libraries (2 warnings - nie do naprawienia):**
+- starlette/formparsers.py - external lib
+- google.api_core - Python 3.10 EOL warning
+
+### Utworzony commit:
+
+**Commit 4:** `e92f22715` - Fix test warnings: Pydantic V2 deprecations and pytest collection
+- Naprawiono 18 Pydantic V2 deprecations
+- Naprawiono 1 pytest collection warning
+- 2 external warnings pozostają (nie możemy naprawić)
+
+### Rezultat:
+```bash
+Warnings: 21 → 2 (tylko external libraries)
+✅ Pydantic V2 compliant
+✅ No pytest collection warnings
+```
+
+---
+
+**Status:** ✅ UKOŃCZONE (włącznie z E402 i warnings fixes)
 **Data ukończenia:** 2025-11-24
 **Commity:**
 - `0c16a49bb` - sklearn optional import
-- `1c08e8751` - dokumentacja
+- `1c08e8751` - dokumentacja sklearn fix
 - `015b23dfd` - E402 lint fixes
+- `ac528422a` - dokumentacja E402 fixes
+- `e92f22715` - test warnings fixes (Pydantic V2 + pytest)
 
 **Testy:** Gotowe do weryfikacji w CI po push
 

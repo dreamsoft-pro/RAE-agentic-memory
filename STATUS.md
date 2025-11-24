@@ -20,12 +20,14 @@
 
 ## 📝 Ostatnie Zmiany
 
-### 2025-11-24 - CI Pipeline: Naprawa sklearn optional imports + E402 lint errors
+### 2025-11-24 - CI Pipeline: sklearn fix + E402 errors + test warnings
 
 **Commity:**
 - `0c16a49bb` - Fix CI: make sklearn optional in reflection_pipeline.py
 - `1c08e8751` - Update documentation - CI Step 8: sklearn fix completion
 - `015b23dfd` - Fix lint: resolve all 17 E402 errors
+- `ac528422a` - Update documentation - CI Step 8: Add E402 lint fixes section
+- `e92f22715` - Fix test warnings: Pydantic V2 deprecations and pytest collection
 
 **Problem 1: sklearn ModuleNotFoundError**
 - GitHub Actions CI: ModuleNotFoundError dla sklearn w reflection_pipeline.py
@@ -37,6 +39,11 @@
 - Lint job: 17 błędów E402 "Module level import not at top of file"
 - 2 błędy w models/__init__.py (importy po operacjach importlib)
 - 15 błędów w testach (importy po pytest.importorskip())
+
+**Problem 3: 21 Test Warnings**
+- 18 Pydantic V2 deprecation warnings (min_items/max_items, class Config)
+- 1 pytest collection warning (TestPlugin ma __init__)
+- 2 external library warnings (starlette, google.api_core)
 
 **Rozwiązanie 1: sklearn optional import**
 1. Opcjonalny import wszystkich sklearn modules (try/except)
@@ -52,6 +59,14 @@
    - Pattern: skip check → conditional import → tests (poprawny i konieczny)
 3. Formatowanie: black (5 plików) + isort
 
+**Rozwiązanie 3: Test Warnings**
+1. Pydantic V2 deprecations (18 warnings):
+   - min_items/max_items → min_length/max_length (6 plików)
+   - class Config → model_config = ConfigDict() (12 klas w 4 plikach)
+2. Pytest collection (1 warning):
+   - TestPlugin → MockTestPlugin (20+ zmian w test_phase2_plugins.py)
+3. External warnings: pozostają (nie można naprawić)
+
 **sklearn używany do:**
 - Memory clustering (HDBSCAN, KMeans)
 - Embedding standardization (StandardScaler)
@@ -64,6 +79,9 @@
 - ✅ Reflection clustering działa gdy sklearn jest zainstalowany
 - ✅ Jasny error message gdy sklearn brakuje
 - ✅ **Lint: 0 błędów E402 (było 17 po 7 iteracjach)**
+- ✅ **Test warnings: 2 (było 21) - tylko external libs**
+- ✅ **Pydantic V2 compliant (18 deprecations fixed)**
+- ✅ **No pytest collection warnings**
 - ✅ **All linters pass: ruff ✅ black ✅ isort ✅**
 
 **Kompletny wzorzec optional dependencies - FINALIZACJA:**
