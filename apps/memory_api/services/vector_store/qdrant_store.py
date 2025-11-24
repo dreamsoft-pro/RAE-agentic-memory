@@ -1,12 +1,9 @@
 import hashlib
-import os
-from typing import Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List
 
 import numpy as np
-import onnxruntime
 import structlog
 from qdrant_client import QdrantClient, models
-from sentence_transformers import SentenceTransformer
 from tenacity import (
     before_sleep_log,
     retry,
@@ -14,6 +11,26 @@ from tenacity import (
     stop_after_attempt,
     wait_exponential,
 )
+
+# Optional ML dependencies
+try:  # pragma: no cover
+    import onnxruntime
+
+    ONNXRUNTIME_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    onnxruntime = None  # type: ignore[assignment]
+    ONNXRUNTIME_AVAILABLE = False
+
+try:  # pragma: no cover
+    from sentence_transformers import SentenceTransformer
+
+    SENTENCE_TRANSFORMERS_AVAILABLE = True
+except ImportError:  # pragma: no cover
+    SentenceTransformer = None  # type: ignore[assignment,misc]
+    SENTENCE_TRANSFORMERS_AVAILABLE = False
+
+if TYPE_CHECKING:
+    from sentence_transformers import SentenceTransformer  # noqa: F401
 
 from ...config import settings
 from ...metrics import vector_query_time_histogram
@@ -40,7 +57,12 @@ class QdrantStore(MemoryVectorStore):
                 f"Using ONNX embedder (placeholder) from: {settings.ONNX_EMBEDDER_PATH}"
             )
         else:
-            self.embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+            if not SENTENCE_TRANSFORMERS_AVAILABLE:
+                raise RuntimeError(
+                    "QdrantStore requires sentence-transformers. "
+                    "Install ML extras or run: `pip install sentence-transformers`."
+                )
+            self.embedding_model = SentenceTransformer("all-MiniLM-L6-v2")  # type: ignore[misc]
             print("Using SentenceTransformer 'all-MiniLM-L6-v2'")
 
     def _get_onnx_embedder(self, model_path: str):
