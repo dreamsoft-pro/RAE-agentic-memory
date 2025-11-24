@@ -333,13 +333,68 @@ uvicorn apps.memory_api.main:app
 
 ---
 
-**Status:** ✅ UKOŃCZONE
+---
+
+## 8. Dodatkowa naprawa: E402 Lint Errors (17 błędów)
+
+### Problem:
+Po 7 iteracjach napraw CI wciąż było 17 błędów E402 w lint job:
+- 2 błędy w `models/__init__.py` (importy po operacjach importlib)
+- 15 błędów w testach (importy po `pytest.importorskip()`)
+
+### Rozwiązanie:
+
+**1. models/__init__.py (2 błędy):**
+- Przeniesiono importy `rbac` i `tenant` na górę pliku (po import Path)
+- Zachowano wzorzec importlib, ale zgodny z E402
+
+**2. Testy (15 błędów):**
+- Dodano `# noqa: E402` do importów po `pytest.importorskip()`
+- **Uzasadnienie:** `pytest.importorskip()` MUSI być przed importem modułów wymagających ML
+- Wzorzec: skip check → conditional import → tests (poprawny i konieczny)
+- Pliki:
+  * test_graph_extraction.py
+  * test_graph_extraction_integration.py
+  * test_hybrid_search.py
+  * test_pii_scrubber.py
+  * test_reflection_simple.py
+  * test_semantic_memory.py
+  * test_vector_store.py
+
+**3. Formatowanie:**
+- black: 5 plików przeformatowanych
+- isort: naprawiono sortowanie importów
+
+### Utworzony commit:
+
+**Commit 3:** `015b23dfd` - Fix lint: resolve all 17 E402 errors
+- Naprawiono wszystkie E402 errors w models/__init__.py
+- Dodano # noqa: E402 w testach (zamierzony pattern z pytest.importorskip)
+- Formatowanie: black + isort
+
+### Rezultat końcowy:
+```bash
+✅ ruff check: All checks passed (0 errors, było 17)
+✅ black --check: 169 files unchanged
+✅ isort --check: All correct
+```
+
+**Lint job będzie teraz ZIELONY!**
+
+---
+
+**Status:** ✅ UKOŃCZONE (włącznie z E402 fixes)
 **Data ukończenia:** 2025-11-24
-**Commit:** 0c16a49bb
+**Commity:**
+- `0c16a49bb` - sklearn optional import
+- `1c08e8751` - dokumentacja
+- `015b23dfd` - E402 lint fixes
+
 **Testy:** Gotowe do weryfikacji w CI po push
 
-**Kluczowe osiągnięcie:**
-- API jest teraz w 100% importowalny bez sklearn
-- Wszystkie ML dependencies są opcjonalne (kompletny wzorzec)
-- CI może zbierać testy bez żadnych ML packages
-- Reflection clustering działa gdy sklearn jest zainstalowany
+**Kluczowe osiągnięcia:**
+- ✅ API jest teraz w 100% importowalny bez sklearn
+- ✅ Wszystkie ML dependencies są opcjonalne (kompletny wzorzec)
+- ✅ CI może zbierać testy bez żadnych ML packages
+- ✅ Reflection clustering działa gdy sklearn jest zainstalowany
+- ✅ **0 błędów lint (było 17 E402 po 7 iteracjach)**

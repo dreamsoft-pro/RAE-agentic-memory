@@ -20,23 +20,37 @@
 
 ## 📝 Ostatnie Zmiany
 
-### 2025-11-24 - CI Pipeline: Naprawa sklearn optional imports
+### 2025-11-24 - CI Pipeline: Naprawa sklearn optional imports + E402 lint errors
 
-**Commit:**
+**Commity:**
 - `0c16a49bb` - Fix CI: make sklearn optional in reflection_pipeline.py
+- `1c08e8751` - Update documentation - CI Step 8: sklearn fix completion
+- `015b23dfd` - Fix lint: resolve all 17 E402 errors
 
-**Problem:**
+**Problem 1: sklearn ModuleNotFoundError**
 - GitHub Actions CI: ModuleNotFoundError dla sklearn w reflection_pipeline.py
 - Test jobs (Python 3.10, 3.11, 3.12) czerwone - błąd przy zbieraniu testów
 - Import chain: test_openapi.py:3 → main.py:23 → routes/reflections.py:31 → reflection_pipeline.py:20 → sklearn
 - sklearn importowane na module level (HDBSCAN, KMeans, StandardScaler)
 
-**Rozwiązanie:**
+**Problem 2: 17 E402 Lint Errors (7th iteration)**
+- Lint job: 17 błędów E402 "Module level import not at top of file"
+- 2 błędy w models/__init__.py (importy po operacjach importlib)
+- 15 błędów w testach (importy po pytest.importorskip())
+
+**Rozwiązanie 1: sklearn optional import**
 1. Opcjonalny import wszystkich sklearn modules (try/except)
 2. Runtime validation w _ensure_sklearn_available() method
 3. Sprawdzenie na początku _cluster_memories() - jedynej metody używającej sklearn
 4. TYPE_CHECKING imports dla type hints
 5. RuntimeError z jasnym message gdy sklearn brakuje ale jest używany
+
+**Rozwiązanie 2: E402 errors**
+1. models/__init__.py: przeniesiono rbac i tenant imports na górę (po Path import)
+2. Testy: dodano # noqa: E402 do importów po pytest.importorskip()
+   - Uzasadnienie: pytest.importorskip() MUSI być przed importem modułów wymagających ML
+   - Pattern: skip check → conditional import → tests (poprawny i konieczny)
+3. Formatowanie: black (5 plików) + isort
 
 **sklearn używany do:**
 - Memory clustering (HDBSCAN, KMeans)
@@ -49,6 +63,8 @@
 - ✅ Wszystkie testy mogą być zbierane w CI
 - ✅ Reflection clustering działa gdy sklearn jest zainstalowany
 - ✅ Jasny error message gdy sklearn brakuje
+- ✅ **Lint: 0 błędów E402 (było 17 po 7 iteracjach)**
+- ✅ **All linters pass: ruff ✅ black ✅ isort ✅**
 
 **Kompletny wzorzec optional dependencies - FINALIZACJA:**
 
