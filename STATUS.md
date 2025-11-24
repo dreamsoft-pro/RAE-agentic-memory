@@ -20,6 +20,54 @@
 
 ## 📝 Ostatnie Zmiany
 
+### 2025-11-24 - CI Pipeline: Naprawa sklearn optional imports
+
+**Commit:**
+- `0c16a49bb` - Fix CI: make sklearn optional in reflection_pipeline.py
+
+**Problem:**
+- GitHub Actions CI: ModuleNotFoundError dla sklearn w reflection_pipeline.py
+- Test jobs (Python 3.10, 3.11, 3.12) czerwone - błąd przy zbieraniu testów
+- Import chain: test_openapi.py:3 → main.py:23 → routes/reflections.py:31 → reflection_pipeline.py:20 → sklearn
+- sklearn importowane na module level (HDBSCAN, KMeans, StandardScaler)
+
+**Rozwiązanie:**
+1. Opcjonalny import wszystkich sklearn modules (try/except)
+2. Runtime validation w _ensure_sklearn_available() method
+3. Sprawdzenie na początku _cluster_memories() - jedynej metody używającej sklearn
+4. TYPE_CHECKING imports dla type hints
+5. RuntimeError z jasnym message gdy sklearn brakuje ale jest używany
+
+**sklearn używany do:**
+- Memory clustering (HDBSCAN, KMeans)
+- Embedding standardization (StandardScaler)
+- Pattern analysis w reflections
+
+**Rezultat:**
+- ✅ reflection_pipeline.py importowalny bez sklearn (SKLEARN_AVAILABLE=False)
+- ✅ routes/reflections.py i main.py importowalne bez ML dependencies
+- ✅ Wszystkie testy mogą być zbierane w CI
+- ✅ Reflection clustering działa gdy sklearn jest zainstalowany
+- ✅ Jasny error message gdy sklearn brakuje
+
+**Kompletny wzorzec optional dependencies - FINALIZACJA:**
+
+| Typ | Dependency | File | Strategia |
+|-----|------------|------|-----------|
+| ML | spacy | graph_extraction.py | RuntimeError ✅ |
+| ML | sentence_transformers | embedding.py, qdrant_store.py | RuntimeError ✅ |
+| ML | onnxruntime | qdrant_store.py | RuntimeError ✅ |
+| ML | python-louvain | community_detection.py | RuntimeError ✅ |
+| ML | presidio_analyzer | pii_scrubber.py | RuntimeError ✅ |
+| **ML** | **sklearn** | **reflection_pipeline.py** | **RuntimeError ✅ NEW** |
+| Observability | opentelemetry | opentelemetry_config.py | Graceful ✅ |
+
+**Wszystkie ciężkie dependencies są teraz opcjonalne! API w 100% importowalny bez ML/observability packages.**
+
+**Dokumentacja:** [CI_STEP8_SKLEARN_FIX.md](CI_STEP8_SKLEARN_FIX.md)
+
+---
+
 ### 2025-11-24 - CI Pipeline: Naprawa opentelemetry optional imports
 
 **Commit:**
