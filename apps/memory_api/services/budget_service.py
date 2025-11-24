@@ -15,7 +15,7 @@ from typing import Optional
 import asyncpg
 import structlog
 from fastapi import HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 logger = structlog.get_logger(__name__)
 
@@ -58,8 +58,7 @@ class Budget(BaseModel):
     last_daily_reset: datetime
     last_monthly_reset: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class BudgetUsageIncrement(BaseModel):

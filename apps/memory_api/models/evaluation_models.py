@@ -475,7 +475,7 @@ class CreateABTestRequest(BaseModel):
     test_name: str
     description: Optional[str] = None
 
-    variants: List[ABTestVariant] = Field(..., min_items=2, max_items=10)
+    variants: List[ABTestVariant] = Field(..., min_length=2, max_length=10)
 
     # Test parameters
     duration_days: int = Field(7, gt=0, le=90)
@@ -526,8 +526,8 @@ class BenchmarkSuite(BaseModel):
     description: Optional[str] = None
 
     # Benchmark queries
-    queries: List[str] = Field(..., min_items=1)
-    relevance_judgments: List[RelevanceJudgment] = Field(..., min_items=1)
+    queries: List[str] = Field(..., min_length=1)
+    relevance_judgments: List[RelevanceJudgment] = Field(..., min_length=1)
 
     # Expected performance
     target_mrr: Optional[float] = Field(None, ge=0.0, le=1.0)

@@ -16,8 +16,8 @@ from apps.memory_api.plugins.base import (
 )
 
 
-class TestPlugin(Plugin):
-    """Test plugin for unit tests"""
+class MockTestPlugin(Plugin):
+    """Mock plugin for unit tests (renamed to avoid pytest collection)"""
 
     def _create_metadata(self) -> PluginMetadata:
         return PluginMetadata(
@@ -89,7 +89,7 @@ class TestPluginBase:
     @pytest.mark.asyncio
     async def test_plugin_initialization(self):
         """Test plugin initialization"""
-        plugin = TestPlugin(config={"test": "value"})
+        plugin = MockTestPlugin(config={"test": "value"})
 
         assert plugin.config["test"] == "value"
         assert plugin.metadata.name == "test_plugin"
@@ -99,13 +99,13 @@ class TestPluginBase:
     @pytest.mark.asyncio
     async def test_plugin_shutdown(self):
         """Test plugin shutdown"""
-        plugin = TestPlugin()
+        plugin = MockTestPlugin()
         await plugin.shutdown()
 
     @pytest.mark.asyncio
     async def test_plugin_health_check(self):
         """Test plugin health check"""
-        plugin = TestPlugin()
+        plugin = MockTestPlugin()
         health = await plugin.health_check()
 
         assert health["plugin"] == "test_plugin"
@@ -115,7 +115,7 @@ class TestPluginBase:
     @pytest.mark.asyncio
     async def test_hook_execution(self):
         """Test hook method execution"""
-        plugin = TestPlugin()
+        plugin = MockTestPlugin()
         tenant_id = uuid4()
 
         # Test after_memory_create hook
@@ -129,7 +129,7 @@ class TestPluginBase:
     @pytest.mark.asyncio
     async def test_transform_hook(self):
         """Test transform hook that modifies data"""
-        plugin = TestPlugin()
+        plugin = MockTestPlugin()
         tenant_id = uuid4()
 
         params = {"query": "test"}
@@ -152,7 +152,7 @@ class TestPluginRegistry:
     def test_register_plugin(self):
         """Test registering a plugin"""
         registry = PluginRegistry()
-        plugin = TestPlugin()
+        plugin = MockTestPlugin()
 
         registry.register(plugin)
 
@@ -162,7 +162,7 @@ class TestPluginRegistry:
     def test_unregister_plugin(self):
         """Test unregistering a plugin"""
         registry = PluginRegistry()
-        plugin = TestPlugin()
+        plugin = MockTestPlugin()
 
         registry.register(plugin)
         assert "test_plugin" in registry._plugins
@@ -173,7 +173,7 @@ class TestPluginRegistry:
     def test_list_plugins(self):
         """Test listing plugins"""
         registry = PluginRegistry()
-        plugin = TestPlugin()
+        plugin = MockTestPlugin()
 
         registry.register(plugin)
 
@@ -184,7 +184,7 @@ class TestPluginRegistry:
     def test_get_plugins_for_hook(self):
         """Test getting plugins for specific hook"""
         registry = PluginRegistry()
-        plugin = TestPlugin()
+        plugin = MockTestPlugin()
 
         registry.register(plugin)
 
@@ -204,8 +204,8 @@ class TestPluginRegistry:
     async def test_initialize_all(self):
         """Test initializing all plugins"""
         registry = PluginRegistry()
-        plugin1 = TestPlugin()
-        plugin2 = TestPlugin()
+        plugin1 = MockTestPlugin()
+        plugin2 = MockTestPlugin()
 
         registry.register(plugin1)
         registry.register(plugin2)
@@ -216,7 +216,7 @@ class TestPluginRegistry:
     async def test_shutdown_all(self):
         """Test shutting down all plugins"""
         registry = PluginRegistry()
-        plugin = TestPlugin()
+        plugin = MockTestPlugin()
 
         registry.register(plugin)
         await registry.shutdown_all()
@@ -225,7 +225,7 @@ class TestPluginRegistry:
     async def test_execute_hook(self):
         """Test executing a hook"""
         registry = PluginRegistry()
-        plugin = TestPlugin()
+        plugin = MockTestPlugin()
         registry.register(plugin)
 
         tenant_id = uuid4()
@@ -245,7 +245,7 @@ class TestPluginRegistry:
     async def test_execute_transform_hook(self):
         """Test executing a transform hook"""
         registry = PluginRegistry()
-        plugin = TestPlugin()
+        plugin = MockTestPlugin()
         registry.register(plugin)
 
         tenant_id = uuid4()
@@ -264,7 +264,7 @@ class TestPluginRegistry:
     async def test_health_check_all(self):
         """Test health checking all plugins"""
         registry = PluginRegistry()
-        plugin = TestPlugin()
+        plugin = MockTestPlugin()
         registry.register(plugin)
 
         health = await registry.health_check_all()
@@ -328,7 +328,7 @@ class TestPluginDisabling:
     def test_disabled_plugin_not_executed(self):
         """Test that disabled plugins are not executed"""
         registry = PluginRegistry()
-        plugin = TestPlugin()
+        plugin = MockTestPlugin()
 
         # Disable plugin before registering
         plugin.metadata.enabled = False
@@ -345,7 +345,7 @@ class TestPluginDisabling:
     async def test_disabled_plugin_not_initialized(self):
         """Test that disabled plugins are not initialized"""
         registry = PluginRegistry()
-        plugin = TestPlugin()
+        plugin = MockTestPlugin()
 
         # Disable before registering
         plugin.metadata.enabled = False
@@ -362,8 +362,8 @@ class TestMultiplePlugins:
     async def test_multiple_plugins_same_hook(self):
         """Test multiple plugins handling same hook"""
         registry = PluginRegistry()
-        plugin1 = TestPlugin()
-        plugin2 = TestPlugin()
+        plugin1 = MockTestPlugin()
+        plugin2 = MockTestPlugin()
 
         registry.register(plugin1)
         registry.register(plugin2)
@@ -388,14 +388,14 @@ class TestMultiplePlugins:
         registry = PluginRegistry()
 
         # Create plugins with different names to avoid overwriting
-        class TestPlugin1(TestPlugin):
+        class TestPlugin1(MockTestPlugin):
             @property
             def metadata(self):
                 meta = super().metadata
                 meta.name = "test_plugin_1"
                 return meta
 
-        class TestPlugin2(TestPlugin):
+        class TestPlugin2(MockTestPlugin):
             @property
             def metadata(self):
                 meta = super().metadata

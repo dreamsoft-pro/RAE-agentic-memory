@@ -15,7 +15,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 # ============================================================================
 # Enums
@@ -72,8 +72,7 @@ class EnhancedGraphNode(BaseModel):
     # Timestamps
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EnhancedGraphEdge(BaseModel):
@@ -118,8 +117,7 @@ class EnhancedGraphEdge(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class GraphPath(BaseModel):
@@ -204,8 +202,7 @@ class GraphSnapshot(BaseModel):
     created_at: datetime
     created_by: Optional[str] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class GraphTraversal(BaseModel):
@@ -245,8 +242,7 @@ class GraphTraversal(BaseModel):
     # Timestamps
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class NodeDegreeMetrics(BaseModel):
@@ -558,7 +554,7 @@ class BatchCreateNodesRequest(BaseModel):
 
     tenant_id: str
     project_id: str
-    nodes: List[Dict[str, Any]] = Field(..., min_items=1, max_items=1000)
+    nodes: List[Dict[str, Any]] = Field(..., min_length=1, max_length=1000)
 
 
 class BatchCreateEdgesRequest(BaseModel):
@@ -566,7 +562,7 @@ class BatchCreateEdgesRequest(BaseModel):
 
     tenant_id: str
     project_id: str
-    edges: List[CreateGraphEdgeRequest] = Field(..., min_items=1, max_items=1000)
+    edges: List[CreateGraphEdgeRequest] = Field(..., min_length=1, max_length=1000)
 
 
 class BatchOperationResponse(BaseModel):

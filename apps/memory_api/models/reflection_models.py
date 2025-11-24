@@ -13,7 +13,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field, constr
+from pydantic import BaseModel, ConfigDict, Field, constr
 
 # ============================================================================
 # Enums
@@ -177,8 +177,7 @@ class ReflectionUnit(BaseModel):
     last_accessed_at: datetime
     accessed_count: int = Field(0, ge=0, description="Number of times accessed")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ReflectionRelationship(BaseModel):
@@ -220,8 +219,7 @@ class ReflectionRelationship(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ReflectionCluster(BaseModel):
@@ -263,8 +261,7 @@ class ReflectionCluster(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ============================================================================
@@ -481,5 +478,4 @@ class ReflectionUsageLog(BaseModel):
     # Timestamp
     timestamp: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

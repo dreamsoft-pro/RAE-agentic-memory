@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional
 
 import asyncpg
 import structlog
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 logger = structlog.get_logger(__name__)
 
@@ -65,8 +65,7 @@ class LLMCallLog(BaseModel):
     # Timestamp
     timestamp: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LogLLMCallParams(BaseModel):
