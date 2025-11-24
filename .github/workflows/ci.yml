@@ -59,7 +59,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
-          pip install -r apps/memory_api/requirements.txt
+          pip install -r apps/memory_api/requirements-base.txt
           pip install -r apps/memory_api/requirements-ml.txt
           pip install -r apps/memory_api/requirements-test.txt
           pip install -e sdk/python/rae_memory_sdk
