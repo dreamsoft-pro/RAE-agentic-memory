@@ -13,7 +13,7 @@
 |---------|---------|--------|
 | **Testy** | 184 total (174 PASS, 10 SKIP) | ✅ 100% pass rate |
 | **Pokrycie testami** | 57% | ✅ Cel: 55% (ML-optional) |
-| **API Endpoints** | 102 aktywne | ✅ Kompletne |
+| **API Endpoints** | 96 aktywne | ✅ Kompletne |
 | **Dokumentacja** | 95% pokrycia | ✅ Excellent |
 | **Deployment** | Kubernetes + Helm | ✅ Production-ready |
 
@@ -662,7 +662,7 @@ Funkcje wspomniane w pierwotnych planach, które nie zostały jeszcze zaimplemen
 | Metryka | Wartość | Status |
 |---------|---------|--------|
 | **Services** | 25+ | ✅ Complete |
-| **API Endpoints** | 102 active | ✅ Complete |
+| **API Endpoints** | 96 active | ✅ Complete |
 | **Tests** | 184 (174 pass, 10 skip) | ✅ Excellent |
 | **Test Coverage** | 57% | ✅ Target: 55% |
 | **Documentation** | 95% coverage | ✅ Excellent |
@@ -857,7 +857,7 @@ RAE Agentic Memory Engine jest **production-ready** na poziomie enterprise z:
 - ✅ **Pełną transparentnością architektury**
 - ✅ **Repository Pattern** (100% eliminacja direct SQL)
 - ✅ **184 testami** (94.6% pass rate, 57% coverage)
-- ✅ **102 aktywnymi API endpoints**
+- ✅ **96 aktywnymi API endpoints**
 
 Wszystkie krytyczne luki zostały zamknięte. System jest gotowy do produkcji.
 
