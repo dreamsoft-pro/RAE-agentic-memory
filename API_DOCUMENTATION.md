@@ -17,9 +17,15 @@ Complete API reference for RAE Memory Engine v2.0 Enterprise
 | [Graph API](#graph-api) | 7 | Knowledge graph operations (GraphRAG) |
 | [Cache API](#cache-api) | 1 | Context cache management |
 | [Governance API](#governance-api) | 3 | Cost tracking and budget management |
+| [Event Triggers API](#event-triggers-api) | 18 | Event-driven automation with triggers and actions |
+| [Reflections API](#reflections-api) | 8 | Hierarchical reflection system with clustering |
+| [Hybrid Search API](#hybrid-search-api) | 10 | Multi-strategy search with dynamic weighting |
+| [Evaluation API](#evaluation-api) | 12 | Search quality metrics and drift detection |
+| [Dashboard API](#dashboard-api) | 7 | Real-time monitoring and visualizations |
+| [Graph Management API](#graph-management-api) | 19 | Advanced graph operations and analytics |
 | [Health API](#health-api) | 4 | Health checks and system metrics |
 
-**Total:** 22 enterprise-ready endpoints
+**Total:** 96 enterprise-ready endpoints
 
 ---
 
@@ -923,20 +929,511 @@ GET /metrics
 
 ---
 
+## Event Triggers API
+
+Base path: `/v1/triggers`
+
+The Event Triggers API enables event-driven automation with complex condition evaluation and action execution. Build sophisticated workflows that respond to system events automatically.
+
+### Create Trigger
+
+Create a new event trigger rule.
+
+```http
+POST /v1/triggers/create
+Content-Type: application/json
+X-Tenant-Id: tenant-1
+
+{
+  "tenant_id": "tenant-1",
+  "project": "production",
+  "rule_name": "auto_reflection_on_memory_threshold",
+  "event_types": ["memory_created"],
+  "conditions": {
+    "type": "and",
+    "conditions": [
+      {
+        "field": "memory_count",
+        "operator": "gt",
+        "value": 100
+      }
+    ]
+  },
+  "actions": [
+    {
+      "type": "generate_reflection",
+      "config": {
+        "max_memories": 100
+      }
+    }
+  ],
+  "enabled": true,
+  "rate_limit": {
+    "max_executions": 10,
+    "window_seconds": 3600
+  }
+}
+```
+
+**Response:** `201 Created`
+
+### Other Trigger Operations
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/v1/triggers/{trigger_id}` | Get trigger by ID |
+| PUT | `/v1/triggers/{trigger_id}` | Update trigger |
+| DELETE | `/v1/triggers/{trigger_id}` | Delete trigger |
+| POST | `/v1/triggers/{trigger_id}/enable` | Enable trigger |
+| POST | `/v1/triggers/{trigger_id}/disable` | Disable trigger |
+| GET | `/v1/triggers/list` | List all triggers |
+
+### Event Operations
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/v1/triggers/events/emit` | Emit custom event |
+| GET | `/v1/triggers/events/types` | Get supported event types |
+| POST | `/v1/triggers/executions` | Get trigger execution history |
+
+### Workflow Management
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/v1/triggers/workflows/create` | Create workflow |
+| GET | `/v1/triggers/workflows/{workflow_id}` | Get workflow |
+| GET | `/v1/triggers/workflows` | List workflows |
+
+### Templates
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/v1/triggers/templates` | Get trigger templates |
+| GET | `/v1/triggers/templates/{template_id}` | Get template by ID |
+| POST | `/v1/triggers/templates/instantiate` | Create trigger from template |
+
+**Event Types:**
+- `memory_created`, `memory_updated`, `memory_deleted`
+- `reflection_generated`, `reflection_failed`
+- `budget_exceeded`, `budget_warning`
+- `drift_detected`, `quality_degraded`
+- `graph_updated`, `cache_invalidated`
+
+**Condition Operators:** `equals`, `gt`, `lt`, `gte`, `lte`, `contains`, `regex`, `in`, `not_in`, `between`, `exists`, `not_exists`
+
+**Action Types:** `webhook`, `notification`, `generate_reflection`, `rebuild_cache`, `create_snapshot`, `run_evaluation`, `execute_workflow`
+
+---
+
+## Reflections API
+
+Base path: `/v1/reflections`
+
+The Reflections API provides hierarchical reflection generation with automatic clustering, insight extraction, and relationship management.
+
+### Generate Reflections
+
+Generate reflections from memories using clustering pipeline.
+
+```http
+POST /v1/reflections/generate
+Content-Type: application/json
+X-Tenant-Id: tenant-1
+
+{
+  "tenant_id": "tenant-1",
+  "project": "production",
+  "max_memories": 100,
+  "min_cluster_size": 5,
+  "enable_clustering": true,
+  "clustering_method": "hdbscan",
+  "generate_meta_insights": true,
+  "since": "2025-01-01T00:00:00Z"
+}
+```
+
+**Returns:** Generated reflections with scoring and metadata.
+
+**Clustering Methods:**
+- `hdbscan` - Density-based clustering (automatic cluster count)
+- `kmeans` - K-means clustering (requires n_clusters)
+
+### Query Reflections
+
+Search reflections by semantic similarity or filters.
+
+```http
+POST /v1/reflections/query
+Content-Type: application/json
+
+{
+  "tenant_id": "tenant-1",
+  "project": "production",
+  "query": "What patterns emerged in user behavior?",
+  "top_k": 10,
+  "reflection_type": "insight",
+  "min_score": 0.7
+}
+```
+
+### Other Reflection Operations
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/v1/reflections/{reflection_id}` | Get reflection by ID |
+| GET | `/v1/reflections/{reflection_id}/children` | Get child reflections |
+| POST | `/v1/reflections/graph` | Get reflection graph |
+| POST | `/v1/reflections/relationships` | Create reflection relationship |
+| GET | `/v1/reflections/statistics/{tenant_id}/{project}` | Get statistics |
+| DELETE | `/v1/reflections/batch` | Batch delete reflections |
+
+**Reflection Types:** `insight`, `meta_insight`, `pattern`, `summary`, `conclusion`
+
+---
+
+## Hybrid Search API
+
+Base path: `/v1/search`
+
+The Hybrid Search API provides multi-strategy search with dynamic weighting, query analysis, and result fusion.
+
+### Hybrid Search
+
+Execute hybrid multi-strategy search.
+
+```http
+POST /v1/search/hybrid
+Content-Type: application/json
+
+{
+  "tenant_id": "tenant-1",
+  "project_id": "production",
+  "query": "authentication system architecture",
+  "k": 20,
+  "enable_vector_search": true,
+  "enable_semantic_search": true,
+  "enable_graph_search": true,
+  "enable_fulltext_search": true,
+  "enable_reranking": true,
+  "reranking_model": "claude-3-5-sonnet-20241022",
+  "graph_max_depth": 3,
+  "temporal_filter": {
+    "start": "2025-01-01T00:00:00Z",
+    "end": "2025-12-31T23:59:59Z"
+  }
+}
+```
+
+**Features:**
+- Automatic query intent classification
+- Dynamic weight calculation
+- Multi-strategy result fusion
+- Optional LLM re-ranking
+
+### Query Analysis
+
+Analyze query intent and get recommended weights.
+
+```http
+POST /v1/search/analyze
+Content-Type: application/json
+
+{
+  "query": "how does the authentication work?",
+  "conversation_history": []
+}
+```
+
+**Response:** Query classification and recommended strategy weights.
+
+### Other Search Operations
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/v1/search/analyze/explain` | Get detailed query analysis |
+| GET | `/v1/search/weights/profiles` | Get weight profiles |
+| GET | `/v1/search/weights/profiles/{profile_name}` | Get specific profile |
+| POST | `/v1/search/weights/calculate` | Calculate dynamic weights |
+| POST | `/v1/search/compare` | Compare search strategies |
+| POST | `/v1/search/test/weights` | Test custom weights |
+
+**Weight Profiles:** `balanced`, `quality`, `speed`, `comprehensive`, `exploratory`
+
+**Query Intents:** `factual`, `conceptual`, `navigational`, `procedural`, `exploratory`, `relational`
+
+---
+
+## Evaluation API
+
+Base path: `/v1/evaluation`
+
+The Evaluation API provides search quality metrics, drift detection, A/B testing, and quality monitoring.
+
+### Evaluate Search Quality
+
+Evaluate search results using IR metrics.
+
+```http
+POST /v1/evaluation/search
+Content-Type: application/json
+
+{
+  "results": [
+    {"memory_id": "mem1", "score": 0.95},
+    {"memory_id": "mem2", "score": 0.85}
+  ],
+  "ground_truth": ["mem1", "mem3", "mem2"],
+  "metrics": ["mrr", "ndcg", "precision", "recall"]
+}
+```
+
+**Supported Metrics:**
+- **MRR** (Mean Reciprocal Rank)
+- **NDCG@K** (Normalized Discounted Cumulative Gain)
+- **Precision@K**
+- **Recall@K**
+- **MAP** (Mean Average Precision)
+
+### Drift Detection
+
+Detect semantic drift in memory quality.
+
+```http
+POST /v1/evaluation/drift/detect
+Content-Type: application/json
+
+{
+  "tenant_id": "tenant-1",
+  "project": "production",
+  "baseline_start": "2025-01-01T00:00:00Z",
+  "baseline_end": "2025-01-31T23:59:59Z",
+  "current_start": "2025-11-01T00:00:00Z",
+  "current_end": "2025-11-25T23:59:59Z",
+  "feature": "importance_scores",
+  "test": "ks"
+}
+```
+
+**Drift Tests:**
+- **KS** (Kolmogorov-Smirnov Test)
+- **PSI** (Population Stability Index)
+- **Chi-Square Test**
+
+**Severity Levels:** `none`, `low`, `medium`, `high`, `critical`
+
+### Other Evaluation Operations
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/v1/evaluation/metrics/supported` | Get supported metrics |
+| GET | `/v1/evaluation/drift/severity-levels` | Get severity levels |
+| POST | `/v1/evaluation/ab-test/create` | Create A/B test |
+| POST | `/v1/evaluation/ab-test/{test_id}/compare` | Compare variants |
+| POST | `/v1/evaluation/quality/metrics` | Get quality metrics |
+| GET | `/v1/evaluation/quality/thresholds` | Get quality thresholds |
+| POST | `/v1/evaluation/benchmark/run` | Run benchmark |
+| GET | `/v1/evaluation/benchmark/suites` | Get benchmark suites |
+
+---
+
+## Dashboard API
+
+Base path: `/v1/dashboard`
+
+The Dashboard API provides real-time metrics, visualizations, system health, and activity monitoring.
+
+### Get Dashboard Metrics
+
+Get comprehensive dashboard metrics.
+
+```http
+POST /v1/dashboard/metrics
+Content-Type: application/json
+
+{
+  "tenant_id": "tenant-1",
+  "project": "production",
+  "time_range": "24h",
+  "metrics": ["memory_count", "query_count", "cache_hit_rate"]
+}
+```
+
+**Available Metrics:**
+- `memory_count`, `memory_growth_rate`
+- `query_count`, `query_latency`
+- `cache_hit_rate`, `cache_size`
+- `graph_node_count`, `graph_edge_count`
+- `reflection_count`, `api_calls`
+- `cost_total`, `cost_by_model`
+
+### Get System Health
+
+Get system health status with recommendations.
+
+```http
+POST /v1/dashboard/health
+Content-Type: application/json
+
+{
+  "tenant_id": "tenant-1",
+  "include_recommendations": true
+}
+```
+
+**Health Components:**
+- Database connectivity
+- Cache availability
+- Vector store status
+- ML service health
+- Budget status
+- Memory quality
+
+### Other Dashboard Operations
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/v1/dashboard/metrics/timeseries/{metric_name}` | Get time series data |
+| POST | `/v1/dashboard/visualizations` | Get visualization data |
+| GET | `/v1/dashboard/health/simple` | Simple health check |
+| GET | `/v1/dashboard/activity` | Get recent activity |
+
+**Time Ranges:** `1h`, `6h`, `24h`, `7d`, `30d`, `90d`
+
+**Visualization Types:** `reflection_tree`, `semantic_graph`, `timeline`, `quality_trends`, `cost_breakdown`, `performance_heatmap`
+
+---
+
+## Graph Management API
+
+Base path: `/v1/graph/manage`
+
+The Graph Management API provides advanced graph operations including temporal graphs, snapshots, traversal algorithms, and batch operations.
+
+### Create Node
+
+Create an enhanced graph node with metrics.
+
+```http
+POST /v1/graph/manage/nodes
+Content-Type: application/json
+
+{
+  "tenant_id": "tenant-1",
+  "project": "production",
+  "node_type": "entity",
+  "name": "authentication_module",
+  "properties": {
+    "category": "code",
+    "language": "python"
+  }
+}
+```
+
+**Response:** `201 Created` with node details including centrality metrics.
+
+### Create Edge
+
+Create weighted, temporal graph edge.
+
+```http
+POST /v1/graph/manage/edges
+Content-Type: application/json
+
+{
+  "tenant_id": "tenant-1",
+  "project": "production",
+  "source_node_id": "node-1",
+  "target_node_id": "node-2",
+  "edge_type": "depends_on",
+  "weight": 0.85,
+  "valid_from": "2025-01-01T00:00:00Z",
+  "valid_to": "2025-12-31T23:59:59Z",
+  "properties": {
+    "strength": "strong"
+  }
+}
+```
+
+### Traverse Graph
+
+Execute graph traversal with algorithm selection.
+
+```http
+POST /v1/graph/manage/traverse
+Content-Type: application/json
+
+{
+  "tenant_id": "tenant-1",
+  "project": "production",
+  "start_node_id": "node-1",
+  "algorithm": "bfs",
+  "max_depth": 3,
+  "filters": {
+    "edge_types": ["related_to", "depends_on"],
+    "min_weight": 0.5
+  }
+}
+```
+
+**Algorithms:** `bfs` (Breadth-First Search), `dfs` (Depth-First Search), `dijkstra` (Shortest Path)
+
+### Graph Snapshots
+
+Create and restore point-in-time graph snapshots.
+
+```http
+POST /v1/graph/manage/snapshots
+Content-Type: application/json
+
+{
+  "tenant_id": "tenant-1",
+  "project": "production",
+  "snapshot_name": "pre_refactor_snapshot",
+  "description": "Graph state before major refactoring"
+}
+```
+
+**Snapshot Operations:**
+- `POST /v1/graph/manage/snapshots` - Create snapshot
+- `GET /v1/graph/manage/snapshots/{snapshot_id}` - Get snapshot
+- `GET /v1/graph/manage/snapshots` - List snapshots
+- `POST /v1/graph/manage/snapshots/{snapshot_id}/restore` - Restore snapshot
+
+### Other Graph Management Operations
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/v1/graph/manage/nodes/{node_id}/metrics` | Get node centrality metrics |
+| POST | `/v1/graph/manage/nodes/connected` | Find connected nodes |
+| PUT | `/v1/graph/manage/edges/{edge_id}/weight` | Update edge weight |
+| POST | `/v1/graph/manage/edges/{edge_id}/deactivate` | Deactivate edge |
+| POST | `/v1/graph/manage/edges/{edge_id}/activate` | Activate edge |
+| PUT | `/v1/graph/manage/edges/{edge_id}/temporal` | Update temporal validity |
+| POST | `/v1/graph/manage/path/shortest` | Find shortest path |
+| POST | `/v1/graph/manage/cycles/detect` | Detect cycles |
+| POST | `/v1/graph/manage/statistics` | Get graph statistics |
+| POST | `/v1/graph/manage/nodes/batch` | Batch node operations |
+| POST | `/v1/graph/manage/edges/batch` | Batch edge operations |
+
+**Centrality Metrics:** `degree`, `betweenness`, `closeness`, `eigenvector`, `pagerank`
+
+**Graph Statistics:** Node count, edge count, density, diameter, clustering coefficient, component analysis
+
+---
+
 ## Future / Planned APIs
 
-The following APIs are described in this documentation but **NOT YET IMPLEMENTED** in the current release. They represent the target design for future versions.
+The following APIs are planned for future releases:
 
 ### Not Currently Available
 
-- **Standalone Reflections API** (`/v1/reflections`) - Reflection generation is currently integrated into Memory API and Graph API
-- **Semantic Memory API** (`/v1/semantic`) - Planned for entity extraction and semantic search
-- **Standalone Hybrid Search API** (`/v1/search`) - Hybrid search is currently integrated into Memory API query endpoint
-- **Evaluation API** (`/v1/evaluation`) - Metrics, drift detection, A/B testing
-- **Event Triggers API** (`/v1/triggers`) - Automation, rules, and workflows
-- **Dashboard API** (`/v1/dashboard`) - Real-time monitoring and WebSocket events
+- **Semantic Memory API** (`/v1/semantic`) - Dedicated entity extraction and semantic node management
+- **MCP Enhanced API** (`/v1/mcp`) - Model Context Protocol enhancements
+- **Multi-modal Memory API** (`/v1/multimodal`) - Support for images, audio, and video memories
+- **Collaboration API** (`/v1/collaborate`) - Real-time multi-user collaboration features
+- **Plugin System API** (`/v1/plugins`) - Custom plugin registration and management
 
-**Implementation Status:** These APIs are part of the product roadmap and may be added in future releases. For current capabilities, use the implemented endpoints documented above.
+**Implementation Status:** These APIs are part of the product roadmap. Current v2.0 Enterprise release includes 96 production-ready endpoints.
 
 ---
 
@@ -1068,36 +1565,50 @@ Complete examples in [apps/memory_api/clients/examples.py](apps/memory_api/clien
 ---
 
 **API Version:** v2.0 Enterprise
-**Last Updated:** 2025-11-23
-**Implemented Endpoints:** 22
+**Last Updated:** 2025-11-25
+**Implemented Endpoints:** 96
 **Status:** Production Ready ✅
 
 ---
 
 ## Summary of Changes
 
-This documentation now accurately reflects the **implemented** RAE Memory API endpoints:
+This documentation now accurately reflects the **complete** RAE Memory API v2.0 Enterprise endpoints:
 
-### ✅ Implemented APIs (22 endpoints)
-- **Memory API** (6 endpoints) - `/v1/memory/*`
-- **Agent API** (1 endpoint) - `/v1/agent/execute`
-- **Graph API** (7 endpoints) - `/v1/graph/*` (GraphRAG)
-- **Cache API** (1 endpoint) - `/v1/cache/rebuild`
-- **Governance API** (3 endpoints) - `/v1/governance/*`
-- **Health API** (4 endpoints) - `/health*`, `/metrics`
+### ✅ Implemented APIs (96 endpoints)
+
+**Core APIs:**
+- **Memory API** (6 endpoints) - `/v1/memory/*` - Core storage and retrieval
+- **Agent API** (1 endpoint) - `/v1/agent/execute` - Agent orchestration
+- **Graph API** (7 endpoints) - `/v1/graph/*` - Basic GraphRAG operations
+- **Cache API** (1 endpoint) - `/v1/cache/rebuild` - Cache management
+- **Governance API** (3 endpoints) - `/v1/governance/*` - Cost tracking and budgets
+- **Health API** (4 endpoints) - `/health*`, `/metrics` - System monitoring
+
+**Enterprise APIs (NEW - v2.0):**
+- **Event Triggers API** (18 endpoints) - `/v1/triggers/*` - Automation and workflows
+- **Reflections API** (8 endpoints) - `/v1/reflections/*` - Hierarchical reflections
+- **Hybrid Search API** (10 endpoints) - `/v1/search/*` - Multi-strategy search
+- **Evaluation API** (12 endpoints) - `/v1/evaluation/*` - Quality metrics and drift
+- **Dashboard API** (7 endpoints) - `/v1/dashboard/*` - Real-time monitoring
+- **Graph Management API** (19 endpoints) - `/v1/graph/manage/*` - Advanced graph ops
 
 ### 🔮 Planned APIs (Future Releases)
-- Standalone Reflections API
-- Semantic Memory API
-- Standalone Hybrid Search API
-- Evaluation API
-- Event Triggers API
-- Dashboard API
+- Semantic Memory API (dedicated entity management)
+- Multi-modal Memory API (images, audio, video)
+- Collaboration API (multi-user features)
+- Plugin System API (custom extensions)
 
 ### 🔧 Enterprise Features
-- **GraphRAG** - Knowledge graph extraction and traversal
-- **Context Caching** - Cost optimization through cached contexts
-- **Governance** - Cost tracking, budget management, usage analytics
+- **GraphRAG** - Knowledge graph extraction and traversal with advanced algorithms
+- **Event-Driven Automation** - Triggers, conditions, actions, and workflow orchestration
+- **Hierarchical Reflections** - Automatic insight extraction with clustering
+- **Hybrid Search** - Multi-strategy search with dynamic weighting and LLM re-ranking
+- **Quality Monitoring** - Search evaluation, drift detection, and A/B testing
+- **Real-time Dashboard** - Live metrics, visualizations, and system health
+- **Advanced Graph Operations** - Temporal graphs, snapshots, and batch operations
+- **Context Caching** - Cost optimization through intelligent caching
+- **Governance** - Cost tracking, budget management, and usage analytics
 - **Agent Orchestration** - Full agent execution pipeline with automatic reflection
 - **Health Monitoring** - Kubernetes-ready health probes and metrics
 
