@@ -1,14 +1,14 @@
 # RAE Agentic Memory Engine - TODO List
 
-**Ostatnia aktualizacja:** 2025-11-25
-**Status projektu:** Production Ready ✅
-**Weryfikacja testów:** 2025-11-25 (GitHub Actions ✅)
+**Last Updated:** 2025-11-25
+**Project Status:** Production Ready ✅
+**Test Verification:** 2025-11-25 (GitHub Actions ✅)
 
-Ten plik zawiera uporządkowaną listę zadań do wykonania, pogrupowanych według priorytetów.
+This file contains an organized list of tasks to be completed, grouped by priority.
 
 ---
 
-## 🔥 Priorytet WYSOKI (Critical)
+## 🔥 HIGH Priority (Critical)
 
 ### 1. ✅ ~~Repository Pattern - Direct SQL Elimination~~ DONE
 **Status:** ✅ Completed (2025-11-23)
@@ -19,7 +19,7 @@ Ten plik zawiera uporządkowaną listę zadań do wykonania, pogrupowanych wedł
 - ✅ Created 29 tests (27 passing - 93%)
 - ✅ Updated documentation
 
-**Rezultat:** 100% eliminacja direct SQL z service layer
+**Result:** 100% elimination of direct SQL from service layer
 
 ---
 
@@ -133,7 +133,7 @@ open htmlcov/index.html
 
 ---
 
-## ⚠️ Priorytet ŚREDNI (Medium)
+## ⚠️ MEDIUM Priority (Medium)
 
 ### 4. API Documentation vs Real Endpoints Alignment
 **Status:** ⚠️ Needs Review
@@ -406,7 +406,7 @@ open htmlcov/index.html
 
 ---
 
-## 📊 Priorytet NISKI (Low)
+## 📊 LOW Priority (Low)
 
 ### 9. GraphRAG Documentation Alignment
 **Status:** ⚠️ Needs minor updates
@@ -525,9 +525,9 @@ open htmlcov/index.html
 
 ---
 
-## ❌ Nie Planowane (Out of Scope)
+## ❌ Out of Scope (Not Planned)
 
-Te funkcje są poza obecnym scope projektu i są planowane na przyszłe wersje:
+These features are out of current project scope and are planned for future versions:
 
 ### v2.1
 - [ ] MCP API Client Integration
@@ -549,10 +549,10 @@ Te funkcje są poza obecnym scope projektu i są planowane na przyszłe wersje:
 
 ## 📋 Acceptance Criteria
 
-Projekt można uznać za "complete" gdy:
+Project can be considered "complete" when:
 
 ### Critical (Must Have)
-- [x] ~~Repository Pattern implemented (100% eliminacja direct SQL)~~
+- [x] ~~Repository Pattern implemented (100% elimination of direct SQL)~~
 - [ ] Test Coverage ≥ 80%
 - [ ] Memory Decay fully implemented (`last_accessed_at`, `usage_count`)
 
@@ -574,7 +574,7 @@ Projekt można uznać za "complete" gdy:
 
 ### Overall Progress: ~75% Complete
 
-| Kategoria | Status | Progress |
+| Category | Status | Progress |
 |-----------|--------|----------|
 | **Core Features** | ✅ Complete | 100% |
 | **Infrastructure** | ✅ Complete | 100% |
@@ -588,10 +588,10 @@ Projekt można uznać za "complete" gdy:
 
 ## 🔗 Related Documents
 
-- [Project Status](STATUS.md) - Aktualny stan projektu
-- [Testing Guide](TESTING.md) - Status testów i instrukcje
-- [Contributing](CONTRIBUTING.md) - Jak kontrybuować
-- [Architecture](docs/concepts/architecture.md) - Architektura systemu
+- [Project Status](STATUS.md) - Current project status
+- [Testing Guide](TESTING.md) - Test status and instructions
+- [Contributing](CONTRIBUTING.md) - How to contribute
+- [Architecture](docs/concepts/architecture.md) - System architecture
 
 ---
 
