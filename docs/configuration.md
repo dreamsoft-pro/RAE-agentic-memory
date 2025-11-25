@@ -1,5 +1,9 @@
 # Configuration Management
 
+**Last Updated:** 2025-11-25
+**RAE Version:** v2.0.0-enterprise
+**Verified Against:** apps/memory_api/config.py
+
 The RAE Agentic Memory system is configured primarily through environment variables. For local development, these can be conveniently placed in a `.env` file at the root of the project.
 
 ## Table of Contents

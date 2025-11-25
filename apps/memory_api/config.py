@@ -77,7 +77,7 @@ class Settings(BaseSettings):
 
     # Memory lifecycle settings
     MEMORY_RETENTION_DAYS: int = 30
-    MEMORY_DECAY_RATE: float = 0.99
+    MEMORY_DECAY_RATE: float = 0.01  # 1% decay per day
 
     # Logging configuration
     LOG_LEVEL: str = "WARNING"  # For external libraries (uvicorn, asyncpg, etc.)
