@@ -22,13 +22,13 @@ import mcp.types as types
 import structlog
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
-from prometheus_client import Counter, Histogram
 
 # OpenTelemetry imports
 from opentelemetry import trace
+from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
-from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+from prometheus_client import Counter, Histogram
 
 logger = structlog.get_logger(__name__)
 
