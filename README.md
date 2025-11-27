@@ -36,12 +36,50 @@ Current AI agents are **stateless** - they forget everything after each conversa
 
 ---
 
+## Choosing Your Deployment
+
+RAE offers three deployment profiles to match your needs:
+
+### 💡 RAE Lite (Start Here)
+**Perfect for:**
+- Developers trying RAE for the first time
+- Small teams (1-10 users)
+- Limited infrastructure (VPS, laptop)
+- Prototypes and proof-of-concepts
+
+**Includes:** Core API, GraphRAG, Cost Tracking (4 services, 4 GB RAM)
+
+### 🚀 RAE Standard (Production Ready)
+**Perfect for:**
+- Mid-size teams (10-100 users)
+- Production deployments
+- Companies needing ML features
+
+**Includes:** Everything in Lite + ML Service, Reranker, Dashboard (9 services, 8 GB RAM)
+
+### ☸️ RAE Enterprise (High Availability)
+**Perfect for:**
+- Large organizations (100+ users)
+- Mission-critical applications
+- Auto-scaling requirements
+
+**Includes:** Everything + Kubernetes, Monitoring, Auto-scaling (15+ services, auto-scaling)
+
+**Recommendation:** Start with RAE Lite to evaluate, then upgrade as needed.
+
+---
+
 ## Quick Start (< 5 minutes)
 
-**Choose your deployment:**
+**Choose your deployment profile:**
 
-- 🚀 **Full Stack** (recommended): `./scripts/quickstart.sh`
-- 💡 **Lite Profile** (minimal): `docker-compose -f docker-compose.lite.yml up -d`
+| Profile | Best For | Resources | Command |
+|---------|----------|-----------|---------|
+| 💡 **RAE Lite** | Developers, testing, small teams (1-10 users) | 4 GB RAM, 2 CPU | `docker-compose -f docker-compose.lite.yml up -d` |
+| 🚀 **Full Stack** | Production, mid-size teams (10-100 users) | 8 GB RAM, 4 CPU | `./scripts/quickstart.sh` |
+| ☸️ **Enterprise** | Large orgs, auto-scaling, high availability | Auto-scaling | [Kubernetes Guide](docs/deployment/kubernetes.md) |
+
+**Not sure which to choose?** Start with RAE Lite - you can always upgrade later.
 
 ### Full Stack (Recommended for Production)
 **One-line install:**
@@ -50,8 +88,25 @@ Current AI agents are **stateless** - they forget everything after each conversa
 git clone https://github.com/dreamsoft-pro/RAE-agentic-memory && cd RAE-agentic-memory && ./scripts/quickstart.sh
 ```
 
-### RAE Lite (Minimal - Perfect for Development)
-**Quick start with minimal resources (4 GB RAM):**
+### RAE Lite (Minimal - Perfect for Getting Started)
+
+**Who is RAE Lite for?**
+- 👨‍💻 **Developers** evaluating RAE or building prototypes
+- 🧪 **Teams testing** RAE before full deployment
+- 🏢 **Small teams** (1-10 users) with limited infrastructure
+- 💰 **Resource-constrained** environments (VPS, single server)
+- 🎓 **Learning** and experimenting with agentic memory
+
+**What you get:**
+- ✅ Core API with 4-layer memory architecture
+- ✅ GraphRAG (knowledge graph + hybrid search)
+- ✅ Cost tracking and governance
+- ✅ PostgreSQL, Qdrant, Redis (all essential services)
+- ❌ No ML Service, Dashboard, or Celery (optional components)
+
+**Requirements:** 4 GB RAM, 2 CPU cores (runs on any modern laptop)
+
+**Quick start:**
 
 ```bash
 git clone https://github.com/dreamsoft-pro/RAE-agentic-memory
@@ -61,7 +116,11 @@ cp .env.example .env
 docker-compose -f docker-compose.lite.yml up -d
 ```
 
-See [RAE Lite Profile Documentation](docs/deployment/rae-lite-profile.md) for details.
+**Access your instance:**
+- API: http://localhost:8000/docs
+- Health: http://localhost:8000/health
+
+See [RAE Lite Profile Documentation](docs/deployment/rae-lite-profile.md) for complete guide.
 
 ---
 
