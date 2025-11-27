@@ -191,6 +191,83 @@ pytest -n 4 apps/memory_api/tests/
 
 ---
 
+## Test Fixtures
+
+### Global Fixtures (tests/conftest.py)
+
+RAE uses centralized pytest fixtures for consistent test setup across all test files:
+
+#### 1. `mock_app_state_pool` - Database Connection Mock
+
+**Purpose:** Provides a fully mocked asyncpg connection pool for testing database operations.
+
+**What It Provides:**
+- Mock pool with `fetch()`, `fetchrow()`, `execute()`, `close()` methods
+- Mock connection with transaction support
+- Async context manager for `pool.acquire()`
+- No actual database connection required
+
+**Usage:**
+```python
+@pytest.mark.asyncio
+async def test_my_function(mock_app_state_pool):
+    # Configure mock responses
+    mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
+    mock_conn.fetchrow.return_value = {"id": "123", "name": "test"}
+
+    # Your test code here
+    result = await my_database_function()
+    assert result["id"] == "123"
+```
+
+**Used By:**
+- All API endpoint tests (`tests/api/v1/*.py`)
+- Service layer tests requiring database
+- Repository tests
+
+#### 2. `mock_env_and_settings` - Environment Configuration
+
+**Purpose:** Auto-injected fixture that mocks all environment variables and settings.
+
+**Configuration:**
+- PostgreSQL: `localhost:5432/test_db`
+- Qdrant: `localhost:6333`
+- Redis: `redis://localhost:6379/0`
+- LLM Backend: OpenAI with test key
+- Authentication: Disabled for testing
+
+**Scope:** Automatically applied to all tests (`autouse=True`)
+
+#### 3. `override_auth` - Authentication Bypass
+
+**Purpose:** Bypasses API key and JWT authentication for all test requests.
+
+**Mock User:** `{"sub": "test-user", "scope": "admin"}`
+
+**Scope:** Automatically applied to all tests (`autouse=True`)
+
+### Fixture Dependency Chain
+
+```
+mock_env_and_settings (autouse)
+  └── Sets up environment variables
+       └── mock_app_state_pool
+            └── Provides database mock
+                 └── override_auth (autouse)
+                      └── Bypasses authentication
+                           └── Your Test
+```
+
+### Best Practices
+
+1. **Use `mock_app_state_pool` for all database tests** - Consistent mocking across tests
+2. **Configure mock responses explicitly** - Don't rely on default return values
+3. **Use AsyncMock for async methods** - Ensures proper async/await handling
+4. **Test with realistic data** - Use actual data structures from your models
+5. **Verify mock calls** - Use `mock.assert_called_once()` to verify behavior
+
+---
+
 ## Test Structure
 
 ### Directory Layout
@@ -482,6 +559,56 @@ async def test_api_e2e():
     # Verify database changes
     pass
 ```
+
+---
+
+## Smoke Tests & Integration Testing
+
+### RAE Lite Profile Smoke Test
+
+**Script:** `scripts/test_lite_profile.sh`
+
+Comprehensive smoke test for the minimal deployment profile (`docker-compose.lite.yml`):
+
+**What It Tests:**
+- ✅ Docker Compose YAML syntax validation
+- ✅ Service startup and health checks
+- ✅ API availability and responsiveness
+- ✅ Core endpoint functionality (`/health`, `/v1/memory/store`, `/v1/memory/query`)
+- ✅ All 4 services running (API, PostgreSQL, Qdrant, Redis)
+
+**Usage:**
+```bash
+# Run smoke test
+./scripts/test_lite_profile.sh
+
+# Expected output:
+# ✅ docker-compose found
+# ✅ Valid YAML syntax
+# ✅ .env file exists
+# 🚀 Starting RAE Lite services...
+# ✅ API is ready
+# ✅ Health check passed
+# ✅ POST /v1/memory/store passed
+# ✅ POST /v1/memory/query passed
+# ✅ RAE Lite Profile smoke test PASSED
+```
+
+**When to Run:**
+- After changes to `docker-compose.lite.yml`
+- Before deploying to production
+- As part of CI/CD pipeline for deployment validation
+- When troubleshooting deployment issues
+
+**Test Duration:** ~30-45 seconds (including service startup)
+
+**Services Tested:**
+- RAE API (`rae-api-lite`) - Port 8000
+- PostgreSQL with pgvector (`rae-postgres-lite`) - Port 5432
+- Qdrant Vector DB (`rae-qdrant-lite`) - Port 6333
+- Redis Cache (`rae-redis-lite`) - Port 6379
+
+See [RAE Lite Profile Documentation](docs/deployment/rae-lite-profile.md) for deployment details.
 
 ---
 
