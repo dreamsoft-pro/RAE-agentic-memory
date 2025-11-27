@@ -30,6 +30,8 @@ Components ready for production use with full support and stability guarantees.
 | Component | Version | Status | Support | Description |
 |-----------|---------|--------|---------|-------------|
 | **Core API** | 2.0.0-enterprise | ✅ **GA** | Full | Main Memory API with 4-layer architecture |
+| **Enterprise Security** | 2.0.0 | ✅ **GA** | Full | RBAC, authentication, audit logging, tenant isolation |
+| **Memory Decay Scheduler** | 2.0.0 | ✅ **GA** | Full | Automated importance decay with temporal logic |
 | **GraphRAG** | 2.0.0 | ✅ **GA** | Full | Knowledge graph + hybrid search |
 | **MCP Integration** | 1.2.0 | ✅ **GA** | Full | Model Context Protocol server (OpenTelemetry, load tests, rate limiting) |
 | **Governance API** | 2.0.0 | ✅ **GA** | Full | Cost tracking & budget management |
@@ -73,15 +75,22 @@ Components in active development, not recommended for production use.
 - Deprecated old MCP endpoints
 
 **New Features:**
+- ✅ **Enterprise Security (Phase 1-5 Complete)**
+  - ✅ Unified authentication (API Key + JWT)
+  - ✅ Role-Based Access Control (RBAC) with 5-tier hierarchy
+  - ✅ Tenant isolation at query level
+  - ✅ Comprehensive audit logging
+  - ✅ Memory decay scheduler with temporal logic
+  - ✅ Database-backed RBAC with migrations
 - ✅ GraphRAG integration (knowledge graph + vector search)
 - ✅ Hierarchical Reflection Engine with clustering
 - ✅ Multi-tenancy with full isolation
 - ✅ Structured logging (structlog + JSON)
 - ✅ Comprehensive API documentation (v2.0)
+- ✅ Cost Controller with budget enforcement
+- ✅ Governance dashboard with RBAC protection
 - 🟡 OpenTelemetry distributed tracing
 - 🟡 Rate limiting (SlowAPI/FastAPI-Limiter)
-- 🟡 Cost Controller with budget enforcement
-- 🟡 Governance dashboard
 - 🟡 Event Engine with retry/cooldown
 - 🟡 Helm Chart for Kubernetes
 

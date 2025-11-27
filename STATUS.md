@@ -38,6 +38,94 @@
 
 ## 📝 Recent Changes
 
+### 2025-11-27 - Enterprise Security Implementation (v2.0.0-enterprise) ✅
+
+**Focus:** Production-Ready Security & Access Control (Phase 1-5 Complete)
+
+**Changes:**
+
+1. **Phase 1: Authentication Unification** ✅
+   - Unified authentication system in `apps/memory_api/security/auth.py`
+   - Support for API Key and JWT authentication
+   - Consistent `verify_token()` across all endpoints
+   - Configuration: `ENABLE_API_KEY_AUTH`, `ENABLE_JWT_AUTH`
+
+2. **Phase 2: RBAC Implementation** ✅
+   - Complete Role-Based Access Control system
+   - 5-tier role hierarchy: Owner → Admin → Developer → Analyst → Viewer
+   - Database migration: `002_create_rbac_tables.sql`
+   - Tables: `user_tenant_roles`, `access_logs`
+   - RBACService with PostgreSQL-backed storage
+   - FastAPI dependencies for endpoint protection
+   - Tenant access control with `check_tenant_access()`
+   - Permission-based authorization with `require_permission()`
+
+3. **Phase 3: Memory Decay Scheduler** ✅
+   - Enterprise-grade memory importance decay system
+   - Celery task: `decay_memory_importance_task()`
+   - Sophisticated temporal decay logic:
+     - Base decay for all memories (configurable rate)
+     - Accelerated decay for stale memories (>30 days)
+     - Protected decay for recent memories (<7 days)
+   - Cron-based scheduling: daily at 2 AM UTC
+   - Multi-tenant batch processing with retry logic
+
+4. **Phase 4: Governance Security** ✅
+   - RBAC protection for governance endpoints
+   - `/governance/overview` requires system admin
+   - `/governance/tenant/{id}` requires tenant access
+
+5. **Phase 5: Cleanup & Documentation** ✅
+   - Comprehensive security documentation:
+     - `docs/security/SECURITY.md` (600+ lines)
+     - `docs/security/RBAC.md` (800+ lines)
+   - Resolved TODO comments with implementation guidance
+   - Updated CHANGELOG.md with migration guide
+
+**Security Features:**
+- ✅ Dual authentication (API Key + JWT)
+- ✅ 5-tier RBAC with 20+ permissions
+- ✅ Tenant isolation at query level
+- ✅ Comprehensive audit logging (IP + user agent)
+- ✅ Role expiration support
+- ✅ Project-level access restrictions
+- ✅ Automated memory decay
+- ✅ Database-backed RBAC
+
+**Configuration:**
+```bash
+# Authentication
+ENABLE_API_KEY_AUTH=true
+ENABLE_JWT_AUTH=false
+
+# Memory Decay
+MEMORY_IMPORTANCE_DECAY_ENABLED=true
+MEMORY_IMPORTANCE_DECAY_RATE=0.01
+MEMORY_IMPORTANCE_DECAY_SCHEDULE="0 2 * * *"
+```
+
+**Files Modified/Created:**
+- `apps/memory_api/security/auth.py` (enhanced)
+- `apps/memory_api/security/dependencies.py` (new)
+- `apps/memory_api/services/rbac_service.py` (enhanced)
+- `apps/memory_api/services/importance_scoring.py` (enhanced)
+- `apps/memory_api/tasks/background_tasks.py` (enhanced)
+- `infra/postgres/migrations/002_create_rbac_tables.sql` (new)
+- `docs/security/SECURITY.md` (new)
+- `docs/security/RBAC.md` (new)
+- `CHANGELOG.md` (updated)
+- `README.md` (updated)
+- `.env.example` (updated)
+
+**Impact:**
+- ✅ Production-ready security implementation
+- ✅ Enterprise-grade access control
+- ✅ Complete tenant isolation
+- ✅ Audit trail for compliance
+- ✅ Automated memory lifecycle management
+
+---
+
 ### 2025-11-27 - Documentation Consistency Fix: Component Classification ✅
 
 **Problem:**

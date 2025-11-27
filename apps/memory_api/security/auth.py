@@ -180,6 +180,7 @@ async def get_user_id_from_token(request: Request) -> Optional[str]:
         # For now, use token hash as user_id for testing
         # This allows basic tenant access control without full JWT setup
         import hashlib
+
         return hashlib.sha256(token.encode()).hexdigest()[:32]
 
     # Try API key as user identifier

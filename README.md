@@ -32,7 +32,7 @@ Current AI agents are **stateless** - they forget everything after each conversa
 ✅ **Graph-based knowledge connections** (GraphRAG)
 ✅ **IDE integration** via Model Context Protocol (MCP)
 ✅ **Cost-aware caching** to minimize LLM API costs
-✅ **Production-ready** with multi-tenancy and security
+✅ **Enterprise Security** with RBAC, authentication, and audit logging
 
 ---
 
@@ -293,6 +293,9 @@ RAE implements a **4-layer cognitive memory system** inspired by human cognition
 | Hybrid search | ✅ Vector + Graph | ⚠️ Vector only | ⚠️ Vector only | ⚠️ Vector only |
 | MCP integration | ✅ Yes | ❌ No | ❌ No | ❌ No |
 | Multi-tenancy | ✅ Built-in | ❌ No | ❌ No | ⚠️ Manual |
+| RBAC & Auth | ✅ Enterprise | ❌ No | ❌ No | ⚠️ Basic |
+| Audit logging | ✅ Yes | ❌ No | ❌ No | ❌ No |
+| Memory decay | ✅ Automated | ❌ No | ⚠️ Manual | ❌ No |
 | Self-hosted | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
 | Production-ready | ✅ Yes | ⚠️ DIY | ⚠️ DIY | ✅ Yes |
 | Cost optimization | ✅ Built-in cache | ❌ No | ❌ No | ❌ No |
@@ -320,6 +323,69 @@ RAE implements a **4-layer cognitive memory system** inspired by human cognition
 - Pattern detection across memories
 - LLM-powered knowledge consolidation
 - Configurable reflection schedules
+
+### 🔒 Enterprise Security & Access Control (v2.0)
+
+**Production-ready security implementation with comprehensive access control:**
+
+#### Authentication & Authorization
+- **Dual Authentication**: API Key and JWT token support
+- **Unified Auth System**: Consistent `verify_token()` across all endpoints
+- **Flexible Configuration**: Enable/disable auth methods per deployment
+- **Token Management**: JWT with expiration, refresh, and validation
+
+#### Role-Based Access Control (RBAC)
+- **5-Tier Role Hierarchy**: Owner → Admin → Developer → Analyst → Viewer
+- **Granular Permissions**: Action-level control (read, write, delete, manage)
+- **Permission Matrix**: 20+ distinct permissions across resources
+- **Role Hierarchy**: Lower roles cannot escalate privileges
+- **Time-Limited Access**: Roles can expire automatically
+- **Project-Level Restrictions**: Optional fine-grained project access
+
+#### Tenant Isolation
+- **Strict Tenant Boundaries**: Query-level filtering on all operations
+- **Explicit Access Required**: Users must be assigned to tenants
+- **No Tenant Enumeration**: UUID-based tenant identification
+- **Cross-Tenant Protection**: All access attempts validated and logged
+
+#### Audit & Compliance
+- **Comprehensive Audit Logs**: All access attempts logged with IP and user agent
+- **Access Denial Tracking**: Failed attempts logged with reasons
+- **Role Assignment History**: Complete audit trail of role changes
+- **GDPR-Ready**: Audit logs support compliance requirements
+
+#### Memory Lifecycle Management
+- **Enterprise Decay Scheduler**: Automated importance decay (daily at 2 AM)
+- **Temporal Decay Logic**:
+  - Base decay for all memories (configurable rate)
+  - Accelerated decay for stale memories (>30 days)
+  - Protected decay for recent memories (<7 days)
+- **Importance Floor**: Memories never fully decay (minimum 0.01)
+- **Multi-Tenant Support**: Processes all tenants in batch
+
+#### Security Features
+- **Database-Backed RBAC**: PostgreSQL storage with migrations
+- **FastAPI Dependencies**: Easy endpoint protection patterns
+- **Rate Limiting**: Configurable request limits per user/tenant
+- **CORS Protection**: Restrictable origin configuration
+- **Secrets Management**: Environment-based configuration
+
+**Documentation:**
+- [Security Overview](docs/security/SECURITY.md) - Complete security architecture
+- [RBAC Guide](docs/security/RBAC.md) - Role-based access control details
+- [Migration Guide](CHANGELOG.md) - Upgrading to v2.0 security
+
+**Configuration:**
+```bash
+# Authentication
+ENABLE_API_KEY_AUTH=true
+ENABLE_JWT_AUTH=false
+
+# Memory Decay
+MEMORY_IMPORTANCE_DECAY_ENABLED=true
+MEMORY_IMPORTANCE_DECAY_RATE=0.01  # 1% per day
+MEMORY_IMPORTANCE_DECAY_SCHEDULE="0 2 * * *"  # Daily at 2 AM
+```
 
 ### 🏢 Enterprise Features
 
@@ -383,10 +449,13 @@ RAE provides two complementary integration methods:
 See [Cost Controller Documentation](docs/concepts/cost-controller.md) for detailed usage.
 
 ### 🔒 Production-Ready
-- Multi-tenant with Row Level Security (RLS)
-- API authentication and rate limiting
-- Health checks and monitoring
-- Horizontal scaling support
+- **Enterprise Security**: RBAC, authentication, tenant isolation (see section above)
+- **Multi-tenant Architecture**: Complete tenant isolation with RLS
+- **API Protection**: Authentication, rate limiting, CORS
+- **Audit Logging**: Comprehensive access logs with IP tracking
+- **Health Checks**: Built-in health and readiness endpoints
+- **Horizontal Scaling**: Stateless API design for easy scaling
+- **Database Migrations**: Version-controlled schema updates
 
 ### 🎯 LLM-Agnostic
 - OpenAI, Anthropic, Google Gemini
