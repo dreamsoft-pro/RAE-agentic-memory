@@ -412,6 +412,111 @@ class RAEMemoryClient:
         )
 
 
+# =============================================================================
+# RATE LIMITING
+# =============================================================================
+
+
+class RateLimiter:
+    """
+    Simple in-memory rate limiter for MCP server.
+
+    Tracks request counts per tenant within a sliding time window.
+    Prevents abuse by limiting the number of tool calls per minute.
+
+    Note: This is a simple implementation suitable for single-process servers.
+    For distributed deployments, use Redis-based rate limiting.
+    """
+
+    def __init__(self, max_requests: int = 100, window_seconds: int = 60):
+        """
+        Initialize rate limiter.
+
+        Args:
+            max_requests: Maximum requests per window (default: 100)
+            window_seconds: Time window in seconds (default: 60)
+        """
+        self.max_requests = max_requests
+        self.window_seconds = window_seconds
+        self._requests: Dict[str, List[float]] = {}  # tenant_id -> timestamps
+
+    def check_rate_limit(self, tenant_id: str) -> bool:
+        """
+        Check if request is within rate limit.
+
+        Args:
+            tenant_id: Tenant identifier
+
+        Returns:
+            True if within limit, False if exceeded
+
+        Side Effects:
+            Records the request timestamp if within limit
+        """
+        now = time.time()
+        cutoff = now - self.window_seconds
+
+        # Initialize tenant if not exists
+        if tenant_id not in self._requests:
+            self._requests[tenant_id] = []
+
+        # Remove old timestamps outside window
+        self._requests[tenant_id] = [
+            ts for ts in self._requests[tenant_id] if ts > cutoff
+        ]
+
+        # Check if within limit
+        if len(self._requests[tenant_id]) >= self.max_requests:
+            logger.warning(
+                "rate_limit_exceeded",
+                tenant_id=tenant_id,
+                request_count=len(self._requests[tenant_id]),
+                limit=self.max_requests,
+            )
+            return False
+
+        # Record this request
+        self._requests[tenant_id].append(now)
+        return True
+
+    def get_remaining(self, tenant_id: str) -> int:
+        """
+        Get remaining requests for tenant.
+
+        Args:
+            tenant_id: Tenant identifier
+
+        Returns:
+            Number of requests remaining in current window
+        """
+        now = time.time()
+        cutoff = now - self.window_seconds
+
+        if tenant_id not in self._requests:
+            return self.max_requests
+
+        # Count requests in current window
+        recent = [ts for ts in self._requests[tenant_id] if ts > cutoff]
+        return max(0, self.max_requests - len(recent))
+
+
+# Initialize rate limiter
+# Configuration via environment variables
+RATE_LIMIT_ENABLED = os.getenv("MCP_RATE_LIMIT_ENABLED", "true").lower() == "true"
+RATE_LIMIT_REQUESTS = int(os.getenv("MCP_RATE_LIMIT_REQUESTS", "100"))
+RATE_LIMIT_WINDOW = int(os.getenv("MCP_RATE_LIMIT_WINDOW", "60"))
+
+rate_limiter = RateLimiter(
+    max_requests=RATE_LIMIT_REQUESTS, window_seconds=RATE_LIMIT_WINDOW
+)
+
+logger.info(
+    "rate_limiter_initialized",
+    enabled=RATE_LIMIT_ENABLED,
+    max_requests=RATE_LIMIT_REQUESTS,
+    window_seconds=RATE_LIMIT_WINDOW,
+)
+
 # Initialize RAE client
 rae_client = RAEMemoryClient()
 
@@ -537,6 +642,20 @@ async def handle_call_tool(
     # Track metrics
     start_time = time.time()
     TOOLS_CALLED.labels(tool_name=name).inc()
+
+    # Check rate limit (if enabled)
+    if RATE_LIMIT_ENABLED:
+        if not rate_limiter.check_rate_limit(RAE_TENANT_ID):
+            remaining = rate_limiter.get_remaining(RAE_TENANT_ID)
+            error_msg = (
+                f"⚠️ Rate limit exceeded\n\n"
+                f"Tenant: {RAE_TENANT_ID}\n"
+                f"Limit: {RATE_LIMIT_REQUESTS} requests per {RATE_LIMIT_WINDOW}s\n"
+                f"Remaining: {remaining}\n\n"
+                f"Please wait a moment before trying again."
+            )
+            TOOL_ERRORS.labels(tool_name=name, error_type="rate_limit").inc()
+            return [types.TextContent(type="text", text=error_msg)]
 
     # Scrub PII from arguments before logging
     scrubbed_arguments = PIIScrubber.scrub(arguments, max_content_length=200)
