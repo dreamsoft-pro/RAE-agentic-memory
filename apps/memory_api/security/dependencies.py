@@ -7,7 +7,7 @@ These dependencies can be used with Depends() in route definitions.
 from typing import Callable
 
 import structlog
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import HTTPException, Request, status
 
 from apps.memory_api.security import auth
 
