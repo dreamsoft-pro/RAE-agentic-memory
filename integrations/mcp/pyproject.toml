@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rae-mcp"
-version = "1.1.0"
+version = "1.2.0"
 description = "Enterprise-grade Model Context Protocol (MCP) server for RAE Memory Engine"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -30,6 +30,9 @@ dependencies = [
     "pydantic>=2.0.0",
     "python-dotenv>=1.0.0",
     "prometheus-client>=0.19.0",
+    "opentelemetry-api>=1.20.0",
+    "opentelemetry-sdk>=1.20.0",
+    "opentelemetry-instrumentation-httpx>=0.41b0",
 ]
 
 [project.optional-dependencies]
@@ -64,6 +67,7 @@ asyncio_mode = "auto"
 markers = [
     "integration: marks tests as integration tests (deselect with '-m \"not integration\"')",
     "e2e: marks tests as end-to-end tests",
+    "load: marks tests as load tests (requires significant resources)",
 ]
 
 [tool.black]

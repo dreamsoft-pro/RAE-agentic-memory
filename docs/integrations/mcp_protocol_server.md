@@ -839,6 +839,326 @@ For high-scale deployments (100+ users), consider:
 - RAE Full Stack (not Lite) for better performance
 - CDN for static resources
 
+## OpenTelemetry Distributed Tracing (New in v1.2.0)
+
+### Overview
+
+MCP server now includes optional OpenTelemetry tracing for distributed observability. When enabled, all tool calls, memory operations, and HTTP requests are instrumented with spans, providing end-to-end visibility into request flows.
+
+### Features
+
+**Automatic Instrumentation**:
+- Tool invocations (`rae.mcp.tool.{tool_name}`)
+- Memory operations (`rae.mcp.store_memory`, `rae.mcp.search_memory`)
+- HTTP requests (via `httpx` instrumentation)
+
+**Span Attributes**:
+- Tool metadata (name, tenant_id)
+- Memory metadata (layer, source, tags, project)
+- Search parameters (query, top_k, result_count)
+- Error information (error type, HTTP status codes)
+
+**Exporters Supported**:
+- Console (default) - prints spans to stdout
+- Jaeger - distributed tracing backend (future)
+- OTLP - OpenTelemetry Protocol (future)
+
+### Configuration
+
+OpenTelemetry is **disabled by default**. Enable via environment variables:
+
+```bash
+# Enable OpenTelemetry
+OTEL_ENABLED=true
+
+# Service name (appears in traces)
+OTEL_SERVICE_NAME=rae-mcp-server
+
+# Exporter type (console, jaeger, otlp)
+OTEL_EXPORTER=console
+```
+
+### Example: Console Exporter
+
+```bash
+# Start MCP server with tracing
+export OTEL_ENABLED=true
+export OTEL_EXPORTER=console
+rae-mcp-server
+```
+
+**Sample Output**:
+```json
+{
+  "name": "rae.mcp.tool.save_memory",
+  "context": {
+    "trace_id": "0x1234567890abcdef",
+    "span_id": "0xfedcba9876543210"
+  },
+  "attributes": {
+    "tool.name": "save_memory",
+    "tool.tenant_id": "my-tenant"
+  },
+  "children": [
+    {
+      "name": "rae.mcp.store_memory",
+      "attributes": {
+        "memory.layer": "episodic",
+        "memory.source": "test",
+        "memory.id": "mem-123"
+      }
+    }
+  ]
+}
+```
+
+### Use Cases
+
+**1. Performance Debugging**
+- Identify slow operations (database queries, LLM calls)
+- Measure end-to-end latency
+- Find bottlenecks in request processing
+
+**2. Error Tracing**
+- Track error propagation across services
+- Identify root cause of failures
+- Correlate errors with specific requests
+
+**3. Distributed Systems**
+- Trace requests across multiple services (MCP → RAE API → PostgreSQL)
+- Understand service dependencies
+- Monitor cascading failures
+
+### Integration with Jaeger (Future)
+
+```bash
+# Install Jaeger exporter
+pip install opentelemetry-exporter-jaeger
+
+# Configure
+export OTEL_ENABLED=true
+export OTEL_EXPORTER=jaeger
+export JAEGER_AGENT_HOST=localhost
+export JAEGER_AGENT_PORT=6831
+
+# Run server
+rae-mcp-server
+
+# View traces
+# Open http://localhost:16686 (Jaeger UI)
+```
+
+### Integration with OTLP (Future)
+
+```bash
+# Install OTLP exporter
+pip install opentelemetry-exporter-otlp
+
+# Configure
+export OTEL_ENABLED=true
+export OTEL_EXPORTER=otlp
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
+
+# Compatible with: Grafana Tempo, Elastic APM, Datadog, New Relic
+```
+
+### Performance Impact
+
+**Overhead**:
+- Console exporter: ~1-2ms per span
+- OTLP exporter: ~2-5ms per span (network dependent)
+- Memory: +20-50MB for span buffers
+
+**Recommendations**:
+- Disable in production unless debugging
+- Use sampling (e.g., 10% of requests) for high-traffic deployments
+- Prefer async exporters to minimize latency impact
+
+### Best Practices
+
+1. **Production**: Disable tracing or use sampling
+   ```bash
+   OTEL_ENABLED=false  # or OTEL_SAMPLING_RATIO=0.1
+   ```
+
+2. **Development**: Enable console exporter for debugging
+   ```bash
+   OTEL_ENABLED=true
+   OTEL_EXPORTER=console
+   ```
+
+3. **Staging**: Use OTLP with Jaeger/Tempo
+   ```bash
+   OTEL_ENABLED=true
+   OTEL_EXPORTER=otlp
+   ```
+
+4. **Custom Spans**: Add application-specific tracing
+   ```python
+   from rae_mcp.server import tracer
+
+   with tracer.start_as_current_span("custom_operation") as span:
+       span.set_attribute("user_id", "12345")
+       # ... operation ...
+   ```
+
+## Load Testing (New in v1.2.0)
+
+### Overview
+
+MCP server includes comprehensive load tests to validate performance under high concurrency (100+ concurrent requests). These tests measure throughput, latency percentiles, error rates, and resource usage.
+
+### Running Load Tests
+
+```bash
+# Run all load tests
+pytest integrations/mcp/tests/test_mcp_load.py -v -m load
+
+# Run specific test
+pytest integrations/mcp/tests/test_mcp_load.py::TestConcurrentStoreMemory::test_concurrent_store_memory_100 -v
+
+# Run with detailed output
+pytest integrations/mcp/tests/test_mcp_load.py -v -m load -s
+```
+
+### Test Suite
+
+**1. Concurrent Store Memory** (`TestConcurrentStoreMemory`)
+- 100 concurrent store operations
+- 200 concurrent store operations
+- Measures: throughput, latency, error rate
+
+**2. Concurrent Search Memory** (`TestConcurrentSearchMemory`)
+- 100 concurrent search operations
+- Validates search performance under load
+- Measures: query latency, result accuracy
+
+**3. Mixed Operations** (`TestMixedOperations`)
+- 150 mixed operations (75 store + 75 search)
+- Simulates realistic workload
+- Validates system under varied load
+
+**4. Sustained Load** (`TestSustainedLoad`)
+- 60 seconds of sustained load (10 req/sec)
+- Tests stability over time
+- Detects memory leaks and resource exhaustion
+
+**5. Latency Percentiles** (`TestLatencyPercentiles`)
+- Measures p50, p95, p99, max latencies
+- 100 concurrent requests
+- Validates SLA compliance
+
+**6. Resource Usage** (`TestResourceUsage`)
+- Memory leak detection
+- CPU usage monitoring
+- Validates efficient resource management
+
+### Expected Results
+
+**Throughput**:
+- 100 concurrent: ~20-50 req/sec (depends on RAE API)
+- 200 concurrent: ~30-70 req/sec
+- Mixed operations: ~40-60 req/sec
+
+**Latency** (under load):
+- p50: < 100ms
+- p95: < 300ms
+- p99: < 500ms
+
+**Error Rate**:
+- < 5% for 100 concurrent
+- < 10% for 200 concurrent
+- < 5% for sustained load
+
+**Resource Usage**:
+- Memory: ~300-450MB under load
+- CPU: 50-80% (2 cores)
+
+### Interpreting Results
+
+**Good Performance**:
+```
+=== Concurrent Store Memory (n=100) ===
+Total time: 4.52s
+Throughput: 22.12 req/sec
+Avg latency: 45.2ms
+Successes: 100
+Errors: 0
+```
+
+**Performance Issues**:
+```
+=== Concurrent Store Memory (n=100) ===
+Total time: 45.23s  ⚠️ Too slow (>30s)
+Throughput: 2.21 req/sec  ⚠️ Low throughput (<5 req/sec)
+Successes: 75  ⚠️ High error rate (25%)
+Errors: 25
+```
+
+**Common Issues**:
+- **High latency**: Check RAE API performance, database connections, network
+- **High error rate**: Check rate limiting, connection pool size, timeouts
+- **Low throughput**: Check worker count (MAX_WORKERS), connection pooling
+
+### Tuning for Better Performance
+
+**1. Increase Worker Count**:
+```bash
+# In docker-compose.lite.yml or .env
+MAX_WORKERS=4  # default: 2
+```
+
+**2. Connection Pooling**:
+```python
+# httpx automatically pools connections (default: 100)
+# Increase if needed:
+limits = httpx.Limits(max_keepalive_connections=200, max_connections=200)
+client = httpx.AsyncClient(limits=limits)
+```
+
+**3. Database Tuning**:
+```yaml
+# PostgreSQL
+max_connections: 100
+shared_buffers: 256MB
+
+# Qdrant
+indexing_threshold: 20000
+```
+
+**4. Rate Limiting**:
+```bash
+# Increase rate limit for load testing
+MCP_RATE_LIMIT_REQUESTS=500  # default: 100
+MCP_RATE_LIMIT_WINDOW=60
+```
+
+### Load Testing Best Practices
+
+1. **Dedicated Environment**: Run load tests on staging/test environment, not production
+2. **Resource Allocation**: Ensure adequate CPU/RAM (8GB+ recommended)
+3. **Monitoring**: Watch system metrics (CPU, memory, disk I/O) during tests
+4. **Baseline**: Establish performance baseline before optimization
+5. **Incremental**: Test with 50, 100, 200, 500 concurrent requests incrementally
+
+### CI/CD Integration
+
+Skip load tests in CI (too resource intensive):
+
+```yaml
+# .github/workflows/ci.yml
+- name: Run tests
+  run: pytest tests/ -v -m "not load"  # Exclude load tests
+```
+
+Run load tests manually or in dedicated performance testing pipeline:
+
+```yaml
+# .github/workflows/performance.yml (manual trigger)
+- name: Run load tests
+  run: pytest integrations/mcp/tests/test_mcp_load.py -v -m load
+```
+
 ## Development
 
 ### Running Tests

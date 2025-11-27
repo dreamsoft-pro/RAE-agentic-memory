@@ -24,7 +24,48 @@ from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 from prometheus_client import Counter, Histogram
 
+# OpenTelemetry imports
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+
 logger = structlog.get_logger(__name__)
+
+# =============================================================================
+# OPENTELEMETRY CONFIGURATION
+# =============================================================================
+
+# Initialize OpenTelemetry (optional, disabled by default)
+OTEL_ENABLED = os.getenv("OTEL_ENABLED", "false").lower() == "true"
+OTEL_SERVICE_NAME = os.getenv("OTEL_SERVICE_NAME", "rae-mcp-server")
+OTEL_EXPORTER = os.getenv("OTEL_EXPORTER", "console")  # console, jaeger, otlp
+
+if OTEL_ENABLED:
+    # Set up tracer provider
+    trace.set_tracer_provider(TracerProvider())
+    tracer_provider = trace.get_tracer_provider()
+
+    # Configure exporter
+    if OTEL_EXPORTER == "console":
+        span_processor = BatchSpanProcessor(ConsoleSpanExporter())
+        tracer_provider.add_span_processor(span_processor)
+    # Add support for other exporters (Jaeger, OTLP) in future
+
+    # Instrument httpx for automatic HTTP tracing
+    HTTPXClientInstrumentor().instrument()
+
+    logger.info(
+        "opentelemetry_initialized",
+        enabled=True,
+        service_name=OTEL_SERVICE_NAME,
+        exporter=OTEL_EXPORTER,
+    )
+else:
+    logger.info("opentelemetry_disabled")
+
+# Get tracer instance
+tracer = trace.get_tracer(__name__)
 
 # Prometheus Metrics
 TOOLS_CALLED = Counter(
@@ -239,44 +280,59 @@ class RAEMemoryClient:
         Returns:
             Response dict with memory ID
         """
-        payload = {
-            "content": content,
-            "source": source,
-            "layer": layer,
-            "tags": tags or [],
-            "project": project,
-        }
+        with tracer.start_as_current_span("rae.mcp.store_memory") as span:
+            # Add span attributes for observability
+            span.set_attribute("memory.layer", layer)
+            span.set_attribute("memory.source", source)
+            span.set_attribute("memory.tags_count", len(tags or []))
+            span.set_attribute("memory.project", project)
 
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"{self.base_url}/memory/store",
-                    json=payload,
-                    headers=self.headers,
-                    timeout=30.0,
+            payload = {
+                "content": content,
+                "source": source,
+                "layer": layer,
+                "tags": tags or [],
+                "project": project,
+            }
+
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(
+                        f"{self.base_url}/memory/store",
+                        json=payload,
+                        headers=self.headers,
+                        timeout=30.0,
+                    )
+                    response.raise_for_status()
+                    result = response.json()
+
+                    memory_id = result.get("id")
+                    span.set_attribute("memory.id", memory_id)
+
+                    logger.info(
+                        "memory_stored",
+                        memory_id=memory_id,
+                        source=source,
+                        layer=layer,
+                    )
+
+                    return result
+
+            except httpx.HTTPStatusError as e:
+                span.set_attribute("error", True)
+                span.set_attribute("error.type", "http_error")
+                span.set_attribute("http.status_code", e.response.status_code)
+                logger.error(
+                    "memory_store_http_error",
+                    status_code=e.response.status_code,
+                    error=str(e),
                 )
-                response.raise_for_status()
-                result = response.json()
-
-                logger.info(
-                    "memory_stored",
-                    memory_id=result.get("id"),
-                    source=source,
-                    layer=layer,
-                )
-
-                return result
-
-        except httpx.HTTPStatusError as e:
-            logger.error(
-                "memory_store_http_error",
-                status_code=e.response.status_code,
-                error=str(e),
-            )
-            raise
-        except Exception as e:
-            logger.error("memory_store_error", error=str(e))
-            raise
+                raise
+            except Exception as e:
+                span.set_attribute("error", True)
+                span.set_attribute("error.type", type(e).__name__)
+                logger.error("memory_store_error", error=str(e))
+                raise
 
     async def search_memory(
         self,
@@ -297,40 +353,52 @@ class RAEMemoryClient:
         Returns:
             List of scored memory records
         """
-        payload = {
-            "query_text": query,
-            "k": top_k,
-            "project": project or RAE_PROJECT_ID,
-            "filters": filters or {},
-        }
+        with tracer.start_as_current_span("rae.mcp.search_memory") as span:
+            # Add span attributes
+            span.set_attribute("search.query", query)
+            span.set_attribute("search.top_k", top_k)
+            span.set_attribute("search.project", project or RAE_PROJECT_ID)
 
-        try:
-            async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"{self.base_url}/memory/query",
-                    json=payload,
-                    headers=self.headers,
-                    timeout=30.0,
+            payload = {
+                "query_text": query,
+                "k": top_k,
+                "project": project or RAE_PROJECT_ID,
+                "filters": filters or {},
+            }
+
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.post(
+                        f"{self.base_url}/memory/query",
+                        json=payload,
+                        headers=self.headers,
+                        timeout=30.0,
+                    )
+                    response.raise_for_status()
+                    result = response.json()
+
+                    results = result.get("results", [])
+                    span.set_attribute("search.result_count", len(results))
+
+                    logger.info("memory_searched", query=query, result_count=len(results))
+
+                    return results
+
+            except httpx.HTTPStatusError as e:
+                span.set_attribute("error", True)
+                span.set_attribute("error.type", "http_error")
+                span.set_attribute("http.status_code", e.response.status_code)
+                logger.error(
+                    "memory_search_http_error",
+                    status_code=e.response.status_code,
+                    error=str(e),
                 )
-                response.raise_for_status()
-                result = response.json()
-
-                results = result.get("results", [])
-
-                logger.info("memory_searched", query=query, result_count=len(results))
-
-                return results
-
-        except httpx.HTTPStatusError as e:
-            logger.error(
-                "memory_search_http_error",
-                status_code=e.response.status_code,
-                error=str(e),
-            )
-            raise
-        except Exception as e:
-            logger.error("memory_search_error", error=str(e))
-            raise
+                raise
+            except Exception as e:
+                span.set_attribute("error", True)
+                span.set_attribute("error.type", type(e).__name__)
+                logger.error("memory_search_error", error=str(e))
+                raise
 
     async def get_file_context(
         self, file_path: str, top_k: int = 10
@@ -642,6 +710,11 @@ async def handle_call_tool(
     # Track metrics
     start_time = time.time()
     TOOLS_CALLED.labels(tool_name=name).inc()
+
+    # Create OpenTelemetry span for tool invocation
+    with tracer.start_as_current_span(f"rae.mcp.tool.{name}") as span:
+        span.set_attribute("tool.name", name)
+        span.set_attribute("tool.tenant_id", RAE_TENANT_ID)
 
     # Check rate limit (if enabled)
     if RATE_LIMIT_ENABLED:

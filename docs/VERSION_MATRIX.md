@@ -31,8 +31,7 @@ Components ready for production use with full support and stability guarantees.
 |-----------|---------|--------|---------|-------------|
 | **Core API** | 2.0.0-enterprise | ✅ **GA** | Full | Main Memory API with 4-layer architecture |
 | **GraphRAG** | 2.0.0 | ✅ **GA** | Full | Knowledge graph + hybrid search |
-| **MCP Integration** | 1.1.0 | ✅ **GA** | Full | Model Context Protocol server (enterprise features) |
-| **MCP Server (Legacy)** | 1.0.0 | ⚠️ **Deprecated** | Until v2.0 | Legacy MCP - use v1.1.0 instead |
+| **MCP Integration** | 1.2.0 | ✅ **GA** | Full | Model Context Protocol server (OpenTelemetry, load tests, rate limiting) |
 | **Governance API** | 2.0.0 | ✅ **GA** | Full | Cost tracking & budget management |
 | **Context Watcher** | 1.0.0 | ✅ **GA** | Full | File system monitoring |
 | **Reranker Service** | 1.0.0 | ✅ **GA** | Full | Result re-ranking service |
