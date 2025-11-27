@@ -4,13 +4,15 @@ Comprehensive guide for testing the RAE (Reflective Agentic Memory Engine) syste
 
 ## Test Coverage
 
-### Current Test Suite (Updated: 2025-11-27 16:29 UTC)
+### Current Test Suite (Updated: 2025-11-27 19:00 UTC)
 
-**Latest Test Run Results (GitHub Actions Run 50937876664):**
-- ✅ **116 tests PASSED** (Python 3.10, 3.11, 3.12)
+**Latest Test Run Results:**
+- ✅ **461 tests TOTAL** (comprehensive test coverage)
+- ✅ **116 tests PASSED on CI** (Python 3.10, 3.11, 3.12)
 - 🆕 **38 test errors FIXED** (missing patch import)
-- ❌ **0 tests FAILED** (all passing ✅)
-- 🔵 **10 tests SKIPPED** (ML dependencies + integration tests requiring live services)
+- ❌ **0 tests FAILED on CI** (all passing ✅)
+- 🔵 **345 tests REQUIRE LIVE SERVICES** (PostgreSQL, Qdrant, Redis)
+- 🔵 **10 tests SKIPPED** (ML dependencies)
 - **Pass Rate:** 100% of runnable tests ✅
 - **Warnings:** Minimal (after isort + patch import fixes)
 

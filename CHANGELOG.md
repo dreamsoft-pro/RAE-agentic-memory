@@ -89,15 +89,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Comparison table: Lite vs Full vs Enterprise
   - Upgrade paths to full stack or Kubernetes
 
-- **Enhanced Test Coverage (35 new tests)**
+- **Enhanced MCP Test Coverage (+60 new tests)**
+  - `integrations/mcp/tests/test_mcp_integration.py` (17 tests) - MCP protocol integration
+  - `integrations/mcp/tests/test_mcp_load.py` (7 tests) - Load and performance testing
+  - `integrations/mcp/tests/test_pii_scrubber.py` (36 tests) - PII detection and masking
   - `tests/api/v1/test_governance.py` (13 tests) - Governance API endpoints
   - `tests/api/v1/test_search_hybrid.py` (9 tests) - Hybrid search functionality
   - `tests/api/v1/test_memory.py` (+6 tests) - Enhanced memory operations
   - `tests/api/v1/test_agent.py` (+3 tests) - Agent execution with context
-  - `tests/integration/test_lite_profile.py` (12 tests) - RAE Lite integration tests
-  - Total test count: 184 → 219 tests (+19% increase)
-  - Coverage target: 75-80% for critical endpoints
-  - All tests verified passing on GitHub Actions CI
+  - `tests/integration/test_lite_profile.py` (11 tests) - RAE Lite integration tests
+  - **Total test count: 431 → 461 tests (+7% increase, 461 tests total)**
+  - Coverage: Comprehensive test suite across all major components
+  - All critical tests verified passing on GitHub Actions CI
 
 - **Integration Testing Infrastructure**
   - `scripts/test_lite_profile.sh` (131 lines) - Comprehensive smoke test
