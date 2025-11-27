@@ -1,5 +1,22 @@
 # RAE MCP Server
 
+> **⚠️ DEPRECATED: This folder contains the legacy v1.0.0 MCP implementation.**
+>
+> **Please use [`integrations/mcp/`](../mcp/) (v1.1.0) for new projects.**
+>
+> **Migration Guide**: See [MIGRATION.md](../MIGRATION.md) for upgrade instructions.
+>
+> **Support Timeline**: This v1.0.0 implementation will be maintained until RAE v2.0.0 (estimated Q2 2025), after which it will be removed.
+>
+> **What's New in v1.1.0**:
+> - Enhanced PII scrubbing with comprehensive tests
+> - Built-in rate limiting (100 req/min per tenant)
+> - Integration tests with real RAE API
+> - Improved error handling and observability
+> - Better documentation with performance benchmarks
+
+---
+
 Enterprise-grade Model Context Protocol (MCP) server for RAE (Reflective Agentic Memory Engine).
 
 ## Features
