@@ -20,7 +20,6 @@ from .repositories.memory_repository import MemoryRepository
 from .services.graph_extraction import GraphExtractionService
 from .services.hybrid_search import HybridSearchService
 
-
 # ==========================================
 # Authentication Dependencies
 # ==========================================

@@ -19,12 +19,12 @@ from apps.memory_api.models import (
     StoreMemoryResponse,
 )
 from apps.memory_api.repositories.memory_repository import MemoryRepository  # NEW
+from apps.memory_api.security import auth
+from apps.memory_api.security.dependencies import get_and_verify_tenant_id
 from apps.memory_api.services import pii_scrubber, scoring
 from apps.memory_api.services.embedding import get_embedding_service  # NEW
 from apps.memory_api.services.hybrid_search import HybridSearchService  # NEW
 from apps.memory_api.services.vector_store import get_vector_store  # NEW
-from apps.memory_api.security import auth
-from apps.memory_api.security.dependencies import get_and_verify_tenant_id
 from apps.memory_api.tasks.background_tasks import (  # NEW
     generate_reflection_for_project,
 )

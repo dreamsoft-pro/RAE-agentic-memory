@@ -13,13 +13,13 @@ from apps.memory_api.models import (
     ScoredMemoryRecord,
     StoreMemoryRequest,
 )
+from apps.memory_api.security import auth
+from apps.memory_api.security.dependencies import get_and_verify_tenant_id
 from apps.memory_api.services.context_cache import get_context_cache  # NEW
 from apps.memory_api.services.embedding import get_embedding_service  # NEW
 from apps.memory_api.services.llm import get_llm_provider  # NEW import
 from apps.memory_api.services.llm.base import LLMResult  # NEW import - for type hinting
 from apps.memory_api.services.token_estimator import estimate_tokens  # NEW
-from apps.memory_api.security import auth
-from apps.memory_api.security.dependencies import get_and_verify_tenant_id
 from apps.memory_api.services.vector_store import get_vector_store  # NEW
 
 # All agent endpoints require authentication

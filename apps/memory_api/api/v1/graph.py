@@ -16,14 +16,14 @@ from pydantic import BaseModel, Field
 
 from apps.memory_api.dependencies import get_hybrid_search_service
 from apps.memory_api.metrics import memory_query_counter
+from apps.memory_api.security import auth
+from apps.memory_api.security.dependencies import get_and_verify_tenant_id
 from apps.memory_api.services.graph_extraction import GraphExtractionResult
 from apps.memory_api.services.hybrid_search import (
     HybridSearchResult,
     HybridSearchService,
     TraversalStrategy,
 )
-from apps.memory_api.security import auth
-from apps.memory_api.security.dependencies import get_and_verify_tenant_id
 from apps.memory_api.services.reflection_engine import ReflectionEngine
 
 logger = structlog.get_logger(__name__)
