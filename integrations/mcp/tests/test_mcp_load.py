@@ -202,7 +202,7 @@ class TestConcurrentSearchMemory:
         async def search_single(i: int):
             """Search memories"""
             return await mcp_client.search_memory(
-                query=f"search target memory",
+                query="search target memory",
                 top_k=5,
             )
 
