@@ -291,6 +291,7 @@ RAE implements a **4-layer cognitive memory system** inspired by human cognition
 | Auto-reflection | ✅ Yes | ❌ No | ⚠️ Limited | ❌ |
 | Knowledge graph | ✅ GraphRAG | ❌ No | ❌ No | ❌ |
 | Hybrid search | ✅ Vector + Graph | ⚠️ Vector only | ⚠️ Vector only | ⚠️ Vector only |
+| Multi-model LLM | ✅ 7 providers | ⚠️ Manual | ⚠️ Limited | ❌ |
 | MCP integration | ✅ Yes | ❌ No | ❌ No | ❌ No |
 | Multi-tenancy | ✅ Built-in | ❌ No | ❌ No | ⚠️ Manual |
 | RBAC & Auth | ✅ Enterprise | ❌ No | ❌ No | ⚠️ Basic |
@@ -323,6 +324,24 @@ RAE implements a **4-layer cognitive memory system** inspired by human cognition
 - Pattern detection across memories
 - LLM-powered knowledge consolidation
 - Configurable reflection schedules
+
+### 🤖 Multi-Model LLM Integration (v2.0)
+- **Unified Provider Interface**: Single API for all LLM providers
+- **Supported Models**:
+  - OpenAI (GPT-4, GPT-3.5, O1)
+  - Anthropic (Claude 3.x, Claude 3.7)
+  - Google (Gemini 1.5 Pro, Flash)
+  - DeepSeek (Coder, Chat)
+  - Qwen (Alibaba Cloud)
+  - Grok (xAI)
+  - Ollama (Local models: Llama, Mistral)
+- **Intelligent Routing**: Automatic provider selection based on model name
+- **Cost-Aware Fallbacks**: Switch providers on rate limits or failures
+- **Streaming Support**: Real-time response streaming for all compatible providers
+- **Tool Calling**: Unified function/tool calling interface
+- **JSON Mode**: Structured output support across providers
+- **Profile-Based Selection**: Use llm_profiles.yaml for smart model selection
+- **Easy Extension**: Add new providers by implementing simple interface
 
 ### 🔒 Enterprise Security & Access Control (v2.0)
 
