@@ -179,9 +179,7 @@ class TestMCPSearchMemory:
         time.sleep(1)
 
         # Search for the memory
-        results = await mcp_client.search_memory(
-            query="FastAPI REST API", top_k=5
-        )
+        results = await mcp_client.search_memory(query="FastAPI REST API", top_k=5)
 
         assert isinstance(results, list)
         # May or may not find results depending on indexing speed
@@ -224,9 +222,7 @@ class TestMCPSearchMemory:
         time.sleep(2)
 
         # Search with top_k=3
-        results = await mcp_client.search_memory(
-            query="top_k testing", top_k=3
-        )
+        results = await mcp_client.search_memory(query="top_k testing", top_k=3)
 
         assert isinstance(results, list)
         # Should return at most 3 results (may be less if indexing incomplete)
@@ -257,9 +253,7 @@ class TestMCPFileContext:
         time.sleep(1)
 
         # Get file context
-        results = await mcp_client.get_file_context(
-            file_path="/app/auth.py", top_k=10
-        )
+        results = await mcp_client.get_file_context(file_path="/app/auth.py", top_k=10)
 
         assert isinstance(results, list)
 

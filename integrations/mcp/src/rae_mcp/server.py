@@ -380,7 +380,9 @@ class RAEMemoryClient:
                     results = result.get("results", [])
                     span.set_attribute("search.result_count", len(results))
 
-                    logger.info("memory_searched", query=query, result_count=len(results))
+                    logger.info(
+                        "memory_searched", query=query, result_count=len(results)
+                    )
 
                     return results
 

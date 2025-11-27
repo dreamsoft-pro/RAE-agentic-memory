@@ -142,7 +142,9 @@ class TestConcurrentStoreMemory:
         print(f"Errors: {len(errors)}")
 
         # Assertions
-        assert len(successes) >= concurrency * 0.95, f"Too many errors: {len(errors)}/{concurrency}"
+        assert (
+            len(successes) >= concurrency * 0.95
+        ), f"Too many errors: {len(errors)}/{concurrency}"
         assert elapsed < 30.0, f"Too slow: {elapsed}s for {concurrency} requests"
 
     @pytest.mark.asyncio
@@ -173,7 +175,9 @@ class TestConcurrentStoreMemory:
         print(f"Successes: {len(successes)}")
         print(f"Errors: {len(errors)}")
 
-        assert len(successes) >= concurrency * 0.90, f"Too many errors: {len(errors)}/{concurrency}"
+        assert (
+            len(successes) >= concurrency * 0.90
+        ), f"Too many errors: {len(errors)}/{concurrency}"
 
 
 class TestConcurrentSearchMemory:
@@ -217,7 +221,9 @@ class TestConcurrentSearchMemory:
         print(f"Successes: {len(successes)}")
         print(f"Errors: {len(errors)}")
 
-        assert len(successes) >= concurrency * 0.95, f"Too many errors: {len(errors)}/{concurrency}"
+        assert (
+            len(successes) >= concurrency * 0.95
+        ), f"Too many errors: {len(errors)}/{concurrency}"
         assert elapsed < 30.0, f"Too slow: {elapsed}s for {concurrency} requests"
 
 
@@ -260,7 +266,9 @@ class TestMixedOperations:
         print(f"Successes: {len(successes)}")
         print(f"Errors: {len(errors)}")
 
-        assert len(successes) >= concurrency * 0.90, f"Too many errors: {len(errors)}/{concurrency}"
+        assert (
+            len(successes) >= concurrency * 0.90
+        ), f"Too many errors: {len(errors)}/{concurrency}"
 
 
 class TestSustainedLoad:
@@ -317,7 +325,9 @@ class TestSustainedLoad:
         print(f"Actual throughput: {request_count / total_elapsed:.2f} req/sec")
         print(f"Error rate: {(error_count / request_count) * 100:.2f}%")
 
-        assert error_count / request_count < 0.05, f"Error rate too high: {error_count}/{request_count}"
+        assert (
+            error_count / request_count < 0.05
+        ), f"Error rate too high: {error_count}/{request_count}"
 
 
 class TestLatencyPercentiles:
@@ -341,7 +351,9 @@ class TestLatencyPercentiles:
             return latency
 
         # Execute concurrent requests
-        latencies = await asyncio.gather(*[timed_operation(i) for i in range(concurrency)])
+        latencies = await asyncio.gather(
+            *[timed_operation(i) for i in range(concurrency)]
+        )
         latencies = sorted(latencies)
 
         # Calculate percentiles
@@ -389,7 +401,9 @@ class TestResourceUsage:
             results = await asyncio.gather(*tasks, return_exceptions=True)
             successes = [r for r in results if not isinstance(r, Exception)]
 
-            print(f"Batch {batch + 1}/{num_batches}: {len(successes)}/{batch_size} succeeded")
+            print(
+                f"Batch {batch + 1}/{num_batches}: {len(successes)}/{batch_size} succeeded"
+            )
 
             # Small delay between batches
             await asyncio.sleep(1)

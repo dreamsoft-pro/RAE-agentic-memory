@@ -4,7 +4,7 @@ Pytest configuration and shared fixtures for RAE Memory API tests.
 
 import asyncio
 from typing import Any, Generator
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock, patch
 
 import asyncpg
 import pytest
@@ -120,7 +120,9 @@ def mock_pool():
 
     # Patch asyncpg.create_pool to return our mock pool
     # This prevents the app from trying to connect to a real DB during test startup
-    with patch("apps.memory_api.main.asyncpg.create_pool", new_callable=AsyncMock) as mock_create_pool:
+    with patch(
+        "apps.memory_api.main.asyncpg.create_pool", new_callable=AsyncMock
+    ) as mock_create_pool:
         mock_create_pool.return_value = pool
         yield pool
 
