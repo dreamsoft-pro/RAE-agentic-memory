@@ -1,0 +1,22 @@
+﻿2025-11-27T16:29:34.1098639Z ##[group]Run actions/setup-python@v5
+2025-11-27T16:29:34.1098924Z with:
+2025-11-27T16:29:34.1099097Z   python-version: 3.10
+2025-11-27T16:29:34.1099291Z   cache: pip
+2025-11-27T16:29:34.1099455Z   check-latest: false
+2025-11-27T16:29:34.1099756Z   token: ***
+2025-11-27T16:29:34.1099930Z   update-environment: true
+2025-11-27T16:29:34.1100143Z   allow-prereleases: false
+2025-11-27T16:29:34.1100335Z   freethreaded: false
+2025-11-27T16:29:34.1100515Z ##[endgroup]
+2025-11-27T16:29:34.2793819Z ##[group]Installed versions
+2025-11-27T16:29:34.2912711Z Successfully set up CPython (3.10.19)
+2025-11-27T16:29:34.2914329Z ##[endgroup]
+2025-11-27T16:29:34.3851008Z [command]/opt/hostedtoolcache/Python/3.10.19/x64/bin/pip cache dir
+2025-11-27T16:29:34.7180528Z /home/runner/.cache/pip
+2025-11-27T16:29:34.8643478Z Cache hit for: setup-python-Linux-x64-24.04-Ubuntu-python-3.10.19-pip-95ebd838ea30dfa2c987f9bac75f820c290461fa42ed4bab22d8dee29c03de2a
+2025-11-27T16:29:35.9732729Z Received 134217728 of 205791321 (65.2%), 128.0 MBs/sec
+2025-11-27T16:29:36.4662923Z Received 205791321 of 205791321 (100.0%), 131.5 MBs/sec
+2025-11-27T16:29:36.4663620Z Cache Size: ~196 MB (205791321 B)
+2025-11-27T16:29:36.4794310Z [command]/usr/bin/tar -xf /home/runner/work/_temp/1a0618ce-ddf3-411c-bc5e-48fc39d0e946/cache.tzst -P -C /home/runner/work/RAE-agentic-memory/RAE-agentic-memory --use-compress-program unzstd
+2025-11-27T16:29:36.8256140Z Cache restored successfully
+2025-11-27T16:29:36.8666024Z Cache restored from key: setup-python-Linux-x64-24.04-Ubuntu-python-3.10.19-pip-95ebd838ea30dfa2c987f9bac75f820c290461fa42ed4bab22d8dee29c03de2a

@@ -301,16 +301,172 @@ def run_community_detection_task(
     asyncio.run(main())
 
 
+@celery_app.task(bind=True, max_retries=3)
+def decay_memory_importance_task(self, tenant_id: str = None):
+    """
+    Enterprise-grade periodic task for memory importance decay.
+
+    Applies temporal decay to memory importance scores across all tenants
+    or a specific tenant. Uses ImportanceScoringService with sophisticated
+    decay logic that considers:
+    - Base decay rate for all memories
+    - Accelerated decay for stale memories (not accessed > 30 days)
+    - Protected decay for recently accessed memories (< 7 days)
+
+    This task should be scheduled to run daily (e.g., at 2 AM) to maintain
+    memory importance scores and naturally age memories over time.
+
+    Args:
+        tenant_id: Optional tenant ID to process. If None, processes all tenants.
+
+    Returns:
+        Dictionary with processing statistics
+    """
+    import asyncio
+    from uuid import UUID
+
+    from apps.memory_api.services.importance_scoring import ImportanceScoringService
+
+    async def main():
+        pool = await get_pool()
+        try:
+            # Initialize scoring service
+            scoring_service = ImportanceScoringService(db=pool)
+
+            # Get decay configuration from settings
+            decay_rate = settings.MEMORY_DECAY_RATE
+            logger.info(
+                "decay_task_started",
+                tenant_id=tenant_id,
+                decay_rate=decay_rate,
+            )
+
+            total_updated = 0
+            tenants_processed = 0
+            failed_tenants = []
+
+            if tenant_id:
+                # Process single tenant
+                try:
+                    tenant_uuid = UUID(tenant_id)
+                    updated = await scoring_service.decay_importance(
+                        tenant_id=tenant_uuid,
+                        decay_rate=decay_rate,
+                        consider_access_stats=True,
+                    )
+                    total_updated += updated
+                    tenants_processed = 1
+                    logger.info(
+                        "decay_tenant_complete",
+                        tenant_id=tenant_id,
+                        updated_count=updated,
+                    )
+                except Exception as e:
+                    logger.error(
+                        "decay_tenant_failed", tenant_id=tenant_id, error=str(e)
+                    )
+                    failed_tenants.append({"tenant_id": tenant_id, "error": str(e)})
+            else:
+                # Process all tenants
+                # Get unique tenant IDs from memories table
+                tenant_records = await pool.fetch(
+                    """
+                    SELECT DISTINCT tenant_id
+                    FROM memories
+                    WHERE importance > 0.01
+                    """
+                )
+
+                logger.info(
+                    "decay_processing_all_tenants",
+                    tenant_count=len(tenant_records),
+                    decay_rate=decay_rate,
+                )
+
+                for record in tenant_records:
+                    try:
+                        tenant_id_str = record["tenant_id"]
+                        # Try to parse as UUID, if fails use as string
+                        try:
+                            tenant_uuid = UUID(tenant_id_str)
+                        except (ValueError, AttributeError):
+                            # If not a valid UUID, skip (could log warning)
+                            logger.warning(
+                                "invalid_tenant_id_format", tenant_id=tenant_id_str
+                            )
+                            continue
+
+                        updated = await scoring_service.decay_importance(
+                            tenant_id=tenant_uuid,
+                            decay_rate=decay_rate,
+                            consider_access_stats=True,
+                        )
+                        total_updated += updated
+                        tenants_processed += 1
+
+                        if updated > 0:
+                            logger.info(
+                                "decay_tenant_complete",
+                                tenant_id=tenant_id_str,
+                                updated_count=updated,
+                            )
+                    except Exception as e:
+                        logger.error(
+                            "decay_tenant_failed",
+                            tenant_id=record["tenant_id"],
+                            error=str(e),
+                        )
+                        failed_tenants.append(
+                            {"tenant_id": record["tenant_id"], "error": str(e)}
+                        )
+                        # Continue processing other tenants
+
+            result = {
+                "success": True,
+                "total_memories_updated": total_updated,
+                "tenants_processed": tenants_processed,
+                "failed_tenants": failed_tenants,
+                "decay_rate": decay_rate,
+            }
+
+            logger.info(
+                "decay_task_complete",
+                total_updated=total_updated,
+                tenants_processed=tenants_processed,
+                failed_count=len(failed_tenants),
+            )
+
+            return result
+
+        except Exception as e:
+            logger.error("decay_task_fatal_error", error=str(e))
+            # Retry with exponential backoff
+            raise self.retry(exc=e, countdown=300 * (2**self.request.retries))
+
+        finally:
+            await pool.close()
+
+    return asyncio.run(main())
+
+
 # --- Celery Beat Schedule ---
 @celery_app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
+    from celery.schedules import crontab
+
     # Schedule reflection checks every 5 minutes
     sender.add_periodic_task(
         300.0, schedule_reflections.s(), name="check for reflections every 5 mins"
     )
-    # Schedule memory decay every hour
+    # Schedule memory decay every hour (legacy, simple decay)
     sender.add_periodic_task(
         3600.0, apply_memory_decay.s(), name="apply memory decay every hour"
+    )
+    # Schedule importance decay daily at 2 AM (enterprise-grade decay)
+    sender.add_periodic_task(
+        crontab(hour=2, minute=0),
+        decay_memory_importance_task.s(),
+        name="decay memory importance daily at 2 AM",
     )
     # Schedule memory pruning once a day (86400 seconds)
     sender.add_periodic_task(

@@ -1,0 +1,155 @@
+﻿2025-11-27T16:30:47.8095830Z ##[group]Run pytest -m "integration" --cov --cov-append --cov-report=xml --cov-report=term || true
+2025-11-27T16:30:47.8096485Z [36;1mpytest -m "integration" --cov --cov-append --cov-report=xml --cov-report=term || true[0m
+2025-11-27T16:30:47.8129601Z shell: /usr/bin/bash -e {0}
+2025-11-27T16:30:47.8129830Z env:
+2025-11-27T16:30:47.8130068Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-27T16:30:47.8130471Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-27T16:30:47.8130858Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-27T16:30:47.8131196Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-27T16:30:47.8131537Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-27T16:30:47.8131876Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-27T16:30:47.8132630Z   DATABASE_URL: ***localhost:5432/test_rae
+2025-11-27T16:30:47.8132915Z   REDIS_URL: redis://localhost:6379/0
+2025-11-27T16:30:47.8133200Z   QDRANT_URL: http://localhost:6333
+2025-11-27T16:30:47.8133438Z   RAE_VECTOR_BACKEND: qdrant
+2025-11-27T16:30:47.8133649Z ##[endgroup]
+2025-11-27T16:30:48.1208049Z [1m============================= test session starts ==============================[0m
+2025-11-27T16:30:48.1209520Z platform linux -- Python 3.11.14, pytest-9.0.1, pluggy-1.6.0 -- /opt/hostedtoolcache/Python/3.11.14/x64/bin/python
+2025-11-27T16:30:48.1210233Z cachedir: .pytest_cache
+2025-11-27T16:30:48.1210697Z rootdir: /home/runner/work/RAE-agentic-memory/RAE-agentic-memory
+2025-11-27T16:30:48.1211209Z configfile: pytest.ini
+2025-11-27T16:30:48.1211793Z testpaths: apps/memory_api/tests, sdk/python/rae_memory_sdk/tests, integrations/mcp-server/tests
+2025-11-27T16:30:48.1212535Z plugins: anyio-4.11.0, cov-7.0.0, asyncio-1.3.0, mock-3.15.1
+2025-11-27T16:30:48.1213356Z asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+2025-11-27T16:31:00.4052770Z [1mcollecting ... [0mcollected 157 items / 157 deselected / 7 skipped / 0 selected
+2025-11-27T16:31:00.4053385Z 
+2025-11-27T16:31:00.4053664Z [33m=============================== warnings summary ===============================[0m
+2025-11-27T16:31:00.4054375Z ../../../../../opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages/starlette/formparsers.py:12
+2025-11-27T16:31:00.4055614Z   /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages/starlette/formparsers.py:12: PendingDeprecationWarning: Please use `import python_multipart` instead.
+2025-11-27T16:31:00.4056602Z     import multipart
+2025-11-27T16:31:00.4056758Z 
+2025-11-27T16:31:00.4057014Z -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2025-11-27T16:31:00.4057530Z ================================ tests coverage ================================
+2025-11-27T16:31:00.4058021Z _______________ coverage: platform linux, python 3.11.14-final-0 _______________
+2025-11-27T16:31:00.4058361Z 
+2025-11-27T16:31:00.4058520Z Name                                                         Stmts   Miss  Cover   Missing
+2025-11-27T16:31:00.4058985Z ------------------------------------------------------------------------------------------
+2025-11-27T16:31:00.4059748Z apps/__init__.py                                                 0      0   100%
+2025-11-27T16:31:00.4060456Z apps/memory_api/__init__.py                                      0      0   100%
+2025-11-27T16:31:00.4060871Z apps/memory_api/api/__init__.py                                  0      0   100%
+2025-11-27T16:31:00.4061281Z apps/memory_api/api/v1/__init__.py                               0      0   100%
+2025-11-27T16:31:00.4061722Z apps/memory_api/api/v1/agent.py                                 89     68    24%   48-222, 249-271
+2025-11-27T16:31:00.4062178Z apps/memory_api/api/v1/cache.py                                  8      2    75%   14-15
+2025-11-27T16:31:00.4062660Z apps/memory_api/api/v1/governance.py                           122     75    39%   103-175, 197-300, 319-419
+2025-11-27T16:31:00.4063408Z apps/memory_api/api/v1/graph.py                                192    123    36%   150-190, 219-272, 296-359, 400-512, 541-591, 628-684, 716-818
+2025-11-27T16:31:00.4063998Z apps/memory_api/api/v1/health.py                               127     86    32%   59-95, 102-135, 142-174, 189-204, 228-265, 282-287, 303, 322-351
+2025-11-27T16:31:00.4064578Z apps/memory_api/api/v1/memory.py                               139    110    21%   43-103, 127-239, 247-275, 283-284, 292-306, 349-408
+2025-11-27T16:31:00.4065059Z apps/memory_api/celery_app.py                                    4      0   100%
+2025-11-27T16:31:00.4065655Z apps/memory_api/clients/rae_client.py                          270     32    88%   116-119, 242-244, 298, 374-383, 465, 472, 507-508, 512, 516, 561-562, 589, 604, 715, 741, 747, 796-802
+2025-11-27T16:31:00.4066240Z apps/memory_api/config.py                                       49      1    98%   40
+2025-11-27T16:31:00.4066661Z apps/memory_api/cost_model.py                                    8      6    25%   53-61
+2025-11-27T16:31:00.4067149Z apps/memory_api/dependencies.py                                 34     19    44%   38-42, 60, 78-80, 93-95, 116-123, 139-145
+2025-11-27T16:31:00.4067629Z apps/memory_api/logging_config.py                               24      0   100%
+2025-11-27T16:31:00.4068095Z apps/memory_api/main.py                                         81     18    78%   51-72, 115, 194-201, 209-215, 229-230, 249-250, 290
+2025-11-27T16:31:00.4068542Z apps/memory_api/metrics.py                                      22      0   100%
+2025-11-27T16:31:00.4069014Z apps/memory_api/middleware/cost_guard.py                       144    124    14%   63-95, 111-128, 166-476
+2025-11-27T16:31:00.4069704Z apps/memory_api/middleware/rate_limiter.py                      51     31    39%   55-74, 106-114, 165-177, 200-211
+2025-11-27T16:31:00.4070225Z apps/memory_api/middleware/tenant.py                             9      0   100%
+2025-11-27T16:31:00.4070653Z apps/memory_api/models.py                                       68      0   100%
+2025-11-27T16:31:00.4071061Z apps/memory_api/models/__init__.py                              22      0   100%
+2025-11-27T16:31:00.4071497Z apps/memory_api/models/dashboard_models.py                     286      0   100%
+2025-11-27T16:31:00.4071964Z apps/memory_api/models/evaluation_models.py                    256      0   100%
+2025-11-27T16:31:00.4072415Z apps/memory_api/models/event_models.py                         244      0   100%
+2025-11-27T16:31:00.4072838Z apps/memory_api/models/graph.py                                 17      0   100%
+2025-11-27T16:31:00.4073274Z apps/memory_api/models/graph_enhanced_models.py                254      0   100%
+2025-11-27T16:31:00.4073735Z apps/memory_api/models/hybrid_search_models.py                 164      0   100%
+2025-11-27T16:31:00.4074188Z apps/memory_api/models/rbac.py                                  95     17    82%   135, 207-224, 234-239
+2025-11-27T16:31:00.4074668Z apps/memory_api/models/reflection_models.py                    169      1    99%   69
+2025-11-27T16:31:00.4075153Z apps/memory_api/models/tenant.py                                94     11    88%   193-200, 212-215
+2025-11-27T16:31:00.4075613Z apps/memory_api/observability/__init__.py                        2      0   100%
+2025-11-27T16:31:00.4076375Z apps/memory_api/observability/opentelemetry_config.py          104     71    32%   136-191, 215-219, 235-254, 275-278, 292-298, 312-318, 352-363, 368-371, 380-383, 388-391
+2025-11-27T16:31:00.4076996Z apps/memory_api/plugins/__init__.py                              2      0   100%
+2025-11-27T16:31:00.4077575Z apps/memory_api/plugins/base.py                                190     44    77%   137, 185, 198, 214, 232, 242, 252, 268, 281, 296, 309, 329, 378-379, 421-426, 435-436, 456, 470-471, 501-535, 550-551
+2025-11-27T16:31:00.4078158Z apps/memory_api/repositories/__init__.py                         0      0   100%
+2025-11-27T16:31:00.4078757Z apps/memory_api/repositories/cost_logs_repository.py           141     60    57%   176-242, 279-357, 374-382, 401-408, 425-433, 452-459, 493-543, 577-634, 657-685
+2025-11-27T16:31:00.4079890Z apps/memory_api/repositories/graph_repository.py               131    106    19%   33, 53-139, 162, 180-216, 232-253, 275-293, 319-338, 358-380, 403-423, 448-469, 485-496, 517-584, 601-611, 628-638, 653-664, 682-722, 737-753, 767-783, 809-843
+2025-11-27T16:31:00.4081019Z apps/memory_api/repositories/graph_repository_enhanced.py      130     99    24%   60, 90-108, 114-127, 133-146, 162-184, 208-216, 260-297, 303-329, 335-350, 354-366, 372-386, 413-436, 471-534, 563-591, 618-631, 635-642, 648-660, 675-689, 708-740, 778-800, 808, 820, 841
+2025-11-27T16:31:00.4081982Z apps/memory_api/repositories/memory_repository.py               77     62    19%   30, 59-104, 122-140, 155-170, 185-196, 211-222, 238-263, 279-299, 315-335, 363-405
+2025-11-27T16:31:00.4082770Z apps/memory_api/repositories/reflection_repository.py          158    140    11%   83-157, 174-185, 222-295, 312-333, 374-420, 443-471, 494-569, 591-600, 635-659, 669-689, 720
+2025-11-27T16:31:00.4083403Z apps/memory_api/routes/__init__.py                               1      0   100%
+2025-11-27T16:31:00.4084057Z apps/memory_api/routes/dashboard.py                            239    202    15%   68, 74-78, 114-163, 182-217, 240-274, 296-351, 368-397, 409-421, 444-466, 479, 490-556, 563-643, 650-720, 731-779, 791-806, 811-832, 837-860, 875
+2025-11-27T16:31:00.4084833Z apps/memory_api/routes/evaluation.py                            91     59    35%   40, 64-89, 99, 160-193, 203, 250-280, 293-311, 331-358, 368, 406-418, 428, 454, 477
+2025-11-27T16:31:00.4085608Z apps/memory_api/routes/event_triggers.py                       159    114    28%   48, 69-89, 95-109, 126-139, 145-154, 160-171, 177-188, 204-219, 237-267, 277, 312-334, 356-373, 379-391, 399-406, 421, 440-457, 479-512, 523, 555
+2025-11-27T16:31:00.4086560Z apps/memory_api/routes/graph_enhanced.py                       225    179    20%   63, 79-94, 106-122, 134-151, 167-203, 211-226, 234-245, 253-264, 272-287, 306-361, 376-417, 432-457, 473-504, 510-526, 534-545, 557-581, 598-617, 632-654, 664-706, 717
+2025-11-27T16:31:00.4087399Z apps/memory_api/routes/hybrid_search.py                        104     75    28%   38, 60-96, 115-137, 148-167, 182-194, 209-228, 238-264, 282-369, 394-426, 437, 461
+2025-11-27T16:31:00.4088053Z apps/memory_api/routes/reflections.py                           98     71    28%   45, 83-104, 142-200, 225-247, 270-282, 316-352, 387-420, 447-453, 481-510
+2025-11-27T16:31:00.4088587Z apps/memory_api/security/__init__.py                             4      0   100%
+2025-11-27T16:31:00.4089408Z apps/memory_api/security/auth.py                                42     30    29%   38-56, 81-109, 126-129, 151-156
+2025-11-27T16:31:00.4090333Z apps/memory_api/security/rate_limit.py                          78     63    19%   31-32, 36-48, 63-77, 99-179, 189-191, 208-225
+2025-11-27T16:31:00.4090992Z apps/memory_api/security/validation.py                          87     68    22%   40-56, 72-95, 111-150, 166-177, 193-203, 219-236, 252-269, 286-301
+2025-11-27T16:31:00.4091524Z apps/memory_api/services/__init__.py                             0      0   100%
+2025-11-27T16:31:00.4091984Z apps/memory_api/services/analytics.py                          193      4    98%   339-342, 346
+2025-11-27T16:31:00.4092715Z apps/memory_api/services/budget_service.py                      88     52    41%   74, 95-136, 160-297, 323-351, 376-458, 487-521
+2025-11-27T16:31:00.4093348Z apps/memory_api/services/community_detection.py                 81     60    26%   48-50, 54-55, 69-100, 114-137, 142-165, 187-208, 226-254
+2025-11-27T16:31:00.4093951Z apps/memory_api/services/context_cache.py                       62     42    32%   21, 31, 34, 39-49, 54-57, 63-102, 106
+2025-11-27T16:31:00.4094554Z apps/memory_api/services/cost_controller.py                     55     43    22%   79-146, 171-174, 194-200, 224-241, 260-261, 277-284, 309, 344-359
+2025-11-27T16:31:00.4095322Z apps/memory_api/services/dashboard_websocket.py                182     79    57%   131, 175-177, 201, 205-210, 247-253, 257-271, 296, 307, 346-357, 365-372, 410-425, 439-451, 461-498, 620-622, 638, 662-703
+2025-11-27T16:31:00.4096196Z apps/memory_api/services/drift_detector.py                     108     33    69%   102-104, 118-124, 248, 292, 329, 333, 357-373, 423-434, 445
+2025-11-27T16:31:00.4096776Z apps/memory_api/services/embedding.py                           28     15    46%   28-29, 36-55, 62-64, 72
+2025-11-27T16:31:00.4097341Z apps/memory_api/services/entity_resolution.py                   74     54    27%   52-57, 69-107, 116-132, 137-161, 187-222, 240
+2025-11-27T16:31:00.4097956Z apps/memory_api/services/evaluation_service.py                 139     82    41%   74-205, 233-234, 275, 330, 357-385, 408-442, 464-474
+2025-11-27T16:31:00.4098716Z apps/memory_api/services/graph_algorithms.py                   298     41    86%   34, 55, 93, 126-127, 135-140, 160-165, 191-193, 231, 308, 329, 350-361, 394, 405, 418-419, 445, 451, 454, 490, 554, 573, 589, 665-671, 685-691
+2025-11-27T16:31:00.4099771Z apps/memory_api/services/graph_extraction.py                   132     91    31%   39-47, 100, 106, 115, 165-205, 258-260, 264-265, 299-406, 415-467, 483, 497-515, 534-545
+2025-11-27T16:31:00.4100497Z apps/memory_api/services/hybrid_cache.py                        90     71    21%   48-58, 82-105, 126-153, 176-185, 202-216, 225-236, 240-248, 257-260, 269, 283-285, 300-302
+2025-11-27T16:31:00.4101166Z apps/memory_api/services/hybrid_search.py                      114     88    23%   81-83, 122-230, 254-308, 318, 341-358, 383-388, 411-470, 482-493
+2025-11-27T16:31:00.4101835Z apps/memory_api/services/hybrid_search_service.py              226    207     8%   93-98, 145-336, 353-407, 418-473, 485-624, 636-680, 705-776, 796-850
+2025-11-27T16:31:00.4102419Z apps/memory_api/services/llm/__init__.py                        20     10    50%   18-33
+2025-11-27T16:31:00.4102924Z apps/memory_api/services/llm/anthropic.py                       30     17    43%   18-21, 30-54, 65-78
+2025-11-27T16:31:00.4103417Z apps/memory_api/services/llm/base.py                            14      0   100%
+2025-11-27T16:31:00.4103892Z apps/memory_api/services/llm/gemini.py                          33     20    39%   18-22, 31-52, 63-74
+2025-11-27T16:31:00.4104417Z apps/memory_api/services/llm/litellm_provider.py                19     10    47%   17-20, 28-43, 62-72
+2025-11-27T16:31:00.4104936Z apps/memory_api/services/llm/ollama.py                          43     30    30%   18-21, 30-62, 73-95
+2025-11-27T16:31:00.4105423Z apps/memory_api/services/llm/openai.py                          30     17    43%   18-21, 30-53, 64-76
+2025-11-27T16:31:00.4106064Z apps/memory_api/services/ml_service_client.py                  122     99    19%   50-54, 58-59, 63-68, 76-90, 94, 125-130, 138, 159-204, 222-250, 268-294, 312-337, 356-385, 396-409, 418-420
+2025-11-27T16:31:00.4106706Z apps/memory_api/services/pii_scrubber.py                        24     17    29%   29-30, 40-45, 51-56, 72-89
+2025-11-27T16:31:00.4107289Z apps/memory_api/services/query_analyzer.py                      91     62    32%   128-129, 148-197, 216-241, 257-269, 283-312, 344, 363-383
+2025-11-27T16:31:00.4107833Z apps/memory_api/services/redis_client.py                         5      2    60%   7-8
+2025-11-27T16:31:00.4108579Z apps/memory_api/services/reflection_engine.py                   98     69    30%   79-82, 89-126, 138-154, 167-178, 207-239, 268-319, 335-361, 373-388, 400-412, 425-441
+2025-11-27T16:31:00.4109439Z apps/memory_api/services/reflection_pipeline.py                194    168    13%   126-128, 132-133, 151-247, 258-290, 306-380, 391-473, 479-559, 571-600, 609-615, 624-633
+2025-11-27T16:31:00.4110410Z apps/memory_api/services/rules_engine.py                       202    102    50%   95-108, 137-159, 181-183, 196-197, 226, 232, 238, 245-249, 252-260, 266, 269-272, 277-278, 282, 304, 323, 332-341, 357, 360, 384-412, 486-525, 549-569, 592-600, 606-609, 615-618, 624-629, 639-642, 648-651
+2025-11-27T16:31:00.4111334Z apps/memory_api/services/scoring.py                             28     20    29%   15-29, 36, 44-64, 72-79
+2025-11-27T16:31:00.4111872Z apps/memory_api/services/temporal_graph.py                     186      9    95%   48, 74, 85, 182, 279, 338-340, 426, 478
+2025-11-27T16:31:00.4112413Z apps/memory_api/services/token_estimator.py                      4      3    25%   8-10
+2025-11-27T16:31:00.4112905Z apps/memory_api/services/vector_store/__init__.py               16      8    50%   17-28
+2025-11-27T16:31:00.4113390Z apps/memory_api/services/vector_store/base.py                    6      0   100%
+2025-11-27T16:31:00.4113919Z apps/memory_api/services/vector_store/pgvector_store.py         23     11    52%   17, 25-32, 46-55, 62
+2025-11-27T16:31:00.4114544Z apps/memory_api/services/vector_store/qdrant_store.py           64     43    33%   49-66, 70-74, 80-106, 129-160, 170-180, 198-208
+2025-11-27T16:31:00.4115067Z apps/memory_api/tasks/__init__.py                                0      0   100%
+2025-11-27T16:31:00.4115562Z apps/memory_api/tasks/background_tasks.py                      121     27    78%   18, 47-66, 123-125, 268-278, 289-301
+2025-11-27T16:31:00.4116044Z apps/memory_api/tests/__init__.py                                0      0   100%
+2025-11-27T16:31:00.4116510Z apps/memory_api/tests/conftest.py                               68     30    56%   16-18, 24, 52-55, 146-163, 183-266, 281
+2025-11-27T16:31:00.4116984Z apps/memory_api/tests/test_analytics.py                        121      0   100%
+2025-11-27T16:31:00.4117440Z apps/memory_api/tests/test_api_client.py                       155      1    99%   116
+2025-11-27T16:31:00.4117914Z apps/memory_api/tests/test_api_e2e.py                           26      4    85%   57, 71, 86, 119
+2025-11-27T16:31:00.4118387Z apps/memory_api/tests/test_background_tasks.py                 131      1    99%   334
+2025-11-27T16:31:00.4118864Z apps/memory_api/tests/test_dashboard_websocket.py               96      0   100%
+2025-11-27T16:31:00.4119427Z apps/memory_api/tests/test_evaluation_suite.py                  79      0   100%
+2025-11-27T16:31:00.4119878Z apps/memory_api/tests/test_event_triggers.py                    92      0   100%
+2025-11-27T16:31:00.4120320Z apps/memory_api/tests/test_graph_algorithms.py                 178      0   100%
+2025-11-27T16:31:00.4120807Z apps/memory_api/tests/test_graph_extraction.py                 136    132     3%   18-418
+2025-11-27T16:31:00.4121318Z apps/memory_api/tests/test_graph_extraction_integration.py     132    130     2%   23-441
+2025-11-27T16:31:00.4121817Z apps/memory_api/tests/test_hybrid_search.py                    223    220     1%   17-931
+2025-11-27T16:31:00.4122269Z apps/memory_api/tests/test_openapi.py                           10      0   100%
+2025-11-27T16:31:00.4122727Z apps/memory_api/tests/test_phase2_models.py                    158      1    99%   325
+2025-11-27T16:31:00.4123198Z apps/memory_api/tests/test_phase2_plugins.py                   209      1    99%   425
+2025-11-27T16:31:00.4123677Z apps/memory_api/tests/test_pii_scrubber.py                      74     72     3%   25-197
+2025-11-27T16:31:00.4124160Z apps/memory_api/tests/test_reflection_simple.py                 51     45    12%   20-143
+2025-11-27T16:31:00.4124656Z apps/memory_api/tests/test_semantic_memory.py                   70     65     7%   24-216
+2025-11-27T16:31:00.4125238Z apps/memory_api/tests/test_temporal_graph.py                   176      0   100%
+2025-11-27T16:31:00.4125691Z apps/memory_api/tests/test_vector_store.py                      75     72     4%   26-212
+2025-11-27T16:31:00.4126123Z ------------------------------------------------------------------------------------------
+2025-11-27T16:31:00.4126458Z TOTAL                                                        10608   4647    56%
+2025-11-27T16:31:00.4126735Z Coverage HTML written to dir htmlcov
+2025-11-27T16:31:00.4126991Z Coverage XML written to file coverage.xml
+2025-11-27T16:31:01.3420443Z [32mRequired test coverage of 55% reached. Total coverage: 56.19%
+2025-11-27T16:31:01.3422246Z [0m[33m================ [33m[1m7 skipped[0m, [33m[1m157 deselected[0m, [33m[1m1 warning[0m[33m in 12.29s[0m[33m ================[0m

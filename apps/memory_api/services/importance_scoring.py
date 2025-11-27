@@ -430,41 +430,65 @@ class ImportanceScoringService:
             return 0
 
         try:
-            from datetime import datetime, timezone
+            now = datetime.now(timezone.utc)
 
-            datetime.now(timezone.utc)
+            # SQL query implementing decay with temporal considerations
+            query = """
+                UPDATE memories SET
+                    importance = GREATEST(
+                        0.01,  -- Floor at 0.01
+                        CASE
+                            -- Accelerated decay for stale memories (not accessed > 30 days)
+                            WHEN EXTRACT(EPOCH FROM ($1 - COALESCE(last_accessed_at, timestamp))) / 86400 > 30
+                            THEN importance * (
+                                1 - ($2 * (1 + (EXTRACT(EPOCH FROM ($1 - COALESCE(last_accessed_at, timestamp))) / 86400) / 30))
+                            )
+                            -- Protected decay for recent memories (accessed < 7 days ago)
+                            WHEN EXTRACT(EPOCH FROM ($1 - COALESCE(last_accessed_at, timestamp))) / 86400 < 7
+                            THEN importance * (1 - ($2 * 0.5))
+                            -- Standard decay for everything else
+                            ELSE importance * (1 - $2)
+                        END
+                    )
+                WHERE tenant_id = $3
+                  AND importance > 0.01
+                  AND ($4 = TRUE OR $4 = FALSE)  -- consider_access_stats parameter (always applies logic above)
+            """
+
+            result = await self.db.execute(
+                query,
+                now,
+                decay_rate,
+                str(tenant_id),
+                consider_access_stats,
+            )
+
+            # Extract number of updated rows from result string
+            # Result format: "UPDATE N" where N is the count
             updated_count = 0
-
-            # In production, this would be implemented as:
-            # 1. Fetch all memories for tenant (in batches)
-            # 2. Calculate effective decay rate based on last_accessed_at
-            # 3. Update importance scores in batch
-            # 4. Return total updated count
-
-            # SQL implementation example:
-            # UPDATE memories SET
-            #   importance = CASE
-            #     WHEN (EXTRACT(EPOCH FROM (NOW() - last_accessed_at)) / 86400) > 30
-            #       THEN importance * (1 - (decay_rate * (1 + (EXTRACT(EPOCH FROM (NOW() - last_accessed_at)) / 86400) / 30)))
-            #     WHEN (EXTRACT(EPOCH FROM (NOW() - last_accessed_at)) / 86400) < 7
-            #       THEN importance * (1 - (decay_rate * 0.5))
-            #     ELSE importance * (1 - decay_rate)
-            #   END
-            # WHERE tenant_id = $1 AND importance > 0.01
+            if result and isinstance(result, str):
+                parts = result.split()
+                if len(parts) == 2 and parts[0] == "UPDATE":
+                    updated_count = int(parts[1])
 
             logger.info(
                 "importance_decay_complete",
                 tenant_id=str(tenant_id),
                 updated_count=updated_count,
+                decay_rate=decay_rate,
+                consider_access_stats=consider_access_stats,
             )
 
             return updated_count
 
         except Exception as e:
             logger.error(
-                "importance_decay_failed", tenant_id=str(tenant_id), error=str(e)
+                "importance_decay_failed",
+                tenant_id=str(tenant_id),
+                error=str(e),
+                decay_rate=decay_rate,
             )
-            return 0
+            raise
 
     async def get_importance_distribution(self, tenant_id: UUID) -> Dict[str, Any]:
         """

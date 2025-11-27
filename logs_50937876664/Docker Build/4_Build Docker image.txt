@@ -1,0 +1,333 @@
+﻿2025-11-27T16:29:18.7125880Z ##[group]Run docker/build-push-action@v5
+2025-11-27T16:29:18.7126172Z with:
+2025-11-27T16:29:18.7126332Z   context: .
+2025-11-27T16:29:18.7126499Z   push: false
+2025-11-27T16:29:18.7126666Z   tags: rae-api:test
+2025-11-27T16:29:18.7126859Z   cache-from: type=gha
+2025-11-27T16:29:18.7127054Z   cache-to: type=gha,mode=max
+2025-11-27T16:29:18.7127272Z   load: false
+2025-11-27T16:29:18.7127435Z   no-cache: false
+2025-11-27T16:29:18.7127603Z   pull: false
+2025-11-27T16:29:18.7127924Z   github-token: ***
+2025-11-27T16:29:18.7128112Z ##[endgroup]
+2025-11-27T16:29:18.9352592Z ##[group]GitHub Actions runtime token ACs
+2025-11-27T16:29:18.9363644Z refs/pull/3/merge: read/write
+2025-11-27T16:29:18.9364396Z refs/heads/main: read
+2025-11-27T16:29:18.9366136Z ##[endgroup]
+2025-11-27T16:29:18.9367179Z ##[group]Docker info
+2025-11-27T16:29:18.9410305Z [command]/usr/bin/docker version
+2025-11-27T16:29:18.9625034Z Client: Docker Engine - Community
+2025-11-27T16:29:18.9628558Z  Version:           28.0.4
+2025-11-27T16:29:18.9629794Z  API version:       1.48
+2025-11-27T16:29:18.9630103Z  Go version:        go1.23.7
+2025-11-27T16:29:18.9630328Z  Git commit:        b8034c0
+2025-11-27T16:29:18.9630569Z  Built:             Tue Mar 25 15:07:16 2025
+2025-11-27T16:29:18.9630848Z  OS/Arch:           linux/amd64
+2025-11-27T16:29:18.9631069Z  Context:           default
+2025-11-27T16:29:18.9631211Z 
+2025-11-27T16:29:18.9631313Z Server: Docker Engine - Community
+2025-11-27T16:29:18.9631537Z  Engine:
+2025-11-27T16:29:18.9631704Z   Version:          28.0.4
+2025-11-27T16:29:18.9631934Z   API version:      1.48 (minimum version 1.24)
+2025-11-27T16:29:18.9632201Z   Go version:       go1.23.7
+2025-11-27T16:29:18.9632426Z   Git commit:       6430e49
+2025-11-27T16:29:18.9632649Z   Built:            Tue Mar 25 15:07:16 2025
+2025-11-27T16:29:18.9632890Z   OS/Arch:          linux/amd64
+2025-11-27T16:29:18.9633111Z   Experimental:     false
+2025-11-27T16:29:18.9633319Z  containerd:
+2025-11-27T16:29:18.9633485Z   Version:          v2.1.5
+2025-11-27T16:29:18.9633755Z   GitCommit:        fcd43222d6b07379a4be9786bda52438f0dd16a1
+2025-11-27T16:29:18.9634039Z  runc:
+2025-11-27T16:29:18.9634203Z   Version:          1.3.3
+2025-11-27T16:29:18.9634408Z   GitCommit:        v1.3.3-0-gd842d771
+2025-11-27T16:29:18.9634651Z  docker-init:
+2025-11-27T16:29:18.9634825Z   Version:          0.19.0
+2025-11-27T16:29:18.9635030Z   GitCommit:        de40ad0
+2025-11-27T16:29:18.9680375Z [command]/usr/bin/docker info
+2025-11-27T16:29:19.0270088Z Client: Docker Engine - Community
+2025-11-27T16:29:19.0271325Z  Version:    28.0.4
+2025-11-27T16:29:19.0271915Z  Context:    default
+2025-11-27T16:29:19.0272295Z  Debug Mode: false
+2025-11-27T16:29:19.0272646Z  Plugins:
+2025-11-27T16:29:19.0272954Z   buildx: Docker Buildx (Docker Inc.)
+2025-11-27T16:29:19.0273366Z     Version:  v0.29.1
+2025-11-27T16:29:19.0273792Z     Path:     /usr/libexec/docker/cli-plugins/docker-buildx
+2025-11-27T16:29:19.0274337Z   compose: Docker Compose (Docker Inc.)
+2025-11-27T16:29:19.0274756Z     Version:  v2.38.2
+2025-11-27T16:29:19.0275220Z     Path:     /usr/libexec/docker/cli-plugins/docker-compose
+2025-11-27T16:29:19.0275594Z 
+2025-11-27T16:29:19.0275707Z Server:
+2025-11-27T16:29:19.0275962Z  Containers: 1
+2025-11-27T16:29:19.0276253Z   Running: 1
+2025-11-27T16:29:19.0276529Z   Paused: 0
+2025-11-27T16:29:19.0276802Z   Stopped: 0
+2025-11-27T16:29:19.0277067Z  Images: 1
+2025-11-27T16:29:19.0277356Z  Server Version: 28.0.4
+2025-11-27T16:29:19.0277702Z  Storage Driver: overlay2
+2025-11-27T16:29:19.0278063Z   Backing Filesystem: extfs
+2025-11-27T16:29:19.0278680Z   Supports d_type: true
+2025-11-27T16:29:19.0279025Z   Using metacopy: false
+2025-11-27T16:29:19.0279386Z   Native Overlay Diff: false
+2025-11-27T16:29:19.0279747Z   userxattr: false
+2025-11-27T16:29:19.0280086Z  Logging Driver: json-file
+2025-11-27T16:29:19.0280474Z  Cgroup Driver: systemd
+2025-11-27T16:29:19.0280818Z  Cgroup Version: 2
+2025-11-27T16:29:19.0281115Z  Plugins:
+2025-11-27T16:29:19.0281392Z   Volume: local
+2025-11-27T16:29:19.0281764Z   Network: bridge host ipvlan macvlan null overlay
+2025-11-27T16:29:19.0282982Z   Log: awslogs fluentd gcplogs gelf journald json-file local splunk syslog
+2025-11-27T16:29:19.0283622Z  Swarm: inactive
+2025-11-27T16:29:19.0284000Z  Runtimes: io.containerd.runc.v2 runc
+2025-11-27T16:29:19.0284455Z  Default Runtime: runc
+2025-11-27T16:29:19.0284813Z  Init Binary: docker-init
+2025-11-27T16:29:19.0285327Z  containerd version: fcd43222d6b07379a4be9786bda52438f0dd16a1
+2025-11-27T16:29:19.0285911Z  runc version: v1.3.3-0-gd842d771
+2025-11-27T16:29:19.0286339Z  init version: de40ad0
+2025-11-27T16:29:19.0286687Z  Security Options:
+2025-11-27T16:29:19.0287271Z   apparmor
+2025-11-27T16:29:19.0287551Z   seccomp
+2025-11-27T16:29:19.0287837Z    Profile: builtin
+2025-11-27T16:29:19.0288143Z   cgroupns
+2025-11-27T16:29:19.0288626Z  Kernel Version: 6.11.0-1018-azure
+2025-11-27T16:29:19.0289052Z  Operating System: Ubuntu 24.04.3 LTS
+2025-11-27T16:29:19.0289457Z  OSType: linux
+2025-11-27T16:29:19.0289772Z  Architecture: x86_64
+2025-11-27T16:29:19.0290103Z  CPUs: 4
+2025-11-27T16:29:19.0290380Z  Total Memory: 15.62GiB
+2025-11-27T16:29:19.0290695Z  Name: runnervmg1sw1
+2025-11-27T16:29:19.0291039Z  ID: 25309008-d3b6-4795-9b53-5704e2dd5a06
+2025-11-27T16:29:19.0291462Z  Docker Root Dir: /var/lib/docker
+2025-11-27T16:29:19.0291853Z  Debug Mode: false
+2025-11-27T16:29:19.0292175Z  Username: githubactions
+2025-11-27T16:29:19.0292531Z  Experimental: false
+2025-11-27T16:29:19.0292860Z  Insecure Registries:
+2025-11-27T16:29:19.0293285Z   ::1/128
+2025-11-27T16:29:19.0293544Z   127.0.0.0/8
+2025-11-27T16:29:19.0293849Z  Live Restore Enabled: false
+2025-11-27T16:29:19.0294111Z 
+2025-11-27T16:29:19.0294620Z ##[endgroup]
+2025-11-27T16:29:19.0295991Z ##[group]Proxy configuration
+2025-11-27T16:29:19.0297066Z No proxy configuration found
+2025-11-27T16:29:19.0298821Z ##[endgroup]
+2025-11-27T16:29:19.1003126Z ##[group]Buildx version
+2025-11-27T16:29:19.1032468Z [command]/usr/bin/docker buildx version
+2025-11-27T16:29:19.1600503Z github.com/docker/buildx v0.29.1 a32761aeb3debd39be1eca514af3693af0db334b
+2025-11-27T16:29:19.1633364Z ##[endgroup]
+2025-11-27T16:29:19.1633837Z ##[group]Builder info
+2025-11-27T16:29:19.2522265Z {
+2025-11-27T16:29:19.2522645Z   "nodes": [
+2025-11-27T16:29:19.2522936Z     {
+2025-11-27T16:29:19.2523319Z       "name": "builder-bfdbae6e-8886-4535-8423-e8b7367373920",
+2025-11-27T16:29:19.2523865Z       "endpoint": "unix:///var/run/docker.sock",
+2025-11-27T16:29:19.2524289Z       "status": "running",
+2025-11-27T16:29:19.2525079Z       "buildkitd-flags": "--allow-insecure-entitlement security.insecure --allow-insecure-entitlement network.host",
+2025-11-27T16:29:19.2525648Z       "buildkit": "v0.26.2",
+2025-11-27T16:29:19.2526003Z       "platforms": "linux/amd64,linux/amd64/v2,linux/amd64/v3,linux/386",
+2025-11-27T16:29:19.2526337Z       "features": {
+2025-11-27T16:29:19.2526616Z         "Automatically load images to the Docker Engine image store": true,
+2025-11-27T16:29:19.2526946Z         "Cache export": true,
+2025-11-27T16:29:19.2527149Z         "Direct push": true,
+2025-11-27T16:29:19.2527378Z         "Docker exporter": true,
+2025-11-27T16:29:19.2527599Z         "Multi-platform build": true,
+2025-11-27T16:29:19.2527829Z         "OCI exporter": true
+2025-11-27T16:29:19.2528018Z       },
+2025-11-27T16:29:19.2528171Z       "labels": {
+2025-11-27T16:29:19.2528595Z         "org.mobyproject.buildkit.worker.executor": "oci",
+2025-11-27T16:29:19.2528969Z         "org.mobyproject.buildkit.worker.hostname": "8f7bee5453e1",
+2025-11-27T16:29:19.2529329Z         "org.mobyproject.buildkit.worker.network": "host",
+2025-11-27T16:29:19.2529711Z         "org.mobyproject.buildkit.worker.oci.process-mode": "sandbox",
+2025-11-27T16:29:19.2530129Z         "org.mobyproject.buildkit.worker.selinux.enabled": "false",
+2025-11-27T16:29:19.2530516Z         "org.mobyproject.buildkit.worker.snapshotter": "overlayfs"
+2025-11-27T16:29:19.2530813Z       },
+2025-11-27T16:29:19.2530960Z       "gcPolicy": [
+2025-11-27T16:29:19.2531129Z         {
+2025-11-27T16:29:19.2531282Z           "all": false,
+2025-11-27T16:29:19.2531777Z           "filter": [
+2025-11-27T16:29:19.2531970Z             "type==source.local",
+2025-11-27T16:29:19.2532194Z             "type==exec.cachemount",
+2025-11-27T16:29:19.2532435Z             "type==source.git.checkout"
+2025-11-27T16:29:19.2532654Z           ],
+2025-11-27T16:29:19.2532826Z           "keepDuration": "48h0m0s"
+2025-11-27T16:29:19.2533027Z         },
+2025-11-27T16:29:19.2533180Z         {
+2025-11-27T16:29:19.2533328Z           "all": false,
+2025-11-27T16:29:19.2533520Z           "keepDuration": "1440h0m0s"
+2025-11-27T16:29:19.2533747Z         },
+2025-11-27T16:29:19.2533889Z         {
+2025-11-27T16:29:19.2534213Z           "all": false
+2025-11-27T16:29:19.2534380Z         },
+2025-11-27T16:29:19.2534559Z         {
+2025-11-27T16:29:19.2534701Z           "all": true
+2025-11-27T16:29:19.2534873Z         }
+2025-11-27T16:29:19.2535008Z       ]
+2025-11-27T16:29:19.2535149Z     }
+2025-11-27T16:29:19.2535283Z   ],
+2025-11-27T16:29:19.2535491Z   "name": "builder-bfdbae6e-8886-4535-8423-e8b736737392",
+2025-11-27T16:29:19.2535776Z   "driver": "docker-container",
+2025-11-27T16:29:19.2536009Z   "lastActivity": "2025-11-27T16:29:15.000Z"
+2025-11-27T16:29:19.2536238Z }
+2025-11-27T16:29:19.2536630Z ##[endgroup]
+2025-11-27T16:29:19.4046740Z [command]/usr/bin/docker buildx build --cache-from type=gha --cache-to type=gha,mode=max --iidfile /home/runner/work/_temp/docker-actions-toolkit-ayGJCx/build-iidfile-1f4a8d4f8f.txt --attest type=provenance,mode=max,builder-id=https://github.com/dreamsoft-pro/RAE-agentic-memory/actions/runs/19742705091 --tag rae-api:test --metadata-file /home/runner/work/_temp/docker-actions-toolkit-ayGJCx/build-metadata-7e150a11e0.json .
+2025-11-27T16:29:19.7149996Z #0 building with "builder-bfdbae6e-8886-4535-8423-e8b736737392" instance using docker-container driver
+2025-11-27T16:29:19.7150832Z 
+2025-11-27T16:29:19.7151114Z #1 [internal] load build definition from Dockerfile
+2025-11-27T16:29:19.7151564Z #1 transferring dockerfile: 1.14kB done
+2025-11-27T16:29:19.7152084Z #1 WARN: FromAsCasing: 'as' and 'FROM' keywords' casing do not match (line 2)
+2025-11-27T16:29:19.7152575Z #1 DONE 0.0s
+2025-11-27T16:29:19.7152715Z 
+2025-11-27T16:29:19.7152924Z #2 [auth] library/python:pull token for registry-1.docker.io
+2025-11-27T16:29:19.7153330Z #2 DONE 0.0s
+2025-11-27T16:29:19.7153468Z 
+2025-11-27T16:29:19.7153691Z #3 [internal] load metadata for docker.io/library/python:3.11-slim
+2025-11-27T16:29:19.8699942Z #3 DONE 0.3s
+2025-11-27T16:29:19.9914577Z 
+2025-11-27T16:29:19.9916439Z #4 [internal] load .dockerignore
+2025-11-27T16:29:19.9916890Z #4 transferring context: 2B done
+2025-11-27T16:29:19.9917293Z #4 DONE 0.0s
+2025-11-27T16:29:19.9917456Z 
+2025-11-27T16:29:19.9918056Z #5 [ 1/10] FROM docker.io/library/python:3.11-slim@sha256:193fdd0bbcb3d2ae612bd6cc3548d2f7c78d65b549fcaa8af75624c47474444d
+2025-11-27T16:29:19.9919578Z #5 resolve docker.io/library/python:3.11-slim@sha256:193fdd0bbcb3d2ae612bd6cc3548d2f7c78d65b549fcaa8af75624c47474444d done
+2025-11-27T16:29:19.9920097Z #5 DONE 0.0s
+2025-11-27T16:29:19.9920229Z 
+2025-11-27T16:29:19.9920361Z #6 importing cache manifest from gha:15955868730470843449
+2025-11-27T16:29:19.9920639Z #6 DONE 0.1s
+2025-11-27T16:29:19.9920736Z 
+2025-11-27T16:29:19.9920816Z #7 [internal] load build context
+2025-11-27T16:29:19.9921052Z #7 transferring context: 1.39MB 0.0s done
+2025-11-27T16:29:20.1056879Z #7 DONE 0.0s
+2025-11-27T16:29:20.1057172Z 
+2025-11-27T16:29:20.1057661Z #8 [ 5/10] RUN pip install --no-cache-dir -e /app/sdk/python/rae_memory_sdk
+2025-11-27T16:29:20.1058256Z #8 CACHED
+2025-11-27T16:29:20.1058636Z 
+2025-11-27T16:29:20.1058939Z #9 [ 7/10] COPY apps/memory_api/requirements.txt /app/requirements.txt
+2025-11-27T16:29:20.1059506Z #9 CACHED
+2025-11-27T16:29:20.1059657Z 
+2025-11-27T16:29:20.1060010Z #10 [ 6/10] COPY apps/memory_api/requirements-base.txt /app/requirements-base.txt
+2025-11-27T16:29:20.1060779Z #10 CACHED
+2025-11-27T16:29:20.1060891Z 
+2025-11-27T16:29:20.1061329Z #11 [ 2/10] RUN apt-get update && apt-get install -y     gcc     g++     postgresql-client     && rm -rf /var/lib/apt/lists/*
+2025-11-27T16:29:20.1062385Z #11 CACHED
+2025-11-27T16:29:20.1062493Z 
+2025-11-27T16:29:20.1062569Z #12 [ 3/10] WORKDIR /app
+2025-11-27T16:29:20.1062771Z #12 CACHED
+2025-11-27T16:29:20.1062951Z 
+2025-11-27T16:29:20.1063162Z #13 [ 4/10] COPY sdk/python/rae_memory_sdk /app/sdk/python/rae_memory_sdk
+2025-11-27T16:29:20.1063487Z #13 CACHED
+2025-11-27T16:29:20.1063582Z 
+2025-11-27T16:29:20.1064028Z #14 [ 8/10] RUN pip install --no-cache-dir -r /app/requirements-base.txt &&     pip install --no-cache-dir -r /app/requirements.txt
+2025-11-27T16:29:20.1064869Z #14 sha256:c2633b74ea0ae3d8c8780c75e1de4b568b4b9c3767e9b2f0f37a418d4ec1d9cd 698B / 698B 0.0s done
+2025-11-27T16:29:20.2290432Z #14 sha256:51adc2b0dcb2bb7698db0c5c8bd900a1f428d8389a87d363d6b537bcc506d5c4 493B / 493B 0.0s done
+2025-11-27T16:29:20.2291683Z #14 sha256:1bb701f1805412430b867463f7a7951cb47aabb939cd570b43871e6dfadd8492 14.43kB / 14.43kB done
+2025-11-27T16:29:20.2292713Z #14 sha256:cbb9907c77db31c369c2ba365d144a5cc1a60c7cd264cca9f23b15958b02e50f 92B / 92B 0.0s done
+2025-11-27T16:29:20.2293525Z #14 sha256:1771569cc1299abc9cc762fc4419523e721b11a3927ef968ae63ba0a4a88f2da 251B / 251B 0.0s done
+2025-11-27T16:29:20.2294264Z #14 sha256:10cebb1762bb964f3e5cb78318bec152508d309ea38bac8049c065729c66e907 2.10MB / 10.37MB 0.2s
+2025-11-27T16:29:20.3580292Z #14 sha256:10cebb1762bb964f3e5cb78318bec152508d309ea38bac8049c065729c66e907 10.37MB / 10.37MB 0.2s done
+2025-11-27T16:29:20.3581870Z #14 sha256:dc8b0f218e0313961c2d8c5ab4781eb1276418c293221f6a6a826248645bbb97 11.53MB / 117.16MB 0.2s
+2025-11-27T16:29:20.3583437Z #14 sha256:05d15e3da811dc793ae036d5635fd166b63054739e4c9f2adeba145d30fe0d61 13.63MB / 109.08MB 0.2s
+2025-11-27T16:29:20.3585088Z #14 sha256:b3dd773c329649f22e467ae63d1c612a039a0559dec99ffb9ada904ab5c60c55 7.34MB / 14.36MB 0.2s
+2025-11-27T16:29:20.3586206Z #14 sha256:22b63e76fde1e200371ed9f3cee91161d192063bcff65c9ab6bf63819810a974 1.29MB / 1.29MB 0.1s done
+2025-11-27T16:29:20.5048517Z #14 sha256:dc8b0f218e0313961c2d8c5ab4781eb1276418c293221f6a6a826248645bbb97 33.55MB / 117.16MB 0.3s
+2025-11-27T16:29:20.5049344Z #14 sha256:05d15e3da811dc793ae036d5635fd166b63054739e4c9f2adeba145d30fe0d61 37.27MB / 109.08MB 0.3s
+2025-11-27T16:29:20.5050054Z #14 sha256:b3dd773c329649f22e467ae63d1c612a039a0559dec99ffb9ada904ab5c60c55 14.36MB / 14.36MB 0.2s done
+2025-11-27T16:29:20.5050899Z #14 sha256:0e4bc2bd6656e6e004e3c749af70e5650bac2258243eb0949dea51cb8b7863db 3.15MB / 29.78MB 0.2s
+2025-11-27T16:29:20.6547996Z #14 sha256:dc8b0f218e0313961c2d8c5ab4781eb1276418c293221f6a6a826248645bbb97 56.62MB / 117.16MB 0.5s
+2025-11-27T16:29:20.6549376Z #14 sha256:05d15e3da811dc793ae036d5635fd166b63054739e4c9f2adeba145d30fe0d61 59.77MB / 109.08MB 0.5s
+2025-11-27T16:29:20.6550551Z #14 sha256:0e4bc2bd6656e6e004e3c749af70e5650bac2258243eb0949dea51cb8b7863db 13.63MB / 29.78MB 0.3s
+2025-11-27T16:29:20.8049626Z #14 sha256:dc8b0f218e0313961c2d8c5ab4781eb1276418c293221f6a6a826248645bbb97 81.79MB / 117.16MB 0.6s
+2025-11-27T16:29:20.8050867Z #14 sha256:05d15e3da811dc793ae036d5635fd166b63054739e4c9f2adeba145d30fe0d61 82.84MB / 109.08MB 0.6s
+2025-11-27T16:29:20.8051717Z #14 sha256:0e4bc2bd6656e6e004e3c749af70e5650bac2258243eb0949dea51cb8b7863db 27.26MB / 29.78MB 0.5s
+2025-11-27T16:29:20.9743357Z #14 sha256:dc8b0f218e0313961c2d8c5ab4781eb1276418c293221f6a6a826248645bbb97 117.16MB / 117.16MB 0.9s
+2025-11-27T16:29:20.9744506Z #14 sha256:05d15e3da811dc793ae036d5635fd166b63054739e4c9f2adeba145d30fe0d61 104.86MB / 109.08MB 0.8s
+2025-11-27T16:29:20.9745553Z #14 sha256:0e4bc2bd6656e6e004e3c749af70e5650bac2258243eb0949dea51cb8b7863db 29.78MB / 29.78MB 0.5s done
+2025-11-27T16:29:20.9746535Z #14 extracting sha256:0e4bc2bd6656e6e004e3c749af70e5650bac2258243eb0949dea51cb8b7863db
+2025-11-27T16:29:21.2986157Z #14 sha256:dc8b0f218e0313961c2d8c5ab4781eb1276418c293221f6a6a826248645bbb97 117.16MB / 117.16MB 1.1s done
+2025-11-27T16:29:21.2987776Z #14 sha256:05d15e3da811dc793ae036d5635fd166b63054739e4c9f2adeba145d30fe0d61 109.08MB / 109.08MB 1.0s done
+2025-11-27T16:29:21.7448337Z #14 extracting sha256:0e4bc2bd6656e6e004e3c749af70e5650bac2258243eb0949dea51cb8b7863db 0.9s done
+2025-11-27T16:29:21.7450403Z #14 DONE 1.7s
+2025-11-27T16:29:21.9667451Z 
+2025-11-27T16:29:21.9668619Z #14 [ 8/10] RUN pip install --no-cache-dir -r /app/requirements-base.txt &&     pip install --no-cache-dir -r /app/requirements.txt
+2025-11-27T16:29:21.9669861Z #14 extracting sha256:22b63e76fde1e200371ed9f3cee91161d192063bcff65c9ab6bf63819810a974 0.1s done
+2025-11-27T16:29:21.9670876Z #14 extracting sha256:b3dd773c329649f22e467ae63d1c612a039a0559dec99ffb9ada904ab5c60c55
+2025-11-27T16:29:22.2681911Z #14 extracting sha256:b3dd773c329649f22e467ae63d1c612a039a0559dec99ffb9ada904ab5c60c55 0.5s done
+2025-11-27T16:29:22.2683289Z #14 DONE 2.3s
+2025-11-27T16:29:22.4232826Z 
+2025-11-27T16:29:22.4234155Z #14 [ 8/10] RUN pip install --no-cache-dir -r /app/requirements-base.txt &&     pip install --no-cache-dir -r /app/requirements.txt
+2025-11-27T16:29:22.4235196Z #14 extracting sha256:1771569cc1299abc9cc762fc4419523e721b11a3927ef968ae63ba0a4a88f2da done
+2025-11-27T16:29:22.4236289Z #14 extracting sha256:05d15e3da811dc793ae036d5635fd166b63054739e4c9f2adeba145d30fe0d61
+2025-11-27T16:29:24.3075599Z #14 extracting sha256:05d15e3da811dc793ae036d5635fd166b63054739e4c9f2adeba145d30fe0d61 2.0s done
+2025-11-27T16:29:24.3076467Z #14 DONE 4.3s
+2025-11-27T16:29:24.4667956Z 
+2025-11-27T16:29:24.4669160Z #14 [ 8/10] RUN pip install --no-cache-dir -r /app/requirements-base.txt &&     pip install --no-cache-dir -r /app/requirements.txt
+2025-11-27T16:29:24.4670398Z #14 extracting sha256:cbb9907c77db31c369c2ba365d144a5cc1a60c7cd264cca9f23b15958b02e50f done
+2025-11-27T16:29:24.4671089Z #14 extracting sha256:1bb701f1805412430b867463f7a7951cb47aabb939cd570b43871e6dfadd8492 done
+2025-11-27T16:29:24.4671662Z #14 extracting sha256:10cebb1762bb964f3e5cb78318bec152508d309ea38bac8049c065729c66e907
+2025-11-27T16:29:24.6073512Z #14 extracting sha256:10cebb1762bb964f3e5cb78318bec152508d309ea38bac8049c065729c66e907 0.3s done
+2025-11-27T16:29:24.6074701Z #14 DONE 4.6s
+2025-11-27T16:29:24.7661681Z 
+2025-11-27T16:29:24.7662551Z #14 [ 8/10] RUN pip install --no-cache-dir -r /app/requirements-base.txt &&     pip install --no-cache-dir -r /app/requirements.txt
+2025-11-27T16:29:24.7663564Z #14 extracting sha256:c2633b74ea0ae3d8c8780c75e1de4b568b4b9c3767e9b2f0f37a418d4ec1d9cd done
+2025-11-27T16:29:24.7664325Z #14 extracting sha256:51adc2b0dcb2bb7698db0c5c8bd900a1f428d8389a87d363d6b537bcc506d5c4 done
+2025-11-27T16:29:24.7665060Z #14 extracting sha256:dc8b0f218e0313961c2d8c5ab4781eb1276418c293221f6a6a826248645bbb97
+2025-11-27T16:29:28.6784831Z #14 extracting sha256:dc8b0f218e0313961c2d8c5ab4781eb1276418c293221f6a6a826248645bbb97 4.1s done
+2025-11-27T16:29:28.6786901Z #14 DONE 8.7s
+2025-11-27T16:29:28.8291505Z 
+2025-11-27T16:29:28.8292028Z #15 [ 9/10] COPY apps/memory_api /app
+2025-11-27T16:29:30.9527387Z #15 DONE 2.3s
+2025-11-27T16:29:31.0924646Z 
+2025-11-27T16:29:31.0925347Z #16 [10/10] RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
+2025-11-27T16:29:31.0926006Z #16 DONE 0.1s
+2025-11-27T16:29:31.2452218Z 
+2025-11-27T16:29:31.2452722Z #17 exporting to GitHub Actions Cache
+2025-11-27T16:29:31.2453173Z #17 preparing build cache for export
+2025-11-27T16:29:31.3434022Z #17 writing layer sha256:5f32c04422f299f38f6ad8facae74ad4c3d8dcaaa72f5dd5ee3b1ac5c2be511e
+2025-11-27T16:29:31.6634168Z #17 writing layer sha256:5f32c04422f299f38f6ad8facae74ad4c3d8dcaaa72f5dd5ee3b1ac5c2be511e 0.3s done
+2025-11-27T16:29:31.8415377Z #17 writing layer sha256:bc56cdf00151f6c5d9b676c8940a12e2e27758a288778937cb5df95c0067f54b
+2025-11-27T16:29:31.8770849Z #17 writing layer sha256:bc56cdf00151f6c5d9b676c8940a12e2e27758a288778937cb5df95c0067f54b 0.2s done
+2025-11-27T16:29:32.0824718Z #17 preparing build cache for export 1.0s done
+2025-11-27T16:29:32.0826407Z #17 DONE 1.0s
+2025-11-27T16:29:32.1122856Z 
+2025-11-27T16:29:32.1123239Z #18 resolving provenance for metadata file
+2025-11-27T16:29:32.1123688Z #18 DONE 0.0s
+2025-11-27T16:29:32.1124506Z WARNING: No output specified with docker-container driver. Build result will only remain in the build cache. To push result image into registry use --push or to load image into docker use --load
+2025-11-27T16:29:32.1126047Z 
+2025-11-27T16:29:32.1126583Z  [33m1 warning found (use docker --debug to expand):
+2025-11-27T16:29:32.1127317Z [0m - FromAsCasing: 'as' and 'FROM' keywords' casing do not match (line 2)
+2025-11-27T16:29:32.1202420Z ##[group]Metadata
+2025-11-27T16:29:32.1202754Z {
+2025-11-27T16:29:32.1203060Z   "buildx.build.provenance": {
+2025-11-27T16:29:32.1203385Z     "builder": {
+2025-11-27T16:29:32.1203889Z       "id": "https://github.com/dreamsoft-pro/RAE-agentic-memory/actions/runs/19742705091"
+2025-11-27T16:29:32.1204820Z     },
+2025-11-27T16:29:32.1205160Z     "buildType": "https://mobyproject.org/buildkit@v1",
+2025-11-27T16:29:32.1205614Z     "materials": [
+2025-11-27T16:29:32.1205875Z       {
+2025-11-27T16:29:32.1206326Z         "uri": "pkg:docker/python@3.11-slim?platform=linux%2Famd64",
+2025-11-27T16:29:32.1206801Z         "digest": {
+2025-11-27T16:29:32.1207315Z           "sha256": "193fdd0bbcb3d2ae612bd6cc3548d2f7c78d65b549fcaa8af75624c47474444d"
+2025-11-27T16:29:32.1207933Z         }
+2025-11-27T16:29:32.1208173Z       }
+2025-11-27T16:29:32.1208607Z     ],
+2025-11-27T16:29:32.1208856Z     "invocation": {
+2025-11-27T16:29:32.1209159Z       "configSource": {
+2025-11-27T16:29:32.1209472Z         "entryPoint": "Dockerfile"
+2025-11-27T16:29:32.1209828Z       },
+2025-11-27T16:29:32.1210083Z       "parameters": {
+2025-11-27T16:29:32.1210389Z         "frontend": "dockerfile.v0",
+2025-11-27T16:29:32.1210750Z         "locals": [
+2025-11-27T16:29:32.1211013Z           {
+2025-11-27T16:29:32.1211294Z             "name": "context"
+2025-11-27T16:29:32.1211607Z           },
+2025-11-27T16:29:32.1211859Z           {
+2025-11-27T16:29:32.1212123Z             "name": "dockerfile"
+2025-11-27T16:29:32.1212457Z           }
+2025-11-27T16:29:32.1212702Z         ]
+2025-11-27T16:29:32.1212942Z       },
+2025-11-27T16:29:32.1213187Z       "environment": {
+2025-11-27T16:29:32.1213534Z         "platform": "linux/amd64",
+2025-11-27T16:29:32.1213943Z         "ProvenanceCustomEnv": null
+2025-11-27T16:29:32.1214327Z       }
+2025-11-27T16:29:32.1214574Z     }
+2025-11-27T16:29:32.1214811Z   },
+2025-11-27T16:29:32.1215680Z   "buildx.build.ref": "builder-bfdbae6e-8886-4535-8423-e8b736737392/builder-bfdbae6e-8886-4535-8423-e8b7367373920/nkxy2ukps5lohq8n5cy5b6i9m"
+2025-11-27T16:29:32.1216695Z }
+2025-11-27T16:29:32.1217220Z ##[endgroup]

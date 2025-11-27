@@ -1,0 +1,1679 @@
+﻿2025-11-27T16:29:11.4060153Z Current runner version: '2.329.0'
+2025-11-27T16:29:11.4082713Z ##[group]Runner Image Provisioner
+2025-11-27T16:29:11.4083916Z Hosted Compute Agent
+2025-11-27T16:29:11.4084784Z Version: 20251016.436
+2025-11-27T16:29:11.4085731Z Commit: 8ab8ac8bfd662a3739dab9fe09456aba92132568
+2025-11-27T16:29:11.4086803Z Build Date: 2025-10-15T20:44:12Z
+2025-11-27T16:29:11.4087424Z ##[endgroup]
+2025-11-27T16:29:11.4087967Z ##[group]Operating System
+2025-11-27T16:29:11.4088638Z Ubuntu
+2025-11-27T16:29:11.4089342Z 24.04.3
+2025-11-27T16:29:11.4089868Z LTS
+2025-11-27T16:29:11.4090426Z ##[endgroup]
+2025-11-27T16:29:11.4090911Z ##[group]Runner Image
+2025-11-27T16:29:11.4091550Z Image: ubuntu-24.04
+2025-11-27T16:29:11.4092092Z Version: 20251112.124.1
+2025-11-27T16:29:11.4093140Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20251112.124/images/ubuntu/Ubuntu2404-Readme.md
+2025-11-27T16:29:11.4094653Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20251112.124
+2025-11-27T16:29:11.4095718Z ##[endgroup]
+2025-11-27T16:29:11.4098251Z ##[group]GITHUB_TOKEN Permissions
+2025-11-27T16:29:11.4100918Z Actions: write
+2025-11-27T16:29:11.4101468Z ArtifactMetadata: write
+2025-11-27T16:29:11.4102155Z Attestations: write
+2025-11-27T16:29:11.4102667Z Checks: write
+2025-11-27T16:29:11.4103177Z Contents: write
+2025-11-27T16:29:11.4103647Z Deployments: write
+2025-11-27T16:29:11.4104313Z Discussions: write
+2025-11-27T16:29:11.4104836Z Issues: write
+2025-11-27T16:29:11.4105341Z Metadata: read
+2025-11-27T16:29:11.4105925Z Models: read
+2025-11-27T16:29:11.4106410Z Packages: write
+2025-11-27T16:29:11.4106921Z Pages: write
+2025-11-27T16:29:11.4107507Z PullRequests: write
+2025-11-27T16:29:11.4108084Z RepositoryProjects: write
+2025-11-27T16:29:11.4108725Z SecurityEvents: write
+2025-11-27T16:29:11.4109921Z Statuses: write
+2025-11-27T16:29:11.4110488Z ##[endgroup]
+2025-11-27T16:29:11.4112918Z Secret source: Actions
+2025-11-27T16:29:11.4113732Z Prepare workflow directory
+2025-11-27T16:29:11.4551223Z Prepare all required actions
+2025-11-27T16:29:11.4588573Z Getting action download info
+2025-11-27T16:29:11.8249452Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2025-11-27T16:29:12.5633126Z Download action repository 'actions/setup-python@v5' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
+2025-11-27T16:29:12.6535695Z Download action repository 'codecov/codecov-action@v4' (SHA:b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238)
+2025-11-27T16:29:13.0935908Z Complete job name: Test (Python 3.11)
+2025-11-27T16:29:13.1416656Z ##[group]Checking docker version
+2025-11-27T16:29:13.1431018Z ##[command]/usr/bin/docker version --format '{{.Server.APIVersion}}'
+2025-11-27T16:29:13.2405970Z '1.48'
+2025-11-27T16:29:13.2418380Z Docker daemon API version: '1.48'
+2025-11-27T16:29:13.2420099Z ##[command]/usr/bin/docker version --format '{{.Client.APIVersion}}'
+2025-11-27T16:29:13.2586965Z '1.48'
+2025-11-27T16:29:13.2600997Z Docker client API version: '1.48'
+2025-11-27T16:29:13.2606916Z ##[endgroup]
+2025-11-27T16:29:13.2610679Z ##[group]Clean up resources from previous jobs
+2025-11-27T16:29:13.2617053Z ##[command]/usr/bin/docker ps --all --quiet --no-trunc --filter "label=eb5f43"
+2025-11-27T16:29:13.2758012Z ##[command]/usr/bin/docker network prune --force --filter "label=eb5f43"
+2025-11-27T16:29:13.2885310Z ##[endgroup]
+2025-11-27T16:29:13.2886182Z ##[group]Create local container network
+2025-11-27T16:29:13.2897215Z ##[command]/usr/bin/docker network create --label eb5f43 github_network_fbfc051abff14557927e7f4e62a64c7e
+2025-11-27T16:29:13.3402008Z da9584eebc4d89a2ea81e1ac256d4c89aee6322263855741b266479ec5a538a0
+2025-11-27T16:29:13.3420185Z ##[endgroup]
+2025-11-27T16:29:13.3446071Z ##[group]Starting postgres service container
+2025-11-27T16:29:13.3467206Z ##[command]/usr/bin/docker pull ankane/pgvector:latest
+2025-11-27T16:29:13.7304819Z latest: Pulling from ankane/pgvector
+2025-11-27T16:29:13.8328346Z a803e7c4b030: Pulling fs layer
+2025-11-27T16:29:13.8330224Z 12dd3b657e91: Pulling fs layer
+2025-11-27T16:29:13.8332103Z 147adba297eb: Pulling fs layer
+2025-11-27T16:29:13.8333058Z 56ee7c0dd616: Pulling fs layer
+2025-11-27T16:29:13.8334014Z f9aacf30f429: Pulling fs layer
+2025-11-27T16:29:13.8334943Z 7ad57b8030eb: Pulling fs layer
+2025-11-27T16:29:13.8335900Z 786562b3be85: Pulling fs layer
+2025-11-27T16:29:13.8336858Z 04efcdd3a2a4: Pulling fs layer
+2025-11-27T16:29:13.8337789Z 2c35234636c9: Pulling fs layer
+2025-11-27T16:29:13.8338700Z 6e662fa63f18: Pulling fs layer
+2025-11-27T16:29:13.8339888Z f1a157d7d7b0: Pulling fs layer
+2025-11-27T16:29:13.8340825Z bb153abf3802: Pulling fs layer
+2025-11-27T16:29:13.8341768Z 7077e54346e0: Pulling fs layer
+2025-11-27T16:29:13.8342685Z 2e3723549f11: Pulling fs layer
+2025-11-27T16:29:13.8343593Z c5f09b500022: Pulling fs layer
+2025-11-27T16:29:13.8344511Z 2c35234636c9: Waiting
+2025-11-27T16:29:13.8345302Z 6e662fa63f18: Waiting
+2025-11-27T16:29:13.8346100Z f1a157d7d7b0: Waiting
+2025-11-27T16:29:13.8346891Z bb153abf3802: Waiting
+2025-11-27T16:29:13.8347682Z 7077e54346e0: Waiting
+2025-11-27T16:29:13.8348477Z 56ee7c0dd616: Waiting
+2025-11-27T16:29:13.8349515Z c5f09b500022: Waiting
+2025-11-27T16:29:13.8350315Z f9aacf30f429: Waiting
+2025-11-27T16:29:13.8351113Z 7ad57b8030eb: Waiting
+2025-11-27T16:29:13.8351897Z 786562b3be85: Waiting
+2025-11-27T16:29:13.8352687Z 04efcdd3a2a4: Waiting
+2025-11-27T16:29:13.8353486Z 2e3723549f11: Waiting
+2025-11-27T16:29:13.9515125Z 12dd3b657e91: Verifying Checksum
+2025-11-27T16:29:13.9516972Z 12dd3b657e91: Download complete
+2025-11-27T16:29:13.9683927Z 147adba297eb: Verifying Checksum
+2025-11-27T16:29:13.9685138Z 147adba297eb: Download complete
+2025-11-27T16:29:14.1042082Z 56ee7c0dd616: Verifying Checksum
+2025-11-27T16:29:14.1044014Z 56ee7c0dd616: Download complete
+2025-11-27T16:29:14.1433510Z f9aacf30f429: Verifying Checksum
+2025-11-27T16:29:14.1435250Z f9aacf30f429: Download complete
+2025-11-27T16:29:14.2682451Z 786562b3be85: Verifying Checksum
+2025-11-27T16:29:14.2684215Z 786562b3be85: Download complete
+2025-11-27T16:29:14.3310396Z 7ad57b8030eb: Verifying Checksum
+2025-11-27T16:29:14.3311182Z 7ad57b8030eb: Download complete
+2025-11-27T16:29:14.3941477Z 04efcdd3a2a4: Verifying Checksum
+2025-11-27T16:29:14.3942198Z 04efcdd3a2a4: Download complete
+2025-11-27T16:29:14.5269861Z 6e662fa63f18: Verifying Checksum
+2025-11-27T16:29:14.5270661Z 6e662fa63f18: Download complete
+2025-11-27T16:29:14.5528331Z a803e7c4b030: Verifying Checksum
+2025-11-27T16:29:14.5529948Z a803e7c4b030: Download complete
+2025-11-27T16:29:14.6460292Z f1a157d7d7b0: Verifying Checksum
+2025-11-27T16:29:14.6461846Z f1a157d7d7b0: Download complete
+2025-11-27T16:29:14.6660024Z bb153abf3802: Download complete
+2025-11-27T16:29:14.7645981Z 7077e54346e0: Verifying Checksum
+2025-11-27T16:29:14.7646740Z 7077e54346e0: Download complete
+2025-11-27T16:29:14.7959318Z 2e3723549f11: Verifying Checksum
+2025-11-27T16:29:14.7960005Z 2e3723549f11: Download complete
+2025-11-27T16:29:15.2867554Z c5f09b500022: Verifying Checksum
+2025-11-27T16:29:15.2868130Z c5f09b500022: Download complete
+2025-11-27T16:29:15.8154115Z a803e7c4b030: Pull complete
+2025-11-27T16:29:15.9205801Z 2c35234636c9: Download complete
+2025-11-27T16:29:16.8484816Z 12dd3b657e91: Pull complete
+2025-11-27T16:29:16.9787962Z 147adba297eb: Pull complete
+2025-11-27T16:29:17.0234728Z 56ee7c0dd616: Pull complete
+2025-11-27T16:29:17.3184263Z f9aacf30f429: Pull complete
+2025-11-27T16:29:17.4015857Z 7ad57b8030eb: Pull complete
+2025-11-27T16:29:17.4126115Z 786562b3be85: Pull complete
+2025-11-27T16:29:17.4306517Z 04efcdd3a2a4: Pull complete
+2025-11-27T16:29:20.1463840Z 2c35234636c9: Pull complete
+2025-11-27T16:29:20.1612534Z 6e662fa63f18: Pull complete
+2025-11-27T16:29:20.1742835Z f1a157d7d7b0: Pull complete
+2025-11-27T16:29:20.1852667Z bb153abf3802: Pull complete
+2025-11-27T16:29:20.1956294Z 7077e54346e0: Pull complete
+2025-11-27T16:29:20.2327255Z 2e3723549f11: Pull complete
+2025-11-27T16:29:20.5774769Z c5f09b500022: Pull complete
+2025-11-27T16:29:20.5824526Z Digest: sha256:956744bd14e9cbdf639c61c2a2a7c7c2c48a9c8cdd42f7de4ac034f4e96b90f8
+2025-11-27T16:29:20.5836635Z Status: Downloaded newer image for ankane/pgvector:latest
+2025-11-27T16:29:20.5847955Z docker.io/ankane/pgvector:latest
+2025-11-27T16:29:20.5911021Z ##[command]/usr/bin/docker create --name 14576fd33b384cea8fafceaba492704f_ankanepgvectorlatest_6999f6 --label eb5f43 --network github_network_fbfc051abff14557927e7f4e62a64c7e --network-alias postgres -p 5432:5432 --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5 -e "POSTGRES_PASSWORD=postgres" -e "POSTGRES_USER=postgres" -e "POSTGRES_DB=test_rae" -e GITHUB_ACTIONS=true -e CI=true ankane/pgvector:latest
+2025-11-27T16:29:20.6156682Z 8ab5c4ef8477271ed427da58575861e02d4fe60f1a4e34f0e5935e7ae0a7c79b
+2025-11-27T16:29:20.6181346Z ##[command]/usr/bin/docker start 8ab5c4ef8477271ed427da58575861e02d4fe60f1a4e34f0e5935e7ae0a7c79b
+2025-11-27T16:29:20.8197470Z 8ab5c4ef8477271ed427da58575861e02d4fe60f1a4e34f0e5935e7ae0a7c79b
+2025-11-27T16:29:20.8219342Z ##[command]/usr/bin/docker ps --all --filter id=8ab5c4ef8477271ed427da58575861e02d4fe60f1a4e34f0e5935e7ae0a7c79b --filter status=running --no-trunc --format "{{.ID}} {{.Status}}"
+2025-11-27T16:29:20.8343678Z 8ab5c4ef8477271ed427da58575861e02d4fe60f1a4e34f0e5935e7ae0a7c79b Up Less than a second (health: starting)
+2025-11-27T16:29:20.8370016Z ##[command]/usr/bin/docker port 8ab5c4ef8477271ed427da58575861e02d4fe60f1a4e34f0e5935e7ae0a7c79b
+2025-11-27T16:29:20.8502471Z 5432/tcp -> 0.0.0.0:5432
+2025-11-27T16:29:20.8502872Z 5432/tcp -> [::]:5432
+2025-11-27T16:29:20.8554046Z ##[endgroup]
+2025-11-27T16:29:20.8555267Z ##[group]Starting redis service container
+2025-11-27T16:29:20.8556564Z ##[command]/usr/bin/docker pull redis:7-alpine
+2025-11-27T16:29:21.2331758Z 7-alpine: Pulling from library/redis
+2025-11-27T16:29:21.3449011Z f637881d1138: Pulling fs layer
+2025-11-27T16:29:21.3449717Z 60c57c0072ef: Pulling fs layer
+2025-11-27T16:29:21.3451112Z fc4343b4accd: Pulling fs layer
+2025-11-27T16:29:21.3451542Z 380e8aa8b1fd: Pulling fs layer
+2025-11-27T16:29:21.3451959Z c70aae7b5e0d: Pulling fs layer
+2025-11-27T16:29:21.3452540Z 232f7549c9b0: Pulling fs layer
+2025-11-27T16:29:21.3452914Z 4f4fb700ef54: Pulling fs layer
+2025-11-27T16:29:21.3453282Z d75b3becd998: Pulling fs layer
+2025-11-27T16:29:21.3453661Z c70aae7b5e0d: Waiting
+2025-11-27T16:29:21.3453988Z 232f7549c9b0: Waiting
+2025-11-27T16:29:21.3454305Z 4f4fb700ef54: Waiting
+2025-11-27T16:29:21.3454613Z 380e8aa8b1fd: Waiting
+2025-11-27T16:29:21.3454939Z d75b3becd998: Waiting
+2025-11-27T16:29:21.4510858Z fc4343b4accd: Download complete
+2025-11-27T16:29:21.4624038Z 60c57c0072ef: Download complete
+2025-11-27T16:29:21.5547325Z f637881d1138: Verifying Checksum
+2025-11-27T16:29:21.5551587Z f637881d1138: Download complete
+2025-11-27T16:29:21.6567000Z 380e8aa8b1fd: Verifying Checksum
+2025-11-27T16:29:21.6567460Z 380e8aa8b1fd: Download complete
+2025-11-27T16:29:21.6813052Z 232f7549c9b0: Verifying Checksum
+2025-11-27T16:29:21.6813476Z 232f7549c9b0: Download complete
+2025-11-27T16:29:21.6833921Z f637881d1138: Pull complete
+2025-11-27T16:29:21.7110281Z 60c57c0072ef: Pull complete
+2025-11-27T16:29:21.7630081Z 4f4fb700ef54: Verifying Checksum
+2025-11-27T16:29:21.7630561Z 4f4fb700ef54: Download complete
+2025-11-27T16:29:21.8068014Z d75b3becd998: Verifying Checksum
+2025-11-27T16:29:21.8068475Z d75b3becd998: Download complete
+2025-11-27T16:29:21.8596149Z c70aae7b5e0d: Verifying Checksum
+2025-11-27T16:29:21.8597773Z c70aae7b5e0d: Download complete
+2025-11-27T16:29:21.8653171Z fc4343b4accd: Pull complete
+2025-11-27T16:29:21.8946000Z 380e8aa8b1fd: Pull complete
+2025-11-27T16:29:22.0733719Z c70aae7b5e0d: Pull complete
+2025-11-27T16:29:22.0809994Z 232f7549c9b0: Pull complete
+2025-11-27T16:29:22.0878253Z 4f4fb700ef54: Pull complete
+2025-11-27T16:29:22.0983301Z d75b3becd998: Pull complete
+2025-11-27T16:29:22.1020085Z Digest: sha256:ee64a64eaab618d88051c3ade8f6352d11531fcf79d9a4818b9b183d8c1d18ba
+2025-11-27T16:29:22.1030011Z Status: Downloaded newer image for redis:7-alpine
+2025-11-27T16:29:22.1038772Z docker.io/library/redis:7-alpine
+2025-11-27T16:29:22.1055691Z ##[command]/usr/bin/docker create --name e99dc5a8f364434f94032254f6375e3a_redis7alpine_0f92a2 --label eb5f43 --network github_network_fbfc051abff14557927e7f4e62a64c7e --network-alias redis -p 6379:6379 --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5 -e GITHUB_ACTIONS=true -e CI=true redis:7-alpine
+2025-11-27T16:29:22.1274976Z b7a262ee1f4f155380edc978ffc653e1c68738570d50edc4ee7c4fd37d221bee
+2025-11-27T16:29:22.1290193Z ##[command]/usr/bin/docker start b7a262ee1f4f155380edc978ffc653e1c68738570d50edc4ee7c4fd37d221bee
+2025-11-27T16:29:22.2548190Z b7a262ee1f4f155380edc978ffc653e1c68738570d50edc4ee7c4fd37d221bee
+2025-11-27T16:29:22.2564409Z ##[command]/usr/bin/docker ps --all --filter id=b7a262ee1f4f155380edc978ffc653e1c68738570d50edc4ee7c4fd37d221bee --filter status=running --no-trunc --format "{{.ID}} {{.Status}}"
+2025-11-27T16:29:22.2687256Z b7a262ee1f4f155380edc978ffc653e1c68738570d50edc4ee7c4fd37d221bee Up Less than a second (health: starting)
+2025-11-27T16:29:22.2699894Z ##[command]/usr/bin/docker port b7a262ee1f4f155380edc978ffc653e1c68738570d50edc4ee7c4fd37d221bee
+2025-11-27T16:29:22.2810450Z 6379/tcp -> 0.0.0.0:6379
+2025-11-27T16:29:22.2810752Z 6379/tcp -> [::]:6379
+2025-11-27T16:29:22.2823462Z ##[endgroup]
+2025-11-27T16:29:22.2824223Z ##[group]Starting qdrant service container
+2025-11-27T16:29:22.2824850Z ##[command]/usr/bin/docker pull qdrant/qdrant:latest
+2025-11-27T16:29:22.6426000Z latest: Pulling from qdrant/qdrant
+2025-11-27T16:29:22.7552805Z 0e4bc2bd6656: Pulling fs layer
+2025-11-27T16:29:22.7553291Z 4f4fb700ef54: Pulling fs layer
+2025-11-27T16:29:22.7553617Z e7e3b24edd4b: Pulling fs layer
+2025-11-27T16:29:22.7553948Z c34aec5dcf80: Pulling fs layer
+2025-11-27T16:29:22.7554309Z 231dc95f1e77: Pulling fs layer
+2025-11-27T16:29:22.7554674Z c69c70becb6a: Pulling fs layer
+2025-11-27T16:29:22.7555020Z 46054db6899d: Pulling fs layer
+2025-11-27T16:29:22.7555402Z c838b6ce71e9: Pulling fs layer
+2025-11-27T16:29:22.7555784Z c34aec5dcf80: Waiting
+2025-11-27T16:29:22.7556096Z 231dc95f1e77: Waiting
+2025-11-27T16:29:22.7556539Z c69c70becb6a: Waiting
+2025-11-27T16:29:22.7556881Z 46054db6899d: Waiting
+2025-11-27T16:29:22.7557163Z c838b6ce71e9: Waiting
+2025-11-27T16:29:22.8767725Z e7e3b24edd4b: Verifying Checksum
+2025-11-27T16:29:22.8768269Z e7e3b24edd4b: Download complete
+2025-11-27T16:29:22.8936184Z 4f4fb700ef54: Verifying Checksum
+2025-11-27T16:29:22.8936649Z 4f4fb700ef54: Download complete
+2025-11-27T16:29:23.0161189Z 231dc95f1e77: Verifying Checksum
+2025-11-27T16:29:23.0161663Z 231dc95f1e77: Download complete
+2025-11-27T16:29:23.1361201Z c69c70becb6a: Verifying Checksum
+2025-11-27T16:29:23.1363309Z c69c70becb6a: Download complete
+2025-11-27T16:29:23.2472988Z 0e4bc2bd6656: Verifying Checksum
+2025-11-27T16:29:23.2477518Z 0e4bc2bd6656: Download complete
+2025-11-27T16:29:23.2851710Z 46054db6899d: Verifying Checksum
+2025-11-27T16:29:23.2852120Z 46054db6899d: Download complete
+2025-11-27T16:29:23.5746373Z c34aec5dcf80: Verifying Checksum
+2025-11-27T16:29:23.5747349Z c34aec5dcf80: Download complete
+2025-11-27T16:29:23.5872114Z c838b6ce71e9: Download complete
+2025-11-27T16:29:24.2004611Z 0e4bc2bd6656: Pull complete
+2025-11-27T16:29:24.2670753Z 4f4fb700ef54: Pull complete
+2025-11-27T16:29:24.3855268Z e7e3b24edd4b: Pull complete
+2025-11-27T16:29:24.8415183Z c34aec5dcf80: Pull complete
+2025-11-27T16:29:24.8548025Z 231dc95f1e77: Pull complete
+2025-11-27T16:29:24.8644093Z c69c70becb6a: Pull complete
+2025-11-27T16:29:24.8723032Z 46054db6899d: Pull complete
+2025-11-27T16:29:24.9925542Z c838b6ce71e9: Pull complete
+2025-11-27T16:29:25.0041744Z Digest: sha256:db1c735496dfa982ef27576a17b624e48e6b46a140bcdc2ac34e39d186204ef5
+2025-11-27T16:29:25.0054082Z Status: Downloaded newer image for qdrant/qdrant:latest
+2025-11-27T16:29:25.0061961Z docker.io/qdrant/qdrant:latest
+2025-11-27T16:29:25.0077344Z ##[command]/usr/bin/docker create --name 36d201fbf3fc47a0af1ebabd5c4974cf_qdrantqdrantlatest_5f5e8b --label eb5f43 --network github_network_fbfc051abff14557927e7f4e62a64c7e --network-alias qdrant -p 6333:6333  -e GITHUB_ACTIONS=true -e CI=true qdrant/qdrant:latest
+2025-11-27T16:29:25.0293673Z f8126f99c5fdbacc28866bba9ec700fefd8b26db6edb3a471dd7342a3b92792a
+2025-11-27T16:29:25.0307666Z ##[command]/usr/bin/docker start f8126f99c5fdbacc28866bba9ec700fefd8b26db6edb3a471dd7342a3b92792a
+2025-11-27T16:29:25.1629459Z f8126f99c5fdbacc28866bba9ec700fefd8b26db6edb3a471dd7342a3b92792a
+2025-11-27T16:29:25.1646828Z ##[command]/usr/bin/docker ps --all --filter id=f8126f99c5fdbacc28866bba9ec700fefd8b26db6edb3a471dd7342a3b92792a --filter status=running --no-trunc --format "{{.ID}} {{.Status}}"
+2025-11-27T16:29:25.1794832Z f8126f99c5fdbacc28866bba9ec700fefd8b26db6edb3a471dd7342a3b92792a Up Less than a second
+2025-11-27T16:29:25.1820530Z ##[command]/usr/bin/docker port f8126f99c5fdbacc28866bba9ec700fefd8b26db6edb3a471dd7342a3b92792a
+2025-11-27T16:29:25.1972642Z 6333/tcp -> 0.0.0.0:6333
+2025-11-27T16:29:25.1973052Z 6333/tcp -> [::]:6333
+2025-11-27T16:29:25.1986086Z ##[endgroup]
+2025-11-27T16:29:25.1997583Z ##[group]Waiting for all services to be ready
+2025-11-27T16:29:25.2011768Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 8ab5c4ef8477271ed427da58575861e02d4fe60f1a4e34f0e5935e7ae0a7c79b
+2025-11-27T16:29:25.2154042Z starting
+2025-11-27T16:29:25.2175164Z postgres service is starting, waiting 2 seconds before checking again.
+2025-11-27T16:29:27.2170560Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 8ab5c4ef8477271ed427da58575861e02d4fe60f1a4e34f0e5935e7ae0a7c79b
+2025-11-27T16:29:27.2291454Z starting
+2025-11-27T16:29:27.2305358Z postgres service is starting, waiting 3 seconds before checking again.
+2025-11-27T16:29:30.8708343Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 8ab5c4ef8477271ed427da58575861e02d4fe60f1a4e34f0e5935e7ae0a7c79b
+2025-11-27T16:29:30.8834202Z starting
+2025-11-27T16:29:30.8847586Z postgres service is starting, waiting 8 seconds before checking again.
+2025-11-27T16:29:39.7776032Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" 8ab5c4ef8477271ed427da58575861e02d4fe60f1a4e34f0e5935e7ae0a7c79b
+2025-11-27T16:29:39.7897406Z healthy
+2025-11-27T16:29:39.7914141Z postgres service is healthy.
+2025-11-27T16:29:39.7914926Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" b7a262ee1f4f155380edc978ffc653e1c68738570d50edc4ee7c4fd37d221bee
+2025-11-27T16:29:39.8035393Z healthy
+2025-11-27T16:29:39.8048731Z redis service is healthy.
+2025-11-27T16:29:39.8049699Z ##[command]/usr/bin/docker inspect --format="{{if .Config.Healthcheck}}{{print .State.Health.Status}}{{end}}" f8126f99c5fdbacc28866bba9ec700fefd8b26db6edb3a471dd7342a3b92792a
+2025-11-27T16:29:39.8177537Z qdrant service is healthy.
+2025-11-27T16:29:39.8177918Z ##[endgroup]
+2025-11-27T16:29:39.8417229Z ##[group]Run actions/checkout@v4
+2025-11-27T16:29:39.8417773Z with:
+2025-11-27T16:29:39.8417995Z   repository: dreamsoft-pro/RAE-agentic-memory
+2025-11-27T16:29:39.8418428Z   token: ***
+2025-11-27T16:29:39.8418602Z   ssh-strict: true
+2025-11-27T16:29:39.8418777Z   ssh-user: git
+2025-11-27T16:29:39.8418955Z   persist-credentials: true
+2025-11-27T16:29:39.8419516Z   clean: true
+2025-11-27T16:29:39.8419706Z   sparse-checkout-cone-mode: true
+2025-11-27T16:29:39.8419937Z   fetch-depth: 1
+2025-11-27T16:29:39.8420115Z   fetch-tags: false
+2025-11-27T16:29:39.8420303Z   show-progress: true
+2025-11-27T16:29:39.8420486Z   lfs: false
+2025-11-27T16:29:39.8420644Z   submodules: false
+2025-11-27T16:29:39.8420825Z   set-safe-directory: true
+2025-11-27T16:29:39.8421305Z ##[endgroup]
+2025-11-27T16:29:39.9535091Z Syncing repository: dreamsoft-pro/RAE-agentic-memory
+2025-11-27T16:29:39.9536422Z ##[group]Getting Git version info
+2025-11-27T16:29:39.9536914Z Working directory is '/home/runner/work/RAE-agentic-memory/RAE-agentic-memory'
+2025-11-27T16:29:39.9537633Z [command]/usr/bin/git version
+2025-11-27T16:29:39.9624312Z git version 2.51.2
+2025-11-27T16:29:39.9651587Z ##[endgroup]
+2025-11-27T16:29:39.9664882Z Temporarily overriding HOME='/home/runner/work/_temp/65615ece-5226-4454-b10e-c527ec78905a' before making global git config changes
+2025-11-27T16:29:39.9665904Z Adding repository directory to the temporary git global config as a safe directory
+2025-11-27T16:29:39.9670103Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/RAE-agentic-memory/RAE-agentic-memory
+2025-11-27T16:29:39.9705507Z Deleting the contents of '/home/runner/work/RAE-agentic-memory/RAE-agentic-memory'
+2025-11-27T16:29:39.9708988Z ##[group]Initializing the repository
+2025-11-27T16:29:39.9713315Z [command]/usr/bin/git init /home/runner/work/RAE-agentic-memory/RAE-agentic-memory
+2025-11-27T16:29:39.9827789Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-11-27T16:29:39.9828510Z hint: is subject to change. To configure the initial branch name to use in all
+2025-11-27T16:29:39.9829206Z hint: of your new repositories, which will suppress this warning, call:
+2025-11-27T16:29:39.9829607Z hint:
+2025-11-27T16:29:39.9830025Z hint: 	git config --global init.defaultBranch <name>
+2025-11-27T16:29:39.9830536Z hint:
+2025-11-27T16:29:39.9831035Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-11-27T16:29:39.9831912Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-11-27T16:29:39.9832587Z hint:
+2025-11-27T16:29:39.9832951Z hint: 	git branch -m <name>
+2025-11-27T16:29:39.9833355Z hint:
+2025-11-27T16:29:39.9833980Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-11-27T16:29:39.9835156Z Initialized empty Git repository in /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/.git/
+2025-11-27T16:29:39.9844842Z [command]/usr/bin/git remote add origin https://github.com/dreamsoft-pro/RAE-agentic-memory
+2025-11-27T16:29:39.9878402Z ##[endgroup]
+2025-11-27T16:29:39.9878812Z ##[group]Disabling automatic garbage collection
+2025-11-27T16:29:39.9882682Z [command]/usr/bin/git config --local gc.auto 0
+2025-11-27T16:29:39.9909656Z ##[endgroup]
+2025-11-27T16:29:39.9910134Z ##[group]Setting up auth
+2025-11-27T16:29:39.9916340Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-11-27T16:29:39.9945315Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-11-27T16:29:40.0314429Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-11-27T16:29:40.0342937Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-11-27T16:29:40.0565045Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2025-11-27T16:29:40.0594487Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2025-11-27T16:29:40.0815998Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-11-27T16:29:40.0850538Z ##[endgroup]
+2025-11-27T16:29:40.0851112Z ##[group]Fetching the repository
+2025-11-27T16:29:40.0858577Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +ffb72dd46c65ea2cf733ec872b5073408ba48fcc:refs/remotes/pull/3/merge
+2025-11-27T16:29:40.4990501Z From https://github.com/dreamsoft-pro/RAE-agentic-memory
+2025-11-27T16:29:40.4990982Z  * [new ref]         ffb72dd46c65ea2cf733ec872b5073408ba48fcc -> pull/3/merge
+2025-11-27T16:29:40.5028331Z ##[endgroup]
+2025-11-27T16:29:40.5028853Z ##[group]Determining the checkout info
+2025-11-27T16:29:40.5031237Z ##[endgroup]
+2025-11-27T16:29:40.5036107Z [command]/usr/bin/git sparse-checkout disable
+2025-11-27T16:29:40.5080194Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-11-27T16:29:40.5116448Z ##[group]Checking out the ref
+2025-11-27T16:29:40.5116880Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/3/merge
+2025-11-27T16:29:40.5441044Z Note: switching to 'refs/remotes/pull/3/merge'.
+2025-11-27T16:29:40.5441565Z 
+2025-11-27T16:29:40.5441938Z You are in 'detached HEAD' state. You can look around, make experimental
+2025-11-27T16:29:40.5442708Z changes and commit them, and you can discard any commits you make in this
+2025-11-27T16:29:40.5443244Z state without impacting any branches by switching back to a branch.
+2025-11-27T16:29:40.5443568Z 
+2025-11-27T16:29:40.5443770Z If you want to create a new branch to retain commits you create, you may
+2025-11-27T16:29:40.5444497Z do so (now or later) by using -c with the switch command. Example:
+2025-11-27T16:29:40.5444965Z 
+2025-11-27T16:29:40.5445226Z   git switch -c <new-branch-name>
+2025-11-27T16:29:40.5445506Z 
+2025-11-27T16:29:40.5445675Z Or undo this operation with:
+2025-11-27T16:29:40.5445984Z 
+2025-11-27T16:29:40.5446139Z   git switch -
+2025-11-27T16:29:40.5446539Z 
+2025-11-27T16:29:40.5446896Z Turn off this advice by setting config variable advice.detachedHead to false
+2025-11-27T16:29:40.5447380Z 
+2025-11-27T16:29:40.5447948Z HEAD is now at ffb72dd Merge 9dbde0bfb57e59e4ed0464f13b2c2b2f99b07c95 into 5a739d4273a7a6b322457f5d2d4b9a4937081507
+2025-11-27T16:29:40.5450929Z ##[endgroup]
+2025-11-27T16:29:40.5491303Z [command]/usr/bin/git log -1 --format=%H
+2025-11-27T16:29:40.5514618Z ffb72dd46c65ea2cf733ec872b5073408ba48fcc
+2025-11-27T16:29:40.5729441Z ##[group]Run actions/setup-python@v5
+2025-11-27T16:29:40.5729734Z with:
+2025-11-27T16:29:40.5729909Z   python-version: 3.11
+2025-11-27T16:29:40.5730108Z   cache: pip
+2025-11-27T16:29:40.5730278Z   check-latest: false
+2025-11-27T16:29:40.5730638Z   token: ***
+2025-11-27T16:29:40.5730820Z   update-environment: true
+2025-11-27T16:29:40.5731047Z   allow-prereleases: false
+2025-11-27T16:29:40.5731260Z   freethreaded: false
+2025-11-27T16:29:40.5731474Z ##[endgroup]
+2025-11-27T16:29:40.7388497Z ##[group]Installed versions
+2025-11-27T16:29:40.7510145Z Successfully set up CPython (3.11.14)
+2025-11-27T16:29:40.7511198Z ##[endgroup]
+2025-11-27T16:29:40.8496820Z [command]/opt/hostedtoolcache/Python/3.11.14/x64/bin/pip cache dir
+2025-11-27T16:29:41.1749614Z /home/runner/.cache/pip
+2025-11-27T16:29:41.3146450Z Cache hit for: setup-python-Linux-x64-24.04-Ubuntu-python-3.11.14-pip-95ebd838ea30dfa2c987f9bac75f820c290461fa42ed4bab22d8dee29c03de2a
+2025-11-27T16:29:42.4352157Z Received 134217728 of 197132083 (68.1%), 127.4 MBs/sec
+2025-11-27T16:29:42.7220560Z Received 197132083 of 197132083 (100.0%), 145.6 MBs/sec
+2025-11-27T16:29:42.7221711Z Cache Size: ~188 MB (197132083 B)
+2025-11-27T16:29:42.7257941Z [command]/usr/bin/tar -xf /home/runner/work/_temp/c63be8c6-29d8-4910-a8fe-369d30ced394/cache.tzst -P -C /home/runner/work/RAE-agentic-memory/RAE-agentic-memory --use-compress-program unzstd
+2025-11-27T16:29:43.0803920Z Cache restored successfully
+2025-11-27T16:29:43.1189339Z Cache restored from key: setup-python-Linux-x64-24.04-Ubuntu-python-3.11.14-pip-95ebd838ea30dfa2c987f9bac75f820c290461fa42ed4bab22d8dee29c03de2a
+2025-11-27T16:29:43.1371075Z ##[group]Run python -m pip install --upgrade pip
+2025-11-27T16:29:43.1371502Z [36;1mpython -m pip install --upgrade pip[0m
+2025-11-27T16:29:43.1371810Z [36;1mpip install -r requirements-dev.txt[0m
+2025-11-27T16:29:43.1372170Z [36;1mpip install -r apps/memory_api/requirements-base.txt[0m
+2025-11-27T16:29:43.1372548Z [36;1mpip install -r apps/memory_api/requirements-test.txt[0m
+2025-11-27T16:29:43.1372914Z [36;1mpip install -e sdk/python/rae_memory_sdk[0m
+2025-11-27T16:29:43.1414387Z shell: /usr/bin/bash -e {0}
+2025-11-27T16:29:43.1414620Z env:
+2025-11-27T16:29:43.1414871Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-27T16:29:43.1415307Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-27T16:29:43.1415716Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-27T16:29:43.1416267Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-27T16:29:43.1416665Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-27T16:29:43.1417023Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-27T16:29:43.1417312Z ##[endgroup]
+2025-11-27T16:29:43.7219290Z Requirement already satisfied: pip in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (25.3)
+2025-11-27T16:29:44.6058153Z Collecting ruff (from -r requirements-dev.txt (line 2))
+2025-11-27T16:29:44.6074822Z   Using cached ruff-0.14.6-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (25 kB)
+2025-11-27T16:29:44.6434486Z Collecting pytest (from -r requirements-dev.txt (line 3))
+2025-11-27T16:29:44.6449912Z   Using cached pytest-9.0.1-py3-none-any.whl.metadata (7.6 kB)
+2025-11-27T16:29:44.6646855Z Collecting pytest-asyncio (from -r requirements-dev.txt (line 4))
+2025-11-27T16:29:44.6660998Z   Using cached pytest_asyncio-1.3.0-py3-none-any.whl.metadata (4.1 kB)
+2025-11-27T16:29:44.6805800Z Collecting pytest-cov (from -r requirements-dev.txt (line 5))
+2025-11-27T16:29:44.6821108Z   Using cached pytest_cov-7.0.0-py3-none-any.whl.metadata (31 kB)
+2025-11-27T16:29:44.7757897Z Collecting mypy (from -r requirements-dev.txt (line 6))
+2025-11-27T16:29:44.7773284Z   Using cached mypy-1.18.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.2 kB)
+2025-11-27T16:29:44.7878202Z Collecting iniconfig>=1.0.1 (from pytest->-r requirements-dev.txt (line 3))
+2025-11-27T16:29:44.7891609Z   Using cached iniconfig-2.3.0-py3-none-any.whl.metadata (2.5 kB)
+2025-11-27T16:29:44.8022253Z Collecting packaging>=22 (from pytest->-r requirements-dev.txt (line 3))
+2025-11-27T16:29:44.8035497Z   Using cached packaging-25.0-py3-none-any.whl.metadata (3.3 kB)
+2025-11-27T16:29:44.8159749Z Collecting pluggy<2,>=1.5 (from pytest->-r requirements-dev.txt (line 3))
+2025-11-27T16:29:44.8172930Z   Using cached pluggy-1.6.0-py3-none-any.whl.metadata (4.8 kB)
+2025-11-27T16:29:44.8509493Z Collecting pygments>=2.7.2 (from pytest->-r requirements-dev.txt (line 3))
+2025-11-27T16:29:44.8523147Z   Using cached pygments-2.19.2-py3-none-any.whl.metadata (2.5 kB)
+2025-11-27T16:29:44.8795126Z Collecting typing-extensions>=4.12 (from pytest-asyncio->-r requirements-dev.txt (line 4))
+2025-11-27T16:29:44.8807999Z   Using cached typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+2025-11-27T16:29:45.2066964Z Collecting coverage>=7.10.6 (from coverage[toml]>=7.10.6->pytest-cov->-r requirements-dev.txt (line 5))
+2025-11-27T16:29:45.2083420Z   Using cached coverage-7.12.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (9.1 kB)
+2025-11-27T16:29:45.2361849Z Collecting mypy_extensions>=1.0.0 (from mypy->-r requirements-dev.txt (line 6))
+2025-11-27T16:29:45.2376156Z   Using cached mypy_extensions-1.1.0-py3-none-any.whl.metadata (1.1 kB)
+2025-11-27T16:29:45.2489752Z Collecting pathspec>=0.9.0 (from mypy->-r requirements-dev.txt (line 6))
+2025-11-27T16:29:45.2504127Z   Using cached pathspec-0.12.1-py3-none-any.whl.metadata (21 kB)
+2025-11-27T16:29:45.2580056Z Using cached ruff-0.14.6-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (13.9 MB)
+2025-11-27T16:29:45.2693591Z Using cached pytest-9.0.1-py3-none-any.whl (373 kB)
+2025-11-27T16:29:45.2709698Z Using cached pluggy-1.6.0-py3-none-any.whl (20 kB)
+2025-11-27T16:29:45.2723057Z Using cached pytest_asyncio-1.3.0-py3-none-any.whl (15 kB)
+2025-11-27T16:29:45.2735989Z Using cached pytest_cov-7.0.0-py3-none-any.whl (22 kB)
+2025-11-27T16:29:45.2749683Z Using cached mypy-1.18.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (13.2 MB)
+2025-11-27T16:29:45.2856190Z Using cached coverage-7.12.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (250 kB)
+2025-11-27T16:29:45.2870893Z Using cached iniconfig-2.3.0-py3-none-any.whl (7.5 kB)
+2025-11-27T16:29:45.2885414Z Using cached mypy_extensions-1.1.0-py3-none-any.whl (5.0 kB)
+2025-11-27T16:29:45.2898748Z Using cached packaging-25.0-py3-none-any.whl (66 kB)
+2025-11-27T16:29:45.2912192Z Using cached pathspec-0.12.1-py3-none-any.whl (31 kB)
+2025-11-27T16:29:45.2925360Z Using cached pygments-2.19.2-py3-none-any.whl (1.2 MB)
+2025-11-27T16:29:45.2947453Z Using cached typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+2025-11-27T16:29:45.3623715Z Installing collected packages: typing-extensions, ruff, pygments, pluggy, pathspec, packaging, mypy_extensions, iniconfig, coverage, pytest, mypy, pytest-cov, pytest-asyncio
+2025-11-27T16:29:47.8491599Z 
+2025-11-27T16:29:47.8505416Z Successfully installed coverage-7.12.0 iniconfig-2.3.0 mypy-1.18.2 mypy_extensions-1.1.0 packaging-25.0 pathspec-0.12.1 pluggy-1.6.0 pygments-2.19.2 pytest-9.0.1 pytest-asyncio-1.3.0 pytest-cov-7.0.0 ruff-0.14.6 typing-extensions-4.15.0
+2025-11-27T16:29:48.4177223Z Collecting fastapi==0.115.0 (from -r apps/memory_api/requirements-base.txt (line 6))
+2025-11-27T16:29:48.4193841Z   Using cached fastapi-0.115.0-py3-none-any.whl.metadata (27 kB)
+2025-11-27T16:29:48.4462144Z Collecting uvicorn==0.38.0 (from -r apps/memory_api/requirements-base.txt (line 7))
+2025-11-27T16:29:48.4476591Z   Using cached uvicorn-0.38.0-py3-none-any.whl.metadata (6.8 kB)
+2025-11-27T16:29:48.5635822Z Collecting pydantic==2.12.4 (from -r apps/memory_api/requirements-base.txt (line 8))
+2025-11-27T16:29:48.5651721Z   Using cached pydantic-2.12.4-py3-none-any.whl.metadata (89 kB)
+2025-11-27T16:29:48.5805909Z Collecting pydantic-settings==2.12.0 (from -r apps/memory_api/requirements-base.txt (line 9))
+2025-11-27T16:29:48.5821212Z   Using cached pydantic_settings-2.12.0-py3-none-any.whl.metadata (3.4 kB)
+2025-11-27T16:29:48.6206601Z Collecting asyncpg==0.30.0 (from -r apps/memory_api/requirements-base.txt (line 12))
+2025-11-27T16:29:48.6220958Z   Using cached asyncpg-0.30.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.0 kB)
+2025-11-27T16:29:48.6489847Z Collecting qdrant-client==1.10.1 (from -r apps/memory_api/requirements-base.txt (line 13))
+2025-11-27T16:29:48.6502921Z   Using cached qdrant_client-1.10.1-py3-none-any.whl.metadata (10 kB)
+2025-11-27T16:29:48.6606939Z Collecting pgvector==0.4.1 (from -r apps/memory_api/requirements-base.txt (line 14))
+2025-11-27T16:29:48.6620323Z   Using cached pgvector-0.4.1-py3-none-any.whl.metadata (18 kB)
+2025-11-27T16:29:48.6818740Z Collecting alembic==1.17.2 (from -r apps/memory_api/requirements-base.txt (line 15))
+2025-11-27T16:29:48.6832352Z   Using cached alembic-1.17.2-py3-none-any.whl.metadata (7.2 kB)
+2025-11-27T16:29:48.6999267Z Collecting httpx==0.27.2 (from -r apps/memory_api/requirements-base.txt (line 18))
+2025-11-27T16:29:48.7012493Z   Using cached httpx-0.27.2-py3-none-any.whl.metadata (7.1 kB)
+2025-11-27T16:29:48.7297763Z Collecting celery==5.5.3 (from -r apps/memory_api/requirements-base.txt (line 21))
+2025-11-27T16:29:48.7311100Z   Using cached celery-5.5.3-py3-none-any.whl.metadata (22 kB)
+2025-11-27T16:29:48.7707659Z Collecting redis==7.1.0 (from -r apps/memory_api/requirements-base.txt (line 22))
+2025-11-27T16:29:48.7721126Z   Using cached redis-7.1.0-py3-none-any.whl.metadata (12 kB)
+2025-11-27T16:29:48.7892419Z Collecting opentelemetry-sdk==1.27.0 (from -r apps/memory_api/requirements-base.txt (line 25))
+2025-11-27T16:29:48.7905183Z   Using cached opentelemetry_sdk-1.27.0-py3-none-any.whl.metadata (1.5 kB)
+2025-11-27T16:29:48.8086794Z Collecting opentelemetry-instrumentation-fastapi==0.48b0 (from -r apps/memory_api/requirements-base.txt (line 26))
+2025-11-27T16:29:48.8100683Z   Using cached opentelemetry_instrumentation_fastapi-0.48b0-py3-none-any.whl.metadata (2.1 kB)
+2025-11-27T16:29:48.8238118Z Collecting prometheus-fastapi-instrumentator==7.1.0 (from -r apps/memory_api/requirements-base.txt (line 27))
+2025-11-27T16:29:48.8251608Z   Using cached prometheus_fastapi_instrumentator-7.1.0-py3-none-any.whl.metadata (13 kB)
+2025-11-27T16:29:48.8374449Z Collecting prometheus_client==0.23.1 (from -r apps/memory_api/requirements-base.txt (line 28))
+2025-11-27T16:29:48.8387741Z   Using cached prometheus_client-0.23.1-py3-none-any.whl.metadata (1.9 kB)
+2025-11-27T16:29:48.8537830Z Collecting structlog==25.5.0 (from -r apps/memory_api/requirements-base.txt (line 29))
+2025-11-27T16:29:48.8551355Z   Using cached structlog-25.5.0-py3-none-any.whl.metadata (9.5 kB)
+2025-11-27T16:29:49.0323830Z Collecting litellm==1.80.0 (from -r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:49.0338036Z   Using cached litellm-1.80.0-py3-none-any.whl.metadata (30 kB)
+2025-11-27T16:29:49.0891306Z Collecting openai==2.8.1 (from -r apps/memory_api/requirements-base.txt (line 33))
+2025-11-27T16:29:49.0905471Z   Using cached openai-2.8.1-py3-none-any.whl.metadata (29 kB)
+2025-11-27T16:29:49.1211521Z Collecting anthropic==0.74.1 (from -r apps/memory_api/requirements-base.txt (line 34))
+2025-11-27T16:29:49.1225928Z   Using cached anthropic-0.74.1-py3-none-any.whl.metadata (28 kB)
+2025-11-27T16:29:49.1385880Z Collecting google-generativeai==0.8.5 (from -r apps/memory_api/requirements-base.txt (line 35))
+2025-11-27T16:29:49.1399351Z   Using cached google_generativeai-0.8.5-py3-none-any.whl.metadata (3.9 kB)
+2025-11-27T16:29:49.1541722Z Collecting tenacity==9.1.2 (from -r apps/memory_api/requirements-base.txt (line 38))
+2025-11-27T16:29:49.1554964Z   Using cached tenacity-9.1.2-py3-none-any.whl.metadata (1.2 kB)
+2025-11-27T16:29:49.1657604Z Collecting python-jose==3.5.0 (from python-jose[cryptography]==3.5.0->-r apps/memory_api/requirements-base.txt (line 39))
+2025-11-27T16:29:49.1671165Z   Using cached python_jose-3.5.0-py2.py3-none-any.whl.metadata (5.5 kB)
+2025-11-27T16:29:49.2339824Z Collecting zstandard==0.25.0 (from -r apps/memory_api/requirements-base.txt (line 40))
+2025-11-27T16:29:49.2355356Z   Using cached zstandard-0.25.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (3.3 kB)
+2025-11-27T16:29:49.2622353Z Collecting starlette<0.39.0,>=0.37.2 (from fastapi==0.115.0->-r apps/memory_api/requirements-base.txt (line 6))
+2025-11-27T16:29:49.2635582Z   Using cached starlette-0.38.6-py3-none-any.whl.metadata (6.0 kB)
+2025-11-27T16:29:49.3026397Z Requirement already satisfied: typing-extensions>=4.8.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from fastapi==0.115.0->-r apps/memory_api/requirements-base.txt (line 6)) (4.15.0)
+2025-11-27T16:29:49.3107979Z Collecting annotated-types>=0.6.0 (from pydantic==2.12.4->-r apps/memory_api/requirements-base.txt (line 8))
+2025-11-27T16:29:49.3121623Z   Using cached annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)
+2025-11-27T16:29:49.9497051Z Collecting pydantic-core==2.41.5 (from pydantic==2.12.4->-r apps/memory_api/requirements-base.txt (line 8))
+2025-11-27T16:29:49.9512672Z   Using cached pydantic_core-2.41.5-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.3 kB)
+2025-11-27T16:29:49.9606172Z Collecting typing-inspection>=0.4.2 (from pydantic==2.12.4->-r apps/memory_api/requirements-base.txt (line 8))
+2025-11-27T16:29:49.9619778Z   Using cached typing_inspection-0.4.2-py3-none-any.whl.metadata (2.6 kB)
+2025-11-27T16:29:49.9795041Z Collecting click>=7.0 (from uvicorn==0.38.0->-r apps/memory_api/requirements-base.txt (line 7))
+2025-11-27T16:29:49.9808750Z   Using cached click-8.3.1-py3-none-any.whl.metadata (2.6 kB)
+2025-11-27T16:29:50.0255961Z Collecting h11>=0.8 (from uvicorn==0.38.0->-r apps/memory_api/requirements-base.txt (line 7))
+2025-11-27T16:29:50.0270552Z   Using cached h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+2025-11-27T16:29:50.0778447Z Collecting python-dotenv>=0.21.0 (from pydantic-settings==2.12.0->-r apps/memory_api/requirements-base.txt (line 9))
+2025-11-27T16:29:50.0792085Z   Using cached python_dotenv-1.2.1-py3-none-any.whl.metadata (25 kB)
+2025-11-27T16:29:50.5836076Z Collecting grpcio>=1.41.0 (from qdrant-client==1.10.1->-r apps/memory_api/requirements-base.txt (line 13))
+2025-11-27T16:29:50.5851226Z   Using cached grpcio-1.76.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (3.7 kB)
+2025-11-27T16:29:51.1432776Z Collecting grpcio-tools>=1.41.0 (from qdrant-client==1.10.1->-r apps/memory_api/requirements-base.txt (line 13))
+2025-11-27T16:29:51.1447644Z   Using cached grpcio_tools-1.76.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (5.3 kB)
+2025-11-27T16:29:51.3162556Z Collecting numpy>=1.21 (from qdrant-client==1.10.1->-r apps/memory_api/requirements-base.txt (line 13))
+2025-11-27T16:29:51.3177372Z   Using cached numpy-2.3.5-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (62 kB)
+2025-11-27T16:29:51.3399840Z Collecting portalocker<3.0.0,>=2.7.0 (from qdrant-client==1.10.1->-r apps/memory_api/requirements-base.txt (line 13))
+2025-11-27T16:29:51.3412623Z   Using cached portalocker-2.10.1-py3-none-any.whl.metadata (8.5 kB)
+2025-11-27T16:29:51.4014550Z Collecting urllib3<3,>=1.26.14 (from qdrant-client==1.10.1->-r apps/memory_api/requirements-base.txt (line 13))
+2025-11-27T16:29:51.4027749Z   Using cached urllib3-2.5.0-py3-none-any.whl.metadata (6.5 kB)
+2025-11-27T16:29:51.6515789Z Collecting SQLAlchemy>=1.4.0 (from alembic==1.17.2->-r apps/memory_api/requirements-base.txt (line 15))
+2025-11-27T16:29:51.6531463Z   Using cached sqlalchemy-2.0.44-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (9.5 kB)
+2025-11-27T16:29:51.6737375Z Collecting Mako (from alembic==1.17.2->-r apps/memory_api/requirements-base.txt (line 15))
+2025-11-27T16:29:51.6751474Z   Using cached mako-1.3.10-py3-none-any.whl.metadata (2.9 kB)
+2025-11-27T16:29:51.6925964Z Collecting anyio (from httpx==0.27.2->-r apps/memory_api/requirements-base.txt (line 18))
+2025-11-27T16:29:51.6939429Z   Using cached anyio-4.11.0-py3-none-any.whl.metadata (4.1 kB)
+2025-11-27T16:29:51.7112227Z Collecting certifi (from httpx==0.27.2->-r apps/memory_api/requirements-base.txt (line 18))
+2025-11-27T16:29:51.7125281Z   Using cached certifi-2025.11.12-py3-none-any.whl.metadata (2.5 kB)
+2025-11-27T16:29:51.7285677Z Collecting httpcore==1.* (from httpx==0.27.2->-r apps/memory_api/requirements-base.txt (line 18))
+2025-11-27T16:29:51.7298587Z   Using cached httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+2025-11-27T16:29:51.7420033Z Collecting idna (from httpx==0.27.2->-r apps/memory_api/requirements-base.txt (line 18))
+2025-11-27T16:29:51.7432803Z   Using cached idna-3.11-py3-none-any.whl.metadata (8.4 kB)
+2025-11-27T16:29:51.7516267Z Collecting sniffio (from httpx==0.27.2->-r apps/memory_api/requirements-base.txt (line 18))
+2025-11-27T16:29:51.7528754Z   Using cached sniffio-1.3.1-py3-none-any.whl.metadata (3.9 kB)
+2025-11-27T16:29:51.7692344Z Collecting billiard<5.0,>=4.2.1 (from celery==5.5.3->-r apps/memory_api/requirements-base.txt (line 21))
+2025-11-27T16:29:51.7704781Z   Using cached billiard-4.2.3-py3-none-any.whl.metadata (4.8 kB)
+2025-11-27T16:29:51.8755802Z Collecting kombu<5.6,>=5.5.2 (from celery==5.5.3->-r apps/memory_api/requirements-base.txt (line 21))
+2025-11-27T16:29:51.8771478Z   Using cached kombu-5.5.4-py3-none-any.whl.metadata (3.5 kB)
+2025-11-27T16:29:51.8910144Z Collecting vine<6.0,>=5.1.0 (from celery==5.5.3->-r apps/memory_api/requirements-base.txt (line 21))
+2025-11-27T16:29:51.8923854Z   Using cached vine-5.1.0-py3-none-any.whl.metadata (2.7 kB)
+2025-11-27T16:29:51.9050221Z Collecting click-didyoumean>=0.3.0 (from celery==5.5.3->-r apps/memory_api/requirements-base.txt (line 21))
+2025-11-27T16:29:51.9063948Z   Using cached click_didyoumean-0.3.1-py3-none-any.whl.metadata (3.9 kB)
+2025-11-27T16:29:51.9144635Z Collecting click-repl>=0.2.0 (from celery==5.5.3->-r apps/memory_api/requirements-base.txt (line 21))
+2025-11-27T16:29:51.9158318Z   Using cached click_repl-0.3.0-py3-none-any.whl.metadata (3.6 kB)
+2025-11-27T16:29:51.9250041Z Collecting click-plugins>=1.1.1 (from celery==5.5.3->-r apps/memory_api/requirements-base.txt (line 21))
+2025-11-27T16:29:51.9263587Z   Using cached click_plugins-1.1.1.2-py2.py3-none-any.whl.metadata (6.5 kB)
+2025-11-27T16:29:51.9383764Z Collecting python-dateutil>=2.8.2 (from celery==5.5.3->-r apps/memory_api/requirements-base.txt (line 21))
+2025-11-27T16:29:51.9397156Z   Using cached python_dateutil-2.9.0.post0-py2.py3-none-any.whl.metadata (8.4 kB)
+2025-11-27T16:29:51.9590961Z Collecting opentelemetry-api==1.27.0 (from opentelemetry-sdk==1.27.0->-r apps/memory_api/requirements-base.txt (line 25))
+2025-11-27T16:29:51.9604194Z   Using cached opentelemetry_api-1.27.0-py3-none-any.whl.metadata (1.4 kB)
+2025-11-27T16:29:51.9756231Z Collecting opentelemetry-semantic-conventions==0.48b0 (from opentelemetry-sdk==1.27.0->-r apps/memory_api/requirements-base.txt (line 25))
+2025-11-27T16:29:51.9769884Z   Using cached opentelemetry_semantic_conventions-0.48b0-py3-none-any.whl.metadata (2.4 kB)
+2025-11-27T16:29:51.9979839Z Collecting opentelemetry-instrumentation-asgi==0.48b0 (from opentelemetry-instrumentation-fastapi==0.48b0->-r apps/memory_api/requirements-base.txt (line 26))
+2025-11-27T16:29:51.9993472Z   Using cached opentelemetry_instrumentation_asgi-0.48b0-py3-none-any.whl.metadata (2.0 kB)
+2025-11-27T16:29:52.0167035Z Collecting opentelemetry-instrumentation==0.48b0 (from opentelemetry-instrumentation-fastapi==0.48b0->-r apps/memory_api/requirements-base.txt (line 26))
+2025-11-27T16:29:52.0185594Z   Using cached opentelemetry_instrumentation-0.48b0-py3-none-any.whl.metadata (6.1 kB)
+2025-11-27T16:29:52.0377128Z Collecting opentelemetry-util-http==0.48b0 (from opentelemetry-instrumentation-fastapi==0.48b0->-r apps/memory_api/requirements-base.txt (line 26))
+2025-11-27T16:29:52.0395195Z   Using cached opentelemetry_util_http-0.48b0-py3-none-any.whl.metadata (2.5 kB)
+2025-11-27T16:29:52.0566176Z Collecting deprecated>=1.2.6 (from opentelemetry-api==1.27.0->opentelemetry-sdk==1.27.0->-r apps/memory_api/requirements-base.txt (line 25))
+2025-11-27T16:29:52.0582677Z   Using cached deprecated-1.3.1-py2.py3-none-any.whl.metadata (5.9 kB)
+2025-11-27T16:29:52.0881474Z Collecting importlib-metadata<=8.4.0,>=6.0 (from opentelemetry-api==1.27.0->opentelemetry-sdk==1.27.0->-r apps/memory_api/requirements-base.txt (line 25))
+2025-11-27T16:29:52.0896887Z   Using cached importlib_metadata-8.4.0-py3-none-any.whl.metadata (4.7 kB)
+2025-11-27T16:29:52.5925041Z Collecting aiohttp>=3.10 (from litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:52.5940528Z   Using cached aiohttp-3.13.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (8.1 kB)
+2025-11-27T16:29:52.6230350Z Collecting fastuuid>=0.13.0 (from litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:52.6245948Z   Using cached fastuuid-0.14.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (1.1 kB)
+2025-11-27T16:29:52.6501703Z Collecting jinja2<4.0.0,>=3.1.2 (from litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:52.6515147Z   Using cached jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+2025-11-27T16:29:52.6740126Z Collecting jsonschema<5.0.0,>=4.22.0 (from litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:52.6753816Z   Using cached jsonschema-4.25.1-py3-none-any.whl.metadata (7.6 kB)
+2025-11-27T16:29:52.7561247Z Collecting tiktoken>=0.7.0 (from litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:52.7575611Z   Using cached tiktoken-0.12.0-cp311-cp311-manylinux_2_28_x86_64.whl.metadata (6.7 kB)
+2025-11-27T16:29:52.9971661Z Collecting tokenizers (from litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:52.9987742Z   Using cached tokenizers-0.22.1-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (6.8 kB)
+2025-11-27T16:29:53.0156932Z Collecting distro<2,>=1.7.0 (from openai==2.8.1->-r apps/memory_api/requirements-base.txt (line 33))
+2025-11-27T16:29:53.0170082Z   Using cached distro-1.9.0-py3-none-any.whl.metadata (6.8 kB)
+2025-11-27T16:29:53.0872585Z Collecting jiter<1,>=0.10.0 (from openai==2.8.1->-r apps/memory_api/requirements-base.txt (line 33))
+2025-11-27T16:29:53.0888112Z   Using cached jiter-0.12.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.2 kB)
+2025-11-27T16:29:53.1484895Z Collecting tqdm>4 (from openai==2.8.1->-r apps/memory_api/requirements-base.txt (line 33))
+2025-11-27T16:29:53.1498847Z   Using cached tqdm-4.67.1-py3-none-any.whl.metadata (57 kB)
+2025-11-27T16:29:53.1706183Z Collecting docstring-parser<1,>=0.15 (from anthropic==0.74.1->-r apps/memory_api/requirements-base.txt (line 34))
+2025-11-27T16:29:53.1719864Z   Using cached docstring_parser-0.17.0-py3-none-any.whl.metadata (3.5 kB)
+2025-11-27T16:29:53.1926602Z Collecting google-ai-generativelanguage==0.6.15 (from google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-27T16:29:53.1942213Z   Using cached google_ai_generativelanguage-0.6.15-py3-none-any.whl.metadata (5.7 kB)
+2025-11-27T16:29:53.2288659Z Collecting google-api-core (from google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-27T16:29:53.2304632Z   Using cached google_api_core-2.28.1-py3-none-any.whl.metadata (3.3 kB)
+2025-11-27T16:29:53.2843976Z Collecting google-api-python-client (from google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-27T16:29:53.2860045Z   Using cached google_api_python_client-2.187.0-py3-none-any.whl.metadata (7.0 kB)
+2025-11-27T16:29:53.3205259Z Collecting google-auth>=2.15.0 (from google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-27T16:29:53.3219833Z   Using cached google_auth-2.43.0-py2.py3-none-any.whl.metadata (6.6 kB)
+2025-11-27T16:29:53.4757733Z Collecting protobuf (from google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-27T16:29:53.4773376Z   Using cached protobuf-6.33.1-cp39-abi3-manylinux2014_x86_64.whl.metadata (593 bytes)
+2025-11-27T16:29:53.5026624Z Collecting ecdsa!=0.15 (from python-jose==3.5.0->python-jose[cryptography]==3.5.0->-r apps/memory_api/requirements-base.txt (line 39))
+2025-11-27T16:29:53.5040304Z   Using cached ecdsa-0.19.1-py2.py3-none-any.whl.metadata (29 kB)
+2025-11-27T16:29:53.5206857Z Collecting rsa!=4.1.1,!=4.4,<5.0,>=4.0 (from python-jose==3.5.0->python-jose[cryptography]==3.5.0->-r apps/memory_api/requirements-base.txt (line 39))
+2025-11-27T16:29:53.5219641Z   Using cached rsa-4.9.1-py3-none-any.whl.metadata (5.6 kB)
+2025-11-27T16:29:53.5413497Z Collecting pyasn1>=0.5.0 (from python-jose==3.5.0->python-jose[cryptography]==3.5.0->-r apps/memory_api/requirements-base.txt (line 39))
+2025-11-27T16:29:53.5425851Z   Using cached pyasn1-0.6.1-py3-none-any.whl.metadata (8.4 kB)
+2025-11-27T16:29:53.6957607Z Collecting proto-plus<2.0.0dev,>=1.22.3 (from google-ai-generativelanguage==0.6.15->google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-27T16:29:53.6970949Z   Using cached proto_plus-1.26.1-py3-none-any.whl.metadata (2.2 kB)
+2025-11-27T16:29:53.7742070Z Collecting protobuf (from google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-27T16:29:53.7756018Z   Using cached protobuf-5.29.5-cp38-abi3-manylinux2014_x86_64.whl.metadata (592 bytes)
+2025-11-27T16:29:53.7817727Z Requirement already satisfied: setuptools>=16.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from opentelemetry-instrumentation==0.48b0->opentelemetry-instrumentation-fastapi==0.48b0->-r apps/memory_api/requirements-base.txt (line 26)) (79.0.1)
+2025-11-27T16:29:53.9101447Z Collecting wrapt<2.0.0,>=1.0.0 (from opentelemetry-instrumentation==0.48b0->opentelemetry-instrumentation-fastapi==0.48b0->-r apps/memory_api/requirements-base.txt (line 26))
+2025-11-27T16:29:53.9116587Z   Using cached wrapt-1.17.3-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (6.4 kB)
+2025-11-27T16:29:53.9337971Z Collecting asgiref~=3.0 (from opentelemetry-instrumentation-asgi==0.48b0->opentelemetry-instrumentation-fastapi==0.48b0->-r apps/memory_api/requirements-base.txt (line 26))
+2025-11-27T16:29:53.9351402Z   Using cached asgiref-3.11.0-py3-none-any.whl.metadata (9.3 kB)
+2025-11-27T16:29:54.1158340Z Collecting cryptography>=3.4.0 (from python-jose[cryptography]==3.5.0->-r apps/memory_api/requirements-base.txt (line 39))
+2025-11-27T16:29:54.1173861Z   Using cached cryptography-46.0.3-cp311-abi3-manylinux_2_34_x86_64.whl.metadata (5.7 kB)
+2025-11-27T16:29:54.1523736Z Collecting googleapis-common-protos<2.0.0,>=1.56.2 (from google-api-core->google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-27T16:29:54.1537213Z   Using cached googleapis_common_protos-1.72.0-py3-none-any.whl.metadata (9.4 kB)
+2025-11-27T16:29:54.3039384Z Collecting requests<3.0.0,>=2.18.0 (from google-api-core->google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-27T16:29:54.3054019Z   Using cached requests-2.32.5-py3-none-any.whl.metadata (4.9 kB)
+2025-11-27T16:29:54.3716070Z Collecting grpcio-status<2.0.0,>=1.33.2 (from google-api-core[grpc]!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0dev,>=1.34.1->google-ai-generativelanguage==0.6.15->google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-27T16:29:54.3729596Z   Using cached grpcio_status-1.76.0-py3-none-any.whl.metadata (1.1 kB)
+2025-11-27T16:29:54.4047084Z Collecting cachetools<7.0,>=2.0.0 (from google-auth>=2.15.0->google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-27T16:29:54.4059987Z   Using cached cachetools-6.2.2-py3-none-any.whl.metadata (5.6 kB)
+2025-11-27T16:29:54.4217567Z Collecting pyasn1-modules>=0.2.1 (from google-auth>=2.15.0->google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-27T16:29:54.4230694Z   Using cached pyasn1_modules-0.4.2-py3-none-any.whl.metadata (3.5 kB)
+2025-11-27T16:29:54.5099403Z INFO: pip is looking at multiple versions of grpcio-status to determine which version is compatible with other requirements. This could take a while.
+2025-11-27T16:29:54.5106202Z Collecting grpcio-status<2.0.0,>=1.33.2 (from google-api-core[grpc]!=2.0.*,!=2.1.*,!=2.10.*,!=2.2.*,!=2.3.*,!=2.4.*,!=2.5.*,!=2.6.*,!=2.7.*,!=2.8.*,!=2.9.*,<3.0.0dev,>=1.34.1->google-ai-generativelanguage==0.6.15->google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-27T16:29:54.5121974Z   Using cached grpcio_status-1.75.1-py3-none-any.whl.metadata (1.1 kB)
+2025-11-27T16:29:54.5169515Z   Using cached grpcio_status-1.75.0-py3-none-any.whl.metadata (1.1 kB)
+2025-11-27T16:29:54.5213517Z   Using cached grpcio_status-1.74.0-py3-none-any.whl.metadata (1.1 kB)
+2025-11-27T16:29:54.5256649Z   Using cached grpcio_status-1.73.1-py3-none-any.whl.metadata (1.1 kB)
+2025-11-27T16:29:54.6228536Z   Using cached grpcio_status-1.73.0-py3-none-any.whl.metadata (1.1 kB)
+2025-11-27T16:29:54.6275083Z   Using cached grpcio_status-1.72.2-py3-none-any.whl.metadata (1.1 kB)
+2025-11-27T16:29:54.6318739Z   Using cached grpcio_status-1.72.1-py3-none-any.whl.metadata (1.1 kB)
+2025-11-27T16:29:54.6348856Z INFO: pip is still looking at multiple versions of grpcio-status to determine which version is compatible with other requirements. This could take a while.
+2025-11-27T16:29:54.6365300Z   Using cached grpcio_status-1.71.2-py3-none-any.whl.metadata (1.1 kB)
+2025-11-27T16:29:54.7623196Z Collecting zipp>=0.5 (from importlib-metadata<=8.4.0,>=6.0->opentelemetry-api==1.27.0->opentelemetry-sdk==1.27.0->-r apps/memory_api/requirements-base.txt (line 25))
+2025-11-27T16:29:54.7636403Z   Using cached zipp-3.23.0-py3-none-any.whl.metadata (3.6 kB)
+2025-11-27T16:29:54.9332540Z Collecting MarkupSafe>=2.0 (from jinja2<4.0.0,>=3.1.2->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:54.9348523Z   Using cached markupsafe-3.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+2025-11-27T16:29:54.9517895Z Collecting attrs>=22.2.0 (from jsonschema<5.0.0,>=4.22.0->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:54.9531509Z   Using cached attrs-25.4.0-py3-none-any.whl.metadata (10 kB)
+2025-11-27T16:29:54.9643628Z Collecting jsonschema-specifications>=2023.03.6 (from jsonschema<5.0.0,>=4.22.0->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:54.9657016Z   Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl.metadata (2.9 kB)
+2025-11-27T16:29:54.9875575Z Collecting referencing>=0.28.4 (from jsonschema<5.0.0,>=4.22.0->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:54.9888641Z   Using cached referencing-0.37.0-py3-none-any.whl.metadata (2.8 kB)
+2025-11-27T16:29:55.2363790Z Collecting rpds-py>=0.7.1 (from jsonschema<5.0.0,>=4.22.0->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:55.2379555Z   Using cached rpds_py-0.29.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.1 kB)
+2025-11-27T16:29:55.2571340Z Collecting amqp<6.0.0,>=5.1.1 (from kombu<5.6,>=5.5.2->celery==5.5.3->-r apps/memory_api/requirements-base.txt (line 21))
+2025-11-27T16:29:55.2584624Z   Using cached amqp-5.3.1-py3-none-any.whl.metadata (8.9 kB)
+2025-11-27T16:29:55.2722457Z Collecting tzdata>=2025.2 (from kombu<5.6,>=5.5.2->celery==5.5.3->-r apps/memory_api/requirements-base.txt (line 21))
+2025-11-27T16:29:55.2737716Z   Using cached tzdata-2025.2-py2.py3-none-any.whl.metadata (1.4 kB)
+2025-11-27T16:29:55.2753898Z Requirement already satisfied: packaging in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from kombu<5.6,>=5.5.2->celery==5.5.3->-r apps/memory_api/requirements-base.txt (line 21)) (25.0)
+2025-11-27T16:29:55.4497960Z Collecting charset_normalizer<4,>=2 (from requests<3.0.0,>=2.18.0->google-api-core->google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-27T16:29:55.4513196Z   Using cached charset_normalizer-3.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (37 kB)
+2025-11-27T16:29:55.5053762Z Collecting aiohappyeyeballs>=2.5.0 (from aiohttp>=3.10->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:55.5066990Z   Using cached aiohappyeyeballs-2.6.1-py3-none-any.whl.metadata (5.9 kB)
+2025-11-27T16:29:55.5150138Z Collecting aiosignal>=1.4.0 (from aiohttp>=3.10->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:55.5162859Z   Using cached aiosignal-1.4.0-py3-none-any.whl.metadata (3.7 kB)
+2025-11-27T16:29:55.5827568Z Collecting frozenlist>=1.1.1 (from aiohttp>=3.10->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:55.5842316Z   Using cached frozenlist-1.8.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl.metadata (20 kB)
+2025-11-27T16:29:55.7984794Z Collecting multidict<7.0,>=4.5 (from aiohttp>=3.10->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:55.8000416Z   Using cached multidict-6.7.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (5.3 kB)
+2025-11-27T16:29:55.8508761Z Collecting propcache>=0.2.0 (from aiohttp>=3.10->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:55.8524563Z   Using cached propcache-0.4.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (13 kB)
+2025-11-27T16:29:56.0944198Z Collecting yarl<2.0,>=1.17.0 (from aiohttp>=3.10->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:56.0959689Z   Using cached yarl-1.22.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (75 kB)
+2025-11-27T16:29:56.1749814Z Collecting prompt-toolkit>=3.0.36 (from click-repl>=0.2.0->celery==5.5.3->-r apps/memory_api/requirements-base.txt (line 21))
+2025-11-27T16:29:56.1763549Z   Using cached prompt_toolkit-3.0.52-py3-none-any.whl.metadata (6.4 kB)
+2025-11-27T16:29:56.4165325Z Collecting cffi>=2.0.0 (from cryptography>=3.4.0->python-jose[cryptography]==3.5.0->-r apps/memory_api/requirements-base.txt (line 39))
+2025-11-27T16:29:56.4180830Z   Using cached cffi-2.0.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.6 kB)
+2025-11-27T16:29:56.4304571Z Collecting pycparser (from cffi>=2.0.0->cryptography>=3.4.0->python-jose[cryptography]==3.5.0->-r apps/memory_api/requirements-base.txt (line 39))
+2025-11-27T16:29:56.4317731Z   Using cached pycparser-2.23-py3-none-any.whl.metadata (993 bytes)
+2025-11-27T16:29:56.4535220Z Collecting six>=1.9.0 (from ecdsa!=0.15->python-jose==3.5.0->python-jose[cryptography]==3.5.0->-r apps/memory_api/requirements-base.txt (line 39))
+2025-11-27T16:29:56.4548265Z   Using cached six-1.17.0-py2.py3-none-any.whl.metadata (1.7 kB)
+2025-11-27T16:29:56.5356728Z INFO: pip is looking at multiple versions of grpcio-tools to determine which version is compatible with other requirements. This could take a while.
+2025-11-27T16:29:56.5362260Z Collecting grpcio-tools>=1.41.0 (from qdrant-client==1.10.1->-r apps/memory_api/requirements-base.txt (line 13))
+2025-11-27T16:29:56.5377361Z   Using cached grpcio_tools-1.75.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (5.3 kB)
+2025-11-27T16:29:56.5432521Z   Using cached grpcio_tools-1.75.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (5.3 kB)
+2025-11-27T16:29:56.5492159Z   Using cached grpcio_tools-1.74.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.3 kB)
+2025-11-27T16:29:56.5546608Z   Using cached grpcio_tools-1.73.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.3 kB)
+2025-11-27T16:29:56.6396375Z   Using cached grpcio_tools-1.73.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.3 kB)
+2025-11-27T16:29:56.6449734Z   Using cached grpcio_tools-1.72.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.3 kB)
+2025-11-27T16:29:56.6504242Z   Using cached grpcio_tools-1.72.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.3 kB)
+2025-11-27T16:29:56.6544778Z INFO: pip is still looking at multiple versions of grpcio-tools to determine which version is compatible with other requirements. This could take a while.
+2025-11-27T16:29:56.6560991Z   Using cached grpcio_tools-1.71.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.3 kB)
+2025-11-27T16:29:56.6787960Z Collecting h2<5,>=3 (from httpx[http2]>=0.20.0->qdrant-client==1.10.1->-r apps/memory_api/requirements-base.txt (line 13))
+2025-11-27T16:29:56.6801142Z   Using cached h2-4.3.0-py3-none-any.whl.metadata (5.1 kB)
+2025-11-27T16:29:56.6940500Z Collecting hyperframe<7,>=6.1 (from h2<5,>=3->httpx[http2]>=0.20.0->qdrant-client==1.10.1->-r apps/memory_api/requirements-base.txt (line 13))
+2025-11-27T16:29:56.6955608Z   Using cached hyperframe-6.1.0-py3-none-any.whl.metadata (4.3 kB)
+2025-11-27T16:29:56.7052353Z Collecting hpack<5,>=4.1 (from h2<5,>=3->httpx[http2]>=0.20.0->qdrant-client==1.10.1->-r apps/memory_api/requirements-base.txt (line 13))
+2025-11-27T16:29:56.7066693Z   Using cached hpack-4.1.0-py3-none-any.whl.metadata (4.6 kB)
+2025-11-27T16:29:56.7401879Z Collecting wcwidth (from prompt-toolkit>=3.0.36->click-repl>=0.2.0->celery==5.5.3->-r apps/memory_api/requirements-base.txt (line 21))
+2025-11-27T16:29:56.7415302Z   Using cached wcwidth-0.2.14-py2.py3-none-any.whl.metadata (15 kB)
+2025-11-27T16:29:56.9036469Z Collecting greenlet>=1 (from SQLAlchemy>=1.4.0->alembic==1.17.2->-r apps/memory_api/requirements-base.txt (line 15))
+2025-11-27T16:29:56.9051882Z   Using cached greenlet-3.2.4-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (4.1 kB)
+2025-11-27T16:29:57.2348375Z Collecting regex>=2022.1.18 (from tiktoken>=0.7.0->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:57.2364800Z   Using cached regex-2025.11.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (40 kB)
+2025-11-27T16:29:57.2774657Z Collecting httplib2<1.0.0,>=0.19.0 (from google-api-python-client->google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-27T16:29:57.2787676Z   Using cached httplib2-0.31.0-py3-none-any.whl.metadata (2.2 kB)
+2025-11-27T16:29:57.3088008Z Collecting google-auth-httplib2<1.0.0,>=0.2.0 (from google-api-python-client->google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-27T16:29:57.3101398Z   Using cached google_auth_httplib2-0.2.1-py3-none-any.whl.metadata (3.0 kB)
+2025-11-27T16:29:57.3190431Z Collecting uritemplate<5,>=3.0.1 (from google-api-python-client->google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-27T16:29:57.3203610Z   Using cached uritemplate-4.2.0-py3-none-any.whl.metadata (2.6 kB)
+2025-11-27T16:29:57.3507594Z Collecting pyparsing<4,>=3.0.4 (from httplib2<1.0.0,>=0.19.0->google-api-python-client->google-generativeai==0.8.5->-r apps/memory_api/requirements-base.txt (line 35))
+2025-11-27T16:29:57.3521197Z   Using cached pyparsing-3.2.5-py3-none-any.whl.metadata (5.0 kB)
+2025-11-27T16:29:57.4135774Z Collecting huggingface-hub<2.0,>=0.16.4 (from tokenizers->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:57.4149364Z   Using cached huggingface_hub-1.1.5-py3-none-any.whl.metadata (13 kB)
+2025-11-27T16:29:57.4481948Z Collecting filelock (from huggingface-hub<2.0,>=0.16.4->tokenizers->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:57.4494932Z   Using cached filelock-3.20.0-py3-none-any.whl.metadata (2.1 kB)
+2025-11-27T16:29:57.4678910Z Collecting fsspec>=2023.5.0 (from huggingface-hub<2.0,>=0.16.4->tokenizers->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:57.4692390Z   Using cached fsspec-2025.10.0-py3-none-any.whl.metadata (10 kB)
+2025-11-27T16:29:57.5257392Z Collecting hf-xet<2.0.0,>=1.2.0 (from huggingface-hub<2.0,>=0.16.4->tokenizers->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:57.5272321Z   Using cached hf_xet-1.2.0-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.9 kB)
+2025-11-27T16:29:57.5613344Z Collecting pyyaml>=5.1 (from huggingface-hub<2.0,>=0.16.4->tokenizers->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:57.5627318Z   Using cached pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+2025-11-27T16:29:57.5741067Z Collecting shellingham (from huggingface-hub<2.0,>=0.16.4->tokenizers->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:57.5754379Z   Using cached shellingham-1.5.4-py2.py3-none-any.whl.metadata (3.5 kB)
+2025-11-27T16:29:57.6003677Z Collecting typer-slim (from huggingface-hub<2.0,>=0.16.4->tokenizers->litellm==1.80.0->-r apps/memory_api/requirements-base.txt (line 32))
+2025-11-27T16:29:57.6016601Z   Using cached typer_slim-0.20.0-py3-none-any.whl.metadata (16 kB)
+2025-11-27T16:29:57.6412550Z Using cached fastapi-0.115.0-py3-none-any.whl (94 kB)
+2025-11-27T16:29:57.6425827Z Using cached pydantic-2.12.4-py3-none-any.whl (463 kB)
+2025-11-27T16:29:57.6442054Z Using cached uvicorn-0.38.0-py3-none-any.whl (68 kB)
+2025-11-27T16:29:57.6455566Z Using cached pydantic_settings-2.12.0-py3-none-any.whl (51 kB)
+2025-11-27T16:29:57.6469465Z Using cached asyncpg-0.30.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.1 MB)
+2025-11-27T16:29:57.6507069Z Using cached qdrant_client-1.10.1-py3-none-any.whl (254 kB)
+2025-11-27T16:29:57.6521807Z Using cached pgvector-0.4.1-py3-none-any.whl (27 kB)
+2025-11-27T16:29:57.6534852Z Using cached alembic-1.17.2-py3-none-any.whl (248 kB)
+2025-11-27T16:29:57.6549474Z Using cached httpx-0.27.2-py3-none-any.whl (76 kB)
+2025-11-27T16:29:57.6563043Z Using cached celery-5.5.3-py3-none-any.whl (438 kB)
+2025-11-27T16:29:57.6579483Z Using cached redis-7.1.0-py3-none-any.whl (354 kB)
+2025-11-27T16:29:57.6595195Z Using cached opentelemetry_sdk-1.27.0-py3-none-any.whl (110 kB)
+2025-11-27T16:29:57.6609002Z Using cached opentelemetry_instrumentation_fastapi-0.48b0-py3-none-any.whl (11 kB)
+2025-11-27T16:29:57.6622368Z Using cached opentelemetry_api-1.27.0-py3-none-any.whl (63 kB)
+2025-11-27T16:29:57.6635807Z Using cached prometheus_fastapi_instrumentator-7.1.0-py3-none-any.whl (19 kB)
+2025-11-27T16:29:57.6649402Z Using cached prometheus_client-0.23.1-py3-none-any.whl (61 kB)
+2025-11-27T16:29:57.6662797Z Using cached structlog-25.5.0-py3-none-any.whl (72 kB)
+2025-11-27T16:29:57.6675997Z Using cached litellm-1.80.0-py3-none-any.whl (10.5 MB)
+2025-11-27T16:29:57.6763782Z Using cached openai-2.8.1-py3-none-any.whl (1.0 MB)
+2025-11-27T16:29:57.6784467Z Using cached anthropic-0.74.1-py3-none-any.whl (371 kB)
+2025-11-27T16:29:57.6800033Z Using cached google_generativeai-0.8.5-py3-none-any.whl (155 kB)
+2025-11-27T16:29:57.6813962Z Using cached tenacity-9.1.2-py3-none-any.whl (28 kB)
+2025-11-27T16:29:57.6826930Z Using cached python_jose-3.5.0-py2.py3-none-any.whl (34 kB)
+2025-11-27T16:29:57.6840482Z Using cached zstandard-0.25.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (5.6 MB)
+2025-11-27T16:29:57.6892404Z Using cached google_ai_generativelanguage-0.6.15-py3-none-any.whl (1.3 MB)
+2025-11-27T16:29:57.6915142Z Using cached opentelemetry_instrumentation-0.48b0-py3-none-any.whl (29 kB)
+2025-11-27T16:29:57.6928309Z Using cached opentelemetry_instrumentation_asgi-0.48b0-py3-none-any.whl (15 kB)
+2025-11-27T16:29:57.6941828Z Using cached opentelemetry_semantic_conventions-0.48b0-py3-none-any.whl (149 kB)
+2025-11-27T16:29:57.6955768Z Using cached opentelemetry_util_http-0.48b0-py3-none-any.whl (6.9 kB)
+2025-11-27T16:29:57.6969379Z Using cached pydantic_core-2.41.5-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+2025-11-27T16:29:57.6997165Z Using cached anyio-4.11.0-py3-none-any.whl (109 kB)
+2025-11-27T16:29:57.7010935Z Using cached asgiref-3.11.0-py3-none-any.whl (24 kB)
+2025-11-27T16:29:57.7023970Z Using cached billiard-4.2.3-py3-none-any.whl (87 kB)
+2025-11-27T16:29:57.7037649Z Using cached click-8.3.1-py3-none-any.whl (108 kB)
+2025-11-27T16:29:57.7051512Z Using cached distro-1.9.0-py3-none-any.whl (20 kB)
+2025-11-27T16:29:57.7064594Z Using cached docstring_parser-0.17.0-py3-none-any.whl (36 kB)
+2025-11-27T16:29:57.7077991Z Using cached google_api_core-2.28.1-py3-none-any.whl (173 kB)
+2025-11-27T16:29:57.7092444Z Using cached google_auth-2.43.0-py2.py3-none-any.whl (223 kB)
+2025-11-27T16:29:57.7106816Z Using cached cachetools-6.2.2-py3-none-any.whl (11 kB)
+2025-11-27T16:29:57.7120031Z Using cached googleapis_common_protos-1.72.0-py3-none-any.whl (297 kB)
+2025-11-27T16:29:57.7135479Z Using cached grpcio-1.76.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (6.6 MB)
+2025-11-27T16:29:57.7194843Z Using cached grpcio_status-1.71.2-py3-none-any.whl (14 kB)
+2025-11-27T16:29:57.7208185Z Using cached httpcore-1.0.9-py3-none-any.whl (78 kB)
+2025-11-27T16:29:57.7222013Z Using cached importlib_metadata-8.4.0-py3-none-any.whl (26 kB)
+2025-11-27T16:29:57.7235169Z Using cached jinja2-3.1.6-py3-none-any.whl (134 kB)
+2025-11-27T16:29:57.7249414Z Using cached jiter-0.12.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (364 kB)
+2025-11-27T16:29:57.7264924Z Using cached jsonschema-4.25.1-py3-none-any.whl (90 kB)
+2025-11-27T16:29:57.7280229Z Using cached kombu-5.5.4-py3-none-any.whl (210 kB)
+2025-11-27T16:29:57.7294440Z Using cached vine-5.1.0-py3-none-any.whl (9.6 kB)
+2025-11-27T16:29:57.7307662Z Using cached amqp-5.3.1-py3-none-any.whl (50 kB)
+2025-11-27T16:29:57.7320867Z Using cached portalocker-2.10.1-py3-none-any.whl (18 kB)
+2025-11-27T16:29:57.7333916Z Using cached proto_plus-1.26.1-py3-none-any.whl (50 kB)
+2025-11-27T16:29:57.7347248Z Using cached protobuf-5.29.5-cp38-abi3-manylinux2014_x86_64.whl (319 kB)
+2025-11-27T16:29:57.7362534Z Using cached requests-2.32.5-py3-none-any.whl (64 kB)
+2025-11-27T16:29:57.7376454Z Using cached charset_normalizer-3.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (151 kB)
+2025-11-27T16:29:57.7390247Z Using cached idna-3.11-py3-none-any.whl (71 kB)
+2025-11-27T16:29:57.7403554Z Using cached rsa-4.9.1-py3-none-any.whl (34 kB)
+2025-11-27T16:29:57.7416795Z Using cached starlette-0.38.6-py3-none-any.whl (71 kB)
+2025-11-27T16:29:57.7430888Z Using cached urllib3-2.5.0-py3-none-any.whl (129 kB)
+2025-11-27T16:29:57.7445123Z Using cached wrapt-1.17.3-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (82 kB)
+2025-11-27T16:29:57.7459604Z Using cached aiohttp-3.13.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (1.7 MB)
+2025-11-27T16:29:57.7486028Z Using cached multidict-6.7.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (246 kB)
+2025-11-27T16:29:57.7501492Z Using cached yarl-1.22.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (365 kB)
+2025-11-27T16:29:57.7516931Z Using cached aiohappyeyeballs-2.6.1-py3-none-any.whl (15 kB)
+2025-11-27T16:29:57.7529975Z Using cached aiosignal-1.4.0-py3-none-any.whl (7.5 kB)
+2025-11-27T16:29:57.7543231Z Using cached annotated_types-0.7.0-py3-none-any.whl (13 kB)
+2025-11-27T16:29:57.7556306Z Using cached attrs-25.4.0-py3-none-any.whl (67 kB)
+2025-11-27T16:29:57.7569775Z Using cached certifi-2025.11.12-py3-none-any.whl (159 kB)
+2025-11-27T16:29:57.7584275Z Using cached click_didyoumean-0.3.1-py3-none-any.whl (3.6 kB)
+2025-11-27T16:29:57.7597387Z Using cached click_plugins-1.1.1.2-py2.py3-none-any.whl (11 kB)
+2025-11-27T16:29:57.7610220Z Using cached click_repl-0.3.0-py3-none-any.whl (10 kB)
+2025-11-27T16:29:57.7623616Z Using cached cryptography-46.0.3-cp311-abi3-manylinux_2_34_x86_64.whl (4.5 MB)
+2025-11-27T16:29:57.7674839Z Using cached cffi-2.0.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (215 kB)
+2025-11-27T16:29:57.7690287Z Using cached deprecated-1.3.1-py2.py3-none-any.whl (11 kB)
+2025-11-27T16:29:57.7704567Z Using cached ecdsa-0.19.1-py2.py3-none-any.whl (150 kB)
+2025-11-27T16:29:57.7720144Z Using cached fastuuid-0.14.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (279 kB)
+2025-11-27T16:29:57.7736225Z Using cached frozenlist-1.8.0-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl (231 kB)
+2025-11-27T16:29:57.7751684Z Using cached grpcio_tools-1.71.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.5 MB)
+2025-11-27T16:29:57.7783826Z Using cached h11-0.16.0-py3-none-any.whl (37 kB)
+2025-11-27T16:29:57.7797627Z Using cached h2-4.3.0-py3-none-any.whl (61 kB)
+2025-11-27T16:29:57.7811462Z Using cached hpack-4.1.0-py3-none-any.whl (34 kB)
+2025-11-27T16:29:57.7824582Z Using cached hyperframe-6.1.0-py3-none-any.whl (13 kB)
+2025-11-27T16:29:57.7837902Z Using cached jsonschema_specifications-2025.9.1-py3-none-any.whl (18 kB)
+2025-11-27T16:29:57.7851844Z Using cached markupsafe-3.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+2025-11-27T16:29:57.7865233Z Using cached numpy-2.3.5-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (16.9 MB)
+2025-11-27T16:29:57.8003499Z Using cached prompt_toolkit-3.0.52-py3-none-any.whl (391 kB)
+2025-11-27T16:29:57.8019544Z Using cached propcache-0.4.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (210 kB)
+2025-11-27T16:29:57.8033869Z Using cached pyasn1-0.6.1-py3-none-any.whl (83 kB)
+2025-11-27T16:29:57.8047637Z Using cached pyasn1_modules-0.4.2-py3-none-any.whl (181 kB)
+2025-11-27T16:29:57.8062762Z Using cached python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+2025-11-27T16:29:57.8076904Z Using cached python_dotenv-1.2.1-py3-none-any.whl (21 kB)
+2025-11-27T16:29:57.8089918Z Using cached referencing-0.37.0-py3-none-any.whl (26 kB)
+2025-11-27T16:29:57.8103451Z Using cached rpds_py-0.29.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (392 kB)
+2025-11-27T16:29:57.8119020Z Using cached six-1.17.0-py2.py3-none-any.whl (11 kB)
+2025-11-27T16:29:57.8132483Z Using cached sniffio-1.3.1-py3-none-any.whl (10 kB)
+2025-11-27T16:29:57.8145938Z Using cached sqlalchemy-2.0.44-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.3 MB)
+2025-11-27T16:29:57.8182963Z Using cached greenlet-3.2.4-cp311-cp311-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (587 kB)
+2025-11-27T16:29:57.8200037Z Using cached tiktoken-0.12.0-cp311-cp311-manylinux_2_28_x86_64.whl (1.2 MB)
+2025-11-27T16:29:57.8221660Z Using cached regex-2025.11.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (800 kB)
+2025-11-27T16:29:57.8239892Z Using cached tqdm-4.67.1-py3-none-any.whl (78 kB)
+2025-11-27T16:29:57.8254754Z Using cached typing_inspection-0.4.2-py3-none-any.whl (14 kB)
+2025-11-27T16:29:57.8268825Z Using cached tzdata-2025.2-py2.py3-none-any.whl (347 kB)
+2025-11-27T16:29:57.8287951Z Using cached zipp-3.23.0-py3-none-any.whl (10 kB)
+2025-11-27T16:29:57.8303259Z Using cached google_api_python_client-2.187.0-py3-none-any.whl (14.6 MB)
+2025-11-27T16:29:57.8426407Z Using cached google_auth_httplib2-0.2.1-py3-none-any.whl (9.5 kB)
+2025-11-27T16:29:57.8440402Z Using cached httplib2-0.31.0-py3-none-any.whl (91 kB)
+2025-11-27T16:29:57.8454476Z Using cached pyparsing-3.2.5-py3-none-any.whl (113 kB)
+2025-11-27T16:29:57.8468258Z Using cached uritemplate-4.2.0-py3-none-any.whl (11 kB)
+2025-11-27T16:29:57.8481993Z Using cached mako-1.3.10-py3-none-any.whl (78 kB)
+2025-11-27T16:29:57.8495596Z Using cached pycparser-2.23-py3-none-any.whl (118 kB)
+2025-11-27T16:29:57.8510025Z Using cached tokenizers-0.22.1-cp39-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.3 MB)
+2025-11-27T16:29:57.8546795Z Using cached huggingface_hub-1.1.5-py3-none-any.whl (516 kB)
+2025-11-27T16:29:57.8563931Z Using cached hf_xet-1.2.0-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (3.3 MB)
+2025-11-27T16:29:57.8600925Z Using cached fsspec-2025.10.0-py3-none-any.whl (200 kB)
+2025-11-27T16:29:57.8615799Z Using cached pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (806 kB)
+2025-11-27T16:29:57.8634607Z Using cached filelock-3.20.0-py3-none-any.whl (16 kB)
+2025-11-27T16:29:57.8648034Z Using cached shellingham-1.5.4-py2.py3-none-any.whl (9.8 kB)
+2025-11-27T16:29:57.8661742Z Using cached typer_slim-0.20.0-py3-none-any.whl (47 kB)
+2025-11-27T16:29:57.8675169Z Using cached wcwidth-0.2.14-py2.py3-none-any.whl (37 kB)
+2025-11-27T16:29:58.2218683Z Installing collected packages: zstandard, zipp, wrapt, wcwidth, vine, urllib3, uritemplate, tzdata, typing-inspection, tqdm, tenacity, structlog, sniffio, six, shellingham, rpds-py, regex, redis, pyyaml, python-dotenv, pyparsing, pydantic-core, pycparser, pyasn1, protobuf, propcache, prometheus_client, portalocker, opentelemetry-util-http, numpy, multidict, MarkupSafe, jiter, idna, hyperframe, hpack, hf-xet, h11, grpcio, greenlet, fsspec, frozenlist, filelock, fastuuid, docstring-parser, distro, click, charset_normalizer, certifi, cachetools, billiard, attrs, asyncpg, asgiref, annotated-types, aiohappyeyeballs, yarl, uvicorn, typer-slim, SQLAlchemy, rsa, requests, referencing, python-dateutil, pydantic, pyasn1-modules, proto-plus, prompt-toolkit, pgvector, Mako, jinja2, importlib-metadata, httplib2, httpcore, h2, grpcio-tools, googleapis-common-protos, ecdsa, deprecated, click-plugins, click-didyoumean, cffi, anyio, amqp, aiosignal, tiktoken, starlette, python-jose, pydantic-settings, opentelemetry-api, kombu, jsonschema-specifications, httpx, grpcio-status, google-auth, cryptography, click-repl, alembic, aiohttp, prometheus-fastapi-instrumentator, opentelemetry-semantic-conventions, opentelemetry-instrumentation, openai, jsonschema, huggingface-hub, google-auth-httplib2, google-api-core, fastapi, celery, anthropic, tokenizers, qdrant-client, opentelemetry-sdk, opentelemetry-instrumentation-asgi, google-api-python-client, opentelemetry-instrumentation-fastapi, litellm, google-ai-generativelanguage, google-generativeai
+2025-11-27T16:30:11.0538090Z 
+2025-11-27T16:30:11.0604645Z Successfully installed Mako-1.3.10 MarkupSafe-3.0.3 SQLAlchemy-2.0.44 aiohappyeyeballs-2.6.1 aiohttp-3.13.2 aiosignal-1.4.0 alembic-1.17.2 amqp-5.3.1 annotated-types-0.7.0 anthropic-0.74.1 anyio-4.11.0 asgiref-3.11.0 asyncpg-0.30.0 attrs-25.4.0 billiard-4.2.3 cachetools-6.2.2 celery-5.5.3 certifi-2025.11.12 cffi-2.0.0 charset_normalizer-3.4.4 click-8.3.1 click-didyoumean-0.3.1 click-plugins-1.1.1.2 click-repl-0.3.0 cryptography-46.0.3 deprecated-1.3.1 distro-1.9.0 docstring-parser-0.17.0 ecdsa-0.19.1 fastapi-0.115.0 fastuuid-0.14.0 filelock-3.20.0 frozenlist-1.8.0 fsspec-2025.10.0 google-ai-generativelanguage-0.6.15 google-api-core-2.28.1 google-api-python-client-2.187.0 google-auth-2.43.0 google-auth-httplib2-0.2.1 google-generativeai-0.8.5 googleapis-common-protos-1.72.0 greenlet-3.2.4 grpcio-1.76.0 grpcio-status-1.71.2 grpcio-tools-1.71.2 h11-0.16.0 h2-4.3.0 hf-xet-1.2.0 hpack-4.1.0 httpcore-1.0.9 httplib2-0.31.0 httpx-0.27.2 huggingface-hub-1.1.5 hyperframe-6.1.0 idna-3.11 importlib-metadata-8.4.0 jinja2-3.1.6 jiter-0.12.0 jsonschema-4.25.1 jsonschema-specifications-2025.9.1 kombu-5.5.4 litellm-1.80.0 multidict-6.7.0 numpy-2.3.5 openai-2.8.1 opentelemetry-api-1.27.0 opentelemetry-instrumentation-0.48b0 opentelemetry-instrumentation-asgi-0.48b0 opentelemetry-instrumentation-fastapi-0.48b0 opentelemetry-sdk-1.27.0 opentelemetry-semantic-conventions-0.48b0 opentelemetry-util-http-0.48b0 pgvector-0.4.1 portalocker-2.10.1 prometheus-fastapi-instrumentator-7.1.0 prometheus_client-0.23.1 prompt-toolkit-3.0.52 propcache-0.4.1 proto-plus-1.26.1 protobuf-5.29.5 pyasn1-0.6.1 pyasn1-modules-0.4.2 pycparser-2.23 pydantic-2.12.4 pydantic-core-2.41.5 pydantic-settings-2.12.0 pyparsing-3.2.5 python-dateutil-2.9.0.post0 python-dotenv-1.2.1 python-jose-3.5.0 pyyaml-6.0.3 qdrant-client-1.10.1 redis-7.1.0 referencing-0.37.0 regex-2025.11.3 requests-2.32.5 rpds-py-0.29.0 rsa-4.9.1 shellingham-1.5.4 six-1.17.0 sniffio-1.3.1 starlette-0.38.6 structlog-25.5.0 tenacity-9.1.2 tiktoken-0.12.0 tokenizers-0.22.1 tqdm-4.67.1 typer-slim-0.20.0 typing-inspection-0.4.2 tzdata-2025.2 uritemplate-4.2.0 urllib3-2.5.0 uvicorn-0.38.0 vine-5.1.0 wcwidth-0.2.14 wrapt-1.17.3 yarl-1.22.0 zipp-3.23.0 zstandard-0.25.0
+2025-11-27T16:30:12.7227970Z Requirement already satisfied: pytest>=7.4.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from -r apps/memory_api/requirements-test.txt (line 3)) (9.0.1)
+2025-11-27T16:30:12.7232210Z Requirement already satisfied: pytest-asyncio>=0.21.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from -r apps/memory_api/requirements-test.txt (line 4)) (1.3.0)
+2025-11-27T16:30:12.7237182Z Requirement already satisfied: pytest-cov>=4.1.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from -r apps/memory_api/requirements-test.txt (line 5)) (7.0.0)
+2025-11-27T16:30:12.8017421Z Collecting pytest-mock>=3.11.1 (from -r apps/memory_api/requirements-test.txt (line 6))
+2025-11-27T16:30:12.8032320Z   Using cached pytest_mock-3.15.1-py3-none-any.whl.metadata (3.9 kB)
+2025-11-27T16:30:12.8054051Z Requirement already satisfied: anyio>=3.7.1 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from -r apps/memory_api/requirements-test.txt (line 7)) (4.11.0)
+2025-11-27T16:30:12.8218167Z Collecting testcontainers>=3.7.0 (from testcontainers[postgres]>=3.7.0->-r apps/memory_api/requirements-test.txt (line 10))
+2025-11-27T16:30:12.8232554Z   Using cached testcontainers-4.13.3-py3-none-any.whl.metadata (8.4 kB)
+2025-11-27T16:30:12.8622445Z Collecting instructor>=1.0.0 (from -r apps/memory_api/requirements-test.txt (line 13))
+2025-11-27T16:30:12.8635645Z   Using cached instructor-1.13.0-py3-none-any.whl.metadata (11 kB)
+2025-11-27T16:30:12.8862280Z Collecting slowapi>=0.1.9 (from -r apps/memory_api/requirements-test.txt (line 14))
+2025-11-27T16:30:12.8875933Z   Using cached slowapi-0.1.9-py3-none-any.whl.metadata (3.0 kB)
+2025-11-27T16:30:13.0177954Z Collecting scipy>=1.11.0 (from -r apps/memory_api/requirements-test.txt (line 15))
+2025-11-27T16:30:13.0194022Z   Using cached scipy-1.16.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (62 kB)
+2025-11-27T16:30:13.0470771Z Collecting mcp>=1.0.0 (from -r apps/memory_api/requirements-test.txt (line 16))
+2025-11-27T16:30:13.0484309Z   Using cached mcp-1.22.0-py3-none-any.whl.metadata (85 kB)
+2025-11-27T16:30:13.0663017Z Collecting python-louvain>=0.16 (from -r apps/memory_api/requirements-test.txt (line 19))
+2025-11-27T16:30:13.0664318Z   Using cached python_louvain-0.16-py3-none-any.whl
+2025-11-27T16:30:13.0715573Z Requirement already satisfied: iniconfig>=1.0.1 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pytest>=7.4.0->-r apps/memory_api/requirements-test.txt (line 3)) (2.3.0)
+2025-11-27T16:30:13.0721051Z Requirement already satisfied: packaging>=22 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pytest>=7.4.0->-r apps/memory_api/requirements-test.txt (line 3)) (25.0)
+2025-11-27T16:30:13.0726865Z Requirement already satisfied: pluggy<2,>=1.5 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pytest>=7.4.0->-r apps/memory_api/requirements-test.txt (line 3)) (1.6.0)
+2025-11-27T16:30:13.0732684Z Requirement already satisfied: pygments>=2.7.2 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pytest>=7.4.0->-r apps/memory_api/requirements-test.txt (line 3)) (2.19.2)
+2025-11-27T16:30:13.0764594Z Requirement already satisfied: typing-extensions>=4.12 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pytest-asyncio>=0.21.0->-r apps/memory_api/requirements-test.txt (line 4)) (4.15.0)
+2025-11-27T16:30:13.0784726Z Requirement already satisfied: coverage>=7.10.6 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from coverage[toml]>=7.10.6->pytest-cov>=4.1.0->-r apps/memory_api/requirements-test.txt (line 5)) (7.12.0)
+2025-11-27T16:30:13.0813314Z Requirement already satisfied: idna>=2.8 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from anyio>=3.7.1->-r apps/memory_api/requirements-test.txt (line 7)) (3.11)
+2025-11-27T16:30:13.0819587Z Requirement already satisfied: sniffio>=1.1 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from anyio>=3.7.1->-r apps/memory_api/requirements-test.txt (line 7)) (1.3.1)
+2025-11-27T16:30:13.1004725Z Collecting docker (from testcontainers>=3.7.0->testcontainers[postgres]>=3.7.0->-r apps/memory_api/requirements-test.txt (line 10))
+2025-11-27T16:30:13.1022166Z   Using cached docker-7.1.0-py3-none-any.whl.metadata (3.8 kB)
+2025-11-27T16:30:13.1060769Z Requirement already satisfied: python-dotenv in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from testcontainers>=3.7.0->testcontainers[postgres]>=3.7.0->-r apps/memory_api/requirements-test.txt (line 10)) (1.2.1)
+2025-11-27T16:30:13.1066837Z Requirement already satisfied: urllib3 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from testcontainers>=3.7.0->testcontainers[postgres]>=3.7.0->-r apps/memory_api/requirements-test.txt (line 10)) (2.5.0)
+2025-11-27T16:30:13.1071064Z Requirement already satisfied: wrapt in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from testcontainers>=3.7.0->testcontainers[postgres]>=3.7.0->-r apps/memory_api/requirements-test.txt (line 10)) (1.17.3)
+2025-11-27T16:30:13.1084921Z Requirement already satisfied: aiohttp<4.0.0,>=3.9.1 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (3.13.2)
+2025-11-27T16:30:13.1302089Z Collecting diskcache>=5.6.3 (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-27T16:30:13.1320330Z   Using cached diskcache-5.6.3-py3-none-any.whl.metadata (20 kB)
+2025-11-27T16:30:13.1349413Z Requirement already satisfied: docstring-parser<1.0,>=0.16 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (0.17.0)
+2025-11-27T16:30:13.1355022Z Requirement already satisfied: jinja2<4.0.0,>=3.1.4 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (3.1.6)
+2025-11-27T16:30:13.2070133Z Collecting jiter<0.12,>=0.6.1 (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-27T16:30:13.2086565Z   Using cached jiter-0.11.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.2 kB)
+2025-11-27T16:30:13.2104786Z Requirement already satisfied: openai<3.0.0,>=2.0.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (2.8.1)
+2025-11-27T16:30:13.2413459Z Collecting pre-commit>=4.3.0 (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-27T16:30:13.2428895Z   Using cached pre_commit-4.5.0-py2.py3-none-any.whl.metadata (1.2 kB)
+2025-11-27T16:30:13.2447470Z Requirement already satisfied: pydantic-core<3.0.0,>=2.18.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (2.41.5)
+2025-11-27T16:30:13.2452528Z Requirement already satisfied: pydantic<3.0.0,>=2.8.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (2.12.4)
+2025-11-27T16:30:13.2457720Z Requirement already satisfied: requests<3.0.0,>=2.32.3 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (2.32.5)
+2025-11-27T16:30:13.2859819Z Collecting rich<15.0.0,>=13.7.0 (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-27T16:30:13.2875101Z   Using cached rich-14.2.0-py3-none-any.whl.metadata (18 kB)
+2025-11-27T16:30:13.2904109Z Requirement already satisfied: tenacity<10.0.0,>=8.2.3 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (9.1.2)
+2025-11-27T16:30:13.3292900Z Collecting ty>=0.0.1a23 (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-27T16:30:13.3307466Z   Using cached ty-0.0.1a28-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (4.5 kB)
+2025-11-27T16:30:13.3497579Z Collecting typer<1.0.0,>=0.9.0 (from instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-27T16:30:13.3511639Z   Using cached typer-0.20.0-py3-none-any.whl.metadata (16 kB)
+2025-11-27T16:30:13.3551017Z Requirement already satisfied: aiohappyeyeballs>=2.5.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from aiohttp<4.0.0,>=3.9.1->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (2.6.1)
+2025-11-27T16:30:13.3556383Z Requirement already satisfied: aiosignal>=1.4.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from aiohttp<4.0.0,>=3.9.1->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (1.4.0)
+2025-11-27T16:30:13.3563705Z Requirement already satisfied: attrs>=17.3.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from aiohttp<4.0.0,>=3.9.1->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (25.4.0)
+2025-11-27T16:30:13.3569549Z Requirement already satisfied: frozenlist>=1.1.1 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from aiohttp<4.0.0,>=3.9.1->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (1.8.0)
+2025-11-27T16:30:13.3575147Z Requirement already satisfied: multidict<7.0,>=4.5 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from aiohttp<4.0.0,>=3.9.1->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (6.7.0)
+2025-11-27T16:30:13.3580600Z Requirement already satisfied: propcache>=0.2.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from aiohttp<4.0.0,>=3.9.1->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (0.4.1)
+2025-11-27T16:30:13.3586269Z Requirement already satisfied: yarl<2.0,>=1.17.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from aiohttp<4.0.0,>=3.9.1->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (1.22.0)
+2025-11-27T16:30:13.3615653Z Requirement already satisfied: MarkupSafe>=2.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from jinja2<4.0.0,>=3.1.4->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (3.0.3)
+2025-11-27T16:30:13.3650602Z Requirement already satisfied: distro<2,>=1.7.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from openai<3.0.0,>=2.0.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (1.9.0)
+2025-11-27T16:30:13.3656519Z Requirement already satisfied: httpx<1,>=0.23.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from openai<3.0.0,>=2.0.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (0.27.2)
+2025-11-27T16:30:13.3682073Z Requirement already satisfied: tqdm>4 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from openai<3.0.0,>=2.0.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (4.67.1)
+2025-11-27T16:30:13.3715960Z Requirement already satisfied: certifi in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from httpx<1,>=0.23.0->openai<3.0.0,>=2.0.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (2025.11.12)
+2025-11-27T16:30:13.3721608Z Requirement already satisfied: httpcore==1.* in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from httpx<1,>=0.23.0->openai<3.0.0,>=2.0.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (1.0.9)
+2025-11-27T16:30:13.3748317Z Requirement already satisfied: h11>=0.16 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from httpcore==1.*->httpx<1,>=0.23.0->openai<3.0.0,>=2.0.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (0.16.0)
+2025-11-27T16:30:13.3770896Z Requirement already satisfied: annotated-types>=0.6.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pydantic<3.0.0,>=2.8.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (0.7.0)
+2025-11-27T16:30:13.3780472Z Requirement already satisfied: typing-inspection>=0.4.2 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pydantic<3.0.0,>=2.8.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (0.4.2)
+2025-11-27T16:30:13.3808939Z Requirement already satisfied: charset_normalizer<4,>=2 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from requests<3.0.0,>=2.32.3->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (3.4.4)
+2025-11-27T16:30:13.3977774Z Collecting markdown-it-py>=2.2.0 (from rich<15.0.0,>=13.7.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-27T16:30:13.3990673Z   Using cached markdown_it_py-4.0.0-py3-none-any.whl.metadata (7.3 kB)
+2025-11-27T16:30:13.4068422Z Requirement already satisfied: click>=8.0.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from typer<1.0.0,>=0.9.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (8.3.1)
+2025-11-27T16:30:13.4074609Z Requirement already satisfied: shellingham>=1.3.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from typer<1.0.0,>=0.9.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (1.5.4)
+2025-11-27T16:30:13.4495988Z Collecting limits>=2.3 (from slowapi>=0.1.9->-r apps/memory_api/requirements-test.txt (line 14))
+2025-11-27T16:30:13.4508307Z   Using cached limits-5.6.0-py3-none-any.whl.metadata (10 kB)
+2025-11-27T16:30:13.4554577Z Requirement already satisfied: numpy<2.6,>=1.25.2 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from scipy>=1.11.0->-r apps/memory_api/requirements-test.txt (line 15)) (2.3.5)
+2025-11-27T16:30:13.4675795Z Collecting httpx-sse>=0.4 (from mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16))
+2025-11-27T16:30:13.4688270Z   Using cached httpx_sse-0.4.3-py3-none-any.whl.metadata (9.7 kB)
+2025-11-27T16:30:13.4707525Z Requirement already satisfied: jsonschema>=4.20.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16)) (4.25.1)
+2025-11-27T16:30:13.4711752Z Requirement already satisfied: pydantic-settings>=2.5.2 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16)) (2.12.0)
+2025-11-27T16:30:13.4835774Z Collecting pyjwt>=2.10.1 (from pyjwt[crypto]>=2.10.1->mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16))
+2025-11-27T16:30:13.4848362Z   Using cached PyJWT-2.10.1-py3-none-any.whl.metadata (4.0 kB)
+2025-11-27T16:30:13.4972610Z Collecting python-multipart>=0.0.9 (from mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16))
+2025-11-27T16:30:13.4985198Z   Using cached python_multipart-0.0.20-py3-none-any.whl.metadata (1.8 kB)
+2025-11-27T16:30:13.5128010Z Collecting sse-starlette>=1.6.1 (from mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16))
+2025-11-27T16:30:13.5140858Z   Using cached sse_starlette-3.0.3-py3-none-any.whl.metadata (12 kB)
+2025-11-27T16:30:13.5170297Z Requirement already satisfied: starlette>=0.27 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16)) (0.38.6)
+2025-11-27T16:30:13.5180788Z Requirement already satisfied: uvicorn>=0.31.1 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16)) (0.38.0)
+2025-11-27T16:30:13.5368936Z Collecting networkx (from python-louvain>=0.16->-r apps/memory_api/requirements-test.txt (line 19))
+2025-11-27T16:30:13.5382010Z   Using cached networkx-3.6-py3-none-any.whl.metadata (6.8 kB)
+2025-11-27T16:30:13.5624503Z Requirement already satisfied: jsonschema-specifications>=2023.03.6 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from jsonschema>=4.20.0->mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16)) (2025.9.1)
+2025-11-27T16:30:13.5628417Z Requirement already satisfied: referencing>=0.28.4 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from jsonschema>=4.20.0->mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16)) (0.37.0)
+2025-11-27T16:30:13.5633609Z Requirement already satisfied: rpds-py>=0.7.1 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from jsonschema>=4.20.0->mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16)) (0.29.0)
+2025-11-27T16:30:13.5676920Z Requirement already satisfied: deprecated>=1.2 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from limits>=2.3->slowapi>=0.1.9->-r apps/memory_api/requirements-test.txt (line 14)) (1.3.1)
+2025-11-27T16:30:13.5816045Z Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich<15.0.0,>=13.7.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-27T16:30:13.5828750Z   Using cached mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
+2025-11-27T16:30:13.5978559Z Collecting cfgv>=2.0.0 (from pre-commit>=4.3.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-27T16:30:13.5991098Z   Using cached cfgv-3.5.0-py2.py3-none-any.whl.metadata (8.9 kB)
+2025-11-27T16:30:13.6394223Z Collecting identify>=1.0.0 (from pre-commit>=4.3.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-27T16:30:13.6407492Z   Using cached identify-2.6.15-py2.py3-none-any.whl.metadata (4.4 kB)
+2025-11-27T16:30:13.6711731Z Collecting nodeenv>=0.11.1 (from pre-commit>=4.3.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-27T16:30:13.6725841Z   Using cached nodeenv-1.9.1-py2.py3-none-any.whl.metadata (21 kB)
+2025-11-27T16:30:13.6752138Z Requirement already satisfied: pyyaml>=5.1 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pre-commit>=4.3.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (6.0.3)
+2025-11-27T16:30:13.7137235Z Collecting virtualenv>=20.10.0 (from pre-commit>=4.3.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-27T16:30:13.7150719Z   Using cached virtualenv-20.35.4-py3-none-any.whl.metadata (4.6 kB)
+2025-11-27T16:30:13.7320133Z Requirement already satisfied: cryptography>=3.4.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pyjwt[crypto]>=2.10.1->mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16)) (46.0.3)
+2025-11-27T16:30:13.7346200Z Requirement already satisfied: cffi>=2.0.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from cryptography>=3.4.0->pyjwt[crypto]>=2.10.1->mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16)) (2.0.0)
+2025-11-27T16:30:13.7387333Z Requirement already satisfied: pycparser in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from cffi>=2.0.0->cryptography>=3.4.0->pyjwt[crypto]>=2.10.1->mcp>=1.0.0->-r apps/memory_api/requirements-test.txt (line 16)) (2.23)
+2025-11-27T16:30:13.7769507Z Collecting distlib<1,>=0.3.7 (from virtualenv>=20.10.0->pre-commit>=4.3.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-27T16:30:13.7782350Z   Using cached distlib-0.4.0-py2.py3-none-any.whl.metadata (5.2 kB)
+2025-11-27T16:30:13.7799950Z Requirement already satisfied: filelock<4,>=3.12.2 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from virtualenv>=20.10.0->pre-commit>=4.3.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13)) (3.20.0)
+2025-11-27T16:30:13.7947534Z Collecting platformdirs<5,>=3.9.1 (from virtualenv>=20.10.0->pre-commit>=4.3.0->instructor>=1.0.0->-r apps/memory_api/requirements-test.txt (line 13))
+2025-11-27T16:30:13.7960960Z   Using cached platformdirs-4.5.0-py3-none-any.whl.metadata (12 kB)
+2025-11-27T16:30:13.8133444Z Using cached pytest_mock-3.15.1-py3-none-any.whl (10 kB)
+2025-11-27T16:30:13.8146553Z Using cached testcontainers-4.13.3-py3-none-any.whl (124 kB)
+2025-11-27T16:30:13.8160640Z Using cached instructor-1.13.0-py3-none-any.whl (160 kB)
+2025-11-27T16:30:13.8174825Z Using cached jiter-0.11.1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (359 kB)
+2025-11-27T16:30:13.8190573Z Using cached rich-14.2.0-py3-none-any.whl (243 kB)
+2025-11-27T16:30:13.8205432Z Using cached typer-0.20.0-py3-none-any.whl (47 kB)
+2025-11-27T16:30:13.8218626Z Using cached slowapi-0.1.9-py3-none-any.whl (14 kB)
+2025-11-27T16:30:13.8232040Z Using cached scipy-1.16.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (35.9 MB)
+2025-11-27T16:30:13.8508305Z Using cached mcp-1.22.0-py3-none-any.whl (175 kB)
+2025-11-27T16:30:13.8522393Z Using cached diskcache-5.6.3-py3-none-any.whl (45 kB)
+2025-11-27T16:30:13.8535514Z Using cached httpx_sse-0.4.3-py3-none-any.whl (9.0 kB)
+2025-11-27T16:30:13.8548370Z Using cached limits-5.6.0-py3-none-any.whl (60 kB)
+2025-11-27T16:30:13.8561357Z Using cached markdown_it_py-4.0.0-py3-none-any.whl (87 kB)
+2025-11-27T16:30:13.8574319Z Using cached mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+2025-11-27T16:30:13.8586857Z Using cached pre_commit-4.5.0-py2.py3-none-any.whl (226 kB)
+2025-11-27T16:30:13.8601125Z Using cached cfgv-3.5.0-py2.py3-none-any.whl (7.4 kB)
+2025-11-27T16:30:13.8613283Z Using cached identify-2.6.15-py2.py3-none-any.whl (99 kB)
+2025-11-27T16:30:13.8626224Z Using cached nodeenv-1.9.1-py2.py3-none-any.whl (22 kB)
+2025-11-27T16:30:13.8638713Z Using cached PyJWT-2.10.1-py3-none-any.whl (22 kB)
+2025-11-27T16:30:13.8651453Z Using cached python_multipart-0.0.20-py3-none-any.whl (24 kB)
+2025-11-27T16:30:13.8663870Z Using cached sse_starlette-3.0.3-py3-none-any.whl (11 kB)
+2025-11-27T16:30:13.8676485Z Using cached ty-0.0.1a28-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (9.6 MB)
+2025-11-27T16:30:13.8756098Z Using cached virtualenv-20.35.4-py3-none-any.whl (6.0 MB)
+2025-11-27T16:30:13.8810521Z Using cached distlib-0.4.0-py2.py3-none-any.whl (469 kB)
+2025-11-27T16:30:13.8826095Z Using cached platformdirs-4.5.0-py3-none-any.whl (18 kB)
+2025-11-27T16:30:13.8838716Z Using cached docker-7.1.0-py3-none-any.whl (147 kB)
+2025-11-27T16:30:13.8852339Z Using cached networkx-3.6-py3-none-any.whl (2.1 MB)
+2025-11-27T16:30:14.1170365Z Installing collected packages: distlib, ty, scipy, python-multipart, pyjwt, platformdirs, nodeenv, networkx, mdurl, jiter, identify, httpx-sse, diskcache, cfgv, virtualenv, sse-starlette, python-louvain, pytest-mock, markdown-it-py, limits, docker, testcontainers, slowapi, rich, pre-commit, typer, mcp, instructor
+2025-11-27T16:30:19.1558255Z   Attempting uninstall: jiter
+2025-11-27T16:30:19.1594550Z     Found existing installation: jiter 0.12.0
+2025-11-27T16:30:19.1612138Z     Uninstalling jiter-0.12.0:
+2025-11-27T16:30:19.1620124Z       Successfully uninstalled jiter-0.12.0
+2025-11-27T16:30:20.1037309Z 
+2025-11-27T16:30:20.1100495Z Successfully installed cfgv-3.5.0 diskcache-5.6.3 distlib-0.4.0 docker-7.1.0 httpx-sse-0.4.3 identify-2.6.15 instructor-1.13.0 jiter-0.11.1 limits-5.6.0 markdown-it-py-4.0.0 mcp-1.22.0 mdurl-0.1.2 networkx-3.6 nodeenv-1.9.1 platformdirs-4.5.0 pre-commit-4.5.0 pyjwt-2.10.1 pytest-mock-3.15.1 python-louvain-0.16 python-multipart-0.0.20 rich-14.2.0 scipy-1.16.3 slowapi-0.1.9 sse-starlette-3.0.3 testcontainers-4.13.3 ty-0.0.1a28 typer-0.20.0 virtualenv-20.35.4
+2025-11-27T16:30:20.5660524Z Obtaining file:///home/runner/work/RAE-agentic-memory/RAE-agentic-memory/sdk/python/rae_memory_sdk
+2025-11-27T16:30:20.5677447Z   Installing build dependencies: started
+2025-11-27T16:30:21.4345743Z   Installing build dependencies: finished with status 'done'
+2025-11-27T16:30:21.4353348Z   Checking if build backend supports build_editable: started
+2025-11-27T16:30:21.7870592Z   Checking if build backend supports build_editable: finished with status 'done'
+2025-11-27T16:30:21.7879397Z   Getting requirements to build editable: started
+2025-11-27T16:30:22.1792406Z   Getting requirements to build editable: finished with status 'done'
+2025-11-27T16:30:22.1802547Z   Preparing editable metadata (pyproject.toml): started
+2025-11-27T16:30:22.3945838Z   Preparing editable metadata (pyproject.toml): finished with status 'done'
+2025-11-27T16:30:22.4001186Z Requirement already satisfied: httpx>=0.27.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from rae-memory-sdk==0.1.0) (0.27.2)
+2025-11-27T16:30:22.4005224Z Requirement already satisfied: pydantic>=2.0.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from rae-memory-sdk==0.1.0) (2.12.4)
+2025-11-27T16:30:22.4009643Z Requirement already satisfied: pydantic-settings>=2.0.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from rae-memory-sdk==0.1.0) (2.12.0)
+2025-11-27T16:30:22.4018148Z Requirement already satisfied: anyio in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from httpx>=0.27.0->rae-memory-sdk==0.1.0) (4.11.0)
+2025-11-27T16:30:22.4022221Z Requirement already satisfied: certifi in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from httpx>=0.27.0->rae-memory-sdk==0.1.0) (2025.11.12)
+2025-11-27T16:30:22.4027416Z Requirement already satisfied: httpcore==1.* in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from httpx>=0.27.0->rae-memory-sdk==0.1.0) (1.0.9)
+2025-11-27T16:30:22.4031100Z Requirement already satisfied: idna in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from httpx>=0.27.0->rae-memory-sdk==0.1.0) (3.11)
+2025-11-27T16:30:22.4035527Z Requirement already satisfied: sniffio in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from httpx>=0.27.0->rae-memory-sdk==0.1.0) (1.3.1)
+2025-11-27T16:30:22.4059320Z Requirement already satisfied: h11>=0.16 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from httpcore==1.*->httpx>=0.27.0->rae-memory-sdk==0.1.0) (0.16.0)
+2025-11-27T16:30:22.4083908Z Requirement already satisfied: annotated-types>=0.6.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pydantic>=2.0.0->rae-memory-sdk==0.1.0) (0.7.0)
+2025-11-27T16:30:22.4088660Z Requirement already satisfied: pydantic-core==2.41.5 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pydantic>=2.0.0->rae-memory-sdk==0.1.0) (2.41.5)
+2025-11-27T16:30:22.4093775Z Requirement already satisfied: typing-extensions>=4.14.1 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pydantic>=2.0.0->rae-memory-sdk==0.1.0) (4.15.0)
+2025-11-27T16:30:22.4098816Z Requirement already satisfied: typing-inspection>=0.4.2 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pydantic>=2.0.0->rae-memory-sdk==0.1.0) (0.4.2)
+2025-11-27T16:30:22.4125122Z Requirement already satisfied: python-dotenv>=0.21.0 in /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages (from pydantic-settings>=2.0.0->rae-memory-sdk==0.1.0) (1.2.1)
+2025-11-27T16:30:22.4198523Z Building wheels for collected packages: rae-memory-sdk
+2025-11-27T16:30:22.4206144Z   Building editable for rae-memory-sdk (pyproject.toml): started
+2025-11-27T16:30:22.6371213Z   Building editable for rae-memory-sdk (pyproject.toml): finished with status 'done'
+2025-11-27T16:30:22.6378367Z   Created wheel for rae-memory-sdk: filename=rae_memory_sdk-0.1.0-0.editable-py3-none-any.whl size=6716 sha256=13e6d7728324fe2b91a98054a3e171d04433669067394f492597ebfbb60abfec
+2025-11-27T16:30:22.6381701Z   Stored in directory: /tmp/pip-ephem-wheel-cache-1njy25co/wheels/a5/03/93/c8e2af923acbbb83f935a0cc44617824980269c64b52628884
+2025-11-27T16:30:22.6406802Z Successfully built rae-memory-sdk
+2025-11-27T16:30:22.8211090Z Installing collected packages: rae-memory-sdk
+2025-11-27T16:30:22.8351516Z Successfully installed rae-memory-sdk-0.1.0
+2025-11-27T16:30:22.9175893Z ##[group]Run pytest -m "not integration" --cov --cov-report=xml --cov-report=term
+2025-11-27T16:30:22.9176467Z [36;1mpytest -m "not integration" --cov --cov-report=xml --cov-report=term[0m
+2025-11-27T16:30:22.9211396Z shell: /usr/bin/bash -e {0}
+2025-11-27T16:30:22.9211640Z env:
+2025-11-27T16:30:22.9211913Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-27T16:30:22.9212344Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-27T16:30:22.9212739Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-27T16:30:22.9213091Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-27T16:30:22.9213438Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-27T16:30:22.9213781Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-27T16:30:22.9214427Z   DATABASE_URL: ***localhost:5432/test_rae
+2025-11-27T16:30:22.9214699Z   REDIS_URL: redis://localhost:6379/0
+2025-11-27T16:30:22.9215034Z   QDRANT_URL: http://localhost:6333
+2025-11-27T16:30:22.9215268Z   RAE_VECTOR_BACKEND: qdrant
+2025-11-27T16:30:22.9215479Z ##[endgroup]
+2025-11-27T16:30:23.6413271Z [1m============================= test session starts ==============================[0m
+2025-11-27T16:30:23.6414621Z platform linux -- Python 3.11.14, pytest-9.0.1, pluggy-1.6.0 -- /opt/hostedtoolcache/Python/3.11.14/x64/bin/python
+2025-11-27T16:30:23.6415726Z cachedir: .pytest_cache
+2025-11-27T16:30:23.6416192Z rootdir: /home/runner/work/RAE-agentic-memory/RAE-agentic-memory
+2025-11-27T16:30:23.6416709Z configfile: pytest.ini
+2025-11-27T16:30:23.6417308Z testpaths: apps/memory_api/tests, sdk/python/rae_memory_sdk/tests, integrations/mcp-server/tests
+2025-11-27T16:30:23.6418060Z plugins: anyio-4.11.0, cov-7.0.0, asyncio-1.3.0, mock-3.15.1
+2025-11-27T16:30:23.6418916Z asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+2025-11-27T16:30:33.0424963Z [1mcollecting ... [0mcollected 157 items / 7 skipped
+2025-11-27T16:30:33.0425410Z 
+2025-11-27T16:30:33.0550312Z apps/memory_api/tests/test_analytics.py::test_get_tenant_stats_cached [32mPASSED[0m[33m [  0%][0m
+2025-11-27T16:30:33.0727268Z apps/memory_api/tests/test_analytics.py::test_get_tenant_stats_uncached [32mPASSED[0m[33m [  1%][0m
+2025-11-27T16:30:33.0804967Z apps/memory_api/tests/test_analytics.py::test_get_memory_stats [32mPASSED[0m[33m    [  1%][0m
+2025-11-27T16:30:33.0881502Z apps/memory_api/tests/test_analytics.py::test_get_query_stats [32mPASSED[0m[33m     [  2%][0m
+2025-11-27T16:30:33.0979017Z apps/memory_api/tests/test_analytics.py::test_get_graph_stats [32mPASSED[0m[33m     [  3%][0m
+2025-11-27T16:30:33.1059587Z apps/memory_api/tests/test_analytics.py::test_get_reflection_stats [32mPASSED[0m[33m [  3%][0m
+2025-11-27T16:30:33.1137477Z apps/memory_api/tests/test_analytics.py::test_get_api_usage_stats [32mPASSED[0m[33m [  4%][0m
+2025-11-27T16:30:33.1214773Z apps/memory_api/tests/test_analytics.py::test_get_performance_stats [32mPASSED[0m[33m [  5%][0m
+2025-11-27T16:30:33.1296450Z apps/memory_api/tests/test_analytics.py::test_get_cost_stats [32mPASSED[0m[33m      [  5%][0m
+2025-11-27T16:30:33.1372338Z apps/memory_api/tests/test_analytics.py::test_calculate_graph_density [32mPASSED[0m[33m [  6%][0m
+2025-11-27T16:30:33.1466108Z apps/memory_api/tests/test_analytics.py::test_cache_operations [32mPASSED[0m[33m    [  7%][0m
+2025-11-27T16:30:33.1556002Z apps/memory_api/tests/test_analytics.py::test_generate_report [32mPASSED[0m[33m     [  7%][0m
+2025-11-27T16:30:33.1633561Z apps/memory_api/tests/test_analytics.py::test_get_real_time_metrics [32mPASSED[0m[33m [  8%][0m
+2025-11-27T16:30:33.1711970Z apps/memory_api/tests/test_analytics.py::test_get_usage_alerts [32mPASSED[0m[33m    [  8%][0m
+2025-11-27T16:30:33.1788746Z apps/memory_api/tests/test_analytics.py::test_mock_db_methods [32mPASSED[0m[33m     [  9%][0m
+2025-11-27T16:30:33.1802317Z apps/memory_api/tests/test_api_client.py::test_classify_network_error [32mPASSED[0m[33m [ 10%][0m
+2025-11-27T16:30:33.1816554Z apps/memory_api/tests/test_api_client.py::test_classify_timeout_error [32mPASSED[0m[33m [ 10%][0m
+2025-11-27T16:30:33.1828520Z apps/memory_api/tests/test_api_client.py::test_classify_rate_limit [32mPASSED[0m[33m [ 11%][0m
+2025-11-27T16:30:33.1840836Z apps/memory_api/tests/test_api_client.py::test_classify_authentication_error [32mPASSED[0m[33m [ 12%][0m
+2025-11-27T16:30:33.1864808Z apps/memory_api/tests/test_api_client.py::test_circuit_breaker_closed_success [32mPASSED[0m[33m [ 12%][0m
+2025-11-27T16:30:33.1895569Z apps/memory_api/tests/test_api_client.py::test_circuit_breaker_opens_on_failures [32mPASSED[0m[33m [ 13%][0m
+2025-11-27T16:30:33.1920500Z apps/memory_api/tests/test_api_client.py::test_circuit_breaker_rejects_when_open [32mPASSED[0m[33m [ 14%][0m
+2025-11-27T16:30:33.1952016Z apps/memory_api/tests/test_api_client.py::test_circuit_breaker_half_open_recovery [32mPASSED[0m[33m [ 14%][0m
+2025-11-27T16:30:33.1968491Z apps/memory_api/tests/test_api_client.py::test_cache_set_and_get [32mPASSED[0m[33m  [ 15%][0m
+2025-11-27T16:30:33.1984273Z apps/memory_api/tests/test_api_client.py::test_cache_miss [32mPASSED[0m[33m         [ 15%][0m
+2025-11-27T16:30:34.4011467Z apps/memory_api/tests/test_api_client.py::test_cache_expiration [32mPASSED[0m[33m   [ 16%][0m
+2025-11-27T16:30:34.4029692Z apps/memory_api/tests/test_api_client.py::test_cache_invalidation [32mPASSED[0m[33m [ 17%][0m
+2025-11-27T16:30:34.4048341Z apps/memory_api/tests/test_api_client.py::test_cache_clear [32mPASSED[0m[33m        [ 17%][0m
+2025-11-27T16:30:34.7347944Z apps/memory_api/tests/test_api_client.py::test_retry_on_network_error [32mPASSED[0m[33m [ 18%][0m
+2025-11-27T16:30:35.4653455Z apps/memory_api/tests/test_api_client.py::test_retry_exhausted [32mPASSED[0m[33m    [ 19%][0m
+2025-11-27T16:30:35.4939006Z apps/memory_api/tests/test_api_client.py::test_no_retry_on_client_error [32mPASSED[0m[33m [ 19%][0m
+2025-11-27T16:30:35.4958141Z apps/memory_api/tests/test_api_client.py::test_exponential_backoff [32mPASSED[0m[33m [ 20%][0m
+2025-11-27T16:30:35.5225417Z apps/memory_api/tests/test_api_client.py::test_get_request [32mPASSED[0m[33m        [ 21%][0m
+2025-11-27T16:30:35.5492616Z apps/memory_api/tests/test_api_client.py::test_post_request [32mPASSED[0m[33m       [ 21%][0m
+2025-11-27T16:30:35.5733148Z apps/memory_api/tests/test_api_client.py::test_client_statistics [32mPASSED[0m[33m  [ 22%][0m
+2025-11-27T16:30:35.5975909Z apps/memory_api/tests/test_api_client.py::test_reset_statistics [32mPASSED[0m[33m   [ 22%][0m
+2025-11-27T16:30:35.5989617Z apps/memory_api/tests/test_api_e2e.py::TestMemoryAPISmoke::test_store_and_query_memory_e2e [33mSKIPPED[0m[33m [ 23%][0m
+2025-11-27T16:30:35.5999356Z apps/memory_api/tests/test_api_e2e.py::TestMemoryAPISmoke::test_hybrid_search_e2e [33mSKIPPED[0m[33m [ 24%][0m
+2025-11-27T16:30:35.6014695Z apps/memory_api/tests/test_api_e2e.py::TestHealthCheckSmoke::test_health_check [33mSKIPPED[0m[33m [ 24%][0m
+2025-11-27T16:30:35.6710111Z apps/memory_api/tests/test_api_e2e.py::TestAPIErrorHandling::test_missing_tenant_header [32mPASSED[0m[33m [ 25%][0m
+2025-11-27T16:30:35.6764132Z apps/memory_api/tests/test_api_e2e.py::TestAPIErrorHandling::test_invalid_json [32mPASSED[0m[33m [ 26%][0m
+2025-11-27T16:30:36.1998636Z apps/memory_api/tests/test_background_tasks.py::TestExtractGraphLazy::test_extract_graph_success [32mPASSED[0m[33m [ 26%][0m
+2025-11-27T16:30:37.2078767Z apps/memory_api/tests/test_background_tasks.py::TestExtractGraphLazy::test_extract_graph_with_mini_model [32mPASSED[0m[33m [ 27%][0m
+2025-11-27T16:30:37.2132378Z apps/memory_api/tests/test_background_tasks.py::TestExtractGraphLazy::test_extract_graph_exception_handling [32mPASSED[0m[33m [ 28%][0m
+2025-11-27T16:30:37.7680673Z apps/memory_api/tests/test_background_tasks.py::TestExtractGraphLazy::test_extract_graph_pool_cleanup [32mPASSED[0m[33m [ 28%][0m
+2025-11-27T16:30:37.7759354Z apps/memory_api/tests/test_background_tasks.py::TestProcessGraphExtractionQueue::test_queue_processor_schedules_tasks [32mPASSED[0m[33m [ 29%][0m
+2025-11-27T16:30:37.7826151Z apps/memory_api/tests/test_background_tasks.py::TestProcessGraphExtractionQueue::test_queue_processor_no_pending_memories [32mPASSED[0m[33m [ 29%][0m
+2025-11-27T16:30:37.7904306Z apps/memory_api/tests/test_background_tasks.py::TestGenerateReflection::test_generate_reflection_calls_engine [32mPASSED[0m[33m [ 30%][0m
+2025-11-27T16:30:37.7984188Z apps/memory_api/tests/test_background_tasks.py::TestMemoryDecay::test_apply_decay_updates_strength [32mPASSED[0m[33m [ 31%][0m
+2025-11-27T16:30:37.8083085Z apps/memory_api/tests/test_background_tasks.py::TestPruneOldMemories::test_prune_respects_retention_days [32mPASSED[0m[33m [ 31%][0m
+2025-11-27T16:30:37.8114115Z apps/memory_api/tests/test_background_tasks.py::TestPruneOldMemories::test_prune_disabled_when_retention_zero [32mPASSED[0m[33m [ 32%][0m
+2025-11-27T16:30:37.8194877Z apps/memory_api/tests/test_dashboard_websocket.py::test_websocket_connect [32mPASSED[0m[33m [ 33%][0m
+2025-11-27T16:30:37.8273106Z apps/memory_api/tests/test_dashboard_websocket.py::test_websocket_disconnect [32mPASSED[0m[33m [ 33%][0m
+2025-11-27T16:30:37.8348730Z apps/memory_api/tests/test_dashboard_websocket.py::test_subscription_filtering [32mPASSED[0m[33m [ 34%][0m
+2025-11-27T16:30:37.8426359Z apps/memory_api/tests/test_dashboard_websocket.py::test_broadcast_to_tenant [32mPASSED[0m[33m [ 35%][0m
+2025-11-27T16:30:37.8550599Z apps/memory_api/tests/test_dashboard_websocket.py::test_broadcast_all [32mPASSED[0m[33m [ 35%][0m
+2025-11-27T16:30:37.8600610Z apps/memory_api/tests/test_dashboard_websocket.py::test_collect_system_metrics [32mPASSED[0m[33m [ 36%][0m
+2025-11-27T16:30:37.8635617Z apps/memory_api/tests/test_dashboard_websocket.py::test_metrics_changed_significantly [32mPASSED[0m[33m [ 36%][0m
+2025-11-27T16:30:37.8679492Z apps/memory_api/tests/test_dashboard_websocket.py::test_check_system_health [32mPASSED[0m[33m [ 37%][0m
+2025-11-27T16:30:37.8729882Z apps/memory_api/tests/test_dashboard_websocket.py::test_health_monitoring_failure [32mPASSED[0m[33m [ 38%][0m
+2025-11-27T16:30:37.8818244Z apps/memory_api/tests/test_dashboard_websocket.py::test_broadcast_memory_created [32mPASSED[0m[33m [ 38%][0m
+2025-11-27T16:30:37.8907964Z apps/memory_api/tests/test_dashboard_websocket.py::test_broadcast_quality_alert [32mPASSED[0m[33m [ 39%][0m
+2025-11-27T16:30:37.8931165Z apps/memory_api/tests/test_evaluation_suite.py::test_mrr_calculation [32mPASSED[0m[33m [ 40%][0m
+2025-11-27T16:30:37.8953591Z apps/memory_api/tests/test_evaluation_suite.py::test_ndcg_calculation [32mPASSED[0m[33m [ 40%][0m
+2025-11-27T16:30:37.8975945Z apps/memory_api/tests/test_evaluation_suite.py::test_precision_recall [32mPASSED[0m[33m [ 41%][0m
+2025-11-27T16:30:37.9024447Z apps/memory_api/tests/test_evaluation_suite.py::test_kolmogorov_smirnov_test [32mPASSED[0m[33m [ 42%][0m
+2025-11-27T16:30:37.9058729Z apps/memory_api/tests/test_evaluation_suite.py::test_psi_calculation [32mPASSED[0m[33m [ 42%][0m
+2025-11-27T16:30:37.9090144Z apps/memory_api/tests/test_evaluation_suite.py::test_drift_severity_classification [32mPASSED[0m[33m [ 43%][0m
+2025-11-27T16:30:37.9209361Z apps/memory_api/tests/test_evaluation_suite.py::test_drift_detection_no_data [32mPASSED[0m[33m [ 43%][0m
+2025-11-27T16:30:37.9230558Z apps/memory_api/tests/test_evaluation_suite.py::test_ab_test_traffic_validation [32mPASSED[0m[33m [ 44%][0m
+2025-11-27T16:30:37.9276497Z apps/memory_api/tests/test_event_triggers.py::test_process_event [32mPASSED[0m[33m  [ 45%][0m
+2025-11-27T16:30:37.9308743Z apps/memory_api/tests/test_event_triggers.py::test_evaluate_simple_condition [32mPASSED[0m[33m [ 45%][0m
+2025-11-27T16:30:37.9340376Z apps/memory_api/tests/test_event_triggers.py::test_evaluate_condition_group_and [32mPASSED[0m[33m [ 46%][0m
+2025-11-27T16:30:37.9376791Z apps/memory_api/tests/test_event_triggers.py::test_evaluate_condition_group_or [32mPASSED[0m[33m [ 47%][0m
+2025-11-27T16:30:37.9407745Z apps/memory_api/tests/test_event_triggers.py::test_nested_condition_groups [32mPASSED[0m[33m [ 47%][0m
+2025-11-27T16:30:37.9439839Z apps/memory_api/tests/test_event_triggers.py::test_condition_operators [32mPASSED[0m[33m [ 48%][0m
+2025-11-27T16:30:37.9471467Z apps/memory_api/tests/test_event_triggers.py::test_rate_limiting [32mPASSED[0m[33m  [ 49%][0m
+2025-11-27T16:30:37.9503068Z apps/memory_api/tests/test_event_triggers.py::test_cooldown_period [32mPASSED[0m[33m [ 49%][0m
+2025-11-27T16:30:37.9557881Z apps/memory_api/tests/test_event_triggers.py::test_execute_action [32mPASSED[0m[33m [ 50%][0m
+2025-11-27T16:30:37.9590258Z apps/memory_api/tests/test_event_triggers.py::test_workflow_execution [32mPASSED[0m[33m [ 50%][0m
+2025-11-27T16:30:37.9610805Z apps/memory_api/tests/test_graph_algorithms.py::test_graph_node [32mPASSED[0m[33m   [ 51%][0m
+2025-11-27T16:30:37.9630877Z apps/memory_api/tests/test_graph_algorithms.py::test_graph_edge [32mPASSED[0m[33m   [ 52%][0m
+2025-11-27T16:30:37.9651117Z apps/memory_api/tests/test_graph_algorithms.py::test_knowledge_graph [32mPASSED[0m[33m [ 52%][0m
+2025-11-27T16:30:37.9737290Z apps/memory_api/tests/test_graph_algorithms.py::test_service_load_tenant_graph [32mPASSED[0m[33m [ 53%][0m
+2025-11-27T16:30:37.9819606Z apps/memory_api/tests/test_graph_algorithms.py::test_pagerank [32mPASSED[0m[33m     [ 54%][0m
+2025-11-27T16:30:37.9900270Z apps/memory_api/tests/test_graph_algorithms.py::test_shortest_path [32mPASSED[0m[33m [ 54%][0m
+2025-11-27T16:30:37.9980161Z apps/memory_api/tests/test_graph_algorithms.py::test_find_all_paths [32mPASSED[0m[33m [ 55%][0m
+2025-11-27T16:30:38.0060796Z apps/memory_api/tests/test_graph_algorithms.py::test_find_related_entities [32mPASSED[0m[33m [ 56%][0m
+2025-11-27T16:30:38.0142222Z apps/memory_api/tests/test_graph_algorithms.py::test_graph_summary [32mPASSED[0m[33m [ 56%][0m
+2025-11-27T16:30:38.0250437Z apps/memory_api/tests/test_graph_algorithms.py::test_community_detection [32mPASSED[0m[33m [ 57%][0m
+2025-11-27T16:30:38.0341547Z apps/memory_api/tests/test_graph_algorithms.py::test_calculate_centrality [32mPASSED[0m[33m [ 57%][0m
+2025-11-27T16:30:38.0446885Z apps/memory_api/tests/test_graph_algorithms.py::test_graph_density [32mPASSED[0m[33m [ 58%][0m
+2025-11-27T16:30:38.0528114Z apps/memory_api/tests/test_graph_algorithms.py::test_subgraph_extraction [32mPASSED[0m[33m [ 59%][0m
+2025-11-27T16:30:38.4432442Z apps/memory_api/tests/test_openapi.py::test_openapi_schema [32mPASSED[0m[33m        [ 59%][0m
+2025-11-27T16:30:38.4444528Z apps/memory_api/tests/test_phase2_models.py::TestTenantModels::test_tenant_tier_enum [32mPASSED[0m[33m [ 60%][0m
+2025-11-27T16:30:38.4456813Z apps/memory_api/tests/test_phase2_models.py::TestTenantModels::test_tenant_config_defaults [32mPASSED[0m[33m [ 61%][0m
+2025-11-27T16:30:38.4469392Z apps/memory_api/tests/test_phase2_models.py::TestTenantModels::test_tenant_creation [32mPASSED[0m[33m [ 61%][0m
+2025-11-27T16:30:38.4481423Z apps/memory_api/tests/test_phase2_models.py::TestTenantModels::test_get_default_config_for_free_tier [32mPASSED[0m[33m [ 62%][0m
+2025-11-27T16:30:38.4493312Z apps/memory_api/tests/test_phase2_models.py::TestTenantModels::test_get_default_config_for_pro_tier [32mPASSED[0m[33m [ 63%][0m
+2025-11-27T16:30:38.4505199Z apps/memory_api/tests/test_phase2_models.py::TestTenantModels::test_get_default_config_for_enterprise_tier [32mPASSED[0m[33m [ 63%][0m
+2025-11-27T16:30:38.4517633Z apps/memory_api/tests/test_phase2_models.py::TestTenantModels::test_has_quota_available_memories [32mPASSED[0m[33m [ 64%][0m
+2025-11-27T16:30:38.4529786Z apps/memory_api/tests/test_phase2_models.py::TestTenantModels::test_has_quota_available_unlimited [32mPASSED[0m[33m [ 64%][0m
+2025-11-27T16:30:38.4541827Z apps/memory_api/tests/test_phase2_models.py::TestTenantModels::test_increment_usage [32mPASSED[0m[33m [ 65%][0m
+2025-11-27T16:30:38.4554671Z apps/memory_api/tests/test_phase2_models.py::TestTenantModels::test_is_feature_enabled [32mPASSED[0m[33m [ 66%][0m
+2025-11-27T16:30:38.4566335Z apps/memory_api/tests/test_phase2_models.py::TestRBACModels::test_role_enum_values [32mPASSED[0m[33m [ 66%][0m
+2025-11-27T16:30:38.4578292Z apps/memory_api/tests/test_phase2_models.py::TestRBACModels::test_role_levels [32mPASSED[0m[33m [ 67%][0m
+2025-11-27T16:30:38.4590371Z apps/memory_api/tests/test_phase2_models.py::TestRBACModels::test_role_can_perform_owner [32mPASSED[0m[33m [ 68%][0m
+2025-11-27T16:30:38.4604211Z apps/memory_api/tests/test_phase2_models.py::TestRBACModels::test_role_can_perform_admin [32mPASSED[0m[33m [ 68%][0m
+2025-11-27T16:30:38.4616442Z apps/memory_api/tests/test_phase2_models.py::TestRBACModels::test_role_can_perform_developer [32mPASSED[0m[33m [ 69%][0m
+2025-11-27T16:30:38.4628449Z apps/memory_api/tests/test_phase2_models.py::TestRBACModels::test_role_can_perform_analyst [32mPASSED[0m[33m [ 70%][0m
+2025-11-27T16:30:38.4640467Z apps/memory_api/tests/test_phase2_models.py::TestRBACModels::test_role_can_perform_viewer [32mPASSED[0m[33m [ 70%][0m
+2025-11-27T16:30:38.4652250Z apps/memory_api/tests/test_phase2_models.py::TestRBACModels::test_permission_model [32mPASSED[0m[33m [ 71%][0m
+2025-11-27T16:30:38.4664542Z apps/memory_api/tests/test_phase2_models.py::TestRBACModels::test_user_role_creation [32mPASSED[0m[33m [ 71%][0m
+2025-11-27T16:30:38.4677046Z apps/memory_api/tests/test_phase2_models.py::TestRBACModels::test_user_role_expiration [32mPASSED[0m[33m [ 72%][0m
+2025-11-27T16:30:38.4689420Z apps/memory_api/tests/test_phase2_models.py::TestRBACModels::test_user_role_project_access [32mPASSED[0m[33m [ 73%][0m
+2025-11-27T16:30:38.4701811Z apps/memory_api/tests/test_phase2_models.py::TestRBACModels::test_user_role_can_perform [32mPASSED[0m[33m [ 73%][0m
+2025-11-27T16:30:38.4714193Z apps/memory_api/tests/test_phase2_models.py::TestRBACModels::test_user_role_can_perform_with_project [32mPASSED[0m[33m [ 74%][0m
+2025-11-27T16:30:38.4726321Z apps/memory_api/tests/test_phase2_models.py::TestRBACModels::test_role_hierarchy_comparison [32mPASSED[0m[33m [ 75%][0m
+2025-11-27T16:30:38.4738668Z apps/memory_api/tests/test_phase2_models.py::TestRBACModels::test_can_assign_role [32mPASSED[0m[33m [ 75%][0m
+2025-11-27T16:30:38.4751967Z apps/memory_api/tests/test_phase2_models.py::TestRBACModels::test_can_modify_user [32mPASSED[0m[33m [ 76%][0m
+2025-11-27T16:30:38.4764317Z apps/memory_api/tests/test_phase2_plugins.py::TestPluginMetadata::test_metadata_creation [32mPASSED[0m[33m [ 77%][0m
+2025-11-27T16:30:38.4776391Z apps/memory_api/tests/test_phase2_plugins.py::TestPluginMetadata::test_metadata_to_dict [32mPASSED[0m[33m [ 77%][0m
+2025-11-27T16:30:38.4800002Z apps/memory_api/tests/test_phase2_plugins.py::TestPluginBase::test_plugin_initialization [32mPASSED[0m[33m [ 78%][0m
+2025-11-27T16:30:38.4820268Z apps/memory_api/tests/test_phase2_plugins.py::TestPluginBase::test_plugin_shutdown [32mPASSED[0m[33m [ 78%][0m
+2025-11-27T16:30:38.4839842Z apps/memory_api/tests/test_phase2_plugins.py::TestPluginBase::test_plugin_health_check [32mPASSED[0m[33m [ 79%][0m
+2025-11-27T16:30:38.4860079Z apps/memory_api/tests/test_phase2_plugins.py::TestPluginBase::test_hook_execution [32mPASSED[0m[33m [ 80%][0m
+2025-11-27T16:30:38.4879793Z apps/memory_api/tests/test_phase2_plugins.py::TestPluginBase::test_transform_hook [32mPASSED[0m[33m [ 80%][0m
+2025-11-27T16:30:38.4892546Z apps/memory_api/tests/test_phase2_plugins.py::TestPluginRegistry::test_registry_creation [32mPASSED[0m[33m [ 81%][0m
+2025-11-27T16:30:38.4908405Z apps/memory_api/tests/test_phase2_plugins.py::TestPluginRegistry::test_register_plugin [32mPASSED[0m[33m [ 82%][0m
+2025-11-27T16:30:38.4925213Z apps/memory_api/tests/test_phase2_plugins.py::TestPluginRegistry::test_unregister_plugin [32mPASSED[0m[33m [ 82%][0m
+2025-11-27T16:30:38.4940510Z apps/memory_api/tests/test_phase2_plugins.py::TestPluginRegistry::test_list_plugins [32mPASSED[0m[33m [ 83%][0m
+2025-11-27T16:30:38.4955375Z apps/memory_api/tests/test_phase2_plugins.py::TestPluginRegistry::test_get_plugins_for_hook [32mPASSED[0m[33m [ 84%][0m
+2025-11-27T16:30:38.4985086Z apps/memory_api/tests/test_phase2_plugins.py::TestPluginRegistry::test_initialize_all [32mPASSED[0m[33m [ 84%][0m
+2025-11-27T16:30:38.5009478Z apps/memory_api/tests/test_phase2_plugins.py::TestPluginRegistry::test_shutdown_all [32mPASSED[0m[33m [ 85%][0m
+2025-11-27T16:30:38.5032910Z apps/memory_api/tests/test_phase2_plugins.py::TestPluginRegistry::test_execute_hook [32mPASSED[0m[33m [ 85%][0m
+2025-11-27T16:30:38.5055607Z apps/memory_api/tests/test_phase2_plugins.py::TestPluginRegistry::test_execute_transform_hook [32mPASSED[0m[33m [ 86%][0m
+2025-11-27T16:30:38.5077924Z apps/memory_api/tests/test_phase2_plugins.py::TestPluginRegistry::test_health_check_all [32mPASSED[0m[33m [ 87%][0m
+2025-11-27T16:30:38.5090695Z apps/memory_api/tests/test_phase2_plugins.py::TestPluginRegistry::test_get_global_registry [32mPASSED[0m[33m [ 87%][0m
+2025-11-27T16:30:38.5102925Z apps/memory_api/tests/test_phase2_plugins.py::TestPluginHooks::test_hook_values [32mPASSED[0m[33m [ 88%][0m
+2025-11-27T16:30:38.5115625Z apps/memory_api/tests/test_phase2_plugins.py::TestPluginHooks::test_all_hooks_defined [32mPASSED[0m[33m [ 89%][0m
+2025-11-27T16:30:38.5131105Z apps/memory_api/tests/test_phase2_plugins.py::TestPluginDisabling::test_disabled_plugin_not_executed [32mPASSED[0m[33m [ 89%][0m
+2025-11-27T16:30:38.5155087Z apps/memory_api/tests/test_phase2_plugins.py::TestPluginDisabling::test_disabled_plugin_not_initialized [32mPASSED[0m[33m [ 90%][0m
+2025-11-27T16:30:38.5181113Z apps/memory_api/tests/test_phase2_plugins.py::TestMultiplePlugins::test_multiple_plugins_same_hook [32mPASSED[0m[33m [ 91%][0m
+2025-11-27T16:30:38.5206796Z apps/memory_api/tests/test_phase2_plugins.py::TestMultiplePlugins::test_plugin_chaining [32mPASSED[0m[33m [ 91%][0m
+2025-11-27T16:30:38.5285066Z apps/memory_api/tests/test_temporal_graph.py::test_create_snapshot [32mPASSED[0m[33m [ 92%][0m
+2025-11-27T16:30:38.5359438Z apps/memory_api/tests/test_temporal_graph.py::test_get_snapshot_at_time [32mPASSED[0m[33m [ 92%][0m
+2025-11-27T16:30:38.5432763Z apps/memory_api/tests/test_temporal_graph.py::test_get_latest_snapshot [32mPASSED[0m[33m [ 93%][0m
+2025-11-27T16:30:38.5506684Z apps/memory_api/tests/test_temporal_graph.py::test_record_change [32mPASSED[0m[33m  [ 94%][0m
+2025-11-27T16:30:38.5577984Z apps/memory_api/tests/test_temporal_graph.py::test_get_changes_filters [32mPASSED[0m[33m [ 94%][0m
+2025-11-27T16:30:38.5652027Z apps/memory_api/tests/test_temporal_graph.py::test_get_entity_history [32mPASSED[0m[33m [ 95%][0m
+2025-11-27T16:30:38.5724942Z apps/memory_api/tests/test_temporal_graph.py::test_reconstruct_graph_at_time [32mPASSED[0m[33m [ 96%][0m
+2025-11-27T16:30:38.5804290Z apps/memory_api/tests/test_temporal_graph.py::test_apply_change_logic [32mPASSED[0m[33m [ 96%][0m
+2025-11-27T16:30:38.5876558Z apps/memory_api/tests/test_temporal_graph.py::test_compare_graphs [32mPASSED[0m[33m [ 97%][0m
+2025-11-27T16:30:38.5947259Z apps/memory_api/tests/test_temporal_graph.py::test_get_evolution_timeline [32mPASSED[0m[33m [ 98%][0m
+2025-11-27T16:30:38.6028928Z apps/memory_api/tests/test_temporal_graph.py::test_get_growth_metrics [32mPASSED[0m[33m [ 98%][0m
+2025-11-27T16:30:38.6102156Z apps/memory_api/tests/test_temporal_graph.py::test_find_emerging_patterns [32mPASSED[0m[33m [ 99%][0m
+2025-11-27T16:30:46.1068791Z apps/memory_api/tests/test_temporal_graph.py::test_cleanup_old_snapshots [32mPASSED[0m[33m [100%][0m
+2025-11-27T16:30:46.1069756Z 
+2025-11-27T16:30:46.1070115Z [33m=============================== warnings summary ===============================[0m
+2025-11-27T16:30:46.1071032Z ../../../../../opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages/starlette/formparsers.py:12
+2025-11-27T16:30:46.1073023Z   /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages/starlette/formparsers.py:12: PendingDeprecationWarning: Please use `import python_multipart` instead.
+2025-11-27T16:30:46.1074269Z     import multipart
+2025-11-27T16:30:46.1074505Z 
+2025-11-27T16:30:46.1074833Z -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2025-11-27T16:30:46.1075476Z ================================ tests coverage ================================
+2025-11-27T16:30:46.1076062Z _______________ coverage: platform linux, python 3.11.14-final-0 _______________
+2025-11-27T16:30:46.1076475Z 
+2025-11-27T16:30:46.1076665Z Name                                                         Stmts   Miss  Cover   Missing
+2025-11-27T16:30:46.1077218Z ------------------------------------------------------------------------------------------
+2025-11-27T16:30:46.1077779Z apps/__init__.py                                                 0      0   100%
+2025-11-27T16:30:46.1078354Z apps/memory_api/__init__.py                                      0      0   100%
+2025-11-27T16:30:46.1079018Z apps/memory_api/api/__init__.py                                  0      0   100%
+2025-11-27T16:30:46.1079881Z apps/memory_api/api/v1/__init__.py                               0      0   100%
+2025-11-27T16:30:46.1080563Z apps/memory_api/api/v1/agent.py                                 89     68    24%   48-222, 249-271
+2025-11-27T16:30:46.1081283Z apps/memory_api/api/v1/cache.py                                  8      2    75%   14-15
+2025-11-27T16:30:46.1082035Z apps/memory_api/api/v1/governance.py                           122     75    39%   103-175, 197-300, 319-419
+2025-11-27T16:30:46.1082926Z apps/memory_api/api/v1/graph.py                                192    123    36%   150-190, 219-272, 296-359, 400-512, 541-591, 628-684, 716-818
+2025-11-27T16:30:46.1083856Z apps/memory_api/api/v1/health.py                               127     86    32%   59-95, 102-135, 142-174, 189-204, 228-265, 282-287, 303, 322-351
+2025-11-27T16:30:46.1084758Z apps/memory_api/api/v1/memory.py                               139    110    21%   43-103, 127-239, 247-275, 283-284, 292-306, 349-408
+2025-11-27T16:30:46.1085531Z apps/memory_api/celery_app.py                                    4      0   100%
+2025-11-27T16:30:46.1086465Z apps/memory_api/clients/rae_client.py                          270     32    88%   116-119, 242-244, 298, 374-383, 465, 472, 507-508, 512, 516, 561-562, 589, 604, 715, 741, 747, 796-802
+2025-11-27T16:30:46.1087604Z apps/memory_api/config.py                                       49      1    98%   40
+2025-11-27T16:30:46.1088242Z apps/memory_api/cost_model.py                                    8      6    25%   53-61
+2025-11-27T16:30:46.1088999Z apps/memory_api/dependencies.py                                 34     19    44%   38-42, 60, 78-80, 93-95, 116-123, 139-145
+2025-11-27T16:30:46.1089899Z apps/memory_api/logging_config.py                               24      0   100%
+2025-11-27T16:30:46.1090613Z apps/memory_api/main.py                                         81     18    78%   51-72, 115, 194-201, 209-215, 229-230, 249-250, 290
+2025-11-27T16:30:46.1091280Z apps/memory_api/metrics.py                                      22      0   100%
+2025-11-27T16:30:46.1092003Z apps/memory_api/middleware/cost_guard.py                       144    124    14%   63-95, 111-128, 166-476
+2025-11-27T16:30:46.1092871Z apps/memory_api/middleware/rate_limiter.py                      51     31    39%   55-74, 106-114, 165-177, 200-211
+2025-11-27T16:30:46.1093686Z apps/memory_api/middleware/tenant.py                             9      0   100%
+2025-11-27T16:30:46.1094370Z apps/memory_api/models.py                                       68      0   100%
+2025-11-27T16:30:46.1095047Z apps/memory_api/models/__init__.py                              22      0   100%
+2025-11-27T16:30:46.1095747Z apps/memory_api/models/dashboard_models.py                     286      0   100%
+2025-11-27T16:30:46.1096482Z apps/memory_api/models/evaluation_models.py                    256      0   100%
+2025-11-27T16:30:46.1097363Z apps/memory_api/models/event_models.py                         244      0   100%
+2025-11-27T16:30:46.1098051Z apps/memory_api/models/graph.py                                 17      0   100%
+2025-11-27T16:30:46.1098742Z apps/memory_api/models/graph_enhanced_models.py                254      0   100%
+2025-11-27T16:30:46.1099684Z apps/memory_api/models/hybrid_search_models.py                 164      0   100%
+2025-11-27T16:30:46.1100422Z apps/memory_api/models/rbac.py                                  95     17    82%   135, 207-224, 234-239
+2025-11-27T16:30:46.1101175Z apps/memory_api/models/reflection_models.py                    169      1    99%   69
+2025-11-27T16:30:46.1101935Z apps/memory_api/models/tenant.py                                94     11    88%   193-200, 212-215
+2025-11-27T16:30:46.1102669Z apps/memory_api/observability/__init__.py                        2      0   100%
+2025-11-27T16:30:46.1103724Z apps/memory_api/observability/opentelemetry_config.py          104     71    32%   136-191, 215-219, 235-254, 275-278, 292-298, 312-318, 352-363, 368-371, 380-383, 388-391
+2025-11-27T16:30:46.1104743Z apps/memory_api/plugins/__init__.py                              2      0   100%
+2025-11-27T16:30:46.1105675Z apps/memory_api/plugins/base.py                                190     44    77%   137, 185, 198, 214, 232, 242, 252, 268, 281, 296, 309, 329, 378-379, 421-426, 435-436, 456, 470-471, 501-535, 550-551
+2025-11-27T16:30:46.1106620Z apps/memory_api/repositories/__init__.py                         0      0   100%
+2025-11-27T16:30:46.1107584Z apps/memory_api/repositories/cost_logs_repository.py           141     60    57%   176-242, 279-357, 374-382, 401-408, 425-433, 452-459, 493-543, 577-634, 657-685
+2025-11-27T16:30:46.1109207Z apps/memory_api/repositories/graph_repository.py               131    106    19%   33, 53-139, 162, 180-216, 232-253, 275-293, 319-338, 358-380, 403-423, 448-469, 485-496, 517-584, 601-611, 628-638, 653-664, 682-722, 737-753, 767-783, 809-843
+2025-11-27T16:30:46.1111051Z apps/memory_api/repositories/graph_repository_enhanced.py      130     99    24%   60, 90-108, 114-127, 133-146, 162-184, 208-216, 260-297, 303-329, 335-350, 354-366, 372-386, 413-436, 471-534, 563-591, 618-631, 635-642, 648-660, 675-689, 708-740, 778-800, 808, 820, 841
+2025-11-27T16:30:46.1112593Z apps/memory_api/repositories/memory_repository.py               77     62    19%   30, 59-104, 122-140, 155-170, 185-196, 211-222, 238-263, 279-299, 315-335, 363-405
+2025-11-27T16:30:46.1114057Z apps/memory_api/repositories/reflection_repository.py          158    140    11%   83-157, 174-185, 222-295, 312-333, 374-420, 443-471, 494-569, 591-600, 635-659, 669-689, 720
+2025-11-27T16:30:46.1115071Z apps/memory_api/routes/__init__.py                               1      0   100%
+2025-11-27T16:30:46.1116126Z apps/memory_api/routes/dashboard.py                            239    202    15%   68, 74-78, 114-163, 182-217, 240-274, 296-351, 368-397, 409-421, 444-466, 479, 490-556, 563-643, 650-720, 731-779, 791-806, 811-832, 837-860, 875
+2025-11-27T16:30:46.1117390Z apps/memory_api/routes/evaluation.py                            91     59    35%   40, 64-89, 99, 160-193, 203, 250-280, 293-311, 331-358, 368, 406-418, 428, 454, 477
+2025-11-27T16:30:46.1118727Z apps/memory_api/routes/event_triggers.py                       159    114    28%   48, 69-89, 95-109, 126-139, 145-154, 160-171, 177-188, 204-219, 237-267, 277, 312-334, 356-373, 379-391, 399-406, 421, 440-457, 479-512, 523, 555
+2025-11-27T16:30:46.1120443Z apps/memory_api/routes/graph_enhanced.py                       225    179    20%   63, 79-94, 106-122, 134-151, 167-203, 211-226, 234-245, 253-264, 272-287, 306-361, 376-417, 432-457, 473-504, 510-526, 534-545, 557-581, 598-617, 632-654, 664-706, 717
+2025-11-27T16:30:46.1121808Z apps/memory_api/routes/hybrid_search.py                        104     75    28%   38, 60-96, 115-137, 148-167, 182-194, 209-228, 238-264, 282-369, 394-426, 437, 461
+2025-11-27T16:30:46.1123056Z apps/memory_api/routes/reflections.py                           98     71    28%   45, 83-104, 142-200, 225-247, 270-282, 316-352, 387-420, 447-453, 481-510
+2025-11-27T16:30:46.1123924Z apps/memory_api/security/__init__.py                             4      0   100%
+2025-11-27T16:30:46.1124667Z apps/memory_api/security/auth.py                                42     30    29%   38-56, 81-109, 126-129, 151-156
+2025-11-27T16:30:46.1125487Z apps/memory_api/security/rate_limit.py                          78     63    19%   31-32, 36-48, 63-77, 99-179, 189-191, 208-225
+2025-11-27T16:30:46.1126419Z apps/memory_api/security/validation.py                          87     68    22%   40-56, 72-95, 111-150, 166-177, 193-203, 219-236, 252-269, 286-301
+2025-11-27T16:30:46.1127283Z apps/memory_api/services/__init__.py                             0      0   100%
+2025-11-27T16:30:46.1128043Z apps/memory_api/services/analytics.py                          193      4    98%   339-342, 346
+2025-11-27T16:30:46.1128935Z apps/memory_api/services/budget_service.py                      88     52    41%   74, 95-136, 160-297, 323-351, 376-458, 487-521
+2025-11-27T16:30:46.1130102Z apps/memory_api/services/community_detection.py                 81     60    26%   48-50, 54-55, 69-100, 114-137, 142-165, 187-208, 226-254
+2025-11-27T16:30:46.1131053Z apps/memory_api/services/context_cache.py                       62     42    32%   21, 31, 34, 39-49, 54-57, 63-102, 106
+2025-11-27T16:30:46.1132018Z apps/memory_api/services/cost_controller.py                     55     43    22%   79-146, 171-174, 194-200, 224-241, 260-261, 277-284, 309, 344-359
+2025-11-27T16:30:46.1133282Z apps/memory_api/services/dashboard_websocket.py                182     79    57%   131, 175-177, 201, 205-210, 247-253, 257-271, 296, 307, 346-357, 365-372, 410-425, 439-451, 461-498, 620-622, 638, 662-703
+2025-11-27T16:30:46.1134553Z apps/memory_api/services/drift_detector.py                     108     33    69%   102-104, 118-124, 248, 292, 329, 333, 357-373, 423-434, 445
+2025-11-27T16:30:46.1135478Z apps/memory_api/services/embedding.py                           28     15    46%   28-29, 36-55, 62-64, 72
+2025-11-27T16:30:46.1136375Z apps/memory_api/services/entity_resolution.py                   74     54    27%   52-57, 69-107, 116-132, 137-161, 187-222, 240
+2025-11-27T16:30:46.1137348Z apps/memory_api/services/evaluation_service.py                 139     82    41%   74-205, 233-234, 275, 330, 357-385, 408-442, 464-474
+2025-11-27T16:30:46.1138755Z apps/memory_api/services/graph_algorithms.py                   298     41    86%   34, 55, 93, 126-127, 135-140, 160-165, 191-193, 231, 308, 329, 350-361, 394, 405, 418-419, 445, 451, 454, 490, 554, 573, 589, 665-671, 685-691
+2025-11-27T16:30:46.1140204Z apps/memory_api/services/graph_extraction.py                   132     91    31%   39-47, 100, 106, 115, 165-205, 258-260, 264-265, 299-406, 415-467, 483, 497-515, 534-545
+2025-11-27T16:30:46.1141426Z apps/memory_api/services/hybrid_cache.py                        90     71    21%   48-58, 82-105, 126-153, 176-185, 202-216, 225-236, 240-248, 257-260, 269, 283-285, 300-302
+2025-11-27T16:30:46.1142532Z apps/memory_api/services/hybrid_search.py                      114     88    23%   81-83, 122-230, 254-308, 318, 341-358, 383-388, 411-470, 482-493
+2025-11-27T16:30:46.1143604Z apps/memory_api/services/hybrid_search_service.py              226    207     8%   93-98, 145-336, 353-407, 418-473, 485-624, 636-680, 705-776, 796-850
+2025-11-27T16:30:46.1144548Z apps/memory_api/services/llm/__init__.py                        20     10    50%   18-33
+2025-11-27T16:30:46.1145359Z apps/memory_api/services/llm/anthropic.py                       30     17    43%   18-21, 30-54, 65-78
+2025-11-27T16:30:46.1146145Z apps/memory_api/services/llm/base.py                            14      0   100%
+2025-11-27T16:30:46.1146900Z apps/memory_api/services/llm/gemini.py                          33     20    39%   18-22, 31-52, 63-74
+2025-11-27T16:30:46.1147737Z apps/memory_api/services/llm/litellm_provider.py                19     10    47%   17-20, 28-43, 62-72
+2025-11-27T16:30:46.1148758Z apps/memory_api/services/llm/ollama.py                          43     30    30%   18-21, 30-62, 73-95
+2025-11-27T16:30:46.1149717Z apps/memory_api/services/llm/openai.py                          30     17    43%   18-21, 30-53, 64-76
+2025-11-27T16:30:46.1150740Z apps/memory_api/services/ml_service_client.py                  122     99    19%   50-54, 58-59, 63-68, 76-90, 94, 125-130, 138, 159-204, 222-250, 268-294, 312-337, 356-385, 396-409, 418-420
+2025-11-27T16:30:46.1151782Z apps/memory_api/services/pii_scrubber.py                        24     17    29%   29-30, 40-45, 51-56, 72-89
+2025-11-27T16:30:46.1152706Z apps/memory_api/services/query_analyzer.py                      91     62    32%   128-129, 148-197, 216-241, 257-269, 283-312, 344, 363-383
+2025-11-27T16:30:46.1153636Z apps/memory_api/services/redis_client.py                         5      2    60%   7-8
+2025-11-27T16:30:46.1154619Z apps/memory_api/services/reflection_engine.py                   98     69    30%   79-82, 89-126, 138-154, 167-178, 207-239, 268-319, 335-361, 373-388, 400-412, 425-441
+2025-11-27T16:30:46.1155837Z apps/memory_api/services/reflection_pipeline.py                194    168    13%   126-128, 132-133, 151-247, 258-290, 306-380, 391-473, 479-559, 571-600, 609-615, 624-633
+2025-11-27T16:30:46.1157423Z apps/memory_api/services/rules_engine.py                       202    102    50%   95-108, 137-159, 181-183, 196-197, 226, 232, 238, 245-249, 252-260, 266, 269-272, 277-278, 282, 304, 323, 332-341, 357, 360, 384-412, 486-525, 549-569, 592-600, 606-609, 615-618, 624-629, 639-642, 648-651
+2025-11-27T16:30:46.1158791Z apps/memory_api/services/scoring.py                             28     20    29%   15-29, 36, 44-64, 72-79
+2025-11-27T16:30:46.1159765Z apps/memory_api/services/temporal_graph.py                     186      9    95%   48, 74, 85, 182, 279, 338-340, 426, 478
+2025-11-27T16:30:46.1160621Z apps/memory_api/services/token_estimator.py                      4      3    25%   8-10
+2025-11-27T16:30:46.1161452Z apps/memory_api/services/vector_store/__init__.py               16      8    50%   17-28
+2025-11-27T16:30:46.1162234Z apps/memory_api/services/vector_store/base.py                    6      0   100%
+2025-11-27T16:30:46.1163095Z apps/memory_api/services/vector_store/pgvector_store.py         23     11    52%   17, 25-32, 46-55, 62
+2025-11-27T16:30:46.1164253Z apps/memory_api/services/vector_store/qdrant_store.py           64     43    33%   49-66, 70-74, 80-106, 129-160, 170-180, 198-208
+2025-11-27T16:30:46.1165095Z apps/memory_api/tasks/__init__.py                                0      0   100%
+2025-11-27T16:30:46.1165880Z apps/memory_api/tasks/background_tasks.py                      121     27    78%   18, 47-66, 123-125, 268-278, 289-301
+2025-11-27T16:30:46.1166657Z apps/memory_api/tests/__init__.py                                0      0   100%
+2025-11-27T16:30:46.1167384Z apps/memory_api/tests/conftest.py                               68     30    56%   16-18, 24, 52-55, 146-163, 183-266, 281
+2025-11-27T16:30:46.1168170Z apps/memory_api/tests/test_analytics.py                        121      0   100%
+2025-11-27T16:30:46.1168901Z apps/memory_api/tests/test_api_client.py                       155      1    99%   116
+2025-11-27T16:30:46.1169777Z apps/memory_api/tests/test_api_e2e.py                           26      4    85%   57, 71, 86, 119
+2025-11-27T16:30:46.1170536Z apps/memory_api/tests/test_background_tasks.py                 131      1    99%   334
+2025-11-27T16:30:46.1171295Z apps/memory_api/tests/test_dashboard_websocket.py               96      0   100%
+2025-11-27T16:30:46.1172011Z apps/memory_api/tests/test_evaluation_suite.py                  79      0   100%
+2025-11-27T16:30:46.1172702Z apps/memory_api/tests/test_event_triggers.py                    92      0   100%
+2025-11-27T16:30:46.1173415Z apps/memory_api/tests/test_graph_algorithms.py                 178      0   100%
+2025-11-27T16:30:46.1174174Z apps/memory_api/tests/test_graph_extraction.py                 136    132     3%   18-418
+2025-11-27T16:30:46.1175162Z apps/memory_api/tests/test_graph_extraction_integration.py     132    130     2%   23-441
+2025-11-27T16:30:46.1175956Z apps/memory_api/tests/test_hybrid_search.py                    223    220     1%   17-931
+2025-11-27T16:30:46.1176701Z apps/memory_api/tests/test_openapi.py                           10      0   100%
+2025-11-27T16:30:46.1177477Z apps/memory_api/tests/test_phase2_models.py                    158      1    99%   325
+2025-11-27T16:30:46.1178250Z apps/memory_api/tests/test_phase2_plugins.py                   209      1    99%   425
+2025-11-27T16:30:46.1179011Z apps/memory_api/tests/test_pii_scrubber.py                      74     72     3%   25-197
+2025-11-27T16:30:46.1179985Z apps/memory_api/tests/test_reflection_simple.py                 51     45    12%   20-143
+2025-11-27T16:30:46.1180792Z apps/memory_api/tests/test_semantic_memory.py                   70     65     7%   24-216
+2025-11-27T16:30:46.1181555Z apps/memory_api/tests/test_temporal_graph.py                   176      0   100%
+2025-11-27T16:30:46.1182332Z apps/memory_api/tests/test_vector_store.py                      75     72     4%   26-212
+2025-11-27T16:30:46.1183056Z ------------------------------------------------------------------------------------------
+2025-11-27T16:30:46.1183605Z TOTAL                                                        10608   4647    56%
+2025-11-27T16:30:46.1184052Z Coverage HTML written to dir htmlcov
+2025-11-27T16:30:46.1184451Z Coverage XML written to file coverage.xml
+2025-11-27T16:30:46.9933244Z [32mRequired test coverage of 55% reached. Total coverage: 56.19%
+2025-11-27T16:30:46.9934130Z [0m============================= slowest 10 durations =============================
+2025-11-27T16:30:46.9934941Z 1.20s call     apps/memory_api/tests/test_api_client.py::test_cache_expiration
+2025-11-27T16:30:46.9936036Z 1.01s call     apps/memory_api/tests/test_background_tasks.py::TestExtractGraphLazy::test_extract_graph_with_mini_model
+2025-11-27T16:30:46.9937266Z 0.71s call     apps/memory_api/tests/test_api_client.py::test_retry_exhausted
+2025-11-27T16:30:46.9938261Z 0.55s call     apps/memory_api/tests/test_background_tasks.py::TestExtractGraphLazy::test_extract_graph_pool_cleanup
+2025-11-27T16:30:46.9939678Z 0.52s call     apps/memory_api/tests/test_background_tasks.py::TestExtractGraphLazy::test_extract_graph_success
+2025-11-27T16:30:46.9940983Z 0.39s call     apps/memory_api/tests/test_openapi.py::test_openapi_schema
+2025-11-27T16:30:46.9941710Z 0.30s call     apps/memory_api/tests/test_api_client.py::test_retry_on_network_error
+2025-11-27T16:30:46.9942580Z 0.07s call     apps/memory_api/tests/test_api_e2e.py::TestAPIErrorHandling::test_missing_tenant_header
+2025-11-27T16:30:46.9943449Z 0.02s setup    apps/memory_api/tests/test_api_client.py::test_no_retry_on_client_error
+2025-11-27T16:30:46.9944217Z 0.02s setup    apps/memory_api/tests/test_api_client.py::test_retry_on_network_error
+2025-11-27T16:30:46.9945278Z [33m================= [32m154 passed[0m, [33m[1m10 skipped[0m, [33m[1m1 warning[0m[33m in 22.47s[0m[33m ==================[0m
+2025-11-27T16:30:47.8095843Z ##[group]Run pytest -m "integration" --cov --cov-append --cov-report=xml --cov-report=term || true
+2025-11-27T16:30:47.8096488Z [36;1mpytest -m "integration" --cov --cov-append --cov-report=xml --cov-report=term || true[0m
+2025-11-27T16:30:47.8129608Z shell: /usr/bin/bash -e {0}
+2025-11-27T16:30:47.8129833Z env:
+2025-11-27T16:30:47.8130071Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-27T16:30:47.8130473Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-27T16:30:47.8130860Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-27T16:30:47.8131198Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-27T16:30:47.8131539Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-27T16:30:47.8131878Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-27T16:30:47.8132634Z   DATABASE_URL: ***localhost:5432/test_rae
+2025-11-27T16:30:47.8132951Z   REDIS_URL: redis://localhost:6379/0
+2025-11-27T16:30:47.8133202Z   QDRANT_URL: http://localhost:6333
+2025-11-27T16:30:47.8133441Z   RAE_VECTOR_BACKEND: qdrant
+2025-11-27T16:30:47.8133651Z ##[endgroup]
+2025-11-27T16:30:48.1208409Z [1m============================= test session starts ==============================[0m
+2025-11-27T16:30:48.1209527Z platform linux -- Python 3.11.14, pytest-9.0.1, pluggy-1.6.0 -- /opt/hostedtoolcache/Python/3.11.14/x64/bin/python
+2025-11-27T16:30:48.1210236Z cachedir: .pytest_cache
+2025-11-27T16:30:48.1210700Z rootdir: /home/runner/work/RAE-agentic-memory/RAE-agentic-memory
+2025-11-27T16:30:48.1211212Z configfile: pytest.ini
+2025-11-27T16:30:48.1211797Z testpaths: apps/memory_api/tests, sdk/python/rae_memory_sdk/tests, integrations/mcp-server/tests
+2025-11-27T16:30:48.1212538Z plugins: anyio-4.11.0, cov-7.0.0, asyncio-1.3.0, mock-3.15.1
+2025-11-27T16:30:48.1213360Z asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+2025-11-27T16:31:00.4052843Z [1mcollecting ... [0mcollected 157 items / 157 deselected / 7 skipped / 0 selected
+2025-11-27T16:31:00.4053390Z 
+2025-11-27T16:31:00.4053667Z [33m=============================== warnings summary ===============================[0m
+2025-11-27T16:31:00.4054378Z ../../../../../opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages/starlette/formparsers.py:12
+2025-11-27T16:31:00.4055617Z   /opt/hostedtoolcache/Python/3.11.14/x64/lib/python3.11/site-packages/starlette/formparsers.py:12: PendingDeprecationWarning: Please use `import python_multipart` instead.
+2025-11-27T16:31:00.4056605Z     import multipart
+2025-11-27T16:31:00.4056760Z 
+2025-11-27T16:31:00.4057017Z -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+2025-11-27T16:31:00.4057533Z ================================ tests coverage ================================
+2025-11-27T16:31:00.4058023Z _______________ coverage: platform linux, python 3.11.14-final-0 _______________
+2025-11-27T16:31:00.4058363Z 
+2025-11-27T16:31:00.4058527Z Name                                                         Stmts   Miss  Cover   Missing
+2025-11-27T16:31:00.4058987Z ------------------------------------------------------------------------------------------
+2025-11-27T16:31:00.4059751Z apps/__init__.py                                                 0      0   100%
+2025-11-27T16:31:00.4060459Z apps/memory_api/__init__.py                                      0      0   100%
+2025-11-27T16:31:00.4060873Z apps/memory_api/api/__init__.py                                  0      0   100%
+2025-11-27T16:31:00.4061283Z apps/memory_api/api/v1/__init__.py                               0      0   100%
+2025-11-27T16:31:00.4061725Z apps/memory_api/api/v1/agent.py                                 89     68    24%   48-222, 249-271
+2025-11-27T16:31:00.4062180Z apps/memory_api/api/v1/cache.py                                  8      2    75%   14-15
+2025-11-27T16:31:00.4062838Z apps/memory_api/api/v1/governance.py                           122     75    39%   103-175, 197-300, 319-419
+2025-11-27T16:31:00.4063411Z apps/memory_api/api/v1/graph.py                                192    123    36%   150-190, 219-272, 296-359, 400-512, 541-591, 628-684, 716-818
+2025-11-27T16:31:00.4064000Z apps/memory_api/api/v1/health.py                               127     86    32%   59-95, 102-135, 142-174, 189-204, 228-265, 282-287, 303, 322-351
+2025-11-27T16:31:00.4064580Z apps/memory_api/api/v1/memory.py                               139    110    21%   43-103, 127-239, 247-275, 283-284, 292-306, 349-408
+2025-11-27T16:31:00.4065066Z apps/memory_api/celery_app.py                                    4      0   100%
+2025-11-27T16:31:00.4065657Z apps/memory_api/clients/rae_client.py                          270     32    88%   116-119, 242-244, 298, 374-383, 465, 472, 507-508, 512, 516, 561-562, 589, 604, 715, 741, 747, 796-802
+2025-11-27T16:31:00.4066243Z apps/memory_api/config.py                                       49      1    98%   40
+2025-11-27T16:31:00.4066670Z apps/memory_api/cost_model.py                                    8      6    25%   53-61
+2025-11-27T16:31:00.4067156Z apps/memory_api/dependencies.py                                 34     19    44%   38-42, 60, 78-80, 93-95, 116-123, 139-145
+2025-11-27T16:31:00.4067631Z apps/memory_api/logging_config.py                               24      0   100%
+2025-11-27T16:31:00.4068097Z apps/memory_api/main.py                                         81     18    78%   51-72, 115, 194-201, 209-215, 229-230, 249-250, 290
+2025-11-27T16:31:00.4068544Z apps/memory_api/metrics.py                                      22      0   100%
+2025-11-27T16:31:00.4069016Z apps/memory_api/middleware/cost_guard.py                       144    124    14%   63-95, 111-128, 166-476
+2025-11-27T16:31:00.4069707Z apps/memory_api/middleware/rate_limiter.py                      51     31    39%   55-74, 106-114, 165-177, 200-211
+2025-11-27T16:31:00.4070227Z apps/memory_api/middleware/tenant.py                             9      0   100%
+2025-11-27T16:31:00.4070662Z apps/memory_api/models.py                                       68      0   100%
+2025-11-27T16:31:00.4071063Z apps/memory_api/models/__init__.py                              22      0   100%
+2025-11-27T16:31:00.4071498Z apps/memory_api/models/dashboard_models.py                     286      0   100%
+2025-11-27T16:31:00.4071966Z apps/memory_api/models/evaluation_models.py                    256      0   100%
+2025-11-27T16:31:00.4072417Z apps/memory_api/models/event_models.py                         244      0   100%
+2025-11-27T16:31:00.4072840Z apps/memory_api/models/graph.py                                 17      0   100%
+2025-11-27T16:31:00.4073275Z apps/memory_api/models/graph_enhanced_models.py                254      0   100%
+2025-11-27T16:31:00.4073736Z apps/memory_api/models/hybrid_search_models.py                 164      0   100%
+2025-11-27T16:31:00.4074196Z apps/memory_api/models/rbac.py                                  95     17    82%   135, 207-224, 234-239
+2025-11-27T16:31:00.4074675Z apps/memory_api/models/reflection_models.py                    169      1    99%   69
+2025-11-27T16:31:00.4075155Z apps/memory_api/models/tenant.py                                94     11    88%   193-200, 212-215
+2025-11-27T16:31:00.4075615Z apps/memory_api/observability/__init__.py                        2      0   100%
+2025-11-27T16:31:00.4076377Z apps/memory_api/observability/opentelemetry_config.py          104     71    32%   136-191, 215-219, 235-254, 275-278, 292-298, 312-318, 352-363, 368-371, 380-383, 388-391
+2025-11-27T16:31:00.4076997Z apps/memory_api/plugins/__init__.py                              2      0   100%
+2025-11-27T16:31:00.4077578Z apps/memory_api/plugins/base.py                                190     44    77%   137, 185, 198, 214, 232, 242, 252, 268, 281, 296, 309, 329, 378-379, 421-426, 435-436, 456, 470-471, 501-535, 550-551
+2025-11-27T16:31:00.4078160Z apps/memory_api/repositories/__init__.py                         0      0   100%
+2025-11-27T16:31:00.4078878Z apps/memory_api/repositories/cost_logs_repository.py           141     60    57%   176-242, 279-357, 374-382, 401-408, 425-433, 452-459, 493-543, 577-634, 657-685
+2025-11-27T16:31:00.4079893Z apps/memory_api/repositories/graph_repository.py               131    106    19%   33, 53-139, 162, 180-216, 232-253, 275-293, 319-338, 358-380, 403-423, 448-469, 485-496, 517-584, 601-611, 628-638, 653-664, 682-722, 737-753, 767-783, 809-843
+2025-11-27T16:31:00.4081022Z apps/memory_api/repositories/graph_repository_enhanced.py      130     99    24%   60, 90-108, 114-127, 133-146, 162-184, 208-216, 260-297, 303-329, 335-350, 354-366, 372-386, 413-436, 471-534, 563-591, 618-631, 635-642, 648-660, 675-689, 708-740, 778-800, 808, 820, 841
+2025-11-27T16:31:00.4081984Z apps/memory_api/repositories/memory_repository.py               77     62    19%   30, 59-104, 122-140, 155-170, 185-196, 211-222, 238-263, 279-299, 315-335, 363-405
+2025-11-27T16:31:00.4082778Z apps/memory_api/repositories/reflection_repository.py          158    140    11%   83-157, 174-185, 222-295, 312-333, 374-420, 443-471, 494-569, 591-600, 635-659, 669-689, 720
+2025-11-27T16:31:00.4083405Z apps/memory_api/routes/__init__.py                               1      0   100%
+2025-11-27T16:31:00.4084059Z apps/memory_api/routes/dashboard.py                            239    202    15%   68, 74-78, 114-163, 182-217, 240-274, 296-351, 368-397, 409-421, 444-466, 479, 490-556, 563-643, 650-720, 731-779, 791-806, 811-832, 837-860, 875
+2025-11-27T16:31:00.4084835Z apps/memory_api/routes/evaluation.py                            91     59    35%   40, 64-89, 99, 160-193, 203, 250-280, 293-311, 331-358, 368, 406-418, 428, 454, 477
+2025-11-27T16:31:00.4085610Z apps/memory_api/routes/event_triggers.py                       159    114    28%   48, 69-89, 95-109, 126-139, 145-154, 160-171, 177-188, 204-219, 237-267, 277, 312-334, 356-373, 379-391, 399-406, 421, 440-457, 479-512, 523, 555
+2025-11-27T16:31:00.4086568Z apps/memory_api/routes/graph_enhanced.py                       225    179    20%   63, 79-94, 106-122, 134-151, 167-203, 211-226, 234-245, 253-264, 272-287, 306-361, 376-417, 432-457, 473-504, 510-526, 534-545, 557-581, 598-617, 632-654, 664-706, 717
+2025-11-27T16:31:00.4087401Z apps/memory_api/routes/hybrid_search.py                        104     75    28%   38, 60-96, 115-137, 148-167, 182-194, 209-228, 238-264, 282-369, 394-426, 437, 461
+2025-11-27T16:31:00.4088056Z apps/memory_api/routes/reflections.py                           98     71    28%   45, 83-104, 142-200, 225-247, 270-282, 316-352, 387-420, 447-453, 481-510
+2025-11-27T16:31:00.4088589Z apps/memory_api/security/__init__.py                             4      0   100%
+2025-11-27T16:31:00.4089415Z apps/memory_api/security/auth.py                                42     30    29%   38-56, 81-109, 126-129, 151-156
+2025-11-27T16:31:00.4090339Z apps/memory_api/security/rate_limit.py                          78     63    19%   31-32, 36-48, 63-77, 99-179, 189-191, 208-225
+2025-11-27T16:31:00.4091003Z apps/memory_api/security/validation.py                          87     68    22%   40-56, 72-95, 111-150, 166-177, 193-203, 219-236, 252-269, 286-301
+2025-11-27T16:31:00.4091527Z apps/memory_api/services/__init__.py                             0      0   100%
+2025-11-27T16:31:00.4091987Z apps/memory_api/services/analytics.py                          193      4    98%   339-342, 346
+2025-11-27T16:31:00.4092717Z apps/memory_api/services/budget_service.py                      88     52    41%   74, 95-136, 160-297, 323-351, 376-458, 487-521
+2025-11-27T16:31:00.4093350Z apps/memory_api/services/community_detection.py                 81     60    26%   48-50, 54-55, 69-100, 114-137, 142-165, 187-208, 226-254
+2025-11-27T16:31:00.4093954Z apps/memory_api/services/context_cache.py                       62     42    32%   21, 31, 34, 39-49, 54-57, 63-102, 106
+2025-11-27T16:31:00.4094556Z apps/memory_api/services/cost_controller.py                     55     43    22%   79-146, 171-174, 194-200, 224-241, 260-261, 277-284, 309, 344-359
+2025-11-27T16:31:00.4095428Z apps/memory_api/services/dashboard_websocket.py                182     79    57%   131, 175-177, 201, 205-210, 247-253, 257-271, 296, 307, 346-357, 365-372, 410-425, 439-451, 461-498, 620-622, 638, 662-703
+2025-11-27T16:31:00.4096203Z apps/memory_api/services/drift_detector.py                     108     33    69%   102-104, 118-124, 248, 292, 329, 333, 357-373, 423-434, 445
+2025-11-27T16:31:00.4096778Z apps/memory_api/services/embedding.py                           28     15    46%   28-29, 36-55, 62-64, 72
+2025-11-27T16:31:00.4097343Z apps/memory_api/services/entity_resolution.py                   74     54    27%   52-57, 69-107, 116-132, 137-161, 187-222, 240
+2025-11-27T16:31:00.4097958Z apps/memory_api/services/evaluation_service.py                 139     82    41%   74-205, 233-234, 275, 330, 357-385, 408-442, 464-474
+2025-11-27T16:31:00.4098728Z apps/memory_api/services/graph_algorithms.py                   298     41    86%   34, 55, 93, 126-127, 135-140, 160-165, 191-193, 231, 308, 329, 350-361, 394, 405, 418-419, 445, 451, 454, 490, 554, 573, 589, 665-671, 685-691
+2025-11-27T16:31:00.4099775Z apps/memory_api/services/graph_extraction.py                   132     91    31%   39-47, 100, 106, 115, 165-205, 258-260, 264-265, 299-406, 415-467, 483, 497-515, 534-545
+2025-11-27T16:31:00.4100499Z apps/memory_api/services/hybrid_cache.py                        90     71    21%   48-58, 82-105, 126-153, 176-185, 202-216, 225-236, 240-248, 257-260, 269, 283-285, 300-302
+2025-11-27T16:31:00.4101168Z apps/memory_api/services/hybrid_search.py                      114     88    23%   81-83, 122-230, 254-308, 318, 341-358, 383-388, 411-470, 482-493
+2025-11-27T16:31:00.4101837Z apps/memory_api/services/hybrid_search_service.py              226    207     8%   93-98, 145-336, 353-407, 418-473, 485-624, 636-680, 705-776, 796-850
+2025-11-27T16:31:00.4102429Z apps/memory_api/services/llm/__init__.py                        20     10    50%   18-33
+2025-11-27T16:31:00.4102931Z apps/memory_api/services/llm/anthropic.py                       30     17    43%   18-21, 30-54, 65-78
+2025-11-27T16:31:00.4103419Z apps/memory_api/services/llm/base.py                            14      0   100%
+2025-11-27T16:31:00.4103895Z apps/memory_api/services/llm/gemini.py                          33     20    39%   18-22, 31-52, 63-74
+2025-11-27T16:31:00.4104419Z apps/memory_api/services/llm/litellm_provider.py                19     10    47%   17-20, 28-43, 62-72
+2025-11-27T16:31:00.4104938Z apps/memory_api/services/llm/ollama.py                          43     30    30%   18-21, 30-62, 73-95
+2025-11-27T16:31:00.4105425Z apps/memory_api/services/llm/openai.py                          30     17    43%   18-21, 30-53, 64-76
+2025-11-27T16:31:00.4106066Z apps/memory_api/services/ml_service_client.py                  122     99    19%   50-54, 58-59, 63-68, 76-90, 94, 125-130, 138, 159-204, 222-250, 268-294, 312-337, 356-385, 396-409, 418-420
+2025-11-27T16:31:00.4106712Z apps/memory_api/services/pii_scrubber.py                        24     17    29%   29-30, 40-45, 51-56, 72-89
+2025-11-27T16:31:00.4107291Z apps/memory_api/services/query_analyzer.py                      91     62    32%   128-129, 148-197, 216-241, 257-269, 283-312, 344, 363-383
+2025-11-27T16:31:00.4107835Z apps/memory_api/services/redis_client.py                         5      2    60%   7-8
+2025-11-27T16:31:00.4108581Z apps/memory_api/services/reflection_engine.py                   98     69    30%   79-82, 89-126, 138-154, 167-178, 207-239, 268-319, 335-361, 373-388, 400-412, 425-441
+2025-11-27T16:31:00.4109448Z apps/memory_api/services/reflection_pipeline.py                194    168    13%   126-128, 132-133, 151-247, 258-290, 306-380, 391-473, 479-559, 571-600, 609-615, 624-633
+2025-11-27T16:31:00.4110518Z apps/memory_api/services/rules_engine.py                       202    102    50%   95-108, 137-159, 181-183, 196-197, 226, 232, 238, 245-249, 252-260, 266, 269-272, 277-278, 282, 304, 323, 332-341, 357, 360, 384-412, 486-525, 549-569, 592-600, 606-609, 615-618, 624-629, 639-642, 648-651
+2025-11-27T16:31:00.4111336Z apps/memory_api/services/scoring.py                             28     20    29%   15-29, 36, 44-64, 72-79
+2025-11-27T16:31:00.4111874Z apps/memory_api/services/temporal_graph.py                     186      9    95%   48, 74, 85, 182, 279, 338-340, 426, 478
+2025-11-27T16:31:00.4112415Z apps/memory_api/services/token_estimator.py                      4      3    25%   8-10
+2025-11-27T16:31:00.4112906Z apps/memory_api/services/vector_store/__init__.py               16      8    50%   17-28
+2025-11-27T16:31:00.4113392Z apps/memory_api/services/vector_store/base.py                    6      0   100%
+2025-11-27T16:31:00.4113921Z apps/memory_api/services/vector_store/pgvector_store.py         23     11    52%   17, 25-32, 46-55, 62
+2025-11-27T16:31:00.4114546Z apps/memory_api/services/vector_store/qdrant_store.py           64     43    33%   49-66, 70-74, 80-106, 129-160, 170-180, 198-208
+2025-11-27T16:31:00.4115074Z apps/memory_api/tasks/__init__.py                                0      0   100%
+2025-11-27T16:31:00.4115564Z apps/memory_api/tasks/background_tasks.py                      121     27    78%   18, 47-66, 123-125, 268-278, 289-301
+2025-11-27T16:31:00.4116046Z apps/memory_api/tests/__init__.py                                0      0   100%
+2025-11-27T16:31:00.4116512Z apps/memory_api/tests/conftest.py                               68     30    56%   16-18, 24, 52-55, 146-163, 183-266, 281
+2025-11-27T16:31:00.4116986Z apps/memory_api/tests/test_analytics.py                        121      0   100%
+2025-11-27T16:31:00.4117443Z apps/memory_api/tests/test_api_client.py                       155      1    99%   116
+2025-11-27T16:31:00.4117916Z apps/memory_api/tests/test_api_e2e.py                           26      4    85%   57, 71, 86, 119
+2025-11-27T16:31:00.4118395Z apps/memory_api/tests/test_background_tasks.py                 131      1    99%   334
+2025-11-27T16:31:00.4118866Z apps/memory_api/tests/test_dashboard_websocket.py               96      0   100%
+2025-11-27T16:31:00.4119435Z apps/memory_api/tests/test_evaluation_suite.py                  79      0   100%
+2025-11-27T16:31:00.4119880Z apps/memory_api/tests/test_event_triggers.py                    92      0   100%
+2025-11-27T16:31:00.4120322Z apps/memory_api/tests/test_graph_algorithms.py                 178      0   100%
+2025-11-27T16:31:00.4120809Z apps/memory_api/tests/test_graph_extraction.py                 136    132     3%   18-418
+2025-11-27T16:31:00.4121320Z apps/memory_api/tests/test_graph_extraction_integration.py     132    130     2%   23-441
+2025-11-27T16:31:00.4121819Z apps/memory_api/tests/test_hybrid_search.py                    223    220     1%   17-931
+2025-11-27T16:31:00.4122271Z apps/memory_api/tests/test_openapi.py                           10      0   100%
+2025-11-27T16:31:00.4122729Z apps/memory_api/tests/test_phase2_models.py                    158      1    99%   325
+2025-11-27T16:31:00.4123204Z apps/memory_api/tests/test_phase2_plugins.py                   209      1    99%   425
+2025-11-27T16:31:00.4123679Z apps/memory_api/tests/test_pii_scrubber.py                      74     72     3%   25-197
+2025-11-27T16:31:00.4124161Z apps/memory_api/tests/test_reflection_simple.py                 51     45    12%   20-143
+2025-11-27T16:31:00.4124658Z apps/memory_api/tests/test_semantic_memory.py                   70     65     7%   24-216
+2025-11-27T16:31:00.4125240Z apps/memory_api/tests/test_temporal_graph.py                   176      0   100%
+2025-11-27T16:31:00.4125693Z apps/memory_api/tests/test_vector_store.py                      75     72     4%   26-212
+2025-11-27T16:31:00.4126125Z ------------------------------------------------------------------------------------------
+2025-11-27T16:31:00.4126460Z TOTAL                                                        10608   4647    56%
+2025-11-27T16:31:00.4126737Z Coverage HTML written to dir htmlcov
+2025-11-27T16:31:00.4126993Z Coverage XML written to file coverage.xml
+2025-11-27T16:31:01.3420906Z [32mRequired test coverage of 55% reached. Total coverage: 56.19%
+2025-11-27T16:31:01.3422256Z [0m[33m================ [33m[1m7 skipped[0m, [33m[1m157 deselected[0m, [33m[1m1 warning[0m[33m in 12.29s[0m[33m ================[0m
+2025-11-27T16:31:02.2537372Z ##[group]Run codecov/codecov-action@v4
+2025-11-27T16:31:02.2537660Z with:
+2025-11-27T16:31:02.2537832Z   file: ./coverage.xml
+2025-11-27T16:31:02.2538020Z   flags: unittests
+2025-11-27T16:31:02.2538206Z   name: codecov-umbrella
+2025-11-27T16:31:02.2547897Z   fail_ci_if_error: false
+2025-11-27T16:31:02.2548272Z env:
+2025-11-27T16:31:02.2548656Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-27T16:31:02.2549527Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-27T16:31:02.2550176Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-27T16:31:02.2550705Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-27T16:31:02.2551294Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-27T16:31:02.2551896Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-27T16:31:02.2552337Z ##[endgroup]
+2025-11-27T16:31:02.3404871Z eventName: pull_request
+2025-11-27T16:31:02.3406570Z baseRef: dreamsoft-pro:main | headRef: dreamsoft-pro:rae-lite-and-fixes
+2025-11-27T16:31:02.3414372Z ==> linux OS detected
+2025-11-27T16:31:02.4952453Z https://cli.codecov.io/latest/linux/codecov.SHA256SUM
+2025-11-27T16:31:02.5578705Z gpg: directory '/home/runner/.gnupg' created
+2025-11-27T16:31:02.5584156Z gpg: keybox '/home/runner/.gnupg/pubring.kbx' created
+2025-11-27T16:31:02.5609618Z gpg: /home/runner/.gnupg/trustdb.gpg: trustdb created
+2025-11-27T16:31:02.5610968Z gpg: key 806BB28AED779869: public key "Codecov Uploader (Codecov Uploader Verification Key) <security@codecov.io>" imported
+2025-11-27T16:31:02.5754056Z gpg: Total number processed: 1
+2025-11-27T16:31:02.5755013Z gpg:               imported: 1
+2025-11-27T16:31:02.5838420Z gpg: Signature made Mon Nov 10 14:58:43 2025 UTC
+2025-11-27T16:31:02.5848378Z gpg:                using RSA key 27034E7FDB850E0BBC2C62FF806BB28AED779869
+2025-11-27T16:31:02.5849451Z gpg: Good signature from "Codecov Uploader (Codecov Uploader Verification Key) <security@codecov.io>" [unknown]
+2025-11-27T16:31:02.5850267Z gpg: WARNING: This key is not certified with a trusted signature!
+2025-11-27T16:31:02.5850874Z gpg:          There is no indication that the signature belongs to the owner.
+2025-11-27T16:31:02.5851516Z Primary key fingerprint: 2703 4E7F DB85 0E0B BC2C  62FF 806B B28A ED77 9869
+2025-11-27T16:31:02.6134970Z ==> Uploader SHASUM verified (80b5e6f898d6080be523f53ff169702a008a1c91b20c63c49df1175ed794d822  codecov)
+2025-11-27T16:31:02.6136219Z ==> Running version latest
+2025-11-27T16:31:02.6922390Z Could not pull latest version information: SyntaxError: Unexpected token '<', "<!DOCTYPE "... is not valid JSON
+2025-11-27T16:31:02.6925164Z ==> Running git config --global --add safe.directory /home/runner/work/RAE-agentic-memory/RAE-agentic-memory
+2025-11-27T16:31:02.7054617Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/RAE-agentic-memory/RAE-agentic-memory
+2025-11-27T16:31:02.7107427Z ==> Running command '/home/runner/work/_actions/codecov/codecov-action/v4/dist/codecov create-commit'
+2025-11-27T16:31:02.7110596Z [command]/home/runner/work/_actions/codecov/codecov-action/v4/dist/codecov create-commit --git-service github -C 9dbde0bfb57e59e4ed0464f13b2c2b2f99b07c95
+2025-11-27T16:31:03.0720034Z info - 2025-11-27 16:31:03,071 -- ci service found: github-actions
+2025-11-27T16:31:03.0813526Z warning - 2025-11-27 16:31:03,080 -- No config file could be found. Ignoring config.
+2025-11-27T16:31:03.1127842Z warning - 2025-11-27 16:31:03,112 -- Branch `rae-lite-and-fixes` is protected but no token was provided
+2025-11-27T16:31:03.1129361Z warning - 2025-11-27 16:31:03,112 -- For information on Codecov upload tokens, see https://docs.codecov.com/docs/codecov-tokens
+2025-11-27T16:31:03.2786134Z info - 2025-11-27 16:31:03,278 -- Process Commit creating complete
+2025-11-27T16:31:03.2787111Z error - 2025-11-27 16:31:03,278 -- Commit creating failed: {"message":"Token required - not valid tokenless upload"}
+2025-11-27T16:31:03.3853663Z Sentry is attempting to send 2 pending events
+2025-11-27T16:31:03.3854313Z Waiting up to 2 seconds
+2025-11-27T16:31:03.3854749Z Press Ctrl-C to quit
+2025-11-27T16:31:03.4548728Z ==> Running command '/home/runner/work/_actions/codecov/codecov-action/v4/dist/codecov create-report'
+2025-11-27T16:31:03.4551364Z [command]/home/runner/work/_actions/codecov/codecov-action/v4/dist/codecov create-report --git-service github -C 9dbde0bfb57e59e4ed0464f13b2c2b2f99b07c95
+2025-11-27T16:31:03.8050914Z info - 2025-11-27 16:31:03,804 -- ci service found: github-actions
+2025-11-27T16:31:03.8148015Z warning - 2025-11-27 16:31:03,814 -- No config file could be found. Ignoring config.
+2025-11-27T16:31:04.0276276Z info - 2025-11-27 16:31:04,026 -- Process Report creating complete
+2025-11-27T16:31:04.0284382Z error - 2025-11-27 16:31:04,028 -- Report creating failed: {"message":"Token required - not valid tokenless upload"}
+2025-11-27T16:31:04.1366205Z Sentry is attempting to send 2 pending events
+2025-11-27T16:31:04.1366905Z Waiting up to 2 seconds
+2025-11-27T16:31:04.1367322Z Press Ctrl-C to quit
+2025-11-27T16:31:04.2203210Z ==> Running command '/home/runner/work/_actions/codecov/codecov-action/v4/dist/codecov do-upload'
+2025-11-27T16:31:04.2205273Z [command]/home/runner/work/_actions/codecov/codecov-action/v4/dist/codecov do-upload -f ./coverage.xml -F unittests --git-service github -n codecov-umbrella -C 9dbde0bfb57e59e4ed0464f13b2c2b2f99b07c95
+2025-11-27T16:31:04.6217360Z info - 2025-11-27 16:31:04,621 -- ci service found: github-actions
+2025-11-27T16:31:04.6318089Z warning - 2025-11-27 16:31:04,631 -- No config file could be found. Ignoring config.
+2025-11-27T16:31:04.6661842Z warning - 2025-11-27 16:31:04,665 -- xcrun is not installed or can't be found.
+2025-11-27T16:31:04.6776217Z warning - 2025-11-27 16:31:04,677 -- No gcov data found.
+2025-11-27T16:31:04.6784978Z info - 2025-11-27 16:31:04,678 -- Generating coverage.xml report in /home/runner/work/RAE-agentic-memory/RAE-agentic-memory
+2025-11-27T16:31:06.4096652Z info - 2025-11-27 16:31:06,409 -- Wrote XML report to coverage.xml
+2025-11-27T16:31:06.4480393Z info - 2025-11-27 16:31:06,447 -- Found 1 coverage files to report
+2025-11-27T16:31:06.4481579Z info - 2025-11-27 16:31:06,447 -- > /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/coverage.xml
+2025-11-27T16:31:06.6310952Z info - 2025-11-27 16:31:06,630 -- Process Upload complete
+2025-11-27T16:31:06.6313937Z error - 2025-11-27 16:31:06,630 -- Upload failed: {"message":"Token required - not valid tokenless upload"}
+2025-11-27T16:31:06.7386068Z Sentry is attempting to send 2 pending events
+2025-11-27T16:31:06.7386509Z Waiting up to 2 seconds
+2025-11-27T16:31:06.7386779Z Press Ctrl-C to quit
+2025-11-27T16:31:06.8044751Z Post job cleanup.
+2025-11-27T16:31:06.9577535Z Cache hit occurred on the primary key setup-python-Linux-x64-24.04-Ubuntu-python-3.11.14-pip-95ebd838ea30dfa2c987f9bac75f820c290461fa42ed4bab22d8dee29c03de2a, not saving cache.
+2025-11-27T16:31:06.9678655Z Post job cleanup.
+2025-11-27T16:31:07.0634225Z [command]/usr/bin/git version
+2025-11-27T16:31:07.0670979Z git version 2.51.2
+2025-11-27T16:31:07.0714590Z Copying '/home/runner/.gitconfig' to '/home/runner/work/_temp/0c9c83a6-4371-4d65-a976-6efd85b2d6ba/.gitconfig'
+2025-11-27T16:31:07.0724844Z Temporarily overriding HOME='/home/runner/work/_temp/0c9c83a6-4371-4d65-a976-6efd85b2d6ba' before making global git config changes
+2025-11-27T16:31:07.0726031Z Adding repository directory to the temporary git global config as a safe directory
+2025-11-27T16:31:07.0730441Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/RAE-agentic-memory/RAE-agentic-memory
+2025-11-27T16:31:07.0764674Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-11-27T16:31:07.0796050Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-11-27T16:31:07.1027092Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-11-27T16:31:07.1048820Z http.https://github.com/.extraheader
+2025-11-27T16:31:07.1062145Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2025-11-27T16:31:07.1092857Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-11-27T16:31:07.1318224Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2025-11-27T16:31:07.1350547Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2025-11-27T16:31:07.1675995Z Print service container logs: 14576fd33b384cea8fafceaba492704f_ankanepgvectorlatest_6999f6
+2025-11-27T16:31:07.1680660Z ##[command]/usr/bin/docker logs --details 8ab5c4ef8477271ed427da58575861e02d4fe60f1a4e34f0e5935e7ae0a7c79b
+2025-11-27T16:31:07.1818630Z  The files belonging to this database system will be owned by user "postgres".
+2025-11-27T16:31:07.1819642Z  This user must also own the server process.
+2025-11-27T16:31:07.1821956Z  initdb: warning: enabling "trust" authentication for local connections
+2025-11-27T16:31:07.1822660Z  initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+2025-11-27T16:31:07.1823519Z  2025-11-27 16:29:21.832 UTC [1] LOG:  starting PostgreSQL 15.4 (Debian 15.4-2.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+2025-11-27T16:31:07.1824166Z  2025-11-27 16:29:21.833 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2025-11-27T16:31:07.1824670Z  2025-11-27 16:29:21.833 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2025-11-27T16:31:07.1825139Z  2025-11-27 16:29:21.834 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-11-27T16:31:07.1825656Z  2025-11-27 16:29:21.837 UTC [64] LOG:  database system was shut down at 2025-11-27 16:29:21 UTC
+2025-11-27T16:31:07.1826123Z  2025-11-27 16:29:21.841 UTC [1] LOG:  database system is ready to accept connections
+2025-11-27T16:31:07.1826521Z  2025-11-27 16:29:30.885 UTC [75] FATAL:  role "root" does not exist
+2025-11-27T16:31:07.1826874Z  2025-11-27 16:29:40.957 UTC [83] FATAL:  role "root" does not exist
+2025-11-27T16:31:07.1827203Z  2025-11-27 16:29:51.033 UTC [91] FATAL:  role "root" does not exist
+2025-11-27T16:31:07.1827552Z  2025-11-27 16:30:01.105 UTC [100] FATAL:  role "root" does not exist
+2025-11-27T16:31:07.1827890Z  2025-11-27 16:30:11.173 UTC [108] FATAL:  role "root" does not exist
+2025-11-27T16:31:07.1828223Z  2025-11-27 16:30:21.241 UTC [116] FATAL:  role "root" does not exist
+2025-11-27T16:31:07.1828561Z  2025-11-27 16:30:31.309 UTC [125] FATAL:  role "root" does not exist
+2025-11-27T16:31:07.1828882Z  2025-11-27 16:30:41.375 UTC [133] FATAL:  role "root" does not exist
+2025-11-27T16:31:07.1829522Z  2025-11-27 16:30:51.442 UTC [141] FATAL:  role "root" does not exist
+2025-11-27T16:31:07.1830226Z  2025-11-27 16:31:01.507 UTC [150] FATAL:  role "root" does not exist
+2025-11-27T16:31:07.1830493Z  
+2025-11-27T16:31:07.1830742Z  The database cluster will be initialized with locale "en_US.utf8".
+2025-11-27T16:31:07.1831140Z  The default database encoding has accordingly been set to "UTF8".
+2025-11-27T16:31:07.1831521Z  The default text search configuration will be set to "english".
+2025-11-27T16:31:07.1831807Z  
+2025-11-27T16:31:07.1831969Z  Data page checksums are disabled.
+2025-11-27T16:31:07.1832185Z  
+2025-11-27T16:31:07.1832448Z  fixing permissions on existing directory /var/lib/postgresql/data ... ok
+2025-11-27T16:31:07.1832815Z  creating subdirectories ... ok
+2025-11-27T16:31:07.1833095Z  selecting dynamic shared memory implementation ... posix
+2025-11-27T16:31:07.1833411Z  selecting default max_connections ... 100
+2025-11-27T16:31:07.1833679Z  selecting default shared_buffers ... 128MB
+2025-11-27T16:31:07.1833934Z  selecting default time zone ... Etc/UTC
+2025-11-27T16:31:07.1834255Z  creating configuration files ... ok
+2025-11-27T16:31:07.1834930Z  running bootstrap script ... ok
+2025-11-27T16:31:07.1835387Z  performing post-bootstrap initialization ... ok
+2025-11-27T16:31:07.1835875Z  syncing data to disk ... ok
+2025-11-27T16:31:07.1836224Z  
+2025-11-27T16:31:07.1836389Z  
+2025-11-27T16:31:07.1836598Z  Success. You can now start the database server using:
+2025-11-27T16:31:07.1836866Z  
+2025-11-27T16:31:07.1837090Z      pg_ctl -D /var/lib/postgresql/data -l logfile start
+2025-11-27T16:31:07.1837348Z  
+2025-11-27T16:31:07.1838160Z  waiting for server to start....2025-11-27 16:29:21.471 UTC [48] LOG:  starting PostgreSQL 15.4 (Debian 15.4-2.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+2025-11-27T16:31:07.1838940Z  2025-11-27 16:29:21.471 UTC [48] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-11-27T16:31:07.1839645Z  2025-11-27 16:29:21.474 UTC [51] LOG:  database system was shut down at 2025-11-27 16:29:21 UTC
+2025-11-27T16:31:07.1840106Z  2025-11-27 16:29:21.478 UTC [48] LOG:  database system is ready to accept connections
+2025-11-27T16:31:07.1840423Z   done
+2025-11-27T16:31:07.1840586Z  server started
+2025-11-27T16:31:07.1840764Z  CREATE DATABASE
+2025-11-27T16:31:07.1840931Z  
+2025-11-27T16:31:07.1841065Z  
+2025-11-27T16:31:07.1841358Z  /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+2025-11-27T16:31:07.1841714Z  
+2025-11-27T16:31:07.1841933Z  2025-11-27 16:29:21.707 UTC [48] LOG:  received fast shutdown request
+2025-11-27T16:31:07.1842377Z  waiting for server to shut down....2025-11-27 16:29:21.708 UTC [48] LOG:  aborting any active transactions
+2025-11-27T16:31:07.1842990Z  2025-11-27 16:29:21.710 UTC [48] LOG:  background worker "logical replication launcher" (PID 54) exited with exit code 1
+2025-11-27T16:31:07.1843451Z  2025-11-27 16:29:21.710 UTC [49] LOG:  shutting down
+2025-11-27T16:31:07.1843789Z  2025-11-27 16:29:21.710 UTC [49] LOG:  checkpoint starting: shutdown immediate
+2025-11-27T16:31:07.1844609Z  2025-11-27 16:29:21.732 UTC [49] LOG:  checkpoint complete: wrote 918 buffers (5.6%); 0 WAL file(s) added, 0 removed, 0 recycled; write=0.019 s, sync=0.002 s, total=0.023 s; sync files=301, longest=0.001 s, average=0.001 s; distance=4223 kB, estimate=4223 kB
+2025-11-27T16:31:07.1845403Z  2025-11-27 16:29:21.741 UTC [48] LOG:  database system is shut down
+2025-11-27T16:31:07.1845682Z   done
+2025-11-27T16:31:07.1845839Z  server stopped
+2025-11-27T16:31:07.1846002Z  
+2025-11-27T16:31:07.1846203Z  PostgreSQL init process complete; ready for start up.
+2025-11-27T16:31:07.1846466Z  
+2025-11-27T16:31:07.1853277Z Stop and remove container: 14576fd33b384cea8fafceaba492704f_ankanepgvectorlatest_6999f6
+2025-11-27T16:31:07.1858938Z ##[command]/usr/bin/docker rm --force 8ab5c4ef8477271ed427da58575861e02d4fe60f1a4e34f0e5935e7ae0a7c79b
+2025-11-27T16:31:07.3089403Z 8ab5c4ef8477271ed427da58575861e02d4fe60f1a4e34f0e5935e7ae0a7c79b
+2025-11-27T16:31:07.3110987Z Print service container logs: e99dc5a8f364434f94032254f6375e3a_redis7alpine_0f92a2
+2025-11-27T16:31:07.3112503Z ##[command]/usr/bin/docker logs --details b7a262ee1f4f155380edc978ffc653e1c68738570d50edc4ee7c4fd37d221bee
+2025-11-27T16:31:07.3237160Z  1:C 27 Nov 2025 16:29:22.262 # WARNING Memory overcommit must be enabled! Without it, a background save or replication may fail under low memory condition. Being disabled, it can also cause failures without low memory condition, see https://github.com/jemalloc/jemalloc/issues/1328. To fix this issue add 'vm.overcommit_memory = 1' to /etc/sysctl.conf and then reboot or run the command 'sysctl vm.overcommit_memory=1' for this to take effect.
+2025-11-27T16:31:07.3240035Z  1:C 27 Nov 2025 16:29:22.262 * oO0OoO0OoO0Oo Redis is starting oO0OoO0OoO0Oo
+2025-11-27T16:31:07.3240827Z  1:C 27 Nov 2025 16:29:22.262 * Redis version=7.4.7, bits=64, commit=00000000, modified=0, pid=1, just started
+2025-11-27T16:31:07.3242052Z  1:C 27 Nov 2025 16:29:22.262 # Warning: no config file specified, using the default config. In order to specify a config file use redis-server /path/to/redis.conf
+2025-11-27T16:31:07.3243060Z  1:M 27 Nov 2025 16:29:22.262 * monotonic clock: POSIX clock_gettime
+2025-11-27T16:31:07.3243620Z  1:M 27 Nov 2025 16:29:22.263 * Running mode=standalone, port=6379.
+2025-11-27T16:31:07.3244144Z  1:M 27 Nov 2025 16:29:22.263 * Server initialized
+2025-11-27T16:31:07.3244651Z  1:M 27 Nov 2025 16:29:22.263 * Ready to accept connections tcp
+2025-11-27T16:31:07.3252043Z Stop and remove container: e99dc5a8f364434f94032254f6375e3a_redis7alpine_0f92a2
+2025-11-27T16:31:07.3252788Z ##[command]/usr/bin/docker rm --force b7a262ee1f4f155380edc978ffc653e1c68738570d50edc4ee7c4fd37d221bee
+2025-11-27T16:31:07.4417888Z b7a262ee1f4f155380edc978ffc653e1c68738570d50edc4ee7c4fd37d221bee
+2025-11-27T16:31:07.4438441Z Print service container logs: 36d201fbf3fc47a0af1ebabd5c4974cf_qdrantqdrantlatest_5f5e8b
+2025-11-27T16:31:07.4440308Z ##[command]/usr/bin/docker logs --details f8126f99c5fdbacc28866bba9ec700fefd8b26db6edb3a471dd7342a3b92792a
+2025-11-27T16:31:07.4562449Z             _                 _    
+2025-11-27T16:31:07.4562950Z    __ _  __| |_ __ __ _ _ __ | |_  
+2025-11-27T16:31:07.4563335Z   / _` |/ _` | '__/ _` | '_ \| __| 
+2025-11-27T16:31:07.4563701Z  | (_| | (_| | | | (_| | | | | |_  
+2025-11-27T16:31:07.4564073Z   \__, |\__,_|_|  \__,_|_| |_|\__| 
+2025-11-27T16:31:07.4564431Z      |_|                           
+2025-11-27T16:31:07.4564779Z  
+2025-11-27T16:31:07.4565041Z  Version: 1.16.1, build: e293ab1f
+2025-11-27T16:31:07.4565532Z  Access web UI at http://localhost:6333/dashboard
+2025-11-27T16:31:07.4565993Z  
+2025-11-27T16:31:07.4567222Z  2025-11-27T16:29:25.170052Z  WARN qdrant: There is a potential issue with the filesystem for storage path ./storage. Details: Container filesystem detected - storage might be lost with container re-creation
+2025-11-27T16:31:07.4569287Z  2025-11-27T16:29:25.170117Z  INFO storage::content_manager::consensus::persistent: Initializing new raft state at ./storage/raft_state.json
+2025-11-27T16:31:07.4570342Z  2025-11-27T16:29:25.174576Z  INFO qdrant: Distributed mode disabled
+2025-11-27T16:31:07.4571232Z  2025-11-27T16:29:25.174656Z  INFO qdrant: Telemetry reporting enabled, id: fdc9ea0d-11d7-4770-880f-5eb3ef906d72
+2025-11-27T16:31:07.4572150Z  2025-11-27T16:29:25.188621Z  INFO qdrant::actix: TLS disabled for REST API
+2025-11-27T16:31:07.4572879Z  2025-11-27T16:29:25.188749Z  INFO qdrant::actix: Qdrant HTTP listening on 6333
+2025-11-27T16:31:07.4573594Z  2025-11-27T16:29:25.188799Z  INFO actix_server::builder: starting 3 workers
+2025-11-27T16:31:07.4574406Z  2025-11-27T16:29:25.188818Z  INFO actix_server::server: Actix runtime found; starting in Actix runtime
+2025-11-27T16:31:07.4575637Z  2025-11-27T16:29:25.188836Z  INFO actix_server::server: starting service: "actix-web-service-0.0.0.0:6333", workers: 3, listening on: 0.0.0.0:6333
+2025-11-27T16:31:07.4576696Z  2025-11-27T16:29:25.191118Z  INFO qdrant::tonic: Qdrant gRPC listening on 6334
+2025-11-27T16:31:07.4577366Z  2025-11-27T16:29:25.191133Z  INFO qdrant::tonic: TLS disabled for gRPC API
+2025-11-27T16:31:07.4582240Z Stop and remove container: 36d201fbf3fc47a0af1ebabd5c4974cf_qdrantqdrantlatest_5f5e8b
+2025-11-27T16:31:07.4582997Z ##[command]/usr/bin/docker rm --force f8126f99c5fdbacc28866bba9ec700fefd8b26db6edb3a471dd7342a3b92792a
+2025-11-27T16:31:07.5866822Z f8126f99c5fdbacc28866bba9ec700fefd8b26db6edb3a471dd7342a3b92792a
+2025-11-27T16:31:07.5894726Z Remove container network: github_network_fbfc051abff14557927e7f4e62a64c7e
+2025-11-27T16:31:07.5899308Z ##[command]/usr/bin/docker network rm github_network_fbfc051abff14557927e7f4e62a64c7e
+2025-11-27T16:31:07.7308560Z github_network_fbfc051abff14557927e7f4e62a64c7e
+2025-11-27T16:31:07.7368918Z Cleaning up orphan processes

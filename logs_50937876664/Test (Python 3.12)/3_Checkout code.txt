@@ -1,0 +1,87 @@
+﻿2025-11-27T16:29:34.8717991Z ##[group]Run actions/checkout@v4
+2025-11-27T16:29:34.8718514Z with:
+2025-11-27T16:29:34.8718737Z   repository: dreamsoft-pro/RAE-agentic-memory
+2025-11-27T16:29:34.8719131Z   token: ***
+2025-11-27T16:29:34.8719308Z   ssh-strict: true
+2025-11-27T16:29:34.8719477Z   ssh-user: git
+2025-11-27T16:29:34.8719658Z   persist-credentials: true
+2025-11-27T16:29:34.8719865Z   clean: true
+2025-11-27T16:29:34.8720049Z   sparse-checkout-cone-mode: true
+2025-11-27T16:29:34.8720269Z   fetch-depth: 1
+2025-11-27T16:29:34.8720432Z   fetch-tags: false
+2025-11-27T16:29:34.8720610Z   show-progress: true
+2025-11-27T16:29:34.8720779Z   lfs: false
+2025-11-27T16:29:34.8720941Z   submodules: false
+2025-11-27T16:29:34.8721114Z   set-safe-directory: true
+2025-11-27T16:29:34.8721492Z ##[endgroup]
+2025-11-27T16:29:34.9816008Z Syncing repository: dreamsoft-pro/RAE-agentic-memory
+2025-11-27T16:29:34.9817328Z ##[group]Getting Git version info
+2025-11-27T16:29:34.9818020Z Working directory is '/home/runner/work/RAE-agentic-memory/RAE-agentic-memory'
+2025-11-27T16:29:34.9818653Z [command]/usr/bin/git version
+2025-11-27T16:29:34.9883134Z git version 2.51.2
+2025-11-27T16:29:34.9909606Z ##[endgroup]
+2025-11-27T16:29:34.9925387Z Temporarily overriding HOME='/home/runner/work/_temp/0e91b3a8-6d76-4c8b-a1d7-40834307575a' before making global git config changes
+2025-11-27T16:29:34.9926717Z Adding repository directory to the temporary git global config as a safe directory
+2025-11-27T16:29:34.9931568Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/RAE-agentic-memory/RAE-agentic-memory
+2025-11-27T16:29:34.9968321Z Deleting the contents of '/home/runner/work/RAE-agentic-memory/RAE-agentic-memory'
+2025-11-27T16:29:34.9971781Z ##[group]Initializing the repository
+2025-11-27T16:29:34.9976332Z [command]/usr/bin/git init /home/runner/work/RAE-agentic-memory/RAE-agentic-memory
+2025-11-27T16:29:35.0076577Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-11-27T16:29:35.0077504Z hint: is subject to change. To configure the initial branch name to use in all
+2025-11-27T16:29:35.0078189Z hint: of your new repositories, which will suppress this warning, call:
+2025-11-27T16:29:35.0078533Z hint:
+2025-11-27T16:29:35.0078825Z hint: 	git config --global init.defaultBranch <name>
+2025-11-27T16:29:35.0079173Z hint:
+2025-11-27T16:29:35.0079664Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-11-27T16:29:35.0080487Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-11-27T16:29:35.0080837Z hint:
+2025-11-27T16:29:35.0081021Z hint: 	git branch -m <name>
+2025-11-27T16:29:35.0081220Z hint:
+2025-11-27T16:29:35.0081676Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-11-27T16:29:35.0083072Z Initialized empty Git repository in /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/.git/
+2025-11-27T16:29:35.0092560Z [command]/usr/bin/git remote add origin https://github.com/dreamsoft-pro/RAE-agentic-memory
+2025-11-27T16:29:35.0124121Z ##[endgroup]
+2025-11-27T16:29:35.0124725Z ##[group]Disabling automatic garbage collection
+2025-11-27T16:29:35.0129009Z [command]/usr/bin/git config --local gc.auto 0
+2025-11-27T16:29:35.0156718Z ##[endgroup]
+2025-11-27T16:29:35.0157249Z ##[group]Setting up auth
+2025-11-27T16:29:35.0165052Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-11-27T16:29:35.0194016Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-11-27T16:29:35.0510119Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-11-27T16:29:35.0538574Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-11-27T16:29:35.0757197Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2025-11-27T16:29:35.0794913Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2025-11-27T16:29:35.1020833Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-11-27T16:29:35.1058132Z ##[endgroup]
+2025-11-27T16:29:35.1058802Z ##[group]Fetching the repository
+2025-11-27T16:29:35.1067371Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +ffb72dd46c65ea2cf733ec872b5073408ba48fcc:refs/remotes/pull/3/merge
+2025-11-27T16:29:35.5733072Z From https://github.com/dreamsoft-pro/RAE-agentic-memory
+2025-11-27T16:29:35.5733892Z  * [new ref]         ffb72dd46c65ea2cf733ec872b5073408ba48fcc -> pull/3/merge
+2025-11-27T16:29:35.5764693Z ##[endgroup]
+2025-11-27T16:29:35.5765076Z ##[group]Determining the checkout info
+2025-11-27T16:29:35.5767632Z ##[endgroup]
+2025-11-27T16:29:35.5773296Z [command]/usr/bin/git sparse-checkout disable
+2025-11-27T16:29:35.5812249Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-11-27T16:29:35.5837003Z ##[group]Checking out the ref
+2025-11-27T16:29:35.5840782Z [command]/usr/bin/git checkout --progress --force refs/remotes/pull/3/merge
+2025-11-27T16:29:35.6167983Z Note: switching to 'refs/remotes/pull/3/merge'.
+2025-11-27T16:29:35.6168397Z 
+2025-11-27T16:29:35.6168624Z You are in 'detached HEAD' state. You can look around, make experimental
+2025-11-27T16:29:35.6169138Z changes and commit them, and you can discard any commits you make in this
+2025-11-27T16:29:35.6169629Z state without impacting any branches by switching back to a branch.
+2025-11-27T16:29:35.6169923Z 
+2025-11-27T16:29:35.6170107Z If you want to create a new branch to retain commits you create, you may
+2025-11-27T16:29:35.6170547Z do so (now or later) by using -c with the switch command. Example:
+2025-11-27T16:29:35.6170823Z 
+2025-11-27T16:29:35.6170924Z   git switch -c <new-branch-name>
+2025-11-27T16:29:35.6171112Z 
+2025-11-27T16:29:35.6171210Z Or undo this operation with:
+2025-11-27T16:29:35.6171367Z 
+2025-11-27T16:29:35.6171444Z   git switch -
+2025-11-27T16:29:35.6171675Z 
+2025-11-27T16:29:35.6172134Z Turn off this advice by setting config variable advice.detachedHead to false
+2025-11-27T16:29:35.6172560Z 
+2025-11-27T16:29:35.6173091Z HEAD is now at ffb72dd Merge 9dbde0bfb57e59e4ed0464f13b2c2b2f99b07c95 into 5a739d4273a7a6b322457f5d2d4b9a4937081507
+2025-11-27T16:29:35.6178216Z ##[endgroup]
+2025-11-27T16:29:35.6213554Z [command]/usr/bin/git log -1 --format=%H
+2025-11-27T16:29:35.6236016Z ffb72dd46c65ea2cf733ec872b5073408ba48fcc

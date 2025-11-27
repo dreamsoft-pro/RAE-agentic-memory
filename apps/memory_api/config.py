@@ -77,7 +77,15 @@ class Settings(BaseSettings):
 
     # Memory lifecycle settings
     MEMORY_RETENTION_DAYS: int = 30
-    MEMORY_DECAY_RATE: float = 0.01  # 1% decay per day
+    MEMORY_DECAY_RATE: float = 0.01  # 1% decay per day (legacy)
+
+    # Memory importance decay settings (Phase 3 - Enterprise)
+    MEMORY_IMPORTANCE_DECAY_ENABLED: bool = True  # Enable importance-based decay
+    MEMORY_IMPORTANCE_DECAY_RATE: float = 0.01  # 1% decay per day for importance scores
+    MEMORY_IMPORTANCE_DECAY_SCHEDULE: str = "0 2 * * *"  # Cron: daily at 2 AM
+    MEMORY_IMPORTANCE_FLOOR: float = 0.01  # Minimum importance score (prevents complete decay)
+    MEMORY_IMPORTANCE_ACCELERATED_THRESHOLD_DAYS: int = 30  # Days for accelerated decay
+    MEMORY_IMPORTANCE_PROTECTED_THRESHOLD_DAYS: int = 7  # Days for protected decay
 
     # Logging configuration
     LOG_LEVEL: str = "WARNING"  # For external libraries (uvicorn, asyncpg, etc.)

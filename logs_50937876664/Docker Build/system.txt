@@ -1,0 +1,5 @@
+2025-11-27T16:29:08.9500000Z Requested labels: ubuntu-latest
+2025-11-27T16:29:08.9500000Z Job defined at: dreamsoft-pro/RAE-agentic-memory/.github/workflows/ci.yml@refs/pull/3/merge
+2025-11-27T16:29:08.9500000Z Waiting for a runner to pick up this job...
+2025-11-27T16:29:09.3310000Z Job is waiting for a hosted runner to come online.
+2025-11-27T16:29:09.3320000Z Job is about to start running on the hosted runner: GitHub Actions 1000000308

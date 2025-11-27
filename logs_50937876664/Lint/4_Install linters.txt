@@ -1,0 +1,47 @@
+﻿2025-11-27T16:29:16.8699982Z ##[group]Run pip install black isort ruff mypy
+2025-11-27T16:29:16.8700626Z [36;1mpip install black isort ruff mypy[0m
+2025-11-27T16:29:16.8739843Z shell: /usr/bin/bash -e {0}
+2025-11-27T16:29:16.8740110Z env:
+2025-11-27T16:29:16.8740569Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-27T16:29:16.8741012Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-27T16:29:16.8741439Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-27T16:29:16.8741784Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-27T16:29:16.8742168Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-27T16:29:16.8742514Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-27T16:29:16.8742808Z ##[endgroup]
+2025-11-27T16:29:18.1661293Z Collecting black
+2025-11-27T16:29:18.1679131Z   Using cached black-25.11.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (85 kB)
+2025-11-27T16:29:18.2055814Z Collecting isort
+2025-11-27T16:29:18.2070936Z   Using cached isort-7.0.0-py3-none-any.whl.metadata (11 kB)
+2025-11-27T16:29:18.5494601Z Collecting ruff
+2025-11-27T16:29:18.5511869Z   Using cached ruff-0.14.6-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (25 kB)
+2025-11-27T16:29:18.6661055Z Collecting mypy
+2025-11-27T16:29:18.6679042Z   Using cached mypy-1.18.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.2 kB)
+2025-11-27T16:29:18.6857652Z Collecting click>=8.0.0 (from black)
+2025-11-27T16:29:18.6872409Z   Using cached click-8.3.1-py3-none-any.whl.metadata (2.6 kB)
+2025-11-27T16:29:18.6970417Z Collecting mypy-extensions>=0.4.3 (from black)
+2025-11-27T16:29:18.6984338Z   Using cached mypy_extensions-1.1.0-py3-none-any.whl.metadata (1.1 kB)
+2025-11-27T16:29:18.7121489Z Collecting packaging>=22.0 (from black)
+2025-11-27T16:29:18.7135533Z   Using cached packaging-25.0-py3-none-any.whl.metadata (3.3 kB)
+2025-11-27T16:29:18.7248084Z Collecting pathspec>=0.9.0 (from black)
+2025-11-27T16:29:18.7261544Z   Using cached pathspec-0.12.1-py3-none-any.whl.metadata (21 kB)
+2025-11-27T16:29:18.7438587Z Collecting platformdirs>=2 (from black)
+2025-11-27T16:29:18.7451664Z   Using cached platformdirs-4.5.0-py3-none-any.whl.metadata (12 kB)
+2025-11-27T16:29:18.7552487Z Collecting pytokens>=0.3.0 (from black)
+2025-11-27T16:29:18.7565297Z   Using cached pytokens-0.3.0-py3-none-any.whl.metadata (2.0 kB)
+2025-11-27T16:29:18.7729401Z Collecting typing_extensions>=4.6.0 (from mypy)
+2025-11-27T16:29:18.7742541Z   Using cached typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+2025-11-27T16:29:18.7805685Z Using cached black-25.11.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (1.6 MB)
+2025-11-27T16:29:18.7829494Z Using cached isort-7.0.0-py3-none-any.whl (94 kB)
+2025-11-27T16:29:18.7843112Z Using cached ruff-0.14.6-py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (13.9 MB)
+2025-11-27T16:29:18.7952468Z Using cached mypy-1.18.2-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (13.2 MB)
+2025-11-27T16:29:18.8056585Z Using cached click-8.3.1-py3-none-any.whl (108 kB)
+2025-11-27T16:29:18.8069617Z Using cached mypy_extensions-1.1.0-py3-none-any.whl (5.0 kB)
+2025-11-27T16:29:18.8082099Z Using cached packaging-25.0-py3-none-any.whl (66 kB)
+2025-11-27T16:29:18.8095030Z Using cached pathspec-0.12.1-py3-none-any.whl (31 kB)
+2025-11-27T16:29:18.8107603Z Using cached platformdirs-4.5.0-py3-none-any.whl (18 kB)
+2025-11-27T16:29:18.8119935Z Using cached pytokens-0.3.0-py3-none-any.whl (12 kB)
+2025-11-27T16:29:18.8132654Z Using cached typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+2025-11-27T16:29:18.8893226Z Installing collected packages: typing_extensions, ruff, pytokens, platformdirs, pathspec, packaging, mypy-extensions, isort, click, mypy, black
+2025-11-27T16:29:20.6630547Z 
+2025-11-27T16:29:20.6643473Z Successfully installed black-25.11.0 click-8.3.1 isort-7.0.0 mypy-1.18.2 mypy-extensions-1.1.0 packaging-25.0 pathspec-0.12.1 platformdirs-4.5.0 pytokens-0.3.0 ruff-0.14.6 typing_extensions-4.15.0
