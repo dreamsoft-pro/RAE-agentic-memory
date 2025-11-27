@@ -423,6 +423,54 @@ reflection = await client.generate_reflection()
 
 ---
 
+## Enterprise Core vs Optional Modules
+
+RAE is designed with a modular architecture. Choose the components that fit your needs:
+
+### Enterprise Core (Production Ready - GA) ✅
+
+| Component | Required | Description | Use Case |
+|-----------|----------|-------------|----------|
+| **Core API** | ✅ Yes | Main memory engine with 4-layer architecture | All deployments |
+| **PostgreSQL** | ✅ Yes | Primary database with pgvector | Data persistence |
+| **Qdrant** | ✅ Yes | Vector database for semantic search | Memory retrieval |
+| **Redis** | ✅ Yes | Cache and rate limiting | Performance optimization |
+| **GraphRAG** | ✅ Yes | Knowledge graph with hybrid search | Contextual memory |
+| **Governance API** | ✅ Yes | Cost tracking & budget management | Production deployments |
+| **MCP Integration** | ⚠️ Optional | IDE integration (Cursor, VSCode, Claude Desktop) | Developer productivity |
+
+### Optional Modules
+
+| Component | Status | Description | When to Use |
+|-----------|--------|-------------|-------------|
+| **ML Service** | 🟡 Beta | Heavy ML operations (entity resolution, NLP) | Advanced entity linking |
+| **Reranker Service** | ✅ GA | CrossEncoder-based result re-ranking | Improved search quality |
+| **Dashboard** | 🟡 Beta | Web UI for visualization & monitoring | Teams needing visual insights |
+| **Celery Workers** | ⚠️ Optional | Async background tasks (scheduled reflections) | Automated workflows |
+| **Prometheus + Grafana** | ⚠️ Optional | Metrics and monitoring | Production monitoring |
+| **Context Watcher** | ✅ GA | Automatic file change detection | Auto-sync to memory |
+
+### Deployment Profiles
+
+**RAE Lite** (Minimal):
+- Core API + PostgreSQL + Qdrant + Redis
+- Perfect for: Development, testing, small teams (1-10 users)
+- Resources: 4 GB RAM, 2 CPU cores
+- See: [RAE Lite Profile Documentation](docs/deployment/rae-lite-profile.md)
+
+**RAE Standard** (Recommended):
+- All Core + ML Service + Reranker + Dashboard
+- Perfect for: Production use, mid-size teams (10-100 users)
+- Resources: 8 GB RAM, 4 CPU cores
+
+**RAE Enterprise** (Full Stack):
+- All Core + All Optional + Kubernetes + Monitoring
+- Perfect for: Large organizations, high availability
+- Resources: Auto-scaling with HPA
+- See: [Kubernetes Deployment Guide](docs/deployment/kubernetes.md)
+
+---
+
 ## Components Overview
 
 - **`apps/memory_api`** - Main FastAPI service exposing the memory engine
