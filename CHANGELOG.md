@@ -17,6 +17,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.0.0-enterprise] - 2025-11-27
 
+### Fixed - Documentation Consistency (2025-11-27 18:30 UTC)
+- **Enterprise Core vs Optional Modules Classification**
+  - Fixed inconsistency between README.md and VERSION_MATRIX.md
+  - MCP Integration: Corrected from "Optional" to "Enterprise Extension (GA)"
+  - Reranker Service: Moved to "Enterprise Extensions (GA)" section
+  - Context Watcher: Moved to "Enterprise Extensions (GA)" section
+  - Added clear distinction between maturity status and requirement status
+
+- **New Structure in README.md:**
+  - Enterprise Core (Required): Components needed for RAE to function
+  - Enterprise Extensions (Optional - Production Ready - GA): Production-ready enhancements
+  - Optional Modules (Beta/Experimental): Components still in development
+
+- **Affected Documentation:**
+  - README.md: Restructured "Enterprise Core vs Optional Modules" section
+  - STATUS.md: Added "Component Classification Note" explaining dual classification
+  - VERSION_MATRIX.md: Already correct (used as reference for fixes)
+
 ### Fixed - CI/CD Pipeline (2025-11-27 16:29 UTC)
 - **Import Sorting Issue (isort)**
   - Fixed import order in `integrations/mcp/src/rae_mcp/server.py`

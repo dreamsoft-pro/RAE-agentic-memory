@@ -448,47 +448,56 @@ reflection = await client.generate_reflection()
 
 RAE is designed with a modular architecture. Choose the components that fit your needs:
 
-### Enterprise Core (Production Ready - GA) ✅
+### Enterprise Core (Required) ✅
 
-| Component | Required | Description | Use Case |
-|-----------|----------|-------------|----------|
-| **Core API** | ✅ Yes | Main memory engine with 4-layer architecture | All deployments |
-| **PostgreSQL** | ✅ Yes | Primary database with pgvector | Data persistence |
-| **Qdrant** | ✅ Yes | Vector database for semantic search | Memory retrieval |
-| **Redis** | ✅ Yes | Cache and rate limiting | Performance optimization |
-| **GraphRAG** | ✅ Yes | Knowledge graph with hybrid search | Contextual memory |
-| **Governance API** | ✅ Yes | Cost tracking & budget management | Production deployments |
-| **MCP Integration** | ⚠️ Optional | IDE integration (Cursor, VSCode, Claude Desktop) | Developer productivity |
+These components are required for RAE to function.
 
-### Optional Modules
+| Component | Description | Use Case |
+|-----------|-------------|----------|
+| **Core API** | Main memory engine with 4-layer architecture | All deployments |
+| **PostgreSQL** | Primary database with pgvector | Data persistence |
+| **Qdrant** | Vector database for semantic search | Memory retrieval |
+| **Redis** | Cache and rate limiting | Performance optimization |
+| **GraphRAG** | Knowledge graph with hybrid search | Contextual memory |
+| **Governance API** | Cost tracking & budget management | Production deployments |
+
+### Enterprise Extensions (Optional - Production Ready - GA) ✅
+
+Production-ready components that enhance RAE but are not required.
+
+| Component | Version | Description | When to Use |
+|-----------|---------|-------------|-------------|
+| **MCP Integration** | v1.2.0 | IDE integration (Cursor, VSCode, Claude Desktop) | Developer productivity & IDE workflows |
+| **Reranker Service** | v1.0.0 | CrossEncoder-based result re-ranking | Improved search quality (10-20% accuracy boost) |
+| **Context Watcher** | v1.0.0 | Automatic file change detection | Auto-sync to memory, live updates |
+
+### Optional Modules (Beta/Experimental)
 
 | Component | Status | Description | When to Use |
 |-----------|--------|-------------|-------------|
 | **ML Service** | 🟡 Beta | Heavy ML operations (entity resolution, NLP) | Advanced entity linking |
-| **Reranker Service** | ✅ GA | CrossEncoder-based result re-ranking | Improved search quality |
 | **Dashboard** | 🟡 Beta | Web UI for visualization & monitoring | Teams needing visual insights |
-| **Celery Workers** | ⚠️ Optional | Async background tasks (scheduled reflections) | Automated workflows |
+| **Celery Workers** | 🟡 Beta | Async background tasks (scheduled reflections) | Automated workflows |
 | **Prometheus + Grafana** | ⚠️ Optional | Metrics and monitoring | Production monitoring |
-| **Context Watcher** | ✅ GA | Automatic file change detection | Auto-sync to memory |
 
 ### Deployment Profiles
 
 **RAE Lite** (Minimal):
-- Core API + PostgreSQL + Qdrant + Redis
-- Perfect for: Development, testing, small teams (1-10 users)
-- Resources: 4 GB RAM, 2 CPU cores
-- See: [RAE Lite Profile Documentation](docs/deployment/rae-lite-profile.md)
+- **Includes:** Enterprise Core only (API, PostgreSQL, Qdrant, Redis, GraphRAG, Governance)
+- **Perfect for:** Development, testing, small teams (1-10 users)
+- **Resources:** 4 GB RAM, 2 CPU cores
+- **See:** [RAE Lite Profile Documentation](docs/deployment/rae-lite-profile.md)
 
 **RAE Standard** (Recommended):
-- All Core + ML Service + Reranker + Dashboard
-- Perfect for: Production use, mid-size teams (10-100 users)
-- Resources: 8 GB RAM, 4 CPU cores
+- **Includes:** Enterprise Core + Enterprise Extensions (MCP, Reranker, Context Watcher) + ML Service + Dashboard
+- **Perfect for:** Production use, mid-size teams (10-100 users)
+- **Resources:** 8 GB RAM, 4 CPU cores
 
 **RAE Enterprise** (Full Stack):
-- All Core + All Optional + Kubernetes + Monitoring
-- Perfect for: Large organizations, high availability
-- Resources: Auto-scaling with HPA
-- See: [Kubernetes Deployment Guide](docs/deployment/kubernetes.md)
+- **Includes:** Enterprise Core + All Extensions + All Optional Modules + Kubernetes + Monitoring
+- **Perfect for:** Large organizations, high availability, auto-scaling
+- **Resources:** Auto-scaling with HPA (starts at 16 GB RAM)
+- **See:** [Kubernetes Deployment Guide](docs/deployment/kubernetes.md)
 
 ---
 

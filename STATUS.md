@@ -29,9 +29,45 @@
 | **Deployment** | Kubernetes + Helm + Lite Profile | ✅ Production-ready |
 | **Component Status** | GA/Beta/Experimental clearly defined | ✅ Complete |
 
+**Component Classification Note:**
+- **Maturity Status:** GA (Generally Available), Beta, Experimental - indicates production readiness
+- **Requirement Status:** Required, Optional - indicates if component is needed for RAE to function
+- Components can be "GA but Optional" (e.g., MCP v1.2.0, Reranker v1.0.0) - production-ready but not required
+
 ---
 
 ## 📝 Recent Changes
+
+### 2025-11-27 - Documentation Consistency Fix: Component Classification ✅
+
+**Problem:**
+- Inconsistency between README.md and VERSION_MATRIX.md regarding component classification
+- MCP Integration (v1.2.0): Listed as "Optional" in README but "GA" in VERSION_MATRIX
+- Reranker Service (v1.0.0): Listed as "Optional" but marked "GA" in VERSION_MATRIX
+- Context Watcher (v1.0.0): Listed as "Optional" but marked "GA" in VERSION_MATRIX
+- Confusion between maturity status (GA/Beta) and requirement status (Required/Optional)
+
+**Solution:**
+- Created new section "Enterprise Extensions (Optional - Production Ready - GA)"
+- Clear separation between:
+  - **Enterprise Core (Required):** 6 components needed for RAE to function
+  - **Enterprise Extensions (GA but Optional):** 3 production-ready components (MCP, Reranker, Context Watcher)
+  - **Optional Modules (Beta/Experimental):** 4 components in development
+- Updated deployment profiles to reflect new structure
+- Added "Component Classification Note" explaining dual classification system
+
+**Impact:**
+- ✅ Clear distinction between maturity and requirement status
+- ✅ Accurate representation of MCP v1.2.0 as enterprise-ready (A+ grade, 98/100)
+- ✅ Proper classification of GA components that are optional
+- ✅ Improved clarity for users choosing deployment profile
+
+**Files Modified:**
+- `README.md` - Restructured "Enterprise Core vs Optional Modules" section
+- `STATUS.md` - Added Component Classification Note
+- `CHANGELOG.md` - Documented the fix
+
+---
 
 ### 2025-11-27 - CI/CD Fix: Import Sorting & Missing patch Import ✅
 
