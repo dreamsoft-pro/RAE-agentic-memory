@@ -19,12 +19,35 @@ def mock_hybrid_search_service():
 @pytest.mark.asyncio
 async def test_hybrid_search_success(mock_app_state_pool, mock_hybrid_search_service):
     """Test POST /v1/search/hybrid with successful search"""
-    mock_result = MagicMock()
-    mock_result.total_results = 5
-    mock_result.total_time_ms = 123.45
-    mock_result.results = []
-    mock_result.weights_used = {"vector": 0.4, "semantic": 0.3, "graph": 0.2, "fulltext": 0.1}
-    mock_result.query_analysis = {"intent": "factual_lookup"}
+    # Complete mock object to satisfy Pydantic validation
+    mock_result = {
+        "results": [],
+        "total_results": 5,
+        "query_analysis": {
+            "intent": "factual",
+            "confidence": 0.9,
+            "original_query": "authentication system",
+            "key_entities": [],
+            "key_concepts": [],
+            "temporal_markers": [],
+            "relation_types": [],
+            "recommended_strategies": ["vector", "semantic"],
+            "strategy_weights": {"vector": 0.4, "semantic": 0.3, "graph": 0.2, "fulltext": 0.1},
+            "requires_temporal_filtering": False,
+            "requires_graph_traversal": False,
+            "suggested_depth": 2,
+            "analyzed_at": datetime.utcnow().isoformat()
+        },
+        "vector_results_count": 2,
+        "semantic_results_count": 1,
+        "graph_results_count": 1,
+        "fulltext_results_count": 1,
+        "total_time_ms": 123,
+        "query_analysis_time_ms": 50,
+        "search_time_ms": 73,
+        "applied_weights": {"vector": 0.4, "semantic": 0.3, "graph": 0.2, "fulltext": 0.1},
+        "reranking_used": False
+    }
 
     mock_hybrid_search_service.search.return_value = mock_result
 
@@ -45,6 +68,9 @@ async def test_hybrid_search_success(mock_app_state_pool, mock_hybrid_search_ser
         headers={"X-Tenant-Id": "test-tenant"}
     )
 
+    if response.status_code != 200:
+        print(f"\nDEBUG: Response {response.status_code}: {response.json()}")
+
     assert response.status_code == 200
     data = response.json()
     assert "search_result" in data
@@ -54,12 +80,35 @@ async def test_hybrid_search_success(mock_app_state_pool, mock_hybrid_search_ser
 @pytest.mark.asyncio
 async def test_hybrid_search_with_reranking(mock_app_state_pool, mock_hybrid_search_service):
     """Test hybrid search with LLM re-ranking enabled"""
-    mock_result = MagicMock()
-    mock_result.total_results = 3
-    mock_result.total_time_ms = 250.0
-    mock_result.results = []
-    mock_result.weights_used = {"vector": 0.5, "semantic": 0.3, "graph": 0.2}
-    mock_result.query_analysis = {"intent": "exploratory"}
+    mock_result = {
+        "results": [],
+        "total_results": 3,
+        "query_analysis": {
+            "intent": "exploratory",
+            "confidence": 0.8,
+            "original_query": "explain the authentication flow",
+            "key_entities": [],
+            "key_concepts": [],
+            "temporal_markers": [],
+            "relation_types": [],
+            "recommended_strategies": ["vector", "graph"],
+            "strategy_weights": {"vector": 0.5, "semantic": 0.3, "graph": 0.2},
+            "requires_temporal_filtering": False,
+            "requires_graph_traversal": True,
+            "suggested_depth": 3,
+            "analyzed_at": datetime.utcnow().isoformat()
+        },
+        "vector_results_count": 1,
+        "semantic_results_count": 1,
+        "graph_results_count": 1,
+        "fulltext_results_count": 0,
+        "total_time_ms": 250,
+        "query_analysis_time_ms": 50,
+        "search_time_ms": 100,
+        "reranking_time_ms": 100,
+        "applied_weights": {"vector": 0.5, "semantic": 0.3, "graph": 0.2},
+        "reranking_used": True
+    }
 
     mock_hybrid_search_service.search.return_value = mock_result
 
@@ -82,6 +131,9 @@ async def test_hybrid_search_with_reranking(mock_app_state_pool, mock_hybrid_sea
         headers={"X-Tenant-Id": "test-tenant"}
     )
 
+    if response.status_code != 200:
+        print(f"\nDEBUG: Response {response.status_code}: {response.json()}")
+
     assert response.status_code == 200
     data = response.json()
     assert "search_result" in data
@@ -90,12 +142,34 @@ async def test_hybrid_search_with_reranking(mock_app_state_pool, mock_hybrid_sea
 @pytest.mark.asyncio
 async def test_hybrid_search_with_filters(mock_app_state_pool, mock_hybrid_search_service):
     """Test hybrid search with temporal and tag filters"""
-    mock_result = MagicMock()
-    mock_result.total_results = 2
-    mock_result.total_time_ms = 89.5
-    mock_result.results = []
-    mock_result.weights_used = {"vector": 0.6, "semantic": 0.4}
-    mock_result.query_analysis = {"intent": "temporal_query"}
+    mock_result = {
+        "results": [],
+        "total_results": 2,
+        "query_analysis": {
+            "intent": "temporal",
+            "confidence": 0.85,
+            "original_query": "recent security updates",
+            "key_entities": [],
+            "key_concepts": [],
+            "temporal_markers": ["recent"],
+            "relation_types": [],
+            "recommended_strategies": ["vector", "fulltext"],
+            "strategy_weights": {"vector": 0.6, "semantic": 0.4},
+            "requires_temporal_filtering": True,
+            "requires_graph_traversal": False,
+            "suggested_depth": 1,
+            "analyzed_at": datetime.utcnow().isoformat()
+        },
+        "vector_results_count": 1,
+        "semantic_results_count": 1,
+        "graph_results_count": 0,
+        "fulltext_results_count": 0,
+        "total_time_ms": 89,
+        "query_analysis_time_ms": 40,
+        "search_time_ms": 49,
+        "applied_weights": {"vector": 0.6, "semantic": 0.4},
+        "reranking_used": False
+    }
 
     mock_hybrid_search_service.search.return_value = mock_result
 
@@ -122,6 +196,9 @@ async def test_hybrid_search_with_filters(mock_app_state_pool, mock_hybrid_searc
         headers={"X-Tenant-Id": "test-tenant"}
     )
 
+    if response.status_code != 200:
+        print(f"\nDEBUG: Response {response.status_code}: {response.json()}")
+
     assert response.status_code == 200
     data = response.json()
     assert "search_result" in data
@@ -130,12 +207,34 @@ async def test_hybrid_search_with_filters(mock_app_state_pool, mock_hybrid_searc
 @pytest.mark.asyncio
 async def test_hybrid_search_with_manual_weights(mock_app_state_pool, mock_hybrid_search_service):
     """Test hybrid search with manually specified weights"""
-    mock_result = MagicMock()
-    mock_result.total_results = 8
-    mock_result.total_time_ms = 150.2
-    mock_result.results = []
-    mock_result.weights_used = {"vector": 0.7, "semantic": 0.2, "graph": 0.1}
-    mock_result.query_analysis = None  # Manual weights override analysis
+    mock_result = {
+        "results": [],
+        "total_results": 8,
+        "query_analysis": {
+            "intent": "conceptual",
+            "confidence": 1.0,
+            "original_query": "database optimization",
+            "key_entities": [],
+            "key_concepts": [],
+            "temporal_markers": [],
+            "relation_types": [],
+            "recommended_strategies": [],
+            "strategy_weights": {"vector": 0.7, "semantic": 0.2, "graph": 0.1},
+            "requires_temporal_filtering": False,
+            "requires_graph_traversal": False,
+            "suggested_depth": 1,
+            "analyzed_at": datetime.utcnow().isoformat()
+        },
+        "vector_results_count": 5,
+        "semantic_results_count": 2,
+        "graph_results_count": 1,
+        "fulltext_results_count": 0,
+        "total_time_ms": 150,
+        "query_analysis_time_ms": 0,
+        "search_time_ms": 150,
+        "applied_weights": {"vector": 0.7, "semantic": 0.2, "graph": 0.1},
+        "reranking_used": False
+    }
 
     mock_hybrid_search_service.search.return_value = mock_result
 
@@ -162,6 +261,9 @@ async def test_hybrid_search_with_manual_weights(mock_app_state_pool, mock_hybri
         headers={"X-Tenant-Id": "test-tenant"}
     )
 
+    if response.status_code != 200:
+        print(f"\nDEBUG: Response {response.status_code}: {response.json()}")
+
     assert response.status_code == 200
     data = response.json()
     assert "search_result" in data
@@ -170,12 +272,34 @@ async def test_hybrid_search_with_manual_weights(mock_app_state_pool, mock_hybri
 @pytest.mark.asyncio
 async def test_hybrid_search_with_graph_depth(mock_app_state_pool, mock_hybrid_search_service):
     """Test hybrid search with custom graph traversal depth"""
-    mock_result = MagicMock()
-    mock_result.total_results = 12
-    mock_result.total_time_ms = 300.0
-    mock_result.results = []
-    mock_result.weights_used = {"vector": 0.3, "semantic": 0.3, "graph": 0.4}
-    mock_result.query_analysis = {"intent": "exploratory"}
+    mock_result = {
+        "results": [],
+        "total_results": 12,
+        "query_analysis": {
+            "intent": "exploratory",
+            "confidence": 0.85,
+            "original_query": "knowledge graph relationships",
+            "key_entities": [],
+            "key_concepts": [],
+            "temporal_markers": [],
+            "relation_types": [],
+            "recommended_strategies": ["graph", "vector"],
+            "strategy_weights": {"vector": 0.3, "semantic": 0.3, "graph": 0.4},
+            "requires_temporal_filtering": False,
+            "requires_graph_traversal": True,
+            "suggested_depth": 3,
+            "analyzed_at": datetime.utcnow().isoformat()
+        },
+        "vector_results_count": 3,
+        "semantic_results_count": 3,
+        "graph_results_count": 4,
+        "fulltext_results_count": 2,
+        "total_time_ms": 300,
+        "query_analysis_time_ms": 50,
+        "search_time_ms": 250,
+        "applied_weights": {"vector": 0.3, "semantic": 0.3, "graph": 0.4},
+        "reranking_used": False
+    }
 
     mock_hybrid_search_service.search.return_value = mock_result
 
@@ -197,6 +321,9 @@ async def test_hybrid_search_with_graph_depth(mock_app_state_pool, mock_hybrid_s
         headers={"X-Tenant-Id": "test-tenant"}
     )
 
+    if response.status_code != 200:
+        print(f"\nDEBUG: Response {response.status_code}: {response.json()}")
+
     assert response.status_code == 200
     data = response.json()
     assert "search_result" in data
@@ -205,12 +332,34 @@ async def test_hybrid_search_with_graph_depth(mock_app_state_pool, mock_hybrid_s
 @pytest.mark.asyncio
 async def test_hybrid_search_with_conversation_history(mock_app_state_pool, mock_hybrid_search_service):
     """Test hybrid search with conversation context"""
-    mock_result = MagicMock()
-    mock_result.total_results = 6
-    mock_result.total_time_ms = 180.0
-    mock_result.results = []
-    mock_result.weights_used = {"vector": 0.5, "semantic": 0.3, "graph": 0.2}
-    mock_result.query_analysis = {"intent": "conversational"}
+    mock_result = {
+        "results": [],
+        "total_results": 6,
+        "query_analysis": {
+            "intent": "conversational",
+            "confidence": 0.9,
+            "original_query": "how does it work?",
+            "key_entities": [],
+            "key_concepts": [],
+            "temporal_markers": [],
+            "relation_types": [],
+            "recommended_strategies": ["vector"],
+            "strategy_weights": {"vector": 0.5, "semantic": 0.3, "graph": 0.2},
+            "requires_temporal_filtering": False,
+            "requires_graph_traversal": False,
+            "suggested_depth": 1,
+            "analyzed_at": datetime.utcnow().isoformat()
+        },
+        "vector_results_count": 3,
+        "semantic_results_count": 2,
+        "graph_results_count": 1,
+        "fulltext_results_count": 0,
+        "total_time_ms": 180,
+        "query_analysis_time_ms": 50,
+        "search_time_ms": 130,
+        "applied_weights": {"vector": 0.5, "semantic": 0.3, "graph": 0.2},
+        "reranking_used": False
+    }
 
     mock_hybrid_search_service.search.return_value = mock_result
 
@@ -235,6 +384,9 @@ async def test_hybrid_search_with_conversation_history(mock_app_state_pool, mock
         headers={"X-Tenant-Id": "test-tenant"}
     )
 
+    if response.status_code != 200:
+        print(f"\nDEBUG: Response {response.status_code}: {response.json()}")
+
     assert response.status_code == 200
     data = response.json()
     assert "search_result" in data
@@ -243,12 +395,34 @@ async def test_hybrid_search_with_conversation_history(mock_app_state_pool, mock
 @pytest.mark.asyncio
 async def test_hybrid_search_empty_query(mock_app_state_pool, mock_hybrid_search_service):
     """Test hybrid search with empty query"""
-    mock_result = MagicMock()
-    mock_result.total_results = 0
-    mock_result.total_time_ms = 5.0
-    mock_result.results = []
-    mock_result.weights_used = {}
-    mock_result.query_analysis = None
+    mock_result = {
+        "results": [],
+        "total_results": 0,
+        "query_analysis": {
+            "intent": "factual",
+            "confidence": 0.0,
+            "original_query": "",
+            "key_entities": [],
+            "key_concepts": [],
+            "temporal_markers": [],
+            "relation_types": [],
+            "recommended_strategies": [],
+            "strategy_weights": {},
+            "requires_temporal_filtering": False,
+            "requires_graph_traversal": False,
+            "suggested_depth": 0,
+            "analyzed_at": datetime.utcnow().isoformat()
+        },
+        "vector_results_count": 0,
+        "semantic_results_count": 0,
+        "graph_results_count": 0,
+        "fulltext_results_count": 0,
+        "total_time_ms": 5,
+        "query_analysis_time_ms": 0,
+        "search_time_ms": 5,
+        "applied_weights": {},
+        "reranking_used": False
+    }
 
     mock_hybrid_search_service.search.return_value = mock_result
 
@@ -296,18 +470,42 @@ async def test_hybrid_search_service_error(mock_app_state_pool, mock_hybrid_sear
     )
 
     assert response.status_code == 500
-    assert "error" in response.json()["detail"].lower() or "Service error" in response.json()["detail"]
+    data = response.json()
+    assert "error" in data
+    assert data["error"]["code"] == "500"
 
 
 @pytest.mark.asyncio
 async def test_hybrid_search_all_strategies_disabled(mock_app_state_pool, mock_hybrid_search_service):
     """Test hybrid search with all strategies disabled"""
-    mock_result = MagicMock()
-    mock_result.total_results = 0
-    mock_result.total_time_ms = 1.0
-    mock_result.results = []
-    mock_result.weights_used = {}
-    mock_result.query_analysis = None
+    mock_result = {
+        "results": [],
+        "total_results": 0,
+        "query_analysis": {
+            "intent": "factual",
+            "confidence": 0.0,
+            "original_query": "test query",
+            "key_entities": [],
+            "key_concepts": [],
+            "temporal_markers": [],
+            "relation_types": [],
+            "recommended_strategies": [],
+            "strategy_weights": {},
+            "requires_temporal_filtering": False,
+            "requires_graph_traversal": False,
+            "suggested_depth": 0,
+            "analyzed_at": datetime.utcnow().isoformat()
+        },
+        "vector_results_count": 0,
+        "semantic_results_count": 0,
+        "graph_results_count": 0,
+        "fulltext_results_count": 0,
+        "total_time_ms": 1,
+        "query_analysis_time_ms": 0,
+        "search_time_ms": 1,
+        "applied_weights": {},
+        "reranking_used": False
+    }
 
     mock_hybrid_search_service.search.return_value = mock_result
 
@@ -327,6 +525,9 @@ async def test_hybrid_search_all_strategies_disabled(mock_app_state_pool, mock_h
         json=payload,
         headers={"X-Tenant-Id": "test-tenant"}
     )
+
+    if response.status_code != 200:
+        print(f"\nDEBUG: Response {response.status_code}: {response.json()}")
 
     # Should return 200 with empty results
     assert response.status_code == 200

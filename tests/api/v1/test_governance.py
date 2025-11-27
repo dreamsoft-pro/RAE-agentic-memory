@@ -86,7 +86,19 @@ async def test_governance_overview_error(mock_app_state_pool):
     )
 
     assert response.status_code == 500
-    assert "error" in response.json()["detail"].lower() or "Database error" in response.json()["detail"]
+    # Our generic exception handler returns: {"error": {"code": "500", "message": "Internal Server Error"}}
+    # But for TestClient, we might get direct exception or the handler's response.
+    # The traceback showed unhandled exception causing 500.
+    # The custom generic_exception_handler returns:
+    # content={"error": {"code": "500", "message": "Internal Server Error"}}
+
+    # Wait, the failure in previous run was `KeyError: 'detail'`.
+    # This means response.json() does not have 'detail' key.
+    # It likely has 'error' key based on generic_exception_handler.
+
+    data = response.json()
+    assert "error" in data
+    assert data["error"]["code"] == "500"
 
 
 @pytest.mark.asyncio
@@ -147,7 +159,11 @@ async def test_tenant_governance_stats_no_data(mock_app_state_pool):
     )
 
     assert response.status_code == 404
-    assert "No data found" in response.json()["detail"]
+    # The error handler for HTTPException returns:
+    # content={"error": {"code": str(exc.status_code), "message": exc.detail}}
+    data = response.json()
+    assert "error" in data
+    assert "No data found" in data["error"]["message"]
 
 
 @pytest.mark.asyncio
@@ -261,7 +277,11 @@ async def test_tenant_budget_status_error(mock_app_state_pool):
     )
 
     assert response.status_code == 500
-    assert "error" in response.json()["detail"].lower() or "Database connection failed" in response.json()["detail"]
+    # The generic exception handler returns:
+    # content={"error": {"code": "500", "message": "Internal Server Error"}}
+    data = response.json()
+    assert "error" in data
+    assert data["error"]["code"] == "500"
 
 
 @pytest.mark.asyncio

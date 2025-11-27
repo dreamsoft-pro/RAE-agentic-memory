@@ -33,6 +33,72 @@
 
 ## 📝 Recent Changes
 
+### 2025-11-27 - Enterprise Features Implementation & Test Coverage Enhancement ✅
+
+**Changes:**
+
+1. **RAE Lite Profile** ✅
+   - Created `docker-compose.lite.yml` - minimal deployment profile
+   - Documented in `docs/deployment/rae-lite-profile.md`
+   - Includes: Core API + PostgreSQL + Qdrant + Redis only
+   - Perfect for: Development, testing, small teams (1-10 users)
+   - Resources: 4 GB RAM, 2 CPU cores (vs 8 GB for full stack)
+
+2. **Test Coverage Enhancement** ✅
+   - Added comprehensive tests for `/v1/memory/*` endpoints (8+ new tests)
+     - `test_rebuild_reflections_success`
+     - `test_reflection_stats_success`
+     - `test_store_memory_missing_tenant_header`
+     - `test_query_memory_with_filters`
+     - `test_query_memory_with_graph_traversal`
+     - And more edge cases
+   - Added tests for `/v1/agent/execute` endpoint (3+ new tests)
+     - `test_agent_execute_with_context`
+     - `test_agent_execute_with_empty_prompt`
+     - `test_agent_execute_with_llm_error`
+   - Created comprehensive test suite for `/v1/search/hybrid` endpoint (10 new tests)
+     - Testing all search strategies (vector, semantic, graph, fulltext)
+     - Testing with re-ranking, filters, manual weights
+     - Error handling and edge cases
+   - Created comprehensive test suite for `/v1/governance/*` endpoints (12 new tests)
+     - Testing overview, tenant stats, budget status
+     - Error handling, validation, edge cases
+
+3. **VERSION_MATRIX Update** ✅
+   - Clearly defined component status: GA, Beta, Experimental
+   - **GA (Production Ready):** Core API, GraphRAG, MCP, Governance, Context Watcher, Reranker
+   - **Beta:** ML Service, Dashboard, Python SDK, Helm Chart
+   - **Experimental:** Multi-modal Memory, Plugin System, Replay Tool (planned)
+   - Added support level for each component (Full, Best-effort, Community)
+
+4. **README Enhancement** ✅
+   - Added "Enterprise Core vs Optional Modules" section
+   - Clear table showing required vs optional components
+   - Added "Deployment Profiles" section:
+     - RAE Lite (Minimal)
+     - RAE Standard (Recommended)
+     - RAE Enterprise (Full Stack)
+   - Clear resource requirements for each profile
+
+**Impact:**
+- ✅ Better onboarding experience for new users (clear deployment options)
+- ✅ Improved test coverage for critical endpoints
+- ✅ Clear production-readiness signals (GA vs Beta vs Experimental)
+- ✅ Flexible deployment options (from 4GB to auto-scaling)
+
+**Files Modified:**
+- `docker-compose.lite.yml` (new)
+- `docs/deployment/rae-lite-profile.md` (new)
+- `tests/api/v1/test_memory.py` (enhanced)
+- `tests/api/v1/test_agent.py` (enhanced)
+- `tests/api/v1/test_search_hybrid.py` (new)
+- `tests/api/v1/test_governance.py` (new)
+- `docs/VERSION_MATRIX.md` (updated)
+- `README.md` (enhanced)
+- `STATUS.md` (this file)
+
+---
+
 ### 2025-11-27 - MCP Enterprise Enhancement (v1.1.0) ✅
 
 **Focus:** Security, Testing, Performance
@@ -168,72 +234,6 @@
 - `integrations/mcp/tests/test_mcp_load.py` - NEW (400+ lines)
 - `docs/integrations/mcp_protocol_server.md` - OpenTelemetry & load testing docs
 - `integrations/mcp-server/` - REMOVED (18 files deleted)
-
----
-
-### 2025-11-27 - Enterprise Features Implementation & Test Coverage Enhancement ✅
-
-**Changes:**
-
-1. **RAE Lite Profile** ✅
-   - Created `docker-compose.lite.yml` - minimal deployment profile
-   - Documented in `docs/deployment/rae-lite-profile.md`
-   - Includes: Core API + PostgreSQL + Qdrant + Redis only
-   - Perfect for: Development, testing, small teams (1-10 users)
-   - Resources: 4 GB RAM, 2 CPU cores (vs 8 GB for full stack)
-
-2. **Test Coverage Enhancement** ✅
-   - Added comprehensive tests for `/v1/memory/*` endpoints (8+ new tests)
-     - `test_rebuild_reflections_success`
-     - `test_reflection_stats_success`
-     - `test_store_memory_missing_tenant_header`
-     - `test_query_memory_with_filters`
-     - `test_query_memory_with_graph_traversal`
-     - And more edge cases
-   - Added tests for `/v1/agent/execute` endpoint (3+ new tests)
-     - `test_agent_execute_with_context`
-     - `test_agent_execute_with_empty_prompt`
-     - `test_agent_execute_with_llm_error`
-   - Created comprehensive test suite for `/v1/search/hybrid` endpoint (10 new tests)
-     - Testing all search strategies (vector, semantic, graph, fulltext)
-     - Testing with re-ranking, filters, manual weights
-     - Error handling and edge cases
-   - Created comprehensive test suite for `/v1/governance/*` endpoints (12 new tests)
-     - Testing overview, tenant stats, budget status
-     - Error handling, validation, edge cases
-
-3. **VERSION_MATRIX Update** ✅
-   - Clearly defined component status: GA, Beta, Experimental
-   - **GA (Production Ready):** Core API, GraphRAG, MCP, Governance, Context Watcher, Reranker
-   - **Beta:** ML Service, Dashboard, Python SDK, Helm Chart
-   - **Experimental:** Multi-modal Memory, Plugin System, Replay Tool (planned)
-   - Added support level for each component (Full, Best-effort, Community)
-
-4. **README Enhancement** ✅
-   - Added "Enterprise Core vs Optional Modules" section
-   - Clear table showing required vs optional components
-   - Added "Deployment Profiles" section:
-     - RAE Lite (Minimal)
-     - RAE Standard (Recommended)
-     - RAE Enterprise (Full Stack)
-   - Clear resource requirements for each profile
-
-**Impact:**
-- ✅ Better onboarding experience for new users (clear deployment options)
-- ✅ Improved test coverage for critical endpoints
-- ✅ Clear production-readiness signals (GA vs Beta vs Experimental)
-- ✅ Flexible deployment options (from 4GB to auto-scaling)
-
-**Files Modified:**
-- `docker-compose.lite.yml` (new)
-- `docs/deployment/rae-lite-profile.md` (new)
-- `tests/api/v1/test_memory.py` (enhanced)
-- `tests/api/v1/test_agent.py` (enhanced)
-- `tests/api/v1/test_search_hybrid.py` (new)
-- `tests/api/v1/test_governance.py` (new)
-- `docs/VERSION_MATRIX.md` (updated)
-- `README.md` (enhanced)
-- `STATUS.md` (this file)
 
 ---
 

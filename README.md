@@ -40,6 +40,9 @@ Current AI agents are **stateless** - they forget everything after each conversa
 
 **Choose your deployment:**
 
+- 🚀 **Full Stack** (recommended): `./scripts/quickstart.sh`
+- 💡 **Lite Profile** (minimal): `docker-compose -f docker-compose.lite.yml up -d`
+
 ### Full Stack (Recommended for Production)
 **One-line install:**
 

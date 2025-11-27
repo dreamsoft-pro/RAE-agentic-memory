@@ -118,7 +118,11 @@ def mock_pool():
     pool._test_conn = conn
     pool._test_context = context_manager
 
-    return pool
+    # Patch asyncpg.create_pool to return our mock pool
+    # This prevents the app from trying to connect to a real DB during test startup
+    with patch("apps.memory_api.main.asyncpg.create_pool", new_callable=AsyncMock) as mock_create_pool:
+        mock_create_pool.return_value = pool
+        yield pool
 
 
 # =============================================================================
