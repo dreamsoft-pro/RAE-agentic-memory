@@ -14,7 +14,7 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
-from apps.memory_api.dependencies import get_api_key, get_hybrid_search_service
+from apps.memory_api.dependencies import get_hybrid_search_service
 from apps.memory_api.metrics import memory_query_counter
 from apps.memory_api.services.graph_extraction import GraphExtractionResult
 from apps.memory_api.services.hybrid_search import (
@@ -26,9 +26,8 @@ from apps.memory_api.services.reflection_engine import ReflectionEngine
 
 logger = structlog.get_logger(__name__)
 
-router = APIRouter(
-    prefix="/graph", tags=["knowledge-graph"], dependencies=[Depends(get_api_key)]
-)
+# Auth is handled globally via FastAPI app dependencies
+router = APIRouter(prefix="/graph", tags=["knowledge-graph"])
 
 
 class GraphExtractionRequest(BaseModel):

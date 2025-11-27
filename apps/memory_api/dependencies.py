@@ -13,33 +13,20 @@ Enterprise Architecture Benefits:
 """
 
 import asyncpg
-from fastapi import HTTPException, Request, Security
-from fastapi.security import APIKeyHeader
+from fastapi import HTTPException, Request
 
-from .config import settings
 from .repositories.graph_repository import GraphRepository
 from .repositories.memory_repository import MemoryRepository
 from .services.graph_extraction import GraphExtractionService
 from .services.hybrid_search import HybridSearchService
 
-api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
-
 
 # ==========================================
 # Authentication Dependencies
 # ==========================================
-
-
-async def get_api_key(api_key: str = Security(api_key_header)):
-    """
-    Dependency to validate the API key provided in the X-API-Key header.
-    If settings.API_KEY is not set, authentication is effectively disabled.
-    """
-    if settings.API_KEY:  # Only enforce if an API_KEY is configured
-        if api_key and api_key == settings.API_KEY:
-            return api_key
-        raise HTTPException(status_code=403, detail="Could not validate credentials")
-    return None  # Authentication disabled
+# NOTE: Auth dependencies moved to apps/memory_api/security/auth.py
+# Use verify_token() for authentication globally via FastAPI dependencies
+# or import from security.auth for specific endpoints
 
 
 # ==========================================

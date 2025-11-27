@@ -3,7 +3,6 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from apps.memory_api.config import settings
-from apps.memory_api.dependencies import get_api_key
 from apps.memory_api.metrics import reflection_event_counter
 from apps.memory_api.middleware.cost_guard import cost_guard
 from apps.memory_api.models import (
@@ -21,13 +20,8 @@ from apps.memory_api.services.llm.base import LLMResult  # NEW import - for type
 from apps.memory_api.services.token_estimator import estimate_tokens  # NEW
 from apps.memory_api.services.vector_store import get_vector_store  # NEW
 
-router = APIRouter(
-    prefix="/agent", tags=["agent", "external"], dependencies=[Depends(get_api_key)]
-)
-
-router = APIRouter(
-    prefix="/agent", tags=["agent", "external"], dependencies=[Depends(get_api_key)]
-)
+# Auth is handled globally via FastAPI app dependencies
+router = APIRouter(prefix="/agent", tags=["agent", "external"])
 
 logger = structlog.get_logger(__name__)
 

@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter
 
-from apps.memory_api.dependencies import get_api_key
 from apps.memory_api.tasks.background_tasks import rebuild_cache
 
-router = APIRouter(prefix="/cache", tags=["cache"], dependencies=[Depends(get_api_key)])
+# Auth is handled globally via FastAPI app dependencies
+router = APIRouter(prefix="/cache", tags=["cache"])
 
 
 @router.post("/rebuild", status_code=202)

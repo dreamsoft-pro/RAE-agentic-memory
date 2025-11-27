@@ -4,7 +4,6 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from apps.memory_api.dependencies import get_hybrid_search_service  # NEW
-from apps.memory_api.dependencies import get_api_key
 from apps.memory_api.metrics import (
     memory_delete_counter,
     memory_query_counter,
@@ -30,9 +29,8 @@ from apps.memory_api.tasks.background_tasks import (  # NEW
 
 logger = structlog.get_logger(__name__)
 
-router = APIRouter(
-    prefix="/memory", tags=["memory-protocol"], dependencies=[Depends(get_api_key)]
-)
+# Auth is handled globally via FastAPI app dependencies
+router = APIRouter(prefix="/memory", tags=["memory-protocol"])
 
 
 @router.post("/store", response_model=StoreMemoryResponse)
