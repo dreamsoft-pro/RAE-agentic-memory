@@ -379,7 +379,7 @@ Before deploying RAE Lite to production:
 2. **Enable API authentication** (JWT tokens, API keys)
 3. **Restrict network access** (firewall, VPN)
 4. **Use secret management** (Vault, AWS Secrets Manager)
-5. **Enable PII scrubbing** (see [PII Scrubbing Guide](../concepts/pii-scrubbing.md))
+5. **Enable PII scrubbing** (configure PII detection in environment variables)
 6. **Regular backups** of PostgreSQL and Qdrant data
 
 For production deployments, we recommend **Kubernetes** with the official Helm chart.

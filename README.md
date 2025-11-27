@@ -38,13 +38,31 @@ Current AI agents are **stateless** - they forget everything after each conversa
 
 ## Quick Start (< 5 minutes)
 
+**Choose your deployment:**
+
+### Full Stack (Recommended for Production)
 **One-line install:**
 
 ```bash
 git clone https://github.com/dreamsoft-pro/RAE-agentic-memory && cd RAE-agentic-memory && ./scripts/quickstart.sh
 ```
 
-Or step by step:
+### RAE Lite (Minimal - Perfect for Development)
+**Quick start with minimal resources (4 GB RAM):**
+
+```bash
+git clone https://github.com/dreamsoft-pro/RAE-agentic-memory
+cd RAE-agentic-memory
+cp .env.example .env
+# Edit .env and add your LLM API key (OPENAI_API_KEY or ANTHROPIC_API_KEY)
+docker-compose -f docker-compose.lite.yml up -d
+```
+
+See [RAE Lite Profile Documentation](docs/deployment/rae-lite-profile.md) for details.
+
+---
+
+**Or step by step (Full Stack):**
 
 ```bash
 # 1. Clone the repository

@@ -4,17 +4,26 @@ Comprehensive guide for testing the RAE (Reflective Agentic Memory Engine) syste
 
 ## Test Coverage
 
-### Current Test Suite (Updated: 2025-11-25)
+### Current Test Suite (Updated: 2025-11-27)
 
 **Latest Test Run Results:**
-- ✅ **174 tests PASSED**
+- ✅ **174 tests PASSED** (verified 2025-11-25)
+- 🆕 **+35 tests ADDED** (2025-11-27 - pending CI verification)
 - ❌ **0 tests FAILED**
 - 🔵 **10 tests SKIPPED** (ML dependencies + integration tests requiring live services)
-- **Total:** 184 tests
-- **Pass Rate:** 94.6% (100% of runnable tests) ✅
+- **Total:** ~219 tests (184 verified + 35 new)
+- **Pass Rate:** 94.6% baseline (100% of runnable tests) ✅
 - **Warnings:** Minimal (after Pydantic v2 migration + isort fixes)
 
-**Coverage:** 57% (Target: 55% - ML-optional architecture) ✅
+**Coverage:** 57% → Target 75-80% (with new tests) 🎯
+
+**Latest Additions (2025-11-27):**
+- ✅ **API Endpoint Tests** - 35 new tests for critical endpoints
+  - `test_governance.py` - 13 tests (governance API)
+  - `test_search_hybrid.py` - 9 tests (hybrid search)
+  - `test_memory.py` - +6 tests (memory operations)
+  - `test_agent.py` - +3 tests (agent execution)
+  - `test_cache.py` - +4 tests (cache operations)
 
 **Recent Additions (2025-11-23 - 2025-11-25):**
 - ✅ **Repository Pattern Tests** - 29 new tests
