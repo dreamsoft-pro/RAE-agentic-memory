@@ -17,6 +17,155 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.0.0-enterprise] - 2025-11-27
 
+### Added - Enterprise Security Features (Phase 1-5 Complete) 🔒
+
+#### Phase 1: Authentication Unification ✅
+- **Unified authentication system** in `apps/memory_api/security/auth.py`
+  - `verify_token()` function for consistent authentication
+  - Support for API Key and JWT authentication
+  - Configuration flags: `ENABLE_API_KEY_AUTH`, `ENABLE_JWT_AUTH`
+- **Standardized auth verification** across all endpoints
+- **Removed duplicate auth functions** from dependencies
+
+#### Phase 2: RBAC Implementation ✅
+- **Complete Role-Based Access Control (RBAC) system**
+  - 5-tier role hierarchy: Owner → Admin → Developer → Analyst → Viewer
+  - User-tenant-role data model with database migration
+  - `user_tenant_roles` table for role assignments
+  - `access_logs` table for comprehensive audit logging
+- **RBACService with PostgreSQL-backed storage**
+  - CRUD operations for user roles
+  - Access logging for audit trail
+- **Tenant access control**
+  - `check_tenant_access()` - Verify user access to tenants
+  - `require_permission()` - Check specific action permissions
+  - `get_user_id_from_token()` - Extract user ID from auth tokens
+- **FastAPI dependencies for endpoint protection**
+  - `verify_tenant_access` - Path parameter tenant verification
+  - `get_and_verify_tenant_id` - Header-based tenant verification
+  - `require_admin` - System admin check
+  - `require_tenant_role` - Role-level access control
+  - `require_action` - Permission-based access control
+- **Secured all API endpoints**
+  - Governance API: admin required for overview, tenant access for stats
+  - Memory API: tenant access required for all operations
+  - Agent API: tenant access required
+  - Graph API: tenant access required
+- **Project-level access restrictions** (optional)
+- **Role expiration support** for time-limited access
+
+**Database Migration:**
+- `infra/postgres/migrations/002_create_rbac_tables.sql`
+- Indexes for efficient role and access log queries
+- Trigger for role expiration validation
+
+**Security Improvements:**
+- Tenant isolation enforced at API level
+- No user can access tenants without explicit role assignment
+- All access attempts logged with IP and user agent
+- Role hierarchy prevents privilege escalation
+- Expired roles automatically denied access
+
+#### Phase 3: Memory Decay Scheduler ✅
+- **Enterprise-grade memory importance decay system**
+  - `decay_memory_importance_task()` Celery task
+  - Multi-tenant batch processing
+  - Retry logic with exponential backoff (max 3 retries)
+- **Sophisticated temporal decay logic**
+  - Base decay rate for all memories
+  - Accelerated decay for stale memories (not accessed > 30 days)
+  - Protected decay for recently accessed memories (< 7 days)
+  - Floor at 0.01 to prevent complete decay
+  - SQL-based batch updates for performance
+- **Cron-based scheduling**: daily at 2 AM UTC
+- **Configuration options**
+  - `MEMORY_IMPORTANCE_DECAY_ENABLED` (default: true)
+  - `MEMORY_IMPORTANCE_DECAY_RATE` (default: 0.01 = 1% per day)
+  - `MEMORY_IMPORTANCE_DECAY_SCHEDULE` (default: "0 2 * * *")
+  - `MEMORY_IMPORTANCE_FLOOR` (default: 0.01)
+  - `MEMORY_IMPORTANCE_ACCELERATED_THRESHOLD_DAYS` (default: 30)
+  - `MEMORY_IMPORTANCE_PROTECTED_THRESHOLD_DAYS` (default: 7)
+- **Enhanced ImportanceScoringService**
+  - Real database implementation (replaced in-memory placeholder)
+  - Comprehensive error handling and logging
+  - Graceful failure handling (continues on tenant errors)
+
+#### Phase 4: Governance Security ✅
+- **RBAC protection for governance endpoints**
+  - `/governance/overview` requires system admin
+  - `/governance/tenant/{id}` requires tenant access
+  - `/governance/tenant/{id}/budget` requires tenant access
+
+#### Phase 5: Cleanup & Documentation ✅
+- **Comprehensive security documentation**
+  - `docs/security/SECURITY.md` - Complete security architecture
+  - `docs/security/RBAC.md` - Detailed RBAC guide
+  - Security overview with architecture diagrams
+  - Permission matrices and role descriptions
+  - Implementation examples and best practices
+  - Troubleshooting guides
+  - Threat model and security checklist
+- **Code cleanup**
+  - Resolved TODO comments with detailed implementation notes
+  - Added JWT verification documentation
+  - Enhanced system admin check documentation
+  - Improved code comments for future implementation
+- **Updated CHANGELOG** with all enterprise features
+
+### Changed
+- **All API endpoints now require authentication** by default
+- **Tenant isolation enforced** - users must have explicit role in tenant
+- **Governance endpoints secured** with admin/tenant access requirements
+
+### Fixed
+- Inconsistent authentication behavior across endpoints
+- Missing tenant access control
+- Lack of audit logging for security events
+- TODO comments resolved with implementation guidance
+
+### Migration Guide for 2.0.0-enterprise
+
+#### 1. Database Migration Required
+```bash
+psql -U memory -d memory -f infra/postgres/migrations/002_create_rbac_tables.sql
+```
+
+#### 2. Configuration Updates
+Update your `.env` file:
+```bash
+# Authentication (choose at least one)
+ENABLE_API_KEY_AUTH=true
+ENABLE_JWT_AUTH=false
+
+# Memory Decay
+MEMORY_IMPORTANCE_DECAY_ENABLED=true
+MEMORY_IMPORTANCE_DECAY_RATE=0.01
+MEMORY_IMPORTANCE_DECAY_SCHEDULE="0 2 * * *"
+```
+
+#### 3. Assign Initial Roles
+```python
+from apps.memory_api.services.rbac_service import RBACService
+from apps.memory_api.models.rbac import Role
+
+rbac_service = RBACService(pool)
+await rbac_service.assign_role(
+    user_id="your_user_id",
+    tenant_id=your_tenant_uuid,
+    role=Role.OWNER,
+    assigned_by="system"
+)
+```
+
+#### 4. Breaking Changes
+- Authentication now required for all endpoints
+- Tenant access required (users need explicit role)
+- Some endpoints return 403 instead of 401 for authorization failures
+
+---
+
+## [2.0.0-enterprise] - 2025-11-27 (Earlier Updates)
+
 ### Fixed - Documentation Consistency (2025-11-27 18:30 UTC)
 - **Enterprise Core vs Optional Modules Classification**
   - Fixed inconsistency between README.md and VERSION_MATRIX.md

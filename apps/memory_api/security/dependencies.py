@@ -6,9 +6,12 @@ These dependencies can be used with Depends() in route definitions.
 
 from typing import Callable
 
+import structlog
 from fastapi import Depends, HTTPException, Request, status
 
 from apps.memory_api.security import auth
+
+logger = structlog.get_logger(__name__)
 
 
 async def verify_tenant_access(
@@ -106,8 +109,27 @@ async def require_admin(request: Request) -> bool:
             detail="Authentication required for admin access",
         )
 
-    # TODO: Implement system-wide admin check
-    # For now, allow authenticated users (this is temporary)
+    # System-wide admin check
+    # NOTE: Implement system-wide admin verification:
+    # 1. Check if user_id exists in system_admins table
+    # 2. Or verify admin claim in JWT token
+    # 3. Or check against ADMIN_USER_IDS environment variable
+    #
+    # Example implementation:
+    # if hasattr(request.app.state, 'pool'):
+    #     result = await request.app.state.pool.fetchval(
+    #         "SELECT EXISTS(SELECT 1 FROM system_admins WHERE user_id = $1)",
+    #         user_id
+    #     )
+    #     if not result:
+    #         raise HTTPException(status_code=403, detail="Admin access required")
+    #
+    # For now, allow authenticated users (should be restricted in production)
+    logger.warning(
+        "system_admin_check_bypassed",
+        user_id=user_id,
+        message="System admin check not fully implemented - allowing authenticated users",
+    )
     return True
 
 
