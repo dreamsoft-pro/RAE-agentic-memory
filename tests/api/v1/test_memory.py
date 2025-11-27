@@ -99,3 +99,140 @@ async def test_delete_memory_success(mock_app_state_pool, mock_vector_store):
     )
 
     assert response.status_code == 200
+
+@pytest.mark.asyncio
+async def test_rebuild_reflections_success(mock_app_state_pool):
+    """Test POST /v1/memory/rebuild-reflections endpoint"""
+    with patch("apps.memory_api.api.v1.memory.generate_reflection_for_project") as mock_task:
+        mock_task.delay = MagicMock(return_value=MagicMock(id="task-123"))
+
+        payload = {
+            "tenant_id": "test-tenant",
+            "project": "test-project"
+        }
+
+        response = client.post(
+            "/v1/memory/rebuild-reflections",
+            json=payload,
+            headers={"X-Tenant-Id": "test-tenant"}
+        )
+
+        assert response.status_code == 202
+        assert "dispatched" in response.json()["message"].lower()
+
+@pytest.mark.asyncio
+async def test_reflection_stats_success(mock_app_state_pool):
+    """Test GET /v1/memory/reflection-stats endpoint"""
+    mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
+
+    # Mock database response
+    mock_conn.fetchrow.return_value = {
+        "reflective_memory_count": 42,
+        "average_strength": 0.75
+    }
+
+    response = client.get(
+        "/v1/memory/reflection-stats?project=test-project",
+        headers={"X-Tenant-Id": "test-tenant"}
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["reflective_memory_count"] == 42
+    assert data["average_strength"] == 0.75
+
+@pytest.mark.asyncio
+async def test_store_memory_missing_tenant_header(mock_app_state_pool, mock_vector_store, mock_embedding_service):
+    """Test store memory without tenant header returns 400"""
+    payload = {
+        "content": "Test content",
+        "source": "cli",
+        "layer": "em",
+        "importance": 0.5
+    }
+
+    response = client.post("/v1/memory/store", json=payload)
+
+    assert response.status_code == 400
+    assert "X-Tenant-Id" in response.json()["detail"]
+
+@pytest.mark.asyncio
+async def test_query_memory_with_filters(mock_app_state_pool, mock_vector_store, mock_embedding_service):
+    """Test query memory with tag filters"""
+    record = ScoredMemoryRecord(
+        id="mem-1",
+        content="Filtered result",
+        score=0.90,
+        importance=0.7,
+        layer="em",
+        tags=["filtered", "test"],
+        source="src",
+        project="proj",
+        timestamp=datetime.now(),
+        last_accessed_at=datetime.now(),
+        usage_count=5
+    )
+
+    mock_vector_store.query.return_value = [record]
+
+    payload = {
+        "query_text": "test query",
+        "k": 5,
+        "filters": {"tags": ["filtered"]}
+    }
+
+    response = client.post(
+        "/v1/memory/query",
+        json=payload,
+        headers={"X-Tenant-Id": "test-tenant"}
+    )
+
+    assert response.status_code == 200
+    results = response.json()["results"]
+    assert len(results) == 1
+    assert "filtered" in results[0]["tags"]
+
+@pytest.mark.asyncio
+async def test_query_memory_with_graph_traversal(mock_app_state_pool, mock_vector_store, mock_embedding_service):
+    """Test query memory with GraphRAG (use_graph=true)"""
+    with patch("apps.memory_api.api.v1.memory.get_hybrid_search_service") as mock_hybrid:
+        mock_service = AsyncMock()
+        mock_service.hybrid_search = AsyncMock(return_value={
+            "results": [],
+            "synthesized_context": "Graph context",
+            "graph_statistics": {"nodes_traversed": 10}
+        })
+        mock_hybrid.return_value = mock_service
+
+        payload = {
+            "query_text": "test query",
+            "k": 5,
+            "use_graph": True,
+            "graph_depth": 2,
+            "project": "test-project"
+        }
+
+        response = client.post(
+            "/v1/memory/query",
+            json=payload,
+            headers={"X-Tenant-Id": "test-tenant"}
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "synthesized_context" in data
+        assert "graph_statistics" in data
+
+@pytest.mark.asyncio
+async def test_delete_memory_not_found(mock_app_state_pool, mock_vector_store):
+    """Test delete memory that doesn't exist"""
+    mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
+    mock_conn.execute.return_value = "DELETE 0"
+
+    response = client.delete(
+        "/v1/memory/delete?memory_id=nonexistent",
+        headers={"X-Tenant-Id": "test-tenant"}
+    )
+
+    # Should still return 200 even if memory doesn't exist (idempotent)
+    assert response.status_code == 200
