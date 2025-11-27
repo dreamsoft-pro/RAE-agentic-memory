@@ -23,16 +23,40 @@ MAJOR.MINOR.PATCH[-PRERELEASE]
 
 ## Component Versions (v2.0.0-enterprise)
 
-| Component | Version | Status | Description |
-|-----------|---------|--------|-------------|
-| **Core API** | 2.0.0-enterprise | 🟡 Development | Main Memory API with GraphRAG |
-| **ML Service** | 2.0.0 | 🟡 Development | Embeddings, NLP, Entity Resolution |
-| **Reranker Service** | 1.0.0 | 🟢 Stable | Result reranking service |
-| **MCP Integration** | 1.1.0 | 🟢 Stable | Model Context Protocol server |
-| **MCP Server** | 1.0.0 | 🟢 Stable | Alternative MCP implementation |
-| **Context Watcher** | 1.0.0 | 🟢 Stable | File system monitoring |
-| **Python SDK** | 0.1.0 | 🟡 Development | Client library for Python |
-| **Dashboard** | 1.0.0 | 🟡 Development | Web UI for monitoring |
+### Production Ready (GA - Generally Available) ✅
+
+Components ready for production use with full support and stability guarantees.
+
+| Component | Version | Status | Support | Description |
+|-----------|---------|--------|---------|-------------|
+| **Core API** | 2.0.0-enterprise | ✅ **GA** | Full | Main Memory API with 4-layer architecture |
+| **GraphRAG** | 2.0.0 | ✅ **GA** | Full | Knowledge graph + hybrid search |
+| **MCP Integration** | 1.1.0 | ✅ **GA** | Full | Model Context Protocol server |
+| **MCP Server** | 1.0.0 | ✅ **GA** | Full | Alternative MCP implementation |
+| **Governance API** | 2.0.0 | ✅ **GA** | Full | Cost tracking & budget management |
+| **Context Watcher** | 1.0.0 | ✅ **GA** | Full | File system monitoring |
+| **Reranker Service** | 1.0.0 | ✅ **GA** | Full | Result re-ranking service |
+
+### Beta (Production-Ready but Evolving) 🟡
+
+Components suitable for production but may have breaking changes in minor versions.
+
+| Component | Version | Status | Support | Description |
+|-----------|---------|--------|---------|-------------|
+| **ML Service** | 2.0.0 | 🟡 **Beta** | Best-effort | Embeddings, NLP, Entity Resolution |
+| **Dashboard** | 1.0.0 | 🟡 **Beta** | Best-effort | Web UI for monitoring & visualization |
+| **Python SDK** | 0.1.0 | 🟡 **Beta** | Best-effort | Client library for Python |
+| **Helm Chart** | 1.0.0 | 🟡 **Beta** | Best-effort | Kubernetes deployment |
+
+### Experimental (Preview Features) ⚠️
+
+Components in active development, not recommended for production use.
+
+| Component | Version | Status | Support | Description |
+|-----------|---------|--------|---------|-------------|
+| **Multi-modal Memory** | - | ⚠️ **Experimental** | Community | Images, audio, video support (planned) |
+| **Plugin System** | - | ⚠️ **Experimental** | Community | Custom extensions (planned) |
+| **Replay Tool** | - | ⚠️ **Experimental** | Community | Agent session replay (concept)
 
 ---
 
