@@ -59,6 +59,11 @@
      - `integrations/mcp/tests/test_mcp_load.py`
      - `integrations/mcp/src/rae_mcp/server.py`
 
+4. **Ruff Linting Errors (F541, F401)** ✅
+   - Fixed F541 in `test_mcp_load.py`: removed unnecessary f-string prefix
+   - Fixed F401 in `test_pii_scrubber.py`: removed unused pytest import
+   - All ruff checks now passing
+
 **Impact:**
 - ✅ All GitHub Actions jobs passing (Lint, Tests, Security, Docker Build)
 - ✅ 38 test errors eliminated (100% success rate)
