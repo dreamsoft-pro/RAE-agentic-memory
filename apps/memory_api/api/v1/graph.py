@@ -22,12 +22,18 @@ from apps.memory_api.services.hybrid_search import (
     HybridSearchService,
     TraversalStrategy,
 )
+from apps.memory_api.security import auth
+from apps.memory_api.security.dependencies import get_and_verify_tenant_id
 from apps.memory_api.services.reflection_engine import ReflectionEngine
 
 logger = structlog.get_logger(__name__)
 
-# Auth is handled globally via FastAPI app dependencies
-router = APIRouter(prefix="/graph", tags=["knowledge-graph"])
+# All graph endpoints require authentication
+router = APIRouter(
+    prefix="/graph",
+    tags=["knowledge-graph"],
+    dependencies=[Depends(auth.verify_token)],
+)
 
 
 class GraphExtractionRequest(BaseModel):

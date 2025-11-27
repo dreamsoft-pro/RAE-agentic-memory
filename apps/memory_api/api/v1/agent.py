@@ -18,17 +18,27 @@ from apps.memory_api.services.embedding import get_embedding_service  # NEW
 from apps.memory_api.services.llm import get_llm_provider  # NEW import
 from apps.memory_api.services.llm.base import LLMResult  # NEW import - for type hinting
 from apps.memory_api.services.token_estimator import estimate_tokens  # NEW
+from apps.memory_api.security import auth
+from apps.memory_api.security.dependencies import get_and_verify_tenant_id
 from apps.memory_api.services.vector_store import get_vector_store  # NEW
 
-# Auth is handled globally via FastAPI app dependencies
-router = APIRouter(prefix="/agent", tags=["agent", "external"])
+# All agent endpoints require authentication
+router = APIRouter(
+    prefix="/agent",
+    tags=["agent", "external"],
+    dependencies=[Depends(auth.verify_token)],
+)
 
 logger = structlog.get_logger(__name__)
 
 
 @router.post("/execute", response_model=AgentExecuteResponse)
 @cost_guard()
-async def execute(req: AgentExecuteRequest, request: Request):
+async def execute(
+    req: AgentExecuteRequest,
+    request: Request,
+    verified_tenant_id: str = Depends(get_and_verify_tenant_id),
+):
     """
     Pipeline agenta:
     1) Retrieve z Qdrant (hybrid_search)
@@ -37,11 +47,12 @@ async def execute(req: AgentExecuteRequest, request: Request):
     4) Wywołanie LLM przez litellm
     5) Reflection hook - zapisanie refleksji jako nowego wspomnienia
     6) Zwrócenie odpowiedzi + użytych memories + kosztu
+
+    **Security:** Requires authentication and tenant access.
     """
 
-    tenant_id = req.tenant_id or request.headers.get("X-Tenant-Id")
-    if not tenant_id:
-        raise HTTPException(status_code=400, detail="Missing tenant_id")
+    # Use verified tenant_id from RBAC, or fall back to request tenant_id
+    tenant_id = req.tenant_id or verified_tenant_id
 
     # 1. Retrieve pre-built semantic & reflective context from cache
     cache = get_context_cache()

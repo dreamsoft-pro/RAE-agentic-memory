@@ -23,24 +23,33 @@ from apps.memory_api.services import pii_scrubber, scoring
 from apps.memory_api.services.embedding import get_embedding_service  # NEW
 from apps.memory_api.services.hybrid_search import HybridSearchService  # NEW
 from apps.memory_api.services.vector_store import get_vector_store  # NEW
+from apps.memory_api.security import auth
+from apps.memory_api.security.dependencies import get_and_verify_tenant_id
 from apps.memory_api.tasks.background_tasks import (  # NEW
     generate_reflection_for_project,
 )
 
 logger = structlog.get_logger(__name__)
 
-# Auth is handled globally via FastAPI app dependencies
-router = APIRouter(prefix="/memory", tags=["memory-protocol"])
+# All memory endpoints require authentication
+router = APIRouter(
+    prefix="/memory",
+    tags=["memory-protocol"],
+    dependencies=[Depends(auth.verify_token)],
+)
 
 
 @router.post("/store", response_model=StoreMemoryResponse)
-async def store_memory(req: StoreMemoryRequest, request: Request):
+async def store_memory(
+    req: StoreMemoryRequest,
+    request: Request,
+    tenant_id: str = Depends(get_and_verify_tenant_id),
+):
     """
     Stores a new memory record in the database and vector store.
+
+    **Security:** Requires authentication and tenant access with memories:write permission.
     """
-    tenant_id = request.headers.get("X-Tenant-Id")
-    if not tenant_id:
-        raise HTTPException(status_code=400, detail="X-Tenant-Id header is required.")
 
     content = pii_scrubber.scrub_text(req.content)
 
@@ -105,6 +114,7 @@ async def store_memory(req: StoreMemoryRequest, request: Request):
 async def query_memory(
     req: QueryMemoryRequest,
     request: Request,
+    tenant_id: str = Depends(get_and_verify_tenant_id),
     hybrid_search: HybridSearchService = Depends(get_hybrid_search_service),
 ):
     """
@@ -120,11 +130,11 @@ async def query_memory(
     Args:
         req: Query request parameters
         request: FastAPI request object
+        tenant_id: Verified tenant ID (injected via RBAC)
         hybrid_search: HybridSearchService (injected via DI)
+
+    **Security:** Requires authentication and tenant access with memories:read permission.
     """
-    tenant_id = request.headers.get("X-Tenant-Id")
-    if not tenant_id:
-        raise HTTPException(status_code=400, detail="X-Tenant-Id header is required.")
 
     # Check if hybrid search is requested
     if req.use_graph:
@@ -238,13 +248,16 @@ async def query_memory(
 
 
 @router.delete("/delete", response_model=DeleteMemoryResponse)
-async def delete_memory(memory_id: str, request: Request):
+async def delete_memory(
+    memory_id: str,
+    request: Request,
+    tenant_id: str = Depends(get_and_verify_tenant_id),
+):
     """
     Deletes a memory record from the database and vector store.
+
+    **Security:** Requires authentication and tenant access with memories:delete permission.
     """
-    tenant_id = request.headers.get("X-Tenant-Id")
-    if not tenant_id:
-        raise HTTPException(status_code=400, detail="X-Tenant-Id header is required.")
 
     # 1. Delete from database using repository
     try:
@@ -283,13 +296,16 @@ async def rebuild_reflections(req: RebuildReflectionsRequest):
 
 
 @router.get("/reflection-stats")
-async def get_reflection_stats(request: Request, project: Optional[str] = None):
+async def get_reflection_stats(
+    request: Request,
+    tenant_id: str = Depends(get_and_verify_tenant_id),
+    project: Optional[str] = None,
+):
     """
     Gets statistics about reflective memories.
+
+    **Security:** Requires authentication and tenant access.
     """
-    tenant_id = request.headers.get("X-Tenant-Id")
-    if not tenant_id:
-        raise HTTPException(status_code=400, detail="X-Tenant-Id header is required.")
 
     memory_repository = MemoryRepository(request.app.state.pool)
 

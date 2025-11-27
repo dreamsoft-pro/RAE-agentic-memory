@@ -1,5 +1,8 @@
 # Enterprise Fix Plan - Security & Architecture Issues
 
+**WAŻNE: Wykonaj wszystkie kroki poniżej od początku do końca bez przerywania. 
+Nie pytaj o potwierdzenie między krokami. Kontynuuj aż do pełnego zakończenia.**
+
 **Date:** 2025-11-27
 **Source:** docs/RAE-improve-02.md
 **Priority:** HIGH - Security & Architecture

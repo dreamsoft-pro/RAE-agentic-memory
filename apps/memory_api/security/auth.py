@@ -129,15 +129,48 @@ async def get_current_user(request: Request) -> dict:
     return {"authenticated": False}
 
 
-async def check_tenant_access(
-    tenant_id: str, user: dict = Security(get_current_user)
-) -> bool:
+async def get_user_id_from_token(request: Request) -> Optional[str]:
     """
-    Check if user has access to specific tenant.
+    Extract user ID from authentication token.
 
     Args:
+        request: FastAPI request object
+
+    Returns:
+        User ID if authenticated, None otherwise
+    """
+    # Try to get from request state first
+    if hasattr(request.state, "user"):
+        user = request.state.user
+        if user.get("user_id"):
+            return user["user_id"]
+
+    # Try to extract from token
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+        # TODO: Decode JWT and extract user_id
+        # For now, use token as user_id for testing
+        return token[:50]  # Limit length
+
+    # Try API key as user identifier
+    api_key = request.headers.get("X-API-Key")
+    if api_key:
+        return f"apikey_{api_key[:20]}"
+
+    return None
+
+
+async def check_tenant_access(
+    request: Request,
+    tenant_id: str,
+) -> bool:
+    """
+    Check if user has access to specific tenant using RBAC.
+
+    Args:
+        request: FastAPI request object
         tenant_id: Tenant ID to check access for
-        user: Current authenticated user
 
     Returns:
         True if user has access
@@ -145,12 +178,216 @@ async def check_tenant_access(
     Raises:
         HTTPException: If user doesn't have access
     """
-    # TODO: Implement proper tenant access control
-    # For now, allow all authenticated users
+    from uuid import UUID
 
-    if not user.get("authenticated"):
+    from apps.memory_api.services.rbac_service import RBACService
+
+    # Get user ID from authentication
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        logger.warning("check_tenant_access_no_user_id", tenant_id=tenant_id)
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to tenant"
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required to access tenant",
         )
+
+    # Get database pool from app state
+    if not hasattr(request.app.state, "pool"):
+        logger.error("check_tenant_access_no_pool", tenant_id=tenant_id)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database not initialized",
+        )
+
+    # Convert tenant_id to UUID
+    try:
+        tenant_uuid = UUID(tenant_id)
+    except (ValueError, AttributeError):
+        logger.warning("check_tenant_access_invalid_tenant_id", tenant_id=tenant_id)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid tenant ID format: {tenant_id}",
+        )
+
+    # Check RBAC
+    rbac_service = RBACService(request.app.state.pool)
+    user_role = await rbac_service.get_user_role(user_id, tenant_uuid)
+
+    if not user_role:
+        logger.warning(
+            "check_tenant_access_denied",
+            user_id=user_id,
+            tenant_id=tenant_id,
+            reason="no_role",
+        )
+        # Log access attempt
+        await rbac_service.log_access(
+            tenant_id=tenant_uuid,
+            user_id=user_id,
+            action="tenant:access",
+            resource="tenant",
+            allowed=False,
+            denial_reason="User has no role in this tenant",
+            ip_address=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: You don't have access to this tenant",
+        )
+
+    # Check if role is expired
+    if user_role.is_expired():
+        logger.warning(
+            "check_tenant_access_denied",
+            user_id=user_id,
+            tenant_id=tenant_id,
+            reason="role_expired",
+        )
+        await rbac_service.log_access(
+            tenant_id=tenant_uuid,
+            user_id=user_id,
+            action="tenant:access",
+            resource="tenant",
+            allowed=False,
+            denial_reason="Role assignment has expired",
+            ip_address=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Your access to this tenant has expired",
+        )
+
+    # Log successful access
+    await rbac_service.log_access(
+        tenant_id=tenant_uuid,
+        user_id=user_id,
+        action="tenant:access",
+        resource="tenant",
+        allowed=True,
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+
+    logger.info(
+        "check_tenant_access_granted",
+        user_id=user_id,
+        tenant_id=tenant_id,
+        role=user_role.role.value,
+    )
+
+    return True
+
+
+async def require_permission(
+    request: Request,
+    tenant_id: str,
+    action: str,
+    project_id: Optional[str] = None,
+) -> bool:
+    """
+    Check if user has specific permission to perform action.
+
+    Args:
+        request: FastAPI request object
+        tenant_id: Tenant ID
+        action: Action to check (e.g., "memories:write", "users:delete")
+        project_id: Optional project ID for project-scoped permissions
+
+    Returns:
+        True if permission granted
+
+    Raises:
+        HTTPException: If permission denied
+    """
+    from uuid import UUID
+
+    from apps.memory_api.services.rbac_service import RBACService
+
+    # Get user ID from authentication
+    user_id = await get_user_id_from_token(request)
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required",
+        )
+
+    # Get database pool
+    if not hasattr(request.app.state, "pool"):
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Database not initialized",
+        )
+
+    # Convert tenant_id to UUID
+    try:
+        tenant_uuid = UUID(tenant_id)
+    except (ValueError, AttributeError):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid tenant ID format: {tenant_id}",
+        )
+
+    # Check permission
+    rbac_service = RBACService(request.app.state.pool)
+    user_role = await rbac_service.get_user_role(user_id, tenant_uuid)
+
+    if not user_role:
+        await rbac_service.log_access(
+            tenant_id=tenant_uuid,
+            user_id=user_id,
+            action=action,
+            resource=action.split(":")[0],
+            allowed=False,
+            denial_reason="User has no role in this tenant",
+            ip_address=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: You don't have access to this tenant",
+        )
+
+    # Check if can perform action
+    if not user_role.can_perform(action, project_id):
+        denial_reason = f"Role {user_role.role.value} cannot perform {action}"
+        if project_id and not user_role.has_access_to_project(project_id):
+            denial_reason = f"No access to project {project_id}"
+
+        await rbac_service.log_access(
+            tenant_id=tenant_uuid,
+            user_id=user_id,
+            action=action,
+            resource=action.split(":")[0],
+            allowed=False,
+            denial_reason=denial_reason,
+            ip_address=request.client.host if request.client else None,
+            user_agent=request.headers.get("user-agent"),
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Permission denied: {denial_reason}",
+        )
+
+    # Log successful access
+    await rbac_service.log_access(
+        tenant_id=tenant_uuid,
+        user_id=user_id,
+        action=action,
+        resource=action.split(":")[0],
+        allowed=True,
+        ip_address=request.client.host if request.client else None,
+        user_agent=request.headers.get("user-agent"),
+    )
+
+    logger.info(
+        "permission_granted",
+        user_id=user_id,
+        tenant_id=tenant_id,
+        action=action,
+        role=user_role.role.value,
+    )
 
     return True

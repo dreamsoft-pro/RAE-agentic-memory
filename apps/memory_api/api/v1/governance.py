@@ -23,9 +23,15 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from apps.memory_api.dependencies import get_db_pool
+from apps.memory_api.security import auth
+from apps.memory_api.security.dependencies import require_admin, verify_tenant_access
 
 logger = structlog.get_logger(__name__)
-router = APIRouter(prefix="/v1/governance", tags=["Governance"])
+router = APIRouter(
+    prefix="/v1/governance",
+    tags=["Governance"],
+    dependencies=[Depends(auth.verify_token)],  # All endpoints require auth
+)
 
 
 # ============================================================================
@@ -91,6 +97,7 @@ class TenantBudgetStatus(BaseModel):
 async def get_governance_overview(
     days: int = Query(30, ge=1, le=365, description="Number of days to analyze"),
     pool=Depends(get_db_pool),
+    _: bool = Depends(require_admin),
 ):
     """
     Get system-wide governance overview.
@@ -99,6 +106,7 @@ async def get_governance_overview(
     Useful for platform administrators to monitor overall costs and usage.
 
     **Permissions:** Admin only
+    **Security:** Requires system admin authentication
     """
     try:
         end_date = datetime.now(timezone.utc)
@@ -182,6 +190,7 @@ async def get_tenant_governance_stats(
     tenant_id: str,
     days: int = Query(30, ge=1, le=365, description="Number of days to analyze"),
     pool=Depends(get_db_pool),
+    _: bool = Depends(verify_tenant_access),
 ):
     """
     Get comprehensive governance statistics for a specific tenant.
@@ -193,6 +202,7 @@ async def get_tenant_governance_stats(
     - Average cost per API call
 
     **Permissions:** Tenant owner or admin
+    **Security:** Requires authentication and tenant access
     """
     try:
         end_date = datetime.now(timezone.utc)
@@ -303,7 +313,11 @@ async def get_tenant_governance_stats(
 
 
 @router.get("/tenant/{tenant_id}/budget", response_model=TenantBudgetStatus)
-async def get_tenant_budget_status(tenant_id: str, pool=Depends(get_db_pool)):
+async def get_tenant_budget_status(
+    tenant_id: str,
+    pool=Depends(get_db_pool),
+    _: bool = Depends(verify_tenant_access),
+):
     """
     Get current budget status and projections for a tenant.
 
@@ -315,6 +329,7 @@ async def get_tenant_budget_status(tenant_id: str, pool=Depends(get_db_pool)):
     - Alerts if approaching or exceeding limits
 
     **Permissions:** Tenant owner or admin
+    **Security:** Requires authentication and tenant access
     """
     try:
         logger.info("tenant_budget_status_request", tenant_id=tenant_id)
