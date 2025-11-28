@@ -1,0 +1,488 @@
+"""
+Context Builder - Working Memory Construction with Reflections
+
+This service builds the Working Memory (Layer 2) by combining:
+- Recent conversation messages
+- Relevant Long-Term Memories (LTM)
+- Lessons Learned from Reflective Memory
+- User/system profiles
+
+Implements the context injection pattern from RAE v1 Implementation Plan.
+"""
+
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+
+import asyncpg
+import structlog
+
+from apps.memory_api.repositories.memory_repository import MemoryRepository
+from apps.memory_api.services.memory_scoring_v2 import (
+    ScoringWeights,
+    compute_batch_scores,
+    rank_memories_by_score,
+)
+from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
+
+logger = structlog.get_logger(__name__)
+
+
+# ============================================================================
+# Configuration
+# ============================================================================
+
+
+@dataclass
+class ContextConfig:
+    """Configuration for context building"""
+
+    # Token budgets
+    max_total_tokens: int = 8000
+    max_messages_tokens: int = 4000
+    max_ltm_tokens: int = 2000
+    max_reflections_tokens: int = 1024
+    max_profile_tokens: int = 512
+
+    # Retrieval limits
+    max_ltm_items: int = 10
+    max_reflection_items: int = 5
+    min_reflection_importance: float = 0.5
+
+    # Scoring
+    enable_enhanced_scoring: bool = True
+    scoring_weights: Optional[ScoringWeights] = None
+
+
+# ============================================================================
+# Context Components
+# ============================================================================
+
+
+@dataclass
+class ContextComponent:
+    """A single component of the context"""
+
+    type: str  # "message", "ltm", "reflection", "profile"
+    content: str
+    metadata: Dict[str, Any]
+    tokens: int = 0
+
+
+@dataclass
+class WorkingMemoryContext:
+    """
+    Complete Working Memory context ready for LLM.
+
+    Contains all components needed for agent execution.
+    """
+
+    # Core components
+    messages: List[ContextComponent]
+    ltm_items: List[ContextComponent]
+    reflections: List[ContextComponent]
+    profile_items: List[ContextComponent]
+
+    # Formatted output
+    system_prompt: str
+    context_text: str
+
+    # Metadata
+    total_tokens: int
+    retrieval_stats: Dict[str, Any]
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary for serialization"""
+        return {
+            "messages": [
+                {"type": c.type, "content": c.content, "metadata": c.metadata}
+                for c in self.messages
+            ],
+            "ltm_items": [
+                {"type": c.type, "content": c.content, "metadata": c.metadata}
+                for c in self.ltm_items
+            ],
+            "reflections": [
+                {"type": c.type, "content": c.content, "metadata": c.metadata}
+                for c in self.reflections
+            ],
+            "profile_items": [
+                {"type": c.type, "content": c.content, "metadata": c.metadata}
+                for c in self.profile_items
+            ],
+            "system_prompt": self.system_prompt,
+            "context_text": self.context_text,
+            "total_tokens": self.total_tokens,
+            "retrieval_stats": self.retrieval_stats,
+        }
+
+
+# ============================================================================
+# ContextBuilder Service
+# ============================================================================
+
+
+class ContextBuilder:
+    """
+    Service for building Working Memory context with reflections.
+
+    This implements Layer 2 (Working Memory) of the 4-layer memory architecture,
+    combining inputs from Layer 1 (Sensory), Layer 3 (LTM), and Layer 4 (Reflective).
+    """
+
+    def __init__(
+        self,
+        pool: asyncpg.Pool,
+        memory_repository: Optional[MemoryRepository] = None,
+        reflection_engine: Optional[ReflectionEngineV2] = None,
+        config: Optional[ContextConfig] = None,
+    ):
+        """
+        Initialize ContextBuilder
+
+        Args:
+            pool: Database connection pool
+            memory_repository: Memory repository for retrieval
+            reflection_engine: Reflection engine for querying reflections
+            config: Context configuration
+        """
+        self.pool = pool
+        self.memory_repo = memory_repository or MemoryRepository(pool)
+        self.reflection_engine = reflection_engine or ReflectionEngineV2(pool)
+        self.config = config or ContextConfig()
+
+    async def build_context(
+        self,
+        tenant_id: str,
+        project_id: str,
+        query: str,
+        recent_messages: Optional[List[Dict[str, Any]]] = None,
+        user_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+    ) -> WorkingMemoryContext:
+        """
+        Build complete Working Memory context.
+
+        Args:
+            tenant_id: Tenant identifier
+            project_id: Project identifier
+            query: Current user query/task
+            recent_messages: Recent conversation messages
+            user_id: Optional user identifier
+            session_id: Optional session identifier
+
+        Returns:
+            WorkingMemoryContext with all components
+        """
+        logger.info(
+            "context_building_started",
+            tenant_id=tenant_id,
+            project_id=project_id,
+            query_length=len(query),
+        )
+
+        retrieval_stats = {
+            "ltm_retrieved": 0,
+            "reflections_retrieved": 0,
+            "scoring_method": (
+                "enhanced" if self.config.enable_enhanced_scoring else "basic"
+            ),
+        }
+
+        # 1. Format recent messages
+        message_components = self._format_messages(recent_messages or [])
+
+        # 2. Retrieve relevant LTM
+        ltm_components = await self._retrieve_ltm(
+            tenant_id=tenant_id,
+            project_id=project_id,
+            query=query,
+        )
+        retrieval_stats["ltm_retrieved"] = len(ltm_components)
+
+        # 3. Retrieve relevant reflections (Lessons Learned)
+        reflection_components = await self._retrieve_reflections(
+            tenant_id=tenant_id,
+            project_id=project_id,
+            query=query,
+        )
+        retrieval_stats["reflections_retrieved"] = len(reflection_components)
+
+        # 4. Retrieve user/system profile
+        profile_components = await self._retrieve_profile(
+            tenant_id=tenant_id, project_id=project_id, user_id=user_id
+        )
+
+        # 5. Build formatted context
+        system_prompt, context_text = self._build_formatted_context(
+            messages=message_components,
+            ltm_items=ltm_components,
+            reflections=reflection_components,
+            profile_items=profile_components,
+        )
+
+        # 6. Calculate total tokens (rough estimate)
+        total_tokens = (
+            sum(c.tokens for c in message_components)
+            + sum(c.tokens for c in ltm_components)
+            + sum(c.tokens for c in reflection_components)
+            + sum(c.tokens for c in profile_components)
+        )
+
+        logger.info(
+            "context_building_completed",
+            tenant_id=tenant_id,
+            total_tokens=total_tokens,
+            stats=retrieval_stats,
+        )
+
+        return WorkingMemoryContext(
+            messages=message_components,
+            ltm_items=ltm_components,
+            reflections=reflection_components,
+            profile_items=profile_components,
+            system_prompt=system_prompt,
+            context_text=context_text,
+            total_tokens=total_tokens,
+            retrieval_stats=retrieval_stats,
+        )
+
+    def _format_messages(
+        self, messages: List[Dict[str, Any]]
+    ) -> List[ContextComponent]:
+        """Format recent conversation messages"""
+        components = []
+        for msg in messages[-10:]:  # Last 10 messages
+            content = msg.get("content", "")
+            role = msg.get("role", "user")
+            tokens = len(content.split()) * 1.3  # Rough estimate
+
+            components.append(
+                ContextComponent(
+                    type="message",
+                    content=content,
+                    metadata={"role": role},
+                    tokens=int(tokens),
+                )
+            )
+
+        return components
+
+    async def _retrieve_ltm(
+        self, tenant_id: str, project_id: str, query: str
+    ) -> List[ContextComponent]:
+        """
+        Retrieve relevant Long-Term Memories.
+
+        Uses enhanced scoring if enabled.
+        """
+        # Get query embedding (will be used for vector search in production)
+        # query_embedding = await get_embedding(query)
+
+        # Retrieve episodic and semantic memories
+        episodic = await self.memory_repo.get_episodic_memories(
+            tenant_id=tenant_id, project=project_id, limit=50
+        )
+        semantic = await self.memory_repo.get_semantic_memories(
+            tenant_id=tenant_id, project=project_id
+        )
+
+        all_memories = episodic + semantic
+
+        if not all_memories:
+            return []
+
+        # TODO: In production, use vector search to get similarity scores
+        # For now, use placeholder similarity
+        similarity_scores = [0.8] * len(all_memories)
+
+        if self.config.enable_enhanced_scoring:
+            # Use enhanced scoring
+            score_results = compute_batch_scores(
+                memories=all_memories,
+                similarity_scores=similarity_scores,
+                weights=self.config.scoring_weights,
+            )
+            ranked = rank_memories_by_score(all_memories, score_results)
+        else:
+            # Basic ranking by similarity
+            ranked = sorted(
+                zip(all_memories, similarity_scores),
+                key=lambda x: x[1],
+                reverse=True,
+            )
+            ranked = [m[0] for m in ranked]
+
+        # Take top K
+        top_memories = ranked[: self.config.max_ltm_items]
+
+        # Convert to components
+        components = []
+        for mem in top_memories:
+            content = mem.get("content", "")
+            tokens = len(content.split()) * 1.3
+
+            components.append(
+                ContextComponent(
+                    type="ltm",
+                    content=content,
+                    metadata={
+                        "id": str(mem.get("id")),
+                        "layer": mem.get("layer"),
+                        "importance": mem.get("importance", 0.5),
+                        "created_at": str(mem.get("created_at", "")),
+                    },
+                    tokens=int(tokens),
+                )
+            )
+
+        return components
+
+    async def _retrieve_reflections(
+        self, tenant_id: str, project_id: str, query: str
+    ) -> List[ContextComponent]:
+        """
+        Retrieve relevant reflections (Lessons Learned).
+
+        This is the key integration point for Reflective Memory (Layer 4).
+        """
+        # Query reflections using reflection engine
+        reflections = await self.reflection_engine.query_reflections(
+            tenant_id=tenant_id,
+            project_id=project_id,
+            query_text=query,
+            k=self.config.max_reflection_items,
+            min_importance=self.config.min_reflection_importance,
+        )
+
+        # Convert to components
+        components = []
+        for refl in reflections:
+            content = refl.get("content", "")
+            tokens = len(content.split()) * 1.3
+
+            components.append(
+                ContextComponent(
+                    type="reflection",
+                    content=content,
+                    metadata={
+                        "id": str(refl.get("id")),
+                        "importance": refl.get("importance", 0.5),
+                        "tags": refl.get("tags", []),
+                        "created_at": str(refl.get("created_at", "")),
+                    },
+                    tokens=int(tokens),
+                )
+            )
+
+        return components
+
+    async def _retrieve_profile(
+        self,
+        tenant_id: str,
+        project_id: str,
+        user_id: Optional[str] = None,
+    ) -> List[ContextComponent]:
+        """Retrieve user/system profile information"""
+        # TODO: Implement profile retrieval
+        # For now, return empty
+        return []
+
+    def _build_formatted_context(
+        self,
+        messages: List[ContextComponent],
+        ltm_items: List[ContextComponent],
+        reflections: List[ContextComponent],
+        profile_items: List[ContextComponent],
+    ) -> tuple[str, str]:
+        """
+        Build formatted context for LLM.
+
+        Returns:
+            Tuple of (system_prompt, context_text)
+        """
+        sections = []
+
+        # 1. System prompt (always included)
+        system_prompt = (
+            "You are a helpful AI assistant with access to memory and reflections."
+        )
+
+        # 2. Profile section (if any)
+        if profile_items:
+            profile_text = "\n".join([p.content for p in profile_items])
+            sections.append(f"# User Profile\n{profile_text}")
+
+        # 3. Lessons Learned section (CRITICAL for reflective memory)
+        if reflections:
+            lessons = []
+            for refl in reflections:
+                tags = refl.metadata.get("tags", [])
+                tag_text = f" [{', '.join(tags)}]" if tags else ""
+                lessons.append(f"- {refl.content}{tag_text}")
+
+            lessons_text = "\n".join(lessons)
+            sections.append(
+                f"# Lessons Learned (internal reflective memory)\n{lessons_text}"
+            )
+
+        # 4. Relevant Context section (LTM)
+        if ltm_items:
+            context_items = []
+            for ltm in ltm_items:
+                layer = ltm.metadata.get("layer", "")
+                context_items.append(f"- [{layer}] {ltm.content}")
+
+            context_text = "\n".join(context_items)
+            sections.append(f"# Relevant Context\n{context_text}")
+
+        # 5. Recent messages handled separately (in conversation history)
+
+        # Combine sections
+        full_context = "\n\n".join(sections)
+
+        return system_prompt, full_context
+
+    async def inject_reflections_into_prompt(
+        self,
+        base_prompt: str,
+        tenant_id: str,
+        project_id: str,
+        query: str,
+    ) -> str:
+        """
+        Helper method to inject reflections into an existing prompt.
+
+        Args:
+            base_prompt: Original system prompt
+            tenant_id: Tenant identifier
+            project_id: Project identifier
+            query: Current query for relevance
+
+        Returns:
+            Enhanced prompt with reflections injected
+        """
+        reflections = await self._retrieve_reflections(
+            tenant_id=tenant_id, project_id=project_id, query=query
+        )
+
+        if not reflections:
+            return base_prompt
+
+        # Format reflections
+        lessons = []
+        for refl in reflections:
+            tags = refl.metadata.get("tags", [])
+            tag_text = f" [{', '.join(tags)}]" if tags else ""
+            lessons.append(f"- {refl.content}{tag_text}")
+
+        lessons_text = "\n".join(lessons)
+
+        # Inject into prompt
+        enhanced_prompt = f"""{base_prompt}
+
+# Lessons Learned (internal memory)
+{lessons_text}
+
+Consider these lessons when formulating your response."""
+
+        return enhanced_prompt
