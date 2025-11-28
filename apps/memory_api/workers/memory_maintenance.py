@@ -23,15 +23,15 @@ from apps.memory_api.metrics import (
     rae_reflective_decay_duration_seconds,
     rae_reflective_decay_updated_total,
 )
-from apps.memory_api.repositories.memory_repository import MemoryRepository
-from apps.memory_api.services.importance_scoring import ImportanceScoringService
-from apps.memory_api.services.reflection_engine_v2 import (
+from apps.memory_api.models.reflection_v2_models import (
     Event,
     EventType,
     OutcomeType,
     ReflectionContext,
-    ReflectionEngineV2,
 )
+from apps.memory_api.repositories.memory_repository import MemoryRepository
+from apps.memory_api.services.importance_scoring import ImportanceScoringService
+from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
 
 logger = structlog.get_logger(__name__)
 

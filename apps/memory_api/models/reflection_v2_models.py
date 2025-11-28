@@ -257,7 +257,7 @@ class GenerateReflectionV2Request(BaseModel):
     session_id: Optional[UUID] = None
 
     # Events
-    events: List[Dict[str, Any]] = Field(..., min_items=1)
+    events: List[Dict[str, Any]] = Field(..., min_length=1)
 
     # Outcome
     outcome: OutcomeType
