@@ -10,32 +10,43 @@ from pydantic import BaseModel, Field, constr
 class MemoryLayer(str, Enum):
     """
     Enum for memory layers, representing different levels of processing and retention.
-    - stm: Short-term memory, volatile and immediate.
-    - ltm: Long-term memory, consolidated and durable.
-    - rm: Reflective memory, synthesized from other memories.
+
+    Logicalwarstwa przetwarzania (STM/LTM/episodic/reflective).
+    See: docs/MEMORY_MODEL.md for complete layer mapping.
+
+    - stm: Short-term memory (Layer 1/2), volatile and immediate
+    - ltm: Long-term memory (Layer 3), consolidated and durable
+    - em: Episodic memory (Layer 2/3), time-sequenced events
+    - rm: Reflective memory (Layer 4), synthesized meta-learning
     """
 
     stm = "stm"
     ltm = "ltm"
     rm = "rm"
-    em = "em"  # Added from previous task, should be here
+    em = "em"
 
 
 class MemoryRecord(BaseModel):
     """
     The standard, unified format for a memory record.
+
+    Note on memory classification:
+    - layer: Processing stage (stm/ltm/em/rm) - determines retention strategy
+    - memory_type: Functional type (sensory/episodic/semantic/reflection/strategy)
+
+    See: docs/MEMORY_MODEL.md for detailed mapping
     """
 
     id: str
     content: str
     source: Optional[str] = None
     importance: float = 0.5
-    layer: MemoryLayer = MemoryLayer.ltm
+    layer: MemoryLayer = MemoryLayer.ltm  # See MEMORY_MODEL.md for layer mapping
     tags: Optional[List[str]] = None
     timestamp: datetime = Field(default_factory=datetime.now)
     last_accessed_at: Optional[datetime] = None
     usage_count: int = 0
-    project: Optional[str] = None  # Added from previous task, should be here
+    project: Optional[str] = None
 
 
 class ScoredMemoryRecord(MemoryRecord):
