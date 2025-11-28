@@ -121,7 +121,10 @@ def test_pydantic_models():
         confidence=0.95
     )
 
-    assert graph_triple.source == "Entity1"
+    # Entity names are normalized to lowercase
+    assert graph_triple.source == "entity1"
+    assert graph_triple.target == "entity2"
+    assert graph_triple.relation == "RELATED_TO"  # Relations are uppercase
     assert graph_triple.confidence == 0.95
 
     print("✓ Task 2.1: Pydantic models work correctly")
