@@ -93,6 +93,63 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "WARNING"  # For external libraries (uvicorn, asyncpg, etc.)
     RAE_APP_LOG_LEVEL: str = "INFO"  # For RAE application logs
 
+    # ============================================================================
+    # Reflective Memory V1 Configuration (RAE Implementation Plan)
+    # ============================================================================
+
+    # Feature flags
+    REFLECTIVE_MEMORY_ENABLED: bool = True  # Enable reflective memory system
+    REFLECTIVE_MEMORY_MODE: str = "full"  # "lite" or "full"
+
+    # Retrieval limits
+    REFLECTIVE_MAX_ITEMS_PER_QUERY: int = 5  # Max reflections per context
+    REFLECTIVE_LESSONS_TOKEN_BUDGET: int = 1024  # Max tokens for lessons learned
+
+    # Scoring configuration
+    MEMORY_SCORE_WEIGHTS_ALPHA: float = 0.5  # Relevance weight (similarity)
+    MEMORY_SCORE_WEIGHTS_BETA: float = 0.3  # Importance weight
+    MEMORY_SCORE_WEIGHTS_GAMMA: float = 0.2  # Recency weight
+
+    # Decay configuration
+    MEMORY_BASE_DECAY_RATE: float = 0.001  # Base decay rate per second
+    MEMORY_ACCESS_COUNT_BOOST: bool = True  # Consider access count in decay
+    MEMORY_MIN_DECAY_RATE: float = 0.0001  # Minimum decay rate
+    MEMORY_MAX_DECAY_RATE: float = 0.01  # Maximum decay rate
+
+    # Reflection generation
+    REFLECTION_MIN_IMPORTANCE_THRESHOLD: float = 0.3  # Min importance to store
+    REFLECTION_GENERATE_ON_ERRORS: bool = True  # Generate on errors
+    REFLECTION_GENERATE_ON_SUCCESS: bool = False  # Generate on success (lite mode off)
+
+    # Dreaming configuration (batch reflection)
+    DREAMING_ENABLED: bool = False  # Enable dreaming in lite mode
+    DREAMING_LOOKBACK_HOURS: int = 24  # Hours to look back
+    DREAMING_MIN_IMPORTANCE: float = 0.6  # Min importance for dreaming
+    DREAMING_MAX_SAMPLES: int = 20  # Max memories per cycle
+
+    # Summarization configuration
+    SUMMARIZATION_ENABLED: bool = True  # Enable session summarization
+    SUMMARIZATION_MIN_EVENTS: int = 10  # Min events to trigger
+    SUMMARIZATION_EVENT_THRESHOLD: int = 100  # Threshold for long sessions
+
+    # Mode-specific overrides
+    @model_validator(mode="after")
+    def apply_mode_overrides(self):
+        """Apply configuration based on lite/full mode"""
+        if self.REFLECTIVE_MEMORY_MODE == "lite":
+            # Lite mode: minimal overhead
+            self.REFLECTION_GENERATE_ON_SUCCESS = False
+            self.DREAMING_ENABLED = False
+            self.REFLECTIVE_MAX_ITEMS_PER_QUERY = 3
+            self.REFLECTIVE_LESSONS_TOKEN_BUDGET = 512
+        elif self.REFLECTIVE_MEMORY_MODE == "full":
+            # Full mode: all features
+            self.REFLECTION_GENERATE_ON_SUCCESS = True
+            self.DREAMING_ENABLED = True
+            self.REFLECTIVE_MAX_ITEMS_PER_QUERY = 5
+            self.REFLECTIVE_LESSONS_TOKEN_BUDGET = 1024
+        return self
+
     model_config = ConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 
