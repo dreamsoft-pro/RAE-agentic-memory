@@ -45,7 +45,11 @@ class OpenAIProvider:
     def _convert_messages(self, request: LLMRequest) -> list[dict]:
         """Convert LLMRequest messages to OpenAI format."""
         return [
-            {"role": msg.role, "content": msg.content, **({"name": msg.name} if msg.name else {})}
+            {
+                "role": msg.role,
+                "content": msg.content,
+                **({"name": msg.name} if msg.name else {}),
+            }
             for msg in request.messages
         ]
 

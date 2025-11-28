@@ -48,7 +48,11 @@ class DeepSeekProvider:
     def _convert_messages(self, request: LLMRequest) -> list[dict]:
         """Convert LLMRequest messages to DeepSeek format."""
         return [
-            {"role": msg.role, "content": msg.content, **({"name": msg.name} if msg.name else {})}
+            {
+                "role": msg.role,
+                "content": msg.content,
+                **({"name": msg.name} if msg.name else {}),
+            }
             for msg in request.messages
         ]
 
@@ -157,7 +161,11 @@ class DeepSeekProvider:
             )
         except Exception as e:
             error_str = str(e).lower()
-            if "authentication" in error_str or "api key" in error_str or "401" in error_str:
+            if (
+                "authentication" in error_str
+                or "api key" in error_str
+                or "401" in error_str
+            ):
                 raise LLMAuthError(
                     f"DeepSeek authentication failed: {str(e)}",
                     provider="deepseek",
@@ -169,7 +177,9 @@ class DeepSeekProvider:
                     provider="deepseek",
                     raw_error=e,
                 )
-            elif "context_length_exceeded" in error_str or "maximum context" in error_str:
+            elif (
+                "context_length_exceeded" in error_str or "maximum context" in error_str
+            ):
                 raise LLMContextLengthError(
                     f"DeepSeek context length exceeded: {str(e)}",
                     provider="deepseek",

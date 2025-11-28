@@ -151,7 +151,11 @@ class AnthropicProvider:
                 text=text,
                 usage=usage,
                 finish_reason=response.stop_reason,
-                raw={"id": response.id, "model": response.model, "content": str(response.content)},
+                raw={
+                    "id": response.id,
+                    "model": response.model,
+                    "content": str(response.content),
+                },
                 model_name=response.model,
                 tool_calls=tool_calls,
             )

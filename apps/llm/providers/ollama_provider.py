@@ -11,7 +11,6 @@ import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from ..models import (
-    LLMAuthError,
     LLMChunk,
     LLMProviderError,
     LLMRequest,
@@ -174,7 +173,9 @@ class OllamaProvider:
             if request.json_mode:
                 payload["format"] = "json"
 
-            async with self.client.stream("POST", "/api/generate", json=payload) as response:
+            async with self.client.stream(
+                "POST", "/api/generate", json=payload
+            ) as response:
                 response.raise_for_status()
 
                 async for line in response.aiter_lines():
@@ -183,7 +184,11 @@ class OllamaProvider:
                         if chunk_data.get("response"):
                             yield LLMChunk(
                                 text=chunk_data["response"],
-                                finish_reason=chunk_data.get("done_reason") if chunk_data.get("done") else None,
+                                finish_reason=(
+                                    chunk_data.get("done_reason")
+                                    if chunk_data.get("done")
+                                    else None
+                                ),
                             )
 
         except httpx.ConnectError as e:

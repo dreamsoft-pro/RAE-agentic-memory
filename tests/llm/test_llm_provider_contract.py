@@ -10,14 +10,13 @@ import os
 import pytest
 
 from apps.llm import (
-    LLMMessage,
-    LLMRequest,
-    LLMResponse,
     AnthropicProvider,
     DeepSeekProvider,
     GeminiProvider,
     GrokProvider,
-    OllamaProvider,
+    LLMMessage,
+    LLMRequest,
+    LLMResponse,
     OpenAIProvider,
     QwenProvider,
 )

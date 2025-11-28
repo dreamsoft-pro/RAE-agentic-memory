@@ -49,7 +49,11 @@ class GrokProvider:
     def _convert_messages(self, request: LLMRequest) -> list[dict]:
         """Convert LLMRequest messages to Grok format."""
         return [
-            {"role": msg.role, "content": msg.content, **({"name": msg.name} if msg.name else {})}
+            {
+                "role": msg.role,
+                "content": msg.content,
+                **({"name": msg.name} if msg.name else {}),
+            }
             for msg in request.messages
         ]
 
@@ -156,7 +160,9 @@ class GrokProvider:
                     for tc in response.choices[0].message.tool_calls
                 ]
 
-            finish_reason = self._normalize_finish_reason(response.choices[0].finish_reason)
+            finish_reason = self._normalize_finish_reason(
+                response.choices[0].finish_reason
+            )
 
             return LLMResponse(
                 text=response.choices[0].message.content or "",
@@ -175,7 +181,11 @@ class GrokProvider:
             )
         except Exception as e:
             error_str = str(e).lower()
-            if "authentication" in error_str or "api key" in error_str or "401" in error_str:
+            if (
+                "authentication" in error_str
+                or "api key" in error_str
+                or "401" in error_str
+            ):
                 raise LLMAuthError(
                     f"Grok authentication failed: {str(e)}",
                     provider="grok",
@@ -187,7 +197,9 @@ class GrokProvider:
                     provider="grok",
                     raw_error=e,
                 )
-            elif "context_length_exceeded" in error_str or "maximum context" in error_str:
+            elif (
+                "context_length_exceeded" in error_str or "maximum context" in error_str
+            ):
                 raise LLMContextLengthError(
                     f"Grok context length exceeded: {str(e)}",
                     provider="grok",
@@ -242,7 +254,9 @@ class GrokProvider:
                 if chunk.choices and chunk.choices[0].delta.content:
                     finish_reason = None
                     if chunk.choices[0].finish_reason:
-                        finish_reason = self._normalize_finish_reason(chunk.choices[0].finish_reason)
+                        finish_reason = self._normalize_finish_reason(
+                            chunk.choices[0].finish_reason
+                        )
 
                     yield LLMChunk(
                         text=chunk.choices[0].delta.content,

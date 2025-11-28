@@ -30,7 +30,9 @@ class QwenProvider:
     and tools handling.
     """
 
-    def __init__(self, api_key: str, api_base: str = "https://dashscope.aliyuncs.com/api/v1"):
+    def __init__(
+        self, api_key: str, api_base: str = "https://dashscope.aliyuncs.com/api/v1"
+    ):
         """
         Initialize the Qwen provider.
 
@@ -283,10 +285,15 @@ class QwenProvider:
                         data_str = line[5:].strip()  # Remove "data:" prefix
                         if data_str and data_str != "[DONE]":
                             chunk_data = json.loads(data_str)
-                            if "output" in chunk_data and "text" in chunk_data["output"]:
+                            if (
+                                "output" in chunk_data
+                                and "text" in chunk_data["output"]
+                            ):
                                 yield LLMChunk(
                                     text=chunk_data["output"]["text"],
-                                    finish_reason=chunk_data["output"].get("finish_reason"),
+                                    finish_reason=chunk_data["output"].get(
+                                        "finish_reason"
+                                    ),
                                 )
 
         except httpx.HTTPStatusError as e:

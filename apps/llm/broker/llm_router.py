@@ -62,7 +62,9 @@ class LLMRouter:
             # Default to config file in same directory as this module
             import pathlib
 
-            config_path = pathlib.Path(__file__).parent.parent / "config" / "providers.yaml"
+            config_path = (
+                pathlib.Path(__file__).parent.parent / "config" / "providers.yaml"
+            )
 
         try:
             with open(config_path, "r") as f:
@@ -150,9 +152,7 @@ class LLMRouter:
 
         return None
 
-    async def complete(
-        self, request: LLMRequest, fallback: bool = True
-    ) -> LLMResponse:
+    async def complete(self, request: LLMRequest, fallback: bool = True) -> LLMResponse:
         """
         Generate a complete response using the appropriate provider.
 
@@ -186,26 +186,26 @@ class LLMRouter:
 
             return response
 
-        except LLMAuthError as e:
+        except LLMAuthError:
             logger.error(f"llm.provider.error - provider={provider.name} error=auth")
             raise  # Don't retry auth errors
 
-        except LLMRateLimitError as e:
+        except LLMRateLimitError:
             logger.warning(
                 f"llm.provider.error - provider={provider.name} error=rate_limit"
             )
             if fallback:
-                logger.info(f"llm.provider.fallback - attempting fallback")
+                logger.info("llm.provider.fallback - attempting fallback")
                 # In production, implement intelligent fallback logic
                 # For now, just re-raise
             raise
 
-        except LLMTransientError as e:
+        except LLMTransientError:
             logger.warning(
                 f"llm.provider.error - provider={provider.name} error=transient"
             )
             if fallback:
-                logger.info(f"llm.provider.retry - retrying request")
+                logger.info("llm.provider.retry - retrying request")
                 # Provider already has retry logic via tenacity
             raise
 
@@ -241,7 +241,9 @@ class LLMRouter:
             async for chunk in provider.stream(request):
                 yield chunk
 
-            logger.info(f"llm.provider.ok - provider={provider.name} streaming=complete")
+            logger.info(
+                f"llm.provider.ok - provider={provider.name} streaming=complete"
+            )
 
         except Exception as e:
             logger.error(
