@@ -29,3 +29,4 @@ Thumbs.db
 rae_tests*.zip
 project_dump.txt
 .clauderc
+logs_*/
