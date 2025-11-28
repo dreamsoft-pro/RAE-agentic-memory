@@ -7,8 +7,8 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Docker](https://img.shields.io/badge/docker-required-blue.svg)](https://docs.docker.com/get-docker/)
-[![Tests](https://img.shields.io/badge/tests-226%20passing-brightgreen.svg)]()
-[![Coverage](https://img.shields.io/badge/coverage-60%25-yellow.svg)]()
+[![Tests](https://img.shields.io/badge/tests-162%20passing-brightgreen.svg)]()
+[![Coverage](https://img.shields.io/badge/coverage-47%25-orange.svg)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Version](https://img.shields.io/badge/version-2.1.0--enterprise-blue.svg)](STATUS.md)
 
@@ -19,11 +19,11 @@
 > 💡 **Reality Check**
 >
 > Internally we joke that RAE is in its **"almost enterprise"** phase:
-> the architecture thinks it's enterprise, the tests are catching up (226 passing, 60% coverage),
+> the architecture thinks it's enterprise, the tests are catching up (162 passing, 47% coverage),
 > and the docs are brutally honest about what's still missing.
 >
 > **What works:** 4-layer memory, GraphRAG, reflection engine V1, multi-model LLM, multi-tenant security, cost tracking
-> **What's maturing:** ML service (beta), dashboard (beta), test coverage (60% → 75% target)
+> **What's maturing:** ML service (beta), dashboard (beta), test coverage (47% → 75% target)
 > **What's honest:** We're pre-1.0, actively developed, and **transparent about security** (see [SECURITY.md](docs/SECURITY.md))
 >
 > **Production Ready For:**

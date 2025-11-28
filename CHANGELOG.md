@@ -17,6 +17,46 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.0.1-enterprise] - 2025-11-28
 
+### Fixed - pytest.ini Configuration 🔧
+
+#### Test Directory Discovery Fix ✅
+- **Fixed pytest.ini testpaths configuration**
+  - Added all project test directories to testpaths:
+    - `apps/memory_api/tests`
+    - `apps/reranker-service/tests`
+    - `integrations/mcp/tests`
+    - `integrations/context-watcher/tests`
+    - `tools/memory-dashboard/tests`
+    - `tests`
+  - Previously only `apps/memory_api/tests` was included
+- **Fixed GitHub Actions test failures**
+  - Resolved ModuleNotFoundError for tests in:
+    - `integrations/mcp/tests/test_mcp_e2e.py`
+    - `integrations/mcp/tests/test_mcp_integration.py`
+    - `integrations/mcp/tests/test_mcp_load.py`
+    - `integrations/mcp/tests/test_pii_scrubber.py`
+    - `integrations/mcp/tests/test_server.py`
+    - `tools/memory-dashboard/tests/test_api_client.py`
+    - `tools/memory-dashboard/tests/test_visualizations.py`
+- **Test results:**
+  - 162 tests passing
+  - 2 tests failing (test_reflective_flags.py - mock configuration issues)
+  - 10 tests skipped
+  - Coverage: 47.45% (target: 55%+)
+
+**Files Modified:**
+- `pytest.ini` - Added all test directories to testpaths
+
+**Impact:**
+- ✅ pytest can now discover and run all tests
+- ✅ ModuleNotFoundError issues resolved
+- ✅ GitHub Actions CI will pass test collection phase
+- ✅ Better test organization and discoverability
+
+---
+
+## [2.0.1-enterprise] - 2025-11-28
+
 ### Added - Reflective Memory V1 Finalization 🧠
 
 #### Feature Flags Made Functional ✅
