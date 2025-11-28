@@ -32,6 +32,30 @@ Layer 1: Sensory
 └── Raw inputs (messages, events, tool calls)
 ```
 
+### Memory Layers Mapping (Code Implementation)
+
+The conceptual 4-layer model maps to database schema as follows:
+
+| Conceptual Layer | `layer` (enum) | `memory_type` (typical) | Examples | Usage |
+|------------------|----------------|-------------------------|----------|-------|
+| **Layer 1: Sensory** | `stm` | `sensory` | Raw events, logs, tool calls | Immediate inputs, rarely persisted long-term |
+| **Layer 2: Working** | `stm`, `em` | `episodic` (recent) | Current session context | Short-term context for active tasks |
+| **Layer 3: LTM** | `ltm`, `em` | `episodic`, `semantic`, `profile` | Completed sessions, facts, user profile | Long-term storage, retrieved by relevance |
+| **Layer 4: Reflective** | `rm` | `reflection`, `strategy` | Post-mortems, lessons, strategies | Meta-learning, injected into future contexts |
+
+**Key distinctions:**
+- **`layer`**: Processing stage (STM/LTM/episodic/reflective) - determines retention and retrieval strategy
+- **`memory_type`**: Functional classification (sensory/episodic/semantic/profile/reflection/strategy) - determines content semantics
+
+**Migration note:** Existing memories use:
+- `em` (episodic memory) → Layer 2/3 boundary
+- `sm` (semantic memory) → Layer 3
+- `rm` (reflective memory) → Layer 4
+- `stm` (short-term) → Layer 1/2
+- `ltm` (long-term) → Layer 3
+
+See also: Database schema in `alembic/versions/d4e5f6a7b8c9_add_reflective_memory_columns.py`
+
 ### Actor-Evaluator-Reflector Pattern
 
 ```
@@ -289,6 +313,29 @@ SUMMARIZATION_MIN_EVENTS=10
 - Periodic "dreaming" enabled
 - 5 reflections per query
 - 1024 token budget
+
+### Mode Behavior Matrix
+
+| Flag / Setting | Effect | Lite Mode | Full Mode |
+|----------------|--------|-----------|-----------|
+| `REFLECTIVE_MEMORY_ENABLED=false` | No reflections, no "Lessons Learned" section | ❌ Disabled | ❌ Disabled |
+| `REFLECTIVE_MEMORY_ENABLED=true` | Enable reflective memory system | ✅ Enabled | ✅ Enabled |
+| `REFLECTIVE_MEMORY_MODE=lite` | Minimal overhead, critical errors only | ✅ Active | - |
+| `REFLECTIVE_MEMORY_MODE=full` | Full pipeline with all features | - | ✅ Active |
+| `REFLECTION_GENERATE_ON_ERRORS` | Generate reflections from failures | ✅ Always | ✅ Always |
+| `REFLECTION_GENERATE_ON_SUCCESS` | Generate reflections from successes | ❌ Disabled | ✅ Enabled |
+| `DREAMING_ENABLED` | Periodic batch reflection analysis | ❌ Disabled | ✅ Enabled |
+| `SUMMARIZATION_ENABLED` | Session summarization | ✅ Basic | ✅ Advanced |
+| `REFLECTIVE_MAX_ITEMS_PER_QUERY` | Max reflections in context | 3 | 5 |
+| `REFLECTIVE_LESSONS_TOKEN_BUDGET` | Token budget for lessons | 512 | 1024 |
+| Memory decay | Importance decay rate | Standard | Standard |
+| Maintenance workers | Background tasks | Essential only | All tasks |
+
+**Recommendations:**
+- **Development/Testing:** Use `lite` mode for faster iterations
+- **Production (low-traffic):** Use `lite` mode to minimize overhead
+- **Production (high-value):** Use `full` mode for maximum learning
+- **Resource-constrained:** Disable `DREAMING_ENABLED` even in full mode
 
 ## Usage Examples
 
