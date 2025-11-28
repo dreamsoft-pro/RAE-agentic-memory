@@ -22,11 +22,20 @@
 > the architecture thinks it's enterprise, the tests are catching up (226 passing, 60% coverage),
 > and the docs are brutally honest about what's still missing.
 >
-> **What works:** 4-layer memory, GraphRAG, reflection engine, multi-model LLM, security, cost tracking
+> **What works:** 4-layer memory, GraphRAG, reflection engine V1, multi-model LLM, multi-tenant security, cost tracking
 > **What's maturing:** ML service (beta), dashboard (beta), test coverage (60% → 75% target)
-> **What's honest:** We're pre-1.0, actively developed, and transparent about our status
+> **What's honest:** We're pre-1.0, actively developed, and **transparent about security** (see [SECURITY.md](docs/SECURITY.md))
 >
-> See [STATUS.md](STATUS.md) for complete implementation status and [TESTING_STATUS.md](docs/TESTING_STATUS.md) for test coverage details.
+> **Production Ready For:**
+> - ✅ Internal corporate tools (behind VPN/firewall)
+> - ✅ Controlled cloud environments (with TLS termination at ALB/proxy)
+> - ✅ Proof-of-concepts and team knowledge bases
+>
+> **Requires Additional Infrastructure For:**
+> - ⚠️ Public internet deployment (add TLS, API gateway, WAF)
+> - ⚠️ Regulated industries (additional controls needed)
+>
+> See [STATUS.md](STATUS.md) for implementation status, [TESTING_STATUS.md](docs/TESTING_STATUS.md) for test coverage, and **[SECURITY.md](docs/SECURITY.md) for honest security assessment**.
 
 ---
 
@@ -424,9 +433,10 @@ See [REFLECTIVE_MEMORY_V1.md](docs/REFLECTIVE_MEMORY_V1.md) for complete impleme
 - **Secrets Management**: Environment-based configuration
 
 **Documentation:**
-- [Security Overview](docs/security/SECURITY.md) - Complete security architecture
+- **[Security Overview](docs/SECURITY.md)** - **Honest "Almost Enterprise" assessment** with deployment patterns
 - [RBAC Guide](docs/security/RBAC.md) - Role-based access control details
 - [Migration Guide](CHANGELOG.md) - Upgrading to v2.0 security
+- [Configuration Reference](docs/CONFIG_REFLECTIVE_MEMORY.md) - Feature flags and production recommendations
 
 **Configuration:**
 ```bash
