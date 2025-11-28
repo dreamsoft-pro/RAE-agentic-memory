@@ -1,16 +1,32 @@
-# 🧠 RAE - Reflective Agentic Memory Engine
+# 🧠 RAE - Reflective Agentic-memory Engine
 
 > Give your AI agents human-like memory: Learn, remember, and improve over time.
+
+*Designed for enterprise-grade use, currently in pre-1.0 "almost enterprise" state.*
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Docker](https://img.shields.io/badge/docker-required-blue.svg)](https://docs.docker.com/get-docker/)
-[![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)]()
-[![Build Status](https://img.shields.io/badge/build-stable-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/tests-226%20passing-brightgreen.svg)]()
+[![Coverage](https://img.shields.io/badge/coverage-60%25-yellow.svg)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![Version](https://img.shields.io/badge/version-2.0.0--enterprise-blue.svg)](docs/VERSION_MATRIX.md)
+[![Version](https://img.shields.io/badge/version-2.1.0--enterprise-blue.svg)](STATUS.md)
 
 [📖 Documentation](#documentation) | [🚀 Quick Start](#quick-start-5-minutes) | [💬 Community](#community--support) | [🎯 Examples](#real-world-examples)
+
+---
+
+> 💡 **Reality Check**
+>
+> Internally we joke that RAE is in its **"almost enterprise"** phase:
+> the architecture thinks it's enterprise, the tests are catching up (226 passing, 60% coverage),
+> and the docs are brutally honest about what's still missing.
+>
+> **What works:** 4-layer memory, GraphRAG, reflection engine, multi-model LLM, security, cost tracking
+> **What's maturing:** ML service (beta), dashboard (beta), test coverage (60% → 75% target)
+> **What's honest:** We're pre-1.0, actively developed, and transparent about our status
+>
+> See [STATUS.md](STATUS.md) for complete implementation status and [TESTING_STATUS.md](docs/TESTING_STATUS.md) for test coverage details.
 
 ---
 
@@ -28,7 +44,7 @@ Current AI agents are **stateless** - they forget everything after each conversa
 ### The RAE Solution
 
 ✅ **Multi-layered memory** (episodic → working → semantic → long-term)
-✅ **Automatic insight extraction** via Reflection Engine
+✅ **Automatic insight extraction** via Reflection Engine V2 (Actor-Evaluator-Reflector pattern)
 ✅ **Graph-based knowledge connections** (GraphRAG)
 ✅ **IDE integration** via Model Context Protocol (MCP)
 ✅ **Cost-aware caching** to minimize LLM API costs
@@ -188,36 +204,37 @@ RAE implements a **4-layer cognitive memory system** inspired by human cognition
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  EPISODIC MEMORY (EM)                                   │
-│  Raw events, observations, conversations                │
-│  "User fixed bug in auth.py on Jan 5"                   │
+│  LAYER 1: SENSORY MEMORY                                │
+│  Raw inputs, immediate observations                     │
+│  "User clicked submit button"                           │
 └──────────────────┬──────────────────────────────────────┘
-                   │ Reflection Engine
+                   │ Attention & Filtering
                    ▼
 ┌─────────────────────────────────────────────────────────┐
-│  WORKING MEMORY (WM)                                    │
-│  Active context for current task                        │
+│  LAYER 2: WORKING MEMORY (WM)                           │
+│  Active context for current task + reflections          │
 │  "Currently debugging authentication issues"            │
+│  + "Lessons Learned: auth.py frequently has bugs"       │
 └──────────────────┬──────────────────────────────────────┘
-                   │ Pattern Detection
+                   │ Consolidation & Pattern Detection
                    ▼
 ┌─────────────────────────────────────────────────────────┐
-│  SEMANTIC MEMORY (SM)                                   │
-│  Facts, rules, patterns extracted from episodes         │
-│  "auth.py frequently has bugs"                          │
+│  LAYER 3: LONG-TERM MEMORY (LTM)                        │
+│  Episodic: Events + Semantic: Facts + Profiles          │
+│  "User fixed auth bug on Jan 5" + "auth.py bug-prone"   │
 └──────────────────┬──────────────────────────────────────┘
-                   │ Knowledge Graph (GraphRAG)
+                   │ Reflection Engine V2 (Actor-Evaluator-Reflector)
                    ▼
 ┌─────────────────────────────────────────────────────────┐
-│  LONG-TERM MEMORY (LTM)                                 │
-│  Consolidated knowledge, insights, wisdom               │
-│  "Authentication module needs refactoring"              │
+│  LAYER 4: REFLECTIVE MEMORY (RM)                        │
+│  Meta-learnings, strategies, wisdom                     │
+│  "Authentication module needs architectural refactoring" │
 └─────────────────────────────────────────────────────────┘
 ```
 
 **Key Components:**
 
-### Microservices Architecture (v2.0)
+### Microservices Architecture (v2.1)
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
@@ -227,13 +244,18 @@ RAE implements a **4-layer cognitive memory system** inspired by human cognition
 │  ├───────────────────────────────────────────────────────────────┤   │
 │  │  Core Services (Business Logic)                               │   │
 │  │  • HybridSearchService + Cache  • QueryAnalyzer               │   │
-│  │  • ReflectionEngine  • EntityResolution                       │   │
+│  │  • ReflectionEngineV2 (NEW)  • EntityResolution              │   │
 │  │  • TemporalGraph  • SemanticExtractor                         │   │
+│  │  • ContextBuilder (NEW)  • MemoryScoringV2 (NEW)              │   │
 │  ├───────────────────────────────────────────────────────────────┤   │
 │  │  Enterprise Services                                          │   │
 │  │  • RulesEngine (Event Triggers)  • EvaluationService          │   │
 │  │  • DriftDetector  • PIIScrubber  • CostController             │   │
 │  │  • DashboardWebSocket  • Analytics                            │   │
+│  │  • Evaluator (NEW) - Actor-Evaluator-Reflector pattern        │   │
+│  ├───────────────────────────────────────────────────────────────┤   │
+│  │  Background Workers (NEW)                                     │   │
+│  │  • DecayWorker  • SummarizationWorker  • DreamingWorker       │   │
 │  ├───────────────────────────────────────────────────────────────┤   │
 │  │  Repositories (Data Access Layer - DAO Pattern)               │   │
 │  │  • GraphRepository  • MemoryRepository                        │   │
@@ -265,13 +287,21 @@ RAE implements a **4-layer cognitive memory system** inspired by human cognition
 **Core Services:**
 - **HybridSearchService** - Multi-strategy search (vector, semantic, graph, fulltext) with caching
 - **QueryAnalyzer** - LLM-powered query intent classification and dynamic weight calculation
-- **ReflectionEngine** - Automatic insight extraction from episodic memories
+- **ReflectionEngineV2** - Actor-Evaluator-Reflector pattern for automatic insight extraction *(NEW in v2.1)*
+- **ContextBuilder** - Working Memory (Layer 2) construction with reflection injection *(NEW in v2.1)*
+- **MemoryScoringV2** - Unified scoring: α·relevance + β·importance + γ·recency *(NEW in v2.1)*
+- **Evaluator** - Execution outcome assessment (Deterministic, Threshold, LLM) *(NEW in v2.1)*
 - **RulesEngine** - Event-driven automation with triggers, conditions, and actions
 - **EvaluationService** - Search quality metrics (MRR, NDCG, Precision@K, Recall@K)
 - **TemporalGraph** - Knowledge graph evolution tracking and time-travel queries
 - **PIIScrubber** - Automatic PII detection and anonymization
 - **DriftDetector** - Memory quality and semantic drift monitoring
 - **DashboardWebSocket** - Real-time updates for dashboard visualization
+
+**Background Workers (NEW in v2.1):**
+- **DecayWorker** - Automatic importance decay with temporal logic
+- **SummarizationWorker** - Session-based memory consolidation
+- **DreamingWorker** - Batch reflection generation during idle periods
 
 **Storage & Infrastructure:**
 - **Vector Store** (Qdrant/pgvector) - Semantic search across memories
@@ -288,7 +318,7 @@ RAE implements a **4-layer cognitive memory system** inspired by human cognition
 | Feature | RAE | LangChain Memory | MemGPT | Chroma |
 |---------|-----|------------------|---------|--------|
 | Multi-layer memory | ✅ Full (4 layers) | ⚠️ Basic | ✅ Limited | ❌ |
-| Auto-reflection | ✅ Yes | ❌ No | ⚠️ Limited | ❌ |
+| Auto-reflection | ✅ Actor-Evaluator-Reflector | ❌ No | ⚠️ Limited | ❌ |
 | Knowledge graph | ✅ GraphRAG | ❌ No | ❌ No | ❌ |
 | Hybrid search | ✅ Vector + Graph | ⚠️ Vector only | ⚠️ Vector only | ⚠️ Vector only |
 | Multi-model LLM | ✅ 7 providers | ⚠️ Manual | ⚠️ Limited | ❌ |
@@ -296,20 +326,22 @@ RAE implements a **4-layer cognitive memory system** inspired by human cognition
 | Multi-tenancy | ✅ Built-in | ❌ No | ❌ No | ⚠️ Manual |
 | RBAC & Auth | ✅ Enterprise | ❌ No | ❌ No | ⚠️ Basic |
 | Audit logging | ✅ Yes | ❌ No | ❌ No | ❌ No |
-| Memory decay | ✅ Automated | ❌ No | ⚠️ Manual | ❌ No |
+| Memory decay | ✅ Automated workers | ❌ No | ⚠️ Manual | ❌ No |
 | Self-hosted | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes |
-| Production-ready | ✅ Yes | ⚠️ DIY | ⚠️ DIY | ✅ Yes |
+| Production-ready | ⚠️ Pre-1.0 | ⚠️ DIY | ⚠️ DIY | ✅ Yes |
 | Cost optimization | ✅ Built-in cache | ❌ No | ❌ No | ❌ No |
 
 ---
 
 ## Core Features
 
-### 🧠 Multi-Layer Memory Architecture
-- **Episodic**: Chronological events and observations
-- **Working**: Active context for current tasks
-- **Semantic**: Extracted facts and patterns
-- **Long-Term**: Consolidated knowledge and insights
+### 🧠 Multi-Layer Memory Architecture (v2.1)
+- **Layer 1 - Sensory**: Raw inputs and immediate observations (`layer=stm`, `memory_type=sensory`)
+- **Layer 2 - Working**: Active task context with reflection injection (`layer=stm/em`, `memory_type=episodic`)
+- **Layer 3 - Long-Term**: Episodic events + Semantic facts + User profiles (`layer=ltm/em`, `memory_type=episodic/semantic/profile`)
+- **Layer 4 - Reflective**: Meta-learnings and strategies (`layer=rm`, `memory_type=reflection/strategy`)
+
+See [MEMORY_MODEL.md](docs/MEMORY_MODEL.md) for complete layer mapping reference.
 
 ### 🔍 Hybrid Search 2.0 (GraphRAG)
 - **Multi-Strategy Search**: Vector similarity, Semantic nodes, Graph traversal, Full-text
@@ -319,11 +351,15 @@ RAE implements a **4-layer cognitive memory system** inspired by human cognition
 - **Intelligent Caching**: Hash-based cache with temporal windowing for performance
 - **Adaptive Weighting**: Automatically adjusts search strategy weights based on query intent
 
-### 🔄 Reflection Engine
-- Automatic insight extraction from episodes
-- Pattern detection across memories
-- LLM-powered knowledge consolidation
-- Configurable reflection schedules
+### 🔄 Reflection Engine V2 (Actor-Evaluator-Reflector Pattern) *(NEW in v2.1)*
+- **Automatic Evaluation**: Deterministic and threshold-based outcome assessment
+- **Failure Analysis**: LLM-powered reflection on errors and failures
+- **Success Patterns**: Extract learnings from successful executions
+- **Context Integration**: Reflections automatically injected into Working Memory
+- **Configurable Modes**: Lite mode (disabled) vs Full mode (enabled)
+- **Background Workers**: Decay, Summarization, Dreaming for automated lifecycle
+
+See [REFLECTIVE_MEMORY_V1.md](docs/REFLECTIVE_MEMORY_V1.md) for complete implementation guide.
 
 ### 🤖 Multi-Model LLM Integration (v2.0)
 - **Unified Provider Interface**: Single API for all LLM providers
@@ -373,13 +409,11 @@ RAE implements a **4-layer cognitive memory system** inspired by human cognition
 - **Role Assignment History**: Complete audit trail of role changes
 - **GDPR-Ready**: Audit logs support compliance requirements
 
-#### Memory Lifecycle Management
-- **Enterprise Decay Scheduler**: Automated importance decay (daily at 2 AM)
-- **Temporal Decay Logic**:
-  - Base decay for all memories (configurable rate)
-  - Accelerated decay for stale memories (>30 days)
-  - Protected decay for recent memories (<7 days)
-- **Importance Floor**: Memories never fully decay (minimum 0.01)
+#### Memory Lifecycle Management *(Enhanced in v2.1)*
+- **Enterprise Decay Worker**: Automated importance decay with temporal logic
+- **Summarization Worker**: Session-based memory consolidation
+- **Dreaming Worker**: Batch reflection generation during idle periods
+- **Configurable Schedules**: Cron-based scheduling for all workers
 - **Multi-Tenant Support**: Processes all tenants in batch
 
 #### Security Features
@@ -400,7 +434,11 @@ RAE implements a **4-layer cognitive memory system** inspired by human cognition
 ENABLE_API_KEY_AUTH=true
 ENABLE_JWT_AUTH=false
 
-# Memory Decay
+# Reflective Memory V2.1
+REFLECTIVE_MEMORY_ENABLED=true
+REFLECTIVE_MEMORY_MODE=full  # "lite" or "full"
+
+# Memory Decay Worker
 MEMORY_IMPORTANCE_DECAY_ENABLED=true
 MEMORY_IMPORTANCE_DECAY_RATE=0.01  # 1% per day
 MEMORY_IMPORTANCE_DECAY_SCHEDULE="0 2 * * *"  # Daily at 2 AM
@@ -617,6 +655,7 @@ Production-ready components that enhance RAE but are not required.
 | **MCP Integration** | v1.2.0 | IDE integration (Cursor, VSCode, Claude Desktop) | Developer productivity & IDE workflows |
 | **Reranker Service** | v1.0.0 | CrossEncoder-based result re-ranking | Improved search quality (10-20% accuracy boost) |
 | **Context Watcher** | v1.0.0 | Automatic file change detection | Auto-sync to memory, live updates |
+| **Reflection Engine V2** | v2.1.0 | Actor-Evaluator-Reflector pattern | Automated learning from failures/successes |
 
 ### Optional Modules (Beta/Experimental)
 
@@ -636,7 +675,7 @@ Production-ready components that enhance RAE but are not required.
 - **See:** [RAE Lite Profile Documentation](docs/deployment/rae-lite-profile.md)
 
 **RAE Standard** (Recommended):
-- **Includes:** Enterprise Core + Enterprise Extensions (MCP, Reranker, Context Watcher) + ML Service + Dashboard
+- **Includes:** Enterprise Core + Enterprise Extensions (MCP, Reranker, Context Watcher, Reflection V2) + ML Service + Dashboard
 - **Perfect for:** Production use, mid-size teams (10-100 users)
 - **Resources:** 8 GB RAM, 4 CPU cores
 
@@ -670,7 +709,7 @@ Production-ready components that enhance RAE but are not required.
 ### Project Status & Progress
 - 📊 **[Project Status](STATUS.md)** - Current implementation status and features
 - ✅ **[TODO List](TODO.md)** - Upcoming features and improvements
-- 🧪 **[Testing Guide](TESTING.md)** - Test coverage, running tests, and writing new tests
+- 🧪 **[Testing Status](docs/TESTING_STATUS.md)** - Test coverage and quality metrics
 
 ### Getting Started
 - 📖 **[Getting Started Guide](docs/getting-started/)** - Installation and first steps
@@ -679,9 +718,10 @@ Production-ready components that enhance RAE but are not required.
 
 ### Architecture & Concepts
 - 🏗️ **[Architecture Overview](docs/concepts/architecture.md)** - System design and components
+- 🧠 **[Memory Model](docs/MEMORY_MODEL.md)** - 4-layer memory architecture reference
+- 🔄 **[Reflective Memory V1](docs/REFLECTIVE_MEMORY_V1.md)** - Actor-Evaluator-Reflector pattern
 - 🏛️ **[Repository Pattern](docs/architecture/repository-pattern.md)** - Data access layer design
 - 💰 **[Cost Controller](docs/concepts/cost-controller.md)** - Budget management and cost tracking
-- 🔄 **[Reflection Engine](docs/concepts/)** - Automatic insight extraction
 - 🔍 **[Hybrid Search](docs/concepts/)** - Multi-strategy search with GraphRAG
 
 ### Deployment
@@ -777,90 +817,43 @@ pip install -e .
 
 ---
 
-## Enterprise Features (v2.0)
-
-RAE includes production-grade enterprise capabilities:
-
-### 🎯 Hierarchical Reflection Engine
-- **HDBSCAN Clustering** - Automatic memory grouping by semantic similarity
-- **Meta-Insights** - Multi-level reflections (insight → meta-insight)
-- **Cycle Detection** - Prevents circular reflection dependencies
-- **Adaptive Scoring** - Novelty, importance, utility, confidence metrics
-
-### 🧠 Semantic Memory System
-- **Knowledge Extraction** - Automatic entity and concept extraction from memories
-- **TTL/LTM Decay Model** - Time-based knowledge degradation with reinforcement
-- **3-Stage Search** - Topic matching → Canonicalization → LLM re-ranking
-- **Graph Integration** - Semantic nodes connected in knowledge graph
-
-### 📊 Hybrid Search Engine
-- **Query Intent Analysis** - LLM-powered classification (6 intent types)
-- **Multi-Strategy Fusion** - Vector + Semantic + Graph + Full-text
-- **Dynamic Weighting** - Auto-adjusts strategy weights based on query type
-- **5 Weight Profiles** - Balanced, Quality, Speed, Comprehensive, Exploratory
-
-### 📈 Evaluation & Monitoring Suite
-- **IR Metrics** - MRR, NDCG@K, Precision@K, Recall@K, MAP
-- **Drift Detection** - Kolmogorov-Smirnov test, PSI, severity classification
-- **A/B Testing** - Compare search strategies and configurations
-- **Quality Alerts** - Automatic degradation detection
-
-### ⚡ Event Triggers & Automation
-- **Rules Engine** - Complex condition evaluation (AND/OR logic, 12 operators)
-- **13 Event Types** - Memory lifecycle, quality changes, drift detection
-- **12 Action Types** - Notifications, webhooks, reflections, evaluations
-- **Workflow Orchestration** - Multi-step automation with dependencies
-- **Rate Limiting & Cooldowns** - Prevent trigger spam
-
-### 📱 Real-time Dashboard
-- **WebSocket Updates** - Live metrics, events, and health monitoring
-- **6 Visualizations** - Reflection tree, semantic graph, timelines, quality trends
-- **System Health** - Component-level monitoring with recommendations
-- **Activity Logs** - Real-time event feed with severity levels
-
-### 🔌 Enhanced API Client
-- **Circuit Breaker** - Prevents cascading failures (CLOSED, OPEN, HALF_OPEN states)
-- **Exponential Backoff** - Intelligent retry logic with configurable parameters
-- **Response Caching** - TTL-based caching for GET requests
-- **Error Classification** - 6 error categories for targeted handling
-- **Connection Pooling** - HTTP/2 support with configurable limits
-- **Statistics Tracking** - Success rates, cache hit rates, performance metrics
-
-### 📚 Graph Repository Enhancements
-- **Temporal Graphs** - Time-based node and edge validity
-- **Weighted Edges** - Confidence-based relationship strength
-- **Advanced Algorithms** - Dijkstra shortest path, DFS cycle detection
-- **Graph Snapshots** - Point-in-time graph state capture
-
 ## Status & Roadmap
 
-RAE is currently in **v2.0** - Production Ready!
+RAE is currently in **v2.1.0-enterprise** - Pre-1.0 with Enterprise Features!
 
-**Current Status:**
-- ✅ Core memory layers (EM, WM, SM, LTM)
+**Current Status (v2.1):**
+- ✅ Core memory layers (4-layer architecture)
 - ✅ Vector search with multiple backends
 - ✅ Knowledge graph (GraphRAG)
-- ✅ **Hierarchical Reflection Engine** (v2.0)
-- ✅ **Semantic Memory with TTL/LTM** (v2.0)
-- ✅ **Hybrid Multi-Strategy Search** (v2.0)
-- ✅ **Evaluation Suite** (v2.0)
-- ✅ **Event Triggers & Automation** (v2.0)
-- ✅ **Real-time Dashboard** (v2.0)
-- ✅ **Enhanced API Client** (v2.0)
+- ✅ **Reflection Engine V2** (Actor-Evaluator-Reflector pattern)
+- ✅ **Memory Scoring V2** (Unified α·relevance + β·importance + γ·recency)
+- ✅ **Context Builder** (Working Memory with reflection injection)
+- ✅ **Background Workers** (Decay, Summarization, Dreaming)
+- ✅ **Evaluator Interface** (Deterministic, Threshold, LLM-ready)
+- ✅ Hybrid Multi-Strategy Search
+- ✅ Event Triggers & Automation
+- ✅ Real-time Dashboard
 - ✅ MCP server for IDEs
 - ✅ Python SDK
-- ✅ Multi-tenancy
+- ✅ Multi-tenancy & RBAC
 - ✅ Docker deployment
-- ✅ **184 Tests (94.6% pass rate), 57% Coverage** (v2.0)
-- ✅ **CI/CD Pipeline** (lint, test, docker build - all passing ✅ 2025-11-25)
+- ✅ **226 Tests (100% passing), 60% Coverage** (target: 75%+)
+- ✅ **CI/CD Pipeline** (lint, test, docker build - all passing ✅)
 
-**Coming Soon:**
+**Coming Soon (v1.0):**
+- 🚧 Test coverage improvement (60% → 75%+)
+- 🚧 ML Service stabilization (beta → GA)
+- 🚧 Dashboard enhancements (beta → GA)
+- 🚧 LLM Evaluator implementation
+- 🚧 Production deployment guides
+
+**Future (Post-1.0):**
 - 🚧 Plugin system
 - 🚧 Multi-modal memories (images, audio)
-- 🚧 Memory consolidation/pruning
-- 🚧 Enterprise SSO/RBAC
+- 🚧 Memory consolidation/pruning optimization
+- 🚧 Enterprise SSO integration
 
-
+See [STATUS.md](STATUS.md) for detailed implementation status.
 
 ---
 
