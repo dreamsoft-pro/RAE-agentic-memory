@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from apps.memory_api import metrics
 from apps.memory_api.config import settings
 from apps.memory_api.repositories.graph_repository import GraphRepository
+from apps.memory_api.repositories.memory_repository import MemoryRepository
 from apps.memory_api.services.graph_extraction import (
     GraphExtractionResult,
     GraphExtractionService,
@@ -78,8 +79,9 @@ class ReflectionEngine:
     def __init__(self, pool: asyncpg.Pool, graph_repository: GraphRepository = None):
         self.pool = pool
         self.graph_repo = graph_repository or GraphRepository(pool)
+        self.memory_repo = MemoryRepository(pool)
         self.llm_provider = get_llm_provider()
-        self.graph_extractor = GraphExtractionService(pool)
+        self.graph_extractor = GraphExtractionService(self.memory_repo, self.graph_repo)
 
     async def generate_reflection(self, project: str, tenant_id: str) -> str:
         """
