@@ -18,7 +18,7 @@ import pytest
 # Add src to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../src"))
 
-from rae_mcp_server.server import (
+from rae_mcp.server import (
     RAEMemoryClient,
     handle_call_tool,
     handle_get_prompt,
