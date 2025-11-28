@@ -76,16 +76,14 @@ async def test_merge_node_edges(mock_pool):
     """Test merging edges from source to target node."""
     pool, conn = mock_pool
 
-    # Mock transaction context - need to return an awaitable
-    async def mock_transaction():
-        class TransactionContext:
-            async def __aenter__(self):
-                return None
-            async def __aexit__(self, *args):
-                return None
-        return TransactionContext()
+    # Mock transaction context - return context manager directly
+    class TransactionContext:
+        async def __aenter__(self):
+            return None
+        async def __aexit__(self, *args):
+            return None
 
-    conn.transaction = mock_transaction
+    conn.transaction = MagicMock(return_value=TransactionContext())
 
     # Mock execute results
     conn.execute.side_effect = ["UPDATE 3", "UPDATE 2"]
@@ -253,16 +251,14 @@ async def test_store_graph_triples(mock_pool):
     """Test storing multiple triples in batch."""
     pool, conn = mock_pool
 
-    # Mock transaction context
-    async def mock_transaction():
-        class TransactionContext:
-            async def __aenter__(self):
-                return None
-            async def __aexit__(self, *args):
-                return None
-        return TransactionContext()
+    # Mock transaction context - return context manager directly
+    class TransactionContext:
+        async def __aenter__(self):
+            return None
+        async def __aexit__(self, *args):
+            return None
 
-    conn.transaction = mock_transaction
+    conn.transaction = MagicMock(return_value=TransactionContext())
 
     # Mock node creation and ID retrieval
     conn.execute.return_value = "INSERT 0 1"
