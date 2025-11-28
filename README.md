@@ -7,9 +7,9 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Docker](https://img.shields.io/badge/docker-required-blue.svg)](https://docs.docker.com/get-docker/)
-[![Tests](https://img.shields.io/badge/tests-207%20passing-brightgreen.svg)]()
-[![Tests Total](https://img.shields.io/badge/total-283%20tests-blue.svg)]()
-[![Coverage](https://img.shields.io/badge/coverage-51%25-orange.svg)]()
+[![Tests](https://img.shields.io/badge/tests-197%20passing-brightgreen.svg)]()
+[![Tests Total](https://img.shields.io/badge/total-238%20unit%20tests-blue.svg)]()
+[![Coverage](https://img.shields.io/badge/coverage-51%25-yellow.svg)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Version](https://img.shields.io/badge/version-2.1.0--enterprise-blue.svg)](STATUS.md)
 
@@ -20,7 +20,7 @@
 > 💡 **Reality Check**
 >
 > Internally we joke that RAE is in its **"almost enterprise"** phase:
-> the architecture thinks it's enterprise, the tests are catching up (207 passing unit tests, 283 total, 51% coverage),
+> the architecture thinks it's enterprise, the tests are catching up (197 passing unit tests, 238 total, 51% coverage),
 > and the docs are brutally honest about what's still missing.
 >
 > **What works:** 4-layer memory, GraphRAG, reflection engine V1, multi-model LLM, multi-tenant security, cost tracking
