@@ -4,12 +4,13 @@ Knowledge Graph Page - Graph Visualization
 Explore knowledge graph relationships and entities.
 """
 
-import streamlit as st
-from pyvis.network import Network
-import streamlit.components.v1 as components
-import sys
 import os
+import sys
 import tempfile
+
+import streamlit as st
+import streamlit.components.v1 as components
+from pyvis.network import Network
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -40,27 +41,17 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
     physics_enabled = st.checkbox(
-        "Enable Physics",
-        value=True,
-        help="Enable physics-based layout"
+        "Enable Physics", value=True, help="Enable physics-based layout"
     )
 
 with col2:
     node_size = st.slider(
-        "Node Size",
-        min_value=10,
-        max_value=50,
-        value=25,
-        help="Size of graph nodes"
+        "Node Size", min_value=10, max_value=50, value=25, help="Size of graph nodes"
     )
 
 with col3:
     edge_width = st.slider(
-        "Edge Width",
-        min_value=1,
-        max_value=5,
-        value=2,
-        help="Width of graph edges"
+        "Edge Width", min_value=1, max_value=5, value=2, help="Width of graph edges"
     )
 
 st.divider()
@@ -77,14 +68,16 @@ try:
 
     if not nodes:
         st.warning("No graph data available")
-        st.info("""
+        st.info(
+            """
         **To populate the knowledge graph:**
         1. Store memories with relationships
         2. Use the reflection engine to extract entities
         3. Wait for graph extraction to complete
 
         The graph will automatically populate as you use RAE.
-        """)
+        """
+        )
         st.stop()
 
     # Display statistics
@@ -108,12 +101,13 @@ try:
         width="100%",
         bgcolor="#0E1117",
         font_color="white",
-        directed=True
+        directed=True,
     )
 
     # Configure physics
     if physics_enabled:
-        net.set_options("""
+        net.set_options(
+            """
         {
           "physics": {
             "enabled": true,
@@ -141,9 +135,11 @@ try:
             "dragView": true
           }
         }
-        """)
+        """
+        )
     else:
-        net.set_options("""
+        net.set_options(
+            """
         {
           "physics": {
             "enabled": false
@@ -155,7 +151,8 @@ try:
             "dragView": true
           }
         }
-        """)
+        """
+        )
 
     # Add nodes
     node_colors = {
@@ -164,7 +161,7 @@ try:
         "event": "#FF6B6B",
         "person": "#96CEB4",
         "project": "#FFD93D",
-        "default": "#95E1D3"
+        "default": "#95E1D3",
     }
 
     for node in nodes:
@@ -178,7 +175,7 @@ try:
             label=label,
             title=title,
             color=node_colors.get(node_type, node_colors["default"]),
-            size=node_size
+            size=node_size,
         )
 
     # Add edges
@@ -188,30 +185,26 @@ try:
         relation = edge.get("relation", "")
 
         if source and target:
-            net.add_edge(
-                source,
-                target,
-                label=relation,
-                width=edge_width,
-                arrows="to"
-            )
+            net.add_edge(source, target, label=relation, width=edge_width, arrows="to")
 
     # Save to temporary file
-    with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.html') as f:
+    with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".html") as f:
         net.save_graph(f.name)
-        with open(f.name, 'r') as file:
+        with open(f.name, "r") as file:
             html_content = file.read()
 
     # Display graph
     components.html(html_content, height=750, scrolling=True)
 
-    st.caption("""
+    st.caption(
+        """
     **Interactive Graph:**
     - Click and drag nodes to reposition
     - Scroll to zoom
     - Hover over nodes and edges for details
     - Click nodes to highlight connections
-    """)
+    """
+    )
 
 except Exception as e:
     st.error(f"Error loading knowledge graph: {e}")
@@ -234,7 +227,9 @@ if nodes and edges:
             node_type = node.get("type", "default")
             node_types[node_type] = node_types.get(node_type, 0) + 1
 
-        for node_type, count in sorted(node_types.items(), key=lambda x: x[1], reverse=True):
+        for node_type, count in sorted(
+            node_types.items(), key=lambda x: x[1], reverse=True
+        ):
             st.write(f"**{node_type.title()}:** {count}")
 
     with col2:
@@ -250,11 +245,9 @@ if nodes and edges:
             node_connections[target] = node_connections.get(target, 0) + 1
 
         # Sort by connections
-        top_nodes = sorted(
-            node_connections.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )[:10]
+        top_nodes = sorted(node_connections.items(), key=lambda x: x[1], reverse=True)[
+            :10
+        ]
 
         for node_id, connections in top_nodes:
             # Find node label
@@ -281,7 +274,7 @@ if nodes:
     selected_node = st.selectbox(
         "Select Node to Explore",
         options=list(node_options.keys()),
-        format_func=lambda x: node_options[x]
+        format_func=lambda x: node_options[x],
     )
 
     if selected_node:
@@ -300,12 +293,14 @@ if nodes:
                         target_label = node.get("label", target)
                         break
 
-                connected_nodes.append({
-                    "type": "outgoing",
-                    "relation": relation,
-                    "node": target_label,
-                    "node_id": target
-                })
+                connected_nodes.append(
+                    {
+                        "type": "outgoing",
+                        "relation": relation,
+                        "node": target_label,
+                        "node_id": target,
+                    }
+                )
 
             elif target == selected_node:
                 # Find source node label
@@ -315,12 +310,14 @@ if nodes:
                         source_label = node.get("label", source)
                         break
 
-                connected_nodes.append({
-                    "type": "incoming",
-                    "relation": relation,
-                    "node": source_label,
-                    "node_id": source
-                })
+                connected_nodes.append(
+                    {
+                        "type": "incoming",
+                        "relation": relation,
+                        "node": source_label,
+                        "node_id": source,
+                    }
+                )
 
         if connected_nodes:
             st.success(f"Found {len(connected_nodes)} connections")

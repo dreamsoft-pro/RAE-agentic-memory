@@ -5,7 +5,6 @@ from typing import Callable, Iterable
 
 from gitignore_parser import parse_gitignore
 
-
 # Katalogi, których NIE chcemy włączać do zrzutu, niezależnie od .gitignore
 DEFAULT_IGNORED_DIRS = {
     ".git",
@@ -39,16 +38,15 @@ def iter_files(root_path: Path) -> Iterable[Path]:
         current_dir = Path(dirpath)
 
         # odfiltruj katalogi, których nie chcemy przeglądać
-        dirnames[:] = [d for d in dirnames
-                       if not should_skip_dir(current_dir / d)]
+        dirnames[:] = [d for d in dirnames if not should_skip_dir(current_dir / d)]
 
         for filename in filenames:
             yield current_dir / filename
 
 
-def export_project(root_dir: str | Path,
-                   output_file: str | Path,
-                   max_file_size: int = 2 * 1024 * 1024) -> None:
+def export_project(
+    root_dir: str | Path, output_file: str | Path, max_file_size: int = 2 * 1024 * 1024
+) -> None:
     """
     Zbiera zawartość projektu do jednego pliku tekstowego.
 
@@ -66,7 +64,8 @@ def export_project(root_dir: str | Path,
         matches: Callable[[str], bool] = parse_gitignore(str(gitignore_file))
     else:
         # jeśli nie ma gitignore – nic nie ignorujemy
-        matches = lambda p: False  # type: ignore[assignment]
+        def matches(p: str) -> bool:  # type: ignore[misc]
+            return False
 
     with output_path.open("w", encoding="utf-8") as out:
         for path in sorted(iter_files(root_path)):
@@ -88,13 +87,17 @@ def export_project(root_dir: str | Path,
             try:
                 size = path.stat().st_size
             except OSError as e:
-                print(f"[WARN] Nie mogę odczytać rozmiaru pliku {rel_path}: {e}",
-                      file=sys.stderr)
+                print(
+                    f"[WARN] Nie mogę odczytać rozmiaru pliku {rel_path}: {e}",
+                    file=sys.stderr,
+                )
                 continue
 
             if size > max_file_size:
-                print(f"[INFO] Pomijam duży plik (> {max_file_size} B): {rel_path}",
-                      file=sys.stderr)
+                print(
+                    f"[INFO] Pomijam duży plik (> {max_file_size} B): {rel_path}",
+                    file=sys.stderr,
+                )
                 continue
 
             # próbujemy czytać jako tekst UTF-8, ignorując błędy
@@ -102,8 +105,9 @@ def export_project(root_dir: str | Path,
                 with path.open("r", encoding="utf-8", errors="ignore") as f:
                     content = f.read()
             except Exception as e:  # np. permissions, dziwny path, itp.
-                print(f"[WARN] Nie mogę odczytać pliku {rel_path}: {e}",
-                      file=sys.stderr)
+                print(
+                    f"[WARN] Nie mogę odczytać pliku {rel_path}: {e}", file=sys.stderr
+                )
                 continue
 
             out.write(f"# {rel_path}\n")

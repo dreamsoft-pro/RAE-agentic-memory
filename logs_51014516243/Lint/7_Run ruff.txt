@@ -1,0 +1,12 @@
+﻿2025-11-28T17:38:42.7888004Z ##[group]Run ruff check apps/ sdk/ integrations/
+2025-11-28T17:38:42.7889125Z [36;1mruff check apps/ sdk/ integrations/[0m
+2025-11-28T17:38:42.7936732Z shell: /usr/bin/bash -e {0}
+2025-11-28T17:38:42.7937116Z env:
+2025-11-28T17:38:42.7937541Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-28T17:38:42.7938237Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-28T17:38:42.7939128Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-28T17:38:42.7939750Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-28T17:38:42.7940371Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-28T17:38:42.7940990Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-28T17:38:42.7941500Z ##[endgroup]
+2025-11-28T17:38:42.8335926Z All checks passed!

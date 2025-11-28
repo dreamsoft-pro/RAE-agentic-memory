@@ -1,8 +1,9 @@
-import requests
-import time
-import sys
 import json
 import os
+import sys
+import time
+
+import requests
 
 # Configuration
 API_URL = os.getenv("API_URL", "http://localhost:8000")
@@ -10,13 +11,12 @@ TENANT_ID = os.getenv("TENANT_ID", "e2e-test-tenant")
 PROJECT_ID = "e2e-test-project"
 
 # Headers
-headers = {
-    "Content-Type": "application/json",
-    "X-Tenant-Id": TENANT_ID
-}
+headers = {"Content-Type": "application/json", "X-Tenant-Id": TENANT_ID}
+
 
 def log(message):
     print(f"[E2E TEST] {message}")
+
 
 def check_health():
     log(f"Checking health at {API_URL}/health")
@@ -32,6 +32,7 @@ def check_health():
         log("Could not connect to API. Is it running?")
         return False
 
+
 def run_test():
     if not check_health():
         sys.exit(1)
@@ -41,19 +42,21 @@ def run_test():
     store_payload = {
         "content": memory_content,
         "source": "e2e-script",
-        "project": PROJECT_ID
+        "project": PROJECT_ID,
     }
 
     log(f"Storing memory: '{memory_content}'")
     try:
-        response = requests.post(f"{API_URL}/v1/memory/store", headers=headers, json=store_payload)
+        response = requests.post(
+            f"{API_URL}/v1/memory/store", headers=headers, json=store_payload
+        )
         response.raise_for_status()
         memory_id = response.json().get("id")
         log(f"Memory stored successfully. ID: {memory_id}")
     except Exception as e:
         log(f"Failed to store memory: {e}")
-        if hasattr(e, 'response') and e.response:
-             log(f"Response: {e.response.text}")
+        if hasattr(e, "response") and e.response:
+            log(f"Response: {e.response.text}")
         sys.exit(1)
 
     # 2. Wait for processing (simulating eventual consistency)
@@ -66,14 +69,14 @@ def run_test():
     query_payload = {
         "query_text": query_text,
         "k": 5,
-        "filters": {
-            "tenant_id": TENANT_ID
-        }
+        "filters": {"tenant_id": TENANT_ID},
     }
 
     log(f"Querying: '{query_text}'")
     try:
-        response = requests.post(f"{API_URL}/v1/memory/query", headers=headers, json=query_payload)
+        response = requests.post(
+            f"{API_URL}/v1/memory/query", headers=headers, json=query_payload
+        )
         response.raise_for_status()
         results = response.json().get("results", [])
 
@@ -93,9 +96,10 @@ def run_test():
 
     except Exception as e:
         log(f"Failed to query memory: {e}")
-        if hasattr(e, 'response') and e.response:
-             log(f"Response: {e.response.text}")
+        if hasattr(e, "response") and e.response:
+            log(f"Response: {e.response.text}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     run_test()

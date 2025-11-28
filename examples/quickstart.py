@@ -20,7 +20,6 @@ try:
     from rich.panel import Panel
     from rich.progress import Progress, SpinnerColumn, TextColumn
     from rich.table import Table
-    from rich.markdown import Markdown
 except ImportError:
     print("❌ Error: 'rich' library not installed")
     print("Install with: pip install rich")
@@ -61,7 +60,7 @@ async def check_api_connection():
             response = await client.get("http://localhost:8000/health", timeout=3.0)
             if response.status_code == 200:
                 return True
-    except:
+    except Exception:
         pass
 
     return False
@@ -70,16 +69,18 @@ async def check_api_connection():
 async def main():
     print_header()
 
-    console.print(Panel.fit(
-        "This tutorial will show you how to:\n\n"
-        "1. ✅ Connect to RAE\n"
-        "2. 💾 Store memories\n"
-        "3. 🔍 Query with semantic search\n"
-        "4. 🕸️  Build knowledge graphs\n"
-        "5. 🤔 Generate reflections",
-        title="📚 What You'll Learn",
-        border_style="green"
-    ))
+    console.print(
+        Panel.fit(
+            "This tutorial will show you how to:\n\n"
+            "1. ✅ Connect to RAE\n"
+            "2. 💾 Store memories\n"
+            "3. 🔍 Query with semantic search\n"
+            "4. 🕸️  Build knowledge graphs\n"
+            "5. 🤔 Generate reflections",
+            title="📚 What You'll Learn",
+            border_style="green",
+        )
+    )
 
     console.print("\n[dim]Press Ctrl+C at any time to exit[/dim]\n")
 
@@ -89,7 +90,7 @@ async def main():
     with Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
-        console=console
+        console=console,
     ) as progress:
         task = progress.add_task("Connecting to RAE API...", total=None)
 
@@ -113,12 +114,12 @@ async def main():
     client = MemoryClient(
         api_url="http://localhost:8000",
         tenant_id="quickstart-demo",
-        project_id="my-first-agent"
+        project_id="my-first-agent",
     )
 
     console.print("✅ Client initialized!")
-    console.print(f"  Tenant ID: [cyan]quickstart-demo[/cyan]")
-    console.print(f"  Project ID: [cyan]my-first-agent[/cyan]\n")
+    console.print("  Tenant ID: [cyan]quickstart-demo[/cyan]")
+    console.print("  Project ID: [cyan]my-first-agent[/cyan]\n")
 
     # Step 3: Store memories
     print_step(3, "Storing sample memories")
@@ -126,24 +127,24 @@ async def main():
     memories = [
         {
             "content": "User prefers dark mode in all applications",
-            "tags": ["preference", "ui"]
+            "tags": ["preference", "ui"],
         },
         {
             "content": "User is learning Python and FastAPI",
-            "tags": ["skill", "learning"]
+            "tags": ["skill", "learning"],
         },
         {
             "content": "User's favorite coffee is cappuccino",
-            "tags": ["preference", "personal"]
+            "tags": ["preference", "personal"],
         },
         {
             "content": "User had a bug with async/await in authentication module",
-            "tags": ["bug", "auth", "async"]
+            "tags": ["bug", "auth", "async"],
         },
         {
             "content": "User fixed the bug by adding proper exception handling",
-            "tags": ["solution", "auth"]
-        }
+            "tags": ["solution", "auth"],
+        },
     ]
 
     stored_ids = []
@@ -151,16 +152,14 @@ async def main():
     with Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
-        console=console
+        console=console,
     ) as progress:
         task = progress.add_task("Storing memories...", total=len(memories))
 
         for i, memory in enumerate(memories, 1):
             try:
                 response = await client.store_memory(
-                    content=memory["content"],
-                    layer="episodic",
-                    tags=memory["tags"]
+                    content=memory["content"], layer="episodic", tags=memory["tags"]
                 )
                 stored_ids.append(response.get("id"))
                 console.print(f"  {i}. [green]✓[/green] {memory['content'][:60]}...")
@@ -176,7 +175,7 @@ async def main():
     queries = [
         "What programming issues did the user face?",
         "What are the user's preferences?",
-        "What technologies is the user learning?"
+        "What technologies is the user learning?",
     ]
 
     for query in queries:
@@ -196,11 +195,7 @@ async def main():
                     content = result.get("content", "")[:60]
                     tags = ", ".join(result.get("tags", [])[:3])
 
-                    table.add_row(
-                        f"{score:.3f}",
-                        content,
-                        tags
-                    )
+                    table.add_row(f"{score:.3f}", content, tags)
 
                 console.print(table)
             else:
@@ -220,17 +215,20 @@ async def main():
     try:
         # Try to query with graph enabled
         graph_results = await client.hybrid_search(
-            query="authentication and bugs",
-            use_graph=True,
-            graph_depth=2,
-            top_k=5
+            query="authentication and bugs", use_graph=True, graph_depth=2, top_k=5
         )
 
         if graph_results:
             console.print("✅ Knowledge graph query successful!")
-            console.print(f"  Found {len(graph_results.get('vector_matches', []))} vector matches")
-            console.print(f"  Found {len(graph_results.get('graph_nodes', []))} graph nodes")
-            console.print(f"  Found {len(graph_results.get('graph_edges', []))} graph edges\n")
+            console.print(
+                f"  Found {len(graph_results.get('vector_matches', []))} vector matches"
+            )
+            console.print(
+                f"  Found {len(graph_results.get('graph_nodes', []))} graph nodes"
+            )
+            console.print(
+                f"  Found {len(graph_results.get('graph_edges', []))} graph edges\n"
+            )
         else:
             console.print("[yellow]⚠️  GraphRAG not yet configured[/yellow]")
             console.print("  See docs for setup instructions\n")
@@ -248,22 +246,22 @@ async def main():
         with Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
-            console=console
+            console=console,
         ) as progress:
             task = progress.add_task("Generating reflection...", total=None)
 
-            reflection = await client.generate_reflection(
-                memory_limit=50
-            )
+            reflection = await client.generate_reflection(memory_limit=50)
 
             progress.update(task, completed=True)
 
         if reflection:
-            console.print(Panel.fit(
-                reflection.get("content", "No reflection generated"),
-                title="🤔 AI-Generated Reflection",
-                border_style="green"
-            ))
+            console.print(
+                Panel.fit(
+                    reflection.get("content", "No reflection generated"),
+                    title="🤔 AI-Generated Reflection",
+                    border_style="green",
+                )
+            )
         else:
             console.print("[yellow]⚠️  Reflection generation not available[/yellow]")
             console.print("  Configure an LLM provider in .env\n")
@@ -273,18 +271,20 @@ async def main():
         console.print("  Make sure you have an LLM API key configured\n")
 
     # Completion
-    console.print("\n" + "="*60 + "\n")
+    console.print("\n" + "=" * 60 + "\n")
 
-    console.print(Panel.fit(
-        "✨ [bold green]Tutorial Complete![/bold green] ✨\n\n"
-        "You've successfully:\n"
-        "✅ Connected to RAE\n"
-        "✅ Stored memories\n"
-        "✅ Performed semantic search\n"
-        "✅ Explored knowledge graphs\n"
-        "✅ Generated AI reflections",
-        border_style="green"
-    ))
+    console.print(
+        Panel.fit(
+            "✨ [bold green]Tutorial Complete![/bold green] ✨\n\n"
+            "You've successfully:\n"
+            "✅ Connected to RAE\n"
+            "✅ Stored memories\n"
+            "✅ Performed semantic search\n"
+            "✅ Explored knowledge graphs\n"
+            "✅ Generated AI reflections",
+            border_style="green",
+        )
+    )
 
     # Next steps
     console.print("\n[bold cyan]📚 Next Steps:[/bold cyan]\n")
@@ -294,13 +294,15 @@ async def main():
         ("📊 Open dashboard", "http://localhost:8501"),
         ("🔧 Try advanced examples", "examples/"),
         ("🔌 Setup IDE integration", "docs/guides/ide-integration.md"),
-        ("💡 Explore use cases", "docs/examples/")
+        ("💡 Explore use cases", "docs/examples/"),
     ]
 
     for step, link in next_steps:
         console.print(f"  • {step}: [link={link}]{link}[/link]")
 
-    console.print("\n[dim]💡 Tip: Run 'make help' to see all available commands[/dim]\n")
+    console.print(
+        "\n[dim]💡 Tip: Run 'make help' to see all available commands[/dim]\n"
+    )
 
 
 if __name__ == "__main__":
@@ -311,5 +313,7 @@ if __name__ == "__main__":
         sys.exit(0)
     except Exception as e:
         console.print(f"\n[bold red]Error:[/bold red] {e}")
-        console.print("\n[dim]If you need help, visit: https://github.com/dreamsoft-pro/RAE-agentic-memory/issues[/dim]")
+        console.print(
+            "\n[dim]If you need help, visit: https://github.com/dreamsoft-pro/RAE-agentic-memory/issues[/dim]"
+        )
         sys.exit(1)

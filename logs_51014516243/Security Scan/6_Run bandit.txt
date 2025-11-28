@@ -1,0 +1,195 @@
+﻿2025-11-28T17:38:41.3668842Z ##[group]Run bandit -r apps/ sdk/ -ll || true
+2025-11-28T17:38:41.3669360Z [36;1mbandit -r apps/ sdk/ -ll || true[0m
+2025-11-28T17:38:41.3704024Z shell: /usr/bin/bash -e {0}
+2025-11-28T17:38:41.3704257Z env:
+2025-11-28T17:38:41.3704496Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-28T17:38:41.3704905Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-28T17:38:41.3705286Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-28T17:38:41.3705634Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-28T17:38:41.3705974Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-28T17:38:41.3706309Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-28T17:38:41.3706771Z ##[endgroup]
+2025-11-28T17:38:41.5102933Z [main]	INFO	profile include tests: None
+2025-11-28T17:38:41.5103486Z [main]	INFO	profile exclude tests: None
+2025-11-28T17:38:41.5103924Z [main]	INFO	cli include tests: None
+2025-11-28T17:38:41.5104316Z [main]	INFO	cli exclude tests: None
+2025-11-28T17:38:41.5105904Z [main]	INFO	running on Python 3.11.14
+2025-11-28T17:38:44.0888845Z Working... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:02
+2025-11-28T17:38:44.0905946Z Run started:2025-11-28 17:38:44.089389+00:00
+2025-11-28T17:38:44.0906382Z 
+2025-11-28T17:38:44.0906489Z Test results:
+2025-11-28T17:38:44.0907080Z >> Issue: [B324:hashlib] Use of weak MD5 hash for security. Consider usedforsecurity=False
+2025-11-28T17:38:44.0907783Z    Severity: High   Confidence: High
+2025-11-28T17:38:44.0908193Z    CWE: CWE-327 (https://cwe.mitre.org/data/definitions/327.html)
+2025-11-28T17:38:44.0908748Z    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b324_hashlib.html
+2025-11-28T17:38:44.0909318Z    Location: apps/memory_api/clients/rae_client.py:301:15
+2025-11-28T17:38:44.0909710Z 300	        key_string = "|".join(key_parts)
+2025-11-28T17:38:44.0910105Z 301	        return hashlib.md5(key_string.encode()).hexdigest()
+2025-11-28T17:38:44.0910671Z 302	
+2025-11-28T17:38:44.0910795Z 
+2025-11-28T17:38:44.0910916Z --------------------------------------------------
+2025-11-28T17:38:44.0911540Z >> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+2025-11-28T17:38:44.0912169Z    Severity: Medium   Confidence: Low
+2025-11-28T17:38:44.0912555Z    CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+2025-11-28T17:38:44.0913164Z    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b608_hardcoded_sql_expressions.html
+2025-11-28T17:38:44.0913829Z    Location: apps/memory_api/repositories/cost_logs_repository.py:668:8
+2025-11-28T17:38:44.0914279Z 667	    records = await pool.fetch(
+2025-11-28T17:38:44.0914571Z 668	        f"""
+2025-11-28T17:38:44.0914779Z 669	        SELECT *
+2025-11-28T17:38:44.0915009Z 670	        FROM cost_logs
+2025-11-28T17:38:44.0915264Z 671	        WHERE tenant_id = $1
+2025-11-28T17:38:44.0915542Z 672	          AND project_id = $2
+2025-11-28T17:38:44.0915812Z 673	          {error_filter}
+2025-11-28T17:38:44.0916085Z 674	        ORDER BY timestamp DESC
+2025-11-28T17:38:44.0916352Z 675	        LIMIT $3
+2025-11-28T17:38:44.0916567Z 676	        """,
+2025-11-28T17:38:44.0916776Z 677	        tenant_id,
+2025-11-28T17:38:44.0916919Z 
+2025-11-28T17:38:44.0917031Z --------------------------------------------------
+2025-11-28T17:38:44.0917645Z >> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+2025-11-28T17:38:44.0918256Z    Severity: Medium   Confidence: Low
+2025-11-28T17:38:44.0918637Z    CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+2025-11-28T17:38:44.0919237Z    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b608_hardcoded_sql_expressions.html
+2025-11-28T17:38:44.0919891Z    Location: apps/memory_api/repositories/memory_repository.py:87:22
+2025-11-28T17:38:44.0920583Z 86	
+2025-11-28T17:38:44.0921138Z 87	                sql = f"INSERT INTO memories ({columns_str}) VALUES ({placeholders_str}) RETURNING id, created_at, last_accessed_at, usage_count"
+2025-11-28T17:38:44.0922192Z 88	
+2025-11-28T17:38:44.0922281Z 
+2025-11-28T17:38:44.0922374Z --------------------------------------------------
+2025-11-28T17:38:44.0922845Z >> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+2025-11-28T17:38:44.0923314Z    Severity: Medium   Confidence: Low
+2025-11-28T17:38:44.0923622Z    CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+2025-11-28T17:38:44.0924081Z    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b608_hardcoded_sql_expressions.html
+2025-11-28T17:38:44.0924595Z    Location: apps/memory_api/repositories/reflection_repository.py:273:18
+2025-11-28T17:38:44.0925084Z 272	    # Count total matching
+2025-11-28T17:38:44.0925391Z 273	    count_query = f"SELECT COUNT(*) FROM reflections WHERE {where_clause}"
+2025-11-28T17:38:44.0925778Z 274	    total_count = await pool.fetchval(count_query, *params)
+2025-11-28T17:38:44.0926002Z 
+2025-11-28T17:38:44.0926100Z --------------------------------------------------
+2025-11-28T17:38:44.0926569Z >> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+2025-11-28T17:38:44.0927023Z    Severity: Medium   Confidence: Low
+2025-11-28T17:38:44.0927314Z    CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+2025-11-28T17:38:44.0927766Z    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b608_hardcoded_sql_expressions.html
+2025-11-28T17:38:44.0928270Z    Location: apps/memory_api/repositories/reflection_repository.py:288:12
+2025-11-28T17:38:44.0928589Z 287	
+2025-11-28T17:38:44.0928839Z 288	    query = f"SELECT * FROM reflections WHERE {where_clause} {order_clause}"
+2025-11-28T17:38:44.0929216Z 289	    records = await pool.fetch(query, *params)
+2025-11-28T17:38:44.0929398Z 
+2025-11-28T17:38:44.0929481Z --------------------------------------------------
+2025-11-28T17:38:44.0929943Z >> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+2025-11-28T17:38:44.0930603Z    Severity: Medium   Confidence: Low
+2025-11-28T17:38:44.0930908Z    CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+2025-11-28T17:38:44.0931380Z    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b608_hardcoded_sql_expressions.html
+2025-11-28T17:38:44.0931888Z    Location: apps/memory_api/repositories/reflection_repository.py:467:12
+2025-11-28T17:38:44.0932251Z 466	    where_clause = " AND ".join(conditions)
+2025-11-28T17:38:44.0932584Z 467	    query = f"SELECT * FROM reflection_relationships WHERE {where_clause}"
+2025-11-28T17:38:44.0932895Z 468	
+2025-11-28T17:38:44.0932977Z 
+2025-11-28T17:38:44.0933067Z --------------------------------------------------
+2025-11-28T17:38:44.0933558Z >> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+2025-11-28T17:38:44.0934133Z    Severity: Medium   Confidence: Low
+2025-11-28T17:38:44.0934430Z    CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+2025-11-28T17:38:44.0934891Z    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b608_hardcoded_sql_expressions.html
+2025-11-28T17:38:44.0935400Z    Location: apps/memory_api/repositories/reflection_repository.py:513:12
+2025-11-28T17:38:44.0935755Z 512	    # Recursive query for graph traversal
+2025-11-28T17:38:44.0935996Z 513	    query = f"""
+2025-11-28T17:38:44.0936181Z 514	    WITH RECURSIVE graph AS (
+2025-11-28T17:38:44.0936451Z 515	        -- Base case: starting reflection
+2025-11-28T17:38:44.0936679Z 516	        SELECT
+2025-11-28T17:38:44.0936841Z 517	            id,
+2025-11-28T17:38:44.0937012Z 518	            0 as depth,
+2025-11-28T17:38:44.0937208Z 519	            ARRAY[id] as path
+2025-11-28T17:38:44.0937426Z 520	        FROM reflections
+2025-11-28T17:38:44.0937621Z 521	        WHERE id = $1
+2025-11-28T17:38:44.0937828Z 522	
+2025-11-28T17:38:44.0937971Z 523	        UNION ALL
+2025-11-28T17:38:44.0938143Z 524	
+2025-11-28T17:38:44.0938471Z 525	        -- Recursive case: follow relationships
+2025-11-28T17:38:44.0938719Z 526	        SELECT
+2025-11-28T17:38:44.0938877Z 527	            r.id,
+2025-11-28T17:38:44.0939052Z 528	            g.depth + 1,
+2025-11-28T17:38:44.0939256Z 529	            g.path || r.id
+2025-11-28T17:38:44.0939451Z 530	        FROM graph g
+2025-11-28T17:38:44.0939746Z 531	        JOIN reflection_relationships rr ON rr.source_reflection_id = g.id
+2025-11-28T17:38:44.0940281Z 532	        JOIN reflections r ON r.id = rr.target_reflection_id
+2025-11-28T17:38:44.0940589Z 533	        WHERE
+2025-11-28T17:38:44.0940758Z 534	            g.depth < $1
+2025-11-28T17:38:44.0940965Z 535	            {relation_filter}
+2025-11-28T17:38:44.0941173Z 536	            {strength_filter}
+2025-11-28T17:38:44.0941564Z 537	            AND NOT (r.id = ANY(g.path))  -- Prevent cycles
+2025-11-28T17:38:44.0941830Z 538	    )
+2025-11-28T17:38:44.0941993Z 539	    SELECT DISTINCT id FROM graph
+2025-11-28T17:38:44.0942213Z 540	    """
+2025-11-28T17:38:44.0942366Z 541	
+2025-11-28T17:38:44.0942448Z 
+2025-11-28T17:38:44.0942543Z --------------------------------------------------
+2025-11-28T17:38:44.0943008Z >> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+2025-11-28T17:38:44.0943470Z    Severity: Medium   Confidence: Low
+2025-11-28T17:38:44.0943760Z    CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+2025-11-28T17:38:44.0944225Z    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b608_hardcoded_sql_expressions.html
+2025-11-28T17:38:44.0944735Z    Location: apps/memory_api/repositories/reflection_repository.py:553:22
+2025-11-28T17:38:44.0945087Z 552	        # Fetch all edges between these nodes
+2025-11-28T17:38:44.0945344Z 553	        edges_query = f"""
+2025-11-28T17:38:44.0945572Z 554	        SELECT * FROM reflection_relationships
+2025-11-28T17:38:44.0945816Z 555	        WHERE
+2025-11-28T17:38:44.0945999Z 556	            source_reflection_id = ANY($1)
+2025-11-28T17:38:44.0946263Z 557	            AND target_reflection_id = ANY($1)
+2025-11-28T17:38:44.0946509Z 558	            {relation_filter}
+2025-11-28T17:38:44.0946735Z 559	            {strength_filter}
+2025-11-28T17:38:44.0946930Z 560	        """
+2025-11-28T17:38:44.0947217Z 561	        edges_records = await pool.fetch(edges_query, node_ids, *relation_params)
+2025-11-28T17:38:44.0947490Z 
+2025-11-28T17:38:44.0947584Z --------------------------------------------------
+2025-11-28T17:38:44.0948034Z >> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+2025-11-28T17:38:44.0948504Z    Severity: Medium   Confidence: Low
+2025-11-28T17:38:44.0948792Z    CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+2025-11-28T17:38:44.0949260Z    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b608_hardcoded_sql_expressions.html
+2025-11-28T17:38:44.0949744Z    Location: apps/memory_api/services/reflection_pipeline.py:280:16
+2025-11-28T17:38:44.0950084Z 279	        where_clause = " AND ".join(conditions)
+2025-11-28T17:38:44.0950529Z 280	        query = f"""
+2025-11-28T17:38:44.0950799Z 281	            SELECT id, content, embedding, tags, importance, created_at
+2025-11-28T17:38:44.0951106Z 282	            FROM memories
+2025-11-28T17:38:44.0951308Z 283	            WHERE {where_clause}
+2025-11-28T17:38:44.0951535Z 284	            ORDER BY created_at DESC
+2025-11-28T17:38:44.0951769Z 285	            LIMIT ${param_idx}
+2025-11-28T17:38:44.0951973Z 286	        """
+2025-11-28T17:38:44.0952148Z 287	        params.append(limit)
+2025-11-28T17:38:44.0952289Z 
+2025-11-28T17:38:44.0952373Z --------------------------------------------------
+2025-11-28T17:38:44.0952747Z >> Issue: [B324:hashlib] Use of weak MD5 hash for security. Consider usedforsecurity=False
+2025-11-28T17:38:44.0953119Z    Severity: High   Confidence: High
+2025-11-28T17:38:44.0953411Z    CWE: CWE-327 (https://cwe.mitre.org/data/definitions/327.html)
+2025-11-28T17:38:44.0953817Z    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b324_hashlib.html
+2025-11-28T17:38:44.0954395Z    Location: apps/memory_api/services/vector_store/qdrant_store.py:102:28
+2025-11-28T17:38:44.0954737Z 101	            if word not in stopwords:
+2025-11-28T17:38:44.0955044Z 102	                index = int(hashlib.md5(word.encode()).hexdigest(), 16) % 100000
+2025-11-28T17:38:44.0955371Z 103	                indices.append(index)
+2025-11-28T17:38:44.0955529Z 
+2025-11-28T17:38:44.0955612Z --------------------------------------------------
+2025-11-28T17:38:44.0955968Z >> Issue: [B104:hardcoded_bind_all_interfaces] Possible binding to all interfaces.
+2025-11-28T17:38:44.0956326Z    Severity: Medium   Confidence: Medium
+2025-11-28T17:38:44.0956628Z    CWE: CWE-605 (https://cwe.mitre.org/data/definitions/605.html)
+2025-11-28T17:38:44.0957216Z    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b104_hardcoded_bind_all_interfaces.html
+2025-11-28T17:38:44.0957648Z    Location: apps/ml_service/main.py:331:26
+2025-11-28T17:38:44.0957876Z 330	
+2025-11-28T17:38:44.0958056Z 331	    uvicorn.run(app, host="0.0.0.0", port=8001)
+2025-11-28T17:38:44.0958243Z 
+2025-11-28T17:38:44.0958330Z --------------------------------------------------
+2025-11-28T17:38:44.0958497Z 
+2025-11-28T17:38:44.0958561Z Code scanned:
+2025-11-28T17:38:44.0958739Z 	Total lines of code: 36607
+2025-11-28T17:38:44.0958950Z 	Total lines skipped (#nosec): 0
+2025-11-28T17:38:44.0959313Z 	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
+2025-11-28T17:38:44.0959621Z 
+2025-11-28T17:38:44.0959691Z Run metrics:
+2025-11-28T17:38:44.0959860Z 	Total issues (by severity):
+2025-11-28T17:38:44.0960062Z 		Undefined: 0
+2025-11-28T17:38:44.0960423Z 		Low: 620
+2025-11-28T17:38:44.0960583Z 		Medium: 9
+2025-11-28T17:38:44.0960739Z 		High: 2
+2025-11-28T17:38:44.0960911Z 	Total issues (by confidence):
+2025-11-28T17:38:44.0961117Z 		Undefined: 0
+2025-11-28T17:38:44.0961269Z 		Low: 8
+2025-11-28T17:38:44.0961418Z 		Medium: 3
+2025-11-28T17:38:44.0961562Z 		High: 620
+2025-11-28T17:38:44.0961730Z Files skipped (0):

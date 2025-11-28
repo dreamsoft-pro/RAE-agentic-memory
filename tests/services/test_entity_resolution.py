@@ -4,9 +4,14 @@ Tests for EntityResolutionService - Entity deduplication and merging.
 Tests verify that the service correctly uses GraphRepository for all database operations.
 """
 
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from apps.memory_api.services.entity_resolution import EntityResolutionService, MergeDecision
+
+from apps.memory_api.services.entity_resolution import (
+    EntityResolutionService,
+    MergeDecision,
+)
 
 
 @pytest.fixture
@@ -27,13 +32,11 @@ async def test_fetch_nodes_uses_repository(mock_dependencies):
     # Mock repository response
     mock_graph_repo.get_all_nodes.return_value = [
         {"id": 1, "node_id": "node1", "label": "Entity1"},
-        {"id": 2, "node_id": "node2", "label": "Entity2"}
+        {"id": 2, "node_id": "node2", "label": "Entity2"},
     ]
 
     service = EntityResolutionService(
-        pool=mock_pool,
-        ml_client=mock_ml_client,
-        graph_repository=mock_graph_repo
+        pool=mock_pool, ml_client=mock_ml_client, graph_repository=mock_graph_repo
     )
 
     nodes = await service._fetch_nodes(project_id="project1", tenant_id="tenant1")
@@ -41,8 +44,7 @@ async def test_fetch_nodes_uses_repository(mock_dependencies):
     assert len(nodes) == 2
     assert nodes[0]["label"] == "Entity1"
     mock_graph_repo.get_all_nodes.assert_called_once_with(
-        tenant_id="tenant1",
-        project_id="project1"
+        tenant_id="tenant1", project_id="project1"
     )
 
 
@@ -55,33 +57,27 @@ async def test_merge_nodes_with_canonical_name(mock_dependencies):
     mock_graph_repo.update_node_label.return_value = True
     mock_graph_repo.merge_node_edges.return_value = {
         "outgoing_updated": 2,
-        "incoming_updated": 1
+        "incoming_updated": 1,
     }
     mock_graph_repo.delete_node_edges.return_value = 3
     mock_graph_repo.delete_node.return_value = True
 
     service = EntityResolutionService(
-        pool=mock_pool,
-        ml_client=mock_ml_client,
-        graph_repository=mock_graph_repo
+        pool=mock_pool, ml_client=mock_ml_client, graph_repository=mock_graph_repo
     )
 
-    nodes = [
-        {"id": 1, "label": "Apple Inc"},
-        {"id": 2, "label": "Apple Company"}
-    ]
+    nodes = [{"id": 1, "label": "Apple Inc"}, {"id": 2, "label": "Apple Company"}]
 
     await service._merge_nodes(
         nodes=nodes,
         project_id="project1",
         tenant_id="tenant1",
-        canonical_name="Apple Inc."
+        canonical_name="Apple Inc.",
     )
 
     # Verify repository methods were called
     mock_graph_repo.update_node_label.assert_called_once_with(
-        node_internal_id=1,
-        new_label="Apple Inc."
+        node_internal_id=1, new_label="Apple Inc."
     )
     mock_graph_repo.merge_node_edges.assert_called_once()
     mock_graph_repo.delete_node_edges.assert_called_once()
@@ -96,34 +92,25 @@ async def test_merge_nodes_without_canonical_name(mock_dependencies):
     # Mock repository methods
     mock_graph_repo.merge_node_edges.return_value = {
         "outgoing_updated": 1,
-        "incoming_updated": 1
+        "incoming_updated": 1,
     }
     mock_graph_repo.delete_node_edges.return_value = 2
     mock_graph_repo.delete_node.return_value = True
 
     service = EntityResolutionService(
-        pool=mock_pool,
-        ml_client=mock_ml_client,
-        graph_repository=mock_graph_repo
+        pool=mock_pool, ml_client=mock_ml_client, graph_repository=mock_graph_repo
     )
 
-    nodes = [
-        {"id": 1, "label": "Short"},
-        {"id": 2, "label": "Much Longer Label"}
-    ]
+    nodes = [{"id": 1, "label": "Short"}, {"id": 2, "label": "Much Longer Label"}]
 
     await service._merge_nodes(
-        nodes=nodes,
-        project_id="project1",
-        tenant_id="tenant1",
-        canonical_name=None
+        nodes=nodes, project_id="project1", tenant_id="tenant1", canonical_name=None
     )
 
     # Should pick node with longest label (id=2)
     # Should merge node 1 into node 2
     mock_graph_repo.merge_node_edges.assert_called_once_with(
-        source_node_id=1,
-        target_node_id=2
+        source_node_id=1, target_node_id=2
     )
     mock_graph_repo.delete_node.assert_called_once_with(node_internal_id=1)
 
@@ -134,17 +121,12 @@ async def test_merge_nodes_empty_list(mock_dependencies):
     mock_pool, mock_graph_repo, mock_ml_client = mock_dependencies
 
     service = EntityResolutionService(
-        pool=mock_pool,
-        ml_client=mock_ml_client,
-        graph_repository=mock_graph_repo
+        pool=mock_pool, ml_client=mock_ml_client, graph_repository=mock_graph_repo
     )
 
     # Should handle empty list gracefully
     await service._merge_nodes(
-        nodes=[],
-        project_id="project1",
-        tenant_id="tenant1",
-        canonical_name="Test"
+        nodes=[], project_id="project1", tenant_id="tenant1", canonical_name="Test"
     )
 
     # No repository methods should be called
@@ -163,15 +145,10 @@ async def test_run_clustering_with_insufficient_nodes(mock_dependencies):
     ]
 
     service = EntityResolutionService(
-        pool=mock_pool,
-        ml_client=mock_ml_client,
-        graph_repository=mock_graph_repo
+        pool=mock_pool, ml_client=mock_ml_client, graph_repository=mock_graph_repo
     )
 
-    await service.run_clustering_and_merging(
-        project_id="project1",
-        tenant_id="tenant1"
-    )
+    await service.run_clustering_and_merging(project_id="project1", tenant_id="tenant1")
 
     # ML service should not be called
     mock_ml_client.resolve_entities.assert_not_called()
@@ -183,39 +160,31 @@ async def test_process_group_with_merge_approval(mock_dependencies):
     mock_pool, mock_graph_repo, mock_ml_client = mock_dependencies
 
     service = EntityResolutionService(
-        pool=mock_pool,
-        ml_client=mock_ml_client,
-        graph_repository=mock_graph_repo
+        pool=mock_pool, ml_client=mock_ml_client, graph_repository=mock_graph_repo
     )
 
     # Mock LLM provider
     service.llm_provider = MagicMock()
-    service.llm_provider.generate_structured = AsyncMock(return_value=MergeDecision(
-        should_merge=True,
-        canonical_name="Python Programming Language",
-        reasoning="Both refer to the same programming language"
-    ))
+    service.llm_provider.generate_structured = AsyncMock(
+        return_value=MergeDecision(
+            should_merge=True,
+            canonical_name="Python Programming Language",
+            reasoning="Both refer to the same programming language",
+        )
+    )
 
     # Mock merge operation
     service._merge_nodes = AsyncMock()
 
-    nodes = [
-        {"id": 1, "label": "Python"},
-        {"id": 2, "label": "Python Language"}
-    ]
+    nodes = [{"id": 1, "label": "Python"}, {"id": 2, "label": "Python Language"}]
 
     await service._process_group(
-        nodes=nodes,
-        project_id="project1",
-        tenant_id="tenant1"
+        nodes=nodes, project_id="project1", tenant_id="tenant1"
     )
 
     # Verify merge was called with canonical name
     service._merge_nodes.assert_called_once_with(
-        nodes,
-        "project1",
-        "tenant1",
-        canonical_name="Python Programming Language"
+        nodes, "project1", "tenant1", canonical_name="Python Programming Language"
     )
 
 
@@ -225,31 +194,26 @@ async def test_process_group_with_merge_rejection(mock_dependencies):
     mock_pool, mock_graph_repo, mock_ml_client = mock_dependencies
 
     service = EntityResolutionService(
-        pool=mock_pool,
-        ml_client=mock_ml_client,
-        graph_repository=mock_graph_repo
+        pool=mock_pool, ml_client=mock_ml_client, graph_repository=mock_graph_repo
     )
 
     # Mock LLM provider to reject merge
     service.llm_provider = MagicMock()
-    service.llm_provider.generate_structured = AsyncMock(return_value=MergeDecision(
-        should_merge=False,
-        canonical_name="",
-        reasoning="Java (island) and Java (programming language) are different concepts"
-    ))
+    service.llm_provider.generate_structured = AsyncMock(
+        return_value=MergeDecision(
+            should_merge=False,
+            canonical_name="",
+            reasoning="Java (island) and Java (programming language) are different concepts",
+        )
+    )
 
     # Mock merge operation
     service._merge_nodes = AsyncMock()
 
-    nodes = [
-        {"id": 1, "label": "Java"},
-        {"id": 2, "label": "Java Island"}
-    ]
+    nodes = [{"id": 1, "label": "Java"}, {"id": 2, "label": "Java Island"}]
 
     await service._process_group(
-        nodes=nodes,
-        project_id="project1",
-        tenant_id="tenant1"
+        nodes=nodes, project_id="project1", tenant_id="tenant1"
     )
 
     # Verify merge was NOT called

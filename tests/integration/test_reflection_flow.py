@@ -9,9 +9,10 @@ Tests the complete Actor → Evaluator → Reflector pattern:
 5. Next execution retrieves reflection in context
 """
 
-import pytest
 from datetime import datetime, timezone
 from uuid import uuid4
+
+import pytest
 
 from apps.memory_api.models.reflection_v2_models import (
     ErrorCategory,
@@ -21,11 +22,10 @@ from apps.memory_api.models.reflection_v2_models import (
     OutcomeType,
     ReflectionContext,
 )
-from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
+from apps.memory_api.repositories.memory_repository import MemoryRepository
 from apps.memory_api.services.context_builder import ContextBuilder, ContextConfig
 from apps.memory_api.services.memory_scoring_v2 import compute_memory_score
-from apps.memory_api.repositories.memory_repository import MemoryRepository
-
+from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
 
 pytestmark = pytest.mark.integration
 
@@ -137,15 +137,16 @@ async def test_generate_reflection_from_failure(
     # 3. Assertions on reflection result
     assert result is not None
     assert len(result.reflection_text) > 0, "Reflection text should not be empty"
-    assert result.importance > 0.3, "Failure reflection should have reasonable importance"
+    assert (
+        result.importance > 0.3
+    ), "Failure reflection should have reasonable importance"
     assert result.confidence > 0.0, "Confidence should be non-zero"
     assert result.error_category == ErrorCategory.TIMEOUT_ERROR
     assert len(result.source_event_ids) == len(events)
 
     # Check for relevant tags
     assert any(
-        tag.lower() in ["sql", "timeout", "performance", "query"]
-        for tag in result.tags
+        tag.lower() in ["sql", "timeout", "performance", "query"] for tag in result.tags
     ), "Reflection should have relevant tags"
 
     # 4. Store reflection
@@ -293,14 +294,15 @@ async def test_reflection_retrieval_in_context(
     assert reflection_found, "Our test reflection should be in context"
 
     # 4. Verify formatted context includes lessons learned
-    assert "Lessons Learned" in working_memory.context_text or "lessons learned" in working_memory.context_text.lower(), \
-        "Context should include lessons learned section"
+    assert (
+        "Lessons Learned" in working_memory.context_text
+        or "lessons learned" in working_memory.context_text.lower()
+    ), "Context should include lessons learned section"
 
     # 5. Verify reflection content is in formatted text
     # (It should be in the Lessons Learned section)
     assert any(
-        reflection_content in refl.content
-        for refl in working_memory.reflections
+        reflection_content in refl.content for refl in working_memory.reflections
     ), "Reflection content should be accessible"
 
 
@@ -338,7 +340,9 @@ async def test_memory_scoring_v2():
     )
 
     # Score 1 should be significantly higher
-    assert score1.final_score > score2.final_score, "Recent high-importance should score higher"
+    assert (
+        score1.final_score > score2.final_score
+    ), "Recent high-importance should score higher"
 
     # Verify component breakdown
     assert score1.relevance_score == 0.9
@@ -383,9 +387,13 @@ async def test_inject_reflections_into_prompt(
 
     # 3. Verify injection
     assert len(enhanced_prompt) > len(base_prompt), "Prompt should be enhanced"
-    assert "Lessons Learned" in enhanced_prompt or "lessons learned" in enhanced_prompt.lower(), \
-        "Should include lessons learned section"
-    assert "validate user input" in enhanced_prompt.lower(), "Should include reflection content"
+    assert (
+        "Lessons Learned" in enhanced_prompt
+        or "lessons learned" in enhanced_prompt.lower()
+    ), "Should include lessons learned section"
+    assert (
+        "validate user input" in enhanced_prompt.lower()
+    ), "Should include reflection content"
 
 
 # ============================================================================
@@ -469,7 +477,11 @@ async def test_end_to_end_reflection_flow(
 
     # Check if our reflection is there
     our_refl = next(
-        (r for r in working_memory.reflections if r.metadata.get("id") == reflection_id),
+        (
+            r
+            for r in working_memory.reflections
+            if r.metadata.get("id") == reflection_id
+        ),
         None,
     )
     assert our_refl is not None, "Our reflection should be retrieved"

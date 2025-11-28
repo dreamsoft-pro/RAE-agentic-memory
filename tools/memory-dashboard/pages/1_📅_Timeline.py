@@ -4,21 +4,22 @@ Timeline Page - Memory Timeline Visualization
 View and analyze memory timeline with interactive charts.
 """
 
-import streamlit as st
-import pandas as pd
-from datetime import datetime, timedelta
-import sys
 import os
+import sys
+from datetime import datetime
+
+import pandas as pd
+import streamlit as st
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils.api_client import get_cached_memories
 from utils.visualizations import (
-    create_timeline_chart,
+    apply_custom_css,
     create_temporal_heatmap,
+    create_timeline_chart,
     format_timestamp,
-    apply_custom_css
 )
 
 # Apply styling
@@ -48,7 +49,7 @@ with col1:
         "Memory Layers",
         options=["em", "wm", "sm", "ltm"],
         default=["em", "wm"],
-        help="Select which memory layers to display"
+        help="Select which memory layers to display",
     )
 
 with col2:
@@ -57,14 +58,14 @@ with col2:
         min_value=1,
         max_value=90,
         value=7,
-        help="Number of days to look back"
+        help="Number of days to look back",
     )
 
 with col3:
     sort_by = st.selectbox(
         "Sort By",
         options=["timestamp", "layer", "source"],
-        help="Sort memories by field"
+        help="Sort memories by field",
     )
 
 st.divider()
@@ -72,11 +73,7 @@ st.divider()
 # Fetch memories
 try:
     with st.spinner("Loading memories..."):
-        memories = get_cached_memories(
-            client,
-            tuple(layer_filter),
-            days_back
-        )
+        memories = get_cached_memories(client, tuple(layer_filter), days_back)
 
     if not memories:
         st.warning("No memories found with current filters")
@@ -99,10 +96,12 @@ with tab1:
         fig = create_timeline_chart(memories)
         st.plotly_chart(fig, use_container_width=True)
 
-        st.caption("""
+        st.caption(
+            """
         **Interactive Chart:** Hover over points to see details.
         Click and drag to zoom, double-click to reset.
-        """)
+        """
+        )
 
     except Exception as e:
         st.error(f"Error creating timeline chart: {e}")
@@ -112,10 +111,12 @@ with tab2:
         fig = create_temporal_heatmap(memories)
         st.plotly_chart(fig, use_container_width=True)
 
-        st.caption("""
+        st.caption(
+            """
         **Activity Heatmap:** Shows when memories are most frequently created.
         Darker colors indicate higher activity.
-        """)
+        """
+        )
 
     except Exception as e:
         st.error(f"Error creating heatmap: {e}")
@@ -136,15 +137,11 @@ with tab3:
         display_columns = st.multiselect(
             "Display Columns",
             options=df.columns.tolist(),
-            default=["id", "content", "layer", "timestamp", "tags"][:len(df.columns)]
+            default=["id", "content", "layer", "timestamp", "tags"][: len(df.columns)],
         )
 
         if display_columns:
-            st.dataframe(
-                df[display_columns],
-                use_container_width=True,
-                height=400
-            )
+            st.dataframe(df[display_columns], use_container_width=True, height=400)
         else:
             st.dataframe(df, use_container_width=True, height=400)
 
@@ -154,7 +151,7 @@ with tab3:
             label="📥 Download as CSV",
             data=csv,
             file_name=f"rae_memories_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-            mime="text/csv"
+            mime="text/csv",
         )
 
     except Exception as e:
@@ -198,11 +195,7 @@ st.divider()
 st.header("📋 Memory Details")
 
 # Pagination
-items_per_page = st.select_slider(
-    "Items per page",
-    options=[10, 25, 50, 100],
-    value=25
-)
+items_per_page = st.select_slider("Items per page", options=[10, 25, 50, 100], value=25)
 
 total_pages = (len(memories) - 1) // items_per_page + 1
 
@@ -217,7 +210,10 @@ with col1:
         st.rerun()
 
 with col2:
-    st.markdown(f"<center>Page {st.session_state.timeline_page} of {total_pages}</center>", unsafe_allow_html=True)
+    st.markdown(
+        f"<center>Page {st.session_state.timeline_page} of {total_pages}</center>",
+        unsafe_allow_html=True,
+    )
 
 with col3:
     if st.button("Next ➡️", disabled=st.session_state.timeline_page >= total_pages):
@@ -230,7 +226,9 @@ end_idx = start_idx + items_per_page
 page_memories = memories[start_idx:end_idx]
 
 for i, memory in enumerate(page_memories, start=start_idx + 1):
-    with st.expander(f"#{i} - {memory.get('layer', 'N/A')} - {format_timestamp(memory.get('timestamp', ''))}"):
+    with st.expander(
+        f"#{i} - {memory.get('layer', 'N/A')} - {format_timestamp(memory.get('timestamp', ''))}"
+    ):
         col1, col2 = st.columns([3, 1])
 
         with col1:

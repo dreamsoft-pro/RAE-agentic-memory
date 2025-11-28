@@ -4,12 +4,12 @@ Visualization Utilities for RAE Dashboard
 Helper functions for creating charts and graphs.
 """
 
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
-import pandas as pd
-from typing import List, Dict, Any, Optional
-from datetime import datetime
 import streamlit as st
 
 
@@ -44,13 +44,10 @@ def create_timeline_chart(memories: List[Dict[str, Any]]) -> go.Figure:
             "content": True,
             "source": True,
             "timestamp": "|%Y-%m-%d %H:%M",
-            "layer": False
+            "layer": False,
         },
         title="Memory Timeline",
-        labels={
-            "timestamp": "Time",
-            "layer": "Memory Layer"
-        },
+        labels={"timestamp": "Time", "layer": "Memory Layer"},
         color_discrete_map={
             "em": "#FF6B6B",
             "episodic": "#FF6B6B",
@@ -59,8 +56,8 @@ def create_timeline_chart(memories: List[Dict[str, Any]]) -> go.Figure:
             "sm": "#45B7D1",
             "semantic": "#45B7D1",
             "ltm": "#96CEB4",
-            "long-term": "#96CEB4"
-        }
+            "long-term": "#96CEB4",
+        },
     )
 
     fig.update_layout(
@@ -68,12 +65,12 @@ def create_timeline_chart(memories: List[Dict[str, Any]]) -> go.Figure:
         hovermode="closest",
         template="plotly_dark",
         plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)"
+        paper_bgcolor="rgba(0,0,0,0)",
     )
 
     fig.update_traces(
         marker=dict(size=12, line=dict(width=2, color="white")),
-        selector=dict(mode="markers")
+        selector=dict(mode="markers"),
     )
 
     return fig
@@ -108,15 +105,15 @@ def create_layer_distribution_chart(memories: List[Dict[str, Any]]) -> go.Figure
             "sm": "#45B7D1",
             "semantic": "#45B7D1",
             "ltm": "#96CEB4",
-            "long-term": "#96CEB4"
-        }
+            "long-term": "#96CEB4",
+        },
     )
 
     fig.update_layout(
         height=400,
         template="plotly_dark",
         plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)"
+        paper_bgcolor="rgba(0,0,0,0)",
     )
 
     return fig
@@ -154,7 +151,7 @@ def create_tags_wordcloud_chart(memories: List[Dict[str, Any]]) -> go.Figure:
         title="Top 20 Tags",
         labels={"x": "Count", "y": "Tag"},
         color=tag_counts.values,
-        color_continuous_scale="Viridis"
+        color_continuous_scale="Viridis",
     )
 
     fig.update_layout(
@@ -162,7 +159,7 @@ def create_tags_wordcloud_chart(memories: List[Dict[str, Any]]) -> go.Figure:
         showlegend=False,
         template="plotly_dark",
         plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)"
+        paper_bgcolor="rgba(0,0,0,0)",
     )
 
     return fig
@@ -192,21 +189,31 @@ def create_temporal_heatmap(memories: List[Dict[str, Any]]) -> go.Figure:
     heatmap_data = df.groupby(["day", "hour"]).size().unstack(fill_value=0)
 
     # Reorder days
-    day_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-    heatmap_data = heatmap_data.reindex([d for d in day_order if d in heatmap_data.index])
+    day_order = [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+    ]
+    heatmap_data = heatmap_data.reindex(
+        [d for d in day_order if d in heatmap_data.index]
+    )
 
     fig = px.imshow(
         heatmap_data,
         labels=dict(x="Hour of Day", y="Day of Week", color="Activity"),
         title="Memory Activity Heatmap",
-        color_continuous_scale="YlOrRd"
+        color_continuous_scale="YlOrRd",
     )
 
     fig.update_layout(
         height=400,
         template="plotly_dark",
         plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)"
+        paper_bgcolor="rgba(0,0,0,0)",
     )
 
     return fig
@@ -227,13 +234,7 @@ def create_score_distribution(results: List[Dict[str, Any]]) -> go.Figure:
 
     scores = [r.get("score", 0) for r in results]
 
-    fig = go.Figure(data=[
-        go.Histogram(
-            x=scores,
-            nbinsx=20,
-            marker_color="#4ECDC4"
-        )
-    ])
+    fig = go.Figure(data=[go.Histogram(x=scores, nbinsx=20, marker_color="#4ECDC4")])
 
     fig.update_layout(
         title="Search Score Distribution",
@@ -242,7 +243,7 @@ def create_score_distribution(results: List[Dict[str, Any]]) -> go.Figure:
         height=300,
         template="plotly_dark",
         plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)"
+        paper_bgcolor="rgba(0,0,0,0)",
     )
 
     return fig
@@ -343,7 +344,8 @@ def display_memory_card(memory: Dict[str, Any], show_actions: bool = True):
 
 def apply_custom_css():
     """Apply custom CSS styling to the dashboard."""
-    st.markdown("""
+    st.markdown(
+        """
         <style>
         .main {
             padding: 2rem;
@@ -380,4 +382,6 @@ def apply_custom_css():
             border-radius: 0.5rem;
         }
         </style>
-    """, unsafe_allow_html=True)
+    """,
+        unsafe_allow_html=True,
+    )

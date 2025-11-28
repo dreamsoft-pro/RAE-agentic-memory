@@ -12,14 +12,15 @@ Features:
 - Query inspector
 """
 
+import os
+
 import streamlit as st
 from utils.api_client import RAEClient, get_cached_stats
 from utils.visualizations import (
     apply_custom_css,
     create_layer_distribution_chart,
-    create_tags_wordcloud_chart
+    create_tags_wordcloud_chart,
 )
-import os
 
 # Page configuration
 st.set_page_config(
@@ -30,8 +31,8 @@ st.set_page_config(
     menu_items={
         "Get Help": "https://docs.rae-memory.dev",
         "Report a bug": "https://github.com/your-org/rae-agentic-memory/issues",
-        "About": "RAE Memory Dashboard v1.0.0 - Enterprise Memory Management"
-    }
+        "About": "RAE Memory Dashboard v1.0.0 - Enterprise Memory Management",
+    },
 )
 
 # Apply custom styling
@@ -39,7 +40,8 @@ apply_custom_css()
 
 # Title and description
 st.title("🧠 RAE Memory Dashboard")
-st.markdown("""
+st.markdown(
+    """
 Enterprise-grade dashboard for visualizing and managing your AI agent's memory.
 
 **Features:**
@@ -48,7 +50,8 @@ Enterprise-grade dashboard for visualizing and managing your AI agent's memory.
 - 🕸️ Knowledge graph explorer
 - ✏️ Memory editor
 - 🔍 Query inspector
-""")
+"""
+)
 
 # Sidebar configuration
 with st.sidebar:
@@ -59,26 +62,26 @@ with st.sidebar:
         api_url = st.text_input(
             "API URL",
             value=os.getenv("RAE_API_URL", "http://localhost:8000"),
-            help="URL of the RAE Memory API"
+            help="URL of the RAE Memory API",
         )
 
         api_key = st.text_input(
             "API Key",
             value=os.getenv("RAE_API_KEY", "default-key"),
             type="password",
-            help="API authentication key"
+            help="API authentication key",
         )
 
         tenant_id = st.text_input(
             "Tenant ID",
             value=os.getenv("RAE_TENANT_ID", "default-tenant"),
-            help="Tenant identifier for multi-tenancy"
+            help="Tenant identifier for multi-tenancy",
         )
 
         project_id = st.text_input(
             "Project ID",
             value=os.getenv("RAE_PROJECT_ID", "default-project"),
-            help="Project identifier"
+            help="Project identifier",
         )
 
     # Connection button
@@ -91,7 +94,7 @@ with st.sidebar:
                     api_url=api_url,
                     api_key=api_key,
                     tenant_id=tenant_id,
-                    project_id=project_id
+                    project_id=project_id,
                 )
 
                 # Test connection
@@ -121,7 +124,8 @@ with st.sidebar:
 
     # Help section
     with st.expander("ℹ️ Help"):
-        st.markdown("""
+        st.markdown(
+            """
         **Quick Start:**
         1. Configure connection settings
         2. Click "Connect"
@@ -137,7 +141,8 @@ with st.sidebar:
         - Ensure RAE API is running
         - Check API URL and credentials
         - Click "Refresh" to reload data
-        """)
+        """
+        )
 
 # Main content area
 if "connected" in st.session_state and st.session_state.connected:
@@ -159,35 +164,29 @@ if "connected" in st.session_state and st.session_state.connected:
             st.metric(
                 "Total Memories",
                 stats.get("total", 0),
-                help="Total number of memories stored"
+                help="Total number of memories stored",
             )
 
         with col2:
             st.metric(
-                "Episodic",
-                stats.get("episodic", 0),
-                help="Recent event memories"
+                "Episodic", stats.get("episodic", 0), help="Recent event memories"
             )
 
         with col3:
             st.metric(
-                "Working",
-                stats.get("working", 0),
-                help="Current context memories"
+                "Working", stats.get("working", 0), help="Current context memories"
             )
 
         with col4:
             st.metric(
                 "Semantic",
                 stats.get("semantic", 0),
-                help="Concept and guideline memories"
+                help="Concept and guideline memories",
             )
 
         with col5:
             st.metric(
-                "Long-term",
-                stats.get("ltm", 0),
-                help="Consolidated long-term memories"
+                "Long-term", stats.get("ltm", 0), help="Consolidated long-term memories"
             )
 
     except Exception as e:
@@ -278,7 +277,9 @@ if "connected" in st.session_state and st.session_state.connected:
 
 else:
     # Not connected - show welcome message
-    st.info("👈 Please configure connection settings in the sidebar and click 'Connect'")
+    st.info(
+        "👈 Please configure connection settings in the sidebar and click 'Connect'"
+    )
 
     st.divider()
 
@@ -287,7 +288,8 @@ else:
 
     with col1:
         st.subheader("🚀 Getting Started")
-        st.markdown("""
+        st.markdown(
+            """
         1. **Start RAE API**
            ```bash
            docker-compose up -d
@@ -303,11 +305,13 @@ else:
            - Explore knowledge graph
            - Edit memories
            - Test queries
-        """)
+        """
+        )
 
     with col2:
         st.subheader("📚 Features")
-        st.markdown("""
+        st.markdown(
+            """
         **Timeline Visualization**
         - View memory history
         - Filter by layer and date
@@ -327,18 +331,22 @@ else:
         - Test search queries
         - View ranked results
         - Inspect scoring
-        """)
+        """
+        )
 
     st.divider()
 
     # Example connection
     st.subheader("💡 Example Configuration")
 
-    st.code("""
+    st.code(
+        """
 API URL: http://localhost:8000
 API Key: your-api-key
 Tenant ID: default-tenant
 Project ID: my-project
-    """, language="text")
+    """,
+        language="text",
+    )
 
     st.caption("Ensure RAE Memory API is running and accessible at the specified URL.")

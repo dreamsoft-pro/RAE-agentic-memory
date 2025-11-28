@@ -4,13 +4,14 @@ Tests for RAE API Client
 Tests the enterprise RAE client functionality.
 """
 
-import pytest
-from unittest.mock import Mock, patch, MagicMock
-import httpx
-from datetime import datetime, timedelta
-
-import sys
 import os
+import sys
+from datetime import datetime, timedelta
+from unittest.mock import Mock, patch
+
+import httpx
+import pytest
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils.api_client import RAEClient, get_cached_memories, get_cached_stats
@@ -26,7 +27,7 @@ class TestRAEClient:
             api_url="http://test-api:8000",
             api_key="test-key",
             tenant_id="test-tenant",
-            project_id="test-project"
+            project_id="test-project",
         )
 
     @pytest.fixture
@@ -95,7 +96,7 @@ class TestRAEClient:
                     "id": "mem1",
                     "content": "Test memory",
                     "layer": "em",
-                    "timestamp": "2024-01-01T00:00:00"
+                    "timestamp": "2024-01-01T00:00:00",
                 }
             ]
         }
@@ -117,7 +118,7 @@ class TestRAEClient:
                     "id": "mem1",
                     "content": "Test memory",
                     "layer": "em",
-                    "timestamp": datetime.now().isoformat()
+                    "timestamp": datetime.now().isoformat(),
                 }
             ]
         }
@@ -134,13 +135,7 @@ class TestRAEClient:
         """Test searching memories"""
         mock_response = Mock()
         mock_response.json.return_value = {
-            "results": [
-                {
-                    "id": "mem1",
-                    "content": "Matching memory",
-                    "score": 0.95
-                }
-            ]
+            "results": [{"id": "mem1", "content": "Matching memory", "score": 0.95}]
         }
         mock_response.raise_for_status = Mock()
         mock_request.return_value = mock_response
@@ -161,7 +156,7 @@ class TestRAEClient:
             "results": [
                 {"id": "mem1", "score": 0.8},
                 {"id": "mem2", "score": 0.9},
-                {"id": "mem3", "score": 0.7}
+                {"id": "mem3", "score": 0.7},
             ]
         }
         mock_response.raise_for_status = Mock()
@@ -180,7 +175,7 @@ class TestRAEClient:
         mock_response = Mock()
         mock_response.json.return_value = {
             "nodes": [{"id": "n1", "label": "Node 1"}],
-            "edges": [{"source": "n1", "target": "n2"}]
+            "edges": [{"source": "n1", "target": "n2"}],
         }
         mock_response.raise_for_status = Mock()
         mock_request.return_value = mock_response
@@ -194,9 +189,7 @@ class TestRAEClient:
     def test_get_reflection(self, mock_request, client):
         """Test fetching reflection"""
         mock_response = Mock()
-        mock_response.json.return_value = {
-            "summary": "Test reflection summary"
-        }
+        mock_response.json.return_value = {"summary": "Test reflection summary"}
         mock_response.raise_for_status = Mock()
         mock_request.return_value = mock_response
 
@@ -224,7 +217,7 @@ class TestRAEClient:
         mock_request.side_effect = httpx.HTTPStatusError(
             "Not found",
             request=Mock(),
-            response=Mock(status_code=404, text="Not found")
+            response=Mock(status_code=404, text="Not found"),
         )
 
         with patch("streamlit.error"):
@@ -259,11 +252,9 @@ class TestCachingFunctions:
             "episodic": 30,
             "working": 25,
             "semantic": 25,
-            "ltm": 20
+            "ltm": 20,
         }
-        client.get_memories.return_value = [
-            {"id": "mem1", "content": "Test"}
-        ]
+        client.get_memories.return_value = [{"id": "mem1", "content": "Test"}]
         return client
 
     def test_get_cached_stats(self, mock_client):
@@ -276,11 +267,7 @@ class TestCachingFunctions:
 
     def test_get_cached_memories(self, mock_client):
         """Test cached memories function"""
-        memories = get_cached_memories(
-            mock_client,
-            layers=("em", "wm"),
-            days_back=7
-        )
+        memories = get_cached_memories(mock_client, layers=("em", "wm"), days_back=7)
 
         assert isinstance(memories, list)
         mock_client.get_memories.assert_called_once()

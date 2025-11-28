@@ -1,8 +1,10 @@
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from fastapi.testclient import TestClient
-from apps.memory_api.main import app
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+from fastapi.testclient import TestClient
+
+from apps.memory_api.main import app
 
 client = TestClient(app)
 
@@ -32,11 +34,16 @@ async def test_hybrid_search_success(mock_app_state_pool, mock_hybrid_search_ser
             "temporal_markers": [],
             "relation_types": [],
             "recommended_strategies": ["vector", "semantic"],
-            "strategy_weights": {"vector": 0.4, "semantic": 0.3, "graph": 0.2, "fulltext": 0.1},
+            "strategy_weights": {
+                "vector": 0.4,
+                "semantic": 0.3,
+                "graph": 0.2,
+                "fulltext": 0.1,
+            },
             "requires_temporal_filtering": False,
             "requires_graph_traversal": False,
             "suggested_depth": 2,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.utcnow().isoformat(),
         },
         "vector_results_count": 2,
         "semantic_results_count": 1,
@@ -45,8 +52,13 @@ async def test_hybrid_search_success(mock_app_state_pool, mock_hybrid_search_ser
         "total_time_ms": 123,
         "query_analysis_time_ms": 50,
         "search_time_ms": 73,
-        "applied_weights": {"vector": 0.4, "semantic": 0.3, "graph": 0.2, "fulltext": 0.1},
-        "reranking_used": False
+        "applied_weights": {
+            "vector": 0.4,
+            "semantic": 0.3,
+            "graph": 0.2,
+            "fulltext": 0.1,
+        },
+        "reranking_used": False,
     }
 
     mock_hybrid_search_service.search.return_value = mock_result
@@ -59,13 +71,11 @@ async def test_hybrid_search_success(mock_app_state_pool, mock_hybrid_search_ser
         "enable_vector_search": True,
         "enable_semantic_search": True,
         "enable_graph_search": True,
-        "enable_fulltext_search": True
+        "enable_fulltext_search": True,
     }
 
     response = client.post(
-        "/v1/search/hybrid",
-        json=payload,
-        headers={"X-Tenant-Id": "test-tenant"}
+        "/v1/search/hybrid", json=payload, headers={"X-Tenant-Id": "test-tenant"}
     )
 
     if response.status_code != 200:
@@ -78,7 +88,9 @@ async def test_hybrid_search_success(mock_app_state_pool, mock_hybrid_search_ser
 
 
 @pytest.mark.asyncio
-async def test_hybrid_search_with_reranking(mock_app_state_pool, mock_hybrid_search_service):
+async def test_hybrid_search_with_reranking(
+    mock_app_state_pool, mock_hybrid_search_service
+):
     """Test hybrid search with LLM re-ranking enabled"""
     mock_result = {
         "results": [],
@@ -96,7 +108,7 @@ async def test_hybrid_search_with_reranking(mock_app_state_pool, mock_hybrid_sea
             "requires_temporal_filtering": False,
             "requires_graph_traversal": True,
             "suggested_depth": 3,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.utcnow().isoformat(),
         },
         "vector_results_count": 1,
         "semantic_results_count": 1,
@@ -107,7 +119,7 @@ async def test_hybrid_search_with_reranking(mock_app_state_pool, mock_hybrid_sea
         "search_time_ms": 100,
         "reranking_time_ms": 100,
         "applied_weights": {"vector": 0.5, "semantic": 0.3, "graph": 0.2},
-        "reranking_used": True
+        "reranking_used": True,
     }
 
     mock_hybrid_search_service.search.return_value = mock_result
@@ -122,13 +134,11 @@ async def test_hybrid_search_with_reranking(mock_app_state_pool, mock_hybrid_sea
         "enable_graph_search": True,
         "enable_fulltext_search": False,
         "enable_reranking": True,
-        "reranking_model": "claude-3-5-sonnet-20241022"
+        "reranking_model": "claude-3-5-sonnet-20241022",
     }
 
     response = client.post(
-        "/v1/search/hybrid",
-        json=payload,
-        headers={"X-Tenant-Id": "test-tenant"}
+        "/v1/search/hybrid", json=payload, headers={"X-Tenant-Id": "test-tenant"}
     )
 
     if response.status_code != 200:
@@ -140,7 +150,9 @@ async def test_hybrid_search_with_reranking(mock_app_state_pool, mock_hybrid_sea
 
 
 @pytest.mark.asyncio
-async def test_hybrid_search_with_filters(mock_app_state_pool, mock_hybrid_search_service):
+async def test_hybrid_search_with_filters(
+    mock_app_state_pool, mock_hybrid_search_service
+):
     """Test hybrid search with temporal and tag filters"""
     mock_result = {
         "results": [],
@@ -158,7 +170,7 @@ async def test_hybrid_search_with_filters(mock_app_state_pool, mock_hybrid_searc
             "requires_temporal_filtering": True,
             "requires_graph_traversal": False,
             "suggested_depth": 1,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.utcnow().isoformat(),
         },
         "vector_results_count": 1,
         "semantic_results_count": 1,
@@ -168,7 +180,7 @@ async def test_hybrid_search_with_filters(mock_app_state_pool, mock_hybrid_searc
         "query_analysis_time_ms": 40,
         "search_time_ms": 49,
         "applied_weights": {"vector": 0.6, "semantic": 0.4},
-        "reranking_used": False
+        "reranking_used": False,
     }
 
     mock_hybrid_search_service.search.return_value = mock_result
@@ -184,16 +196,14 @@ async def test_hybrid_search_with_filters(mock_app_state_pool, mock_hybrid_searc
         "enable_fulltext_search": True,
         "temporal_filter": {
             "start_date": "2025-01-01T00:00:00Z",
-            "end_date": "2025-12-31T23:59:59Z"
+            "end_date": "2025-12-31T23:59:59Z",
         },
         "tag_filter": ["security", "updates"],
-        "min_importance": 0.5
+        "min_importance": 0.5,
     }
 
     response = client.post(
-        "/v1/search/hybrid",
-        json=payload,
-        headers={"X-Tenant-Id": "test-tenant"}
+        "/v1/search/hybrid", json=payload, headers={"X-Tenant-Id": "test-tenant"}
     )
 
     if response.status_code != 200:
@@ -205,7 +215,9 @@ async def test_hybrid_search_with_filters(mock_app_state_pool, mock_hybrid_searc
 
 
 @pytest.mark.asyncio
-async def test_hybrid_search_with_manual_weights(mock_app_state_pool, mock_hybrid_search_service):
+async def test_hybrid_search_with_manual_weights(
+    mock_app_state_pool, mock_hybrid_search_service
+):
     """Test hybrid search with manually specified weights"""
     mock_result = {
         "results": [],
@@ -223,7 +235,7 @@ async def test_hybrid_search_with_manual_weights(mock_app_state_pool, mock_hybri
             "requires_temporal_filtering": False,
             "requires_graph_traversal": False,
             "suggested_depth": 1,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.utcnow().isoformat(),
         },
         "vector_results_count": 5,
         "semantic_results_count": 2,
@@ -233,7 +245,7 @@ async def test_hybrid_search_with_manual_weights(mock_app_state_pool, mock_hybri
         "query_analysis_time_ms": 0,
         "search_time_ms": 150,
         "applied_weights": {"vector": 0.7, "semantic": 0.2, "graph": 0.1},
-        "reranking_used": False
+        "reranking_used": False,
     }
 
     mock_hybrid_search_service.search.return_value = mock_result
@@ -251,14 +263,12 @@ async def test_hybrid_search_with_manual_weights(mock_app_state_pool, mock_hybri
             "vector": 0.7,
             "semantic": 0.2,
             "graph": 0.1,
-            "fulltext": 0.0
-        }
+            "fulltext": 0.0,
+        },
     }
 
     response = client.post(
-        "/v1/search/hybrid",
-        json=payload,
-        headers={"X-Tenant-Id": "test-tenant"}
+        "/v1/search/hybrid", json=payload, headers={"X-Tenant-Id": "test-tenant"}
     )
 
     if response.status_code != 200:
@@ -270,7 +280,9 @@ async def test_hybrid_search_with_manual_weights(mock_app_state_pool, mock_hybri
 
 
 @pytest.mark.asyncio
-async def test_hybrid_search_with_graph_depth(mock_app_state_pool, mock_hybrid_search_service):
+async def test_hybrid_search_with_graph_depth(
+    mock_app_state_pool, mock_hybrid_search_service
+):
     """Test hybrid search with custom graph traversal depth"""
     mock_result = {
         "results": [],
@@ -288,7 +300,7 @@ async def test_hybrid_search_with_graph_depth(mock_app_state_pool, mock_hybrid_s
             "requires_temporal_filtering": False,
             "requires_graph_traversal": True,
             "suggested_depth": 3,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.utcnow().isoformat(),
         },
         "vector_results_count": 3,
         "semantic_results_count": 3,
@@ -298,7 +310,7 @@ async def test_hybrid_search_with_graph_depth(mock_app_state_pool, mock_hybrid_s
         "query_analysis_time_ms": 50,
         "search_time_ms": 250,
         "applied_weights": {"vector": 0.3, "semantic": 0.3, "graph": 0.4},
-        "reranking_used": False
+        "reranking_used": False,
     }
 
     mock_hybrid_search_service.search.return_value = mock_result
@@ -312,13 +324,11 @@ async def test_hybrid_search_with_graph_depth(mock_app_state_pool, mock_hybrid_s
         "enable_semantic_search": True,
         "enable_graph_search": True,
         "enable_fulltext_search": True,
-        "graph_max_depth": 3
+        "graph_max_depth": 3,
     }
 
     response = client.post(
-        "/v1/search/hybrid",
-        json=payload,
-        headers={"X-Tenant-Id": "test-tenant"}
+        "/v1/search/hybrid", json=payload, headers={"X-Tenant-Id": "test-tenant"}
     )
 
     if response.status_code != 200:
@@ -330,7 +340,9 @@ async def test_hybrid_search_with_graph_depth(mock_app_state_pool, mock_hybrid_s
 
 
 @pytest.mark.asyncio
-async def test_hybrid_search_with_conversation_history(mock_app_state_pool, mock_hybrid_search_service):
+async def test_hybrid_search_with_conversation_history(
+    mock_app_state_pool, mock_hybrid_search_service
+):
     """Test hybrid search with conversation context"""
     mock_result = {
         "results": [],
@@ -348,7 +360,7 @@ async def test_hybrid_search_with_conversation_history(mock_app_state_pool, mock
             "requires_temporal_filtering": False,
             "requires_graph_traversal": False,
             "suggested_depth": 1,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.utcnow().isoformat(),
         },
         "vector_results_count": 3,
         "semantic_results_count": 2,
@@ -358,7 +370,7 @@ async def test_hybrid_search_with_conversation_history(mock_app_state_pool, mock
         "query_analysis_time_ms": 50,
         "search_time_ms": 130,
         "applied_weights": {"vector": 0.5, "semantic": 0.3, "graph": 0.2},
-        "reranking_used": False
+        "reranking_used": False,
     }
 
     mock_hybrid_search_service.search.return_value = mock_result
@@ -374,14 +386,12 @@ async def test_hybrid_search_with_conversation_history(mock_app_state_pool, mock
         "enable_fulltext_search": False,
         "conversation_history": [
             {"role": "user", "content": "Tell me about authentication"},
-            {"role": "assistant", "content": "Authentication uses JWT tokens"}
-        ]
+            {"role": "assistant", "content": "Authentication uses JWT tokens"},
+        ],
     }
 
     response = client.post(
-        "/v1/search/hybrid",
-        json=payload,
-        headers={"X-Tenant-Id": "test-tenant"}
+        "/v1/search/hybrid", json=payload, headers={"X-Tenant-Id": "test-tenant"}
     )
 
     if response.status_code != 200:
@@ -393,7 +403,9 @@ async def test_hybrid_search_with_conversation_history(mock_app_state_pool, mock
 
 
 @pytest.mark.asyncio
-async def test_hybrid_search_empty_query(mock_app_state_pool, mock_hybrid_search_service):
+async def test_hybrid_search_empty_query(
+    mock_app_state_pool, mock_hybrid_search_service
+):
     """Test hybrid search with empty query"""
     mock_result = {
         "results": [],
@@ -411,7 +423,7 @@ async def test_hybrid_search_empty_query(mock_app_state_pool, mock_hybrid_search
             "requires_temporal_filtering": False,
             "requires_graph_traversal": False,
             "suggested_depth": 0,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.utcnow().isoformat(),
         },
         "vector_results_count": 0,
         "semantic_results_count": 0,
@@ -421,7 +433,7 @@ async def test_hybrid_search_empty_query(mock_app_state_pool, mock_hybrid_search
         "query_analysis_time_ms": 0,
         "search_time_ms": 5,
         "applied_weights": {},
-        "reranking_used": False
+        "reranking_used": False,
     }
 
     mock_hybrid_search_service.search.return_value = mock_result
@@ -434,13 +446,11 @@ async def test_hybrid_search_empty_query(mock_app_state_pool, mock_hybrid_search
         "enable_vector_search": True,
         "enable_semantic_search": True,
         "enable_graph_search": False,
-        "enable_fulltext_search": False
+        "enable_fulltext_search": False,
     }
 
     response = client.post(
-        "/v1/search/hybrid",
-        json=payload,
-        headers={"X-Tenant-Id": "test-tenant"}
+        "/v1/search/hybrid", json=payload, headers={"X-Tenant-Id": "test-tenant"}
     )
 
     # Should handle empty query gracefully
@@ -448,7 +458,9 @@ async def test_hybrid_search_empty_query(mock_app_state_pool, mock_hybrid_search
 
 
 @pytest.mark.asyncio
-async def test_hybrid_search_service_error(mock_app_state_pool, mock_hybrid_search_service):
+async def test_hybrid_search_service_error(
+    mock_app_state_pool, mock_hybrid_search_service
+):
     """Test hybrid search when service fails"""
     mock_hybrid_search_service.search.side_effect = Exception("Service error")
 
@@ -460,13 +472,11 @@ async def test_hybrid_search_service_error(mock_app_state_pool, mock_hybrid_sear
         "enable_vector_search": True,
         "enable_semantic_search": True,
         "enable_graph_search": False,
-        "enable_fulltext_search": False
+        "enable_fulltext_search": False,
     }
 
     response = client.post(
-        "/v1/search/hybrid",
-        json=payload,
-        headers={"X-Tenant-Id": "test-tenant"}
+        "/v1/search/hybrid", json=payload, headers={"X-Tenant-Id": "test-tenant"}
     )
 
     assert response.status_code == 500
@@ -476,7 +486,9 @@ async def test_hybrid_search_service_error(mock_app_state_pool, mock_hybrid_sear
 
 
 @pytest.mark.asyncio
-async def test_hybrid_search_all_strategies_disabled(mock_app_state_pool, mock_hybrid_search_service):
+async def test_hybrid_search_all_strategies_disabled(
+    mock_app_state_pool, mock_hybrid_search_service
+):
     """Test hybrid search with all strategies disabled"""
     mock_result = {
         "results": [],
@@ -494,7 +506,7 @@ async def test_hybrid_search_all_strategies_disabled(mock_app_state_pool, mock_h
             "requires_temporal_filtering": False,
             "requires_graph_traversal": False,
             "suggested_depth": 0,
-            "analyzed_at": datetime.utcnow().isoformat()
+            "analyzed_at": datetime.utcnow().isoformat(),
         },
         "vector_results_count": 0,
         "semantic_results_count": 0,
@@ -504,7 +516,7 @@ async def test_hybrid_search_all_strategies_disabled(mock_app_state_pool, mock_h
         "query_analysis_time_ms": 0,
         "search_time_ms": 1,
         "applied_weights": {},
-        "reranking_used": False
+        "reranking_used": False,
     }
 
     mock_hybrid_search_service.search.return_value = mock_result
@@ -517,13 +529,11 @@ async def test_hybrid_search_all_strategies_disabled(mock_app_state_pool, mock_h
         "enable_vector_search": False,
         "enable_semantic_search": False,
         "enable_graph_search": False,
-        "enable_fulltext_search": False
+        "enable_fulltext_search": False,
     }
 
     response = client.post(
-        "/v1/search/hybrid",
-        json=payload,
-        headers={"X-Tenant-Id": "test-tenant"}
+        "/v1/search/hybrid", json=payload, headers={"X-Tenant-Id": "test-tenant"}
     )
 
     if response.status_code != 200:

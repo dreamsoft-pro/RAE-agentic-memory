@@ -1,18 +1,22 @@
-import typer
+import os
+
 import httpx
+import typer
 from rich.console import Console
 from rich.markdown import Markdown
-import os
 
 from .config import settings
 
 app = typer.Typer()
 console = Console()
 
+
 @app.command()
 def refactor(
     file_path: str = typer.Argument(..., help="The path to the file to refactor."),
-    instruction: str = typer.Argument(..., help="The refactoring instruction for the agent."),
+    instruction: str = typer.Argument(
+        ..., help="The refactoring instruction for the agent."
+    ),
 ):
     """
     Refactors a given file using the RAE Agent.
@@ -55,27 +59,38 @@ Provide only the refactored code in your response, enclosed in a ```python block
             "X-API-Key": settings.RAE_API_KEY,
         }
         payload = {
-            "tenant_id": settings.RAE_TENANT_ID, # Redundant, but kept for now
+            "tenant_id": settings.RAE_TENANT_ID,  # Redundant, but kept for now
             "prompt": agent_prompt,
-            "budget_tokens": 5000, # Example budget
+            "budget_tokens": 5000,  # Example budget
         }
-        
+
         with httpx.Client() as client:
-            response = client.post(f"{settings.RAE_API_URL}/agent/execute", json=payload, headers=headers, timeout=120)
+            response = client.post(
+                f"{settings.RAE_API_URL}/agent/execute",
+                json=payload,
+                headers=headers,
+                timeout=120,
+            )
             response.raise_for_status()
-            
+
             agent_response = response.json()
             refactored_code = agent_response["answer"]
-            
+
             console.print("[green]  - RAE Agent returned a response.[/green]")
-            console.print(f"[bold green]  - Cost estimate: {agent_response['cost']['total_estimate']:.4f} USD[/bold green]")
+            console.print(
+                f"[bold green]  - Cost estimate: {agent_response['cost']['total_estimate']:.4f} USD[/bold green]"
+            )
 
     except httpx.HTTPStatusError as e:
-        console.print(f"[bold red]Error calling RAE Agent API: {e.response.status_code}[/bold red]")
+        console.print(
+            f"[bold red]Error calling RAE Agent API: {e.response.status_code}[/bold red]"
+        )
         console.print(e.response.text)
         raise typer.Exit(1)
     except Exception as e:
-        console.print(f"[bold red]An unexpected error occurred while calling RAE Agent: {e}[/bold red]")
+        console.print(
+            f"[bold red]An unexpected error occurred while calling RAE Agent: {e}[/bold red]"
+        )
         raise typer.Exit(1)
 
     # 4. Extract refactored code from LLM response
@@ -86,7 +101,9 @@ Provide only the refactored code in your response, enclosed in a ```python block
         extracted_code = refactored_code[start:end].strip()
     else:
         extracted_code = refactored_code.strip()
-        console.print("[yellow]  - Warning: Could not find a '```python' block in the response. Using raw response.[/yellow]")
+        console.print(
+            "[yellow]  - Warning: Could not find a '```python' block in the response. Using raw response.[/yellow]"
+        )
 
     console.print("\n[bold yellow]Refactored Code Preview:[/bold yellow]")
     console.print(Markdown(f"```python\n{extracted_code}\n```"))
@@ -95,10 +112,13 @@ Provide only the refactored code in your response, enclosed in a ```python block
     try:
         with open(file_path, "w", encoding="utf-8") as f:
             f.write(extracted_code)
-        console.print(f"[bold green]  - File {file_path} updated successfully with refactored code.[/bold green]")
+        console.print(
+            f"[bold green]  - File {file_path} updated successfully with refactored code.[/bold green]"
+        )
     except Exception as e:
         console.print(f"[bold red]Error writing to file: {e}[/bold red]")
         raise typer.Exit(1)
+
 
 if __name__ == "__main__":
     app()

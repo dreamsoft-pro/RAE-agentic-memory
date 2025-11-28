@@ -1,0 +1,44 @@
+﻿2025-11-28T17:38:27.8871926Z Current runner version: '2.329.0'
+2025-11-28T17:38:27.8896901Z ##[group]Runner Image Provisioner
+2025-11-28T17:38:27.8897841Z Hosted Compute Agent
+2025-11-28T17:38:27.8898501Z Version: 20251016.436
+2025-11-28T17:38:27.8899192Z Commit: 8ab8ac8bfd662a3739dab9fe09456aba92132568
+2025-11-28T17:38:27.8899912Z Build Date: 2025-10-15T20:44:12Z
+2025-11-28T17:38:27.8900503Z ##[endgroup]
+2025-11-28T17:38:27.8901032Z ##[group]Operating System
+2025-11-28T17:38:27.8901607Z Ubuntu
+2025-11-28T17:38:27.8902047Z 24.04.3
+2025-11-28T17:38:27.8902580Z LTS
+2025-11-28T17:38:27.8903075Z ##[endgroup]
+2025-11-28T17:38:27.8903581Z ##[group]Runner Image
+2025-11-28T17:38:27.8904180Z Image: ubuntu-24.04
+2025-11-28T17:38:27.8904703Z Version: 20251112.124.1
+2025-11-28T17:38:27.8905732Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20251112.124/images/ubuntu/Ubuntu2404-Readme.md
+2025-11-28T17:38:27.8907364Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20251112.124
+2025-11-28T17:38:27.8908915Z ##[endgroup]
+2025-11-28T17:38:27.8911745Z ##[group]GITHUB_TOKEN Permissions
+2025-11-28T17:38:27.8913689Z Actions: write
+2025-11-28T17:38:27.8914286Z ArtifactMetadata: write
+2025-11-28T17:38:27.8914984Z Attestations: write
+2025-11-28T17:38:27.8915488Z Checks: write
+2025-11-28T17:38:27.8915963Z Contents: write
+2025-11-28T17:38:27.8916515Z Deployments: write
+2025-11-28T17:38:27.8917050Z Discussions: write
+2025-11-28T17:38:27.8917542Z Issues: write
+2025-11-28T17:38:27.8918890Z Metadata: read
+2025-11-28T17:38:27.8919414Z Models: read
+2025-11-28T17:38:27.8919941Z Packages: write
+2025-11-28T17:38:27.8920506Z Pages: write
+2025-11-28T17:38:27.8921044Z PullRequests: write
+2025-11-28T17:38:27.8921632Z RepositoryProjects: write
+2025-11-28T17:38:27.8922373Z SecurityEvents: write
+2025-11-28T17:38:27.8922899Z Statuses: write
+2025-11-28T17:38:27.8923398Z ##[endgroup]
+2025-11-28T17:38:27.8925572Z Secret source: Actions
+2025-11-28T17:38:27.8926254Z Prepare workflow directory
+2025-11-28T17:38:27.9249862Z Prepare all required actions
+2025-11-28T17:38:27.9288147Z Getting action download info
+2025-11-28T17:38:28.2210898Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2025-11-28T17:38:28.5076822Z Download action repository 'docker/setup-buildx-action@v3' (SHA:e468171a9de216ec08956ac3ada2f0791b6bd435)
+2025-11-28T17:38:28.8358871Z Download action repository 'docker/build-push-action@v5' (SHA:ca052bb54ab0790a636c9b5f226502c73d547a25)
+2025-11-28T17:38:29.2431275Z Complete job name: Docker Build

@@ -1,7 +1,5 @@
-#generate_tests_v8.py
-import os
+# generate_tests_v8.py
 import zipfile
-from pathlib import Path
 
 # --- 1. CONFTEST (Bez zmian - działa poprawnie z V7) ---
 CONFTEST_PY = """
@@ -421,14 +419,16 @@ file_structure = {
     "apps/reranker-service/tests/test_main.py": TEST_RERANKER_PY,
 }
 
+
 def create_zip():
     zip_filename = "rae_tests_v8.zip"
     print(f"Tworzenie {zip_filename}...")
-    with zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED) as zipf:
+    with zipfile.ZipFile(zip_filename, "w", zipfile.ZIP_DEFLATED) as zipf:
         for filepath, content in file_structure.items():
             print(f"Dodawanie: {filepath}")
             zipf.writestr(filepath, content.strip())
     print("Gotowe.")
+
 
 if __name__ == "__main__":
     create_zip()

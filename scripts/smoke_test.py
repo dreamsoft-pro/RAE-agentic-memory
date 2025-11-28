@@ -10,33 +10,39 @@ Scenariusz:
     5. Assert
 """
 
+import json
+import logging
 import os
 import sys
 import time
+
 import requests
-import json
-import logging
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(message)s')
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
 
 # Colors for output
-GREEN = '\033[92m'
-RED = '\033[91m'
-RESET = '\033[0m'
-BOLD = '\033[1m'
+GREEN = "\033[92m"
+RED = "\033[91m"
+RESET = "\033[0m"
+BOLD = "\033[1m"
+
 
 def log_pass(message):
     print(f"{GREEN}✅ {message}{RESET}")
 
+
 def log_fail(message):
     print(f"{RED}❌ {message}{RESET}")
+
 
 def log_info(message):
     print(f"{BOLD}ℹ️  {message}{RESET}")
 
+
 API_URL = os.environ.get("API_URL", "http://localhost:8000")
+
 
 def main():
     log_info(f"Starting Smoke Test against {API_URL}")
@@ -58,11 +64,13 @@ def main():
     log_info("Step 2: Ingest Memory...")
     ingest_payload = {
         "content": "SmokeTestUser pracuje w firmie TestCorp jako Senior Python Developer.",
-        "metadata": {"source": "e2e_script"}
+        "metadata": {"source": "e2e_script"},
     }
 
     try:
-        response = requests.post(f"{API_URL}/api/v1/memory", json=ingest_payload, timeout=10)
+        response = requests.post(
+            f"{API_URL}/api/v1/memory", json=ingest_payload, timeout=10
+        )
         if response.status_code in [200, 201, 202]:
             log_pass("Ingest Request Accepted")
             # Assuming response might contain an ID, but typically it returns status
@@ -85,17 +93,16 @@ def main():
     max_duration = 30
     found = False
 
-    search_payload = {
-        "query": "Gdzie pracuje SmokeTestUser?",
-        "limit": 5
-    }
+    search_payload = {"query": "Gdzie pracuje SmokeTestUser?", "limit": 5}
 
     while time.time() - start_time < max_duration:
-        time.sleep(2) # Poll interval
+        time.sleep(2)  # Poll interval
 
         try:
             # Step 4: Verification (Hybrid Search)
-            response = requests.post(f"{API_URL}/api/v1/memory/search", json=search_payload, timeout=5)
+            response = requests.post(
+                f"{API_URL}/api/v1/memory/search", json=search_payload, timeout=5
+            )
 
             if response.status_code == 200:
                 data = response.json()
@@ -106,12 +113,14 @@ def main():
 
                 if "TestCorp" in response_text:
                     found = True
-                    log_pass(f"Found 'TestCorp' in search results after {time.time() - start_time:.1f}s")
+                    log_pass(
+                        f"Found 'TestCorp' in search results after {time.time() - start_time:.1f}s"
+                    )
                     break
                 else:
                     print(f"Waiting... ({int(time.time() - start_time)}s)")
             else:
-                 print(f"Search error {response.status_code}, retrying...")
+                print(f"Search error {response.status_code}, retrying...")
 
         except requests.exceptions.RequestException as e:
             print(f"Connection error: {e}, retrying...")
@@ -125,6 +134,7 @@ def main():
     else:
         log_fail("TEST FAILED: Timeout waiting for data to appear in search.")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

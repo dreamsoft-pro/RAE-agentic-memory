@@ -5,8 +5,10 @@ Tests verify that repository methods correctly interact with the database
 and follow the Repository/DAO pattern.
 """
 
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+
 from apps.memory_api.repositories.graph_repository import GraphRepository
 
 
@@ -28,7 +30,7 @@ async def test_get_all_nodes(mock_pool):
     pool, conn = mock_pool
     conn.fetch.return_value = [
         {"id": 1, "node_id": "node1", "label": "Label1", "properties": {}},
-        {"id": 2, "node_id": "node2", "label": "Label2", "properties": {}}
+        {"id": 2, "node_id": "node2", "label": "Label2", "properties": {}},
     ]
 
     repo = GraphRepository(pool)
@@ -45,8 +47,18 @@ async def test_get_all_edges(mock_pool):
     """Test retrieving all edges for a project."""
     pool, conn = mock_pool
     conn.fetch.return_value = [
-        {"source_node_id": 1, "target_node_id": 2, "relation": "RELATED_TO", "properties": {}},
-        {"source_node_id": 2, "target_node_id": 3, "relation": "LINKED_TO", "properties": {}}
+        {
+            "source_node_id": 1,
+            "target_node_id": 2,
+            "relation": "RELATED_TO",
+            "properties": {},
+        },
+        {
+            "source_node_id": 2,
+            "target_node_id": 3,
+            "relation": "LINKED_TO",
+            "properties": {},
+        },
     ]
 
     repo = GraphRepository(pool)
@@ -80,6 +92,7 @@ async def test_merge_node_edges(mock_pool):
     class TransactionContext:
         async def __aenter__(self):
             return None
+
         async def __aexit__(self, *args):
             return None
 
@@ -147,7 +160,7 @@ async def test_upsert_node_insert(mock_pool):
         project_id="project1",
         node_id="node1",
         label="Label1",
-        properties={"key": "value"}
+        properties={"key": "value"},
     )
 
     assert internal_id == 123
@@ -166,7 +179,7 @@ async def test_upsert_node_update(mock_pool):
         project_id="project1",
         node_id="existing_node",
         label="UpdatedLabel",
-        properties={"updated": True}
+        properties={"updated": True},
     )
 
     assert internal_id == 456
@@ -185,7 +198,7 @@ async def test_create_node(mock_pool):
         project_id="project1",
         node_id="node1",
         label="Label1",
-        properties={}
+        properties={},
     )
 
     assert result is True
@@ -205,7 +218,7 @@ async def test_create_edge(mock_pool):
         source_node_internal_id=1,
         target_node_internal_id=2,
         relation="RELATED_TO",
-        properties={}
+        properties={},
     )
 
     assert result is True
@@ -220,9 +233,7 @@ async def test_get_node_internal_id(mock_pool):
 
     repo = GraphRepository(pool)
     internal_id = await repo.get_node_internal_id(
-        tenant_id="tenant1",
-        project_id="project1",
-        node_id="node1"
+        tenant_id="tenant1", project_id="project1", node_id="node1"
     )
 
     assert internal_id == 789
@@ -237,9 +248,7 @@ async def test_get_node_internal_id_not_found(mock_pool):
 
     repo = GraphRepository(pool)
     internal_id = await repo.get_node_internal_id(
-        tenant_id="tenant1",
-        project_id="project1",
-        node_id="nonexistent"
+        tenant_id="tenant1", project_id="project1", node_id="nonexistent"
     )
 
     assert internal_id is None
@@ -255,6 +264,7 @@ async def test_store_graph_triples(mock_pool):
     class TransactionContext:
         async def __aenter__(self):
             return None
+
         async def __aexit__(self, *args):
             return None
 
@@ -280,14 +290,12 @@ async def test_store_graph_triples(mock_pool):
             "target": "node2",
             "relation": "RELATED_TO",
             "confidence": 0.9,
-            "metadata": {}
+            "metadata": {},
         }
     ]
 
     stats = await repo.store_graph_triples(
-        triples=triples,
-        tenant_id="tenant1",
-        project_id="project1"
+        triples=triples, tenant_id="tenant1", project_id="project1"
     )
 
     assert "nodes_created" in stats

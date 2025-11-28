@@ -1,9 +1,11 @@
-import pytest
 from unittest.mock import patch
+
 from fastapi.testclient import TestClient
+
 from apps.memory_api.main import app
 
 client = TestClient(app)
+
 
 @patch("apps.memory_api.api.v1.cache.rebuild_cache.delay")
 def test_rebuild_cache(mock_task):

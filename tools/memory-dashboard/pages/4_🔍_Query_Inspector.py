@@ -4,20 +4,20 @@ Query Inspector Page - Test and Analyze Queries
 Test search queries and inspect results with scoring analysis.
 """
 
-import streamlit as st
-import pandas as pd
-import sys
 import os
-from typing import List, Dict, Any
+import sys
+
+import pandas as pd
+import streamlit as st
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils.visualizations import (
     apply_custom_css,
-    format_timestamp,
+    create_score_distribution,
     format_memory_preview,
-    create_score_distribution
+    format_timestamp,
 )
 
 # Apply styling
@@ -52,7 +52,7 @@ with col1:
     if st.button(
         "🔍 Single Query Mode",
         type="primary" if not st.session_state.comparison_mode else "secondary",
-        use_container_width=True
+        use_container_width=True,
     ):
         st.session_state.comparison_mode = False
         st.rerun()
@@ -61,7 +61,7 @@ with col2:
     if st.button(
         "⚖️ Comparison Mode",
         type="primary" if st.session_state.comparison_mode else "secondary",
-        use_container_width=True
+        use_container_width=True,
     ):
         st.session_state.comparison_mode = True
         st.rerun()
@@ -79,7 +79,7 @@ if not st.session_state.comparison_mode:
         "Query Text",
         placeholder="Enter your search query...",
         height=100,
-        help="The query to search for in memory"
+        help="The query to search for in memory",
     )
 
     # Query parameters
@@ -91,21 +91,17 @@ if not st.session_state.comparison_mode:
             min_value=1,
             max_value=50,
             value=10,
-            help="Number of top results to return"
+            help="Number of top results to return",
         )
 
     with col2:
         use_rerank = st.checkbox(
-            "Use Reranking",
-            value=True,
-            help="Apply reranking to results"
+            "Use Reranking", value=True, help="Apply reranking to results"
         )
 
     with col3:
         show_scores = st.checkbox(
-            "Show Detailed Scores",
-            value=True,
-            help="Display score breakdown"
+            "Show Detailed Scores", value=True, help="Display score breakdown"
         )
 
     # Advanced filters
@@ -117,21 +113,19 @@ if not st.session_state.comparison_mode:
                 "Memory Layers",
                 options=["em", "wm", "sm", "ltm"],
                 default=[],
-                help="Filter by memory layer"
+                help="Filter by memory layer",
             )
 
         with col2:
             filter_tags = st.text_input(
                 "Tags (comma-separated)",
                 placeholder="tag1, tag2, tag3",
-                help="Filter by tags"
+                help="Filter by tags",
             )
 
         with col3:
             filter_source = st.text_input(
-                "Source",
-                placeholder="Filter by source",
-                help="Filter by memory source"
+                "Source", placeholder="Filter by source", help="Filter by memory source"
             )
 
     # Execute query
@@ -144,22 +138,25 @@ if not st.session_state.comparison_mode:
                     # Build filters
                     filters = {}
                     if filter_layers:
-                        filters["layer"] = filter_layers[0] if len(filter_layers) == 1 else filter_layers
+                        filters["layer"] = (
+                            filter_layers[0]
+                            if len(filter_layers) == 1
+                            else filter_layers
+                        )
                     if filter_source:
                         filters["source"] = filter_source
 
                     # Execute query
                     results = client.query_memory(
-                        query=query_text,
-                        top_k=top_k,
-                        use_rerank=use_rerank
+                        query=query_text, top_k=top_k, use_rerank=use_rerank
                     )
 
                     # Filter by tags if specified
                     if filter_tags:
                         tag_list = [tag.strip() for tag in filter_tags.split(",")]
                         results = [
-                            r for r in results
+                            r
+                            for r in results
                             if any(tag in r.get("tags", []) for tag in tag_list)
                         ]
 
@@ -169,16 +166,21 @@ if not st.session_state.comparison_mode:
                         "results": results,
                         "top_k": top_k,
                         "use_rerank": use_rerank,
-                        "filters": filters
+                        "filters": filters,
                     }
 
                     # Add to history
-                    st.session_state.query_history.insert(0, {
-                        "query": query_text,
-                        "count": len(results),
-                        "timestamp": pd.Timestamp.now()
-                    })
-                    st.session_state.query_history = st.session_state.query_history[:10]  # Keep last 10
+                    st.session_state.query_history.insert(
+                        0,
+                        {
+                            "query": query_text,
+                            "count": len(results),
+                            "timestamp": pd.Timestamp.now(),
+                        },
+                    )
+                    st.session_state.query_history = st.session_state.query_history[
+                        :10
+                    ]  # Keep last 10
 
                     st.success(f"✓ Query executed - Found {len(results)} results")
 
@@ -227,13 +229,17 @@ if not st.session_state.comparison_mode:
             st.divider()
 
             # Results tabs
-            tab1, tab2, tab3 = st.tabs(["🎯 Ranked Results", "📋 Table View", "📊 Analysis"])
+            tab1, tab2, tab3 = st.tabs(
+                ["🎯 Ranked Results", "📋 Table View", "📊 Analysis"]
+            )
 
             with tab1:
                 st.subheader("Ranked Results")
 
                 for i, result in enumerate(results, 1):
-                    with st.expander(f"#{i} - Score: {result.get('score', 0):.4f} - {format_memory_preview(result.get('content', ''), 80)}"):
+                    with st.expander(
+                        f"#{i} - Score: {result.get('score', 0):.4f} - {format_memory_preview(result.get('content', ''), 80)}"
+                    ):
                         # Result header
                         col1, col2 = st.columns([3, 1])
 
@@ -257,7 +263,9 @@ if not st.session_state.comparison_mode:
                         with col1:
                             st.caption(f"**Source:** {result.get('source', 'N/A')}")
                             if "timestamp" in result:
-                                st.caption(f"**Timestamp:** {format_timestamp(result['timestamp'])}")
+                                st.caption(
+                                    f"**Timestamp:** {format_timestamp(result['timestamp'])}"
+                                )
 
                         with col2:
                             if "tags" in result and result["tags"]:
@@ -276,20 +284,25 @@ if not st.session_state.comparison_mode:
 
                 # Select columns to display
                 available_columns = df.columns.tolist()
-                default_columns = ["id", "content", "layer", "score", "source", "timestamp"]
-                default_columns = [col for col in default_columns if col in available_columns]
+                default_columns = [
+                    "id",
+                    "content",
+                    "layer",
+                    "score",
+                    "source",
+                    "timestamp",
+                ]
+                default_columns = [
+                    col for col in default_columns if col in available_columns
+                ]
 
                 display_columns = st.multiselect(
-                    "Select Columns",
-                    options=available_columns,
-                    default=default_columns
+                    "Select Columns", options=available_columns, default=default_columns
                 )
 
                 if display_columns:
                     st.dataframe(
-                        df[display_columns],
-                        use_container_width=True,
-                        height=400
+                        df[display_columns], use_container_width=True, height=400
                     )
                 else:
                     st.dataframe(df, use_container_width=True, height=400)
@@ -300,7 +313,7 @@ if not st.session_state.comparison_mode:
                     label="📥 Download Results as CSV",
                     data=csv,
                     file_name=f"query_results_{pd.Timestamp.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                    mime="text/csv"
+                    mime="text/csv",
                 )
 
             with tab3:
@@ -316,8 +329,12 @@ if not st.session_state.comparison_mode:
                         layer = result.get("layer", "unknown")
                         layer_counts[layer] = layer_counts.get(layer, 0) + 1
 
-                    for layer, count in sorted(layer_counts.items(), key=lambda x: x[1], reverse=True):
-                        st.write(f"**{layer}:** {count} ({count/len(results)*100:.1f}%)")
+                    for layer, count in sorted(
+                        layer_counts.items(), key=lambda x: x[1], reverse=True
+                    ):
+                        st.write(
+                            f"**{layer}:** {count} ({count/len(results)*100:.1f}%)"
+                        )
 
                 with col2:
                     st.markdown("**Score Statistics:**")
@@ -336,7 +353,9 @@ if not st.session_state.comparison_mode:
                     source = result.get("source", "unknown")
                     source_counts[source] = source_counts.get(source, 0) + 1
 
-                for source, count in sorted(source_counts.items(), key=lambda x: x[1], reverse=True)[:10]:
+                for source, count in sorted(
+                    source_counts.items(), key=lambda x: x[1], reverse=True
+                )[:10]:
                     st.write(f"**{source}:** {count}")
 
         else:
@@ -356,20 +375,14 @@ else:
     with col1:
         st.subheader("Query A")
         query_a = st.text_area(
-            "Query A",
-            placeholder="Enter first query...",
-            height=80,
-            key="query_a"
+            "Query A", placeholder="Enter first query...", height=80, key="query_a"
         )
         top_k_a = st.slider("Top K", 1, 20, 5, key="top_k_a")
 
     with col2:
         st.subheader("Query B")
         query_b = st.text_area(
-            "Query B",
-            placeholder="Enter second query...",
-            height=80,
-            key="query_b"
+            "Query B", placeholder="Enter second query...", height=80, key="query_b"
         )
         top_k_b = st.slider("Top K", 1, 20, 5, key="top_k_b")
 
@@ -388,7 +401,7 @@ else:
                         "query_a": query_a,
                         "results_a": results_a,
                         "query_b": query_b,
-                        "results_b": results_b
+                        "results_b": results_b,
                     }
 
                     st.success("✓ Both queries executed")
@@ -409,13 +422,17 @@ else:
         with col1:
             st.metric("Query A Results", len(comp["results_a"]))
             if comp["results_a"]:
-                avg_score_a = sum(r.get("score", 0) for r in comp["results_a"]) / len(comp["results_a"])
+                avg_score_a = sum(r.get("score", 0) for r in comp["results_a"]) / len(
+                    comp["results_a"]
+                )
                 st.metric("Avg Score A", f"{avg_score_a:.4f}")
 
         with col2:
             st.metric("Query B Results", len(comp["results_b"]))
             if comp["results_b"]:
-                avg_score_b = sum(r.get("score", 0) for r in comp["results_b"]) / len(comp["results_b"])
+                avg_score_b = sum(r.get("score", 0) for r in comp["results_b"]) / len(
+                    comp["results_b"]
+                )
                 st.metric("Avg Score B", f"{avg_score_b:.4f}")
 
         with col3:
@@ -437,7 +454,9 @@ else:
             for i, result in enumerate(comp["results_a"], 1):
                 overlap_marker = "⭐" if result.get("id") in overlap else ""
                 with st.container():
-                    st.markdown(f"**#{i} {overlap_marker}** - Score: {result.get('score', 0):.4f}")
+                    st.markdown(
+                        f"**#{i} {overlap_marker}** - Score: {result.get('score', 0):.4f}"
+                    )
                     st.caption(format_memory_preview(result.get("content", ""), 100))
                     st.divider()
 
@@ -448,7 +467,9 @@ else:
             for i, result in enumerate(comp["results_b"], 1):
                 overlap_marker = "⭐" if result.get("id") in overlap else ""
                 with st.container():
-                    st.markdown(f"**#{i} {overlap_marker}** - Score: {result.get('score', 0):.4f}")
+                    st.markdown(
+                        f"**#{i} {overlap_marker}** - Score: {result.get('score', 0):.4f}"
+                    )
                     st.caption(format_memory_preview(result.get("content", ""), 100))
                     st.divider()
 
@@ -460,8 +481,12 @@ else:
 
             for mem_id in overlap:
                 # Find in both results
-                mem_a = next((r for r in comp["results_a"] if r.get("id") == mem_id), None)
-                mem_b = next((r for r in comp["results_b"] if r.get("id") == mem_id), None)
+                mem_a = next(
+                    (r for r in comp["results_a"] if r.get("id") == mem_id), None
+                )
+                mem_b = next(
+                    (r for r in comp["results_b"] if r.get("id") == mem_id), None
+                )
 
                 if mem_a and mem_b:
                     with st.expander(f"ID: {mem_id}"):
@@ -484,11 +509,14 @@ st.divider()
 if st.session_state.query_history:
     with st.expander("📜 Query History (Last 10)"):
         for i, hist in enumerate(st.session_state.query_history, 1):
-            st.caption(f"{i}. **{hist['query'][:50]}...** ({hist['count']} results) - {hist['timestamp'].strftime('%H:%M:%S')}")
+            st.caption(
+                f"{i}. **{hist['query'][:50]}...** ({hist['count']} results) - {hist['timestamp'].strftime('%H:%M:%S')}"
+            )
 
 # Help section
 with st.expander("ℹ️ Help - Query Inspector"):
-    st.markdown("""
+    st.markdown(
+        """
     **Single Query Mode:**
     - Enter a query and adjust parameters
     - Execute query to see ranked results
@@ -507,6 +535,7 @@ with st.expander("ℹ️ Help - Query Inspector"):
     - Reranking can improve result quality
     - Top K controls number of results
     - Compare different phrasings to optimize queries
-    """)
+    """
+    )
 
 st.caption("RAE Memory Dashboard - Query Inspector")

@@ -1,0 +1,71 @@
+﻿2025-11-28T17:38:29.3211246Z ##[group]Run actions/checkout@v4
+2025-11-28T17:38:29.3212585Z with:
+2025-11-28T17:38:29.3213485Z   repository: dreamsoft-pro/RAE-agentic-memory
+2025-11-28T17:38:29.3214887Z   token: ***
+2025-11-28T17:38:29.3215640Z   ssh-strict: true
+2025-11-28T17:38:29.3216445Z   ssh-user: git
+2025-11-28T17:38:29.3217256Z   persist-credentials: true
+2025-11-28T17:38:29.3218322Z   clean: true
+2025-11-28T17:38:29.3219131Z   sparse-checkout-cone-mode: true
+2025-11-28T17:38:29.3220147Z   fetch-depth: 1
+2025-11-28T17:38:29.3220919Z   fetch-tags: false
+2025-11-28T17:38:29.3221720Z   show-progress: true
+2025-11-28T17:38:29.3222529Z   lfs: false
+2025-11-28T17:38:29.3223291Z   submodules: false
+2025-11-28T17:38:29.3224113Z   set-safe-directory: true
+2025-11-28T17:38:29.3225241Z ##[endgroup]
+2025-11-28T17:38:29.4315861Z Syncing repository: dreamsoft-pro/RAE-agentic-memory
+2025-11-28T17:38:29.4319087Z ##[group]Getting Git version info
+2025-11-28T17:38:29.4320730Z Working directory is '/home/runner/work/RAE-agentic-memory/RAE-agentic-memory'
+2025-11-28T17:38:29.4323073Z [command]/usr/bin/git version
+2025-11-28T17:38:29.4427558Z git version 2.51.2
+2025-11-28T17:38:29.4455348Z ##[endgroup]
+2025-11-28T17:38:29.4470954Z Temporarily overriding HOME='/home/runner/work/_temp/b6319821-70d2-4740-910d-5c1f64605060' before making global git config changes
+2025-11-28T17:38:29.4475657Z Adding repository directory to the temporary git global config as a safe directory
+2025-11-28T17:38:29.4478383Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/RAE-agentic-memory/RAE-agentic-memory
+2025-11-28T17:38:29.4516380Z Deleting the contents of '/home/runner/work/RAE-agentic-memory/RAE-agentic-memory'
+2025-11-28T17:38:29.4519909Z ##[group]Initializing the repository
+2025-11-28T17:38:29.4523914Z [command]/usr/bin/git init /home/runner/work/RAE-agentic-memory/RAE-agentic-memory
+2025-11-28T17:38:29.4650358Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-11-28T17:38:29.4652459Z hint: is subject to change. To configure the initial branch name to use in all
+2025-11-28T17:38:29.4654982Z hint: of your new repositories, which will suppress this warning, call:
+2025-11-28T17:38:29.4656366Z hint:
+2025-11-28T17:38:29.4657292Z hint: 	git config --global init.defaultBranch <name>
+2025-11-28T17:38:29.4658720Z hint:
+2025-11-28T17:38:29.4660065Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-11-28T17:38:29.4661917Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-11-28T17:38:29.4663374Z hint:
+2025-11-28T17:38:29.4664137Z hint: 	git branch -m <name>
+2025-11-28T17:38:29.4665411Z hint:
+2025-11-28T17:38:29.4666653Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-11-28T17:38:29.4669038Z Initialized empty Git repository in /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/.git/
+2025-11-28T17:38:29.4672648Z [command]/usr/bin/git remote add origin https://github.com/dreamsoft-pro/RAE-agentic-memory
+2025-11-28T17:38:29.4704308Z ##[endgroup]
+2025-11-28T17:38:29.4705738Z ##[group]Disabling automatic garbage collection
+2025-11-28T17:38:29.4707821Z [command]/usr/bin/git config --local gc.auto 0
+2025-11-28T17:38:29.4736827Z ##[endgroup]
+2025-11-28T17:38:29.4738441Z ##[group]Setting up auth
+2025-11-28T17:38:29.4743896Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-11-28T17:38:29.4774674Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-11-28T17:38:29.5140572Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-11-28T17:38:29.5173978Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-11-28T17:38:29.5394569Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2025-11-28T17:38:29.5427186Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2025-11-28T17:38:29.5648616Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-11-28T17:38:29.5683488Z ##[endgroup]
+2025-11-28T17:38:29.5686029Z ##[group]Fetching the repository
+2025-11-28T17:38:29.5695523Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +fbac3ab396c08da0f089066e2301ab6ad011004c:refs/remotes/origin/main
+2025-11-28T17:38:29.9504337Z From https://github.com/dreamsoft-pro/RAE-agentic-memory
+2025-11-28T17:38:29.9504999Z  * [new ref]         fbac3ab396c08da0f089066e2301ab6ad011004c -> origin/main
+2025-11-28T17:38:29.9542424Z ##[endgroup]
+2025-11-28T17:38:29.9542913Z ##[group]Determining the checkout info
+2025-11-28T17:38:29.9545011Z ##[endgroup]
+2025-11-28T17:38:29.9550052Z [command]/usr/bin/git sparse-checkout disable
+2025-11-28T17:38:29.9589793Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-11-28T17:38:29.9615203Z ##[group]Checking out the ref
+2025-11-28T17:38:29.9620272Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2025-11-28T17:38:29.9991046Z Switched to a new branch 'main'
+2025-11-28T17:38:29.9992190Z branch 'main' set up to track 'origin/main'.
+2025-11-28T17:38:30.0000370Z ##[endgroup]
+2025-11-28T17:38:30.0039823Z [command]/usr/bin/git log -1 --format=%H
+2025-11-28T17:38:30.0062162Z fbac3ab396c08da0f089066e2301ab6ad011004c

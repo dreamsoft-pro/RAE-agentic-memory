@@ -4,18 +4,18 @@ Memory Editor Page - Edit and Manage Memories
 Search, view, edit, and delete individual memories.
 """
 
-import streamlit as st
-import sys
 import os
-from typing import Dict, Any, Optional
+import sys
+
+import streamlit as st
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils.visualizations import (
     apply_custom_css,
+    format_memory_preview,
     format_timestamp,
-    format_memory_preview
 )
 
 # Apply styling
@@ -45,18 +45,31 @@ if "editor_mode" not in st.session_state:
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    if st.button("🔍 Search Mode", type="primary" if st.session_state.editor_mode == "search" else "secondary", use_container_width=True):
+    if st.button(
+        "🔍 Search Mode",
+        type="primary" if st.session_state.editor_mode == "search" else "secondary",
+        use_container_width=True,
+    ):
         st.session_state.editor_mode = "search"
         st.session_state.selected_memory = None
         st.rerun()
 
 with col2:
-    if st.button("✏️ Edit Mode", type="primary" if st.session_state.editor_mode == "edit" else "secondary", use_container_width=True, disabled=st.session_state.selected_memory is None):
+    if st.button(
+        "✏️ Edit Mode",
+        type="primary" if st.session_state.editor_mode == "edit" else "secondary",
+        use_container_width=True,
+        disabled=st.session_state.selected_memory is None,
+    ):
         st.session_state.editor_mode = "edit"
         st.rerun()
 
 with col3:
-    if st.button("➕ Create New", type="primary" if st.session_state.editor_mode == "create" else "secondary", use_container_width=True):
+    if st.button(
+        "➕ Create New",
+        type="primary" if st.session_state.editor_mode == "create" else "secondary",
+        use_container_width=True,
+    ):
         st.session_state.editor_mode = "create"
         st.session_state.selected_memory = None
         st.rerun()
@@ -76,7 +89,7 @@ if st.session_state.editor_mode == "search":
         search_query = st.text_input(
             "Search Query",
             placeholder="Enter search terms...",
-            help="Search for memories by content"
+            help="Search for memories by content",
         )
 
     with col2:
@@ -86,7 +99,7 @@ if st.session_state.editor_mode == "search":
             max_value=100,
             value=20,
             step=5,
-            help="Maximum number of results to return"
+            help="Maximum number of results to return",
         )
 
     # Advanced filters
@@ -98,21 +111,19 @@ if st.session_state.editor_mode == "search":
                 "Memory Layers",
                 options=["em", "wm", "sm", "ltm"],
                 default=[],
-                help="Filter by memory layer"
+                help="Filter by memory layer",
             )
 
         with col2:
             filter_tags = st.text_input(
                 "Tags (comma-separated)",
                 placeholder="tag1, tag2, tag3",
-                help="Filter by tags"
+                help="Filter by tags",
             )
 
         with col3:
             filter_source = st.text_input(
-                "Source",
-                placeholder="Filter by source",
-                help="Filter by memory source"
+                "Source", placeholder="Filter by source", help="Filter by memory source"
             )
 
     # Search button
@@ -125,7 +136,11 @@ if st.session_state.editor_mode == "search":
                     # Build filters
                     filters = {}
                     if filter_layers:
-                        filters["layer"] = filter_layers[0] if len(filter_layers) == 1 else filter_layers
+                        filters["layer"] = (
+                            filter_layers[0]
+                            if len(filter_layers) == 1
+                            else filter_layers
+                        )
                     if filter_source:
                         filters["source"] = filter_source
 
@@ -133,14 +148,15 @@ if st.session_state.editor_mode == "search":
                     results = client.search_memories(
                         query=search_query,
                         top_k=search_limit,
-                        filters=filters if filters else None
+                        filters=filters if filters else None,
                     )
 
                     # Filter by tags if specified
                     if filter_tags:
                         tag_list = [tag.strip() for tag in filter_tags.split(",")]
                         results = [
-                            r for r in results
+                            r
+                            for r in results
                             if any(tag in r.get("tags", []) for tag in tag_list)
                         ]
 
@@ -171,7 +187,9 @@ if st.session_state.editor_mode == "search":
 
                 with col2:
                     st.markdown(f"**ID:** `{memory.get('id', 'N/A')}`")
-                    st.markdown(f"**Content:** {format_memory_preview(memory.get('content', ''), 150)}")
+                    st.markdown(
+                        f"**Content:** {format_memory_preview(memory.get('content', ''), 150)}"
+                    )
 
                     # Metadata
                     metadata_parts = []
@@ -179,7 +197,9 @@ if st.session_state.editor_mode == "search":
                     if "source" in memory:
                         metadata_parts.append(f"**Source:** {memory.get('source')}")
                     if "timestamp" in memory:
-                        metadata_parts.append(f"**Time:** {format_timestamp(memory.get('timestamp'))}")
+                        metadata_parts.append(
+                            f"**Time:** {format_timestamp(memory.get('timestamp'))}"
+                        )
 
                     st.caption(" | ".join(metadata_parts))
 
@@ -187,7 +207,11 @@ if st.session_state.editor_mode == "search":
                         st.caption(f"**Tags:** {', '.join(memory['tags'])}")
 
                 with col3:
-                    if st.button(f"✏️ Edit", key=f"edit_{memory.get('id')}", use_container_width=True):
+                    if st.button(
+                        "✏️ Edit",
+                        key=f"edit_{memory.get('id')}",
+                        use_container_width=True,
+                    ):
                         st.session_state.selected_memory = memory
                         st.session_state.editor_mode = "edit"
                         st.rerun()
@@ -229,15 +253,13 @@ elif st.session_state.editor_mode == "edit" and st.session_state.selected_memory
             "Content",
             value=memory.get("content", ""),
             height=200,
-            help="Edit the memory content"
+            help="Edit the memory content",
         )
 
         # Tags editor
         current_tags = ", ".join(memory.get("tags", []))
         new_tags_str = st.text_input(
-            "Tags (comma-separated)",
-            value=current_tags,
-            help="Edit memory tags"
+            "Tags (comma-separated)", value=current_tags, help="Edit memory tags"
         )
 
         # Metadata (read-only)
@@ -245,14 +267,22 @@ elif st.session_state.editor_mode == "edit" and st.session_state.selected_memory
             col1, col2 = st.columns(2)
 
             with col1:
-                st.text_input("Source", value=memory.get("source", "N/A"), disabled=True)
+                st.text_input(
+                    "Source", value=memory.get("source", "N/A"), disabled=True
+                )
                 st.text_input("Layer", value=memory.get("layer", "N/A"), disabled=True)
 
             with col2:
                 if "timestamp" in memory:
-                    st.text_input("Timestamp", value=format_timestamp(memory["timestamp"]), disabled=True)
+                    st.text_input(
+                        "Timestamp",
+                        value=format_timestamp(memory["timestamp"]),
+                        disabled=True,
+                    )
                 if "score" in memory:
-                    st.text_input("Score", value=f"{memory['score']:.4f}", disabled=True)
+                    st.text_input(
+                        "Score", value=f"{memory['score']:.4f}", disabled=True
+                    )
 
         st.divider()
 
@@ -261,21 +291,15 @@ elif st.session_state.editor_mode == "edit" and st.session_state.selected_memory
 
         with col1:
             save_button = st.form_submit_button(
-                "💾 Save Changes",
-                type="primary",
-                use_container_width=True
+                "💾 Save Changes", type="primary", use_container_width=True
             )
 
         with col2:
-            cancel_button = st.form_submit_button(
-                "❌ Cancel",
-                use_container_width=True
-            )
+            cancel_button = st.form_submit_button("❌ Cancel", use_container_width=True)
 
         with col3:
             delete_button = st.form_submit_button(
-                "🗑️ Delete Memory",
-                use_container_width=True
+                "🗑️ Delete Memory", use_container_width=True
             )
 
     # Handle form submissions
@@ -286,13 +310,13 @@ elif st.session_state.editor_mode == "edit" and st.session_state.selected_memory
             try:
                 with st.spinner("Saving changes..."):
                     # Parse tags
-                    new_tags = [tag.strip() for tag in new_tags_str.split(",") if tag.strip()]
+                    new_tags = [
+                        tag.strip() for tag in new_tags_str.split(",") if tag.strip()
+                    ]
 
                     # Update memory
                     success = client.update_memory(
-                        memory_id=memory["id"],
-                        content=new_content,
-                        tags=new_tags
+                        memory_id=memory["id"], content=new_content, tags=new_tags
                     )
 
                     if success:
@@ -308,6 +332,7 @@ elif st.session_state.editor_mode == "edit" and st.session_state.selected_memory
 
                         # Rerun after short delay
                         import time
+
                         time.sleep(1)
                         st.rerun()
 
@@ -339,6 +364,7 @@ elif st.session_state.editor_mode == "edit" and st.session_state.selected_memory
 
                         # Rerun after short delay
                         import time
+
                         time.sleep(1)
                         st.rerun()
 
@@ -360,21 +386,21 @@ elif st.session_state.editor_mode == "create":
             "Content",
             placeholder="Enter memory content...",
             height=200,
-            help="The main content of the memory"
+            help="The main content of the memory",
         )
 
         # Layer selection
         layer = st.selectbox(
             "Memory Layer",
             options=["em", "wm", "sm", "ltm"],
-            help="Select the memory layer for storage"
+            help="Select the memory layer for storage",
         )
 
         # Tags
         tags_str = st.text_input(
             "Tags (comma-separated)",
             placeholder="tag1, tag2, tag3",
-            help="Add tags to categorize the memory"
+            help="Add tags to categorize the memory",
         )
 
         # Source
@@ -382,7 +408,7 @@ elif st.session_state.editor_mode == "create":
             "Source",
             placeholder="dashboard-manual-entry",
             value="dashboard-manual-entry",
-            help="Source identifier for the memory"
+            help="Source identifier for the memory",
         )
 
         st.divider()
@@ -392,16 +418,11 @@ elif st.session_state.editor_mode == "create":
 
         with col1:
             create_button = st.form_submit_button(
-                "💾 Create Memory",
-                type="primary",
-                use_container_width=True
+                "💾 Create Memory", type="primary", use_container_width=True
             )
 
         with col2:
-            cancel_button = st.form_submit_button(
-                "❌ Cancel",
-                use_container_width=True
-            )
+            cancel_button = st.form_submit_button("❌ Cancel", use_container_width=True)
 
     # Handle form submissions
     if create_button:
@@ -422,8 +443,8 @@ elif st.session_state.editor_mode == "create":
                             "layer": layer,
                             "tags": tags,
                             "source": source,
-                            "project": client.project_id
-                        }
+                            "project": client.project_id,
+                        },
                     )
 
                     st.success("✓ Memory created successfully!")
@@ -439,6 +460,7 @@ elif st.session_state.editor_mode == "create":
 
                     # Rerun after short delay
                     import time
+
                     time.sleep(1)
                     st.rerun()
 
@@ -454,7 +476,8 @@ st.divider()
 
 # Help section
 with st.expander("ℹ️ Help - Memory Editor"):
-    st.markdown("""
+    st.markdown(
+        """
     **Search Mode:**
     - Enter search terms to find memories
     - Use advanced filters to narrow results
@@ -475,6 +498,7 @@ with st.expander("ℹ️ Help - Memory Editor"):
     - Tags help organize and filter memories
     - Scores indicate relevance to search query
     - Always review before deleting
-    """)
+    """
+    )
 
 st.caption("RAE Memory Dashboard - Memory Editor")

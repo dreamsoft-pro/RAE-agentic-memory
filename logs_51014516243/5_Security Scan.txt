@@ -1,0 +1,595 @@
+﻿2025-11-28T17:38:28.3358857Z Current runner version: '2.329.0'
+2025-11-28T17:38:28.3384274Z ##[group]Runner Image Provisioner
+2025-11-28T17:38:28.3385164Z Hosted Compute Agent
+2025-11-28T17:38:28.3385671Z Version: 20251016.436
+2025-11-28T17:38:28.3386389Z Commit: 8ab8ac8bfd662a3739dab9fe09456aba92132568
+2025-11-28T17:38:28.3387060Z Build Date: 2025-10-15T20:44:12Z
+2025-11-28T17:38:28.3387642Z ##[endgroup]
+2025-11-28T17:38:28.3388274Z ##[group]Operating System
+2025-11-28T17:38:28.3388812Z Ubuntu
+2025-11-28T17:38:28.3389268Z 24.04.3
+2025-11-28T17:38:28.3389773Z LTS
+2025-11-28T17:38:28.3390537Z ##[endgroup]
+2025-11-28T17:38:28.3391046Z ##[group]Runner Image
+2025-11-28T17:38:28.3391739Z Image: ubuntu-24.04
+2025-11-28T17:38:28.3392227Z Version: 20251112.124.1
+2025-11-28T17:38:28.3393258Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20251112.124/images/ubuntu/Ubuntu2404-Readme.md
+2025-11-28T17:38:28.3394864Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20251112.124
+2025-11-28T17:38:28.3395842Z ##[endgroup]
+2025-11-28T17:38:28.3398536Z ##[group]GITHUB_TOKEN Permissions
+2025-11-28T17:38:28.3400909Z Actions: write
+2025-11-28T17:38:28.3401512Z ArtifactMetadata: write
+2025-11-28T17:38:28.3402093Z Attestations: write
+2025-11-28T17:38:28.3402571Z Checks: write
+2025-11-28T17:38:28.3403504Z Contents: write
+2025-11-28T17:38:28.3404020Z Deployments: write
+2025-11-28T17:38:28.3404548Z Discussions: write
+2025-11-28T17:38:28.3405075Z Issues: write
+2025-11-28T17:38:28.3405544Z Metadata: read
+2025-11-28T17:38:28.3406060Z Models: read
+2025-11-28T17:38:28.3406495Z Packages: write
+2025-11-28T17:38:28.3407110Z Pages: write
+2025-11-28T17:38:28.3407574Z PullRequests: write
+2025-11-28T17:38:28.3408092Z RepositoryProjects: write
+2025-11-28T17:38:28.3408881Z SecurityEvents: write
+2025-11-28T17:38:28.3409381Z Statuses: write
+2025-11-28T17:38:28.3409930Z ##[endgroup]
+2025-11-28T17:38:28.3412358Z Secret source: Actions
+2025-11-28T17:38:28.3413135Z Prepare workflow directory
+2025-11-28T17:38:28.3754780Z Prepare all required actions
+2025-11-28T17:38:28.3795054Z Getting action download info
+2025-11-28T17:38:28.8071102Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+2025-11-28T17:38:29.3789173Z Download action repository 'actions/setup-python@v5' (SHA:a26af69be951a213d495a4c3e4e4022e16d87065)
+2025-11-28T17:38:29.5486513Z Complete job name: Security Scan
+2025-11-28T17:38:29.6194014Z ##[group]Run actions/checkout@v4
+2025-11-28T17:38:29.6194864Z with:
+2025-11-28T17:38:29.6195312Z   repository: dreamsoft-pro/RAE-agentic-memory
+2025-11-28T17:38:29.6196063Z   token: ***
+2025-11-28T17:38:29.6196437Z   ssh-strict: true
+2025-11-28T17:38:29.6196826Z   ssh-user: git
+2025-11-28T17:38:29.6197226Z   persist-credentials: true
+2025-11-28T17:38:29.6197650Z   clean: true
+2025-11-28T17:38:29.6198041Z   sparse-checkout-cone-mode: true
+2025-11-28T17:38:29.6198501Z   fetch-depth: 1
+2025-11-28T17:38:29.6198867Z   fetch-tags: false
+2025-11-28T17:38:29.6199255Z   show-progress: true
+2025-11-28T17:38:29.6199668Z   lfs: false
+2025-11-28T17:38:29.6200062Z   submodules: false
+2025-11-28T17:38:29.6200610Z   set-safe-directory: true
+2025-11-28T17:38:29.6201317Z ##[endgroup]
+2025-11-28T17:38:29.7299122Z Syncing repository: dreamsoft-pro/RAE-agentic-memory
+2025-11-28T17:38:29.7301327Z ##[group]Getting Git version info
+2025-11-28T17:38:29.7302259Z Working directory is '/home/runner/work/RAE-agentic-memory/RAE-agentic-memory'
+2025-11-28T17:38:29.7303308Z [command]/usr/bin/git version
+2025-11-28T17:38:29.7387279Z git version 2.51.2
+2025-11-28T17:38:29.7414581Z ##[endgroup]
+2025-11-28T17:38:29.7429115Z Temporarily overriding HOME='/home/runner/work/_temp/3ab078b7-0513-493f-a82f-e858d7ac7e8b' before making global git config changes
+2025-11-28T17:38:29.7431416Z Adding repository directory to the temporary git global config as a safe directory
+2025-11-28T17:38:29.7434921Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/RAE-agentic-memory/RAE-agentic-memory
+2025-11-28T17:38:29.7473301Z Deleting the contents of '/home/runner/work/RAE-agentic-memory/RAE-agentic-memory'
+2025-11-28T17:38:29.7477041Z ##[group]Initializing the repository
+2025-11-28T17:38:29.7481339Z [command]/usr/bin/git init /home/runner/work/RAE-agentic-memory/RAE-agentic-memory
+2025-11-28T17:38:29.7589275Z hint: Using 'master' as the name for the initial branch. This default branch name
+2025-11-28T17:38:29.7590992Z hint: is subject to change. To configure the initial branch name to use in all
+2025-11-28T17:38:29.7592496Z hint: of your new repositories, which will suppress this warning, call:
+2025-11-28T17:38:29.7593616Z hint:
+2025-11-28T17:38:29.7594343Z hint: 	git config --global init.defaultBranch <name>
+2025-11-28T17:38:29.7595241Z hint:
+2025-11-28T17:38:29.7596002Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2025-11-28T17:38:29.7596897Z hint: 'development'. The just-created branch can be renamed via this command:
+2025-11-28T17:38:29.7597592Z hint:
+2025-11-28T17:38:29.7597959Z hint: 	git branch -m <name>
+2025-11-28T17:38:29.7598396Z hint:
+2025-11-28T17:38:29.7598940Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2025-11-28T17:38:29.7600362Z Initialized empty Git repository in /home/runner/work/RAE-agentic-memory/RAE-agentic-memory/.git/
+2025-11-28T17:38:29.7606823Z [command]/usr/bin/git remote add origin https://github.com/dreamsoft-pro/RAE-agentic-memory
+2025-11-28T17:38:29.7643413Z ##[endgroup]
+2025-11-28T17:38:29.7644539Z ##[group]Disabling automatic garbage collection
+2025-11-28T17:38:29.7647298Z [command]/usr/bin/git config --local gc.auto 0
+2025-11-28T17:38:29.7677758Z ##[endgroup]
+2025-11-28T17:38:29.7678965Z ##[group]Setting up auth
+2025-11-28T17:38:29.7685767Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-11-28T17:38:29.7718323Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-11-28T17:38:29.8059161Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-11-28T17:38:29.8091866Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-11-28T17:38:29.8319426Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2025-11-28T17:38:29.8350936Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2025-11-28T17:38:29.8580317Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2025-11-28T17:38:29.8617777Z ##[endgroup]
+2025-11-28T17:38:29.8618591Z ##[group]Fetching the repository
+2025-11-28T17:38:29.8627381Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +fbac3ab396c08da0f089066e2301ab6ad011004c:refs/remotes/origin/main
+2025-11-28T17:38:30.4958159Z From https://github.com/dreamsoft-pro/RAE-agentic-memory
+2025-11-28T17:38:30.4961028Z  * [new ref]         fbac3ab396c08da0f089066e2301ab6ad011004c -> origin/main
+2025-11-28T17:38:30.4996073Z ##[endgroup]
+2025-11-28T17:38:30.4997887Z ##[group]Determining the checkout info
+2025-11-28T17:38:30.5000500Z ##[endgroup]
+2025-11-28T17:38:30.5002074Z [command]/usr/bin/git sparse-checkout disable
+2025-11-28T17:38:30.5046849Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+2025-11-28T17:38:30.5078099Z ##[group]Checking out the ref
+2025-11-28T17:38:30.5082160Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2025-11-28T17:38:30.5462489Z Switched to a new branch 'main'
+2025-11-28T17:38:30.5466920Z branch 'main' set up to track 'origin/main'.
+2025-11-28T17:38:30.5474573Z ##[endgroup]
+2025-11-28T17:38:30.5516226Z [command]/usr/bin/git log -1 --format=%H
+2025-11-28T17:38:30.5540726Z fbac3ab396c08da0f089066e2301ab6ad011004c
+2025-11-28T17:38:30.5861731Z ##[group]Run actions/setup-python@v5
+2025-11-28T17:38:30.5862870Z with:
+2025-11-28T17:38:30.5863592Z   python-version: 3.11
+2025-11-28T17:38:30.5864455Z   check-latest: false
+2025-11-28T17:38:30.5865585Z   token: ***
+2025-11-28T17:38:30.5866367Z   update-environment: true
+2025-11-28T17:38:30.5867329Z   allow-prereleases: false
+2025-11-28T17:38:30.5868236Z   freethreaded: false
+2025-11-28T17:38:30.5869067Z ##[endgroup]
+2025-11-28T17:38:30.7625234Z ##[group]Installed versions
+2025-11-28T17:38:30.7753838Z Successfully set up CPython (3.11.14)
+2025-11-28T17:38:30.7756654Z ##[endgroup]
+2025-11-28T17:38:30.7907143Z ##[group]Run pip install safety bandit
+2025-11-28T17:38:30.7908366Z [36;1mpip install safety bandit[0m
+2025-11-28T17:38:30.7962316Z shell: /usr/bin/bash -e {0}
+2025-11-28T17:38:30.7963273Z env:
+2025-11-28T17:38:30.7964230Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-28T17:38:30.7965894Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-28T17:38:30.7967543Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-28T17:38:30.7968989Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-28T17:38:30.7970768Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-28T17:38:30.7972294Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-28T17:38:30.7973523Z ##[endgroup]
+2025-11-28T17:38:31.6872683Z Collecting safety
+2025-11-28T17:38:31.7483135Z   Downloading safety-3.7.0-py3-none-any.whl.metadata (11 kB)
+2025-11-28T17:38:31.7703884Z Collecting bandit
+2025-11-28T17:38:31.7742166Z   Downloading bandit-1.9.2-py3-none-any.whl.metadata (7.1 kB)
+2025-11-28T17:38:31.7952772Z Collecting authlib>=1.2.0 (from safety)
+2025-11-28T17:38:31.7988335Z   Downloading authlib-1.6.5-py2.py3-none-any.whl.metadata (9.8 kB)
+2025-11-28T17:38:31.8190707Z Collecting click>=8.0.2 (from safety)
+2025-11-28T17:38:31.8228002Z   Downloading click-8.3.1-py3-none-any.whl.metadata (2.6 kB)
+2025-11-28T17:38:31.8356688Z Collecting dparse>=0.6.4 (from safety)
+2025-11-28T17:38:31.8389036Z   Downloading dparse-0.6.4-py3-none-any.whl.metadata (5.5 kB)
+2025-11-28T17:38:31.8592384Z Collecting filelock<4.0,>=3.16.1 (from safety)
+2025-11-28T17:38:31.8631065Z   Downloading filelock-3.20.0-py3-none-any.whl.metadata (2.1 kB)
+2025-11-28T17:38:31.8835933Z Collecting httpx (from safety)
+2025-11-28T17:38:31.8870922Z   Downloading httpx-0.28.1-py3-none-any.whl.metadata (7.1 kB)
+2025-11-28T17:38:31.9216494Z Collecting jinja2>=3.1.0 (from safety)
+2025-11-28T17:38:31.9255973Z   Downloading jinja2-3.1.6-py3-none-any.whl.metadata (2.9 kB)
+2025-11-28T17:38:31.9638396Z Collecting marshmallow>=3.15.0 (from safety)
+2025-11-28T17:38:31.9675207Z   Downloading marshmallow-4.1.0-py3-none-any.whl.metadata (7.4 kB)
+2025-11-28T17:38:31.9862856Z Collecting nltk>=3.9 (from safety)
+2025-11-28T17:38:31.9900989Z   Downloading nltk-3.9.2-py3-none-any.whl.metadata (3.2 kB)
+2025-11-28T17:38:32.0091027Z Collecting packaging>=21.0 (from safety)
+2025-11-28T17:38:32.0127939Z   Downloading packaging-25.0-py3-none-any.whl.metadata (3.3 kB)
+2025-11-28T17:38:32.1266584Z Collecting pydantic>=2.6.0 (from safety)
+2025-11-28T17:38:32.1303471Z   Downloading pydantic-2.12.5-py3-none-any.whl.metadata (90 kB)
+2025-11-28T17:38:32.1628382Z Collecting requests (from safety)
+2025-11-28T17:38:32.1667128Z   Downloading requests-2.32.5-py3-none-any.whl.metadata (4.9 kB)
+2025-11-28T17:38:32.3148601Z Collecting ruamel-yaml>=0.17.21 (from safety)
+2025-11-28T17:38:32.3186638Z   Downloading ruamel.yaml-0.18.16-py3-none-any.whl.metadata (25 kB)
+2025-11-28T17:38:32.3342596Z Collecting safety-schemas==0.0.16 (from safety)
+2025-11-28T17:38:32.3382911Z   Downloading safety_schemas-0.0.16-py3-none-any.whl.metadata (1.1 kB)
+2025-11-28T17:38:32.3552306Z Collecting tenacity>=8.1.0 (from safety)
+2025-11-28T17:38:32.3587191Z   Downloading tenacity-9.1.2-py3-none-any.whl.metadata (1.2 kB)
+2025-11-28T17:38:32.3777224Z Collecting tomlkit (from safety)
+2025-11-28T17:38:32.3812396Z   Downloading tomlkit-0.13.3-py3-none-any.whl.metadata (2.8 kB)
+2025-11-28T17:38:32.4009868Z Collecting typer>=0.16.0 (from safety)
+2025-11-28T17:38:32.4045485Z   Downloading typer-0.20.0-py3-none-any.whl.metadata (16 kB)
+2025-11-28T17:38:32.4233298Z Collecting typing-extensions>=4.7.1 (from safety)
+2025-11-28T17:38:32.4271153Z   Downloading typing_extensions-4.15.0-py3-none-any.whl.metadata (3.3 kB)
+2025-11-28T17:38:32.4671071Z Collecting PyYAML>=5.3.1 (from bandit)
+2025-11-28T17:38:32.4712188Z   Downloading pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.4 kB)
+2025-11-28T17:38:32.4953533Z Collecting stevedore>=1.20.0 (from bandit)
+2025-11-28T17:38:32.4991195Z   Downloading stevedore-5.6.0-py3-none-any.whl.metadata (2.3 kB)
+2025-11-28T17:38:32.5411369Z Collecting rich (from bandit)
+2025-11-28T17:38:32.5449153Z   Downloading rich-14.2.0-py3-none-any.whl.metadata (18 kB)
+2025-11-28T17:38:32.7533494Z Collecting cryptography (from authlib>=1.2.0->safety)
+2025-11-28T17:38:32.7570773Z   Downloading cryptography-46.0.3-cp311-abi3-manylinux_2_34_x86_64.whl.metadata (5.7 kB)
+2025-11-28T17:38:32.8151730Z Collecting MarkupSafe>=2.0 (from jinja2>=3.1.0->safety)
+2025-11-28T17:38:32.8189048Z   Downloading markupsafe-3.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (2.7 kB)
+2025-11-28T17:38:32.8429837Z Collecting joblib (from nltk>=3.9->safety)
+2025-11-28T17:38:32.8467163Z   Downloading joblib-1.5.2-py3-none-any.whl.metadata (5.6 kB)
+2025-11-28T17:38:33.2096259Z Collecting regex>=2021.8.3 (from nltk>=3.9->safety)
+2025-11-28T17:38:33.2134171Z   Downloading regex-2025.11.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (40 kB)
+2025-11-28T17:38:33.2507896Z Collecting tqdm (from nltk>=3.9->safety)
+2025-11-28T17:38:33.2545114Z   Downloading tqdm-4.67.1-py3-none-any.whl.metadata (57 kB)
+2025-11-28T17:38:33.2721305Z Collecting annotated-types>=0.6.0 (from pydantic>=2.6.0->safety)
+2025-11-28T17:38:33.2759635Z   Downloading annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)
+2025-11-28T17:38:33.9409044Z Collecting pydantic-core==2.41.5 (from pydantic>=2.6.0->safety)
+2025-11-28T17:38:33.9445720Z   Downloading pydantic_core-2.41.5-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.3 kB)
+2025-11-28T17:38:33.9608492Z Collecting typing-inspection>=0.4.2 (from pydantic>=2.6.0->safety)
+2025-11-28T17:38:33.9642344Z   Downloading typing_inspection-0.4.2-py3-none-any.whl.metadata (2.6 kB)
+2025-11-28T17:38:34.0561389Z Collecting ruamel.yaml.clib>=0.2.7 (from ruamel-yaml>=0.17.21->safety)
+2025-11-28T17:38:34.0601163Z   Downloading ruamel_yaml_clib-0.2.15-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (3.5 kB)
+2025-11-28T17:38:34.0839650Z Collecting shellingham>=1.3.0 (from typer>=0.16.0->safety)
+2025-11-28T17:38:34.0873288Z   Downloading shellingham-1.5.4-py2.py3-none-any.whl.metadata (3.5 kB)
+2025-11-28T17:38:34.1145617Z Collecting markdown-it-py>=2.2.0 (from rich->bandit)
+2025-11-28T17:38:34.1181790Z   Downloading markdown_it_py-4.0.0-py3-none-any.whl.metadata (7.3 kB)
+2025-11-28T17:38:34.1419754Z Collecting pygments<3.0.0,>=2.13.0 (from rich->bandit)
+2025-11-28T17:38:34.1456779Z   Downloading pygments-2.19.2-py3-none-any.whl.metadata (2.5 kB)
+2025-11-28T17:38:34.1579508Z Collecting mdurl~=0.1 (from markdown-it-py>=2.2.0->rich->bandit)
+2025-11-28T17:38:34.1612407Z   Downloading mdurl-0.1.2-py3-none-any.whl.metadata (1.6 kB)
+2025-11-28T17:38:34.2665555Z Collecting cffi>=2.0.0 (from cryptography->authlib>=1.2.0->safety)
+2025-11-28T17:38:34.2703785Z   Downloading cffi-2.0.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.6 kB)
+2025-11-28T17:38:34.2831220Z Collecting pycparser (from cffi>=2.0.0->cryptography->authlib>=1.2.0->safety)
+2025-11-28T17:38:34.2863505Z   Downloading pycparser-2.23-py3-none-any.whl.metadata (993 bytes)
+2025-11-28T17:38:34.3071997Z Collecting anyio (from httpx->safety)
+2025-11-28T17:38:34.3106654Z   Downloading anyio-4.11.0-py3-none-any.whl.metadata (4.1 kB)
+2025-11-28T17:38:34.3305491Z Collecting certifi (from httpx->safety)
+2025-11-28T17:38:34.3340108Z   Downloading certifi-2025.11.12-py3-none-any.whl.metadata (2.5 kB)
+2025-11-28T17:38:34.3529525Z Collecting httpcore==1.* (from httpx->safety)
+2025-11-28T17:38:34.3562449Z   Downloading httpcore-1.0.9-py3-none-any.whl.metadata (21 kB)
+2025-11-28T17:38:34.3714106Z Collecting idna (from httpx->safety)
+2025-11-28T17:38:34.3750916Z   Downloading idna-3.11-py3-none-any.whl.metadata (8.4 kB)
+2025-11-28T17:38:34.3883061Z Collecting h11>=0.16 (from httpcore==1.*->httpx->safety)
+2025-11-28T17:38:34.3917796Z   Downloading h11-0.16.0-py3-none-any.whl.metadata (8.3 kB)
+2025-11-28T17:38:34.4071214Z Collecting sniffio>=1.1 (from anyio->httpx->safety)
+2025-11-28T17:38:34.4104004Z   Downloading sniffio-1.3.1-py3-none-any.whl.metadata (3.9 kB)
+2025-11-28T17:38:34.5019627Z Collecting charset_normalizer<4,>=2 (from requests->safety)
+2025-11-28T17:38:34.5057881Z   Downloading charset_normalizer-3.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl.metadata (37 kB)
+2025-11-28T17:38:34.5394963Z Collecting urllib3<3,>=1.21.1 (from requests->safety)
+2025-11-28T17:38:34.5431055Z   Downloading urllib3-2.5.0-py3-none-any.whl.metadata (6.5 kB)
+2025-11-28T17:38:34.5621486Z Downloading safety-3.7.0-py3-none-any.whl (312 kB)
+2025-11-28T17:38:34.5737870Z Downloading safety_schemas-0.0.16-py3-none-any.whl (39 kB)
+2025-11-28T17:38:34.5802505Z Downloading filelock-3.20.0-py3-none-any.whl (16 kB)
+2025-11-28T17:38:34.5857406Z Downloading bandit-1.9.2-py3-none-any.whl (134 kB)
+2025-11-28T17:38:34.5937529Z Downloading authlib-1.6.5-py2.py3-none-any.whl (243 kB)
+2025-11-28T17:38:34.6022555Z Downloading click-8.3.1-py3-none-any.whl (108 kB)
+2025-11-28T17:38:34.6082787Z Downloading dparse-0.6.4-py3-none-any.whl (11 kB)
+2025-11-28T17:38:34.6136764Z Downloading jinja2-3.1.6-py3-none-any.whl (134 kB)
+2025-11-28T17:38:34.6204586Z Downloading markupsafe-3.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (22 kB)
+2025-11-28T17:38:34.6256804Z Downloading marshmallow-4.1.0-py3-none-any.whl (48 kB)
+2025-11-28T17:38:34.6308790Z Downloading nltk-3.9.2-py3-none-any.whl (1.5 MB)
+2025-11-28T17:38:34.6551309Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.5/1.5 MB 76.9 MB/s  0:00:00
+2025-11-28T17:38:34.6590482Z Downloading packaging-25.0-py3-none-any.whl (66 kB)
+2025-11-28T17:38:34.6650077Z Downloading pydantic-2.12.5-py3-none-any.whl (463 kB)
+2025-11-28T17:38:34.6748302Z Downloading pydantic_core-2.41.5-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+2025-11-28T17:38:34.6947561Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 113.7 MB/s  0:00:00
+2025-11-28T17:38:34.6985046Z Downloading annotated_types-0.7.0-py3-none-any.whl (13 kB)
+2025-11-28T17:38:34.7044470Z Downloading pyyaml-6.0.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (806 kB)
+2025-11-28T17:38:34.7132454Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 806.6/806.6 kB 85.8 MB/s  0:00:00
+2025-11-28T17:38:34.7169179Z Downloading regex-2025.11.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (800 kB)
+2025-11-28T17:38:34.7254283Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 800.4/800.4 kB 89.5 MB/s  0:00:00
+2025-11-28T17:38:34.7289660Z Downloading ruamel.yaml-0.18.16-py3-none-any.whl (119 kB)
+2025-11-28T17:38:34.7348164Z Downloading ruamel_yaml_clib-0.2.15-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (777 kB)
+2025-11-28T17:38:34.7454978Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 777.6/777.6 kB 105.7 MB/s  0:00:00
+2025-11-28T17:38:34.7488968Z Downloading stevedore-5.6.0-py3-none-any.whl (54 kB)
+2025-11-28T17:38:34.7547364Z Downloading tenacity-9.1.2-py3-none-any.whl (28 kB)
+2025-11-28T17:38:34.7690790Z Downloading typer-0.20.0-py3-none-any.whl (47 kB)
+2025-11-28T17:38:34.7691615Z Downloading rich-14.2.0-py3-none-any.whl (243 kB)
+2025-11-28T17:38:34.7739024Z Downloading pygments-2.19.2-py3-none-any.whl (1.2 MB)
+2025-11-28T17:38:34.7839454Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.2/1.2 MB 126.4 MB/s  0:00:00
+2025-11-28T17:38:34.7874678Z Downloading markdown_it_py-4.0.0-py3-none-any.whl (87 kB)
+2025-11-28T17:38:34.7930388Z Downloading mdurl-0.1.2-py3-none-any.whl (10.0 kB)
+2025-11-28T17:38:34.7980875Z Downloading shellingham-1.5.4-py2.py3-none-any.whl (9.8 kB)
+2025-11-28T17:38:34.8036600Z Downloading typing_extensions-4.15.0-py3-none-any.whl (44 kB)
+2025-11-28T17:38:34.8090542Z Downloading typing_inspection-0.4.2-py3-none-any.whl (14 kB)
+2025-11-28T17:38:34.8168771Z Downloading cryptography-46.0.3-cp311-abi3-manylinux_2_34_x86_64.whl (4.5 MB)
+2025-11-28T17:38:34.8411767Z    ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.5/4.5 MB 193.4 MB/s  0:00:00
+2025-11-28T17:38:34.8448781Z Downloading cffi-2.0.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (215 kB)
+2025-11-28T17:38:34.8510039Z Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+2025-11-28T17:38:34.8568013Z Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+2025-11-28T17:38:34.8625321Z Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+2025-11-28T17:38:34.8682195Z Downloading anyio-4.11.0-py3-none-any.whl (109 kB)
+2025-11-28T17:38:34.8739049Z Downloading idna-3.11-py3-none-any.whl (71 kB)
+2025-11-28T17:38:34.8794291Z Downloading sniffio-1.3.1-py3-none-any.whl (10 kB)
+2025-11-28T17:38:34.8847024Z Downloading certifi-2025.11.12-py3-none-any.whl (159 kB)
+2025-11-28T17:38:34.8909264Z Downloading joblib-1.5.2-py3-none-any.whl (308 kB)
+2025-11-28T17:38:34.8978229Z Downloading pycparser-2.23-py3-none-any.whl (118 kB)
+2025-11-28T17:38:34.9032272Z Downloading requests-2.32.5-py3-none-any.whl (64 kB)
+2025-11-28T17:38:34.9086639Z Downloading charset_normalizer-3.4.4-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (151 kB)
+2025-11-28T17:38:34.9144818Z Downloading urllib3-2.5.0-py3-none-any.whl (129 kB)
+2025-11-28T17:38:34.9202081Z Downloading tomlkit-0.13.3-py3-none-any.whl (38 kB)
+2025-11-28T17:38:34.9256094Z Downloading tqdm-4.67.1-py3-none-any.whl (78 kB)
+2025-11-28T17:38:35.0453689Z Installing collected packages: urllib3, typing-extensions, tqdm, tomlkit, tenacity, stevedore, sniffio, shellingham, ruamel.yaml.clib, regex, PyYAML, pygments, pycparser, packaging, mdurl, marshmallow, MarkupSafe, joblib, idna, h11, filelock, click, charset_normalizer, certifi, annotated-types, typing-inspection, ruamel-yaml, requests, pydantic-core, nltk, markdown-it-py, jinja2, httpcore, dparse, cffi, anyio, rich, pydantic, httpx, cryptography, typer, safety-schemas, bandit, authlib, safety
+2025-11-28T17:38:39.0905276Z 
+2025-11-28T17:38:39.0933773Z Successfully installed MarkupSafe-3.0.3 PyYAML-6.0.3 annotated-types-0.7.0 anyio-4.11.0 authlib-1.6.5 bandit-1.9.2 certifi-2025.11.12 cffi-2.0.0 charset_normalizer-3.4.4 click-8.3.1 cryptography-46.0.3 dparse-0.6.4 filelock-3.20.0 h11-0.16.0 httpcore-1.0.9 httpx-0.28.1 idna-3.11 jinja2-3.1.6 joblib-1.5.2 markdown-it-py-4.0.0 marshmallow-4.1.0 mdurl-0.1.2 nltk-3.9.2 packaging-25.0 pycparser-2.23 pydantic-2.12.5 pydantic-core-2.41.5 pygments-2.19.2 regex-2025.11.3 requests-2.32.5 rich-14.2.0 ruamel-yaml-0.18.16 ruamel.yaml.clib-0.2.15 safety-3.7.0 safety-schemas-0.0.16 shellingham-1.5.4 sniffio-1.3.1 stevedore-5.6.0 tenacity-9.1.2 tomlkit-0.13.3 tqdm-4.67.1 typer-0.20.0 typing-extensions-4.15.0 typing-inspection-0.4.2 urllib3-2.5.0
+2025-11-28T17:38:39.6192624Z ##[group]Run safety check --file requirements-dev.txt || true
+2025-11-28T17:38:39.6193105Z [36;1msafety check --file requirements-dev.txt || true[0m
+2025-11-28T17:38:39.6227843Z shell: /usr/bin/bash -e {0}
+2025-11-28T17:38:39.6228066Z env:
+2025-11-28T17:38:39.6228303Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-28T17:38:39.6228726Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-28T17:38:39.6229120Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-28T17:38:39.6229467Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-28T17:38:39.6230009Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-28T17:38:39.6230482Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-28T17:38:39.6230771Z ##[endgroup]
+2025-11-28T17:38:40.6844703Z 
+2025-11-28T17:38:40.6844816Z 
+2025-11-28T17:38:40.6845881Z [33m[1m+===========================================================================================================================================================================================+[0m
+2025-11-28T17:38:40.6846312Z 
+2025-11-28T17:38:40.6846319Z 
+2025-11-28T17:38:40.6847096Z [31m[1mDEPRECATED: [0m[33m[1mthis command (`check`) has been DEPRECATED, and will be unsupported beyond 01 June 2024.[0m
+2025-11-28T17:38:40.6847875Z 
+2025-11-28T17:38:40.6847884Z 
+2025-11-28T17:38:40.6849207Z [32mWe highly encourage switching to the new [0m[32m[1m`scan`[0m[32m command which is easier to use, more powerful, and can be set up to mimic the deprecated command if required.[0m
+2025-11-28T17:38:40.6850843Z 
+2025-11-28T17:38:40.6850852Z 
+2025-11-28T17:38:40.6851518Z [33m[1m+===========================================================================================================================================================================================+[0m
+2025-11-28T17:38:40.6852012Z 
+2025-11-28T17:38:40.6852021Z 
+2025-11-28T17:38:41.2154608Z +==============================================================================+
+2025-11-28T17:38:41.2155050Z 
+2025-11-28T17:38:41.2155201Z                                /$$$$$$            /$$
+2025-11-28T17:38:41.2155612Z                               /$$__  $$          | $$
+2025-11-28T17:38:41.2156021Z            /$$$$$$$  /$$$$$$ | $$  \__//$$$$$$  /$$$$$$   /$$   /$$
+2025-11-28T17:38:41.2156453Z           /$$_____/ |____  $$| $$$$   /$$__  $$|_  $$_/  | $$  | $$
+2025-11-28T17:38:41.2156873Z          |  $$$$$$   /$$$$$$$| $$_/  | $$$$$$$$  | $$    | $$  | $$
+2025-11-28T17:38:41.2157280Z           \____  $$ /$$__  $$| $$    | $$_____/  | $$ /$$| $$  | $$
+2025-11-28T17:38:41.2157845Z           /$$$$$$$/|  $$$$$$$| $$    |  $$$$$$$  |  $$$$/|  $$$$$$$
+2025-11-28T17:38:41.2158149Z          |_______/  \_______/|__/     \_______/   \___/   \____  $$
+2025-11-28T17:38:41.2158421Z                                                           /$$  | $$
+2025-11-28T17:38:41.2158681Z                                                          |  $$$$$$/
+2025-11-28T17:38:41.2158970Z   by safetycli.com                                        \______/
+2025-11-28T17:38:41.2159184Z 
+2025-11-28T17:38:41.2159311Z +==============================================================================+
+2025-11-28T17:38:41.2159502Z 
+2025-11-28T17:38:41.2159799Z  [1mANNOUNCEMENTS[0m 
+2025-11-28T17:38:41.2159933Z 
+2025-11-28T17:38:41.2160513Z [33m  * Warning: ruff, pytest, pytest-asyncio, pytest-cov and mypy are unpinned.[0m 
+2025-11-28T17:38:41.2161092Z [33m    Safety by default does not report on potential vulnerabilities in unpinned[0m 
+2025-11-28T17:38:41.2161960Z [33m    packages. It is recommended to pin your dependencies unless this is a[0m 
+2025-11-28T17:38:41.2162959Z [33m    library meant for distribution. To learn more about reporting these,[0m 
+2025-11-28T17:38:41.2163734Z [33m    specifier range handling, and options for scanning unpinned packages visit[0m 
+2025-11-28T17:38:41.2164444Z [33m    https://docs.pyup.io/docs/safety-range-specs[0m 
+2025-11-28T17:38:41.2165024Z 
+2025-11-28T17:38:41.2165139Z +==============================================================================+
+2025-11-28T17:38:41.2165328Z 
+2025-11-28T17:38:41.2165430Z  [1mREPORT[0m 
+2025-11-28T17:38:41.2165548Z 
+2025-11-28T17:38:41.2165775Z   Safety [1mv3.7.0[0m is scanning for [1mVulnerabilities[0m[1m...[0m
+2025-11-28T17:38:41.2166194Z [1m  Scanning dependencies[0m in your [1mfiles:[0m
+2025-11-28T17:38:41.2166392Z 
+2025-11-28T17:38:41.2166481Z   -> requirements-dev.txt
+2025-11-28T17:38:41.2166659Z 
+2025-11-28T17:38:41.2166822Z   Using [1mopen-source vulnerability database[0m
+2025-11-28T17:38:41.2167298Z [1m  Found and scanned 5 packages[0m
+2025-11-28T17:38:41.2167594Z   Timestamp [1m2025-11-28 17:38:41[0m
+2025-11-28T17:38:41.2167885Z [1m  0[0m[1m vulnerabilities reported[0m
+2025-11-28T17:38:41.2168200Z [1m  1[0m[1m vulnerability ignored[0m
+2025-11-28T17:38:41.2168367Z 
+2025-11-28T17:38:41.2168470Z +==============================================================================+
+2025-11-28T17:38:41.2168764Z  [1mVULNERABILITIES REPORTED[0m 
+2025-11-28T17:38:41.2169006Z +==============================================================================+
+2025-11-28T17:38:41.2169177Z 
+2025-11-28T17:38:41.2169456Z [33m-> Warning: 1 known vulnerability matches the pytest-cov versions that could be[0m 
+2025-11-28T17:38:41.2169990Z [33m   installed from your specifier: pytest-cov>=0 (unpinned). These[0m 
+2025-11-28T17:38:41.2170805Z [33m   vulnerabilities are not reported by default. To report these vulnerabilities[0m 
+2025-11-28T17:38:41.2171385Z [33m   set 'ignore-unpinned-requirements' to False under 'security' in your policy[0m 
+2025-11-28T17:38:41.2171952Z [33m   file. See https://docs.pyup.io/docs/safety-20-policy-file for more[0m 
+2025-11-28T17:38:41.2172317Z [33m   information.[0m 
+2025-11-28T17:38:41.2173127Z [33m   It is recommended to pin your dependencies unless this is a library meant[0m 
+2025-11-28T17:38:41.2173675Z [33m   for distribution. To learn more about reporting these, specifier range[0m 
+2025-11-28T17:38:41.2174264Z [33m   handling, and options for scanning unpinned packages visit[0m 
+2025-11-28T17:38:41.2174686Z [33m   https://docs.pyup.io/docs/safety-range-specs[0m 
+2025-11-28T17:38:41.2174896Z 
+2025-11-28T17:38:41.2174900Z 
+2025-11-28T17:38:41.2174904Z 
+2025-11-28T17:38:41.2174994Z +==============================================================================+
+2025-11-28T17:38:41.2175178Z 
+2025-11-28T17:38:41.2175369Z  Scan was completed. 0 vulnerabilities were reported. 1 vulnerability from 1 
+2025-11-28T17:38:41.2175720Z  package was ignored. 
+2025-11-28T17:38:41.2175849Z 
+2025-11-28T17:38:41.2176003Z +==============================================================================+[0m
+2025-11-28T17:38:41.2176194Z 
+2025-11-28T17:38:41.2176198Z 
+2025-11-28T17:38:41.2176468Z [33m[1m+===========================================================================================================================================================================================+[0m
+2025-11-28T17:38:41.2176689Z 
+2025-11-28T17:38:41.2176694Z 
+2025-11-28T17:38:41.2177089Z [31m[1mDEPRECATED: [0m[33m[1mthis command (`check`) has been DEPRECATED, and will be unsupported beyond 01 June 2024.[0m
+2025-11-28T17:38:41.2177470Z 
+2025-11-28T17:38:41.2177474Z 
+2025-11-28T17:38:41.2178034Z [32mWe highly encourage switching to the new [0m[32m[1m`scan`[0m[32m command which is easier to use, more powerful, and can be set up to mimic the deprecated command if required.[0m
+2025-11-28T17:38:41.2178568Z 
+2025-11-28T17:38:41.2178572Z 
+2025-11-28T17:38:41.2178826Z [33m[1m+===========================================================================================================================================================================================+[0m
+2025-11-28T17:38:41.2179071Z 
+2025-11-28T17:38:41.2179075Z 
+2025-11-28T17:38:41.3668896Z ##[group]Run bandit -r apps/ sdk/ -ll || true
+2025-11-28T17:38:41.3669366Z [36;1mbandit -r apps/ sdk/ -ll || true[0m
+2025-11-28T17:38:41.3704030Z shell: /usr/bin/bash -e {0}
+2025-11-28T17:38:41.3704259Z env:
+2025-11-28T17:38:41.3704498Z   pythonLocation: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-28T17:38:41.3704908Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib/pkgconfig
+2025-11-28T17:38:41.3705288Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-28T17:38:41.3705636Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-28T17:38:41.3705977Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.11.14/x64
+2025-11-28T17:38:41.3706312Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.11.14/x64/lib
+2025-11-28T17:38:41.3706784Z ##[endgroup]
+2025-11-28T17:38:41.5102979Z [main]	INFO	profile include tests: None
+2025-11-28T17:38:41.5103491Z [main]	INFO	profile exclude tests: None
+2025-11-28T17:38:41.5104008Z [main]	INFO	cli include tests: None
+2025-11-28T17:38:41.5104318Z [main]	INFO	cli exclude tests: None
+2025-11-28T17:38:41.5105913Z [main]	INFO	running on Python 3.11.14
+2025-11-28T17:38:44.0888885Z Working... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:00:02
+2025-11-28T17:38:44.0905963Z Run started:2025-11-28 17:38:44.089389+00:00
+2025-11-28T17:38:44.0906386Z 
+2025-11-28T17:38:44.0906500Z Test results:
+2025-11-28T17:38:44.0907084Z >> Issue: [B324:hashlib] Use of weak MD5 hash for security. Consider usedforsecurity=False
+2025-11-28T17:38:44.0907786Z    Severity: High   Confidence: High
+2025-11-28T17:38:44.0908196Z    CWE: CWE-327 (https://cwe.mitre.org/data/definitions/327.html)
+2025-11-28T17:38:44.0908752Z    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b324_hashlib.html
+2025-11-28T17:38:44.0909321Z    Location: apps/memory_api/clients/rae_client.py:301:15
+2025-11-28T17:38:44.0909713Z 300	        key_string = "|".join(key_parts)
+2025-11-28T17:38:44.0910114Z 301	        return hashlib.md5(key_string.encode()).hexdigest()
+2025-11-28T17:38:44.0910688Z 302	
+2025-11-28T17:38:44.0910798Z 
+2025-11-28T17:38:44.0910918Z --------------------------------------------------
+2025-11-28T17:38:44.0911544Z >> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+2025-11-28T17:38:44.0912172Z    Severity: Medium   Confidence: Low
+2025-11-28T17:38:44.0912557Z    CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+2025-11-28T17:38:44.0913166Z    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b608_hardcoded_sql_expressions.html
+2025-11-28T17:38:44.0913832Z    Location: apps/memory_api/repositories/cost_logs_repository.py:668:8
+2025-11-28T17:38:44.0914281Z 667	    records = await pool.fetch(
+2025-11-28T17:38:44.0914574Z 668	        f"""
+2025-11-28T17:38:44.0914781Z 669	        SELECT *
+2025-11-28T17:38:44.0915011Z 670	        FROM cost_logs
+2025-11-28T17:38:44.0915266Z 671	        WHERE tenant_id = $1
+2025-11-28T17:38:44.0915545Z 672	          AND project_id = $2
+2025-11-28T17:38:44.0915819Z 673	          {error_filter}
+2025-11-28T17:38:44.0916087Z 674	        ORDER BY timestamp DESC
+2025-11-28T17:38:44.0916354Z 675	        LIMIT $3
+2025-11-28T17:38:44.0916569Z 676	        """,
+2025-11-28T17:38:44.0916778Z 677	        tenant_id,
+2025-11-28T17:38:44.0916921Z 
+2025-11-28T17:38:44.0917034Z --------------------------------------------------
+2025-11-28T17:38:44.0917648Z >> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+2025-11-28T17:38:44.0918258Z    Severity: Medium   Confidence: Low
+2025-11-28T17:38:44.0918639Z    CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+2025-11-28T17:38:44.0919240Z    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b608_hardcoded_sql_expressions.html
+2025-11-28T17:38:44.0919893Z    Location: apps/memory_api/repositories/memory_repository.py:87:22
+2025-11-28T17:38:44.0920586Z 86	
+2025-11-28T17:38:44.0921588Z 87	                sql = f"INSERT INTO memories ({columns_str}) VALUES ({placeholders_str}) RETURNING id, created_at, last_accessed_at, usage_count"
+2025-11-28T17:38:44.0922194Z 88	
+2025-11-28T17:38:44.0922284Z 
+2025-11-28T17:38:44.0922377Z --------------------------------------------------
+2025-11-28T17:38:44.0922847Z >> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+2025-11-28T17:38:44.0923316Z    Severity: Medium   Confidence: Low
+2025-11-28T17:38:44.0923624Z    CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+2025-11-28T17:38:44.0924083Z    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b608_hardcoded_sql_expressions.html
+2025-11-28T17:38:44.0924597Z    Location: apps/memory_api/repositories/reflection_repository.py:273:18
+2025-11-28T17:38:44.0925087Z 272	    # Count total matching
+2025-11-28T17:38:44.0925394Z 273	    count_query = f"SELECT COUNT(*) FROM reflections WHERE {where_clause}"
+2025-11-28T17:38:44.0925787Z 274	    total_count = await pool.fetchval(count_query, *params)
+2025-11-28T17:38:44.0926011Z 
+2025-11-28T17:38:44.0926102Z --------------------------------------------------
+2025-11-28T17:38:44.0926571Z >> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+2025-11-28T17:38:44.0927025Z    Severity: Medium   Confidence: Low
+2025-11-28T17:38:44.0927316Z    CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+2025-11-28T17:38:44.0927768Z    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b608_hardcoded_sql_expressions.html
+2025-11-28T17:38:44.0928272Z    Location: apps/memory_api/repositories/reflection_repository.py:288:12
+2025-11-28T17:38:44.0928591Z 287	
+2025-11-28T17:38:44.0928841Z 288	    query = f"SELECT * FROM reflections WHERE {where_clause} {order_clause}"
+2025-11-28T17:38:44.0929218Z 289	    records = await pool.fetch(query, *params)
+2025-11-28T17:38:44.0929400Z 
+2025-11-28T17:38:44.0929483Z --------------------------------------------------
+2025-11-28T17:38:44.0929949Z >> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+2025-11-28T17:38:44.0930611Z    Severity: Medium   Confidence: Low
+2025-11-28T17:38:44.0930911Z    CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+2025-11-28T17:38:44.0931385Z    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b608_hardcoded_sql_expressions.html
+2025-11-28T17:38:44.0931890Z    Location: apps/memory_api/repositories/reflection_repository.py:467:12
+2025-11-28T17:38:44.0932253Z 466	    where_clause = " AND ".join(conditions)
+2025-11-28T17:38:44.0932586Z 467	    query = f"SELECT * FROM reflection_relationships WHERE {where_clause}"
+2025-11-28T17:38:44.0932897Z 468	
+2025-11-28T17:38:44.0932979Z 
+2025-11-28T17:38:44.0933069Z --------------------------------------------------
+2025-11-28T17:38:44.0933560Z >> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+2025-11-28T17:38:44.0934135Z    Severity: Medium   Confidence: Low
+2025-11-28T17:38:44.0934437Z    CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+2025-11-28T17:38:44.0934893Z    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b608_hardcoded_sql_expressions.html
+2025-11-28T17:38:44.0935402Z    Location: apps/memory_api/repositories/reflection_repository.py:513:12
+2025-11-28T17:38:44.0935757Z 512	    # Recursive query for graph traversal
+2025-11-28T17:38:44.0935998Z 513	    query = f"""
+2025-11-28T17:38:44.0936183Z 514	    WITH RECURSIVE graph AS (
+2025-11-28T17:38:44.0936453Z 515	        -- Base case: starting reflection
+2025-11-28T17:38:44.0936686Z 516	        SELECT
+2025-11-28T17:38:44.0936844Z 517	            id,
+2025-11-28T17:38:44.0937014Z 518	            0 as depth,
+2025-11-28T17:38:44.0937210Z 519	            ARRAY[id] as path
+2025-11-28T17:38:44.0937428Z 520	        FROM reflections
+2025-11-28T17:38:44.0937623Z 521	        WHERE id = $1
+2025-11-28T17:38:44.0937830Z 522	
+2025-11-28T17:38:44.0937973Z 523	        UNION ALL
+2025-11-28T17:38:44.0938293Z 524	
+2025-11-28T17:38:44.0938473Z 525	        -- Recursive case: follow relationships
+2025-11-28T17:38:44.0938721Z 526	        SELECT
+2025-11-28T17:38:44.0938879Z 527	            r.id,
+2025-11-28T17:38:44.0939054Z 528	            g.depth + 1,
+2025-11-28T17:38:44.0939258Z 529	            g.path || r.id
+2025-11-28T17:38:44.0939452Z 530	        FROM graph g
+2025-11-28T17:38:44.0939748Z 531	        JOIN reflection_relationships rr ON rr.source_reflection_id = g.id
+2025-11-28T17:38:44.0940286Z 532	        JOIN reflections r ON r.id = rr.target_reflection_id
+2025-11-28T17:38:44.0940591Z 533	        WHERE
+2025-11-28T17:38:44.0940760Z 534	            g.depth < $1
+2025-11-28T17:38:44.0940967Z 535	            {relation_filter}
+2025-11-28T17:38:44.0941175Z 536	            {strength_filter}
+2025-11-28T17:38:44.0941567Z 537	            AND NOT (r.id = ANY(g.path))  -- Prevent cycles
+2025-11-28T17:38:44.0941832Z 538	    )
+2025-11-28T17:38:44.0941995Z 539	    SELECT DISTINCT id FROM graph
+2025-11-28T17:38:44.0942222Z 540	    """
+2025-11-28T17:38:44.0942368Z 541	
+2025-11-28T17:38:44.0942450Z 
+2025-11-28T17:38:44.0942545Z --------------------------------------------------
+2025-11-28T17:38:44.0943010Z >> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+2025-11-28T17:38:44.0943472Z    Severity: Medium   Confidence: Low
+2025-11-28T17:38:44.0943768Z    CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+2025-11-28T17:38:44.0944226Z    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b608_hardcoded_sql_expressions.html
+2025-11-28T17:38:44.0944737Z    Location: apps/memory_api/repositories/reflection_repository.py:553:22
+2025-11-28T17:38:44.0945089Z 552	        # Fetch all edges between these nodes
+2025-11-28T17:38:44.0945346Z 553	        edges_query = f"""
+2025-11-28T17:38:44.0945573Z 554	        SELECT * FROM reflection_relationships
+2025-11-28T17:38:44.0945818Z 555	        WHERE
+2025-11-28T17:38:44.0946006Z 556	            source_reflection_id = ANY($1)
+2025-11-28T17:38:44.0946265Z 557	            AND target_reflection_id = ANY($1)
+2025-11-28T17:38:44.0946511Z 558	            {relation_filter}
+2025-11-28T17:38:44.0946736Z 559	            {strength_filter}
+2025-11-28T17:38:44.0946932Z 560	        """
+2025-11-28T17:38:44.0947219Z 561	        edges_records = await pool.fetch(edges_query, node_ids, *relation_params)
+2025-11-28T17:38:44.0947492Z 
+2025-11-28T17:38:44.0947585Z --------------------------------------------------
+2025-11-28T17:38:44.0948036Z >> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
+2025-11-28T17:38:44.0948506Z    Severity: Medium   Confidence: Low
+2025-11-28T17:38:44.0948794Z    CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
+2025-11-28T17:38:44.0949262Z    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b608_hardcoded_sql_expressions.html
+2025-11-28T17:38:44.0949752Z    Location: apps/memory_api/services/reflection_pipeline.py:280:16
+2025-11-28T17:38:44.0950091Z 279	        where_clause = " AND ".join(conditions)
+2025-11-28T17:38:44.0950532Z 280	        query = f"""
+2025-11-28T17:38:44.0950801Z 281	            SELECT id, content, embedding, tags, importance, created_at
+2025-11-28T17:38:44.0951108Z 282	            FROM memories
+2025-11-28T17:38:44.0951310Z 283	            WHERE {where_clause}
+2025-11-28T17:38:44.0951536Z 284	            ORDER BY created_at DESC
+2025-11-28T17:38:44.0951771Z 285	            LIMIT ${param_idx}
+2025-11-28T17:38:44.0951975Z 286	        """
+2025-11-28T17:38:44.0952150Z 287	        params.append(limit)
+2025-11-28T17:38:44.0952290Z 
+2025-11-28T17:38:44.0952375Z --------------------------------------------------
+2025-11-28T17:38:44.0952749Z >> Issue: [B324:hashlib] Use of weak MD5 hash for security. Consider usedforsecurity=False
+2025-11-28T17:38:44.0953121Z    Severity: High   Confidence: High
+2025-11-28T17:38:44.0953414Z    CWE: CWE-327 (https://cwe.mitre.org/data/definitions/327.html)
+2025-11-28T17:38:44.0953942Z    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b324_hashlib.html
+2025-11-28T17:38:44.0954397Z    Location: apps/memory_api/services/vector_store/qdrant_store.py:102:28
+2025-11-28T17:38:44.0954739Z 101	            if word not in stopwords:
+2025-11-28T17:38:44.0955046Z 102	                index = int(hashlib.md5(word.encode()).hexdigest(), 16) % 100000
+2025-11-28T17:38:44.0955373Z 103	                indices.append(index)
+2025-11-28T17:38:44.0955530Z 
+2025-11-28T17:38:44.0955614Z --------------------------------------------------
+2025-11-28T17:38:44.0955969Z >> Issue: [B104:hardcoded_bind_all_interfaces] Possible binding to all interfaces.
+2025-11-28T17:38:44.0956328Z    Severity: Medium   Confidence: Medium
+2025-11-28T17:38:44.0956630Z    CWE: CWE-605 (https://cwe.mitre.org/data/definitions/605.html)
+2025-11-28T17:38:44.0957218Z    More Info: https://bandit.readthedocs.io/en/1.9.2/plugins/b104_hardcoded_bind_all_interfaces.html
+2025-11-28T17:38:44.0957650Z    Location: apps/ml_service/main.py:331:26
+2025-11-28T17:38:44.0957885Z 330	
+2025-11-28T17:38:44.0958058Z 331	    uvicorn.run(app, host="0.0.0.0", port=8001)
+2025-11-28T17:38:44.0958245Z 
+2025-11-28T17:38:44.0958332Z --------------------------------------------------
+2025-11-28T17:38:44.0958499Z 
+2025-11-28T17:38:44.0958569Z Code scanned:
+2025-11-28T17:38:44.0958741Z 	Total lines of code: 36607
+2025-11-28T17:38:44.0958952Z 	Total lines skipped (#nosec): 0
+2025-11-28T17:38:44.0959316Z 	Total potential issues skipped due to specifically being disabled (e.g., #nosec BXXX): 0
+2025-11-28T17:38:44.0959622Z 
+2025-11-28T17:38:44.0959693Z Run metrics:
+2025-11-28T17:38:44.0959861Z 	Total issues (by severity):
+2025-11-28T17:38:44.0960064Z 		Undefined: 0
+2025-11-28T17:38:44.0960426Z 		Low: 620
+2025-11-28T17:38:44.0960585Z 		Medium: 9
+2025-11-28T17:38:44.0960741Z 		High: 2
+2025-11-28T17:38:44.0960914Z 	Total issues (by confidence):
+2025-11-28T17:38:44.0961119Z 		Undefined: 0
+2025-11-28T17:38:44.0961271Z 		Low: 8
+2025-11-28T17:38:44.0961419Z 		Medium: 3
+2025-11-28T17:38:44.0961569Z 		High: 620
+2025-11-28T17:38:44.0961732Z Files skipped (0):
+2025-11-28T17:38:44.1630015Z Post job cleanup.
+2025-11-28T17:38:44.3313892Z Post job cleanup.
+2025-11-28T17:38:44.4284308Z [command]/usr/bin/git version
+2025-11-28T17:38:44.4329199Z git version 2.51.2
+2025-11-28T17:38:44.4373203Z Temporarily overriding HOME='/home/runner/work/_temp/12bc1a49-fe4f-4d5a-b358-b8d8466e85e9' before making global git config changes
+2025-11-28T17:38:44.4374371Z Adding repository directory to the temporary git global config as a safe directory
+2025-11-28T17:38:44.4378795Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/RAE-agentic-memory/RAE-agentic-memory
+2025-11-28T17:38:44.4416663Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+2025-11-28T17:38:44.4450391Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2025-11-28T17:38:44.4691517Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2025-11-28T17:38:44.4715311Z http.https://github.com/.extraheader
+2025-11-28T17:38:44.4728126Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+2025-11-28T17:38:44.4760329Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2025-11-28T17:38:44.4997087Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2025-11-28T17:38:44.5037943Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2025-11-28T17:38:44.5405463Z Cleaning up orphan processes

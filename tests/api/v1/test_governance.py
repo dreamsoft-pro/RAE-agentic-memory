@@ -1,8 +1,7 @@
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi.testclient import TestClient
+
 from apps.memory_api.main import app
-from datetime import datetime, timezone
 
 client = TestClient(app)
 
@@ -17,24 +16,38 @@ async def test_governance_overview_success(mock_app_state_pool):
         "total_calls": 1000,
         "total_cost_usd": 150.50,
         "total_tokens": 500000,
-        "unique_tenants": 5
+        "unique_tenants": 5,
     }
 
     # Mock top tenants
     mock_conn.fetch.side_effect = [
         [
-            {"tenant_id": "tenant-1", "calls": 500, "cost_usd": 75.25, "tokens": 250000},
-            {"tenant_id": "tenant-2", "calls": 300, "cost_usd": 45.15, "tokens": 150000},
+            {
+                "tenant_id": "tenant-1",
+                "calls": 500,
+                "cost_usd": 75.25,
+                "tokens": 250000,
+            },
+            {
+                "tenant_id": "tenant-2",
+                "calls": 300,
+                "cost_usd": 45.15,
+                "tokens": 150000,
+            },
         ],
         [
             {"model": "gpt-4", "calls": 600, "cost_usd": 90.30, "tokens": 300000},
-            {"model": "claude-3-5-sonnet-20241022", "calls": 400, "cost_usd": 60.20, "tokens": 200000},
-        ]
+            {
+                "model": "claude-3-5-sonnet-20241022",
+                "calls": 400,
+                "cost_usd": 60.20,
+                "tokens": 200000,
+            },
+        ],
     ]
 
     response = client.get(
-        "/v1/governance/overview?days=30",
-        headers={"X-Tenant-Id": "admin"}
+        "/v1/governance/overview?days=30", headers={"X-Tenant-Id": "admin"}
     )
 
     assert response.status_code == 200
@@ -56,17 +69,16 @@ async def test_governance_overview_with_custom_days(mock_app_state_pool):
         "total_calls": 200,
         "total_cost_usd": 30.00,
         "total_tokens": 100000,
-        "unique_tenants": 2
+        "unique_tenants": 2,
     }
 
     mock_conn.fetch.side_effect = [
         [{"tenant_id": "tenant-1", "calls": 200, "cost_usd": 30.00, "tokens": 100000}],
-        [{"model": "gpt-4", "calls": 200, "cost_usd": 30.00, "tokens": 100000}]
+        [{"model": "gpt-4", "calls": 200, "cost_usd": 30.00, "tokens": 100000}],
     ]
 
     response = client.get(
-        "/v1/governance/overview?days=7",
-        headers={"X-Tenant-Id": "admin"}
+        "/v1/governance/overview?days=7", headers={"X-Tenant-Id": "admin"}
     )
 
     assert response.status_code == 200
@@ -80,10 +92,7 @@ async def test_governance_overview_error(mock_app_state_pool):
     mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
     mock_conn.fetchrow.side_effect = Exception("Database error")
 
-    response = client.get(
-        "/v1/governance/overview",
-        headers={"X-Tenant-Id": "admin"}
-    )
+    response = client.get("/v1/governance/overview", headers={"X-Tenant-Id": "admin"})
 
     assert response.status_code == 500
     # Our generic exception handler returns: {"error": {"code": "500", "message": "Internal Server Error"}}
@@ -113,19 +122,26 @@ async def test_tenant_governance_stats_success(mock_app_state_pool):
         "total_tokens": 250000,
         "avg_cost_per_call": 0.15,
         "cache_hit_rate": 0.35,
-        "cache_savings": 12.50
+        "cache_savings": 12.50,
     }
 
     # Mock breakdowns
     mock_conn.fetch.side_effect = [
-        [{"project_id": "project-1", "calls": 300, "cost_usd": 45.15, "tokens": 150000}],
+        [
+            {
+                "project_id": "project-1",
+                "calls": 300,
+                "cost_usd": 45.15,
+                "tokens": 150000,
+            }
+        ],
         [{"model": "gpt-4", "calls": 500, "cost_usd": 75.25, "tokens": 250000}],
-        [{"operation": "query", "calls": 400, "cost_usd": 60.20, "tokens": 200000}]
+        [{"operation": "query", "calls": 400, "cost_usd": 60.20, "tokens": 200000}],
     ]
 
     response = client.get(
         "/v1/governance/tenant/test-tenant?days=30",
-        headers={"X-Tenant-Id": "test-tenant"}
+        headers={"X-Tenant-Id": "test-tenant"},
     )
 
     assert response.status_code == 200
@@ -150,12 +166,11 @@ async def test_tenant_governance_stats_no_data(mock_app_state_pool):
         "total_tokens": 0,
         "avg_cost_per_call": 0.0,
         "cache_hit_rate": 0.0,
-        "cache_savings": 0.0
+        "cache_savings": 0.0,
     }
 
     response = client.get(
-        "/v1/governance/tenant/nonexistent-tenant",
-        headers={"X-Tenant-Id": "admin"}
+        "/v1/governance/tenant/nonexistent-tenant", headers={"X-Tenant-Id": "admin"}
     )
 
     assert response.status_code == 404
@@ -177,18 +192,18 @@ async def test_tenant_governance_stats_with_custom_period(mock_app_state_pool):
         "total_tokens": 50000,
         "avg_cost_per_call": 0.15,
         "cache_hit_rate": 0.40,
-        "cache_savings": 5.00
+        "cache_savings": 5.00,
     }
 
     mock_conn.fetch.side_effect = [
         [{"project_id": "project-1", "calls": 100, "cost_usd": 15.00, "tokens": 50000}],
         [{"model": "gpt-4", "calls": 100, "cost_usd": 15.00, "tokens": 50000}],
-        [{"operation": "query", "calls": 100, "cost_usd": 15.00, "tokens": 50000}]
+        [{"operation": "query", "calls": 100, "cost_usd": 15.00, "tokens": 50000}],
     ]
 
     response = client.get(
         "/v1/governance/tenant/test-tenant?days=7",
-        headers={"X-Tenant-Id": "test-tenant"}
+        headers={"X-Tenant-Id": "test-tenant"},
     )
 
     assert response.status_code == 200
@@ -203,12 +218,12 @@ async def test_tenant_budget_status_success(mock_app_state_pool):
 
     mock_conn.fetchrow.return_value = {
         "current_cost_usd": 45.50,
-        "current_tokens": 150000
+        "current_tokens": 150000,
     }
 
     response = client.get(
         "/v1/governance/tenant/test-tenant/budget",
-        headers={"X-Tenant-Id": "test-tenant"}
+        headers={"X-Tenant-Id": "test-tenant"},
     )
 
     assert response.status_code == 200
@@ -229,12 +244,12 @@ async def test_tenant_budget_status_with_alerts(mock_app_state_pool):
     # Simulate high usage (would trigger alerts if budget was configured)
     mock_conn.fetchrow.return_value = {
         "current_cost_usd": 950.00,
-        "current_tokens": 3000000
+        "current_tokens": 3000000,
     }
 
     response = client.get(
         "/v1/governance/tenant/test-tenant/budget",
-        headers={"X-Tenant-Id": "test-tenant"}
+        headers={"X-Tenant-Id": "test-tenant"},
     )
 
     assert response.status_code == 200
@@ -248,14 +263,10 @@ async def test_tenant_budget_status_zero_usage(mock_app_state_pool):
     """Test budget status with zero usage"""
     mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
 
-    mock_conn.fetchrow.return_value = {
-        "current_cost_usd": 0.0,
-        "current_tokens": 0
-    }
+    mock_conn.fetchrow.return_value = {"current_cost_usd": 0.0, "current_tokens": 0}
 
     response = client.get(
-        "/v1/governance/tenant/new-tenant/budget",
-        headers={"X-Tenant-Id": "new-tenant"}
+        "/v1/governance/tenant/new-tenant/budget", headers={"X-Tenant-Id": "new-tenant"}
     )
 
     assert response.status_code == 200
@@ -273,7 +284,7 @@ async def test_tenant_budget_status_error(mock_app_state_pool):
 
     response = client.get(
         "/v1/governance/tenant/test-tenant/budget",
-        headers={"X-Tenant-Id": "test-tenant"}
+        headers={"X-Tenant-Id": "test-tenant"},
     )
 
     assert response.status_code == 500
@@ -289,7 +300,7 @@ async def test_governance_overview_invalid_days(mock_app_state_pool):
     """Test governance overview with invalid days parameter"""
     response = client.get(
         "/v1/governance/overview?days=400",  # Max is 365
-        headers={"X-Tenant-Id": "admin"}
+        headers={"X-Tenant-Id": "admin"},
     )
 
     # FastAPI should validate and return 422 for invalid parameter
@@ -301,7 +312,7 @@ async def test_tenant_governance_stats_invalid_days(mock_app_state_pool):
     """Test tenant stats with invalid days parameter"""
     response = client.get(
         "/v1/governance/tenant/test-tenant?days=0",  # Min is 1
-        headers={"X-Tenant-Id": "test-tenant"}
+        headers={"X-Tenant-Id": "test-tenant"},
     )
 
     # FastAPI should validate and return 422 for invalid parameter
@@ -317,15 +328,12 @@ async def test_governance_overview_empty_results(mock_app_state_pool):
         "total_calls": 0,
         "total_cost_usd": 0.0,
         "total_tokens": 0,
-        "unique_tenants": 0
+        "unique_tenants": 0,
     }
 
     mock_conn.fetch.side_effect = [[], []]  # Empty top tenants and models
 
-    response = client.get(
-        "/v1/governance/overview",
-        headers={"X-Tenant-Id": "admin"}
-    )
+    response = client.get("/v1/governance/overview", headers={"X-Tenant-Id": "admin"})
 
     assert response.status_code == 200
     data = response.json()

@@ -1,0 +1,36 @@
+#!/bin/bash
+
+echo ""
+echo "🔍 Sprawdzanie GitHub Actions przed commitem..."
+echo ""
+
+# Sprawdź Actions
+if [ -f .claude/scripts/check-actions.sh ]; then
+    bash .claude/scripts/check-actions.sh
+    ACTIONS_STATUS=$?
+    
+    if [ $ACTIONS_STATUS -eq 1 ]; then
+        echo ""
+        echo "⚠️  UWAGA: Ostatni GitHub Actions FAILED!"
+        echo "Czy na pewno chcesz commitować? (y/n)"
+        read -r response
+        if [[ ! "$response" =~ ^[Yy]$ ]]; then
+            echo "❌ Commit anulowany"
+            exit 1
+        fi
+    fi
+fi
+
+# Lint check
+echo ""
+echo "🔍 Uruchamiam linter..."
+npm run lint:fix 2>/dev/null || echo "⚠️  Brak lintera w projekcie"
+
+# Test check
+echo ""
+echo "🧪 Uruchamiam testy..."
+npm test 2>/dev/null || echo "⚠️  Brak testów lub testy nieudane"
+
+echo ""
+echo "✅ Pre-commit checks zakończone!"
+echo ""

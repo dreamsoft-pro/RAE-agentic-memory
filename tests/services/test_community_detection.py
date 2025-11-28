@@ -4,10 +4,15 @@ Tests for CommunityDetectionService - Community detection and summarization.
 Tests verify that the service correctly uses GraphRepository for all database operations.
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
+
 import networkx as nx
-from apps.memory_api.services.community_detection import CommunityDetectionService, CommunitySummary
+import pytest
+
+from apps.memory_api.services.community_detection import (
+    CommunityDetectionService,
+    CommunitySummary,
+)
 
 
 @pytest.fixture
@@ -28,22 +33,20 @@ async def test_load_graph_uses_repository(mock_dependencies):
     mock_graph_repo.get_all_nodes.return_value = [
         {"id": 1, "node_id": "node1", "label": "Entity1"},
         {"id": 2, "node_id": "node2", "label": "Entity2"},
-        {"id": 3, "node_id": "node3", "label": "Entity3"}
+        {"id": 3, "node_id": "node3", "label": "Entity3"},
     ]
 
     mock_graph_repo.get_all_edges.return_value = [
         {"source_node_id": 1, "target_node_id": 2, "relation": "RELATED_TO"},
-        {"source_node_id": 2, "target_node_id": 3, "relation": "CONNECTED_TO"}
+        {"source_node_id": 2, "target_node_id": 3, "relation": "CONNECTED_TO"},
     ]
 
     service = CommunityDetectionService(
-        pool=mock_pool,
-        graph_repository=mock_graph_repo
+        pool=mock_pool, graph_repository=mock_graph_repo
     )
 
     graph = await service._load_graph_from_db(
-        project_id="project1",
-        tenant_id="tenant1"
+        project_id="project1", tenant_id="tenant1"
     )
 
     # Verify graph structure
@@ -53,12 +56,10 @@ async def test_load_graph_uses_repository(mock_dependencies):
 
     # Verify repository was called
     mock_graph_repo.get_all_nodes.assert_called_once_with(
-        tenant_id="tenant1",
-        project_id="project1"
+        tenant_id="tenant1", project_id="project1"
     )
     mock_graph_repo.get_all_edges.assert_called_once_with(
-        tenant_id="tenant1",
-        project_id="project1"
+        tenant_id="tenant1", project_id="project1"
     )
 
 
@@ -70,22 +71,24 @@ async def test_load_graph_with_disconnected_edges(mock_dependencies):
     # Mock nodes and edges where an edge references missing node
     mock_graph_repo.get_all_nodes.return_value = [
         {"id": 1, "node_id": "node1", "label": "Entity1"},
-        {"id": 2, "node_id": "node2", "label": "Entity2"}
+        {"id": 2, "node_id": "node2", "label": "Entity2"},
     ]
 
     mock_graph_repo.get_all_edges.return_value = [
         {"source_node_id": 1, "target_node_id": 2, "relation": "RELATED_TO"},
-        {"source_node_id": 2, "target_node_id": 999, "relation": "BROKEN_LINK"}  # Node 999 doesn't exist
+        {
+            "source_node_id": 2,
+            "target_node_id": 999,
+            "relation": "BROKEN_LINK",
+        },  # Node 999 doesn't exist
     ]
 
     service = CommunityDetectionService(
-        pool=mock_pool,
-        graph_repository=mock_graph_repo
+        pool=mock_pool, graph_repository=mock_graph_repo
     )
 
     graph = await service._load_graph_from_db(
-        project_id="project1",
-        tenant_id="tenant1"
+        project_id="project1", tenant_id="tenant1"
     )
 
     # Should only add valid edges
@@ -102,14 +105,13 @@ async def test_store_super_node_uses_repository(mock_dependencies):
     mock_graph_repo.upsert_node.return_value = 123
 
     service = CommunityDetectionService(
-        pool=mock_pool,
-        graph_repository=mock_graph_repo
+        pool=mock_pool, graph_repository=mock_graph_repo
     )
 
     summary = CommunitySummary(
         summary="This community discusses Python programming",
         themes=["Python", "Programming", "Development"],
-        title="Python Development Community"
+        title="Python Development Community",
     )
 
     await service._store_super_node(
@@ -117,7 +119,7 @@ async def test_store_super_node_uses_repository(mock_dependencies):
         summary=summary,
         member_node_ids=[1, 2, 3],
         project_id="project1",
-        tenant_id="tenant1"
+        tenant_id="tenant1",
     )
 
     # Verify repository upsert was called
@@ -147,19 +149,17 @@ async def test_run_community_detection_insufficient_nodes(mock_dependencies):
     # Mock small graph (less than 5 nodes)
     mock_graph_repo.get_all_nodes.return_value = [
         {"id": 1, "node_id": "node1", "label": "Entity1"},
-        {"id": 2, "node_id": "node2", "label": "Entity2"}
+        {"id": 2, "node_id": "node2", "label": "Entity2"},
     ]
     mock_graph_repo.get_all_edges.return_value = []
 
     service = CommunityDetectionService(
-        pool=mock_pool,
-        graph_repository=mock_graph_repo
+        pool=mock_pool, graph_repository=mock_graph_repo
     )
 
     # Should complete without processing
     await service.run_community_detection_and_summarization(
-        project_id="project1",
-        tenant_id="tenant1"
+        project_id="project1", tenant_id="tenant1"
     )
 
     # Verify upsert was not called (no communities created)
@@ -172,19 +172,22 @@ async def test_generate_summary_llm_integration(mock_dependencies):
     mock_pool, mock_graph_repo = mock_dependencies
 
     service = CommunityDetectionService(
-        pool=mock_pool,
-        graph_repository=mock_graph_repo
+        pool=mock_pool, graph_repository=mock_graph_repo
     )
 
     # Mock LLM provider
     service.llm_provider = MagicMock()
-    service.llm_provider.generate_structured = AsyncMock(return_value=CommunitySummary(
-        summary="A collection of Python-related entities",
-        themes=["Python", "Programming"],
-        title="Python Ecosystem"
-    ))
+    service.llm_provider.generate_structured = AsyncMock(
+        return_value=CommunitySummary(
+            summary="A collection of Python-related entities",
+            themes=["Python", "Programming"],
+            title="Python Ecosystem",
+        )
+    )
 
-    description = "Nodes: Python, Django, Flask\nRelationships:\nPython --[RELATED_TO]--> Django"
+    description = (
+        "Nodes: Python, Django, Flask\nRelationships:\nPython --[RELATED_TO]--> Django"
+    )
 
     summary = await service._generate_summary(description)
 
@@ -199,13 +202,14 @@ async def test_generate_summary_llm_failure(mock_dependencies):
     mock_pool, mock_graph_repo = mock_dependencies
 
     service = CommunityDetectionService(
-        pool=mock_pool,
-        graph_repository=mock_graph_repo
+        pool=mock_pool, graph_repository=mock_graph_repo
     )
 
     # Mock LLM provider to raise exception
     service.llm_provider = MagicMock()
-    service.llm_provider.generate_structured = AsyncMock(side_effect=Exception("LLM Error"))
+    service.llm_provider.generate_structured = AsyncMock(
+        side_effect=Exception("LLM Error")
+    )
 
     description = "Test nodes"
 
@@ -224,17 +228,16 @@ async def test_process_community_workflow(mock_dependencies):
     mock_pool, mock_graph_repo = mock_dependencies
 
     service = CommunityDetectionService(
-        pool=mock_pool,
-        graph_repository=mock_graph_repo
+        pool=mock_pool, graph_repository=mock_graph_repo
     )
 
     # Mock LLM provider
     service.llm_provider = MagicMock()
-    service.llm_provider.generate_structured = AsyncMock(return_value=CommunitySummary(
-        summary="Test summary",
-        themes=["Test"],
-        title="Test Community"
-    ))
+    service.llm_provider.generate_structured = AsyncMock(
+        return_value=CommunitySummary(
+            summary="Test summary", themes=["Test"], title="Test Community"
+        )
+    )
 
     # Mock upsert
     mock_graph_repo.upsert_node.return_value = 456
@@ -254,7 +257,7 @@ async def test_process_community_workflow(mock_dependencies):
         node_ids=node_ids,
         graph=graph,
         project_id="project1",
-        tenant_id="tenant1"
+        tenant_id="tenant1",
     )
 
     # Verify LLM was called
@@ -273,13 +276,11 @@ async def test_empty_graph_handling(mock_dependencies):
     mock_graph_repo.get_all_edges.return_value = []
 
     service = CommunityDetectionService(
-        pool=mock_pool,
-        graph_repository=mock_graph_repo
+        pool=mock_pool, graph_repository=mock_graph_repo
     )
 
     graph = await service._load_graph_from_db(
-        project_id="project1",
-        tenant_id="tenant1"
+        project_id="project1", tenant_id="tenant1"
     )
 
     assert len(graph.nodes) == 0

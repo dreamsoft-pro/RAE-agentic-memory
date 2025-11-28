@@ -5,12 +5,11 @@ Enterprise-grade async HTTP client for RAE Memory API.
 Provides comprehensive error handling and caching.
 """
 
-import httpx
-from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
+from typing import Any, Dict, List, Optional
+
+import httpx
 import streamlit as st
-from functools import lru_cache
-import json
 
 
 class RAEClient:
@@ -31,7 +30,7 @@ class RAEClient:
         api_key: str = "default-key",
         tenant_id: str = "default-tenant",
         project_id: str = "default-project",
-        timeout: float = 30.0
+        timeout: float = 30.0,
     ):
         """
         Initialize RAE API client.
@@ -56,9 +55,7 @@ class RAEClient:
         }
 
         self.client = httpx.Client(
-            base_url=self.api_url,
-            headers=self.headers,
-            timeout=timeout
+            base_url=self.api_url, headers=self.headers, timeout=timeout
         )
 
     def __enter__(self):
@@ -67,12 +64,7 @@ class RAEClient:
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.client.close()
 
-    def _request(
-        self,
-        method: str,
-        endpoint: str,
-        **kwargs
-    ) -> Dict[str, Any]:
+    def _request(self, method: str, endpoint: str, **kwargs) -> Dict[str, Any]:
         """
         Make HTTP request with error handling.
 
@@ -110,24 +102,14 @@ class RAEClient:
         """
         try:
             # Query for counts by layer
-            stats = {
-                "total": 0,
-                "episodic": 0,
-                "working": 0,
-                "semantic": 0,
-                "ltm": 0
-            }
+            stats = {"total": 0, "episodic": 0, "working": 0, "semantic": 0, "ltm": 0}
 
             # Get count for each layer
             for layer in ["em", "wm", "sm", "ltm"]:
-                response = self._request(
+                self._request(
                     "POST",
                     "/v1/memory/query",
-                    json={
-                        "query_text": "*",
-                        "k": 1,
-                        "filters": {"layer": layer}
-                    }
+                    json={"query_text": "*", "k": 1, "filters": {"layer": layer}},
                 )
                 # This is approximate - would need dedicated stats endpoint
                 stats["total"] += 1
@@ -142,7 +124,7 @@ class RAEClient:
         self,
         layers: Optional[List[str]] = None,
         since: Optional[datetime] = None,
-        limit: int = 100
+        limit: int = 100,
     ) -> List[Dict[str, Any]]:
         """
         Fetch memories with filters.
@@ -159,15 +141,11 @@ class RAEClient:
             # Query for memories
             memories = []
 
-            for layer in (layers or ["em", "wm", "sm", "ltm"]):
+            for layer in layers or ["em", "wm", "sm", "ltm"]:
                 response = self._request(
                     "POST",
                     "/v1/memory/query",
-                    json={
-                        "query_text": "*",
-                        "k": limit,
-                        "filters": {"layer": layer}
-                    }
+                    json={"query_text": "*", "k": limit, "filters": {"layer": layer}},
                 )
 
                 results = response.get("results", [])
@@ -176,7 +154,8 @@ class RAEClient:
             # Filter by date if specified
             if since:
                 memories = [
-                    m for m in memories
+                    m
+                    for m in memories
                     if datetime.fromisoformat(m.get("timestamp", "")) >= since
                 ]
 
@@ -200,8 +179,7 @@ class RAEClient:
             # This would need a dedicated endpoint
             # For now, return mock data structure
             response = self._request(
-                "GET",
-                f"/v1/graph/nodes?project={project or self.project_id}"
+                "GET", f"/v1/graph/nodes?project={project or self.project_id}"
             )
 
             return response
@@ -211,10 +189,7 @@ class RAEClient:
             return {"nodes": [], "edges": []}
 
     def search_memories(
-        self,
-        query: str,
-        top_k: int = 10,
-        filters: Optional[Dict[str, Any]] = None
+        self, query: str, top_k: int = 10, filters: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Any]]:
         """
         Search memories by query.
@@ -235,8 +210,8 @@ class RAEClient:
                     "query_text": query,
                     "k": top_k,
                     "filters": filters or {},
-                    "project": self.project_id
-                }
+                    "project": self.project_id,
+                },
             )
 
             return response.get("results", [])
@@ -273,7 +248,7 @@ class RAEClient:
         self,
         memory_id: str,
         content: Optional[str] = None,
-        tags: Optional[List[str]] = None
+        tags: Optional[List[str]] = None,
     ) -> bool:
         """
         Update a memory record.
@@ -297,8 +272,8 @@ class RAEClient:
                     json={
                         "content": content,
                         "tags": tags or [],
-                        "project": self.project_id
-                    }
+                        "project": self.project_id,
+                    },
                 )
 
             st.success("Memory updated successfully")
@@ -319,10 +294,7 @@ class RAEClient:
             True if successful
         """
         try:
-            self._request(
-                "DELETE",
-                f"/v1/memory/delete?memory_id={memory_id}"
-            )
+            self._request("DELETE", f"/v1/memory/delete?memory_id={memory_id}")
 
             st.success("Memory deleted successfully")
             return True
@@ -332,10 +304,7 @@ class RAEClient:
             return False
 
     def query_memory(
-        self,
-        query: str,
-        top_k: int = 5,
-        use_rerank: bool = True
+        self, query: str, top_k: int = 5, use_rerank: bool = True
     ) -> List[Dict[str, Any]]:
         """
         Query memories with optional reranking.
@@ -352,22 +321,14 @@ class RAEClient:
             response = self._request(
                 "POST",
                 "/v1/memory/query",
-                json={
-                    "query_text": query,
-                    "k": top_k,
-                    "project": self.project_id
-                }
+                json={"query_text": query, "k": top_k, "project": self.project_id},
             )
 
             results = response.get("results", [])
 
             # Simple reranking by score if requested
             if use_rerank and results:
-                results = sorted(
-                    results,
-                    key=lambda x: x.get("score", 0),
-                    reverse=True
-                )
+                results = sorted(results, key=lambda x: x.get("score", 0), reverse=True)
 
             return results
 
@@ -389,10 +350,7 @@ class RAEClient:
             response = self._request(
                 "POST",
                 "/v1/memory/reflection/hierarchical",
-                params={
-                    "project": project or self.project_id,
-                    "bucket_size": 10
-                }
+                params={"project": project or self.project_id, "bucket_size": 10},
             )
 
             return response.get("summary", "No reflection available")
@@ -432,9 +390,7 @@ def get_cached_stats(_client: RAEClient) -> Dict[str, int]:
 
 @st.cache_data(ttl=30)
 def get_cached_memories(
-    _client: RAEClient,
-    layers: tuple,
-    days_back: int
+    _client: RAEClient, layers: tuple, days_back: int
 ) -> List[Dict[str, Any]]:
     """
     Cached version of get_memories.

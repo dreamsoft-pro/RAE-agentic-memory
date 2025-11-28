@@ -1,15 +1,19 @@
-import typer
-import requests
-import os
 import json
+import os
+
+import requests
+import typer
 
 app = typer.Typer(help="A CLI for interacting with the RAE API.")
+
 
 def _get_api_url() -> str:
     return os.environ.get("RAE_API_URL", "http://localhost:8000")
 
+
 def _get_api_key() -> str:
     return os.environ.get("RAE_API_KEY", "test-key")
+
 
 @app.command()
 def health():
@@ -21,6 +25,7 @@ def health():
         print(r.json())
     except requests.RequestException as e:
         print(f"Error connecting to API at {url}: {e}")
+
 
 @app.command()
 def store(
@@ -45,6 +50,7 @@ def store(
         print(json.dumps(r.json(), indent=2))
     except requests.RequestException as e:
         print(f"Error storing memory: {e}")
+
 
 @app.command()
 def query(
@@ -84,6 +90,7 @@ def ask(
         print(json.dumps(r.json(), indent=2, ensure_ascii=False))
     except requests.RequestException as e:
         print(f"Error executing agent: {e}")
+
 
 if __name__ == "__main__":
     app()

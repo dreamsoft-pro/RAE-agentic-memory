@@ -4,22 +4,23 @@ Tests for Visualization Utilities
 Tests chart creation and formatting functions.
 """
 
-import pytest
-import plotly.graph_objects as go
+import os
+import sys
 from datetime import datetime
 
-import sys
-import os
+import plotly.graph_objects as go
+import pytest
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from utils.visualizations import (
-    create_timeline_chart,
     create_layer_distribution_chart,
+    create_score_distribution,
     create_tags_wordcloud_chart,
     create_temporal_heatmap,
-    create_score_distribution,
+    create_timeline_chart,
     format_memory_preview,
-    format_timestamp
+    format_timestamp,
 )
 
 
@@ -36,7 +37,7 @@ class TestChartCreation:
                 "layer": "em",
                 "timestamp": "2024-01-01T10:00:00",
                 "source": "test",
-                "tags": ["tag1", "tag2"]
+                "tags": ["tag1", "tag2"],
             },
             {
                 "id": "mem2",
@@ -44,7 +45,7 @@ class TestChartCreation:
                 "layer": "wm",
                 "timestamp": "2024-01-02T11:00:00",
                 "source": "test",
-                "tags": ["tag2", "tag3"]
+                "tags": ["tag2", "tag3"],
             },
             {
                 "id": "mem3",
@@ -52,8 +53,8 @@ class TestChartCreation:
                 "layer": "sm",
                 "timestamp": "2024-01-03T12:00:00",
                 "source": "test",
-                "tags": ["tag1", "tag3"]
-            }
+                "tags": ["tag1", "tag3"],
+            },
         ]
 
     @pytest.fixture
@@ -64,7 +65,7 @@ class TestChartCreation:
             {"id": "r2", "content": "Result 2", "score": 0.85},
             {"id": "r3", "content": "Result 3", "score": 0.75},
             {"id": "r4", "content": "Result 4", "score": 0.65},
-            {"id": "r5", "content": "Result 5", "score": 0.55}
+            {"id": "r5", "content": "Result 5", "score": 0.55},
         ]
 
     def test_create_timeline_chart(self, sample_memories):
@@ -212,8 +213,18 @@ class TestChartProperties:
     def test_timeline_chart_color_mapping(self):
         """Test timeline uses correct color mapping"""
         memories = [
-            {"id": "m1", "content": "test", "layer": "em", "timestamp": "2024-01-01T10:00:00"},
-            {"id": "m2", "content": "test", "layer": "wm", "timestamp": "2024-01-01T11:00:00"}
+            {
+                "id": "m1",
+                "content": "test",
+                "layer": "em",
+                "timestamp": "2024-01-01T10:00:00",
+            },
+            {
+                "id": "m2",
+                "content": "test",
+                "layer": "wm",
+                "timestamp": "2024-01-01T11:00:00",
+            },
         ]
         fig = create_timeline_chart(memories)
 
@@ -228,7 +239,7 @@ class TestChartProperties:
         memories = [
             {"id": "m1", "content": "test", "layer": "em"},
             {"id": "m2", "content": "test", "layer": "wm"},
-            {"id": "m3", "content": "test", "layer": "sm"}
+            {"id": "m3", "content": "test", "layer": "sm"},
         ]
         fig = create_layer_distribution_chart(memories)
 
@@ -241,11 +252,13 @@ class TestChartProperties:
         # Create memories spanning a week
         memories = []
         for i in range(7):
-            memories.append({
-                "id": f"m{i}",
-                "content": "test",
-                "timestamp": f"2024-01-{i+1:02d}T10:00:00"
-            })
+            memories.append(
+                {
+                    "id": f"m{i}",
+                    "content": "test",
+                    "timestamp": f"2024-01-{i+1:02d}T10:00:00",
+                }
+            )
 
         fig = create_temporal_heatmap(memories)
 
@@ -258,9 +271,7 @@ class TestEdgeCases:
 
     def test_memories_without_timestamps(self):
         """Test handling memories without timestamps"""
-        memories = [
-            {"id": "m1", "content": "test", "layer": "em"}
-        ]
+        memories = [{"id": "m1", "content": "test", "layer": "em"}]
 
         # Should not raise exception
         fig = create_timeline_chart(memories)
@@ -271,7 +282,7 @@ class TestEdgeCases:
         memories = [
             {"id": "m1"},  # Minimal memory
             {"content": "test"},  # No ID
-            {"layer": "em"}  # No content
+            {"layer": "em"},  # No content
         ]
 
         # Should handle gracefully
@@ -280,13 +291,15 @@ class TestEdgeCases:
 
     def test_single_memory(self):
         """Test charts with single memory"""
-        memories = [{
-            "id": "m1",
-            "content": "Single memory",
-            "layer": "em",
-            "timestamp": "2024-01-01T10:00:00",
-            "tags": ["tag1"]
-        }]
+        memories = [
+            {
+                "id": "m1",
+                "content": "Single memory",
+                "layer": "em",
+                "timestamp": "2024-01-01T10:00:00",
+                "tags": ["tag1"],
+            }
+        ]
 
         timeline = create_timeline_chart(memories)
         distribution = create_layer_distribution_chart(memories)
@@ -298,13 +311,15 @@ class TestEdgeCases:
         """Test charts with large dataset"""
         memories = []
         for i in range(1000):
-            memories.append({
-                "id": f"m{i}",
-                "content": f"Memory {i}",
-                "layer": ["em", "wm", "sm", "ltm"][i % 4],
-                "timestamp": f"2024-01-01T{i%24:02d}:00:00",
-                "tags": [f"tag{i%10}"]
-            })
+            memories.append(
+                {
+                    "id": f"m{i}",
+                    "content": f"Memory {i}",
+                    "layer": ["em", "wm", "sm", "ltm"][i % 4],
+                    "timestamp": f"2024-01-01T{i%24:02d}:00:00",
+                    "tags": [f"tag{i%10}"],
+                }
+            )
 
         # Should handle large datasets
         fig = create_timeline_chart(memories)

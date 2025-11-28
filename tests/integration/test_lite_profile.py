@@ -13,11 +13,11 @@ Usage:
     pytest tests/integration/test_lite_profile.py -v
 """
 
-import pytest
 import subprocess
 import time
-import httpx
 
+import httpx
+import pytest
 
 pytestmark = pytest.mark.integration
 
@@ -37,7 +37,7 @@ def lite_profile_services():
     subprocess.run(
         ["docker-compose", "-f", "docker-compose.lite.yml", "up", "-d"],
         check=True,
-        capture_output=True
+        capture_output=True,
     )
 
     # Wait for services to be ready (up to 60 seconds)
@@ -61,7 +61,7 @@ def lite_profile_services():
         # Cleanup on failure
         subprocess.run(
             ["docker-compose", "-f", "docker-compose.lite.yml", "down"],
-            capture_output=True
+            capture_output=True,
         )
         pytest.fail("RAE API failed to start within 60 seconds")
 
@@ -71,7 +71,7 @@ def lite_profile_services():
     # Teardown: Stop services
     subprocess.run(
         ["docker-compose", "-f", "docker-compose.lite.yml", "down", "-v"],
-        capture_output=True
+        capture_output=True,
     )
 
 
@@ -100,14 +100,14 @@ def test_lite_profile_store_memory(lite_profile_services):
         "source": "integration-test",
         "layer": "em",
         "importance": 0.5,
-        "tags": ["test", "integration"]
+        "tags": ["test", "integration"],
     }
 
     response = httpx.post(
         "http://localhost:8000/v1/memory/store",
         json=payload,
         headers={"X-Tenant-Id": "test-tenant"},
-        timeout=10.0
+        timeout=10.0,
     )
 
     assert response.status_code == 200
@@ -124,14 +124,14 @@ def test_lite_profile_query_memory(lite_profile_services):
         "source": "integration-test",
         "layer": "em",
         "importance": 0.7,
-        "tags": ["querytest"]
+        "tags": ["querytest"],
     }
 
     store_response = httpx.post(
         "http://localhost:8000/v1/memory/store",
         json=store_payload,
         headers={"X-Tenant-Id": "test-tenant"},
-        timeout=10.0
+        timeout=10.0,
     )
     assert store_response.status_code == 200
 
@@ -139,16 +139,13 @@ def test_lite_profile_query_memory(lite_profile_services):
     time.sleep(1)
 
     # Query for the memory
-    query_payload = {
-        "query_text": "test memory query",
-        "k": 5
-    }
+    query_payload = {"query_text": "test memory query", "k": 5}
 
     response = httpx.post(
         "http://localhost:8000/v1/memory/query",
         json=query_payload,
         headers={"X-Tenant-Id": "test-tenant"},
-        timeout=10.0
+        timeout=10.0,
     )
 
     assert response.status_code == 200
@@ -163,7 +160,7 @@ def test_lite_profile_services_running():
     result = subprocess.run(
         ["docker-compose", "-f", "docker-compose.lite.yml", "ps", "--services"],
         capture_output=True,
-        text=True
+        text=True,
     )
 
     services = result.stdout.strip().split("\n")
@@ -181,7 +178,7 @@ def test_lite_profile_postgres_accessible():
     result = subprocess.run(
         ["docker-compose", "-f", "docker-compose.lite.yml", "ps", "postgres"],
         capture_output=True,
-        text=True
+        text=True,
     )
 
     assert "Up" in result.stdout or "running" in result.stdout.lower()
@@ -201,7 +198,7 @@ def test_lite_profile_redis_accessible():
     result = subprocess.run(
         ["docker-compose", "-f", "docker-compose.lite.yml", "ps", "redis"],
         capture_output=True,
-        text=True
+        text=True,
     )
 
     assert "Up" in result.stdout or "running" in result.stdout.lower()
@@ -212,7 +209,7 @@ def test_lite_profile_no_ml_service():
     result = subprocess.run(
         ["docker-compose", "-f", "docker-compose.lite.yml", "ps", "--services"],
         capture_output=True,
-        text=True
+        text=True,
     )
 
     services = result.stdout.strip().split("\n")
@@ -221,7 +218,9 @@ def test_lite_profile_no_ml_service():
     unwanted_services = ["ml-service", "celery-worker", "celery-beat", "rae-dashboard"]
 
     for service in unwanted_services:
-        assert service not in services, f"Service {service} should not be in Lite Profile"
+        assert (
+            service not in services
+        ), f"Service {service} should not be in Lite Profile"
 
 
 def test_lite_profile_resource_efficiency():
@@ -230,7 +229,7 @@ def test_lite_profile_resource_efficiency():
     result = subprocess.run(
         ["docker-compose", "-f", "docker-compose.lite.yml", "ps", "--services"],
         capture_output=True,
-        text=True
+        text=True,
     )
 
     service_count = len(result.stdout.strip().split("\n"))
@@ -241,13 +240,13 @@ def test_lite_profile_resource_efficiency():
 
 @pytest.mark.skipif(
     subprocess.run(["which", "docker-compose"], capture_output=True).returncode != 0,
-    reason="docker-compose not available"
+    reason="docker-compose not available",
 )
 def test_lite_profile_config_valid():
     """Test that docker-compose.lite.yml is valid"""
     result = subprocess.run(
         ["docker-compose", "-f", "docker-compose.lite.yml", "config"],
-        capture_output=True
+        capture_output=True,
     )
 
     assert result.returncode == 0, "docker-compose.lite.yml has invalid syntax"

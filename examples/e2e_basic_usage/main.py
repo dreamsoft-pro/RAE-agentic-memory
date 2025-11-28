@@ -1,6 +1,7 @@
 import asyncio
-from rae_memory_sdk import RAEClient, AsyncRAEClient
-from rae_memory_sdk.models import Memory
+
+from rae_memory_sdk import AsyncRAEClient, RAEClient
+
 
 def run_sync_example():
     """Demonstrates the synchronous client."""
@@ -47,6 +48,7 @@ def run_sync_example():
     else:
         print("  No memories found.")
 
+
 async def run_async_example():
     """Demonstrates the asynchronous client."""
     print("\n--- Running Asynchronous Example ---")
@@ -69,7 +71,7 @@ async def run_async_example():
             type="rule",
             content="Performance issues in critical paths should be escalated to the on-call engineer.",
             tags=["ops", "rule"],
-        )
+        ),
     )
     print("Memories stored.")
 
@@ -87,6 +89,7 @@ async def run_async_example():
         print("  No memories found.")
 
     await client.close()
+
 
 if __name__ == "__main__":
     run_sync_example()

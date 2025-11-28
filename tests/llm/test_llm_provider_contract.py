@@ -24,7 +24,6 @@ from apps.llm import (
     QwenProvider,
 )
 
-
 # Mark all tests in this module as requiring LLM API access
 pytestmark = pytest.mark.llm
 
