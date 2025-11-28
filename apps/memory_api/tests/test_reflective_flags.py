@@ -4,13 +4,15 @@ Tests for Reflective Memory Feature Flags
 These tests ensure that feature flags actually affect system behavior.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
 from apps.memory_api.services.context_builder import ContextBuilder
 from apps.memory_api.workers.memory_maintenance import (
     DreamingWorker,
-    SummarizationWorker,
     MaintenanceScheduler,
+    SummarizationWorker,
 )
 
 
@@ -29,9 +31,7 @@ class TestReflectiveMemoryFlags:
 
         # Act
         reflections = await context_builder._retrieve_reflections(
-            tenant_id="test_tenant",
-            project_id="test_project",
-            query="test query"
+            tenant_id="test_tenant", project_id="test_project", query="test query"
         )
 
         # Assert
@@ -50,26 +50,25 @@ class TestReflectiveMemoryFlags:
 
         mock_pool = AsyncMock()
         mock_reflection_engine = AsyncMock()
-        mock_reflection_engine.query_reflections = AsyncMock(return_value=[
-            {
-                "id": "refl1",
-                "content": "Test reflection",
-                "importance": 0.8,
-                "tags": ["test"],
-                "created_at": "2025-01-01"
-            }
-        ])
+        mock_reflection_engine.query_reflections = AsyncMock(
+            return_value=[
+                {
+                    "id": "refl1",
+                    "content": "Test reflection",
+                    "importance": 0.8,
+                    "tags": ["test"],
+                    "created_at": "2025-01-01",
+                }
+            ]
+        )
 
         context_builder = ContextBuilder(
-            pool=mock_pool,
-            reflection_engine=mock_reflection_engine
+            pool=mock_pool, reflection_engine=mock_reflection_engine
         )
 
         # Act
         reflections = await context_builder._retrieve_reflections(
-            tenant_id="test_tenant",
-            project_id="test_project",
-            query="test query"
+            tenant_id="test_tenant", project_id="test_project", query="test query"
         )
 
         # Assert
@@ -97,15 +96,12 @@ class TestReflectiveMemoryMode:
         mock_reflection_engine.query_reflections = AsyncMock(return_value=[])
 
         context_builder = ContextBuilder(
-            pool=mock_pool,
-            reflection_engine=mock_reflection_engine
+            pool=mock_pool, reflection_engine=mock_reflection_engine
         )
 
         # Act
         await context_builder._retrieve_reflections(
-            tenant_id="test_tenant",
-            project_id="test_project",
-            query="test query"
+            tenant_id="test_tenant", project_id="test_project", query="test query"
         )
 
         # Assert
@@ -114,7 +110,7 @@ class TestReflectiveMemoryMode:
             project_id="test_project",
             query_text="test query",
             k=3,  # Lite mode limit
-            min_importance=0.5
+            min_importance=0.5,
         )
 
     @pytest.mark.asyncio
@@ -132,15 +128,12 @@ class TestReflectiveMemoryMode:
         mock_reflection_engine.query_reflections = AsyncMock(return_value=[])
 
         context_builder = ContextBuilder(
-            pool=mock_pool,
-            reflection_engine=mock_reflection_engine
+            pool=mock_pool, reflection_engine=mock_reflection_engine
         )
 
         # Act
         await context_builder._retrieve_reflections(
-            tenant_id="test_tenant",
-            project_id="test_project",
-            query="test query"
+            tenant_id="test_tenant", project_id="test_project", query="test query"
         )
 
         # Assert
@@ -149,7 +142,7 @@ class TestReflectiveMemoryMode:
             project_id="test_project",
             query_text="test query",
             k=5,  # Full mode limit
-            min_importance=0.5
+            min_importance=0.5,
         )
 
 
@@ -169,8 +162,7 @@ class TestDreamingEnabled:
 
         # Act
         results = await dreaming_worker.run_dreaming_cycle(
-            tenant_id="test_tenant",
-            project_id="test_project"
+            tenant_id="test_tenant", project_id="test_project"
         )
 
         # Assert
@@ -198,8 +190,7 @@ class TestDreamingEnabled:
 
         # Act
         results = await dreaming_worker.run_dreaming_cycle(
-            tenant_id="test_tenant",
-            project_id="test_project"
+            tenant_id="test_tenant", project_id="test_project"
         )
 
         # Assert - dreaming attempted to fetch memories
@@ -224,7 +215,7 @@ class TestSummarizationEnabled:
         result = await summarization_worker.summarize_session(
             tenant_id="test_tenant",
             project_id="test_project",
-            session_id="test-session-id"
+            session_id="test-session-id",
         )
 
         # Assert
@@ -240,25 +231,25 @@ class TestSummarizationEnabled:
 
         mock_pool = AsyncMock()
         mock_memory_repo = AsyncMock()
-        mock_memory_repo.get_episodic_memories = AsyncMock(return_value=[
-            {"content": f"Event {i}", "importance": 0.5}
-            for i in range(12)  # Above min_events
-        ])
-        mock_memory_repo.insert_memory = AsyncMock(return_value={
-            "id": "summary-123",
-            "content": "Summary content"
-        })
+        mock_memory_repo.get_episodic_memories = AsyncMock(
+            return_value=[
+                {"content": f"Event {i}", "importance": 0.5}
+                for i in range(12)  # Above min_events
+            ]
+        )
+        mock_memory_repo.insert_memory = AsyncMock(
+            return_value={"id": "summary-123", "content": "Summary content"}
+        )
 
         summarization_worker = SummarizationWorker(
-            pool=mock_pool,
-            memory_repository=mock_memory_repo
+            pool=mock_pool, memory_repository=mock_memory_repo
         )
 
         # Act
         result = await summarization_worker.summarize_session(
             tenant_id="test_tenant",
             project_id="test_project",
-            session_id="test-session-id"
+            session_id="test-session-id",
         )
 
         # Assert
@@ -331,6 +322,8 @@ class TestMaintenanceScheduler:
 
         # Assert
         assert stats["decay"]["updated"] == 100
-        assert "skipped" not in stats["dreaming"] or not stats["dreaming"].get("skipped")
+        assert "skipped" not in stats["dreaming"] or not stats["dreaming"].get(
+            "skipped"
+        )
         assert stats["config"]["reflective_enabled"] is True
         assert stats["config"]["dreaming_enabled"] is True

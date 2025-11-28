@@ -112,15 +112,15 @@ class ReflectionContext:
 
     # Outcome
     outcome: OutcomeType
-    error: Optional[ErrorInfo] = None
 
-    # Task information
-    task_description: Optional[str] = None
-    task_goal: Optional[str] = None
-
-    # Session context
+    # Session context (required fields must come before optional fields)
     tenant_id: str
     project_id: str
+
+    # Optional fields
+    error: Optional[ErrorInfo] = None
+    task_description: Optional[str] = None
+    task_goal: Optional[str] = None
     session_id: Optional[UUID] = None
 
     # Additional context
