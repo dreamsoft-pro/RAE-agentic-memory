@@ -4,7 +4,6 @@ from pathlib import Path
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 from apps.memory_api.main import app
-from apps.memory_api.dependencies import get_api_key
 from apps.memory_api.security import auth
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -40,7 +39,7 @@ def mock_env_and_settings(monkeypatch):
 
 @pytest.fixture(autouse=True)
 def override_auth():
-    app.dependency_overrides[get_api_key] = lambda: "test-api-key"
+    app.dependency_overrides[auth.verify_api_key] = lambda: "test-api-key"
     app.dependency_overrides[auth.verify_token] = lambda: {"sub": "test-user", "scope": "admin"}
     yield
     app.dependency_overrides = {}
