@@ -3,6 +3,9 @@ Contract tests for LLM providers.
 
 All providers must pass these tests to ensure they implement
 the LLMProvider interface correctly.
+
+NOTE: These tests make real API calls and require valid API keys.
+Run with: pytest -m llm tests/llm/
 """
 
 import os
@@ -20,6 +23,10 @@ from apps.llm import (
     OpenAIProvider,
     QwenProvider,
 )
+
+
+# Mark all tests in this module as requiring LLM API access
+pytestmark = pytest.mark.llm
 
 
 # Fixtures for providers - skip if API keys not available

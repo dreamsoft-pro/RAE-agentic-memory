@@ -29,6 +29,9 @@ from apps.memory_api.services.hybrid_search import HybridSearchService, Traversa
 from apps.memory_api.config import settings
 
 
+pytestmark = pytest.mark.integration
+
+
 @pytest.fixture
 async def db_pool():
     """Create a database connection pool for testing."""

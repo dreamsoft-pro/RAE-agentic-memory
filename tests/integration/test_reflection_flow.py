@@ -27,6 +27,9 @@ from apps.memory_api.services.memory_scoring_v2 import compute_memory_score
 from apps.memory_api.repositories.memory_repository import MemoryRepository
 
 
+pytestmark = pytest.mark.integration
+
+
 # ============================================================================
 # Fixtures
 # ============================================================================
