@@ -6,7 +6,7 @@ celery_app = Celery(
     "rae_memory_tasks",
     broker=settings.CELERY_BROKER_URL,
     backend=settings.CELERY_RESULT_BACKEND,
-    include=["apps.memory-api.tasks.background_tasks"],  # Points to the tasks module
+    include=["apps.memory_api.tasks.background_tasks"],  # Points to the tasks module
 )
 
 celery_app.conf.update(

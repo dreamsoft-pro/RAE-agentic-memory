@@ -449,6 +449,106 @@ def decay_memory_importance_task(self, tenant_id: str = None):
     return asyncio.run(main())
 
 
+@celery_app.task(bind=True, max_retries=3)
+def run_maintenance_cycle_task(self):
+    """
+    Run the complete memory maintenance cycle.
+
+    This task runs the MaintenanceScheduler which coordinates:
+    - Decay worker (importance decay)
+    - Dreaming worker (background reflections)
+    - Summarization worker (session summarization)
+
+    All operations respect configuration flags:
+    - REFLECTIVE_MEMORY_ENABLED
+    - DREAMING_ENABLED
+    - SUMMARIZATION_ENABLED
+    - REFLECTIVE_MEMORY_MODE (lite/full)
+
+    Should be scheduled daily (e.g., at 3 AM).
+    """
+    import asyncio
+
+    from apps.memory_api.workers.memory_maintenance import MaintenanceScheduler
+
+    async def main():
+        pool = await get_pool()
+        try:
+            scheduler = MaintenanceScheduler(pool)
+            stats = await scheduler.run_daily_maintenance()
+
+            logger.info(
+                "maintenance_cycle_complete",
+                decay_updated=stats.get("decay", {}).get("total_updated", 0),
+                dreaming_generated=stats.get("dreaming", {}).get(
+                    "reflections_generated", 0
+                ),
+                config=stats.get("config", {}),
+            )
+
+            return stats
+
+        except Exception as e:
+            logger.error("maintenance_cycle_failed", error=str(e))
+            raise self.retry(exc=e, countdown=300 * (2**self.request.retries))
+
+        finally:
+            await pool.close()
+
+    return asyncio.run(main())
+
+
+@celery_app.task
+def run_dreaming_task(tenant_id: str, project_id: str = "default"):
+    """
+    Run dreaming cycle for a specific tenant/project.
+
+    Analyzes high-importance memories and generates meta-reflections.
+    Only runs if REFLECTIVE_MEMORY_ENABLED and DREAMING_ENABLED are True.
+    """
+    import asyncio
+
+    from apps.memory_api.workers.memory_maintenance import DreamingWorker
+
+    async def main():
+        # Check flags before running
+        if not settings.REFLECTIVE_MEMORY_ENABLED or not settings.DREAMING_ENABLED:
+            logger.info(
+                "dreaming_task_skipped",
+                tenant_id=tenant_id,
+                reason="disabled_by_config",
+            )
+            return {"skipped": True, "reason": "disabled_by_config"}
+
+        pool = await get_pool()
+        try:
+            worker = DreamingWorker(pool)
+            results = await worker.run_dreaming_cycle(
+                tenant_id=tenant_id,
+                project_id=project_id,
+                lookback_hours=settings.DREAMING_LOOKBACK_HOURS,
+                min_importance=settings.DREAMING_MIN_IMPORTANCE,
+                max_samples=settings.DREAMING_MAX_SAMPLES,
+            )
+
+            logger.info(
+                "dreaming_task_complete",
+                tenant_id=tenant_id,
+                reflections_generated=len(results),
+            )
+
+            return {
+                "success": True,
+                "reflections_generated": len(results),
+                "reflection_ids": results,
+            }
+
+        finally:
+            await pool.close()
+
+    return asyncio.run(main())
+
+
 # --- Celery Beat Schedule ---
 @celery_app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
@@ -487,4 +587,10 @@ def setup_periodic_tasks(sender, **kwargs):
         21600.0,
         run_community_detection_task.s(),
         name="run community detection every 6 hours",
+    )
+    # Schedule full maintenance cycle daily at 3 AM (includes dreaming, summarization)
+    sender.add_periodic_task(
+        crontab(hour=3, minute=0),
+        run_maintenance_cycle_task.s(),
+        name="run full maintenance cycle daily at 3 AM",
     )

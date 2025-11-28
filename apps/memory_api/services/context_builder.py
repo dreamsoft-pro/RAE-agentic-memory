@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional
 import asyncpg
 import structlog
 
+from apps.memory_api.config import settings
 from apps.memory_api.repositories.memory_repository import MemoryRepository
 from apps.memory_api.services.memory_scoring_v2 import (
     ScoringWeights,
@@ -345,13 +346,34 @@ class ContextBuilder:
 
         This is the key integration point for Reflective Memory (Layer 4).
         """
+        # Check if reflective memory is enabled
+        if not settings.REFLECTIVE_MEMORY_ENABLED:
+            logger.info(
+                "reflections_retrieval_skipped",
+                tenant_id=tenant_id,
+                reason="reflective_memory_disabled",
+            )
+            return []
+
+        # Apply mode-specific limits
+        max_items = settings.REFLECTIVE_MAX_ITEMS_PER_QUERY
+        min_importance = settings.REFLECTION_MIN_IMPORTANCE_THRESHOLD
+
+        logger.info(
+            "reflections_retrieval_started",
+            tenant_id=tenant_id,
+            mode=settings.REFLECTIVE_MEMORY_MODE,
+            max_items=max_items,
+            min_importance=min_importance,
+        )
+
         # Query reflections using reflection engine
         reflections = await self.reflection_engine.query_reflections(
             tenant_id=tenant_id,
             project_id=project_id,
             query_text=query,
-            k=self.config.max_reflection_items,
-            min_importance=self.config.min_reflection_importance,
+            k=max_items,
+            min_importance=min_importance,
         )
 
         # Convert to components
@@ -373,6 +395,12 @@ class ContextBuilder:
                     tokens=int(tokens),
                 )
             )
+
+        logger.info(
+            "reflections_retrieval_completed",
+            tenant_id=tenant_id,
+            retrieved_count=len(components),
+        )
 
         return components
 
@@ -423,6 +451,11 @@ class ContextBuilder:
             lessons_text = "\n".join(lessons)
             sections.append(
                 f"# Lessons Learned (internal reflective memory)\n{lessons_text}"
+            )
+        elif not settings.REFLECTIVE_MEMORY_ENABLED:
+            # Explicitly indicate when reflective memory is disabled
+            sections.append(
+                "# Lessons Learned\n[Reflective memory is currently disabled]"
             )
 
         # 4. Relevant Context section (LTM)

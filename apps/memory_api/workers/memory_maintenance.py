@@ -11,12 +11,18 @@ These tasks should be run periodically (cron, scheduler, or task queue).
 
 import asyncio
 from datetime import datetime, timedelta, timezone
+from time import time
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 import asyncpg
 import structlog
 
+from apps.memory_api.config import settings
+from apps.memory_api.metrics import (
+    rae_reflective_decay_duration_seconds,
+    rae_reflective_decay_updated_total,
+)
 from apps.memory_api.repositories.memory_repository import MemoryRepository
 from apps.memory_api.services.importance_scoring import ImportanceScoringService
 from apps.memory_api.services.reflection_engine_v2 import (
@@ -67,6 +73,8 @@ class DecayWorker:
         Returns:
             Statistics about decay operation
         """
+        start_time = time()
+
         logger.info(
             "decay_cycle_started",
             tenant_count=len(tenant_ids) if tenant_ids else "all",
@@ -83,6 +91,8 @@ class DecayWorker:
         # Process each tenant
         for tenant_id in tenant_ids:
             try:
+                tenant_start_time = time()
+
                 updated_count = await self.scoring_service.decay_importance(
                     tenant_id=UUID(tenant_id),
                     decay_rate=decay_rate,
@@ -90,10 +100,19 @@ class DecayWorker:
                 )
                 stats["total_updated"] += updated_count
 
+                # Record metrics
+                rae_reflective_decay_updated_total.labels(tenant_id=tenant_id).inc(
+                    updated_count
+                )
+                rae_reflective_decay_duration_seconds.labels(
+                    tenant_id=tenant_id
+                ).observe(time() - tenant_start_time)
+
                 logger.info(
                     "tenant_decay_completed",
                     tenant_id=tenant_id,
                     updated_count=updated_count,
+                    duration_seconds=time() - tenant_start_time,
                 )
 
             except Exception as e:
@@ -105,7 +124,12 @@ class DecayWorker:
                 )
                 continue
 
-        logger.info("decay_cycle_completed", stats=stats)
+        duration = time() - start_time
+        logger.info(
+            "decay_cycle_completed",
+            stats=stats,
+            total_duration_seconds=duration,
+        )
         return stats
 
     async def _get_all_tenant_ids(self) -> List[str]:
@@ -156,11 +180,21 @@ class SummarizationWorker:
         Returns:
             Summary record dict or None if not enough events
         """
+        # Check if summarization is enabled
+        if not settings.SUMMARIZATION_ENABLED:
+            logger.info(
+                "session_summarization_skipped",
+                tenant_id=tenant_id,
+                reason="summarization_disabled",
+            )
+            return None
+
         logger.info(
             "session_summarization_started",
             tenant_id=tenant_id,
             project_id=project_id,
             session_id=str(session_id),
+            min_events=settings.SUMMARIZATION_MIN_EVENTS,
         )
 
         # Get episodic memories for session
@@ -310,11 +344,23 @@ class DreamingWorker:
         Returns:
             List of generated reflection IDs
         """
+        # Check if reflective memory and dreaming are enabled
+        if not settings.REFLECTIVE_MEMORY_ENABLED or not settings.DREAMING_ENABLED:
+            logger.info(
+                "dreaming_cycle_skipped",
+                tenant_id=tenant_id,
+                reason="disabled_by_config",
+                reflective_enabled=settings.REFLECTIVE_MEMORY_ENABLED,
+                dreaming_enabled=settings.DREAMING_ENABLED,
+            )
+            return []
+
         logger.info(
             "dreaming_cycle_started",
             tenant_id=tenant_id,
             project_id=project_id,
             lookback_hours=lookback_hours,
+            mode=settings.REFLECTIVE_MEMORY_MODE,
         )
 
         # Get high-importance episodic memories from recent period
@@ -432,55 +478,84 @@ class MaintenanceScheduler:
         """
         Run daily maintenance tasks.
 
+        Respects configuration flags:
+        - REFLECTIVE_MEMORY_ENABLED: Master switch for all reflective operations
+        - DREAMING_ENABLED: Controls dreaming worker
+        - SUMMARIZATION_ENABLED: Controls summarization worker
+
         Args:
             tenant_ids: Optional list of tenant IDs (None = all)
 
         Returns:
             Statistics about maintenance operations
         """
-        logger.info("daily_maintenance_started", timestamp=datetime.now(timezone.utc))
+        logger.info(
+            "daily_maintenance_started",
+            timestamp=datetime.now(timezone.utc),
+            reflective_enabled=settings.REFLECTIVE_MEMORY_ENABLED,
+            mode=settings.REFLECTIVE_MEMORY_MODE,
+            dreaming_enabled=settings.DREAMING_ENABLED,
+            summarization_enabled=settings.SUMMARIZATION_ENABLED,
+        )
 
         stats = {
             "decay": {},
             "summarization": {},
             "dreaming": {},
             "started_at": datetime.now(timezone.utc).isoformat(),
+            "config": {
+                "reflective_enabled": settings.REFLECTIVE_MEMORY_ENABLED,
+                "mode": settings.REFLECTIVE_MEMORY_MODE,
+                "dreaming_enabled": settings.DREAMING_ENABLED,
+                "summarization_enabled": settings.SUMMARIZATION_ENABLED,
+            },
         }
 
         try:
-            # 1. Run decay cycle
+            # 1. Run decay cycle (always runs for memory lifecycle management)
             logger.info("running_decay_cycle")
             stats["decay"] = await self.decay_worker.run_decay_cycle(
-                tenant_ids=tenant_ids, decay_rate=0.01, consider_access_stats=True
+                tenant_ids=tenant_ids,
+                decay_rate=settings.MEMORY_BASE_DECAY_RATE,
+                consider_access_stats=settings.MEMORY_ACCESS_COUNT_BOOST,
             )
 
-            # 2. Run dreaming cycles for each tenant
-            if tenant_ids is None:
-                tenant_ids = await self.decay_worker._get_all_tenant_ids()
+            # 2. Run dreaming cycles for each tenant (only if enabled)
+            if settings.REFLECTIVE_MEMORY_ENABLED and settings.DREAMING_ENABLED:
+                if tenant_ids is None:
+                    tenant_ids = await self.decay_worker._get_all_tenant_ids()
 
-            dreaming_results = []
-            for tenant_id in tenant_ids[:10]:  # Limit to 10 tenants per cycle
-                try:
-                    # For simplicity, use default project
-                    results = await self.dreaming_worker.run_dreaming_cycle(
-                        tenant_id=tenant_id,
-                        project_id="default",  # TODO: Get actual projects
-                        lookback_hours=24,
-                        min_importance=0.6,
-                    )
-                    dreaming_results.extend(results)
-                except Exception as e:
-                    logger.error(
-                        "dreaming_failed_for_tenant",
-                        tenant_id=tenant_id,
-                        error=str(e),
-                    )
-                    continue
+                dreaming_results = []
+                for tenant_id in tenant_ids[:10]:  # Limit to 10 tenants per cycle
+                    try:
+                        # For simplicity, use default project
+                        results = await self.dreaming_worker.run_dreaming_cycle(
+                            tenant_id=tenant_id,
+                            project_id="default",  # TODO: Get actual projects
+                            lookback_hours=settings.DREAMING_LOOKBACK_HOURS,
+                            min_importance=settings.DREAMING_MIN_IMPORTANCE,
+                            max_samples=settings.DREAMING_MAX_SAMPLES,
+                        )
+                        dreaming_results.extend(results)
+                    except Exception as e:
+                        logger.error(
+                            "dreaming_failed_for_tenant",
+                            tenant_id=tenant_id,
+                            error=str(e),
+                        )
+                        continue
 
-            stats["dreaming"] = {
-                "tenants_processed": len(tenant_ids[:10]),
-                "reflections_generated": len(dreaming_results),
-            }
+                stats["dreaming"] = {
+                    "tenants_processed": len(tenant_ids[:10]),
+                    "reflections_generated": len(dreaming_results),
+                }
+            else:
+                stats["dreaming"] = {"skipped": True, "reason": "disabled_by_config"}
+                logger.info(
+                    "dreaming_skipped",
+                    reflective_enabled=settings.REFLECTIVE_MEMORY_ENABLED,
+                    dreaming_enabled=settings.DREAMING_ENABLED,
+                )
 
             logger.info("daily_maintenance_completed", stats=stats)
 

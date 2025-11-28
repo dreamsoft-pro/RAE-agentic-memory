@@ -15,6 +15,90 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.1-enterprise] - 2025-11-28
+
+### Added - Reflective Memory V1 Finalization 🧠
+
+#### Feature Flags Made Functional ✅
+- **All reflective memory flags now control runtime behavior**
+  - `REFLECTIVE_MEMORY_ENABLED` - Master switch for reflective operations
+  - `REFLECTIVE_MEMORY_MODE` - Controls limits (`lite` with k=3 vs `full` with k=5)
+  - `DREAMING_ENABLED` - Controls background reflection generation
+  - `SUMMARIZATION_ENABLED` - Controls session summarization
+- **ContextBuilder enforces flag checks**
+  - Returns empty reflections when disabled
+  - Displays "[Reflective memory is currently disabled]" in prompts
+  - Uses mode-specific limits for retrieval
+- **Workers respect configuration flags**
+  - `DreamingWorker` checks `REFLECTIVE_MEMORY_ENABLED` and `DREAMING_ENABLED`
+  - `SummarizationWorker` checks `SUMMARIZATION_ENABLED`
+  - `MaintenanceScheduler` respects all flags and logs config
+- **Comprehensive test suite** (`tests/test_reflective_flags.py`)
+  - 11 test cases covering all flag behaviors
+  - Tests for enabled/disabled states
+  - Tests for lite/full mode limits
+  - Tests for all workers
+
+#### Scheduler & Background Tasks ✅
+- **Fixed Celery configuration**
+  - Corrected import path from `apps.memory-api` to `apps.memory_api`
+- **New Celery tasks**
+  - `run_maintenance_cycle_task()` - Coordinates all maintenance workers
+  - `run_dreaming_task()` - Standalone dreaming for specific tenant
+- **Scheduled maintenance**
+  - Daily decay at 2 AM (existing)
+  - Daily full maintenance at 3 AM (new)
+- **Workers use configuration settings**
+  - `DREAMING_LOOKBACK_HOURS`, `DREAMING_MIN_IMPORTANCE`, `DREAMING_MAX_SAMPLES`
+  - `MEMORY_BASE_DECAY_RATE`, `MEMORY_ACCESS_COUNT_BOOST`
+  - `SUMMARIZATION_MIN_EVENTS`, `SUMMARIZATION_EVENT_THRESHOLD`
+
+#### Prometheus Metrics ✅
+- **11 new metrics for observability**
+  - `rae_reflective_decay_updated_total` - Memories decayed
+  - `rae_reflective_decay_duration_seconds` - Decay cycle duration
+  - `rae_reflective_dreaming_reflections_generated` - Reflections created
+  - `rae_reflective_dreaming_episodes_analyzed` - Episodes analyzed
+  - `rae_reflective_dreaming_duration_seconds` - Dreaming cycle duration
+  - `rae_reflective_summarization_summaries_created` - Summaries created
+  - `rae_reflective_summarization_events_summarized` - Events summarized
+  - `rae_reflective_summarization_duration_seconds` - Summarization duration
+  - `rae_reflective_context_reflections_retrieved` - Reflections per query
+  - `rae_reflective_mode_gauge` - Current mode (0=disabled, 1=lite, 2=full)
+  - `rae_reflective_flags_gauge` - Flag status tracking
+- **Metrics integrated into DecayWorker**
+  - Records duration and update counts per tenant
+
+#### ContextBuilder Enforcement ✅
+- **Agent endpoint refactored** (`api/v1/agent.py`)
+  - Now uses `ContextBuilder.build_context()` for all agent executions
+  - Replaced manual context construction with unified pattern
+  - Reflections automatically included in every agent call (when enabled)
+  - Configuration respects `REFLECTIVE_MEMORY_ENABLED` and mode limits
+
+### Changed
+- **ContextBuilder behavior**
+  - `_retrieve_reflections()` now checks flags before retrieval
+  - Returns empty list when reflective memory disabled
+  - Uses configuration values for limits and thresholds
+- **Workers behavior**
+  - All workers log configuration state at startup
+  - Skip operations when disabled by flags
+  - Use settings values for all parameters
+
+### Fixed
+- **Celery app import path** - Corrected typo in module name
+- **Flag checks missing** - All flags now have runtime implementation
+
+### Documentation
+- **Finalization report** (`docs/RAE-ReflectiveMemory_v1-Finalization-REPORT.md`)
+  - Complete audit of before/after state
+  - Evidence for all changes
+  - Test coverage summary
+  - Security assessment
+
+---
+
 ## [2.0.0-enterprise] - 2025-11-27
 
 ### Added - Enterprise Security Features (Phase 1-5 Complete) 🔒

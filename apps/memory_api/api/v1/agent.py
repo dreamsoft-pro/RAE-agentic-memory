@@ -15,7 +15,10 @@ from apps.memory_api.models import (
 )
 from apps.memory_api.security import auth
 from apps.memory_api.security.dependencies import get_and_verify_tenant_id
-from apps.memory_api.services.context_cache import get_context_cache  # NEW
+from apps.memory_api.services.context_builder import (  # NEW
+    ContextBuilder,
+    ContextConfig,
+)
 from apps.memory_api.services.embedding import get_embedding_service  # NEW
 from apps.memory_api.services.llm import get_llm_provider  # NEW import
 from apps.memory_api.services.llm.base import LLMResult  # NEW import - for type hinting
@@ -54,18 +57,27 @@ async def execute(
     # Use verified tenant_id from RBAC, or fall back to request tenant_id
     tenant_id = req.tenant_id or verified_tenant_id
 
-    # 1. Retrieve pre-built semantic & reflective context from cache
-    cache = get_context_cache()
-    semantic_context = cache.get_context(tenant_id, req.project, "semantic") or ""
-    reflective_context = cache.get_context(tenant_id, req.project, "reflective") or ""
+    # 1. Build context using ContextBuilder (includes reflective memory)
+    context_builder = ContextBuilder(
+        pool=request.app.state.pool,
+        config=ContextConfig(
+            max_total_tokens=8000,
+            max_reflections_tokens=1024,
+            max_ltm_items=10,
+            enable_enhanced_scoring=True,
+        ),
+    )
 
-    static_context_block = f"""
-CORE KNOWLEDGE AND RULES (SEMANTIC MEMORY):
-{semantic_context}
+    # Build complete context with reflections
+    working_memory = await context_builder.build_context(
+        tenant_id=tenant_id,
+        project_id=req.project,
+        query=req.prompt,
+        recent_messages=[],  # Could pass conversation history if available
+    )
 
-LESSONS AND META-INSIGHTS (REFLECTIVE MEMORY):
-{reflective_context}
-""".strip()
+    # Use the formatted context as system instruction
+    static_context_block = working_memory.context_text
 
     # 3. Retrieve episodic context from vector store
     try:
