@@ -1,8 +1,8 @@
 # RAE Agentic Memory Engine - Project Status
 
-**Last Updated:** 2025-11-27
+**Last Updated:** 2025-11-28
 **Test Verification:** 2025-11-27 16:29 UTC (GitHub Actions - ALL JOBS PASSING ✅)
-**Version:** 2.0.0-enterprise
+**Version:** 2.1.0-enterprise (Reflective Memory V1)
 **Status:** Production Ready ✅
 
 ## 🎉 Latest CI/CD Status
@@ -37,6 +37,82 @@
 ---
 
 ## 📝 Recent Changes
+
+### 2025-11-28 - Reflective Memory V1 (v2.1.0) ✅
+
+**Focus:** 4-Layer Memory Architecture with Actor-Evaluator-Reflector Pattern
+
+**Changes:**
+
+1. **4-Layer Memory Model** ✅
+   - Layer 1 (Sensory): Raw inputs and events
+   - Layer 2 (Working): Active session context with reflections
+   - Layer 3 (LTM): Episodic, semantic, and profile memories
+   - Layer 4 (Reflective): Lessons learned and strategies
+
+2. **Actor-Evaluator-Reflector Pattern** ✅
+   - **Actor**: Executes tasks and generates events
+   - **Evaluator**: Assesses outcomes (deterministic, threshold, LLM-based)
+   - **Reflector**: Generates reflections from failures and successes
+
+3. **Core Components** ✅
+   - `ReflectionEngineV2`: LLM-powered reflection generation
+   - `Memory Scoring V2`: Unified Relevance + Importance + Recency
+   - `ContextBuilder`: Working Memory with "Lessons Learned" injection
+   - `Evaluator`: Assessment interface with multiple implementations
+   - Background Workers: Decay, Summarization, Dreaming
+
+4. **Database Schema** ✅
+   - Added `memory_type` field: sensory/episodic/semantic/profile/reflection/strategy
+   - Added `session_id`: Links memories to execution sessions
+   - Added `qdrant_point_id`: Vector store integration
+   - Optimized indexes for Layer 4 queries
+
+5. **Configuration & Modes** ✅
+   - **Lite Mode**: Minimal overhead, critical errors only
+   - **Full Mode**: All features, success reflections, dreaming
+   - 15+ configuration flags for fine-tuning
+   - Behavior matrix for transparent mode switching
+
+6. **Testing** ✅
+   - 6 integration tests for reflection flow
+   - End-to-end Actor-Evaluator-Reflector test
+   - Memory scoring validation
+   - Context injection verification
+
+**Benefits:**
+- 🧠 Meta-learning from failures and successes
+- 📚 Growing library of "lessons learned"
+- 🎯 Context-aware reflection injection
+- 🔄 Configurable retention and decay policies
+- ⚡ Efficient 4-layer retrieval strategy
+- 📊 Enhanced scoring: similarity + importance + recency
+- 🛠️ Extensible evaluator framework
+
+**Files Added/Modified:**
+- `alembic/versions/d4e5f6a7b8c9_*.py` - Database migration
+- `apps/memory_api/models/reflection_v2_models.py` - Reflection data models
+- `apps/memory_api/services/reflection_engine_v2.py` - Reflection generation
+- `apps/memory_api/services/memory_scoring_v2.py` - Enhanced scoring
+- `apps/memory_api/services/context_builder.py` - Working Memory builder
+- `apps/memory_api/services/evaluator.py` - Assessment framework
+- `apps/memory_api/workers/memory_maintenance.py` - Background tasks
+- `docs/REFLECTIVE_MEMORY_V1.md` - Complete implementation guide
+- `docs/MEMORY_MODEL.md` - Layer mapping reference
+- `tests/integration/test_reflection_flow.py` - Integration tests
+
+**Documentation:**
+- Comprehensive implementation guide
+- Memory model reference
+- Configuration matrix
+- Usage examples for all APIs
+- Architecture diagrams
+
+**Next Steps:**
+- Add worker integration tests
+- Implement LLM-based evaluator
+- Add Prometheus metrics export
+- Performance benchmarking
 
 ### 2025-11-27 - Multi-Model LLM Integration (v2.0.0) ✅
 

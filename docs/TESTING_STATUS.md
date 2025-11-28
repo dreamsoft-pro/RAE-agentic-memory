@@ -323,3 +323,71 @@ python -m pytest apps/memory_api/tests/test_graph_extraction_integration.py -v
 - ✅ Meets enterprise standard
 - ⚠️ Approaching standard (needs minor work)
 - ❌ Below standard (needs significant work)
+
+---
+
+## Reflective Memory V1 Testing (2025-11-28)
+
+### Overview
+
+Reflective Memory V1 implements the 4-layer memory architecture with Actor-Evaluator-Reflector pattern.
+Full documentation: `docs/REFLECTIVE_MEMORY_V1.md`, `docs/MEMORY_MODEL.md`
+
+### Integration Tests
+
+| Test Scenario | File | Status | Coverage |
+|---------------|------|--------|----------|
+| **Reflection from Failure** | `tests/integration/test_reflection_flow.py::test_generate_reflection_from_failure` | ✅ Implemented | Full |
+| **Reflection from Success** | `tests/integration/test_reflection_flow.py::test_generate_reflection_from_success` | ✅ Implemented | Full |
+| **Reflection Retrieval in Context** | `tests/integration/test_reflection_flow.py::test_reflection_retrieval_in_context` | ✅ Implemented | Full |
+| **Memory Scoring V2** | `tests/integration/test_reflection_flow.py::test_memory_scoring_v2` | ✅ Implemented | Full |
+| **Context Injection** | `tests/integration/test_reflection_flow.py::test_inject_reflections_into_prompt` | ✅ Implemented | Full |
+| **End-to-End Flow** | `tests/integration/test_reflection_flow.py::test_end_to_end_reflection_flow` | ✅ Implemented | Full |
+| **Decay Worker** | TBD | ⚠️ Planned | - |
+| **Summarization Worker** | TBD | ⚠️ Planned | - |
+| **Dreaming Worker** | TBD | ⚠️ Planned | - |
+| **Actor-Evaluator-Reflector** | TBD | ⚠️ Partial | - |
+
+### Module Coverage
+
+| Module | Purpose | Status | Notes |
+|--------|---------|--------|-------|
+| `models/reflection_v2_models.py` | Data models for reflections | ✅ Complete | ReflectionContext, ReflectionResult, Event models |
+| `services/reflection_engine_v2.py` | Reflection generation | ✅ Implemented | LLM-powered failure/success analysis |
+| `services/memory_scoring_v2.py` | Enhanced scoring | ✅ Implemented | Relevance + Importance + Recency |
+| `services/context_builder.py` | Working Memory construction | ✅ Implemented | Layer 2 with reflections injection |
+| `services/evaluator.py` | Execution assessment | ✅ New | Deterministic & Threshold evaluators |
+| `workers/memory_maintenance.py` | Background tasks | ✅ Implemented | Decay, Summarization, Dreaming |
+| `alembic/../d4e5f6a7b8c9_*.py` | DB schema | ✅ Complete | memory_type, session_id, qdrant_point_id |
+
+### Test Summary
+
+**Current:** 6/10 scenarios implemented (60%)
+**Target:** 10/10 scenarios (100%)
+**Priority:** Add worker tests (P1), full Actor-Evaluator-Reflector test (P0)
+
+### Next Steps
+
+1. **P0 - Worker Integration Tests**
+   - Test decay with importance updates
+   - Test summarization with session creation
+   - Test dreaming with reflection generation
+
+2. **P1 - Enhanced Actor-Evaluator-Reflector Test**
+   - Use new `Evaluator` interface
+   - Test full cycle: Actor → Evaluator → Reflector → ContextBuilder
+   - Verify reflections reduce error recurrence
+
+3. **P2 - Performance Testing**
+   - Benchmark scoring function
+   - Test context building latency
+   - Measure worker execution time
+
+### Known Issues
+
+- [ ] Worker tests not yet implemented
+- [ ] LLM evaluator not yet implemented (only deterministic/threshold)
+- [ ] Prometheus metrics not yet exported
+- [ ] No load testing for reflection generation
+
+---
