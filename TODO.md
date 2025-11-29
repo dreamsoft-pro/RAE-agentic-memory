@@ -1,93 +1,41 @@
-# Technical Debt (Auto-generated)
-Last update: 2025-11-29 21:09:38.455208
+# RAE Agentic Memory - Missing/Incomplete Functionalities
 
-- [ ] **STATUS.md**:14 - - [Technical Debt](TODO.md)
-- [ ] **TODO.md**:4 - - [ ] **STATUS.md**:95 - - `TODO.md` (UPDATED)
-- [ ] **TODO.md**:5 - - [ ] **STATUS.md**:519 - - Resolved TODO comments with implementation guidance
-- [ ] **TODO.md**:6 - - [ ] **STATUS.md**:1476 - - **Before:** TODO comment in code
-- [ ] **TODO.md**:7 - - [ ] **STATUS.md**:1556 - - [TODO List](TODO.md)
-- [ ] **TODO.md**:8 - - [ ] **TODO.md**:1 - RAE Agentic Memory Engine - TODO List
-- [ ] **TODO.md**:9 - - [ ] **TODO.md**:61 - - ✅ Updated all documentation (README, STATUS, CHANGELOG, TODO)
-- [ ] **TODO.md**:10 - - [ ] **TODO.md**:747 - - 📝 Documentation updated: README.md, STATUS.md, CHANGELOG.md, TODO.md
-- [ ] **TODO.md**:11 - - [ ] **TODO.md**:774 - - 📝 Documentation updated: README.md, STATUS.md, VERSION_MATRIX.md, TODO.md
-- [ ] **TODO.md**:12 - - [ ] **TODO.md**:782 - - Updated STATUS.md, TESTING.md, README.md, TODO.md
-- [ ] **TODO.md**:13 - - [ ] **TODO.md**:797 - - 📝 Documentation updated (CHANGELOG, STATUS, TODO)
-- [ ] **TODO.md**:14 - - [ ] **TODO.md**:802 - - ✅ Reorganized TODO structure by priority
-- [ ] **TODO.md**:15 - - [ ] **CHANGELOG.md**:366 - - Resolved TODO comments with detailed implementation notes
-- [ ] **TODO.md**:16 - - [ ] **CHANGELOG.md**:381 - - TODO comments resolved with implementation guidance
-- [ ] **TODO.md**:17 - - [ ] **README.md**:725 - - ✅ **[TODO List](TODO.md)** - Upcoming features and improvements
-- [ ] **TODO.md**:18 - - [ ] **RAE-–Reflective_Memory_v1-Implementati.md**:108 - **TODO:**
-- [ ] **TODO.md**:30 - - [ ] **Self-Documenting Codebase Blueprint.md**:11 - 1. Warstwa Źródłowa: Kod, Komentarze TODO, Historia Gita (Commity).
-- [ ] **TODO.md**:31 - - [ ] **Self-Documenting Codebase Blueprint.md**:13 - 3. Warstwa Prezentacji: Pliki Markdown (STATUS.md, CHANGELOG.md, TODO.md).
-- [ ] **TODO.md**:32 - - [ ] **Self-Documenting Codebase Blueprint.md**:29 - B. Komentarze w Kodzie (TODO)
-- [ ] **TODO.md**:33 - - [ ] **Self-Documenting Codebase Blueprint.md**:31 - Format:  TODO: opis zadania lub  TODO: opis zadania.
-- [ ] **TODO.md**:34 - - [ ] **Self-Documenting Codebase Blueprint.md**:46 - 2. Skaner Długu Technicznego (`TODO.md`):
-- [ ] **TODO.md**:35 - - [ ] **Self-Documenting Codebase Blueprint.md**:48 - * Wyciąga linie zawierające TODO.
-- [ ] **TODO.md**:36 - - [ ] **Self-Documenting Codebase Blueprint.md**:70 - * Transparentność: Klient/Manager widzi postępy (CHANGELOG) i problemy (TODO) w prostych plikach tekstowych.
-- [ ] **TODO.md**:37 - - [ ] **ENTERPRISE-FIX-STATUS.md**:331 - - [ ] Remove TODO comments or implement them
-- [ ] **TODO.md**:38 - - [ ] **ENTERPRISE-FIX-STATUS.md**:441 - - [ ] 100% of TODO comments resolved
-- [ ] **TODO.md**:41 - - [ ] **ENTERPRISE-FIX-PLAN.md**:100 - 2. Implement TODO comments or remove them
-- [ ] **TODO.md**:42 - - [ ] **ENTERPRISE-FIX-PLAN.md**:281 - 2. ✅ Implement or remove TODO comments - COMPLETED
-- [ ] **TODO.md**:43 - - [ ] **ENTERPRISE-FIX-PLAN.md**:336 - - ✅ All TODO comments resolved
-- [ ] **TODO.md**:44 - - [ ] **RAE–Multi-Model_LLM-Integration-Guide.md**:17 - - ✅ Updated documentation (README.md, STATUS.md, TODO.md)
-- [ ] **TODO.md**:45 - - [ ] **RAE–Multi-Model_LLM-Integration-Guide.md**:232 - 8.1. DeepSeek Provider – TODO
-- [ ] **TODO.md**:46 - - [ ] **RAE–Multi-Model_LLM-Integration-Guide.md**:259 - 8.2. Qwen Provider – TODO
-- [ ] **TODO.md**:47 - - [ ] **RAE–Multi-Model_LLM-Integration-Guide.md**:284 - 8.3. Grok Provider – TODO
-- [ ] **TODO.md**:48 - - [ ] **RAE-lite.md**:10 - Sam projekt deklaruje, że 80%+ coverage to wciąż cel, nie stan – w TODO.md jest to nadal HIGH priority.
-- [ ] **TODO.md**:54 - - [ ] **memory_maintenance.py**:534 - project_id="default",   TODO: Get actual projects
-- [ ] **TODO.md**:55 - - [ ] **docs_automator.py**:4 - Generates CHANGELOG.md, TODO.md, and STATUS.md based on code and git history.
-- [ ] **TODO.md**:56 - - [ ] **docs_automator.py**:17 - _FILE = "TODO.md"
-- [ ] **TODO.md**:57 - - [ ] **docs_automator.py**:98 - print("Scanning for TODOs...")
-- [ ] **TODO.md**:58 - - [ ] **docs_automator.py**:113 - if "TODO" in line or "FIXME" in line:
-- [ ] **TODO.md**:59 - - [ ] **docs_automator.py**:116 - Remove "TODO" or "FIXME" prefix if present for cleaner output
-- [ ] **TODO.md**:60 - - [ ] **docs_automator.py**:117 - clean_line = re.sub(r"^(TODO|FIXME)[:\s]*", "", clean_line)
-- [ ] **TODO.md**:61 - - [ ] **docs_automator.py**:124 - with open(TODO_FILE, "w") as f:
-- [ ] **TODO.md**:62 - - [ ] **docs_automator.py**:157 - - [Technical Debt](TODO.md)
-- [ ] **CHANGELOG.md**:366 - - Resolved TODO comments with detailed implementation notes
-- [ ] **CHANGELOG.md**:381 - - TODO comments resolved with implementation guidance
-- [ ] **README.md**:725 - - ✅ **[TODO List](TODO.md)** - Upcoming features and improvements
-- [ ] **RAE-–Reflective_Memory_v1-Implementati.md**:108 - **TODO:**
-- [ ] **RAE-–Reflective_Memory_v1-Implementati.md**:146 - 
-- [ ] **RAE-–Reflective_Memory_v1-Implementati.md**:183 - 
-- [ ] **RAE-–Reflective_Memory_v1-Implementati.md**:221 - 
-- [ ] **RAE-–Reflective_Memory_v1-Implementati.md**:262 - 
-- [ ] **RAE-–Reflective_Memory_v1-Implementati.md**:286 - 
-- [ ] **RAE-–Reflective_Memory_v1-Implementati.md**:303 - 
-- [ ] **RAE-–Reflective_Memory_v1-Implementati.md**:330 - 
-- [ ] **RAE-–Reflective_Memory_v1-Implementati.md**:362 - 
-- [ ] **RAE-–Reflective_Memory_v1-Implementati.md**:382 - 
-- [ ] **RAE-–Reflective_Memory_v1-Implementati.md**:403 - 
-- [ ] **RAE-–Reflective_Memory_v1-Implementati.md**:455 - 
-- [ ] **Self-Documenting Codebase Blueprint.md**:11 - 1. Warstwa Źródłowa: Kod, Komentarze TODO, Historia Gita (Commity).
-- [ ] **Self-Documenting Codebase Blueprint.md**:13 - 3. Warstwa Prezentacji: Pliki Markdown (STATUS.md, CHANGELOG.md, TODO.md).
-- [ ] **Self-Documenting Codebase Blueprint.md**:29 - B. Komentarze w Kodzie (TODO)
-- [ ] **Self-Documenting Codebase Blueprint.md**:31 - Format:  TODO: opis zadania lub  TODO: opis zadania.
-- [ ] **Self-Documenting Codebase Blueprint.md**:46 - 2. Skaner Długu Technicznego (`TODO.md`):
-- [ ] **Self-Documenting Codebase Blueprint.md**:48 - * Wyciąga linie zawierające TODO.
-- [ ] **Self-Documenting Codebase Blueprint.md**:70 - * Transparentność: Klient/Manager widzi postępy (CHANGELOG) i problemy (TODO) w prostych plikach tekstowych.
-- [ ] **ENTERPRISE-FIX-STATUS.md**:331 - - [ ] Remove TODO comments or implement them
-- [ ] **ENTERPRISE-FIX-STATUS.md**:441 - - [ ] 100% of TODO comments resolved
-- [ ] **RAE-improve_01.md**:13 - Implement JWT token verification
-- [ ] **RAE-improve_01.md**:16 - Implement proper tenant access control
-- [ ] **ENTERPRISE-FIX-PLAN.md**:100 - 2. Implement TODO comments or remove them
-- [ ] **ENTERPRISE-FIX-PLAN.md**:281 - 2. ✅ Implement or remove TODO comments - COMPLETED
-- [ ] **ENTERPRISE-FIX-PLAN.md**:336 - - ✅ All TODO comments resolved
-- [ ] **RAE–Multi-Model_LLM-Integration-Guide.md**:17 - - ✅ Updated documentation (README.md, STATUS.md, TODO.md)
-- [ ] **RAE–Multi-Model_LLM-Integration-Guide.md**:232 - 8.1. DeepSeek Provider – TODO
-- [ ] **RAE–Multi-Model_LLM-Integration-Guide.md**:259 - 8.2. Qwen Provider – TODO
-- [ ] **RAE–Multi-Model_LLM-Integration-Guide.md**:284 - 8.3. Grok Provider – TODO
-- [ ] **RAE-lite.md**:10 - Sam projekt deklaruje, że 80%+ coverage to wciąż cel, nie stan – w TODO.md jest to nadal HIGH priority.
-- [ ] **evaluator.py**:273 - Implement LLM-based evaluator
-- [ ] **context_builder.py**:295 - In production, use vector search to get similarity scores
-- [ ] **context_builder.py**:414 - Implement profile retrieval
-- [ ] **memory_maintenance.py**:201 - Add session_id filter once migration is applied
-- [ ] **memory_maintenance.py**:289 - Implement session detection and batch summarization
-- [ ] **memory_maintenance.py**:534 - project_id="default",   TODO: Get actual projects
-- [ ] **docs_automator.py**:4 - Generates CHANGELOG.md, TODO.md, and STATUS.md based on code and git history.
-- [ ] **docs_automator.py**:17 - _FILE = "TODO.md"
-- [ ] **docs_automator.py**:98 - print("Scanning for TODOs...")
-- [ ] **docs_automator.py**:113 - if "TODO" in line or "FIXME" in line:
-- [ ] **docs_automator.py**:116 - Remove "TODO" or "FIXME" prefix if present for cleaner output
-- [ ] **docs_automator.py**:117 - clean_line = re.sub(r"^(TODO|FIXME)[:\s]*", "", clean_line)
-- [ ] **docs_automator.py**:124 - with open(TODO_FILE, "w") as f:
-- [ ] **docs_automator.py**:157 - - [Technical Debt](TODO.md)
+This document lists functionalities described in `docs/all.md` that are either entirely missing from the codebase or are only partially implemented, requiring further development.
+
+## 1. RAE–Reflective Memory v1 Iteration Fix and Polish Plan
+
+### 1.4. Maintenance Workers (Decay, Summarization, Dreaming)
+*   **Implement `SummarizationWorker.summarize_long_sessions`:** The current implementation in `apps/memory_api/workers/memory_maintenance.py` has a `TODO` comment indicating it needs to be fully implemented beyond just returning an empty list.
+*   **Upgrade `SummarizationWorker._create_summary_text` to use an LLM:** Currently, this function performs simple text aggregation, but `memory_maintenance.py` notes that it should use an LLM in production.
+*   **Confirm `ImportanceScoringService.decay_importance` details:** Further investigation is needed to ensure decay mechanisms explicitly prevent negative importance scores and prioritize fresh memories as per documentation.
+### 1.5. Actor–Evaluator–Reflector Contract
+*   **Implement LLM-based evaluator:** The `apps/memory_api/services/evaluator.py` module defines an `LLM` evaluator type but explicitly raises `NotImplementedError`.
+*   **Clarify `EvaluationResult` model consolidation:** Investigate if the `EvaluationResult` models in `apps/memory_api/models/reflection_v2_models.py` and `apps/memory_api/models/evaluation_models.py` should be consolidated or if their distinction is intentional.
+### 1.6. Tests, Metrics, DX
+*   **Implement integration tests for Decay Worker:** As per `TESTING_STATUS.md`, these tests are planned but not yet implemented.
+*   **Implement integration tests for Summarization Worker:** As per `TESTING_STATUS.md`, these tests are planned but not yet implemented.
+*   **Implement integration tests for Dreaming Worker:** As per `TESTING_STATUS.md`, these tests are planned but not yet implemented.
+
+## 2. RAE Agentic Memory API Reference
+
+### 2.1. Event Triggers (`/v1/triggers/*`)
+*   **Implement database storage and retrieval for trigger rules:** The API endpoints (`create_trigger`, `get_trigger`, `update_trigger`, `delete_trigger`, `list_triggers`) in `apps/memory_api/routes/event_triggers.py` are largely placeholders with "database storage not yet implemented" comments.
+*   **Implement database storage and retrieval for workflows:** Similarly, workflow endpoints (`create_workflow`, `get_workflow`, `list_workflows`) in `apps/memory_api/routes/event_triggers.py` lack full database integration.
+### 2.4. Evaluation (`/v1/evaluation/*`)
+*   **Implement database storage and retrieval for A/B tests:** The A/B test endpoints (`create_ab_test`, `compare_ab_test_variants`) in `apps/memory_api/routes/evaluation.py` require database integration for persisting test definitions and results.
+*   **Implement database storage and retrieval for benchmark suites and their execution results:** The benchmarking endpoints (`run_benchmark_suite`) in `apps/memory_api/routes/evaluation.py` require full database integration for managing benchmark suites and their results.
+### 2.5. Dashboard (`/v1/dashboard/*`)
+*   **Implement time series data retrieval for `/v1/dashboard/metrics/timeseries/{metric_name}`:** This endpoint in `apps/memory_api/routes/dashboard.py` currently uses a placeholder and returns an empty list, indicating a need for a backend metrics table and data retrieval logic.
+
+## 6. Go SDK (rae_memory_sdk)
+*   **Implement the Go SDK:** The `docs/sdk_go_design.md` describes a Go SDK, but the actual implementation is missing from the `sdk/go` directory.
+
+## 7. Node.js SDK (rae-memory-sdk)
+*   **Implement the Node.js SDK:** The `docs/sdk_nodejs_design.md` describes a Node.js SDK, but the actual implementation is missing from the `sdk/nodejs` directory.
+
+## 9. RAE Memory Replay Tool - Design Document
+*   **Implement the RAE Memory Replay Tool:** This functionality is entirely missing. This includes:
+    *   Creating the `agent_sessions` database table.
+    *   Integrating session recording into the `apps/memory_api/routers/agent.py` `execute` endpoint.
+    *   Implementing core replay functionalities (record, list, replay, visualize, inspect, filter, search).
+    *   Developing CLI/Web UI for the tool.
