@@ -184,13 +184,13 @@ async def execute(
             input_tokens=usage.prompt_tokens,
             output_tokens=usage.candidates_tokens,
             tenant_id=tenant_id,
-            project_id=req.project
+            project_id=req.project,
         )
 
         cost = CostInfo(
             input_tokens=usage.prompt_tokens,
             output_tokens=usage.candidates_tokens,
-            total_estimate=cost_info["total_cost_usd"] if cost_info else 0.0
+            total_estimate=cost_info["total_cost_usd"] if cost_info else 0.0,
         )
 
     except Exception as e:

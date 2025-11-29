@@ -31,7 +31,7 @@ async def track_request_cost(
         cost_info = calculate_cost(
             model_name=model_name,
             input_tokens=input_tokens,
-            output_tokens=output_tokens
+            output_tokens=output_tokens,
         )
         total_cost = cost_info["total_cost_usd"]
 
@@ -44,22 +44,18 @@ async def track_request_cost(
 
         # Increment usage
         usage = BudgetUsageIncrement(
-            cost_usd=total_cost,
-            input_tokens=input_tokens,
-            output_tokens=output_tokens
+            cost_usd=total_cost, input_tokens=input_tokens, output_tokens=output_tokens
         )
 
         await BudgetService(pool).increment_usage(
-            tenant_id=tenant_id,
-            project_id=project_id,
-            usage=usage
+            tenant_id=tenant_id, project_id=project_id, usage=usage
         )
 
         logger.info(
             "cost_tracked_successfully",
             tenant_id=tenant_id,
             cost_usd=total_cost,
-            tokens=usage.total_tokens
+            tokens=usage.total_tokens,
         )
 
         return cost_info
