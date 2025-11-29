@@ -15,7 +15,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [2.0.2-enterprise] - 2025-11-28
+## [2.1.1-enterprise-ready] - 2025-11-29
+
+### Added - Enterprise Hardening (Security & Governance) 🛡️
+
+**1. Full JWT Authentication Implementation**
+- Implemented real JWT signature verification in `apps/memory_api/security/auth.py`.
+- Replaced stubbed "accept any token" logic with `python-jose` validation.
+- Validates signature, expiration (`exp`), and subject (`sub`).
+- Ensures only valid tokens from the configured issuer are accepted.
+
+**2. Active Cost Guard Middleware**
+- Implemented `apps/memory_api/middleware/cost_guard.py`.
+- Actively blocks requests with HTTP 402 (Payment Required) if tenant budget is exceeded.
+- Checks both daily and monthly limits before processing LLM requests.
+- Fail-open design (logs error but allows request if DB/Service fails) to prevent outages.
+
+**3. Worker Infrastructure Verification**
+- Verified Celery Worker and Beat configuration in `docker-compose.yml`.
+- Added `scripts/start_worker.sh` helper script for local development.
+- Confirmed full Maintenance Cycle (Decay, Summarization, Dreaming) infrastructure is ready.
+
+### Fixed
+- Critical security vulnerability where invalid JWT tokens were accepted.
+- Missing enforcement of budget limits (Cost Controller was passive).
+
+---
+
+## [2.1.0-enterprise] - 2025-11-28
 
 ### Fixed - CI/CD Optimization & Test Suite Stabilization 🎯
 
