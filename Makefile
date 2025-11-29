@@ -1,4 +1,4 @@
-.PHONY: help start stop restart logs clean install lint test format db-init demo dev
+.PHONY: help start stop restart logs clean install lint test format db-init demo dev docs
 
 # ==============================================================================
 # HELP
@@ -221,6 +221,11 @@ health:  ## Check health of all services
 # ==============================================================================
 # UTILITIES
 # ==============================================================================
+
+docs:  ## Auto-generate documentation (Changelog, TODOs, Status)
+	@echo "📚 Generating documentation..."
+	@python3 scripts/docs_automator.py
+	@echo "✅ Documentation updated"
 
 version:  ## Show version information
 	@echo "RAE - Reflective Agentic Memory Engine"
