@@ -2,7 +2,7 @@
 
 > Give your AI agents human-like memory: Learn, remember, and improve over time.
 
-*Designed for enterprise-grade use, currently in pre-1.0 "almost enterprise" state.*
+*Designed for enterprise-grade use, currently in v2.1.1 "Enterprise Ready" state.*
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
@@ -19,13 +19,16 @@
 
 > 💡 **Reality Check**
 >
-> Internally we joke that RAE is in its **"almost enterprise"** phase:
-> the architecture thinks it's enterprise, the tests are catching up (197 passing unit tests, 238 total, 48% coverage),
-> and the docs are brutally honest about what's still missing.
+> RAE has graduated to **"Enterprise Ready"** status with the release of v2.1.1.
+> The critical gaps in authentication and cost control have been closed.
 >
-> **What works:** 4-layer memory, GraphRAG, reflection engine V1, multi-model LLM, multi-tenant security, cost tracking
-> **What's maturing:** ML service (beta), dashboard (beta), test coverage (51% → 75% target)
-> **What's honest:** We're pre-1.0, actively developed, and **transparent about security** (see [SECURITY.md](docs/SECURITY.md))
+> **What works:**
+> - ✅ **Full JWT Authentication**: Real signature verification and claim validation.
+> - ✅ **Active Budget Enforcement**: Requests are blocked (HTTP 402) if budget is exceeded.
+> - ✅ **Background Workers**: Fully operational Decay, Summarization, and Dreaming cycles.
+> - ✅ **Core Features**: 4-layer memory, GraphRAG, Reflection Engine V2, Multi-tenancy.
+>
+> **What's maturing:** ML service (beta), dashboard (beta), test coverage (target: 75%).
 >
 > **Production Ready For:**
 > - ✅ Internal corporate tools (behind VPN/firewall)

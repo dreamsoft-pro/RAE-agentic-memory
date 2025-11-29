@@ -15,6 +15,7 @@ from apps.memory_api.api.v1 import health as health_router
 from apps.memory_api.api.v1 import memory
 from apps.memory_api.config import settings
 from apps.memory_api.logging_config import setup_logging
+from apps.memory_api.middleware.budget_enforcer import BudgetEnforcementMiddleware
 from apps.memory_api.middleware.rate_limiter import limiter, rate_limit_exceeded_handler
 from apps.memory_api.middleware.tenant import TenantContextMiddleware
 from apps.memory_api.observability import (
@@ -255,6 +256,9 @@ if settings.ENABLE_RATE_LIMITING:
 
 # Tenant context middleware
 app.add_middleware(TenantContextMiddleware)
+
+# Budget Enforcement middleware (blocks requests if budget exceeded)
+app.add_middleware(BudgetEnforcementMiddleware)
 
 # OpenTelemetry instrumentation
 instrument_fastapi(app)
