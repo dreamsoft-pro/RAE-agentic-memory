@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 
 from apps.memory_api.config import settings
 from apps.memory_api.metrics import reflection_event_counter
-from apps.memory_api.middleware.cost_guard import cost_guard
 from apps.memory_api.models import (
     AgentExecuteRequest,
     AgentExecuteResponse,
@@ -24,6 +23,7 @@ from apps.memory_api.services.llm import get_llm_provider  # NEW import
 from apps.memory_api.services.llm.base import LLMResult  # NEW import - for type hinting
 from apps.memory_api.services.token_estimator import estimate_tokens  # NEW
 from apps.memory_api.services.vector_store import get_vector_store  # NEW
+from apps.memory_api.utils.cost_tracker import track_request_cost  # NEW
 
 # All agent endpoints require authentication
 router = APIRouter(
@@ -36,7 +36,6 @@ logger = structlog.get_logger(__name__)
 
 
 @router.post("/execute", response_model=AgentExecuteResponse)
-@cost_guard()
 async def execute(
     req: AgentExecuteRequest,
     request: Request,
@@ -178,14 +177,21 @@ async def execute(
         estimated_static_tokens = estimate_tokens(static_context_block)
         max(usage.prompt_tokens - estimated_static_tokens, 0)
 
-        # For cost calculation, will be handled by cost_guard
+        # Track cost and update budget
+        cost_info = await track_request_cost(
+            request=request,
+            model_name=settings.RAE_LLM_MODEL_DEFAULT,
+            input_tokens=usage.prompt_tokens,
+            output_tokens=usage.candidates_tokens,
+            tenant_id=tenant_id,
+            project_id=req.project
+        )
+
         cost = CostInfo(
             input_tokens=usage.prompt_tokens,
             output_tokens=usage.candidates_tokens,
-            total_estimate=0.0,  # Placeholder, actual calculation in cost_guard
+            total_estimate=cost_info["total_cost_usd"] if cost_info else 0.0
         )
-
-        # llm_cost_gauge will be set in cost_guard after cost calculation
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"LLM call failed: {e}")

@@ -74,6 +74,41 @@ class BudgetUsageIncrement(BaseModel):
         return self.input_tokens + self.output_tokens
 
 
+class BudgetService:
+    """Service class for budget management (wrapper around standalone functions)."""
+
+    def __init__(self, pool: asyncpg.Pool):
+        self.pool = pool
+
+    async def get_or_create_budget(
+        self, tenant_id: str, project_id: str = "default"
+    ) -> Budget:
+        return await get_or_create_budget(self.pool, tenant_id, project_id)
+
+    async def check_budget_exceeded(
+        self, tenant_id: str, project_id: str = "default"
+    ) -> tuple[bool, float, float]:
+        """
+        Check if budget is exceeded for a tenant.
+        Returns: (is_exceeded, remaining_budget, total_limit)
+        """
+        budget = await self.get_or_create_budget(tenant_id, project_id)
+
+        # Check monthly limit
+        if budget.monthly_limit_usd is not None:
+            remaining = budget.monthly_limit_usd - budget.monthly_usage_usd
+            if remaining <= 0:
+                return True, 0.0, budget.monthly_limit_usd
+
+        # Check daily limit
+        if budget.daily_limit_usd is not None:
+            remaining = budget.daily_limit_usd - budget.daily_usage_usd
+            if remaining <= 0:
+                return True, 0.0, budget.daily_limit_usd
+
+        return False, 999999.0, 999999.0  # Not exceeded or unlimited
+
+
 async def get_or_create_budget(
     pool: asyncpg.Pool, tenant_id: str, project_id: str
 ) -> Budget:

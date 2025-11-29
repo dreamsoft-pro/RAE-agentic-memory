@@ -90,34 +90,44 @@ async def verify_token(
         token = credentials.credentials
 
         # For now, we accept any token if JWT verification is disabled
-        # In production, implement proper JWT verification
         if not settings.ENABLE_JWT_AUTH:
             return {"authenticated": True, "method": "bearer", "token": token}
 
         # JWT verification implementation
-        # NOTE: Full JWT verification should decode and validate the token:
-        # 1. Verify signature using SECRET_KEY or public key
-        # 2. Check expiration (exp claim)
-        # 3. Verify issuer (iss claim) and audience (aud claim)
-        # 4. Extract user_id from subject (sub claim)
-        #
-        # Example implementation:
-        # import jwt
-        # try:
-        #     decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-        #     return {
-        #         "authenticated": True,
-        #         "method": "bearer",
-        #         "user_id": decoded["sub"],
-        #         "email": decoded.get("email"),
-        #     }
-        # except jwt.ExpiredSignatureError:
-        #     raise HTTPException(status_code=401, detail="Token expired")
-        # except jwt.InvalidTokenError:
-        #     raise HTTPException(status_code=401, detail="Invalid token")
-        #
-        # For now, accept any bearer token when JWT_AUTH is enabled
-        return {"authenticated": True, "method": "bearer", "token": token}
+        from jose import JWTError, jwt
+
+        try:
+            # Decode and validate the token using the secret key
+            # This verifies the signature and expiration automatically
+            decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+
+            # Ensure subject (user_id) is present
+            if "sub" not in decoded:
+                raise JWTError("Token missing subject claim")
+
+            return {
+                "authenticated": True,
+                "method": "bearer",
+                "user_id": decoded["sub"],
+                "email": decoded.get("email"),
+                "token": token,
+                "claims": decoded,
+            }
+
+        except JWTError as e:
+            logger.warning("invalid_jwt_token", error=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"Invalid authentication credentials: {str(e)}",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        except Exception as e:
+            logger.error("jwt_verification_error", error=str(e))
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Authentication failed",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
     # If both API key and token authentication are disabled, allow access
     if not settings.ENABLE_API_KEY_AUTH and not settings.ENABLE_JWT_AUTH:
@@ -168,17 +178,18 @@ async def get_user_id_from_token(request: Request) -> Optional[str]:
     auth_header = request.headers.get("Authorization")
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header.split(" ")[1]
-        # NOTE: Decode JWT to extract user_id
-        # In production with JWT enabled, decode the token:
-        # import jwt
-        # try:
-        #     decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-        #     return decoded.get("sub")  # Return user_id from subject claim
-        # except jwt.InvalidTokenError:
-        #     return None
-        #
-        # For now, use token hash as user_id for testing
-        # This allows basic tenant access control without full JWT setup
+
+        # If JWT is enabled, decode it to get the real user_id
+        if settings.ENABLE_JWT_AUTH:
+            from jose import JWTError, jwt
+
+            try:
+                decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+                return decoded.get("sub")
+            except JWTError:
+                return None
+
+        # Fallback for testing/non-JWT mode: use token hash
         import hashlib
 
         return hashlib.sha256(token.encode()).hexdigest()[:32]
