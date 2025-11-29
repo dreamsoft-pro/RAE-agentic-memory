@@ -85,9 +85,9 @@ class ErrorInfo:
     Information about an error that occurred during execution.
     """
 
-    error_code: str
     error_category: ErrorCategory
     error_message: str
+    error_code: Optional[str] = None
     traceback: Optional[str] = None
     tool_name: Optional[str] = None
     context: Optional[Dict[str, Any]] = None
