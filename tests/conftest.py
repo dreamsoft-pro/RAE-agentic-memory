@@ -14,9 +14,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 def mock_env_and_settings(monkeypatch):
     envs = {
         "POSTGRES_HOST": "localhost",
-        "POSTGRES_DB": "test_db",
-        "POSTGRES_USER": "test_user",
-        "POSTGRES_PASSWORD": "test_pass",
+        "POSTGRES_DB": "test_rae",
+        "POSTGRES_USER": "postgres",
+        "POSTGRES_PASSWORD": "postgres",
         "QDRANT_HOST": "localhost",
         "REDIS_URL": "redis://localhost:6379/0",
         "RAE_LLM_BACKEND": "openai",
@@ -30,9 +30,9 @@ def mock_env_and_settings(monkeypatch):
     with patch("apps.memory_api.config.settings") as mock_settings:
         mock_settings.API_KEY = "test-api-key"
         mock_settings.POSTGRES_HOST = "localhost"
-        mock_settings.POSTGRES_DB = "test"
-        mock_settings.POSTGRES_USER = "user"
-        mock_settings.POSTGRES_PASSWORD = "pass"
+        mock_settings.POSTGRES_DB = "test_rae"
+        mock_settings.POSTGRES_USER = "postgres"
+        mock_settings.POSTGRES_PASSWORD = "postgres"
         mock_settings.QDRANT_HOST = "localhost"
         mock_settings.RERANKER_API_URL = "http://reranker"
         mock_settings.MEMORY_API_URL = "http://memory"
