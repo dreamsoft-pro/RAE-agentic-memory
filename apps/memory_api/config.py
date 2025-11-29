@@ -56,6 +56,7 @@ class Settings(BaseSettings):
     ENABLE_RATE_LIMITING: bool = False  # Set to True in production
     RATE_LIMIT_REQUESTS: int = 100  # Max requests per window
     RATE_LIMIT_WINDOW: int = 60  # Time window in seconds
+    ENABLE_COST_TRACKING: bool = False  # Set to True to track request costs
 
     # CORS
     ALLOWED_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:8501"]
