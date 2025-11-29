@@ -17,6 +17,7 @@ from uuid import UUID
 
 import asyncpg
 import structlog
+from pydantic import BaseModel, Field
 
 from apps.memory_api.config import settings
 from apps.memory_api.metrics import (
@@ -32,6 +33,7 @@ from apps.memory_api.models.reflection_v2_models import (
 from apps.memory_api.repositories.memory_repository import MemoryRepository
 from apps.memory_api.services.importance_scoring import ImportanceScoringService
 from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
+from apps.memory_api.services.llm import get_llm_provider
 
 logger = structlog.get_logger(__name__)
 
@@ -146,6 +148,13 @@ class DecayWorker:
 # ============================================================================
 
 
+class SessionSummaryResponse(BaseModel):
+    """Structured response for session summarization"""
+    summary: str = Field(..., description="A concise summary of the session")
+    key_topics: List[str] = Field(..., description="List of key topics discussed or actions taken")
+    sentiment: str = Field(..., description="Overall sentiment of the session")
+
+
 class SummarizationWorker:
     """
     Worker for creating session summaries from episodic memories.
@@ -160,6 +169,7 @@ class SummarizationWorker:
     ):
         self.pool = pool
         self.memory_repo = memory_repository or MemoryRepository(pool)
+        self.llm_provider = get_llm_provider()
 
     async def summarize_session(
         self,
@@ -198,9 +208,8 @@ class SummarizationWorker:
         )
 
         # Get episodic memories for session
-        # TODO: Add session_id filter once migration is applied
         episodic_memories = await self.memory_repo.get_episodic_memories(
-            tenant_id=tenant_id, project=project_id, limit=100
+            tenant_id=tenant_id, project=project_id, limit=100, session_id=session_id
         )
 
         if len(episodic_memories) < min_events:
@@ -214,7 +223,7 @@ class SummarizationWorker:
             return None
 
         # Create summary content
-        summary_content = self._create_summary_text(episodic_memories)
+        summary_content = await self._create_summary_text(episodic_memories)
 
         # Calculate importance (higher for summaries)
         avg_importance = sum(m.get("importance", 0.5) for m in episodic_memories) / len(
@@ -232,6 +241,7 @@ class SummarizationWorker:
             tags=["session_summary", "auto_generated"],
             timestamp=datetime.now(timezone.utc),
             project=project_id,
+            metadata={"session_id": str(session_id), "event_count": len(episodic_memories)}
         )
 
         logger.info(
@@ -244,23 +254,32 @@ class SummarizationWorker:
 
         return summary_record
 
-    def _create_summary_text(self, memories: List[Dict[str, Any]]) -> str:
+    async def _create_summary_text(self, memories: List[Dict[str, Any]]) -> str:
         """
-        Create summary text from memory list.
-
-        In production, this would use LLM. For now, simple aggregation.
+        Create summary text from memory list using LLM.
         """
         # Extract key facts
-        contents = [m.get("content", "") for m in memories]
+        contents = [f"- {m.get('content', '')} (Time: {m.get('created_at')})" for m in memories]
+        memories_text = "\n".join(contents)
 
-        # Simple summary (in production, use LLM)
-        summary = f"Session summary ({len(memories)} events): "
-        summary += " | ".join(contents[:5])  # First 5 events
+        try:
+            response: SessionSummaryResponse = await self.llm_provider.generate_structured(
+                system="You are an expert summarizer. Synthesize the following session events into a concise summary.",
+                prompt=f"Session Events:\n{memories_text}\n\nProvide a summary, key topics, and sentiment.",
+                model=settings.RAE_LLM_MODEL_DEFAULT,
+                response_model=SessionSummaryResponse
+            )
 
-        if len(contents) > 5:
-            summary += f" ... and {len(contents) - 5} more events"
+            return f"{response.summary}\n\nKey Topics: {', '.join(response.key_topics)}\nSentiment: {response.sentiment}"
 
-        return summary
+        except Exception as e:
+            logger.error("llm_summarization_failed", error=str(e))
+            # Fallback to simple aggregation
+            summary = f"Session summary ({len(memories)} events): "
+            summary += " | ".join([m.get("content", "") for m in memories][:5])
+            if len(memories) > 5:
+                summary += f" ... and {len(memories) - 5} more events"
+            return summary
 
     async def summarize_long_sessions(
         self,
@@ -286,9 +305,45 @@ class SummarizationWorker:
             threshold=event_threshold,
         )
 
-        # TODO: Implement session detection and batch summarization
-        # For now, return empty
+        # Fetch recent memories (e.g. last 24h)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=24)
+
+        # We need to access the database directly here for aggregation
+        async with self.pool.acquire() as conn:
+            # Try to group by session_id in metadata
+            # Note: This assumes metadata is JSONB and has session_id
+            rows = await conn.fetch("""
+                SELECT
+                    metadata->>'session_id' as session_id,
+                    COUNT(*) as event_count
+                FROM memories
+                WHERE tenant_id = $1
+                  AND project = $2
+                  AND created_at > $3
+                  AND metadata->>'session_id' IS NOT NULL
+                GROUP BY metadata->>'session_id'
+                HAVING COUNT(*) >= $4
+            """, tenant_id, project_id, cutoff_time, event_threshold)
+
         summaries = []
+        for row in rows:
+            session_id_str = row['session_id']
+            try:
+                session_id = UUID(session_id_str)
+                # Check if already summarized recently
+                # (Optimization: could be done in the query above)
+
+                summary = await self.summarize_session(
+                    tenant_id=tenant_id,
+                    project_id=project_id,
+                    session_id=session_id,
+                    min_events=event_threshold
+                )
+                if summary:
+                    summaries.append(summary)
+            except ValueError:
+                logger.warning(f"Invalid session_id UUID: {session_id_str}")
+                continue
 
         logger.info(
             "long_session_summarization_completed",
