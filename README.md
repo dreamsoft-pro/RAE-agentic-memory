@@ -743,7 +743,8 @@ Production-ready components that enhance RAE but are not required.
 ### API Documentation
 - 🔧 **[REST API Reference](docs/api/rest-api.md)** - Complete API documentation
 - 📚 **[Interactive API Docs](http://localhost:8000/docs)** - Swagger UI (when running)
-- 🔌 **[MCP Integration](docs/integrations/mcp_protocol_server.md)** - IDE integration guide
+- 🔌 **[IDE Integration Guide](docs/guides/IDE_INTEGRATION.md)** - Connect RAE with your IDE (Claude, Cursor, VSCode, etc.)
+- 🔌 **[MCP Protocol Server](docs/integrations/mcp_protocol_server.md)** - Technical MCP implementation details
 
 ### Examples & Use Cases
 - 💡 **[Examples](examples/)** - Real-world use cases and code samples

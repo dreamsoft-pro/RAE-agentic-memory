@@ -15,6 +15,69 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.0.3-enterprise] - 2025-11-29
+
+### Added - IDE Integration Documentation & Developer Experience 🔌
+
+#### Comprehensive IDE Integration Overhaul ✅
+
+**1. New Documentation Structure**
+- Created comprehensive `docs/guides/IDE_INTEGRATION.md` (master guide)
+- Consolidated all IDE integration knowledge into single source of truth
+- Added detailed recipes for Claude Desktop, Cursor, Cline, Continue, Windsurf
+- Documented Non-MCP IDE integration paths (JetBrains, Vim/Neovim, Sublime)
+- Deprecated old `docs/guides/ide-integration.md` and `docs/api/mcp-server.md`
+
+**2. Ready-to-Use Configuration Examples**
+- Created `examples/ide-config/` directory with IDE-specific templates:
+  - `claude/claude_desktop_config.json` - Claude Desktop configuration
+  - `cursor/mcp.json` - Cursor IDE configuration
+  - `cline/settings.json` - VSCode Cline extension
+  - `windsurf/mcp.json` - Windsurf IDE configuration
+  - `continue/settings.json` - VSCode Continue extension
+- Added comprehensive `examples/ide-config/README.md` with setup instructions
+
+**3. Makefile Developer Tools**
+- Added MCP integration section to Makefile with 8 new targets:
+  - `mcp-dev-install` - Install MCP server in development mode
+  - `mcp-install` - Install MCP server (production)
+  - `mcp-test` - Run all MCP tests
+  - `mcp-test-integration` - Run MCP integration tests
+  - `mcp-test-load` - Run MCP load tests
+  - `mcp-lint` - Lint MCP server code
+  - `mcp-format` - Format MCP server code
+  - `mcp-verify` - Verify MCP installation and health
+- Fixed reference to old `integrations/mcp-server` → `integrations/mcp`
+
+**4. Documentation Cleanup**
+- Updated README.md with links to new IDE integration guide
+- Fixed all references from `integrations/mcp-server` to `integrations/mcp`
+- Fixed all references from `python -m rae_mcp_server` to `rae-mcp-server`
+- Updated cross-links throughout documentation
+- Added migration warnings to deprecated documents
+
+**Benefits:**
+- 5-minute IDE setup for developers
+- Zero confusion about MCP server location
+- Copy-paste ready configuration examples
+- Comprehensive troubleshooting guide
+- Clear path for IDEs without native MCP support
+- Improved developer experience (DX)
+
+**Files Added/Modified:**
+- `docs/guides/IDE_INTEGRATION.md` (NEW - 1000+ lines)
+- `examples/ide-config/README.md` (NEW)
+- `examples/ide-config/*/` (NEW - 5 IDE templates)
+- `docs/guides/ide-integration.md` (DEPRECATED)
+- `docs/api/mcp-server.md` (DEPRECATED)
+- `README.md` (UPDATED - API Documentation section)
+- `Makefile` (UPDATED - Added MCP section)
+
+**Commit:**
+- feat(docs): Comprehensive IDE integration documentation and examples
+
+---
+
 ## [2.0.2-enterprise] - 2025-11-28
 
 ### Fixed - CI/CD Optimization & Test Suite Stabilization 🎯

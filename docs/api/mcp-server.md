@@ -1,15 +1,26 @@
-# MCP Server API
+# MCP Server API (Legacy)
 
-Model Context Protocol server for IDE integration with RAE.
+**⚠️ This document is deprecated. Please use the new documentation:**
 
-## Overview
+**→ [MCP Protocol Server Documentation](../integrations/mcp_protocol_server.md)** ←
 
-MCP (Model Context Protocol) enables IDEs to access RAE memory directly. Supported in Cursor, Claude Desktop, VSCode, and other MCP-compatible editors.
+**→ [IDE Integration Guide](../guides/IDE_INTEGRATION.md)** ←
+
+---
+
+## Quick Migration
+
+The MCP server has been upgraded and moved:
+
+- **Old location**: `integrations/mcp-server`
+- **New location**: `integrations/mcp`
+- **Old command**: `python -m rae_mcp_server`
+- **New command**: `rae-mcp-server` (installed script)
 
 ## Installation
 
 ```bash
-cd integrations/mcp-server
+cd integrations/mcp
 pip install -e .
 ```
 
@@ -23,8 +34,7 @@ Add to config file:
 {
   "mcpServers": {
     "rae-memory": {
-      "command": "python",
-      "args": ["-m", "rae_mcp_server"],
+      "command": "rae-mcp-server",
       "env": {
         "RAE_API_URL": "http://localhost:8000",
         "RAE_TENANT_ID": "your-tenant-id",

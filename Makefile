@@ -82,7 +82,7 @@ install-all:  ## Install all dependencies (including integrations)
 	@$(VENV_PIP) install -r eval/requirements.txt || true
 	@$(VENV_PIP) install -r integrations/langchain/requirements.txt || true
 	@$(VENV_PIP) install -r integrations/llama_index/requirements.txt || true
-	@$(VENV_PIP) install -r integrations/mcp-server/requirements.txt || true
+	@$(VENV_PIP) install -e integrations/mcp || true
 	@$(VENV_PIP) install -r integrations/ollama-wrapper/requirements.txt || true
 	@$(VENV_PIP) install -e sdk/python/rae_memory_sdk
 	@echo "✅ All dependencies installed"
@@ -236,3 +236,65 @@ env-example:  ## Create .env from .env.example
 	else \
 		echo "⚠️  .env already exists"; \
 	fi
+
+# ==============================================================================
+# MCP INTEGRATION
+# ==============================================================================
+
+mcp-dev-install:  ## Install MCP server in development mode
+	@echo "📦 Installing MCP server (development mode)..."
+	@if [ ! -d ".venv" ]; then \
+		python3 -m venv .venv; \
+	fi
+	@$(VENV_PIP) install --upgrade pip
+	@cd integrations/mcp && ../../$(VENV_PIP) install -e ".[dev]"
+	@echo "✅ MCP server installed"
+	@echo "🔍 Verify: $(VENV_ACTIVATE) && rae-mcp-server --help"
+
+mcp-install:  ## Install MCP server (production mode)
+	@echo "📦 Installing MCP server..."
+	@if [ ! -d ".venv" ]; then \
+		python3 -m venv .venv; \
+	fi
+	@$(VENV_PIP) install --upgrade pip
+	@cd integrations/mcp && ../../$(VENV_PIP) install -e .
+	@echo "✅ MCP server installed"
+
+mcp-test:  ## Run MCP server tests
+	@echo "🧪 Running MCP server tests..."
+	@PYTHONPATH=. $(VENV_PYTHON) -m pytest integrations/mcp/tests/ -v
+	@echo "✅ MCP tests complete"
+
+mcp-test-integration:  ## Run MCP integration tests (requires RAE API running)
+	@echo "🧪 Running MCP integration tests..."
+	@PYTHONPATH=. $(VENV_PYTHON) -m pytest integrations/mcp/tests/test_mcp_integration.py -v
+	@echo "✅ MCP integration tests complete"
+
+mcp-test-load:  ## Run MCP load tests (requires RAE API running)
+	@echo "🧪 Running MCP load tests..."
+	@PYTHONPATH=. $(VENV_PYTHON) -m pytest integrations/mcp/tests/test_mcp_load.py -v -m load
+	@echo "✅ MCP load tests complete"
+
+mcp-lint:  ## Lint MCP server code
+	@echo "🔍 Linting MCP server..."
+	@$(VENV_ACTIVATE) && ruff check integrations/mcp/
+	@$(VENV_ACTIVATE) && black --check integrations/mcp/
+	@$(VENV_ACTIVATE) && isort --check integrations/mcp/
+	@echo "✅ MCP linting complete"
+
+mcp-format:  ## Format MCP server code
+	@echo "🎨 Formatting MCP server..."
+	@$(VENV_ACTIVATE) && black integrations/mcp/
+	@$(VENV_ACTIVATE) && isort integrations/mcp/
+	@echo "✅ MCP code formatted"
+
+mcp-verify:  ## Verify MCP installation and health
+	@echo "🔍 Verifying MCP installation..."
+	@$(VENV_ACTIVATE) && rae-mcp-server --help || echo "❌ rae-mcp-server not found"
+	@echo ""
+	@echo "✅ Verification complete"
+	@echo ""
+	@echo "Next steps:"
+	@echo "  1. Configure your IDE using examples/ide-config/<YOUR-IDE>/"
+	@echo "  2. Read docs/guides/IDE_INTEGRATION.md for full setup guide"
+	@echo "  3. Restart your IDE to load MCP configuration"

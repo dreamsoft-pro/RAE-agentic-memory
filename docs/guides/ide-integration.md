@@ -1,48 +1,41 @@
-# IDE Integration Guide
+# IDE Integration Guide (Legacy)
 
-Integrate RAE memory with your IDE using Model Context Protocol (MCP).
+**⚠️ This document is deprecated. Please use the new comprehensive guide:**
 
-## Supported IDEs
-- Cursor
-- Claude Desktop  
-- VSCode (with Continue)
-- Windsurf
+**→ [IDE_INTEGRATION.md](./IDE_INTEGRATION.md)** ←
 
-## Quick Setup
+---
 
-### 1. Install MCP Server
-```bash
-cd integrations/mcp-server
-pip install -e .
-```
+## Quick Migration
 
-### 2. Configure IDE
+The MCP server has moved:
 
-**Cursor** - Edit `~/.cursor/config.json`:
-```json
-{
-  "mcpServers": {
-    "rae": {
-      "command": "python",
-      "args": ["-m", "rae_mcp_server"],
-      "env": {
-        "RAE_API_URL": "http://localhost:8000"
-      }
-    }
-  }
-}
-```
+- **Old location**: `integrations/mcp-server`
+- **New location**: `integrations/mcp`
+- **Old command**: `python -m rae_mcp_server`
+- **New command**: `rae-mcp-server` (installed script)
 
-**Claude Desktop** - Edit `~/Library/Application Support/Claude/claude_desktop_config.json`
+### Quick Setup
 
-### 3. Restart IDE
+1. Install new MCP server:
+   ```bash
+   cd integrations/mcp
+   pip install -e .
+   ```
 
-## Usage
+2. Update your IDE configuration to use `rae-mcp-server` instead of `python -m rae_mcp_server`
 
-- `/rae-save <text>` - Save to memory
-- `/rae-search <query>` - Search memories  
-- `/rae-list` - List recent
+3. Follow the full guide: [IDE_INTEGRATION.md](./IDE_INTEGRATION.md)
 
-Auto-context injection happens automatically based on your current work.
+### Migration Guide
 
-See [MCP Server docs](../api/mcp-server.md) for details.
+See [integrations/MIGRATION.md](../../integrations/MIGRATION.md) for detailed migration instructions.
+
+---
+
+## Resources
+
+- **[New IDE Integration Guide](./IDE_INTEGRATION.md)** - Complete documentation
+- **[MCP Protocol Server](../integrations/mcp_protocol_server.md)** - Technical details
+- **[Migration Guide](../../integrations/MIGRATION.md)** - Upgrade instructions
+- **[Configuration Examples](../../examples/ide-config/)** - Ready-to-use configs
