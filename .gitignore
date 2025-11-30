@@ -31,3 +31,4 @@ project_dump.txt
 .clauderc
 logs_*/
 docker-logs-*.txt
+low-memory.txt

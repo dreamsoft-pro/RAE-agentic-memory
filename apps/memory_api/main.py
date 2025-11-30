@@ -63,7 +63,6 @@ async def lifespan(app: FastAPI):
         user=settings.POSTGRES_USER,
         password=settings.POSTGRES_PASSWORD,
     )
-    Instrumentator().instrument(app).expose(app)
     await rebuild_full_cache()
 
     yield  # Application is running
@@ -101,6 +100,9 @@ app = FastAPI(
         else []
     ),
 )
+
+# Add Prometheus instrumentation
+Instrumentator().instrument(app).expose(app)
 
 # Add rate limiter to app state
 app.state.limiter = limiter
