@@ -48,6 +48,7 @@ from apps.memory_api.models.dashboard_models import (
     TimeSeriesMetric,
     VisualizationType,
 )
+from apps.memory_api.repositories.metrics_repository import MetricsRepository
 from apps.memory_api.services.dashboard_websocket import DashboardWebSocketService
 
 logger = structlog.get_logger(__name__)
@@ -66,6 +67,11 @@ _websocket_service: Optional[DashboardWebSocketService] = None
 async def get_pool(request: Request):
     """Get database connection pool from app state"""
     return request.app.state.pool
+
+
+async def get_metrics_repo(pool=Depends(get_pool)) -> MetricsRepository:
+    """Get metrics repository instance"""
+    return MetricsRepository(pool)
 
 
 def get_websocket_service(pool=Depends(get_pool)) -> DashboardWebSocketService:
@@ -223,7 +229,7 @@ async def get_metric_timeseries(
     tenant_id: str,
     project_id: str,
     period: MetricPeriod = MetricPeriod.LAST_24H,
-    pool=Depends(get_pool),
+    repo: MetricsRepository = Depends(get_metrics_repo),
 ):
     """
     Get time series data for a specific metric.
@@ -238,30 +244,59 @@ async def get_metric_timeseries(
     - degraded_nodes
     """
     try:
-        # Calculate time range
+        # Calculate time range and aggregation interval
         end_time = datetime.now(timezone.utc)
         if period == MetricPeriod.LAST_HOUR:
             start_time = end_time - timedelta(hours=1)
+            aggregation_interval = "5 minutes"
         elif period == MetricPeriod.LAST_24H:
             start_time = end_time - timedelta(hours=24)
+            aggregation_interval = "1 hour"
         elif period == MetricPeriod.LAST_7D:
             start_time = end_time - timedelta(days=7)
+            aggregation_interval = "6 hours"
         elif period == MetricPeriod.LAST_30D:
             start_time = end_time - timedelta(days=30)
+            aggregation_interval = "1 day"
         else:
             start_time = end_time - timedelta(hours=24)
+            aggregation_interval = "1 hour"
 
-        # Fetch metric data (placeholder - would need metrics table)
+        # Fetch metric data from database
+        data_points = await repo.get_timeseries(
+            tenant_id=tenant_id,
+            project_id=project_id,
+            metric_name=metric_name,
+            start_time=start_time,
+            end_time=end_time,
+            aggregation_interval=aggregation_interval,
+        )
+
+        # Convert to TimeSeriesMetric format
         time_series = TimeSeriesMetric(
             metric_name=metric_name,
             metric_label=metric_name.replace("_", " ").title(),
-            data_points=[],
+            data_points=data_points,
             period_start=start_time,
             period_end=end_time,
         )
 
+        # Calculate trend if we have data
+        if len(data_points) > 1:
+            first_value = data_points[0]["metric_value"]
+            last_value = data_points[-1]["metric_value"]
+            if first_value > 0:
+                percent_change = ((last_value - first_value) / first_value) * 100
+                time_series.trend_direction = (
+                    "up" if percent_change > 5 else "down" if percent_change < -5 else "stable"
+                )
+                time_series.trend_percent = round(percent_change, 2)
+
         logger.info(
-            "timeseries_metric_retrieved", metric=metric_name, period=period.value
+            "timeseries_metric_retrieved",
+            metric=metric_name,
+            period=period.value,
+            data_points=len(data_points),
         )
 
         return {
