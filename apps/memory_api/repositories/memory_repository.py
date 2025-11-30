@@ -6,6 +6,7 @@ following the Repository/DAO pattern to separate data access from business logic
 """
 
 from typing import Any, Dict, List, Optional
+from uuid import UUID
 
 import asyncpg
 import structlog
@@ -39,6 +40,7 @@ class MemoryRepository:
         tags: Optional[List[str]],
         timestamp: Any,
         project: str,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """
         Insert a new memory record into the database.
@@ -52,6 +54,7 @@ class MemoryRepository:
             tags: Optional list of tags
             timestamp: Timestamp of the memory
             project: Project identifier
+            metadata: Optional metadata
 
         Returns:
             Dict containing id, created_at, last_accessed_at, and usage_count
@@ -80,6 +83,10 @@ class MemoryRepository:
                     timestamp,
                     project,
                 ]
+
+                if metadata is not None:
+                    columns.append("metadata")
+                    values.append(asyncpg.types.Jsonb(metadata))
 
                 columns_str = ", ".join(columns)
                 placeholders_str = ", ".join([f"${i+1}" for i in range(len(values))])
@@ -222,7 +229,11 @@ class MemoryRepository:
             return [dict(r) for r in records]
 
     async def get_episodic_memories(
-        self, tenant_id: str, project: str, limit: Optional[int] = None
+        self,
+        tenant_id: str,
+        project: str,
+        limit: Optional[int] = None,
+        session_id: Optional[UUID] = None,
     ) -> List[Dict[str, Any]]:
         """
         Retrieve episodic memories for a tenant and project.
@@ -231,35 +242,34 @@ class MemoryRepository:
             tenant_id: Tenant identifier
             project: Project identifier
             limit: Optional limit on number of records
+            session_id: Optional session identifier filter
 
         Returns:
             List of episodic memory records
         """
         async with self.pool.acquire() as conn:
+
+            conditions = ["tenant_id = $1", "project = $2", "layer = 'em'"]
+            params = [tenant_id, project]
+
+            if session_id:
+                conditions.append("metadata->>'session_id' = $" + str(len(params) + 1))
+                params.append(str(session_id))
+
+            where_clause = " AND ".join(conditions)
+
+            sql = f"""
+                SELECT id, content, tags, metadata, layer, created_at, timestamp, source
+                FROM memories
+                WHERE {where_clause}
+                ORDER BY created_at DESC
+            """
+
             if limit:
-                records = await conn.fetch(
-                    """
-                    SELECT id, content, tags, metadata, layer, created_at, timestamp, source
-                    FROM memories
-                    WHERE tenant_id = $1 AND project = $2 AND layer = 'em'
-                    ORDER BY created_at DESC
-                    LIMIT $3
-                    """,
-                    tenant_id,
-                    project,
-                    limit,
-                )
-            else:
-                records = await conn.fetch(
-                    """
-                    SELECT id, content, tags, metadata, layer, created_at, timestamp, source
-                    FROM memories
-                    WHERE tenant_id = $1 AND project = $2 AND layer = 'em'
-                    ORDER BY created_at DESC
-                    """,
-                    tenant_id,
-                    project,
-                )
+                sql += f" LIMIT ${len(params) + 1}"
+                params.append(limit)
+
+            records = await conn.fetch(sql, *params)
             return [dict(r) for r in records]
 
     async def count_memories_by_layer(
