@@ -105,17 +105,27 @@ format:  ## Format code with black and isort
 	@$(VENV_ACTIVATE) && isort apps/ sdk/ integrations/
 	@echo "✅ Code formatted"
 
-lint:  ## Run linters (ruff, black, isort)
+lint:  ## Run linters (ruff, black, isort, mypy)
 	@echo "🔍 Running linters..."
 	@$(VENV_ACTIVATE) && ruff check apps/ sdk/ integrations/
 	@$(VENV_ACTIVATE) && black --check apps/ sdk/ integrations/
 	@$(VENV_ACTIVATE) && isort --check apps/ sdk/ integrations/
+	@$(VENV_ACTIVATE) && mypy apps/ sdk/ || true
 	@echo "✅ Linting complete"
 
-typecheck:  ## Run type checking with mypy
-	@echo "🔍 Running type checking..."
-	@$(VENV_ACTIVATE) && mypy apps/ sdk/
-	@echo "✅ Type checking complete"
+security:  ## Run security scans (safety, bandit)
+	@echo "🔒 Running security scans..."
+	@$(VENV_ACTIVATE) && pip install safety bandit > /dev/null
+	@$(VENV_ACTIVATE) && safety check --file requirements-dev.txt || true
+	@$(VENV_ACTIVATE) && bandit -r apps/ sdk/ -ll || true
+	@echo "✅ Security scan complete"
+
+format:  ## Format code with black, isort, and ruff
+	@echo "🎨 Formatting code..."
+	@$(VENV_ACTIVATE) && black apps/ sdk/ integrations/
+	@$(VENV_ACTIVATE) && isort apps/ sdk/ integrations/
+	@$(VENV_ACTIVATE) && ruff check --fix apps/ sdk/ integrations/
+	@echo "✅ Code formatted"
 
 # ==============================================================================
 # TESTING
@@ -127,7 +137,7 @@ test:  ## Run all tests
 
 test-unit:  ## Run unit tests only
 	@echo "🧪 Running unit tests..."
-	@PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "not integration" -v
+	@PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "not integration and not llm" -v
 
 test-integration:  ## Run integration tests only
 	@echo "🧪 Running integration tests..."

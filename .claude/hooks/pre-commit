@@ -30,6 +30,15 @@ else
     echo "⚠️  Makefile not found, skipping lint."
 fi
 
+# Security check (optional, don't fail commit on security warnings unless critical)
+echo ""
+echo "🔒 Uruchamiam skan bezpieczeństwa..."
+if [ -f Makefile ]; then
+    make security || echo "⚠️  Security scan had findings (check logs)"
+else
+    echo "⚠️  Makefile not found, skipping security scan."
+fi
+
 # Test check
 echo ""
 echo "🧪 Uruchamiam testy..."
