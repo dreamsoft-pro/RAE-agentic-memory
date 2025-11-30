@@ -326,9 +326,48 @@ Provide a concise summary, list key topics, and determine the overall sentiment.
             threshold=event_threshold,
         )
 
-        # TODO: Implement session detection and batch summarization
-        # For now, return empty
         summaries = []
+
+        # Find sessions with many events
+        async with self.pool.acquire() as conn:
+            # Query to find sessions with event count above threshold
+            sql = """
+                SELECT
+                    metadata->>'session_id' as session_id,
+                    COUNT(*) as event_count
+                FROM memories
+                WHERE tenant_id = $1
+                  AND project = $2
+                  AND layer = 'em'
+                  AND metadata->>'session_id' IS NOT NULL
+                GROUP BY metadata->>'session_id'
+                HAVING COUNT(*) >= $3
+                ORDER BY COUNT(*) DESC
+            """
+
+            long_sessions = await conn.fetch(
+                sql, tenant_id, project_id, event_threshold
+            )
+
+            # Summarize each long session
+            for session_row in long_sessions:
+                session_id = UUID(session_row["session_id"])
+                try:
+                    summary = await self.summarize_session(
+                        tenant_id=tenant_id,
+                        project_id=project_id,
+                        session_id=session_id,
+                        min_events=event_threshold,
+                    )
+                    if summary:
+                        summaries.append(summary)
+                except Exception as e:
+                    logger.warning(
+                        "session_summarization_failed",
+                        tenant_id=tenant_id,
+                        session_id=str(session_id),
+                        error=str(e),
+                    )
 
         logger.info(
             "long_session_summarization_completed",
