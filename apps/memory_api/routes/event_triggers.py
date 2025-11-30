@@ -10,7 +10,7 @@ This module provides FastAPI routes for event trigger operations including:
 """
 
 from datetime import timezone
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -31,6 +31,10 @@ from apps.memory_api.models.event_models import (
     TriggerStatus,
     UpdateTriggerRequest,
 )
+from apps.memory_api.repositories.trigger_repository import (
+    TriggerRepository,
+    WorkflowRepository,
+)
 from apps.memory_api.services.rules_engine import RulesEngine
 
 logger = structlog.get_logger(__name__)
@@ -48,13 +52,25 @@ async def get_pool(request: Request):
     return request.app.state.pool
 
 
+async def get_trigger_repo(pool=Depends(get_pool)) -> TriggerRepository:
+    """Get trigger repository instance"""
+    return TriggerRepository(pool)
+
+
+async def get_workflow_repo(pool=Depends(get_pool)) -> WorkflowRepository:
+    """Get workflow repository instance"""
+    return WorkflowRepository(pool)
+
+
 # ============================================================================
 # Trigger Management
 # ============================================================================
 
 
 @router.post("/create", response_model=CreateTriggerResponse, status_code=201)
-async def create_trigger(request: CreateTriggerRequest, pool=Depends(get_pool)):
+async def create_trigger(
+    request: CreateTriggerRequest, repo: TriggerRepository = Depends(get_trigger_repo)
+):
     """
     Create a new event trigger rule.
 
@@ -67,20 +83,24 @@ async def create_trigger(request: CreateTriggerRequest, pool=Depends(get_pool)):
     - Create snapshots periodically
     """
     try:
-        trigger_id = uuid4()
-
-        logger.info(
-            "trigger_created",
-            trigger_id=trigger_id,
-            rule_name=request.rule_name,
+        # Create trigger in database
+        trigger_record = await repo.create_trigger(
             tenant_id=request.tenant_id,
+            project_id=request.project_id,
+            rule_name=request.rule_name,
+            event_types=request.event_types,
+            conditions=request.conditions,
+            actions=request.actions,
+            created_by=request.created_by,
+            description=request.description,
+            condition_operator=request.condition_operator,
+            priority=request.priority,
+            status=request.status,
+            retry_config=request.retry_config,
         )
 
-        # In production, would store in database
-        # For now, return success
-
         return CreateTriggerResponse(
-            trigger_id=trigger_id,
+            trigger_id=trigger_record["id"],
             message=f"Trigger rule '{request.rule_name}' created successfully",
         )
 
@@ -90,17 +110,17 @@ async def create_trigger(request: CreateTriggerRequest, pool=Depends(get_pool)):
 
 
 @router.get("/{trigger_id}", response_model=TriggerRule)
-async def get_trigger(trigger_id: str, pool=Depends(get_pool)):
+async def get_trigger(
+    trigger_id: str, repo: TriggerRepository = Depends(get_trigger_repo)
+):
     """Get trigger rule by ID"""
     try:
+        trigger = await repo.get_trigger(UUID(trigger_id))
 
-        # In production, fetch from database
-        logger.info("get_trigger_requested", trigger_id=trigger_id)
+        if not trigger:
+            raise HTTPException(status_code=404, detail="Trigger not found")
 
-        raise HTTPException(
-            status_code=404,
-            detail="Trigger not found (database storage not yet implemented)",
-        )
+        return TriggerRule(**trigger)
 
     except HTTPException:
         raise
@@ -111,7 +131,9 @@ async def get_trigger(trigger_id: str, pool=Depends(get_pool)):
 
 @router.put("/{trigger_id}")
 async def update_trigger(
-    trigger_id: str, request: UpdateTriggerRequest, pool=Depends(get_pool)
+    trigger_id: str,
+    request: UpdateTriggerRequest,
+    repo: TriggerRepository = Depends(get_trigger_repo),
 ):
     """
     Update trigger rule configuration.
@@ -124,31 +146,58 @@ async def update_trigger(
     - Enable/disable status
     """
     try:
-        logger.info("update_trigger_requested", trigger_id=trigger_id)
+        # Prepare updates dict
+        updates = {}
+        if request.rule_name is not None:
+            updates["rule_name"] = request.rule_name
+        if request.description is not None:
+            updates["description"] = request.description
+        if request.conditions is not None:
+            updates["conditions"] = request.conditions
+        if request.actions is not None:
+            updates["actions"] = request.actions
+        if request.priority is not None:
+            updates["priority"] = request.priority
+        if request.status is not None:
+            updates["status"] = request.status
 
-        # In production, update in database
+        # Update in database
+        # Note: tenant_id should come from auth context in production
+        tenant_id = "default"  # TODO: Get from auth context
+        updated_trigger = await repo.update_trigger(UUID(trigger_id), tenant_id, updates)
+
+        if not updated_trigger:
+            raise HTTPException(status_code=404, detail="Trigger not found")
 
         return {
             "trigger_id": trigger_id,
             "message": "Trigger updated successfully",
-            "status": "pending_implementation",
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("update_trigger_failed", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete("/{trigger_id}")
-async def delete_trigger(trigger_id: str, pool=Depends(get_pool)):
+async def delete_trigger(
+    trigger_id: str, repo: TriggerRepository = Depends(get_trigger_repo)
+):
     """Delete trigger rule"""
     try:
-        logger.info("delete_trigger_requested", trigger_id=trigger_id)
+        # Note: tenant_id should come from auth context in production
+        tenant_id = "default"  # TODO: Get from auth context
+        deleted = await repo.delete_trigger(UUID(trigger_id), tenant_id)
 
-        # In production, delete from database
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Trigger not found")
 
         return {"trigger_id": trigger_id, "message": "Trigger deleted successfully"}
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("delete_trigger_failed", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
@@ -194,7 +243,7 @@ async def list_triggers(
     project_id: str,
     status_filter: str = None,
     limit: int = 100,
-    pool=Depends(get_pool),
+    repo: TriggerRepository = Depends(get_trigger_repo),
 ):
     """
     List trigger rules.
@@ -202,16 +251,17 @@ async def list_triggers(
     Filter by status (active, inactive, paused, error).
     """
     try:
-        logger.info(
-            "list_triggers_requested", tenant_id=tenant_id, project_id=project_id
+        triggers = await repo.list_triggers(
+            tenant_id=tenant_id,
+            project_id=project_id,
+            status_filter=status_filter,
+            limit=limit,
         )
 
-        # In production, query database
-
         return {
-            "triggers": [],
-            "total_count": 0,
-            "message": "No triggers found (database storage not yet implemented)",
+            "triggers": triggers,
+            "total_count": len(triggers),
+            "message": f"Found {len(triggers)} triggers",
         }
 
     except Exception as e:
@@ -300,7 +350,8 @@ async def get_event_types():
 
 @router.post("/executions", response_model=GetTriggerExecutionsResponse)
 async def get_trigger_executions(
-    request: GetTriggerExecutionsRequest, pool=Depends(get_pool)
+    request: GetTriggerExecutionsRequest,
+    repo: TriggerRepository = Depends(get_trigger_repo),
 ):
     """
     Get execution history for a trigger.
@@ -310,9 +361,17 @@ async def get_trigger_executions(
     **Use Case:** Debug trigger behavior, monitor automation performance.
     """
     try:
-        logger.info("get_executions_requested", trigger_id=request.trigger_id)
+        # Get execution history from database
+        tenant_id = "default"  # TODO: Get from auth context
+        executions = await repo.get_execution_history(
+            trigger_id=UUID(request.trigger_id),
+            tenant_id=tenant_id,
+            limit=request.limit,
+            status_filter=request.status_filter,
+        )
 
-        # In production, query from database
+        # Get trigger info for summary
+        trigger = await repo.get_trigger(UUID(request.trigger_id), tenant_id)
 
         from datetime import datetime, timedelta
 
@@ -320,13 +379,13 @@ async def get_trigger_executions(
 
         summary = TriggerExecutionSummary(
             trigger_id=request.trigger_id,
-            trigger_name="Example Trigger",
+            trigger_name=trigger["rule_name"] if trigger else "Unknown Trigger",
             period_start=datetime.now(timezone.utc) - timedelta(days=7),
             period_end=datetime.now(timezone.utc),
         )
 
         return GetTriggerExecutionsResponse(
-            executions=[], total_count=0, summary=summary
+            executions=executions, total_count=len(executions), summary=summary
         )
 
     except Exception as e:
@@ -342,7 +401,9 @@ async def get_trigger_executions(
 @router.post(
     "/workflows/create", response_model=CreateWorkflowResponse, status_code=201
 )
-async def create_workflow(request: CreateWorkflowRequest, pool=Depends(get_pool)):
+async def create_workflow(
+    request: CreateWorkflowRequest, repo: WorkflowRepository = Depends(get_workflow_repo)
+):
     """
     Create a workflow (chain of actions).
 
@@ -354,17 +415,19 @@ async def create_workflow(request: CreateWorkflowRequest, pool=Depends(get_pool)
     - Detect drift → Send alert → Run evaluation
     """
     try:
-        workflow_id = uuid4()
-
-        logger.info(
-            "workflow_created",
-            workflow_id=workflow_id,
+        # Create workflow in database
+        workflow_record = await repo.create_workflow(
+            tenant_id=request.tenant_id,
+            project_id=request.project_id,
             workflow_name=request.workflow_name,
-            steps=len(request.steps),
+            steps=request.steps,
+            created_by=request.created_by,
+            description=request.description,
+            execution_mode=request.execution_mode,
         )
 
         return CreateWorkflowResponse(
-            workflow_id=workflow_id,
+            workflow_id=workflow_record["id"],
             message=f"Workflow '{request.workflow_name}' created with {len(request.steps)} steps",
         )
 
@@ -374,15 +437,17 @@ async def create_workflow(request: CreateWorkflowRequest, pool=Depends(get_pool)
 
 
 @router.get("/workflows/{workflow_id}")
-async def get_workflow(workflow_id: str, pool=Depends(get_pool)):
+async def get_workflow(
+    workflow_id: str, repo: WorkflowRepository = Depends(get_workflow_repo)
+):
     """Get workflow definition by ID"""
     try:
-        logger.info("get_workflow_requested", workflow_id=workflow_id)
+        workflow = await repo.get_workflow(UUID(workflow_id))
 
-        raise HTTPException(
-            status_code=404,
-            detail="Workflow not found (database storage not yet implemented)",
-        )
+        if not workflow:
+            raise HTTPException(status_code=404, detail="Workflow not found")
+
+        return {"workflow": workflow, "message": "Workflow retrieved successfully"}
 
     except HTTPException:
         raise
@@ -393,13 +458,22 @@ async def get_workflow(workflow_id: str, pool=Depends(get_pool)):
 
 @router.get("/workflows")
 async def list_workflows(
-    tenant_id: str, project_id: str, limit: int = 100, pool=Depends(get_pool)
+    tenant_id: str,
+    project_id: str,
+    limit: int = 100,
+    repo: WorkflowRepository = Depends(get_workflow_repo),
 ):
     """List workflows"""
     try:
-        logger.info("list_workflows_requested", tenant_id=tenant_id)
+        workflows = await repo.list_workflows(
+            tenant_id=tenant_id, project_id=project_id, limit=limit
+        )
 
-        return {"workflows": [], "total_count": 0, "message": "No workflows found"}
+        return {
+            "workflows": workflows,
+            "total_count": len(workflows),
+            "message": f"Found {len(workflows)} workflows",
+        }
 
     except Exception as e:
         logger.error("list_workflows_failed", error=str(e))
