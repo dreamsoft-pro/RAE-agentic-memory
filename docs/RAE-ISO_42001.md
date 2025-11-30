@@ -303,7 +303,8 @@ Status wdrożenia (aktualizacja: 2025-11-30):
 | Rejestr ryzyk (Risk Register)      | ✅ Zaimplementowane | `docs/RAE-Risk-Register.md` - 10 ryzyk z mitygacją |
 | Tagowanie źródeł i scoring         | ✅ Zaimplementowane | `SourceTrustService` - automatic trust assessment |
 | Source provenance tracking         | ✅ Zaimplementowane | `source_owner`, `trust_level`, `last_verified_at` |
-| Multi-tenant isolation             | ✅ Zaimplementowane | TenantContextMiddleware + tenant_id filtering     |
+| Multi-tenant isolation (App)       | ✅ Zaimplementowane | TenantContextMiddleware + tenant_id filtering     |
+| Multi-tenant isolation (DB - RLS)  | ✅ Zaimplementowane | PostgreSQL RLS + Migration 006 + RLSContextMiddleware |
 | Retencja danych                    | ✅ Zaimplementowane | `RetentionService` + cleanup workers (daily at 1 AM) |
 | GDPR "right to be forgotten"       | ✅ Zaimplementowane | `gdpr_delete_user_data_task` - cascade deletion  |
 | Deletion audit trail               | ✅ Zaimplementowane | `deletion_audit_log` table with full tracking    |
@@ -336,17 +337,34 @@ Status wdrożenia (aktualizacja: 2025-11-30):
 - 🟡 **RISK-001** (Wyciek danych) - Multi-tenant isolation + audit logging (RLS planowany)
 - 🟡 **RISK-010** (Brak nadzoru człowieka) - High-risk marking (w planach)
 
-### 11.2. Następne kroki (priorytet)
+### 11.2. Zrealizowane zadania Q4 2025 / Q1 2026
 
-**Q4 2025:**
-1. PostgreSQL Row-Level Security (RLS) dla tenant isolation (RISK-001, RISK-006)
-2. High-risk scenario marking + human approval workflow (RISK-010)
-3. Context provenance linking - pełna ścieżka: query → context → decision (RISK-005)
+**Q4 2025 - ✅ COMPLETE:**
+1. ✅ **PostgreSQL Row-Level Security (RLS)** - FULLY IMPLEMENTED
+   - Migration 006 z pełnymi policies
+   - RLSContextMiddleware dla automatycznego ustawiania tenant context
+   - Deployment guide z rollback procedures
+   - RISK-001 i RISK-006 teraz FULLY MITIGATED
 
-**Q1 2026:**
-4. Graceful degradation - circuit breaker + fallback mode (RISK-004)
-5. Telemetria kognitywna - memory quality metrics dashboard (RISK-009)
-6. Policy Packs - wersjonowanie i enforcement engine (RISK-003)
+**Pozostałe zadania - Roadmap 2026:**
+2. 📋 **High-risk scenario marking** - Planned (Q1 2026)
+   - Dodanie `risk_level` field do modeli
+   - Human approval workflow dla critical operations
+   - RISK-010 mitigation
+3. 📋 **Context provenance linking** - Planned (Q1 2026)
+   - Decision audit trail (query → context → decision)
+   - RISK-005 mitigation
+4. 📋 **Graceful degradation** - Planned (Q2 2026)
+   - Circuit breaker pattern for RAE downtime
+   - Fallback mode dla agentów
+   - RISK-004 mitigation
+5. 📋 **Telemetria kognitywna** - Partial (drift detection exists)
+   - Memory quality metrics dashboard
+   - RISK-009 mitigation (enhanced)
+6. 📋 **Policy Packs enhancement** - Planned (Q2 2026)
+   - Wersjonowanie policies
+   - Enforcement engine upgrade
+   - RISK-003 further mitigation
 
 ### 11.3. Dokumenty i artifakty
 

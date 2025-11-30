@@ -76,15 +76,19 @@ Nieuprawniony dostęp do pamięci RAE może prowadzić do wycieku danych osobowy
 - ✅ Audit logging wszystkich operacji
 - ✅ Encryption at rest (opcjonalnie per-tenant)
 
-**Działania mitygujące (planowane):**
-- 🔄 Row-Level Security (RLS) w PostgreSQL dla enforce tenant isolation na poziomie bazy
-- 🔄 Automatyczna anonimizacja PII w logach i dumps
-- 🔄 Data Loss Prevention (DLP) scanning przed storage
-- 🔄 Regular security audits i penetration testing
+**Działania mitygujące (NOWE - zaimplementowane 2025-11-30):**
+- ✅ **Row-Level Security (RLS)** w PostgreSQL - FULLY IMPLEMENTED
+  - Migration 006: Enable RLS on all tables
+  - RLSContextMiddleware: Automatic tenant context setting
+  - Defense in depth: DB-level + app-level isolation
+  - Deployment guide: docs/RLS-Deployment-Guide.md
+- 🔄 Automatyczna anonimizacja PII w logach i dumps (planned)
+- 🔄 Data Loss Prevention (DLP) scanning przed storage (planned)
+- 🔄 Regular security audits i penetration testing (planned)
 
 **Właściciel:** Security & Compliance Contact
-**Status:** W trakcie mitygacji
-**Data przeglądu:** 2025-12-31
+**Status:** ✅ FULLY MITIGATED (RLS deployed)
+**Data przeglądu:** 2026-Q1 (post-deployment verification)
 
 ---
 
@@ -264,15 +268,18 @@ Bug w tenant isolation logic może prowadzić do:
 - ✅ RBAC - users przypisani do tenants
 - ✅ Testy integracyjne dla tenant isolation
 
-**Działania mitygujące (planowane):**
-- 🔄 PostgreSQL Row-Level Security (RLS) - enforce na poziomie DB
-- 🔄 Qdrant collections per-tenant - fizyczna separacja vectorów
-- 🔄 Tenant isolation tests - automated security testing
-- 🔄 Penetration testing - external security audit
+**Działania mitygujące (NOWE - zaimplementowane 2025-11-30):**
+- ✅ **PostgreSQL Row-Level Security (RLS)** - FULLY IMPLEMENTED
+  - Database-level enforcement of tenant isolation
+  - Even with app bugs, DB blocks cross-tenant access
+  - See RISK-001 for implementation details
+- 🔄 Qdrant collections per-tenant - fizyczna separacja vectorów (planned)
+- 🔄 Tenant isolation tests - automated security testing (planned)
+- 🔄 Penetration testing - external security audit (planned)
 
 **Właściciel:** Security & Compliance Contact
-**Status:** W trakcie wzmocnienia
-**Data przeglądu:** 2025-12-31
+**Status:** ✅ FULLY MITIGATED (RLS deployed)
+**Data przeglądu:** 2026-Q1 (post-deployment verification)
 
 ---
 

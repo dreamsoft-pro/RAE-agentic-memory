@@ -126,12 +126,13 @@ RAE is designed for enterprise AI governance and compliance with **ISO/IEC 42001
 | Data Retention & Cleanup | ✅ Implemented | Per-tenant policies with automated cleanup workers |
 | GDPR Right to Erasure | ✅ Implemented | User data deletion with full cascade and audit |
 | Deletion Audit Trail | ✅ Implemented | Complete tracking of who/when/why for all deletions |
+| PostgreSQL Row-Level Security | ✅ Implemented | Database-level tenant isolation (Q4 2025) |
 | Roles & Responsibilities | ✅ Documented | Full RACI matrix for 6 roles |
 | Risk Register | ✅ Complete | 10 risks identified with mitigation plans |
 | Telemetry (Technical) | ✅ Implemented | OpenTelemetry + structured logging |
 | Telemetry (Cognitive) | 🟡 Partial | Drift detection (quality metrics in progress) |
-| High-Risk Marking | 🟡 In Progress | Human approval workflow planned |
-| Graceful Degradation | ⏳ Planned | Circuit breaker + fallback mode (Q1 2026) |
+| High-Risk Marking | ⏳ Planned | Human approval workflow (Q1 2026) |
+| Graceful Degradation | ⏳ Planned | Circuit breaker + fallback mode (Q2 2026) |
 
 **Legend:** ✅ Complete | 🟡 Partial | ⏳ Planned
 
