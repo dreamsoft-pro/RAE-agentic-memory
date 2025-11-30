@@ -12,11 +12,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from apps.memory_api.models.reflection_v2_models import (
-    OutcomeType,
     ReflectionResult,
     ReflectionType,
 )
-from apps.memory_api.repositories.memory_repository import MemoryRepository
 from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
 from apps.memory_api.workers.memory_maintenance import DreamingWorker
 
@@ -66,9 +64,7 @@ async def test_dreaming_worker_basic_cycle(mock_app_state_pool, mock_env_and_set
             )
 
             # Create worker
-            worker = DreamingWorker(
-                pool=pool, reflection_engine=mock_reflection_engine
-            )
+            worker = DreamingWorker(pool=pool, reflection_engine=mock_reflection_engine)
 
             # Run dreaming cycle
             results = await worker.run_dreaming_cycle(
@@ -206,9 +202,7 @@ async def test_dreaming_worker_lookback_window(
                 return_value={"reflection_id": uuid.uuid4()}
             )
 
-            worker = DreamingWorker(
-                pool=pool, reflection_engine=mock_reflection_engine
-            )
+            worker = DreamingWorker(pool=pool, reflection_engine=mock_reflection_engine)
 
             # Run with 24-hour lookback
             results = await worker.run_dreaming_cycle(
@@ -283,9 +277,7 @@ async def test_dreaming_worker_importance_filter(
                 return_value={"reflection_id": uuid.uuid4()}
             )
 
-            worker = DreamingWorker(
-                pool=pool, reflection_engine=mock_reflection_engine
-            )
+            worker = DreamingWorker(pool=pool, reflection_engine=mock_reflection_engine)
 
             # Run with importance threshold
             results = await worker.run_dreaming_cycle(
@@ -348,12 +340,10 @@ async def test_dreaming_worker_max_samples_limit(
                 return_value={"reflection_id": uuid.uuid4()}
             )
 
-            worker = DreamingWorker(
-                pool=pool, reflection_engine=mock_reflection_engine
-            )
+            worker = DreamingWorker(pool=pool, reflection_engine=mock_reflection_engine)
 
             # Run with max_samples limit
-            results = await worker.run_dreaming_cycle(
+            await worker.run_dreaming_cycle(
                 tenant_id=tenant_id,
                 project_id=project_id,
                 lookback_hours=24,
@@ -363,9 +353,7 @@ async def test_dreaming_worker_max_samples_limit(
 
             # Verify max_samples was respected
             call_args = mock_reflection_engine.generate_reflection.call_args[0][0]
-            assert (
-                len(call_args.events) <= 10
-            ), "Should respect max_samples limit of 10"
+            assert len(call_args.events) <= 10, "Should respect max_samples limit of 10"
 
 
 @pytest.mark.integration
@@ -401,9 +389,7 @@ async def test_dreaming_worker_error_handling(
                 side_effect=Exception("LLM service unavailable")
             )
 
-            worker = DreamingWorker(
-                pool=pool, reflection_engine=mock_reflection_engine
-            )
+            worker = DreamingWorker(pool=pool, reflection_engine=mock_reflection_engine)
 
             # Run dreaming cycle
             results = await worker.run_dreaming_cycle(

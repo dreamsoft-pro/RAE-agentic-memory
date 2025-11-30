@@ -7,11 +7,9 @@ memory importance decay works correctly across multiple scenarios.
 
 import uuid
 from datetime import datetime, timedelta, timezone
-from unittest.mock import MagicMock
 
 import pytest
 
-from apps.memory_api.services.importance_scoring import ImportanceScoringService
 from apps.memory_api.workers.memory_maintenance import DecayWorker
 
 
@@ -115,9 +113,9 @@ async def test_decay_worker_with_access_stats(mock_app_state_pool):
 
     # Recently accessed memory should decay less (or be protected)
     # Stale memory should decay more aggressively
-    assert stale_importance < recent_importance, (
-        "Stale memory should have lower importance than recently accessed memory"
-    )
+    assert (
+        stale_importance < recent_importance
+    ), "Stale memory should have lower importance than recently accessed memory"
     assert stale_importance >= 0.01, "Importance should not go below floor"
 
 
@@ -309,4 +307,6 @@ async def test_decay_worker_preserves_metadata(mock_app_state_pool):
     assert record["importance"] < 0.9, "Importance should be reduced"
     assert record["metadata"] == metadata, "Metadata should be preserved"
     assert record["tags"] == tags, "Tags should be preserved"
-    assert record["content"] == "Test memory with metadata", "Content should be preserved"
+    assert (
+        record["content"] == "Test memory with metadata"
+    ), "Content should be preserved"

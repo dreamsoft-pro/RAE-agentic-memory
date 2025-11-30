@@ -288,7 +288,9 @@ async def get_metric_timeseries(
             if first_value > 0:
                 percent_change = ((last_value - first_value) / first_value) * 100
                 time_series.trend_direction = (
-                    "up" if percent_change > 5 else "down" if percent_change < -5 else "stable"
+                    "up"
+                    if percent_change > 5
+                    else "down" if percent_change < -5 else "stable"
                 )
                 time_series.trend_percent = round(percent_change, 2)
 
