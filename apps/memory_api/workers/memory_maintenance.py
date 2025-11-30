@@ -17,6 +17,7 @@ from uuid import UUID
 
 import asyncpg
 import structlog
+from pydantic import BaseModel
 
 from apps.memory_api.config import settings
 from apps.memory_api.metrics import (
@@ -35,6 +36,19 @@ from apps.memory_api.services.llm import get_llm_provider
 from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
 
 logger = structlog.get_logger(__name__)
+
+
+# ============================================================================
+# Response Models
+# ============================================================================
+
+
+class SessionSummaryResponse(BaseModel):
+    """Response model for LLM-generated session summaries."""
+
+    summary: str
+    key_topics: list[str]
+    sentiment: str
 
 
 # ============================================================================
