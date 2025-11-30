@@ -17,7 +17,6 @@ from uuid import UUID
 
 import asyncpg
 import structlog
-from pydantic import BaseModel, Field
 
 from apps.memory_api.config import settings
 from apps.memory_api.metrics import (
@@ -32,8 +31,8 @@ from apps.memory_api.models.reflection_v2_models import (
 )
 from apps.memory_api.repositories.memory_repository import MemoryRepository
 from apps.memory_api.services.importance_scoring import ImportanceScoringService
-from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
 from apps.memory_api.services.llm import get_llm_provider
+from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
 
 logger = structlog.get_logger(__name__)
 

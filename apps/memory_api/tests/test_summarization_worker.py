@@ -1,10 +1,12 @@
-import pytest
-from unittest.mock import AsyncMock, MagicMock
-from datetime import datetime, timezone
 import uuid
+from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+
 from apps.memory_api.workers.memory_maintenance import (
-    SummarizationWorker,
     SessionSummaryResponse,
+    SummarizationWorker,
 )
 
 

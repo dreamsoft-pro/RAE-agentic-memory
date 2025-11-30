@@ -6,7 +6,6 @@ following the Repository/DAO pattern to separate data access from business logic
 """
 
 from typing import Any, Dict, List, Optional
-from uuid import UUID
 
 import asyncpg
 import structlog
@@ -229,7 +228,11 @@ class MemoryRepository:
             return [dict(r) for r in records]
 
     async def get_episodic_memories(
-        self, tenant_id: str, project: str, limit: Optional[int] = None
+        self,
+        tenant_id: str,
+        project: str,
+        limit: Optional[int] = None,
+        session_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """
         Retrieve episodic memories for a tenant and project.
