@@ -266,14 +266,41 @@ class SummarizationWorker:
         # Extract key facts
         contents = [m.get("content", "") for m in memories]
 
-        # Simple summary (in production, use LLM)
-        summary = f"Session summary ({len(memories)} events): "
-        summary += " | ".join(contents[:5])  # First 5 events
+        # Build prompt for LLM
+        memories_text = "\n".join([f"- {content}" for content in contents])
+        prompt = f"""Summarize the following session events:
 
-        if len(contents) > 5:
-            summary += f" ... and {len(contents) - 5} more events"
+{memories_text}
 
-        return summary
+Provide a concise summary, list key topics, and determine the overall sentiment."""
+
+        try:
+            # Use LLM to generate structured summary
+            response = await self.llm_provider.generate_structured(
+                system="You are an expert at summarizing conversation sessions.",
+                prompt=prompt,
+                model=settings.RAE_LLM_MODEL_DEFAULT,
+                response_model=SessionSummaryResponse,
+            )
+
+            # Format the summary
+            summary = f"{response.summary}\n\nKey Topics: {', '.join(response.key_topics)}\n\nSentiment: {response.sentiment}"
+            return summary
+
+        except Exception as e:
+            logger.warning(
+                "llm_summarization_failed",
+                error=str(e),
+                event_count=len(memories),
+            )
+            # Fallback to simple summary
+            summary = f"Session summary ({len(memories)} events): "
+            summary += " | ".join(contents[:5])
+
+            if len(contents) > 5:
+                summary += f" ... and {len(contents) - 5} more events"
+
+            return summary
 
     async def summarize_long_sessions(
         self,
