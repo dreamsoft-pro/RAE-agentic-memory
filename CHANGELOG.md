@@ -166,22 +166,101 @@ This release completes the implementation of critical functionalities identified
 - Optional TimescaleDB support for high-volume metrics
 - Multi-tenant and multi-project metric isolation
 
+#### A/B Testing & Benchmarking Database Implementation ✅
+
+**Database Schema** (`infra/postgres/migrations/005_create_evaluation_tables.sql`)
+- ✅ `ab_tests` table - A/B test definitions
+  - Variant configurations (variant_a_config, variant_b_config as JSONB)
+  - Traffic split control (0.0-1.0)
+  - Statistical parameters (min_sample_size, confidence_level)
+  - Primary and secondary metrics tracking
+  - Results summary with winner determination
+  - Status lifecycle (draft, running, completed, archived)
+- ✅ `ab_test_results` table - Individual A/B test observations
+  - Variant assignment tracking
+  - Metric values as JSONB for flexibility
+  - Query metadata (query_id, query_text, session_id)
+  - Retrieved document counts and relevance labels
+  - User feedback integration
+  - Execution timing tracking
+- ✅ `benchmark_suites` table - Reusable benchmark definitions
+  - Test queries as JSONB array
+  - Evaluation criteria with thresholds
+  - Expected results for comparison
+  - Execution settings (timeout, parallel execution, retry policies)
+  - Baseline designation for regression testing
+  - Version tracking for suite evolution
+- ✅ `benchmark_executions` table - Benchmark execution history
+  - Configuration snapshots for reproducibility
+  - Query-level pass/fail tracking
+  - Overall score calculation
+  - Metric scores breakdown
+  - Performance timing (total and per-query)
+  - Baseline comparison with improvement percentage
+  - Git commit hash tracking for code correlation
+  - Error handling with detailed logging
+- ✅ **Helper Functions**
+  - calculate_ab_test_statistics() - Basic statistical analysis for A/B tests
+- ✅ **Automatic Statistics Updates** - Triggers update suite execution counts
+- ✅ **Data Validation** - Check constraints for status enums and value ranges
+
+**ABTestRepository** (`apps/memory_api/repositories/evaluation_repository.py`)
+- ✅ create_test() - Create A/B test with variant configurations
+- ✅ get_test() - Retrieve test definition by ID
+- ✅ list_tests() - List tests with status filtering and pagination
+- ✅ update_test_status() - Update test status and results (winner, confidence, effect size)
+- ✅ record_result() - Record individual A/B test observation
+- ✅ get_test_results() - Retrieve results with variant filtering
+- ✅ calculate_statistics() - Calculate basic statistics using database function
+- ✅ delete_test() - Delete test with cascade to results
+
+**BenchmarkRepository** (`apps/memory_api/repositories/evaluation_repository.py`)
+- ✅ create_suite() - Create benchmark suite with test queries
+- ✅ get_suite() - Retrieve suite definition
+- ✅ list_suites() - List suites with status and baseline filtering
+- ✅ update_suite_status() - Update suite status
+- ✅ create_execution() - Create execution record with configuration snapshot
+- ✅ update_execution() - Update execution with results and metrics
+- ✅ get_execution() - Retrieve execution details
+- ✅ list_executions() - List executions with filtering by suite/tenant/status
+- ✅ get_baseline_execution() - Retrieve baseline for comparison
+- ✅ delete_suite() - Delete suite with cascade to executions
+
+**API Integration** (`apps/memory_api/routes/evaluation.py`)
+- ✅ POST /v1/evaluation/ab-test/create - Now stores tests in database with variant configurations
+- ✅ POST /v1/evaluation/ab-test/{test_id}/compare - Now retrieves results and calculates statistics
+- ✅ POST /v1/evaluation/benchmark/run - Now creates execution records and tracks status
+- ✅ GET /v1/evaluation/benchmark/suites - Now lists suites from database with execution history
+
+**Impact:**
+- A/B testing infrastructure ready for production experimentation
+- Benchmark suites enable systematic regression testing
+- Statistical analysis support for data-driven decisions
+- Complete audit trail for all evaluations
+- Git commit tracking for code-performance correlation
+- Baseline comparison for tracking improvements/regressions
+
 ### Changed
 - **Event Triggers API** - All endpoints now use database-backed repositories instead of placeholders
 - **Dashboard Metrics API** - Time series endpoint now retrieves real aggregated data
-- **Repository Pattern** - Added TriggerRepository, WorkflowRepository, and MetricsRepository
+- **Evaluation API** - A/B testing and benchmarking endpoints now use database storage
+- **Repository Pattern** - Added TriggerRepository, WorkflowRepository, MetricsRepository, ABTestRepository, and BenchmarkRepository
 
 ### Fixed
 - **Event Triggers** - Fixed placeholder implementations that returned 404 or empty data
 - **Dashboard Time Series** - Fixed empty data_points array in TimeSeriesMetric responses
-- **TODO.md Items** - Completed 3 major categories of missing/incomplete functionalities:
+- **A/B Testing** - Fixed placeholder create_ab_test that only logged without persistence
+- **Benchmarking** - Fixed placeholder run_benchmark_suite and list_benchmark_suites
+- **TODO.md Items** - Completed 5 major categories of missing/incomplete functionalities:
   1. Integration tests for Decay and Dreaming workers
   2. Event Triggers database storage
   3. Dashboard metrics time series
+  4. A/B tests database storage
+  5. Benchmark suites database storage
 
 ### Documentation
 - Updated STATUS.md with implementation summary and timestamps
-- Updated TODO.md to reflect completed items (will be updated separately)
+- Updated TODO.md to reflect all completed items with detailed completion notes
 - All new code includes comprehensive docstrings and comments
 
 ### Technical Details
@@ -189,18 +268,22 @@ This release completes the implementation of critical functionalities identified
 **Database Migrations:**
 - Migration 003: 4 tables, 15 indexes, 4 triggers, 3 validation functions
 - Migration 004: 2 tables, 7 indexes, 3 helper functions, TimescaleDB support
+- Migration 005: 4 tables, 12 indexes, 3 triggers, 1 statistics function, constraint validation
 
 **New Files:**
 - tests/integration/test_decay_worker.py (372 lines, 9 tests)
 - tests/integration/test_dreaming_worker.py (383 lines, 9 tests)
 - infra/postgres/migrations/003_create_triggers_workflows_tables.sql (280 lines)
 - infra/postgres/migrations/004_create_metrics_timeseries_table.sql (356 lines)
+- infra/postgres/migrations/005_create_evaluation_tables.sql (359 lines)
 - apps/memory_api/repositories/trigger_repository.py (486 lines)
 - apps/memory_api/repositories/metrics_repository.py (346 lines)
+- apps/memory_api/repositories/evaluation_repository.py (616 lines)
 
 **Modified Files:**
 - apps/memory_api/routes/event_triggers.py - Updated 10 endpoints with database integration
 - apps/memory_api/routes/dashboard.py - Updated time series endpoint with database retrieval
+- apps/memory_api/routes/evaluation.py - Updated 4 endpoints (A/B testing and benchmarking) with database integration
 
 **Test Statistics:**
 - Integration tests added: 18
