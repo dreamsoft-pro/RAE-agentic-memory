@@ -295,20 +295,73 @@ Dla RAE oznacza to:
 
 ## 11. Podsumowanie i status wdrożenia
 
-Status wdrożenia (przykładowa tabela do uzupełniania):
+Status wdrożenia (aktualizacja: 2025-11-30):
 
 | Obszar                             | Status       | Komentarz / plan działań                          |
 |------------------------------------|-------------|--------------------------------------------------|
-| Role i odpowiedzialności           | Częściowo   | Zdefiniować formalnie Ownera i Maintainerów      |
-| Rejestr ryzyk (Risk Register)      | Do zrobienia| Utworzyć `docs/RAE-Risk-Register.md`             |
-| Tagowanie źródeł i scoring         | Częściowo   | Mechanizm w kodzie + konwencje w konfiguracji    |
-| Multi-tenant isolation             | W trakcie   | Uporządkować schematy/tenant_id w bazie          |
-| Retencja danych                    | Do zrobienia| Dodać zadania cleanup + konfigurację per-tenant  |
-| Telemetria techniczna              | Częściowo   | Dokończyć integrację z monitoringiem/OTel        |
-| Telemetria kognitywna              | Do zrobienia| Zaprojektować metryki jakości pamięci            |
-| Policy Packs / Guardrails          | W trakcie   | Uporządkować format, wersjonowanie, testy        |
-| Audytowalność decyzji              | Częściowo   | Wzmocnić logowanie powiązań kontekst ↔ decyzja   |
-| Procedury ewaluacji i przeglądów   | Do zrobienia| Ustalić cykl (np. kwartalny) i zakres przeglądów |
+| Role i odpowiedzialności           | ✅ Zaimplementowane | `docs/RAE-Roles.md` - pełna macierz RACI, 6 ról |
+| Rejestr ryzyk (Risk Register)      | ✅ Zaimplementowane | `docs/RAE-Risk-Register.md` - 10 ryzyk z mitygacją |
+| Tagowanie źródeł i scoring         | ✅ Zaimplementowane | `SourceTrustService` - automatic trust assessment |
+| Source provenance tracking         | ✅ Zaimplementowane | `source_owner`, `trust_level`, `last_verified_at` |
+| Multi-tenant isolation             | ✅ Zaimplementowane | TenantContextMiddleware + tenant_id filtering     |
+| Retencja danych                    | ✅ Zaimplementowane | `RetentionService` + cleanup workers (daily at 1 AM) |
+| GDPR "right to be forgotten"       | ✅ Zaimplementowane | `gdpr_delete_user_data_task` - cascade deletion  |
+| Deletion audit trail               | ✅ Zaimplementowane | `deletion_audit_log` table with full tracking    |
+| Telemetria techniczna              | ✅ Zaimplementowane | OpenTelemetry + structured logging (structlog)   |
+| Telemetria kognitywna              | W trakcie   | Drift detection + semantic quality metrics (częściowo) |
+| Policy Packs / Guardrails          | W trakcie   | RulesEngine istnieje, uporządkować format        |
+| High-risk scenario marking         | W trakcie   | Zaprojektować oznaczanie + approval workflow     |
+| Audytowalność decyzji              | Częściowo   | Audit logs + context tracking (wzmocnić provenance) |
+| Graceful degradation               | Do zrobienia| Circuit breaker + fallback mode dla agentów      |
+| Procedury ewaluacji i przeglądów   | ✅ Zaimplementowane | Quarterly review process w dokumentacji          |
+
+**Legenda:**
+- ✅ Zaimplementowane - Feature gotowy do użycia, pokryty testami
+- Częściowo - Podstawowa implementacja istnieje, wymaga wzmocnienia
+- W trakcie - Rozpoczęte prace, wymaga dokończenia
+- Do zrobienia - Planowane, nie rozpoczęte
+
+### 11.1. Najważniejsze osiągnięcia (2025-11-30)
+
+**Zgodność z ISO/IEC 42001:**
+- ✅ **Rejestr ryzyk** - 10 zidentyfikowanych ryzyk z mitygacją (RISK-001 do RISK-010)
+- ✅ **Source Trust Scoring** - Automatyczna ocena wiarygodności źródeł wiedzy
+- ✅ **Data Retention & GDPR** - Pełna zgodność z GDPR Article 17 (right to erasure)
+- ✅ **Role i odpowiedzialności** - Macierz RACI dla 6 ról organizacyjnych
+- ✅ **Audit trail** - Śledzenie wszystkich operacji deletion z metadata
+
+**Mitygacja ryzyk o wysokim priorytecie:**
+- ✅ **RISK-002** (Brak kontroli retencji) - RetentionService + cleanup workers
+- ✅ **RISK-003** (Halucynacje z błędnych kontekstów) - Source trust scoring
+- 🟡 **RISK-001** (Wyciek danych) - Multi-tenant isolation + audit logging (RLS planowany)
+- 🟡 **RISK-010** (Brak nadzoru człowieka) - High-risk marking (w planach)
+
+### 11.2. Następne kroki (priorytet)
+
+**Q4 2025:**
+1. PostgreSQL Row-Level Security (RLS) dla tenant isolation (RISK-001, RISK-006)
+2. High-risk scenario marking + human approval workflow (RISK-010)
+3. Context provenance linking - pełna ścieżka: query → context → decision (RISK-005)
+
+**Q1 2026:**
+4. Graceful degradation - circuit breaker + fallback mode (RISK-004)
+5. Telemetria kognitywna - memory quality metrics dashboard (RISK-009)
+6. Policy Packs - wersjonowanie i enforcement engine (RISK-003)
+
+### 11.3. Dokumenty i artifakty
+
+**Dokumentacja compliance:**
+- `docs/RAE-ISO_42001.md` - Ten dokument (readiness assessment)
+- `docs/RAE-Risk-Register.md` - Rejestr ryzyk z mitygacją
+- `docs/RAE-Roles.md` - Role i odpowiedzialności (RACI matrix)
+- `docs/SECURITY.md` - Security assessment
+
+**Implementacja w kodzie:**
+- `apps/memory_api/models.py` - Modele z polami ISO 42001 (trust_level, source_owner)
+- `apps/memory_api/services/source_trust_service.py` - Source trust scoring
+- `apps/memory_api/services/retention_service.py` - Data retention & GDPR compliance
+- `apps/memory_api/tasks/background_tasks.py` - Cleanup workers & GDPR deletion tasks
+- `apps/memory_api/models/tenant.py` - TenantConfig z retention policies
 
 Ten dokument jest **żywy** – należy go aktualizować wraz z:
 
