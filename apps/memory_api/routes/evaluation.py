@@ -22,6 +22,10 @@ from apps.memory_api.models.evaluation_models import (
     GetQualityMetricsRequest,
     GetQualityMetricsResponse,
 )
+from apps.memory_api.repositories.evaluation_repository import (
+    ABTestRepository,
+    BenchmarkRepository,
+)
 from apps.memory_api.services.drift_detector import DriftDetector
 from apps.memory_api.services.evaluation_service import EvaluationService
 
@@ -38,6 +42,16 @@ router = APIRouter(prefix="/v1/evaluation", tags=["Evaluation"])
 async def get_pool(request: Request):
     """Get database connection pool from app state"""
     return request.app.state.pool
+
+
+async def get_ab_test_repo(pool=Depends(get_pool)) -> ABTestRepository:
+    """Get A/B test repository"""
+    return ABTestRepository(pool)
+
+
+async def get_benchmark_repo(pool=Depends(get_pool)) -> BenchmarkRepository:
+    """Get benchmark repository"""
+    return BenchmarkRepository(pool)
 
 
 # ============================================================================
@@ -238,7 +252,9 @@ async def get_drift_severity_levels():
 
 
 @router.post("/ab-test/create", response_model=CreateABTestResponse, status_code=201)
-async def create_ab_test(request: CreateABTestRequest, pool=Depends(get_pool)):
+async def create_ab_test(
+    request: CreateABTestRequest, repo: ABTestRepository = Depends(get_ab_test_repo)
+):
     """
     Create a new A/B test to compare variants.
 
@@ -248,8 +264,6 @@ async def create_ab_test(request: CreateABTestRequest, pool=Depends(get_pool)):
     **Use Case:** Test new search algorithms, weight profiles, or model versions.
     """
     try:
-        from uuid import uuid4
-
         # Validate traffic allocation
         total_traffic = sum(v.traffic_percentage for v in request.variants)
         if not (99.0 <= total_traffic <= 101.0):  # Allow small floating point error
@@ -258,18 +272,46 @@ async def create_ab_test(request: CreateABTestRequest, pool=Depends(get_pool)):
                 detail=f"Traffic allocation must sum to 100% (got {total_traffic}%)",
             )
 
-        test_id = uuid4()
+        # Extract variant A and B (support only 2 variants for now)
+        if len(request.variants) != 2:
+            raise HTTPException(
+                status_code=400,
+                detail="Currently only 2-variant A/B tests are supported",
+            )
 
-        # In production, would store in database
+        variant_a = request.variants[0]
+        variant_b = request.variants[1]
+
+        # Create test in database
+        test_record = await repo.create_test(
+            tenant_id=request.tenant_id,
+            project_id=request.project_id,
+            test_name=request.test_name,
+            description=request.description,
+            hypothesis=request.hypothesis,
+            variant_a_name=variant_a.variant_name,
+            variant_a_config=variant_a.config,
+            variant_b_name=variant_b.variant_name,
+            variant_b_config=variant_b.config,
+            traffic_split=variant_b.traffic_percentage / 100.0,
+            min_sample_size=request.min_sample_size,
+            confidence_level=request.confidence_level,
+            primary_metric=request.primary_metric,
+            secondary_metrics=request.secondary_metrics,
+            created_by=request.created_by,
+            tags=request.tags,
+            metadata=request.metadata,
+        )
+
         logger.info(
             "ab_test_created",
-            test_id=test_id,
+            test_id=test_record["id"],
             test_name=request.test_name,
             variants=len(request.variants),
         )
 
         return CreateABTestResponse(
-            test_id=test_id,
+            test_id=test_record["id"],
             message=f"A/B test '{request.test_name}' created with {len(request.variants)} variants",
         )
 
@@ -281,7 +323,9 @@ async def create_ab_test(request: CreateABTestRequest, pool=Depends(get_pool)):
 
 
 @router.post("/ab-test/{test_id}/compare")
-async def compare_ab_test_variants(test_id: str, pool=Depends(get_pool)):
+async def compare_ab_test_variants(
+    test_id: str, repo: ABTestRepository = Depends(get_ab_test_repo)
+):
     """
     Compare A/B test variants and determine winner.
 
@@ -291,21 +335,60 @@ async def compare_ab_test_variants(test_id: str, pool=Depends(get_pool)):
     **Returns:** Comparison results with winner determination.
     """
     try:
+        from uuid import UUID
 
-        # In production, would fetch from database
-        # For now, return structure
+        test_uuid = UUID(test_id)
 
-        logger.info("ab_test_comparison_requested", test_id=test_id)
+        # Get test details
+        test_record = await repo.get_test(test_uuid)
+        if not test_record:
+            raise HTTPException(status_code=404, detail=f"Test {test_id} not found")
+
+        # Calculate statistics
+        stats = await repo.calculate_statistics(test_uuid)
+
+        # Get sample counts
+        variant_a_count = stats.get("variant_a_count", 0)
+        variant_b_count = stats.get("variant_b_count", 0)
+
+        # Check if we have enough samples
+        min_samples = test_record.get("min_sample_size", 100)
+        if variant_a_count < min_samples or variant_b_count < min_samples:
+            return {
+                "test_id": test_id,
+                "comparison": {
+                    "message": f"Not enough samples yet (need {min_samples} per variant)",
+                    "status": "pending",
+                    "variant_a_count": variant_a_count,
+                    "variant_b_count": variant_b_count,
+                    "min_sample_size": min_samples,
+                },
+            }
+
+        # Return basic statistics (full statistical testing would be in application code)
+        logger.info(
+            "ab_test_comparison_complete",
+            test_id=test_id,
+            variant_a_count=variant_a_count,
+            variant_b_count=variant_b_count,
+        )
 
         return {
             "test_id": test_id,
+            "test_name": test_record["test_name"],
+            "status": test_record["status"],
+            "statistics": stats,
             "comparison": {
-                "message": "A/B test comparison requires actual test data",
-                "status": "pending",
-                "note": "Submit evaluation results for each variant to compare",
+                "variant_a_samples": variant_a_count,
+                "variant_b_samples": variant_b_count,
+                "variant_a_avg": stats.get("variant_a_avg"),
+                "variant_b_avg": stats.get("variant_b_avg"),
+                "message": "Basic statistics calculated. Full statistical testing available via application logic.",
             },
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("ab_test_comparison_failed", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
@@ -393,7 +476,10 @@ async def get_quality_thresholds():
 
 @router.post("/benchmark/run")
 async def run_benchmark_suite(
-    suite_name: str, tenant_id: str, project_id: str, pool=Depends(get_pool)
+    suite_name: str,
+    tenant_id: str,
+    project_id: str,
+    repo: BenchmarkRepository = Depends(get_benchmark_repo),
 ):
     """
     Run a predefined benchmark suite.
@@ -404,43 +490,92 @@ async def run_benchmark_suite(
     **Use Case:** Regular system validation, regression testing.
     """
     try:
-        logger.info("benchmark_run_requested", suite=suite_name)
+        # Find suite by name
+        suites = await repo.list_suites(
+            tenant_id=tenant_id, project_id=project_id, status="active"
+        )
+        suite = next((s for s in suites if s["suite_name"] == suite_name), None)
+
+        if not suite:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Benchmark suite '{suite_name}' not found for tenant/project",
+            )
+
+        # Create execution record
+        execution = await repo.create_execution(
+            suite_id=suite["id"],
+            tenant_id=tenant_id,
+            project_id=project_id,
+            triggered_by="api",
+        )
+
+        # Update to running status
+        await repo.update_execution(execution["id"], status="running")
+
+        logger.info(
+            "benchmark_run_started",
+            suite=suite_name,
+            execution_id=execution["id"],
+        )
 
         return {
+            "execution_id": str(execution["id"]),
+            "suite_id": str(suite["id"]),
             "suite_name": suite_name,
-            "status": "pending",
-            "message": "Benchmark suite execution requires predefined test data",
-            "note": "Create benchmark suites with ground truth first",
+            "status": "running",
+            "message": f"Benchmark suite '{suite_name}' execution started",
+            "note": "Execution in progress. Poll execution status or wait for completion.",
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("benchmark_run_failed", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/benchmark/suites")
-async def list_benchmark_suites(tenant_id: str, project_id: str):
+async def list_benchmark_suites(
+    tenant_id: str,
+    project_id: str,
+    repo: BenchmarkRepository = Depends(get_benchmark_repo),
+):
     """
     List available benchmark suites.
 
     Returns configured benchmark suites for systematic evaluation.
     """
-    return {
-        "suites": [
-            {
-                "name": "standard_retrieval",
-                "description": "Standard retrieval quality benchmark",
-                "num_queries": 50,
-                "metrics": ["mrr", "ndcg", "precision", "recall"],
-            },
-            {
-                "name": "performance",
-                "description": "Performance and latency benchmark",
-                "num_queries": 100,
-                "metrics": ["response_time", "throughput"],
-            },
-        ]
-    }
+    try:
+        suites = await repo.list_suites(
+            tenant_id=tenant_id, project_id=project_id, status="active"
+        )
+
+        # Format response
+        formatted_suites = []
+        for suite in suites:
+            formatted_suites.append(
+                {
+                    "id": str(suite["id"]),
+                    "name": suite["suite_name"],
+                    "description": suite.get("description", ""),
+                    "num_queries": suite["total_queries"],
+                    "version": suite.get("version", "1.0"),
+                    "is_baseline": suite.get("is_baseline", False),
+                    "last_executed_at": (
+                        suite["last_executed_at"].isoformat()
+                        if suite.get("last_executed_at")
+                        else None
+                    ),
+                    "execution_count": suite.get("execution_count", 0),
+                }
+            )
+
+        return {"suites": formatted_suites, "total": len(formatted_suites)}
+
+    except Exception as e:
+        logger.error("list_benchmark_suites_failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # ============================================================================
