@@ -89,7 +89,7 @@ class ExtractTriplesRequest(BaseModel):
 class ExtractTriplesResponse(BaseModel):
     """Response model for triple extraction."""
 
-    triples: List[Dict[str, str]] = Field(
+    triples: List[Dict[str, Any]] = Field(
         ..., description="List of extracted knowledge triples"
     )
 
