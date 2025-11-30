@@ -219,6 +219,11 @@ async def check_tenant_access(
     Raises:
         HTTPException: If user doesn't have access
     """
+    # If tenancy is disabled, allow access
+    if not settings.TENANCY_ENABLED:
+        logger.debug("check_tenant_access_bypassed_tenancy_disabled", tenant_id=tenant_id)
+        return True
+
     from uuid import UUID
 
     from apps.memory_api.services.rbac_service import RBACService

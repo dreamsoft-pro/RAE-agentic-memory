@@ -81,6 +81,11 @@ echo -n "  - Adding 'project' column to memories... "
 docker exec rae-postgres psql -U rae -d rae -c "ALTER TABLE memories ADD COLUMN IF NOT EXISTS project VARCHAR(255);" > /dev/null 2>&1
 echo -e "${GREEN}✓${NC}"
 
+echo -n "  - Adding 'created_at' column to memories... "
+docker exec rae-postgres psql -U rae -d rae -c "ALTER TABLE memories ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT now();" > /dev/null 2>&1
+docker exec rae-postgres psql -U rae -d rae -c "UPDATE memories SET created_at = timestamp WHERE created_at IS NULL;" > /dev/null 2>&1
+echo -e "${GREEN}✓${NC}"
+
 echo ""
 echo -e "${GREEN}✅ Database initialization complete!${NC}"
 echo ""
