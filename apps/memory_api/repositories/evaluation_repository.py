@@ -7,7 +7,6 @@ Provides database operations for:
 - Statistical analysis and comparison
 """
 
-from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
@@ -136,9 +135,9 @@ class ABTestRepository:
             param_idx = 3
 
             if status == "running" and not winner:
-                update_fields.append(f"started_at = NOW()")
+                update_fields.append("started_at = NOW()")
             elif status == "completed":
-                update_fields.append(f"completed_at = NOW()")
+                update_fields.append("completed_at = NOW()")
                 if winner:
                     update_fields.append(f"winner = ${param_idx}")
                     params.append(winner)
@@ -358,9 +357,7 @@ class BenchmarkRepository:
             records = await conn.fetch(query, *params)
         return [dict(r) for r in records]
 
-    async def update_suite_status(
-        self, suite_id: UUID, status: str
-    ) -> Dict[str, Any]:
+    async def update_suite_status(self, suite_id: UUID, status: str) -> Dict[str, Any]:
         """Update benchmark suite status."""
         async with self.pool.acquire() as conn:
             record = await conn.fetchrow(
@@ -549,9 +546,7 @@ class BenchmarkRepository:
             records = await conn.fetch(query, *params)
         return [dict(r) for r in records]
 
-    async def get_baseline_execution(
-        self, suite_id: UUID
-    ) -> Optional[Dict[str, Any]]:
+    async def get_baseline_execution(self, suite_id: UUID) -> Optional[Dict[str, Any]]:
         """Get the baseline execution for a suite."""
         async with self.pool.acquire() as conn:
             record = await conn.fetchrow(
