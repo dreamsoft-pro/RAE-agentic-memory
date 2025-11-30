@@ -6,7 +6,6 @@ and their execution histories.
 """
 
 import json
-from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 

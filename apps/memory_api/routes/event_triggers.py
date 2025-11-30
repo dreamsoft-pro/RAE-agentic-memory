@@ -164,7 +164,9 @@ async def update_trigger(
         # Update in database
         # Note: tenant_id should come from auth context in production
         tenant_id = "default"  # TODO: Get from auth context
-        updated_trigger = await repo.update_trigger(UUID(trigger_id), tenant_id, updates)
+        updated_trigger = await repo.update_trigger(
+            UUID(trigger_id), tenant_id, updates
+        )
 
         if not updated_trigger:
             raise HTTPException(status_code=404, detail="Trigger not found")
@@ -402,7 +404,8 @@ async def get_trigger_executions(
     "/workflows/create", response_model=CreateWorkflowResponse, status_code=201
 )
 async def create_workflow(
-    request: CreateWorkflowRequest, repo: WorkflowRepository = Depends(get_workflow_repo)
+    request: CreateWorkflowRequest,
+    repo: WorkflowRepository = Depends(get_workflow_repo),
 ):
     """
     Create a workflow (chain of actions).
