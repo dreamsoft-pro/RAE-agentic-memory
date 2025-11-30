@@ -6,24 +6,35 @@ echo "🔍 GitHub Actions Status - $(date +%H:%M:%S)"
 echo "================================================"
 echo ""
 
-# Pobierz ostatnie 3 runs
-RUNS=$(gh run list --repo $REPO --limit 3 --json databaseId,status,conclusion,name,headBranch,createdAt,workflowName)
-
-# Wyświetl w czytelnej formie
-echo "$RUNS" | jq -r '.[] | "[\(.conclusion // .status)] \(.workflowName) (\(.headBranch)) - \(.createdAt)"'
-
-echo ""
-echo "---"
+# Pobierz aktualną gałąź
+CURRENT_BRANCH=$(git branch --show-current)
+echo "📍 Bieżąca gałąź: $CURRENT_BRANCH"
 echo ""
 
-# Szczegóły ostatniego runa
-LAST_RUN=$(echo "$RUNS" | jq '.[0]')
+# Pobierz ostatnie 10 runs i filtruj po bieżącej gałęzi
+RUNS=$(gh run list --repo $REPO --limit 10 --json databaseId,status,conclusion,name,headBranch,createdAt,workflowName)
+
+# Znajdź ostatni run dla bieżącej gałęzi
+CURRENT_BRANCH_RUN=$(echo "$RUNS" | jq --arg branch "$CURRENT_BRANCH" '[.[] | select(.headBranch == $branch)] | .[0]')
+
+# Jeśli nie ma workflow dla tej gałęzi, nie blokuj commita
+if [ "$CURRENT_BRANCH_RUN" = "null" ] || [ -z "$CURRENT_BRANCH_RUN" ]; then
+    echo "⚠️  Brak workflow dla gałęzi '$CURRENT_BRANCH'"
+    echo "✓ Commit dozwolony - brak workflow do sprawdzenia"
+    exit 0
+fi
+
+echo "✓ Znaleziono workflow dla gałęzi '$CURRENT_BRANCH'"
+LAST_RUN=$CURRENT_BRANCH_RUN
+
 RUN_ID=$(echo "$LAST_RUN" | jq -r '.databaseId')
 CONCLUSION=$(echo "$LAST_RUN" | jq -r '.conclusion')
 STATUS=$(echo "$LAST_RUN" | jq -r '.status')
 NAME=$(echo "$LAST_RUN" | jq -r '.workflowName')
+BRANCH=$(echo "$LAST_RUN" | jq -r '.headBranch')
 
-echo "📌 Ostatni workflow: $NAME"
+echo "📌 Sprawdzany workflow: $NAME"
+echo "   Gałąź: $BRANCH"
 echo "   Status: $STATUS"
 echo "   Result: $CONCLUSION"
 echo ""
