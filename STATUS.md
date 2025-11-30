@@ -1,6 +1,6 @@
 # Project Status
 
-**Last Update:** 2025-11-30 16:00:00
+**Last Update:** 2025-11-30 17:30:00
 
 ## Health Indicators
 | Metric | Status | Details |
@@ -8,9 +8,10 @@
 | **CI/CD** | ✅ **PASSING** | All checks pass (Lint, Tests, Security, Docker) |
 | **Python** | ✅ | Python 3.10, 3.11, 3.12 |
 | **Documentation** | ✅ | Complete and up-to-date |
-| **Test Coverage** | ✅ | 18 integration tests + full unit test suite |
+| **Test Coverage** | ⚠️ | 159 tests passing, 10 skipped - 45% coverage (target 48%) |
 | **Event Triggers** | ✅ | Full database implementation |
-| **Dashboard Metrics** | ✅ | Time series database implementation |
+| **Dashboard** | ✅ | All pages functional (Browser, Timeline, Knowledge Graph) |
+| **Vector Store** | ✅ | Qdrant with multi-tenancy support |
 | **A/B Testing** | ✅ | Full database implementation with statistics |
 | **Benchmarking** | ✅ | Full database implementation with executions |
 | **Code Quality** | ✅ | Black, isort, ruff, mypy passing |
@@ -37,7 +38,38 @@ All missing/incomplete functionalities from TODO.md have been successfully imple
 
 ## Recent Implementations (2025-11-30)
 
-### Docker Deployment Fixes
+### Dashboard & Vector Store Fixes (17:00-17:30)
+- ✅ **Vector Store Query Fix** - Added tenant_id to MemoryRecord model for proper multi-tenancy filtering
+- ✅ **Qdrant Configuration** - Created collection with dense (384d) and sparse (text) vectors
+- ✅ **Demo Data Seeding** - Fixed seed script endpoint (/v1/memory/store) and layer values (sm→ltm)
+- ✅ **Knowledge Graph Page** - Fixed parameter name (project→project_id) and separate nodes/edges fetching
+- ✅ **Timeline Page** - Fixed timezone comparison error (UTC-aware datetime)
+- ✅ **Query Results** - 10 demo memories successfully stored and queryable with relevance scores
+- ✅ **Code Formatting** - Fixed black formatting in auth.py
+
+**Files Modified:**
+- `apps/memory_api/models.py` - Added tenant_id field to MemoryRecord
+- `apps/memory_api/api/v1/memory.py` - Include tenant_id when creating records
+- `apps/memory_api/repositories/memory_repository.py` - Conditional tenancy context
+- `apps/memory_api/services/vector_store/qdrant_store.py` - Fixed duplicate id in query
+- `tools/memory-dashboard/utils/api_client.py` - Fixed graph fetching and datetime comparison
+- `scripts/seed_demo_data.py` - Updated endpoint and layer values
+
+**Commits:**
+- d97e0cdb1 - Dashboard tenant ID and database fixes
+- 0bfcae410 - Vector store query and multi-tenancy support
+- d810f559d - Knowledge graph API parameter fix
+- ae0b49309 - Timeline timezone comparison fix
+- ced94e50d - Knowledge graph nodes/edges fetching
+- 0d9a352fa - Black formatting
+
+**Testing Results:**
+- 159 tests passing, 10 skipped
+- Total coverage: 45% (target 48%)
+- Main gaps: ml_service (0%), reranker-service (0%), workers (39%)
+- All core functionality covered and working
+
+### Docker Deployment Fixes (15:00-16:00)
 - ✅ **Module Import Paths** - Fixed Dockerfile to preserve apps/ directory structure for correct Python imports
 - ✅ **ML Dependencies** - Added requirements-ml.txt installation (networkx, scikit-learn, scipy, etc.)
 - ✅ **Dashboard Service** - Created complete Dockerfile and .dockerignore for tools/memory-dashboard
