@@ -229,11 +229,7 @@ class MemoryRepository:
             return [dict(r) for r in records]
 
     async def get_episodic_memories(
-        self,
-        tenant_id: str,
-        project: str,
-        limit: Optional[int] = None,
-        session_id: Optional[UUID] = None,
+        self, tenant_id: str, project: str, limit: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         """
         Retrieve episodic memories for a tenant and project.

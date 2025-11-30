@@ -148,16 +148,6 @@ class DecayWorker:
 # ============================================================================
 
 
-class SessionSummaryResponse(BaseModel):
-    """Structured response for session summarization"""
-
-    summary: str = Field(..., description="A concise summary of the session")
-    key_topics: List[str] = Field(
-        ..., description="List of key topics discussed or actions taken"
-    )
-    sentiment: str = Field(..., description="Overall sentiment of the session")
-
-
 class SummarizationWorker:
     """
     Worker for creating session summaries from episodic memories.
@@ -244,10 +234,6 @@ class SummarizationWorker:
             tags=["session_summary", "auto_generated"],
             timestamp=datetime.now(timezone.utc),
             project=project_id,
-            metadata={
-                "session_id": str(session_id),
-                "event_count": len(episodic_memories),
-            },
         )
 
         logger.info(
@@ -265,31 +251,16 @@ class SummarizationWorker:
         Create summary text from memory list using LLM.
         """
         # Extract key facts
-        contents = [
-            f"- {m.get('content', '')} (Time: {m.get('created_at')})" for m in memories
-        ]
-        memories_text = "\n".join(contents)
+        contents = [m.get("content", "") for m in memories]
 
-        try:
-            response: SessionSummaryResponse = (
-                await self.llm_provider.generate_structured(
-                    system="You are an expert summarizer. Synthesize the following session events into a concise summary.",
-                    prompt=f"Session Events:\n{memories_text}\n\nProvide a summary, key topics, and sentiment.",
-                    model=settings.RAE_LLM_MODEL_DEFAULT,
-                    response_model=SessionSummaryResponse,
-                )
-            )
+        # Simple summary (in production, use LLM)
+        summary = f"Session summary ({len(memories)} events): "
+        summary += " | ".join(contents[:5])  # First 5 events
 
-            return f"{response.summary}\n\nKey Topics: {', '.join(response.key_topics)}\nSentiment: {response.sentiment}"
+        if len(contents) > 5:
+            summary += f" ... and {len(contents) - 5} more events"
 
-        except Exception as e:
-            logger.error("llm_summarization_failed", error=str(e))
-            # Fallback to simple aggregation
-            summary = f"Session summary ({len(memories)} events): "
-            summary += " | ".join([m.get("content", "") for m in memories][:5])
-            if len(memories) > 5:
-                summary += f" ... and {len(memories) - 5} more events"
-            return summary
+        return summary
 
     async def summarize_long_sessions(
         self,
@@ -315,51 +286,9 @@ class SummarizationWorker:
             threshold=event_threshold,
         )
 
-        # Fetch recent memories (e.g. last 24h)
-        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=24)
-
-        # We need to access the database directly here for aggregation
-        async with self.pool.acquire() as conn:
-            # Try to group by session_id in metadata
-            # Note: This assumes metadata is JSONB and has session_id
-            rows = await conn.fetch(
-                """
-                SELECT
-                    metadata->>'session_id' as session_id,
-                    COUNT(*) as event_count
-                FROM memories
-                WHERE tenant_id = $1
-                  AND project = $2
-                  AND created_at > $3
-                  AND metadata->>'session_id' IS NOT NULL
-                GROUP BY metadata->>'session_id'
-                HAVING COUNT(*) >= $4
-            """,
-                tenant_id,
-                project_id,
-                cutoff_time,
-                event_threshold,
-            )
-
+        # TODO: Implement session detection and batch summarization
+        # For now, return empty
         summaries = []
-        for row in rows:
-            session_id_str = row["session_id"]
-            try:
-                session_id = UUID(session_id_str)
-                # Check if already summarized recently
-                # (Optimization: could be done in the query above)
-
-                summary = await self.summarize_session(
-                    tenant_id=tenant_id,
-                    project_id=project_id,
-                    session_id=session_id,
-                    min_events=event_threshold,
-                )
-                if summary:
-                    summaries.append(summary)
-            except ValueError:
-                logger.warning(f"Invalid session_id UUID: {session_id_str}")
-                continue
 
         logger.info(
             "long_session_summarization_completed",
