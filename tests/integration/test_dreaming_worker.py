@@ -11,10 +11,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from apps.memory_api.models.reflection_v2_models import (
-    ReflectionResult,
-    ReflectionType,
-)
+from apps.memory_api.models.reflection_v2_models import ReflectionResult
 from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
 from apps.memory_api.workers.memory_maintenance import DreamingWorker
 
@@ -49,11 +46,9 @@ async def test_dreaming_worker_basic_cycle(mock_app_state_pool, mock_env_and_set
             mock_reflection_engine = MagicMock(spec=ReflectionEngineV2)
             mock_reflection_engine.generate_reflection = AsyncMock(
                 return_value=ReflectionResult(
-                    reflection_type=ReflectionType.PATTERN,
-                    content="Pattern detected: Users frequently encounter errors in this area",
-                    score=0.85,
-                    depth_level=1,
-                    source_memory_ids=[],
+                    reflection_text="Pattern detected: Users frequently encounter errors in this area",
+                    importance=0.85,
+                    confidence=0.85,
                 )
             )
             mock_reflection_engine.store_reflection = AsyncMock(
@@ -191,11 +186,9 @@ async def test_dreaming_worker_lookback_window(
             mock_reflection_engine = MagicMock(spec=ReflectionEngineV2)
             mock_reflection_engine.generate_reflection = AsyncMock(
                 return_value=ReflectionResult(
-                    reflection_type=ReflectionType.PATTERN,
-                    content="Pattern from recent memories",
-                    score=0.85,
-                    depth_level=1,
-                    source_memory_ids=[],
+                    reflection_text="Pattern from recent memories",
+                    importance=0.85,
+                    confidence=0.85,
                 )
             )
             mock_reflection_engine.store_reflection = AsyncMock(
@@ -266,11 +259,9 @@ async def test_dreaming_worker_importance_filter(
             mock_reflection_engine = MagicMock(spec=ReflectionEngineV2)
             mock_reflection_engine.generate_reflection = AsyncMock(
                 return_value=ReflectionResult(
-                    reflection_type=ReflectionType.PATTERN,
-                    content="Pattern from high-importance memories",
-                    score=0.85,
-                    depth_level=1,
-                    source_memory_ids=[],
+                    reflection_text="Pattern from high-importance memories",
+                    importance=0.85,
+                    confidence=0.85,
                 )
             )
             mock_reflection_engine.store_reflection = AsyncMock(
@@ -329,11 +320,9 @@ async def test_dreaming_worker_max_samples_limit(
             mock_reflection_engine = MagicMock(spec=ReflectionEngineV2)
             mock_reflection_engine.generate_reflection = AsyncMock(
                 return_value=ReflectionResult(
-                    reflection_type=ReflectionType.PATTERN,
-                    content="Pattern detected",
-                    score=0.85,
-                    depth_level=1,
-                    source_memory_ids=[],
+                    reflection_text="Pattern detected",
+                    importance=0.85,
+                    confidence=0.85,
                 )
             )
             mock_reflection_engine.store_reflection = AsyncMock(
