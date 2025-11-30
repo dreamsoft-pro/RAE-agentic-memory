@@ -92,6 +92,7 @@ def apply_memory_decay():
 def prune_old_memories():
     """
     Periodically deletes old episodic memories to manage data lifecycle.
+    DEPRECATED: Use cleanup_expired_data_task instead for ISO 42001 compliance.
     """
     import asyncio
 
@@ -113,6 +114,160 @@ def prune_old_memories():
             await pool.close()
 
     asyncio.run(main())
+
+
+@celery_app.task(bind=True, max_retries=3)
+def cleanup_expired_data_task(self, tenant_id: str = None):
+    """
+    Enterprise-grade data retention cleanup - ISO/IEC 42001 & GDPR compliance
+
+    Automatically cleans up expired data based on per-tenant retention policies:
+    - Episodic memories (configurable per tenant)
+    - Embeddings (orphaned or expired)
+    - Cost logs (financial records retention)
+    - Other data classes per policy
+
+    Features:
+    - Per-tenant retention policies
+    - Audit trail for all deletions
+    - Exception handling (protected tags)
+    - GDPR data minimization compliance
+
+    Args:
+        tenant_id: Optional tenant ID. If None, processes all tenants.
+
+    Returns:
+        Dict with cleanup statistics per data class
+    """
+    import asyncio
+
+    from apps.memory_api.services.retention_service import RetentionService
+
+    async def main():
+        pool = await get_pool()
+        try:
+            service = RetentionService(pool)
+
+            logger.info(
+                "retention_cleanup_started",
+                tenant_id=tenant_id,
+            )
+
+            # Run cleanup
+            results = await service.cleanup_expired_data(tenant_id=tenant_id)
+
+            total_deleted = sum(results.values())
+
+            logger.info(
+                "retention_cleanup_complete",
+                tenant_id=tenant_id,
+                total_deleted=total_deleted,
+                breakdown=results,
+            )
+
+            return {
+                "success": True,
+                "total_deleted": total_deleted,
+                "breakdown": {k.value: v for k, v in results.items()},
+            }
+
+        except Exception as e:
+            logger.error(
+                "retention_cleanup_failed",
+                tenant_id=tenant_id,
+                error=str(e),
+            )
+            raise self.retry(exc=e, countdown=300 * (2**self.request.retries))
+
+        finally:
+            await pool.close()
+
+    return asyncio.run(main())
+
+
+@celery_app.task(bind=True, max_retries=3)
+def gdpr_delete_user_data_task(
+    self, tenant_id: str, user_identifier: str, deleted_by: str
+):
+    """
+    GDPR Article 17: Right to erasure ("right to be forgotten")
+
+    Cascade delete all user data across the system:
+    - Memories (episodic, semantic, reflective)
+    - Semantic nodes and graph triples
+    - Embeddings
+    - Reflections
+    - Cost logs (anonymized, not deleted)
+
+    This operation is irreversible and creates an audit trail.
+
+    Args:
+        tenant_id: Tenant ID
+        user_identifier: User email, ID, or other identifier
+        deleted_by: Who requested deletion (for audit)
+
+    Returns:
+        Dict with deletion statistics
+    """
+    import asyncio
+
+    from apps.memory_api.services.retention_service import RetentionService
+
+    async def main():
+        pool = await get_pool()
+        try:
+            service = RetentionService(pool)
+
+            logger.info(
+                "gdpr_deletion_started",
+                tenant_id=tenant_id,
+                user_identifier=user_identifier,
+                deleted_by=deleted_by,
+            )
+
+            # Execute GDPR deletion
+            results = await service.delete_user_data(
+                tenant_id=tenant_id,
+                user_identifier=user_identifier,
+                deleted_by=deleted_by,
+            )
+
+            total_deleted = sum(
+                v for k, v in results.items() if not k.endswith("_anonymized")
+            )
+            total_anonymized = sum(
+                v for k, v in results.items() if k.endswith("_anonymized")
+            )
+
+            logger.info(
+                "gdpr_deletion_complete",
+                tenant_id=tenant_id,
+                user_identifier=user_identifier,
+                total_deleted=total_deleted,
+                total_anonymized=total_anonymized,
+                breakdown=results,
+            )
+
+            return {
+                "success": True,
+                "total_deleted": total_deleted,
+                "total_anonymized": total_anonymized,
+                "breakdown": results,
+            }
+
+        except Exception as e:
+            logger.error(
+                "gdpr_deletion_failed",
+                tenant_id=tenant_id,
+                user_identifier=user_identifier,
+                error=str(e),
+            )
+            raise self.retry(exc=e, countdown=60 * (2**self.request.retries))
+
+        finally:
+            await pool.close()
+
+    return asyncio.run(main())
 
 
 @celery_app.task
@@ -568,9 +723,15 @@ def setup_periodic_tasks(sender, **kwargs):
         decay_memory_importance_task.s(),
         name="decay memory importance daily at 2 AM",
     )
-    # Schedule memory pruning once a day (86400 seconds)
+    # Schedule memory pruning once a day (86400 seconds) - DEPRECATED
     sender.add_periodic_task(
-        86400.0, prune_old_memories.s(), name="prune old memories daily"
+        86400.0, prune_old_memories.s(), name="prune old memories daily (deprecated)"
+    )
+    # Schedule ISO 42001 compliant retention cleanup daily at 1 AM
+    sender.add_periodic_task(
+        crontab(hour=1, minute=0),
+        cleanup_expired_data_task.s(),
+        name="ISO 42001 retention cleanup daily at 1 AM",
     )
     # Schedule graph extraction queue processing every 10 minutes
     sender.add_periodic_task(
