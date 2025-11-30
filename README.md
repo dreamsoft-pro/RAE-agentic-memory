@@ -98,6 +98,47 @@ RAE offers three deployment profiles to match your needs:
 
 ---
 
+## 🔒 ISO/IEC 42001 Compliance
+
+RAE is designed for enterprise AI governance and compliance with **ISO/IEC 42001** (AI Management System).
+
+### Key Compliance Features ✅
+
+- **Risk Management** - Comprehensive [Risk Register](docs/RAE-Risk-Register.md) with 10 identified risks and mitigation strategies
+- **Data Governance** - Source trust scoring, provenance tracking, and retention policies per tenant
+- **GDPR Compliance** - Full "right to be forgotten" (Article 17) with cascade deletion and audit trail
+- **Roles & Responsibilities** - Clear RACI matrix for 6 organizational roles ([docs/RAE-Roles.md](docs/RAE-Roles.md))
+- **Audit Trail** - Complete logging of all data operations, deletions, and trust assessments
+- **Multi-Tenant Isolation** - Tenant-level data segregation with configurable policies
+
+### Compliance Documentation
+
+- 📋 **[RAE-ISO_42001.md](docs/RAE-ISO_42001.md)** - Full ISO 42001 readiness assessment
+- 🛡️ **[RAE-Risk-Register.md](docs/RAE-Risk-Register.md)** - 10 risks (RISK-001 to RISK-010) with mitigation
+- 👥 **[RAE-Roles.md](docs/RAE-Roles.md)** - Organizational roles and RACI matrix
+- 🔐 **[SECURITY.md](docs/SECURITY.md)** - Security assessment and controls
+
+### Implementation Status (2025-11-30)
+
+| Feature | Status | Description |
+|---------|--------|-------------|
+| Source Trust Scoring | ✅ Implemented | Automatic reliability assessment for knowledge sources |
+| Data Retention & Cleanup | ✅ Implemented | Per-tenant policies with automated cleanup workers |
+| GDPR Right to Erasure | ✅ Implemented | User data deletion with full cascade and audit |
+| Deletion Audit Trail | ✅ Implemented | Complete tracking of who/when/why for all deletions |
+| Roles & Responsibilities | ✅ Documented | Full RACI matrix for 6 roles |
+| Risk Register | ✅ Complete | 10 risks identified with mitigation plans |
+| Telemetry (Technical) | ✅ Implemented | OpenTelemetry + structured logging |
+| Telemetry (Cognitive) | 🟡 Partial | Drift detection (quality metrics in progress) |
+| High-Risk Marking | 🟡 In Progress | Human approval workflow planned |
+| Graceful Degradation | ⏳ Planned | Circuit breaker + fallback mode (Q1 2026) |
+
+**Legend:** ✅ Complete | 🟡 Partial | ⏳ Planned
+
+> 💡 **For Regulated Industries:** RAE provides a strong foundation for AI governance. Additional controls may be required depending on your industry (healthcare, finance, etc.). See [RAE-ISO_42001.md](docs/RAE-ISO_42001.md) for details.
+
+---
+
 ## Quick Start (< 5 minutes)
 
 **Choose your deployment profile:**
