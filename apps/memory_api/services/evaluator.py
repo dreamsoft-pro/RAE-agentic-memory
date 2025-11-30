@@ -10,14 +10,27 @@ Pattern: Actor → **Evaluator** → Reflector
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Protocol
 
-from pydantic import BaseModel, Field
-
-from apps.memory_api.config import settings
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from apps.memory_api.config import settings
 from apps.memory_api.models.reflection_v2_models import ErrorInfo, OutcomeType
 from apps.memory_api.services.llm import get_llm_provider
+
+# ============================================================================
+# LLM Response Models
+# ============================================================================
+
+
+class LLMEvaluationResponse(BaseModel):
+    """Response model for LLM evaluation."""
+
+    is_success: bool
+    quality_score: float
+    outcome_type: str
+    reasons: list[str]
+    should_reflect: bool
+    importance: float
+
 
 # ============================================================================
 # Execution Context
@@ -312,89 +325,7 @@ class LLMEvaluator:
                 confidence=0.9,  # High confidence in LLM assessment
             )
 
-        except Exception as e:
-            # Fallback to deterministic evaluation on error
-            return await DeterministicEvaluator().evaluate(context)
-
-    def _build_prompt(self, context: ExecutionContext) -> str:
-        """Build prompt for LLM evaluation"""
-
-        events_str = "\n".join([f"- {e}" for e in context.events])
-
-        return f"""
-        Task Goal: {context.task_goal or 'Not specified'}
-        Task Description: {context.task_description or 'Not specified'}
-        Expected Outcome: {context.expected_outcome or 'Not specified'}
-
-        Execution Events:
-        {events_str}
-
-        Final Response:
-        {context.response}
-
-        Error Info:
-        {context.error if context.error else 'None'}
-
-        Evaluate whether the task was successful, assign a quality score (0.0-1.0), and determine if this execution is worth reflecting on (e.g. for learning from mistakes or saving successful strategies).
-        """
-
-
-class LLMEvaluator:
-    """
-    Evaluator that uses an LLM to assess execution outcomes.
-    """
-
-    def __init__(self):
-        self.llm_provider = get_llm_provider()
-
-    async def evaluate(self, context: ExecutionContext) -> EvaluationResult:
-        """
-        Evaluate execution outcome using LLM.
-
-        Args:
-            context: ExecutionContext with trace and results
-
-        Returns:
-            EvaluationResult
-        """
-        # Prepare prompt
-        prompt = self._build_prompt(context)
-
-        # Call LLM
-        try:
-            response: LLMEvaluationResponse = (
-                await self.llm_provider.generate_structured(
-                    system="You are an expert evaluator of AI agent execution. Assess the quality and success of the following task execution.",
-                    prompt=prompt,
-                    model=settings.RAE_LLM_MODEL_DEFAULT,
-                    response_model=LLMEvaluationResponse,
-                )
-            )
-
-            # Map outcome string to enum
-            outcome_map = {
-                "success": OutcomeType.SUCCESS,
-                "failure": OutcomeType.FAILURE,
-                "partial": OutcomeType.PARTIAL,
-                "error": OutcomeType.ERROR,
-                "timeout": OutcomeType.TIMEOUT,
-            }
-            outcome = outcome_map.get(
-                response.outcome_type.lower(), OutcomeType.PARTIAL
-            )
-
-            return EvaluationResult(
-                outcome=outcome,
-                is_ok=response.is_success,
-                quality_score=response.quality_score,
-                reasons=response.reasons,
-                importance_hint=response.importance,
-                should_reflect=response.should_reflect,
-                evaluation_method="llm",
-                confidence=0.9,  # High confidence in LLM assessment
-            )
-
-        except Exception as e:
+        except Exception:
             # Fallback to deterministic evaluation on error
             return await DeterministicEvaluator().evaluate(context)
 

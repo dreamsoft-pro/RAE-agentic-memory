@@ -1,13 +1,13 @@
-import pytest
-from unittest.mock import AsyncMock, MagicMock
-from datetime import datetime, timezone
 import uuid
+from unittest.mock import AsyncMock
+
+import pytest
+
 from apps.memory_api.services.evaluator import (
-    LLMEvaluator,
     ExecutionContext,
-    EvaluationResult,
-    OutcomeType,
     LLMEvaluationResponse,
+    LLMEvaluator,
+    OutcomeType,
 )
 
 
@@ -103,7 +103,7 @@ async def test_llm_evaluator_fallback():
     evaluator.llm_provider = mock_llm_provider
 
     # Create context with explicit error to trigger deterministic failure
-    from apps.memory_api.models.reflection_v2_models import ErrorInfo, ErrorCategory
+    from apps.memory_api.models.reflection_v2_models import ErrorCategory, ErrorInfo
 
     context = ExecutionContext(
         events=[],
