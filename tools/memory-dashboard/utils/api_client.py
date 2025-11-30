@@ -181,11 +181,19 @@ class RAEClient:
             if not project_id:
                 raise ValueError("project_id is required for knowledge graph")
 
-            response = self._request(
+            # Fetch nodes and edges separately
+            nodes = self._request(
                 "GET", f"/v1/graph/nodes?project_id={project_id}"
             )
+            edges = self._request(
+                "GET", f"/v1/graph/edges?project_id={project_id}"
+            )
 
-            return response
+            # Combine into expected format
+            return {
+                "nodes": nodes if isinstance(nodes, list) else [],
+                "edges": edges if isinstance(edges, list) else []
+            }
 
         except Exception as e:
             st.warning(f"Could not fetch knowledge graph: {e}")
