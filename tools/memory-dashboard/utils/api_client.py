@@ -176,10 +176,13 @@ class RAEClient:
             Dictionary with nodes and edges
         """
         try:
-            # This would need a dedicated endpoint
-            # For now, return mock data structure
+            # Use project_id parameter as required by API
+            project_id = project or self.project_id
+            if not project_id:
+                raise ValueError("project_id is required for knowledge graph")
+
             response = self._request(
-                "GET", f"/v1/graph/nodes?project={project or self.project_id}"
+                "GET", f"/v1/graph/nodes?project_id={project_id}"
             )
 
             return response
