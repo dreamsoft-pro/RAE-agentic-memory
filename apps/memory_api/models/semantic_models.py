@@ -136,6 +136,22 @@ class SemanticNode(BaseModel):
     extraction_model: Optional[str] = None
     extraction_confidence: Optional[float] = Field(None, ge=0.0, le=1.0)
 
+    # ISO/IEC 42001 - Source Trust & Provenance
+    source_owner: Optional[str] = Field(
+        None, max_length=255, description="Owner/responsible party for this source"
+    )
+    trust_level: Optional[str] = Field(
+        "unverified",
+        max_length=50,
+        description="Trust level: high/medium/low/unverified",
+    )
+    last_verified_at: Optional[datetime] = Field(
+        None, description="Timestamp of last verification"
+    )
+    verification_notes: Optional[str] = Field(
+        None, description="Notes from verification process"
+    )
+
     # Metadata
     tags: List[str] = Field(default_factory=list)
     metadata: Dict[str, Any] = Field(default_factory=dict)
