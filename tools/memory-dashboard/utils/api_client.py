@@ -406,5 +406,8 @@ def get_cached_memories(
     Returns:
         List of memories
     """
-    since = datetime.now() - timedelta(days=days_back)
+    from datetime import timezone
+
+    # Use timezone-aware datetime to match API timestamps
+    since = datetime.now(timezone.utc) - timedelta(days=days_back)
     return _client.get_memories(layers=list(layers), since=since)
