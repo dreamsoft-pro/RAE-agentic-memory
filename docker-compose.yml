@@ -22,6 +22,9 @@ services:
       - RAE_VECTOR_BACKEND=${RAE_VECTOR_BACKEND:-qdrant}
       - ML_SERVICE_URL=http://ml-service:8001
       - RERANKER_API_URL=http://ml-service:8001
+      - TENANCY_ENABLED=false
+      - ENABLE_API_KEY_AUTH=false
+      - ENABLE_JWT_AUTH=false
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
