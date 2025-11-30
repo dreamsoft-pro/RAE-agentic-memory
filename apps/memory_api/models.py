@@ -38,6 +38,7 @@ class MemoryRecord(BaseModel):
     """
 
     id: str
+    tenant_id: Optional[str] = None  # Added for multi-tenancy support
     content: str
     source: Optional[str] = None
     importance: float = 0.5

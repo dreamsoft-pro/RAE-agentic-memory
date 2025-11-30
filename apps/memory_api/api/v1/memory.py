@@ -75,6 +75,7 @@ async def store_memory(
 
         memory_record = MemoryRecord(
             id=row_data["id"],
+            tenant_id=tenant_id,
             content=content,
             source=req.source,
             importance=req.importance,

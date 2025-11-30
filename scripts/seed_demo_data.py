@@ -61,7 +61,7 @@ DEMO_MEMORIES = [
     },
     {
         "content": "The authentication service depends on the user-profile-service for JWT token validation. This dependency was added in release v2.3.0 to centralize user management.",
-        "layer": "sm",  # Semantic Memory - Structured knowledge
+        "layer": "ltm",  # Long-Term Memory - Structured knowledge
         "tags": ["architecture", "dependencies", "authentication"],
         "source": "architecture-docs",
         "importance": 0.8,
@@ -82,7 +82,7 @@ DEMO_MEMORIES = [
     },
     {
         "content": "Best practice established: All microservices must implement structured logging with correlation IDs for distributed tracing. This pattern significantly improved debugging time during the last incident.",
-        "layer": "sm",
+        "layer": "ltm",
         "tags": ["best-practice", "logging", "observability"],
         "source": "engineering-standards",
         "importance": 0.85,
@@ -116,10 +116,12 @@ def check_rae_health() -> bool:
 def create_memory(client: httpx.Client, memory_data: Dict[str, Any]) -> bool:
     """Create a single memory in RAE."""
     try:
-        # Add tenant_id and project to memory data
-        payload = {"tenant_id": TENANT_ID, "project": PROJECT_ID, **memory_data}
+        # Add project to memory data (tenant_id goes in header)
+        payload = {"project": PROJECT_ID, **memory_data}
 
-        response = client.post(f"{RAE_API_URL}/v1/memories", json=payload, timeout=10.0)
+        headers = {"X-Tenant-Id": TENANT_ID}
+
+        response = client.post(f"{RAE_API_URL}/v1/memory/store", json=payload, headers=headers, timeout=10.0)
 
         if response.status_code in [200, 201]:
             return True
@@ -166,7 +168,8 @@ def main():
         for i, memory in enumerate(DEMO_MEMORIES, 1):
             layer_emoji = {
                 "em": "📝",  # Episodic
-                "sm": "📚",  # Semantic
+                "stm": "⚡",  # Short-Term
+                "ltm": "📚",  # Long-Term
                 "rm": "💡",  # Reflective
             }.get(memory["layer"], "📄")
 

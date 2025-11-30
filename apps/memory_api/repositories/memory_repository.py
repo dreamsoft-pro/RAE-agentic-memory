@@ -10,6 +10,8 @@ from typing import Any, Dict, List, Optional
 import asyncpg
 import structlog
 
+from apps.memory_api.config import settings
+
 logger = structlog.get_logger(__name__)
 
 
@@ -60,7 +62,9 @@ class MemoryRepository:
         """
         async with self.pool.acquire() as conn:
             async with conn.transaction():
-                await conn.execute("SET app.tenant_id = $1", tenant_id)
+                # Only set tenant context if tenancy is enabled
+                if settings.TENANCY_ENABLED:
+                    await conn.execute("SET app.tenant_id = $1", tenant_id)
 
                 columns = [
                     "tenant_id",
@@ -127,7 +131,9 @@ class MemoryRepository:
         """
         async with self.pool.acquire() as conn:
             async with conn.transaction():
-                await conn.execute("SET app.tenant_id = $1", tenant_id)
+                # Only set tenant context if tenancy is enabled
+                if settings.TENANCY_ENABLED:
+                    await conn.execute("SET app.tenant_id = $1", tenant_id)
                 result = await conn.execute(
                     "DELETE FROM memories WHERE id = $1", memory_id
                 )
@@ -382,7 +388,9 @@ class MemoryRepository:
         async with self.pool.acquire() as conn:
             async with conn.transaction():
                 # Security: Set tenant context
-                await conn.execute("SET app.tenant_id = $1", tenant_id)
+                # Only set tenant context if tenancy is enabled
+                if settings.TENANCY_ENABLED:
+                    await conn.execute("SET app.tenant_id = $1", tenant_id)
 
                 # Batch update using ANY array
                 result = await conn.execute(
