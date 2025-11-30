@@ -178,7 +178,7 @@ class QdrantStore(MemoryVectorStore):
         )
 
         return [
-            ScoredMemoryRecord(id=point.id, score=point.score, **point.payload)
+            ScoredMemoryRecord(score=point.score, **point.payload)
             for point in search_results
         ]
 
