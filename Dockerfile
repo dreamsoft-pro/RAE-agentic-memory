@@ -18,14 +18,16 @@ RUN pip install --no-cache-dir -e /app/sdk/python/rae_memory_sdk
 
 # Copy requirements files
 COPY apps/memory_api/requirements-base.txt /app/requirements-base.txt
+COPY apps/memory_api/requirements-ml.txt /app/requirements-ml.txt
 COPY apps/memory_api/requirements.txt /app/requirements.txt
 
 # Install dependencies
 RUN pip install --no-cache-dir -r /app/requirements-base.txt && \
+    pip install --no-cache-dir -r /app/requirements-ml.txt && \
     pip install --no-cache-dir -r /app/requirements.txt
 
-# Copy application code
-COPY apps/memory_api /app
+# Copy application code with correct structure
+COPY apps /app/apps
 
 # Create non-root user
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app
@@ -37,4 +39,4 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD python -c "import requests; requests.get('http://localhost:8000/health')"
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "apps.memory_api.main:app", "--host", "0.0.0.0", "--port", "8000"]

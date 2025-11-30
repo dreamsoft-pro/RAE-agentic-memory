@@ -13,7 +13,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Version](https://img.shields.io/badge/version-2.1.0--enterprise-blue.svg)](STATUS.md)
 
-[📖 Documentation](#documentation) | [🚀 Quick Start](#quick-start-5-minutes) | [💬 Community](#community--support) | [🎯 Examples](#real-world-examples)
+[📖 Documentation](#documentation) | [🚀 Quick Start](#quick-start-5-minutes) | [🔧 Troubleshooting](TROUBLESHOOTING.md) | [💬 Community](#community--support) | [🎯 Examples](#real-world-examples)
 
 ---
 
@@ -143,11 +143,16 @@ cd RAE-agentic-memory
 cp .env.example .env
 # Edit .env and add your LLM API key (OPENAI_API_KEY or ANTHROPIC_API_KEY)
 docker-compose -f docker-compose.lite.yml up -d
+
+# Initialize database (first time only)
+./scripts/init-database.sh
 ```
 
 **Access your instance:**
 - API: http://localhost:8000/docs
 - Health: http://localhost:8000/health
+
+**Having issues?** See [Troubleshooting Guide](TROUBLESHOOTING.md)
 
 See [RAE Lite Profile Documentation](docs/deployment/rae-lite-profile.md) for complete guide.
 
@@ -163,7 +168,10 @@ cd RAE-agentic-memory
 # 2. Run quickstart script (handles everything!)
 ./scripts/quickstart.sh
 
-# 3. Seed demo data (optional)
+# 3. Initialize database (first time only)
+./scripts/init-database.sh
+
+# 4. Seed demo data (optional)
 python3 scripts/seed_demo_data.py
 ```
 
@@ -172,6 +180,8 @@ That's it! 🎉
 - **API Documentation**: http://localhost:8000/docs
 - **Dashboard**: http://localhost:8501
 - **Health Check**: http://localhost:8000/health
+
+**Having issues?** See [Troubleshooting Guide](TROUBLESHOOTING.md)
 
 ---
 

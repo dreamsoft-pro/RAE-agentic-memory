@@ -10,11 +10,18 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-rae}:${POSTGRES_PASSWORD:-rae_password}@postgres:5432/${POSTGRES_DB:-rae}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DB=${POSTGRES_DB:-rae}
+      - POSTGRES_USER=${POSTGRES_USER:-rae}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-rae_password}
       - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
       - RAE_VECTOR_BACKEND=${RAE_VECTOR_BACKEND:-qdrant}
-      - QDRANT_URL=http://qdrant:6333
       - ML_SERVICE_URL=http://ml-service:8001
+      - RERANKER_API_URL=http://ml-service:8001
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
@@ -119,10 +126,16 @@ services:
     container_name: rae-celery-worker
     command: celery -A apps.memory_api.celery_app worker --loglevel=info --concurrency=2
     environment:
-      - DATABASE_URL=postgresql://rae:rae_password@postgres:5432/rae
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DB=${POSTGRES_DB:-rae}
+      - POSTGRES_USER=${POSTGRES_USER:-rae}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-rae_password}
       - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
       - RAE_VECTOR_BACKEND=qdrant
-      - QDRANT_URL=http://qdrant:6333
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
     depends_on:
@@ -141,8 +154,13 @@ services:
     container_name: rae-celery-beat
     command: celery -A apps.memory_api.celery_app beat --loglevel=info
     environment:
-      - DATABASE_URL=postgresql://rae:rae_password@postgres:5432/rae
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DB=${POSTGRES_DB:-rae}
+      - POSTGRES_USER=${POSTGRES_USER:-rae}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-rae_password}
       - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
     depends_on:
       - postgres
       - redis

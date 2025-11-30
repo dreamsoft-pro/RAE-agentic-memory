@@ -38,3 +38,7 @@ google-generativeai==0.8.5
 tenacity==9.1.2  # Retry logic
 python-jose[cryptography]==3.5.0  # JWT handling
 zstandard==0.25.0  # Compression
+slowapi>=0.1.9  # Rate limiting
+instructor>=1.0.0  # Structured LLM outputs
+scipy>=1.11.0  # Statistical functions
+python-louvain>=0.16  # Community detection

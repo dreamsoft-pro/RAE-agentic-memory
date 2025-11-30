@@ -37,6 +37,13 @@ All missing/incomplete functionalities from TODO.md have been successfully imple
 
 ## Recent Implementations (2025-11-30)
 
+### Docker Deployment Fixes
+- ✅ **Module Import Paths** - Fixed Dockerfile to preserve apps/ directory structure for correct Python imports
+- ✅ **ML Dependencies** - Added requirements-ml.txt installation (networkx, scikit-learn, scipy, etc.)
+- ✅ **Dashboard Service** - Created complete Dockerfile and .dockerignore for tools/memory-dashboard
+- ✅ **Docker Best Practices** - Fixed FROM...AS casing to uppercase per Docker standards
+- ✅ **CI/CD Validation** - All Docker builds and tests passing in GitHub Actions
+
 ### Integration Tests
 - ✅ **DecayWorker Tests** - 9 integration tests covering decay cycles, access stats, multi-tenant, and error handling
 - ✅ **DreamingWorker Tests** - 9 integration tests covering reflection generation, lookback windows, importance filtering
