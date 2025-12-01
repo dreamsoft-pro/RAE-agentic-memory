@@ -229,18 +229,18 @@ python3 scripts/seed_demo_data.py
 
 **Demo Data Scenarios:**
 
-RAE includes two comprehensive demo scenarios (66 memories total):
+RAE includes two comprehensive demo scenarios (86 memories total):
 
-📦 **Project Phoenix** - Software Development (30 memories)
+📦 **Project Phoenix** - Software Development (40 memories)
 - Software team building a microservices platform
 - Incidents, circuit breakers, security audits
 - All 4 memory layers: STM, EM, LTM, RM
-- GraphRAG-ready with entities and relationships
+- GraphRAG-ready with enriched cross-references and temporal chains
 
-🏛️ **City Hall** - Public Administration (36 memories)
+🏛️ **City Hall** - Public Administration (46 memories)
 - Municipal customer service department
 - Citizen requests, RODO compliance, ISO 42001
-- Real-world governance scenarios
+- Real-world governance scenarios with enriched relationships
 - Polish language content for local government use case
 
 **Load specific scenario:**
