@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from slowapi.errors import RateLimitExceeded
 
-from apps.memory_api.api.v1 import agent, cache, governance, graph
+from apps.memory_api.api.v1 import agent, cache, compliance, governance, graph
 from apps.memory_api.api.v1 import health as health_router
 from apps.memory_api.api.v1 import memory
 from apps.memory_api.config import settings
@@ -158,6 +158,10 @@ def custom_openapi():
         {"name": "Graph", "description": "Knowledge graph operations (GraphRAG)"},
         {"name": "Governance", "description": "Cost tracking, budgets, and governance"},
         {
+            "name": "ISO/IEC 42001 Compliance",
+            "description": "AI governance: human approval workflows, context provenance, circuit breakers, policy management",
+        },
+        {
             "name": "Event Triggers",
             "description": "Event-driven automation with triggers, conditions, and actions",
         },
@@ -277,6 +281,7 @@ app.include_router(agent.router, prefix="/v1", tags=["Agent"])
 app.include_router(cache.router, prefix="/v1", tags=["Cache"])
 app.include_router(graph.router, prefix="/v1", tags=["Graph"])
 app.include_router(governance.router, tags=["Governance"])
+app.include_router(compliance.router, tags=["ISO/IEC 42001 Compliance"])
 
 # API v1 endpoints - Enterprise Features
 app.include_router(event_triggers.router, tags=["Event Triggers"])
