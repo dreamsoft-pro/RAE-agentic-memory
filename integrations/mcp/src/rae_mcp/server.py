@@ -68,11 +68,19 @@ else:
 tracer = trace.get_tracer(__name__)
 
 # Prometheus Metrics
-TOOLS_CALLED = Counter("mcp_tools_called_total", "Total MCP tool invocations", ["tool_name"])
-TOOL_ERRORS = Counter("mcp_tool_errors_total", "Total MCP tool errors", ["tool_name", "error_type"])
-TOOL_DURATION = Histogram("mcp_tool_duration_seconds", "MCP tool execution duration", ["tool_name"])
+TOOLS_CALLED = Counter(
+    "mcp_tools_called_total", "Total MCP tool invocations", ["tool_name"]
+)
+TOOL_ERRORS = Counter(
+    "mcp_tool_errors_total", "Total MCP tool errors", ["tool_name", "error_type"]
+)
+TOOL_DURATION = Histogram(
+    "mcp_tool_duration_seconds", "MCP tool execution duration", ["tool_name"]
+)
 
-RESOURCES_READ = Counter("mcp_resources_read_total", "Total MCP resource reads", ["resource_uri"])
+RESOURCES_READ = Counter(
+    "mcp_resources_read_total", "Total MCP resource reads", ["resource_uri"]
+)
 RESOURCE_ERRORS = Counter(
     "mcp_resource_errors_total", "Total MCP resource errors", ["resource_uri"]
 )
@@ -83,7 +91,9 @@ RESOURCE_DURATION = Histogram(
 PROMPTS_REQUESTED = Counter(
     "mcp_prompts_requested_total", "Total MCP prompt requests", ["prompt_name"]
 )
-PROMPT_ERRORS = Counter("mcp_prompt_errors_total", "Total MCP prompt errors", ["prompt_name"])
+PROMPT_ERRORS = Counter(
+    "mcp_prompt_errors_total", "Total MCP prompt errors", ["prompt_name"]
+)
 PROMPT_DURATION = Histogram(
     "mcp_prompt_duration_seconds", "MCP prompt request duration", ["prompt_name"]
 )
@@ -149,7 +159,8 @@ class PIIScrubber:
         """
         if isinstance(data, dict):
             return {
-                key: cls._scrub_value(key, value, max_content_length) for key, value in data.items()
+                key: cls._scrub_value(key, value, max_content_length)
+                for key, value in data.items()
             }
         elif isinstance(data, list):
             return [cls.scrub(item, max_content_length) for item in data]
@@ -203,7 +214,9 @@ class PIIScrubber:
 
                 scrubbed = pattern.sub(mask_email, scrubbed)
             elif pattern_name == "credit_card":
-                scrubbed = pattern.sub(lambda m: f"****-****-****-{m.group(0)[-4:]}", scrubbed)
+                scrubbed = pattern.sub(
+                    lambda m: f"****-****-****-{m.group(0)[-4:]}", scrubbed
+                )
             elif pattern_name == "ip_address":
                 scrubbed = pattern.sub(
                     lambda m: f"{'.'.join(m.group(0).split('.')[:2])}.***.**", scrubbed
@@ -367,7 +380,9 @@ class RAEMemoryClient:
                     results = result.get("results", [])
                     span.set_attribute("search.result_count", len(results))
 
-                    logger.info("memory_searched", query=query, result_count=len(results))
+                    logger.info(
+                        "memory_searched", query=query, result_count=len(results)
+                    )
 
                     return results
 
@@ -387,7 +402,9 @@ class RAEMemoryClient:
                 logger.error("memory_search_error", error=str(e))
                 raise
 
-    async def get_file_context(self, file_path: str, top_k: int = 10) -> List[Dict[str, Any]]:
+    async def get_file_context(
+        self, file_path: str, top_k: int = 10
+    ) -> List[Dict[str, Any]]:
         """
         Get historical context about a file or module.
 
@@ -401,7 +418,9 @@ class RAEMemoryClient:
         # Search by file path in source field
         query = f"file:{file_path}"
 
-        return await self.search_memory(query=query, top_k=top_k, filters={"source": file_path})
+        return await self.search_memory(
+            query=query, top_k=top_k, filters={"source": file_path}
+        )
 
     async def get_latest_reflection(self, project: str = RAE_PROJECT_ID) -> str:
         """
@@ -426,7 +445,9 @@ class RAEMemoryClient:
 
                 summary = result.get("summary", "No reflection available.")
 
-                logger.info("reflection_retrieved", project=project, summary_length=len(summary))
+                logger.info(
+                    "reflection_retrieved", project=project, summary_length=len(summary)
+                )
 
                 return summary
 
@@ -441,7 +462,9 @@ class RAEMemoryClient:
             logger.error("reflection_error", error=str(e))
             return "Error retrieving reflection."
 
-    async def get_project_guidelines(self, project: str = RAE_PROJECT_ID) -> List[Dict[str, Any]]:
+    async def get_project_guidelines(
+        self, project: str = RAE_PROJECT_ID
+    ) -> List[Dict[str, Any]]:
         """
         Get project guidelines from semantic memory.
 
@@ -633,7 +656,9 @@ class RateLimiter:
             self._requests[tenant_id] = []
 
         # Remove old timestamps outside window
-        self._requests[tenant_id] = [ts for ts in self._requests[tenant_id] if ts > cutoff]
+        self._requests[tenant_id] = [
+            ts for ts in self._requests[tenant_id] if ts > cutoff
+        ]
 
         # Check if within limit
         if len(self._requests[tenant_id]) >= self.max_requests:
@@ -676,7 +701,9 @@ RATE_LIMIT_ENABLED = os.getenv("MCP_RATE_LIMIT_ENABLED", "true").lower() == "tru
 RATE_LIMIT_REQUESTS = int(os.getenv("MCP_RATE_LIMIT_REQUESTS", "100"))
 RATE_LIMIT_WINDOW = int(os.getenv("MCP_RATE_LIMIT_WINDOW", "60"))
 
-rate_limiter = RateLimiter(max_requests=RATE_LIMIT_REQUESTS, window_seconds=RATE_LIMIT_WINDOW)
+rate_limiter = RateLimiter(
+    max_requests=RATE_LIMIT_REQUESTS, window_seconds=RATE_LIMIT_WINDOW
+)
 
 logger.info(
     "rate_limiter_initialized",
@@ -944,9 +971,13 @@ async def handle_call_tool(
 
             # Validate
             if not content:
-                return [types.TextContent(type="text", text="Error: 'content' is required")]
+                return [
+                    types.TextContent(type="text", text="Error: 'content' is required")
+                ]
             if not source:
-                return [types.TextContent(type="text", text="Error: 'source' is required")]
+                return [
+                    types.TextContent(type="text", text="Error: 'source' is required")
+                ]
 
             # Store memory
             result = await rae_client.store_memory(
@@ -974,14 +1005,18 @@ async def handle_call_tool(
 
             # Validate
             if not query:
-                return [types.TextContent(type="text", text="Error: 'query' is required")]
+                return [
+                    types.TextContent(type="text", text="Error: 'query' is required")
+                ]
 
             # Search memory
             results = await rae_client.search_memory(query=query, top_k=top_k)
 
             if not results:
                 return [
-                    types.TextContent(type="text", text=f"No memories found for query: '{query}'")
+                    types.TextContent(
+                        type="text", text=f"No memories found for query: '{query}'"
+                    )
                 ]
 
             # Format results
@@ -1008,14 +1043,22 @@ async def handle_call_tool(
 
             # Validate
             if not file_path:
-                return [types.TextContent(type="text", text="Error: 'file_path' is required")]
+                return [
+                    types.TextContent(
+                        type="text", text="Error: 'file_path' is required"
+                    )
+                ]
 
             # Get context
-            results = await rae_client.get_file_context(file_path=file_path, top_k=include_count)
+            results = await rae_client.get_file_context(
+                file_path=file_path, top_k=include_count
+            )
 
             if not results:
                 return [
-                    types.TextContent(type="text", text=f"No context found for file: {file_path}")
+                    types.TextContent(
+                        type="text", text=f"No context found for file: {file_path}"
+                    )
                 ]
 
             # Format context
@@ -1027,7 +1070,9 @@ async def handle_call_tool(
                 content = mem.get("content", "")
 
                 formatted += f"{i}. [{timestamp}]\n"
-                formatted += f"   {content[:300]}{'...' if len(content) > 300 else ''}\n\n"
+                formatted += (
+                    f"   {content[:300]}{'...' if len(content) > 300 else ''}\n\n"
+                )
 
             return [types.TextContent(type="text", text=formatted)]
 
@@ -1053,7 +1098,8 @@ async def handle_call_tool(
             ):
                 return [
                     types.TextContent(
-                        type="text", text="Error: All fields are required for approval request"
+                        type="text",
+                        text="Error: All fields are required for approval request",
                     )
                 ]
 
@@ -1092,7 +1138,11 @@ async def handle_call_tool(
 
             # Validate
             if not request_id:
-                return [types.TextContent(type="text", text="Error: 'request_id' is required")]
+                return [
+                    types.TextContent(
+                        type="text", text="Error: 'request_id' is required"
+                    )
+                ]
 
             # Check status
             result = await rae_client.check_approval_status(request_id=request_id)
@@ -1128,7 +1178,8 @@ async def handle_call_tool(
             if not breakers:
                 return [
                     types.TextContent(
-                        type="text", text="No circuit breakers found or error retrieving data."
+                        type="text",
+                        text="No circuit breakers found or error retrieving data.",
                     )
                 ]
 
@@ -1140,7 +1191,9 @@ async def handle_call_tool(
                 failure_count = breaker.get("failure_count", 0)
                 success_rate = breaker.get("success_rate", 0)
 
-                status_emoji = "✓" if state == "closed" else "⚠" if state == "half_open" else "✗"
+                status_emoji = (
+                    "✓" if state == "closed" else "⚠" if state == "half_open" else "✗"
+                )
 
                 formatted += (
                     f"{status_emoji} {name_field}\n"
@@ -1186,12 +1239,18 @@ async def handle_call_tool(
 
         else:
             TOOL_ERRORS.labels(tool_name=name, error_type="unknown_tool").inc()
-            return [types.TextContent(type="text", text=f"Error: Unknown tool '{name}'")]
+            return [
+                types.TextContent(type="text", text=f"Error: Unknown tool '{name}'")
+            ]
 
     except Exception as e:
         TOOL_ERRORS.labels(tool_name=name, error_type=type(e).__name__).inc()
         logger.exception("tool_execution_error", tool=name, error=str(e))
-        return [types.TextContent(type="text", text=f"Error executing tool '{name}': {str(e)}")]
+        return [
+            types.TextContent(
+                type="text", text=f"Error executing tool '{name}': {str(e)}"
+            )
+        ]
     finally:
         # Record execution duration
         duration = time.time() - start_time
