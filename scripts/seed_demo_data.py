@@ -1,20 +1,29 @@
 #!/usr/bin/env python3
 """
-RAE Demo Data Seeding Script
-Seeds RAE with sample memories for the fictional "Project Phoenix" scenario.
+RAE Demo Data Seeding Script - Extended Edition
 
-This script demonstrates RAE's multi-layer memory architecture and knowledge graph capabilities.
+Seeds RAE with comprehensive sample data demonstrating:
+- Scenario 1: Project Phoenix (Software Development)
+- Scenario 2: City Hall Customer Service (Public Administration)
+
+This script demonstrates RAE's full capabilities including:
+- Multi-layer memory architecture (STM, EM, LTM, RM)
+- Knowledge graph extraction
+- ISO/IEC 42001 compliance features
+- Complex decision workflows
+- Context provenance tracking
 
 Usage:
-    python3 scripts/seed_demo_data.py
+    python3 scripts/seed_demo_data.py [--scenario phoenix|city-hall|all]
 
 Requirements:
-    pip install httpx (or use system Python with httpx installed)
+    pip install httpx
 """
 
+import argparse
 import sys
 import time
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 try:
     import httpx
@@ -26,80 +35,460 @@ except ImportError:
 
 # Configuration
 RAE_API_URL = "http://localhost:8000"
-TENANT_ID = "demo-tenant"
-PROJECT_ID = "phoenix-project"
 
-# Demo memories representing a software project lifecycle
-DEMO_MEMORIES = [
+# ============================================================================
+# SCENARIO 1: PROJECT PHOENIX - Software Development
+# ============================================================================
+
+PHOENIX_TENANT_ID = "demo-tenant"
+PHOENIX_PROJECT_ID = "phoenix-project"
+
+PHOENIX_MEMORIES = [
+    # === Episodic Memories (Events and interactions) ===
     {
-        "content": "Project Phoenix kickoff meeting held on 2024-01-15. Team decided to build a cloud-native microservices platform for real-time data processing. Key stakeholders: Alice (Tech Lead), Bob (Product Manager), Charlie (DevOps).",
-        "layer": "em",  # Episodic Memory
-        "tags": ["meeting", "kickoff", "planning"],
+        "content": "Project Phoenix kickoff meeting held on 2024-01-15. Team decided to build a cloud-native microservices platform for real-time data processing. Key stakeholders: Alice Chen (Tech Lead), Bob Martinez (Product Manager), Charlie Kim (DevOps Engineer), Diana Wu (Security Lead).",
+        "layer": "em",
+        "tags": ["meeting", "kickoff", "planning", "stakeholders"],
         "source": "meeting-notes",
-        "importance": 0.9,
+        "importance": 0.95,
     },
     {
-        "content": "Alice proposed using Kafka for event streaming and PostgreSQL for persistent storage. The team agreed on this architecture after comparing it with Redis Streams and MongoDB alternatives.",
+        "content": "Alice proposed using Kafka for event streaming and PostgreSQL for persistent storage. The team agreed on this architecture after comparing it with Redis Streams and MongoDB alternatives. Decision rationale: Kafka's proven scalability and PostgreSQL's ACID guarantees.",
         "layer": "em",
-        "tags": ["architecture", "decision", "kafka", "postgresql"],
+        "tags": ["architecture", "decision", "kafka", "postgresql", "database"],
         "source": "technical-discussion",
         "importance": 0.95,
     },
     {
-        "content": "Bug #PX-42 reported by QA team: Authentication service crashes when handling concurrent requests above 100 RPS. The issue is related to connection pool exhaustion in the database layer.",
+        "content": "Diana raised security concerns about the initial authentication design. The team scheduled a follow-up meeting to review OAuth2 implementation and discuss multi-factor authentication requirements. Security audit required before production launch.",
         "layer": "em",
-        "tags": ["bug", "authentication", "performance"],
-        "source": "bug-tracker",
-        "importance": 0.85,
-    },
-    {
-        "content": "Charlie implemented horizontal auto-scaling for the authentication service using Kubernetes HPA. The service now handles 500 RPS without issues. Bug #PX-42 resolved.",
-        "layer": "em",
-        "tags": ["fix", "kubernetes", "performance", "devops"],
-        "source": "git-commit",
+        "tags": ["security", "authentication", "oauth2", "mfa", "audit"],
+        "source": "security-review",
         "importance": 0.9,
     },
     {
-        "content": "The authentication service depends on the user-profile-service for JWT token validation. This dependency was added in release v2.3.0 to centralize user management.",
-        "layer": "ltm",  # Long-Term Memory - Structured knowledge
-        "tags": ["architecture", "dependencies", "authentication"],
-        "source": "architecture-docs",
-        "importance": 0.8,
+        "content": "Bug #PX-42 reported by QA team: Authentication service crashes when handling concurrent requests above 100 RPS. The issue is related to connection pool exhaustion in the database layer. Severity: HIGH. Assigned to: Charlie Kim.",
+        "layer": "em",
+        "tags": ["bug", "authentication", "performance", "database", "critical"],
+        "source": "bug-tracker",
+        "importance": 0.9,
     },
     {
-        "content": "Sprint retrospective insight: The team needs to improve test coverage for edge cases. Multiple bugs were found in production that could have been caught with better integration tests.",
-        "layer": "rm",  # Reflective Memory - Insights and patterns
-        "tags": ["retrospective", "testing", "quality"],
+        "content": "Charlie implemented horizontal auto-scaling for the authentication service using Kubernetes HPA (Horizontal Pod Autoscaler). Configuration: min=2 pods, max=10 pods, target CPU=70%. The service now handles 500 RPS without issues. Bug #PX-42 resolved and verified.",
+        "layer": "em",
+        "tags": ["fix", "kubernetes", "performance", "devops", "scaling", "resolved"],
+        "source": "git-commit",
+        "importance": 0.92,
+    },
+    {
+        "content": "Sprint retrospective insight: The team needs to improve test coverage for edge cases. Multiple bugs were found in production that could have been caught with better integration tests. Action item: Increase coverage to 85% minimum.",
+        "layer": "em",
+        "tags": ["retrospective", "testing", "quality", "action-item"],
         "source": "team-reflection",
         "importance": 0.75,
     },
     {
-        "content": "Product roadmap Q2 2024: Priority features include OAuth2 integration, multi-tenant support, and advanced analytics dashboard. Bob estimates 8 weeks for completion.",
+        "content": "Product roadmap Q2 2024 finalized: Priority features include OAuth2 integration, multi-tenant support, advanced analytics dashboard, and GraphQL API. Bob estimates 10 weeks for completion with current team size.",
         "layer": "em",
-        "tags": ["roadmap", "planning", "features"],
+        "tags": ["roadmap", "planning", "features", "q2-2024"],
         "source": "product-planning",
-        "importance": 0.7,
-    },
-    {
-        "content": "Best practice established: All microservices must implement structured logging with correlation IDs for distributed tracing. This pattern significantly improved debugging time during the last incident.",
-        "layer": "ltm",
-        "tags": ["best-practice", "logging", "observability"],
-        "source": "engineering-standards",
         "importance": 0.85,
     },
     {
-        "content": "Alice and Bob discussed the trade-offs between gRPC and REST for inter-service communication. They decided on REST for external APIs and gRPC for internal services to balance developer experience and performance.",
+        "content": "Alice and Bob discussed the trade-offs between gRPC and REST for inter-service communication. They decided on REST for external APIs and gRPC for internal services to balance developer experience and performance. Decision documented in ADR-007.",
         "layer": "em",
-        "tags": ["architecture", "discussion", "grpc", "rest"],
+        "tags": ["architecture", "discussion", "grpc", "rest", "adr"],
         "source": "technical-discussion",
+        "importance": 0.88,
+    },
+    {
+        "content": "Incident #INC-089: Production outage on 2024-02-20 from 14:30 to 15:45 UTC. Root cause: Redis cache cluster failure causing cascading failures in downstream services. Impact: 15% of users affected. Post-mortem scheduled.",
+        "layer": "em",
+        "tags": ["incident", "outage", "redis", "production", "postmortem"],
+        "source": "incident-report",
+        "importance": 0.95,
+    },
+    {
+        "content": "Post-mortem INC-089 findings: Lack of circuit breakers caused cascading failures. Team agreed to implement Resilience4j circuit breakers for all external dependencies. Action owners assigned. Target completion: Sprint 12.",
+        "layer": "em",
+        "tags": ["postmortem", "circuit-breaker", "resilience", "action-items"],
+        "source": "incident-postmortem",
+        "importance": 0.93,
+    },
+    {
+        "content": "Charlie deployed circuit breakers for all critical services: database, Redis cache, external payment API, and notification service. Configuration: failure threshold=5, timeout=30s, half-open wait=60s. System resilience significantly improved.",
+        "layer": "em",
+        "tags": ["devops", "circuit-breaker", "deployment", "resilience"],
+        "source": "deployment-notes",
+        "importance": 0.9,
+    },
+    {
+        "content": "Customer feedback: Users love the new analytics dashboard but request export functionality to CSV and PDF. Bob added these features to Sprint 13 backlog with priority=HIGH.",
+        "layer": "em",
+        "tags": ["feedback", "analytics", "feature-request", "export"],
+        "source": "customer-feedback",
+        "importance": 0.7,
+    },
+    {
+        "content": "Diana completed security audit and found 3 MEDIUM and 1 HIGH severity issues. HIGH issue: Sensitive data logged in application logs. Team implemented log scrubbing and PII detection. All issues resolved before production.",
+        "layer": "em",
+        "tags": ["security", "audit", "pii", "compliance", "remediation"],
+        "source": "security-audit",
+        "importance": 0.92,
+    },
+    # === Short-Term Memory (Working context) ===
+    {
+        "content": "Currently implementing feature FT-156: Multi-tenant support. Expected completion: end of Sprint 11. Dependencies: database schema migration, API authentication updates, UI tenant switcher.",
+        "layer": "stm",
+        "tags": ["wip", "multi-tenant", "sprint-11", "feature"],
+        "source": "sprint-board",
         "importance": 0.8,
     },
     {
-        "content": "Meta-insight: When making architectural decisions, the team tends to prioritize developer experience over raw performance, unless performance becomes a proven bottleneck. This philosophy has led to faster iteration cycles.",
+        "content": "Alice is blocked on PR #342 waiting for Bob's review. PR implements GraphQL API endpoints. Bob is in customer meetings all day. Expected review: tomorrow morning.",
+        "layer": "stm",
+        "tags": ["blocked", "pr-review", "graphql", "current"],
+        "source": "team-status",
+        "importance": 0.65,
+    },
+    {
+        "content": "Charlie is investigating performance degradation in staging environment. CPU usage increased from 30% to 75% after last deployment. Suspect: new analytics queries causing database load.",
+        "layer": "stm",
+        "tags": ["investigation", "performance", "staging", "ongoing"],
+        "source": "slack-discussion",
+        "importance": 0.75,
+    },
+    # === Long-Term Memory (Structured knowledge) ===
+    {
+        "content": "The authentication service depends on the user-profile-service for JWT token validation and user metadata retrieval. This dependency was added in release v2.3.0 to centralize user management and improve data consistency.",
+        "layer": "ltm",
+        "tags": ["architecture", "dependencies", "authentication", "knowledge"],
+        "source": "architecture-docs",
+        "importance": 0.85,
+    },
+    {
+        "content": "Best practice established: All microservices must implement structured logging with correlation IDs for distributed tracing. Log format: JSON with fields {timestamp, level, service, correlation_id, message, context}. This pattern significantly improved debugging time during incidents.",
+        "layer": "ltm",
+        "tags": ["best-practice", "logging", "observability", "standard"],
+        "source": "engineering-standards",
+        "importance": 0.9,
+    },
+    {
+        "content": "Database schema versioning: We use Flyway for schema migrations. Migration files must be sequential and immutable. Rollback migrations required for all schema changes. Location: db/migrations/. Review process: mandatory peer review + DBA approval.",
+        "layer": "ltm",
+        "tags": ["database", "migrations", "process", "flyway"],
+        "source": "database-documentation",
+        "importance": 0.82,
+    },
+    {
+        "content": "Deployment process: Feature branches merge to develop → CI runs tests → Deploy to staging → Manual QA → Merge to main → Deploy to production (blue-green). Rollback procedure: revert to previous blue environment. Average deployment time: 30 minutes.",
+        "layer": "ltm",
+        "tags": ["deployment", "ci-cd", "process", "blue-green"],
+        "source": "devops-handbook",
+        "importance": 0.88,
+    },
+    {
+        "content": "Error handling strategy: Use custom exception hierarchy with ErrorCode enum. All errors must include: error_code, message, context, timestamp, correlation_id. Client-facing errors must be user-friendly. Internal errors logged with full stack traces.",
+        "layer": "ltm",
+        "tags": ["error-handling", "exceptions", "coding-standard"],
+        "source": "coding-guidelines",
+        "importance": 0.8,
+    },
+    {
+        "content": "API versioning policy: Use URL path versioning (/v1/, /v2/). Maintain backward compatibility for at least 2 versions. Deprecation notice period: 6 months. Breaking changes require major version bump. Document all changes in CHANGELOG.md.",
+        "layer": "ltm",
+        "tags": ["api", "versioning", "policy", "compatibility"],
+        "source": "api-guidelines",
+        "importance": 0.85,
+    },
+    {
+        "content": "Security requirements: All external APIs must use HTTPS. API keys stored in HashiCorp Vault. Passwords hashed with bcrypt (cost=12). Session timeout: 30 minutes. MFA required for admin accounts. Security headers: CSP, HSTS, X-Frame-Options.",
+        "layer": "ltm",
+        "tags": ["security", "requirements", "authentication", "standards"],
+        "source": "security-policy",
+        "importance": 0.95,
+    },
+    # === Reflective Memory (Meta-insights and patterns) ===
+    {
+        "content": "Meta-insight: When making architectural decisions, the team consistently prioritizes developer experience over raw performance, unless performance becomes a proven bottleneck. This philosophy has led to faster iteration cycles and higher team morale.",
         "layer": "rm",
-        "tags": ["meta-learning", "philosophy", "decision-making"],
+        "tags": ["meta-learning", "philosophy", "decision-making", "culture"],
         "source": "pattern-analysis",
         "importance": 0.9,
+    },
+    {
+        "content": "Pattern observed: Technical debt accumulates most rapidly during 'crunch time' before major releases. The team should allocate 20% of each sprint to technical debt reduction to maintain long-term velocity.",
+        "layer": "rm",
+        "tags": ["technical-debt", "velocity", "process-improvement"],
+        "source": "retrospective-synthesis",
+        "importance": 0.85,
+    },
+    {
+        "content": "Communication pattern: Most misunderstandings occur at the boundary between product and engineering. Weekly sync meetings between Bob and Alice have reduced miscommunication by ~60%. Regular cross-functional alignment is critical.",
+        "layer": "rm",
+        "tags": ["communication", "collaboration", "cross-functional"],
+        "source": "team-observation",
+        "importance": 0.8,
+    },
+    {
+        "content": "Quality insight: The correlation between test coverage and production bugs is strong. Services with >80% coverage have 70% fewer P1 incidents. Investing in testing infrastructure yields measurable ROI.",
+        "layer": "rm",
+        "tags": ["quality", "testing", "metrics", "roi"],
+        "source": "data-analysis",
+        "importance": 0.88,
+    },
+    {
+        "content": "Incident pattern: 80% of production incidents occur during or shortly after deployments. Implementing canary deployments and automated rollback would significantly reduce incident frequency and MTTR.",
+        "layer": "rm",
+        "tags": ["incidents", "deployment", "reliability", "improvement"],
+        "source": "incident-analysis",
+        "importance": 0.92,
+    },
+]
+
+
+# ============================================================================
+# SCENARIO 2: CITY HALL CUSTOMER SERVICE - Public Administration
+# ============================================================================
+
+CITYHALL_TENANT_ID = "cityhall-tenant"
+CITYHALL_PROJECT_ID = "customer-service"
+
+CITYHALL_MEMORIES = [
+    # === Episodic Memories (Citizen interactions and events) ===
+    {
+        "content": "Zgłoszenie #2024-001: Pan Jan Kowalski (PESEL: 12345678901) zgłosił się 2024-01-10 do Działu Ewidencji Ludności w sprawie wymiany dowodu osobistego. Powód: utrata dokumentu. Status: w trakcie realizacji. Termin odbioru: 2024-01-24.",
+        "layer": "em",
+        "tags": ["dowod-osobisty", "ewidencja", "wymiana", "utrata"],
+        "source": "system-crm",
+        "importance": 0.7,
+    },
+    {
+        "content": "Zgłoszenie #2024-002: Pani Maria Nowak zgłosiła problem z odbiorem odpadów przy ul. Kwiatowej 15. Data zgłoszenia: 2024-01-11. Kategoria: odpady komunalne. Przekazano do Wydziału Gospodarki Komunalnej. Priorytet: normalny.",
+        "layer": "em",
+        "tags": ["odpady", "skargi", "gospodarka-komunalna", "interwencja"],
+        "source": "system-crm",
+        "importance": 0.6,
+    },
+    {
+        "content": "Zgłoszenie #2024-003 (PRIORYTET WYSOKI): Awaria oświetlenia ulicznego przy ulicy Szkolnej - zgłoszenie od 5 mieszkańców. Data: 2024-01-12. Wydział Infrastruktury wysłał ekipę techniczną. Szacowany czas naprawy: 48h. Status: w realizacji.",
+        "layer": "em",
+        "tags": ["oswietlenie", "awaria", "infrastruktura", "pilne"],
+        "source": "system-zgloszeniowy",
+        "importance": 0.85,
+    },
+    {
+        "content": "Wniosek #2024-005: Firma 'BudPol sp. z o.o.' złożyła wniosek o pozwolenie na budowę hali magazynowej przy ul. Przemysłowej 44. Data wpływu: 2024-01-15. Wymagana opinia Miejskiego Architekta oraz Wydziału Ochrony Środowiska. Termin rozpatrzenia: 65 dni.",
+        "layer": "em",
+        "tags": ["pozwolenie-budowlane", "budownictwo", "procedura", "firma"],
+        "source": "system-ewidencyjny",
+        "importance": 0.8,
+    },
+    {
+        "content": "Sesja Rady Miejskiej 2024-01-18: Uchwalono nowy Regulamin Czystości i Porządku. Nowe stawki opłat za odpady: 28 zł/os/miesiąc (segregacja), 42 zł/os/miesiąc (bez segregacji). Wejście w życie: 2024-03-01. Wymagana kampania informacyjna dla mieszkańców.",
+        "layer": "em",
+        "tags": ["rada-miejska", "uchwala", "odpady", "regulamin", "stawki"],
+        "source": "protokol-rady",
+        "importance": 0.95,
+    },
+    {
+        "content": "Szkolenie pracowników 2024-01-22: 'Obsługa klienta w administracji publicznej'. Uczestniczyło 23 pracowników. Omówiono: zasady komunikacji, standardy obsługi, rozwiązywanie konfliktów, procedury odwoławcze. Ocena szkolenia: 4.7/5.0.",
+        "layer": "em",
+        "tags": ["szkolenie", "obsluga-klienta", "rozwoj", "pracownicy"],
+        "source": "system-hr",
+        "importance": 0.75,
+    },
+    {
+        "content": "Zgłoszenie #2024-010: Pan Andrzej Wiśniewski złożył skargę na przedłużający się czas rozpatrywania wniosku o zasiłek rodzinny (wniosek #ZR-2023-456 z dnia 2023-12-15). Sprawa przekazana do kierownika Wydziału Pomocy Społecznej. Odpowiedź udzielona w terminie 7 dni.",
+        "layer": "em",
+        "tags": ["skarga", "zasilek", "pomoc-spoleczna", "opoznienie"],
+        "source": "system-skarg",
+        "importance": 0.8,
+    },
+    {
+        "content": "Zgłoszenie #2024-015: Zgłoszono dziurę w jezdni przy skrzyżowaniu ul. Długiej i Krótkiej. Zagrożenie bezpieczeństwa. Wydział Dróg i Mostów zlecił naprawę firmie zewnętrznej. Termin realizacji: 5 dni roboczych. Status: zrealizowano 2024-01-29.",
+        "layer": "em",
+        "tags": ["drogi", "naprawa", "bezpieczenstwo", "infrastruktura"],
+        "source": "system-interwencyjny",
+        "importance": 0.85,
+    },
+    {
+        "content": "Wniosek o informację publiczną #IP-2024-003: Dziennikarz lokalnej gazety poprosił o dane dotyczące wydatków na remonty dróg w 2023 roku. Podstawa prawna: ustawa o dostępie do informacji publicznej. Odpowiedź udzielona w terminie 14 dni. Przekazano zestawienie z systemu finansowego.",
+        "layer": "em",
+        "tags": ["informacja-publiczna", "transparentnosc", "finanse", "media"],
+        "source": "system-bip",
+        "importance": 0.7,
+    },
+    {
+        "content": "Zgłoszenie #2024-020 (DANE OSOBOWE - wymaga zatwierdzenia): Mieszkanka Maria Kowalska wnioskowała o dostęp do swoich danych osobowych przetwarzanych przez urząd (art. 15 RODO). Przygotowano raport zawierający: dane z USC, ewidencji podatkowej, systemu CRM. Zatwierdzenie przez IODO wymagane przed wydaniem.",
+        "layer": "em",
+        "tags": ["rodo", "dane-osobowe", "dostep", "prywatnosc", "compliance"],
+        "source": "system-rodo",
+        "importance": 0.95,
+    },
+    {
+        "content": "Incydent #SEC-2024-001: Wykryto próbę nieautoryzowanego dostępu do systemu ewidencji ludności. Data: 2024-02-05 03:14 UTC. Źródło: IP 185.x.x.x (proxy TOR). Atak zablokowany przez firewall. Administrator IT powiadomiony. Raport bezpieczeństwa sporządzony. Nie doszło do wycieku danych.",
+        "layer": "em",
+        "tags": ["bezpieczenstwo", "incydent", "cyberatak", "ochrona-danych"],
+        "source": "system-bezpieczenstwa",
+        "importance": 0.95,
+    },
+    {
+        "content": "Spotkanie zespołu 2024-02-08: Omówiono problemy z długimi kolejkami w godzinach szczytu (10:00-12:00). Zaproponowano: system rezerwacji wizyt online, dodatkowe stanowisko obsługi w godzinach 10-12, kampania promująca e-usługi. Decyzja: pilot systemu rezerwacji od marca 2024.",
+        "layer": "em",
+        "tags": ["kolejki", "usluga", "optymalizacja", "e-uslugi"],
+        "source": "notatka-spotkanie",
+        "importance": 0.85,
+    },
+    {
+        "content": "Kontrola wewnętrzna 2024-02-12: Audyt procedur w Wydziale Podatków i Opłat. Wynik: pozytywny z uchybieniami. Stwierdzone nieprawidłowości: brak kompletnej dokumentacji w 3 sprawach, przekroczenie terminu rozpatrzenia w 2 sprawach. Zalecenia wdrożone w terminie 30 dni.",
+        "layer": "em",
+        "tags": ["audyt", "kontrola", "podatki", "procedury", "uchybienia"],
+        "source": "raport-kontroli",
+        "importance": 0.88,
+    },
+    {
+        "content": "Zgłoszenie #2024-035: Przedsiębiorca Jan Nowak wnioskował o odroczenie płatności podatku od nieruchomości z powodu trudnej sytuacji finansowej firmy. Wymagana analiza sytuacji finansowej + opinia prawnika. Decyzja administracyjna wymaga zatwierdzenia przez Skarbnika Miasta.",
+        "layer": "em",
+        "tags": ["podatki", "odroczenie", "decyzja-administracyjna", "przedsiebiorca"],
+        "source": "system-podatkowy",
+        "importance": 0.8,
+    },
+    # === Short-Term Memory (Current work context) ===
+    {
+        "content": "Obecnie w realizacji: 47 aktywnych zgłoszeń. Podział: 12 USC, 18 gospodarka komunalna, 8 budownictwo, 9 inne. Priorytetowe: 5 zgłoszeń (awarie, pilne interwencje). Średni czas realizacji: 8 dni. Cel: 7 dni.",
+        "layer": "stm",
+        "tags": ["statystyki", "biezace", "realizacja", "monitoring"],
+        "source": "dashboard-crm",
+        "importance": 0.7,
+    },
+    {
+        "content": "W trakcie: Wdrożenie nowego systemu e-Urząd. Faza testów akceptacyjnych. Uczestniczy 10 pracowników z różnych wydziałów. Zgłoszono 15 błędów (12 naprawionych, 3 w trakcie). Planowane uruchomienie: 2024-03-15.",
+        "layer": "stm",
+        "tags": ["wdrozenie", "e-urzad", "testy", "projekt"],
+        "source": "status-projektu",
+        "importance": 0.85,
+    },
+    {
+        "content": "Oczekująca decyzja: Wniosek #2024-042 o pozwolenie na wycinkę 3 drzew przy ul. Parkowej. Czeka na opinię Wydziału Ochrony Środowiska. Zgłoszenie obywatelskie sprzeciwu (10 osób). Wymaga rozpatrzenia protestów przed wydaniem decyzji.",
+        "layer": "stm",
+        "tags": ["oczekujace", "wycinka", "srodowisko", "protest"],
+        "source": "sprawy-w-toku",
+        "importance": 0.75,
+    },
+    {
+        "content": "Akcja bieżąca: Kampania informacyjna o nowych stawkach za odpady. Harmonogram: ulotki wysłane (100%), spotkania osiedlowe (3/5 zrealizowane), artykuł w gazecie lokalnej (opublikowany), post na Facebook (zasięg: 12,000 osób).",
+        "layer": "stm",
+        "tags": ["kampania", "komunikacja", "odpady", "informowanie"],
+        "source": "plan-komunikacji",
+        "importance": 0.7,
+    },
+    # === Long-Term Memory (Procedures, regulations, knowledge) ===
+    {
+        "content": "Procedura obsługi zgłoszeń: (1) Rejestracja w systemie CRM + nadanie numeru, (2) Klasyfikacja i określenie priorytetu, (3) Przypisanie do właściwego wydziału, (4) Realizacja przez wydział (termin: 14 dni standardowo), (5) Informacja zwrotna do zgłaszającego, (6) Zamknięcie sprawy. W przypadkach pilnych: termin skrócony do 48h.",
+        "layer": "ltm",
+        "tags": ["procedura", "zgloszenia", "crm", "proces"],
+        "source": "instrukcja-obsluga",
+        "importance": 0.9,
+    },
+    {
+        "content": "Przepisy RODO w urzędzie: Administrator Danych Osobowych: Burmistrz. IOD: Jan Kowalski. Podstawy prawne przetwarzania: art. 6 ust. 1 lit. c (obowiązek prawny), lit. e (zadanie publiczne). Okres przechowywania: wg kategorii archiwalnej (kat. A - archiwum państwowe, kat. B - 50 lat, kat. BE - 5 lat).",
+        "layer": "ltm",
+        "tags": ["rodo", "dane-osobowe", "przepisy", "archiwizacja"],
+        "source": "dokumentacja-rodo",
+        "importance": 0.95,
+    },
+    {
+        "content": "Standardy obsługi mieszkańców: Czas oczekiwania w kolejce: max 15 min. Czas obsługi pojedynczego klienta: 8-10 min. Wymóg uprzejmości i profesjonalizmu. W przypadku niemożności załatwienia sprawy na miejscu: przekazanie do właściwego wydziału z poinformowaniem o terminach.",
+        "layer": "ltm",
+        "tags": ["standardy", "obsluga", "jakość", "procedury"],
+        "source": "regulamin-obsluga",
+        "importance": 0.82,
+    },
+    {
+        "content": "Procedura odwoławcza: Strona niezadowolona z decyzji może wnieść odwołanie w terminie 14 dni od doręczenia. Odwołanie kierowane do organu wyższego stopnia (Samorządowe Kolegium Odwoławcze). Urząd ma 7 dni na ustosunkowanie się i przekazanie akt. SKO rozpatruje w terminie 60 dni.",
+        "layer": "ltm",
+        "tags": ["odwolanie", "procedura", "prawo", "terminy"],
+        "source": "kodeks-postepowania-administracyjnego",
+        "importance": 0.9,
+    },
+    {
+        "content": "Struktura organizacyjna urzędu: 8 wydziałów merytorycznych - (1) USC, (2) Ewidencja Ludności, (3) Budownictwo, (4) Gospodarka Komunalna, (5) Podatki i Opłaty, (6) Pomoc Społeczna, (7) Ochrona Środowiska, (8) Infrastruktura. Łącznie: 87 pracowników. Koordynator obsługi klienta: Pani Anna Lewandowska.",
+        "layer": "ltm",
+        "tags": ["struktura", "organizacja", "wydzialy", "pracownicy"],
+        "source": "regulamin-organizacyjny",
+        "importance": 0.75,
+    },
+    {
+        "content": "Polityka bezpieczeństwa IT: Dostęp do systemów tylko z autoryzowanych stanowisk. Hasła: min 12 znaków, wymiana co 90 dni, uwierzytelnianie dwuskładnikowe dla administratorów. Backup danych: co 24h, przechowywanie 30 dni. Monitoring: SIEM, logi przechowywane 2 lata.",
+        "layer": "ltm",
+        "tags": ["bezpieczenstwo", "it", "polityka", "backup"],
+        "source": "polityka-bezpieczenstwa",
+        "importance": 0.92,
+    },
+    {
+        "content": "Procedura zgłaszania incydentów bezpieczeństwa: (1) Natychmiastowe powiadomienie administratora IT, (2) Dokumentacja incydentu (czas, rodzaj, skutki), (3) Zabezpieczenie dowodów (logi, screenshoty), (4) Analiza i reakcja (max 4h), (5) Raport do IOD i UODO jeśli dotyczy danych osobowych (72h), (6) Wdrożenie środków naprawczych.",
+        "layer": "ltm",
+        "tags": ["incydenty", "bezpieczenstwo", "procedura", "rodo"],
+        "source": "instrukcja-incydenty",
+        "importance": 0.95,
+    },
+    {
+        "content": "Zakres danych w systemie CRM: dane kontaktowe mieszkańców (imię, nazwisko, adres, telefon, email), historia zgłoszeń, przypisane sprawy, status realizacji, komunikacja z urzędem, preferencje komunikacji. Dane chronione: poziom 2 (dane osobowe). Dostęp: autoryzowani pracownicy obsługi.",
+        "layer": "ltm",
+        "tags": ["crm", "dane", "zakres", "dostep"],
+        "source": "dokumentacja-systemu",
+        "importance": 0.85,
+    },
+    # === Reflective Memory (Meta-insights and improvements) ===
+    {
+        "content": "Wzorzec obserwowany: 70% zgłoszeń do Wydziału Gospodarki Komunalnej dotyczy odpadów. Z tego 60% to pytania o harmonogram wywozu. Rozwiązanie: automatyczny SMS reminder przed wywozem + aplikacja mobilna z harmonogramem. Implementacja zredukowałaby obciążenie call center o ~40%.",
+        "layer": "rm",
+        "tags": ["analiza", "optymalizacja", "odpady", "usprawnienie"],
+        "source": "analiza-zgloszeniowa",
+        "importance": 0.88,
+    },
+    {
+        "content": "Refleksja jakościowa: Skargi mieszkańców najczęściej dotyczą nie merytorycznego rozstrzygnięcia, ale długiego czasu oczekiwania i braku informacji zwrotnej. Wdrożenie automatycznych notyfikacji SMS/email o statusie sprawy zmniejszyło liczbę skarg o 45%.",
+        "layer": "rm",
+        "tags": ["jakosc", "komunikacja", "skargi", "usprawnienie"],
+        "source": "analiza-satysfakcji",
+        "importance": 0.9,
+    },
+    {
+        "content": "Korelacja zaobserwowana: Wydziały, które przeszły szkolenie z obsługi klienta, mają o 30% wyższą ocenę satysfakcji od mieszkańców. Inwestycja w szkolenia soft skills daje mierzalny ROI w postaci lepszej jakości usług i mniejszej liczby skarg.",
+        "layer": "rm",
+        "tags": ["szkolenia", "roi", "satysfakcja", "rozwoj"],
+        "source": "badanie-efektywnosci",
+        "importance": 0.85,
+    },
+    {
+        "content": "Sezonowość zgłoszeń: Piki w styczniu (podatki), czerwcu (pozwolenia budowlane), wrześniu (sprawy szkolne). Planowanie urlopów pracowników powinno uwzględniać te okresy. Wzmocnienie zespołu w okresach szczytowych o pracowników tymczasowych zwiększyło efektywność o 25%.",
+        "layer": "rm",
+        "tags": ["sezonowosc", "planowanie", "zasoby", "efektywnosc"],
+        "source": "analiza-obciazenia",
+        "importance": 0.82,
+    },
+    {
+        "content": "Lekcja z incydentów bezpieczeństwa: 80% prób nieautoryzowanego dostępu występuje poza godzinami pracy (18:00-08:00). Wdrożenie systemu wykrywania anomalii + monitoring 24/7 jest konieczny. Automatyczne blokowanie podejrzanych IP zmniejszyło liczbę prób ataków o 90%.",
+        "layer": "rm",
+        "tags": ["bezpieczenstwo", "monitoring", "prewencja", "lekcja"],
+        "source": "raport-bezpieczenstwa",
+        "importance": 0.93,
+    },
+    {
+        "content": "Wzorzec cyfryzacji: Wdrożenie e-usług zmniejsza obciążenie tradycyjnych kanałów, ale wymaga wsparcia technicznego dla starszych mieszkańców. Optymalne rozwiązanie: e-usługi + punkty wsparcia dla osób starszych + infolinia. Takie podejście zwiększyło adopcję e-usług z 15% do 42%.",
+        "layer": "rm",
+        "tags": ["cyfryzacja", "e-uslugi", "wsparcie", "adopcja"],
+        "source": "ewaluacja-e-urzad",
+        "importance": 0.87,
+    },
+    {
+        "content": "Meta-obserwacja: Najskuteczniejsze usprawnienia procesów pochodzą od sugestii pracowników pierwszej linii obsługi. Wdrożenie systemu zgłaszania pomysłów + nagrody za implementowane usprawnienia zwiększyło zaangażowanie o 60% i wygenerowało 23 wdrożone usprawnienia rocznie.",
+        "layer": "rm",
+        "tags": ["kultura", "innowacje", "zaangazowanie", "usprawnienia"],
+        "source": "program-innowacyjny",
+        "importance": 0.85,
     },
 ]
 
@@ -113,23 +502,29 @@ def check_rae_health() -> bool:
         return False
 
 
-def create_memory(client: httpx.Client, memory_data: Dict[str, Any]) -> bool:
+def create_memory(
+    client: httpx.Client, memory_data: Dict[str, Any], tenant_id: str, project_id: str
+) -> bool:
     """Create a single memory in RAE."""
     try:
-        # Add project to memory data (tenant_id goes in header)
-        payload = {"project": PROJECT_ID, **memory_data}
+        payload = {"project": project_id, **memory_data}
+        headers = {"X-Tenant-Id": tenant_id}
 
-        headers = {"X-Tenant-Id": TENANT_ID}
-
-        response = client.post(f"{RAE_API_URL}/v1/memory/store", json=payload, headers=headers, timeout=10.0)
+        response = client.post(
+            f"{RAE_API_URL}/v1/memory/store",
+            json=payload,
+            headers=headers,
+            timeout=10.0,
+        )
 
         if response.status_code in [200, 201]:
             return True
         else:
-            print(
-                f"   WARNING: Failed to create memory (status {response.status_code})"
-            )
-            print(f"   Response: {response.text[:200]}")
+            print(f"   WARNING: Failed (status {response.status_code})")
+            if (
+                response.status_code != 404
+            ):  # Don't spam with full error for missing endpoints
+                print(f"   Response: {response.text[:150]}")
             return False
 
     except Exception as e:
@@ -137,18 +532,105 @@ def create_memory(client: httpx.Client, memory_data: Dict[str, Any]) -> bool:
         return False
 
 
+def seed_scenario(
+    client: httpx.Client,
+    scenario_name: str,
+    tenant_id: str,
+    project_id: str,
+    memories: List[Dict[str, Any]],
+) -> tuple[int, int]:
+    """Seed a specific scenario and return (success_count, failed_count)."""
+
+    print(f"\n{'='*70}")
+    print(f"  SCENARIO: {scenario_name}")
+    print(f"  Tenant: {tenant_id}")
+    print(f"  Project: {project_id}")
+    print(f"  Memories: {len(memories)}")
+    print(f"{'='*70}\n")
+
+    success_count = 0
+    failed_count = 0
+
+    for i, memory in enumerate(memories, 1):
+        layer_emoji = {
+            "em": "📝",  # Episodic
+            "stm": "⚡",  # Short-Term
+            "ltm": "📚",  # Long-Term
+            "rm": "💡",  # Reflective
+        }.get(memory["layer"], "📄")
+
+        # Truncate content for display
+        content_preview = memory["content"][:80].replace("\n", " ")
+
+        print(
+            f"{layer_emoji} [{i:2d}/{len(memories):2d}] {memory['layer'].upper():3s}: {content_preview}..."
+        )
+
+        if create_memory(client, memory, tenant_id, project_id):
+            success_count += 1
+            print("   ✅ Created")
+        else:
+            failed_count += 1
+            print("   ❌ Failed")
+
+        # Small delay to avoid overwhelming the API
+        time.sleep(0.1)
+
+    return success_count, failed_count
+
+
+def print_usage_tips(scenarios: List[str]):
+    """Print usage tips for the seeded data."""
+
+    print("\n" + "=" * 70)
+    print("  Demo Data Seeded Successfully! 🎉")
+    print("=" * 70)
+
+    if "phoenix" in scenarios:
+        print("\n📦 PROJECT PHOENIX - Software Development Scenario")
+        print(f"   Tenant: {PHOENIX_TENANT_ID}")
+        print(f"   Project: {PHOENIX_PROJECT_ID}")
+        print(f"   Try: Search for 'authentication bug' or 'circuit breaker'")
+
+    if "city-hall" in scenarios:
+        print("\n🏛️  CITY HALL - Public Administration Scenario")
+        print(f"   Tenant: {CITYHALL_TENANT_ID}")
+        print(f"   Project: {CITYHALL_PROJECT_ID}")
+        print(f"   Try: Search for 'odpady' or 'bezpieczeństwo' or 'RODO'")
+
+    print("\n💡 Explore the data:")
+    print("   1. Dashboard: http://localhost:8501")
+    print("   2. API Docs: http://localhost:8000/docs")
+    print("   3. Query API: POST http://localhost:8000/v1/memory/query")
+    print("   4. Graph extraction: http://localhost:8000/v1/graph/extract")
+    print("   5. ISO/IEC 42001: http://localhost:8000/v1/compliance/...")
+    print()
+
+
 def main():
     """Main execution function."""
-    print("\n" + "=" * 60)
-    print("  RAE Demo Data Seeding Script")
-    print("  Project: Phoenix (Fictional Software Project)")
-    print("=" * 60 + "\n")
+
+    # Parse arguments
+    parser = argparse.ArgumentParser(
+        description="Seed RAE with demo data (Phoenix and/or City Hall scenarios)"
+    )
+    parser.add_argument(
+        "--scenario",
+        choices=["phoenix", "city-hall", "all"],
+        default="all",
+        help="Which scenario to seed (default: all)",
+    )
+    args = parser.parse_args()
+
+    print("\n" + "=" * 70)
+    print("  RAE Demo Data Seeding Script - Extended Edition")
+    print("=" * 70 + "\n")
 
     # Step 1: Check RAE health
     print(f"[1/3] Checking RAE API health at {RAE_API_URL}...")
     if not check_rae_health():
-        print("❌ ERROR: RAE API is not reachable or unhealthy")
-        print("\nPlease ensure RAE is running:")
+        print("❌ ERROR: RAE API is not reachable or unhealthy\n")
+        print("Please ensure RAE is running:")
         print("  docker-compose ps")
         print("  docker-compose logs rae-api")
         print("\nOr run: ./scripts/quickstart.sh")
@@ -156,76 +638,47 @@ def main():
 
     print("✅ RAE API is healthy\n")
 
-    # Step 2: Seed memories
-    print(f"[2/3] Seeding {len(DEMO_MEMORIES)} demo memories...")
-    print(f"      Tenant: {TENANT_ID}")
-    print(f"      Project: {PROJECT_ID}\n")
+    # Step 2: Seed selected scenarios
+    print("[2/3] Seeding demo data...")
 
-    success_count = 0
-    failed_count = 0
+    total_success = 0
+    total_failed = 0
+    scenarios_seeded = []
 
     with httpx.Client() as client:
-        for i, memory in enumerate(DEMO_MEMORIES, 1):
-            layer_emoji = {
-                "em": "📝",  # Episodic
-                "stm": "⚡",  # Short-Term
-                "ltm": "📚",  # Long-Term
-                "rm": "💡",  # Reflective
-            }.get(memory["layer"], "📄")
-
-            print(
-                f"{layer_emoji} [{i}/{len(DEMO_MEMORIES)}] {memory['layer'].upper()}: {memory['content'][:70]}..."
+        if args.scenario in ["phoenix", "all"]:
+            success, failed = seed_scenario(
+                client,
+                "Project Phoenix (Software Development)",
+                PHOENIX_TENANT_ID,
+                PHOENIX_PROJECT_ID,
+                PHOENIX_MEMORIES,
             )
+            total_success += success
+            total_failed += failed
+            scenarios_seeded.append("phoenix")
 
-            if create_memory(client, memory):
-                success_count += 1
-                print("   ✅ Created")
-            else:
-                failed_count += 1
-                print("   ❌ Failed")
-
-            # Small delay to avoid overwhelming the API
-            time.sleep(0.1)
-
-    print()
+        if args.scenario in ["city-hall", "all"]:
+            success, failed = seed_scenario(
+                client,
+                "City Hall Customer Service (Public Administration)",
+                CITYHALL_TENANT_ID,
+                CITYHALL_PROJECT_ID,
+                CITYHALL_MEMORIES,
+            )
+            total_success += success
+            total_failed += failed
+            scenarios_seeded.append("city-hall")
 
     # Step 3: Summary
-    print("[3/3] Summary:")
-    print(
-        f"      ✅ Successfully created: {success_count}/{len(DEMO_MEMORIES)} memories"
-    )
+    print("\n[3/3] Summary:")
+    print(f"      ✅ Successfully created: {total_success} memories")
 
-    if failed_count > 0:
-        print(f"      ❌ Failed: {failed_count}/{len(DEMO_MEMORIES)} memories")
+    if total_failed > 0:
+        print(f"      ❌ Failed: {total_failed} memories")
 
-    # Step 4: Next steps
-    print("\n" + "=" * 60)
-    print("  Demo data seeded successfully! 🎉")
-    print("=" * 60)
-    print("\n💡 Try these queries to explore the data:\n")
-
-    print("1. View all memories:")
-    print(
-        f"   curl http://localhost:8000/v1/memories?tenant_id={TENANT_ID}&project={PROJECT_ID}\n"
-    )
-
-    print("2. Search for authentication-related memories:")
-    print("   curl -X POST http://localhost:8000/v1/search \\")
-    print('     -H "Content-Type: application/json" \\')
-    print(
-        f'     -d \'{{"query": "authentication bug", "tenant_id": "{TENANT_ID}", "project": "{PROJECT_ID}"}}\'\n'
-    )
-
-    print("3. Explore the knowledge graph:")
-    print(
-        f"   curl http://localhost:8000/v1/graph/nodes?tenant_id={TENANT_ID}&project={PROJECT_ID}\n"
-    )
-
-    print("4. Open the Dashboard:")
-    print("   http://localhost:8501\n")
-
-    print("5. Explore the API:")
-    print("   http://localhost:8000/docs\n")
+    # Step 4: Usage tips
+    print_usage_tips(scenarios_seeded)
 
 
 if __name__ == "__main__":
@@ -236,4 +689,7 @@ if __name__ == "__main__":
         sys.exit(1)
     except Exception as e:
         print(f"\n❌ Unexpected error: {str(e)}")
+        import traceback
+
+        traceback.print_exc()
         sys.exit(1)
