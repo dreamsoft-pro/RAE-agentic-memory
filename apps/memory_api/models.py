@@ -43,6 +43,25 @@ class SourceTrustLevel(str, Enum):
     unverified = "unverified"
 
 
+class OperationRiskLevel(str, Enum):
+    """
+    Risk level for AI operations - ISO/IEC 42001 Section 9 (Human Oversight)
+
+    Determines whether human approval is required before execution:
+    - critical: Requires mandatory human approval (financial, legal, safety)
+    - high: Requires human review before execution
+    - medium: Can proceed with logging and post-hoc review
+    - low: Automatic execution allowed
+    - none: No special oversight required
+    """
+
+    critical = "critical"
+    high = "high"
+    medium = "medium"
+    low = "low"
+    none = "none"
+
+
 class MemoryRecord(BaseModel):
     """
     The standard, unified format for a memory record.
