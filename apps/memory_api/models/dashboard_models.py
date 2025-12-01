@@ -573,6 +573,327 @@ class SystemHealth(BaseModel):
 
 
 # ============================================================================
+# ISO/IEC 42001 Compliance Models
+# ============================================================================
+
+
+class ComplianceStatus(str, Enum):
+    """ISO 42001 compliance status levels"""
+
+    COMPLIANT = "compliant"
+    NON_COMPLIANT = "non_compliant"
+    PARTIALLY_COMPLIANT = "partially_compliant"
+    NOT_APPLICABLE = "not_applicable"
+    UNKNOWN = "unknown"
+
+
+class ComplianceArea(str, Enum):
+    """ISO 42001 compliance areas"""
+
+    GOVERNANCE = "governance"
+    RISK_MANAGEMENT = "risk_management"
+    DATA_MANAGEMENT = "data_management"
+    TRANSPARENCY = "transparency"
+    HUMAN_OVERSIGHT = "human_oversight"
+    SECURITY_PRIVACY = "security_privacy"
+    ACCOUNTABILITY = "accountability"
+    FAIRNESS = "fairness"
+    QUALITY_PERFORMANCE = "quality_performance"
+
+
+class RiskLevel(str, Enum):
+    """Risk severity levels"""
+
+    CRITICAL = "critical"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+    NEGLIGIBLE = "negligible"
+
+
+class ISO42001Requirement(BaseModel):
+    """
+    ISO 42001 requirement definition.
+
+    Maps to specific clauses in ISO/IEC 42001 standard.
+    """
+
+    requirement_id: str = Field(..., description="e.g., 'A.5.1', 'A.6.2'")
+    requirement_name: str
+    requirement_description: str
+    compliance_area: ComplianceArea
+
+    # Parent requirement (for hierarchical requirements)
+    parent_requirement_id: Optional[str] = None
+
+    # Applicable controls
+    control_ids: List[str] = Field(default_factory=list)
+
+    # Evidence required
+    evidence_types: List[str] = Field(default_factory=list)
+
+
+class ISO42001Metric(BaseModel):
+    """
+    ISO 42001 compliance metric.
+
+    Tracks compliance status for a specific requirement.
+    """
+
+    requirement_id: str
+    requirement_name: str
+    compliance_area: ComplianceArea
+
+    # Current status
+    status: ComplianceStatus
+    current_value: float = Field(..., ge=0.0, le=100.0, description="Percentage 0-100")
+    threshold: float = Field(
+        100.0, ge=0.0, le=100.0, description="Required threshold for compliance"
+    )
+
+    # Timestamps
+    last_check: datetime = Field(default_factory=datetime.utcnow)
+    last_compliant_at: Optional[datetime] = None
+
+    # Evidence and details
+    evidence_ids: List[str] = Field(default_factory=list)
+    findings: List[str] = Field(default_factory=list)
+    recommendations: List[str] = Field(default_factory=list)
+
+    # Metadata
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class RiskMetric(BaseModel):
+    """
+    Risk metric from risk register.
+
+    Tracks identified risks and mitigation status.
+    """
+
+    risk_id: str
+    risk_description: str
+    category: str
+
+    # Risk assessment
+    probability: float = Field(..., ge=0.0, le=1.0)
+    impact: float = Field(..., ge=0.0, le=1.0)
+    risk_score: float = Field(..., ge=0.0, le=1.0)
+    risk_level: RiskLevel
+
+    # Current status
+    status: str = Field(..., description="e.g., 'open', 'mitigated', 'accepted'")
+    mitigation_status: Optional[str] = None
+
+    # Controls
+    mitigation_controls: List[str] = Field(default_factory=list)
+    effectiveness_score: Optional[float] = Field(None, ge=0.0, le=1.0)
+
+    # Ownership
+    owner: Optional[str] = None
+    responsible_party: Optional[str] = None
+
+    # Timestamps
+    identified_at: datetime
+    last_reviewed_at: datetime
+    next_review_due: Optional[datetime] = None
+
+    # Metadata
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class AuditTrailEntry(BaseModel):
+    """
+    Audit trail entry for compliance tracking.
+
+    Records actions for accountability and transparency.
+    """
+
+    entry_id: UUID = Field(default_factory=lambda: __import__("uuid").uuid4())
+    tenant_id: str
+
+    # Event classification
+    event_type: str = Field(..., description="e.g., 'data_access', 'model_decision'")
+    event_category: str = Field(
+        ..., description="e.g., 'data_operation', 'ai_decision', 'user_action'"
+    )
+
+    # Actor information
+    actor_type: str = Field(..., description="'user', 'system', 'api', 'external'")
+    actor_id: str
+    actor_name: Optional[str] = None
+
+    # Resource information
+    resource_type: str = Field(..., description="e.g., 'memory', 'model', 'data'")
+    resource_id: str
+    resource_name: Optional[str] = None
+
+    # Action details
+    action: str = Field(..., description="'create', 'read', 'update', 'delete'")
+    action_description: str
+
+    # Result
+    result: str = Field(..., description="'success', 'failure', 'partial'")
+    result_details: Optional[str] = None
+
+    # Context
+    request_id: Optional[str] = None
+    session_id: Optional[str] = None
+    ip_address: Optional[str] = None
+
+    # Metadata
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+    # Timestamp
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
+class DataRetentionMetric(BaseModel):
+    """
+    Data retention compliance metric.
+
+    Tracks adherence to data retention policies.
+    """
+
+    tenant_id: str
+    data_class: str = Field(..., description="e.g., 'episodic_memory', 'audit_logs'")
+
+    # Retention policy
+    retention_policy_days: int = Field(..., description="-1 for permanent retention")
+    policy_name: str
+
+    # Current status
+    total_records: int = Field(0, ge=0)
+    expired_records: int = Field(0, ge=0)
+    deleted_records_last_30d: int = Field(0, ge=0)
+
+    # Compliance
+    compliance_percentage: float = Field(..., ge=0.0, le=100.0)
+    overdue_deletions: int = Field(0, ge=0)
+
+    # Last cleanup
+    last_cleanup_at: Optional[datetime] = None
+    next_cleanup_scheduled: Optional[datetime] = None
+
+    # Timestamp
+    checked_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class SourceTrustMetric(BaseModel):
+    """
+    Source trust distribution metric.
+
+    Tracks trust levels of knowledge sources.
+    """
+
+    tenant_id: str
+
+    # Trust level distribution
+    high_trust_count: int = Field(0, ge=0)
+    medium_trust_count: int = Field(0, ge=0)
+    low_trust_count: int = Field(0, ge=0)
+    unverified_count: int = Field(0, ge=0)
+
+    # Percentages
+    high_trust_percentage: float = Field(0.0, ge=0.0, le=100.0)
+    verified_percentage: float = Field(0.0, ge=0.0, le=100.0)
+
+    # Verification status
+    sources_pending_verification: int = Field(0, ge=0)
+    sources_due_for_reverification: int = Field(0, ge=0)
+
+    # Timestamp
+    collected_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ComplianceReport(BaseModel):
+    """
+    ISO 42001 compliance report.
+
+    Comprehensive compliance status across all areas.
+    """
+
+    report_id: UUID = Field(default_factory=lambda: __import__("uuid").uuid4())
+    generated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    # Context
+    tenant_id: str
+    project_id: str
+    report_type: str = Field("full", description="'full', 'summary', 'area_specific'")
+
+    # Overall compliance
+    overall_compliance_score: float = Field(..., ge=0.0, le=100.0)
+    overall_status: ComplianceStatus
+
+    # Area-specific compliance
+    governance_metrics: List[ISO42001Metric] = Field(default_factory=list)
+    risk_management_metrics: List[ISO42001Metric] = Field(default_factory=list)
+    data_management_metrics: List[ISO42001Metric] = Field(default_factory=list)
+    transparency_metrics: List[ISO42001Metric] = Field(default_factory=list)
+    human_oversight_metrics: List[ISO42001Metric] = Field(default_factory=list)
+    security_privacy_metrics: List[ISO42001Metric] = Field(default_factory=list)
+
+    # Risk register
+    active_risks: List[RiskMetric] = Field(default_factory=list)
+    high_priority_risks: int = Field(0, ge=0)
+    mitigated_risks: int = Field(0, ge=0)
+
+    # Data governance
+    retention_metrics: List[DataRetentionMetric] = Field(default_factory=list)
+    source_trust_metrics: Optional[SourceTrustMetric] = None
+
+    # Audit trail
+    audit_trail_completeness: float = Field(
+        0.0, ge=0.0, le=100.0, description="Percentage of events with audit trail"
+    )
+    audit_entries_last_30d: int = Field(0, ge=0)
+
+    # Gaps and recommendations
+    critical_gaps: List[str] = Field(default_factory=list)
+    non_compliant_requirements: List[str] = Field(default_factory=list)
+    recommendations: List[str] = Field(default_factory=list)
+    action_items: List[Dict[str, Any]] = Field(default_factory=list)
+
+    # Certification status
+    certification_ready: bool = False
+    next_audit_date: Optional[datetime] = None
+
+    # Metadata
+    metadata: Dict[str, Any] = Field(default_factory=dict)
+
+
+class RLSVerificationStatus(BaseModel):
+    """
+    Row-Level Security verification status.
+
+    Tracks RLS enforcement for tenant isolation.
+    """
+
+    tenant_id: str
+
+    # RLS status per table
+    tables_with_rls: List[str] = Field(default_factory=list)
+    tables_without_rls: List[str] = Field(default_factory=list)
+
+    # RLS policies
+    total_policies: int = Field(0, ge=0)
+    active_policies: int = Field(0, ge=0)
+    disabled_policies: int = Field(0, ge=0)
+
+    # Verification results
+    rls_enabled_percentage: float = Field(0.0, ge=0.0, le=100.0)
+    all_critical_tables_protected: bool
+
+    # Last verification
+    last_verified_at: datetime = Field(default_factory=datetime.utcnow)
+    verification_passed: bool
+
+    # Issues
+    issues: List[str] = Field(default_factory=list)
+    recommendations: List[str] = Field(default_factory=list)
+
+
+# ============================================================================
 # Request/Response Models
 # ============================================================================
 
@@ -675,3 +996,85 @@ class WebSocketSubscription(BaseModel):
 
     connected_at: datetime = Field(default_factory=datetime.utcnow)
     expires_at: Optional[datetime] = None
+
+
+class GetComplianceReportRequest(BaseModel):
+    """Request to get ISO 42001 compliance report"""
+
+    tenant_id: str
+    project_id: str
+    report_type: str = Field("full", description="'full', 'summary', 'area_specific'")
+    compliance_area: Optional[ComplianceArea] = None  # For area_specific reports
+    include_audit_trail: bool = True
+
+
+class GetComplianceReportResponse(BaseModel):
+    """Response with ISO 42001 compliance report"""
+
+    compliance_report: ComplianceReport
+    rls_status: Optional[RLSVerificationStatus] = None
+    message: str = "Compliance report generated successfully"
+
+
+class GetComplianceMetricsRequest(BaseModel):
+    """Request to get compliance metrics by area"""
+
+    tenant_id: str
+    project_id: str
+    compliance_area: Optional[ComplianceArea] = None
+    include_history: bool = False
+    period: MetricPeriod = MetricPeriod.LAST_30D
+
+
+class GetComplianceMetricsResponse(BaseModel):
+    """Response with compliance metrics"""
+
+    metrics: List[ISO42001Metric]
+    area_scores: Dict[str, float] = Field(
+        default_factory=dict, description="Compliance score by area"
+    )
+    overall_score: float = Field(..., ge=0.0, le=100.0)
+    message: str = "Compliance metrics retrieved successfully"
+
+
+class GetRiskRegisterRequest(BaseModel):
+    """Request to get risk register data"""
+
+    tenant_id: str
+    project_id: str
+    risk_level: Optional[RiskLevel] = None
+    status: Optional[str] = None  # 'open', 'mitigated', etc.
+    include_closed: bool = False
+
+
+class GetRiskRegisterResponse(BaseModel):
+    """Response with risk register data"""
+
+    risks: List[RiskMetric]
+    risk_summary: Dict[str, int] = Field(
+        default_factory=dict, description="Count by risk level"
+    )
+    high_priority_count: int = Field(0, ge=0)
+    message: str = "Risk register retrieved successfully"
+
+
+class GetAuditTrailRequest(BaseModel):
+    """Request to get audit trail entries"""
+
+    tenant_id: str
+    project_id: str
+    start_time: Optional[datetime] = None
+    end_time: Optional[datetime] = None
+    event_types: Optional[List[str]] = None
+    actor_types: Optional[List[str]] = None
+    limit: int = Field(100, ge=1, le=1000)
+    offset: int = Field(0, ge=0)
+
+
+class GetAuditTrailResponse(BaseModel):
+    """Response with audit trail entries"""
+
+    entries: List[AuditTrailEntry]
+    total_count: int = Field(0, ge=0)
+    completeness_percentage: float = Field(0.0, ge=0.0, le=100.0)
+    message: str = "Audit trail retrieved successfully"
