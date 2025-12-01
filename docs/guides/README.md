@@ -8,6 +8,12 @@ Practical guides and tutorials for using RAE.
 - [RAE Lite Guide](./rae-lite/RAE-lite.md) - Cost-optimized deployment
 - [RAE Lite Verification](./rae-lite/RAE-LITE-VERIFICATION.md) - Verification guide
 
+### RAE Standard
+- [RAE Standard Guide](./rae-standard/README.md) - Full-featured production deployment
+
+### RAE Enterprise
+- [RAE Enterprise Guide](./rae-enterprise/README.md) - Enterprise deployment with HA and compliance
+
 ### Developers
 - [Getting Started](./developers/getting_started.md) - Quick start guide
 - [Best Practices](./developers/best_practices.md) - Development best practices
@@ -28,7 +34,9 @@ Guides for Polish local government units (jednostki samorządu terytorialnego)
 
 1. **New to RAE?** Start with [Getting Started](./developers/getting_started.md)
 2. **Cost-conscious?** Check [RAE Lite Guide](./rae-lite/RAE-lite.md)
-3. **Developer?** See [Best Practices](./developers/best_practices.md)
+3. **Production deployment?** See [RAE Standard Guide](./rae-standard/README.md)
+4. **Enterprise needs?** See [RAE Enterprise Guide](./rae-enterprise/README.md)
+5. **Developer?** See [Best Practices](./developers/best_practices.md)
 
 ## 📚 Related
 
