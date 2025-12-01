@@ -19,6 +19,8 @@ spec.loader.exec_module(models_legacy)
 
 # Import core models from legacy models.py (only those that exist)
 MemoryLayer = models_legacy.MemoryLayer
+SourceTrustLevel = models_legacy.SourceTrustLevel
+OperationRiskLevel = models_legacy.OperationRiskLevel
 MemoryRecord = models_legacy.MemoryRecord
 ScoredMemoryRecord = models_legacy.ScoredMemoryRecord
 StoreMemoryRequest = models_legacy.StoreMemoryRequest
@@ -35,6 +37,8 @@ AgentExecuteResponse = models_legacy.AgentExecuteResponse
 __all__ = [
     # Core models
     "MemoryLayer",
+    "SourceTrustLevel",
+    "OperationRiskLevel",
     "MemoryRecord",
     "ScoredMemoryRecord",
     "StoreMemoryRequest",
