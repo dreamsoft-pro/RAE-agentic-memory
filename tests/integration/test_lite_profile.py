@@ -13,6 +13,7 @@ Usage:
     pytest tests/integration/test_lite_profile.py -v
 """
 
+import os
 import subprocess
 import time
 
