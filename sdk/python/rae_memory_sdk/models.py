@@ -83,3 +83,150 @@ class DeleteMemoryRequest(BaseModel):
 
 class DeleteMemoryResponse(BaseModel):
     message: str
+
+
+# --- ISO/IEC 42001 Compliance Models ---
+
+
+class OperationRiskLevel(str, Enum):
+    """Risk level for operations requiring approval."""
+
+    none = "none"
+    low = "low"
+    medium = "medium"
+    high = "high"
+    critical = "critical"
+
+
+class ApprovalStatus(str, Enum):
+    """Status of approval requests."""
+
+    pending = "pending"
+    approved = "approved"
+    rejected = "rejected"
+    expired = "expired"
+    auto_approved = "auto_approved"
+
+
+class ApprovalRequest(BaseModel):
+    """Request for human approval of high-risk operations."""
+
+    tenant_id: str
+    project_id: str
+    operation_type: str
+    operation_description: str
+    risk_level: OperationRiskLevel
+    resource_type: str
+    resource_id: str
+    requested_by: str
+    required_approvers: Optional[List[str]] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class ApprovalResponse(BaseModel):
+    """Response from approval request."""
+
+    request_id: str
+    status: ApprovalStatus
+    risk_level: OperationRiskLevel
+    expires_at: Optional[datetime] = None
+    min_approvals: int
+    current_approvals: int = 0
+    approvers: List[str] = Field(default_factory=list)
+
+
+class ApprovalDecisionRequest(BaseModel):
+    """Decision on an approval request."""
+
+    approved: bool
+    approver_id: str
+    reason: Optional[str] = None
+
+
+class ContextSourceType(str, Enum):
+    """Type of context source."""
+
+    memory = "memory"
+    graph = "graph"
+    cache = "cache"
+    external = "external"
+
+
+class SourceTrustLevel(str, Enum):
+    """Trust level for sources."""
+
+    high = "high"
+    medium = "medium"
+    low = "low"
+    unverified = "unverified"
+
+
+class ContextCreationRequest(BaseModel):
+    """Request to create decision context."""
+
+    tenant_id: str
+    project_id: str
+    query: str
+    sources: List[Dict[str, Any]]
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class DecisionRecordRequest(BaseModel):
+    """Request to record a decision."""
+
+    tenant_id: str
+    project_id: str
+    context_id: str
+    decision: str
+    decision_type: str
+    confidence: float
+    human_approved: bool = False
+    approver_id: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class PolicyType(str, Enum):
+    """Type of governance policy."""
+
+    data_retention = "data_retention"
+    access_control = "access_control"
+    approval_workflow = "approval_workflow"
+    trust_scoring = "trust_scoring"
+    risk_assessment = "risk_assessment"
+    human_oversight = "human_oversight"
+
+
+class PolicyStatus(str, Enum):
+    """Status of policy version."""
+
+    draft = "draft"
+    active = "active"
+    deprecated = "deprecated"
+    archived = "archived"
+
+
+class PolicyRequest(BaseModel):
+    """Request to create a policy."""
+
+    tenant_id: str
+    policy_id: str
+    policy_type: PolicyType
+    rules: Dict[str, Any]
+    description: Optional[str] = None
+    created_by: str
+    metadata: Optional[Dict[str, Any]] = None
+
+
+class PolicyEnforceRequest(BaseModel):
+    """Request to enforce a policy."""
+
+    tenant_id: str
+    context: Dict[str, Any]
+
+
+class CircuitState(str, Enum):
+    """Circuit breaker state."""
+
+    closed = "closed"
+    open = "open"
+    half_open = "half_open"
