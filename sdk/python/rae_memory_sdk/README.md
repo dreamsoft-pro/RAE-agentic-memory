@@ -344,6 +344,229 @@ if budget['alerts']:
         print(f"  ⚠️  {alert}")
 ```
 
+## ISO/IEC 42001 Compliance
+
+The SDK provides comprehensive support for ISO/IEC 42001 AI management system compliance features:
+
+### Human Approval Workflows
+
+Request and track approval for high-risk operations:
+
+```python
+# Request approval for a critical operation
+approval = client.request_approval(
+    tenant_id="tenant-1",
+    project_id="project-1",
+    operation_type="delete",
+    operation_description="Delete user data from all memory layers",
+    risk_level="high",
+    resource_type="user_data",
+    resource_id="user-12345",
+    requested_by="admin@example.com"
+)
+
+print(f"Approval request ID: {approval['request_id']}")
+print(f"Status: {approval['status']}")
+print(f"Required approvals: {approval['min_approvals']}")
+
+# Check approval status
+status = client.check_approval_status(request_id=approval['request_id'])
+print(f"Current status: {status['status']}")
+print(f"Approvals: {status['current_approvals']}/{status['min_approvals']}")
+print(f"Expires at: {status['expires_at']}")
+
+# Process approval decision (typically done by an approver)
+decision = client.process_approval_decision(
+    request_id=approval['request_id'],
+    approved=True,
+    approver_id="manager@example.com",
+    reason="Reviewed and approved for GDPR compliance"
+)
+```
+
+**Risk Levels:**
+- `none` - No risk, auto-approved
+- `low` - Minimal risk, auto-approved
+- `medium` - Requires 1 approval (24h timeout)
+- `high` - Requires 1 approval (48h timeout)
+- `critical` - Requires 2 approvals (72h timeout)
+
+### Context Provenance
+
+Track decision lineage from query to final decision:
+
+```python
+# Create decision context
+context = client.create_decision_context(
+    tenant_id="tenant-1",
+    project_id="project-1",
+    query="Should we approve this loan application?",
+    sources=[
+        {
+            "source_id": "mem-123",
+            "source_type": "memory",
+            "relevance_score": 0.9,
+            "trust_level": "high",
+            "content": "Credit score: 750"
+        },
+        {
+            "source_id": "mem-456",
+            "source_type": "memory",
+            "relevance_score": 0.8,
+            "trust_level": "high",
+            "content": "Employment: stable for 5 years"
+        }
+    ]
+)
+
+print(f"Context ID: {context['context_id']}")
+print(f"Quality metrics - Trust: {context['avg_trust']}, Relevance: {context['avg_relevance']}")
+
+# Record the decision
+decision = client.record_decision(
+    tenant_id="tenant-1",
+    project_id="project-1",
+    context_id=context['context_id'],
+    decision="Approve loan with $50,000 limit",
+    decision_type="loan_approval",
+    confidence=0.87,
+    human_approved=True,
+    approver_id="loan_officer@example.com"
+)
+
+print(f"Decision ID: {decision['decision_id']}")
+
+# Get full provenance lineage
+lineage = client.get_decision_lineage(decision_id=decision['decision_id'])
+print(f"Query: {lineage['query']}")
+print(f"Sources used: {len(lineage['sources'])}")
+print(f"Final decision: {lineage['decision']}")
+print(f"Human oversight: {lineage['human_approved']}")
+```
+
+### Circuit Breakers
+
+Monitor system health and circuit breaker states:
+
+```python
+# Get all circuit breakers
+breakers = client.get_all_circuit_breakers()
+
+for breaker in breakers:
+    print(f"{breaker['name']}: {breaker['state']}")
+    print(f"  Failures: {breaker['failure_count']}")
+    print(f"  Success rate: {breaker['success_rate']:.1%}")
+
+# Get specific circuit breaker
+db_breaker = client.get_circuit_breaker_state(name="database")
+print(f"Database circuit breaker: {db_breaker['state']}")
+
+# Reset circuit breaker (admin only)
+result = client.reset_circuit_breaker(name="database")
+print(result['message'])
+```
+
+**Circuit Breaker States:**
+- `closed` - Normal operation
+- `open` - Failing fast, service unhealthy
+- `half_open` - Testing recovery
+
+### Policy Management
+
+Manage governance policies with versioning:
+
+```python
+# List all policies
+policies = client.list_policies(
+    tenant_id="tenant-1",
+    policy_type="data_retention"
+)
+
+for policy in policies['policies']:
+    print(f"{policy['policy_id']} v{policy['version']} - {policy['status']}")
+
+# Create a new policy
+policy = client.create_policy(
+    tenant_id="tenant-1",
+    policy_id="data_retention_policy",
+    policy_type="data_retention",
+    rules={
+        "max_retention_days": 365,
+        "auto_delete": True,
+        "layers": ["episodic", "working"]
+    },
+    created_by="compliance@example.com",
+    description="Retain episodic memories for 1 year"
+)
+
+print(f"Created policy version: {policy['version_id']}")
+
+# Activate policy
+activation = client.activate_policy(
+    policy_id="data_retention_policy",
+    version_id=policy['version_id'],
+    tenant_id="tenant-1"
+)
+
+print(f"Policy activated: {activation['status']}")
+
+# Enforce policy
+enforcement = client.enforce_policy(
+    policy_id="data_retention_policy",
+    tenant_id="tenant-1",
+    context={
+        "operation": "store_memory",
+        "layer": "episodic",
+        "retention_days": 400
+    }
+)
+
+print(f"Enforcement result: {enforcement['compliant']}")
+if enforcement['violations']:
+    print("Violations:")
+    for violation in enforcement['violations']:
+        print(f"  - {violation}")
+```
+
+**Policy Types:**
+- `data_retention` - Data retention rules
+- `access_control` - Access control policies
+- `approval_workflow` - Approval requirements
+- `trust_scoring` - Source trust scoring
+- `risk_assessment` - Risk assessment rules
+- `human_oversight` - Human-in-the-loop requirements
+
+### Async ISO/IEC 42001 Methods
+
+All compliance methods have async equivalents:
+
+```python
+# Async approval request
+approval = await client.request_approval_async(...)
+
+# Async status check
+status = await client.check_approval_status_async(request_id)
+
+# Async decision approval
+decision = await client.process_approval_decision_async(...)
+
+# Async provenance
+context = await client.create_decision_context_async(...)
+decision = await client.record_decision_async(...)
+lineage = await client.get_decision_lineage_async(decision_id)
+
+# Async circuit breakers
+breakers = await client.get_all_circuit_breakers_async()
+state = await client.get_circuit_breaker_state_async(name)
+result = await client.reset_circuit_breaker_async(name)
+
+# Async policies
+policies = await client.list_policies_async(tenant_id, policy_type)
+policy = await client.create_policy_async(...)
+activation = await client.activate_policy_async(...)
+enforcement = await client.enforce_policy_async(...)
+```
+
 ## Health & Cache
 
 ### Health Check

@@ -29,6 +29,32 @@ Learn more: [MCP Specification](https://modelcontextprotocol.io/)
    - Understand file evolution
    - Access related memories
 
+### 🔒 ISO/IEC 42001 Compliance Tools
+
+4. **request_approval** - Request human approval for high-risk operations
+   - Human-in-the-loop workflows
+   - Risk-based approval routing (none → critical)
+   - Multi-approver support for critical operations
+   - Automatic timeouts and expiration
+
+5. **check_approval_status** - Check approval request status
+   - Real-time status tracking
+   - Approver list and progress
+   - Expiration monitoring
+
+6. **get_circuit_breakers** - Monitor system health
+   - Circuit breaker states (closed/open/half_open)
+   - Failure counts and success rates
+   - Service health monitoring
+   - Fail-fast protection
+
+7. **list_policies** - List governance policies
+   - Data retention policies
+   - Access control rules
+   - Approval workflows
+   - Trust scoring and risk assessment
+   - Human oversight requirements
+
 ### 📚 MCP Resources
 
 1. **rae://project/reflection** - Current project insights
@@ -196,6 +222,63 @@ The AI will read the `rae://project/reflection` resource.
 ### Using Prompts
 
 The `project-guidelines` prompt can be manually invoked or automatically injected, ensuring the AI is always aware of your project's coding standards and conventions.
+
+### Using ISO/IEC 42001 Compliance Tools
+
+#### Requesting Approval for High-Risk Operations
+
+```
+I need to delete all user data for user ID user-12345.
+This is a critical operation that requires approval.
+
+Please request approval for:
+- Operation: delete_user_data
+- Risk level: critical
+- Resource: user_data
+- Resource ID: user-12345
+- Requested by: admin@example.com
+```
+
+The AI will use the `request_approval` tool and return a request ID for tracking.
+
+#### Checking Approval Status
+
+```
+Check the status of approval request: 550e8400-e29b-41d4-a716-446655440000
+```
+
+The AI will use `check_approval_status` to show current approval progress, remaining approvers, and expiration time.
+
+#### Monitoring System Health
+
+```
+Show me the current status of all circuit breakers in the system
+```
+
+The AI will use `get_circuit_breakers` to display:
+- Database circuit breaker status
+- Vector store circuit breaker status
+- LLM service circuit breaker status
+- Failure counts and success rates
+
+#### Managing Policies
+
+```
+List all data retention policies for our tenant
+```
+
+The AI will use `list_policies` with `policy_type=data_retention` to show:
+- Active policies
+- Policy versions
+- Status (active/deprecated/draft)
+- Policy rules and requirements
+
+**Risk Levels for Approval Workflows:**
+- `none` - No oversight needed, auto-approved
+- `low` - Minimal risk, auto-approved
+- `medium` - Requires 1 approval, 24h timeout
+- `high` - Requires 1 approval, 48h timeout
+- `critical` - Requires 2 approvals, 72h timeout
 
 ## Development
 
