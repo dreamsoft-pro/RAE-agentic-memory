@@ -333,6 +333,323 @@ class MemoryClient:
         """
         return self._request("GET", f"/v1/governance/tenant/{tenant_id}/budget")
 
+    # ISO/IEC 42001 Compliance Methods
+
+    def request_approval(
+        self,
+        tenant_id: str,
+        project_id: str,
+        operation_type: str,
+        operation_description: str,
+        risk_level: str,
+        resource_type: str,
+        resource_id: str,
+        requested_by: str,
+        required_approvers: Optional[List[str]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Request approval for a high-risk operation.
+
+        Args:
+            tenant_id: Tenant identifier
+            project_id: Project identifier
+            operation_type: Type of operation (e.g., "delete", "export", "modify")
+            operation_description: Human-readable description of the operation
+            risk_level: Risk level (none, low, medium, high, critical)
+            resource_type: Type of resource being operated on
+            resource_id: ID of the resource
+            requested_by: User ID who requested the operation
+            required_approvers: Optional list of specific approvers required
+            metadata: Optional additional metadata
+
+        Returns:
+            Dict with request_id, status, risk_level, expires_at, min_approvals
+        """
+        request_body = {
+            "tenant_id": tenant_id,
+            "project_id": project_id,
+            "operation_type": operation_type,
+            "operation_description": operation_description,
+            "risk_level": risk_level,
+            "resource_type": resource_type,
+            "resource_id": resource_id,
+            "requested_by": requested_by,
+        }
+        if required_approvers:
+            request_body["required_approvers"] = required_approvers
+        if metadata:
+            request_body["metadata"] = metadata
+
+        return self._request("POST", "/v1/compliance/approvals", json=request_body)
+
+    def check_approval_status(self, request_id: str) -> Dict[str, Any]:
+        """
+        Check the status of an approval request.
+
+        Args:
+            request_id: UUID of the approval request
+
+        Returns:
+            Dict with full approval details including status, approvers, and timestamps
+        """
+        return self._request("GET", f"/v1/compliance/approvals/{request_id}")
+
+    def process_approval_decision(
+        self,
+        request_id: str,
+        approved: bool,
+        approver_id: str,
+        reason: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        Approve or reject an approval request.
+
+        Args:
+            request_id: UUID of the approval request
+            approved: True to approve, False to reject
+            approver_id: User ID of the approver
+            reason: Optional reason for the decision
+
+        Returns:
+            Dict with updated approval status
+        """
+        request_body = {"approved": approved, "approver_id": approver_id}
+        if reason:
+            request_body["reason"] = reason
+
+        return self._request(
+            "POST", f"/v1/compliance/approvals/{request_id}/decide", json=request_body
+        )
+
+    def create_decision_context(
+        self,
+        tenant_id: str,
+        project_id: str,
+        query: str,
+        sources: List[Dict[str, Any]],
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Create decision context for provenance tracking.
+
+        Args:
+            tenant_id: Tenant identifier
+            project_id: Project identifier
+            query: Original query that led to the decision
+            sources: List of context sources with metadata
+            metadata: Optional additional metadata
+
+        Returns:
+            Dict with context_id and quality metrics
+        """
+        request_body = {
+            "tenant_id": tenant_id,
+            "project_id": project_id,
+            "query": query,
+            "sources": sources,
+        }
+        if metadata:
+            request_body["metadata"] = metadata
+
+        return self._request(
+            "POST", "/v1/compliance/provenance/context", json=request_body
+        )
+
+    def record_decision(
+        self,
+        tenant_id: str,
+        project_id: str,
+        context_id: str,
+        decision: str,
+        decision_type: str,
+        confidence: float,
+        human_approved: bool = False,
+        approver_id: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Record a decision with full provenance.
+
+        Args:
+            tenant_id: Tenant identifier
+            project_id: Project identifier
+            context_id: ID of the decision context
+            decision: The decision made
+            decision_type: Type of decision (e.g., "classification", "recommendation")
+            confidence: Confidence score (0.0 to 1.0)
+            human_approved: Whether a human approved this decision
+            approver_id: Optional ID of human approver
+            metadata: Optional additional metadata
+
+        Returns:
+            Dict with decision_id and confirmation
+        """
+        request_body = {
+            "tenant_id": tenant_id,
+            "project_id": project_id,
+            "context_id": context_id,
+            "decision": decision,
+            "decision_type": decision_type,
+            "confidence": confidence,
+            "human_approved": human_approved,
+        }
+        if approver_id:
+            request_body["approver_id"] = approver_id
+        if metadata:
+            request_body["metadata"] = metadata
+
+        return self._request(
+            "POST", "/v1/compliance/provenance/decision", json=request_body
+        )
+
+    def get_decision_lineage(self, decision_id: str) -> Dict[str, Any]:
+        """
+        Get full provenance lineage for a decision.
+
+        Args:
+            decision_id: UUID of the decision
+
+        Returns:
+            Dict with query, context, sources, and decision details
+        """
+        return self._request("GET", f"/v1/compliance/provenance/lineage/{decision_id}")
+
+    def get_all_circuit_breakers(self) -> List[Dict[str, Any]]:
+        """
+        Get status of all circuit breakers.
+
+        Returns:
+            List of circuit breaker states with metrics
+        """
+        return self._request("GET", "/v1/compliance/circuit-breakers")
+
+    def get_circuit_breaker_state(self, name: str) -> Dict[str, Any]:
+        """
+        Get status of a specific circuit breaker.
+
+        Args:
+            name: Name of the circuit breaker (e.g., "database", "vector_store", "llm_service")
+
+        Returns:
+            Dict with state, failure count, and metrics
+        """
+        return self._request("GET", f"/v1/compliance/circuit-breakers/{name}")
+
+    def reset_circuit_breaker(self, name: str) -> Dict[str, Any]:
+        """
+        Reset a circuit breaker (admin only).
+
+        Args:
+            name: Name of the circuit breaker to reset
+
+        Returns:
+            Dict with confirmation message
+        """
+        return self._request("POST", f"/v1/compliance/circuit-breakers/{name}/reset")
+
+    def list_policies(
+        self,
+        tenant_id: str,
+        policy_type: Optional[str] = None,
+        status: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """
+        List governance policies.
+
+        Args:
+            tenant_id: Tenant identifier
+            policy_type: Optional filter by policy type
+            status: Optional filter by status
+
+        Returns:
+            Dict with policies list
+        """
+        params = {"tenant_id": tenant_id}
+        if policy_type:
+            params["policy_type"] = policy_type
+        if status:
+            params["status"] = status
+
+        return self._request("GET", "/v1/compliance/policies", params=params)
+
+    def create_policy(
+        self,
+        tenant_id: str,
+        policy_id: str,
+        policy_type: str,
+        rules: Dict[str, Any],
+        created_by: str,
+        description: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """
+        Create a new governance policy.
+
+        Args:
+            tenant_id: Tenant identifier
+            policy_id: Unique policy identifier
+            policy_type: Type of policy (data_retention, access_control, etc.)
+            rules: Policy rules as dict
+            created_by: User who created the policy
+            description: Optional policy description
+            metadata: Optional additional metadata
+
+        Returns:
+            Dict with version_id and confirmation
+        """
+        request_body = {
+            "tenant_id": tenant_id,
+            "policy_id": policy_id,
+            "policy_type": policy_type,
+            "rules": rules,
+            "created_by": created_by,
+        }
+        if description:
+            request_body["description"] = description
+        if metadata:
+            request_body["metadata"] = metadata
+
+        return self._request("POST", "/v1/compliance/policies", json=request_body)
+
+    def activate_policy(
+        self, policy_id: str, version_id: str, tenant_id: str
+    ) -> Dict[str, Any]:
+        """
+        Activate a policy version.
+
+        Args:
+            policy_id: Policy identifier
+            version_id: UUID of the version to activate
+            tenant_id: Tenant identifier
+
+        Returns:
+            Dict with confirmation and updated status
+        """
+        request_body = {"version_id": version_id, "tenant_id": tenant_id}
+        return self._request(
+            "POST", f"/v1/compliance/policies/{policy_id}/activate", json=request_body
+        )
+
+    def enforce_policy(
+        self, policy_id: str, tenant_id: str, context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Enforce a policy against a context.
+
+        Args:
+            policy_id: Policy identifier
+            tenant_id: Tenant identifier
+            context: Context data to check against policy
+
+        Returns:
+            Dict with enforcement result, violations, and warnings
+        """
+        request_body = {"tenant_id": tenant_id, "context": context}
+        return self._request(
+            "POST", f"/v1/compliance/policies/{policy_id}/enforce", json=request_body
+        )
+
     # Reflection Methods
 
     def rebuild_reflections(self, tenant_id: str, project: str) -> Dict[str, Any]:
@@ -504,6 +821,200 @@ class MemoryClient:
         """Async version of execute_agent."""
         request_body = {"tenant_id": tenant_id, "project": project, "prompt": prompt}
         return await self._async_request("POST", "/v1/agent/execute", json=request_body)
+
+    # Async ISO/IEC 42001 Compliance Methods
+
+    async def request_approval_async(
+        self,
+        tenant_id: str,
+        project_id: str,
+        operation_type: str,
+        operation_description: str,
+        risk_level: str,
+        resource_type: str,
+        resource_id: str,
+        requested_by: str,
+        required_approvers: Optional[List[str]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Async version of request_approval."""
+        request_body = {
+            "tenant_id": tenant_id,
+            "project_id": project_id,
+            "operation_type": operation_type,
+            "operation_description": operation_description,
+            "risk_level": risk_level,
+            "resource_type": resource_type,
+            "resource_id": resource_id,
+            "requested_by": requested_by,
+        }
+        if required_approvers:
+            request_body["required_approvers"] = required_approvers
+        if metadata:
+            request_body["metadata"] = metadata
+
+        return await self._async_request(
+            "POST", "/v1/compliance/approvals", json=request_body
+        )
+
+    async def check_approval_status_async(self, request_id: str) -> Dict[str, Any]:
+        """Async version of check_approval_status."""
+        return await self._async_request(
+            "GET", f"/v1/compliance/approvals/{request_id}"
+        )
+
+    async def process_approval_decision_async(
+        self,
+        request_id: str,
+        approved: bool,
+        approver_id: str,
+        reason: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Async version of process_approval_decision."""
+        request_body = {"approved": approved, "approver_id": approver_id}
+        if reason:
+            request_body["reason"] = reason
+
+        return await self._async_request(
+            "POST", f"/v1/compliance/approvals/{request_id}/decide", json=request_body
+        )
+
+    async def create_decision_context_async(
+        self,
+        tenant_id: str,
+        project_id: str,
+        query: str,
+        sources: List[Dict[str, Any]],
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Async version of create_decision_context."""
+        request_body = {
+            "tenant_id": tenant_id,
+            "project_id": project_id,
+            "query": query,
+            "sources": sources,
+        }
+        if metadata:
+            request_body["metadata"] = metadata
+
+        return await self._async_request(
+            "POST", "/v1/compliance/provenance/context", json=request_body
+        )
+
+    async def record_decision_async(
+        self,
+        tenant_id: str,
+        project_id: str,
+        context_id: str,
+        decision: str,
+        decision_type: str,
+        confidence: float,
+        human_approved: bool = False,
+        approver_id: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Async version of record_decision."""
+        request_body = {
+            "tenant_id": tenant_id,
+            "project_id": project_id,
+            "context_id": context_id,
+            "decision": decision,
+            "decision_type": decision_type,
+            "confidence": confidence,
+            "human_approved": human_approved,
+        }
+        if approver_id:
+            request_body["approver_id"] = approver_id
+        if metadata:
+            request_body["metadata"] = metadata
+
+        return await self._async_request(
+            "POST", "/v1/compliance/provenance/decision", json=request_body
+        )
+
+    async def get_decision_lineage_async(self, decision_id: str) -> Dict[str, Any]:
+        """Async version of get_decision_lineage."""
+        return await self._async_request(
+            "GET", f"/v1/compliance/provenance/lineage/{decision_id}"
+        )
+
+    async def get_all_circuit_breakers_async(self) -> List[Dict[str, Any]]:
+        """Async version of get_all_circuit_breakers."""
+        return await self._async_request("GET", "/v1/compliance/circuit-breakers")
+
+    async def get_circuit_breaker_state_async(self, name: str) -> Dict[str, Any]:
+        """Async version of get_circuit_breaker_state."""
+        return await self._async_request(
+            "GET", f"/v1/compliance/circuit-breakers/{name}"
+        )
+
+    async def reset_circuit_breaker_async(self, name: str) -> Dict[str, Any]:
+        """Async version of reset_circuit_breaker."""
+        return await self._async_request(
+            "POST", f"/v1/compliance/circuit-breakers/{name}/reset"
+        )
+
+    async def list_policies_async(
+        self,
+        tenant_id: str,
+        policy_type: Optional[str] = None,
+        status: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Async version of list_policies."""
+        params = {"tenant_id": tenant_id}
+        if policy_type:
+            params["policy_type"] = policy_type
+        if status:
+            params["status"] = status
+
+        return await self._async_request(
+            "GET", "/v1/compliance/policies", params=params
+        )
+
+    async def create_policy_async(
+        self,
+        tenant_id: str,
+        policy_id: str,
+        policy_type: str,
+        rules: Dict[str, Any],
+        created_by: str,
+        description: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        """Async version of create_policy."""
+        request_body = {
+            "tenant_id": tenant_id,
+            "policy_id": policy_id,
+            "policy_type": policy_type,
+            "rules": rules,
+            "created_by": created_by,
+        }
+        if description:
+            request_body["description"] = description
+        if metadata:
+            request_body["metadata"] = metadata
+
+        return await self._async_request(
+            "POST", "/v1/compliance/policies", json=request_body
+        )
+
+    async def activate_policy_async(
+        self, policy_id: str, version_id: str, tenant_id: str
+    ) -> Dict[str, Any]:
+        """Async version of activate_policy."""
+        request_body = {"version_id": version_id, "tenant_id": tenant_id}
+        return await self._async_request(
+            "POST", f"/v1/compliance/policies/{policy_id}/activate", json=request_body
+        )
+
+    async def enforce_policy_async(
+        self, policy_id: str, tenant_id: str, context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Async version of enforce_policy."""
+        request_body = {"tenant_id": tenant_id, "context": context}
+        return await self._async_request(
+            "POST", f"/v1/compliance/policies/{policy_id}/enforce", json=request_body
+        )
 
     async def close(self):
         """Close async HTTP client connections."""
