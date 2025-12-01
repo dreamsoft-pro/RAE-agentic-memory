@@ -39,7 +39,7 @@
 > - ⚠️ Public internet deployment (add TLS, API gateway, WAF)
 > - ⚠️ Regulated industries (additional controls needed)
 >
-> See [STATUS.md](STATUS.md) for implementation status, [TESTING_STATUS.md](docs/TESTING_STATUS.md) for test coverage, and **[SECURITY.md](docs/SECURITY.md) for honest security assessment**.
+> See [STATUS.md](STATUS.md) for implementation status, [TESTING_STATUS.md](docs/reference/testing/TESTING_STATUS.md) for test coverage, and **[SECURITY.md](docs/reference/iso-security/SECURITY.md) for honest security assessment**.
 
 ---
 
@@ -104,10 +104,10 @@ RAE is designed for enterprise AI governance and compliance with **ISO/IEC 42001
 
 ### Key Compliance Features ✅
 
-- **Risk Management** - Comprehensive [Risk Register](docs/RAE-Risk-Register.md) with 10 identified risks, all fully mitigated
+- **Risk Management** - Comprehensive [Risk Register](docs/reference/iso-security/RAE-Risk-Register.md) with 10 identified risks, all fully mitigated
 - **Data Governance** - Source trust scoring, provenance tracking, and retention policies per tenant
 - **GDPR Compliance** - Full "right to be forgotten" (Article 17) with cascade deletion and audit trail
-- **Roles & Responsibilities** - Clear RACI matrix for 6 organizational roles ([docs/RAE-Roles.md](docs/RAE-Roles.md))
+- **Roles & Responsibilities** - Clear RACI matrix for 6 organizational roles ([docs/reference/iso-security/RAE-Roles.md](docs/reference/iso-security/RAE-Roles.md))
 - **Audit Trail** - Complete logging of all data operations, deletions, and trust assessments
 - **Multi-Tenant Isolation** - Database-level tenant isolation with PostgreSQL Row-Level Security
 - **Human Oversight** - Risk-based approval workflow for high-risk operations with multi-approver support
@@ -118,10 +118,10 @@ RAE is designed for enterprise AI governance and compliance with **ISO/IEC 42001
 
 ### Compliance Documentation
 
-- 📋 **[RAE-ISO_42001.md](docs/RAE-ISO_42001.md)** - Full ISO 42001 readiness assessment
-- 🛡️ **[RAE-Risk-Register.md](docs/RAE-Risk-Register.md)** - 10 risks (RISK-001 to RISK-010) with mitigation
-- 👥 **[RAE-Roles.md](docs/RAE-Roles.md)** - Organizational roles and RACI matrix
-- 🔐 **[SECURITY.md](docs/SECURITY.md)** - Security assessment and controls
+- 📋 **[RAE-ISO_42001.md](docs/reference/iso-security/RAE-ISO_42001.md)** - Full ISO 42001 readiness assessment
+- 🛡️ **[RAE-Risk-Register.md](docs/reference/iso-security/RAE-Risk-Register.md)** - 10 risks (RISK-001 to RISK-010) with mitigation
+- 👥 **[RAE-Roles.md](docs/reference/iso-security/RAE-Roles.md)** - Organizational roles and RACI matrix
+- 🔐 **[SECURITY.md](docs/reference/iso-security/SECURITY.md)** - Security assessment and controls
 
 ### Implementation Status (2025-12-01)
 
@@ -146,7 +146,7 @@ RAE is designed for enterprise AI governance and compliance with **ISO/IEC 42001
 
 🎉 **Status: 100% ISO/IEC 42001 Compliance Achieved (2025-12-01)**
 
-> 💡 **For Regulated Industries:** RAE provides a strong foundation for AI governance. Additional controls may be required depending on your industry (healthcare, finance, etc.). See [RAE-ISO_42001.md](docs/RAE-ISO_42001.md) for details.
+> 💡 **For Regulated Industries:** RAE provides a strong foundation for AI governance. Additional controls may be required depending on your industry (healthcare, finance, etc.). See [RAE-ISO_42001.md](docs/reference/iso-security/RAE-ISO_42001.md) for details.
 
 ---
 
@@ -158,7 +158,7 @@ RAE is designed for enterprise AI governance and compliance with **ISO/IEC 42001
 |---------|----------|-----------|---------|
 | 💡 **RAE Lite** | Developers, testing, small teams (1-10 users) | 4 GB RAM, 2 CPU | `docker-compose -f docker-compose.lite.yml up -d` |
 | 🚀 **Full Stack** | Production, mid-size teams (10-100 users) | 8 GB RAM, 4 CPU | `./scripts/quickstart.sh` |
-| ☸️ **Enterprise** | Large orgs, auto-scaling, high availability | Auto-scaling | [Kubernetes Guide](docs/deployment/kubernetes.md) |
+| ☸️ **Enterprise** | Large orgs, auto-scaling, high availability | Auto-scaling | [Kubernetes Guide](docs/reference/deployment/kubernetes.md) |
 
 **Not sure which to choose?** Start with RAE Lite - you can always upgrade later.
 
@@ -206,7 +206,7 @@ docker-compose -f docker-compose.lite.yml up -d
 
 **Having issues?** See [Troubleshooting Guide](TROUBLESHOOTING.md)
 
-See [RAE Lite Profile Documentation](docs/deployment/rae-lite-profile.md) for complete guide.
+See [RAE Lite Profile Documentation](docs/reference/deployment/rae-lite-profile.md) for complete guide.
 
 ---
 
@@ -439,7 +439,7 @@ RAE implements a **4-layer cognitive memory system** inspired by human cognition
 - **Layer 3 - Long-Term**: Episodic events + Semantic facts + User profiles (`layer=ltm/em`, `memory_type=episodic/semantic/profile`)
 - **Layer 4 - Reflective**: Meta-learnings and strategies (`layer=rm`, `memory_type=reflection/strategy`)
 
-See [MEMORY_MODEL.md](docs/MEMORY_MODEL.md) for complete layer mapping reference.
+See [MEMORY_MODEL.md](docs/reference/memory/MEMORY_MODEL.md) for complete layer mapping reference.
 
 ### 🔍 Hybrid Search 2.0 (GraphRAG)
 - **Multi-Strategy Search**: Vector similarity, Semantic nodes, Graph traversal, Full-text
@@ -457,7 +457,7 @@ See [MEMORY_MODEL.md](docs/MEMORY_MODEL.md) for complete layer mapping reference
 - **Configurable Modes**: Lite mode (disabled) vs Full mode (enabled)
 - **Background Workers**: Decay, Summarization, Dreaming for automated lifecycle
 
-See [REFLECTIVE_MEMORY_V1.md](docs/REFLECTIVE_MEMORY_V1.md) for complete implementation guide.
+See [REFLECTIVE_MEMORY_V1.md](docs/project-design/rae-4layer-design/REFLECTIVE_MEMORY_V1.md) for complete implementation guide.
 
 ### 🤖 Multi-Model LLM Integration (v2.0)
 - **Unified Provider Interface**: Single API for all LLM providers
@@ -522,10 +522,10 @@ See [REFLECTIVE_MEMORY_V1.md](docs/REFLECTIVE_MEMORY_V1.md) for complete impleme
 - **Secrets Management**: Environment-based configuration
 
 **Documentation:**
-- **[Security Overview](docs/SECURITY.md)** - **Honest "Almost Enterprise" assessment** with deployment patterns
-- [RBAC Guide](docs/security/RBAC.md) - Role-based access control details
+- **[Security Overview](docs/reference/iso-security/SECURITY.md)** - **Honest "Almost Enterprise" assessment** with deployment patterns
+- [RBAC Guide](docs/reference/iso-security/security/RBAC.md) - Role-based access control details
 - [Migration Guide](CHANGELOG.md) - Upgrading to v2.0 security
-- [Configuration Reference](docs/CONFIG_REFLECTIVE_MEMORY.md) - Feature flags and production recommendations
+- [Configuration Reference](docs/reference/deployment/CONFIG_REFLECTIVE_MEMORY.md) - Feature flags and production recommendations
 
 **Configuration:**
 ```bash
@@ -560,7 +560,7 @@ MEMORY_IMPORTANCE_DECAY_SCHEDULE="0 2 * * *"  # Daily at 2 AM
 - **Cost Analytics**: Detailed cost logs, usage trends, and optimization recommendations
 - **Model Selection**: Cost-aware model selection based on budget availability
 
-See [Cost Controller Documentation](docs/concepts/cost-controller.md) for implementation details.
+See [Cost Controller Documentation](docs/reference/concepts/cost-controller.md) for implementation details.
 
 #### Quality & Monitoring
 - **Evaluation Service**: Industry-standard IR metrics (MRR, NDCG, Precision@K, Recall@K, MAP)
@@ -586,8 +586,8 @@ RAE provides two complementary integration methods:
 
 | Integration | Protocol | Use Case | Documentation |
 |-------------|----------|----------|---------------|
-| **MCP Server** (IDE) | Model Context Protocol (JSON-RPC/STDIO) | AI assistant tools in Claude Desktop, Cursor, Cline | [docs/integrations/mcp_protocol_server.md](docs/integrations/mcp_protocol_server.md) |
-| **Context Watcher** | HTTP + File Watcher | Automatic file sync to RAE memory | [docs/integrations/context_watcher_daemon.md](docs/integrations/context_watcher_daemon.md) |
+| **MCP Server** (IDE) | Model Context Protocol (JSON-RPC/STDIO) | AI assistant tools in Claude Desktop, Cursor, Cline | [docs/reference/integrations/mcp_protocol_server.md](docs/reference/integrations/mcp_protocol_server.md) |
+| **Context Watcher** | HTTP + File Watcher | Automatic file sync to RAE memory | [docs/reference/integrations/context_watcher_daemon.md](docs/reference/integrations/context_watcher_daemon.md) |
 
 **Key Features**:
 - **MCP Server**: Save/search memories directly from your editor, automatic context injection
@@ -602,7 +602,7 @@ RAE provides two complementary integration methods:
 - **Embedding deduplication** to avoid redundant computations
 - **Budget alerts** and notifications at configurable thresholds
 
-See [Cost Controller Documentation](docs/concepts/cost-controller.md) for detailed usage.
+See [Cost Controller Documentation](docs/reference/concepts/cost-controller.md) for detailed usage.
 
 ### 🔒 Production-Ready
 - **Enterprise Security**: RBAC, authentication, tenant isolation (see section above)
@@ -673,7 +673,7 @@ helm install rae-memory ./helm/rae-memory \
 - External Secrets Operator support
 - TLS with cert-manager
 
-See [Kubernetes Deployment Guide](docs/deployment/kubernetes.md) for complete documentation.
+See [Kubernetes Deployment Guide](docs/reference/deployment/kubernetes.md) for complete documentation.
 
 ### Manual Setup
 
@@ -771,7 +771,7 @@ Production-ready components that enhance RAE but are not required.
 - **Includes:** Enterprise Core only (API, PostgreSQL, Qdrant, Redis, GraphRAG, Governance)
 - **Perfect for:** Development, testing, small teams (1-10 users)
 - **Resources:** 4 GB RAM, 2 CPU cores
-- **See:** [RAE Lite Profile Documentation](docs/deployment/rae-lite-profile.md)
+- **See:** [RAE Lite Profile Documentation](docs/reference/deployment/rae-lite-profile.md)
 
 **RAE Standard** (Recommended):
 - **Includes:** Enterprise Core + Enterprise Extensions (MCP, Reranker, Context Watcher, Reflection V2) + ML Service + Dashboard
@@ -782,7 +782,7 @@ Production-ready components that enhance RAE but are not required.
 - **Includes:** Enterprise Core + All Extensions + All Optional Modules + Kubernetes + Monitoring
 - **Perfect for:** Large organizations, high availability, auto-scaling
 - **Resources:** Auto-scaling with HPA (starts at 16 GB RAM)
-- **See:** [Kubernetes Deployment Guide](docs/deployment/kubernetes.md)
+- **See:** [Kubernetes Deployment Guide](docs/reference/deployment/kubernetes.md)
 
 ---
 
@@ -808,31 +808,31 @@ Production-ready components that enhance RAE but are not required.
 ### Project Status & Progress
 - 📊 **[Project Status](STATUS.md)** - Current implementation status and features
 - ✅ **[TODO List](TODO.md)** - Upcoming features and improvements
-- 🧪 **[Testing Status](docs/TESTING_STATUS.md)** - Test coverage and quality metrics
+- 🧪 **[Testing Status](docs/reference/testing/TESTING_STATUS.md)** - Test coverage and quality metrics
 
 ### Getting Started
-- 📖 **[Getting Started Guide](docs/getting-started/)** - Installation and first steps
-- 🚀 **[Quick Start](docs/getting-started/)** - 5-minute setup guide
+- 📖 **[Getting Started Guide](docs/guides/developers/getting-started/)** - Installation and first steps
+- 🚀 **[Quick Start](docs/guides/developers/getting-started/quickstart.md)** - 5-minute setup guide
 - 🎓 **[Tutorials](docs/guides/)** - Step-by-step guides
 
 ### Architecture & Concepts
-- 🏗️ **[Architecture Overview](docs/concepts/architecture.md)** - System design and components
-- 🧠 **[Memory Model](docs/MEMORY_MODEL.md)** - 4-layer memory architecture reference
-- 🔄 **[Reflective Memory V1](docs/REFLECTIVE_MEMORY_V1.md)** - Actor-Evaluator-Reflector pattern
-- 🏛️ **[Repository Pattern](docs/architecture/repository-pattern.md)** - Data access layer design
-- 💰 **[Cost Controller](docs/concepts/cost-controller.md)** - Budget management and cost tracking
-- 🔍 **[Hybrid Search](docs/concepts/)** - Multi-strategy search with GraphRAG
+- 🏗️ **[Architecture Overview](docs/reference/concepts/architecture.md)** - System design and components
+- 🧠 **[Memory Model](docs/reference/memory/MEMORY_MODEL.md)** - 4-layer memory architecture reference
+- 🔄 **[Reflective Memory V1](docs/project-design/rae-4layer-design/REFLECTIVE_MEMORY_V1.md)** - Actor-Evaluator-Reflector pattern
+- 🏛️ **[Repository Pattern](docs/reference/architecture/repository-pattern.md)** - Data access layer design
+- 💰 **[Cost Controller](docs/reference/concepts/cost-controller.md)** - Budget management and cost tracking
+- 🔍 **[Hybrid Search](docs/reference/concepts/)** - Multi-strategy search with GraphRAG
 
 ### Deployment
-- 🐳 **[Docker Compose Setup](docs/getting-started/)** - Local development
-- ☸️ **[Kubernetes Deployment](docs/deployment/kubernetes.md)** - Enterprise production deployment
+- 🐳 **[Docker Compose Setup](docs/guides/developers/getting-started/)** - Local development
+- ☸️ **[Kubernetes Deployment](docs/reference/deployment/kubernetes.md)** - Enterprise production deployment
 - 📊 **[Helm Chart Configuration](helm/rae-memory/README.md)** - Detailed Helm values reference
 
 ### API Documentation
-- 🔧 **[REST API Reference](docs/api/rest-api.md)** - Complete API documentation
+- 🔧 **[REST API Reference](docs/reference/api/rest-api.md)** - Complete API documentation
 - 📚 **[Interactive API Docs](http://localhost:8000/docs)** - Swagger UI (when running)
 - 🔌 **[IDE Integration Guide](docs/guides/IDE_INTEGRATION.md)** - Connect RAE with your IDE (Claude, Cursor, VSCode, etc.)
-- 🔌 **[MCP Protocol Server](docs/integrations/mcp_protocol_server.md)** - Technical MCP implementation details
+- 🔌 **[MCP Protocol Server](docs/reference/integrations/mcp_protocol_server.md)** - Technical MCP implementation details
 
 ### Examples & Use Cases
 - 💡 **[Examples](examples/)** - Real-world use cases and code samples
