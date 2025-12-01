@@ -68,19 +68,11 @@ else:
 tracer = trace.get_tracer(__name__)
 
 # Prometheus Metrics
-TOOLS_CALLED = Counter(
-    "mcp_tools_called_total", "Total MCP tool invocations", ["tool_name"]
-)
-TOOL_ERRORS = Counter(
-    "mcp_tool_errors_total", "Total MCP tool errors", ["tool_name", "error_type"]
-)
-TOOL_DURATION = Histogram(
-    "mcp_tool_duration_seconds", "MCP tool execution duration", ["tool_name"]
-)
+TOOLS_CALLED = Counter("mcp_tools_called_total", "Total MCP tool invocations", ["tool_name"])
+TOOL_ERRORS = Counter("mcp_tool_errors_total", "Total MCP tool errors", ["tool_name", "error_type"])
+TOOL_DURATION = Histogram("mcp_tool_duration_seconds", "MCP tool execution duration", ["tool_name"])
 
-RESOURCES_READ = Counter(
-    "mcp_resources_read_total", "Total MCP resource reads", ["resource_uri"]
-)
+RESOURCES_READ = Counter("mcp_resources_read_total", "Total MCP resource reads", ["resource_uri"])
 RESOURCE_ERRORS = Counter(
     "mcp_resource_errors_total", "Total MCP resource errors", ["resource_uri"]
 )
@@ -91,9 +83,7 @@ RESOURCE_DURATION = Histogram(
 PROMPTS_REQUESTED = Counter(
     "mcp_prompts_requested_total", "Total MCP prompt requests", ["prompt_name"]
 )
-PROMPT_ERRORS = Counter(
-    "mcp_prompt_errors_total", "Total MCP prompt errors", ["prompt_name"]
-)
+PROMPT_ERRORS = Counter("mcp_prompt_errors_total", "Total MCP prompt errors", ["prompt_name"])
 PROMPT_DURATION = Histogram(
     "mcp_prompt_duration_seconds", "MCP prompt request duration", ["prompt_name"]
 )
@@ -159,8 +149,7 @@ class PIIScrubber:
         """
         if isinstance(data, dict):
             return {
-                key: cls._scrub_value(key, value, max_content_length)
-                for key, value in data.items()
+                key: cls._scrub_value(key, value, max_content_length) for key, value in data.items()
             }
         elif isinstance(data, list):
             return [cls.scrub(item, max_content_length) for item in data]
@@ -214,9 +203,7 @@ class PIIScrubber:
 
                 scrubbed = pattern.sub(mask_email, scrubbed)
             elif pattern_name == "credit_card":
-                scrubbed = pattern.sub(
-                    lambda m: f"****-****-****-{m.group(0)[-4:]}", scrubbed
-                )
+                scrubbed = pattern.sub(lambda m: f"****-****-****-{m.group(0)[-4:]}", scrubbed)
             elif pattern_name == "ip_address":
                 scrubbed = pattern.sub(
                     lambda m: f"{'.'.join(m.group(0).split('.')[:2])}.***.**", scrubbed
@@ -380,9 +367,7 @@ class RAEMemoryClient:
                     results = result.get("results", [])
                     span.set_attribute("search.result_count", len(results))
 
-                    logger.info(
-                        "memory_searched", query=query, result_count=len(results)
-                    )
+                    logger.info("memory_searched", query=query, result_count=len(results))
 
                     return results
 
@@ -402,9 +387,7 @@ class RAEMemoryClient:
                 logger.error("memory_search_error", error=str(e))
                 raise
 
-    async def get_file_context(
-        self, file_path: str, top_k: int = 10
-    ) -> List[Dict[str, Any]]:
+    async def get_file_context(self, file_path: str, top_k: int = 10) -> List[Dict[str, Any]]:
         """
         Get historical context about a file or module.
 
@@ -418,9 +401,7 @@ class RAEMemoryClient:
         # Search by file path in source field
         query = f"file:{file_path}"
 
-        return await self.search_memory(
-            query=query, top_k=top_k, filters={"source": file_path}
-        )
+        return await self.search_memory(query=query, top_k=top_k, filters={"source": file_path})
 
     async def get_latest_reflection(self, project: str = RAE_PROJECT_ID) -> str:
         """
@@ -445,9 +426,7 @@ class RAEMemoryClient:
 
                 summary = result.get("summary", "No reflection available.")
 
-                logger.info(
-                    "reflection_retrieved", project=project, summary_length=len(summary)
-                )
+                logger.info("reflection_retrieved", project=project, summary_length=len(summary))
 
                 return summary
 
@@ -462,9 +441,7 @@ class RAEMemoryClient:
             logger.error("reflection_error", error=str(e))
             return "Error retrieving reflection."
 
-    async def get_project_guidelines(
-        self, project: str = RAE_PROJECT_ID
-    ) -> List[Dict[str, Any]]:
+    async def get_project_guidelines(self, project: str = RAE_PROJECT_ID) -> List[Dict[str, Any]]:
         """
         Get project guidelines from semantic memory.
 
@@ -480,6 +457,131 @@ class RAEMemoryClient:
             project=project,
             filters={"layer": "semantic"},
         )
+
+    # ISO/IEC 42001 Compliance Methods
+
+    async def request_approval(
+        self,
+        operation_type: str,
+        operation_description: str,
+        risk_level: str,
+        resource_type: str,
+        resource_id: str,
+        requested_by: str,
+    ) -> Dict[str, Any]:
+        """
+        Request approval for a high-risk operation.
+
+        Args:
+            operation_type: Type of operation
+            operation_description: Description of the operation
+            risk_level: Risk level (none, low, medium, high, critical)
+            resource_type: Type of resource
+            resource_id: ID of the resource
+            requested_by: User requesting the operation
+
+        Returns:
+            Approval response with request_id and status
+        """
+        payload = {
+            "tenant_id": RAE_TENANT_ID,
+            "project_id": RAE_PROJECT_ID,
+            "operation_type": operation_type,
+            "operation_description": operation_description,
+            "risk_level": risk_level,
+            "resource_type": resource_type,
+            "resource_id": resource_id,
+            "requested_by": requested_by,
+        }
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{self.api_url}/v1/compliance/approvals",
+                    json=payload,
+                    headers=self.headers,
+                    timeout=30.0,
+                )
+                response.raise_for_status()
+                return response.json()
+
+        except Exception as e:
+            logger.error("approval_request_error", error=str(e))
+            raise
+
+    async def check_approval_status(self, request_id: str) -> Dict[str, Any]:
+        """
+        Check approval request status.
+
+        Args:
+            request_id: UUID of the approval request
+
+        Returns:
+            Approval status details
+        """
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{self.api_url}/v1/compliance/approvals/{request_id}",
+                    headers=self.headers,
+                    timeout=30.0,
+                )
+                response.raise_for_status()
+                return response.json()
+
+        except Exception as e:
+            logger.error("approval_status_error", error=str(e))
+            raise
+
+    async def get_circuit_breakers(self) -> List[Dict[str, Any]]:
+        """
+        Get all circuit breaker states.
+
+        Returns:
+            List of circuit breaker states
+        """
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{self.api_url}/v1/compliance/circuit-breakers",
+                    headers=self.headers,
+                    timeout=30.0,
+                )
+                response.raise_for_status()
+                return response.json()
+
+        except Exception as e:
+            logger.error("circuit_breakers_error", error=str(e))
+            raise
+
+    async def list_policies(self, policy_type: Optional[str] = None) -> Dict[str, Any]:
+        """
+        List governance policies.
+
+        Args:
+            policy_type: Optional filter by policy type
+
+        Returns:
+            Policies list
+        """
+        params = {"tenant_id": RAE_TENANT_ID}
+        if policy_type:
+            params["policy_type"] = policy_type
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{self.api_url}/v1/compliance/policies",
+                    params=params,
+                    headers=self.headers,
+                    timeout=30.0,
+                )
+                response.raise_for_status()
+                return response.json()
+
+        except Exception as e:
+            logger.error("policies_list_error", error=str(e))
+            raise
 
 
 # =============================================================================
@@ -531,9 +633,7 @@ class RateLimiter:
             self._requests[tenant_id] = []
 
         # Remove old timestamps outside window
-        self._requests[tenant_id] = [
-            ts for ts in self._requests[tenant_id] if ts > cutoff
-        ]
+        self._requests[tenant_id] = [ts for ts in self._requests[tenant_id] if ts > cutoff]
 
         # Check if within limit
         if len(self._requests[tenant_id]) >= self.max_requests:
@@ -576,9 +676,7 @@ RATE_LIMIT_ENABLED = os.getenv("MCP_RATE_LIMIT_ENABLED", "true").lower() == "tru
 RATE_LIMIT_REQUESTS = int(os.getenv("MCP_RATE_LIMIT_REQUESTS", "100"))
 RATE_LIMIT_WINDOW = int(os.getenv("MCP_RATE_LIMIT_WINDOW", "60"))
 
-rate_limiter = RateLimiter(
-    max_requests=RATE_LIMIT_REQUESTS, window_seconds=RATE_LIMIT_WINDOW
-)
+rate_limiter = RateLimiter(max_requests=RATE_LIMIT_REQUESTS, window_seconds=RATE_LIMIT_WINDOW)
 
 logger.info(
     "rate_limiter_initialized",
@@ -692,6 +790,106 @@ async def handle_list_tools() -> list[types.Tool]:
                 "required": ["file_path"],
             },
         ),
+        # ISO/IEC 42001 Compliance Tools
+        types.Tool(
+            name="request_approval",
+            description=(
+                "Request human approval for high-risk operations. "
+                "Use this for operations that require oversight, such as "
+                "deleting data, modifying critical settings, or exporting sensitive information."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "operation_type": {
+                        "type": "string",
+                        "description": "Type of operation (e.g., 'delete', 'export', 'modify')",
+                    },
+                    "operation_description": {
+                        "type": "string",
+                        "description": "Human-readable description of what will be done",
+                    },
+                    "risk_level": {
+                        "type": "string",
+                        "enum": ["none", "low", "medium", "high", "critical"],
+                        "description": "Risk level of the operation",
+                    },
+                    "resource_type": {
+                        "type": "string",
+                        "description": "Type of resource (e.g., 'memory', 'user_data', 'config')",
+                    },
+                    "resource_id": {
+                        "type": "string",
+                        "description": "Identifier of the resource",
+                    },
+                    "requested_by": {
+                        "type": "string",
+                        "description": "User ID requesting the operation",
+                    },
+                },
+                "required": [
+                    "operation_type",
+                    "operation_description",
+                    "risk_level",
+                    "resource_type",
+                    "resource_id",
+                    "requested_by",
+                ],
+            },
+        ),
+        types.Tool(
+            name="check_approval_status",
+            description=(
+                "Check the status of an approval request. "
+                "Returns current status, approvers, and expiration time."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "request_id": {
+                        "type": "string",
+                        "description": "UUID of the approval request",
+                    },
+                },
+                "required": ["request_id"],
+            },
+        ),
+        types.Tool(
+            name="get_circuit_breakers",
+            description=(
+                "Get status of all circuit breakers in the system. "
+                "Circuit breakers protect against cascading failures by "
+                "failing fast when services are unhealthy."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {},
+            },
+        ),
+        types.Tool(
+            name="list_policies",
+            description=(
+                "List governance policies configured for the tenant. "
+                "Includes data retention, access control, and approval workflows."
+            ),
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "policy_type": {
+                        "type": "string",
+                        "enum": [
+                            "data_retention",
+                            "access_control",
+                            "approval_workflow",
+                            "trust_scoring",
+                            "risk_assessment",
+                            "human_oversight",
+                        ],
+                        "description": "Optional filter by policy type",
+                    },
+                },
+            },
+        ),
     ]
 
 
@@ -746,13 +944,9 @@ async def handle_call_tool(
 
             # Validate
             if not content:
-                return [
-                    types.TextContent(type="text", text="Error: 'content' is required")
-                ]
+                return [types.TextContent(type="text", text="Error: 'content' is required")]
             if not source:
-                return [
-                    types.TextContent(type="text", text="Error: 'source' is required")
-                ]
+                return [types.TextContent(type="text", text="Error: 'source' is required")]
 
             # Store memory
             result = await rae_client.store_memory(
@@ -780,18 +974,14 @@ async def handle_call_tool(
 
             # Validate
             if not query:
-                return [
-                    types.TextContent(type="text", text="Error: 'query' is required")
-                ]
+                return [types.TextContent(type="text", text="Error: 'query' is required")]
 
             # Search memory
             results = await rae_client.search_memory(query=query, top_k=top_k)
 
             if not results:
                 return [
-                    types.TextContent(
-                        type="text", text=f"No memories found for query: '{query}'"
-                    )
+                    types.TextContent(type="text", text=f"No memories found for query: '{query}'")
                 ]
 
             # Format results
@@ -818,22 +1008,14 @@ async def handle_call_tool(
 
             # Validate
             if not file_path:
-                return [
-                    types.TextContent(
-                        type="text", text="Error: 'file_path' is required"
-                    )
-                ]
+                return [types.TextContent(type="text", text="Error: 'file_path' is required")]
 
             # Get context
-            results = await rae_client.get_file_context(
-                file_path=file_path, top_k=include_count
-            )
+            results = await rae_client.get_file_context(file_path=file_path, top_k=include_count)
 
             if not results:
                 return [
-                    types.TextContent(
-                        type="text", text=f"No context found for file: {file_path}"
-                    )
+                    types.TextContent(type="text", text=f"No context found for file: {file_path}")
                 ]
 
             # Format context
@@ -845,26 +1027,171 @@ async def handle_call_tool(
                 content = mem.get("content", "")
 
                 formatted += f"{i}. [{timestamp}]\n"
+                formatted += f"   {content[:300]}{'...' if len(content) > 300 else ''}\n\n"
+
+            return [types.TextContent(type="text", text=formatted)]
+
+        elif name == "request_approval":
+            # Extract arguments
+            operation_type = arguments.get("operation_type")
+            operation_description = arguments.get("operation_description")
+            risk_level = arguments.get("risk_level")
+            resource_type = arguments.get("resource_type")
+            resource_id = arguments.get("resource_id")
+            requested_by = arguments.get("requested_by")
+
+            # Validate
+            if not all(
+                [
+                    operation_type,
+                    operation_description,
+                    risk_level,
+                    resource_type,
+                    resource_id,
+                    requested_by,
+                ]
+            ):
+                return [
+                    types.TextContent(
+                        type="text", text="Error: All fields are required for approval request"
+                    )
+                ]
+
+            # Request approval
+            result = await rae_client.request_approval(
+                operation_type=operation_type,
+                operation_description=operation_description,
+                risk_level=risk_level,
+                resource_type=resource_type,
+                resource_id=resource_id,
+                requested_by=requested_by,
+            )
+
+            request_id = result.get("request_id", "unknown")
+            status = result.get("status", "unknown")
+            min_approvals = result.get("min_approvals", 0)
+
+            return [
+                types.TextContent(
+                    type="text",
+                    text=(
+                        f"✓ Approval request submitted\n\n"
+                        f"Request ID: {request_id}\n"
+                        f"Status: {status}\n"
+                        f"Risk Level: {risk_level}\n"
+                        f"Operation: {operation_type}\n"
+                        f"Required Approvals: {min_approvals}\n\n"
+                        f"Use 'check_approval_status' tool with request_id to check status."
+                    ),
+                )
+            ]
+
+        elif name == "check_approval_status":
+            # Extract arguments
+            request_id = arguments.get("request_id")
+
+            # Validate
+            if not request_id:
+                return [types.TextContent(type="text", text="Error: 'request_id' is required")]
+
+            # Check status
+            result = await rae_client.check_approval_status(request_id=request_id)
+
+            status = result.get("status", "unknown")
+            risk_level = result.get("risk_level", "unknown")
+            approvers = result.get("approvers", [])
+            min_approvals = result.get("min_approvals", 0)
+            current_approvals = result.get("current_approvals", 0)
+            expires_at = result.get("expires_at", "N/A")
+
+            formatted = (
+                f"Approval Request Status\n"
+                f"{'=' * 40}\n\n"
+                f"Request ID: {request_id}\n"
+                f"Status: {status}\n"
+                f"Risk Level: {risk_level}\n"
+                f"Approvals: {current_approvals}/{min_approvals}\n"
+                f"Expires: {expires_at}\n"
+            )
+
+            if approvers:
+                formatted += "\nApprovers:\n"
+                for approver in approvers:
+                    formatted += f"  - {approver}\n"
+
+            return [types.TextContent(type="text", text=formatted)]
+
+        elif name == "get_circuit_breakers":
+            # Get circuit breakers
+            breakers = await rae_client.get_circuit_breakers()
+
+            if not breakers:
+                return [
+                    types.TextContent(
+                        type="text", text="No circuit breakers found or error retrieving data."
+                    )
+                ]
+
+            formatted = f"Circuit Breaker Status\n{'=' * 40}\n\n"
+
+            for breaker in breakers:
+                name_field = breaker.get("name", "unknown")
+                state = breaker.get("state", "unknown")
+                failure_count = breaker.get("failure_count", 0)
+                success_rate = breaker.get("success_rate", 0)
+
+                status_emoji = "✓" if state == "closed" else "⚠" if state == "half_open" else "✗"
+
                 formatted += (
-                    f"   {content[:300]}{'...' if len(content) > 300 else ''}\n\n"
+                    f"{status_emoji} {name_field}\n"
+                    f"   State: {state}\n"
+                    f"   Failures: {failure_count}\n"
+                    f"   Success Rate: {success_rate:.1%}\n\n"
+                )
+
+            return [types.TextContent(type="text", text=formatted)]
+
+        elif name == "list_policies":
+            # Extract arguments
+            policy_type = arguments.get("policy_type")
+
+            # List policies
+            result = await rae_client.list_policies(policy_type=policy_type)
+
+            policies = result.get("policies", [])
+
+            if not policies:
+                return [
+                    types.TextContent(
+                        type="text",
+                        text=f"No policies found{f' for type: {policy_type}' if policy_type else ''}.",
+                    )
+                ]
+
+            formatted = f"Governance Policies\n{'=' * 40}\n\n"
+
+            for policy in policies:
+                policy_id = policy.get("policy_id", "unknown")
+                policy_type_field = policy.get("policy_type", "unknown")
+                status = policy.get("status", "unknown")
+                version = policy.get("version", 1)
+
+                formatted += (
+                    f"• {policy_id} (v{version})\n"
+                    f"  Type: {policy_type_field}\n"
+                    f"  Status: {status}\n\n"
                 )
 
             return [types.TextContent(type="text", text=formatted)]
 
         else:
             TOOL_ERRORS.labels(tool_name=name, error_type="unknown_tool").inc()
-            return [
-                types.TextContent(type="text", text=f"Error: Unknown tool '{name}'")
-            ]
+            return [types.TextContent(type="text", text=f"Error: Unknown tool '{name}'")]
 
     except Exception as e:
         TOOL_ERRORS.labels(tool_name=name, error_type=type(e).__name__).inc()
         logger.exception("tool_execution_error", tool=name, error=str(e))
-        return [
-            types.TextContent(
-                type="text", text=f"Error executing tool '{name}': {str(e)}"
-            )
-        ]
+        return [types.TextContent(type="text", text=f"Error executing tool '{name}': {str(e)}")]
     finally:
         # Record execution duration
         duration = time.time() - start_time
