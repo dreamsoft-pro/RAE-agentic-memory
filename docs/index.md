@@ -1,45 +1,101 @@
-# Welcome to RAE Agentic Memory
+# RAE Documentation
 
-RAE (Reflective Agentic Memory) is an open-source **Memory Engine** designed to provide intelligent agents with a robust, structured, and reflective long-term memory. Unlike traditional RAG (Retrieval Augmented Generation) systems, RAE focuses on building a true meta-memory, enabling agents to learn, adapt, and make more informed decisions over time.
+Welcome to the RAE (Reflective Agentic Environment) documentation.
 
-## Why RAE?
+## 📚 Documentation Structure
 
-Intelligent agents often struggle with:
+### [Reference](./reference/README.md)
+**Official production documentation**
 
-*   **Context Window Limitations**: LLMs have limited context windows, making it hard to retain long-term information.
-*   **Lack of Persistence**: Agents often "forget" past interactions, decisions, and learnings between sessions.
-*   **Static Knowledge**: RAG systems provide static knowledge retrieval, but lack the ability to synthesize new insights or adapt to changing environments.
-*   **Cost Management**: Blindly calling LLMs can be expensive.
+Complete technical reference for RAE:
+- Architecture & Design Patterns
+- API & SDK Documentation
+- Memory Model & GraphRAG
+- Security & ISO 42001 Compliance
+- LLM Integration & Cost Guard
+- Deployment & Operations
+- Testing & Evaluation
 
-RAE addresses these challenges by providing:
+👉 **Start here** for production use and integration.
 
-*   **Standardized Memory Protocol**: A simple, technology-agnostic API for storing, querying, and managing memories.
-*   **Scoring & Heuristics**: Advanced algorithms to determine the relevance, recency, importance, and usage frequency of memories.
-*   **Reflection & Meta-Memory**: Mechanisms for agents to reflect on their experiences, consolidate similar information, filter noise, and build higher-level insights.
-*   **Cost-Aware LLM Selection**: Dynamic model selection to optimize for cost and performance.
-*   **Observability**: Built-in metrics and a visual dashboard to understand memory flow and agent behavior.
+### [Guides](./guides/README.md)
+**User guides and tutorials**
 
-## Key Features
+Practical guides for different use cases:
+- RAE Lite (cost-optimized)
+- Developer guides
+- Getting started tutorials
+- Best practices
 
-*   **Standard API**: `/memory/store`, `/memory/query`, `/memory/delete`, `/memory/reflect`, etc.
-*   **Structured Memory Records**: Flexible JSON Schema for diverse memory types.
-*   **Advanced Retrieval**: Hybrid search (dense + sparse vectors) with intelligent re-scoring.
-*   **Cost Controller**: Manages LLM usage, prioritizes local models, and tracks expenses.
-*   **PII Scrubber**: Integrates with Presidio for sensitive data handling.
-*   **Reflection Hook**: Enables agents to create new semantic memories from interactions.
-*   **Ecosystem Integrations**: Ollama wrapper, MCP (Memory Context Provider) for file watching.
-*   **SDKs**: Python SDK (with Node.js and Go planned).
-*   **Visual Dashboard**: Prometheus/Grafana integration for real-time monitoring.
-*   **Reference Agents**: Examples demonstrating practical applications.
+👉 **Start here** if you're new to RAE.
 
-## Getting Started
+### [AI Specs](./ai-specs/README.md)
+**Specifications for AI agents**
 
-To get started with RAE, check out our [Getting Started](getting_started.md) guide.
+Materials for AI coding assistants (Claude, Gemini, Jules):
+- Prompt templates
+- Test generation specs
+- Agent workflows
+- IDE integration plans
 
-## Architecture
+👉 For AI assistant developers and LLM integration.
 
-Dive deeper into the system's design in the [Architecture](architecture.md) section.
+### [Project Design](./project-design/README.md)
+**Design documents and research**
 
-## Contributing
+Working notes, experiments, and research:
+- Feniks integration
+- Architecture evolution
+- Enterprise roadmap
+- Research ideas and experiments
 
-RAE is an open-source project, and we welcome contributions from the community. Please see our [Contributing](contributing.md) guide for more details.
+👉 For contributors and researchers interested in RAE's development.
+
+## 🚀 Quick Links
+
+**New Users**: [Getting Started Guide](./guides/developers/getting_started.md)
+**Developers**: [Python SDK Reference](./reference/api/SDK_PYTHON_REFERENCE.md)
+**DevOps**: [Kubernetes Deployment](./reference/deployment/DEPLOY_K8S_HELM.md)
+**Security**: [ISO 42001 Compliance](./reference/iso-security/RAE-ISO_42001.md)
+**AI Integration**: [MCP/IDE Integration](./reference/integrations/MCP_IDE_INTEGRATION.md)
+
+## 📖 Key Documentation
+
+### Architecture
+- [Memory Model](./reference/memory/MEMORY_MODEL.md) - 4-layer memory architecture
+- [GraphRAG](./reference/memory/GRAPHRAG_IMPLEMENTATION.md) - Knowledge graph RAG
+- [Reflection Engine V2](./reference/architecture/REFLECTION_ENGINE_V2_IMPLEMENTATION.md) - Learning from execution
+- [Multi-Tenancy](./reference/architecture/MULTI_TENANCY.md) - Enterprise isolation
+
+### Development
+- [Python SDK](./reference/api/SDK_PYTHON_REFERENCE.md) - SDK documentation
+- [CLI Reference](./reference/api/CLI_REFERENCE.md) - Command-line tools
+- [Dev Tools](./reference/testing/DEV_TOOLS_AND_SCRIPTS.md) - Developer utilities
+- [Testing](./reference/testing/TEST_COVERAGE_MAP.md) - Test coverage
+
+### Operations
+- [Deployment Guide](./reference/deployment/DEPLOY_K8S_HELM.md) - Kubernetes/Helm
+- [LLM Profiles](./reference/llm/LLM_PROFILES_AND_COST_GUARD.md) - LLM configuration
+- [Cost Guard](./reference/llm/cost-controller.md) - Cost management
+- [Observability](./reference/deployment/observability.md) - Monitoring
+
+## 🏗️ Documentation Philosophy
+
+RAE documentation is organized by **purpose and audience**:
+
+1. **Reference** = Production documentation for users and integrators
+2. **Guides** = Tutorials and practical how-to guides
+3. **AI Specs** = Materials for AI coding assistants
+4. **Project Design** = Internal design docs and research
+
+This structure keeps production documentation clean while preserving valuable research and design artifacts.
+
+## 🤝 Contributing
+
+See [Contributing Guide](./guides/developers/contributing/) for documentation contribution guidelines.
+
+## 📄 Other Resources
+
+- [Code of Conduct](./CODE_OF_CONDUCT.md)
+- [Version Matrix](./reference/VERSION_MATRIX.md)
+- [Main README](../README.md)
