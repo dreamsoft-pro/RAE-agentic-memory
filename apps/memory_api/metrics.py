@@ -189,3 +189,198 @@ rae_reflective_flags_gauge = Gauge(
     "Reflective memory feature flags status (0=disabled, 1=enabled)",
     ["flag"],  # flag: reflective_enabled, dreaming_enabled, summarization_enabled
 )
+
+# --- ISO/IEC 42001 Compliance Metrics ---
+# These metrics track compliance with ISO 42001 AI Management System standard
+
+# Overall compliance score
+rae_iso42001_compliance_score = Gauge(
+    "rae_iso42001_compliance_score",
+    "Overall ISO 42001 compliance score (0-100)",
+    ["tenant_id", "area"],  # area: governance, risk_mgmt, data_mgmt, transparency, etc.
+)
+
+# Compliance requirement tracking
+rae_iso42001_requirements_total = Gauge(
+    "rae_iso42001_requirements_total",
+    "Total number of ISO 42001 requirements tracked",
+    ["tenant_id", "area"],
+)
+
+rae_iso42001_requirements_compliant = Gauge(
+    "rae_iso42001_requirements_compliant",
+    "Number of compliant ISO 42001 requirements",
+    ["tenant_id", "area"],
+)
+
+# Audit trail metrics
+rae_iso42001_audit_trail_completeness = Gauge(
+    "rae_iso42001_audit_trail_completeness",
+    "Percentage of events with complete audit trail (0-100)",
+    ["tenant_id", "event_type"],
+)
+
+rae_iso42001_audit_entries_total = Counter(
+    "rae_iso42001_audit_entries_total",
+    "Total number of audit trail entries created",
+    ["tenant_id", "event_type", "actor_type"],
+)
+
+# Data retention compliance
+rae_iso42001_data_retention_compliance = Gauge(
+    "rae_iso42001_data_retention_compliance",
+    "Percentage of data meeting retention policies (0-100)",
+    ["tenant_id", "data_class"],
+)
+
+rae_iso42001_expired_data_records = Gauge(
+    "rae_iso42001_expired_data_records",
+    "Number of records past retention period pending deletion",
+    ["tenant_id", "data_class"],
+)
+
+rae_iso42001_data_deletions_total = Counter(
+    "rae_iso42001_data_deletions_total",
+    "Total number of records deleted per retention policy",
+    ["tenant_id", "data_class", "deletion_reason"],
+)
+
+# Risk register metrics
+rae_iso42001_risks_total = Gauge(
+    "rae_iso42001_risks_total",
+    "Total number of identified risks in risk register",
+    ["tenant_id", "risk_level"],  # risk_level: critical, high, medium, low
+)
+
+rae_iso42001_risks_open = Gauge(
+    "rae_iso42001_risks_open",
+    "Number of open (unmitigated) risks",
+    ["tenant_id", "risk_level"],
+)
+
+rae_iso42001_risks_mitigated = Gauge(
+    "rae_iso42001_risks_mitigated",
+    "Number of mitigated risks",
+    ["tenant_id", "risk_level"],
+)
+
+rae_iso42001_risk_register_last_review_days = Gauge(
+    "rae_iso42001_risk_register_last_review_days",
+    "Days since risk register was last updated",
+    ["tenant_id"],
+)
+
+# Source trust metrics
+rae_iso42001_source_trust_distribution = Gauge(
+    "rae_iso42001_source_trust_distribution",
+    "Distribution of source trust levels",
+    ["tenant_id", "trust_level"],  # trust_level: high, medium, low, unverified
+)
+
+rae_iso42001_source_trust_verified_percentage = Gauge(
+    "rae_iso42001_source_trust_verified_percentage",
+    "Percentage of sources with verified trust level (0-100)",
+    ["tenant_id"],
+)
+
+rae_iso42001_sources_pending_verification = Gauge(
+    "rae_iso42001_sources_pending_verification",
+    "Number of sources pending verification",
+    ["tenant_id"],
+)
+
+# Human oversight metrics
+rae_iso42001_human_oversight_decisions = Counter(
+    "rae_iso42001_human_oversight_decisions",
+    "Number of human-in-the-loop oversight decisions",
+    ["tenant_id", "decision_type"],  # decision_type: approval, rejection, escalation
+)
+
+rae_iso42001_ai_decisions_total = Counter(
+    "rae_iso42001_ai_decisions_total",
+    "Total number of AI system decisions",
+    ["tenant_id", "decision_category", "confidence_level"],
+)
+
+rae_iso42001_ai_decisions_overridden = Counter(
+    "rae_iso42001_ai_decisions_overridden",
+    "Number of AI decisions overridden by humans",
+    ["tenant_id", "decision_category", "override_reason"],
+)
+
+# Model governance metrics
+rae_iso42001_models_deployed = Gauge(
+    "rae_iso42001_models_deployed",
+    "Number of AI models currently deployed",
+    ["tenant_id", "model_type"],
+)
+
+rae_iso42001_model_cards_completeness = Gauge(
+    "rae_iso42001_model_cards_completeness",
+    "Percentage of deployed models with complete model cards (0-100)",
+    ["tenant_id"],
+)
+
+# Transparency and explainability
+rae_iso42001_explainability_requests = Counter(
+    "rae_iso42001_explainability_requests",
+    "Number of AI decision explainability requests",
+    ["tenant_id", "explanation_type"],
+)
+
+rae_iso42001_data_subject_requests = Counter(
+    "rae_iso42001_data_subject_requests",
+    "Number of GDPR data subject requests processed",
+    ["tenant_id", "request_type"],  # request_type: access, erasure, rectification
+)
+
+# Row-Level Security (RLS) metrics
+rae_iso42001_rls_tables_enabled = Gauge(
+    "rae_iso42001_rls_tables_enabled",
+    "Number of database tables with RLS enabled",
+    ["tenant_id"],
+)
+
+rae_iso42001_rls_policies_active = Gauge(
+    "rae_iso42001_rls_policies_active",
+    "Number of active RLS policies",
+    ["tenant_id"],
+)
+
+rae_iso42001_rls_verification_status = Gauge(
+    "rae_iso42001_rls_verification_status",
+    "RLS verification status (1=passed, 0=failed)",
+    ["tenant_id"],
+)
+
+rae_iso42001_rls_context_set_total = Counter(
+    "rae_iso42001_rls_context_set_total",
+    "Total number of RLS context settings",
+    ["tenant_id", "context_type"],  # context_type: http_request, background_task
+)
+
+rae_iso42001_rls_context_failures = Counter(
+    "rae_iso42001_rls_context_failures",
+    "Number of RLS context setting failures",
+    ["tenant_id", "failure_reason"],
+)
+
+# Certification readiness
+rae_iso42001_certification_ready = Gauge(
+    "rae_iso42001_certification_ready",
+    "Certification readiness indicator (1=ready, 0=not ready)",
+    ["tenant_id"],
+)
+
+rae_iso42001_critical_gaps_count = Gauge(
+    "rae_iso42001_critical_gaps_count",
+    "Number of critical compliance gaps",
+    ["tenant_id"],
+)
+
+# Compliance checks
+rae_iso42001_compliance_checks_total = Counter(
+    "rae_iso42001_compliance_checks_total",
+    "Total number of compliance checks performed",
+    ["tenant_id", "check_type", "result"],  # result: passed, failed, warning
+)
