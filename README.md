@@ -223,8 +223,31 @@ cd RAE-agentic-memory
 # 3. Initialize database (first time only)
 ./scripts/init-database.sh
 
-# 4. Seed demo data (optional)
+# 4. Seed demo data (optional - recommended)
 python3 scripts/seed_demo_data.py
+```
+
+**Demo Data Scenarios:**
+
+RAE includes two comprehensive demo scenarios (66 memories total):
+
+📦 **Project Phoenix** - Software Development (30 memories)
+- Software team building a microservices platform
+- Incidents, circuit breakers, security audits
+- All 4 memory layers: STM, EM, LTM, RM
+- GraphRAG-ready with entities and relationships
+
+🏛️ **City Hall** - Public Administration (36 memories)
+- Municipal customer service department
+- Citizen requests, RODO compliance, ISO 42001
+- Real-world governance scenarios
+- Polish language content for local government use case
+
+**Load specific scenario:**
+```bash
+python3 scripts/seed_demo_data.py --scenario phoenix      # Only software dev
+python3 scripts/seed_demo_data.py --scenario city-hall   # Only public admin
+python3 scripts/seed_demo_data.py --scenario all          # Both (default)
 ```
 
 That's it! 🎉
