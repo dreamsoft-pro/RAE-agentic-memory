@@ -358,8 +358,18 @@ Status wdrożenia (aktualizacja: 2025-11-30):
    - Circuit breaker pattern for RAE downtime
    - Fallback mode dla agentów
    - RISK-004 mitigation
-5. 📋 **Telemetria kognitywna** - Partial (drift detection exists)
+5. ✅ **Telemetria kognitywna** - Implemented (2025-12-01)
    - Memory quality metrics dashboard
+   - **ISO/IEC 42001 Compliance Dashboard** - NEW:
+     * Overall compliance score (85% at Q4 2025)
+     * Compliance metrics by area (governance, risk, data, transparency, oversight, security)
+     * Risk register visualization with mitigation status
+     * Audit trail monitoring and completeness tracking
+     * Data retention compliance monitoring
+     * Source trust distribution metrics
+     * RLS verification status
+     * API endpoints: `/v1/dashboard/compliance/*`
+     * Prometheus metrics for real-time monitoring
    - RISK-009 mitigation (enhanced)
 6. 📋 **Policy Packs enhancement** - Planned (Q2 2026)
    - Wersjonowanie policies
@@ -380,6 +390,11 @@ Status wdrożenia (aktualizacja: 2025-11-30):
 - `apps/memory_api/services/retention_service.py` - Data retention & GDPR compliance
 - `apps/memory_api/tasks/background_tasks.py` - Cleanup workers & GDPR deletion tasks
 - `apps/memory_api/models/tenant.py` - TenantConfig z retention policies
+- `apps/memory_api/services/compliance_service.py` - ISO 42001 compliance monitoring service
+- `apps/memory_api/models/dashboard_models.py` - Compliance reporting models
+- `apps/memory_api/routes/dashboard.py` - Compliance dashboard API endpoints
+- `apps/memory_api/metrics.py` - Prometheus metrics for compliance tracking
+- `migrations/007_iso42001_compliance_tracking.sql` - Database schema for compliance data
 
 Ten dokument jest **żywy** – należy go aktualizować wraz z:
 

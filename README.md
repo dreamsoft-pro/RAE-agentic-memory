@@ -110,6 +110,7 @@ RAE is designed for enterprise AI governance and compliance with **ISO/IEC 42001
 - **Roles & Responsibilities** - Clear RACI matrix for 6 organizational roles ([docs/RAE-Roles.md](docs/RAE-Roles.md))
 - **Audit Trail** - Complete logging of all data operations, deletions, and trust assessments
 - **Multi-Tenant Isolation** - Tenant-level data segregation with configurable policies
+- **Compliance Dashboard** - Real-time ISO 42001 monitoring with 25+ metrics, risk visualization, and certification readiness tracking
 
 ### Compliance Documentation
 
@@ -118,7 +119,7 @@ RAE is designed for enterprise AI governance and compliance with **ISO/IEC 42001
 - 👥 **[RAE-Roles.md](docs/RAE-Roles.md)** - Organizational roles and RACI matrix
 - 🔐 **[SECURITY.md](docs/SECURITY.md)** - Security assessment and controls
 
-### Implementation Status (2025-11-30)
+### Implementation Status (2025-12-01)
 
 | Feature | Status | Description |
 |---------|--------|-------------|
@@ -129,8 +130,9 @@ RAE is designed for enterprise AI governance and compliance with **ISO/IEC 42001
 | PostgreSQL Row-Level Security | ✅ Implemented | Database-level tenant isolation (Q4 2025) |
 | Roles & Responsibilities | ✅ Documented | Full RACI matrix for 6 roles |
 | Risk Register | ✅ Complete | 10 risks identified with mitigation plans |
+| Compliance Dashboard | ✅ Implemented | ISO 42001 monitoring with 5 API endpoints + Prometheus metrics |
 | Telemetry (Technical) | ✅ Implemented | OpenTelemetry + structured logging |
-| Telemetry (Cognitive) | 🟡 Partial | Drift detection (quality metrics in progress) |
+| Telemetry (Cognitive) | ✅ Implemented | Compliance dashboard + drift detection |
 | High-Risk Marking | ⏳ Planned | Human approval workflow (Q1 2026) |
 | Graceful Degradation | ⏳ Planned | Circuit breaker + fallback mode (Q2 2026) |
 
