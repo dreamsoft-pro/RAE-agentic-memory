@@ -96,16 +96,8 @@ This document tracks the implementation status of RAE features and defines the r
 - **Memory Replay Tool**
 
 ## Technical Debt (Auto-generated from code)
-<<<<<<< HEAD
-*Last scan: 2025-12-03 00:00*
+*Last scan: 2025-12-02 23:45*
 
-- [ ] **STATUS.md:25** - All missing/incomplete functionalities from TODO.md have been successfully implemented:
-- [ ] **STATUS.md:169** - - [Technical Debt](TODO.md)
-- [ ] **CONTRIBUTING.md:143** - Run the documentation automator to update status and TODOs:
-=======
-*Last scan: 2025-12-02 22:12*
-
->>>>>>> 2020150fd5decca210983cadcae9c325c9fd65e5
 - [ ] **CHANGELOG.md:238** - Added - Missing Functionalities from TODO.md Completed 🎯
 - [ ] **CHANGELOG.md:240** - This release completes the implementation of critical functionalities identified in TODO.md that were either missing or partially implemented.
 - [ ] **CHANGELOG.md:472** - - **TODO.md Items** - Completed 5 major categories of missing/incomplete functionalities:
@@ -116,7 +108,7 @@ This document tracks the implementation status of RAE features and defines the r
 - [ ] **CONTRIBUTING.md:143** - Run the documentation automator to update status and TODOs:
 - [ ] **README.md:812** - - ✅ **[TODO List](TODO.md)** - Upcoming features and improvements
 - [ ] **STATUS.md:25** - All missing/incomplete functionalities from TODO.md have been successfully implemented:
-- [ ] **STATUS.md:170** - - [Technical Debt](TODO.md)
+- [ ] **STATUS.md:172** - - [Technical Debt](TODO.md)
 - [ ] **apps/memory_api/services/context_builder.py:295** - In production, use vector search to get similarity scores
 - [ ] **apps/memory_api/services/context_builder.py:414** - Implement profile retrieval
 - [ ] **apps/memory_api/routes/event_triggers.py:166** - tenant_id = "default"   TODO: Get from auth context
