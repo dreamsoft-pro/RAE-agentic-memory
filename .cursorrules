@@ -1,0 +1,45 @@
+# RAE Project Rules for AI Agents
+
+You are working on the RAE (Reflective Agentic-memory Engine) project.
+Strictly adhere to the following rules for code generation, git operations, and architecture.
+
+## 🌳 Branching Strategy (STRICT)
+
+Refer to `docs/BRANCHING.md` for full details.
+
+- **`main`**: Production-ready state. NEVER commit directly. Merge only from `release/*` or `hotfix/*`.
+- **`develop`**: Main integration branch. Source for new features.
+- **`feature/name-of-feature`**: New features. MUST branch from `develop`.
+- **`hotfix/name-of-fix`**: Critical production fixes. MUST branch from `main`.
+- **`release/x.y`**: Release preparation. Branches from `develop`.
+
+**Command Patterns:**
+- Start feature: `git checkout develop && git pull && git checkout -b feature/my-feature`
+- Start hotfix: `git checkout main && git pull && git checkout -b hotfix/critical-fix`
+
+## 🐍 Python & Code Style
+
+- **Python 3.11+**: Use modern syntax (type hints, dataclasses, async/await).
+- **Formatters**: Code MUST pass `black`, `isort`, and `ruff`.
+- **Type Checking**: Code MUST pass `mypy`.
+- **Testing**: Write `pytest` tests for ALL new logic.
+  - Unit tests: `apps/memory_api/tests/`
+  - Integration tests: `tests/integration/`
+- **Docstrings**: Required for all public modules, classes, and functions (Google style or similar).
+
+## 🏗️ Architecture
+
+- **Repository Pattern**: Use `apps/memory_api/repositories/` for DB access. Do NOT use raw SQL in services/routes.
+- **Services**: Business logic goes in `apps/memory_api/services/`.
+- **Routes**: FastAPI routes in `apps/memory_api/api/v1/` or `routes/`.
+- **Config**: Use `apps/memory_api/config.py` via `pydantic-settings`. Do NOT hardcode secrets.
+
+## 🐳 Docker
+
+- If adding dependencies, update `requirements.txt` AND `Dockerfile` if needed.
+- Ensure `docker-compose.yml` services are healthy after changes.
+
+## 🛡️ Security
+
+- Never expose API keys or secrets in code. Use `.env`.
+- Ensure `TENANCY_ENABLED` logic is respected in new endpoints.
