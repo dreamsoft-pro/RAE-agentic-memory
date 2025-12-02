@@ -150,6 +150,17 @@ All missing/incomplete functionalities from TODO.md have been successfully imple
 - ✅ **API Integration** - evaluation.py endpoints now use database storage
 - ✅ **Statistical Support** - Helper functions for A/B test analysis with baseline comparisons
 
+
+## Live Metrics (Auto-generated)
+| Metric | Value |
+|--------|-------|
+| **Branch** | `feature/docs-automation-update` |
+| **Commit** | `e03c1f195` |
+| **Coverage** | 52.4% |
+| **Tests** | 309 total, 0 failed, 10 skipped |
+| **Pass Rate** | 100.0% |
+| **Last Update** | 2025-12-02 15:33:59 |
+
 ## Quick Links
 - [Changelog](CHANGELOG.md)
 - [Technical Debt](TODO.md)
