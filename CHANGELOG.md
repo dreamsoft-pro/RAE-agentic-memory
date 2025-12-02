@@ -15,6 +15,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [2.2.0-enterprise] - 2025-12-02
+
+### Added - Token Savings Tracker 💰
+
+#### Metrics & Cost Optimization
+- ✅ **Token Savings Tracker** - Comprehensive system for tracking tokens saved via optimizations (Cache, GraphRAG, Reranking)
+- ✅ **Metrics API** - New endpoints for savings analytics:
+  - `GET /v1/metrics/savings` - Summary statistics (total tokens, USD saved)
+  - `GET /v1/metrics/savings/graph` - Time-series data for visualization
+- ✅ **Hybrid Search Integration** - Automatically tracks savings when search results are served from cache
+- ✅ **Database Schema** - New `token_savings_log` table with efficient indexing
+- ✅ **Repository Layer** - `TokenSavingsRepository` for high-performance logging and aggregation
+- ✅ **Service Layer** - `TokenSavingsService` with cost calculation logic
+
+### Fixed - Critical Infrastructure & Stability 🔧
+- ✅ **Vector Store Initialization** - Fixed Qdrant collection creation issues causing 502 errors on startup
+- ✅ **Database Migrations** - Added automatic Alembic migration execution on container startup
+- ✅ **Docker Configuration** - Fixed missing dependencies (psycopg2-binary, alembic files) in Docker image
+- ✅ **Database Connection** - Standardized DB connection parameters across services
+- ✅ **Dashboard State** - Fixed configuration persistence issue in memory-dashboard
+
+### Documentation 📚
+- ✅ **Local First Guide** - Added `docs/LOCAL_SETUP.md` for privacy-focused local LLM deployment
+- ✅ **Production Guides** - Updated single-node and HA deployment guides
+- ✅ **Agent Guidelines** - Added `.cursorrules` and `.github/copilot-instructions.md` for AI assistants
+
+---
+
 ## [2.0.5-enterprise] - 2025-12-01
 
 ### Added - ISO/IEC 42001 Full Compliance 🎯

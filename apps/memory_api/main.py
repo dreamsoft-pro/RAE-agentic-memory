@@ -76,7 +76,7 @@ async def lifespan(app: FastAPI):
 # --- App Initialization ---
 app = FastAPI(
     title="RAE Memory API",
-    version="2.0.0-enterprise",
+    version="2.2.0-enterprise",
     lifespan=lifespan,
     description="""
     ## The Cognitive Memory Engine for AI Agents
@@ -120,7 +120,7 @@ def custom_openapi():
 
     openapi_schema = get_openapi(
         title="RAE Memory API",
-        version="2.0.0-enterprise",
+        version="2.2.0-enterprise",
         description=app.description,
         routes=app.routes,
     )
