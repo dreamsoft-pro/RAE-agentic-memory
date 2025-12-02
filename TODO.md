@@ -27,14 +27,14 @@ This document tracks the implementation status of RAE features and defines the r
 ### Iteration 2: Core Logic (Complex Services) 🧠
 **Goal:** Increase coverage to ~70% by testing the most critical and complex business logic.
 
-- [ ] **`apps/memory_api/services/hybrid_search_service.py`** (Current: 9%) 🚨 **CRITICAL**
+- [x] **`apps/memory_api/services/hybrid_search_service.py`** (Current: ~81%) 🚨 **CRITICAL**
     - Test result fusion logic (weighting).
     - Test reranking integration (mock LLM).
     - Test fallback strategies (vector only, graph only).
-- [ ] **`apps/memory_api/services/graph_extraction.py`** (Current: 39%)
+- [x] **`apps/memory_api/services/graph_extraction.py`** (Current: ~79%)
     - Test triple extraction parsing.
     - Test graph node/edge creation logic.
-- [ ] **`apps/memory_api/services/reflection_pipeline.py`** (Current: 13%)
+- [x] **`apps/memory_api/services/reflection_pipeline.py`** (Current: ~63%)
     - Test reflection cycle execution.
     - Verify recursive insight generation.
 
