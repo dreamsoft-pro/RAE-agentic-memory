@@ -237,11 +237,15 @@ class TripleExtractionService:
         Returns:
             List of extracted triples
         """
+        if not text or not text.strip():
+            return []
+
         try:
             doc = self._nlp(text)
             triples = []
+            seen_triples = set()
 
-            # Simple pattern: find ENTITY1 - VERB - ENTITY2
+            # Method 1: Entity-Verb-Entity pattern (existing logic)
             for sent in doc.sents:
                 entities = [ent for ent in sent.ents]
 
@@ -257,14 +261,55 @@ class TripleExtractionService:
                                 for verb in verbs:
                                     # Only if verb is between the entities
                                     if subj.end <= verb.i <= obj.start:
-                                        triples.append(
-                                            {
-                                                "subject": subj.text,
-                                                "predicate": verb.lemma_,
-                                                "object": obj.text,
-                                                "confidence": 0.6,  # Lower confidence for simple method
-                                            }
-                                        )
+                                        triple_key = (subj.text, verb.lemma_, obj.text)
+                                        if triple_key not in seen_triples:
+                                            triples.append(
+                                                {
+                                                    "subject": subj.text,
+                                                    "predicate": verb.lemma_,
+                                                    "object": obj.text,
+                                                    "confidence": 0.6,
+                                                }
+                                            )
+                                            seen_triples.add(triple_key)
+
+            # Method 2: Simple Subject-Verb-Object pattern (fallback for simple sentences)
+            # Useful when entities are not detected (e.g. "He eats apples")
+            for sent in doc.sents:
+                # Re-iterating to be cleaner about head matching
+                # Find the root verb
+                root = sent.root
+                if root.pos_ == "VERB":
+                    # Check children for subject and object
+                    subj_token = next(
+                        (
+                            child
+                            for child in root.children
+                            if child.dep_ in ("nsubj", "nsubjpass")
+                        ),
+                        None,
+                    )
+                    obj_token = next(
+                        (
+                            child
+                            for child in root.children
+                            if child.dep_ in ("dobj", "pobj", "attr")
+                        ),
+                        None,
+                    )
+
+                    if subj_token and obj_token:
+                        triple_key = (subj_token.text, root.lemma_, obj_token.text)
+                        if triple_key not in seen_triples:
+                            triples.append(
+                                {
+                                    "subject": subj_token.text,
+                                    "predicate": root.lemma_,
+                                    "object": obj_token.text,
+                                    "confidence": 0.65,
+                                }
+                            )
+                            seen_triples.add(triple_key)
 
             return triples
 

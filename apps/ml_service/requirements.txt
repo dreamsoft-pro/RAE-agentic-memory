@@ -1,20 +1,5 @@
-# ML Service Requirements - Heavy ML dependencies isolated from main service
-# This service handles computationally expensive ML operations
-
-# Web Framework
-fastapi==0.115.0
-uvicorn>=0.31.1
-pydantic>=2.11.5
-
-# ML Libraries
-torch>=2.0.0
-sentence-transformers>=2.2.0
-spacy>=3.5.0
-scikit-learn>=1.3.0
-numpy>=1.24.0
-
-# HTTP Client (for communication)
-httpx>=0.27.2
-
-# Observability
+sentence-transformers
+scikit-learn
 structlog
+fastapi
+uvicorn
