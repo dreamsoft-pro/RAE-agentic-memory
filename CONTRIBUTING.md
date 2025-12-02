@@ -357,6 +357,7 @@ If you are an AI assistant (Claude, ChatGPT, GitHub Copilot) working on this rep
 2.  **Branching**: ALWAYS create new features from `develop`. NEVER commit directly to `main` or `develop`.
 3.  **Tests**: Always generate tests for new code.
 4.  **Style**: Ensure code passes `black` and `ruff`.
+5.  **CI Check**: Before merging to `main`, VERIFY that GitHub Actions have passed (`gh run watch` or checking PR status).
 
 ## ❓ Questions?
 

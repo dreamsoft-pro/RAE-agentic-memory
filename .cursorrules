@@ -13,6 +13,11 @@ Refer to `docs/BRANCHING.md` for full details.
 - **`hotfix/name-of-fix`**: Critical production fixes. MUST branch from `main`.
 - **`release/x.y`**: Release preparation. Branches from `develop`.
 
+**CI/CD Verification:**
+- Before merging to `main`, you MUST verify that GitHub Actions checks have passed for the source branch.
+- Use `gh run watch` or `gh run list` to confirm green status.
+- NEVER merge a failing branch to `main`.
+
 **Command Patterns:**
 - Start feature: `git checkout develop && git pull && git checkout -b feature/my-feature`
 - Start hotfix: `git checkout main && git pull && git checkout -b hotfix/critical-fix`
