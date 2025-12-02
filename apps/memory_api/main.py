@@ -30,6 +30,7 @@ from apps.memory_api.routes import (
     graph_enhanced,
     hybrid_search,
     reflections,
+    token_savings,
 )
 from apps.memory_api.security import auth
 from apps.memory_api.security.rate_limit import rate_limit_middleware
@@ -290,6 +291,7 @@ app.include_router(hybrid_search.router, tags=["Hybrid Search"])
 app.include_router(evaluation.router, tags=["Evaluation"])
 app.include_router(dashboard.router, tags=["Dashboard"])
 app.include_router(graph_enhanced.router, tags=["Graph Management"])
+app.include_router(token_savings.router, tags=["Metrics"])
 
 
 # Root endpoint

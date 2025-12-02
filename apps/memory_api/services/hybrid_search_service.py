@@ -28,10 +28,12 @@ from apps.memory_api.models.hybrid_search_models import (
     SearchResultItem,
     SearchStrategy,
 )
+from apps.memory_api.repositories.token_savings_repository import TokenSavingsRepository
 from apps.memory_api.services.hybrid_cache import get_hybrid_cache
 from apps.memory_api.services.llm import get_llm_provider
 from apps.memory_api.services.ml_service_client import MLServiceClient
 from apps.memory_api.services.query_analyzer import QueryAnalyzer
+from apps.memory_api.services.token_savings_service import TokenSavingsService
 
 logger = structlog.get_logger(__name__)
 
@@ -96,6 +98,7 @@ class HybridSearchService:
         self.llm_provider = get_llm_provider()
         self.enable_cache = enable_cache
         self.cache = get_hybrid_cache() if enable_cache else None
+        self.savings_service = TokenSavingsService(TokenSavingsRepository(pool))
 
     async def search(
         self,
@@ -173,6 +176,22 @@ class HybridSearchService:
 
             if cached_result:
                 logger.info("returning_cached_result", tenant_id=tenant_id)
+                
+                # Track token savings
+                # Estimate: Query Analysis (~300) + Reranking (~k * 200 if enabled)
+                predicted_tokens = 300
+                if enable_reranking:
+                    predicted_tokens += k * 200
+                
+                await self.savings_service.track_savings(
+                    tenant_id=tenant_id,
+                    project_id=project_id,
+                    model="claude-3-haiku",
+                    predicted_tokens=predicted_tokens,
+                    real_tokens=0,
+                    savings_type="cache"
+                )
+
                 return HybridSearchResult(**cached_result)
 
         # Stage 1: Query Analysis
