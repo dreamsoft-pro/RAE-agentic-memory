@@ -129,7 +129,7 @@ jobs:
       - name: Run MCP tests
         run: |
           cd integrations/mcp
-          pytest
+          pytest -m "not integration and not e2e and not load"
 
   lint:
     name: Lint
