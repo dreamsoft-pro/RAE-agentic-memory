@@ -12,16 +12,16 @@ This document tracks the implementation status of RAE features and defines the r
 ### Iteration 1: Foundation Layer (Repositories & Basic Services) 🎯
 **Goal:** Increase coverage to ~60% by securing the data access layer and core utilities.
 
-- [ ] **`apps/memory_api/repositories/cost_logs_repository.py`** (Current: 0%)
+- [x] **`apps/memory_api/repositories/cost_logs_repository.py`** (Current: ~87%)
     - Implement unit tests for `log_cost` and `get_costs` methods.
     - Mock database pool interactions.
-- [ ] **`apps/memory_api/repositories/trigger_repository.py`** (Current: 21%)
+- [x] **`apps/memory_api/repositories/trigger_repository.py`** (Current: ~48%)
     - Increase coverage for `create_trigger`, `update_trigger`, `get_active_triggers`.
     - Test edge cases (invalid inputs, DB errors).
-- [ ] **`apps/memory_api/services/cost_controller.py`** (Current: 22%)
+- [x] **`apps/memory_api/services/cost_controller.py`** (Current: ~89%)
     - Test budget calculation logic and thresholds.
     - Verify cache checking logic.
-- [ ] **`apps/memory_api/services/analytics.py`** (Current: 0%)
+- [x] **`apps/memory_api/services/analytics.py`** (Current: ~95%)
     - Test metrics aggregation logic.
 
 ### Iteration 2: Core Logic (Complex Services) 🧠
