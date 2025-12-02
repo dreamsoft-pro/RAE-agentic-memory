@@ -157,6 +157,7 @@ RAE is designed for enterprise AI governance and compliance with **ISO/IEC 42001
 | Profile | Best For | Resources | Command |
 |---------|----------|-----------|---------|
 | 💡 **RAE Lite** | Developers, testing, small teams (1-10 users) | 4 GB RAM, 2 CPU | `docker-compose -f docker-compose.lite.yml up -d` |
+| 🔒 **Local First** | Privacy focused, offline capable (Ollama) | 16GB+ RAM | See [docs/LOCAL_SETUP.md](docs/LOCAL_SETUP.md) |
 | 🚀 **Full Stack** | Production, mid-size teams (10-100 users) | 8 GB RAM, 4 CPU | `./scripts/quickstart.sh` |
 | ☸️ **Enterprise** | Large orgs, auto-scaling, high availability | Auto-scaling | [Kubernetes Guide](docs/reference/deployment/kubernetes.md) |
 
@@ -173,6 +174,7 @@ git clone https://github.com/dreamsoft-pro/RAE-agentic-memory && cd RAE-agentic-
 
 **Who is RAE Lite for?**
 - 👨‍💻 **Developers** evaluating RAE or building prototypes
+- 🔒 **Privacy-conscious users** running local LLMs (Ollama)
 - 🧪 **Teams testing** RAE before full deployment
 - 🏢 **Small teams** (1-10 users) with limited infrastructure
 - 💰 **Resource-constrained** environments (VPS, single server)
@@ -185,7 +187,7 @@ git clone https://github.com/dreamsoft-pro/RAE-agentic-memory && cd RAE-agentic-
 - ✅ PostgreSQL, Qdrant, Redis (all essential services)
 - ❌ No ML Service, Dashboard, or Celery (optional components)
 
-**Requirements:** 4 GB RAM, 2 CPU cores (runs on any modern laptop)
+**Requirements:** 4 GB RAM (8GB+ for Local LLM), 2 CPU cores
 
 **Quick start:**
 
@@ -193,7 +195,7 @@ git clone https://github.com/dreamsoft-pro/RAE-agentic-memory && cd RAE-agentic-
 git clone https://github.com/dreamsoft-pro/RAE-agentic-memory
 cd RAE-agentic-memory
 cp .env.example .env
-# Edit .env and add your LLM API key (OPENAI_API_KEY or ANTHROPIC_API_KEY)
+# Edit .env: Add API keys OR configure Ollama for local privacy (see docs/LOCAL_SETUP.md)
 docker-compose -f docker-compose.lite.yml up -d
 
 # Initialize database (first time only)
