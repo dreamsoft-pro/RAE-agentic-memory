@@ -57,30 +57,39 @@ Enterprise-grade dashboard for visualizing and managing your AI agent's memory.
 with st.sidebar:
     st.header("⚙️ Configuration")
 
+    # Initialize session state for config if not exists
+    if "config" not in st.session_state:
+        st.session_state.config = {
+            "api_url": os.getenv("RAE_API_URL", "http://localhost:8000"),
+            "api_key": os.getenv("RAE_API_KEY", "default-key"),
+            "tenant_id": os.getenv("RAE_TENANT_ID", "default-tenant"),
+            "project_id": os.getenv("RAE_PROJECT_ID", "default-project"),
+        }
+
     # Connection settings
     with st.expander("API Connection", expanded=True):
         api_url = st.text_input(
             "API URL",
-            value=os.getenv("RAE_API_URL", "http://localhost:8000"),
+            value=st.session_state.config["api_url"],
             help="URL of the RAE Memory API",
         )
 
         api_key = st.text_input(
             "API Key",
-            value=os.getenv("RAE_API_KEY", "default-key"),
+            value=st.session_state.config["api_key"],
             type="password",
             help="API authentication key",
         )
 
         tenant_id = st.text_input(
             "Tenant ID",
-            value=os.getenv("RAE_TENANT_ID", "default-tenant"),
+            value=st.session_state.config["tenant_id"],
             help="Tenant identifier for multi-tenancy",
         )
 
         project_id = st.text_input(
             "Project ID",
-            value=os.getenv("RAE_PROJECT_ID", "default-project"),
+            value=st.session_state.config["project_id"],
             help="Project identifier",
         )
 
@@ -90,6 +99,14 @@ with st.sidebar:
     with col1:
         if st.button("🔌 Connect", type="primary", use_container_width=True):
             try:
+                # Update config in session state
+                st.session_state.config.update({
+                    "api_url": api_url,
+                    "api_key": api_key,
+                    "tenant_id": tenant_id,
+                    "project_id": project_id,
+                })
+                
                 client = RAEClient(
                     api_url=api_url,
                     api_key=api_key,

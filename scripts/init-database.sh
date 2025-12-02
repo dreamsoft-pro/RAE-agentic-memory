@@ -17,10 +17,17 @@ if ! docker ps | grep -q rae-postgres; then
     exit 1
 fi
 
+# Database connection settings
+DB_USER=${POSTGRES_USER:-rae_user}
+DB_NAME=${POSTGRES_DB:-rae_memory}
+
+echo "Using DB User: $DB_USER"
+echo "Using DB Name: $DB_NAME"
+
 # Wait for postgres to be ready
 echo -e "${YELLOW}Waiting for PostgreSQL to be ready...${NC}"
 for i in {1..30}; do
-    if docker exec rae-postgres pg_isready -U rae -d rae > /dev/null 2>&1; then
+    if docker exec rae-postgres pg_isready -U $DB_USER -d $DB_NAME > /dev/null 2>&1; then
         echo -e "${GREEN}PostgreSQL is ready!${NC}"
         break
     fi
@@ -39,7 +46,7 @@ for file in infra/postgres/ddl/*.sql; do
     if [ -f "$file" ]; then
         filename=$(basename "$file")
         echo -n "  - $filename... "
-        if docker exec -i rae-postgres psql -U rae -d rae < "$file" > /dev/null 2>&1; then
+        if docker exec -i rae-postgres psql -U $DB_USER -d $DB_NAME < "$file" > /dev/null 2>&1; then
             echo -e "${GREEN}✓${NC}"
         else
             echo -e "${YELLOW}⚠ (may already exist)${NC}"
@@ -53,7 +60,7 @@ for file in infra/postgres/migrations/*.sql; do
     if [ -f "$file" ]; then
         filename=$(basename "$file")
         echo -n "  - $filename... "
-        if docker exec -i rae-postgres psql -U rae -d rae < "$file" > /dev/null 2>&1; then
+        if docker exec -i rae-postgres psql -U $DB_USER -d $DB_NAME < "$file" > /dev/null 2>&1; then
             echo -e "${GREEN}✓${NC}"
         else
             echo -e "${YELLOW}⚠ (may already exist)${NC}"
@@ -66,7 +73,7 @@ echo -e "${YELLOW}Verifying database schema...${NC}"
 TABLES=("memories" "shared_memories")
 for table in "${TABLES[@]}"; do
     echo -n "  - Checking table '$table'... "
-    if docker exec rae-postgres psql -U rae -d rae -tAc "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = '$table');" | grep -q 't'; then
+    if docker exec rae-postgres psql -U $DB_USER -d $DB_NAME -tAc "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = '$table');" | grep -q 't'; then
         echo -e "${GREEN}✓${NC}"
     else
         echo -e "${RED}✗ Missing!${NC}"
@@ -78,12 +85,12 @@ done
 # Add missing columns if needed
 echo -e "${YELLOW}Checking for required columns...${NC}"
 echo -n "  - Adding 'project' column to memories... "
-docker exec rae-postgres psql -U rae -d rae -c "ALTER TABLE memories ADD COLUMN IF NOT EXISTS project VARCHAR(255);" > /dev/null 2>&1
+docker exec rae-postgres psql -U $DB_USER -d $DB_NAME -c "ALTER TABLE memories ADD COLUMN IF NOT EXISTS project VARCHAR(255);" > /dev/null 2>&1
 echo -e "${GREEN}✓${NC}"
 
 echo -n "  - Adding 'created_at' column to memories... "
-docker exec rae-postgres psql -U rae -d rae -c "ALTER TABLE memories ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT now();" > /dev/null 2>&1
-docker exec rae-postgres psql -U rae -d rae -c "UPDATE memories SET created_at = timestamp WHERE created_at IS NULL;" > /dev/null 2>&1
+docker exec rae-postgres psql -U $DB_USER -d $DB_NAME -c "ALTER TABLE memories ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT now();" > /dev/null 2>&1
+docker exec rae-postgres psql -U $DB_USER -d $DB_NAME -c "UPDATE memories SET created_at = timestamp WHERE created_at IS NULL;" > /dev/null 2>&1
 echo -e "${GREEN}✓${NC}"
 
 echo ""
