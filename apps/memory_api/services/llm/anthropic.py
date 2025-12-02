@@ -18,7 +18,7 @@ class AnthropicProvider(LLMProvider):
         key = api_key or settings.ANTHROPIC_API_KEY
         if not key:
             raise ValueError("ANTHROPIC_API_KEY is not set.")
-        self.client = instructor.patch(AsyncAnthropic(api_key=key))
+        self.client = instructor.from_anthropic(AsyncAnthropic(api_key=key))
 
     @retry(
         wait=wait_exponential(multiplier=1, min=4, max=10), stop=stop_after_attempt(3)

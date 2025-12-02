@@ -45,3 +45,12 @@ repos:
         additional_dependencies: [types-all]
         args: ['--ignore-missing-imports', '--no-strict-optional']
         exclude: ^(tests/|examples/)
+
+  - repo: local
+    hooks:
+      - id: run-tests
+        name: Run Unit Tests
+        entry: make test-unit
+        language: system
+        pass_filenames: false
+        always_run: true
