@@ -17,6 +17,11 @@ We follow a strict Git Flow variant (see `docs/BRANCHING.md`):
 3.  **Releases**: Start from `develop`.
     - Pattern: `release/x.y`
 
+4.  **Main Integrity**:
+    - BEFORE merging any branch to `main`, you must confirm that GitHub Actions CI has passed.
+    - Use `gh run watch` to wait for tests.
+    - Do not merge if CI fails.
+
 ## Code Standards
 
 - **Stack**: Python 3.11+, FastAPI, PostgreSQL (asyncpg), Qdrant, Redis.
