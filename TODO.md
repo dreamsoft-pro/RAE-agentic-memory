@@ -1,69 +1,96 @@
-# RAE Agentic Memory - Missing/Incomplete Functionalities
+# RAE Agentic Memory - Roadmap & Implementation Plan
 
-**Status as of 2025-11-30:** ✅ **ALL MAJOR BACKEND FUNCTIONALITIES COMPLETED**
+**Status as of 2025-12-02:** ✅ **ALL MAJOR BACKEND FUNCTIONALITIES COMPLETED**
 
-This document lists functionalities described in `docs/all.md` that are either entirely missing from the codebase or are only partially implemented, requiring further development.
+This document tracks the implementation status of RAE features and defines the roadmap for quality assurance and future extensions.
 
-## Summary
+## Phase 3: Quality & Reliability (Target: 80% Coverage)
 
-**✅ Completed in v2.0.4-enterprise:**
-- Sections 1.4, 1.5, 1.6 (Maintenance Workers, Actor-Evaluator-Reflector, Tests)
-- Sections 2.1, 2.4, 2.5 (Event Triggers, Evaluation, Dashboard)
-- All backend API functionalities now have full database implementations
-- All CI/CD checks passing (Lint, Tests, Security, Docker Build)
+**Current Status:** ~52% Coverage (244 tests passing)
+**Target:** 80% Coverage (~400+ tests)
 
-**⏳ Remaining (Out of Current Scope):**
-- Sections 6, 7 (Go SDK, Node.js SDK) - Require full SDK implementations
-- Section 9 (RAE Memory Replay Tool) - Requires entirely new feature development
+### Iteration 1: Foundation Layer (Repositories & Basic Services) 🎯
+**Goal:** Increase coverage to ~60% by securing the data access layer and core utilities.
+
+- [ ] **`apps/memory_api/repositories/cost_logs_repository.py`** (Current: 0%)
+    - Implement unit tests for `log_cost` and `get_costs` methods.
+    - Mock database pool interactions.
+- [ ] **`apps/memory_api/repositories/trigger_repository.py`** (Current: 21%)
+    - Increase coverage for `create_trigger`, `update_trigger`, `get_active_triggers`.
+    - Test edge cases (invalid inputs, DB errors).
+- [ ] **`apps/memory_api/services/cost_controller.py`** (Current: 22%)
+    - Test budget calculation logic and thresholds.
+    - Verify cache checking logic.
+- [ ] **`apps/memory_api/services/analytics.py`** (Current: 0%)
+    - Test metrics aggregation logic.
+
+### Iteration 2: Core Logic (Complex Services) 🧠
+**Goal:** Increase coverage to ~70% by testing the most critical and complex business logic.
+
+- [ ] **`apps/memory_api/services/hybrid_search_service.py`** (Current: 9%) 🚨 **CRITICAL**
+    - Test result fusion logic (weighting).
+    - Test reranking integration (mock LLM).
+    - Test fallback strategies (vector only, graph only).
+- [ ] **`apps/memory_api/services/graph_extraction.py`** (Current: 39%)
+    - Test triple extraction parsing.
+    - Test graph node/edge creation logic.
+- [ ] **`apps/memory_api/services/reflection_pipeline.py`** (Current: 13%)
+    - Test reflection cycle execution.
+    - Verify recursive insight generation.
+
+### Iteration 3: Microservices & Integrations 🔌
+**Goal:** Increase coverage to ~75% by covering isolated services.
+
+- [ ] **`apps/ml_service/*`** (Current: 0%)
+    - Add integration tests for embedding generation (mocking the actual model to save resources).
+    - Test entity resolution endpoints.
+- [ ] **`apps/reranker-service/*`** (Current: 0%)
+    - Test rerank endpoint logic.
+- [ ] **`integrations/mcp`** (Current: ~50% in isolated suite)
+    - Ensure MCP tests are fully integrated into the main CI pipeline reporting.
+
+### Iteration 4: Safety Net (Routes & Dashboard) 🛡️
+**Goal:** Reach 80% coverage by testing API controllers and frontend backends.
+
+- [ ] **`apps/memory_api/routes/dashboard.py`** (Current: 0%)
+    - Test all dashboard endpoints (happy paths and error handling).
+    - Verify data formatting for frontend.
+- [ ] **`apps/memory_api/routes/graph_enhanced.py`** (Current: 0%)
+    - Test advanced graph endpoints.
+- [ ] **E2E/Integration Polish**
+    - Add missing integration tests for full flows (Store -> Process -> Query).
 
 ---
 
-## 1. RAE–Reflective Memory v1 Iteration Fix and Polish Plan
+## Completed in v2.2.0-enterprise (2025-12-02) ✅
 
-### 1.4. Maintenance Workers (Decay, Summarization, Dreaming) ✅ COMPLETED
+*   **✅ Token Savings Tracker:**
+    - Implemented `TokenSavingsRepository` and `TokenSavingsService`.
+    - Added database migration (`token_savings_log`).
+    - Integrated with `HybridSearchService` to track cache hits.
+    - Added API endpoints for metrics and visualization.
+    - **Verification:** Unit tests passed, manual seed confirmed.
 
-*   **✅ Implement `SummarizationWorker.summarize_long_sessions`:** COMPLETED - The implementation in `apps/memory_api/workers/memory_maintenance.py` lines 305-378 now includes full database query logic to find and summarize long sessions with SQL-based aggregation and optional LLM fallback.
-*   **✅ Upgrade `SummarizationWorker._create_summary_text` to use an LLM:** COMPLETED - Lines 351-378 now use LLM with SessionSummaryResponse model and structured output, with fallback to string aggregation.
-*   **✅ Confirm `ImportanceScoringService.decay_importance` details:** VERIFIED - Implementation in `apps/memory_api/services/importance_scoring.py` lines 366-465 includes importance floor (GREATEST(0.01, ...)), accelerated decay for stale memories (>30 days), and protected decay for recent memories (<7 days).
+*   **✅ Critical Infrastructure Fixes:**
+    - Fixed Qdrant initialization (502 errors).
+    - Fixed Alembic migration automation (Docker command).
+    - Fixed Dockerfile dependencies (`psycopg2-binary`).
+    - Fixed Dashboard configuration persistence.
 
-### 1.5. Actor–Evaluator–Reflector Contract ✅ COMPLETED
+---
 
-*   **✅ Implement LLM-based evaluator:** COMPLETED - The `LLMEvaluator` class in `apps/memory_api/services/evaluator.py` lines 273-352 is fully implemented with LLM integration using LLMEvaluationResponse model and fallback to DeterministicEvaluator on error.
-*   **✅ Clarify `EvaluationResult` model consolidation:** INVESTIGATED - The two `EvaluationResult` models serve different purposes and should remain separate:
-    *   `reflection_v2_models.py` line 231: Dataclass for reflection evaluation (internal use)
-    *   `evaluation_models.py` line 126: Pydantic model for search quality evaluation (API responses)
+## Completed in v2.0.4-enterprise (2025-11-30) ✅
 
-### 1.6. Tests, Metrics, DX ✅ COMPLETED
+*   **✅ Maintenance Workers:** Summarization, Decay, Dreaming (Implementation & Tests).
+*   **✅ Event Triggers:** Database storage, CRUD API, execution logging.
+*   **✅ Dashboard Metrics:** Time-series database, optimized queries.
+*   **✅ A/B Testing & Benchmarking:** Full database implementation.
+*   **✅ CI/CD:** All checks passing.
 
-*   **✅ Implement integration tests for Decay Worker:** COMPLETED - Created `tests/integration/test_decay_worker.py` with 9 comprehensive tests covering basic decay, access stats, multi-tenant, importance floor, error handling, and metadata preservation (372 lines).
-*   **✅ Implement integration tests for Dreaming Worker:** COMPLETED - Created `tests/integration/test_dreaming_worker.py` with 9 comprehensive tests covering basic cycle, config flags, lookback windows, importance filtering, max samples, and error handling (383 lines).
-*   **Note:** Summarization Worker integration tests were not created as the worker is already well-tested through unit tests and the implementation was verified to be complete.
+---
 
-## 2. RAE Agentic Memory API Reference
+## Remaining (Out of Current Scope)
 
-### 2.1. Event Triggers (`/v1/triggers/*`) ✅ COMPLETED
-
-*   **✅ Implement database storage and retrieval for trigger rules:** COMPLETED - Created `infra/postgres/migrations/003_create_triggers_workflows_tables.sql` with trigger_rules table and `apps/memory_api/repositories/trigger_repository.py` (486 lines) with full CRUD operations. All 10 endpoints in `apps/memory_api/routes/event_triggers.py` now use database storage.
-*   **✅ Implement database storage and retrieval for workflows:** COMPLETED - Migration 003 includes workflows table, and WorkflowRepository in `trigger_repository.py` provides full CRUD operations. All workflow endpoints now use database storage.
-
-### 2.4. Evaluation (`/v1/evaluation/*`) ✅ COMPLETED
-
-*   **✅ Implement database storage and retrieval for A/B tests:** COMPLETED - Created `infra/postgres/migrations/005_create_evaluation_tables.sql` with ab_tests and ab_test_results tables, and `apps/memory_api/repositories/evaluation_repository.py` with ABTestRepository class (full CRUD + statistics). Updated `create_ab_test` and `compare_ab_test_variants` endpoints in `apps/memory_api/routes/evaluation.py` to use database storage.
-*   **✅ Implement database storage and retrieval for benchmark suites and their execution results:** COMPLETED - Migration 005 includes benchmark_suites and benchmark_executions tables. BenchmarkRepository in `evaluation_repository.py` provides full CRUD operations. Updated `run_benchmark_suite` and `list_benchmark_suites` endpoints to use database storage.
-
-### 2.5. Dashboard (`/v1/dashboard/*`) ✅ COMPLETED
-
-*   **✅ Implement time series data retrieval for `/v1/dashboard/metrics/timeseries/{metric_name}`:** COMPLETED - Created `infra/postgres/migrations/004_create_metrics_timeseries_table.sql` with metrics_timeseries table and helper functions, and `apps/memory_api/repositories/metrics_repository.py` (346 lines) for time series operations. Updated `/v1/dashboard/metrics/timeseries/{metric_name}` endpoint in `apps/memory_api/routes/dashboard.py` to retrieve real data with automatic aggregation intervals.
-
-## 6. Go SDK (rae_memory_sdk)
-*   **Implement the Go SDK:** The `docs/sdk_go_design.md` describes a Go SDK, but the actual implementation is missing from the `sdk/go` directory.
-
-## 7. Node.js SDK (rae-memory-sdk)
-*   **Implement the Node.js SDK:** The `docs/sdk_nodejs_design.md` describes a Node.js SDK, but the actual implementation is missing from the `sdk/nodejs` directory.
-
-## 9. RAE Memory Replay Tool - Design Document
-*   **Implement the RAE Memory Replay Tool:** This functionality is entirely missing. This includes:
-    *   Creating the `agent_sessions` database table.
-    *   Integrating session recording into the `apps/memory_api/routers/agent.py` `execute` endpoint.
-    *   Implementing core replay functionalities (record, list, replay, visualize, inspect, filter, search).
-    *   Developing CLI/Web UI for the tool.
+- **Go SDK**
+- **Node.js SDK**
+- **Memory Replay Tool**
