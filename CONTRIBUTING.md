@@ -138,7 +138,14 @@ make lint
 pre-commit run --all-files
 ```
 
-5. **Commit your changes:**
+5. **Update Documentation:**
+
+   Run the documentation automator to update status and TODOs:
+   ```bash
+   make docs
+   ```
+
+6. **Commit your changes:**
 
 We use [Conventional Commits](https://www.conventionalcommits.org/):
 
@@ -160,7 +167,7 @@ git commit -m "chore: update dependencies"
 - `perf:` - Performance improvement
 - `chore:` - Maintenance tasks
 
-6. **Push and create a Pull Request:**
+7. **Push and create a Pull Request:**
 
 ```bash
 git push origin feature/amazing-feature

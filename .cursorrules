@@ -48,3 +48,8 @@ Refer to `docs/BRANCHING.md` for full details.
 
 - Never expose API keys or secrets in code. Use `.env`.
 - Ensure `TENANCY_ENABLED` logic is respected in new endpoints.
+
+## 📚 Documentation
+
+- **Update Docs**: Before finishing a task or submitting a PR, run `make docs`.
+- **Status**: Ensure `STATUS.md` and `TODO.md` are up-to-date with your changes.
