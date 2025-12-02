@@ -780,7 +780,7 @@ class HybridSearchService:
                 fulltext_score=data["strategy_scores"].get("fulltext"),
                 hybrid_score=hybrid_score,
                 final_score=hybrid_score,  # Will be updated if re-ranked
-                rank=0,  # Will be assigned later
+                rank=1,  # Will be assigned later, default to 1 for validation
                 search_strategies_used=data["strategies_used"],
                 created_at=data["created_at"],
             )
