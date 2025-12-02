@@ -151,15 +151,16 @@ All missing/incomplete functionalities from TODO.md have been successfully imple
 - ✅ **Statistical Support** - Helper functions for A/B test analysis with baseline comparisons
 
 
+
 ## Live Metrics (Auto-generated)
 | Metric | Value |
 |--------|-------|
-| **Branch** | `feature/docs-automation-update` |
-| **Commit** | `e03c1f195` |
-| **Coverage** | 52.4% |
-| **Tests** | 309 total, 0 failed, 10 skipped |
-| **Pass Rate** | 100.0% |
-| **Last Update** | 2025-12-02 15:33:59 |
+| **Branch** | `main` |
+| **Commit** | `bac71e6` |
+| **Coverage** | 60.2% |
+| **Tests** | 45 total, 15 failed, 12 skipped |
+| **Pass Rate** | 44.4% |
+| **Last Update** | 2025-12-02 15:05:11 |
 
 ## Quick Links
 - [Changelog](CHANGELOG.md)
