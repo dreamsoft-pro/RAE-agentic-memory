@@ -58,12 +58,16 @@ async def test_list_tools():
     """Test that list_tools returns all expected tools."""
     tools = await handle_list_tools()
 
-    assert len(tools) == 3
+    assert len(tools) == 7
     tool_names = [tool.name for tool in tools]
 
     assert "save_memory" in tool_names
     assert "search_memory" in tool_names
     assert "get_related_context" in tool_names
+    assert "request_approval" in tool_names
+    assert "check_approval_status" in tool_names
+    assert "get_circuit_breakers" in tool_names
+    assert "list_policies" in tool_names
 
     # Verify save_memory schema
     save_memory_tool = next(t for t in tools if t.name == "save_memory")
@@ -236,14 +240,15 @@ async def test_list_resources():
     resources = await handle_list_resources()
 
     assert len(resources) == 2
-    resource_uris = [resource.uri for resource in resources]
+    # Convert AnyUrl to string for comparison
+    resource_uris = [str(resource.uri) for resource in resources]
 
     assert "rae://project/reflection" in resource_uris
     assert "rae://project/guidelines" in resource_uris
 
     # Verify resource metadata
     reflection_resource = next(
-        r for r in resources if r.uri == "rae://project/reflection"
+        r for r in resources if str(r.uri) == "rae://project/reflection"
     )
     assert reflection_resource.name == "Project Reflection"
     assert reflection_resource.mimeType == "text/plain"
