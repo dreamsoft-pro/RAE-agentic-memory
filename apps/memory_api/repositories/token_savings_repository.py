@@ -3,9 +3,11 @@ from typing import List, Optional
 
 import asyncpg
 import structlog
+
 from apps.memory_api.models.token_savings import SavingsSummary, TokenSavingsEntry
 
 logger = structlog.get_logger(__name__)
+
 
 class TokenSavingsRepository:
     """
@@ -43,19 +45,21 @@ class TokenSavingsRepository:
                 entry.estimated_cost_saved_usd,
                 entry.savings_type,
                 entry.model,
-                entry.timestamp
+                entry.timestamp,
             )
         except Exception as e:
-            logger.error("failed_to_log_savings", error=str(e), entry=entry.model_dump())
+            logger.error(
+                "failed_to_log_savings", error=str(e), entry=entry.model_dump()
+            )
             # We don't raise here to avoid breaking the main request flow
             # Metrics loss is acceptable vs request failure
 
     async def get_savings_summary(
-        self, 
-        tenant_id: str, 
+        self,
+        tenant_id: str,
         project_id: Optional[str] = None,
         start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None
+        end_date: Optional[datetime] = None,
     ) -> SavingsSummary:
         """
         Calculate aggregated savings for a given period.
@@ -65,10 +69,7 @@ class TokenSavingsRepository:
         if not end_date:
             end_date = datetime.now()
 
-        conditions = [
-            "tenant_id = $1",
-            "timestamp BETWEEN $2 AND $3"
-        ]
+        conditions = ["tenant_id = $1", "timestamp BETWEEN $2 AND $3"]
         params = [tenant_id, start_date, end_date]
 
         if project_id:
@@ -97,17 +98,17 @@ class TokenSavingsRepository:
 
         # Process grouped results
         for row in rows:
-            # Note: total_tokens/usd are partial sums here if multiple types exist, 
+            # Note: total_tokens/usd are partial sums here if multiple types exist,
             # but usually we want the grand total.
             # Actually, GROUP BY savings_type means we get one row per type.
             # We need to sum them up in python or use window functions/ROLLUP.
             # Simpler to sum in python here.
             t_tokens = row["type_tokens"] or 0
-            
+
             by_type[row["savings_type"]] = t_tokens
             total_tokens += t_tokens
             # Assuming total_usd comes from sum of individual rows
-            # But since we grouped, we can't just take total_usd from first column easily 
+            # But since we grouped, we can't just take total_usd from first column easily
             # unless we do window function.
             # Let's adjust query logic:
             # The query sums saved_tokens and cost PER GROUP.
@@ -119,21 +120,18 @@ class TokenSavingsRepository:
             total_saved_usd=total_usd,
             savings_by_type=by_type,
             period_start=start_date,
-            period_end=end_date
+            period_end=end_date,
         )
 
     async def get_timeseries(
-        self, 
-        tenant_id: str, 
-        interval: str = "day",  # 'hour', 'day'
-        limit: int = 30
+        self, tenant_id: str, interval: str = "day", limit: int = 30  # 'hour', 'day'
     ) -> List[dict]:
         """
         Get savings over time for charting.
         """
         trunc = "hour" if interval == "hour" else "day"
-        
-        query = f"""
+
+        query = """
             SELECT 
                 date_trunc($2, timestamp) as bucket,
                 SUM(saved_tokens) as saved_tokens,
@@ -144,6 +142,6 @@ class TokenSavingsRepository:
             ORDER BY bucket DESC
             LIMIT $3
         """
-        
+
         rows = await self.pool.fetch(query, tenant_id, trunc, limit)
         return [dict(row) for row in rows]

@@ -176,20 +176,20 @@ class HybridSearchService:
 
             if cached_result:
                 logger.info("returning_cached_result", tenant_id=tenant_id)
-                
+
                 # Track token savings
                 # Estimate: Query Analysis (~300) + Reranking (~k * 200 if enabled)
                 predicted_tokens = 300
                 if enable_reranking:
                     predicted_tokens += k * 200
-                
+
                 await self.savings_service.track_savings(
                     tenant_id=tenant_id,
                     project_id=project_id,
                     model="claude-3-haiku",
                     predicted_tokens=predicted_tokens,
                     real_tokens=0,
-                    savings_type="cache"
+                    savings_type="cache",
                 )
 
                 return HybridSearchResult(**cached_result)
