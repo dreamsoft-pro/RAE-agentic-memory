@@ -13,6 +13,7 @@ htmlcov/
 .pytest_cache/
 .tox/
 coverage.xml
+junit.xml # Added to ignore generated JUnit XML reports
 .hypothesis/
 # Node
 node_modules/
