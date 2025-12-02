@@ -124,11 +124,15 @@ class TestMCPTools:
         """Test listing available tools"""
         tools = await handle_list_tools()
 
-        assert len(tools) == 3
+        assert len(tools) == 7
         tool_names = [t.name for t in tools]
         assert "save_memory" in tool_names
         assert "search_memory" in tool_names
         assert "get_related_context" in tool_names
+        assert "request_approval" in tool_names
+        assert "check_approval_status" in tool_names
+        assert "get_circuit_breakers" in tool_names
+        assert "list_policies" in tool_names
 
     @pytest.mark.asyncio
     async def test_save_memory_tool(self):
@@ -242,7 +246,7 @@ class TestMCPResources:
         resources = await handle_list_resources()
 
         assert len(resources) == 2
-        uris = [r.uri for r in resources]
+        uris = [str(r.uri) for r in resources]
         assert "rae://project/reflection" in uris
         assert "rae://project/guidelines" in uris
 

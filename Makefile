@@ -78,6 +78,7 @@ install-all:  ## Install all dependencies (including integrations)
 	@$(VENV_PIP) install -r requirements-dev.txt
 	@$(VENV_PIP) install -r apps/memory_api/requirements.txt
 	@$(VENV_PIP) install -r apps/reranker-service/requirements.txt || true
+	@$(VENV_PIP) install -r apps/ml_service/requirements.txt || true # New ML Service requirements
 	@$(VENV_PIP) install -r cli/agent-cli/requirements.txt || true
 	@$(VENV_PIP) install -r eval/requirements.txt || true
 	@$(VENV_PIP) install -r integrations/langchain/requirements.txt || true
@@ -86,6 +87,15 @@ install-all:  ## Install all dependencies (including integrations)
 	@$(VENV_PIP) install -r integrations/ollama-wrapper/requirements.txt || true
 	@$(VENV_PIP) install -e sdk/python/rae_memory_sdk
 	@echo "✅ All dependencies installed"
+
+ml-install:  ## Install ML service dependencies
+	@echo "📦 Installing ML service dependencies..."
+	@if [ ! -d ".venv" ]; then \
+		python3 -m venv .venv; \
+	fi
+	@$(VENV_PIP) install --upgrade pip
+	@$(VENV_PIP) install -r apps/ml_service/requirements.txt
+	@echo "✅ ML service dependencies installed"
 
 dev:  ## Start API in development mode (with auto-reload)
 	@echo "🔧 Starting development server..."
