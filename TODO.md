@@ -96,11 +96,8 @@ This document tracks the implementation status of RAE features and defines the r
 - **Memory Replay Tool**
 
 ## Technical Debt (Auto-generated from code)
-*Last scan: 2025-12-02 15:33*
+*Last scan: 2025-12-02 15:04*
 
-- [ ] **STATUS.md:25** - All missing/incomplete functionalities from TODO.md have been successfully implemented:
-- [ ] **STATUS.md:155** - - [Technical Debt](TODO.md)
-- [ ] **CONTRIBUTING.md:143** - Run the documentation automator to update status and TODOs:
 - [ ] **CHANGELOG.md:238** - Added - Missing Functionalities from TODO.md Completed 🎯
 - [ ] **CHANGELOG.md:240** - This release completes the implementation of critical functionalities identified in TODO.md that were either missing or partially implemented.
 - [ ] **CHANGELOG.md:472** - - **TODO.md Items** - Completed 5 major categories of missing/incomplete functionalities:
@@ -108,7 +105,29 @@ This document tracks the implementation status of RAE features and defines the r
 - [ ] **CHANGELOG.md:518** - - Technical debt reduction: 5 major TODO.md categories completed
 - [ ] **CHANGELOG.md:877** - - Resolved TODO comments with detailed implementation notes
 - [ ] **CHANGELOG.md:892** - - TODO comments resolved with implementation guidance
+- [ ] **CONTRIBUTING.md:143** - Run the documentation automator to update status and TODOs:
 - [ ] **README.md:812** - - ✅ **[TODO List](TODO.md)** - Upcoming features and improvements
+- [ ] **STATUS.md:25** - All missing/incomplete functionalities from TODO.md have been successfully implemented:
+- [ ] **STATUS.md:166** - - [Technical Debt](TODO.md)
+- [ ] **apps/memory_api/services/context_builder.py:295** - In production, use vector search to get similarity scores
+- [ ] **apps/memory_api/services/context_builder.py:414** - Implement profile retrieval
+- [ ] **apps/memory_api/routes/event_triggers.py:166** - tenant_id = "default"   TODO: Get from auth context
+- [ ] **apps/memory_api/routes/event_triggers.py:193** - tenant_id = "default"   TODO: Get from auth context
+- [ ] **apps/memory_api/routes/event_triggers.py:367** - tenant_id = "default"   TODO: Get from auth context
+- [ ] **apps/memory_api/workers/memory_maintenance.py:613** - project_id="default",   TODO: Get actual projects
+- [ ] **apps/memory_api/repositories/metrics_repository.py:83** - Implement COPY-based bulk insert for better performance
+- [ ] **scripts/docs_automator.py:4** - Generates/Updates CHANGELOG.md, TODO.md, STATUS.md, and TESTING_STATUS.md.
+- [ ] **scripts/docs_automator.py:18** - _FILE = "TODO.md"
+- [ ] **scripts/docs_automator.py:89** - print(f"Updating {TODO_FILE}...")
+- [ ] **scripts/docs_automator.py:90** - current_content = get_file_content(TODO_FILE)
+- [ ] **scripts/docs_automator.py:92** - Scan for TODOs in code
+- [ ] **scripts/docs_automator.py:100** - if file_path == os.path.join(PROJECT_ROOT, TODO_FILE): continue
+- [ ] **scripts/docs_automator.py:105** - if "TODO" in line or "FIXME" in line:
+- [ ] **scripts/docs_automator.py:107** - clean_line = re.sub(r"^(TODO|FIXME)[:\s]*", "", clean_line)
+- [ ] **scripts/docs_automator.py:116** - "\n".join(todos) if todos else "No TODOs found in code."
+- [ ] **scripts/docs_automator.py:118** - Inject into TODO.md
+- [ ] **scripts/docs_automator.py:129** - write_file_content(TODO_FILE, new_content)
+- [ ] **.github/workflows/docs.yml:52** - file_pattern: 'STATUS.md TODO.md docs/TESTING_STATUS.md'
 - [ ] **docs/RAE–Docs-vs-Code.md:396** - 11. Priorytetowa lista TODO (szczególnie pod RAE Lite)
 - [ ] **docs/Self-Documenting Codebase Blueprint.md:11** - 1. Warstwa Źródłowa: Kod, Komentarze TODO, Historia Gita (Commity).
 - [ ] **docs/Self-Documenting Codebase Blueprint.md:13** - 3. Warstwa Prezentacji: Pliki Markdown (STATUS.md, CHANGELOG.md, TODO.md).
@@ -126,6 +145,9 @@ This document tracks the implementation status of RAE features and defines the r
 - [ ] **docs/project-design/enterprise-roadmap/ENTERPRISE-FIX-PLAN.md:100** - 2. Implement TODO comments or remove them
 - [ ] **docs/project-design/enterprise-roadmap/ENTERPRISE-FIX-PLAN.md:281** - 2. ✅ Implement or remove TODO comments - COMPLETED
 - [ ] **docs/project-design/enterprise-roadmap/ENTERPRISE-FIX-PLAN.md:336** - - ✅ All TODO comments resolved
+- [ ] **docs/project-design/research-ideas/RAE-improve_01.md:13** - Implement JWT token verification
+- [ ] **docs/project-design/research-ideas/RAE-improve_01.md:16** - Implement proper tenant access control
+- [ ] **docs/project-design/research-ideas/RAE_Code_vs_Docs_Feature_Gaps.md:9** - > - głównym `README.md`, `STATUS.md`, `TESTING_STATUS.md`, `TODO.md`,
 - [ ] **docs/project-design/rae-4layer-design/RAE-–Reflective_Memory_v1-Implementati.md:108** - **TODO:**
 - [ ] **docs/project-design/rae-4layer-design/RAE-–Reflective_Memory_v1-Implementati.md:146** - 
 - [ ] **docs/project-design/rae-4layer-design/RAE-–Reflective_Memory_v1-Implementati.md:183** - 
@@ -138,26 +160,4 @@ This document tracks the implementation status of RAE features and defines the r
 - [ ] **docs/project-design/rae-4layer-design/RAE-–Reflective_Memory_v1-Implementati.md:382** - 
 - [ ] **docs/project-design/rae-4layer-design/RAE-–Reflective_Memory_v1-Implementati.md:403** - 
 - [ ] **docs/project-design/rae-4layer-design/RAE-–Reflective_Memory_v1-Implementati.md:455** - 
-- [ ] **docs/project-design/research-ideas/RAE-improve_01.md:13** - Implement JWT token verification
-- [ ] **docs/project-design/research-ideas/RAE-improve_01.md:16** - Implement proper tenant access control
-- [ ] **docs/project-design/research-ideas/RAE_Code_vs_Docs_Feature_Gaps.md:9** - > - głównym `README.md`, `STATUS.md`, `TESTING_STATUS.md`, `TODO.md`,
 - [ ] **docs/guides/rae-lite/RAE-lite.md:10** - Sam projekt deklaruje, że 80%+ coverage to wciąż cel, nie stan – w TODO.md jest to nadal HIGH priority.
-- [ ] **.github/workflows/docs.yml:52** - file_pattern: 'STATUS.md TODO.md docs/TESTING_STATUS.md'
-- [ ] **apps/memory_api/services/context_builder.py:295** - In production, use vector search to get similarity scores
-- [ ] **apps/memory_api/services/context_builder.py:414** - Implement profile retrieval
-- [ ] **apps/memory_api/repositories/metrics_repository.py:83** - Implement COPY-based bulk insert for better performance
-- [ ] **apps/memory_api/routes/event_triggers.py:166** - tenant_id = "default"   TODO: Get from auth context
-- [ ] **apps/memory_api/routes/event_triggers.py:193** - tenant_id = "default"   TODO: Get from auth context
-- [ ] **apps/memory_api/routes/event_triggers.py:367** - tenant_id = "default"   TODO: Get from auth context
-- [ ] **apps/memory_api/workers/memory_maintenance.py:613** - project_id="default",   TODO: Get actual projects
-- [ ] **scripts/docs_automator.py:4** - Generates/Updates CHANGELOG.md, TODO.md, STATUS.md, and TESTING_STATUS.md.
-- [ ] **scripts/docs_automator.py:18** - _FILE = "TODO.md"
-- [ ] **scripts/docs_automator.py:89** - print(f"Updating {TODO_FILE}...")
-- [ ] **scripts/docs_automator.py:90** - current_content = get_file_content(TODO_FILE)
-- [ ] **scripts/docs_automator.py:92** - Scan for TODOs in code
-- [ ] **scripts/docs_automator.py:100** - if file_path == os.path.join(PROJECT_ROOT, TODO_FILE): continue
-- [ ] **scripts/docs_automator.py:105** - if "TODO" in line or "FIXME" in line:
-- [ ] **scripts/docs_automator.py:107** - clean_line = re.sub(r"^(TODO|FIXME)[:\s]*", "", clean_line)
-- [ ] **scripts/docs_automator.py:116** - "\n".join(todos) if todos else "No TODOs found in code."
-- [ ] **scripts/docs_automator.py:118** - Inject into TODO.md
-- [ ] **scripts/docs_automator.py:129** - write_file_content(TODO_FILE, new_content)
