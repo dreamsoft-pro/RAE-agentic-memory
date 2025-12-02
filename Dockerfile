@@ -26,7 +26,9 @@ RUN pip install --no-cache-dir -r /app/requirements-base.txt && \
     pip install --no-cache-dir -r /app/requirements-ml.txt && \
     pip install --no-cache-dir -r /app/requirements.txt
 
-# Copy application code with correct structure
+# Copy application code
+COPY alembic.ini /app/alembic.ini
+COPY alembic /app/alembic
 COPY apps /app/apps
 
 # Create non-root user

@@ -65,6 +65,38 @@ class QdrantStore(MemoryVectorStore):
             self.embedding_model = SentenceTransformer("all-MiniLM-L6-v2")  # type: ignore[misc]
             print("Using SentenceTransformer 'all-MiniLM-L6-v2'")
 
+        self.ensure_collection_exists()
+
+    def ensure_collection_exists(self):
+        """
+        Ensures that the Qdrant collection exists with the correct configuration.
+        Creates it if it doesn't exist.
+        """
+        collection_name = "memories"
+        try:
+            collections = self.qdrant_client.get_collections().collections
+            exists = any(c.name == collection_name for c in collections)
+
+            if not exists:
+                logger.info(f"Collection '{collection_name}' not found. Creating...")
+                self.qdrant_client.create_collection(
+                    collection_name=collection_name,
+                    vectors_config={
+                        "dense": models.VectorParams(
+                            size=384,  # Default for all-MiniLM-L6-v2
+                            distance=models.Distance.COSINE,
+                        )
+                    },
+                    sparse_vectors_config={"text": models.SparseVectorParams()},
+                )
+                logger.info(f"Collection '{collection_name}' created successfully.")
+            else:
+                logger.debug(f"Collection '{collection_name}' already exists.")
+        except Exception as e:
+            logger.error(f"Failed to ensure collection exists: {e}")
+            # Don't raise here to allow app startup even if Qdrant is temporarily down
+            # Retry logic in upsert/query will handle connection issues
+
     def _get_onnx_embedder(self, model_path: str):
         # This is a placeholder for a real ONNX embedder
         class OnnxEmbedder:

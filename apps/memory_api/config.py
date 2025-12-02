@@ -11,9 +11,9 @@ class Settings(BaseSettings):
     """
 
     POSTGRES_HOST: str = "localhost"
-    POSTGRES_DB: str = "memory"
-    POSTGRES_USER: str = "memory"
-    POSTGRES_PASSWORD: str = "example"
+    POSTGRES_DB: str = "rae"
+    POSTGRES_USER: str = "rae"
+    POSTGRES_PASSWORD: str = "rae_password"
 
     QDRANT_HOST: str = "localhost"
     QDRANT_PORT: int = 6333
@@ -151,7 +151,9 @@ class Settings(BaseSettings):
             self.REFLECTIVE_LESSONS_TOKEN_BUDGET = 1024
         return self
 
-    model_config = ConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = ConfigDict(
+        env_file=".env", env_file_encoding="utf-8", extra="ignore"
+    )
 
 
 settings = Settings()
