@@ -90,11 +90,21 @@ make test
 
 1. **Create a new branch:**
 
-```bash
-git checkout -b feature/amazing-feature
-# or
-git checkout -b fix/bug-description
-```
+   We follow a strict branching strategy (see `docs/BRANCHING.md`):
+
+   - **Features**: Must branch from `develop`.
+     ```bash
+     git checkout develop
+     git pull
+     git checkout -b feature/amazing-feature
+     ```
+
+   - **Hotfixes** (Production critical): Must branch from `main`.
+     ```bash
+     git checkout main
+     git pull
+     git checkout -b hotfix/critical-fix
+     ```
 
 2. **Make your changes:**
    - Write clear, commented code
@@ -338,6 +348,15 @@ Contributors will be recognized in:
 - GitHub contributor badge on your profile
 - Release notes for significant contributions
 - Our eternal gratitude! 💙
+
+## 🤖 AI Agent Guidelines
+
+If you are an AI assistant (Claude, ChatGPT, GitHub Copilot) working on this repository, please:
+
+1.  **Read Instructions**: Check `.cursorrules` (for Cursor) or `.github/copilot-instructions.md`.
+2.  **Branching**: ALWAYS create new features from `develop`. NEVER commit directly to `main` or `develop`.
+3.  **Tests**: Always generate tests for new code.
+4.  **Style**: Ensure code passes `black` and `ruff`.
 
 ## ❓ Questions?
 
