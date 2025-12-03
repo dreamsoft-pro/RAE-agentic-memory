@@ -108,7 +108,7 @@ This document tracks the implementation status of RAE features and defines the r
 - [ ] **CONTRIBUTING.md:143** - Run the documentation automator to update status and TODOs:
 - [ ] **README.md:812** - - ✅ **[TODO List](TODO.md)** - Upcoming features and improvements
 - [ ] **STATUS.md:25** - All missing/incomplete functionalities from TODO.md have been successfully implemented:
-- [ ] **STATUS.md:175** - - [Technical Debt](TODO.md)
+- [ ] **STATUS.md:174** - - [Technical Debt](TODO.md)
 - [ ] **apps/memory_api/services/context_builder.py:295** - In production, use vector search to get similarity scores
 - [ ] **apps/memory_api/services/context_builder.py:414** - Implement profile retrieval
 - [ ] **apps/memory_api/routes/event_triggers.py:166** - tenant_id = "default"   TODO: Get from auth context
