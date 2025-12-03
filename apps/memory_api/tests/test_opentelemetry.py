@@ -68,10 +68,13 @@ class TestOpenTelemetrySetup:
         mock_provider_instance.add_span_processor.assert_called_once()
         mock_trace.set_tracer_provider.assert_called_once_with(mock_provider_instance)
 
-    @patch.dict(os.environ, {"OTEL_TRACES_ENABLED": "false"})
     @patch(
         "apps.memory_api.observability.opentelemetry_config.OPENTELEMETRY_AVAILABLE",
         True,
+    )
+    @patch(
+        "apps.memory_api.observability.opentelemetry_config.OTEL_ENABLED",
+        False,
     )
     def test_setup_opentelemetry_disabled(self):
         """Test OpenTelemetry setup when disabled."""
