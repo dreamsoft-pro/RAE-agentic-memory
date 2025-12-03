@@ -173,7 +173,7 @@ class SemanticExtractor:
                         normalized_topic=topic.normalized_topic,
                         node_type=SemanticNodeType.TOPIC,
                         confidence=topic.confidence,
-                        source_memory_ids=[UUID(m["id"]) for m in memories],
+                        source_memory_ids=[UUID(str(m["id"])) for m in memories],
                         domain=extraction.domain,
                         categories=extraction.categories,
                     )
@@ -194,7 +194,7 @@ class SemanticExtractor:
                         normalized_topic=term.canonical,
                         node_type=SemanticNodeType.TERM,
                         confidence=term.confidence,
-                        source_memory_ids=[UUID(m["id"]) for m in memories],
+                        source_memory_ids=[UUID(str(m["id"])) for m in memories],
                         domain=extraction.domain,
                         categories=extraction.categories,
                         definition=term.definition,
