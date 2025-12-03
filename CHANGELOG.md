@@ -13,6 +13,73 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Advanced analytics dashboard
 - Plugin system for custom integrations
 
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2025-12-03 18:42 • Branch: main • Commit: 09c7cec24*
+
+### ✨ Features
+
+- docs: Implement automated testing status updates ([`08140a24c`](../../commit/08140a24c))
+
+### 🐛 Bug Fixes
+
+- Use extra kwarg for tenant_id in logger calls (fixed tests) ([`939fd78d4`](../../commit/939fd78d4))
+- update test_mcp_e2e tool assertions to match server implementation ([`22816bb23`](../../commit/22816bb23))
+- update CI workflow for MCP tests and fix PII regex ([`86195a2a6`](../../commit/86195a2a6))
+- formatting and lint errors ([`378bbeace`](../../commit/378bbeace))
+- **ci**: Fix Anthropic client initialization and enforce local tests ([`3080d9cc6`](../../commit/3080d9cc6))
+
+### 📚 Documentation
+
+- Add autonomous work mode rule to .cursorrules ([`09c7cec24`](../../commit/09c7cec24))
+- Expand .cursorrules with comprehensive testing and commit guidelines ([`b9c209960`](../../commit/b9c209960))
+- Add security documentation files ([`be618a3b2`](../../commit/be618a3b2))
+- Update branching workflow with mandatory CI check rule ([`85db02cec`](../../commit/85db02cec))
+- update BRANCHING.md after merge ([`9b24c78a3`](../../commit/9b24c78a3))
+- update project status and TODO list after iteration 2 completion ([`49aff83c8`](../../commit/49aff83c8))
+- Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a98a`](../../commit/934b3a98a))
+- Enforce CI verification rules for AI agents ([`0d3a7d8e1`](../../commit/0d3a7d8e1))
+
+### 🧪 Tests
+
+- update junit test results ([`6e50ac84e`](../../commit/6e50ac84e))
+- Ensure test discovery for ML service ([`c2946090a`](../../commit/c2946090a))
+- Add comprehensive tests for Graph Enhanced API ([`bbff6aed6`](../../commit/bbff6aed6))
+- Increase dashboard coverage and fix logic bugs ([`cbdadb17b`](../../commit/cbdadb17b))
+- Add tests for LLMRouter (73% coverage) ([`8cbf8f76a`](../../commit/8cbf8f76a))
+- Add tests for SemanticExtractor (88% coverage) ([`b1ce17876`](../../commit/b1ce17876))
+- Add tests for MemoryConsolidationService (75% coverage) ([`5025232e4`](../../commit/5025232e4))
+- Implement tests for Phase 3 - Iteration 4 (Safety Net) ([`6db3408dc`](../../commit/6db3408dc))
+- Implement tests for Phase 3 - Iteration 2 (Core Logic) ([`3118869f9`](../../commit/3118869f9))
+- Implement tests for Phase 3 - Iteration 1 (Foundation Layer) ([`4e855ada5`](../../commit/4e855ada5))
+
+### 👷 CI/CD
+
+- Add automated documentation workflow ([`e03c1f195`](../../commit/e03c1f195))
+
+### 🔧 Chore
+
+- Remove junit.xml from git tracking (already in .gitignore) ([`a1ebc5076`](../../commit/a1ebc5076))
+- Stop tracking coverage.xml and junit.xml ([`bac71e601`](../../commit/bac71e601))
+- Add junit.xml to .gitignore (fix previous commit) ([`dda7f3952`](../../commit/dda7f3952))
+- Update documentation and test artifacts based on recent automation changes ([`bf1437faa`](../../commit/bf1437faa))
+
+### 📦 Other
+
+- p8-graph-enhanced-tests ([`be4ac1bb3`](../../commit/be4ac1bb3))
+- Merge branch 'feature/phase6-llm-router-tests' into develop ([`6daf445b3`](../../commit/6daf445b3))
+- Merge branch 'feature/phase5-semantic-extractor-tests' into develop ([`e7f3a8a71`](../../commit/e7f3a8a71))
+- Merge branch 'release/v2.2.1-safetynet' ([`f90b87104`](../../commit/f90b87104))
+- Merge branch 'feature/phase3-iteration4-safetynet-routes' into develop ([`c4011a0fc`](../../commit/c4011a0fc))
+- Merge pull request #7 from dreamsoft-pro/develop ([`54bab69b2`](../../commit/54bab69b2))
+- Merge branch 'main' of github.com:dreamsoft-pro/RAE-agentic-memory ([`72f06449f`](../../commit/72f06449f))
+- Merge branch 'develop' of github.com:dreamsoft-pro/RAE-agentic-memory into develop ([`f0947c015`](../../commit/f0947c015))
+- Merge branch 'feature/phase3-iteration2-core-logic' into develop # Podaj komunikat zapisu, żeby wyjaśnić, dlaczego to scalenie jest konieczne, # zwłaszcza jeśli scala zaktualizowaną gałąź nadrzędną z gałęzią tematyczną. # # Wiersze zaczynające się od „#” będą ignorowane, a pusty komunikat # przerwie zapis. ([`683f293d1`](../../commit/683f293d1))
+
+---
+
+
 ---
 
 ## [2.2.0-enterprise] - 2025-12-02
