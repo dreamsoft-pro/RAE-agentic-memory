@@ -288,11 +288,25 @@ async def get_metric_timeseries(
             aggregation_interval=aggregation_interval,
         )
 
+        # Transform data points to match model (metric_value -> value)
+        formatted_data_points = [
+            {
+                "timestamp": dp["timestamp"],
+                "value": dp["metric_value"],
+                "metadata": {
+                    k: v
+                    for k, v in dp.items()
+                    if k not in ["timestamp", "metric_value"]
+                },
+            }
+            for dp in data_points
+        ]
+
         # Convert to TimeSeriesMetric format
         time_series = TimeSeriesMetric(
             metric_name=metric_name,
             metric_label=metric_name.replace("_", " ").title(),
-            data_points=data_points,
+            data_points=formatted_data_points,
             period_start=start_time,
             period_end=end_time,
         )
@@ -308,7 +322,7 @@ async def get_metric_timeseries(
                     if percent_change > 5
                     else "down" if percent_change < -5 else "stable"
                 )
-                time_series.trend_percent = round(percent_change, 2)
+                time_series.percent_change = round(percent_change, 2)
 
         logger.info(
             "timeseries_metric_retrieved",
