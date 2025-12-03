@@ -96,10 +96,12 @@ This document tracks the implementation status of RAE features and defines the r
 - **Memory Replay Tool**
 
 ## Technical Debt (Auto-generated from code)
-*Last scan: 2025-12-03 22:23*
+*Last scan: 2025-12-03 22:43*
 
+- [ ] **CHANGELOG.md:32** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:33** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
 - [ ] **CONTRIBUTING.md:148** - Run the documentation automator to update status and TODOs:
-- [ ] **README.md:812** - - ✅ **[TODO List](TODO.md)** - Upcoming features and improvements
+- [ ] **README.md:853** - - ✅ **[TODO List](TODO.md)** - Upcoming features and improvements
 - [ ] **apps/llm/tests/broker/test_llm_router.py:127** - Should re-raise (fallback logic in code is TODO)
 - [ ] **apps/memory_api/services/context_builder.py:295** - In production, use vector search to get similarity scores
 - [ ] **apps/memory_api/services/context_builder.py:414** - Implement profile retrieval
