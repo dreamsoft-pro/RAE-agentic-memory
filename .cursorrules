@@ -21,22 +21,90 @@ Strictly adhere to the following rules for code generation, git operations, and 
 
 ## 🌳 Branching Strategy (STRICT)
 
-Refer to `docs/BRANCHING.md` for full details.
+Refer to `docs/BRANCHING.md` for full details. RAE uses **hybrid approach** (GitHub Flow + Git Flow).
 
-- **`main`**: Production-ready state. NEVER commit directly. Merge only from `release/*` or `hotfix/*`.
-- **`develop`**: Main integration branch. Source for new features.
-- **`feature/name-of-feature`**: New features. MUST branch from `develop`.
-- **`hotfix/name-of-fix`**: Critical production fixes. MUST branch from `main`.
-- **`release/x.y`**: Release preparation. Branches from `develop`.
+### Daily Workflow (Feature Development)
 
-**CI/CD Verification:**
-- Before merging to `main`, you MUST verify that GitHub Actions checks have passed for the source branch.
-- Use `gh run watch` or `gh run list` to confirm green status.
-- NEVER merge a failing branch to `main`.
+1. **Create feature branch from develop**
+   ```bash
+   git checkout develop && git pull && git checkout -b feature/name
+   ```
 
-**Command Patterns:**
-- Start feature: `git checkout develop && git pull && git checkout -b feature/my-feature`
-- Start hotfix: `git checkout main && git pull && git checkout -b hotfix/critical-fix`
+2. **Develop and test ONLY new functionality**
+   - Test only new features on feature branch
+   - Do NOT run full test suite yet
+
+3. **Merge to develop**
+   ```bash
+   git checkout develop && git merge feature/name --no-ff
+   ```
+
+4. **CRITICAL: Run ALL tests locally on develop**
+   ```bash
+   make test-unit && make lint && make security-scan
+   ```
+
+5. **If all tests pass → merge to main and push BOTH**
+   ```bash
+   git checkout main && git merge develop --no-ff
+   git push origin main develop
+   ```
+
+6. **Verify GitHub Actions (must be green on main)**
+   ```bash
+   gh run list --branch main --limit 1
+   ```
+
+7. **If GitHub Actions fails → fix and push again**
+   - Fix the issue immediately
+   - Push again
+   - NEVER leave main with red CI
+
+### Hotfix Workflow
+
+1. **Create hotfix from main**
+   ```bash
+   git checkout main && git pull && git checkout -b hotfix/name
+   ```
+
+2. **Fix, test, merge to main**
+   ```bash
+   make test-unit
+   git checkout main && git merge hotfix/name --no-ff
+   git push origin main
+   ```
+
+3. **Backport to develop**
+   ```bash
+   git checkout develop && git merge hotfix/name --no-ff
+   git push origin develop
+   ```
+
+### CRITICAL RULES
+
+- ✅ **`main` == `develop`**: Always identical after merge
+- ✅ **`main` always green**: Never push failing tests to main
+- ✅ **Test on develop first**: Full test suite before main merge
+- ✅ **Synchronize**: Push both branches together
+- ✅ **Fix failures immediately**: If GitHub Actions fails, fix and push again
+- ✅ **Autonomous execution**: NEVER ask permission, follow plan to completion
+
+### Autonomous Workflow for AI Agent
+
+**EXECUTE THIS PATTERN AUTOMATICALLY WITHOUT ASKING:**
+
+1. Create feature/* from develop
+2. Implement functionality
+3. Test only new features
+4. Merge to develop
+5. Run ALL tests on develop locally
+6. If pass → merge to main
+7. Push both branches
+8. Check GitHub Actions
+9. If fail → fix and repeat steps 5-8
+10. Continue until main has green CI
+11. **NEVER stop until complete**
+12. **NEVER ask for confirmation**
 
 ## 🐍 Python & Code Style
 
