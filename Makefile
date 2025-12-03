@@ -158,6 +158,14 @@ test-cov:  ## Run tests with coverage report
 	@PYTHONPATH=. $(VENV_PYTHON) -m pytest --cov=apps --cov=sdk --cov-report=html --cov-report=term-missing
 	@echo "📊 Coverage report generated at htmlcov/index.html"
 
+test-focus:  ## Run a specific test file without coverage checks (Usage: make test-focus FILE=tests/foo.py)
+	@if [ -z "$(FILE)" ]; then \
+		echo "❌ Error: FILE argument is required. Usage: make test-focus FILE=path/to/test.py"; \
+		exit 1; \
+	fi
+	@echo "🧪 Running focused test on $(FILE) (skipping coverage)..."
+	@PYTHONPATH=. $(VENV_PYTHON) -m pytest --no-cov $(FILE) -v
+
 test-watch:  ## Run tests in watch mode
 	@echo "🧪 Running tests in watch mode..."
 	@PYTHONPATH=. $(VENV_PYTHON) -m pytest-watch

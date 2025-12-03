@@ -114,14 +114,19 @@ make test
 
 3. **Test your changes:**
 
+> **IMPORTANT:** When running specific tests during development, ALWAYS use the `--no-cov` flag (or the `make test-focus` command). The project has strict global coverage thresholds configured in `pytest.ini` which will cause single-file tests to fail if coverage is enabled.
+
 ```bash
-# Run all tests
+# Run all tests (enforces global coverage)
 make test
 
-# Run specific tests
-pytest apps/memory_api/tests/test_specific.py
+# Run specific tests WITHOUT coverage (Recommended for dev loop)
+make test-focus FILE=apps/memory_api/tests/test_specific.py
 
-# Run with coverage
+# OR manually:
+pytest --no-cov apps/memory_api/tests/test_specific.py
+
+# Run with coverage report (for full suite)
 make test-cov
 ```
 
