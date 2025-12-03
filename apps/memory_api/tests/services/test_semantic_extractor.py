@@ -1,0 +1,224 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import uuid4
+
+import pytest
+
+from apps.memory_api.models.semantic_models import (
+    ExtractedRelation,
+    ExtractedTerm,
+    ExtractedTopic,
+    SemanticExtractionResult,
+    SemanticNodeType,
+)
+from apps.memory_api.services.semantic_extractor import SemanticExtractor
+
+# Test data
+TENANT_ID = "t1"
+PROJECT_ID = "p1"
+
+
+@pytest.fixture
+def mock_pool():
+    pool = AsyncMock()
+    conn = AsyncMock()
+    # Mock acquire context manager
+    mock_context = MagicMock()
+    mock_context.__aenter__ = AsyncMock(return_value=conn)
+    mock_context.__aexit__ = AsyncMock(return_value=None)
+    pool.acquire.return_value = mock_context
+
+    # Mock fetch methods
+    pool.fetch = AsyncMock(return_value=[])
+    pool.fetchrow = AsyncMock(return_value=None)
+    pool.fetchval = AsyncMock(return_value=None)
+    pool.execute = AsyncMock(return_value=None)
+
+    return pool
+
+
+@pytest.fixture
+def mock_llm_provider():
+    provider = AsyncMock()
+    provider.generate.return_value = MagicMock(text="canonical_term")
+
+    # Mock structured response
+    extraction_result = SemanticExtractionResult(
+        topics=[ExtractedTopic(topic="AI", normalized_topic="ai", confidence=0.9)],
+        terms=[
+            ExtractedTerm(
+                original="ML",
+                canonical="Machine Learning",
+                definition="...",
+                confidence=0.85,
+            )
+        ],
+        relations=[
+            ExtractedRelation(source="ML", relation="is_a", target="AI", confidence=0.9)
+        ],
+        domain="tech",
+        categories=["science"],
+    )
+    provider.generate_structured.return_value = extraction_result
+    return provider
+
+
+@pytest.fixture
+def mock_ml_client():
+    client = AsyncMock()
+    client.get_embedding.return_value = [0.1] * 1536
+    return client
+
+
+@pytest.fixture
+def extractor(mock_pool, mock_llm_provider, mock_ml_client):
+    with patch(
+        "apps.memory_api.services.semantic_extractor.get_llm_provider",
+        return_value=mock_llm_provider,
+    ), patch(
+        "apps.memory_api.services.semantic_extractor.MLServiceClient",
+        return_value=mock_ml_client,
+    ):
+
+        svc = SemanticExtractor(mock_pool)
+        svc.llm_provider = mock_llm_provider
+        svc.ml_client = mock_ml_client
+        return svc
+
+
+@pytest.mark.asyncio
+async def test_initialization(extractor, mock_pool):
+    assert extractor.pool == mock_pool
+    assert extractor.llm_provider is not None
+    assert extractor.ml_client is not None
+
+
+@pytest.mark.asyncio
+async def test_extract_from_memories_no_memories(extractor, mock_pool):
+    """Test early exit when no memories found."""
+    mock_pool.fetch.return_value = []
+
+    stats = await extractor.extract_from_memories(
+        TENANT_ID, PROJECT_ID, max_memories=10
+    )
+
+    assert stats["memories_processed"] == 0
+    mock_pool.fetch.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_extract_from_memories_success(extractor, mock_pool, mock_llm_provider):
+    """Test full extraction flow."""
+    # Mock memories
+    memories = [{"id": uuid4(), "content": "text"}]
+    mock_pool.fetch.return_value = memories
+
+    # Mock node creation returns (UUIDs)
+    # For each node (Topic, Term):
+    # 1. Check if exists (fetchrow) -> None (does not exist)
+    # 2. Insert (fetchrow) -> {"id": uuid}
+    mock_pool.fetchrow.side_effect = [
+        None,  # Topic check
+        {"id": uuid4()},  # Topic insert
+        None,  # Term check
+        {"id": uuid4()},  # Term insert
+    ]
+
+    # Mock relations UUID lookup
+    mock_pool.fetchval.side_effect = [uuid4(), uuid4()]  # Source UUID, Target UUID
+
+    stats = await extractor.extract_from_memories(
+        TENANT_ID, PROJECT_ID, max_memories=10
+    )
+
+    assert stats["memories_processed"] == 1
+    assert stats["nodes_extracted"] == 2  # 1 topic + 1 term
+    assert stats["relationships_created"] == 1  # 1 relation
+
+    mock_llm_provider.generate_structured.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_canonicalize_term(extractor, mock_llm_provider):
+    """Test term canonicalization."""
+    term = await extractor.canonicalize_term("auth")
+    assert term == "canonical_term"
+    mock_llm_provider.generate.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_create_or_update_semantic_node_existing(extractor, mock_pool):
+    """Test updating an existing node."""
+    node_id = uuid4()
+    # fetchrow returns existing record
+    mock_pool.fetchrow.return_value = {
+        "id": node_id,
+        "reinforcement_count": 1,
+        "source_memory_ids": [uuid4()],
+    }
+
+    result_id = await extractor._create_or_update_semantic_node(
+        TENANT_ID, PROJECT_ID, "Topic", "topic", SemanticNodeType.TOPIC, 0.9, [uuid4()]
+    )
+
+    assert result_id == node_id
+    # verify update query executed
+    assert mock_pool.execute.call_count >= 2  # reinforce + update
+
+
+@pytest.mark.asyncio
+async def test_create_or_update_semantic_node_new(extractor, mock_pool):
+    """Test creating a new node."""
+    new_id = uuid4()
+    # fetchrow returns None first (check), then returns record (insert)
+    mock_pool.fetchrow.side_effect = [
+        None,  # Check if exists -> None
+        {"id": new_id},  # Insert returning -> record
+    ]
+
+    result_id = await extractor._create_or_update_semantic_node(
+        TENANT_ID, PROJECT_ID, "Topic", "topic", SemanticNodeType.TOPIC, 0.9, [uuid4()]
+    )
+
+    assert result_id == new_id
+    # verify insert happened (fetchrow called twice)
+    assert mock_pool.fetchrow.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_create_semantic_relationship_success(extractor, mock_pool):
+    """Test creating a relationship."""
+    # fetchval returns IDs for source and target
+    mock_pool.fetchval.side_effect = [uuid4(), uuid4()]
+
+    result = await extractor._create_semantic_relationship(
+        TENANT_ID, PROJECT_ID, "source", "is_a", "target", 0.9
+    )
+
+    assert result is True
+    mock_pool.execute.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_create_semantic_relationship_nodes_missing(extractor, mock_pool):
+    """Test relationship failure when nodes are missing."""
+    # fetchval returns None for one of them
+    mock_pool.fetchval.side_effect = [uuid4(), None]
+
+    result = await extractor._create_semantic_relationship(
+        TENANT_ID, PROJECT_ID, "source", "is_a", "target", 0.9
+    )
+
+    assert result is False
+    mock_pool.execute.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_extract_semantic_knowledge_error(extractor, mock_llm_provider):
+    """Test LLM failure handling."""
+    mock_llm_provider.generate_structured.side_effect = Exception("LLM Error")
+
+    result = await extractor._extract_semantic_knowledge([{}])
+
+    # Should return empty result, not raise
+    assert len(result.topics) == 0
+    assert len(result.terms) == 0
