@@ -296,7 +296,7 @@ async def test_rate_limit_check(rules_engine):
 async def test_webhook_action(rules_engine, sample_event):
     """Test webhook action execution using aiohttp mock."""
     config = {"url": "http://test.com/webhook"}
-    trigger = MagicMock()
+    # trigger is not used
 
     with patch("aiohttp.ClientSession.post") as mock_post:
         mock_response = AsyncMock()
