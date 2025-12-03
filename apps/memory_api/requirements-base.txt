@@ -22,8 +22,18 @@ celery==5.5.3
 redis==7.1.0
 
 # Observability
+opentelemetry-api==1.27.0
 opentelemetry-sdk==1.27.0
+opentelemetry-exporter-otlp==1.27.0
+opentelemetry-exporter-otlp-proto-grpc==1.27.0
 opentelemetry-instrumentation-fastapi==0.48b0
+opentelemetry-instrumentation-asgi==0.48b0
+opentelemetry-instrumentation-asyncpg==0.48b0
+opentelemetry-instrumentation-redis==0.48b0
+opentelemetry-instrumentation-celery==0.48b0
+opentelemetry-instrumentation-psycopg2==0.48b0
+opentelemetry-instrumentation-requests==0.48b0
+opentelemetry-instrumentation-logging==0.48b0
 prometheus-fastapi-instrumentator==7.1.0
 prometheus_client==0.23.1
 structlog==25.5.0

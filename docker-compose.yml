@@ -28,6 +28,11 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - OTEL_TRACES_ENABLED=${OTEL_TRACES_ENABLED:-true}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_SERVICE_NAME=rae-memory-api
+      - OTEL_SERVICE_VERSION=2.2.0-enterprise
+      - OTEL_EXPORTER_TYPE=otlp
     depends_on:
       postgres:
         condition: service_healthy
@@ -37,6 +42,8 @@ services:
         condition: service_started
       ml-service:
         condition: service_healthy
+      otel-collector:
+        condition: service_started
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
@@ -141,10 +148,16 @@ services:
       - RAE_VECTOR_BACKEND=qdrant
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - OTEL_TRACES_ENABLED=${OTEL_TRACES_ENABLED:-true}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_SERVICE_NAME=rae-celery-worker
+      - OTEL_SERVICE_VERSION=2.2.0-enterprise
+      - OTEL_EXPORTER_TYPE=otlp
     depends_on:
       - postgres
       - redis
       - qdrant
+      - otel-collector
     restart: unless-stopped
     networks:
       - rae-network
@@ -164,9 +177,15 @@ services:
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
       - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - OTEL_TRACES_ENABLED=${OTEL_TRACES_ENABLED:-true}
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_SERVICE_NAME=rae-celery-beat
+      - OTEL_SERVICE_VERSION=2.2.0-enterprise
+      - OTEL_EXPORTER_TYPE=otlp
     depends_on:
       - postgres
       - redis
+      - otel-collector
     restart: unless-stopped
     networks:
       - rae-network
@@ -185,6 +204,38 @@ services:
       - RAE_PROJECT_ID=${RAE_PROJECT_ID:-demo-project}
     depends_on:
       - rae-api
+    restart: unless-stopped
+    networks:
+      - rae-network
+
+  # OpenTelemetry Collector
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    container_name: rae-otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./infra/otel-collector-config.yaml:/etc/otel-collector-config.yaml
+    ports:
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+      - "8888:8888"   # Prometheus metrics exposed by the collector
+      - "8889:8889"   # Prometheus exporter metrics
+      - "13133:13133" # Health check extension
+    depends_on:
+      - jaeger
+    restart: unless-stopped
+    networks:
+      - rae-network
+
+  # Jaeger for distributed tracing
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: rae-jaeger
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "16686:16686" # Jaeger UI
+      - "14250:14250" # gRPC receiver
     restart: unless-stopped
     networks:
       - rae-network

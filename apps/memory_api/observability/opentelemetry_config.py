@@ -33,6 +33,8 @@ try:  # pragma: no cover
     from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
         OTLPSpanExporter,
     )
+    from opentelemetry.instrumentation.asyncpg import AsyncPGInstrumentor
+    from opentelemetry.instrumentation.celery import CeleryInstrumentor
     from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
     from opentelemetry.instrumentation.logging import LoggingInstrumentor
     from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
@@ -46,6 +48,8 @@ try:  # pragma: no cover
 except ImportError:  # pragma: no cover
     trace = None  # type: ignore[assignment]
     OTLPSpanExporter = None  # type: ignore[assignment,misc]
+    AsyncPGInstrumentor = None  # type: ignore[assignment,misc]
+    CeleryInstrumentor = None  # type: ignore[assignment,misc]
     FastAPIInstrumentor = None  # type: ignore[assignment,misc]
     LoggingInstrumentor = None  # type: ignore[assignment,misc]
     Psycopg2Instrumentor = None  # type: ignore[assignment,misc]
@@ -64,6 +68,10 @@ if TYPE_CHECKING:
     from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (  # noqa: F401
         OTLPSpanExporter,
     )
+    from opentelemetry.instrumentation.asyncpg import (  # noqa: F401
+        AsyncPGInstrumentor,
+    )
+    from opentelemetry.instrumentation.celery import CeleryInstrumentor  # noqa: F401
     from opentelemetry.instrumentation.fastapi import (  # noqa: F401
         FastAPIInstrumentor,
     )
@@ -225,9 +233,10 @@ def instrument_libraries():
 
     This adds tracing for:
     - HTTP requests (requests library)
-    - PostgreSQL queries (psycopg2)
+    - PostgreSQL queries (psycopg2 and asyncpg)
     - Redis operations (redis-py)
     - Python logging (adds trace context to logs)
+    - Celery tasks (background job processing)
     """
     if not OPENTELEMETRY_AVAILABLE or not OTEL_ENABLED:
         return
@@ -238,13 +247,20 @@ def instrument_libraries():
         logger.info("opentelemetry_requests_instrumented")
 
         # Instrument PostgreSQL (psycopg2)
-        # Note: For asyncpg, you'll need custom instrumentation
         Psycopg2Instrumentor().instrument()  # type: ignore[misc]
         logger.info("opentelemetry_psycopg2_instrumented")
+
+        # Instrument PostgreSQL (asyncpg)
+        AsyncPGInstrumentor().instrument()  # type: ignore[misc]
+        logger.info("opentelemetry_asyncpg_instrumented")
 
         # Instrument Redis
         RedisInstrumentor().instrument()  # type: ignore[misc]
         logger.info("opentelemetry_redis_instrumented")
+
+        # Instrument Celery
+        CeleryInstrumentor().instrument()  # type: ignore[misc]
+        logger.info("opentelemetry_celery_instrumented")
 
         # Instrument logging (adds trace_id to logs)
         LoggingInstrumentor().instrument(set_logging_format=False)  # type: ignore[misc]
