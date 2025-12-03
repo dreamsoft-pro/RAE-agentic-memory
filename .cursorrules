@@ -27,10 +27,58 @@ Refer to `docs/BRANCHING.md` for full details.
 - **Python 3.11+**: Use modern syntax (type hints, dataclasses, async/await).
 - **Formatters**: Code MUST pass `black`, `isort`, and `ruff`.
 - **Type Checking**: Code MUST pass `mypy`.
-- **Testing**: Write `pytest` tests for ALL new logic.
-  - Unit tests: `apps/memory_api/tests/`
-  - Integration tests: `tests/integration/`
 - **Docstrings**: Required for all public modules, classes, and functions (Google style or similar).
+
+## 🧪 Testing Philosophy (CRITICAL - READ docs/AGENTS_TEST_POLICY.md)
+
+**Core Principle**: Tests are CONTRACTS, not snapshots of implementation.
+
+- **Test Behavior, Not Implementation**: Focus on public API (input → output), not internal structure.
+- **When to Change Tests**: Only when spec changes, test was wrong, or refactoring away from implementation details.
+- **When NOT to Change**: If test correctly describes expected behavior - fix the code instead!
+
+### pytest Configuration (see pytest.ini):
+
+- **Markers** (use appropriately):
+  - `@pytest.mark.unit` - Fast, no external dependencies
+  - `@pytest.mark.integration` - Requires services (Postgres/Redis/Qdrant)
+  - `@pytest.mark.llm` - Requires LLM API keys (skipped in CI)
+  - `@pytest.mark.slow` - Long-running tests
+
+- **Coverage**: Global threshold is **48%** (not 100%!). This is intentional.
+  - Full suite: `make test` or `make test-cov`
+  - CI runs: `pytest -m "not integration and not llm"`
+
+### Development Loop (IMPORTANT):
+
+**⚠️ ALWAYS use `--no-cov` when testing single files!**
+
+```bash
+# ✅ CORRECT - Development testing
+make test-focus FILE=apps/memory_api/tests/test_specific.py
+# OR: pytest --no-cov apps/memory_api/tests/test_specific.py
+
+# ❌ WRONG - Will fail due to global coverage threshold
+pytest apps/memory_api/tests/test_specific.py
+```
+
+**Why?** Global coverage threshold (48%) in `pytest.ini` will fail single-file tests. Use `--no-cov` during development, coverage only for full suite.
+
+### Test Writing Guidelines:
+
+```python
+# ✅ GOOD - Tests behavior
+def test_user_authentication_with_valid_credentials():
+    response = api.login(username="user", password="pass")
+    assert response.status_code == 200
+    assert response.user_id is not None
+
+# ❌ BAD - Tests implementation details
+def test_user_authentication_calls_bcrypt_with_hash():
+    with patch('bcrypt.checkpw') as mock_bcrypt:
+        api.login(username="user", password="pass")
+        mock_bcrypt.assert_called_once()
+```
 
 ## 🏗️ Architecture
 
@@ -53,3 +101,63 @@ Refer to `docs/BRANCHING.md` for full details.
 
 - **Update Docs**: Before finishing a task or submitting a PR, run `make docs`.
 - **Status**: Ensure `STATUS.md` and `TODO.md` are up-to-date with your changes.
+
+## 📝 Commit Messages (Conventional Commits)
+
+Use [Conventional Commits](https://www.conventionalcommits.org/) format:
+
+```bash
+<type>: <description>
+
+[optional body]
+[optional footer]
+```
+
+**Types:**
+- `feat:` - New feature (e.g., `feat: add GraphRAG entity resolution`)
+- `fix:` - Bug fix (e.g., `fix: resolve authentication timeout`)
+- `docs:` - Documentation only (e.g., `docs: update API cookbook`)
+- `test:` - Adding/updating tests (e.g., `test: add hybrid search tests`)
+- `refactor:` - Code change without behavior change (e.g., `refactor: simplify reflection engine`)
+- `perf:` - Performance improvement (e.g., `perf: optimize vector similarity search`)
+- `chore:` - Maintenance (dependencies, config) (e.g., `chore: update pytest to 8.0`)
+- `ci:` - CI/CD changes (e.g., `ci: add security scanning job`)
+
+**Examples:**
+```bash
+git commit -m "feat: add cost controller for LLM budget management"
+git commit -m "fix: correct tenant isolation in memory queries"
+git commit -m "docs: add architecture-to-code mapping document"
+git commit -m "test: add integration tests for reflection engine"
+```
+
+## 🚀 Quick Reference
+
+**Before Starting:**
+1. Read `docs/BRANCHING.md` - Git workflow
+2. Read `docs/AGENTS_TEST_POLICY.md` - Testing philosophy
+3. Check `pytest.ini` - Test markers and coverage config
+
+**Development Workflow:**
+```bash
+# 1. Create branch
+git checkout develop && git pull
+git checkout -b feature/my-feature
+
+# 2. Code + Test (without coverage)
+make test-focus FILE=apps/memory_api/tests/test_my_feature.py
+
+# 3. Format + Lint
+make format && make lint
+
+# 4. Commit with conventional format
+git commit -m "feat: add my feature"
+
+# 5. Push and create PR
+git push origin feature/my-feature
+
+# 6. Verify CI is GREEN before merge to main
+gh run watch
+```
+
+**When in Doubt:** Ask the user or check existing code patterns!
