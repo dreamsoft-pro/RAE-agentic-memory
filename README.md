@@ -11,7 +11,7 @@
 [![Tests Total](https://img.shields.io/badge/total-238%20unit%20tests-blue.svg)]()
 [![Coverage](https://img.shields.io/badge/coverage-48%25-yellow.svg)]())
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
-[![Version](https://img.shields.io/badge/version-2.1.0--enterprise-blue.svg)](STATUS.md)
+[![Version](https://img.shields.io/badge/version-2.1.0--enterprise-blue.svg)](docs/.auto-generated/status/STATUS.md)
 
 [📖 Documentation](#documentation) | [🚀 Quick Start](#quick-start-5-minutes) | [🔧 Troubleshooting](TROUBLESHOOTING.md) | [💬 Community](#community--support) | [🎯 Examples](#real-world-examples)
 
@@ -39,7 +39,7 @@
 > - ⚠️ Public internet deployment (add TLS, API gateway, WAF)
 > - ⚠️ Regulated industries (additional controls needed)
 >
-> See [STATUS.md](STATUS.md) for implementation status, [TESTING_STATUS.md](docs/reference/testing/TESTING_STATUS.md) for test coverage, and **[SECURITY.md](docs/reference/iso-security/SECURITY.md) for honest security assessment**.
+> See [docs/.auto-generated/status/STATUS.md](docs/.auto-generated/status/STATUS.md) for implementation status, [TESTING_docs/.auto-generated/status/STATUS.md](docs/reference/testing/TESTING_docs/.auto-generated/status/STATUS.md) for test coverage, and **[SECURITY.md](docs/compliance/layer-1-foundation/iso-42001/SECURITY.md) for honest security assessment**.
 
 ---
 
@@ -121,7 +121,7 @@ RAE is designed for enterprise AI governance and compliance with **ISO/IEC 42001
 - 📋 **[RAE-ISO_42001.md](docs/reference/iso-security/RAE-ISO_42001.md)** - Full ISO 42001 readiness assessment
 - 🛡️ **[RAE-Risk-Register.md](docs/reference/iso-security/RAE-Risk-Register.md)** - 10 risks (RISK-001 to RISK-010) with mitigation
 - 👥 **[RAE-Roles.md](docs/reference/iso-security/RAE-Roles.md)** - Organizational roles and RACI matrix
-- 🔐 **[SECURITY.md](docs/reference/iso-security/SECURITY.md)** - Security assessment and controls
+- 🔐 **[SECURITY.md](docs/compliance/layer-1-foundation/iso-42001/SECURITY.md)** - Security assessment and controls
 
 ### Implementation Status (2025-12-01)
 
@@ -524,7 +524,7 @@ See [REFLECTIVE_MEMORY_V1.md](docs/project-design/rae-4layer-design/REFLECTIVE_M
 - **Secrets Management**: Environment-based configuration
 
 **Documentation:**
-- **[Security Overview](docs/reference/iso-security/SECURITY.md)** - **Honest "Almost Enterprise" assessment** with deployment patterns
+- **[Security Overview](docs/compliance/layer-1-foundation/iso-42001/SECURITY.md)** - **Honest "Almost Enterprise" assessment** with deployment patterns
 - [RBAC Guide](docs/reference/iso-security/security/RBAC.md) - Role-based access control details
 - [Migration Guide](CHANGELOG.md) - Upgrading to v2.0 security
 - [Configuration Reference](docs/reference/deployment/CONFIG_REFLECTIVE_MEMORY.md) - Feature flags and production recommendations
@@ -808,9 +808,9 @@ Production-ready components that enhance RAE but are not required.
 ## Documentation
 
 ### Project Status & Progress
-- 📊 **[Project Status](STATUS.md)** - Current implementation status and features
+- 📊 **[Project Status](docs/.auto-generated/status/STATUS.md)** - Current implementation status and features
 - ✅ **[TODO List](TODO.md)** - Upcoming features and improvements
-- 🧪 **[Testing Status](docs/reference/testing/TESTING_STATUS.md)** - Test coverage and quality metrics
+- 🧪 **[Testing Status](docs/reference/testing/TESTING_docs/.auto-generated/status/STATUS.md)** - Test coverage and quality metrics
 
 ### Getting Started
 - 📖 **[Getting Started Guide](docs/guides/developers/getting-started/)** - Installation and first steps
@@ -955,7 +955,7 @@ RAE is currently in **v2.1.0-enterprise** - Pre-1.0 with Enterprise Features!
 - 🚧 Memory consolidation/pruning optimization
 - 🚧 Enterprise SSO integration
 
-See [STATUS.md](STATUS.md) for detailed implementation status.
+See [docs/.auto-generated/status/STATUS.md](docs/.auto-generated/status/STATUS.md) for detailed implementation status.
 
 ---
 
