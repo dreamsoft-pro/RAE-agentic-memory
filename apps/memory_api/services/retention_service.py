@@ -59,7 +59,7 @@ class RetentionPolicy(BaseModel):
 
     data_class: DataClass
     retention_days: int = Field(
-        ge=0,
+        ge=-1,
         description="Days to retain data (0 = never delete, -1 = delete immediately)",
     )
     soft_delete_grace_days: int = Field(
