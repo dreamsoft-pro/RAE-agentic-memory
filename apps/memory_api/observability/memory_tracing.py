@@ -27,6 +27,13 @@ from .opentelemetry_config import (
     get_tracer,
     record_exception,
 )
+from .rae_telemetry_schema import (
+    MemoryLayer,
+    RAECostAttributes,
+    RAEMemoryAttributes,
+    RAEPerformanceAttributes,
+    RAEReasoningAttributes,
+)
 
 logger = structlog.get_logger(__name__)
 
@@ -42,15 +49,17 @@ class MemoryTracer:
 
     Provides context-aware tracing for different memory layers with
     automatic attribute collection and performance tracking.
+
+    Uses standardized RAE Telemetry Schema v1 attributes.
     """
 
-    # Memory layer constants
-    LAYER_EPISODIC = "episodic"
-    LAYER_SEMANTIC = "semantic"
-    LAYER_GRAPH = "graph"
-    LAYER_REFLECTIVE = "reflective"
+    # Memory layer constants (using RAE schema)
+    LAYER_EPISODIC = MemoryLayer.EPISODIC.value
+    LAYER_SEMANTIC = MemoryLayer.SEMANTIC.value
+    LAYER_GRAPH = MemoryLayer.GRAPH.value
+    LAYER_REFLECTIVE = MemoryLayer.REFLECTIVE.value
 
-    # Operation types
+    # Operation types (standardized)
     OP_CREATE = "create"
     OP_READ = "read"
     OP_UPDATE = "update"
@@ -92,9 +101,9 @@ class MemoryTracer:
         start_time = time.time()
 
         with self.tracer.start_as_current_span(span_name) as span:
-            # Set base attributes
-            span.set_attribute("memory.layer", layer)
-            span.set_attribute("memory.operation", operation)
+            # Set base attributes using RAE schema
+            span.set_attribute(RAEMemoryAttributes.LAYER, layer)
+            span.set_attribute(RAEMemoryAttributes.OPERATION, operation)
 
             # Set additional attributes
             for key, value in attributes.items():
@@ -110,9 +119,11 @@ class MemoryTracer:
                 record_exception(e)
                 raise
             finally:
-                # Record latency
+                # Record latency using RAE schema
                 latency_ms = (time.time() - start_time) * 1000
-                span.set_attribute("memory.latency_ms", round(latency_ms, 2))
+                span.set_attribute(
+                    RAEPerformanceAttributes.LATENCY_MS, round(latency_ms, 2)
+                )
 
     def record_vector_operation(
         self,
@@ -122,7 +133,7 @@ class MemoryTracer:
         similarity_threshold: Optional[float] = None,
     ):
         """
-        Record vector operation metrics.
+        Record vector operation metrics using RAE schema.
 
         Args:
             span: Current span
@@ -133,11 +144,13 @@ class MemoryTracer:
         if not span:
             return
 
-        span.set_attribute("memory.vector_count", vector_count)
+        span.set_attribute(RAEMemoryAttributes.VECTOR_COUNT, vector_count)
         if dimension:
             span.set_attribute("memory.vector_dimension", dimension)
         if similarity_threshold:
-            span.set_attribute("memory.similarity_threshold", similarity_threshold)
+            span.set_attribute(
+                RAEMemoryAttributes.SIMILARITY_THRESHOLD, similarity_threshold
+            )
 
     def record_graph_operation(
         self,
@@ -147,7 +160,7 @@ class MemoryTracer:
         traversal_depth: Optional[int] = None,
     ):
         """
-        Record graph operation metrics.
+        Record graph operation metrics using RAE schema.
 
         Args:
             span: Current span
@@ -159,11 +172,11 @@ class MemoryTracer:
             return
 
         if node_count > 0:
-            span.set_attribute("memory.graph_nodes", node_count)
+            span.set_attribute(RAEMemoryAttributes.GRAPH_NODES, node_count)
         if edge_count > 0:
-            span.set_attribute("memory.graph_edges", edge_count)
+            span.set_attribute(RAEMemoryAttributes.GRAPH_EDGES, edge_count)
         if traversal_depth:
-            span.set_attribute("memory.graph_traversal_depth", traversal_depth)
+            span.set_attribute(RAEMemoryAttributes.GRAPH_DEPTH, traversal_depth)
 
     def record_reasoning_operation(
         self,
@@ -173,7 +186,7 @@ class MemoryTracer:
         confidence_score: Optional[float] = None,
     ):
         """
-        Record reasoning operation metrics.
+        Record reasoning operation metrics using RAE schema.
 
         Args:
             span: Current span
@@ -184,10 +197,10 @@ class MemoryTracer:
         if not span:
             return
 
-        span.set_attribute("memory.reasoning_iteration", iteration)
-        span.set_attribute("memory.reasoning_depth", depth)
+        span.set_attribute(RAEReasoningAttributes.ITERATIONS, iteration)
+        span.set_attribute(RAEReasoningAttributes.DEPTH, depth)
         if confidence_score is not None:
-            span.set_attribute("memory.reasoning_confidence", confidence_score)
+            span.set_attribute(RAEReasoningAttributes.CONFIDENCE, confidence_score)
 
     def record_tokens(
         self,
@@ -197,7 +210,7 @@ class MemoryTracer:
         cost_usd: Optional[float] = None,
     ):
         """
-        Record token usage and cost.
+        Record token usage and cost using RAE schema.
 
         Args:
             span: Current span
@@ -208,11 +221,11 @@ class MemoryTracer:
         if not span:
             return
 
-        span.set_attribute("memory.tokens_input", input_tokens)
-        span.set_attribute("memory.tokens_output", output_tokens)
-        span.set_attribute("memory.tokens_total", input_tokens + output_tokens)
+        span.set_attribute(RAECostAttributes.TOKENS_INPUT, input_tokens)
+        span.set_attribute(RAECostAttributes.TOKENS_OUTPUT, output_tokens)
+        span.set_attribute(RAECostAttributes.TOKENS_TOTAL, input_tokens + output_tokens)
         if cost_usd is not None:
-            span.set_attribute("memory.cost_usd", cost_usd)
+            span.set_attribute(RAECostAttributes.COST_USD, cost_usd)
 
 
 # Global memory tracer instance
@@ -320,7 +333,7 @@ def _infer_operation(func_name: str) -> str:
 
 
 def _extract_result_metrics(span, result: Dict[str, Any], layer: str):
-    """Extract metrics from result dictionary."""
+    """Extract metrics from result dictionary using RAE schema."""
     # Common metrics
     if "count" in result:
         span.set_attribute("memory.result_count", result["count"])
@@ -330,7 +343,7 @@ def _extract_result_metrics(span, result: Dict[str, Any], layer: str):
     # Vector metrics
     if layer in [MemoryTracer.LAYER_SEMANTIC, MemoryTracer.LAYER_EPISODIC]:
         if "vectors" in result:
-            span.set_attribute("memory.vector_count", len(result["vectors"]))
+            span.set_attribute(RAEMemoryAttributes.VECTOR_COUNT, len(result["vectors"]))
         if "similarity_scores" in result:
             scores = result["similarity_scores"]
             if scores:
@@ -340,22 +353,22 @@ def _extract_result_metrics(span, result: Dict[str, Any], layer: str):
     # Graph metrics
     if layer == MemoryTracer.LAYER_GRAPH:
         if "nodes" in result:
-            span.set_attribute("memory.graph_nodes", len(result["nodes"]))
+            span.set_attribute(RAEMemoryAttributes.GRAPH_NODES, len(result["nodes"]))
         if "edges" in result:
-            span.set_attribute("memory.graph_edges", len(result["edges"]))
+            span.set_attribute(RAEMemoryAttributes.GRAPH_EDGES, len(result["edges"]))
         if "communities" in result:
             span.set_attribute("memory.graph_communities", len(result["communities"]))
 
     # Reasoning metrics
     if layer == MemoryTracer.LAYER_REFLECTIVE:
         if "iterations" in result:
-            span.set_attribute("memory.reasoning_iterations", result["iterations"])
+            span.set_attribute(RAEReasoningAttributes.ITERATIONS, result["iterations"])
         if "confidence" in result:
-            span.set_attribute("memory.reasoning_confidence", result["confidence"])
+            span.set_attribute(RAEReasoningAttributes.CONFIDENCE, result["confidence"])
         if "tokens_used" in result:
-            span.set_attribute("memory.tokens_total", result["tokens_used"])
+            span.set_attribute(RAECostAttributes.TOKENS_TOTAL, result["tokens_used"])
         if "cost" in result:
-            span.set_attribute("memory.cost_usd", result["cost"])
+            span.set_attribute(RAECostAttributes.COST_USD, result["cost"])
 
 
 # ============================================================================

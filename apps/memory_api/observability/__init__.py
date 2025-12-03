@@ -19,6 +19,54 @@ from .opentelemetry_config import (
     record_exception,
     setup_opentelemetry,
 )
+from .pii_scrubber import (
+    PIIScrubber,
+    create_pii_scrubbing_processor,
+    detect_pii,
+    get_scrubber,
+    has_pii,
+    scrub_pii,
+    scrub_span_attributes,
+)
+from .rae_telemetry_schema import (
+    SCHEMA_VERSION,
+    AgentRole,
+    MemoryLayer,
+    OutcomeLabel,
+    RAEAgentAttributes,
+    RAECorrelationAttributes,
+    RAECostAttributes,
+    RAEExperimentAttributes,
+    RAELLMAttributes,
+    RAEMemoryAttributes,
+    RAEOutcomeAttributes,
+    RAEPerformanceAttributes,
+    RAEReasoningAttributes,
+    RAESafetyAttributes,
+    ReasoningStepType,
+    SafetyInterventionType,
+    get_schema_version,
+)
+from .rae_tracing import (
+    RAETracingContext,
+    set_llm_cost,
+    set_llm_tokens,
+    set_outcome,
+    set_reasoning_confidence,
+    start_llm_call,
+    start_memory_operation,
+    start_reasoning_step,
+    start_safety_check,
+    trace_agent_operation,
+)
+from .telemetry_profiles import (
+    ProfileAwareSpanProcessor,
+    ProfileConfig,
+    TelemetryProfile,
+    TelemetryProfileManager,
+    get_current_profile,
+    get_profile_manager,
+)
 from .traced_qdrant import TracedQdrantClient, create_traced_client
 
 __all__ = [
@@ -42,4 +90,48 @@ __all__ = [
     # Traced Clients
     "TracedQdrantClient",
     "create_traced_client",
+    # RAE Telemetry Schema
+    "SCHEMA_VERSION",
+    "get_schema_version",
+    "AgentRole",
+    "MemoryLayer",
+    "ReasoningStepType",
+    "OutcomeLabel",
+    "SafetyInterventionType",
+    "RAEAgentAttributes",
+    "RAEMemoryAttributes",
+    "RAEReasoningAttributes",
+    "RAELLMAttributes",
+    "RAECostAttributes",
+    "RAESafetyAttributes",
+    "RAEOutcomeAttributes",
+    "RAECorrelationAttributes",
+    "RAEExperimentAttributes",
+    "RAEPerformanceAttributes",
+    # RAE Tracing Helpers
+    "RAETracingContext",
+    "start_reasoning_step",
+    "start_memory_operation",
+    "start_llm_call",
+    "start_safety_check",
+    "set_reasoning_confidence",
+    "set_llm_tokens",
+    "set_llm_cost",
+    "set_outcome",
+    "trace_agent_operation",
+    # Telemetry Profiles
+    "TelemetryProfile",
+    "ProfileConfig",
+    "TelemetryProfileManager",
+    "get_profile_manager",
+    "get_current_profile",
+    "ProfileAwareSpanProcessor",
+    # PII Scrubber
+    "PIIScrubber",
+    "get_scrubber",
+    "scrub_pii",
+    "detect_pii",
+    "has_pii",
+    "scrub_span_attributes",
+    "create_pii_scrubbing_processor",
 ]
