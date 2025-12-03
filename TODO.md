@@ -96,7 +96,7 @@ This document tracks the implementation status of RAE features and defines the r
 - **Memory Replay Tool**
 
 ## Technical Debt (Auto-generated from code)
-*Last scan: 2025-12-03 12:24*
+*Last scan: 2025-12-03 12:27*
 
 - [ ] **CHANGELOG.md:238** - Added - Missing Functionalities from TODO.md Completed 🎯
 - [ ] **CHANGELOG.md:240** - This release completes the implementation of critical functionalities identified in TODO.md that were either missing or partially implemented.
@@ -108,7 +108,7 @@ This document tracks the implementation status of RAE features and defines the r
 - [ ] **CONTRIBUTING.md:143** - Run the documentation automator to update status and TODOs:
 - [ ] **README.md:812** - - ✅ **[TODO List](TODO.md)** - Upcoming features and improvements
 - [ ] **STATUS.md:25** - All missing/incomplete functionalities from TODO.md have been successfully implemented:
-- [ ] **STATUS.md:179** - - [Technical Debt](TODO.md)
+- [ ] **STATUS.md:180** - - [Technical Debt](TODO.md)
 - [ ] **apps/llm/tests/broker/test_llm_router.py:127** - Should re-raise (fallback logic in code is TODO)
 - [ ] **apps/memory_api/services/context_builder.py:295** - In production, use vector search to get similarity scores
 - [ ] **apps/memory_api/services/context_builder.py:414** - Implement profile retrieval
