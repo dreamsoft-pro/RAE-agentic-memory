@@ -146,10 +146,12 @@ class ComplianceService:
             ComplianceReport with all compliance metrics
         """
         logger.info(
-            "Generating ISO 42001 compliance report",
-            tenant_id=tenant_id,
-            project_id=project_id,
-            report_type=report_type,
+            f"Generating ISO 42001 compliance report for tenant {tenant_id}",
+            extra={
+                "tenant_id": tenant_id,
+                "project_id": project_id,
+                "report_type": report_type,
+            },
         )
 
         # Collect all compliance metrics
@@ -273,9 +275,11 @@ class ComplianceService:
 
         logger.info(
             "Compliance report generated",
-            tenant_id=tenant_id,
-            overall_score=overall_score,
-            status=overall_status,
+            extra={
+                "tenant_id": tenant_id,
+                "overall_score": overall_score,
+                "status": overall_status,
+            },
         )
 
         return report
@@ -376,12 +380,20 @@ class ComplianceService:
             recommendations=recommendations,
         )
 
-        logger.info(
-            "RLS verification completed",
-            tenant_id=tenant_id,
-            verification_passed=verification_passed,
-            rls_percentage=rls_percentage,
-        )
+        if not verification_passed:
+            logger.error(
+                f"RLS Verification FAILED for tenant {tenant_id}",
+                extra={"tenant_id": tenant_id},
+            )
+        else:
+            logger.info(
+                f"RLS Verification PASSED for tenant {tenant_id}",
+                extra={
+                    "tenant_id": tenant_id,
+                    "verification_passed": verification_passed,
+                    "rls_percentage": rls_percentage,
+                },
+            )
 
         return status
 
