@@ -3,6 +3,22 @@
 You are working on the RAE (Reflective Agentic-memory Engine) project.
 Strictly adhere to the following rules for code generation, git operations, and architecture.
 
+## 🤖 Agent Work Mode (CRITICAL)
+
+**AUTONOMOUS EXECUTION - NO CONFIRMATION REQUIRED**
+
+- **NEVER ask for permission** to perform tasks - just do them.
+- **Work until completion** - finish all steps of a task before stopping.
+- **Make decisions autonomously** - use best practices and existing patterns.
+- **Commit incrementally** - create logical commits as you progress.
+- **Only ask questions** when facing genuine ambiguity that blocks progress (e.g., "Which API should I use?" not "Should I create this file?").
+- **Trust the process** - if the user asked for it, execute it fully.
+
+**Examples:**
+- ✅ User: "Add authentication" → Agent: [creates files, writes code, adds tests, commits, done]
+- ✅ User: "Fix the bug in X" → Agent: [analyzes, fixes, tests, commits, reports result]
+- ❌ User: "Add feature Y" → Agent: "Should I create a new file?" ← WRONG! Just do it.
+
 ## 🌳 Branching Strategy (STRICT)
 
 Refer to `docs/BRANCHING.md` for full details.
@@ -160,4 +176,4 @@ git push origin feature/my-feature
 gh run watch
 ```
 
-**When in Doubt:** Ask the user or check existing code patterns!
+**When in Doubt:** Check existing code patterns and documentation - execute autonomously!
