@@ -80,7 +80,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Recent Changes (Auto-generated)
 
-*Last updated: 2025-12-03 20:59 • Branch: main • Commit: df22b6e*
+*Last updated: 2025-12-03 20:59 • Branch: develop • Commit: e60975a*
 
 ### ✨ Features
 
@@ -136,8 +136,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 📦 Other
 
-- Merge branch 'develop' ([`df22b6e`](../../commit/df22b6e))
-- Merge develop into main: RAE Telemetry Schema v1 and OpenTelemetry improvements ([`5b53d05`](../../commit/5b53d05))
 - p8-graph-enhanced-tests ([`be4ac1b`](../../commit/be4ac1b))
 - Merge branch 'feature/phase6-llm-router-tests' into develop ([`6daf445`](../../commit/6daf445))
 - Merge branch 'feature/phase5-semantic-extractor-tests' into develop ([`e7f3a8a`](../../commit/e7f3a8a))
