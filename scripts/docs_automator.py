@@ -83,6 +83,55 @@ def get_git_branch() -> str:
 def get_git_hash() -> str:
     return run_command(["git", "rev-parse", "--short", "HEAD"]) or "unknown"
 
+def get_recent_commits(limit: int = 50) -> List[Dict[str, str]]:
+    """Get recent commits with type, scope, and description."""
+    # Try to get commits since last tag, or last 50 commits
+    last_tag = run_command(["git", "describe", "--tags", "--abbrev=0"])
+    if last_tag:
+        commit_range = f"{last_tag}..HEAD"
+    else:
+        commit_range = f"HEAD~{limit}..HEAD"
+
+    # Get commit log: hash + subject
+    log_output = run_command(["git", "log", commit_range, "--pretty=format:%h|%s|%ad", "--date=short"])
+
+    commits = []
+    for line in log_output.split("\n"):
+        if not line.strip():
+            continue
+        parts = line.split("|", 2)
+        if len(parts) < 3:
+            continue
+
+        hash_short, subject, date = parts
+
+        # Skip auto-generated docs commits
+        if "[skip ci]" in subject or "Auto-update" in subject:
+            continue
+
+        # Parse Conventional Commits format: type(scope): description
+        match = re.match(r"^(\w+)(?:\(([^)]+)\))?:\s*(.+)$", subject)
+        if match:
+            commit_type, scope, description = match.groups()
+            commits.append({
+                "hash": hash_short,
+                "type": commit_type,
+                "scope": scope or "",
+                "description": description,
+                "date": date
+            })
+        else:
+            # Non-conventional commit
+            commits.append({
+                "hash": hash_short,
+                "type": "other",
+                "scope": "",
+                "description": subject,
+                "date": date
+            })
+
+    return commits
+
 # --- Generators ---
 
 def update_todo():
@@ -182,7 +231,7 @@ def update_testing_status():
     print(f"Updating {TESTING_FILE}...")
     tests = get_test_stats()
     cov = get_coverage_stats()
-    
+
     if not tests["total"] and not cov:
         print("No test data found. Skipping TESTING_STATUS update.")
         return
@@ -210,13 +259,122 @@ See `htmlcov/index.html` for detailed report.
     os.makedirs(os.path.dirname(TESTING_FILE), exist_ok=True)
     write_file_content(TESTING_FILE, content)
 
+def update_changelog():
+    print(f"Updating {CHANGELOG_FILE}...")
+    current_content = get_file_content(CHANGELOG_FILE)
+
+    commits = get_recent_commits(limit=50)
+
+    if not commits:
+        print("No recent commits found. Skipping CHANGELOG update.")
+        return
+
+    # Group commits by type
+    type_labels = {
+        "feat": "✨ Features",
+        "fix": "🐛 Bug Fixes",
+        "docs": "📚 Documentation",
+        "test": "🧪 Tests",
+        "refactor": "♻️ Refactoring",
+        "perf": "⚡ Performance",
+        "chore": "🔧 Chore",
+        "ci": "👷 CI/CD",
+        "style": "💄 Style",
+        "other": "📦 Other"
+    }
+
+    grouped = {}
+    for commit in commits:
+        commit_type = commit["type"]
+        if commit_type not in grouped:
+            grouped[commit_type] = []
+        grouped[commit_type].append(commit)
+
+    # Generate markdown
+    changelog_section = f"""## Recent Changes (Auto-generated)
+
+*Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M')} • Branch: {get_git_branch()} • Commit: {get_git_hash()}*
+
+"""
+
+    # Order types by importance
+    type_order = ["feat", "fix", "perf", "refactor", "docs", "test", "ci", "chore", "style", "other"]
+
+    for commit_type in type_order:
+        if commit_type not in grouped:
+            continue
+
+        label = type_labels.get(commit_type, "Other")
+        changelog_section += f"### {label}\n\n"
+
+        for commit in grouped[commit_type]:
+            scope_str = f"**{commit['scope']}**: " if commit['scope'] else ""
+            changelog_section += f"- {scope_str}{commit['description']} ([`{commit['hash']}`](../../commit/{commit['hash']}))\n"
+
+        changelog_section += "\n"
+
+    changelog_section += "---\n\n"
+
+    # Insert after "## [Unreleased]" section
+    marker = "## [Unreleased]"
+
+    if marker in current_content:
+        # Find the end of Unreleased section (next ##)
+        parts = current_content.split(marker, 1)
+        header = parts[0] + marker
+        rest = parts[1]
+
+        # Find the next release section or "---"
+        next_section = re.search(r"\n(---|\n## \[)", rest)
+        if next_section:
+            unreleased_content = rest[:next_section.start()]
+            remaining = rest[next_section.start():]
+
+            # Check if auto-generated section exists
+            if "## Recent Changes (Auto-generated)" in remaining:
+                # Replace existing auto-generated section
+                parts_remaining = remaining.split("## Recent Changes (Auto-generated)", 1)
+                # Find end of auto-generated section (next --- or ##)
+                after_autogen = parts_remaining[1]
+                end_autogen = re.search(r"\n(---|\n## )", after_autogen)
+                if end_autogen:
+                    # Skip to end of section including the separator
+                    tail_start = end_autogen.end() - 1  # Keep the \n before next section
+                    final_content = header + unreleased_content + "\n\n" + changelog_section + after_autogen[tail_start:]
+                else:
+                    final_content = header + unreleased_content + "\n\n" + changelog_section
+            else:
+                # Insert new auto-generated section
+                final_content = header + unreleased_content + "\n\n" + changelog_section + remaining
+        else:
+            # No next section found, append at end
+            final_content = header + rest + "\n\n" + changelog_section
+    else:
+        # No Unreleased section, append at top after header
+        lines = current_content.split("\n")
+        # Find first ## heading
+        insert_pos = 0
+        for i, line in enumerate(lines):
+            if line.startswith("## "):
+                insert_pos = i
+                break
+
+        if insert_pos > 0:
+            header_content = "\n".join(lines[:insert_pos])
+            rest_content = "\n".join(lines[insert_pos:])
+            final_content = header_content + "\n\n" + changelog_section + rest_content
+        else:
+            final_content = changelog_section + current_content
+
+    write_file_content(CHANGELOG_FILE, final_content)
+
 def main():
     print("🤖 Docs Automator - Starting...")
     try:
         update_todo()
         update_status()
         update_testing_status()
-        # We skip changelog for now to avoid git noise, it should be handled by release workflow
+        update_changelog()
         print("✅ Documentation updated successfully.")
     except Exception as e:
         print(f"❌ Error updating documentation: {e}")
