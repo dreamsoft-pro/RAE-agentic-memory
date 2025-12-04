@@ -1,143 +1,93 @@
-openapi: 3.0.3
-info:
-  title: Agentic Memory API
-  version: "0.1"
-paths:
-  /health:
-    get:
-      responses: { "200": { "description": "ok" } }
+# OpenAPI Specification
 
-  /memory/add:
-    post:
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AddMemoryRequest'
-      responses:
-        "200": { description: "added", content: { application/json: { schema: { $ref: '#/components/schemas/AddMemoryResponse' } } } }
+> **Note**: This file previously contained a static OpenAPI specification that became outdated. The OpenAPI specification is now **auto-generated** from code and always up-to-date.
 
-  /memory/query:
-    post:
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/QueryRequest' }
-      responses:
-        "200": { description: "results", content: { application/json: { schema: { $ref: '#/components/schemas/QueryResponse' } } } }
+## Access the Live OpenAPI Specification
 
-  /agent/execute:
-    post:
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema: { $ref: '#/components/schemas/AgentExecuteRequest' }
-      responses:
-        "200": { description: "answer", content: { application/json: { schema: { $ref: '#/components/schemas/AgentExecuteResponse' } } } }
+### JSON Format (Machine-Readable)
+**URL**: http://localhost:8000/openapi.json
 
-  /memory/timeline:
-    get:
-      parameters:
-        - in: query
-          name: start_date
-          schema: { type: string }
-        - in: query
-          name: end_date
-          schema: { type: string }
-        - in: query
-          name: limit
-          schema: { type: integer, default: 100 }
-      responses:
-        "200": { description: "timeline", content: { application/json: { schema: { $ref: '#/components/schemas/TimelineResponse' } } } }
+Use this for:
+- Generating API clients in various programming languages
+- Importing into API tools (Postman, Insomnia, etc.)
+- Integration with testing frameworks
+- Building custom tooling
 
-components:
-  schemas:
-    MemoryType:
-      type: string
-      enum: [episodic, semantic, procedural]
+### Interactive Documentation (Human-Readable)
 
-    AddMemoryRequest:
-      type: object
-      required: [tenant_id, agent_id, memory_type, content]
-      properties:
-        tenant_id: { type: string }
-        agent_id: { type: string }
-        memory_type: { $ref: '#/components/schemas/MemoryType' }
-        content: { type: string }
-        source_id: { type: string }
-        created_at: { type: string, format: date-time }
-        tags: { type: array, items: { type: string } }
-        metadata: { type: object, additionalProperties: true }
+#### Swagger UI
+**URL**: http://localhost:8000/docs
 
-    AddMemoryResponse:
-      type: object
-      properties:
-        memory_id: { type: string, format: uuid }
+Features:
+- ✅ Interactive testing interface
+- ✅ All 116 endpoints with full documentation
+- ✅ Request/response schemas with examples
+- ✅ Authentication examples
+- ✅ Try endpoints directly from browser
 
-    QueryRequest:
-      type: object
-      required: [tenant_id, query_text]
-      properties:
-        tenant_id: { type: string }
-        query_text: { type: string }
-        k: { type: integer, default: 50 }
-        k_final: { type: integer, default: 5 }
-        filters:
-          type: object
-          properties:
-            memory_type: { $ref: '#/components/schemas/MemoryType' }
-            min_saliency: { type: number }
-            since: { type: string, format: date-time }
+#### ReDoc
+**URL**: http://localhost:8000/redoc
 
-    QueryResponse:
-      type: object
-      properties:
-        results:
-          type: array
-          items:
-            type: object
-            properties:
-              memory_id: { type: string, format: uuid }
-              score: { type: number }
-              content: { type: string }
-              source_id: { type: string }
-              memory_type: { $ref: '#/components/schemas/MemoryType' }
-              provenance: { type: object, additionalProperties: true }
+Features:
+- ✅ Clean, three-panel layout
+- ✅ Printable documentation
+- ✅ Comprehensive data model documentation
+- ✅ Easy navigation
 
-    AgentExecuteRequest:
-      type: object
-      required: [tenant_id, prompt]
-      properties:
-        tenant_id: { type: string }
-        prompt: { type: string }
-        tools_allowed: { type: array, items: { type: string } }
-        budget_tokens: { type: integer, default: 20000 }
+## Current API Version
 
-    AgentExecuteResponse:
-      type: object
-      properties:
-        answer: { type: string }
-        used_memories: { $ref: '#/components/schemas/QueryResponse' }
-        cost:
-          type: object
-          properties:
-            input_tokens: { type: integer }
-            output_tokens: { type: integer }
-            total_estimate: { type: number }
+**Version**: 2.2.0-enterprise
 
-    TimelineResponse:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            type: object
-            properties:
-              memory_id: { type: string, format: uuid }
-              created_at: { type: string, format: date-time }
-              content: { type: string }
-              memory_type: { $ref: '#/components/schemas/MemoryType' }
-              saliency_score: { type: number }
+**Total Endpoints**: 116
+- 26 core endpoints
+- 90 enterprise endpoints
+
+## Why Auto-Generated?
+
+Static OpenAPI files become outdated quickly. By using FastAPI's built-in OpenAPI generation:
+
+1. **Always Accurate**: Documentation updates automatically when code changes
+2. **No Maintenance**: No manual editing required
+3. **Comprehensive**: Includes all endpoints, models, and validation rules
+4. **Standards Compliant**: Follows OpenAPI 3.0+ specification
+
+## Quick Start
+
+1. **Start the API**:
+   ```bash
+   docker-compose up memory-api
+   ```
+
+2. **Access Documentation**:
+   - Browse to http://localhost:8000/docs
+   - Or http://localhost:8000/redoc
+
+3. **Download Specification**:
+   ```bash
+   curl http://localhost:8000/openapi.json > openapi.json
+   ```
+
+## Generate API Clients
+
+Use the OpenAPI specification to generate clients:
+
+```bash
+# Download spec
+curl http://localhost:8000/openapi.json > openapi.json
+
+# Generate Python client
+openapi-generator-cli generate -i openapi.json -g python -o ./client-python
+
+# Generate TypeScript client
+openapi-generator-cli generate -i openapi.json -g typescript-axios -o ./client-ts
+
+# Generate Go client
+openapi-generator-cli generate -i openapi.json -g go -o ./client-go
+```
+
+## Further Reading
+
+- [API Reference](api_reference.md) - Complete API overview
+- [API Cookbook](API_COOKBOOK.md) - Task-oriented recipes and examples
+- [REST API Examples](rest-api.md) - Curl examples for all operations
+- [Python SDK](python-sdk.md) - Official Python client library

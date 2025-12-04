@@ -127,8 +127,8 @@ def test_select_context_empty_memory(ib_selector, query_embedding):
 
 
 def test_select_context_high_beta_compression(query_embedding, mock_memories):
-    """Test that high beta leads to more compression"""
-    # Low beta (less compression - prefers relevance)
+    """Test that high beta increases compression"""
+    # Low beta (lower compression - prefers relevance)
     selector_low = InformationBottleneckSelector(beta=0.1)
     selected_low = selector_low.select_context(
         query="test",
@@ -137,7 +137,7 @@ def test_select_context_high_beta_compression(query_embedding, mock_memories):
         max_tokens=2000,
     )
 
-    # High beta (more compression - penalizes token usage heavily)
+    # High beta (higher compression - penalizes token usage heavily)
     selector_high = InformationBottleneckSelector(beta=10.0)
     selected_high = selector_high.select_context(
         query="test",
@@ -146,7 +146,7 @@ def test_select_context_high_beta_compression(query_embedding, mock_memories):
         max_tokens=2000,
     )
 
-    # High beta should select fewer tokens (more compression)
+    # High beta should select fewer tokens (higher compression)
     # Count total tokens instead of memory count for more reliable test
     tokens_low = sum(m.tokens for m in selected_low)
     tokens_high = sum(m.tokens for m in selected_high)
@@ -387,7 +387,7 @@ def test_adaptive_beta_complex_query(ib_selector):
         user_preference="balanced",
     )
 
-    # Complex query should get lower beta (less compression)
+    # Complex query should get lower beta (lower compression)
     assert beta < 1.0
 
 
@@ -399,7 +399,7 @@ def test_adaptive_beta_low_budget(ib_selector):
         user_preference="balanced",
     )
 
-    # Low budget should get higher beta (more compression)
+    # Low budget should get higher beta (higher compression)
     assert beta > 1.0
 
 
