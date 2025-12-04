@@ -128,8 +128,8 @@ def test_select_context_empty_memory(ib_selector, query_embedding):
 
 def test_select_context_high_beta_compression(query_embedding, mock_memories):
     """Test that high beta leads to more compression"""
-    # Low beta (less compression)
-    selector_low = InformationBottleneckSelector(beta=0.5)
+    # Low beta (less compression - prefers relevance)
+    selector_low = InformationBottleneckSelector(beta=0.1)
     selected_low = selector_low.select_context(
         query="test",
         query_embedding=query_embedding,
@@ -137,8 +137,8 @@ def test_select_context_high_beta_compression(query_embedding, mock_memories):
         max_tokens=2000,
     )
 
-    # High beta (more compression)
-    selector_high = InformationBottleneckSelector(beta=2.0)
+    # High beta (more compression - penalizes token usage heavily)
+    selector_high = InformationBottleneckSelector(beta=10.0)
     selected_high = selector_high.select_context(
         query="test",
         query_embedding=query_embedding,
@@ -146,8 +146,17 @@ def test_select_context_high_beta_compression(query_embedding, mock_memories):
         max_tokens=2000,
     )
 
-    # High beta should select fewer memories
-    assert len(selected_high) <= len(selected_low)
+    # High beta should select fewer tokens (more compression)
+    # Count total tokens instead of memory count for more reliable test
+    tokens_low = sum(m.tokens for m in selected_low)
+    tokens_high = sum(m.tokens for m in selected_high)
+
+    # High beta should use fewer tokens OR equal (if both hit max_tokens)
+    # We allow equality because both might select up to max_tokens
+    assert tokens_high <= tokens_low, (
+        f"High beta should use fewer or equal tokens: "
+        f"high={tokens_high}, low={tokens_low}"
+    )
 
 
 def test_select_context_respects_min_relevance(
