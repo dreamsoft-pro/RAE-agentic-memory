@@ -96,24 +96,25 @@ This document tracks the implementation status of RAE features and defines the r
 - **Memory Replay Tool**
 
 ## Technical Debt (Auto-generated from code)
-*Last scan: 2025-12-03 21:21*
+*Last scan: 2025-12-04 09:21*
 
 - [ ] **CHANGELOG.md:40** - - update project status and TODO list after iteration 2 completion ([`49aff83c8`](../../commit/49aff83c8))
 - [ ] **CHANGELOG.md:41** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a98a`](../../commit/934b3a98a))
 - [ ] **CHANGELOG.md:109** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
 - [ ] **CHANGELOG.md:110** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:377** - Added - Missing Functionalities from TODO.md Completed 🎯
-- [ ] **CHANGELOG.md:379** - This release completes the implementation of critical functionalities identified in TODO.md that were either missing or partially implemented.
-- [ ] **CHANGELOG.md:611** - - **TODO.md Items** - Completed 5 major categories of missing/incomplete functionalities:
-- [ ] **CHANGELOG.md:620** - - Updated TODO.md to reflect all completed items with detailed completion notes
-- [ ] **CHANGELOG.md:657** - - Technical debt reduction: 5 major TODO.md categories completed
-- [ ] **CHANGELOG.md:1016** - - Resolved TODO comments with detailed implementation notes
-- [ ] **CHANGELOG.md:1031** - - TODO comments resolved with implementation guidance
+- [ ] **CHANGELOG.md:179** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:180** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:450** - Added - Missing Functionalities from TODO.md Completed 🎯
+- [ ] **CHANGELOG.md:452** - This release completes the implementation of critical functionalities identified in TODO.md that were either missing or partially implemented.
+- [ ] **CHANGELOG.md:684** - - **TODO.md Items** - Completed 5 major categories of missing/incomplete functionalities:
+- [ ] **CHANGELOG.md:693** - - Updated TODO.md to reflect all completed items with detailed completion notes
+- [ ] **CHANGELOG.md:730** - - Technical debt reduction: 5 major TODO.md categories completed
+- [ ] **CHANGELOG.md:1089** - - Resolved TODO comments with detailed implementation notes
+- [ ] **CHANGELOG.md:1104** - - TODO comments resolved with implementation guidance
 - [ ] **CONTRIBUTING.md:148** - Run the documentation automator to update status and TODOs:
 - [ ] **README.md:812** - - ✅ **[TODO List](TODO.md)** - Upcoming features and improvements
 - [ ] **STATUS.md:25** - All missing/incomplete functionalities from TODO.md have been successfully implemented:
-- [ ] **STATUS.md:185** - - [Technical Debt](TODO.md)
-- [ ] **apps/llm/tests/broker/test_llm_router.py:127** - Should re-raise (fallback logic in code is TODO)
+- [ ] **STATUS.md:186** - - [Technical Debt](TODO.md)
 - [ ] **apps/memory_api/services/context_builder.py:295** - In production, use vector search to get similarity scores
 - [ ] **apps/memory_api/services/context_builder.py:414** - Implement profile retrieval
 - [ ] **apps/memory_api/routes/event_triggers.py:166** - tenant_id = "default"   TODO: Get from auth context
@@ -132,7 +133,7 @@ This document tracks the implementation status of RAE features and defines the r
 - [ ] **scripts/docs_automator.py:165** - "\n".join(todos) if todos else "No TODOs found in code."
 - [ ] **scripts/docs_automator.py:167** - Inject into TODO.md
 - [ ] **scripts/docs_automator.py:178** - write_file_content(TODO_FILE, new_content)
-- [ ] **.github/workflows/docs.yml:52** - file_pattern: 'CHANGELOG.md STATUS.md TODO.md docs/TESTING_STATUS.md'
+- [ ] **.github/workflows/docs.yml:53** - file_pattern: 'CHANGELOG.md STATUS.md TODO.md docs/TESTING_STATUS.md'
 - [ ] **docs/RAE–Docs-vs-Code.md:396** - 11. Priorytetowa lista TODO (szczególnie pod RAE Lite)
 - [ ] **docs/Self-Documenting Codebase Blueprint.md:11** - 1. Warstwa Źródłowa: Kod, Komentarze TODO, Historia Gita (Commity).
 - [ ] **docs/Self-Documenting Codebase Blueprint.md:13** - 3. Warstwa Prezentacji: Pliki Markdown (STATUS.md, CHANGELOG.md, TODO.md).
