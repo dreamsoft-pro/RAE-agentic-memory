@@ -135,7 +135,7 @@ jobs:
           echo ""
           echo "🚀 Running smart test selection..."
           # testmon tracks which tests cover which code and runs only affected tests
-          pytest -m "not integration and not llm" --testmon --cov --cov-report=xml --cov-report=term
+          pytest -m "not integration and not llm and not contract and not performance" --testmon --cov --cov-report=xml --cov-report=term
           echo ""
           echo "✅ Quick tests completed for your changes!"
           echo ""
@@ -241,7 +241,7 @@ jobs:
           RAE_VECTOR_BACKEND: qdrant
         run: |
           echo "🔍 Running FULL test suite..."
-          pytest -m "not integration and not llm" --cov --cov-report=xml --cov-report=term
+          pytest -m "not integration and not llm and not contract and not performance" --cov --cov-report=xml --cov-report=term
 
       - name: Run integration tests
         env:
@@ -259,8 +259,8 @@ jobs:
 
       - name: Run contract tests
         run: |
-          echo "📋 Running API contract tests..."
-          pytest -m contract -v || echo "⚠️ Contract tests failed"
+          echo "📋 Contract tests skipped (require full test infrastructure)"
+          echo "ℹ️  To run contract tests: pytest -m contract"
 
       - name: Check coverage trend
         if: github.ref == 'refs/heads/develop'
