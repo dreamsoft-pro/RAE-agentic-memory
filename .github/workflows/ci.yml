@@ -390,24 +390,32 @@ jobs:
         run: |
           echo "🔍 Checking for forbidden interactive commands..."
 
-          # Search for interactive commands in Python files
-          FORBIDDEN_PATTERNS=(
-            "nano "
-            "vim "
-            "vi "
-            "emacs "
-            "less "
-            "more "
-            "git add -i"
-            "git rebase -i"
-          )
-
+          # Search for interactive commands in actual code (not comments/strings)
+          # We check for patterns that indicate actual command usage, not natural language
           VIOLATIONS=()
-          for pattern in "${FORBIDDEN_PATTERNS[@]}"; do
-            if git grep -n "$pattern" -- '*.py' '*.sh' 2>/dev/null; then
-              VIOLATIONS+=("Found forbidden command: $pattern")
+
+          # Check for editor commands (nano, vim, vi, emacs)
+          # These are rarely used in natural language, so we can check broadly
+          EDITOR_PATTERNS=("nano " "vim " "vi " "emacs ")
+          for pattern in "${EDITOR_PATTERNS[@]}"; do
+            if git grep -n "$pattern" -- '*.py' '*.sh' 2>/dev/null | grep -v "^[^:]*:[^:]*:#"; then
+              VIOLATIONS+=("Found forbidden editor command: $pattern")
             fi
           done
+
+          # Check for interactive git commands
+          if git grep -n "git add -i" -- '*.py' '*.sh' 2>/dev/null | grep -v "^[^:]*:[^:]*:#"; then
+            VIOLATIONS+=("Found forbidden command: git add -i")
+          fi
+          if git grep -n "git rebase -i" -- '*.py' '*.sh' 2>/dev/null | grep -v "^[^:]*:[^:]*:#"; then
+            VIOLATIONS+=("Found forbidden command: git rebase -i")
+          fi
+
+          # For less/more: only check in command contexts (subprocess, os.system, etc)
+          # Skip these as they're too common in natural language comments
+          if git grep -nE '(subprocess|os\.system|run|exec|popen).*["\x27](less|more)["\x27]' -- '*.py' 2>/dev/null; then
+            VIOLATIONS+=("Found interactive pager command (less/more) in code")
+          fi
 
           if [ ${#VIOLATIONS[@]} -ne 0 ]; then
             echo "❌ Forbidden interactive commands found:"
