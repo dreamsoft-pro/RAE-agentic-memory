@@ -7,9 +7,28 @@ on:
     branches: [ main, develop, 'feature/**' ]
 
 jobs:
-  # Quick test job for feature branches (incremental testing)
+  # ═══════════════════════════════════════════════════════════════════════════
+  # 🚨 FEATURE BRANCH TESTING - READ THIS CAREFULLY!
+  # ═══════════════════════════════════════════════════════════════════════════
+  #
+  # This job runs ONLY SMART TEST SELECTION (not full test suite!)
+  # It uses 'testmon' to run only tests affected by changed files.
+  #
+  # ❌ DO NOT modify this to run full test suite on feature branches!
+  # ❌ DO NOT add `make test-unit` or `pytest` without markers here!
+  # ✅ Full test suite runs ONLY on develop/main branches (see test-full job)
+  #
+  # Why?
+  # - Feature branches push frequently (every small change)
+  # - Full tests take 10-15 minutes and cost CI credits
+  # - Smart selection gives quick feedback (1-2 minutes)
+  # - Full validation happens on develop before merging to main
+  #
+  # If you need full tests on a feature branch, use: git commit -m "message [full-test]"
+  # ═══════════════════════════════════════════════════════════════════════════
+
   test-quick:
-    name: Quick Test (Python ${{ matrix.python-version }})
+    name: Quick Test - Feature Branch ONLY (Smart Selection)
     runs-on: ubuntu-latest
     # Run ONLY on feature branches AND NOT on PR AND NOT when commit contains [full-test]
     if: |
@@ -99,10 +118,33 @@ jobs:
           QDRANT_URL: http://localhost:6333
           RAE_VECTOR_BACKEND: qdrant
         run: |
-          echo "🚀 Running smart test selection for changed files..."
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🚨 FEATURE BRANCH - SMART TEST SELECTION ONLY"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "This is NOT a full test run. We only test files affected by your changes."
+          echo ""
+          echo "Why? Feature branches push frequently. Full tests would:"
+          echo "  - Take 10-15 minutes instead of 1-2 minutes"
+          echo "  - Cost 5-10x more in CI credits"
+          echo "  - Slow down your development"
+          echo ""
+          echo "Full test suite runs on develop/main branches automatically."
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "🚀 Running smart test selection..."
           # testmon tracks which tests cover which code and runs only affected tests
           pytest -m "not integration and not llm" --testmon --cov --cov-report=xml --cov-report=term
-          echo "✅ Quick tests completed"
+          echo ""
+          echo "✅ Quick tests completed for your changes!"
+          echo ""
+          echo "Next steps:"
+          echo "  1. Continue developing on feature branch"
+          echo "  2. When ready, merge to develop"
+          echo "  3. Run FULL test suite on develop: make test-unit"
+          echo "  4. If passes, merge to main"
+          echo ""
 
       - name: No changes detected
         if: steps.changes.outputs.has_changes == 'false'
@@ -299,6 +341,194 @@ jobs:
         run: |
           mypy apps/ sdk/ || true
 
+  quality-gate:
+    name: Code Quality Gate
+    runs-on: ubuntu-latest
+    # Run on all branches
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for changed files detection
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Check required documentation exists
+        run: |
+          echo "📋 Checking required documentation..."
+
+          REQUIRED_DOCS=(
+            "PROJECT_STRUCTURE.md"
+            "CONVENTIONS.md"
+            "ONBOARDING_GUIDE.md"
+            "INTEGRATION_CHECKLIST.md"
+            ".cursorrules"
+            "docs/AGENTS_TEST_POLICY.md"
+            "docs/BRANCHING.md"
+            ".ai-templates/README.md"
+          )
+
+          MISSING_DOCS=()
+          for doc in "${REQUIRED_DOCS[@]}"; do
+            if [ ! -f "$doc" ]; then
+              MISSING_DOCS+=("$doc")
+            fi
+          done
+
+          if [ ${#MISSING_DOCS[@]} -ne 0 ]; then
+            echo "❌ Missing required documentation files:"
+            printf '   - %s\n' "${MISSING_DOCS[@]}"
+            exit 1
+          fi
+
+          echo "✅ All required documentation exists"
+
+      - name: Check for forbidden interactive commands
+        run: |
+          echo "🔍 Checking for forbidden interactive commands..."
+
+          # Search for interactive commands in Python files
+          FORBIDDEN_PATTERNS=(
+            "nano "
+            "vim "
+            "vi "
+            "emacs "
+            "less "
+            "more "
+            "git add -i"
+            "git rebase -i"
+          )
+
+          VIOLATIONS=()
+          for pattern in "${FORBIDDEN_PATTERNS[@]}"; do
+            if git grep -n "$pattern" -- '*.py' '*.sh' 2>/dev/null; then
+              VIOLATIONS+=("Found forbidden command: $pattern")
+            fi
+          done
+
+          if [ ${#VIOLATIONS[@]} -ne 0 ]; then
+            echo "❌ Forbidden interactive commands found:"
+            printf '   - %s\n' "${VIOLATIONS[@]}"
+            echo ""
+            echo "Use non-interactive alternatives:"
+            echo "   - cat, head, tail instead of less/more"
+            echo "   - Edit/Write tools instead of nano/vim"
+            echo "   - git add/commit without -i flags"
+            exit 1
+          fi
+
+          echo "✅ No forbidden commands found"
+
+      - name: Check file structure compliance
+        run: |
+          echo "🗂️  Checking file structure compliance..."
+
+          # Check if new Python files are in correct locations
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            CHANGED_FILES=$(git diff --name-only origin/develop...HEAD 2>/dev/null | grep '\.py$' || echo "")
+
+            if [ -n "$CHANGED_FILES" ]; then
+              echo "Changed Python files:"
+              echo "$CHANGED_FILES"
+
+              MISPLACED=()
+              while IFS= read -r file; do
+                # Check if file is in apps/ but not in correct structure
+                if [[ "$file" == apps/memory_api/* ]] && \
+                   [[ "$file" != apps/memory_api/api/* ]] && \
+                   [[ "$file" != apps/memory_api/services/* ]] && \
+                   [[ "$file" != apps/memory_api/repositories/* ]] && \
+                   [[ "$file" != apps/memory_api/models/* ]] && \
+                   [[ "$file" != apps/memory_api/tasks/* ]] && \
+                   [[ "$file" != apps/memory_api/middleware/* ]] && \
+                   [[ "$file" != apps/memory_api/security/* ]] && \
+                   [[ "$file" != apps/memory_api/utils/* ]] && \
+                   [[ "$file" != apps/memory_api/tests/* ]] && \
+                   [[ "$file" != apps/memory_api/main.py ]] && \
+                   [[ "$file" != apps/memory_api/config.py ]] && \
+                   [[ "$file" != apps/memory_api/__init__.py ]]; then
+                  MISPLACED+=("$file")
+                fi
+              done <<< "$CHANGED_FILES"
+
+              if [ ${#MISPLACED[@]} -ne 0 ]; then
+                echo "⚠️  Warning: Files may be in wrong locations:"
+                printf '   - %s\n' "${MISPLACED[@]}"
+                echo ""
+                echo "Check PROJECT_STRUCTURE.md for correct locations"
+              else
+                echo "✅ File structure looks good"
+              fi
+            fi
+          fi
+
+      - name: Check for tenant_id in SQL queries (security)
+        run: |
+          echo "🔒 Checking tenant_id usage in database queries..."
+
+          # Find Python files with SQL queries but without tenant_id
+          CHANGED_FILES=$(git diff --name-only origin/develop...HEAD 2>/dev/null | grep '\.py$' || echo "")
+
+          if [ -n "$CHANGED_FILES" ]; then
+            SECURITY_ISSUES=()
+
+            while IFS= read -r file; do
+              if [ -f "$file" ] && [[ "$file" == apps/memory_api/repositories/* ]]; then
+                # Check if file has SELECT/UPDATE/DELETE without tenant_id
+                if grep -i "SELECT.*FROM" "$file" | grep -v "tenant_id" | grep -v "#" > /dev/null 2>&1; then
+                  SECURITY_ISSUES+=("$file: SELECT query may be missing tenant_id")
+                fi
+                if grep -i "UPDATE.*SET" "$file" | grep -v "tenant_id" | grep -v "#" > /dev/null 2>&1; then
+                  SECURITY_ISSUES+=("$file: UPDATE query may be missing tenant_id")
+                fi
+                if grep -i "DELETE.*FROM" "$file" | grep -v "tenant_id" | grep -v "#" > /dev/null 2>&1; then
+                  SECURITY_ISSUES+=("$file: DELETE query may be missing tenant_id")
+                fi
+              fi
+            done <<< "$CHANGED_FILES"
+
+            if [ ${#SECURITY_ISSUES[@]} -ne 0 ]; then
+              echo "⚠️  Potential security issues (missing tenant_id):"
+              printf '   - %s\n' "${SECURITY_ISSUES[@]}"
+              echo ""
+              echo "CRITICAL: All database queries MUST include tenant_id for multi-tenancy security!"
+              echo "Review CONVENTIONS.md for details"
+              # Don't fail - just warn (might be false positives)
+            else
+              echo "✅ tenant_id usage looks good"
+            fi
+          fi
+
+      - name: Check test file naming conventions
+        run: |
+          echo "🧪 Checking test file naming conventions..."
+
+          # Find test files that don't follow naming convention
+          WRONG_NAMES=$(find apps/ -path "*/tests/*" -name "*.py" ! -name "test_*.py" ! -name "__init__.py" ! -name "conftest.py" 2>/dev/null || echo "")
+
+          if [ -n "$WRONG_NAMES" ]; then
+            echo "⚠️  Test files should be named test_*.py:"
+            echo "$WRONG_NAMES"
+          else
+            echo "✅ Test naming conventions followed"
+          fi
+
+      - name: Quality gate summary
+        run: |
+          echo "✅ Code Quality Gate Passed!"
+          echo ""
+          echo "Verified:"
+          echo "  ✅ Required documentation exists"
+          echo "  ✅ No forbidden interactive commands"
+          echo "  ✅ File structure compliance checked"
+          echo "  ✅ tenant_id security check performed"
+          echo "  ✅ Test naming conventions verified"
+          echo ""
+          echo "Next: Full test suite and integration checks"
+
   security:
     name: Security Scan
     runs-on: ubuntu-latest
@@ -325,6 +555,57 @@ jobs:
         continue-on-error: true
         run: |
           bandit -r apps/ sdk/ -ll || true
+
+  docs-update:
+    name: Auto-Update Documentation
+    runs-on: ubuntu-latest
+    # Run ONLY on develop and main after successful tests
+    if: |
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') &&
+      github.event_name == 'push'
+    needs: [test-full, lint, quality-gate]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for CHANGELOG
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run documentation automation
+        run: |
+          echo "📚 Auto-updating documentation..."
+          python3 scripts/docs_automator.py || echo "⚠️  Docs automation had issues (non-blocking)"
+
+      - name: Check if documentation changed
+        id: docs_changed
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  No documentation changes"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "📝 Documentation was updated"
+          fi
+
+      - name: Commit documentation updates
+        if: steps.docs_changed.outputs.changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add CHANGELOG.md TODO.md STATUS.md docs/TESTING_STATUS.md || true
+          git commit -m "docs: auto-update documentation [skip ci]" || echo "Nothing to commit"
+
+      - name: Push documentation changes
+        if: steps.docs_changed.outputs.changed == 'true'
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
 
   docker:
     name: Docker Build

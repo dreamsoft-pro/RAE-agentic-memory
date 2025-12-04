@@ -7,6 +7,8 @@ Data models for RAE Memory API
 import importlib.util
 from pathlib import Path
 
+from apps.memory_api.models.hybrid_search_models import HybridSearchResult, QueryIntent
+
 # Import Phase 2 models from submodules (early import to avoid E402)
 from apps.memory_api.models.rbac import Permission, Role, UserRole
 from apps.memory_api.models.tenant import Tenant, TenantConfig, TenantTier
@@ -58,4 +60,7 @@ __all__ = [
     "Role",
     "Permission",
     "UserRole",
+    # Hybrid Search Models
+    "HybridSearchResult",
+    "QueryIntent",
 ]
