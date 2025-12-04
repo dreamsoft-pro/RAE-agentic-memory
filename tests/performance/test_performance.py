@@ -36,7 +36,9 @@ class TestMemoryOperationsPerformance:
         assert result is not None
 
         # Check that mean time is under threshold
-        assert benchmark.stats.mean < 0.2, f"Query too slow: {benchmark.stats.mean:.3f}s"
+        # benchmark.stats is a BenchmarkStats object with stats dict
+        mean_time = benchmark.stats.stats.mean if hasattr(benchmark.stats, 'stats') else benchmark.stats['mean']
+        assert mean_time < 0.2, f"Query too slow: {mean_time:.3f}s"
 
     def test_embedding_generation_performance(self, benchmark):
         """Ensure embedding generation completes in <500ms"""
@@ -48,7 +50,8 @@ class TestMemoryOperationsPerformance:
         result = benchmark(embed_operation)
         assert len(result) == 384
 
-        assert benchmark.stats.mean < 0.5, f"Embedding too slow: {benchmark.stats.mean:.3f}s"
+        mean_time = benchmark.stats.stats.mean if hasattr(benchmark.stats, 'stats') else benchmark.stats['mean']
+        assert mean_time < 0.5, f"Embedding too slow: {mean_time:.3f}s"
 
 
 @pytest.mark.performance
@@ -66,7 +69,8 @@ class TestGraphOperationsPerformance:
         result = benchmark(traverse_operation)
         assert result["nodes"] > 0
 
-        assert benchmark.stats.mean < 0.1, f"Traversal too slow: {benchmark.stats.mean:.3f}s"
+        mean_time = benchmark.stats.stats.mean if hasattr(benchmark.stats, 'stats') else benchmark.stats['mean']
+        assert mean_time < 0.1, f"Traversal too slow: {mean_time:.3f}s"
 
 
 @pytest.mark.performance
@@ -81,4 +85,5 @@ def test_bulk_insert_performance(benchmark):
     result = benchmark(bulk_insert)
     assert result == 100
 
-    assert benchmark.stats.mean < 1.0, f"Bulk insert too slow: {benchmark.stats.mean:.3f}s"
+    mean_time = benchmark.stats.stats.mean if hasattr(benchmark.stats, 'stats') else benchmark.stats['mean']
+    assert mean_time < 1.0, f"Bulk insert too slow: {mean_time:.3f}s"
