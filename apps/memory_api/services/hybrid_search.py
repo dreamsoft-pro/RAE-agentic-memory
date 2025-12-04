@@ -127,6 +127,22 @@ class HybridSearchService:
             use_graph=use_graph,
         )
 
+        # Initialize RAE state before search (MDP formulation: s_t)
+        from apps.memory_api.core.state import BudgetState, GraphState, RAEState
+
+        initial_state = RAEState(
+            tenant_id=tenant_id,
+            project_id=project_id,
+            budget_state=BudgetState(
+                remaining_tokens=100000,  # Default budget
+                remaining_cost_usd=10.0,
+                latency_budget_ms=30000,
+                calls_remaining=100,
+            ),
+        )
+
+        logger.info("hybrid_search_state_initialized", state=initial_state.to_dict())
+
         try:
             # Phase 1: Vector similarity search
             vector_results = await self._vector_search(
@@ -209,6 +225,34 @@ class HybridSearchService:
                 tenant_id=tenant_id,
                 project_id=project_id,
                 statistics=statistics,
+            )
+
+            # Update RAE state after search completes (MDP formulation: s_{t+1})
+            final_state = RAEState(
+                tenant_id=tenant_id,
+                project_id=project_id,
+                budget_state=BudgetState(
+                    # Context tokens used (approximation)
+                    remaining_tokens=initial_state.budget_state.remaining_tokens
+                    - statistics.get("context_length", 0),
+                    # No direct LLM cost in search
+                    remaining_cost_usd=initial_state.budget_state.remaining_cost_usd,
+                    latency_budget_ms=initial_state.budget_state.latency_budget_ms,
+                    calls_remaining=initial_state.budget_state.calls_remaining,
+                ),
+                graph_state=GraphState(
+                    node_count=len(graph_nodes),
+                    edge_count=len(graph_edges),
+                    connected_components=1,  # TODO: compute from graph
+                ),
+            )
+
+            # Log state transition (Δs = s_{t+1} - s_t)
+            state_delta = final_state.compare(initial_state)
+            logger.info(
+                "hybrid_search_state_transition",
+                tenant_id=tenant_id,
+                state_delta=state_delta,
             )
 
             return HybridSearchResult(
