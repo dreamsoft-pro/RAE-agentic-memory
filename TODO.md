@@ -96,7 +96,7 @@ This document tracks the implementation status of RAE features and defines the r
 - **Memory Replay Tool**
 
 ## Technical Debt (Auto-generated from code)
-*Last scan: 2025-12-04 09:21*
+*Last scan: 2025-12-04 09:58*
 
 - [ ] **CHANGELOG.md:40** - - update project status and TODO list after iteration 2 completion ([`49aff83c8`](../../commit/49aff83c8))
 - [ ] **CHANGELOG.md:41** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a98a`](../../commit/934b3a98a))
@@ -104,17 +104,19 @@ This document tracks the implementation status of RAE features and defines the r
 - [ ] **CHANGELOG.md:110** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
 - [ ] **CHANGELOG.md:179** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
 - [ ] **CHANGELOG.md:180** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:450** - Added - Missing Functionalities from TODO.md Completed 🎯
-- [ ] **CHANGELOG.md:452** - This release completes the implementation of critical functionalities identified in TODO.md that were either missing or partially implemented.
-- [ ] **CHANGELOG.md:684** - - **TODO.md Items** - Completed 5 major categories of missing/incomplete functionalities:
-- [ ] **CHANGELOG.md:693** - - Updated TODO.md to reflect all completed items with detailed completion notes
-- [ ] **CHANGELOG.md:730** - - Technical debt reduction: 5 major TODO.md categories completed
-- [ ] **CHANGELOG.md:1089** - - Resolved TODO comments with detailed implementation notes
-- [ ] **CHANGELOG.md:1104** - - TODO comments resolved with implementation guidance
+- [ ] **CHANGELOG.md:252** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:253** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:528** - Added - Missing Functionalities from TODO.md Completed 🎯
+- [ ] **CHANGELOG.md:530** - This release completes the implementation of critical functionalities identified in TODO.md that were either missing or partially implemented.
+- [ ] **CHANGELOG.md:762** - - **TODO.md Items** - Completed 5 major categories of missing/incomplete functionalities:
+- [ ] **CHANGELOG.md:771** - - Updated TODO.md to reflect all completed items with detailed completion notes
+- [ ] **CHANGELOG.md:808** - - Technical debt reduction: 5 major TODO.md categories completed
+- [ ] **CHANGELOG.md:1167** - - Resolved TODO comments with detailed implementation notes
+- [ ] **CHANGELOG.md:1182** - - TODO comments resolved with implementation guidance
 - [ ] **CONTRIBUTING.md:148** - Run the documentation automator to update status and TODOs:
 - [ ] **README.md:812** - - ✅ **[TODO List](TODO.md)** - Upcoming features and improvements
 - [ ] **STATUS.md:25** - All missing/incomplete functionalities from TODO.md have been successfully implemented:
-- [ ] **STATUS.md:186** - - [Technical Debt](TODO.md)
+- [ ] **STATUS.md:187** - - [Technical Debt](TODO.md)
 - [ ] **apps/memory_api/services/context_builder.py:295** - In production, use vector search to get similarity scores
 - [ ] **apps/memory_api/services/context_builder.py:414** - Implement profile retrieval
 - [ ] **apps/memory_api/routes/event_triggers.py:166** - tenant_id = "default"   TODO: Get from auth context
