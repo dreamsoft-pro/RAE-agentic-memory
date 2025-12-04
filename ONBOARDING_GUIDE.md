@@ -2,16 +2,38 @@
 
 > **Welcome!** This guide will get you productive on the RAE project in 15 minutes.
 
-## 🎯 Quick Start (5 Minutes)
+## 🚨 BEFORE YOU START - READ THIS FIRST!
+
+### ⚠️ CRITICAL RULES (1 minute - MANDATORY!)
+
+**STOP!** Before doing ANYTHING, read: **`CRITICAL_AGENT_RULES.md`**
+
+This file contains 8 MANDATORY rules that CANNOT be violated:
+
+1. **NEVER run full test suite on feature branches** (only test your NEW code)
+2. **Work AUTONOMOUSLY** (don't ask permission for standard tasks)
+3. **ALWAYS include tenant_id** in database queries (security!)
+4. **Use templates** from `.ai-templates/` for all new code
+5. **No interactive commands** (nano, vim, etc.)
+6. **Tests are contracts** (fix code, not tests)
+7. **Update documentation** when needed
+8. **Push main + develop together** (never leave main with red CI)
+
+**Read `CRITICAL_AGENT_RULES.md` NOW before continuing!**
+
+---
+
+## 🎯 Quick Start (After Reading Critical Rules)
 
 ### Step 1: Read These Files First (In Order)
 
-1. **THIS FILE** (you're here!) - Overview and first steps
-2. **PROJECT_STRUCTURE.md** - Where to find/add code
-3. **CONVENTIONS.md** - How to write code (with WHY explanations)
-4. **.cursorrules** - Complete rules and protocols
+1. **CRITICAL_AGENT_RULES.md** ⚠️ (READ FIRST - 5 min)
+2. **THIS FILE** (you're here!) - Overview and first steps
+3. **PROJECT_STRUCTURE.md** - Where to find/add code
+4. **CONVENTIONS.md** - How to write code (with WHY explanations)
+5. **.cursorrules** - Complete rules and protocols
 
-**⏰ Time: 10 minutes of reading = Hours saved later**
+**⏰ Total time: 55 minutes of reading = Hours saved later**
 
 ### Step 2: Understand the System
 
