@@ -147,7 +147,7 @@ test:  ## Run all tests
 
 test-unit:  ## Run unit tests only
 	@echo "🧪 Running unit tests..."
-	@PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "not integration and not llm" -v
+	@PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "not integration and not llm and not contract and not performance" -v
 
 test-integration:  ## Run integration tests only
 	@echo "🧪 Running integration tests..."
