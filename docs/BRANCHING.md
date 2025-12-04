@@ -1,6 +1,40 @@
 # Git Branching Strategy (RAE)
 
+> **🚨 CRITICAL**: Read `CRITICAL_AGENT_RULES.md` first - contains mandatory rules!
+
 RAE używa **hybrydowego podejścia** łączącego GitHub Flow (dla codziennej pracy) z Git Flow (dla major releases).
+
+## 🚨 CRITICAL RULE: Testing on Branches
+
+```
+┌─────────────────────────────────────────────────────────┐
+│ FEATURE BRANCH:  ❌ NO full test suite                  │
+│                  ✅ Test ONLY new code (--no-cov)        │
+│                                                          │
+│ DEVELOP BRANCH:  ✅ FULL test suite (make test-unit)    │
+│                  🚨 MANDATORY before merging to main!   │
+│                                                          │
+│ MAIN BRANCH:     ✅ CI runs full tests automatically    │
+│                  🚨 Must ALWAYS be green!               │
+└─────────────────────────────────────────────────────────┘
+```
+
+### ❌ FORBIDDEN on Feature Branches:
+```bash
+# ❌ NEVER DO THESE ON FEATURE BRANCH:
+pytest                          # Runs ALL tests
+pytest --cov                    # Full coverage
+make test                       # Full suite
+make test-unit                  # Only on develop!
+make test-cov                   # Only on develop!
+```
+
+### ✅ ALLOWED on Feature Branches:
+```bash
+# ✅ Test ONLY your new code:
+pytest --no-cov apps/memory_api/tests/services/test_my_feature.py
+make test-focus FILE=apps/memory_api/tests/services/test_my_feature.py
+```
 
 ## 🔄 Daily Workflow (GitHub Flow based)
 
@@ -13,8 +47,13 @@ git pull origin develop
 git checkout -b feature/your-feature-name
 
 # 2. Rozwijaj i testuj TYLKO nową funkcjonalność
-# - Uruchamiaj testy TYLKO dla nowych funkcji
-# - Nie uruchamiaj wszystkich testów na feature branch
+# 🚨 CRITICAL: Uruchamiaj testy TYLKO dla nowych funkcji!
+# ❌ NIE uruchamiaj wszystkich testów na feature branch!
+#
+# ✅ POPRAWNIE - testuj tylko nowy kod:
+pytest --no-cov apps/memory_api/tests/test_my_new_code.py
+# LUB
+make test-focus FILE=apps/memory_api/tests/test_my_new_code.py
 
 # 3. Commituj zgodnie z conventional commits
 git add .
