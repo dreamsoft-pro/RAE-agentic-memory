@@ -252,6 +252,24 @@ jobs:
         run: |
           pytest -m "integration" --cov --cov-append --cov-report=xml --cov-report=term || true
 
+      - name: Run architectural tests
+        run: |
+          echo "🏗️ Running architectural tests..."
+          pytest tests/architecture/ -v || echo "⚠️ Architectural tests failed"
+
+      - name: Run contract tests
+        run: |
+          echo "📋 Running API contract tests..."
+          pytest -m contract -v || echo "⚠️ Contract tests failed"
+
+      - name: Check coverage trend
+        if: github.ref == 'refs/heads/develop'
+        run: |
+          echo "📊 Checking coverage trend..."
+          git fetch origin main
+          git show origin/main:coverage.xml > coverage_previous.xml 2>/dev/null || echo "<coverage line-rate='0'/>" > coverage_previous.xml
+          python scripts/check_coverage_trend.py coverage.xml coverage_previous.xml || true
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:
