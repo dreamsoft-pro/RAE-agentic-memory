@@ -7,9 +7,28 @@ on:
     branches: [ main, develop, 'feature/**' ]
 
 jobs:
-  # Quick test job for feature branches (incremental testing)
+  # ═══════════════════════════════════════════════════════════════════════════
+  # 🚨 FEATURE BRANCH TESTING - READ THIS CAREFULLY!
+  # ═══════════════════════════════════════════════════════════════════════════
+  #
+  # This job runs ONLY SMART TEST SELECTION (not full test suite!)
+  # It uses 'testmon' to run only tests affected by changed files.
+  #
+  # ❌ DO NOT modify this to run full test suite on feature branches!
+  # ❌ DO NOT add `make test-unit` or `pytest` without markers here!
+  # ✅ Full test suite runs ONLY on develop/main branches (see test-full job)
+  #
+  # Why?
+  # - Feature branches push frequently (every small change)
+  # - Full tests take 10-15 minutes and cost CI credits
+  # - Smart selection gives quick feedback (1-2 minutes)
+  # - Full validation happens on develop before merging to main
+  #
+  # If you need full tests on a feature branch, use: git commit -m "message [full-test]"
+  # ═══════════════════════════════════════════════════════════════════════════
+
   test-quick:
-    name: Quick Test (Python ${{ matrix.python-version }})
+    name: Quick Test - Feature Branch ONLY (Smart Selection)
     runs-on: ubuntu-latest
     # Run ONLY on feature branches AND NOT on PR AND NOT when commit contains [full-test]
     if: |
@@ -99,10 +118,33 @@ jobs:
           QDRANT_URL: http://localhost:6333
           RAE_VECTOR_BACKEND: qdrant
         run: |
-          echo "🚀 Running smart test selection for changed files..."
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🚨 FEATURE BRANCH - SMART TEST SELECTION ONLY"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "This is NOT a full test run. We only test files affected by your changes."
+          echo ""
+          echo "Why? Feature branches push frequently. Full tests would:"
+          echo "  - Take 10-15 minutes instead of 1-2 minutes"
+          echo "  - Cost 5-10x more in CI credits"
+          echo "  - Slow down your development"
+          echo ""
+          echo "Full test suite runs on develop/main branches automatically."
+          echo ""
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "🚀 Running smart test selection..."
           # testmon tracks which tests cover which code and runs only affected tests
           pytest -m "not integration and not llm" --testmon --cov --cov-report=xml --cov-report=term
-          echo "✅ Quick tests completed"
+          echo ""
+          echo "✅ Quick tests completed for your changes!"
+          echo ""
+          echo "Next steps:"
+          echo "  1. Continue developing on feature branch"
+          echo "  2. When ready, merge to develop"
+          echo "  3. Run FULL test suite on develop: make test-unit"
+          echo "  4. If passes, merge to main"
+          echo ""
 
       - name: No changes detected
         if: steps.changes.outputs.has_changes == 'false'
@@ -513,6 +555,57 @@ jobs:
         continue-on-error: true
         run: |
           bandit -r apps/ sdk/ -ll || true
+
+  docs-update:
+    name: Auto-Update Documentation
+    runs-on: ubuntu-latest
+    # Run ONLY on develop and main after successful tests
+    if: |
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop') &&
+      github.event_name == 'push'
+    needs: [test-full, lint, quality-gate]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for CHANGELOG
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run documentation automation
+        run: |
+          echo "📚 Auto-updating documentation..."
+          python3 scripts/docs_automator.py || echo "⚠️  Docs automation had issues (non-blocking)"
+
+      - name: Check if documentation changed
+        id: docs_changed
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "ℹ️  No documentation changes"
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "📝 Documentation was updated"
+          fi
+
+      - name: Commit documentation updates
+        if: steps.docs_changed.outputs.changed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add CHANGELOG.md TODO.md STATUS.md docs/TESTING_STATUS.md || true
+          git commit -m "docs: auto-update documentation [skip ci]" || echo "Nothing to commit"
+
+      - name: Push documentation changes
+        if: steps.docs_changed.outputs.changed == 'true'
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
 
   docker:
     name: Docker Build

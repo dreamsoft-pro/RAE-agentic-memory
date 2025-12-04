@@ -1,7 +1,21 @@
 # RAE Project Rules for AI Agents
 
+> **🚨 CRITICAL**: Before doing ANYTHING, read `CRITICAL_AGENT_RULES.md` - these are MANDATORY rules that cannot be violated!
+
 You are working on the RAE (Reflective Agentic-memory Engine) project.
 Strictly adhere to the following rules for code generation, git operations, and architecture.
+
+## ⚠️ MOST IMPORTANT RULES (READ FIRST!)
+
+**🔴 RULE #1**: NEVER run full test suite on feature branches! Only test your NEW code with `--no-cov`
+
+**🔴 RULE #2**: Work AUTONOMOUSLY - don't ask permission for standard tasks (creating files, adding tests, etc.)
+
+**🔴 RULE #3**: ALWAYS include `tenant_id` in database queries (security!)
+
+**🔴 RULE #4**: Use templates from `.ai-templates/` for all new code
+
+**Complete rules**: See `CRITICAL_AGENT_RULES.md` for details and examples
 
 ## 🚫 FORBIDDEN COMMANDS (CRITICAL - NEVER USE THESE)
 
