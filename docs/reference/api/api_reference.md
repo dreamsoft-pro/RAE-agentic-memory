@@ -75,9 +75,9 @@ RAE Memory API v2.0-enterprise provides:
 - **Graph Management** (`/v1/graph-management/*`) - Advanced graph operations, snapshots, traversal
 
 ### Total Endpoints
-- **102 endpoints** across all features
+- **116 endpoints** across all features
 - **26 core endpoints** (Memory, Agent, Cache, Graph, Governance, Health)
-- **77 enterprise endpoints** (Triggers, Reflections, Search, Evaluation, Dashboard, Graph Management)
+- **90 enterprise endpoints** (Triggers, Reflections, Search, Evaluation, Dashboard, Graph Management, Compliance)
 
 ## Authentication
 
