@@ -43,8 +43,9 @@ Transform RAE into a **mathematically grounded engineering system** where every 
 ### Expected Outcomes
 
 After 5 iterations:
-- RAE state formally defined: `s_t = (context, M^episodic, M^semantic, M^reflective, budget)`
-- Actions mathematically specified: `a_t ∈ {retrieve, summarize, reflect, call_LLM(i), update}`
+- RAE state formally defined: `s_t = (context, M^episodic, M^working, M^semantic, M^ltm, M^reflective, budget)`
+- **5-layer memory architecture** explicitly modeled: episodic → working → semantic → LTM + reflective
+- Actions mathematically specified: `a_t ∈ {retrieve, consolidate, summarize, reflect, call_LLM(i), update}`
 - Reward function implemented: `r_t = Quality - λ·tokens - μ·latency`
 - Information bottleneck metrics: `I(Z;Y)`, `I(Z;X)`
 - Graph update operator: `G_{t+1} = T(G_t, o_t, a_t)`
@@ -82,17 +83,32 @@ s_t = {
         "episodic": {
             "count": int,
             "avg_importance": float,
-            "recency_distribution": np.ndarray
+            "recency_distribution": np.ndarray,
+            "avg_age_hours": float  # How fresh are episodic memories
+        },
+        "working": {
+            "count": int,
+            "active_count": int,  # Currently in use
+            "avg_access_count": float,
+            "buffer_utilization": float  # 0-1, how full is working memory
         },
         "semantic": {
             "count": int,
             "cluster_count": int,
-            "coverage": float  # 0-1, how much is covered
+            "coverage": float,  # 0-1, how much knowledge is covered
+            "consolidation_rate": float  # Memories/day being consolidated
+        },
+        "ltm": {
+            "count": int,
+            "avg_importance": float,
+            "stability_score": float,  # 0-1, how stable is LTM
+            "last_consolidated": datetime
         },
         "reflective": {
             "count": int,
             "last_generated": datetime,
-            "avg_novelty": float
+            "avg_novelty": float,
+            "meta_insights_count": int  # L2/L3 reflections
         }
     },
     "budget_state": {
@@ -115,13 +131,28 @@ s_t = {
 ```python
 A = {
     "retrieve_episodic": {
-        "params": {"k": int, "threshold": float}
+        "params": {"k": int, "threshold": float, "time_window_hours": int}
+    },
+    "retrieve_working": {
+        "params": {"k": int, "active_only": bool}
     },
     "retrieve_semantic": {
         "params": {"k": int, "use_graph": bool}
     },
+    "retrieve_ltm": {
+        "params": {"k": int, "min_stability": float}
+    },
     "retrieve_reflective": {
         "params": {"level": str, "k": int}
+    },
+    "consolidate_episodic_to_working": {
+        "params": {"max_memories": int, "min_importance": float}
+    },
+    "consolidate_working_to_semantic": {
+        "params": {"max_memories": int, "clustering_threshold": float}
+    },
+    "consolidate_semantic_to_ltm": {
+        "params": {"max_memories": int, "min_age_days": int, "min_importance": float}
     },
     "summarize": {
         "params": {"compression_ratio": float, "method": str}
@@ -582,7 +613,8 @@ def retrieve_via_graph_walk(
 
 | RAE Component | Math Concept | Implementation Status | File Location |
 |---------------|-------------|----------------------|---------------|
-| Memory layers | State space S | ✅ Implicit | `apps/memory_api/services/hybrid_search.py` |
+| **5-layer memory** (episodic/working/semantic/ltm/reflective) | State space S | ✅ Implicit | `apps/memory_api/services/hybrid_search.py` |
+| Memory consolidation | State transitions | ✅ Implemented | `apps/memory_api/services/memory_consolidation.py` |
 | Retrieval methods | Action space A | ✅ Implicit | `apps/memory_api/services/hybrid_search.py` |
 | Importance scoring | Partial reward | ⚠️ No cost integration | `apps/memory_api/services/importance_scoring.py` |
 | Cost calculation | Cost term in reward | ✅ Implemented | `apps/memory_api/services/cost_controller.py` |
