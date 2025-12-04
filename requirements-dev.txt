@@ -3,6 +3,8 @@ ruff
 pytest
 pytest-asyncio
 pytest-cov
+pytest-testmon  # Smart test selection based on code changes
+pytest-picked   # Run tests for changed files only
 mypy
 black
 isort
