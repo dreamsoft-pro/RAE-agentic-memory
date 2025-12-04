@@ -74,7 +74,7 @@ class InformationBottleneckSelector:
 
         Args:
             beta: Trade-off parameter
-                  β < 1: Prefer relevance (less compression)
+                  β < 1: Prefer relevance (lower compression)
                   β = 1: Balanced
                   β > 1: Prefer compression (smaller context)
         """
@@ -409,7 +409,7 @@ class InformationBottleneckSelector:
             # Low budget, compress more
             base_beta *= 1.5
         elif budget_remaining > 0.8:
-            # High budget, less compression
+            # High budget, lower compression
             base_beta *= 0.8
 
         logger.debug(
