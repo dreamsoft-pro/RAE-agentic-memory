@@ -7,9 +7,136 @@ on:
     branches: [ main, develop, 'feature/**' ]
 
 jobs:
-  test:
-    name: Test (Python ${{ matrix.python-version }})
+  # Quick test job for feature branches (incremental testing)
+  test-quick:
+    name: Quick Test (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    # Run ONLY on feature branches AND NOT on PR AND NOT when commit contains [full-test]
+    if: |
+      startsWith(github.ref, 'refs/heads/feature/') &&
+      github.event_name != 'pull_request' &&
+      !contains(github.event.head_commit.message, '[full-test]')
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11']  # Only one version for quick feedback
+
+    services:
+      postgres:
+        image: ankane/pgvector:latest
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: test_rae
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+      qdrant:
+        image: qdrant/qdrant:latest
+        ports:
+          - 6333:6333
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better diff detection
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install -r apps/memory_api/requirements-base.txt
+          pip install -r apps/memory_api/requirements-test.txt
+          pip install -e sdk/python/rae_memory_sdk
+
+      - name: Detect changed files
+        id: changes
+        run: |
+          # Get changed Python files compared to develop
+          git fetch origin develop:develop
+          CHANGED_FILES=$(git diff --name-only develop...HEAD | grep '\.py$' || echo "")
+          echo "Changed Python files:"
+          echo "$CHANGED_FILES"
+          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          # Count changed files
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run quick tests (testmon - smart test selection)
+        if: steps.changes.outputs.has_changes == 'true'
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_rae
+          REDIS_URL: redis://localhost:6379/0
+          QDRANT_URL: http://localhost:6333
+          RAE_VECTOR_BACKEND: qdrant
+        run: |
+          echo "🚀 Running smart test selection for changed files..."
+          # testmon tracks which tests cover which code and runs only affected tests
+          pytest -m "not integration and not llm" --testmon --cov --cov-report=xml --cov-report=term
+          echo "✅ Quick tests completed"
+
+      - name: No changes detected
+        if: steps.changes.outputs.has_changes == 'false'
+        run: |
+          echo "ℹ️ No Python file changes detected - skipping tests"
+          echo "This is normal for documentation-only commits"
+
+      - name: Upload coverage
+        if: steps.changes.outputs.has_changes == 'true'
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          flags: quick-tests
+          name: codecov-quick
+          fail_ci_if_error: false
+
+      - name: Comment on efficiency
+        if: success()
+        run: |
+          echo "⚡ Quick test mode:"
+          echo "   - Ran only tests affected by your changes"
+          echo "   - Saved tokens and CI time"
+          echo "   - Add [full-test] to commit message for full validation"
+
+  # Full test job for main/develop branches, PRs, or when explicitly requested
+  test-full:
+    name: Full Test (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    # Run on main/develop OR pull_request OR [full-test] in commit message
+    if: |
+      github.ref == 'refs/heads/main' ||
+      github.ref == 'refs/heads/develop' ||
+      github.event_name == 'pull_request' ||
+      contains(github.event.head_commit.message, '[full-test]')
 
     strategy:
       fail-fast: false
@@ -64,13 +191,14 @@ jobs:
           pip install -r apps/memory_api/requirements-test.txt
           pip install -e sdk/python/rae_memory_sdk
 
-      - name: Run unit tests
+      - name: Run ALL unit tests (full validation)
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_rae
           REDIS_URL: redis://localhost:6379/0
           QDRANT_URL: http://localhost:6333
           RAE_VECTOR_BACKEND: qdrant
         run: |
+          echo "🔍 Running FULL test suite..."
           pytest -m "not integration and not llm" --cov --cov-report=xml --cov-report=term
 
       - name: Run integration tests
@@ -86,8 +214,8 @@ jobs:
         uses: codecov/codecov-action@v4
         with:
           file: ./coverage.xml
-          flags: unittests
-          name: codecov-umbrella
+          flags: full-tests
+          name: codecov-full-${{ matrix.python-version }}
           fail_ci_if_error: false
 
       - name: Upload test artifacts
@@ -104,6 +232,11 @@ jobs:
   test-mcp:
     name: Test MCP (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    # Run on main/develop/PR only (not on every feature push)
+    if: |
+      github.ref == 'refs/heads/main' ||
+      github.ref == 'refs/heads/develop' ||
+      github.event_name == 'pull_request'
 
     strategy:
       fail-fast: false
@@ -196,6 +329,11 @@ jobs:
   docker:
     name: Docker Build
     runs-on: ubuntu-latest
+    # Only on main/develop/PR
+    if: |
+      github.ref == 'refs/heads/main' ||
+      github.ref == 'refs/heads/develop' ||
+      github.event_name == 'pull_request'
 
     steps:
       - name: Checkout code
@@ -217,7 +355,7 @@ jobs:
     name: Publish Docker Images
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: [test, lint, docker]
+    needs: [test-full, lint, docker]
 
     permissions:
       contents: read
