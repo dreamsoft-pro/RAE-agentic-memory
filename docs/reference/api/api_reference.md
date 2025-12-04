@@ -74,6 +74,15 @@ RAE Memory API v2.0-enterprise provides:
 - **Dashboard** (`/v1/dashboard/*`) - Real-time monitoring with WebSocket support
 - **Graph Management** (`/v1/graph-management/*`) - Advanced graph operations, snapshots, traversal
 
+### Core Mathematical Modules (Internal)
+- **State Management** (`apps/memory_api/core/state.py`) - MDP state space (S) with memory layers and budget tracking
+- **Action Space** (`apps/memory_api/core/actions.py`) - 12 action types (A) for memory operations
+- **Reward Function** (`apps/memory_api/core/reward.py`) - Performance evaluation (R) with quality metrics
+- **Information Bottleneck** (`apps/memory_api/core/information_bottleneck.py`) - Optimal context selection via IB principle
+- **Graph Operator** (`apps/memory_api/core/graph_operator.py`) - Knowledge graph evolution G_{t+1} = T(G_t, o_t, a_t)
+
+See [RAE Mathematical Formalization](../architecture/rae-mathematical-formalization.md) for detailed documentation.
+
 ### Total Endpoints
 - **102 endpoints** across all features
 - **26 core endpoints** (Memory, Agent, Cache, Graph, Governance, Health)
