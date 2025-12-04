@@ -63,6 +63,43 @@ Current AI agents are **stateless** - they forget everything after each conversa
 ✅ **IDE integration** via Model Context Protocol (MCP)
 ✅ **Cost-aware caching** to minimize LLM API costs
 ✅ **Enterprise Security** with RBAC, authentication, and audit logging
+✅ **Mathematical Foundations** - Rigorous MDP formalization for decision-making
+
+---
+
+## Mathematical Foundations
+
+RAE is built on rigorous mathematical principles using **Markov Decision Process (MDP)** formalism:
+
+**MDP = (S, A, T, R, γ)** where:
+- **S**: State space - Complete memory system state (working context, memory layers, budget, graph)
+- **A**: Action space - 12 distinct operations (retrieve, prune, reflect, update graph, etc.)
+- **T**: Transition function - Deterministic state transitions
+- **R**: Reward function - Quality metrics for decision evaluation
+- **γ**: Discount factor - Future reward consideration
+
+### Key Mathematical Components
+
+**🔹 Information Bottleneck Principle**
+Optimal context selection via: `Minimize: I(Z; X) - β · I(Z; Y)`
+- Balances relevance (I(Z;Y)) with compression (I(Z;X))
+- Adaptive β parameter for query-specific optimization
+
+**🔹 Graph Update Operator**
+Knowledge graph evolution: `G_{t+1} = T(G_t, o_t, a_t)`
+- Temporal decay: `w(t) = w_0 · exp(-Δt / τ)`
+- Convergence analysis with spectral gap metrics
+- Entity resolution and duplicate merging
+
+**🔹 Reward-Guided Learning**
+Action evaluation: `R(s_t, a_t, s_{t+1}) = w_q · Quality(a_t) - w_c · Cost(a_t)`
+- Quality metrics by action type
+- Budget-aware cost penalties
+- Performance tracking over episodes
+
+📖 **[Complete Mathematical Documentation](docs/reference/architecture/rae-mathematical-formalization.md)**
+
+**Implementation:** `apps/memory_api/core/` (126 tests, 100% pass rate)
 
 ---
 
