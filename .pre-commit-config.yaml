@@ -57,7 +57,7 @@ repos:
 
       - id: run-affected-tests
         name: Run Affected Tests (smart selection)
-        entry: bash -c 'pytest --testmon --testmon-noselect -x -q || echo "⚠️  Some tests failed - full validation will run in CI"'
+        entry: bash -c 'pytest --testmon --testmon-noselect -x -q -m "not integration and not llm and not contract and not performance" || echo "⚠️  Some tests failed - full validation will run in CI"'
         language: system
         types: [python]
         pass_filenames: false
