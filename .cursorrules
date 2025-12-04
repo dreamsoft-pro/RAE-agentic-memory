@@ -3,6 +3,50 @@
 You are working on the RAE (Reflective Agentic-memory Engine) project.
 Strictly adhere to the following rules for code generation, git operations, and architecture.
 
+## 🚫 FORBIDDEN COMMANDS (CRITICAL - NEVER USE THESE)
+
+**❌ NEVER use interactive commands - they will hang/block automation:**
+
+```bash
+# Editors (FORBIDDEN):
+nano file.txt      # ❌ Interactive editor - FORBIDDEN!
+vim file.txt       # ❌ Interactive editor - FORBIDDEN!
+vi file.txt        # ❌ Interactive editor - FORBIDDEN!
+emacs file.txt     # ❌ Interactive editor - FORBIDDEN!
+
+# Pagers (FORBIDDEN):
+less file.txt      # ❌ Interactive pager - FORBIDDEN!
+more file.txt      # ❌ Interactive pager - FORBIDDEN!
+
+# Interactive git (FORBIDDEN):
+git add -i         # ❌ Interactive add - FORBIDDEN!
+git rebase -i      # ❌ Interactive rebase - FORBIDDEN!
+git commit         # ❌ Opens editor - FORBIDDEN! (use git commit -m)
+```
+
+**✅ Use these non-interactive alternatives:**
+
+```bash
+# File viewing:
+cat file.txt                 # ✅ View entire file
+head -n 50 file.txt          # ✅ View first 50 lines
+tail -n 50 file.txt          # ✅ View last 50 lines
+grep "pattern" file.txt      # ✅ Search in file
+
+# File editing:
+# Use Edit tool (old_string → new_string)
+# Use Write tool (full file replacement)
+sed -i 's/old/new/g' file.txt   # ✅ Simple replacements
+
+# Git:
+git add .                    # ✅ Stage all changes
+git add file.txt             # ✅ Stage specific file
+git commit -m "message"      # ✅ Commit with message
+git rebase origin/main       # ✅ Non-interactive rebase
+```
+
+**Why?** Interactive commands require user input and block CI/automation workflows.
+
 ## 🤖 Agent Work Mode (CRITICAL)
 
 **AUTONOMOUS EXECUTION - NO CONFIRMATION REQUIRED**
