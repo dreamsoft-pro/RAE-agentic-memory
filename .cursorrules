@@ -1,7 +1,21 @@
 # RAE Project Rules for AI Agents
 
+> **🚨 CRITICAL**: Before doing ANYTHING, read `CRITICAL_AGENT_RULES.md` - these are MANDATORY rules that cannot be violated!
+
 You are working on the RAE (Reflective Agentic-memory Engine) project.
 Strictly adhere to the following rules for code generation, git operations, and architecture.
+
+## ⚠️ MOST IMPORTANT RULES (READ FIRST!)
+
+**🔴 RULE #1**: NEVER run full test suite on feature branches! Only test your NEW code with `--no-cov`
+
+**🔴 RULE #2**: Work AUTONOMOUSLY - don't ask permission for standard tasks (creating files, adding tests, etc.)
+
+**🔴 RULE #3**: ALWAYS include `tenant_id` in database queries (security!)
+
+**🔴 RULE #4**: Use templates from `.ai-templates/` for all new code
+
+**Complete rules**: See `CRITICAL_AGENT_RULES.md` for details and examples
 
 ## 🚫 FORBIDDEN COMMANDS (CRITICAL - NEVER USE THESE)
 
@@ -46,6 +60,174 @@ git rebase origin/main       # ✅ Non-interactive rebase
 ```
 
 **Why?** Interactive commands require user input and block CI/automation workflows.
+
+## 📐 DESIGN-FIRST PROTOCOL (MANDATORY)
+
+**CRITICAL: Before writing ANY significant code, follow this protocol:**
+
+### When to Use Design-First
+
+Apply this protocol for:
+- ✅ Adding new features (services, endpoints, repositories)
+- ✅ Refactoring existing code (> 50 lines)
+- ✅ Adding new dependencies or patterns
+- ✅ Changes affecting > 2 files
+
+Skip for:
+- ❌ Bug fixes (< 20 lines)
+- ❌ Documentation updates
+- ❌ Trivial changes (typos, formatting)
+
+### Design-First Steps
+
+#### Step 1: Read Documentation (MANDATORY)
+```bash
+# BEFORE coding, read these in order:
+1. PROJECT_STRUCTURE.md  # Where to add code
+2. CONVENTIONS.md         # How to write code
+3. .ai-templates/         # Code examples
+```
+
+#### Step 2: Design Document (Write Before Coding)
+
+Create a design document in your response:
+
+```markdown
+# Design: [Feature Name]
+
+## Problem Statement
+What are we solving? Why?
+
+## Proposed Solution
+High-level approach (2-3 sentences)
+
+## Architecture Impact
+- Layers affected: [API/Service/Repository]
+- New files: [list]
+- Modified files: [list]
+- Dependencies: [any new imports/services]
+
+## Implementation Plan
+1. Step 1: [e.g., Create EntityRepository with CRUD methods]
+2. Step 2: [e.g., Create EntityService with business logic]
+3. Step 3: [e.g., Add API endpoints in /api/v1/entities.py]
+4. Step 4: [e.g., Add tests for all layers]
+
+## Code Structure
+Repository: apps/memory_api/repositories/entity_repository.py
+Service: apps/memory_api/services/entity_service.py
+API: apps/memory_api/api/v1/entities.py
+Tests: apps/memory_api/tests/[repositories|services|api]/test_*.py
+
+## Testing Strategy
+- Unit tests: [what will be tested]
+- Integration tests: [what will be tested]
+- Expected coverage: [X%]
+
+## Risks/Concerns
+[Any concerns about this approach?]
+```
+
+#### Step 3: Wait for Approval (If Uncertain)
+
+If design involves:
+- Architectural changes
+- Multiple approaches possible
+- Breaking changes
+- Performance implications
+
+→ Show design, wait for user approval
+
+#### Step 4: Implement Following Templates
+
+Use templates from `.ai-templates/`:
+- `repository_template.py` for data access
+- `service_template.py` for business logic
+- `route_template.py` for API endpoints
+- `test_template.py` for tests
+
+#### Step 5: Pre-Commit Checklist
+
+Before committing, verify:
+- [ ] Code follows PROJECT_STRUCTURE.md (correct file locations)
+- [ ] Code follows CONVENTIONS.md (Repository/Service/API patterns)
+- [ ] Tests added for all layers
+- [ ] Docstrings added (Google style)
+- [ ] Logging added (structlog)
+- [ ] Security: tenant_id in all queries
+- [ ] No interactive commands (nano, vim, etc.)
+- [ ] Run: `make lint` (black, isort, ruff)
+- [ ] Run: `pytest --no-cov [your test file]`
+
+### Example: Good Design-First Workflow
+
+```
+User: "Add user profile management"
+
+Agent:
+"I'll design the user profile management feature first.
+
+# Design: User Profile Management
+
+## Problem Statement
+Need to store and retrieve user profile data (name, email, preferences)
+with proper tenant isolation.
+
+## Proposed Solution
+Add 3-layer architecture:
+- UserProfileRepository (CRUD operations)
+- UserProfileService (business logic, validation)
+- API endpoints at /api/v1/users/profile
+
+## Architecture Impact
+- Layers affected: Repository, Service, API
+- New files:
+  - apps/memory_api/repositories/user_profile_repository.py
+  - apps/memory_api/services/user_profile_service.py
+  - apps/memory_api/api/v1/users.py
+- Modified files:
+  - apps/memory_api/api/v1/__init__.py (register router)
+- Dependencies: None (uses existing Pydantic, asyncpg)
+
+## Implementation Plan
+1. Create UserProfileRepository (CRUD: get, insert, update, delete)
+2. Create UserProfileService (validation, business rules)
+3. Add API endpoints (GET, POST, PATCH, DELETE /users/profile)
+4. Add tests for all 3 layers
+5. Update router registration
+
+## Testing Strategy
+- Unit tests: UserProfileService (mock repository)
+- Integration tests: UserProfileRepository (real DB)
+- API tests: Endpoints (TestClient)
+- Expected coverage: 80%+
+
+## Risks/Concerns
+None - follows established patterns
+
+Should I proceed with implementation?"
+
+[User approves or suggests changes]
+
+Agent: "Implementing now..."
+[Follows templates, writes code, adds tests, commits]
+```
+
+### Why Design-First?
+
+**Without Design-First:**
+- ❌ Code doesn't fit architecture
+- ❌ Inconsistent patterns
+- ❌ Missing tests
+- ❌ Needs refactoring after 2-3 days
+- ❌ Wastes tokens on rework
+
+**With Design-First:**
+- ✅ Code fits naturally
+- ✅ Consistent with existing patterns
+- ✅ Tests planned upfront
+- ✅ No refactoring needed
+- ✅ Saves tokens long-term
 
 ## 🤖 Agent Work Mode (CRITICAL)
 
@@ -259,12 +441,40 @@ git commit -m "docs: add architecture-to-code mapping document"
 git commit -m "test: add integration tests for reflection engine"
 ```
 
+## 📚 Essential Documentation
+
+**NEW AGENTS START HERE:**
+1. **ONBOARDING_GUIDE.md** - Complete 15-minute onboarding guide
+2. **PROJECT_STRUCTURE.md** - Where to find/add code (file locations map)
+3. **CONVENTIONS.md** - How to write code (architecture patterns with WHY explanations)
+4. **INTEGRATION_CHECKLIST.md** - Pre-merge verification checklist
+
+**Code Templates & Examples:**
+- `.ai-templates/` - Repository, Service, Route, Test templates
+- `.ai-templates/README.md` - How to use templates
+- `examples/template-usage/` - Complete working examples
+
+**Workflows & Testing:**
+- `docs/BRANCHING.md` - Git workflow (hybrid strategy)
+- `docs/AGENTS_TEST_POLICY.md` - Testing philosophy (tests as contracts)
+
+**Reference Documentation:**
+- `docs/reference/architecture/` - Deep architectural documentation
+- `docs/guides/developers/` - Comprehensive developer guides
+
 ## 🚀 Quick Reference
 
-**Before Starting:**
-1. Read `docs/BRANCHING.md` - Git workflow
-2. Read `docs/AGENTS_TEST_POLICY.md` - Testing philosophy
-3. Check `pytest.ini` - Test markers and coverage config
+**Before Starting ANY Work:**
+1. Read `ONBOARDING_GUIDE.md` - Essential for all agents (15 min)
+2. Read `PROJECT_STRUCTURE.md` - Know where files go (10 min)
+3. Read `CONVENTIONS.md` - Understand patterns and WHY (20 min)
+4. Study `.ai-templates/` - Use templates for all new code (10 min)
+
+**Before First Commit:**
+1. Review `INTEGRATION_CHECKLIST.md` - Verify all items
+2. Read `docs/BRANCHING.md` - Git workflow
+3. Read `docs/AGENTS_TEST_POLICY.md` - Testing philosophy
+4. Check `pytest.ini` - Test markers and coverage config
 
 **Development Workflow:**
 ```bash
