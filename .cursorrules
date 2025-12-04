@@ -427,12 +427,40 @@ git commit -m "docs: add architecture-to-code mapping document"
 git commit -m "test: add integration tests for reflection engine"
 ```
 
+## 📚 Essential Documentation
+
+**NEW AGENTS START HERE:**
+1. **ONBOARDING_GUIDE.md** - Complete 15-minute onboarding guide
+2. **PROJECT_STRUCTURE.md** - Where to find/add code (file locations map)
+3. **CONVENTIONS.md** - How to write code (architecture patterns with WHY explanations)
+4. **INTEGRATION_CHECKLIST.md** - Pre-merge verification checklist
+
+**Code Templates & Examples:**
+- `.ai-templates/` - Repository, Service, Route, Test templates
+- `.ai-templates/README.md` - How to use templates
+- `examples/template-usage/` - Complete working examples
+
+**Workflows & Testing:**
+- `docs/BRANCHING.md` - Git workflow (hybrid strategy)
+- `docs/AGENTS_TEST_POLICY.md` - Testing philosophy (tests as contracts)
+
+**Reference Documentation:**
+- `docs/reference/architecture/` - Deep architectural documentation
+- `docs/guides/developers/` - Comprehensive developer guides
+
 ## 🚀 Quick Reference
 
-**Before Starting:**
-1. Read `docs/BRANCHING.md` - Git workflow
-2. Read `docs/AGENTS_TEST_POLICY.md` - Testing philosophy
-3. Check `pytest.ini` - Test markers and coverage config
+**Before Starting ANY Work:**
+1. Read `ONBOARDING_GUIDE.md` - Essential for all agents (15 min)
+2. Read `PROJECT_STRUCTURE.md` - Know where files go (10 min)
+3. Read `CONVENTIONS.md` - Understand patterns and WHY (20 min)
+4. Study `.ai-templates/` - Use templates for all new code (10 min)
+
+**Before First Commit:**
+1. Review `INTEGRATION_CHECKLIST.md` - Verify all items
+2. Read `docs/BRANCHING.md` - Git workflow
+3. Read `docs/AGENTS_TEST_POLICY.md` - Testing philosophy
+4. Check `pytest.ini` - Test markers and coverage config
 
 **Development Workflow:**
 ```bash
