@@ -299,6 +299,194 @@ jobs:
         run: |
           mypy apps/ sdk/ || true
 
+  quality-gate:
+    name: Code Quality Gate
+    runs-on: ubuntu-latest
+    # Run on all branches
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for changed files detection
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Check required documentation exists
+        run: |
+          echo "📋 Checking required documentation..."
+
+          REQUIRED_DOCS=(
+            "PROJECT_STRUCTURE.md"
+            "CONVENTIONS.md"
+            "ONBOARDING_GUIDE.md"
+            "INTEGRATION_CHECKLIST.md"
+            ".cursorrules"
+            "docs/AGENTS_TEST_POLICY.md"
+            "docs/BRANCHING.md"
+            ".ai-templates/README.md"
+          )
+
+          MISSING_DOCS=()
+          for doc in "${REQUIRED_DOCS[@]}"; do
+            if [ ! -f "$doc" ]; then
+              MISSING_DOCS+=("$doc")
+            fi
+          done
+
+          if [ ${#MISSING_DOCS[@]} -ne 0 ]; then
+            echo "❌ Missing required documentation files:"
+            printf '   - %s\n' "${MISSING_DOCS[@]}"
+            exit 1
+          fi
+
+          echo "✅ All required documentation exists"
+
+      - name: Check for forbidden interactive commands
+        run: |
+          echo "🔍 Checking for forbidden interactive commands..."
+
+          # Search for interactive commands in Python files
+          FORBIDDEN_PATTERNS=(
+            "nano "
+            "vim "
+            "vi "
+            "emacs "
+            "less "
+            "more "
+            "git add -i"
+            "git rebase -i"
+          )
+
+          VIOLATIONS=()
+          for pattern in "${FORBIDDEN_PATTERNS[@]}"; do
+            if git grep -n "$pattern" -- '*.py' '*.sh' 2>/dev/null; then
+              VIOLATIONS+=("Found forbidden command: $pattern")
+            fi
+          done
+
+          if [ ${#VIOLATIONS[@]} -ne 0 ]; then
+            echo "❌ Forbidden interactive commands found:"
+            printf '   - %s\n' "${VIOLATIONS[@]}"
+            echo ""
+            echo "Use non-interactive alternatives:"
+            echo "   - cat, head, tail instead of less/more"
+            echo "   - Edit/Write tools instead of nano/vim"
+            echo "   - git add/commit without -i flags"
+            exit 1
+          fi
+
+          echo "✅ No forbidden commands found"
+
+      - name: Check file structure compliance
+        run: |
+          echo "🗂️  Checking file structure compliance..."
+
+          # Check if new Python files are in correct locations
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            CHANGED_FILES=$(git diff --name-only origin/develop...HEAD 2>/dev/null | grep '\.py$' || echo "")
+
+            if [ -n "$CHANGED_FILES" ]; then
+              echo "Changed Python files:"
+              echo "$CHANGED_FILES"
+
+              MISPLACED=()
+              while IFS= read -r file; do
+                # Check if file is in apps/ but not in correct structure
+                if [[ "$file" == apps/memory_api/* ]] && \
+                   [[ "$file" != apps/memory_api/api/* ]] && \
+                   [[ "$file" != apps/memory_api/services/* ]] && \
+                   [[ "$file" != apps/memory_api/repositories/* ]] && \
+                   [[ "$file" != apps/memory_api/models/* ]] && \
+                   [[ "$file" != apps/memory_api/tasks/* ]] && \
+                   [[ "$file" != apps/memory_api/middleware/* ]] && \
+                   [[ "$file" != apps/memory_api/security/* ]] && \
+                   [[ "$file" != apps/memory_api/utils/* ]] && \
+                   [[ "$file" != apps/memory_api/tests/* ]] && \
+                   [[ "$file" != apps/memory_api/main.py ]] && \
+                   [[ "$file" != apps/memory_api/config.py ]] && \
+                   [[ "$file" != apps/memory_api/__init__.py ]]; then
+                  MISPLACED+=("$file")
+                fi
+              done <<< "$CHANGED_FILES"
+
+              if [ ${#MISPLACED[@]} -ne 0 ]; then
+                echo "⚠️  Warning: Files may be in wrong locations:"
+                printf '   - %s\n' "${MISPLACED[@]}"
+                echo ""
+                echo "Check PROJECT_STRUCTURE.md for correct locations"
+              else
+                echo "✅ File structure looks good"
+              fi
+            fi
+          fi
+
+      - name: Check for tenant_id in SQL queries (security)
+        run: |
+          echo "🔒 Checking tenant_id usage in database queries..."
+
+          # Find Python files with SQL queries but without tenant_id
+          CHANGED_FILES=$(git diff --name-only origin/develop...HEAD 2>/dev/null | grep '\.py$' || echo "")
+
+          if [ -n "$CHANGED_FILES" ]; then
+            SECURITY_ISSUES=()
+
+            while IFS= read -r file; do
+              if [ -f "$file" ] && [[ "$file" == apps/memory_api/repositories/* ]]; then
+                # Check if file has SELECT/UPDATE/DELETE without tenant_id
+                if grep -i "SELECT.*FROM" "$file" | grep -v "tenant_id" | grep -v "#" > /dev/null 2>&1; then
+                  SECURITY_ISSUES+=("$file: SELECT query may be missing tenant_id")
+                fi
+                if grep -i "UPDATE.*SET" "$file" | grep -v "tenant_id" | grep -v "#" > /dev/null 2>&1; then
+                  SECURITY_ISSUES+=("$file: UPDATE query may be missing tenant_id")
+                fi
+                if grep -i "DELETE.*FROM" "$file" | grep -v "tenant_id" | grep -v "#" > /dev/null 2>&1; then
+                  SECURITY_ISSUES+=("$file: DELETE query may be missing tenant_id")
+                fi
+              fi
+            done <<< "$CHANGED_FILES"
+
+            if [ ${#SECURITY_ISSUES[@]} -ne 0 ]; then
+              echo "⚠️  Potential security issues (missing tenant_id):"
+              printf '   - %s\n' "${SECURITY_ISSUES[@]}"
+              echo ""
+              echo "CRITICAL: All database queries MUST include tenant_id for multi-tenancy security!"
+              echo "Review CONVENTIONS.md for details"
+              # Don't fail - just warn (might be false positives)
+            else
+              echo "✅ tenant_id usage looks good"
+            fi
+          fi
+
+      - name: Check test file naming conventions
+        run: |
+          echo "🧪 Checking test file naming conventions..."
+
+          # Find test files that don't follow naming convention
+          WRONG_NAMES=$(find apps/ -path "*/tests/*" -name "*.py" ! -name "test_*.py" ! -name "__init__.py" ! -name "conftest.py" 2>/dev/null || echo "")
+
+          if [ -n "$WRONG_NAMES" ]; then
+            echo "⚠️  Test files should be named test_*.py:"
+            echo "$WRONG_NAMES"
+          else
+            echo "✅ Test naming conventions followed"
+          fi
+
+      - name: Quality gate summary
+        run: |
+          echo "✅ Code Quality Gate Passed!"
+          echo ""
+          echo "Verified:"
+          echo "  ✅ Required documentation exists"
+          echo "  ✅ No forbidden interactive commands"
+          echo "  ✅ File structure compliance checked"
+          echo "  ✅ tenant_id security check performed"
+          echo "  ✅ Test naming conventions verified"
+          echo ""
+          echo "Next: Full test suite and integration checks"
+
   security:
     name: Security Scan
     runs-on: ubuntu-latest
