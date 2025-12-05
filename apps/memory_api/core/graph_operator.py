@@ -49,7 +49,10 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import structlog
 
+from apps.memory_api.observability.rae_tracing import get_tracer
+
 logger = structlog.get_logger(__name__)
+tracer = get_tracer(__name__)
 
 
 class GraphActionType(str, Enum):
@@ -311,59 +314,76 @@ class GraphUpdateOperator:
         Returns:
             New graph state G_{t+1}
         """
-        # Validate action_type is a GraphActionType enum
-        if not isinstance(action_type, GraphActionType):
-            raise ValueError(
-                f"action_type must be GraphActionType enum, got {type(action_type)}"
+        with tracer.start_as_current_span("rae.graph.transform") as span:
+            # Validate action_type is a GraphActionType enum
+            if not isinstance(action_type, GraphActionType):
+                raise ValueError(
+                    f"action_type must be GraphActionType enum, got {type(action_type)}"
+                )
+
+            parameters = parameters or {}
+
+            span.set_attribute("rae.graph.action_type", action_type.value)
+            span.set_attribute("rae.tenant_id", graph.tenant_id)
+            span.set_attribute("rae.project_id", graph.project_id)
+            span.set_attribute("rae.graph.nodes_before", len(graph.nodes))
+            span.set_attribute("rae.graph.edges_before", len(graph.edges))
+
+            logger.info(
+                "graph_transformation_started",
+                action_type=action_type.value,
+                nodes_before=len(graph.nodes),
+                edges_before=len(graph.edges),
             )
 
-        parameters = parameters or {}
+            # Copy graph (immutable transformation)
+            G_next = graph.copy()
 
-        logger.info(
-            "graph_transformation_started",
-            action_type=action_type.value,
-            nodes_before=len(graph.nodes),
-            edges_before=len(graph.edges),
-        )
+            # Apply transformation based on action type
+            if action_type == GraphActionType.ADD_NODE:
+                G_next = self._add_node(G_next, observation, parameters)
 
-        # Copy graph (immutable transformation)
-        G_next = graph.copy()
+            elif action_type == GraphActionType.ADD_EDGE:
+                G_next = self._add_edge(G_next, observation, parameters)
 
-        # Apply transformation based on action type
-        if action_type == GraphActionType.ADD_NODE:
-            G_next = self._add_node(G_next, observation, parameters)
+            elif action_type == GraphActionType.UPDATE_EDGE_WEIGHT:
+                G_next = self._update_edge_weight(G_next, observation, parameters)
 
-        elif action_type == GraphActionType.ADD_EDGE:
-            G_next = self._add_edge(G_next, observation, parameters)
+            elif action_type == GraphActionType.MERGE_NODES:
+                G_next = self._merge_nodes(G_next, observation, parameters)
 
-        elif action_type == GraphActionType.UPDATE_EDGE_WEIGHT:
-            G_next = self._update_edge_weight(G_next, observation, parameters)
+            elif action_type == GraphActionType.PRUNE_NODE:
+                G_next = self._prune_node(G_next, observation, parameters)
 
-        elif action_type == GraphActionType.MERGE_NODES:
-            G_next = self._merge_nodes(G_next, observation, parameters)
+            elif action_type == GraphActionType.PRUNE_EDGE:
+                G_next = self._prune_edge(G_next, observation, parameters)
 
-        elif action_type == GraphActionType.PRUNE_NODE:
-            G_next = self._prune_node(G_next, observation, parameters)
+            else:
+                span.set_attribute("rae.outcome.label", "fail")
+                raise ValueError(f"Unknown action type: {action_type}")
 
-        elif action_type == GraphActionType.PRUNE_EDGE:
-            G_next = self._prune_edge(G_next, observation, parameters)
+            # Update timestamp
+            G_next.last_updated = datetime.now()
 
-        else:
-            raise ValueError(f"Unknown action type: {action_type}")
+            nodes_delta = len(G_next.nodes) - len(graph.nodes)
+            edges_delta = len(G_next.edges) - len(graph.edges)
 
-        # Update timestamp
-        G_next.last_updated = datetime.now()
+            span.set_attribute("rae.graph.nodes_after", len(G_next.nodes))
+            span.set_attribute("rae.graph.edges_after", len(G_next.edges))
+            span.set_attribute("rae.graph.nodes_delta", nodes_delta)
+            span.set_attribute("rae.graph.edges_delta", edges_delta)
+            span.set_attribute("rae.outcome.label", "success")
 
-        logger.info(
-            "graph_transformation_completed",
-            action_type=action_type.value,
-            nodes_after=len(G_next.nodes),
-            edges_after=len(G_next.edges),
-            nodes_delta=len(G_next.nodes) - len(graph.nodes),
-            edges_delta=len(G_next.edges) - len(graph.edges),
-        )
+            logger.info(
+                "graph_transformation_completed",
+                action_type=action_type.value,
+                nodes_after=len(G_next.nodes),
+                edges_after=len(G_next.edges),
+                nodes_delta=nodes_delta,
+                edges_delta=edges_delta,
+            )
 
-        return G_next
+            return G_next
 
     def _add_node(
         self,
@@ -758,63 +778,82 @@ class GraphUpdateOperator:
         Returns:
             Dictionary with convergence metrics and is_converging flag
         """
-        if len(graph_history) < 2:
+        with tracer.start_as_current_span("rae.graph.analyze_convergence") as span:
+            span.set_attribute("rae.graph.history_length", len(graph_history))
+
+            if len(graph_history) < 2:
+                span.set_attribute("rae.graph.convergence_result", "insufficient_history")
+                span.set_attribute("rae.outcome.label", "fail")
+                return {
+                    "is_converging": False,
+                    "reason": "insufficient_history",
+                    "history_length": len(graph_history),
+                }
+
+            # Node churn
+            node_counts = [len(g.nodes) for g in graph_history]
+            node_deltas = [
+                abs(node_counts[i + 1] - node_counts[i])
+                for i in range(len(node_counts) - 1)
+            ]
+            node_churn = float(np.mean(node_deltas)) if node_deltas else 0.0
+            span.set_attribute("rae.graph.node_churn", node_churn)
+
+            # Edge churn
+            edge_counts = [len(g.edges) for g in graph_history]
+            edge_deltas = [
+                abs(edge_counts[i + 1] - edge_counts[i])
+                for i in range(len(edge_counts) - 1)
+            ]
+            edge_churn = float(np.mean(edge_deltas)) if edge_deltas else 0.0
+            span.set_attribute("rae.graph.edge_churn", edge_churn)
+
+            # Spectral gap (from latest graph)
+            latest_graph = graph_history[-1]
+            spectral_gap = 0.0
+
+            span.set_attribute("rae.tenant_id", latest_graph.tenant_id)
+            span.set_attribute("rae.project_id", latest_graph.project_id)
+            span.set_attribute("rae.graph.node_count", len(latest_graph.nodes))
+            span.set_attribute("rae.graph.edge_count", len(latest_graph.edges))
+
+            if len(latest_graph.nodes) > 1:
+                adj_matrix = latest_graph.adjacency_matrix()
+
+                if adj_matrix.size > 0:
+                    try:
+                        eigenvalues = np.linalg.eigvals(adj_matrix)
+                        eigenvalues_sorted = np.sort(np.abs(eigenvalues))[::-1]
+
+                        if len(eigenvalues_sorted) >= 2:
+                            spectral_gap = float(
+                                eigenvalues_sorted[0] - eigenvalues_sorted[1]
+                            )
+                            span.set_attribute("rae.graph.eigenvalue_1", float(eigenvalues_sorted[0]))
+                            span.set_attribute("rae.graph.eigenvalue_2", float(eigenvalues_sorted[1]))
+                    except Exception as e:
+                        logger.warning("spectral_gap_computation_failed", error=str(e))
+                        spectral_gap = 0.0
+
+            span.set_attribute("rae.graph.spectral_gap", spectral_gap)
+
+            # Convergence criteria
+            # For true convergence, we want very low churn (approaching stability)
+            is_converging = (
+                node_churn < 1.0  # Less than 1 node added/removed per step
+                and edge_churn < 2.0  # Less than 2 edges added/removed per step
+                and spectral_gap < 0.5  # Stable eigenvalue spectrum
+            )
+
+            span.set_attribute("rae.graph.is_converging", is_converging)
+            span.set_attribute("rae.outcome.label", "success" if is_converging else "not_converged")
+
             return {
-                "is_converging": False,
-                "reason": "insufficient_history",
+                "is_converging": is_converging,
+                "node_churn": node_churn,
+                "edge_churn": edge_churn,
+                "spectral_gap": spectral_gap,
+                "node_count": len(latest_graph.nodes),
+                "edge_count": len(latest_graph.edges),
                 "history_length": len(graph_history),
             }
-
-        # Node churn
-        node_counts = [len(g.nodes) for g in graph_history]
-        node_deltas = [
-            abs(node_counts[i + 1] - node_counts[i])
-            for i in range(len(node_counts) - 1)
-        ]
-        node_churn = float(np.mean(node_deltas)) if node_deltas else 0.0
-
-        # Edge churn
-        edge_counts = [len(g.edges) for g in graph_history]
-        edge_deltas = [
-            abs(edge_counts[i + 1] - edge_counts[i])
-            for i in range(len(edge_counts) - 1)
-        ]
-        edge_churn = float(np.mean(edge_deltas)) if edge_deltas else 0.0
-
-        # Spectral gap (from latest graph)
-        latest_graph = graph_history[-1]
-        spectral_gap = 0.0
-
-        if len(latest_graph.nodes) > 1:
-            adj_matrix = latest_graph.adjacency_matrix()
-
-            if adj_matrix.size > 0:
-                try:
-                    eigenvalues = np.linalg.eigvals(adj_matrix)
-                    eigenvalues_sorted = np.sort(np.abs(eigenvalues))[::-1]
-
-                    if len(eigenvalues_sorted) >= 2:
-                        spectral_gap = float(
-                            eigenvalues_sorted[0] - eigenvalues_sorted[1]
-                        )
-                except Exception as e:
-                    logger.warning("spectral_gap_computation_failed", error=str(e))
-                    spectral_gap = 0.0
-
-        # Convergence criteria
-        # For true convergence, we want very low churn (approaching stability)
-        is_converging = (
-            node_churn < 1.0  # Less than 1 node added/removed per step
-            and edge_churn < 2.0  # Less than 2 edges added/removed per step
-            and spectral_gap < 0.5  # Stable eigenvalue spectrum
-        )
-
-        return {
-            "is_converging": is_converging,
-            "node_churn": node_churn,
-            "edge_churn": edge_churn,
-            "spectral_gap": spectral_gap,
-            "node_count": len(latest_graph.nodes),
-            "edge_count": len(latest_graph.edges),
-            "history_length": len(graph_history),
-        }

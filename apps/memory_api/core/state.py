@@ -36,7 +36,10 @@ import numpy as np
 import structlog
 from pydantic import BaseModel, Field
 
+from apps.memory_api.observability.rae_tracing import get_tracer
+
 logger = structlog.get_logger(__name__)
+tracer = get_tracer(__name__)
 
 
 @dataclass
@@ -324,30 +327,43 @@ class RAEState(BaseModel):
         Returns:
             Dictionary with deltas for key metrics
         """
-        return {
-            "token_delta": (
-                self.budget_state.remaining_tokens - other.budget_state.remaining_tokens
-            ),
-            "cost_delta": (
-                self.budget_state.remaining_cost_usd
-                - other.budget_state.remaining_cost_usd
-            ),
-            "context_size_delta": (
-                self.working_context.token_count - other.working_context.token_count
-            ),
-            "graph_nodes_delta": (
-                self.graph_state.node_count - other.graph_state.node_count
-            ),
-            "graph_edges_delta": (
-                self.graph_state.edge_count - other.graph_state.edge_count
-            ),
-            "memory_count_delta": (
-                self.memory_state.total_count() - other.memory_state.total_count()
-            ),
-            "time_delta_ms": (
-                (self.timestamp - other.timestamp).total_seconds() * 1000
-            ),
-        }
+        with tracer.start_as_current_span("rae.state.compare") as span:
+            span.set_attribute("rae.tenant_id", self.tenant_id)
+            span.set_attribute("rae.project_id", self.project_id)
+
+            delta = {
+                "token_delta": (
+                    self.budget_state.remaining_tokens - other.budget_state.remaining_tokens
+                ),
+                "cost_delta": (
+                    self.budget_state.remaining_cost_usd
+                    - other.budget_state.remaining_cost_usd
+                ),
+                "context_size_delta": (
+                    self.working_context.token_count - other.working_context.token_count
+                ),
+                "graph_nodes_delta": (
+                    self.graph_state.node_count - other.graph_state.node_count
+                ),
+                "graph_edges_delta": (
+                    self.graph_state.edge_count - other.graph_state.edge_count
+                ),
+                "memory_count_delta": (
+                    self.memory_state.total_count() - other.memory_state.total_count()
+                ),
+                "time_delta_ms": (
+                    (self.timestamp - other.timestamp).total_seconds() * 1000
+                ),
+            }
+
+            # Record key deltas as span attributes for analysis
+            span.set_attribute("rae.state.token_delta", delta["token_delta"])
+            span.set_attribute("rae.state.cost_delta_usd", delta["cost_delta"])
+            span.set_attribute("rae.state.memory_delta", delta["memory_count_delta"])
+            span.set_attribute("rae.state.graph_nodes_delta", delta["graph_nodes_delta"])
+            span.set_attribute("rae.state.time_delta_ms", delta["time_delta_ms"])
+
+            return delta
 
     def is_valid(self) -> bool:
         """
@@ -362,56 +378,76 @@ class RAEState(BaseModel):
         Returns:
             True if state is valid and consistent
         """
-        # Budget check
-        if self.budget_state.is_exhausted():
-            logger.warning(
-                "state_validation_failed_budget_exhausted",
-                tenant_id=self.tenant_id,
-                budget=self.budget_state.to_dict(),
-            )
-            return False
+        with tracer.start_as_current_span("rae.state.validate") as span:
+            span.set_attribute("rae.tenant_id", self.tenant_id)
+            span.set_attribute("rae.project_id", self.project_id)
 
-        # Context consistency
-        if self.working_context.token_count < 0:
-            logger.warning(
-                "state_validation_failed_negative_tokens",
-                tenant_id=self.tenant_id,
-                token_count=self.working_context.token_count,
-            )
-            return False
+            # Record current state metrics
+            span.set_attribute("rae.state.budget_tokens", self.budget_state.remaining_tokens)
+            span.set_attribute("rae.state.budget_usd", self.budget_state.remaining_cost_usd)
+            span.set_attribute("rae.state.context_tokens", self.working_context.token_count)
+            span.set_attribute("rae.state.total_memories", self.memory_state.total_count())
+            span.set_attribute("rae.state.graph_nodes", self.graph_state.node_count)
 
-        # Importance scores length matches content
-        if len(self.working_context.content) != len(
-            self.working_context.importance_scores
-        ):
-            # This is acceptable if importance_scores is empty (not yet computed)
-            if self.working_context.importance_scores:
+            # Budget check
+            if self.budget_state.is_exhausted():
+                span.set_attribute("rae.state.validation_result", "failed_budget_exhausted")
+                span.set_attribute("rae.outcome.label", "fail")
                 logger.warning(
-                    "state_validation_warning_mismatched_importance_scores",
+                    "state_validation_failed_budget_exhausted",
                     tenant_id=self.tenant_id,
-                    content_length=len(self.working_context.content),
-                    scores_length=len(self.working_context.importance_scores),
+                    budget=self.budget_state.to_dict(),
                 )
+                return False
 
-        # Memory counts non-negative
-        if any(
-            layer.count < 0
-            for layer in [
-                self.memory_state.episodic,
-                self.memory_state.working,
-                self.memory_state.semantic,
-                self.memory_state.ltm,
-                self.memory_state.reflective,
-            ]
-        ):
-            logger.warning(
-                "state_validation_failed_negative_memory_count",
-                tenant_id=self.tenant_id,
-                memory_state=self.memory_state.to_dict(),
-            )
-            return False
+            # Context consistency
+            if self.working_context.token_count < 0:
+                span.set_attribute("rae.state.validation_result", "failed_negative_tokens")
+                span.set_attribute("rae.outcome.label", "fail")
+                logger.warning(
+                    "state_validation_failed_negative_tokens",
+                    tenant_id=self.tenant_id,
+                    token_count=self.working_context.token_count,
+                )
+                return False
 
-        return True
+            # Importance scores length matches content
+            if len(self.working_context.content) != len(
+                self.working_context.importance_scores
+            ):
+                # This is acceptable if importance_scores is empty (not yet computed)
+                if self.working_context.importance_scores:
+                    span.set_attribute("rae.state.validation_result", "warning_mismatched_scores")
+                    logger.warning(
+                        "state_validation_warning_mismatched_importance_scores",
+                        tenant_id=self.tenant_id,
+                        content_length=len(self.working_context.content),
+                        scores_length=len(self.working_context.importance_scores),
+                    )
+
+            # Memory counts non-negative
+            if any(
+                layer.count < 0
+                for layer in [
+                    self.memory_state.episodic,
+                    self.memory_state.working,
+                    self.memory_state.semantic,
+                    self.memory_state.ltm,
+                    self.memory_state.reflective,
+                ]
+            ):
+                span.set_attribute("rae.state.validation_result", "failed_negative_memory_count")
+                span.set_attribute("rae.outcome.label", "fail")
+                logger.warning(
+                    "state_validation_failed_negative_memory_count",
+                    tenant_id=self.tenant_id,
+                    memory_state=self.memory_state.to_dict(),
+                )
+                return False
+
+            span.set_attribute("rae.state.validation_result", "success")
+            span.set_attribute("rae.outcome.label", "success")
+            return True
 
     def log_state(self, event: str = "state_snapshot") -> None:
         """
