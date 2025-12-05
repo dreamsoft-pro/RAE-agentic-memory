@@ -334,3 +334,101 @@ def test_calculate_priority(pipeline):
     # Small cluster -> bonus 0.2. Total = 4.2 -> 4
     p2 = pipeline._calculate_priority(2, scoring)
     assert p2 == 4
+
+
+@pytest.mark.asyncio
+async def test_fetch_memories_full_filters(pipeline, mock_pool):
+    """Test _fetch_memories with all filter options."""
+    conn_mock = mock_pool
+    conn_mock.fetch.return_value = []
+
+    filters = {"layer": "episodic", "tags": ["tag1", "tag2"]}
+    since = datetime(2024, 1, 1)
+
+    await pipeline._fetch_memories(TENANT_ID, PROJECT_ID, 10, filters, since)
+
+    # Verify query construction
+    call_args = conn_mock.fetch.call_args
+    query = call_args[0][0]
+    params = call_args[0][1:]
+
+    assert "created_at >= $3" in query
+    assert "layer = $4" in query
+    assert "tags && $5" in query
+    assert params[2] == since
+    assert params[3] == "episodic"
+    assert params[4] == ["tag1", "tag2"]
+
+
+@pytest.mark.asyncio
+async def test_clustering_noise_handling(pipeline):
+    """Test clustering handles noise (-1 labels) correctly."""
+    memories = [
+        {"id": "1", "embedding": [0.1]},
+        {"id": "2", "embedding": [0.9]},  # Noise
+    ]
+
+    with (
+        patch("apps.memory_api.services.reflection_pipeline.HDBSCAN") as MockHDBSCAN,
+        patch("apps.memory_api.services.reflection_pipeline.StandardScaler"),
+        patch("apps.memory_api.services.reflection_pipeline.SKLEARN_AVAILABLE", True),
+    ):
+        hdbscan_instance = MockHDBSCAN.return_value
+        # Label 0 for memory 1, Label -1 (noise) for memory 2
+        hdbscan_instance.fit_predict.return_value = [0, -1]
+
+        clusters = await pipeline._cluster_memories(memories, min_cluster_size=1)
+
+        # Only cluster 0 should exist, noise ignored
+        assert len(clusters) == 1
+        assert "cluster_0" in clusters
+        assert len(clusters["cluster_0"]) == 1
+        assert clusters["cluster_0"][0]["id"] == "1"
+
+
+@pytest.mark.asyncio
+async def test_embedding_generation_failure(pipeline, mock_ml_client):
+    """Test fallback when embedding generation fails."""
+    mock_ml_client.get_embedding.side_effect = Exception("ML Error")
+
+    embedding = await pipeline._generate_embedding("text")
+
+    assert embedding == [0.0] * 1536
+
+
+@pytest.mark.asyncio
+async def test_generate_reflections_exception_handling(pipeline):
+    """Test exception handling in main generation loop."""
+    memories = [{"id": "1", "embedding": [0.1]}]
+
+    with (
+        patch.object(pipeline, "_fetch_memories", new_callable=AsyncMock) as mock_fetch,
+        patch.object(
+            pipeline, "_cluster_memories", new_callable=AsyncMock
+        ) as mock_cluster,
+        patch.object(
+            pipeline,
+            "_generate_cluster_insight",
+            side_effect=Exception("Insight Error"),
+        ),
+        patch.object(
+            pipeline, "_generate_meta_insight", side_effect=Exception("Meta Error")
+        ),
+    ):
+        mock_fetch.return_value = memories
+        # Two clusters to trigger potential meta-insight logic if it weren't for errors
+        mock_cluster.return_value = {"c1": memories, "c2": memories, "c3": memories}
+
+        reflections, stats = await pipeline.generate_reflections(
+            GenerateReflectionRequest(
+                tenant_id=TENANT_ID,
+                project=PROJECT_ID,
+                reflection_type=ReflectionType.INSIGHT,
+            )
+        )
+
+        # Should return empty list but not crash
+        assert len(reflections) == 0
+        assert stats["insights_generated"] == 0
+        # Should try to generate insights for all 3 clusters
+        assert pipeline._generate_cluster_insight.call_count == 3
