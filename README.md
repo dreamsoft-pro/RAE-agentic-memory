@@ -210,6 +210,24 @@ RAE is designed for enterprise AI governance and compliance with **ISO/IEC 42001
 
 **Not sure which to choose?** Start with RAE Lite - you can always upgrade later.
 
+### 📦 Docker Images & Build Information
+
+**Image Sizes (Full Stack):**
+- **Main API** (rae-api, celery-worker, celery-beat): 9.23 GB
+- **ML Service** (embeddings, NLP): 8.14 GB
+- **Dashboard**: 690 MB
+- **Total Disk Space**: ~18 GB (actual storage after layer deduplication)
+
+**Build Time (on laptop):**
+- **Initial build**: 8-10 minutes (downloads PyTorch, CUDA, ML models)
+- **Rebuild with cache**: 1-2 minutes (only changed layers)
+- **Docker layer caching**: Automatically preserves downloaded packages
+
+**Optimization Tips:**
+- Use `docker-compose build --parallel` to build images concurrently
+- Docker BuildKit cache persists between builds (no re-download)
+- See [Makefile.dev](Makefile.dev) for smart rebuild commands
+
 ### Full Stack (Recommended for Production)
 **One-line install:**
 
