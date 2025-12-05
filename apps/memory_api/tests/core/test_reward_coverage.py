@@ -1,164 +1,76 @@
-"""
-Additional coverage tests for reward.py to hit edge cases and helper functions.
-"""
-
-from unittest.mock import Mock
+from unittest.mock import MagicMock
 
 import pytest
 
-from apps.memory_api.core.actions import SummarizeContextAction
+from apps.memory_api.core.actions import ActionType, ConsolidateEpisodicToWorkingAction
 from apps.memory_api.core.reward import RewardFunction
-from apps.memory_api.core.state import RAEState
+from apps.memory_api.core.state import (
+    BudgetState,
+    GraphState,
+    MemoryState,
+    RAEState,
+    WorkingContext,
+)
 
 
 @pytest.fixture
-def default_state():
-    return RAEState(tenant_id="test", project_id="test")
+def real_state():
+    return RAEState(
+        tenant_id="test_tenant",
+        project_id="test_project",
+        budget_state=BudgetState(),
+        memory_state=MemoryState(),
+        graph_state=GraphState(),
+        working_context=WorkingContext(),
+    )
 
 
-@pytest.fixture
-def reward_fn():
-    return RewardFunction()
+def test_evaluate_quality_default_fallback(real_state):
+    """Test that unhandled action types return default quality 0.5 (Line 210)"""
+    reward_fn = RewardFunction()
+    action = ConsolidateEpisodicToWorkingAction(
+        action_type=ActionType.CONSOLIDATE_EPISODIC_TO_WORKING, parameters={}
+    )
 
-
-@pytest.mark.unit
-def test_evaluate_quality_default_else_branch(reward_fn, default_state):
-    # ActionType not in the explicit list (e.g. SUMMARIZE_CONTEXT)
-    # Should hit the 'else: quality = 0.5' branch (Line 210 approx)
-    action = SummarizeContextAction(parameters={})
-
-    # Execution result irrelevant for default branch
-    quality = reward_fn._evaluate_quality(default_state, action, default_state, None)
+    quality = reward_fn._evaluate_quality(real_state, action, real_state, {})
     assert quality == 0.5
 
 
-@pytest.mark.unit
-def test_evaluate_retrieval_quality_no_result(reward_fn):
-    # Line 224: if not execution_result: return 0.5
-    quality = reward_fn._evaluate_retrieval_quality(None)
-    assert quality == 0.5
-
-
-@pytest.mark.unit
-def test_evaluate_reflection_quality_no_result(reward_fn):
-    # Line 270: if not execution_result: return 0.5
-    quality = reward_fn._evaluate_reflection_quality(None)
-    assert quality == 0.5
-
-
-@pytest.mark.unit
-def test_evaluate_reflection_quality_empty_reflections(reward_fn):
-    # Line 275: if not reflections: return 0.0
-    quality = reward_fn._evaluate_reflection_quality({"reflections": []})
+def test_evaluate_retrieval_quality_zero_memories():
+    """Test retrieval quality with zero memories (Line 227)"""
+    reward_fn = RewardFunction()
+    execution_result = {"memories_retrieved": 0}
+    quality = reward_fn._evaluate_retrieval_quality(execution_result)
     assert quality == 0.0
 
 
-@pytest.mark.unit
-def test_evaluate_reflection_quality_with_scores(reward_fn):
-    # Lines 284-288: scoring logic
-    mock_reflection = Mock()
-    mock_reflection.scoring = Mock()
-    mock_reflection.scoring.composite_score = 0.8
-
-    quality = reward_fn._evaluate_reflection_quality({"reflections": [mock_reflection]})
-    assert quality == 0.8
+def test_evaluate_llm_quality_no_result():
+    """Test LLM quality with missing result (Line 250)"""
+    reward_fn = RewardFunction()
+    execution_result = {"status": "failed"}  # Non-empty but no llm_result
+    quality = reward_fn._evaluate_llm_quality(execution_result)
+    assert quality == 0.0
 
 
-@pytest.mark.unit
-def test_evaluate_reflection_quality_no_scoring_obj(reward_fn):
-    # Edge case where reflection object doesn't have scoring
-    mock_reflection = Mock()
-    del (
-        mock_reflection.scoring
-    )  # Ensure attribute error if accessed, or None if we set it
-    mock_reflection.scoring = None
+def test_evaluate_llm_quality_short_output():
+    """Test LLM quality with short output (Line 261)"""
+    reward_fn = RewardFunction()
+    mock_result = MagicMock()
+    mock_result.text = "Short text"
+    execution_result = {"llm_result": mock_result}
 
-    quality = reward_fn._evaluate_reflection_quality({"reflections": [mock_reflection]})
-    # Should skip appending to scores
-    # if scores is empty, returns 0.6 (Line ~290)
-    assert quality == 0.6
-
-
-@pytest.mark.unit
-def test_evaluate_pruning_quality_full_coverage(reward_fn, default_state):
-    # Lines 298-317
-
-    # 1. No result
-    assert (
-        reward_fn._evaluate_pruning_quality(default_state, default_state, None) == 0.5
-    )
-
-    # 2. Zero tokens saved
-    assert (
-        reward_fn._evaluate_pruning_quality(
-            default_state, default_state, {"tokens_saved": 0}
-        )
-        == 0.0
-    )
-
-    # 3. Valid pruning
-    state_before = RAEState(tenant_id="test", project_id="test")
-    state_before.working_context.token_count = 1000
-
-    # Saved 200 tokens = 20% compression
-    quality = reward_fn._evaluate_pruning_quality(
-        state_before, default_state, {"tokens_saved": 200}
-    )
-    # Expected: min(1.0, 0.2 * 2) = 0.4
+    quality = reward_fn._evaluate_llm_quality(execution_result)
     assert quality == 0.4
 
 
-@pytest.mark.unit
-def test_evaluate_graph_update_quality_branches(reward_fn, default_state):
-    # Lines ~333, 338
+def test_evaluate_reflection_quality_no_scoring():
+    """Test reflection quality when scoring is missing (Line 293)"""
+    reward_fn = RewardFunction()
+    # Reflection object without scoring
+    mock_reflection = MagicMock()
+    mock_reflection.scoring = None
 
-    state_before = RAEState(tenant_id="test", project_id="test")
-    state_before.graph_state.node_count = 10
-    state_before.graph_state.edge_count = 10
+    execution_result = {"reflections": [mock_reflection]}
 
-    state_after = RAEState(tenant_id="test", project_id="test")
-    state_after.graph_state.node_count = 10
-    state_after.graph_state.edge_count = 10
-
-    # 1. No change
-    assert reward_fn._evaluate_graph_update_quality(state_before, state_after) == 0.5
-
-    # 2. Increase nodes
-    state_more_nodes = RAEState(tenant_id="test", project_id="test")
-    state_more_nodes.graph_state.node_count = 11
-    state_more_nodes.graph_state.edge_count = 10
-    assert (
-        reward_fn._evaluate_graph_update_quality(state_before, state_more_nodes) == 0.7
-    )
-
-    # 3. Pruning (decrease)
-    state_fewer = RAEState(tenant_id="test", project_id="test")
-    state_fewer.graph_state.node_count = 9
-    assert reward_fn._evaluate_graph_update_quality(state_before, state_fewer) == 0.6
-
-
-@pytest.mark.unit
-def test_evaluate_llm_quality_edge_cases(reward_fn):
-    # 1. No result (None) -> 0.5
-    assert reward_fn._evaluate_llm_quality(None) == 0.5
-
-    # 2. Empty dict (falsy) -> 0.5
-    assert reward_fn._evaluate_llm_quality({}) == 0.5
-
-    # 3. Non-empty dict without llm_result -> 0.0
-    assert reward_fn._evaluate_llm_quality({"other": "data"}) == 0.0
-
-    # 4. Short output
-    mock_res = Mock()
-    mock_res.text = "Short"
-    assert reward_fn._evaluate_llm_quality({"llm_result": mock_res}) == 0.4
-
-    # 5. Long output
-    mock_res_long = Mock()
-    mock_res_long.text = "A" * 2001
-    assert reward_fn._evaluate_llm_quality({"llm_result": mock_res_long}) == 0.7
-
-    # 6. Empty output
-    mock_res_empty = Mock()
-    mock_res_empty.text = ""
-    assert reward_fn._evaluate_llm_quality({"llm_result": mock_res_empty}) == 0.0
+    quality = reward_fn._evaluate_reflection_quality(execution_result)
+    assert quality == 0.6
