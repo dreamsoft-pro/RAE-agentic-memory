@@ -67,6 +67,51 @@ dev-rebuild: ## Rebuild specific service (usage: make dev-rebuild SERVICE=rae-ap
 	@echo "🔨 Rebuilding $(SERVICE)..."
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build $(SERVICE)
 
+# ============================================================================
+# Smart Rebuild (with cache optimization)
+# ============================================================================
+
+dev-rebuild-parallel: ## Rebuild all services in parallel (uses cache)
+	@echo "🔨 Building images in parallel with cache..."
+	@echo "💡 This uses Docker BuildKit for optimal caching"
+	DOCKER_BUILDKIT=1 docker-compose -f docker-compose.yml -f docker-compose.dev.yml build --parallel
+	@echo "✅ Build complete! Starting services..."
+	docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+	@echo "✅ Done! Run 'make dev-ps' to check status"
+
+dev-rebuild-nocache: ## Rebuild all services without cache (clean build)
+	@echo "⚠️  Building from scratch (no cache)..."
+	@echo "⏱️  This will take 8-10 minutes"
+	DOCKER_BUILDKIT=1 docker-compose -f docker-compose.yml -f docker-compose.dev.yml build --no-cache --parallel
+	@echo "✅ Clean build complete! Starting services..."
+	docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+dev-rebuild-if-changed: ## Rebuild only if source files changed (smart rebuild)
+	@echo "🔍 Checking for changes in source files..."
+	@CHANGED=0; \
+	if [ -n "$$(git status --porcelain apps/ Dockerfile* requirements*.txt 2>/dev/null)" ]; then \
+		echo "📝 Changes detected in source files"; \
+		CHANGED=1; \
+	elif [ ! "$$(docker images -q rae-agentic-memory_rae-api 2>/dev/null)" ]; then \
+		echo "🆕 No existing images found"; \
+		CHANGED=1; \
+	fi; \
+	if [ $$CHANGED -eq 1 ]; then \
+		echo "🔨 Rebuilding with cache..."; \
+		DOCKER_BUILDKIT=1 docker-compose -f docker-compose.yml -f docker-compose.dev.yml build --parallel; \
+		docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d; \
+		echo "✅ Rebuild complete!"; \
+	else \
+		echo "✅ No changes detected, using existing images"; \
+		docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d; \
+	fi
+
+dev-prune: ## Remove unused Docker data (free up space)
+	@echo "🧹 Pruning unused Docker data..."
+	@docker system prune -f
+	@echo "✅ Cleanup complete"
+	@docker system df
+
 dev-shell-api: ## Open shell in API container
 	docker-compose -f docker-compose.yml -f docker-compose.dev.yml exec rae-api /bin/bash
 
