@@ -358,3 +358,65 @@ async def test_fulltext_search_execution(service, mock_pool):
 
     assert len(results) == 1
     assert results[0]["score"] == 0.5
+
+
+@pytest.mark.asyncio
+async def test_search_with_manual_weights(service, mock_pool):
+    """Test search with manual weights provided."""
+    # Ensure cache miss
+    service.cache.get.return_value = None
+
+    # Mock vector search results
+    mock_pool.fetch.return_value = [
+        {
+            "id": uuid4(),
+            "content": "res",
+            "similarity": 0.8,
+            "metadata": {},
+            "created_at": datetime.now(),
+        }
+    ]
+
+    manual_weights = {"vector": 1.0, "semantic": 0.0}
+
+    result = await service.search(
+        tenant_id="t-1", project_id="p-1", query="test", manual_weights=manual_weights
+    )
+
+    # Should skip analysis
+    service.query_analyzer.analyze_query.assert_not_called()
+    assert result.applied_weights["vector"] == 1.0
+
+
+@pytest.mark.asyncio
+async def test_vector_search_error_handling(service, mock_pool, mock_ml_client):
+    """Test vector search error handling."""
+    mock_ml_client.get_embedding.side_effect = Exception("ML Service Down")
+
+    results = await service._vector_search("t", "p", "q", 5)
+
+    assert results == []
+
+
+@pytest.mark.asyncio
+async def test_rerank_results_error_handling(service, mock_llm_provider):
+    """Test reranking fallback on error."""
+    mock_llm_provider.generate.side_effect = Exception("LLM Error")
+
+    results = [
+        SearchResultItem(
+            memory_id=str(uuid4()),
+            content="c",
+            hybrid_score=0.5,
+            rank=1,
+            search_strategies_used=[],
+            created_at=datetime.now(),
+            final_score=0.5,
+        )
+    ]
+
+    reranked = await service._rerank_results("q", results, RerankingModel.CLAUDE_HAIKU)
+
+    # Should return original results
+    assert len(reranked) == 1
+    assert reranked[0].hybrid_score == 0.5
