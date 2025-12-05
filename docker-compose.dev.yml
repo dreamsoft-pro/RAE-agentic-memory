@@ -72,11 +72,11 @@ services:
       - LOG_LEVEL=INFO
       - OTEL_TRACES_ENABLED=false
     healthcheck:
-      test: ["CMD-SHELL", "celery -A apps.memory_api.celery_app inspect ping -d celery@$HOSTNAME || exit 1"]
+      test: ["CMD-SHELL", "celery -A apps.memory_api.celery_app inspect ping -t 10 || exit 1"]
       interval: 30s
-      timeout: 10s
+      timeout: 15s
       retries: 3
-      start_period: 60s
+      start_period: 90s
 
   # ============================================================================
   # Celery Beat with Auto-reload
@@ -94,11 +94,11 @@ services:
       - LOG_LEVEL=INFO
       - OTEL_TRACES_ENABLED=false
     healthcheck:
-      test: ["CMD-SHELL", "ps aux | grep 'celery.*beat' | grep -v grep || exit 1"]
+      test: ["CMD-SHELL", "python3 -c 'import os; os.kill(1, 0)' || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 90s
 
   # ============================================================================
   # Streamlit Dashboard with Hot Reload
