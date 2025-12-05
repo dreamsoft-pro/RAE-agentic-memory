@@ -88,15 +88,17 @@ async def create_trigger(
             tenant_id=request.tenant_id,
             project_id=request.project_id,
             rule_name=request.rule_name,
-            event_types=request.event_types,
-            conditions=request.conditions,
+            event_types=request.condition.event_types,
+            conditions=request.condition.condition_group,
             actions=request.actions,
             created_by=request.created_by,
             description=request.description,
-            condition_operator=request.condition_operator,
+            condition_operator="AND",  # Default as it's not in request
             priority=request.priority,
-            status=request.status,
-            retry_config=request.retry_config,
+            status=(
+                TriggerStatus.ACTIVE if request.is_enabled else TriggerStatus.INACTIVE
+            ),
+            retry_config=None,  # Default as it's not in request
         )
 
         return CreateTriggerResponse(
@@ -152,14 +154,16 @@ async def update_trigger(
             updates["rule_name"] = request.rule_name
         if request.description is not None:
             updates["description"] = request.description
-        if request.conditions is not None:
-            updates["conditions"] = request.conditions
+        if request.condition is not None:
+            updates["condition"] = request.condition.dict()
         if request.actions is not None:
-            updates["actions"] = request.actions
+            updates["actions"] = [a.dict() for a in request.actions]
         if request.priority is not None:
             updates["priority"] = request.priority
         if request.status is not None:
             updates["status"] = request.status
+        if request.is_enabled is not None:
+            updates["is_enabled"] = request.is_enabled
 
         # Update in database
         # Note: tenant_id should come from auth context in production
@@ -426,7 +430,7 @@ async def create_workflow(
             steps=request.steps,
             created_by=request.created_by,
             description=request.description,
-            execution_mode=request.execution_mode,
+            parallel_execution=request.parallel_execution,
         )
 
         return CreateWorkflowResponse(
