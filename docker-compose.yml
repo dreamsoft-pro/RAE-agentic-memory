@@ -45,7 +45,7 @@ services:
       otel-collector:
         condition: service_started
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD-SHELL", "python3 -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8000/health\")' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -63,7 +63,7 @@ services:
     ports:
       - "8001:8001"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      test: ["CMD-SHELL", "python3 -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8001/health\")' || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -213,6 +213,8 @@ services:
     image: otel/opentelemetry-collector:latest
     container_name: rae-otel-collector
     command: ["--config=/etc/otel-collector-config.yaml"]
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
     volumes:
       - ./infra/otel-collector-config.yaml:/etc/otel-collector-config.yaml
     ports:
