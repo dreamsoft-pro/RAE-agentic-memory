@@ -15,6 +15,7 @@ from apps.memory_api.models import (
     DeleteMemoryResponse,
     QueryMemoryRequest,
     QueryMemoryResponse,
+    ScoredMemoryRecord,
     StoreMemoryRequest,
     StoreMemoryResponse,
 )
@@ -168,7 +169,25 @@ async def query_memory(
             )
 
             # Rescore vector results
-            rescored_results = scoring.rescore_memories(hybrid_result.vector_matches)
+            # Convert HybridSearchResult items to ScoredMemoryRecord
+            candidates = []
+            for item in hybrid_result.results:
+                candidates.append(
+                    ScoredMemoryRecord(
+                        id=str(item.memory_id),
+                        content=item.content,
+                        score=item.final_score,
+                        importance=item.metadata.get("importance", 0.5),
+                        layer=item.metadata.get("layer"),
+                        tags=item.metadata.get("tags", []),
+                        source=item.metadata.get("source", "unknown"),
+                        project=item.metadata.get("project"),
+                        timestamp=item.created_at,
+                        last_accessed_at=item.metadata.get("last_accessed_at"),
+                        usage_count=item.metadata.get("usage_count", 0),
+                    )
+                )
+            rescored_results = scoring.rescore_memories(candidates)
 
             # Update access statistics for retrieved memories
             memory_ids = [item.id for item in rescored_results]
@@ -188,10 +207,20 @@ async def query_memory(
 
             memory_query_counter.labels(tenant_id=tenant_id).inc()
 
+            # Construct statistics from available fields
+            stats = {
+                "vector_count": hybrid_result.vector_results_count,
+                "semantic_count": hybrid_result.semantic_results_count,
+                "graph_count": hybrid_result.graph_results_count,
+                "fulltext_count": hybrid_result.fulltext_results_count,
+                "total_results": hybrid_result.total_results,
+                "total_time_ms": hybrid_result.total_time_ms,
+            }
+
             return QueryMemoryResponse(
                 results=rescored_results,
-                synthesized_context=hybrid_result.synthesized_context,
-                graph_statistics=hybrid_result.statistics,
+                synthesized_context=None,  # Not available in current model
+                graph_statistics=stats,
             )
 
         except Exception as e:
