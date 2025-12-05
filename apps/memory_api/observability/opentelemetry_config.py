@@ -275,6 +275,41 @@ def instrument_libraries():
 # ============================================================================
 
 
+class NoOpSpan:
+    """No-op implementation of OTel Span."""
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        pass
+
+    def set_attribute(self, key, value):
+        pass
+
+    def record_exception(self, exception):
+        pass
+
+    def set_status(self, status):
+        pass
+
+    def is_recording(self):
+        return False
+
+    def end(self):
+        pass
+
+
+class NoOpTracer:
+    """No-op implementation of OTel Tracer."""
+
+    def start_as_current_span(self, name, **kwargs):
+        return NoOpSpan()
+
+    def start_span(self, name, **kwargs):
+        return NoOpSpan()
+
+
 def get_tracer(name: str = OTEL_SERVICE_NAME):
     """
     Get a tracer instance for creating custom spans.
@@ -286,10 +321,10 @@ def get_tracer(name: str = OTEL_SERVICE_NAME):
             # ... do work ...
 
     Returns:
-        Tracer instance if OpenTelemetry is available, None otherwise
+        Tracer instance (OpenTelemetry or NoOp)
     """
     if not OPENTELEMETRY_AVAILABLE:
-        return None
+        return NoOpTracer()
 
     return trace.get_tracer(name, OTEL_SERVICE_VERSION)  # type: ignore[union-attr]
 
