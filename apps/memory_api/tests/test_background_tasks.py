@@ -14,6 +14,7 @@ Current Coverage: 0% -> Target: 60%+
 """
 
 from unittest.mock import AsyncMock, Mock, patch
+from uuid import uuid4
 
 import pytest
 
@@ -24,10 +25,12 @@ pytest.importorskip(
 
 from apps.memory_api.tasks.background_tasks import (
     apply_memory_decay,
+    cleanup_expired_data_task,
+    decay_memory_importance_task,
     extract_graph_lazy,
+    gdpr_delete_user_data_task,
     generate_reflection_for_project,
     process_graph_extraction_queue,
-    prune_old_memories,
 )
 
 
@@ -284,50 +287,140 @@ class TestMemoryDecay:
         assert "strength = strength *" in decay_call[0][0]
 
 
-class TestPruneOldMemories:
-    """Tests for memory pruning task."""
+@pytest.mark.asyncio
+class TestCleanupExpiredData:
+    async def test_cleanup_expired_data_success(self, mock_pool):
+        """Test cleanup task runs successfully"""
+        # Ensure pool.close is awaitable
+        mock_pool.close = AsyncMock()
 
-    @patch("apps.memory_api.tasks.background_tasks.get_pool")
-    @patch("apps.memory_api.tasks.background_tasks.settings")
-    def test_prune_respects_retention_days(self, mock_settings, mock_get_pool):
-        """Test that pruning respects retention setting.
+        # Create a dummy object with .value attribute to simulate Enum keys
+        class MockEnum:
+            def __init__(self, v):
+                self.value = v
 
-        Verifies:
-        - Only episodic memories are pruned
-        - Retention period is used correctly
-        """
-        # Mock settings
-        mock_settings.MEMORY_RETENTION_DAYS = 90
+        mock_results = {MockEnum("episodic"): 10, MockEnum("embeddings"): 5}
 
-        # Mock pool
-        mock_pool = AsyncMock()
-        mock_get_pool.return_value = mock_pool
+        with patch(
+            "apps.memory_api.services.retention_service.RetentionService"
+        ) as MockRetention:
+            mock_service = MockRetention.return_value
+            mock_service.cleanup_expired_data = AsyncMock(return_value=mock_results)
 
-        # Execute
-        prune_old_memories()
+            with patch(
+                "apps.memory_api.tasks.background_tasks.get_pool",
+                new=AsyncMock(return_value=mock_pool),
+            ):
+                with patch(
+                    "apps.memory_api.tasks.background_tasks.asyncio.run",
+                    side_effect=lambda x: x,
+                ):
+                    result = await cleanup_expired_data_task(tenant_id="t1")
 
-        # Verify delete was called
-        mock_pool.execute.assert_called_once()
-        sql = mock_pool.execute.call_args[0][0]
+                assert result["success"] is True
+                assert result["total_deleted"] == 15
+                mock_service.cleanup_expired_data.assert_called_once_with(
+                    tenant_id="t1"
+                )
+                mock_pool.close.assert_called_once()
 
-        assert "DELETE FROM memories" in sql
-        assert "layer = 'em'" in sql  # Only episodic
+    async def test_cleanup_expired_data_failure(self, mock_pool):
+        """Test cleanup task handles failure"""
+        mock_pool.close = AsyncMock()
 
-    @patch("apps.memory_api.tasks.background_tasks.settings")
-    def test_prune_disabled_when_retention_zero(self, mock_settings):
-        """Test that pruning is disabled when retention is 0.
+        with patch(
+            "apps.memory_api.services.retention_service.RetentionService"
+        ) as MockRetention:
+            mock_service = MockRetention.return_value
+            mock_service.cleanup_expired_data = AsyncMock(
+                side_effect=Exception("DB Error")
+            )
 
-        Allows indefinite retention if configured.
-        """
-        # Mock settings with disabled pruning
-        mock_settings.MEMORY_RETENTION_DAYS = 0
+            with patch(
+                "apps.memory_api.tasks.background_tasks.get_pool",
+                new=AsyncMock(return_value=mock_pool),
+            ):
+                with patch(
+                    "apps.memory_api.tasks.background_tasks.asyncio.run",
+                    side_effect=lambda x: x,
+                ):
+                    try:
+                        await cleanup_expired_data_task(tenant_id="t1")
+                    except Exception:
+                        pass
 
-        # Execute - should return early without creating pool
-        with patch("apps.memory_api.tasks.background_tasks.get_pool") as mock_get_pool:
-            prune_old_memories()
 
-            # Pool should not be created if disabled
-            mock_get_pool.assert_not_called()
+@pytest.mark.asyncio
+class TestGDPRDeletion:
+    async def test_gdpr_deletion_success(self, mock_pool):
+        """Test GDPR deletion task"""
+        mock_pool.close = AsyncMock()
+
+        with patch(
+            "apps.memory_api.services.retention_service.RetentionService"
+        ) as MockRetention:
+            mock_service = MockRetention.return_value
+            mock_service.delete_user_data = AsyncMock(
+                return_value={"memories_deleted": 100, "logs_anonymized": 50}
+            )
+
+            with patch(
+                "apps.memory_api.tasks.background_tasks.get_pool",
+                new=AsyncMock(return_value=mock_pool),
+            ):
+                with patch(
+                    "apps.memory_api.tasks.background_tasks.asyncio.run",
+                    side_effect=lambda x: x,
+                ):
+                    result = await gdpr_delete_user_data_task(
+                        tenant_id="t1",
+                        user_identifier="user@example.com",
+                        deleted_by="admin",
+                    )
+
+                assert result["success"] is True
+                assert result["total_deleted"] == 100
+                assert result["total_anonymized"] == 50
+                mock_service.delete_user_data.assert_called_once_with(
+                    tenant_id="t1",
+                    user_identifier="user@example.com",
+                    deleted_by="admin",
+                )
+
+
+@pytest.mark.asyncio
+class TestDecayMemoryImportance:
+    async def test_decay_task_all_tenants(self, mock_pool):
+        """Test decay task iterating over tenants"""
+        mock_pool.close = AsyncMock()
+
+        # Use valid UUIDs
+        t1 = str(uuid4())
+        t2 = str(uuid4())
+
+        # Explicitly set fetch as AsyncMock to avoid "object list can't be used in await"
+        mock_pool.fetch = AsyncMock(return_value=[{"tenant_id": t1}, {"tenant_id": t2}])
+
+        with patch(
+            "apps.memory_api.services.importance_scoring.ImportanceScoringService"
+        ) as MockScoring:
+            mock_service = MockScoring.return_value
+            mock_service.decay_importance = AsyncMock(return_value=5)
+
+            with patch(
+                "apps.memory_api.tasks.background_tasks.get_pool",
+                new=AsyncMock(return_value=mock_pool),
+            ):
+                with patch(
+                    "apps.memory_api.tasks.background_tasks.asyncio.run",
+                    side_effect=lambda x: x,
+                ):
+                    result = await decay_memory_importance_task(tenant_id=None)
+
+                assert result["success"] is True
+                assert result["total_memories_updated"] == 10  # 5 * 2
+                assert result["tenants_processed"] == 2
+                assert mock_service.decay_importance.call_count == 2
 
 
 if __name__ == "__main__":

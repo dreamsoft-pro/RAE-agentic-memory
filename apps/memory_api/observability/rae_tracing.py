@@ -13,6 +13,7 @@ Design principles:
 """
 
 import functools
+import inspect
 import time
 import uuid
 from contextlib import contextmanager
@@ -584,7 +585,7 @@ def trace_agent_operation(
                         RAEPerformanceAttributes.LATENCY_MS, round(latency_ms, 2)
                     )
 
-        if functools.iscoroutinefunction(func):
+        if inspect.iscoroutinefunction(func):
             return async_wrapper
         else:
             return sync_wrapper
