@@ -1,5 +1,6 @@
 sentence-transformers
 scikit-learn
+spacy
 structlog
 fastapi
 uvicorn
