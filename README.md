@@ -9,7 +9,7 @@
 [![Docker](https://img.shields.io/badge/docker-required-blue.svg)](https://docs.docker.com/get-docker/)
 [![Tests](https://img.shields.io/badge/tests-468%20passing-brightgreen.svg)]()
 [![Tests Total](https://img.shields.io/badge/total-516%20unit%20tests-blue.svg)]()
-[![Coverage](https://img.shields.io/badge/coverage-48%25-yellow.svg)]())
+[![Coverage](https://img.shields.io/badge/coverage-67%25-green.svg)]())
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Version](https://img.shields.io/badge/version-2.1.0--enterprise-blue.svg)](docs/.auto-generated/status/STATUS.md)
 
@@ -29,7 +29,7 @@
 > - ✅ **Core Features**: 4-layer memory, GraphRAG, Reflection Engine V2, Multi-tenancy.
 > - ✅ **Optional Modules**: ML Service, Dashboard, Celery Workers (production-ready, 96+ tests, full docs)
 >
-> **What's maturing:** Test coverage (48% → 75% target), production deployment guides.
+> **What's maturing:** Test coverage (67% → 75% target), production deployment guides.
 >
 > **Production Ready For:**
 > - ✅ Internal corporate tools (behind VPN/firewall)
@@ -1020,11 +1020,11 @@ RAE is currently in **v2.1.0-enterprise** - Pre-1.0 with Enterprise Features!
 - ✅ Python SDK
 - ✅ Multi-tenancy & RBAC
 - ✅ Docker deployment
-- ✅ **468 Tests (100% passing), 48% Coverage** (target: 75%+)
+- ✅ **706 Tests (100% passing), 67% Coverage** (target: 75%+)
 - ✅ **CI/CD Pipeline** (lint, test, docker build - all passing ✅)
 
 **Coming Soon (v1.0):**
-- 🚧 Test coverage improvement (48% → 75%+)
+- 🚧 Test coverage improvement (67% → 75%+)
 - 🚧 Production deployment guides (Kubernetes, cloud providers)
 - 🚧 Performance optimization (query latency, caching improvements)
 - 🚧 Advanced monitoring dashboards (Grafana templates)
