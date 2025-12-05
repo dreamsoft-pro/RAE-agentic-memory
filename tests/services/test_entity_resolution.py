@@ -218,3 +218,84 @@ async def test_process_group_with_merge_rejection(mock_dependencies):
 
     # Verify merge was NOT called
     service._merge_nodes.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_run_clustering_success(mock_dependencies):
+    """Test full clustering workflow success."""
+    mock_pool, mock_graph_repo, mock_ml_client = mock_dependencies
+
+    # Mock nodes
+    mock_graph_repo.get_all_nodes.return_value = [
+        {"id": 1, "label": "A"},
+        {"id": 2, "label": "A Inc"},
+        {"id": 3, "label": "B"},
+    ]
+
+    # Mock ML response
+    mock_ml_client.resolve_entities.return_value = {
+        "merge_groups": [["1", "2"]],
+        "statistics": {}
+    }
+
+    service = EntityResolutionService(
+        pool=mock_pool, ml_client=mock_ml_client, graph_repository=mock_graph_repo
+    )
+    
+    # Mock process group to avoid complex interactions
+    service._process_group = AsyncMock()
+
+    await service.run_clustering_and_merging("p1", "t1")
+
+    # Verify ML called
+    mock_ml_client.resolve_entities.assert_called_once()
+    
+    # Verify process group called for the group
+    service._process_group.assert_called_once()
+    # Check args: group nodes should have ids 1 and 2
+    call_args = service._process_group.call_args
+    group_nodes = call_args[0][0]
+    assert len(group_nodes) == 2
+    assert group_nodes[0]["id"] == 1
+    assert group_nodes[1]["id"] == 2
+
+
+@pytest.mark.asyncio
+async def test_run_clustering_ml_failure(mock_dependencies):
+    """Test handling of ML service failure."""
+    mock_pool, mock_graph_repo, mock_ml_client = mock_dependencies
+
+    mock_graph_repo.get_all_nodes.return_value = [
+        {"id": 1, "label": "A"},
+        {"id": 2, "label": "B"},
+    ]
+
+    mock_ml_client.resolve_entities.side_effect = Exception("ML Down")
+
+    service = EntityResolutionService(
+        pool=mock_pool, ml_client=mock_ml_client, graph_repository=mock_graph_repo
+    )
+
+    await service.run_clustering_and_merging("p1", "t1")
+
+    # Should not crash
+    mock_ml_client.resolve_entities.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_ask_janitor_failure(mock_dependencies):
+    """Test handling of Janitor LLM failure."""
+    mock_pool, mock_graph_repo, mock_ml_client = mock_dependencies
+
+    service = EntityResolutionService(
+        pool=mock_pool, ml_client=mock_ml_client, graph_repository=mock_graph_repo
+    )
+
+    service.llm_provider = MagicMock()
+    service.llm_provider.generate_structured = AsyncMock(side_effect=Exception("LLM Error"))
+
+    decision = await service._ask_janitor(["A", "B"])
+
+    # Should return default False decision
+    assert decision.should_merge is False
+    assert decision.reasoning == "Error"
