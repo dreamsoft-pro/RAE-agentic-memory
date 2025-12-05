@@ -1,3 +1,5 @@
+import asyncio
+
 import asyncpg
 import structlog
 
@@ -28,7 +30,6 @@ def generate_reflection_for_project(project: str, tenant_id: str):
     """
     Celery task to generate a reflection for a specific project.
     """
-    import asyncio
 
     async def main():
         pool = await get_pool()
@@ -44,7 +45,6 @@ def schedule_reflections():
     """
     Periodically finds projects with recent activity and schedules reflection tasks.
     """
-    import asyncio
 
     async def main():
         pool = await get_pool()
@@ -71,7 +71,6 @@ def apply_memory_decay():
     """
     Periodically applies decay to memory strength and deletes expired memories.
     """
-    import asyncio
 
     async def main():
         pool = await get_pool()
@@ -94,7 +93,6 @@ def prune_old_memories():
     Periodically deletes old episodic memories to manage data lifecycle.
     DEPRECATED: Use cleanup_expired_data_task instead for ISO 42001 compliance.
     """
-    import asyncio
 
     async def main():
         if settings.MEMORY_RETENTION_DAYS <= 0:
@@ -139,7 +137,6 @@ def cleanup_expired_data_task(self, tenant_id: str = None):
     Returns:
         Dict with cleanup statistics per data class
     """
-    import asyncio
 
     from apps.memory_api.services.retention_service import RetentionService
 
@@ -209,7 +206,6 @@ def gdpr_delete_user_data_task(
     Returns:
         Dict with deletion statistics
     """
-    import asyncio
 
     from apps.memory_api.services.retention_service import RetentionService
 
@@ -275,7 +271,6 @@ def rebuild_cache():
     """
     Celery task to perform a full rebuild of the context cache.
     """
-    import asyncio
 
     asyncio.run(rebuild_full_cache())
 
@@ -298,7 +293,6 @@ def extract_graph_lazy(
         tenant_id: Tenant UUID
         use_mini_model: Use cheaper model (gpt-4o-mini) for extraction
     """
-    import asyncio
     import random
 
     async def main():
@@ -372,7 +366,6 @@ def process_graph_extraction_queue():
 
     Then schedules them for lazy extraction.
     """
-    import asyncio
 
     async def main():
         pool = await get_pool()
@@ -420,7 +413,6 @@ def run_entity_resolution_task(project_id: str = "default", tenant_id: str = "de
     Periodic task for Pillar 1: Entity Resolution.
     Clusters and merges duplicate nodes.
     """
-    import asyncio
 
     async def main():
         pool = await get_pool()
@@ -441,7 +433,6 @@ def run_community_detection_task(
     Periodic task for Pillar 2: Community Detection & Summarization.
     Generates 'Wisdom' by summarizing clusters.
     """
-    import asyncio
 
     async def main():
         pool = await get_pool()
@@ -477,7 +468,6 @@ def decay_memory_importance_task(self, tenant_id: str = None):
     Returns:
         Dictionary with processing statistics
     """
-    import asyncio
     from uuid import UUID
 
     from apps.memory_api.services.importance_scoring import ImportanceScoringService
@@ -622,7 +612,6 @@ def run_maintenance_cycle_task(self):
 
     Should be scheduled daily (e.g., at 3 AM).
     """
-    import asyncio
 
     from apps.memory_api.workers.memory_maintenance import MaintenanceScheduler
 
@@ -661,7 +650,6 @@ def run_dreaming_task(tenant_id: str, project_id: str = "default"):
     Analyzes high-importance memories and generates meta-reflections.
     Only runs if REFLECTIVE_MEMORY_ENABLED and DREAMING_ENABLED are True.
     """
-    import asyncio
 
     from apps.memory_api.workers.memory_maintenance import DreamingWorker
 
