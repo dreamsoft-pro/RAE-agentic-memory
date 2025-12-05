@@ -782,7 +782,9 @@ class GraphUpdateOperator:
             span.set_attribute("rae.graph.history_length", len(graph_history))
 
             if len(graph_history) < 2:
-                span.set_attribute("rae.graph.convergence_result", "insufficient_history")
+                span.set_attribute(
+                    "rae.graph.convergence_result", "insufficient_history"
+                )
                 span.set_attribute("rae.outcome.label", "fail")
                 return {
                     "is_converging": False,
@@ -829,8 +831,12 @@ class GraphUpdateOperator:
                             spectral_gap = float(
                                 eigenvalues_sorted[0] - eigenvalues_sorted[1]
                             )
-                            span.set_attribute("rae.graph.eigenvalue_1", float(eigenvalues_sorted[0]))
-                            span.set_attribute("rae.graph.eigenvalue_2", float(eigenvalues_sorted[1]))
+                            span.set_attribute(
+                                "rae.graph.eigenvalue_1", float(eigenvalues_sorted[0])
+                            )
+                            span.set_attribute(
+                                "rae.graph.eigenvalue_2", float(eigenvalues_sorted[1])
+                            )
                     except Exception as e:
                         logger.warning("spectral_gap_computation_failed", error=str(e))
                         spectral_gap = 0.0
@@ -846,7 +852,9 @@ class GraphUpdateOperator:
             )
 
             span.set_attribute("rae.graph.is_converging", is_converging)
-            span.set_attribute("rae.outcome.label", "success" if is_converging else "not_converged")
+            span.set_attribute(
+                "rae.outcome.label", "success" if is_converging else "not_converged"
+            )
 
             return {
                 "is_converging": is_converging,

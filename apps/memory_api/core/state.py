@@ -333,7 +333,8 @@ class RAEState(BaseModel):
 
             delta = {
                 "token_delta": (
-                    self.budget_state.remaining_tokens - other.budget_state.remaining_tokens
+                    self.budget_state.remaining_tokens
+                    - other.budget_state.remaining_tokens
                 ),
                 "cost_delta": (
                     self.budget_state.remaining_cost_usd
@@ -360,7 +361,9 @@ class RAEState(BaseModel):
             span.set_attribute("rae.state.token_delta", delta["token_delta"])
             span.set_attribute("rae.state.cost_delta_usd", delta["cost_delta"])
             span.set_attribute("rae.state.memory_delta", delta["memory_count_delta"])
-            span.set_attribute("rae.state.graph_nodes_delta", delta["graph_nodes_delta"])
+            span.set_attribute(
+                "rae.state.graph_nodes_delta", delta["graph_nodes_delta"]
+            )
             span.set_attribute("rae.state.time_delta_ms", delta["time_delta_ms"])
 
             return delta
@@ -383,15 +386,25 @@ class RAEState(BaseModel):
             span.set_attribute("rae.project_id", self.project_id)
 
             # Record current state metrics
-            span.set_attribute("rae.state.budget_tokens", self.budget_state.remaining_tokens)
-            span.set_attribute("rae.state.budget_usd", self.budget_state.remaining_cost_usd)
-            span.set_attribute("rae.state.context_tokens", self.working_context.token_count)
-            span.set_attribute("rae.state.total_memories", self.memory_state.total_count())
+            span.set_attribute(
+                "rae.state.budget_tokens", self.budget_state.remaining_tokens
+            )
+            span.set_attribute(
+                "rae.state.budget_usd", self.budget_state.remaining_cost_usd
+            )
+            span.set_attribute(
+                "rae.state.context_tokens", self.working_context.token_count
+            )
+            span.set_attribute(
+                "rae.state.total_memories", self.memory_state.total_count()
+            )
             span.set_attribute("rae.state.graph_nodes", self.graph_state.node_count)
 
             # Budget check
             if self.budget_state.is_exhausted():
-                span.set_attribute("rae.state.validation_result", "failed_budget_exhausted")
+                span.set_attribute(
+                    "rae.state.validation_result", "failed_budget_exhausted"
+                )
                 span.set_attribute("rae.outcome.label", "fail")
                 logger.warning(
                     "state_validation_failed_budget_exhausted",
@@ -402,7 +415,9 @@ class RAEState(BaseModel):
 
             # Context consistency
             if self.working_context.token_count < 0:
-                span.set_attribute("rae.state.validation_result", "failed_negative_tokens")
+                span.set_attribute(
+                    "rae.state.validation_result", "failed_negative_tokens"
+                )
                 span.set_attribute("rae.outcome.label", "fail")
                 logger.warning(
                     "state_validation_failed_negative_tokens",
@@ -417,7 +432,9 @@ class RAEState(BaseModel):
             ):
                 # This is acceptable if importance_scores is empty (not yet computed)
                 if self.working_context.importance_scores:
-                    span.set_attribute("rae.state.validation_result", "warning_mismatched_scores")
+                    span.set_attribute(
+                        "rae.state.validation_result", "warning_mismatched_scores"
+                    )
                     logger.warning(
                         "state_validation_warning_mismatched_importance_scores",
                         tenant_id=self.tenant_id,
@@ -436,7 +453,9 @@ class RAEState(BaseModel):
                     self.memory_state.reflective,
                 ]
             ):
-                span.set_attribute("rae.state.validation_result", "failed_negative_memory_count")
+                span.set_attribute(
+                    "rae.state.validation_result", "failed_negative_memory_count"
+                )
                 span.set_attribute("rae.outcome.label", "fail")
                 logger.warning(
                     "state_validation_failed_negative_memory_count",
