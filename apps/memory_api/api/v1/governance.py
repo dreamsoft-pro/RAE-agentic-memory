@@ -23,10 +23,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from apps.memory_api.dependencies import get_db_pool
+from apps.memory_api.observability.rae_tracing import get_tracer
 from apps.memory_api.security import auth
 from apps.memory_api.security.dependencies import require_admin, verify_tenant_access
 
 logger = structlog.get_logger(__name__)
+tracer = get_tracer(__name__)
 router = APIRouter(
     prefix="/v1/governance",
     tags=["Governance"],
@@ -108,81 +110,99 @@ async def get_governance_overview(
     **Permissions:** Admin only
     **Security:** Requires system admin authentication
     """
-    try:
-        end_date = datetime.now(timezone.utc)
-        start_date = end_date - timedelta(days=days)
+    with tracer.start_as_current_span("rae.api.governance.overview") as span:
+        span.set_attribute("rae.governance.days", days)
 
-        logger.info("governance_overview_request", days=days)
+        try:
+            end_date = datetime.now(timezone.utc)
+            start_date = end_date - timedelta(days=days)
 
-        # Get overall statistics
-        async with pool.acquire() as conn:
-            # Total costs and calls
-            row = await conn.fetchrow(
-                """
-                SELECT
-                    COUNT(*)::int as total_calls,
-                    COALESCE(SUM(total_cost_usd), 0) as total_cost_usd,
-                    COALESCE(SUM(total_tokens), 0) as total_tokens,
-                    COUNT(DISTINCT tenant_id)::int as unique_tenants
-                FROM cost_logs
-                WHERE timestamp >= $1 AND timestamp <= $2
-            """,
-                start_date,
-                end_date,
+            logger.info("governance_overview_request", days=days)
+
+            # Get overall statistics
+            async with pool.acquire() as conn:
+                # Total costs and calls
+                row = await conn.fetchrow(
+                    """
+                    SELECT
+                        COUNT(*)::int as total_calls,
+                        COALESCE(SUM(total_cost_usd), 0) as total_cost_usd,
+                        COALESCE(SUM(total_tokens), 0) as total_tokens,
+                        COUNT(DISTINCT tenant_id)::int as unique_tenants
+                    FROM cost_logs
+                    WHERE timestamp >= $1 AND timestamp <= $2
+                """,
+                    start_date,
+                    end_date,
+                )
+
+                # Top tenants by cost
+                top_tenants_rows = await conn.fetch(
+                    """
+                    SELECT
+                        tenant_id,
+                        COUNT(*)::int as calls,
+                        COALESCE(SUM(total_cost_usd), 0) as cost_usd,
+                        COALESCE(SUM(total_tokens), 0) as tokens
+                    FROM cost_logs
+                    WHERE timestamp >= $1 AND timestamp <= $2
+                    GROUP BY tenant_id
+                    ORDER BY cost_usd DESC
+                    LIMIT 5
+                """,
+                    start_date,
+                    end_date,
+                )
+
+                # Top models by usage
+                top_models_rows = await conn.fetch(
+                    """
+                    SELECT
+                        model,
+                        COUNT(*)::int as calls,
+                        COALESCE(SUM(total_cost_usd), 0) as cost_usd,
+                        COALESCE(SUM(total_tokens), 0) as tokens
+                    FROM cost_logs
+                    WHERE timestamp >= $1 AND timestamp <= $2
+                    GROUP BY model
+                    ORDER BY calls DESC
+                    LIMIT 5
+                """,
+                    start_date,
+                    end_date,
+                )
+
+            # Add telemetry attributes
+            span.set_attribute(
+                "rae.governance.total_cost_usd", float(row["total_cost_usd"])
+            )
+            span.set_attribute("rae.governance.total_calls", row["total_calls"])
+            span.set_attribute("rae.governance.total_tokens", int(row["total_tokens"]))
+            span.set_attribute("rae.governance.unique_tenants", row["unique_tenants"])
+            span.set_attribute(
+                "rae.governance.top_tenants_count", len(top_tenants_rows)
+            )
+            span.set_attribute("rae.governance.top_models_count", len(top_models_rows))
+            span.set_attribute("rae.outcome.label", "success")
+
+            return CostOverview(
+                total_cost_usd=float(row["total_cost_usd"]),
+                total_calls=row["total_calls"],
+                total_tokens=int(row["total_tokens"]),
+                unique_tenants=row["unique_tenants"],
+                period_start=start_date,
+                period_end=end_date,
+                top_tenants=[dict(r) for r in top_tenants_rows],
+                top_models=[dict(r) for r in top_models_rows],
             )
 
-            # Top tenants by cost
-            top_tenants_rows = await conn.fetch(
-                """
-                SELECT
-                    tenant_id,
-                    COUNT(*)::int as calls,
-                    COALESCE(SUM(total_cost_usd), 0) as cost_usd,
-                    COALESCE(SUM(total_tokens), 0) as tokens
-                FROM cost_logs
-                WHERE timestamp >= $1 AND timestamp <= $2
-                GROUP BY tenant_id
-                ORDER BY cost_usd DESC
-                LIMIT 5
-            """,
-                start_date,
-                end_date,
+        except Exception as e:
+            span.set_attribute("rae.outcome.label", "error")
+            span.set_attribute("rae.error.message", str(e))
+            logger.error("governance_overview_error", error=str(e))
+            raise HTTPException(
+                status_code=500, detail=f"Failed to get governance overview: {str(e)}"
             )
-
-            # Top models by usage
-            top_models_rows = await conn.fetch(
-                """
-                SELECT
-                    model,
-                    COUNT(*)::int as calls,
-                    COALESCE(SUM(total_cost_usd), 0) as cost_usd,
-                    COALESCE(SUM(total_tokens), 0) as tokens
-                FROM cost_logs
-                WHERE timestamp >= $1 AND timestamp <= $2
-                GROUP BY model
-                ORDER BY calls DESC
-                LIMIT 5
-            """,
-                start_date,
-                end_date,
-            )
-
-        return CostOverview(
-            total_cost_usd=float(row["total_cost_usd"]),
-            total_calls=row["total_calls"],
-            total_tokens=int(row["total_tokens"]),
-            unique_tenants=row["unique_tenants"],
-            period_start=start_date,
-            period_end=end_date,
-            top_tenants=[dict(r) for r in top_tenants_rows],
-            top_models=[dict(r) for r in top_models_rows],
-        )
-
-    except Exception as e:
-        logger.error("governance_overview_error", error=str(e))
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get governance overview: {str(e)}"
-        )
 
 
 @router.get("/tenant/{tenant_id}", response_model=TenantGovernanceStats)
@@ -204,112 +224,141 @@ async def get_tenant_governance_stats(
     **Permissions:** Tenant owner or admin
     **Security:** Requires authentication and tenant access
     """
-    try:
-        end_date = datetime.now(timezone.utc)
-        start_date = end_date - timedelta(days=days)
+    with tracer.start_as_current_span("rae.api.governance.tenant_stats") as span:
+        span.set_attribute("rae.tenant_id", tenant_id)
+        span.set_attribute("rae.governance.days", days)
 
-        logger.info("tenant_governance_request", tenant_id=tenant_id, days=days)
+        try:
+            end_date = datetime.now(timezone.utc)
+            start_date = end_date - timedelta(days=days)
 
-        async with pool.acquire() as conn:
-            # Overall tenant statistics
-            row = await conn.fetchrow(
-                """
-                SELECT
-                    COUNT(*)::int as total_calls,
-                    COALESCE(SUM(total_cost_usd), 0) as total_cost_usd,
-                    COALESCE(SUM(total_tokens), 0) as total_tokens,
-                    COALESCE(AVG(total_cost_usd), 0) as avg_cost_per_call,
-                    COALESCE(SUM(CASE WHEN cache_hit THEN 1 ELSE 0 END)::float / NULLIF(COUNT(*), 0), 0) as cache_hit_rate,
-                    COALESCE(SUM(CASE WHEN cache_hit THEN total_cost_usd ELSE 0 END), 0) as cache_savings
-                FROM cost_logs
-                WHERE tenant_id = $1 AND timestamp >= $2 AND timestamp <= $3
-            """,
-                tenant_id,
-                start_date,
-                end_date,
-            )
+            logger.info("tenant_governance_request", tenant_id=tenant_id, days=days)
 
-            if row["total_calls"] == 0:
-                raise HTTPException(
-                    status_code=404, detail=f"No data found for tenant {tenant_id}"
+            async with pool.acquire() as conn:
+                # Overall tenant statistics
+                row = await conn.fetchrow(
+                    """
+                    SELECT
+                        COUNT(*)::int as total_calls,
+                        COALESCE(SUM(total_cost_usd), 0) as total_cost_usd,
+                        COALESCE(SUM(total_tokens), 0) as total_tokens,
+                        COALESCE(AVG(total_cost_usd), 0) as avg_cost_per_call,
+                        COALESCE(SUM(CASE WHEN cache_hit THEN 1 ELSE 0 END)::float / NULLIF(COUNT(*), 0), 0) as cache_hit_rate,
+                        COALESCE(SUM(CASE WHEN cache_hit THEN total_cost_usd ELSE 0 END), 0) as cache_savings
+                    FROM cost_logs
+                    WHERE tenant_id = $1 AND timestamp >= $2 AND timestamp <= $3
+                """,
+                    tenant_id,
+                    start_date,
+                    end_date,
                 )
 
-            # By project
-            by_project_rows = await conn.fetch(
-                """
-                SELECT
-                    project_id,
-                    COUNT(*)::int as calls,
-                    COALESCE(SUM(total_cost_usd), 0) as cost_usd,
-                    COALESCE(SUM(total_tokens), 0) as tokens
-                FROM cost_logs
-                WHERE tenant_id = $1 AND timestamp >= $2 AND timestamp <= $3
-                GROUP BY project_id
-                ORDER BY cost_usd DESC
-            """,
-                tenant_id,
-                start_date,
-                end_date,
+                if row["total_calls"] == 0:
+                    span.set_attribute("rae.outcome.label", "not_found")
+                    raise HTTPException(
+                        status_code=404, detail=f"No data found for tenant {tenant_id}"
+                    )
+
+                # By project
+                by_project_rows = await conn.fetch(
+                    """
+                    SELECT
+                        project_id,
+                        COUNT(*)::int as calls,
+                        COALESCE(SUM(total_cost_usd), 0) as cost_usd,
+                        COALESCE(SUM(total_tokens), 0) as tokens
+                    FROM cost_logs
+                    WHERE tenant_id = $1 AND timestamp >= $2 AND timestamp <= $3
+                    GROUP BY project_id
+                    ORDER BY cost_usd DESC
+                """,
+                    tenant_id,
+                    start_date,
+                    end_date,
+                )
+
+                # By model
+                by_model_rows = await conn.fetch(
+                    """
+                    SELECT
+                        model,
+                        COUNT(*)::int as calls,
+                        COALESCE(SUM(total_cost_usd), 0) as cost_usd,
+                        COALESCE(SUM(total_tokens), 0) as tokens
+                    FROM cost_logs
+                    WHERE tenant_id = $1 AND timestamp >= $2 AND timestamp <= $3
+                    GROUP BY model
+                    ORDER BY calls DESC
+                """,
+                    tenant_id,
+                    start_date,
+                    end_date,
+                )
+
+                # By operation
+                by_operation_rows = await conn.fetch(
+                    """
+                    SELECT
+                        operation,
+                        COUNT(*)::int as calls,
+                        COALESCE(SUM(total_cost_usd), 0) as cost_usd,
+                        COALESCE(SUM(total_tokens), 0) as tokens
+                    FROM cost_logs
+                    WHERE tenant_id = $1 AND timestamp >= $2 AND timestamp <= $3
+                    GROUP BY operation
+                    ORDER BY calls DESC
+                """,
+                    tenant_id,
+                    start_date,
+                    end_date,
+                )
+
+            # Add telemetry attributes
+            span.set_attribute(
+                "rae.governance.total_cost_usd", float(row["total_cost_usd"])
+            )
+            span.set_attribute("rae.governance.total_calls", row["total_calls"])
+            span.set_attribute("rae.governance.total_tokens", int(row["total_tokens"]))
+            span.set_attribute(
+                "rae.governance.avg_cost_per_call", float(row["avg_cost_per_call"])
+            )
+            span.set_attribute(
+                "rae.governance.cache_hit_rate", float(row["cache_hit_rate"])
+            )
+            span.set_attribute(
+                "rae.governance.cache_savings_usd", float(row["cache_savings"])
+            )
+            span.set_attribute("rae.governance.projects_count", len(by_project_rows))
+            span.set_attribute("rae.governance.models_count", len(by_model_rows))
+            span.set_attribute(
+                "rae.governance.operations_count", len(by_operation_rows)
+            )
+            span.set_attribute("rae.outcome.label", "success")
+
+            return TenantGovernanceStats(
+                tenant_id=tenant_id,
+                total_cost_usd=float(row["total_cost_usd"]),
+                total_calls=row["total_calls"],
+                total_tokens=int(row["total_tokens"]),
+                average_cost_per_call=float(row["avg_cost_per_call"]),
+                cache_hit_rate=float(row["cache_hit_rate"]),
+                cache_savings_usd=float(row["cache_savings"]),
+                period_start=start_date,
+                period_end=end_date,
+                by_project=[dict(r) for r in by_project_rows],
+                by_model=[dict(r) for r in by_model_rows],
+                by_operation=[dict(r) for r in by_operation_rows],
             )
 
-            # By model
-            by_model_rows = await conn.fetch(
-                """
-                SELECT
-                    model,
-                    COUNT(*)::int as calls,
-                    COALESCE(SUM(total_cost_usd), 0) as cost_usd,
-                    COALESCE(SUM(total_tokens), 0) as tokens
-                FROM cost_logs
-                WHERE tenant_id = $1 AND timestamp >= $2 AND timestamp <= $3
-                GROUP BY model
-                ORDER BY calls DESC
-            """,
-                tenant_id,
-                start_date,
-                end_date,
+        except HTTPException:
+            raise
+        except Exception as e:
+            span.set_attribute("rae.outcome.label", "error")
+            span.set_attribute("rae.error.message", str(e))
+            logger.error("tenant_governance_error", tenant_id=tenant_id, error=str(e))
+            raise HTTPException(
+                status_code=500, detail=f"Failed to get tenant statistics: {str(e)}"
             )
-
-            # By operation
-            by_operation_rows = await conn.fetch(
-                """
-                SELECT
-                    operation,
-                    COUNT(*)::int as calls,
-                    COALESCE(SUM(total_cost_usd), 0) as cost_usd,
-                    COALESCE(SUM(total_tokens), 0) as tokens
-                FROM cost_logs
-                WHERE tenant_id = $1 AND timestamp >= $2 AND timestamp <= $3
-                GROUP BY operation
-                ORDER BY calls DESC
-            """,
-                tenant_id,
-                start_date,
-                end_date,
-            )
-
-        return TenantGovernanceStats(
-            tenant_id=tenant_id,
-            total_cost_usd=float(row["total_cost_usd"]),
-            total_calls=row["total_calls"],
-            total_tokens=int(row["total_tokens"]),
-            average_cost_per_call=float(row["avg_cost_per_call"]),
-            cache_hit_rate=float(row["cache_hit_rate"]),
-            cache_savings_usd=float(row["cache_savings"]),
-            period_start=start_date,
-            period_end=end_date,
-            by_project=[dict(r) for r in by_project_rows],
-            by_model=[dict(r) for r in by_model_rows],
-            by_operation=[dict(r) for r in by_operation_rows],
-        )
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error("tenant_governance_error", tenant_id=tenant_id, error=str(e))
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get tenant statistics: {str(e)}"
-        )
 
 
 @router.get("/tenant/{tenant_id}/budget", response_model=TenantBudgetStatus)
@@ -331,106 +380,127 @@ async def get_tenant_budget_status(
     **Permissions:** Tenant owner or admin
     **Security:** Requires authentication and tenant access
     """
-    try:
-        logger.info("tenant_budget_status_request", tenant_id=tenant_id)
+    with tracer.start_as_current_span("rae.api.governance.budget_status") as span:
+        span.set_attribute("rae.tenant_id", tenant_id)
 
-        # Get current month start/end
-        now = datetime.now(timezone.utc)
-        month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        try:
+            logger.info("tenant_budget_status_request", tenant_id=tenant_id)
 
-        # Calculate days in month and days remaining
-        if now.month == 12:
-            next_month = now.replace(year=now.year + 1, month=1, day=1)
-        else:
-            next_month = now.replace(month=now.month + 1, day=1)
+            # Get current month start/end
+            now = datetime.now(timezone.utc)
+            month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-        days_in_month = (next_month - month_start).days
-        days_elapsed = (now - month_start).days + 1
-        days_remaining = days_in_month - days_elapsed
-
-        async with pool.acquire() as conn:
-            # Get current month usage
-            row = await conn.fetchrow(
-                """
-                SELECT
-                    COALESCE(SUM(total_cost_usd), 0) as current_cost_usd,
-                    COALESCE(SUM(total_tokens), 0) as current_tokens
-                FROM cost_logs
-                WHERE tenant_id = $1 AND timestamp >= $2
-            """,
-                tenant_id,
-                month_start,
-            )
-
-            current_cost = float(row["current_cost_usd"])
-            current_tokens = int(row["current_tokens"])
-
-            # Get budget limits (stub - would come from budget_service or config)
-            # For now, return None to indicate no budget is configured
-            budget_usd = None
-            budget_tokens = None
-
-            # Calculate projection
-            if days_elapsed > 0:
-                daily_avg_cost = current_cost / days_elapsed
-                projected_cost = daily_avg_cost * days_in_month
+            # Calculate days in month and days remaining
+            if now.month == 12:
+                next_month = now.replace(year=now.year + 1, month=1, day=1)
             else:
-                projected_cost = 0.0
+                next_month = now.replace(month=now.month + 1, day=1)
 
-            # Calculate budget usage percentage
-            budget_used_percent = None
-            if budget_usd:
-                budget_used_percent = (current_cost / budget_usd) * 100
+            days_in_month = (next_month - month_start).days
+            days_elapsed = (now - month_start).days + 1
+            days_remaining = days_in_month - days_elapsed
 
-            # Generate alerts
-            alerts = []
-            status = "OK"
+            async with pool.acquire() as conn:
+                # Get current month usage
+                row = await conn.fetchrow(
+                    """
+                    SELECT
+                        COALESCE(SUM(total_cost_usd), 0) as current_cost_usd,
+                        COALESCE(SUM(total_tokens), 0) as current_tokens
+                    FROM cost_logs
+                    WHERE tenant_id = $1 AND timestamp >= $2
+                """,
+                    tenant_id,
+                    month_start,
+                )
 
-            if budget_usd:
-                if current_cost >= budget_usd:
-                    alerts.append(
-                        f"Budget exceeded: ${current_cost:.2f} / ${budget_usd:.2f}"
-                    )
-                    status = "EXCEEDED"
-                elif current_cost >= budget_usd * 0.9:
-                    alerts.append(
-                        f"Critical: 90% of budget used (${current_cost:.2f} / ${budget_usd:.2f})"
-                    )
-                    status = "CRITICAL"
-                elif current_cost >= budget_usd * 0.75:
-                    alerts.append(
-                        f"Warning: 75% of budget used (${current_cost:.2f} / ${budget_usd:.2f})"
-                    )
-                    status = "WARNING"
+                current_cost = float(row["current_cost_usd"])
+                current_tokens = int(row["current_tokens"])
 
-                if projected_cost > budget_usd:
-                    alerts.append(
-                        f"Projected to exceed budget: ${projected_cost:.2f} estimated by month end"
-                    )
-                    if status == "OK":
+                # Get budget limits (stub - would come from budget_service or config)
+                # For now, return None to indicate no budget is configured
+                budget_usd = None
+                budget_tokens = None
+
+                # Calculate projection
+                if days_elapsed > 0:
+                    daily_avg_cost = current_cost / days_elapsed
+                    projected_cost = daily_avg_cost * days_in_month
+                else:
+                    projected_cost = 0.0
+
+                # Calculate budget usage percentage
+                budget_used_percent = None
+                if budget_usd:
+                    budget_used_percent = (current_cost / budget_usd) * 100
+
+                # Generate alerts
+                alerts = []
+                status = "OK"
+
+                if budget_usd:
+                    if current_cost >= budget_usd:
+                        alerts.append(
+                            f"Budget exceeded: ${current_cost:.2f} / ${budget_usd:.2f}"
+                        )
+                        status = "EXCEEDED"
+                    elif current_cost >= budget_usd * 0.9:
+                        alerts.append(
+                            f"Critical: 90% of budget used (${current_cost:.2f} / ${budget_usd:.2f})"
+                        )
+                        status = "CRITICAL"
+                    elif current_cost >= budget_usd * 0.75:
+                        alerts.append(
+                            f"Warning: 75% of budget used (${current_cost:.2f} / ${budget_usd:.2f})"
+                        )
                         status = "WARNING"
 
-            if budget_tokens and current_tokens >= budget_tokens:
-                alerts.append(
-                    f"Token budget exceeded: {current_tokens:,} / {budget_tokens:,}"
+                    if projected_cost > budget_usd:
+                        alerts.append(
+                            f"Projected to exceed budget: ${projected_cost:.2f} estimated by month end"
+                        )
+                        if status == "OK":
+                            status = "WARNING"
+
+                if budget_tokens and current_tokens >= budget_tokens:
+                    alerts.append(
+                        f"Token budget exceeded: {current_tokens:,} / {budget_tokens:,}"
+                    )
+                    status = "EXCEEDED"
+
+            # Add telemetry attributes
+            span.set_attribute("rae.governance.current_month_cost_usd", current_cost)
+            span.set_attribute("rae.governance.current_month_tokens", current_tokens)
+            span.set_attribute("rae.governance.projected_cost_usd", projected_cost)
+            span.set_attribute("rae.governance.days_remaining", days_remaining)
+            span.set_attribute("rae.governance.budget_status", status)
+            span.set_attribute("rae.governance.alerts_count", len(alerts))
+            if budget_usd:
+                span.set_attribute("rae.governance.budget_usd", budget_usd)
+                span.set_attribute(
+                    "rae.governance.budget_used_percent", budget_used_percent
                 )
-                status = "EXCEEDED"
+            span.set_attribute("rae.outcome.label", "success")
 
-        return TenantBudgetStatus(
-            tenant_id=tenant_id,
-            budget_usd_monthly=budget_usd,
-            budget_tokens_monthly=budget_tokens,
-            current_month_cost_usd=current_cost,
-            current_month_tokens=current_tokens,
-            budget_used_percent=budget_used_percent,
-            days_remaining=days_remaining,
-            projected_month_end_cost=projected_cost,
-            alerts=alerts,
-            status=status,
-        )
+            return TenantBudgetStatus(
+                tenant_id=tenant_id,
+                budget_usd_monthly=budget_usd,
+                budget_tokens_monthly=budget_tokens,
+                current_month_cost_usd=current_cost,
+                current_month_tokens=current_tokens,
+                budget_used_percent=budget_used_percent,
+                days_remaining=days_remaining,
+                projected_month_end_cost=projected_cost,
+                alerts=alerts,
+                status=status,
+            )
 
-    except Exception as e:
-        logger.error("tenant_budget_status_error", tenant_id=tenant_id, error=str(e))
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get budget status: {str(e)}"
-        )
+        except Exception as e:
+            span.set_attribute("rae.outcome.label", "error")
+            span.set_attribute("rae.error.message", str(e))
+            logger.error(
+                "tenant_budget_status_error", tenant_id=tenant_id, error=str(e)
+            )
+            raise HTTPException(
+                status_code=500, detail=f"Failed to get budget status: {str(e)}"
+            )

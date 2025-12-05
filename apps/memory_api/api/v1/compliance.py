@@ -33,6 +33,7 @@ from pydantic import BaseModel, Field
 
 from apps.memory_api.dependencies import get_db_pool
 from apps.memory_api.models import OperationRiskLevel
+from apps.memory_api.observability.rae_tracing import get_tracer
 from apps.memory_api.security import auth
 from apps.memory_api.security.dependencies import require_admin, verify_tenant_access
 from apps.memory_api.services.context_provenance_service import (
@@ -54,6 +55,7 @@ from apps.memory_api.services.policy_versioning_service import (
 from apps.memory_api.utils.circuit_breaker import rae_circuit_breakers
 
 logger = structlog.get_logger(__name__)
+tracer = get_tracer(__name__)
 router = APIRouter(
     prefix="/v1/compliance",
     tags=["ISO/IEC 42001 Compliance"],
@@ -182,36 +184,50 @@ async def request_approval(
 
     **Permissions:** Tenant owner or authorized user
     """
-    try:
-        service = HumanApprovalService(pool)
-        result = await service.request_approval(
-            tenant_id=request.tenant_id,
-            project_id=request.project_id,
-            operation_type=request.operation_type,
-            operation_description=request.operation_description,
-            risk_level=request.risk_level,
-            resource_type=request.resource_type,
-            resource_id=request.resource_id,
-            requested_by=request.requested_by,
-            required_approvers=request.required_approvers,
-            metadata=request.metadata,
-        )
+    with tracer.start_as_current_span("rae.api.compliance.request_approval") as span:
+        span.set_attribute("rae.tenant_id", request.tenant_id)
+        span.set_attribute("rae.project_id", request.project_id)
+        span.set_attribute("rae.compliance.operation_type", request.operation_type)
+        span.set_attribute("rae.compliance.risk_level", request.risk_level.value)
+        span.set_attribute("rae.compliance.resource_type", request.resource_type)
 
-        return ApprovalResponse(
-            request_id=result.request_id,
-            status=result.status,
-            risk_level=result.risk_level,
-            expires_at=result.expires_at,
-            min_approvals=result.min_approvals,
-            current_approvals=len(result.approvers),
-            approvers=result.approvers,
-        )
+        try:
+            service = HumanApprovalService(pool)
+            result = await service.request_approval(
+                tenant_id=request.tenant_id,
+                project_id=request.project_id,
+                operation_type=request.operation_type,
+                operation_description=request.operation_description,
+                risk_level=request.risk_level,
+                resource_type=request.resource_type,
+                resource_id=request.resource_id,
+                requested_by=request.requested_by,
+                required_approvers=request.required_approvers,
+                metadata=request.metadata,
+            )
 
-    except Exception as e:
-        logger.error("approval_request_error", error=str(e))
-        raise HTTPException(
-            status_code=500, detail=f"Failed to request approval: {str(e)}"
-        )
+            span.set_attribute("rae.compliance.request_id", str(result.request_id))
+            span.set_attribute("rae.compliance.approval_status", result.status.value)
+            span.set_attribute("rae.compliance.min_approvals", result.min_approvals)
+            span.set_attribute("rae.outcome.label", "success")
+
+            return ApprovalResponse(
+                request_id=result.request_id,
+                status=result.status,
+                risk_level=result.risk_level,
+                expires_at=result.expires_at,
+                min_approvals=result.min_approvals,
+                current_approvals=len(result.approvers),
+                approvers=result.approvers,
+            )
+
+        except Exception as e:
+            span.set_attribute("rae.outcome.label", "error")
+            span.set_attribute("rae.error.message", str(e))
+            logger.error("approval_request_error", error=str(e))
+            raise HTTPException(
+                status_code=500, detail=f"Failed to request approval: {str(e)}"
+            )
 
 
 @router.get("/approvals/{request_id}", response_model=ApprovalResponse)
@@ -225,27 +241,45 @@ async def check_approval_status(
 
     Returns current status, approvers, and expiration time.
     """
-    try:
-        service = HumanApprovalService(pool)
-        result = await service.check_approval_status(request_id)
+    with tracer.start_as_current_span(
+        "rae.api.compliance.check_approval_status"
+    ) as span:
+        span.set_attribute("rae.compliance.request_id", str(request_id))
 
-        return ApprovalResponse(
-            request_id=result.request_id,
-            status=result.status,
-            risk_level=result.risk_level,
-            expires_at=result.expires_at,
-            min_approvals=result.min_approvals,
-            current_approvals=len(result.approvers),
-            approvers=result.approvers,
-        )
+        try:
+            service = HumanApprovalService(pool)
+            result = await service.check_approval_status(request_id)
 
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        logger.error("approval_status_error", request_id=str(request_id), error=str(e))
-        raise HTTPException(
-            status_code=500, detail=f"Failed to check approval status: {str(e)}"
-        )
+            span.set_attribute("rae.compliance.approval_status", result.status.value)
+            span.set_attribute("rae.compliance.risk_level", result.risk_level.value)
+            span.set_attribute(
+                "rae.compliance.current_approvals", len(result.approvers)
+            )
+            span.set_attribute("rae.compliance.min_approvals", result.min_approvals)
+            span.set_attribute("rae.outcome.label", "success")
+
+            return ApprovalResponse(
+                request_id=result.request_id,
+                status=result.status,
+                risk_level=result.risk_level,
+                expires_at=result.expires_at,
+                min_approvals=result.min_approvals,
+                current_approvals=len(result.approvers),
+                approvers=result.approvers,
+            )
+
+        except ValueError as e:
+            span.set_attribute("rae.outcome.label", "not_found")
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            span.set_attribute("rae.outcome.label", "error")
+            span.set_attribute("rae.error.message", str(e))
+            logger.error(
+                "approval_status_error", request_id=str(request_id), error=str(e)
+            )
+            raise HTTPException(
+                status_code=500, detail=f"Failed to check approval status: {str(e)}"
+            )
 
 
 @router.post("/approvals/{request_id}/decide", response_model=ApprovalResponse)
@@ -261,37 +295,53 @@ async def process_approval_decision(
     Only authorized approvers can make decisions.
     For critical operations, multiple approvals may be required.
     """
-    try:
-        service = HumanApprovalService(pool)
+    with tracer.start_as_current_span(
+        "rae.api.compliance.process_approval_decision"
+    ) as span:
+        span.set_attribute("rae.compliance.request_id", str(request_id))
+        span.set_attribute("rae.compliance.decision", decision.decision.value)
+        span.set_attribute("rae.compliance.approver_id", decision.approver_id)
 
-        decision_request = ApprovalDecisionRequest(
-            request_id=request_id,
-            approver_id=decision.approver_id,
-            decision=decision.decision,
-            reason=decision.reason,
-        )
+        try:
+            service = HumanApprovalService(pool)
 
-        result = await service.process_decision(decision_request)
+            decision_request = ApprovalDecisionRequest(
+                request_id=request_id,
+                approver_id=decision.approver_id,
+                decision=decision.decision,
+                reason=decision.reason,
+            )
 
-        return ApprovalResponse(
-            request_id=result.request_id,
-            status=result.status,
-            risk_level=result.risk_level,
-            expires_at=result.expires_at,
-            min_approvals=result.min_approvals,
-            current_approvals=len(result.approvers),
-            approvers=result.approvers,
-        )
+            result = await service.process_decision(decision_request)
 
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        logger.error(
-            "approval_decision_error", request_id=str(request_id), error=str(e)
-        )
-        raise HTTPException(
-            status_code=500, detail=f"Failed to process decision: {str(e)}"
-        )
+            span.set_attribute("rae.compliance.approval_status", result.status.value)
+            span.set_attribute(
+                "rae.compliance.current_approvals", len(result.approvers)
+            )
+            span.set_attribute("rae.outcome.label", "success")
+
+            return ApprovalResponse(
+                request_id=result.request_id,
+                status=result.status,
+                risk_level=result.risk_level,
+                expires_at=result.expires_at,
+                min_approvals=result.min_approvals,
+                current_approvals=len(result.approvers),
+                approvers=result.approvers,
+            )
+
+        except ValueError as e:
+            span.set_attribute("rae.outcome.label", "invalid_request")
+            raise HTTPException(status_code=400, detail=str(e))
+        except Exception as e:
+            span.set_attribute("rae.outcome.label", "error")
+            span.set_attribute("rae.error.message", str(e))
+            logger.error(
+                "approval_decision_error", request_id=str(request_id), error=str(e)
+            )
+            raise HTTPException(
+                status_code=500, detail=f"Failed to process decision: {str(e)}"
+            )
 
 
 # ============================================================================
@@ -310,44 +360,60 @@ async def create_decision_context(
     Records the query and source context used for decision-making.
     Calculates quality metrics (relevance, trust, coverage).
     """
-    try:
-        service = ContextProvenanceService()
+    with tracer.start_as_current_span(
+        "rae.api.compliance.create_decision_context"
+    ) as span:
+        span.set_attribute("rae.tenant_id", request.tenant_id)
+        span.set_attribute("rae.project_id", request.project_id)
+        span.set_attribute("rae.compliance.query_length", len(request.query))
+        span.set_attribute("rae.compliance.sources_count", len(request.sources))
 
-        # Convert dict sources to ContextSource objects
-        sources = [
-            ContextSource(
-                source_id=UUID(s["source_id"]),
-                source_type=ContextSourceType(s["source_type"]),
-                content=s["content"],
-                relevance_score=s["relevance_score"],
-                trust_level=s.get("trust_level", "medium"),
-                source_owner=s.get("source_owner"),
-                metadata=s.get("metadata"),
+        try:
+            service = ContextProvenanceService()
+
+            # Convert dict sources to ContextSource objects
+            sources = [
+                ContextSource(
+                    source_id=UUID(s["source_id"]),
+                    source_type=ContextSourceType(s["source_type"]),
+                    content=s["content"],
+                    relevance_score=s["relevance_score"],
+                    trust_level=s.get("trust_level", "medium"),
+                    source_owner=s.get("source_owner"),
+                    metadata=s.get("metadata"),
+                )
+                for s in request.sources
+            ]
+
+            result = await service.create_decision_context(
+                tenant_id=request.tenant_id,
+                project_id=request.project_id,
+                query=request.query,
+                sources=sources,
             )
-            for s in request.sources
-        ]
 
-        result = await service.create_decision_context(
-            tenant_id=request.tenant_id,
-            project_id=request.project_id,
-            query=request.query,
-            sources=sources,
-        )
+            span.set_attribute("rae.compliance.context_id", str(result.context_id))
+            span.set_attribute("rae.compliance.avg_relevance", result.avg_relevance)
+            span.set_attribute("rae.compliance.avg_trust", result.avg_trust)
+            span.set_attribute("rae.compliance.coverage_score", result.coverage_score)
+            span.set_attribute("rae.outcome.label", "success")
 
-        return {
-            "context_id": str(result.context_id),
-            "query": result.query,
-            "total_sources": result.total_sources,
-            "avg_relevance": result.avg_relevance,
-            "avg_trust": result.avg_trust,
-            "coverage_score": result.coverage_score,
-        }
+            return {
+                "context_id": str(result.context_id),
+                "query": result.query,
+                "total_sources": result.total_sources,
+                "avg_relevance": result.avg_relevance,
+                "avg_trust": result.avg_trust,
+                "coverage_score": result.coverage_score,
+            }
 
-    except Exception as e:
-        logger.error("context_creation_error", error=str(e))
-        raise HTTPException(
-            status_code=500, detail=f"Failed to create context: {str(e)}"
-        )
+        except Exception as e:
+            span.set_attribute("rae.outcome.label", "error")
+            span.set_attribute("rae.error.message", str(e))
+            logger.error("context_creation_error", error=str(e))
+            raise HTTPException(
+                status_code=500, detail=f"Failed to create context: {str(e)}"
+            )
 
 
 @router.post("/provenance/decision")
@@ -360,36 +426,51 @@ async def record_decision(
 
     Links decisions to their context and approval workflows.
     """
-    try:
-        service = ContextProvenanceService()
+    with tracer.start_as_current_span("rae.api.compliance.record_decision") as span:
+        span.set_attribute("rae.tenant_id", request.tenant_id)
+        span.set_attribute("rae.project_id", request.project_id)
+        span.set_attribute("rae.compliance.decision_type", request.decision_type.value)
+        span.set_attribute("rae.compliance.context_id", str(request.context_id))
+        span.set_attribute("rae.compliance.confidence", request.confidence)
+        span.set_attribute("rae.compliance.human_approved", request.human_approved)
 
-        result = await service.record_decision(
-            tenant_id=request.tenant_id,
-            project_id=request.project_id,
-            decision_type=request.decision_type,
-            decision_description=request.decision_description,
-            context_id=request.context_id,
-            output=request.output,
-            confidence=request.confidence,
-            model_name=request.model_name,
-            human_approved=request.human_approved,
-            approval_request_id=request.approval_request_id,
-            metadata=request.metadata,
-        )
+        try:
+            service = ContextProvenanceService()
 
-        return {
-            "decision_id": str(result.decision_id),
-            "context_id": str(result.context_id),
-            "confidence": result.confidence,
-            "human_approved": result.human_approved,
-            "context_summary": result.context_summary,
-        }
+            result = await service.record_decision(
+                tenant_id=request.tenant_id,
+                project_id=request.project_id,
+                decision_type=request.decision_type,
+                decision_description=request.decision_description,
+                context_id=request.context_id,
+                output=request.output,
+                confidence=request.confidence,
+                model_name=request.model_name,
+                human_approved=request.human_approved,
+                approval_request_id=request.approval_request_id,
+                metadata=request.metadata,
+            )
 
-    except Exception as e:
-        logger.error("decision_recording_error", error=str(e))
-        raise HTTPException(
-            status_code=500, detail=f"Failed to record decision: {str(e)}"
-        )
+            span.set_attribute("rae.compliance.decision_id", str(result.decision_id))
+            if request.model_name:
+                span.set_attribute("rae.compliance.model_name", request.model_name)
+            span.set_attribute("rae.outcome.label", "success")
+
+            return {
+                "decision_id": str(result.decision_id),
+                "context_id": str(result.context_id),
+                "confidence": result.confidence,
+                "human_approved": result.human_approved,
+                "context_summary": result.context_summary,
+            }
+
+        except Exception as e:
+            span.set_attribute("rae.outcome.label", "error")
+            span.set_attribute("rae.error.message", str(e))
+            logger.error("decision_recording_error", error=str(e))
+            raise HTTPException(
+                status_code=500, detail=f"Failed to record decision: {str(e)}"
+            )
 
 
 @router.get("/provenance/lineage/{decision_id}")
@@ -402,19 +483,30 @@ async def get_decision_lineage(
 
     Returns the complete chain: query → context → decision
     """
-    try:
-        service = ContextProvenanceService()
-        result = await service.get_decision_lineage(decision_id)
+    with tracer.start_as_current_span(
+        "rae.api.compliance.get_decision_lineage"
+    ) as span:
+        span.set_attribute("rae.compliance.decision_id", str(decision_id))
 
-        return result
+        try:
+            service = ContextProvenanceService()
+            result = await service.get_decision_lineage(decision_id)
 
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        logger.error(
-            "lineage_retrieval_error", decision_id=str(decision_id), error=str(e)
-        )
-        raise HTTPException(status_code=500, detail=f"Failed to get lineage: {str(e)}")
+            span.set_attribute("rae.outcome.label", "success")
+            return result
+
+        except ValueError as e:
+            span.set_attribute("rae.outcome.label", "not_found")
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            span.set_attribute("rae.outcome.label", "error")
+            span.set_attribute("rae.error.message", str(e))
+            logger.error(
+                "lineage_retrieval_error", decision_id=str(decision_id), error=str(e)
+            )
+            raise HTTPException(
+                status_code=500, detail=f"Failed to get lineage: {str(e)}"
+            )
 
 
 # ============================================================================
@@ -433,27 +525,36 @@ async def get_all_circuit_breakers(
 
     **Permissions:** Admin only
     """
-    try:
-        states = []
-        for name, breaker in rae_circuit_breakers.items():
-            state = breaker.get_state()
-            states.append(
-                CircuitBreakerState(
-                    name=state["name"],
-                    state=state["state"].value,
-                    failure_threshold=state["failure_threshold"],
-                    recovery_timeout=state["recovery_timeout"],
-                    metrics=state["metrics"],
+    with tracer.start_as_current_span(
+        "rae.api.compliance.get_all_circuit_breakers"
+    ) as span:
+        try:
+            states = []
+            for name, breaker in rae_circuit_breakers.items():
+                state = breaker.get_state()
+                states.append(
+                    CircuitBreakerState(
+                        name=state["name"],
+                        state=state["state"].value,
+                        failure_threshold=state["failure_threshold"],
+                        recovery_timeout=state["recovery_timeout"],
+                        metrics=state["metrics"],
+                    )
                 )
+
+            span.set_attribute("rae.compliance.circuit_breakers_count", len(states))
+            span.set_attribute("rae.outcome.label", "success")
+
+            return states
+
+        except Exception as e:
+            span.set_attribute("rae.outcome.label", "error")
+            span.set_attribute("rae.error.message", str(e))
+            logger.error("circuit_breaker_list_error", error=str(e))
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to get circuit breaker states: {str(e)}",
             )
-
-        return states
-
-    except Exception as e:
-        logger.error("circuit_breaker_list_error", error=str(e))
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get circuit breaker states: {str(e)}"
-        )
 
 
 @router.get("/circuit-breakers/{name}", response_model=CircuitBreakerState)
@@ -467,30 +568,46 @@ async def get_circuit_breaker_state(
     **Available breakers:** database, vector_store, llm_service
     **Permissions:** Admin only
     """
-    try:
-        if name not in rae_circuit_breakers:
-            raise HTTPException(
-                status_code=404, detail=f"Circuit breaker '{name}' not found"
+    with tracer.start_as_current_span(
+        "rae.api.compliance.get_circuit_breaker_state"
+    ) as span:
+        span.set_attribute("rae.compliance.circuit_breaker_name", name)
+
+        try:
+            if name not in rae_circuit_breakers:
+                span.set_attribute("rae.outcome.label", "not_found")
+                raise HTTPException(
+                    status_code=404, detail=f"Circuit breaker '{name}' not found"
+                )
+
+            breaker = rae_circuit_breakers[name]
+            state = breaker.get_state()
+
+            span.set_attribute(
+                "rae.compliance.circuit_breaker_state", state["state"].value
+            )
+            span.set_attribute(
+                "rae.compliance.failure_count", state["metrics"].get("failure_count", 0)
+            )
+            span.set_attribute("rae.outcome.label", "success")
+
+            return CircuitBreakerState(
+                name=state["name"],
+                state=state["state"].value,
+                failure_threshold=state["failure_threshold"],
+                recovery_timeout=state["recovery_timeout"],
+                metrics=state["metrics"],
             )
 
-        breaker = rae_circuit_breakers[name]
-        state = breaker.get_state()
-
-        return CircuitBreakerState(
-            name=state["name"],
-            state=state["state"].value,
-            failure_threshold=state["failure_threshold"],
-            recovery_timeout=state["recovery_timeout"],
-            metrics=state["metrics"],
-        )
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error("circuit_breaker_state_error", name=name, error=str(e))
-        raise HTTPException(
-            status_code=500, detail=f"Failed to get circuit breaker state: {str(e)}"
-        )
+        except HTTPException:
+            raise
+        except Exception as e:
+            span.set_attribute("rae.outcome.label", "error")
+            span.set_attribute("rae.error.message", str(e))
+            logger.error("circuit_breaker_state_error", name=name, error=str(e))
+            raise HTTPException(
+                status_code=500, detail=f"Failed to get circuit breaker state: {str(e)}"
+            )
 
 
 @router.post("/circuit-breakers/{name}/reset")
@@ -505,27 +622,38 @@ async def reset_circuit_breaker(
 
     **Permissions:** Admin only
     """
-    try:
-        if name not in rae_circuit_breakers:
+    with tracer.start_as_current_span(
+        "rae.api.compliance.reset_circuit_breaker"
+    ) as span:
+        span.set_attribute("rae.compliance.circuit_breaker_name", name)
+
+        try:
+            if name not in rae_circuit_breakers:
+                span.set_attribute("rae.outcome.label", "not_found")
+                raise HTTPException(
+                    status_code=404, detail=f"Circuit breaker '{name}' not found"
+                )
+
+            breaker = rae_circuit_breakers[name]
+            breaker.reset()
+
+            span.set_attribute("rae.compliance.circuit_breaker_state", "CLOSED")
+            span.set_attribute("rae.outcome.label", "success")
+
+            return {
+                "message": f"Circuit breaker '{name}' has been reset",
+                "state": "CLOSED",
+            }
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            span.set_attribute("rae.outcome.label", "error")
+            span.set_attribute("rae.error.message", str(e))
+            logger.error("circuit_breaker_reset_error", name=name, error=str(e))
             raise HTTPException(
-                status_code=404, detail=f"Circuit breaker '{name}' not found"
+                status_code=500, detail=f"Failed to reset circuit breaker: {str(e)}"
             )
-
-        breaker = rae_circuit_breakers[name]
-        breaker.reset()
-
-        return {
-            "message": f"Circuit breaker '{name}' has been reset",
-            "state": "CLOSED",
-        }
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error("circuit_breaker_reset_error", name=name, error=str(e))
-        raise HTTPException(
-            status_code=500, detail=f"Failed to reset circuit breaker: {str(e)}"
-        )
 
 
 # ============================================================================
@@ -550,22 +678,32 @@ async def list_policies(
     - risk_assessment
     - human_oversight
     """
-    try:
-        # This is a simplified implementation
-        # In production, you would query the database for policies
-        return {
-            "message": "Policy listing endpoint",
-            "filters": {
-                "tenant_id": tenant_id,
-                "policy_type": policy_type.value if policy_type else None,
-            },
-        }
+    with tracer.start_as_current_span("rae.api.compliance.list_policies") as span:
+        if tenant_id:
+            span.set_attribute("rae.tenant_id", tenant_id)
+        if policy_type:
+            span.set_attribute("rae.compliance.policy_type", policy_type.value)
 
-    except Exception as e:
-        logger.error("policy_list_error", error=str(e))
-        raise HTTPException(
-            status_code=500, detail=f"Failed to list policies: {str(e)}"
-        )
+        try:
+            # This is a simplified implementation
+            # In production, you would query the database for policies
+            span.set_attribute("rae.outcome.label", "success")
+
+            return {
+                "message": "Policy listing endpoint",
+                "filters": {
+                    "tenant_id": tenant_id,
+                    "policy_type": policy_type.value if policy_type else None,
+                },
+            }
+
+        except Exception as e:
+            span.set_attribute("rae.outcome.label", "error")
+            span.set_attribute("rae.error.message", str(e))
+            logger.error("policy_list_error", error=str(e))
+            raise HTTPException(
+                status_code=500, detail=f"Failed to list policies: {str(e)}"
+            )
 
 
 @router.post("/policies")
@@ -579,33 +717,46 @@ async def create_policy(
     If a policy with the same ID exists, creates a new version.
     New policies start in DRAFT status.
     """
-    try:
-        service = PolicyVersioningService()
+    with tracer.start_as_current_span("rae.api.compliance.create_policy") as span:
+        span.set_attribute("rae.tenant_id", request.tenant_id)
+        span.set_attribute("rae.compliance.policy_id", request.policy_id)
+        span.set_attribute("rae.compliance.policy_type", request.policy_type.value)
+        span.set_attribute("rae.compliance.created_by", request.created_by)
 
-        result = await service.create_policy(
-            tenant_id=request.tenant_id,
-            policy_id=request.policy_id,
-            policy_type=request.policy_type,
-            policy_name=request.policy_name,
-            policy_description=request.policy_description,
-            rules=request.rules,
-            created_by=request.created_by,
-            metadata=request.metadata,
-        )
+        try:
+            service = PolicyVersioningService()
 
-        return {
-            "version_id": str(result.version_id),
-            "policy_id": result.policy_id,
-            "version": result.version,
-            "status": result.status.value,
-            "created_at": result.created_at.isoformat(),
-        }
+            result = await service.create_policy(
+                tenant_id=request.tenant_id,
+                policy_id=request.policy_id,
+                policy_type=request.policy_type,
+                policy_name=request.policy_name,
+                policy_description=request.policy_description,
+                rules=request.rules,
+                created_by=request.created_by,
+                metadata=request.metadata,
+            )
 
-    except Exception as e:
-        logger.error("policy_creation_error", error=str(e))
-        raise HTTPException(
-            status_code=500, detail=f"Failed to create policy: {str(e)}"
-        )
+            span.set_attribute("rae.compliance.version_id", str(result.version_id))
+            span.set_attribute("rae.compliance.version", result.version)
+            span.set_attribute("rae.compliance.policy_status", result.status.value)
+            span.set_attribute("rae.outcome.label", "success")
+
+            return {
+                "version_id": str(result.version_id),
+                "policy_id": result.policy_id,
+                "version": result.version,
+                "status": result.status.value,
+                "created_at": result.created_at.isoformat(),
+            }
+
+        except Exception as e:
+            span.set_attribute("rae.outcome.label", "error")
+            span.set_attribute("rae.error.message", str(e))
+            logger.error("policy_creation_error", error=str(e))
+            raise HTTPException(
+                status_code=500, detail=f"Failed to create policy: {str(e)}"
+            )
 
 
 @router.post("/policies/{policy_id}/activate")
@@ -622,27 +773,38 @@ async def activate_policy(
 
     **Permissions:** Admin only
     """
-    try:
-        service = PolicyVersioningService()
-        result = await service.activate_policy(policy_id, version_id)
+    with tracer.start_as_current_span("rae.api.compliance.activate_policy") as span:
+        span.set_attribute("rae.compliance.policy_id", policy_id)
+        span.set_attribute("rae.compliance.version_id", str(version_id))
 
-        return {
-            "version_id": str(result.version_id),
-            "policy_id": result.policy_id,
-            "version": result.version,
-            "status": result.status.value,
-            "activated_at": (
-                result.activated_at.isoformat() if result.activated_at else None
-            ),
-        }
+        try:
+            service = PolicyVersioningService()
+            result = await service.activate_policy(policy_id, version_id)
 
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-    except Exception as e:
-        logger.error("policy_activation_error", policy_id=policy_id, error=str(e))
-        raise HTTPException(
-            status_code=500, detail=f"Failed to activate policy: {str(e)}"
-        )
+            span.set_attribute("rae.compliance.version", result.version)
+            span.set_attribute("rae.compliance.policy_status", result.status.value)
+            span.set_attribute("rae.outcome.label", "success")
+
+            return {
+                "version_id": str(result.version_id),
+                "policy_id": result.policy_id,
+                "version": result.version,
+                "status": result.status.value,
+                "activated_at": (
+                    result.activated_at.isoformat() if result.activated_at else None
+                ),
+            }
+
+        except ValueError as e:
+            span.set_attribute("rae.outcome.label", "not_found")
+            raise HTTPException(status_code=404, detail=str(e))
+        except Exception as e:
+            span.set_attribute("rae.outcome.label", "error")
+            span.set_attribute("rae.error.message", str(e))
+            logger.error("policy_activation_error", policy_id=policy_id, error=str(e))
+            raise HTTPException(
+                status_code=500, detail=f"Failed to activate policy: {str(e)}"
+            )
 
 
 @router.post("/policies/{policy_id}/enforce")
@@ -656,21 +818,34 @@ async def enforce_policy(
 
     Returns compliance status, violations, and warnings.
     """
-    try:
-        service = PolicyVersioningService()
-        result = await service.enforce_policy(policy_id, request.context)
+    with tracer.start_as_current_span("rae.api.compliance.enforce_policy") as span:
+        span.set_attribute("rae.compliance.policy_id", policy_id)
 
-        return {
-            "policy_id": result.policy_id,
-            "version": result.version,
-            "compliant": result.compliant,
-            "violations": result.violations,
-            "warnings": result.warnings,
-            "checked_at": result.checked_at.isoformat(),
-        }
+        try:
+            service = PolicyVersioningService()
+            result = await service.enforce_policy(policy_id, request.context)
 
-    except Exception as e:
-        logger.error("policy_enforcement_error", policy_id=policy_id, error=str(e))
-        raise HTTPException(
-            status_code=500, detail=f"Failed to enforce policy: {str(e)}"
-        )
+            span.set_attribute("rae.compliance.version", result.version)
+            span.set_attribute("rae.compliance.compliant", result.compliant)
+            span.set_attribute(
+                "rae.compliance.violations_count", len(result.violations)
+            )
+            span.set_attribute("rae.compliance.warnings_count", len(result.warnings))
+            span.set_attribute("rae.outcome.label", "success")
+
+            return {
+                "policy_id": result.policy_id,
+                "version": result.version,
+                "compliant": result.compliant,
+                "violations": result.violations,
+                "warnings": result.warnings,
+                "checked_at": result.checked_at.isoformat(),
+            }
+
+        except Exception as e:
+            span.set_attribute("rae.outcome.label", "error")
+            span.set_attribute("rae.error.message", str(e))
+            logger.error("policy_enforcement_error", policy_id=policy_id, error=str(e))
+            raise HTTPException(
+                status_code=500, detail=f"Failed to enforce policy: {str(e)}"
+            )

@@ -504,3 +504,160 @@ RAE provides **production-grade observability** with:
 ✅ **Production Ready** - Sampling, filtering, multi-tenant support
 
 **No API changes required** - All instrumentation is internal and transparent to API clients.
+
+---
+
+## Future Enhancements (TODO)
+
+The following OpenTelemetry instrumentation phases are planned for future implementation:
+
+### Phase 2: Graph API Instrumentation (Priority: Medium)
+
+**File:** `apps/memory_api/api/v1/graph.py`
+
+**Value Proposition:** Critical for research and scientific applications requiring knowledge graph analysis and entity relationship tracking.
+
+**Endpoints to Instrument (7 endpoints):**
+
+1. **POST /graph/build** - Build graph from memories
+   - Track: memory count, entities extracted, relationships created, build time
+   - Attributes: `rae.graph.memories_count`, `rae.graph.entities_count`, `rae.graph.relationships_count`
+
+2. **GET /graph/query** - Query graph
+   - Track: query type, node count, relationship count, traversal depth
+   - Attributes: `rae.graph.query_type`, `rae.graph.nodes_returned`, `rae.graph.edges_returned`
+
+3. **GET /graph/entity/{entity_id}** - Get entity details
+   - Track: entity type, relationship count, attribute count
+   - Attributes: `rae.graph.entity_type`, `rae.graph.relationships_count`
+
+4. **GET /graph/entity/{entity_id}/neighbors** - Get entity neighbors
+   - Track: neighbor count, relationship types, traversal depth
+   - Attributes: `rae.graph.neighbors_count`, `rae.graph.relationship_types`
+
+5. **GET /graph/path** - Find shortest path
+   - Track: path length, nodes traversed, algorithm used
+   - Attributes: `rae.graph.path_length`, `rae.graph.algorithm`
+
+6. **GET /graph/community** - Detect communities
+   - Track: communities found, modularity score, algorithm
+   - Attributes: `rae.graph.communities_count`, `rae.graph.modularity`
+
+7. **GET /graph/stats** - Graph statistics
+   - Track: nodes, edges, density, connected components
+   - Attributes: `rae.graph.nodes_total`, `rae.graph.edges_total`, `rae.graph.density`
+
+**Implementation Notes:**
+- Focus on graph algorithm performance metrics
+- Track Neo4j query execution times
+- Monitor memory usage for large graph operations
+- Add entity resolution accuracy metrics
+
+### Phase 3: Background Workers & Advanced Services (Priority: Low)
+
+**Value Proposition:** Complete end-to-end observability for asynchronous operations and advanced computational tasks.
+
+**Components to Instrument:**
+
+#### 3.1 Celery Background Workers
+
+**Files:**
+- `apps/memory_api/tasks/reflection_tasks.py`
+- `apps/memory_api/tasks/maintenance_tasks.py`
+
+**Tasks to Instrument:**
+- **Reflection Generation** (periodic clustering)
+  - Track: memories processed, clusters created, insights generated, execution time
+  - Attributes: `rae.task.reflection.memories_count`, `rae.task.reflection.duration_seconds`
+
+- **Temporal Decay** (periodic importance decay)
+  - Track: memories decayed, importance changes, execution time
+  - Attributes: `rae.task.decay.memories_affected`, `rae.task.decay.avg_decay_rate`
+
+- **Garbage Collection** (cleanup old memories)
+  - Track: memories deleted, space freed, execution time
+  - Attributes: `rae.task.gc.memories_deleted`, `rae.task.gc.space_freed_mb`
+
+- **Graph Rebuild** (periodic graph reconstruction)
+  - Track: nodes updated, edges updated, execution time
+  - Attributes: `rae.task.graph_rebuild.nodes_updated`, `rae.task.graph_rebuild.duration_seconds`
+
+#### 3.2 Advanced Services
+
+**Files:**
+- `apps/memory_api/services/importance_scoring_v2.py`
+- `apps/memory_api/services/memory_decay_service.py`
+- `apps/memory_api/services/pii_scrubber.py`
+
+**Operations to Instrument:**
+- **Importance Scoring** (ML-based importance calculation)
+  - Track: memories scored, model inference time, score distribution
+  - Attributes: `rae.importance.memories_scored`, `rae.importance.inference_ms`
+
+- **Memory Decay** (time-based importance decay)
+  - Track: decay function used, memories affected, decay rate
+  - Attributes: `rae.decay.function`, `rae.decay.memories_count`, `rae.decay.avg_rate`
+
+- **PII Scrubbing** (personal data detection & removal)
+  - Track: PII entities found, scrubbing time, entity types
+  - Attributes: `rae.pii.entities_found`, `rae.pii.entity_types`, `rae.pii.scrub_time_ms`
+
+#### 3.3 Integration Services
+
+**Files:**
+- `apps/memory_api/services/embedding.py`
+- `apps/memory_api/services/vector_store.py`
+- `apps/memory_api/services/reranker.py`
+
+**Operations to Instrument:**
+- **Embedding Generation** (via OpenAI/local models)
+  - Track: batch size, generation time, model used, token count
+  - Attributes: `rae.embedding.batch_size`, `rae.embedding.model`, `rae.embedding.duration_ms`
+
+- **Vector Store Operations** (Qdrant queries)
+  - Track: query latency, result count, filter complexity
+  - Attributes: `rae.vector.query_latency_ms`, `rae.vector.results_count`
+
+- **Reranking** (cross-encoder reranking)
+  - Track: candidates reranked, reranking time, score distribution
+  - Attributes: `rae.rerank.candidates_count`, `rae.rerank.duration_ms`
+
+### Implementation Priority
+
+1. **Phase 2 (Graph API)** - Medium priority
+   - Estimated effort: 4-6 hours
+   - Dependencies: None
+   - Value: High for research applications
+
+2. **Phase 3 (Background Workers)** - Low priority
+   - Estimated effort: 8-12 hours
+   - Dependencies: None
+   - Value: Completeness, debugging async issues
+
+### Implementation Guidelines
+
+When implementing future phases, follow these patterns:
+
+1. **Consistent Namespace**: Use `rae.*` prefix for all attributes
+2. **Error Tracking**: Always set `rae.outcome.label` (success/error/not_found)
+3. **Error Details**: Include `rae.error.message` on failures
+4. **Performance Metrics**: Track duration, count, and size metrics
+5. **Business Metrics**: Include tenant_id, project_id for multi-tenant tracking
+6. **Outcome Labels**: Standardize on success, error, not_found, timeout, invalid_request
+
+### Testing Recommendations
+
+For each instrumented component:
+- Verify spans appear in Jaeger/Tempo
+- Check attribute naming consistency
+- Validate error scenarios produce proper spans
+- Test trace context propagation
+- Monitor performance overhead (<5%)
+
+### Documentation Updates
+
+After implementing each phase:
+- Update this file with actual implementation details
+- Add new attributes to `rae_telemetry_schema.py`
+- Update Grafana dashboards with new metrics
+- Add example queries to FAQ section
