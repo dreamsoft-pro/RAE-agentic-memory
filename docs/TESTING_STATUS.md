@@ -1,18 +1,18 @@
 # Testing Status
 
-**Last Run:** 2025-12-05 12:46:29
-**Commit:** e85f100
+**Last Run:** 2025-12-05 17:19:58
+**Commit:** beb1329
 
 ## Summary
-- **Total Tests:** 9
-- **Passed:** 9
-- **Failed:** 0
+- **Total Tests:** 676
+- **Passed:** 671
+- **Failed:** 5
 - **Errors:** 0
-- **Skipped:** 6
-- **Coverage:** 21.46%
+- **Skipped:** 21
+- **Coverage:** N/A
 
 ## Coverage Report
 See `htmlcov/index.html` for detailed report.
 
 ## Test Suite Health
-🟡 Good
+🔴 Failing
