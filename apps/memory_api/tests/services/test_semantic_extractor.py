@@ -222,3 +222,83 @@ async def test_extract_semantic_knowledge_error(extractor, mock_llm_provider):
     # Should return empty result, not raise
     assert len(result.topics) == 0
     assert len(result.terms) == 0
+
+
+@pytest.mark.asyncio
+async def test_extract_from_memories_with_ids(extractor, mock_pool):
+    """Test fetching specific memories."""
+    memory_ids = [uuid4(), uuid4()]
+    mock_pool.fetch.return_value = []
+
+    await extractor.extract_from_memories(TENANT_ID, PROJECT_ID, memory_ids=memory_ids)
+
+    # Verify fetch called with memory_ids query (contains "id = ANY($3)")
+    call_args = mock_pool.fetch.call_args
+    assert "id = ANY($3)" in call_args[0][0]
+    assert call_args[0][3] == memory_ids
+
+
+@pytest.mark.asyncio
+async def test_node_creation_exceptions(extractor, mock_pool, mock_llm_provider):
+    """Test exception handling during node creation loop."""
+    # Setup extraction result
+    result = SemanticExtractionResult(
+        topics=[ExtractedTopic(topic="T1", normalized_topic="t1", confidence=0.9)],
+        terms=[ExtractedTerm(original="tm", canonical="term", confidence=0.9)],
+        relations=[
+            ExtractedRelation(
+                source="T1", relation="is_a", target="term", confidence=0.9
+            )
+        ],
+        domain="d",
+        categories=[],
+    )
+    mock_llm_provider.generate_structured.return_value = result
+    mock_pool.fetch.return_value = [{"id": uuid4()}]
+
+    # Make create_or_update fail
+    # We can patch the private method on the instance or use side_effect on pool calls if we knew exact sequence
+    # Easier to patch the method on the extractor instance
+    with patch.object(
+        extractor, "_create_or_update_semantic_node", side_effect=Exception("DB Error")
+    ) as mock_create_node, patch.object(
+        extractor, "_create_semantic_relationship", side_effect=Exception("Rel Error")
+    ) as mock_create_rel:
+
+        stats = await extractor.extract_from_memories(TENANT_ID, PROJECT_ID)
+
+        assert stats["nodes_extracted"] == 0
+        assert stats["relationships_created"] == 0
+        # Should try to create 2 nodes (1 topic + 1 term)
+        assert mock_create_node.call_count == 2
+        assert mock_create_rel.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_canonicalize_term_fallback(extractor, mock_llm_provider):
+    """Test canonicalization fallback on error."""
+    mock_llm_provider.generate.side_effect = Exception("LLM Error")
+
+    term = await extractor.canonicalize_term("  AuTh  ")
+    assert term == "auth"  # Lowercase stripped
+
+
+@pytest.mark.asyncio
+async def test_generate_embedding_fallback(extractor, mock_ml_client):
+    """Test embedding generation fallback."""
+    mock_ml_client.get_embedding.side_effect = Exception("ML Error")
+
+    emb = await extractor._generate_embedding("text")
+    assert emb == [0.0] * 1536
+
+
+@pytest.mark.asyncio
+async def test_create_semantic_relationship_db_error(extractor, mock_pool):
+    """Test DB error during relationship creation."""
+    mock_pool.fetchval.side_effect = [uuid4(), uuid4()]
+    mock_pool.execute.side_effect = Exception("DB Insert Error")
+
+    result = await extractor._create_semantic_relationship(
+        TENANT_ID, PROJECT_ID, "s", "is_a", "t", 0.9
+    )
+    assert result is False
