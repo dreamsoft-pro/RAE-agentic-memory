@@ -25,11 +25,15 @@ def mock_pool():
     trans.__aenter__.return_value = None
     trans.__aexit__.return_value = None
     conn.transaction.return_value = trans
-    
+
     pool_ctx = MagicMock()
     pool_ctx.__aenter__.return_value = conn
     pool_ctx.__aexit__.return_value = None
     pool.acquire.return_value = pool_ctx
+
+    # Make close awaitable for lifespan shutdown
+    pool.close = AsyncMock()
+
     return pool
 
 @pytest.fixture
@@ -38,13 +42,14 @@ def client_with_auth(mock_pool):
     app.dependency_overrides[auth.verify_token] = lambda: {"sub": "test-user", "role": "admin"}
     # Override tenant verification
     app.dependency_overrides[get_and_verify_tenant_id] = lambda: "t1"
-    
-    # Mock DB pool on app state
-    app.state.pool = mock_pool
-    
-    with TestClient(app) as client:
-        yield client
-    
+
+    # Mock lifespan dependencies to avoid real DB/Redis connections
+    with patch("apps.memory_api.main.asyncpg.create_pool", new=AsyncMock(return_value=mock_pool)), \
+         patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()):
+
+        with TestClient(app) as client:
+            yield client
+
     # Cleanup
     app.dependency_overrides = {}
 
@@ -79,20 +84,14 @@ def mock_pii_scrubber():
 # ... (rest of the file)
 
 # ============================================================================
-# FROZEN TESTS - Database Configuration Issue
+# PREVIOUSLY FROZEN TESTS - Now Unfrozen
 # ============================================================================
-# The following tests are temporarily frozen due to PostgreSQL authentication
-# failures in CI environment: "password authentication failed for user 'rae'"
-#
-# Issue: asyncpg.exceptions.InvalidPasswordError in GitHub Actions CI
-# Root cause: Database connection configuration in test environment needs fixing
-# Status: 749/756 tests passing (99.07% pass rate)
-#
-# Action required: Fix PostgreSQL test database configuration before unfreezing
-# See: GitHub Actions workflow database setup steps
+# These tests were frozen due to PostgreSQL auth issues in CI
+# Now unfrozen - tests use mocks and don't require database connection
+# Database credentials have been fixed in docker-compose.yml and .env.example
 # ============================================================================
 
-@pytest.mark.skip(reason="FROZEN: PostgreSQL auth failure in CI - requires database config fix")
+# @pytest.mark.skip removed - tests now enabled
 @pytest.mark.asyncio
 async def test_store_memory_vector_failure(client_with_auth, mock_memory_repo, mock_embedding_service, mock_vector_store, mock_pii_scrubber):
     mock_memory_repo.insert_memory.return_value = {
@@ -125,7 +124,6 @@ async def test_store_memory_vector_failure(client_with_auth, mock_memory_repo, m
     else:
         pytest.fail(f"Unexpected error format: {data}")
 
-@pytest.mark.skip(reason="FROZEN: PostgreSQL auth failure in CI - requires database config fix")
 @pytest.mark.asyncio
 async def test_store_memory_db_failure(client_with_auth, mock_memory_repo, mock_pii_scrubber):
     mock_memory_repo.insert_memory.side_effect = Exception("DB Error")
@@ -153,7 +151,6 @@ async def test_store_memory_db_failure(client_with_auth, mock_memory_repo, mock_
     else:
         pytest.fail(f"Unexpected error format: {data}")
 
-@pytest.mark.skip(reason="FROZEN: PostgreSQL auth failure in CI - requires database config fix")
 @pytest.mark.asyncio
 async def test_query_memory_hybrid_missing_project(client_with_auth):
     payload = {
@@ -172,7 +169,6 @@ async def test_query_memory_hybrid_missing_project(client_with_auth):
     else:
         pytest.fail(f"Unexpected error format: {data}")
 
-@pytest.mark.skip(reason="FROZEN: PostgreSQL auth failure in CI - requires database config fix")
 @pytest.mark.asyncio
 async def test_delete_memory_success(client_with_auth, mock_memory_repo, mock_vector_store):
     # Ensure delete returns True
@@ -184,7 +180,6 @@ async def test_delete_memory_success(client_with_auth, mock_memory_repo, mock_ve
     mock_memory_repo.delete_memory.assert_called_once()
     mock_vector_store.delete.assert_called_once_with("mem-1")
 
-@pytest.mark.skip(reason="FROZEN: PostgreSQL auth failure in CI - requires database config fix")
 @pytest.mark.asyncio
 async def test_delete_memory_not_found(client_with_auth, mock_memory_repo):
     mock_memory_repo.delete_memory.return_value = False
@@ -195,7 +190,6 @@ async def test_delete_memory_not_found(client_with_auth, mock_memory_repo):
 
 # --- Test Background Tasks Trigger ---
 
-@pytest.mark.skip(reason="FROZEN: PostgreSQL auth failure in CI - requires database config fix")
 @pytest.mark.asyncio
 async def test_rebuild_reflections(client_with_auth):
     with patch("apps.memory_api.api.v1.memory.generate_reflection_for_project") as mock_task:
@@ -207,7 +201,6 @@ async def test_rebuild_reflections(client_with_auth):
 
 # --- Test Reflection Stats ---
 
-@pytest.mark.skip(reason="FROZEN: PostgreSQL auth failure in CI - requires database config fix")
 @pytest.mark.asyncio
 async def test_get_reflection_stats(client_with_auth, mock_memory_repo):
     mock_memory_repo.count_memories_by_layer.return_value = 10
