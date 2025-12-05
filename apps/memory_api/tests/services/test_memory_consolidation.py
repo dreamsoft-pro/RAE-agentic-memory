@@ -254,3 +254,108 @@ async def test_preview_consolidation(service):
         mock_gen.return_value = "Preview"
         result = await service.preview_consolidation(uuid4(), ["m1", "m2"])
         assert result["preview_content"] == "Preview"
+
+
+@pytest.mark.asyncio
+async def test_group_similar_memories_execution(service):
+    """Test _group_similar_memories logic (placeholder behavior)."""
+    memories = [{"id": "1"}, {"id": "2"}]
+    groups = await service._group_similar_memories(memories)
+    # Placeholder returns each memory as own group
+    assert len(groups) == 2
+    assert len(groups[0]) == 1
+
+
+@pytest.mark.asyncio
+async def test_group_by_patterns_execution(service):
+    """Test _group_by_patterns logic (placeholder behavior)."""
+    memories = [{"id": "1"}, {"id": "2"}]
+    groups = await service._group_by_patterns(memories)
+    assert len(groups) == 2
+
+
+@pytest.mark.asyncio
+async def test_consolidate_group_exception(service):
+    """Test exception handling in _consolidate_group."""
+    memories = [{"id": "1"}]
+
+    with patch.object(
+        service, "_generate_consolidated_content", side_effect=Exception("Gen Error")
+    ):
+        result = await service._consolidate_group(
+            uuid4(), memories, "layer", ConsolidationStrategy.MANUAL
+        )
+        assert result.success is False
+        assert "Gen Error" in result.error
+
+
+@pytest.mark.asyncio
+async def test_generate_consolidated_content_llm(service, mock_llm_client):
+    """Test content generation with LLM client."""
+    service.llm_client = mock_llm_client
+    memories = [{"content": "A"}]
+
+    content = await service._generate_consolidated_content(
+        memories, "working", ConsolidationStrategy.MANUAL
+    )
+
+    # In current implementation it calls build_prompt but returns a placeholder string anyway
+    # or calls LLM if implemented. The code says:
+    # # Call LLM
+    # # In production: response = await self.llm_client.generate(prompt)
+    # # For now, return placeholder
+    # consolidated = f"Consolidated content from {len(memories)} memories"
+
+    # So strictly it returns placeholder even with LLM client.
+    assert "Consolidated content from" in content
+
+
+def test_build_consolidation_prompt(service):
+    """Test prompt building for different layers."""
+    memories = [{"content": "A"}]
+
+    p1 = service._build_consolidation_prompt(
+        memories, "working", ConsolidationStrategy.MANUAL
+    )
+    assert "working memory" in p1
+
+    p2 = service._build_consolidation_prompt(
+        memories, "semantic", ConsolidationStrategy.MANUAL
+    )
+    assert "semantic memory" in p2
+
+    p3 = service._build_consolidation_prompt(
+        memories, "ltm", ConsolidationStrategy.MANUAL
+    )
+    assert "long-term memory" in p3
+
+    p4 = service._build_consolidation_prompt(
+        memories, "other", ConsolidationStrategy.MANUAL
+    )
+    assert "Consolidate these memories" in p4
+
+
+@pytest.mark.asyncio
+async def test_revert_consolidation_exception(service):
+    """Test exception handling in revert_consolidation."""
+    # The first logger.info is outside try/except, the second is inside.
+    # We want the first to succeed, second to fail to trigger exception handler.
+    with patch(
+        "apps.memory_api.services.memory_consolidation.logger.info",
+        side_effect=[None, Exception("Log Error")],
+    ):
+        result = await service.revert_consolidation("id")
+        assert result is False
+
+
+@pytest.mark.asyncio
+async def test_no_candidates_other_layers(service):
+    """Test no candidates for working->semantic and semantic->ltm."""
+    tenant_id = uuid4()
+
+    with patch.object(service, "_get_consolidation_candidates", return_value=[]):
+        r1 = await service.consolidate_working_to_semantic(tenant_id)
+        assert len(r1) == 0
+
+        r2 = await service.consolidate_semantic_to_ltm(tenant_id)
+        assert len(r2) == 0
