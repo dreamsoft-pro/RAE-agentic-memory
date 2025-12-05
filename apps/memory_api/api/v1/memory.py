@@ -128,7 +128,9 @@ async def store_memory(
             raise HTTPException(status_code=502, detail=f"Vector store error: {e}")
 
         span.set_attribute("rae.outcome.label", "success")
-        memory_store_counter.labels(tenant_id=tenant_id).inc()  # Increment store counter
+        memory_store_counter.labels(
+            tenant_id=tenant_id
+        ).inc()  # Increment store counter
         return StoreMemoryResponse(id=memory_record.id)
 
 
@@ -203,12 +205,24 @@ async def query_memory(
                 )
 
                 # Track hybrid search statistics
-                span.set_attribute("rae.query.vector_count", hybrid_result.vector_results_count)
-                span.set_attribute("rae.query.semantic_count", hybrid_result.semantic_results_count)
-                span.set_attribute("rae.query.graph_count", hybrid_result.graph_results_count)
-                span.set_attribute("rae.query.fulltext_count", hybrid_result.fulltext_results_count)
-                span.set_attribute("rae.query.total_results", hybrid_result.total_results)
-                span.set_attribute("rae.query.total_time_ms", hybrid_result.total_time_ms)
+                span.set_attribute(
+                    "rae.query.vector_count", hybrid_result.vector_results_count
+                )
+                span.set_attribute(
+                    "rae.query.semantic_count", hybrid_result.semantic_results_count
+                )
+                span.set_attribute(
+                    "rae.query.graph_count", hybrid_result.graph_results_count
+                )
+                span.set_attribute(
+                    "rae.query.fulltext_count", hybrid_result.fulltext_results_count
+                )
+                span.set_attribute(
+                    "rae.query.total_results", hybrid_result.total_results
+                )
+                span.set_attribute(
+                    "rae.query.total_time_ms", hybrid_result.total_time_ms
+                )
 
                 # Rescore vector results
                 # Convert HybridSearchResult items to ScoredMemoryRecord
@@ -230,7 +244,9 @@ async def query_memory(
                         )
                     )
                 rescored_results = scoring.rescore_memories(candidates)
-                span.set_attribute("rae.query.rescored_results_count", len(rescored_results))
+                span.set_attribute(
+                    "rae.query.rescored_results_count", len(rescored_results)
+                )
 
                 # Update access statistics for retrieved memories
                 memory_ids = [item.id for item in rescored_results]
@@ -268,7 +284,9 @@ async def query_memory(
                 )
 
             except Exception as e:
-                logger.exception("hybrid_search_failed", tenant_id=tenant_id, error=str(e))
+                logger.exception(
+                    "hybrid_search_failed", tenant_id=tenant_id, error=str(e)
+                )
                 span.set_attribute("rae.outcome.label", "hybrid_search_error")
                 raise HTTPException(status_code=502, detail=f"Hybrid search error: {e}")
 
@@ -289,7 +307,9 @@ async def query_memory(
             # This is a simplified example.
             for key, value in req.filters.items():
                 if key == "tags" and isinstance(value, list):
-                    query_filters["must"].append({"key": "tags", "match": {"any": value}})
+                    query_filters["must"].append(
+                        {"key": "tags", "match": {"any": value}}
+                    )
 
         # 3. Query the vector store
         try:
@@ -302,7 +322,9 @@ async def query_memory(
             span.set_attribute("rae.query.raw_results_count", len(raw_results))
         except Exception as e:
             span.set_attribute("rae.outcome.label", "vector_store_query_error")
-            raise HTTPException(status_code=502, detail=f"Vector store query error: {e}")
+            raise HTTPException(
+                status_code=502, detail=f"Vector store query error: {e}"
+            )
 
         # 4. Rescore memories using additional heuristics (optional)
         rescored_results = scoring.rescore_memories(raw_results)
@@ -325,7 +347,9 @@ async def query_memory(
                 )
 
         span.set_attribute("rae.outcome.label", "success")
-        memory_query_counter.labels(tenant_id=tenant_id).inc()  # Increment query counter
+        memory_query_counter.labels(
+            tenant_id=tenant_id
+        ).inc()  # Increment query counter
         return QueryMemoryResponse(results=rescored_results)
 
 
@@ -370,12 +394,16 @@ async def delete_memory(
             # Log the error but don't fail the request, as the DB part succeeded.
             # The record will be out of sync, but this is a decision to make.
             # For now, we'll just log it.
-            logger.warning("vector_store_deletion_failed", memory_id=memory_id, error=str(e))
+            logger.warning(
+                "vector_store_deletion_failed", memory_id=memory_id, error=str(e)
+            )
             span.set_attribute("rae.memory.vector_deleted", False)
             span.set_attribute("rae.memory.vector_delete_error", str(e))
 
         span.set_attribute("rae.outcome.label", "success")
-        memory_delete_counter.labels(tenant_id=tenant_id).inc()  # Increment delete counter
+        memory_delete_counter.labels(
+            tenant_id=tenant_id
+        ).inc()  # Increment delete counter
         return DeleteMemoryResponse(message=f"Memory {memory_id} deleted successfully.")
 
 
@@ -389,10 +417,14 @@ async def rebuild_reflections(req: RebuildReflectionsRequest):
         span.set_attribute("rae.project_id", req.project)
         span.set_attribute("rae.task.type", "background")
 
-        generate_reflection_for_project.delay(project=req.project, tenant_id=req.tenant_id)
+        generate_reflection_for_project.delay(
+            project=req.project, tenant_id=req.tenant_id
+        )
 
         span.set_attribute("rae.outcome.label", "task_dispatched")
-        return {"message": f"Reflection rebuild task dispatched for project {req.project}."}
+        return {
+            "message": f"Reflection rebuild task dispatched for project {req.project}."
+        }
 
 
 @router.get("/reflection-stats")
@@ -467,11 +499,15 @@ async def generate_hierarchical_reflection(
 
     This endpoint will be removed in a future version.
     """
-    with tracer.start_as_current_span("rae.api.memory.hierarchical_reflection_deprecated") as span:
+    with tracer.start_as_current_span(
+        "rae.api.memory.hierarchical_reflection_deprecated"
+    ) as span:
         tenant_id = request.headers.get("X-Tenant-Id")
         if not tenant_id:
             span.set_attribute("rae.outcome.label", "missing_tenant_id")
-            raise HTTPException(status_code=400, detail="X-Tenant-Id header is required.")
+            raise HTTPException(
+                status_code=400, detail="X-Tenant-Id header is required."
+            )
 
         span.set_attribute("rae.tenant_id", tenant_id)
         span.set_attribute("rae.project_id", project)

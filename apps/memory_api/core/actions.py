@@ -192,7 +192,9 @@ class RetrieveEpisodicAction(Action):
     action_type: ActionType = ActionType.RETRIEVE_EPISODIC
 
     def is_valid_for_state(self, state: RAEState) -> bool:
-        with tracer.start_as_current_span("rae.action.retrieve_episodic.validate") as span:
+        with tracer.start_as_current_span(
+            "rae.action.retrieve_episodic.validate"
+        ) as span:
             span.set_attribute("rae.action.type", self.action_type.value)
             span.set_attribute("rae.tenant_id", state.tenant_id)
             span.set_attribute("rae.project_id", state.project_id)
@@ -201,10 +203,13 @@ class RetrieveEpisodicAction(Action):
 
             # Check budget
             if state.budget_state.is_exhausted():
-                span.set_attribute("rae.action.validation_result", "failed_budget_exhausted")
+                span.set_attribute(
+                    "rae.action.validation_result", "failed_budget_exhausted"
+                )
                 span.set_attribute("rae.outcome.label", "fail")
                 logger.warning(
-                    "retrieve_episodic_invalid_budget_exhausted", tenant_id=state.tenant_id
+                    "retrieve_episodic_invalid_budget_exhausted",
+                    tenant_id=state.tenant_id,
                 )
                 return False
 
@@ -222,7 +227,9 @@ class RetrieveEpisodicAction(Action):
             return True
 
     def estimate_cost(self, state: RAEState) -> Dict[str, float]:
-        with tracer.start_as_current_span("rae.action.retrieve_episodic.estimate_cost") as span:
+        with tracer.start_as_current_span(
+            "rae.action.retrieve_episodic.estimate_cost"
+        ) as span:
             k = self.parameters.get("k", 10)
             threshold = self.parameters.get("threshold", 0.7)
             time_window_days = self.parameters.get("time_window_days", 7)
@@ -404,11 +411,15 @@ class CallLLMAction(Action):
             span.set_attribute("rae.action.type", self.action_type.value)
             span.set_attribute("rae.tenant_id", state.tenant_id)
             span.set_attribute("rae.project_id", state.project_id)
-            span.set_attribute("rae.action.model", self.parameters.get("model", "gpt-4o-mini"))
+            span.set_attribute(
+                "rae.action.model", self.parameters.get("model", "gpt-4o-mini")
+            )
 
             # Check budget
             if state.budget_state.is_exhausted():
-                span.set_attribute("rae.action.validation_result", "failed_budget_exhausted")
+                span.set_attribute(
+                    "rae.action.validation_result", "failed_budget_exhausted"
+                )
                 span.set_attribute("rae.outcome.label", "fail")
                 return False
 
@@ -423,10 +434,14 @@ class CallLLMAction(Action):
             estimated = self.estimate_cost(state)
             span.set_attribute("rae.action.estimated_cost_usd", estimated["cost_usd"])
             span.set_attribute("rae.action.estimated_tokens", estimated["tokens"])
-            span.set_attribute("rae.state.budget_remaining_usd", state.budget_state.remaining_cost_usd)
+            span.set_attribute(
+                "rae.state.budget_remaining_usd", state.budget_state.remaining_cost_usd
+            )
 
             if estimated["cost_usd"] > state.budget_state.remaining_cost_usd:
-                span.set_attribute("rae.action.validation_result", "failed_exceeds_cost_budget")
+                span.set_attribute(
+                    "rae.action.validation_result", "failed_exceeds_cost_budget"
+                )
                 span.set_attribute("rae.outcome.label", "fail")
                 logger.warning(
                     "call_llm_invalid_exceeds_budget",
@@ -437,7 +452,9 @@ class CallLLMAction(Action):
                 return False
 
             if estimated["tokens"] > state.budget_state.remaining_tokens:
-                span.set_attribute("rae.action.validation_result", "failed_exceeds_token_budget")
+                span.set_attribute(
+                    "rae.action.validation_result", "failed_exceeds_token_budget"
+                )
                 span.set_attribute("rae.outcome.label", "fail")
                 return False
 
@@ -481,7 +498,9 @@ class CallLLMAction(Action):
             latency = 1000 + (output_tokens * 50)  # ~50ms per output token
 
             span.set_attribute("rae.action.estimated_cost_usd", total_cost)
-            span.set_attribute("rae.action.estimated_tokens", input_tokens + output_tokens)
+            span.set_attribute(
+                "rae.action.estimated_tokens", input_tokens + output_tokens
+            )
             span.set_attribute("rae.action.estimated_latency_ms", latency)
 
             return {
@@ -533,14 +552,18 @@ class GenerateReflectionAction(Action):
     action_type: ActionType = ActionType.GENERATE_REFLECTION
 
     def is_valid_for_state(self, state: RAEState) -> bool:
-        with tracer.start_as_current_span("rae.action.generate_reflection.validate") as span:
+        with tracer.start_as_current_span(
+            "rae.action.generate_reflection.validate"
+        ) as span:
             span.set_attribute("rae.action.type", self.action_type.value)
             span.set_attribute("rae.tenant_id", state.tenant_id)
             span.set_attribute("rae.project_id", state.project_id)
             span.set_attribute("rae.memory.layer", "reflective")
 
             if state.budget_state.is_exhausted():
-                span.set_attribute("rae.action.validation_result", "failed_budget_exhausted")
+                span.set_attribute(
+                    "rae.action.validation_result", "failed_budget_exhausted"
+                )
                 span.set_attribute("rae.outcome.label", "fail")
                 return False
 
@@ -553,7 +576,9 @@ class GenerateReflectionAction(Action):
 
             min_memories = self.parameters.get("min_cluster_size", 5) * 2
             if total_memories < min_memories:
-                span.set_attribute("rae.action.validation_result", "failed_insufficient_memories")
+                span.set_attribute(
+                    "rae.action.validation_result", "failed_insufficient_memories"
+                )
                 span.set_attribute("rae.outcome.label", "fail")
                 span.set_attribute("rae.memory.required", min_memories)
                 logger.info(
@@ -569,7 +594,9 @@ class GenerateReflectionAction(Action):
             return True
 
     def estimate_cost(self, state: RAEState) -> Dict[str, float]:
-        with tracer.start_as_current_span("rae.action.generate_reflection.estimate_cost") as span:
+        with tracer.start_as_current_span(
+            "rae.action.generate_reflection.estimate_cost"
+        ) as span:
             max_memories = self.parameters.get("max_memories", 100)
             min_cluster_size = self.parameters.get("min_cluster_size", 5)
             level = self.parameters.get("level", "L1")

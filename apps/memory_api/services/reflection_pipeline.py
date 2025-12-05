@@ -154,7 +154,9 @@ class ReflectionPipeline:
             span.set_attribute("rae.tenant_id", request.tenant_id)
             span.set_attribute("rae.project_id", request.project)
             span.set_attribute("rae.reflection.max_memories", request.max_memories)
-            span.set_attribute("rae.reflection.min_cluster_size", request.min_cluster_size)
+            span.set_attribute(
+                "rae.reflection.min_cluster_size", request.min_cluster_size
+            )
 
             logger.info(
                 "reflection_pipeline_started",
@@ -254,8 +256,12 @@ class ReflectionPipeline:
             )
 
             span.set_attribute("rae.reflection.total_reflections", len(all_reflections))
-            span.set_attribute("rae.reflection.total_cost_usd", statistics["total_cost_usd"])
-            span.set_attribute("rae.reflection.duration_ms", statistics["total_duration_ms"])
+            span.set_attribute(
+                "rae.reflection.total_cost_usd", statistics["total_cost_usd"]
+            )
+            span.set_attribute(
+                "rae.reflection.duration_ms", statistics["total_duration_ms"]
+            )
             span.set_attribute("rae.outcome.label", "success")
 
             logger.info(
@@ -343,7 +349,9 @@ class ReflectionPipeline:
                     valid_memories.append(memory)
 
             if len(embeddings) < min_cluster_size:
-                span.set_attribute("rae.reflection.cluster.valid_memories", len(embeddings))
+                span.set_attribute(
+                    "rae.reflection.cluster.valid_memories", len(embeddings)
+                )
                 span.set_attribute("rae.outcome.label", "insufficient_memories")
                 logger.warning(
                     "insufficient_memories_for_clustering", count=len(embeddings)
@@ -399,13 +407,17 @@ class ReflectionPipeline:
 
             # Filter out clusters below minimum size
             clusters = {
-                cid: mems for cid, mems in clusters.items() if len(mems) >= min_cluster_size
+                cid: mems
+                for cid, mems in clusters.items()
+                if len(mems) >= min_cluster_size
             }
 
             span.set_attribute("rae.reflection.cluster.clusters_found", len(clusters))
             if clusters:
-                span.set_attribute("rae.reflection.cluster.avg_cluster_size",
-                    sum(len(mems) for mems in clusters.values()) / len(clusters))
+                span.set_attribute(
+                    "rae.reflection.cluster.avg_cluster_size",
+                    sum(len(mems) for mems in clusters.values()) / len(clusters),
+                )
             span.set_attribute("rae.outcome.label", "success")
 
             logger.info(
