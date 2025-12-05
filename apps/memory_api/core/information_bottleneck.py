@@ -34,7 +34,10 @@ from typing import Any, Dict, List
 import numpy as np
 import structlog
 
+from apps.memory_api.observability.rae_tracing import get_tracer
+
 logger = structlog.get_logger(__name__)
+tracer = get_tracer(__name__)
 
 
 @dataclass
@@ -101,72 +104,92 @@ class InformationBottleneckSelector:
         Returns:
             Selected memories optimizing IB objective
         """
-        if not full_memory:
-            return []
+        with tracer.start_as_current_span("rae.information_bottleneck.select_context") as span:
+            if not full_memory:
+                span.set_attribute("rae.ib.full_memory_count", 0)
+                span.set_attribute("rae.outcome.label", "empty_memory")
+                return []
 
-        logger.info(
-            "ib_selection_started",
-            full_memory_count=len(full_memory),
-            max_tokens=max_tokens,
-            beta=self.beta,
-        )
+            span.set_attribute("rae.ib.full_memory_count", len(full_memory))
+            span.set_attribute("rae.ib.max_tokens", max_tokens)
+            span.set_attribute("rae.ib.beta", self.beta)
+            span.set_attribute("rae.ib.min_relevance", min_relevance)
 
-        # Step 1: Compute relevance scores I(m; Y)
-        relevance_scores = self._compute_relevance_scores(
-            memories=full_memory, query_embedding=query_embedding
-        )
+            logger.info(
+                "ib_selection_started",
+                full_memory_count=len(full_memory),
+                max_tokens=max_tokens,
+                beta=self.beta,
+            )
 
-        # Step 2: Compute compression costs I(m; X)
-        compression_costs = self._compute_compression_costs(memories=full_memory)
+            # Step 1: Compute relevance scores I(m; Y)
+            relevance_scores = self._compute_relevance_scores(
+                memories=full_memory, query_embedding=query_embedding
+            )
+            span.set_attribute("rae.ib.avg_relevance", float(np.mean(relevance_scores)))
 
-        # Step 3: Compute IB objective for each memory
-        ib_scores = []
-        for i, memory in enumerate(full_memory):
-            relevance = relevance_scores[i]
-            compression_cost = compression_costs[i]
+            # Step 2: Compute compression costs I(m; X)
+            compression_costs = self._compute_compression_costs(memories=full_memory)
+            span.set_attribute("rae.ib.avg_compression_cost", float(np.mean(compression_costs)))
 
-            # Filter by minimum relevance
-            if relevance < min_relevance:
-                ib_score = -np.inf
-            else:
-                # IB objective: maximize relevance, minimize compression cost
-                ib_score = relevance - self.beta * compression_cost
+            # Step 3: Compute IB objective for each memory
+            ib_scores = []
+            for i, memory in enumerate(full_memory):
+                relevance = relevance_scores[i]
+                compression_cost = compression_costs[i]
 
-            ib_scores.append((memory, ib_score, relevance, compression_cost))
+                # Filter by minimum relevance
+                if relevance < min_relevance:
+                    ib_score = -np.inf
+                else:
+                    # IB objective: maximize relevance, minimize compression cost
+                    ib_score = relevance - self.beta * compression_cost
 
-        # Step 4: Greedy selection
-        # Sort by IB score descending
-        ib_scores_sorted = sorted(ib_scores, key=lambda x: x[1], reverse=True)
+                ib_scores.append((memory, ib_score, relevance, compression_cost))
 
-        selected = []
-        current_tokens = 0
+            # Step 4: Greedy selection
+            # Sort by IB score descending
+            ib_scores_sorted = sorted(ib_scores, key=lambda x: x[1], reverse=True)
 
-        for memory, ib_score, relevance, comp_cost in ib_scores_sorted:
-            if ib_score == -np.inf:
-                continue
+            selected = []
+            current_tokens = 0
 
-            if current_tokens + memory.tokens <= max_tokens:
-                selected.append(memory)
-                current_tokens += memory.tokens
+            for memory, ib_score, relevance, comp_cost in ib_scores_sorted:
+                if ib_score == -np.inf:
+                    continue
 
-            if current_tokens >= max_tokens:
-                break
+                if current_tokens + memory.tokens <= max_tokens:
+                    selected.append(memory)
+                    current_tokens += memory.tokens
 
-        # Log selection metrics
-        I_Z_Y = self.estimate_I_Z_Y(selected, query_embedding, full_memory)
-        I_Z_X = self.estimate_I_Z_X(selected, full_memory)
+                if current_tokens >= max_tokens:
+                    break
 
-        logger.info(
-            "ib_selection_completed",
-            selected_count=len(selected),
-            total_tokens=current_tokens,
-            I_Z_Y=I_Z_Y,
-            I_Z_X=I_Z_X,
-            compression_ratio=1.0 - I_Z_X,
-            ib_objective=I_Z_Y - self.beta * I_Z_X,
-        )
+            # Log selection metrics
+            I_Z_Y = self.estimate_I_Z_Y(selected, query_embedding, full_memory)
+            I_Z_X = self.estimate_I_Z_X(selected, full_memory)
+            compression_ratio = 1.0 - I_Z_X
+            ib_objective = I_Z_Y - self.beta * I_Z_X
 
-        return selected
+            span.set_attribute("rae.ib.selected_count", len(selected))
+            span.set_attribute("rae.ib.total_tokens", current_tokens)
+            span.set_attribute("rae.ib.I_Z_Y", I_Z_Y)
+            span.set_attribute("rae.ib.I_Z_X", I_Z_X)
+            span.set_attribute("rae.ib.compression_ratio", compression_ratio)
+            span.set_attribute("rae.ib.objective", ib_objective)
+            span.set_attribute("rae.outcome.label", "success")
+
+            logger.info(
+                "ib_selection_completed",
+                selected_count=len(selected),
+                total_tokens=current_tokens,
+                I_Z_Y=I_Z_Y,
+                I_Z_X=I_Z_X,
+                compression_ratio=compression_ratio,
+                ib_objective=ib_objective,
+            )
+
+            return selected
 
     def _compute_relevance_scores(
         self, memories: List[MemoryItem], query_embedding: np.ndarray

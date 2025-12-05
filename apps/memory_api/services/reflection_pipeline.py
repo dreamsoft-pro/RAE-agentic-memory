@@ -42,11 +42,13 @@ from apps.memory_api.models.reflection_models import (
     ReflectionType,
     ReflectionUnit,
 )
+from apps.memory_api.observability.rae_tracing import get_tracer
 from apps.memory_api.repositories import reflection_repository
 from apps.memory_api.services.llm import get_llm_provider
 from apps.memory_api.services.ml_service_client import MLServiceClient
 
 logger = structlog.get_logger(__name__)
+tracer = get_tracer(__name__)
 
 
 # ============================================================================
@@ -148,103 +150,121 @@ class ReflectionPipeline:
         Returns:
             Tuple of (generated_reflections, statistics)
         """
-        logger.info(
-            "reflection_pipeline_started",
-            tenant_id=request.tenant_id,
-            project=request.project,
-            max_memories=request.max_memories,
-        )
+        with tracer.start_as_current_span("rae.reflection_pipeline.generate") as span:
+            span.set_attribute("rae.tenant_id", request.tenant_id)
+            span.set_attribute("rae.project_id", request.project)
+            span.set_attribute("rae.reflection.max_memories", request.max_memories)
+            span.set_attribute("rae.reflection.min_cluster_size", request.min_cluster_size)
 
-        start_time = datetime.now()
-        statistics = {
-            "memories_processed": 0,
-            "clusters_found": 0,
-            "insights_generated": 0,
-            "meta_insights_generated": 0,
-            "total_cost_usd": 0.0,
-            "total_duration_ms": 0,
-        }
+            logger.info(
+                "reflection_pipeline_started",
+                tenant_id=request.tenant_id,
+                project=request.project,
+                max_memories=request.max_memories,
+            )
 
-        # Step 1: Fetch memories
-        memories = await self._fetch_memories(
-            request.tenant_id,
-            request.project,
-            request.max_memories,
-            request.memory_filters,
-            request.since,
-        )
+            start_time = datetime.now()
+            statistics = {
+                "memories_processed": 0,
+                "clusters_found": 0,
+                "insights_generated": 0,
+                "meta_insights_generated": 0,
+                "total_cost_usd": 0.0,
+                "total_duration_ms": 0,
+            }
 
-        if not memories:
-            logger.info("no_memories_for_reflection", project=request.project)
-            return [], statistics
+            # Step 1: Fetch memories
+            memories = await self._fetch_memories(
+                request.tenant_id,
+                request.project,
+                request.max_memories,
+                request.memory_filters,
+                request.since,
+            )
 
-        statistics["memories_processed"] = len(memories)
-        logger.info("memories_fetched", count=len(memories))
+            if not memories:
+                span.set_attribute("rae.reflection.memories_count", 0)
+                span.set_attribute("rae.outcome.label", "no_memories")
+                logger.info("no_memories_for_reflection", project=request.project)
+                return [], statistics
 
-        # Step 2: Cluster memories
-        clusters = await self._cluster_memories(memories, request.min_cluster_size)
-        statistics["clusters_found"] = len(clusters)
-        logger.info("clustering_complete", clusters=len(clusters))
+            statistics["memories_processed"] = len(memories)
+            span.set_attribute("rae.reflection.memories_count", len(memories))
+            logger.info("memories_fetched", count=len(memories))
 
-        if not clusters:
-            logger.info("no_clusters_found", min_size=request.min_cluster_size)
-            return [], statistics
+            # Step 2: Cluster memories
+            clusters = await self._cluster_memories(memories, request.min_cluster_size)
+            statistics["clusters_found"] = len(clusters)
+            span.set_attribute("rae.reflection.clusters_count", len(clusters))
+            logger.info("clustering_complete", clusters=len(clusters))
 
-        # Step 3: Generate insights for each cluster
-        insights = []
-        for cluster_id, cluster_memories in clusters.items():
-            try:
-                insight = await self._generate_cluster_insight(
-                    tenant_id=request.tenant_id,
-                    project_id=request.project,
-                    cluster_id=cluster_id,
-                    memories=cluster_memories,
-                    parent_reflection_id=request.parent_reflection_id,
-                )
-                insights.append(insight)
-                statistics["insights_generated"] += 1
-                statistics["total_cost_usd"] += (
-                    insight.telemetry.generation_cost_usd or 0.0
-                )
-            except Exception as e:
-                logger.error(
-                    "cluster_insight_failed", cluster_id=cluster_id, error=str(e)
-                )
+            if not clusters:
+                span.set_attribute("rae.outcome.label", "no_clusters")
+                logger.info("no_clusters_found", min_size=request.min_cluster_size)
+                return [], statistics
 
-        logger.info("insights_generated", count=len(insights))
+            # Step 3: Generate insights for each cluster
+            insights = []
+            for cluster_id, cluster_memories in clusters.items():
+                try:
+                    insight = await self._generate_cluster_insight(
+                        tenant_id=request.tenant_id,
+                        project_id=request.project,
+                        cluster_id=cluster_id,
+                        memories=cluster_memories,
+                        parent_reflection_id=request.parent_reflection_id,
+                    )
+                    insights.append(insight)
+                    statistics["insights_generated"] += 1
+                    statistics["total_cost_usd"] += (
+                        insight.telemetry.generation_cost_usd or 0.0
+                    )
+                except Exception as e:
+                    logger.error(
+                        "cluster_insight_failed", cluster_id=cluster_id, error=str(e)
+                    )
 
-        # Step 4: Generate meta-insights if we have multiple insights
-        all_reflections = insights.copy()
+            span.set_attribute("rae.reflection.insights_generated", len(insights))
+            logger.info("insights_generated", count=len(insights))
 
-        if len(insights) >= 3 and not request.parent_reflection_id:
-            try:
-                meta_insight = await self._generate_meta_insight(
-                    tenant_id=request.tenant_id,
-                    project_id=request.project,
-                    insights=insights,
-                )
-                all_reflections.append(meta_insight)
-                statistics["meta_insights_generated"] += 1
-                statistics["total_cost_usd"] += (
-                    meta_insight.telemetry.generation_cost_usd or 0.0
-                )
-                logger.info("meta_insight_generated")
-            except Exception as e:
-                logger.error("meta_insight_failed", error=str(e))
+            # Step 4: Generate meta-insights if we have multiple insights
+            all_reflections = insights.copy()
 
-        # Calculate total duration
-        end_time = datetime.now()
-        statistics["total_duration_ms"] = int(
-            (end_time - start_time).total_seconds() * 1000
-        )
+            if len(insights) >= 3 and not request.parent_reflection_id:
+                try:
+                    meta_insight = await self._generate_meta_insight(
+                        tenant_id=request.tenant_id,
+                        project_id=request.project,
+                        insights=insights,
+                    )
+                    all_reflections.append(meta_insight)
+                    statistics["meta_insights_generated"] += 1
+                    statistics["total_cost_usd"] += (
+                        meta_insight.telemetry.generation_cost_usd or 0.0
+                    )
+                    span.set_attribute("rae.reflection.meta_insights_generated", 1)
+                    logger.info("meta_insight_generated")
+                except Exception as e:
+                    logger.error("meta_insight_failed", error=str(e))
 
-        logger.info(
-            "reflection_pipeline_complete",
-            reflections=len(all_reflections),
-            statistics=statistics,
-        )
+            # Calculate total duration
+            end_time = datetime.now()
+            statistics["total_duration_ms"] = int(
+                (end_time - start_time).total_seconds() * 1000
+            )
 
-        return all_reflections, statistics
+            span.set_attribute("rae.reflection.total_reflections", len(all_reflections))
+            span.set_attribute("rae.reflection.total_cost_usd", statistics["total_cost_usd"])
+            span.set_attribute("rae.reflection.duration_ms", statistics["total_duration_ms"])
+            span.set_attribute("rae.outcome.label", "success")
+
+            logger.info(
+                "reflection_pipeline_complete",
+                reflections=len(all_reflections),
+                statistics=statistics,
+            )
+
+            return all_reflections, statistics
 
     async def _fetch_memories(
         self,
@@ -302,82 +322,99 @@ class ReflectionPipeline:
         Returns:
             Dictionary mapping cluster_id to list of memories
         """
-        # Ensure scikit-learn is available for clustering
-        self._ensure_sklearn_available()
+        with tracer.start_as_current_span("rae.reflection_pipeline.cluster") as span:
+            # Ensure scikit-learn is available for clustering
+            self._ensure_sklearn_available()
 
-        logger.info(
-            "clustering_memories", count=len(memories), min_size=min_cluster_size
-        )
+            span.set_attribute("rae.reflection.cluster.memory_count", len(memories))
+            span.set_attribute("rae.reflection.cluster.min_size", min_cluster_size)
 
-        # Extract embeddings
-        embeddings = []
-        valid_memories = []
-
-        for memory in memories:
-            if memory.get("embedding"):
-                embeddings.append(memory["embedding"])
-                valid_memories.append(memory)
-
-        if len(embeddings) < min_cluster_size:
-            logger.warning(
-                "insufficient_memories_for_clustering", count=len(embeddings)
+            logger.info(
+                "clustering_memories", count=len(memories), min_size=min_cluster_size
             )
-            return {}
 
-        embeddings_array = np.array(embeddings)
+            # Extract embeddings
+            embeddings = []
+            valid_memories = []
 
-        # Standardize embeddings
-        scaler = StandardScaler()
-        embeddings_scaled = scaler.fit_transform(embeddings_array)
+            for memory in memories:
+                if memory.get("embedding"):
+                    embeddings.append(memory["embedding"])
+                    valid_memories.append(memory)
 
-        # Try HDBSCAN first (density-based, automatic cluster detection)
-        try:
-            clusterer = HDBSCAN(
-                min_cluster_size=min_cluster_size,
-                min_samples=max(2, min_cluster_size // 2),
-                metric="euclidean",
+            if len(embeddings) < min_cluster_size:
+                span.set_attribute("rae.reflection.cluster.valid_memories", len(embeddings))
+                span.set_attribute("rae.outcome.label", "insufficient_memories")
+                logger.warning(
+                    "insufficient_memories_for_clustering", count=len(embeddings)
+                )
+                return {}
+
+            span.set_attribute("rae.reflection.cluster.valid_memories", len(embeddings))
+            embeddings_array = np.array(embeddings)
+
+            # Standardize embeddings
+            scaler = StandardScaler()
+            embeddings_scaled = scaler.fit_transform(embeddings_array)
+
+            # Try HDBSCAN first (density-based, automatic cluster detection)
+            algorithm_used = "hdbscan"
+            try:
+                clusterer = HDBSCAN(
+                    min_cluster_size=min_cluster_size,
+                    min_samples=max(2, min_cluster_size // 2),
+                    metric="euclidean",
+                )
+                cluster_labels = clusterer.fit_predict(embeddings_scaled)
+
+                # Check if we got meaningful clusters (not all noise)
+                unique_labels = set(cluster_labels)
+                unique_labels.discard(-1)  # Remove noise label
+
+                if len(unique_labels) == 0:
+                    # Fall back to k-means
+                    logger.info("hdbscan_found_no_clusters_falling_back_to_kmeans")
+                    raise ValueError("No clusters found")
+
+            except Exception as e:
+                algorithm_used = "kmeans"
+                logger.info("using_kmeans_clustering", reason=str(e))
+                # Fall back to k-means with heuristic for number of clusters
+                n_clusters = max(2, min(len(embeddings) // min_cluster_size, 10))
+                clusterer = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+                cluster_labels = clusterer.fit_predict(embeddings_scaled)
+
+            span.set_attribute("rae.reflection.cluster.algorithm", algorithm_used)
+
+            # Group memories by cluster
+            clusters = {}
+            for memory, label in zip(valid_memories, cluster_labels):
+                if label == -1:  # Skip noise in HDBSCAN
+                    continue
+
+                cluster_id = f"cluster_{label}"
+                if cluster_id not in clusters:
+                    clusters[cluster_id] = []
+                clusters[cluster_id].append(memory)
+
+            # Filter out clusters below minimum size
+            clusters = {
+                cid: mems for cid, mems in clusters.items() if len(mems) >= min_cluster_size
+            }
+
+            span.set_attribute("rae.reflection.cluster.clusters_found", len(clusters))
+            if clusters:
+                span.set_attribute("rae.reflection.cluster.avg_cluster_size",
+                    sum(len(mems) for mems in clusters.values()) / len(clusters))
+            span.set_attribute("rae.outcome.label", "success")
+
+            logger.info(
+                "clustering_complete",
+                clusters_found=len(clusters),
+                sizes=[len(mems) for mems in clusters.values()],
             )
-            cluster_labels = clusterer.fit_predict(embeddings_scaled)
 
-            # Check if we got meaningful clusters (not all noise)
-            unique_labels = set(cluster_labels)
-            unique_labels.discard(-1)  # Remove noise label
-
-            if len(unique_labels) == 0:
-                # Fall back to k-means
-                logger.info("hdbscan_found_no_clusters_falling_back_to_kmeans")
-                raise ValueError("No clusters found")
-
-        except Exception as e:
-            logger.info("using_kmeans_clustering", reason=str(e))
-            # Fall back to k-means with heuristic for number of clusters
-            n_clusters = max(2, min(len(embeddings) // min_cluster_size, 10))
-            clusterer = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
-            cluster_labels = clusterer.fit_predict(embeddings_scaled)
-
-        # Group memories by cluster
-        clusters = {}
-        for memory, label in zip(valid_memories, cluster_labels):
-            if label == -1:  # Skip noise in HDBSCAN
-                continue
-
-            cluster_id = f"cluster_{label}"
-            if cluster_id not in clusters:
-                clusters[cluster_id] = []
-            clusters[cluster_id].append(memory)
-
-        # Filter out clusters below minimum size
-        clusters = {
-            cid: mems for cid, mems in clusters.items() if len(mems) >= min_cluster_size
-        }
-
-        logger.info(
-            "clustering_complete",
-            clusters_found=len(clusters),
-            sizes=[len(mems) for mems in clusters.values()],
-        )
-
-        return clusters
+            return clusters
 
     async def _generate_cluster_insight(
         self,

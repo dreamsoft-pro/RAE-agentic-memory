@@ -594,6 +594,24 @@ MEMORY_IMPORTANCE_DECAY_SCHEDULE="0 2 * * *"  # Daily at 2 AM
 
 ### 🏢 Enterprise Features
 
+#### Observability & Monitoring
+- **OpenTelemetry Distributed Tracing**: Deep visibility into all operations
+  - Auto-instrumentation (FastAPI, PostgreSQL, Redis, Celery, HTTP)
+  - Custom spans for mathematical core, services, and API endpoints
+  - Multi-backend export (Jaeger, Grafana Tempo, Elastic APM, AWS X-Ray)
+  - Standardized `rae.*` namespace for all trace attributes
+- **Prometheus Metrics**: Comprehensive performance metrics
+  - API latency and throughput (request_latency, request_duration)
+  - Cache efficiency (cache_hits, cache_misses, hit_ratio)
+  - LLM usage and costs (token_usage, llm_cost by model/provider)
+  - System health (memory, CPU, connection pools)
+- **Grafana Dashboard**: Pre-built visualization with 20+ panels
+- **Trace Context Propagation**: W3C TraceContext for distributed systems
+- **Zero Configuration**: Works out of the box with sensible defaults
+- **Production Ready**: Sampling, filtering, multi-tenant tracking
+
+See **[Observability Documentation](docs/reference/deployment/observability.md)** for setup and deployment guides.
+
 #### Event Automation & Rules Engine
 - **Event-Driven Triggers**: React to memory creation, reflections, threshold breaches
 - **Complex Conditions**: AND/OR logic with nested condition groups
