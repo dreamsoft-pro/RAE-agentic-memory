@@ -367,3 +367,104 @@ async def test_subgraph_extraction(mock_pool):
         assert "n2" in subgraph.nodes
         assert "n3" not in subgraph.nodes
         assert subgraph.edge_count() == 1
+
+
+@pytest.mark.asyncio
+async def test_repr_methods():
+    """Test __repr__ methods for graph objects"""
+    node = GraphNode("n1", "Person")
+    assert repr(node) == "Node(n1, Person)"
+
+    edge = GraphEdge("n1", "n2", "knows")
+    assert repr(edge) == "Edge(n1 --[knows]--> n2)"
+
+    graph = KnowledgeGraph()
+    graph.add_node(node)
+    graph.add_edge(edge)
+    assert repr(graph) == "KnowledgeGraph(nodes=1, edges=1)"
+
+
+@pytest.mark.asyncio
+async def test_load_tenant_graph_no_db():
+    """Test loading graph without DB connection"""
+    service = GraphAlgorithmsService(db=None)
+    graph = await service.load_tenant_graph(uuid4())
+    assert graph.node_count() == 0
+
+
+@pytest.mark.asyncio
+async def test_load_tenant_graph_with_project_id(mock_pool):
+    """Test loading graph with project_id filter"""
+    service = GraphAlgorithmsService(db=mock_pool)
+    tenant_id = uuid4()
+    project_id = "proj-123"
+
+    mock_conn = mock_pool._test_conn
+    mock_conn.fetch.side_effect = [
+        [],  # nodes
+        [],  # edges
+    ]
+
+    await service.load_tenant_graph(tenant_id, project_id=project_id)
+
+    # Verify SQL queries contained project_id
+    assert mock_conn.fetch.call_count == 2
+    args, _ = mock_conn.fetch.call_args_list[0]
+    assert "AND project_id = $2" in args[0]
+
+
+@pytest.mark.asyncio
+async def test_load_tenant_graph_exception(mock_pool):
+    """Test exception handling during graph load"""
+    service = GraphAlgorithmsService(db=mock_pool)
+    mock_conn = mock_pool._test_conn
+    mock_conn.fetch.side_effect = Exception("DB Error")
+
+    with pytest.raises(Exception):
+        await service.load_tenant_graph(uuid4())
+
+
+@pytest.mark.asyncio
+async def test_empty_graph_algorithms(mock_pool):
+    """Test algorithms on empty graph"""
+    service = GraphAlgorithmsService(db=mock_pool)
+    tenant_id = uuid4()
+    empty_graph = KnowledgeGraph()
+
+    with patch.object(
+        service, "load_tenant_graph", new=AsyncMock(return_value=empty_graph)
+    ):
+        assert await service.pagerank(tenant_id) == {}
+        assert await service.community_detection(tenant_id, "louvain") == {}
+        assert await service.community_detection(tenant_id, "label_propagation") == {}
+        assert await service.calculate_centrality(tenant_id, "degree") == {}
+        assert await service.calculate_centrality(tenant_id, "betweenness") == {}
+        assert await service.calculate_centrality(tenant_id, "closeness") == {}
+
+
+@pytest.mark.asyncio
+async def test_find_all_paths_edge_cases(mock_pool):
+    """Test find_all_paths edge cases"""
+    service = GraphAlgorithmsService(db=mock_pool)
+    tenant_id = uuid4()
+
+    graph = KnowledgeGraph()
+    graph.add_node(GraphNode("n1", "A"))
+
+    with patch.object(service, "load_tenant_graph", new=AsyncMock(return_value=graph)):
+        # Target not in graph
+        assert await service.find_all_paths(tenant_id, "n1", "n2") == []
+
+        # Source not in graph
+        assert await service.find_all_paths(tenant_id, "n2", "n1") == []
+
+
+@pytest.mark.asyncio
+async def test_find_bridges_and_articulation_points(mock_pool):
+    """Test bridge and articulation point placeholders"""
+    service = GraphAlgorithmsService(db=mock_pool)
+    tenant_id = uuid4()
+
+    # Just verify they run without error for now as they are placeholders
+    assert await service.find_bridges(tenant_id) == []
+    assert await service.find_articulation_points(tenant_id) == []
