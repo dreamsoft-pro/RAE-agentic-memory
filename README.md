@@ -275,6 +275,24 @@ docker-compose -f docker-compose.lite.yml up -d
 
 See [RAE Lite Profile Documentation](docs/reference/deployment/rae-lite-profile.md) for complete guide.
 
+### ⚙️ Environment Configuration
+
+**For Docker deployments (recommended):**
+1. Copy the example environment file: `cp .env.example .env`
+2. **Database credentials are pre-configured** - no changes needed for Docker!
+3. Only add your **LLM API keys** (OpenAI, Anthropic, or Gemini)
+4. Optional: Configure Ollama for local/offline LLMs (see [Local Setup](docs/LOCAL_SETUP.md))
+
+**Default credentials (already in docker-compose.yml):**
+- Database: `rae` / User: `rae` / Password: `rae_password`
+- These work out-of-box with Docker - only change for production deployments
+- For production: Update password in both `.env` and `docker-compose.yml`
+
+**For local development (without Docker):**
+- Match credentials in `.env` to your local PostgreSQL setup
+- Ensure Redis is running on `localhost:6379`
+- See [Development Guide](docs/DEVELOPMENT.md) for complete setup
+
 ---
 
 **Or step by step (Full Stack):**
