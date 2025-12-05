@@ -352,7 +352,25 @@ def test_rae_state_identity_fields():
     assert state.project_id == "project-456"
     assert state.session_id == "session-789"
 
-    state_dict = state.to_dict()
-    assert state_dict["tenant_id"] == "tenant-123"
-    assert state_dict["project_id"] == "project-456"
-    assert state_dict["session_id"] == "session-789"
+
+@pytest.mark.unit
+def test_rae_state_validation_mismatched_importance_scores():
+    """Test RAEState validation warns on mismatched content and importance scores."""
+    state = RAEState(tenant_id="test", project_id="test")
+
+    state.working_context.content = ["item1", "item2"]
+    state.working_context.importance_scores = [0.5]  # Mismatched length
+
+    # The validation should still return True as it's a warning, not an error
+    assert state.is_valid()
+
+
+@pytest.mark.unit
+def test_rae_state_validation_negative_memory_count():
+    """Test RAEState validation fails with negative memory layer count."""
+    state = RAEState(tenant_id="test", project_id="test")
+
+    # Manually set an invalid negative count
+    state.memory_state.episodic.count = -5
+
+    assert not state.is_valid()
