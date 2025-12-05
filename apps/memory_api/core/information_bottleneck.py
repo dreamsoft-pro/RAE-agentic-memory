@@ -104,7 +104,9 @@ class InformationBottleneckSelector:
         Returns:
             Selected memories optimizing IB objective
         """
-        with tracer.start_as_current_span("rae.information_bottleneck.select_context") as span:
+        with tracer.start_as_current_span(
+            "rae.information_bottleneck.select_context"
+        ) as span:
             if not full_memory:
                 span.set_attribute("rae.ib.full_memory_count", 0)
                 span.set_attribute("rae.outcome.label", "empty_memory")
@@ -130,7 +132,9 @@ class InformationBottleneckSelector:
 
             # Step 2: Compute compression costs I(m; X)
             compression_costs = self._compute_compression_costs(memories=full_memory)
-            span.set_attribute("rae.ib.avg_compression_cost", float(np.mean(compression_costs)))
+            span.set_attribute(
+                "rae.ib.avg_compression_cost", float(np.mean(compression_costs))
+            )
 
             # Step 3: Compute IB objective for each memory
             ib_scores = []

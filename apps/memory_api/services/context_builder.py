@@ -217,7 +217,9 @@ class ContextBuilder:
                 query=query,
             )
             retrieval_stats["reflections_retrieved"] = len(reflection_components)
-            span.set_attribute("rae.context.reflections_retrieved", len(reflection_components))
+            span.set_attribute(
+                "rae.context.reflections_retrieved", len(reflection_components)
+            )
 
             # 4. Retrieve user/system profile
             profile_components = await self._retrieve_profile(
@@ -242,7 +244,9 @@ class ContextBuilder:
             )
 
             span.set_attribute("rae.context.total_tokens", total_tokens)
-            span.set_attribute("rae.context.scoring_method", retrieval_stats["scoring_method"])
+            span.set_attribute(
+                "rae.context.scoring_method", retrieval_stats["scoring_method"]
+            )
             span.set_attribute("rae.outcome.label", "success")
 
             logger.info(
