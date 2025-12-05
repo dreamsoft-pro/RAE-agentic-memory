@@ -52,24 +52,28 @@ def mock_memory_repo():
 
 @pytest.fixture
 def client_with_overrides():
-    # Setup
-    app.state.pool = MagicMock()
-    
+    # Setup mock pool
+    mock_pool = MagicMock()
+    mock_pool.close = AsyncMock()
+    app.state.pool = mock_pool
+
     # Mock the direct function calls in memory.py
     with patch("apps.memory_api.api.v1.memory.get_vector_store") as mock_get_vs, \
          patch("apps.memory_api.api.v1.memory.get_embedding_service") as mock_get_es, \
-         patch("apps.memory_api.api.v1.memory.get_hybrid_search_service") as mock_get_hss:
-        
+         patch("apps.memory_api.api.v1.memory.get_hybrid_search_service") as mock_get_hss, \
+         patch("apps.memory_api.main.asyncpg.create_pool", new=AsyncMock(return_value=mock_pool)), \
+         patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()):
+
         mock_vs = AsyncMock()
         mock_es = MagicMock()
         mock_hss = AsyncMock()
-        
+
         mock_get_vs.return_value = mock_vs
         mock_get_es.return_value = mock_es
-        
+
         # Setup embedding mock to return list of floats
         mock_es.generate_embeddings.return_value = [[0.1] * 384]
-        
+
         # Override dependency for hybrid search
         app.dependency_overrides[get_hybrid_search_service] = lambda: mock_hss
         # Override auth
