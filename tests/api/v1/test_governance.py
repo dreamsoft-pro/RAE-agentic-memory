@@ -1,13 +1,37 @@
 import pytest
+from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi.testclient import TestClient
 
 from apps.memory_api.main import app
+from apps.memory_api.security.dependencies import get_and_verify_tenant_id, require_admin, verify_tenant_access
 
-client = TestClient(app)
+
+@pytest.fixture
+def client_with_auth(mock_app_state_pool):
+    """Create TestClient with mocked lifespan and auth"""
+    # mock_app_state_pool already sets app.state.pool, so we just need to ensure
+    # it has a close method for lifespan shutdown
+    if not hasattr(mock_app_state_pool, 'close'):
+        mock_app_state_pool.close = AsyncMock()
+
+    # Override auth to prevent 401 errors
+    app.dependency_overrides[get_and_verify_tenant_id] = lambda: "test-tenant"
+    app.dependency_overrides[require_admin] = lambda: True
+    app.dependency_overrides[verify_tenant_access] = lambda tenant_id: True
+
+    # Mock lifespan dependencies (use the same pool from mock_app_state_pool)
+    with patch("apps.memory_api.main.asyncpg.create_pool", new=AsyncMock(return_value=mock_app_state_pool)), \
+         patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()):
+
+        with TestClient(app) as client:
+            yield client
+
+    # Cleanup
+    app.dependency_overrides = {}
 
 
 @pytest.mark.asyncio
-async def test_governance_overview_success(mock_app_state_pool):
+async def test_governance_overview_success(client_with_auth, mock_app_state_pool):
     """Test GET /v1/governance/overview endpoint"""
     mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
 
@@ -46,7 +70,7 @@ async def test_governance_overview_success(mock_app_state_pool):
         ],
     ]
 
-    response = client.get(
+    response = client_with_auth.get(
         "/v1/governance/overview?days=30", headers={"X-Tenant-Id": "admin"}
     )
 
@@ -61,7 +85,7 @@ async def test_governance_overview_success(mock_app_state_pool):
 
 
 @pytest.mark.asyncio
-async def test_governance_overview_with_custom_days(mock_app_state_pool):
+async def test_governance_overview_with_custom_days(client_with_auth, mock_app_state_pool):
     """Test governance overview with custom time period"""
     mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
 
@@ -77,7 +101,7 @@ async def test_governance_overview_with_custom_days(mock_app_state_pool):
         [{"model": "gpt-4", "calls": 200, "cost_usd": 30.00, "tokens": 100000}],
     ]
 
-    response = client.get(
+    response = client_with_auth.get(
         "/v1/governance/overview?days=7", headers={"X-Tenant-Id": "admin"}
     )
 
@@ -87,12 +111,12 @@ async def test_governance_overview_with_custom_days(mock_app_state_pool):
 
 
 @pytest.mark.asyncio
-async def test_governance_overview_error(mock_app_state_pool):
+async def test_governance_overview_error(client_with_auth, mock_app_state_pool):
     """Test governance overview when database fails"""
     mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
     mock_conn.fetchrow.side_effect = Exception("Database error")
 
-    response = client.get("/v1/governance/overview", headers={"X-Tenant-Id": "admin"})
+    response = client_with_auth.get("/v1/governance/overview", headers={"X-Tenant-Id": "admin"})
 
     assert response.status_code == 500
     # Our generic exception handler returns: {"error": {"code": "500", "message": "Internal Server Error"}}
@@ -111,7 +135,7 @@ async def test_governance_overview_error(mock_app_state_pool):
 
 
 @pytest.mark.asyncio
-async def test_tenant_governance_stats_success(mock_app_state_pool):
+async def test_tenant_governance_stats_success(client_with_auth, mock_app_state_pool):
     """Test GET /v1/governance/tenant/{tenant_id} endpoint"""
     mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
 
@@ -139,7 +163,7 @@ async def test_tenant_governance_stats_success(mock_app_state_pool):
         [{"operation": "query", "calls": 400, "cost_usd": 60.20, "tokens": 200000}],
     ]
 
-    response = client.get(
+    response = client_with_auth.get(
         "/v1/governance/tenant/test-tenant?days=30",
         headers={"X-Tenant-Id": "test-tenant"},
     )
@@ -156,7 +180,7 @@ async def test_tenant_governance_stats_success(mock_app_state_pool):
 
 
 @pytest.mark.asyncio
-async def test_tenant_governance_stats_no_data(mock_app_state_pool):
+async def test_tenant_governance_stats_no_data(client_with_auth, mock_app_state_pool):
     """Test tenant stats when no data exists for tenant"""
     mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
 
@@ -169,7 +193,7 @@ async def test_tenant_governance_stats_no_data(mock_app_state_pool):
         "cache_savings": 0.0,
     }
 
-    response = client.get(
+    response = client_with_auth.get(
         "/v1/governance/tenant/nonexistent-tenant", headers={"X-Tenant-Id": "admin"}
     )
 
@@ -182,7 +206,7 @@ async def test_tenant_governance_stats_no_data(mock_app_state_pool):
 
 
 @pytest.mark.asyncio
-async def test_tenant_governance_stats_with_custom_period(mock_app_state_pool):
+async def test_tenant_governance_stats_with_custom_period(client_with_auth, mock_app_state_pool):
     """Test tenant stats with custom time period"""
     mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
 
@@ -201,7 +225,7 @@ async def test_tenant_governance_stats_with_custom_period(mock_app_state_pool):
         [{"operation": "query", "calls": 100, "cost_usd": 15.00, "tokens": 50000}],
     ]
 
-    response = client.get(
+    response = client_with_auth.get(
         "/v1/governance/tenant/test-tenant?days=7",
         headers={"X-Tenant-Id": "test-tenant"},
     )
@@ -212,7 +236,7 @@ async def test_tenant_governance_stats_with_custom_period(mock_app_state_pool):
 
 
 @pytest.mark.asyncio
-async def test_tenant_budget_status_success(mock_app_state_pool):
+async def test_tenant_budget_status_success(client_with_auth, mock_app_state_pool):
     """Test GET /v1/governance/tenant/{tenant_id}/budget endpoint"""
     mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
 
@@ -221,7 +245,7 @@ async def test_tenant_budget_status_success(mock_app_state_pool):
         "current_tokens": 150000,
     }
 
-    response = client.get(
+    response = client_with_auth.get(
         "/v1/governance/tenant/test-tenant/budget",
         headers={"X-Tenant-Id": "test-tenant"},
     )
@@ -237,7 +261,7 @@ async def test_tenant_budget_status_success(mock_app_state_pool):
 
 
 @pytest.mark.asyncio
-async def test_tenant_budget_status_with_alerts(mock_app_state_pool):
+async def test_tenant_budget_status_with_alerts(client_with_auth, mock_app_state_pool):
     """Test budget status with budget alerts (simulated)"""
     mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
 
@@ -247,7 +271,7 @@ async def test_tenant_budget_status_with_alerts(mock_app_state_pool):
         "current_tokens": 3000000,
     }
 
-    response = client.get(
+    response = client_with_auth.get(
         "/v1/governance/tenant/test-tenant/budget",
         headers={"X-Tenant-Id": "test-tenant"},
     )
@@ -259,13 +283,13 @@ async def test_tenant_budget_status_with_alerts(mock_app_state_pool):
 
 
 @pytest.mark.asyncio
-async def test_tenant_budget_status_zero_usage(mock_app_state_pool):
+async def test_tenant_budget_status_zero_usage(client_with_auth, mock_app_state_pool):
     """Test budget status with zero usage"""
     mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
 
     mock_conn.fetchrow.return_value = {"current_cost_usd": 0.0, "current_tokens": 0}
 
-    response = client.get(
+    response = client_with_auth.get(
         "/v1/governance/tenant/new-tenant/budget", headers={"X-Tenant-Id": "new-tenant"}
     )
 
@@ -277,12 +301,12 @@ async def test_tenant_budget_status_zero_usage(mock_app_state_pool):
 
 
 @pytest.mark.asyncio
-async def test_tenant_budget_status_error(mock_app_state_pool):
+async def test_tenant_budget_status_error(client_with_auth, mock_app_state_pool):
     """Test budget status when database fails"""
     mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
     mock_conn.fetchrow.side_effect = Exception("Database connection failed")
 
-    response = client.get(
+    response = client_with_auth.get(
         "/v1/governance/tenant/test-tenant/budget",
         headers={"X-Tenant-Id": "test-tenant"},
     )
@@ -296,9 +320,9 @@ async def test_tenant_budget_status_error(mock_app_state_pool):
 
 
 @pytest.mark.asyncio
-async def test_governance_overview_invalid_days(mock_app_state_pool):
+async def test_governance_overview_invalid_days(client_with_auth, mock_app_state_pool):
     """Test governance overview with invalid days parameter"""
-    response = client.get(
+    response = client_with_auth.get(
         "/v1/governance/overview?days=400",  # Max is 365
         headers={"X-Tenant-Id": "admin"},
     )
@@ -308,9 +332,9 @@ async def test_governance_overview_invalid_days(mock_app_state_pool):
 
 
 @pytest.mark.asyncio
-async def test_tenant_governance_stats_invalid_days(mock_app_state_pool):
+async def test_tenant_governance_stats_invalid_days(client_with_auth, mock_app_state_pool):
     """Test tenant stats with invalid days parameter"""
-    response = client.get(
+    response = client_with_auth.get(
         "/v1/governance/tenant/test-tenant?days=0",  # Min is 1
         headers={"X-Tenant-Id": "test-tenant"},
     )
@@ -320,7 +344,7 @@ async def test_tenant_governance_stats_invalid_days(mock_app_state_pool):
 
 
 @pytest.mark.asyncio
-async def test_governance_overview_empty_results(mock_app_state_pool):
+async def test_governance_overview_empty_results(client_with_auth, mock_app_state_pool):
     """Test governance overview with no data in system"""
     mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
 
@@ -333,7 +357,7 @@ async def test_governance_overview_empty_results(mock_app_state_pool):
 
     mock_conn.fetch.side_effect = [[], []]  # Empty top tenants and models
 
-    response = client.get("/v1/governance/overview", headers={"X-Tenant-Id": "admin"})
+    response = client_with_auth.get("/v1/governance/overview", headers={"X-Tenant-Id": "admin"})
 
     assert response.status_code == 200
     data = response.json()
