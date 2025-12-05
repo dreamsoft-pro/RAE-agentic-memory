@@ -17,6 +17,7 @@ import asyncpg
 import structlog
 
 from apps.memory_api.config import settings
+from apps.memory_api.observability.rae_tracing import get_tracer
 from apps.memory_api.repositories.memory_repository import MemoryRepository
 from apps.memory_api.services.memory_scoring_v2 import (
     ScoringWeights,
@@ -26,6 +27,7 @@ from apps.memory_api.services.memory_scoring_v2 import (
 from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
 
 logger = structlog.get_logger(__name__)
+tracer = get_tracer(__name__)
 
 
 # ============================================================================
@@ -174,78 +176,92 @@ class ContextBuilder:
         Returns:
             WorkingMemoryContext with all components
         """
-        logger.info(
-            "context_building_started",
-            tenant_id=tenant_id,
-            project_id=project_id,
-            query_length=len(query),
-        )
+        with tracer.start_as_current_span("rae.context_builder.build") as span:
+            span.set_attribute("rae.tenant_id", tenant_id)
+            span.set_attribute("rae.project_id", project_id)
+            span.set_attribute("rae.context.query_length", len(query))
+            span.set_attribute("rae.context.max_tokens", self.config.max_total_tokens)
 
-        retrieval_stats = {
-            "ltm_retrieved": 0,
-            "reflections_retrieved": 0,
-            "scoring_method": (
-                "enhanced" if self.config.enable_enhanced_scoring else "basic"
-            ),
-        }
+            logger.info(
+                "context_building_started",
+                tenant_id=tenant_id,
+                project_id=project_id,
+                query_length=len(query),
+            )
 
-        # 1. Format recent messages
-        message_components = self._format_messages(recent_messages or [])
+            retrieval_stats = {
+                "ltm_retrieved": 0,
+                "reflections_retrieved": 0,
+                "scoring_method": (
+                    "enhanced" if self.config.enable_enhanced_scoring else "basic"
+                ),
+            }
 
-        # 2. Retrieve relevant LTM
-        ltm_components = await self._retrieve_ltm(
-            tenant_id=tenant_id,
-            project_id=project_id,
-            query=query,
-        )
-        retrieval_stats["ltm_retrieved"] = len(ltm_components)
+            # 1. Format recent messages
+            message_components = self._format_messages(recent_messages or [])
+            span.set_attribute("rae.context.messages_count", len(message_components))
 
-        # 3. Retrieve relevant reflections (Lessons Learned)
-        reflection_components = await self._retrieve_reflections(
-            tenant_id=tenant_id,
-            project_id=project_id,
-            query=query,
-        )
-        retrieval_stats["reflections_retrieved"] = len(reflection_components)
+            # 2. Retrieve relevant LTM
+            ltm_components = await self._retrieve_ltm(
+                tenant_id=tenant_id,
+                project_id=project_id,
+                query=query,
+            )
+            retrieval_stats["ltm_retrieved"] = len(ltm_components)
+            span.set_attribute("rae.context.ltm_retrieved", len(ltm_components))
 
-        # 4. Retrieve user/system profile
-        profile_components = await self._retrieve_profile(
-            tenant_id=tenant_id, project_id=project_id, user_id=user_id
-        )
+            # 3. Retrieve relevant reflections (Lessons Learned)
+            reflection_components = await self._retrieve_reflections(
+                tenant_id=tenant_id,
+                project_id=project_id,
+                query=query,
+            )
+            retrieval_stats["reflections_retrieved"] = len(reflection_components)
+            span.set_attribute("rae.context.reflections_retrieved", len(reflection_components))
 
-        # 5. Build formatted context
-        system_prompt, context_text = self._build_formatted_context(
-            messages=message_components,
-            ltm_items=ltm_components,
-            reflections=reflection_components,
-            profile_items=profile_components,
-        )
+            # 4. Retrieve user/system profile
+            profile_components = await self._retrieve_profile(
+                tenant_id=tenant_id, project_id=project_id, user_id=user_id
+            )
+            span.set_attribute("rae.context.profile_items", len(profile_components))
 
-        # 6. Calculate total tokens (rough estimate)
-        total_tokens = (
-            sum(c.tokens for c in message_components)
-            + sum(c.tokens for c in ltm_components)
-            + sum(c.tokens for c in reflection_components)
-            + sum(c.tokens for c in profile_components)
-        )
+            # 5. Build formatted context
+            system_prompt, context_text = self._build_formatted_context(
+                messages=message_components,
+                ltm_items=ltm_components,
+                reflections=reflection_components,
+                profile_items=profile_components,
+            )
 
-        logger.info(
-            "context_building_completed",
-            tenant_id=tenant_id,
-            total_tokens=total_tokens,
-            stats=retrieval_stats,
-        )
+            # 6. Calculate total tokens (rough estimate)
+            total_tokens = (
+                sum(c.tokens for c in message_components)
+                + sum(c.tokens for c in ltm_components)
+                + sum(c.tokens for c in reflection_components)
+                + sum(c.tokens for c in profile_components)
+            )
 
-        return WorkingMemoryContext(
-            messages=message_components,
-            ltm_items=ltm_components,
-            reflections=reflection_components,
-            profile_items=profile_components,
-            system_prompt=system_prompt,
-            context_text=context_text,
-            total_tokens=total_tokens,
-            retrieval_stats=retrieval_stats,
-        )
+            span.set_attribute("rae.context.total_tokens", total_tokens)
+            span.set_attribute("rae.context.scoring_method", retrieval_stats["scoring_method"])
+            span.set_attribute("rae.outcome.label", "success")
+
+            logger.info(
+                "context_building_completed",
+                tenant_id=tenant_id,
+                total_tokens=total_tokens,
+                stats=retrieval_stats,
+            )
+
+            return WorkingMemoryContext(
+                messages=message_components,
+                ltm_items=ltm_components,
+                reflections=reflection_components,
+                profile_items=profile_components,
+                system_prompt=system_prompt,
+                context_text=context_text,
+                total_tokens=total_tokens,
+                retrieval_stats=retrieval_stats,
+            )
 
     def _format_messages(
         self, messages: List[Dict[str, Any]]

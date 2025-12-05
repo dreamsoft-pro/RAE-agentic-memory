@@ -21,8 +21,10 @@ import structlog
 
 from apps.memory_api.core.actions import Action, ActionType
 from apps.memory_api.core.state import RAEState
+from apps.memory_api.observability.rae_tracing import get_tracer
 
 logger = structlog.get_logger(__name__)
+tracer = get_tracer(__name__)
 
 
 @dataclass
@@ -125,45 +127,61 @@ class RewardFunction:
         Returns:
             RewardComponents with detailed breakdown
         """
-        # Component 1: Quality
-        quality_score = self._evaluate_quality(
-            state_before, action, state_after, execution_result
-        )
+        with tracer.start_as_current_span("rae.reward.compute") as span:
+            span.set_attribute("rae.action.type", action.action_type.value)
+            span.set_attribute("rae.tenant_id", state_after.tenant_id)
+            span.set_attribute("rae.project_id", state_after.project_id)
+            span.set_attribute("rae.reward.lambda", self.lambda_)
+            span.set_attribute("rae.reward.mu", self.mu)
+            span.set_attribute("rae.reward.gamma", self.gamma)
 
-        # Component 2: Token cost
-        state_delta = state_after.compare(state_before)
-        token_cost = abs(state_delta["token_delta"])  # Tokens consumed
+            # Component 1: Quality
+            quality_score = self._evaluate_quality(
+                state_before, action, state_after, execution_result
+            )
+            span.set_attribute("rae.reward.quality_score", quality_score)
 
-        # Component 3: Latency
-        latency_cost = state_delta["time_delta_ms"]
+            # Component 2: Token cost
+            state_delta = state_after.compare(state_before)
+            token_cost = abs(state_delta["token_delta"])  # Tokens consumed
+            span.set_attribute("rae.reward.token_cost", token_cost)
 
-        # Compute weighted components
-        quality_reward = quality_score  # Already 0-1
-        token_penalty = self.lambda_ * token_cost
-        latency_penalty = self.mu * latency_cost
+            # Component 3: Latency
+            latency_cost = state_delta["time_delta_ms"]
+            span.set_attribute("rae.reward.latency_cost_ms", latency_cost)
 
-        # Total reward
-        total_reward = quality_reward - token_penalty - latency_penalty
+            # Compute weighted components
+            quality_reward = quality_score  # Already 0-1
+            token_penalty = self.lambda_ * token_cost
+            latency_penalty = self.mu * latency_cost
 
-        components = RewardComponents(
-            quality_score=quality_score,
-            token_cost=token_cost,
-            latency_cost=latency_cost,
-            quality_reward=quality_reward,
-            token_penalty=token_penalty,
-            latency_penalty=latency_penalty,
-            total_reward=total_reward,
-            lambda_weight=self.lambda_,
-            mu_weight=self.mu,
-        )
+            span.set_attribute("rae.reward.quality_reward", quality_reward)
+            span.set_attribute("rae.reward.token_penalty", token_penalty)
+            span.set_attribute("rae.reward.latency_penalty", latency_penalty)
 
-        logger.debug(
-            "reward_computed",
-            action_type=action.action_type.value,
-            reward_components=components.to_dict(),
-        )
+            # Total reward
+            total_reward = quality_reward - token_penalty - latency_penalty
+            span.set_attribute("rae.reward.total", total_reward)
 
-        return components
+            components = RewardComponents(
+                quality_score=quality_score,
+                token_cost=token_cost,
+                latency_cost=latency_cost,
+                quality_reward=quality_reward,
+                token_penalty=token_penalty,
+                latency_penalty=latency_penalty,
+                total_reward=total_reward,
+                lambda_weight=self.lambda_,
+                mu_weight=self.mu,
+            )
+
+            logger.debug(
+                "reward_computed",
+                action_type=action.action_type.value,
+                reward_components=components.to_dict(),
+            )
+
+            return components
 
     def _evaluate_quality(
         self,
@@ -188,42 +206,54 @@ class RewardFunction:
           - Measured via A/B testing
           - Proxy metrics (click-through, engagement, etc.)
         """
-        action_type = action.action_type
+        with tracer.start_as_current_span("rae.reward.evaluate_quality") as span:
+            action_type = action.action_type
+            span.set_attribute("rae.action.type", action_type.value)
 
-        if action_type in [
-            ActionType.RETRIEVE_EPISODIC,
-            ActionType.RETRIEVE_SEMANTIC,
-            ActionType.RETRIEVE_WORKING,
-            ActionType.RETRIEVE_LTM,
-            ActionType.RETRIEVE_REFLECTIVE,
-        ]:
-            # Quality = relevance + diversity of retrieved memories
-            quality = self._evaluate_retrieval_quality(execution_result)
+            if action_type in [
+                ActionType.RETRIEVE_EPISODIC,
+                ActionType.RETRIEVE_SEMANTIC,
+                ActionType.RETRIEVE_WORKING,
+                ActionType.RETRIEVE_LTM,
+                ActionType.RETRIEVE_REFLECTIVE,
+            ]:
+                # Quality = relevance + diversity of retrieved memories
+                span.set_attribute("rae.reward.quality_method", "retrieval")
+                quality = self._evaluate_retrieval_quality(execution_result)
 
-        elif action_type == ActionType.CALL_LLM:
-            # Quality = heuristic based on output length and coherence
-            # (In production: user feedback, human ratings, etc.)
-            quality = self._evaluate_llm_quality(execution_result)
+            elif action_type == ActionType.CALL_LLM:
+                # Quality = heuristic based on output length and coherence
+                # (In production: user feedback, human ratings, etc.)
+                span.set_attribute("rae.reward.quality_method", "llm_output")
+                quality = self._evaluate_llm_quality(execution_result)
 
-        elif action_type == ActionType.GENERATE_REFLECTION:
-            # Quality = novelty and importance scores from reflection
-            quality = self._evaluate_reflection_quality(execution_result)
+            elif action_type == ActionType.GENERATE_REFLECTION:
+                # Quality = novelty and importance scores from reflection
+                span.set_attribute("rae.reward.quality_method", "reflection")
+                quality = self._evaluate_reflection_quality(execution_result)
 
-        elif action_type == ActionType.PRUNE_CONTEXT:
-            # Quality = how much we compressed while preserving importance
-            quality = self._evaluate_pruning_quality(
-                state_before, state_after, execution_result
-            )
+            elif action_type == ActionType.PRUNE_CONTEXT:
+                # Quality = how much we compressed while preserving importance
+                span.set_attribute("rae.reward.quality_method", "pruning")
+                quality = self._evaluate_pruning_quality(
+                    state_before, state_after, execution_result
+                )
 
-        elif action_type == ActionType.UPDATE_GRAPH:
-            # Quality = graph structure improvement
-            quality = self._evaluate_graph_update_quality(state_before, state_after)
+            elif action_type == ActionType.UPDATE_GRAPH:
+                # Quality = graph structure improvement
+                span.set_attribute("rae.reward.quality_method", "graph_update")
+                quality = self._evaluate_graph_update_quality(state_before, state_after)
 
-        else:
-            # Default: neutral quality
-            quality = 0.5
+            else:
+                # Default: neutral quality
+                span.set_attribute("rae.reward.quality_method", "default")
+                quality = 0.5
 
-        return max(0.0, min(1.0, quality))  # Clamp to [0, 1]
+            clamped_quality = max(0.0, min(1.0, quality))
+            span.set_attribute("rae.reward.quality_raw", quality)
+            span.set_attribute("rae.reward.quality_clamped", clamped_quality)
+
+            return clamped_quality  # Clamp to [0, 1]
 
     def _evaluate_retrieval_quality(self, execution_result: Optional[Dict]) -> float:
         """

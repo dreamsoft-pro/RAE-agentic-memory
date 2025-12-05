@@ -34,8 +34,10 @@ import structlog
 from pydantic import BaseModel, Field
 
 from apps.memory_api.core.state import RAEState
+from apps.memory_api.observability.rae_tracing import get_tracer
 
 logger = structlog.get_logger(__name__)
+tracer = get_tracer(__name__)
 
 
 class ActionType(str, Enum):
@@ -190,34 +192,59 @@ class RetrieveEpisodicAction(Action):
     action_type: ActionType = ActionType.RETRIEVE_EPISODIC
 
     def is_valid_for_state(self, state: RAEState) -> bool:
-        # Check budget
-        if state.budget_state.is_exhausted():
-            logger.warning(
-                "retrieve_episodic_invalid_budget_exhausted", tenant_id=state.tenant_id
-            )
-            return False
+        with tracer.start_as_current_span("rae.action.retrieve_episodic.validate") as span:
+            span.set_attribute("rae.action.type", self.action_type.value)
+            span.set_attribute("rae.tenant_id", state.tenant_id)
+            span.set_attribute("rae.project_id", state.project_id)
+            span.set_attribute("rae.memory.layer", "episodic")
+            span.set_attribute("rae.memory.count", state.memory_state.episodic.count)
 
-        # Check we have episodic memories
-        if state.memory_state.episodic.count == 0:
-            logger.info(
-                "retrieve_episodic_invalid_no_memories", tenant_id=state.tenant_id
-            )
-            return False
+            # Check budget
+            if state.budget_state.is_exhausted():
+                span.set_attribute("rae.action.validation_result", "failed_budget_exhausted")
+                span.set_attribute("rae.outcome.label", "fail")
+                logger.warning(
+                    "retrieve_episodic_invalid_budget_exhausted", tenant_id=state.tenant_id
+                )
+                return False
 
-        return True
+            # Check we have episodic memories
+            if state.memory_state.episodic.count == 0:
+                span.set_attribute("rae.action.validation_result", "failed_no_memories")
+                span.set_attribute("rae.outcome.label", "fail")
+                logger.info(
+                    "retrieve_episodic_invalid_no_memories", tenant_id=state.tenant_id
+                )
+                return False
+
+            span.set_attribute("rae.action.validation_result", "success")
+            span.set_attribute("rae.outcome.label", "success")
+            return True
 
     def estimate_cost(self, state: RAEState) -> Dict[str, float]:
-        k = self.parameters.get("k", 10)
+        with tracer.start_as_current_span("rae.action.retrieve_episodic.estimate_cost") as span:
+            k = self.parameters.get("k", 10)
+            threshold = self.parameters.get("threshold", 0.7)
+            time_window_days = self.parameters.get("time_window_days", 7)
 
-        # Episodic retrieval: mainly embedding computation cost
-        # Assume ~100 tokens per memory
-        estimated_tokens = k * 100
+            span.set_attribute("rae.action.type", self.action_type.value)
+            span.set_attribute("rae.memory.layer", "episodic")
+            span.set_attribute("rae.action.k", k)
+            span.set_attribute("rae.action.threshold", threshold)
+            span.set_attribute("rae.action.time_window_days", time_window_days)
 
-        return {
-            "tokens": estimated_tokens,
-            "cost_usd": 0.0,  # No LLM cost, just retrieval
-            "latency_ms": k * 5,  # ~5ms per memory retrieval
-        }
+            # Episodic retrieval: mainly embedding computation cost
+            # Assume ~100 tokens per memory
+            estimated_tokens = k * 100
+
+            span.set_attribute("rae.action.estimated_tokens", estimated_tokens)
+            span.set_attribute("rae.action.estimated_latency_ms", k * 5)
+
+            return {
+                "tokens": estimated_tokens,
+                "cost_usd": 0.0,  # No LLM cost, just retrieval
+                "latency_ms": k * 5,  # ~5ms per memory retrieval
+            }
 
 
 class RetrieveWorkingAction(Action):
@@ -373,63 +400,95 @@ class CallLLMAction(Action):
     action_type: ActionType = ActionType.CALL_LLM
 
     def is_valid_for_state(self, state: RAEState) -> bool:
-        # Check budget
-        if state.budget_state.is_exhausted():
-            return False
+        with tracer.start_as_current_span("rae.action.call_llm.validate") as span:
+            span.set_attribute("rae.action.type", self.action_type.value)
+            span.set_attribute("rae.tenant_id", state.tenant_id)
+            span.set_attribute("rae.project_id", state.project_id)
+            span.set_attribute("rae.action.model", self.parameters.get("model", "gpt-4o-mini"))
 
-        # Check we have context
-        if state.working_context.token_count == 0:
-            logger.warning("call_llm_invalid_no_context", tenant_id=state.tenant_id)
-            return False
+            # Check budget
+            if state.budget_state.is_exhausted():
+                span.set_attribute("rae.action.validation_result", "failed_budget_exhausted")
+                span.set_attribute("rae.outcome.label", "fail")
+                return False
 
-        # Check estimated cost doesn't exceed budget
-        estimated = self.estimate_cost(state)
-        if estimated["cost_usd"] > state.budget_state.remaining_cost_usd:
-            logger.warning(
-                "call_llm_invalid_exceeds_budget",
-                tenant_id=state.tenant_id,
-                estimated_cost=estimated["cost_usd"],
-                remaining_budget=state.budget_state.remaining_cost_usd,
-            )
-            return False
+            # Check we have context
+            if state.working_context.token_count == 0:
+                span.set_attribute("rae.action.validation_result", "failed_no_context")
+                span.set_attribute("rae.outcome.label", "fail")
+                logger.warning("call_llm_invalid_no_context", tenant_id=state.tenant_id)
+                return False
 
-        if estimated["tokens"] > state.budget_state.remaining_tokens:
-            return False
+            # Check estimated cost doesn't exceed budget
+            estimated = self.estimate_cost(state)
+            span.set_attribute("rae.action.estimated_cost_usd", estimated["cost_usd"])
+            span.set_attribute("rae.action.estimated_tokens", estimated["tokens"])
+            span.set_attribute("rae.state.budget_remaining_usd", state.budget_state.remaining_cost_usd)
 
-        return True
+            if estimated["cost_usd"] > state.budget_state.remaining_cost_usd:
+                span.set_attribute("rae.action.validation_result", "failed_exceeds_cost_budget")
+                span.set_attribute("rae.outcome.label", "fail")
+                logger.warning(
+                    "call_llm_invalid_exceeds_budget",
+                    tenant_id=state.tenant_id,
+                    estimated_cost=estimated["cost_usd"],
+                    remaining_budget=state.budget_state.remaining_cost_usd,
+                )
+                return False
+
+            if estimated["tokens"] > state.budget_state.remaining_tokens:
+                span.set_attribute("rae.action.validation_result", "failed_exceeds_token_budget")
+                span.set_attribute("rae.outcome.label", "fail")
+                return False
+
+            span.set_attribute("rae.action.validation_result", "success")
+            span.set_attribute("rae.outcome.label", "success")
+            return True
 
     def estimate_cost(self, state: RAEState) -> Dict[str, float]:
-        model = self.parameters.get("model", "gpt-4o-mini")
-        max_tokens = self.parameters.get("max_tokens", 1000)
+        with tracer.start_as_current_span("rae.action.call_llm.estimate_cost") as span:
+            model = self.parameters.get("model", "gpt-4o-mini")
+            max_tokens = self.parameters.get("max_tokens", 1000)
 
-        # Input tokens = current context
-        input_tokens = state.working_context.token_count
-        output_tokens = max_tokens
+            span.set_attribute("rae.action.type", self.action_type.value)
+            span.set_attribute("rae.action.model", model)
+            span.set_attribute("rae.action.max_output_tokens", max_tokens)
 
-        # Simple cost model (should be imported from cost_model module)
-        # Rough estimates:
-        costs_per_million = {
-            "gpt-4o": {"input": 2.50, "output": 10.00},
-            "gpt-4o-mini": {"input": 0.15, "output": 0.60},
-            "claude-3-5-sonnet-20241022": {"input": 3.00, "output": 15.00},
-            "claude-3-5-haiku-20241022": {"input": 0.80, "output": 4.00},
-        }
+            # Input tokens = current context
+            input_tokens = state.working_context.token_count
+            output_tokens = max_tokens
 
-        costs = costs_per_million.get(
-            model, {"input": 0.15, "output": 0.60}
-        )  # Default to mini
-        input_cost = (input_tokens / 1_000_000) * costs["input"]
-        output_cost = (output_tokens / 1_000_000) * costs["output"]
-        total_cost = input_cost + output_cost
+            span.set_attribute("rae.action.input_tokens", input_tokens)
+            span.set_attribute("rae.action.output_tokens", output_tokens)
 
-        # Latency estimate (very rough)
-        latency = 1000 + (output_tokens * 50)  # ~50ms per output token
+            # Simple cost model (should be imported from cost_model module)
+            # Rough estimates:
+            costs_per_million = {
+                "gpt-4o": {"input": 2.50, "output": 10.00},
+                "gpt-4o-mini": {"input": 0.15, "output": 0.60},
+                "claude-3-5-sonnet-20241022": {"input": 3.00, "output": 15.00},
+                "claude-3-5-haiku-20241022": {"input": 0.80, "output": 4.00},
+            }
 
-        return {
-            "tokens": input_tokens + output_tokens,
-            "cost_usd": total_cost,
-            "latency_ms": latency,
-        }
+            costs = costs_per_million.get(
+                model, {"input": 0.15, "output": 0.60}
+            )  # Default to mini
+            input_cost = (input_tokens / 1_000_000) * costs["input"]
+            output_cost = (output_tokens / 1_000_000) * costs["output"]
+            total_cost = input_cost + output_cost
+
+            # Latency estimate (very rough)
+            latency = 1000 + (output_tokens * 50)  # ~50ms per output token
+
+            span.set_attribute("rae.action.estimated_cost_usd", total_cost)
+            span.set_attribute("rae.action.estimated_tokens", input_tokens + output_tokens)
+            span.set_attribute("rae.action.estimated_latency_ms", latency)
+
+            return {
+                "tokens": input_tokens + output_tokens,
+                "cost_usd": total_cost,
+                "latency_ms": latency,
+            }
 
 
 class PruneContextAction(Action):
@@ -474,52 +533,80 @@ class GenerateReflectionAction(Action):
     action_type: ActionType = ActionType.GENERATE_REFLECTION
 
     def is_valid_for_state(self, state: RAEState) -> bool:
-        if state.budget_state.is_exhausted():
-            return False
+        with tracer.start_as_current_span("rae.action.generate_reflection.validate") as span:
+            span.set_attribute("rae.action.type", self.action_type.value)
+            span.set_attribute("rae.tenant_id", state.tenant_id)
+            span.set_attribute("rae.project_id", state.project_id)
+            span.set_attribute("rae.memory.layer", "reflective")
 
-        # Need sufficient memories to reflect on
-        total_memories = (
-            state.memory_state.episodic.count + state.memory_state.semantic.count
-        )
+            if state.budget_state.is_exhausted():
+                span.set_attribute("rae.action.validation_result", "failed_budget_exhausted")
+                span.set_attribute("rae.outcome.label", "fail")
+                return False
 
-        min_memories = self.parameters.get("min_cluster_size", 5) * 2
-        if total_memories < min_memories:
-            logger.info(
-                "generate_reflection_invalid_insufficient_memories",
-                tenant_id=state.tenant_id,
-                total_memories=total_memories,
-                required=min_memories,
+            # Need sufficient memories to reflect on
+            total_memories = (
+                state.memory_state.episodic.count + state.memory_state.semantic.count
             )
-            return False
 
-        return True
+            span.set_attribute("rae.memory.total_available", total_memories)
+
+            min_memories = self.parameters.get("min_cluster_size", 5) * 2
+            if total_memories < min_memories:
+                span.set_attribute("rae.action.validation_result", "failed_insufficient_memories")
+                span.set_attribute("rae.outcome.label", "fail")
+                span.set_attribute("rae.memory.required", min_memories)
+                logger.info(
+                    "generate_reflection_invalid_insufficient_memories",
+                    tenant_id=state.tenant_id,
+                    total_memories=total_memories,
+                    required=min_memories,
+                )
+                return False
+
+            span.set_attribute("rae.action.validation_result", "success")
+            span.set_attribute("rae.outcome.label", "success")
+            return True
 
     def estimate_cost(self, state: RAEState) -> Dict[str, float]:
-        max_memories = self.parameters.get("max_memories", 100)
-        min_cluster_size = self.parameters.get("min_cluster_size", 5)
+        with tracer.start_as_current_span("rae.action.generate_reflection.estimate_cost") as span:
+            max_memories = self.parameters.get("max_memories", 100)
+            min_cluster_size = self.parameters.get("min_cluster_size", 5)
+            level = self.parameters.get("level", "L1")
 
-        # Reflection involves:
-        # 1. Clustering (local computation)
-        # 2. LLM call per cluster
-        # 3. Embedding generation
+            span.set_attribute("rae.action.type", self.action_type.value)
+            span.set_attribute("rae.memory.layer", "reflective")
+            span.set_attribute("rae.action.max_memories", max_memories)
+            span.set_attribute("rae.action.min_cluster_size", min_cluster_size)
+            span.set_attribute("rae.action.reflection_level", level)
 
-        estimated_clusters = max_memories // min_cluster_size
-        estimated_tokens_per_cluster = 2000  # Context + output
+            # Reflection involves:
+            # 1. Clustering (local computation)
+            # 2. LLM call per cluster
+            # 3. Embedding generation
 
-        total_tokens = estimated_clusters * estimated_tokens_per_cluster
+            estimated_clusters = max_memories // min_cluster_size
+            estimated_tokens_per_cluster = 2000  # Context + output
 
-        # Rough cost estimate (using gpt-4o-mini for reflections)
-        cost_per_million = 1.0  # $1 per million tokens (mixed input/output)
-        total_cost = (total_tokens / 1_000_000) * cost_per_million
+            total_tokens = estimated_clusters * estimated_tokens_per_cluster
 
-        # Latency: clustering + LLM calls
-        latency = 5000 + (estimated_clusters * 3000)  # 3s per cluster
+            # Rough cost estimate (using gpt-4o-mini for reflections)
+            cost_per_million = 1.0  # $1 per million tokens (mixed input/output)
+            total_cost = (total_tokens / 1_000_000) * cost_per_million
 
-        return {
-            "tokens": total_tokens,
-            "cost_usd": total_cost,
-            "latency_ms": latency,
-        }
+            # Latency: clustering + LLM calls
+            latency = 5000 + (estimated_clusters * 3000)  # 3s per cluster
+
+            span.set_attribute("rae.action.estimated_clusters", estimated_clusters)
+            span.set_attribute("rae.action.estimated_tokens", total_tokens)
+            span.set_attribute("rae.action.estimated_cost_usd", total_cost)
+            span.set_attribute("rae.action.estimated_latency_ms", latency)
+
+            return {
+                "tokens": total_tokens,
+                "cost_usd": total_cost,
+                "latency_ms": latency,
+            }
 
 
 class UpdateGraphAction(Action):
