@@ -71,12 +71,6 @@ services:
       - RAE_APP_LOG_LEVEL=DEBUG
       - LOG_LEVEL=INFO
       - OTEL_TRACES_ENABLED=false
-    healthcheck:
-      test: ["CMD-SHELL", "celery -A apps.memory_api.celery_app inspect ping -t 10 || exit 1"]
-      interval: 30s
-      timeout: 15s
-      retries: 3
-      start_period: 90s
 
   # ============================================================================
   # Celery Beat with Auto-reload
@@ -93,12 +87,6 @@ services:
       - RAE_APP_LOG_LEVEL=DEBUG
       - LOG_LEVEL=INFO
       - OTEL_TRACES_ENABLED=false
-    healthcheck:
-      test: ["CMD-SHELL", "python3 -c 'import os; os.kill(1, 0)' || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 90s
 
   # ============================================================================
   # Streamlit Dashboard with Hot Reload
