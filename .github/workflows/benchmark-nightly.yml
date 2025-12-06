@@ -68,6 +68,9 @@ jobs:
         run: |
           python -c "import asyncpg; import asyncio; asyncio.run(asyncpg.connect('postgresql://rae_user:rae_password@localhost:5432/rae_memory'))"
           echo "✅ Database connection successful"
+          # Run migrations
+          alembic upgrade head
+          echo "✅ Database migrations complete"
 
       - name: Run academic_extended benchmark
         env:
@@ -143,6 +146,9 @@ jobs:
         run: |
           python -c "import asyncpg; import asyncio; asyncio.run(asyncpg.connect('postgresql://rae_user:rae_password@localhost:5432/rae_memory'))"
           echo "✅ Database connection successful"
+          # Run migrations
+          alembic upgrade head
+          echo "✅ Database migrations complete"
 
       - name: Run industrial_small benchmark
         env:
