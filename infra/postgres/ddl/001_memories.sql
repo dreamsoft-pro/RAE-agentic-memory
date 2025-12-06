@@ -1,4 +1,5 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS vector;
 
 -- Drop old tables if they exist to apply the new schema
 DROP TABLE IF EXISTS procedural_memories CASCADE;
