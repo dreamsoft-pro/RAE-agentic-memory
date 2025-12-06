@@ -57,7 +57,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
-          pip install -r requirements-ml.txt
+          pip install -r apps/memory_api/requirements-ml.txt
 
       - name: Setup database
         env:
@@ -140,7 +140,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
-          pip install -r requirements-ml.txt
+          pip install -r apps/memory_api/requirements-ml.txt
 
       - name: Setup database
         env:
