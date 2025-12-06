@@ -96,62 +96,75 @@ This document tracks the implementation status of RAE features and defines the r
 - **Memory Replay Tool**
 
 ## Technical Debt (Auto-generated from code)
-*Last scan: 2025-12-06 10:03*
+*Last scan: 2025-12-06 11:10*
 
-- [ ] **CHANGELOG.md:78** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:79** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:258** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:259** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:432** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:433** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:600** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:601** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:759** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:760** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:914** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:915** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:1063** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:1064** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:1212** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:1213** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:1359** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:1360** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:1505** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:1506** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:1631** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:1632** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:1755** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:1756** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:1866** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:1867** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:1977** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:1978** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:2084** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:2085** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:2190** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:2191** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:2281** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:2282** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:2363** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:2364** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:2435** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:2436** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:2505** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:2506** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:2578** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:2579** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:2653** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:2654** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:2743** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:2744** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:2819** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:2820** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:2894** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:2895** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:77** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:78** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:257** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:258** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:437** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:438** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:614** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:615** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:791** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:792** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:967** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:968** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:1143** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:1144** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:1317** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:1318** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:1491** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:1492** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:1659** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:1660** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:1818** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:1819** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:1973** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:1974** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:2122** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:2123** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:2271** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:2272** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:2418** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:2419** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:2564** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:2565** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:2690** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:2691** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:2814** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:2815** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:2925** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:2926** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:3036** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:3037** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:3143** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:3144** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:3249** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:3250** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:3340** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:3341** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:3422** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:3423** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:3494** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:3495** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:3564** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:3565** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:3637** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:3638** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:3712** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:3713** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:3802** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:3803** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:3878** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:3879** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:3953** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:3954** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
 - [ ] **CONTRIBUTING.md:148** - Run the documentation automator to update status and TODOs:
-- [ ] **README.md:945** - - ✅ **[TODO List](TODO.md)** - Upcoming features and improvements
+- [ ] **CRITICAL_AGENT_RULES.md:305** - - `TODO.md` - Extracted TODOs/FIXMEs from code
+- [ ] **README.md:1006** - - ✅ **[TODO List](TODO.md)** - Upcoming features and improvements
 - [ ] **STATUS.md:25** - All missing/incomplete functionalities from TODO.md have been successfully implemented:
-- [ ] **STATUS.md:204** - - [Technical Debt](TODO.md)
+- [ ] **STATUS.md:210** - - [Technical Debt](TODO.md)
 - [ ] **apps/memory_api/services/hybrid_search.py:318** - connected_components=1,   TODO: compute from graph
 - [ ] **apps/memory_api/services/smart_reranker.py:122** - "recency_seconds": 0,   TODO: calc
 - [ ] **apps/memory_api/services/context_builder.py:321** - In production, use vector search to get similarity scores
@@ -165,6 +178,7 @@ This document tracks the implementation status of RAE features and defines the r
 - [ ] **apps/memory_api/core/action_executor.py:275** - Mock action implementations (TODO: Replace with real integrations)
 - [ ] **apps/memory_api/workers/memory_maintenance.py:613** - project_id="default",   TODO: Get actual projects
 - [ ] **apps/memory_api/repositories/metrics_repository.py:83** - Implement COPY-based bulk insert for better performance
+- [ ] **scripts/metrics_tracker.py:132** - metrics.record_file("TODO.md", "update_todo")
 - [ ] **scripts/docs_automator.py:4** - Generates/Updates CHANGELOG.md, TODO.md, STATUS.md, and TESTING_STATUS.md.
 - [ ] **scripts/docs_automator.py:18** - _FILE = "TODO.md"
 - [ ] **scripts/docs_automator.py:138** - print(f"Updating {TODO_FILE}...")
@@ -176,9 +190,17 @@ This document tracks the implementation status of RAE features and defines the r
 - [ ] **scripts/docs_automator.py:165** - "\n".join(todos) if todos else "No TODOs found in code."
 - [ ] **scripts/docs_automator.py:167** - Inject into TODO.md
 - [ ] **scripts/docs_automator.py:178** - write_file_content(TODO_FILE, new_content)
+- [ ] **scripts/docs_automator.py:387** - metrics.record_file(TODO_FILE, "update_todo")
+- [ ] **scripts/docs_generators/api_docs.py:24** - Implement FastAPI OpenAPI export
+- [ ] **scripts/docs_generators/code_metrics.py:37** - Add radon for cyclomatic complexity
+- [ ] **scripts/docs_generators/code_metrics.py:38** - Add lizard for code analysis
 - [ ] **.github/workflows/ci.yml:626** - git add CHANGELOG.md TODO.md STATUS.md docs/TESTING_STATUS.md || true
-- [ ] **.github/workflows/docs.yml:53** - file_pattern: 'CHANGELOG.md STATUS.md TODO.md docs/TESTING_STATUS.md'
+- [ ] **.github/workflows/docs.yml:53** - file_pattern: 'CHANGELOG.md STATUS.md TODO.md docs/TESTING_STATUS.md docs/.auto-generated/**'
 - [ ] **docs/RAE–Docs-vs-Code.md:396** - 11. Priorytetowa lista TODO (szczególnie pod RAE Lite)
+- [ ] **docs/CONTRIBUTING_DOCS.md:25** - - **reports/TODO.md** - Extracted TODOs from code
+- [ ] **docs/CONTRIBUTING_DOCS.md:300** - file_pattern: 'CHANGELOG.md STATUS.md TODO.md docs/.auto-generated/your-category/your-doc.md'
+- [ ] **docs/CONTRIBUTING_DOCS.md:351** - - **TODOs:** Documentation tasks in code
+- [ ] **docs/DOCUMENTATION_EXECUTIVE_SUMMARY.md:50** - | **Reports** | CHANGELOG.md, TODO.md | Every CI run |
 - [ ] **docs/Self-Documenting Codebase Blueprint.md:11** - 1. Warstwa Źródłowa: Kod, Komentarze TODO, Historia Gita (Commity).
 - [ ] **docs/Self-Documenting Codebase Blueprint.md:13** - 3. Warstwa Prezentacji: Pliki Markdown (STATUS.md, CHANGELOG.md, TODO.md).
 - [ ] **docs/Self-Documenting Codebase Blueprint.md:29** - B. Komentarze w Kodzie (TODO)
@@ -188,6 +210,7 @@ This document tracks the implementation status of RAE features and defines the r
 - [ ] **docs/Self-Documenting Codebase Blueprint.md:70** - * Transparentność: Klient/Manager widzi postępy (CHANGELOG) i problemy (TODO) w prostych plikach tekstowych.
 - [ ] **docs/RAE_MATHEMATICAL_REFACTORING_GUIDE.md:2196** - Add relevance scoring when available
 - [ ] **docs/RAE_MATHEMATICAL_REFACTORING_GUIDE.md:3935** - Use embedding similarity for semantic matching
+- [ ] **docs/.auto-generated/metrics/DASHBOARD.md:39** - | TODO.md | update_todo | 2025-12-06 11:57:03 |
 - [ ] **docs/.auto-generated/reports/CHANGELOG.md:40** - - update project status and TODO list after iteration 2 completion ([`49aff83c8`](../../commit/49aff83c8))
 - [ ] **docs/.auto-generated/reports/CHANGELOG.md:41** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a98a`](../../commit/934b3a98a))
 - [ ] **docs/.auto-generated/reports/CHANGELOG.md:109** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
@@ -210,6 +233,9 @@ This document tracks the implementation status of RAE features and defines the r
 - [ ] **docs/reference/llm/RAE–Multi-Model_LLM-Integration-Guide.md:259** - 8.2. Qwen Provider – TODO
 - [ ] **docs/reference/llm/RAE–Multi-Model_LLM-Integration-Guide.md:284** - 8.3. Grok Provider – TODO
 - [ ] **docs/reference/deployment/observability.md:510** - Future Enhancements (TODO)
+- [ ] **docs/project-design/active/DOCUMENTATION_AUTOMATION_PLAN.md:14** - - **docs_automator.py**: Updates 4 files (CHANGELOG, STATUS, TODO, TESTING_STATUS)
+- [ ] **docs/project-design/active/DOCUMENTATION_AUTOMATION_PLAN.md:114** - │   │   └── TODO.md            Extracted TODOs
+- [ ] **docs/project-design/active/DOCUMENTATION_AUTOMATION_PLAN.md:167** - | `reports/TODO.md` | On push | Every commit | Code scan (TODO/FIXME) |
 - [ ] **docs/project-design/completed/enterprise-roadmap/ENTERPRISE-FIX-STATUS.md:331** - - [ ] Remove TODO comments or implement them
 - [ ] **docs/project-design/completed/enterprise-roadmap/ENTERPRISE-FIX-STATUS.md:441** - - [ ] 100% of TODO comments resolved
 - [ ] **docs/project-design/completed/enterprise-roadmap/ENTERPRISE-FIX-PLAN.md:100** - 2. Implement TODO comments or remove them

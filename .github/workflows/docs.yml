@@ -49,8 +49,8 @@ jobs:
       - name: Commit and Push changes
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
-          commit_message: "docs: Auto-update status and metrics [skip ci]"
-          file_pattern: 'CHANGELOG.md STATUS.md TODO.md docs/TESTING_STATUS.md'
+          commit_message: "docs: auto-update documentation [skip ci]"
+          file_pattern: 'CHANGELOG.md STATUS.md TODO.md docs/TESTING_STATUS.md docs/.auto-generated/**'
           branch: ${{ github.event.workflow_run.head_branch }}
           skip_dirty_check: false
           skip_fetch: true
