@@ -1,6 +1,6 @@
 ## Recent Changes (Auto-generated)
 
-*Last updated: 2025-12-06 20:54 • Branch: develop • Commit: ce0e766*
+*Last updated: 2025-12-06 20:54 • Branch: main • Commit: 35d0480*
 
 ### ✨ Features
 
@@ -157,6 +157,7 @@
 
 ### 📦 Other
 
+- Merge develop into main - Benchmark tests complete ([`35d0480`](../../commit/35d0480))
 - Merge main into develop - Add benchmark tests ([`ce0e766`](../../commit/ce0e766))
 - Merge branch 'develop' - Add benchmarking suite ([`23cb3a2`](../../commit/23cb3a2))
 - Merge branch 'develop' ([`63d81f5`](../../commit/63d81f5))
