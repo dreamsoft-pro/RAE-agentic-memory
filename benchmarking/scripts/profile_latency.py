@@ -30,13 +30,15 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from apps.memory_api.services.embedding import get_embedding_service
-from apps.memory_api.services.vector_store import VectorStoreService
 
 
 class LatencyProfiler:
     """Profile query latency with statistical analysis"""
 
     def __init__(self, db_pool: asyncpg.Pool):
+        # Lazy import to avoid initialization issues in test environments
+        from apps.memory_api.services.vector_store import VectorStoreService
+
         self.pool = db_pool
         self.embedding_service = get_embedding_service()
         self.vector_store = VectorStoreService(db_pool)
