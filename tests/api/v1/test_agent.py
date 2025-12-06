@@ -57,11 +57,17 @@ def client_with_auth():
     # Override auth dependency
     app.dependency_overrides[get_and_verify_tenant_id] = lambda: "test-tenant"
     # Mock pool state to avoid AttributeError
-    app.state.pool = MagicMock()
-    
-    with TestClient(app) as client:
-        yield client
-        
+    mock_pool = MagicMock()
+    mock_pool.close = AsyncMock()
+    app.state.pool = mock_pool
+
+    # Mock lifespan dependencies to avoid real DB/Redis connections
+    with patch("apps.memory_api.main.asyncpg.create_pool", new=AsyncMock(return_value=mock_pool)), \
+         patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()):
+
+        with TestClient(app) as client:
+            yield client
+
     app.dependency_overrides = {}
     if hasattr(app.state, "pool"):
         del app.state.pool

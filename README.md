@@ -213,6 +213,24 @@ RAE is designed for enterprise AI governance and compliance with **ISO/IEC 42001
 
 **Not sure which to choose?** Start with RAE Lite - you can always upgrade later.
 
+### 📦 Docker Images & Build Information
+
+**Image Sizes (Full Stack):**
+- **Main API** (rae-api, celery-worker, celery-beat): 9.23 GB
+- **ML Service** (embeddings, NLP): 8.14 GB
+- **Dashboard**: 690 MB
+- **Total Disk Space**: ~18 GB (actual storage after layer deduplication)
+
+**Build Time (on laptop):**
+- **Initial build**: 8-10 minutes (downloads PyTorch, CUDA, ML models)
+- **Rebuild with cache**: 1-2 minutes (only changed layers)
+- **Docker layer caching**: Automatically preserves downloaded packages
+
+**Optimization Tips:**
+- Use `docker-compose build --parallel` to build images concurrently
+- Docker BuildKit cache persists between builds (no re-download)
+- See [Makefile.dev](Makefile.dev) for smart rebuild commands
+
 ### Full Stack (Recommended for Production)
 **One-line install:**
 
@@ -259,6 +277,24 @@ docker-compose -f docker-compose.lite.yml up -d
 **Having issues?** See [Troubleshooting Guide](TROUBLESHOOTING.md)
 
 See [RAE Lite Profile Documentation](docs/reference/deployment/rae-lite-profile.md) for complete guide.
+
+### ⚙️ Environment Configuration
+
+**For Docker deployments (recommended):**
+1. Copy the example environment file: `cp .env.example .env`
+2. **Database credentials are pre-configured** - no changes needed for Docker!
+3. Only add your **LLM API keys** (OpenAI, Anthropic, or Gemini)
+4. Optional: Configure Ollama for local/offline LLMs (see [Local Setup](docs/LOCAL_SETUP.md))
+
+**Default credentials (already in docker-compose.yml):**
+- Database: `rae` / User: `rae` / Password: `rae_password`
+- These work out-of-box with Docker - only change for production deployments
+- For production: Update password in both `.env` and `docker-compose.yml`
+
+**For local development (without Docker):**
+- Match credentials in `.env` to your local PostgreSQL setup
+- Ensure Redis is running on `localhost:6379`
+- See [Development Guide](docs/DEVELOPMENT.md) for complete setup
 
 ---
 
