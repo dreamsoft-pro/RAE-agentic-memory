@@ -397,9 +397,6 @@ jobs:
             psql -h localhost -U postgres -d rae_memory -f "$sql_file"
           done
           echo "✅ Base schema created"
-          # Run migrations
-          alembic upgrade head
-          echo "✅ Database migrations complete"
 
       - name: Run lite benchmark
         env:

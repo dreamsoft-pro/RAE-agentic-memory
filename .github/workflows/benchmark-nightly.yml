@@ -75,9 +75,6 @@ jobs:
             psql -h localhost -U rae_user -d rae_memory -f "$sql_file"
           done
           echo "✅ Base schema created"
-          # Run migrations
-          alembic upgrade head
-          echo "✅ Database migrations complete"
 
       - name: Run academic_extended benchmark
         env:
@@ -160,9 +157,6 @@ jobs:
             psql -h localhost -U rae_user -d rae_memory -f "$sql_file"
           done
           echo "✅ Base schema created"
-          # Run migrations
-          alembic upgrade head
-          echo "✅ Database migrations complete"
 
       - name: Run industrial_small benchmark
         env:
