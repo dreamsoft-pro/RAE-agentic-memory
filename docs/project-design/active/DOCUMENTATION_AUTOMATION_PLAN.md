@@ -42,15 +42,21 @@ This document outlines a comprehensive, iterative plan to automate RAE documenta
 **Needs:** API docs, code examples, architecture, testing guides
 **Files:** REST API, SDK reference, integration guides
 
-### 2. JST (Jednostki Samorządu Terytorialnego)
-**Needs:** Compliance, GDPR/RODO, deployment, Polish language
-**Files:** Compliance guides, ISO 42001, security policies
+### 2. Administracja (Administration)
+**Needs:** Compliance, GDPR/RODO, deployment, Polish language, security policies
+**Files:** Compliance guides, ISO 42001, security policies, deployment guides
+**Note:** Includes government agencies (JST - Jednostki Samorządu Terytorialnego)
 
 ### 3. Industry (Enterprises)
 **Needs:** ROI, scalability, security, production deployment
 **Files:** Enterprise guides, Kubernetes, cost optimization
 
-### 4. Researchers
+### 4. Usługi (Professional Services)
+**Needs:** Knowledge isolation, multi-tenancy, audit trails, compliance reporting
+**Files:** Legal/audit guides, tenant isolation, data governance, compliance reports
+**Note:** Lawyers, auditors, accountants - requires strict data isolation
+
+### 5. Researchers
 **Needs:** Mathematical foundations, benchmarks, reproducibility
 **Files:** Mathematical formalization, evaluation suite, papers
 
@@ -58,46 +64,51 @@ This document outlines a comprehensive, iterative plan to automate RAE documenta
 
 ### Iteration 1: Core Documentation Audit (This File + Inventory)
 **Duration:** 1 session
+**Status:** ✅ COMPLETED
 **Deliverables:**
-- [ ] Complete documentation inventory (all 172 files)
-- [ ] Identify auto-updatable content
-- [ ] Map file relationships and dependencies
-- [ ] Create DOCUMENTATION_INVENTORY.md
+- [x] Complete documentation inventory (all 172 files)
+- [x] Identify auto-updatable content
+- [x] Map file relationships and dependencies
+- [x] Create DOCUMENTATION_INVENTORY.md
 
 ### Iteration 2: Enhanced Auto-Documentation System
 **Duration:** 1 session
+**Status:** ✅ COMPLETED
 **Deliverables:**
-- [ ] Extend docs_automator.py with:
+- [x] Extend docs_automator.py with:
   - OpenAPI export (from FastAPI app)
   - Code metrics (radon, lizard)
   - API endpoint list
   - Module index
   - Test coverage per module
-- [ ] Consolidate duplicate files (root vs docs/.auto-generated/)
-- [ ] Add docs/.auto-generated/api/, docs/.auto-generated/metrics/
-- [ ] Update GitHub Actions workflow
+- [x] Consolidate duplicate files (root vs docs/.auto-generated/)
+- [x] Add docs/.auto-generated/api/, docs/.auto-generated/metrics/
+- [x] Update GitHub Actions workflow
 
 ### Iteration 3: Workflow Integration & Self-Documentation
 **Duration:** 1 session
+**Status:** ✅ COMPLETED
 **Deliverables:**
-- [ ] Pre-commit hook for API docs
-- [ ] Weekly cron for code metrics
-- [ ] Add CONTRIBUTING_DOCS.md guide
-- [ ] Create documentation templates
-- [ ] Add doc validation (broken links, structure)
-- [ ] Update .cursorrules with doc guidelines
+- [x] Pre-commit hook for API docs (`scripts/generate_api_docs.py` + `.pre-commit-config.yaml`)
+- [x] Weekly cron for code metrics (`.github/workflows/code-metrics.yml`)
+- [x] Add CONTRIBUTING_DOCS.md guide (already exists)
+- [x] Create documentation templates (`docs/templates/` - guide, reference, architecture)
+- [x] Add doc validation (`scripts/validate_docs.py` + `make docs-validate`)
+- [x] Update .cursorrules with doc guidelines (already updated in Iteration 2)
 
 ### Iteration 4: User-Specific Documentation Portals
 **Duration:** 1 session
 **Deliverables:**
-- [ ] Generate 4 user-specific landing pages:
+- [ ] Generate 5 user-specific landing pages:
   - docs/guides/developers/INDEX.md
-  - docs/guides/jst/INDEX.md (with Polish content)
+  - docs/guides/administracja/INDEX.md (with Polish content for government)
   - docs/guides/enterprise/INDEX.md
+  - docs/guides/uslugi/INDEX.md (professional services: lawyers, auditors, accountants)
   - docs/guides/researchers/INDEX.md
 - [ ] Add audience-specific quick starts
 - [ ] Create role-based navigation paths
-- [ ] Add Polish translations for JST docs
+- [ ] Add Polish translations for Administracja and Usługi docs
+- [ ] Add knowledge isolation guides for professional services
 
 ## File Structure (Target)
 
@@ -127,8 +138,8 @@ docs/
 │   │   ├── getting-started/
 │   │   ├── api/
 │   │   └── testing/
-│   ├── jst/                   # Jednostki Samorządu Terytorialnego
-│   │   ├── INDEX.md          # JST portal (Polish)
+│   ├── administracja/         # Administration (government, JST)
+│   │   ├── INDEX.md          # Administration portal (Polish)
 │   │   ├── compliance/
 │   │   ├── deployment/
 │   │   └── gdpr-rodo/
@@ -137,6 +148,11 @@ docs/
 │   │   ├── production/
 │   │   ├── kubernetes/
 │   │   └── security/
+│   ├── uslugi/                # Professional Services
+│   │   ├── INDEX.md          # Services portal (Polish)
+│   │   ├── tenant-isolation/
+│   │   ├── audit-trails/
+│   │   └── data-governance/
 │   └── researchers/
 │       ├── INDEX.md          # Research portal
 │       ├── mathematical/
@@ -189,9 +205,9 @@ docs/
 4. Add doc validation CI check
 
 ### Phase 4: User Portals (Iteration 4)
-1. Generate 4 INDEX.md files (one per audience)
-2. Add Polish translations for JST
-3. Create role-based quick starts
+1. Generate 5 INDEX.md files (one per audience)
+2. Add Polish translations for Administracja and Usługi
+3. Create role-based quick starts (focus on knowledge isolation for Usługi)
 4. Update main README with audience paths
 
 ## Success Metrics
@@ -199,8 +215,9 @@ docs/
 - [ ] 100% of dynamic content auto-generated
 - [ ] Zero duplicate files (single source of truth)
 - [ ] Documentation updates require zero manual intervention
-- [ ] 4 user-specific landing pages with clear paths
-- [ ] Polish content for JST audience
+- [ ] 5 user-specific landing pages with clear paths
+- [ ] Polish content for Administracja and Usługi audiences
+- [ ] Knowledge isolation guides for professional services
 - [ ] CONTRIBUTING_DOCS.md guide in place
 - [ ] All auto-gen scripts documented
 - [ ] CI validates docs on every PR
