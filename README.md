@@ -23,6 +23,7 @@
 > The critical gaps in authentication and cost control have been closed.
 >
 > **What works:**
+> - ✅ **LLM Orchestrator**: Provider-agnostic architecture - use 0/1/N models with single/fallback strategies (NEW in v2.1.1)
 > - ✅ **Full JWT Authentication**: Real signature verification and claim validation.
 > - ✅ **Active Budget Enforcement**: Requests are blocked (HTTP 402) if budget is exceeded.
 > - ✅ **Background Workers**: Fully operational Decay, Summarization, and Dreaming cycles.
@@ -60,6 +61,7 @@ Current AI agents are **stateless** - they forget everything after each conversa
 ✅ **Multi-layered memory** (episodic → working → semantic → long-term)
 ✅ **Automatic insight extraction** via Reflection Engine V2 (Actor-Evaluator-Reflector pattern)
 ✅ **Graph-based knowledge connections** (GraphRAG)
+✅ **LLM Orchestrator** - Provider-agnostic: use any LLM (OpenAI, Claude, Gemini, local) or no LLM at all
 ✅ **IDE integration** via Model Context Protocol (MCP)
 ✅ **Cost-aware caching** to minimize LLM API costs
 ✅ **Enterprise Security** with RBAC, authentication, and audit logging
@@ -508,23 +510,65 @@ See [MEMORY_MODEL.md](docs/reference/memory/MEMORY_MODEL.md) for complete layer 
 
 See [REFLECTIVE_MEMORY_V1.md](docs/project-design/rae-4layer-design/REFLECTIVE_MEMORY_V1.md) for complete implementation guide.
 
-### 🤖 Multi-Model LLM Integration (v2.0)
-- **Unified Provider Interface**: Single API for all LLM providers
-- **Supported Models**:
-  - OpenAI (GPT-4, GPT-3.5, O1)
-  - Anthropic (Claude 3.x, Claude 3.7)
-  - Google (Gemini 1.5 Pro, Flash)
-  - DeepSeek (Coder, Chat)
-  - Qwen (Alibaba Cloud)
-  - Grok (xAI)
-  - Ollama (Local models: Llama, Mistral)
-- **Intelligent Routing**: Automatic provider selection based on model name
-- **Cost-Aware Fallbacks**: Switch providers on rate limits or failures
-- **Streaming Support**: Real-time response streaming for all compatible providers
-- **Tool Calling**: Unified function/tool calling interface
-- **JSON Mode**: Structured output support across providers
-- **Profile-Based Selection**: Use llm_profiles.yaml for smart model selection
-- **Easy Extension**: Add new providers by implementing simple interface
+### 🤖 LLM Orchestrator - Multi-Model Flexibility (v2.1.1)
+
+**Decouples RAE from any specific LLM provider** - use 0, 1, or N models simultaneously!
+
+#### Orchestrator Modes
+- **Single Mode**: One LLM per request (simple, fast, cost-effective)
+- **Fallback Mode**: Primary + backup model for high availability
+- **Ensemble Mode** *(coming soon)*: Multiple models collaborate for improved quality
+- **No-LLM Mode**: RAE works without any LLM (rule-based fallbacks)
+
+#### Configuration-Driven
+```yaml
+# apps/llm/config/llm_config.yaml
+default_strategy: single
+
+models:
+  - id: openai_gpt4o
+    provider: openai
+    model_name: gpt-4o
+    enabled: true
+    roles: [general, reflection, coding]
+    cost_weight: 1.0
+
+  - id: local_llama3
+    provider: ollama
+    model_name: llama3
+    enabled: true
+    roles: [low_cost, offline]
+    cost_weight: 0.0
+
+strategies:
+  default:
+    mode: single
+    primary: openai_gpt4o
+
+  summaries:
+    mode: fallback
+    primary: openai_gpt4o_mini
+    fallback: local_llama3
+```
+
+#### Supported Providers
+- **OpenAI** (GPT-4, GPT-3.5, O1)
+- **Anthropic** (Claude 3.x, Claude 3.7)
+- **Google** (Gemini 1.5 Pro, Flash)
+- **DeepSeek** (Coder, Chat)
+- **Qwen** (Alibaba Cloud)
+- **Grok** (xAI)
+- **Ollama** (Local models: Llama, Mistral, Qwen)
+
+#### Benefits
+- ✅ **Provider Independence**: Switch models without code changes
+- ✅ **Cost Optimization**: Route queries to cheaper models based on complexity
+- ✅ **High Availability**: Automatic fallback on provider failures
+- ✅ **Privacy Options**: Use local models (Ollama) for sensitive data
+- ✅ **Testing**: Compare model quality side-by-side
+- ✅ **Future-Proof**: Add new providers via simple configuration
+
+See [LLM Orchestrator Documentation](docs/project-design/active/LLM_orchestrator/LLM_ORCHESTRATOR.md) for complete guide.
 
 ### 🔒 Enterprise Security & Access Control (v2.0)
 
@@ -701,7 +745,12 @@ cd RAE-agentic-memory
 cp .env.example .env
 # Edit .env with your LLM API keys
 
-# Start all services (including ML service)
+# Quick start with Makefile (recommended)
+make start              # Start all services
+make logs               # View logs
+make db-init            # Initialize database (first time)
+
+# Or use docker-compose directly
 docker-compose up -d
 
 # Services will be available at:
@@ -713,6 +762,53 @@ docker-compose up -d
 curl http://localhost:8000/health
 curl http://localhost:8001/health
 ```
+
+### Local Development (with hot-reload)
+
+For active development with instant code reloading:
+
+```bash
+# 1. Install Python dependencies
+make install            # Core dependencies
+# or
+make install-all        # All dependencies including integrations
+
+# 2. Start infrastructure only (Postgres, Redis, Qdrant)
+docker-compose up -d postgres redis qdrant
+
+# 3. Run API locally with hot-reload
+make dev                # Starts uvicorn with --reload
+
+# 4. Run tests during development
+make test-focus FILE=apps/memory_api/tests/test_my_feature.py
+```
+
+**Development Commands:**
+```bash
+make help               # Show all available commands
+make start              # Start all Docker services
+make stop               # Stop all services
+make restart            # Restart services
+make logs               # View all logs
+make logs-api           # View API logs only
+make clean              # Clean up volumes and caches
+
+# Development
+make install            # Install dependencies
+make dev                # Run with hot-reload
+make format             # Format code (black, isort)
+make lint               # Run linters (ruff, black)
+make test               # Run all tests
+make test-unit          # Run unit tests only
+make test-focus         # Run specific test file
+
+# Database
+make db-init            # Initialize database
+make db-migrate         # Run migrations
+make db-reset           # Reset database (WARNING: deletes data)
+```
+
+See [Makefile](Makefile) for complete list of commands.
 
 ### Kubernetes (Recommended for Production)
 
@@ -1020,10 +1116,11 @@ pip install -e .
 
 RAE is currently in **v2.1.0-enterprise** - Pre-1.0 with Enterprise Features!
 
-**Current Status (v2.1):**
+**Current Status (v2.1.1):**
 - ✅ Core memory layers (4-layer architecture)
 - ✅ Vector search with multiple backends
 - ✅ Knowledge graph (GraphRAG)
+- ✅ **LLM Orchestrator** (Multi-model flexibility: 0/1/N LLMs, single/fallback modes)
 - ✅ **Reflection Engine V2** (Actor-Evaluator-Reflector pattern)
 - ✅ **Memory Scoring V2** (Unified α·relevance + β·importance + γ·recency)
 - ✅ **Context Builder** (Working Memory with reflection injection)
@@ -1038,7 +1135,7 @@ RAE is currently in **v2.1.0-enterprise** - Pre-1.0 with Enterprise Features!
 - ✅ Python SDK
 - ✅ Multi-tenancy & RBAC
 - ✅ Docker deployment
-- ✅ **754 Tests (100% passing), 69% Coverage** (target: 75%+)
+- ✅ **820+ Tests (100% passing), 69% Coverage** (target: 75%+)
 - ✅ **CI/CD Pipeline** (lint, test, docker build - all passing ✅)
 
 **Coming Soon (v1.0):**
