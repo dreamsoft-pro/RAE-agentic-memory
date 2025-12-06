@@ -1,6 +1,6 @@
 ## Recent Changes (Auto-generated)
 
-*Last updated: 2025-12-06 22:08 • Branch: develop • Commit: 14c4c6c*
+*Last updated: 2025-12-06 22:07 • Branch: main • Commit: 93cdd92*
 
 ### ✨ Features
 
@@ -40,9 +40,9 @@
 
 ### 🐛 Bug Fixes
 
-- remove Alembic migrations from benchmark workflows ([`14c4c6c`](../../commit/14c4c6c))
-- add pgvector extension to base DDL schema ([`54d0ba8`](../../commit/54d0ba8))
-- run DDL scripts before Alembic migrations in CI ([`2d22e48`](../../commit/2d22e48))
+- remove Alembic migrations from benchmark workflows ([`93cdd92`](../../commit/93cdd92))
+- add pgvector extension to base DDL schema ([`82b5b3a`](../../commit/82b5b3a))
+- run DDL scripts before Alembic migrations in CI ([`dedd543`](../../commit/dedd543))
 - add database migrations to benchmark workflows ([`fbe6e89`](../../commit/fbe6e89))
 - use lazy imports in benchmark scripts to fix CI failures ([`330bffd`](../../commit/330bffd))
 - disable invalid HTTP healthchecks for Celery workers in dev mode ([`32ce8d2`](../../commit/32ce8d2))
@@ -163,11 +163,6 @@
 
 ### 📦 Other
 
-- Merge remote-tracking branch 'origin/develop' into develop ([`f46e033`](../../commit/f46e033))
-- Merge main into develop - Add database migrations to benchmarks ([`f78bacb`](../../commit/f78bacb))
-- Merge remote-tracking branch 'origin/develop' into develop ([`359946d`](../../commit/359946d))
-- Merge branch 'main' into develop ([`f104766`](../../commit/f104766))
-- Merge main into develop - Add 9/5 benchmarking suite ([`0a63cca`](../../commit/0a63cca))
 - Merge develop into main - Benchmark tests complete ([`35d0480`](../../commit/35d0480))
 - Merge main into develop - Add benchmark tests ([`ce0e766`](../../commit/ce0e766))
 - Merge branch 'develop' - Add benchmarking suite ([`23cb3a2`](../../commit/23cb3a2))
