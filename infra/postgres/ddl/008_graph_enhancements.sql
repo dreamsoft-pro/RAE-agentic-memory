@@ -26,9 +26,16 @@ ADD COLUMN IF NOT EXISTS bidirectional BOOLEAN DEFAULT FALSE,
 ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}';
 
 -- Add constraint to prevent self-loops
-ALTER TABLE knowledge_graph_edges
-ADD CONSTRAINT IF NOT EXISTS kg_edges_no_self_loop
-CHECK (source_node_id != target_node_id);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'kg_edges_no_self_loop'
+    ) THEN
+        ALTER TABLE knowledge_graph_edges
+        ADD CONSTRAINT kg_edges_no_self_loop
+        CHECK (source_node_id != target_node_id);
+    END IF;
+END $$;
 
 -- Add unique constraint for relation between nodes
 CREATE UNIQUE INDEX IF NOT EXISTS idx_kg_edges_unique_relation
@@ -97,10 +104,17 @@ ON knowledge_graph_snapshots(created_at DESC);
 ALTER TABLE knowledge_graph_snapshots ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policy
-CREATE POLICY IF NOT EXISTS kg_snapshots_tenant_isolation
-ON knowledge_graph_snapshots
-FOR ALL
-USING (tenant_id = current_setting('app.current_tenant', TRUE));
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies WHERE policyname = 'kg_snapshots_tenant_isolation' AND tablename = 'knowledge_graph_snapshots'
+    ) THEN
+        CREATE POLICY kg_snapshots_tenant_isolation
+        ON knowledge_graph_snapshots
+        FOR ALL
+        USING (tenant_id = current_setting('app.current_tenant', TRUE));
+    END IF;
+END $$;
 
 COMMENT ON TABLE knowledge_graph_snapshots IS 'Versioned snapshots of knowledge graph state';
 

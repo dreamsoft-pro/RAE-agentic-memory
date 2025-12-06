@@ -82,7 +82,41 @@ CREATE TYPE condition_operator AS ENUM (
 -- Core Tables
 -- ============================================================================
 
--- Trigger rules definition
+-- Workflows definition (created first because trigger_rules references it)
+CREATE TABLE IF NOT EXISTS workflows (
+    -- Identification
+    workflow_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    tenant_id VARCHAR(255) NOT NULL,
+    project_id VARCHAR(255) NOT NULL,
+
+    -- Workflow metadata
+    workflow_name VARCHAR(200) NOT NULL,
+    description TEXT,
+
+    -- Steps (stored as JSONB array of WorkflowStep)
+    steps JSONB NOT NULL DEFAULT '[]'::JSONB,
+
+    -- Execution mode
+    stop_on_failure BOOLEAN DEFAULT TRUE,
+    parallel_execution BOOLEAN DEFAULT FALSE,
+
+    -- Metadata
+    tags TEXT[] DEFAULT '{}',
+
+    -- Ownership and timestamps
+    created_by VARCHAR(255) NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+
+    CONSTRAINT workflows_tenant_project_name_idx UNIQUE (tenant_id, project_id, workflow_name)
+);
+
+-- Indexes for workflows
+CREATE INDEX idx_workflows_tenant_project ON workflows(tenant_id, project_id);
+CREATE INDEX idx_workflows_tags ON workflows USING GIN(tags);
+
+
+-- Trigger rules definition (created after workflows because it references workflows)
 CREATE TABLE IF NOT EXISTS trigger_rules (
     -- Identification
     trigger_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -184,40 +218,6 @@ CREATE INDEX idx_action_executions_event ON action_executions(event_id);
 CREATE INDEX idx_action_executions_status ON action_executions(status);
 CREATE INDEX idx_action_executions_tenant_project ON action_executions(tenant_id, project_id);
 CREATE INDEX idx_action_executions_started_at ON action_executions(started_at DESC);
-
-
--- Workflows definition
-CREATE TABLE IF NOT EXISTS workflows (
-    -- Identification
-    workflow_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id VARCHAR(255) NOT NULL,
-    project_id VARCHAR(255) NOT NULL,
-
-    -- Workflow metadata
-    workflow_name VARCHAR(200) NOT NULL,
-    description TEXT,
-
-    -- Steps (stored as JSONB array of WorkflowStep)
-    steps JSONB NOT NULL DEFAULT '[]'::JSONB,
-
-    -- Execution mode
-    stop_on_failure BOOLEAN DEFAULT TRUE,
-    parallel_execution BOOLEAN DEFAULT FALSE,
-
-    -- Metadata
-    tags TEXT[] DEFAULT '{}',
-
-    -- Ownership and timestamps
-    created_by VARCHAR(255) NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT NOW(),
-    updated_at TIMESTAMPTZ DEFAULT NOW(),
-
-    CONSTRAINT workflows_tenant_project_name_idx UNIQUE (tenant_id, project_id, workflow_name)
-);
-
--- Indexes for workflows
-CREATE INDEX idx_workflows_tenant_project ON workflows(tenant_id, project_id);
-CREATE INDEX idx_workflows_tags ON workflows USING GIN(tags);
 
 
 -- Workflow execution history
