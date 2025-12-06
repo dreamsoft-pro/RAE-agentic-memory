@@ -384,12 +384,19 @@ jobs:
           POSTGRES_DB: rae_memory
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
+          PGPASSWORD: postgres
         run: |
           # Wait for postgres
           sleep 3
           # Test database connection
           python -c "import asyncpg; import asyncio; asyncio.run(asyncpg.connect(host='localhost', database='rae_memory', user='postgres', password='postgres'))"
           echo "✅ Database connection successful"
+          # Run DDL scripts to create base tables
+          for sql_file in infra/postgres/ddl/*.sql; do
+            echo "Running $sql_file..."
+            psql -h localhost -U postgres -d rae_memory -f "$sql_file"
+          done
+          echo "✅ Base schema created"
           # Run migrations
           alembic upgrade head
           echo "✅ Database migrations complete"
