@@ -375,6 +375,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt
           pip install -r apps/memory_api/requirements-base.txt
+          pip install -r requirements-ml.txt
           pip install -e sdk/python/rae_memory_sdk
 
       - name: Setup database
