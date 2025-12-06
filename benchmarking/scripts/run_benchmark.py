@@ -29,7 +29,6 @@ import yaml
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from apps.memory_api.services.embedding import get_embedding_service
-from apps.memory_api.services.vector_store import VectorStoreService
 
 
 class BenchmarkMetrics:
@@ -205,6 +204,9 @@ class RAEBenchmarkRunner:
         """Insert all benchmark memories into RAE"""
         print(f"\n📝 Inserting {len(self.benchmark_data['memories'])} memories...")
 
+        # Lazy import to avoid initialization issues in test environments
+        from apps.memory_api.services.vector_store import VectorStoreService
+
         embedding_service = get_embedding_service()
         vector_store = VectorStoreService(self.pool)
 
@@ -264,6 +266,9 @@ class RAEBenchmarkRunner:
     async def run_queries(self):
         """Execute all benchmark queries and collect results"""
         print(f"\n🔍 Running {len(self.benchmark_data['queries'])} queries...")
+
+        # Lazy import to avoid initialization issues in test environments
+        from apps.memory_api.services.vector_store import VectorStoreService
 
         embedding_service = get_embedding_service()
         vector_store = VectorStoreService(self.pool)
