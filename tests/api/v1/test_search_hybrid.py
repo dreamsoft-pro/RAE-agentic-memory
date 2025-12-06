@@ -11,12 +11,19 @@ from apps.memory_api.services.hybrid_search_service import HybridSearchService
 # Create a fixture for the client that overrides dependencies
 @pytest.fixture
 def client_with_mock_service():
+    # Setup mock pool
+    mock_pool = MagicMock()
+    mock_pool.close = AsyncMock()
+
     with patch("apps.memory_api.routes.hybrid_search.HybridSearchService") as MockService:
         instance = MockService.return_value
         instance.search = AsyncMock()
-        
+
         # We need to mock the pool dependency as well to avoid actual DB connection
-        with patch("apps.memory_api.routes.hybrid_search.get_pool", return_value=AsyncMock()):
+        with patch("apps.memory_api.routes.hybrid_search.get_pool", return_value=AsyncMock()), \
+             patch("apps.memory_api.main.asyncpg.create_pool", new=AsyncMock(return_value=mock_pool)), \
+             patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()):
+
             with TestClient(app) as client:
                 yield client, instance
 

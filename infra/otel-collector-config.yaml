@@ -35,7 +35,7 @@ processors:
   resource:
     attributes:
       - key: deployment.environment
-        value: ${ENVIRONMENT:-development}
+        value: ${env:ENVIRONMENT}
         action: upsert
       - key: service.namespace
         value: rae
@@ -56,9 +56,9 @@ exporters:
     tls:
       insecure: true
 
-  # Logging exporter for debugging (can be disabled in production)
-  logging:
-    loglevel: info
+  # Debug exporter for debugging (can be disabled in production)
+  debug:
+    verbosity: normal
     sampling_initial: 5
     sampling_thereafter: 200
 
@@ -88,13 +88,13 @@ service:
     traces:
       receivers: [otlp]
       processors: [memory_limiter, resource, attributes, batch]
-      exporters: [otlp/jaeger, logging]
+      exporters: [otlp/jaeger, debug]
 
     # Metrics pipeline
     metrics:
       receivers: [otlp, prometheus]
       processors: [memory_limiter, resource, batch]
-      exporters: [prometheus, logging]
+      exporters: [prometheus, debug]
 
   # Telemetry settings for the collector itself
   telemetry:
@@ -102,4 +102,9 @@ service:
       level: info
     metrics:
       level: detailed
-      address: 0.0.0.0:8888
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: 0.0.0.0
+                port: 8888
