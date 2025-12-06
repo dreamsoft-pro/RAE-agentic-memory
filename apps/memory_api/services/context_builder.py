@@ -29,6 +29,7 @@ from apps.memory_api.services.memory_scoring_v3 import (
     compute_batch_scores_v3,
 )
 from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
+from apps.memory_api.services.smart_reranker import SmartReranker
 
 logger = structlog.get_logger(__name__)
 tracer = get_tracer(__name__)
@@ -155,6 +156,7 @@ class ContextBuilder:
         self.pool = pool
         self.memory_repo = memory_repository or MemoryRepository(pool)
         self.reflection_engine = reflection_engine or ReflectionEngineV2(pool)
+        self.reranker = SmartReranker()
         self.config = config or ContextConfig()
 
     async def build_context(
@@ -336,6 +338,19 @@ class ContextBuilder:
             )
             ranked = rank_memories_by_score(all_memories, score_results)
 
+            # --- Iteration 2: Smart Re-Ranker ---
+            if settings.ENABLE_SMART_RERANKER:
+                # Take a larger pool for re-ranking (e.g. top 50)
+                candidates = ranked[: settings.RERANKER_TOP_K_CANDIDATES]
+                # Apply re-ranking
+                ranked = await self.reranker.rerank(
+                    candidates, query, limit=settings.RERANKER_FINAL_K
+                )
+                # Use this new list as top_memories (it's already limited)
+                top_memories = ranked
+            else:
+                top_memories = ranked[: self.config.max_ltm_items]
+
         elif self.config.enable_enhanced_scoring:
             # Use enhanced scoring
             score_results = compute_batch_scores(
@@ -344,6 +359,7 @@ class ContextBuilder:
                 weights=self.config.scoring_weights,
             )
             ranked = rank_memories_by_score(all_memories, score_results)
+            top_memories = ranked[: self.config.max_ltm_items]
         else:
             # Basic ranking by similarity
             ranked = sorted(
@@ -351,10 +367,7 @@ class ContextBuilder:
                 key=lambda x: x[1],
                 reverse=True,
             )
-            ranked = [m[0] for m in ranked]
-
-        # Take top K
-        top_memories = ranked[: self.config.max_ltm_items]
+            top_memories = [m[0] for m in ranked[: self.config.max_ltm_items]]
 
         # Convert to components
         components = []

@@ -112,13 +112,25 @@ class Settings(BaseSettings):
     MEMORY_SCORE_WEIGHTS_GAMMA: float = 0.2  # Recency weight
 
     # Hybrid Math V3 Configuration
-    ENABLE_MATH_V3: bool = False  # Enable Hybrid Math v3 scoring
+    ENABLE_MATH_V3: bool = True  # Enable Hybrid Math v3 scoring (Iteration 1)
     MATH_V3_W1_RELEVANCE: float = 0.40
     MATH_V3_W2_IMPORTANCE: float = 0.20
     MATH_V3_W3_RECENCY: float = 0.10
     MATH_V3_W4_CENTRALITY: float = 0.10
     MATH_V3_W5_DIVERSITY: float = 0.10
     MATH_V3_W6_DENSITY: float = 0.10
+
+    # Iteration 2: Smart Re-Ranker
+    ENABLE_SMART_RERANKER: bool = False  # Enable ML-based re-ranking
+    RERANKER_MODEL_PATH: str | None = None
+    RERANKER_TIMEOUT_MS: int = 10
+    RERANKER_TOP_K_CANDIDATES: int = 50
+    RERANKER_FINAL_K: int = 10
+
+    # Iteration 3: Feedback Loop
+    ENABLE_FEEDBACK_LOOP: bool = False  # Enable learning from feedback
+    FEEDBACK_POSITIVE_DELTA: float = 0.05
+    FEEDBACK_NEGATIVE_DELTA: float = 0.05
 
     # Decay configuration
     MEMORY_BASE_DECAY_RATE: float = 0.001  # Base decay rate per second
