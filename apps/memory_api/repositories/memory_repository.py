@@ -420,3 +420,39 @@ class MemoryRepository:
                 )
 
                 return updated_count
+
+    async def update_importance(
+        self, memory_id: str, tenant_id: str, delta: float
+    ) -> Optional[float]:
+        """
+        Update importance score for a memory by a delta.
+        Clamps the result between 0.0 and 1.0.
+
+        Args:
+            memory_id: Memory identifier
+            tenant_id: Tenant identifier
+            delta: Amount to add (positive) or subtract (negative)
+
+        Returns:
+            New importance score if updated, None if not found
+        """
+        async with self.pool.acquire() as conn:
+            # Clamp new importance between 0 and 1
+            query = """
+                UPDATE memories
+                SET importance = GREATEST(0.0, LEAST(1.0, importance + $1))
+                WHERE id = $2 AND tenant_id = $3
+                RETURNING importance
+            """
+            new_score = await conn.fetchval(query, delta, memory_id, tenant_id)
+
+            if new_score is not None:
+                logger.info(
+                    "memory_importance_updated",
+                    memory_id=memory_id,
+                    tenant_id=tenant_id,
+                    delta=delta,
+                    new_score=new_score,
+                )
+
+            return new_score
