@@ -166,10 +166,17 @@ ON knowledge_graph_traversals(algorithm);
 -- Enable RLS
 ALTER TABLE knowledge_graph_traversals ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS kg_traversals_tenant_isolation
-ON knowledge_graph_traversals
-FOR ALL
-USING (tenant_id = current_setting('app.current_tenant', TRUE));
+DO $
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies WHERE policyname = 'kg_traversals_tenant_isolation' AND tablename = 'knowledge_graph_traversals'
+    ) THEN
+        CREATE POLICY kg_traversals_tenant_isolation
+        ON knowledge_graph_traversals
+        FOR ALL
+        USING (tenant_id = current_setting('app.current_tenant', TRUE));
+    END IF;
+END $;
 
 COMMENT ON TABLE knowledge_graph_traversals IS 'Log of graph traversal operations for analytics';
 
