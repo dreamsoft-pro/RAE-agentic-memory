@@ -65,9 +65,16 @@ jobs:
           POSTGRES_USER: rae_user
           POSTGRES_PASSWORD: rae_password
           POSTGRES_DB: rae_memory
+          PGPASSWORD: rae_password
         run: |
           python -c "import asyncpg; import asyncio; asyncio.run(asyncpg.connect('postgresql://rae_user:rae_password@localhost:5432/rae_memory'))"
           echo "✅ Database connection successful"
+          # Run DDL scripts to create base tables
+          for sql_file in infra/postgres/ddl/*.sql; do
+            echo "Running $sql_file..."
+            psql -h localhost -U rae_user -d rae_memory -f "$sql_file"
+          done
+          echo "✅ Base schema created"
           # Run migrations
           alembic upgrade head
           echo "✅ Database migrations complete"
@@ -143,9 +150,16 @@ jobs:
           POSTGRES_USER: rae_user
           POSTGRES_PASSWORD: rae_password
           POSTGRES_DB: rae_memory
+          PGPASSWORD: rae_password
         run: |
           python -c "import asyncpg; import asyncio; asyncio.run(asyncpg.connect('postgresql://rae_user:rae_password@localhost:5432/rae_memory'))"
           echo "✅ Database connection successful"
+          # Run DDL scripts to create base tables
+          for sql_file in infra/postgres/ddl/*.sql; do
+            echo "Running $sql_file..."
+            psql -h localhost -U rae_user -d rae_memory -f "$sql_file"
+          done
+          echo "✅ Base schema created"
           # Run migrations
           alembic upgrade head
           echo "✅ Database migrations complete"
