@@ -1,0 +1,531 @@
+#!/usr/bin/env python3
+"""
+RAE Benchmark Runner
+
+This script runs benchmarks against the RAE Memory API to evaluate:
+- Search quality (MRR, HitRate@k, Precision, Recall)
+- Performance (latency, throughput)
+- System behavior under different configurations
+
+Usage:
+    python run_benchmark.py --set academic_lite.yaml
+    python run_benchmark.py --set academic_extended.yaml --output results/
+"""
+
+import argparse
+import json
+import sys
+import time
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple
+
+import asyncio
+import asyncpg
+import httpx
+import yaml
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+from apps.memory_api.services.embedding import get_embedding_service
+from apps.memory_api.services.vector_store import VectorStoreService
+
+
+class BenchmarkMetrics:
+    """Calculate IR evaluation metrics"""
+
+    @staticmethod
+    def calculate_mrr(results: List[Tuple[str, List[str]]]) -> float:
+        """
+        Calculate Mean Reciprocal Rank
+
+        Args:
+            results: List of (query_id, [retrieved_doc_ids]) tuples
+
+        Returns:
+            MRR score (0.0 to 1.0)
+        """
+        reciprocal_ranks = []
+        for expected_ids, retrieved_ids in results:
+            rank = None
+            for i, doc_id in enumerate(retrieved_ids, 1):
+                if doc_id in expected_ids:
+                    rank = i
+                    break
+            reciprocal_ranks.append(1.0 / rank if rank else 0.0)
+
+        return sum(reciprocal_ranks) / len(reciprocal_ranks) if reciprocal_ranks else 0.0
+
+    @staticmethod
+    def calculate_hit_rate(results: List[Tuple[str, List[str]]], k: int = 5) -> float:
+        """
+        Calculate Hit Rate @ K (% of queries with at least one relevant result in top-k)
+
+        Args:
+            results: List of (expected_ids, retrieved_ids) tuples
+            k: Number of top results to consider
+
+        Returns:
+            Hit rate (0.0 to 1.0)
+        """
+        hits = 0
+        for expected_ids, retrieved_ids in results:
+            top_k = retrieved_ids[:k]
+            if any(doc_id in expected_ids for doc_id in top_k):
+                hits += 1
+
+        return hits / len(results) if results else 0.0
+
+    @staticmethod
+    def calculate_precision_at_k(results: List[Tuple[List[str], List[str]]], k: int = 5) -> float:
+        """
+        Calculate average Precision @ K
+
+        Args:
+            results: List of (expected_ids, retrieved_ids) tuples
+            k: Number of top results to consider
+
+        Returns:
+            Average precision (0.0 to 1.0)
+        """
+        precisions = []
+        for expected_ids, retrieved_ids in results:
+            top_k = retrieved_ids[:k]
+            relevant_in_top_k = sum(1 for doc_id in top_k if doc_id in expected_ids)
+            precisions.append(relevant_in_top_k / k if k > 0 else 0.0)
+
+        return sum(precisions) / len(precisions) if precisions else 0.0
+
+    @staticmethod
+    def calculate_recall_at_k(results: List[Tuple[List[str], List[str]]], k: int = 5) -> float:
+        """
+        Calculate average Recall @ K
+
+        Args:
+            results: List of (expected_ids, retrieved_ids) tuples
+            k: Number of top results to consider
+
+        Returns:
+            Average recall (0.0 to 1.0)
+        """
+        recalls = []
+        for expected_ids, retrieved_ids in results:
+            top_k = retrieved_ids[:k]
+            relevant_in_top_k = sum(1 for doc_id in top_k if doc_id in expected_ids)
+            recalls.append(relevant_in_top_k / len(expected_ids) if expected_ids else 0.0)
+
+        return sum(recalls) / len(recalls) if recalls else 0.0
+
+
+class RAEBenchmarkRunner:
+    """Main benchmark runner for RAE Memory API"""
+
+    def __init__(
+        self,
+        benchmark_file: Path,
+        output_dir: Path,
+        api_url: Optional[str] = None,
+        api_key: Optional[str] = None,
+        use_direct_db: bool = True,
+    ):
+        self.benchmark_file = benchmark_file
+        self.output_dir = output_dir
+        self.api_url = api_url or "http://localhost:8000"
+        self.api_key = api_key
+        self.use_direct_db = use_direct_db
+
+        self.benchmark_data = None
+        self.tenant_id = "benchmark_tenant"
+        self.project_id = "benchmark_project"
+
+        # Statistics
+        self.insert_times = []
+        self.query_times = []
+        self.results = []
+
+        # Database pool (if using direct DB access)
+        self.pool = None
+
+    async def load_benchmark(self):
+        """Load benchmark YAML file"""
+        print(f"📂 Loading benchmark: {self.benchmark_file.name}")
+
+        with open(self.benchmark_file, 'r') as f:
+            self.benchmark_data = yaml.safe_load(f)
+
+        print(f"   Name: {self.benchmark_data['name']}")
+        print(f"   Description: {self.benchmark_data['description']}")
+        print(f"   Memories: {len(self.benchmark_data['memories'])}")
+        print(f"   Queries: {len(self.benchmark_data['queries'])}")
+
+    async def setup_database(self):
+        """Setup direct database connection"""
+        if not self.use_direct_db:
+            return
+
+        print("🔌 Connecting to database...")
+
+        # Get DB credentials from environment or defaults
+        import os
+        db_config = {
+            'host': os.getenv('POSTGRES_HOST', 'localhost'),
+            'port': int(os.getenv('POSTGRES_PORT', 5432)),
+            'database': os.getenv('POSTGRES_DB', 'rae_memory'),
+            'user': os.getenv('POSTGRES_USER', 'rae_user'),
+            'password': os.getenv('POSTGRES_PASSWORD', 'rae_password'),
+        }
+
+        self.pool = await asyncpg.create_pool(**db_config, min_size=2, max_size=5)
+        print("   ✅ Database connected")
+
+    async def cleanup_test_data(self):
+        """Clean up test data before benchmark"""
+        if not self.use_direct_db or not self.pool:
+            return
+
+        print("🧹 Cleaning up existing test data...")
+
+        async with self.pool.acquire() as conn:
+            # Delete memories for this tenant
+            await conn.execute(
+                "DELETE FROM memories WHERE tenant_id = $1",
+                self.tenant_id
+            )
+
+            # Delete vectors for this tenant
+            await conn.execute(
+                "DELETE FROM memory_vectors WHERE tenant_id = $1",
+                self.tenant_id
+            )
+
+        print("   ✅ Cleanup complete")
+
+    async def insert_memories(self):
+        """Insert all benchmark memories into RAE"""
+        print(f"\n📝 Inserting {len(self.benchmark_data['memories'])} memories...")
+
+        embedding_service = get_embedding_service()
+        vector_store = VectorStoreService(self.pool)
+
+        for i, memory in enumerate(self.benchmark_data['memories'], 1):
+            start_time = time.time()
+
+            try:
+                # Generate embedding
+                content = memory['text']
+                embedding = embedding_service.generate_embeddings([content])[0]
+
+                # Insert into database
+                async with self.pool.acquire() as conn:
+                    row = await conn.fetchrow(
+                        """
+                        INSERT INTO memories (
+                            tenant_id, content, source, importance,
+                            layer, tags, project_id
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                        RETURNING id, created_at
+                        """,
+                        self.tenant_id,
+                        content,
+                        memory.get('metadata', {}).get('source', 'benchmark'),
+                        memory.get('metadata', {}).get('importance', 0.5),
+                        'ltm',
+                        memory.get('tags', []),
+                        self.project_id
+                    )
+
+                    memory_id = row['id']
+
+                    # Store memory ID for later reference
+                    memory['_db_id'] = memory_id
+
+                    # Insert vector
+                    await vector_store.upsert_single(
+                        tenant_id=self.tenant_id,
+                        memory_id=memory_id,
+                        embedding=embedding,
+                        content=content
+                    )
+
+                elapsed = time.time() - start_time
+                self.insert_times.append(elapsed)
+
+                if i % 10 == 0:
+                    print(f"   ✅ Inserted {i}/{len(self.benchmark_data['memories'])} memories")
+
+            except Exception as e:
+                print(f"   ❌ Error inserting memory {memory.get('id', 'unknown')}: {e}")
+                raise
+
+        avg_time = sum(self.insert_times) / len(self.insert_times) if self.insert_times else 0
+        print(f"   ⏱️  Average insert time: {avg_time*1000:.2f}ms")
+
+    async def run_queries(self):
+        """Execute all benchmark queries and collect results"""
+        print(f"\n🔍 Running {len(self.benchmark_data['queries'])} queries...")
+
+        embedding_service = get_embedding_service()
+        vector_store = VectorStoreService(self.pool)
+
+        config = self.benchmark_data.get('config', {})
+        top_k = config.get('top_k', 5)
+
+        for i, query_data in enumerate(self.benchmark_data['queries'], 1):
+            query_text = query_data['query']
+            expected_ids = query_data['expected_source_ids']
+
+            start_time = time.time()
+
+            try:
+                # Generate query embedding
+                query_embedding = embedding_service.generate_embeddings([query_text])[0]
+
+                # Search vectors
+                search_results = await vector_store.search(
+                    tenant_id=self.tenant_id,
+                    query_embedding=query_embedding,
+                    top_k=top_k,
+                    min_score=config.get('min_relevance_score', 0.0)
+                )
+
+                elapsed = time.time() - start_time
+                self.query_times.append(elapsed)
+
+                # Map DB IDs back to benchmark IDs
+                retrieved_ids = []
+                for result in search_results:
+                    # Find the original benchmark ID
+                    for memory in self.benchmark_data['memories']:
+                        if memory.get('_db_id') == result['id']:
+                            retrieved_ids.append(memory['id'])
+                            break
+
+                # Store results for metric calculation
+                self.results.append({
+                    'query': query_text,
+                    'expected': expected_ids,
+                    'retrieved': retrieved_ids,
+                    'latency_ms': elapsed * 1000,
+                    'difficulty': query_data.get('difficulty', 'unknown'),
+                    'category': query_data.get('category', 'unknown')
+                })
+
+                if i % 5 == 0:
+                    print(f"   ✅ Completed {i}/{len(self.benchmark_data['queries'])} queries")
+
+            except Exception as e:
+                print(f"   ❌ Error running query '{query_text}': {e}")
+                raise
+
+        avg_time = sum(self.query_times) / len(self.query_times) if self.query_times else 0
+        print(f"   ⏱️  Average query time: {avg_time*1000:.2f}ms")
+
+    def calculate_metrics(self) -> Dict:
+        """Calculate all benchmark metrics"""
+        print("\n📊 Calculating metrics...")
+
+        # Prepare data for metric calculation
+        results_tuple = [(r['expected'], r['retrieved']) for r in self.results]
+
+        config = self.benchmark_data.get('config', {})
+        k_values = [3, 5, 10]
+
+        metrics = {
+            'mrr': BenchmarkMetrics.calculate_mrr(results_tuple),
+            'hit_rate': {},
+            'precision': {},
+            'recall': {},
+        }
+
+        for k in k_values:
+            metrics['hit_rate'][f'@{k}'] = BenchmarkMetrics.calculate_hit_rate(results_tuple, k)
+            metrics['precision'][f'@{k}'] = BenchmarkMetrics.calculate_precision_at_k(results_tuple, k)
+            metrics['recall'][f'@{k}'] = BenchmarkMetrics.calculate_recall_at_k(results_tuple, k)
+
+        # Performance metrics
+        metrics['performance'] = {
+            'avg_insert_time_ms': (sum(self.insert_times) / len(self.insert_times) * 1000) if self.insert_times else 0,
+            'avg_query_time_ms': (sum(self.query_times) / len(self.query_times) * 1000) if self.query_times else 0,
+            'p95_query_time_ms': sorted(self.query_times)[int(len(self.query_times) * 0.95)] * 1000 if self.query_times else 0,
+            'p99_query_time_ms': sorted(self.query_times)[int(len(self.query_times) * 0.99)] * 1000 if self.query_times else 0,
+        }
+
+        # Quality score (weighted average)
+        metrics['overall_quality_score'] = (
+            metrics['mrr'] * 0.4 +
+            metrics['hit_rate']['@5'] * 0.3 +
+            metrics['precision']['@5'] * 0.15 +
+            metrics['recall']['@5'] * 0.15
+        )
+
+        print(f"   MRR: {metrics['mrr']:.4f}")
+        print(f"   Hit Rate @5: {metrics['hit_rate']['@5']:.4f}")
+        print(f"   Overall Quality: {metrics['overall_quality_score']:.4f}")
+
+        return metrics
+
+    def save_results(self, metrics: Dict):
+        """Save benchmark results to JSON and Markdown"""
+        print("\n💾 Saving results...")
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        benchmark_name = self.benchmark_data['name']
+
+        # Prepare results data
+        results_data = {
+            'benchmark': {
+                'name': benchmark_name,
+                'description': self.benchmark_data['description'],
+                'version': self.benchmark_data.get('version', '1.0'),
+                'file': str(self.benchmark_file),
+            },
+            'execution': {
+                'timestamp': datetime.now().isoformat(),
+                'num_memories': len(self.benchmark_data['memories']),
+                'num_queries': len(self.benchmark_data['queries']),
+                'total_time_seconds': sum(self.insert_times) + sum(self.query_times),
+            },
+            'metrics': metrics,
+            'detailed_results': self.results,
+        }
+
+        # Save JSON
+        json_file = self.output_dir / f"{benchmark_name}_{timestamp}.json"
+        with open(json_file, 'w') as f:
+            json.dump(results_data, f, indent=2)
+        print(f"   ✅ JSON: {json_file}")
+
+        # Generate Markdown report
+        md_file = self.output_dir / f"{benchmark_name}_{timestamp}.md"
+        self._generate_markdown_report(md_file, results_data, metrics)
+        print(f"   ✅ Report: {md_file}")
+
+    def _generate_markdown_report(self, md_file: Path, results_data: Dict, metrics: Dict):
+        """Generate human-readable Markdown report"""
+        with open(md_file, 'w') as f:
+            f.write(f"# RAE Benchmark Report: {results_data['benchmark']['name']}\n\n")
+            f.write(f"**Description:** {results_data['benchmark']['description']}\n\n")
+            f.write(f"**Executed:** {results_data['execution']['timestamp']}\n\n")
+            f.write("---\n\n")
+
+            f.write("## Dataset Overview\n\n")
+            f.write(f"- **Memories:** {results_data['execution']['num_memories']}\n")
+            f.write(f"- **Queries:** {results_data['execution']['num_queries']}\n")
+            f.write(f"- **Total Time:** {results_data['execution']['total_time_seconds']:.2f}s\n\n")
+
+            f.write("## Quality Metrics\n\n")
+            f.write(f"- **MRR:** {metrics['mrr']:.4f}\n")
+            f.write(f"- **Hit Rate @3:** {metrics['hit_rate']['@3']:.4f}\n")
+            f.write(f"- **Hit Rate @5:** {metrics['hit_rate']['@5']:.4f}\n")
+            f.write(f"- **Hit Rate @10:** {metrics['hit_rate']['@10']:.4f}\n")
+            f.write(f"- **Precision @5:** {metrics['precision']['@5']:.4f}\n")
+            f.write(f"- **Recall @5:** {metrics['recall']['@5']:.4f}\n")
+            f.write(f"- **Overall Quality Score:** {metrics['overall_quality_score']:.4f}\n\n")
+
+            f.write("## Performance Metrics\n\n")
+            perf = metrics['performance']
+            f.write(f"- **Average Insert Time:** {perf['avg_insert_time_ms']:.2f}ms\n")
+            f.write(f"- **Average Query Time:** {perf['avg_query_time_ms']:.2f}ms\n")
+            f.write(f"- **P95 Query Time:** {perf['p95_query_time_ms']:.2f}ms\n")
+            f.write(f"- **P99 Query Time:** {perf['p99_query_time_ms']:.2f}ms\n\n")
+
+            f.write("## Observations\n\n")
+            if metrics['mrr'] > 0.7:
+                f.write("- ✅ Excellent MRR score - search quality is high\n")
+            elif metrics['mrr'] > 0.5:
+                f.write("- ⚠️ Good MRR score - room for improvement\n")
+            else:
+                f.write("- ❌ Low MRR score - search quality needs attention\n")
+
+            if perf['avg_query_time_ms'] < 50:
+                f.write("- ✅ Excellent query latency\n")
+            elif perf['avg_query_time_ms'] < 100:
+                f.write("- ⚠️ Acceptable query latency\n")
+            else:
+                f.write("- ❌ High query latency - optimization needed\n")
+
+            f.write("\n---\n\n")
+            f.write("*Generated by RAE Benchmarking Suite*\n")
+
+    async def cleanup(self):
+        """Cleanup resources"""
+        if self.pool:
+            await self.pool.close()
+
+
+async def main():
+    parser = argparse.ArgumentParser(description="Run RAE benchmarks")
+    parser.add_argument(
+        '--set',
+        type=str,
+        required=True,
+        help='Benchmark set to run (e.g., academic_lite.yaml)'
+    )
+    parser.add_argument(
+        '--output',
+        type=str,
+        default='benchmarking/results',
+        help='Output directory for results'
+    )
+    parser.add_argument(
+        '--api-url',
+        type=str,
+        help='RAE API URL (default: direct DB access)'
+    )
+    parser.add_argument(
+        '--api-key',
+        type=str,
+        help='API key for authentication'
+    )
+
+    args = parser.parse_args()
+
+    # Resolve paths
+    project_root = Path(__file__).parent.parent.parent
+    benchmark_file = project_root / 'benchmarking' / 'sets' / args.set
+    output_dir = project_root / args.output
+
+    if not benchmark_file.exists():
+        print(f"❌ Benchmark file not found: {benchmark_file}")
+        sys.exit(1)
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Run benchmark
+    print("🚀 RAE Benchmark Runner")
+    print("=" * 60)
+
+    runner = RAEBenchmarkRunner(
+        benchmark_file=benchmark_file,
+        output_dir=output_dir,
+        api_url=args.api_url,
+        api_key=args.api_key,
+        use_direct_db=True  # Always use direct DB for benchmarks
+    )
+
+    try:
+        await runner.load_benchmark()
+        await runner.setup_database()
+        await runner.cleanup_test_data()
+        await runner.insert_memories()
+        await runner.run_queries()
+
+        metrics = runner.calculate_metrics()
+        runner.save_results(metrics)
+
+        print("\n✅ Benchmark complete!")
+        print("=" * 60)
+
+    except Exception as e:
+        print(f"\n❌ Benchmark failed: {e}")
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+    finally:
+        await runner.cleanup()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())

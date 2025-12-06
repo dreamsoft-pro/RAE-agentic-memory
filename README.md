@@ -1015,6 +1015,79 @@ Production-ready components that enhance RAE but are not required.
 
 ---
 
+## 🔬 Academic & Enterprise Benchmarking Suite
+
+RAE includes a comprehensive benchmarking environment designed for both academic research and enterprise quality assurance:
+
+### Quick Start
+
+```bash
+# Run quick smoke test (<10 seconds)
+make benchmark-lite
+
+# Run comprehensive evaluation (~30 seconds)
+make benchmark-extended
+
+# Run production-like test (~2 minutes)
+make benchmark-industrial
+```
+
+### What's Included
+
+- **3 Official Benchmark Sets**:
+  - `academic_lite.yaml` - Fast validation (10 memories, 7 queries)
+  - `academic_extended.yaml` - Thorough testing (50 memories, 20 queries, multi-domain)
+  - `industrial_small.yaml` - Real-world simulation (100+ memories, "dirty data", edge cases)
+
+- **Research-Grade Metrics**:
+  - Quality: MRR (Mean Reciprocal Rank), Hit Rate @k, Precision, Recall, Semantic Similarity
+  - Performance: Latency (avg, P95, P99), Throughput, Insert time
+  - System Analysis: GraphRAG impact, Reflection engine effectiveness
+
+- **Automated Tools**:
+  - `run_benchmark.py` - Execute benchmarks with JSON + Markdown reports
+  - `compare_runs.py` - A/B testing and regression detection
+  - CI/CD integration with automatic smoke tests on PRs
+
+### Example Results
+
+Recent benchmark on `academic_extended`:
+- **MRR**: 0.8456 ✅ (target: >0.70)
+- **Hit Rate @5**: 0.9143 ✅ (91.4% queries found in top 5)
+- **Avg Latency**: 45.67ms ✅ (P95: 78.45ms)
+- **Overall Quality**: 0.8234 ✅ (weighted composite score)
+
+### Documentation
+
+- **[Quick Start Guide](benchmarking/BENCHMARK_STARTER.md)** - Get started in 3 minutes
+- **[Report Template](benchmarking/BENCHMARK_REPORT_TEMPLATE.md)** - Standardized format for papers/reports
+- **[Example Report](benchmarking/results/example_report.md)** - Reference implementation
+- **[YAML Schema](benchmarking/sets/)** - Create custom benchmark sets
+
+### Use Cases
+
+- **Academic Research**: Reproducible results for papers and publications
+- **Enterprise QA**: Pre-deployment validation and regression testing
+- **CI/CD Integration**: Automated quality gates on pull requests
+- **Performance Tracking**: Monitor metrics over time
+- **A/B Testing**: Compare configurations and model changes
+
+### CI/CD Integration
+
+Benchmarks run automatically on:
+- All pull requests (lite benchmark, 60s timeout)
+- Pushes to `main` and `develop` branches
+- Manual workflow dispatch for full test suites
+
+Quality gates enforce minimum thresholds:
+- MRR > 0.50
+- Hit Rate @5 > 0.60
+- Overall Quality > 0.55
+
+See `benchmarking/BENCHMARK_STARTER.md` for complete documentation.
+
+---
+
 ## Documentation
 
 ### 📋 Documentation Structure (Updated 2025-12-03)

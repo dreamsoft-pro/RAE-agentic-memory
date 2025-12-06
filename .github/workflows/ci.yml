@@ -324,6 +324,140 @@ jobs:
           cd integrations/mcp
           pytest -m "not integration and not e2e and not load"
 
+  benchmark-smoke:
+    name: Benchmark Smoke Test
+    runs-on: ubuntu-latest
+    # Run on PRs and main/develop branches
+    if: |
+      github.event_name == 'pull_request' ||
+      github.ref == 'refs/heads/main' ||
+      github.ref == 'refs/heads/develop'
+
+    timeout-minutes: 3  # Fast smoke test should complete in <3 minutes
+
+    services:
+      postgres:
+        image: ankane/pgvector:latest
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: rae_memory
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install -r apps/memory_api/requirements-base.txt
+          pip install -e sdk/python/rae_memory_sdk
+
+      - name: Setup database
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: rae_memory
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        run: |
+          # Wait for postgres
+          sleep 3
+          # Initialize database schema (if needed)
+          python -c "import asyncpg; import asyncio; asyncio.run(asyncpg.connect(host='localhost', database='rae_memory', user='postgres', password='postgres'))"
+
+      - name: Run lite benchmark
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: 5432
+          POSTGRES_DB: rae_memory
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        run: |
+          python benchmarking/scripts/run_benchmark.py --set academic_lite.yaml
+
+      - name: Check benchmark results
+        run: |
+          # Get the latest result file
+          RESULT_FILE=$(ls -t benchmarking/results/academic_lite_*.json | head -1)
+
+          if [ ! -f "$RESULT_FILE" ]; then
+            echo "❌ No benchmark results found"
+            exit 1
+          fi
+
+          # Extract metrics using Python
+          python -c "
+          import json
+          import sys
+
+          with open('$RESULT_FILE', 'r') as f:
+              data = json.load(f)
+
+          metrics = data['metrics']
+          mrr = metrics['mrr']
+          hit_rate_5 = metrics['hit_rate']['@5']
+          quality_score = metrics['overall_quality_score']
+
+          print(f'📊 Benchmark Results:')
+          print(f'   MRR: {mrr:.4f}')
+          print(f'   Hit Rate @5: {hit_rate_5:.4f}')
+          print(f'   Overall Quality: {quality_score:.4f}')
+
+          # Quality thresholds (minimum acceptable scores)
+          MRR_THRESHOLD = 0.50
+          HIT_RATE_THRESHOLD = 0.60
+          QUALITY_THRESHOLD = 0.55
+
+          failed = []
+          if mrr < MRR_THRESHOLD:
+              failed.append(f'MRR ({mrr:.4f}) below threshold ({MRR_THRESHOLD})')
+          if hit_rate_5 < HIT_RATE_THRESHOLD:
+              failed.append(f'Hit Rate @5 ({hit_rate_5:.4f}) below threshold ({HIT_RATE_THRESHOLD})')
+          if quality_score < QUALITY_THRESHOLD:
+              failed.append(f'Overall Quality ({quality_score:.4f}) below threshold ({QUALITY_THRESHOLD})')
+
+          if failed:
+              print('\\n❌ Benchmark quality check FAILED:')
+              for failure in failed:
+                  print(f'   - {failure}')
+              sys.exit(1)
+          else:
+              print('\\n✅ Benchmark quality check PASSED')
+          "
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: benchmarking/results/
+          retention-days: 7
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
