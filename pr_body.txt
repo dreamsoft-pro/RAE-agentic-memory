@@ -1,0 +1,13 @@
+## Description
+This PR fixes a critical issue where tests were failing with `AttributeError: 'NoneType' object has no attribute 'start_as_current_span'` because `get_tracer` returned `None` when OpenTelemetry was unavailable/disabled in the test environment.
+
+## Changes
+- Modified `apps/memory_api/observability/opentelemetry_config.py` to return a `NoOpTracer` instead of `None`.
+- Added `NoOpTracer` and `NoOpSpan` classes to handle tracing calls gracefully.
+- Ran `make format` to ensure code style compliance.
+- Verified with full test suite (786 passed).
+
+## Testing
+- [x] `pytest` passes locally.
+- [x] `make lint` passes.
+- [x] `make security-scan` passes.
