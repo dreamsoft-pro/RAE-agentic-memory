@@ -41,6 +41,10 @@ class LLMRequest:
     tools: Optional[list[LLMTool]] = None
     metadata: dict[str, Any] = field(default_factory=dict)
 
+    # Orchestration parameters
+    tags: Optional[list[str]] = None
+    strategy: Optional[str] = None
+
     # Additional provider-specific parameters
     top_p: Optional[float] = None
     frequency_penalty: Optional[float] = None
