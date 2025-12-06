@@ -1,15 +1,15 @@
 # Testing Status
 
-**Last Run:** 2025-12-06 11:10:08
-**Commit:** 452af9c
+**Last Run:** 2025-12-06 13:52:42
+**Commit:** dc82afc
 
 ## Summary
-- **Total Tests:** 9
-- **Passed:** 9
+- **Total Tests:** 791
+- **Passed:** 791
 - **Failed:** 0
 - **Errors:** 0
-- **Skipped:** 6
-- **Coverage:** 21.76%
+- **Skipped:** 27
+- **Coverage:** N/A
 
 ## Coverage Report
 See `htmlcov/index.html` for detailed report.
