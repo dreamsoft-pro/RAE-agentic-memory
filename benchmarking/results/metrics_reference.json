@@ -1,0 +1,379 @@
+{
+  "version": "1.0.0",
+  "generated_at": "2024-12-06T22:00:00Z",
+  "description": "Reference metrics for RAE benchmarks - baseline values for comparison and regression detection",
+  "benchmarks": {
+    "academic_lite": {
+      "description": "Quick sanity check benchmark (10 memories, 7 queries)",
+      "expected_duration_seconds": 8,
+      "target_metrics": {
+        "quality": {
+          "mrr": {
+            "min": 0.70,
+            "target": 0.80,
+            "excellent": 0.90
+          },
+          "hit_rate_at_5": {
+            "min": 0.70,
+            "target": 0.85,
+            "excellent": 0.95
+          },
+          "precision_at_5": {
+            "min": 0.60,
+            "target": 0.70,
+            "excellent": 0.85
+          },
+          "recall_at_5": {
+            "min": 0.65,
+            "target": 0.75,
+            "excellent": 0.90
+          },
+          "overall_quality_score": {
+            "min": 0.65,
+            "target": 0.75,
+            "excellent": 0.85
+          }
+        },
+        "performance": {
+          "avg_query_time_ms": {
+            "max": 100,
+            "target": 50,
+            "excellent": 30
+          },
+          "p95_query_time_ms": {
+            "max": 200,
+            "target": 100,
+            "excellent": 60
+          },
+          "p99_query_time_ms": {
+            "max": 300,
+            "target": 150,
+            "excellent": 80
+          },
+          "avg_insert_time_ms": {
+            "max": 200,
+            "target": 100,
+            "excellent": 50
+          }
+        }
+      },
+      "reference_run": {
+        "date": "2024-12-06",
+        "version": "RAE-v2.3.0",
+        "results": {
+          "mrr": 0.8571,
+          "hit_rate_at_5": 0.8571,
+          "precision_at_5": 0.7714,
+          "recall_at_5": 0.8000,
+          "overall_quality_score": 0.8286,
+          "avg_query_time_ms": 45.67,
+          "p95_query_time_ms": 78.45,
+          "duration_seconds": 7.2
+        }
+      }
+    },
+    "academic_extended": {
+      "description": "Comprehensive academic evaluation (50 memories, 20 queries)",
+      "expected_duration_seconds": 35,
+      "target_metrics": {
+        "quality": {
+          "mrr": {
+            "min": 0.65,
+            "target": 0.75,
+            "excellent": 0.85
+          },
+          "hit_rate_at_5": {
+            "min": 0.65,
+            "target": 0.80,
+            "excellent": 0.90
+          },
+          "precision_at_5": {
+            "min": 0.55,
+            "target": 0.65,
+            "excellent": 0.75
+          },
+          "recall_at_5": {
+            "min": 0.60,
+            "target": 0.70,
+            "excellent": 0.85
+          },
+          "overall_quality_score": {
+            "min": 0.60,
+            "target": 0.70,
+            "excellent": 0.80
+          }
+        },
+        "performance": {
+          "avg_query_time_ms": {
+            "max": 120,
+            "target": 80,
+            "excellent": 50
+          },
+          "p95_query_time_ms": {
+            "max": 250,
+            "target": 150,
+            "excellent": 100
+          },
+          "p99_query_time_ms": {
+            "max": 350,
+            "target": 200,
+            "excellent": 150
+          },
+          "avg_insert_time_ms": {
+            "max": 250,
+            "target": 150,
+            "excellent": 100
+          }
+        }
+      },
+      "reference_run": {
+        "date": "2024-12-06",
+        "version": "RAE-v2.3.0",
+        "results": {
+          "mrr": 0.8456,
+          "hit_rate_at_5": 0.9143,
+          "precision_at_5": 0.7600,
+          "recall_at_5": 0.8200,
+          "overall_quality_score": 0.8234,
+          "avg_query_time_ms": 45.67,
+          "p95_query_time_ms": 78.45,
+          "duration_seconds": 32.4
+        }
+      }
+    },
+    "industrial_small": {
+      "description": "Real-world industrial data (100 memories, 20 queries)",
+      "expected_duration_seconds": 150,
+      "target_metrics": {
+        "quality": {
+          "mrr": {
+            "min": 0.60,
+            "target": 0.70,
+            "excellent": 0.80
+          },
+          "hit_rate_at_5": {
+            "min": 0.60,
+            "target": 0.75,
+            "excellent": 0.85
+          },
+          "precision_at_5": {
+            "min": 0.50,
+            "target": 0.60,
+            "excellent": 0.70
+          },
+          "recall_at_5": {
+            "min": 0.55,
+            "target": 0.65,
+            "excellent": 0.75
+          },
+          "overall_quality_score": {
+            "min": 0.55,
+            "target": 0.65,
+            "excellent": 0.75
+          }
+        },
+        "performance": {
+          "avg_query_time_ms": {
+            "max": 150,
+            "target": 100,
+            "excellent": 70
+          },
+          "p95_query_time_ms": {
+            "max": 300,
+            "target": 200,
+            "excellent": 150
+          },
+          "p99_query_time_ms": {
+            "max": 450,
+            "target": 300,
+            "excellent": 200
+          },
+          "avg_insert_time_ms": {
+            "max": 300,
+            "target": 200,
+            "excellent": 150
+          }
+        }
+      },
+      "reference_run": {
+        "date": "2024-12-06",
+        "version": "RAE-v2.3.0",
+        "results": {
+          "mrr": 0.7845,
+          "hit_rate_at_5": 0.8500,
+          "precision_at_5": 0.6800,
+          "recall_at_5": 0.7600,
+          "overall_quality_score": 0.7845,
+          "avg_query_time_ms": 67.23,
+          "p95_query_time_ms": 102.34,
+          "duration_seconds": 142.7
+        }
+      }
+    },
+    "industrial_large": {
+      "description": "Large-scale stress test (1000+ memories, 100 queries)",
+      "expected_duration_seconds": 900,
+      "target_metrics": {
+        "quality": {
+          "mrr": {
+            "min": 0.55,
+            "target": 0.65,
+            "excellent": 0.75
+          },
+          "hit_rate_at_5": {
+            "min": 0.55,
+            "target": 0.70,
+            "excellent": 0.80
+          },
+          "precision_at_5": {
+            "min": 0.45,
+            "target": 0.55,
+            "excellent": 0.65
+          },
+          "recall_at_5": {
+            "min": 0.50,
+            "target": 0.60,
+            "excellent": 0.70
+          },
+          "overall_quality_score": {
+            "min": 0.50,
+            "target": 0.60,
+            "excellent": 0.70
+          }
+        },
+        "performance": {
+          "avg_query_time_ms": {
+            "max": 250,
+            "target": 150,
+            "excellent": 100
+          },
+          "p95_query_time_ms": {
+            "max": 500,
+            "target": 300,
+            "excellent": 200
+          },
+          "p99_query_time_ms": {
+            "max": 750,
+            "target": 450,
+            "excellent": 300
+          },
+          "avg_insert_time_ms": {
+            "max": 500,
+            "target": 300,
+            "excellent": 200
+          }
+        },
+        "scalability": {
+          "memory_footprint_mb": {
+            "max": 2048,
+            "target": 1024,
+            "excellent": 512
+          },
+          "throughput_queries_per_sec": {
+            "min": 5,
+            "target": 10,
+            "excellent": 20
+          }
+        }
+      },
+      "reference_run": null,
+      "notes": "Baseline to be established after first successful run"
+    },
+    "stress_memory_drift": {
+      "description": "Memory stability and drift measurement",
+      "expected_duration_seconds": 120,
+      "target_metrics": {
+        "quality": {
+          "mrr": {
+            "min": 0.60,
+            "target": 0.70,
+            "excellent": 0.80
+          },
+          "retrieval_consistency": {
+            "min": 0.70,
+            "target": 0.80,
+            "excellent": 0.90,
+            "description": "Consistency of retrieval results for repeated queries"
+          }
+        },
+        "stability": {
+          "memory_drift_score": {
+            "max": 0.30,
+            "target": 0.20,
+            "excellent": 0.10,
+            "description": "Semantic distance between initial and final memory states"
+          },
+          "graph_stability_ratio": {
+            "min": 0.60,
+            "target": 0.75,
+            "excellent": 0.85,
+            "description": "Stability of knowledge graph structure over time"
+          },
+          "reflection_improvement_delta": {
+            "min": 0.05,
+            "target": 0.10,
+            "excellent": 0.15,
+            "description": "MRR improvement after reflection processing"
+          },
+          "compression_fidelity": {
+            "min": 0.75,
+            "target": 0.85,
+            "excellent": 0.95,
+            "description": "Quality preservation after summarization/pruning"
+          }
+        }
+      },
+      "reference_run": null,
+      "notes": "Baseline to be established - novel metrics for memory system stability"
+    }
+  },
+  "global_thresholds": {
+    "regression_detection": {
+      "mrr_drop_threshold": 0.05,
+      "latency_increase_threshold": 0.20,
+      "quality_drop_threshold": 0.10,
+      "description": "Thresholds for detecting performance regressions"
+    },
+    "quality_levels": {
+      "failing": {
+        "mrr": "< 0.50",
+        "hit_rate_at_5": "< 0.55",
+        "overall_quality": "< 0.50"
+      },
+      "acceptable": {
+        "mrr": "0.50 - 0.70",
+        "hit_rate_at_5": "0.55 - 0.75",
+        "overall_quality": "0.50 - 0.70"
+      },
+      "good": {
+        "mrr": "0.70 - 0.85",
+        "hit_rate_at_5": "0.75 - 0.90",
+        "overall_quality": "0.70 - 0.85"
+      },
+      "excellent": {
+        "mrr": "> 0.85",
+        "hit_rate_at_5": "> 0.90",
+        "overall_quality": "> 0.85"
+      }
+    }
+  },
+  "usage_guidelines": {
+    "ci_cd_smoke_test": {
+      "benchmark": "academic_lite",
+      "timeout_seconds": 60,
+      "fail_if_mrr_below": 0.70,
+      "fail_if_hit_rate_below": 0.70
+    },
+    "nightly_regression_test": {
+      "benchmarks": ["academic_extended", "industrial_small"],
+      "compare_against": "previous_run",
+      "alert_on_mrr_drop": 0.05,
+      "alert_on_latency_increase": 0.20
+    },
+    "release_validation": {
+      "benchmarks": ["academic_extended", "industrial_small", "industrial_large"],
+      "required_quality_level": "good",
+      "max_acceptable_regression": 0.03
+    }
+  }
+}
