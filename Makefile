@@ -1,4 +1,4 @@
-.PHONY: help start stop restart logs clean install lint test format db-init demo dev docs
+.PHONY: help start stop restart logs clean install lint test format db-init demo dev docs benchmark-lite benchmark-extended benchmark-industrial benchmark-all benchmark-compare
 
 # ==============================================================================
 # HELP
@@ -169,6 +169,42 @@ test-focus:  ## Run a specific test file without coverage checks (Usage: make te
 test-watch:  ## Run tests in watch mode
 	@echo "🧪 Running tests in watch mode..."
 	@PYTHONPATH=. $(VENV_PYTHON) -m pytest-watch
+
+# ==============================================================================
+# BENCHMARKING
+# ==============================================================================
+
+benchmark-lite:  ## Run quick benchmark (academic_lite, <10s)
+	@echo "🔬 Running lite benchmark..."
+	@$(VENV_PYTHON) benchmarking/scripts/run_benchmark.py --set academic_lite.yaml
+	@echo "✅ Lite benchmark complete"
+
+benchmark-extended:  ## Run extended benchmark (academic_extended, ~30s)
+	@echo "🔬 Running extended benchmark..."
+	@$(VENV_PYTHON) benchmarking/scripts/run_benchmark.py --set academic_extended.yaml
+	@echo "✅ Extended benchmark complete"
+
+benchmark-industrial:  ## Run industrial benchmark (industrial_small, ~2min)
+	@echo "🔬 Running industrial benchmark..."
+	@$(VENV_PYTHON) benchmarking/scripts/run_benchmark.py --set industrial_small.yaml
+	@echo "✅ Industrial benchmark complete"
+
+benchmark-all:  ## Run all benchmarks sequentially
+	@echo "🔬 Running all benchmarks..."
+	@$(MAKE) benchmark-lite
+	@$(MAKE) benchmark-extended
+	@$(MAKE) benchmark-industrial
+	@echo "✅ All benchmarks complete"
+
+benchmark-compare:  ## Compare two benchmark runs (Usage: make benchmark-compare BASE=run1.json COMP=run2.json)
+	@if [ -z "$(BASE)" ] || [ -z "$(COMP)" ]; then \
+		echo "❌ Error: BASE and COMP arguments required."; \
+		echo "Usage: make benchmark-compare BASE=benchmarking/results/run1.json COMP=benchmarking/results/run2.json"; \
+		exit 1; \
+	fi
+	@echo "🔍 Comparing benchmark results..."
+	@$(VENV_PYTHON) benchmarking/scripts/compare_runs.py $(BASE) $(COMP) --output comparison_report.md
+	@echo "✅ Comparison complete: comparison_report.md"
 
 # ==============================================================================
 # DATABASE
