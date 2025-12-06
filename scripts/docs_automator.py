@@ -370,11 +370,33 @@ def update_changelog():
 
 def main():
     print("🤖 Docs Automator - Starting...")
+
+    # Initialize metrics tracker
+    try:
+        import sys
+        sys.path.append(os.path.join(PROJECT_ROOT, "scripts"))
+        from metrics_tracker import DocsMetrics
+        metrics = DocsMetrics()
+    except ImportError:
+        print("⚠️  Metrics tracker not available")
+        metrics = None
+
     try:
         update_todo()
+        if metrics:
+            metrics.record_file(TODO_FILE, "update_todo")
+
         update_status()
+        if metrics:
+            metrics.record_file(STATUS_FILE, "update_status")
+
         update_testing_status()
+        if metrics:
+            metrics.record_file(TESTING_FILE, "update_testing_status")
+
         update_changelog()
+        if metrics:
+            metrics.record_file(CHANGELOG_FILE, "update_changelog")
 
         # Import and run modular generators
         try:
@@ -384,15 +406,35 @@ def main():
             from docs_generators.code_metrics import generate_code_metrics
 
             generate_api_docs()
+            if metrics:
+                metrics.record_file("docs/.auto-generated/api/openapi.json", "generate_api_docs")
+                metrics.record_file("docs/.auto-generated/api/endpoints.md", "generate_api_docs")
+
             generate_code_metrics()
+            if metrics:
+                metrics.record_file("docs/.auto-generated/metrics/complexity.md", "generate_code_metrics")
+                metrics.record_file("docs/.auto-generated/metrics/dependencies.md", "generate_code_metrics")
         except ImportError as e:
             print(f"⚠️  Modular generators not available: {e}")
+            if metrics:
+                metrics.record_warning("modular_generators", f"Import error: {e}")
         except Exception as e:
             print(f"⚠️  Error in modular generators: {e}")
+            if metrics:
+                metrics.record_error("modular_generators", str(e))
+
+        # Save metrics
+        if metrics:
+            metrics.save_metrics()
+            print(f"📊 Metrics: {metrics.to_dict()['files_generated_count']} files, {metrics.to_dict()['duration_seconds']}s")
 
         print("✅ Documentation updated successfully.")
+
     except Exception as e:
         print(f"❌ Error updating documentation: {e}")
+        if metrics:
+            metrics.record_error("main", str(e))
+            metrics.save_metrics()
         exit(1)
 
 if __name__ == "__main__":
