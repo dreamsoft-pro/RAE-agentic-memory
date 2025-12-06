@@ -71,6 +71,9 @@ services:
       - RAE_APP_LOG_LEVEL=DEBUG
       - LOG_LEVEL=INFO
       - OTEL_TRACES_ENABLED=false
+    healthcheck:
+      # Disable HTTP healthcheck - celery worker doesn't expose HTTP endpoint
+      disable: true
 
   # ============================================================================
   # Celery Beat with Auto-reload
@@ -87,6 +90,9 @@ services:
       - RAE_APP_LOG_LEVEL=DEBUG
       - LOG_LEVEL=INFO
       - OTEL_TRACES_ENABLED=false
+    healthcheck:
+      # Disable HTTP healthcheck - celery beat doesn't expose HTTP endpoint
+      disable: true
 
   # ============================================================================
   # Streamlit Dashboard with Hot Reload
