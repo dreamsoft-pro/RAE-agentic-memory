@@ -331,3 +331,10 @@ mcp-verify:  ## Verify MCP installation and health
 	@echo "  1. Configure your IDE using examples/ide-config/<YOUR-IDE>/"
 	@echo "  2. Read docs/guides/IDE_INTEGRATION.md for full setup guide"
 	@echo "  3. Restart your IDE to load MCP configuration"
+
+# Documentation
+.PHONY: docs
+docs:
+	@echo "🤖 Updating auto-generated documentation..."
+	python3 scripts/docs_automator.py
+	@echo "✅ Documentation updated. See docs/.auto-generated/metrics/DASHBOARD.md for health status."
