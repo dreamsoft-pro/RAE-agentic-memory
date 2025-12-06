@@ -24,7 +24,12 @@ from apps.memory_api.services.memory_scoring_v2 import (
     compute_batch_scores,
     rank_memories_by_score,
 )
+from apps.memory_api.services.memory_scoring_v3 import (
+    ScoringWeightsV3,
+    compute_batch_scores_v3,
+)
 from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
+from apps.memory_api.services.smart_reranker import SmartReranker
 
 logger = structlog.get_logger(__name__)
 tracer = get_tracer(__name__)
@@ -151,6 +156,7 @@ class ContextBuilder:
         self.pool = pool
         self.memory_repo = memory_repository or MemoryRepository(pool)
         self.reflection_engine = reflection_engine or ReflectionEngineV2(pool)
+        self.reranker = SmartReranker()
         self.config = config or ContextConfig()
 
     async def build_context(
@@ -316,7 +322,36 @@ class ContextBuilder:
         # For now, use placeholder similarity
         similarity_scores = [0.8] * len(all_memories)
 
-        if self.config.enable_enhanced_scoring:
+        if settings.ENABLE_MATH_V3:
+            # Use Hybrid Math V3
+            score_results = compute_batch_scores_v3(
+                memories=all_memories,
+                similarity_scores=similarity_scores,
+                weights=ScoringWeightsV3(
+                    w1_relevance=settings.MATH_V3_W1_RELEVANCE,
+                    w2_importance=settings.MATH_V3_W2_IMPORTANCE,
+                    w3_recency=settings.MATH_V3_W3_RECENCY,
+                    w4_centrality=settings.MATH_V3_W4_CENTRALITY,
+                    w5_diversity=settings.MATH_V3_W5_DIVERSITY,
+                    w6_density=settings.MATH_V3_W6_DENSITY,
+                ),
+            )
+            ranked = rank_memories_by_score(all_memories, score_results)
+
+            # --- Iteration 2: Smart Re-Ranker ---
+            if settings.ENABLE_SMART_RERANKER:
+                # Take a larger pool for re-ranking (e.g. top 50)
+                candidates = ranked[: settings.RERANKER_TOP_K_CANDIDATES]
+                # Apply re-ranking
+                ranked = await self.reranker.rerank(
+                    candidates, query, limit=settings.RERANKER_FINAL_K
+                )
+                # Use this new list as top_memories (it's already limited)
+                top_memories = ranked
+            else:
+                top_memories = ranked[: self.config.max_ltm_items]
+
+        elif self.config.enable_enhanced_scoring:
             # Use enhanced scoring
             score_results = compute_batch_scores(
                 memories=all_memories,
@@ -324,6 +359,7 @@ class ContextBuilder:
                 weights=self.config.scoring_weights,
             )
             ranked = rank_memories_by_score(all_memories, score_results)
+            top_memories = ranked[: self.config.max_ltm_items]
         else:
             # Basic ranking by similarity
             ranked = sorted(
@@ -331,10 +367,7 @@ class ContextBuilder:
                 key=lambda x: x[1],
                 reverse=True,
             )
-            ranked = [m[0] for m in ranked]
-
-        # Take top K
-        top_memories = ranked[: self.config.max_ltm_items]
+            top_memories = [m[0] for m in ranked[: self.config.max_ltm_items]]
 
         # Convert to components
         components = []
