@@ -387,8 +387,12 @@ jobs:
         run: |
           # Wait for postgres
           sleep 3
-          # Initialize database schema (if needed)
+          # Test database connection
           python -c "import asyncpg; import asyncio; asyncio.run(asyncpg.connect(host='localhost', database='rae_memory', user='postgres', password='postgres'))"
+          echo "✅ Database connection successful"
+          # Run migrations
+          alembic upgrade head
+          echo "✅ Database migrations complete"
 
       - name: Run lite benchmark
         env:
