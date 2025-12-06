@@ -192,11 +192,15 @@ class RAEBenchmarkRunner:
                 self.tenant_id
             )
 
-            # Delete vectors for this tenant
-            await conn.execute(
-                "DELETE FROM memory_vectors WHERE tenant_id = $1",
-                self.tenant_id
-            )
+            # Delete vectors for this tenant (if table exists)
+            try:
+                await conn.execute(
+                    "DELETE FROM memory_vectors WHERE tenant_id = $1",
+                    self.tenant_id
+                )
+            except asyncpg.exceptions.UndefinedTableError:
+                # Table doesn't exist, skip cleanup
+                pass
 
         print("   ✅ Cleanup complete")
 
