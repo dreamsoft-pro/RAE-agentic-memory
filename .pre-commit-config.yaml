@@ -48,6 +48,13 @@ repos:
 
   - repo: local
     hooks:
+      - id: generate-api-docs
+        name: Generate API Documentation
+        entry: bash -c 'python scripts/generate_api_docs.py --quiet && git add docs/.auto-generated/api/ 2>/dev/null || true'
+        language: system
+        files: ^apps/memory_api/(api|routes|models)/.*\.py$
+        pass_filenames: false
+
       - id: quick-validation
         name: Quick Validation (imports + type check)
         entry: bash -c 'python -c "import apps.memory_api" && echo "✅ Imports OK"'
