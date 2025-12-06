@@ -1,6 +1,14 @@
 # RAE Project Rules for AI Agents
 
-> **🚨 CRITICAL**: Before doing ANYTHING, read `CRITICAL_AGENT_RULES.md` - these are MANDATORY rules that cannot be violated!
+> **🚨 CRITICAL**: Before doing ANYTHING, read these documents (15 minutes):
+>
+> 1. **[CRITICAL_AGENT_RULES.md](./CRITICAL_AGENT_RULES.md)** (5 min) - 8 MANDATORY rules that cannot be violated
+> 2. **[AI_AGENT_MANIFEST.md](./AI_AGENT_MANIFEST.md)** (3 min) - Universal baseline & documentation hierarchy
+> 3. **[.ai-agent-rules.md](./.ai-agent-rules.md)** (5 min) - Forbidden commands & hybrid testing
+> 4. **[docs/BRANCHING.md](./docs/BRANCHING.md)** (3 min) - Git workflow
+> 5. **[docs/AGENTS_TEST_POLICY.md](./docs/AGENTS_TEST_POLICY.md)** (3 min) - Tests as contracts
+>
+> **AI_AGENT_MANIFEST.md** is the universal baseline for ALL AI agents. Read it first!
 
 You are working on the RAE (Reflective Agentic-memory Engine) project.
 Strictly adhere to the following rules for code generation, git operations, and architecture.

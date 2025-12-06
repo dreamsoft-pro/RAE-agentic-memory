@@ -542,6 +542,124 @@ jobs:
             echo "✅ Test naming conventions followed"
           fi
 
+      - name: Verify documentation automation is enabled
+        run: |
+          echo "📚 Checking if docs automation is properly configured..."
+
+          ISSUES=()
+
+          # Check if docs-update job exists in CI workflow
+          if ! grep -q "docs-update:" .github/workflows/ci.yml; then
+            ISSUES+=("Missing docs-update job in .github/workflows/ci.yml")
+          fi
+
+          # Check if docs.yml workflow exists
+          if [ ! -f ".github/workflows/docs.yml" ]; then
+            ISSUES+=("Missing .github/workflows/docs.yml file")
+          fi
+
+          # Check if docs_automator.py script exists
+          if [ ! -f "scripts/docs_automator.py" ]; then
+            ISSUES+=("Missing scripts/docs_automator.py script")
+          fi
+
+          # Check if AI_AGENT_MANIFEST.md exists (new universal baseline)
+          if [ ! -f "AI_AGENT_MANIFEST.md" ]; then
+            ISSUES+=("Missing AI_AGENT_MANIFEST.md (universal agent baseline)")
+          fi
+
+          # Check if docs-update job has correct dependencies
+          if grep -A 5 "docs-update:" .github/workflows/ci.yml | grep -q "needs:"; then
+            if ! grep -A 5 "docs-update:" .github/workflows/ci.yml | grep "needs:" | grep -q "test-full"; then
+              ISSUES+=("docs-update job should depend on test-full job")
+            fi
+          else
+            ISSUES+=("docs-update job missing 'needs' dependencies")
+          fi
+
+          if [ ${#ISSUES[@]} -ne 0 ]; then
+            echo "❌ Documentation automation issues found:"
+            printf '   - %s\n' "${ISSUES[@]}"
+            echo ""
+            echo "Documentation automation ensures:"
+            echo "  - CHANGELOG.md stays current (git history)"
+            echo "  - STATUS.md reflects live metrics"
+            echo "  - TODO.md tracks code TODOs"
+            echo "  - TESTING_STATUS.md shows test results"
+            echo ""
+            echo "Fix these issues to enable automatic documentation updates"
+            exit 1
+          fi
+
+          echo "✅ Documentation automation is properly configured"
+          echo ""
+          echo "Automated docs (CI handles):"
+          echo "  - CHANGELOG.md (git history)"
+          echo "  - STATUS.md (live metrics)"
+          echo "  - TODO.md (code TODOs)"
+          echo "  - docs/TESTING_STATUS.md (test results)"
+          echo ""
+          echo "Manual docs (agent responsibility):"
+          echo "  - CONVENTIONS.md (patterns)"
+          echo "  - PROJECT_STRUCTURE.md (locations)"
+          echo "  - docs/guides/ (feature guides)"
+
+      - name: Check AI agent baseline configuration
+        run: |
+          echo "🤖 Verifying AI agent baseline configuration..."
+
+          ISSUES=()
+
+          # Check if all agent config files reference the manifest
+          if [ -f "GEMINI.md" ]; then
+            if ! grep -q "AI_AGENT_MANIFEST.md" GEMINI.md; then
+              ISSUES+=("GEMINI.md missing reference to AI_AGENT_MANIFEST.md")
+            fi
+          fi
+
+          if [ -f ".clauderc" ]; then
+            if ! grep -q "AI_AGENT_MANIFEST.md" .clauderc; then
+              ISSUES+=(".clauderc missing reference to AI_AGENT_MANIFEST.md")
+            fi
+          fi
+
+          if [ -f ".cursorrules" ]; then
+            if ! grep -q "AI_AGENT_MANIFEST.md" .cursorrules; then
+              ISSUES+=(".cursorrules missing reference to AI_AGENT_MANIFEST.md")
+            fi
+          fi
+
+          # Check if critical rule files exist
+          CRITICAL_FILES=(
+            "CRITICAL_AGENT_RULES.md"
+            "AI_AGENT_MANIFEST.md"
+            ".ai-agent-rules.md"
+            "docs/BRANCHING.md"
+            "docs/AGENTS_TEST_POLICY.md"
+          )
+
+          for file in "${CRITICAL_FILES[@]}"; do
+            if [ ! -f "$file" ]; then
+              ISSUES+=("Missing critical file: $file")
+            fi
+          done
+
+          if [ ${#ISSUES[@]} -ne 0 ]; then
+            echo "⚠️ AI agent baseline configuration issues:"
+            printf '   - %s\n' "${ISSUES[@]}"
+            echo ""
+            echo "Note: These are warnings. Agents should have unified baseline."
+          else
+            echo "✅ AI agent baseline properly configured"
+            echo ""
+            echo "All agents read same baseline:"
+            echo "  - AI_AGENT_MANIFEST.md (universal navigation)"
+            echo "  - CRITICAL_AGENT_RULES.md (8 mandatory rules)"
+            echo "  - .ai-agent-rules.md (commands & testing)"
+            echo "  - docs/BRANCHING.md (git workflow)"
+            echo "  - docs/AGENTS_TEST_POLICY.md (test philosophy)"
+          fi
+
       - name: Quality gate summary
         run: |
           echo "✅ Code Quality Gate Passed!"
@@ -552,6 +670,8 @@ jobs:
           echo "  ✅ File structure compliance checked"
           echo "  ✅ tenant_id security check performed"
           echo "  ✅ Test naming conventions verified"
+          echo "  ✅ Documentation automation configured"
+          echo "  ✅ AI agent baseline unified"
           echo ""
           echo "Next: Full test suite and integration checks"
 
