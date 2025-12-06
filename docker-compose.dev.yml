@@ -38,6 +38,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+    restart: unless-stopped  # Auto-restart after system reboot
 
   # ============================================================================
   # ML Service with Hot Reload
@@ -54,6 +55,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+    restart: unless-stopped  # Auto-restart after system reboot
 
   # ============================================================================
   # Celery Worker with Auto-reload
@@ -74,6 +76,7 @@ services:
     healthcheck:
       # Disable HTTP healthcheck - celery worker doesn't expose HTTP endpoint
       disable: true
+    restart: unless-stopped  # Auto-restart after system reboot
 
   # ============================================================================
   # Celery Beat with Auto-reload
@@ -93,6 +96,7 @@ services:
     healthcheck:
       # Disable HTTP healthcheck - celery beat doesn't expose HTTP endpoint
       disable: true
+    restart: unless-stopped  # Auto-restart after system reboot
 
   # ============================================================================
   # Streamlit Dashboard with Hot Reload
@@ -104,6 +108,7 @@ services:
       - ./tools/memory-dashboard:/app:ro
     environment:
       - LOG_LEVEL=DEBUG
+    restart: unless-stopped  # Auto-restart after system reboot
 
   # ============================================================================
   # Database Services - No changes needed, but expose ports
@@ -142,6 +147,7 @@ services:
       - postgres
     networks:
       - rae-network
+    restart: unless-stopped  # Auto-restart after system reboot
     labels:
       - "dev.tool=true"
       - "dev.description=Database UI - http://localhost:8080"
