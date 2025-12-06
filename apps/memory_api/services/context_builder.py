@@ -24,6 +24,10 @@ from apps.memory_api.services.memory_scoring_v2 import (
     compute_batch_scores,
     rank_memories_by_score,
 )
+from apps.memory_api.services.memory_scoring_v3 import (
+    ScoringWeightsV3,
+    compute_batch_scores_v3,
+)
 from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
 
 logger = structlog.get_logger(__name__)
@@ -316,7 +320,23 @@ class ContextBuilder:
         # For now, use placeholder similarity
         similarity_scores = [0.8] * len(all_memories)
 
-        if self.config.enable_enhanced_scoring:
+        if settings.ENABLE_MATH_V3:
+            # Use Hybrid Math V3
+            score_results = compute_batch_scores_v3(
+                memories=all_memories,
+                similarity_scores=similarity_scores,
+                weights=ScoringWeightsV3(
+                    w1_relevance=settings.MATH_V3_W1_RELEVANCE,
+                    w2_importance=settings.MATH_V3_W2_IMPORTANCE,
+                    w3_recency=settings.MATH_V3_W3_RECENCY,
+                    w4_centrality=settings.MATH_V3_W4_CENTRALITY,
+                    w5_diversity=settings.MATH_V3_W5_DIVERSITY,
+                    w6_density=settings.MATH_V3_W6_DENSITY,
+                ),
+            )
+            ranked = rank_memories_by_score(all_memories, score_results)
+
+        elif self.config.enable_enhanced_scoring:
             # Use enhanced scoring
             score_results = compute_batch_scores(
                 memories=all_memories,

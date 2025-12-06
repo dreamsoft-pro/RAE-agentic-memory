@@ -111,6 +111,15 @@ class Settings(BaseSettings):
     MEMORY_SCORE_WEIGHTS_BETA: float = 0.3  # Importance weight
     MEMORY_SCORE_WEIGHTS_GAMMA: float = 0.2  # Recency weight
 
+    # Hybrid Math V3 Configuration
+    ENABLE_MATH_V3: bool = False  # Enable Hybrid Math v3 scoring
+    MATH_V3_W1_RELEVANCE: float = 0.40
+    MATH_V3_W2_IMPORTANCE: float = 0.20
+    MATH_V3_W3_RECENCY: float = 0.10
+    MATH_V3_W4_CENTRALITY: float = 0.10
+    MATH_V3_W5_DIVERSITY: float = 0.10
+    MATH_V3_W6_DENSITY: float = 0.10
+
     # Decay configuration
     MEMORY_BASE_DECAY_RATE: float = 0.001  # Base decay rate per second
     MEMORY_ACCESS_COUNT_BOOST: bool = True  # Consider access count in decay
