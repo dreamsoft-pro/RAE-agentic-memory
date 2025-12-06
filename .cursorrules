@@ -409,7 +409,7 @@ def test_user_authentication_calls_bcrypt_with_hash():
 
 ## 📚 Documentation
 
-- **Update Docs**: Before finishing a task or submitting a PR, run `make docs`.
+- **Update Docs**: Manual docs only (CONVENTIONS.md, guides). Auto-docs (CHANGELOG, STATUS, TODO) are handled by CI automatically. See RULE #8 in CRITICAL_AGENT_RULES.md.
 - **Status**: Ensure `STATUS.md` and `TODO.md` are up-to-date with your changes.
 
 ## 📝 Commit Messages (Conventional Commits)

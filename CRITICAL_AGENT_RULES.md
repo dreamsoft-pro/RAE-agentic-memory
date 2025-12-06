@@ -297,17 +297,42 @@ See `docs/AGENTS_TEST_POLICY.md` for complete philosophy.
 | New template | .ai-templates/README.md |
 | Breaking change | CHANGELOG.md, migration guide |
 
-### 🤖 Automated Documentation:
+### 🤖 Automated Documentation (CI Handles This):
 
+**Files auto-updated by GitHub Actions (DO NOT manually edit):**
+- `CHANGELOG.md` - Git commit history (last 50 commits)
+- `STATUS.md` - Live project metrics (coverage, tests, branch)
+- `TODO.md` - Extracted TODOs/FIXMEs from code
+- `docs/TESTING_STATUS.md` - Test results and coverage
+- `docs/.auto-generated/api/` - OpenAPI specs and endpoints
+- `docs/.auto-generated/metrics/` - Code metrics, automation health
+
+**Automatic workflow:**
+1. Every push to `develop`/`main` triggers `.github/workflows/docs.yml`
+2. Runs `python scripts/docs_automator.py` (integrated with metrics)
+3. Auto-commits updated files with `[skip ci]` tag
+4. Metrics saved to `docs/.auto-generated/metrics/automation-health.json`
+
+**Dashboard:** [docs/.auto-generated/metrics/DASHBOARD.md](docs/.auto-generated/metrics/DASHBOARD.md)
+
+**Test locally (optional, CI will run automatically):**
 ```bash
-# Run before commit (if repo has docs automation)
-make docs
-
-# This updates:
-# - CHANGELOG.md (from commits)
-# - STATUS.md (from test results)
-# - Coverage reports
+make docs  # or: python scripts/docs_automator.py
 ```
+
+**Metrics tracked:**
+- Execution time, files generated, errors, warnings
+- Success rate (100% = healthy)
+- Historical trends (last 50 runs)
+
+### 📝 Manual Documentation (Your Responsibility):
+
+When you add new features, **manually update** these files (CI does NOT handle these):
+- `CONVENTIONS.md` - New patterns or conventions
+- `PROJECT_STRUCTURE.md` - New file locations
+- `docs/guides/` - Feature guides and tutorials
+- `docs/reference/` - Technical specifications
+- `.ai-templates/README.md` - New templates
 
 ---
 
