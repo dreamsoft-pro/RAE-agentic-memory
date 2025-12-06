@@ -375,21 +375,6 @@ def main():
         update_status()
         update_testing_status()
         update_changelog()
-
-        # Import and run modular generators
-        try:
-            import sys
-            sys.path.append(os.path.join(PROJECT_ROOT, "scripts"))
-            from docs_generators.api_docs import generate_api_docs
-            from docs_generators.code_metrics import generate_code_metrics
-
-            generate_api_docs()
-            generate_code_metrics()
-        except ImportError as e:
-            print(f"⚠️  Modular generators not available: {e}")
-        except Exception as e:
-            print(f"⚠️  Error in modular generators: {e}")
-
         print("✅ Documentation updated successfully.")
     except Exception as e:
         print(f"❌ Error updating documentation: {e}")
