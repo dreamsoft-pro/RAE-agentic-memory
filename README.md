@@ -1042,6 +1042,20 @@ RAE documentation is organized into four main areas:
 - ✅ **[TODO List](TODO.md)** - Upcoming features and improvements
 - 🧪 **[Testing Status](docs/.auto-generated/status/TESTING_STATUS.md)** - Test coverage and quality metrics
 
+### Testing & Benchmarking
+- 🧪 **[Testing Kit](docs/testing/RAE_TESTING_KIT.md)** - Complete guide to running tests and benchmarks
+- 📊 **[Benchmark Starter](docs/testing/BENCHMARK_STARTER.md)** - Benchmark datasets and evaluation protocols
+- 📝 **[Report Template](docs/testing/BENCHMARK_REPORT_TEMPLATE.md)** - Standardized benchmark reporting
+- 🎯 **[Academic Lite Benchmark](benchmarking/academic_lite.yaml)** - Example benchmark dataset
+
+### Academic & Research
+- 📄 **[Executive Summary](docs/outreach/EXEC_SUMMARY.md)** - 1-page RAE overview
+- 🔬 **[Technical Abstract](docs/outreach/TECHNICAL_ABSTRACT.md)** - Detailed technical description
+- 📧 **[Research Invitation](docs/outreach/RESEARCH_INVITATION_LETTER.md)** - Collaboration opportunities
+- 📐 **[LaTeX Description](docs/outreach/LATEX_DESCRIPTION.md)** - Academic paper-ready content
+- 💼 **[R&D Pitch](docs/outreach/RD_PITCH.md)** - Enterprise evaluation opportunity
+- 💬 **[Quick Messages](docs/outreach/QUICK_MESSAGE.md)** - Templates for technical outreach
+
 ### Getting Started
 - 📖 **[Getting Started Guide](docs/guides/developers/getting-started/)** - Installation and first steps
 - 🚀 **[Quick Start](docs/guides/developers/getting-started/quickstart.md)** - 5-minute setup guide
