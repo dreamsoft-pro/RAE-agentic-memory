@@ -12,8 +12,9 @@
 [![Coverage](https://img.shields.io/badge/coverage-69%25-green.svg)]())
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Version](https://img.shields.io/badge/version-2.1.0--enterprise-blue.svg)](docs/.auto-generated/status/STATUS.md)
+[![Docs Automation](https://img.shields.io/badge/docs_automation-✓_healthy-brightgreen.svg)](docs/.auto-generated/metrics/DASHBOARD.md)
 
-[📖 Documentation](#documentation) | [🚀 Quick Start](#quick-start-5-minutes) | [🔧 Troubleshooting](TROUBLESHOOTING.md) | [💬 Community](#community--support) | [🎯 Examples](#real-world-examples)
+[📖 Documentation](#documentation) | [🚀 Quick Start](#quick-start-5-minutes) | [🔧 Troubleshooting](TROUBLESHOOTING.md) | [💬 Community](#community--support) | [🎯 Examples](#real-world-examples) | [📊 Docs Dashboard](docs/.auto-generated/metrics/DASHBOARD.md)
 
 ---
 
