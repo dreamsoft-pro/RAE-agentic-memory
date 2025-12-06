@@ -1,6 +1,6 @@
 ## Recent Changes (Auto-generated)
 
-*Last updated: 2025-12-06 21:37 • Branch: develop • Commit: f46e033*
+*Last updated: 2025-12-06 21:37 • Branch: main • Commit: fbe6e89*
 
 ### ✨ Features
 
@@ -160,11 +160,6 @@
 
 ### 📦 Other
 
-- Merge remote-tracking branch 'origin/develop' into develop ([`f46e033`](../../commit/f46e033))
-- Merge main into develop - Add database migrations to benchmarks ([`f78bacb`](../../commit/f78bacb))
-- Merge remote-tracking branch 'origin/develop' into develop ([`359946d`](../../commit/359946d))
-- Merge branch 'main' into develop ([`f104766`](../../commit/f104766))
-- Merge main into develop - Add 9/5 benchmarking suite ([`0a63cca`](../../commit/0a63cca))
 - Merge develop into main - Benchmark tests complete ([`35d0480`](../../commit/35d0480))
 - Merge main into develop - Add benchmark tests ([`ce0e766`](../../commit/ce0e766))
 - Merge branch 'develop' - Add benchmarking suite ([`23cb3a2`](../../commit/23cb3a2))
@@ -220,7 +215,7 @@
 
 ## Recent Changes (Auto-generated)
 
-*Last updated: 2025-12-06 21:30 • Branch: develop • Commit: 359946d*
+*Last updated: 2025-12-06 21:29 • Branch: main • Commit: 330bffd*
 
 ### ✨ Features
 
@@ -379,9 +374,6 @@
 
 ### 📦 Other
 
-- Merge remote-tracking branch 'origin/develop' into develop ([`359946d`](../../commit/359946d))
-- Merge branch 'main' into develop ([`f104766`](../../commit/f104766))
-- Merge main into develop - Add 9/5 benchmarking suite ([`0a63cca`](../../commit/0a63cca))
 - Merge develop into main - Benchmark tests complete ([`35d0480`](../../commit/35d0480))
 - Merge main into develop - Add benchmark tests ([`ce0e766`](../../commit/ce0e766))
 - Merge branch 'develop' - Add benchmarking suite ([`23cb3a2`](../../commit/23cb3a2))
@@ -437,7 +429,7 @@
 
 ## Recent Changes (Auto-generated)
 
-*Last updated: 2025-12-06 21:21 • Branch: develop • Commit: 0a63cca*
+*Last updated: 2025-12-06 21:20 • Branch: main • Commit: ee66f95*
 
 ### ✨ Features
 
@@ -595,7 +587,6 @@
 
 ### 📦 Other
 
-- Merge main into develop - Add 9/5 benchmarking suite ([`0a63cca`](../../commit/0a63cca))
 - Merge develop into main - Benchmark tests complete ([`35d0480`](../../commit/35d0480))
 - Merge main into develop - Add benchmark tests ([`ce0e766`](../../commit/ce0e766))
 - Merge branch 'develop' - Add benchmarking suite ([`23cb3a2`](../../commit/23cb3a2))
