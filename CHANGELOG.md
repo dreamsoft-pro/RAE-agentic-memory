@@ -1,6 +1,6 @@
 ## Recent Changes (Auto-generated)
 
-*Last updated: 2025-12-06 07:05 • Branch: main • Commit: b4e9636*
+*Last updated: 2025-12-06 07:04 • Branch: develop • Commit: ed353f9*
 
 ### ✨ Features
 
@@ -9,7 +9,6 @@
 - implement Feedback Loop (Iteration 3) ([`5a15deb`](../../commit/5a15deb))
 - implement Smart Re-Ranker (Iteration 2) ([`6b7d262`](../../commit/6b7d262))
 - implement Hybrid Math v3 (Soft Hybrid) iteration 1 ([`455bfd5`](../../commit/455bfd5))
-- add complete development mode with hot-reload support ([`897adf2`](../../commit/897adf2))
 - implement Phase 1 OpenTelemetry instrumentation for enterprise APIs ([`64a8e09`](../../commit/64a8e09))
 - add OpenTelemetry instrumentation to services layer and API endpoints ([`8442bff`](../../commit/8442bff))
 - add OpenTelemetry instrumentation to mathematical core layers ([`20c6651`](../../commit/20c6651))
@@ -30,9 +29,6 @@
 
 ### 🐛 Bug Fixes
 
-- improve celery healthchecks for reliable container health status ([`09bb46d`](../../commit/09bb46d))
-- correct Docker healthchecks and OTel Collector config ([`c00bf4e`](../../commit/c00bf4e))
-- correct postgres DDL initialization and merge Alembic heads ([`fe3fc14`](../../commit/fe3fc14))
 - improve Docker environment setup for ML service and API healthchecks ([`acd3122`](../../commit/acd3122))
 - improve hybrid search result handling in query_memory endpoint ([`77cd4d5`](../../commit/77cd4d5))
 - exclude contract/performance tests from CI and fix benchmark API ([`0092535`](../../commit/0092535))
@@ -51,8 +47,6 @@
 
 ### 📚 Documentation
 
-- fix database credentials and add environment configuration guide ([`e966320`](../../commit/e966320))
-- add Docker image sizes and smart rebuild commands ([`9424841`](../../commit/9424841))
 - add comprehensive OpenTelemetry observability documentation ([`2eaefef`](../../commit/2eaefef))
 - update README coverage from 67% to 69% and test count to 754 ([`1be89e7`](../../commit/1be89e7))
 - update coverage from 48% to 67% in README ([`e2218c8`](../../commit/e2218c8))
@@ -78,8 +72,6 @@
 
 ### 🧪 Tests
 
-- fix 36 previously ignored API tests by adding lifespan mocking ([`e6277c2`](../../commit/e6277c2))
-- unfreeze 7 tests and fix lifespan mocking for unit tests ([`f9b9d1d`](../../commit/f9b9d1d))
 - freeze 7 failing tests due to PostgreSQL auth issue in CI ([`f8523a0`](../../commit/f8523a0))
 - improve coverage for importance scoring and context builder ([`daf836f`](../../commit/daf836f))
 - improve coverage for memory api and repository ([`609340d`](../../commit/609340d))
@@ -126,7 +118,6 @@
 
 ### 🔧 Chore
 
-- re-enable 36 fixed API tests in pytest.ini ([`1ea837f`](../../commit/1ea837f))
 - add GEMINI.md to .gitignore ([`34f7310`](../../commit/34f7310))
 - sync develop with main (includes CI fixes) ([`11e719f`](../../commit/11e719f))
 - Remove junit.xml from git tracking (already in .gitignore) ([`a1ebc50`](../../commit/a1ebc50))
@@ -136,9 +127,6 @@
 
 ### 📦 Other
 
-- Merge remote main into local main ([`356e1f4`](../../commit/356e1f4))
-- Merge develop to main: Docker improvements and Hybrid Math v3 ([`c0ae950`](../../commit/c0ae950))
-- Merge branch 'feature/fix-docker-environment' ([`985e6e0`](../../commit/985e6e0))
 - Merge branch 'develop' ([`beb1329`](../../commit/beb1329))
 - Merge branch 'develop' ([`676d958`](../../commit/676d958))
 - Merge develop into main: OpenTelemetry instrumentation and documentation ([`cb9b095`](../../commit/cb9b095))
@@ -186,7 +174,7 @@
 
 ## Recent Changes (Auto-generated)
 
-*Last updated: 2025-12-06 07:05 • Branch: main • Commit: 356e1f4*
+*Last updated: 2025-12-06 07:04 • Branch: develop • Commit: e2454e0*
 
 ### ✨ Features
 
@@ -195,7 +183,6 @@
 - implement Feedback Loop (Iteration 3) ([`5a15deb`](../../commit/5a15deb))
 - implement Smart Re-Ranker (Iteration 2) ([`6b7d262`](../../commit/6b7d262))
 - implement Hybrid Math v3 (Soft Hybrid) iteration 1 ([`455bfd5`](../../commit/455bfd5))
-- add complete development mode with hot-reload support ([`897adf2`](../../commit/897adf2))
 - implement Phase 1 OpenTelemetry instrumentation for enterprise APIs ([`64a8e09`](../../commit/64a8e09))
 - add OpenTelemetry instrumentation to services layer and API endpoints ([`8442bff`](../../commit/8442bff))
 - add OpenTelemetry instrumentation to mathematical core layers ([`20c6651`](../../commit/20c6651))
@@ -216,9 +203,6 @@
 
 ### 🐛 Bug Fixes
 
-- improve celery healthchecks for reliable container health status ([`09bb46d`](../../commit/09bb46d))
-- correct Docker healthchecks and OTel Collector config ([`c00bf4e`](../../commit/c00bf4e))
-- correct postgres DDL initialization and merge Alembic heads ([`fe3fc14`](../../commit/fe3fc14))
 - improve Docker environment setup for ML service and API healthchecks ([`acd3122`](../../commit/acd3122))
 - improve hybrid search result handling in query_memory endpoint ([`77cd4d5`](../../commit/77cd4d5))
 - exclude contract/performance tests from CI and fix benchmark API ([`0092535`](../../commit/0092535))
@@ -237,8 +221,6 @@
 
 ### 📚 Documentation
 
-- fix database credentials and add environment configuration guide ([`e966320`](../../commit/e966320))
-- add Docker image sizes and smart rebuild commands ([`9424841`](../../commit/9424841))
 - add comprehensive OpenTelemetry observability documentation ([`2eaefef`](../../commit/2eaefef))
 - update README coverage from 67% to 69% and test count to 754 ([`1be89e7`](../../commit/1be89e7))
 - update coverage from 48% to 67% in README ([`e2218c8`](../../commit/e2218c8))
@@ -264,8 +246,6 @@
 
 ### 🧪 Tests
 
-- fix 36 previously ignored API tests by adding lifespan mocking ([`e6277c2`](../../commit/e6277c2))
-- unfreeze 7 tests and fix lifespan mocking for unit tests ([`f9b9d1d`](../../commit/f9b9d1d))
 - freeze 7 failing tests due to PostgreSQL auth issue in CI ([`f8523a0`](../../commit/f8523a0))
 - improve coverage for importance scoring and context builder ([`daf836f`](../../commit/daf836f))
 - improve coverage for memory api and repository ([`609340d`](../../commit/609340d))
@@ -312,7 +292,6 @@
 
 ### 🔧 Chore
 
-- re-enable 36 fixed API tests in pytest.ini ([`1ea837f`](../../commit/1ea837f))
 - add GEMINI.md to .gitignore ([`34f7310`](../../commit/34f7310))
 - sync develop with main (includes CI fixes) ([`11e719f`](../../commit/11e719f))
 - Remove junit.xml from git tracking (already in .gitignore) ([`a1ebc50`](../../commit/a1ebc50))
@@ -322,9 +301,6 @@
 
 ### 📦 Other
 
-- Merge remote main into local main ([`356e1f4`](../../commit/356e1f4))
-- Merge develop to main: Docker improvements and Hybrid Math v3 ([`c0ae950`](../../commit/c0ae950))
-- Merge branch 'feature/fix-docker-environment' ([`985e6e0`](../../commit/985e6e0))
 - Merge branch 'develop' ([`beb1329`](../../commit/beb1329))
 - Merge branch 'develop' ([`676d958`](../../commit/676d958))
 - Merge develop into main: OpenTelemetry instrumentation and documentation ([`cb9b095`](../../commit/cb9b095))
