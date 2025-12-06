@@ -166,7 +166,7 @@ ON knowledge_graph_traversals(algorithm);
 -- Enable RLS
 ALTER TABLE knowledge_graph_traversals ENABLE ROW LEVEL SECURITY;
 
-DO $
+DO $$
 BEGIN
     IF NOT EXISTS (
         SELECT 1 FROM pg_policies WHERE policyname = 'kg_traversals_tenant_isolation' AND tablename = 'knowledge_graph_traversals'
@@ -176,7 +176,7 @@ BEGIN
         FOR ALL
         USING (tenant_id = current_setting('app.current_tenant', TRUE));
     END IF;
-END $;
+END $$;
 
 COMMENT ON TABLE knowledge_graph_traversals IS 'Log of graph traversal operations for analytics';
 
