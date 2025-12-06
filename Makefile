@@ -1,4 +1,4 @@
-.PHONY: help start stop restart logs clean install lint test format db-init demo dev docs benchmark-lite benchmark-extended benchmark-industrial benchmark-all benchmark-compare
+.PHONY: help start stop restart logs clean install lint test format db-init demo dev docs benchmark-lite benchmark-extended benchmark-industrial benchmark-large benchmark-drift benchmark-profile benchmark-plot benchmark-full benchmark-all benchmark-compare
 
 # ==============================================================================
 # HELP
@@ -205,6 +205,45 @@ benchmark-compare:  ## Compare two benchmark runs (Usage: make benchmark-compare
 	@echo "🔍 Comparing benchmark results..."
 	@$(VENV_PYTHON) benchmarking/scripts/compare_runs.py $(BASE) $(COMP) --output comparison_report.md
 	@echo "✅ Comparison complete: comparison_report.md"
+
+benchmark-large:  ## Run large-scale stress benchmark (industrial_large, ~15min)
+	@echo "🔬 Running large-scale benchmark..."
+	@$(VENV_PYTHON) benchmarking/scripts/run_benchmark.py --set industrial_large.yaml
+	@echo "✅ Large-scale benchmark complete"
+
+benchmark-drift:  ## Run memory drift stress test (stress_memory_drift, ~2min)
+	@echo "🔬 Running memory drift benchmark..."
+	@$(VENV_PYTHON) benchmarking/scripts/run_benchmark.py --set stress_memory_drift.yaml
+	@echo "✅ Memory drift benchmark complete"
+
+benchmark-profile:  ## Profile query latency (Usage: make benchmark-profile BENCHMARK=academic_lite.yaml RUNS=100)
+	@if [ -z "$(BENCHMARK)" ]; then \
+		echo "❌ Error: BENCHMARK argument required."; \
+		echo "Usage: make benchmark-profile BENCHMARK=academic_lite.yaml RUNS=100"; \
+		exit 1; \
+	fi
+	@RUNS=$${RUNS:-100}; \
+	echo "🔬 Profiling latency ($$RUNS runs per query)..."; \
+	$(VENV_PYTHON) benchmarking/scripts/profile_latency.py --benchmark $(BENCHMARK) --runs $$RUNS --output latency_profile.json
+
+benchmark-plot:  ## Generate plots from benchmark results (Usage: make benchmark-plot RESULTS=results/*.json)
+	@if [ -z "$(RESULTS)" ]; then \
+		echo "❌ Error: RESULTS argument required."; \
+		echo "Usage: make benchmark-plot RESULTS='results/academic_*.json'"; \
+		exit 1; \
+	fi
+	@echo "📊 Generating plots..."
+	@mkdir -p benchmarking/plots
+	@$(VENV_PYTHON) benchmarking/scripts/generate_plots.py --results $(RESULTS) --output benchmarking/plots/
+
+benchmark-full:  ## Run complete benchmark suite (all benchmarks + profiling)
+	@echo "🔬 Running FULL benchmark suite..."
+	@$(MAKE) benchmark-lite
+	@$(MAKE) benchmark-extended
+	@$(MAKE) benchmark-industrial
+	@$(MAKE) benchmark-large
+	@$(MAKE) benchmark-drift
+	@echo "✅ Full benchmark suite complete"
 
 # ==============================================================================
 # DATABASE
