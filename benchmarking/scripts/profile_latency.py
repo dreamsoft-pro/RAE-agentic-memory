@@ -37,11 +37,11 @@ class LatencyProfiler:
 
     def __init__(self, db_pool: asyncpg.Pool):
         # Lazy import to avoid initialization issues in test environments
-        from apps.memory_api.services.vector_store import VectorStoreService
+        from apps.memory_api.services.vector_store import get_vector_store
 
         self.pool = db_pool
         self.embedding_service = get_embedding_service()
-        self.vector_store = VectorStoreService(db_pool)
+        self.vector_store = get_vector_store(db_pool)
         self.results = []
 
     async def profile_single_query(

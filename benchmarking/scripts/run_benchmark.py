@@ -209,10 +209,10 @@ class RAEBenchmarkRunner:
         print(f"\n📝 Inserting {len(self.benchmark_data['memories'])} memories...")
 
         # Lazy import to avoid initialization issues in test environments
-        from apps.memory_api.services.vector_store import VectorStoreService
+        from apps.memory_api.services.vector_store import get_vector_store
 
         embedding_service = get_embedding_service()
-        vector_store = VectorStoreService(self.pool)
+        vector_store = get_vector_store(self.pool)
 
         for i, memory in enumerate(self.benchmark_data['memories'], 1):
             start_time = time.time()
