@@ -60,8 +60,10 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # Install only essential test and benchmark dependencies (skip mutation testing, pre-commit, heavy ML)
+          # Install only essential test and benchmark dependencies
           pip install pytest pytest-asyncio anthropic
+          # Need sentence-transformers for embeddings (QdrantStore requirement)
+          pip install sentence-transformers
           pip install -r apps/memory_api/requirements-base.txt
           pip install -e sdk/python/rae_memory_sdk
 
@@ -151,8 +153,10 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          # Install only essential test and benchmark dependencies (skip mutation testing, pre-commit, heavy ML)
+          # Install only essential test and benchmark dependencies
           pip install pytest pytest-asyncio anthropic
+          # Need sentence-transformers for embeddings (QdrantStore requirement)
+          pip install sentence-transformers
           pip install -r apps/memory_api/requirements-base.txt
           pip install -e sdk/python/rae_memory_sdk
 
