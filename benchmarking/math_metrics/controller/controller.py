@@ -20,9 +20,11 @@ from ..decision_engine import MathematicalDecisionEngine
 from ..base import MemorySnapshot
 from .types import MathLevel, TaskType
 from .features import Features
+from .features_v2 import FeaturesV2
 from .decision import MathDecision, DecisionWithOutcome
 from .context import TaskContext
 from .config import MathControllerConfig
+from .policy_v2 import PolicyV2, PolicyV2Config
 
 
 logger = structlog.get_logger(__name__)
@@ -158,6 +160,18 @@ class MathLayerController:
         )
         self.feature_extractor = FeatureExtractor(self.decision_engine)
 
+        # Initialize Policy v2 (if configured)
+        self.policy_version = getattr(self.config, 'policy_version', 1)
+        self.policy_v2 = None
+        if self.policy_version >= 2:
+            policy_v2_config = PolicyV2Config()
+            # Transfer thresholds from main config
+            policy_v2_config.l2_memory_threshold = self.config.thresholds.get('l2_memory_threshold', 30)
+            policy_v2_config.l2_entropy_threshold = self.config.thresholds.get('l2_entropy_threshold', 0.7)
+            policy_v2_config.l3_memory_threshold = self.config.thresholds.get('l3_memory_threshold', 500)
+            policy_v2_config.l3_session_threshold = self.config.thresholds.get('l3_session_threshold', 10)
+            self.policy_v2 = PolicyV2(policy_v2_config)
+
         # Decision history (in-memory, for recent decisions)
         self.decision_history: List[MathDecision] = []
         self._max_history = 1000
@@ -169,6 +183,7 @@ class MathLayerController:
             "math_layer_controller_initialized",
             profile=self.config.profile,
             default_level=self.config.default_level.value,
+            policy_version=self.policy_version,
         )
 
     def decide(self, context: TaskContext) -> MathDecision:
@@ -224,12 +239,17 @@ class MathLayerController:
         """
         Select which math level to use based on features.
 
-        Iteration 1 Logic (Rule-based):
+        Policy v1 (Rule-based):
         1. If budget-constrained -> L1 (cheapest)
         2. If latency-constrained -> L1 (fastest)
         3. If task prefers L2 AND conditions met -> L2
         4. If high-value scenario AND profile allows -> L3
         5. Default to configured default
+
+        Policy v2 (Weighted scoring):
+        - Computes scores for each level based on features
+        - Applies task type priors and policy rules
+        - Selects highest-scoring level
 
         Args:
             features: Extracted features from context
@@ -237,6 +257,22 @@ class MathLayerController:
         Returns:
             Selected MathLevel
         """
+        # Use Policy v2 if configured
+        if self.policy_version >= 2 and self.policy_v2:
+            # Convert to FeaturesV2 if needed
+            if isinstance(features, Features) and not isinstance(features, FeaturesV2):
+                features_v2 = FeaturesV2.from_features(features)
+                # Enhance with historical data
+                features_v2.consecutive_same_level = self._get_consecutive_same_level()
+                features_v2.is_first_turn = (features.session_length == 0)
+            else:
+                features_v2 = features
+
+            level = self.policy_v2.select_level(features_v2)
+            logger.debug("level_selection_v2", level=level.value, policy="v2")
+            return level
+
+        # Fall back to Policy v1 (original logic)
         # Rule 1: Budget constraint forces L1
         if features.is_budget_constrained():
             logger.debug("level_selection_budget_constrained", level="L1")
@@ -265,6 +301,22 @@ class MathLayerController:
 
         # Default
         return self.config.default_level
+
+    def _get_consecutive_same_level(self) -> int:
+        """Get count of consecutive decisions using same level"""
+        if not self.decision_history:
+            return 0
+
+        count = 0
+        last_level = self.decision_history[-1].selected_level
+
+        for decision in reversed(self.decision_history):
+            if decision.selected_level == last_level:
+                count += 1
+            else:
+                break
+
+        return count
 
     def _should_use_l3(self, features: Features) -> bool:
         """Check if L3 (adaptive/hybrid) should be used"""

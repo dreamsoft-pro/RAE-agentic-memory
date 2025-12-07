@@ -28,6 +28,7 @@ from .controller import MathLayerController, FeatureExtractor
 from .decision import MathDecision, DecisionWithOutcome
 from .context import TaskContext
 from .features import Features
+from .features_v2 import FeaturesV2
 from .types import MathLevel, TaskType
 from .config import MathControllerConfig, LoggingConfig, SafetyConfig, load_config
 from .integration import (
@@ -35,6 +36,8 @@ from .integration import (
     get_math_controller,
     set_math_controller,
 )
+from .policy_v2 import PolicyV2, PolicyV2Config
+from .reward import RewardCalculator, RewardConfig
 
 __all__ = [
     # Main classes
@@ -46,6 +49,7 @@ __all__ = [
     "DecisionWithOutcome",
     "TaskContext",
     "Features",
+    "FeaturesV2",
 
     # Enums
     "MathLevel",
@@ -56,6 +60,12 @@ __all__ = [
     "LoggingConfig",
     "SafetyConfig",
     "load_config",
+
+    # Policy v2
+    "PolicyV2",
+    "PolicyV2Config",
+    "RewardCalculator",
+    "RewardConfig",
 
     # Integration helpers
     "MathControllerIntegration",
