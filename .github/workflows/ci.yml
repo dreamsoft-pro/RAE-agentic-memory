@@ -360,6 +360,11 @@ jobs:
         ports:
           - 6379:6379
 
+      qdrant:
+        image: qdrant/qdrant:latest
+        ports:
+          - 6333:6333
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -406,6 +411,8 @@ jobs:
           POSTGRES_DB: rae_memory
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
+          QDRANT_HOST: localhost
+          QDRANT_PORT: 6333
         run: |
           python benchmarking/scripts/run_benchmark.py --set academic_lite.yaml
 
