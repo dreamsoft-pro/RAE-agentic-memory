@@ -60,9 +60,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt
+          # Install only essential test and benchmark dependencies (skip mutation testing, pre-commit, heavy ML)
+          pip install pytest pytest-asyncio anthropic
           pip install -r apps/memory_api/requirements-base.txt
-          pip install -r apps/memory_api/requirements-ml.txt
           pip install -e sdk/python/rae_memory_sdk
 
       - name: Setup database
@@ -151,9 +151,9 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt
+          # Install only essential test and benchmark dependencies (skip mutation testing, pre-commit, heavy ML)
+          pip install pytest pytest-asyncio anthropic
           pip install -r apps/memory_api/requirements-base.txt
-          pip install -r apps/memory_api/requirements-ml.txt
           pip install -e sdk/python/rae_memory_sdk
 
       - name: Setup database
