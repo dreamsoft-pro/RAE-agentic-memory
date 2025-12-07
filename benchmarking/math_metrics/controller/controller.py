@@ -25,6 +25,7 @@ from .decision import MathDecision, DecisionWithOutcome
 from .context import TaskContext
 from .config import MathControllerConfig
 from .policy_v2 import PolicyV2, PolicyV2Config
+from .bandit import MultiArmedBandit, BanditConfig, BanditMonitor
 
 
 logger = structlog.get_logger(__name__)
@@ -172,6 +173,15 @@ class MathLayerController:
             policy_v2_config.l3_session_threshold = self.config.thresholds.get('l3_session_threshold', 10)
             self.policy_v2 = PolicyV2(policy_v2_config)
 
+        # Initialize Bandit (if configured and policy v2 is active)
+        self.bandit_enabled = getattr(self.config, 'bandit_enabled', False)
+        self.bandit: Optional[MultiArmedBandit] = None
+        self.bandit_monitor: Optional[BanditMonitor] = None
+        if self.bandit_enabled and self.policy_version >= 2:
+            bandit_config = self._create_bandit_config()
+            self.bandit = MultiArmedBandit(config=bandit_config)
+            self.bandit_monitor = BanditMonitor(bandit=self.bandit)
+
         # Decision history (in-memory, for recent decisions)
         self.decision_history: List[MathDecision] = []
         self._max_history = 1000
@@ -184,6 +194,7 @@ class MathLayerController:
             profile=self.config.profile,
             default_level=self.config.default_level.value,
             policy_version=self.policy_version,
+            bandit_enabled=self.bandit_enabled,
         )
 
     def decide(self, context: TaskContext) -> MathDecision:
@@ -191,6 +202,13 @@ class MathLayerController:
         Make a decision about which math level to use.
 
         This is the main entry point for the controller.
+
+        Decision Flow with Bandit (if enabled):
+        1. Extract features and convert to FeaturesV2
+        2. Get baseline decision from Policy v2
+        3. Check safety (degradation, exploration limits)
+        4. If safe: use bandit to select arm (level, strategy)
+        5. Monitor records the decision
 
         Args:
             context: Task context with all relevant information
@@ -206,17 +224,25 @@ class MathLayerController:
             features.previous_level = self._previous_decision.selected_level
             # Note: previous_level_success would be set after outcome is known
 
-        # Select level
-        level = self.select_level(features)
+        # Convert to FeaturesV2 if needed (for bandit and policy v2)
+        if isinstance(features, Features) and not isinstance(features, FeaturesV2):
+            features_v2 = FeaturesV2.from_features(features)
+            features_v2.consecutive_same_level = self._get_consecutive_same_level()
+            features_v2.is_first_turn = (features.session_length == 0)
+        else:
+            features_v2 = features
 
-        # Select strategy within level
-        strategy = self.select_strategy(level, features)
+        # Bandit decision flow (if enabled)
+        if self.bandit and self.bandit_monitor:
+            level, strategy, explanation = self._decide_with_bandit(features_v2)
+        else:
+            # Standard decision flow
+            level = self.select_level(features)
+            strategy = self.select_strategy(level, features)
+            explanation = self._build_explanation(level, strategy, features)
 
         # Configure parameters
         params = self.configure_params(level, strategy, features)
-
-        # Build explanation
-        explanation = self._build_explanation(level, strategy, features)
 
         # Create decision
         decision = MathDecision(
@@ -225,8 +251,8 @@ class MathLayerController:
             params=params,
             explanation=explanation,
             telemetry_tags=self._build_telemetry_tags(level, strategy, features, context),
-            features_used=features,
-            confidence=self._calculate_confidence(level, features),
+            features_used=features_v2,
+            confidence=self._calculate_confidence(level, features_v2),
         )
 
         # Log and store
@@ -604,6 +630,8 @@ class MathLayerController:
         """
         Record the outcome of a decision for future learning.
 
+        If bandit is enabled, this also provides reward feedback to update arm statistics.
+
         Args:
             decision_id: ID of the decision
             success: Whether the operation was successful
@@ -633,6 +661,10 @@ class MathLayerController:
             success=success,
             metrics=metrics,
         )
+
+        # Provide reward feedback to bandit (if enabled)
+        if self.bandit and self.bandit_monitor and isinstance(decision.features_used, FeaturesV2):
+            self._update_bandit_with_outcome(decision, outcome)
 
         # In Iteration 2+, this would be saved for training
         if self.config.logging.save_outcomes:
@@ -682,3 +714,169 @@ class MathLayerController:
                 lines.append(f"  {key}: {value}")
 
         return "\n".join(lines)
+
+    def _decide_with_bandit(self, features: FeaturesV2) -> tuple[MathLevel, str, str]:
+        """
+        Make decision using bandit (online learning).
+
+        Decision Flow:
+        1. Get baseline from Policy v2
+        2. Check safety (degradation, exploration limits)
+        3. If safe: select arm using UCB
+        4. Monitor records the decision
+        5. Return (level, strategy, explanation)
+
+        Args:
+            features: Task features (must be FeaturesV2)
+
+        Returns:
+            Tuple of (level, strategy, explanation)
+        """
+        # Get baseline decision from Policy v2
+        baseline_level = self.policy_v2.select_level(features)
+        baseline_strategy = self.select_strategy(baseline_level, features)
+
+        # Check safety: degradation detection
+        is_degraded, drop = self.bandit.check_degradation()
+        if is_degraded:
+            logger.warning(
+                "bandit_degradation_detected",
+                drop=drop,
+                rolling_back_to_baseline=True
+            )
+            # Rollback to baseline
+            return baseline_level, baseline_strategy, f"Bandit degradation detected ({drop:.1%}), using baseline {baseline_level.value}"
+
+        # Run monitor health checks
+        alerts = self.bandit_monitor.check_health()
+        critical_alerts = [a for a in alerts if a.severity == "critical"]
+
+        if critical_alerts:
+            logger.warning(
+                "bandit_critical_alerts",
+                alert_count=len(critical_alerts),
+                rolling_back_to_baseline=True
+            )
+            # Rollback to baseline
+            return baseline_level, baseline_strategy, f"Bandit safety alerts, using baseline {baseline_level.value}"
+
+        # Safe to use bandit - select arm
+        arm, was_exploration = self.bandit.select_arm(features)
+
+        # Record decision in monitor
+        self.bandit_monitor.record_decision(arm.arm_id)
+
+        # Build explanation
+        explanation_parts = [f"Bandit selected {arm.level.value} with {arm.strategy} strategy"]
+        if was_exploration:
+            explanation_parts.append(f"(exploration)")
+        else:
+            explanation_parts.append(f"(exploitation, UCB score: {arm.ucb_score(self.bandit.total_pulls):.3f})")
+
+        explanation = " ".join(explanation_parts)
+
+        logger.info(
+            "bandit_decision",
+            arm_id=arm.arm_id,
+            level=arm.level.value,
+            strategy=arm.strategy,
+            was_exploration=was_exploration,
+            arm_pulls=arm.pulls,
+            arm_mean_reward=arm.mean_reward(),
+        )
+
+        return arm.level, arm.strategy, explanation
+
+    def _create_bandit_config(self) -> BanditConfig:
+        """
+        Create BanditConfig from controller config.
+
+        Reads bandit settings from config and creates BanditConfig.
+        Uses safe defaults if not specified.
+
+        Returns:
+            BanditConfig
+        """
+        bandit_settings = getattr(self.config, 'bandit', {})
+
+        # Get exploration rate based on profile
+        profile = self.config.profile
+        if profile == "production":
+            default_exploration = 0.0  # No exploration in production
+        elif profile == "lab":
+            default_exploration = 0.05  # 5% exploration in lab
+        else:  # research
+            default_exploration = 0.2  # 20% exploration in research
+
+        exploration_rate = bandit_settings.get('exploration_rate', default_exploration)
+        max_exploration_rate = bandit_settings.get('max_exploration_rate', 0.2)
+
+        # Ensure exploration_rate <= max_exploration_rate
+        exploration_rate = min(exploration_rate, max_exploration_rate)
+
+        # Persistence path
+        persistence_path = bandit_settings.get('persistence_path')
+        if persistence_path:
+            persistence_path = Path(persistence_path)
+
+        return BanditConfig(
+            c=bandit_settings.get('c', 1.0),
+            context_bonus=bandit_settings.get('context_bonus', 0.1),
+            exploration_rate=exploration_rate,
+            max_exploration_rate=max_exploration_rate,
+            degradation_threshold=bandit_settings.get('degradation_threshold', 0.15),
+            min_pulls_for_confidence=bandit_settings.get('min_pulls_for_confidence', 10),
+            save_frequency=bandit_settings.get('save_frequency', 50),
+            persistence_path=persistence_path,
+        )
+
+    def _update_bandit_with_outcome(
+        self,
+        decision: MathDecision,
+        outcome: DecisionWithOutcome,
+    ) -> None:
+        """
+        Update bandit with outcome reward.
+
+        Calculates reward from outcome and updates the arm that was selected.
+
+        Args:
+            decision: Original decision
+            outcome: Decision with outcome metrics
+        """
+        from .reward import RewardCalculator, RewardConfig
+
+        # Calculate reward
+        reward_config = RewardConfig()
+        reward_calculator = RewardCalculator(reward_config)
+        reward = reward_calculator.calculate(outcome)
+
+        # Find the arm that was selected
+        arm_key = (decision.selected_level, decision.strategy_id)
+        if arm_key not in self.bandit.arm_map:
+            logger.warning(
+                "bandit_arm_not_found",
+                level=decision.selected_level.value,
+                strategy=decision.strategy_id,
+            )
+            return
+
+        arm = self.bandit.arm_map[arm_key]
+
+        # Update arm with reward
+        self.bandit.update(
+            arm=arm,
+            reward=reward,
+            features=decision.features_used,
+        )
+
+        # Record in monitor
+        self.bandit_monitor.record_decision(arm.arm_id, reward=reward)
+
+        logger.info(
+            "bandit_updated_with_outcome",
+            arm_id=arm.arm_id,
+            reward=reward,
+            arm_pulls=arm.pulls,
+            arm_mean_reward=arm.mean_reward(),
+        )
