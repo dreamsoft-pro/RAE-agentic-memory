@@ -22,6 +22,10 @@ node_modules/
 Thumbs.db
 # Docker
 *.log
+
+# Benchmarking
+benchmarking/results/
+benchmarking/session_*.log
 # venv/IDE
 .env
 .vscode/
