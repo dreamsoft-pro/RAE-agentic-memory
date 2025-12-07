@@ -14,7 +14,7 @@
 [![Version](https://img.shields.io/badge/version-2.1.0--enterprise-blue.svg)](docs/.auto-generated/status/STATUS.md)
 [![Docs Automation](https://img.shields.io/badge/docs_automation-✓_healthy-brightgreen.svg)](docs/.auto-generated/metrics/DASHBOARD.md)
 
-[📖 Documentation](#documentation) | [🚀 Quick Start](#quick-start-5-minutes) | [🔧 Troubleshooting](TROUBLESHOOTING.md) | [💬 Community](#community--support) | [🎯 Examples](#real-world-examples) | [📊 Docs Dashboard](docs/.auto-generated/metrics/DASHBOARD.md)
+[📖 Documentation](#documentation) | [🚀 Quick Start](#quick-start-5-minutes) | [📊 Benchmarking](benchmarking/README.md) | [🔧 Troubleshooting](TROUBLESHOOTING.md) | [💬 Community](#community--support) | [🎯 Examples](#real-world-examples)
 
 ---
 
@@ -1330,10 +1330,14 @@ RAE documentation is organized into four main areas:
 - 🧪 **[Testing Status](docs/.auto-generated/status/TESTING_STATUS.md)** - Test coverage and quality metrics
 
 ### Testing & Benchmarking
+- 📊 **[Benchmarking Suite Complete Guide](benchmarking/README.md)** - **⭐ START HERE** - Central hub for all 11 benchmarks
+  - 5 Standard Benchmarks (v1) - academic_lite, academic_extended, industrial_small, stress_memory_drift, industrial_large
+  - 6 Research Benchmarks (9/5) - LECT, MMIT, GRDT, RST, MPEB, ORB
+  - 1,109+ memories | 164+ queries | 10,000+ cycle temporal testing
+  - Decision tree, comparison matrix, telemetry guide
 - 🧪 **[Testing Kit](docs/testing/RAE_TESTING_KIT.md)** - Complete guide to running tests and benchmarks
-- 📊 **[Benchmark Starter](docs/testing/BENCHMARK_STARTER.md)** - Benchmark datasets and evaluation protocols
+- 🚀 **[Quick Start: test_all_benchmarks.sh](benchmarking/test_all_benchmarks.sh)** - One command to test everything
 - 📝 **[Report Template](docs/testing/BENCHMARK_REPORT_TEMPLATE.md)** - Standardized benchmark reporting
-- 🎯 **[Academic Lite Benchmark](benchmarking/academic_lite.yaml)** - Example benchmark dataset
 
 ### Academic & Research
 - 📄 **[Executive Summary](docs/outreach/EXEC_SUMMARY.md)** - 1-page RAE overview
