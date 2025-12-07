@@ -1,10 +1,10 @@
 ## Recent Changes (Auto-generated)
 
-*Last updated: 2025-12-07 00:21 • Branch: main • Commit: ce05957*
+*Last updated: 2025-12-07 00:21 • Branch: develop • Commit: d840913*
 
 ### ✨ Features
 
-- add Qdrant service to benchmark CI workflows ([`ce05957`](../../commit/ce05957))
+- add Qdrant service to benchmark CI workflows ([`d840913`](../../commit/d840913))
 - implement 9/5 benchmarking suite - comprehensive enterprise-grade testing ([`ee66f95`](../../commit/ee66f95))
 - add comprehensive benchmarking suite (academic & enterprise grade) ([`9fa6cd5`](../../commit/9fa6cd5))
 - add auto-restart policy for all dev containers ([`7ccb4df`](../../commit/7ccb4df))
@@ -41,16 +41,23 @@
 
 ### 🐛 Bug Fixes
 
-- benchmark script compatibility with vector store API ([`d3134ba`](../../commit/d3134ba))
+- benchmark script compatibility with vector store API ([`370191e`](../../commit/370191e))
 - correct path to ML requirements file in CI workflows ([`8eea1b4`](../../commit/8eea1b4))
 - install ML dependencies for benchmark tests ([`ca9a1b4`](../../commit/ca9a1b4))
+- use get_vector_store instead of non-existent VectorStoreService ([`991eece`](../../commit/991eece))
 - use get_vector_store instead of non-existent VectorStoreService ([`ad77925`](../../commit/ad77925))
+- DO block delimiter syntax in 008_graph_enhancements.sql ([`7b2378e`](../../commit/7b2378e))
 - DO block delimiter syntax in 008_graph_enhancements.sql ([`cecaa92`](../../commit/cecaa92))
+- CREATE POLICY syntax error in 008_graph_enhancements.sql ([`f1b8f95`](../../commit/f1b8f95))
 - CREATE POLICY syntax error in 008_graph_enhancements.sql ([`6aca1ae`](../../commit/6aca1ae))
+- DDL script errors and table ordering ([`7f603cc`](../../commit/7f603cc))
 - DDL script errors and table ordering ([`58802e3`](../../commit/58802e3))
 - handle missing memory_vectors table in benchmark cleanup ([`6eb9061`](../../commit/6eb9061))
+- remove Alembic migrations from benchmark workflows ([`14c4c6c`](../../commit/14c4c6c))
 - remove Alembic migrations from benchmark workflows ([`93cdd92`](../../commit/93cdd92))
+- add pgvector extension to base DDL schema ([`54d0ba8`](../../commit/54d0ba8))
 - add pgvector extension to base DDL schema ([`82b5b3a`](../../commit/82b5b3a))
+- run DDL scripts before Alembic migrations in CI ([`2d22e48`](../../commit/2d22e48))
 - run DDL scripts before Alembic migrations in CI ([`dedd543`](../../commit/dedd543))
 - add database migrations to benchmark workflows ([`fbe6e89`](../../commit/fbe6e89))
 - use lazy imports in benchmark scripts to fix CI failures ([`330bffd`](../../commit/330bffd))
@@ -172,6 +179,15 @@
 
 ### 📦 Other
 
+- Merge remote develop: accept remote auto-generated docs ([`5b196ff`](../../commit/5b196ff))
+- Merge branch 'main' into develop ([`ec48055`](../../commit/ec48055))
+- Merge remote-tracking branch 'origin/main' into develop ([`e7ad587`](../../commit/e7ad587))
+- Merge branch 'main' into develop ([`e29cae5`](../../commit/e29cae5))
+- Merge remote-tracking branch 'origin/develop' into develop ([`f46e033`](../../commit/f46e033))
+- Merge main into develop - Add database migrations to benchmarks ([`f78bacb`](../../commit/f78bacb))
+- Merge remote-tracking branch 'origin/develop' into develop ([`359946d`](../../commit/359946d))
+- Merge branch 'main' into develop ([`f104766`](../../commit/f104766))
+- Merge main into develop - Add 9/5 benchmarking suite ([`0a63cca`](../../commit/0a63cca))
 - Merge develop into main - Benchmark tests complete ([`35d0480`](../../commit/35d0480))
 - Merge main into develop - Add benchmark tests ([`ce0e766`](../../commit/ce0e766))
 - Merge branch 'develop' - Add benchmarking suite ([`23cb3a2`](../../commit/23cb3a2))
@@ -227,7 +243,7 @@
 
 ## Recent Changes (Auto-generated)
 
-*Last updated: 2025-12-07 00:06 • Branch: main • Commit: d3134ba*
+*Last updated: 2025-12-07 00:06 • Branch: develop • Commit: 370191e*
 
 ### ✨ Features
 
@@ -267,16 +283,23 @@
 
 ### 🐛 Bug Fixes
 
-- benchmark script compatibility with vector store API ([`d3134ba`](../../commit/d3134ba))
+- benchmark script compatibility with vector store API ([`370191e`](../../commit/370191e))
 - correct path to ML requirements file in CI workflows ([`8eea1b4`](../../commit/8eea1b4))
 - install ML dependencies for benchmark tests ([`ca9a1b4`](../../commit/ca9a1b4))
+- use get_vector_store instead of non-existent VectorStoreService ([`991eece`](../../commit/991eece))
 - use get_vector_store instead of non-existent VectorStoreService ([`ad77925`](../../commit/ad77925))
+- DO block delimiter syntax in 008_graph_enhancements.sql ([`7b2378e`](../../commit/7b2378e))
 - DO block delimiter syntax in 008_graph_enhancements.sql ([`cecaa92`](../../commit/cecaa92))
+- CREATE POLICY syntax error in 008_graph_enhancements.sql ([`f1b8f95`](../../commit/f1b8f95))
 - CREATE POLICY syntax error in 008_graph_enhancements.sql ([`6aca1ae`](../../commit/6aca1ae))
+- DDL script errors and table ordering ([`7f603cc`](../../commit/7f603cc))
 - DDL script errors and table ordering ([`58802e3`](../../commit/58802e3))
 - handle missing memory_vectors table in benchmark cleanup ([`6eb9061`](../../commit/6eb9061))
+- remove Alembic migrations from benchmark workflows ([`14c4c6c`](../../commit/14c4c6c))
 - remove Alembic migrations from benchmark workflows ([`93cdd92`](../../commit/93cdd92))
+- add pgvector extension to base DDL schema ([`54d0ba8`](../../commit/54d0ba8))
 - add pgvector extension to base DDL schema ([`82b5b3a`](../../commit/82b5b3a))
+- run DDL scripts before Alembic migrations in CI ([`2d22e48`](../../commit/2d22e48))
 - run DDL scripts before Alembic migrations in CI ([`dedd543`](../../commit/dedd543))
 - add database migrations to benchmark workflows ([`fbe6e89`](../../commit/fbe6e89))
 - use lazy imports in benchmark scripts to fix CI failures ([`330bffd`](../../commit/330bffd))
@@ -398,6 +421,15 @@
 
 ### 📦 Other
 
+- Merge remote develop: accept remote auto-generated docs ([`5b196ff`](../../commit/5b196ff))
+- Merge branch 'main' into develop ([`ec48055`](../../commit/ec48055))
+- Merge remote-tracking branch 'origin/main' into develop ([`e7ad587`](../../commit/e7ad587))
+- Merge branch 'main' into develop ([`e29cae5`](../../commit/e29cae5))
+- Merge remote-tracking branch 'origin/develop' into develop ([`f46e033`](../../commit/f46e033))
+- Merge main into develop - Add database migrations to benchmarks ([`f78bacb`](../../commit/f78bacb))
+- Merge remote-tracking branch 'origin/develop' into develop ([`359946d`](../../commit/359946d))
+- Merge branch 'main' into develop ([`f104766`](../../commit/f104766))
+- Merge main into develop - Add 9/5 benchmarking suite ([`0a63cca`](../../commit/0a63cca))
 - Merge develop into main - Benchmark tests complete ([`35d0480`](../../commit/35d0480))
 - Merge main into develop - Add benchmark tests ([`ce0e766`](../../commit/ce0e766))
 - Merge branch 'develop' - Add benchmarking suite ([`23cb3a2`](../../commit/23cb3a2))
@@ -453,7 +485,7 @@
 
 ## Recent Changes (Auto-generated)
 
-*Last updated: 2025-12-06 23:26 • Branch: main • Commit: 8eea1b4*
+*Last updated: 2025-12-06 23:27 • Branch: develop • Commit: 5b196ff*
 
 ### ✨ Features
 
@@ -495,13 +527,20 @@
 
 - correct path to ML requirements file in CI workflows ([`8eea1b4`](../../commit/8eea1b4))
 - install ML dependencies for benchmark tests ([`ca9a1b4`](../../commit/ca9a1b4))
+- use get_vector_store instead of non-existent VectorStoreService ([`991eece`](../../commit/991eece))
 - use get_vector_store instead of non-existent VectorStoreService ([`ad77925`](../../commit/ad77925))
+- DO block delimiter syntax in 008_graph_enhancements.sql ([`7b2378e`](../../commit/7b2378e))
 - DO block delimiter syntax in 008_graph_enhancements.sql ([`cecaa92`](../../commit/cecaa92))
+- CREATE POLICY syntax error in 008_graph_enhancements.sql ([`f1b8f95`](../../commit/f1b8f95))
 - CREATE POLICY syntax error in 008_graph_enhancements.sql ([`6aca1ae`](../../commit/6aca1ae))
+- DDL script errors and table ordering ([`7f603cc`](../../commit/7f603cc))
 - DDL script errors and table ordering ([`58802e3`](../../commit/58802e3))
 - handle missing memory_vectors table in benchmark cleanup ([`6eb9061`](../../commit/6eb9061))
+- remove Alembic migrations from benchmark workflows ([`14c4c6c`](../../commit/14c4c6c))
 - remove Alembic migrations from benchmark workflows ([`93cdd92`](../../commit/93cdd92))
+- add pgvector extension to base DDL schema ([`54d0ba8`](../../commit/54d0ba8))
 - add pgvector extension to base DDL schema ([`82b5b3a`](../../commit/82b5b3a))
+- run DDL scripts before Alembic migrations in CI ([`2d22e48`](../../commit/2d22e48))
 - run DDL scripts before Alembic migrations in CI ([`dedd543`](../../commit/dedd543))
 - add database migrations to benchmark workflows ([`fbe6e89`](../../commit/fbe6e89))
 - use lazy imports in benchmark scripts to fix CI failures ([`330bffd`](../../commit/330bffd))
@@ -623,6 +662,15 @@
 
 ### 📦 Other
 
+- Merge remote develop: accept remote auto-generated docs ([`5b196ff`](../../commit/5b196ff))
+- Merge branch 'main' into develop ([`ec48055`](../../commit/ec48055))
+- Merge remote-tracking branch 'origin/main' into develop ([`e7ad587`](../../commit/e7ad587))
+- Merge branch 'main' into develop ([`e29cae5`](../../commit/e29cae5))
+- Merge remote-tracking branch 'origin/develop' into develop ([`f46e033`](../../commit/f46e033))
+- Merge main into develop - Add database migrations to benchmarks ([`f78bacb`](../../commit/f78bacb))
+- Merge remote-tracking branch 'origin/develop' into develop ([`359946d`](../../commit/359946d))
+- Merge branch 'main' into develop ([`f104766`](../../commit/f104766))
+- Merge main into develop - Add 9/5 benchmarking suite ([`0a63cca`](../../commit/0a63cca))
 - Merge develop into main - Benchmark tests complete ([`35d0480`](../../commit/35d0480))
 - Merge main into develop - Add benchmark tests ([`ce0e766`](../../commit/ce0e766))
 - Merge branch 'develop' - Add benchmarking suite ([`23cb3a2`](../../commit/23cb3a2))
@@ -678,7 +726,7 @@
 
 ## Recent Changes (Auto-generated)
 
-*Last updated: 2025-12-06 23:18 • Branch: main • Commit: ca9a1b4*
+*Last updated: 2025-12-06 23:18 • Branch: develop • Commit: e7ad587*
 
 ### ✨ Features
 
@@ -719,13 +767,20 @@
 ### 🐛 Bug Fixes
 
 - install ML dependencies for benchmark tests ([`ca9a1b4`](../../commit/ca9a1b4))
+- use get_vector_store instead of non-existent VectorStoreService ([`991eece`](../../commit/991eece))
 - use get_vector_store instead of non-existent VectorStoreService ([`ad77925`](../../commit/ad77925))
+- DO block delimiter syntax in 008_graph_enhancements.sql ([`7b2378e`](../../commit/7b2378e))
 - DO block delimiter syntax in 008_graph_enhancements.sql ([`cecaa92`](../../commit/cecaa92))
+- CREATE POLICY syntax error in 008_graph_enhancements.sql ([`f1b8f95`](../../commit/f1b8f95))
 - CREATE POLICY syntax error in 008_graph_enhancements.sql ([`6aca1ae`](../../commit/6aca1ae))
+- DDL script errors and table ordering ([`7f603cc`](../../commit/7f603cc))
 - DDL script errors and table ordering ([`58802e3`](../../commit/58802e3))
 - handle missing memory_vectors table in benchmark cleanup ([`6eb9061`](../../commit/6eb9061))
+- remove Alembic migrations from benchmark workflows ([`14c4c6c`](../../commit/14c4c6c))
 - remove Alembic migrations from benchmark workflows ([`93cdd92`](../../commit/93cdd92))
+- add pgvector extension to base DDL schema ([`54d0ba8`](../../commit/54d0ba8))
 - add pgvector extension to base DDL schema ([`82b5b3a`](../../commit/82b5b3a))
+- run DDL scripts before Alembic migrations in CI ([`2d22e48`](../../commit/2d22e48))
 - run DDL scripts before Alembic migrations in CI ([`dedd543`](../../commit/dedd543))
 - add database migrations to benchmark workflows ([`fbe6e89`](../../commit/fbe6e89))
 - use lazy imports in benchmark scripts to fix CI failures ([`330bffd`](../../commit/330bffd))
@@ -847,6 +902,13 @@
 
 ### 📦 Other
 
+- Merge remote-tracking branch 'origin/main' into develop ([`e7ad587`](../../commit/e7ad587))
+- Merge branch 'main' into develop ([`e29cae5`](../../commit/e29cae5))
+- Merge remote-tracking branch 'origin/develop' into develop ([`f46e033`](../../commit/f46e033))
+- Merge main into develop - Add database migrations to benchmarks ([`f78bacb`](../../commit/f78bacb))
+- Merge remote-tracking branch 'origin/develop' into develop ([`359946d`](../../commit/359946d))
+- Merge branch 'main' into develop ([`f104766`](../../commit/f104766))
+- Merge main into develop - Add 9/5 benchmarking suite ([`0a63cca`](../../commit/0a63cca))
 - Merge develop into main - Benchmark tests complete ([`35d0480`](../../commit/35d0480))
 - Merge main into develop - Add benchmark tests ([`ce0e766`](../../commit/ce0e766))
 - Merge branch 'develop' - Add benchmarking suite ([`23cb3a2`](../../commit/23cb3a2))
