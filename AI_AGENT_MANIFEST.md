@@ -20,9 +20,10 @@
 | 2 | **This Manifest** | 3 min | Navigation guide & documentation hierarchy |
 | 3 | **.ai-agent-rules.md** | 5 min | Forbidden commands & hybrid testing strategy |
 | 4 | **docs/BRANCHING.md** | 3 min | Git workflow (feature → develop → main) |
-| 5 | **docs/AGENTS_TEST_POLICY.md** | 3 min | Tests as contracts philosophy |
+| 5 | **docs/CI_WORKFLOW.md** | 5 min | CI/CD workflow (local → develop → main) |
+| 6 | **docs/AGENTS_TEST_POLICY.md** | 3 min | Tests as contracts philosophy |
 
-**Total Time**: ~15-20 minutes to read critical documentation before starting any work.
+**Total Time**: ~20-25 minutes to read critical documentation before starting any work.
 
 ---
 
@@ -35,6 +36,7 @@ Must read before touching ANY code:
 - **CRITICAL_AGENT_RULES.md** - 8 mandatory rules that cannot be violated
 - **.ai-agent-rules.md** - Forbidden interactive commands, hybrid testing strategy
 - **docs/BRANCHING.md** - Git workflow (feature/develop/main branches)
+- **docs/CI_WORKFLOW.md** - CI/CD workflow (local tests → develop → main)
 - **docs/AGENTS_TEST_POLICY.md** - Tests are contracts, not snapshots
 
 **Key Rules from Tier 1:**
@@ -391,6 +393,7 @@ You're succeeding when:
 - [CRITICAL_AGENT_RULES.md](./CRITICAL_AGENT_RULES.md) - 8 mandatory rules
 - [.ai-agent-rules.md](./.ai-agent-rules.md) - Forbidden commands & testing
 - [docs/BRANCHING.md](./docs/BRANCHING.md) - Git workflow
+- [docs/CI_WORKFLOW.md](./docs/CI_WORKFLOW.md) - CI/CD workflow
 - [docs/AGENTS_TEST_POLICY.md](./docs/AGENTS_TEST_POLICY.md) - Testing philosophy
 
 **Structure & Patterns:**
