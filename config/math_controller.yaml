@@ -12,6 +12,12 @@
 # Active profile
 profile: "research"
 
+# Policy version (1 = rule-based, 2 = weighted scoring + reward)
+policy_version: 2
+
+# Enable Multi-Armed Bandit online learning (requires policy_version >= 2)
+bandit_enabled: false
+
 # Default level when no rules match
 default_level: "deterministic_heuristic"  # L1
 
@@ -115,6 +121,33 @@ logging:
   # Maximum log retention (days)
   retention_days: 90
 
+# Multi-Armed Bandit configuration (Iteration 3)
+bandit:
+  # UCB exploration parameter (higher = more exploration)
+  c: 1.0
+
+  # Bonus for context match
+  context_bonus: 0.1
+
+  # Exploration rate (probability of random exploration)
+  # Overridden by profile defaults if not specified
+  exploration_rate: null  # null = use profile default
+
+  # Maximum allowed exploration (safety limit)
+  max_exploration_rate: 0.2
+
+  # Degradation threshold (max acceptable reward drop before rollback)
+  degradation_threshold: 0.15
+
+  # Minimum pulls before arm is considered reliable
+  min_pulls_for_confidence: 10
+
+  # Save arm weights every N decisions
+  save_frequency: 50
+
+  # Persistence path for arm statistics
+  persistence_path: "eval/math_policy_logs/bandit_arms.json"
+
 # Safety configuration
 safety:
   # Maximum exploration rate (for L3)
@@ -148,6 +181,8 @@ telemetry:
 profiles:
   research:
     default_level: "information_theoretic"
+    policy_version: 2
+    bandit_enabled: false  # Enable manually for experiments
     allowed_levels:
       - "deterministic_heuristic"
       - "information_theoretic"
@@ -158,9 +193,32 @@ profiles:
       include_features: true
     safety:
       max_exploration_rate: 0.3
+    bandit:
+      exploration_rate: 0.2  # 20% exploration in research
+      max_exploration_rate: 0.3
+
+  lab:
+    default_level: "information_theoretic"
+    policy_version: 2
+    bandit_enabled: true  # Safe to enable in lab
+    allowed_levels:
+      - "deterministic_heuristic"
+      - "information_theoretic"
+      - "adaptive_hybrid"
+    logging:
+      enabled: true
+      level: "INFO"
+      include_features: true
+    safety:
+      max_exploration_rate: 0.1
+    bandit:
+      exploration_rate: 0.05  # 5% exploration in lab
+      max_exploration_rate: 0.1
 
   production:
     default_level: "deterministic_heuristic"
+    policy_version: 2
+    bandit_enabled: false  # No bandit in production yet
     allowed_levels:
       - "deterministic_heuristic"
       - "information_theoretic"
@@ -170,9 +228,14 @@ profiles:
       include_features: false
     safety:
       max_exploration_rate: 0.0
+    bandit:
+      exploration_rate: 0.0  # No exploration in production
+      max_exploration_rate: 0.0
 
   cheap:
     default_level: "deterministic_heuristic"
+    policy_version: 1  # Use simple rules
+    bandit_enabled: false
     allowed_levels:
       - "deterministic_heuristic"
     logging:
