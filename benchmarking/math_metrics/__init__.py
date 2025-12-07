@@ -27,6 +27,13 @@ from .policy_metrics import (
     ReflectionPolicyEfficiency,
 )
 from .base import MathMetricBase, MemorySnapshot
+from .decision_engine import (
+    MathematicalDecisionEngine,
+    Action,
+    ActionType,
+    Priority,
+    DEFAULT_THRESHOLDS,
+)
 
 __all__ = [
     # Base classes
@@ -46,6 +53,12 @@ __all__ = [
     "OptimalRetrievalRatio",
     "CostQualityFrontier",
     "ReflectionPolicyEfficiency",
+    # Decision engine
+    "MathematicalDecisionEngine",
+    "Action",
+    "ActionType",
+    "Priority",
+    "DEFAULT_THRESHOLDS",
 ]
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
