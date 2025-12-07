@@ -72,7 +72,7 @@ for benchmark in "${BENCHMARK_ROTATION[@]}"; do
 
     if PYTHONPATH=. python benchmarking/scripts/run_benchmark_math.py \
         --set "$benchmark" \
-        --output "$RESULTS_DIR/" 2>&1 | tee "$RESULTS_DIR/${benchmark%.yaml}_phase1.log"; then
+        --output "$RESULTS_DIR/" 2>&1; then
         echo "✅ $benchmark completed successfully"
         ((total_benchmarks_run++))
     else
@@ -128,7 +128,7 @@ while true; do
 
         if PYTHONPATH=. python benchmarking/scripts/run_benchmark_math.py \
             --set "$benchmark" \
-            --output "$RESULTS_DIR/" 2>&1 | tee -a "$RESULTS_DIR/${benchmark%.yaml}_iter${iteration}.log"; then
+            --output "$RESULTS_DIR/" 2>&1; then
             echo "✅ $benchmark completed"
             ((total_benchmarks_run++))
         else
