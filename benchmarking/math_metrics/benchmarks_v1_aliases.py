@@ -19,7 +19,8 @@ from .dynamics_metrics import (
     MemoryDriftIndex,
     CompressionFidelityRatio,
 )
-from .policy_metrics import OptimalRetrievalRatio
+from .policy_metrics import OptimalRetrievalRatio, CrossLayerMathematicalConsistency
+from .memory_metrics import WorkingMemoryPrecisionRecall
 from .operational_metrics import (
     LLMCostIndex,
     StoragePressureIndex,
@@ -110,8 +111,17 @@ def calculate_gsu(structural_drift: float) -> float:
     return 1.0 - min(structural_drift, 1.0)
 
 
+# Memory Benchmarks (Section 2 of BENCHMARKS_v1.md)
+# Working Memory metrics
+
+WM_PR = WorkingMemoryPrecisionRecall  # Working Memory Precision/Recall
+
+
 # Math Layer Benchmarks (Section 5 of BENCHMARKS_v1.md)
 # Composite metrics
+
+CMC = CrossLayerMathematicalConsistency  # Cross-Layer Mathematical Consistency
+
 
 def calculate_mas(gcs: float, scs: float, orr: float) -> float:
     """
@@ -198,9 +208,10 @@ BENCHMARKS_V1_METRICS = {
     },
     "WM-P/R": {
         "name": "Working Memory Precision/Recall",
-        "impl": None,
-        "type": "direct",
-        "status": "missing",
+        "impl": WM_PR,
+        "type": "alias",
+        "source": "WorkingMemoryPrecisionRecall",
+        "status": "implemented",
     },
     "LPM": {
         "name": "Latency per Memory Layer",
@@ -307,9 +318,10 @@ BENCHMARKS_V1_METRICS = {
     },
     "CMC": {
         "name": "Cross-Layer Mathematical Consistency",
-        "impl": None,
-        "type": "direct",
-        "status": "missing",
+        "impl": CMC,
+        "type": "alias",
+        "source": "CrossLayerMathematicalConsistency",
+        "status": "implemented",
     },
 
     # Performance Benchmarks

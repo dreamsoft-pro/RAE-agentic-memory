@@ -27,6 +27,10 @@ from .policy_metrics import (
     OptimalRetrievalRatio,
     CostQualityFrontier,
     ReflectionPolicyEfficiency,
+    CrossLayerMathematicalConsistency,
+)
+from .memory_metrics import (
+    WorkingMemoryPrecisionRecall,
 )
 from .operational_metrics import (
     LLMCostIndex,
@@ -74,6 +78,9 @@ __all__ = [
     "OptimalRetrievalRatio",
     "CostQualityFrontier",
     "ReflectionPolicyEfficiency",
+    "CrossLayerMathematicalConsistency",
+    # Memory metrics
+    "WorkingMemoryPrecisionRecall",
     # Operational metrics
     "LLMCostIndex",
     "StoragePressureIndex",
