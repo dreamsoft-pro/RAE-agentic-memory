@@ -228,7 +228,7 @@ class RAEBenchmarkRunner:
                         """
                         INSERT INTO memories (
                             tenant_id, content, source, importance,
-                            layer, tags, project_id
+                            layer, tags, project
                         ) VALUES ($1, $2, $3, $4, $5, $6, $7)
                         RETURNING id, created_at
                         """,
@@ -242,17 +242,25 @@ class RAEBenchmarkRunner:
                     )
 
                     memory_id = row['id']
+                    created_at = row['created_at']
 
                     # Store memory ID for later reference
                     memory['_db_id'] = memory_id
 
-                    # Insert vector
-                    await vector_store.upsert_single(
+                    # Insert vector - create MemoryRecord and use batch upsert
+                    from apps.memory_api.models import MemoryRecord, MemoryLayer
+                    memory_record = MemoryRecord(
+                        id=str(memory_id),
                         tenant_id=self.tenant_id,
-                        memory_id=memory_id,
-                        embedding=embedding,
-                        content=content
+                        content=content,
+                        source=memory.get('metadata', {}).get('source', 'benchmark'),
+                        importance=memory.get('metadata', {}).get('importance', 0.5),
+                        layer=MemoryLayer.ltm,
+                        tags=memory.get('tags', []),
+                        timestamp=created_at,
+                        project=self.project_id
                     )
+                    await vector_store.upsert([memory_record], [embedding])
 
                 elapsed = time.time() - start_time
                 self.insert_times.append(elapsed)
@@ -272,10 +280,10 @@ class RAEBenchmarkRunner:
         print(f"\n🔍 Running {len(self.benchmark_data['queries'])} queries...")
 
         # Lazy import to avoid initialization issues in test environments
-        from apps.memory_api.services.vector_store import VectorStoreService
+        from apps.memory_api.services.vector_store import get_vector_store
 
         embedding_service = get_embedding_service()
-        vector_store = VectorStoreService(self.pool)
+        vector_store = get_vector_store(self.pool)
 
         config = self.benchmark_data.get('config', {})
         top_k = config.get('top_k', 5)
@@ -290,12 +298,12 @@ class RAEBenchmarkRunner:
                 # Generate query embedding
                 query_embedding = embedding_service.generate_embeddings([query_text])[0]
 
-                # Search vectors
-                search_results = await vector_store.search(
-                    tenant_id=self.tenant_id,
+                # Search vectors - use query method with filters
+                filters = {"must": [{"key": "tenant_id", "match": {"value": self.tenant_id}}]}
+                search_results = await vector_store.query(
                     query_embedding=query_embedding,
                     top_k=top_k,
-                    min_score=config.get('min_relevance_score', 0.0)
+                    filters=filters
                 )
 
                 elapsed = time.time() - start_time
@@ -306,7 +314,7 @@ class RAEBenchmarkRunner:
                 for result in search_results:
                     # Find the original benchmark ID
                     for memory in self.benchmark_data['memories']:
-                        if memory.get('_db_id') == result['id']:
+                        if str(memory.get('_db_id')) == str(result.id):
                             retrieved_ids.append(memory['id'])
                             break
 
