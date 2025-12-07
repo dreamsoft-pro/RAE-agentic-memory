@@ -229,6 +229,40 @@ export POSTGRES_PASSWORD=rae_password
 python benchmarking/scripts/run_benchmark.py --set academic_lite.yaml
 ```
 
+### Telemetry Configuration (Enable/Disable OpenTelemetry)
+
+RAE benchmarks respect the global OpenTelemetry configuration via environment variables:
+
+**To run benchmarks WITH telemetry (default):**
+```bash
+export OTEL_TRACES_ENABLED=true
+python benchmarking/scripts/run_benchmark_math.py --set academic_lite.yaml
+```
+
+**To run benchmarks WITHOUT telemetry (faster, cleaner output):**
+```bash
+export OTEL_TRACES_ENABLED=false
+python benchmarking/scripts/run_benchmark_math.py --set academic_lite.yaml
+```
+
+**Or disable for a single run:**
+```bash
+OTEL_TRACES_ENABLED=false python benchmarking/scripts/run_benchmark_math.py --set academic_lite.yaml
+```
+
+**Why disable telemetry?**
+- **Faster execution**: No trace collection overhead (~5-10% performance gain)
+- **Cleaner output**: No OTLP export warnings or trace logs
+- **CI/CD optimization**: Reduce noise in automated test runs
+- **Local development**: Simplify debugging without trace data
+
+**Why keep telemetry enabled?**
+- **Performance analysis**: Identify bottlenecks in query/insert operations
+- **Production simulation**: Test with the same observability stack as production
+- **Debugging**: Trace context helps correlate benchmark operations with system behavior
+
+See [Observability Documentation](../docs/reference/deployment/observability.md) for complete OpenTelemetry configuration options.
+
 ### API-Based Benchmarking (Future)
 
 Currently, benchmarks use direct database access for maximum accuracy. API-based benchmarking coming soon:

@@ -529,6 +529,27 @@ RAE implements a **4-layer cognitive memory system** inspired by human cognition
 
 See [MEMORY_MODEL.md](docs/reference/memory/MEMORY_MODEL.md) for complete layer mapping reference.
 
+### 🔢 Three-Tier Mathematical Foundation
+
+RAE's memory system is governed by three mathematical layers that work above the 4-layer memory architecture:
+
+**Math-1: Memory Structure Mathematics** (Geometry of Information)
+- **What it measures**: How memory looks - graph topology, semantic coherence, entropy
+- **Key metrics**: Graph Connectivity Score, Semantic Coherence Score, Graph Entropy, Cluster Consistency
+- **Purpose**: Ensures structural integrity and optimal knowledge organization
+
+**Math-2: Memory Dynamics Mathematics** (Physics of Memory Evolution)
+- **What it measures**: How memory changes - semantic drift, structural evolution, retention curves
+- **Key metrics**: Memory Drift Index, Structural Drift, Retention Curve, Reflection Gain Score, Compression Fidelity
+- **Purpose**: Tracks memory quality over time and prevents degradation
+
+**Math-3: Memory Policy Mathematics** (Economics & Control Theory)
+- **What it measures**: How to make decisions - which memories to strengthen, when to reflect, retrieval optimization
+- **Key metrics**: Cost-Quality Frontier, Optimal Retrieval Ratio, Reflection Policy Efficiency
+- **Purpose**: Optimizes decision-making while controlling costs and maintaining quality
+
+These mathematical layers enable RAE to be stable, adaptive, predictable, and cost-efficient. See [Mathematical Layer Overview](docs/project-design/active/MATH_LAYER_OVERVIEW.md) for complete specification.
+
 ### 🔍 Hybrid Search 2.0 (GraphRAG)
 - **Multi-Strategy Search**: Vector similarity, Semantic nodes, Graph traversal, Full-text
 - **Query Analyzer**: LLM-powered intent classification and dynamic weight calculation
@@ -536,6 +557,8 @@ See [MEMORY_MODEL.md](docs/reference/memory/MEMORY_MODEL.md) for complete layer 
 - **LLM Re-ranking**: Optional re-ranking with Claude/GPT for contextual relevance
 - **Intelligent Caching**: Hash-based cache with temporal windowing for performance
 - **Adaptive Weighting**: Automatically adjusts search strategy weights based on query intent
+
+See [Hybrid Search Documentation](docs/reference/services/HYBRID_SEARCH.md) for detailed implementation guide, architecture, and API usage examples.
 
 ### 🔄 Reflection Engine V2 (Actor-Evaluator-Reflector Pattern) *(NEW in v2.1)*
 - **Automatic Evaluation**: Deterministic and threshold-based outcome assessment
@@ -700,6 +723,8 @@ See **[Observability Documentation](docs/reference/deployment/observability.md)*
 - **Action Execution**: Webhook calls, notifications, automated reflections
 - **Retry Logic**: Automatic retries with exponential backoff
 
+See [Rules Engine Documentation](docs/reference/services/RULES_ENGINE.md) for complete API reference, use cases, and integration examples.
+
 #### Cost Control & Budget Management
 - **Real-time Cost Tracking**: Track LLM API costs across all providers (OpenAI, Anthropic, Google)
 - **Budget Enforcement**: Daily and monthly limits with automatic HTTP 402 responses when exceeded
@@ -716,17 +741,23 @@ See [Cost Controller Documentation](docs/reference/concepts/cost-controller.md) 
 - **PII Scrubbing**: Automatic detection and anonymization of sensitive data
 - **Analytics Dashboard**: Real-time metrics and performance monitoring
 
+See [Evaluation Service Documentation](docs/reference/services/EVALUATION_SERVICE.md) for metrics specifications and [Enterprise Services Overview](docs/reference/services/ENTERPRISE_SERVICES.md) for PII scrubbing, drift detection, and analytics implementation.
+
 #### Temporal Knowledge Graph
 - **Graph Snapshots**: Point-in-time graph state capture
 - **Time Travel**: Query graph state at any historical moment
 - **Change Tracking**: Complete audit trail of graph evolution
 - **Growth Analytics**: Track knowledge graph expansion over time
 
+See [Temporal Graph Service Documentation](docs/reference/services/ENTERPRISE_SERVICES.md#6-temporal-graph-service) for API usage and time-travel query examples.
+
 #### Search Quality
 - **A/B Testing**: Statistical comparison of search variants
 - **Query Analysis**: Automatic query intent classification
 - **Dynamic Weights**: Adaptive search strategy selection
 - **Result Caching**: Intelligent caching with temporal windowing
+
+See [Evaluation Service Documentation](docs/reference/services/EVALUATION_SERVICE.md) for A/B testing guide and [Hybrid Search Documentation](docs/reference/services/HYBRID_SEARCH.md) for query analysis and caching implementation.
 
 ### 🔌 IDE Integration
 
