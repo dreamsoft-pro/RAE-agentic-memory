@@ -40,6 +40,12 @@ from benchmarking.math_metrics import (
     OptimalRetrievalRatio,
     CostQualityFrontier,
 )
+from benchmarking.math_metrics.controller import (
+    MathLayerController,
+    TaskContext,
+    TaskType,
+    MathLevel,
+)
 
 
 class MathBenchmarkRunner(RAEBenchmarkRunner):
@@ -59,6 +65,10 @@ class MathBenchmarkRunner(RAEBenchmarkRunner):
         # Math-specific storage
         self.snapshots: List[MemorySnapshot] = []
         self.math_metrics_results: Dict[str, Any] = {}
+
+        # Initialize MathLayerController
+        self.math_controller = MathLayerController() if enable_math else None
+        self.controller_decisions: List[Dict[str, Any]] = []
 
         # Initialize metric calculators
         self._init_metrics()
@@ -307,13 +317,60 @@ class MathBenchmarkRunner(RAEBenchmarkRunner):
             await self.capture_memory_snapshot(label="after_insertion")
 
     async def run_queries(self):
-        """Override to capture snapshot after queries"""
+        """Override to capture snapshot after queries and make level decisions"""
+        # Make controller decisions for each query
+        if self.enable_math and self.math_controller:
+            await self._make_retrieval_decisions()
+
         # Call parent method
         await super().run_queries()
 
         # Capture snapshot if math enabled
         if self.enable_math:
             await self.capture_memory_snapshot(label="after_queries")
+
+    async def _make_retrieval_decisions(self):
+        """
+        Use MathLayerController to decide which level to use for each query.
+
+        For Iteration 1, this logs decisions without affecting actual query execution.
+        Future iterations will use these decisions to dynamically select algorithms.
+        """
+        print("\n🎯 Making math level decisions for queries...")
+
+        # Get current snapshot for context
+        snapshot = None
+        if len(self.snapshots) > 0:
+            snapshot = self.snapshots[-1]
+
+        # Make a decision for each query
+        queries = self.benchmark_data.get('queries', [])
+        for idx, query_item in enumerate(queries):
+            query_text = query_item.get('query', '')
+
+            # Create task context
+            context = TaskContext(
+                task_type=TaskType.MEMORY_RETRIEVE,
+                memory_snapshot=snapshot,
+                session_metadata={
+                    "query_index": idx,
+                    "query_text": query_text,
+                    "benchmark_name": self.benchmark_data.get('name', 'unknown'),
+                },
+            )
+
+            # Get decision from controller
+            decision = self.math_controller.decide(context)
+
+            # Store decision
+            decision_dict = decision.to_dict()
+            decision_dict['query_index'] = idx
+            decision_dict['query_text'] = query_text
+            self.controller_decisions.append(decision_dict)
+
+            print(f"   Query {idx}: {decision.selected_level.value} ({decision.strategy_id})")
+
+        print(f"   ✅ Made {len(self.controller_decisions)} decisions")
 
     def calculate_metrics(self) -> Dict:
         """Override to include mathematical metrics"""
@@ -364,6 +421,13 @@ class MathBenchmarkRunner(RAEBenchmarkRunner):
             with open(snapshots_file, 'w') as f:
                 json.dump(snapshots_meta, f, indent=2)
             print(f"   ✅ Snapshots metadata: {snapshots_file}")
+
+            # Save controller decisions (Iteration 1: logging foundation)
+            if self.controller_decisions:
+                decisions_file = self.output_dir / f"{benchmark_name}_{timestamp}_decisions.json"
+                with open(decisions_file, 'w') as f:
+                    json.dump(self.controller_decisions, f, indent=2)
+                print(f"   ✅ Controller decisions: {decisions_file}")
 
 
 async def main():
