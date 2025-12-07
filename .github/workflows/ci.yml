@@ -333,7 +333,7 @@ jobs:
       github.ref == 'refs/heads/main' ||
       github.ref == 'refs/heads/develop'
 
-    timeout-minutes: 3  # Fast smoke test should complete in <3 minutes
+    timeout-minutes: 5  # Increased timeout for benchmark with math metrics
 
     services:
       postgres:

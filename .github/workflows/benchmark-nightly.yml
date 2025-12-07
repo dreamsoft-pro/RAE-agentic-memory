@@ -60,9 +60,10 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
           pip install -r requirements-dev.txt
+          pip install -r apps/memory_api/requirements-base.txt
           pip install -r apps/memory_api/requirements-ml.txt
+          pip install -e sdk/python/rae_memory_sdk
 
       - name: Setup database
         env:
@@ -150,9 +151,10 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
           pip install -r requirements-dev.txt
+          pip install -r apps/memory_api/requirements-base.txt
           pip install -r apps/memory_api/requirements-ml.txt
+          pip install -e sdk/python/rae_memory_sdk
 
       - name: Setup database
         env:
