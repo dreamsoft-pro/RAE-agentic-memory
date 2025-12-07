@@ -185,8 +185,35 @@ class RAEBenchmarkRunner:
 
         print("🧹 Cleaning up existing test data...")
 
+        # Lazy import to avoid initialization issues
+        from apps.memory_api.services.vector_store import get_vector_store
+        from qdrant_client import models
+
+        vector_store = get_vector_store(self.pool)
+
+        # Delete ALL vectors with this tenant_id from Qdrant using filter-based deletion
+        # This is more thorough than deleting only vectors that are in PostgreSQL
+        print(f"   Deleting all vectors for tenant '{self.tenant_id}' from Qdrant...")
+        try:
+            vector_store.qdrant_client.delete(
+                collection_name="memories",
+                points_selector=models.FilterSelector(
+                    filter=models.Filter(
+                        must=[
+                            models.FieldCondition(
+                                key="tenant_id",
+                                match=models.MatchValue(value=self.tenant_id)
+                            )
+                        ]
+                    )
+                )
+            )
+            print("   ✅ Qdrant cleanup complete")
+        except Exception as e:
+            print(f"   ⚠️  Qdrant cleanup failed: {e}")
+
         async with self.pool.acquire() as conn:
-            # Delete memories for this tenant
+            # Delete from PostgreSQL
             await conn.execute(
                 "DELETE FROM memories WHERE tenant_id = $1",
                 self.tenant_id

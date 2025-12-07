@@ -1,4 +1,5 @@
 import hashlib
+import logging
 from typing import TYPE_CHECKING, Any, Dict, List
 
 import numpy as np
@@ -126,14 +127,18 @@ class QdrantStore(MemoryVectorStore):
             "but",
         }
 
-        indices = []
-        values = []
+        # Use dict to handle hash collisions and ensure unique indices
+        index_values = {}
 
         for word in set(words):
             if word not in stopwords:
                 index = int(hashlib.md5(word.encode()).hexdigest(), 16) % 100000
-                indices.append(index)
-                values.append(1.0)
+                # Accumulate values for duplicate indices (hash collisions)
+                index_values[index] = index_values.get(index, 0.0) + 1.0
+
+        # Convert to sorted lists for Qdrant
+        indices = sorted(index_values.keys())
+        values = [index_values[i] for i in indices]
 
         return models.SparseVector(indices=indices, values=values)
 
@@ -141,7 +146,7 @@ class QdrantStore(MemoryVectorStore):
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
         retry=retry_if_exception_type((ConnectionError, TimeoutError, Exception)),
-        before_sleep=before_sleep_log(logger, "warning"),
+        before_sleep=before_sleep_log(logger, logging.WARNING),
         reraise=True,
     )
     async def upsert(self, memories: List[MemoryRecord], embeddings: List[List[float]]):
@@ -218,7 +223,7 @@ class QdrantStore(MemoryVectorStore):
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
         retry=retry_if_exception_type((ConnectionError, TimeoutError, Exception)),
-        before_sleep=before_sleep_log(logger, "warning"),
+        before_sleep=before_sleep_log(logger, logging.WARNING),
         reraise=True,
     )
     async def delete(self, memory_id: str):

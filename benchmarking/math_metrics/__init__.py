@@ -1,10 +1,12 @@
 """
 RAE Mathematical Metrics Module
 
-Three-tier mathematical model for agent memory analysis:
+Five-tier mathematical model for agent memory analysis (BENCHMARKS_v1 compliant):
 1. Structure Metrics - geometry of memory (graph connectivity, coherence, entropy)
 2. Dynamics Metrics - evolution over time (drift, retention, reflection gain)
 3. Policy Metrics - decision optimization (retrieval quality, cost-quality frontier)
+4. Operational Metrics - production performance (cost, storage, telemetry, workers)
+5. Reflection Metrics - insight quality (precision, stability, latency, detection)
 
 This module provides research-grade mathematical analysis tools for RAE benchmarks.
 """
@@ -25,6 +27,16 @@ from .policy_metrics import (
     OptimalRetrievalRatio,
     CostQualityFrontier,
     ReflectionPolicyEfficiency,
+    CrossLayerMathematicalConsistency,
+)
+from .memory_metrics import (
+    WorkingMemoryPrecisionRecall,
+)
+from .operational_metrics import (
+    LLMCostIndex,
+    StoragePressureIndex,
+    TelemetryEventCorrelation,
+    WorkerSaturationIndex,
 )
 from .base import MathMetricBase, MemorySnapshot
 from .decision_engine import (
@@ -34,6 +46,19 @@ from .decision_engine import (
     Priority,
     DEFAULT_THRESHOLDS,
 )
+
+# Try importing reflection metrics (may not exist yet if agent is still working)
+try:
+    from .reflection_metrics import (
+        ReflectionLatency,
+        InsightPrecision,
+        InsightStability,
+        CriticalEventDetectionScore,
+        ContradictionAvoidanceScore,
+    )
+    _REFLECTION_METRICS_AVAILABLE = True
+except ImportError:
+    _REFLECTION_METRICS_AVAILABLE = False
 
 __all__ = [
     # Base classes
@@ -53,6 +78,14 @@ __all__ = [
     "OptimalRetrievalRatio",
     "CostQualityFrontier",
     "ReflectionPolicyEfficiency",
+    "CrossLayerMathematicalConsistency",
+    # Memory metrics
+    "WorkingMemoryPrecisionRecall",
+    # Operational metrics
+    "LLMCostIndex",
+    "StoragePressureIndex",
+    "TelemetryEventCorrelation",
+    "WorkerSaturationIndex",
     # Decision engine
     "MathematicalDecisionEngine",
     "Action",
@@ -61,4 +94,14 @@ __all__ = [
     "DEFAULT_THRESHOLDS",
 ]
 
-__version__ = "1.1.0"
+# Add reflection metrics to __all__ if available
+if _REFLECTION_METRICS_AVAILABLE:
+    __all__.extend([
+        "ReflectionLatency",
+        "InsightPrecision",
+        "InsightStability",
+        "CriticalEventDetectionScore",
+        "ContradictionAvoidanceScore",
+    ])
+
+__version__ = "2.0.0"  # Major version bump for BENCHMARKS_v1 compliance
