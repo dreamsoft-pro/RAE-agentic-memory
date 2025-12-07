@@ -6,7 +6,8 @@
 > 2. **[AI_AGENT_MANIFEST.md](./AI_AGENT_MANIFEST.md)** (3 min) - Universal baseline & documentation hierarchy
 > 3. **[.ai-agent-rules.md](./.ai-agent-rules.md)** (5 min) - Forbidden commands & hybrid testing
 > 4. **[docs/BRANCHING.md](./docs/BRANCHING.md)** (3 min) - Git workflow
-> 5. **[docs/AGENTS_TEST_POLICY.md](./docs/AGENTS_TEST_POLICY.md)** (3 min) - Tests as contracts
+> 5. **[docs/CI_WORKFLOW.md](./docs/CI_WORKFLOW.md)** (5 min) - CI/CD workflow (local tests → develop → main)
+> 6. **[docs/AGENTS_TEST_POLICY.md](./docs/AGENTS_TEST_POLICY.md)** (3 min) - Tests as contracts
 >
 > **AI_AGENT_MANIFEST.md** is the universal baseline for ALL AI agents. Read it first!
 
