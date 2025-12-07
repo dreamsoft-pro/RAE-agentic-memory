@@ -1,11 +1,12 @@
 ## Recent Changes (Auto-generated)
 
-*Last updated: 2025-12-07 08:09 • Branch: develop • Commit: 7f079c5*
+*Last updated: 2025-12-07 08:10 • Branch: main • Commit: 2c24eec*
 
 ### ✨ Features
 
 - add Mathematical Decision Engine for metric-driven actions ([`7f079c5`](../../commit/7f079c5))
 - add three-tier mathematical metrics layer for RAE benchmarks ([`b4b93f5`](../../commit/b4b93f5))
+- add Qdrant service to benchmark CI workflows ([`ce05957`](../../commit/ce05957))
 - add Qdrant service to benchmark CI workflows ([`d840913`](../../commit/d840913))
 - implement 9/5 benchmarking suite - comprehensive enterprise-grade testing ([`ee66f95`](../../commit/ee66f95))
 - add comprehensive benchmarking suite (academic & enterprise grade) ([`9fa6cd5`](../../commit/9fa6cd5))
@@ -43,6 +44,7 @@
 
 ### 🐛 Bug Fixes
 
+- benchmark script compatibility with vector store API ([`d3134ba`](../../commit/d3134ba))
 - benchmark script compatibility with vector store API ([`370191e`](../../commit/370191e))
 - correct path to ML requirements file in CI workflows ([`8eea1b4`](../../commit/8eea1b4))
 - install ML dependencies for benchmark tests ([`ca9a1b4`](../../commit/ca9a1b4))
@@ -181,6 +183,9 @@
 
 ### 📦 Other
 
+- Merge branch 'main' of github.com:dreamsoft-pro/RAE-agentic-memory ([`2c24eec`](../../commit/2c24eec))
+- Merge branch 'develop' ([`9ad1f85`](../../commit/9ad1f85))
+- Merge develop to main: add mathematical metrics layer ([`15b38ea`](../../commit/15b38ea))
 - Merge remote develop: accept remote auto-generated docs ([`5b196ff`](../../commit/5b196ff))
 - Merge branch 'main' into develop ([`ec48055`](../../commit/ec48055))
 - Merge remote-tracking branch 'origin/main' into develop ([`e7ad587`](../../commit/e7ad587))
@@ -245,11 +250,12 @@
 
 ## Recent Changes (Auto-generated)
 
-*Last updated: 2025-12-07 07:58 • Branch: develop • Commit: b4b93f5*
+*Last updated: 2025-12-07 07:58 • Branch: main • Commit: 15b38ea*
 
 ### ✨ Features
 
 - add three-tier mathematical metrics layer for RAE benchmarks ([`b4b93f5`](../../commit/b4b93f5))
+- add Qdrant service to benchmark CI workflows ([`ce05957`](../../commit/ce05957))
 - add Qdrant service to benchmark CI workflows ([`d840913`](../../commit/d840913))
 - implement 9/5 benchmarking suite - comprehensive enterprise-grade testing ([`ee66f95`](../../commit/ee66f95))
 - add comprehensive benchmarking suite (academic & enterprise grade) ([`9fa6cd5`](../../commit/9fa6cd5))
@@ -287,6 +293,7 @@
 
 ### 🐛 Bug Fixes
 
+- benchmark script compatibility with vector store API ([`d3134ba`](../../commit/d3134ba))
 - benchmark script compatibility with vector store API ([`370191e`](../../commit/370191e))
 - correct path to ML requirements file in CI workflows ([`8eea1b4`](../../commit/8eea1b4))
 - install ML dependencies for benchmark tests ([`ca9a1b4`](../../commit/ca9a1b4))
@@ -425,6 +432,7 @@
 
 ### 📦 Other
 
+- Merge develop to main: add mathematical metrics layer ([`15b38ea`](../../commit/15b38ea))
 - Merge remote develop: accept remote auto-generated docs ([`5b196ff`](../../commit/5b196ff))
 - Merge branch 'main' into develop ([`ec48055`](../../commit/ec48055))
 - Merge remote-tracking branch 'origin/main' into develop ([`e7ad587`](../../commit/e7ad587))
