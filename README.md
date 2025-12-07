@@ -60,13 +60,107 @@ Current AI agents are **stateless** - they forget everything after each conversa
 ### The RAE Solution
 
 ✅ **Multi-layered memory** (episodic → working → semantic → long-term)
+✅ **Mathematical intelligence layers** (Math-1: structure, Math-2: dynamics, Math-3: policy optimization)
 ✅ **Automatic insight extraction** via Reflection Engine V2 (Actor-Evaluator-Reflector pattern)
-✅ **Graph-based knowledge connections** (GraphRAG)
+✅ **Hybrid search** - Vector similarity + Knowledge graph traversal (GraphRAG)
 ✅ **LLM Orchestrator** - Provider-agnostic: use any LLM (OpenAI, Claude, Gemini, local) or no LLM at all
+✅ **Local-first capable** - Run entirely offline with local LLMs for complete data sovereignty
 ✅ **IDE integration** via Model Context Protocol (MCP)
 ✅ **Cost-aware caching** to minimize LLM API costs
 ✅ **Enterprise Security** with RBAC, authentication, and audit logging
 ✅ **Mathematical Foundations** - Rigorous MDP formalization for decision-making
+
+#### How RAE Works: A Complete System
+
+RAE is **not just a vector database** or **simple RAG system**. It's a complete cognitive architecture that combines:
+
+**🧠 4-Layer Memory System (Cognitive Architecture)**
+```
+Sensory Memory → Working Memory → Long-Term Memory → Reflective Memory
+   (raw)         (active task)      (facts+events)    (meta-learnings)
+```
+Each layer serves a distinct cognitive function, similar to human memory systems.
+
+**🔢 3-Tier Mathematical Foundation (Decision Intelligence)**
+```
+Math-1: Structure Analysis    →  How memory looks (graph topology, coherence)
+Math-2: Dynamics Tracking      →  How memory evolves (drift, retention, quality)
+Math-3: Policy Optimization    →  What decisions to make (cost-quality tradeoffs)
+```
+These layers work **above** the 4 memory layers, continuously monitoring and optimizing the system.
+
+**🔍 Hybrid Search Engine (Beyond Simple RAG)**
+
+Traditional RAG systems use only vector similarity. RAE combines:
+- **Vector search** - Semantic similarity (dense embeddings via Qdrant/pgvector)
+- **Sparse vectors** - Keyword matching (BM25-style sparse embeddings)
+- **Graph traversal** - Knowledge connections (BFS exploration of semantic graph)
+- **Full-text search** - Exact phrase matching (PostgreSQL FTS)
+- **Query analysis** - LLM-powered intent classification for adaptive weighting
+
+**Why this matters:** A query like "authentication bug from last week" needs temporal reasoning (graph),
+exact keywords ("bug"), and semantic understanding - not just vector similarity.
+
+**🎭 LLM Orchestrator (Optional Intelligence)**
+
+RAE can operate in multiple modes:
+- **Zero-LLM Mode** - Pure mathematical/heuristic decisions (fastest, zero API cost)
+- **Single-LLM Mode** - One model for all tasks (simple, cost-effective)
+- **Multi-LLM Mode** - Specialized models for different tasks (optimal quality)
+- **Local-First Mode** - Ollama/local models only (complete data sovereignty)
+
+This means you can run RAE entirely **offline** with local LLMs, or use cloud models, or mix both.
+
+**🏗️ Why This Is Not a "Simple RAG System"**
+
+| Feature | Traditional RAG | RAE |
+|---------|----------------|-----|
+| **Memory Model** | Flat vector store | 4-layer cognitive architecture |
+| **Search** | Vector similarity only | Hybrid: Vector + Graph + Sparse + FTS |
+| **Learning** | Static (no adaptation) | Active learning via reflection + drift detection |
+| **Decision Making** | Threshold-based | MDP-based with reward optimization |
+| **Knowledge Graph** | None or separate | Integrated with temporal evolution tracking |
+| **Cost Control** | Manual or none | Built-in budget enforcement + caching |
+| **Offline Capable** | Usually cloud-only | Fully local-first with Ollama |
+| **Mathematical Foundation** | Heuristics | 3-tier formal mathematical model |
+
+**🔒 Local-First Deployment (Data Sovereignty)**
+
+For organizations requiring complete data separation (healthcare, government, regulated industries),
+RAE can run **entirely offline**:
+- Local LLMs via Ollama (Llama 3, Mistral, Qwen)
+- Self-hosted vector database (Qdrant)
+- Local PostgreSQL database
+- No external API calls
+
+See [Local Setup Guide](docs/LOCAL_SETUP.md) for complete offline deployment.
+
+**📊 Real-World Example**
+
+```
+User Query: "Show me architectural decisions from auth module"
+
+Traditional RAG:
+  → Vector search for "architectural decisions auth"
+  → Returns: Top-k similar documents
+  → Problem: Misses connected concepts, temporal context, keyword precision
+
+RAE:
+  1. Query Analyzer classifies intent: "factual + temporal + relational"
+  2. Math-1 analyzes graph structure around "auth module" node
+  3. Hybrid Search executes:
+     - Vector search: Semantic similarity to "architectural decisions"
+     - Graph traversal: BFS from "auth module" (depth=2)
+     - Sparse vectors: Keyword match "architectural" AND "auth"
+     - Full-text: Exact phrase "architectural decisions"
+  4. Math-2 checks memory drift (are results still relevant?)
+  5. Math-3 optimizes retrieval (balance quality vs. cost)
+  6. Context Builder assembles working memory with reflections
+  → Returns: Precise results with temporal context + related decisions
+```
+
+**Key Insight:** RAE makes intelligent decisions about **how to search**, **what to remember**, and **when to learn** -
+not just "retrieve similar vectors."
 
 ---
 
@@ -386,83 +480,172 @@ results = agent.query("What are the user's UI preferences?")
 
 ## Architecture
 
-RAE implements a **4-layer cognitive memory system** inspired by human cognition:
+RAE implements a **complete cognitive architecture** with multiple integrated layers:
+
+### System Overview
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  LAYER 1: SENSORY MEMORY                                │
-│  Raw inputs, immediate observations                     │
-│  "User clicked submit button"                           │
-└──────────────────┬──────────────────────────────────────┘
-                   │ Attention & Filtering
-                   ▼
-┌─────────────────────────────────────────────────────────┐
-│  LAYER 2: WORKING MEMORY (WM)                           │
-│  Active context for current task + reflections          │
-│  "Currently debugging authentication issues"            │
-│  + "Lessons Learned: auth.py frequently has bugs"       │
-└──────────────────┬──────────────────────────────────────┘
-                   │ Consolidation & Pattern Detection
-                   ▼
-┌─────────────────────────────────────────────────────────┐
-│  LAYER 3: LONG-TERM MEMORY (LTM)                        │
-│  Episodic: Events + Semantic: Facts + Profiles          │
-│  "User fixed auth bug on Jan 5" + "auth.py bug-prone"   │
-└──────────────────┬──────────────────────────────────────┘
-                   │ Reflection Engine V2 (Actor-Evaluator-Reflector)
-                   ▼
-┌─────────────────────────────────────────────────────────┐
-│  LAYER 4: REFLECTIVE MEMORY (RM)                        │
-│  Meta-learnings, strategies, wisdom                     │
-│  "Authentication module needs architectural refactoring" │
-└─────────────────────────────────────────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────┐
+│                    RAE COGNITIVE ARCHITECTURE                              │
+├────────────────────────────────────────────────────────────────────────────┤
+│                                                                            │
+│  ┌──────────────────────────────────────────────────────────────────┐    │
+│  │         MATH-3: POLICY OPTIMIZATION (Decision Layer)             │    │
+│  │  • What decisions to make (retrieval strategy, reflection timing)│    │
+│  │  • Cost-Quality Frontier, Optimal Retrieval Ratio               │    │
+│  └────────────────┬─────────────────────────────────────────────────┘    │
+│                   │ Guides system behavior                                │
+│  ┌────────────────┴─────────────────────────────────────────────────┐    │
+│  │         MATH-2: DYNAMICS TRACKING (Evolution Layer)              │    │
+│  │  • How memory evolves (drift, retention, degradation)            │    │
+│  │  • Memory Drift Index, Retention Curves, Reflection Gain         │    │
+│  └────────────────┬─────────────────────────────────────────────────┘    │
+│                   │ Monitors quality                                      │
+│  ┌────────────────┴─────────────────────────────────────────────────┐    │
+│  │         MATH-1: STRUCTURE ANALYSIS (Topology Layer)              │    │
+│  │  • How memory looks (graph connectivity, semantic coherence)     │    │
+│  │  • Graph Connectivity Score, Semantic Coherence, Entropy         │    │
+│  └────────────────┬─────────────────────────────────────────────────┘    │
+│                   │ Analyzes structure                                    │
+├───────────────────┴────────────────────────────────────────────────────────┤
+│                                                                            │
+│  ┌─────────────────────────────────────────────────────────────┐          │
+│  │  LAYER 4: REFLECTIVE MEMORY (Meta-Learnings)                │          │
+│  │  "Authentication module needs architectural refactoring"     │          │
+│  └──────────────────────────┬──────────────────────────────────┘          │
+│                             │ Reflection Engine V2                        │
+│  ┌──────────────────────────┴──────────────────────────────────┐          │
+│  │  LAYER 3: LONG-TERM MEMORY (Facts + Events + Profiles)      │          │
+│  │  Episodic: "User fixed auth bug" | Semantic: "auth.py prone"│          │
+│  └──────────────────────────┬──────────────────────────────────┘          │
+│                             │ Consolidation                               │
+│  ┌──────────────────────────┴──────────────────────────────────┐          │
+│  │  LAYER 2: WORKING MEMORY (Active Task Context)              │          │
+│  │  "Currently debugging auth" + "Lessons: frequent bugs"      │          │
+│  └──────────────────────────┬──────────────────────────────────┘          │
+│                             │ Attention & Filtering                       │
+│  ┌──────────────────────────┴──────────────────────────────────┐          │
+│  │  LAYER 1: SENSORY MEMORY (Raw Inputs)                       │          │
+│  │  "User clicked submit button"                                │          │
+│  └──────────────────────────────────────────────────────────────┘          │
+│                                                                            │
+├────────────────────────────────────────────────────────────────────────────┤
+│                       HYBRID SEARCH ENGINE                                 │
+│  ┌──────────────┬──────────────┬──────────────┬──────────────┐            │
+│  │ Vector Search│ Graph Travers│ Sparse Vector│ Full-Text    │            │
+│  │ (Qdrant)     │ (PostgreSQL) │ (BM25-style) │ (PostgreSQL) │            │
+│  │ Dense emb.   │ BFS/DFS      │ Keywords     │ Exact phrases│            │
+│  └──────┬───────┴──────┬───────┴──────┬───────┴──────┬───────┘            │
+│         └──────────────┴──────────────┴──────────────┘                    │
+│                   Query Analyzer (Intent Classification)                   │
+│                   Adaptive Weighting + Cache Layer                         │
+└────────────────────────────────────────────────────────────────────────────┘
 ```
+
+**What Makes RAE Different:**
+
+1. **Mathematical Layers Work ABOVE Memory Layers** - Math-1/2/3 continuously monitor and optimize the 4 memory layers
+2. **Hybrid Search = 4 Search Strategies Combined** - Not just vector similarity, but graph reasoning + keywords + exact matches
+3. **Vector + Relational Database Integration** - Qdrant (vectors) + PostgreSQL (relations, graph, full-text) work together
+4. **Optional LLM Orchestration** - Can run with zero LLMs (pure math), local LLMs, or cloud LLMs
 
 **Key Components:**
 
 ### Microservices Architecture (v2.1)
 
 ```
-┌──────────────────────────────────────────────────────────────────────┐
-│                      RAE Memory API (Port 8000)                      │
-│  ┌───────────────────────────────────────────────────────────────┐   │
-│  │  API Layer (FastAPI)                                          │   │
-│  ├───────────────────────────────────────────────────────────────┤   │
-│  │  Core Services (Business Logic)                               │   │
-│  │  • HybridSearchService + Cache  • QueryAnalyzer               │   │
-│  │  • ReflectionEngineV2 (NEW)  • EntityResolution              │   │
-│  │  • TemporalGraph  • SemanticExtractor                         │   │
-│  │  • ContextBuilder (NEW)  • MemoryScoringV2 (NEW)              │   │
-│  ├───────────────────────────────────────────────────────────────┤   │
-│  │  Enterprise Services                                          │   │
-│  │  • RulesEngine (Event Triggers)  • EvaluationService          │   │
-│  │  • DriftDetector  • PIIScrubber  • CostController             │   │
-│  │  • DashboardWebSocket  • Analytics                            │   │
-│  │  • Evaluator (NEW) - Actor-Evaluator-Reflector pattern        │   │
-│  ├───────────────────────────────────────────────────────────────┤   │
-│  │  Background Workers (NEW)                                     │   │
-│  │  • DecayWorker  • SummarizationWorker  • DreamingWorker       │   │
-│  ├───────────────────────────────────────────────────────────────┤   │
-│  │  Repositories (Data Access Layer - DAO Pattern)               │   │
-│  │  • GraphRepository  • MemoryRepository                        │   │
-│  └───────────────────────────────────────────────────────────────┘   │
-└────────────────────────┬──────────────────┬─────────────────────────┘
-                         │                  │
-          ┌──────────────┴────────┐    ┌────┴─────────┐
-          │                       │    │              │
-          ▼                       ▼    ▼              ▼
-┌──────────────────────┐  ┌────────────────────┐  ┌──────────────────────┐
-│ ML Service (8001)    │  │ Reranker (8002)    │  │   Storage Layer      │
-│ ┌──────────────────┐ │  │ ┌────────────────┐ │  │ • PostgreSQL         │
-│ │ ML Operations:   │ │  │ │ CrossEncoder   │ │  │   (pgvector + RLS)   │
-│ │ • Entity Resol.  │ │  │ │ Re-ranking     │ │  │ • Qdrant Vector DB   │
-│ │ • Embeddings     │ │  │ │ for improved   │ │  │ • Redis Cache        │
-│ │ • NLP Processing │ │  │ │ search results │ │  │ • Celery (async)     │
-│ └──────────────────┘ │  │ └────────────────┘ │  └──────────────────────┘
-└──────────────────────┘  └────────────────────┘
+┌────────────────────────────────────────────────────────────────────────────────┐
+│                          RAE Memory API (Port 8000)                            │
+│  ┌─────────────────────────────────────────────────────────────────────────┐   │
+│  │  API Layer (FastAPI) - REST + WebSocket endpoints                       │   │
+│  ├─────────────────────────────────────────────────────────────────────────┤   │
+│  │  Mathematical Layer Controller (Math-1/2/3) *(NEW in v2.2)*             │   │
+│  │  • Math-1: Structure metrics  • Math-2: Drift tracking                 │   │
+│  │  • Math-3: Policy optimization  • Decision-making for retrieval         │   │
+│  ├─────────────────────────────────────────────────────────────────────────┤   │
+│  │  Core Services (Business Logic)                                         │   │
+│  │  • HybridSearchService + Cache  • QueryAnalyzer (LLM intent)            │   │
+│  │  • ReflectionEngineV2 (Actor-Evaluator-Reflector)                       │   │
+│  │  • TemporalGraph  • EntityResolution  • SemanticExtractor               │   │
+│  │  • ContextBuilder (Working Memory assembly)                             │   │
+│  │  • MemoryScoringV2 (α·relevance + β·importance + γ·recency)             │   │
+│  ├─────────────────────────────────────────────────────────────────────────┤   │
+│  │  Enterprise Services                                                    │   │
+│  │  • RulesEngine (Event Automation)  • EvaluationService (MRR, NDCG)     │   │
+│  │  • DriftDetector  • PIIScrubber  • CostController                       │   │
+│  │  • DashboardWebSocket  • Analytics  • Evaluator (Outcome Assessment)   │   │
+│  ├─────────────────────────────────────────────────────────────────────────┤   │
+│  │  Background Workers (Celery + Redis Queue)                              │   │
+│  │  • DecayWorker (importance decay)  • SummarizationWorker                │   │
+│  │  • DreamingWorker (batch reflections)                                   │   │
+│  ├─────────────────────────────────────────────────────────────────────────┤   │
+│  │  Repositories (Data Access Layer - DAO Pattern)                         │   │
+│  │  • MemoryRepository  • GraphRepository  • ReflectionRepository          │   │
+│  └─────────────────────────────────────────────────────────────────────────┘   │
+└──────────────┬───────────────────┬─────────────────┬────────────────────────────┘
+               │                   │                 │
+       ┌───────┴────────┐  ┌───────┴────────┐  ┌────┴──────────────────────────┐
+       │                │  │                │  │                               │
+       ▼                ▼  ▼                ▼  ▼                               ▼
+┌──────────────────┐  ┌────────────────┐  ┌─────────────────────────────────────────┐
+│ ML Service       │  │ Reranker       │  │      Storage Layer (Hybrid)             │
+│ (Port 8001)      │  │ (Port 8002)    │  │  ┌─────────────────────────────────┐    │
+│ ┌──────────────┐ │  │ ┌────────────┐ │  │  │  PostgreSQL (Relational)        │    │
+│ │ • Entity Res.│ │  │ │CrossEncoder│ │  │  │  • Memory metadata (id, content)│    │
+│ │ • Embeddings │ │  │ │Re-ranking  │ │  │  │  • pgvector (dense vectors)     │    │
+│ │ • NLP Tasks  │ │  │ │Score boost│ │  │  │  • Knowledge graph (nodes+edges)│    │
+│ │ • SpaCy/BERT │ │  │ │Precision   │ │  │  │  • Full-text search (FTS)       │    │
+│ └──────────────┘ │  │ └────────────┘ │  │  │  • Row-Level Security (RLS)     │    │
+└──────────────────┘  └────────────────┘  │  └─────────────────────────────────┘    │
+                                          │  ┌─────────────────────────────────┐    │
+                                          │  │  Qdrant (Vector Database)       │    │
+                                          │  │  • Dense embeddings (768/1536d) │    │
+                                          │  │  • Sparse vectors (BM25-style)  │    │
+                                          │  │  • HNSW index for fast ANN      │    │
+                                          │  │  • Tenant isolation via payload │    │
+                                          │  └─────────────────────────────────┘    │
+                                          │  ┌─────────────────────────────────┐    │
+                                          │  │  Redis (Cache + Queue)          │    │
+                                          │  │  • Query result cache (hybrid)  │    │
+                                          │  │  • Celery task queue            │    │
+                                          │  │  • Session state cache          │    │
+                                          │  └─────────────────────────────────┘    │
+                                          └─────────────────────────────────────────┘
+```
+
+**Integration Flow Example:**
+
+```
+Query: "authentication bug"
+   ↓
+1. Query Analyzer (LLM) → intent: "factual + technical"
+   ↓
+2. Math-3 Policy → decides: hybrid search (vector=0.4, graph=0.3, sparse=0.2, fts=0.1)
+   ↓
+3. Hybrid Search executes IN PARALLEL:
+   ├─ Qdrant: Vector search (dense embedding) → 50 results
+   ├─ PostgreSQL Graph: BFS from "authentication" node → 30 results
+   ├─ Qdrant: Sparse vector (keyword match) → 40 results
+   └─ PostgreSQL FTS: Full-text "authentication" AND "bug" → 20 results
+   ↓
+4. Result Fusion: Normalize scores → weighted combination → deduplicate
+   ↓
+5. Math-2 Drift Check: Filter stale memories (drift > threshold)
+   ↓
+6. Math-1 Structure Check: Verify graph coherence of results
+   ↓
+7. [Optional] Reranker: CrossEncoder re-ranks top-20
+   ↓
+8. Context Builder: Assemble Working Memory with reflections
+   ↓
+Returns: Top-k results with full context
 ```
 
 **Architecture Highlights:**
+- **Mathematical Intelligence Layer**: Math-1/2/3 continuously monitor and optimize all operations
+- **Hybrid Storage**: PostgreSQL (relations, graph, FTS) + Qdrant (vectors) work as unified system
+- **Vector + Relational Integration**: Single query leverages both vector similarity AND relational reasoning
+- **Local-First Capable**: Run entirely offline with Ollama + self-hosted databases (complete data sovereignty)
 - **Separation of Concerns**: DAO pattern isolates database operations from business logic
 - **Microservices**: Heavy ML dependencies (PyTorch, transformers) isolated in separate services
 - **Lightweight Main API**: Faster startup, smaller Docker images (~500MB vs 3-5GB)
