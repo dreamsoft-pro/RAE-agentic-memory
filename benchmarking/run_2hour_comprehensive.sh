@@ -70,14 +70,16 @@ for benchmark in "${BENCHMARK_ROTATION[@]}"; do
     remaining=$((DURATION_SECONDS - elapsed))
     echo "[$(date +%H:%M:%S)] Running: $benchmark (Elapsed: ${elapsed}s, Remaining: ${remaining}s)"
 
+    # Run benchmark and capture output to temp file
+    BENCHMARK_LOG="$RESULTS_DIR/benchmark_${benchmark%.yaml}_$(date +%Y%m%d_%H%M%S).log"
     if PYTHONPATH=. python benchmarking/scripts/run_benchmark_math.py \
         --set "$benchmark" \
-        --output "$RESULTS_DIR/" 2>&1; then
+        --output "$RESULTS_DIR/" > "$BENCHMARK_LOG" 2>&1; then
         echo "✅ $benchmark completed successfully"
-        ((total_benchmarks_run++))
+        total_benchmarks_run=$((total_benchmarks_run + 1))
     else
-        echo "❌ $benchmark failed"
-        ((failed_benchmarks++))
+        echo "❌ $benchmark failed (see $BENCHMARK_LOG)"
+        failed_benchmarks=$((failed_benchmarks + 1))
     fi
 
     echo ""
@@ -126,14 +128,16 @@ while true; do
 
         echo "[$(date +%H:%M:%S)] Iteration $iteration: $benchmark (Remaining: ${remaining}s)"
 
+        # Run benchmark and capture output to temp file
+        BENCHMARK_LOG="$RESULTS_DIR/benchmark_${benchmark%.yaml}_iter${iteration}_$(date +%Y%m%d_%H%M%S).log"
         if PYTHONPATH=. python benchmarking/scripts/run_benchmark_math.py \
             --set "$benchmark" \
-            --output "$RESULTS_DIR/" 2>&1; then
+            --output "$RESULTS_DIR/" > "$BENCHMARK_LOG" 2>&1; then
             echo "✅ $benchmark completed"
-            ((total_benchmarks_run++))
+            total_benchmarks_run=$((total_benchmarks_run + 1))
         else
-            echo "❌ $benchmark failed"
-            ((failed_benchmarks++))
+            echo "❌ $benchmark failed (see $BENCHMARK_LOG)"
+            failed_benchmarks=$((failed_benchmarks + 1))
         fi
 
         echo ""
