@@ -263,18 +263,55 @@ pytest --no-cov benchmarking/tests/test_math_metrics.py -v
 pytest --no-cov benchmarking/tests/test_math_metrics.py::TestGraphConnectivityScore -v
 ```
 
+## Decision Engine
+
+The Mathematical Decision Engine transforms metrics into actionable intelligence:
+
+```python
+from benchmarking.math_metrics import MathematicalDecisionEngine
+
+# Initialize engine
+engine = MathematicalDecisionEngine()
+
+# Analyze and get recommendations
+actions = await engine.analyze_and_decide(
+    snapshot_current=current_snapshot,
+    snapshot_previous=previous_snapshot,
+    query_results=recent_queries,
+)
+
+# Review recommendations
+for action in actions:
+    print(f"[{action.priority.name}] {action.type.value}")
+    print(f"  Reason: {action.reason}")
+    print(f"  Params: {action.params}")
+```
+
+**Decision Flow:**
+```
+Measure → Analyze → Decide → Act → Measure (loop)
+
+Structure Metrics → Organization Actions (add connections, cluster)
+Dynamics Metrics  → Maintenance Actions (consolidate, reflect)
+Policy Metrics    → Optimization Actions (improve search, tune)
+```
+
+See [MATH_DECISION_ENGINE.md](../../docs/project-design/active/MATH_DECISION_ENGINE.md) for complete documentation.
+
 ## Scientific Foundation
 
 This module implements the three-tier mathematical model described in:
-- `docs/project-design/active/MATH_LAYER_OVERVIEW.md`
-- `docs/project-design/active/BENCHMARK_MATH_EXTENSION.md`
-- `docs/project-design/active/MATH_EXPERIMENTS_PLAN.md`
+- `docs/project-design/active/MATH_LAYER_OVERVIEW.md` - Core mathematical model
+- `docs/project-design/active/MATH_DECISION_ENGINE.md` - **Decision algorithm**
+- `docs/project-design/active/BENCHMARK_MATH_EXTENSION.md` - Benchmark integration
+- `docs/project-design/active/MATH_EXPERIMENTS_PLAN.md` - Research experiments
 
 ### Key Concepts
 
 1. **Memory as Geometry** - Structure metrics quantify the shape and connectivity of memory
 2. **Memory as Physics** - Dynamics metrics model memory evolution and stability
 3. **Memory as Economics** - Policy metrics optimize cost-quality trade-offs
+4. **Memory as Intelligence** - Decision engine turns measurements into actions
 
 ## Contributing
 
