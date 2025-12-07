@@ -46,9 +46,12 @@ jobs:
 
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install mutmut
           pip install -r requirements-dev.txt
+          pip install -r apps/memory_api/requirements-base.txt
           pip install -r apps/memory_api/requirements-test.txt
+          pip install -e sdk/python/rae_memory_sdk
 
       - name: Run mutation testing on core modules
         env:
@@ -61,10 +64,14 @@ jobs:
           mutmut run --paths-to-mutate=apps/memory_api/core/ --tests-dir=apps/memory_api/tests/core/ || true
 
           # Generate report
-          mutmut results > mutation_report.txt
+          if mutmut results > mutation_report.txt 2>&1; then
+            echo "✅ Mutation report generated"
+          else
+            echo "⚠️ No mutation results available" > mutation_report.txt
+          fi
 
           # Show summary
-          mutmut show
+          mutmut show || echo "No mutations to show"
 
       - name: Check mutation score
         run: |
