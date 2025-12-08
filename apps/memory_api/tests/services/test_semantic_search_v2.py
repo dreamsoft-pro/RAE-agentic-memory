@@ -1,4 +1,3 @@
-from datetime import datetime
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
@@ -6,6 +5,7 @@ import pytest
 
 from apps.memory_api.models.semantic_models import SemanticNode
 from apps.memory_api.services.semantic_search import SemanticSearchPipeline
+from apps.memory_api.utils.datetime_utils import utc_now
 
 
 @pytest.fixture
@@ -61,7 +61,7 @@ def sample_node_record():
         "embedding": [0.1] * 1536,
         "priority": 1,
         "importance_score": 0.5,
-        "last_reinforced_at": datetime.utcnow(),
+        "last_reinforced_at": utc_now(),
         "reinforcement_count": 1,
         "decay_rate": 0.1,
         "is_degraded": False,
@@ -71,9 +71,9 @@ def sample_node_record():
         "extraction_confidence": 0.9,
         "tags": [],
         "metadata": {},
-        "created_at": datetime.utcnow(),
-        "updated_at": datetime.utcnow(),
-        "last_accessed_at": datetime.utcnow(),
+        "created_at": utc_now(),
+        "updated_at": utc_now(),
+        "last_accessed_at": utc_now(),
         "accessed_count": 5,
     }
 
@@ -238,7 +238,7 @@ async def test_empty_results(semantic_search_service, mock_pool):
 @pytest.mark.asyncio
 async def test_reranking_logic(semantic_search_service):
     # Create mock nodes
-    now = datetime.utcnow()
+    now = utc_now()
     node1 = SemanticNode(
         id=uuid4(),
         tenant_id="t",

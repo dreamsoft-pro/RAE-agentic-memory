@@ -312,8 +312,9 @@ async def liveness_check() -> Dict[str, str]:
     status_code=status.HTTP_200_OK,
     summary="System Metrics",
     description="Get system metrics including uptime, memory usage, and component statistics.",
+    operation_id="get_system_metrics",
 )
-async def metrics() -> MetricsResponse:
+async def get_system_metrics() -> MetricsResponse:
     """
     System metrics endpoint.
 

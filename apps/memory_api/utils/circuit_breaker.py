@@ -21,6 +21,8 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, Optional
 
+from apps.memory_api.utils.datetime_utils import utc_now
+
 logger = logging.getLogger(__name__)
 
 
@@ -171,7 +173,7 @@ class CircuitBreaker:
     def _open(self):
         """Open the circuit"""
         self.state = CircuitState.OPEN
-        self.opened_at = datetime.utcnow()
+        self.opened_at = utc_now()
 
         logger.error(
             "circuit_breaker_opened",
@@ -257,7 +259,7 @@ class DegradedModeService:
             reason: Reason for entering degraded mode
         """
         self.degraded_mode = True
-        self.entered_at = datetime.utcnow()
+        self.entered_at = utc_now()
         self.reason = reason
 
         logger.warning(
@@ -271,9 +273,7 @@ class DegradedModeService:
         """Exit degraded mode and return to normal operation"""
         if self.degraded_mode:
             duration = (
-                (datetime.utcnow() - self.entered_at).total_seconds()
-                if self.entered_at
-                else 0
+                (utc_now() - self.entered_at).total_seconds() if self.entered_at else 0
             )
 
             logger.info(
@@ -297,9 +297,7 @@ class DegradedModeService:
             "entered_at": self.entered_at.isoformat() if self.entered_at else None,
             "reason": self.reason,
             "duration_seconds": (
-                (datetime.utcnow() - self.entered_at).total_seconds()
-                if self.entered_at
-                else 0
+                (utc_now() - self.entered_at).total_seconds() if self.entered_at else 0
             ),
         }
 

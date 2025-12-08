@@ -25,6 +25,7 @@ import asyncpg
 from pydantic import BaseModel, Field
 
 from apps.memory_api.models import OperationRiskLevel
+from apps.memory_api.utils.datetime_utils import utc_now
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +81,7 @@ class ApprovalRequest(BaseModel):
     # Status
     status: ApprovalStatus = ApprovalStatus.PENDING
     requested_by: str
-    requested_at: datetime = Field(default_factory=datetime.utcnow)
+    requested_at: datetime = Field(default_factory=utc_now)
     expires_at: Optional[datetime] = None
 
     # Decision
@@ -193,7 +194,7 @@ class HumanApprovalService:
                 requested_by=requested_by,
                 status=ApprovalStatus.AUTO_APPROVED,
                 approved_by="system",
-                approved_at=datetime.utcnow(),
+                approved_at=utc_now(),
                 resource_details=resource_details or {},
                 metadata=metadata or {},
             )
@@ -205,7 +206,7 @@ class HumanApprovalService:
 
         # For higher risk, create pending approval request
         timeout = self.APPROVAL_TIMEOUTS.get(risk_level, timedelta(hours=24))
-        expires_at = datetime.utcnow() + timeout
+        expires_at = utc_now() + timeout
 
         min_approvals = self.MIN_APPROVERS.get(risk_level, 1)
 
@@ -270,7 +271,7 @@ class HumanApprovalService:
             )
 
         # Check if expired
-        if request.expires_at and datetime.utcnow() > request.expires_at:
+        if request.expires_at and utc_now() > request.expires_at:
             request.status = ApprovalStatus.EXPIRED
             await self._update_approval_request(request)
             raise ValueError("Approval request has expired")
@@ -308,7 +309,7 @@ class HumanApprovalService:
             if len(request.approvers) >= request.min_approvals:
                 request.status = ApprovalStatus.APPROVED
                 request.approved_by = decision_request.approver_id
-                request.approved_at = datetime.utcnow()
+                request.approved_at = utc_now()
 
                 logger.info(
                     "approval_granted",
@@ -352,7 +353,7 @@ class HumanApprovalService:
         if (
             request.status == ApprovalStatus.PENDING
             and request.expires_at
-            and datetime.utcnow() > request.expires_at
+            and utc_now() > request.expires_at
         ):
             request.status = ApprovalStatus.EXPIRED
             await self._update_approval_request(request)
