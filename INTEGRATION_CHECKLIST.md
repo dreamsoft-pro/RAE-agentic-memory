@@ -1,6 +1,8 @@
 # 🔍 Integration Checklist - Pre-Merge Verification
 
 > **Purpose**: Use this checklist before merging any code to `develop` or `main` to ensure quality and consistency.
+>
+> **⚠️ CRITICAL**: This checklist verifies compliance with [CRITICAL_AGENT_RULES.md](./CRITICAL_AGENT_RULES.md). Read those 8 mandatory rules FIRST!
 
 ## ⚡ Quick Checklist (Essential)
 
@@ -41,6 +43,22 @@ Before merging to `develop` or `main`, verify ALL of these:
 - [ ] PROJECT_STRUCTURE.md updated if new patterns introduced
 - [ ] CONVENTIONS.md updated if new conventions established
 - [ ] .ai-templates/ updated if template improvements made
+
+#### 1.4 Documentation Updates (RULE #8 - CRITICAL!)
+**⚠️ Auto-generated (CI handles - NEVER EDIT!):**
+- [ ] Did NOT edit `CHANGELOG.md` (CI generates from git history)
+- [ ] Did NOT edit `STATUS.md` (CI generates project metrics)
+- [ ] Did NOT edit `TODO.md` (CI extracts from code comments)
+- [ ] Did NOT edit `docs/.auto-generated/` files
+- [ ] Did NOT edit `docs/TESTING_STATUS.md` (CI generates from test runs)
+
+**✅ Manual (Your responsibility - DO EDIT if needed!):**
+- [ ] Updated `CONVENTIONS.md` if new patterns added
+- [ ] Updated `PROJECT_STRUCTURE.md` if new file locations added
+- [ ] Updated `docs/guides/` if new features added
+- [ ] Updated `.ai-templates/README.md` if template changes made
+
+> **Why this matters**: CI automatically overwrites auto-generated files. If you edit them, your changes will be lost!
 
 ### 2. Code Structure & Patterns
 
@@ -402,13 +420,19 @@ Before merging, agent must verify:
 
 ## 📚 Related Documentation
 
+### Mandatory Reading (RULE #2: Work Autonomously!)
+- **⚠️ CRITICAL_AGENT_RULES.md** - 8 mandatory rules (READ FIRST!)
 - **ONBOARDING_GUIDE.md** - Getting started guide
 - **PROJECT_STRUCTURE.md** - Where to put files
 - **CONVENTIONS.md** - How to write code
+
+### Supporting Documentation
 - **.cursorrules** - Complete rules
-- **docs/AGENTS_TEST_POLICY.md** - Testing philosophy
-- **docs/BRANCHING.md** - Git workflow
-- **.ai-templates/** - Code templates
+- **docs/AGENTS_TEST_POLICY.md** - Testing philosophy (RULE #7)
+- **docs/BRANCHING.md** - Git workflow (3-phase)
+- **.ai-templates/** - Code templates (RULE #5)
+
+> **Note on RULE #2 (Autonomous Work)**: By the time you're using this checklist, you should already know these patterns and work autonomously without asking permission for standard tasks. If you're unclear, re-read the mandatory documentation above!
 
 ---
 

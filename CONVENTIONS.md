@@ -1,6 +1,14 @@
 # RAE Code Conventions - Patterns and Why We Use Them
 
 > **Purpose**: This document explains the architectural patterns, conventions, and **WHY** we use them. Understanding the reasoning helps agents write code that fits naturally into the existing codebase.
+>
+> **⚠️ CRITICAL**: This document describes HOW to write code. For WHAT rules you MUST follow, read [CRITICAL_AGENT_RULES.md](./CRITICAL_AGENT_RULES.md) first!
+> - 3-phase testing workflow (RULE #1 & #3)
+> - `make format && make lint` before every commit
+> - tenant_id in all queries (RULE #4)
+> - No interactive commands (RULE #6)
+> - Tests as contracts (RULE #7)
+> - Auto vs manual documentation (RULE #8)
 
 ## 🏛️ Architecture Philosophy
 

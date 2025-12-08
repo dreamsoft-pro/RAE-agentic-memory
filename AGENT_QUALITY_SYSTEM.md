@@ -3,6 +3,8 @@
 > **Status**: ✅ FULLY IMPLEMENTED
 > **Version**: 1.0.0
 > **Date**: 2025-12-04
+>
+> **⚠️ CRITICAL**: This document is part of the RAE Agent Quality System. For the complete mandatory rules, read **[CRITICAL_AGENT_RULES.md](./CRITICAL_AGENT_RULES.md)** first!
 
 ## 📋 Executive Summary
 
@@ -136,9 +138,16 @@ CI/CD quality gate automatically checks for this!
 4. .ai-templates/README.md    # 10 min
 ```
 
-### Phase 2: Development (for each feature)
+### Phase 2: Development (for each feature) - 3 PHASE WORKFLOW!
+
+**🚨 CRITICAL**: Follow the 3-phase testing workflow (RULE #1 & #3)!
 
 ```bash
+# ========================================
+# PHASE 1: FEATURE BRANCH (Fast Feedback)
+# ========================================
+git checkout develop && git checkout -b feature/my-feature
+
 # 1. Design First (MANDATORY!)
 - Write design document
 - Get approval if needed
@@ -148,33 +157,36 @@ CI/CD quality gate automatically checks for this!
 - Customize for your feature
 - Keep patterns intact
 
-# 3. Implement & Test
-make test-focus FILE=path/to/test.py  # Dev mode
+# 3. Implement & Test (ONLY new code!)
+pytest --no-cov apps/memory_api/tests/test_my_feature.py  # Fast!
 
-# 4. Quality Check
+# 4. Quality Check (MANDATORY before commit!)
 make format && make lint
 
-# 5. Pre-commit Check
-# Review INTEGRATION_CHECKLIST.md
-make test-unit  # Full suite
-```
+# 5. Commit
+git add . && git commit -m "feat: my feature"
 
-### Phase 3: Integration (merge to develop/main)
+# ========================================
+# PHASE 2: DEVELOP BRANCH (Full Validation)
+# ========================================
+git checkout develop && git merge feature/my-feature --no-ff
 
-```bash
-# 1. Feature branch → develop
-git checkout develop && git merge feature/name --no-ff
+# MANDATORY: Run full test suite!
+make test-unit  # ⚠️ Must pass before proceeding to main!
+make lint       # Must pass!
 
-# 2. Full test suite on develop (CRITICAL!)
-make test-unit && make lint
+# If fails → FIX on develop, don't proceed to main!
 
-# 3. If passes → main
+# ========================================
+# PHASE 3: MAIN BRANCH (Production)
+# ========================================
 git checkout main && git merge develop --no-ff
 git push origin main develop
 
-# 4. Verify CI
-gh run watch  # Must be green!
+# Verify CI is green
+gh run watch
 ```
+
 
 ## 📊 Impact Metrics
 
@@ -215,6 +227,8 @@ You're using the system correctly when:
 
 ## 🚨 Critical Rules (NEVER VIOLATE!)
 
+> **⚠️ Complete ruleset**: See [CRITICAL_AGENT_RULES.md](./CRITICAL_AGENT_RULES.md) for all 8 mandatory rules
+
 ### 1. Design-First Protocol
 ❌ Don't start coding without design
 ✅ Write design → get approval → implement
@@ -227,17 +241,66 @@ You're using the system correctly when:
 ❌ Don't mix layers (SQL in API)
 ✅ Always API → Service → Repository
 
-### 4. Security First
+### 4. Security First (RULE #4)
 ❌ Don't write queries without tenant_id
 ✅ Include tenant_id in ALL WHERE clauses
 
-### 5. Testing
-❌ Don't test single files without --no-cov
-✅ Use `make test-focus FILE=...` in dev
+### 5. Testing - 3 Phase Workflow (RULE #1 & #3)
+❌ Don't run full tests on feature branch
+✅ Feature: `pytest --no-cov path/` (ONLY new code)
+✅ Develop: `make test-unit` (MANDATORY before main!)
+✅ Main: CI tests automatically
 
-### 6. Autonomous Work
+### 6. No Interactive Commands (RULE #6)
+❌ Don't use: nano, vim, vi, less, git add -i, git rebase -i
+✅ Use: Edit/Write tools, cat, head, git add .
+
+### 7. Tests Are Contracts (RULE #7)
+❌ Don't change tests to make them pass
+✅ Test fails → Check if test is correct → Fix CODE, not test!
+✅ See: [docs/AGENTS_TEST_POLICY.md](./docs/AGENTS_TEST_POLICY.md)
+
+### 8. Autonomous Work (RULE #2)
 ❌ Don't ask permission for standard tasks
 ✅ Follow patterns, work autonomously
+
+### 9. Code Quality (Pre-commit MANDATORY!)
+❌ Don't commit without formatting/linting
+✅ ALWAYS run: `make format && make lint` before commit
+
+### 10. Documentation Updates (RULE #8)
+**Auto-generated (CI handles - DON'T EDIT!):**
+- ❌ `CHANGELOG.md` - Git commit history
+- ❌ `STATUS.md` - Project metrics
+- ❌ `TODO.md` - Extracted TODOs/FIXMEs
+- ❌ `docs/.auto-generated/` - All auto-generated files
+- ❌ `docs/TESTING_STATUS.md` - Test results
+
+**Manual (Your responsibility - DO EDIT!):**
+- ✅ `CONVENTIONS.md` - New patterns/conventions
+- ✅ `PROJECT_STRUCTURE.md` - New file locations
+- ✅ `docs/guides/` - Feature guides
+- ✅ `.ai-templates/README.md` - Template changes
+
+**⚠️ If you edit auto-generated files, CI will overwrite your changes!**
+
+## ✅ Pre-Commit Checklist
+
+Before every commit, verify:
+
+```
+[ ] Tested ONLY new code on feature branch (pytest --no-cov path/)
+[ ] make format passed (black + isort + ruff)
+[ ] make lint passed (no errors)
+[ ] Used templates from .ai-templates/
+[ ] tenant_id included in ALL database queries
+[ ] No interactive commands in code (nano, vim, git -i)
+[ ] Docstrings added (Google style)
+[ ] Will run make test-unit on develop before main
+[ ] Updated manual docs if needed (NOT auto-generated!)
+```
+
+**If ANY checkbox fails → DON'T COMMIT!**
 
 ## 🔄 System Maintenance
 
@@ -284,32 +347,53 @@ Code Quality:             ████████████████░░
 ## 🎯 Quick Start Commands
 
 ```bash
-# New agent onboarding
-cat ONBOARDING_GUIDE.md
-cat PROJECT_STRUCTURE.md
-cat CONVENTIONS.md
+# ========================================
+# NEW AGENT ONBOARDING (55 min one-time)
+# ========================================
+cat CRITICAL_AGENT_RULES.md    # ⚠️ READ FIRST! (5 min)
+cat ONBOARDING_GUIDE.md         # 15 min
+cat PROJECT_STRUCTURE.md        # 10 min
+cat CONVENTIONS.md              # 20 min
 
-# Start new feature
+# ========================================
+# PHASE 1: FEATURE BRANCH (Fast Feedback)
+# ========================================
+git checkout develop && git checkout -b feature/my-feature
+
+# Copy template
 cp .ai-templates/repository_template.py apps/memory_api/repositories/my_repo.py
 # Edit and customize...
 
-# Development testing
-make test-focus FILE=apps/memory_api/tests/test_my_feature.py
+# Test ONLY new code (fast!)
+pytest --no-cov apps/memory_api/tests/test_my_feature.py
 
-# Pre-commit checks
-make format && make lint && make test-unit
+# MANDATORY before commit
+make format && make lint
 
-# Git workflow
-git checkout develop && git checkout -b feature/my-feature
-# ... develop feature ...
+# Commit
+git add . && git commit -m "feat: my feature"
+
+# ========================================
+# PHASE 2: DEVELOP BRANCH (Full Validation)
+# ========================================
 git checkout develop && git merge feature/my-feature --no-ff
-make test-unit  # CRITICAL - full suite!
+
+# MANDATORY: Full test suite!
+make test-unit  # ⚠️ MUST PASS before main!
+make lint
+
+# ========================================
+# PHASE 3: MAIN BRANCH (Production)
+# ========================================
 git checkout main && git merge develop --no-ff
 git push origin main develop
 gh run watch  # Verify green CI
 ```
 
 ## 📚 All Documentation Files
+
+### Tier 0: MANDATORY (Read Before Starting!)
+- ⚠️ **`CRITICAL_AGENT_RULES.md`** (5 min) - 8 rules you MUST follow
 
 ### Tier 1: Must Read (55 min)
 - `ONBOARDING_GUIDE.md` (15 min)

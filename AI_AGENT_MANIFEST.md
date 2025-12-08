@@ -39,13 +39,20 @@ Must read before touching ANY code:
 - **docs/CI_WORKFLOW.md** - CI/CD workflow (local tests → develop → main)
 - **docs/AGENTS_TEST_POLICY.md** - Tests are contracts, not snapshots
 
-**Key Rules from Tier 1:**
-- ❌ NEVER run full test suite on feature branches (only `--no-cov`)
-- ✅ ALWAYS work autonomously (don't ask obvious questions)
-- ✅ ALWAYS include `tenant_id` in database queries
-- ❌ NEVER use interactive commands (nano, vim, git -i)
-- ✅ ALWAYS use templates from `.ai-templates/`
-- ✅ Tests are contracts - fix code, not tests
+**Key Rules from Tier 1 (All 8 Critical Rules):**
+1. ❌ **RULE #1**: NEVER run full test suite on feature branches (only `pytest --no-cov`)
+2. ✅ **RULE #2**: ALWAYS work autonomously (don't ask obvious questions)
+3. ✅ **RULE #3**: Follow 3-phase workflow (Feature → Develop → Main)
+   - Feature: test ONLY new code
+   - Develop: `make test-unit` MANDATORY before main!
+   - Main: CI tests automatically
+4. ✅ **RULE #4**: ALWAYS include `tenant_id` in database queries (security!)
+5. ✅ **RULE #5**: ALWAYS use templates from `.ai-templates/`
+6. ❌ **RULE #6**: NEVER use interactive commands (nano, vim, git -i)
+7. ✅ **RULE #7**: Tests are contracts - fix CODE, not tests (when tests fail correctly)
+8. ✅ **RULE #8**: Documentation updates
+   - DON'T EDIT: Auto-generated files (`CHANGELOG.md`, `STATUS.md`, `TODO.md`, `docs/.auto-generated/`)
+   - DO EDIT: Manual files (`CONVENTIONS.md`, `PROJECT_STRUCTURE.md`, `docs/guides/`)
 
 ### 🟡 Tier 2: Essential (Read before first commit)
 
