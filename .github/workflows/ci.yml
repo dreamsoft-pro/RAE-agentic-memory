@@ -241,15 +241,22 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
           QDRANT_URL: http://localhost:6333
           RAE_VECTOR_BACKEND: qdrant
-          PYTHONWARNINGS: "error,ignore::PendingDeprecationWarning:multipart,ignore::DeprecationWarning:google._upb._message,ignore::ResourceWarning:tldextract,ignore::DeprecationWarning:spacy.cli._util,ignore:Can't initialize NVML:UserWarning,ignore::pytest.PytestDeprecationWarning:pytest_asyncio"
         run: |
           echo "🔍 Running FULL test suite with -W error..."
-          pytest -W error \
+          python -W error \
             -W "ignore::DeprecationWarning:google._upb._message" \
             -W "ignore::ResourceWarning:tldextract" \
             -W "ignore::DeprecationWarning:spacy.cli._util" \
             -W "ignore:Can't initialize NVML:UserWarning" \
             -W "ignore::PendingDeprecationWarning:multipart" \
+            -W "ignore::pytest.PytestDeprecationWarning:pytest_asyncio" \
+            -m pytest -W error \
+            -W "ignore::DeprecationWarning:google._upb._message" \
+            -W "ignore::ResourceWarning:tldextract" \
+            -W "ignore::DeprecationWarning:spacy.cli._util" \
+            -W "ignore:Can't initialize NVML:UserWarning" \
+            -W "ignore::PendingDeprecationWarning:multipart" \
+            -W "ignore::pytest.PytestDeprecationWarning:pytest_asyncio" \
             -m "not integration and not llm and not contract and not performance" \
             --cov --cov-report=xml --cov-report=term
 
