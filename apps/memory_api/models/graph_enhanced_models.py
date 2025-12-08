@@ -163,7 +163,9 @@ class CycleDetectionResult(BaseModel):
     # Context
     source_node_id: UUID
     target_node_id: UUID
-    detection_timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    detection_timestamp: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
 
 
 class GraphSnapshot(BaseModel):

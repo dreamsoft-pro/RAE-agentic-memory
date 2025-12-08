@@ -885,7 +885,9 @@ class RLSVerificationStatus(BaseModel):
     all_critical_tables_protected: bool
 
     # Last verification
-    last_verified_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    last_verified_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
     verification_passed: bool
 
     # Issues

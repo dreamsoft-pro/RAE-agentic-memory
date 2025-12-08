@@ -81,7 +81,9 @@ class RelevanceJudgment(BaseModel):
 
     # Optional metadata
     judged_by: Optional[str] = None
-    judgment_timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    judgment_timestamp: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
     judgment_confidence: float = Field(1.0, ge=0.0, le=1.0)
     notes: Optional[str] = None
 
@@ -219,7 +221,9 @@ class DriftDetectionResult(BaseModel):
     recommended_actions: List[str] = Field(default_factory=list)
 
     # Metadata
-    detection_timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    detection_timestamp: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
     baseline_period: Tuple[datetime, datetime]
     current_period: Tuple[datetime, datetime]
 
