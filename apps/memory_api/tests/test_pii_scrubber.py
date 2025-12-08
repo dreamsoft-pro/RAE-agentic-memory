@@ -28,6 +28,9 @@ from apps.memory_api.services.pii_scrubber import scrub_text  # noqa: E402
 class TestPIIScrubber:
     """Tests for PII scrubbing functionality using Microsoft Presidio."""
 
+    # Suppress ResourceWarning from tldextract (external dependency)
+    pytestmark = pytest.mark.filterwarnings("ignore::ResourceWarning")
+
     def test_scrub_email_address(self):
         """Test that email addresses are properly masked.
 
