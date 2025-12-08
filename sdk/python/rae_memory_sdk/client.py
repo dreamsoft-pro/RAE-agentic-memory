@@ -2,6 +2,7 @@ from typing import Any, Dict, List, Optional
 
 import httpx
 import structlog
+from pydantic import ConfigDict
 from pydantic_settings import BaseSettings
 
 from .models import (
@@ -24,10 +25,11 @@ class RAEClientConfig(BaseSettings):
     RAE_API_KEY: str = "your-rae-api-key"
     RAE_TENANT_ID: str = "default-tenant"
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        extra = "ignore"  # Ignore extra fields from .env file
+    model_config = ConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",  # Ignore extra fields from .env file
+    )
 
 
 class MemoryClient:
