@@ -10,7 +10,7 @@ import json
 import time
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 try:
@@ -120,7 +120,7 @@ def main():
     args = parser.parse_args()
 
     metrics = {
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "git_sha": subprocess.getoutput("git rev-parse HEAD"),
         "git_branch": subprocess.getoutput("git rev-parse --abbrev-ref HEAD"),
         "collector_version": "1.0.0"

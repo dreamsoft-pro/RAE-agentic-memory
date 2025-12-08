@@ -8,7 +8,7 @@ This module defines models for the interactive dashboard including:
 - System health indicators
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
@@ -119,7 +119,7 @@ class SystemMetrics(BaseModel):
     error_rate_last_hour: float = Field(0.0, ge=0.0, le=1.0)
 
     # Timestamps
-    collected_at: datetime = Field(default_factory=datetime.utcnow)
+    collected_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     period: MetricPeriod = MetricPeriod.LAST_24H
 
 
@@ -193,7 +193,7 @@ class ActivityLog(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
     # Timestamp
-    occurred_at: datetime = Field(default_factory=datetime.utcnow)
+    occurred_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 # ============================================================================
@@ -299,7 +299,7 @@ class SemanticGraph(BaseModel):
     )
 
     # Timestamp
-    generated_at: datetime = Field(default_factory=datetime.utcnow)
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class MemoryTimelineEvent(BaseModel):
@@ -458,7 +458,7 @@ class WebSocketMessage(BaseModel):
     project_id: str
 
     # Timestamp
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class MetricsUpdateMessage(WebSocketMessage):
@@ -527,7 +527,7 @@ class ComponentHealth(BaseModel):
 
     # Details
     message: Optional[str] = None
-    last_check: datetime = Field(default_factory=datetime.utcnow)
+    last_check: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     # Sub-components
     sub_components: List["ComponentHealth"] = Field(default_factory=list)
@@ -569,7 +569,7 @@ class SystemHealth(BaseModel):
     degraded_components: int = Field(0, ge=0)
 
     # Timestamp
-    checked_at: datetime = Field(default_factory=datetime.utcnow)
+    checked_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 # ============================================================================
@@ -652,7 +652,7 @@ class ISO42001Metric(BaseModel):
     )
 
     # Timestamps
-    last_check: datetime = Field(default_factory=datetime.utcnow)
+    last_check: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     last_compliant_at: Optional[datetime] = None
 
     # Evidence and details
@@ -745,7 +745,7 @@ class AuditTrailEntry(BaseModel):
     metadata: Dict[str, Any] = Field(default_factory=dict)
 
     # Timestamp
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class DataRetentionMetric(BaseModel):
@@ -776,7 +776,7 @@ class DataRetentionMetric(BaseModel):
     next_cleanup_scheduled: Optional[datetime] = None
 
     # Timestamp
-    checked_at: datetime = Field(default_factory=datetime.utcnow)
+    checked_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class SourceTrustMetric(BaseModel):
@@ -803,7 +803,7 @@ class SourceTrustMetric(BaseModel):
     sources_due_for_reverification: int = Field(0, ge=0)
 
     # Timestamp
-    collected_at: datetime = Field(default_factory=datetime.utcnow)
+    collected_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class ComplianceReport(BaseModel):
@@ -814,7 +814,7 @@ class ComplianceReport(BaseModel):
     """
 
     report_id: UUID = Field(default_factory=lambda: __import__("uuid").uuid4())
-    generated_at: datetime = Field(default_factory=datetime.utcnow)
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     # Context
     tenant_id: str
@@ -885,7 +885,7 @@ class RLSVerificationStatus(BaseModel):
     all_critical_tables_protected: bool
 
     # Last verification
-    last_verified_at: datetime = Field(default_factory=datetime.utcnow)
+    last_verified_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     verification_passed: bool
 
     # Issues
@@ -948,7 +948,7 @@ class GetVisualizationResponse(BaseModel):
     cluster_map: Optional[ClusterMap] = None
 
     # Metadata
-    generated_at: datetime = Field(default_factory=datetime.utcnow)
+    generated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     cache_valid_until: Optional[datetime] = None
     message: str = "Visualization data generated successfully"
 
@@ -994,7 +994,7 @@ class WebSocketSubscription(BaseModel):
     subscribed_events: List[DashboardEventType]
     update_interval_seconds: int
 
-    connected_at: datetime = Field(default_factory=datetime.utcnow)
+    connected_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     expires_at: Optional[datetime] = None
 
 

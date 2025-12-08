@@ -9,7 +9,7 @@ This module defines models for the evaluation system including:
 - Performance benchmarking
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
@@ -81,7 +81,7 @@ class RelevanceJudgment(BaseModel):
 
     # Optional metadata
     judged_by: Optional[str] = None
-    judgment_timestamp: datetime = Field(default_factory=datetime.utcnow)
+    judgment_timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     judgment_confidence: float = Field(1.0, ge=0.0, le=1.0)
     notes: Optional[str] = None
 
@@ -120,7 +120,7 @@ class MetricScore(BaseModel):
     # Metadata
     num_queries: int = Field(0, ge=0, description="Number of queries evaluated")
     num_documents: int = Field(0, ge=0, description="Number of documents")
-    computed_at: datetime = Field(default_factory=datetime.utcnow)
+    computed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class EvaluationResult(BaseModel):
@@ -185,7 +185,7 @@ class DistributionStatistics(BaseModel):
 
     # Sample info
     sample_size: int = Field(..., ge=1)
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class DriftDetectionResult(BaseModel):
@@ -219,7 +219,7 @@ class DriftDetectionResult(BaseModel):
     recommended_actions: List[str] = Field(default_factory=list)
 
     # Metadata
-    detection_timestamp: datetime = Field(default_factory=datetime.utcnow)
+    detection_timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     baseline_period: Tuple[datetime, datetime]
     current_period: Tuple[datetime, datetime]
 
@@ -260,8 +260,8 @@ class DriftMonitor(BaseModel):
     last_drift_detected_at: Optional[datetime] = None
 
     # Timestamps
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 # ============================================================================
@@ -369,7 +369,7 @@ class QualityMetrics(BaseModel):
     period_end: datetime
 
     # Computed at
-    computed_at: datetime = Field(default_factory=datetime.utcnow)
+    computed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class QualityAlert(BaseModel):
@@ -402,7 +402,7 @@ class QualityAlert(BaseModel):
     acknowledged_at: Optional[datetime] = None
 
     # Timestamps
-    triggered_at: datetime = Field(default_factory=datetime.utcnow)
+    triggered_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     resolved_at: Optional[datetime] = None
 
 
@@ -535,8 +535,8 @@ class BenchmarkSuite(BaseModel):
 
     # Metadata
     created_by: Optional[str] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     version: str = Field("1.0")
 
 
@@ -563,7 +563,7 @@ class BenchmarkResult(BaseModel):
 
     # Execution
     execution_time_ms: int
-    executed_at: datetime = Field(default_factory=datetime.utcnow)
+    executed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     executed_by: Optional[str] = None
 
 

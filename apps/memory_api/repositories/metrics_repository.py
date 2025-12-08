@@ -5,7 +5,7 @@ Provides storage and retrieval operations for dashboard metrics time series data
 """
 
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 import asyncpg
@@ -94,7 +94,7 @@ class MetricsRepository:
                         value,
                         json.dumps(dimensions) if dimensions else "{}",
                         tags or [],
-                        datetime.utcnow(),
+                        datetime.now(timezone.utc),
                     )
                 )
 
@@ -342,7 +342,9 @@ class MetricsRepository:
                 )
             except asyncpg.exceptions.UndefinedFunctionError:
                 # Fallback to manual deletion
-                cutoff_date = datetime.utcnow() - timedelta(days=retention_days)
+                cutoff_date = datetime.now(timezone.utc) - timedelta(
+                    days=retention_days
+                )
                 result = await conn.execute(
                     "DELETE FROM metrics_timeseries WHERE timestamp < $1", cutoff_date
                 )

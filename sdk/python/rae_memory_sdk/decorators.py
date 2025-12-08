@@ -7,7 +7,7 @@ This module provides decorators for automatic memory tracing of function executi
 import asyncio
 import functools
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Callable, List, Optional
 
 import structlog
@@ -74,7 +74,7 @@ def trace_memory(
         def sync_wrapper(*args, **kwargs) -> Any:
             """Wrapper for synchronous functions."""
             # Execute function and capture execution time
-            start_time = datetime.utcnow()
+            start_time = datetime.now(timezone.utc)
             exception_occurred = None
             result = None
 
@@ -86,7 +86,7 @@ def trace_memory(
                 raise
             finally:
                 # Build memory content
-                end_time = datetime.utcnow()
+                end_time = datetime.now(timezone.utc)
                 duration_ms = (end_time - start_time).total_seconds() * 1000
 
                 content = _build_memory_content(
@@ -123,7 +123,7 @@ def trace_memory(
         async def async_wrapper(*args, **kwargs) -> Any:
             """Wrapper for asynchronous functions."""
             # Execute function and capture execution time
-            start_time = datetime.utcnow()
+            start_time = datetime.now(timezone.utc)
             exception_occurred = None
             result = None
 
@@ -135,7 +135,7 @@ def trace_memory(
                 raise
             finally:
                 # Build memory content
-                end_time = datetime.utcnow()
+                end_time = datetime.now(timezone.utc)
                 duration_ms = (end_time - start_time).total_seconds() * 1000
 
                 content = _build_memory_content(

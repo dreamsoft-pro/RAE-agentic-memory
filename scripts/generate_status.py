@@ -9,7 +9,7 @@ Usage:
 import argparse
 import json
 import subprocess
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -83,7 +83,7 @@ def generate_status_md(output_path, branch, commit):
     test_metrics = get_test_metrics()
     coverage = get_coverage()
 
-    now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     content = f"""# Project Status
 

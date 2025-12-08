@@ -18,7 +18,7 @@ ISO/IEC 42001 alignment:
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional
 
@@ -272,7 +272,7 @@ class SourceTrustService:
                 )
             return (trust_level, "Never verified")
 
-        days_since_verification = (datetime.utcnow() - last_verified_at).days
+        days_since_verification = (datetime.now(timezone.utc) - last_verified_at).days
         decay_threshold = self.TRUST_DECAY_THRESHOLDS[trust_level]
 
         if days_since_verification > decay_threshold:
@@ -322,7 +322,7 @@ class SourceTrustService:
             dict with verification metadata
         """
 
-        verification_time = datetime.utcnow()
+        verification_time = datetime.now(timezone.utc)
 
         return {
             "last_verified_at": verification_time,

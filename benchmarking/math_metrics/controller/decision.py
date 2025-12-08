@@ -6,7 +6,7 @@ DecisionWithOutcome: Decision paired with its outcome for learning
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 import uuid
 import json
@@ -39,7 +39,7 @@ class MathDecision:
     """
     # Identity
     decision_id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     # Decision
     selected_level: MathLevel = MathLevel.L1
@@ -79,7 +79,7 @@ class MathDecision:
         """Deserialize from dictionary"""
         return cls(
             decision_id=data.get("decision_id", str(uuid.uuid4())[:8]),
-            timestamp=datetime.fromisoformat(data["timestamp"]) if "timestamp" in data else datetime.utcnow(),
+            timestamp=datetime.fromisoformat(data["timestamp"]) if "timestamp" in data else datetime.now(timezone.utc),
             selected_level=MathLevel(data.get("selected_level", "deterministic_heuristic")),
             strategy_id=data.get("strategy_id", "default"),
             params=data.get("params", {}),
@@ -95,7 +95,7 @@ class MathDecision:
             decision=self,
             success=success,
             outcome_metrics=metrics,
-            outcome_timestamp=datetime.utcnow(),
+            outcome_timestamp=datetime.now(timezone.utc),
         )
 
 
@@ -109,7 +109,7 @@ class DecisionWithOutcome:
     decision: MathDecision
     success: bool
     outcome_metrics: Dict[str, float]  # e.g., {"mrr": 0.85, "latency_ms": 45}
-    outcome_timestamp: datetime = field(default_factory=datetime.utcnow)
+    outcome_timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_training_example(self) -> Dict[str, Any]:
         """Convert to format suitable for policy training"""
