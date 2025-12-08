@@ -249,14 +249,12 @@ jobs:
             -W "ignore::DeprecationWarning:spacy.cli._util" \
             -W "ignore:Can't initialize NVML:UserWarning" \
             -W "ignore::PendingDeprecationWarning:multipart" \
-            -W "ignore::pytest.PytestDeprecationWarning:pytest_asyncio" \
             -m pytest -W error \
             -W "ignore::DeprecationWarning:google._upb._message" \
             -W "ignore::ResourceWarning:tldextract" \
             -W "ignore::DeprecationWarning:spacy.cli._util" \
             -W "ignore:Can't initialize NVML:UserWarning" \
             -W "ignore::PendingDeprecationWarning:multipart" \
-            -W "ignore::pytest.PytestDeprecationWarning:pytest_asyncio" \
             -m "not integration and not llm and not contract and not performance" \
             --cov --cov-report=xml --cov-report=term
 
