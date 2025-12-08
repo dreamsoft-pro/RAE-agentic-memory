@@ -258,6 +258,8 @@ make lint    # Check for issues
 make test-unit  # All unit tests with coverage
 ```
 
+**⚠️ NOTE**: This is for feature branch validation. Full `make test-unit` on develop is MANDATORY before main!
+
 ### Phase 4: Git Workflow
 
 #### 4.1 Create Feature Branch
@@ -290,12 +292,14 @@ git checkout develop
 git merge feature/user-preferences --no-ff
 ```
 
-#### 4.4 Run Full Test Suite on Develop
+#### 4.4 Run Full Test Suite on Develop (MANDATORY!)
 ```bash
-make test-unit  # Must pass!
+make test-unit  # ⚠️ OBOWIĄZKOWE! Must pass before main!
 make lint       # Must pass!
 make security   # Check warnings
 ```
+
+**🚨 CRITICAL**: If `make test-unit` fails, FIX IT ON DEVELOP! NEVER proceed to main with failing tests!
 
 #### 4.5 Merge to Main & Push Both
 ```bash
@@ -356,6 +360,27 @@ gh run watch  # Wait for green CI
 - ✅ DO: Use `cat`, `head`, `tail` for viewing
 - ✅ DO: Use Edit/Write tools for file changes
 - ✅ DO: Use non-interactive git commands
+
+### 8. Documentation Updates
+- ❌ DON'T: Edit auto-generated files (CI overwrites them!)
+- ❌ DON'T: Edit `CHANGELOG.md`, `STATUS.md`, `TODO.md`, `docs/.auto-generated/`
+- ✅ DO: Edit manual docs when adding features
+- ✅ DO: Update `CONVENTIONS.md` for new patterns
+- ✅ DO: Update `PROJECT_STRUCTURE.md` for new locations
+- ✅ DO: Update `docs/guides/` for user-facing features
+
+**Auto-generated (CI handles):**
+- `CHANGELOG.md` - Commit history
+- `STATUS.md` - Project metrics
+- `TODO.md` - Extracted TODOs/FIXMEs
+- `docs/TESTING_STATUS.md` - Test results
+- `docs/.auto-generated/` - All generated files
+
+**Manual (your responsibility):**
+- `CONVENTIONS.md` - Patterns and conventions
+- `PROJECT_STRUCTURE.md` - File locations
+- `docs/guides/` - User guides
+- `.ai-templates/README.md` - Template changes
 
 ## 🔧 Essential Commands
 
