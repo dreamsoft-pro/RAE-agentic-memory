@@ -31,7 +31,7 @@ from enum import Enum
 from typing import Any, Dict, Optional
 
 import structlog
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from apps.memory_api.core.state import RAEState
 from apps.memory_api.observability.rae_tracing import get_tracer
@@ -116,8 +116,7 @@ class Action(BaseModel, ABC):
     )
     reason: Optional[str] = Field(None, description="Why this action was selected")
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     @abstractmethod
     def is_valid_for_state(self, state: RAEState) -> bool:
