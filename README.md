@@ -1302,6 +1302,53 @@ See `benchmarking/BENCHMARK_STARTER.md` for complete documentation.
 
 ---
 
+## Testing & Quality Assurance
+
+RAE maintains **strong startup/scale-up level testing practices** - comparable to companies like Stripe, GitLab, and Vercel in their growth phase.
+
+### Current Test Suite
+
+- **~900 tests** across unit, integration, and performance layers
+- **Multi-version testing:** Python 3.10, 3.11, 3.12
+- **Smart test selection:** 90% CI cost reduction on feature branches (1-2 min vs 13 min full suite)
+- **65% coverage minimum** with gap analysis and trending
+- **Automated quality gates:**
+  - Security scanning (Bandit)
+  - Code quality (Ruff linting, mypy type checking)
+  - Flaky test detection and quarantine
+  - Performance drift detection with baseline tracking
+  - Warning detection and monitoring
+
+### CI/CD Pipeline
+
+- **13-minute full test suite** (feature branches: 1-2 minutes with smart selection)
+- **100% test pass rate** maintained via "main always green" policy
+- **Automated smoke tests** on all pull requests
+- **Benchmark quality gates** (MRR >0.50, Hit Rate @5 >0.60)
+- **Auto-documentation** with CI-driven updates
+
+### What This Means
+
+**✅ Production-ready for:**
+- Startups and scale-ups (10-500 employees)
+- Internal tools and controlled environments
+- Proof-of-concepts with solid foundations
+
+**⚠️ Not Yet At:**
+- Big Tech level (OpenAI, Anthropic, AWS) - requires 10-50 engineer QA teams and $M budgets
+- This is realistic and appropriate for our stage
+
+### Improvement Roadmap
+
+We have a pragmatic 3-iteration plan to enhance testing quality:
+- **Iteration 1 (1-2 weeks):** Performance benchmarking, load testing, structured logging
+- **Iteration 2 (4-6 weeks):** Canary deployments, SLO tracking, enhanced security, ML testing
+- **Iteration 3 (8-12 weeks):** Distributed tracing, advanced ML testing, chaos engineering
+
+**See [Testing Improvement Roadmap](docs/TESTING_IMPROVEMENT_ROADMAP.md) for detailed plan.**
+
+---
+
 ## Documentation
 
 ### 📋 Documentation Structure (Updated 2025-12-03)
