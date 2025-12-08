@@ -1351,25 +1351,52 @@ We have a pragmatic 3-iteration plan to enhance testing quality:
 
 ## Documentation
 
-### 📋 Documentation Structure (Updated 2025-12-03)
+### 🎯 Start Here - Core Architecture
 
-RAE documentation is organized into four main areas:
+**New to RAE? Start with these comprehensive architecture guides:**
 
-1. **[`.auto-generated/`](docs/.auto-generated/)** - Automatically updated documentation
+#### System Architecture
+- 🧠 **[Memory Layers](docs/architecture/MEMORY_LAYERS.md)** - Complete 4-layer cognitive architecture reference
+- 🔢 **[Math Layers](docs/architecture/MATH_LAYERS.md)** - 3-tier mathematical intelligence model
+- 🔍 **[Hybrid Search](docs/architecture/HYBRID_SEARCH.md)** - GraphRAG multi-strategy retrieval system
+- 🎭 **[LLM Orchestrator](docs/architecture/ORCHESTRATION.md)** - Provider-agnostic intelligence layer (0/1/N models)
+
+#### API Reference
+- 📡 **[Memory API](docs/api/MEMORY_API.md)** - Complete REST API reference for memory operations
+
+#### Documentation Standards
+- 📝 **[Style Guide](docs/STYLE_GUIDE.md)** - Unified documentation standards
+- 🔄 **[Autodoc System](docs/autodoc/README.md)** - Automated documentation consistency
+
+---
+
+### 📋 Documentation Structure (Updated 2025-12-08)
+
+RAE documentation is organized into six main areas:
+
+1. **[`architecture/`](docs/architecture/)** - **⭐ START HERE** - Core system architecture
+   - 4-Layer Memory System, 3-Tier Math Foundation, Hybrid Search, LLM Orchestrator
+
+2. **[`api/`](docs/api/)** - REST API reference
+   - Memory API, Search API, Reflection Engine API
+
+3. **[`.auto-generated/`](docs/.auto-generated/)** - Automatically updated documentation
    - Status reports, test results, API specs, compliance reports
    - Updated by CI/CD pipelines
 
-2. **[`compliance/`](docs/compliance/)** - ISO 42001 & 4-layer compliance framework
+4. **[`compliance/`](docs/compliance/)** - ISO 42001 & 4-layer compliance framework
    - Layer 1: ISO 42001 foundation
    - Layer 2: Regulatory mappings (NIST, HIPAA, FedRAMP, GDPR, AI Act)
    - Layer 3: Policy packs (modular compliance modules)
    - Layer 4: Runtime enforcement (guardrails, cost controllers)
 
-3. **[`operations/`](docs/operations/)** - Operational documentation
+5. **[`operations/`](docs/operations/)** - Operational documentation
    - Security policies, runbooks, monitoring, maintenance
 
-4. **[`project-design/`](docs/project-design/)** - Development planning
+6. **[`project-design/`](docs/project-design/)** - Development planning
    - Active projects, completed work, research ideas
+
+**Legacy documentation** (pre-v2.0) is in [`reference/`](docs/reference/) and [`guides/`](docs/guides/) - gradually being migrated to new structure.
 
 ### Project Status & Progress
 - 📊 **[Project Status](docs/.auto-generated/status/STATUS.md)** - Current implementation status and features
