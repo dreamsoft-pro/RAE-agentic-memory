@@ -353,13 +353,27 @@ grep -r "await.*fetch" apps/memory_api/repositories/
 
 ## 🎯 Key Takeaways for Agents
 
+> **⚠️ BEFORE YOU START**: Read [CRITICAL_AGENT_RULES.md](./CRITICAL_AGENT_RULES.md) for 8 mandatory rules!
+
+### File Structure & Code Organization
 1. **Mirror structure**: Tests mirror source structure exactly
 2. **Layer separation**: API → Service → Repository (never skip layers)
 3. **Absolute imports**: Always use `from apps.` imports
-4. **Test markers**: Use appropriate pytest markers
-5. **Templates**: Check `.ai-templates/` before writing new code
-6. **Conventions**: Read `CONVENTIONS.md` before major changes
-7. **No coverage in dev**: Use `--no-cov` or `make test-focus` during development
+4. **Templates**: Check `.ai-templates/` before writing new code
+5. **Conventions**: Read `CONVENTIONS.md` before major changes
+
+### Testing & Quality (CRITICAL!)
+6. **3-phase workflow** (RULE #1 & #3):
+   - Feature branch: Test ONLY new code (`pytest --no-cov path/`)
+   - Develop branch: Test EVERYTHING (`make test-unit`) - MANDATORY!
+   - Main branch: CI tests automatically
+7. **Format & Lint** (MANDATORY before commit):
+   - Always run: `make format && make lint`
+8. **Test markers**: Use appropriate pytest markers (`@pytest.mark.unit`, etc.)
+
+### Documentation (RULE #8)
+9. **Auto-generated docs** (DON'T EDIT): `CHANGELOG.md`, `STATUS.md`, `TODO.md`, `docs/.auto-generated/`
+10. **Manual docs** (DO EDIT): `CONVENTIONS.md`, `PROJECT_STRUCTURE.md`, `docs/guides/`
 
 ---
 
