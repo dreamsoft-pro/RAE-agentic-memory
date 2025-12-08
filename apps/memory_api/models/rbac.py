@@ -97,7 +97,7 @@ class UserRole(BaseModel):
     )
 
     # Metadata
-    assigned_at: datetime = Field(default_factory=datetime.utcnow)
+    assigned_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     assigned_by: Optional[str] = Field(None, description="Who assigned this role")
     expires_at: Optional[datetime] = Field(
         None, description="Role expiration (optional)"
@@ -188,7 +188,7 @@ class AccessLog(BaseModel):
     # Context
     ip_address: Optional[str] = None
     user_agent: Optional[str] = None
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     # Metadata
     metadata: dict = Field(default_factory=dict)

@@ -9,7 +9,7 @@ This module defines models for the hybrid search system including:
 - Composite scoring
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
@@ -102,7 +102,7 @@ class QueryAnalysis(BaseModel):
 
     # Original query
     original_query: str
-    analyzed_at: datetime = Field(default_factory=datetime.utcnow)
+    analyzed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class QueryAnalysisRequest(BaseModel):
@@ -207,7 +207,7 @@ class HybridSearchResult(BaseModel):
     reranking_used: bool = Field(False)
     reranking_model: Optional[RerankingModel] = None
 
-    searched_at: datetime = Field(default_factory=datetime.utcnow)
+    searched_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 # ============================================================================

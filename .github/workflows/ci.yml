@@ -5,6 +5,8 @@ on:
     branches: [ main, develop, 'feature/**' ]
   pull_request:
     branches: [ main, develop, 'feature/**' ]
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC for flaky detection
 
 jobs:
   # ═══════════════════════════════════════════════════════════════════════════
@@ -239,9 +241,16 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
           QDRANT_URL: http://localhost:6333
           RAE_VECTOR_BACKEND: qdrant
+          PYTHONWARNINGS: error
         run: |
-          echo "🔍 Running FULL test suite..."
-          pytest -m "not integration and not llm and not contract and not performance" --cov --cov-report=xml --cov-report=term
+          echo "🔍 Running FULL test suite with -W error..."
+          pytest -W error \
+            -W "ignore::DeprecationWarning:google._upb._message" \
+            -W "ignore::ResourceWarning:tldextract" \
+            -W "ignore::DeprecationWarning:spacy.cli._util" \
+            -W "ignore:Can't initialize NVML:UserWarning" \
+            -m "not integration and not llm and not contract and not performance" \
+            --cov --cov-report=xml --cov-report=term
 
       - name: Run integration tests
         env:
@@ -905,6 +914,287 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           branch: ${{ github.ref }}
+
+  warning-check:
+    name: Warning Detection
+    runs-on: ubuntu-latest
+    # Run on main/develop/PR
+    if: |
+      github.ref == 'refs/heads/main' ||
+      github.ref == 'refs/heads/develop' ||
+      github.event_name == 'pull_request'
+    needs: [test-full]
+
+    services:
+      postgres:
+        image: ankane/pgvector:latest
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: test_rae
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+      qdrant:
+        image: qdrant/qdrant:latest
+        ports:
+          - 6333:6333
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install -r apps/memory_api/requirements-base.txt
+          pip install -r apps/memory_api/requirements-test.txt
+          pip install -e sdk/python/rae_memory_sdk
+
+      - name: Run tests with warning detection
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_rae
+          REDIS_URL: redis://localhost:6379/0
+          QDRANT_URL: http://localhost:6333
+          RAE_VECTOR_BACKEND: qdrant
+        run: |
+          echo "🔍 Checking for new warnings..."
+          pytest -W default \
+            -m "not integration and not llm and not contract and not performance" \
+            --tb=no -q 2>&1 | tee warnings.log
+          python scripts/ci/check_new_warnings.py warnings.log
+
+      - name: Upload warnings log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: warnings-log
+          path: warnings.log
+          retention-days: 7
+
+  flaky-detection:
+    name: Flaky Test Detection
+    runs-on: ubuntu-latest
+    # Run on schedule (nightly) or when commit contains [flaky-check]
+    if: |
+      github.event_name == 'schedule' ||
+      contains(github.event.head_commit.message, '[flaky-check]')
+
+    services:
+      postgres:
+        image: ankane/pgvector:latest
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: test_rae
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+      qdrant:
+        image: qdrant/qdrant:latest
+        ports:
+          - 6333:6333
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install -r apps/memory_api/requirements-base.txt
+          pip install -r apps/memory_api/requirements-test.txt
+          pip install -e sdk/python/rae_memory_sdk
+          pip install pytest-json-report
+
+      - name: Run tests multiple times (3x)
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_rae
+          REDIS_URL: redis://localhost:6379/0
+          QDRANT_URL: http://localhost:6333
+          RAE_VECTOR_BACKEND: qdrant
+        run: |
+          mkdir -p .flaky-reports
+          for i in 1 2 3; do
+            echo "🔄 Run $i/3..."
+            pytest -m "not integration and not llm and not contract and not performance" \
+              --json-report \
+              --json-report-file=.flaky-reports/run_$i.json \
+              --tb=no -q || true
+          done
+
+      - name: Analyze flakiness
+        run: |
+          echo "📊 Analyzing test consistency..."
+          python scripts/ci/analyze_flaky_tests.py \
+            .flaky-reports/run_1.json \
+            .flaky-reports/run_2.json \
+            .flaky-reports/run_3.json \
+            --output flaky_report.json
+
+      - name: Upload flaky report
+        uses: actions/upload-artifact@v4
+        with:
+          name: flaky-report
+          path: flaky_report.json
+          retention-days: 30
+
+      - name: Check for flaky tests
+        run: |
+          if [ -f "flaky_report.json" ]; then
+            FLAKY_COUNT=$(python3 -c "import json; print(len(json.load(open('flaky_report.json'))['flaky_tests']))")
+            if [ "$FLAKY_COUNT" -gt 0 ]; then
+              echo "⚠️  Found $FLAKY_COUNT flaky tests!"
+              python3 -c "import json; import sys; data=json.load(open('flaky_report.json')); [print(f\"  - {t['nodeid']} (pass rate: {t['pass_rate']}) - {t['recommendation']}\") for t in data['flaky_tests'][:10]]"
+              echo ""
+              echo "📝 Action required: Review flaky_report.json artifact and quarantine unstable tests"
+              echo "   Use: python scripts/ci/quarantine_test.py <test_nodeid>"
+              exit 1
+            fi
+          fi
+          echo "✅ No flaky tests detected"
+
+  drift-detection:
+    name: Zero Drift Check
+    runs-on: ubuntu-latest
+    # Run on PR and develop/main
+    if: |
+      github.event_name == 'pull_request' ||
+      github.ref == 'refs/heads/develop' ||
+      github.ref == 'refs/heads/main'
+    needs: [test-full]
+
+    services:
+      postgres:
+        image: ankane/pgvector:latest
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: test_rae
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+      qdrant:
+        image: qdrant/qdrant:latest
+        ports:
+          - 6333:6333
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for comparison
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+          pip install -r apps/memory_api/requirements-base.txt
+          pip install -r apps/memory_api/requirements-test.txt
+          pip install -e sdk/python/rae_memory_sdk
+          pip install pyyaml psutil memory-profiler pytest-timeout
+
+      - name: Collect performance metrics
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_rae
+          REDIS_URL: redis://localhost:6379/0
+          QDRANT_URL: http://localhost:6333
+          RAE_VECTOR_BACKEND: qdrant
+        run: |
+          echo "📊 Collecting metrics..."
+          python scripts/ci/collect_metrics.py \
+            --output metrics_current.json \
+            --include-memory \
+            --include-timing
+
+      - name: Check against SLO
+        run: |
+          echo "🔍 Checking SLO compliance..."
+          python scripts/ci/check_slo.py \
+            --current metrics_current.json \
+            --baseline benchmarking/results/metrics_reference.json \
+            --slo-config ci/slo_config.yaml \
+            --output drift_report.md || true
+
+      - name: Upload metrics snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics-snapshot-${{ github.sha }}
+          path: metrics_current.json
+          retention-days: 90
+
+      - name: Upload drift report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: drift-report
+          path: drift_report.md
+          retention-days: 30
+
+      - name: Comment on PR with drift report
+        if: github.event_name == 'pull_request' && always()
+        continue-on-error: true
+        run: |
+          if [ -f "drift_report.md" ]; then
+            echo "📄 Drift report generated - see artifacts"
+            cat drift_report.md
+          fi
 
   docker:
     name: Docker Build
