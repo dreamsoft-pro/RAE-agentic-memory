@@ -241,9 +241,9 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
           QDRANT_URL: http://localhost:6333
           RAE_VECTOR_BACKEND: qdrant
+          PYTHONWARNINGS: "ignore::PendingDeprecationWarning:multipart"
         run: |
           echo "🔍 Running FULL test suite with -W error..."
-          export PYTHONWARNINGS="ignore::PendingDeprecationWarning:multipart"
           python -W error \
             -W "ignore::DeprecationWarning:google._upb._message" \
             -W "ignore::ResourceWarning:tldextract" \
