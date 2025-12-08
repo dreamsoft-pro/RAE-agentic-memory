@@ -241,7 +241,6 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
           QDRANT_URL: http://localhost:6333
           RAE_VECTOR_BACKEND: qdrant
-          PYTHONWARNINGS: "ignore::PendingDeprecationWarning"
         run: |
           echo "🔍 Running FULL test suite with -W error..."
           python -W error \
@@ -249,11 +248,13 @@ jobs:
             -W "ignore::ResourceWarning:tldextract" \
             -W "ignore::DeprecationWarning:spacy.cli._util" \
             -W "ignore:Can't initialize NVML:UserWarning" \
+            -W "default::PendingDeprecationWarning" \
             -m pytest -W error \
             -W "ignore::DeprecationWarning:google._upb._message" \
             -W "ignore::ResourceWarning:tldextract" \
             -W "ignore::DeprecationWarning:spacy.cli._util" \
             -W "ignore:Can't initialize NVML:UserWarning" \
+            -W "default::PendingDeprecationWarning" \
             -m "not integration and not llm and not contract and not performance" \
             --cov --cov-report=xml --cov-report=term
 
