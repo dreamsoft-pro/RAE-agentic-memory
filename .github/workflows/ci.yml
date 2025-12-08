@@ -249,6 +249,7 @@ jobs:
             -W "ignore::ResourceWarning:tldextract" \
             -W "ignore::DeprecationWarning:spacy.cli._util" \
             -W "ignore:Can't initialize NVML:UserWarning" \
+            -W "ignore::PendingDeprecationWarning:multipart" \
             -m "not integration and not llm and not contract and not performance" \
             --cov --cov-report=xml --cov-report=term
 
