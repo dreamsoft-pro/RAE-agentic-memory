@@ -243,6 +243,7 @@ jobs:
           RAE_VECTOR_BACKEND: qdrant
         run: |
           echo "🔍 Running FULL test suite (warnings configured in pytest.ini)..."
+          export PYTHONWARNINGS="ignore::PendingDeprecationWarning"
           python -m pytest -c pytest.ini \
             -m "not integration and not llm and not contract and not performance" \
             --cov --cov-report=xml --cov-report=term
