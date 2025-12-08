@@ -10,7 +10,7 @@ This module defines comprehensive Pydantic models for the enhanced knowledge gra
 - Path finding results
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
@@ -144,7 +144,7 @@ class GraphPath(BaseModel):
 
     # Metadata
     algorithm_used: Optional[TraversalAlgorithm] = None
-    computed_at: datetime = Field(default_factory=datetime.utcnow)
+    computed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class CycleDetectionResult(BaseModel):
@@ -163,7 +163,7 @@ class CycleDetectionResult(BaseModel):
     # Context
     source_node_id: UUID
     target_node_id: UUID
-    detection_timestamp: datetime = Field(default_factory=datetime.utcnow)
+    detection_timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class GraphSnapshot(BaseModel):

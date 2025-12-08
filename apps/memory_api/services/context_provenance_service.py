@@ -17,7 +17,7 @@ Key features:
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
@@ -56,7 +56,7 @@ class ContextSource(BaseModel):
     content: str
     relevance_score: float = Field(ge=0.0, le=1.0)
     trust_level: str  # From SourceTrustLevel
-    retrieved_at: datetime = Field(default_factory=datetime.utcnow)
+    retrieved_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     # Metadata
     source_owner: Optional[str] = None
@@ -85,7 +85,7 @@ class DecisionContext(BaseModel):
     coverage_score: float = Field(0.0, ge=0.0, le=1.0)
 
     # Timestamps
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     # Metadata
     metadata: Dict[str, Any] = Field(default_factory=dict)
@@ -121,7 +121,7 @@ class DecisionRecord(BaseModel):
     prompt_template: Optional[str] = None
 
     # Timestamps
-    decided_at: datetime = Field(default_factory=datetime.utcnow)
+    decided_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     # Metadata
     metadata: Dict[str, Any] = Field(default_factory=dict)

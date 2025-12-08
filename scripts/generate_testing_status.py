@@ -8,7 +8,7 @@ Usage:
 
 import argparse
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -62,7 +62,7 @@ def generate_testing_status_md(output_path, test_report_path, coverage_report_pa
     test_data = parse_test_report(test_report_path)
     coverage_data = parse_coverage_report(coverage_report_path)
 
-    now = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+    now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     # Calculate pass rate
     pass_rate = 0
