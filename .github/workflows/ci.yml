@@ -243,18 +243,18 @@ jobs:
           RAE_VECTOR_BACKEND: qdrant
         run: |
           echo "🔍 Running FULL test suite with -W error..."
-          python -W error \
+          python -W "default::PendingDeprecationWarning" \
+            -W error \
             -W "ignore::DeprecationWarning:google._upb._message" \
             -W "ignore::ResourceWarning:tldextract" \
             -W "ignore::DeprecationWarning:spacy.cli._util" \
             -W "ignore:Can't initialize NVML:UserWarning" \
-            -W "default::PendingDeprecationWarning" \
-            -m pytest -W error \
+            -m pytest -W "default::PendingDeprecationWarning" \
+            -W error \
             -W "ignore::DeprecationWarning:google._upb._message" \
             -W "ignore::ResourceWarning:tldextract" \
             -W "ignore::DeprecationWarning:spacy.cli._util" \
             -W "ignore:Can't initialize NVML:UserWarning" \
-            -W "default::PendingDeprecationWarning" \
             -m "not integration and not llm and not contract and not performance" \
             --cov --cov-report=xml --cov-report=term
 
