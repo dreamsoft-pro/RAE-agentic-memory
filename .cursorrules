@@ -16,15 +16,30 @@ Strictly adhere to the following rules for code generation, git operations, and 
 
 ## ⚠️ MOST IMPORTANT RULES (READ FIRST!)
 
-**🔴 RULE #1**: NEVER run full test suite on feature branches! Only test your NEW code with `--no-cov`
+**All 8 Critical Rules:**
 
-**🔴 RULE #2**: Work AUTONOMOUSLY - don't ask permission for standard tasks (creating files, adding tests, etc.)
+1. **🔴 RULE #1**: NEVER run full test suite on feature branches! Only test your NEW code with `pytest --no-cov`
 
-**🔴 RULE #3**: ALWAYS include `tenant_id` in database queries (security!)
+2. **🔴 RULE #2**: Work AUTONOMOUSLY - don't ask permission for standard tasks (creating files, adding tests, etc.)
 
-**🔴 RULE #4**: Use templates from `.ai-templates/` for all new code
+3. **🔴 RULE #3**: Follow 3-phase workflow (Feature → Develop → Main)
+   - Feature: Test ONLY new code (`pytest --no-cov`)
+   - Develop: `make test-unit` MANDATORY before main!
+   - Main: CI tests automatically
 
-**Complete rules**: See `CRITICAL_AGENT_RULES.md` for details and examples
+4. **🔴 RULE #4**: ALWAYS include `tenant_id` in database queries (security!)
+
+5. **🔴 RULE #5**: Use templates from `.ai-templates/` for all new code
+
+6. **🔴 RULE #6**: NEVER use interactive commands (nano, vim, git -i) - see section below
+
+7. **🔴 RULE #7**: Tests are contracts - fix CODE, not tests (when tests fail correctly)
+
+8. **🔴 RULE #8**: Documentation updates
+   - DON'T EDIT: Auto-generated (`CHANGELOG.md`, `STATUS.md`, `TODO.md`, `docs/.auto-generated/`)
+   - DO EDIT: Manual (`CONVENTIONS.md`, `PROJECT_STRUCTURE.md`, `docs/guides/`)
+
+**Complete rules with examples**: See `CRITICAL_AGENT_RULES.md`
 
 ## 🚫 FORBIDDEN COMMANDS (CRITICAL - NEVER USE THESE)
 
