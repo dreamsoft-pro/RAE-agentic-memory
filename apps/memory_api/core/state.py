@@ -34,7 +34,7 @@ from uuid import UUID
 
 import numpy as np
 import structlog
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from apps.memory_api.observability.rae_tracing import get_tracer
 
@@ -286,8 +286,7 @@ class RAEState(BaseModel):
         None, description="Last action that led to this state"
     )
 
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     def to_dict(self) -> Dict[str, Any]:
         """

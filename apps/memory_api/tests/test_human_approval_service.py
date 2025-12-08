@@ -2,7 +2,7 @@
 Tests for HumanApprovalService - ISO/IEC 42001 Section 9 (Human Oversight)
 """
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 from uuid import uuid4
 
 import pytest
@@ -14,6 +14,7 @@ from apps.memory_api.services.human_approval_service import (
     ApprovalStatus,
     HumanApprovalService,
 )
+from apps.memory_api.utils.datetime_utils import utc_now
 
 
 @pytest.fixture(autouse=True)
@@ -125,7 +126,7 @@ class TestRequestApproval:
         assert result.min_approvals == 2
         assert result.expires_at is not None
         # Critical operations have 3 day timeout
-        expected_timeout = datetime.utcnow() + timedelta(hours=72)
+        expected_timeout = utc_now() + timedelta(hours=72)
         assert abs((result.expires_at - expected_timeout).total_seconds()) < 5
 
     @pytest.mark.asyncio
@@ -147,7 +148,7 @@ class TestRequestApproval:
             requested_by="user-1",
         )
 
-        expected_high = datetime.utcnow() + timedelta(hours=48)
+        expected_high = utc_now() + timedelta(hours=48)
         assert abs((result_high.expires_at - expected_high).total_seconds()) < 5
 
         # Test medium risk timeout (24 hours)
@@ -162,7 +163,7 @@ class TestRequestApproval:
             requested_by="user-1",
         )
 
-        expected_medium = datetime.utcnow() + timedelta(hours=24)
+        expected_medium = utc_now() + timedelta(hours=24)
         assert abs((result_medium.expires_at - expected_medium).total_seconds()) < 5
 
 
@@ -176,7 +177,7 @@ class TestProcessDecision:
         mock_request = mocker.MagicMock()
         mock_request.request_id = request_id
         mock_request.status = ApprovalStatus.PENDING
-        mock_request.expires_at = datetime.utcnow() + timedelta(hours=24)
+        mock_request.expires_at = utc_now() + timedelta(hours=24)
         mock_request.required_approvers = ["approver-1", "approver-2"]
         mock_request.approvers = []
         mock_request.min_approvals = 1
@@ -209,7 +210,7 @@ class TestProcessDecision:
         mock_request = mocker.MagicMock()
         mock_request.request_id = request_id
         mock_request.status = ApprovalStatus.PENDING
-        mock_request.expires_at = datetime.utcnow() + timedelta(hours=24)
+        mock_request.expires_at = utc_now() + timedelta(hours=24)
         mock_request.required_approvers = ["approver-1", "approver-2"]
         mock_request.approvers = []
         mock_request.min_approvals = 2
@@ -250,7 +251,7 @@ class TestProcessDecision:
         mock_request = mocker.MagicMock()
         mock_request.request_id = request_id
         mock_request.status = ApprovalStatus.PENDING
-        mock_request.expires_at = datetime.utcnow() + timedelta(hours=24)
+        mock_request.expires_at = utc_now() + timedelta(hours=24)
         mock_request.required_approvers = ["approver-1"]
         mock_request.approvers = []
 
@@ -280,7 +281,7 @@ class TestProcessDecision:
         mock_request = mocker.MagicMock()
         mock_request.request_id = request_id
         mock_request.status = ApprovalStatus.PENDING
-        mock_request.expires_at = datetime.utcnow() - timedelta(hours=1)  # Expired
+        mock_request.expires_at = utc_now() - timedelta(hours=1)  # Expired
 
         mocker.patch.object(
             approval_service, "_get_approval_request", return_value=mock_request
@@ -305,7 +306,7 @@ class TestProcessDecision:
         mock_request = mocker.MagicMock()
         mock_request.request_id = request_id
         mock_request.status = ApprovalStatus.PENDING
-        mock_request.expires_at = datetime.utcnow() + timedelta(hours=24)
+        mock_request.expires_at = utc_now() + timedelta(hours=24)
         mock_request.required_approvers = ["approver-1", "approver-2"]
         mock_request.approvers = []
 
@@ -354,7 +355,7 @@ class TestCheckApprovalStatus:
         mock_request = mocker.MagicMock()
         mock_request.request_id = request_id
         mock_request.status = ApprovalStatus.PENDING
-        mock_request.expires_at = datetime.utcnow() + timedelta(hours=24)
+        mock_request.expires_at = utc_now() + timedelta(hours=24)
 
         mocker.patch.object(
             approval_service, "_get_approval_request", return_value=mock_request
@@ -370,7 +371,7 @@ class TestCheckApprovalStatus:
         mock_request = mocker.MagicMock()
         mock_request.request_id = request_id
         mock_request.status = ApprovalStatus.PENDING
-        mock_request.expires_at = datetime.utcnow() - timedelta(hours=1)  # Expired
+        mock_request.expires_at = utc_now() - timedelta(hours=1)  # Expired
 
         mocker.patch.object(
             approval_service, "_get_approval_request", return_value=mock_request

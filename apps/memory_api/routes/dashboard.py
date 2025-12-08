@@ -332,7 +332,7 @@ async def get_metric_timeseries(
         )
 
         return {
-            "time_series": time_series.dict(),
+            "time_series": time_series.model_dump(),
             "message": f"Time series for {metric_name} retrieved",
         }
 
@@ -523,7 +523,7 @@ async def get_activity_log(
         )
 
         return {
-            "activity_logs": [log.dict() for log in activity_logs],
+            "activity_logs": [log.model_dump() for log in activity_logs],
             "total_count": len(activity_logs),
             "message": "Activity log retrieved successfully",
         }

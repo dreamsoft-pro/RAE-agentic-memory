@@ -596,7 +596,7 @@ class RulesEngine:
             raise ValueError("Webhook URL required")
 
         async with aiohttp.ClientSession() as session:
-            async with session.post(url, json=event.dict()) as response:
+            async with session.post(url, json=event.model_dump()) as response:
                 return {"status": "sent", "status_code": response.status, "url": url}
 
     async def _action_generate_reflection(

@@ -14,7 +14,7 @@ Responsibilities:
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
 import asyncpg
@@ -762,8 +762,8 @@ class ComplianceService:
                 mitigation_controls=["RLS policies", "Tenant context middleware"],
                 effectiveness_score=0.95,
                 owner="Security Contact",
-                identified_at=datetime.utcnow() - timedelta(days=30),
-                last_reviewed_at=datetime.utcnow(),
+                identified_at=datetime.now(timezone.utc) - timedelta(days=30),
+                last_reviewed_at=datetime.now(timezone.utc),
             ),
             RiskMetric(
                 risk_id="RISK-002",
@@ -778,8 +778,8 @@ class ComplianceService:
                 mitigation_controls=["RetentionService", "Automated cleanup"],
                 effectiveness_score=0.90,
                 owner="Data Steward",
-                identified_at=datetime.utcnow() - timedelta(days=28),
-                last_reviewed_at=datetime.utcnow(),
+                identified_at=datetime.now(timezone.utc) - timedelta(days=28),
+                last_reviewed_at=datetime.now(timezone.utc),
             ),
             RiskMetric(
                 risk_id="RISK-006",
@@ -794,8 +794,8 @@ class ComplianceService:
                 mitigation_controls=["Database-level RLS", "Context isolation"],
                 effectiveness_score=0.95,
                 owner="Security Contact",
-                identified_at=datetime.utcnow() - timedelta(days=30),
-                last_reviewed_at=datetime.utcnow(),
+                identified_at=datetime.now(timezone.utc) - timedelta(days=30),
+                last_reviewed_at=datetime.now(timezone.utc),
             ),
         ]
 

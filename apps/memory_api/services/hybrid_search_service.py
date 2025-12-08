@@ -348,7 +348,7 @@ class HybridSearchService:
                 query=query,
                 tenant_id=tenant_id,
                 project_id=project_id,
-                result=result.dict(),
+                result=result.model_dump(),
                 filters=cache_filters,
             )
 

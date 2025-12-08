@@ -13,6 +13,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from apps.memory_api.utils.datetime_utils import utc_now
+
 # ============================================================================
 # Enums
 # ============================================================================
@@ -177,7 +179,7 @@ class ReflectionResult:
         if self.metadata is None:
             self.metadata = {}
         if self.generated_at is None:
-            self.generated_at = datetime.utcnow()
+            self.generated_at = utc_now()
 
 
 # ============================================================================

@@ -23,6 +23,8 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
 
+from apps.memory_api.utils.datetime_utils import utc_now
+
 logger = logging.getLogger(__name__)
 
 
@@ -67,7 +69,7 @@ class PolicyVersion(BaseModel):
 
     # Change tracking
     created_by: str
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=utc_now)
     activated_at: Optional[datetime] = None
     deprecated_at: Optional[datetime] = None
 
@@ -87,7 +89,7 @@ class PolicyEnforcementResult(BaseModel):
     compliant: bool
     violations: List[str] = Field(default_factory=list)
     warnings: List[str] = Field(default_factory=list)
-    checked_at: datetime = Field(default_factory=datetime.utcnow)
+    checked_at: datetime = Field(default_factory=utc_now)
 
 
 class PolicyVersioningService:
@@ -200,7 +202,7 @@ class PolicyVersioningService:
         for v in versions:
             if v.status == PolicyStatus.ACTIVE:
                 v.status = PolicyStatus.DEPRECATED
-                v.deprecated_at = datetime.utcnow()
+                v.deprecated_at = utc_now()
 
                 logger.info(
                     "policy_deprecated",
@@ -211,7 +213,7 @@ class PolicyVersioningService:
 
         # Activate target version
         target_version.status = PolicyStatus.ACTIVE
-        target_version.activated_at = datetime.utcnow()
+        target_version.activated_at = utc_now()
 
         logger.info(
             "policy_activated",
@@ -357,10 +359,10 @@ class PolicyVersioningService:
         # Rollback
         if current_active:
             current_active.status = PolicyStatus.DEPRECATED
-            current_active.deprecated_at = datetime.utcnow()
+            current_active.deprecated_at = utc_now()
 
         previous_version.status = PolicyStatus.ACTIVE
-        previous_version.activated_at = datetime.utcnow()
+        previous_version.activated_at = utc_now()
 
         logger.warning(
             "policy_rolled_back",
