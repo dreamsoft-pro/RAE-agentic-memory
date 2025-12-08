@@ -1389,6 +1389,7 @@ RAE documentation is organized into four main areas:
 ### Academic & Research
 - 📄 **[Executive Summary](docs/outreach/EXEC_SUMMARY.md)** - 1-page RAE overview
 - 🔬 **[Technical Abstract](docs/outreach/TECHNICAL_ABSTRACT.md)** - Detailed technical description
+- ⚖️ **[RAE vs Big Tech](docs/guides/RAE-vs-BIGTECH.md)** - Architectural comparison: 10 key differentiators vs OpenAI, Anthropic, Google
 - 📧 **[Research Invitation](docs/outreach/RESEARCH_INVITATION_LETTER.md)** - Collaboration opportunities
 - 📐 **[LaTeX Description](docs/outreach/LATEX_DESCRIPTION.md)** - Academic paper-ready content
 - 💼 **[R&D Pitch](docs/outreach/RD_PITCH.md)** - Enterprise evaluation opportunity
