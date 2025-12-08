@@ -27,6 +27,8 @@ from uuid import UUID
 import asyncpg
 from pydantic import BaseModel, Field
 
+from apps.memory_api.utils.datetime_utils import utc_now
+
 logger = logging.getLogger(__name__)
 
 
@@ -236,7 +238,7 @@ class RetentionService:
     ) -> int:
         """Clean up expired episodic memories"""
 
-        cutoff_date = datetime.utcnow() - timedelta(days=policy.retention_days)
+        cutoff_date = utc_now() - timedelta(days=policy.retention_days)
 
         # Delete expired memories (respecting exceptions)
         result = await self.db.execute(
@@ -284,7 +286,7 @@ class RetentionService:
     async def _cleanup_embeddings(self, tenant_id: str, policy: RetentionPolicy) -> int:
         """Clean up old embeddings (orphaned or expired)"""
 
-        cutoff_date = datetime.utcnow() - timedelta(days=policy.retention_days)
+        cutoff_date = utc_now() - timedelta(days=policy.retention_days)
 
         try:
             # Delete orphaned embeddings (memories no longer exist)
@@ -322,7 +324,7 @@ class RetentionService:
     async def _cleanup_cost_logs(self, tenant_id: str, policy: RetentionPolicy) -> int:
         """Clean up old cost logs"""
 
-        cutoff_date = datetime.utcnow() - timedelta(days=policy.retention_days)
+        cutoff_date = utc_now() - timedelta(days=policy.retention_days)
 
         try:
             result = await self.db.execute(
@@ -376,7 +378,7 @@ class RetentionService:
                 deletion_reason.value,
                 deleted_count,
                 deleted_by or "system",
-                datetime.utcnow(),
+                utc_now(),
                 metadata or {},
             )
         except Exception as e:

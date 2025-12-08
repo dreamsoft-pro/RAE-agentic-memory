@@ -240,7 +240,7 @@ async def execute(
                 headers = {"X-Tenant-Id": tenant_id, "X-API-Key": settings.API_KEY}
                 await client.post(
                     settings.MEMORY_API_URL + "/v1/memory/store",
-                    json=reflection_payload.dict(exclude_none=True),
+                    json=reflection_payload.model_dump(exclude_none=True),
                     headers=headers,
                 )
 

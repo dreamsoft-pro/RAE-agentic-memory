@@ -91,7 +91,7 @@ def test_reward_function_defaults():
 def test_reward_computation_basic(reward_function, base_state):
     """Test basic reward computation for retrieval action"""
     state_before = base_state
-    state_after = base_state.copy(deep=True)
+    state_after = base_state.model_copy(deep=True)
     state_after.budget_state.remaining_tokens = 99000  # Used 1000 tokens
     state_after.working_context.token_count = 1000
 
@@ -115,7 +115,7 @@ def test_reward_computation_basic(reward_function, base_state):
 def test_reward_components_structure(reward_function, base_state):
     """Test that reward components have correct structure"""
     state_before = base_state
-    state_after = base_state.copy(deep=True)
+    state_after = base_state.model_copy(deep=True)
 
     action = RetrieveEpisodicAction(parameters={"k": 10})
     execution_result = {"memories_retrieved": 10}
@@ -144,7 +144,7 @@ def test_reward_components_structure(reward_function, base_state):
 def test_high_quality_high_reward(reward_function, base_state):
     """Test that high quality actions get high rewards"""
     state_before = base_state
-    state_after = base_state.copy(deep=True)
+    state_after = base_state.model_copy(deep=True)
 
     action = RetrieveSemanticAction(parameters={"k": 20})
 
@@ -164,7 +164,7 @@ def test_high_quality_high_reward(reward_function, base_state):
 def test_zero_memories_zero_quality(reward_function, base_state):
     """Test that retrieving zero memories gives zero quality"""
     state_before = base_state
-    state_after = base_state.copy(deep=True)
+    state_after = base_state.model_copy(deep=True)
 
     action = RetrieveEpisodicAction(parameters={"k": 10})
 
@@ -187,7 +187,7 @@ def test_token_penalty_scaling(base_state):
     reward_fn_cheap = RewardFunction(lambda_=0.0001, mu=0.01)
 
     state_before = base_state
-    state_after = base_state.copy(deep=True)
+    state_after = base_state.model_copy(deep=True)
     state_after.budget_state.remaining_tokens = 99000  # Used 1000 tokens
 
     action = RetrieveEpisodicAction(parameters={"k": 10})
@@ -215,7 +215,7 @@ def test_token_penalty_scaling(base_state):
 def test_retrieval_quality_evaluation(reward_function, base_state):
     """Test quality evaluation for retrieval actions"""
     state_before = base_state
-    state_after = base_state.copy(deep=True)
+    state_after = base_state.model_copy(deep=True)
 
     action = RetrieveEpisodicAction(parameters={"k": 15})
     execution_result = {"memories_retrieved": 15}
@@ -231,7 +231,7 @@ def test_retrieval_quality_evaluation(reward_function, base_state):
 def test_llm_quality_evaluation(reward_function, base_state):
     """Test quality evaluation for LLM actions"""
     state_before = base_state
-    state_after = base_state.copy(deep=True)
+    state_after = base_state.model_copy(deep=True)
     state_after.budget_state.remaining_tokens -= 1500
 
     action = CallLLMAction(parameters={"model": "gpt-4o-mini", "max_tokens": 1000})
@@ -259,7 +259,7 @@ def test_pruning_quality_evaluation(reward_function, base_state):
     state_before = base_state
     state_before.working_context.token_count = 4000
 
-    state_after = base_state.copy(deep=True)
+    state_after = base_state.model_copy(deep=True)
     state_after.working_context.token_count = 2000
 
     action = PruneContextAction(
@@ -282,7 +282,7 @@ def test_graph_update_quality_evaluation(reward_function, base_state):
     state_before.graph_state.node_count = 100
     state_before.graph_state.edge_count = 200
 
-    state_after = base_state.copy(deep=True)
+    state_after = base_state.model_copy(deep=True)
     state_after.graph_state.node_count = 101  # Added node
     state_after.graph_state.edge_count = 203  # Added edges
 
@@ -317,7 +317,7 @@ def test_metrics_tracker_records_transition(reward_function, base_state):
     tracker = MetricsTracker()
 
     state_before = base_state
-    state_after = base_state.copy(deep=True)
+    state_after = base_state.model_copy(deep=True)
     state_after.budget_state.remaining_tokens = 99000
 
     action = RetrieveEpisodicAction(parameters={"k": 10})
@@ -341,7 +341,7 @@ def test_metrics_tracker_averages(reward_function, base_state):
     # Record multiple transitions
     for i in range(5):
         state_before = base_state
-        state_after = base_state.copy(deep=True)
+        state_after = base_state.model_copy(deep=True)
         state_after.budget_state.remaining_tokens -= 1000 * (i + 1)
 
         reward = reward_function.compute_reward(
@@ -363,7 +363,7 @@ def test_metrics_best_and_worst_actions(reward_function, base_state):
 
     # Record good action
     action_good = RetrieveSemanticAction(parameters={"k": 20})
-    state_after_good = base_state.copy(deep=True)
+    state_after_good = base_state.model_copy(deep=True)
     reward_good = reward_function.compute_reward(
         base_state, action_good, state_after_good, {"memories_retrieved": 20}
     )
@@ -371,7 +371,7 @@ def test_metrics_best_and_worst_actions(reward_function, base_state):
 
     # Record bad action (no results)
     action_bad = RetrieveEpisodicAction(parameters={"k": 10})
-    state_after_bad = base_state.copy(deep=True)
+    state_after_bad = base_state.model_copy(deep=True)
     state_after_bad.budget_state.remaining_tokens -= 5000  # High cost
     reward_bad = reward_function.compute_reward(
         base_state, action_bad, state_after_bad, {"memories_retrieved": 0}  # No results
@@ -390,7 +390,7 @@ def test_metrics_get_current_metrics(reward_function, base_state):
     tracker = MetricsTracker()
 
     action = RetrieveEpisodicAction(parameters={"k": 10})
-    state_after = base_state.copy(deep=True)
+    state_after = base_state.model_copy(deep=True)
     reward = reward_function.compute_reward(
         base_state, action, state_after, {"memories_retrieved": 10}
     )
@@ -415,7 +415,7 @@ def test_metrics_get_current_metrics(reward_function, base_state):
 def test_reward_with_no_execution_result(reward_function, base_state):
     """Test reward computation when execution_result is None"""
     state_before = base_state
-    state_after = base_state.copy(deep=True)
+    state_after = base_state.model_copy(deep=True)
 
     action = RetrieveEpisodicAction(parameters={"k": 10})
 
@@ -431,7 +431,7 @@ def test_reward_with_no_execution_result(reward_function, base_state):
 def test_reward_with_zero_cost(reward_function, base_state):
     """Test reward when action has zero cost"""
     state_before = base_state
-    state_after = base_state.copy(deep=True)  # No change
+    state_after = base_state.model_copy(deep=True)  # No change
 
     action = RetrieveEpisodicAction(parameters={"k": 10})
     execution_result = {"memories_retrieved": 10}
@@ -448,7 +448,7 @@ def test_reward_with_zero_cost(reward_function, base_state):
 def test_quality_score_clamped_to_0_1(reward_function, base_state):
     """Test that quality scores are always clamped to [0, 1]"""
     state_before = base_state
-    state_after = base_state.copy(deep=True)
+    state_after = base_state.model_copy(deep=True)
 
     action = RetrieveEpisodicAction(parameters={"k": 10})
 
