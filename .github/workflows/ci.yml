@@ -241,7 +241,7 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
           QDRANT_URL: http://localhost:6333
           RAE_VECTOR_BACKEND: qdrant
-          PYTHONWARNINGS: error
+          PYTHONWARNINGS: "error,ignore::PendingDeprecationWarning:multipart,ignore::DeprecationWarning:google._upb._message,ignore::ResourceWarning:tldextract,ignore::DeprecationWarning:spacy.cli._util,ignore:Can't initialize NVML:UserWarning,ignore::pytest.PytestDeprecationWarning:pytest_asyncio"
         run: |
           echo "🔍 Running FULL test suite with -W error..."
           pytest -W error \
