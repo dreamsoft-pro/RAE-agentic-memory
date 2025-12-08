@@ -45,8 +45,38 @@ while true; do
     ELAPSED=$(($(date +%s) - START_TIME))
     ELAPSED_MIN=$((ELAPSED / 60))
 
-    echo -e "[$(date '+%H:%M:%S')] Run #$RUN_ID | Status: ${BLUE}$STATUS${NC}"
+    # Get jobs status to detect early failures
+    JOBS_DATA=$(gh run view "$RUN_ID" --json jobs 2>/dev/null || echo '{"jobs":[]}')
+    FAILED_JOBS=$(echo "$JOBS_DATA" | jq -r '.jobs[] | select(.conclusion == "failure") | .name' || echo "")
+    COMPLETED_JOBS=$(echo "$JOBS_DATA" | jq -r '[.jobs[] | select(.status == "completed")] | length')
+    TOTAL_JOBS=$(echo "$JOBS_DATA" | jq -r '.jobs | length')
 
+    echo -e "[$(date '+%H:%M:%S')] Run #$RUN_ID | Status: ${BLUE}$STATUS${NC} | Jobs: $COMPLETED_JOBS/$TOTAL_JOBS completed"
+
+    # Check for failed jobs immediately (even if workflow still in_progress)
+    if [ -n "$FAILED_JOBS" ]; then
+        echo ""
+        echo -e "${RED}❌ CI FAILED - Job failures detected!${NC}"
+        echo -e "   Branch: $BRANCH"
+        echo -e "   Run: $RUN_NAME (#$RUN_ID)"
+        echo -e "   Time: ${ELAPSED_MIN}m ${ELAPSED}s"
+        echo ""
+        echo -e "${YELLOW}📋 Failed jobs:${NC}"
+        echo "$FAILED_JOBS" | while read -r job; do
+            echo -e "  ${RED}❌ $job${NC}"
+        done
+
+        echo ""
+        echo -e "${YELLOW}💡 View logs:${NC}"
+        echo -e "   gh run view $RUN_ID --log-failed"
+        echo ""
+        echo -e "${YELLOW}💡 Rerun failed jobs:${NC}"
+        echo -e "   gh run rerun $RUN_ID --failed"
+
+        exit 1
+    fi
+
+    # Check if workflow completed successfully
     if [ "$STATUS" = "completed" ]; then
         echo ""
         if [ "$CONCLUSION" = "success" ]; then
@@ -60,19 +90,6 @@ while true; do
             echo -e "   Branch: $BRANCH"
             echo -e "   Run: $RUN_NAME (#$RUN_ID)"
             echo -e "   Conclusion: $CONCLUSION"
-            echo ""
-            echo -e "${YELLOW}📋 Fetching failed jobs...${NC}"
-
-            # Show failed jobs
-            gh run view "$RUN_ID" --json jobs | jq -r '.jobs[] | select(.conclusion != "success" and .conclusion != null) | "  ❌ \(.name): \(.conclusion)"'
-
-            echo ""
-            echo -e "${YELLOW}💡 View logs:${NC}"
-            echo -e "   gh run view $RUN_ID --log-failed"
-            echo ""
-            echo -e "${YELLOW}💡 Rerun failed jobs:${NC}"
-            echo -e "   gh run rerun $RUN_ID --failed"
-
             exit 1
         fi
     fi
