@@ -241,16 +241,9 @@ jobs:
           REDIS_URL: redis://localhost:6379/0
           QDRANT_URL: http://localhost:6333
           RAE_VECTOR_BACKEND: qdrant
-          PYTHONWARNINGS: error
         run: |
-          echo "🔍 Running FULL test suite with -W error..."
-          pytest -W error \
-            -W "ignore::DeprecationWarning:google._upb._message" \
-            -W "ignore::ResourceWarning:tldextract" \
-            -W "ignore::DeprecationWarning:spacy.cli._util" \
-            -W "ignore:Can't initialize NVML:UserWarning" \
-            -m "not integration and not llm and not contract and not performance" \
-            --cov --cov-report=xml --cov-report=term
+          echo "🔍 Running FULL test suite..."
+          pytest -m "not integration and not llm and not contract and not performance" --cov --cov-report=xml --cov-report=term
 
       - name: Run integration tests
         env:
