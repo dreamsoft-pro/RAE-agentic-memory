@@ -7,8 +7,8 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Docker](https://img.shields.io/badge/docker-required-blue.svg)](https://docs.docker.com/get-docker/)
-[![Tests](https://img.shields.io/badge/tests-468%20passing-brightgreen.svg)]()
-[![Tests Total](https://img.shields.io/badge/total-516%20unit%20tests-blue.svg)]()
+[![Tests](https://img.shields.io/badge/tests-892%20passing-brightgreen.svg)]()
+[![Tests Total](https://img.shields.io/badge/total-955%20tests-blue.svg)]()
 [![Coverage](https://img.shields.io/badge/coverage-69%25-green.svg)]())
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 [![Version](https://img.shields.io/badge/version-2.1.0--enterprise-blue.svg)](docs/.auto-generated/status/STATUS.md)
@@ -1308,7 +1308,7 @@ RAE maintains **strong startup/scale-up level testing practices** - comparable t
 
 ### Current Test Suite
 
-- **~900 tests** across unit, integration, and performance layers
+- **955 tests** across unit, integration, and performance layers (892 selected in standard run)
 - **Multi-version testing:** Python 3.10, 3.11, 3.12
 - **Smart test selection:** 90% CI cost reduction on feature branches (1-2 min vs 13 min full suite)
 - **65% coverage minimum** with gap analysis and trending
@@ -1524,7 +1524,7 @@ RAE is currently in **v2.1.0-enterprise** - Pre-1.0 with Enterprise Features!
 - ✅ Python SDK
 - ✅ Multi-tenancy & RBAC
 - ✅ Docker deployment
-- ✅ **820+ Tests (100% passing), 69% Coverage** (target: 75%+)
+- ✅ **955 Tests (892 passing), 69% Coverage** (target: 75%+)
 - ✅ **CI/CD Pipeline** (lint, test, docker build - all passing ✅)
 
 **Coming Soon (v1.0):**

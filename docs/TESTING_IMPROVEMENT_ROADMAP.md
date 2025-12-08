@@ -21,7 +21,7 @@
 - **Auto-documentation:** CI-driven docs updates
 
 **Test Suite Stats:**
-- ~900 tests across unit/integration layers
+- 955 tests across unit/integration layers (892 selected in standard run)
 - Average CI runtime: 13 minutes (full suite)
 - Average feature branch CI: 1-2 minutes (smart selection)
 
