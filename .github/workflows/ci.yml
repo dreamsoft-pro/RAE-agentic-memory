@@ -242,12 +242,8 @@ jobs:
           QDRANT_URL: http://localhost:6333
           RAE_VECTOR_BACKEND: qdrant
         run: |
-          echo "🔍 Running FULL test suite (warnings configured in pytest.ini)..."
-          PYTHONWARNINGS="ignore::PendingDeprecationWarning" python -m pytest \
-            -W ignore::PendingDeprecationWarning \
-            -c pytest.ini \
-            -m "not integration and not llm and not contract and not performance" \
-            --cov --cov-report=xml --cov-report=term
+          echo "🔍 Running FULL test suite..."
+          pytest -m "not integration and not llm and not contract and not performance" --cov --cov-report=xml --cov-report=term
 
       - name: Run integration tests
         env:
