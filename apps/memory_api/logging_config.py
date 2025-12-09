@@ -18,7 +18,20 @@ import logging
 import sys
 
 import structlog
+from opentelemetry.trace import get_current_span  # New import
 from structlog.types import Processor
+
+
+def add_trace_id_to_log(logger, method_name, event_dict):
+    """
+    Processor to add the current OpenTelemetry trace_id and span_id to log events.
+    """
+    span = get_current_span()
+    span_context = span.get_span_context()
+    if span_context.is_valid:  # is_valid is a property, not a method
+        event_dict["trace_id"] = f"{span_context.trace_id:x}"
+        event_dict["span_id"] = f"{span_context.span_id:x}"
+    return event_dict
 
 
 def setup_logging():
@@ -44,6 +57,7 @@ def setup_logging():
         structlog.stdlib.add_log_level,
         structlog.stdlib.add_logger_name,
         structlog.processors.TimeStamper(fmt="iso"),
+        add_trace_id_to_log,  # New processor
         structlog.processors.StackInfoRenderer(),
     ]
 
