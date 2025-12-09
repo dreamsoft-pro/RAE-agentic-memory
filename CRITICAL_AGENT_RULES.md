@@ -44,20 +44,63 @@ Feature Branch:  Test ONLY new code ✅
 
 ---
 
-## 🔴 RULE #2: WORK AUTONOMOUSLY - DON'T ASK FOR PERMISSION
+## 🔴 RULE #2: WORK AUTONOMOUSLY - NO CONFIRMATIONS, NO VERBOSE MESSAGES
 
-### ❌ DON'T ASK:
+### ❌ NEVER ASK FOR CONFIRMATION:
 - "Should I create a new file?" → **Just create it** (follow PROJECT_STRUCTURE.md)
 - "Should I add tests?" → **Yes, always add tests**
 - "Should I commit now?" → **Yes, commit when feature is complete**
 - "Should I use this pattern?" → **Follow templates in .ai-templates/**
 - "Can I proceed with implementation?" → **Yes, if you have a design**
+- "Do you want to proceed?" → **NEVER show this - just execute**
+
+### ❌ NO INTERACTIVE COMMANDS:
+```bash
+# ❌ FORBIDDEN - require user input:
+nano, vim, vi, less, more
+git add -i
+git rebase -i
+git commit -i
+any command with interactive prompts
+```
+
+### ❌ NO VERBOSE DESCRIPTIONS IN COMMITS:
+```bash
+# ❌ WRONG - marketing speak, verbose:
+git commit -m "feat: Complete amazing Phase 1!
+
+✅ Implemented incredible features:
+- Super cool feature X
+- Awesome component Y
+
+Phase 1 Milestone M1 completed! 🎉
+Next: Phase 2 will be even better!"
+
+# ✅ CORRECT - technical, concise:
+git commit -m "feat(rae-core): implement 4-layer memory architecture
+
+- sensory, working, longterm, reflective layers
+- hybrid search with RRF/weighted fusion
+- reflection engine for pattern detection
+- comprehensive test coverage"
+```
+
+### ❌ NO VERBOSE PROGRESS MESSAGES:
+```
+# ❌ WRONG:
+"Great! Now I'll implement the amazing feature X which will revolutionize..."
+"Perfect! Let me create this incredible component..."
+"Excellent! The tests are passing beautifully..."
+
+# ✅ CORRECT:
+[Just do the work silently, show results when done]
+```
 
 ### ✅ DO ASK ONLY WHEN:
 - Multiple valid architectural approaches exist
 - Breaking changes are needed
 - Requirements are genuinely unclear
-- User must make a business decision
+- User must make a business decision (NOT technical)
 
 ### 📖 Example - Autonomous Work:
 
@@ -74,19 +117,8 @@ User: "Yes"
 
 ✅ CORRECT CONVERSATION:
 User: "Add user notifications"
-Agent: "I'll implement user notifications using our 3-layer architecture:
-
-Design:
-- NotificationRepository (data access)
-- NotificationService (business logic)
-- NotificationRoutes (API endpoints)
-- Comprehensive tests for all layers
-
-[Shows design document]
-
-Implementing now..."
-[Agent completes entire feature autonomously]
-Agent: "✅ Feature complete. Tests pass. Ready for review."
+Agent: [silently implements: NotificationRepository, NotificationService, routes, tests]
+Agent: "Implemented notifications (3-layer arch). Tests pass."
 ```
 
 ---

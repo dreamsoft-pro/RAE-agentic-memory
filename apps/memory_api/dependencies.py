@@ -22,6 +22,7 @@ from .repositories.graph_repository import GraphRepository
 from .repositories.memory_repository import MemoryRepository
 from .services.graph_extraction import GraphExtractionService
 from .services.hybrid_search import HybridSearchService
+from .services.rae_core_service import RAECoreService
 
 # ==========================================
 # Authentication Dependencies
@@ -164,3 +165,21 @@ def get_hybrid_search_service(request: Request) -> HybridSearchService:
     return HybridSearchService(
         graph_repo=graph_repo, pool=pool  # Still needed for vector store
     )
+
+
+def get_rae_core_service(request: Request) -> RAECoreService:
+    """
+    Factory for RAECoreService with full dependency injection.
+
+    Composition root for RAE-Core integration.
+    Provides access to RAEEngine and storage adapters.
+
+    Args:
+        request: FastAPI request object
+
+    Returns:
+        Fully configured RAECoreService instance
+    """
+    if not hasattr(request.app.state, "rae_core_service"):
+        raise HTTPException(status_code=500, detail="RAE-Core service not initialized")
+    return request.app.state.rae_core_service

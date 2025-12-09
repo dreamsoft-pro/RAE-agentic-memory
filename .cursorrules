@@ -72,9 +72,17 @@ tail -n 50 file.txt          # ✅ View last 50 lines
 grep "pattern" file.txt      # ✅ Search in file
 
 # File editing:
-# Use Edit tool (old_string → new_string)
-# Use Write tool (full file replacement)
-sed -i 's/old/new/g' file.txt   # ✅ Simple replacements
+# Use Write tool for creating new files (PREFERRED - no confirmation needed)
+# Use Edit tool for modifying existing files (old_string → new_string)
+sed -i 's/old/new/g' file.txt      # ✅ Simple replacements
+
+# ❌ FORBIDDEN: cat with heredoc (requires user confirmation)
+cat > file.txt <<'EOF'             # ❌ FORBIDDEN - needs approval!
+content here
+EOF
+
+# ✅ CORRECT: Use Write tool instead
+# Write tool creates files without user confirmation
 
 # Git:
 git add .                    # ✅ Stage all changes
