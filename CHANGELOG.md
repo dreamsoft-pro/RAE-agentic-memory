@@ -1,6 +1,6 @@
 ## Recent Changes (Auto-generated)
 
-*Last updated: 2025-12-09 21:09 • Branch: develop • Commit: c543fdb*
+*Last updated: 2025-12-09 23:23 • Branch: main • Commit: 3c3c0e3*
 
 ### ✨ Features
 
@@ -262,6 +262,8 @@
 
 ### 📦 Other
 
+- Merge branch 'develop' ([`82e7ee8`](../../commit/82e7ee8))
+- Merge develop into main: RAE-core refactoring + test improvements ([`a01de76`](../../commit/a01de76))
 - Merge branch 'feature/test-improvements-iteration-1' into develop ([`10aa500`](../../commit/10aa500))
 - Merge branch 'develop' of github.com:dreamsoft-pro/RAE-agentic-memory into develop ([`0039e7a`](../../commit/0039e7a))
 - Merge develop → main: Documentation Overhaul v2.0 ([`3f5a94c`](../../commit/3f5a94c))
@@ -370,7 +372,7 @@
 
 ## Recent Changes (Auto-generated)
 
-*Last updated: 2025-12-09 21:00 • Branch: develop • Commit: 6e97578*
+*Last updated: 2025-12-09 23:14 • Branch: main • Commit: 82e7ee8*
 
 ### ✨ Features
 
@@ -632,6 +634,8 @@
 
 ### 📦 Other
 
+- Merge branch 'develop' ([`82e7ee8`](../../commit/82e7ee8))
+- Merge develop into main: RAE-core refactoring + test improvements ([`a01de76`](../../commit/a01de76))
 - Merge branch 'feature/test-improvements-iteration-1' into develop ([`10aa500`](../../commit/10aa500))
 - Merge branch 'develop' of github.com:dreamsoft-pro/RAE-agentic-memory into develop ([`0039e7a`](../../commit/0039e7a))
 - Merge develop → main: Documentation Overhaul v2.0 ([`3f5a94c`](../../commit/3f5a94c))
