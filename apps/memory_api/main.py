@@ -8,16 +8,25 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
+from qdrant_client import QdrantClient
 from slowapi.errors import RateLimitExceeded
 
-from apps.memory_api.api.v1 import agent, cache, compliance, feedback, governance, graph
-from apps.memory_api.api.v1 import health as health_router
-from apps.memory_api.api.v1 import memory
+from apps.memory_api.api.v1 import (
+    agent,
+    cache,
+    compliance,
+    feedback,
+    governance,
+    graph,
+    memory,
+)
 from apps.memory_api.config import settings
+from apps.memory_api.dependencies import create_redis_client
 from apps.memory_api.logging_config import setup_logging
 from apps.memory_api.middleware.budget_enforcer import BudgetEnforcementMiddleware
 from apps.memory_api.middleware.rate_limiter import limiter, rate_limit_exceeded_handler
 from apps.memory_api.middleware.tenant import TenantContextMiddleware
+from apps.memory_api.observability import health_checks as health_router
 from apps.memory_api.observability import (
     instrument_fastapi,
     instrument_libraries,
@@ -36,10 +45,6 @@ from apps.memory_api.security import auth
 from apps.memory_api.security.rate_limit import rate_limit_middleware
 from apps.memory_api.services.context_cache import rebuild_full_cache
 
-# Setup structured logging
-setup_logging()
-logger = structlog.get_logger(__name__)
-
 # Setup OpenTelemetry (before app creation)
 setup_opentelemetry()
 instrument_libraries()
@@ -49,6 +54,10 @@ instrument_libraries()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage application lifespan (startup and shutdown)."""
+    # Setup structured logging within lifespan
+    setup_logging()
+    logger = structlog.get_logger(__name__)
+
     # Startup
     logger.info("Starting up RAE Memory API...")
     logger.info(
@@ -64,6 +73,13 @@ async def lifespan(app: FastAPI):
         user=settings.POSTGRES_USER,
         password=settings.POSTGRES_PASSWORD,
     )
+    # Initialize Redis client
+    app.state.redis_client = await create_redis_client(settings.REDIS_URL)
+    # Initialize Qdrant client
+    app.state.qdrant_client = QdrantClient(
+        host=settings.QDRANT_HOST, port=settings.QDRANT_PORT
+    )
+
     await rebuild_full_cache()
 
     yield  # Application is running
@@ -71,6 +87,7 @@ async def lifespan(app: FastAPI):
     # Shutdown
     logger.info("Shutting down RAE Memory API...")
     await app.state.pool.close()
+    await app.state.redis_client.close()  # Close Redis client
 
 
 # --- App Initialization ---
@@ -110,6 +127,9 @@ app.state.limiter = limiter
 
 # Add rate limit exception handler
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+
+# Module-level logger for exception handlers
+logger = structlog.get_logger(__name__)
 
 
 # Custom OpenAPI schema

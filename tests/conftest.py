@@ -23,21 +23,27 @@ def mock_env_and_settings(monkeypatch):
         "OPENAI_API_KEY": "sk-test-key",
         "API_KEY": "test-api-key",
         "OAUTH_ENABLED": "False",
+        "LOG_LEVEL": "INFO",
+        "RAE_APP_LOG_LEVEL": "INFO",
+        "ENABLE_API_KEY_AUTH": "False",
+        "ENABLE_JWT_AUTH": "False",
+        "ENABLE_RATE_LIMITING": "False",
     }
     for k, v in envs.items():
         monkeypatch.setenv(k, v)
 
-    with patch("apps.memory_api.config.settings") as mock_settings:
-        mock_settings.API_KEY = "test-api-key"
-        mock_settings.POSTGRES_HOST = "localhost"
-        mock_settings.POSTGRES_DB = "test_rae"
-        mock_settings.POSTGRES_USER = "postgres"
-        mock_settings.POSTGRES_PASSWORD = "postgres"
-        mock_settings.QDRANT_HOST = "localhost"
-        mock_settings.RERANKER_API_URL = "http://reranker"
-        mock_settings.MEMORY_API_URL = "http://memory"
-        mock_settings.RAE_LLM_MODEL_DEFAULT = "gpt-4"
-        yield mock_settings
+    from importlib import reload
+    from apps.memory_api import config
+    
+    # Reload the config module to ensure settings are re-evaluated with mocked envs
+    # This is crucial for Pydantic BaseSettings which load from env at import time
+    config = reload(config) 
+
+    # Now, explicitly set the settings object in the config module to the newly instantiated one
+    # This will ensure all modules importing 'settings' will get this updated instance
+    monkeypatch.setattr(config, "settings", config.Settings())
+
+    yield config.settings
 
 
 @pytest.fixture(autouse=True)
