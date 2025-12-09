@@ -1,96 +1,65 @@
 """
 Memory Scoring V2 - Unified Relevance + Importance + Recency
 
-This module implements the unified memory scoring function described in
-RAE v1 Implementation Plan, combining:
-- Relevance (vector similarity)
-- Importance (LLM-driven or manual)
-- Recency (time-based decay with access count consideration)
+This module provides a backward-compatible wrapper around rae_core.math
+for the unified memory scoring function described in RAE v1 Implementation Plan.
+
+The actual implementation now lives in rae_core.math as pure mathematical
+functions, allowing them to be used independently of the FastAPI application.
+
+This module now serves as:
+1. A compatibility layer for existing code
+2. An integration point for logging (via structlog)
+3. The service layer that bridges rae_core (pure math) and apps/memory_api (infrastructure)
+
+Mathematical formulation (implemented in rae_core.math):
+    score = alpha * similarity + beta * importance + gamma * recency
+
+Where:
+- Relevance (similarity): Vector cosine similarity (0.0-1.0)
+- Importance: LLM-driven or manual importance score (0.0-1.0)
+- Recency: Time-based decay with access count consideration
+
+See rae_core.math for detailed mathematical documentation.
 """
 
-import math
-from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 import structlog
 
+# Import pure math functions from rae_core
+from rae_core.math import (
+    DecayConfig,
+    MemoryScoreResult,
+    ScoringWeights,
+)
+from rae_core.math import compute_batch_scores as _compute_batch_scores
+from rae_core.math import compute_memory_score as _compute_memory_score
+from rae_core.math import rank_memories_by_score as _rank_memories_by_score
+
 logger = structlog.get_logger(__name__)
 
-
-# ============================================================================
-# Configuration
-# ============================================================================
-
-
-@dataclass
-class ScoringWeights:
-    """
-    Weights for combining scoring components.
-
-    Default weights:
-    - alpha (relevance): 0.5 - Semantic similarity is most important
-    - beta (importance): 0.3 - Content importance matters
-    - gamma (recency): 0.2 - Time decay has moderate impact
-
-    Weights should sum to 1.0 for normalized scores.
-    """
-
-    alpha: float = 0.5  # Relevance weight
-    beta: float = 0.3  # Importance weight
-    gamma: float = 0.2  # Recency weight
-
-    def __post_init__(self):
-        total = self.alpha + self.beta + self.gamma
-        if not math.isclose(total, 1.0, rel_tol=1e-5):
-            logger.warning(
-                "scoring_weights_not_normalized",
-                total=total,
-                weights={"alpha": self.alpha, "beta": self.beta, "gamma": self.gamma},
-            )
-
-
-@dataclass
-class DecayConfig:
-    """
-    Configuration for recency decay calculation.
-    """
-
-    base_decay_rate: float = 0.001  # Base decay rate per second
-    access_count_boost: bool = True  # Whether to consider access count
-    min_decay_rate: float = 0.0001  # Minimum decay rate (for frequently accessed)
-    max_decay_rate: float = 0.01  # Maximum decay rate (for rarely accessed)
+# Re-export for backward compatibility
+__all__ = [
+    "ScoringWeights",
+    "DecayConfig",
+    "MemoryScoreResult",
+    "compute_memory_score",
+    "compute_batch_scores",
+    "rank_memories_by_score",
+]
 
 
 # ============================================================================
-# Memory Score Result
+# Service Layer Functions (with logging)
 # ============================================================================
-
-
-@dataclass
-class MemoryScoreResult:
-    """
-    Result of memory scoring with component breakdown.
-    """
-
-    # Final score
-    final_score: float
-
-    # Component scores
-    relevance_score: float
-    importance_score: float
-    recency_score: float
-
-    # Metadata
-    memory_id: str
-    age_seconds: float
-    access_count: int
-    effective_decay_rate: float
-
-
-# ============================================================================
-# Scoring Function
-# ============================================================================
+#
+# These wrap the pure math functions from rae_core.math and add:
+# - Structured logging for observability
+# - Application-specific context
+# - Integration with FastAPI services
+#
 
 
 def compute_memory_score(
@@ -107,13 +76,10 @@ def compute_memory_score(
     """
     Compute unified memory score combining relevance, importance, and recency.
 
-    This is the core scoring function implementing the formula from the plan:
-        score = alpha * similarity + beta * importance + gamma * recency_component
+    This is a service-layer wrapper that adds logging around the pure math
+    function from rae_core.math.policy.compute_memory_score().
 
-    Where recency_component considers:
-    - Time since last access (or creation)
-    - Access count (more accessed = slower decay)
-    - Configurable decay rate
+    For mathematical details, see: rae_core.math.policy.compute_memory_score
 
     Args:
         similarity: Relevance score from vector similarity (0.0-1.0)
@@ -122,160 +88,55 @@ def compute_memory_score(
         created_at: Creation timestamp
         access_count: Number of times memory was accessed
         now: Current time (defaults to UTC now)
-        weights: Custom scoring weights (defaults to standard weights)
-        decay_config: Custom decay configuration
+        weights: Custom scoring weights (defaults to ScoringWeights())
+        decay_config: Custom decay configuration (defaults to DecayConfig())
         memory_id: Optional memory ID for logging
 
     Returns:
         MemoryScoreResult with final score and component breakdown
 
     Example:
+        >>> from datetime import datetime, timezone
         >>> score = compute_memory_score(
         ...     similarity=0.85,
         ...     importance=0.7,
-        ...     last_accessed_at=datetime(2024, 1, 1),
-        ...     created_at=datetime(2024, 1, 1),
+        ...     last_accessed_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
+        ...     created_at=datetime(2024, 1, 1, tzinfo=timezone.utc),
         ...     access_count=5,
-        ...     now=datetime(2024, 1, 8)
+        ...     now=datetime(2024, 1, 8, tzinfo=timezone.utc)
         ... )
         >>> print(f"Final score: {score.final_score:.3f}")
-        >>> print(f"Components: rel={score.relevance_score:.3f}, "
-        ...       f"imp={score.importance_score:.3f}, rec={score.recency_score:.3f}")
+        Final score: 0.783
     """
-    # Initialize configs
-    if weights is None:
-        weights = ScoringWeights()
-    if decay_config is None:
-        decay_config = DecayConfig()
-    if now is None:
-        now = datetime.now(timezone.utc)
-
-    # Ensure timestamps are timezone-aware
-    created_at = _ensure_utc(created_at)
-    if last_accessed_at:
-        last_accessed_at = _ensure_utc(last_accessed_at)
-
-    # 1. Relevance component (normalized similarity)
-    relevance_score = max(0.0, min(1.0, similarity))
-
-    # 2. Importance component (already normalized)
-    importance_score = max(0.0, min(1.0, importance))
-
-    # 3. Recency component (exponential decay with access count adjustment)
-    recency_score, age_seconds, effective_decay = _calculate_recency_component(
+    # Delegate to pure math function
+    result = _compute_memory_score(
+        similarity=similarity,
+        importance=importance,
         last_accessed_at=last_accessed_at,
         created_at=created_at,
         access_count=access_count,
         now=now,
+        weights=weights,
         decay_config=decay_config,
+        memory_id=memory_id,
     )
 
-    # 4. Weighted combination
-    final_score = (
-        weights.alpha * relevance_score
-        + weights.beta * importance_score
-        + weights.gamma * recency_score
-    )
-
-    # Ensure final score is in [0, 1]
-    final_score = max(0.0, min(1.0, final_score))
-
+    # Log for observability (service layer responsibility)
     logger.debug(
         "memory_score_computed",
         memory_id=memory_id,
-        final_score=round(final_score, 4),
+        final_score=round(result.final_score, 4),
         components={
-            "relevance": round(relevance_score, 4),
-            "importance": round(importance_score, 4),
-            "recency": round(recency_score, 4),
+            "relevance": round(result.relevance_score, 4),
+            "importance": round(result.importance_score, 4),
+            "recency": round(result.recency_score, 4),
         },
-        age_seconds=int(age_seconds),
-        access_count=access_count,
-        effective_decay_rate=round(effective_decay, 6),
+        age_seconds=int(result.age_seconds),
+        access_count=result.access_count,
+        effective_decay_rate=round(result.effective_decay_rate, 6),
     )
 
-    return MemoryScoreResult(
-        final_score=final_score,
-        relevance_score=relevance_score,
-        importance_score=importance_score,
-        recency_score=recency_score,
-        memory_id=memory_id or "unknown",
-        age_seconds=age_seconds,
-        access_count=access_count,
-        effective_decay_rate=effective_decay,
-    )
-
-
-def _calculate_recency_component(
-    last_accessed_at: Optional[datetime],
-    created_at: datetime,
-    access_count: int,
-    now: datetime,
-    decay_config: DecayConfig,
-) -> tuple[float, float, float]:
-    """
-    Calculate recency component with access count consideration.
-
-    Formula:
-        time_ref = last_accessed_at or created_at
-        time_diff = (now - time_ref).total_seconds()
-
-        effective_decay = base_decay_rate / (log(1 + access_count) + 1)
-        recency_score = exp(-effective_decay * time_diff)
-
-    Returns:
-        Tuple of (recency_score, age_seconds, effective_decay_rate)
-    """
-    # Determine reference time (last access or creation)
-    time_ref = last_accessed_at if last_accessed_at else created_at
-    time_diff = (now - time_ref).total_seconds()
-
-    # Handle edge case: future timestamps (shouldn't happen, but safeguard)
-    if time_diff < 0:
-        logger.warning(
-            "future_timestamp_detected",
-            time_ref=time_ref.isoformat(),
-            now=now.isoformat(),
-        )
-        return 1.0, 0.0, 0.0
-
-    # Calculate effective decay rate based on access count
-    if decay_config.access_count_boost and access_count > 0:
-        # More accessed memories decay slower
-        # log(1 + access_count) + 1 ensures:
-        # - access_count=0: divisor=1 (no reduction)
-        # - access_count=9: divisor≈2.3 (decay rate ~43% of base)
-        # - access_count=99: divisor≈5.6 (decay rate ~18% of base)
-        effective_decay = decay_config.base_decay_rate / (
-            math.log(1 + access_count) + 1
-        )
-    else:
-        effective_decay = decay_config.base_decay_rate
-
-    # Clamp to min/max
-    effective_decay = max(
-        decay_config.min_decay_rate, min(decay_config.max_decay_rate, effective_decay)
-    )
-
-    # Exponential decay: score = e^(-decay * time)
-    recency_score = math.exp(-effective_decay * time_diff)
-
-    # Ensure score is in [0, 1]
-    recency_score = max(0.0, min(1.0, recency_score))
-
-    return recency_score, time_diff, effective_decay
-
-
-def _ensure_utc(dt: datetime) -> datetime:
-    """Ensure datetime is timezone-aware (UTC)"""
-    if dt.tzinfo is None:
-        return dt.replace(tzinfo=timezone.utc)
-    return dt
-
-
-# ============================================================================
-# Batch Scoring
-# ============================================================================
+    return result
 
 
 def compute_batch_scores(
@@ -287,6 +148,10 @@ def compute_batch_scores(
 ) -> List[MemoryScoreResult]:
     """
     Compute scores for a batch of memories.
+
+    Service-layer wrapper with logging around rae_core.math.policy.compute_batch_scores().
+
+    For mathematical details, see: rae_core.math.policy.compute_batch_scores
 
     Args:
         memories: List of memory dicts with keys: id, importance,
@@ -304,38 +169,36 @@ def compute_batch_scores(
         ...     {
         ...         "id": "mem1",
         ...         "importance": 0.8,
-        ...         "last_accessed_at": datetime(2024, 1, 1),
-        ...         "created_at": datetime(2024, 1, 1),
+        ...         "last_accessed_at": datetime(2024, 1, 1, tzinfo=timezone.utc),
+        ...         "created_at": datetime(2024, 1, 1, tzinfo=timezone.utc),
         ...         "usage_count": 10,
         ...     },
-        ...     # ... more memories
         ... ]
-        >>> similarities = [0.9, 0.7, 0.6]
+        >>> similarities = [0.9]
         >>> results = compute_batch_scores(memories, similarities)
-        >>> sorted_results = sorted(results, key=lambda r: r.final_score, reverse=True)
     """
-    if len(memories) != len(similarity_scores):
-        raise ValueError(
-            f"Mismatch: {len(memories)} memories but {len(similarity_scores)} similarity scores"
-        )
+    logger.debug(
+        "batch_scoring_started",
+        num_memories=len(memories),
+        num_similarities=len(similarity_scores),
+    )
 
-    results = []
-    for memory, similarity in zip(memories, similarity_scores):
-        # Extract fields (handle both usage_count and access_count)
-        access_count = memory.get("usage_count") or memory.get("access_count") or 0
+    # Delegate to pure math function
+    results = _compute_batch_scores(
+        memories=memories,
+        similarity_scores=similarity_scores,
+        now=now,
+        weights=weights,
+        decay_config=decay_config,
+    )
 
-        result = compute_memory_score(
-            similarity=similarity,
-            importance=memory.get("importance", 0.5),
-            last_accessed_at=memory.get("last_accessed_at"),
-            created_at=memory["created_at"],
-            access_count=access_count,
-            now=now,
-            weights=weights,
-            decay_config=decay_config,
-            memory_id=str(memory.get("id", "unknown")),
-        )
-        results.append(result)
+    logger.debug(
+        "batch_scoring_completed",
+        num_results=len(results),
+        avg_score=(
+            sum(r.final_score for r in results) / len(results) if results else 0.0
+        ),
+    )
 
     return results
 
@@ -346,6 +209,10 @@ def rank_memories_by_score(
     """
     Rank memories by their computed scores.
 
+    Service-layer wrapper around rae_core.math.policy.rank_memories_by_score().
+
+    For details, see: rae_core.math.policy.rank_memories_by_score
+
     Args:
         memories: Original memory records
         score_results: Corresponding score results
@@ -353,16 +220,5 @@ def rank_memories_by_score(
     Returns:
         List of memories sorted by score (descending), with 'final_score' added
     """
-    if len(memories) != len(score_results):
-        raise ValueError("Memories and score_results must have same length")
-
-    # Combine memories with scores
-    ranked = []
-    for memory, score_result in zip(memories, score_results):
-        memory_with_score = {**memory, "final_score": score_result.final_score}
-        ranked.append(memory_with_score)
-
-    # Sort by final_score descending
-    ranked.sort(key=lambda m: m["final_score"], reverse=True)
-
-    return ranked
+    # Delegate to pure math function
+    return _rank_memories_by_score(memories, score_results)

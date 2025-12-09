@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from structlog.testing import capture_logs
 
 from apps.memory_api.services.memory_scoring_v2 import (
     DecayConfig,
@@ -24,12 +23,11 @@ def created_at():
 
 
 def test_scoring_weights_validation():
-    """Test that non-normalized weights log a warning"""
-    with capture_logs() as cap_logs:
+    """Test that non-normalized weights raise a warning"""
+    # Changed: Now uses Python warnings.warn() instead of structlog logging
+    # since rae_core is pure and shouldn't depend on structlog
+    with pytest.warns(UserWarning, match="do not sum to 1.0"):
         ScoringWeights(alpha=0.5, beta=0.5, gamma=0.5)  # Sum = 1.5
-
-        assert len(cap_logs) >= 1
-        assert cap_logs[0]["event"] == "scoring_weights_not_normalized"
 
 
 def test_compute_memory_score_basic(now, created_at):
@@ -105,7 +103,9 @@ def test_future_timestamp(now):
     """Test handling of future timestamps"""
     future = now + timedelta(days=1)
 
-    with capture_logs() as cap_logs:
+    # Changed: Now uses Python warnings.warn() instead of structlog logging
+    # since rae_core is pure and shouldn't depend on structlog
+    with pytest.warns(UserWarning, match="Future timestamp detected"):
         result = compute_memory_score(
             similarity=0.5,
             importance=0.5,
@@ -114,7 +114,6 @@ def test_future_timestamp(now):
             now=now,
         )
 
-        assert any(log["event"] == "future_timestamp_detected" for log in cap_logs)
         assert result.recency_score == 1.0  # Default for invalid/future
 
 
@@ -142,7 +141,8 @@ def test_batch_scoring_mismatch():
     memories = [{"id": "m1"}]
     similarities = [0.9, 0.8]
 
-    with pytest.raises(ValueError, match="Mismatch"):
+    # Updated: Error message changed to "Length mismatch" in rae_core.math
+    with pytest.raises(ValueError, match="Length mismatch"):
         compute_batch_scores(memories, similarities)
 
 

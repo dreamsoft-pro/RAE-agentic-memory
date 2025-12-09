@@ -13,3 +13,4 @@ mypy
 black
 isort
 pre-commit
+locust # Added for basic load testing (Iteration 1.2)
