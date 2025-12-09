@@ -92,6 +92,7 @@ jobs:
           pip install -r apps/memory_api/requirements-base.txt
           pip install -r apps/memory_api/requirements-test.txt
           pip install -e sdk/python/rae_memory_sdk
+          pip install -e rae_core
 
       - name: Detect changed files
         id: changes
@@ -234,6 +235,7 @@ jobs:
           pip install -r apps/memory_api/requirements-base.txt
           pip install -r apps/memory_api/requirements-test.txt
           pip install -e sdk/python/rae_memory_sdk
+          pip install -e rae_core
 
       - name: Run ALL unit tests (full validation)
         env:
@@ -387,6 +389,7 @@ jobs:
           pip install sentence-transformers
           pip install -r apps/memory_api/requirements-base.txt
           pip install -e sdk/python/rae_memory_sdk
+          pip install -e rae_core
 
       - name: Setup database
         env:
@@ -962,6 +965,7 @@ jobs:
           pip install -r apps/memory_api/requirements-base.txt
           pip install -r apps/memory_api/requirements-test.txt
           pip install -e sdk/python/rae_memory_sdk
+          pip install -e rae_core
 
       - name: Run tests with warning detection
         env:
@@ -1036,6 +1040,7 @@ jobs:
           pip install -r apps/memory_api/requirements-base.txt
           pip install -r apps/memory_api/requirements-test.txt
           pip install -e sdk/python/rae_memory_sdk
+          pip install -e rae_core
           pip install pytest-json-report
 
       - name: Run tests multiple times (3x)
@@ -1141,6 +1146,7 @@ jobs:
           pip install -r apps/memory_api/requirements-base.txt
           pip install -r apps/memory_api/requirements-test.txt
           pip install -e sdk/python/rae_memory_sdk
+          pip install -e rae_core
           pip install pyyaml psutil memory-profiler pytest-timeout
 
       - name: Collect performance metrics
