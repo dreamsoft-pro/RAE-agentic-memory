@@ -3,7 +3,7 @@ Query analyzer for intent detection and query enhancement.
 """
 
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel
 
@@ -27,7 +27,7 @@ class AnalyzedQuery(BaseModel):
     intent: QueryIntent
     keywords: List[str]
     entities: List[str]
-    filters: Dict[str, any]
+    filters: Dict[str, Any]
     enhanced_query: str
     confidence: float
 
@@ -128,7 +128,7 @@ class QueryAnalyzer:
         self,
         query_lower: str,
         intent: QueryIntent
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """Build search filters based on query and intent."""
         filters = {}
 
