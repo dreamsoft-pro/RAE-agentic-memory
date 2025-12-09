@@ -20,6 +20,7 @@ from apps.memory_api.api.v1 import (
     graph,
     memory,
 )
+from apps.memory_api.api.v2 import memory as memory_v2
 from apps.memory_api.config import settings
 from apps.memory_api.dependencies import create_redis_client
 from apps.memory_api.logging_config import setup_logging
@@ -44,6 +45,7 @@ from apps.memory_api.routes import (
 from apps.memory_api.security import auth
 from apps.memory_api.security.rate_limit import rate_limit_middleware
 from apps.memory_api.services.context_cache import rebuild_full_cache
+from apps.memory_api.services.rae_core_service import RAECoreService
 
 # Setup OpenTelemetry (before app creation)
 setup_opentelemetry()
@@ -79,6 +81,19 @@ async def lifespan(app: FastAPI):
     app.state.qdrant_client = QdrantClient(
         host=settings.QDRANT_HOST, port=settings.QDRANT_PORT
     )
+
+    # Initialize RAE-Core service
+    from qdrant_client import AsyncQdrantClient
+
+    async_qdrant = AsyncQdrantClient(
+        host=settings.QDRANT_HOST, port=settings.QDRANT_PORT
+    )
+    app.state.rae_core_service = RAECoreService(
+        postgres_pool=app.state.pool,
+        qdrant_client=async_qdrant,
+        redis_client=app.state.redis_client,
+    )
+    logger.info("RAE-Core service initialized")
 
     await rebuild_full_cache()
 
@@ -313,6 +328,9 @@ app.include_router(evaluation.router, tags=["Evaluation"])
 app.include_router(dashboard.router, tags=["Dashboard"])
 app.include_router(graph_enhanced.router, tags=["Graph Management"])
 app.include_router(token_savings.router, tags=["Metrics"])
+
+# API v2 - RAE-Core powered endpoints
+app.include_router(memory_v2.router)
 
 
 # Root endpoint
