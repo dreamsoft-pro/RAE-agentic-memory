@@ -1,0 +1,82 @@
+# PyInstaller spec file for RAE-Lite
+# Usage: pyinstaller rae-lite.spec
+
+import sys
+from pathlib import Path
+
+block_cipher = None
+
+a = Analysis(
+    ['rae_lite/main.py'],
+    pathex=[],
+    binaries=[],
+    datas=[
+        # Include rae-core package
+        ('../.venv/lib/python*/site-packages/rae_core', 'rae_core'),
+    ],
+    hiddenimports=[
+        'rae_core',
+        'rae_core.engine',
+        'rae_core.adapters.sqlite',
+        'rae_core.layers',
+        'rae_core.search',
+        'fastapi',
+        'uvicorn',
+        'pystray',
+        'PIL',
+        'structlog',
+        'aiosqlite',
+        'numpy',
+    ],
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
+    excludes=[
+        'matplotlib',
+        'pandas',
+        'scipy',
+        'jupyter',
+    ],
+    win_no_prefer_redirects=False,
+    win_private_assemblies=False,
+    cipher=block_cipher,
+    noarchive=False,
+)
+
+pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+
+exe = EXE(
+    pyz,
+    a.scripts,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    [],
+    name='RAE-Lite',
+    debug=False,
+    bootloader_ignore_signals=False,
+    strip=False,
+    upx=True,
+    upx_exclude=[],
+    runtime_tmpdir=None,
+    console=False,  # No console window
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
+    icon='assets/icon.ico' if sys.platform == 'win32' else None,
+)
+
+# macOS .app bundle
+if sys.platform == 'darwin':
+    app = BUNDLE(
+        exe,
+        name='RAE-Lite.app',
+        icon='assets/icon.icns',
+        bundle_identifier='com.rae.lite',
+        info_plist={
+            'NSHighResolutionCapable': 'True',
+            'LSBackgroundOnly': 'False',
+        },
+    )
