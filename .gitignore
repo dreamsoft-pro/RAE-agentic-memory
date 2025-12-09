@@ -26,6 +26,21 @@ Thumbs.db
 # Benchmarking
 benchmarking/results/
 benchmarking/session_*.log
+
+# Load Testing
+stress_test_report.html
+stress_test_stats_exceptions.csv
+stress_test_stats_failures.csv
+stress_test_stats_stats.csv
+stress_test_stats_stats_history.csv
+soak_test_report.html
+soak_test_stats_exceptions.csv
+soak_test_stats_failures.csv
+soak_test_stats_stats.csv
+soak_test_stats_stats_history.csv
+*.log # Catching stress_test.log and soak_test.log
+
+
 # venv/IDE
 .env
 .vscode/

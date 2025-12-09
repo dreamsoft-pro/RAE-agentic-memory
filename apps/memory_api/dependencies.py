@@ -13,7 +13,10 @@ Enterprise Architecture Benefits:
 """
 
 import asyncpg
+import redis.asyncio as aioredis
 from fastapi import HTTPException, Request
+from qdrant_client import QdrantClient
+from redis.asyncio import Redis as AsyncRedis
 
 from .repositories.graph_repository import GraphRepository
 from .repositories.memory_repository import MemoryRepository
@@ -44,6 +47,36 @@ def get_db_pool(request: Request) -> asyncpg.Pool:
         AsyncPG connection pool
     """
     return request.app.state.pool
+
+
+# ==========================================
+# External Services Clients
+# ==========================================
+
+
+async def create_redis_client(redis_url: str) -> AsyncRedis:
+    """
+    Factory function to create an asynchronous Redis client.
+    """
+    return aioredis.from_url(redis_url, encoding="utf-8", decode_responses=True)
+
+
+def get_redis_client(request: Request) -> AsyncRedis:
+    """
+    Get the Redis client from application state.
+    """
+    if not hasattr(request.app.state, "redis_client"):
+        raise HTTPException(status_code=500, detail="Redis client not initialized")
+    return request.app.state.redis_client
+
+
+def get_qdrant_client(request: Request) -> QdrantClient:
+    """
+    Get the Qdrant client from application state.
+    """
+    if not hasattr(request.app.state, "qdrant_client"):
+        raise HTTPException(status_code=500, detail="Qdrant client not initialized")
+    return request.app.state.qdrant_client
 
 
 # ==========================================
