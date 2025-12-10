@@ -1,0 +1,60 @@
+"""Context models for RAE-core working memory."""
+
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+from uuid import UUID
+
+from pydantic import BaseModel, Field
+
+
+class ContextWindow(BaseModel):
+    """Context window for working memory."""
+
+    max_tokens: int = Field(default=4096, description="Maximum tokens in window")
+    current_tokens: int = Field(default=0, description="Current token count")
+    items: List[UUID] = Field(
+        default_factory=list, description="Memory item IDs in window"
+    )
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict, description="Window metadata"
+    )
+
+
+class WorkingContext(BaseModel):
+    """Working context model for active processing."""
+
+    tenant_id: str = Field(description="Tenant identifier")
+    agent_id: Optional[str] = Field(default=None, description="Agent identifier")
+
+    window: ContextWindow = Field(
+        default_factory=ContextWindow, description="Context window"
+    )
+
+    focus_items: List[UUID] = Field(
+        default_factory=list, description="Currently focused memory items"
+    )
+
+    priority_score: float = Field(
+        default=0.5, ge=0.0, le=1.0, description="Context priority"
+    )
+
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict, description="Additional context metadata"
+    )
+
+
+class ContextMetadata(BaseModel):
+    """Metadata for context management."""
+
+    total_items: int = Field(default=0, description="Total items in context")
+    active_items: int = Field(default=0, description="Active items")
+    token_usage: int = Field(default=0, description="Current token usage")
+    last_compaction: Optional[datetime] = Field(
+        default=None, description="Last context compaction time"
+    )
+    statistics: Dict[str, Any] = Field(
+        default_factory=dict, description="Context statistics"
+    )
