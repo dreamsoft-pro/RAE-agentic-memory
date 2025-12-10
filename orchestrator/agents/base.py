@@ -153,41 +153,6 @@ class BaseAgent(ABC):
         Returns:
             Formatted rules section for prompt
         """
-        import os
-        from pathlib import Path
-
-        # ONLY load critical rules - keep prompt small for Gemini CLI
-        rules_files = [
-            "CRITICAL_AGENT_RULES.md",  # Only the most important
-        ]
-
-        rules_content = []
-        rules_content.append("=" * 80)
-        rules_content.append("CRITICAL PROJECT RULES")
-        rules_content.append("=" * 80)
-        rules_content.append("")
-
-        for rules_file in rules_files:
-            file_path = Path(working_dir) / rules_file
-            if file_path.exists():
-                try:
-                    with open(file_path, 'r', encoding='utf-8') as f:
-                        content = f.read()
-
-                    # Keep ONLY first 50 lines - critical rules only!
-                    lines = content.split('\n')
-                    if len(lines) > 50:
-                        content = '\n'.join(lines[:50])
-                        content += f"\n\n... (see {rules_file} for complete rules)"
-
-                    rules_content.append(content)
-                except Exception as e:
-                    # If file can't be read, skip it
-                    pass
-
-        if len(rules_content) > 1:  # If we loaded at least one file
-            rules_content.append("")
-            rules_content.append("=" * 80)
-            return "\n".join(rules_content)
-
+        # DISABLED: Project rules cause issues with LLM prompts
+        # Keep prompts minimal for better reliability
         return ""
