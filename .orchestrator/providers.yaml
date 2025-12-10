@@ -3,6 +3,7 @@
 
 providers:
   # Claude (Anthropic) - Advanced reasoning, code generation
+  # Using Claude because Gemini CLI has issues with orchestrator prompts
   claude:
     enabled: true
     default_model: claude-sonnet-4-5-20250929
@@ -10,19 +11,17 @@ providers:
       # API key from environment variable
       api_key: ${ANTHROPIC_API_KEY}
 
-  # Gemini (Google) - Fast, FREE for most tasks (via CLI)
+  # Gemini (Google) - DISABLED due to CLI "thinking mode" errors
+  # Error: "thinking is not supported by this model"
+  # Gemini CLI adds its own context that conflicts with orchestrator
   gemini:
-    enabled: true
-    default_model: gemini-2.5-flash  # Latest stable
+    enabled: false  # Disabled - use Claude instead
+    default_model: gemini-2.5-flash
     settings:
-      # Path to Gemini CLI (requires: gemini auth login)
       cli_path: gemini
-
-      # Rate limiting (IMPORTANT for free CLI without API key)
-      # Adds random delays (1-10s) between requests to avoid hitting rate limits
       rate_limit_delay: true
-      min_delay: 1.0   # Minimum delay in seconds
-      max_delay: 10.0  # Maximum delay in seconds
+      min_delay: 1.0
+      max_delay: 10.0
 
   # Ollama - Local models (free, but requires Ollama running)
   ollama:
