@@ -31,7 +31,7 @@ Przewodnik konfiguracji Claude Code z RAE Memory i Gemini CLI jako narzędziem w
                ↓
 ┌─────────────────────────────────────────────────────────────────┐
 │                      RAE Memory API                              │
-│                      (Port 8001)                                 │
+│                      (Port 8000)                                 │
 │                                                                  │
 │  Episodic Memory:                                                │
 │  ┌────────────────────────────────────────────────────────┐    │
@@ -56,7 +56,7 @@ cd /home/grzegorz/cloud/Dockerized/RAE-agentic-memory
 docker-compose up -d rae-api
 
 # 2. Sprawdź czy działa
-curl http://localhost:8001/health
+curl http://localhost:8000/health
 # Powinno zwrócić: {"status":"ok"}
 ```
 
@@ -89,7 +89,7 @@ Edytuj `~/.config/Claude/claude_desktop_config.json`:
     "rae-memory": {
       "command": "/home/grzegorz/cloud/Dockerized/RAE-agentic-memory/.venv/bin/rae-mcp-server",
       "env": {
-        "RAE_API_URL": "http://localhost:8001",
+        "RAE_API_URL": "http://localhost:8000",
         "RAE_API_KEY": "dev-key",
         "RAE_PROJECT_ID": "claude-code-project",
         "RAE_TENANT_ID": "claude-code"
@@ -98,7 +98,7 @@ Edytuj `~/.config/Claude/claude_desktop_config.json`:
     "gemini": {
       "command": "/home/grzegorz/cloud/Dockerized/RAE-agentic-memory/.venv/bin/gemini-mcp-server",
       "env": {
-        "RAE_API_URL": "http://localhost:8001",
+        "RAE_API_URL": "http://localhost:8000",
         "RAE_API_KEY": "dev-key",
         "RAE_PROJECT_ID": "claude-code-project",
         "RAE_TENANT_ID": "claude-code"
@@ -297,7 +297,7 @@ Alternatywnie: Claude może kontynuować samodzielnie
 
 ```bash
 # API endpoint do sprawdzenia pamięci
-curl -X POST http://localhost:8001/v1/memory/query \
+curl -X POST http://localhost:8000/v1/memory/query \
   -H "Content-Type: application/json" \
   -H "X-API-Key: dev-key" \
   -H "X-Tenant-Id: claude-code" \
@@ -314,7 +314,7 @@ curl -X POST http://localhost:8001/v1/memory/query \
 
 ```bash
 # Sprawdź czy RAE API działa
-curl http://localhost:8001/health
+curl http://localhost:8000/health
 
 # Sprawdź logi Docker
 docker-compose logs rae-api
