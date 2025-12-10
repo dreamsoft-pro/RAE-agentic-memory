@@ -156,20 +156,15 @@ class BaseAgent(ABC):
         import os
         from pathlib import Path
 
+        # ONLY load critical rules - keep prompt small for Gemini CLI
         rules_files = [
-            "CRITICAL_AGENT_RULES.md",
-            "CONVENTIONS.md",
-            "AUTONOMOUS_OPERATIONS.md",
-            "BRANCH_STRATEGY.md",
-            "PROJECT_STRUCTURE.md",
+            "CRITICAL_AGENT_RULES.md",  # Only the most important
         ]
 
         rules_content = []
         rules_content.append("=" * 80)
-        rules_content.append("PROJECT RULES AND GUIDELINES")
+        rules_content.append("CRITICAL PROJECT RULES")
         rules_content.append("=" * 80)
-        rules_content.append("")
-        rules_content.append("IMPORTANT: You MUST follow these project guidelines:")
         rules_content.append("")
 
         for rules_file in rules_files:
@@ -179,27 +174,20 @@ class BaseAgent(ABC):
                     with open(file_path, 'r', encoding='utf-8') as f:
                         content = f.read()
 
-                    # Truncate if too long (keep first ~500 lines for key rules)
+                    # Keep ONLY first 50 lines - critical rules only!
                     lines = content.split('\n')
-                    if len(lines) > 500:
-                        content = '\n'.join(lines[:500])
-                        content += f"\n\n... (truncated, see {rules_file} for complete rules)"
+                    if len(lines) > 50:
+                        content = '\n'.join(lines[:50])
+                        content += f"\n\n... (see {rules_file} for complete rules)"
 
-                    rules_content.append(f"## {rules_file}")
-                    rules_content.append("")
                     rules_content.append(content)
-                    rules_content.append("")
-                    rules_content.append("-" * 80)
-                    rules_content.append("")
                 except Exception as e:
                     # If file can't be read, skip it
                     pass
 
-        if len(rules_content) > 5:  # If we loaded at least one file
-            rules_content.append("=" * 80)
-            rules_content.append("END OF PROJECT RULES")
-            rules_content.append("=" * 80)
+        if len(rules_content) > 1:  # If we loaded at least one file
             rules_content.append("")
+            rules_content.append("=" * 80)
             return "\n".join(rules_content)
 
         return ""
