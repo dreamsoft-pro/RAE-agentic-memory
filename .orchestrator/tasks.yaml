@@ -61,3 +61,15 @@ tasks:
       - Input validation
       - Rate limiting
       - Integration tests
+
+  # Twoje pierwsze zadanie - bardzo proste!
+  - id: DEMO-001
+    goal: "Create a simple Python function that returns current timestamp"
+    risk: low
+    area: test
+    repo: RAE-agentic-memory
+    constraints:
+      - Add docstring
+      - Add type hints
+      - Use datetime module
+      - Return ISO format string
