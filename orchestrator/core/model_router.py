@@ -18,14 +18,19 @@ class RoutingDecision:
 class ModelRouter:
     """Routes tasks to appropriate models based on complexity, risk, and area."""
 
-    def __init__(self):
-        """Initialize model router with routing rules."""
+    def __init__(self, gemini_enabled: bool = True):
+        """Initialize model router with routing rules.
+
+        Args:
+            gemini_enabled: Whether Gemini models are available
+        """
         # Cost per 1K tokens (from plan)
         self.costs = {
             ModelType.GEMINI_FLASH: 0.00001875,
             ModelType.GEMINI_PRO: 0.00025,
             ModelType.CLAUDE_SONNET: 0.003,
         }
+        self.gemini_enabled = gemini_enabled
 
     def choose_planner(
         self,
@@ -70,22 +75,38 @@ class ModelRouter:
                 confidence=0.90,
             )
 
-        # Low-risk docs/comments → Gemini Flash
+        # Low-risk docs/comments → Gemini Flash (if available) or Claude
         if task_risk == TaskRisk.LOW and task_area in ["docs", "comments"]:
-            return RoutingDecision(
-                model=ModelType.GEMINI_FLASH,
-                rationale="Low-risk docs, Gemini Flash is cheap and sufficient",
-                estimated_cost=self.costs[ModelType.GEMINI_FLASH] * 3,
-                confidence=0.95,
-            )
+            if self.gemini_enabled:
+                return RoutingDecision(
+                    model=ModelType.GEMINI_FLASH,
+                    rationale="Low-risk docs, Gemini Flash is cheap and sufficient",
+                    estimated_cost=self.costs[ModelType.GEMINI_FLASH] * 3,
+                    confidence=0.95,
+                )
+            else:
+                return RoutingDecision(
+                    model=ModelType.CLAUDE_SONNET,
+                    rationale="Low-risk docs (Gemini disabled, using Claude Sonnet)",
+                    estimated_cost=self.costs[ModelType.CLAUDE_SONNET] * 3,
+                    confidence=0.95,
+                )
 
-        # Default: Gemini Pro
-        return RoutingDecision(
-            model=ModelType.GEMINI_PRO,
-            rationale="Default choice for general planning tasks",
-            estimated_cost=self.costs[ModelType.GEMINI_PRO] * 3,
-            confidence=0.75,
-        )
+        # Default: Gemini Pro (if available) or Claude
+        if self.gemini_enabled:
+            return RoutingDecision(
+                model=ModelType.GEMINI_PRO,
+                rationale="Default choice for general planning tasks",
+                estimated_cost=self.costs[ModelType.GEMINI_PRO] * 3,
+                confidence=0.75,
+            )
+        else:
+            return RoutingDecision(
+                model=ModelType.CLAUDE_SONNET,
+                rationale="Default choice (Gemini disabled, using Claude Sonnet)",
+                estimated_cost=self.costs[ModelType.CLAUDE_SONNET] * 3,
+                confidence=0.90,
+            )
 
     def choose_plan_reviewer(
         self,
@@ -105,12 +126,21 @@ class ModelRouter:
         """
         # RULE: Different than Planner
         if planner_model == ModelType.CLAUDE_SONNET:
-            return RoutingDecision(
-                model=ModelType.GEMINI_PRO,
-                rationale="Cross-review: Gemini Pro reviews Claude Sonnet's plan",
-                estimated_cost=self.costs[ModelType.GEMINI_PRO] * 2,  # ~2K tokens
-                confidence=0.90,
-            )
+            # If Gemini disabled, use Claude again (same model for now)
+            if self.gemini_enabled:
+                return RoutingDecision(
+                    model=ModelType.GEMINI_PRO,
+                    rationale="Cross-review: Gemini Pro reviews Claude Sonnet's plan",
+                    estimated_cost=self.costs[ModelType.GEMINI_PRO] * 2,  # ~2K tokens
+                    confidence=0.90,
+                )
+            else:
+                return RoutingDecision(
+                    model=ModelType.CLAUDE_SONNET,
+                    rationale="Cross-review: Claude Sonnet (Gemini disabled, using same model)",
+                    estimated_cost=self.costs[ModelType.CLAUDE_SONNET] * 2,
+                    confidence=0.85,
+                )
         elif planner_model == ModelType.GEMINI_PRO:
             # For high-risk, use Claude; otherwise Flash
             if task_risk == TaskRisk.HIGH:
@@ -121,12 +151,20 @@ class ModelRouter:
                     confidence=0.95,
                 )
             else:
-                return RoutingDecision(
-                    model=ModelType.GEMINI_FLASH,
-                    rationale="Cross-review: Gemini Flash reviews Gemini Pro's plan (low-risk)",
-                    estimated_cost=self.costs[ModelType.GEMINI_FLASH] * 2,
-                    confidence=0.85,
-                )
+                if self.gemini_enabled:
+                    return RoutingDecision(
+                        model=ModelType.GEMINI_FLASH,
+                        rationale="Cross-review: Gemini Flash reviews Gemini Pro's plan (low-risk)",
+                        estimated_cost=self.costs[ModelType.GEMINI_FLASH] * 2,
+                        confidence=0.85,
+                    )
+                else:
+                    return RoutingDecision(
+                        model=ModelType.CLAUDE_SONNET,
+                        rationale="Cross-review: Claude Sonnet (Gemini disabled)",
+                        estimated_cost=self.costs[ModelType.CLAUDE_SONNET] * 2,
+                        confidence=0.85,
+                    )
         else:  # Planner is Flash
             return RoutingDecision(
                 model=ModelType.CLAUDE_SONNET,
@@ -162,31 +200,55 @@ class ModelRouter:
                 confidence=0.95,
             )
 
-        # Simple docs/comments/refactor → Gemini Flash
+        # Simple docs/comments/refactor → Gemini Flash or Claude
         if step_type in ["docs", "comments", "simple_refactor"]:
-            return RoutingDecision(
-                model=ModelType.GEMINI_FLASH,
-                rationale="Simple docs/comments, Gemini Flash is fast and cheap",
-                estimated_cost=self.costs[ModelType.GEMINI_FLASH] * 5,
-                confidence=0.95,
-            )
+            if self.gemini_enabled:
+                return RoutingDecision(
+                    model=ModelType.GEMINI_FLASH,
+                    rationale="Simple docs/comments, Gemini Flash is fast and cheap",
+                    estimated_cost=self.costs[ModelType.GEMINI_FLASH] * 5,
+                    confidence=0.95,
+                )
+            else:
+                return RoutingDecision(
+                    model=ModelType.CLAUDE_SONNET,
+                    rationale="Simple docs/comments (Gemini disabled, using Claude Sonnet)",
+                    estimated_cost=self.costs[ModelType.CLAUDE_SONNET] * 5,
+                    confidence=0.95,
+                )
 
-        # Low-risk tests → Gemini Flash
+        # Low-risk tests → Gemini Flash or Claude
         if step_area == "tests" and step_risk == TaskRisk.LOW:
+            if self.gemini_enabled:
+                return RoutingDecision(
+                    model=ModelType.GEMINI_FLASH,
+                    rationale="Low-risk tests, Gemini Flash is good at writing tests",
+                    estimated_cost=self.costs[ModelType.GEMINI_FLASH] * 5,
+                    confidence=0.90,
+                )
+            else:
+                return RoutingDecision(
+                    model=ModelType.CLAUDE_SONNET,
+                    rationale="Low-risk tests (Gemini disabled, using Claude Sonnet)",
+                    estimated_cost=self.costs[ModelType.CLAUDE_SONNET] * 5,
+                    confidence=0.90,
+                )
+
+        # Default: Gemini Pro or Claude
+        if self.gemini_enabled:
             return RoutingDecision(
-                model=ModelType.GEMINI_FLASH,
-                rationale="Low-risk tests, Gemini Flash is good at writing tests",
-                estimated_cost=self.costs[ModelType.GEMINI_FLASH] * 5,
+                model=ModelType.GEMINI_PRO,
+                rationale="Default choice for medium-complexity implementation",
+                estimated_cost=self.costs[ModelType.GEMINI_PRO] * 5,
+                confidence=0.80,
+            )
+        else:
+            return RoutingDecision(
+                model=ModelType.CLAUDE_SONNET,
+                rationale="Default implementation (Gemini disabled, using Claude Sonnet)",
+                estimated_cost=self.costs[ModelType.CLAUDE_SONNET] * 5,
                 confidence=0.90,
             )
-
-        # Default: Gemini Pro
-        return RoutingDecision(
-            model=ModelType.GEMINI_PRO,
-            rationale="Default choice for medium-complexity implementation",
-            estimated_cost=self.costs[ModelType.GEMINI_PRO] * 5,
-            confidence=0.80,
-        )
 
     def choose_code_reviewer(
         self,
@@ -206,12 +268,20 @@ class ModelRouter:
         """
         # RULE: Different than Implementer
         if implementer_model == ModelType.CLAUDE_SONNET:
-            return RoutingDecision(
-                model=ModelType.GEMINI_PRO,
-                rationale="Cross-review: Gemini Pro reviews Claude Sonnet's code",
-                estimated_cost=self.costs[ModelType.GEMINI_PRO] * 3,  # ~3K tokens
-                confidence=0.90,
-            )
+            if self.gemini_enabled:
+                return RoutingDecision(
+                    model=ModelType.GEMINI_PRO,
+                    rationale="Cross-review: Gemini Pro reviews Claude Sonnet's code",
+                    estimated_cost=self.costs[ModelType.GEMINI_PRO] * 3,  # ~3K tokens
+                    confidence=0.90,
+                )
+            else:
+                return RoutingDecision(
+                    model=ModelType.CLAUDE_SONNET,
+                    rationale="Cross-review: Claude Sonnet (Gemini disabled, using same model)",
+                    estimated_cost=self.costs[ModelType.CLAUDE_SONNET] * 3,
+                    confidence=0.85,
+                )
         elif implementer_model == ModelType.GEMINI_FLASH:
             # Flash code needs high-quality review
             return RoutingDecision(
@@ -230,12 +300,20 @@ class ModelRouter:
                     confidence=0.95,
                 )
             else:
-                return RoutingDecision(
-                    model=ModelType.GEMINI_FLASH,
-                    rationale="Cross-review: Gemini Flash reviews Gemini Pro's code (low-risk)",
-                    estimated_cost=self.costs[ModelType.GEMINI_FLASH] * 3,
-                    confidence=0.85,
-                )
+                if self.gemini_enabled:
+                    return RoutingDecision(
+                        model=ModelType.GEMINI_FLASH,
+                        rationale="Cross-review: Gemini Flash reviews Gemini Pro's code (low-risk)",
+                        estimated_cost=self.costs[ModelType.GEMINI_FLASH] * 3,
+                        confidence=0.85,
+                    )
+                else:
+                    return RoutingDecision(
+                        model=ModelType.CLAUDE_SONNET,
+                        rationale="Cross-review: Claude Sonnet (Gemini disabled)",
+                        estimated_cost=self.costs[ModelType.CLAUDE_SONNET] * 3,
+                        confidence=0.85,
+                    )
 
     def estimate_task_cost(
         self,

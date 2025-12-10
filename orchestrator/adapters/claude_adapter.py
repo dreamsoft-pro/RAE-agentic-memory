@@ -31,8 +31,10 @@ class ClaudeAdapter(ModelAdapter):
 
         super().__init__(model_type, working_dir)
 
-        # Get API key
-        self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
+        # Get API key and strip any whitespace (newlines, spaces, etc.)
+        raw_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
+        self.api_key = raw_key.strip() if raw_key else None
+
         if not self.api_key:
             raise ValueError(
                 "ANTHROPIC_API_KEY not found. Set via environment or pass to constructor."
