@@ -1,28 +1,35 @@
 # 📋 Małe Zadania dla Orkiestratora (Fixed!)
 
-> **Problem:** Gemini CLI nie radzi sobie z dużymi promptami (1MB)
-> **Rozwiązanie:** Rozbiliśmy duże zadania na małe kawałki!
+> **Problem:** Gemini CLI miał błędy parsowania i "thinking mode not supported"
+> **Rozwiązanie:** Przełączenie na Claude + małe zadania!
 
 ---
 
 ## ✅ Co Naprawiliśmy:
 
-1. **Reguły projektowe:** 73KB → 5KB (tylko pierwsze 50 linii CRITICAL_AGENT_RULES.md)
-2. **Duże zadania rozbite:**
+1. **Provider:** Gemini CLI → **Claude Sonnet 4.5** (niezawodny, działa!)
+   - Gemini CLI error: "thinking is not supported by this model"
+   - Claude API jest stabilny i bez problemów
+
+2. **Reguły projektowe:** 73KB → 5KB (tylko pierwsze 50 linii CRITICAL_AGENT_RULES.md)
+
+3. **Duże zadania rozbite:**
    - ~~RAE-DOC-001 (1 ogromne)~~ → **3 małe zadania** (RAE-DOC-001, 002, 003)
    - ~~RAE-PHASE2-FULL (2 tygodnie!)~~ → **3 adaptery** (RAE-PHASE2-001, 002, 003)
+
+**Koszt:** Trochę drożej (~$0.15-0.30 zamiast $0), ale **DZIAŁA stabilnie!**
 
 ---
 
 ## 📝 Dostępne Małe Zadania
 
-### Grupa 1: Dokumentacja (DARMOWE, bezpieczne)
+### Grupa 1: Dokumentacja (małe koszty, bezpieczne)
 
 #### RAE-DOC-001
 **Cel:** Sprawdź czy ContextBuilder jest zaimplementowany
 **Risk:** Low
 **Czas:** 3-5 minut
-**Koszt:** $0.00 (Gemini)
+**Koszt:** ~$0.01-0.02 (Claude Sonnet 4.5)
 ```bash
 python -m orchestrator.main --task-id RAE-DOC-001
 ```
@@ -31,7 +38,7 @@ python -m orchestrator.main --task-id RAE-DOC-001
 **Cel:** Sprawdź status SQLite adapterów
 **Risk:** Low
 **Czas:** 3-5 minut
-**Koszt:** $0.00 (Gemini)
+**Koszt:** ~$0.01-0.02 (Claude Sonnet 4.5)
 ```bash
 python -m orchestrator.main --task-id RAE-DOC-002
 ```
@@ -40,20 +47,20 @@ python -m orchestrator.main --task-id RAE-DOC-002
 **Cel:** Sprawdź status In-Memory adapterów
 **Risk:** Low
 **Czas:** 3-5 minut
-**Koszt:** $0.00 (Gemini)
+**Koszt:** ~$0.01-0.02 (Claude Sonnet 4.5)
 ```bash
 python -m orchestrator.main --task-id RAE-DOC-003
 ```
 
 ---
 
-### Grupa 2: Phase 2 Adaptery (PŁATNE, ~$0.05 każdy)
+### Grupa 2: Phase 2 Adaptery (średnie koszty)
 
 #### RAE-PHASE2-001
 **Cel:** Implementuj PostgresMemoryStorage adapter
 **Risk:** Medium
 **Czas:** 10-15 minut
-**Koszt:** ~$0.05 (Gemini Pro)
+**Koszt:** ~$0.05-0.10 (Claude Sonnet 4.5)
 ```bash
 python -m orchestrator.main --task-id RAE-PHASE2-001
 ```
@@ -62,7 +69,7 @@ python -m orchestrator.main --task-id RAE-PHASE2-001
 **Cel:** Implementuj QdrantVectorStore adapter
 **Risk:** Medium
 **Czas:** 10-15 minut
-**Koszt:** ~$0.05 (Gemini Pro)
+**Koszt:** ~$0.05-0.10 (Claude Sonnet 4.5)
 ```bash
 python -m orchestrator.main --task-id RAE-PHASE2-002
 ```
@@ -71,7 +78,7 @@ python -m orchestrator.main --task-id RAE-PHASE2-002
 **Cel:** Implementuj RedisCacheProvider adapter
 **Risk:** Low
 **Czas:** 10-15 minut
-**Koszt:** $0.00 (Gemini Flash)
+**Koszt:** ~$0.02-0.05 (Claude Sonnet 4.5)
 ```bash
 python -m orchestrator.main --task-id RAE-PHASE2-003
 ```
@@ -104,15 +111,15 @@ python -m orchestrator.main --task-id RAE-DOC-001
 
 ## 💡 Rekomendowana Kolejność
 
-### Dzień 1: Dokumentacja (DARMOWE!)
+### Dzień 1: Dokumentacja (tanie!)
 ```bash
-# 3 szybkie zadania - wszystkie darmowe
+# 3 szybkie zadania - małe koszty
 python -m orchestrator.main --task-id RAE-DOC-001
 python -m orchestrator.main --task-id RAE-DOC-002
 python -m orchestrator.main --task-id RAE-DOC-003
 ```
 
-**Koszt:** $0.00
+**Koszt:** ~$0.03-0.06
 **Czas:** 15-20 minut
 **Efekt:** Zaktualizowana dokumentacja Phase 1
 
@@ -186,14 +193,16 @@ gemini auth login
 
 | Zadanie | Model | Koszt | Czas |
 |---------|-------|-------|------|
-| RAE-DOC-001 | Gemini Flash | $0.00 | 3-5 min |
-| RAE-DOC-002 | Gemini Flash | $0.00 | 3-5 min |
-| RAE-DOC-003 | Gemini Flash | $0.00 | 3-5 min |
-| RAE-PHASE2-001 | Gemini Pro | ~$0.05 | 10-15 min |
-| RAE-PHASE2-002 | Gemini Pro | ~$0.05 | 10-15 min |
-| RAE-PHASE2-003 | Gemini Flash | $0.00 | 10-15 min |
+| RAE-DOC-001 | Claude Sonnet 4.5 | ~$0.01-0.02 | 3-5 min |
+| RAE-DOC-002 | Claude Sonnet 4.5 | ~$0.01-0.02 | 3-5 min |
+| RAE-DOC-003 | Claude Sonnet 4.5 | ~$0.01-0.02 | 3-5 min |
+| RAE-PHASE2-001 | Claude Sonnet 4.5 | ~$0.05-0.10 | 10-15 min |
+| RAE-PHASE2-002 | Claude Sonnet 4.5 | ~$0.05-0.10 | 10-15 min |
+| RAE-PHASE2-003 | Claude Sonnet 4.5 | ~$0.02-0.05 | 10-15 min |
 
-**RAZEM:** ~$0.10 dla wszystkich 6 zadań!
+**RAZEM:** ~$0.15-0.30 dla wszystkich 6 zadań
+
+**UWAGA:** Gemini CLI wyłączony z powodu błędów "thinking mode not supported"
 
 ---
 
