@@ -111,13 +111,13 @@ class BaseAgent(ABC):
         return await self.adapter.execute(context)
 
     def _build_base_prompt(self, task: AgentTask) -> str:
-        """Build base prompt with common context.
+        """Build base prompt with common context and project rules.
 
         Args:
             task: Agent task
 
         Returns:
-            Base prompt string
+            Base prompt string with project guidelines
         """
         parts = [
             f"You are {self.name}, a {self.role} agent in a multi-agent orchestrator.",
@@ -126,6 +126,11 @@ class BaseAgent(ABC):
             f"Complexity: {task.complexity.value}",
             f"Risk: {task.risk.value}",
         ]
+
+        # Add project rules and guidelines
+        rules_section = self._load_project_rules(task.working_directory)
+        if rules_section:
+            parts.append(f"\n{rules_section}")
 
         if task.files_to_read:
             parts.append(f"\nRelevant files:")
@@ -138,3 +143,63 @@ class BaseAgent(ABC):
                 parts.append(f"- {key}: {value}")
 
         return "\n".join(parts)
+
+    def _load_project_rules(self, working_dir: str) -> str:
+        """Load project rules and guidelines from documentation.
+
+        Args:
+            working_dir: Project working directory
+
+        Returns:
+            Formatted rules section for prompt
+        """
+        import os
+        from pathlib import Path
+
+        rules_files = [
+            "CRITICAL_AGENT_RULES.md",
+            "CONVENTIONS.md",
+            "AUTONOMOUS_OPERATIONS.md",
+            "BRANCH_STRATEGY.md",
+            "PROJECT_STRUCTURE.md",
+        ]
+
+        rules_content = []
+        rules_content.append("=" * 80)
+        rules_content.append("PROJECT RULES AND GUIDELINES")
+        rules_content.append("=" * 80)
+        rules_content.append("")
+        rules_content.append("IMPORTANT: You MUST follow these project guidelines:")
+        rules_content.append("")
+
+        for rules_file in rules_files:
+            file_path = Path(working_dir) / rules_file
+            if file_path.exists():
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        content = f.read()
+
+                    # Truncate if too long (keep first ~500 lines for key rules)
+                    lines = content.split('\n')
+                    if len(lines) > 500:
+                        content = '\n'.join(lines[:500])
+                        content += f"\n\n... (truncated, see {rules_file} for complete rules)"
+
+                    rules_content.append(f"## {rules_file}")
+                    rules_content.append("")
+                    rules_content.append(content)
+                    rules_content.append("")
+                    rules_content.append("-" * 80)
+                    rules_content.append("")
+                except Exception as e:
+                    # If file can't be read, skip it
+                    pass
+
+        if len(rules_content) > 5:  # If we loaded at least one file
+            rules_content.append("=" * 80)
+            rules_content.append("END OF PROJECT RULES")
+            rules_content.append("=" * 80)
+            rules_content.append("")
+            return "\n".join(rules_content)
+
+        return ""
