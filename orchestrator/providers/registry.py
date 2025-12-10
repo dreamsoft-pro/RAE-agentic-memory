@@ -1,7 +1,7 @@
 """Provider registry for managing LLM providers."""
 
 import logging
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from .base import LLMProvider, ModelInfo, ModelTier, ProviderConfig
 
