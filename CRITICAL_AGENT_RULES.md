@@ -368,24 +368,134 @@ When you add new features, **manually update** these files (CI does NOT handle t
 
 ---
 
-## 🎯 Quick Reference Card
+---
+
+## 🔴 RULE #9: START EVERY SESSION WITH REQUIRED READING
+
+### 📖 MANDATORY - Read These First (15 minutes)
+
+Before ANY work, read these documents in this EXACT order:
+
+| # | Document | Time | What |
+|---|----------|------|------|
+| 1 | **SESSION_START.md** | 5 min | How to start a session properly |
+| 2 | **AUTONOMOUS_OPERATIONS.md** | 5 min | What to do WITHOUT asking |
+| 3 | **BRANCH_STRATEGY.md** | 5 min | 4-phase workflow (feature→develop→release→main) |
+
+### 🎯 Why This Rule Exists
+
+1. **Prevents Questions**: Reading first prevents 20+ obvious questions
+2. **Saves Time**: 15 minutes reading saves hours of back-and-forth
+3. **Consistency**: All agents start with the same baseline knowledge
+4. **Autonomy**: Understanding autonomy rules upfront = no blocking user
+
+### ❌ DON'T:
+```
+User: "Add cache service"
+Agent: "Should I create a file?"           # You didn't read docs!
+Agent: "Which pattern to use?"             # Read AUTONOMOUS_OPERATIONS.md!
+Agent: "Can I commit?"                     # Read SESSION_START.md!
+```
+
+### ✅ DO:
+```
+User: "Add cache service"
+Agent: [Silently reads SESSION_START.md, AUTONOMOUS_OPERATIONS.md]
+Agent: [Implements autonomously using templates]
+Agent: "Done. Cache service implemented with 12 tests. Ready for merge."
+```
+
+**See**: `SESSION_START.md` for complete checklist
+
+---
+
+## 🔴 RULE #10: RESPECT 4-PHASE WORKFLOW WITH RELEASE BRANCH
+
+### 🌳 NEW: Release Branch as Production Gate
+
+```
+feature/* → develop → release → main
+  (dev)     (integ)   (QA)     (HOLY)
+```
+
+**Critical Change**: Main is now ONLY accessed through release branch!
+
+### 📋 Rules for Each Branch
+
+| Branch | Testing | Merge How | Protection |
+|--------|---------|-----------|------------|
+| feature/* | ONLY new code (--no-cov) | Local or PR to develop | None |
+| develop | FULL tests (make test-unit) | Local or PR | Basic CI |
+| release | Full + integration | PR to main (1 approval) | High |
+| main | CI automatic | ONLY from release PR (2 approvals) | MAXIMUM |
+
+### ❌ FORBIDDEN:
+```bash
+# Direct merge to main
+git checkout main
+git merge develop        # ❌ WRONG!
+git push origin main     # ❌ FORBIDDEN!
+```
+
+### ✅ CORRECT:
+```bash
+# Create release branch
+git checkout -b release/v1.2.0 develop
+git push origin release/v1.2.0
+
+# Create PR to main (ONLY way)
+gh pr create --base main --head release/v1.2.0 \
+  --title "Release v1.2.0"
+
+# Wait for:
+# - 2 approvals
+# - All CI checks pass
+# - Merge through GitHub UI
+```
+
+### 🎯 Why Release Branch Exists
+
+1. **Stabilization**: Final QA before production
+2. **Protection**: No accidental pushes to main
+3. **Review**: Formal approval process (2 maintainers)
+4. **Rollback**: Easy to identify release points
+5. **Safety**: Main is HOLY - always working code
+
+**See**: `BRANCH_STRATEGY.md` for complete 4-phase workflow
+
+---
+
+## 🎯 Quick Reference Card (Updated)
 
 Print this and keep visible:
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  FEATURE BRANCH: Test ONLY new code (--no-cov)         │
-│  DEVELOP BRANCH: Test EVERYTHING (make test-unit)      │
-│  MAIN BRANCH:    CI tests automatically                │
-├─────────────────────────────────────────────────────────┤
-│  NEVER ask permission for standard tasks               │
-│  ALWAYS follow templates (.ai-templates/)              │
-│  ALWAYS include tenant_id in queries                   │
-│  NEVER use interactive commands (nano, vim, etc.)      │
-│  ALWAYS fix code when tests fail (not tests!)          │
-│  ALWAYS push main + develop together                   │
-│  NEVER leave main with red CI                          │
-└─────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│  SESSION START: Read docs first (15 min) - MANDATORY       │
+├─────────────────────────────────────────────────────────────┤
+│  4-PHASE WORKFLOW:                                          │
+│    feature/* → develop → release → main                     │
+│                                                             │
+│  FEATURE BRANCH: Test ONLY new code (--no-cov)             │
+│  DEVELOP BRANCH: Test EVERYTHING (make test-unit)          │
+│  RELEASE BRANCH: Full + integration + 1 approval           │
+│  MAIN BRANCH:    HOLY - only from release (2 approvals)    │
+├─────────────────────────────────────────────────────────────┤
+│  AUTONOMY:                                                  │
+│    NEVER ask permission for standard tasks                 │
+│    ALWAYS follow templates (.ai-templates/)                │
+│    ALWAYS work autonomously (read AUTONOMOUS_OPERATIONS.md)│
+├─────────────────────────────────────────────────────────────┤
+│  SECURITY:                                                  │
+│    ALWAYS include tenant_id in queries                     │
+│    NEVER use interactive commands (nano, vim, etc.)        │
+│    NEVER force push to main/release                        │
+├─────────────────────────────────────────────────────────────┤
+│  TESTING:                                                   │
+│    ALWAYS fix code when tests fail (not tests!)            │
+│    NEVER leave main with red CI                            │
+│    READ SESSION_START.md before EVERY session              │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -407,14 +517,29 @@ Print this and keep visible:
 
 ## 📚 Complete Rule Set Links
 
-- **This file**: CRITICAL_AGENT_RULES.md (you are here)
-- **Onboarding**: ONBOARDING_GUIDE.md
-- **Structure**: PROJECT_STRUCTURE.md
-- **Patterns**: CONVENTIONS.md
-- **Testing**: docs/AGENTS_TEST_POLICY.md
-- **Git Workflow**: docs/BRANCHING.md
-- **Integration**: INTEGRATION_CHECKLIST.md
-- **Complete Rules**: .cursorrules
+### 🔴 Tier 1 - CRITICAL (Read EVERY session)
+
+- **This file**: CRITICAL_AGENT_RULES.md (you are here - 10 rules)
+- **Session Start**: SESSION_START.md (how to start properly)
+- **Autonomy**: AUTONOMOUS_OPERATIONS.md (what to do WITHOUT asking)
+- **Branch Strategy**: BRANCH_STRATEGY.md (4-phase workflow)
+
+### 🟡 Tier 2 - ESSENTIAL (Read before first commit)
+
+- **Structure**: PROJECT_STRUCTURE.md (where to put files)
+- **Patterns**: CONVENTIONS.md (how to write code)
+- **Testing Policy**: docs/AGENTS_TEST_POLICY.md (tests as contracts)
+- **Testing Optimization**: TESTING_OPTIMIZATION.md (smart testing)
+- **Git Workflow**: docs/BRANCHING.md (git commands)
+- **Onboarding**: ONBOARDING_GUIDE.md (complete guide)
+
+### 🟢 Tier 3 - REFERENCE (As needed)
+
+- **Branch Protection**: BRANCH_PROTECTION.md (GitHub rules)
+- **Public Repo**: PUBLIC_REPO_STRATEGY.md (for external contributions)
+- **Integration**: INTEGRATION_CHECKLIST.md (pre-commit checks)
+- **Complete Rules**: .cursorrules (all rules for Cursor)
+- **Manifest**: AI_AGENT_MANIFEST.md (universal navigation)
 
 ---
 
