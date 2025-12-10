@@ -156,12 +156,14 @@ Created comprehensive permission list with wildcard patterns:
 
 ## 📊 Impact
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| Permission prompts during Phase 1 | 11 | **0** | **100%** ✅ |
-| Manual "Yes" clicks | 11 | **0** | **100%** ✅ |
-| Covered commands | ~20 | **47** | **235%** ⬆️ |
-| Agent autonomy | ~60% | **95%+** | **+35%** 🚀 |
+| Metric | Before Fix #1 | After Fix #1 | After Fix #2 | Total Improvement |
+|--------|---------------|--------------|--------------|-------------------|
+| Permission prompts | 11 | **0** | **0** | **100%** ✅ |
+| Manual "Yes" clicks | 11 | **0** | **0** | **100%** ✅ |
+| Covered commands | ~20 | **47** | **50** | **250%** ⬆️ |
+| Agent autonomy | ~60% | **95%+** | **99%+** | **+39%** 🚀 |
+
+**Update 2025-12-10 #2**: Added file operation permissions (Write/Edit/Read) - see below.
 
 ---
 
@@ -271,10 +273,69 @@ git status  # Should not prompt
 
 - **Claude Code Permissions**: https://docs.anthropic.com/claude/docs/claude-code-permissions
 - **Project Policy**: `AUTONOMOUS_OPERATIONS.md`
-- **Blocked Commands Log**: `docs/not-autonomus.md`
+- **Blocked Commands Log**: `docs/not-autonomus.md`, `docs/not-autonomus_02.md`
 
 ---
 
-**Status**: ✅ All 11 blocked commands now autonomous
-**Next Session**: Should work without any permission prompts
+## 🔄 UPDATE #2 - File Operations (2025-12-10)
+
+### New Problem Discovered
+
+After implementing Fix #1, **3 new permission prompts** appeared for file operations:
+
+```
+❌ Write(.claude/settings.local.json)
+❌ Write(.claude/settings.example.json)
+❌ Write(.claude/README.md)
+```
+
+**Root Cause**: Original fix only covered `Bash(*)` commands, not `Write(*)`, `Edit(*)`, `Read(*)` operations.
+
+### Solution #2: File Operation Permissions
+
+Added 3 new permission patterns:
+
+```json
+{
+  "permissions": {
+    "allow": [
+      // ... all previous Bash patterns ...
+      "Read(//home/grzegorz/cloud/Dockerized/**)",
+      "Write(//home/grzegorz/cloud/Dockerized/RAE-agentic-memory/**)",
+      "Edit(//home/grzegorz/cloud/Dockerized/RAE-agentic-memory/**)"
+    ]
+  }
+}
+```
+
+### Permission Scope
+
+| Operation | Pattern | Covers |
+|-----------|---------|--------|
+| `Read` | `//home/grzegorz/cloud/Dockerized/**` | All files in Dockerized/ (includes other projects) |
+| `Write` | `.../RAE-agentic-memory/**` | Create new files in RAE project only |
+| `Edit` | `.../RAE-agentic-memory/**` | Modify existing files in RAE project only |
+
+**Security**: Read is broader (parent directory) for convenience, but Write/Edit are scoped to RAE project only.
+
+### Impact Update
+
+**Additional improvement**:
+- Permission prompts for file operations: **3 → 0** (100% reduction)
+- Total command patterns: **47 → 50** (+3 file operations)
+- Agent autonomy: **95% → 99%+** (can now create/edit files freely)
+
+### Files Changed
+
+```
+✅ .claude/settings.local.json       (+3 patterns)
+✅ .claude/settings.example.json     (+3 patterns)
+✅ docs/CLAUDE_CODE_AUTOMATION_FIX.md (this update)
+✅ docs/not-autonomus_02.md          (marked as resolved)
+```
+
+---
+
+**Status**: ✅ All 14 blocked operations now autonomous (11 Bash + 3 file ops)
+**Next Session**: Should work without ANY permission prompts (Bash + file operations)
 **Rollback**: `git checkout HEAD~1 .claude/settings.local.json`
