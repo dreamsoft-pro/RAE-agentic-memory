@@ -1,0 +1,63 @@
+# Orchestrator task definitions
+# Each task is automatically routed to appropriate models based on risk/area
+
+tasks:
+  # Example low-risk documentation task
+  - id: TEST-001
+    goal: "Add comprehensive docstrings to ContextBuilder class"
+    risk: low
+    area: docs
+    repo: RAE-agentic-memory
+    context_files:
+      - rae-core/rae_core/context/builder.py
+    constraints:
+      - ZERO-WARNINGS
+      - Follow Google docstring format
+      - No functional changes to code
+
+  # Example medium-risk test task
+  - id: TEST-002
+    goal: "Add missing unit tests for SQLite vector store edge cases"
+    risk: medium
+    area: tests
+    repo: RAE-agentic-memory
+    context_files:
+      - rae-core/rae_core/adapters/sqlite/vector.py
+      - rae-core/tests/unit/adapters/sqlite/test_vector.py
+    constraints:
+      - ZERO-WARNINGS
+      - 90%+ coverage for new tests
+      - Test edge cases: empty vectors, dimension mismatches, large batches
+
+  # Example high-risk core implementation task
+  - id: RAE-PHASE2-001
+    goal: "Implement search strategies module with semantic, working memory, and hybrid engines"
+    risk: high
+    area: core
+    repo: RAE-agentic-memory
+    context_files:
+      - docs/RAE_PHASE2_PLAN.md
+      - rae-core/rae_core/search/
+      - rae-core/rae_core/interfaces/
+    constraints:
+      - ZERO-WARNINGS
+      - 85%+ test coverage
+      - No breaking changes to public API
+      - Follow existing architectural patterns
+      - All tests must pass
+
+  # Example API integration task
+  - id: RAE-API-001
+    goal: "Add RESTful endpoint for hybrid search with pagination"
+    risk: medium
+    area: api
+    repo: RAE-agentic-memory
+    context_files:
+      - rae_core_service.py
+      - docs/API_SPEC.md
+    constraints:
+      - ZERO-WARNINGS
+      - OpenAPI documentation
+      - Input validation
+      - Rate limiting
+      - Integration tests
