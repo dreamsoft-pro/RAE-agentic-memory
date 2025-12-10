@@ -1,0 +1,57 @@
+# Provider Configuration for Multi-Agent Orchestrator
+# Configure LLM providers, routing preferences, and cost constraints
+
+providers:
+  # Claude (Anthropic) - Advanced reasoning, code generation
+  claude:
+    enabled: true
+    default_model: claude-sonnet-4-5-20250929
+    settings:
+      # API key from environment variable
+      api_key: ${ANTHROPIC_API_KEY}
+
+  # Gemini (Google) - Fast, FREE for most tasks (via CLI)
+  gemini:
+    enabled: true
+    default_model: gemini-2.5-flash  # Latest stable
+    settings:
+      # Path to Gemini CLI (requires: gemini auth login)
+      cli_path: gemini
+
+      # Rate limiting (IMPORTANT for free CLI without API key)
+      # Adds random delays (1-10s) between requests to avoid hitting rate limits
+      rate_limit_delay: true
+      min_delay: 1.0   # Minimum delay in seconds
+      max_delay: 10.0  # Maximum delay in seconds
+
+  # Ollama - Local models (free, but requires Ollama running)
+  ollama:
+    enabled: false  # Disabled by default (requires local setup)
+    default_model: llama3:70b
+    settings:
+      # Ollama API endpoint
+      endpoint: http://localhost:11434
+
+# Routing Configuration
+routing:
+  # Prefer local models when available (cost-saving)
+  prefer_local: false
+
+  # Maximum cost per task (USD)
+  max_cost_per_task: 1.0
+
+  # Fallback provider if preferred is unavailable
+  fallback_provider: claude
+
+# Model Selection Strategy
+# The orchestrator will:
+# 1. Choose models based on task risk, complexity, and area
+# 2. Prefer cheaper models when quality is sufficient
+# 3. Use cross-review (different models review each other's work)
+# 4. Respect cost constraints while maintaining quality
+
+# Cost Optimization Tips:
+# - Use gemini-2.0-flash for low-risk tasks (docs, simple code)
+# - Use gemini-2.0-pro for medium-risk tasks (tests, APIs)
+# - Use claude-sonnet-4-5 for high-risk tasks (core logic, algorithms)
+# - Enable Ollama for free local inference (requires setup)
