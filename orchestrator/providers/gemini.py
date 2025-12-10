@@ -5,6 +5,8 @@ import json
 import logging
 import random
 import shutil
+import tempfile
+import os
 from typing import List, Optional
 
 from .base import (
@@ -176,36 +178,53 @@ class GeminiProvider(LLMProvider):
             if system_prompt:
                 full_prompt = f"{system_prompt}\n\n{prompt}"
 
-            # Build CLI command
-            cmd = [
-                self.cli_path,
-                "-p", full_prompt,
-                "-m", model,
-                "--output-format", "json",
-            ]
+            # IMPORTANT: Write prompt to temp file to avoid CLI parsing issues
+            # Long prompts with newlines/special chars break when passed via -p flag
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+                f.write(full_prompt)
+                prompt_file = f.name
 
-            logger.debug(f"Calling Gemini CLI: model={model}")
-
-            # Execute CLI
-            proc = await asyncio.create_subprocess_exec(
-                *cmd,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
-
-            # Wait for completion (5 minute timeout)
             try:
-                stdout, stderr = await asyncio.wait_for(
-                    proc.communicate(),
-                    timeout=300.0
+                # Build CLI command - read prompt from stdin
+                cmd = [
+                    self.cli_path,
+                    "-m", model,
+                    "--output-format", "json",
+                ]
+
+                logger.debug(f"Calling Gemini CLI: model={model}, prompt_file={prompt_file}")
+
+                # Execute CLI with prompt from stdin
+                proc = await asyncio.create_subprocess_exec(
+                    *cmd,
+                    stdin=asyncio.subprocess.PIPE,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
                 )
-            except asyncio.TimeoutError:
-                proc.kill()
-                logger.error(f"Gemini CLI timeout for model {model}")
-                return GenerationResult(
-                    content="",
-                    error="Gemini CLI timeout after 5 minutes"
-                )
+
+                # Read prompt from file and send to stdin
+                with open(prompt_file, 'r') as pf:
+                    prompt_content = pf.read()
+
+                # Wait for completion (5 minute timeout)
+                try:
+                    stdout, stderr = await asyncio.wait_for(
+                        proc.communicate(input=prompt_content.encode('utf-8')),
+                        timeout=300.0
+                    )
+                except asyncio.TimeoutError:
+                    proc.kill()
+                    logger.error(f"Gemini CLI timeout for model {model}")
+                    return GenerationResult(
+                        content="",
+                        error="Gemini CLI timeout after 5 minutes"
+                    )
+            finally:
+                # Clean up temp file
+                try:
+                    os.unlink(prompt_file)
+                except Exception:
+                    pass
 
             # Check return code
             if proc.returncode != 0:
