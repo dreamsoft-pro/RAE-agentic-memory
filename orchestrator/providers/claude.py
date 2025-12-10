@@ -31,7 +31,10 @@ class ClaudeProvider(LLMProvider):
         Args:
             api_key: Anthropic API key (defaults to ANTHROPIC_API_KEY env var)
         """
-        self.api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
+        # Get API key and strip any whitespace (newlines, spaces, etc.)
+        raw_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
+        self.api_key = raw_key.strip() if raw_key else None
+
         if not self.api_key:
             logger.warning("No Anthropic API key provided - provider will be unavailable")
             self.client = None

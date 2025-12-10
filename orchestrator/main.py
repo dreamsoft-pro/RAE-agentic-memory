@@ -51,7 +51,16 @@ class Orchestrator:
             working_dir: Working directory for operations
         """
         self.working_dir = Path(working_dir)
-        self.router = ModelRouter()
+
+        # Load provider configuration
+        providers_config_path = self.working_dir / ".orchestrator" / "providers.yaml"
+        gemini_enabled = True  # Default to enabled
+        if providers_config_path.exists():
+            with open(providers_config_path, "r") as f:
+                config = yaml.safe_load(f)
+                gemini_enabled = config.get("providers", {}).get("gemini", {}).get("enabled", True)
+
+        self.router = ModelRouter(gemini_enabled=gemini_enabled)
         self.quality_gate = QualityGate(str(self.working_dir))
         self.telemetry = init_telemetry()
 
