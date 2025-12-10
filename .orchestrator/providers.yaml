@@ -11,12 +11,11 @@ providers:
       # API key from environment variable
       api_key: ${ANTHROPIC_API_KEY}
 
-  # Gemini (Google) - DISABLED due to CLI "thinking mode" errors
-  # Error: "thinking is not supported by this model"
-  # Gemini CLI adds its own context that conflicts with orchestrator
+  # Gemini (Google) - Uses default model from ~/.gemini/settings.json
+  # Note: -m flag causes 404 errors, so we use whatever model is default
   gemini:
-    enabled: false  # Disabled - use Claude instead
-    default_model: gemini-2.5-flash
+    enabled: true  # Enabled - uses default Gemini model
+    default_model: gemini-default
     settings:
       cli_path: gemini
       rate_limit_delay: true
