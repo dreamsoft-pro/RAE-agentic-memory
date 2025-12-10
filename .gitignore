@@ -46,6 +46,7 @@ soak_test_stats_stats_history.csv
 .vscode/
 .idea/
 .venv/
+.local/
 rae_tests*.zip
 project_dump.txt
 .clauderc

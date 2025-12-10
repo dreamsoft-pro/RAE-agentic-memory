@@ -11,14 +11,20 @@ Or after installation:
 import asyncio
 import sys
 
-from .server import main
+from .server import main as async_main
 
-if __name__ == "__main__":
+
+def main():
+    """Entry point for rae-mcp-server command."""
     try:
-        asyncio.run(main())
+        asyncio.run(async_main())
     except KeyboardInterrupt:
         print("\nRAE MCP Server stopped by user.", file=sys.stderr)
         sys.exit(0)
     except Exception as e:
         print(f"\nFatal error: {e}", file=sys.stderr)
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

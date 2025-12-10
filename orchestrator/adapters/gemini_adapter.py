@@ -46,13 +46,15 @@ class GeminiAdapter(ModelAdapter):
             # Build prompt from context
             prompt = self._build_prompt(context)
 
-            # Call Gemini CLI
+            # Call Gemini CLI (without -m flag as it causes 404 errors with API)
+            # Gemini will use default model configured in ~/.gemini/settings.json
+            # Use positional argument instead of deprecated -p flag
+            # Run from /tmp to avoid loading large project context
             proc = await asyncio.create_subprocess_exec(
                 "gemini",
-                "-p", prompt,
-                "-m", self.model_name,
+                prompt,  # Positional argument
                 "--output-format", "json",
-                cwd=self.working_dir,
+                cwd="/tmp",  # Avoid loading project context
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
@@ -64,6 +66,45 @@ class GeminiAdapter(ModelAdapter):
 
             if proc.returncode != 0:
                 error_msg = stderr.decode() if stderr else "Unknown error"
+
+                # Detect quota/rate limit errors
+                if any(keyword in error_msg.lower() for keyword in [
+                    "quota", "rate limit", "resource exhausted", "429",
+                    "too many requests", "limit exceeded"
+                ]):
+                    return AgentResult(
+                        success=False,
+                        output="",
+                        error=(
+                            f"⚠️  GEMINI QUOTA LIMIT EXCEEDED ⚠️\n\n"
+                            f"Limit dzienny wyczerpany na obecnym koncie.\n\n"
+                            f"Aby kontynuować:\n"
+                            f"1. Przełącz konto Gemini: .local/switch-gemini.sh [grzegorz|lili|marcel]\n"
+                            f"2. Uruchom ponownie zadanie\n\n"
+                            f"Alternatywnie: orkiestrator automatycznie użyje Claude Sonnet\n\n"
+                            f"Szczegóły błędu: {error_msg}"
+                        ),
+                    )
+
+                # Detect authentication errors (including 404 which can mean no API access)
+                if any(keyword in error_msg.lower() for keyword in [
+                    "unauthenticated", "unauthorized", "401", "403", "404",
+                    "authentication", "permission denied", "not found", "entity was not found"
+                ]):
+                    return AgentResult(
+                        success=False,
+                        output="",
+                        error=(
+                            f"⚠️  GEMINI AUTHENTICATION ERROR ⚠️\n\n"
+                            f"Problem z autoryzacją konta Gemini.\n\n"
+                            f"Aby naprawić:\n"
+                            f"1. Uruchom: gemini /auth\n"
+                            f"2. Zaloguj się w przeglądarce\n"
+                            f"3. Uruchom ponownie zadanie\n\n"
+                            f"Szczegóły błędu: {error_msg}"
+                        ),
+                    )
+
                 return AgentResult(
                     success=False,
                     output="",
@@ -71,7 +112,17 @@ class GeminiAdapter(ModelAdapter):
                 )
 
             # Parse JSON response
-            response_data = json.loads(stdout.decode())
+            # Gemini CLI may output extra lines before JSON (like "Loaded cached credentials.")
+            stdout_text = stdout.decode()
+            # Find first { to start of JSON
+            json_start = stdout_text.find('{')
+            if json_start == -1:
+                return AgentResult(
+                    success=False,
+                    output="",
+                    error=f"No JSON found in Gemini response: {stdout_text[:200]}",
+                )
+            response_data = json.loads(stdout_text[json_start:])
 
             # Extract output (Gemini CLI format may vary)
             output = self._extract_output(response_data)
