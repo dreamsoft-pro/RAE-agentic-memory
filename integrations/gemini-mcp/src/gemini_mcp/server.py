@@ -19,7 +19,7 @@ from mcp.server import Server
 logger = structlog.get_logger(__name__)
 
 # Configuration from environment
-RAE_API_URL = os.getenv("RAE_API_URL", "http://localhost:8001")
+RAE_API_URL = os.getenv("RAE_API_URL", "http://localhost:8000")
 RAE_API_KEY = os.getenv("RAE_API_KEY", "dev-key")
 RAE_PROJECT_ID = os.getenv("RAE_PROJECT_ID", "claude-code-project")
 RAE_TENANT_ID = os.getenv("RAE_TENANT_ID", "claude-code")
