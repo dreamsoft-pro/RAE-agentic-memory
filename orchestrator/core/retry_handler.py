@@ -210,9 +210,9 @@ class ErrorClassifier:
             return error
 
         if cls.is_retryable(error):
-            return RetryableError(str(error)) from error
+            raise RetryableError(str(error)) from error
         else:
-            return NonRetryableError(str(error)) from error
+            raise NonRetryableError(str(error)) from error
 
 
 # Convenience decorators

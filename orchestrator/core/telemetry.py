@@ -81,6 +81,9 @@ class OrchestratorTelemetry:
             self._metrics = {}
             return
 
+        # Initialize metrics dict
+        self._metrics = {}
+
         # Initialize OpenTelemetry
         self._setup_tracing()
         self._setup_metrics()
