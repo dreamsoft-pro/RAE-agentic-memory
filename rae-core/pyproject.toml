@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rae-core"
-version = "0.1.0"
+version = "0.4.0"
 description = "RAE Core - Pure Python memory system for AI agents"
 readme = "README.md"
 authors = [
@@ -29,6 +29,7 @@ dependencies = [
     "pydantic-settings>=2.0",
     "numpy>=1.24",
     "typing-extensions>=4.0",
+    "cryptography>=41.0",
 ]
 
 [project.optional-dependencies]
