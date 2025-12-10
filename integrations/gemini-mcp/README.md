@@ -63,7 +63,7 @@ Edit `~/.config/Claude/claude_desktop_config.json` (Linux) or equivalent:
     "rae-memory": {
       "command": "/path/to/.venv/bin/rae-mcp-server",
       "env": {
-        "RAE_API_URL": "http://localhost:8001",
+        "RAE_API_URL": "http://localhost:8000",
         "RAE_API_KEY": "dev-key",
         "RAE_PROJECT_ID": "claude-code-project",
         "RAE_TENANT_ID": "claude-code"
@@ -72,7 +72,7 @@ Edit `~/.config/Claude/claude_desktop_config.json` (Linux) or equivalent:
     "gemini": {
       "command": "/path/to/.venv/bin/gemini-mcp-server",
       "env": {
-        "RAE_API_URL": "http://localhost:8001",
+        "RAE_API_URL": "http://localhost:8000",
         "RAE_API_KEY": "dev-key",
         "RAE_PROJECT_ID": "claude-code-project",
         "RAE_TENANT_ID": "claude-code"
@@ -251,7 +251,7 @@ pip install -e .
 
 ```bash
 # Check RAE API is running
-curl http://localhost:8001/health
+curl http://localhost:8000/health
 
 # Start RAE if needed
 docker-compose up -d rae-api
