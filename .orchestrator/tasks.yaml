@@ -63,6 +63,17 @@ tasks:
   # Rozbite na małe kawałki dla Gemini CLI (małe prompty!)
   # ===================================================================
 
+  # TEST: Absolutnie najprostsze zadanie
+  - id: TEST-SIMPLE
+    goal: "Check if file exists: rae-core/rae_core/context/builder.py"
+    risk: low
+    area: docs
+    repo: RAE-agentic-memory
+    constraints:
+      - Read file rae-core/rae_core/context/builder.py
+      - Report if file exists or not
+      - Output: YES or NO
+
   # Zadanie 1: Naprawić dokumentację Phase 1
   - id: RAE-DOC-001
     goal: "Update RAE_PHASE1_COMPLETION_PLAN.md: check ContextBuilder implementation status"

@@ -1,6 +1,7 @@
 """Claude API adapter for orchestrator."""
 
 import asyncio
+import logging
 import os
 from typing import Optional
 
@@ -10,6 +11,8 @@ except ImportError:
     AsyncAnthropic = None
 
 from .base import ModelAdapter, ModelType, AgentContext, AgentResult
+
+logger = logging.getLogger(__name__)
 
 
 class ClaudeAdapter(ModelAdapter):
@@ -57,6 +60,9 @@ class ClaudeAdapter(ModelAdapter):
             # Build prompt from context
             prompt = self._build_prompt(context)
 
+            logger.info(f"Claude API call: model={self.model_name}, prompt_len={len(prompt)}")
+            logger.debug(f"Prompt preview: {prompt[:200]}...")
+
             # Call Claude API
             response = await self.client.messages.create(
                 model=self.model_name,
@@ -69,6 +75,8 @@ class ClaudeAdapter(ModelAdapter):
                 ],
                 timeout=300.0,  # 5 minutes
             )
+
+            logger.info(f"Claude API success: input={response.usage.input_tokens}, output={response.usage.output_tokens}")
 
             # Extract text from response
             output = ""
@@ -91,12 +99,14 @@ class ClaudeAdapter(ModelAdapter):
             )
 
         except asyncio.TimeoutError:
+            logger.error("Claude API timeout after 5 minutes")
             return AgentResult(
                 success=False,
                 output="",
                 error="Claude API timed out after 5 minutes",
             )
         except Exception as e:
+            logger.error(f"Claude API error: {type(e).__name__}: {str(e)}", exc_info=True)
             return AgentResult(
                 success=False,
                 output="",
