@@ -38,6 +38,7 @@ This project follows **maximum autonomy** within safety boundaries:
 - All git operations (add, commit, push, pull, merge, rebase)
 - All testing (pytest, make test-unit)
 - File operations (mkdir, touch, cp, mv, rm)
+- **File editing** (Write, Edit, Read within project)
 - Python/pip operations (.venv/bin/*)
 - Build tools (make, black, isort, ruff)
 - Docker operations
@@ -101,9 +102,10 @@ cat .claude/settings.local.json | grep "Bash(git:*)"
 
 With proper configuration:
 - **0 permission prompts** during standard workflow
-- **95%+ autonomy** for agent operations
+- **99%+ autonomy** for agent operations (Bash + file operations)
 - **100% aligned** with `AUTONOMOUS_OPERATIONS.md`
 - **Safe** - no sudo, scoped to project
+- **50 command patterns** (47 Bash + 3 file operations)
 
 ## 📖 Documentation
 
