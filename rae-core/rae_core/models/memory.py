@@ -3,7 +3,7 @@
 Pydantic models for memory representation across all layers.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
@@ -68,8 +68,8 @@ class MemoryItem(BaseModel):
     usage_count: int = Field(default=0, description="Number of times accessed")
 
     # Timestamps
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    last_accessed_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    last_accessed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     expires_at: Optional[datetime] = Field(
         default=None, description="Optional expiration time for sensory memories"
     )

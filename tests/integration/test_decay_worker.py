@@ -23,17 +23,19 @@ async def test_decay_worker_basic_cycle(mock_app_state_pool):
     # Insert test memories with high importance
     async with pool.acquire() as conn:
         memory_ids = []
+        timestamp_10_days_ago = datetime.now(timezone.utc) - timedelta(days=10)
         for i in range(5):
             memory_id = await conn.fetchval(
                 """
-                INSERT INTO memories (tenant_id, content, importance, layer, project, created_at)
-                VALUES ($1, $2, $3, 'em', 'default', $4)
+                INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp)
+                VALUES ($1, $2, $3, 'em', 'default', $4, $5)
                 RETURNING id
                 """,
                 tenant_id,
                 f"Test memory {i}",
                 0.9,  # High importance
-                datetime.now(timezone.utc) - timedelta(days=10),  # 10 days old
+                timestamp_10_days_ago,  # 10 days old
+                timestamp_10_days_ago,  # timestamp also 10 days old
             )
             memory_ids.append(memory_id)
 
@@ -128,17 +130,19 @@ async def test_decay_worker_multiple_tenants(mock_app_state_pool):
 
     # Insert memories for each tenant
     async with pool.acquire() as conn:
+        timestamp_5_days_ago = datetime.now(timezone.utc) - timedelta(days=5)
         for tenant_id in tenant_ids:
             for i in range(3):
                 await conn.execute(
                     """
-                    INSERT INTO memories (tenant_id, content, importance, layer, project, created_at)
-                    VALUES ($1, $2, $3, 'em', 'default', $4)
+                    INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp)
+                    VALUES ($1, $2, $3, 'em', 'default', $4, $5)
                     """,
                     tenant_id,
                     f"Memory {i}",
                     0.85,
-                    datetime.now(timezone.utc) - timedelta(days=5),
+                    timestamp_5_days_ago,
+                    timestamp_5_days_ago,
                 )
 
     # Run decay for all tenants
@@ -159,16 +163,18 @@ async def test_decay_worker_importance_floor(mock_app_state_pool):
 
     # Insert memory with very low importance
     async with pool.acquire() as conn:
+        timestamp_30_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
         memory_id = await conn.fetchval(
             """
-            INSERT INTO memories (tenant_id, content, importance, layer, project, created_at)
-            VALUES ($1, $2, $3, 'em', 'default', $4)
+            INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp)
+            VALUES ($1, $2, $3, 'em', 'default', $4, $5)
             RETURNING id
             """,
             tenant_id,
             "Low importance memory",
             0.02,  # Already near floor
-            datetime.now(timezone.utc) - timedelta(days=30),
+            timestamp_30_days_ago,
+            timestamp_30_days_ago,
         )
 
     # Run decay multiple times
@@ -195,15 +201,17 @@ async def test_decay_worker_error_handling(mock_app_state_pool):
 
     # Insert memory for valid tenant
     async with pool.acquire() as conn:
+        timestamp_now = datetime.now(timezone.utc)
         await conn.execute(
             """
-            INSERT INTO memories (tenant_id, content, importance, layer, project, created_at)
-            VALUES ($1, $2, $3, 'em', 'default', $4)
+            INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp)
+            VALUES ($1, $2, $3, 'em', 'default', $4, $5)
             """,
             valid_tenant,
             "Valid memory",
             0.8,
-            datetime.now(timezone.utc),
+            timestamp_now,
+            timestamp_now,
         )
 
     # Run decay with both valid and invalid tenant
@@ -226,16 +234,18 @@ async def test_decay_worker_get_all_tenants(mock_app_state_pool):
 
     # Insert memories for multiple tenants
     async with pool.acquire() as conn:
+        timestamp_now = datetime.now(timezone.utc)
         for tenant_id in tenant_ids:
             await conn.execute(
                 """
-                INSERT INTO memories (tenant_id, content, importance, layer, project, created_at)
-                VALUES ($1, $2, $3, 'em', 'default', $4)
+                INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp)
+                VALUES ($1, $2, $3, 'em', 'default', $4, $5)
                 """,
                 tenant_id,
                 "Test memory",
                 0.7,
-                datetime.now(timezone.utc),
+                timestamp_now,
+                timestamp_now,
             )
 
     # Get all tenants
@@ -275,17 +285,19 @@ async def test_decay_worker_preserves_metadata(mock_app_state_pool):
     tags = ["important", "test"]
 
     async with pool.acquire() as conn:
+        timestamp_now = datetime.now(timezone.utc)
         memory_id = await conn.fetchval(
             """
             INSERT INTO memories (tenant_id, content, importance, layer, project,
-                                 created_at, metadata, tags)
-            VALUES ($1, $2, $3, 'em', 'default', $4, $5, $6)
+                                 created_at, timestamp, metadata, tags)
+            VALUES ($1, $2, $3, 'em', 'default', $4, $5, $6, $7)
             RETURNING id
             """,
             tenant_id,
             "Test memory with metadata",
             0.9,
-            datetime.now(timezone.utc),
+            timestamp_now,
+            timestamp_now,
             metadata,
             tags,
         )

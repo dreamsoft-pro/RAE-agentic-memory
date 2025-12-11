@@ -4,6 +4,7 @@ Tests for Reflective Memory Feature Flags
 These tests ensure that feature flags actually affect system behavior.
 """
 
+from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -27,7 +28,10 @@ class TestReflectiveMemoryFlags:
         mock_settings.REFLECTIVE_MEMORY_ENABLED = False
 
         mock_pool = AsyncMock()
-        context_builder = ContextBuilder(pool=mock_pool)
+        mock_reflection_engine = AsyncMock()
+        context_builder = ContextBuilder(
+            pool=mock_pool, reflection_engine=mock_reflection_engine
+        )
 
         # Act
         reflections = await context_builder._retrieve_reflections(
@@ -37,7 +41,7 @@ class TestReflectiveMemoryFlags:
         # Assert
         assert reflections == []
         # Verify reflection engine was NOT called
-        context_builder.reflection_engine.query_reflections.assert_not_called()
+        mock_reflection_engine.query_reflections.assert_not_called()
 
     @pytest.mark.asyncio
     @patch("apps.memory_api.services.context_builder.settings")
@@ -182,9 +186,13 @@ class TestDreamingEnabled:
         mock_conn = AsyncMock()
         mock_conn.fetch = AsyncMock(return_value=[])  # No memories
 
+        # Create async context manager for pool.acquire()
+        @asynccontextmanager
+        async def mock_acquire():
+            yield mock_conn
+
         mock_pool = AsyncMock()
-        mock_pool.acquire.return_value.__aenter__.return_value = mock_conn
-        mock_pool.acquire.return_value.__aexit__.return_value = None
+        mock_pool.acquire = mock_acquire
 
         dreaming_worker = DreamingWorker(pool=mock_pool)
 

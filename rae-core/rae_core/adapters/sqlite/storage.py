@@ -6,7 +6,7 @@ Uses SQLite FTS5 (Full-Text Search) for efficient content search.
 
 import aiosqlite
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
@@ -60,7 +60,8 @@ class SQLiteStorage(IMemoryStorage):
                     modified_at TEXT NOT NULL,
                     last_accessed_at TEXT NOT NULL,
                     access_count INTEGER DEFAULT 0,
-                    version INTEGER DEFAULT 1
+                    version INTEGER DEFAULT 1,
+                    expires_at TEXT
                 )
             """)
 
@@ -135,7 +136,7 @@ class SQLiteStorage(IMemoryStorage):
         await self.initialize()
 
         memory_id = uuid4()
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
 
         tags_json = json.dumps(tags or [])
         metadata_json = json.dumps(metadata or {})
@@ -218,7 +219,7 @@ class SQLiteStorage(IMemoryStorage):
         # Always update modified_at and increment version
         set_clauses.append("modified_at = ?")
         set_clauses.append("version = version + 1")
-        params.append(datetime.utcnow().isoformat())
+        params.append(datetime.now(timezone.utc).isoformat())
 
         params.extend([str(memory_id), tenant_id])
 
@@ -355,7 +356,7 @@ class SQLiteStorage(IMemoryStorage):
                     last_accessed_at = ?
                 WHERE id = ? AND tenant_id = ?
                 """,
-                (datetime.utcnow().isoformat(), str(memory_id), tenant_id),
+                (datetime.now(timezone.utc).isoformat(), str(memory_id), tenant_id),
             )
             await db.commit()
 
@@ -420,3 +421,250 @@ class SQLiteStorage(IMemoryStorage):
             memory["id"] = UUID(memory["id"])
 
         return memory
+
+    async def delete_memories_with_metadata_filter(
+        self,
+        tenant_id: str,
+        agent_id: str,
+        layer: str,
+        metadata_filter: Dict[str, Any],
+    ) -> int:
+        """Delete memories matching metadata filter.
+
+        Args:
+            tenant_id: Tenant identifier
+            agent_id: Agent identifier
+            layer: Memory layer
+            metadata_filter: Dictionary of metadata key-value pairs to match
+
+        Returns:
+            Number of memories deleted
+        """
+        await self.initialize()
+
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            # First, fetch all memories matching tenant, agent, layer
+            async with db.execute(
+                """
+                SELECT id, metadata FROM memories
+                WHERE tenant_id = ? AND agent_id = ? AND layer = ?
+                """,
+                (tenant_id, agent_id, layer),
+            ) as cursor:
+                rows = await cursor.fetchall()
+
+            # Filter by metadata in Python (SQLite JSON support is limited)
+            matching_ids = []
+            for row in rows:
+                metadata = json.loads(row["metadata"]) if row["metadata"] else {}
+                if self._matches_metadata_filter(metadata, metadata_filter):
+                    matching_ids.append(row["id"])
+
+            # Delete matching memories
+            if matching_ids:
+                placeholders = ",".join("?" * len(matching_ids))
+                cursor = await db.execute(
+                    f"DELETE FROM memories WHERE id IN ({placeholders})",
+                    matching_ids,
+                )
+                await db.commit()
+                return cursor.rowcount
+
+            return 0
+
+    async def delete_memories_below_importance(
+        self,
+        tenant_id: str,
+        agent_id: str,
+        layer: str,
+        importance_threshold: float,
+    ) -> int:
+        """Delete memories below importance threshold.
+
+        Args:
+            tenant_id: Tenant identifier
+            agent_id: Agent identifier
+            layer: Memory layer
+            importance_threshold: Minimum importance value to keep
+
+        Returns:
+            Number of memories deleted
+        """
+        await self.initialize()
+
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                """
+                DELETE FROM memories
+                WHERE tenant_id = ? AND agent_id = ? AND layer = ?
+                AND importance < ?
+                """,
+                (tenant_id, agent_id, layer, importance_threshold),
+            )
+            await db.commit()
+            return cursor.rowcount
+
+    async def search_memories(
+        self,
+        query: str,
+        tenant_id: str,
+        agent_id: str,
+        layer: str,
+        limit: int = 10,
+        filters: Optional[Dict[str, Any]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Search memories using FTS5 full-text search.
+
+        Args:
+            query: Search query (FTS5 syntax supported)
+            tenant_id: Tenant identifier
+            agent_id: Agent identifier
+            layer: Memory layer
+            limit: Maximum number of results
+            filters: Optional additional filters (not implemented yet)
+
+        Returns:
+            List of dictionaries with 'memory' and 'score' keys
+        """
+        await self.initialize()
+
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(
+                """
+                SELECT m.*, bm25(memories_fts) as score
+                FROM memories m
+                JOIN memories_fts ON m.rowid = memories_fts.rowid
+                WHERE memories_fts MATCH ?
+                AND m.tenant_id = ? AND m.agent_id = ? AND m.layer = ?
+                ORDER BY bm25(memories_fts)
+                LIMIT ?
+                """,
+                (query, tenant_id, agent_id, layer, limit),
+            ) as cursor:
+                rows = await cursor.fetchall()
+                return [
+                    {"memory": self._row_to_dict(row), "score": abs(row["score"])}
+                    for row in rows
+                ]
+
+    async def delete_expired_memories(
+        self,
+        tenant_id: str,
+        agent_id: str,
+        layer: str,
+    ) -> int:
+        """Delete expired memories.
+
+        Args:
+            tenant_id: Tenant identifier
+            agent_id: Agent identifier
+            layer: Memory layer
+
+        Returns:
+            Number of memories deleted
+        """
+        await self.initialize()
+
+        now = datetime.now(timezone.utc).isoformat()
+
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                """
+                DELETE FROM memories
+                WHERE tenant_id = ? AND agent_id = ? AND layer = ?
+                AND expires_at IS NOT NULL AND expires_at < ?
+                """,
+                (tenant_id, agent_id, layer, now),
+            )
+            await db.commit()
+            return cursor.rowcount
+
+    async def update_memory_access(
+        self,
+        memory_id: UUID,
+        tenant_id: str,
+    ) -> bool:
+        """Update last access time and increment usage count.
+
+        Args:
+            memory_id: Memory identifier
+            tenant_id: Tenant identifier
+
+        Returns:
+            True if memory was updated, False if not found
+        """
+        await self.initialize()
+
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                """
+                UPDATE memories
+                SET last_accessed_at = ?,
+                    access_count = access_count + 1
+                WHERE id = ? AND tenant_id = ?
+                """,
+                (datetime.now(timezone.utc).isoformat(), str(memory_id), tenant_id),
+            )
+            await db.commit()
+            return cursor.rowcount > 0
+
+    async def update_memory_expiration(
+        self,
+        memory_id: UUID,
+        tenant_id: str,
+        expires_at: Any,
+    ) -> bool:
+        """Update memory expiration time.
+
+        Args:
+            memory_id: Memory identifier
+            tenant_id: Tenant identifier
+            expires_at: Expiration datetime (datetime object or ISO string)
+
+        Returns:
+            True if memory was updated, False if not found
+        """
+        await self.initialize()
+
+        # Convert datetime to ISO string if needed
+        if hasattr(expires_at, "isoformat"):
+            expires_at_str = expires_at.isoformat()
+        else:
+            expires_at_str = expires_at
+
+        async with aiosqlite.connect(self.db_path) as db:
+            cursor = await db.execute(
+                """
+                UPDATE memories
+                SET expires_at = ?,
+                    modified_at = ?
+                WHERE id = ? AND tenant_id = ?
+                """,
+                (
+                    expires_at_str,
+                    datetime.now(timezone.utc).isoformat(),
+                    str(memory_id),
+                    tenant_id,
+                ),
+            )
+            await db.commit()
+            return cursor.rowcount > 0
+
+    def _matches_metadata_filter(
+        self, metadata: Dict[str, Any], filter_dict: Dict[str, Any]
+    ) -> bool:
+        """Check if metadata matches filter criteria.
+
+        Args:
+            metadata: Memory metadata dictionary
+            filter_dict: Filter criteria dictionary
+
+        Returns:
+            True if all filter criteria match
+        """
+        for key, value in filter_dict.items():
+            if key not in metadata or metadata[key] != value:
+                return False
+        return True

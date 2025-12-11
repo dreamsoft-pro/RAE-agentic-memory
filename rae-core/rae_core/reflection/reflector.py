@@ -3,7 +3,7 @@
 The Reflector generates insights and reflection patterns from memories.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
@@ -114,7 +114,7 @@ class Reflector:
                 "reflection_type": "consolidation",
                 "source_memory_count": len(memories),
                 "source_memory_ids": [str(m["id"]) for m in memories],
-                "generated_at": datetime.utcnow().isoformat(),
+                "generated_at": datetime.now(timezone.utc).isoformat(),
             },
             importance=0.9,
         )
@@ -169,7 +169,7 @@ class Reflector:
                 "reflection_type": "pattern",
                 "patterns": patterns,
                 "source_memory_count": len(memories),
-                "generated_at": datetime.utcnow().isoformat(),
+                "generated_at": datetime.now(timezone.utc).isoformat(),
             },
             importance=0.85,
         )
@@ -221,7 +221,7 @@ class Reflector:
                 "avg_importance": avg_importance,
                 "layer_distribution": layer_dist,
                 "source_memory_count": len(memories),
-                "generated_at": datetime.utcnow().isoformat(),
+                "generated_at": datetime.now(timezone.utc).isoformat(),
             },
             importance=0.95,
         )

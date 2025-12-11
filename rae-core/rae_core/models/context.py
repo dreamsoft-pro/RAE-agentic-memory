@@ -1,6 +1,6 @@
 """Context models for RAE-core working memory."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
@@ -38,8 +38,8 @@ class WorkingContext(BaseModel):
         default=0.5, ge=0.0, le=1.0, description="Context priority"
     )
 
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     metadata: Dict[str, Any] = Field(
         default_factory=dict, description="Additional context metadata"

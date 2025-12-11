@@ -1,6 +1,6 @@
 """Sync protocol for memory synchronization."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
@@ -13,7 +13,7 @@ class SyncMetadata(BaseModel):
     """Metadata for sync operations."""
 
     sync_id: str = Field(description="Unique sync operation ID")
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     source_agent: str = Field(description="Source agent ID")
     target_agent: Optional[str] = Field(default=None, description="Target agent ID")
     sync_type: str = Field(description="Type of sync: push, pull, sync")

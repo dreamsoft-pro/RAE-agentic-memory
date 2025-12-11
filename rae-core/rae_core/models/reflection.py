@@ -1,6 +1,6 @@
 """Reflection models for RAE-core reflection system."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
@@ -45,8 +45,8 @@ class Reflection(BaseModel):
     confidence: float = Field(default=0.5, ge=0.0, le=1.0)
     
     # Timestamps
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    last_updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    last_updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class ReflectionPolicy(BaseModel):

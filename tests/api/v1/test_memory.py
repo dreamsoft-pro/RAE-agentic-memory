@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
@@ -8,13 +9,14 @@ from fastapi.testclient import TestClient
 from apps.memory_api.main import app
 from apps.memory_api.models import ScoredMemoryRecord
 from apps.memory_api.models.hybrid_search_models import (
-    HybridSearchResult, 
-    QueryAnalysis, 
+    HybridSearchResult,
+    QueryAnalysis,
     QueryIntent,
     SearchResultItem
 )
 from apps.memory_api.api.v1.memory import get_vector_store, get_embedding_service, get_hybrid_search_service
 from apps.memory_api.security.dependencies import get_and_verify_tenant_id
+from apps.memory_api.dependencies import get_qdrant_client
 
 
 # Define fixtures for mocks
@@ -52,10 +54,47 @@ def mock_memory_repo():
 
 @pytest.fixture
 def client_with_overrides():
-    # Setup mock pool
-    mock_pool = MagicMock()
+    # Setup mock connection with async context manager support
+    mock_conn = AsyncMock()
+
+    @asynccontextmanager
+    async def mock_transaction():
+        yield
+
+    # Mock fetchrow to return appropriate data based on query
+    async def mock_fetchrow(query, *args):
+        # For INSERT queries, return memory record
+        if "INSERT INTO memories" in query:
+            return {
+                "id": str(uuid4()),
+                "created_at": datetime.now(timezone.utc),
+                "last_accessed_at": datetime.now(timezone.utc),
+                "usage_count": 0,
+            }
+        # For other queries, return None
+        return None
+
+    mock_conn.transaction = mock_transaction
+    mock_conn.execute = AsyncMock()
+    mock_conn.fetch = AsyncMock(return_value=[])
+    mock_conn.fetchrow = mock_fetchrow
+
+    # Setup mock pool with async context manager support
+    @asynccontextmanager
+    async def mock_acquire():
+        yield mock_conn
+
+    mock_pool = AsyncMock()
+    mock_pool.acquire = mock_acquire
     mock_pool.close = AsyncMock()
     app.state.pool = mock_pool
+
+    # Setup mock Qdrant client with health_check
+    mock_qdrant = AsyncMock()
+    mock_health_result = MagicMock()
+    mock_health_result.status = "ok"
+    mock_health_result.version = "1.0.0"
+    mock_qdrant.health_check = AsyncMock(return_value=mock_health_result)
 
     # Mock the direct function calls in memory.py
     with patch("apps.memory_api.api.v1.memory.get_vector_store") as mock_get_vs, \
@@ -76,6 +115,8 @@ def client_with_overrides():
 
         # Override dependency for hybrid search
         app.dependency_overrides[get_hybrid_search_service] = lambda: mock_hss
+        # Override dependency for Qdrant client
+        app.dependency_overrides[get_qdrant_client] = lambda: mock_qdrant
         # Override auth
         async def _mock_tenant():
             return "test-tenant"
