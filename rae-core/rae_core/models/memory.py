@@ -8,7 +8,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class MemoryLayer(str, Enum):
@@ -82,10 +82,8 @@ class MemoryItem(BaseModel):
         default=None, description="Context when memory was created"
     )
 
-    class Config:
-        """Pydantic config."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "id": "550e8400-e29b-41d4-a716-446655440000",
                 "content": "User prefers Python over JavaScript for backend development",
@@ -98,6 +96,7 @@ class MemoryItem(BaseModel):
                 "usage_count": 5,
             }
         }
+    )
 
 
 class ScoredMemoryItem(BaseModel):
@@ -115,10 +114,8 @@ class ScoredMemoryItem(BaseModel):
         description="Breakdown of score components (similarity, importance, recency)",
     )
 
-    class Config:
-        """Pydantic config."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "memory": {"content": "Example memory", "layer": "episodic"},
                 "score": 0.87,
@@ -129,6 +126,7 @@ class ScoredMemoryItem(BaseModel):
                 },
             }
         }
+    )
 
 
 class MemoryStats(BaseModel):

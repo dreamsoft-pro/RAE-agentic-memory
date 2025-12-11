@@ -3,7 +3,7 @@
 from enum import Enum
 from typing import Dict, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class LLMProviderType(str, Enum):
@@ -28,9 +28,7 @@ class ProviderConfig(BaseModel):
     max_retries: int = Field(default=3, ge=0, le=10)
     metadata: Dict[str, str] = Field(default_factory=dict, description="Additional metadata")
 
-    class Config:
-        """Pydantic config."""
-        use_enum_values = True
+    model_config = ConfigDict(use_enum_values=True)
 
 
 class LLMConfig(BaseModel):
