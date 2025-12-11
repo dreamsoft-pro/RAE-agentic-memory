@@ -339,7 +339,7 @@ def configure_scrubber(
 # Usage Examples
 # ============================================================================
 
-"""
+r"""
 # Example 1: Basic scrubbing
 text = "Contact John Smith at john.smith@example.com or 555-123-4567"
 scrubbed = scrub_pii(text)
