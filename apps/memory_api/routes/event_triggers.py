@@ -155,9 +155,9 @@ async def update_trigger(
         if request.description is not None:
             updates["description"] = request.description
         if request.condition is not None:
-            updates["condition"] = request.condition.dict()
+            updates["condition"] = request.condition.model_dump()
         if request.actions is not None:
-            updates["actions"] = [a.dict() for a in request.actions]
+            updates["actions"] = [a.model_dump() for a in request.actions]
         if request.priority is not None:
             updates["priority"] = request.priority
         if request.status is not None:
@@ -527,7 +527,7 @@ async def get_trigger_template(template_id: str):
         template = DEFAULT_TEMPLATES[template_id]
 
         return {
-            "template": template.dict(),
+            "template": template.model_dump(),
             "message": "Template retrieved successfully",
         }
 

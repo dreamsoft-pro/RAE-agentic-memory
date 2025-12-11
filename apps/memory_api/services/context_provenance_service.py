@@ -281,8 +281,8 @@ class ContextProvenanceService:
         context = await self._get_context(decision.context_id)
 
         lineage = {
-            "decision": decision.dict(),
-            "context": context.dict() if context else None,
+            "decision": decision.model_dump(),
+            "context": context.model_dump() if context else None,
             "provenance_chain": {
                 "query": context.query if context else None,
                 "sources": [
