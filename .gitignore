@@ -43,6 +43,7 @@ soak_test_stats_stats_history.csv
 
 # venv/IDE
 .env
+.mcp-test.env
 .vscode/
 .idea/
 .venv/
@@ -60,3 +61,4 @@ zapetlenie-1.txt
 docs/first-start-gemini-with-RAE.md
 docs/*-gemini-*.md
 docs/*-claude-*.md
+.mypy_cache/
