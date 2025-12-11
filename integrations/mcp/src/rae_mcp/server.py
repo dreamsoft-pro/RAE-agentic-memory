@@ -68,19 +68,11 @@ else:
 tracer = trace.get_tracer(__name__)
 
 # Prometheus Metrics
-TOOLS_CALLED = Counter(
-    "mcp_tools_called_total", "Total MCP tool invocations", ["tool_name"]
-)
-TOOL_ERRORS = Counter(
-    "mcp_tool_errors_total", "Total MCP tool errors", ["tool_name", "error_type"]
-)
-TOOL_DURATION = Histogram(
-    "mcp_tool_duration_seconds", "MCP tool execution duration", ["tool_name"]
-)
+TOOLS_CALLED = Counter("mcp_tools_called_total", "Total MCP tool invocations", ["tool_name"])
+TOOL_ERRORS = Counter("mcp_tool_errors_total", "Total MCP tool errors", ["tool_name", "error_type"])
+TOOL_DURATION = Histogram("mcp_tool_duration_seconds", "MCP tool execution duration", ["tool_name"])
 
-RESOURCES_READ = Counter(
-    "mcp_resources_read_total", "Total MCP resource reads", ["resource_uri"]
-)
+RESOURCES_READ = Counter("mcp_resources_read_total", "Total MCP resource reads", ["resource_uri"])
 RESOURCE_ERRORS = Counter(
     "mcp_resource_errors_total", "Total MCP resource errors", ["resource_uri"]
 )
@@ -91,9 +83,7 @@ RESOURCE_DURATION = Histogram(
 PROMPTS_REQUESTED = Counter(
     "mcp_prompts_requested_total", "Total MCP prompt requests", ["prompt_name"]
 )
-PROMPT_ERRORS = Counter(
-    "mcp_prompt_errors_total", "Total MCP prompt errors", ["prompt_name"]
-)
+PROMPT_ERRORS = Counter("mcp_prompt_errors_total", "Total MCP prompt errors", ["prompt_name"])
 PROMPT_DURATION = Histogram(
     "mcp_prompt_duration_seconds", "MCP prompt request duration", ["prompt_name"]
 )
@@ -159,8 +149,7 @@ class PIIScrubber:
         """
         if isinstance(data, dict):
             return {
-                key: cls._scrub_value(key, value, max_content_length)
-                for key, value in data.items()
+                key: cls._scrub_value(key, value, max_content_length) for key, value in data.items()
             }
         elif isinstance(data, list):
             return [cls.scrub(item, max_content_length) for item in data]
@@ -214,9 +203,7 @@ class PIIScrubber:
 
                 scrubbed = pattern.sub(mask_email, scrubbed)
             elif pattern_name == "credit_card":
-                scrubbed = pattern.sub(
-                    lambda m: f"****-****-****-{m.group(0)[-4:]}", scrubbed
-                )
+                scrubbed = pattern.sub(lambda m: f"****-****-****-{m.group(0)[-4:]}", scrubbed)
             elif pattern_name == "ip_address":
                 scrubbed = pattern.sub(
                     lambda m: f"{'.'.join(m.group(0).split('.')[:2])}.***.**", scrubbed
@@ -232,6 +219,19 @@ RAE_API_URL = os.getenv("RAE_API_URL", "http://localhost:8000")
 RAE_API_KEY = os.getenv("RAE_API_KEY", "your-rae-api-key")
 RAE_PROJECT_ID = os.getenv("RAE_PROJECT_ID", "default-project")
 RAE_TENANT_ID = os.getenv("RAE_TENANT_ID", "default-tenant")
+
+# Memory layer mapping: MCP human-friendly names -> RAE API codes
+LAYER_MAPPING = {
+    "episodic": "em",  # Episodic Memory
+    "working": "stm",  # Short-Term Memory (working context)
+    "semantic": "ltm",  # Long-Term Memory (semantic knowledge)
+    "ltm": "ltm",  # Long-Term Memory (direct)
+    "reflective": "rm",  # Reflective Memory
+    # Also support direct API codes
+    "em": "em",
+    "stm": "stm",
+    "rm": "rm",
+}
 
 # Initialize MCP Server
 server = Server("rae-memory")
@@ -263,9 +263,10 @@ class RAEMemoryClient:
         self,
         content: str,
         source: str,
-        layer: str = "episodic",
+        layer: str = "em",
         tags: Optional[List[str]] = None,
         project: str = RAE_PROJECT_ID,
+        importance: float = 0.5,
     ) -> Dict[str, Any]:
         """
         Store a memory in RAE.
@@ -273,9 +274,10 @@ class RAEMemoryClient:
         Args:
             content: Memory content
             source: Source identifier
-            layer: Memory layer (episodic, working, semantic, ltm)
+            layer: Memory layer (em, stm, ltm, rm)
             tags: Optional list of tags
             project: Project identifier
+            importance: Importance score (0.0-1.0)
 
         Returns:
             Response dict with memory ID
@@ -286,6 +288,7 @@ class RAEMemoryClient:
             span.set_attribute("memory.source", source)
             span.set_attribute("memory.tags_count", len(tags or []))
             span.set_attribute("memory.project", project)
+            span.set_attribute("memory.importance", importance)
 
             payload = {
                 "content": content,
@@ -293,6 +296,7 @@ class RAEMemoryClient:
                 "layer": layer,
                 "tags": tags or [],
                 "project": project,
+                "importance": importance,
             }
 
             try:
@@ -380,9 +384,7 @@ class RAEMemoryClient:
                     results = result.get("results", [])
                     span.set_attribute("search.result_count", len(results))
 
-                    logger.info(
-                        "memory_searched", query=query, result_count=len(results)
-                    )
+                    logger.info("memory_searched", query=query, result_count=len(results))
 
                     return results
 
@@ -402,9 +404,7 @@ class RAEMemoryClient:
                 logger.error("memory_search_error", error=str(e))
                 raise
 
-    async def get_file_context(
-        self, file_path: str, top_k: int = 10
-    ) -> List[Dict[str, Any]]:
+    async def get_file_context(self, file_path: str, top_k: int = 10) -> List[Dict[str, Any]]:
         """
         Get historical context about a file or module.
 
@@ -418,9 +418,7 @@ class RAEMemoryClient:
         # Search by file path in source field
         query = f"file:{file_path}"
 
-        return await self.search_memory(
-            query=query, top_k=top_k, filters={"source": file_path}
-        )
+        return await self.search_memory(query=query, top_k=top_k, filters={"source": file_path})
 
     async def get_latest_reflection(self, project: str = RAE_PROJECT_ID) -> str:
         """
@@ -445,9 +443,7 @@ class RAEMemoryClient:
 
                 summary = result.get("summary", "No reflection available.")
 
-                logger.info(
-                    "reflection_retrieved", project=project, summary_length=len(summary)
-                )
+                logger.info("reflection_retrieved", project=project, summary_length=len(summary))
 
                 return summary
 
@@ -462,9 +458,7 @@ class RAEMemoryClient:
             logger.error("reflection_error", error=str(e))
             return "Error retrieving reflection."
 
-    async def get_project_guidelines(
-        self, project: str = RAE_PROJECT_ID
-    ) -> List[Dict[str, Any]]:
+    async def get_project_guidelines(self, project: str = RAE_PROJECT_ID) -> List[Dict[str, Any]]:
         """
         Get project guidelines from semantic memory.
 
@@ -656,9 +650,7 @@ class RateLimiter:
             self._requests[tenant_id] = []
 
         # Remove old timestamps outside window
-        self._requests[tenant_id] = [
-            ts for ts in self._requests[tenant_id] if ts > cutoff
-        ]
+        self._requests[tenant_id] = [ts for ts in self._requests[tenant_id] if ts > cutoff]
 
         # Check if within limit
         if len(self._requests[tenant_id]) >= self.max_requests:
@@ -701,9 +693,7 @@ RATE_LIMIT_ENABLED = os.getenv("MCP_RATE_LIMIT_ENABLED", "true").lower() == "tru
 RATE_LIMIT_REQUESTS = int(os.getenv("MCP_RATE_LIMIT_REQUESTS", "100"))
 RATE_LIMIT_WINDOW = int(os.getenv("MCP_RATE_LIMIT_WINDOW", "60"))
 
-rate_limiter = RateLimiter(
-    max_requests=RATE_LIMIT_REQUESTS, window_seconds=RATE_LIMIT_WINDOW
-)
+rate_limiter = RateLimiter(max_requests=RATE_LIMIT_REQUESTS, window_seconds=RATE_LIMIT_WINDOW)
 
 logger.info(
     "rate_limiter_initialized",
@@ -755,15 +745,23 @@ async def handle_list_tools() -> list[types.Tool]:
                     },
                     "layer": {
                         "type": "string",
-                        "enum": ["episodic", "working", "semantic", "ltm"],
+                        "enum": ["episodic", "working", "semantic", "ltm", "reflective"],
                         "default": "episodic",
                         "description": (
                             "Memory layer: "
                             "episodic (recent events), "
                             "working (current task context), "
                             "semantic (concepts/guidelines), "
-                            "ltm (long-term facts)"
+                            "ltm (long-term facts), "
+                            "reflective (insights and learnings)"
                         ),
+                    },
+                    "importance": {
+                        "type": "number",
+                        "minimum": 0.0,
+                        "maximum": 1.0,
+                        "default": 0.5,
+                        "description": "Importance score (0.0=low, 0.5=medium, 1.0=critical)",
                     },
                 },
                 "required": ["content", "source"],
@@ -967,21 +965,21 @@ async def handle_call_tool(
             content = arguments.get("content")
             source = arguments.get("source")
             tags = arguments.get("tags", [])
-            layer = arguments.get("layer", "episodic")
+            layer_input = arguments.get("layer", "episodic")
+            importance = arguments.get("importance", 0.5)  # default medium importance
+
+            # Map human-friendly layer name to API code
+            layer = LAYER_MAPPING.get(layer_input, "em")  # default to episodic (em)
 
             # Validate
             if not content:
-                return [
-                    types.TextContent(type="text", text="Error: 'content' is required")
-                ]
+                return [types.TextContent(type="text", text="Error: 'content' is required")]
             if not source:
-                return [
-                    types.TextContent(type="text", text="Error: 'source' is required")
-                ]
+                return [types.TextContent(type="text", text="Error: 'source' is required")]
 
             # Store memory
             result = await rae_client.store_memory(
-                content=content, source=source, layer=layer, tags=tags
+                content=content, source=source, layer=layer, tags=tags, importance=importance
             )
 
             memory_id = result.get("id", "unknown")
@@ -1005,18 +1003,14 @@ async def handle_call_tool(
 
             # Validate
             if not query:
-                return [
-                    types.TextContent(type="text", text="Error: 'query' is required")
-                ]
+                return [types.TextContent(type="text", text="Error: 'query' is required")]
 
             # Search memory
             results = await rae_client.search_memory(query=query, top_k=top_k)
 
             if not results:
                 return [
-                    types.TextContent(
-                        type="text", text=f"No memories found for query: '{query}'"
-                    )
+                    types.TextContent(type="text", text=f"No memories found for query: '{query}'")
                 ]
 
             # Format results
@@ -1043,22 +1037,14 @@ async def handle_call_tool(
 
             # Validate
             if not file_path:
-                return [
-                    types.TextContent(
-                        type="text", text="Error: 'file_path' is required"
-                    )
-                ]
+                return [types.TextContent(type="text", text="Error: 'file_path' is required")]
 
             # Get context
-            results = await rae_client.get_file_context(
-                file_path=file_path, top_k=include_count
-            )
+            results = await rae_client.get_file_context(file_path=file_path, top_k=include_count)
 
             if not results:
                 return [
-                    types.TextContent(
-                        type="text", text=f"No context found for file: {file_path}"
-                    )
+                    types.TextContent(type="text", text=f"No context found for file: {file_path}")
                 ]
 
             # Format context
@@ -1070,9 +1056,7 @@ async def handle_call_tool(
                 content = mem.get("content", "")
 
                 formatted += f"{i}. [{timestamp}]\n"
-                formatted += (
-                    f"   {content[:300]}{'...' if len(content) > 300 else ''}\n\n"
-                )
+                formatted += f"   {content[:300]}{'...' if len(content) > 300 else ''}\n\n"
 
             return [types.TextContent(type="text", text=formatted)]
 
@@ -1138,11 +1122,7 @@ async def handle_call_tool(
 
             # Validate
             if not request_id:
-                return [
-                    types.TextContent(
-                        type="text", text="Error: 'request_id' is required"
-                    )
-                ]
+                return [types.TextContent(type="text", text="Error: 'request_id' is required")]
 
             # Check status
             result = await rae_client.check_approval_status(request_id=request_id)
@@ -1191,9 +1171,7 @@ async def handle_call_tool(
                 failure_count = breaker.get("failure_count", 0)
                 success_rate = breaker.get("success_rate", 0)
 
-                status_emoji = (
-                    "✓" if state == "closed" else "⚠" if state == "half_open" else "✗"
-                )
+                status_emoji = "✓" if state == "closed" else "⚠" if state == "half_open" else "✗"
 
                 formatted += (
                     f"{status_emoji} {name_field}\n"
@@ -1239,18 +1217,12 @@ async def handle_call_tool(
 
         else:
             TOOL_ERRORS.labels(tool_name=name, error_type="unknown_tool").inc()
-            return [
-                types.TextContent(type="text", text=f"Error: Unknown tool '{name}'")
-            ]
+            return [types.TextContent(type="text", text=f"Error: Unknown tool '{name}'")]
 
     except Exception as e:
         TOOL_ERRORS.labels(tool_name=name, error_type=type(e).__name__).inc()
         logger.exception("tool_execution_error", tool=name, error=str(e))
-        return [
-            types.TextContent(
-                type="text", text=f"Error executing tool '{name}': {str(e)}"
-            )
-        ]
+        return [types.TextContent(type="text", text=f"Error executing tool '{name}': {str(e)}")]
     finally:
         # Record execution duration
         duration = time.time() - start_time
