@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "rae-memory": {
+      "command": "/home/grzegorz/cloud/Dockerized/RAE-agentic-memory/.venv/bin/rae-mcp-server",
+      "args": [],
+      "env": {
+        "RAE_API_URL": "http://localhost:8000",
+        "RAE_API_KEY": "dev-key",
+        "RAE_PROJECT_ID": "gemini-rae-collaboration",
+        "RAE_TENANT_ID": "meta-development"
+      },
+      "trust": true,
+      "description": "RAE Memory for Gemini CLI - shared memory with Claude Code"
+    }
+  }
+}
