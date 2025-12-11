@@ -3,7 +3,7 @@
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class SearchStrategy(str, Enum):
@@ -52,10 +52,8 @@ class SearchQuery(BaseModel):
         default=2, ge=1, le=5, description="Max graph traversal depth"
     )
 
-    class Config:
-        """Pydantic config."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "query": "What are the user's programming preferences?",
                 "strategy": "hybrid",
@@ -70,6 +68,7 @@ class SearchQuery(BaseModel):
                 },
             }
         }
+    )
 
 
 class SearchResult(BaseModel):
@@ -98,10 +97,8 @@ class SearchResponse(BaseModel):
         default=None, description="Details about fusion process"
     )
 
-    class Config:
-        """Pydantic config."""
-
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "results": [
                     {
@@ -117,6 +114,7 @@ class SearchResponse(BaseModel):
                 "execution_time_ms": 45.2,
             }
         }
+    )
 
 
 class ScoringWeights(BaseModel):
