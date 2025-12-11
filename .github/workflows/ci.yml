@@ -92,9 +92,7 @@ jobs:
           pip install -r apps/memory_api/requirements-base.txt
           pip install -r apps/memory_api/requirements-test.txt
           pip install -e sdk/python/rae_memory_sdk
-          pip install -e "rae_core[all]"
-
-      - name: Detect changed files
+          pip install -e "rae-core[all]"      - name: Detect changed files
         id: changes
         run: |
           # Get changed Python files compared to develop
@@ -235,9 +233,7 @@ jobs:
           pip install -r apps/memory_api/requirements-base.txt
           pip install -r apps/memory_api/requirements-test.txt
           pip install -e sdk/python/rae_memory_sdk
-          pip install -e "rae_core[all]"
-
-      - name: Run ALL unit tests (full validation)
+          pip install -e "rae-core[all]"      - name: Run ALL unit tests (full validation)
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_rae
           REDIS_URL: redis://localhost:6379/0
@@ -389,9 +385,7 @@ jobs:
           pip install sentence-transformers
           pip install -r apps/memory_api/requirements-base.txt
           pip install -e sdk/python/rae_memory_sdk
-          pip install -e "rae_core[all]"
-
-      - name: Setup database
+          pip install -e "rae-core[all]"      - name: Setup database
         env:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: 5432
@@ -965,9 +959,7 @@ jobs:
           pip install -r apps/memory_api/requirements-base.txt
           pip install -r apps/memory_api/requirements-test.txt
           pip install -e sdk/python/rae_memory_sdk
-          pip install -e "rae_core[all]"
-
-      - name: Run tests with warning detection
+          pip install -e "rae-core[all]"      - name: Run tests with warning detection
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_rae
           REDIS_URL: redis://localhost:6379/0
