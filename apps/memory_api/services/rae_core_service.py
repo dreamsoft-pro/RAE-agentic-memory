@@ -17,7 +17,7 @@ from rae_core.adapters import (
     RedisCacheAdapter,
 )
 from rae_core.engine import RAEEngine
-from rae_core.models.memory import QueryMemoryResponse
+from rae_core.models.search import SearchResponse
 
 logger = structlog.get_logger(__name__)
 
@@ -129,7 +129,7 @@ class RAECoreService:
         query: str,
         k: int = 10,
         layers: Optional[list] = None,
-    ) -> QueryMemoryResponse:
+    ) -> SearchResponse:
         """
         Query memories across layers.
 

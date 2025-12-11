@@ -344,9 +344,17 @@
     "errors_count": 0
   },
   {
-    "run_id": "20251211-025652",
-    "timestamp": "2025-12-11T02:56:52.359322",
-    "duration_seconds": 0.3,
+    "run_id": "20251210-135309",
+    "timestamp": "2025-12-10T13:53:09.811772",
+    "duration_seconds": 0.22,
+    "status": "success",
+    "files_count": 8,
+    "errors_count": 0
+  },
+  {
+    "run_id": "20251210-141114",
+    "timestamp": "2025-12-10T14:11:14.080838",
+    "duration_seconds": 0.23,
     "status": "success",
     "files_count": 8,
     "errors_count": 0
