@@ -175,6 +175,10 @@ class RedisCache(ICacheProvider):
         except Exception:
             return False
 
+    async def clear(self, pattern: Optional[str] = None) -> int:
+        """Clear cache keys matching pattern (all if None)."""
+        return await self.clear_prefix(pattern or "*")
+
     async def clear_prefix(self, pattern: str = "*") -> int:
         """Clear all keys matching pattern under prefix.
         

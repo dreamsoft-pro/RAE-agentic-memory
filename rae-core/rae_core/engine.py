@@ -57,10 +57,23 @@ class RAEEngine:
         self.sync_provider = sync_provider
 
         # Initialize sub-engines
+        from rae_core.search.strategies.vector import VectorSearchStrategy
+        
+        strategies = {}
+        if vector_store and embedding_provider:
+            strategies["vector"] = VectorSearchStrategy(
+                vector_store=vector_store,
+                embedding_provider=embedding_provider,
+            )
+            
+        search_cache = None
+        if cache_provider:
+            from rae_core.search.cache import SearchCache
+            search_cache = SearchCache(cache_provider=cache_provider)
+
         self.search_engine = HybridSearchEngine(
-            vector_store=vector_store,
-            embedding_provider=embedding_provider,
-            cache_provider=cache_provider,
+            strategies=strategies,
+            cache=search_cache,
         )
 
         self.reflection_engine = ReflectionEngine(
