@@ -135,6 +135,69 @@ class QdrantVectorStore(IVectorStore):
         except Exception:
             return False
 
+    async def store_vector(
+        self,
+        memory_id: UUID,
+        embedding: List[float],
+        tenant_id: str,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> bool:
+        """Store a vector embedding."""
+        metadata = metadata or {}
+        agent_id = str(metadata.get("agent_id", "default"))
+        layer = str(metadata.get("layer", "episodic"))
+        return await self.add_vector(memory_id, embedding, tenant_id, agent_id, layer, metadata)
+
+    async def update_vector(
+        self,
+        memory_id: UUID,
+        embedding: List[float],
+        tenant_id: str,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> bool:
+        """Update a vector embedding."""
+        return await self.store_vector(memory_id, embedding, tenant_id, metadata)
+
+    async def batch_store_vectors(
+        self,
+        vectors: List[Tuple[UUID, List[float], Dict[str, Any]]],
+        tenant_id: str,
+    ) -> int:
+        """Store multiple vectors in a batch."""
+        await self._ensure_collection()
+        
+        points = []
+        for memory_id, embedding, metadata in vectors:
+            meta = metadata or {}
+            agent_id = str(meta.get("agent_id", "default"))
+            layer = str(meta.get("layer", "episodic"))
+            
+            payload = {
+                "memory_id": str(memory_id),
+                "tenant_id": tenant_id,
+                "agent_id": agent_id,
+                "layer": layer,
+                **meta
+            }
+            
+            points.append(PointStruct(
+                id=str(memory_id),
+                vector=embedding,
+                payload=payload
+            ))
+            
+        if not points:
+            return 0
+
+        try:
+            self.client.upsert(
+                collection_name=self.collection_name,
+                points=points
+            )
+            return len(points)
+        except Exception:
+            return 0
+
     async def search_similar(
         self,
         query_embedding: List[float],
