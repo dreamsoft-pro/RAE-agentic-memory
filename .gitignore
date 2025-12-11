@@ -46,6 +46,7 @@ soak_test_stats_stats_history.csv
 .vscode/
 .idea/
 .venv/
+.local/
 rae_tests*.zip
 project_dump.txt
 .clauderc
@@ -55,4 +56,8 @@ low-memory.txt
 Polecenie-Startowe-dla-Nowego-Agent.md
 RAE-math-improvments.txt
 zapetlenie-1.txt
-GEMINI.md
+# Agent session logs (personal notes)
+docs/first-start-gemini-with-RAE.md
+docs/*-gemini-*.md
+docs/*-claude-*.md
+.mypy_cache/

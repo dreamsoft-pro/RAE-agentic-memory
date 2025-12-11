@@ -6,6 +6,7 @@ Implements strategies (Single, Fallback) and handles configuration.
 """
 
 import logging
+import os
 from typing import Any, Dict, Optional
 
 import yaml
@@ -38,6 +39,20 @@ class LLMOrchestrator:
         """
         self.router = router or LLMRouter()
         self.config = self._load_config(config_path)
+
+        # Override default model_name with environment variable if set
+        env_model_name = os.getenv("LLM_MODEL_NAME")
+        if env_model_name:
+            for model_entry in self.config.get("models", []):
+                if (
+                    model_entry.get("id") == "openai_gpt4o"
+                ):  # Targeting the default primary model
+                    model_entry["model_name"] = env_model_name
+                    logger.info(
+                        f"Overriding openai_gpt4o model_name with LLM_MODEL_NAME from env: {env_model_name}"
+                    )
+                    break  # Assuming only one entry for openai_gpt4o
+
         self.models_config = {m["id"]: m for m in self.config.get("models", [])}
         self.strategies_config = self.config.get("strategies", {})
         self.default_strategy = self.config.get("default_strategy", "default")

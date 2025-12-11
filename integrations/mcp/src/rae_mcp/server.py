@@ -233,6 +233,19 @@ RAE_API_KEY = os.getenv("RAE_API_KEY", "your-rae-api-key")
 RAE_PROJECT_ID = os.getenv("RAE_PROJECT_ID", "default-project")
 RAE_TENANT_ID = os.getenv("RAE_TENANT_ID", "default-tenant")
 
+# Memory layer mapping: MCP human-friendly names -> RAE API codes
+LAYER_MAPPING = {
+    "episodic": "em",  # Episodic Memory
+    "working": "stm",  # Short-Term Memory (working context)
+    "semantic": "ltm",  # Long-Term Memory (semantic knowledge)
+    "ltm": "ltm",  # Long-Term Memory (direct)
+    "reflective": "rm",  # Reflective Memory
+    # Also support direct API codes
+    "em": "em",
+    "stm": "stm",
+    "rm": "rm",
+}
+
 # Initialize MCP Server
 server = Server("rae-memory")
 
@@ -263,9 +276,10 @@ class RAEMemoryClient:
         self,
         content: str,
         source: str,
-        layer: str = "episodic",
+        layer: str = "em",
         tags: Optional[List[str]] = None,
         project: str = RAE_PROJECT_ID,
+        importance: float = 0.5,
     ) -> Dict[str, Any]:
         """
         Store a memory in RAE.
@@ -273,9 +287,10 @@ class RAEMemoryClient:
         Args:
             content: Memory content
             source: Source identifier
-            layer: Memory layer (episodic, working, semantic, ltm)
+            layer: Memory layer (em, stm, ltm, rm)
             tags: Optional list of tags
             project: Project identifier
+            importance: Importance score (0.0-1.0)
 
         Returns:
             Response dict with memory ID
@@ -286,6 +301,7 @@ class RAEMemoryClient:
             span.set_attribute("memory.source", source)
             span.set_attribute("memory.tags_count", len(tags or []))
             span.set_attribute("memory.project", project)
+            span.set_attribute("memory.importance", importance)
 
             payload = {
                 "content": content,
@@ -293,6 +309,7 @@ class RAEMemoryClient:
                 "layer": layer,
                 "tags": tags or [],
                 "project": project,
+                "importance": importance,
             }
 
             try:
@@ -755,15 +772,29 @@ async def handle_list_tools() -> list[types.Tool]:
                     },
                     "layer": {
                         "type": "string",
-                        "enum": ["episodic", "working", "semantic", "ltm"],
+                        "enum": [
+                            "episodic",
+                            "working",
+                            "semantic",
+                            "ltm",
+                            "reflective",
+                        ],
                         "default": "episodic",
                         "description": (
                             "Memory layer: "
                             "episodic (recent events), "
                             "working (current task context), "
                             "semantic (concepts/guidelines), "
-                            "ltm (long-term facts)"
+                            "ltm (long-term facts), "
+                            "reflective (insights and learnings)"
                         ),
+                    },
+                    "importance": {
+                        "type": "number",
+                        "minimum": 0.0,
+                        "maximum": 1.0,
+                        "default": 0.5,
+                        "description": "Importance score (0.0=low, 0.5=medium, 1.0=critical)",
                     },
                 },
                 "required": ["content", "source"],
@@ -967,7 +998,11 @@ async def handle_call_tool(
             content = arguments.get("content")
             source = arguments.get("source")
             tags = arguments.get("tags", [])
-            layer = arguments.get("layer", "episodic")
+            layer_input = arguments.get("layer", "episodic")
+            importance = arguments.get("importance", 0.5)  # default medium importance
+
+            # Map human-friendly layer name to API code
+            layer = LAYER_MAPPING.get(layer_input, "em")  # default to episodic (em)
 
             # Validate
             if not content:
@@ -981,7 +1016,11 @@ async def handle_call_tool(
 
             # Store memory
             result = await rae_client.store_memory(
-                content=content, source=source, layer=layer, tags=tags
+                content=content,
+                source=source,
+                layer=layer,
+                tags=tags,
+                importance=importance,
             )
 
             memory_id = result.get("id", "unknown")

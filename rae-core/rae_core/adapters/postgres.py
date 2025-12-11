@@ -383,6 +383,87 @@ class PostgreSQLStorage(IMemoryStorage):
 
         return result == "UPDATE 1"
 
+    async def update_memory(
+        self,
+        memory_id: UUID,
+        tenant_id: str,
+        updates: Dict[str, Any],
+    ) -> bool:
+        """Update a memory with given fields.
+
+        Args:
+            memory_id: UUID of the memory
+            tenant_id: Tenant identifier
+            updates: Dictionary of fields to update
+
+        Returns:
+            True if successful, False otherwise
+        """
+        pool = await self._get_pool()
+
+        # Build dynamic UPDATE query
+        set_clauses = []
+        params = []
+        param_idx = 1
+
+        for key, value in updates.items():
+            if key not in ["id", "created_at", "tenant_id"]:  # Immutable fields
+                set_clauses.append(f"{key} = ${param_idx}")
+                params.append(value)
+                param_idx += 1
+
+        if not set_clauses:
+            return False
+
+        # Always update modified_at if it exists in schema
+        # (Note: current schema doesn't have modified_at, but this is future-proof)
+
+        # Add WHERE clause parameters
+        params.extend([memory_id, tenant_id])
+
+        query = f"""
+            UPDATE memories
+            SET {', '.join(set_clauses)}
+            WHERE id = ${param_idx} AND tenant_id = ${param_idx + 1}
+        """
+
+        async with pool.acquire() as conn:
+            result = await conn.execute(query, *params)
+
+        return result == "UPDATE 1"
+
+    async def increment_access_count(
+        self,
+        memory_id: UUID,
+        tenant_id: str,
+    ) -> bool:
+        """Increment access count for a memory.
+
+        Args:
+            memory_id: UUID of the memory
+            tenant_id: Tenant identifier
+
+        Returns:
+            True if successful, False otherwise
+        """
+        pool = await self._get_pool()
+
+        async with pool.acquire() as conn:
+            result = await conn.execute(
+                """
+                UPDATE memories
+                SET
+                    usage_count = usage_count + 1,
+                    last_accessed_at = $1
+                WHERE id = $2 AND tenant_id = $3
+                """,
+                datetime.utcnow(),
+                memory_id,
+                tenant_id,
+            )
+
+        return result == "UPDATE 1"
+
     async def delete_memory(
         self,
         memory_id: UUID,
