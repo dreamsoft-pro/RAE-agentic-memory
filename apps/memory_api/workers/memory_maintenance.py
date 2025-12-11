@@ -448,7 +448,7 @@ class DreamingWorker:
         async with self.pool.acquire() as conn:
             records = await conn.fetch(
                 """
-                SELECT id, content, importance, created_at, tags, metadata
+                SELECT id, content, importance, created_at, tags
                 FROM memories
                 WHERE tenant_id = $1
                   AND project = $2
