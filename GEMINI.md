@@ -6,30 +6,35 @@
 
 ---
 
-## 🚀 STARTUP PROCEDURE (EXECUTE FIRST!)
+## 🚀 STARTUP PROCEDURE (RAE-First Bootstrapping)
 
 **Gemini CLI: Przy każdej nowej sesji wykonaj to AUTOMATYCZNIE:**
 
-```
-I need to read and understand the project rules before starting work.
-Please read these files in order and confirm understanding:
+1. **Check Memory**:
+   `search_memory(query="project_rules_summary_v1", tags=["system", "rules", "bootstrap"])`
 
-1. CRITICAL_AGENT_RULES.md - Critical rules (8 mandatory rules)
-2. AI_AGENT_MANIFEST.md - Documentation hierarchy
-3. .ai-agent-rules.md - Forbidden commands and testing strategy
-4. docs/BRANCHING.md - Git workflow (feature → develop → main)
-5. docs/AGENTS_TEST_POLICY.md - Tests as contract philosophy
+2. **Decision**:
+   - **IF FOUND**: Read the summary. Confirm: "✅ Rules loaded from RAE Memory."
+   - **IF NOT FOUND**:
+     1. Read `CRITICAL_AGENT_RULES.md` and `.ai-agent-rules.md`.
+     2. Generate a concise summary (max 500 tokens).
+     3. Save to RAE: `save_memory(content=summary, tags=["system", "rules", "bootstrap"], importance=1.0)`
+     4. Confirm: "✅ Rules cached in RAE."
 
-After reading, confirm:
-"I have read and understood all 5 documents. I will follow:
-- 3-phase testing workflow (--no-cov on feature, make test-unit on develop)
-- No interactive commands (nano, vim, git -i)
-- Always include tenant_id in SQL queries
-- Fix code, not tests (unless tests are wrong)
-- Use .ai-templates/ for new code"
+3. **Communication Protocol**:
+   - **Treat RAE as the primary communication channel.**
+   - Before responding to complex tasks, check if another agent has context: `search_memory(query="task_context", tags=["handoff", "status"])`
+   - Save your final status updates to RAE: `save_memory(content="Task complete...", tags=["status", "handoff"])`
 
-Then check if I'm connected to RAE via MCP and save this startup to RAE memory.
-```
+4. **Confirm Rules**:
+   "I have read and understood the rules via RAE/Files. I will follow:
+   - 3-phase testing workflow (--no-cov on feature, make test-unit on develop)
+   - No interactive commands (nano, vim, git -i)
+   - Always include tenant_id in SQL queries
+   - Fix code, not tests (unless tests are wrong)
+   - Use .ai-templates/ for new code"
+
+Then check if I'm connected to RAE via MCP.
 
 **User: Po przeczytaniu powyższego promptu przez Gemini, kontynuuj z normalnym zadaniem.**
 

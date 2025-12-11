@@ -1,6 +1,26 @@
-# CLAUDE_CODE.md – RAE Project Guide for Claude Code
+# CLAUDE.md – RAE Project Guide for Claude Code
 
 > 🤖 **Welcome, Claude Code!** This guide is specifically designed for you (Claude Code CLI) and your unique capabilities.
+
+> **🧠 RAE-FIRST BOOTSTRAPPING (Token Saving)**
+>
+> **Agent: Execute this sequence BEFORE reading files:**
+>
+> 1. **Check Memory**:
+>    `search_memory(query="project_rules_summary_v1", tags=["system", "rules", "bootstrap"])`
+>
+> 2. **Decision Tree**:
+>    - **IF FOUND**: Read the summary. Confirm: "✅ Rules loaded from RAE Memory."
+>    - **IF NOT FOUND**:
+>      1. Read `CRITICAL_AGENT_RULES.md` and `.ai-agent-rules.md`.
+>      2. Generate a concise summary (max 500 tokens).
+>      3. Save to RAE: `save_memory(content=summary, tags=["system", "rules", "bootstrap"], importance=1.0)`
+>      4. Confirm: "✅ Rules cached in RAE."
+>
+> 3. **Communication Protocol**:
+>    - All substantial reasoning, decisions, and status updates MUST be saved to RAE.
+>    - Use `save_memory` for "working memory" of the current session.
+>    - Use `search_memory` to retrieve context from other agents (Claude/Gemini).
 
 ---
 
