@@ -14,7 +14,26 @@
 [![Version](https://img.shields.io/badge/version-2.1.0--enterprise-blue.svg)](docs/.auto-generated/status/STATUS.md)
 [![Docs Automation](https://img.shields.io/badge/docs_automation-✓_healthy-brightgreen.svg)](docs/.auto-generated/metrics/DASHBOARD.md)
 
-[📖 Documentation](#documentation) | [🚀 Quick Start](#quick-start-5-minutes) | [📊 Benchmarking](benchmarking/README.md) | [🔧 Troubleshooting](TROUBLESHOOTING.md) | [💬 Community](#community--support) | [🎯 Examples](#real-world-examples)
+[📖 Documentation](#documentation) | [🚀 Quick Start](#quick-start-5-minutes) | [🤖 Multi-Agent Setup](README-MULTI-AGENT.md) | [📊 Benchmarking](benchmarking/README.md) | [🔧 Troubleshooting](TROUBLESHOOTING.md) | [💬 Community](#community--support) | [🎯 Examples](#real-world-examples)
+
+---
+
+## 🤖 NEW: Multi-Agent Collaboration
+
+**Connect multiple AI agents to shared RAE memory!**
+
+```
+Claude Code  →  ┐
+Gemini CLI   →  ├─→  RAE Memory  ←─ Shared Context
+Cursor IDE   →  │                   Persistent Learning
+Your Agent   →  ┘                   Seamless Collaboration
+```
+
+🎯 **One command setup**: `.local/setup-rae-mcp.sh`
+
+✨ **Any agent with MCP support** can join (Claude, Gemini, Cursor, Windsurf, Cline, custom agents)
+
+📚 **[→ Full Multi-Agent Documentation](README-MULTI-AGENT.md)**
 
 ---
 
