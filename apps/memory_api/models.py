@@ -14,16 +14,25 @@ class MemoryLayer(str, Enum):
     Logicalwarstwa przetwarzania (STM/LTM/episodic/reflective).
     See: docs/MEMORY_MODEL.md for complete layer mapping.
 
-    - stm: Short-term memory (Layer 1/2), volatile and immediate
-    - ltm: Long-term memory (Layer 3), consolidated and durable
-    - em: Episodic memory (Layer 2/3), time-sequenced events
-    - rm: Reflective memory (Layer 4), synthesized meta-learning
+    - stm/working: Short-term memory (Layer 1/2), volatile and immediate
+    - ltm/semantic: Long-term memory (Layer 3), consolidated and durable
+    - em/episodic: Episodic memory (Layer 2/3), time-sequenced events
+    - rm/reflective: Reflective memory (Layer 4), synthesized meta-learning
+    - sensory: Sensory buffer (Layer 0), immediate perception
     """
 
+    # Short codes (legacy)
     stm = "stm"
     ltm = "ltm"
     rm = "rm"
     em = "em"
+
+    # Full names (new standard from RAE-core)
+    working = "working"
+    semantic = "semantic"
+    reflective = "reflective"
+    episodic = "episodic"
+    sensory = "sensory"
 
 
 class SourceTrustLevel(str, Enum):

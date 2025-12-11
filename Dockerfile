@@ -16,11 +16,11 @@ COPY sdk/python/rae_memory_sdk /app/sdk/python/rae_memory_sdk
 # Install SDK
 RUN pip install --no-cache-dir -e /app/sdk/python/rae_memory_sdk
 
-# Copy rae_core
-COPY rae_core /app/rae_core
+# Copy rae-core
+COPY rae-core /app/rae-core
 
-# Install rae_core
-RUN pip install --no-cache-dir -e /app/rae_core
+# Install rae-core
+RUN pip install --no-cache-dir -e /app/rae-core
 
 # Copy requirements files
 COPY apps/memory_api/requirements-base.txt /app/requirements-base.txt

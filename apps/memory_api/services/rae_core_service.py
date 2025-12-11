@@ -10,8 +10,6 @@ import asyncpg
 import redis.asyncio as redis
 import structlog
 from qdrant_client import AsyncQdrantClient
-
-from apps.memory_api.services.embedding import get_embedding_service
 from rae_core.adapters import (
     PostgresMemoryAdapter,
     QdrantVectorAdapter,
@@ -21,6 +19,8 @@ from rae_core.config import RAESettings
 from rae_core.engine import RAEEngine
 from rae_core.interfaces.embedding import IEmbeddingProvider
 from rae_core.models.search import SearchResponse
+
+from apps.memory_api.services.embedding import get_embedding_service
 
 logger = structlog.get_logger(__name__)
 
@@ -121,16 +121,15 @@ class RAECoreService:
         Returns:
             Memory ID
         """
-        # Store in RAEEngine (in-memory layers)
+        # Store in RAEEngine
         memory_id = await self.engine.store_memory(
-            content=content,
-            source=source,
-            importance=importance or 0.5,
-            layer=layer,
-            tags=tags,
             tenant_id=tenant_id,
             agent_id="default",  # Default agent ID required by engine
-            metadata={"project": project},
+            content=content,
+            layer=layer or "episodic",
+            importance=importance or 0.5,
+            tags=tags,
+            metadata={"project": project, "source": source},
         )
 
         # Also persist to PostgreSQL for durability (if engine doesn't handle it already via adapter)
