@@ -298,7 +298,7 @@ class ResponseCache:
             key_parts.append(json.dumps(params, sort_keys=True))
 
         key_string = "|".join(key_parts)
-        return hashlib.md5(key_string.encode()).hexdigest()
+        return hashlib.sha256(key_string.encode()).hexdigest()
 
     def get(
         self, method: str, url: str, params: Optional[Dict] = None
