@@ -177,10 +177,9 @@ class QdrantStore(MemoryVectorStore):
                             "dense": dense_vector,
                             "text": sparse_vector,
                         },
-                        payload=memory.dict(),
+                        payload=memory.model_dump(),
                     )
                 )
-
             self.qdrant_client.upsert(
                 collection_name="memories", points=points_to_upsert, wait=True
             )

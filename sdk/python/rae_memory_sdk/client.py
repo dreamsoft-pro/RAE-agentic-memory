@@ -108,7 +108,7 @@ class MemoryClient:
         Stores a new memory record.
         """
         response_data = self._request(
-            "POST", "/memory/store", json=memory.dict(exclude_none=True)
+            "POST", "/memory/store", json=memory.model_dump(exclude_none=True)
         )
         return StoreMemoryResponse(**response_data)
 
@@ -120,7 +120,7 @@ class MemoryClient:
         """
         request_body = QueryMemoryRequest(query_text=query_text, k=k, filters=filters)
         response_data = self._request(
-            "POST", "/memory/query", json=request_body.dict(exclude_none=True)
+            "POST", "/memory/query", json=request_body.model_dump(exclude_none=True)
         )
         return QueryMemoryResponse(**response_data)
 
@@ -736,7 +736,7 @@ class MemoryClient:
             ```
         """
         response_data = await self._async_request(
-            "POST", "/memory/store", json=memory.dict(exclude_none=True)
+            "POST", "/memory/store", json=memory.model_dump(exclude_none=True)
         )
         return StoreMemoryResponse(**response_data)
 
@@ -756,7 +756,7 @@ class MemoryClient:
         """
         request_body = QueryMemoryRequest(query_text=query_text, k=k, filters=filters)
         response_data = await self._async_request(
-            "POST", "/memory/query", json=request_body.dict(exclude_none=True)
+            "POST", "/memory/query", json=request_body.model_dump(exclude_none=True)
         )
         return QueryMemoryResponse(**response_data)
 
