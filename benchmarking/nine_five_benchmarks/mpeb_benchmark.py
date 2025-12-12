@@ -252,7 +252,7 @@ class QLearningPolicy:
 
     def __init__(
         self,
-        learning_rate: float = 0.1,
+        learning_rate: float = 0.12,
         discount_factor: float = 0.95,
         initial_epsilon: float = 1.0,
         epsilon_decay: float = 0.995,

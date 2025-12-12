@@ -180,7 +180,7 @@ class MMITBenchmark:
     def __init__(
         self,
         embedding_dim: int = 384,
-        similarity_threshold: float = 0.95,
+        similarity_threshold: float = 0.97,
         seed: Optional[int] = 42,
     ):
         """

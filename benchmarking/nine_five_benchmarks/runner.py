@@ -19,6 +19,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type
 
+from benchmarking.telemetry import BenchmarkTelemetry
+
 from .lect_benchmark import LECTBenchmark, LECTResults
 from .mmit_benchmark import MMITBenchmark, MMITResults
 from .grdt_benchmark import GRDTBenchmark, GRDTResults
@@ -317,6 +319,36 @@ class NineFiveBenchmarkRunner:
             "orb_pareto_optimal": len([p for p in orb_results.pareto_frontier if p.get("is_pareto_optimal", False)]),
         }
 
+        # Record metrics to telemetry
+        telemetry = BenchmarkTelemetry()
+        timestamp = datetime.fromisoformat(results.timestamp)
+
+        # Record LECT metrics
+        telemetry.record_metric("LECT", "consistency", lect_results.consistency_score, timestamp)
+        telemetry.record_metric("LECT", "retention", lect_results.retention_rate, timestamp)
+
+        # Record MMIT metrics
+        telemetry.record_metric("MMIT", "interference", mmit_results.interference_score, timestamp)
+
+        # Record GRDT metrics
+        telemetry.record_metric("GRDT", "max_depth", grdt_results.max_reasoning_depth, timestamp)
+        telemetry.record_metric("GRDT", "coherence", grdt_results.chain_coherence, timestamp)
+
+        # Record RST metrics
+        telemetry.record_metric("RST", "noise_threshold", rst_results.noise_threshold, timestamp)
+        telemetry.record_metric("RST", "consistency", rst_results.insight_consistency, timestamp)
+
+        # Record MPEB metrics
+        telemetry.record_metric("MPEB", "convergence", mpeb_results.convergence_rate, timestamp)
+        telemetry.record_metric("MPEB", "adaptation", mpeb_results.stability_index, timestamp)
+
+        # Record ORB metrics
+        orb_pareto_count = len([p for p in orb_results.pareto_frontier if p.get("is_pareto_optimal", False)])
+        telemetry.record_metric("ORB", "pareto_optimal", orb_pareto_count, timestamp)
+
+        # Export telemetry
+        telemetry.export_json()
+
         if self.verbose:
             print("\n" + "#" * 60)
             print("  BENCHMARK SUITE COMPLETE")
@@ -325,6 +357,7 @@ class NineFiveBenchmarkRunner:
             print("\nSummary Scores:")
             for key, value in results.summary.items():
                 print(f"  {key}: {value}")
+            print("\n✅ Telemetry data exported")
 
         return results
 
