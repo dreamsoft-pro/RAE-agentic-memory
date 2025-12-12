@@ -7,7 +7,7 @@ Ideal for testing, development, and single-instance deployments.
 import asyncio
 import json
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
 
 from rae_core.interfaces.cache import ICacheProvider
@@ -40,8 +40,7 @@ class InMemoryCache(ICacheProvider):
 
             value, expiry = self._cache[key]
 
-            # Check if expired
-            if expiry and datetime.utcnow() > expiry:
+            if expiry and datetime.now(timezone.utc) > expiry:
                 # Remove expired entry
                 del self._cache[key]
                 return None
@@ -51,10 +50,9 @@ class InMemoryCache(ICacheProvider):
     async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
         """Set value in cache with optional TTL in seconds."""
         async with self._lock:
-            # Calculate expiry time
             expiry = None
             if ttl:
-                expiry = datetime.utcnow() + timedelta(seconds=ttl)
+                expiry = datetime.now(timezone.utc) + timedelta(seconds=ttl)
 
             # Store value
             self._cache[key] = (value, expiry)
@@ -78,7 +76,7 @@ class InMemoryCache(ICacheProvider):
 
             # Check if expired
             value, expiry = self._cache[key]
-            if expiry and datetime.utcnow() > expiry:
+            if expiry and datetime.now(timezone.utc) > expiry:
                 # Remove expired entry
                 del self._cache[key]
                 return False
@@ -151,7 +149,7 @@ class InMemoryCache(ICacheProvider):
             Number of entries removed
         """
         async with self._lock:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             expired_keys = [
                 key
                 for key, (_, expiry) in self._cache.items()
@@ -182,7 +180,7 @@ class InMemoryCache(ICacheProvider):
                 return None
 
             # Check if expired
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             if now > expiry:
                 del self._cache[key]
                 return None
@@ -205,14 +203,14 @@ class InMemoryCache(ICacheProvider):
         async with self._lock:
             # Check if key exists and is not expired
             if key in self._cache:
-                existing_value, expiry = self._cache[key]
-                if not expiry or datetime.utcnow() <= expiry:
+                _, expiry = self._cache[key]
+                if not expiry or datetime.now(timezone.utc) <= expiry:
                     return False
 
             # Set value
             expiry = None
             if ttl:
-                expiry = datetime.utcnow() + timedelta(seconds=ttl)
+                expiry = datetime.now(timezone.utc) + timedelta(seconds=ttl)
 
             self._cache[key] = (value, expiry)
             return True
@@ -234,7 +232,7 @@ class InMemoryCache(ICacheProvider):
             if key in self._cache:
                 value, expiry = self._cache[key]
                 # Check if expired
-                if not expiry or datetime.utcnow() <= expiry:
+                if not expiry or datetime.now(timezone.utc) <= expiry:
                     try:
                         current_value = int(value)
                     except (ValueError, TypeError):
@@ -252,7 +250,7 @@ class InMemoryCache(ICacheProvider):
             Dictionary with cache statistics
         """
         async with self._lock:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
 
             total_keys = len(self._cache)
             expired_keys = sum(

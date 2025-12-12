@@ -103,9 +103,10 @@ class NoLLMFallback(ILLMProvider):
         # Capitalize words likely to be names (very basic)
         words = text.split()
         for word in words:
-            if word and word[0].isupper() and len(word) > 2:
+            clean_word = word.strip(".,!?;:\"'()[]{}")
+            if clean_word and clean_word[0].isupper() and len(clean_word) > 2:
                 entities.append({
-                    "text": word,
+                    "text": clean_word,
                     "type": "ENTITY",
                     "confidence": 0.5
                 })

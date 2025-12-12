@@ -1,7 +1,7 @@
 """Importance decay functions for memory aging."""
 
 import math
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from rae_core.models.scoring import DecayConfig, DecayResult
@@ -41,18 +41,7 @@ class ImportanceDecay:
 
         # Calculate decay
         decay_factor = math.exp(-decay_rate * periods)
-        decayed = importance * decay_factor
-
-        # Apply floor and ceiling
-        decayed = max(self.config.min_importance, min(self.config.max_importance, decayed))
-
-        return DecayResult(
-            original_importance=importance,
-            decayed_importance=decayed,
-            decay_amount=importance - decayed,
-            time_elapsed=time_elapsed,
-            next_decay_at=datetime.utcnow() + self.config.decay_period
-        )
+            next_decay_at=datetime.now(timezone.utc) + self.config.decay_period
 
     def linear_decay(
         self,
@@ -78,7 +67,7 @@ class ImportanceDecay:
             decayed_importance=decayed,
             decay_amount=importance - decayed,
             time_elapsed=time_elapsed,
-            next_decay_at=datetime.utcnow() + self.config.decay_period
+            next_decay_at=datetime.now(timezone.utc) + self.config.decay_period
         )
 
     def logarithmic_decay(
@@ -105,7 +94,7 @@ class ImportanceDecay:
             decayed_importance=decayed,
             decay_amount=importance - decayed,
             time_elapsed=time_elapsed,
-            next_decay_at=datetime.utcnow() + self.config.decay_period
+            next_decay_at=datetime.now(timezone.utc) + self.config.decay_period
         )
 
     def step_decay(
@@ -131,7 +120,7 @@ class ImportanceDecay:
             decayed_importance=decayed,
             decay_amount=importance - decayed,
             time_elapsed=time_elapsed,
-            next_decay_at=datetime.utcnow() + self.config.decay_period
+            next_decay_at=datetime.now(timezone.utc) + self.config.decay_period
         )
 
 

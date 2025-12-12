@@ -1,6 +1,6 @@
 """Graph models for RAE-core knowledge graph."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
@@ -37,7 +37,7 @@ class GraphNode(BaseModel):
     node_type: NodeType
     properties: Dict[str, Any] = Field(default_factory=dict)
     tenant_id: str
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class GraphEdge(BaseModel):
@@ -49,7 +49,7 @@ class GraphEdge(BaseModel):
     weight: float = Field(default=1.0, ge=0.0, le=1.0)
     properties: Dict[str, Any] = Field(default_factory=dict)
     tenant_id: str
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class GraphPath(BaseModel):

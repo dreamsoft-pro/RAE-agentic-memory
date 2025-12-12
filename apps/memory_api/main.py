@@ -102,7 +102,7 @@ async def lifespan(app: FastAPI):
     # Shutdown
     logger.info("Shutting down RAE Memory API...")
     await app.state.pool.close()
-    await app.state.redis_client.close()  # Close Redis client
+    await app.state.redis_client.aclose()  # Close Redis client
 
 
 # --- App Initialization ---

@@ -113,7 +113,7 @@ class RAEEngine:
         tenant_id: str,
         agent_id: str,
         content: str,
-        memory_type: str = "sensory",
+        layer: str = "sensory",
         importance: float = 0.5,
         tags: Optional[List[str]] = None,
         metadata: Optional[Dict[str, Any]] = None,
@@ -124,7 +124,7 @@ class RAEEngine:
             tenant_id: Tenant identifier
             agent_id: Agent identifier
             content: Memory content
-            memory_type: Type of memory (sensory, working, episodic, semantic)
+            layer: Memory layer (sensory, working, episodic, semantic, reflective)
             importance: Importance score (0-1)
             tags: Optional tags
             metadata: Optional metadata
@@ -136,7 +136,7 @@ class RAEEngine:
             tenant_id=tenant_id,
             agent_id=agent_id,
             content=content,
-            memory_type=memory_type,
+            layer=layer,
             importance=importance,
             tags=tags or [],
             metadata=metadata or {},
@@ -166,7 +166,7 @@ class RAEEngine:
         query: str,
         tenant_id: str,
         agent_id: Optional[str] = None,
-        memory_type: Optional[str] = None,
+        layer: Optional[str] = None,
         top_k: Optional[int] = None,
         similarity_threshold: Optional[float] = None,
         use_reranker: bool = False,
@@ -177,7 +177,7 @@ class RAEEngine:
             query: Search query
             tenant_id: Tenant identifier
             agent_id: Optional agent filter
-            memory_type: Optional memory type filter
+            layer: Optional memory layer filter
             top_k: Number of results (uses settings default if not specified)
             similarity_threshold: Similarity threshold (uses settings default if not specified)
             use_reranker: Whether to use reranking
@@ -192,8 +192,8 @@ class RAEEngine:
         filters = {}
         if agent_id:
             filters["agent_id"] = agent_id
-        if memory_type:
-            filters["memory_type"] = memory_type
+        if layer:
+            filters["layer"] = layer
 
         results = await self.search_engine.search(
             query=query,

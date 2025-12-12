@@ -1,6 +1,6 @@
 """Memory diff calculation for synchronization."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
@@ -35,7 +35,7 @@ class DiffResult(BaseModel):
 
     tenant_id: str
     agent_id: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     created: List[MemoryChange] = Field(default_factory=list)
     modified: List[MemoryChange] = Field(default_factory=list)
     deleted: List[MemoryChange] = Field(default_factory=list)

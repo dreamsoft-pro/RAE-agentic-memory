@@ -1,6 +1,6 @@
 """Sensory memory layer - short-term buffer with automatic decay."""
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
@@ -70,7 +70,7 @@ class SensoryLayer(MemoryLayerBase):
 
         # Calculate expiration time
         ttl = ttl_seconds if ttl_seconds is not None else self.default_ttl_seconds
-        expires_at = datetime.utcnow() + timedelta(seconds=ttl)
+        expires_at = datetime.now(timezone.utc) + timedelta(seconds=ttl)
 
         # Add metadata about TTL
         if metadata is None:
@@ -109,7 +109,7 @@ class SensoryLayer(MemoryLayerBase):
 
         # Check if expired
         expires_at = memory_dict.get("expires_at")
-        if expires_at and expires_at < datetime.utcnow():
+        if expires_at and expires_at < datetime.now(timezone.utc):
             # Delete expired memory
             await self.delete_memory(memory_id)
             return None

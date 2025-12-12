@@ -3,7 +3,7 @@
 Implements IMemoryStorage interface using asyncpg for async PostgreSQL access.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID, uuid4
 
@@ -126,7 +126,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 embedding,
                 importance,
                 expires_at,
-                datetime.utcnow(),
+                datetime.now(timezone.utc),
             )
 
         return memory_id
@@ -203,7 +203,7 @@ class PostgreSQLStorage(IMemoryStorage):
         # Handle not_expired filter
         if filters.get("not_expired"):
             conditions.append(f"(expires_at IS NULL OR expires_at > ${param_idx})")
-            params.append(datetime.utcnow())
+            params.append(datetime.now(timezone.utc))
             param_idx += 1
 
         # Handle tags filter
@@ -353,7 +353,7 @@ class PostgreSQLStorage(IMemoryStorage):
                     usage_count = usage_count + 1
                 WHERE id = $2 AND tenant_id = $3
                 """,
-                datetime.utcnow(),
+                datetime.now(timezone.utc),
                 memory_id,
                 tenant_id,
             )
@@ -457,7 +457,7 @@ class PostgreSQLStorage(IMemoryStorage):
                     last_accessed_at = $1
                 WHERE id = $2 AND tenant_id = $3
                 """,
-                datetime.utcnow(),
+                datetime.now(timezone.utc),
                 memory_id,
                 tenant_id,
             )
@@ -506,7 +506,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 tenant_id,
                 agent_id,
                 layer,
-                datetime.utcnow(),
+                datetime.now(timezone.utc),
             )
 
         # Parse "DELETE N" to get count

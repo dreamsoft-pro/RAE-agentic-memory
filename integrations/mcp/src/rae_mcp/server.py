@@ -1031,7 +1031,7 @@ async def handle_call_tool(
                     text=(
                         f"✓ Memory stored successfully\n"
                         f"ID: {memory_id}\n"
-                        f"Layer: {layer}\n"
+                        f"Layer: {layer_input}\n"
                         f"Tags: {', '.join(tags) if tags else 'none'}"
                     ),
                 )

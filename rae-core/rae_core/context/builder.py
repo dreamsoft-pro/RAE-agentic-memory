@@ -1,6 +1,6 @@
 """Context builder for assembling LLM-ready context from search results."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
@@ -117,7 +117,7 @@ class ContextBuilder:
             total_items=len(memories),
             active_items=len(included_memories),
             token_usage=total_tokens,
-            last_compaction=datetime.utcnow() if len(included_memories) < len(memories) else None,
+            last_compaction=datetime.now(timezone.utc) if len(included_memories) < len(memories) else None,
             statistics={
                 "format": format_type,
                 "truncated": len(included_memories) < len(memories),
@@ -200,7 +200,11 @@ class ContextBuilder:
                         modified_at = None
 
                 if isinstance(modified_at, datetime):
-                    age_hours = (datetime.utcnow() - modified_at.replace(tzinfo=None)).total_seconds() / 3600
+                    # Ensure modified_at is timezone-aware (assume UTC if naive)
+                    if modified_at.tzinfo is None:
+                        modified_at = modified_at.replace(tzinfo=timezone.utc)
+                    
+                    age_hours = (datetime.now(timezone.utc) - modified_at).total_seconds() / 3600
                     # More recent = higher bonus
                     recency_bonus = 0.2 * (1.0 / (1.0 + age_hours / 24))
 

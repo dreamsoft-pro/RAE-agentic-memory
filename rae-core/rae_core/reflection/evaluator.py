@@ -8,11 +8,11 @@ from uuid import UUID
 
 from rae_core.interfaces.storage import IMemoryStorage
 from rae_core.math.metrics import (
-    CoherenceMetric,
+    TextCoherenceMetric,
     CompletenessMetric,
     EntropyMetric,
     RelevanceMetric,
-    calculate_quality_score,
+    QualityScorer,
 )
 
 
@@ -20,6 +20,7 @@ class Evaluator:
     """Evaluator component that assesses memory quality and action outcomes.
 
     Implements the "Evaluate" phase of the Actor-Evaluator-Reflector pattern.
+    Uses the extensible Metric System for quality assessment.
     """
 
     def __init__(
@@ -32,10 +33,14 @@ class Evaluator:
             memory_storage: Memory storage for retrieval
         """
         self.memory_storage = memory_storage
-        self.coherence_metric = CoherenceMetric()
-        self.entropy_metric = EntropyMetric()
-        self.relevance_metric = RelevanceMetric()
-        self.completeness_metric = CompletenessMetric()
+        
+        # Initialize scorer with standard metrics
+        self.scorer = QualityScorer([
+            TextCoherenceMetric(),
+            EntropyMetric(),
+            RelevanceMetric(),
+            CompletenessMetric()
+        ])
 
     async def evaluate_memory_quality(
         self,
@@ -48,7 +53,7 @@ class Evaluator:
         Args:
             memory_id: Memory identifier
             tenant_id: Tenant identifier
-            context: Optional context for relevance evaluation
+            context: Optional context string (treated as query for relevance)
 
         Returns:
             Dictionary of quality metrics
@@ -57,20 +62,28 @@ class Evaluator:
         if not memory:
             return {"error": 1.0}
 
-        content = memory.get("content", "")
-        tokens = content.split()
-
-        metrics = {
-            "coherence": self.coherence_metric.compute(content),
-            "entropy": self.entropy_metric.compute(tokens),
-            "completeness": self.completeness_metric.compute(memory),
-        }
-
+        # Prepare evaluation context
+        eval_context = {}
         if context:
-            metrics["relevance"] = self.relevance_metric.compute(content, context)
+            eval_context["query"] = context
 
-        # Calculate overall quality
-        metrics["quality"] = calculate_quality_score(metrics)
+        # Evaluate content quality (text)
+        content_result = self.scorer.evaluate(memory.get("content", ""), eval_context)
+        
+        # Evaluate completeness (dict)
+        completeness_metric = CompletenessMetric()
+        completeness_result = completeness_metric.compute(memory)
+        
+        # Merge results (simplified for now)
+        # In a real scenario, we might want to run scorer on memory dict as well
+        # or have separate scorers for content vs structure.
+        
+        metrics = content_result.metadata.get("components", {})
+        metrics["quality"] = content_result.score
+        metrics["completeness"] = completeness_result.score
+        
+        # Recalculate overall quality including completeness
+        metrics["quality"] = (metrics["quality"] * 0.7) + (completeness_result.score * 0.3)
 
         return metrics
 
@@ -217,22 +230,18 @@ class Evaluator:
             Aggregated quality metrics
         """
         total_metrics = {
-            "coherence": 0.0,
-            "entropy": 0.0,
-            "completeness": 0.0,
             "quality": 0.0,
         }
-
-        if context:
-            total_metrics["relevance"] = 0.0
 
         count = 0
         for memory_id in memory_ids:
             metrics = await self.evaluate_memory_quality(memory_id, tenant_id, context)
             if "error" not in metrics:
-                for key in total_metrics:
-                    if key in metrics:
-                        total_metrics[key] += metrics[key]
+                total_metrics["quality"] += metrics.get("quality", 0.0)
+                # Aggregate other keys if present
+                for k, v in metrics.items():
+                    if k != "quality" and isinstance(v, (int, float)):
+                         total_metrics[k] = total_metrics.get(k, 0.0) + v
                 count += 1
 
         # Average
