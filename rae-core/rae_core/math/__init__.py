@@ -8,6 +8,7 @@ Modules:
     structure: Data structures (ScoringWeights, DecayConfig, MemoryScoreResult)
     dynamics: Temporal dynamics (recency calculation, decay functions)
     policy: Scoring policy (unified memory scoring, ranking)
+    reasoning: Reasoning controller for graph reasoning (NEW)
 
 License: Apache-2.0
 Author: Grzegorz Leśniowski <lesniowskig@gmail.com>
@@ -36,6 +37,12 @@ from rae_core.math.policy import (
     rank_memories_by_score,
 )
 
+# Reasoning (NEW - Iteration 3)
+from rae_core.math.reasoning import (
+    ReasoningController,
+    ReasoningPath,
+)
+
 __all__ = [
     # Data structures
     "ScoringWeights",
@@ -51,4 +58,7 @@ __all__ = [
     "compute_batch_scores",
     "rank_memories_by_score",
     "compute_score_with_custom_weights",
+    # Reasoning
+    "ReasoningController",
+    "ReasoningPath",
 ]
