@@ -6,7 +6,7 @@ Ideal for testing, development, and lightweight deployments.
 
 import asyncio
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
@@ -52,7 +52,7 @@ class InMemoryStorage(IMemoryStorage):
         """Store a new memory."""
         async with self._lock:
             memory_id = uuid4()
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
 
             memory = {
                 "id": memory_id,
@@ -135,7 +135,7 @@ class InMemoryStorage(IMemoryStorage):
 
             # Update memory
             memory.update(updates)
-            memory["modified_at"] = datetime.utcnow()
+            memory["modified_at"] = datetime.now(timezone.utc)
             memory["version"] = memory.get("version", 1) + 1
 
             return True
@@ -237,7 +237,7 @@ class InMemoryStorage(IMemoryStorage):
                 return False
 
             memory["access_count"] = memory.get("access_count", 0) + 1
-            memory["last_accessed_at"] = datetime.utcnow()
+            memory["last_accessed_at"] = datetime.now(timezone.utc)
 
             return True
 
@@ -302,3 +302,174 @@ class InMemoryStorage(IMemoryStorage):
             self._by_tags.clear()
 
             return count
+
+    async def delete_memories_with_metadata_filter(
+        self,
+        tenant_id: str,
+        agent_id: str,
+        layer: str,
+        metadata_filter: Dict[str, Any],
+    ) -> int:
+        """Delete memories matching metadata filter."""
+        async with self._lock:
+            matching_ids = []
+            for memory_id, memory in self._memories.items():
+                if (
+                    memory["tenant_id"] == tenant_id
+                    and memory["agent_id"] == agent_id
+                    and memory["layer"] == layer
+                ):
+                    # Check if metadata matches filter
+                    if self._matches_metadata_filter(memory.get("metadata", {}), metadata_filter):
+                        matching_ids.append(memory_id)
+
+            for memory_id in matching_ids:
+                await self._delete_memory_internal(memory_id)
+
+            return len(matching_ids)
+
+    async def delete_memories_below_importance(
+        self,
+        tenant_id: str,
+        agent_id: str,
+        layer: str,
+        importance_threshold: float,
+    ) -> int:
+        """Delete memories below importance threshold."""
+        async with self._lock:
+            matching_ids = [
+                memory_id
+                for memory_id, memory in self._memories.items()
+                if (
+                    memory["tenant_id"] == tenant_id
+                    and memory["agent_id"] == agent_id
+                    and memory["layer"] == layer
+                    and memory.get("importance", 0) < importance_threshold
+                )
+            ]
+
+            for memory_id in matching_ids:
+                await self._delete_memory_internal(memory_id)
+
+            return len(matching_ids)
+
+    async def search_memories(
+        self,
+        query: str,
+        tenant_id: str,
+        agent_id: str,
+        layer: str,
+        limit: int = 10,
+        filters: Optional[Dict[str, Any]] = None,
+    ) -> List[Dict[str, Any]]:
+        """Search memories using simple substring matching."""
+        async with self._lock:
+            results = []
+            query_lower = query.lower()
+
+            for memory in self._memories.values():
+                if (
+                    memory["tenant_id"] == tenant_id
+                    and memory["agent_id"] == agent_id
+                    and memory["layer"] == layer
+                ):
+                    # Simple substring search in content
+                    content_lower = memory["content"].lower()
+                    if query_lower in content_lower:
+                        # Calculate simple score based on position
+                        score = 1.0 - (content_lower.index(query_lower) / len(content_lower))
+                        results.append({"memory": memory.copy(), "score": score})
+
+            # Sort by score descending
+            results.sort(key=lambda x: x["score"], reverse=True)
+
+            return results[:limit]
+
+    async def delete_expired_memories(
+        self,
+        tenant_id: str,
+        agent_id: str,
+        layer: str,
+    ) -> int:
+        """Delete expired memories."""
+        async with self._lock:
+            now = datetime.now(timezone.utc)
+            matching_ids = [
+                memory_id
+                for memory_id, memory in self._memories.items()
+                if (
+                    memory["tenant_id"] == tenant_id
+                    and memory["agent_id"] == agent_id
+                    and memory["layer"] == layer
+                    and memory.get("expires_at")
+                    and memory["expires_at"] < now
+                )
+            ]
+
+            for memory_id in matching_ids:
+                await self._delete_memory_internal(memory_id)
+
+            return len(matching_ids)
+
+    async def update_memory_access(
+        self,
+        memory_id: UUID,
+        tenant_id: str,
+    ) -> bool:
+        """Update last access time and increment usage count."""
+        async with self._lock:
+            memory = self._memories.get(memory_id)
+
+            if not memory or memory["tenant_id"] != tenant_id:
+                return False
+
+            memory["last_accessed_at"] = datetime.now(timezone.utc)
+            memory["access_count"] = memory.get("access_count", 0) + 1
+
+            return True
+
+    async def update_memory_expiration(
+        self,
+        memory_id: UUID,
+        tenant_id: str,
+        expires_at: Any,
+    ) -> bool:
+        """Update memory expiration time."""
+        async with self._lock:
+            memory = self._memories.get(memory_id)
+
+            if not memory or memory["tenant_id"] != tenant_id:
+                return False
+
+            memory["expires_at"] = expires_at
+            memory["modified_at"] = datetime.now(timezone.utc)
+
+            return True
+
+    def _matches_metadata_filter(self, metadata: Dict[str, Any], filter_dict: Dict[str, Any]) -> bool:
+        """Check if metadata matches filter criteria."""
+        for key, value in filter_dict.items():
+            if key not in metadata or metadata[key] != value:
+                return False
+        return True
+
+    async def _delete_memory_internal(self, memory_id: UUID):
+        """Internal delete helper (assumes lock is held)."""
+        memory = self._memories.get(memory_id)
+        if not memory:
+            return
+
+        # Remove from main storage
+        del self._memories[memory_id]
+
+        # Remove from indexes
+        tenant_id = memory["tenant_id"]
+        agent_id = memory["agent_id"]
+        layer = memory["layer"]
+
+        self._by_tenant[tenant_id].discard(memory_id)
+        self._by_agent[(tenant_id, agent_id)].discard(memory_id)
+        self._by_layer[(tenant_id, layer)].discard(memory_id)
+
+        for tag in memory.get("tags", []):
+            self._by_tags[(tenant_id, tag)].discard(memory_id)

@@ -21,8 +21,38 @@ RAE-core is the foundational library for the RAE (Reflective Agentic Engine) eco
 
 ## Installation
 
+### Basic Installation (Reference Adapters)
+
 ```bash
 pip install rae-core
+```
+
+This includes:
+- **InMemoryStorage** - Dictionary-based storage for testing/development
+- **InMemoryCache** - Dictionary-based cache with TTL support
+- **InMemoryVectorStore** - Numpy-based vector similarity search
+- **SQLiteStorage** - File-based storage with FTS5 full-text search (via `aiosqlite`)
+- **SQLiteVectorStore** - File-based vector storage
+
+### Production Adapters (Optional)
+
+For production deployments, install the appropriate extras:
+
+```bash
+# PostgreSQL storage
+pip install rae-core[postgres]
+
+# Redis cache
+pip install rae-core[redis]
+
+# Qdrant vector store
+pip install rae-core[qdrant]
+
+# All production adapters
+pip install rae-core[all]
+
+# Development tools
+pip install rae-core[dev]
 ```
 
 ## Quick Start
@@ -54,6 +84,69 @@ results = await engine.search(
 
 for result in results:
     print(f"{result.score}: {result.content}")
+```
+
+## Production Usage
+
+### PostgreSQL Storage
+
+```python
+from rae_core import RAEEngine
+from rae_core.adapters import PostgreSQLStorage
+
+engine = RAEEngine(
+    storage=PostgreSQLStorage(
+        dsn="postgresql://user:pass@localhost/rae"
+    )
+)
+```
+
+### Redis Cache
+
+```python
+from rae_core.adapters import RedisCache
+
+cache = RedisCache(
+    host="localhost",
+    port=6379,
+    prefix="rae:"
+)
+```
+
+### Qdrant Vector Store
+
+```python
+from rae_core.adapters import QdrantVectorStore
+
+vector_store = QdrantVectorStore(
+    url="http://localhost:6333",
+    collection_name="rae_vectors"
+)
+```
+
+## Configuration & Telemetry
+
+RAE-core uses `pydantic-settings` for configuration. All settings can be overridden via environment variables with the `RAE_` prefix.
+
+### Key Settings
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `RAE_SENSORY_MAX_SIZE` | Max items in sensory layer | 100 |
+| `RAE_WORKING_MAX_SIZE` | Max items in working memory | 50 |
+| `RAE_EPISODIC_MAX_SIZE` | Max items in episodic memory | 500 |
+| `RAE_DECAY_RATE` | Memory decay rate (0.0-1.0) | 0.95 |
+| `RAE_OTEL_ENABLED` | Enable OpenTelemetry tracing | `True` |
+
+### Telemetry (Privacy-First)
+
+RAE-core is designed with a **Privacy-First** approach. While OpenTelemetry support is built-in via the `RAE_OTEL_ENABLED` flag (default: `True`), RAE-core **does not** initialize any telemetry exporters automatically.
+
+It is up to the hosting application (e.g., RAE-Server, RAE-Lite) to configure the OpenTelemetry SDK and exporters. This ensures no data leaves the system without explicit configuration by the implementer.
+
+To disable telemetry support completely:
+```bash
+export RAE_OTEL_ENABLED=False
 ```
 
 ## Architecture

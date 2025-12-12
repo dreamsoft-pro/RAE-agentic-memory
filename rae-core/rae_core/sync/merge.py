@@ -1,6 +1,6 @@
 """CRDT-based memory merge and conflict resolution."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
@@ -188,7 +188,7 @@ class ConflictResolver:
             local.get("version", 1),
             remote.get("version", 1),
         ) + 1
-        merged["modified_at"] = datetime.utcnow()
+        merged["modified_at"] = datetime.now(timezone.utc)
 
         return merged
 

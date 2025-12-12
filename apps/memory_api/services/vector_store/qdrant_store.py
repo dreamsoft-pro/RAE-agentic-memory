@@ -132,7 +132,13 @@ class QdrantStore(MemoryVectorStore):
 
         for word in set(words):
             if word not in stopwords:
-                index = int(hashlib.md5(word.encode()).hexdigest(), 16) % 100000
+                index = (
+                    int(
+                        hashlib.md5(word.encode(), usedforsecurity=False).hexdigest(),
+                        16,
+                    )
+                    % 100000
+                )
                 # Accumulate values for duplicate indices (hash collisions)
                 index_values[index] = index_values.get(index, 0.0) + 1.0
 
@@ -177,10 +183,9 @@ class QdrantStore(MemoryVectorStore):
                             "dense": dense_vector,
                             "text": sparse_vector,
                         },
-                        payload=memory.dict(),
+                        payload=memory.model_dump(),
                     )
                 )
-
             self.qdrant_client.upsert(
                 collection_name="memories", points=points_to_upsert, wait=True
             )
