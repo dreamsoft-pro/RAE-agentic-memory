@@ -189,6 +189,18 @@ class ORBBenchmark:
             parameters={"math_level": 2, "batch_size": 10, "cache_enabled": True},
             description="Optimized for latency",
         ),
+        Configuration(
+            config_id="cfg_realtime",
+            name="Real-time",
+            parameters={"math_level": 1, "batch_size": 5, "cache_enabled": True},
+            description="Ultra-low latency for real-time applications",
+        ),
+        Configuration(
+            config_id="cfg_research",
+            name="Research Grade",
+            parameters={"math_level": 4, "batch_size": 50, "cache_enabled": True},
+            description="Research-grade quality (expensive but thorough)",
+        ),
     ]
 
     def __init__(

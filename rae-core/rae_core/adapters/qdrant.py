@@ -26,6 +26,7 @@ class QdrantVectorStore(IVectorStore):
         memory_id: UUID,
         tenant_id: str,
         agent_id: str,
+        session_id: str,
         layer: str,
         content: str (optional, for debugging),
         importance: float,
@@ -106,16 +107,18 @@ class QdrantVectorStore(IVectorStore):
         agent_id: str,
         layer: str,
         metadata: Optional[Dict[str, Any]] = None,
+        session_id: Optional[str] = None,
     ) -> bool:
         """Add a vector to Qdrant."""
         await self._ensure_collection()
 
         metadata = metadata or {}
-        
+
         payload = {
             "memory_id": str(memory_id),
             "tenant_id": tenant_id,
             "agent_id": agent_id,
+            "session_id": session_id or metadata.get("session_id", "default"),
             "layer": layer,
             **metadata,
         }
@@ -145,8 +148,9 @@ class QdrantVectorStore(IVectorStore):
         """Store a vector embedding."""
         metadata = metadata or {}
         agent_id = str(metadata.get("agent_id", "default"))
+        session_id = str(metadata.get("session_id", "default"))
         layer = str(metadata.get("layer", "episodic"))
-        return await self.add_vector(memory_id, embedding, tenant_id, agent_id, layer, metadata)
+        return await self.add_vector(memory_id, embedding, tenant_id, agent_id, layer, metadata, session_id)
 
     async def update_vector(
         self,
@@ -165,17 +169,19 @@ class QdrantVectorStore(IVectorStore):
     ) -> int:
         """Store multiple vectors in a batch."""
         await self._ensure_collection()
-        
+
         points = []
         for memory_id, embedding, metadata in vectors:
             meta = metadata or {}
             agent_id = str(meta.get("agent_id", "default"))
+            session_id = str(meta.get("session_id", "default"))
             layer = str(meta.get("layer", "episodic"))
-            
+
             payload = {
                 "memory_id": str(memory_id),
                 "tenant_id": tenant_id,
                 "agent_id": agent_id,
+                "session_id": session_id,
                 "layer": layer,
                 **meta
             }
@@ -205,15 +211,39 @@ class QdrantVectorStore(IVectorStore):
         layer: Optional[str] = None,
         limit: int = 10,
         score_threshold: Optional[float] = None,
+        agent_id: Optional[str] = None,
+        session_id: Optional[str] = None,
     ) -> List[Tuple[UUID, float]]:
-        """Search for similar vectors using cosine similarity."""
+        """Search for similar vectors using cosine similarity.
+
+        Args:
+            query_embedding: Query vector
+            tenant_id: Tenant ID (mandatory for multi-tenancy)
+            layer: Optional memory layer filter
+            limit: Maximum results to return
+            score_threshold: Minimum similarity score
+            agent_id: Optional agent ID for namespace isolation
+            session_id: Optional session ID for namespace isolation
+        """
         await self._ensure_collection()
 
-        # Build filter
+        # Build filter - mandatory tenant_id
         must_conditions = [
             {"key": "tenant_id", "match": {"value": tenant_id}}
         ]
-        
+
+        # Add agent_id filter if provided (namespace isolation)
+        if agent_id:
+            must_conditions.append(
+                {"key": "agent_id", "match": {"value": agent_id}}
+            )
+
+        # Add session_id filter if provided (namespace isolation)
+        if session_id:
+            must_conditions.append(
+                {"key": "session_id", "match": {"value": session_id}}
+            )
+
         if layer:
             must_conditions.append(
                 {"key": "layer", "match": {"value": layer}}
