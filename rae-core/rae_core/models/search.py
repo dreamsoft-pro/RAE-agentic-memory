@@ -1,7 +1,7 @@
 """Search models for RAE-core hybrid search."""
 
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -26,23 +26,23 @@ class SearchQuery(BaseModel):
 
     # Filters
     tenant_id: str = Field(description="Tenant identifier")
-    agent_id: Optional[str] = Field(default=None, description="Filter by agent")
-    layer: Optional[str] = Field(default=None, description="Filter by memory layer")
-    tags: Optional[List[str]] = Field(
+    agent_id: str | None = Field(default=None, description="Filter by agent")
+    layer: str | None = Field(default=None, description="Filter by memory layer")
+    tags: list[str] | None = Field(
         default=None, description="Filter by tags (OR logic)"
     )
-    min_importance: Optional[float] = Field(
+    min_importance: float | None = Field(
         default=None, ge=0.0, le=1.0, description="Minimum importance threshold"
     )
 
     # Search parameters
     limit: int = Field(default=10, ge=1, le=100, description="Max results")
-    score_threshold: Optional[float] = Field(
+    score_threshold: float | None = Field(
         default=None, ge=0.0, le=1.0, description="Minimum score threshold"
     )
 
     # Fusion weights (for hybrid search)
-    weights: Optional[Dict[str, float]] = Field(
+    weights: dict[str, float] | None = Field(
         default=None,
         description="Strategy weights for fusion (vector, graph, sparse, fulltext)",
     )
@@ -80,7 +80,7 @@ class SearchResult(BaseModel):
     strategy_used: SearchStrategy = Field(
         description="Which strategy produced this result"
     )
-    metadata: Dict[str, Any] = Field(
+    metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional result metadata"
     )
 
@@ -88,12 +88,12 @@ class SearchResult(BaseModel):
 class SearchResponse(BaseModel):
     """Search response with results and metadata."""
 
-    results: List[SearchResult] = Field(description="Search results")
+    results: list[SearchResult] = Field(description="Search results")
     query: str = Field(description="Original query")
     strategy: SearchStrategy = Field(description="Strategy used")
     total_found: int = Field(description="Total matching results before limit")
     execution_time_ms: float = Field(description="Execution time in milliseconds")
-    fusion_details: Optional[Dict[str, Any]] = Field(
+    fusion_details: dict[str, Any] | None = Field(
         default=None, description="Details about fusion process"
     )
 

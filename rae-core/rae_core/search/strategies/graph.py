@@ -1,6 +1,6 @@
 """Graph-based traversal search strategy (GraphRAG)."""
 
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 from uuid import UUID
 
 from rae_core.interfaces.graph import IGraphStore
@@ -39,9 +39,9 @@ class GraphTraversalStrategy(SearchStrategy):
         self,
         query: str,
         tenant_id: str,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
         limit: int = 10,
-    ) -> List[Tuple[UUID, float]]:
+    ) -> list[tuple[UUID, float]]:
         """Execute graph traversal search.
 
         Args:
@@ -56,7 +56,9 @@ class GraphTraversalStrategy(SearchStrategy):
         # Extract seed memory IDs from filters
         seed_ids = filters.get("seed_ids", []) if filters else []
         edge_type = filters.get("edge_type") if filters else None
-        max_depth = filters.get("max_depth", self.max_depth) if filters else self.max_depth
+        max_depth = (
+            filters.get("max_depth", self.max_depth) if filters else self.max_depth
+        )
 
         if not seed_ids:
             # If no seeds provided, return empty results
@@ -64,8 +66,8 @@ class GraphTraversalStrategy(SearchStrategy):
             return []
 
         # Traverse graph from seed nodes
-        visited: Set[UUID] = set()
-        results: Dict[UUID, float] = {}
+        visited: set[UUID] = set()
+        results: dict[UUID, float] = {}
 
         for seed_id in seed_ids:
             if isinstance(seed_id, str):
@@ -89,11 +91,9 @@ class GraphTraversalStrategy(SearchStrategy):
                     results[neighbor_id] = score
 
         # Convert to sorted list
-        sorted_results = sorted(
-            results.items(),
-            key=lambda x: x[1],
-            reverse=True
-        )[:limit]
+        sorted_results = sorted(results.items(), key=lambda x: x[1], reverse=True)[
+            :limit
+        ]
 
         return sorted_results
 

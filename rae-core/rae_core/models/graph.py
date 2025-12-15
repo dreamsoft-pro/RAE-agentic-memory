@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -35,7 +35,7 @@ class GraphNode(BaseModel):
 
     id: UUID
     node_type: NodeType
-    properties: Dict[str, Any] = Field(default_factory=dict)
+    properties: dict[str, Any] = Field(default_factory=dict)
     tenant_id: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -47,7 +47,7 @@ class GraphEdge(BaseModel):
     target_id: UUID
     edge_type: EdgeType
     weight: float = Field(default=1.0, ge=0.0, le=1.0)
-    properties: Dict[str, Any] = Field(default_factory=dict)
+    properties: dict[str, Any] = Field(default_factory=dict)
     tenant_id: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -55,14 +55,14 @@ class GraphEdge(BaseModel):
 class GraphPath(BaseModel):
     """Path in the graph."""
 
-    nodes: List[UUID]
-    edges: List[GraphEdge]
+    nodes: list[UUID]
+    edges: list[GraphEdge]
     total_weight: float
 
 
 class Subgraph(BaseModel):
     """Extracted subgraph."""
 
-    nodes: List[GraphNode]
-    edges: List[GraphEdge]
-    center_node: Optional[UUID] = None
+    nodes: list[GraphNode]
+    edges: list[GraphEdge]
+    center_node: UUID | None = None

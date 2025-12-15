@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -22,12 +22,12 @@ class MemoryChange(BaseModel):
 
     memory_id: UUID
     change_type: ChangeType
-    local_version: Optional[int] = None
-    remote_version: Optional[int] = None
-    local_modified: Optional[datetime] = None
-    remote_modified: Optional[datetime] = None
+    local_version: int | None = None
+    remote_version: int | None = None
+    local_modified: datetime | None = None
+    remote_modified: datetime | None = None
     conflicts: bool = Field(default=False)
-    conflict_fields: List[str] = Field(default_factory=list)
+    conflict_fields: list[str] = Field(default_factory=list)
 
 
 class DiffResult(BaseModel):
@@ -36,11 +36,11 @@ class DiffResult(BaseModel):
     tenant_id: str
     agent_id: str
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    created: List[MemoryChange] = Field(default_factory=list)
-    modified: List[MemoryChange] = Field(default_factory=list)
-    deleted: List[MemoryChange] = Field(default_factory=list)
-    unchanged: List[MemoryChange] = Field(default_factory=list)
-    conflicts: List[MemoryChange] = Field(default_factory=list)
+    created: list[MemoryChange] = Field(default_factory=list)
+    modified: list[MemoryChange] = Field(default_factory=list)
+    deleted: list[MemoryChange] = Field(default_factory=list)
+    unchanged: list[MemoryChange] = Field(default_factory=list)
+    conflicts: list[MemoryChange] = Field(default_factory=list)
 
     @property
     def has_changes(self) -> bool:
@@ -59,8 +59,8 @@ class DiffResult(BaseModel):
 
 
 def calculate_memory_diff(
-    local_memories: List[Dict[str, Any]],
-    remote_memories: List[Dict[str, Any]],
+    local_memories: list[dict[str, Any]],
+    remote_memories: list[dict[str, Any]],
     tenant_id: str,
     agent_id: str,
 ) -> DiffResult:
@@ -155,7 +155,7 @@ def calculate_memory_diff(
     return result
 
 
-def _is_memory_modified(local: Dict[str, Any], remote: Dict[str, Any]) -> bool:
+def _is_memory_modified(local: dict[str, Any], remote: dict[str, Any]) -> bool:
     """Check if memory has been modified.
 
     Args:
@@ -180,11 +180,11 @@ def _is_memory_modified(local: Dict[str, Any], remote: Dict[str, Any]) -> bool:
 
 
 def _detect_conflicts(
-    local: Dict[str, Any],
-    remote: Dict[str, Any],
-    local_modified: Optional[datetime],
-    remote_modified: Optional[datetime],
-) -> tuple[bool, List[str]]:
+    local: dict[str, Any],
+    remote: dict[str, Any],
+    local_modified: datetime | None,
+    remote_modified: datetime | None,
+) -> tuple[bool, list[str]]:
     """Detect conflicts between local and remote versions.
 
     Conflicts occur when:

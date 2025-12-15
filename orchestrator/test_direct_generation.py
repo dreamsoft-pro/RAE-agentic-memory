@@ -1,6 +1,7 @@
 """Direct test of Gemini generation without full orchestrator."""
 
 import asyncio
+
 from providers.gemini import GeminiProvider
 
 
@@ -10,8 +11,7 @@ async def test_simple_generation():
     print("=" * 60)
 
     provider = GeminiProvider(
-        cli_path="gemini",
-        rate_limit_delay=False  # Disable for testing
+        cli_path="gemini", rate_limit_delay=False  # Disable for testing
     )
 
     # Very simple prompt
@@ -30,11 +30,13 @@ async def test_simple_generation():
         print(f"\n❌ Error: {result.error}\n")
         return False
 
-    print(f"\n✅ Success!")
+    print("\n✅ Success!")
     print(f"\n📥 Response:\n{result.content}\n")
 
     if result.usage:
-        print(f"Token usage: {result.usage.input_tokens} in, {result.usage.output_tokens} out")
+        print(
+            f"Token usage: {result.usage.input_tokens} in, {result.usage.output_tokens} out"
+        )
 
     return True
 

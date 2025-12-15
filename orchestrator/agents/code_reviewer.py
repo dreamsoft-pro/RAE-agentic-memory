@@ -1,9 +1,9 @@
 """Code-Reviewer-Agent: Reviews generated code before committing."""
 
 import json
-from typing import Dict, Any
+from typing import Any, Dict
 
-from .base import BaseAgent, AgentTask, AgentResponse
+from .base import AgentResponse, AgentTask, BaseAgent
 
 
 class CodeReviewerAgent(BaseAgent):
@@ -76,10 +76,7 @@ class CodeReviewerAgent(BaseAgent):
             )
 
     def _build_review_prompt(
-        self,
-        task: AgentTask,
-        implementation: Dict[str, Any],
-        step: Dict[str, Any]
+        self, task: AgentTask, implementation: Dict[str, Any], step: Dict[str, Any]
     ) -> str:
         """Build prompt for code review.
 
@@ -201,12 +198,12 @@ Now review the code:
         import re
 
         # Look for JSON code blocks
-        json_match = re.search(r'```json\s*(.*?)\s*```', output, re.DOTALL)
+        json_match = re.search(r"```json\s*(.*?)\s*```", output, re.DOTALL)
         if json_match:
             json_str = json_match.group(1)
         else:
             # Try to find JSON object
-            json_match = re.search(r'\{.*\}', output, re.DOTALL)
+            json_match = re.search(r"\{.*\}", output, re.DOTALL)
             if json_match:
                 json_str = json_match.group(0)
             else:

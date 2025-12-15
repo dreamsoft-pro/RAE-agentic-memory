@@ -3,20 +3,13 @@
 import asyncio
 import json
 import logging
+import os
 import random
 import shutil
 import tempfile
-import os
 from typing import List, Optional
 
-from .base import (
-    GenerationResult,
-    LLMProvider,
-    ModelInfo,
-    ModelTier,
-    Usage,
-)
-
+from .base import GenerationResult, LLMProvider, ModelInfo, ModelTier, Usage
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +26,7 @@ class GeminiProvider(LLMProvider):
         cli_path: str = "gemini",
         rate_limit_delay: bool = True,
         min_delay: float = 1.0,
-        max_delay: float = 10.0
+        max_delay: float = 10.0,
     ):
         """Initialize Gemini provider.
 
@@ -73,7 +66,15 @@ class GeminiProvider(LLMProvider):
                 provider="gemini",
                 model_id="gemini-3-pro-preview",
                 display_name="Gemini 3.0 Pro (Preview)",
-                capabilities=["code", "analysis", "planning", "complex_reasoning", "review", "research", "architecture"],
+                capabilities=[
+                    "code",
+                    "analysis",
+                    "planning",
+                    "complex_reasoning",
+                    "review",
+                    "research",
+                    "architecture",
+                ],
                 context_window=200000,
                 cost_per_1k_input=0.0,  # Free via CLI
                 cost_per_1k_output=0.0,
@@ -84,7 +85,13 @@ class GeminiProvider(LLMProvider):
                 provider="gemini",
                 model_id="gemini-2.5-pro",
                 display_name="Gemini 2.5 Pro",
-                capabilities=["code", "analysis", "planning", "complex_reasoning", "review"],
+                capabilities=[
+                    "code",
+                    "analysis",
+                    "planning",
+                    "complex_reasoning",
+                    "review",
+                ],
                 context_window=128000,
                 cost_per_1k_input=0.0,  # Free via CLI
                 cost_per_1k_output=0.0,
@@ -94,7 +101,13 @@ class GeminiProvider(LLMProvider):
                 provider="gemini",
                 model_id="gemini-2.5-flash",
                 display_name="Gemini 2.5 Flash",
-                capabilities=["code", "analysis", "simple_tasks", "docs", "refactoring"],
+                capabilities=[
+                    "code",
+                    "analysis",
+                    "simple_tasks",
+                    "docs",
+                    "refactoring",
+                ],
                 context_window=64000,
                 cost_per_1k_input=0.0,  # Free via CLI
                 cost_per_1k_output=0.0,
@@ -104,7 +117,13 @@ class GeminiProvider(LLMProvider):
                 provider="gemini",
                 model_id="gemini-2.5-flash-lite",
                 display_name="Gemini 2.5 Flash Lite",
-                capabilities=["simple_tasks", "docs", "linting", "formatting", "simple_edits"],
+                capabilities=[
+                    "simple_tasks",
+                    "docs",
+                    "linting",
+                    "formatting",
+                    "simple_edits",
+                ],
                 context_window=32000,
                 cost_per_1k_input=0.0,  # Free via CLI
                 cost_per_1k_output=0.0,
@@ -140,7 +159,7 @@ class GeminiProvider(LLMProvider):
         system_prompt: Optional[str] = None,
         max_tokens: int = 4096,
         temperature: float = 0.7,
-        **kwargs
+        **kwargs,
     ) -> GenerationResult:
         """Generate completion using Gemini CLI.
 
@@ -162,7 +181,7 @@ class GeminiProvider(LLMProvider):
         if not await self.is_available():
             return GenerationResult(
                 content="",
-                error="Gemini CLI not available - install with: pip install google-genai"
+                error="Gemini CLI not available - install with: pip install google-genai",
             )
 
         # Rate limiting: Add random delay to avoid hitting rate limits
@@ -180,7 +199,9 @@ class GeminiProvider(LLMProvider):
 
             # IMPORTANT: Write prompt to temp file to avoid CLI parsing issues
             # Long prompts with newlines/special chars break when passed via -p flag
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
+            with tempfile.NamedTemporaryFile(
+                mode="w", suffix=".txt", delete=False
+            ) as f:
                 f.write(full_prompt)
                 prompt_file = f.name
 
@@ -188,11 +209,15 @@ class GeminiProvider(LLMProvider):
                 # Build CLI command - read prompt from stdin
                 cmd = [
                     self.cli_path,
-                    "-m", model,
-                    "--output-format", "json",
+                    "-m",
+                    model,
+                    "--output-format",
+                    "json",
                 ]
 
-                logger.debug(f"Calling Gemini CLI: model={model}, prompt_file={prompt_file}")
+                logger.debug(
+                    f"Calling Gemini CLI: model={model}, prompt_file={prompt_file}"
+                )
 
                 # Execute CLI with prompt from stdin
                 proc = await asyncio.create_subprocess_exec(
@@ -203,21 +228,20 @@ class GeminiProvider(LLMProvider):
                 )
 
                 # Read prompt from file and send to stdin
-                with open(prompt_file, 'r') as pf:
+                with open(prompt_file, "r") as pf:
                     prompt_content = pf.read()
 
                 # Wait for completion (5 minute timeout)
                 try:
                     stdout, stderr = await asyncio.wait_for(
-                        proc.communicate(input=prompt_content.encode('utf-8')),
-                        timeout=300.0
+                        proc.communicate(input=prompt_content.encode("utf-8")),
+                        timeout=300.0,
                     )
                 except asyncio.TimeoutError:
                     proc.kill()
                     logger.error(f"Gemini CLI timeout for model {model}")
                     return GenerationResult(
-                        content="",
-                        error="Gemini CLI timeout after 5 minutes"
+                        content="", error="Gemini CLI timeout after 5 minutes"
                     )
             finally:
                 # Clean up temp file
@@ -231,8 +255,7 @@ class GeminiProvider(LLMProvider):
                 error_msg = stderr.decode("utf-8") if stderr else "Unknown error"
                 logger.error(f"Gemini CLI failed: {error_msg}")
                 return GenerationResult(
-                    content="",
-                    error=f"Gemini CLI error: {error_msg}"
+                    content="", error=f"Gemini CLI error: {error_msg}"
                 )
 
             # Parse JSON output
@@ -244,8 +267,7 @@ class GeminiProvider(LLMProvider):
                 # Try to extract raw text
                 content = stdout.decode("utf-8") if stdout else ""
                 return GenerationResult(
-                    content=content,
-                    error=f"JSON parse error: {str(e)}"
+                    content=content, error=f"JSON parse error: {str(e)}"
                 )
 
             # Extract content and metadata from JSON
@@ -271,7 +293,11 @@ class GeminiProvider(LLMProvider):
                     )
 
                 # Store other metadata
-                metadata = {k: v for k, v in output_json.items() if k not in ["text", "content", "response", "usage"]}
+                metadata = {
+                    k: v
+                    for k, v in output_json.items()
+                    if k not in ["text", "content", "response", "usage"]
+                }
 
             elif isinstance(output_json, str):
                 content = output_json
@@ -289,10 +315,7 @@ class GeminiProvider(LLMProvider):
 
         except Exception as e:
             logger.error(f"Gemini CLI call failed: {e}")
-            return GenerationResult(
-                content="",
-                error=f"Gemini CLI error: {str(e)}"
-            )
+            return GenerationResult(content="", error=f"Gemini CLI error: {str(e)}")
 
     async def is_available(self) -> bool:
         """Check if Gemini CLI is available.

@@ -19,7 +19,7 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 
 class FailureAnalyzer:
@@ -37,7 +37,7 @@ class FailureAnalyzer:
                 r"ResourceWarning",
             ],
             "can_auto_fix": True,
-            "confidence": "high"
+            "confidence": "high",
         },
         "import_error": {
             "patterns": [
@@ -46,7 +46,7 @@ class FailureAnalyzer:
                 r"No module named",
             ],
             "can_auto_fix": True,
-            "confidence": "high"
+            "confidence": "high",
         },
         "type_error": {
             "patterns": [
@@ -55,7 +55,7 @@ class FailureAnalyzer:
                 r"Incompatible types",
             ],
             "can_auto_fix": True,
-            "confidence": "medium"
+            "confidence": "medium",
         },
         "flaky_test": {
             "patterns": [
@@ -65,7 +65,7 @@ class FailureAnalyzer:
                 r"AssertionError.*eventually",
             ],
             "can_auto_fix": True,
-            "confidence": "medium"
+            "confidence": "medium",
         },
         "lint": {
             "patterns": [
@@ -75,7 +75,7 @@ class FailureAnalyzer:
                 r"flake8.*E\d{3}",
             ],
             "can_auto_fix": True,
-            "confidence": "high"
+            "confidence": "high",
         },
         "drift": {
             "patterns": [
@@ -85,7 +85,7 @@ class FailureAnalyzer:
                 r"Performance degradation",
             ],
             "can_auto_fix": False,
-            "confidence": "low"
+            "confidence": "low",
         },
     }
 
@@ -151,12 +151,14 @@ class FailureAnalyzer:
             for suite in data.get("testsuites", []):
                 for case in suite.get("testcases", []):
                     if case.get("failure") or case.get("error"):
-                        self.failures.append({
-                            "nodeid": f"{case.get('classname', '')}::{case.get('name', '')}",
-                            "outcome": "failed",
-                            "message": case.get("failure", {}).get("message", "")
-                                      or case.get("error", {}).get("message", "")
-                        })
+                        self.failures.append(
+                            {
+                                "nodeid": f"{case.get('classname', '')}::{case.get('name', '')}",
+                                "outcome": "failed",
+                                "message": case.get("failure", {}).get("message", "")
+                                or case.get("error", {}).get("message", ""),
+                            }
+                        )
 
     def classify_failure(self) -> Tuple[str, bool, str]:
         """Classify the type of failure.
@@ -307,7 +309,7 @@ class FailureAnalyzer:
                 "Check for N+1 queries",
                 "Optimize slow tests",
                 "Review recent changes for regressions",
-            ]
+            ],
         }
         return suggestions.get(fix_type, ["Manual investigation required"])
 
@@ -330,7 +332,7 @@ class FailureAnalyzer:
             "flaky_test": f"Found {failure_count} potentially flaky test failures in {affected_count} files",
             "lint": f"Found linting issues in {affected_count} files",
             "drift": f"Found {failure_count} drift/regression issues",
-            "unknown": f"Found {failure_count} failures of unknown type"
+            "unknown": f"Found {failure_count} failures of unknown type",
         }
 
         return summaries.get(fix_type, f"Found {failure_count} failures")
@@ -346,19 +348,15 @@ def main() -> int:
         description="Analyze CI failures and generate context for fix generation"
     )
     parser.add_argument(
-        "--workflow-run-id",
-        required=True,
-        help="GitHub Actions workflow run ID"
+        "--workflow-run-id", required=True, help="GitHub Actions workflow run ID"
     )
     parser.add_argument(
-        "--artifacts-dir",
-        required=True,
-        help="Directory containing CI artifacts"
+        "--artifacts-dir", required=True, help="Directory containing CI artifacts"
     )
     parser.add_argument(
         "--output",
         default="failure_context.json",
-        help="Output file for failure context (default: failure_context.json)"
+        help="Output file for failure context (default: failure_context.json)",
     )
     args = parser.parse_args()
 

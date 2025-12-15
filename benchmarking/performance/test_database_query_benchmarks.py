@@ -1,29 +1,37 @@
-import pytest
-import asyncpg
 import os
-import asyncio
+
+import asyncpg
+import pytest
+
 
 # Fixture to provide a database connection pool
 @pytest.fixture(scope="function")
 async def db_pool():
     # Use environment variables or a config for connection details
-    db_url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/test_rae")
+    db_url = os.getenv(
+        "DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/test_rae"
+    )
     pool = await asyncpg.create_pool(db_url)
     yield pool
     await pool.close()
+
 
 @pytest.fixture(scope="function")
 async def setup_db(db_pool):
     # Ensure table exists for benchmarking
     async with db_pool.acquire() as conn:
-        await conn.execute("""
+        await conn.execute(
+            """
             CREATE TABLE IF NOT EXISTS benchmark_data (
                 id SERIAL PRIMARY KEY,
                 value TEXT
             );
-        """)
+        """
+        )
         # Insert some initial data
-        await conn.execute("INSERT INTO benchmark_data (value) SELECT 'test_value_' || generate_series(1, 1000);")
+        await conn.execute(
+            "INSERT INTO benchmark_data (value) SELECT 'test_value_' || generate_series(1, 1000);"
+        )
     yield
     # Clean up after tests (optional, depending on testing strategy)
     async with db_pool.acquire() as conn:
@@ -61,5 +69,3 @@ async def setup_db(db_pool):
 #
 # # Temporarily commenting out database benchmarks due to persistent docker image database user issues.
 # # This needs further investigation into the 'ankane/pgvector' image configuration or a switch to a standard PostgreSQL image.
-
-

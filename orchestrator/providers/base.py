@@ -3,11 +3,12 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 class ModelTier(Enum):
     """Model capability tiers for routing."""
+
     FAST = "fast"  # Fast, cheap models (e.g., Gemini Flash, local small models)
     STANDARD = "standard"  # Standard models (e.g., Gemini Pro, GPT-3.5)
     ADVANCED = "advanced"  # Advanced models (e.g., Claude Sonnet, GPT-4)
@@ -16,6 +17,7 @@ class ModelTier(Enum):
 @dataclass
 class Usage:
     """Token usage information."""
+
     input_tokens: int = 0
     output_tokens: int = 0
     total_tokens: int = 0
@@ -28,6 +30,7 @@ class Usage:
 @dataclass
 class GenerationResult:
     """Result from LLM generation."""
+
     content: str
     usage: Optional[Usage] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
@@ -42,6 +45,7 @@ class GenerationResult:
 @dataclass
 class ModelInfo:
     """Metadata about an LLM model."""
+
     provider: str  # Provider name (e.g., 'claude', 'gemini', 'ollama')
     model_id: str  # Model identifier (e.g., 'claude-sonnet-4-5')
     display_name: str  # Human-readable name
@@ -158,7 +162,7 @@ class LLMProvider(ABC):
         self,
         capability: Optional[str] = None,
         tier: Optional[ModelTier] = None,
-        max_cost: Optional[float] = None
+        max_cost: Optional[float] = None,
     ) -> List[ModelInfo]:
         """List models matching criteria.
 
@@ -185,6 +189,7 @@ class LLMProvider(ABC):
 @dataclass
 class ProviderConfig:
     """Configuration for an LLM provider."""
+
     name: str
     enabled: bool = True
     default_model: Optional[str] = None
@@ -204,5 +209,5 @@ class ProviderConfig:
             name=data["name"],
             enabled=data.get("enabled", True),
             default_model=data.get("default_model"),
-            settings=data.get("settings", {})
+            settings=data.get("settings", {}),
         )

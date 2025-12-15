@@ -14,7 +14,6 @@ Author: Grzegorz Leśniowski <lesniowskig@gmail.com>
 
 import math
 from dataclasses import dataclass
-from typing import Dict
 
 
 @dataclass
@@ -67,7 +66,7 @@ class ScoringWeights:
                 UserWarning,
             )
 
-    def to_dict(self) -> Dict[str, float]:
+    def to_dict(self) -> dict[str, float]:
         """Serialize to dictionary"""
         return {"alpha": self.alpha, "beta": self.beta, "gamma": self.gamma}
 
@@ -111,7 +110,7 @@ class DecayConfig:
     min_decay_rate: float = 0.0001  # Minimum effective decay (for frequent access)
     max_decay_rate: float = 0.01  # Maximum effective decay (for rare access)
 
-    def to_dict(self) -> Dict[str, float]:
+    def to_dict(self) -> dict[str, float]:
         """Serialize to dictionary"""
         return {
             "base_decay_rate": self.base_decay_rate,
@@ -172,7 +171,7 @@ class MemoryScoreResult:
     access_count: int
     effective_decay_rate: float
 
-    def to_dict(self) -> Dict[str, float]:
+    def to_dict(self) -> dict[str, float]:
         """Serialize to dictionary"""
         return {
             "final_score": self.final_score,

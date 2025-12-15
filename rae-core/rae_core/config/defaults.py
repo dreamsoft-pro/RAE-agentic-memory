@@ -1,6 +1,6 @@
 """Default configuration values for RAE-core."""
 
-from typing import Dict, Any
+from typing import Any
 
 # Memory layer sizes
 DEFAULT_SENSORY_SIZE = 100
@@ -47,7 +47,7 @@ DEFAULT_OTEL_SERVICE_NAME = "rae-core"
 DEFAULT_OTEL_SERVICE_VERSION = "0.4.0"
 
 
-def get_default_memory_layer_config() -> Dict[str, Any]:
+def get_default_memory_layer_config() -> dict[str, Any]:
     """Get default configuration for memory layers.
 
     Returns:
@@ -77,7 +77,7 @@ def get_default_memory_layer_config() -> Dict[str, Any]:
     }
 
 
-def get_default_llm_config() -> Dict[str, Any]:
+def get_default_llm_config() -> dict[str, Any]:
     """Get default LLM configuration.
 
     Returns:
@@ -90,7 +90,7 @@ def get_default_llm_config() -> Dict[str, Any]:
     }
 
 
-def get_default_search_config() -> Dict[str, Any]:
+def get_default_search_config() -> dict[str, Any]:
     """Get default search configuration.
 
     Returns:
@@ -103,7 +103,7 @@ def get_default_search_config() -> Dict[str, Any]:
     }
 
 
-def get_default_reflection_config() -> Dict[str, Any]:
+def get_default_reflection_config() -> dict[str, Any]:
     """Get default reflection configuration.
 
     Returns:

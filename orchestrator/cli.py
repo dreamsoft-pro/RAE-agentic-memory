@@ -1,12 +1,11 @@
 """CLI commands for orchestrator management."""
 
-import asyncio
 import json
 from pathlib import Path
-from typing import List
+
 import click
 
-from orchestrator.core import StateMachine, TaskState, StepState
+from orchestrator.core import StateMachine, StepState, TaskState
 
 
 @click.group()
@@ -28,7 +27,7 @@ def summary():
     click.echo(f"Total Cost: ${summary_data['total_cost_usd']:.4f}\n")
 
     click.echo("Tasks by State:")
-    for state, count in summary_data['by_state'].items():
+    for state, count in summary_data["by_state"].items():
         click.echo(f"  {state}: {count}")
     click.echo()
 
@@ -55,10 +54,10 @@ def review():
             click.echo(f"Plan Steps: {len(task.plan.get('steps', []))}")
 
         if task.plan_review:
-            review_status = task.plan_review.get('status', 'unknown')
+            review_status = task.plan_review.get("status", "unknown")
             click.echo(f"Plan Review Status: {review_status}")
             if review_status == "rejected":
-                concerns = task.plan_review.get('review', {}).get('concerns', [])
+                concerns = task.plan_review.get("review", {}).get("concerns", [])
                 if concerns:
                     click.echo("Concerns:")
                     for concern in concerns:
@@ -76,10 +75,10 @@ def review():
 
 
 @cli.command()
-@click.argument('task_id')
-@click.option('--approve', is_flag=True, help='Approve and continue task')
-@click.option('--reject', is_flag=True, help='Reject and mark as failed')
-@click.option('--details', is_flag=True, help='Show full details')
+@click.argument("task_id")
+@click.option("--approve", is_flag=True, help="Approve and continue task")
+@click.option("--reject", is_flag=True, help="Reject and mark as failed")
+@click.option("--details", is_flag=True, help="Show full details")
 def task(task_id: str, approve: bool, reject: bool, details: bool):
     """Manage specific task."""
     state_machine = StateMachine()
@@ -109,9 +108,7 @@ def task(task_id: str, approve: bool, reject: bool, details: bool):
     if reject:
         # Reject task - mark as failed
         state_machine.update_task_state(
-            task_id,
-            TaskState.FAILED,
-            error="Rejected by human reviewer"
+            task_id, TaskState.FAILED, error="Rejected by human reviewer"
         )
         click.echo(f"❌ Task {task_id} rejected and marked as failed")
         return
@@ -125,7 +122,7 @@ def task(task_id: str, approve: bool, reject: bool, details: bool):
 
     if task_exec.plan:
         click.echo(f"\nPlan: {len(task_exec.plan.get('steps', []))} steps")
-        if task_exec.plan.get('estimated_duration'):
+        if task_exec.plan.get("estimated_duration"):
             click.echo(f"Estimated Duration: {task_exec.plan['estimated_duration']}")
 
     if task_exec.steps:
@@ -137,7 +134,9 @@ def task(task_id: str, approve: bool, reject: bool, details: bool):
                 StepState.IMPLEMENTING: "🔄",
                 StepState.PENDING: "⏳",
             }.get(step.state, "")
-            click.echo(f"  {icon} {step.step_id}: {step.state.value} (attempt {step.attempt})")
+            click.echo(
+                f"  {icon} {step.step_id}: {step.state.value} (attempt {step.attempt})"
+            )
 
     click.echo(f"\nCost: ${task_exec.total_cost_usd:.4f}")
     click.echo(f"Started: {task_exec.started_at}")
@@ -148,14 +147,11 @@ def task(task_id: str, approve: bool, reject: bool, details: bool):
 
 
 @cli.command()
-@click.option('--force', is_flag=True, help='Force clean without confirmation')
+@click.option("--force", is_flag=True, help="Force clean without confirmation")
 def clean_state(force: bool):
     """Clean all task state (start fresh)."""
     if not force:
-        click.confirm(
-            "⚠️  This will delete all task state. Are you sure?",
-            abort=True
-        )
+        click.confirm("⚠️  This will delete all task state. Are you sure?", abort=True)
 
     state_dir = Path("orchestrator/state")
     if state_dir.exists():
@@ -181,13 +177,19 @@ def active():
     click.echo(f"\n🔄 {len(tasks)} active task(s):\n")
 
     for task in tasks:
-        click.echo(f"  [{task.state.value}] {task.task_id}: {task.task_def.get('goal', 'N/A')[:60]}")
+        click.echo(
+            f"  [{task.state.value}] {task.task_id}: {task.task_def.get('goal', 'N/A')[:60]}"
+        )
 
     click.echo()
 
 
 @cli.command()
-@click.option('--state', type=click.Choice(['done', 'failed', 'awaiting_human']), help='Filter by state')
+@click.option(
+    "--state",
+    type=click.Choice(["done", "failed", "awaiting_human"]),
+    help="Filter by state",
+)
 def list_tasks(state: str):
     """List all tasks (optionally filtered by state)."""
     state_machine = StateMachine()

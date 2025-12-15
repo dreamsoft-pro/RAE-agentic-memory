@@ -13,26 +13,24 @@ Research-grade implementation for academic evaluation of RAE memory systems.
 """
 
 import json
-import time
-import hashlib
 import random
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Callable
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-from numpy.typing import NDArray
 
 
 @dataclass
 class TelemetryPoint:
     """Single telemetry measurement point."""
+
     timestamp: datetime
     config_id: str
-    quality: float      # 0-1, overall quality metric
-    cost: float         # Cost units (e.g., API cost, compute cost)
-    latency_ms: float   # Response latency in milliseconds
+    quality: float  # 0-1, overall quality metric
+    cost: float  # Cost units (e.g., API cost, compute cost)
+    latency_ms: float  # Response latency in milliseconds
 
     # Detailed metrics
     mrr: float = 0.0
@@ -47,6 +45,7 @@ class TelemetryPoint:
 @dataclass
 class Configuration:
     """A system configuration to benchmark."""
+
     config_id: str
     name: str
     parameters: Dict[str, Any]
@@ -56,6 +55,7 @@ class Configuration:
 @dataclass
 class ParetoPoint:
     """Point on the Pareto frontier."""
+
     config_id: str
     quality: float
     cost: float
@@ -67,6 +67,7 @@ class ParetoPoint:
 @dataclass
 class ORBResults:
     """Results from ORB benchmark."""
+
     benchmark_name: str = "ORB"
     version: str = "1.0.0"
 
@@ -188,6 +189,18 @@ class ORBBenchmark:
             name="Latency Optimized",
             parameters={"math_level": 2, "batch_size": 10, "cache_enabled": True},
             description="Optimized for latency",
+        ),
+        Configuration(
+            config_id="cfg_realtime",
+            name="Real-time",
+            parameters={"math_level": 1, "batch_size": 5, "cache_enabled": True},
+            description="Ultra-low latency for real-time applications",
+        ),
+        Configuration(
+            config_id="cfg_research",
+            name="Research Grade",
+            parameters={"math_level": 4, "batch_size": 50, "cache_enabled": True},
+            description="Research-grade quality (expensive but thorough)",
         ),
     ]
 
@@ -332,12 +345,17 @@ class ORBBenchmark:
                 better_latency = p2.latency_ms <= p1.latency_ms
 
                 strictly_better = (
-                    p2.quality > p1.quality or
-                    p2.cost < p1.cost or
-                    p2.latency_ms < p1.latency_ms
+                    p2.quality > p1.quality
+                    or p2.cost < p1.cost
+                    or p2.latency_ms < p1.latency_ms
                 )
 
-                if better_quality and better_cost and better_latency and strictly_better:
+                if (
+                    better_quality
+                    and better_cost
+                    and better_latency
+                    and strictly_better
+                ):
                     p1.is_pareto_optimal = False
                     p1.dominated_by.append(p2.config_id)
 
@@ -346,7 +364,9 @@ class ORBBenchmark:
     def _generate_trade_off_curves(
         self,
         points: List[TelemetryPoint],
-    ) -> Tuple[List[Tuple[float, float]], List[Tuple[float, float]], List[Tuple[float, float]]]:
+    ) -> Tuple[
+        List[Tuple[float, float]], List[Tuple[float, float]], List[Tuple[float, float]]
+    ]:
         """Generate trade-off curves from telemetry points."""
         quality_cost = []
         quality_latency = []
@@ -420,14 +440,18 @@ class ORBBenchmark:
         c_range = max(costs) - min(costs) if len(costs) > 1 else 1
         l_range = max(latencies) - min(latencies) if len(latencies) > 1 else 1
 
-        best_balanced_score = -float('inf')
+        best_balanced_score = -float("inf")
         best_balanced_point = optimal_points[0]
 
         for point in optimal_points:
             # Normalized scores (higher is better)
             q_norm = (point.quality - min(qualities)) / q_range if q_range > 0 else 0.5
             c_norm = 1 - (point.cost - min(costs)) / c_range if c_range > 0 else 0.5
-            l_norm = 1 - (point.latency_ms - min(latencies)) / l_range if l_range > 0 else 0.5
+            l_norm = (
+                1 - (point.latency_ms - min(latencies)) / l_range
+                if l_range > 0
+                else 0.5
+            )
 
             # Balanced score (equal weights)
             score = q_norm + c_norm + l_norm
@@ -468,7 +492,7 @@ class ORBBenchmark:
         start_time = datetime.now()
 
         if verbose:
-            print(f"Starting ORB Benchmark")
+            print("Starting ORB Benchmark")
             print(f"  Configurations: {len(self.configs)}")
             print(f"  Samples per config: {num_samples_per_config}")
             print("=" * 60)
@@ -489,7 +513,9 @@ class ORBBenchmark:
                 avg_quality = np.mean([p.quality for p in points])
                 avg_cost = np.mean([p.cost for p in points])
                 avg_latency = np.mean([p.latency_ms for p in points])
-                print(f"    Quality={avg_quality:.4f}, Cost={avg_cost:.4f}, Latency={avg_latency:.1f}ms")
+                print(
+                    f"    Quality={avg_quality:.4f}, Cost={avg_cost:.4f}, Latency={avg_latency:.1f}ms"
+                )
 
         # Compute Pareto frontier
         if verbose:
@@ -522,7 +548,11 @@ class ORBBenchmark:
                 best_quality_config = max(optimal, key=lambda p: p.quality).config_id
                 best_cost_config = min(optimal, key=lambda p: p.cost).config_id
                 best_latency_config = min(optimal, key=lambda p: p.latency_ms).config_id
-                best_balanced_config = recommendations.get("scenarios", {}).get("balanced", {}).get("config_id")
+                best_balanced_config = (
+                    recommendations.get("scenarios", {})
+                    .get("balanced", {})
+                    .get("config_id")
+                )
 
         # Config rankings (by balanced score)
         config_rankings = {}
@@ -573,10 +603,10 @@ class ORBBenchmark:
             print("=" * 60)
             print("ORB Results:")
             print(f"  Pareto-optimal configs: {optimal_count}/{len(self.configs)}")
-            print(f"\n  Recommendations:")
+            print("\n  Recommendations:")
             for scenario, rec in recommendations.get("scenarios", {}).items():
                 print(f"    {scenario}: {rec.get('config_id', 'N/A')}")
-            print(f"\n  Best Configurations:")
+            print("\n  Best Configurations:")
             print(f"    Quality: {best_quality_config}")
             print(f"    Cost: {best_cost_config}")
             print(f"    Latency: {best_latency_config}")

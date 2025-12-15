@@ -1,7 +1,6 @@
 """LLM orchestration strategies."""
 
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional
 
 from rae_core.interfaces.llm import ILLMProvider
 
@@ -12,7 +11,7 @@ class LLMStrategy(ABC):
     @abstractmethod
     async def execute(
         self,
-        providers: Dict[str, ILLMProvider],
+        providers: dict[str, ILLMProvider],
         prompt: str,
         **kwargs,
     ) -> tuple[str, str]:
@@ -42,7 +41,7 @@ class SingleLLMStrategy(LLMStrategy):
 
     async def execute(
         self,
-        providers: Dict[str, ILLMProvider],
+        providers: dict[str, ILLMProvider],
         prompt: str,
         **kwargs,
     ) -> tuple[str, str]:
@@ -67,7 +66,7 @@ class SingleLLMStrategy(LLMStrategy):
 class FallbackStrategy(LLMStrategy):
     """Try providers in order until one succeeds."""
 
-    def __init__(self, provider_priority: List[str]):
+    def __init__(self, provider_priority: list[str]):
         """Initialize with provider priority order.
 
         Args:
@@ -77,7 +76,7 @@ class FallbackStrategy(LLMStrategy):
 
     async def execute(
         self,
-        providers: Dict[str, ILLMProvider],
+        providers: dict[str, ILLMProvider],
         prompt: str,
         **kwargs,
     ) -> tuple[str, str]:
@@ -107,9 +106,7 @@ class FallbackStrategy(LLMStrategy):
 
         # All failed
         if last_error:
-            raise RuntimeError(
-                f"All providers failed. Last error: {last_error}"
-            )
+            raise RuntimeError(f"All providers failed. Last error: {last_error}")
         else:
             raise ValueError("No providers available")
 
@@ -117,7 +114,7 @@ class FallbackStrategy(LLMStrategy):
 class LoadBalancingStrategy(LLMStrategy):
     """Distribute requests across multiple providers using round-robin."""
 
-    def __init__(self, provider_names: List[str]):
+    def __init__(self, provider_names: list[str]):
         """Initialize with provider names for load balancing.
 
         Args:
@@ -128,7 +125,7 @@ class LoadBalancingStrategy(LLMStrategy):
 
     async def execute(
         self,
-        providers: Dict[str, ILLMProvider],
+        providers: dict[str, ILLMProvider],
         prompt: str,
         **kwargs,
     ) -> tuple[str, str]:
@@ -170,7 +167,7 @@ class LoadBalancingStrategy(LLMStrategy):
 class RoundRobinStrategy(LLMStrategy):
     """Simple round-robin without fallback on failure."""
 
-    def __init__(self, provider_names: List[str]):
+    def __init__(self, provider_names: list[str]):
         """Initialize with provider names.
 
         Args:
@@ -181,7 +178,7 @@ class RoundRobinStrategy(LLMStrategy):
 
     async def execute(
         self,
-        providers: Dict[str, ILLMProvider],
+        providers: dict[str, ILLMProvider],
         prompt: str,
         **kwargs,
     ) -> tuple[str, str]:

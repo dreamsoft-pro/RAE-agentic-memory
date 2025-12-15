@@ -5,7 +5,7 @@ Implementations can use Neo4j, PostgreSQL with pg_graph, or in-memory graphs.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 from uuid import UUID
 
 
@@ -22,7 +22,7 @@ class IGraphStore(ABC):
         node_id: UUID,
         node_type: str,
         tenant_id: str,
-        properties: Optional[Dict[str, Any]] = None,
+        properties: dict[str, Any] | None = None,
     ) -> bool:
         """Create a graph node.
 
@@ -45,7 +45,7 @@ class IGraphStore(ABC):
         edge_type: str,
         tenant_id: str,
         weight: float = 1.0,
-        properties: Optional[Dict[str, Any]] = None,
+        properties: dict[str, Any] | None = None,
     ) -> bool:
         """Create a graph edge.
 
@@ -67,10 +67,10 @@ class IGraphStore(ABC):
         self,
         node_id: UUID,
         tenant_id: str,
-        edge_type: Optional[str] = None,
+        edge_type: str | None = None,
         direction: str = "both",  # "in", "out", "both"
         max_depth: int = 1,
-    ) -> List[UUID]:
+    ) -> list[UUID]:
         """Get neighboring nodes.
 
         Args:
@@ -92,7 +92,7 @@ class IGraphStore(ABC):
         target_id: UUID,
         tenant_id: str,
         max_depth: int = 5,
-    ) -> Optional[List[UUID]]:
+    ) -> list[UUID] | None:
         """Find shortest path between two nodes.
 
         Args:
@@ -109,10 +109,10 @@ class IGraphStore(ABC):
     @abstractmethod
     async def get_subgraph(
         self,
-        node_ids: List[UUID],
+        node_ids: list[UUID],
         tenant_id: str,
         include_edges: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Extract a subgraph containing specified nodes.
 
         Args:

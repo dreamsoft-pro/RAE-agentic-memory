@@ -17,19 +17,19 @@ Expected Results:
 - Increase in semantic coherence (better integration)
 """
 
-import asyncio
-import asyncpg
-import numpy as np
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
+import asyncpg
+import numpy as np
 
 from apps.memory_api.services.embedding import get_embedding_service
 from benchmarking.math_metrics import (
-    MemorySnapshot,
     GraphConnectivityScore,
-    SemanticCoherenceScore,
     GraphEntropyMetric,
+    MemorySnapshot,
+    SemanticCoherenceScore,
 )
 
 
@@ -52,11 +52,11 @@ class StructuralStabilityExperiment:
         import os
 
         db_config = {
-            'host': os.getenv('POSTGRES_HOST', 'localhost'),
-            'port': int(os.getenv('POSTGRES_PORT', 5432)),
-            'database': os.getenv('POSTGRES_DB', 'rae_memory'),
-            'user': os.getenv('POSTGRES_USER', 'rae_user'),
-            'password': os.getenv('POSTGRES_PASSWORD', 'rae_password'),
+            "host": os.getenv("POSTGRES_HOST", "localhost"),
+            "port": int(os.getenv("POSTGRES_PORT", 5432)),
+            "database": os.getenv("POSTGRES_DB", "rae_memory"),
+            "user": os.getenv("POSTGRES_USER", "rae_user"),
+            "password": os.getenv("POSTGRES_PASSWORD", "rae_password"),
         }
 
         self.pool = await asyncpg.create_pool(**db_config, min_size=2, max_size=5)
@@ -99,7 +99,7 @@ class StructuralStabilityExperiment:
                     [prefix],
                     self.project_id,
                 )
-                memory_ids.append(str(row['id']))
+                memory_ids.append(str(row["id"]))
 
         return memory_ids
 
@@ -117,8 +117,8 @@ class StructuralStabilityExperiment:
                 self.tenant_id,
             )
 
-        memory_ids = [str(row['id']) for row in rows]
-        contents = [row['content'] for row in rows]
+        memory_ids = [str(row["id"]) for row in rows]
+        contents = [row["content"] for row in rows]
 
         # Get embeddings
         embedding_service = get_embedding_service()
@@ -277,9 +277,7 @@ class StructuralStabilityExperiment:
         conclusions = []
 
         if gcs_change > 5:
-            conclusions.append(
-                "✅ GCS increased moderately - improved connectivity"
-            )
+            conclusions.append("✅ GCS increased moderately - improved connectivity")
         elif gcs_change < -5:
             conclusions.append("⚠️ GCS decreased - degraded connectivity")
         else:

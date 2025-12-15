@@ -4,13 +4,11 @@ Displays performance metrics, model rankings, and optimization recommendations.
 """
 
 import logging
-from typing import Optional
 
 import click
 
 from .analytics import PerformanceAnalytics
-from .performance_tracker import PerformanceTracker, TaskOutcome
-
+from .performance_tracker import PerformanceTracker
 
 logger = logging.getLogger(__name__)
 
@@ -37,16 +35,18 @@ class PerformanceDashboard:
 
         # Overall metrics
         click.echo(f"Total Tasks: {stats['total_tasks']}")
-        click.echo(f"  ✅ Successful: {stats['successful']} ({stats['success_rate']:.1%})")
+        click.echo(
+            f"  ✅ Successful: {stats['successful']} ({stats['success_rate']:.1%})"
+        )
         click.echo(f"  ❌ Failed: {stats['failed']}")
         click.echo(f"  ⚠️  Partial: {stats['partial']}")
         click.echo(f"  🔍 Human Review: {stats['human_review']}")
 
-        click.echo(f"\n💰 Cost Metrics:")
+        click.echo("\n💰 Cost Metrics:")
         click.echo(f"  Total Cost: ${stats['total_cost']:.2f}")
         click.echo(f"  Average Cost: ${stats['avg_cost']:.4f} per task")
 
-        click.echo(f"\n⏱️  Duration Metrics:")
+        click.echo("\n⏱️  Duration Metrics:")
         click.echo(f"  Total Duration: {stats['total_duration']:.0f}s")
         click.echo(f"  Average Duration: {stats['avg_duration']:.1f}s per task")
 
@@ -64,9 +64,7 @@ class PerformanceDashboard:
 
         # Sort by success rate
         providers = sorted(
-            comparison.items(),
-            key=lambda x: x[1]["success_rate"],
-            reverse=True
+            comparison.items(), key=lambda x: x[1]["success_rate"], reverse=True
         )
 
         for provider, metrics in providers:
@@ -86,7 +84,7 @@ class PerformanceDashboard:
             task_area: Task area
             task_risk: Risk level
         """
-        click.echo(f"\n" + "=" * 60)
+        click.echo("\n" + "=" * 60)
         click.echo(f"📈 MODEL RANKINGS: {task_area.upper()} / {task_risk.upper()}")
         click.echo("=" * 60 + "\n")
 
@@ -125,17 +123,25 @@ class PerformanceDashboard:
         click.echo("=" * 60 + "\n")
 
         if not opportunities:
-            click.echo("✨ No optimization opportunities found - routing is already optimal!")
+            click.echo(
+                "✨ No optimization opportunities found - routing is already optimal!"
+            )
             return
 
         for i, opp in enumerate(opportunities[:5], 1):
-            click.echo(f"#{i} {opp['task_area'].upper()} / {opp['task_risk'].upper()} ({opp['role']})")
-            click.echo(f"  Current: {opp['current_model']} (${opp['current_cost']:.4f}, {opp['current_success_rate']:.1%})")
-            click.echo(f"  Recommended: {opp['recommended_model']} (${opp['new_cost']:.4f}, {opp['new_success_rate']:.1%})")
+            click.echo(
+                f"#{i} {opp['task_area'].upper()} / {opp['task_risk'].upper()} ({opp['role']})"
+            )
+            click.echo(
+                f"  Current: {opp['current_model']} (${opp['current_cost']:.4f}, {opp['current_success_rate']:.1%})"
+            )
+            click.echo(
+                f"  Recommended: {opp['recommended_model']} (${opp['new_cost']:.4f}, {opp['new_success_rate']:.1%})"
+            )
             click.echo(f"  💰 Savings: ${opp['savings_per_task']:.4f} per task")
             click.echo()
 
-        total_savings = sum(opp['savings_per_task'] for opp in opportunities)
+        total_savings = sum(opp["savings_per_task"] for opp in opportunities)
         click.echo(f"Total potential savings: ${total_savings:.4f} per task")
 
     def show_task_pattern(self, task_area: str, task_risk: str):
@@ -151,8 +157,10 @@ class PerformanceDashboard:
             click.echo(f"\n⚠️  Insufficient data for {task_area}/{task_risk}")
             return
 
-        click.echo(f"\n" + "=" * 60)
-        click.echo(f"🔍 TASK PATTERN ANALYSIS: {task_area.upper()} / {task_risk.upper()}")
+        click.echo("\n" + "=" * 60)
+        click.echo(
+            f"🔍 TASK PATTERN ANALYSIS: {task_area.upper()} / {task_risk.upper()}"
+        )
         click.echo("=" * 60 + "\n")
 
         click.echo(f"Total Attempts: {pattern.total_attempts}")
@@ -167,18 +175,18 @@ class PerformanceDashboard:
             model, success_rate = pattern.best_implementer
             click.echo(f"🏆 Best Implementer: {model} ({success_rate:.1%})")
 
-        click.echo(f"\n💰 Cost Analysis:")
+        click.echo("\n💰 Cost Analysis:")
         click.echo(f"  Average: ${pattern.avg_cost:.4f}")
         click.echo(f"  Min: ${pattern.min_cost:.4f}")
         click.echo(f"  Max: ${pattern.max_cost:.4f}")
 
-        click.echo(f"\n⏱️  Duration Analysis:")
+        click.echo("\n⏱️  Duration Analysis:")
         click.echo(f"  Average: {pattern.avg_duration:.1f}s")
         click.echo(f"  Min: {pattern.min_duration:.1f}s")
         click.echo(f"  Max: {pattern.max_duration:.1f}s")
 
         if pattern.common_errors:
-            click.echo(f"\n⚠️  Common Errors:")
+            click.echo("\n⚠️  Common Errors:")
             for error_type, count in pattern.common_errors[:3]:
                 click.echo(f"  - {error_type}: {count} occurrences")
 
@@ -195,7 +203,7 @@ class PerformanceDashboard:
             click.echo(f"\n⚠️  Insufficient data for model: {model_id}")
             return
 
-        click.echo(f"\n" + "=" * 60)
+        click.echo("\n" + "=" * 60)
         click.echo(f"📊 MODEL PERFORMANCE: {model_id}")
         click.echo(f"Provider: {perf.provider} | Role: {perf.role}")
         click.echo("=" * 60 + "\n")
@@ -204,31 +212,36 @@ class PerformanceDashboard:
         click.echo(f"  ✅ Successful: {perf.successful_tasks} ({perf.success_rate:.1%})")
         click.echo(f"  ❌ Failed: {perf.failed_tasks}")
 
-        click.echo(f"\n💰 Cost Metrics:")
+        click.echo("\n💰 Cost Metrics:")
         click.echo(f"  Total Cost: ${perf.total_cost:.2f}")
         click.echo(f"  Average Cost: ${perf.avg_cost_per_task:.4f} per task")
 
-        click.echo(f"\n⏱️  Duration Metrics:")
+        click.echo("\n⏱️  Duration Metrics:")
         click.echo(f"  Total Duration: {perf.total_duration:.0f}s")
         click.echo(f"  Average Duration: {perf.avg_duration:.1f}s per task")
 
-        click.echo(f"\n✅ Quality Metrics:")
+        click.echo("\n✅ Quality Metrics:")
         click.echo(f"  Quality Gate Pass Rate: {perf.quality_gate_pass_rate:.1%}")
         click.echo(f"  Code Review Pass Rate: {perf.code_review_pass_rate:.1%}")
         click.echo(f"  Average Retries: {perf.avg_retries:.1f}")
 
         if perf.by_area:
-            click.echo(f"\n📁 Tasks by Area:")
-            for area, count in sorted(perf.by_area.items(), key=lambda x: x[1], reverse=True)[:5]:
+            click.echo("\n📁 Tasks by Area:")
+            for area, count in sorted(
+                perf.by_area.items(), key=lambda x: x[1], reverse=True
+            )[:5]:
                 click.echo(f"  {area}: {count}")
 
         if perf.by_risk:
-            click.echo(f"\n⚠️  Tasks by Risk:")
-            for risk, count in sorted(perf.by_risk.items(), key=lambda x: x[1], reverse=True):
+            click.echo("\n⚠️  Tasks by Risk:")
+            for risk, count in sorted(
+                perf.by_risk.items(), key=lambda x: x[1], reverse=True
+            ):
                 click.echo(f"  {risk}: {count}")
 
 
 # CLI Commands
+
 
 @click.group()
 def intelligence_cli():
@@ -237,7 +250,11 @@ def intelligence_cli():
 
 
 @intelligence_cli.command()
-@click.option("--storage-dir", default="orchestrator/intelligence/data", help="Performance data directory")
+@click.option(
+    "--storage-dir",
+    default="orchestrator/intelligence/data",
+    help="Performance data directory",
+)
 def summary(storage_dir: str):
     """Show performance summary."""
     tracker = PerformanceTracker(storage_dir=storage_dir)
@@ -247,7 +264,11 @@ def summary(storage_dir: str):
 
 
 @intelligence_cli.command()
-@click.option("--storage-dir", default="orchestrator/intelligence/data", help="Performance data directory")
+@click.option(
+    "--storage-dir",
+    default="orchestrator/intelligence/data",
+    help="Performance data directory",
+)
 def optimize(storage_dir: str):
     """Show optimization opportunities."""
     tracker = PerformanceTracker(storage_dir=storage_dir)
@@ -258,7 +279,11 @@ def optimize(storage_dir: str):
 @intelligence_cli.command()
 @click.argument("task_area")
 @click.argument("task_risk")
-@click.option("--storage-dir", default="orchestrator/intelligence/data", help="Performance data directory")
+@click.option(
+    "--storage-dir",
+    default="orchestrator/intelligence/data",
+    help="Performance data directory",
+)
 def rankings(task_area: str, task_risk: str, storage_dir: str):
     """Show model rankings for a task type."""
     tracker = PerformanceTracker(storage_dir=storage_dir)
@@ -270,7 +295,11 @@ def rankings(task_area: str, task_risk: str, storage_dir: str):
 @intelligence_cli.command()
 @click.argument("model_id")
 @click.option("--role", default="any", help="Role: planner, implementer, or any")
-@click.option("--storage-dir", default="orchestrator/intelligence/data", help="Performance data directory")
+@click.option(
+    "--storage-dir",
+    default="orchestrator/intelligence/data",
+    help="Performance data directory",
+)
 def model(model_id: str, role: str, storage_dir: str):
     """Show detailed performance for a model."""
     tracker = PerformanceTracker(storage_dir=storage_dir)

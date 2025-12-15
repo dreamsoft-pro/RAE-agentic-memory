@@ -9,7 +9,6 @@ Usage:
 import json
 import sys
 from collections import defaultdict
-from pathlib import Path
 
 
 def load_test_report(filepath: str) -> dict:
@@ -48,18 +47,22 @@ def find_flaky_tests(test_outcomes: dict, min_runs: int = 3) -> list:
 
         # Test is flaky if it has different outcomes
         if len(set(outcomes)) > 1:
-            flaky.append({
-                "test": test_id,
-                "outcomes": outcomes,
-                "pass_rate": outcomes.count("passed") / len(outcomes),
-            })
+            flaky.append(
+                {
+                    "test": test_id,
+                    "outcomes": outcomes,
+                    "pass_rate": outcomes.count("passed") / len(outcomes),
+                }
+            )
 
     return flaky
 
 
 def main():
     if len(sys.argv) < 3:
-        print("Usage: python detect_flaky_tests.py report1.json report2.json [report3.json ...]")
+        print(
+            "Usage: python detect_flaky_tests.py report1.json report2.json [report3.json ...]"
+        )
         sys.exit(2)
 
     report_files = sys.argv[1:]

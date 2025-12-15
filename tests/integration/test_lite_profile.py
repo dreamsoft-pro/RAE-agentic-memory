@@ -35,11 +35,15 @@ def lite_profile_services():
     4. Tears down services after tests complete
     """
     # Check if docker-compose is available and if not in CI
-    docker_compose_missing = subprocess.run(["which", "docker-compose"], capture_output=True).returncode != 0
+    docker_compose_missing = (
+        subprocess.run(["which", "docker-compose"], capture_output=True).returncode != 0
+    )
     in_ci = "CI" in os.environ
 
     if docker_compose_missing or in_ci:
-        pytest.skip("Skipping lite profile tests: docker-compose not available or running in CI (services pre-provisioned)")
+        pytest.skip(
+            "Skipping lite profile tests: docker-compose not available or running in CI (services pre-provisioned)"
+        )
 
     # Start services
     subprocess.run(

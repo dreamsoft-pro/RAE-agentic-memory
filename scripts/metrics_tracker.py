@@ -6,10 +6,10 @@ Lightweight JSON-based metrics - NO OpenTelemetry overhead.
 """
 
 import json
-import time
 import os
+import time
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict
 
 
 class DocsMetrics:
@@ -23,42 +23,57 @@ class DocsMetrics:
 
     def record_file(self, filename: str, generator: str):
         """Record successfully generated file."""
-        self.files_generated.append({
-            "file": filename,
-            "generator": generator,
-            "timestamp": datetime.now().isoformat()
-        })
+        self.files_generated.append(
+            {
+                "file": filename,
+                "generator": generator,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
 
     def record_error(self, generator: str, error: str):
         """Record error in generator."""
-        self.errors.append({
-            "generator": generator,
-            "error": str(error),
-            "timestamp": datetime.now().isoformat()
-        })
+        self.errors.append(
+            {
+                "generator": generator,
+                "error": str(error),
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
 
     def record_warning(self, generator: str, warning: str):
         """Record warning (non-fatal issue)."""
-        self.warnings.append({
-            "generator": generator,
-            "warning": warning,
-            "timestamp": datetime.now().isoformat()
-        })
+        self.warnings.append(
+            {
+                "generator": generator,
+                "warning": warning,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
 
     def to_dict(self) -> Dict:
         """Convert metrics to dictionary."""
         duration = time.time() - self.start_time
         success_rate = 0.0
         if len(self.files_generated) + len(self.errors) > 0:
-            success_rate = len(self.files_generated) / (len(self.files_generated) + len(self.errors)) * 100
+            success_rate = (
+                len(self.files_generated)
+                / (len(self.files_generated) + len(self.errors))
+                * 100
+            )
 
         # Get git info
         try:
             import subprocess
-            branch = subprocess.run(["git", "rev-parse", "--abbrev-ref", "HEAD"],
-                                    capture_output=True, text=True).stdout.strip()
-            commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"],
-                                    capture_output=True, text=True).stdout.strip()
+
+            branch = subprocess.run(
+                ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            commit = subprocess.run(
+                ["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True
+            ).stdout.strip()
         except:
             branch, commit = "unknown", "unknown"
 
@@ -75,10 +90,12 @@ class DocsMetrics:
             "errors": self.errors,
             "warnings": self.warnings,
             "git_branch": branch,
-            "git_commit": commit
+            "git_commit": commit,
         }
 
-    def save_metrics(self, filepath: str = "docs/.auto-generated/metrics/automation-health.json"):
+    def save_metrics(
+        self, filepath: str = "docs/.auto-generated/metrics/automation-health.json"
+    ):
         """Save metrics to JSON file."""
         try:
             metrics = self.to_dict()
@@ -101,14 +118,16 @@ class DocsMetrics:
                 except Exception:
                     history = []
 
-            history.append({
-                "run_id": metrics["run_id"],
-                "timestamp": metrics["timestamp"],
-                "duration_seconds": metrics["duration_seconds"],
-                "status": metrics["status"],
-                "files_count": metrics["files_generated_count"],
-                "errors_count": metrics["errors_count"]
-            })
+            history.append(
+                {
+                    "run_id": metrics["run_id"],
+                    "timestamp": metrics["timestamp"],
+                    "duration_seconds": metrics["duration_seconds"],
+                    "status": metrics["status"],
+                    "files_count": metrics["files_generated_count"],
+                    "errors_count": metrics["errors_count"],
+                }
+            )
 
             # Keep only last 50 runs
             history = history[-50:]
@@ -134,7 +153,7 @@ if __name__ == "__main__":
 
     metrics.save_metrics()
 
-    print(f"\n📊 Summary:")
+    print("\n📊 Summary:")
     print(f"  - Files: {metrics.to_dict()['files_generated_count']}")
     print(f"  - Duration: {metrics.to_dict()['duration_seconds']}s")
     print(f"  - Status: {metrics.to_dict()['status']}")

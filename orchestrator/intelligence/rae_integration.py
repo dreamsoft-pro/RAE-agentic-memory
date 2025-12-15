@@ -5,12 +5,9 @@ historical analysis, and cross-deployment learning.
 """
 
 import logging
-from datetime import datetime
-from pathlib import Path
 from typing import Dict, List, Optional
 
-from .performance_tracker import ExecutionRecord, PerformanceTracker, TaskOutcome
-
+from .performance_tracker import ExecutionRecord, PerformanceTracker
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +27,7 @@ class RAEMemoryIntegration:
     def __init__(
         self,
         rae_endpoint: Optional[str] = None,
-        namespace: str = "orchestrator_performance"
+        namespace: str = "orchestrator_performance",
     ):
         """Initialize RAE integration.
 
@@ -74,11 +71,7 @@ class RAEMemoryIntegration:
             return False
 
     def query_similar_tasks(
-        self,
-        task_description: str,
-        task_area: str,
-        task_risk: str,
-        limit: int = 10
+        self, task_description: str, task_area: str, task_risk: str, limit: int = 10
     ) -> List[ExecutionRecord]:
         """Query RAE for similar past tasks.
 
@@ -208,9 +201,7 @@ Completed: {record.completed_at}
             logger.error(f"Failed to enable cross-deployment learning: {e}")
 
 
-def create_rae_integration(
-    config_path: Optional[str] = None
-) -> RAEMemoryIntegration:
+def create_rae_integration(config_path: Optional[str] = None) -> RAEMemoryIntegration:
     """Create RAE integration from configuration.
 
     Args:
@@ -222,9 +213,9 @@ def create_rae_integration(
     # TODO: Load from config file
     # For now, check environment variable
     import os
+
     rae_endpoint = os.environ.get("RAE_ENDPOINT")
 
     return RAEMemoryIntegration(
-        rae_endpoint=rae_endpoint,
-        namespace="orchestrator_performance"
+        rae_endpoint=rae_endpoint, namespace="orchestrator_performance"
     )

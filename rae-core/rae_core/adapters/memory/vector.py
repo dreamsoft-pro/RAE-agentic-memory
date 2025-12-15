@@ -6,7 +6,7 @@ Ideal for testing, development, and lightweight deployments.
 
 import asyncio
 from collections import defaultdict
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 from uuid import UUID
 
 import numpy as np
@@ -29,10 +29,10 @@ class InMemoryVectorStore(IVectorStore):
         """Initialize in-memory vector store."""
         # Main storage: {memory_id: vector_data}
         # vector_data = {"embedding": np.array, "tenant_id": str, "metadata": dict}
-        self._vectors: Dict[UUID, Dict[str, Any]] = {}
+        self._vectors: dict[UUID, dict[str, Any]] = {}
 
         # Indexes for fast lookups
-        self._by_tenant: Dict[str, set[UUID]] = defaultdict(set)
+        self._by_tenant: dict[str, set[UUID]] = defaultdict(set)
 
         # Thread safety
         self._lock = asyncio.Lock()
@@ -40,9 +40,9 @@ class InMemoryVectorStore(IVectorStore):
     async def store_vector(
         self,
         memory_id: UUID,
-        embedding: List[float],
+        embedding: list[float],
         tenant_id: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> bool:
         """Store a vector embedding."""
         async with self._lock:
@@ -59,12 +59,12 @@ class InMemoryVectorStore(IVectorStore):
 
     async def search_similar(
         self,
-        query_embedding: List[float],
+        query_embedding: list[float],
         tenant_id: str,
-        layer: Optional[str] = None,
+        layer: str | None = None,
         limit: int = 10,
-        score_threshold: Optional[float] = None,
-    ) -> List[Tuple[UUID, float]]:
+        score_threshold: float | None = None,
+    ) -> list[tuple[UUID, float]]:
         """Search for similar vectors using cosine similarity."""
         async with self._lock:
             # Get candidate vectors for tenant
@@ -139,9 +139,9 @@ class InMemoryVectorStore(IVectorStore):
     async def update_vector(
         self,
         memory_id: UUID,
-        embedding: List[float],
+        embedding: list[float],
         tenant_id: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> bool:
         """Update a vector embedding."""
         async with self._lock:
@@ -163,7 +163,7 @@ class InMemoryVectorStore(IVectorStore):
         self,
         memory_id: UUID,
         tenant_id: str,
-    ) -> Optional[List[float]]:
+    ) -> list[float] | None:
         """Retrieve a vector embedding."""
         async with self._lock:
             vector_data = self._vectors.get(memory_id)
@@ -176,7 +176,7 @@ class InMemoryVectorStore(IVectorStore):
 
     async def batch_store_vectors(
         self,
-        vectors: List[Tuple[UUID, List[float], Dict[str, Any]]],
+        vectors: list[tuple[UUID, list[float], dict[str, Any]]],
         tenant_id: str,
     ) -> int:
         """Store multiple vectors in a batch."""
@@ -203,12 +203,12 @@ class InMemoryVectorStore(IVectorStore):
 
     async def search_similar_batch(
         self,
-        query_embeddings: List[List[float]],
+        query_embeddings: list[list[float]],
         tenant_id: str,
-        layer: Optional[str] = None,
+        layer: str | None = None,
         limit: int = 10,
-        score_threshold: Optional[float] = None,
-    ) -> List[List[Tuple[UUID, float]]]:
+        score_threshold: float | None = None,
+    ) -> list[list[tuple[UUID, float]]]:
         """Search for similar vectors for multiple queries.
 
         Args:
@@ -255,7 +255,7 @@ class InMemoryVectorStore(IVectorStore):
 
             return len(memory_ids)
 
-    async def get_statistics(self) -> Dict[str, Any]:
+    async def get_statistics(self) -> dict[str, Any]:
         """Get vector store statistics.
 
         Returns:

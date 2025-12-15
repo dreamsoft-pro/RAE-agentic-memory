@@ -9,18 +9,12 @@ from typing import List, Optional
 
 try:
     import aiohttp
+
     AIOHTTP_AVAILABLE = True
 except ImportError:
     AIOHTTP_AVAILABLE = False
 
-from .base import (
-    GenerationResult,
-    LLMProvider,
-    ModelInfo,
-    ModelTier,
-    Usage,
-)
-
+from .base import GenerationResult, LLMProvider, ModelInfo, ModelTier, Usage
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +36,9 @@ class OllamaProvider(LLMProvider):
         self.endpoint = endpoint.rstrip("/")
 
         if not AIOHTTP_AVAILABLE:
-            logger.warning("aiohttp not installed - Ollama provider will be unavailable")
+            logger.warning(
+                "aiohttp not installed - Ollama provider will be unavailable"
+            )
 
     @property
     def name(self) -> str:
@@ -133,7 +129,7 @@ class OllamaProvider(LLMProvider):
         system_prompt: Optional[str] = None,
         max_tokens: int = 4096,
         temperature: float = 0.7,
-        **kwargs
+        **kwargs,
     ) -> GenerationResult:
         """Generate completion using Ollama API.
 
@@ -154,8 +150,7 @@ class OllamaProvider(LLMProvider):
         """
         if not AIOHTTP_AVAILABLE:
             return GenerationResult(
-                content="",
-                error="aiohttp not installed - run: pip install aiohttp"
+                content="", error="aiohttp not installed - run: pip install aiohttp"
             )
 
         try:
@@ -167,7 +162,7 @@ class OllamaProvider(LLMProvider):
                 "options": {
                     "temperature": temperature,
                     "num_predict": max_tokens,
-                }
+                },
             }
 
             # Add system prompt if provided
@@ -185,14 +180,16 @@ class OllamaProvider(LLMProvider):
                 async with session.post(
                     f"{self.endpoint}/api/generate",
                     json=payload,
-                    timeout=aiohttp.ClientTimeout(total=300.0)  # 5 minute timeout
+                    timeout=aiohttp.ClientTimeout(total=300.0),  # 5 minute timeout
                 ) as response:
                     if response.status != 200:
                         error_text = await response.text()
-                        logger.error(f"Ollama API error: {response.status} - {error_text}")
+                        logger.error(
+                            f"Ollama API error: {response.status} - {error_text}"
+                        )
                         return GenerationResult(
                             content="",
-                            error=f"Ollama API error {response.status}: {error_text}"
+                            error=f"Ollama API error {response.status}: {error_text}",
                         )
 
                     result = await response.json()
@@ -232,10 +229,7 @@ class OllamaProvider(LLMProvider):
 
         except Exception as e:
             logger.error(f"Ollama API call failed: {e}")
-            return GenerationResult(
-                content="",
-                error=f"Ollama API error: {str(e)}"
-            )
+            return GenerationResult(content="", error=f"Ollama API error: {str(e)}")
 
     async def is_available(self) -> bool:
         """Check if Ollama is running and available.
@@ -251,7 +245,7 @@ class OllamaProvider(LLMProvider):
             async with aiohttp.ClientSession() as session:
                 async with session.get(
                     f"{self.endpoint}/api/tags",
-                    timeout=aiohttp.ClientTimeout(total=5.0)
+                    timeout=aiohttp.ClientTimeout(total=5.0),
                 ) as response:
                     return response.status == 200
 

@@ -1,10 +1,10 @@
 """Planner-Agent: Creates step-by-step implementation plans."""
 
 import json
-from typing import List, Dict, Any
+from typing import Any, Dict
 
-from .base import BaseAgent, AgentTask, AgentResponse
-from orchestrator.adapters.base import TaskComplexity, TaskRisk
+
+from .base import AgentResponse, AgentTask, BaseAgent
 
 
 class PlannerAgent(BaseAgent):
@@ -135,12 +135,12 @@ Now create the plan:
         import re
 
         # Look for JSON code blocks
-        json_match = re.search(r'```json\s*(.*?)\s*```', output, re.DOTALL)
+        json_match = re.search(r"```json\s*(.*?)\s*```", output, re.DOTALL)
         if json_match:
             json_str = json_match.group(1)
         else:
             # Try to find JSON object
-            json_match = re.search(r'\{.*\}', output, re.DOTALL)
+            json_match = re.search(r"\{.*\}", output, re.DOTALL)
             if json_match:
                 json_str = json_match.group(0)
             else:

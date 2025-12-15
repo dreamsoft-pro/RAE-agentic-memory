@@ -1,8 +1,9 @@
 """Unit tests for ContextBuilder."""
 
-import pytest
 from datetime import datetime, timedelta
 from uuid import uuid4
+
+import pytest
 
 from rae_core.context.builder import ContextBuilder, ContextFormat
 from rae_core.models.context import ContextMetadata
@@ -14,7 +15,9 @@ class TestContextBuilder:
     @pytest.fixture
     def builder(self):
         """Create a ContextBuilder instance for testing."""
-        return ContextBuilder(max_tokens=1000, default_format=ContextFormat.CONVERSATIONAL)
+        return ContextBuilder(
+            max_tokens=1000, default_format=ContextFormat.CONVERSATIONAL
+        )
 
     @pytest.fixture
     def sample_memories(self):
@@ -59,7 +62,9 @@ class TestContextBuilder:
 
     def test_builder_custom_initialization(self):
         """Test builder initializes with custom parameters."""
-        builder = ContextBuilder(max_tokens=2048, default_format=ContextFormat.STRUCTURED)
+        builder = ContextBuilder(
+            max_tokens=2048, default_format=ContextFormat.STRUCTURED
+        )
         assert builder.max_tokens == 2048
         assert builder.default_format == ContextFormat.STRUCTURED
 

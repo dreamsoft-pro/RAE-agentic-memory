@@ -28,6 +28,7 @@ class TaskContext:
         budget_constraints: Cost and latency limits
         config_overrides: Per-request config overrides
     """
+
     # Required
     task_type: TaskType
 
@@ -39,19 +40,23 @@ class TaskContext:
     query_results: Optional[List[Dict[str, Any]]] = None
 
     # Session context
-    session_metadata: Dict[str, Any] = field(default_factory=lambda: {
-        "session_id": None,
-        "turn_number": 0,
-        "agent_id": None,
-        "tenant_id": None,
-    })
+    session_metadata: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "session_id": None,
+            "turn_number": 0,
+            "agent_id": None,
+            "tenant_id": None,
+        }
+    )
 
     # Constraints
-    budget_constraints: Dict[str, Any] = field(default_factory=lambda: {
-        "max_cost_usd": None,
-        "max_latency_ms": None,
-        "prefer_cheap": False,
-    })
+    budget_constraints: Dict[str, Any] = field(
+        default_factory=lambda: {
+            "max_cost_usd": None,
+            "max_latency_ms": None,
+            "prefer_cheap": False,
+        }
+    )
 
     # Config overrides
     config_overrides: Dict[str, Any] = field(default_factory=dict)

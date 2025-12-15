@@ -5,8 +5,12 @@ import pytest
 from fastapi.testclient import TestClient
 
 from apps.memory_api.main import app
-from apps.memory_api.models.hybrid_search_models import HybridSearchResult, QueryAnalysis, QueryIntent, WeightProfile
-from apps.memory_api.services.hybrid_search_service import HybridSearchService
+from apps.memory_api.models.hybrid_search_models import (
+    HybridSearchResult,
+    QueryAnalysis,
+    QueryIntent,
+)
+
 
 # Create a fixture for the client that overrides dependencies
 @pytest.fixture
@@ -15,23 +19,30 @@ def client_with_mock_service():
     mock_pool = MagicMock()
     mock_pool.close = AsyncMock()
 
-    with patch("apps.memory_api.routes.hybrid_search.HybridSearchService") as MockService:
+    with patch(
+        "apps.memory_api.routes.hybrid_search.HybridSearchService"
+    ) as MockService:
         instance = MockService.return_value
         instance.search = AsyncMock()
 
         # We need to mock the pool dependency as well to avoid actual DB connection
-        with patch("apps.memory_api.routes.hybrid_search.get_pool", return_value=AsyncMock()), \
-             patch("apps.memory_api.main.asyncpg.create_pool", new=AsyncMock(return_value=mock_pool)), \
-             patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()):
-
+        with patch(
+            "apps.memory_api.routes.hybrid_search.get_pool", return_value=AsyncMock()
+        ), patch(
+            "apps.memory_api.main.asyncpg.create_pool",
+            new=AsyncMock(return_value=mock_pool),
+        ), patch(
+            "apps.memory_api.main.rebuild_full_cache", new=AsyncMock()
+        ):
             with TestClient(app) as client:
                 yield client, instance
+
 
 @pytest.mark.asyncio
 async def test_hybrid_search_success(client_with_mock_service):
     """Test POST /v1/search/hybrid with successful search"""
     client, mock_service = client_with_mock_service
-    
+
     # Create a proper Pydantic model for the result
     mock_result = HybridSearchResult(
         results=[],
@@ -45,11 +56,16 @@ async def test_hybrid_search_success(client_with_mock_service):
             temporal_markers=[],
             relation_types=[],
             recommended_strategies=["vector", "semantic"],
-            strategy_weights={"vector": 0.4, "semantic": 0.3, "graph": 0.2, "fulltext": 0.1},
+            strategy_weights={
+                "vector": 0.4,
+                "semantic": 0.3,
+                "graph": 0.2,
+                "fulltext": 0.1,
+            },
             requires_temporal_filtering=False,
             requires_graph_traversal=False,
             suggested_depth=2,
-            analyzed_at=datetime.now(timezone.utc)
+            analyzed_at=datetime.now(timezone.utc),
         ),
         vector_results_count=2,
         semantic_results_count=1,
@@ -59,7 +75,7 @@ async def test_hybrid_search_success(client_with_mock_service):
         query_analysis_time_ms=50,
         search_time_ms=73,
         applied_weights={"vector": 0.4, "semantic": 0.3, "graph": 0.2, "fulltext": 0.1},
-        reranking_used=False
+        reranking_used=False,
     )
 
     mock_service.search.return_value = mock_result
@@ -90,7 +106,7 @@ async def test_hybrid_search_success(client_with_mock_service):
 async def test_hybrid_search_with_reranking(client_with_mock_service):
     """Test hybrid search with LLM re-ranking enabled"""
     client, mock_service = client_with_mock_service
-    
+
     mock_result = HybridSearchResult(
         results=[],
         total_results=3,
@@ -107,7 +123,7 @@ async def test_hybrid_search_with_reranking(client_with_mock_service):
             requires_temporal_filtering=False,
             requires_graph_traversal=True,
             suggested_depth=3,
-            analyzed_at=datetime.now(timezone.utc)
+            analyzed_at=datetime.now(timezone.utc),
         ),
         vector_results_count=1,
         semantic_results_count=1,
@@ -118,7 +134,7 @@ async def test_hybrid_search_with_reranking(client_with_mock_service):
         search_time_ms=100,
         reranking_time_ms=100,
         applied_weights={"vector": 0.5, "semantic": 0.3, "graph": 0.2},
-        reranking_used=True
+        reranking_used=True,
     )
 
     mock_service.search.return_value = mock_result
@@ -150,7 +166,7 @@ async def test_hybrid_search_with_reranking(client_with_mock_service):
 async def test_hybrid_search_with_filters(client_with_mock_service):
     """Test hybrid search with temporal and tag filters"""
     client, mock_service = client_with_mock_service
-    
+
     mock_result = HybridSearchResult(
         results=[],
         total_results=2,
@@ -167,7 +183,7 @@ async def test_hybrid_search_with_filters(client_with_mock_service):
             requires_temporal_filtering=True,
             requires_graph_traversal=False,
             suggested_depth=1,
-            analyzed_at=datetime.now(timezone.utc)
+            analyzed_at=datetime.now(timezone.utc),
         ),
         vector_results_count=1,
         semantic_results_count=1,
@@ -177,7 +193,7 @@ async def test_hybrid_search_with_filters(client_with_mock_service):
         query_analysis_time_ms=40,
         search_time_ms=49,
         applied_weights={"vector": 0.6, "semantic": 0.4},
-        reranking_used=False
+        reranking_used=False,
     )
 
     mock_service.search.return_value = mock_result

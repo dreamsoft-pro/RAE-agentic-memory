@@ -1,9 +1,11 @@
-from locust import HttpUser, task, between
+from locust import HttpUser, between, task
+
 
 class RAEUser(HttpUser):
     """
     Locust user class that simulates traffic to the RAE API.
     """
+
     wait_time = between(1, 2)  # Users wait 1-2 seconds between tasks
 
     @task

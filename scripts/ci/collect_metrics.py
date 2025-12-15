@@ -7,14 +7,14 @@ Part of RAE CI Quality Implementation - Iteration 3: Zero Drift
 """
 import argparse
 import json
-import time
 import subprocess
 import sys
+import time
 from datetime import datetime, timezone
-from pathlib import Path
 
 try:
     import psutil
+
     PSUTIL_AVAILABLE = True
 except ImportError:
     PSUTIL_AVAILABLE = False
@@ -26,10 +26,16 @@ def collect_test_timing():
     print("📊 Collecting timing metrics...")
     start = time.time()
     result = subprocess.run(
-        ["pytest", "-m", "not integration and not llm and not contract and not performance",
-         "--tb=no", "-q", "--durations=50"],
+        [
+            "pytest",
+            "-m",
+            "not integration and not llm and not contract and not performance",
+            "--tb=no",
+            "-q",
+            "--durations=50",
+        ],
         capture_output=True,
-        text=True
+        text=True,
     )
     duration = time.time() - start
 
@@ -41,17 +47,14 @@ def collect_test_timing():
             if len(parts) >= 3:
                 try:
                     test_duration = float(parts[0].replace("s", ""))
-                    slowest_tests.append({
-                        "test": parts[-1],
-                        "duration": test_duration
-                    })
+                    slowest_tests.append({"test": parts[-1], "duration": test_duration})
                 except (ValueError, IndexError):
                     pass
 
     return {
         "total_duration_seconds": round(duration, 2),
         "slowest_tests": slowest_tests[:10],
-        "test_count": result.stdout.count("passed") + result.stdout.count("failed")
+        "test_count": result.stdout.count("passed") + result.stdout.count("failed"),
     }
 
 
@@ -63,7 +66,7 @@ def collect_memory_metrics():
             "memory_after_mb": 0,
             "memory_peak_mb": 0,
             "memory_delta_mb": 0,
-            "note": "psutil not available"
+            "note": "psutil not available",
         }
 
     print("💾 Collecting memory metrics...")
@@ -71,9 +74,15 @@ def collect_memory_metrics():
     mem_before = process.memory_info().rss / 1024 / 1024  # MB
 
     subprocess.run(
-        ["pytest", "-m", "not integration and not llm and not contract and not performance",
-         "--tb=no", "-q", "-x"],
-        capture_output=True
+        [
+            "pytest",
+            "-m",
+            "not integration and not llm and not contract and not performance",
+            "--tb=no",
+            "-q",
+            "-x",
+        ],
+        capture_output=True,
     )
 
     mem_after = process.memory_info().rss / 1024 / 1024
@@ -83,7 +92,7 @@ def collect_memory_metrics():
         "memory_before_mb": round(mem_before, 2),
         "memory_after_mb": round(mem_after, 2),
         "memory_peak_mb": round(mem_peak, 2),
-        "memory_delta_mb": round(mem_after - mem_before, 2)
+        "memory_delta_mb": round(mem_after - mem_before, 2),
     }
 
 
@@ -91,10 +100,16 @@ def collect_log_metrics():
     """Collect log level counts from test run."""
     print("📝 Collecting log metrics...")
     result = subprocess.run(
-        ["pytest", "-m", "not integration and not llm and not contract and not performance",
-         "--tb=no", "-q", "-s"],
+        [
+            "pytest",
+            "-m",
+            "not integration and not llm and not contract and not performance",
+            "--tb=no",
+            "-q",
+            "-s",
+        ],
         capture_output=True,
-        text=True
+        text=True,
     )
 
     output = result.stdout + result.stderr
@@ -108,7 +123,7 @@ def collect_log_metrics():
         "warning_count": warning_count,
         "error_count": error_count,
         "critical_count": critical_count,
-        "log_volume_lines": len(output.split("\n"))
+        "log_volume_lines": len(output.split("\n")),
     }
 
 
@@ -123,7 +138,7 @@ def main():
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "git_sha": subprocess.getoutput("git rev-parse HEAD"),
         "git_branch": subprocess.getoutput("git rev-parse --abbrev-ref HEAD"),
-        "collector_version": "1.0.0"
+        "collector_version": "1.0.0",
     }
 
     metrics["timing"] = collect_test_timing()

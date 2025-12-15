@@ -100,13 +100,15 @@ with st.sidebar:
         if st.button("🔌 Connect", type="primary", use_container_width=True):
             try:
                 # Update config in session state
-                st.session_state.config.update({
-                    "api_url": api_url,
-                    "api_key": api_key,
-                    "tenant_id": tenant_id,
-                    "project_id": project_id,
-                })
-                
+                st.session_state.config.update(
+                    {
+                        "api_url": api_url,
+                        "api_key": api_key,
+                        "tenant_id": tenant_id,
+                        "project_id": project_id,
+                    }
+                )
+
                 client = RAEClient(
                     api_url=api_url,
                     api_key=api_key,
@@ -294,9 +296,7 @@ if "connected" in st.session_state and st.session_state.connected:
 
 else:
     # Not connected - show welcome message
-    st.info(
-        "👈 Please configure connection settings in the sidebar and click 'Connect'"
-    )
+    st.info("👈 Please configure connection settings in the sidebar and click 'Connect'")
 
     st.divider()
 

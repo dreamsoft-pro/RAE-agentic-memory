@@ -172,7 +172,6 @@ async def test_calculate_overall_score(compliance_service):
     ) as mock_audit_count, patch.object(
         compliance_service, "_update_compliance_metrics", new_callable=MagicMock
     ) as mock_update_metrics:
-
         # Mock a metric with 100% score for one area, others empty
         compliant_metric = ISO42001Metric(
             requirement_id="T1",
@@ -226,7 +225,6 @@ async def test_get_governance_metrics_logic(compliance_service):
         new_callable=AsyncMock,
         return_value=True,
     ):
-
         metrics = await compliance_service._get_governance_metrics("t1", "p1")
 
         assert len(metrics) == 3

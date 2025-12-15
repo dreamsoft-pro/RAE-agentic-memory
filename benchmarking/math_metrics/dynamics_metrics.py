@@ -8,17 +8,12 @@ These metrics analyze how memory changes and evolves:
 - Compression Fidelity Ratio (CFR): Information preservation during compression
 """
 
-from typing import Dict, List, Tuple, Any
+from typing import List
 
 import numpy as np
 from numpy.typing import NDArray
 
-from .base import (
-    MathMetricBase,
-    MemorySnapshot,
-    cosine_distance,
-    normalize_vector,
-)
+from .base import MathMetricBase, MemorySnapshot, cosine_distance, normalize_vector
 
 
 class MemoryDriftIndex(MathMetricBase):

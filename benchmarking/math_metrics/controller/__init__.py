@@ -24,13 +24,12 @@ Usage:
     decision = controller.decide(context)
 """
 
-from .controller import MathLayerController, FeatureExtractor
-from .decision import MathDecision, DecisionWithOutcome
+from .config import LoggingConfig, MathControllerConfig, SafetyConfig, load_config
 from .context import TaskContext
+from .controller import FeatureExtractor, MathLayerController
+from .decision import DecisionWithOutcome, MathDecision
 from .features import Features
 from .features_v2 import FeaturesV2
-from .types import MathLevel, TaskType
-from .config import MathControllerConfig, LoggingConfig, SafetyConfig, load_config
 from .integration import (
     MathControllerIntegration,
     get_math_controller,
@@ -38,35 +37,31 @@ from .integration import (
 )
 from .policy_v2 import PolicyV2, PolicyV2Config
 from .reward import RewardCalculator, RewardConfig
+from .types import MathLevel, TaskType
 
 __all__ = [
     # Main classes
     "MathLayerController",
     "FeatureExtractor",
-
     # Data structures
     "MathDecision",
     "DecisionWithOutcome",
     "TaskContext",
     "Features",
     "FeaturesV2",
-
     # Enums
     "MathLevel",
     "TaskType",
-
     # Configuration
     "MathControllerConfig",
     "LoggingConfig",
     "SafetyConfig",
     "load_config",
-
     # Policy v2
     "PolicyV2",
     "PolicyV2Config",
     "RewardCalculator",
     "RewardConfig",
-
     # Integration helpers
     "MathControllerIntegration",
     "get_math_controller",

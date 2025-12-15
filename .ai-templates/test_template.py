@@ -17,20 +17,21 @@ WHY THESE PATTERNS:
 - Mocking: Isolate unit under test, test integration points separately
 """
 
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock
 
 import pytest
+
+from apps.memory_api.models import EntityInput
 
 # Adjust imports based on what you're testing
 from apps.memory_api.repositories.entity_repository import EntityRepository
 from apps.memory_api.services.my_business_service import MyBusinessService
-from apps.memory_api.models import EntityInput, EntityOutput
-
 
 # ═══════════════════════════════════════════════════════════════
 # FIXTURES (Reusable Test Data and Setup)
 # WHY: DRY principle, consistent test data, easy to modify
 # ═══════════════════════════════════════════════════════════════
+
 
 @pytest.fixture
 def sample_entity_input():
@@ -44,7 +45,7 @@ def sample_entity_input():
         value=100,
         category="test",
         tags=["important", "test"],
-        metadata={"source": "test"}
+        metadata={"source": "test"},
     )
 
 
@@ -56,15 +57,15 @@ def sample_entity_dict():
     WHY: Simulate database record format
     """
     return {
-        'id': 'entity_123',
-        'tenant_id': 'tenant_1',
-        'name': 'Test Entity',
-        'value': 100,
-        'category': 'test',
-        'tags': ['important', 'test'],
-        'score': 1.0,
-        'created_at': '2025-12-04T10:00:00Z',
-        'updated_at': None
+        "id": "entity_123",
+        "tenant_id": "tenant_1",
+        "name": "Test Entity",
+        "value": 100,
+        "category": "test",
+        "tags": ["important", "test"],
+        "score": 1.0,
+        "created_at": "2025-12-04T10:00:00Z",
+        "updated_at": None,
     }
 
 
@@ -85,10 +86,10 @@ def mock_repository():
 # WHY: Fast feedback during development
 # ═══════════════════════════════════════════════════════════════
 
+
 @pytest.mark.unit
 async def test_create_entity_validates_duplicate_name(
-    mock_repository,
-    sample_entity_input
+    mock_repository, sample_entity_input
 ):
     """
     Test that create_entity rejects duplicate names.
@@ -97,32 +98,23 @@ async def test_create_entity_validates_duplicate_name(
     WHY: Test error handling
     """
     # Arrange: Mock repository to return existing entity
-    mock_repository.get_by_name = AsyncMock(return_value={
-        'id': 'existing_id',
-        'name': 'Test Entity'
-    })
-
-    service = MyBusinessService(
-        entity_repo=mock_repository,
-        pool=Mock()
+    mock_repository.get_by_name = AsyncMock(
+        return_value={"id": "existing_id", "name": "Test Entity"}
     )
+
+    service = MyBusinessService(entity_repo=mock_repository, pool=Mock())
 
     # Act & Assert: Should raise ValueError for duplicate
     with pytest.raises(ValueError, match="already exists"):
         await service.create_entity("tenant_1", sample_entity_input)
 
     # Verify repository was called
-    mock_repository.get_by_name.assert_called_once_with(
-        "Test Entity",
-        "tenant_1"
-    )
+    mock_repository.get_by_name.assert_called_once_with("Test Entity", "tenant_1")
 
 
 @pytest.mark.unit
 async def test_create_entity_calculates_score_correctly(
-    mock_repository,
-    sample_entity_input,
-    sample_entity_dict
+    mock_repository, sample_entity_input, sample_entity_dict
 ):
     """
     Test that create_entity calculates score based on value.
@@ -134,10 +126,7 @@ async def test_create_entity_calculates_score_correctly(
     mock_repository.get_by_name = AsyncMock(return_value=None)  # No duplicate
     mock_repository.insert = AsyncMock(return_value=sample_entity_dict)
 
-    service = MyBusinessService(
-        entity_repo=mock_repository,
-        pool=Mock()
-    )
+    service = MyBusinessService(entity_repo=mock_repository, pool=Mock())
 
     # Act
     result = await service.create_entity("tenant_1", sample_entity_input)
@@ -148,8 +137,8 @@ async def test_create_entity_calculates_score_correctly(
     # Verify repository insert was called with score
     mock_repository.insert.assert_called_once()
     insert_data = mock_repository.insert.call_args[0][0]
-    assert 'score' in insert_data
-    assert insert_data['score'] == 1.0
+    assert "score" in insert_data
+    assert insert_data["score"] == 1.0
 
 
 @pytest.mark.unit
@@ -163,26 +152,18 @@ async def test_get_entity_returns_none_when_not_found(mock_repository):
     # Arrange
     mock_repository.get_by_id = AsyncMock(return_value=None)
 
-    service = MyBusinessService(
-        entity_repo=mock_repository,
-        pool=Mock()
-    )
+    service = MyBusinessService(entity_repo=mock_repository, pool=Mock())
 
     # Act
     result = await service.get_entity("nonexistent_id", "tenant_1")
 
     # Assert
     assert result is None
-    mock_repository.get_by_id.assert_called_once_with(
-        "nonexistent_id",
-        "tenant_1"
-    )
+    mock_repository.get_by_id.assert_called_once_with("nonexistent_id", "tenant_1")
 
 
 @pytest.mark.unit
-async def test_delete_entity_prevents_deletion_with_dependencies(
-    mock_repository
-):
+async def test_delete_entity_prevents_deletion_with_dependencies(mock_repository):
     """
     Test that delete_entity enforces deletion policies.
 
@@ -190,12 +171,9 @@ async def test_delete_entity_prevents_deletion_with_dependencies(
     WHY: Test error handling
     """
     # Arrange
-    mock_repository.get_by_id = AsyncMock(return_value={'id': 'entity_123'})
+    mock_repository.get_by_id = AsyncMock(return_value={"id": "entity_123"})
 
-    service = MyBusinessService(
-        entity_repo=mock_repository,
-        pool=Mock()
-    )
+    service = MyBusinessService(entity_repo=mock_repository, pool=Mock())
 
     # Mock _can_delete_entity to return False
     service._can_delete_entity = AsyncMock(return_value=False)
@@ -232,6 +210,7 @@ def test_calculate_score_returns_correct_values():
 # WHY: Test database constraints and transactions
 # ═══════════════════════════════════════════════════════════════
 
+
 @pytest.mark.integration
 async def test_repository_insert_persists_entity(pool, test_tenant):
     """
@@ -246,29 +225,29 @@ async def test_repository_insert_persists_entity(pool, test_tenant):
     repo = EntityRepository(pool)
 
     entity_data = {
-        'tenant_id': test_tenant,
-        'name': 'Integration Test Entity',
-        'value': 150,
-        'category': 'test',
-        'tags': ['integration'],
-        'score': 1.0
+        "tenant_id": test_tenant,
+        "name": "Integration Test Entity",
+        "value": 150,
+        "category": "test",
+        "tags": ["integration"],
+        "score": 1.0,
     }
 
     # Act: Insert
     created = await repo.insert(entity_data)
 
     # Assert: Created entity has ID
-    assert created['id'] is not None
-    assert created['name'] == 'Integration Test Entity'
-    assert created['value'] == 150
+    assert created["id"] is not None
+    assert created["name"] == "Integration Test Entity"
+    assert created["value"] == 150
 
     # Act: Fetch by ID
-    fetched = await repo.get_by_id(created['id'], test_tenant)
+    fetched = await repo.get_by_id(created["id"], test_tenant)
 
     # Assert: Fetched matches created
     assert fetched is not None
-    assert fetched['id'] == created['id']
-    assert fetched['name'] == 'Integration Test Entity'
+    assert fetched["id"] == created["id"]
+    assert fetched["name"] == "Integration Test Entity"
 
 
 @pytest.mark.integration
@@ -284,17 +263,17 @@ async def test_repository_enforces_tenant_isolation(pool):
 
     # Create entity for tenant A
     entity_data_a = {
-        'tenant_id': 'tenant_a',
-        'name': 'Entity A',
-        'value': 100,
-        'category': 'test',
-        'tags': [],
-        'score': 1.0
+        "tenant_id": "tenant_a",
+        "name": "Entity A",
+        "value": 100,
+        "category": "test",
+        "tags": [],
+        "score": 1.0,
     }
     created = await repo.insert(entity_data_a)
 
     # Act: Try to fetch with tenant B credentials
-    result = await repo.get_by_id(created['id'], 'tenant_b')
+    result = await repo.get_by_id(created["id"], "tenant_b")
 
     # Assert: Should NOT be able to access
     assert result is None  # ← Critical security assertion
@@ -311,27 +290,24 @@ async def test_repository_update_modifies_entity(pool, test_tenant):
     repo = EntityRepository(pool)
 
     entity_data = {
-        'tenant_id': test_tenant,
-        'name': 'Original Name',
-        'value': 100,
-        'category': 'test',
-        'tags': [],
-        'score': 1.0
+        "tenant_id": test_tenant,
+        "name": "Original Name",
+        "value": 100,
+        "category": "test",
+        "tags": [],
+        "score": 1.0,
     }
     created = await repo.insert(entity_data)
 
     # Act: Update entity
-    updates = {
-        'name': 'Updated Name',
-        'value': 200
-    }
-    updated = await repo.update(created['id'], test_tenant, updates)
+    updates = {"name": "Updated Name", "value": 200}
+    updated = await repo.update(created["id"], test_tenant, updates)
 
     # Assert: Updates applied
     assert updated is not None
-    assert updated['name'] == 'Updated Name'
-    assert updated['value'] == 200
-    assert updated['id'] == created['id']  # ID unchanged
+    assert updated["name"] == "Updated Name"
+    assert updated["value"] == 200
+    assert updated["id"] == created["id"]  # ID unchanged
 
 
 @pytest.mark.integration
@@ -345,23 +321,23 @@ async def test_repository_delete_removes_entity(pool, test_tenant):
     repo = EntityRepository(pool)
 
     entity_data = {
-        'tenant_id': test_tenant,
-        'name': 'To Be Deleted',
-        'value': 100,
-        'category': 'test',
-        'tags': [],
-        'score': 1.0
+        "tenant_id": test_tenant,
+        "name": "To Be Deleted",
+        "value": 100,
+        "category": "test",
+        "tags": [],
+        "score": 1.0,
     }
     created = await repo.insert(entity_data)
 
     # Act: Delete
-    deleted = await repo.delete(created['id'], test_tenant)
+    deleted = await repo.delete(created["id"], test_tenant)
 
     # Assert: Deletion successful
     assert deleted is True
 
     # Verify entity no longer exists
-    fetched = await repo.get_by_id(created['id'], test_tenant)
+    fetched = await repo.get_by_id(created["id"], test_tenant)
     assert fetched is None
 
 
@@ -370,6 +346,7 @@ async def test_repository_delete_removes_entity(pool, test_tenant):
 # WHY: Test service orchestration with real database
 # WHY: Verify end-to-end flows
 # ═══════════════════════════════════════════════════════════════
+
 
 @pytest.mark.integration
 async def test_service_create_entity_end_to_end(pool, test_tenant):
@@ -384,10 +361,7 @@ async def test_service_create_entity_end_to_end(pool, test_tenant):
     service = MyBusinessService(entity_repo=repo, pool=pool)
 
     input_data = EntityInput(
-        name="End-to-End Test",
-        value=75,
-        category="test",
-        tags=["e2e"]
+        name="End-to-End Test", value=75, category="test", tags=["e2e"]
     )
 
     # Act
@@ -401,8 +375,8 @@ async def test_service_create_entity_end_to_end(pool, test_tenant):
 
     # Verify in database
     fetched = await repo.get_by_id(result.id, test_tenant)
-    assert fetched['name'] == "End-to-End Test"
-    assert fetched['score'] == 0.75
+    assert fetched["name"] == "End-to-End Test"
+    assert fetched["score"] == 0.75
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -410,6 +384,7 @@ async def test_service_create_entity_end_to_end(pool, test_tenant):
 # WHY: Test HTTP layer (request validation, status codes, etc.)
 # WHY: Verify API contracts
 # ═══════════════════════════════════════════════════════════════
+
 
 @pytest.mark.integration
 def test_api_create_entity_returns_201(test_client, auth_headers, test_tenant):
@@ -424,30 +399,25 @@ def test_api_create_entity_returns_201(test_client, auth_headers, test_tenant):
         "name": "API Test Entity",
         "value": 100,
         "category": "test",
-        "tags": ["api-test"]
+        "tags": ["api-test"],
     }
 
     # Act
     response = test_client.post(
-        "/api/v1/my-domain/entities",
-        json=request_body,
-        headers=auth_headers
+        "/api/v1/my-domain/entities", json=request_body, headers=auth_headers
     )
 
     # Assert
     assert response.status_code == 201
     data = response.json()
-    assert data['name'] == "API Test Entity"
-    assert data['value'] == 100
-    assert 'id' in data
-    assert 'created_at' in data
+    assert data["name"] == "API Test Entity"
+    assert data["value"] == 100
+    assert "id" in data
+    assert "created_at" in data
 
 
 @pytest.mark.integration
-def test_api_get_entity_returns_404_for_nonexistent(
-    test_client,
-    auth_headers
-):
+def test_api_get_entity_returns_404_for_nonexistent(test_client, auth_headers):
     """
     Test GET /entities/{id} returns 404 for non-existent entity.
 
@@ -455,21 +425,17 @@ def test_api_get_entity_returns_404_for_nonexistent(
     """
     # Act
     response = test_client.get(
-        "/api/v1/my-domain/entities/nonexistent-id",
-        headers=auth_headers
+        "/api/v1/my-domain/entities/nonexistent-id", headers=auth_headers
     )
 
     # Assert
     assert response.status_code == 404
     error = response.json()
-    assert "not found" in error['detail'].lower()
+    assert "not found" in error["detail"].lower()
 
 
 @pytest.mark.integration
-def test_api_create_entity_returns_400_for_invalid_input(
-    test_client,
-    auth_headers
-):
+def test_api_create_entity_returns_400_for_invalid_input(test_client, auth_headers):
     """
     Test POST /entities returns 400 for invalid input.
 
@@ -483,9 +449,7 @@ def test_api_create_entity_returns_400_for_invalid_input(
 
     # Act
     response = test_client.post(
-        "/api/v1/my-domain/entities",
-        json=request_body,
-        headers=auth_headers
+        "/api/v1/my-domain/entities", json=request_body, headers=auth_headers
     )
 
     # Assert
@@ -511,16 +475,20 @@ def test_api_requires_authentication(test_client):
 # WHY: Test multiple inputs with single test function
 # ═══════════════════════════════════════════════════════════════
 
+
 @pytest.mark.unit
-@pytest.mark.parametrize("value,expected_score", [
-    (0, 0.0),
-    (25, 0.25),
-    (50, 0.5),
-    (75, 0.75),
-    (100, 1.0),
-    (200, 1.0),  # Capped at 1.0
-    (1000, 1.0),  # Capped at 1.0
-])
+@pytest.mark.parametrize(
+    "value,expected_score",
+    [
+        (0, 0.0),
+        (25, 0.25),
+        (50, 0.5),
+        (75, 0.75),
+        (100, 1.0),
+        (200, 1.0),  # Capped at 1.0
+        (1000, 1.0),  # Capped at 1.0
+    ],
+)
 def test_calculate_score_parametrized(value, expected_score):
     """
     Test score calculation for multiple values.
@@ -544,6 +512,7 @@ def test_calculate_score_parametrized(value, expected_score):
 # WHY: Verify graceful degradation
 # ═══════════════════════════════════════════════════════════════
 
+
 @pytest.mark.unit
 async def test_create_entity_handles_database_error(mock_repository):
     """
@@ -558,10 +527,7 @@ async def test_create_entity_handles_database_error(mock_repository):
         side_effect=Exception("Database connection lost")
     )
 
-    service = MyBusinessService(
-        entity_repo=mock_repository,
-        pool=Mock()
-    )
+    service = MyBusinessService(entity_repo=mock_repository, pool=Mock())
 
     input_data = EntityInput(name="Test", value=100, category="test")
 
@@ -573,6 +539,7 @@ async def test_create_entity_handles_database_error(mock_repository):
 # ═══════════════════════════════════════════════════════════════
 # FIXTURES FOR DATABASE TESTS (Example - Adapt to Your Setup)
 # ═══════════════════════════════════════════════════════════════
+
 
 @pytest.fixture
 async def pool():
@@ -604,6 +571,7 @@ def test_client():
     NOTE: Placeholder - implement based on your app setup
     """
     from fastapi.testclient import TestClient
+
     from apps.memory_api.main import app
 
     return TestClient(app)
@@ -616,6 +584,4 @@ def auth_headers(test_tenant):
 
     NOTE: Placeholder - generate real JWT for your tests
     """
-    return {
-        "Authorization": f"Bearer test_jwt_token_for_{test_tenant}"
-    }
+    return {"Authorization": f"Bearer test_jwt_token_for_{test_tenant}"}

@@ -9,24 +9,21 @@ to use for memory operations. It provides:
 - Integration with existing MathematicalDecisionEngine
 """
 
-from dataclasses import dataclass
-from datetime import datetime
+import json
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-import json
+
 import structlog
 
 from ..decision_engine import MathematicalDecisionEngine
-from ..base import MemorySnapshot
-from .types import MathLevel, TaskType
+from .bandit import BanditConfig, BanditMonitor, MultiArmedBandit
+from .config import MathControllerConfig
+from .context import TaskContext
+from .decision import DecisionWithOutcome, MathDecision
 from .features import Features
 from .features_v2 import FeaturesV2
-from .decision import MathDecision, DecisionWithOutcome
-from .context import TaskContext
-from .config import MathControllerConfig
 from .policy_v2 import PolicyV2, PolicyV2Config
-from .bandit import MultiArmedBandit, BanditConfig, BanditMonitor
-
+from .types import MathLevel, TaskType
 
 logger = structlog.get_logger(__name__)
 
@@ -79,7 +76,11 @@ class FeatureExtractor:
         # Calculate metrics if we have snapshots
         if context.memory_snapshot and len(context.memory_snapshot.graph_edges) > 0:
             # Use decision engine metrics
-            from ..structure_metrics import GraphEntropyMetric, GraphConnectivityScore, SemanticCoherenceScore
+            from ..structure_metrics import (
+                GraphConnectivityScore,
+                GraphEntropyMetric,
+                SemanticCoherenceScore,
+            )
 
             entropy_metric = GraphEntropyMetric()
             gcs_metric = GraphConnectivityScore()
@@ -98,6 +99,7 @@ class FeatureExtractor:
         # Calculate MRR from query results
         if context.query_results:
             from ..policy_metrics import OptimalRetrievalRatio
+
             orr_metric = OptimalRetrievalRatio()
             features.recent_mrr = orr_metric.calculate(context.query_results, k=5)
 
@@ -151,6 +153,7 @@ class MathLayerController:
             self.config = config
         elif config_path:
             from .config import load_config
+
             self.config = load_config(config_path)
         else:
             self.config = MathControllerConfig()  # Default config
@@ -162,19 +165,27 @@ class MathLayerController:
         self.feature_extractor = FeatureExtractor(self.decision_engine)
 
         # Initialize Policy v2 (if configured)
-        self.policy_version = getattr(self.config, 'policy_version', 1)
+        self.policy_version = getattr(self.config, "policy_version", 1)
         self.policy_v2 = None
         if self.policy_version >= 2:
             policy_v2_config = PolicyV2Config()
             # Transfer thresholds from main config
-            policy_v2_config.l2_memory_threshold = self.config.thresholds.get('l2_memory_threshold', 30)
-            policy_v2_config.l2_entropy_threshold = self.config.thresholds.get('l2_entropy_threshold', 0.7)
-            policy_v2_config.l3_memory_threshold = self.config.thresholds.get('l3_memory_threshold', 500)
-            policy_v2_config.l3_session_threshold = self.config.thresholds.get('l3_session_threshold', 10)
+            policy_v2_config.l2_memory_threshold = self.config.thresholds.get(
+                "l2_memory_threshold", 30
+            )
+            policy_v2_config.l2_entropy_threshold = self.config.thresholds.get(
+                "l2_entropy_threshold", 0.7
+            )
+            policy_v2_config.l3_memory_threshold = self.config.thresholds.get(
+                "l3_memory_threshold", 500
+            )
+            policy_v2_config.l3_session_threshold = self.config.thresholds.get(
+                "l3_session_threshold", 10
+            )
             self.policy_v2 = PolicyV2(policy_v2_config)
 
         # Initialize Bandit (if configured and policy v2 is active)
-        self.bandit_enabled = getattr(self.config, 'bandit_enabled', False)
+        self.bandit_enabled = getattr(self.config, "bandit_enabled", False)
         self.bandit: Optional[MultiArmedBandit] = None
         self.bandit_monitor: Optional[BanditMonitor] = None
         if self.bandit_enabled and self.policy_version >= 2:
@@ -228,7 +239,7 @@ class MathLayerController:
         if isinstance(features, Features) and not isinstance(features, FeaturesV2):
             features_v2 = FeaturesV2.from_features(features)
             features_v2.consecutive_same_level = self._get_consecutive_same_level()
-            features_v2.is_first_turn = (features.session_length == 0)
+            features_v2.is_first_turn = features.session_length == 0
         else:
             features_v2 = features
 
@@ -250,7 +261,9 @@ class MathLayerController:
             strategy_id=strategy,
             params=params,
             explanation=explanation,
-            telemetry_tags=self._build_telemetry_tags(level, strategy, features, context),
+            telemetry_tags=self._build_telemetry_tags(
+                level, strategy, features, context
+            ),
             features_used=features_v2,
             confidence=self._calculate_confidence(level, features_v2),
         )
@@ -290,7 +303,7 @@ class MathLayerController:
                 features_v2 = FeaturesV2.from_features(features)
                 # Enhance with historical data
                 features_v2.consecutive_same_level = self._get_consecutive_same_level()
-                features_v2.is_first_turn = (features.session_length == 0)
+                features_v2.is_first_turn = features.session_length == 0
             else:
                 features_v2 = features
 
@@ -457,27 +470,35 @@ class MathLayerController:
 
         # Adjust based on features
         if level == MathLevel.L1:
-            base_params.update({
-                "use_recency": True,
-                "recency_weight": self._calculate_recency_weight(features),
-                "importance_threshold": self.config.thresholds.get(
-                    "importance_threshold", 0.3
-                ),
-            })
+            base_params.update(
+                {
+                    "use_recency": True,
+                    "recency_weight": self._calculate_recency_weight(features),
+                    "importance_threshold": self.config.thresholds.get(
+                        "importance_threshold", 0.3
+                    ),
+                }
+            )
 
         elif level == MathLevel.L2:
-            base_params.update({
-                "entropy_target": 0.5,
-                "ib_beta": self._calculate_ib_beta(features),
-                "max_iterations": 100,
-            })
+            base_params.update(
+                {
+                    "entropy_target": 0.5,
+                    "ib_beta": self._calculate_ib_beta(features),
+                    "max_iterations": 100,
+                }
+            )
 
         elif level == MathLevel.L3:
-            base_params.update({
-                "l1_weight": 0.5,
-                "l2_weight": 0.5,
-                "exploration_rate": 0.1 if self.config.profile == "research" else 0.0,
-            })
+            base_params.update(
+                {
+                    "l1_weight": 0.5,
+                    "l2_weight": 0.5,
+                    "exploration_rate": 0.1
+                    if self.config.profile == "research"
+                    else 0.0,
+                }
+            )
 
         return base_params
 
@@ -518,16 +539,24 @@ class MathLayerController:
             elif features.is_latency_constrained():
                 parts.append("Reason: Latency constraints require fastest approach")
             else:
-                parts.append(f"Reason: Task type '{features.task_type.value}' works well with L1")
+                parts.append(
+                    f"Reason: Task type '{features.task_type.value}' works well with L1"
+                )
 
         elif level == MathLevel.L2:
             if features.memory_entropy > 0.6:
-                parts.append(f"Reason: High memory entropy ({features.memory_entropy:.2f}) suggests need for information-theoretic optimization")
+                parts.append(
+                    f"Reason: High memory entropy ({features.memory_entropy:.2f}) suggests need for information-theoretic optimization"
+                )
             else:
-                parts.append(f"Reason: Task type '{features.task_type.value}' benefits from entropy analysis")
+                parts.append(
+                    f"Reason: Task type '{features.task_type.value}' benefits from entropy analysis"
+                )
 
         elif level == MathLevel.L3:
-            parts.append(f"Reason: Complex scenario (memory_count={features.memory_count}, session_length={features.session_length}) benefits from adaptive approach")
+            parts.append(
+                f"Reason: Complex scenario (memory_count={features.memory_count}, session_length={features.session_length}) benefits from adaptive approach"
+            )
 
         # Strategy explanation
         parts.append(f"Strategy: {strategy}")
@@ -615,7 +644,7 @@ class MathLayerController:
 
         # Trim history if needed
         if len(self.decision_history) > self._max_history:
-            self.decision_history = self.decision_history[-self._max_history:]
+            self.decision_history = self.decision_history[-self._max_history :]
 
     def get_decision_history(self, limit: int = 100) -> List[MathDecision]:
         """Get recent decision history"""
@@ -663,7 +692,11 @@ class MathLayerController:
         )
 
         # Provide reward feedback to bandit (if enabled)
-        if self.bandit and self.bandit_monitor and isinstance(decision.features_used, FeaturesV2):
+        if (
+            self.bandit
+            and self.bandit_monitor
+            and isinstance(decision.features_used, FeaturesV2)
+        ):
             self._update_bandit_with_outcome(decision, outcome)
 
         # In Iteration 2+, this would be saved for training
@@ -695,18 +728,18 @@ class MathLayerController:
         lines = [
             f"Decision ID: {decision.decision_id}",
             f"Timestamp: {decision.timestamp.isoformat()}",
-            f"",
+            "",
             f"Selected Level: {decision.selected_level.value}",
             f"  Description: {decision.selected_level.description}",
             f"  Cost Multiplier: {decision.selected_level.cost_multiplier}x",
-            f"",
+            "",
             f"Strategy: {decision.strategy_id}",
             f"Parameters: {json.dumps(decision.params, indent=2)}",
-            f"",
+            "",
             f"Explanation: {decision.explanation}",
             f"Confidence: {decision.confidence:.2f}",
-            f"",
-            f"Features Used:",
+            "",
+            "Features Used:",
         ]
 
         if decision.features_used:
@@ -740,12 +773,14 @@ class MathLayerController:
         is_degraded, drop = self.bandit.check_degradation()
         if is_degraded:
             logger.warning(
-                "bandit_degradation_detected",
-                drop=drop,
-                rolling_back_to_baseline=True
+                "bandit_degradation_detected", drop=drop, rolling_back_to_baseline=True
             )
             # Rollback to baseline
-            return baseline_level, baseline_strategy, f"Bandit degradation detected ({drop:.1%}), using baseline {baseline_level.value}"
+            return (
+                baseline_level,
+                baseline_strategy,
+                f"Bandit degradation detected ({drop:.1%}), using baseline {baseline_level.value}",
+            )
 
         # Run monitor health checks
         alerts = self.bandit_monitor.check_health()
@@ -755,10 +790,14 @@ class MathLayerController:
             logger.warning(
                 "bandit_critical_alerts",
                 alert_count=len(critical_alerts),
-                rolling_back_to_baseline=True
+                rolling_back_to_baseline=True,
             )
             # Rollback to baseline
-            return baseline_level, baseline_strategy, f"Bandit safety alerts, using baseline {baseline_level.value}"
+            return (
+                baseline_level,
+                baseline_strategy,
+                f"Bandit safety alerts, using baseline {baseline_level.value}",
+            )
 
         # Safe to use bandit - select arm
         arm, was_exploration = self.bandit.select_arm(features)
@@ -767,11 +806,15 @@ class MathLayerController:
         self.bandit_monitor.record_decision(arm.arm_id)
 
         # Build explanation
-        explanation_parts = [f"Bandit selected {arm.level.value} with {arm.strategy} strategy"]
+        explanation_parts = [
+            f"Bandit selected {arm.level.value} with {arm.strategy} strategy"
+        ]
         if was_exploration:
-            explanation_parts.append(f"(exploration)")
+            explanation_parts.append("(exploration)")
         else:
-            explanation_parts.append(f"(exploitation, UCB score: {arm.ucb_score(self.bandit.total_pulls):.3f})")
+            explanation_parts.append(
+                f"(exploitation, UCB score: {arm.ucb_score(self.bandit.total_pulls):.3f})"
+            )
 
         explanation = " ".join(explanation_parts)
 
@@ -797,7 +840,7 @@ class MathLayerController:
         Returns:
             BanditConfig
         """
-        bandit_settings = getattr(self.config, 'bandit', {})
+        bandit_settings = getattr(self.config, "bandit", {})
 
         # Get exploration rate based on profile
         profile = self.config.profile
@@ -808,25 +851,27 @@ class MathLayerController:
         else:  # research
             default_exploration = 0.2  # 20% exploration in research
 
-        exploration_rate = bandit_settings.get('exploration_rate', default_exploration)
-        max_exploration_rate = bandit_settings.get('max_exploration_rate', 0.2)
+        exploration_rate = bandit_settings.get("exploration_rate", default_exploration)
+        max_exploration_rate = bandit_settings.get("max_exploration_rate", 0.2)
 
         # Ensure exploration_rate <= max_exploration_rate
         exploration_rate = min(exploration_rate, max_exploration_rate)
 
         # Persistence path
-        persistence_path = bandit_settings.get('persistence_path')
+        persistence_path = bandit_settings.get("persistence_path")
         if persistence_path:
             persistence_path = Path(persistence_path)
 
         return BanditConfig(
-            c=bandit_settings.get('c', 1.0),
-            context_bonus=bandit_settings.get('context_bonus', 0.1),
+            c=bandit_settings.get("c", 1.0),
+            context_bonus=bandit_settings.get("context_bonus", 0.1),
             exploration_rate=exploration_rate,
             max_exploration_rate=max_exploration_rate,
-            degradation_threshold=bandit_settings.get('degradation_threshold', 0.15),
-            min_pulls_for_confidence=bandit_settings.get('min_pulls_for_confidence', 10),
-            save_frequency=bandit_settings.get('save_frequency', 50),
+            degradation_threshold=bandit_settings.get("degradation_threshold", 0.15),
+            min_pulls_for_confidence=bandit_settings.get(
+                "min_pulls_for_confidence", 10
+            ),
+            save_frequency=bandit_settings.get("save_frequency", 50),
             persistence_path=persistence_path,
         )
 

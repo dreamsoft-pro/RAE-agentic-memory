@@ -7,7 +7,7 @@ Multi-objective reward function balancing quality, cost, and stability.
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 
-from .decision import MathDecision, DecisionWithOutcome
+from .decision import DecisionWithOutcome, MathDecision
 from .types import MathLevel
 
 
@@ -16,9 +16,9 @@ class RewardConfig:
     """Configuration for reward calculation"""
 
     # Component weights
-    w_quality: float = 1.0      # Quality is most important
-    w_cost: float = 0.3         # Moderate cost penalty
-    w_stability: float = 0.2    # Light stability preference
+    w_quality: float = 1.0  # Quality is most important
+    w_cost: float = 0.3  # Moderate cost penalty
+    w_stability: float = 0.2  # Light stability preference
 
     # Quality sub-weights
     quality_weights: Dict[str, float] = None
@@ -87,7 +87,9 @@ class RewardCalculator:
         quality = self._calculate_quality(decision_with_outcome.outcome_metrics)
 
         # Cost component (0.0 to ~2.0 typically)
-        cost = self._calculate_cost(decision_with_outcome.decision, decision_with_outcome.outcome_metrics)
+        cost = self._calculate_cost(
+            decision_with_outcome.decision, decision_with_outcome.outcome_metrics
+        )
 
         # Stability component (0.0 to 1.0)
         stability = self._calculate_stability(decision_with_outcome.outcome_metrics)
@@ -112,7 +114,9 @@ class RewardCalculator:
         # Extract metrics with defaults
         mrr = metrics.get("mrr", 0.0)
         hit_rate = metrics.get("hit_rate_5", metrics.get("hit_rate", {}).get("@5", 0.0))
-        precision = metrics.get("precision_5", metrics.get("precision", {}).get("@5", 0.0))
+        precision = metrics.get(
+            "precision_5", metrics.get("precision", {}).get("@5", 0.0)
+        )
         orr = metrics.get("orr", metrics.get("optimal_retrieval_ratio", 0.0))
 
         quality = (
@@ -168,7 +172,9 @@ class RewardCalculator:
 
         return stability_penalty
 
-    def _calculate_penalty(self, decision_with_outcome: DecisionWithOutcome, baseline_mrr: float) -> float:
+    def _calculate_penalty(
+        self, decision_with_outcome: DecisionWithOutcome, baseline_mrr: float
+    ) -> float:
         """Calculate catastrophic failure penalties"""
         penalty = 0.0
         p = self.config.penalties
@@ -182,7 +188,9 @@ class RewardCalculator:
             penalty += p["error"]
 
         # Budget violation (if tracked)
-        budget_exceeded = decision_with_outcome.outcome_metrics.get("budget_exceeded", False)
+        budget_exceeded = decision_with_outcome.outcome_metrics.get(
+            "budget_exceeded", False
+        )
         if budget_exceeded:
             penalty += p["budget_violation"]
 
@@ -209,6 +217,8 @@ class RewardCalculator:
             for d in decisions_with_outcomes
             if d.outcome.success
         ]
-        baseline_mrr = sum(successful_mrrs) / len(successful_mrrs) if successful_mrrs else 0.5
+        baseline_mrr = (
+            sum(successful_mrrs) / len(successful_mrrs) if successful_mrrs else 0.5
+        )
 
         return [self.calculate(d, baseline_mrr) for d in decisions_with_outcomes]

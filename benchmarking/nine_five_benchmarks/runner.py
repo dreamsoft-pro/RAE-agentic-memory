@@ -17,19 +17,22 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, Optional
 
+from benchmarking.telemetry import BenchmarkTelemetry
+
+from .grdt_benchmark import GRDTBenchmark, GRDTResults
 from .lect_benchmark import LECTBenchmark, LECTResults
 from .mmit_benchmark import MMITBenchmark, MMITResults
-from .grdt_benchmark import GRDTBenchmark, GRDTResults
-from .rst_benchmark import RSTBenchmark, RSTResults
 from .mpeb_benchmark import MPEBBenchmark, MPEBResults
 from .orb_benchmark import ORBBenchmark, ORBResults
+from .rst_benchmark import RSTBenchmark, RSTResults
 
 
 @dataclass
 class NineFiveResults:
     """Aggregated results from all 9/5 benchmarks."""
+
     timestamp: str
     version: str = "1.0.0"
 
@@ -103,7 +106,9 @@ class NineFiveBenchmarkRunner:
             seed: Random seed for reproducibility
             verbose: Whether to print progress
         """
-        self.output_dir = output_dir or (Path(__file__).parent.parent / "results" / "nine_five")
+        self.output_dir = output_dir or (
+            Path(__file__).parent.parent / "results" / "nine_five"
+        )
         self.seed = seed
         self.verbose = verbose
 
@@ -144,7 +149,9 @@ class NineFiveBenchmarkRunner:
             similarity_threshold=similarity_threshold,
             seed=self.seed,
         )
-        return benchmark.run(num_operations=num_operations, verbose=self.verbose, **kwargs)
+        return benchmark.run(
+            num_operations=num_operations, verbose=self.verbose, **kwargs
+        )
 
     def run_grdt(
         self,
@@ -314,8 +321,68 @@ class NineFiveBenchmarkRunner:
             "rst_consistency": rst_results.insight_consistency,
             "mpeb_convergence": mpeb_results.convergence_rate,
             "mpeb_stability": mpeb_results.stability_index,
-            "orb_pareto_optimal": len([p for p in orb_results.pareto_frontier if p.get("is_pareto_optimal", False)]),
+            "orb_pareto_optimal": len(
+                [
+                    p
+                    for p in orb_results.pareto_frontier
+                    if p.get("is_pareto_optimal", False)
+                ]
+            ),
         }
+
+        # Record metrics to telemetry
+        telemetry = BenchmarkTelemetry()
+        timestamp = datetime.fromisoformat(results.timestamp)
+
+        # Record LECT metrics
+        telemetry.record_metric(
+            "LECT", "consistency", lect_results.consistency_score, timestamp
+        )
+        telemetry.record_metric(
+            "LECT", "retention", lect_results.retention_rate, timestamp
+        )
+
+        # Record MMIT metrics
+        telemetry.record_metric(
+            "MMIT", "interference", mmit_results.interference_score, timestamp
+        )
+
+        # Record GRDT metrics
+        telemetry.record_metric(
+            "GRDT", "max_depth", grdt_results.max_reasoning_depth, timestamp
+        )
+        telemetry.record_metric(
+            "GRDT", "coherence", grdt_results.chain_coherence, timestamp
+        )
+
+        # Record RST metrics
+        telemetry.record_metric(
+            "RST", "noise_threshold", rst_results.noise_threshold, timestamp
+        )
+        telemetry.record_metric(
+            "RST", "consistency", rst_results.insight_consistency, timestamp
+        )
+
+        # Record MPEB metrics
+        telemetry.record_metric(
+            "MPEB", "convergence", mpeb_results.convergence_rate, timestamp
+        )
+        telemetry.record_metric(
+            "MPEB", "adaptation", mpeb_results.stability_index, timestamp
+        )
+
+        # Record ORB metrics
+        orb_pareto_count = len(
+            [
+                p
+                for p in orb_results.pareto_frontier
+                if p.get("is_pareto_optimal", False)
+            ]
+        )
+        telemetry.record_metric("ORB", "pareto_optimal", orb_pareto_count, timestamp)
+
+        # Export telemetry
+        telemetry.export_json()
 
         if self.verbose:
             print("\n" + "#" * 60)
@@ -325,6 +392,7 @@ class NineFiveBenchmarkRunner:
             print("\nSummary Scores:")
             for key, value in results.summary.items():
                 print(f"  {key}: {value}")
+            print("\n✅ Telemetry data exported")
 
         return results
 
@@ -528,15 +596,21 @@ def main():
     elif args.benchmark == "lect":
         results = runner.run_lect(num_cycles=quick_params.get("lect_cycles", 10000))
     elif args.benchmark == "mmit":
-        results = runner.run_mmit(num_operations=quick_params.get("mmit_operations", 5000))
+        results = runner.run_mmit(
+            num_operations=quick_params.get("mmit_operations", 5000)
+        )
     elif args.benchmark == "grdt":
         results = runner.run_grdt(num_queries=quick_params.get("grdt_queries", 100))
     elif args.benchmark == "rst":
         results = runner.run_rst(num_insights=quick_params.get("rst_insights", 50))
     elif args.benchmark == "mpeb":
-        results = runner.run_mpeb(num_iterations=quick_params.get("mpeb_iterations", 1000))
+        results = runner.run_mpeb(
+            num_iterations=quick_params.get("mpeb_iterations", 1000)
+        )
     elif args.benchmark == "orb":
-        results = runner.run_orb(num_samples_per_config=quick_params.get("orb_samples", 20))
+        results = runner.run_orb(
+            num_samples_per_config=quick_params.get("orb_samples", 20)
+        )
 
     print("\nBenchmark complete!")
 

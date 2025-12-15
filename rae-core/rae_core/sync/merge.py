@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -24,9 +24,9 @@ class MergeResult(BaseModel):
     memory_id: UUID
     success: bool
     strategy_used: ConflictResolutionStrategy
-    merged_memory: Optional[Dict[str, Any]] = None
-    conflicts_resolved: List[str] = []
-    error_message: Optional[str] = None
+    merged_memory: dict[str, Any] | None = None
+    conflicts_resolved: list[str] = []
+    error_message: str | None = None
 
 
 class ConflictResolver:
@@ -45,10 +45,10 @@ class ConflictResolver:
 
     def resolve(
         self,
-        local: Dict[str, Any],
-        remote: Dict[str, Any],
-        conflict_fields: List[str],
-        strategy: Optional[ConflictResolutionStrategy] = None,
+        local: dict[str, Any],
+        remote: dict[str, Any],
+        conflict_fields: list[str],
+        strategy: ConflictResolutionStrategy | None = None,
     ) -> MergeResult:
         """Resolve conflicts between local and remote versions.
 
@@ -99,10 +99,10 @@ class ConflictResolver:
 
     def _last_write_wins(
         self,
-        local: Dict[str, Any],
-        remote: Dict[str, Any],
-        conflict_fields: List[str],
-    ) -> Dict[str, Any]:
+        local: dict[str, Any],
+        remote: dict[str, Any],
+        conflict_fields: list[str],
+    ) -> dict[str, Any]:
         """Resolve conflicts using Last-Write-Wins strategy.
 
         Args:
@@ -124,8 +124,7 @@ class ConflictResolver:
         else:
             winner = (
                 local
-                if (local_modified or datetime.min)
-                > (remote_modified or datetime.min)
+                if (local_modified or datetime.min) > (remote_modified or datetime.min)
                 else remote
             )
 
@@ -133,10 +132,10 @@ class ConflictResolver:
 
     def _merge_fields(
         self,
-        local: Dict[str, Any],
-        remote: Dict[str, Any],
-        conflict_fields: List[str],
-    ) -> Dict[str, Any]:
+        local: dict[str, Any],
+        remote: dict[str, Any],
+        conflict_fields: list[str],
+    ) -> dict[str, Any]:
         """Resolve conflicts by merging fields intelligently.
 
         Args:
@@ -184,20 +183,23 @@ class ConflictResolver:
                 pass
 
         # Update version and timestamp
-        merged["version"] = max(
-            local.get("version", 1),
-            remote.get("version", 1),
-        ) + 1
+        merged["version"] = (
+            max(
+                local.get("version", 1),
+                remote.get("version", 1),
+            )
+            + 1
+        )
         merged["modified_at"] = datetime.now(timezone.utc)
 
         return merged
 
 
 def merge_memories(
-    local_memories: List[Dict[str, Any]],
-    remote_memories: List[Dict[str, Any]],
-    resolver: Optional[ConflictResolver] = None,
-) -> List[MergeResult]:
+    local_memories: list[dict[str, Any]],
+    remote_memories: list[dict[str, Any]],
+    resolver: ConflictResolver | None = None,
+) -> list[MergeResult]:
     """Merge local and remote memories using CRDT principles.
 
     Args:
@@ -279,9 +281,9 @@ def merge_memories(
 
 
 def apply_merge_results(
-    merge_results: List[MergeResult],
+    merge_results: list[MergeResult],
     storage_update_fn: Any,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Apply merge results to storage.
 
     Args:

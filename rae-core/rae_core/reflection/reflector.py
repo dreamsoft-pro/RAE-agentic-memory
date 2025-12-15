@@ -4,8 +4,8 @@ The Reflector generates insights and reflection patterns from memories.
 """
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
-from uuid import UUID, uuid4
+from typing import Any
+from uuid import UUID
 
 from rae_core.interfaces.llm import ILLMProvider
 from rae_core.interfaces.storage import IMemoryStorage
@@ -20,7 +20,7 @@ class Reflector:
     def __init__(
         self,
         memory_storage: IMemoryStorage,
-        llm_provider: Optional[ILLMProvider] = None,
+        llm_provider: ILLMProvider | None = None,
     ):
         """Initialize Reflector.
 
@@ -33,11 +33,11 @@ class Reflector:
 
     async def generate_reflection(
         self,
-        memory_ids: List[UUID],
+        memory_ids: list[UUID],
         tenant_id: str,
         agent_id: str,
         reflection_type: str = "consolidation",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate a reflection from memories.
 
         Args:
@@ -73,14 +73,17 @@ class Reflector:
                 memories, tenant_id, agent_id
             )
         else:
-            return {"success": False, "error": f"Unknown reflection type: {reflection_type}"}
+            return {
+                "success": False,
+                "error": f"Unknown reflection type: {reflection_type}",
+            }
 
     async def _generate_consolidation_reflection(
         self,
-        memories: List[Dict[str, Any]],
+        memories: list[dict[str, Any]],
         tenant_id: str,
         agent_id: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate consolidation reflection."""
         # Extract common themes
         all_content = " ".join([m.get("content", "") for m in memories])
@@ -98,7 +101,9 @@ class Reflector:
         # Generate reflection content
         if self.llm_provider:
             prompt = f"Consolidate these {len(memories)} memory fragments into a coherent insight:\n{all_content[:1000]}"
-            reflection_content = await self.llm_provider.summarize(all_content, max_length=300)
+            reflection_content = await self.llm_provider.summarize(
+                all_content, max_length=300
+            )
         else:
             # Rule-based consolidation
             reflection_content = f"Consolidated {len(memories)} memories with common themes: {', '.join(common_tags[:5]) if common_tags else 'various topics'}"
@@ -128,10 +133,10 @@ class Reflector:
 
     async def _generate_pattern_reflection(
         self,
-        memories: List[Dict[str, Any]],
+        memories: list[dict[str, Any]],
         tenant_id: str,
         agent_id: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate pattern recognition reflection."""
         # Detect patterns in memories
         patterns = []
@@ -157,7 +162,9 @@ class Reflector:
 
         # Generate reflection
         pattern_desc = ", ".join(patterns) if patterns else "no clear patterns"
-        reflection_content = f"Detected patterns across {len(memories)} memories: {pattern_desc}"
+        reflection_content = (
+            f"Detected patterns across {len(memories)} memories: {pattern_desc}"
+        )
 
         reflection_id = await self.memory_storage.store_memory(
             content=reflection_content,
@@ -184,10 +191,10 @@ class Reflector:
 
     async def _generate_insight_reflection(
         self,
-        memories: List[Dict[str, Any]],
+        memories: list[dict[str, Any]],
         tenant_id: str,
         agent_id: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate high-level insight reflection."""
         # Analyze memory importance distribution
         importances = [m.get("importance", 0.5) for m in memories]
@@ -204,7 +211,9 @@ class Reflector:
             all_content = " ".join([m.get("content", "") for m in memories[:10]])
             prompt = f"Generate a meta-cognitive insight from these memories:\n{all_content[:800]}"
             try:
-                insight_content = await self.llm_provider.generate(prompt, max_tokens=200)
+                insight_content = await self.llm_provider.generate(
+                    prompt, max_tokens=200
+                )
             except:
                 insight_content = f"Key insight: {len(memories)} memories with average importance {avg_importance:.2f}"
         else:
@@ -234,16 +243,16 @@ class Reflector:
             "metrics": {
                 "avg_importance": avg_importance,
                 "layer_distribution": layer_dist,
-            }
+            },
         }
 
     async def identify_reflection_candidates(
         self,
         tenant_id: str,
-        agent_id: Optional[str] = None,
+        agent_id: str | None = None,
         min_memories: int = 5,
         max_age_hours: int = 24,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Identify memories that are candidates for reflection.
 
         Args:
@@ -278,11 +287,13 @@ class Reflector:
         candidates = []
         for tag, mem_ids in tag_groups.items():
             if len(mem_ids) >= min_memories:
-                candidates.append({
-                    "tag": tag,
-                    "memory_ids": mem_ids,
-                    "count": len(mem_ids),
-                    "type": "tag_group",
-                })
+                candidates.append(
+                    {
+                        "tag": tag,
+                        "memory_ids": mem_ids,
+                        "count": len(mem_ids),
+                        "type": "tag_group",
+                    }
+                )
 
         return candidates

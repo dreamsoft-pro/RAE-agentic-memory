@@ -32,26 +32,22 @@ Author: Grzegorz Leśniowski <lesniowskig@gmail.com>
 """
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from rae_core.math.dynamics import calculate_recency_score
-from rae_core.math.structure import (
-    DecayConfig,
-    MemoryScoreResult,
-    ScoringWeights,
-)
+from rae_core.math.structure import DecayConfig, MemoryScoreResult, ScoringWeights
 
 
 def compute_memory_score(
     similarity: float,
     importance: float,
-    last_accessed_at: Optional[datetime],
+    last_accessed_at: datetime | None,
     created_at: datetime,
     access_count: int = 0,
-    now: Optional[datetime] = None,
-    weights: Optional[ScoringWeights] = None,
-    decay_config: Optional[DecayConfig] = None,
-    memory_id: Optional[str] = None,
+    now: datetime | None = None,
+    weights: ScoringWeights | None = None,
+    decay_config: DecayConfig | None = None,
+    memory_id: str | None = None,
 ) -> MemoryScoreResult:
     """
     Compute unified memory score combining relevance, importance, and recency.
@@ -155,12 +151,12 @@ def compute_memory_score(
 
 
 def compute_batch_scores(
-    memories: List[Dict[str, Any]],
-    similarity_scores: List[float],
-    now: Optional[datetime] = None,
-    weights: Optional[ScoringWeights] = None,
-    decay_config: Optional[DecayConfig] = None,
-) -> List[MemoryScoreResult]:
+    memories: list[dict[str, Any]],
+    similarity_scores: list[float],
+    now: datetime | None = None,
+    weights: ScoringWeights | None = None,
+    decay_config: DecayConfig | None = None,
+) -> list[MemoryScoreResult]:
     """
     Compute scores for a batch of memories.
 
@@ -238,8 +234,8 @@ def compute_batch_scores(
 
 
 def rank_memories_by_score(
-    memories: List[Dict[str, Any]], score_results: List[MemoryScoreResult]
-) -> List[Dict[str, Any]]:
+    memories: list[dict[str, Any]], score_results: list[MemoryScoreResult]
+) -> list[dict[str, Any]]:
     """
     Rank memories by their computed scores.
 
@@ -323,3 +319,114 @@ def compute_score_with_custom_weights(
     """
     score = alpha * similarity + beta * importance + gamma * recency
     return max(0.0, min(1.0, score))
+
+
+def compute_coherence_reward(
+    path_steps: list[str],
+    episodic_memories: list[dict[str, Any]],
+    semantic_memories: list[dict[str, Any]],
+) -> float:
+    """
+    Compute coherence reward for a reasoning path.
+
+    Higher reward if path is consistent with multiple memory layers.
+    This encourages reasoning that aligns across episodic and semantic memory.
+
+    Args:
+        path_steps: List of reasoning step descriptions
+        episodic_memories: Recent episodic memories for validation
+        semantic_memories: Semantic knowledge for validation
+
+    Returns:
+        Coherence reward (0.0-1.0), higher is better
+
+    Mathematical Properties:
+        - Reward = (episodic_support + semantic_support) / (path_length + 1)
+        - episodic_support = count of episodic memories aligned with path
+        - semantic_support = count of semantic memories aligned with path
+        - Normalized by path length to prevent bias toward longer paths
+
+    Example:
+        >>> episodic = [
+        ...     {"content": "User logged in at 10am"},
+        ...     {"content": "User accessed dashboard"},
+        ... ]
+        >>> semantic = [
+        ...     {"content": "Dashboard requires authentication"},
+        ... ]
+        >>> path = ["User logged in", "User accessed dashboard"]
+        >>> reward = compute_coherence_reward(path, episodic, semantic)
+        >>> print(f"Coherence: {reward:.3f}")
+        Coherence: 0.667
+
+    Implementation Notes:
+        - Simple alignment check: memory content appears in step
+        - Could be enhanced with semantic similarity scoring
+        - Returns 0.0 if path is empty
+    """
+    if not path_steps:
+        return 0.0
+
+    episodic_support = 0
+    semantic_support = 0
+
+    # Check alignment with episodic memories
+    for memory in episodic_memories:
+        memory_content = memory.get("content", "").lower()
+        if not memory_content:
+            continue
+
+        # Check if any path step aligns with this memory
+        for step in path_steps:
+            if memory_content in step.lower() or step.lower() in memory_content:
+                episodic_support += 1
+                break  # Count each memory only once
+
+    # Check alignment with semantic memories
+    for memory in semantic_memories:
+        memory_content = memory.get("content", "").lower()
+        if not memory_content:
+            continue
+
+        # Check if any path step aligns with this memory
+        for step in path_steps:
+            if memory_content in step.lower() or step.lower() in memory_content:
+                semantic_support += 1
+                break  # Count each memory only once
+
+    # Compute reward normalized by path length
+    # +1 to avoid division by zero and prevent bias toward very short paths
+    total_support = episodic_support + semantic_support
+    reward = total_support / (len(path_steps) + 1)
+
+    return max(0.0, min(1.0, reward))
+
+
+def compute_reasoning_score_with_coherence(
+    base_score: float,
+    coherence_reward: float,
+    coherence_weight: float = 0.3,
+) -> float:
+    """
+    Combine base reasoning score with coherence reward.
+
+    Args:
+        base_score: Base reasoning score (0.0-1.0)
+        coherence_reward: Coherence reward from compute_coherence_reward()
+        coherence_weight: Weight for coherence component (default: 0.3)
+
+    Returns:
+        Combined score (0.0-1.0)
+
+    Example:
+        >>> base = 0.7
+        >>> coherence = 0.8
+        >>> score = compute_reasoning_score_with_coherence(base, coherence)
+        >>> print(f"Combined: {score:.3f}")
+        Combined: 0.730
+    """
+    # Weighted combination: (1 - w) * base + w * coherence
+    combined = (
+        1.0 - coherence_weight
+    ) * base_score + coherence_weight * coherence_reward
+    return max(0.0, min(1.0, combined))

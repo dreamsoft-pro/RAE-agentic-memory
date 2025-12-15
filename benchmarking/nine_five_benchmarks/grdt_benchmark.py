@@ -13,16 +13,16 @@ the agent's ability to perform correct multi-hop reasoning.
 Research-grade implementation for academic evaluation of RAE memory systems.
 """
 
-import json
-import time
 import hashlib
+import json
 import random
+import time
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
@@ -30,10 +30,11 @@ from numpy.typing import NDArray
 
 class RelationType(Enum):
     """Types of relationships in the knowledge graph."""
-    IS_A = "is_a"              # Hierarchical
-    HAS_PART = "has_part"      # Compositional
-    CAUSES = "causes"          # Causal
-    REQUIRES = "requires"      # Dependency
+
+    IS_A = "is_a"  # Hierarchical
+    HAS_PART = "has_part"  # Compositional
+    CAUSES = "causes"  # Causal
+    REQUIRES = "requires"  # Dependency
     LOCATED_IN = "located_in"  # Spatial
     RELATED_TO = "related_to"  # General association
 
@@ -54,6 +55,7 @@ class RelationType(Enum):
 @dataclass
 class GraphNode:
     """Node in the knowledge graph."""
+
     id: str
     name: str
     node_type: str
@@ -64,6 +66,7 @@ class GraphNode:
 @dataclass
 class GraphEdge:
     """Edge in the knowledge graph."""
+
     source_id: str
     target_id: str
     relation: RelationType
@@ -74,6 +77,7 @@ class GraphEdge:
 @dataclass
 class ReasoningQuery:
     """A multi-hop reasoning query."""
+
     query_id: str
     start_node: str
     end_node: str
@@ -87,6 +91,7 @@ class ReasoningQuery:
 @dataclass
 class ReasoningResult:
     """Result of a reasoning query."""
+
     query_id: str
     found_path: List[str]
     found_relations: List[str]
@@ -100,12 +105,15 @@ class ReasoningResult:
 @dataclass
 class GRDTResults:
     """Results from GRDT benchmark."""
+
     benchmark_name: str = "GRDT"
     version: str = "1.0.0"
 
     # Primary metrics
     max_reasoning_depth: int = 0
-    reasoning_accuracy: Dict[int, float] = field(default_factory=dict)  # Depth -> accuracy
+    reasoning_accuracy: Dict[int, float] = field(
+        default_factory=dict
+    )  # Depth -> accuracy
     chain_coherence: float = 0.0
 
     # Detailed metrics
@@ -355,11 +363,13 @@ class GRDTBenchmark:
 
                 if neighbor_id not in visited:
                     visited.add(neighbor_id)
-                    queue.append((
-                        neighbor_id,
-                        path + [neighbor_id],
-                        relations + [relation],
-                    ))
+                    queue.append(
+                        (
+                            neighbor_id,
+                            path + [neighbor_id],
+                            relations + [relation],
+                        )
+                    )
 
         return None
 
@@ -407,7 +417,9 @@ class GRDTBenchmark:
                 expected_relations=relations,
                 depth=depth,
                 query_type="path_finding",
-                natural_language=self._generate_natural_query(start_node, end_node, depth),
+                natural_language=self._generate_natural_query(
+                    start_node, end_node, depth
+                ),
             )
 
             self.queries.append(query)
@@ -464,7 +476,9 @@ class GRDTBenchmark:
                 break
 
             # With probability (1-noise), pick correct path; else random
-            if random.random() > noise_level and any(n[0] == expected_next for n in neighbors):
+            if random.random() > noise_level and any(
+                n[0] == expected_next for n in neighbors
+            ):
                 next_node = expected_next
                 relation = expected_relation
             else:
@@ -476,14 +490,16 @@ class GRDTBenchmark:
             found_path.append(next_node)
             found_relations.append(relation.value)
 
-            reasoning_steps.append({
-                "step": step + 1,
-                "from": current_node,
-                "to": next_node,
-                "relation": relation.value,
-                "expected_next": expected_next,
-                "correct": next_node == expected_next,
-            })
+            reasoning_steps.append(
+                {
+                    "step": step + 1,
+                    "from": current_node,
+                    "to": next_node,
+                    "relation": relation.value,
+                    "expected_next": expected_next,
+                    "correct": next_node == expected_next,
+                }
+            )
 
             current_node = next_node
             expected_idx += 1
@@ -491,9 +507,9 @@ class GRDTBenchmark:
 
         # Check final correctness
         correct = (
-            found_path[-1] == query.end_node and
-            correct_so_far and
-            depth_reached == query.depth
+            found_path[-1] == query.end_node
+            and correct_so_far
+            and depth_reached == query.depth
         )
 
         # Check chain coherence (all steps logically connected)
@@ -540,7 +556,7 @@ class GRDTBenchmark:
         start_time = datetime.now()
 
         if verbose:
-            print(f"Starting GRDT Benchmark")
+            print("Starting GRDT Benchmark")
             print(f"  Queries: {num_queries}")
             print(f"  Depth range: {min_depth}-{max_depth}")
             print(f"  Noise level: {noise_level}")
@@ -652,7 +668,9 @@ class GRDTBenchmark:
             print("GRDT Results:")
             print(f"  Max Reasoning Depth: {results.max_reasoning_depth}")
             print(f"  Chain Coherence: {results.chain_coherence:.4f}")
-            print(f"  Successful Queries: {results.successful_queries}/{results.total_queries}")
+            print(
+                f"  Successful Queries: {results.successful_queries}/{results.total_queries}"
+            )
             print("\n  Accuracy by Depth:")
             for depth, accuracy in sorted(reasoning_accuracy.items()):
                 print(f"    Depth {depth}: {accuracy:.4f}")

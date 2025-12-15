@@ -1,10 +1,7 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from anthropic import (
-    APIError,
-    AuthenticationError,
-)
+from anthropic import APIError, AuthenticationError
 from anthropic import RateLimitError as AnthropicRateLimitError
 from openai import APIStatusError as OpenAIAPIError
 from openai import AuthenticationError as OpenAIAuthError

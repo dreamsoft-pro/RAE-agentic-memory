@@ -81,7 +81,6 @@ def service(mock_pool, mock_query_analyzer, mock_ml_client, mock_llm_provider):
         "apps.memory_api.services.hybrid_search_service.TokenSavingsService",
         return_value=AsyncMock(),
     ):
-
         svc = HybridSearchService(mock_pool, enable_cache=True)
         # Manually attach mocks if init created new instances (though patch return_value handles this for new instances)
         svc.query_analyzer = mock_query_analyzer

@@ -1,9 +1,14 @@
+from unittest.mock import AsyncMock, patch
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi.testclient import TestClient
 
 from apps.memory_api.main import app
-from apps.memory_api.security.dependencies import get_and_verify_tenant_id, require_admin, verify_tenant_access
+from apps.memory_api.security.dependencies import (
+    get_and_verify_tenant_id,
+    require_admin,
+    verify_tenant_access,
+)
 
 
 @pytest.fixture
@@ -11,7 +16,7 @@ def client_with_auth(mock_app_state_pool):
     """Create TestClient with mocked lifespan and auth"""
     # mock_app_state_pool already sets app.state.pool, so we just need to ensure
     # it has a close method for lifespan shutdown
-    if not hasattr(mock_app_state_pool, 'close'):
+    if not hasattr(mock_app_state_pool, "close"):
         mock_app_state_pool.close = AsyncMock()
 
     # Override auth to prevent 401 errors
@@ -20,9 +25,10 @@ def client_with_auth(mock_app_state_pool):
     app.dependency_overrides[verify_tenant_access] = lambda tenant_id: True
 
     # Mock lifespan dependencies (use the same pool from mock_app_state_pool)
-    with patch("apps.memory_api.main.asyncpg.create_pool", new=AsyncMock(return_value=mock_app_state_pool)), \
-         patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()):
-
+    with patch(
+        "apps.memory_api.main.asyncpg.create_pool",
+        new=AsyncMock(return_value=mock_app_state_pool),
+    ), patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()):
         with TestClient(app) as client:
             yield client
 
@@ -85,7 +91,9 @@ async def test_governance_overview_success(client_with_auth, mock_app_state_pool
 
 
 @pytest.mark.asyncio
-async def test_governance_overview_with_custom_days(client_with_auth, mock_app_state_pool):
+async def test_governance_overview_with_custom_days(
+    client_with_auth, mock_app_state_pool
+):
     """Test governance overview with custom time period"""
     mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
 
@@ -116,7 +124,9 @@ async def test_governance_overview_error(client_with_auth, mock_app_state_pool):
     mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
     mock_conn.fetchrow.side_effect = Exception("Database error")
 
-    response = client_with_auth.get("/v1/governance/overview", headers={"X-Tenant-Id": "admin"})
+    response = client_with_auth.get(
+        "/v1/governance/overview", headers={"X-Tenant-Id": "admin"}
+    )
 
     assert response.status_code == 500
     # Our generic exception handler returns: {"error": {"code": "500", "message": "Internal Server Error"}}
@@ -206,7 +216,9 @@ async def test_tenant_governance_stats_no_data(client_with_auth, mock_app_state_
 
 
 @pytest.mark.asyncio
-async def test_tenant_governance_stats_with_custom_period(client_with_auth, mock_app_state_pool):
+async def test_tenant_governance_stats_with_custom_period(
+    client_with_auth, mock_app_state_pool
+):
     """Test tenant stats with custom time period"""
     mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
 
@@ -332,7 +344,9 @@ async def test_governance_overview_invalid_days(client_with_auth, mock_app_state
 
 
 @pytest.mark.asyncio
-async def test_tenant_governance_stats_invalid_days(client_with_auth, mock_app_state_pool):
+async def test_tenant_governance_stats_invalid_days(
+    client_with_auth, mock_app_state_pool
+):
     """Test tenant stats with invalid days parameter"""
     response = client_with_auth.get(
         "/v1/governance/tenant/test-tenant?days=0",  # Min is 1
@@ -357,7 +371,9 @@ async def test_governance_overview_empty_results(client_with_auth, mock_app_stat
 
     mock_conn.fetch.side_effect = [[], []]  # Empty top tenants and models
 
-    response = client_with_auth.get("/v1/governance/overview", headers={"X-Tenant-Id": "admin"})
+    response = client_with_auth.get(
+        "/v1/governance/overview", headers={"X-Tenant-Id": "admin"}
+    )
 
     assert response.status_code == 200
     data = response.json()

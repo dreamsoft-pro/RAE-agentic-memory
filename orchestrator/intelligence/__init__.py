@@ -7,24 +7,11 @@ Phase 3 features:
 - Model performance learning
 """
 
-from .adaptive_router import (
-    AdaptiveModelRouter,
-    LearningConfig,
-    RoutingStrategy,
-)
-from .analytics import (
-    ModelPerformance,
-    PerformanceAnalytics,
-    TaskPatternAnalysis,
-)
+from .adaptive_router import AdaptiveModelRouter, LearningConfig, RoutingStrategy
+from .analytics import ModelPerformance, PerformanceAnalytics, TaskPatternAnalysis
 from .dashboard import PerformanceDashboard, intelligence_cli
-from .performance_tracker import (
-    ExecutionRecord,
-    PerformanceTracker,
-    TaskOutcome,
-)
+from .performance_tracker import ExecutionRecord, PerformanceTracker, TaskOutcome
 from .rae_integration import RAEMemoryIntegration, create_rae_integration
-
 
 __all__ = [
     # Performance tracking

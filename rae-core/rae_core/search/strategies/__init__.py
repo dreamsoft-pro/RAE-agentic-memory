@@ -13,9 +13,9 @@ class SearchStrategy(ABC):
         self,
         query: str,
         tenant_id: str,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
         limit: int = 10,
-    ) -> List[Tuple[UUID, float]]:
+    ) -> list[tuple[UUID, float]]:
         """Execute search and return (memory_id, score) tuples.
 
         Args:

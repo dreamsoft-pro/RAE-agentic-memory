@@ -1,4 +1,4 @@
-.PHONY: help start stop restart logs clean install lint test format db-init demo dev docs benchmark-lite benchmark-extended benchmark-industrial benchmark-large benchmark-drift benchmark-profile benchmark-plot benchmark-full benchmark-all benchmark-compare
+.PHONY: help start stop restart logs clean install lint test format db-init demo dev docs benchmark-lite benchmark-extended benchmark-industrial benchmark-large benchmark-drift benchmark-profile benchmark-plot benchmark-full benchmark-all benchmark-compare benchmark-gate
 
 # ==============================================================================
 # HELP
@@ -205,6 +205,14 @@ benchmark-compare:  ## Compare two benchmark runs (Usage: make benchmark-compare
 	@echo "🔍 Comparing benchmark results..."
 	@$(VENV_PYTHON) benchmarking/scripts/compare_runs.py $(BASE) $(COMP) --output comparison_report.md
 	@echo "✅ Comparison complete: comparison_report.md"
+
+benchmark-gate:  ## Run nine_five benchmarks and check thresholds (CI gate)
+	@echo "🚦 Running benchmark gate (CI threshold check)..."
+	@echo "Running nine_five benchmark suite..."
+	@$(VENV_PYTHON) -m benchmarking.nine_five_benchmarks.runner --all
+	@echo "Checking thresholds..."
+	@$(VENV_PYTHON) benchmarking/scripts/check_thresholds.py
+	@echo "✅ Benchmark gate passed!"
 
 benchmark-large:  ## Run large-scale stress benchmark (industrial_large, ~15min)
 	@echo "🔬 Running large-scale benchmark..."

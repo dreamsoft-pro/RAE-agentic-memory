@@ -1,6 +1,6 @@
 """Vector-based semantic search strategy."""
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 from uuid import UUID
 
 from rae_core.interfaces.embedding import IEmbeddingProvider
@@ -36,9 +36,9 @@ class VectorSearchStrategy(SearchStrategy):
         self,
         query: str,
         tenant_id: str,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
         limit: int = 10,
-    ) -> List[Tuple[UUID, float]]:
+    ) -> list[tuple[UUID, float]]:
         """Execute semantic search.
 
         Args:

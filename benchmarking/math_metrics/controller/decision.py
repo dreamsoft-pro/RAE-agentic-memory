@@ -5,14 +5,14 @@ MathDecision: Standardized decision format
 DecisionWithOutcome: Decision paired with its outcome for learning
 """
 
+import json
+import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
-import uuid
-import json
 
-from .types import MathLevel
 from .features import Features
+from .types import MathLevel
 
 
 @dataclass
@@ -37,6 +37,7 @@ class MathDecision:
         features_used: The features that informed this decision
         confidence: Confidence score (0.0-1.0), higher = more certain
     """
+
     # Identity
     decision_id: str = field(default_factory=lambda: str(uuid.uuid4())[:8])
     timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
@@ -79,8 +80,12 @@ class MathDecision:
         """Deserialize from dictionary"""
         return cls(
             decision_id=data.get("decision_id", str(uuid.uuid4())[:8]),
-            timestamp=datetime.fromisoformat(data["timestamp"]) if "timestamp" in data else datetime.now(timezone.utc),
-            selected_level=MathLevel(data.get("selected_level", "deterministic_heuristic")),
+            timestamp=datetime.fromisoformat(data["timestamp"])
+            if "timestamp" in data
+            else datetime.now(timezone.utc),
+            selected_level=MathLevel(
+                data.get("selected_level", "deterministic_heuristic")
+            ),
             strategy_id=data.get("strategy_id", "default"),
             params=data.get("params", {}),
             explanation=data.get("explanation", ""),
@@ -89,7 +94,9 @@ class MathDecision:
             confidence=data.get("confidence", 1.0),
         )
 
-    def with_outcome(self, success: bool, metrics: Dict[str, float]) -> "DecisionWithOutcome":
+    def with_outcome(
+        self, success: bool, metrics: Dict[str, float]
+    ) -> "DecisionWithOutcome":
         """Create outcome-linked version for learning"""
         return DecisionWithOutcome(
             decision=self,
@@ -106,15 +113,20 @@ class DecisionWithOutcome:
 
     This is used in Iteration 2+ for data-driven policy learning.
     """
+
     decision: MathDecision
     success: bool
     outcome_metrics: Dict[str, float]  # e.g., {"mrr": 0.85, "latency_ms": 45}
-    outcome_timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    outcome_timestamp: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
 
     def to_training_example(self) -> Dict[str, Any]:
         """Convert to format suitable for policy training"""
         return {
-            "features": self.decision.features_used.to_dict() if self.decision.features_used else {},
+            "features": self.decision.features_used.to_dict()
+            if self.decision.features_used
+            else {},
             "action": {
                 "level": self.decision.selected_level.value,
                 "strategy": self.decision.strategy_id,

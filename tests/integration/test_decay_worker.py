@@ -324,6 +324,4 @@ async def test_decay_worker_preserves_metadata(mock_app_state_pool):
     assert record["importance"] < 0.9, "Importance should be reduced"
     assert record["tags"] == tags, "Tags should be preserved"
     assert record["session_id"] == test_session_id, "Session ID should be preserved"
-    assert (
-        record["content"] == "Test memory with tags"
-    ), "Content should be preserved"
+    assert record["content"] == "Test memory with tags", "Content should be preserved"

@@ -2,7 +2,7 @@
 
 import math
 from collections import Counter
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 from uuid import UUID
 
 from rae_core.interfaces.storage import IMemoryStorage
@@ -36,17 +36,17 @@ class SparseVectorStrategy(SearchStrategy):
         self.k1 = k1
         self.b = b
 
-    def _tokenize(self, text: str) -> List[str]:
+    def _tokenize(self, text: str) -> list[str]:
         """Simple tokenization (split on whitespace and lowercase)."""
         return text.lower().split()
 
     def _compute_bm25_score(
         self,
-        query_terms: List[str],
-        doc_terms: List[str],
+        query_terms: list[str],
+        doc_terms: list[str],
         avg_doc_length: float,
         doc_count: int,
-        term_doc_freq: Dict[str, int],
+        term_doc_freq: dict[str, int],
     ) -> float:
         """Compute BM25 score for a document.
 
@@ -89,9 +89,9 @@ class SparseVectorStrategy(SearchStrategy):
         self,
         query: str,
         tenant_id: str,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
         limit: int = 10,
-    ) -> List[Tuple[UUID, float]]:
+    ) -> list[tuple[UUID, float]]:
         """Execute BM25 search.
 
         Args:
@@ -124,8 +124,8 @@ class SparseVectorStrategy(SearchStrategy):
         # Build corpus statistics
         doc_count = len(memories)
         total_doc_length = 0
-        term_doc_freq: Dict[str, int] = {}
-        doc_terms_cache: Dict[UUID, List[str]] = {}
+        term_doc_freq: dict[str, int] = {}
+        doc_terms_cache: dict[UUID, list[str]] = {}
 
         for memory in memories:
             content = memory.get("content", "")
@@ -141,7 +141,7 @@ class SparseVectorStrategy(SearchStrategy):
         avg_doc_length = total_doc_length / doc_count if doc_count > 0 else 0
 
         # Score each document
-        results: List[Tuple[UUID, float]] = []
+        results: list[tuple[UUID, float]] = []
         for memory in memories:
             memory_id = memory["id"]
             if isinstance(memory_id, str):

@@ -16,12 +16,12 @@ from orchestrator.providers import ProviderRegistry
 from .analytics import PerformanceAnalytics
 from .performance_tracker import PerformanceTracker
 
-
 logger = logging.getLogger(__name__)
 
 
 class RoutingStrategy(Enum):
     """Strategy for adaptive routing."""
+
     BASELINE = "baseline"  # Use standard routing rules
     PERFORMANCE = "performance"  # Optimize for success rate
     COST = "cost"  # Optimize for cost
@@ -61,7 +61,7 @@ class AdaptiveModelRouter(ModelRouterV2):
         registry: ProviderRegistry,
         tracker: PerformanceTracker,
         strategy: RoutingStrategy = RoutingStrategy.BALANCED,
-        config: Optional[LearningConfig] = None
+        config: Optional[LearningConfig] = None,
     ):
         """Initialize adaptive router.
 
@@ -87,13 +87,11 @@ class AdaptiveModelRouter(ModelRouterV2):
             True if should explore
         """
         import random
+
         return random.random() < self.config.exploration_rate
 
     def _get_historical_choice(
-        self,
-        task_area: str,
-        task_risk: TaskRisk,
-        role: str
+        self, task_area: str, task_risk: TaskRisk, role: str
     ) -> Optional[RoutingDecision]:
         """Get routing decision based on historical data.
 
@@ -128,7 +126,9 @@ class AdaptiveModelRouter(ModelRouterV2):
             return None
 
         # Check confidence
-        confidence = success_rate * (pattern.total_attempts / (pattern.total_attempts + 10))
+        confidence = success_rate * (
+            pattern.total_attempts / (pattern.total_attempts + 10)
+        )
 
         if confidence < self.config.min_confidence:
             logger.debug(
@@ -166,7 +166,7 @@ class AdaptiveModelRouter(ModelRouterV2):
         baseline: RoutingDecision,
         historical: Optional[RoutingDecision],
         task_area: str,
-        task_risk: TaskRisk
+        task_risk: TaskRisk,
     ) -> RoutingDecision:
         """Apply routing strategy to choose between baseline and historical.
 
@@ -211,15 +211,15 @@ class AdaptiveModelRouter(ModelRouterV2):
             # Historical score: success_weight * success_rate - cost_weight * normalized_cost
             norm_cost_hist = historical.estimated_cost / max(pattern.max_cost, 0.001)
             hist_score = (
-                self.config.success_weight * pattern.success_rate -
-                self.config.cost_weight * norm_cost_hist
+                self.config.success_weight * pattern.success_rate
+                - self.config.cost_weight * norm_cost_hist
             )
 
             # Baseline score: assume 0.8 success rate (conservative)
             norm_cost_base = baseline.estimated_cost / max(pattern.max_cost, 0.001)
             base_score = (
-                self.config.success_weight * 0.8 -
-                self.config.cost_weight * norm_cost_base
+                self.config.success_weight * 0.8
+                - self.config.cost_weight * norm_cost_base
             )
 
             if hist_score > base_score:
@@ -294,7 +294,9 @@ class AdaptiveModelRouter(ModelRouterV2):
         )
 
         # Get historical recommendation
-        historical = self._get_historical_choice(step_area, step_risk, role="implementer")
+        historical = self._get_historical_choice(
+            step_area, step_risk, role="implementer"
+        )
 
         # Apply strategy
         decision = self._apply_strategy(baseline, historical, step_area, step_risk)

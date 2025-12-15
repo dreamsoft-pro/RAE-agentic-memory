@@ -16,9 +16,9 @@ from ..interfaces.cache import ICacheProvider
 
 class RedisCache(ICacheProvider):
     """Redis implementation of ICacheProvider.
-    
+
     Requires redis package with async support.
-    
+
     Features:
     - TTL-based expiration
     - JSON serialization for complex objects
@@ -28,14 +28,14 @@ class RedisCache(ICacheProvider):
 
     def __init__(
         self,
-        url: Optional[str] = None,
+        url: str | None = None,
         redis_client: Optional["aioredis.Redis"] = None,
         prefix: str = "rae:",
         default_ttl: int = 3600,
         **redis_kwargs,
     ):
         """Initialize Redis cache.
-        
+
         Args:
             url: Redis connection URL (e.g., redis://localhost:6379/0)
             redis_client: Existing Redis client instance
@@ -51,7 +51,7 @@ class RedisCache(ICacheProvider):
 
         self.prefix = prefix
         self.default_ttl = default_ttl
-        
+
         if redis_client:
             self.redis = redis_client
         elif url:
@@ -59,25 +59,22 @@ class RedisCache(ICacheProvider):
         else:
             # Default to localhost
             self.redis = aioredis.Redis(
-                host="localhost",
-                port=6379,
-                db=0,
-                **redis_kwargs
+                host="localhost", port=6379, db=0, **redis_kwargs
             )
 
     def _make_key(self, key: str) -> str:
         """Add prefix to key."""
         return f"{self.prefix}{key}"
 
-    async def get(self, key: str) -> Optional[Any]:
+    async def get(self, key: str) -> Any | None:
         """Get value from cache."""
         full_key = self._make_key(key)
-        
+
         try:
             value = await self.redis.get(full_key)
             if value is None:
                 return None
-            
+
             # Try to deserialize as JSON
             try:
                 return json.loads(value)
@@ -91,7 +88,7 @@ class RedisCache(ICacheProvider):
         self,
         key: str,
         value: Any,
-        ttl: Optional[int] = None,
+        ttl: int | None = None,
     ) -> bool:
         """Set value in cache with optional TTL."""
         full_key = self._make_key(key)
@@ -108,7 +105,7 @@ class RedisCache(ICacheProvider):
                 await self.redis.setex(full_key, ttl, value)
             else:
                 await self.redis.set(full_key, value)
-            
+
             return True
         except Exception:
             return False
@@ -116,7 +113,7 @@ class RedisCache(ICacheProvider):
     async def delete(self, key: str) -> bool:
         """Delete value from cache."""
         full_key = self._make_key(key)
-        
+
         try:
             result = await self.redis.delete(full_key)
             return result > 0
@@ -126,37 +123,37 @@ class RedisCache(ICacheProvider):
     async def exists(self, key: str) -> bool:
         """Check if key exists in cache."""
         full_key = self._make_key(key)
-        
+
         try:
             result = await self.redis.exists(full_key)
             return result > 0
         except Exception:
             return False
 
-    async def increment(self, key: str, amount: int = 1) -> Optional[int]:
+    async def increment(self, key: str, amount: int = 1) -> int | None:
         """Increment a counter."""
         full_key = self._make_key(key)
-        
+
         try:
             result = await self.redis.incrby(full_key, amount)
             return int(result)
         except Exception:
             return None
 
-    async def decrement(self, key: str, amount: int = 1) -> Optional[int]:
+    async def decrement(self, key: str, amount: int = 1) -> int | None:
         """Decrement a counter."""
         full_key = self._make_key(key)
-        
+
         try:
             result = await self.redis.decrby(full_key, amount)
             return int(result)
         except Exception:
             return None
 
-    async def get_ttl(self, key: str) -> Optional[int]:
+    async def get_ttl(self, key: str) -> int | None:
         """Get remaining TTL for a key in seconds."""
         full_key = self._make_key(key)
-        
+
         try:
             ttl = await self.redis.ttl(full_key)
             # TTL returns -1 if key exists but has no expiration
@@ -168,33 +165,33 @@ class RedisCache(ICacheProvider):
     async def expire(self, key: str, ttl: int) -> bool:
         """Set expiration on existing key."""
         full_key = self._make_key(key)
-        
+
         try:
             result = await self.redis.expire(full_key, ttl)
             return result
         except Exception:
             return False
 
-    async def clear(self, pattern: Optional[str] = None) -> int:
+    async def clear(self, pattern: str | None = None) -> int:
         """Clear cache keys matching pattern (all if None)."""
         return await self.clear_prefix(pattern or "*")
 
     async def clear_prefix(self, pattern: str = "*") -> int:
         """Clear all keys matching pattern under prefix.
-        
+
         Args:
             pattern: Pattern to match (default: "*" = all keys with prefix)
-            
+
         Returns:
             Number of keys deleted
         """
         full_pattern = self._make_key(pattern)
-        
+
         try:
             keys = []
             async for key in self.redis.scan_iter(match=full_pattern):
                 keys.append(key)
-            
+
             if keys:
                 deleted = await self.redis.delete(*keys)
                 return deleted

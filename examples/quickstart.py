@@ -300,9 +300,7 @@ async def main():
     for step, link in next_steps:
         console.print(f"  • {step}: [link={link}]{link}[/link]")
 
-    console.print(
-        "\n[dim]💡 Tip: Run 'make help' to see all available commands[/dim]\n"
-    )
+    console.print("\n[dim]💡 Tip: Run 'make help' to see all available commands[/dim]\n")
 
 
 if __name__ == "__main__":

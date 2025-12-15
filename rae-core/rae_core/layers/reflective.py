@@ -1,6 +1,6 @@
 """Reflective memory layer - meta-cognitive insights and patterns."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from ..interfaces.storage import IMemoryStorage
@@ -11,14 +11,14 @@ from .base import MemoryLayerBase
 
 class ReflectiveLayer(MemoryLayerBase):
     """Reflective memory layer implementation.
-    
+
     Characteristics:
     - Stores higher-order insights derived from other memories
     - Pattern recognition across episodic/semantic layers
     - Meta-cognitive awareness (contradictions, trends, insights)
     - Links back to source memories
     - Highest importance scores
-    
+
     Typical use cases:
     - "User prefers Python over JavaScript" (pattern)
     - "Contradiction: user said X but did Y" (contradiction)
@@ -33,7 +33,7 @@ class ReflectiveLayer(MemoryLayerBase):
         min_source_memories: int = 3,
     ):
         """Initialize reflective layer.
-        
+
         Args:
             storage: Storage backend
             tenant_id: Tenant ID
@@ -46,10 +46,10 @@ class ReflectiveLayer(MemoryLayerBase):
     async def add_memory(
         self,
         content: str,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        embedding: Optional[List[float]] = None,
-        importance: Optional[float] = None,
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
+        embedding: list[float] | None = None,
+        importance: float | None = None,
     ) -> UUID:
         """Add reflective memory (use add_reflection instead for proper structure)."""
         # Reflections should have high importance
@@ -70,14 +70,14 @@ class ReflectiveLayer(MemoryLayerBase):
     async def add_reflection(
         self,
         reflection: Reflection,
-        embedding: Optional[List[float]] = None,
+        embedding: list[float] | None = None,
     ) -> UUID:
         """Add a structured reflection.
-        
+
         Args:
             reflection: Reflection object with content, type, source memories
             embedding: Optional vector embedding
-            
+
         Returns:
             Memory UUID
         """
@@ -104,9 +104,7 @@ class ReflectiveLayer(MemoryLayerBase):
             "high": 0.85,
             "critical": 0.95,
         }
-        importance = priority_to_importance.get(
-            reflection.priority.value, 0.8
-        )
+        importance = priority_to_importance.get(reflection.priority.value, 0.8)
 
         memory_id = await self.storage.store_memory(
             content=reflection.content,
@@ -121,13 +119,13 @@ class ReflectiveLayer(MemoryLayerBase):
 
         return memory_id
 
-    async def get_memory(self, memory_id: UUID) -> Optional[MemoryItem]:
+    async def get_memory(self, memory_id: UUID) -> MemoryItem | None:
         """Get reflective memory by ID."""
         memory_dict = await self.storage.get_memory(
             memory_id=memory_id,
             tenant_id=self.tenant_id,
         )
-        
+
         if not memory_dict:
             return None
 
@@ -139,14 +137,14 @@ class ReflectiveLayer(MemoryLayerBase):
 
         return MemoryItem(**memory_dict)
 
-    async def get_reflection(self, memory_id: UUID) -> Optional[Reflection]:
+    async def get_reflection(self, memory_id: UUID) -> Reflection | None:
         """Get reflection as structured object."""
         memory = await self.get_memory(memory_id)
         if not memory:
             return None
 
         metadata = memory.metadata
-        
+
         return Reflection(
             id=UUID(metadata.get("reflection_id", str(memory.id))),
             content=memory.content,
@@ -167,17 +165,17 @@ class ReflectiveLayer(MemoryLayerBase):
         self,
         query: str,
         limit: int = 10,
-        filters: Optional[Dict[str, Any]] = None,
-        reflection_type: Optional[ReflectionType] = None,
-    ) -> List[ScoredMemoryItem]:
+        filters: dict[str, Any] | None = None,
+        reflection_type: ReflectionType | None = None,
+    ) -> list[ScoredMemoryItem]:
         """Search reflective memories.
-        
+
         Args:
             query: Search query
             limit: Max results
             filters: Optional filters
             reflection_type: Filter by reflection type
-            
+
         Returns:
             List of scored memories
         """
@@ -203,7 +201,7 @@ class ReflectiveLayer(MemoryLayerBase):
 
     async def cleanup(self) -> int:
         """Remove low-confidence reflections.
-        
+
         Returns:
             Number of reflections removed
         """
@@ -220,13 +218,13 @@ class ReflectiveLayer(MemoryLayerBase):
         self,
         reflection_type: ReflectionType,
         limit: int = 10,
-    ) -> List[Reflection]:
+    ) -> list[Reflection]:
         """Get reflections of a specific type.
-        
+
         Args:
             reflection_type: Type of reflection to retrieve
             limit: Maximum number of results
-            
+
         Returns:
             List of Reflection objects
         """
@@ -244,7 +242,7 @@ class ReflectiveLayer(MemoryLayerBase):
         for mem_dict in memories:
             memory = MemoryItem(**mem_dict)
             metadata = memory.metadata
-            
+
             reflection = Reflection(
                 id=UUID(metadata.get("reflection_id", str(memory.id))),
                 content=memory.content,
@@ -264,9 +262,9 @@ class ReflectiveLayer(MemoryLayerBase):
 
         return reflections
 
-    async def find_contradictions(self) -> List[Reflection]:
+    async def find_contradictions(self) -> list[Reflection]:
         """Find all contradiction reflections.
-        
+
         Returns:
             List of contradiction reflections
         """
@@ -275,9 +273,9 @@ class ReflectiveLayer(MemoryLayerBase):
             limit=50,
         )
 
-    async def find_patterns(self) -> List[Reflection]:
+    async def find_patterns(self) -> list[Reflection]:
         """Find all pattern reflections.
-        
+
         Returns:
             List of pattern reflections
         """

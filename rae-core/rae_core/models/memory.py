@@ -5,7 +5,7 @@ Pydantic models for memory representation across all layers.
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -51,13 +51,13 @@ class MemoryItem(BaseModel):
     # Metadata
     tenant_id: str = Field(description="Tenant identifier for multi-tenancy")
     agent_id: str = Field(description="Agent that owns this memory")
-    tags: List[str] = Field(default_factory=list, description="Tags for filtering")
-    metadata: Dict[str, Any] = Field(
+    tags: list[str] = Field(default_factory=list, description="Tags for filtering")
+    metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional metadata"
     )
 
     # Vector embedding
-    embedding: Optional[List[float]] = Field(
+    embedding: list[float] | None = Field(
         default=None, description="Vector embedding for similarity search"
     )
 
@@ -69,16 +69,18 @@ class MemoryItem(BaseModel):
 
     # Timestamps
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    last_accessed_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    expires_at: Optional[datetime] = Field(
+    last_accessed_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc)
+    )
+    expires_at: datetime | None = Field(
         default=None, description="Optional expiration time for sensory memories"
     )
 
     # Source tracking
-    source: Optional[str] = Field(
+    source: str | None = Field(
         default=None, description="Source of the memory (e.g., 'user_input', 'llm')"
     )
-    context: Optional[Dict[str, Any]] = Field(
+    context: dict[str, Any] | None = Field(
         default=None, description="Context when memory was created"
     )
 
@@ -106,10 +108,8 @@ class ScoredMemoryItem(BaseModel):
     """
 
     memory: MemoryItem
-    score: float = Field(
-        description="Relevance or similarity score", ge=0.0, le=1.0
-    )
-    score_breakdown: Optional[Dict[str, float]] = Field(
+    score: float = Field(description="Relevance or similarity score", ge=0.0, le=1.0)
+    score_breakdown: dict[str, float] | None = Field(
         default=None,
         description="Breakdown of score components (similarity, importance, recency)",
     )
@@ -133,17 +133,17 @@ class MemoryStats(BaseModel):
     """Statistics for a memory layer or agent."""
 
     total_count: int = Field(description="Total number of memories")
-    by_layer: Dict[MemoryLayer, int] = Field(
+    by_layer: dict[MemoryLayer, int] = Field(
         default_factory=dict, description="Count by layer"
     )
-    by_type: Dict[MemoryType, int] = Field(
+    by_type: dict[MemoryType, int] = Field(
         default_factory=dict, description="Count by type"
     )
     average_importance: float = Field(description="Average importance score")
     total_usage: int = Field(description="Total usage count across all memories")
-    oldest_memory: Optional[datetime] = Field(
+    oldest_memory: datetime | None = Field(
         default=None, description="Timestamp of oldest memory"
     )
-    newest_memory: Optional[datetime] = Field(
+    newest_memory: datetime | None = Field(
         default=None, description="Timestamp of newest memory"
     )

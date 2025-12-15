@@ -15,14 +15,16 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from benchmarking.experiments.exp_structural_stability import StructuralStabilityExperiment
 from benchmarking.experiments.exp_drift_dynamics import DriftDynamicsExperiment
 from benchmarking.experiments.exp_reflection_gain import ReflectionGainExperiment
+from benchmarking.experiments.exp_structural_stability import (
+    StructuralStabilityExperiment,
+)
 
 
 class ExperimentRunner:
@@ -57,10 +59,10 @@ class ExperimentRunner:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             results_file = self.output_dir / f"{experiment_name}_{timestamp}.json"
 
-            with open(results_file, 'w') as f:
+            with open(results_file, "w") as f:
                 json.dump(results, f, indent=2)
 
-            print(f"\n✅ Experiment complete!")
+            print("\n✅ Experiment complete!")
             print(f"📊 Results saved to: {results_file}")
 
             return results
@@ -68,6 +70,7 @@ class ExperimentRunner:
         except Exception as e:
             print(f"\n❌ Experiment failed: {e}")
             import traceback
+
             traceback.print_exc()
             raise
 
@@ -95,7 +98,7 @@ class ExperimentRunner:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         summary_file = self.output_dir / f"experiments_summary_{timestamp}.json"
 
-        with open(summary_file, 'w') as f:
+        with open(summary_file, "w") as f:
             json.dump(all_results, f, indent=2)
 
         print(f"\n📊 Full summary saved to: {summary_file}")
@@ -104,20 +107,18 @@ class ExperimentRunner:
 
 
 async def main():
-    parser = argparse.ArgumentParser(
-        description="Run RAE mathematical experiments"
+    parser = argparse.ArgumentParser(description="Run RAE mathematical experiments")
+    parser.add_argument(
+        "--experiment",
+        type=str,
+        default="all",
+        help="Experiment to run (structural_stability, drift_dynamics, reflection_gain, all)",
     )
     parser.add_argument(
-        '--experiment',
+        "--output",
         type=str,
-        default='all',
-        help='Experiment to run (structural_stability, drift_dynamics, reflection_gain, all)',
-    )
-    parser.add_argument(
-        '--output',
-        type=str,
-        default='benchmarking/experiments/results',
-        help='Output directory for results',
+        default="benchmarking/experiments/results",
+        help="Output directory for results",
     )
 
     args = parser.parse_args()
@@ -129,7 +130,7 @@ async def main():
     runner = ExperimentRunner(output_dir=output_dir)
 
     try:
-        if args.experiment == 'all':
+        if args.experiment == "all":
             await runner.run_all_experiments()
         else:
             await runner.run_experiment(args.experiment)

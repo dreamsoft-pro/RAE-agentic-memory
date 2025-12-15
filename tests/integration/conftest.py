@@ -7,6 +7,7 @@ to interact with an actual database.
 
 import asyncpg
 import pytest_asyncio
+
 from apps.memory_api.config import settings
 
 

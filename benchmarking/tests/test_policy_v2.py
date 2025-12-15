@@ -12,17 +12,15 @@ import pytest
 
 from benchmarking.math_metrics.controller import (
     FeaturesV2,
+    MathControllerConfig,
+    MathDecision,
+    MathLayerController,
+    MathLevel,
     PolicyV2,
-    PolicyV2Config,
     RewardCalculator,
     RewardConfig,
-    MathDecision,
-    DecisionWithOutcome,
-    MathLevel,
-    TaskType,
-    MathLayerController,
-    MathControllerConfig,
     TaskContext,
+    TaskType,
 )
 
 
@@ -103,7 +101,7 @@ class TestRewardCalculator:
                 "hit_rate_5": 1.0,
                 "precision_5": 1.0,
                 "orr": 1.0,
-            }
+            },
         )
 
         reward = calculator.calculate(outcome)
@@ -121,10 +119,7 @@ class TestRewardCalculator:
             strategy_id="test",
         )
 
-        outcome = decision.with_outcome(
-            success=True,
-            metrics={"mrr": 0.0}
-        )
+        outcome = decision.with_outcome(success=True, metrics={"mrr": 0.0})
 
         reward = calculator.calculate(outcome)
 

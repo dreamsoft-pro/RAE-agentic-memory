@@ -1,10 +1,8 @@
 """Context Window management for working memory."""
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from rae_core.models.context import ContextWindow, WorkingContext
+from rae_core.models.context import ContextWindow
 
 
 class ContextWindowManager:
@@ -21,7 +19,7 @@ class ContextWindowManager:
     def __init__(self, max_tokens: int = 4096):
         """Initialize with maximum token limit."""
         self.max_tokens = max_tokens
-        self.current_window: Optional[ContextWindow] = None
+        self.current_window: ContextWindow | None = None
 
     def create_window(self) -> ContextWindow:
         """Create a new context window."""
@@ -56,7 +54,7 @@ class ContextWindowManager:
         )
         return True
 
-    def compact(self, keep_items: List[UUID]) -> int:
+    def compact(self, keep_items: list[UUID]) -> int:
         """
         Compact window by keeping only specified items.
 

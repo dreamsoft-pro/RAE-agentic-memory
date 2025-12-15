@@ -4,10 +4,8 @@ API Documentation Generator
 Exports OpenAPI spec and generates endpoint list.
 """
 
-import os
 import json
 from pathlib import Path
-from typing import Dict, List
 
 
 def generate_api_docs():
@@ -30,9 +28,9 @@ def generate_api_docs():
         "info": {
             "title": "RAE Memory API",
             "version": "2.1.1",
-            "description": "Reflective Agentic Memory Engine API"
+            "description": "Reflective Agentic Memory Engine API",
         },
-        "note": "Auto-generated from FastAPI app - implementation pending"
+        "note": "Auto-generated from FastAPI app - implementation pending",
     }
 
     # Write OpenAPI JSON
@@ -89,7 +87,9 @@ Get cost tracking data.
 
 **Note:** Full API documentation will be auto-generated from FastAPI app in future iteration.
 See interactive docs at: http://localhost:8000/docs
-""".format(timestamp="2025-12-06")
+""".format(
+        timestamp="2025-12-06"
+    )
 
     endpoints_path = output_dir / "endpoints.md"
     with open(endpoints_path, "w") as f:

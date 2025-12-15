@@ -1,7 +1,8 @@
 """Unit tests for InMemoryCache adapter."""
 
-import pytest
 import asyncio
+
+import pytest
 
 from rae_core.adapters.memory.cache import InMemoryCache
 
@@ -350,6 +351,7 @@ class TestInMemoryCache:
     @pytest.mark.asyncio
     async def test_concurrent_operations(self, cache):
         """Test thread safety with concurrent operations."""
+
         async def increment_counter():
             for _ in range(10):
                 await cache.increment("counter")

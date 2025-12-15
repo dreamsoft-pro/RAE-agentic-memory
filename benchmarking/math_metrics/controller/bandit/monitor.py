@@ -8,13 +8,12 @@ Monitors bandit performance and detects issues:
 - Anomalous rewards
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional
 import time
 from collections import deque
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional
 
 from .bandit import MultiArmedBandit
-from ..types import MathLevel
 
 
 @dataclass
@@ -138,9 +137,11 @@ class BanditMonitor:
                 metadata={
                     "drop": drop,
                     "baseline": self.bandit.baseline_mean_reward,
-                    "current": sum(self.bandit.last_100_rewards) / len(self.bandit.last_100_rewards)
-                    if self.bandit.last_100_rewards else 0.0,
-                }
+                    "current": sum(self.bandit.last_100_rewards)
+                    / len(self.bandit.last_100_rewards)
+                    if self.bandit.last_100_rewards
+                    else 0.0,
+                },
             )
         return None
 
@@ -157,7 +158,7 @@ class BanditMonitor:
                 metadata={
                     "exploration_rate": exploration_rate,
                     "max_rate": max_rate,
-                }
+                },
             )
         elif exploration_rate > max_rate * 0.8:
             return MonitorAlert(
@@ -167,7 +168,7 @@ class BanditMonitor:
                 metadata={
                     "exploration_rate": exploration_rate,
                     "max_rate": max_rate,
-                }
+                },
             )
         return None
 
@@ -197,7 +198,7 @@ class BanditMonitor:
                     "dominant_arm": max_arm_id,
                     "ratio": max_arm_ratio,
                     "distribution": arm_pulls,
-                }
+                },
             )
         return None
 
@@ -210,7 +211,7 @@ class BanditMonitor:
         rewards = list(self.reward_window)
         mean = sum(rewards) / len(rewards)
         variance = sum((r - mean) ** 2 for r in rewards) / len(rewards)
-        std = variance ** 0.5
+        std = variance**0.5
 
         if std == 0:
             return None
@@ -228,14 +229,16 @@ class BanditMonitor:
                     "total_count": len(rewards),
                     "mean": mean,
                     "std": std,
-                }
+                },
             )
         return None
 
     def _check_staleness(self) -> Optional[MonitorAlert]:
         """Check if bandit hasn't been updated recently"""
         # Find most recent pull across all arms
-        recent_pulls = [arm.last_pulled for arm in self.bandit.arms if arm.last_pulled is not None]
+        recent_pulls = [
+            arm.last_pulled for arm in self.bandit.arms if arm.last_pulled is not None
+        ]
 
         if not recent_pulls:
             return None
@@ -252,7 +255,7 @@ class BanditMonitor:
                 metadata={
                     "age_seconds": age,
                     "last_update": most_recent,
-                }
+                },
             )
         return None
 

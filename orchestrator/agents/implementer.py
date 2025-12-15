@@ -1,8 +1,8 @@
 """Implementer-Agent: Writes code for approved plan steps."""
 
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
-from .base import BaseAgent, AgentTask, AgentResponse
+from .base import AgentResponse, AgentTask, BaseAgent
 
 
 class ImplementerAgent(BaseAgent):
@@ -70,7 +70,9 @@ class ImplementerAgent(BaseAgent):
                 error=f"Implementation failed: {str(e)}",
             )
 
-    def _build_implementation_prompt(self, task: AgentTask, step: Dict[str, Any]) -> str:
+    def _build_implementation_prompt(
+        self, task: AgentTask, step: Dict[str, Any]
+    ) -> str:
         """Build prompt for implementation.
 
         Args:
@@ -165,11 +167,7 @@ Now implement the step:
         import re
 
         # Extract code blocks
-        code_blocks = re.findall(
-            r'```(\w+)?\n(.*?)```',
-            output,
-            re.DOTALL
-        )
+        code_blocks = re.findall(r"```(\w+)?\n(.*?)```", output, re.DOTALL)
 
         if not code_blocks:
             # No code blocks found, return raw output
@@ -181,14 +179,16 @@ Now implement the step:
         # Parse code blocks
         files = []
         for lang, code in code_blocks:
-            files.append({
-                "language": lang or "text",
-                "content": code.strip(),
-            })
+            files.append(
+                {
+                    "language": lang or "text",
+                    "content": code.strip(),
+                }
+            )
 
         # Extract file paths from output if present
         # Look for patterns like "File: path/to/file.py"
-        file_mentions = re.findall(r'File:\s*([^\n]+)', output)
+        file_mentions = re.findall(r"File:\s*([^\n]+)", output)
 
         # Match files to paths if possible
         result = {
@@ -198,10 +198,12 @@ Now implement the step:
 
         for i, file_info in enumerate(files):
             file_path = file_mentions[i] if i < len(file_mentions) else None
-            result["files"].append({
-                "path": file_path,
-                "language": file_info["language"],
-                "content": file_info["content"],
-            })
+            result["files"].append(
+                {
+                    "path": file_path,
+                    "language": file_info["language"],
+                    "content": file_info["content"],
+                }
+            )
 
         return result

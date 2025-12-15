@@ -4,7 +4,7 @@ Implements IMemoryStorage interface using asyncpg for async PostgreSQL access.
 """
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 from uuid import UUID, uuid4
 
 try:
@@ -17,12 +17,12 @@ from ..interfaces.storage import IMemoryStorage
 
 class PostgreSQLStorage(IMemoryStorage):
     """PostgreSQL implementation of IMemoryStorage.
-    
+
     Requires asyncpg package and PostgreSQL 12+ with:
     - UUID extension
     - JSONB support
     - Optional: pgvector extension for embedding storage
-    
+
     Schema expected:
     ```sql
     CREATE TABLE memories (
@@ -40,7 +40,7 @@ class PostgreSQLStorage(IMemoryStorage):
         last_accessed_at TIMESTAMP DEFAULT NOW(),
         expires_at TIMESTAMP
     );
-    
+
     CREATE INDEX idx_memories_tenant_agent ON memories(tenant_id, agent_id);
     CREATE INDEX idx_memories_layer ON memories(layer);
     CREATE INDEX idx_memories_expires_at ON memories(expires_at) WHERE expires_at IS NOT NULL;
@@ -51,12 +51,12 @@ class PostgreSQLStorage(IMemoryStorage):
 
     def __init__(
         self,
-        dsn: Optional[str] = None,
+        dsn: str | None = None,
         pool: Optional["asyncpg.Pool"] = None,
         **pool_kwargs,
     ):
         """Initialize PostgreSQL storage.
-        
+
         Args:
             dsn: PostgreSQL connection string (e.g., postgresql://user:pass@host/db)
             pool: Existing asyncpg connection pool
@@ -67,7 +67,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 "asyncpg is required for PostgreSQLStorage. "
                 "Install with: pip install asyncpg"
             )
-        
+
         self.dsn = dsn
         self._pool = pool
         self._pool_kwargs = pool_kwargs
@@ -92,15 +92,15 @@ class PostgreSQLStorage(IMemoryStorage):
         layer: str,
         tenant_id: str,
         agent_id: str,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        embedding: Optional[List[float]] = None,
-        importance: Optional[float] = None,
-        expires_at: Optional[datetime] = None,
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
+        embedding: list[float] | None = None,
+        importance: float | None = None,
+        expires_at: datetime | None = None,
     ) -> UUID:
         """Store a new memory in PostgreSQL."""
         pool = await self._get_pool()
-        
+
         memory_id = uuid4()
         tags = tags or []
         metadata = metadata or {}
@@ -135,7 +135,7 @@ class PostgreSQLStorage(IMemoryStorage):
         self,
         memory_id: UUID,
         tenant_id: str,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Retrieve a memory by ID."""
         pool = await self._get_pool()
 
@@ -179,10 +179,10 @@ class PostgreSQLStorage(IMemoryStorage):
         agent_id: str,
         layer: str,
         limit: int = 10,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> List[Dict[str, Any]]:
+        filters: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]]:
         """Search memories using PostgreSQL full-text search.
-        
+
         Note: This is a basic implementation. For production, consider:
         - Adding tsvector column with GIN index
         - Using pgvector for semantic search
@@ -197,7 +197,7 @@ class PostgreSQLStorage(IMemoryStorage):
             "agent_id = $2",
             "layer = $3",
         ]
-        params: List[Any] = [tenant_id, agent_id, layer]
+        params: list[Any] = [tenant_id, agent_id, layer]
         param_idx = 4
 
         # Handle not_expired filter
@@ -264,10 +264,12 @@ class PostgreSQLStorage(IMemoryStorage):
                 "last_accessed_at": row["last_accessed_at"],
                 "expires_at": row["expires_at"],
             }
-            results.append({
-                "memory": memory,
-                "score": float(row["score"]),
-            })
+            results.append(
+                {
+                    "memory": memory,
+                    "score": float(row["score"]),
+                }
+            )
 
         return results
 
@@ -276,12 +278,12 @@ class PostgreSQLStorage(IMemoryStorage):
         tenant_id: str,
         agent_id: str,
         layer: str,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
         limit: int = 100,
         offset: int = 0,
         order_by: str = "created_at",
         order_direction: str = "desc",
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """List memories with pagination."""
         pool = await self._get_pool()
         filters = filters or {}
@@ -291,7 +293,7 @@ class PostgreSQLStorage(IMemoryStorage):
             "agent_id = $2",
             "layer = $3",
         ]
-        params: List[Any] = [tenant_id, agent_id, layer]
+        params: list[Any] = [tenant_id, agent_id, layer]
 
         # Apply additional filters
         # (Similar to search_memories, omitted for brevity)
@@ -318,21 +320,23 @@ class PostgreSQLStorage(IMemoryStorage):
 
         results = []
         for row in rows:
-            results.append({
-                "id": row["id"],
-                "content": row["content"],
-                "layer": row["layer"],
-                "tenant_id": row["tenant_id"],
-                "agent_id": row["agent_id"],
-                "tags": list(row["tags"]) if row["tags"] else [],
-                "metadata": dict(row["metadata"]) if row["metadata"] else {},
-                "embedding": list(row["embedding"]) if row["embedding"] else None,
-                "importance": float(row["importance"]),
-                "usage_count": int(row["usage_count"]),
-                "created_at": row["created_at"],
-                "last_accessed_at": row["last_accessed_at"],
-                "expires_at": row["expires_at"],
-            })
+            results.append(
+                {
+                    "id": row["id"],
+                    "content": row["content"],
+                    "layer": row["layer"],
+                    "tenant_id": row["tenant_id"],
+                    "agent_id": row["agent_id"],
+                    "tags": list(row["tags"]) if row["tags"] else [],
+                    "metadata": dict(row["metadata"]) if row["metadata"] else {},
+                    "embedding": list(row["embedding"]) if row["embedding"] else None,
+                    "importance": float(row["importance"]),
+                    "usage_count": int(row["usage_count"]),
+                    "created_at": row["created_at"],
+                    "last_accessed_at": row["last_accessed_at"],
+                    "expires_at": row["expires_at"],
+                }
+            )
 
         return results
 
@@ -387,7 +391,7 @@ class PostgreSQLStorage(IMemoryStorage):
         self,
         memory_id: UUID,
         tenant_id: str,
-        updates: Dict[str, Any],
+        updates: dict[str, Any],
     ) -> bool:
         """Update a memory with given fields.
 
@@ -546,10 +550,10 @@ class PostgreSQLStorage(IMemoryStorage):
         tenant_id: str,
         agent_id: str,
         layer: str,
-        metadata_filter: Dict[str, Any],
+        metadata_filter: dict[str, Any],
     ) -> int:
         """Delete memories matching metadata filter.
-        
+
         Note: This is a simplified implementation.
         Production code should properly handle JSONB queries.
         """
@@ -574,7 +578,7 @@ class PostgreSQLStorage(IMemoryStorage):
             for row in rows:
                 metadata = dict(row["metadata"]) if row["metadata"] else {}
                 matches = True
-                
+
                 for key, value in metadata_filter.items():
                     # Handle special operators like confidence__lt
                     if "__lt" in key:
@@ -586,7 +590,7 @@ class PostgreSQLStorage(IMemoryStorage):
                         if metadata.get(key) != value:
                             matches = False
                             break
-                
+
                 if matches:
                     ids_to_delete.append(row["id"])
 

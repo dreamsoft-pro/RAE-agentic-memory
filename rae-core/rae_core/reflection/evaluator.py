@@ -3,16 +3,16 @@
 The Evaluator assesses the quality and outcomes of actions.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from rae_core.interfaces.storage import IMemoryStorage
 from rae_core.math.metrics import (
-    TextCoherenceMetric,
     CompletenessMetric,
     EntropyMetric,
-    RelevanceMetric,
     QualityScorer,
+    RelevanceMetric,
+    TextCoherenceMetric,
 )
 
 
@@ -33,21 +33,23 @@ class Evaluator:
             memory_storage: Memory storage for retrieval
         """
         self.memory_storage = memory_storage
-        
+
         # Initialize scorer with standard metrics
-        self.scorer = QualityScorer([
-            TextCoherenceMetric(),
-            EntropyMetric(),
-            RelevanceMetric(),
-            CompletenessMetric()
-        ])
+        self.scorer = QualityScorer(
+            [
+                TextCoherenceMetric(),
+                EntropyMetric(),
+                RelevanceMetric(),
+                CompletenessMetric(),
+            ]
+        )
 
     async def evaluate_memory_quality(
         self,
         memory_id: UUID,
         tenant_id: str,
-        context: Optional[str] = None,
-    ) -> Dict[str, float]:
+        context: str | None = None,
+    ) -> dict[str, float]:
         """Evaluate quality of a single memory.
 
         Args:
@@ -69,30 +71,32 @@ class Evaluator:
 
         # Evaluate content quality (text)
         content_result = self.scorer.evaluate(memory.get("content", ""), eval_context)
-        
+
         # Evaluate completeness (dict)
         completeness_metric = CompletenessMetric()
         completeness_result = completeness_metric.compute(memory)
-        
+
         # Merge results (simplified for now)
         # In a real scenario, we might want to run scorer on memory dict as well
         # or have separate scorers for content vs structure.
-        
+
         metrics = content_result.metadata.get("components", {})
         metrics["quality"] = content_result.score
         metrics["completeness"] = completeness_result.score
-        
+
         # Recalculate overall quality including completeness
-        metrics["quality"] = (metrics["quality"] * 0.7) + (completeness_result.score * 0.3)
+        metrics["quality"] = (metrics["quality"] * 0.7) + (
+            completeness_result.score * 0.3
+        )
 
         return metrics
 
     async def evaluate_action_outcome(
         self,
         action_type: str,
-        action_result: Dict[str, Any],
-        context: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        action_result: dict[str, Any],
+        context: dict[str, Any],
+    ) -> dict[str, Any]:
         """Evaluate the outcome of an action.
 
         Args:
@@ -128,9 +132,9 @@ class Evaluator:
 
     def _evaluate_consolidation(
         self,
-        result: Dict[str, Any],
-        context: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        result: dict[str, Any],
+        context: dict[str, Any],
+    ) -> dict[str, Any]:
         """Evaluate memory consolidation."""
         consolidated_count = result.get("consolidated_count", 0)
 
@@ -147,14 +151,14 @@ class Evaluator:
             "reason": f"Consolidated {consolidated_count} memories",
             "metrics": {
                 "consolidated_count": consolidated_count,
-            }
+            },
         }
 
     def _evaluate_importance_update(
         self,
-        result: Dict[str, Any],
-        context: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        result: dict[str, Any],
+        context: dict[str, Any],
+    ) -> dict[str, Any]:
         """Evaluate importance score updates."""
         updated_count = result.get("updated_count", 0)
         total = result.get("total", 0)
@@ -170,14 +174,14 @@ class Evaluator:
             "reason": f"Updated {updated_count}/{total} importance scores",
             "metrics": {
                 "success_rate": score,
-            }
+            },
         }
 
     def _evaluate_link_creation(
         self,
-        result: Dict[str, Any],
-        context: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        result: dict[str, Any],
+        context: dict[str, Any],
+    ) -> dict[str, Any]:
         """Evaluate semantic link creation."""
         link = result.get("link", {})
 
@@ -187,14 +191,14 @@ class Evaluator:
             "reason": f"Created {link.get('type', 'link')} between memories",
             "metrics": {
                 "link_type": link.get("type"),
-            }
+            },
         }
 
     def _evaluate_pruning(
         self,
-        result: Dict[str, Any],
-        context: Dict[str, Any],
-    ) -> Dict[str, Any]:
+        result: dict[str, Any],
+        context: dict[str, Any],
+    ) -> dict[str, Any]:
         """Evaluate memory pruning."""
         pruned_count = result.get("pruned_count", 0)
         total = result.get("total", 0)
@@ -210,15 +214,15 @@ class Evaluator:
             "reason": f"Pruned {pruned_count}/{total} memories",
             "metrics": {
                 "pruning_rate": score,
-            }
+            },
         }
 
     async def evaluate_memory_batch(
         self,
-        memory_ids: List[UUID],
+        memory_ids: list[UUID],
         tenant_id: str,
-        context: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        context: str | None = None,
+    ) -> dict[str, Any]:
         """Evaluate quality of multiple memories.
 
         Args:
@@ -241,7 +245,7 @@ class Evaluator:
                 # Aggregate other keys if present
                 for k, v in metrics.items():
                     if k != "quality" and isinstance(v, (int, float)):
-                         total_metrics[k] = total_metrics.get(k, 0.0) + v
+                        total_metrics[k] = total_metrics.get(k, 0.0) + v
                 count += 1
 
         # Average

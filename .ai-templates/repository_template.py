@@ -48,9 +48,7 @@ class EntityRepository:
         self.pool = pool
 
     async def get_by_id(
-        self,
-        entity_id: str,
-        tenant_id: str
+        self, entity_id: str, tenant_id: str
     ) -> Optional[Dict[str, Any]]:
         """
         Retrieve entity by ID.
@@ -83,15 +81,12 @@ class EntityRepository:
                     "db_get_error",
                     entity_id=entity_id,
                     tenant_id=tenant_id,
-                    error=str(e)
+                    error=str(e),
                 )
                 raise
 
     async def get_all(
-        self,
-        tenant_id: str,
-        limit: int = 100,
-        offset: int = 0
+        self, tenant_id: str, limit: int = 100, offset: int = 0
     ) -> List[Dict[str, Any]]:
         """
         Retrieve all entities for a tenant (paginated).
@@ -122,14 +117,11 @@ class EntityRepository:
                     tenant_id=tenant_id,
                     limit=limit,
                     offset=offset,
-                    error=str(e)
+                    error=str(e),
                 )
                 raise
 
-    async def insert(
-        self,
-        entity_data: Dict[str, Any]
-    ) -> Dict[str, Any]:
+    async def insert(self, entity_data: Dict[str, Any]) -> Dict[str, Any]:
         """
         Insert a new entity.
 
@@ -149,7 +141,7 @@ class EntityRepository:
             KeyError: If required fields are missing
         """
         # Validate required fields
-        required_fields = ['tenant_id', 'name']  # ← Customize for your entity
+        required_fields = ["tenant_id", "name"]  # ← Customize for your entity
         for field in required_fields:
             if field not in entity_data:
                 raise KeyError(f"Missing required field: {field}")
@@ -171,23 +163,20 @@ class EntityRepository:
                 record = await conn.fetchrow(query, *values)
                 logger.info(
                     "entity_inserted",
-                    entity_id=record['id'],
-                    tenant_id=entity_data['tenant_id']
+                    entity_id=record["id"],
+                    tenant_id=entity_data["tenant_id"],
                 )
                 return dict(record)
             except asyncpg.PostgresError as e:
                 logger.error(
                     "db_insert_error",
-                    tenant_id=entity_data.get('tenant_id'),
-                    error=str(e)
+                    tenant_id=entity_data.get("tenant_id"),
+                    error=str(e),
                 )
                 raise
 
     async def update(
-        self,
-        entity_id: str,
-        tenant_id: str,
-        updates: Dict[str, Any]
+        self, entity_id: str, tenant_id: str, updates: Dict[str, Any]
     ) -> Optional[Dict[str, Any]]:
         """
         Update an existing entity.
@@ -229,7 +218,7 @@ class EntityRepository:
                         "entity_updated",
                         entity_id=entity_id,
                         tenant_id=tenant_id,
-                        fields_updated=list(updates.keys())
+                        fields_updated=list(updates.keys()),
                     )
                 return dict(record) if record else None
             except asyncpg.PostgresError as e:
@@ -237,15 +226,11 @@ class EntityRepository:
                     "db_update_error",
                     entity_id=entity_id,
                     tenant_id=tenant_id,
-                    error=str(e)
+                    error=str(e),
                 )
                 raise
 
-    async def delete(
-        self,
-        entity_id: str,
-        tenant_id: str
-    ) -> bool:
+    async def delete(self, entity_id: str, tenant_id: str) -> bool:
         """
         Delete an entity.
 
@@ -283,9 +268,7 @@ class EntityRepository:
 
                 if rows_affected > 0:
                     logger.info(
-                        "entity_deleted",
-                        entity_id=entity_id,
-                        tenant_id=tenant_id
+                        "entity_deleted", entity_id=entity_id, tenant_id=tenant_id
                     )
                     return True
                 return False
@@ -295,7 +278,7 @@ class EntityRepository:
                     "db_delete_error",
                     entity_id=entity_id,
                     tenant_id=tenant_id,
-                    error=str(e)
+                    error=str(e),
                 )
                 raise
 
@@ -319,11 +302,7 @@ class EntityRepository:
                 count = await conn.fetchval(query, tenant_id)
                 return count or 0
             except asyncpg.PostgresError as e:
-                logger.error(
-                    "db_count_error",
-                    tenant_id=tenant_id,
-                    error=str(e)
-                )
+                logger.error("db_count_error", tenant_id=tenant_id, error=str(e))
                 raise
 
     # Add your custom query methods here

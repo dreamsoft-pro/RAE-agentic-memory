@@ -2,7 +2,7 @@
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 from uuid import UUID
 
 from rae_core.context.window import ContextWindowManager, estimate_tokens
@@ -47,12 +47,12 @@ class ContextBuilder:
 
     def build_context(
         self,
-        memories: List[Dict[str, Any]],
-        query: Optional[str] = None,
-        format_type: Optional[ContextFormat] = None,
-        max_memories: Optional[int] = None,
+        memories: list[dict[str, Any]],
+        query: str | None = None,
+        format_type: ContextFormat | None = None,
+        max_memories: int | None = None,
         include_metadata: bool = True,
-    ) -> Tuple[str, ContextMetadata]:
+    ) -> tuple[str, ContextMetadata]:
         """Build context from search results.
 
         Args:
@@ -117,7 +117,9 @@ class ContextBuilder:
             total_items=len(memories),
             active_items=len(included_memories),
             token_usage=total_tokens,
-            last_compaction=datetime.now(timezone.utc) if len(included_memories) < len(memories) else None,
+            last_compaction=datetime.now(timezone.utc)
+            if len(included_memories) < len(memories)
+            else None,
             statistics={
                 "format": format_type,
                 "truncated": len(included_memories) < len(memories),
@@ -133,9 +135,9 @@ class ContextBuilder:
     def build_working_context(
         self,
         tenant_id: str,
-        agent_id: Optional[str],
-        memories: List[Dict[str, Any]],
-        focus_items: Optional[List[UUID]] = None,
+        agent_id: str | None,
+        memories: list[dict[str, Any]],
+        focus_items: list[UUID] | None = None,
     ) -> WorkingContext:
         """Build WorkingContext model from memories.
 
@@ -176,7 +178,7 @@ class ContextBuilder:
             },
         )
 
-    def _rank_memories(self, memories: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _rank_memories(self, memories: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Rank memories by priority (importance, recency, relevance).
 
         Args:
@@ -185,7 +187,8 @@ class ContextBuilder:
         Returns:
             Sorted list of memories (highest priority first)
         """
-        def priority_score(memory: Dict[str, Any]) -> float:
+
+        def priority_score(memory: dict[str, Any]) -> float:
             # Base score from importance
             importance = memory.get("importance", 0.5)
 
@@ -195,7 +198,9 @@ class ContextBuilder:
             if modified_at:
                 if isinstance(modified_at, str):
                     try:
-                        modified_at = datetime.fromisoformat(modified_at.replace("Z", "+00:00"))
+                        modified_at = datetime.fromisoformat(
+                            modified_at.replace("Z", "+00:00")
+                        )
                     except Exception:
                         modified_at = None
 
@@ -203,8 +208,10 @@ class ContextBuilder:
                     # Ensure modified_at is timezone-aware (assume UTC if naive)
                     if modified_at.tzinfo is None:
                         modified_at = modified_at.replace(tzinfo=timezone.utc)
-                    
-                    age_hours = (datetime.now(timezone.utc) - modified_at).total_seconds() / 3600
+
+                    age_hours = (
+                        datetime.now(timezone.utc) - modified_at
+                    ).total_seconds() / 3600
                     # More recent = higher bonus
                     recency_bonus = 0.2 * (1.0 / (1.0 + age_hours / 24))
 
@@ -233,11 +240,13 @@ class ContextBuilder:
         elif format_type == ContextFormat.DETAILED:
             return f"## Search Query\n{query}\n\n## Retrieved Memories (ranked by relevance)\n"
         else:  # CONVERSATIONAL
-            return f"Based on your query: '{query}'\n\nHere are the relevant memories:\n\n"
+            return (
+                f"Based on your query: '{query}'\n\nHere are the relevant memories:\n\n"
+            )
 
     def _format_memory(
         self,
-        memory: Dict[str, Any],
+        memory: dict[str, Any],
         format_type: ContextFormat,
         include_metadata: bool = True,
     ) -> str:
@@ -286,9 +295,7 @@ class ContextBuilder:
                 return f"- {content} [Important]\n"
             return f"- {content}\n"
 
-    def _assemble_context(
-        self, parts: List[str], format_type: ContextFormat
-    ) -> str:
+    def _assemble_context(self, parts: list[str], format_type: ContextFormat) -> str:
         """Assemble context parts into final string.
 
         Args:
@@ -306,7 +313,7 @@ class ContextBuilder:
             return "\n".join(parts)
 
     def _calculate_priority_score(
-        self, memories: List[Dict[str, Any]], focus_items: List[UUID]
+        self, memories: list[dict[str, Any]], focus_items: list[UUID]
     ) -> float:
         """Calculate overall priority score for working context.
 
@@ -321,9 +328,7 @@ class ContextBuilder:
             return 0.0
 
         # Average importance of all memories
-        avg_importance = sum(m.get("importance", 0.5) for m in memories) / len(
-            memories
-        )
+        avg_importance = sum(m.get("importance", 0.5) for m in memories) / len(memories)
 
         # Boost if focus items are present
         focus_boost = 0.2 if focus_items else 0.0
@@ -338,7 +343,7 @@ class ContextBuilder:
         """Reset builder state and create new window."""
         self.window_manager.create_window()
 
-    def get_statistics(self) -> Dict[str, Any]:
+    def get_statistics(self) -> dict[str, Any]:
         """Get builder statistics.
 
         Returns:

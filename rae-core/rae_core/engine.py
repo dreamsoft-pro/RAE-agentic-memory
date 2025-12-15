@@ -1,6 +1,6 @@
 """Main RAE Engine - Orchestrates all RAE-core components."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from rae_core.config import RAESettings
@@ -32,10 +32,10 @@ class RAEEngine:
         memory_storage: IMemoryStorage,
         vector_store: IVectorStore,
         embedding_provider: IEmbeddingProvider,
-        settings: Optional[RAESettings] = None,
-        llm_provider: Optional[ILLMProvider] = None,
-        cache_provider: Optional[ICacheProvider] = None,
-        sync_provider: Optional[ISyncProvider] = None,
+        settings: RAESettings | None = None,
+        llm_provider: ILLMProvider | None = None,
+        cache_provider: ICacheProvider | None = None,
+        sync_provider: ISyncProvider | None = None,
     ):
         """Initialize RAE Engine.
 
@@ -58,17 +58,18 @@ class RAEEngine:
 
         # Initialize sub-engines
         from rae_core.search.strategies.vector import VectorSearchStrategy
-        
+
         strategies = {}
         if vector_store and embedding_provider:
             strategies["vector"] = VectorSearchStrategy(
                 vector_store=vector_store,
                 embedding_provider=embedding_provider,
             )
-            
+
         search_cache = None
         if cache_provider:
             from rae_core.search.cache import SearchCache
+
             search_cache = SearchCache(cache_provider=cache_provider)
 
         self.search_engine = HybridSearchEngine(
@@ -82,7 +83,7 @@ class RAEEngine:
         )
 
         # Initialize LLM orchestrator if LLM provider is available
-        self.llm_orchestrator: Optional[LLMOrchestrator] = None
+        self.llm_orchestrator: LLMOrchestrator | None = None
         if llm_provider:
             from rae_core.llm.config import LLMConfig
 
@@ -99,7 +100,7 @@ class RAEEngine:
             )
 
         # Initialize sync protocol if sync provider is available
-        self.sync_protocol: Optional[SyncProtocol] = None
+        self.sync_protocol: SyncProtocol | None = None
         if sync_provider and self.settings.sync_enabled:
             self.sync_protocol = SyncProtocol(
                 sync_provider=sync_provider,
@@ -115,8 +116,8 @@ class RAEEngine:
         content: str,
         layer: str = "sensory",
         importance: float = 0.5,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> UUID:
         """Store a new memory.
 
@@ -146,7 +147,7 @@ class RAEEngine:
         self,
         memory_id: UUID,
         tenant_id: str,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Retrieve a memory by ID.
 
         Args:
@@ -165,12 +166,12 @@ class RAEEngine:
         self,
         query: str,
         tenant_id: str,
-        agent_id: Optional[str] = None,
-        layer: Optional[str] = None,
-        top_k: Optional[int] = None,
-        similarity_threshold: Optional[float] = None,
+        agent_id: str | None = None,
+        layer: str | None = None,
+        top_k: int | None = None,
+        similarity_threshold: float | None = None,
         use_reranker: bool = False,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Search memories using hybrid search.
 
         Args:
@@ -187,7 +188,9 @@ class RAEEngine:
         """
         search_config = self.settings.get_search_config()
         top_k = top_k or search_config["top_k"]
-        similarity_threshold = similarity_threshold or search_config["similarity_threshold"]
+        similarity_threshold = (
+            similarity_threshold or search_config["similarity_threshold"]
+        )
 
         filters = {}
         if agent_id:
@@ -219,7 +222,7 @@ class RAEEngine:
         tenant_id: str,
         agent_id: str,
         trigger_type: str = "scheduled",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Run a reflection cycle.
 
         Args:
@@ -238,11 +241,11 @@ class RAEEngine:
 
     async def generate_reflection(
         self,
-        memory_ids: List[UUID],
+        memory_ids: list[UUID],
         tenant_id: str,
         agent_id: str,
         reflection_type: str = "consolidation",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate a reflection from specific memories.
 
         Args:
@@ -267,7 +270,7 @@ class RAEEngine:
         self,
         tenant_id: str,
         agent_id: str,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Synchronize memories with remote.
 
         Args:
@@ -297,9 +300,9 @@ class RAEEngine:
     async def generate_text(
         self,
         prompt: str,
-        provider_name: Optional[str] = None,
+        provider_name: str | None = None,
         **kwargs,
-    ) -> Optional[str]:
+    ) -> str | None:
         """Generate text using LLM.
 
         Args:
@@ -328,7 +331,7 @@ class RAEEngine:
 
     # Health and status
 
-    def get_status(self) -> Dict[str, Any]:
+    def get_status(self) -> dict[str, Any]:
         """Get engine status.
 
         Returns:

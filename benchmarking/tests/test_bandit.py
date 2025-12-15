@@ -10,22 +10,21 @@ Tests:
 - Persistence (save/load)
 """
 
-import pytest
 import tempfile
 from pathlib import Path
-from typing import List
+
+import pytest
 
 from benchmarking.math_metrics.controller.bandit import (
     Arm,
-    create_default_arms,
     BanditConfig,
-    MultiArmedBandit,
     BanditMonitor,
     MonitorAlert,
+    MultiArmedBandit,
+    create_default_arms,
 )
-from benchmarking.math_metrics.controller.types import MathLevel
 from benchmarking.math_metrics.controller.features_v2 import FeaturesV2
-from benchmarking.math_metrics.controller.types import TaskType
+from benchmarking.math_metrics.controller.types import MathLevel, TaskType
 
 
 class TestArm:
@@ -68,7 +67,9 @@ class TestArm:
         arm.update(reward=0.5, context_id=10)
 
         # Check context-specific means
-        assert arm.mean_reward(context_id=5) == pytest.approx(0.85, abs=0.01)  # (0.9 + 0.8) / 2
+        assert arm.mean_reward(context_id=5) == pytest.approx(
+            0.85, abs=0.01
+        )  # (0.9 + 0.8) / 2
         assert arm.mean_reward(context_id=10) == pytest.approx(0.5, abs=0.01)
         assert arm.mean_reward() == pytest.approx(0.733, abs=0.01)  # Global mean
 
@@ -78,7 +79,7 @@ class TestArm:
 
         # Never pulled - should return infinity
         ucb = arm.ucb_score(total_pulls=10, c=1.0)
-        assert ucb == float('inf')
+        assert ucb == float("inf")
 
         # After pulls
         arm.update(reward=0.7)
@@ -392,11 +393,11 @@ class TestBanditMonitor:
         assert status == "healthy"
 
         # Add a critical alert
-        monitor.alerts.append(MonitorAlert(
-            severity="critical",
-            category="test",
-            message="Test critical alert"
-        ))
+        monitor.alerts.append(
+            MonitorAlert(
+                severity="critical", category="test", message="Test critical alert"
+            )
+        )
 
         status = monitor.get_health_status()
         assert status == "critical"

@@ -10,13 +10,15 @@ Note: These tests require test infrastructure (client_with_overrides fixture).
 If infrastructure is not available, tests will be skipped.
 """
 
-import pytest
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Any, Dict, List
+
+import pytest
 
 # Check if test infrastructure is available
 try:
     from tests.api.v1.test_memory import client_with_overrides
+
     HAS_TEST_INFRASTRUCTURE = True
 except ImportError:
     HAS_TEST_INFRASTRUCTURE = False
@@ -68,7 +70,9 @@ def assert_schema(data: Dict[str, Any], expected_schema: Dict[str, type]):
 def assert_fields_not_present(data: Dict[str, Any], forbidden_fields: List[str]):
     """Assert that deprecated/removed fields are not in response"""
     for field in forbidden_fields:
-        assert field not in data, f"Deprecated field '{field}' should not be in response"
+        assert (
+            field not in data
+        ), f"Deprecated field '{field}' should not be in response"
 
 
 # ============================================================================
@@ -77,7 +81,9 @@ def assert_fields_not_present(data: Dict[str, Any], forbidden_fields: List[str])
 
 
 @pytest.mark.contract
-@pytest.mark.skipif(not HAS_TEST_INFRASTRUCTURE, reason="Test infrastructure not available")
+@pytest.mark.skipif(
+    not HAS_TEST_INFRASTRUCTURE, reason="Test infrastructure not available"
+)
 class TestMemoryStoreContract:
     """Contract tests for /v1/memory/store endpoint"""
 
@@ -111,7 +117,9 @@ class TestMemoryStoreContract:
 
 
 @pytest.mark.contract
-@pytest.mark.skipif(not HAS_TEST_INFRASTRUCTURE, reason="Test infrastructure not available")
+@pytest.mark.skipif(
+    not HAS_TEST_INFRASTRUCTURE, reason="Test infrastructure not available"
+)
 class TestMemoryQueryContract:
     """Contract tests for /v1/memory/query endpoint"""
 
@@ -168,7 +176,9 @@ class TestMemoryQueryContract:
 
 
 @pytest.mark.contract
-@pytest.mark.skipif(not HAS_TEST_INFRASTRUCTURE, reason="Test infrastructure not available")
+@pytest.mark.skipif(
+    not HAS_TEST_INFRASTRUCTURE, reason="Test infrastructure not available"
+)
 class TestMemoryDeleteContract:
     """Contract tests for /v1/memory/delete endpoint"""
 
@@ -194,7 +204,9 @@ class TestMemoryDeleteContract:
 
 
 @pytest.mark.contract
-@pytest.mark.skipif(not HAS_TEST_INFRASTRUCTURE, reason="Test infrastructure not available")
+@pytest.mark.skipif(
+    not HAS_TEST_INFRASTRUCTURE, reason="Test infrastructure not available"
+)
 class TestAgentExecuteContract:
     """Contract tests for /v1/agent/execute endpoint"""
 
@@ -229,7 +241,9 @@ class TestAgentExecuteContract:
 
 
 @pytest.mark.contract
-@pytest.mark.skipif(not HAS_TEST_INFRASTRUCTURE, reason="Test infrastructure not available")
+@pytest.mark.skipif(
+    not HAS_TEST_INFRASTRUCTURE, reason="Test infrastructure not available"
+)
 class TestHealthContract:
     """Contract tests for /health endpoint"""
 
@@ -264,7 +278,9 @@ class TestHealthContract:
 
 
 @pytest.mark.contract
-@pytest.mark.skipif(not HAS_TEST_INFRASTRUCTURE, reason="Test infrastructure not available")
+@pytest.mark.skipif(
+    not HAS_TEST_INFRASTRUCTURE, reason="Test infrastructure not available"
+)
 class TestErrorResponseContract:
     """Contract tests for error responses"""
 
@@ -305,7 +321,9 @@ class TestErrorResponseContract:
 
 
 @pytest.mark.contract
-@pytest.mark.skipif(not HAS_TEST_INFRASTRUCTURE, reason="Test infrastructure not available")
+@pytest.mark.skipif(
+    not HAS_TEST_INFRASTRUCTURE, reason="Test infrastructure not available"
+)
 class TestPaginationContract:
     """Contract tests for paginated endpoints"""
 
@@ -331,7 +349,9 @@ class TestPaginationContract:
 
 
 @pytest.mark.contract
-@pytest.mark.skipif(not HAS_TEST_INFRASTRUCTURE, reason="Test infrastructure not available")
+@pytest.mark.skipif(
+    not HAS_TEST_INFRASTRUCTURE, reason="Test infrastructure not available"
+)
 class TestBackwardCompatibility:
     """Ensure we don't break backward compatibility"""
 

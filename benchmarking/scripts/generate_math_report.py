@@ -12,7 +12,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -32,12 +32,14 @@ class MathReportGenerator:
 
         for file_path in self.results_files:
             try:
-                with open(file_path, 'r') as f:
+                with open(file_path, "r") as f:
                     data = json.load(f)
-                    self.results_data.append({
-                        "file": file_path.name,
-                        "data": data,
-                    })
+                    self.results_data.append(
+                        {
+                            "file": file_path.name,
+                            "data": data,
+                        }
+                    )
                     print(f"   ✅ Loaded: {file_path.name}")
             except Exception as e:
                 print(f"   ❌ Failed to load {file_path.name}: {e}")
@@ -58,7 +60,7 @@ class MathReportGenerator:
         # Detailed metrics for each file
         for result in self.results_data:
             report.append(f"\n## Results: {result['file']}\n")
-            report.append(self._generate_detailed_metrics(result['data']))
+            report.append(self._generate_detailed_metrics(result["data"]))
 
         # Comparative analysis (if multiple files)
         if len(self.results_data) > 1:
@@ -76,7 +78,7 @@ class MathReportGenerator:
         summary = []
 
         for result in self.results_data:
-            data = result['data']
+            data = result["data"]
 
             if "math" not in data.get("metrics", {}):
                 continue
@@ -158,7 +160,9 @@ class MathReportGenerator:
             # Format metric name
             display_name = metric_name.replace("_", " ").title()
             output.append(f"\n#### {display_name}\n")
-            output.append(f"**Value:** `{value:.4f if isinstance(value, float) else value}`\n")
+            output.append(
+                f"**Value:** `{value:.4f if isinstance(value, float) else value}`\n"
+            )
 
             # Add metadata if available
             if metadata:
@@ -270,28 +274,26 @@ class MathReportGenerator:
         """Generate and save report"""
         report_content = self.generate_report()
 
-        with open(self.output_file, 'w') as f:
+        with open(self.output_file, "w") as f:
             f.write(report_content)
 
         print(f"\n✅ Report generated: {self.output_file}")
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Generate mathematical metrics report"
-    )
+    parser = argparse.ArgumentParser(description="Generate mathematical metrics report")
     parser.add_argument(
-        '--results',
+        "--results",
         type=str,
-        nargs='+',
+        nargs="+",
         required=True,
-        help='Result JSON files to analyze',
+        help="Result JSON files to analyze",
     )
     parser.add_argument(
-        '--output',
+        "--output",
         type=str,
-        default='benchmarking/results/math_report.md',
-        help='Output markdown file',
+        default="benchmarking/results/math_report.md",
+        help="Output markdown file",
     )
 
     args = parser.parse_args()

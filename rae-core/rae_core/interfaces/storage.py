@@ -5,7 +5,7 @@ Storage can be PostgreSQL, SQLite, in-memory, or any other backend.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 
@@ -23,11 +23,11 @@ class IMemoryStorage(ABC):
         layer: str,
         tenant_id: str,
         agent_id: str,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        embedding: Optional[List[float]] = None,
-        importance: Optional[float] = None,
-        expires_at: Optional[Any] = None,  # Added parameter
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
+        embedding: list[float] | None = None,
+        importance: float | None = None,
+        expires_at: Any | None = None,  # Added parameter
     ) -> UUID:
         """Store a new memory.
 
@@ -52,7 +52,7 @@ class IMemoryStorage(ABC):
         self,
         memory_id: UUID,
         tenant_id: str,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Retrieve a memory by ID.
 
         Args:
@@ -69,7 +69,7 @@ class IMemoryStorage(ABC):
         self,
         memory_id: UUID,
         tenant_id: str,
-        updates: Dict[str, Any],
+        updates: dict[str, Any],
     ) -> bool:
         """Update a memory.
 
@@ -104,15 +104,15 @@ class IMemoryStorage(ABC):
     async def list_memories(
         self,
         tenant_id: str,
-        agent_id: Optional[str] = None,
-        layer: Optional[str] = None,
-        tags: Optional[List[str]] = None,
-        filters: Optional[Dict[str, Any]] = None,
+        agent_id: str | None = None,
+        layer: str | None = None,
+        tags: list[str] | None = None,
+        filters: dict[str, Any] | None = None,
         limit: int = 100,
         offset: int = 0,
         order_by: str = "created_at",
         order_direction: str = "desc",
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """List memories with filtering and sorting.
 
         Args:
@@ -137,7 +137,7 @@ class IMemoryStorage(ABC):
         tenant_id: str,
         agent_id: str,
         layer: str,
-        metadata_filter: Dict[str, Any],
+        metadata_filter: dict[str, Any],
     ) -> int:
         """Delete memories matching metadata filter.
 
@@ -177,8 +177,8 @@ class IMemoryStorage(ABC):
     async def count_memories(
         self,
         tenant_id: str,
-        agent_id: Optional[str] = None,
-        layer: Optional[str] = None,
+        agent_id: str | None = None,
+        layer: str | None = None,
     ) -> int:
         """Count memories matching filters.
 
@@ -200,8 +200,8 @@ class IMemoryStorage(ABC):
         agent_id: str,
         layer: str,
         limit: int = 10,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> List[Dict[str, Any]]:
+        filters: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]]:
         """Search memories using full-text search.
 
         Args:

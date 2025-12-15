@@ -1,7 +1,7 @@
 """Sync protocol for memory synchronization."""
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -15,11 +15,11 @@ class SyncMetadata(BaseModel):
     sync_id: str = Field(description="Unique sync operation ID")
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     source_agent: str = Field(description="Source agent ID")
-    target_agent: Optional[str] = Field(default=None, description="Target agent ID")
+    target_agent: str | None = Field(default=None, description="Target agent ID")
     sync_type: str = Field(description="Type of sync: push, pull, sync")
     memory_count: int = Field(default=0, description="Number of memories synced")
     success: bool = Field(default=False)
-    error_message: Optional[str] = Field(default=None)
+    error_message: str | None = Field(default=None)
 
 
 class SyncRequest(BaseModel):
@@ -28,8 +28,8 @@ class SyncRequest(BaseModel):
     tenant_id: str
     agent_id: str
     sync_type: str  # push, pull, sync
-    memory_ids: Optional[List[str]] = Field(default=None)
-    since: Optional[datetime] = Field(default=None)
+    memory_ids: list[str] | None = Field(default=None)
+    since: datetime | None = Field(default=None)
     batch_size: int = Field(default=100)
     encryption_enabled: bool = Field(default=True)
 
@@ -39,9 +39,9 @@ class SyncResponse(BaseModel):
 
     success: bool
     metadata: SyncMetadata
-    synced_memory_ids: List[str] = Field(default_factory=list)
-    conflicts: List[Dict[str, Any]] = Field(default_factory=list)
-    error_message: Optional[str] = None
+    synced_memory_ids: list[str] = Field(default_factory=list)
+    conflicts: list[dict[str, Any]] = Field(default_factory=list)
+    error_message: str | None = None
 
 
 class SyncProtocol:
@@ -68,8 +68,8 @@ class SyncProtocol:
         self,
         tenant_id: str,
         agent_id: str,
-        memory_ids: Optional[List[UUID]] = None,
-        since: Optional[datetime] = None,
+        memory_ids: list[UUID] | None = None,
+        since: datetime | None = None,
     ) -> SyncResponse:
         """Push local memories to remote.
 
@@ -134,8 +134,8 @@ class SyncProtocol:
         self,
         tenant_id: str,
         agent_id: str,
-        memory_ids: Optional[List[UUID]] = None,
-        since: Optional[datetime] = None,
+        memory_ids: list[UUID] | None = None,
+        since: datetime | None = None,
     ) -> SyncResponse:
         """Pull remote memories to local.
 
@@ -200,7 +200,7 @@ class SyncProtocol:
         self,
         tenant_id: str,
         agent_id: str,
-        since: Optional[datetime] = None,
+        since: datetime | None = None,
     ) -> SyncResponse:
         """Bidirectional sync between local and remote.
 
@@ -261,7 +261,7 @@ class SyncProtocol:
         tenant_id: str,
         agent_id: str,
         sync_id: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get status of a sync operation.
 
         Args:

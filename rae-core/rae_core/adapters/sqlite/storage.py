@@ -4,12 +4,12 @@ Lightweight, file-based storage ideal for RAE-Lite offline-first architecture.
 Uses SQLite FTS5 (Full-Text Search) for efficient content search.
 """
 
-import aiosqlite
 import json
 from datetime import datetime, timezone
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID, uuid4
+
+import aiosqlite
 
 from rae_core.interfaces.storage import IMemoryStorage
 
@@ -45,7 +45,8 @@ class SQLiteStorage(IMemoryStorage):
             await db.execute("PRAGMA journal_mode=WAL")
 
             # Main memories table
-            await db.execute("""
+            await db.execute(
+                """
                 CREATE TABLE IF NOT EXISTS memories (
                     id TEXT PRIMARY KEY,
                     content TEXT NOT NULL,
@@ -63,59 +64,76 @@ class SQLiteStorage(IMemoryStorage):
                     version INTEGER DEFAULT 1,
                     expires_at TEXT
                 )
-            """)
+            """
+            )
 
             # FTS5 virtual table for full-text search on content
-            await db.execute("""
+            await db.execute(
+                """
                 CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(
                     content,
                     content=memories,
                     content_rowid=rowid
                 )
-            """)
+            """
+            )
 
             # Triggers to keep FTS5 in sync
-            await db.execute("""
+            await db.execute(
+                """
                 CREATE TRIGGER IF NOT EXISTS memories_ai AFTER INSERT ON memories BEGIN
                     INSERT INTO memories_fts(rowid, content) VALUES (new.rowid, new.content);
                 END
-            """)
+            """
+            )
 
-            await db.execute("""
+            await db.execute(
+                """
                 CREATE TRIGGER IF NOT EXISTS memories_ad AFTER DELETE ON memories BEGIN
                     INSERT INTO memories_fts(memories_fts, rowid, content)
                     VALUES('delete', old.rowid, old.content);
                 END
-            """)
+            """
+            )
 
-            await db.execute("""
+            await db.execute(
+                """
                 CREATE TRIGGER IF NOT EXISTS memories_au AFTER UPDATE ON memories BEGIN
                     INSERT INTO memories_fts(memories_fts, rowid, content)
                     VALUES('delete', old.rowid, old.content);
                     INSERT INTO memories_fts(rowid, content) VALUES (new.rowid, new.content);
                 END
-            """)
+            """
+            )
 
             # Indexes for fast lookups
-            await db.execute("""
+            await db.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_memories_tenant_id
                 ON memories(tenant_id)
-            """)
+            """
+            )
 
-            await db.execute("""
+            await db.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_memories_agent_id
                 ON memories(tenant_id, agent_id)
-            """)
+            """
+            )
 
-            await db.execute("""
+            await db.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_memories_layer
                 ON memories(tenant_id, layer)
-            """)
+            """
+            )
 
-            await db.execute("""
+            await db.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_memories_created_at
                 ON memories(tenant_id, created_at DESC)
-            """)
+            """
+            )
 
             await db.commit()
 
@@ -127,10 +145,10 @@ class SQLiteStorage(IMemoryStorage):
         layer: str,
         tenant_id: str,
         agent_id: str,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        embedding: Optional[List[float]] = None,
-        importance: Optional[float] = None,
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
+        embedding: list[float] | None = None,
+        importance: float | None = None,
     ) -> UUID:
         """Store a new memory."""
         await self.initialize()
@@ -172,7 +190,7 @@ class SQLiteStorage(IMemoryStorage):
         self,
         memory_id: UUID,
         tenant_id: str,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Retrieve a memory by ID."""
         await self.initialize()
 
@@ -196,7 +214,7 @@ class SQLiteStorage(IMemoryStorage):
         self,
         memory_id: UUID,
         tenant_id: str,
-        updates: Dict[str, Any],
+        updates: dict[str, Any],
     ) -> bool:
         """Update a memory."""
         await self.initialize()
@@ -259,12 +277,12 @@ class SQLiteStorage(IMemoryStorage):
     async def list_memories(
         self,
         tenant_id: str,
-        agent_id: Optional[str] = None,
-        layer: Optional[str] = None,
-        tags: Optional[List[str]] = None,
+        agent_id: str | None = None,
+        layer: str | None = None,
+        tags: list[str] | None = None,
         limit: int = 100,
         offset: int = 0,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """List memories with filtering."""
         await self.initialize()
 
@@ -285,7 +303,7 @@ class SQLiteStorage(IMemoryStorage):
             # OR logic for tags - check if tag exists in JSON array
             tag_conditions = []
             for tag in tags:
-                tag_conditions.append(f"tags LIKE ?")
+                tag_conditions.append("tags LIKE ?")
                 params.append(f'%"{tag}"%')
             where_clauses.append(f"({' OR '.join(tag_conditions)})")
 
@@ -310,8 +328,8 @@ class SQLiteStorage(IMemoryStorage):
     async def count_memories(
         self,
         tenant_id: str,
-        agent_id: Optional[str] = None,
-        layer: Optional[str] = None,
+        agent_id: str | None = None,
+        layer: str | None = None,
     ) -> int:
         """Count memories matching filters."""
         await self.initialize()
@@ -367,7 +385,7 @@ class SQLiteStorage(IMemoryStorage):
         query: str,
         tenant_id: str,
         limit: int = 10,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Full-text search using FTS5.
 
         Args:
@@ -401,7 +419,7 @@ class SQLiteStorage(IMemoryStorage):
         # aiosqlite uses context managers, so explicit close not needed
         pass
 
-    def _row_to_dict(self, row: aiosqlite.Row) -> Dict[str, Any]:
+    def _row_to_dict(self, row: aiosqlite.Row) -> dict[str, Any]:
         """Convert SQLite row to memory dictionary."""
         memory = dict(row)
 
@@ -427,7 +445,7 @@ class SQLiteStorage(IMemoryStorage):
         tenant_id: str,
         agent_id: str,
         layer: str,
-        metadata_filter: Dict[str, Any],
+        metadata_filter: dict[str, Any],
     ) -> int:
         """Delete memories matching metadata filter.
 
@@ -512,8 +530,8 @@ class SQLiteStorage(IMemoryStorage):
         agent_id: str,
         layer: str,
         limit: int = 10,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> List[Dict[str, Any]]:
+        filters: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]]:
         """Search memories using FTS5 full-text search.
 
         Args:
@@ -653,7 +671,7 @@ class SQLiteStorage(IMemoryStorage):
             return cursor.rowcount > 0
 
     def _matches_metadata_filter(
-        self, metadata: Dict[str, Any], filter_dict: Dict[str, Any]
+        self, metadata: dict[str, Any], filter_dict: dict[str, Any]
     ) -> bool:
         """Check if metadata matches filter criteria.
 

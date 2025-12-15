@@ -2,7 +2,7 @@
 
 import hashlib
 import json
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 from uuid import UUID
 
 from rae_core.interfaces.cache import ICacheProvider
@@ -37,7 +37,7 @@ class SearchCache:
         query: str,
         tenant_id: str,
         strategy: str,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
     ) -> str:
         """Generate deterministic cache key from search parameters.
 
@@ -71,8 +71,8 @@ class SearchCache:
         query: str,
         tenant_id: str,
         strategy: str,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> Optional[List[Tuple[UUID, float]]]:
+        filters: dict[str, Any] | None = None,
+    ) -> list[tuple[UUID, float]] | None:
         """Get cached search results.
 
         Args:
@@ -92,10 +92,7 @@ class SearchCache:
 
         # Deserialize results
         try:
-            results = [
-                (UUID(item["id"]), item["score"])
-                for item in cached_data
-            ]
+            results = [(UUID(item["id"]), item["score"]) for item in cached_data]
             return results
         except (KeyError, ValueError, TypeError):
             # Invalid cache data, return None
@@ -106,9 +103,9 @@ class SearchCache:
         query: str,
         tenant_id: str,
         strategy: str,
-        results: List[Tuple[UUID, float]],
-        filters: Optional[Dict[str, Any]] = None,
-        ttl: Optional[int] = None,
+        results: list[tuple[UUID, float]],
+        filters: dict[str, Any] | None = None,
+        ttl: int | None = None,
     ) -> bool:
         """Cache search results.
 
@@ -127,8 +124,7 @@ class SearchCache:
 
         # Serialize results
         serialized = [
-            {"id": str(memory_id), "score": score}
-            for memory_id, score in results
+            {"id": str(memory_id), "score": score} for memory_id, score in results
         ]
 
         return await self.cache_provider.set(
@@ -140,7 +136,7 @@ class SearchCache:
     async def invalidate(
         self,
         tenant_id: str,
-        strategy: Optional[str] = None,
+        strategy: str | None = None,
     ) -> int:
         """Invalidate cached results.
 

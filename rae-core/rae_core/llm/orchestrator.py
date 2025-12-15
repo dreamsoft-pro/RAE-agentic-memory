@@ -1,6 +1,6 @@
 """LLM Orchestrator for managing multiple LLM providers."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from rae_core.interfaces.cache import ICacheProvider
 from rae_core.interfaces.llm import ILLMProvider
@@ -18,8 +18,8 @@ class LLMOrchestrator:
     def __init__(
         self,
         config: LLMConfig,
-        providers: Optional[Dict[str, ILLMProvider]] = None,
-        cache: Optional[ICacheProvider] = None,
+        providers: dict[str, ILLMProvider] | None = None,
+        cache: ICacheProvider | None = None,
     ):
         """Initialize LLM orchestrator.
 
@@ -29,7 +29,7 @@ class LLMOrchestrator:
             cache: Optional cache provider for response caching
         """
         self.config = config
-        self.providers: Dict[str, ILLMProvider] = providers or {}
+        self.providers: dict[str, ILLMProvider] = providers or {}
         self.cache = cache
         self.fallback_provider = NoLLMFallback()
 
@@ -46,7 +46,7 @@ class LLMOrchestrator:
         """
         self.providers[name] = provider
 
-    def get_provider(self, name: str) -> Optional[ILLMProvider]:
+    def get_provider(self, name: str) -> ILLMProvider | None:
         """Get provider by name.
 
         Args:
@@ -60,9 +60,9 @@ class LLMOrchestrator:
     async def generate(
         self,
         prompt: str,
-        provider_name: Optional[str] = None,
-        strategy: Optional[LLMStrategy] = None,
-        system_prompt: Optional[str] = None,
+        provider_name: str | None = None,
+        strategy: LLMStrategy | None = None,
+        system_prompt: str | None = None,
         max_tokens: int = 1000,
         temperature: float = 0.7,
         use_cache: bool = True,
@@ -83,7 +83,9 @@ class LLMOrchestrator:
         """
         # Check cache first
         if use_cache and self.cache and self.config.cache_responses:
-            cache_key = self._generate_cache_key(prompt, system_prompt, max_tokens, temperature)
+            cache_key = self._generate_cache_key(
+                prompt, system_prompt, max_tokens, temperature
+            )
             cached = await self.cache.get(cache_key)
             if cached:
                 return cached["response"], cached["provider"]
@@ -121,7 +123,9 @@ class LLMOrchestrator:
 
         # Cache result
         if use_cache and self.cache and self.config.cache_responses:
-            cache_key = self._generate_cache_key(prompt, system_prompt, max_tokens, temperature)
+            cache_key = self._generate_cache_key(
+                prompt, system_prompt, max_tokens, temperature
+            )
             await self.cache.set(
                 cache_key,
                 {"response": response, "provider": used_provider},
@@ -132,8 +136,8 @@ class LLMOrchestrator:
 
     async def generate_with_context(
         self,
-        messages: List[Dict[str, str]],
-        provider_name: Optional[str] = None,
+        messages: list[dict[str, str]],
+        provider_name: str | None = None,
         max_tokens: int = 1000,
         temperature: float = 0.7,
     ) -> tuple[str, str]:
@@ -167,8 +171,8 @@ class LLMOrchestrator:
     async def extract_entities(
         self,
         text: str,
-        provider_name: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        provider_name: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Extract entities from text.
 
         Args:
@@ -191,7 +195,7 @@ class LLMOrchestrator:
         self,
         text: str,
         max_length: int = 200,
-        provider_name: Optional[str] = None,
+        provider_name: str | None = None,
     ) -> str:
         """Summarize text.
 
@@ -214,12 +218,13 @@ class LLMOrchestrator:
     def _generate_cache_key(
         self,
         prompt: str,
-        system_prompt: Optional[str],
+        system_prompt: str | None,
         max_tokens: int,
         temperature: float,
     ) -> str:
         """Generate cache key for request."""
         import hashlib
+
         key_parts = [
             prompt,
             system_prompt or "",
@@ -229,6 +234,6 @@ class LLMOrchestrator:
         key_string = "|".join(key_parts)
         return f"llm:{hashlib.sha256(key_string.encode()).hexdigest()[:16]}"
 
-    def list_providers(self) -> List[str]:
+    def list_providers(self) -> list[str]:
         """List all registered providers."""
         return list(self.providers.keys())

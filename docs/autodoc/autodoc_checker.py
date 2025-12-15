@@ -16,12 +16,13 @@ import argparse
 import re
 import sys
 from pathlib import Path
-from typing import List, Dict, Tuple
+from typing import List
 
 # Base paths
 DOCS_ROOT = Path(__file__).parent.parent
 FRAGMENTS_DIR = DOCS_ROOT / "autodoc" / "doc_fragments"
 REPO_ROOT = DOCS_ROOT.parent
+
 
 class DocChecker:
     """Documentation consistency checker."""
@@ -64,7 +65,7 @@ class DocChecker:
     def check_doc_fragments(self, file_path: Path, content: str):
         """Check for doc fragment markers and validate them."""
         # Find all fragment markers: <!-- RAE_DOC_FRAGMENT:name -->
-        pattern = r'<!-- RAE_DOC_FRAGMENT:(\w+) -->'
+        pattern = r"<!-- RAE_DOC_FRAGMENT:(\w+) -->"
         matches = re.finditer(pattern, content)
 
         for match in matches:
@@ -85,7 +86,7 @@ class DocChecker:
     def check_internal_links(self, file_path: Path, content: str):
         """Check for broken internal links."""
         # Find all markdown links: [text](path)
-        pattern = r'\[([^\]]+)\]\(([^)]+)\)'
+        pattern = r"\[([^\]]+)\]\(([^)]+)\)"
         matches = re.finditer(pattern, content)
 
         for match in matches:
@@ -93,7 +94,7 @@ class DocChecker:
             link_path = match.group(2)
 
             # Skip external links
-            if link_path.startswith(('http://', 'https://', 'mailto:', '#')):
+            if link_path.startswith(("http://", "https://", "mailto:", "#")):
                 continue
 
             # Resolve relative path
@@ -108,12 +109,12 @@ class DocChecker:
     def resolve_relative_path(self, from_file: Path, link: str) -> Path:
         """Resolve relative path from a file."""
         # Remove anchor
-        link = link.split('#')[0]
+        link = link.split("#")[0]
 
         # Handle relative paths
-        if link.startswith('./'):
+        if link.startswith("./"):
             link = link[2:]
-        elif link.startswith('../'):
+        elif link.startswith("../"):
             pass  # Already relative
         else:
             # Assume relative to current directory
@@ -151,16 +152,14 @@ class DocChecker:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="RAE Documentation Consistency Checker")
-    parser.add_argument(
-        "--fix",
-        action="store_true",
-        help="Automatically fix issues where possible"
+    parser = argparse.ArgumentParser(
+        description="RAE Documentation Consistency Checker"
     )
     parser.add_argument(
-        "files",
-        nargs="*",
-        help="Specific files to check (default: all docs/)"
+        "--fix", action="store_true", help="Automatically fix issues where possible"
+    )
+    parser.add_argument(
+        "files", nargs="*", help="Specific files to check (default: all docs/)"
     )
     args = parser.parse_args()
 

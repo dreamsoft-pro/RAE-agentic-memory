@@ -12,40 +12,36 @@ Usage:
 """
 
 import argparse
+import asyncio
 import json
 import sys
-import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any, Dict, List, Tuple
 
-import asyncio
-import asyncpg
 import numpy as np
-import yaml
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 from apps.memory_api.services.embedding import get_embedding_service
-from benchmarking.scripts.run_benchmark import RAEBenchmarkRunner, BenchmarkMetrics
 from benchmarking.math_metrics import (
-    MemorySnapshot,
-    GraphConnectivityScore,
-    SemanticCoherenceScore,
-    GraphEntropyMetric,
-    StructuralDriftMetric,
-    MemoryDriftIndex,
-    RetentionCurve,
-    OptimalRetrievalRatio,
     CostQualityFrontier,
+    GraphConnectivityScore,
+    GraphEntropyMetric,
+    MemoryDriftIndex,
+    MemorySnapshot,
+    OptimalRetrievalRatio,
+    RetentionCurve,
+    SemanticCoherenceScore,
+    StructuralDriftMetric,
 )
 from benchmarking.math_metrics.controller import (
     MathLayerController,
     TaskContext,
     TaskType,
-    MathLevel,
 )
+from benchmarking.scripts.run_benchmark import RAEBenchmarkRunner
 
 
 class MathBenchmarkRunner(RAEBenchmarkRunner):
@@ -128,8 +124,8 @@ class MathBenchmarkRunner(RAEBenchmarkRunner):
             )
 
         # Get embeddings for all memories
-        memory_ids = [str(row['id']) for row in rows]
-        contents = [row['content'] for row in rows]
+        memory_ids = [str(row["id"]) for row in rows]
+        contents = [row["content"] for row in rows]
 
         embedding_service = get_embedding_service()
         embeddings = embedding_service.generate_embeddings(contents)
@@ -189,7 +185,11 @@ class MathBenchmarkRunner(RAEBenchmarkRunner):
             )
 
         edges = [
-            (str(row['source_memory_id']), str(row['target_memory_id']), float(row['strength']))
+            (
+                str(row["source_memory_id"]),
+                str(row["target_memory_id"]),
+                float(row["strength"]),
+            )
             for row in rows
         ]
 
@@ -219,7 +219,9 @@ class MathBenchmarkRunner(RAEBenchmarkRunner):
 
             # Structure Metrics
             print("   📐 Calculating structure metrics...")
-            math_results["structure"] = self._calculate_structure_metrics(latest_snapshot)
+            math_results["structure"] = self._calculate_structure_metrics(
+                latest_snapshot
+            )
 
             # Dynamics Metrics (if we have multiple snapshots)
             if len(self.snapshots) > 1:
@@ -344,9 +346,9 @@ class MathBenchmarkRunner(RAEBenchmarkRunner):
             snapshot = self.snapshots[-1]
 
         # Make a decision for each query
-        queries = self.benchmark_data.get('queries', [])
+        queries = self.benchmark_data.get("queries", [])
         for idx, query_item in enumerate(queries):
-            query_text = query_item.get('query', '')
+            query_text = query_item.get("query", "")
 
             # Create task context
             context = TaskContext(
@@ -355,7 +357,7 @@ class MathBenchmarkRunner(RAEBenchmarkRunner):
                 session_metadata={
                     "query_index": idx,
                     "query_text": query_text,
-                    "benchmark_name": self.benchmark_data.get('name', 'unknown'),
+                    "benchmark_name": self.benchmark_data.get("name", "unknown"),
                 },
             )
 
@@ -364,11 +366,13 @@ class MathBenchmarkRunner(RAEBenchmarkRunner):
 
             # Store decision
             decision_dict = decision.to_dict()
-            decision_dict['query_index'] = idx
-            decision_dict['query_text'] = query_text
+            decision_dict["query_index"] = idx
+            decision_dict["query_text"] = query_text
             self.controller_decisions.append(decision_dict)
 
-            print(f"   Query {idx}: {decision.selected_level.value} ({decision.strategy_id})")
+            print(
+                f"   Query {idx}: {decision.selected_level.value} ({decision.strategy_id})"
+            )
 
         print(f"   ✅ Made {len(self.controller_decisions)} decisions")
 
@@ -392,40 +396,50 @@ class MathBenchmarkRunner(RAEBenchmarkRunner):
         # Save mathematical metrics separately
         if self.enable_math and "math" in metrics:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            benchmark_name = self.benchmark_data['name']
+            benchmark_name = self.benchmark_data["name"]
 
             # Save structure metrics
             if metrics["math"]["structure"]:
-                structure_file = self.output_dir / f"{benchmark_name}_{timestamp}_structure.json"
-                with open(structure_file, 'w') as f:
+                structure_file = (
+                    self.output_dir / f"{benchmark_name}_{timestamp}_structure.json"
+                )
+                with open(structure_file, "w") as f:
                     json.dump(metrics["math"]["structure"], f, indent=2)
                 print(f"   ✅ Structure metrics: {structure_file}")
 
             # Save dynamics metrics
             if metrics["math"]["dynamics"]:
-                dynamics_file = self.output_dir / f"{benchmark_name}_{timestamp}_dynamics.json"
-                with open(dynamics_file, 'w') as f:
+                dynamics_file = (
+                    self.output_dir / f"{benchmark_name}_{timestamp}_dynamics.json"
+                )
+                with open(dynamics_file, "w") as f:
                     json.dump(metrics["math"]["dynamics"], f, indent=2)
                 print(f"   ✅ Dynamics metrics: {dynamics_file}")
 
             # Save policy metrics
             if metrics["math"]["policy"]:
-                policy_file = self.output_dir / f"{benchmark_name}_{timestamp}_policy.json"
-                with open(policy_file, 'w') as f:
+                policy_file = (
+                    self.output_dir / f"{benchmark_name}_{timestamp}_policy.json"
+                )
+                with open(policy_file, "w") as f:
                     json.dump(metrics["math"]["policy"], f, indent=2)
                 print(f"   ✅ Policy metrics: {policy_file}")
 
             # Save snapshot metadata
             snapshots_meta = [snap.to_dict() for snap in self.snapshots]
-            snapshots_file = self.output_dir / f"{benchmark_name}_{timestamp}_snapshots.json"
-            with open(snapshots_file, 'w') as f:
+            snapshots_file = (
+                self.output_dir / f"{benchmark_name}_{timestamp}_snapshots.json"
+            )
+            with open(snapshots_file, "w") as f:
                 json.dump(snapshots_meta, f, indent=2)
             print(f"   ✅ Snapshots metadata: {snapshots_file}")
 
             # Save controller decisions (Iteration 1: logging foundation)
             if self.controller_decisions:
-                decisions_file = self.output_dir / f"{benchmark_name}_{timestamp}_decisions.json"
-                with open(decisions_file, 'w') as f:
+                decisions_file = (
+                    self.output_dir / f"{benchmark_name}_{timestamp}_decisions.json"
+                )
+                with open(decisions_file, "w") as f:
                     json.dump(self.controller_decisions, f, indent=2)
                 print(f"   ✅ Controller decisions: {decisions_file}")
 
@@ -435,39 +449,39 @@ async def main():
         description="Run RAE benchmarks with mathematical metrics"
     )
     parser.add_argument(
-        '--set',
+        "--set",
         type=str,
         required=True,
-        help='Benchmark set to run (e.g., academic_lite.yaml)',
+        help="Benchmark set to run (e.g., academic_lite.yaml)",
     )
     parser.add_argument(
-        '--output',
+        "--output",
         type=str,
-        default='benchmarking/results',
-        help='Output directory for results',
+        default="benchmarking/results",
+        help="Output directory for results",
     )
     parser.add_argument(
-        '--enable-math',
-        action='store_true',
+        "--enable-math",
+        action="store_true",
         default=True,
-        help='Enable mathematical metrics (default: True)',
+        help="Enable mathematical metrics (default: True)",
     )
     parser.add_argument(
-        '--api-url',
+        "--api-url",
         type=str,
-        help='RAE API URL (default: direct DB access)',
+        help="RAE API URL (default: direct DB access)",
     )
     parser.add_argument(
-        '--api-key',
+        "--api-key",
         type=str,
-        help='API key for authentication',
+        help="API key for authentication",
     )
 
     args = parser.parse_args()
 
     # Resolve paths
     project_root = Path(__file__).parent.parent.parent
-    benchmark_file = project_root / 'benchmarking' / 'sets' / args.set
+    benchmark_file = project_root / "benchmarking" / "sets" / args.set
     output_dir = project_root / args.output
 
     if not benchmark_file.exists():
@@ -507,6 +521,7 @@ async def main():
     except Exception as e:
         print(f"\n❌ Benchmark failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

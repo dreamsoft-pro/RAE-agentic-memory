@@ -8,19 +8,17 @@ Tests cover:
 - Configuration system
 """
 
-import pytest
-import numpy as np
-from datetime import datetime
 
-from benchmarking.math_metrics import MemorySnapshot
+import pytest
+
 from benchmarking.math_metrics.controller import (
-    MathLayerController,
-    MathControllerConfig,
-    MathLevel,
-    TaskType,
-    TaskContext,
     Features,
+    MathControllerConfig,
     MathDecision,
+    MathLayerController,
+    MathLevel,
+    TaskContext,
+    TaskType,
 )
 
 

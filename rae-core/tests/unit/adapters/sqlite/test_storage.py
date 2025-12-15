@@ -5,9 +5,6 @@ and JSON metadata storage.
 """
 
 import asyncio
-import json
-from datetime import datetime, timedelta
-from pathlib import Path
 from uuid import UUID, uuid4
 
 import pytest
@@ -60,9 +57,7 @@ class TestSQLiteStorageBasicOperations:
         assert isinstance(memory_id, UUID)
 
         # Verify stored
-        memory = await storage.get_memory(
-            memory_id, sample_memory_data["tenant_id"]
-        )
+        memory = await storage.get_memory(memory_id, sample_memory_data["tenant_id"])
         assert memory is not None
         assert memory["content"] == sample_memory_data["content"]
         assert memory["layer"] == sample_memory_data["layer"]
@@ -103,9 +98,7 @@ class TestSQLiteStorageBasicOperations:
         assert success is True
 
         # Verify update
-        memory = await storage.get_memory(
-            memory_id, sample_memory_data["tenant_id"]
-        )
+        memory = await storage.get_memory(memory_id, sample_memory_data["tenant_id"])
         assert memory["content"] == "Updated content"
         assert memory["importance"] == 0.9
         assert memory["version"] == 2  # Version incremented
@@ -113,15 +106,11 @@ class TestSQLiteStorageBasicOperations:
     @pytest.mark.asyncio
     async def test_update_memory_not_found(self, storage):
         """Test updating non-existent memory."""
-        success = await storage.update_memory(
-            uuid4(), "tenant-1", {"content": "New"}
-        )
+        success = await storage.update_memory(uuid4(), "tenant-1", {"content": "New"})
         assert success is False
 
     @pytest.mark.asyncio
-    async def test_update_memory_immutable_fields(
-        self, storage, sample_memory_data
-    ):
+    async def test_update_memory_immutable_fields(self, storage, sample_memory_data):
         """Test that immutable fields cannot be updated."""
         memory_id = await storage.store_memory(**sample_memory_data)
         original_memory = await storage.get_memory(
@@ -136,9 +125,7 @@ class TestSQLiteStorageBasicOperations:
         )
 
         # Verify immutable fields unchanged
-        memory = await storage.get_memory(
-            memory_id, sample_memory_data["tenant_id"]
-        )
+        memory = await storage.get_memory(memory_id, sample_memory_data["tenant_id"])
         assert memory["id"] == original_memory["id"]
         assert memory["created_at"] == original_memory["created_at"]
 
@@ -154,9 +141,7 @@ class TestSQLiteStorageBasicOperations:
         assert success is True
 
         # Verify deleted
-        memory = await storage.get_memory(
-            memory_id, sample_memory_data["tenant_id"]
-        )
+        memory = await storage.get_memory(memory_id, sample_memory_data["tenant_id"])
         assert memory is None
 
     @pytest.mark.asyncio
@@ -175,9 +160,7 @@ class TestSQLiteStorageBasicOperations:
         assert success is False
 
         # Verify not deleted
-        memory = await storage.get_memory(
-            memory_id, sample_memory_data["tenant_id"]
-        )
+        memory = await storage.get_memory(memory_id, sample_memory_data["tenant_id"])
         assert memory is not None
 
 
@@ -413,9 +396,7 @@ class TestSQLiteStorageAccessTracking:
         memory_id = await storage.store_memory(**sample_memory_data)
 
         # Initial count should be 0
-        memory = await storage.get_memory(
-            memory_id, sample_memory_data["tenant_id"]
-        )
+        memory = await storage.get_memory(memory_id, sample_memory_data["tenant_id"])
         assert memory["access_count"] == 0
         initial_accessed = memory["last_accessed_at"]
 
@@ -429,16 +410,12 @@ class TestSQLiteStorageAccessTracking:
         assert success is True
 
         # Verify
-        memory = await storage.get_memory(
-            memory_id, sample_memory_data["tenant_id"]
-        )
+        memory = await storage.get_memory(memory_id, sample_memory_data["tenant_id"])
         assert memory["access_count"] == 1
         assert memory["last_accessed_at"] > initial_accessed
 
     @pytest.mark.asyncio
-    async def test_increment_access_count_multiple(
-        self, storage, sample_memory_data
-    ):
+    async def test_increment_access_count_multiple(self, storage, sample_memory_data):
         """Test multiple increments."""
         memory_id = await storage.store_memory(**sample_memory_data)
 
@@ -448,9 +425,7 @@ class TestSQLiteStorageAccessTracking:
                 memory_id, sample_memory_data["tenant_id"]
             )
 
-        memory = await storage.get_memory(
-            memory_id, sample_memory_data["tenant_id"]
-        )
+        memory = await storage.get_memory(memory_id, sample_memory_data["tenant_id"])
         assert memory["access_count"] == 3
 
     @pytest.mark.asyncio

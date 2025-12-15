@@ -182,17 +182,13 @@ class RAEClient:
                 raise ValueError("project_id is required for knowledge graph")
 
             # Fetch nodes and edges separately
-            nodes = self._request(
-                "GET", f"/v1/graph/nodes?project_id={project_id}"
-            )
-            edges = self._request(
-                "GET", f"/v1/graph/edges?project_id={project_id}"
-            )
+            nodes = self._request("GET", f"/v1/graph/nodes?project_id={project_id}")
+            edges = self._request("GET", f"/v1/graph/edges?project_id={project_id}")
 
             # Combine into expected format
             return {
                 "nodes": nodes if isinstance(nodes, list) else [],
-                "edges": edges if isinstance(edges, list) else []
+                "edges": edges if isinstance(edges, list) else [],
             }
 
         except Exception as e:

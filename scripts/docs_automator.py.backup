@@ -9,7 +9,7 @@ import re
 import subprocess
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
 
 # --- Configuration ---
 PROJECT_ROOT = "."

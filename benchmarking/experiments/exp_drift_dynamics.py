@@ -15,18 +15,18 @@ Expected Results:
 """
 
 import asyncio
-import asyncpg
-import numpy as np
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
+
+from benchmarking.experiments.exp_structural_stability import (
+    StructuralStabilityExperiment,
+)
 from benchmarking.math_metrics import (
-    MemorySnapshot,
     MemoryDriftIndex,
     StructuralDriftMetric,
 )
-from benchmarking.experiments.exp_structural_stability import StructuralStabilityExperiment
 
 
 class DriftDynamicsExperiment(StructuralStabilityExperiment):
