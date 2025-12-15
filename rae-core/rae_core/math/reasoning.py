@@ -81,6 +81,50 @@ class ReasoningPath:
 
         return False
 
+    def count_unverified_assumptions(self, verified_facts: Set[str]) -> int:
+        """Count unverified assumptions in the path.
+
+        Args:
+            verified_facts: Set of verified fact strings
+
+        Returns:
+            Number of steps that are not verified by known facts
+        """
+        unverified_count = 0
+        for step in self.steps:
+            step_lower = step.lower()
+            # Check if this step is supported by any verified fact
+            is_verified = any(fact.lower() in step_lower for fact in verified_facts)
+            if not is_verified:
+                unverified_count += 1
+        return unverified_count
+
+    def similarity_to(self, other_path: "ReasoningPath") -> float:
+        """Compute similarity to another path.
+
+        Args:
+            other_path: Another reasoning path
+
+        Returns:
+            Similarity score (0-1) based on overlapping steps
+        """
+        if not self.steps or not other_path.steps:
+            return 0.0
+
+        # Simple Jaccard similarity on step content
+        self_content = set(word.lower() for step in self.steps for word in step.split())
+        other_content = set(
+            word.lower() for step in other_path.steps for word in step.split()
+        )
+
+        if not self_content or not other_content:
+            return 0.0
+
+        intersection = len(self_content & other_content)
+        union = len(self_content | other_content)
+
+        return intersection / union if union > 0 else 0.0
+
 
 class ReasoningController:
     """Centralized controller for graph reasoning with configurable parameters.
@@ -117,6 +161,8 @@ class ReasoningController:
         uncertainty_threshold: float = 0.3,
         token_budget_per_step: int = 500,
         enable_pruning: bool = True,
+        max_unverified_assumptions: int = 2,
+        known_false_similarity_threshold: float = 0.8,
     ):
         """Initialize reasoning controller.
 
@@ -125,16 +171,26 @@ class ReasoningController:
             uncertainty_threshold: Stop if uncertainty drops below this
             token_budget_per_step: Maximum tokens per reasoning step
             enable_pruning: Enable automatic path pruning
+            max_unverified_assumptions: Maximum unverified assumptions before pruning
+            known_false_similarity_threshold: Similarity threshold for known false paths
         """
         self.max_depth = max_depth
         self.uncertainty_threshold = uncertainty_threshold
         self.token_budget = token_budget_per_step
         self.enable_pruning = enable_pruning
+        self.max_unverified_assumptions = max_unverified_assumptions
+        self.known_false_similarity_threshold = known_false_similarity_threshold
+
+        # Track known false paths for pruning
+        self.known_false_paths: List[ReasoningPath] = []
 
         # Statistics
         self.stats = {
             "paths_evaluated": 0,
             "paths_pruned": 0,
+            "paths_pruned_unverified": 0,
+            "paths_pruned_similar_to_false": 0,
+            "paths_pruned_contradictory": 0,
             "max_depth_reached": 0,
             "uncertainty_stops": 0,
             "budget_exceeded": 0,
@@ -189,13 +245,20 @@ class ReasoningController:
         paths: List[ReasoningPath],
         episodic_memories: Optional[List[Dict[str, Any]]] = None,
         semantic_memories: Optional[List[Dict[str, Any]]] = None,
+        verified_facts: Optional[Set[str]] = None,
     ) -> List[ReasoningPath]:
-        """Cut paths that contradict memory layers.
+        """Cut paths that contradict memory layers or have too many unverified assumptions.
+
+        Enhanced with three heuristics:
+        1. Paths contradicting episodic memory → prune
+        2. Paths with >max_unverified_assumptions → prune
+        3. Paths similar (>threshold) to known-false paths → prune
 
         Args:
             paths: List of reasoning paths to evaluate
             episodic_memories: Recent episodic memories for validation
             semantic_memories: Semantic knowledge for validation
+            verified_facts: Set of verified fact strings
 
         Returns:
             Filtered list of non-contradictory paths
@@ -206,38 +269,71 @@ class ReasoningController:
         pruned_paths = []
 
         for path in paths:
-            # Skip paths with detected contradictions
+            # Heuristic 1: Skip paths with detected contradictions
             if path.is_contradictory:
                 self.stats["paths_pruned"] += 1
+                self.stats["paths_pruned_contradictory"] += 1
                 logger.debug(
                     f"Pruning path (depth {path.depth}): Has contradictions"
                 )
                 continue
 
-            # Check alignment with episodic memory
+            # Heuristic 1a: Check alignment with episodic memory
             if episodic_memories:
                 contradicts_episodic = self._contradicts_memories(
                     path, episodic_memories
                 )
                 if contradicts_episodic:
                     self.stats["paths_pruned"] += 1
+                    self.stats["paths_pruned_contradictory"] += 1
                     logger.debug(
                         f"Pruning path (depth {path.depth}): "
                         "Contradicts episodic memory"
                     )
                     continue
 
-            # Check alignment with semantic memory
+            # Heuristic 1b: Check alignment with semantic memory
             if semantic_memories:
                 contradicts_semantic = self._contradicts_memories(
                     path, semantic_memories
                 )
                 if contradicts_semantic:
                     self.stats["paths_pruned"] += 1
+                    self.stats["paths_pruned_contradictory"] += 1
                     logger.debug(
                         f"Pruning path (depth {path.depth}): "
                         "Contradicts semantic knowledge"
                     )
+                    continue
+
+            # Heuristic 2: Prune paths with too many unverified assumptions
+            if verified_facts is not None:
+                unverified_count = path.count_unverified_assumptions(verified_facts)
+                if unverified_count > self.max_unverified_assumptions:
+                    self.stats["paths_pruned"] += 1
+                    self.stats["paths_pruned_unverified"] += 1
+                    logger.debug(
+                        f"Pruning path (depth {path.depth}): "
+                        f"{unverified_count} unverified assumptions "
+                        f"(max: {self.max_unverified_assumptions})"
+                    )
+                    continue
+
+            # Heuristic 3: Prune paths similar to known-false paths
+            if self.known_false_paths:
+                is_similar_to_false = False
+                for false_path in self.known_false_paths:
+                    similarity = path.similarity_to(false_path)
+                    if similarity > self.known_false_similarity_threshold:
+                        is_similar_to_false = True
+                        self.stats["paths_pruned"] += 1
+                        self.stats["paths_pruned_similar_to_false"] += 1
+                        logger.debug(
+                            f"Pruning path (depth {path.depth}): "
+                            f"Similar ({similarity:.2f}) to known-false path"
+                        )
+                        break
+                if is_similar_to_false:
                     continue
 
             # Path passes all checks
@@ -281,3 +377,18 @@ class ReasoningController:
         """Reset statistics counters."""
         for key in self.stats:
             self.stats[key] = 0
+
+    def mark_path_as_false(self, path: ReasoningPath):
+        """Mark a path as known-false for future pruning.
+
+        Args:
+            path: Path that was determined to be false/incorrect
+        """
+        self.known_false_paths.append(path)
+        logger.debug(f"Marked path (depth {path.depth}) as known-false")
+
+    def clear_known_false_paths(self):
+        """Clear the list of known-false paths."""
+        count = len(self.known_false_paths)
+        self.known_false_paths.clear()
+        logger.debug(f"Cleared {count} known-false paths")

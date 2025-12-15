@@ -21,9 +21,7 @@ from apps.memory_api.models.graph import (  # noqa: E402
     TraversalStrategy,
 )
 from apps.memory_api.repositories.graph_repository import GraphRepository  # noqa: E402
-from apps.memory_api.services.hybrid_search import (  # noqa: E402
-    HybridSearchService,
-)
+from apps.memory_api.services.hybrid_search import HybridSearchService  # noqa: E402
 
 
 @pytest.fixture

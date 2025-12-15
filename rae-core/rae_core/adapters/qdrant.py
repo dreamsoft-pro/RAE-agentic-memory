@@ -374,6 +374,138 @@ class QdrantVectorStore(IVectorStore):
         except Exception:
             return 0
 
+    async def search_with_contradiction_penalty(
+        self,
+        query_embedding: List[float],
+        tenant_id: str,
+        layer: Optional[str] = None,
+        limit: int = 10,
+        score_threshold: Optional[float] = None,
+        agent_id: Optional[str] = None,
+        session_id: Optional[str] = None,
+        penalty_factor: float = 0.5,
+        contradiction_threshold: float = 0.15,
+    ) -> List[Tuple[UUID, float]]:
+        """Search with penalty for contradictory results.
+
+        This method:
+        1. Performs similarity search
+        2. Detects contradictory pairs in results
+        3. Penalizes both contradictory memories
+        4. Re-sorts by penalized scores
+
+        Contradictory detection:
+        - If cosine similarity < contradiction_threshold, memories contradict
+        - Low similarity in embedding space suggests opposite meanings
+
+        Args:
+            query_embedding: Query vector
+            tenant_id: Tenant ID (mandatory)
+            layer: Optional memory layer filter
+            limit: Maximum results (will fetch more for filtering)
+            score_threshold: Minimum similarity score
+            agent_id: Optional agent ID for namespace isolation
+            session_id: Optional session ID for namespace isolation
+            penalty_factor: Multiplier for contradictory scores (default: 0.5)
+            contradiction_threshold: Similarity below this = contradiction
+
+        Returns:
+            List of (memory_id, penalized_score) tuples sorted by score
+
+        Example:
+            >>> results = await store.search_with_contradiction_penalty(
+            ...     query_embedding=embedding,
+            ...     tenant_id="tenant1",
+            ...     penalty_factor=0.5,  # Halve contradictory scores
+            ...     contradiction_threshold=0.15,  # <0.15 similarity = contradiction
+            ... )
+        """
+        # Fetch more results for contradiction detection
+        initial_results = await self.search_similar(
+            query_embedding=query_embedding,
+            tenant_id=tenant_id,
+            layer=layer,
+            limit=limit * 2,  # Fetch extra for filtering
+            score_threshold=score_threshold,
+            agent_id=agent_id,
+            session_id=session_id,
+        )
+
+        if len(initial_results) < 2:
+            # Not enough results for contradiction detection
+            return initial_results[:limit]
+
+        # Retrieve vectors for all results
+        result_vectors: Dict[UUID, List[float]] = {}
+        for memory_id, _ in initial_results:
+            vector = await self.get_vector(memory_id=memory_id, tenant_id=tenant_id)
+            if vector:
+                result_vectors[memory_id] = vector
+
+        # Detect contradictions and build penalty map
+        penalties: Dict[UUID, int] = {}  # Count of contradictions per memory
+
+        for i, (mem_a_id, _) in enumerate(initial_results):
+            if mem_a_id not in result_vectors:
+                continue
+
+            for mem_b_id, _ in initial_results[i + 1 :]:
+                if mem_b_id not in result_vectors:
+                    continue
+
+                # Compute cosine similarity between the two vectors
+                vec_a = result_vectors[mem_a_id]
+                vec_b = result_vectors[mem_b_id]
+                similarity = self._cosine_similarity(vec_a, vec_b)
+
+                # If similarity is very low, they contradict
+                if similarity < contradiction_threshold:
+                    penalties[mem_a_id] = penalties.get(mem_a_id, 0) + 1
+                    penalties[mem_b_id] = penalties.get(mem_b_id, 0) + 1
+
+        # Apply penalties to scores
+        penalized_results = []
+        for memory_id, base_score in initial_results:
+            penalty_count = penalties.get(memory_id, 0)
+            if penalty_count > 0:
+                # Apply penalty: score *= penalty_factor^penalty_count
+                penalized_score = base_score * (penalty_factor**penalty_count)
+            else:
+                penalized_score = base_score
+
+            penalized_results.append((memory_id, penalized_score))
+
+        # Re-sort by penalized scores
+        penalized_results.sort(key=lambda x: x[1], reverse=True)
+
+        return penalized_results[:limit]
+
+    @staticmethod
+    def _cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
+        """Compute cosine similarity between two vectors.
+
+        Args:
+            vec_a: First vector
+            vec_b: Second vector
+
+        Returns:
+            Cosine similarity (-1 to 1, higher = more similar)
+        """
+        if len(vec_a) != len(vec_b):
+            return 0.0
+
+        # Dot product
+        dot_product = sum(a * b for a, b in zip(vec_a, vec_b))
+
+        # Magnitudes
+        mag_a = sum(a * a for a in vec_a) ** 0.5
+        mag_b = sum(b * b for b in vec_b) ** 0.5
+
+        if mag_a == 0.0 or mag_b == 0.0:
+            return 0.0
+
+        return dot_product / (mag_a * mag_b)
+
     def close(self):
         """Close Qdrant client."""
         if hasattr(self.client, "close"):

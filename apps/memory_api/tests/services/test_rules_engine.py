@@ -195,7 +195,6 @@ async def test_process_event_flow(rules_engine, sample_event):
     ) as mock_fetch, patch.object(
         rules_engine, "_execute_trigger_actions", new_callable=AsyncMock
     ) as mock_exec:
-
         mock_fetch.return_value = [trigger]
         mock_exec.return_value = [
             MagicMock(status=ExecutionStatus.COMPLETED, success=True)
@@ -237,7 +236,6 @@ async def test_action_retry_logic(rules_engine, sample_event):
     with patch.object(
         rules_engine, "_execute_action_by_type", new_callable=AsyncMock
     ) as mock_exec_type, patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
-
         mock_exec_type.side_effect = [
             Exception("Fail 1"),
             Exception("Fail 2"),

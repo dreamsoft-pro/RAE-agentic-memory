@@ -29,11 +29,7 @@ from typing import Any, Dict, List, Optional
 import structlog
 
 # Import pure math functions from rae_core
-from rae_core.math import (
-    DecayConfig,
-    MemoryScoreResult,
-    ScoringWeights,
-)
+from rae_core.math import DecayConfig, MemoryScoreResult, ScoringWeights
 from rae_core.math import compute_batch_scores as _compute_batch_scores
 from rae_core.math import compute_memory_score as _compute_memory_score
 from rae_core.math import rank_memories_by_score as _rank_memories_by_score

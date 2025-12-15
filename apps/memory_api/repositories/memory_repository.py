@@ -253,7 +253,6 @@ class MemoryRepository:
             List of episodic memory records
         """
         async with self.pool.acquire() as conn:
-
             conditions = ["tenant_id = $1", "project = $2", "layer = 'em'"]
             params = [tenant_id, project]
 

@@ -18,12 +18,7 @@ from typing import Any, List, Optional
 
 import structlog
 from qdrant_client import QdrantClient
-from qdrant_client.models import (
-    Filter,
-    PointStruct,
-    ScoredPoint,
-    SearchParams,
-)
+from qdrant_client.models import Filter, PointStruct, ScoredPoint, SearchParams
 
 from .opentelemetry_config import OPENTELEMETRY_AVAILABLE, get_tracer
 

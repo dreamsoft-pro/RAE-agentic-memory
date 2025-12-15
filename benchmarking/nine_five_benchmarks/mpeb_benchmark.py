@@ -626,6 +626,173 @@ class MPEBBenchmark:
 
         return results
 
+    def run_multi_episode(
+        self,
+        num_episodes: int = 3,
+        iterations_per_episode: int = 100,
+        episode_length: int = 50,
+        verbose: bool = False,
+    ) -> Dict[str, Any]:
+        """Run multi-episode adaptation test.
+
+        Tests policy adaptation across changing rule sets:
+        - Episode 1-N: Different rule sets
+        - Each episode has slightly different optimal policies
+        - Measures adaptation speed without catastrophic forgetting
+
+        Args:
+            num_episodes: Number of episodes with different rule sets
+            iterations_per_episode: Learning iterations per episode
+            episode_length: Steps per learning iteration
+            verbose: Print progress
+
+        Returns:
+            Dict with multi-episode metrics:
+            - episode_adaptations: Adaptation rate for each episode
+            - average_adaptation_rate: Mean adaptation across episodes
+            - forgetting_metric: How much previous learning was retained
+            - final_quality: Final policy quality after all episodes
+
+        Example:
+            >>> mpeb = MPEBBenchmark()
+            >>> results = mpeb.run_multi_episode(num_episodes=3)
+            >>> print(f"Avg adaptation: {results['average_adaptation_rate']:.4f}")
+        """
+        if verbose:
+            print(f"\nRunning multi-episode adaptation test ({num_episodes} episodes)")
+            print("=" * 60)
+
+        episode_results = []
+        adaptation_rates = []
+
+        for episode_num in range(1, num_episodes + 1):
+            if verbose:
+                print(f"\nEpisode {episode_num}/{num_episodes}: Learning new rule set...")
+
+            # Modify environment rules for this episode
+            self._modify_environment_rules(episode_num)
+
+            # Reset exploration for new episode
+            self.policy.reset_exploration()
+
+            # Track initial quality
+            initial_quality = self.policy.get_mean_q_value()
+
+            # Run learning for this episode
+            episode_start = time.time()
+            for iter_num in range(iterations_per_episode):
+                for _ in range(episode_length):
+                    state = self.env.get_state()
+                    action = self.policy.select_action(state)
+                    next_state, reward = self.env.step(action)
+                    self.policy.update(state, action, reward, next_state)
+
+                # Track convergence to new rule set
+                convergence = self._calculate_convergence()
+
+                if verbose and (iter_num + 1) % 20 == 0:
+                    print(
+                        f"  Iteration {iter_num+1}/{iterations_per_episode}: "
+                        f"Convergence={convergence:.3f}"
+                    )
+
+            episode_duration = time.time() - episode_start
+
+            # Final quality for this episode
+            final_quality = self.policy.get_mean_q_value()
+            final_convergence = self._calculate_convergence()
+
+            # Adaptation rate: how quickly quality improved
+            quality_gain = final_quality - initial_quality
+            adaptation_rate = quality_gain / iterations_per_episode
+
+            adaptation_rates.append(adaptation_rate)
+
+            episode_results.append(
+                {
+                    "episode": episode_num,
+                    "initial_quality": initial_quality,
+                    "final_quality": final_quality,
+                    "quality_gain": quality_gain,
+                    "adaptation_rate": adaptation_rate,
+                    "final_convergence": final_convergence,
+                    "duration_seconds": episode_duration,
+                }
+            )
+
+            if verbose:
+                print(f"  Episode {episode_num} complete:")
+                print(f"    Quality gain: {quality_gain:.4f}")
+                print(f"    Adaptation rate: {adaptation_rate:.4f}")
+                print(f"    Final convergence: {final_convergence:.4f}")
+
+        # Calculate aggregate metrics
+        average_adaptation = float(np.mean(adaptation_rates))
+
+        # Forgetting metric: compare first episode vs last episode quality
+        # If quality drops significantly, catastrophic forgetting occurred
+        first_episode_quality = episode_results[0]["final_quality"]
+        last_episode_quality = episode_results[-1]["final_quality"]
+        forgetting_metric = last_episode_quality / (first_episode_quality + 1e-6)
+
+        overall_results = {
+            "num_episodes": num_episodes,
+            "iterations_per_episode": iterations_per_episode,
+            "episode_length": episode_length,
+            "episode_results": episode_results,
+            "episode_adaptations": adaptation_rates,
+            "average_adaptation_rate": average_adaptation,
+            "forgetting_metric": forgetting_metric,
+            "final_quality": last_episode_quality,
+        }
+
+        if verbose:
+            print("\n" + "=" * 60)
+            print("Multi-Episode Results:")
+            print(f"  Average Adaptation Rate: {average_adaptation:.4f}")
+            print(f"  Forgetting Metric: {forgetting_metric:.4f}")
+            print(f"  Final Quality: {last_episode_quality:.4f}")
+            print()
+
+        return overall_results
+
+    def _modify_environment_rules(self, episode_num: int):
+        """Modify environment rules for multi-episode testing.
+
+        Args:
+            episode_num: Current episode number (1-indexed)
+
+        Modifies:
+            - Reward structure
+            - State transition probabilities
+            - Optimal policy (slightly)
+        """
+        # Rotate optimal policy by changing reward weights
+        # This simulates changing task requirements
+        base_rewards = {
+            PolicyAction.RETRIEVE: 10.0,
+            PolicyAction.STORE: 8.0,
+            PolicyAction.COMPRESS: 6.0,
+            PolicyAction.REFLECT: 5.0,
+            PolicyAction.ARCHIVE: 3.0,
+            PolicyAction.SKIP: -2.0,
+        }
+
+        # Apply episode-specific modifications
+        modification_factor = 1.0 + (episode_num % 3) * 0.2
+
+        for state in EnvironmentState:
+            for action in PolicyAction:
+                base_reward = base_rewards[action]
+                # Vary rewards based on episode
+                modified_reward = base_reward * modification_factor
+                # Add some noise
+                modified_reward += np.random.uniform(-1.0, 1.0)
+                self.env.reward_structure[(state, action)] = modified_reward
+
+        # Update optimal policy based on new rewards
+        self.env._compute_optimal_policy()
+
     def save_results(
         self,
         results: MPEBResults,

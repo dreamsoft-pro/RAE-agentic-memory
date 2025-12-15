@@ -6,12 +6,7 @@ Implements the LLM provider interface for Anthropic Claude models.
 
 from typing import AsyncIterator
 
-from anthropic import (
-    APIError,
-    AsyncAnthropic,
-    AuthenticationError,
-    RateLimitError,
-)
+from anthropic import APIError, AsyncAnthropic, AuthenticationError, RateLimitError
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from ..models import (
