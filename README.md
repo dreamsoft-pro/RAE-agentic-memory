@@ -69,8 +69,7 @@ RAE is built on three core principles:
 - 🏛️ **For Public Administration** – See [Transparency, Audit & Policies](docs/paths/public-sector.md)
 - 🤝 **For Philanthropists or VCs** – See [Research Partnerships & Pilots](docs/paths/partners.md)
 
-*(Note: These path documents are currently being developed.)*
-
+*
 ---
 
 ## Quick Start
