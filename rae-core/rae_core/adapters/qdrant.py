@@ -3,7 +3,7 @@
 Implements IVectorStore interface using Qdrant for similarity search.
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Optional
 from uuid import UUID
 
 try:
@@ -17,9 +17,9 @@ from ..interfaces.vector import IVectorStore
 
 class QdrantVectorStore(IVectorStore):
     """Qdrant implementation of IVectorStore.
-    
+
     Requires qdrant-client package and access to Qdrant server.
-    
+
     Collection schema:
     - Vectors: embeddings (dimension configurable, default 1536 for OpenAI)
     - Payload: {
@@ -37,14 +37,14 @@ class QdrantVectorStore(IVectorStore):
     def __init__(
         self,
         collection_name: str = "rae_memories",
-        url: Optional[str] = None,
-        api_key: Optional[str] = None,
+        url: str | None = None,
+        api_key: str | None = None,
         client: Optional["QdrantClient"] = None,
         embedding_dim: int = 1536,
         distance: str = "Cosine",
     ):
         """Initialize Qdrant vector store.
-        
+
         Args:
             collection_name: Name of Qdrant collection
             url: Qdrant server URL (e.g., http://localhost:6333)
@@ -61,7 +61,7 @@ class QdrantVectorStore(IVectorStore):
 
         self.collection_name = collection_name
         self.embedding_dim = embedding_dim
-        
+
         # Distance metric mapping
         distance_map = {
             "Cosine": Distance.COSINE,
@@ -102,12 +102,12 @@ class QdrantVectorStore(IVectorStore):
     async def add_vector(
         self,
         memory_id: UUID,
-        embedding: List[float],
+        embedding: list[float],
         tenant_id: str,
         agent_id: str,
         layer: str,
-        metadata: Optional[Dict[str, Any]] = None,
-        session_id: Optional[str] = None,
+        metadata: dict[str, Any] | None = None,
+        session_id: str | None = None,
     ) -> bool:
         """Add a vector to Qdrant."""
         await self._ensure_collection()
@@ -141,30 +141,32 @@ class QdrantVectorStore(IVectorStore):
     async def store_vector(
         self,
         memory_id: UUID,
-        embedding: List[float],
+        embedding: list[float],
         tenant_id: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> bool:
         """Store a vector embedding."""
         metadata = metadata or {}
         agent_id = str(metadata.get("agent_id", "default"))
         session_id = str(metadata.get("session_id", "default"))
         layer = str(metadata.get("layer", "episodic"))
-        return await self.add_vector(memory_id, embedding, tenant_id, agent_id, layer, metadata, session_id)
+        return await self.add_vector(
+            memory_id, embedding, tenant_id, agent_id, layer, metadata, session_id
+        )
 
     async def update_vector(
         self,
         memory_id: UUID,
-        embedding: List[float],
+        embedding: list[float],
         tenant_id: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> bool:
         """Update a vector embedding."""
         return await self.store_vector(memory_id, embedding, tenant_id, metadata)
 
     async def batch_store_vectors(
         self,
-        vectors: List[Tuple[UUID, List[float], Dict[str, Any]]],
+        vectors: list[tuple[UUID, list[float], dict[str, Any]]],
         tenant_id: str,
     ) -> int:
         """Store multiple vectors in a batch."""
@@ -183,37 +185,32 @@ class QdrantVectorStore(IVectorStore):
                 "agent_id": agent_id,
                 "session_id": session_id,
                 "layer": layer,
-                **meta
+                **meta,
             }
-            
-            points.append(PointStruct(
-                id=str(memory_id),
-                vector=embedding,
-                payload=payload
-            ))
-            
+
+            points.append(
+                PointStruct(id=str(memory_id), vector=embedding, payload=payload)
+            )
+
         if not points:
             return 0
 
         try:
-            self.client.upsert(
-                collection_name=self.collection_name,
-                points=points
-            )
+            self.client.upsert(collection_name=self.collection_name, points=points)
             return len(points)
         except Exception:
             return 0
 
     async def search_similar(
         self,
-        query_embedding: List[float],
+        query_embedding: list[float],
         tenant_id: str,
-        layer: Optional[str] = None,
+        layer: str | None = None,
         limit: int = 10,
-        score_threshold: Optional[float] = None,
-        agent_id: Optional[str] = None,
-        session_id: Optional[str] = None,
-    ) -> List[Tuple[UUID, float]]:
+        score_threshold: float | None = None,
+        agent_id: str | None = None,
+        session_id: str | None = None,
+    ) -> list[tuple[UUID, float]]:
         """Search for similar vectors using cosine similarity.
 
         Args:
@@ -228,15 +225,11 @@ class QdrantVectorStore(IVectorStore):
         await self._ensure_collection()
 
         # Build filter - mandatory tenant_id
-        must_conditions = [
-            {"key": "tenant_id", "match": {"value": tenant_id}}
-        ]
+        must_conditions = [{"key": "tenant_id", "match": {"value": tenant_id}}]
 
         # Add agent_id filter if provided (namespace isolation)
         if agent_id:
-            must_conditions.append(
-                {"key": "agent_id", "match": {"value": agent_id}}
-            )
+            must_conditions.append({"key": "agent_id", "match": {"value": agent_id}})
 
         # Add session_id filter if provided (namespace isolation)
         if session_id:
@@ -245,9 +238,7 @@ class QdrantVectorStore(IVectorStore):
             )
 
         if layer:
-            must_conditions.append(
-                {"key": "layer", "match": {"value": layer}}
-            )
+            must_conditions.append({"key": "layer", "match": {"value": layer}})
 
         query_filter = {"must": must_conditions} if must_conditions else None
 
@@ -261,8 +252,7 @@ class QdrantVectorStore(IVectorStore):
             )
 
             return [
-                (UUID(result.payload["memory_id"]), result.score)
-                for result in results
+                (UUID(result.payload["memory_id"]), result.score) for result in results
             ]
         except Exception:
             return []
@@ -271,7 +261,7 @@ class QdrantVectorStore(IVectorStore):
         self,
         memory_id: UUID,
         tenant_id: str,
-    ) -> Optional[List[float]]:
+    ) -> list[float] | None:
         """Get vector by memory ID."""
         await self._ensure_collection()
 
@@ -280,7 +270,7 @@ class QdrantVectorStore(IVectorStore):
                 collection_name=self.collection_name,
                 ids=[str(memory_id)],
             )
-            
+
             if result and len(result) > 0:
                 # Verify tenant_id matches
                 if result[0].payload.get("tenant_id") == tenant_id:
@@ -304,7 +294,7 @@ class QdrantVectorStore(IVectorStore):
                 collection_name=self.collection_name,
                 ids=[str(memory_id)],
             )
-            
+
             if not result or result[0].payload.get("tenant_id") != tenant_id:
                 return False
 
@@ -339,7 +329,7 @@ class QdrantVectorStore(IVectorStore):
                 collection_name=self.collection_name,
                 points_selector=delete_filter,
             )
-            
+
             # Qdrant doesn't return count easily, return success indicator
             return 1 if result else 0
         except Exception:
@@ -348,44 +338,40 @@ class QdrantVectorStore(IVectorStore):
     async def count_vectors(
         self,
         tenant_id: str,
-        layer: Optional[str] = None,
+        layer: str | None = None,
     ) -> int:
         """Count vectors matching criteria."""
         await self._ensure_collection()
 
         try:
             count_filter = {
-                "must": [
-                    {"key": "tenant_id", "match": {"value": tenant_id}}
-                ]
+                "must": [{"key": "tenant_id", "match": {"value": tenant_id}}]
             }
-            
+
             if layer:
-                count_filter["must"].append(
-                    {"key": "layer", "match": {"value": layer}}
-                )
+                count_filter["must"].append({"key": "layer", "match": {"value": layer}})
 
             result = self.client.count(
                 collection_name=self.collection_name,
                 count_filter=count_filter,
             )
-            
+
             return result.count if result else 0
         except Exception:
             return 0
 
     async def search_with_contradiction_penalty(
         self,
-        query_embedding: List[float],
+        query_embedding: list[float],
         tenant_id: str,
-        layer: Optional[str] = None,
+        layer: str | None = None,
         limit: int = 10,
-        score_threshold: Optional[float] = None,
-        agent_id: Optional[str] = None,
-        session_id: Optional[str] = None,
+        score_threshold: float | None = None,
+        agent_id: str | None = None,
+        session_id: str | None = None,
         penalty_factor: float = 0.5,
         contradiction_threshold: float = 0.15,
-    ) -> List[Tuple[UUID, float]]:
+    ) -> list[tuple[UUID, float]]:
         """Search with penalty for contradictory results.
 
         This method:
@@ -436,14 +422,14 @@ class QdrantVectorStore(IVectorStore):
             return initial_results[:limit]
 
         # Retrieve vectors for all results
-        result_vectors: Dict[UUID, List[float]] = {}
+        result_vectors: dict[UUID, list[float]] = {}
         for memory_id, _ in initial_results:
             vector = await self.get_vector(memory_id=memory_id, tenant_id=tenant_id)
             if vector:
                 result_vectors[memory_id] = vector
 
         # Detect contradictions and build penalty map
-        penalties: Dict[UUID, int] = {}  # Count of contradictions per memory
+        penalties: dict[UUID, int] = {}  # Count of contradictions per memory
 
         for i, (mem_a_id, _) in enumerate(initial_results):
             if mem_a_id not in result_vectors:
@@ -481,7 +467,7 @@ class QdrantVectorStore(IVectorStore):
         return penalized_results[:limit]
 
     @staticmethod
-    def _cosine_similarity(vec_a: List[float], vec_b: List[float]) -> float:
+    def _cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
         """Compute cosine similarity between two vectors.
 
         Args:

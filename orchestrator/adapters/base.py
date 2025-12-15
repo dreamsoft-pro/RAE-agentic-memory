@@ -3,11 +3,12 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, Dict, Any, List
+from typing import Any, Dict, List, Optional
 
 
 class ModelType(Enum):
     """Supported AI model types."""
+
     CLAUDE_SONNET = "claude-sonnet-4-5"
     GEMINI_PRO = "gemini-2.0-pro"
     GEMINI_FLASH = "gemini-2.0-flash"
@@ -15,6 +16,7 @@ class ModelType(Enum):
 
 class TaskComplexity(Enum):
     """Task complexity levels for routing."""
+
     TRIVIAL = "trivial"
     SMALL = "small"
     MEDIUM = "medium"
@@ -23,6 +25,7 @@ class TaskComplexity(Enum):
 
 class TaskRisk(Enum):
     """Task risk levels."""
+
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -31,6 +34,7 @@ class TaskRisk(Enum):
 @dataclass
 class AgentContext:
     """Context information for agent execution."""
+
     task_description: str
     task_type: str  # e.g., "plan", "implement", "review"
     complexity: TaskComplexity
@@ -49,6 +53,7 @@ class AgentContext:
 @dataclass
 class AgentResult:
     """Result from agent execution."""
+
     success: bool
     output: str
     error: Optional[str] = None

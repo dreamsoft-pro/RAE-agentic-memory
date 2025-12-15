@@ -2,11 +2,8 @@
 
 import asyncio
 import json
-import subprocess
-from typing import Optional
-from pathlib import Path
 
-from .base import ModelAdapter, ModelType, AgentContext, AgentResult
+from .base import AgentContext, AgentResult, ModelAdapter, ModelType
 
 
 class GeminiAdapter(ModelAdapter):
@@ -53,25 +50,32 @@ class GeminiAdapter(ModelAdapter):
             proc = await asyncio.create_subprocess_exec(
                 "gemini",
                 prompt,  # Positional argument
-                "--output-format", "json",
+                "--output-format",
+                "json",
                 cwd="/tmp",  # Avoid loading project context
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
 
             stdout, stderr = await asyncio.wait_for(
-                proc.communicate(),
-                timeout=300  # 5 minutes
+                proc.communicate(), timeout=300  # 5 minutes
             )
 
             if proc.returncode != 0:
                 error_msg = stderr.decode() if stderr else "Unknown error"
 
                 # Detect quota/rate limit errors
-                if any(keyword in error_msg.lower() for keyword in [
-                    "quota", "rate limit", "resource exhausted", "429",
-                    "too many requests", "limit exceeded"
-                ]):
+                if any(
+                    keyword in error_msg.lower()
+                    for keyword in [
+                        "quota",
+                        "rate limit",
+                        "resource exhausted",
+                        "429",
+                        "too many requests",
+                        "limit exceeded",
+                    ]
+                ):
                     return AgentResult(
                         success=False,
                         output="",
@@ -87,10 +91,20 @@ class GeminiAdapter(ModelAdapter):
                     )
 
                 # Detect authentication errors (including 404 which can mean no API access)
-                if any(keyword in error_msg.lower() for keyword in [
-                    "unauthenticated", "unauthorized", "401", "403", "404",
-                    "authentication", "permission denied", "not found", "entity was not found"
-                ]):
+                if any(
+                    keyword in error_msg.lower()
+                    for keyword in [
+                        "unauthenticated",
+                        "unauthorized",
+                        "401",
+                        "403",
+                        "404",
+                        "authentication",
+                        "permission denied",
+                        "not found",
+                        "entity was not found",
+                    ]
+                ):
                     return AgentResult(
                         success=False,
                         output="",
@@ -115,7 +129,7 @@ class GeminiAdapter(ModelAdapter):
             # Gemini CLI may output extra lines before JSON (like "Loaded cached credentials.")
             stdout_text = stdout.decode()
             # Find first { to start of JSON
-            json_start = stdout_text.find('{')
+            json_start = stdout_text.find("{")
             if json_start == -1:
                 return AgentResult(
                     success=False,
@@ -134,7 +148,7 @@ class GeminiAdapter(ModelAdapter):
                     "model": self.model_name,
                     "task_type": context.task_type,
                     "complexity": context.complexity.value,
-                }
+                },
             )
 
         except asyncio.TimeoutError:
@@ -173,7 +187,9 @@ class GeminiAdapter(ModelAdapter):
         ]
 
         if context.files_to_read:
-            prompt_parts.append(f"Files to consider: {', '.join(context.files_to_read)}")
+            prompt_parts.append(
+                f"Files to consider: {', '.join(context.files_to_read)}"
+            )
 
         if context.additional_context:
             for key, value in context.additional_context.items():

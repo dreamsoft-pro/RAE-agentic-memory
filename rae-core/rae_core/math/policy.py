@@ -32,26 +32,22 @@ Author: Grzegorz Leśniowski <lesniowskig@gmail.com>
 """
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from rae_core.math.dynamics import calculate_recency_score
-from rae_core.math.structure import (
-    DecayConfig,
-    MemoryScoreResult,
-    ScoringWeights,
-)
+from rae_core.math.structure import DecayConfig, MemoryScoreResult, ScoringWeights
 
 
 def compute_memory_score(
     similarity: float,
     importance: float,
-    last_accessed_at: Optional[datetime],
+    last_accessed_at: datetime | None,
     created_at: datetime,
     access_count: int = 0,
-    now: Optional[datetime] = None,
-    weights: Optional[ScoringWeights] = None,
-    decay_config: Optional[DecayConfig] = None,
-    memory_id: Optional[str] = None,
+    now: datetime | None = None,
+    weights: ScoringWeights | None = None,
+    decay_config: DecayConfig | None = None,
+    memory_id: str | None = None,
 ) -> MemoryScoreResult:
     """
     Compute unified memory score combining relevance, importance, and recency.
@@ -155,12 +151,12 @@ def compute_memory_score(
 
 
 def compute_batch_scores(
-    memories: List[Dict[str, Any]],
-    similarity_scores: List[float],
-    now: Optional[datetime] = None,
-    weights: Optional[ScoringWeights] = None,
-    decay_config: Optional[DecayConfig] = None,
-) -> List[MemoryScoreResult]:
+    memories: list[dict[str, Any]],
+    similarity_scores: list[float],
+    now: datetime | None = None,
+    weights: ScoringWeights | None = None,
+    decay_config: DecayConfig | None = None,
+) -> list[MemoryScoreResult]:
     """
     Compute scores for a batch of memories.
 
@@ -238,8 +234,8 @@ def compute_batch_scores(
 
 
 def rank_memories_by_score(
-    memories: List[Dict[str, Any]], score_results: List[MemoryScoreResult]
-) -> List[Dict[str, Any]]:
+    memories: list[dict[str, Any]], score_results: list[MemoryScoreResult]
+) -> list[dict[str, Any]]:
     """
     Rank memories by their computed scores.
 
@@ -326,9 +322,9 @@ def compute_score_with_custom_weights(
 
 
 def compute_coherence_reward(
-    path_steps: List[str],
-    episodic_memories: List[Dict[str, Any]],
-    semantic_memories: List[Dict[str, Any]],
+    path_steps: list[str],
+    episodic_memories: list[dict[str, Any]],
+    semantic_memories: list[dict[str, Any]],
 ) -> float:
     """
     Compute coherence reward for a reasoning path.
@@ -430,5 +426,7 @@ def compute_reasoning_score_with_coherence(
         Combined: 0.730
     """
     # Weighted combination: (1 - w) * base + w * coherence
-    combined = (1.0 - coherence_weight) * base_score + coherence_weight * coherence_reward
+    combined = (
+        1.0 - coherence_weight
+    ) * base_score + coherence_weight * coherence_reward
     return max(0.0, min(1.0, combined))

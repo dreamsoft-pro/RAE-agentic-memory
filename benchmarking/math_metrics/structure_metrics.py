@@ -9,17 +9,16 @@ These metrics analyze the structural properties of the memory graph:
 """
 
 import math
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Tuple
 
 import numpy as np
-from numpy.typing import NDArray
 
 from .base import (
     MathMetricBase,
     MemorySnapshot,
+    calculate_entropy,
     cosine_similarity,
     jaccard_similarity,
-    calculate_entropy,
 )
 
 

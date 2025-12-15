@@ -1,16 +1,16 @@
 """State machine for task lifecycle with persistence."""
 
 import json
-import time
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
-from pathlib import Path
-from typing import Dict, Any, List, Optional
-from dataclasses import dataclass, field, asdict
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 
 class TaskState(Enum):
     """Task lifecycle states."""
+
     NEW = "new"
     PLANNING = "planning"
     PLAN_REVIEW = "plan_review"
@@ -26,6 +26,7 @@ class TaskState(Enum):
 
 class StepState(Enum):
     """Step execution states."""
+
     PENDING = "pending"
     IMPLEMENTING = "implementing"
     CODE_REVIEW = "code_review"
@@ -39,6 +40,7 @@ class StepState(Enum):
 @dataclass
 class StepExecution:
     """State of a single step execution."""
+
     step_id: str
     state: StepState
     attempt: int = 1
@@ -67,6 +69,7 @@ class StepExecution:
 @dataclass
 class TaskExecution:
     """State of a task execution."""
+
     task_id: str
     state: TaskState
     task_def: Dict[str, Any]
@@ -102,7 +105,11 @@ class TaskExecution:
     def get_current_step(self) -> Optional[StepExecution]:
         """Get currently executing step."""
         for step in self.steps:
-            if step.state in [StepState.PENDING, StepState.IMPLEMENTING, StepState.CODE_REVIEW]:
+            if step.state in [
+                StepState.PENDING,
+                StepState.IMPLEMENTING,
+                StepState.CODE_REVIEW,
+            ]:
                 return step
         return None
 
@@ -187,10 +194,7 @@ class StateMachine:
         return self._tasks.get(task_id)
 
     def update_task_state(
-        self,
-        task_id: str,
-        new_state: TaskState,
-        **kwargs
+        self, task_id: str, new_state: TaskState, **kwargs
     ) -> TaskExecution:
         """Update task state.
 
@@ -221,10 +225,7 @@ class StateMachine:
         return task
 
     def add_step(
-        self,
-        task_id: str,
-        step_id: str,
-        max_attempts: int = 3
+        self, task_id: str, step_id: str, max_attempts: int = 3
     ) -> StepExecution:
         """Add step to task.
 
@@ -253,11 +254,7 @@ class StateMachine:
         return step
 
     def update_step_state(
-        self,
-        task_id: str,
-        step_id: str,
-        new_state: StepState,
-        **kwargs
+        self, task_id: str, step_id: str, new_state: StepState, **kwargs
     ) -> StepExecution:
         """Update step state.
 
@@ -297,11 +294,7 @@ class StateMachine:
         self._save_state(task)
         return step
 
-    def increment_step_attempt(
-        self,
-        task_id: str,
-        step_id: str
-    ) -> StepExecution:
+    def increment_step_attempt(self, task_id: str, step_id: str) -> StepExecution:
         """Increment step retry attempt.
 
         Args:
@@ -350,10 +343,7 @@ class StateMachine:
             TaskState.CODE_REVIEW,
             TaskState.QUALITY_GATE,
         ]
-        return [
-            task for task in self._tasks.values()
-            if task.state in active_states
-        ]
+        return [task for task in self._tasks.values() if task.state in active_states]
 
     def get_tasks_needing_human_review(self) -> List[TaskExecution]:
         """Get tasks awaiting human review.
@@ -363,11 +353,7 @@ class StateMachine:
         """
         return self.get_tasks_by_state(TaskState.AWAITING_HUMAN)
 
-    def add_quality_gate_result(
-        self,
-        task_id: str,
-        result: Dict[str, Any]
-    ):
+    def add_quality_gate_result(self, task_id: str, result: Dict[str, Any]):
         """Add quality gate result to task.
 
         Args:
@@ -378,10 +364,12 @@ class StateMachine:
         if not task:
             raise ValueError(f"Task {task_id} not found")
 
-        task.quality_gate_results.append({
-            "timestamp": datetime.utcnow().isoformat(),
-            "result": result,
-        })
+        task.quality_gate_results.append(
+            {
+                "timestamp": datetime.utcnow().isoformat(),
+                "result": result,
+            }
+        )
 
         self._save_state(task)
 

@@ -17,7 +17,6 @@ For pre-commit hook (silent mode):
 
 import argparse
 import json
-import os
 import sys
 from pathlib import Path
 
@@ -44,7 +43,7 @@ def generate_endpoints_markdown(openapi_schema: dict, output_path: Path):
     lines = [
         "# API Endpoints",
         "",
-        f"**Generated:** Auto-generated from OpenAPI spec",
+        "**Generated:** Auto-generated from OpenAPI spec",
         f"**API Version:** {openapi_schema.get('info', {}).get('version', 'unknown')}",
         "",
         "## Available Endpoints",
@@ -134,7 +133,7 @@ def main():
         generate_endpoints_markdown(openapi_schema, endpoints_path)
 
         if not args.quiet:
-            print(f"✅ API docs generated:")
+            print("✅ API docs generated:")
             print(f"   - {openapi_path}")
             print(f"   - {endpoints_path}")
 

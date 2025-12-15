@@ -8,8 +8,7 @@ Part of RAE CI Quality Implementation - Iteration 2: Zero Flake
 import argparse
 import json
 from collections import defaultdict
-from pathlib import Path
-from typing import List, Dict
+from typing import Dict, List
 
 
 def load_reports(files: List[str]) -> List[Dict]:
@@ -30,10 +29,7 @@ def analyze_flakiness(reports: List[Dict], min_runs: int = 3) -> Dict:
             nodeid = test.get("nodeid", "unknown")
             outcome = test.get("outcome", "unknown")
             duration = test.get("duration", 0)
-            outcomes[nodeid].append({
-                "outcome": outcome,
-                "duration": duration
-            })
+            outcomes[nodeid].append({"outcome": outcome, "duration": duration})
 
     flaky_tests = []
     stable_tests = []
@@ -49,13 +45,17 @@ def analyze_flakiness(reports: List[Dict], min_runs: int = 3) -> Dict:
             pass_rate = run_outcomes.count("passed") / len(run_outcomes)
             avg_duration = sum(r["duration"] for r in runs) / len(runs)
 
-            flaky_tests.append({
-                "nodeid": nodeid,
-                "outcomes": run_outcomes,
-                "pass_rate": round(pass_rate, 2),
-                "avg_duration_seconds": round(avg_duration, 3),
-                "recommendation": get_recommendation(nodeid, run_outcomes, avg_duration)
-            })
+            flaky_tests.append(
+                {
+                    "nodeid": nodeid,
+                    "outcomes": run_outcomes,
+                    "pass_rate": round(pass_rate, 2),
+                    "avg_duration_seconds": round(avg_duration, 3),
+                    "recommendation": get_recommendation(
+                        nodeid, run_outcomes, avg_duration
+                    ),
+                }
+            )
         else:
             stable_tests.append(nodeid)
 
@@ -63,7 +63,7 @@ def analyze_flakiness(reports: List[Dict], min_runs: int = 3) -> Dict:
         "total_tests": len(outcomes),
         "flaky_tests": sorted(flaky_tests, key=lambda x: x["pass_rate"]),
         "stable_tests_count": len(stable_tests),
-        "analysis_runs": len(reports)
+        "analysis_runs": len(reports),
     }
 
 

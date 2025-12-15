@@ -4,21 +4,20 @@ Tracks model performance, costs, success rates, and failure patterns.
 Integrates with RAE memory for persistent storage and querying.
 """
 
+import json
 import logging
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-
-import json
-
 
 logger = logging.getLogger(__name__)
 
 
 class TaskOutcome(Enum):
     """Outcome of task execution."""
+
     SUCCESS = "success"
     FAILED = "failed"
     PARTIAL = "partial"
@@ -32,6 +31,7 @@ class ExecutionRecord:
 
     Stores all metadata needed for performance analysis and learning.
     """
+
     # Task metadata
     task_id: str
     task_area: str
@@ -92,7 +92,7 @@ class PerformanceTracker:
     def __init__(
         self,
         storage_dir: str = "orchestrator/intelligence/data",
-        rae_integration: bool = False
+        rae_integration: bool = False,
     ):
         """Initialize performance tracker.
 
@@ -160,7 +160,7 @@ class PerformanceTracker:
         error_type: Optional[str] = None,
         error_message: Optional[str] = None,
         failed_step: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> ExecutionRecord:
         """Record a task execution.
 
@@ -210,7 +210,7 @@ class PerformanceTracker:
             error_message=error_message,
             failed_step=failed_step,
             completed_at=datetime.utcnow().isoformat(),
-            metadata=metadata or {}
+            metadata=metadata or {},
         )
 
         # Store in memory
@@ -269,9 +269,7 @@ class PerformanceTracker:
         return [r for r in self._records if r.task_area == area]
 
     def get_records_by_model(
-        self,
-        model: str,
-        role: str = "any"
+        self, model: str, role: str = "any"
     ) -> List[ExecutionRecord]:
         """Get records where a model was used.
 
@@ -288,14 +286,13 @@ class PerformanceTracker:
             return [r for r in self._records if r.implementer_model == model]
         else:
             return [
-                r for r in self._records
+                r
+                for r in self._records
                 if r.planner_model == model or r.implementer_model == model
             ]
 
     def get_records_by_provider(
-        self,
-        provider: str,
-        role: str = "any"
+        self, provider: str, role: str = "any"
     ) -> List[ExecutionRecord]:
         """Get records where a provider was used.
 
@@ -312,7 +309,8 @@ class PerformanceTracker:
             return [r for r in self._records if r.implementer_provider == provider]
         else:
             return [
-                r for r in self._records
+                r
+                for r in self._records
                 if r.planner_provider == provider or r.implementer_provider == provider
             ]
 
@@ -325,11 +323,7 @@ class PerformanceTracker:
         Returns:
             Recent execution records (newest first)
         """
-        return sorted(
-            self._records,
-            key=lambda r: r.started_at,
-            reverse=True
-        )[:limit]
+        return sorted(self._records, key=lambda r: r.started_at, reverse=True)[:limit]
 
     def get_statistics(self) -> Dict[str, Any]:
         """Get overall performance statistics.
@@ -352,9 +346,15 @@ class PerformanceTracker:
         return {
             "total_tasks": len(self._records),
             "successful": successful,
-            "failed": len([r for r in self._records if r.outcome == TaskOutcome.FAILED]),
-            "partial": len([r for r in self._records if r.outcome == TaskOutcome.PARTIAL]),
-            "human_review": len([r for r in self._records if r.outcome == TaskOutcome.HUMAN_REVIEW]),
+            "failed": len(
+                [r for r in self._records if r.outcome == TaskOutcome.FAILED]
+            ),
+            "partial": len(
+                [r for r in self._records if r.outcome == TaskOutcome.PARTIAL]
+            ),
+            "human_review": len(
+                [r for r in self._records if r.outcome == TaskOutcome.HUMAN_REVIEW]
+            ),
             "success_rate": successful / len(self._records) if self._records else 0.0,
             "total_cost": total_cost,
             "avg_cost": total_cost / len(self._records),

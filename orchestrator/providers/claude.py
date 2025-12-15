@@ -7,14 +7,7 @@ from typing import List, Optional
 from anthropic import AsyncAnthropic
 from anthropic.types import Message
 
-from .base import (
-    GenerationResult,
-    LLMProvider,
-    ModelInfo,
-    ModelTier,
-    Usage,
-)
-
+from .base import GenerationResult, LLMProvider, ModelInfo, ModelTier, Usage
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +29,9 @@ class ClaudeProvider(LLMProvider):
         self.api_key = raw_key.strip() if raw_key else None
 
         if not self.api_key:
-            logger.warning("No Anthropic API key provided - provider will be unavailable")
+            logger.warning(
+                "No Anthropic API key provided - provider will be unavailable"
+            )
             self.client = None
         else:
             self.client = AsyncAnthropic(api_key=self.api_key)
@@ -66,7 +61,15 @@ class ClaudeProvider(LLMProvider):
                 provider="claude",
                 model_id="claude-sonnet-4-5-20250929",
                 display_name="Claude Sonnet 4.5",
-                capabilities=["code", "analysis", "planning", "complex_reasoning", "review", "refactoring", "debugging"],
+                capabilities=[
+                    "code",
+                    "analysis",
+                    "planning",
+                    "complex_reasoning",
+                    "review",
+                    "refactoring",
+                    "debugging",
+                ],
                 context_window=200000,
                 cost_per_1k_input=0.003,
                 cost_per_1k_output=0.015,
@@ -77,7 +80,16 @@ class ClaudeProvider(LLMProvider):
                 provider="claude",
                 model_id="claude-opus-4-20250514",
                 display_name="Claude Opus 4",
-                capabilities=["code", "analysis", "planning", "complex_reasoning", "review", "research", "architecture", "difficult_bugs"],
+                capabilities=[
+                    "code",
+                    "analysis",
+                    "planning",
+                    "complex_reasoning",
+                    "review",
+                    "research",
+                    "architecture",
+                    "difficult_bugs",
+                ],
                 context_window=200000,
                 cost_per_1k_input=0.015,
                 cost_per_1k_output=0.075,
@@ -88,7 +100,15 @@ class ClaudeProvider(LLMProvider):
                 provider="claude",
                 model_id="claude-haiku-3-5-20241022",
                 display_name="Claude Haiku 3.5",
-                capabilities=["code", "analysis", "simple_tasks", "docs", "linting", "formatting", "simple_edits"],
+                capabilities=[
+                    "code",
+                    "analysis",
+                    "simple_tasks",
+                    "docs",
+                    "linting",
+                    "formatting",
+                    "simple_edits",
+                ],
                 context_window=200000,
                 cost_per_1k_input=0.0008,
                 cost_per_1k_output=0.004,
@@ -114,7 +134,7 @@ class ClaudeProvider(LLMProvider):
         system_prompt: Optional[str] = None,
         max_tokens: int = 4096,
         temperature: float = 0.7,
-        **kwargs
+        **kwargs,
     ) -> GenerationResult:
         """Generate completion using Claude API.
 
@@ -135,8 +155,7 @@ class ClaudeProvider(LLMProvider):
         """
         if not self.client:
             return GenerationResult(
-                content="",
-                error="Claude provider not configured - missing API key"
+                content="", error="Claude provider not configured - missing API key"
             )
 
         try:
@@ -199,10 +218,7 @@ class ClaudeProvider(LLMProvider):
 
         except Exception as e:
             logger.error(f"Claude API call failed: {e}")
-            return GenerationResult(
-                content="",
-                error=f"Claude API error: {str(e)}"
-            )
+            return GenerationResult(content="", error=f"Claude API error: {str(e)}")
 
     async def is_available(self) -> bool:
         """Check if Claude provider is available.

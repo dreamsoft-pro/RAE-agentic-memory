@@ -9,18 +9,19 @@ Tests the full flow:
 - Persistence
 """
 
-import pytest
 import tempfile
-from pathlib import Path
 from datetime import datetime
-import numpy as np
+from pathlib import Path
 
-from benchmarking.math_metrics.controller.controller import MathLayerController
+import numpy as np
+import pytest
+
+from benchmarking.math_metrics.base import MemorySnapshot
+from benchmarking.math_metrics.controller.bandit import BanditConfig
 from benchmarking.math_metrics.controller.config import MathControllerConfig
 from benchmarking.math_metrics.controller.context import TaskContext
-from benchmarking.math_metrics.controller.types import TaskType, MathLevel
-from benchmarking.math_metrics.controller.bandit import BanditConfig
-from benchmarking.math_metrics.base import MemorySnapshot
+from benchmarking.math_metrics.controller.controller import MathLayerController
+from benchmarking.math_metrics.controller.types import MathLevel, TaskType
 
 
 class TestControllerBanditIntegration:
@@ -175,7 +176,11 @@ class TestControllerBanditIntegration:
             controller.record_outcome(
                 decision_id=decision.decision_id,
                 success=True,
-                metrics={"mrr": 0.2, "latency_ms": 100, "cost_usd": 0.001},  # Poor quality
+                metrics={
+                    "mrr": 0.2,
+                    "latency_ms": 100,
+                    "cost_usd": 0.001,
+                },  # Poor quality
             )
 
         # Check if degradation was detected

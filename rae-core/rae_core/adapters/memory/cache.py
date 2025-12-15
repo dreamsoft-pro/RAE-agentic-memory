@@ -5,10 +5,9 @@ Ideal for testing, development, and single-instance deployments.
 """
 
 import asyncio
-import json
 import re
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional
+from typing import Any
 
 from rae_core.interfaces.cache import ICacheProvider
 
@@ -27,12 +26,12 @@ class InMemoryCache(ICacheProvider):
     def __init__(self):
         """Initialize in-memory cache."""
         # Main storage: {key: (value, expiry_time)}
-        self._cache: Dict[str, tuple[Any, Optional[datetime]]] = {}
+        self._cache: dict[str, tuple[Any, datetime | None]] = {}
 
         # Thread safety
         self._lock = asyncio.Lock()
 
-    async def get(self, key: str) -> Optional[Any]:
+    async def get(self, key: str) -> Any | None:
         """Get value from cache."""
         async with self._lock:
             if key not in self._cache:
@@ -47,7 +46,7 @@ class InMemoryCache(ICacheProvider):
 
             return value
 
-    async def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    async def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
         """Set value in cache with optional TTL in seconds."""
         async with self._lock:
             expiry = None
@@ -83,7 +82,7 @@ class InMemoryCache(ICacheProvider):
 
             return True
 
-    async def clear(self, pattern: Optional[str] = None) -> int:
+    async def clear(self, pattern: str | None = None) -> int:
         """Clear cache keys matching pattern (all if None).
 
         Pattern supports glob-style wildcards:
@@ -161,7 +160,7 @@ class InMemoryCache(ICacheProvider):
 
             return len(expired_keys)
 
-    async def get_ttl(self, key: str) -> Optional[int]:
+    async def get_ttl(self, key: str) -> int | None:
         """Get remaining TTL for a key in seconds.
 
         Args:
@@ -189,7 +188,9 @@ class InMemoryCache(ICacheProvider):
             remaining = (expiry - now).total_seconds()
             return int(remaining)
 
-    async def set_if_not_exists(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    async def set_if_not_exists(
+        self, key: str, value: Any, ttl: int | None = None
+    ) -> bool:
         """Set value only if key doesn't exist.
 
         Args:
@@ -243,7 +244,7 @@ class InMemoryCache(ICacheProvider):
 
             return new_value
 
-    async def get_statistics(self) -> Dict[str, Any]:
+    async def get_statistics(self) -> dict[str, Any]:
         """Get cache statistics.
 
         Returns:
@@ -254,15 +255,11 @@ class InMemoryCache(ICacheProvider):
 
             total_keys = len(self._cache)
             expired_keys = sum(
-                1
-                for _, expiry in self._cache.values()
-                if expiry and now > expiry
+                1 for _, expiry in self._cache.values() if expiry and now > expiry
             )
             active_keys = total_keys - expired_keys
 
-            keys_with_ttl = sum(
-                1 for _, expiry in self._cache.values() if expiry
-            )
+            keys_with_ttl = sum(1 for _, expiry in self._cache.values() if expiry)
 
             return {
                 "total_keys": total_keys,

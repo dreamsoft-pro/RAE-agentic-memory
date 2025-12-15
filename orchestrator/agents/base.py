@@ -2,13 +2,12 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Dict, Any, Optional, List
+from typing import Any, Dict, List, Optional
 
 from orchestrator.adapters.base import (
-    ModelAdapter,
-    ModelType,
     AgentContext,
     AgentResult,
+    ModelAdapter,
     TaskComplexity,
     TaskRisk,
 )
@@ -17,6 +16,7 @@ from orchestrator.adapters.base import (
 @dataclass
 class AgentTask:
     """Task for an agent to execute."""
+
     task_id: str
     description: str
     context: Dict[str, Any]
@@ -33,6 +33,7 @@ class AgentTask:
 @dataclass
 class AgentResponse:
     """Response from an agent."""
+
     success: bool
     result: Any
     error: Optional[str] = None
@@ -83,7 +84,7 @@ class BaseAgent(ABC):
         task_type: str,
         complexity: TaskComplexity,
         risk: TaskRisk,
-        working_dir: str
+        working_dir: str,
     ) -> AgentResult:
         """Call the underlying model adapter.
 
@@ -121,7 +122,7 @@ class BaseAgent(ABC):
         """
         parts = [
             f"You are {self.name}, a {self.role} agent in a multi-agent orchestrator.",
-            f"",
+            "",
             f"Task: {task.description}",
             f"Complexity: {task.complexity.value}",
             f"Risk: {task.risk.value}",
@@ -133,12 +134,12 @@ class BaseAgent(ABC):
             parts.append(f"\n{rules_section}")
 
         if task.files_to_read:
-            parts.append(f"\nRelevant files:")
+            parts.append("\nRelevant files:")
             for file in task.files_to_read:
                 parts.append(f"- {file}")
 
         if task.context:
-            parts.append(f"\nAdditional context:")
+            parts.append("\nAdditional context:")
             for key, value in task.context.items():
                 parts.append(f"- {key}: {value}")
 

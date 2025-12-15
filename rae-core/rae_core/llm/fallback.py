@@ -1,7 +1,7 @@
 """No-LLM fallback implementation using rule-based methods."""
 
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from rae_core.interfaces.llm import ILLMProvider
 
@@ -20,10 +20,10 @@ class NoLLMFallback(ILLMProvider):
     async def generate(
         self,
         prompt: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
         max_tokens: int = 1000,
         temperature: float = 0.7,
-        stop_sequences: Optional[List[str]] = None,
+        stop_sequences: list[str] | None = None,
     ) -> str:
         """Generate rule-based response.
 
@@ -53,13 +53,13 @@ class NoLLMFallback(ILLMProvider):
             return self._simple_qa(prompt)
 
         # Default: Return first sentence or truncate
-        sentences = re.split(r'[.!?]+', prompt)
+        sentences = re.split(r"[.!?]+", prompt)
         result = sentences[0].strip() if sentences else prompt[:200]
         return result + "..."
 
     async def generate_with_context(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         max_tokens: int = 1000,
         temperature: float = 0.7,
     ) -> str:
@@ -89,7 +89,7 @@ class NoLLMFallback(ILLMProvider):
         """No function calling support in fallback."""
         return False
 
-    async def extract_entities(self, text: str) -> List[Dict[str, Any]]:
+    async def extract_entities(self, text: str) -> list[dict[str, Any]]:
         """Extract entities using simple rules.
 
         Args:
@@ -105,20 +105,14 @@ class NoLLMFallback(ILLMProvider):
         for word in words:
             clean_word = word.strip(".,!?;:\"'()[]{}")
             if clean_word and clean_word[0].isupper() and len(clean_word) > 2:
-                entities.append({
-                    "text": clean_word,
-                    "type": "ENTITY",
-                    "confidence": 0.5
-                })
+                entities.append(
+                    {"text": clean_word, "type": "ENTITY", "confidence": 0.5}
+                )
 
         # Numbers
-        numbers = re.findall(r'\b\d+\b', text)
+        numbers = re.findall(r"\b\d+\b", text)
         for num in numbers:
-            entities.append({
-                "text": num,
-                "type": "NUMBER",
-                "confidence": 0.8
-            })
+            entities.append({"text": num, "type": "NUMBER", "confidence": 0.8})
 
         return entities[:10]  # Limit to 10
 
@@ -136,7 +130,7 @@ class NoLLMFallback(ILLMProvider):
 
     def _extractive_summary(self, text: str, max_length: int = 200) -> str:
         """Extract first N sentences up to max_length."""
-        sentences = re.split(r'[.!?]+', text)
+        sentences = re.split(r"[.!?]+", text)
         summary = ""
 
         for sentence in sentences:
@@ -171,7 +165,10 @@ class NoLLMFallback(ILLMProvider):
         question_lower = question.lower()
 
         # Common question patterns
-        if any(word in question_lower for word in ["what", "when", "where", "who", "how", "why"]):
+        if any(
+            word in question_lower
+            for word in ["what", "when", "where", "who", "how", "why"]
+        ):
             # Extract context after question word
             for word in ["what", "when", "where", "who", "how", "why"]:
                 if word in question_lower:

@@ -12,10 +12,9 @@ These tests ensure:
 import ast
 import re
 from pathlib import Path
-from typing import List, Tuple
+from typing import List
 
 import pytest
-
 
 # ============================================================================
 # Test Configuration
@@ -280,8 +279,8 @@ def test_no_hardcoded_secrets():
         re.compile(r'password\s*=\s*["\'][^"\']{8,}["\']', re.IGNORECASE),
         re.compile(r'secret\s*=\s*["\'][^"\']+["\']', re.IGNORECASE),
         re.compile(r'token\s*=\s*["\'][^"\']{20,}["\']', re.IGNORECASE),
-        re.compile(r'sk-[a-zA-Z0-9]{20,}'),  # OpenAI key pattern
-        re.compile(r'ghp_[a-zA-Z0-9]{36}'),  # GitHub personal access token
+        re.compile(r"sk-[a-zA-Z0-9]{20,}"),  # OpenAI key pattern
+        re.compile(r"ghp_[a-zA-Z0-9]{36}"),  # GitHub personal access token
     ]
 
     violations = []
@@ -350,9 +349,7 @@ def test_no_circular_dependencies():
         imports = extract_imports(py_file)
 
         # Filter to only internal imports
-        internal_imports = [
-            imp for imp in imports if imp.startswith("apps.memory_api")
-        ]
+        internal_imports = [imp for imp in imports if imp.startswith("apps.memory_api")]
         module_imports[module_name] = internal_imports
 
     # Check for direct circular dependencies

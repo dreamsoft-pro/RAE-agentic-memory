@@ -4,12 +4,12 @@ Integration helpers for MathLayerController with RAE systems.
 Provides convenience methods for common integration patterns.
 """
 
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 from uuid import UUID
 
 from ..base import MemorySnapshot
-from .controller import MathLayerController
 from .context import TaskContext
+from .controller import MathLayerController
 from .types import TaskType
 
 

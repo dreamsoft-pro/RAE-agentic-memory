@@ -1,8 +1,9 @@
 """Unit tests for InMemoryVectorStore adapter."""
 
-import pytest
-import numpy as np
 from uuid import uuid4
+
+import numpy as np
+import pytest
 
 from rae_core.adapters.memory.vector import InMemoryVectorStore
 
@@ -190,12 +191,8 @@ class TestInMemoryVectorStore:
         id1 = uuid4()
         id2 = uuid4()
 
-        await store.store_vector(
-            id1, vec, "tenant1", metadata={"layer": "working"}
-        )
-        await store.store_vector(
-            id2, vec, "tenant1", metadata={"layer": "episodic"}
-        )
+        await store.store_vector(id1, vec, "tenant1", metadata={"layer": "working"})
+        await store.store_vector(id2, vec, "tenant1", metadata={"layer": "episodic"})
 
         # Search with layer filter
         results = await store.search_similar(
@@ -240,9 +237,7 @@ class TestInMemoryVectorStore:
     async def test_search_similar_zero_vector(self, store):
         """Test searching with zero vector."""
         # Store a normal vector
-        await store.store_vector(
-            uuid4(), [1.0, 0.0, 0.0], "tenant1"
-        )
+        await store.store_vector(uuid4(), [1.0, 0.0, 0.0], "tenant1")
 
         # Search with zero vector (should handle gracefully)
         results = await store.search_similar(

@@ -29,18 +29,17 @@ Author: Grzegorz Leśniowski <lesniowskig@gmail.com>
 
 import math
 from datetime import datetime, timezone
-from typing import Optional, Tuple
 
 from rae_core.math.structure import DecayConfig
 
 
 def calculate_recency_score(
-    last_accessed_at: Optional[datetime],
+    last_accessed_at: datetime | None,
     created_at: datetime,
     access_count: int,
     now: datetime,
-    decay_config: Optional[DecayConfig] = None,
-) -> Tuple[float, float, float]:
+    decay_config: DecayConfig | None = None,
+) -> tuple[float, float, float]:
     """
     Calculate recency component with access count consideration.
 

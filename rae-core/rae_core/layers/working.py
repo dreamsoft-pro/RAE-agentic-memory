@@ -1,6 +1,6 @@
 """Working memory layer - active context with capacity limits."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from ..interfaces.storage import IMemoryStorage
@@ -10,14 +10,14 @@ from .base import MemoryLayerBase
 
 class WorkingLayer(MemoryLayerBase):
     """Working memory layer implementation.
-    
+
     Characteristics:
     - Limited capacity (typically 7±2 items, not tokens)
     - High importance threshold
     - Active manipulation of information
     - No automatic decay, but capacity-based eviction
     - Feeds into long-term consolidation
-    
+
     Typical capacity: 5-9 items
     """
 
@@ -30,7 +30,7 @@ class WorkingLayer(MemoryLayerBase):
         importance_threshold: float = 0.5,
     ):
         """Initialize working layer.
-        
+
         Args:
             storage: Storage backend
             tenant_id: Tenant ID
@@ -45,23 +45,23 @@ class WorkingLayer(MemoryLayerBase):
     async def add_memory(
         self,
         content: str,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        embedding: Optional[List[float]] = None,
-        importance: Optional[float] = None,
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
+        embedding: list[float] | None = None,
+        importance: float | None = None,
     ) -> UUID:
         """Add memory to working layer.
-        
+
         If capacity is exceeded, lowest importance items are evicted
         (potentially consolidated to long-term first).
-        
+
         Args:
             content: Memory content
             tags: Optional tags
             metadata: Optional metadata
             embedding: Optional vector embedding
             importance: Importance score (should be >= threshold)
-            
+
         Returns:
             Memory UUID
         """
@@ -89,13 +89,13 @@ class WorkingLayer(MemoryLayerBase):
 
         return memory_id
 
-    async def get_memory(self, memory_id: UUID) -> Optional[MemoryItem]:
+    async def get_memory(self, memory_id: UUID) -> MemoryItem | None:
         """Get memory by ID and update access time."""
         memory_dict = await self.storage.get_memory(
             memory_id=memory_id,
             tenant_id=self.tenant_id,
         )
-        
+
         if not memory_dict:
             return None
 
@@ -111,15 +111,15 @@ class WorkingLayer(MemoryLayerBase):
         self,
         query: str,
         limit: int = 10,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> List[ScoredMemoryItem]:
+        filters: dict[str, Any] | None = None,
+    ) -> list[ScoredMemoryItem]:
         """Search working memories.
-        
+
         Args:
             query: Search query
             limit: Max results
             filters: Optional filters
-            
+
         Returns:
             List of scored memories
         """
@@ -139,7 +139,7 @@ class WorkingLayer(MemoryLayerBase):
 
     async def cleanup(self) -> int:
         """Remove items below importance threshold.
-        
+
         Returns:
             Number of memories removed
         """
@@ -170,19 +170,21 @@ class WorkingLayer(MemoryLayerBase):
     async def promote_to_working(
         self,
         memory: MemoryItem,
-        new_importance: Optional[float] = None,
+        new_importance: float | None = None,
     ) -> UUID:
         """Promote a memory from sensory to working layer.
-        
+
         Args:
             memory: Memory to promote
             new_importance: Optional new importance (default: keep existing or threshold)
-            
+
         Returns:
             UUID of new working memory
         """
-        importance = new_importance if new_importance is not None else max(
-            memory.importance, self.importance_threshold
+        importance = (
+            new_importance
+            if new_importance is not None
+            else max(memory.importance, self.importance_threshold)
         )
 
         return await self.add_memory(
@@ -193,9 +195,9 @@ class WorkingLayer(MemoryLayerBase):
             importance=importance,
         )
 
-    async def get_capacity_status(self) -> Dict[str, Any]:
+    async def get_capacity_status(self) -> dict[str, Any]:
         """Get current capacity status.
-        
+
         Returns:
             Dict with current_count, max_capacity, available_slots
         """

@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 
@@ -10,23 +10,21 @@ class ISyncProvider(ABC):
     """Abstract interface for sync protocol (RAE-Sync)."""
 
     @abstractmethod
-    async def push_changes(
-        self, tenant_id: str, changes: List[Dict[str, Any]]
-    ) -> bool:
+    async def push_changes(self, tenant_id: str, changes: list[dict[str, Any]]) -> bool:
         """Push local changes to sync endpoint."""
         pass
 
     @abstractmethod
     async def pull_changes(
         self, tenant_id: str, since_timestamp: str
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Pull changes from sync endpoint since timestamp."""
         pass
 
     @abstractmethod
     async def resolve_conflict(
-        self, memory_id: UUID, local_version: Dict, remote_version: Dict
-    ) -> Dict[str, Any]:
+        self, memory_id: UUID, local_version: dict, remote_version: dict
+    ) -> dict[str, Any]:
         """Resolve conflict using CRDT merge strategy."""
         pass
 
@@ -35,9 +33,9 @@ class ISyncProvider(ABC):
         self,
         tenant_id: str,
         agent_id: str,
-        memory_ids: Optional[List[UUID]] = None,
-        since: Optional[datetime] = None,
-    ) -> Dict[str, Any]:
+        memory_ids: list[UUID] | None = None,
+        since: datetime | None = None,
+    ) -> dict[str, Any]:
         """Push memories to remote.
 
         Args:
@@ -56,9 +54,9 @@ class ISyncProvider(ABC):
         self,
         tenant_id: str,
         agent_id: str,
-        memory_ids: Optional[List[UUID]] = None,
-        since: Optional[datetime] = None,
-    ) -> Dict[str, Any]:
+        memory_ids: list[UUID] | None = None,
+        since: datetime | None = None,
+    ) -> dict[str, Any]:
         """Pull memories from remote.
 
         Args:
@@ -77,8 +75,8 @@ class ISyncProvider(ABC):
         self,
         tenant_id: str,
         agent_id: str,
-        since: Optional[datetime] = None,
-    ) -> Dict[str, Any]:
+        since: datetime | None = None,
+    ) -> dict[str, Any]:
         """Bidirectional sync of memories.
 
         Args:
@@ -97,7 +95,7 @@ class ISyncProvider(ABC):
         tenant_id: str,
         agent_id: str,
         sync_id: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Get status of a sync operation.
 
         Args:

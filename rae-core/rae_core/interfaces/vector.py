@@ -5,7 +5,7 @@ Implementations can use Qdrant, sqlite-vec, FAISS, or any other vector DB.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 from uuid import UUID
 
 
@@ -20,9 +20,9 @@ class IVectorStore(ABC):
     async def store_vector(
         self,
         memory_id: UUID,
-        embedding: List[float],
+        embedding: list[float],
         tenant_id: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> bool:
         """Store a vector embedding.
 
@@ -40,12 +40,12 @@ class IVectorStore(ABC):
     @abstractmethod
     async def search_similar(
         self,
-        query_embedding: List[float],
+        query_embedding: list[float],
         tenant_id: str,
-        layer: Optional[str] = None,
+        layer: str | None = None,
         limit: int = 10,
-        score_threshold: Optional[float] = None,
-    ) -> List[Tuple[UUID, float]]:
+        score_threshold: float | None = None,
+    ) -> list[tuple[UUID, float]]:
         """Search for similar vectors using cosine similarity.
 
         Args:
@@ -81,9 +81,9 @@ class IVectorStore(ABC):
     async def update_vector(
         self,
         memory_id: UUID,
-        embedding: List[float],
+        embedding: list[float],
         tenant_id: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> bool:
         """Update a vector embedding.
 
@@ -103,7 +103,7 @@ class IVectorStore(ABC):
         self,
         memory_id: UUID,
         tenant_id: str,
-    ) -> Optional[List[float]]:
+    ) -> list[float] | None:
         """Retrieve a vector embedding.
 
         Args:
@@ -118,7 +118,7 @@ class IVectorStore(ABC):
     @abstractmethod
     async def batch_store_vectors(
         self,
-        vectors: List[Tuple[UUID, List[float], Dict[str, Any]]],
+        vectors: list[tuple[UUID, list[float], dict[str, Any]]],
         tenant_id: str,
     ) -> int:
         """Store multiple vectors in a batch.

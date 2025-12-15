@@ -5,9 +5,11 @@ from fastapi.testclient import TestClient
 # Dummy FastAPI app for simulation
 app = FastAPI()
 
+
 @app.get("/dummy_endpoint")
 async def dummy_endpoint():
     return {"message": "Hello, World!"}
+
 
 @pytest.mark.performance
 def test_api_latency_dummy_endpoint(benchmark):
@@ -21,4 +23,3 @@ def test_api_latency_dummy_endpoint(benchmark):
 
     assert result.status_code == 200
     assert result.json() == {"message": "Hello, World!"}
-

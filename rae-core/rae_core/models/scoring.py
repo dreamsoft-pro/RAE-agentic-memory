@@ -1,7 +1,6 @@
 """Scoring models for RAE-core memory importance."""
 
 from datetime import datetime, timedelta
-from typing import Dict, Optional
 
 from pydantic import BaseModel, Field
 
@@ -23,17 +22,17 @@ class QualityMetrics(BaseModel):
     accuracy: float = Field(default=0.5, ge=0.0, le=1.0)
     relevance: float = Field(default=0.5, ge=0.0, le=1.0)
 
-    overall_quality: Optional[float] = Field(
+    overall_quality: float | None = Field(
         default=None, ge=0.0, le=1.0, description="Computed overall quality"
     )
 
     def compute_overall(self) -> float:
         """Compute overall quality score."""
         self.overall_quality = (
-            self.coherence * 0.25 +
-            self.completeness * 0.25 +
-            self.accuracy * 0.30 +
-            self.relevance * 0.20
+            self.coherence * 0.25
+            + self.completeness * 0.25
+            + self.accuracy * 0.30
+            + self.relevance * 0.20
         )
         return self.overall_quality
 
@@ -55,15 +54,15 @@ class DecayConfig(BaseModel):
     )
 
     # Layer-specific decay rates
-    layer_rates: Dict[str, float] = Field(
+    layer_rates: dict[str, float] = Field(
         default_factory=lambda: {
-            "sensory": 0.5,    # Fast decay
-            "working": 0.2,    # Medium decay
+            "sensory": 0.5,  # Fast decay
+            "working": 0.2,  # Medium decay
             "episodic": 0.05,  # Slow decay
             "semantic": 0.01,  # Very slow decay
             "reflective": 0.0,  # No decay
         },
-        description="Decay rates per memory layer"
+        description="Decay rates per memory layer",
     )
 
 

@@ -7,19 +7,9 @@ to the underlying mathematical metrics implementation.
 Maps official BENCHMARKS_v1.md metric names to math_metrics classes.
 """
 
-from typing import Dict, Any, Optional, Callable
-import numpy as np
+from typing import Any, Dict, Optional
 
-from .structure_metrics import (
-    GraphConnectivityScore,
-    SemanticCoherenceScore,
-    StructuralDriftMetric,
-)
-from .dynamics_metrics import (
-    MemoryDriftIndex,
-    CompressionFidelityRatio,
-)
-from .policy_metrics import OptimalRetrievalRatio, CrossLayerMathematicalConsistency
+
 from .memory_metrics import WorkingMemoryPrecisionRecall
 from .operational_metrics import (
     LLMCostIndex,
@@ -27,16 +17,22 @@ from .operational_metrics import (
     TelemetryEventCorrelation,
     WorkerSaturationIndex,
 )
+from .policy_metrics import CrossLayerMathematicalConsistency, OptimalRetrievalRatio
+from .structure_metrics import (
+    GraphConnectivityScore,
+    SemanticCoherenceScore,
+)
 
 # Try importing reflection metrics (conditional)
 try:
     from .reflection_metrics import (
-        ReflectionLatency,
+        ContradictionAvoidanceScore,
+        CriticalEventDetectionScore,
         InsightPrecision,
         InsightStability,
-        CriticalEventDetectionScore,
-        ContradictionAvoidanceScore,
+        ReflectionLatency,
     )
+
     _REFLECTION_AVAILABLE = True
 except ImportError:
     _REFLECTION_AVAILABLE = False
@@ -54,6 +50,7 @@ NDS = GraphConnectivityScore  # Neighborhood Density Score
 
 # Memory Benchmarks (Section 2 of BENCHMARKS_v1.md)
 # Derived metrics requiring transformation functions
+
 
 def calculate_srs(mdi_value: float, max_drift: float = 2.0) -> float:
     """
@@ -145,7 +142,9 @@ def calculate_mas(gcs: float, scs: float, orr: float) -> float:
 DCR = OptimalRetrievalRatio  # Decision Coherence Ratio (direct mapping)
 
 
-def calculate_osi(graph_entropy: float, structural_drift: float, max_entropy: float = 10.0) -> float:
+def calculate_osi(
+    graph_entropy: float, structural_drift: float, max_entropy: float = 10.0
+) -> float:
     """
     Operator Stability Index (OSI) - composite metric.
 
@@ -226,7 +225,6 @@ BENCHMARKS_V1_METRICS = {
         "source": "CompressionFidelityRatio",
         "status": "implemented",
     },
-
     # Graph Memory Benchmarks
     "GCI": {
         "name": "Graph Coherence Index",
@@ -261,7 +259,6 @@ BENCHMARKS_V1_METRICS = {
         "source": "StructuralDriftMetric",
         "status": "implemented",
     },
-
     # Reflection Benchmarks
     "IP": {
         "name": "Insight Precision",
@@ -293,7 +290,6 @@ BENCHMARKS_V1_METRICS = {
         "type": "direct",
         "status": "implemented" if _REFLECTION_AVAILABLE else "in_progress",
     },
-
     # Math Layer Benchmarks
     "MAS": {
         "name": "Math Accuracy Score",
@@ -323,7 +319,6 @@ BENCHMARKS_V1_METRICS = {
         "source": "CrossLayerMathematicalConsistency",
         "status": "implemented",
     },
-
     # Performance Benchmarks
     "E2E-L": {
         "name": "End-to-End Latency",
@@ -379,7 +374,8 @@ def get_all_metrics() -> Dict[str, Dict[str, Any]]:
 def get_implemented_metrics() -> Dict[str, Dict[str, Any]]:
     """Get only implemented metrics"""
     return {
-        code: info for code, info in BENCHMARKS_V1_METRICS.items()
+        code: info
+        for code, info in BENCHMARKS_V1_METRICS.items()
         if info["status"] in ("implemented", "partial")
     }
 
@@ -387,7 +383,8 @@ def get_implemented_metrics() -> Dict[str, Dict[str, Any]]:
 def get_missing_metrics() -> Dict[str, Dict[str, Any]]:
     """Get metrics that are not yet implemented"""
     return {
-        code: info for code, info in BENCHMARKS_V1_METRICS.items()
+        code: info
+        for code, info in BENCHMARKS_V1_METRICS.items()
         if info["status"] == "missing"
     }
 

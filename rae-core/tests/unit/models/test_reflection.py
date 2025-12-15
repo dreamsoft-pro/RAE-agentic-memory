@@ -1,12 +1,13 @@
-import pytest
 from datetime import datetime
 from uuid import UUID, uuid4
 
+import pytest
+
 from rae_core.models.reflection import (
     Reflection,
-    ReflectionType,
-    ReflectionPriority,
     ReflectionPolicy,
+    ReflectionPriority,
+    ReflectionType,
 )
 
 

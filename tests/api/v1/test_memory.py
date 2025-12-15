@@ -6,17 +6,19 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
+from apps.memory_api.api.v1.memory import (
+    get_hybrid_search_service,
+)
+from apps.memory_api.dependencies import get_qdrant_client
 from apps.memory_api.main import app
 from apps.memory_api.models import ScoredMemoryRecord
 from apps.memory_api.models.hybrid_search_models import (
     HybridSearchResult,
     QueryAnalysis,
     QueryIntent,
-    SearchResultItem
+    SearchResultItem,
 )
-from apps.memory_api.api.v1.memory import get_vector_store, get_embedding_service, get_hybrid_search_service
 from apps.memory_api.security.dependencies import get_and_verify_tenant_id
-from apps.memory_api.dependencies import get_qdrant_client
 
 
 # Define fixtures for mocks
@@ -24,19 +26,23 @@ from apps.memory_api.dependencies import get_qdrant_client
 def mock_vector_store():
     return AsyncMock()
 
+
 @pytest.fixture
 def mock_embedding_service():
     return MagicMock()
 
+
 @pytest.fixture
 def mock_hybrid_search_service():
     return AsyncMock()
+
 
 @pytest.fixture(autouse=True)
 def mock_pii_scrubber():
     with patch("apps.memory_api.api.v1.memory.pii_scrubber") as mock_scrubber:
         mock_scrubber.scrub_text.side_effect = lambda x: x
         yield mock_scrubber
+
 
 @pytest.fixture(autouse=True)
 def mock_scoring():
@@ -45,12 +51,14 @@ def mock_scoring():
         mock_s.rescore_memories.side_effect = lambda x: x
         yield mock_s
 
+
 @pytest.fixture(autouse=True)
 def mock_memory_repo():
     with patch("apps.memory_api.api.v1.memory.MemoryRepository") as MockRepo:
         mock_repo_instance = AsyncMock()
         MockRepo.return_value = mock_repo_instance
         yield mock_repo_instance
+
 
 @pytest.fixture
 def client_with_overrides():
@@ -97,12 +105,16 @@ def client_with_overrides():
     mock_qdrant.health_check = AsyncMock(return_value=mock_health_result)
 
     # Mock the direct function calls in memory.py
-    with patch("apps.memory_api.api.v1.memory.get_vector_store") as mock_get_vs, \
-         patch("apps.memory_api.api.v1.memory.get_embedding_service") as mock_get_es, \
-         patch("apps.memory_api.api.v1.memory.get_hybrid_search_service") as mock_get_hss, \
-         patch("apps.memory_api.main.asyncpg.create_pool", new=AsyncMock(return_value=mock_pool)), \
-         patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()):
-
+    with patch("apps.memory_api.api.v1.memory.get_vector_store") as mock_get_vs, patch(
+        "apps.memory_api.api.v1.memory.get_embedding_service"
+    ) as mock_get_es, patch(
+        "apps.memory_api.api.v1.memory.get_hybrid_search_service"
+    ) as mock_get_hss, patch(
+        "apps.memory_api.main.asyncpg.create_pool",
+        new=AsyncMock(return_value=mock_pool),
+    ), patch(
+        "apps.memory_api.main.rebuild_full_cache", new=AsyncMock()
+    ):
         mock_vs = AsyncMock()
         mock_es = MagicMock()
         mock_hss = AsyncMock()
@@ -117,9 +129,11 @@ def client_with_overrides():
         app.dependency_overrides[get_hybrid_search_service] = lambda: mock_hss
         # Override dependency for Qdrant client
         app.dependency_overrides[get_qdrant_client] = lambda: mock_qdrant
+
         # Override auth
         async def _mock_tenant():
             return "test-tenant"
+
         app.dependency_overrides[get_and_verify_tenant_id] = _mock_tenant
 
         with TestClient(app) as client:
@@ -160,7 +174,7 @@ async def test_store_memory_success(client_with_overrides, mock_memory_repo):
 
     assert response.status_code == 200
     assert response.json()["id"] == "123e4567-e89b-12d3-a456-426614174000"
-    
+
     mock_memory_repo.insert_memory.assert_called_once()
     client_with_overrides.mock_embedding_service.generate_embeddings.assert_called_once()
     client_with_overrides.mock_vector_store.upsert.assert_called_once()
@@ -175,7 +189,7 @@ async def test_store_memory_db_failure(client_with_overrides, mock_memory_repo):
         "source": "cli",
         "layer": "em",
         "importance": 0.5,
-        "project": "default"
+        "project": "default",
     }
 
     response = client_with_overrides.post(
@@ -205,7 +219,7 @@ async def test_query_memory_vector_only(client_with_overrides, mock_memory_repo)
     )
 
     client_with_overrides.mock_vector_store.query.return_value = [record]
-    
+
     payload = {"query_text": "test query", "k": 1}
 
     response = client_with_overrides.post(
@@ -214,7 +228,7 @@ async def test_query_memory_vector_only(client_with_overrides, mock_memory_repo)
 
     assert response.status_code == 200
     assert len(response.json()["results"]) == 1
-    
+
     mock_memory_repo.update_memory_access_stats.assert_called()
 
 
@@ -222,9 +236,7 @@ async def test_query_memory_vector_only(client_with_overrides, mock_memory_repo)
 async def test_query_memory_hybrid(client_with_overrides, mock_memory_repo):
     # Create a valid QueryAnalysis object
     analysis = QueryAnalysis(
-        intent=QueryIntent.FACTUAL,
-        confidence=0.9,
-        original_query="test query"
+        intent=QueryIntent.FACTUAL, confidence=0.9, original_query="test query"
     )
 
     hybrid_result = HybridSearchResult(
@@ -242,8 +254,8 @@ async def test_query_memory_hybrid(client_with_overrides, mock_memory_repo):
                     "source": "src",
                     "project": "proj",
                     "last_accessed_at": datetime.now(timezone.utc),
-                    "usage_count": 10
-                }
+                    "usage_count": 10,
+                },
             )
         ],
         query_analysis=analysis,
@@ -252,7 +264,7 @@ async def test_query_memory_hybrid(client_with_overrides, mock_memory_repo):
         graph_results_count=0,
         fulltext_results_count=0,
         total_results=1,
-        total_time_ms=100
+        total_time_ms=100,
     )
     client_with_overrides.mock_hybrid_search_service.search.return_value = hybrid_result
 
@@ -270,21 +282,18 @@ async def test_query_memory_hybrid(client_with_overrides, mock_memory_repo):
 
     assert response.status_code == 200
     data = response.json()
-    assert data.get("synthesized_context") is None 
+    assert data.get("synthesized_context") is None
     assert len(data["results"]) == 1
     assert data["results"][0]["content"] == "Hybrid Found"
     assert data["graph_statistics"]["total_results"] == 1
-    
+
     client_with_overrides.mock_hybrid_search_service.search.assert_called_once()
     mock_memory_repo.update_memory_access_stats.assert_called()
 
 
 @pytest.mark.asyncio
 async def test_query_memory_hybrid_missing_project(client_with_overrides):
-    payload = {
-        "query_text": "test query",
-        "use_graph": True
-    }
+    payload = {"query_text": "test query", "use_graph": True}
     response = client_with_overrides.post(
         "/v1/memory/query", json=payload, headers={"X-Tenant-Id": "test-tenant"}
     )
@@ -314,7 +323,7 @@ async def test_delete_memory_not_found(client_with_overrides, mock_memory_repo):
 
     response = client_with_overrides.delete(
         "/v1/memory/delete?memory_id=nonexistent",
-        headers={"X-Tenant-Id": "test-tenant"}
+        headers={"X-Tenant-Id": "test-tenant"},
     )
 
     assert response.status_code == 404
@@ -325,7 +334,9 @@ async def test_delete_memory_not_found(client_with_overrides, mock_memory_repo):
 
 @pytest.mark.asyncio
 async def test_rebuild_reflections_success(client_with_overrides):
-    with patch("apps.memory_api.api.v1.memory.generate_reflection_for_project") as mock_task:
+    with patch(
+        "apps.memory_api.api.v1.memory.generate_reflection_for_project"
+    ) as mock_task:
         payload = {"tenant_id": "test-tenant", "project": "test-project"}
         response = client_with_overrides.post(
             "/v1/memory/rebuild-reflections",
@@ -357,17 +368,17 @@ async def test_reflection_stats_success(client_with_overrides, mock_memory_repo)
 async def test_store_memory_missing_tenant_header(client_with_overrides):
     # Override the tenant id dependency to simulate missing header
     app.dependency_overrides.pop(get_and_verify_tenant_id, None)
-    
+
     payload = {
         "content": "Test content",
         "source": "cli",
         "layer": "em",
         "importance": 0.5,
-        "project": "default"
+        "project": "default",
     }
     # No headers provided
     response = client_with_overrides.post("/v1/memory/store", json=payload)
-    
+
     assert response.status_code in [400, 401, 403]
 
 
@@ -403,11 +414,11 @@ async def test_query_memory_with_filters(client_with_overrides, mock_memory_repo
 
 
 @pytest.mark.asyncio
-async def test_query_memory_with_graph_traversal(client_with_overrides, mock_memory_repo):
+async def test_query_memory_with_graph_traversal(
+    client_with_overrides, mock_memory_repo
+):
     analysis = QueryAnalysis(
-        intent=QueryIntent.EXPLORATORY,
-        confidence=0.8,
-        original_query="test query"
+        intent=QueryIntent.EXPLORATORY, confidence=0.8, original_query="test query"
     )
 
     hybrid_result = HybridSearchResult(
@@ -425,8 +436,8 @@ async def test_query_memory_with_graph_traversal(client_with_overrides, mock_mem
                     "source": "src",
                     "project": "proj",
                     "last_accessed_at": datetime.now(timezone.utc),
-                    "usage_count": 10
-                }
+                    "usage_count": 10,
+                },
             )
         ],
         query_analysis=analysis,
@@ -435,7 +446,7 @@ async def test_query_memory_with_graph_traversal(client_with_overrides, mock_mem
         graph_results_count=0,
         fulltext_results_count=0,
         total_results=1,
-        total_time_ms=100
+        total_time_ms=100,
     )
     client_with_overrides.mock_hybrid_search_service.search.return_value = hybrid_result
 
@@ -455,24 +466,28 @@ async def test_query_memory_with_graph_traversal(client_with_overrides, mock_mem
     data = response.json()
     assert data.get("synthesized_context") is None
     assert data["graph_statistics"]["total_results"] == 1
-    
+
     client_with_overrides.mock_hybrid_search_service.search.assert_called_once()
     mock_memory_repo.update_memory_access_stats.assert_called()
 
 
 @pytest.mark.asyncio
-async def test_generate_hierarchical_reflection_deprecated(client_with_overrides, mock_memory_repo):
-    with patch("apps.memory_api.services.reflection_engine.ReflectionEngine") as MockEngine:
+async def test_generate_hierarchical_reflection_deprecated(
+    client_with_overrides, mock_memory_repo
+):
+    with patch(
+        "apps.memory_api.services.reflection_engine.ReflectionEngine"
+    ) as MockEngine:
         mock_engine_instance = AsyncMock()
         MockEngine.return_value = mock_engine_instance
         mock_engine_instance.generate_hierarchical_reflection.return_value = "Summary"
-        
+
         # Mock episode count query
         mock_memory_repo.count_memories_by_layer.return_value = 10
 
         response = client_with_overrides.post(
             "/v1/memory/reflection/hierarchical?project=my-project&bucket_size=15",
-            headers={"X-Tenant-Id": "test-tenant"}
+            headers={"X-Tenant-Id": "test-tenant"},
         )
 
         assert response.status_code == 200

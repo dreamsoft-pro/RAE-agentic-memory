@@ -10,7 +10,7 @@ try:
 except ImportError:
     AsyncAnthropic = None
 
-from .base import ModelAdapter, ModelType, AgentContext, AgentResult
+from .base import AgentContext, AgentResult, ModelAdapter, ModelType
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,9 @@ logger = logging.getLogger(__name__)
 class ClaudeAdapter(ModelAdapter):
     """Adapter for Claude API."""
 
-    def __init__(self, model_type: ModelType, working_dir: str, api_key: Optional[str] = None):
+    def __init__(
+        self, model_type: ModelType, working_dir: str, api_key: Optional[str] = None
+    ):
         """Initialize Claude adapter.
 
         Args:
@@ -62,7 +64,9 @@ class ClaudeAdapter(ModelAdapter):
             # Build prompt from context
             prompt = self._build_prompt(context)
 
-            logger.info(f"Claude API call: model={self.model_name}, prompt_len={len(prompt)}")
+            logger.info(
+                f"Claude API call: model={self.model_name}, prompt_len={len(prompt)}"
+            )
             logger.debug(f"Prompt preview: {prompt[:200]}...")
 
             # Call Claude API
@@ -78,7 +82,9 @@ class ClaudeAdapter(ModelAdapter):
                 timeout=300.0,  # 5 minutes
             )
 
-            logger.info(f"Claude API success: input={response.usage.input_tokens}, output={response.usage.output_tokens}")
+            logger.info(
+                f"Claude API success: input={response.usage.input_tokens}, output={response.usage.output_tokens}"
+            )
 
             # Extract text from response
             output = ""
@@ -97,7 +103,7 @@ class ClaudeAdapter(ModelAdapter):
                         "input_tokens": response.usage.input_tokens,
                         "output_tokens": response.usage.output_tokens,
                     },
-                }
+                },
             )
 
         except asyncio.TimeoutError:
@@ -108,7 +114,9 @@ class ClaudeAdapter(ModelAdapter):
                 error="Claude API timed out after 5 minutes",
             )
         except Exception as e:
-            logger.error(f"Claude API error: {type(e).__name__}: {str(e)}", exc_info=True)
+            logger.error(
+                f"Claude API error: {type(e).__name__}: {str(e)}", exc_info=True
+            )
             return AgentResult(
                 success=False,
                 output="",
@@ -133,7 +141,9 @@ class ClaudeAdapter(ModelAdapter):
         ]
 
         if context.files_to_read:
-            prompt_parts.append(f"\nFiles to consider:\n- " + "\n- ".join(context.files_to_read))
+            prompt_parts.append(
+                "\nFiles to consider:\n- " + "\n- ".join(context.files_to_read)
+            )
 
         if context.additional_context:
             prompt_parts.append("\nAdditional Context:")

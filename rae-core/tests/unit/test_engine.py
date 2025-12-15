@@ -1,13 +1,14 @@
-import pytest
 from unittest.mock import AsyncMock, Mock, patch
 from uuid import uuid4
 
-from rae_core.engine import RAEEngine
+import pytest
+
 from rae_core.config import RAESettings
-from rae_core.interfaces.storage import IMemoryStorage
-from rae_core.interfaces.vector import IVectorStore
+from rae_core.engine import RAEEngine
 from rae_core.interfaces.embedding import IEmbeddingProvider
 from rae_core.interfaces.llm import ILLMProvider
+from rae_core.interfaces.storage import IMemoryStorage
+from rae_core.interfaces.vector import IVectorStore
 
 
 @pytest.fixture
@@ -88,7 +89,7 @@ async def test_store_memory(rae_engine, mock_memory_storage):
     agent_id = "test-agent"
     content = "test content"
     expected_uuid = uuid4()
-    
+
     mock_memory_storage.store_memory.return_value = expected_uuid
 
     result = await rae_engine.store_memory(
@@ -114,7 +115,7 @@ async def test_retrieve_memory(rae_engine, mock_memory_storage):
     tenant_id = "test-tenant"
     memory_id = uuid4()
     expected_memory = {"id": memory_id, "content": "test"}
-    
+
     mock_memory_storage.get_memory.return_value = expected_memory
 
     result = await rae_engine.retrieve_memory(
@@ -134,7 +135,7 @@ async def test_search_memories(rae_engine, mock_search_engine):
     tenant_id = "test-tenant"
     query = "test query"
     expected_results = [{"id": uuid4(), "score": 0.9}]
-    
+
     mock_search_engine.search.return_value = expected_results
 
     results = await rae_engine.search_memories(
@@ -153,7 +154,7 @@ async def test_search_memories_with_rerank(rae_engine, mock_search_engine):
     query = "test query"
     search_results = [{"id": i, "score": 0.5} for i in range(5)]
     reranked_results = [{"id": 0, "score": 0.9}]
-    
+
     mock_search_engine.search.return_value = search_results
     mock_search_engine.rerank.return_value = reranked_results
 
@@ -173,7 +174,7 @@ async def test_run_reflection_cycle(rae_engine, mock_reflection_engine):
     tenant_id = "test-tenant"
     agent_id = "test-agent"
     expected_summary = {"status": "completed"}
-    
+
     mock_reflection_engine.run_reflection_cycle.return_value = expected_summary
 
     result = await rae_engine.run_reflection_cycle(
@@ -193,13 +194,14 @@ async def test_run_reflection_cycle(rae_engine, mock_reflection_engine):
 async def test_generate_text(rae_engine, mock_llm_orchestrator):
     prompt = "Hello"
     expected_response = "World"
-    
+
     mock_llm_orchestrator.generate.return_value = (expected_response, {})
 
     result = await rae_engine.generate_text(prompt=prompt)
 
     assert result == expected_response
     mock_llm_orchestrator.generate.assert_called_once()
+
 
 @pytest.mark.asyncio
 async def test_get_status(rae_engine):

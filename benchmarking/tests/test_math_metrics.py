@@ -7,29 +7,31 @@ Tests all three layers of mathematical metrics:
 - Policy Metrics
 """
 
-import pytest
-import numpy as np
 from datetime import datetime, timedelta
 
-from benchmarking.math_metrics.base import MemorySnapshot, cosine_similarity, jaccard_similarity
-from benchmarking.math_metrics.structure_metrics import (
-    GraphConnectivityScore,
-    SemanticCoherenceScore,
-    GraphEntropyMetric,
-    StructuralDriftMetric,
+import numpy as np
+import pytest
+
+from benchmarking.math_metrics.base import (
+    MemorySnapshot,
 )
 from benchmarking.math_metrics.dynamics_metrics import (
-    MemoryDriftIndex,
-    RetentionCurve,
-    ReflectionGainScore,
     CompressionFidelityRatio,
+    MemoryDriftIndex,
+    ReflectionGainScore,
+    RetentionCurve,
 )
 from benchmarking.math_metrics.policy_metrics import (
-    OptimalRetrievalRatio,
     CostQualityFrontier,
+    OptimalRetrievalRatio,
     ReflectionPolicyEfficiency,
 )
-
+from benchmarking.math_metrics.structure_metrics import (
+    GraphConnectivityScore,
+    GraphEntropyMetric,
+    SemanticCoherenceScore,
+    StructuralDriftMetric,
+)
 
 # ============================================================================
 # Fixtures

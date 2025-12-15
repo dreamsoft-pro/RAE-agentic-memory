@@ -34,6 +34,7 @@ logger = structlog.get_logger(__name__)
 # WHY: Type safety, automatic validation, clear API contracts
 # ═══════════════════════════════════════════════════════════════
 
+
 class EntityInput(BaseModel):
     """
     Input model for creating/updating entities.
@@ -46,7 +47,9 @@ class EntityInput(BaseModel):
     value: int = Field(..., ge=0, description="Entity value (must be >= 0)")
     category: str = Field(default="default", description="Entity category")
     tags: List[str] = Field(default_factory=list, description="Optional tags")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata"
+    )
 
     class Config:
         json_schema_extra = {
@@ -55,7 +58,7 @@ class EntityInput(BaseModel):
                 "value": 100,
                 "category": "test",
                 "tags": ["important", "active"],
-                "metadata": {"source": "api"}
+                "metadata": {"source": "api"},
             }
         }
 
@@ -93,6 +96,7 @@ class EntitySearchResult(BaseModel):
 # ═══════════════════════════════════════════════════════════════
 # SERVICE LAYER (Business Logic)
 # ═══════════════════════════════════════════════════════════════
+
 
 class MyBusinessService:
     """
@@ -168,9 +172,7 @@ class MyBusinessService:
             DatabaseError: If persistence fails
         """
         self.logger.info(
-            "create_entity_started",
-            tenant_id=tenant_id,
-            entity_name=input_data.name
+            "create_entity_started", tenant_id=tenant_id, entity_name=input_data.name
         )
 
         try:
@@ -186,7 +188,7 @@ class MyBusinessService:
             entity_data = self._prepare_entity_data(tenant_id, input_data)
 
             # Step 4: Calculate derived fields
-            entity_data['score'] = self._calculate_score(input_data.value)
+            entity_data["score"] = self._calculate_score(input_data.value)
 
             # Step 5: Persist to database
             created = await self.entity_repo.insert(entity_data)
@@ -196,26 +198,20 @@ class MyBusinessService:
             # await self._create_audit_log(tenant_id, "entity_created", created['id'])
 
             self.logger.info(
-                "create_entity_completed",
-                tenant_id=tenant_id,
-                entity_id=created['id']
+                "create_entity_completed", tenant_id=tenant_id, entity_id=created["id"]
             )
 
             return EntityOutput(**created)
 
         except ValueError as e:
             self.logger.warning(
-                "create_entity_validation_failed",
-                tenant_id=tenant_id,
-                error=str(e)
+                "create_entity_validation_failed", tenant_id=tenant_id, error=str(e)
             )
             raise
 
         except Exception as e:
             self.logger.exception(
-                "create_entity_failed",
-                tenant_id=tenant_id,
-                error=str(e)
+                "create_entity_failed", tenant_id=tenant_id, error=str(e)
             )
             raise RuntimeError(f"Failed to create entity: {e}")
 
@@ -271,9 +267,7 @@ class MyBusinessService:
             ValueError: If business rules violated
         """
         self.logger.info(
-            "update_entity_started",
-            entity_id=entity_id,
-            tenant_id=tenant_id
+            "update_entity_started", entity_id=entity_id, tenant_id=tenant_id
         )
 
         # Validate entity exists
@@ -288,17 +282,15 @@ class MyBusinessService:
         update_data = updates.dict(exclude_unset=True)
 
         # Recalculate derived fields if needed
-        if 'value' in update_data:
-            update_data['score'] = self._calculate_score(update_data['value'])
+        if "value" in update_data:
+            update_data["score"] = self._calculate_score(update_data["value"])
 
         # Persist update
         updated = await self.entity_repo.update(entity_id, tenant_id, update_data)
 
         if updated:
             self.logger.info(
-                "update_entity_completed",
-                entity_id=entity_id,
-                tenant_id=tenant_id
+                "update_entity_completed", entity_id=entity_id, tenant_id=tenant_id
             )
 
         return EntityOutput(**updated) if updated else None
@@ -322,9 +314,7 @@ class MyBusinessService:
             True if deleted, False if not found
         """
         self.logger.info(
-            "delete_entity_started",
-            entity_id=entity_id,
-            tenant_id=tenant_id
+            "delete_entity_started", entity_id=entity_id, tenant_id=tenant_id
         )
 
         # Check if entity can be deleted (business rules)
@@ -340,9 +330,7 @@ class MyBusinessService:
 
         if deleted:
             self.logger.info(
-                "delete_entity_completed",
-                entity_id=entity_id,
-                tenant_id=tenant_id
+                "delete_entity_completed", entity_id=entity_id, tenant_id=tenant_id
             )
 
         return deleted
@@ -375,9 +363,7 @@ class MyBusinessService:
 
         # Get entities (simplified - extend with actual search logic)
         entities = await self.entity_repo.get_all(
-            tenant_id=tenant_id,
-            limit=page_size,
-            offset=offset
+            tenant_id=tenant_id, limit=page_size, offset=offset
         )
 
         # Get total count for pagination
@@ -387,7 +373,7 @@ class MyBusinessService:
             entities=[EntityOutput(**e) for e in entities],
             total_count=total_count,
             page=page,
-            page_size=page_size
+            page_size=page_size,
         )
 
     # ═══════════════════════════════════════════════════════════════
@@ -418,20 +404,13 @@ class MyBusinessService:
         pass
 
     async def _validate_update_rules(
-        self,
-        tenant_id: str,
-        entity_id: str,
-        updates: EntityInput
+        self, tenant_id: str, entity_id: str, updates: EntityInput
     ):
         """Validate business rules for updates."""
         # Similar to _validate_create_rules
         pass
 
-    async def _check_duplicate_name(
-        self,
-        tenant_id: str,
-        name: str
-    ) -> Optional[Dict]:
+    async def _check_duplicate_name(self, tenant_id: str, name: str) -> Optional[Dict]:
         """
         Check if entity with name already exists.
 
@@ -442,9 +421,7 @@ class MyBusinessService:
         return None  # Placeholder
 
     def _prepare_entity_data(
-        self,
-        tenant_id: str,
-        input_data: EntityInput
+        self, tenant_id: str, input_data: EntityInput
     ) -> Dict[str, Any]:
         """
         Prepare data for persistence.
@@ -453,7 +430,7 @@ class MyBusinessService:
         WHY: Add system fields (tenant_id, timestamps, etc.)
         """
         return {
-            'tenant_id': tenant_id,
+            "tenant_id": tenant_id,
             **input_data.dict(),
             # Add computed fields here
         }

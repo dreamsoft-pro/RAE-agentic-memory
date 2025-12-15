@@ -1,35 +1,36 @@
 import os
+
 import pytest
 
-from rae_core.config.settings import RAESettings
 from rae_core.config.defaults import (
-    DEFAULT_SENSORY_SIZE,
-    DEFAULT_WORKING_SIZE,
-    DEFAULT_EPISODIC_SIZE,
-    DEFAULT_SEMANTIC_SIZE,
-    DEFAULT_DECAY_RATE,
-    DEFAULT_DECAY_INTERVAL_HOURS,
-    DEFAULT_MIN_IMPORTANCE,
-    DEFAULT_PROMOTION_THRESHOLD,
-    DEFAULT_CONSOLIDATION_THRESHOLD,
-    DEFAULT_TOP_K,
-    DEFAULT_SIMILARITY_THRESHOLD,
-    DEFAULT_RERANK_TOP_K,
-    DEFAULT_MIN_MEMORIES_FOR_REFLECTION,
-    DEFAULT_REFLECTION_MAX_AGE_HOURS,
-    DEFAULT_QUALITY_THRESHOLD,
-    DEFAULT_LLM_TEMPERATURE,
-    DEFAULT_LLM_MAX_TOKENS,
-    DEFAULT_LLM_TIMEOUT,
-    DEFAULT_SYNC_BATCH_SIZE,
-    DEFAULT_SYNC_TIMEOUT,
-    DEFAULT_SYNC_RETRY_ATTEMPTS,
-    DEFAULT_CACHE_TTL,
     DEFAULT_CACHE_MAX_SIZE,
+    DEFAULT_CACHE_TTL,
+    DEFAULT_CONSOLIDATION_THRESHOLD,
+    DEFAULT_DECAY_INTERVAL_HOURS,
+    DEFAULT_DECAY_RATE,
+    DEFAULT_EPISODIC_SIZE,
+    DEFAULT_LLM_MAX_TOKENS,
+    DEFAULT_LLM_TEMPERATURE,
+    DEFAULT_LLM_TIMEOUT,
+    DEFAULT_MIN_IMPORTANCE,
+    DEFAULT_MIN_MEMORIES_FOR_REFLECTION,
     DEFAULT_OTEL_ENABLED,
     DEFAULT_OTEL_SERVICE_NAME,
     DEFAULT_OTEL_SERVICE_VERSION,
+    DEFAULT_PROMOTION_THRESHOLD,
+    DEFAULT_QUALITY_THRESHOLD,
+    DEFAULT_REFLECTION_MAX_AGE_HOURS,
+    DEFAULT_RERANK_TOP_K,
+    DEFAULT_SEMANTIC_SIZE,
+    DEFAULT_SENSORY_SIZE,
+    DEFAULT_SIMILARITY_THRESHOLD,
+    DEFAULT_SYNC_BATCH_SIZE,
+    DEFAULT_SYNC_RETRY_ATTEMPTS,
+    DEFAULT_SYNC_TIMEOUT,
+    DEFAULT_TOP_K,
+    DEFAULT_WORKING_SIZE,
 )
+from rae_core.config.settings import RAESettings
 
 
 @pytest.fixture(autouse=True)
@@ -37,13 +38,13 @@ def clean_env():
     """Fixture to clean environment variables before and after each test."""
     # Store original RAE_ prefixed env vars
     original_rae_env = {k: os.environ[k] for k in os.environ if k.startswith("RAE_")}
-    
+
     # Clear all RAE_ prefixed env vars
     for k in original_rae_env:
         del os.environ[k]
-    
+
     yield
-    
+
     # Restore original RAE_ prefixed env vars
     for k in os.environ:
         if k.startswith("RAE_"):
@@ -86,11 +87,15 @@ def test_default_settings():
     assert settings.llm_timeout == DEFAULT_LLM_TIMEOUT
 
     # Sync parameters
-    assert settings.sync_enabled == False  # Default for sync_enabled is False in settings.py
+    assert (
+        settings.sync_enabled == False
+    )  # Default for sync_enabled is False in settings.py
     assert settings.sync_batch_size == DEFAULT_SYNC_BATCH_SIZE
     assert settings.sync_timeout == DEFAULT_SYNC_TIMEOUT
     assert settings.sync_retry_attempts == DEFAULT_SYNC_RETRY_ATTEMPTS
-    assert settings.sync_encryption_enabled == True  # Default for sync_encryption_enabled is True
+    assert (
+        settings.sync_encryption_enabled == True
+    )  # Default for sync_encryption_enabled is True
 
     # Cache parameters
     assert settings.cache_enabled == True  # Default for cache_enabled is True
@@ -104,7 +109,7 @@ def test_default_settings():
     assert settings.otel_endpoint is None  # Default is None
 
     # Vector backend
-    assert settings.vector_backend == "qdrant" # Default is qdrant
+    assert settings.vector_backend == "qdrant"  # Default is qdrant
 
 
 def test_env_var_override():

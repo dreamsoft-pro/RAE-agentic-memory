@@ -4,16 +4,17 @@ Code Metrics Generator
 Generates code complexity and quality metrics.
 """
 
-import os
 import subprocess
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 
 def run_command(cmd):
     """Run shell command and return output."""
     try:
-        result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=True)
+        result = subprocess.run(
+            cmd, shell=True, capture_output=True, text=True, check=True
+        )
         return result.stdout.strip()
     except subprocess.CalledProcessError:
         return ""
@@ -32,7 +33,9 @@ def generate_code_metrics():
 
     # Count lines of code
     py_files = len(list(Path("apps").rglob("*.py")))
-    py_lines = run_command("find apps -name '*.py' -exec wc -l {} + | tail -1 | awk '{print $1}'")
+    py_lines = run_command(
+        "find apps -name '*.py' -exec wc -l {} + | tail -1 | awk '{print $1}'"
+    )
 
     # TODO: Add radon for cyclomatic complexity
     # TODO: Add lizard for code analysis

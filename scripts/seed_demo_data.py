@@ -756,13 +756,13 @@ def print_usage_tips(scenarios: List[str]):
         print("\n📦 PROJECT PHOENIX - Software Development Scenario")
         print(f"   Tenant: {PHOENIX_TENANT_ID}")
         print(f"   Project: {PHOENIX_PROJECT_ID}")
-        print(f"   Try: Search for 'authentication bug' or 'circuit breaker'")
+        print("   Try: Search for 'authentication bug' or 'circuit breaker'")
 
     if "city-hall" in scenarios:
         print("\n🏛️  CITY HALL - Public Administration Scenario")
         print(f"   Tenant: {CITYHALL_TENANT_ID}")
         print(f"   Project: {CITYHALL_PROJECT_ID}")
-        print(f"   Try: Search for 'odpady' or 'bezpieczeństwo' or 'RODO'")
+        print("   Try: Search for 'odpady' or 'bezpieczeństwo' or 'RODO'")
 
     print("\n💡 Explore the data:")
     print("   1. Dashboard: http://localhost:8501")

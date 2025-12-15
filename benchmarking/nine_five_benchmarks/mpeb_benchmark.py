@@ -13,21 +13,20 @@ Research-grade implementation for academic evaluation of RAE memory systems.
 """
 
 import json
-import time
-import hashlib
 import random
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Callable
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
-from numpy.typing import NDArray
 
 
 class PolicyAction(Enum):
     """Actions available to the policy."""
+
     RETRIEVE = "retrieve"
     STORE = "store"
     COMPRESS = "compress"
@@ -38,6 +37,7 @@ class PolicyAction(Enum):
 
 class EnvironmentState(Enum):
     """Environment states for MDP."""
+
     LOW_MEMORY = "low_memory"
     MEDIUM_MEMORY = "medium_memory"
     HIGH_MEMORY = "high_memory"
@@ -49,6 +49,7 @@ class EnvironmentState(Enum):
 @dataclass
 class PolicyState:
     """State of the policy at a point in time."""
+
     iteration: int
     state: EnvironmentState
     action_values: Dict[PolicyAction, float]  # Q-values
@@ -61,6 +62,7 @@ class PolicyState:
 @dataclass
 class PolicySnapshot:
     """Snapshot of policy performance."""
+
     iteration: int
     quality_score: float  # Mean Q-value
     optimal_action_rate: float  # How often optimal action selected
@@ -72,6 +74,7 @@ class PolicySnapshot:
 @dataclass
 class MPEBResults:
     """Results from MPEB benchmark."""
+
     benchmark_name: str = "MPEB"
     version: str = "1.0.0"
 
@@ -236,7 +239,10 @@ class PolicyEnvironment:
             EnvironmentState.LOW_MEMORY: [PolicyAction.STORE, PolicyAction.RETRIEVE],
             EnvironmentState.MEDIUM_MEMORY: [PolicyAction.RETRIEVE, PolicyAction.STORE],
             EnvironmentState.HIGH_MEMORY: [PolicyAction.COMPRESS, PolicyAction.ARCHIVE],
-            EnvironmentState.CRITICAL_MEMORY: [PolicyAction.ARCHIVE, PolicyAction.COMPRESS],
+            EnvironmentState.CRITICAL_MEMORY: [
+                PolicyAction.ARCHIVE,
+                PolicyAction.COMPRESS,
+            ],
             EnvironmentState.IDLE: [PolicyAction.REFLECT, PolicyAction.SKIP],
             EnvironmentState.ACTIVE: [PolicyAction.RETRIEVE, PolicyAction.STORE],
         }
@@ -421,7 +427,8 @@ class MPEBBenchmark:
             window = min(100, len(self.policy_states))
             recent = self.policy_states[-window:]
             optimal_count = sum(
-                1 for ps in recent
+                1
+                for ps in recent
                 if ps.selected_action == self.env.optimal_policy.get(ps.state)
             )
             optimal_rate = optimal_count / len(recent)
@@ -505,7 +512,7 @@ class MPEBBenchmark:
         start_time = datetime.now()
 
         if verbose:
-            print(f"Starting MPEB Benchmark")
+            print("Starting MPEB Benchmark")
             print(f"  Iterations: {num_iterations}")
             print(f"  Episode length: {episode_length}")
             print(f"  Learning rate: {self.learning_rate}")
@@ -572,7 +579,9 @@ class MPEBBenchmark:
         if len(quality_curve) >= 10:
             early_quality = np.mean(quality_curve[:10])
             late_quality = np.mean(quality_curve[-10:])
-            adaptation_score = (late_quality - early_quality) / max(abs(late_quality), 1e-6)
+            adaptation_score = (late_quality - early_quality) / max(
+                abs(late_quality), 1e-6
+            )
             adaptation_score = max(0.0, min(1.0, adaptation_score))
         else:
             adaptation_score = 0.0
@@ -621,7 +630,9 @@ class MPEBBenchmark:
             print(f"  Convergence Rate: {convergence_rate:.4f}")
             print(f"  Adaptation Score: {adaptation_score:.4f}")
             print(f"  Stability Index: {final_stability:.4f}")
-            print(f"  Optimal Actions: {optimal_count}/{optimal_count + suboptimal_count}")
+            print(
+                f"  Optimal Actions: {optimal_count}/{optimal_count + suboptimal_count}"
+            )
             print(f"\n  Duration: {duration:.2f}s")
 
         return results
@@ -667,7 +678,9 @@ class MPEBBenchmark:
 
         for episode_num in range(1, num_episodes + 1):
             if verbose:
-                print(f"\nEpisode {episode_num}/{num_episodes}: Learning new rule set...")
+                print(
+                    f"\nEpisode {episode_num}/{num_episodes}: Learning new rule set..."
+                )
 
             # Modify environment rules for this episode
             self._modify_environment_rules(episode_num)

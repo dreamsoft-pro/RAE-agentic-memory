@@ -7,7 +7,7 @@ Ideal for testing, development, and lightweight deployments.
 import asyncio
 from collections import defaultdict
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID, uuid4
 
 from rae_core.interfaces.storage import IMemoryStorage
@@ -27,13 +27,19 @@ class InMemoryStorage(IMemoryStorage):
     def __init__(self):
         """Initialize in-memory storage."""
         # Main storage: {memory_id: memory_dict}
-        self._memories: Dict[UUID, Dict[str, Any]] = {}
+        self._memories: dict[UUID, dict[str, Any]] = {}
 
         # Indexes for fast lookups
-        self._by_tenant: Dict[str, set[UUID]] = defaultdict(set)
-        self._by_agent: Dict[tuple[str, str], set[UUID]] = defaultdict(set)  # (tenant, agent)
-        self._by_layer: Dict[tuple[str, str], set[UUID]] = defaultdict(set)  # (tenant, layer)
-        self._by_tags: Dict[tuple[str, str], set[UUID]] = defaultdict(set)  # (tenant, tag)
+        self._by_tenant: dict[str, set[UUID]] = defaultdict(set)
+        self._by_agent: dict[tuple[str, str], set[UUID]] = defaultdict(
+            set
+        )  # (tenant, agent)
+        self._by_layer: dict[tuple[str, str], set[UUID]] = defaultdict(
+            set
+        )  # (tenant, layer)
+        self._by_tags: dict[tuple[str, str], set[UUID]] = defaultdict(
+            set
+        )  # (tenant, tag)
 
         # Thread safety
         self._lock = asyncio.Lock()
@@ -44,10 +50,10 @@ class InMemoryStorage(IMemoryStorage):
         layer: str,
         tenant_id: str,
         agent_id: str,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        embedding: Optional[List[float]] = None,
-        importance: Optional[float] = None,
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
+        embedding: list[float] | None = None,
+        importance: float | None = None,
     ) -> UUID:
         """Store a new memory."""
         async with self._lock:
@@ -88,7 +94,7 @@ class InMemoryStorage(IMemoryStorage):
         self,
         memory_id: UUID,
         tenant_id: str,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> dict[str, Any] | None:
         """Retrieve a memory by ID."""
         async with self._lock:
             memory = self._memories.get(memory_id)
@@ -103,7 +109,7 @@ class InMemoryStorage(IMemoryStorage):
         self,
         memory_id: UUID,
         tenant_id: str,
-        updates: Dict[str, Any],
+        updates: dict[str, Any],
     ) -> bool:
         """Update a memory."""
         async with self._lock:
@@ -168,12 +174,12 @@ class InMemoryStorage(IMemoryStorage):
     async def list_memories(
         self,
         tenant_id: str,
-        agent_id: Optional[str] = None,
-        layer: Optional[str] = None,
-        tags: Optional[List[str]] = None,
+        agent_id: str | None = None,
+        layer: str | None = None,
+        tags: list[str] | None = None,
         limit: int = 100,
         offset: int = 0,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """List memories with filtering."""
         async with self._lock:
             # Start with tenant memories
@@ -207,8 +213,8 @@ class InMemoryStorage(IMemoryStorage):
     async def count_memories(
         self,
         tenant_id: str,
-        agent_id: Optional[str] = None,
-        layer: Optional[str] = None,
+        agent_id: str | None = None,
+        layer: str | None = None,
     ) -> int:
         """Count memories matching filters."""
         async with self._lock:
@@ -271,7 +277,7 @@ class InMemoryStorage(IMemoryStorage):
 
             return len(memory_ids)
 
-    async def get_statistics(self) -> Dict[str, Any]:
+    async def get_statistics(self) -> dict[str, Any]:
         """Get storage statistics.
 
         Returns:
@@ -308,7 +314,7 @@ class InMemoryStorage(IMemoryStorage):
         tenant_id: str,
         agent_id: str,
         layer: str,
-        metadata_filter: Dict[str, Any],
+        metadata_filter: dict[str, Any],
     ) -> int:
         """Delete memories matching metadata filter."""
         async with self._lock:
@@ -320,7 +326,9 @@ class InMemoryStorage(IMemoryStorage):
                     and memory["layer"] == layer
                 ):
                     # Check if metadata matches filter
-                    if self._matches_metadata_filter(memory.get("metadata", {}), metadata_filter):
+                    if self._matches_metadata_filter(
+                        memory.get("metadata", {}), metadata_filter
+                    ):
                         matching_ids.append(memory_id)
 
             for memory_id in matching_ids:
@@ -360,8 +368,8 @@ class InMemoryStorage(IMemoryStorage):
         agent_id: str,
         layer: str,
         limit: int = 10,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> List[Dict[str, Any]]:
+        filters: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]]:
         """Search memories using simple substring matching."""
         async with self._lock:
             results = []
@@ -377,7 +385,9 @@ class InMemoryStorage(IMemoryStorage):
                     content_lower = memory["content"].lower()
                     if query_lower in content_lower:
                         # Calculate simple score based on position
-                        score = 1.0 - (content_lower.index(query_lower) / len(content_lower))
+                        score = 1.0 - (
+                            content_lower.index(query_lower) / len(content_lower)
+                        )
                         results.append({"memory": memory.copy(), "score": score})
 
             # Sort by score descending
@@ -446,7 +456,9 @@ class InMemoryStorage(IMemoryStorage):
 
             return True
 
-    def _matches_metadata_filter(self, metadata: Dict[str, Any], filter_dict: Dict[str, Any]) -> bool:
+    def _matches_metadata_filter(
+        self, metadata: dict[str, Any], filter_dict: dict[str, Any]
+    ) -> bool:
         """Check if metadata matches filter criteria."""
         for key, value in filter_dict.items():
             if key not in metadata or metadata[key] != value:

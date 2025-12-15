@@ -16,7 +16,6 @@ from .gemini import GeminiProvider
 from .ollama import OllamaProvider
 from .registry import ProviderRegistry
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -80,8 +79,7 @@ def expand_env_vars(value: Any) -> Any:
 
 
 def create_provider_from_config(
-    provider_name: str,
-    provider_config: Dict[str, Any]
+    provider_name: str, provider_config: Dict[str, Any]
 ) -> Optional[Any]:
     """Create provider instance from configuration.
 
@@ -114,7 +112,7 @@ def create_provider_from_config(
                 cli_path=cli_path,
                 rate_limit_delay=rate_limit_delay,
                 min_delay=min_delay,
-                max_delay=max_delay
+                max_delay=max_delay,
             )
 
         elif provider_name == "ollama":
@@ -131,8 +129,7 @@ def create_provider_from_config(
 
 
 def init_registry_from_config(
-    config_path: Optional[str] = None,
-    registry: Optional[ProviderRegistry] = None
+    config_path: Optional[str] = None, registry: Optional[ProviderRegistry] = None
 ) -> ProviderRegistry:
     """Initialize provider registry from configuration file.
 
@@ -173,7 +170,7 @@ def init_registry_from_config(
             name=provider_name,
             enabled=provider_config.get("enabled", True),
             default_model=provider_config.get("default_model"),
-            settings=provider_config.get("settings", {})
+            settings=provider_config.get("settings", {}),
         )
 
         # Register
@@ -211,9 +208,7 @@ def create_default_config_file(config_path: Optional[str] = None):
             "claude": {
                 "enabled": True,
                 "default_model": "claude-sonnet-4-5-20250929",
-                "settings": {
-                    "api_key": "${ANTHROPIC_API_KEY}"
-                }
+                "settings": {"api_key": "${ANTHROPIC_API_KEY}"},
             },
             "gemini": {
                 "enabled": True,
@@ -222,22 +217,20 @@ def create_default_config_file(config_path: Optional[str] = None):
                     "cli_path": "gemini",
                     "rate_limit_delay": True,
                     "min_delay": 1.0,
-                    "max_delay": 10.0
-                }
+                    "max_delay": 10.0,
+                },
             },
             "ollama": {
                 "enabled": False,
                 "default_model": "llama3:70b",
-                "settings": {
-                    "endpoint": "http://localhost:11434"
-                }
-            }
+                "settings": {"endpoint": "http://localhost:11434"},
+            },
         },
         "routing": {
             "prefer_local": False,
             "max_cost_per_task": 1.0,
-            "fallback_provider": "claude"
-        }
+            "fallback_provider": "claude",
+        },
     }
 
     # Write to file

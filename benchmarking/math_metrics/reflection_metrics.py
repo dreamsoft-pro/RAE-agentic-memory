@@ -18,13 +18,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 import numpy as np
 from numpy.typing import NDArray
 
-from .base import (
-    MathMetricBase,
-    MemorySnapshot,
-    cosine_similarity,
-    jaccard_similarity,
-)
-
+from .base import MathMetricBase, cosine_similarity, jaccard_similarity
 
 # ============================================================================
 # Helper Functions
@@ -370,9 +364,7 @@ class InsightPrecision(MathMetricBase):
         # Calculate term overlap scores
         if expected_insights is not None and len(expected_insights) > 0:
             # Build expected term set
-            expected_terms_sets = [
-                extract_key_terms(exp) for exp in expected_insights
-            ]
+            expected_terms_sets = [extract_key_terms(exp) for exp in expected_insights]
             all_expected_terms = set().union(*expected_terms_sets)
 
             for gen_insight in generated_insights:
@@ -430,11 +422,13 @@ class InsightPrecision(MathMetricBase):
             "semantic_weight": semantic_weight,
             "term_weight": term_weight,
             "manual_weight": manual_weight,
-            "components_used": sum([
-                1 if scores["semantic"] else 0,
-                1 if scores["term"] else 0,
-                1 if scores["manual"] else 0,
-            ]),
+            "components_used": sum(
+                [
+                    1 if scores["semantic"] else 0,
+                    1 if scores["term"] else 0,
+                    1 if scores["manual"] else 0,
+                ]
+            ),
         }
 
         return precision

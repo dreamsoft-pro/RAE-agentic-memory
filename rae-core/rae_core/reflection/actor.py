@@ -3,7 +3,7 @@
 The Actor executes actions based on reflection insights.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from rae_core.interfaces.llm import ILLMProvider
@@ -19,7 +19,7 @@ class Actor:
     def __init__(
         self,
         memory_storage: IMemoryStorage,
-        llm_provider: Optional[ILLMProvider] = None,
+        llm_provider: ILLMProvider | None = None,
     ):
         """Initialize Actor.
 
@@ -33,9 +33,9 @@ class Actor:
     async def execute_action(
         self,
         action_type: str,
-        context: Dict[str, Any],
+        context: dict[str, Any],
         tenant_id: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Execute a specific action.
 
         Args:
@@ -59,9 +59,9 @@ class Actor:
 
     async def _consolidate_memories(
         self,
-        context: Dict[str, Any],
+        context: dict[str, Any],
         tenant_id: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Consolidate related memories into semantic memory.
 
         Args:
@@ -90,7 +90,11 @@ class Actor:
 
         # Create consolidated memory
         combined_content = " ".join([m.get("content", "") for m in memories])
-        summary = combined_content[:500] + "..." if len(combined_content) > 500 else combined_content
+        summary = (
+            combined_content[:500] + "..."
+            if len(combined_content) > 500
+            else combined_content
+        )
 
         new_memory_id = await self.memory_storage.store_memory(
             content=summary,
@@ -110,9 +114,9 @@ class Actor:
 
     async def _update_importance(
         self,
-        context: Dict[str, Any],
+        context: dict[str, Any],
         tenant_id: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Update importance scores for memories.
 
         Args:
@@ -131,7 +135,9 @@ class Actor:
 
             if memory_id and new_importance is not None:
                 success = await self.memory_storage.update_memory(
-                    memory_id=UUID(memory_id) if isinstance(memory_id, str) else memory_id,
+                    memory_id=UUID(memory_id)
+                    if isinstance(memory_id, str)
+                    else memory_id,
                     tenant_id=tenant_id,
                     updates={"importance": new_importance},
                 )
@@ -146,9 +152,9 @@ class Actor:
 
     async def _create_semantic_link(
         self,
-        context: Dict[str, Any],
+        context: dict[str, Any],
         tenant_id: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Create semantic link between memories.
 
         Args:
@@ -169,11 +175,7 @@ class Actor:
         success = await self.memory_storage.update_memory(
             memory_id=UUID(source_id) if isinstance(source_id, str) else source_id,
             tenant_id=tenant_id,
-            updates={
-                "metadata": {
-                    f"link_{relation_type}": str(target_id)
-                }
-            },
+            updates={"metadata": {f"link_{relation_type}": str(target_id)}},
         )
 
         return {
@@ -182,14 +184,14 @@ class Actor:
                 "source": str(source_id),
                 "target": str(target_id),
                 "type": relation_type,
-            }
+            },
         }
 
     async def _prune_duplicates(
         self,
-        context: Dict[str, Any],
+        context: dict[str, Any],
         tenant_id: str,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Prune duplicate or low-value memories.
 
         Args:

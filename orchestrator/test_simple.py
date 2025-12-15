@@ -27,7 +27,7 @@ async def test_registry():
 
     try:
         registry = get_configured_registry()
-        print(f"✅ Registry initialized successfully")
+        print("✅ Registry initialized successfully")
         print(f"   Registered providers: {list(registry.list_providers())}")
 
         # List all models
@@ -41,6 +41,7 @@ async def test_registry():
     except Exception as e:
         print(f"❌ Registry initialization failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -54,11 +55,10 @@ async def test_gemini_provider():
     try:
         # Create Gemini provider with rate limiting disabled for testing
         provider = GeminiProvider(
-            cli_path="gemini",
-            rate_limit_delay=False  # Disable for faster testing
+            cli_path="gemini", rate_limit_delay=False  # Disable for faster testing
         )
 
-        print(f"✅ Gemini provider created")
+        print("✅ Gemini provider created")
         print(f"   Provider name: {provider.name}")
         print(f"   Available models: {len(provider.available_models)}")
 
@@ -75,6 +75,7 @@ async def test_gemini_provider():
     except Exception as e:
         print(f"❌ Gemini provider test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -87,8 +88,7 @@ async def test_generation():
 
     try:
         provider = GeminiProvider(
-            cli_path="gemini",
-            rate_limit_delay=False  # Fast for testing
+            cli_path="gemini", rate_limit_delay=False  # Fast for testing
         )
 
         # Check if available first
@@ -109,7 +109,7 @@ async def test_generation():
             print(f"❌ Generation failed: {result.error}")
             return False
 
-        print(f"✅ Generation successful!")
+        print("✅ Generation successful!")
         print(f"   Prompt: {prompt}")
         print(f"   Response: {result.content.strip()}")
 
@@ -121,6 +121,7 @@ async def test_generation():
     except Exception as e:
         print(f"❌ Generation test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
@@ -143,13 +144,15 @@ async def test_claude_provider():
 
         provider = ClaudeProvider(api_key=api_key)
 
-        print(f"✅ Claude provider created")
+        print("✅ Claude provider created")
         print(f"   Provider name: {provider.name}")
         print(f"   Available models: {len(provider.available_models)}")
 
         # List models
         for model in provider.available_models:
-            cost_str = f"${model.cost_per_1k_input:.4f}/${model.cost_per_1k_output:.4f} per 1K"
+            cost_str = (
+                f"${model.cost_per_1k_input:.4f}/${model.cost_per_1k_output:.4f} per 1K"
+            )
             print(f"   - {model.display_name}: {cost_str} ({model.tier.value})")
 
         print(f"   API key: {api_key[:20]}...{api_key[-10:]}")
@@ -158,6 +161,7 @@ async def test_claude_provider():
     except Exception as e:
         print(f"❌ Claude provider test failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 

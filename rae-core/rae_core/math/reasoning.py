@@ -5,7 +5,7 @@ Centralizes control of reasoning depth, uncertainty handling, and path pruning.
 
 import logging
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 from uuid import UUID
 
 logger = logging.getLogger(__name__)
@@ -23,11 +23,11 @@ class ReasoningPath:
     - metadata: Additional path information
     """
 
-    nodes: List[UUID] = field(default_factory=list)
-    steps: List[str] = field(default_factory=list)
+    nodes: list[UUID] = field(default_factory=list)
+    steps: list[str] = field(default_factory=list)
     uncertainty: float = 1.0  # Start with full confidence
-    contradictions: List[str] = field(default_factory=list)
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    contradictions: list[str] = field(default_factory=list)
+    metadata: dict[str, Any] = field(default_factory=dict)
     tokens_used: int = 0
 
     @property
@@ -60,7 +60,7 @@ class ReasoningPath:
         self.uncertainty = max(0.0, min(1.0, self.uncertainty + uncertainty_delta))
         self.tokens_used += tokens
 
-    def aligns_with(self, memory: Dict[str, Any]) -> bool:
+    def aligns_with(self, memory: dict[str, Any]) -> bool:
         """Check if path aligns with a memory.
 
         Args:
@@ -81,7 +81,7 @@ class ReasoningPath:
 
         return False
 
-    def count_unverified_assumptions(self, verified_facts: Set[str]) -> int:
+    def count_unverified_assumptions(self, verified_facts: set[str]) -> int:
         """Count unverified assumptions in the path.
 
         Args:
@@ -182,7 +182,7 @@ class ReasoningController:
         self.known_false_similarity_threshold = known_false_similarity_threshold
 
         # Track known false paths for pruning
-        self.known_false_paths: List[ReasoningPath] = []
+        self.known_false_paths: list[ReasoningPath] = []
 
         # Statistics
         self.stats = {
@@ -242,11 +242,11 @@ class ReasoningController:
 
     def prune_contradictory_paths(
         self,
-        paths: List[ReasoningPath],
-        episodic_memories: Optional[List[Dict[str, Any]]] = None,
-        semantic_memories: Optional[List[Dict[str, Any]]] = None,
-        verified_facts: Optional[Set[str]] = None,
-    ) -> List[ReasoningPath]:
+        paths: list[ReasoningPath],
+        episodic_memories: list[dict[str, Any]] | None = None,
+        semantic_memories: list[dict[str, Any]] | None = None,
+        verified_facts: set[str] | None = None,
+    ) -> list[ReasoningPath]:
         """Cut paths that contradict memory layers or have too many unverified assumptions.
 
         Enhanced with three heuristics:
@@ -273,9 +273,7 @@ class ReasoningController:
             if path.is_contradictory:
                 self.stats["paths_pruned"] += 1
                 self.stats["paths_pruned_contradictory"] += 1
-                logger.debug(
-                    f"Pruning path (depth {path.depth}): Has contradictions"
-                )
+                logger.debug(f"Pruning path (depth {path.depth}): Has contradictions")
                 continue
 
             # Heuristic 1a: Check alignment with episodic memory
@@ -342,7 +340,7 @@ class ReasoningController:
         return pruned_paths
 
     def _contradicts_memories(
-        self, path: ReasoningPath, memories: List[Dict[str, Any]]
+        self, path: ReasoningPath, memories: list[dict[str, Any]]
     ) -> bool:
         """Check if path contradicts any memories.
 
@@ -365,7 +363,7 @@ class ReasoningController:
         # If path doesn't align with any memory, consider it contradictory
         return not aligns_with_any
 
-    def get_stats(self) -> Dict[str, int]:
+    def get_stats(self) -> dict[str, int]:
         """Get reasoning statistics.
 
         Returns:

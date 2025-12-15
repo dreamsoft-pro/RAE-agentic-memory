@@ -21,7 +21,9 @@ THRESHOLDS = {
 }
 
 
-def load_latest_results(results_dir: str = "benchmarking/results/telemetry") -> Optional[Dict]:
+def load_latest_results(
+    results_dir: str = "benchmarking/results/telemetry",
+) -> Optional[Dict]:
     """
     Load latest benchmark results from telemetry.
 
@@ -103,7 +105,9 @@ def main():
 
     if results is None:
         print("⚠️  No telemetry data found. Skipping threshold check.")
-        print("   Run benchmarks first: python -m benchmarking.nine_five_benchmarks.runner")
+        print(
+            "   Run benchmarks first: python -m benchmarking.nine_five_benchmarks.runner"
+        )
         sys.exit(0)  # Don't block CI if no data
 
     print("Checking thresholds...")

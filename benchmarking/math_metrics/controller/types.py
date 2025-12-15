@@ -17,6 +17,7 @@ class MathLevel(str, Enum):
     L2 - Information-Theoretic: Entropy-based optimization with IB principles
     L3 - Adaptive/Hybrid: Meta-learning that combines L1+L2 based on context
     """
+
     L1 = "deterministic_heuristic"
     L2 = "information_theoretic"
     L3 = "adaptive_hybrid"
@@ -42,6 +43,7 @@ class MathLevel(str, Enum):
 
 class TaskType(str, Enum):
     """Types of tasks that influence math level selection"""
+
     MEMORY_STORE = "memory_store"
     MEMORY_RETRIEVE = "memory_retrieve"
     MEMORY_CONSOLIDATE = "memory_consolidate"

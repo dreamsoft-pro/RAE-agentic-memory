@@ -23,7 +23,7 @@ def parse_coverage(xml_path: str) -> float:
         root = tree.getroot()
 
         # Coverage.py format: <coverage line-rate="0.75" ...>
-        line_rate = float(root.attrib.get('line-rate', 0))
+        line_rate = float(root.attrib.get("line-rate", 0))
         return line_rate * 100
     except Exception as e:
         print(f"Error parsing {xml_path}: {e}")
@@ -50,7 +50,7 @@ def compare_coverage(current_file: str, previous_file: str, threshold: float = 2
 
     if diff < -threshold:
         print(f"❌ Coverage decreased by {abs(diff):.2f}% (threshold: {threshold}%)")
-        print(f"   This is not acceptable! Add more tests.")
+        print("   This is not acceptable! Add more tests.")
         return 1
     elif diff < 0:
         print(f"⚠️  Coverage decreased by {abs(diff):.2f}% (within threshold)")

@@ -7,13 +7,14 @@ Run with: pytest -m performance
 Note: Requires pytest-benchmark. If not available, tests will be skipped.
 """
 
-import pytest
 import time
-from unittest.mock import Mock, AsyncMock
+
+import pytest
 
 # Check if pytest-benchmark is available
 try:
     import pytest_benchmark  # noqa: F401
+
     HAS_BENCHMARK = True
 except ImportError:
     HAS_BENCHMARK = False
@@ -37,7 +38,11 @@ class TestMemoryOperationsPerformance:
 
         # Check that mean time is under threshold
         # benchmark.stats is a BenchmarkStats object with stats dict
-        mean_time = benchmark.stats.stats.mean if hasattr(benchmark.stats, 'stats') else benchmark.stats['mean']
+        mean_time = (
+            benchmark.stats.stats.mean
+            if hasattr(benchmark.stats, "stats")
+            else benchmark.stats["mean"]
+        )
         assert mean_time < 0.2, f"Query too slow: {mean_time:.3f}s"
 
     def test_embedding_generation_performance(self, benchmark):
@@ -50,7 +55,11 @@ class TestMemoryOperationsPerformance:
         result = benchmark(embed_operation)
         assert len(result) == 384
 
-        mean_time = benchmark.stats.stats.mean if hasattr(benchmark.stats, 'stats') else benchmark.stats['mean']
+        mean_time = (
+            benchmark.stats.stats.mean
+            if hasattr(benchmark.stats, "stats")
+            else benchmark.stats["mean"]
+        )
         assert mean_time < 0.5, f"Embedding too slow: {mean_time:.3f}s"
 
 
@@ -69,7 +78,11 @@ class TestGraphOperationsPerformance:
         result = benchmark(traverse_operation)
         assert result["nodes"] > 0
 
-        mean_time = benchmark.stats.stats.mean if hasattr(benchmark.stats, 'stats') else benchmark.stats['mean']
+        mean_time = (
+            benchmark.stats.stats.mean
+            if hasattr(benchmark.stats, "stats")
+            else benchmark.stats["mean"]
+        )
         assert mean_time < 0.1, f"Traversal too slow: {mean_time:.3f}s"
 
 
@@ -85,5 +98,9 @@ def test_bulk_insert_performance(benchmark):
     result = benchmark(bulk_insert)
     assert result == 100
 
-    mean_time = benchmark.stats.stats.mean if hasattr(benchmark.stats, 'stats') else benchmark.stats['mean']
+    mean_time = (
+        benchmark.stats.stats.mean
+        if hasattr(benchmark.stats, "stats")
+        else benchmark.stats["mean"]
+    )
     assert mean_time < 1.0, f"Bulk insert too slow: {mean_time:.3f}s"

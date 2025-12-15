@@ -11,13 +11,13 @@ from typing import Dict, List, Optional, Tuple
 
 from .performance_tracker import ExecutionRecord, PerformanceTracker, TaskOutcome
 
-
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class ModelPerformance:
     """Performance metrics for a specific model."""
+
     model_id: str
     provider: str
     role: str  # 'planner' or 'implementer'
@@ -49,6 +49,7 @@ class ModelPerformance:
 @dataclass
 class TaskPatternAnalysis:
     """Analysis of task execution patterns."""
+
     task_area: str
     task_risk: str
 
@@ -92,10 +93,7 @@ class PerformanceAnalytics:
         self.tracker = tracker
 
     def analyze_model_performance(
-        self,
-        model_id: str,
-        role: str = "any",
-        min_samples: int = 5
+        self, model_id: str, role: str = "any", min_samples: int = 5
     ) -> Optional[ModelPerformance]:
         """Analyze performance of a specific model.
 
@@ -112,8 +110,12 @@ class PerformanceAnalytics:
             records = self.tracker.get_records_by_model(model_id, role="any")
             # Use role where model appeared most
             planner_count = len([r for r in records if r.planner_model == model_id])
-            implementer_count = len([r for r in records if r.implementer_model == model_id])
-            primary_role = "planner" if planner_count >= implementer_count else "implementer"
+            implementer_count = len(
+                [r for r in records if r.implementer_model == model_id]
+            )
+            primary_role = (
+                "planner" if planner_count >= implementer_count else "implementer"
+            )
         else:
             records = self.tracker.get_records_by_model(model_id, role=role)
             primary_role = role
@@ -145,7 +147,11 @@ class PerformanceAnalytics:
             by_risk[record.task_risk] += 1
 
         # Extract provider
-        provider = records[0].planner_provider if primary_role == "planner" else records[0].implementer_provider
+        provider = (
+            records[0].planner_provider
+            if primary_role == "planner"
+            else records[0].implementer_provider
+        )
 
         return ModelPerformance(
             model_id=model_id,
@@ -167,10 +173,7 @@ class PerformanceAnalytics:
         )
 
     def analyze_task_pattern(
-        self,
-        task_area: str,
-        task_risk: str,
-        min_samples: int = 3
+        self, task_area: str, task_risk: str, min_samples: int = 3
     ) -> Optional[TaskPatternAnalysis]:
         """Analyze execution patterns for a task type.
 
@@ -184,7 +187,8 @@ class PerformanceAnalytics:
         """
         # Get matching records
         records = [
-            r for r in self.tracker.get_all_records()
+            r
+            for r in self.tracker.get_all_records()
             if r.task_area == task_area and r.task_risk == task_risk
         ]
 
@@ -196,23 +200,39 @@ class PerformanceAnalytics:
         failed = [r for r in records if r.outcome == TaskOutcome.FAILED]
 
         # Find best performing models
-        planner_performance: Dict[str, Tuple[int, int]] = defaultdict(lambda: (0, 0))  # (success, total)
-        implementer_performance: Dict[str, Tuple[int, int]] = defaultdict(lambda: (0, 0))
+        planner_performance: Dict[str, Tuple[int, int]] = defaultdict(
+            lambda: (0, 0)
+        )  # (success, total)
+        implementer_performance: Dict[str, Tuple[int, int]] = defaultdict(
+            lambda: (0, 0)
+        )
 
         for record in records:
             success = 1 if record.outcome == TaskOutcome.SUCCESS else 0
 
             # Track planner
             p_success, p_total = planner_performance[record.planner_model]
-            planner_performance[record.planner_model] = (p_success + success, p_total + 1)
+            planner_performance[record.planner_model] = (
+                p_success + success,
+                p_total + 1,
+            )
 
             # Track implementer
             i_success, i_total = implementer_performance[record.implementer_model]
-            implementer_performance[record.implementer_model] = (i_success + success, i_total + 1)
+            implementer_performance[record.implementer_model] = (
+                i_success + success,
+                i_total + 1,
+            )
 
         # Find best performers (min 2 samples)
-        def get_best(perf_dict: Dict[str, Tuple[int, int]]) -> Optional[Tuple[str, float]]:
-            valid = [(model, succ / total) for model, (succ, total) in perf_dict.items() if total >= 2]
+        def get_best(
+            perf_dict: Dict[str, Tuple[int, int]]
+        ) -> Optional[Tuple[str, float]]:
+            valid = [
+                (model, succ / total)
+                for model, (succ, total) in perf_dict.items()
+                if total >= 2
+            ]
             if not valid:
                 return None
             return max(valid, key=lambda x: x[1])
@@ -230,7 +250,9 @@ class PerformanceAnalytics:
             if record.error_type:
                 error_counts[record.error_type] += 1
 
-        common_errors = sorted(error_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+        common_errors = sorted(error_counts.items(), key=lambda x: x[1], reverse=True)[
+            :5
+        ]
 
         return TaskPatternAnalysis(
             task_area=task_area,
@@ -256,7 +278,7 @@ class PerformanceAnalytics:
         task_risk: str,
         role: str,
         metric: str = "success_rate",
-        min_samples: int = 3
+        min_samples: int = 3,
     ) -> List[Tuple[str, float]]:
         """Rank models by performance for a specific task type.
 
@@ -272,7 +294,8 @@ class PerformanceAnalytics:
         """
         # Get matching records
         records = [
-            r for r in self.tracker.get_all_records()
+            r
+            for r in self.tracker.get_all_records()
             if r.task_area == task_area and r.task_risk == task_risk
         ]
 
@@ -293,7 +316,9 @@ class PerformanceAnalytics:
                 continue
 
             if metric == "success_rate":
-                successful = len([r for r in model_recs if r.outcome == TaskOutcome.SUCCESS])
+                successful = len(
+                    [r for r in model_recs if r.outcome == TaskOutcome.SUCCESS]
+                )
                 value = successful / len(model_recs)
                 # Higher is better
                 results.append((model_id, value))
@@ -304,7 +329,9 @@ class PerformanceAnalytics:
                 results.append((model_id, -avg_cost))
 
             elif metric == "duration":
-                avg_duration = sum(r.duration_seconds for r in model_recs) / len(model_recs)
+                avg_duration = sum(r.duration_seconds for r in model_recs) / len(
+                    model_recs
+                )
                 # Lower is better, invert for ranking
                 results.append((model_id, -avg_duration))
 
@@ -346,8 +373,7 @@ class PerformanceAnalytics:
         return comparison
 
     def identify_optimization_opportunities(
-        self,
-        min_cost_savings: float = 0.01
+        self, min_cost_savings: float = 0.01
     ) -> List[Dict[str, any]]:
         """Identify opportunities to optimize routing for cost or performance.
 
@@ -387,30 +413,36 @@ class PerformanceAnalytics:
                     if alt_cost < current_cost - min_cost_savings:
                         # Check success rate
                         alt_records = [
-                            r for r in self.tracker.get_all_records()
-                            if r.task_area == task_area and r.task_risk == task_risk
+                            r
+                            for r in self.tracker.get_all_records()
+                            if r.task_area == task_area
+                            and r.task_risk == task_risk
                             and r.implementer_model == model_id
                         ]
-                        alt_success = len([r for r in alt_records if r.outcome == TaskOutcome.SUCCESS])
+                        alt_success = len(
+                            [r for r in alt_records if r.outcome == TaskOutcome.SUCCESS]
+                        )
                         alt_success_rate = alt_success / len(alt_records)
 
                         # If success rate is comparable (within 10%)
                         if alt_success_rate >= pattern.success_rate - 0.1:
                             savings = current_cost - alt_cost
 
-                            opportunities.append({
-                                "type": "cost_optimization",
-                                "task_area": task_area,
-                                "task_risk": task_risk,
-                                "role": "implementer",
-                                "current_model": best_model,
-                                "recommended_model": model_id,
-                                "current_cost": current_cost,
-                                "new_cost": alt_cost,
-                                "savings_per_task": savings,
-                                "current_success_rate": best_success,
-                                "new_success_rate": alt_success_rate,
-                            })
+                            opportunities.append(
+                                {
+                                    "type": "cost_optimization",
+                                    "task_area": task_area,
+                                    "task_risk": task_risk,
+                                    "role": "implementer",
+                                    "current_model": best_model,
+                                    "recommended_model": model_id,
+                                    "current_cost": current_cost,
+                                    "new_cost": alt_cost,
+                                    "savings_per_task": savings,
+                                    "current_success_rate": best_success,
+                                    "new_success_rate": alt_success_rate,
+                                }
+                            )
                             break
 
         return opportunities

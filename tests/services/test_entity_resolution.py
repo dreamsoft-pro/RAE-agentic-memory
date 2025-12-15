@@ -235,13 +235,13 @@ async def test_run_clustering_success(mock_dependencies):
     # Mock ML response
     mock_ml_client.resolve_entities.return_value = {
         "merge_groups": [["1", "2"]],
-        "statistics": {}
+        "statistics": {},
     }
 
     service = EntityResolutionService(
         pool=mock_pool, ml_client=mock_ml_client, graph_repository=mock_graph_repo
     )
-    
+
     # Mock process group to avoid complex interactions
     service._process_group = AsyncMock()
 
@@ -249,7 +249,7 @@ async def test_run_clustering_success(mock_dependencies):
 
     # Verify ML called
     mock_ml_client.resolve_entities.assert_called_once()
-    
+
     # Verify process group called for the group
     service._process_group.assert_called_once()
     # Check args: group nodes should have ids 1 and 2
@@ -292,7 +292,9 @@ async def test_ask_janitor_failure(mock_dependencies):
     )
 
     service.llm_provider = MagicMock()
-    service.llm_provider.generate_structured = AsyncMock(side_effect=Exception("LLM Error"))
+    service.llm_provider.generate_structured = AsyncMock(
+        side_effect=Exception("LLM Error")
+    )
 
     decision = await service._ask_janitor(["A", "B"])
 

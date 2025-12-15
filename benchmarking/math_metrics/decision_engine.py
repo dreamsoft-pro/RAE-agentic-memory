@@ -8,18 +8,17 @@ The three-tier metrics don't just measure - they guide intelligent actions.
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Optional, Any
-from queue import PriorityQueue
+from typing import Any, Dict, List, Optional
 
 from .base import MemorySnapshot
+from .dynamics_metrics import MemoryDriftIndex
+from .policy_metrics import CostQualityFrontier, OptimalRetrievalRatio
 from .structure_metrics import (
     GraphConnectivityScore,
-    SemanticCoherenceScore,
     GraphEntropyMetric,
+    SemanticCoherenceScore,
     StructuralDriftMetric,
 )
-from .dynamics_metrics import MemoryDriftIndex, RetentionCurve
-from .policy_metrics import OptimalRetrievalRatio, CostQualityFrontier
 
 
 class ActionType(Enum):
@@ -241,7 +240,9 @@ class MathematicalDecisionEngine:
             )
 
         # Rule 3: Graph Entropy
-        max_entropy = self.entropy_metric.get_metadata().get("max_possible_entropy", 1.0)
+        max_entropy = self.entropy_metric.get_metadata().get(
+            "max_possible_entropy", 1.0
+        )
         if max_entropy > 0:
             entropy_ratio = entropy / max_entropy
             if entropy_ratio > self.thresholds["entropy_high"]:
@@ -251,7 +252,10 @@ class MathematicalDecisionEngine:
                         priority=Priority.HIGH,
                         reason=f"High entropy (ratio={entropy_ratio:.3f} > {self.thresholds['entropy_high']})",
                         params={"method": "hierarchical"},
-                        metric_values={"entropy": entropy, "entropy_ratio": entropy_ratio},
+                        metric_values={
+                            "entropy": entropy,
+                            "entropy_ratio": entropy_ratio,
+                        },
                     )
                 )
 

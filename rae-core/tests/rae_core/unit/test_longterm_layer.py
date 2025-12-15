@@ -1,8 +1,9 @@
-import pytest
 from uuid import UUID
 
+import pytest
+
 from rae_core.layers.longterm import LongTermLayer
-from rae_core.models.memory import MemoryLayer, MemoryItem
+from rae_core.models.memory import MemoryItem, MemoryLayer
 
 
 @pytest.fixture
@@ -64,7 +65,7 @@ async def test_consolidate_from_working(longterm_layer):
         tenant_id="test_tenant",
         agent_id="test_agent",
         importance=0.6,
-        tags=["work"]
+        tags=["work"],
     )
 
     # Consolidate as episodic
@@ -80,11 +81,15 @@ async def test_consolidate_from_working(longterm_layer):
 @pytest.mark.asyncio
 async def test_upgrade_to_semantic(longterm_layer):
     """Test upgrading episodic memory to semantic."""
-    ep_id = await longterm_layer.add_memory("User likes Python", is_semantic=False, importance=0.6)
-    
+    ep_id = await longterm_layer.add_memory(
+        "User likes Python", is_semantic=False, importance=0.6
+    )
+
     # Upgrade
-    sem_id = await longterm_layer.upgrade_to_semantic(ep_id, generalized_content="Python preference")
-    
+    sem_id = await longterm_layer.upgrade_to_semantic(
+        ep_id, generalized_content="Python preference"
+    )
+
     sem_mem = await longterm_layer.get_memory(sem_id)
     assert sem_mem.layer == MemoryLayer.SEMANTIC
     assert sem_mem.content == "Python preference"

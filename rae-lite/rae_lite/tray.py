@@ -5,12 +5,10 @@ RAE-Lite System Tray Application.
 import sys
 import threading
 import webbrowser
-from pathlib import Path
 
 import structlog
 from PIL import Image, ImageDraw
 from pystray import Icon, Menu, MenuItem
-
 from rae_lite.config import settings
 
 logger = structlog.get_logger(__name__)

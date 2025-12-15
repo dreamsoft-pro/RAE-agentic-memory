@@ -1,11 +1,10 @@
 """Structured run logging to markdown file."""
 
 import logging
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, List, Optional
-from dataclasses import dataclass
-
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +12,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class RunLogEntry:
     """Single log entry."""
+
     timestamp: str
     level: str  # INFO, WARNING, ERROR
     category: str  # task, step, llm_call, quality_gate, routing
@@ -80,7 +80,7 @@ class RunLogger:
                 "goal": goal,
                 "risk": risk,
                 "area": area,
-            }
+            },
         )
         self.entries.append(entry)
         self._append_to_file(entry)
@@ -91,7 +91,7 @@ class RunLogger:
         model: str,
         reason: str,
         task_id: str,
-        step_id: Optional[str] = None
+        step_id: Optional[str] = None,
     ):
         """Log model routing decision.
 
@@ -117,7 +117,7 @@ class RunLogger:
                 "reason": reason,
                 "task_id": task_id,
                 "step_id": step_id,
-            }
+            },
         )
         self.entries.append(entry)
         self._append_to_file(entry)
@@ -130,7 +130,7 @@ class RunLogger:
         task_id: str,
         success: bool,
         cost_usd: float = 0.0,
-        duration: float = 0.0
+        duration: float = 0.0,
     ):
         """Log LLM call.
 
@@ -158,17 +158,13 @@ class RunLogger:
                 "success": success,
                 "cost_usd": cost_usd,
                 "duration": duration,
-            }
+            },
         )
         self.entries.append(entry)
         self._append_to_file(entry)
 
     def log_quality_gate(
-        self,
-        task_id: str,
-        passed: bool,
-        checks: Dict[str, bool],
-        duration: float = 0.0
+        self, task_id: str, passed: bool, checks: Dict[str, bool], duration: float = 0.0
     ):
         """Log quality gate execution.
 
@@ -190,7 +186,7 @@ class RunLogger:
                 "passed": passed,
                 "checks": checks,
                 "duration": duration,
-            }
+            },
         )
         self.entries.append(entry)
         self._append_to_file(entry)
@@ -202,12 +198,7 @@ class RunLogger:
                     self._append_to_file_raw(f"  - ❌ {check_name} failed\n")
 
     def log_retry(
-        self,
-        task_id: str,
-        step_id: str,
-        attempt: int,
-        max_attempts: int,
-        reason: str
+        self, task_id: str, step_id: str, attempt: int, max_attempts: int, reason: str
     ):
         """Log retry attempt.
 
@@ -229,16 +220,13 @@ class RunLogger:
                 "attempt": attempt,
                 "max_attempts": max_attempts,
                 "reason": reason,
-            }
+            },
         )
         self.entries.append(entry)
         self._append_to_file(entry)
 
     def log_human_review_required(
-        self,
-        task_id: str,
-        reason: str,
-        details: Dict[str, Any]
+        self, task_id: str, reason: str, details: Dict[str, Any]
     ):
         """Log that human review is required.
 
@@ -256,17 +244,13 @@ class RunLogger:
                 "task_id": task_id,
                 "reason": reason,
                 "details": details,
-            }
+            },
         )
         self.entries.append(entry)
         self._append_to_file(entry)
 
     def log_task_complete(
-        self,
-        task_id: str,
-        status: str,
-        duration: float,
-        cost_usd: float
+        self, task_id: str, status: str, duration: float, cost_usd: float
     ):
         """Log task completion.
 
@@ -296,16 +280,12 @@ class RunLogger:
                 "status": status,
                 "duration": duration,
                 "cost_usd": cost_usd,
-            }
+            },
         )
         self.entries.append(entry)
         self._append_to_file(entry)
 
-    def end_run(
-        self,
-        run_id: str,
-        summary: Dict[str, Any]
-    ):
+    def end_run(self, run_id: str, summary: Dict[str, Any]):
         """Log end of orchestrator run.
 
         Args:
@@ -315,7 +295,7 @@ class RunLogger:
         timestamp = datetime.utcnow().isoformat()
 
         with open(self.log_file, "a") as f:
-            f.write(f"\n### Run Summary\n\n")
+            f.write("\n### Run Summary\n\n")
             f.write(f"**Ended**: {timestamp}\n\n")
             f.write(f"**Total Duration**: {summary.get('duration', 0):.1f}s\n\n")
             f.write(f"**Total Cost**: ${summary.get('total_cost_usd', 0):.4f}\n\n")
@@ -344,7 +324,9 @@ class RunLogger:
             }.get(entry.level, "")
 
             # Write entry
-            f.write(f"- `{time_str}` {level_emoji} **{entry.category}**: {entry.message}\n")
+            f.write(
+                f"- `{time_str}` {level_emoji} **{entry.category}**: {entry.message}\n"
+            )
 
     def _append_to_file_raw(self, text: str):
         """Append raw text to file.

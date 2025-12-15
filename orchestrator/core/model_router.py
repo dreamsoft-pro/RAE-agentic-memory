@@ -1,7 +1,7 @@
 """Model routing logic for intelligent task assignment."""
 
-from typing import Dict, Any, Optional
 from dataclasses import dataclass
+from typing import Any, Dict
 
 from orchestrator.adapters.base import ModelType, TaskComplexity, TaskRisk
 
@@ -9,6 +9,7 @@ from orchestrator.adapters.base import ModelType, TaskComplexity, TaskRisk
 @dataclass
 class RoutingDecision:
     """Result of model routing decision."""
+
     model: ModelType
     rationale: str
     estimated_cost: float
@@ -33,10 +34,7 @@ class ModelRouter:
         self.gemini_enabled = gemini_enabled
 
     def choose_planner(
-        self,
-        task_risk: TaskRisk,
-        task_area: str,
-        task_complexity: TaskComplexity
+        self, task_risk: TaskRisk, task_area: str, task_complexity: TaskComplexity
     ) -> RoutingDecision:
         """Choose model for Planner-Agent role.
 
@@ -109,9 +107,7 @@ class ModelRouter:
             )
 
     def choose_plan_reviewer(
-        self,
-        planner_model: ModelType,
-        task_risk: TaskRisk
+        self, planner_model: ModelType, task_risk: TaskRisk
     ) -> RoutingDecision:
         """Choose model for Plan-Reviewer-Agent role.
 
@@ -178,7 +174,7 @@ class ModelRouter:
         step_risk: TaskRisk,
         step_complexity: TaskComplexity,
         step_type: str,
-        step_area: str
+        step_area: str,
     ) -> RoutingDecision:
         """Choose model for Implementer-Agent role.
 
@@ -251,9 +247,7 @@ class ModelRouter:
             )
 
     def choose_code_reviewer(
-        self,
-        implementer_model: ModelType,
-        step_risk: TaskRisk
+        self, implementer_model: ModelType, step_risk: TaskRisk
     ) -> RoutingDecision:
         """Choose model for Code-Reviewer-Agent role.
 
@@ -320,7 +314,7 @@ class ModelRouter:
         task_risk: TaskRisk,
         task_area: str,
         task_complexity: TaskComplexity,
-        num_steps: int = 5
+        num_steps: int = 5,
     ) -> Dict[str, Any]:
         """Estimate total cost for a complete task.
 
@@ -337,7 +331,9 @@ class ModelRouter:
         planner_decision = self.choose_planner(task_risk, task_area, task_complexity)
         reviewer_decision = self.choose_plan_reviewer(planner_decision.model, task_risk)
 
-        planning_cost = planner_decision.estimated_cost + reviewer_decision.estimated_cost
+        planning_cost = (
+            planner_decision.estimated_cost + reviewer_decision.estimated_cost
+        )
 
         # Implementation phase (average across steps)
         impl_cost = 0.0

@@ -12,14 +12,14 @@ This benchmark simulates extended operation to detect:
 Research-grade implementation for academic evaluation of RAE memory systems.
 """
 
-import json
-import time
 import hashlib
+import json
 import random
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 from numpy.typing import NDArray
@@ -28,6 +28,7 @@ from numpy.typing import NDArray
 @dataclass
 class EpisodicMemory:
     """Represents a single episodic memory unit."""
+
     id: str
     content: str
     embedding: NDArray[np.float32]
@@ -41,6 +42,7 @@ class EpisodicMemory:
 @dataclass
 class ConsistencyCheckpoint:
     """Checkpoint for tracking consistency over time."""
+
     cycle: int
     timestamp: datetime
     consistency_score: float
@@ -53,12 +55,13 @@ class ConsistencyCheckpoint:
 @dataclass
 class LECTResults:
     """Results from LECT benchmark."""
+
     benchmark_name: str = "LECT"
     version: str = "1.0.0"
 
     # Primary metrics
     consistency_score: float = 0.0  # 0-1, knowledge consistency
-    retention_rate: float = 0.0     # 0-1, % of information retained
+    retention_rate: float = 0.0  # 0-1, % of information retained
     degradation_curve: List[float] = field(default_factory=list)
 
     # Detailed metrics
@@ -158,7 +161,9 @@ class LECTBenchmark:
         self.total_updates = 0
         self.total_deletions = 0
 
-    def _generate_embedding(self, content: str, noise: float = 0.0) -> NDArray[np.float32]:
+    def _generate_embedding(
+        self, content: str, noise: float = 0.0
+    ) -> NDArray[np.float32]:
         """
         Generate a deterministic embedding for content.
 
@@ -180,7 +185,9 @@ class LECTBenchmark:
 
         # Add noise if specified
         if noise > 0:
-            noise_vector = np.random.randn(self.embedding_dim).astype(np.float32) * noise
+            noise_vector = (
+                np.random.randn(self.embedding_dim).astype(np.float32) * noise
+            )
             base_embedding = base_embedding + noise_vector
             # Re-normalize
             norm = np.linalg.norm(base_embedding)
@@ -212,7 +219,9 @@ class LECTBenchmark:
         is_key_memory: bool = False,
     ) -> EpisodicMemory:
         """Create a new episodic memory."""
-        memory_id = hashlib.md5(f"{content}_{time.time()}_{random.random()}".encode()).hexdigest()[:16]
+        memory_id = hashlib.md5(
+            f"{content}_{time.time()}_{random.random()}".encode()
+        ).hexdigest()[:16]
         embedding = self._generate_embedding(content)
 
         memory = EpisodicMemory(
@@ -390,7 +399,7 @@ class LECTBenchmark:
         # Create new memory
         if random.random() < write_prob:
             content = random.choice(content_templates)
-            is_key = (cycle % 100 == 0)  # Every 100th memory is key
+            is_key = cycle % 100 == 0  # Every 100th memory is key
             self._create_memory(
                 content=content,
                 importance=random.random(),
@@ -452,7 +461,7 @@ class LECTBenchmark:
         start_time = datetime.now()
 
         if verbose:
-            print(f"Starting LECT Benchmark")
+            print("Starting LECT Benchmark")
             print(f"  Cycles: {num_cycles}")
             print(f"  Checkpoint interval: {self.checkpoint_interval}")
             print("=" * 60)

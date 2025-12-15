@@ -9,7 +9,7 @@ import itertools
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional
 
 from benchmarking.nine_five_benchmarks.orb_benchmark import Configuration
 
@@ -114,7 +114,9 @@ class ORBAutoTuner:
         dominated = [c for c in configurations if c not in pareto_frontier]
 
         if self.verbose:
-            print(f"\nFound {len(pareto_frontier)}/{len(configurations)} Pareto-optimal configs")
+            print(
+                f"\nFound {len(pareto_frontier)}/{len(configurations)} Pareto-optimal configs"
+            )
 
         return TuningResult(
             configurations=configurations,

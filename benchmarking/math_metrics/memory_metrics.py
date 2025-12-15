@@ -19,11 +19,7 @@ from typing import Any, Dict, List, Optional, Set, Tuple, Union
 import numpy as np
 from numpy.typing import NDArray
 
-from .base import (
-    MathMetricBase,
-    cosine_similarity,
-    jaccard_similarity,
-)
+from .base import MathMetricBase, cosine_similarity
 
 
 def calculate_f1_score(precision: float, recall: float) -> float:
@@ -185,9 +181,7 @@ class WorkingMemoryPrecisionRecall(MathMetricBase):
 
         # Calculate matches based on matching mode
         if matching_mode == "exact":
-            matches = self._exact_matching(
-                working_memory_items, relevant_items
-            )
+            matches = self._exact_matching(working_memory_items, relevant_items)
         elif matching_mode == "embedding":
             matches = self._embedding_matching(
                 working_memory_items,
@@ -198,9 +192,7 @@ class WorkingMemoryPrecisionRecall(MathMetricBase):
             )
         elif matching_mode == "hybrid":
             # Combine exact and embedding matching
-            exact_matches = self._exact_matching(
-                working_memory_items, relevant_items
-            )
+            exact_matches = self._exact_matching(working_memory_items, relevant_items)
             if working_memory_embeddings and relevant_embeddings:
                 emb_matches = self._embedding_matching(
                     working_memory_items,
@@ -244,7 +236,9 @@ class WorkingMemoryPrecisionRecall(MathMetricBase):
             "false_positives": false_positives,
             "false_negatives": false_negatives,
             "matching_mode": matching_mode,
-            "similarity_threshold": similarity_threshold if matching_mode != "exact" else None,
+            "similarity_threshold": similarity_threshold
+            if matching_mode != "exact"
+            else None,
             "matched_items": list(matches)[:10],  # First 10 matched items
         }
 

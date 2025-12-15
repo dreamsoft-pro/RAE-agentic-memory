@@ -14,13 +14,6 @@ License: Apache-2.0
 Author: Grzegorz Leśniowski <lesniowskig@gmail.com>
 """
 
-# Data structures
-from rae_core.math.structure import (
-    DecayConfig,
-    MemoryScoreResult,
-    ScoringWeights,
-)
-
 # Temporal dynamics
 from rae_core.math.dynamics import (
     calculate_decay_rate_from_half_life,
@@ -38,10 +31,10 @@ from rae_core.math.policy import (
 )
 
 # Reasoning (NEW - Iteration 3)
-from rae_core.math.reasoning import (
-    ReasoningController,
-    ReasoningPath,
-)
+from rae_core.math.reasoning import ReasoningController, ReasoningPath
+
+# Data structures
+from rae_core.math.structure import DecayConfig, MemoryScoreResult, ScoringWeights
 
 __all__ = [
     # Data structures

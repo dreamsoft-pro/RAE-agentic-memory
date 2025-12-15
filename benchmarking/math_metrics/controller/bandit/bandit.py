@@ -5,15 +5,15 @@ Implements UCB (Upper Confidence Bound) algorithm with contextual information
 and safety guardrails for online learning.
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
-import time
 import json
+import time
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
-from .arm import Arm, create_default_arms
-from ..types import MathLevel
 from ..features_v2 import FeaturesV2
+from ..types import MathLevel
+from .arm import Arm, create_default_arms
 
 
 @dataclass
@@ -49,7 +49,9 @@ class BanditConfig:
                 f"max_exploration_rate ({self.max_exploration_rate})"
             )
         if not 0 <= self.exploration_rate <= 1:
-            raise ValueError(f"exploration_rate must be in [0, 1], got {self.exploration_rate}")
+            raise ValueError(
+                f"exploration_rate must be in [0, 1], got {self.exploration_rate}"
+            )
 
 
 class MultiArmedBandit:
@@ -126,9 +128,8 @@ class MultiArmedBandit:
         context_id = self._discretize_context(features)
 
         # Decide: explore or exploit
-        should_explore = (
-            force_exploration or
-            (random.random() < self.config.exploration_rate)
+        should_explore = force_exploration or (
+            random.random() < self.config.exploration_rate
         )
 
         if should_explore and self.config.exploration_rate > 0:
@@ -144,7 +145,7 @@ class MultiArmedBandit:
                     c=self.config.c,
                     context_id=context_id,
                     context_bonus=self.config.context_bonus,
-                )
+                ),
             )
             return best_arm, False
 
@@ -202,7 +203,9 @@ class MultiArmedBandit:
             return False, 0.0
 
         recent_mean = sum(self.last_100_rewards) / len(self.last_100_rewards)
-        drop = (self.baseline_mean_reward - recent_mean) / abs(self.baseline_mean_reward)
+        drop = (self.baseline_mean_reward - recent_mean) / abs(
+            self.baseline_mean_reward
+        )
 
         is_degraded = drop > self.config.degradation_threshold
         return is_degraded, drop
@@ -221,7 +224,8 @@ class MultiArmedBandit:
 
         # Filter arms with minimum confidence
         confident_arms = [
-            arm for arm in self.arms
+            arm
+            for arm in self.arms
             if arm.pulls >= self.config.min_pulls_for_confidence
         ]
 
@@ -230,10 +234,7 @@ class MultiArmedBandit:
             return self.arm_map[(MathLevel.L1, "default")]
 
         # Return arm with highest mean reward
-        return max(
-            confident_arms,
-            key=lambda arm: arm.mean_reward(context_id)
-        )
+        return max(confident_arms, key=lambda arm: arm.mean_reward(context_id))
 
     def _discretize_context(self, features: FeaturesV2) -> int:
         """
@@ -286,12 +287,7 @@ class MultiArmedBandit:
 
         # Combine into single bucket ID: 0-80
         # Formula: memory*27 + density*9 + entropy*3 + affinity
-        bucket_id = (
-            memory_bin * 27 +
-            density_bin * 9 +
-            entropy_bin * 3 +
-            affinity_bin
-        )
+        bucket_id = memory_bin * 27 + density_bin * 9 + entropy_bin * 3 + affinity_bin
 
         return bucket_id
 
@@ -309,15 +305,18 @@ class MultiArmedBandit:
         }
 
         self.config.persistence_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.config.persistence_path, 'w') as f:
+        with open(self.config.persistence_path, "w") as f:
             json.dump(state, f, indent=2)
 
     def load_state(self):
         """Load arm statistics from disk"""
-        if not self.config.persistence_path or not self.config.persistence_path.exists():
+        if (
+            not self.config.persistence_path
+            or not self.config.persistence_path.exists()
+        ):
             return
 
-        with open(self.config.persistence_path, 'r') as f:
+        with open(self.config.persistence_path, "r") as f:
             state = json.load(f)
 
         self.total_pulls = state.get("total_pulls", 0)
@@ -335,9 +334,13 @@ class MultiArmedBandit:
                     arm.total_reward = arm_data.get("total_reward", 0.0)
                     arm.context_pulls = arm_data.get("context_pulls", {})
                     # Convert string keys back to int
-                    arm.context_pulls = {int(k): v for k, v in arm.context_pulls.items()}
+                    arm.context_pulls = {
+                        int(k): v for k, v in arm.context_pulls.items()
+                    }
                     arm.context_rewards = arm_data.get("context_rewards", {})
-                    arm.context_rewards = {int(k): v for k, v in arm.context_rewards.items()}
+                    arm.context_rewards = {
+                        int(k): v for k, v in arm.context_rewards.items()
+                    }
                     arm.last_pulled = arm_data.get("last_pulled")
                     arm.confidence = arm_data.get("confidence", 0.0)
                     break
@@ -362,7 +365,7 @@ class MultiArmedBandit:
                     "confidence": arm.confidence,
                 }
                 for arm in sorted(self.arms, key=lambda a: a.pulls, reverse=True)
-            ]
+            ],
         }
 
     def to_dict(self) -> Dict:

@@ -8,10 +8,10 @@ Part of RAE CI Quality Implementation - Iteration 3: Zero Drift
 import argparse
 import json
 import sys
-from pathlib import Path
 
 try:
     import yaml
+
     YAML_AVAILABLE = True
 except ImportError:
     YAML_AVAILABLE = False
@@ -25,7 +25,7 @@ def load_slo_config(path: str) -> dict:
         return {
             "timing": {"max_increase_percent": 10},
             "memory": {"max_peak_mb": 2048},
-            "logs": {"max_warning": 0, "max_error": 0, "max_critical": 0}
+            "logs": {"max_warning": 0, "max_error": 0, "max_critical": 0},
         }
 
     with open(path) as f:
@@ -34,41 +34,46 @@ def load_slo_config(path: str) -> dict:
 
 def check_slo(current: dict, baseline: dict, slo: dict) -> dict:
     """Compare current metrics against baseline with SLO thresholds."""
-    results = {
-        "status": "PASS",
-        "violations": [],
-        "warnings": [],
-        "metrics": {}
-    }
+    results = {"status": "PASS", "violations": [], "warnings": [], "metrics": {}}
 
     # Timing SLO
     if "timing" in current and "timing" in slo:
         current_duration = current["timing"]["total_duration_seconds"]
         # Get baseline from reference (handle different structures)
-        baseline_duration = baseline.get("reference_run", {}).get(
-            "results", {}).get("duration_seconds", current_duration)
+        baseline_duration = (
+            baseline.get("reference_run", {})
+            .get("results", {})
+            .get("duration_seconds", current_duration)
+        )
         if "timing" in baseline:
-            baseline_duration = baseline["timing"].get("total_duration_seconds", baseline_duration)
+            baseline_duration = baseline["timing"].get(
+                "total_duration_seconds", baseline_duration
+            )
 
         threshold = slo["timing"].get("max_increase_percent", 10)
 
-        increase = ((current_duration - baseline_duration) / baseline_duration * 100
-                   if baseline_duration > 0 else 0)
+        increase = (
+            (current_duration - baseline_duration) / baseline_duration * 100
+            if baseline_duration > 0
+            else 0
+        )
 
         results["metrics"]["timing"] = {
             "current": current_duration,
             "baseline": baseline_duration,
             "increase_percent": round(increase, 2),
-            "threshold_percent": threshold
+            "threshold_percent": threshold,
         }
 
         if increase > threshold:
             results["violations"].append(
-                f"Test duration increased by {increase:.1f}% (threshold: {threshold}%)")
+                f"Test duration increased by {increase:.1f}% (threshold: {threshold}%)"
+            )
             results["status"] = "FAIL"
         elif increase > threshold * 0.7:
             results["warnings"].append(
-                f"Test duration approaching threshold: {increase:.1f}%")
+                f"Test duration approaching threshold: {increase:.1f}%"
+            )
 
     # Memory SLO
     if "memory" in current and "memory" in slo:
@@ -77,12 +82,13 @@ def check_slo(current: dict, baseline: dict, slo: dict) -> dict:
 
         results["metrics"]["memory"] = {
             "current_peak_mb": current_mem,
-            "max_allowed_mb": max_mem
+            "max_allowed_mb": max_mem,
         }
 
         if current_mem > max_mem:
             results["violations"].append(
-                f"Memory peak {current_mem}MB exceeds limit {max_mem}MB")
+                f"Memory peak {current_mem}MB exceeds limit {max_mem}MB"
+            )
             results["status"] = "FAIL"
 
     # Log SLO
@@ -93,12 +99,13 @@ def check_slo(current: dict, baseline: dict, slo: dict) -> dict:
 
             results["metrics"][f"log_{level}"] = {
                 "count": count,
-                "max_allowed": max_allowed
+                "max_allowed": max_allowed,
             }
 
             if count > max_allowed:
                 results["violations"].append(
-                    f"{level.upper()} logs: {count} (max: {max_allowed})")
+                    f"{level.upper()} logs: {count} (max: {max_allowed})"
+                )
                 results["status"] = "FAIL"
 
     return results
@@ -152,7 +159,9 @@ def main():
     parser.add_argument("--current", required=True, help="Current metrics JSON")
     parser.add_argument("--baseline", required=True, help="Baseline metrics JSON")
     parser.add_argument("--slo-config", required=True, help="SLO config YAML")
-    parser.add_argument("--output", default="drift_report.md", help="Output report file")
+    parser.add_argument(
+        "--output", default="drift_report.md", help="Output report file"
+    )
     args = parser.parse_args()
 
     with open(args.current) as f:

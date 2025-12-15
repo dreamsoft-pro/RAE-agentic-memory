@@ -243,7 +243,7 @@ class DocValidator:
 
         print("=" * 70)
         print()
-        print(f"📊 Summary:")
+        print("📊 Summary:")
         print(f"   Errors: {len(self.errors)}")
         print(f"   Warnings: {len(self.warnings)}")
         print(f"   Fixed: {len(self.fixed)}")

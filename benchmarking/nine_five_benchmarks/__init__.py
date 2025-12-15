@@ -31,13 +31,13 @@ Usage:
     all_results = run_all_benchmarks()
 """
 
+from .grdt_benchmark import GRDTBenchmark
 from .lect_benchmark import LECTBenchmark
 from .mmit_benchmark import MMITBenchmark
-from .grdt_benchmark import GRDTBenchmark
-from .rst_benchmark import RSTBenchmark
 from .mpeb_benchmark import MPEBBenchmark
 from .orb_benchmark import ORBBenchmark
-from .runner import run_all_benchmarks, NineFiveBenchmarkRunner
+from .rst_benchmark import RSTBenchmark
+from .runner import NineFiveBenchmarkRunner, run_all_benchmarks
 
 __all__ = [
     "LECTBenchmark",

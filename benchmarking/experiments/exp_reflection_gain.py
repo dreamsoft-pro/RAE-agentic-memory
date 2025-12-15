@@ -16,16 +16,16 @@ Expected Results:
 """
 
 import asyncio
-import numpy as np
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
 
-from benchmarking.math_metrics import (
-    ReflectionGainScore,
-    CostQualityFrontier,
+import numpy as np
+
+from benchmarking.experiments.exp_structural_stability import (
+    StructuralStabilityExperiment,
 )
-from benchmarking.experiments.exp_structural_stability import StructuralStabilityExperiment
+from benchmarking.math_metrics import CostQualityFrontier, ReflectionGainScore
 
 
 class ReflectionGainExperiment(StructuralStabilityExperiment):

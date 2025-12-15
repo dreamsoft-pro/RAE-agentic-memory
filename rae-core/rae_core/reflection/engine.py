@@ -1,6 +1,6 @@
 """Reflection Engine V2 - Orchestrates Actor-Evaluator-Reflector pattern."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from rae_core.interfaces.llm import ILLMProvider
@@ -22,7 +22,7 @@ class ReflectionEngine:
     def __init__(
         self,
         memory_storage: IMemoryStorage,
-        llm_provider: Optional[ILLMProvider] = None,
+        llm_provider: ILLMProvider | None = None,
     ):
         """Initialize reflection engine.
 
@@ -43,7 +43,7 @@ class ReflectionEngine:
         tenant_id: str,
         agent_id: str,
         trigger_type: str = "scheduled",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Run a complete reflection cycle.
 
         Steps:
@@ -126,11 +126,11 @@ class ReflectionEngine:
 
     async def generate_reflection(
         self,
-        memory_ids: List[UUID],
+        memory_ids: list[UUID],
         tenant_id: str,
         agent_id: str,
         reflection_type: str = "consolidation",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate a reflection from specific memories.
 
         Args:
@@ -152,10 +152,10 @@ class ReflectionEngine:
     async def execute_action(
         self,
         action_type: str,
-        context: Dict[str, Any],
+        context: dict[str, Any],
         tenant_id: str,
         evaluate: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Execute an action and optionally evaluate it.
 
         Args:
@@ -187,8 +187,8 @@ class ReflectionEngine:
         self,
         memory_id: UUID,
         tenant_id: str,
-        context: Optional[str] = None,
-    ) -> Dict[str, float]:
+        context: str | None = None,
+    ) -> dict[str, float]:
         """Evaluate quality of a memory.
 
         Args:
@@ -208,10 +208,10 @@ class ReflectionEngine:
     async def identify_low_quality_memories(
         self,
         tenant_id: str,
-        agent_id: Optional[str] = None,
+        agent_id: str | None = None,
         quality_threshold: float = 0.4,
         limit: int = 50,
-    ) -> List[UUID]:
+    ) -> list[UUID]:
         """Identify low-quality memories for pruning.
 
         Args:
@@ -248,9 +248,9 @@ class ReflectionEngine:
     async def prune_low_quality_memories(
         self,
         tenant_id: str,
-        agent_id: Optional[str] = None,
+        agent_id: str | None = None,
         quality_threshold: float = 0.4,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Identify and prune low-quality memories.
 
         Args:

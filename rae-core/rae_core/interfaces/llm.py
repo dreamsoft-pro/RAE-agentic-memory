@@ -5,7 +5,7 @@ Implementations can use OpenAI, Anthropic, Ollama, or rule-based fallback.
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 class ILLMProvider(ABC):
@@ -19,10 +19,10 @@ class ILLMProvider(ABC):
     async def generate(
         self,
         prompt: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
         max_tokens: int = 1000,
         temperature: float = 0.7,
-        stop_sequences: Optional[List[str]] = None,
+        stop_sequences: list[str] | None = None,
     ) -> str:
         """Generate text completion.
 
@@ -41,7 +41,7 @@ class ILLMProvider(ABC):
     @abstractmethod
     async def generate_with_context(
         self,
-        messages: List[Dict[str, str]],
+        messages: list[dict[str, str]],
         max_tokens: int = 1000,
         temperature: float = 0.7,
     ) -> str:
@@ -85,7 +85,7 @@ class ILLMProvider(ABC):
     async def extract_entities(
         self,
         text: str,
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         """Extract entities from text using LLM.
 
         Args:

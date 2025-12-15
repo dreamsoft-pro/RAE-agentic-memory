@@ -8,7 +8,6 @@ import structlog
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-
 from rae_core.adapters.sqlite import (
     SQLiteGraphStore,
     SQLiteMemoryStorage,

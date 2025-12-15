@@ -8,10 +8,9 @@ These metrics analyze the quality of memory policy decisions:
 - Cross-Layer Mathematical Consistency (CMC): Consistency between Math-1, Math-2, Math-3 layers
 """
 
-from typing import Dict, List, Tuple, Any, Set, Optional
+from typing import Any, Dict, List, Optional, Set
 
 import numpy as np
-from numpy.typing import NDArray
 
 from .base import MathMetricBase
 
@@ -159,7 +158,11 @@ class CostQualityFrontier(MathMetricBase):
         self._last_metadata = {
             "reflection_gain": reflection_gain,
             "tokens_used": tokens_used,
-            "cost_efficiency": "high" if cqf > 0.01 else "medium" if cqf > 0.005 else "low",
+            "cost_efficiency": "high"
+            if cqf > 0.01
+            else "medium"
+            if cqf > 0.005
+            else "low",
         }
 
         return cqf
@@ -397,7 +400,9 @@ class CrossLayerMathematicalConsistency(MathMetricBase):
         math3_by_id = {p["item_id"]: p for p in math3_policies}
 
         # Get all unique item IDs
-        all_ids = set(math1_by_id.keys()) | set(math2_by_id.keys()) | set(math3_by_id.keys())
+        all_ids = (
+            set(math1_by_id.keys()) | set(math2_by_id.keys()) | set(math3_by_id.keys())
+        )
 
         if not all_ids:
             self._last_value = 1.0
@@ -426,9 +431,9 @@ class CrossLayerMathematicalConsistency(MathMetricBase):
             total_weight = 1.0
 
         cmc = (
-            weight_1_2 * consistency_1_2 +
-            weight_2_3 * consistency_2_3 +
-            weight_1_3 * consistency_1_3
+            weight_1_2 * consistency_1_2
+            + weight_2_3 * consistency_2_3
+            + weight_1_3 * consistency_1_3
         ) / total_weight
 
         self._last_value = cmc
@@ -620,7 +625,9 @@ class CrossLayerMathematicalConsistency(MathMetricBase):
         math2_by_id = {r["item_id"]: r for r in math2_rankings}
         math3_by_id = {p["item_id"]: p for p in math3_policies}
 
-        all_ids = set(math1_by_id.keys()) | set(math2_by_id.keys()) | set(math3_by_id.keys())
+        all_ids = (
+            set(math1_by_id.keys()) | set(math2_by_id.keys()) | set(math3_by_id.keys())
+        )
 
         # Get thresholds from kwargs or defaults
         gating_threshold = kwargs.get("gating_threshold", 0.5)
@@ -667,7 +674,9 @@ class CrossLayerMathematicalConsistency(MathMetricBase):
 
             if m3:
                 action = m3.get("action", "")
-                m3_positive = action.lower() in [a.lower() for a in policy_positive_actions]
+                m3_positive = action.lower() in [
+                    a.lower() for a in policy_positive_actions
+                ]
 
             # Check for conflicts
             if m1_positive is not None and m2_positive is not None:

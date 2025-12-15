@@ -47,7 +47,6 @@ async def test_reflection_flow():
     with patch(
         "apps.memory_api.services.reflection_engine.settings"
     ) as mock_settings, patch("httpx.AsyncClient") as mock_http:
-
         mock_settings.API_KEY = "key"
         mock_settings.MEMORY_API_URL = "http://mem"
         mock_settings.RAE_LLM_MODEL_DEFAULT = "gpt"

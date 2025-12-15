@@ -9,7 +9,7 @@ In Iteration 2+: become state vector for learning algorithms
 from dataclasses import dataclass, field
 from typing import Any, Dict, Optional
 
-from .types import TaskType, MathLevel
+from .types import MathLevel, TaskType
 
 
 @dataclass
@@ -36,6 +36,7 @@ class Features:
         previous_level_success: Whether previous decision was successful
         custom: Additional custom features for extensibility
     """
+
     # Task context
     task_type: TaskType
 
@@ -74,7 +75,9 @@ class Features:
             "recent_scs": self.recent_scs,
             "cost_budget": self.cost_budget,
             "latency_budget_ms": self.latency_budget_ms,
-            "previous_level": self.previous_level.value if self.previous_level else None,
+            "previous_level": self.previous_level.value
+            if self.previous_level
+            else None,
             "previous_level_success": self.previous_level_success,
             "custom": self.custom,
         }

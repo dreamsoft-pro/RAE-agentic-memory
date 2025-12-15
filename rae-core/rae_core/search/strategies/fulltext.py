@@ -1,6 +1,6 @@
 """Full-text keyword search strategy."""
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 from uuid import UUID
 
 from rae_core.interfaces.storage import IMemoryStorage
@@ -36,7 +36,7 @@ class FullTextStrategy(SearchStrategy):
         self,
         query: str,
         content: str,
-        tags: List[str],
+        tags: list[str],
     ) -> float:
         """Compute match score based on keyword presence.
 
@@ -68,8 +68,12 @@ class FullTextStrategy(SearchStrategy):
         tag_words = set(word for tag in tags_norm for word in tag.split())
 
         # Calculate overlap
-        content_overlap = len(query_words & content_words) / len(query_words) if query_words else 0
-        tag_overlap = len(query_words & tag_words) / len(query_words) if query_words else 0
+        content_overlap = (
+            len(query_words & content_words) / len(query_words) if query_words else 0
+        )
+        tag_overlap = (
+            len(query_words & tag_words) / len(query_words) if query_words else 0
+        )
 
         score += content_overlap * 0.6
         score += tag_overlap * 0.4
@@ -80,9 +84,9 @@ class FullTextStrategy(SearchStrategy):
         self,
         query: str,
         tenant_id: str,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
         limit: int = 10,
-    ) -> List[Tuple[UUID, float]]:
+    ) -> list[tuple[UUID, float]]:
         """Execute full-text search.
 
         Args:
@@ -112,7 +116,7 @@ class FullTextStrategy(SearchStrategy):
             return []
 
         # Score each memory
-        results: List[Tuple[UUID, float]] = []
+        results: list[tuple[UUID, float]] = []
         for memory in memories:
             memory_id = memory["id"]
             if isinstance(memory_id, str):

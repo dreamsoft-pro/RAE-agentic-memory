@@ -9,18 +9,21 @@ Provides 3-layer observability:
 import logging
 import os
 from contextlib import contextmanager
-from typing import Dict, Any, Optional
 from dataclasses import dataclass
+from typing import Optional
 
 try:
-    from opentelemetry import trace, metrics
-    from opentelemetry.sdk.trace import TracerProvider
-    from opentelemetry.sdk.metrics import MeterProvider
-    from opentelemetry.sdk.resources import Resource, SERVICE_NAME
+    from opentelemetry import metrics, trace
+    from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import (
+        OTLPMetricExporter,
+    )
     from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
-    from opentelemetry.exporter.otlp.proto.grpc.metric_exporter import OTLPMetricExporter
-    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+    from opentelemetry.sdk.metrics import MeterProvider
     from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+    from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor
+
     OTEL_AVAILABLE = True
 except ImportError:
     OTEL_AVAILABLE = False
@@ -34,6 +37,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class TelemetryConfig:
     """Configuration for telemetry."""
+
     enabled: bool = True
     service_name: str = "orchestrator"
     otlp_endpoint: Optional[str] = None  # e.g., "http://localhost:4318"
@@ -95,10 +99,12 @@ class OrchestratorTelemetry:
 
     def _setup_tracing(self):
         """Setup distributed tracing."""
-        resource = Resource(attributes={
-            SERVICE_NAME: self.config.service_name,
-            "deployment.environment": self.config.environment,
-        })
+        resource = Resource(
+            attributes={
+                SERVICE_NAME: self.config.service_name,
+                "deployment.environment": self.config.environment,
+            }
+        )
 
         # Create tracer provider
         provider = TracerProvider(resource=resource)
@@ -116,10 +122,12 @@ class OrchestratorTelemetry:
 
     def _setup_metrics(self):
         """Setup metrics collection."""
-        resource = Resource(attributes={
-            SERVICE_NAME: self.config.service_name,
-            "deployment.environment": self.config.environment,
-        })
+        resource = Resource(
+            attributes={
+                SERVICE_NAME: self.config.service_name,
+                "deployment.environment": self.config.environment,
+            }
+        )
 
         # Create metric reader
         if self.config.otlp_endpoint:
@@ -127,12 +135,16 @@ class OrchestratorTelemetry:
                 endpoint=self.config.otlp_endpoint,
                 insecure=True,
             )
-            reader = PeriodicExportingMetricReader(otlp_exporter, export_interval_millis=10000)
+            reader = PeriodicExportingMetricReader(
+                otlp_exporter, export_interval_millis=10000
+            )
         else:
             reader = None
 
         # Create meter provider
-        provider = MeterProvider(resource=resource, metric_readers=[reader] if reader else [])
+        provider = MeterProvider(
+            resource=resource, metric_readers=[reader] if reader else []
+        )
         metrics.set_meter_provider(provider)
         self.meter = metrics.get_meter(__name__)
 
@@ -226,17 +238,12 @@ class OrchestratorTelemetry:
                 "task.id": task_id,
                 "task.area": task_area,
                 "task.risk": task_risk,
-            }
+            },
         ) as span:
             yield span
 
     @contextmanager
-    def trace_step(
-        self,
-        step_id: str,
-        step_type: str,
-        step_risk: str
-    ):
+    def trace_step(self, step_id: str, step_type: str, step_risk: str):
         """Create span for step execution.
 
         Args:
@@ -257,17 +264,12 @@ class OrchestratorTelemetry:
                 "step.id": step_id,
                 "step.type": step_type,
                 "step.risk": step_risk,
-            }
+            },
         ) as span:
             yield span
 
     @contextmanager
-    def trace_llm_call(
-        self,
-        provider: str,
-        model: str,
-        role: str
-    ):
+    def trace_llm_call(self, provider: str, model: str, role: str):
         """Create span for LLM call.
 
         Args:
@@ -288,16 +290,12 @@ class OrchestratorTelemetry:
                 "llm.provider": provider,
                 "llm.model_name": model,
                 "llm.role": role,
-            }
+            },
         ) as span:
             yield span
 
     def record_task_complete(
-        self,
-        status: str,
-        duration: float,
-        task_area: str,
-        task_risk: str
+        self, status: str, duration: float, task_area: str, task_risk: str
     ):
         """Record task completion metrics.
 
@@ -316,7 +314,7 @@ class OrchestratorTelemetry:
                 "status": status,
                 "task.area": task_area,
                 "task.risk": task_risk,
-            }
+            },
         )
 
         self._metrics["task_duration"].record(
@@ -324,15 +322,10 @@ class OrchestratorTelemetry:
             attributes={
                 "status": status,
                 "task.area": task_area,
-            }
+            },
         )
 
-    def record_step_complete(
-        self,
-        step_type: str,
-        status: str,
-        attempt: int = 1
-    ):
+    def record_step_complete(self, step_type: str, status: str, attempt: int = 1):
         """Record step completion metrics.
 
         Args:
@@ -349,7 +342,7 @@ class OrchestratorTelemetry:
                 "type": step_type,
                 "status": status,
                 "attempt": str(attempt),
-            }
+            },
         )
 
     def record_llm_call(
@@ -359,7 +352,7 @@ class OrchestratorTelemetry:
         role: str,
         input_tokens: int = 0,
         output_tokens: int = 0,
-        cost_usd: float = 0.0
+        cost_usd: float = 0.0,
     ):
         """Record LLM call metrics.
 
@@ -384,18 +377,13 @@ class OrchestratorTelemetry:
 
         if input_tokens or output_tokens:
             self._metrics["llm_tokens_total"].add(
-                input_tokens + output_tokens,
-                attributes={**attrs, "type": "total"}
+                input_tokens + output_tokens, attributes={**attrs, "type": "total"}
             )
 
         if cost_usd > 0:
             self._metrics["llm_cost_usd"].add(cost_usd, attributes=attrs)
 
-    def record_quality_gate(
-        self,
-        status: str,
-        regression_type: Optional[str] = None
-    ):
+    def record_quality_gate(self, status: str, regression_type: Optional[str] = None):
         """Record quality gate execution.
 
         Args:
@@ -405,23 +393,15 @@ class OrchestratorTelemetry:
         if not self._metrics:
             return
 
-        self._metrics["quality_gate_runs"].add(
-            1,
-            attributes={"status": status}
-        )
+        self._metrics["quality_gate_runs"].add(1, attributes={"status": status})
 
         if regression_type:
             self._metrics["quality_regressions"].add(
-                1,
-                attributes={"type": regression_type}
+                1, attributes={"type": regression_type}
             )
 
     def record_model_routing(
-        self,
-        task_risk: str,
-        task_area: str,
-        model_chosen: str,
-        reason: str
+        self, task_risk: str, task_area: str, model_chosen: str, reason: str
     ):
         """Record model routing decision.
 
@@ -441,16 +421,11 @@ class OrchestratorTelemetry:
                 "task.area": task_area,
                 "model": model_chosen,
                 "reason": reason,
-            }
+            },
         )
 
     def log_routing_decision(
-        self,
-        task_id: str,
-        step_id: str,
-        role: str,
-        model: str,
-        reason: str
+        self, task_id: str, step_id: str, role: str, model: str, reason: str
     ):
         """Log routing decision.
 
@@ -466,11 +441,7 @@ class OrchestratorTelemetry:
             f"model={model} (reason: {reason})"
         )
 
-    def log_quality_gate_failure(
-        self,
-        reason: str,
-        details: str
-    ):
+    def log_quality_gate_failure(self, reason: str, details: str):
         """Log quality gate failure.
 
         Args:
@@ -481,10 +452,7 @@ class OrchestratorTelemetry:
         logger.error(f"Details: {details}")
 
     def log_cross_review_rejection(
-        self,
-        reviewer_model: str,
-        implementer_model: str,
-        reason: str
+        self, reviewer_model: str, implementer_model: str, reason: str
     ):
         """Log cross-review rejection.
 

@@ -5,11 +5,12 @@ import re
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import List, Optional, Dict, Any
+from typing import List
 
 
 class CheckStatus(Enum):
     """Status of individual quality check."""
+
     PASSED = "passed"
     FAILED = "failed"
     SKIPPED = "skipped"
@@ -19,6 +20,7 @@ class CheckStatus(Enum):
 @dataclass
 class QualityCheck:
     """Result of a single quality check."""
+
     name: str
     status: CheckStatus
     message: str
@@ -29,6 +31,7 @@ class QualityCheck:
 @dataclass
 class QualityGateResult:
     """Overall result of quality gate validation."""
+
     passed: bool
     checks: List[QualityCheck]
     can_merge: bool
@@ -63,9 +66,7 @@ class QualityGate:
         self.project_type = project_type
 
     async def validate(
-        self,
-        changed_files: List[str],
-        change_size: str = "MEDIUM"
+        self, changed_files: List[str], change_size: str = "MEDIUM"
     ) -> QualityGateResult:
         """Run all quality checks on changes.
 
@@ -147,6 +148,7 @@ class QualityGate:
             Quality check result
         """
         import time
+
         start = time.time()
 
         try:
@@ -171,7 +173,7 @@ class QualityGate:
 
             stdout, stderr = await asyncio.wait_for(
                 proc.communicate(),
-                timeout=600 if not quick else 120  # 10min full, 2min quick
+                timeout=600 if not quick else 120,  # 10min full, 2min quick
             )
 
             execution_time = time.time() - start
@@ -180,7 +182,7 @@ class QualityGate:
             # Parse results
             if proc.returncode == 0:
                 # Extract test count
-                match = re.search(r'(\d+) passed', output)
+                match = re.search(r"(\d+) passed", output)
                 num_tests = match.group(1) if match else "?"
 
                 return QualityCheck(
@@ -192,7 +194,7 @@ class QualityGate:
                 )
             else:
                 # Extract failure info
-                failed_match = re.search(r'(\d+) failed', output)
+                failed_match = re.search(r"(\d+) failed", output)
                 num_failed = failed_match.group(1) if failed_match else "?"
 
                 return QualityCheck(
@@ -228,10 +230,16 @@ class QualityGate:
         ruff_check = await self._run_ruff()
 
         # Combine results
-        if mypy_check.status == CheckStatus.FAILED or ruff_check.status == CheckStatus.FAILED:
+        if (
+            mypy_check.status == CheckStatus.FAILED
+            or ruff_check.status == CheckStatus.FAILED
+        ):
             status = CheckStatus.FAILED
             message = "Type checking or linting failed"
-        elif mypy_check.status == CheckStatus.WARNING or ruff_check.status == CheckStatus.WARNING:
+        elif (
+            mypy_check.status == CheckStatus.WARNING
+            or ruff_check.status == CheckStatus.WARNING
+        ):
             status = CheckStatus.WARNING
             message = "Warnings detected (ZERO-WARNINGS policy)"
         else:
@@ -371,10 +379,7 @@ class QualityGate:
         )
 
     def _generate_summary(
-        self,
-        checks: List[QualityCheck],
-        passed: bool,
-        can_merge: bool
+        self, checks: List[QualityCheck], passed: bool, can_merge: bool
     ) -> str:
         """Generate human-readable summary.
 
@@ -396,7 +401,9 @@ class QualityGate:
             lines.append("❌ QUALITY GATE FAILED - Blocking issues detected")
 
         lines.append("")
-        lines.append(f"Checks: {len([c for c in checks if c.status == CheckStatus.PASSED])}/{len(checks)} passed")
+        lines.append(
+            f"Checks: {len([c for c in checks if c.status == CheckStatus.PASSED])}/{len(checks)} passed"
+        )
 
         for check in checks:
             if check.status == CheckStatus.PASSED:

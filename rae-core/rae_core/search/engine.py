@@ -1,7 +1,7 @@
 """Hybrid search engine that orchestrates multiple search strategies."""
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 from uuid import UUID
 
 from rae_core.search.cache import SearchCache
@@ -17,8 +17,8 @@ class HybridSearchEngine:
 
     def __init__(
         self,
-        strategies: Dict[str, SearchStrategy],
-        cache: Optional[SearchCache] = None,
+        strategies: dict[str, SearchStrategy],
+        cache: SearchCache | None = None,
         rrf_k: int = 60,
     ):
         """Initialize hybrid search engine.
@@ -34,9 +34,9 @@ class HybridSearchEngine:
 
     def _reciprocal_rank_fusion(
         self,
-        strategy_results: Dict[str, List[Tuple[UUID, float]]],
-        strategy_weights: Dict[str, float],
-    ) -> List[Tuple[UUID, float]]:
+        strategy_results: dict[str, list[tuple[UUID, float]]],
+        strategy_weights: dict[str, float],
+    ) -> list[tuple[UUID, float]]:
         """Combine multiple result sets using Reciprocal Rank Fusion.
 
         RRF Formula: score(d) = Σ weight_s / (k + rank_s(d))
@@ -51,7 +51,7 @@ class HybridSearchEngine:
             Fused results sorted by combined score
         """
         # Build unified score map
-        unified_scores: Dict[UUID, float] = {}
+        unified_scores: dict[UUID, float] = {}
 
         for strategy_name, results in strategy_results.items():
             weight = strategy_weights.get(strategy_name, 1.0)
@@ -78,12 +78,12 @@ class HybridSearchEngine:
         self,
         query: str,
         tenant_id: str,
-        strategies: Optional[List[str]] = None,
-        strategy_weights: Optional[Dict[str, float]] = None,
-        filters: Optional[Dict[str, Any]] = None,
+        strategies: list[str] | None = None,
+        strategy_weights: dict[str, float] | None = None,
+        filters: dict[str, Any] | None = None,
         limit: int = 10,
         use_cache: bool = True,
-    ) -> List[Tuple[UUID, float]]:
+    ) -> list[tuple[UUID, float]]:
         """Execute hybrid search across multiple strategies.
 
         Args:
@@ -110,7 +110,7 @@ class HybridSearchEngine:
                     weights[strategy_name] = strategy.get_strategy_weight()
 
         # Collect results from each strategy
-        strategy_results: Dict[str, List[Tuple[UUID, float]]] = {}
+        strategy_results: dict[str, list[tuple[UUID, float]]] = {}
 
         for strategy_name in active_strategies:
             strategy = self.strategies.get(strategy_name)
@@ -162,10 +162,10 @@ class HybridSearchEngine:
         strategy_name: str,
         query: str,
         tenant_id: str,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
         limit: int = 10,
         use_cache: bool = True,
-    ) -> List[Tuple[UUID, float]]:
+    ) -> list[tuple[UUID, float]]:
         """Execute search using a single strategy.
 
         Args:
@@ -214,7 +214,7 @@ class HybridSearchEngine:
 
         return results
 
-    def get_available_strategies(self) -> List[str]:
+    def get_available_strategies(self) -> list[str]:
         """Get list of available strategy names."""
         return list(self.strategies.keys())
 
@@ -233,8 +233,8 @@ class NoiseAwareSearchEngine(HybridSearchEngine):
 
     def __init__(
         self,
-        strategies: Dict[str, SearchStrategy],
-        cache: Optional[SearchCache] = None,
+        strategies: dict[str, SearchStrategy],
+        cache: SearchCache | None = None,
         rrf_k: int = 60,
         noise_threshold: float = 0.5,
         recency_boost_factor: float = 1.5,
@@ -257,10 +257,10 @@ class NoiseAwareSearchEngine(HybridSearchEngine):
 
     def _apply_noise_aware_boost(
         self,
-        results: List[Tuple[UUID, float]],
-        memory_metadata: Dict[UUID, Dict[str, Any]],
+        results: list[tuple[UUID, float]],
+        memory_metadata: dict[UUID, dict[str, Any]],
         noise_level: float,
-    ) -> List[Tuple[UUID, float]]:
+    ) -> list[tuple[UUID, float]]:
         """Apply noise-aware boosting to search results.
 
         Args:
@@ -299,7 +299,8 @@ class NoiseAwareSearchEngine(HybridSearchEngine):
             )
 
             final_recency_boost = (
-                1.0 + (self.recency_boost_factor - 1.0) * recency_boost * noise_intensity
+                1.0
+                + (self.recency_boost_factor - 1.0) * recency_boost * noise_intensity
             )
             final_confidence_boost = (
                 1.0
@@ -322,14 +323,14 @@ class NoiseAwareSearchEngine(HybridSearchEngine):
         self,
         query: str,
         tenant_id: str,
-        strategies: Optional[List[str]] = None,
-        strategy_weights: Optional[Dict[str, float]] = None,
-        filters: Optional[Dict[str, Any]] = None,
+        strategies: list[str] | None = None,
+        strategy_weights: dict[str, float] | None = None,
+        filters: dict[str, Any] | None = None,
         limit: int = 10,
         use_cache: bool = True,
         noise_level: float = 0.0,
-        memory_metadata: Optional[Dict[UUID, Dict[str, Any]]] = None,
-    ) -> List[Tuple[UUID, float]]:
+        memory_metadata: dict[UUID, dict[str, Any]] | None = None,
+    ) -> list[tuple[UUID, float]]:
         """Execute noise-aware hybrid search.
 
         Args:

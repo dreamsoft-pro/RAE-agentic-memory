@@ -1,12 +1,12 @@
 """Adapters for different AI model CLIs/APIs."""
 
 from .base import (
+    AgentContext,
+    AgentResult,
     ModelAdapter,
     ModelType,
     TaskComplexity,
     TaskRisk,
-    AgentContext,
-    AgentResult,
 )
 from .claude_adapter import ClaudeAdapter
 from .gemini_adapter import GeminiAdapter

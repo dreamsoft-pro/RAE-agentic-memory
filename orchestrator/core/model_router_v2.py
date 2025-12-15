@@ -192,7 +192,9 @@ class ModelRouterV2:
 
         # For high-risk, prefer Advanced tier reviewer
         if task_risk == TaskRisk.HIGH:
-            advanced_reviewers = [m for m in review_models if m.tier == ModelTier.ADVANCED]
+            advanced_reviewers = [
+                m for m in review_models if m.tier == ModelTier.ADVANCED
+            ]
             if advanced_reviewers:
                 model = min(advanced_reviewers, key=lambda m: m.cost_per_1k_input)
                 return RoutingDecision(

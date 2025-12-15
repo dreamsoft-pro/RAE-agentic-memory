@@ -4,9 +4,9 @@ Arm representation for Multi-Armed Bandit
 An arm represents a specific (level, strategy) combination that the bandit can choose.
 """
 
+import json
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
-import json
 
 from ..types import MathLevel
 
@@ -112,7 +112,7 @@ class Arm:
 
         # If never pulled, return infinity (explore first)
         if arm_pulls == 0:
-            return float('inf')
+            return float("inf")
 
         # Calculate UCB
         mean = self.mean_reward(context_id)
@@ -141,7 +141,9 @@ class Arm:
         # Update context-specific statistics
         if context_id is not None:
             self.context_pulls[context_id] = self.context_pulls.get(context_id, 0) + 1
-            self.context_rewards[context_id] = self.context_rewards.get(context_id, 0.0) + reward
+            self.context_rewards[context_id] = (
+                self.context_rewards.get(context_id, 0.0) + reward
+            )
 
         # Update metadata
         if timestamp is not None:

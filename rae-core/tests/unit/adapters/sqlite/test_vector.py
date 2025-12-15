@@ -4,9 +4,7 @@ Tests vector storage with struct serialization, cosine similarity search,
 and layer filtering.
 """
 
-import asyncio
-import struct
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
 

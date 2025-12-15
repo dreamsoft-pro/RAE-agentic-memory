@@ -29,6 +29,7 @@ from typing import Any, Dict, Optional
 # Optional imports for LLM providers
 try:
     import anthropic
+
     HAS_ANTHROPIC = True
 except ImportError:
     anthropic = None  # type: ignore
@@ -36,6 +37,7 @@ except ImportError:
 
 try:
     import openai
+
     HAS_OPENAI = True
 except ImportError:
     openai = None  # type: ignore
@@ -54,7 +56,7 @@ class CostTracker:
         "openai": {
             "gpt-4o-mini": {"input": 0.00015, "output": 0.0006},
             "gpt-4o": {"input": 0.005, "output": 0.015},
-        }
+        },
     }
 
     def __init__(self):
@@ -62,7 +64,9 @@ class CostTracker:
         self.total_output_tokens = 0
         self.total_cost_usd = 0.0
 
-    def track(self, provider: str, model: str, input_tokens: int, output_tokens: int) -> float:
+    def track(
+        self, provider: str, model: str, input_tokens: int, output_tokens: int
+    ) -> float:
         """Track token usage and return estimated cost.
 
         Args:
@@ -78,7 +82,9 @@ class CostTracker:
         self.total_output_tokens += output_tokens
 
         costs = self.COSTS.get(provider, {}).get(model, {"input": 0.01, "output": 0.03})
-        cost = (input_tokens / 1000) * costs["input"] + (output_tokens / 1000) * costs["output"]
+        cost = (input_tokens / 1000) * costs["input"] + (output_tokens / 1000) * costs[
+            "output"
+        ]
         self.total_cost_usd += cost
 
         return cost
@@ -184,32 +190,24 @@ Include file path as a comment at the top: # File: path/to/file.py
                 )
             api_key = os.getenv("ANTHROPIC_API_KEY")
             if not api_key:
-                raise RuntimeError(
-                    "ANTHROPIC_API_KEY environment variable not set"
-                )
+                raise RuntimeError("ANTHROPIC_API_KEY environment variable not set")
             self.client = anthropic.Anthropic(api_key=api_key)
 
         elif provider == "openai":
             if not HAS_OPENAI:
                 raise RuntimeError(
-                    "openai package not installed. "
-                    "Install with: pip install openai"
+                    "openai package not installed. " "Install with: pip install openai"
                 )
             api_key = os.getenv("OPENAI_API_KEY")
             if not api_key:
-                raise RuntimeError(
-                    "OPENAI_API_KEY environment variable not set"
-                )
+                raise RuntimeError("OPENAI_API_KEY environment variable not set")
             self.client = openai.OpenAI(api_key=api_key)
 
         else:
             raise RuntimeError(f"Unknown provider: {provider}")
 
     def generate_fix(
-        self,
-        context: Dict[str, Any],
-        fix_type: str,
-        max_tokens: int = 4000
+        self, context: Dict[str, Any], fix_type: str, max_tokens: int = 4000
     ) -> Optional[str]:
         """Generate fix using LLM.
 
@@ -262,7 +260,7 @@ Include file path as a comment at the top: # File: path/to/file.py
             test_name=first_failure.get("nodeid", "unknown"),
             failure_info=json.dumps(failures[:3], indent=2, default=str),
             issues="\n".join(context.get("relevant_logs", [])[:20]),
-            error_message="\n".join(context.get("relevant_logs", [])[:10])
+            error_message="\n".join(context.get("relevant_logs", [])[:10]),
         )
 
     def _call_anthropic(self, prompt: str, max_tokens: int) -> Optional[str]:
@@ -280,16 +278,13 @@ Include file path as a comment at the top: # File: path/to/file.py
         response = self.client.messages.create(
             model=model,
             max_tokens=max_tokens,
-            messages=[{"role": "user", "content": prompt}]
+            messages=[{"role": "user", "content": prompt}],
         )
 
         # Track usage
         usage = response.usage
         cost = self.cost_tracker.track(
-            "anthropic",
-            model,
-            usage.input_tokens,
-            usage.output_tokens
+            "anthropic", model, usage.input_tokens, usage.output_tokens
         )
         print(f"[AI] Tokens: {usage.input_tokens} in / {usage.output_tokens} out")
         print(f"[AI] Estimated cost: ${cost:.4f}")
@@ -311,29 +306,23 @@ Include file path as a comment at the top: # File: path/to/file.py
         response = self.client.chat.completions.create(
             model=model,
             max_tokens=max_tokens,
-            messages=[{"role": "user", "content": prompt}]
+            messages=[{"role": "user", "content": prompt}],
         )
 
         # Track usage
         usage = response.usage
         if usage:
             cost = self.cost_tracker.track(
-                "openai",
-                model,
-                usage.prompt_tokens,
-                usage.completion_tokens
+                "openai", model, usage.prompt_tokens, usage.completion_tokens
             )
-            print(f"[AI] Tokens: {usage.prompt_tokens} in / {usage.completion_tokens} out")
+            print(
+                f"[AI] Tokens: {usage.prompt_tokens} in / {usage.completion_tokens} out"
+            )
             print(f"[AI] Estimated cost: ${cost:.4f}")
 
         return response.choices[0].message.content
 
-    def save_fix(
-        self,
-        fix_content: str,
-        output_dir: Path,
-        affected_file: str
-    ) -> Path:
+    def save_fix(self, fix_content: str, output_dir: Path, affected_file: str) -> Path:
         """Save generated fix to file.
 
         Args:
@@ -351,7 +340,9 @@ Include file path as a comment at the top: # File: path/to/file.py
         fix_file = output_dir / f"fix_{stem}.py"
 
         # Add target annotation and save
-        content = f"# TARGET: {affected_file}\n# Generated by CI Fix Agent\n\n{fix_content}"
+        content = (
+            f"# TARGET: {affected_file}\n# Generated by CI Fix Agent\n\n{fix_content}"
+        )
         fix_file.write_text(content, encoding="utf-8")
 
         print(f"[OK] Fix saved: {fix_file}")
@@ -385,6 +376,7 @@ def load_cost_config(config_path: Optional[Path] = None) -> Dict[str, Any]:
     if config_path.exists():
         try:
             import yaml
+
             with open(config_path) as f:
                 return yaml.safe_load(f) or {}
         except ImportError:
@@ -408,34 +400,26 @@ def main() -> int:
     Returns:
         Exit code (0 for success, 1 for error)
     """
-    parser = argparse.ArgumentParser(
-        description="Generate CI fixes using AI"
-    )
+    parser = argparse.ArgumentParser(description="Generate CI fixes using AI")
     parser.add_argument(
-        "--context",
-        required=True,
-        help="Path to failure context JSON file"
+        "--context", required=True, help="Path to failure context JSON file"
     )
-    parser.add_argument(
-        "--fix-type",
-        required=True,
-        help="Type of fix to generate"
-    )
+    parser.add_argument("--fix-type", required=True, help="Type of fix to generate")
     parser.add_argument(
         "--output-dir",
         default="fixes/",
-        help="Output directory for generated fixes (default: fixes/)"
+        help="Output directory for generated fixes (default: fixes/)",
     )
     parser.add_argument(
         "--provider",
         default="anthropic",
         choices=["anthropic", "openai"],
-        help="LLM provider to use (default: anthropic)"
+        help="LLM provider to use (default: anthropic)",
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print what would be done without making API calls"
+        help="Print what would be done without making API calls",
     )
     args = parser.parse_args()
 
@@ -501,8 +485,10 @@ def main() -> int:
 
     # Print cost summary
     cost_summary = agent.get_cost_summary()
-    print(f"\n[COST] Total tokens: {cost_summary['total_input_tokens']} in / "
-          f"{cost_summary['total_output_tokens']} out")
+    print(
+        f"\n[COST] Total tokens: {cost_summary['total_input_tokens']} in / "
+        f"{cost_summary['total_output_tokens']} out"
+    )
     print(f"[COST] Estimated total cost: ${cost_summary['total_cost_usd']:.4f}")
 
     # Save cost report

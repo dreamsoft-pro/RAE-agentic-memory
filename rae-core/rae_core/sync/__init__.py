@@ -7,11 +7,7 @@ from rae_core.sync.diff import (
     calculate_memory_diff,
     get_sync_direction,
 )
-from rae_core.sync.encryption import (
-    E2EEncryption,
-    decrypt_batch,
-    encrypt_batch,
-)
+from rae_core.sync.encryption import E2EEncryption, decrypt_batch, encrypt_batch
 from rae_core.sync.merge import (
     ConflictResolutionStrategy,
     ConflictResolver,
@@ -19,12 +15,7 @@ from rae_core.sync.merge import (
     apply_merge_results,
     merge_memories,
 )
-from rae_core.sync.protocol import (
-    SyncMetadata,
-    SyncProtocol,
-    SyncRequest,
-    SyncResponse,
-)
+from rae_core.sync.protocol import SyncMetadata, SyncProtocol, SyncRequest, SyncResponse
 
 __all__ = [
     # Protocol

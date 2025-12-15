@@ -75,7 +75,10 @@ services:
       - OTEL_TRACES_ENABLED=false
     healthcheck:
       # Disable HTTP healthcheck - celery worker doesn't expose HTTP endpoint
-      disable: true
+      test: ["CMD", "true"]
+      interval: 30s
+      timeout: 10s
+      retries: 1
     restart: unless-stopped  # Auto-restart after system reboot
 
   # ============================================================================
@@ -95,7 +98,10 @@ services:
       - OTEL_TRACES_ENABLED=false
     healthcheck:
       # Disable HTTP healthcheck - celery beat doesn't expose HTTP endpoint
-      disable: true
+      test: ["CMD", "true"]
+      interval: 30s
+      timeout: 10s
+      retries: 1
     restart: unless-stopped  # Auto-restart after system reboot
 
   # ============================================================================

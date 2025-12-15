@@ -1,8 +1,7 @@
 """Base class for all memory layers in RAE-core."""
 
 from abc import ABC, abstractmethod
-from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from ..interfaces.storage import IMemoryStorage
@@ -11,7 +10,7 @@ from ..models.memory import MemoryItem, ScoredMemoryItem
 
 class MemoryLayerBase(ABC):
     """Abstract base class for memory layers.
-    
+
     All memory layers (Sensory, Working, LongTerm, Reflective) inherit from this
     and implement layer-specific logic for storage, retrieval, and lifecycle.
     """
@@ -24,7 +23,7 @@ class MemoryLayerBase(ABC):
         agent_id: str,
     ):
         """Initialize memory layer.
-        
+
         Args:
             storage: Storage backend implementation
             layer_name: Name of this layer (sensory, working, episodic, semantic, reflective)
@@ -40,20 +39,20 @@ class MemoryLayerBase(ABC):
     async def add_memory(
         self,
         content: str,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        embedding: Optional[List[float]] = None,
-        importance: Optional[float] = None,
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
+        embedding: list[float] | None = None,
+        importance: float | None = None,
     ) -> UUID:
         """Add a memory to this layer.
-        
+
         Returns:
             UUID of the created memory
         """
         pass
 
     @abstractmethod
-    async def get_memory(self, memory_id: UUID) -> Optional[MemoryItem]:
+    async def get_memory(self, memory_id: UUID) -> MemoryItem | None:
         """Retrieve a memory by ID."""
         pass
 
@@ -62,15 +61,15 @@ class MemoryLayerBase(ABC):
         self,
         query: str,
         limit: int = 10,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> List[ScoredMemoryItem]:
+        filters: dict[str, Any] | None = None,
+    ) -> list[ScoredMemoryItem]:
         """Search memories in this layer.
-        
+
         Args:
             query: Search query
             limit: Maximum number of results
             filters: Optional filters (tags, date ranges, etc.)
-            
+
         Returns:
             List of scored memory items
         """
@@ -79,7 +78,7 @@ class MemoryLayerBase(ABC):
     @abstractmethod
     async def cleanup(self) -> int:
         """Perform layer-specific cleanup (decay, consolidation, etc.).
-        
+
         Returns:
             Number of memories affected
         """

@@ -13,6 +13,7 @@ Usage:
 """
 
 import argparse
+import asyncio
 import json
 import sys
 import time
@@ -20,9 +21,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
-import asyncio
 import asyncpg
-import httpx
 import yaml
 
 # Add parent directory to path for imports
@@ -54,7 +53,9 @@ class BenchmarkMetrics:
                     break
             reciprocal_ranks.append(1.0 / rank if rank else 0.0)
 
-        return sum(reciprocal_ranks) / len(reciprocal_ranks) if reciprocal_ranks else 0.0
+        return (
+            sum(reciprocal_ranks) / len(reciprocal_ranks) if reciprocal_ranks else 0.0
+        )
 
     @staticmethod
     def calculate_hit_rate(results: List[Tuple[str, List[str]]], k: int = 5) -> float:
@@ -77,7 +78,9 @@ class BenchmarkMetrics:
         return hits / len(results) if results else 0.0
 
     @staticmethod
-    def calculate_precision_at_k(results: List[Tuple[List[str], List[str]]], k: int = 5) -> float:
+    def calculate_precision_at_k(
+        results: List[Tuple[List[str], List[str]]], k: int = 5
+    ) -> float:
         """
         Calculate average Precision @ K
 
@@ -97,7 +100,9 @@ class BenchmarkMetrics:
         return sum(precisions) / len(precisions) if precisions else 0.0
 
     @staticmethod
-    def calculate_recall_at_k(results: List[Tuple[List[str], List[str]]], k: int = 5) -> float:
+    def calculate_recall_at_k(
+        results: List[Tuple[List[str], List[str]]], k: int = 5
+    ) -> float:
         """
         Calculate average Recall @ K
 
@@ -112,7 +117,9 @@ class BenchmarkMetrics:
         for expected_ids, retrieved_ids in results:
             top_k = retrieved_ids[:k]
             relevant_in_top_k = sum(1 for doc_id in top_k if doc_id in expected_ids)
-            recalls.append(relevant_in_top_k / len(expected_ids) if expected_ids else 0.0)
+            recalls.append(
+                relevant_in_top_k / len(expected_ids) if expected_ids else 0.0
+            )
 
         return sum(recalls) / len(recalls) if recalls else 0.0
 
@@ -150,7 +157,7 @@ class RAEBenchmarkRunner:
         """Load benchmark YAML file"""
         print(f"📂 Loading benchmark: {self.benchmark_file.name}")
 
-        with open(self.benchmark_file, 'r') as f:
+        with open(self.benchmark_file, "r") as f:
             self.benchmark_data = yaml.safe_load(f)
 
         print(f"   Name: {self.benchmark_data['name']}")
@@ -167,12 +174,13 @@ class RAEBenchmarkRunner:
 
         # Get DB credentials from environment or defaults
         import os
+
         db_config = {
-            'host': os.getenv('POSTGRES_HOST', 'localhost'),
-            'port': int(os.getenv('POSTGRES_PORT', 5432)),
-            'database': os.getenv('POSTGRES_DB', 'rae_memory'),
-            'user': os.getenv('POSTGRES_USER', 'rae_user'),
-            'password': os.getenv('POSTGRES_PASSWORD', 'rae_password'),
+            "host": os.getenv("POSTGRES_HOST", "localhost"),
+            "port": int(os.getenv("POSTGRES_PORT", 5432)),
+            "database": os.getenv("POSTGRES_DB", "rae_memory"),
+            "user": os.getenv("POSTGRES_USER", "rae_user"),
+            "password": os.getenv("POSTGRES_PASSWORD", "rae_password"),
         }
 
         self.pool = await asyncpg.create_pool(**db_config, min_size=2, max_size=5)
@@ -186,8 +194,9 @@ class RAEBenchmarkRunner:
         print("🧹 Cleaning up existing test data...")
 
         # Lazy import to avoid initialization issues
-        from apps.memory_api.services.vector_store import get_vector_store
         from qdrant_client import models
+
+        from apps.memory_api.services.vector_store import get_vector_store
 
         vector_store = get_vector_store(self.pool)
 
@@ -202,11 +211,11 @@ class RAEBenchmarkRunner:
                         must=[
                             models.FieldCondition(
                                 key="tenant_id",
-                                match=models.MatchValue(value=self.tenant_id)
+                                match=models.MatchValue(value=self.tenant_id),
                             )
                         ]
                     )
-                )
+                ),
             )
             print("   ✅ Qdrant cleanup complete")
         except Exception as e:
@@ -215,15 +224,13 @@ class RAEBenchmarkRunner:
         async with self.pool.acquire() as conn:
             # Delete from PostgreSQL
             await conn.execute(
-                "DELETE FROM memories WHERE tenant_id = $1",
-                self.tenant_id
+                "DELETE FROM memories WHERE tenant_id = $1", self.tenant_id
             )
 
             # Delete vectors for this tenant (if table exists)
             try:
                 await conn.execute(
-                    "DELETE FROM memory_vectors WHERE tenant_id = $1",
-                    self.tenant_id
+                    "DELETE FROM memory_vectors WHERE tenant_id = $1", self.tenant_id
                 )
             except asyncpg.exceptions.UndefinedTableError:
                 # Table doesn't exist, skip cleanup
@@ -241,12 +248,12 @@ class RAEBenchmarkRunner:
         embedding_service = get_embedding_service()
         vector_store = get_vector_store(self.pool)
 
-        for i, memory in enumerate(self.benchmark_data['memories'], 1):
+        for i, memory in enumerate(self.benchmark_data["memories"], 1):
             start_time = time.time()
 
             try:
                 # Generate embedding
-                content = memory['text']
+                content = memory["text"]
                 embedding = embedding_service.generate_embeddings([content])[0]
 
                 # Insert into database
@@ -261,31 +268,32 @@ class RAEBenchmarkRunner:
                         """,
                         self.tenant_id,
                         content,
-                        memory.get('metadata', {}).get('source', 'benchmark'),
-                        memory.get('metadata', {}).get('importance', 0.5),
-                        'ltm',
-                        memory.get('tags', []),
-                        self.project_id
+                        memory.get("metadata", {}).get("source", "benchmark"),
+                        memory.get("metadata", {}).get("importance", 0.5),
+                        "ltm",
+                        memory.get("tags", []),
+                        self.project_id,
                     )
 
-                    memory_id = row['id']
-                    created_at = row['created_at']
+                    memory_id = row["id"]
+                    created_at = row["created_at"]
 
                     # Store memory ID for later reference
-                    memory['_db_id'] = memory_id
+                    memory["_db_id"] = memory_id
 
                     # Insert vector - create MemoryRecord and use batch upsert
-                    from apps.memory_api.models import MemoryRecord, MemoryLayer
+                    from apps.memory_api.models import MemoryLayer, MemoryRecord
+
                     memory_record = MemoryRecord(
                         id=str(memory_id),
                         tenant_id=self.tenant_id,
                         content=content,
-                        source=memory.get('metadata', {}).get('source', 'benchmark'),
-                        importance=memory.get('metadata', {}).get('importance', 0.5),
+                        source=memory.get("metadata", {}).get("source", "benchmark"),
+                        importance=memory.get("metadata", {}).get("importance", 0.5),
                         layer=MemoryLayer.ltm,
-                        tags=memory.get('tags', []),
+                        tags=memory.get("tags", []),
                         timestamp=created_at,
-                        project=self.project_id
+                        project=self.project_id,
                     )
                     await vector_store.upsert([memory_record], [embedding])
 
@@ -293,13 +301,17 @@ class RAEBenchmarkRunner:
                 self.insert_times.append(elapsed)
 
                 if i % 10 == 0:
-                    print(f"   ✅ Inserted {i}/{len(self.benchmark_data['memories'])} memories")
+                    print(
+                        f"   ✅ Inserted {i}/{len(self.benchmark_data['memories'])} memories"
+                    )
 
             except Exception as e:
                 print(f"   ❌ Error inserting memory {memory.get('id', 'unknown')}: {e}")
                 raise
 
-        avg_time = sum(self.insert_times) / len(self.insert_times) if self.insert_times else 0
+        avg_time = (
+            sum(self.insert_times) / len(self.insert_times) if self.insert_times else 0
+        )
         print(f"   ⏱️  Average insert time: {avg_time*1000:.2f}ms")
 
     async def run_queries(self):
@@ -312,12 +324,12 @@ class RAEBenchmarkRunner:
         embedding_service = get_embedding_service()
         vector_store = get_vector_store(self.pool)
 
-        config = self.benchmark_data.get('config', {})
-        top_k = config.get('top_k', 5)
+        config = self.benchmark_data.get("config", {})
+        top_k = config.get("top_k", 5)
 
-        for i, query_data in enumerate(self.benchmark_data['queries'], 1):
-            query_text = query_data['query']
-            expected_ids = query_data['expected_source_ids']
+        for i, query_data in enumerate(self.benchmark_data["queries"], 1):
+            query_text = query_data["query"]
+            expected_ids = query_data["expected_source_ids"]
 
             start_time = time.time()
 
@@ -326,11 +338,11 @@ class RAEBenchmarkRunner:
                 query_embedding = embedding_service.generate_embeddings([query_text])[0]
 
                 # Search vectors - use query method with filters
-                filters = {"must": [{"key": "tenant_id", "match": {"value": self.tenant_id}}]}
+                filters = {
+                    "must": [{"key": "tenant_id", "match": {"value": self.tenant_id}}]
+                }
                 search_results = await vector_store.query(
-                    query_embedding=query_embedding,
-                    top_k=top_k,
-                    filters=filters
+                    query_embedding=query_embedding, top_k=top_k, filters=filters
                 )
 
                 elapsed = time.time() - start_time
@@ -340,29 +352,35 @@ class RAEBenchmarkRunner:
                 retrieved_ids = []
                 for result in search_results:
                     # Find the original benchmark ID
-                    for memory in self.benchmark_data['memories']:
-                        if str(memory.get('_db_id')) == str(result.id):
-                            retrieved_ids.append(memory['id'])
+                    for memory in self.benchmark_data["memories"]:
+                        if str(memory.get("_db_id")) == str(result.id):
+                            retrieved_ids.append(memory["id"])
                             break
 
                 # Store results for metric calculation
-                self.results.append({
-                    'query': query_text,
-                    'expected': expected_ids,
-                    'retrieved': retrieved_ids,
-                    'latency_ms': elapsed * 1000,
-                    'difficulty': query_data.get('difficulty', 'unknown'),
-                    'category': query_data.get('category', 'unknown')
-                })
+                self.results.append(
+                    {
+                        "query": query_text,
+                        "expected": expected_ids,
+                        "retrieved": retrieved_ids,
+                        "latency_ms": elapsed * 1000,
+                        "difficulty": query_data.get("difficulty", "unknown"),
+                        "category": query_data.get("category", "unknown"),
+                    }
+                )
 
                 if i % 5 == 0:
-                    print(f"   ✅ Completed {i}/{len(self.benchmark_data['queries'])} queries")
+                    print(
+                        f"   ✅ Completed {i}/{len(self.benchmark_data['queries'])} queries"
+                    )
 
             except Exception as e:
                 print(f"   ❌ Error running query '{query_text}': {e}")
                 raise
 
-        avg_time = sum(self.query_times) / len(self.query_times) if self.query_times else 0
+        avg_time = (
+            sum(self.query_times) / len(self.query_times) if self.query_times else 0
+        )
         print(f"   ⏱️  Average query time: {avg_time*1000:.2f}ms")
 
     def calculate_metrics(self) -> Dict:
@@ -370,37 +388,59 @@ class RAEBenchmarkRunner:
         print("\n📊 Calculating metrics...")
 
         # Prepare data for metric calculation
-        results_tuple = [(r['expected'], r['retrieved']) for r in self.results]
+        results_tuple = [(r["expected"], r["retrieved"]) for r in self.results]
 
-        config = self.benchmark_data.get('config', {})
+        config = self.benchmark_data.get("config", {})
         k_values = [3, 5, 10]
 
         metrics = {
-            'mrr': BenchmarkMetrics.calculate_mrr(results_tuple),
-            'hit_rate': {},
-            'precision': {},
-            'recall': {},
+            "mrr": BenchmarkMetrics.calculate_mrr(results_tuple),
+            "hit_rate": {},
+            "precision": {},
+            "recall": {},
         }
 
         for k in k_values:
-            metrics['hit_rate'][f'@{k}'] = BenchmarkMetrics.calculate_hit_rate(results_tuple, k)
-            metrics['precision'][f'@{k}'] = BenchmarkMetrics.calculate_precision_at_k(results_tuple, k)
-            metrics['recall'][f'@{k}'] = BenchmarkMetrics.calculate_recall_at_k(results_tuple, k)
+            metrics["hit_rate"][f"@{k}"] = BenchmarkMetrics.calculate_hit_rate(
+                results_tuple, k
+            )
+            metrics["precision"][f"@{k}"] = BenchmarkMetrics.calculate_precision_at_k(
+                results_tuple, k
+            )
+            metrics["recall"][f"@{k}"] = BenchmarkMetrics.calculate_recall_at_k(
+                results_tuple, k
+            )
 
         # Performance metrics
-        metrics['performance'] = {
-            'avg_insert_time_ms': (sum(self.insert_times) / len(self.insert_times) * 1000) if self.insert_times else 0,
-            'avg_query_time_ms': (sum(self.query_times) / len(self.query_times) * 1000) if self.query_times else 0,
-            'p95_query_time_ms': sorted(self.query_times)[int(len(self.query_times) * 0.95)] * 1000 if self.query_times else 0,
-            'p99_query_time_ms': sorted(self.query_times)[int(len(self.query_times) * 0.99)] * 1000 if self.query_times else 0,
+        metrics["performance"] = {
+            "avg_insert_time_ms": (
+                sum(self.insert_times) / len(self.insert_times) * 1000
+            )
+            if self.insert_times
+            else 0,
+            "avg_query_time_ms": (sum(self.query_times) / len(self.query_times) * 1000)
+            if self.query_times
+            else 0,
+            "p95_query_time_ms": sorted(self.query_times)[
+                int(len(self.query_times) * 0.95)
+            ]
+            * 1000
+            if self.query_times
+            else 0,
+            "p99_query_time_ms": sorted(self.query_times)[
+                int(len(self.query_times) * 0.99)
+            ]
+            * 1000
+            if self.query_times
+            else 0,
         }
 
         # Quality score (weighted average)
-        metrics['overall_quality_score'] = (
-            metrics['mrr'] * 0.4 +
-            metrics['hit_rate']['@5'] * 0.3 +
-            metrics['precision']['@5'] * 0.15 +
-            metrics['recall']['@5'] * 0.15
+        metrics["overall_quality_score"] = (
+            metrics["mrr"] * 0.4
+            + metrics["hit_rate"]["@5"] * 0.3
+            + metrics["precision"]["@5"] * 0.15
+            + metrics["recall"]["@5"] * 0.15
         )
 
         print(f"   MRR: {metrics['mrr']:.4f}")
@@ -414,29 +454,29 @@ class RAEBenchmarkRunner:
         print("\n💾 Saving results...")
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        benchmark_name = self.benchmark_data['name']
+        benchmark_name = self.benchmark_data["name"]
 
         # Prepare results data
         results_data = {
-            'benchmark': {
-                'name': benchmark_name,
-                'description': self.benchmark_data['description'],
-                'version': self.benchmark_data.get('version', '1.0'),
-                'file': str(self.benchmark_file),
+            "benchmark": {
+                "name": benchmark_name,
+                "description": self.benchmark_data["description"],
+                "version": self.benchmark_data.get("version", "1.0"),
+                "file": str(self.benchmark_file),
             },
-            'execution': {
-                'timestamp': datetime.now().isoformat(),
-                'num_memories': len(self.benchmark_data['memories']),
-                'num_queries': len(self.benchmark_data['queries']),
-                'total_time_seconds': sum(self.insert_times) + sum(self.query_times),
+            "execution": {
+                "timestamp": datetime.now().isoformat(),
+                "num_memories": len(self.benchmark_data["memories"]),
+                "num_queries": len(self.benchmark_data["queries"]),
+                "total_time_seconds": sum(self.insert_times) + sum(self.query_times),
             },
-            'metrics': metrics,
-            'detailed_results': self.results,
+            "metrics": metrics,
+            "detailed_results": self.results,
         }
 
         # Save JSON
         json_file = self.output_dir / f"{benchmark_name}_{timestamp}.json"
-        with open(json_file, 'w') as f:
+        with open(json_file, "w") as f:
             json.dump(results_data, f, indent=2)
         print(f"   ✅ JSON: {json_file}")
 
@@ -445,9 +485,11 @@ class RAEBenchmarkRunner:
         self._generate_markdown_report(md_file, results_data, metrics)
         print(f"   ✅ Report: {md_file}")
 
-    def _generate_markdown_report(self, md_file: Path, results_data: Dict, metrics: Dict):
+    def _generate_markdown_report(
+        self, md_file: Path, results_data: Dict, metrics: Dict
+    ):
         """Generate human-readable Markdown report"""
-        with open(md_file, 'w') as f:
+        with open(md_file, "w") as f:
             f.write(f"# RAE Benchmark Report: {results_data['benchmark']['name']}\n\n")
             f.write(f"**Description:** {results_data['benchmark']['description']}\n\n")
             f.write(f"**Executed:** {results_data['execution']['timestamp']}\n\n")
@@ -456,7 +498,9 @@ class RAEBenchmarkRunner:
             f.write("## Dataset Overview\n\n")
             f.write(f"- **Memories:** {results_data['execution']['num_memories']}\n")
             f.write(f"- **Queries:** {results_data['execution']['num_queries']}\n")
-            f.write(f"- **Total Time:** {results_data['execution']['total_time_seconds']:.2f}s\n\n")
+            f.write(
+                f"- **Total Time:** {results_data['execution']['total_time_seconds']:.2f}s\n\n"
+            )
 
             f.write("## Quality Metrics\n\n")
             f.write(f"- **MRR:** {metrics['mrr']:.4f}\n")
@@ -465,26 +509,28 @@ class RAEBenchmarkRunner:
             f.write(f"- **Hit Rate @10:** {metrics['hit_rate']['@10']:.4f}\n")
             f.write(f"- **Precision @5:** {metrics['precision']['@5']:.4f}\n")
             f.write(f"- **Recall @5:** {metrics['recall']['@5']:.4f}\n")
-            f.write(f"- **Overall Quality Score:** {metrics['overall_quality_score']:.4f}\n\n")
+            f.write(
+                f"- **Overall Quality Score:** {metrics['overall_quality_score']:.4f}\n\n"
+            )
 
             f.write("## Performance Metrics\n\n")
-            perf = metrics['performance']
+            perf = metrics["performance"]
             f.write(f"- **Average Insert Time:** {perf['avg_insert_time_ms']:.2f}ms\n")
             f.write(f"- **Average Query Time:** {perf['avg_query_time_ms']:.2f}ms\n")
             f.write(f"- **P95 Query Time:** {perf['p95_query_time_ms']:.2f}ms\n")
             f.write(f"- **P99 Query Time:** {perf['p99_query_time_ms']:.2f}ms\n\n")
 
             f.write("## Observations\n\n")
-            if metrics['mrr'] > 0.7:
+            if metrics["mrr"] > 0.7:
                 f.write("- ✅ Excellent MRR score - search quality is high\n")
-            elif metrics['mrr'] > 0.5:
+            elif metrics["mrr"] > 0.5:
                 f.write("- ⚠️ Good MRR score - room for improvement\n")
             else:
                 f.write("- ❌ Low MRR score - search quality needs attention\n")
 
-            if perf['avg_query_time_ms'] < 50:
+            if perf["avg_query_time_ms"] < 50:
                 f.write("- ✅ Excellent query latency\n")
-            elif perf['avg_query_time_ms'] < 100:
+            elif perf["avg_query_time_ms"] < 100:
                 f.write("- ⚠️ Acceptable query latency\n")
             else:
                 f.write("- ❌ High query latency - optimization needed\n")
@@ -501,33 +547,27 @@ class RAEBenchmarkRunner:
 async def main():
     parser = argparse.ArgumentParser(description="Run RAE benchmarks")
     parser.add_argument(
-        '--set',
+        "--set",
         type=str,
         required=True,
-        help='Benchmark set to run (e.g., academic_lite.yaml)'
+        help="Benchmark set to run (e.g., academic_lite.yaml)",
     )
     parser.add_argument(
-        '--output',
+        "--output",
         type=str,
-        default='benchmarking/results',
-        help='Output directory for results'
+        default="benchmarking/results",
+        help="Output directory for results",
     )
     parser.add_argument(
-        '--api-url',
-        type=str,
-        help='RAE API URL (default: direct DB access)'
+        "--api-url", type=str, help="RAE API URL (default: direct DB access)"
     )
-    parser.add_argument(
-        '--api-key',
-        type=str,
-        help='API key for authentication'
-    )
+    parser.add_argument("--api-key", type=str, help="API key for authentication")
 
     args = parser.parse_args()
 
     # Resolve paths
     project_root = Path(__file__).parent.parent.parent
-    benchmark_file = project_root / 'benchmarking' / 'sets' / args.set
+    benchmark_file = project_root / "benchmarking" / "sets" / args.set
     output_dir = project_root / args.output
 
     if not benchmark_file.exists():
@@ -545,7 +585,7 @@ async def main():
         output_dir=output_dir,
         api_url=args.api_url,
         api_key=args.api_key,
-        use_direct_db=True  # Always use direct DB for benchmarks
+        use_direct_db=True,  # Always use direct DB for benchmarks
     )
 
     try:
@@ -564,6 +604,7 @@ async def main():
     except Exception as e:
         print(f"\n❌ Benchmark failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

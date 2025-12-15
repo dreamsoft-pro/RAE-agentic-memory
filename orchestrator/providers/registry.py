@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional
 
 from .base import LLMProvider, ModelInfo, ModelTier, ProviderConfig
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -21,11 +20,7 @@ class ProviderRegistry:
         self._models: Dict[str, ModelInfo] = {}  # model_id -> ModelInfo
         self._configs: Dict[str, ProviderConfig] = {}
 
-    def register(
-        self,
-        provider: LLMProvider,
-        config: Optional[ProviderConfig] = None
-    ):
+    def register(self, provider: LLMProvider, config: Optional[ProviderConfig] = None):
         """Register a provider.
 
         Args:
@@ -43,8 +38,7 @@ class ProviderRegistry:
         elif provider_name not in self._configs:
             # Default config
             self._configs[provider_name] = ProviderConfig(
-                name=provider_name,
-                enabled=True
+                name=provider_name, enabled=True
             )
 
         # Index all models
@@ -101,10 +95,7 @@ class ProviderRegistry:
         """
         return self._models.get(model_id)
 
-    def list_providers(
-        self,
-        enabled_only: bool = True
-    ) -> List[str]:
+    def list_providers(self, enabled_only: bool = True) -> List[str]:
         """List registered providers.
 
         Args:
@@ -114,10 +105,7 @@ class ProviderRegistry:
             List of provider names
         """
         if enabled_only:
-            return [
-                name for name, config in self._configs.items()
-                if config.enabled
-            ]
+            return [name for name, config in self._configs.items() if config.enabled]
         return list(self._providers.keys())
 
     def list_models(
@@ -126,7 +114,7 @@ class ProviderRegistry:
         capability: Optional[str] = None,
         tier: Optional[ModelTier] = None,
         max_cost: Optional[float] = None,
-        enabled_providers_only: bool = True
+        enabled_providers_only: bool = True,
     ) -> List[ModelInfo]:
         """List models matching criteria.
 
@@ -166,9 +154,7 @@ class ProviderRegistry:
         return models
 
     def find_cheapest_model(
-        self,
-        capability: Optional[str] = None,
-        tier: Optional[ModelTier] = None
+        self, capability: Optional[str] = None, tier: Optional[ModelTier] = None
     ) -> Optional[ModelInfo]:
         """Find cheapest model matching criteria.
 
@@ -190,7 +176,7 @@ class ProviderRegistry:
         self,
         capability: Optional[str] = None,
         prefer_local: bool = False,
-        max_cost: Optional[float] = None
+        max_cost: Optional[float] = None,
     ) -> Optional[ModelInfo]:
         """Find best model matching criteria.
 
@@ -202,10 +188,7 @@ class ProviderRegistry:
         Returns:
             Best matching model or None
         """
-        models = self.list_models(
-            capability=capability,
-            max_cost=max_cost
-        )
+        models = self.list_models(capability=capability, max_cost=max_cost)
 
         if not models:
             return None
@@ -221,7 +204,7 @@ class ProviderRegistry:
         tier_priority = {
             ModelTier.ADVANCED: 3,
             ModelTier.STANDARD: 2,
-            ModelTier.FAST: 1
+            ModelTier.FAST: 1,
         }
 
         models.sort(key=lambda m: (-tier_priority[m.tier], m.cost_per_1k_input))
@@ -264,10 +247,10 @@ class ProviderRegistry:
                 name: {
                     "enabled": self._configs[name].enabled,
                     "models": len(provider.available_models),
-                    "default_model": self._configs[name].default_model
+                    "default_model": self._configs[name].default_model,
                 }
                 for name, provider in self._providers.items()
-            }
+            },
         }
 
 

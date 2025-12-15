@@ -1,13 +1,14 @@
-import pytest
 from datetime import datetime
 from uuid import UUID
+
+import pytest
 
 from rae_core.models.memory import (
     MemoryItem,
     MemoryLayer,
+    MemoryStats,
     MemoryType,
     ScoredMemoryItem,
-    MemoryStats,
 )
 
 
@@ -86,11 +87,9 @@ def test_scored_memory_item():
         tenant_id="t",
         agent_id="a",
     )
-    
+
     scored_item = ScoredMemoryItem(
-        memory=item,
-        score=0.9,
-        score_breakdown={"similarity": 0.9}
+        memory=item, score=0.9, score_breakdown={"similarity": 0.9}
     )
 
     assert scored_item.score == 0.9

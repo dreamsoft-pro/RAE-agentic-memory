@@ -5,7 +5,7 @@ Implements weighted feature scoring for intelligent level selection.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from .features_v2 import FeaturesV2
 from .types import MathLevel, TaskType
@@ -16,22 +16,24 @@ class PolicyV2Config:
     """Configuration for Policy v2"""
 
     # Feature weights for scoring
-    feature_weights: Dict[str, float] = field(default_factory=lambda: {
-        "task_type_score": 0.25,
-        "session_length_score": 0.15,
-        "memory_count_score": 0.20,
-        "entropy_score": 0.18,
-        "graph_density_score": 0.12,
-        "recent_mrr_score": 0.15,
-        "previous_success_score": 0.12,
-        "stability_bonus": 0.10,
-    })
+    feature_weights: Dict[str, float] = field(
+        default_factory=lambda: {
+            "task_type_score": 0.25,
+            "session_length_score": 0.15,
+            "memory_count_score": 0.20,
+            "entropy_score": 0.18,
+            "graph_density_score": 0.12,
+            "recent_mrr_score": 0.15,
+            "previous_success_score": 0.12,
+            "stability_bonus": 0.10,
+        }
+    )
 
     # Level selection thresholds
-    l2_memory_threshold: int = 30       # Min memories for L2
-    l2_entropy_threshold: float = 0.5   # Min entropy for L2
-    l3_memory_threshold: int = 200      # Min memories for L3
-    l3_session_threshold: int = 10      # Min session length for L3
+    l2_memory_threshold: int = 30  # Min memories for L2
+    l2_entropy_threshold: float = 0.5  # Min entropy for L2
+    l3_memory_threshold: int = 200  # Min memories for L3
+    l3_session_threshold: int = 10  # Min session length for L3
 
     # Safety settings
     max_exploration_rate: float = 0.2
@@ -117,8 +119,12 @@ class PolicyV2:
 
         # Graph connectivity favors L2/L3
         if derived["has_graph"]:
-            scores[MathLevel.L2] += features.graph_connectivity * w["graph_density_score"]
-            scores[MathLevel.L3] += features.graph_connectivity * w["graph_density_score"] * 0.8
+            scores[MathLevel.L2] += (
+                features.graph_connectivity * w["graph_density_score"]
+            )
+            scores[MathLevel.L3] += (
+                features.graph_connectivity * w["graph_density_score"] * 0.8
+            )
 
         # Recent quality influences scores
         if features.recent_mrr > 0.7:
@@ -259,7 +265,9 @@ class PolicyV2:
         )
 
         # Scores
-        scores_str = ", ".join([f"{level.value}={score:.2f}" for level, score in scores.items()])
+        scores_str = ", ".join(
+            [f"{level.value}={score:.2f}" for level, score in scores.items()]
+        )
         explanation_parts.append(f"Scores: [{scores_str}]")
 
         # Key factors

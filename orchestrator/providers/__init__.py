@@ -49,7 +49,6 @@ from .gemini import GeminiProvider, get_gemini_provider
 from .ollama import OllamaProvider, get_ollama_provider
 from .registry import ProviderRegistry, get_registry, init_registry
 
-
 __all__ = [
     # Base types
     "LLMProvider",

@@ -2,7 +2,9 @@
 
 import asyncio
 import os
+
 from providers.claude import ClaudeProvider
+
 
 async def test_claude():
     """Test Claude with simple prompt."""
@@ -35,15 +37,20 @@ async def test_claude():
         print(f"\n❌ Error: {result.error}")
         return False
 
-    print(f"\n✅ Success!")
+    print("\n✅ Success!")
     print(f"📥 Response: {result.content}")
 
     if result.usage:
-        print(f"Token usage: {result.usage.input_tokens} in, {result.usage.output_tokens} out")
-        cost = (result.usage.input_tokens * 0.003 + result.usage.output_tokens * 0.015) / 1000
+        print(
+            f"Token usage: {result.usage.input_tokens} in, {result.usage.output_tokens} out"
+        )
+        cost = (
+            result.usage.input_tokens * 0.003 + result.usage.output_tokens * 0.015
+        ) / 1000
         print(f"Cost: ${cost:.4f}")
 
     return True
+
 
 if __name__ == "__main__":
     success = asyncio.run(test_claude())

@@ -2,7 +2,7 @@
 
 import base64
 import json
-from typing import Any, Dict, Optional
+from typing import Any
 
 from cryptography.fernet import Fernet
 from cryptography.hazmat.backends import default_backend
@@ -16,7 +16,7 @@ class E2EEncryption:
     Uses Fernet (symmetric encryption) with key derivation.
     """
 
-    def __init__(self, key: Optional[bytes] = None, password: Optional[str] = None):
+    def __init__(self, key: bytes | None = None, password: str | None = None):
         """Initialize E2E encryption.
 
         Args:
@@ -36,7 +36,7 @@ class E2EEncryption:
     def _derive_key_from_password(
         self,
         password: str,
-        salt: Optional[bytes] = None,
+        salt: bytes | None = None,
     ) -> bytes:
         """Derive encryption key from password using PBKDF2.
 
@@ -99,7 +99,7 @@ class E2EEncryption:
         json_data = decrypted_bytes.decode()
         return json.loads(json_data)
 
-    def encrypt_memory(self, memory: Dict[str, Any]) -> Dict[str, Any]:
+    def encrypt_memory(self, memory: dict[str, Any]) -> dict[str, Any]:
         """Encrypt sensitive fields in memory record.
 
         Args:
@@ -120,7 +120,7 @@ class E2EEncryption:
 
         return encrypted_memory
 
-    def decrypt_memory(self, encrypted_memory: Dict[str, Any]) -> Dict[str, Any]:
+    def decrypt_memory(self, encrypted_memory: dict[str, Any]) -> dict[str, Any]:
         """Decrypt sensitive fields in memory record.
 
         Args:
@@ -160,9 +160,9 @@ class E2EEncryption:
 
 
 def encrypt_batch(
-    memories: list[Dict[str, Any]],
+    memories: list[dict[str, Any]],
     encryption: E2EEncryption,
-) -> list[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Encrypt a batch of memories.
 
     Args:
@@ -176,9 +176,9 @@ def encrypt_batch(
 
 
 def decrypt_batch(
-    encrypted_memories: list[Dict[str, Any]],
+    encrypted_memories: list[dict[str, Any]],
     encryption: E2EEncryption,
-) -> list[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Decrypt a batch of memories.
 
     Args:

@@ -1,10 +1,11 @@
 """Main orchestrator controller - coordinates all agents and enforces quality."""
 
 import asyncio
-import time
 import logging
+import time
 from pathlib import Path
-from typing import Dict, Any, List, Optional
+from typing import Any, Dict
+
 import yaml
 
 from orchestrator.adapters import (
@@ -15,22 +16,22 @@ from orchestrator.adapters import (
     TaskRisk,
 )
 from orchestrator.agents import (
+    AgentTask,
+    CodeReviewerAgent,
+    ImplementerAgent,
     PlannerAgent,
     PlanReviewerAgent,
-    ImplementerAgent,
-    CodeReviewerAgent,
-    AgentTask,
 )
 from orchestrator.core.model_router import ModelRouter
 from orchestrator.core.quality_gate import QualityGate
-from orchestrator.core.telemetry import get_telemetry, init_telemetry
-
+from orchestrator.core.telemetry import init_telemetry
 
 logger = logging.getLogger(__name__)
 
 
 class TaskStatus:
     """Task status constants."""
+
     NEW = "new"
     PLANNING = "planning"
     PLAN_REVIEW = "plan_review"
@@ -58,7 +59,9 @@ class Orchestrator:
         if providers_config_path.exists():
             with open(providers_config_path, "r") as f:
                 config = yaml.safe_load(f)
-                gemini_enabled = config.get("providers", {}).get("gemini", {}).get("enabled", True)
+                gemini_enabled = (
+                    config.get("providers", {}).get("gemini", {}).get("enabled", True)
+                )
 
         self.router = ModelRouter(gemini_enabled=gemini_enabled)
         self.quality_gate = QualityGate(str(self.working_dir))
@@ -137,20 +140,22 @@ class Orchestrator:
                 # Check review status
                 review_status = review.get("status", "rejected")
                 if review_status == "rejected":
-                    logger.error(f"Plan rejected: {review.get('reasoning', 'No reason provided')}")
+                    logger.error(
+                        f"Plan rejected: {review.get('reasoning', 'No reason provided')}"
+                    )
                     status = TaskStatus.AWAITING_HUMAN
                     self.telemetry.record_task_complete(
                         "human_required",
                         time.time() - start_time,
                         task_area,
-                        task_risk_str
+                        task_risk_str,
                     )
                     return {
                         "task_id": task_id,
                         "status": status,
                         "plan": plan,
                         "review": review,
-                        "message": "Plan rejected by reviewer - human review required"
+                        "message": "Plan rejected by reviewer - human review required",
                     }
 
                 # Phase 3: Implementation (for each step)
@@ -161,7 +166,9 @@ class Orchestrator:
                     step_result = await self._execute_step(task_def, step)
 
                     if not step_result["success"]:
-                        logger.error(f"Step {step['id']} failed: {step_result.get('error')}")
+                        logger.error(
+                            f"Step {step['id']} failed: {step_result.get('error')}"
+                        )
                         status = TaskStatus.FAILED
                         break
 
@@ -169,7 +176,7 @@ class Orchestrator:
                 if status == TaskStatus.IMPLEMENTING:
                     gate_result = await self.quality_gate.validate(
                         changed_files=[],  # TODO: track changed files
-                        change_size="MEDIUM"
+                        change_size="MEDIUM",
                     )
 
                     if not gate_result.can_merge:
@@ -187,10 +194,12 @@ class Orchestrator:
                     status if status == TaskStatus.DONE else "fail",
                     duration,
                     task_area,
-                    task_risk_str
+                    task_risk_str,
                 )
 
-                logger.info(f"Task {task_id} completed with status {status} in {duration:.2f}s")
+                logger.info(
+                    f"Task {task_id} completed with status {status} in {duration:.2f}s"
+                )
 
                 return {
                     "task_id": task_id,
@@ -202,10 +211,7 @@ class Orchestrator:
             except Exception as e:
                 logger.exception(f"Task {task_id} failed with exception")
                 self.telemetry.record_task_complete(
-                    "fail",
-                    time.time() - start_time,
-                    task_area,
-                    task_risk_str
+                    "fail", time.time() - start_time, task_area, task_risk_str
                 )
                 return {
                     "task_id": task_id,
@@ -230,9 +236,7 @@ class Orchestrator:
 
         # Choose planner model
         routing_decision = self.router.choose_planner(
-            task_risk,
-            task_area,
-            task_complexity
+            task_risk, task_area, task_complexity
         )
 
         logger.info(
@@ -244,7 +248,7 @@ class Orchestrator:
             task_risk_str,
             task_area,
             routing_decision.model.value,
-            routing_decision.rationale
+            routing_decision.rationale,
         )
 
         # Set adapter for planner
@@ -269,14 +273,14 @@ class Orchestrator:
         with self.telemetry.trace_llm_call(
             provider=adapter.__class__.__name__.replace("Adapter", "").lower(),
             model=routing_decision.model.value,
-            role="planner"
+            role="planner",
         ):
             response = await self.planner.execute(agent_task)
             self.telemetry.record_llm_call(
                 provider=adapter.__class__.__name__.replace("Adapter", "").lower(),
                 model=routing_decision.model.value,
                 role="planner",
-                cost_usd=routing_decision.estimated_cost
+                cost_usd=routing_decision.estimated_cost,
             )
 
         if not response.success:
@@ -285,9 +289,7 @@ class Orchestrator:
         return response.result
 
     async def _review_plan(
-        self,
-        task_def: Dict[str, Any],
-        plan: Dict[str, Any]
+        self, task_def: Dict[str, Any], plan: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Review implementation plan.
 
@@ -310,8 +312,7 @@ class Orchestrator:
 
         # Choose reviewer model (must be different)
         routing_decision = self.router.choose_plan_reviewer(
-            planner_decision.model,
-            task_risk
+            planner_decision.model, task_risk
         )
 
         logger.info(
@@ -336,14 +337,14 @@ class Orchestrator:
         with self.telemetry.trace_llm_call(
             provider=adapter.__class__.__name__.replace("Adapter", "").lower(),
             model=routing_decision.model.value,
-            role="plan_reviewer"
+            role="plan_reviewer",
         ):
             response = await self.plan_reviewer.execute(agent_task)
             self.telemetry.record_llm_call(
                 provider=adapter.__class__.__name__.replace("Adapter", "").lower(),
                 model=routing_decision.model.value,
                 role="plan_reviewer",
-                cost_usd=routing_decision.estimated_cost
+                cost_usd=routing_decision.estimated_cost,
             )
 
         if not response.success:
@@ -352,9 +353,7 @@ class Orchestrator:
         return response.result
 
     async def _execute_step(
-        self,
-        task_def: Dict[str, Any],
-        step: Dict[str, Any]
+        self, task_def: Dict[str, Any], step: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Execute a single implementation step.
 
@@ -378,16 +377,12 @@ class Orchestrator:
         with self.telemetry.trace_step(step_id, step_type, step_risk_str):
             # Choose implementer model
             impl_decision = self.router.choose_implementer(
-                step_risk,
-                step_complexity,
-                step_type,
-                task_area
+                step_risk, step_complexity, step_type, task_area
             )
 
             # Choose code reviewer model (must be different)
             review_decision = self.router.choose_code_reviewer(
-                impl_decision.model,
-                step_risk
+                impl_decision.model, step_risk
             )
 
             # Implementation
@@ -406,14 +401,16 @@ class Orchestrator:
             with self.telemetry.trace_llm_call(
                 provider=impl_adapter.__class__.__name__.replace("Adapter", "").lower(),
                 model=impl_decision.model.value,
-                role="implementer"
+                role="implementer",
             ):
                 impl_response = await self.implementer.execute(agent_task)
                 self.telemetry.record_llm_call(
-                    provider=impl_adapter.__class__.__name__.replace("Adapter", "").lower(),
+                    provider=impl_adapter.__class__.__name__.replace(
+                        "Adapter", ""
+                    ).lower(),
                     model=impl_decision.model.value,
                     role="implementer",
-                    cost_usd=impl_decision.estimated_cost
+                    cost_usd=impl_decision.estimated_cost,
                 )
 
             if not impl_response.success:
@@ -436,16 +433,20 @@ class Orchestrator:
             )
 
             with self.telemetry.trace_llm_call(
-                provider=review_adapter.__class__.__name__.replace("Adapter", "").lower(),
+                provider=review_adapter.__class__.__name__.replace(
+                    "Adapter", ""
+                ).lower(),
                 model=review_decision.model.value,
-                role="code_reviewer"
+                role="code_reviewer",
             ):
                 review_response = await self.code_reviewer.execute(review_task)
                 self.telemetry.record_llm_call(
-                    provider=review_adapter.__class__.__name__.replace("Adapter", "").lower(),
+                    provider=review_adapter.__class__.__name__.replace(
+                        "Adapter", ""
+                    ).lower(),
                     model=review_decision.model.value,
                     role="code_reviewer",
-                    cost_usd=review_decision.estimated_cost
+                    cost_usd=review_decision.estimated_cost,
                 )
 
             if not review_response.success:
@@ -459,11 +460,11 @@ class Orchestrator:
                 self.telemetry.log_cross_review_rejection(
                     review_decision.model.value,
                     impl_decision.model.value,
-                    review_result.get("reasoning", "Unknown reason")
+                    review_result.get("reasoning", "Unknown reason"),
                 )
                 return {
                     "success": False,
-                    "error": f"Code review rejected: {review_result.get('reasoning')}"
+                    "error": f"Code review rejected: {review_result.get('reasoning')}",
                 }
 
             self.telemetry.record_step_complete(step_type, "success")
@@ -472,31 +473,25 @@ class Orchestrator:
 
 async def main():
     """Main entry point."""
-    import sys
     import argparse
+    import sys
 
-    parser = argparse.ArgumentParser(description="Orchestrator for multi-agent development")
-    parser.add_argument(
-        "--tasks",
-        default=".orchestrator/tasks.yaml",
-        help="Path to tasks.yaml file"
+    parser = argparse.ArgumentParser(
+        description="Orchestrator for multi-agent development"
     )
     parser.add_argument(
-        "--working-dir",
-        default=".",
-        help="Working directory for operations"
+        "--tasks", default=".orchestrator/tasks.yaml", help="Path to tasks.yaml file"
     )
     parser.add_argument(
-        "--task-id",
-        help="Run specific task by ID"
+        "--working-dir", default=".", help="Working directory for operations"
     )
+    parser.add_argument("--task-id", help="Run specific task by ID")
 
     args = parser.parse_args()
 
     # Setup logging
     logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+        level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
     )
 
     # Load tasks

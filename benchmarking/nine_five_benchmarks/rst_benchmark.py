@@ -12,10 +12,10 @@ Measures:
 Research-grade implementation for academic evaluation of RAE memory systems.
 """
 
-import json
-import time
 import hashlib
+import json
 import random
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -28,15 +28,17 @@ from numpy.typing import NDArray
 
 class NoiseType(Enum):
     """Types of noise to inject."""
-    GAUSSIAN = "gaussian"      # Random noise in embeddings
+
+    GAUSSIAN = "gaussian"  # Random noise in embeddings
     ADVERSARIAL = "adversarial"  # Misleading information
-    MISSING = "missing"        # Dropped information
+    MISSING = "missing"  # Dropped information
     CONTRADICTORY = "contradictory"  # Conflicting data
 
 
 @dataclass
 class Insight:
     """A generated insight/reflection."""
+
     id: str
     content: str
     embedding: NDArray[np.float32]
@@ -49,6 +51,7 @@ class Insight:
 @dataclass
 class NoiseConfig:
     """Configuration for noise injection."""
+
     noise_type: NoiseType
     noise_level: float  # 0.0 to 1.0
     description: str
@@ -57,6 +60,7 @@ class NoiseConfig:
 @dataclass
 class StabilityMeasurement:
     """Measurement of insight stability at a noise level."""
+
     noise_level: float
     noise_type: NoiseType
     original_insight: Insight
@@ -71,11 +75,14 @@ class StabilityMeasurement:
 @dataclass
 class RSTResults:
     """Results from RST benchmark."""
+
     benchmark_name: str = "RST"
     version: str = "1.0.0"
 
     # Primary metrics
-    stability_score: Dict[float, float] = field(default_factory=dict)  # noise_level -> stability
+    stability_score: Dict[float, float] = field(
+        default_factory=dict
+    )  # noise_level -> stability
     insight_consistency: float = 0.0
     noise_threshold: float = 0.0  # Level where insights break down
 
@@ -179,7 +186,9 @@ class RSTBenchmark:
         self.insights: Dict[str, Insight] = {}
         self.measurements: List[StabilityMeasurement] = []
 
-    def _generate_embedding(self, content: str, noise: float = 0.0) -> NDArray[np.float32]:
+    def _generate_embedding(
+        self, content: str, noise: float = 0.0
+    ) -> NDArray[np.float32]:
         """Generate embedding for content with optional noise."""
         content_hash = hashlib.md5(content.encode()).hexdigest()
         local_seed = int(content_hash[:8], 16)
@@ -192,7 +201,9 @@ class RSTBenchmark:
             embedding = embedding / norm
 
         if noise > 0:
-            noise_vector = np.random.randn(self.embedding_dim).astype(np.float32) * noise
+            noise_vector = (
+                np.random.randn(self.embedding_dim).astype(np.float32) * noise
+            )
             embedding = embedding + noise_vector
             norm = np.linalg.norm(embedding)
             if norm > 0:
@@ -226,9 +237,15 @@ class RSTBenchmark:
     def _generate_source_memories(self, num_memories: int = 100):
         """Generate synthetic source memories for reflection."""
         topics = [
-            "user preferences", "system behavior", "task patterns",
-            "error occurrences", "success metrics", "interaction history",
-            "knowledge updates", "performance data", "feedback signals",
+            "user preferences",
+            "system behavior",
+            "task patterns",
+            "error occurrences",
+            "success metrics",
+            "interaction history",
+            "knowledge updates",
+            "performance data",
+            "feedback signals",
         ]
 
         for i in range(num_memories):
@@ -279,7 +296,9 @@ class RSTBenchmark:
         # Apply noise based on type
         if noise_level > 0:
             if noise_type == NoiseType.GAUSSIAN:
-                noise = np.random.randn(self.embedding_dim).astype(np.float32) * noise_level
+                noise = (
+                    np.random.randn(self.embedding_dim).astype(np.float32) * noise_level
+                )
                 base_embedding = base_embedding + noise
 
             elif noise_type == NoiseType.ADVERSARIAL:
@@ -296,7 +315,9 @@ class RSTBenchmark:
                 # Contradictory: mix with random unrelated embedding
                 random_emb = np.random.randn(self.embedding_dim).astype(np.float32)
                 random_emb = random_emb / np.linalg.norm(random_emb)
-                base_embedding = (1 - noise_level) * base_embedding + noise_level * random_emb
+                base_embedding = (
+                    1 - noise_level
+                ) * base_embedding + noise_level * random_emb
 
         # Normalize
         norm = np.linalg.norm(base_embedding)
@@ -308,7 +329,9 @@ class RSTBenchmark:
         confidence = base_confidence * (1.0 - noise_level * 0.5)
 
         insight = Insight(
-            id=hashlib.md5(f"{insight_content}_{time.time()}".encode()).hexdigest()[:16],
+            id=hashlib.md5(f"{insight_content}_{time.time()}".encode()).hexdigest()[
+                :16
+            ],
             content=insight_content,
             embedding=base_embedding,
             source_memories=source_ids,
@@ -381,7 +404,7 @@ class RSTBenchmark:
             noise_types = list(NoiseType)
 
         if verbose:
-            print(f"Starting RST Benchmark")
+            print("Starting RST Benchmark")
             print(f"  Insights: {num_insights}")
             print(f"  Noise levels: {self.NOISE_LEVELS}")
             print(f"  Noise types: {[nt.value for nt in noise_types]}")
@@ -401,7 +424,9 @@ class RSTBenchmark:
         if verbose:
             print("Testing insight stability...")
 
-        stability_by_level: Dict[float, List[float]] = {level: [] for level in self.NOISE_LEVELS}
+        stability_by_level: Dict[float, List[float]] = {
+            level: [] for level in self.NOISE_LEVELS
+        }
         stability_by_type: Dict[NoiseType, Dict[float, List[float]]] = {
             nt: {level: [] for level in self.NOISE_LEVELS} for nt in noise_types
         }
@@ -409,7 +434,10 @@ class RSTBenchmark:
         for i in range(num_insights):
             # Select random source memories
             num_sources = random.randint(3, 10)
-            source_ids = random.sample(list(self.source_memories.keys()), min(num_sources, len(self.source_memories)))
+            source_ids = random.sample(
+                list(self.source_memories.keys()),
+                min(num_sources, len(self.source_memories)),
+            )
 
             # Generate clean insight
             clean_insight = self._generate_insight(source_ids, noise_level=0.0)
@@ -436,8 +464,12 @@ class RSTBenchmark:
                     )
                     self.measurements.append(measurement)
 
-                    stability_by_level[noise_level].append(measurement.semantic_similarity)
-                    stability_by_type[noise_type][noise_level].append(measurement.semantic_similarity)
+                    stability_by_level[noise_level].append(
+                        measurement.semantic_similarity
+                    )
+                    stability_by_type[noise_type][noise_level].append(
+                        measurement.semantic_similarity
+                    )
 
             if verbose and (i + 1) % 10 == 0:
                 print(f"  Tested {i + 1}/{num_insights} insights")
@@ -464,7 +496,9 @@ class RSTBenchmark:
 
         # Insight consistency (variance across noise levels)
         all_stabilities = [m.semantic_similarity for m in self.measurements]
-        insight_consistency = 1.0 - float(np.std(all_stabilities)) if all_stabilities else 0.0
+        insight_consistency = (
+            1.0 - float(np.std(all_stabilities)) if all_stabilities else 0.0
+        )
         insight_consistency = max(0.0, insight_consistency)
 
         # Per-noise-type analysis
@@ -477,9 +511,15 @@ class RSTBenchmark:
                     type_stabilities.extend(sims)
 
             noise_type_analysis[noise_type.value] = {
-                "mean_stability": float(np.mean(type_stabilities)) if type_stabilities else 0.0,
-                "std_stability": float(np.std(type_stabilities)) if type_stabilities else 0.0,
-                "min_stability": float(np.min(type_stabilities)) if type_stabilities else 0.0,
+                "mean_stability": float(np.mean(type_stabilities))
+                if type_stabilities
+                else 0.0,
+                "std_stability": float(np.std(type_stabilities))
+                if type_stabilities
+                else 0.0,
+                "min_stability": float(np.min(type_stabilities))
+                if type_stabilities
+                else 0.0,
             }
 
         # Count stable insights

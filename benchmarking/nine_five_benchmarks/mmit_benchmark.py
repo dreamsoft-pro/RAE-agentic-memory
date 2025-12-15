@@ -16,10 +16,10 @@ Detects:
 Research-grade implementation for academic evaluation of RAE memory systems.
 """
 
-import json
-import time
 import hashlib
+import json
 import random
+import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -32,6 +32,7 @@ from numpy.typing import NDArray
 
 class MemoryLayer(Enum):
     """RAE Memory Layer types."""
+
     EPISODIC = "episodic"
     WORKING = "working"
     SEMANTIC = "semantic"
@@ -51,6 +52,7 @@ class MemoryLayer(Enum):
 @dataclass
 class LayerMemory:
     """Memory item within a specific layer."""
+
     id: str
     content: str
     embedding: NDArray[np.float32]
@@ -63,6 +65,7 @@ class LayerMemory:
 @dataclass
 class ContaminationEvent:
     """Records a detected contamination/leakage event."""
+
     event_id: str
     source_layer: MemoryLayer
     target_layer: MemoryLayer
@@ -77,6 +80,7 @@ class ContaminationEvent:
 @dataclass
 class LayerIsolationScore:
     """Isolation score for a specific layer."""
+
     layer: MemoryLayer
     isolation_score: float  # 0-1, 1 = perfect isolation
     leakage_in: int  # Memories leaked INTO this layer
@@ -87,6 +91,7 @@ class LayerIsolationScore:
 @dataclass
 class MMITResults:
     """Results from MMIT benchmark."""
+
     benchmark_name: str = "MMIT"
     version: str = "1.0.0"
 
@@ -169,12 +174,21 @@ class MMITBenchmark:
 
     # Legitimate transfer paths (allowed data flow)
     LEGITIMATE_TRANSFERS = {
-        (MemoryLayer.EPISODIC, MemoryLayer.WORKING): True,  # Recent events to active context
-        (MemoryLayer.WORKING, MemoryLayer.SEMANTIC): True,  # Processed info to knowledge
-        (MemoryLayer.WORKING, MemoryLayer.LTM): True,       # Important info to long-term
-        (MemoryLayer.SEMANTIC, MemoryLayer.WORKING): True,  # Retrieved knowledge to context
-        (MemoryLayer.LTM, MemoryLayer.WORKING): True,       # Retrieved memories to context
-        (MemoryLayer.SEMANTIC, MemoryLayer.LTM): True,      # Knowledge consolidation
+        (
+            MemoryLayer.EPISODIC,
+            MemoryLayer.WORKING,
+        ): True,  # Recent events to active context
+        (
+            MemoryLayer.WORKING,
+            MemoryLayer.SEMANTIC,
+        ): True,  # Processed info to knowledge
+        (MemoryLayer.WORKING, MemoryLayer.LTM): True,  # Important info to long-term
+        (
+            MemoryLayer.SEMANTIC,
+            MemoryLayer.WORKING,
+        ): True,  # Retrieved knowledge to context
+        (MemoryLayer.LTM, MemoryLayer.WORKING): True,  # Retrieved memories to context
+        (MemoryLayer.SEMANTIC, MemoryLayer.LTM): True,  # Knowledge consolidation
     }
 
     def __init__(
@@ -216,7 +230,9 @@ class MMITBenchmark:
         self.legitimate_transfers = 0
         self.illegitimate_leakages = 0
 
-    def _generate_embedding(self, content: str, noise: float = 0.0) -> NDArray[np.float32]:
+    def _generate_embedding(
+        self, content: str, noise: float = 0.0
+    ) -> NDArray[np.float32]:
         """Generate embedding for content."""
         content_hash = hashlib.md5(content.encode()).hexdigest()
         local_seed = int(content_hash[:8], 16)
@@ -229,7 +245,9 @@ class MMITBenchmark:
             embedding = embedding / norm
 
         if noise > 0:
-            noise_vector = np.random.randn(self.embedding_dim).astype(np.float32) * noise
+            noise_vector = (
+                np.random.randn(self.embedding_dim).astype(np.float32) * noise
+            )
             embedding = embedding + noise_vector
             norm = np.linalg.norm(embedding)
             if norm > 0:
@@ -286,7 +304,9 @@ class MMITBenchmark:
                     if not is_legitimate:
                         # Illegitimate leakage detected!
                         event = ContaminationEvent(
-                            event_id=hashlib.md5(f"{memory.id}_{other_id}_{time.time()}".encode()).hexdigest()[:16],
+                            event_id=hashlib.md5(
+                                f"{memory.id}_{other_id}_{time.time()}".encode()
+                            ).hexdigest()[:16],
                             source_layer=other_layer,
                             target_layer=target_layer,
                             memory_id=memory.id,
@@ -315,7 +335,9 @@ class MMITBenchmark:
         Returns:
             Tuple of (memory, contamination_event if detected)
         """
-        memory_id = hashlib.md5(f"{content}_{layer.value}_{time.time()}".encode()).hexdigest()[:16]
+        memory_id = hashlib.md5(
+            f"{content}_{layer.value}_{time.time()}".encode()
+        ).hexdigest()[:16]
         embedding = self._generate_embedding(content)
 
         memory = LayerMemory(
@@ -364,7 +386,9 @@ class MMITBenchmark:
         is_legitimate = self.LEGITIMATE_TRANSFERS.get(transfer_path, False)
 
         # Create new memory in target layer
-        new_id = hashlib.md5(f"{memory_id}_{target_layer.value}_{time.time()}".encode()).hexdigest()[:16]
+        new_id = hashlib.md5(
+            f"{memory_id}_{target_layer.value}_{time.time()}".encode()
+        ).hexdigest()[:16]
         new_memory = LayerMemory(
             id=new_id,
             content=source_memory.content,
@@ -384,7 +408,9 @@ class MMITBenchmark:
         else:
             self.illegitimate_leakages += 1
             event = ContaminationEvent(
-                event_id=hashlib.md5(f"{memory_id}_{source_layer}_{target_layer}_{time.time()}".encode()).hexdigest()[:16],
+                event_id=hashlib.md5(
+                    f"{memory_id}_{source_layer}_{target_layer}_{time.time()}".encode()
+                ).hexdigest()[:16],
                 source_layer=source_layer,
                 target_layer=target_layer,
                 memory_id=memory_id,
@@ -459,7 +485,9 @@ class MMITBenchmark:
             if not source_memories:
                 continue
 
-            source_contents = {self._content_hash(m.content) for m in source_memories.values()}
+            source_contents = {
+                self._content_hash(m.content) for m in source_memories.values()
+            }
 
             for j, target_layer in enumerate(layers):
                 if i == j:
@@ -574,7 +602,8 @@ class MMITBenchmark:
                     illegitimate_targets = [
                         layer
                         for layer in MemoryLayer
-                        if layer != source_layer and (source_layer, layer) not in self.LEGITIMATE_TRANSFERS
+                        if layer != source_layer
+                        and (source_layer, layer) not in self.LEGITIMATE_TRANSFERS
                     ]
                     if illegitimate_targets:
                         target = random.choice(illegitimate_targets)
@@ -603,7 +632,7 @@ class MMITBenchmark:
         start_time = datetime.now()
 
         if verbose:
-            print(f"Starting MMIT Benchmark")
+            print("Starting MMIT Benchmark")
             print(f"  Operations: {num_operations}")
             print(f"  Similarity threshold: {self.similarity_threshold}")
             print("=" * 60)

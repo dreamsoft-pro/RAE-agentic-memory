@@ -9,17 +9,26 @@ import re
 import subprocess
 import xml.etree.ElementTree as ET
 from datetime import datetime
-from typing import List, Dict, Optional
+from typing import Dict, List, Optional
 
 # --- Configuration ---
 PROJECT_ROOT = "."
-EXCLUDE_DIRS = {".git", ".venv", "__pycache__", "node_modules", "htmlcov", "site", "alembic"}
+EXCLUDE_DIRS = {
+    ".git",
+    ".venv",
+    "__pycache__",
+    "node_modules",
+    "htmlcov",
+    "site",
+    "alembic",
+}
 CHANGELOG_FILE = "CHANGELOG.md"
 TODO_FILE = "TODO.md"
 STATUS_FILE = "STATUS.md"
 TESTING_FILE = "docs/TESTING_STATUS.md"
 COVERAGE_FILE = "coverage.xml"
 JUNIT_FILE = "junit.xml"
+
 
 def run_command(cmd: List[str]) -> str:
     try:
@@ -28,7 +37,9 @@ def run_command(cmd: List[str]) -> str:
     except subprocess.CalledProcessError:
         return ""
 
+
 # --- Helpers ---
+
 
 def get_file_content(path: str) -> str:
     if os.path.exists(path):
@@ -36,11 +47,14 @@ def get_file_content(path: str) -> str:
             return f.read()
     return ""
 
+
 def write_file_content(path: str, content: str):
     with open(path, "w") as f:
         f.write(content)
 
+
 # --- Data Providers ---
+
 
 def get_coverage_stats() -> Optional[float]:
     """Parses coverage.xml to get line coverage percentage."""
@@ -52,6 +66,7 @@ def get_coverage_stats() -> Optional[float]:
         return float(root.attrib.get("line-rate", 0)) * 100
     except Exception:
         return None
+
 
 def get_test_stats() -> Dict[str, int]:
     """Parses junit.xml to get test results."""
@@ -77,11 +92,14 @@ def get_test_stats() -> Dict[str, int]:
         pass
     return stats
 
+
 def get_git_branch() -> str:
     return run_command(["git", "rev-parse", "--abbrev-ref", "HEAD"]) or "unknown"
 
+
 def get_git_hash() -> str:
     return run_command(["git", "rev-parse", "--short", "HEAD"]) or "unknown"
+
 
 def get_recent_commits(limit: int = 50) -> List[Dict[str, str]]:
     """Get recent commits with type, scope, and description."""
@@ -93,7 +111,9 @@ def get_recent_commits(limit: int = 50) -> List[Dict[str, str]]:
         commit_range = f"HEAD~{limit}..HEAD"
 
     # Get commit log: hash + subject
-    log_output = run_command(["git", "log", commit_range, "--pretty=format:%h|%s|%ad", "--date=short"])
+    log_output = run_command(
+        ["git", "log", commit_range, "--pretty=format:%h|%s|%ad", "--date=short"]
+    )
 
     commits = []
     for line in log_output.split("\n"):
@@ -113,31 +133,37 @@ def get_recent_commits(limit: int = 50) -> List[Dict[str, str]]:
         match = re.match(r"^(\w+)(?:\(([^)]+)\))?:\s*(.+)$", subject)
         if match:
             commit_type, scope, description = match.groups()
-            commits.append({
-                "hash": hash_short,
-                "type": commit_type,
-                "scope": scope or "",
-                "description": description,
-                "date": date
-            })
+            commits.append(
+                {
+                    "hash": hash_short,
+                    "type": commit_type,
+                    "scope": scope or "",
+                    "description": description,
+                    "date": date,
+                }
+            )
         else:
             # Non-conventional commit
-            commits.append({
-                "hash": hash_short,
-                "type": "other",
-                "scope": "",
-                "description": subject,
-                "date": date
-            })
+            commits.append(
+                {
+                    "hash": hash_short,
+                    "type": "other",
+                    "scope": "",
+                    "description": subject,
+                    "date": date,
+                }
+            )
 
     return commits
 
+
 # --- Generators ---
+
 
 def update_todo():
     print(f"Updating {TODO_FILE}...")
     current_content = get_file_content(TODO_FILE)
-    
+
     # Scan for TODOs in code
     todos = []
     for root, dirs, files in os.walk(PROJECT_ROOT):
@@ -146,13 +172,16 @@ def update_todo():
             if not file.endswith((".py", ".md", ".js", ".ts", ".yml", ".yaml", ".sh")):
                 continue
             file_path = os.path.join(root, file)
-            if file_path == os.path.join(PROJECT_ROOT, TODO_FILE): continue
-            
+            if file_path == os.path.join(PROJECT_ROOT, TODO_FILE):
+                continue
+
             try:
                 with open(file_path, "r", errors="ignore") as f:
                     for i, line in enumerate(f, 1):
                         if "TODO" in line or "FIXME" in line:
-                            clean_line = line.strip().replace("#", "").replace("//", "").strip()
+                            clean_line = (
+                                line.strip().replace("#", "").replace("//", "").strip()
+                            )
                             clean_line = re.sub(r"^(TODO|FIXME)[:\s]*", "", clean_line)
                             # Format: - [ ] **file:line** - text
                             rel_path = os.path.relpath(file_path, PROJECT_ROOT)
@@ -160,13 +189,21 @@ def update_todo():
             except Exception:
                 continue
 
-    tech_debt_section = "## Technical Debt (Auto-generated from code)\n" + \
-                        (f"*Last scan: {datetime.now().strftime('%Y-%m-%d %H:%M')}*\n\n" if todos else "\n") + \
-                        "\n".join(todos) if todos else "No TODOs found in code."
+    tech_debt_section = (
+        "## Technical Debt (Auto-generated from code)\n"
+        + (
+            f"*Last scan: {datetime.now().strftime('%Y-%m-%d %H:%M')}*\n\n"
+            if todos
+            else "\n"
+        )
+        + "\n".join(todos)
+        if todos
+        else "No TODOs found in code."
+    )
 
     # Inject into TODO.md
     marker = "## Technical Debt (Auto-generated from code)"
-    
+
     if marker in current_content:
         # Replace everything after the marker
         parts = current_content.split(marker)
@@ -174,27 +211,30 @@ def update_todo():
     else:
         # Append to end
         new_content = current_content + "\n\n" + tech_debt_section
-        
+
     write_file_content(TODO_FILE, new_content)
+
 
 def update_status():
     print(f"Updating {STATUS_FILE}...")
     content = get_file_content(STATUS_FILE)
-    
+
     # Metrics
     cov = get_coverage_stats()
     tests = get_test_stats()
     branch = get_git_branch()
     commit = get_git_hash()
-    
+
     # Basic replacement logic (regex would be better but let's keep it simple for now)
     # We will look for specific rows to update or append a "Live Metrics" section
-    
+
     cov_str = f"{cov:.1f}%" if cov is not None else "N/A"
     test_pass_rate = 0
     if tests["total"] > 0:
-        test_pass_rate = ((tests["total"] - tests["failures"] - tests["errors"]) / tests["total"]) * 100
-    
+        test_pass_rate = (
+            (tests["total"] - tests["failures"] - tests["errors"]) / tests["total"]
+        ) * 100
+
     metrics_md = f"""
 ## Live Metrics (Auto-generated)
 | Metric | Value |
@@ -206,7 +246,7 @@ def update_status():
 | **Pass Rate** | {test_pass_rate:.1f}% |
 | **Last Update** | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} |
 """
-    
+
     marker = "## Live Metrics (Auto-generated)"
     if marker in content:
         parts = content.split(marker)
@@ -214,18 +254,21 @@ def update_status():
         rest = parts[1]
         next_section_match = re.search(r"\n## ", rest)
         if next_section_match:
-            footer = rest[next_section_match.start():]
+            footer = rest[next_section_match.start() :]
             new_content = parts[0] + metrics_md + footer
         else:
             new_content = parts[0] + metrics_md
     else:
         # Insert before "Quick Links" if exists, else append
         if "## Quick Links" in content:
-            new_content = content.replace("## Quick Links", metrics_md + "\n## Quick Links")
+            new_content = content.replace(
+                "## Quick Links", metrics_md + "\n## Quick Links"
+            )
         else:
             new_content = content + "\n" + metrics_md
-            
+
     write_file_content(STATUS_FILE, new_content)
+
 
 def update_testing_status():
     print(f"Updating {TESTING_FILE}...")
@@ -259,6 +302,7 @@ See `htmlcov/index.html` for detailed report.
     os.makedirs(os.path.dirname(TESTING_FILE), exist_ok=True)
     write_file_content(TESTING_FILE, content)
 
+
 def update_changelog():
     print(f"Updating {CHANGELOG_FILE}...")
     current_content = get_file_content(CHANGELOG_FILE)
@@ -280,7 +324,7 @@ def update_changelog():
         "chore": "🔧 Chore",
         "ci": "👷 CI/CD",
         "style": "💄 Style",
-        "other": "📦 Other"
+        "other": "📦 Other",
     }
 
     grouped = {}
@@ -298,7 +342,18 @@ def update_changelog():
 """
 
     # Order types by importance
-    type_order = ["feat", "fix", "perf", "refactor", "docs", "test", "ci", "chore", "style", "other"]
+    type_order = [
+        "feat",
+        "fix",
+        "perf",
+        "refactor",
+        "docs",
+        "test",
+        "ci",
+        "chore",
+        "style",
+        "other",
+    ]
 
     for commit_type in type_order:
         if commit_type not in grouped:
@@ -308,7 +363,7 @@ def update_changelog():
         changelog_section += f"### {label}\n\n"
 
         for commit in grouped[commit_type]:
-            scope_str = f"**{commit['scope']}**: " if commit['scope'] else ""
+            scope_str = f"**{commit['scope']}**: " if commit["scope"] else ""
             changelog_section += f"- {scope_str}{commit['description']} ([`{commit['hash']}`](../../commit/{commit['hash']}))\n"
 
         changelog_section += "\n"
@@ -327,25 +382,39 @@ def update_changelog():
         # Find the next release section or "---"
         next_section = re.search(r"\n(---|\n## \[)", rest)
         if next_section:
-            unreleased_content = rest[:next_section.start()]
-            remaining = rest[next_section.start():]
+            unreleased_content = rest[: next_section.start()]
+            remaining = rest[next_section.start() :]
 
             # Check if auto-generated section exists
             if "## Recent Changes (Auto-generated)" in remaining:
                 # Replace existing auto-generated section
-                parts_remaining = remaining.split("## Recent Changes (Auto-generated)", 1)
+                parts_remaining = remaining.split(
+                    "## Recent Changes (Auto-generated)", 1
+                )
                 # Find end of auto-generated section (next --- or ##)
                 after_autogen = parts_remaining[1]
                 end_autogen = re.search(r"\n(---|\n## )", after_autogen)
                 if end_autogen:
                     # Skip to end of section including the separator
-                    tail_start = end_autogen.end() - 1  # Keep the \n before next section
-                    final_content = header + unreleased_content + "\n\n" + changelog_section + after_autogen[tail_start:]
+                    tail_start = (
+                        end_autogen.end() - 1
+                    )  # Keep the \n before next section
+                    final_content = (
+                        header
+                        + unreleased_content
+                        + "\n\n"
+                        + changelog_section
+                        + after_autogen[tail_start:]
+                    )
                 else:
-                    final_content = header + unreleased_content + "\n\n" + changelog_section
+                    final_content = (
+                        header + unreleased_content + "\n\n" + changelog_section
+                    )
             else:
                 # Insert new auto-generated section
-                final_content = header + unreleased_content + "\n\n" + changelog_section + remaining
+                final_content = (
+                    header + unreleased_content + "\n\n" + changelog_section + remaining
+                )
         else:
             # No next section found, append at end
             final_content = header + rest + "\n\n" + changelog_section
@@ -368,14 +437,17 @@ def update_changelog():
 
     write_file_content(CHANGELOG_FILE, final_content)
 
+
 def main():
     print("🤖 Docs Automator - Starting...")
 
     # Initialize metrics tracker
     try:
         import sys
+
         sys.path.append(os.path.join(PROJECT_ROOT, "scripts"))
         from metrics_tracker import DocsMetrics
+
         metrics = DocsMetrics()
     except ImportError:
         print("⚠️  Metrics tracker not available")
@@ -401,19 +473,30 @@ def main():
         # Import and run modular generators
         try:
             import sys
+
             sys.path.append(os.path.join(PROJECT_ROOT, "scripts"))
             from docs_generators.api_docs import generate_api_docs
             from docs_generators.code_metrics import generate_code_metrics
 
             generate_api_docs()
             if metrics:
-                metrics.record_file("docs/.auto-generated/api/openapi.json", "generate_api_docs")
-                metrics.record_file("docs/.auto-generated/api/endpoints.md", "generate_api_docs")
+                metrics.record_file(
+                    "docs/.auto-generated/api/openapi.json", "generate_api_docs"
+                )
+                metrics.record_file(
+                    "docs/.auto-generated/api/endpoints.md", "generate_api_docs"
+                )
 
             generate_code_metrics()
             if metrics:
-                metrics.record_file("docs/.auto-generated/metrics/complexity.md", "generate_code_metrics")
-                metrics.record_file("docs/.auto-generated/metrics/dependencies.md", "generate_code_metrics")
+                metrics.record_file(
+                    "docs/.auto-generated/metrics/complexity.md",
+                    "generate_code_metrics",
+                )
+                metrics.record_file(
+                    "docs/.auto-generated/metrics/dependencies.md",
+                    "generate_code_metrics",
+                )
         except ImportError as e:
             print(f"⚠️  Modular generators not available: {e}")
             if metrics:
@@ -426,7 +509,9 @@ def main():
         # Save metrics
         if metrics:
             metrics.save_metrics()
-            print(f"📊 Metrics: {metrics.to_dict()['files_generated_count']} files, {metrics.to_dict()['duration_seconds']}s")
+            print(
+                f"📊 Metrics: {metrics.to_dict()['files_generated_count']} files, {metrics.to_dict()['duration_seconds']}s"
+            )
 
         print("✅ Documentation updated successfully.")
 
@@ -436,6 +521,7 @@ def main():
             metrics.record_error("main", str(e))
             metrics.save_metrics()
         exit(1)
+
 
 if __name__ == "__main__":
     main()

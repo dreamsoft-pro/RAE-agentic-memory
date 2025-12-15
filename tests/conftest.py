@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -33,11 +33,12 @@ def mock_env_and_settings(monkeypatch):
         monkeypatch.setenv(k, v)
 
     from importlib import reload
+
     from apps.memory_api import config
-    
+
     # Reload the config module to ensure settings are re-evaluated with mocked envs
     # This is crucial for Pydantic BaseSettings which load from env at import time
-    config = reload(config) 
+    config = reload(config)
 
     # Now, explicitly set the settings object in the config module to the newly instantiated one
     # This will ensure all modules importing 'settings' will get this updated instance

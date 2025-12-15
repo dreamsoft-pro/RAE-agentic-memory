@@ -1,6 +1,6 @@
 """Long-term memory layer - persistent storage (episodic + semantic)."""
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from ..interfaces.storage import IMemoryStorage
@@ -10,11 +10,11 @@ from .base import MemoryLayerBase
 
 class LongTermLayer(MemoryLayerBase):
     """Long-term memory layer implementation.
-    
+
     Combines both episodic and semantic memory:
     - Episodic: Time-bound experiences and events
     - Semantic: Facts, concepts, and knowledge (decontextualized)
-    
+
     Characteristics:
     - Persistent storage (no automatic decay)
     - High capacity
@@ -30,7 +30,7 @@ class LongTermLayer(MemoryLayerBase):
         agent_id: str,
     ):
         """Initialize long-term layer.
-        
+
         Args:
             storage: Storage backend
             tenant_id: Tenant ID
@@ -43,14 +43,14 @@ class LongTermLayer(MemoryLayerBase):
     async def add_memory(
         self,
         content: str,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        embedding: Optional[List[float]] = None,
-        importance: Optional[float] = None,
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
+        embedding: list[float] | None = None,
+        importance: float | None = None,
         is_semantic: bool = False,
     ) -> UUID:
         """Add memory to long-term storage.
-        
+
         Args:
             content: Memory content
             tags: Optional tags
@@ -58,7 +58,7 @@ class LongTermLayer(MemoryLayerBase):
             embedding: Optional vector embedding
             importance: Importance score
             is_semantic: True for semantic memory, False for episodic
-            
+
         Returns:
             Memory UUID
         """
@@ -73,7 +73,9 @@ class LongTermLayer(MemoryLayerBase):
         metadata["memory_subtype"] = "semantic" if is_semantic else "episodic"
 
         # Use appropriate layer
-        layer = MemoryLayer.SEMANTIC.value if is_semantic else MemoryLayer.EPISODIC.value
+        layer = (
+            MemoryLayer.SEMANTIC.value if is_semantic else MemoryLayer.EPISODIC.value
+        )
 
         memory_id = await self.storage.store_memory(
             content=content,
@@ -88,13 +90,13 @@ class LongTermLayer(MemoryLayerBase):
 
         return memory_id
 
-    async def get_memory(self, memory_id: UUID) -> Optional[MemoryItem]:
+    async def get_memory(self, memory_id: UUID) -> MemoryItem | None:
         """Get memory by ID."""
         memory_dict = await self.storage.get_memory(
             memory_id=memory_id,
             tenant_id=self.tenant_id,
         )
-        
+
         if not memory_dict:
             return None
 
@@ -110,19 +112,19 @@ class LongTermLayer(MemoryLayerBase):
         self,
         query: str,
         limit: int = 10,
-        filters: Optional[Dict[str, Any]] = None,
+        filters: dict[str, Any] | None = None,
         semantic_only: bool = False,
         episodic_only: bool = False,
-    ) -> List[ScoredMemoryItem]:
+    ) -> list[ScoredMemoryItem]:
         """Search long-term memories.
-        
+
         Args:
             query: Search query
             limit: Max results
             filters: Optional filters
             semantic_only: Only search semantic memories
             episodic_only: Only search episodic memories
-            
+
         Returns:
             List of scored memories
         """
@@ -165,7 +167,7 @@ class LongTermLayer(MemoryLayerBase):
 
     async def cleanup(self) -> int:
         """Long-term memories don't auto-decay, but can prune very low importance.
-        
+
         Returns:
             Number of memories removed
         """
@@ -176,7 +178,7 @@ class LongTermLayer(MemoryLayerBase):
             layer=MemoryLayer.EPISODIC.value,
             importance_threshold=0.1,
         )
-        
+
         # Also check semantic layer
         semantic_deleted = await self.storage.delete_memories_below_importance(
             tenant_id=self.tenant_id,
@@ -184,7 +186,7 @@ class LongTermLayer(MemoryLayerBase):
             layer=MemoryLayer.SEMANTIC.value,
             importance_threshold=0.1,
         )
-        
+
         return deleted_count + semantic_deleted
 
     async def consolidate_from_working(
@@ -193,11 +195,11 @@ class LongTermLayer(MemoryLayerBase):
         as_semantic: bool = False,
     ) -> UUID:
         """Consolidate a working memory into long-term storage.
-        
+
         Args:
             working_memory: Memory from working layer
             as_semantic: True to store as semantic, False for episodic
-            
+
         Returns:
             UUID of new long-term memory
         """
@@ -216,14 +218,14 @@ class LongTermLayer(MemoryLayerBase):
     async def upgrade_to_semantic(
         self,
         episodic_memory_id: UUID,
-        generalized_content: Optional[str] = None,
+        generalized_content: str | None = None,
     ) -> UUID:
         """Upgrade an episodic memory to semantic by decontextualizing.
-        
+
         Args:
             episodic_memory_id: ID of episodic memory to upgrade
             generalized_content: Optional generalized/abstracted content
-            
+
         Returns:
             UUID of new semantic memory
         """
@@ -232,7 +234,9 @@ class LongTermLayer(MemoryLayerBase):
             raise ValueError(f"Memory {episodic_memory_id} not found")
 
         # Use generalized content or original
-        content = generalized_content if generalized_content else episodic_memory.content
+        content = (
+            generalized_content if generalized_content else episodic_memory.content
+        )
 
         # Create semantic version
         semantic_id = await self.add_memory(

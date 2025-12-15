@@ -9,8 +9,8 @@ Part of RAE CI Quality Implementation - Iteration 2: Zero Flake
 """
 import argparse
 import shutil
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 
 def quarantine_test(nodeid: str, reason: str = "flaky"):
@@ -61,7 +61,7 @@ pytestmark = pytest.mark.skip(reason="Quarantined flaky test - {reason}")
     target.write_text(marker + content)
 
     print(f"✅ Test quarantined: {target}")
-    print(f"📝 Next step: Create ticket to fix and move back to main suite")
+    print("📝 Next step: Create ticket to fix and move back to main suite")
     return True
 
 

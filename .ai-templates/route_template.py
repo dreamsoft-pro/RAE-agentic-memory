@@ -22,8 +22,7 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 
-from apps.memory_api.models import (
-    # Import your Pydantic models here
+from apps.memory_api.models import (  # Import your Pydantic models here
     EntityInput,
     EntityOutput,
 )
@@ -47,6 +46,7 @@ logger = structlog.get_logger(__name__)
 # ═══════════════════════════════════════════════════════════════
 # CREATE (POST)
 # ═══════════════════════════════════════════════════════════════
+
 
 @router.post(
     "/entities",
@@ -113,7 +113,7 @@ async def create_entity(
         tenant_id=tenant_id,
         entity_name=input_data.name,
         method=request.method,
-        path=request.url.path
+        path=request.url.path,
     )
 
     try:
@@ -129,9 +129,7 @@ async def create_entity(
         result = await service.create_entity(tenant_id, input_data)
 
         logger.info(
-            "api_create_entity_success",
-            tenant_id=tenant_id,
-            entity_id=result.id
+            "api_create_entity_success", tenant_id=tenant_id, entity_id=result.id
         )
 
         return result
@@ -140,32 +138,24 @@ async def create_entity(
         # Business rule violation → 400 Bad Request
         # WHY: ValueError indicates client error (bad input)
         logger.warning(
-            "api_create_entity_validation_error",
-            tenant_id=tenant_id,
-            error=str(e)
+            "api_create_entity_validation_error", tenant_id=tenant_id, error=str(e)
         )
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     except Exception as e:
         # Unexpected error → 500 Internal Server Error
         # WHY: Don't expose internal details to client
-        logger.exception(
-            "api_create_entity_error",
-            tenant_id=tenant_id,
-            error=str(e)
-        )
+        logger.exception("api_create_entity_error", tenant_id=tenant_id, error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create entity"
+            detail="Failed to create entity",
         )
 
 
 # ═══════════════════════════════════════════════════════════════
 # READ (GET)
 # ═══════════════════════════════════════════════════════════════
+
 
 @router.get(
     "/entities/{entity_id}",
@@ -196,11 +186,7 @@ async def get_entity(
     """
     tenant_id = verified_tenant_id
 
-    logger.info(
-        "api_get_entity",
-        tenant_id=tenant_id,
-        entity_id=entity_id
-    )
+    logger.info("api_get_entity", tenant_id=tenant_id, entity_id=entity_id)
 
     try:
         service = MyBusinessService(
@@ -213,20 +199,14 @@ async def get_entity(
         if not result:
             # WHY: 404 for resource not found
             logger.warning(
-                "api_get_entity_not_found",
-                tenant_id=tenant_id,
-                entity_id=entity_id
+                "api_get_entity_not_found", tenant_id=tenant_id, entity_id=entity_id
             )
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Entity {entity_id} not found"
+                detail=f"Entity {entity_id} not found",
             )
 
-        logger.info(
-            "api_get_entity_success",
-            tenant_id=tenant_id,
-            entity_id=entity_id
-        )
+        logger.info("api_get_entity_success", tenant_id=tenant_id, entity_id=entity_id)
 
         return result
 
@@ -239,11 +219,11 @@ async def get_entity(
             "api_get_entity_error",
             tenant_id=tenant_id,
             entity_id=entity_id,
-            error=str(e)
+            error=str(e),
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to retrieve entity"
+            detail="Failed to retrieve entity",
         )
 
 
@@ -273,23 +253,19 @@ async def list_entities(
     # Validate pagination parameters
     if page < 1:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Page must be >= 1"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Page must be >= 1"
         )
 
     if page_size < 1 or page_size > 100:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Page size must be between 1 and 100"
+            detail="Page size must be between 1 and 100",
         )
 
     tenant_id = verified_tenant_id
 
     logger.info(
-        "api_list_entities",
-        tenant_id=tenant_id,
-        page=page,
-        page_size=page_size
+        "api_list_entities", tenant_id=tenant_id, page=page, page_size=page_size
     )
 
     try:
@@ -302,26 +278,20 @@ async def list_entities(
             tenant_id=tenant_id,
             query="",  # Empty query = list all
             page=page,
-            page_size=page_size
+            page_size=page_size,
         )
 
         logger.info(
-            "api_list_entities_success",
-            tenant_id=tenant_id,
-            count=len(result.entities)
+            "api_list_entities_success", tenant_id=tenant_id, count=len(result.entities)
         )
 
         return result.entities
 
     except Exception as e:
-        logger.exception(
-            "api_list_entities_error",
-            tenant_id=tenant_id,
-            error=str(e)
-        )
+        logger.exception("api_list_entities_error", tenant_id=tenant_id, error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to list entities"
+            detail="Failed to list entities",
         )
 
 
@@ -329,6 +299,7 @@ async def list_entities(
 # UPDATE (PATCH)
 # WHY: PATCH for partial updates, PUT for full replacement
 # ═══════════════════════════════════════════════════════════════
+
 
 @router.patch(
     "/entities/{entity_id}",
@@ -361,11 +332,7 @@ async def update_entity(
     """
     tenant_id = verified_tenant_id
 
-    logger.info(
-        "api_update_entity",
-        tenant_id=tenant_id,
-        entity_id=entity_id
-    )
+    logger.info("api_update_entity", tenant_id=tenant_id, entity_id=entity_id)
 
     try:
         service = MyBusinessService(
@@ -377,19 +344,15 @@ async def update_entity(
 
         if not result:
             logger.warning(
-                "api_update_entity_not_found",
-                tenant_id=tenant_id,
-                entity_id=entity_id
+                "api_update_entity_not_found", tenant_id=tenant_id, entity_id=entity_id
             )
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Entity {entity_id} not found"
+                detail=f"Entity {entity_id} not found",
             )
 
         logger.info(
-            "api_update_entity_success",
-            tenant_id=tenant_id,
-            entity_id=entity_id
+            "api_update_entity_success", tenant_id=tenant_id, entity_id=entity_id
         )
 
         return result
@@ -399,12 +362,9 @@ async def update_entity(
             "api_update_entity_validation_error",
             tenant_id=tenant_id,
             entity_id=entity_id,
-            error=str(e)
+            error=str(e),
         )
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     except HTTPException:
         raise
@@ -414,17 +374,18 @@ async def update_entity(
             "api_update_entity_error",
             tenant_id=tenant_id,
             entity_id=entity_id,
-            error=str(e)
+            error=str(e),
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to update entity"
+            detail="Failed to update entity",
         )
 
 
 # ═══════════════════════════════════════════════════════════════
 # DELETE (DELETE)
 # ═══════════════════════════════════════════════════════════════
+
 
 @router.delete(
     "/entities/{entity_id}",
@@ -455,11 +416,7 @@ async def delete_entity(
     """
     tenant_id = verified_tenant_id
 
-    logger.info(
-        "api_delete_entity",
-        tenant_id=tenant_id,
-        entity_id=entity_id
-    )
+    logger.info("api_delete_entity", tenant_id=tenant_id, entity_id=entity_id)
 
     try:
         service = MyBusinessService(
@@ -471,19 +428,15 @@ async def delete_entity(
 
         if not deleted:
             logger.warning(
-                "api_delete_entity_not_found",
-                tenant_id=tenant_id,
-                entity_id=entity_id
+                "api_delete_entity_not_found", tenant_id=tenant_id, entity_id=entity_id
             )
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Entity {entity_id} not found"
+                detail=f"Entity {entity_id} not found",
             )
 
         logger.info(
-            "api_delete_entity_success",
-            tenant_id=tenant_id,
-            entity_id=entity_id
+            "api_delete_entity_success", tenant_id=tenant_id, entity_id=entity_id
         )
 
         # WHY: 204 No Content for successful DELETE (no body)
@@ -494,12 +447,9 @@ async def delete_entity(
             "api_delete_entity_error",
             tenant_id=tenant_id,
             entity_id=entity_id,
-            error=str(e)
+            error=str(e),
         )
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     except HTTPException:
         raise
@@ -509,11 +459,11 @@ async def delete_entity(
             "api_delete_entity_error",
             tenant_id=tenant_id,
             entity_id=entity_id,
-            error=str(e)
+            error=str(e),
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to delete entity"
+            detail="Failed to delete entity",
         )
 
 

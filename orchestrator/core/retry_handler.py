@@ -2,16 +2,16 @@
 
 import asyncio
 import logging
-from typing import Callable, Any, Optional, Dict
 from dataclasses import dataclass
 from enum import Enum
-
+from typing import Any, Callable, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
 
 class RetryStrategy(Enum):
     """Retry strategy types."""
+
     IMMEDIATE = "immediate"  # Retry immediately
     EXPONENTIAL_BACKOFF = "exponential_backoff"  # Wait 2^attempt seconds
     FIXED_DELAY = "fixed_delay"  # Fixed delay between retries
@@ -20,6 +20,7 @@ class RetryStrategy(Enum):
 @dataclass
 class RetryConfig:
     """Configuration for retry behavior."""
+
     max_attempts: int = 3
     strategy: RetryStrategy = RetryStrategy.EXPONENTIAL_BACKOFF
     base_delay: float = 1.0  # seconds
@@ -29,11 +30,13 @@ class RetryConfig:
 
 class RetryableError(Exception):
     """Error that can be retried."""
+
     pass
 
 
 class NonRetryableError(Exception):
     """Error that should not be retried."""
+
     pass
 
 
@@ -49,11 +52,7 @@ class RetryHandler:
         self.config = config or RetryConfig()
 
     async def execute_with_retry(
-        self,
-        func: Callable,
-        *args,
-        context: Optional[Dict[str, Any]] = None,
-        **kwargs
+        self, func: Callable, *args, context: Optional[Dict[str, Any]] = None, **kwargs
     ) -> Any:
         """Execute function with retry logic.
 
@@ -82,8 +81,7 @@ class RetryHandler:
                 # Execute with timeout if configured
                 if self.config.timeout:
                     result = await asyncio.wait_for(
-                        func(*args, **kwargs),
-                        timeout=self.config.timeout
+                        func(*args, **kwargs), timeout=self.config.timeout
                     )
                 else:
                     result = await func(*args, **kwargs)
@@ -137,7 +135,7 @@ class RetryHandler:
 
         elif self.config.strategy == RetryStrategy.EXPONENTIAL_BACKOFF:
             # 2^attempt * base_delay, capped at max_delay
-            delay = (2 ** attempt) * self.config.base_delay
+            delay = (2**attempt) * self.config.base_delay
             return min(delay, self.config.max_delay)
 
         elif self.config.strategy == RetryStrategy.FIXED_DELAY:
@@ -217,10 +215,11 @@ class ErrorClassifier:
 
 # Convenience decorators
 
+
 def retry_on_failure(
     max_attempts: int = 3,
     strategy: RetryStrategy = RetryStrategy.EXPONENTIAL_BACKOFF,
-    base_delay: float = 1.0
+    base_delay: float = 1.0,
 ):
     """Decorator to add retry logic to async functions.
 
@@ -232,15 +231,16 @@ def retry_on_failure(
     Returns:
         Decorated function
     """
+
     def decorator(func):
         async def wrapper(*args, **kwargs):
             handler = RetryHandler(
                 RetryConfig(
-                    max_attempts=max_attempts,
-                    strategy=strategy,
-                    base_delay=base_delay
+                    max_attempts=max_attempts, strategy=strategy, base_delay=base_delay
                 )
             )
             return await handler.execute_with_retry(func, *args, **kwargs)
+
         return wrapper
+
     return decorator

@@ -2,7 +2,7 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -21,7 +21,7 @@ class SyncChange(BaseModel):
 
     memory_id: UUID
     operation: SyncOperation
-    data: Dict[str, Any]
+    data: dict[str, Any]
     timestamp: datetime
     version: int = Field(description="Version number for conflict resolution")
 
@@ -39,7 +39,7 @@ class SyncConflict(BaseModel):
     """Sync conflict."""
 
     memory_id: UUID
-    local_version: Dict[str, Any]
-    remote_version: Dict[str, Any]
+    local_version: dict[str, Any]
+    remote_version: dict[str, Any]
     resolved: bool = Field(default=False)
-    resolution: Optional[Dict[str, Any]] = None
+    resolution: dict[str, Any] | None = None

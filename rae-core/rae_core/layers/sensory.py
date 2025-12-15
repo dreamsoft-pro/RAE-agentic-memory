@@ -1,7 +1,7 @@
 """Sensory memory layer - short-term buffer with automatic decay."""
 
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 from ..interfaces.storage import IMemoryStorage
@@ -11,13 +11,13 @@ from .base import MemoryLayerBase
 
 class SensoryLayer(MemoryLayerBase):
     """Sensory memory layer implementation.
-    
+
     Characteristics:
     - Very short retention (seconds to minutes)
     - Automatic decay based on TTL
     - High capacity, low importance threshold
     - Acts as buffer before working memory
-    
+
     Typical TTL: 60-300 seconds
     """
 
@@ -30,7 +30,7 @@ class SensoryLayer(MemoryLayerBase):
         max_capacity: int = 1000,
     ):
         """Initialize sensory layer.
-        
+
         Args:
             storage: Storage backend
             tenant_id: Tenant ID
@@ -45,14 +45,14 @@ class SensoryLayer(MemoryLayerBase):
     async def add_memory(
         self,
         content: str,
-        tags: Optional[List[str]] = None,
-        metadata: Optional[Dict[str, Any]] = None,
-        embedding: Optional[List[float]] = None,
-        importance: Optional[float] = None,
-        ttl_seconds: Optional[int] = None,
+        tags: list[str] | None = None,
+        metadata: dict[str, Any] | None = None,
+        embedding: list[float] | None = None,
+        importance: float | None = None,
+        ttl_seconds: int | None = None,
     ) -> UUID:
         """Add memory to sensory layer with TTL.
-        
+
         Args:
             content: Memory content
             tags: Optional tags
@@ -60,7 +60,7 @@ class SensoryLayer(MemoryLayerBase):
             embedding: Optional vector embedding
             importance: Importance score (default: 0.1 for sensory)
             ttl_seconds: Custom TTL, uses default if not specified
-            
+
         Returns:
             Memory UUID
         """
@@ -97,13 +97,13 @@ class SensoryLayer(MemoryLayerBase):
 
         return memory_id
 
-    async def get_memory(self, memory_id: UUID) -> Optional[MemoryItem]:
+    async def get_memory(self, memory_id: UUID) -> MemoryItem | None:
         """Get memory by ID, returns None if expired."""
         memory_dict = await self.storage.get_memory(
             memory_id=memory_id,
             tenant_id=self.tenant_id,
         )
-        
+
         if not memory_dict:
             return None
 
@@ -120,15 +120,15 @@ class SensoryLayer(MemoryLayerBase):
         self,
         query: str,
         limit: int = 10,
-        filters: Optional[Dict[str, Any]] = None,
-    ) -> List[ScoredMemoryItem]:
+        filters: dict[str, Any] | None = None,
+    ) -> list[ScoredMemoryItem]:
         """Search sensory memories, excluding expired ones.
-        
+
         Args:
             query: Search query
             limit: Max results
             filters: Optional filters
-            
+
         Returns:
             List of scored memories
         """
@@ -154,7 +154,7 @@ class SensoryLayer(MemoryLayerBase):
 
     async def cleanup(self) -> int:
         """Remove expired memories from sensory layer.
-        
+
         Returns:
             Number of memories deleted
         """
@@ -167,11 +167,11 @@ class SensoryLayer(MemoryLayerBase):
 
     async def extend_ttl(self, memory_id: UUID, additional_seconds: int) -> bool:
         """Extend TTL for a memory (e.g., if still relevant).
-        
+
         Args:
             memory_id: Memory to extend
             additional_seconds: Seconds to add to current expiration
-            
+
         Returns:
             True if successful
         """
@@ -180,7 +180,7 @@ class SensoryLayer(MemoryLayerBase):
             return False
 
         new_expires_at = memory.expires_at + timedelta(seconds=additional_seconds)
-        
+
         return await self.storage.update_memory_expiration(
             memory_id=memory_id,
             tenant_id=self.tenant_id,

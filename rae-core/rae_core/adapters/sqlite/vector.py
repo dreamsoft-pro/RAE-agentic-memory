@@ -4,11 +4,12 @@ Lightweight vector storage for RAE-Lite offline-first architecture.
 Uses sqlite-vec for efficient vector similarity search.
 """
 
-import aiosqlite
 import json
 import struct
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 from uuid import UUID
+
+import aiosqlite
 
 from rae_core.interfaces.vector import IVectorStore
 
@@ -57,7 +58,8 @@ class SQLiteVectorStore(IVectorStore):
                 self._has_vec_extension = False
 
             # Vectors table
-            await db.execute("""
+            await db.execute(
+                """
                 CREATE TABLE IF NOT EXISTS vectors (
                     memory_id TEXT PRIMARY KEY,
                     embedding BLOB NOT NULL,
@@ -65,13 +67,16 @@ class SQLiteVectorStore(IVectorStore):
                     tenant_id TEXT NOT NULL,
                     metadata TEXT  -- JSON object
                 )
-            """)
+            """
+            )
 
             # Indexes
-            await db.execute("""
+            await db.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_vectors_tenant_id
                 ON vectors(tenant_id)
-            """)
+            """
+            )
 
             await db.commit()
 
@@ -80,9 +85,9 @@ class SQLiteVectorStore(IVectorStore):
     async def store_vector(
         self,
         memory_id: UUID,
-        embedding: List[float],
+        embedding: list[float],
         tenant_id: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> bool:
         """Store a vector embedding."""
         await self.initialize()
@@ -111,12 +116,12 @@ class SQLiteVectorStore(IVectorStore):
 
     async def search_similar(
         self,
-        query_embedding: List[float],
+        query_embedding: list[float],
         tenant_id: str,
-        layer: Optional[str] = None,
+        layer: str | None = None,
         limit: int = 10,
-        score_threshold: Optional[float] = None,
-    ) -> List[Tuple[UUID, float]]:
+        score_threshold: float | None = None,
+    ) -> list[tuple[UUID, float]]:
         """Search for similar vectors using cosine similarity."""
         await self.initialize()
 
@@ -170,7 +175,9 @@ class SQLiteVectorStore(IVectorStore):
                     if embedding_norm_sq == 0:
                         continue
 
-                    similarity = dot_product / (query_norm_sq ** 0.5 * embedding_norm_sq ** 0.5)
+                    similarity = dot_product / (
+                        query_norm_sq**0.5 * embedding_norm_sq**0.5
+                    )
 
                     # Apply threshold
                     if score_threshold is not None and similarity < score_threshold:
@@ -205,9 +212,9 @@ class SQLiteVectorStore(IVectorStore):
     async def update_vector(
         self,
         memory_id: UUID,
-        embedding: List[float],
+        embedding: list[float],
         tenant_id: str,
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> bool:
         """Update a vector embedding."""
         await self.initialize()
@@ -233,7 +240,7 @@ class SQLiteVectorStore(IVectorStore):
         self,
         memory_id: UUID,
         tenant_id: str,
-    ) -> Optional[List[float]]:
+    ) -> list[float] | None:
         """Retrieve a vector embedding."""
         await self.initialize()
 
@@ -259,7 +266,7 @@ class SQLiteVectorStore(IVectorStore):
 
     async def batch_store_vectors(
         self,
-        vectors: List[Tuple[UUID, List[float], Dict[str, Any]]],
+        vectors: list[tuple[UUID, list[float], dict[str, Any]]],
         tenant_id: str,
     ) -> int:
         """Store multiple vectors in a batch."""
@@ -328,7 +335,7 @@ class SQLiteVectorStore(IVectorStore):
 
             return count
 
-    async def get_statistics(self) -> Dict[str, Any]:
+    async def get_statistics(self) -> dict[str, Any]:
         """Get vector store statistics.
 
         Returns:

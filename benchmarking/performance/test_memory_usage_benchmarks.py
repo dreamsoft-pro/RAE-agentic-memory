@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.mark.performance
 def test_memory_allocation_list_creation(benchmark):
     """
@@ -13,4 +14,3 @@ def test_memory_allocation_list_creation(benchmark):
     result = benchmark(create_large_list)
 
     assert len(result) == list_size
-

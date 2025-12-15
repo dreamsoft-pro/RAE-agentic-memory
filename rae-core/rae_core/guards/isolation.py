@@ -6,7 +6,7 @@ the primary namespace guards in adapters.
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
 logger = logging.getLogger(__name__)
@@ -40,11 +40,11 @@ class MemoryIsolationGuard:
 
     def validate_search_results(
         self,
-        results: List[Dict[str, Any]],
+        results: list[dict[str, Any]],
         expected_agent_id: str,
-        expected_session_id: Optional[str] = None,
-        expected_tenant_id: Optional[str] = None,
-    ) -> List[Dict[str, Any]]:
+        expected_session_id: str | None = None,
+        expected_tenant_id: str | None = None,
+    ) -> list[dict[str, Any]]:
         """Filter out any memories that don't match expected IDs.
 
         Args:
@@ -111,10 +111,10 @@ class MemoryIsolationGuard:
 
     def validate_single_memory(
         self,
-        memory: Dict[str, Any],
+        memory: dict[str, Any],
         expected_agent_id: str,
-        expected_session_id: Optional[str] = None,
-        expected_tenant_id: Optional[str] = None,
+        expected_session_id: str | None = None,
+        expected_tenant_id: str | None = None,
     ) -> bool:
         """Validate a single memory.
 
@@ -137,7 +137,7 @@ class MemoryIsolationGuard:
         field: str,
         expected: Any,
         actual: Any,
-        memory_id: Optional[UUID] = None,
+        memory_id: UUID | None = None,
     ):
         """Log a detected memory leak."""
         self.leak_count += 1
@@ -149,7 +149,7 @@ class MemoryIsolationGuard:
                 f"(memory_id={memory_id})"
             )
 
-    def get_stats(self) -> Dict[str, int]:
+    def get_stats(self) -> dict[str, int]:
         """Get isolation guard statistics.
 
         Returns:
@@ -159,7 +159,9 @@ class MemoryIsolationGuard:
             "leak_count": self.leak_count,
             "validation_count": self.validation_count,
             "leak_rate": (
-                self.leak_count / self.validation_count if self.validation_count > 0 else 0
+                self.leak_count / self.validation_count
+                if self.validation_count > 0
+                else 0
             ),
         }
 

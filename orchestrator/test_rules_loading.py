@@ -6,8 +6,8 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from orchestrator.agents.base import BaseAgent, AgentTask
 from orchestrator.adapters.base import TaskComplexity, TaskRisk
+from orchestrator.agents.base import AgentTask, BaseAgent
 
 
 class TestAgent(BaseAgent):
@@ -33,7 +33,7 @@ def test_rules_loading():
         context={"test": "value"},
         complexity=TaskComplexity.SMALL,
         risk=TaskRisk.LOW,
-        working_directory="/home/grzegorz/cloud/Dockerized/RAE-agentic-memory"
+        working_directory="/home/grzegorz/cloud/Dockerized/RAE-agentic-memory",
     )
 
     # Build prompt (should include rules)
@@ -72,7 +72,9 @@ def test_rules_loading():
     print(f"\n📊 Rules Files Loaded: {found_count}/5")
 
     # Overall result
-    has_rules_section = checks["PROJECT RULES AND GUIDELINES"] and checks["END OF PROJECT RULES"]
+    has_rules_section = (
+        checks["PROJECT RULES AND GUIDELINES"] and checks["END OF PROJECT RULES"]
+    )
 
     if has_rules_section and found_count >= 3:
         print("\n✅ SUCCESS: Rules loading works correctly!")

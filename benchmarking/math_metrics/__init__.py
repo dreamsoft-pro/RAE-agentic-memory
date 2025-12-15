@@ -11,51 +11,50 @@ Five-tier mathematical model for agent memory analysis (BENCHMARKS_v1 compliant)
 This module provides research-grade mathematical analysis tools for RAE benchmarks.
 """
 
-from .structure_metrics import (
-    GraphConnectivityScore,
-    SemanticCoherenceScore,
-    GraphEntropyMetric,
-    StructuralDriftMetric,
+from .base import MathMetricBase, MemorySnapshot
+from .decision_engine import (
+    DEFAULT_THRESHOLDS,
+    Action,
+    ActionType,
+    MathematicalDecisionEngine,
+    Priority,
 )
 from .dynamics_metrics import (
-    MemoryDriftIndex,
-    RetentionCurve,
-    ReflectionGainScore,
     CompressionFidelityRatio,
+    MemoryDriftIndex,
+    ReflectionGainScore,
+    RetentionCurve,
 )
-from .policy_metrics import (
-    OptimalRetrievalRatio,
-    CostQualityFrontier,
-    ReflectionPolicyEfficiency,
-    CrossLayerMathematicalConsistency,
-)
-from .memory_metrics import (
-    WorkingMemoryPrecisionRecall,
-)
+from .memory_metrics import WorkingMemoryPrecisionRecall
 from .operational_metrics import (
     LLMCostIndex,
     StoragePressureIndex,
     TelemetryEventCorrelation,
     WorkerSaturationIndex,
 )
-from .base import MathMetricBase, MemorySnapshot
-from .decision_engine import (
-    MathematicalDecisionEngine,
-    Action,
-    ActionType,
-    Priority,
-    DEFAULT_THRESHOLDS,
+from .policy_metrics import (
+    CostQualityFrontier,
+    CrossLayerMathematicalConsistency,
+    OptimalRetrievalRatio,
+    ReflectionPolicyEfficiency,
+)
+from .structure_metrics import (
+    GraphConnectivityScore,
+    GraphEntropyMetric,
+    SemanticCoherenceScore,
+    StructuralDriftMetric,
 )
 
 # Try importing reflection metrics (may not exist yet if agent is still working)
 try:
     from .reflection_metrics import (
-        ReflectionLatency,
+        ContradictionAvoidanceScore,
+        CriticalEventDetectionScore,
         InsightPrecision,
         InsightStability,
-        CriticalEventDetectionScore,
-        ContradictionAvoidanceScore,
+        ReflectionLatency,
     )
+
     _REFLECTION_METRICS_AVAILABLE = True
 except ImportError:
     _REFLECTION_METRICS_AVAILABLE = False
@@ -96,12 +95,14 @@ __all__ = [
 
 # Add reflection metrics to __all__ if available
 if _REFLECTION_METRICS_AVAILABLE:
-    __all__.extend([
-        "ReflectionLatency",
-        "InsightPrecision",
-        "InsightStability",
-        "CriticalEventDetectionScore",
-        "ContradictionAvoidanceScore",
-    ])
+    __all__.extend(
+        [
+            "ReflectionLatency",
+            "InsightPrecision",
+            "InsightStability",
+            "CriticalEventDetectionScore",
+            "ContradictionAvoidanceScore",
+        ]
+    )
 
 __version__ = "2.0.0"  # Major version bump for BENCHMARKS_v1 compliance
