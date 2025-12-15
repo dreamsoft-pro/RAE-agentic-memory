@@ -32,7 +32,6 @@ def mock_provider_classes():
     ) as MockQwenProvider, patch(
         "apps.llm.broker.llm_router.GrokProvider"
     ) as MockGrokProvider:
-
         # Configure mock instances if needed, e.g., to return a specific name
         MockOpenAIProvider.return_value.name = "openai"
         MockAnthropicProvider.return_value.name = "anthropic"

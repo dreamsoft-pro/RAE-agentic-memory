@@ -1,5 +1,6 @@
 """Hybrid search engine that orchestrates multiple search strategies."""
 
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 from uuid import UUID
 
@@ -216,3 +217,153 @@ class HybridSearchEngine:
     def get_available_strategies(self) -> List[str]:
         """Get list of available strategy names."""
         return list(self.strategies.keys())
+
+
+class NoiseAwareSearchEngine(HybridSearchEngine):
+    """Noise-aware search engine that adjusts retrieval based on noise level.
+
+    Under high noise conditions (>0.5), this engine:
+    1. Boosts weight of recent memories (recency bias)
+    2. Boosts weight of high-confidence memories
+    3. Reduces influence of potentially corrupted older data
+
+    This improves RST (Retrieval under Stress Test) performance by
+    preferring verified, recent data when noise is high.
+    """
+
+    def __init__(
+        self,
+        strategies: Dict[str, SearchStrategy],
+        cache: Optional[SearchCache] = None,
+        rrf_k: int = 60,
+        noise_threshold: float = 0.5,
+        recency_boost_factor: float = 1.5,
+        confidence_boost_factor: float = 1.3,
+    ):
+        """Initialize noise-aware search engine.
+
+        Args:
+            strategies: Dictionary of strategy_name -> strategy instance
+            cache: Optional search cache
+            rrf_k: RRF constant (typically 60)
+            noise_threshold: Noise level above which to activate boosting
+            recency_boost_factor: Multiplier for recent memory scores
+            confidence_boost_factor: Multiplier for high-confidence scores
+        """
+        super().__init__(strategies=strategies, cache=cache, rrf_k=rrf_k)
+        self.noise_threshold = noise_threshold
+        self.recency_boost_factor = recency_boost_factor
+        self.confidence_boost_factor = confidence_boost_factor
+
+    def _apply_noise_aware_boost(
+        self,
+        results: List[Tuple[UUID, float]],
+        memory_metadata: Dict[UUID, Dict[str, Any]],
+        noise_level: float,
+    ) -> List[Tuple[UUID, float]]:
+        """Apply noise-aware boosting to search results.
+
+        Args:
+            results: Original search results (memory_id, score)
+            memory_metadata: Metadata for each memory (timestamp, confidence, etc.)
+            noise_level: Current noise level (0.0-1.0)
+
+        Returns:
+            Boosted results sorted by new scores
+        """
+        if noise_level <= self.noise_threshold:
+            # No boosting needed under low noise
+            return results
+
+        now = datetime.now(timezone.utc)
+        boosted_results = []
+
+        for memory_id, base_score in results:
+            metadata = memory_metadata.get(memory_id, {})
+
+            # Calculate recency boost
+            created_at = metadata.get("created_at")
+            recency_boost = 0.0
+            if created_at:
+                age_days = (now - created_at).days
+                # Exponential decay: 1.0 for today, 0.5 for 7 days, ~0 for 30+ days
+                recency_boost = 1.0 / (1.0 + age_days / 7.0)
+
+            # Calculate confidence boost
+            confidence = metadata.get("confidence_score", 0.5)
+            confidence_boost = confidence  # Already 0-1
+
+            # Apply boosts (scaled by noise level)
+            noise_intensity = (noise_level - self.noise_threshold) / (
+                1.0 - self.noise_threshold
+            )
+
+            final_recency_boost = (
+                1.0 + (self.recency_boost_factor - 1.0) * recency_boost * noise_intensity
+            )
+            final_confidence_boost = (
+                1.0
+                + (self.confidence_boost_factor - 1.0)
+                * confidence_boost
+                * noise_intensity
+            )
+
+            # Combine boosts multiplicatively
+            boosted_score = base_score * final_recency_boost * final_confidence_boost
+
+            boosted_results.append((memory_id, boosted_score))
+
+        # Re-sort by boosted scores
+        boosted_results.sort(key=lambda x: x[1], reverse=True)
+
+        return boosted_results
+
+    async def search(
+        self,
+        query: str,
+        tenant_id: str,
+        strategies: Optional[List[str]] = None,
+        strategy_weights: Optional[Dict[str, float]] = None,
+        filters: Optional[Dict[str, Any]] = None,
+        limit: int = 10,
+        use_cache: bool = True,
+        noise_level: float = 0.0,
+        memory_metadata: Optional[Dict[UUID, Dict[str, Any]]] = None,
+    ) -> List[Tuple[UUID, float]]:
+        """Execute noise-aware hybrid search.
+
+        Args:
+            query: Search query text
+            tenant_id: Tenant identifier
+            strategies: List of strategy names to use
+            strategy_weights: Custom weights for strategies
+            filters: Optional filters
+            limit: Maximum number of results
+            use_cache: Whether to use cache
+            noise_level: Current noise level (0.0-1.0)
+            memory_metadata: Metadata for memories (for boosting)
+
+        Returns:
+            List of (memory_id, score) tuples with noise-aware adjustments
+        """
+        # Execute base hybrid search
+        base_results = await super().search(
+            query=query,
+            tenant_id=tenant_id,
+            strategies=strategies,
+            strategy_weights=strategy_weights,
+            filters=filters,
+            limit=limit * 2,  # Fetch more for post-processing
+            use_cache=use_cache,
+        )
+
+        # Apply noise-aware boosting if metadata provided
+        if memory_metadata and noise_level > 0.0:
+            boosted_results = self._apply_noise_aware_boost(
+                results=base_results,
+                memory_metadata=memory_metadata,
+                noise_level=noise_level,
+            )
+            return boosted_results[:limit]
+
+        return base_results[:limit]

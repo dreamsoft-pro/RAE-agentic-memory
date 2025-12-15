@@ -27,7 +27,6 @@ async def basic_usage_example():
         tenant_id="example-tenant",
         project_id="example-project",
     ) as client:
-
         # Create a memory
         memory = await client.create_memory(
             content="This is a test memory", importance=0.8, tags=["test", "example"]
@@ -74,7 +73,6 @@ async def advanced_configuration_example():
         timeout=60.0,
         max_connections=200,
     ) as client:
-
         # Use client normally
         # Retry and circuit breaker work automatically
         results = await client.hybrid_search(
@@ -105,7 +103,6 @@ async def error_handling_example():
         tenant_id="example-tenant",
         project_id="example-project",
     ) as client:
-
         try:
             # This might fail
             await client.get_memory(uuid4())
@@ -146,7 +143,6 @@ async def caching_example():
         enable_cache=True,
         cache_ttl_seconds=300,
     ) as client:
-
         # First call - cache miss
         print("First call (cache miss)")
         await client.search_memories(query="machine learning", k=10)
@@ -180,7 +176,6 @@ async def semantic_memory_workflow():
         tenant_id="example-tenant",
         project_id="example-project",
     ) as client:
-
         # 1. Create memory
         memory = await client.create_memory(
             content="Python is a high-level programming language with dynamic semantics",
@@ -219,7 +214,6 @@ async def evaluation_workflow():
         tenant_id="example-tenant",
         project_id="example-project",
     ) as client:
-
         # Define relevance judgments (ground truth)
         relevance_judgments = {
             "query1": {
@@ -285,7 +279,6 @@ async def event_triggers_example():
         tenant_id="example-tenant",
         project_id="example-project",
     ) as client:
-
         # Create trigger: Generate reflection when 50 memories created
         trigger = await client.create_trigger(
             rule_name="Auto Reflection on 50 Memories",
@@ -338,7 +331,6 @@ async def dashboard_monitoring_example():
         tenant_id="example-tenant",
         project_id="example-project",
     ) as client:
-
         # Get dashboard metrics
         metrics = await client.get_dashboard_metrics(period="last_24h")
         print("Dashboard metrics:")
@@ -398,7 +390,6 @@ async def bulk_operations_example():
         project_id="example-project",
         max_connections=50,  # Higher connection pool for parallel requests
     ) as client:
-
         # Create multiple memories in parallel
         memory_contents = [
             "First memory about machine learning",

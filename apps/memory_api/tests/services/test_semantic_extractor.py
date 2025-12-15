@@ -78,7 +78,6 @@ def extractor(mock_pool, mock_llm_provider, mock_ml_client):
         "apps.memory_api.services.semantic_extractor.MLServiceClient",
         return_value=mock_ml_client,
     ):
-
         svc = SemanticExtractor(mock_pool)
         svc.llm_provider = mock_llm_provider
         svc.ml_client = mock_ml_client
@@ -264,7 +263,6 @@ async def test_node_creation_exceptions(extractor, mock_pool, mock_llm_provider)
     ) as mock_create_node, patch.object(
         extractor, "_create_semantic_relationship", side_effect=Exception("Rel Error")
     ) as mock_create_rel:
-
         stats = await extractor.extract_from_memories(TENANT_ID, PROJECT_ID)
 
         assert stats["nodes_extracted"] == 0

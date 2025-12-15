@@ -288,7 +288,6 @@ async def test_cluster_memories_fallback_kmeans(pipeline):
         ) as MockScaler,
         patch("apps.memory_api.services.reflection_pipeline.SKLEARN_AVAILABLE", True),
     ):
-
         # Configure KMeans mock
         kmeans_instance = MockKMeans.return_value
         kmeans_instance.fit_predict.return_value = [0, 0, 1, 1]  # 2 clusters

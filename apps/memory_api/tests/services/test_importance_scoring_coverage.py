@@ -4,10 +4,7 @@ from uuid import uuid4
 
 import pytest
 
-from apps.memory_api.services.importance_scoring import (
-    ImportanceScoringService,
-    Memory,
-)
+from apps.memory_api.services.importance_scoring import ImportanceScoringService, Memory
 
 # --- Importance Scoring Service Tests ---
 

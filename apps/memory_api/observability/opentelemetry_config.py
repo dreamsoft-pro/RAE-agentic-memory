@@ -30,9 +30,7 @@ import structlog
 # Optional OpenTelemetry imports
 try:  # pragma: no cover
     from opentelemetry import trace
-    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
-        OTLPSpanExporter,
-    )
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
     from opentelemetry.instrumentation.asyncpg import AsyncPGInstrumentor
     from opentelemetry.instrumentation.celery import CeleryInstrumentor
     from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
@@ -68,16 +66,10 @@ if TYPE_CHECKING:
     from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (  # noqa: F401
         OTLPSpanExporter,
     )
-    from opentelemetry.instrumentation.asyncpg import (  # noqa: F401
-        AsyncPGInstrumentor,
-    )
+    from opentelemetry.instrumentation.asyncpg import AsyncPGInstrumentor  # noqa: F401
     from opentelemetry.instrumentation.celery import CeleryInstrumentor  # noqa: F401
-    from opentelemetry.instrumentation.fastapi import (  # noqa: F401
-        FastAPIInstrumentor,
-    )
-    from opentelemetry.instrumentation.logging import (  # noqa: F401
-        LoggingInstrumentor,
-    )
+    from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor  # noqa: F401
+    from opentelemetry.instrumentation.logging import LoggingInstrumentor  # noqa: F401
     from opentelemetry.instrumentation.psycopg2 import (  # noqa: F401
         Psycopg2Instrumentor,
     )

@@ -29,7 +29,6 @@ def mock_sklearn_components():
     ) as MockAgglomerativeClustering, patch(
         "apps.ml_service.services.entity_resolution.cosine_similarity"
     ) as MockCosineSimilarity:
-
         mock_agg_instance = MagicMock()
         MockAgglomerativeClustering.return_value = mock_agg_instance
 
@@ -96,9 +95,11 @@ def test_resolve_entities_multiple_nodes_mocked_clustering(
     mock_sentence_transformer_instance,
 ):
     """Test resolving entities with multiple nodes and mocked clustering."""
-    MockAgglomerativeClustering, mock_agg_instance, MockCosineSimilarity = (
-        mock_sklearn_components
-    )
+    (
+        MockAgglomerativeClustering,
+        mock_agg_instance,
+        MockCosineSimilarity,
+    ) = mock_sklearn_components
 
     nodes = [
         {"id": "node1", "label": "apple"},
@@ -148,9 +149,11 @@ def test_resolve_entities_override_threshold(
     mock_sentence_transformer_instance,
 ):
     """Test resolving entities with an overridden similarity threshold."""
-    MockAgglomerativeClustering, mock_agg_instance, MockCosineSimilarity = (
-        mock_sklearn_components
-    )
+    (
+        MockAgglomerativeClustering,
+        mock_agg_instance,
+        MockCosineSimilarity,
+    ) = mock_sklearn_components
 
     nodes = [
         {"id": "node1", "label": "apple"},

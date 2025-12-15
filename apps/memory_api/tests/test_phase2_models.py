@@ -7,12 +7,7 @@ from uuid import uuid4
 
 import pytest
 
-from apps.memory_api.models.rbac import (
-    Permission,
-    Role,
-    RoleHierarchy,
-    UserRole,
-)
+from apps.memory_api.models.rbac import Permission, Role, RoleHierarchy, UserRole
 from apps.memory_api.models.tenant import Tenant, TenantConfig, TenantTier
 
 

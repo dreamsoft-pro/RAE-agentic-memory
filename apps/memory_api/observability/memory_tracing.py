@@ -22,11 +22,7 @@ from typing import Any, Callable, Dict, Optional
 
 import structlog
 
-from .opentelemetry_config import (
-    OPENTELEMETRY_AVAILABLE,
-    get_tracer,
-    record_exception,
-)
+from .opentelemetry_config import OPENTELEMETRY_AVAILABLE, get_tracer, record_exception
 from .rae_telemetry_schema import (
     MemoryLayer,
     RAECostAttributes,
