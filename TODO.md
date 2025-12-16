@@ -62,6 +62,20 @@ This document tracks the implementation status of RAE features and defines the r
 
 ---
 
+## Completed in Current Session (DevOps & Infrastructure) ✅
+
+*   **✅ Docker Compose V2 Migration:**
+    - Refactored all configuration and scripts to use `docker compose` (v2) syntax instead of `docker-compose`.
+    - Updated documentation, Makefiles, and test scripts.
+    - Verified with linter and unit tests.
+
+*   **✅ Developer Autostart & Persistence:**
+    - Implemented systemd service (`rae-dev.service`) via `scripts/setup_autostart.sh` for automatic startup on boot.
+    - Configured `restart: unless-stopped` policies for all core services to ensure data persistence and reliability.
+    - Verified MCP server availability via continuous RAE API operation.
+
+---
+
 ## Completed in v2.2.0-enterprise (2025-12-02) ✅
 
 *   **✅ Token Savings Tracker:**
