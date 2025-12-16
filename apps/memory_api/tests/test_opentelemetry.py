@@ -20,7 +20,9 @@ import pytest
 class TestOpenTelemetrySetup:
     """Test OpenTelemetry setup and configuration."""
 
-    @patch("apps.memory_api.observability.opentelemetry_config.OTEL_EXPORTER_TYPE", "otlp")
+    @patch(
+        "apps.memory_api.observability.opentelemetry_config.OTEL_EXPORTER_TYPE", "otlp"
+    )
     @patch("apps.memory_api.observability.opentelemetry_config.OTEL_ENABLED", True)
     @patch(
         "apps.memory_api.observability.opentelemetry_config.OPENTELEMETRY_AVAILABLE",
