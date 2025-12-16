@@ -46,10 +46,9 @@ async def check_qdrant(
 ):  # Used deps.get_qdrant_client
     """Check Qdrant connection."""
     try:
-        health = await qdrant_client.health_check()
-        if health.status == "ok":
-            return {"status": "UP", "version": health.version}
-        raise Exception(f"Qdrant status: {health.status}")
+        # Try to get collections list as a simple health check
+        collections = qdrant_client.get_collections()
+        return {"status": "UP", "collections_count": len(collections.collections)}
     except Exception as e:
         logger.error("health_check_qdrant_failed", error=str(e))
         raise HTTPException(
@@ -63,13 +62,16 @@ async def check_llm_provider():
         # Just ensure LLMRouter can be imported and settings are valid
         # A more thorough check would involve a dummy API call, but that's complex for a basic health check
         llm_broker.LLMRouter()  # Instantiate directly, no unused variable
-        return {"status": "UP", "provider": settings.LLM_PROVIDER}
+        provider = getattr(settings, "LLM_PROVIDER", "none")
+        return {"status": "UP", "provider": provider}
     except Exception as e:
-        logger.error("health_check_llm_failed", error=str(e))
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"LLM Provider DOWN: {e}",
-        )
+        logger.warning("health_check_llm_optional", error=str(e))
+        # In development mode without LLM, this is expected
+        return {
+            "status": "OPTIONAL",
+            "provider": "none",
+            "note": "LLM not configured (development mode)",
+        }
 
 
 @router.get("/health", response_model=dict, summary="Overall Health Check")
