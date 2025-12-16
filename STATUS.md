@@ -318,15 +318,16 @@ All missing/incomplete functionalities from TODO.md have been successfully imple
 
 
 
+
 ## Live Metrics (Auto-generated)
 | Metric | Value |
 |--------|-------|
 | **Branch** | `main` |
-| **Commit** | `38767b3` |
-| **Coverage** | 21.7% |
-| **Tests** | 9 total, 0 failed, 6 skipped |
-| **Pass Rate** | 100.0% |
-| **Last Update** | 2025-12-16 22:27:42 |
+| **Commit** | `895682a` |
+| **Coverage** | N/A |
+| **Tests** | 46 total, 11 failed, 13 skipped |
+| **Pass Rate** | 65.2% |
+| **Last Update** | 2025-12-16 23:10:01 |
 
 ## Quick Links
 - [Changelog](CHANGELOG.md)
