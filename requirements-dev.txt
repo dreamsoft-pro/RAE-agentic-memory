@@ -1,17 +1,25 @@
-# requirements-dev.txt
-ruff
+# Development dependencies
 pytest
 pytest-asyncio
 pytest-cov
-pytest-testmon  # Smart test selection based on code changes
-pytest-picked   # Run tests for changed files only
-pytest-benchmark  # Performance regression testing
-pytest-json-report  # JSON reports for flaky test detection
-mutmut  # Mutation testing
-anthropic  # AI code review with Claude
-mypy
+pytest-mock  # For mocking in tests
+pytest-timeout
+pytest-sugar
+pytest-html
+pytest-json-report
+pytest-xdist
 black
 isort
+ruff
+mypy
 pre-commit
-locust # Added for basic load testing (Iteration 1.2)
-pytest-mock # For mocking in tests
+safety
+bandit
+types-requests
+types-PyYAML
+types-redis
+types-setuptools
+watchdog[watchmedo]
+locust
+# ML dependencies for benchmarks and tests
+sentence-transformers
