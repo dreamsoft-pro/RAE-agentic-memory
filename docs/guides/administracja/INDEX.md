@@ -138,8 +138,8 @@ curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 
 # Instalacja Docker Compose
-sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
+sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker compose
+sudo chmod +x /usr/local/bin/docker compose
 ```
 
 #### Krok 2: Konfiguracja
@@ -185,13 +185,13 @@ AUDIT_RETENTION_DAYS=2555  # 7 lat (wymóg prawny)
 
 ```bash
 # Uruchom wszystkie usługi
-docker-compose up -d
+docker compose up -d
 
 # Sprawdź status
-docker-compose ps
+docker compose ps
 
 # Sprawdź logi
-docker-compose logs -f
+docker compose logs -f
 
 # Weryfikacja zdrowia systemu
 curl http://localhost:8000/health
@@ -338,7 +338,7 @@ curl http://localhost:8000/metrics
 **Rozwiązanie:**
 1. Sprawdź czy użytkownik istnieje w systemie
 2. Zresetuj hasło przez panel administratora
-3. Sprawdź logi audytu: `docker-compose logs -f rae-api`
+3. Sprawdź logi audytu: `docker compose logs -f rae-api`
 
 #### Problem: Dane nie są usuwane automatycznie
 
@@ -352,10 +352,10 @@ grep DATA_RETENTION .env
 grep AUTO_DELETE .env
 
 # Uruchom manualnie cleanup
-docker-compose exec rae-api python scripts/cleanup_expired_data.py
+docker compose exec rae-api python scripts/cleanup_expired_data.py
 
 # Sprawdź logi cleanup job
-docker-compose logs celery-worker | grep cleanup
+docker compose logs celery-worker | grep cleanup
 ```
 
 #### Problem: Wysoka latencja API

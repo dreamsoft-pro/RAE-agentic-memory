@@ -13,7 +13,7 @@ NC='\033[0m' # No Color
 if ! docker ps | grep -q rae-postgres; then
     echo -e "${RED}Error: PostgreSQL container (rae-postgres) is not running.${NC}"
     echo "Please start the containers first:"
-    echo "  docker-compose up -d"
+    echo "  docker compose up -d"
     exit 1
 fi
 
@@ -97,7 +97,7 @@ echo ""
 echo -e "${GREEN}✅ Database initialization complete!${NC}"
 echo ""
 echo "You can now restart the API service:"
-echo "  docker-compose restart rae-api"
+echo "  docker compose restart rae-api"
 echo ""
 echo "Or restart all services:"
-echo "  docker-compose restart"
+echo "  docker compose restart"

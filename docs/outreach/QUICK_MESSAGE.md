@@ -84,7 +84,7 @@ Python 3.11+, FastAPI, PostgreSQL (pgvector), Qdrant, Redis, Celery
 ```bash
 git clone https://github.com/dreamsoft-pro/RAE-agentic-memory
 cd RAE-agentic-memory
-docker compose -f docker-compose.lite.yml up -d
+docker compose -f docker compose.lite.yml up -d
 curl http://localhost:8000/health
 ```
 
@@ -217,7 +217,7 @@ I've been working on an open-source memory engine for AI agents (RAE) and would 
 ```bash
 git clone https://github.com/dreamsoft-pro/RAE-agentic-memory
 cd RAE-agentic-memory
-docker compose -f docker-compose.dev.yml up -d  # dev mode with hot-reload
+docker compose -f docker compose.dev.yml up -d  # dev mode with hot-reload
 docker compose ps  # should show 11 healthy services
 ```
 
@@ -225,9 +225,9 @@ Even 10-15 minutes of your time would be super helpful.
 
 Repo: https://github.com/dreamsoft-pro/RAE-agentic-memory
 Docker files:
-- docker-compose.yml (production)
-- docker-compose.dev.yml (dev mode)
-- docker-compose.lite.yml (minimal)
+- docker compose.yml (production)
+- docker compose.dev.yml (dev mode)
+- docker compose.lite.yml (minimal)
 
 Thanks!
 ```
@@ -361,7 +361,7 @@ Production-ready. 820+ tests, full CI/CD, multiple deployments.
 
 **Quick start:**
 ```
-docker compose -f docker-compose.lite.yml up -d
+docker compose -f docker compose.lite.yml up -d
 curl http://localhost:8000/health
 make test-unit
 ```

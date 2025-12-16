@@ -337,7 +337,7 @@ Agent: "Implementuję cache dla queries. Specyfikacja nie określa TTL.
 |----------|--------|--------|-------------------------|
 | Force push | ✅ TAK | NA WSZYSTKICH BRANCHACH | ❌ Odmów natychmiast |
 | Usuwanie danych | ✅ TAK | W produkcji lub develop | - |
-| Zmiany w infrastrukturze | ✅ TAK | docker-compose.yml, CI/CD | - |
+| Zmiany w infrastrukturze | ✅ TAK | docker compose.yml, CI/CD | - |
 | Zmiany w security | ✅ TAK | RBAC, authentication, tenant isolation | - |
 
 **Przykład:**

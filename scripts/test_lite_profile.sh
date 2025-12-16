@@ -1,6 +1,6 @@
 #!/bin/bash
 # Smoke test for RAE Lite Profile
-# Tests basic functionality of docker-compose.lite.yml
+# Tests basic functionality of docker compose.lite.yml
 
 set -e
 
@@ -14,17 +14,17 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# Check if docker-compose is available
-if ! command -v docker-compose &> /dev/null; then
-    echo -e "${RED}❌ docker-compose not found${NC}"
+# Check if docker compose is available
+if ! command -v docker compose &> /dev/null; then
+    echo -e "${RED}❌ docker compose not found${NC}"
     exit 1
 fi
 
-echo "✅ docker-compose found"
+echo "✅ docker compose found"
 
 # Validate YAML syntax
-echo -n "Validating docker-compose.lite.yml syntax... "
-if docker-compose -f docker-compose.lite.yml config > /dev/null 2>&1; then
+echo -n "Validating docker compose.lite.yml syntax... "
+if docker compose -f docker compose.lite.yml config > /dev/null 2>&1; then
     echo -e "${GREEN}✅ Valid${NC}"
 else
     echo -e "${RED}❌ Invalid${NC}"
@@ -44,7 +44,7 @@ echo "✅ .env file exists"
 # Start services
 echo ""
 echo "🚀 Starting RAE Lite services..."
-docker-compose -f docker-compose.lite.yml up -d
+docker compose -f docker compose.lite.yml up -d
 
 # Wait for services to be ready
 echo "⏳ Waiting for services to be healthy..."
@@ -53,9 +53,9 @@ sleep 10
 # Check if services are running
 echo ""
 echo "Checking service status:"
-SERVICES=$(docker-compose -f docker-compose.lite.yml ps --services)
+SERVICES=$(docker compose -f docker compose.lite.yml ps --services)
 for service in $SERVICES; do
-    STATUS=$(docker-compose -f docker-compose.lite.yml ps -q $service | xargs docker inspect -f '{{.State.Status}}' 2>/dev/null || echo "not found")
+    STATUS=$(docker compose -f docker compose.lite.yml ps -q $service | xargs docker inspect -f '{{.State.Status}}' 2>/dev/null || echo "not found")
     if [ "$STATUS" = "running" ]; then
         echo -e "  ${GREEN}✅${NC} $service: running"
     else
@@ -80,7 +80,7 @@ done
 
 if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
     echo -e "${RED}❌ API failed to start within timeout${NC}"
-    docker-compose -f docker-compose.lite.yml logs rae-api
+    docker compose -f docker compose.lite.yml logs rae-api
     exit 1
 fi
 
@@ -150,7 +150,7 @@ echo "  - Qdrant: localhost:6333"
 echo "  - Redis: localhost:6379"
 echo ""
 echo "To stop services:"
-echo "  docker-compose -f docker-compose.lite.yml down"
+echo "  docker compose -f docker compose.lite.yml down"
 echo ""
 echo "To view logs:"
-echo "  docker-compose -f docker-compose.lite.yml logs -f"
+echo "  docker compose -f docker compose.lite.yml logs -f"

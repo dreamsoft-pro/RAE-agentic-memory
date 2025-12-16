@@ -416,7 +416,7 @@ pytest test_file.py::test_name -vvs
 ### "CI is failing but tests pass locally"
 ```bash
 # Run with same environment
-docker-compose -f docker-compose.test.yml up
+docker compose -f docker compose.test.yml up
 
 # Run full suite
 pytest -m "not integration and not llm"

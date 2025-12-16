@@ -16,7 +16,7 @@ Z perspektywy nowej osoby, która odpala RAE pierwszy raz:
    _„Ten prostokąt z diagramu = ten moduł w `apps/…` + te modele w `…/core/` + te tabele w DB.”_
 
 2. **RAE Lite ma świetnie opisany „profil”, ale brakuje ultra-konkretnej ścieżki „Hello, world”**  
-   Jest docker-compose, jest opis usług, ale brakuje jednego, bardzo prostego, skończonego scenariusza:  
+   Jest docker compose, jest opis usług, ale brakuje jednego, bardzo prostego, skończonego scenariusza:  
    _„Uruchom Lite, wrzuć 10 dokumentów, zadaj 3 pytania, zobacz jak działa pamięć i GraphRAG.”_
 
 3. **API jest opisane ogólnie (OpenAPI + API_DOCUMENTATION.md), ale brakuje „task-oriented” cookbooka**  
@@ -109,7 +109,7 @@ Jest odwołanie do **„RAE Lite Profile Documentation”**.
    - check-listy: co trzeba zrobić, żeby uznać, że Lite jest „poprawnie skonfigurowany i zdrowy”.
 
 2. Nie widać gotowego „end-to-end scenariusza” dla Lite:
-   - `docker-compose.lite.yml up`,
+   - `docker compose.lite.yml up`,
    - wgranie danych,
    - przykładowe zapytania,
    - monitorowanie.

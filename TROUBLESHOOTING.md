@@ -32,8 +32,8 @@ These dependencies are now included in `requirements-base.txt`. If you cloned be
 git pull origin main
 
 # Rebuild containers
-docker-compose build --no-cache rae-api celery-worker celery-beat
-docker-compose up -d
+docker compose build --no-cache rae-api celery-worker celery-beat
+docker compose up -d
 ```
 
 ### Prometheus Instrumentation Error
@@ -48,8 +48,8 @@ This is fixed in the latest version. The Prometheus instrumentation has been mov
 
 ```bash
 git pull origin main
-docker-compose build rae-api
-docker-compose up -d rae-api
+docker compose build rae-api
+docker compose up -d rae-api
 ```
 
 ---
@@ -78,7 +78,7 @@ for file in infra/postgres/migrations/*.sql; do
 done
 
 # Restart API
-docker-compose restart rae-api
+docker compose restart rae-api
 ```
 
 ### Column "project" Does Not Exist
@@ -93,7 +93,7 @@ Add the missing column:
 
 ```bash
 docker exec -i rae-postgres psql -U rae -d rae -c "ALTER TABLE memories ADD COLUMN IF NOT EXISTS project VARCHAR(255);"
-docker-compose restart rae-api
+docker compose restart rae-api
 ```
 
 ### Database Connection Refused
@@ -105,12 +105,12 @@ OSError: Multiple exceptions: [Errno 111] Connect call failed ('127.0.0.1', 5432
 ```
 
 **Solution:**
-This happens when services try to connect to `localhost` instead of Docker service names. The issue is fixed in `docker-compose.yml` by using proper environment variables:
+This happens when services try to connect to `localhost` instead of Docker service names. The issue is fixed in `docker compose.yml` by using proper environment variables:
 
 ```bash
 git pull origin main
-docker-compose down
-docker-compose up -d
+docker compose down
+docker compose up -d
 ```
 
 ---
@@ -121,7 +121,7 @@ docker-compose up -d
 
 **Symptoms:**
 ```bash
-$ docker-compose ps
+$ docker compose ps
 rae-api          Restarting
 rae-celery-worker Restarting
 ```
@@ -137,17 +137,17 @@ docker logs rae-celery-worker --tail 50
 2. Common causes:
    - Missing database tables → [See Database Issues](#database-issues)
    - Missing dependencies → [See Missing Dependencies](#missing-dependencies-error)
-   - Wrong environment variables → Check docker-compose.yml
+   - Wrong environment variables → Check docker compose.yml
 
 3. If all else fails, clean restart:
 ```bash
-docker-compose down
-docker-compose up -d
+docker compose down
+docker compose up -d
 ```
 
 ### Celery Shows "Unhealthy"
 
-**Note:** Celery workers don't have health checks defined in docker-compose.yml, so showing "unhealthy" is expected. What matters is:
+**Note:** Celery workers don't have health checks defined in docker compose.yml, so showing "unhealthy" is expected. What matters is:
 
 ```bash
 # Check if celery is actually working
@@ -220,12 +220,12 @@ curl: (7) Failed to connect to localhost port 8000: Connection refused
 
 1. Check if containers are running:
 ```bash
-docker-compose ps
+docker compose ps
 ```
 
 2. Check if services are listening on correct ports:
 ```bash
-docker-compose ps | grep "Up"
+docker compose ps | grep "Up"
 ```
 
 3. Test health endpoints:
@@ -258,8 +258,8 @@ docker network inspect rae-agentic-memory_rae-network
 
 If network is missing:
 ```bash
-docker-compose down
-docker-compose up -d
+docker compose down
+docker compose up -d
 ```
 
 ---
@@ -275,19 +275,19 @@ docker-compose up -d
 1. Use build cache effectively:
 ```bash
 # Don't use --no-cache unless necessary
-docker-compose build
+docker compose build
 ```
 
 2. For faster rebuilds after code changes:
 ```bash
 # Only rebuild changed services
-docker-compose build rae-api
-docker-compose up -d rae-api
+docker compose build rae-api
+docker compose up -d rae-api
 ```
 
 3. Parallel builds:
 ```bash
-docker-compose build --parallel
+docker compose build --parallel
 ```
 
 ### High Memory Usage
@@ -298,11 +298,11 @@ docker-compose build --parallel
 
 1. Use RAE Lite profile for limited resources:
 ```bash
-docker-compose -f docker-compose.lite.yml up -d
+docker compose -f docker compose.lite.yml up -d
 ```
 
 2. Reduce Celery workers:
-Edit `docker-compose.yml`:
+Edit `docker compose.yml`:
 ```yaml
 command: celery -A apps.memory_api.celery_app worker --loglevel=info --concurrency=1
 ```
@@ -324,7 +324,7 @@ df -h /
 free -h
 
 # Docker status
-docker-compose ps
+docker compose ps
 docker system df
 
 # Service health
@@ -332,7 +332,7 @@ curl -s http://localhost:8000/health | jq
 curl -s http://localhost:8001/health | jq
 
 # Recent logs
-docker-compose logs --tail=20 --timestamps
+docker compose logs --tail=20 --timestamps
 
 # Database connectivity
 docker exec -i rae-postgres psql -U rae -d rae -c "SELECT COUNT(*) FROM memories;"
@@ -356,13 +356,13 @@ If you're still experiencing issues:
 
 1. **Check logs for all services:**
    ```bash
-   docker-compose logs > rae-logs.txt
+   docker compose logs > rae-logs.txt
    ```
 
 2. **Gather system information:**
    ```bash
    docker version
-   docker-compose version
+   docker compose version
    df -h
    free -h
    ```
@@ -378,5 +378,5 @@ If you're still experiencing issues:
 
 - [Main README](README.md) - Installation and overview
 - [STATUS.md](STATUS.md) - Implementation status
-- [Docker Compose Configuration](docker-compose.yml)
+- [Docker Compose Configuration](docker compose.yml)
 - [Database Schema](infra/postgres/ddl/)

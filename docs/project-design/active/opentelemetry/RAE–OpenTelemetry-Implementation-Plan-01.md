@@ -43,7 +43,7 @@ rejestruje BatchSpanProcessor
 
 W main.py dodać hook inicjalizujący OTEL.
 
-Dodać konfigurację Collector (docker-compose):
+Dodać konfigurację Collector (docker compose):
 
 odbiór OTLP (gRPC / HTTP)
 
@@ -79,7 +79,7 @@ service.name == "rae-core"
 
 Testy E2E
 
-uruchomić docker-compose z OTEL Collector + Jaeger
+uruchomić docker compose z OTEL Collector + Jaeger
 
 wykonać kilka requestów
 

@@ -53,7 +53,7 @@ Przewodnik konfiguracji Claude Code z RAE Memory i Gemini CLI jako narzędziem w
 ```bash
 # 1. Uruchom RAE Memory API w Docker
 cd /home/grzegorz/cloud/Dockerized/RAE-agentic-memory
-docker-compose up -d rae-api
+docker compose up -d rae-api
 
 # 2. Sprawdź czy działa
 curl http://localhost:8000/health
@@ -317,7 +317,7 @@ curl -X POST http://localhost:8000/v1/memory/query \
 curl http://localhost:8000/health
 
 # Sprawdź logi Docker
-docker-compose logs rae-api
+docker compose logs rae-api
 
 # Sprawdź czy port 8001 jest wolny
 lsof -i :8001

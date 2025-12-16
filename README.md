@@ -80,7 +80,7 @@ The easiest way to run RAE locally is with Docker.
 ```bash
 git clone https://github.com/dreamsoft-pro/RAE-agentic-memory.git
 cd RAE-agentic-memory
-docker-compose -f docker-compose.lite.yml up -d
+docker compose -f docker compose.lite.yml up -d
 ```
 For more detailed instructions, see the [Getting Started Guide](docs/LOCAL_SETUP.md).
 

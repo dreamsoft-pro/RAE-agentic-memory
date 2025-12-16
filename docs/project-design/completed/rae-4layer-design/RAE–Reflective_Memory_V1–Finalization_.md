@@ -100,7 +100,7 @@ Jeżeli scheduler jest tylko „na papierze”:
 
 - dodaj realny task (np. Celery) lub skrypt CLI:
   - `python -m apps.memory_api.workers.memory_maintenance decay`  
-- upewnij się, że w `docker-compose` / K8s jest proces, który go faktycznie uruchamia cyklicznie.
+- upewnij się, że w `docker compose` / K8s jest proces, który go faktycznie uruchamia cyklicznie.
 
 **Zadanie B3 – Logi & metryki:**
 

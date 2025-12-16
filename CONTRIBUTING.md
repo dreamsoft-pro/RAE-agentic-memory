@@ -74,7 +74,7 @@ make install-all
 
 ```bash
 # Start Docker services
-docker-compose up -d
+docker compose up -d
 
 # Or use make
 make start

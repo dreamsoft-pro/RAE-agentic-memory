@@ -48,13 +48,13 @@ QDRANT_URL=http://qdrant:6333
 
 ```bash
 # Start all services
-docker-compose up -d
+docker compose up -d
 
 # Check status
-docker-compose ps
+docker compose ps
 
 # View logs
-docker-compose logs -f rae-api
+docker compose logs -f rae-api
 ```
 
 ### Option B: Using Makefile
@@ -196,7 +196,7 @@ RAE includes a Streamlit dashboard for visual exploration:
 
 ```bash
 # If not already running
-docker-compose up -d rae-dashboard
+docker compose up -d rae-dashboard
 
 # Or run locally
 cd tools/memory-dashboard
@@ -225,21 +225,21 @@ Now that RAE is running, explore:
 docker --version
 
 # Check container logs
-docker-compose logs
+docker compose logs
 
 # Restart services
-docker-compose down
-docker-compose up -d
+docker compose down
+docker compose up -d
 ```
 
 ### Database Connection Error
 
 ```bash
 # Verify Postgres is running
-docker-compose ps postgres
+docker compose ps postgres
 
 # Check database connectivity
-docker-compose exec postgres psql -U rae -d rae -c "SELECT 1;"
+docker compose exec postgres psql -U rae -d rae -c "SELECT 1;"
 
 # Reinitialize database
 make db-reset
@@ -252,7 +252,7 @@ make db-reset
 curl http://localhost:6333/
 
 # Restart Qdrant
-docker-compose restart qdrant
+docker compose restart qdrant
 ```
 
 ### API Key Issues

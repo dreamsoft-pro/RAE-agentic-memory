@@ -36,7 +36,7 @@ The MCP integration is **well-architected, thoroughly documented, and production
 
 ⚠️ **Minor Gaps (2 points deducted)**
 - OpenTelemetry requires external collector for production (Jaeger/Tempo)
-- Load tests require docker-compose.lite.yml setup
+- Load tests require docker compose.lite.yml setup
 
 ---
 
@@ -272,7 +272,7 @@ async def test_save_memory_tool_success(mock_rae_api):
 1. **No Integration Tests with Real RAE API**
    - All tests use mocks
    - No testcontainers-based integration tests
-   - No E2E test with actual docker-compose setup
+   - No E2E test with actual docker compose setup
 
 2. **No PII Scrubbing Tests**
    - PIIScrubber class not tested
@@ -292,7 +292,7 @@ async def test_save_memory_tool_success(mock_rae_api):
 # Add integration test
 @pytest.mark.integration
 async def test_mcp_with_real_rae_api(rae_lite_services):
-    """Test MCP server with real RAE API (docker-compose.lite.yml)"""
+    """Test MCP server with real RAE API (docker compose.lite.yml)"""
     client = RAEMemoryClient(
         api_url="http://localhost:8000",
         api_key=os.getenv("RAE_API_KEY"),
@@ -628,7 +628,7 @@ def test_pii_scrubber_comprehensive():
 @pytest.mark.integration
 async def test_mcp_e2e_with_real_rae(rae_lite_services):
     """Test MCP with real RAE API"""
-    # Use docker-compose.lite.yml fixture
+    # Use docker compose.lite.yml fixture
     ...
 ```
 

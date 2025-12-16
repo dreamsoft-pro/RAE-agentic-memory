@@ -325,11 +325,11 @@ docker run -p 8001:8001 rae-ml-service
 
 ### With Docker Compose
 
-ML Service is included in the main `docker-compose.yml`:
+ML Service is included in the main `docker compose.yml`:
 
 ```bash
 # From project root
-docker-compose up -d ml-service
+docker compose up -d ml-service
 ```
 
 ## Configuration
@@ -491,7 +491,7 @@ These provide interactive API exploration and testing.
 The ML Service is automatically integrated when using Docker Compose:
 
 ```yaml
-# In main docker-compose.yml
+# In main docker compose.yml
 ml-service:
   build: ./apps/ml_service
   ports:

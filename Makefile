@@ -17,7 +17,7 @@ help:  ## Show this help message
 
 start:  ## Start all services with Docker Compose
 	@echo "🚀 Starting RAE..."
-	docker-compose up -d
+	docker compose up -d
 	@echo "✅ RAE is running!"
 	@echo "📖 API Documentation: http://localhost:8000/docs"
 	@echo "📊 Dashboard: http://localhost:8501"
@@ -25,26 +25,26 @@ start:  ## Start all services with Docker Compose
 
 stop:  ## Stop all services
 	@echo "🛑 Stopping RAE..."
-	docker-compose down
+	docker compose down
 	@echo "✅ Services stopped"
 
 restart:  ## Restart all services
 	@echo "🔄 Restarting RAE..."
-	docker-compose restart
+	docker compose restart
 	@echo "✅ Services restarted"
 
 logs:  ## Show logs from all services
-	docker-compose logs -f
+	docker compose logs -f
 
 logs-api:  ## Show API logs only
-	docker-compose logs -f rae-api
+	docker compose logs -f rae-api
 
 logs-worker:  ## Show Celery worker logs
-	docker-compose logs -f celery-worker
+	docker compose logs -f celery-worker
 
 clean:  ## Clean up volumes and containers
 	@echo "🧹 Cleaning up..."
-	docker-compose down -v
+	docker compose down -v
 	rm -rf __pycache__ .pytest_cache .coverage htmlcov
 	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
 	find . -type f -name "*.pyc" -delete
@@ -271,8 +271,8 @@ db-reset:  ## Reset database (WARNING: deletes all data)
 	@echo "⚠️  WARNING: This will delete all data!"
 	@read -p "Are you sure? (yes/no): " confirm; \
 	if [ "$$confirm" = "yes" ]; then \
-		docker-compose down -v; \
-		docker-compose up -d postgres redis qdrant; \
+		docker compose down -v; \
+		docker compose up -d postgres redis qdrant; \
 		sleep 5; \
 		$(VENV_ACTIVATE) && alembic upgrade head; \
 		echo "✅ Database reset complete"; \
@@ -281,7 +281,7 @@ db-reset:  ## Reset database (WARNING: deletes all data)
 	fi
 
 db-shell:  ## Open PostgreSQL shell
-	@docker-compose exec postgres psql -U rae -d rae
+	@docker compose exec postgres psql -U rae -d rae
 
 # ==============================================================================
 # PRE-COMMIT
@@ -302,17 +302,17 @@ pre-commit-run:  ## Run pre-commit on all files
 
 build:  ## Build Docker images
 	@echo "🏗️  Building Docker images..."
-	docker-compose build
+	docker compose build
 	@echo "✅ Build complete"
 
 ps:  ## Show running containers
-	@docker-compose ps
+	@docker compose ps
 
 shell-api:  ## Open shell in API container
-	@docker-compose exec rae-api /bin/bash
+	@docker compose exec rae-api /bin/bash
 
 shell-postgres:  ## Open shell in Postgres container
-	@docker-compose exec postgres /bin/bash
+	@docker compose exec postgres /bin/bash
 
 # ==============================================================================
 # DEPLOYMENT
@@ -326,8 +326,8 @@ health:  ## Check health of all services
 	@echo "🏥 Checking service health..."
 	@curl -s http://localhost:8000/health | python -m json.tool || echo "❌ API not responding"
 	@curl -s http://localhost:6333/ | python -m json.tool || echo "❌ Qdrant not responding"
-	@docker-compose exec -T postgres pg_isready -U rae || echo "❌ Postgres not responding"
-	@docker-compose exec -T redis redis-cli ping || echo "❌ Redis not responding"
+	@docker compose exec -T postgres pg_isready -U rae || echo "❌ Postgres not responding"
+	@docker compose exec -T redis redis-cli ping || echo "❌ Redis not responding"
 
 # ==============================================================================
 # UTILITIES

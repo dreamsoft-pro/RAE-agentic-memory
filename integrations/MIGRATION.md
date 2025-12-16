@@ -20,7 +20,7 @@ This guide helps you migrate from the legacy MCP server (v1.0.0 in `integrations
 
 ✅ **Testing & Quality**
 - 20+ new unit tests for PII scrubbing
-- Integration tests with real RAE API (docker-compose.lite.yml)
+- Integration tests with real RAE API (docker compose.lite.yml)
 - 59 total test functions ensuring reliability
 
 ✅ **Performance & Observability**
@@ -217,7 +217,7 @@ cd integrations/mcp
 # PII scrubbing tests
 pytest tests/test_pii_scrubber.py -v
 
-# Integration tests (requires docker-compose.lite.yml running)
+# Integration tests (requires docker compose.lite.yml running)
 pytest tests/test_mcp_integration.py -v -m integration
 
 # All tests
@@ -323,7 +323,7 @@ lsof -i :6333
 lsof -i :6379
 
 # Start RAE Lite manually
-docker-compose -f docker-compose.lite.yml up -d
+docker compose -f docker compose.lite.yml up -d
 
 # Check health
 curl http://localhost:8000/health

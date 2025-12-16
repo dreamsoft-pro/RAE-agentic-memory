@@ -292,7 +292,7 @@ Test fixtures in `tests/fixtures/`:
 
 ```bash
 # Setup test database
-docker-compose -f docker-compose.test.yml up -d
+docker compose -f docker compose.test.yml up -d
 
 # Run migrations
 alembic -c tests/alembic.ini upgrade head

@@ -3,7 +3,7 @@
 
 Architektura jest gęsta: wiele usług, wiele trybów (bare API vs ML vs reranker vs MCP vs watcher vs dashboard). Dla „zwykłego” zespołu to może być psychologicznie ciężkie – wymaga dobrego „minimal path to value”.
 
-Dokumentacja jest obszerna, ale przy tej ilości komponentów przydałby się jeden bardzo prosty „deployment profile”: „single docker-compose na 1 serwerze, minimal features, single-tenant”.
+Dokumentacja jest obszerna, ale przy tej ilości komponentów przydałby się jeden bardzo prosty „deployment profile”: „single docker compose na 1 serwerze, minimal features, single-tenant”.
 
 2. Test coverage & „enterprise target”
 
@@ -46,7 +46,7 @@ Python SDK jest jeszcze w wersji 0.1.0 – przy takiej architekturze SDK jest kl
 Co bym zrobił „dalej” jako 3 najbliższe kroki
 
 RAE Lite Profile
-Jeden prosty scenariusz: docker-compose up → jeden kontener API + Postgres + Qdrant + Redis (bez dodatkowych usług), z gotowym PROFILE_LITE w docsach i Helm/compose.
+Jeden prosty scenariusz: docker compose up → jeden kontener API + Postgres + Qdrant + Redis (bez dodatkowych usług), z gotowym PROFILE_LITE w docsach i Helm/compose.
 
 Podniesienie coverage do ~75–80% dla kluczowych endpointów
 Skupiłbym się na:

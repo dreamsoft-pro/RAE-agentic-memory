@@ -452,7 +452,7 @@ def test_user_authentication_calls_bcrypt_with_hash():
 ## 🐳 Docker
 
 - If adding dependencies, update `requirements.txt` AND `Dockerfile` if needed.
-- Ensure `docker-compose.yml` services are healthy after changes.
+- Ensure `docker compose.yml` services are healthy after changes.
 
 ## 🛡️ Security
 

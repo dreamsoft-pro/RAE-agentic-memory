@@ -2,13 +2,13 @@
 Integration tests for RAE MCP Server with real RAE API.
 
 These tests verify end-to-end functionality by:
-1. Starting RAE Lite services (docker-compose.lite.yml)
+1. Starting RAE Lite services (docker compose.lite.yml)
 2. Creating RAEMemoryClient connected to real API
 3. Testing all MCP operations (save, search, context, reflections)
 4. Tearing down services after tests
 
 Requirements:
-- Docker and docker-compose installed
+- Docker and docker compose installed
 - .env file configured with LLM API key
 - Ports 8000, 5432, 6333, 6379 available
 
@@ -36,7 +36,7 @@ pytestmark = pytest.mark.integration
 @pytest.fixture(scope="module")
 def rae_lite_services():
     """
-    Start docker-compose.lite.yml services for MCP integration testing.
+    Start docker compose.lite.yml services for MCP integration testing.
 
     This fixture:
     1. Starts all RAE Lite services (API, PostgreSQL, Qdrant, Redis)
@@ -46,11 +46,11 @@ def rae_lite_services():
     """
     # Get project root (3 levels up from this file)
     project_root = Path(__file__).parent.parent.parent.parent
-    compose_file = project_root / "docker-compose.lite.yml"
+    compose_file = project_root / "docker compose.lite.yml"
 
     # Start services
     subprocess.run(
-        ["docker-compose", "-f", str(compose_file), "up", "-d"],
+        ["docker compose", "-f", str(compose_file), "up", "-d"],
         check=True,
         capture_output=True,
         cwd=project_root,
@@ -76,7 +76,7 @@ def rae_lite_services():
     if not api_ready:
         # Cleanup on failure
         subprocess.run(
-            ["docker-compose", "-f", str(compose_file), "down"],
+            ["docker compose", "-f", str(compose_file), "down"],
             capture_output=True,
             cwd=project_root,
         )
@@ -87,7 +87,7 @@ def rae_lite_services():
 
     # Teardown: Stop services
     subprocess.run(
-        ["docker-compose", "-f", str(compose_file), "down", "-v"],
+        ["docker compose", "-f", str(compose_file), "down", "-v"],
         capture_output=True,
         cwd=project_root,
     )
@@ -401,8 +401,8 @@ class TestMCPPerformance:
 
 
 @pytest.mark.skipif(
-    subprocess.run(["which", "docker-compose"], capture_output=True).returncode != 0,
-    reason="docker-compose not available",
+    subprocess.run(["which", "docker compose"], capture_output=True).returncode != 0,
+    reason="docker compose not available",
 )
 class TestMCPServiceDependencies:
     """Test that MCP client properly handles service dependencies"""

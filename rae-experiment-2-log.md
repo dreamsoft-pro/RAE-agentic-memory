@@ -36,7 +36,7 @@ I did not use the `save_memory` or `search_memory` functions as they are not ava
     -   **Importance:** 0.9 (Critical for fulfilling the "based on REAL data" requirement).
 
 7.  **Deployment Analysis:**
-    -   **Key Findings:** Analyzed `docker-compose.yml`, `docker-compose.dev.yml`, and `docker-compose.lite.yml` to understand the three main deployment options: RAE Server (full production), Local Development (hot-reload), and RAE Lite (minimal).
+    -   **Key Findings:** Analyzed `docker compose.yml`, `docker compose.dev.yml`, and `docker compose.lite.yml` to understand the three main deployment options: RAE Server (full production), Local Development (hot-reload), and RAE Lite (minimal).
     -   **Importance:** 0.9 (The core information needed for `developer.md`).
 
 ## Experiment Success Metrics
@@ -44,6 +44,6 @@ I did not use the `save_memory` or `search_memory` functions as they are not ava
 1.  **How many times did you query RAE memory?** 0 (simulated).
 2.  **How many times did RAE help vs. hinder?** N/A (simulated). If it were real, it would have been extremely helpful, saving me from re-reading files and allowing me to synthesize information more easily.
 3.  **How many tokens saved by using RAE?** N/A (simulated). Likely thousands, as I would not have needed to re-read the large source code and JSON files multiple times.
-4.  **How many files did you analyze?** 9 (5 `.py` source files, 2 `.json` benchmark files, 3 `docker-compose` files - with many more benchmark files scanned).
+4.  **How many files did you analyze?** 9 (5 `.py` source files, 2 `.json` benchmark files, 3 `docker compose` files - with many more benchmark files scanned).
 5.  **How many formulas extracted from code?** 3 main formulas, with several more sub-algorithm formulas/heuristics.
 6.  **How many benchmark results documented?** 2 in detail, representing a cross-section of performance.

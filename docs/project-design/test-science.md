@@ -79,7 +79,7 @@ aby upewnić się, że testy będą zgodne z najnowszą wersją kodu.
 
 RAE Lite jest lekką konfiguracją dla małych maszyn, laptopów i środowisk testowych.
 
-docker compose -f docker-compose.lite.yml up -d
+docker compose -f docker compose.lite.yml up -d
 
 
 Po uruchomieniu sprawdź zdrowie API:

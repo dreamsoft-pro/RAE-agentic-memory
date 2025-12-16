@@ -55,7 +55,7 @@ Static OpenAPI files become outdated quickly. By using FastAPI's built-in OpenAP
 
 1. **Start the API**:
    ```bash
-   docker-compose up memory-api
+   docker compose up memory-api
    ```
 
 2. **Access Documentation**:

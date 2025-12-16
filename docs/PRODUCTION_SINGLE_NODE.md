@@ -80,7 +80,7 @@ Set `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` in `.env`.
 
 ### 3.4. Start production stack (single-node)
 
-Use a dedicated production compose file (e.g. docker-compose.prod.yml) if the repo provides one.
+Use a dedicated production compose file (e.g. docker compose.prod.yml) if the repo provides one.
 
 ```bash
 docker compose up -d

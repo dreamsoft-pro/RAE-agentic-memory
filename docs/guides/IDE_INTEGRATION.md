@@ -89,10 +89,10 @@ Choose your deployment profile and start RAE:
 
 ```bash
 # Option A: RAE Lite (recommended for first-time users)
-docker-compose -f docker-compose.lite.yml up -d
+docker compose -f docker compose.lite.yml up -d
 
 # Option B: RAE Standard (with ML service and dashboard)
-docker-compose up -d
+docker compose up -d
 
 # Option C: RAE Enterprise (Kubernetes)
 # See: docs/deployment/kubernetes.md
@@ -680,14 +680,14 @@ Create `RAE.sublime-build`:
 
 2. **Check Docker containers**:
    ```bash
-   docker-compose ps
+   docker compose ps
    ```
 
    All services should be "Up"
 
 3. **Review API logs**:
    ```bash
-   docker-compose logs -f memory-api
+   docker compose logs -f memory-api
    ```
 
 4. **Verify network connectivity**:
@@ -823,7 +823,7 @@ Create `RAE.sublime-build`:
 
 #### Q: Does RAE work offline?
 
-**A**: RAE requires the Memory API to be running. For offline use, run RAE locally (docker-compose) instead of cloud deployment.
+**A**: RAE requires the Memory API to be running. For offline use, run RAE locally (docker compose) instead of cloud deployment.
 
 #### Q: What's the difference between MCP and Context Watcher?
 

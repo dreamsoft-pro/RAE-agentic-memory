@@ -404,8 +404,8 @@ This document maps RAE's architectural components (from README diagrams) to thei
 ### 16. Deployment Configurations
 
 **Docker Compose**:
-- `docker-compose.lite.yml` - RAE Lite (4 services)
-- `docker-compose.yml` - Full stack (9+ services)
+- `docker compose.lite.yml` - RAE Lite (4 services)
+- `docker compose.yml` - Full stack (9+ services)
 
 **Kubernetes/Helm**:
 - `helm/rae-memory/` - Helm chart for enterprise deployment

@@ -20,14 +20,14 @@ This quick start uses the **RAE Lite** profile, which is the fastest way to get 
 
 2.  **Start the RAE Lite stack:**
     ```bash
-    docker-compose -f docker-compose.lite.yml up -d
+    docker compose -f docker compose.lite.yml up -d
     ```
     This command will start the core RAE API, a PostgreSQL database, a Redis cache, and a Qdrant vector database.
 
 3.  **Verify the services are running:**
     You can check the status of the containers:
     ```bash
-    docker-compose -f docker-compose.lite.yml ps
+    docker compose -f docker compose.lite.yml ps
     ```
     You should also be able to access the health check endpoint:
     [http://localhost:8000/health](http://localhost:8000/health)
@@ -96,7 +96,7 @@ RAE offers several deployment profiles tailored to different use cases, from loc
 
 ### 1. Local Development (Hot Reload)
 
-This is the recommended setup for active development on the RAE codebase. It uses `docker-compose.dev.yml` as an override file to enable hot-reloading.
+This is the recommended setup for active development on the RAE codebase. It uses `docker compose.dev.yml` as an override file to enable hot-reloading.
 
 **Key Features:**
 -   **Hot-Reloading:** The `uvicorn` web server is started with the `--reload` flag. Any changes you make to the source code on your host machine will be immediately reflected in the running container without needing to rebuild the image.
@@ -107,17 +107,17 @@ This is the recommended setup for active development on the RAE codebase. It use
 **How to Run:**
 ```bash
 # Use both the base and dev override files
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+docker compose -f docker compose.yml -f docker compose.dev.yml up -d
 
 # To stop
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml down
+docker compose -f docker compose.yml -f docker compose.dev.yml down
 ```
 
 ### 2. RAE Lite (Minimal Deployment)
 
 This profile is perfect for small teams, demos, or development environments where the full observability and background processing stack is not required. It's a single-server setup that is easy to manage.
 
-**Source File:** `docker-compose.lite.yml`
+**Source File:** `docker compose.lite.yml`
 
 **Stack:**
 -   **Included:** `rae-api`, `postgres`, `redis`, `qdrant`
@@ -134,14 +134,14 @@ environment:
 
 **How to Run:**
 ```bash
-docker-compose -f docker-compose.lite.yml up -d
+docker compose -f docker compose.lite.yml up -d
 ```
 
 ### 3. RAE Server (Standard Production)
 
 This is the standard, full-stack deployment for a production environment on a single node. It includes all services for full functionality, observability, and asynchronous processing.
 
-**Source File:** `docker-compose.yml`
+**Source File:** `docker compose.yml`
 
 **Full Stack:**
 -   `rae-api`: The main API.
@@ -155,7 +155,7 @@ This is the standard, full-stack deployment for a production environment on a si
 
 **How to Run:**
 ```bash
-docker-compose -f docker-compose.yml up -d
+docker compose -f docker compose.yml up -d
 ```
 
 ### 4. Proxmox HA (High Availability)

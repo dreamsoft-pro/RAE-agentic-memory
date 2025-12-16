@@ -39,7 +39,7 @@
 
 # Infrastructure configuration
 /infra/* @grzegorz
-/docker-compose*.yml @grzegorz
+/docker compose*.yml @grzegorz
 /Dockerfile @grzegorz
 /.dockerignore @grzegorz
 

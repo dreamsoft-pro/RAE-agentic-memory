@@ -79,7 +79,7 @@ rg "/memory/add|/memories/create" docs/ -g "*.md"
 
 ```bash
 # Start API
-docker-compose up memory-api
+docker compose up memory-api
 
 # Fetch OpenAPI spec
 curl http://localhost:8000/openapi.json | jq '.paths | keys[]' > actual_endpoints.txt
@@ -185,7 +185,7 @@ if __name__ == '__main__':
 **Usage**:
 ```bash
 # Ensure API is running
-docker-compose up memory-api
+docker compose up memory-api
 
 # Run validation
 python scripts/validate_endpoints.py

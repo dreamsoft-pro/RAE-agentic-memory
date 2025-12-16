@@ -6,7 +6,7 @@ RAE Agentic Memory is designed to be flexible, supporting both local-first devel
 
 For local development and testing, the easiest way to run RAE is using Docker Compose. This sets up all necessary services (Postgres, Qdrant, Memory API, Reranker Service) on your local machine.
 
-*   **Setup**: Refer to the [Getting Started](getting_started.md) guide for detailed instructions on how to use `docker-compose up`.
+*   **Setup**: Refer to the [Getting Started](getting_started.md) guide for detailed instructions on how to use `docker compose up`.
 *   **Benefits**: Simple setup, isolated environment, no cloud costs during development.
 *   **Use Case**: Local development, testing, small-scale personal projects.
 

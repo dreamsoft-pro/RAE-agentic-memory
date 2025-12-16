@@ -10,7 +10,7 @@ cd "$(dirname "$0")/.."
 # Check if redis is running
 if ! pgrep redis-server > /dev/null; then
     echo "⚠️  Redis does not seem to be running. Workers need Redis."
-    echo "    Run 'docker-compose up -d redis' or start a local redis-server."
+    echo "    Run 'docker compose up -d redis' or start a local redis-server."
 fi
 
 # Set python path

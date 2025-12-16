@@ -7,7 +7,7 @@ This guide covers deploying RAE to production environments with best practices f
 - [Prerequisites](#prerequisites)
 - [Security Configuration](#security-configuration)
 - [Infrastructure Options](#infrastructure-options)
-- [Docker Compose Production](#docker-compose-production)
+- [Docker Compose Production](#docker compose-production)
 - [Kubernetes Deployment](#kubernetes-deployment)
 - [Cloud Platforms](#cloud-platforms)
 - [Monitoring & Observability](#monitoring--observability)
@@ -145,9 +145,9 @@ Best for:
 
 ## Docker Compose Production
 
-### 1. Production docker-compose.yml
+### 1. Production docker compose.yml
 
-Create `docker-compose.prod.yml`:
+Create `docker compose.prod.yml`:
 
 ```yaml
 version: '3.8'
@@ -336,13 +336,13 @@ docker build -t your-registry.com/rae-api:latest .
 docker push your-registry.com/rae-api:latest
 
 # Deploy
-docker-compose -f docker-compose.prod.yml up -d
+docker compose -f docker compose.prod.yml up -d
 
 # Check health
 curl https://yourdomain.com/health
 
 # View logs
-docker-compose -f docker-compose.prod.yml logs -f rae-api
+docker compose -f docker compose.prod.yml logs -f rae-api
 ```
 
 ## Kubernetes Deployment
@@ -606,7 +606,7 @@ newrelic-admin run-program uvicorn apps.memory_api.main:app
 BACKUP_DIR=/backups
 DATE=$(date +%Y-%m-%d_%H-%M-%S)
 
-docker-compose exec -T postgres pg_dump -U rae rae | gzip > $BACKUP_DIR/rae_$DATE.sql.gz
+docker compose exec -T postgres pg_dump -U rae rae | gzip > $BACKUP_DIR/rae_$DATE.sql.gz
 
 # Keep last 30 days
 find $BACKUP_DIR -name "rae_*.sql.gz" -mtime +30 -delete
@@ -621,13 +621,13 @@ Add to crontab:
 
 ```bash
 # Stop services
-docker-compose down
+docker compose down
 
 # Restore database
-gunzip < backup.sql.gz | docker-compose exec -T postgres psql -U rae rae
+gunzip < backup.sql.gz | docker compose exec -T postgres psql -U rae rae
 
 # Restart services
-docker-compose up -d
+docker compose up -d
 ```
 
 ## Performance Tuning
@@ -683,10 +683,10 @@ CACHE_TTL_SECONDS=3600
 docker stats
 
 # Restart services
-docker-compose restart rae-api
+docker compose restart rae-api
 
 # Clear Redis cache
-docker-compose exec redis redis-cli FLUSHALL
+docker compose exec redis redis-cli FLUSHALL
 ```
 
 ### Slow Queries
@@ -703,13 +703,13 @@ SELECT * FROM pg_stat_statements ORDER BY mean_exec_time DESC LIMIT 10;
 
 ```bash
 # Check service health
-docker-compose ps
+docker compose ps
 
 # Check logs
-docker-compose logs rae-api
+docker compose logs rae-api
 
 # Test database connection
-docker-compose exec postgres psql -U rae -d rae -c "SELECT 1;"
+docker compose exec postgres psql -U rae -d rae -c "SELECT 1;"
 ```
 
 ## Security Checklist

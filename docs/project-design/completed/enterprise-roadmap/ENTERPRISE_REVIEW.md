@@ -24,8 +24,8 @@ The implementation addresses all requirements from `docs/RAE-lite.md` and delive
 ### ✅ What Was Done Well (Enterprise-Grade)
 
 #### 1. RAE Lite Profile Implementation ⭐⭐⭐⭐⭐
-- **docker-compose.lite.yml**: 148 lines, syntactically valid
-  - Verified with `docker-compose config` - PASS ✅
+- **docker compose.lite.yml**: 148 lines, syntactically valid
+  - Verified with `docker compose config` - PASS ✅
   - Environment variables properly set (ML_SERVICE_ENABLED=false, etc.)
   - Resource limits configured (Redis maxmemory, Qdrant thresholds)
   - Health checks on all critical services
@@ -113,10 +113,10 @@ python3 -m pytest tests/api/v1/ --collect-only  # Just check collection
 **Fix Time:** 15 minutes (local) or 5 minutes (CI)
 
 ### H2. Quick Start Not Updated for Lite Profile
-**Issue:** README Quick Start still uses standard docker-compose
+**Issue:** README Quick Start still uses standard docker compose
 **Current:**
 ```bash
-./scripts/quickstart.sh  # Uses docker-compose.yml (full stack)
+./scripts/quickstart.sh  # Uses docker compose.yml (full stack)
 ```
 **Missing:** No mention of lite profile in Quick Start section
 **Impact:** Users unaware of lite option
@@ -126,19 +126,19 @@ python3 -m pytest tests/api/v1/ --collect-only  # Just check collection
 
 **Choose your deployment:**
 - 🚀 **Full Stack** (recommended): `./scripts/quickstart.sh`
-- 💡 **Lite Profile** (minimal): `docker-compose -f docker-compose.lite.yml up -d`
+- 💡 **Lite Profile** (minimal): `docker compose -f docker compose.lite.yml up -d`
 
 See [RAE Lite Profile](docs/deployment/rae-lite-profile.md) for details.
 ```
 **Fix Time:** 5 minutes
 
-### H3. docker-compose.lite.yml Not Functionally Tested
+### H3. docker compose.lite.yml Not Functionally Tested
 **Issue:** Syntax valid, but never started
 **Risk:** Runtime errors, missing dependencies, network issues
 **Recommended Verification:**
 ```bash
 # Test 1: Start services
-docker-compose -f docker-compose.lite.yml up -d
+docker compose -f docker compose.lite.yml up -d
 
 # Test 2: Check health
 curl http://localhost:8000/health
@@ -170,7 +170,7 @@ curl -X POST http://localhost:8000/v1/memory/store \
 **Fix Time:** 5 minutes
 
 ### M3. No Integration Test for Lite Profile
-**Issue:** docker-compose.lite.yml created but no e2e test
+**Issue:** docker compose.lite.yml created but no e2e test
 **Recommended:** Add script `scripts/test_lite_profile.sh`
 **Fix Time:** 15 minutes
 
@@ -193,7 +193,7 @@ curl -X POST http://localhost:8000/v1/memory/store \
 **Recommended:** Add section:
 ```bash
 # =============================================================================
-# LITE PROFILE CONFIGURATION (docker-compose.lite.yml)
+# LITE PROFILE CONFIGURATION (docker compose.lite.yml)
 # =============================================================================
 # ML_SERVICE_ENABLED=false  # Disable heavy ML operations
 # RERANKER_ENABLED=false    # Disable re-ranking service
@@ -267,9 +267,9 @@ curl -X POST http://localhost:8000/v1/memory/store \
    - Commit: "test: Verify new test suite passes"
 
 4. Smoke test lite profile (10 min)
-   - docker-compose -f docker-compose.lite.yml up -d
+   - docker compose -f docker compose.lite.yml up -d
    - curl health check
-   - Commit: "test: Verify docker-compose.lite.yml functional"
+   - Commit: "test: Verify docker compose.lite.yml functional"
 ```
 
 ### Phase 3: MEDIUM Priority (Optional - 40 minutes)

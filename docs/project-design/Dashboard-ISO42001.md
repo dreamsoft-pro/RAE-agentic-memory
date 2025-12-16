@@ -60,7 +60,7 @@
   🚀 Jak uruchomić:
 
   1. Uruchom RAE (jeśli nie działa):
-  docker-compose up -d
+  docker compose up -d
 
   2. Uruchom migracje (jeśli baza nie ma tabel compliance):
   ./scripts/init-database.sh

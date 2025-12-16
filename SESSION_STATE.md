@@ -146,7 +146,7 @@ gh run rerun 20132083914
 docker ps -a
 
 # Restart if needed
-docker-compose up -d postgres redis qdrant
+docker compose up -d postgres redis qdrant
 ```
 
 ### If RAE server has issues:
@@ -155,7 +155,7 @@ docker-compose up -d postgres redis qdrant
 curl http://localhost:8000/health
 
 # Restart if needed
-docker-compose restart rae-memory-api
+docker compose restart rae-memory-api
 ```
 
 ---

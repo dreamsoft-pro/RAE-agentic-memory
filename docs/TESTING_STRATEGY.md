@@ -50,7 +50,7 @@ RAE stosuje klasyczną „piramidę testów”:
      - cost-guard ↔ LLM client ↔ storage.
    - Korzystają albo z:
      - lekkiej, tymczasowej bazy (np. SQLite / testowy Postgres w kontenerze),
-     - albo fixture'ów uruchamiających mini-stack (np. docker-compose do testów).
+     - albo fixture'ów uruchamiających mini-stack (np. docker compose do testów).
 
 3. **End-to-End / Smoke tests**  
    - Minimalny scenariusz „od początku do końca”, np.:
