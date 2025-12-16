@@ -32,7 +32,8 @@ RAE models memory as **four functionally distinct layers**:
 3.  **Working Memory** – What is currently relevant
 4.  **Reflective Memory** – Why decisions were made and whether they remain valid
 
-This separation prevents reasoning drift and supports long-term coherence, auditability, and revision of past reasoning.
+This separation prevents reasoning drift.
+It is governed by a 3-layer Mathematical Verification Engine (Logic, Set Theory, Graph) that ensures retrieved context is not just semantically similar, but logically consistent
 
 ---
 
