@@ -80,8 +80,15 @@ The easiest way to run RAE locally is with Docker.
 ```bash
 git clone https://github.com/dreamsoft-pro/RAE-agentic-memory.git
 cd RAE-agentic-memory
-docker-compose -f docker-compose.lite.yml up -d
+docker compose -f docker-compose.lite.yml up -d
 ```
+
+**For Developers (Hot-Reload & Autostart):**
+You can set up RAE to start automatically on system boot with hot-reload enabled:
+```bash
+./scripts/setup_autostart.sh
+```
+
 For more detailed instructions, see the [Getting Started Guide](docs/LOCAL_SETUP.md).
 
 ---
