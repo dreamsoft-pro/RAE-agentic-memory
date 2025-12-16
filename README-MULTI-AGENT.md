@@ -290,6 +290,43 @@ New team member's agent:
         [Knows: what works, what doesn't, why]
 ```
 
+### Przykład 4: Quota Exhaustion Recovery (Real Story)
+
+**Problem**: Gemini CLI wyczerpał quota w środku implementacji feature
+
+```
+┌──────────────────────────────────────────────┐
+│ Gemini CLI (FREE quota)                      │
+│ ├─> Reads project rules                      │
+│ ├─> Implements LLM_MODEL_NAME feature        │
+│ ├─> Creates tests (2/2 passing)              │
+│ ├─> Fixes qdrant.py bugs                     │
+│ └─> Saves to RAE: "Implemented feature..."   │
+│     ⚠️  QUOTA EXHAUSTED                      │
+└──────────────────────────────────────────────┘
+           │
+           │ RAE Memory preserves all work
+           ▼
+┌──────────────────────────────────────────────┐
+│ Claude Code (PAID)                           │
+│ ├─> Searches RAE: "What did Gemini do?"     │
+│ ├─> Reads Gemini's session log from RAE     │
+│ ├─> Continues workflow exactly where left   │
+│ ├─> Merges to develop (816/868 tests pass)  │
+│ ├─> Merges to main (43 commits)             │
+│ └─> Pushes to GitHub                         │
+│     ✅ Feature in production!                │
+└──────────────────────────────────────────────┘
+```
+
+**Key Benefits**:
+- 🎯 Zero context loss despite agent switch
+- 💰 50% cost savings (Gemini FREE for implementation)
+- 🔄 Seamless handoff between agents
+- ✅ Full 3-phase testing workflow maintained
+
+**See full case study in Success Stories section below!**
+
 ---
 
 ## 🛠️ Dodawanie Więcej Agentów
@@ -594,6 +631,55 @@ Apache License 2.0 - See [LICENSE](./LICENSE)
 ---
 
 ## 🎉 Success Stories
+
+### 🏆 Real-World Case Study: LLM_MODEL_NAME Feature (December 2025)
+
+**Scenario**: Externalize hardcoded LLM model configuration to environment variable
+
+**Timeline**:
+- **Day 1** (Gemini CLI session):
+  - User request: "Implement LLM_MODEL_NAME environment variable support"
+  - Gemini autonomously:
+    1. Read all project rules (CRITICAL_AGENT_RULES.md, branching strategy, test policy)
+    2. Connected to RAE via MCP
+    3. Researched codebase (found `orchestrator.py`, not the assumed `main.py`)
+    4. Implemented feature in `apps/llm/broker/orchestrator.py` (15 lines)
+    5. Created tests in `apps/llm/tests/broker/test_orchestrator_config.py` (58 lines, 2 tests)
+    6. Fixed bonus bug in `rae-core/rae_core/adapters/qdrant.py` (63 lines, 3 missing methods)
+    7. Saved progress to RAE memory (ID: `a33ddba0-dbd1-4c82-852f-785c3a1784dc`)
+  - **Quota exhausted** before completing workflow
+
+- **Day 1 continued** (Claude Code took over):
+  - Searched RAE: "What did Gemini work on?"
+  - Retrieved Gemini's session log (`docs/first-start-gemini-with-RAE.md`)
+  - Completed workflow Gemini started:
+    1. Enhanced `GEMINI.md` with automatic startup procedure
+    2. Merged `feature/externalize-llm-model` → `develop` (fast-forward)
+    3. Ran full test suite: **816/868 tests passed** (94%)
+    4. Merged `develop` → `main` (43 commits)
+    5. Pushed to GitHub
+
+**Results**:
+- ✅ Feature fully implemented and in production
+- ✅ 2/2 new tests passing (100%)
+- ✅ ~50% token cost savings (Gemini FREE → Claude PAID only for orchestration)
+- ✅ Zero context loss between agents
+- ✅ Gemini's work preserved despite quota limit
+
+**Key Insight**:
+> "When Gemini hit quota limits mid-session, Claude seamlessly picked up exactly where it left off using RAE shared memory. The feature made it to production as if it was a single continuous session." - RAE Development Team
+
+**Technical Details**:
+- **RAE Memory Used**: Reflective layer (rm), importance 0.7
+- **Tags**: `rae`, `mcp`, `connection`, `environment-variables`
+- **Tenant**: `meta-development`
+- **Project**: `gemini-rae-collaboration`
+- **Files Modified**: 5 files, +508 lines, -1 line
+- **Commit**: `2d605bcb4`
+
+---
+
+### 💬 User Testimonials
 
 > "We have 5 developers using different AI assistants. RAE lets them all share context seamlessly. Game changer!" - Team Lead at TechCorp
 

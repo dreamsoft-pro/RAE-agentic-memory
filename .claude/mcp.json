@@ -1,16 +1,16 @@
 {
-  "auth": {
-    "method": "oauth"
-  },
-  "security": {
-    "auth": {
-      "selectedType": "oauth-personal"
-    }
-  },
   "mcpServers": {
     "rae-memory": {
       "command": "/home/grzegorz-lesniowski/cloud/RAE-agentic-memory/.venv/bin/rae-mcp-server",
-      "args": [],
+      "env": {
+        "RAE_API_URL": "http://localhost:8000",
+        "RAE_API_KEY": "dev-key",
+        "RAE_PROJECT_ID": "RAE-agentic-memory",
+        "RAE_TENANT_ID": "default-tenant"
+      }
+    },
+    "gemini": {
+      "command": "/home/grzegorz-lesniowski/cloud/RAE-agentic-memory/.venv/bin/gemini-mcp-server",
       "env": {
         "RAE_API_URL": "http://localhost:8000",
         "RAE_API_KEY": "dev-key",
