@@ -63,3 +63,4 @@ docs/*-gemini-*.md
 docs/*-claude-*.md
 .mypy_cache/
 .claude/settings.local.json
+junit.xml

@@ -20,7 +20,8 @@ import pytest
 class TestOpenTelemetrySetup:
     """Test OpenTelemetry setup and configuration."""
 
-    @patch.dict(os.environ, {"OTEL_TRACES_ENABLED": "true"})
+    @patch("apps.memory_api.observability.opentelemetry_config.OTEL_EXPORTER_TYPE", "otlp")
+    @patch("apps.memory_api.observability.opentelemetry_config.OTEL_ENABLED", True)
     @patch(
         "apps.memory_api.observability.opentelemetry_config.OPENTELEMETRY_AVAILABLE",
         True,
@@ -113,7 +114,7 @@ class TestFastAPIInstrumentation:
         "apps.memory_api.observability.opentelemetry_config.OPENTELEMETRY_AVAILABLE",
         True,
     )
-    @patch.dict(os.environ, {"OTEL_TRACES_ENABLED": "true"})
+    @patch("apps.memory_api.observability.opentelemetry_config.OTEL_ENABLED", True)
     @patch("apps.memory_api.observability.opentelemetry_config.FastAPIInstrumentor")
     def test_instrument_fastapi(self, mock_instrumentor):
         """Test FastAPI instrumentation."""
@@ -151,7 +152,7 @@ class TestLibraryInstrumentation:
         "apps.memory_api.observability.opentelemetry_config.OPENTELEMETRY_AVAILABLE",
         True,
     )
-    @patch.dict(os.environ, {"OTEL_TRACES_ENABLED": "true"})
+    @patch("apps.memory_api.observability.opentelemetry_config.OTEL_ENABLED", True)
     @patch("apps.memory_api.observability.opentelemetry_config.RequestsInstrumentor")
     @patch("apps.memory_api.observability.opentelemetry_config.Psycopg2Instrumentor")
     @patch("apps.memory_api.observability.opentelemetry_config.AsyncPGInstrumentor")
