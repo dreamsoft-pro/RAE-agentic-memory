@@ -465,6 +465,27 @@ gh pr create --base main --head release/v1.2.0 \
 
 ---
 
+## 🔴 RULE #11: STRICT REPOSITORY SEPARATION - NO MIXING
+
+### ❌ ABSOLUTELY FORBIDDEN:
+- Mixing code from different projects (e.g., `ProjectA` code in `ProjectB` repo)
+- Committing files meant for `repo-A` into `repo-B`
+- "Just testing" code from another project in the current working directory
+- Copy-pasting unrelated modules without explicit architectural decision
+
+### ✅ CORRECT BEHAVIOR:
+- **Isolate contexts**: If working on `ProjectA`, switch directory/repo entirely.
+- **Verify destination**: Check `git remote -v` before pushing.
+- **Clean workspace**: Don't leave unrelated files in the project root.
+- **Git Hygiene**: `git status` before EVERY add/commit to ensure only relevant files are staged.
+
+### 📋 Why This Rule Exists:
+1. **Pollution**: Unrelated code bloats the repo and confuses dependencies.
+2. **Security**: Leaking proprietary/private code to public/wrong repos.
+3. **CI/CD Failure**: Build scripts for one project (e.g., Windows .exe) break CI for another (e.g., Linux Docker).
+
+---
+
 ## 🎯 Quick Reference Card (Updated)
 
 Print this and keep visible:

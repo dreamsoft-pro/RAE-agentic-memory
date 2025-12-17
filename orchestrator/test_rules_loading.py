@@ -33,7 +33,7 @@ def test_rules_loading():
         context={"test": "value"},
         complexity=TaskComplexity.SMALL,
         risk=TaskRisk.LOW,
-        working_directory="/home/grzegorz/cloud/Dockerized/RAE-agentic-memory",
+        working_directory=str(Path(__file__).parent.parent),
     )
 
     # Build prompt (should include rules)
