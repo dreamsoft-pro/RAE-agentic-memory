@@ -1,102 +1,102 @@
 # 🤖 Multi-Agent Collaboration with Shared RAE Memory
 
-> **TL;DR**: Podłącz dowolną liczbę AI agentów (Claude, Gemini, Cursor, Windsurf, etc.) do wspólnej pamięci RAE. Wszyscy widzą to samo, uczą się od siebie, dzielą kontekst.
+> **TL;DR**: Connect any number of AI agents (Claude, Gemini, Cursor, Windsurf, etc.) to a shared RAE memory. Everyone sees the same thing, learns from each other, shares context.
 
 ---
 
-## 🎯 Czym jest to?
+## 🎯 What is this?
 
-**RAE Multi-Agent System** umożliwia wielu AI agentom współpracę przez **wspólną, trwałą pamięć**.
+**RAE Multi-Agent System** enables multiple AI agents to collaborate through **shared, persistent memory**.
 
-### Bez RAE:
+### Without RAE:
 ```
 Claude          Gemini          Cursor
   🧠              🧠              🧠
   │               │               │
   └───────────────┴───────────────┘
-         Każdy działa solo
-         Brak wspólnej pamięci
-         Duplikacja pracy
+         Each works solo
+         No shared memory
+         Duplication of work
 ```
 
-### Z RAE:
+### With RAE:
 ```
 ┌─────────────────────────────────────────────────┐
 │              RAE Memory Engine                   │
-│         🧠 Współdzielona Pamięć                 │
+│         🧠 Shared Memory                       │
 │                                                  │
-│  • Episodic:   Co się wydarzyło                 │
-│  • Semantic:   Wiedza i zasady                  │
-│  • Working:    Obecny kontekst                  │
-│  • Reflective: Wnioski i uczenie się           │
+│  • Episodic:   What happened                   │
+│  • Semantic:   Knowledge and rules              │
+│  • Working:    Current context                  │
+│  • Reflective: Insights and learning           │
 └────────┬──────────┬──────────┬──────────────────┘
          │          │          │
     ┌────┴────┐ ┌──┴────┐ ┌──┴─────┐
-    │ Claude  │ │Gemini │ │ Cursor │  ... ∞ więcej
+    │ Claude  │ │Gemini │ │ Cursor │  ... ∞ more
     │  Code   │ │  CLI  │ │   IDE  │
     └─────────┘ └───────┘ └────────┘
 ```
 
-**Korzyści:**
-- ✅ **Wspólny kontekst**: Każdy agent widzi pracę innych
-- ✅ **Uczenie się**: Decyzje jednego agenta są dostępne dla innych
-- ✅ **Ciągłość**: Pamięć przetrwa zamknięcie sesji
-- ✅ **Skalowalność**: Dodaj więcej agentów bez limitu
-- ✅ **Audit trail**: Pełna historia współpracy
+**Benefits:**
+- ✅ **Shared context**: Each agent sees the work of others
+- ✅ **Learning**: Decisions of one agent are available to others
+- ✅ **Continuity**: Memory persists beyond session closure
+- ✅ **Scalability**: Add more agents without limit
+- ✅ **Audit trail**: Full collaboration history
 
 ---
 
-## 🚀 Quick Start (1 minuta)
+## 🚀 Quick Start (1 minute)
 
-### Krok 1: Uruchom RAE API
+### Step 1: Start RAE API
 
 ```bash
 docker-compose up -d rae-api
 
-# Sprawdź czy działa
+# Check if it's running
 curl http://localhost:8000/health
 ```
 
-### Krok 2: Uruchom automatyczny setup
+### Step 2: Run automatic setup
 
 ```bash
-# Pierwsza instalacja - skopiuj przykładowy skrypt
+# First installation - copy example script
 cp .claude/scripts/setup-rae-mcp-example.sh .local/setup-rae-mcp.sh
 
-# Opcjonalnie: dostosuj konfigurację
+# Optional: customize configuration
 nano .local/setup-rae-mcp.sh
 
-# Uruchom setup
+# Run setup
 .local/setup-rae-mcp.sh
 ```
 
-**To wszystko!** 🎉
+**That's it!** 🎉
 
-Script automatycznie:
-1. ✅ Sprawdza czy RAE API działa
-2. ✅ Instaluje MCP serwery
-3. ✅ Konfiguruje Claude Code
-4. ✅ Konfiguruje Gemini CLI
-5. ✅ Testuje połączenie
+The script automatically:
+1. ✅ Checks if RAE API is running
+2. ✅ Installs MCP servers
+3. ✅ Configures Claude Code
+4. ✅ Configures Gemini CLI
+5. ✅ Tests connection
 
-### Krok 3: Użyj agentów
+### Step 3: Use agents
 
-**W Claude Code:**
+**In Claude Code:**
 ```
 "Save to RAE: Using PostgreSQL for main database"
 ```
 
-**W Gemini CLI:**
+**In Gemini CLI:**
 ```bash
 gemini "Search RAE: What database are we using?"
 # → Finds: "Using PostgreSQL for main database"
 ```
 
-**Wspólna pamięć działa!** 🧠
+**Shared memory works!** 🧠
 
 ---
 
-## 📐 Architektura (Scalable)
+## 📐 Architecture (Scalable)
 
 ```
                     ┌─────────────────────────────────────┐
@@ -143,42 +143,42 @@ gemini "Search RAE: What database are we using?"
     └────────────────┘    └────────────────┘    └────────────────┘
 
 
-    Dodaj więcej agentów:
+    # Add more agents:
 
     ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
     │  Windsurf IDE   │  │  Cline (VSCode) │  │  Your Custom    │
     │                 │  │                 │  │  Agent          │
     └─────────────────┘  └─────────────────┘  └─────────────────┘
 
-    Każdy nowy agent automatycznie:
-    - Ma dostęp do całej historii
-    - Widzi pracę poprzednich agentów
-    - Może zapisywać swoją pracę
-    - Uczy się od innych
+    Each new agent automatically:
+    - Has access to full history
+    - Sees work of previous agents
+    - Can save its work
+    - Learns from others
 ```
 
-**Im więcej agentów, tym bogatsza współdzielona pamięć!**
+**The more agents, the richer the shared memory!**
 
 ---
 
-## 🔧 Konfiguracja Szczegółowa
+## 🔧 Detailed Configuration
 
-### Zmienne Środowiskowe
+### Environment Variables
 
 ```bash
-# Podstawowe
+# Basic
 export RAE_API_URL="http://localhost:8000"
 export RAE_API_KEY="dev-key"
 
-# Multi-tenancy (opcjonalne)
-export RAE_TENANT_ID="my-team"           # Izolacja między zespołami
-export RAE_PROJECT_ID="my-awesome-app"   # Izolacja między projektami
+# Multi-tenancy (optional)
+export RAE_TENANT_ID="my-team"           # Isolation between teams
+export RAE_PROJECT_ID="my-awesome-app"   # Isolation between projects
 
-# Uruchom setup
+# Run setup
 .local/setup-rae-mcp.sh
 ```
 
-### Struktura Tenantów
+### Tenant Structure
 
 ```
 ┌─────────────────────────────────────────────┐
@@ -187,31 +187,31 @@ export RAE_PROJECT_ID="my-awesome-app"   # Izolacja między projektami
 │                                              │
 │  Tenant: "team-frontend"                    │
 │  ├─ Project: "nextjs-app"                   │
-│  │  └─ Agenty: Claude, Cursor               │
+│  │  └─ Agents: Claude, Cursor               │
 │  └─ Project: "react-native-app"             │
-│     └─ Agenty: Gemini, Windsurf             │
+│     └─ Agents: Gemini, Windsurf             │
 │                                              │
 │  Tenant: "team-backend"                     │
 │  ├─ Project: "api-service"                  │
-│  │  └─ Agenty: Claude, Cline                │
+│  │  └─ Agents: Claude, Cline                │
 │  └─ Project: "worker-service"               │
-│     └─ Agenty: Gemini                       │
+│     └─ Agents: Gemini                       │
 │                                              │
 └─────────────────────────────────────────────┘
 ```
 
-**Izolacja:**
-- Tenant "team-frontend" **nie widzi** pamięci tenant "team-backend"
-- Project "nextjs-app" **nie widzi** pamięci "react-native-app"
-- W ramach jednego projektu **wszyscy agenty widzą tę samą pamięć**
+**Isolation:**
+- Tenant "team-frontend" **does not see** memory of tenant "team-backend"
+- Project "nextjs-app" **does not see** memory of "react-native-app"
+- Within one project, **all agents see the same memory**
 
 ---
 
-## 🎓 Przykłady Użycia
+## 🎓 Usage Examples
 
-### Przykład 1: Współpraca przy implementacji
+### Example 1: Collaboration on implementation
 
-**Dzień 1 - Claude Code:**
+**Day 1 - Claude Code:**
 ```
 User: "Implement user authentication"
 
@@ -223,43 +223,43 @@ Claude: [Searches RAE for auth patterns]
          Using bcrypt for password hashing."
 ```
 
-**Dzień 2 - Gemini CLI:**
+**Day 2 - Gemini CLI:**
 ```bash
 gemini "Write tests for authentication"
 
-# Gemini automatycznie:
+# Gemini automatically:
 # 1. Search RAE: "authentication implementation"
-# 2. Znajduje: "OAuth2 with JWT, 1h access, 7d refresh, bcrypt"
-# 3. Pisze testy pokrywające te szczegóły
+# 2. Finds: "OAuth2 with JWT, 1h access, 7d refresh, bcrypt"
+# 3. Writes tests covering these details
 # 4. Saves to RAE: "Added tests for OAuth2 flow..."
 ```
 
-**Dzień 3 - Cursor IDE:**
+**Day 3 - Cursor IDE:**
 ```
 User: "Fix the authentication bug"
 
 Cursor: [Searches RAE: "authentication"]
-        [Widzi: implementację, testy, historię zmian]
-        [Naprawia bug z pełnym kontekstem]
+        [Sees: implementation, tests, change history]
+        [Fixes bug with full context]
 ```
 
-### Przykład 2: Code Review Workflow
+### Example 2: Code Review Workflow
 
 ```
 ┌──────────────────────────────────────────────┐
-│ 1. Claude implementuje feature              │
+│ 1. Claude implements a feature              │
 │    └─> Saves: "Added payment processing"    │
 └──────────────────────┬───────────────────────┘
                        │
 ┌──────────────────────▼───────────────────────┐
-│ 2. Gemini robi review                        │
+│ 2. Gemini performs review                        │
 │    └─> Searches RAE for context             │
 │    └─> Saves: "Payment code looks good,     │
 │              but missing error handling"     │
 └──────────────────────┬───────────────────────┘
                        │
 ┌──────────────────────▼───────────────────────┐
-│ 3. Claude dodaje error handling              │
+│ 3. Claude adds error handling              │
 │    └─> Reads Gemini's feedback from RAE     │
 │    └─> Implements fixes                      │
 │    └─> Saves: "Added comprehensive error    │
@@ -267,15 +267,15 @@ Cursor: [Searches RAE: "authentication"]
 └──────────────────────────────────────────────┘
 ```
 
-### Przykład 3: Długoterminowe uczenie się
+### Example 3: Long-term learning
 
-**Tydzień 1:**
+**Week 1:**
 ```
 Claude: "Tried approach A for caching - didn't work well"
         [Saves to RAE with tag: "lessons-learned"]
 ```
 
-**Tydzień 4:**
+**Week 4:**
 ```
 Gemini: "How should I implement caching?"
         [Searches RAE: "caching lessons"]
@@ -283,16 +283,16 @@ Gemini: "How should I implement caching?"
         [Suggests: "Based on past experience, let's try B"]
 ```
 
-**Miesiąc później:**
+**A month later:**
 ```
 New team member's agent:
         [Onboards with full context from RAE]
         [Knows: what works, what doesn't, why]
 ```
 
-### Przykład 4: Quota Exhaustion Recovery (Real Story)
+### Example 4: Quota Exhaustion Recovery (Real Story)
 
-**Problem**: Gemini CLI wyczerpał quota w środku implementacji feature
+**Problem**: Gemini CLI exhausted quota in the middle of feature implementation
 
 ```
 ┌──────────────────────────────────────────────┐
@@ -310,7 +310,7 @@ New team member's agent:
 ┌──────────────────────────────────────────────┐
 │ Claude Code (PAID)                           │
 │ ├─> Searches RAE: "What did Gemini do?"     │
-│ ├─> Reads Gemini's session log from RAE     │
+│ ├─> Retrieves Gemini's session log from RAE     │
 │ ├─> Continues workflow exactly where left   │
 │ ├─> Merges to develop (816/868 tests pass)  │
 │ ├─> Merges to main (43 commits)             │
@@ -321,7 +321,7 @@ New team member's agent:
 
 **Key Benefits**:
 - 🎯 Zero context loss despite agent switch
-- 💰 50% cost savings (Gemini FREE for implementation)
+- 💰 50% cost savings (Gemini FREE → Claude PAID only for orchestration)
 - 🔄 Seamless handoff between agents
 - ✅ Full 3-phase testing workflow maintained
 
@@ -329,13 +329,13 @@ New team member's agent:
 
 ---
 
-## 🛠️ Dodawanie Więcej Agentów
+## 🛠️ Adding More Agents
 
 ### Claude Desktop App (GUI)
 
 **macOS:**
 ```bash
-# Edytuj: ~/Library/Application Support/Claude/claude_desktop_config.json
+# Edit: ~/Library/Application Support/Claude/claude_desktop_config.json
 {
   "mcpServers": {
     "rae-memory": {
@@ -363,7 +363,7 @@ New team member's agent:
 
 ### Cursor IDE
 
-Utwórz `.cursor/mcp.json` w projekcie:
+Create `.cursor/mcp.json` in your project:
 
 ```json
 {
@@ -383,7 +383,7 @@ Utwórz `.cursor/mcp.json` w projekcie:
 
 ### Windsurf IDE
 
-Podobnie jak Cursor - utwórz config w projekcie.
+Similar to Cursor - create config in your project.
 
 ### Cline (VSCode Extension)
 
@@ -434,7 +434,7 @@ results = client.search_memory(
 
 ## 📊 Monitoring & Observability
 
-### Sprawdź status agentów
+### Check agent status
 
 ```bash
 # Claude Code
@@ -444,7 +444,7 @@ claude mcp list
 gemini mcp list
 ```
 
-### Zapytaj RAE o aktywność
+### Query RAE for activity
 
 ```bash
 curl -X POST http://localhost:8000/v1/memory/query \
@@ -475,31 +475,31 @@ http://localhost:8000/dashboard
 
 ### Multi-Tenancy
 
-Pamięć jest **kompletnie izolowana** między tenantami:
+Memory is **completely isolated** between tenants:
 
 ```
-Tenant A → Widzi tylko swoją pamięć
-Tenant B → Widzi tylko swoją pamięć
+Tenant A → Only sees its own memory
+Tenant B → Only sees its own memory
 ```
 
-**Brak leakage między zespołami!**
+**No leakage between teams!**
 
 ### API Keys
 
 ```bash
-# Produkcja - użyj silnych kluczy
+# Production - use strong keys
 export RAE_API_KEY="$(openssl rand -base64 32)"
 
-# Development - prosty klucz
+# Development - simple key
 export RAE_API_KEY="dev-key"
 ```
 
 ### PII Scrubbing
 
-MCP Server automatycznie maskuje:
-- API keys (w logach)
-- Emails (częściowo)
-- IP addresses (częściowo)
+MCP Server automatically masks:
+- API keys (in logs)
+- Emails (partially)
+- IP addresses (partially)
 - Credit cards
 - SSNs
 
@@ -507,29 +507,29 @@ MCP Server automatycznie maskuje:
 
 ## 🎯 Best Practices
 
-### 1. Używaj opisowych source identifiers
+### 1. Use descriptive source identifiers
 
 ```python
-# ❌ ZŁE
+# ❌ BAD
 source="agent"
 
-# ✅ DOBRE
+# ✅ GOOD
 source="claude-code:feature-implementation"
 source="gemini-cli:code-review"
 source="cursor:bug-fix"
 ```
 
-### 2. Taguj sensownie
+### 2. Tag wisely
 
 ```python
-# ❌ ZŁE
+# ❌ BAD
 tags=["code"]
 
-# ✅ DOBRE
+# ✅ GOOD
 tags=["authentication", "security", "bug-fix", "lesson-learned"]
 ```
 
-### 3. Używaj odpowiednich warstw
+### 3. Use appropriate layers
 
 ```python
 # Recent events → Episodic
@@ -545,7 +545,7 @@ layer="working"
 layer="reflective"
 ```
 
-### 4. Ustawiaj importance
+### 4. Set importance
 
 ```python
 # Critical decisions
@@ -562,33 +562,33 @@ importance=0.2
 
 ## 🐛 Troubleshooting
 
-### Problem: Agent nie widzi memories
+### Problem: Agent does not see memories
 
-**Sprawdź:**
+**Check:**
 ```bash
-# 1. Czy używasz tego samego tenant_id?
+# 1. Are you using the same tenant_id?
 echo $RAE_TENANT_ID
 
-# 2. Czy używasz tego samego project_id?
+# 2. Are you using the same project_id?
 echo $RAE_PROJECT_ID
 
-# 3. Czy RAE API działa?
+# 3. Is RAE API running?
 curl http://localhost:8000/health
 
-# 4. Czy MCP server jest połączony?
+# 4. Is the MCP server connected?
 claude mcp list
 gemini mcp list
 ```
 
 ### Problem: "Layer validation error"
 
-**Używaj poprawnych kodów warstw:**
-- `episodic` lub `em`
-- `working` lub `stm`
-- `semantic` lub `ltm`
-- `reflective` lub `rm`
+**Use correct layer codes:**
+- `episodic` or `em`
+- `working` or `stm`
+- `semantic` or `ltm`
+- `reflective` or `rm`
 
-MCP server automatycznie mapuje human-friendly names → API codes.
+MCP server automatically maps human-friendly names → API codes.
 
 ### Problem: Setup script fails
 
@@ -664,7 +664,7 @@ Apache License 2.0 - See [LICENSE](./LICENSE)
 - ✅ 2/2 new tests passing (100%)
 - ✅ ~50% token cost savings (Gemini FREE → Claude PAID only for orchestration)
 - ✅ Zero context loss between agents
-- ✅ Gemini's work preserved despite quota limit
+- ✅ Full 3-phase testing workflow maintained
 
 **Key Insight**:
 > "When Gemini hit quota limits mid-session, Claude seamlessly picked up exactly where it left off using RAE shared memory. The feature made it to production as if it was a single continuous session." - RAE Development Team

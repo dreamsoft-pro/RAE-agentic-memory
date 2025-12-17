@@ -1,40 +1,40 @@
 # Orchestrator - Quick Start Guide
 
-## ✅ Wymagania
+## ✅ Requirements
 
-### 1. Klucz API Claude (opcjonalny, ale zalecany)
+### 1. Claude API Key (optional, but recommended)
 ```bash
-# W pliku .env (już skonfigurowany):
+# In .env file (already configured):
 ANTHROPIC_API_KEY=sk-ant-api03-...
 ```
 
-### 2. Gemini CLI (darmowy, już zainstalowany)
+### 2. Gemini CLI (free, already installed)
 ```bash
-# Sprawdź wersję:
+# Check version:
 gemini --version  # ✅ 0.20.0
 
-# Jeśli nie zalogowany, zaloguj się:
-gemini auth login  # Otworzy przeglądarkę do autentykacji
+# If not logged in, log in:
+gemini auth login  # Opens browser for authentication
 ```
 
-## 🚀 Weryfikacja - Czy Orkiestrator Działa?
+## 🚀 Verification - Does the Orchestrator Work?
 
 ```bash
 cd orchestrator
 python test_simple.py
 ```
 
-**Oczekiwany output:**
+**Expected output:**
 ```
 🎉 All tests passed! Orchestrator is ready to use.
 Passed: 4/4
 ```
 
-## 📋 Jak Używać Orkiestratora?
+## 📋 How to Use the Orchestrator?
 
-### Opcja 1: Przykładowe Zadanie z YAML
+### Option 1: Example Task from YAML
 
-Utwórz plik zadania w `.orchestrator/tasks.yaml`:
+Create a task file in `.orchestrator/tasks.yaml`:
 
 ```yaml
 tasks:
@@ -51,13 +51,13 @@ tasks:
     complexity: small
 ```
 
-Uruchom:
+Run:
 ```bash
 cd orchestrator
 python main.py --task-id TEST-001
 ```
 
-### Opcja 2: Bezpośrednio z CLI
+### Option 2: Directly from CLI
 
 ```bash
 cd orchestrator
@@ -67,7 +67,7 @@ python cli.py execute \
   --area test
 ```
 
-### Opcja 3: Programowo (Python API)
+### Option 3: Programmatically (Python API)
 
 ```python
 import asyncio
@@ -75,10 +75,10 @@ from orchestrator.main import Orchestrator
 from orchestrator.core.state_machine import TaskDefinition, TaskRisk
 
 async def main():
-    # Utwórz orkiestrator
+    # Create the orchestrator
     orchestrator = Orchestrator()
 
-    # Zdefiniuj zadanie
+    # Define the task
     task = TaskDefinition(
         task_id="TEST-001",
         goal="Write a function to check if a number is prime",
@@ -87,7 +87,7 @@ async def main():
         area="test",
     )
 
-    # Wykonaj
+    # Execute
     result = await orchestrator.execute_task(task)
 
     print(f"Status: {result.status}")
@@ -96,79 +96,79 @@ async def main():
 asyncio.run(main())
 ```
 
-## 🔧 Konfiguracja Modeli
+## 🔧 Model Configuration
 
-### Plik: `.orchestrator/providers.yaml`
+### File: `.orchestrator/providers.yaml`
 
 ```yaml
 providers:
-  # Claude - Płatny, ale najlepszy dla critical tasks
+  # Claude - Paid, but best for critical tasks
   claude:
     enabled: true
     default_model: claude-sonnet-4-5-20250929
     settings:
       api_key: ${ANTHROPIC_API_KEY}
 
-  # Gemini - DARMOWY przez CLI!
+  # Gemini - FREE via CLI!
   gemini:
     enabled: true
     default_model: gemini-2.5-flash
     settings:
       cli_path: gemini
-      rate_limit_delay: true  # Ważne dla wersji bez API key
+      rate_limit_delay: true  # Important for versions without API key
       min_delay: 1.0
       max_delay: 10.0
 
 routing:
-  # Preferuj tańsze modele gdy jakość wystarczająca
+  # Prefer cheaper models when quality is sufficient
   prefer_local: false
   max_cost_per_task: 1.0
   fallback_provider: claude
 ```
 
-## 💰 Strategie Kosztów
+## 💰 Cost Strategies
 
-### 1. **Maksymalna oszczędność** (90% zadań na Gemini)
+### 1. **Maximum Savings** (90% of tasks on Gemini)
 ```yaml
-# Gemini dla wszystkiego poza critical tasks
+# Gemini for everything except critical tasks
 gemini:
   enabled: true
-  default_model: gemini-2.5-flash  # Najszybszy, darmowy
+  default_model: gemini-2.5-flash  # Fastest, free
 
-# Claude tylko dla high-risk
+# Claude only for high-risk
 routing:
-  max_cost_per_task: 0.10  # Maksymalnie $0.10 na task
+  max_cost_per_task: 0.10  # Max $0.10 per task
 ```
 
 ### 2. **Balanced** (70% Gemini, 30% Claude)
 ```yaml
-# Domyślna konfiguracja
+# Default configuration
 # Gemini: low/medium risk
 # Claude: high risk, critical areas
 ```
 
-### 3. **Maximum Quality** (Claude dla wszystkiego)
+### 3. **Maximum Quality** (Claude for everything)
 ```yaml
 claude:
   enabled: true
-  default_model: claude-opus-4-20250514  # Najlepszy
+  default_model: claude-opus-4-20250514  # Best
 
 gemini:
-  enabled: false  # Wyłącz Gemini
+  enabled: false  # Disable Gemini
 ```
 
-## 📊 Smart Routing - Jak To Działa?
+## 📊 Smart Routing - How It Works?
 
-Orkiestrator automatycznie wybiera model na podstawie:
+The orchestrator automatically selects the model based on:
 
-### 1. **Task Risk** (3 poziomy)
+### 1. **Task Risk** (3 levels)
 ```python
 TaskRisk.LOW     → Gemini 2.5 Flash Lite  (FREE)
 TaskRisk.MEDIUM  → Gemini 2.5 Pro         (FREE)
 TaskRisk.HIGH    → Claude Sonnet 4.5      ($0.003/1K)
 ```
 
-### 2. **Task Area** (gdzie w kodzie)
+### 2. **Task Area** (where in the code)
 ```python
 area = "core"        → Claude (critical code)
 area = "api"         → Gemini Pro
@@ -176,15 +176,15 @@ area = "tests"       → Gemini Flash
 area = "docs"        → Gemini Flash Lite
 ```
 
-### 3. **Historical Performance** (uczenie się)
-Po ~200 zadaniach orkiestrator wie:
-- Które modele są najlepsze dla danego typu zadania
-- Gdzie można zaoszczędzić bez utraty jakości
-- Które zadania wymagają review
+### 3. **Historical Performance** (learning)
+After ~200 tasks, the orchestrator knows:
+- Which models are best for a given task type
+- Where savings can be made without losing quality
+- Which tasks require review
 
-## 🎯 Przykłady Użycia
+## 🎯 Usage Examples
 
-### Przykład 1: Prosty Test (Darmowy - Gemini)
+### Example 1: Simple Test (Free - Gemini)
 ```bash
 cd orchestrator
 python cli.py execute \
@@ -192,11 +192,11 @@ python cli.py execute \
   --risk low \
   --area tests
 
-# Koszt: $0.00 (Gemini FREE)
-# Czas: ~2-3 min
+# Cost: $0.00 (Gemini FREE)
+# Time: ~2-3 min
 ```
 
-### Przykład 2: Krytyczna Funkcja (Płatny - Claude)
+### Example 2: Critical Function (Paid - Claude)
 ```bash
 python cli.py execute \
   --goal "Implement memory pruning algorithm" \
@@ -204,12 +204,12 @@ python cli.py execute \
   --area core \
   --complexity medium
 
-# Koszt: ~$0.05-0.15 (Claude Sonnet)
-# Czas: ~5-10 min
+# Cost: ~$0.05-0.15 (Claude Sonnet)
+# Time: ~5-10 min
 # Quality: Maximum
 ```
 
-### Przykład 3: Batch Processing (Mix)
+### Example 3: Batch Processing (Mix)
 ```yaml
 # tasks.yaml
 tasks:
@@ -225,11 +225,11 @@ tasks:
     goal: "Fix memory leak in graph service"
     risk: high
 
-# Uruchom wszystkie:
+# Run all:
 python main.py --batch
 ```
 
-**Koszt:**
+**Cost:**
 - BATCH-001 + BATCH-002: $0.00 (Gemini)
 - BATCH-003: $0.10 (Claude)
 - **Total: $0.10**
@@ -237,7 +237,7 @@ python main.py --batch
 ## 🔍 Monitoring
 
 ### 1. Run Logs
-Każdy run zapisywany w `ORCHESTRATOR_RUN_LOG.md`:
+Each run is saved in `ORCHESTRATOR_RUN_LOG.md`:
 ```markdown
 ## Run #42 - 2025-12-10 18:00:00
 Task: Add caching to API
@@ -265,32 +265,32 @@ Total cost saved: $12.45 (vs all-Claude)
 2. claude-sonnet-4-5: 98% success, $0.05 avg
 ```
 
-### 3. RAE Memory Integration (przyszłość)
+### 3. RAE Memory Integration (future)
 ```python
-# Orkiestrator zapisze swoje doświadczenie w RAE
-# Potem może się uczyć z poprzednich runów
+# The orchestrator will save its experience in RAE
+# Then it can learn from previous runs
 ```
 
-## ⚠️ Ważne Uwagi
+## ⚠️ Important Notes
 
 ### Rate Limiting (Gemini Free)
-Gemini CLI bez API key ma limity:
+Gemini CLI without an API key has limits:
 - **Per-second**: ~2-3 requests/s
 - **Per-day**: ~1500 requests/day
 
-Orkiestrator automatycznie dodaje losowe opóźnienia (1-10s) między requestami.
+The orchestrator automatically adds random delays (1-10s) between requests.
 
-### Jeśli Potrzebujesz Więcej
+### If You Need More
 ```bash
-# Opcja 1: Gemini API Key (płatny)
+# Option 1: Gemini API Key (paid)
 export GOOGLE_API_KEY=...
-# W providers.yaml:
+# In providers.yaml:
 gemini:
   settings:
     api_key: ${GOOGLE_API_KEY}
-    rate_limit_delay: false  # Wyłącz delays
+    rate_limit_delay: false  # Disable delays
 
-# Opcja 2: Użyj tylko Claude
+# Option 2: Use Claude only
 gemini:
   enabled: false
 ```
@@ -299,43 +299,43 @@ gemini:
 
 ### Problem: "Gemini CLI not available"
 ```bash
-# Zaloguj się:
+# Log in:
 gemini auth login
 
-# Sprawdź:
+# Check:
 gemini --version
 ```
 
 ### Problem: "ANTHROPIC_API_KEY not found"
 ```bash
-# Sprawdź .env:
+# Check .env:
 grep ANTHROPIC_API_KEY .env
 
-# Lub export:
+# Or export:
 export ANTHROPIC_API_KEY=sk-ant-...
 ```
 
 ### Problem: Rate limit errors (429)
 ```yaml
-# Zwiększ delays w providers.yaml:
+# Increase delays in providers.yaml:
 gemini:
   settings:
-    min_delay: 5.0   # Było 1.0
-    max_delay: 20.0  # Było 10.0
+    min_delay: 5.0   # Was 1.0
+    max_delay: 20.0  # Was 10.0
 ```
 
-## 📖 Dalsze Czytanie
+## 📖 Further Reading
 
-- `README.md` - Pełna dokumentacja
+- `README.md` - Full documentation
 - `docs/ORCHESTRATOR_PHASE2.5_COMPLETE.md` - Provider system
 - `docs/ORCHESTRATOR_PHASE3_COMPLETE.md` - Intelligence & learning
-- `docs/ORCHESTRATOR_MODELS_UPDATE.md` - Modele i rate limiting
+- `docs/ORCHESTRATOR_MODELS_UPDATE.md` - Models and rate limiting
 
 ---
 
-**Pierwszych kroków:**
-1. ✅ Uruchom `test_simple.py` - sprawdź czy działa
-2. 🎯 Utwórz proste zadanie w `tasks.yaml`
-3. 🚀 Uruchom `python main.py --task-id YOUR-TASK`
-4. 📊 Zobacz wyniki w `ORCHESTRATOR_RUN_LOG.md`
-5. 💰 Sprawdź koszt (większość zadań = $0.00!)
+**First steps:**
+1. ✅ Run `test_simple.py` - check if it works
+2. 🎯 Create a simple task in `tasks.yaml`
+3. 🚀 Run `python main.py --task-id YOUR-TASK`
+4. 📊 See results in `ORCHESTRATOR_RUN_LOG.md`
+5. 💰 Check cost (most tasks = $0.00!)

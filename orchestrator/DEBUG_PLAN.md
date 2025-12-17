@@ -1,38 +1,38 @@
-# 🔧 Plan Debugowania Orkiestratora
+# 🔧 Orchestrator Debug Plan
 
-## Co Zrobiłem (Podczas Twojego Spaceru):
+## What I Did (While You Were Away):
 
-### 1. Wyłączyłem Reguły Projektowe
-**Plik:** `orchestrator/agents/base.py`
+### 1. Disabled Project Rules
+**File:** `orchestrator/agents/base.py`
 ```python
 def _load_project_rules(self, working_dir: str) -> str:
     # DISABLED: Project rules cause issues with LLM prompts
     return ""
 ```
 
-**Dlaczego:** Reguły dodawały ~5-50KB do każdego promptu, mogły powodować problemy.
+**Why:** Rules added ~5-50KB to each prompt, potentially causing issues.
 
 ---
 
-### 2. Dodałem Ekstensywne Logowanie
-**Plik:** `orchestrator/adapters/claude_adapter.py`
+### 2. Added Extensive Logging
+**File:** `orchestrator/adapters/claude_adapter.py`
 
-Teraz w każdym API calli zobaczysz:
+Now in every API call you will see:
 ```
 INFO: Claude API call: model=claude-sonnet-4-5-20250929, prompt_len=1234
 DEBUG: Prompt preview: Task: Check if file exists...
 INFO: Claude API success: input=456, output=123
 ```
 
-Przy błędzie:
+On error:
 ```
 ERROR: Claude API error: ConnectionError: Connection refused
 ```
 
 ---
 
-### 3. Stworzyłem Ultra-Proste Zadanie Testowe
-**Plik:** `.orchestrator/tasks.yaml`
+### 3. Created an Ultra-Simple Test Task
+**File:** `.orchestrator/tasks.yaml`
 
 ```yaml
 - id: TEST-SIMPLE
@@ -46,14 +46,14 @@ ERROR: Claude API error: ConnectionError: Connection refused
     - Output: YES or NO
 ```
 
-To najprostsze możliwe zadanie - tylko sprawdzenie czy plik istnieje.
+This is the simplest possible task - just checking if a file exists.
 
 ---
 
-### 4. Dodałem Test Claude API (bez orkiestratora)
-**Plik:** `orchestrator/test_claude_direct.py`
+### 4. Added Claude API Test (without orchestrator)
+**File:** `orchestrator/test_claude_direct.py`
 
-Możesz sprawdzić czy Claude działa sam w sobie:
+You can check if Claude works on its own:
 ```bash
 cd orchestrator
 source ../.venv/bin/activate
@@ -62,16 +62,16 @@ python test_claude_direct.py
 
 ---
 
-## 🚀 Jak Przetestować:
+## 🚀 How to Test:
 
-### Test 1: Sprawdź czy Claude API działa
+### Test 1: Check if Claude API works
 ```bash
-cd /home/grzegorz/cloud/Dockerized/RAE-agentic-memory/orchestrator
+cd "$PROJECT_ROOT"/orchestrator
 source ../.venv/bin/activate
 python test_claude_direct.py
 ```
 
-**Oczekiwany wynik:**
+**Expected outcome:**
 ```
 ✅ API key found: sk-ant-api03-...
 📤 Prompt: What is 2+2? Answer in one word.
@@ -80,142 +80,142 @@ python test_claude_direct.py
 📥 Response: Four
 ```
 
-**Jeśli to NIE działa:**
-- Problem jest z Claude API / kluczem / siecią
-- NIE z orkiestratorem
+**If this does NOT work:**
+- The problem is with Claude API / key / network
+- NOT with the orchestrator
 
 ---
 
-### Test 2: Uruchom najprostsze zadanie orkiestratora
+### Test 2: Run the simplest orchestrator task
 ```bash
-cd /home/grzegorz/cloud/Dockerized/RAE-agentic-memory
+cd "$PROJECT_ROOT"
 source .venv/bin/activate
 python -m orchestrator.main --task-id TEST-SIMPLE 2>&1 | tee orchestrator_test_simple.log
 ```
 
-**To:**
-- Uruchomi orkiestrator
-- Z najprostszym możliwym zadaniem
-- Z ekstensywnym logowaniem
-- Zapisze wszystko do `orchestrator_test_simple.log`
+**This will:**
+- Run the orchestrator
+- With the simplest possible task
+- With extensive logging
+- Save everything to `orchestrator_test_simple.log`
 
 ---
 
-### Test 3: Analiza Logów
+### Test 3: Log Analysis
 
-Po uruchomieniu orkiestratora zobaczysz w logach **dokładnie gdzie failuje**:
+After running the orchestrator, you will see in the logs **exactly where it fails**:
 
-**Scenariusz A: Claude API działa**
+**Scenario A: Claude API works**
 ```
 INFO: Claude API call: model=claude-sonnet-4-5-20250929, prompt_len=456
 INFO: Claude API success: input=123, output=45
 ```
-→ Problem jest w parsowaniu odpowiedzi lub innej logice
+→ Problem is in parsing the response or other logic
 
-**Scenariusz B: Claude API nie działa**
+**Scenario B: Claude API does not work**
 ```
 ERROR: Claude API error: ConnectionError: ...
 ```
-→ Problem z API / kluczem / siecią
+→ Problem with API / key / network
 
-**Scenariusz C: Coś innego**
+**Scenario C: Something else**
 ```
 ERROR: Task TEST-SIMPLE failed with exception
 Traceback ...
 ```
-→ Problem gdzieś w orkiestratorze przed Claude API call
+→ Problem somewhere in the orchestrator before Claude API call
 
 ---
 
-## 📝 Co Zapisać:
+## 📝 What to Save:
 
-Po uruchomieniu, skopiuj **WSZYSTKIE** logi do:
+After running, copy **ALL** logs to:
 ```
 docs/bledy-orkiestrator_04.md
 ```
 
-Potrzebne informacje:
-1. Pełny output z `python -m orchestrator.main --task-id TEST-SIMPLE`
-2. Ostatnie linie z `orchestrator_test_simple.log`
-3. Czy `test_claude_direct.py` działało
+Required information:
+1. Full output from `python -m orchestrator.main --task-id TEST-SIMPLE`
+2. Last lines from `orchestrator_test_simple.log`
+3. Whether `test_claude_direct.py` worked
 
 ---
 
-## 🔍 Co Sprawdzić:
+## 🔍 What to Check:
 
-### Klucz API Claude
+### Claude API Key
 ```bash
 grep ANTHROPIC_API_KEY .env
 ```
-Powinno być: `ANTHROPIC_API_KEY=sk-ant-api03-...`
+Should be: `ANTHROPIC_API_KEY=sk-ant-api03-...`
 
-### Czy anthropic package zainstalowany
+### Is anthropic package installed
 ```bash
 source .venv/bin/activate
 pip show anthropic
 ```
-Powinno być: `Version: 0.74.1` lub wyżej
+Should be: `Version: 0.74.1` or higher
 
 ### Internet connectivity
 ```bash
 curl -I https://api.anthropic.com
 ```
-Powinno zwrócić: `HTTP/2 200` (lub 403, ale NIE connection refused)
+Should return: `HTTP/2 200` (or 403, but NOT connection refused)
 
 ---
 
-## 💡 Możliwe Przyczyny Błędów:
+## 💡 Possible Causes of Errors:
 
 ### 1. Claude API Key Invalid
-**Symptom:** `AuthenticationError` w logach
-**Fix:** Sprawdź czy klucz w `.env` jest poprawny
+**Symptom:** `AuthenticationError` in logs
+**Fix:** Check if the key in `.env` is correct
 
-### 2. Brak Internetu / Firewall
-**Symptom:** `ConnectionError` w logach
-**Fix:** Sprawdź połączenie z `curl https://api.anthropic.com`
+### 2. No Internet / Firewall
+**Symptom:** `ConnectionError` in logs
+**Fix:** Check connection with `curl https://api.anthropic.com`
 
 ### 3. anthropic Package Problem
-**Symptom:** `ImportError` lub weird errors
+**Symptom:** `ImportError` or weird errors
 **Fix:** `pip install --upgrade anthropic`
 
-### 4. Problem w Orkiestratorze
-**Symptom:** Błąd PRZED "Claude API call" w logach
-**Fix:** To trzeba będzie debugować dalej
+### 4. Problem in Orchestrator
+**Symptom:** Error BEFORE "Claude API call" in logs
+**Fix:** This will need further debugging
 
-### 5. Problem z Parsowaniem Odpowiedzi
-**Symptom:** "Claude API success" w logach, ale potem błąd
-**Fix:** Problem w agent logic, nie w Claude
-
----
-
-## 🎯 Następne Kroki:
-
-1. **Uruchom Test 1** (test_claude_direct.py)
-   - Jeśli ❌ → Problem z Claude API
-   - Jeśli ✅ → Idź do Test 2
-
-2. **Uruchom Test 2** (TEST-SIMPLE przez orkiestrator)
-   - Zapisz WSZYSTKIE logi do docs/bledy-orkiestrator_04.md
-   - Wrócę i przeanalizuję co poszło nie tak
-
-3. **Jeśli Test 2 ✅ działa:**
-   - Spróbuj RAE-DOC-001: `python -m orchestrator.main --task-id RAE-DOC-001`
-   - Jeśli to też działa → PROBLEM ROZWIĄZANY! 🎉
+### 5. Problem with Response Parsing
+**Symptom:** "Claude API success" in logs, but then an error
+**Fix:** Problem in agent logic, not in Claude
 
 ---
 
-## 📊 Status Zmian:
+## 🎯 Next Steps:
+
+1. **Run Test 1** (test_claude_direct.py)
+   - If ❌ → Problem with Claude API
+   - If ✅ → Go to Test 2
+
+2. **Run Test 2** (TEST-SIMPLE via orchestrator)
+   - Save ALL logs to docs/bledy-orkiestrator_04.md
+   - I will come back and analyze what went wrong
+
+3. **If Test 2 ✅ works:**
+   - Try RAE-DOC-001: `python -m orchestrator.main --task-id RAE-DOC-001`
+   - If that also works → PROBLEM SOLVED! 🎉
+
+---
+
+## 📊 Status of Changes:
 
 ```
-✅ Reguły projektowe wyłączone (base.py)
-✅ Ekstensywne logowanie dodane (claude_adapter.py)
-✅ Ultra-proste zadanie TEST-SIMPLE (.orchestrator/tasks.yaml)
-✅ Direct Claude test (test_claude_direct.py)
-✅ Wszystko zacommitowane (commit 5e8aaceb4)
+✅ Project rules disabled (base.py)
+✅ Extensive logging added (claude_adapter.py)
+✅ Ultra-simple TEST-SIMPLE task created (.orchestrator/tasks.yaml)
+✅ Direct Claude test added (test_claude_direct.py)
+✅ Everything committed (commit 5e8aaceb4)
 ```
 
 ---
 
-**Jesteś gotowy do testowania!** 🚀
+**You are ready for testing!** 🚀
 
-Uruchom testy i zapisz logi. Przeanalizuję je jak wrócisz ze spaceru.
+Run the tests and save the logs. I will analyze them when you return from your walk.
