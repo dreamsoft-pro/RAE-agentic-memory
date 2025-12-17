@@ -10,7 +10,7 @@
 #   - cheap: Always prefer L1, minimize cost
 
 # Active profile
-profile: "research"
+profile: "cheap"
 
 # Policy version (1 = rule-based, 2 = weighted scoring + reward)
 policy_version: 2
