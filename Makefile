@@ -101,6 +101,10 @@ dev:  ## Start API in development mode (with auto-reload)
 	@echo "🔧 Starting development server..."
 	@$(VENV_ACTIVATE) && uvicorn apps.memory_api.main:app --reload --host 0.0.0.0 --port 8000
 
+dev-full:  ## Start full development environment (infra, API, Reranker, MCP)
+	@echo "🔧 Starting full development environment..."
+	./scripts/dev_mode.sh
+
 demo:  ## Run interactive quickstart demo
 	@echo "🎬 Running interactive demo..."
 	@$(VENV_PYTHON) examples/quickstart.py
