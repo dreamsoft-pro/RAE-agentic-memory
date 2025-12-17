@@ -105,6 +105,10 @@ dev-full:  ## Start full development environment (infra, API, Reranker, MCP)
 	@echo "🔧 Starting full development environment..."
 	./scripts/dev_mode.sh
 
+install-mcp-service:  ## Install MCP systemd service for auto-start
+	@echo "🔧 Installing MCP systemd service..."
+	./scripts/install_mcp_service.sh
+
 demo:  ## Run interactive quickstart demo
 	@echo "🎬 Running interactive demo..."
 	@$(VENV_PYTHON) examples/quickstart.py

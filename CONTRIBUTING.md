@@ -64,20 +64,35 @@ python -m venv .venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install dependencies
-make install
-
-# Or install all dependencies (including integrations)
 make install-all
 ```
 
-3. **Start the infrastructure:**
+3. **Start the environment:**
+
+**Option A: Full Development Environment (Recommended)**
+This starts all Docker services (Postgres, Redis, Qdrant), the MCP Server, and both the Memory API and Reranker Service with hot-reload enabled.
+
+```bash
+# Start everything
+make dev-full
+```
+
+**Option B: Standard Docker Start**
+If you just want to run the pre-built containers:
 
 ```bash
 # Start Docker services
-docker-compose up -d
+docker compose up -d
 
 # Or use make
 make start
+```
+
+**Option C: Install MCP Service (Optional)**
+To have the RAE MCP Server start automatically with your system (via systemd):
+
+```bash
+make install-mcp-service
 ```
 
 4. **Run tests to verify setup:**
