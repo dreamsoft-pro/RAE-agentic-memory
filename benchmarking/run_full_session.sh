@@ -10,7 +10,10 @@ export POSTGRES_DB=rae
 export POSTGRES_HOST=localhost
 export POSTGRES_PORT=5432
 
-cd /home/grzegorz/cloud/Dockerized/RAE-agentic-memory
+# Ensure we are in the project root
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+cd "$PROJECT_ROOT" || exit 1
 source .venv/bin/activate
 
 SESSION_START=$(date +%s)

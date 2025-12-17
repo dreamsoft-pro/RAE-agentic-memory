@@ -95,6 +95,7 @@ Przed każdym zadaniem zapamiętaj:
 - ❌ **NIGDY** nie używaj interaktywnych komend (nano, vim, git -i)
 - ✅ **ZAWSZE** używaj szablonów z `.ai-templates/`
 - ✅ Gdy test nie przechodzi - napraw **kod**, nie test (chyba że test był źle napisany)
+- ❌ **KATEGORYCZNIE ZABRONIONE**: Mieszanie repozytoriów! Nie commituj kodu innych projektów do bieżącego repozytorium. Sprawdzaj `git status` przed każdym commitem.
 
 **Szczegóły**: Zobacz [CRITICAL_AGENT_RULES.md](./CRITICAL_AGENT_RULES.md)
 

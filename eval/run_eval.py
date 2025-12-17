@@ -4,6 +4,15 @@ import os
 import statistics
 import time
 from typing import Dict, List
+from pathlib import Path
+import sys
+
+# Ensure core module can be imported
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.append(str(PROJECT_ROOT))
+
+from core.paths import PROJECT_ROOT as ROOT_DIR
 
 import requests
 import yaml
@@ -157,7 +166,8 @@ def main():
     )
     args = parser.parse_args()
 
-    with open("eval/goldenset.yaml", "r", encoding="utf-8") as f:
+    goldenset_path = ROOT_DIR / "eval" / "goldenset.yaml"
+    with open(goldenset_path, "r", encoding="utf-8") as f:
         goldenset = yaml.safe_load(f)
 
     if not args.no_add:
