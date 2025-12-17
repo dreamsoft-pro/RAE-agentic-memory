@@ -1,116 +1,116 @@
-# 🤖 AUTONOMOUS OPERATIONS - Pełna Autonomia Agenta
+# 🤖 AUTONOMOUS OPERATIONS - Full Agent Autonomy
 
-> **🎯 Cel**: Agent realizuje plan od początku do końca BEZ interakcji z użytkownikiem dla standardowych operacji
+> **🎯 Goal**: The agent executes the plan from start to finish WITHOUT user interaction for standard operations
 >
-> **🔴 Status**: MANDATORY - To nie jest sugestia, to WYMAGANIE
+> **🔴 Status**: MANDATORY - This is not a suggestion, it's a REQUIREMENT
 
 ---
 
-## 📜 ZASADA GŁÓWNA
+## 📜 MAIN PRINCIPLE
 
-**Agent ZAWSZE działa AUTONOMICZNIE dla wszystkich standardowych operacji.**
+**The Agent ALWAYS acts AUTONOMOUSLY for all standard operations.**
 
 ```
 ┌────────────────────────────────────────────────────────────┐
-│  "Yes to all" - Użytkownik NIE chce klikać "Yes" 100 razy │
+│  "Yes to all" - User does NOT want to click "Yes" 100 times │
 │                                                            │
-│  Jeśli operacja jest na liście "AUTONOMICZNE" poniżej,    │
-│  wykonujesz ją NATYCHMIAST bez pytania.                   │
+│  If an operation is on the "AUTONOMOUS" list below,      │
+│  you perform it IMMEDIATELY without asking.               │
 │                                                            │
-│  Pytasz TYLKO o rzeczy NAPRAWDĘ niejednoznaczne.         │
+│  You ask ONLY about TRULY ambiguous things.               │
 └────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## ✅ OPERACJE AUTONOMICZNE (NIE PYTAJ!)
+## ✅ AUTONOMOUS OPERATIONS (DO NOT ASK!)
 
-### 1. Operacje na Systemie Plików
+### 1. File System Operations
 
-#### 1.1 Tworzenie
+#### 1.1 Creation
 
-| Operacja | Autonomiczna? | Przykład | Kiedy NIE pytać |
-|----------|---------------|----------|-----------------|
-| `mkdir` | ✅ TAK | `mkdir -p apps/memory_api/services/cache/` | ZAWSZE - struktura katalogów jest standardowa |
-| `mkdir -p` (nested) | ✅ TAK | `mkdir -p tests/unit/services/graph/` | ZAWSZE - deep directories są OK |
-| `touch` | ✅ TAK | `touch apps/memory_api/services/cache_service.py` | ZAWSZE - tworzenie plików jest standardowe |
-| Tworzenie z template | ✅ TAK | `cp .ai-templates/service.py services/new.py` | ZAWSZE - templates istnieją po to |
+| Operation | Autonomous? | Example | When NOT to ask |
+|-----------|-------------|---------|-----------------|
+| `mkdir` | ✅ YES | `mkdir -p apps/memory_api/services/cache/` | ALWAYS - directory structure is standard |
+| `mkdir -p` (nested) | ✅ YES | `mkdir -p tests/unit/services/graph/` | ALWAYS - deep directories are OK |
+| `touch` | ✅ YES | `touch apps/memory_api/services/cache_service.py` | ALWAYS - file creation is standard |
+| Creation from template | ✅ YES | `cp .ai-templates/service.py services/new.py` | ALWAYS - templates are for this purpose |
 
-**Przykład - Prawidłowy (Autonomiczny):**
+**Example - Correct (Autonomous):**
 ```bash
-# User: "Dodaj cache service"
-# Agent: [BEZ PYTANIA]
+# User: "Add cache service"
+# Agent: [WITHOUT ASKING]
 mkdir -p apps/memory_api/services/cache
 mkdir -p apps/memory_api/tests/services/cache
 cp .ai-templates/service_template.py apps/memory_api/services/cache/cache_service.py
 cp .ai-templates/test_template.py apps/memory_api/tests/services/cache/test_cache_service.py
 ```
 
-**Przykład - NIEPRAWIDŁOWY:**
+**Example - INCORRECT:**
 ```bash
-# User: "Dodaj cache service"
-Agent: "Czy mam utworzyć katalog cache/?"           # ❌ NIE pytaj!
-Agent: "Czy mam użyć template?"                     # ❌ NIE pytaj!
-Agent: "W którym katalogu umieścić testy?"          # ❌ Przeczytaj PROJECT_STRUCTURE.md
+# User: "Add cache service"
+Agent: "Should I create a cache/ directory?"           # ❌ DO NOT ask!
+Agent: "Should I use a template?"                     # ❌ DO NOT ask!
+Agent: "In which directory should I put tests?"          # ❌ Read PROJECT_STRUCTURE.md
 ```
 
-#### 1.2 Edycja
+#### 1.2 Editing
 
-| Operacja | Autonomiczna? | Kiedy | Narzędzie |
-|----------|---------------|-------|-----------|
-| Edycja istniejącego kodu | ✅ TAK | Zawsze gdy czytałeś plik wcześniej | Edit tool |
-| Dodanie funkcji | ✅ TAK | Gdy miejsce jest jasne (service/repo/route) | Edit tool |
-| Refactoring | ✅ TAK | Gdy zachowujesz behavior (tests as contract) | Edit tool |
-| Formatowanie | ✅ TAK | `make format` przed każdym commitem | black, isort |
+| Operation | Autonomous? | When | Tool |
+|-----------|-------------|------|------|
+| Editing existing code | ✅ YES | Always when you have read the file before | Edit tool |
+| Adding a function | ✅ YES | When the location is clear (service/repo/route) | Edit tool |
+| Refactoring | ✅ YES | When behavior is preserved (tests as contract) | Edit tool |
+| Formatting | ✅ YES | `make format` before every commit | black, isort |
 
-**Nigdy nie używaj:**
-- ❌ `nano file.py` - interaktywny editor
-- ❌ `vim file.py` - interaktywny editor
-- ❌ `vi file.py` - interaktywny editor
-- ❌ `emacs file.py` - interaktywny editor
+**Never use:**
+- ❌ `nano file.py` - interactive editor
+- ❌ `vim file.py` - interactive editor
+- ❌ `vi file.py` - interactive editor
+- ❌ `emacs file.py` - interactive editor
 
-**Używaj zamiast tego:**
-- ✅ Edit tool (dla zmian)
-- ✅ Write tool (dla nowych plików po przeczytaniu istniejącego)
-- ✅ `cat file.py` (do odczytu)
+**Use instead:**
+- ✅ Edit tool (for changes)
+- ✅ Write tool (for new files after reading an existing one)
+- ✅ `cat file.py` (for reading)
 
-#### 1.3 Usuwanie
+#### 1.3 Deletion
 
-| Operacja | Autonomiczna? | Warunek | Kiedy PYTAĆ |
-|----------|---------------|---------|-------------|
-| Usuwanie pliku tymczasowego | ✅ TAK | `*.pyc`, `__pycache__`, `.pytest_cache` | Nigdy |
-| Usuwanie starego testu | ✅ TAK | Zastępujesz nowym testem | Nigdy (jeśli część planu) |
-| Usuwanie kodu produkcyjnego | ⚠️ OSTROŻNIE | Tylko jeśli martwy kod (nie używany) | Jeśli niepewność |
-| Usuwanie całego modułu | ❌ NIE | - | ZAWSZE pytaj |
+| Operation | Autonomous? | Condition | When to ASK |
+|-----------|-------------|-----------|-------------|
+| Deleting a temporary file | ✅ YES | `*.pyc`, `__pycache__`, `.pytest_cache` | Never |
+| Deleting an old test | ✅ YES | Replacing with a new test | Never (if part of the plan) |
+| Deleting production code | ⚠️ CAUTION | Only if dead code (not used) | If unsure |
+| Deleting an entire module | ❌ NO | - | ALWAYS ask |
 
 ---
 
-### 2. Operacje Git
+### 2. Git Operations
 
-#### 2.1 Podstawowe Operacje (100% Autonomiczne)
+#### 2.1 Basic Operations (100% Autonomous)
 
-| Operacja | Autonomiczna? | Branch | Przykład |
-|----------|---------------|--------|----------|
-| `git status` | ✅ TAK | Wszystkie | Sprawdź stan przed pracą |
-| `git checkout -b feature/X` | ✅ TAK | Z develop | Utwórz feature branch |
-| `git checkout develop` | ✅ TAK | - | Przełącz na develop |
-| `git pull origin develop` | ✅ TAK | develop | Aktualizuj przed mergem |
-| `git add .` | ✅ TAK | feature/develop | Dodaj wszystkie zmiany |
-| `git add <file>` | ✅ TAK | Wszystkie | Dodaj konkretny plik |
-| `git commit -m "..."` | ✅ TAK | Wszystkie | Z conventional message |
-| `git push origin feature/X` | ✅ TAK | feature/* | Push feature branch |
-| `git push origin develop` | ✅ TAK | develop | Po lokalnym merge i testach |
+| Operation | Autonomous? | Branch | Example |
+|-----------|-------------|--------|---------|
+| `git status` | ✅ YES | All | Check status before work |
+| `git checkout -b feature/X` | ✅ YES | From develop | Create feature branch |
+| `git checkout develop` | ✅ YES | - | Switch to develop |
+| `git pull origin develop` | ✅ YES | develop | Update before merge |
+| `git add .` | ✅ YES | feature/develop | Add all changes |
+| `git add <file>` | ✅ YES | All | Add specific file |
+| `git commit -m "..."` | ✅ YES | All | With conventional message |
+| `git push origin feature/X` | ✅ YES | feature/* | Push feature branch |
+| `git push origin develop` | ✅ YES | develop | After local merge and tests |
 
-**Przykład - Prawidłowy Flow:**
+**Example - Correct Flow:**
 ```bash
-# User: "Zaimplementuj feature X"
-# Agent: [AUTONOMICZNIE bez pytania]
+# User: "Implement feature X"
+# Agent: [AUTONOMOUSLY without asking]
 
 git checkout develop
 git pull origin develop
 git checkout -b feature/implement-x
 
-# [... implementacja ...]
+# [... implementation ...]
 
 make format && make lint
 pytest --no-cov tests/test_feature_x.py
@@ -125,169 +125,169 @@ git commit -m "feat: implement feature X
 
 git push origin feature/implement-x
 
-# Merge do develop (lokalnie)
+# Merge to develop (locally)
 git checkout develop
 git merge feature/implement-x --no-ff
 
-# Pełne testy na develop (MANDATORY!)
+# Full tests on develop (MANDATORY!)
 make test-unit
 make lint
 
-# Jeśli przeszły
+# If passed
 git push origin develop
 ```
 
 #### 2.2 Merge Operations
 
-| Operacja | Autonomiczna? | Warunek | Kiedy PYTAĆ |
-|----------|---------------|---------|-------------|
-| `git merge feature/X` (do develop) | ✅ TAK | Po lokalnych testach | Nigdy (standardowy flow) |
-| `git merge develop` (do release) | ✅ TAK | develop CI green | Nigdy (standardowy flow) |
-| `git merge release` (do main) | ❌ NIE | - | ZAWSZE przez PR + 2 approvals |
-| `git merge --no-ff` | ✅ TAK | Preferred dla merge | ZAWSZE używaj --no-ff |
+| Operation | Autonomous? | Condition | When to ASK |
+|-----------|-------------|-----------|-------------|
+| `git merge feature/X` (to develop) | ✅ YES | After local tests | Never (standard flow) |
+| `git merge develop` (to release) | ✅ YES | develop CI green | Never (standard flow) |
+| `git merge release` (to main) | ❌ NO | - | ALWAYS via PR + 2 approvals |
+| `git merge --no-ff` | ✅ YES | Preferred for merge | ALWAYS use --no-ff |
 
-#### 2.3 ZAKAZANE Operacje Git
+#### 2.3 FORBIDDEN Git Operations
 
-| Operacja | Status | Nigdy nie rób tego | Dlaczego |
-|----------|--------|-------------------|----------|
-| `git push --force` | 🚫 ZABRONIONE | Na żadnym branchu | Niszczy historię |
-| `git push -f` | 🚫 ZABRONIONE | Alias dla --force | Niszczy historię |
-| `git rebase -i` | 🚫 ZABRONIONE | Interaktywne | Blokuje CI/CD |
-| `git add -i` | 🚫 ZABRONIONE | Interaktywne | Blokuje CI/CD |
-| `git commit` (bez -m) | 🚫 ZABRONIONE | Otwiera edytor | Blokuje CI/CD |
-| `git reset --hard origin/main` | ⚠️ BARDZO OSTROŻNIE | Tylko jeśli pewien | Traci zmiany |
+| Operation | Status | Never do this | Why |
+|-----------|--------|---------------|-----|
+| `git push --force` | 🚫 FORBIDDEN | On any branch | Destroys history |
+| `git push -f` | 🚫 FORBIDDEN | Alias for --force | Destroys history |
+| `git rebase -i` | 🚫 FORBIDDEN | Interactive | Blocks CI/CD |
+| `git add -i` | 🚫 FORBIDDEN | Interactive | Blocks CI/CD |
+| `git commit` (without -m) | 🚫 FORBIDDEN | Opens editor | Blocks CI/CD |
+| `git reset --hard origin/main` | ⚠️ VERY CAREFUL | Only if certain | Loses changes |
 
 ---
 
-### 3. Testowanie
+### 3. Testing
 
-#### 3.1 Testowanie wg Brancha
+#### 3.1 Testing by Branch
 
-| Branch | Komenda | Autonomiczna? | Kiedy | Czas |
-|--------|---------|---------------|-------|------|
-| feature/* | `pytest --no-cov <file>` | ✅ TAK | Test TYLKO nowego kodu | ~1-2 min |
-| feature/* | `make test-focus FILE=<file>` | ✅ TAK | Test TYLKO nowego kodu | ~1-2 min |
-| develop | `make test-unit` | ✅ TAK | Po merge z feature (MANDATORY!) | ~5-10 min |
-| develop | `make lint` | ✅ TAK | Zawsze przed push | ~30 sek |
-| release | Full tests + integration | ✅ TAK | Przez CI automatically | ~10-15 min |
-| main | CI automatically | ✅ TAK | Przez GitHub Actions | ~10-15 min |
+| Branch | Command | Autonomous? | When | Time |
+|--------|---------|-------------|------|------|
+| feature/* | `pytest --no-cov <file>` | ✅ YES | Test ONLY new code | ~1-2 min |
+| feature/* | `make test-focus FILE=<file>` | ✅ YES | Test ONLY new code | ~1-2 min |
+| develop | `make test-unit` | ✅ YES | After merge from feature (MANDATORY!) | ~5-10 min |
+| develop | `make lint` | ✅ YES | Always before push | ~30 sec |
+| release | Full tests + integration | ✅ YES | Via CI automatically | ~10-15 min |
+| main | CI automatically | ✅ YES | Via GitHub Actions | ~10-15 min |
 
-**Przykład - Prawidłowe Testowanie:**
+**Example - Correct Testing:**
 ```bash
-# Na feature branch
+# On feature branch
 git checkout -b feature/add-cache
 
-# [implementacja...]
+# [implementation...]
 
-# Test TYLKO nowego kodu (NIE pełna suite!)
+# Test ONLY new code (NOT full suite!)
 pytest --no-cov apps/memory_api/tests/services/test_cache_service.py -v
 # 12 tests PASSED
 
-# Format i lint
+# Format and lint
 make format
 make lint
 
 git commit -m "feat: add cache service"
 git push origin feature/add-cache
 
-# Merge do develop
+# Merge to develop
 git checkout develop
 git merge feature/add-cache --no-ff
 
-# TERAZ pełne testy (MANDATORY!)
+# NOW full tests (MANDATORY!)
 make test-unit
 # 461 tests PASSED
 
-# Jeśli OK
+# If OK
 git push origin develop
 ```
 
-#### 3.2 Formatowanie i Linting (Zawsze Autonomiczne)
+#### 3.2 Formatting and Linting (Always Autonomous)
 
-| Komenda | Kiedy | Autonomiczna? | Przed czym |
-|---------|-------|---------------|------------|
-| `make format` | Przed każdym commitem | ✅ TAK | git commit |
-| `make lint` | Przed każdym commitem | ✅ TAK | git commit |
-| `black .` | Część make format | ✅ TAK | Auto |
-| `isort .` | Część make format | ✅ TAK | Auto |
-| `ruff check .` | Część make lint | ✅ TAK | Auto |
+| Command | When | Autonomous? | Before what |
+|---------|------|-------------|-------------|
+| `make format` | Before every commit | ✅ YES | git commit |
+| `make lint` | Before every commit | ✅ YES | git commit |
+| `black .` | Part of make format | ✅ YES | Auto |
+| `isort .` | Part of make format | ✅ YES | Auto |
+| `ruff check .` | Part of make lint | ✅ YES | Auto |
 
-**NIGDY nie pytaj:**
-- ❌ "Czy mam uruchomić make format?"
-- ❌ "Czy mam naprawić linting errors?"
-- ❌ "Czy mam uruchomić testy?"
+**NEVER ask:**
+- ❌ "Should I run make format?"
+- ❌ "Should I fix linting errors?"
+- ❌ "Should I run tests?"
 
-**ZAWSZE rób:**
-- ✅ `make format && make lint` przed KAŻDYM commitem
-- ✅ Napraw wszystkie linting errors NATYCHMIAST
-- ✅ Testuj zgodnie z branchem (feature = only new, develop = all)
+**ALWAYS do:**
+- ✅ `make format && make lint` before EVERY commit
+- ✅ Fix all linting errors IMMEDIATELY
+- ✅ Test according to branch (feature = only new, develop = all)
 
 ---
 
-### 4. Decyzje Techniczne (Autonomiczne)
+### 4. Technical Decisions (Autonomous)
 
-#### 4.1 Wybór Wzorców
+#### 4.1 Pattern Selection
 
-| Decyzja | Autonomiczna? | Jak podjąć | Źródło |
-|---------|---------------|------------|--------|
-| Repository vs Service? | ✅ TAK | Zawsze używaj obu (3-layer arch) | CONVENTIONS.md |
-| Który template użyć? | ✅ TAK | Repository/Service/Route wg typu | `.ai-templates/README.md` |
-| Gdzie umieścić plik? | ✅ TAK | Mirrors structure | PROJECT_STRUCTURE.md |
-| Dependency Injection? | ✅ TAK | ZAWSZE używaj DI | CONVENTIONS.md |
-| Pydantic models? | ✅ TAK | Input/Output models ZAWSZE | CONVENTIONS.md |
+| Decision | Autonomous? | How to decide | Source |
+|----------|-------------|---------------|--------|
+| Repository vs Service? | ✅ YES | Always use both (3-layer arch) | CONVENTIONS.md |
+| Which template to use? | ✅ YES | Repository/Service/Route by type | `.ai-templates/README.md` |
+| Where to place the file? | ✅ YES | Mirrors structure | PROJECT_STRUCTURE.md |
+| Dependency Injection? | ✅ YES | ALWAYS use DI | CONVENTIONS.md |
+| Pydantic models? | ✅ YES | Input/Output models ALWAYS | CONVENTIONS.md |
 
-**Przykład - Prawidłowa Autonomia:**
+**Example - Correct Autonomy:**
 ```python
-# User: "Dodaj user preferences"
+# User: "Add user preferences"
 
-# Agent: [BEZ PYTANIA - czyta dokumentację i decyduje]
-# 1. Przeczytał CONVENTIONS.md → 3-layer architecture
-# 2. Przeczytał PROJECT_STRUCTURE.md → gdzie umieścić
-# 3. Użył .ai-templates/ → wzorzec DI
+# Agent: [WITHOUT ASKING - reads documentation and decides]
+# 1. Read CONVENTIONS.md → 3-layer architecture
+# 2. Read PROJECT_STRUCTURE.md → where to place
+# 3. Used .ai-templates/ → DI pattern
 
-# Rezultat:
-# - apps/memory_api/repositories/preference_repository.py (z tenant_id!)
-# - apps/memory_api/services/preference_service.py (z DI!)
-# - apps/memory_api/api/v1/preferences.py (z Depends!)
+# Result:
+# - apps/memory_api/repositories/preference_repository.py (with tenant_id!)
+# - apps/memory_api/services/preference_service.py (with DI!)
+# - apps/memory_api/api/v1/preferences.py (with Depends!)
 # - apps/memory_api/models/preference.py (Pydantic!)
-# - tests/ (kompletne testy!)
+# - tests/ (complete tests!)
 
-# Wszystko zgodne ze standardami, BEZ PYTANIA!
+# All compliant with standards, WITHOUT ASKING!
 ```
 
-#### 4.2 Nazewnictwo
+#### 4.2 Naming Conventions
 
-| Element | Konwencja | Autonomiczna? | Przykład |
-|---------|-----------|---------------|----------|
-| Klasa Repository | `{Entity}Repository` | ✅ TAK | `UserRepository` |
-| Klasa Service | `{Domain}Service` | ✅ TAK | `CacheService` |
-| Plik Python | `snake_case.py` | ✅ TAK | `cache_service.py` |
-| Test | `test_{module}.py` | ✅ TAK | `test_cache_service.py` |
-| Funkcja testowa | `test_{scenario}` | ✅ TAK | `test_get_cache_returns_none_when_empty` |
-| Branch | `feature/{description}` | ✅ TAK | `feature/add-cache-service` |
-| Commit message | Conventional Commits | ✅ TAK | `feat(services): add cache service` |
+| Element | Convention | Autonomous? | Example |
+|---------|------------|-------------|---------|
+| Repository Class | `{Entity}Repository` | ✅ YES | `UserRepository` |
+| Service Class | `{Domain}Service` | ✅ YES | `CacheService` |
+| Python File | `snake_case.py` | ✅ YES | `cache_service.py` |
+| Test | `test_{module}.py` | ✅ YES | `test_cache_service.py` |
+| Test Function | `test_{scenario}` | ✅ YES | `test_get_cache_returns_none_when_empty` |
+| Branch | `feature/{description}` | ✅ YES | `feature/add-cache-service` |
+| Commit message | Conventional Commits | ✅ YES | `feat(services): add cache service` |
 
-**NIGDY nie pytaj:**
-- ❌ "Jak nazwać plik?"
-- ❌ "Jak nazwać klasę?"
-- ❌ "Jaki branch name?"
+**NEVER ask:**
+- ❌ "What to name the file?"
+- ❌ "What to name the class?"
+- ❌ "What branch name?"
 
-**ZAWSZE używaj:**
-- ✅ Konwencji z CONVENTIONS.md
-- ✅ Wzorców z PROJECT_STRUCTURE.md
-- ✅ Conventional Commits dla message
+**ALWAYS use:**
+- ✅ Conventions from CONVENTIONS.md
+- ✅ Patterns from PROJECT_STRUCTURE.md
+- ✅ Conventional Commits for messages
 
 ---
 
-### 5. Struktura Testów (100% Autonomiczna)
+### 5. Test Structure (100% Autonomous)
 
-| Aspekt | Decyzja | Autonomiczna? | Zasada |
-|--------|---------|---------------|--------|
-| Gdzie umieścić test? | mirrors source | ✅ TAK | `services/X.py` → `tests/services/test_X.py` |
-| Jaki wzorzec użyć? | AAA (Arrange-Act-Assert) | ✅ TAK | Z `.ai-templates/test_template.py` |
-| Mockować czy nie? | Unit tests = mock, Integration = real | ✅ TAK | Service tests = mock repo, Repo tests = real DB |
-| Coverage threshold? | 80%+ dla nowego kodu | ✅ TAK | Automatyczne sprawdzenie w CI |
-| Pytest markers? | Wg typu (unit/integration/llm) | ✅ TAK | `@pytest.mark.unit` dla unit tests |
+| Aspect | Decision | Autonomous? | Rule |
+|--------|----------|-------------|------|
+| Where to place test? | mirrors source | ✅ YES | `services/X.py` → `tests/services/test_X.py` |
+| Which pattern to use? | AAA (Arrange-Act-Assert) | ✅ YES | From `.ai-templates/test_template.py` |
+| Mock or not? | Unit tests = mock, Integration = real | ✅ YES | Service tests = mock repo, Repo tests = real DB |
+| Coverage threshold? | 80%+ for new code | ✅ YES | Automatic check in CI |
+| Pytest markers? | By type (unit/integration/llm) | ✅ YES | `@pytest.mark.unit` for unit tests |
 
 ---
 

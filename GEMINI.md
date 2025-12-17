@@ -1,8 +1,8 @@
 # GEMINI.md – RAE-agentic-memory Code & Tests Assistant
 
-> 🤖 **GEMINI CLI: Ten plik jest dla Ciebie!**
+> 🤖 **GEMINI CLI: This file is for you!**
 >
-> Ten dokument zawiera wszystkie zasady i procedury pracy nad projektem RAE.
+> This document contains all the rules and procedures for working on the RAE project.
 
 ---
 
@@ -36,24 +36,24 @@
 
 Then check if I'm connected to RAE via MCP.
 
-**User: Po przeczytaniu powyższego promptu przez Gemini, kontynuuj z normalnym zadaniem.**
+**User: After Gemini has read the above prompt, continue with the normal task.**
 
 ---
 
 ## 🧠 RAE Multi-Agent Memory
 
-**Gemini: Jesteś połączony z RAE przez MCP!**
+**Gemini: You are connected to RAE via MCP!**
 
-Dostępne narzędzia:
-- `save_memory` - Zapisz decyzję, postęp, problem do wspólnej pamięci
-- `search_memory` - Wyszukaj co inne agenty (Claude, inni Gemini) zrobili
-- `get_related_context` - Pobierz kontekst o pliku
+Available tools:
+- `save_memory` - Save decision, progress, problem to shared memory
+- `search_memory` - Search what other agents (Claude, other Gemini) have done
+- `get_related_context` - Get context about a file
 
-**Użyj tego zawsze gdy:**
-- ✅ Kończysz krok workflow (zapisz postęp)
-- ✅ Naprawiasz bug (zapisz co i dlaczego)
-- ✅ Podejmujesz decyzję (zapisz reasoning)
-- ✅ Znajdziesz coś ważnego (zapisz dla innych)
+**Use this whenever:**
+- ✅ You complete a workflow step (save progress)
+- ✅ You fix a bug (save what and why)
+- ✅ You make a decision (save reasoning)
+- ✅ You find something important (save for others)
 
 **Tenant**: `meta-development`
 **Project**: `gemini-rae-collaboration`
@@ -71,50 +71,50 @@ save_memory(
 
 ---
 
-## 🚨 OBOWIĄZKOWA LEKTURA (Przeczytaj po starcie!)
+## 🚨 MANDATORY READING (Read after startup!)
 
-**⚠️ Te dokumenty zawierają krytyczne zasady!**
+**⚠️ These documents contain critical rules!**
 
-1. **[CRITICAL_AGENT_RULES.md](./CRITICAL_AGENT_RULES.md)** (5 min) ⭐ - 8 OBOWIĄZKOWYCH zasad
-2. **[AI_AGENT_MANIFEST.md](./AI_AGENT_MANIFEST.md)** (3 min) - Hierarchia dokumentacji i nawigacja
-3. **[.ai-agent-rules.md](./.ai-agent-rules.md)** (5 min) - Zabronione komendy i strategia testowania
-4. **[docs/BRANCHING.md](./docs/BRANCHING.md)** (3 min) - Workflow Git (feature → develop → main)
-5. **[docs/AGENTS_TEST_POLICY.md](./docs/AGENTS_TEST_POLICY.md)** (3 min) - Testy jako kontrakt
+1. **[CRITICAL_AGENT_RULES.md](./CRITICAL_AGENT_RULES.md)** (5 min) ⭐ - 8 MANDATORY rules
+2. **[AI_AGENT_MANIFEST.md](./AI_AGENT_MANIFEST.md)** (3 min) - Documentation hierarchy and navigation
+3. **[.ai-agent-rules.md](./.ai-agent-rules.md)** (5 min) - Forbidden commands and testing strategy
+4. **[docs/BRANCHING.md](./docs/BRANCHING.md)** (3 min) - Git Workflow (feature → develop → main)
+5. **[docs/AGENTS_TEST_POLICY.md](./docs/AGENTS_TEST_POLICY.md)** (3 min) - Tests as a contract
 
-**Bez przeczytania = naruszenie workflow = blokada innych developerów!**
-
----
-
-## 🎯 Szybkie Przypomnienia Kluczowych Zasad
-
-Przed każdym zadaniem zapamiętaj:
-
-- ❌ **NIGDY** nie uruchamiaj pełnej suite testów na feature branch (tylko `--no-cov`)
-- ✅ **ZAWSZE** pracuj autonomicznie (nie pytaj o oczywiste rzeczy)
-- ✅ **ZAWSZE** dodawaj `tenant_id` w zapytaniach SQL (bezpieczeństwo!)
-- ❌ **NIGDY** nie używaj interaktywnych komend (nano, vim, git -i)
-- ✅ **ZAWSZE** używaj szablonów z `.ai-templates/`
-- ✅ Gdy test nie przechodzi - napraw **kod**, nie test (chyba że test był źle napisany)
-- ❌ **KATEGORYCZNIE ZABRONIONE**: Mieszanie repozytoriów! Nie commituj kodu innych projektów do bieżącego repozytorium. Sprawdzaj `git status` przed każdym commitem.
-
-**Szczegóły**: Zobacz [CRITICAL_AGENT_RULES.md](./CRITICAL_AGENT_RULES.md)
+**Without reading = workflow violation = blocking other developers!**
 
 ---
 
-## 🔄 3-Fazowy Workflow Testowania (KRYTYCZNE!)
+## 🎯 Quick Reminders of Key Principles
 
-**NAJWAŻNIEJSZA ZASADA**: Różne fazy = różne poziomy testowania!
+Before each task, remember:
+
+- ❌ **NEVER** run the full test suite on a feature branch (only `--no-cov`)
+- ✅ **ALWAYS** work autonomously (don't ask obvious questions)
+- ✅ **ALWAYS** include `tenant_id` in SQL queries (security!)
+- ❌ **NEVER** use interactive commands (nano, vim, git -i)
+- ✅ **ALWAYS** use templates from `.ai-templates/`
+- ✅ If a test fails - fix the **code**, not the test (unless the test was written incorrectly)
+- ❌ **STRICTLY FORBIDDEN**: Mixing repositories! Do not commit code from other projects to the current repository. Check `git status` before every commit.
+
+**Details**: See [CRITICAL_AGENT_RULES.md](./CRITICAL_AGENT_RULES.md)
+
+---
+
+## 🔄 3-Phase Testing Workflow (CRITICAL!)
+
+**MOST IMPORTANT RULE**: Different phases = different testing levels!
 
 ```
 ┌──────────────────────────────────────────────────────┐
 │ PHASE 1: FEATURE BRANCH                              │
 │ ✅ Test ONLY your new code: pytest --no-cov path/   │
-│ ✅ make format && make lint (OBOWIĄZKOWE!)           │
+│ ✅ make format && make lint (MANDATORY!)           │
 │ ✅ Commit when tests pass                            │
 ├──────────────────────────────────────────────────────┤
 │ PHASE 2: DEVELOP BRANCH (MANDATORY!)                │
 │ ✅ git checkout develop && git merge feature/X      │
-│ ✅ make test-unit   ← OBOWIĄZKOWE przed main!       │
+│ ✅ make test-unit   ← MANDATORY before main!       │
 │ ✅ make lint                                         │
 │ ❌ NEVER proceed to main if tests fail!             │
 ├──────────────────────────────────────────────────────┤
@@ -126,30 +126,30 @@ Przed każdym zadaniem zapamiętaj:
 └──────────────────────────────────────────────────────┘
 ```
 
-### Dlaczego 3 fazy?
+### Why 3 phases?
 
 1. **Feature branch** (`--no-cov`):
-   - Szybkie feedback (sekundy zamiast minut)
-   - Test tylko swojego kodu
-   - Oszczędność CI credits
+   - Fast feedback (seconds instead of minutes)
+   - Test only your code
+   - Save CI credits
 
 2. **Develop branch** (`make test-unit` MANDATORY):
-   - Pełna walidacja przed produkcją
-   - Wykrywa konflikty z innym kodem
-   - Ostatnia szansa na fix przed main
+   - Full validation before production
+   - Detects conflicts with other code
+   - Last chance to fix before main
 
-3. **Main branch** (CI automatyczne):
-   - Produkcyjny kod
-   - CI uruchamia wszystko automatycznie
-   - ZAWSZE musi być zielony
+3. **Main branch** (CI automatic):
+   - Production code
+   - CI runs everything automatically
+   - MUST always be green
 
-**⚠️ GEMINI: To jest najbardziej krytyczna zasada! Nie skipuj `make test-unit` na develop!**
+**⚠️ GEMINI: This is the most critical rule! Do not skip `make test-unit` on develop!**
 
 ---
 
-## ✅ Checklist Przed Każdym Commitem
+## ✅ Checklist Before Every Commit
 
-Zanim zrobisz `git commit`, sprawdź:
+Before you `git commit`, check:
 
 ```
 [ ] Tested ONLY my new code on feature branch (pytest --no-cov)
@@ -162,217 +162,217 @@ Zanim zrobisz `git commit`, sprawdź:
 [ ] Will run make test-unit on develop before main
 ```
 
-**Jeśli choć jeden punkt NIE, to NIE commituj!**
+**If even one point is NO, then do NOT commit!**
 
 ---
 
-## 📝 Dokumentacja: Auto vs Manual (RULE #8)
+## 📝 Documentation: Auto vs Manual (RULE #8)
 
-### ❌ NIE EDYTUJ (CI aktualizuje automatycznie):
+### ❌ DO NOT EDIT (CI updates automatically):
 - `CHANGELOG.md` - Git commit history
 - `STATUS.md` - Live project metrics
 - `TODO.md` - Extracted TODOs/FIXMEs
 - `docs/TESTING_STATUS.md` - Test results
 - `docs/.auto-generated/` - All auto-generated files
 
-### ✅ EDYTUJ (Twoja odpowiedzialność):
+### ✅ EDIT (Your responsibility):
 - `CONVENTIONS.md` - New patterns/conventions
 - `PROJECT_STRUCTURE.md` - New file locations
 - `docs/guides/` - Feature guides
 - `.ai-templates/README.md` - Template changes
 
-**⚠️ Jeśli edytujesz auto-generated file, Twoje zmiany zostaną nadpisane!**
+**⚠️ If you edit an auto-generated file, your changes will be overwritten!**
 
 ---
 
-## 0. Kontekst projektu
+## 0. Project Context
 
-Pracujesz nad repozytorium **RAE-agentic-memory**.
+You are working on the **RAE-agentic-memory** repository.
 
-Główne założenia:
-- Kod w Pythonie (backend, warstwy pamięci, API, itp.).
-- Testy w `pytest`.
-- Projekt posiada:
-  - testy jednostkowe, integracyjne i e2e,
-  - testy architektoniczne i kontraktowe,
-  - rozbudowaną strukturę katalogów (API, core, serwisy pamięci, itp.).
-- Celem jest **stopniowe podnoszenie jakości kodu i pokrycia testami**, przy zachowaniu:
-  - stabilnego CI,
-  - rozsądnego czasu wykonania testów,
-  - zgodności z istniejącą architekturą.
-
----
-
-## 1. Główny cel asystenta
-
-Twoim zadaniem jest:
-
-1. **Poprawa jakości testów i kodu**:
-   - zwiększanie pokrycia testami w najważniejszych modułach,
-   - poprawa czytelności, spójności i testowalności kodu,
-   - zachowanie istniejącej architektury (bez rewolucji).
-
-2. **Unikanie zapętleń i zbędnych operacji**:
-   - nie wykonywać w kółko tych samych poleceń,
-   - nie dotykać wielokrotnie plików, które są już „DONE” dla danego zadania.
-
-3. **Szacunek do istniejącego ekosystemu**:
-   - nie modyfikować kodu bibliotek w `.venv/` ani w katalogach zależności,
-   - nie „naprawiać świata” – skupiać się na tym repozytorium i konkretnym celu.
+Main assumptions:
+- Python code (backend, memory layers, API, etc.).
+- Tests in `pytest`.
+- The project has:
+  - unit, integration, and e2e tests,
+  - architectural and contract tests,
+  - an extensive directory structure (API, core, memory services, etc.).
+- The goal is to **gradually improve code quality and test coverage**, while maintaining:
+  - stable CI,
+  - reasonable test execution time,
+  - compliance with the existing architecture.
 
 ---
 
-## 2. Ogólna strategia działania (workflow)
+## 1. Main Assistant Goal
 
-Każde zadanie realizuj w czterech krokach:
+Your task is to:
+
+1. **Improve test and code quality**:
+   - increase test coverage in the most critical modules,
+   - improve code readability, consistency, and testability,
+   - maintain existing architecture (no revolutions).
+
+2. **Avoid loops and unnecessary operations**:
+   - do not repeatedly execute the same commands,
+   - do not repeatedly touch files that are already "DONE" for a given task.
+
+3. **Respect the existing ecosystem**:
+   - do not modify code in `.venv/` or dependency directories,
+   - do not "fix the world" – focus on this repository and the specific goal.
+
+---
+
+## 2. General Operating Strategy (Workflow)
+
+Execute each task in four steps:
 
 1. **PLAN**
-   - Odczytaj pliki, których dotyczy zadanie.
-   - Zrób krótki plan (maks. 5 punktów):
-     - co chcesz zmienić,
-     - które pliki dotkniesz,
-     - jakie testy uruchomisz.
+   - Read the files related to the task.
+   - Create a short plan (max 5 points):
+     - what you want to change,
+     - which files you will touch,
+     - which tests you will run.
 
-2. **EDYCJE**
-   - Wprowadzaj zmiany **małymi porcjami**.
-   - Po każdej większej zmianie:
-     - wykonaj check typu `pytest path/to/tests_for_that_module` zamiast pełnego `pytest` na całym repo.
+2. **EDITS**
+   - Make changes in **small increments**.
+   - After each major change:
+     - perform a check like `pytest path/to/tests_for_that_module` instead of a full `pytest` on the entire repo.
 
-3. **TESTY**
-   - Na koniec zadania uruchom **dokładnie jedno pełne**:
-     - `pytest` lub `pytest` z odpowiednimi markerami (np. bez `slow`, jeśli tak jest skonfigurowane).
-   - Jeśli pełne testy już przeszły i nic więcej nie zmieniasz – **nie odpalaj ich ponownie**.
+3. **TESTS**
+   - At the end of the task, run **exactly one full**:
+     - `pytest` or `pytest` with appropriate markers (e.g., without `slow`, if configured this way).
+   - If full tests have already passed and you are not changing anything else – **do not run them again**.
 
-4. **PODSUMOWANIE**
-   - Wypisz:
-     - co zostało zmienione (lista plików),
-     - jakie testy zostały uruchomione i z jakim wynikiem,
-     - jaki jest efekt dla pokrycia / jakości.
-
----
-
-## 3. Zasady ANTI-LOOP
-
-Unikaj zapętleń zgodnie z poniższymi regułami:
-
-1. **Nie powtarzaj bez zmian**  
-   - Nie uruchamiaj tego samego polecenia `pytest` drugi raz z rzędu, jeśli od poprzedniego uruchomienia:
-     - nie zmieniłeś żadnego pliku kodu,
-     - nie zmieniłeś żadnego pliku testowego.
-
-2. **Zakaz grzebania w `.venv` i zależnościach**
-   - Nigdy nie modyfikuj:
-     - plików w `.venv/`,
-     - kodu zależności (`site-packages`, vendor itp.).
-   - Jeśli widzisz ostrzeżenia (`DeprecationWarning`, itp.) z bibliotek:
-     - możesz **co najwyżej** zaproponować dodanie `filterwarnings` w `pytest.ini` lub krótką notkę w dokumentacji,
-     - ale nie zmieniaj kodu bibliotek.
-
-3. **Pliki oznaczone jako „gotowe” są nietykalne**  
-   - Jeśli użytkownik lub zadanie mówi, że jakiś plik testowy/kodowy jest już „DONE” (np. `tests/api/v1/test_memory.py` ma 100% coverage):
-     - **nie edytuj go** w tym zadaniu,
-     - nie uruchamiaj specjalnie testów tylko dla niego,
-     - możesz go co najwyżej czytać jako przykład.
-
-4. **Limit prób na jedno zadanie**
-   - Jeśli:
-     - trzy razy z rzędu wprowadzasz zmiany i wciąż nie uzyskujesz oczekiwanego efektu, albo
-     - trzy razy z rzędu pełne testy przechodzą, a Ty dalej chcesz coś poprawiać „na wszelki wypadek”,
-   - to **zatrzymaj się** i:
-     - opisz, co już zrobiłeś,
-     - opisz, co Cię blokuje,
-     - zaproponuj, co użytkownik powinien doprecyzować.
-
-5. **Monitoruj własne zachowanie**
-   - Jeżeli zauważysz, że:
-     - czytasz w kółko te same pliki,
-     - uruchamiasz w kółko te same komendy,
-   - potraktuj to jako sygnał pętli i **zakończ zadanie z krótkim raportem** zamiast kontynuować.
+4. **SUMMARY**
+   - List:
+     - what has been changed (list of files),
+     - which tests were run and with what result,
+     - what is the effect on coverage / quality.
 
 ---
 
-## 4. Strategie pracy z testami i coverage
+## 3. ANTI-LOOP Rules
 
-### 4.1. Priorytety
+Avoid loops according to the following rules:
 
-Zamiast „podnieść globalne coverage za wszelką cenę”, preferuj:
+1. **Do not repeat without changes**  
+   - Do not run the same `pytest` command a second time in a row if, since the previous run:
+     - you have not changed any code files,
+     - you have not changed any test files.
 
-1. **Moduły krytyczne**:
-   - pamięć (store/retrieve),
-   - API, które jest publiczne dla użytkowników / innych systemów,
-   - logika związana z bezpieczeństwem, kontrolą dostępu, walidacją danych.
+2. **No tinkering in `.venv` and dependencies**
+   - Never modify:
+     - files in `.venv/`,
+     - dependency code (`site-packages`, vendor, etc.).
+   - If you see warnings (`DeprecationWarning`, etc.) from libraries:
+     - at most, you can propose adding `filterwarnings` in `pytest.ini` or a short note in the documentation,
+     - but do not change library code.
 
-2. **Testy szybkie > wolne**:
-   - preferuj unit testy nad integracjami,
-   - preferuj integracje nad pełnym e2e.
+3. **Files marked "done" are untouchable**  
+   - If the user or task states that a test/code file is already "DONE" (e.g., `tests/api/v1/test_memory.py` has 100% coverage):
+     - **do not edit it** in this task,
+     - do not specifically run tests only for it,
+     - you can at most read it as an example.
 
-### 4.2. Wzór pracy nad jednym modułem
+4. **Attempt limit per task**
+   - If:
+     - three times in a row you make changes and still do not achieve the desired effect, or
+     - three times in a row the full tests pass, and you still want to improve something "just in case",
+   - then **stop** and:
+     - describe what you have already done,
+     - describe what is blocking you,
+     - suggest what the user should clarify.
 
-Dla wybranego modułu (np. `apps/.../memory.py` i odpowiadający mu `tests/.../test_memory.py`):
+5. **Monitor your own behavior**
+   - If you notice that:
+     - you are reading the same files over and over,
+     - you are running the same commands over and over,
+   - treat this as a sign of a loop and **end the task with a short report** instead of continuing.
 
-1. Przeczytaj kod modułu i aktualne testy.
-2. Zidentyfikuj **niepokryte lub słabo pokryte ścieżki**:
-   - rzadkie gałęzie `if`,
-   - nietypowe błędy/wyjątki,
-   - edge-case’y.
-3. Dopisz testy, które:
-   - są **małe** i **nie zależą od zewnętrznych usług**, jeśli to możliwe,
-   - używają fixture’ów i parametrów zamiast duplikować logikę.
-4. Uruchom:
+---
+
+## 4. Test and Coverage Strategies
+
+### 4.1. Priorities
+
+Instead of "raising global coverage at all costs", prefer:
+
+1. **Critical modules**:
+   - memory (store/retrieve),
+   - API that is public to users / other systems,
+   - logic related to security, access control, data validation.
+
+2. **Fast tests > slow tests**:
+   - prefer unit tests over integrations,
+   - prefer integrations over full e2e.
+
+### 4.2. Workflow for one module
+
+For a selected module (e.g., `apps/.../memory.py` and its corresponding `tests/.../test_memory.py`):
+
+1. Read the module code and current tests.
+2. Identify **uncovered or poorly covered paths**:
+   - rare `if` branches,
+   - unusual errors/exceptions,
+   - edge cases.
+3. Write tests that:
+   - are **small** and **do not depend on external services**, if possible,
+   - use fixtures and parameters instead of duplicating logic.
+4. Run:
    - `pytest path/to/tests_for_that_module`.
-5. Jeśli testy przechodzą:
-   - odpal pełne `pytest` **raz** na koniec zadania.
+5. If tests pass:
+   - run full `pytest` **once** at the end of the task.
 
 ---
 
-## 5. Obsługa ostrzeżeń (warnings)
+## 5. Warning Handling
 
-1. **Ostrzeżenia z kodu projektu (Twoje moduły)**:
-   - traktuj jak błąd projektowy,
-   - poprawiaj kod/konfigurację, aby je usunąć, o ile zmiana jest bezpieczna.
+1. **Warnings from project code (Your modules)**:
+   - treat as a design error,
+   - fix code/configuration to remove them, if the change is safe.
 
-2. **Ostrzeżenia z testów**:
-   - jeśli test jest napisany niepoprawnie (np. nieużywane fixture, nie awaited coroutine),
-     - popraw testy.
+2. **Warnings from tests**:
+   - if the test is written incorrectly (e.g., unused fixture, non-awaited coroutine),
+     - fix the tests.
 
-3. **Ostrzeżenia z zewnętrznych bibliotek**:
-   - **nie zmieniaj** kodu bibliotek.
-   - jeśli użytkownik tego chce:
-     - zaproponuj dodanie odpowiednich `filterwarnings` w `pytest.ini`
-       z wyraźnym komentarzem, skąd pochodzi ostrzeżenie i dlaczego jest ignorowane.
-
----
-
-## 6. Granice i rzeczy, których NIE robisz
-
-- Nie:
-  - zmieniasz kodu w `.venv/`, `site-packages` itd.
-  - wyłączasz testów bez wyraźnego powodu (i bez komentarza).
-  - modyfikujesz konfiguracji CI (np. GitHub Actions), chyba że użytkownik o to poprosi i jasno określi cel.
-  - rearanżujesz architektury projektu (np. zmiana struktury katalogów, głównych modułów) – Twoja rola to **refaktoryzacja ewolucyjna**, nie rewolucyjna.
-
-- Możesz:
-  - poprawiać style/typowanie/drobne błędy w plikach, w których pracujesz nad testami,
-  - proponować drobne refaktory (np. wydzielenie funkcji) jeśli wyraźnie poprawiają testowalność.
+3. **Warnings from external libraries**:
+   - **do not change** library code.
+   - if the user wishes:
+     - propose adding appropriate `filterwarnings` in `pytest.ini`
+       with a clear comment about the origin of the warning and why it is being ignored.
 
 ---
 
-## 7. Warunki zakończenia zadania
+## 6. Boundaries and Things You DO NOT Do
 
-Uznaj zadanie za zakończone, jeśli:
+- Do not:
+  - change code in `.venv/`, `site-packages`, etc.
+  - disable tests without a clear reason (and without a comment).
+  - modify CI configuration (e.g., GitHub Actions) unless explicitly requested by the user and with a clear purpose.
+  - rearrange project architecture (e.g., changing directory structure, main modules) – your role is **evolutionary refactoring**, not revolutionary.
 
-1. Zakres określony przez użytkownika (np. „moduł X + testy”) jest:
-   - pokryty rozsądną liczbą testów,
-   - testy przechodzą lokalnie.
+- You may:
+  - improve styles/typing/minor errors in files where you are working on tests,
+  - propose minor refactors (e.g., extracting functions) if they clearly improve testability.
 
-2. Pełne testy:
-   - zostały uruchomione **raz na koniec**,
-   - przeszły (lub jasno opiszesz, które padły i dlaczego – jeśli leży to poza zakresem zadania).
+---
 
-3. Wypiszesz:
-   - zmodyfikowane pliki,
-   - nowe testy/scenariusze,
-   - krótki opis wpływu na jakość (coverage / stabilność),
-   - TODO na przyszłość, jeśli coś zauważyłeś, a wykracza poza bieżący cel.
+## 7. Task Completion Conditions
 
-Po spełnieniu tych warunków **nie wykonuj dalszych zmian** – zakończ pracę i poczekaj na nowe instrukcje użytkownika.
+Consider the task complete if:
+
+1. The scope defined by the user (e.g., "module X + tests") is:
+   - covered by a reasonable number of tests,
+   - tests pass locally.
+
+2. Full tests:
+   - have been run **once at the end**,
+   - have passed (or you clearly describe which ones failed and why – if it's outside the scope of the task).
+
+3. You list:
+   - modified files,
+   - new tests/scenarios,
+   - a brief description of the impact on quality (coverage / stability),
+   - TODOs for the future, if you noticed something that goes beyond the current goal.
+
+After these conditions are met, **do not make further changes** – finish the work and await further user instructions.

@@ -1,49 +1,49 @@
-# 🌍 PUBLIC REPO STRATEGY - Strategia dla Publicznego Repo
+# 🌍 PUBLIC REPO STRATEGY - Strategy for Public Repo
 
-> **Cel**: Bezpieczne zarządzanie publicznym repozytorium open source
+> **Goal**: Securely manage an open-source public repository
 >
-> **Status**: MANDATORY dla RAE jako publiczne repo
+> **Status**: MANDATORY for RAE as a public repo
 
 ---
 
-## 🎯 Model Branchów dla Open Source
+## 🎯 Branch Model for Open Source
 
 ```
-ZEWNĘTRZNI KONTRYBUTORZY:
-fork → feature/* → PR do develop (TYLKO!)
+EXTERNAL CONTRIBUTORS:
+fork → feature/* → PR to develop (ONLY!)
                      ↓
                   Code Review
                      ↓
-                  Merge do develop
+                  Merge to develop
 
-MAINTAINERS (Wewnętrzni):
+MAINTAINERS (Internal):
 feature/* → develop → release → main
 ```
 
-**Kluczowa zasada**: Zewnętrzni mogą targetować TYLKO `develop`, NIGDY `main` ani `release`.
+**Key principle**: Externals can target ONLY `develop`, NEVER `main` or `release`.
 
 ---
 
-## 🔐 BEZPIECZEŃSTWO
+## 🔐 SECURITY
 
-### 1. Secrets i Klucze API
+### 1. Secrets and API Keys
 
-| Element | Status | Ochrona |
-|---------|--------|---------|
-| API Keys | ❌ NIGDY w repo | `.env` + `.gitignore` |
-| Passwords | ❌ NIGDY w repo | Secrets management |
-| Private keys | ❌ NIGDY w repo | Vault/GitHub Secrets |
-| `.env.example` | ✅ OK | Bez wartości, tylko keys |
-| Test fixtures | ⚠️ Ostrożnie | Użyj fake data |
+| Element | Status | Protection |
+|---------|--------|------------|
+| API Keys | ❌ NEVER in repo | `.env` + `.gitignore` |
+| Passwords | ❌ NEVER in repo | Secrets management |
+| Private keys | ❌ NEVER in repo | Vault/GitHub Secrets |
+| `.env.example` | ✅ OK | No values, only keys |
+| Test fixtures | ⚠️ Caution | Use fake data |
 
-### 2. Automatyczne Sprawdzania
+### 2. Automated Checks
 
 ```yaml
 # .github/workflows/pr-security-check.yml
 name: PR Security Check
 
 on:
-  pull_request_target:  # Bezpieczne dla external PRs
+  pull_request_target:  # Safe for external PRs
     types: [opened, synchronize]
 
 jobs:
@@ -78,30 +78,30 @@ jobs:
 
 ---
 
-## 🚪 ZEWNĘTRZNI KONTRYBUTORZY
+## 🚪 EXTERNAL CONTRIBUTORS
 
-### Wymagania dla PR
+### Requirements for PRs
 
-| Wymaganie | Obowiązkowe? | Sprawdzane przez |
-|-----------|-------------|------------------|
-| DCO sign-off | ✅ TAK | dcoapp/app |
-| Target = develop | ✅ TAK | PR check workflow |
-| Passing CI | ✅ TAK | GitHub Actions |
-| Code review | ✅ TAK | Maintainers |
-| CONTRIBUTING.md | ✅ TAK | Manual check |
-| Conventional commits | ✅ TAK | commitlint |
+| Requirement | Mandatory? | Checked by |
+|-------------|------------|------------|
+| DCO sign-off | ✅ YES | dcoapp/app |
+| Target = develop | ✅ YES | PR check workflow |
+| Passing CI | ✅ YES | GitHub Actions |
+| Code review | ✅ YES | Maintainers |
+| CONTRIBUTING.md | ✅ YES | Manual check |
+| Conventional commits | ✅ YES | commitlint |
 
 ### DCO (Developer Certificate of Origin)
 
 ```bash
-# Każdy commit musi być signed
+# Each commit must be signed
 git commit -s -m "feat: add feature X"
 
-# Dodaje do commit message:
+# Adds to commit message:
 Signed-off-by: Jan Kowalski <jan@example.com>
 ```
 
-**Workflow sprawdzania DCO**:
+**DCO checking workflow**:
 ```yaml
 # .github/workflows/dco.yml
 name: DCO Check
@@ -115,7 +115,7 @@ jobs:
       - uses: dcoapp/app@v1
 ```
 
-### Workflow dla Zewnętrznych
+### Workflow for Externals
 
 ```bash
 # 1. Fork repo
@@ -126,36 +126,36 @@ https://github.com/dreamsoft-pro/RAE-agentic-memory
 git clone https://github.com/your-username/RAE-agentic-memory
 cd RAE-agentic-memory
 
-# 3. Dodaj upstream
+# 3. Add upstream
 git remote add upstream https://github.com/dreamsoft-pro/RAE-agentic-memory
 
-# 4. Utwórz feature branch
+# 4. Create feature branch
 git checkout develop
 git pull upstream develop
 git checkout -b feature/my-contribution
 
-# 5. Implementuj
-# [kod...]
+# 5. Implement
+# [code...]
 
-# 6. Commit z DCO
+# 6. Commit with DCO
 git commit -s -m "feat: add my feature"
 
-# 7. Push do fork
+# 7. Push to fork
 git push origin feature/my-contribution
 
-# 8. Utwórz PR (przez GitHub UI)
+# 8. Create PR (via GitHub UI)
 # Base: dreamsoft-pro/RAE-agentic-memory:develop
 # Head: your-username/RAE-agentic-memory:feature/my-contribution
 ```
 
 ---
 
-## ⚠️ ZABRONIONE ZMIANY (Zewnętrzni)
+## ⚠️ FORBIDDEN CHANGES (Externals)
 
-### NIE Akceptujemy PR które:
+### We DO NOT accept PRs that:
 
-| Zmiana | Dlaczego zabronione |
-|--------|---------------------|
+| Change | Why forbidden |
+|--------|---------------|
 | `.github/workflows/*` | Security risk - CI/CD manipulation |
 | `/apps/memory_api/security/*` | Security-sensitive code |
 | `/infra/*` | Infrastructure changes require deep review |
@@ -164,7 +164,7 @@ git push origin feature/my-contribution
 | Large binary files (>10MB) | Bloats repository |
 | Secrets/credentials | Security violation |
 
-### Automatyczna Blokada
+### Automated Blocking
 
 ```yaml
 # .github/workflows/pr-validation.yml
@@ -214,15 +214,15 @@ jobs:
 
 ---
 
-## 👥 CODEOWNERS (Wzmocniona dla Public Repo)
+## 👥 CODEOWNERS (Enhanced for Public Repo)
 
 ```
 # .github/CODEOWNERS
 
-# Wszystko domyślnie
+# Everything by default
 * @dreamsoft-pro/maintainers
 
-# Krytyczne pliki - TYLKO core team
+# Critical files - ONLY core team
 /.github/workflows/* @dreamsoft-pro/core-maintainers
 /CRITICAL_AGENT_RULES.md @dreamsoft-pro/core-maintainers
 /AI_AGENT_MANIFEST.md @dreamsoft-pro/core-maintainers
@@ -230,19 +230,19 @@ jobs:
 /AUTONOMOUS_OPERATIONS.md @dreamsoft-pro/core-maintainers
 /BRANCH_STRATEGY.md @dreamsoft-pro/core-maintainers
 
-# Security - TYLKO security team
+# Security - ONLY security team
 /apps/memory_api/security/* @dreamsoft-pro/security-team
 /apps/memory_api/middleware/auth.py @dreamsoft-pro/security-team
 
-# Infrastructure - TYLKO devops
+# Infrastructure - ONLY devops
 /infra/* @dreamsoft-pro/devops
 /docker-compose*.yml @dreamsoft-pro/devops
 
-# Core services - review przez core team
+# Core services - review by core team
 /apps/memory_api/services/* @dreamsoft-pro/core-maintainers
 /apps/memory_api/repositories/* @dreamsoft-pro/core-maintainers
 
-# Public contributions welcome (dokumentacja, testy)
+# Public contributions welcome (documentation, tests)
 /docs/* @dreamsoft-pro/maintainers
 /tests/* @dreamsoft-pro/maintainers
 /examples/* @dreamsoft-pro/maintainers
@@ -250,11 +250,11 @@ jobs:
 
 ---
 
-## 📋 REVIEW PROCESS (Zewnętrzne PR)
+## 📋 REVIEW PROCESS (External PRs)
 
-### Checklist dla Reviewers
+### Checklist for Reviewers
 
-Przed approval zewnętrznego PR, sprawdź:
+Before approving an external PR, check:
 
 - [ ] ✅ Target branch = `develop`
 - [ ] ✅ DCO sign-off present
@@ -269,34 +269,34 @@ Przed approval zewnętrznego PR, sprawdź:
 - [ ] ✅ No malicious code
 - [ ] ✅ License compatible (MIT)
 
-### Czas Review
+### Review Time
 
 | PR Size | Expected Review Time |
-|---------|---------------------|
-| Trivial (<10 lines) | 1-2 dni |
-| Small (<100 lines) | 2-3 dni |
-| Medium (<500 lines) | 3-5 dni |
-| Large (>500 lines) | 5-10 dni |
+|---------|----------------------|
+| Trivial (<10 lines) | 1-2 days |
+| Small (<100 lines) | 2-3 days |
+| Medium (<500 lines) | 3-5 days |
+| Large (>500 lines) | 5-10 days |
 
-**Uwaga**: Large PRs są trudniejsze do review. Zachęcamy do mniejszych, częstszych PR!
+**Note**: Large PRs are harder to review. We encourage smaller, more frequent PRs!
 
 ---
 
 ## 🏷️ LABEL SYSTEM
 
-### Labels dla PR
+### Labels for PRs
 
-| Label | Kiedy | Kto ustawia |
-|-------|-------|-------------|
-| `external-contribution` | PR od non-maintainer | Automatyczne (bot) |
-| `needs-review` | Czeka na review | Automatyczne |
-| `changes-requested` | Wymaga poprawek | Reviewer |
-| `approved` | Zatwierdzony | Reviewer |
-| `security-review` | Wymaga security review | Automatyczne (jeśli security paths) |
-| `breaking-change` | Łamie API | Author lub reviewer |
-| `documentation` | Tylko docs | Author |
+| Label | When | Who sets |
+|-------|------|----------|
+| `external-contribution` | PR from non-maintainer | Automatic (bot) |
+| `needs-review` | Awaiting review | Automatic |
+| `changes-requested` | Requires fixes | Reviewer |
+| `approved` | Approved | Reviewer |
+| `security-review` | Requires security review | Automatic (if security paths) |
+| `breaking-change` | Breaks API | Author or reviewer |
+| `documentation` | Docs only | Author |
 
-### Automatyczne Labelling
+### Automated Labelling
 
 ```yaml
 # .github/workflows/auto-label.yml
@@ -338,30 +338,30 @@ jobs:
 
 ## 🤝 CONTRIBUTOR LICENSE AGREEMENT (CLA)
 
-### Czy potrzebujemy CLA?
+### Do we need a CLA?
 
-**Dla MIT License: NIE**
+**For MIT License: NO**
 
-MIT license jest wystarczająco permissive. CLA nie jest wymagany.
+The MIT license is sufficiently permissive. A CLA is not required.
 
-Jednak wymagamy **DCO (Developer Certificate of Origin)** który jest lżejszą alternatywą.
+However, we require a **DCO (Developer Certificate of Origin)** which is a lighter alternative.
 
 ### DCO vs CLA
 
-| Aspekt | DCO | CLA |
+| Aspect | DCO | CLA |
 |--------|-----|-----|
-| Złożoność | Prosty | Skomplikowany |
-| Sign-off | Każdy commit | Jednorazowo |
-| Prawne | Wystarczające | Kompletne |
-| Dla MIT | ✅ Zalecane | ❌ Overkill |
+| Complexity | Simple | Complex |
+| Sign-off | Every commit | One-time |
+| Legal | Sufficient | Complete |
+| For MIT | ✅ Recommended | ❌ Overkill |
 
 ---
 
-## 📊 STATYSTYKI I TRANSPARENTNOŚĆ
+## 📊 STATISTICS AND TRANSPARENCY
 
 ### Public Dashboard
 
-Udostępniamy publicznie:
+We publicly provide:
 - ✅ Test coverage (codecov badge)
 - ✅ CI status (GitHub Actions badge)
 - ✅ Security scan results (Snyk/GitHub)
@@ -378,21 +378,21 @@ Udostępniamy publicznie:
 
 ---
 
-## 🎓 ONBOARDING ZEWNĘTRZNYCH
+## 🎓 EXTERNAL ONBOARDING
 
-### CONTRIBUTING.md (Kluczowy dokument)
+### CONTRIBUTING.md (Key document)
 
-Musi zawierać:
-1. **How to contribute** - krok po kroku
-2. **Code of conduct** - zasady zachowania
-3. **Development setup** - jak uruchomić lokalnie
-4. **Testing** - jak testować zmiany
-5. **PR process** - jak utworzyć dobry PR
-6. **Review timeline** - czego się spodziewać
+Must contain:
+1. **How to contribute** - step-by-step
+2. **Code of conduct** - rules of conduct
+3. **Development setup** - how to run locally
+4. **Testing** - how to test changes
+5. **PR process** - how to create a good PR
+6. **Review timeline** - what to expect
 
 ### Good First Issues
 
-Label `good-first-issue` dla prostych zadań:
+Label `good-first-issue` for simple tasks:
 - Documentation fixes
 - Test coverage improvement
 - Small bug fixes
@@ -400,7 +400,7 @@ Label `good-first-issue` dla prostych zadań:
 
 ```yaml
 # .github/workflows/label-good-first-issues.yml
-# Automatycznie label prostych issues
+# Automatically label simple issues
 ```
 
 ---
@@ -409,18 +409,18 @@ Label `good-first-issue` dla prostych zadań:
 
 ### MIT License
 
-RAE używa MIT License - bardzo permissive.
+RAE uses the MIT License - very permissive.
 
-**Wymagania**:
-- ✅ Zachowaj copyright notice
-- ✅ Zachowaj license text
-- ✅ Możesz użyć komercyjnie
-- ✅ Możesz modyfikować
-- ✅ Możesz dystrybuować
+**Requirements**:
+- ✅ Retain copyright notice
+- ✅ Retain license text
+- ✅ Can be used commercially
+- ✅ Can be modified
+- ✅ Can be distributed
 
-**Nie wymagane**:
-- ❌ Share source code (możesz closed-source fork)
-- ❌ Same license dla derivative works
+**Not required**:
+- ❌ Share source code (can fork closed-source)
+- ❌ Same license for derivative works
 
 ### License Check
 
@@ -437,7 +437,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check license headers
         run: |
-          # Sprawdź czy każdy .py ma license header
+          # Check if every .py has a license header
           python scripts/check_license_headers.py
 ```
 
@@ -495,7 +495,7 @@ We will respond within 48 hours.
 - [ ] Branch protection enabled (main, release)
 - [ ] GitHub Teams created (maintainers, core-maintainers, security)
 
-### CI/CD dla External PR
+### CI/CD for External PRs
 
 - [ ] PR validation workflow (target branch check)
 - [ ] DCO check workflow
@@ -506,14 +506,14 @@ We will respond within 48 hours.
 
 ### Documentation
 
-- [ ] PUBLIC_REPO_STRATEGY.md (ten dokument)
+- [ ] PUBLIC_REPO_STRATEGY.md (this document)
 - [ ] Contributor guidelines clear
 - [ ] Setup instructions in README
 - [ ] API documentation published
 
 ---
 
-**Wersja**: 1.0.0
-**Data**: 2025-12-10
-**Status**: 🔴 MANDATORY - Dla publicznych repo
+**Version**: 1.0.0
+**Date**: 2025-12-10
+**Status**: 🔴 MANDATORY - For public repos
 **License**: MIT
