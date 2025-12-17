@@ -209,7 +209,7 @@ benchmark-compare:  ## Compare two benchmark runs (Usage: make benchmark-compare
 benchmark-gate:  ## Run nine_five benchmarks and check thresholds (CI gate)
 	@echo "🚦 Running benchmark gate (CI threshold check)..."
 	@echo "Running nine_five benchmark suite..."
-	@$(VENV_PYTHON) -m benchmarking.nine_five_benchmarks.runner --all
+	@$(VENV_PYTHON) -m benchmarking.nine_five_benchmarks.runner --benchmark all
 	@echo "Checking thresholds..."
 	@$(VENV_PYTHON) benchmarking/scripts/check_thresholds.py
 	@echo "✅ Benchmark gate passed!"
