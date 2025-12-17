@@ -3,7 +3,7 @@
 # Total size: ~500MB vs 3-5GB with ML dependencies
 
 # Core API Framework
-fastapi==0.115.0
+fastapi==0.125.0
 uvicorn==0.38.0
 pydantic==2.12.4
 pydantic-settings==2.12.0
