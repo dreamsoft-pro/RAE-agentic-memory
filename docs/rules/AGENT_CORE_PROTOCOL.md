@@ -56,6 +56,20 @@ Different branches = Different testing levels.
 2. **Check Context**: Use `search_memory` (if available) for recent agent activity.
 3. **Plan**: Create a plan/todo list before editing code.
 
+## 6. HIGH STANDARDS & QUALITY GATES
+
+- **Zero Warning Policy**: Treat warnings as errors. Fix them immediately. Do not ignore them.
+- **No Drift**: Ensure architectural decisions are persistent. Do not re-introduce fixed bugs or deprecated patterns.
+- **Best Practices**:
+  - **Clean Code**: Follow SOLID, DRY, and KISS principles.
+  - **Type Safety**: strict `mypy` compliance.
+  - **Documentation**: Keep docs in sync with code (especially `CONVENTIONS.md`).
+- **Definition of Done**:
+  - Tests passed (Green).
+  - Linter passed (No warnings).
+  - Documentation updated.
+  - PR ready for review.
+
 ---
 **Violation Consequences**:
 - Blocking other devs (broken develop/main).

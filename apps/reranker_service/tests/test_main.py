@@ -21,8 +21,8 @@ def client(mock_reranker_dependencies):
     # Reset module if it was already imported (e.g. by another test)
     if "main" in sys.modules:
         del sys.modules["main"]
-    if "apps.reranker-service.main" in sys.modules:
-        del sys.modules["apps.reranker-service.main"]
+    if "apps.reranker_service.main" in sys.modules:
+        del sys.modules["apps.reranker_service.main"]
 
     # Now import
     try:

@@ -77,7 +77,7 @@ install-all:  ## Install all dependencies (including integrations)
 	@$(VENV_PIP) install --upgrade pip
 	@$(VENV_PIP) install -r requirements-dev.txt
 	@$(VENV_PIP) install -r apps/memory_api/requirements.txt
-	@$(VENV_PIP) install -r apps/reranker-service/requirements.txt || true
+	@$(VENV_PIP) install -r apps/reranker_service/requirements.txt || true
 	@$(VENV_PIP) install -r apps/ml_service/requirements.txt || true # New ML Service requirements
 	@$(VENV_PIP) install -r cli/agent-cli/requirements.txt || true
 	@$(VENV_PIP) install -r eval/requirements.txt || true
@@ -109,11 +109,7 @@ demo:  ## Run interactive quickstart demo
 # CODE QUALITY
 # ==============================================================================
 
-format:  ## Format code with black and isort
-	@echo "🎨 Formatting code..."
-	@$(VENV_ACTIVATE) && black apps/ sdk/ integrations/
-	@$(VENV_ACTIVATE) && isort apps/ sdk/ integrations/
-	@echo "✅ Code formatted"
+
 
 lint:  ## Run linters (ruff, black, isort, mypy)
 	@echo "🔍 Running linters..."
@@ -333,10 +329,7 @@ health:  ## Check health of all services
 # UTILITIES
 # ==============================================================================
 
-docs:  ## Auto-generate documentation (Changelog, TODOs, Status)
-	@echo "📚 Generating documentation..."
-	@python3 scripts/docs_automator.py
-	@echo "✅ Documentation updated"
+
 
 version:  ## Show version information
 	@echo "RAE - Reflective Agentic Memory Engine"

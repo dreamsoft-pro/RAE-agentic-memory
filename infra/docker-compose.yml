@@ -113,7 +113,7 @@ services:
       - rae-net
 
   reranker:
-    build: ../apps/reranker-service
+    build: ../apps/reranker_service
     environment:
       PYTHONUNBUFFERED: "1"
     ports:
