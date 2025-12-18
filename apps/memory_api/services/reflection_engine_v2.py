@@ -26,7 +26,6 @@ from apps.memory_api.services.llm import get_llm_provider
 
 if TYPE_CHECKING:
     from apps.memory_api.services.rae_core_service import RAECoreService
-    from apps.memory_api.repositories.memory_repository import MemoryRepository
 
 logger = structlog.get_logger(__name__)
 
@@ -60,7 +59,6 @@ class ReflectionEngineV2:
         self,
         pool: asyncpg.Pool,
         rae_service: "RAECoreService",
-        memory_repository: Optional["MemoryRepository"] = None,
     ):
         """
         Initialize ReflectionEngineV2
@@ -68,7 +66,6 @@ class ReflectionEngineV2:
         Args:
             pool: Database connection pool
             rae_service: RAECoreService for memory operations
-            memory_repository: Deprecated Memory repository for storage
         """
         self.pool = pool
         self.rae_service = rae_service

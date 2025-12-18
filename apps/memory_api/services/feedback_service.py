@@ -12,7 +12,6 @@ from apps.memory_api.config import settings
 
 if TYPE_CHECKING:
     from apps.memory_api.services.rae_core_service import RAECoreService
-    from apps.memory_api.repositories.memory_repository import MemoryRepository
 
 logger = structlog.get_logger(__name__)
 
@@ -22,9 +21,8 @@ class FeedbackService:
     Service for processing user/system feedback on memory retrieval quality.
     """
 
-    def __init__(self, rae_service: "RAECoreService", memory_repo: Optional["MemoryRepository"] = None):
+    def __init__(self, rae_service: "RAECoreService"):
         self.rae_service = rae_service
-        self.memory_repo = memory_repo # Deprecated, kept for backward compat if needed
 
     async def process_feedback(
         self,

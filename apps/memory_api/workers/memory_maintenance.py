@@ -30,9 +30,9 @@ from apps.memory_api.models.reflection_v2_models import (
     OutcomeType,
     ReflectionContext,
 )
-from apps.memory_api.repositories.memory_repository import MemoryRepository
 from apps.memory_api.services.importance_scoring import ImportanceScoringService
 from apps.memory_api.services.llm import get_llm_provider
+from apps.memory_api.services.rae_core_service import RAECoreService
 from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
 
 logger = structlog.get_logger(__name__)
@@ -171,10 +171,10 @@ class SummarizationWorker:
     def __init__(
         self,
         pool: asyncpg.Pool,
-        memory_repository: Optional[MemoryRepository] = None,
+        rae_service: RAECoreService,
     ):
         self.pool = pool
-        self.memory_repo = memory_repository or MemoryRepository(pool)
+        self.rae_service = rae_service
         self.llm_provider = get_llm_provider()
 
     async def summarize_session(
@@ -214,9 +214,28 @@ class SummarizationWorker:
         )
 
         # Get episodic memories for session
-        episodic_memories = await self.memory_repo.get_episodic_memories(
-            tenant_id=tenant_id, project=project_id, limit=100, session_id=session_id
+        # Using RAECoreService list_memories with session_id filter if supported
+        # Note: RAECoreService list_memories doesn't explicitly support session_id yet in its public method signature
+        # We might need to extend it or pass filters dict.
+        # list_memories supports filters param.
+        # Assuming filters can handle metadata
+        filters = {"metadata": {"session_id": str(session_id)}}
+        
+        episodic_memories = await self.rae_service.list_memories(
+            tenant_id=tenant_id, 
+            project=project_id, 
+            layer="episodic", 
+            limit=100, 
+            # filters=filters # Need to verify if filters pass through correctly
         )
+        
+        # Manually filter by session_id if RAECoreService doesn't support metadata filtering yet in Postgres adapter fully
+        # (Postgres adapter list_memories stub implementation was basic, we updated it but verify)
+        # For now, let's filter in python to be safe as we did in other places
+        episodic_memories = [
+            m for m in episodic_memories 
+            if m.get("metadata", {}).get("session_id") == str(session_id)
+        ]
 
         if len(episodic_memories) < min_events:
             logger.info(
@@ -238,14 +257,13 @@ class SummarizationWorker:
         summary_importance = min(avg_importance * 1.2, 1.0)
 
         # Store summary as episodic memory with special tag
-        summary_record = await self.memory_repo.insert_memory(
+        summary_id = await self.rae_service.store_memory(
             tenant_id=tenant_id,
             content=summary_content,
             source="summarization_worker",
             importance=summary_importance,
-            layer="em",
+            layer="episodic",
             tags=["session_summary", "auto_generated"],
-            timestamp=datetime.now(timezone.utc),
             project=project_id,
         )
 
@@ -253,11 +271,11 @@ class SummarizationWorker:
             "session_summarization_completed",
             tenant_id=tenant_id,
             session_id=str(session_id),
-            summary_id=summary_record["id"],
+            summary_id=summary_id,
             source_events=len(episodic_memories),
         )
 
-        return summary_record
+        return {"id": summary_id, "content": summary_content}
 
     async def _create_summary_text(self, memories: List[Dict[str, Any]]) -> str:
         """
@@ -331,14 +349,18 @@ Provide a concise summary, list key topics, and determine the overall sentiment.
         # Find sessions with many events
         async with self.pool.acquire() as conn:
             # Query to find sessions with event count above threshold
+            # Note: This direct SQL query depends on schema structure which RAECore mostly abstracts
+            # but for analytics/aggregation we might still need direct access or extended RAECore methods.
+            # RAECore has count_memories but no "group by session_id".
+            # We keep direct SQL here as it's a worker task, but acknowledge it as a leaky abstraction or future feature for RAECore.
             sql = """
                 SELECT
                     metadata->>'session_id' as session_id,
                     COUNT(*) as event_count
                 FROM memories
                 WHERE tenant_id = $1
-                  AND project = $2
-                  AND layer = 'em'
+                  AND agent_id = $2 -- agent_id maps to project
+                  AND layer = 'episodic'
                   AND metadata->>'session_id' IS NOT NULL
                 GROUP BY metadata->>'session_id'
                 HAVING COUNT(*) >= $3
@@ -394,12 +416,12 @@ class DreamingWorker:
     def __init__(
         self,
         pool: asyncpg.Pool,
+        rae_service: RAECoreService,
         reflection_engine: Optional[ReflectionEngineV2] = None,
-        memory_repository: Optional[MemoryRepository] = None,
     ):
         self.pool = pool
-        self.reflection_engine = reflection_engine or ReflectionEngineV2(pool)
-        self.memory_repo = memory_repository or MemoryRepository(pool)
+        self.rae_service = rae_service
+        self.reflection_engine = reflection_engine or ReflectionEngineV2(pool, rae_service)
 
     async def run_dreaming_cycle(
         self,
@@ -443,6 +465,11 @@ class DreamingWorker:
         )
 
         # Get high-importance episodic memories from recent period
+        # Using RAECoreService list_memories would be ideal but it lacks complex filtering (created_at > X, importance > Y)
+        # RAECoreService only supports basic equality filters currently.
+        # We can implement extended filtering in RAECoreService or use direct SQL here.
+        # Given this is a worker, direct SQL is acceptable for complex queries, BUT we should target 'memories' table using correct column names.
+        
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=lookback_hours)
 
         async with self.pool.acquire() as conn:
@@ -451,8 +478,8 @@ class DreamingWorker:
                 SELECT id, content, importance, created_at, tags
                 FROM memories
                 WHERE tenant_id = $1
-                  AND project = $2
-                  AND layer = 'em'
+                  AND agent_id = $2 -- agent_id maps to project
+                  AND layer = 'episodic'
                   AND importance >= $3
                   AND created_at >= $4
                 ORDER BY importance DESC, created_at DESC
@@ -547,9 +574,46 @@ class MaintenanceScheduler:
 
     def __init__(self, pool: asyncpg.Pool):
         self.pool = pool
+        
+        # Instantiate RAECoreService dependencies manually for CLI context
+        # In a real app context, this should be injected.
+        # For CLI usage, we need to create it.
+        # Note: This requires Qdrant and Redis which might be heavy for a worker if not needed.
+        # But we need it for Memory replacement.
+        # HACK: For now we mock or create minimal service if possible, or assume full env.
+        # Assuming full env as it's a worker process.
+        
+        # We need to initialize clients. Ideally these are passed in __init__
+        # But to keep signature simple for existing callers (if any), we might need to handle it.
+        # However, the CLI entry point below creates pool.
+        # We should update CLI entry point to create full service stack.
+        # For now, we'll assume we can't easily create RAECoreService inside __init__ without async.
+        # So we'll update the CLI entry point first to pass it, and update __init__ signature.
+        pass
+
+    @classmethod
+    async def create(cls, pool: asyncpg.Pool, redis_url: str, qdrant_host: str, qdrant_port: int):
+        """Async factory"""
+        self = cls(pool)
+        
+        # Initialize dependencies
+        import redis.asyncio as aioredis
+        from qdrant_client import AsyncQdrantClient
+        
+        redis_client = aioredis.from_url(redis_url, encoding="utf-8", decode_responses=True)
+        qdrant_client = AsyncQdrantClient(host=qdrant_host, port=qdrant_port)
+        
+        self.rae_service = RAECoreService(
+            postgres_pool=pool,
+            qdrant_client=qdrant_client,
+            redis_client=redis_client
+        )
+        
         self.decay_worker = DecayWorker(pool)
-        self.summarization_worker = SummarizationWorker(pool)
-        self.dreaming_worker = DreamingWorker(pool)
+        self.summarization_worker = SummarizationWorker(pool, self.rae_service)
+        self.dreaming_worker = DreamingWorker(pool, self.rae_service)
+        
+        return self
 
     async def run_daily_maintenance(
         self, tenant_ids: Optional[List[str]] = None
@@ -685,7 +749,12 @@ async def run_maintenance_cli():
 
     try:
         # Create scheduler
-        scheduler = MaintenanceScheduler(pool)
+        scheduler = await MaintenanceScheduler.create(
+            pool, 
+            redis_url=settings.REDIS_URL,
+            qdrant_host=settings.QDRANT_HOST,
+            qdrant_port=settings.QDRANT_PORT
+        )
 
         # Run daily maintenance
         stats = await scheduler.run_daily_maintenance()

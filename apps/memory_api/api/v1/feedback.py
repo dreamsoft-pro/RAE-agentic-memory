@@ -1,10 +1,11 @@
 import structlog
 from fastapi import APIRouter, Depends, Request
 
+from apps.memory_api.dependencies import get_rae_core_service
 from apps.memory_api.models.feedback import FeedbackRequest
-from apps.memory_api.repositories.memory_repository import MemoryRepository
 from apps.memory_api.security.dependencies import get_and_verify_tenant_id
 from apps.memory_api.services.feedback_service import FeedbackService
+from apps.memory_api.services.rae_core_service import RAECoreService
 
 logger = structlog.get_logger(__name__)
 
@@ -16,16 +17,15 @@ async def submit_feedback(
     feedback: FeedbackRequest,
     request: Request,
     tenant_id: str = Depends(get_and_verify_tenant_id),
+    rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
     Submit feedback for a retrieved memory.
 
     Used for the 'Feedback Loop' mechanism to adjust memory importance.
     """
-    # Initialize service (in production, use dependency injection properly)
-    pool = request.app.state.pool
-    repo = MemoryRepository(pool)
-    service = FeedbackService(repo)
+    # Initialize service
+    service = FeedbackService(rae_service=rae_service)
 
     success = await service.process_feedback(
         tenant_id=tenant_id,

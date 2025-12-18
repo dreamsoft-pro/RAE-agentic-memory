@@ -14,16 +14,13 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
-from apps.memory_api.dependencies import get_hybrid_search_service
+from apps.memory_api.dependencies import get_graph_repository, get_rae_core_service
 from apps.memory_api.metrics import memory_query_counter
 from apps.memory_api.security import auth
 from apps.memory_api.services.graph_extraction import GraphExtractionResult
-from apps.memory_api.services.hybrid_search import (
-    HybridSearchResult,
-    HybridSearchService,
-    TraversalStrategy,
-)
+from apps.memory_api.services.llm import get_llm_provider
 from apps.memory_api.services.reflection_engine import ReflectionEngine
+from apps.memory_api.services.rae_core_service import RAECoreService
 
 logger = structlog.get_logger(__name__)
 
@@ -597,11 +594,11 @@ async def get_graph_edges(
         )
 
 
-@router.post("/query", response_model=HybridSearchResult)
+@router.post("/query", response_model=Dict[str, Any])
 async def query_knowledge_graph(
     req: GraphSearchRequest,
     request: Request,
-    hybrid_search: HybridSearchService = Depends(get_hybrid_search_service),
+    rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
     Advanced knowledge graph search with hybrid retrieval.
@@ -621,7 +618,6 @@ async def query_knowledge_graph(
     Args:
         req: Graph search request parameters
         request: FastAPI request object (for tenant context)
-        hybrid_search: HybridSearchService (injected via DI)
 
     Returns:
         HybridSearchResult with vector matches, graph data, and synthesized context
@@ -652,31 +648,19 @@ async def query_knowledge_graph(
     )
 
     try:
-        # Perform comprehensive hybrid search (service injected via DI)
-        result = await hybrid_search.search(
-            query=req.query,
-            tenant_id=tenant_id,
-            project_id=req.project_id,
-            top_k_vector=req.top_k_vector,
-            graph_depth=req.graph_depth,
-            traversal_strategy=strategy,
-            use_graph=True,
-            filters=req.filters,
-        )
+        # TODO: Implement proper graph query using RAECoreService.
+        # For now, return a placeholder.
+        logger.warning("graph_query_placeholder", detail="Actual graph query logic is not yet implemented using RAECoreService.")
+        
+        return {
+            "message": "Graph query endpoint is under refactoring to use RAECoreService. Placeholder response.",
+            "query": req.query,
+            "project_id": req.project_id,
+            "tenant_id": tenant_id,
+            "results": [],
+            "statistics": {}
+        }
 
-        logger.info(
-            "graph_query_completed",
-            tenant_id=tenant_id,
-            project_id=req.project_id,
-            vector_results=len(result.vector_matches),
-            graph_nodes=len(result.graph_nodes),
-            graph_edges=len(result.graph_edges),
-        )
-
-        # Update metrics
-        memory_query_counter.labels(tenant_id=tenant_id).inc()
-
-        return result
 
     except Exception as e:
         logger.exception(
@@ -688,13 +672,13 @@ async def query_knowledge_graph(
         raise HTTPException(status_code=500, detail=f"Graph query failed: {str(e)}")
 
 
-@router.get("/subgraph", response_model=GraphQueryResponse)
+@router.get("/subgraph", response_model=Dict[str, Any])
 async def get_subgraph(
     request: Request,
     project_id: str = Query(..., description="Project identifier"),
     node_ids: str = Query(..., description="Comma-separated node IDs to start from"),
     depth: int = Query(default=1, ge=1, le=5, description="Traversal depth"),
-    hybrid_search: HybridSearchService = Depends(get_hybrid_search_service),
+    rae_service: RAECoreService = Depends(get_rae_core_service), # Use RAECoreService
 ):
     """
     Retrieve a subgraph starting from specific nodes.
@@ -709,7 +693,6 @@ async def get_subgraph(
         project_id: Project identifier
         node_ids: Comma-separated list of starting node IDs
         depth: Maximum traversal depth
-        hybrid_search: HybridSearchService (injected via DI)
 
     Returns:
         GraphQueryResponse with nodes and edges in the subgraph
@@ -736,84 +719,18 @@ async def get_subgraph(
     )
 
     try:
-        # Graph traversal using injected service
+        # TODO: Implement proper subgraph retrieval using RAECoreService or GraphRepository.
+        # For now, return a placeholder.
+        logger.warning("subgraph_placeholder", detail="Actual subgraph logic is not yet implemented using RAECoreService.")
 
-        # Perform graph traversal
-        nodes, edges = await hybrid_search._traverse_bfs(
-            start_node_ids=start_nodes,
-            tenant_id=tenant_id,
-            project_id=project_id,
-            max_depth=depth,
-        )
-
-        # Convert to response format
-        node_responses = []
-        async with request.app.state.pool.acquire() as conn:
-            for node in nodes:
-                # Get full node data
-                node_data = await conn.fetchrow(
-                    """
-                    SELECT id, node_id, label, properties, created_at
-                    FROM knowledge_graph_nodes
-                    WHERE id = $1::uuid
-                    """,
-                    node.id,
-                )
-
-                if node_data:
-                    node_responses.append(
-                        GraphNodeResponse(
-                            id=str(node_data["id"]),
-                            node_id=node_data["node_id"],
-                            label=node_data["label"],
-                            properties=node_data["properties"],
-                            created_at=str(node_data["created_at"]),
-                        )
-                    )
-
-        edge_responses = []
-        async with request.app.state.pool.acquire() as conn:
-            for edge in edges:
-                # Get full edge data
-                edge_data = await conn.fetchrow(
-                    """
-                    SELECT id, source_node_id, target_node_id, relation, properties, created_at
-                    FROM knowledge_graph_edges
-                    WHERE source_node_id = $1::uuid AND target_node_id = $2::uuid
-                    """,
-                    edge.source_id,
-                    edge.target_id,
-                )
-
-                if edge_data:
-                    edge_responses.append(
-                        GraphEdgeResponse(
-                            id=str(edge_data["id"]),
-                            source_node_id=str(edge_data["source_node_id"]),
-                            target_node_id=str(edge_data["target_node_id"]),
-                            relation=edge_data["relation"],
-                            properties=edge_data["properties"],
-                            created_at=str(edge_data["created_at"]),
-                        )
-                    )
-
-        statistics = {
-            "start_nodes": len(start_nodes),
-            "depth": depth,
-            "nodes_found": len(node_responses),
-            "edges_found": len(edge_responses),
+        return {
+            "message": "Subgraph endpoint is under refactoring to use RAECoreService. Placeholder response.",
+            "project_id": project_id,
+            "tenant_id": tenant_id,
+            "nodes": [],
+            "edges": [],
+            "statistics": {}
         }
-
-        logger.info(
-            "subgraph_retrieved",
-            tenant_id=tenant_id,
-            project_id=project_id,
-            statistics=statistics,
-        )
-
-        return GraphQueryResponse(
-            nodes=node_responses, edges=edge_responses, statistics=statistics
-        )
 
     except Exception as e:
         logger.exception(

@@ -48,7 +48,7 @@ class ActionExecutor:
     Executes actions and maintains transition history.
 
     NOTE: This is a framework class. Actual action execution delegates to
-    existing service layer (MemoryRepository, HybridSearch, etc.).
+    existing service layer (RAECoreService, HybridSearch, etc.).
 
     This class provides:
       - Unified interface for all actions
@@ -230,7 +230,7 @@ class ActionExecutor:
         Delegates to specific handlers based on action type.
 
         NOTE: This is a placeholder implementation. In production:
-          - Integrate with existing services (MemoryRepository, HybridSearch, etc.)
+          - Integrate with existing services (RAECoreService, HybridSearch, etc.)
           - Use dependency injection for services
           - Handle errors gracefully
 

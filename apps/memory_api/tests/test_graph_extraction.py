@@ -10,10 +10,10 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 
 # Skip tests if spacy is not installed (ML dependency)
-spacy = pytest.importorskip(
-    "spacy",
-    reason="Requires spacy – heavy ML dependency, not installed in lightweight CI",
-)
+# spacy = pytest.importorskip(
+#     "spacy",
+#     reason="Requires spacy – heavy ML dependency, not installed in lightweight CI",
+# )
 
 from apps.memory_api.services.graph_extraction import (  # noqa: E402
     GraphExtractionResult,
@@ -49,14 +49,14 @@ def extraction_service(mock_pool, mock_llm_provider):
     """Create extraction service with mocks (using DI pattern)."""
     # Create mock repositories
     from apps.memory_api.repositories.graph_repository import GraphRepository
-    from apps.memory_api.repositories.memory_repository import MemoryRepository
+    from apps.memory_api.services.rae_core_service import RAECoreService
 
-    mock_memory_repo = Mock(spec=MemoryRepository)
+    mock_rae_service = Mock(spec=RAECoreService)
     mock_graph_repo = Mock(spec=GraphRepository)
 
     # Create service with injected repositories
     service = GraphExtractionService(
-        memory_repo=mock_memory_repo, graph_repo=mock_graph_repo
+        rae_service=mock_rae_service, graph_repo=mock_graph_repo
     )
     service.llm_provider = mock_llm_provider
     return service
@@ -169,24 +169,24 @@ class TestGraphExtractionService:
     async def test_service_initialization(self, mock_pool, mock_llm_provider):
         """Test service initialization with DI pattern."""
         from apps.memory_api.repositories.graph_repository import GraphRepository
-        from apps.memory_api.repositories.memory_repository import MemoryRepository
+        from apps.memory_api.services.rae_core_service import RAECoreService
 
-        mock_memory_repo = Mock(spec=MemoryRepository)
+        mock_rae_service = Mock(spec=RAECoreService)
         mock_graph_repo = Mock(spec=GraphRepository)
 
         service = GraphExtractionService(
-            memory_repo=mock_memory_repo, graph_repo=mock_graph_repo
+            rae_service=mock_rae_service, graph_repo=mock_graph_repo
         )
         service.llm_provider = mock_llm_provider
 
-        assert service.memory_repo is mock_memory_repo
+        assert service.rae_service is mock_rae_service
         assert service.graph_repo is mock_graph_repo
         assert service.llm_provider is mock_llm_provider
 
     async def test_fetch_episodic_memories(self, extraction_service, mock_pool):
-        """Test fetching episodic memories via repository."""
-        # Mock the repository method instead of direct DB access
-        extraction_service.memory_repo.get_episodic_memories = AsyncMock(
+        """Test fetching episodic memories via service."""
+        # Mock the service method instead of direct DB access
+        extraction_service.rae_service.list_memories = AsyncMock(
             return_value=[
                 {
                     "id": "mem1",
@@ -234,7 +234,7 @@ class TestGraphExtractionService:
     async def test_extract_knowledge_graph_empty(self, extraction_service, mock_pool):
         """Test extraction with no memories."""
         # Mock repository to return no memories
-        extraction_service.memory_repo.get_episodic_memories = AsyncMock(
+        extraction_service.rae_service.list_memories = AsyncMock(
             return_value=[]
         )
 
@@ -252,7 +252,7 @@ class TestGraphExtractionService:
     async def test_extract_knowledge_graph_success(self, extraction_service, mock_pool):
         """Test successful graph extraction."""
         # Mock repository to return memories
-        extraction_service.memory_repo.get_episodic_memories = AsyncMock(
+        extraction_service.rae_service.list_memories = AsyncMock(
             return_value=[
                 {
                     "id": "mem1",
@@ -287,8 +287,9 @@ class TestGraphExtractionService:
         )
 
         # Mock memories
-        mock_pool._test_conn.fetch = AsyncMock(
-            return_value=[
+        # mock_pool._test_conn.fetch = AsyncMock(...) # Removed dependency on mock_pool internals
+        extraction_service.rae_service.list_memories = AsyncMock(
+             return_value=[
                 {
                     "id": "1",
                     "content": "Test",
@@ -334,7 +335,7 @@ class TestGraphExtractionService:
         )
 
         # Mock repository to return memories
-        extraction_service.memory_repo.get_episodic_memories = AsyncMock(
+        extraction_service.rae_service.list_memories = AsyncMock(
             return_value=[
                 {
                     "id": "1",
@@ -359,7 +360,7 @@ class TestGraphExtractionIntegration:
     async def test_end_to_end_extraction(self, extraction_service, mock_pool):
         """Test complete extraction flow with DI pattern."""
         # Mock repository to return memories
-        extraction_service.memory_repo.get_episodic_memories = AsyncMock(
+        extraction_service.rae_service.list_memories = AsyncMock(
             return_value=[
                 {
                     "id": "mem1",

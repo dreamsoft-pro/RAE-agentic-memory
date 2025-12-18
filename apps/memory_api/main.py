@@ -20,7 +20,6 @@ from apps.memory_api.api.v1 import (
     graph,
     memory,
 )
-from apps.memory_api.api.v2 import memory as memory_v2
 from apps.memory_api.config import settings
 from apps.memory_api.dependencies import create_redis_client
 from apps.memory_api.logging_config import setup_logging
@@ -38,7 +37,6 @@ from apps.memory_api.routes import (
     evaluation,
     event_triggers,
     graph_enhanced,
-    hybrid_search,
     reflections,
     token_savings,
 )
@@ -345,14 +343,10 @@ app.include_router(compliance.router, tags=["ISO/IEC 42001 Compliance"])
 # API v1 endpoints - Enterprise Features
 app.include_router(event_triggers.router, tags=["Event Triggers"])
 app.include_router(reflections.router, tags=["Reflections"])
-app.include_router(hybrid_search.router, tags=["Hybrid Search"])
 app.include_router(evaluation.router, tags=["Evaluation"])
 app.include_router(dashboard.router, tags=["Dashboard"])
 app.include_router(graph_enhanced.router, tags=["Graph Management"])
 app.include_router(token_savings.router, tags=["Metrics"])
-
-# API v2 - RAE-Core powered endpoints
-app.include_router(memory_v2.router)
 
 
 # Root endpoint

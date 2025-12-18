@@ -19,7 +19,6 @@ from qdrant_client import QdrantClient
 from redis.asyncio import Redis as AsyncRedis
 
 from .repositories.graph_repository import GraphRepository
-from .repositories.memory_repository import MemoryRepository
 from .services.graph_extraction import GraphExtractionService
 from .services.hybrid_search import HybridSearchService
 from .services.rae_core_service import RAECoreService
@@ -83,21 +82,6 @@ def get_qdrant_client(request: Request) -> QdrantClient:
 # ==========================================
 # Repository Layer Dependencies
 # ==========================================
-
-
-def get_memory_repository(pool: asyncpg.Pool = None) -> MemoryRepository:
-    """
-    Factory for MemoryRepository.
-
-    Args:
-        pool: Database connection pool (injected by FastAPI)
-
-    Returns:
-        Configured MemoryRepository instance
-    """
-    if pool is None:
-        raise HTTPException(status_code=500, detail="Database pool not available")
-    return MemoryRepository(pool)
 
 
 def get_graph_repository(pool: asyncpg.Pool = None) -> GraphRepository:

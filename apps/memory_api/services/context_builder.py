@@ -32,7 +32,6 @@ from apps.memory_api.services.smart_reranker import SmartReranker
 
 if TYPE_CHECKING:
     from apps.memory_api.services.rae_core_service import RAECoreService
-    from apps.memory_api.repositories.memory_repository import MemoryRepository
 
 logger = structlog.get_logger(__name__)
 tracer = get_tracer(__name__)
@@ -158,7 +157,7 @@ class ContextBuilder:
         """
         self.pool = pool
         self.rae_service = rae_service
-        self.reflection_engine = reflection_engine or ReflectionEngineV2(pool)
+        self.reflection_engine = reflection_engine or ReflectionEngineV2(pool, rae_service)
         self.reranker = SmartReranker()
         self.config = config or ContextConfig()
 

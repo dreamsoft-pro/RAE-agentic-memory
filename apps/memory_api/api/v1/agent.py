@@ -169,11 +169,17 @@ async def execute(
         # Update usage stats for the memories that were used
         used_memory_ids = [item.id for item in final_items]
         if used_memory_ids:
-            await _update_memory_access_stats(
-                memory_ids=used_memory_ids,
-                tenant_id=tenant_id,
-                pool=request.app.state.pool,
-            )
+            try:
+                # Use RAECoreService to update stats
+                from apps.memory_api.dependencies import get_rae_core_service
+                rae_service = get_rae_core_service(request)
+                await rae_service.update_memory_access_batch(
+                    memory_ids=used_memory_ids,
+                    tenant_id=tenant_id
+                )
+            except Exception as e:
+                # Log error but don't fail request
+                logger.error("update_memory_stats_failed", error=str(e))
 
         # 6. LLM call – use static_context_block as system_instruction
         try:
@@ -282,54 +288,4 @@ async def execute(
             answer=answer,
             used_memories=used,
             cost=cost,
-        )
-
-
-async def _update_memory_access_stats(memory_ids: list[str], tenant_id: str, pool):
-    """
-    Updates the usage_count and last_accessed_at for a list of memories.
-
-    This function is called after memories are retrieved and used in agent execution
-    to track memory access patterns. These statistics are used by:
-    - ImportanceScoringService for calculating memory importance
-    - Memory decay mechanisms for identifying stale memories
-    - Governance and analytics for usage tracking
-
-    Args:
-        memory_ids: List of memory IDs that were accessed
-        tenant_id: Tenant identifier for security isolation
-        pool: Database connection pool
-
-    Notes:
-        - Failures are logged but don't interrupt agent execution
-        - Uses batch updates for performance
-        - Updates are async and non-blocking
-    """
-    if not memory_ids:
-        logger.debug("_update_memory_access_stats_skipped", reason="no_memory_ids")
-        return
-
-    try:
-        from apps.memory_api.repositories.memory_repository import MemoryRepository
-
-        repository = MemoryRepository(pool)
-        updated_count = await repository.update_memory_access_stats(
-            memory_ids=memory_ids, tenant_id=tenant_id
-        )
-
-        logger.debug(
-            "_update_memory_access_stats_success",
-            memory_count=len(memory_ids),
-            updated_count=updated_count,
-            tenant_id=tenant_id,
-        )
-
-    except Exception as e:
-        # Log the error but don't fail the main request
-        # Access stats are important but not critical for agent execution
-        logger.error(
-            "_update_memory_access_stats_failed",
-            error=str(e),
-            memory_count=len(memory_ids),
-            tenant_id=tenant_id,
         )

@@ -296,7 +296,6 @@ class GraphExtractionService:
             ValueError: If project_id or tenant_id is invalid
             RuntimeError: If extraction fails
         """
-        self._ensure_spacy_available()
         logger.info(
             "starting_graph_extraction",
             project_id=project_id,

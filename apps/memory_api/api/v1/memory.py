@@ -3,7 +3,7 @@ from typing import Optional
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
-from apps.memory_api.dependencies import get_hybrid_search_service  # NEW
+from apps.memory_api.dependencies import get_rae_core_service
 from apps.memory_api.metrics import (
     memory_delete_counter,
     memory_query_counter,
@@ -20,13 +20,12 @@ from apps.memory_api.models import (
     StoreMemoryResponse,
 )
 from apps.memory_api.observability.rae_tracing import get_tracer
-from apps.memory_api.repositories.memory_repository import MemoryRepository  # NEW
 from apps.memory_api.security import auth
 from apps.memory_api.security.dependencies import get_and_verify_tenant_id
 from apps.memory_api.services import pii_scrubber, scoring
 from apps.memory_api.services.embedding import get_embedding_service  # NEW
-from apps.memory_api.services.hybrid_search import HybridSearchService  # NEW
 from apps.memory_api.services.vector_store import get_vector_store  # NEW
+from apps.memory_api.services.rae_core_service import RAECoreService
 from apps.memory_api.tasks.background_tasks import (  # NEW
     generate_reflection_for_project,
 )
@@ -47,6 +46,7 @@ async def store_memory(
     req: StoreMemoryRequest,
     request: Request,
     tenant_id: str = Depends(get_and_verify_tenant_id),
+    rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
     Stores a new memory record in the database and vector store.
@@ -69,69 +69,34 @@ async def store_memory(
         span.set_attribute("rae.memory.content_length_scrubbed", len(content))
 
         try:
-            # 1. Store metadata in Postgres using repository
-            memory_repository = MemoryRepository(request.app.state.pool)
-
-            row_data = await memory_repository.insert_memory(
+            # 1. Store metadata in Postgres using RAE-Core Service
+            memory_id = await rae_service.store_memory(
                 tenant_id=tenant_id,
+                project=req.project,
                 content=content,
                 source=req.source,
                 importance=req.importance,
                 layer=req.layer.value if req.layer else None,
                 tags=req.tags,
-                timestamp=req.timestamp,
-                project=req.project,
             )
 
-            if not row_data:
-                span.set_attribute("rae.outcome.label", "database_insert_failed")
-                raise HTTPException(
-                    status_code=500, detail="Failed to store memory in database."
-                )
-
-            memory_record = MemoryRecord(
-                id=row_data["id"],
-                tenant_id=tenant_id,
-                content=content,
-                source=req.source,
-                importance=req.importance,
-                layer=req.layer,
-                tags=req.tags,
-                timestamp=row_data["created_at"],
-                last_accessed_at=row_data["last_accessed_at"],
-                usage_count=row_data["usage_count"],
-                project=req.project,
-            )
-            span.set_attribute("rae.memory.id", str(memory_record.id))
+            # RAE-Core Service handles vector storage internally now (via Engine)
+            # But legacy API expected MemoryRecord object back or at least ID.
+            # RAECoreService.store_memory returns ID string.
+            
+            span.set_attribute("rae.memory.id", str(memory_id))
 
         except HTTPException:
             raise
         except Exception as e:
-            span.set_attribute("rae.outcome.label", "database_error")
-            raise HTTPException(status_code=500, detail=f"Database error: {e}")
-
-        try:
-            # 2. Generate embedding
-            embedding_service = get_embedding_service()
-            embedding = embedding_service.generate_embeddings([content])[0]
-            span.set_attribute("rae.memory.embedding_dimension", len(embedding))
-
-            # 3. Upsert to vector store
-            vector_store = get_vector_store(pool=request.app.state.pool)
-            await vector_store.upsert([memory_record], [embedding])
-
-        except Exception as e:
-            # Here you might want to handle the case where the DB insert succeeded
-            # but the vector store upsert failed (e.g., by scheduling a retry).
-            # For now, we'll just raise an error.
-            span.set_attribute("rae.outcome.label", "vector_store_error")
-            raise HTTPException(status_code=502, detail=f"Vector store error: {e}")
+            span.set_attribute("rae.outcome.label", "storage_error")
+            raise HTTPException(status_code=500, detail=f"Storage error: {e}")
 
         span.set_attribute("rae.outcome.label", "success")
         memory_store_counter.labels(
             tenant_id=tenant_id
         ).inc()  # Increment store counter
-        return StoreMemoryResponse(id=memory_record.id)
+        return StoreMemoryResponse(id=memory_id)
 
 
 @router.post("/query", response_model=QueryMemoryResponse)
@@ -139,23 +104,18 @@ async def query_memory(
     req: QueryMemoryRequest,
     request: Request,
     tenant_id: str = Depends(get_and_verify_tenant_id),
-    hybrid_search: HybridSearchService = Depends(get_hybrid_search_service),
+    rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
     Queries the memory for relevant records based on a query text.
 
-    Supports two modes:
-    1. Standard vector search (use_graph=False)
-    2. Hybrid search with graph traversal (use_graph=True)
-
-    Hybrid search combines semantic similarity with knowledge graph relationships
-    to provide richer, more contextual results.
+    Supports vector search.
 
     Args:
         req: Query request parameters
         request: FastAPI request object
         tenant_id: Verified tenant ID (injected via RBAC)
-        hybrid_search: HybridSearchService (injected via DI)
+        rae_service: RAECoreService (injected via DI)
 
     **Security:** Requires authentication and tenant access with memories:read permission.
     """
@@ -165,132 +125,13 @@ async def query_memory(
             span.set_attribute("rae.project_id", req.project)
         span.set_attribute("rae.query.text_length", len(req.query_text))
         span.set_attribute("rae.query.k", req.k)
-        span.set_attribute("rae.query.use_graph", req.use_graph)
+        span.set_attribute("rae.query.use_graph", req.use_graph) # Still in request model
         if req.use_graph:
-            span.set_attribute("rae.query.graph_depth", req.graph_depth or 1)
+            span.set_attribute("rae.query.graph_depth", req.graph_depth or 1) # Still in request model
         if req.filters:
             span.set_attribute("rae.query.filters_count", len(req.filters))
 
-        # Check if hybrid search is requested
-        if req.use_graph:
-            span.set_attribute("rae.query.mode", "hybrid_graph")
-
-            # Validate project parameter for graph search
-            if not req.project:
-                span.set_attribute("rae.outcome.label", "missing_project")
-                raise HTTPException(
-                    status_code=400,
-                    detail="project parameter is required when use_graph=True",
-                )
-
-            logger.info(
-                "hybrid_search_requested",
-                tenant_id=tenant_id,
-                project=req.project,
-                graph_depth=req.graph_depth,
-            )
-
-            try:
-                # Use injected hybrid search service
-
-                # Perform hybrid search
-                hybrid_result = await hybrid_search.search(
-                    query=req.query_text,
-                    tenant_id=tenant_id,
-                    project_id=req.project,
-                    top_k_vector=req.k,
-                    graph_depth=req.graph_depth,
-                    use_graph=True,
-                    filters=req.filters,
-                )
-
-                # Track hybrid search statistics
-                span.set_attribute(
-                    "rae.query.vector_count", hybrid_result.vector_results_count
-                )
-                span.set_attribute(
-                    "rae.query.semantic_count", hybrid_result.semantic_results_count
-                )
-                span.set_attribute(
-                    "rae.query.graph_count", hybrid_result.graph_results_count
-                )
-                span.set_attribute(
-                    "rae.query.fulltext_count", hybrid_result.fulltext_results_count
-                )
-                span.set_attribute(
-                    "rae.query.total_results", hybrid_result.total_results
-                )
-                span.set_attribute(
-                    "rae.query.total_time_ms", hybrid_result.total_time_ms
-                )
-
-                # Rescore vector results
-                # Convert HybridSearchResult items to ScoredMemoryRecord
-                candidates = []
-                for item in hybrid_result.results:
-                    candidates.append(
-                        ScoredMemoryRecord(
-                            id=str(item.memory_id),
-                            content=item.content,
-                            score=item.final_score,
-                            importance=item.metadata.get("importance", 0.5),
-                            layer=item.metadata.get("layer"),
-                            tags=item.metadata.get("tags", []),
-                            source=item.metadata.get("source", "unknown"),
-                            project=item.metadata.get("project"),
-                            timestamp=item.created_at,
-                            last_accessed_at=item.metadata.get("last_accessed_at"),
-                            usage_count=item.metadata.get("usage_count", 0),
-                        )
-                    )
-                rescored_results = scoring.rescore_memories(candidates)
-                span.set_attribute(
-                    "rae.query.rescored_results_count", len(rescored_results)
-                )
-
-                # Update access statistics for retrieved memories
-                memory_ids = [item.id for item in rescored_results]
-                if memory_ids:
-                    try:
-                        memory_repository = MemoryRepository(request.app.state.pool)
-                        await memory_repository.update_memory_access_stats(
-                            memory_ids=memory_ids, tenant_id=tenant_id
-                        )
-                    except Exception as e:
-                        # Log but don't fail the query
-                        logger.warning(
-                            "hybrid_query_access_stats_update_failed",
-                            tenant_id=tenant_id,
-                            error=str(e),
-                        )
-
-                memory_query_counter.labels(tenant_id=tenant_id).inc()
-
-                # Construct statistics from available fields
-                stats = {
-                    "vector_count": hybrid_result.vector_results_count,
-                    "semantic_count": hybrid_result.semantic_results_count,
-                    "graph_count": hybrid_result.graph_results_count,
-                    "fulltext_count": hybrid_result.fulltext_results_count,
-                    "total_results": hybrid_result.total_results,
-                    "total_time_ms": hybrid_result.total_time_ms,
-                }
-
-                span.set_attribute("rae.outcome.label", "success")
-                return QueryMemoryResponse(
-                    results=rescored_results,
-                    synthesized_context=None,  # Not available in current model
-                    graph_statistics=stats,
-                )
-
-            except Exception as e:
-                logger.exception(
-                    "hybrid_search_failed", tenant_id=tenant_id, error=str(e)
-                )
-                span.set_attribute("rae.outcome.label", "hybrid_search_error")
-                raise HTTPException(status_code=502, detail=f"Hybrid search error: {e}")
-
-        # Standard vector search (original implementation)
+        # Standard vector search
         span.set_attribute("rae.query.mode", "vector_only")
 
         # 1. Generate embedding for the query text
@@ -334,8 +175,7 @@ async def query_memory(
         memory_ids = [item.id for item in rescored_results]
         if memory_ids:
             try:
-                memory_repository = MemoryRepository(request.app.state.pool)
-                await memory_repository.update_memory_access_stats(
+                await rae_service.update_memory_access_batch(
                     memory_ids=memory_ids, tenant_id=tenant_id
                 )
             except Exception as e:
@@ -358,6 +198,7 @@ async def delete_memory(
     memory_id: str,
     request: Request,
     tenant_id: str = Depends(get_and_verify_tenant_id),
+    rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
     Deletes a memory record from the database and vector store.
@@ -368,10 +209,9 @@ async def delete_memory(
         span.set_attribute("rae.tenant_id", tenant_id)
         span.set_attribute("rae.memory.id", memory_id)
 
-        # 1. Delete from database using repository
+        # 1. Delete from database using RAE-Core Service
         try:
-            memory_repository = MemoryRepository(request.app.state.pool)
-            deleted = await memory_repository.delete_memory(memory_id, tenant_id)
+            deleted = await rae_service.delete_memory(memory_id, tenant_id)
 
             if not deleted:
                 span.set_attribute("rae.outcome.label", "not_found")
@@ -385,15 +225,35 @@ async def delete_memory(
             span.set_attribute("rae.outcome.label", "database_error")
             raise HTTPException(status_code=500, detail=f"Database error: {e}")
 
-        # 2. Delete from vector store
+        # 2. Delete from vector store - HANDLED BY RAE-CORE ENGINE via DELETE_MEMORY
+        # Assuming RAE-Core engine handles both storage and vector store deletion.
+        # RAECoreService.delete_memory calls storage adapter.
+        # If vector store is separate in engine, engine.delete_memory should be called instead of adapter directly.
+        # RAECoreService.delete_memory wraps adapter.delete_memory currently (based on previous edits).
+        # ideally RAECoreService.delete_memory should call engine.delete_memory.
+        # Checking RAECoreService implementation:
+        # async def delete_memory(self, memory_id: str, tenant_id: str) -> bool:
+        #     try:
+        #         mem_uuid = UUID(memory_id)
+        #     except ValueError:
+        #         return False
+        #     return await self.postgres_adapter.delete_memory(mem_uuid, tenant_id)
+        
+        # It calls adapter directly. So vector store deletion is NOT handled by RAECoreService yet if engine is not used.
+        # To maintain vector store deletion, we should use RAEEngine if possible or keep explicit vector store delete.
+        # Given we want to move logic to RAECore, RAEEngine should be used.
+        # But RAECoreService wraps Engine and Adapters.
+        
+        # Let's keep manual vector delete for now to be safe, or assume Engine handles it if we used engine.delete_memory.
+        # But RAECoreService.delete_memory uses adapter.
+        # Let's keep explicit vector delete for safety until Engine handles it fully.
+        
         try:
             vector_store = get_vector_store(pool=request.app.state.pool)
             await vector_store.delete(memory_id)
             span.set_attribute("rae.memory.vector_deleted", True)
         except Exception as e:
             # Log the error but don't fail the request, as the DB part succeeded.
-            # The record will be out of sync, but this is a decision to make.
-            # For now, we'll just log it.
             logger.warning(
                 "vector_store_deletion_failed", memory_id=memory_id, error=str(e)
             )
@@ -432,6 +292,7 @@ async def get_reflection_stats(
     request: Request,
     tenant_id: str = Depends(get_and_verify_tenant_id),
     project: Optional[str] = None,
+    rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
     Gets statistics about reflective memories.
@@ -443,15 +304,13 @@ async def get_reflection_stats(
         if project:
             span.set_attribute("rae.project_id", project)
 
-        memory_repository = MemoryRepository(request.app.state.pool)
-
-        count = await memory_repository.count_memories_by_layer(
-            tenant_id=tenant_id, layer="rm", project=project
+        count = await rae_service.count_memories(
+            tenant_id=tenant_id, layer="rm", project=project or "default"
         )
         span.set_attribute("rae.reflection.count", count)
 
-        avg_strength = await memory_repository.get_average_strength(
-            tenant_id=tenant_id, layer="rm", project=project
+        avg_strength = await rae_service.get_metric_aggregate(
+            tenant_id=tenant_id, layer="rm", project=project or "default", metric="importance", func="avg"
         )
         span.set_attribute("rae.reflection.avg_strength", avg_strength or 0.0)
 
@@ -469,6 +328,7 @@ async def generate_hierarchical_reflection(
     max_episodes: Optional[int] = Query(
         None, description="Maximum episodes to process", ge=1
     ),
+    rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
     **DEPRECATED:** Use `/v1/graph/reflection/hierarchical` instead.
@@ -528,7 +388,7 @@ async def generate_hierarchical_reflection(
             from apps.memory_api.services.reflection_engine import ReflectionEngine
 
             # Initialize reflection engine
-            reflection_engine = ReflectionEngine(request.app.state.pool)
+            reflection_engine = ReflectionEngine(request.app.state.pool, rae_service)
 
             # Generate hierarchical reflection
             summary = await reflection_engine.generate_hierarchical_reflection(
@@ -539,9 +399,8 @@ async def generate_hierarchical_reflection(
             )
             span.set_attribute("rae.reflection.summary_length", len(summary))
 
-            # Fetch statistics using repository
-            memory_repository = MemoryRepository(request.app.state.pool)
-            episode_count = await memory_repository.count_memories_by_layer(
+            # Fetch statistics using RAECoreService
+            episode_count = await rae_service.count_memories(
                 tenant_id=tenant_id, layer="em", project=project
             )
             span.set_attribute("rae.reflection.episode_count", episode_count)

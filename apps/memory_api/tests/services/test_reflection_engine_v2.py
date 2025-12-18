@@ -13,7 +13,7 @@ from apps.memory_api.models.reflection_v2_models import (
     ReflectionContext,
     ReflectionResult,
 )
-from apps.memory_api.repositories.memory_repository import MemoryRepository
+from apps.memory_api.services.rae_core_service import RAECoreService
 from apps.memory_api.services.reflection_engine_v2 import (
     LLMReflectionResponse,
     ReflectionEngineV2,
@@ -26,11 +26,11 @@ def mock_pool():
 
 
 @pytest.fixture
-def mock_repo():
-    repo = MagicMock(spec=MemoryRepository)
-    repo.insert_memory = AsyncMock(return_value={"id": str(uuid4())})
-    repo.get_reflective_memories = AsyncMock(return_value=[])
-    return repo
+def mock_rae_service():
+    service = MagicMock(spec=RAECoreService)
+    service.store_memory = AsyncMock(return_value=str(uuid4()))
+    service.list_memories = AsyncMock(return_value=[])
+    return service
 
 
 @pytest.fixture
@@ -41,8 +41,8 @@ def mock_llm_provider():
 
 
 @pytest.fixture
-def engine(mock_pool, mock_repo, mock_llm_provider):
-    engine = ReflectionEngineV2(mock_pool, memory_repository=mock_repo)
+def engine(mock_pool, mock_rae_service, mock_llm_provider):
+    engine = ReflectionEngineV2(mock_pool, rae_service=mock_rae_service)
     engine.llm_provider = mock_llm_provider
     return engine
 
@@ -167,7 +167,7 @@ def test_format_events(engine):
 
 
 @pytest.mark.asyncio
-async def test_store_reflection(engine, mock_repo):
+async def test_store_reflection(engine, mock_rae_service):
     """Test storing reflection to repository"""
     result = ReflectionResult(
         reflection_text="Reflection",
@@ -183,12 +183,12 @@ async def test_store_reflection(engine, mock_repo):
     assert "reflection_id" in ids
     assert "strategy_id" in ids
 
-    # Should call insert twice (reflection + strategy)
-    assert mock_repo.insert_memory.call_count == 2
+    # Should call store_memory twice (reflection + strategy)
+    assert mock_rae_service.store_memory.call_count == 2
 
 
 @pytest.mark.asyncio
-async def test_store_reflection_no_strategy(engine, mock_repo):
+async def test_store_reflection_no_strategy(engine, mock_rae_service):
     """Test storing reflection without strategy"""
     result = ReflectionResult(
         reflection_text="Reflection",
@@ -203,13 +203,13 @@ async def test_store_reflection_no_strategy(engine, mock_repo):
     assert "reflection_id" in ids
     assert "strategy_id" not in ids
 
-    assert mock_repo.insert_memory.call_count == 1
+    assert mock_rae_service.store_memory.call_count == 1
 
 
 @pytest.mark.asyncio
-async def test_query_reflections(engine, mock_repo):
+async def test_query_reflections(engine, mock_rae_service):
     """Test querying reflections"""
-    mock_repo.get_reflective_memories.return_value = [
+    mock_rae_service.list_memories.return_value = [
         {"id": "1", "importance": 0.9},
         {"id": "2", "importance": 0.4},  # Low importance
         {"id": "3", "importance": 0.8},
@@ -222,8 +222,8 @@ async def test_query_reflections(engine, mock_repo):
     assert results[0]["id"] == "1"
     assert results[1]["id"] == "3"
 
-    mock_repo.get_reflective_memories.assert_called_once_with(
-        tenant_id="t1", project="p1"
+    mock_rae_service.list_memories.assert_called_once_with(
+        tenant_id="t1", layer="reflective", project="p1", limit=100
     )
 
 

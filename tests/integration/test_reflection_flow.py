@@ -26,7 +26,7 @@ from apps.memory_api.models.reflection_v2_models import (
     ReflectionContext,
     ReflectionResult,  # Imported for type hinting/mocking
 )
-from apps.memory_api.repositories.memory_repository import MemoryRepository # Explicitly imported
+from apps.memory_api.services.rae_core_service import RAECoreService # Updated import
 from apps.memory_api.services.context_builder import ContextBuilder, ContextConfig # Added ContextConfig import
 from apps.memory_api.services.memory_scoring_v2 import compute_memory_score
 from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
@@ -46,9 +46,30 @@ async def db_pool(mock_app_state_pool):
 
 
 @pytest.fixture
-async def memory_repo(db_pool):
-    """Memory repository"""
-    return MemoryRepository(db_pool)
+async def rae_service(db_pool):
+    """RAECoreService for testing."""
+    # This is a minimal RAECoreService for test purposes, only postgres_pool is needed here.
+    # Other clients (Qdrant, Redis) are mocked in tests where they are actually used.
+    from qdrant_client import AsyncQdrantClient
+    import redis.asyncio as aioredis
+    
+    # Create dummy clients, not actually used in this test file
+    mock_qdrant_client = AsyncMock(spec=AsyncQdrantClient)
+    mock_redis_client = AsyncMock(spec=aioredis.Redis)
+
+    return RAECoreService(
+        postgres_pool=db_pool,
+        qdrant_client=mock_qdrant_client,
+        redis_client=mock_redis_client,
+    )
+
+
+@pytest.fixture
+async def graph_repo(db_pool):
+    """Graph repository"""
+    # GraphRepository does not directly use MemoryRepository
+    from apps.memory_api.repositories.graph_repository import GraphRepository
+    return GraphRepository(db_pool)
 
 
 @pytest.fixture
@@ -70,23 +91,22 @@ async def mock_llm():
 
 
 @pytest.fixture
-async def reflection_engine(db_pool, memory_repo, mock_llm):
+async def reflection_engine(db_pool, rae_service, mock_llm):
     """Reflection engine v2 with mocked LLM"""
-    engine = ReflectionEngineV2(db_pool, memory_repo)
-    # Ensure the engine uses the mocked method (it calls generate_structured internally)
-    # Since we patched the class method, instances should use the mock.
+    engine = ReflectionEngineV2(db_pool, rae_service)
+    engine.llm_provider = mock_llm
     return engine
 
 
 @pytest.fixture
-async def context_builder(db_pool, memory_repo, reflection_engine):
+async def context_builder(db_pool, rae_service, reflection_engine):
     """Context builder"""
     config = ContextConfig(
         max_reflection_items=5,
         min_reflection_importance=0.5,
         enable_enhanced_scoring=True,
     )
-    return ContextBuilder(db_pool, memory_repo, reflection_engine, config)
+    return ContextBuilder(db_pool, rae_service, reflection_engine, config)
 
 
 @pytest.fixture
@@ -108,7 +128,7 @@ def project_id():
 
 @pytest.mark.asyncio
 async def test_generate_reflection_from_failure(
-    reflection_engine, memory_repo, tenant_id, project_id
+    reflection_engine, rae_service, tenant_id, project_id
 ):
     """
     Test reflection generation from a failed task execution.
@@ -185,8 +205,8 @@ async def test_generate_reflection_from_failure(
     assert stored_ids["reflection_id"] is not None
 
     # 5. Verify stored in database
-    reflections = await memory_repo.get_reflective_memories(
-        tenant_id=tenant_id, project=project_id
+    reflections = await rae_service.list_memories(
+        tenant_id=tenant_id, project=project_id, layer="reflective"
     )
     assert len(reflections) >= 1, "Reflection should be stored in database"
 
@@ -206,7 +226,7 @@ async def test_generate_reflection_from_failure(
 
 @pytest.mark.asyncio
 async def test_generate_reflection_from_success(
-    reflection_engine, memory_repo, tenant_id, project_id
+    reflection_engine, rae_service, tenant_id, project_id
 ):
     """
     Test reflection generation from a successful task execution.
@@ -269,7 +289,7 @@ async def test_generate_reflection_from_success(
 async def test_reflection_retrieval_in_context(
     reflection_engine,
     context_builder,
-    memory_repo,
+    rae_service,
     tenant_id,
     project_id,
 ):
@@ -287,14 +307,14 @@ async def test_reflection_retrieval_in_context(
         "to prevent timeout errors. Default timeout is 30 seconds."
     )
 
-    reflection_record = await memory_repo.insert_memory(
+    # Use rae_service.store_memory to store the memory directly, as memory_repo is removed.
+    reflection_id_str = await rae_service.store_memory(
         tenant_id=tenant_id,
         content=reflection_content,
         source="test",
         importance=0.8,
-        layer="rm",
+        layer="reflective",
         tags=["sql", "timeout", "best-practice"],
-        timestamp=datetime.now(timezone.utc),
         project=project_id,
     )
 
@@ -313,7 +333,7 @@ async def test_reflection_retrieval_in_context(
 
     # Check our reflection is included (by content or ID)
     reflection_found = any(
-        refl.metadata.get("id") == reflection_record["id"]
+        refl.metadata.get("id") == reflection_id_str
         for refl in working_memory.reflections
     )
     assert reflection_found, "Our test reflection should be in context"
@@ -384,20 +404,19 @@ async def test_memory_scoring_v2():
 
 @pytest.mark.asyncio
 async def test_inject_reflections_into_prompt(
-    context_builder, memory_repo, tenant_id, project_id
+    context_builder, rae_service, tenant_id, project_id
 ):
     """
     Test the helper method for injecting reflections into existing prompts.
     """
     # 1. Store a reflection
-    await memory_repo.insert_memory(
+    await rae_service.store_memory(
         tenant_id=tenant_id,
         content="Always validate user input before processing",
         source="test",
         importance=0.9,
-        layer="rm",
+        layer="reflective",
         tags=["security", "validation"],
-        timestamp=datetime.now(timezone.utc),
         project=project_id,
     )
 
@@ -415,10 +434,10 @@ async def test_inject_reflections_into_prompt(
     assert (
         "Lessons Learned" in enhanced_prompt
         or "lessons learned" in enhanced_prompt.lower()
-    ), "Should include lessons learned section"
+    ), "Context should include lessons learned section"
     assert (
         "validate user input" in enhanced_prompt.lower()
-    ), "Should include reflection content"
+    ), "Reflection content should be accessible"
 
 
 # ============================================================================
@@ -430,7 +449,7 @@ async def test_inject_reflections_into_prompt(
 async def test_end_to_end_reflection_flow(
     reflection_engine,
     context_builder,
-    memory_repo,
+    rae_service,
     tenant_id,
     project_id,
 ):
@@ -511,12 +530,17 @@ async def test_end_to_end_reflection_flow(
     )
     assert our_refl is not None, "Our reflection should be retrieved"
 
-    # === Phase 3: Verify reflection is actionable ===
+    # 4. Verify formatted context includes lessons learned
+    assert (
+        "Lessons Learned" in working_memory.context_text
+        or "lessons learned" in working_memory.context_text.lower()
+    ), "Context should include lessons learned section"
 
-    # The reflection should mention authentication or auth header
+    # 5. Verify reflection content is in formatted text
+    # (It should be in the Lessons Learned section)
     assert any(
         keyword in our_refl.content.lower()
-        for keyword in ["auth", "unauthorized", "401", "header", "token"]
+        for keyword in ["authentication", "auth header", "token"]
     ), "Reflection should mention authentication issue"
 
     # If strategy was generated, it should be actionable
