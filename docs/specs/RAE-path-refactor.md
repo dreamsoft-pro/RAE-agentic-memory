@@ -1,4 +1,6 @@
-# RAE – Path Portability Refactor Specification
+# RAE – Path Portability Refactor Specification [DEPRECATED]
+
+> **NOTE:** The `core/paths.py` module has been removed in favor of `rae-core` logic or local path resolution. This document remains for historical context.
 
 ## Goal
 Refactor the entire RAE codebase so that it does not contain any hardcoded absolute filesystem paths, especially paths like:
