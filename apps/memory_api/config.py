@@ -40,6 +40,13 @@ class Settings(BaseSettings):
             self.RAE_VECTOR_BACKEND = os.getenv("VECTOR_STORE_BACKEND")
         return self
 
+    # Database Validation Mode
+    # validate: Check schema and fail fast on mismatch (default)
+    # init: (Not Implemented) Initialize empty DB
+    # migrate: (Not Implemented) Run migrations
+    # ignore: Skip validation
+    RAE_DB_MODE: str = "validate"
+
     # --- Security Settings ---
     OAUTH_ENABLED: bool = True
     OAUTH_DOMAIN: str = ""  # e.g., "your-tenant.us.auth0.com"

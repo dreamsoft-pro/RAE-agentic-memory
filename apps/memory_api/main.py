@@ -75,6 +75,28 @@ async def lifespan(app: FastAPI):
         user=settings.POSTGRES_USER,
         password=settings.POSTGRES_PASSWORD,
     )
+
+    # --- RAE Schema Validation ---
+    if settings.RAE_DB_MODE == "validate":
+        logger.info("db_validation_start", mode=settings.RAE_DB_MODE)
+        from apps.memory_api.adapters.postgres_validator import PostgresValidator
+        from apps.memory_api.core.contract_definition import RAE_MEMORY_CONTRACT_V1
+
+        validator = PostgresValidator(app.state.pool)
+        result = await validator.validate(RAE_MEMORY_CONTRACT_V1)
+
+        if not result.valid:
+            error_msg = f"Database schema validation failed: {len(result.violations)} violations found."
+            logger.error(
+                "db_validation_failed", violations=[v.model_dump() for v in result.violations]
+            )
+            # Raise exception to stop startup (Fail Fast)
+            raise RuntimeError(f"{error_msg} See logs for details.")
+
+        logger.info("db_validation_success")
+    elif settings.RAE_DB_MODE == "ignore":
+        logger.warning("db_validation_skipped", mode=settings.RAE_DB_MODE)
+
     # Initialize Redis client
     app.state.redis_client = await create_redis_client(settings.REDIS_URL)
     # Initialize Qdrant client
