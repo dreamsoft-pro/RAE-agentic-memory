@@ -11,12 +11,13 @@ from uuid import UUID
 
 import asyncpg
 import structlog
-from pydantic import BaseModel, Field
 
 from apps.memory_api.config import settings
 from apps.memory_api.models.reflection_v2_models import (
+    LLMReflectionResponse,  # Added import for LLMReflectionResponse
+)
+from apps.memory_api.models.reflection_v2_models import (
     Event,
-    LLMReflectionResponse, # Added import for LLMReflectionResponse
     OutcomeType,
     ReflectionContext,
     ReflectionResult,
