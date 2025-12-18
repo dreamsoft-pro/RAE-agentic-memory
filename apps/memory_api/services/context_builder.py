@@ -11,14 +11,13 @@ Implements the context injection pattern from RAE v1 Implementation Plan.
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 import asyncpg
 import structlog
 
 from apps.memory_api.config import settings
 from apps.memory_api.observability.rae_tracing import get_tracer
-from apps.memory_api.repositories.memory_repository import MemoryRepository
 from apps.memory_api.services.memory_scoring_v2 import (
     ScoringWeights,
     compute_batch_scores,
@@ -30,6 +29,10 @@ from apps.memory_api.services.memory_scoring_v3 import (
 )
 from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
 from apps.memory_api.services.smart_reranker import SmartReranker
+
+if TYPE_CHECKING:
+    from apps.memory_api.services.rae_core_service import RAECoreService
+    from apps.memory_api.repositories.memory_repository import MemoryRepository
 
 logger = structlog.get_logger(__name__)
 tracer = get_tracer(__name__)
@@ -140,7 +143,7 @@ class ContextBuilder:
     def __init__(
         self,
         pool: asyncpg.Pool,
-        memory_repository: Optional[MemoryRepository] = None,
+        rae_service: "RAECoreService",
         reflection_engine: Optional[ReflectionEngineV2] = None,
         config: Optional[ContextConfig] = None,
     ):
@@ -149,12 +152,12 @@ class ContextBuilder:
 
         Args:
             pool: Database connection pool
-            memory_repository: Memory repository for retrieval
+            rae_service: RAECoreService for retrieval
             reflection_engine: Reflection engine for querying reflections
             config: Context configuration
         """
         self.pool = pool
-        self.memory_repo = memory_repository or MemoryRepository(pool)
+        self.rae_service = rae_service
         self.reflection_engine = reflection_engine or ReflectionEngineV2(pool)
         self.reranker = SmartReranker()
         self.config = config or ContextConfig()
@@ -306,11 +309,11 @@ class ContextBuilder:
         # query_embedding = await get_embedding(query)
 
         # Retrieve episodic and semantic memories
-        episodic = await self.memory_repo.get_episodic_memories(
-            tenant_id=tenant_id, project=project_id, limit=50
+        episodic = await self.rae_service.list_memories(
+            tenant_id=tenant_id, project=project_id, layer="episodic", limit=50
         )
-        semantic = await self.memory_repo.get_semantic_memories(
-            tenant_id=tenant_id, project=project_id
+        semantic = await self.rae_service.list_memories(
+            tenant_id=tenant_id, project=project_id, layer="semantic"
         )
 
         all_memories = episodic + semantic

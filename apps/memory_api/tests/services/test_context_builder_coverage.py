@@ -18,7 +18,7 @@ def mock_pool():
 
 
 @pytest.fixture
-def mock_memory_repo():
+def mock_rae_service():
     return AsyncMock()
 
 
@@ -28,10 +28,10 @@ def mock_reflection_engine():
 
 
 @pytest.fixture
-def context_builder(mock_pool, mock_memory_repo, mock_reflection_engine):
+def context_builder(mock_pool, mock_rae_service, mock_reflection_engine):
     return ContextBuilder(
         pool=mock_pool,
-        memory_repository=mock_memory_repo,
+        rae_service=mock_rae_service,
         reflection_engine=mock_reflection_engine,
         config=ContextConfig(),
     )
@@ -39,32 +39,36 @@ def context_builder(mock_pool, mock_memory_repo, mock_reflection_engine):
 
 @pytest.mark.asyncio
 async def test_build_context_basic(
-    context_builder, mock_memory_repo, mock_reflection_engine
+    context_builder, mock_rae_service, mock_reflection_engine
 ):
     """Test basic context building flow"""
     # Add required fields for scoring
-    mock_memory_repo.get_episodic_memories.return_value = [
-        {
-            "id": "e1",
-            "content": "E1",
-            "layer": "em",
-            "created_at": datetime.now(),
-            "importance": 0.5,
-            "last_accessed_at": None,
-            "usage_count": 0,
-        }
+    # Mock return values for list_memories (called twice: once for episodic, once for semantic)
+    mock_rae_service.list_memories.side_effect = [
+        [
+            {
+                "id": "e1",
+                "content": "E1",
+                "layer": "em",
+                "created_at": datetime.now(),
+                "importance": 0.5,
+                "last_accessed_at": None,
+                "usage_count": 0,
+            }
+        ],
+        [
+            {
+                "id": "s1",
+                "content": "S1",
+                "layer": "sm",
+                "created_at": datetime.now(),
+                "importance": 0.5,
+                "last_accessed_at": None,
+                "usage_count": 0,
+            }
+        ]
     ]
-    mock_memory_repo.get_semantic_memories.return_value = [
-        {
-            "id": "s1",
-            "content": "S1",
-            "layer": "sm",
-            "created_at": datetime.now(),
-            "importance": 0.5,
-            "last_accessed_at": None,
-            "usage_count": 0,
-        }
-    ]
+    
     mock_reflection_engine.query_reflections.return_value = [
         {
             "id": "r1",
@@ -135,9 +139,8 @@ async def test_inject_reflections_into_prompt(context_builder, mock_reflection_e
 
 
 @pytest.mark.asyncio
-async def test_retrieve_ltm_empty(context_builder, mock_memory_repo):
-    mock_memory_repo.get_episodic_memories.return_value = []
-    mock_memory_repo.get_semantic_memories.return_value = []
+async def test_retrieve_ltm_empty(context_builder, mock_rae_service):
+    mock_rae_service.list_memories.return_value = []
 
     items = await context_builder._retrieve_ltm("t1", "p1", "q")
     assert items == []

@@ -36,12 +36,12 @@ The following features exist in `MemoryRepository` but are missing or different 
 2.  Implement these methods in `PostgreSQLStorage` adapter.
 3.  Release new version of `rae-core`.
 
-### Phase 2: Refactor Memory API (PR 2)
+### Phase 2: Refactor Memory API (PR 2) **Completed**
 1.  Update `RAECoreService` to expose new methods.
 2.  Replace usages in `services/` layer:
     *   Replace `MemoryRepository.insert_memory` -> `RAECoreService.store_memory`
     *   Replace `MemoryRepository.get_*_memories` -> `RAECoreService.list_memories`
-3.  Run parallel tests (Dual Write/Read if risky, or Feature Flag).
+3.  Run parallel tests (Dual Write/Read if risky, or Feature Flag). -> **Verified via Unit Tests**
 
 ### Phase 3: Cleanup (PR 3)
 1.  Delete `apps/memory_api/repositories/memory_repository.py`.

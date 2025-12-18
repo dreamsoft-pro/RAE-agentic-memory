@@ -4,7 +4,8 @@ RAE-Core integration service.
 Wraps RAEEngine and adapters for use in FastAPI application.
 """
 
-from typing import List, Optional
+from typing import List, Optional, Any, Dict
+from uuid import UUID
 
 import asyncpg
 import redis.asyncio as redis
@@ -122,41 +123,16 @@ class RAECoreService:
             Memory ID
         """
         # Store in RAEEngine
+        # Mapping project to agent_id for multi-tenancy within RAE-Core
         memory_id = await self.engine.store_memory(
             tenant_id=tenant_id,
-            agent_id="default",  # Default agent ID required by engine
+            agent_id=project,  # Use project as agent_id
             content=content,
             layer=layer or "episodic",
             importance=importance or 0.5,
             tags=tags,
             metadata={"project": project, "source": source},
         )
-
-        # Also persist to PostgreSQL for durability (if engine doesn't handle it already via adapter)
-        # Note: Engine uses memory_storage which IS postgres_adapter, so this might be redundant or conflicting
-        # depending on RAEEngine implementation.
-        # RAEEngine.store_memory calls memory_storage.store_memory.
-        # PostgresMemoryAdapter.store_memory (if implemented) should handle it.
-        # But let's keep it safe: if engine does it, we don't need to do it twice.
-        # However, checking old code, it did manual insert.
-        # Checking RAEEngine.store_memory:
-        # return await self.memory_storage.store_memory(...)
-        # So it does call the adapter.
-
-        # But wait, does PostgresMemoryAdapter.store_memory match signature?
-        # Assuming yes for now. If tests fail on duplicate insert, I'll remove this.
-        # For now I will comment out the manual insert to avoid double insertion if engine does it.
-
-        # await self.postgres_adapter.insert_memory(
-        #     tenant_id=tenant_id,
-        #     content=content,
-        #     source=source,
-        #     importance=importance or 0.5,
-        #     layer=layer or "ltm",
-        #     tags=tags,
-        #     timestamp=None,
-        #     project=project,
-        # )
 
         logger.info(
             "memory_stored",
@@ -167,6 +143,118 @@ class RAECoreService:
         )
 
         return str(memory_id)
+
+    async def get_memory(self, memory_id: str, tenant_id: str) -> Optional[Dict[str, Any]]:
+        """Retrieve a memory by ID."""
+        try:
+            mem_uuid = UUID(memory_id)
+        except ValueError:
+            return None
+        
+        return await self.postgres_adapter.get_memory(mem_uuid, tenant_id)
+
+    async def delete_memory(self, memory_id: str, tenant_id: str) -> bool:
+        """Delete a memory by ID."""
+        try:
+            mem_uuid = UUID(memory_id)
+        except ValueError:
+            return False
+            
+        return await self.postgres_adapter.delete_memory(mem_uuid, tenant_id)
+
+    async def list_memories(
+        self,
+        tenant_id: str,
+        layer: str,
+        project: str,  # Required as agent_id mapping
+        limit: int = 100,
+        offset: int = 0,
+    ) -> List[Dict[str, Any]]:
+        """List memories for a specific layer and project (agent)."""
+        return await self.postgres_adapter.list_memories(
+            tenant_id=tenant_id,
+            agent_id=project,
+            layer=layer,
+            limit=limit,
+            offset=offset
+        )
+
+    async def count_memories(
+        self,
+        tenant_id: str,
+        layer: str,
+        project: str,
+    ) -> int:
+        """Count memories for a layer and project."""
+        return await self.postgres_adapter.count_memories(
+            tenant_id=tenant_id,
+            agent_id=project,
+            layer=layer
+        )
+
+    async def get_metric_aggregate(
+        self,
+        tenant_id: str,
+        layer: str,
+        project: str,
+        metric: str,
+        func: str,
+    ) -> float:
+        """Get aggregate metric (e.g., avg importance)."""
+        return await self.postgres_adapter.get_metric_aggregate(
+            tenant_id=tenant_id,
+            metric=metric,
+            func=func,
+            filters={"agent_id": project, "layer": layer}
+        )
+
+    async def update_memory_access_batch(
+        self,
+        memory_ids: List[str],
+        tenant_id: str,
+    ) -> int:
+        """Update access stats for multiple memories."""
+        if not memory_ids:
+            return 0
+            
+        try:
+            # Filter valid UUIDs
+            valid_ids = []
+            for mid in memory_ids:
+                try:
+                    valid_ids.append(UUID(mid))
+                except ValueError:
+                    continue
+            
+            if not valid_ids:
+                return 0
+
+            await self.postgres_adapter.update_memory_access_batch(
+                memory_ids=valid_ids,
+                tenant_id=tenant_id
+            )
+            return len(valid_ids)
+        except Exception as e:
+            logger.error("update_memory_access_batch_failed", error=str(e))
+            return 0
+
+    async def adjust_importance(
+        self,
+        memory_id: str,
+        delta: float,
+        tenant_id: str,
+    ) -> Optional[float]:
+        """Adjust memory importance."""
+        try:
+            mem_uuid = UUID(memory_id)
+            return await self.postgres_adapter.adjust_importance(
+                memory_id=mem_uuid,
+                delta=delta,
+                tenant_id=tenant_id
+            )
+        except (ValueError, Exception) as e:
+            logger.error("adjust_importance_failed", memory_id=memory_id, error=str(e))
+            return None
 
     async def query_memories(
         self,

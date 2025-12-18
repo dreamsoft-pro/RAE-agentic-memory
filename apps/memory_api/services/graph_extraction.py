@@ -27,7 +27,7 @@ if TYPE_CHECKING:
     import spacy  # noqa: F401
 
     from apps.memory_api.repositories.graph_repository import GraphRepository
-    from apps.memory_api.repositories.memory_repository import MemoryRepository
+    from apps.memory_api.services.rae_core_service import RAECoreService
 
 logger = structlog.get_logger(__name__)
 
@@ -242,20 +242,20 @@ class GraphExtractionService:
     - Error handling and retry logic
 
     Architecture:
-    - Uses MemoryRepository for memory data access
+    - Uses RAECoreService for memory data access (replacing MemoryRepository)
     - Uses GraphRepository for knowledge graph operations
     - Follows clean Repository/DAO pattern with full Dependency Injection
     """
 
-    def __init__(self, memory_repo: "MemoryRepository", graph_repo: "GraphRepository"):
+    def __init__(self, rae_service: "RAECoreService", graph_repo: "GraphRepository"):
         """
         Initialize the graph extraction service.
 
         Args:
-            memory_repo: MemoryRepository instance for accessing episodic memories
+            rae_service: RAECoreService instance for accessing episodic memories
             graph_repo: GraphRepository instance for knowledge graph operations
         """
-        self.memory_repo = memory_repo
+        self.rae_service = rae_service
         self.graph_repo = graph_repo
         self.llm_provider = get_llm_provider()
 
@@ -470,7 +470,7 @@ class GraphExtractionService:
         self, project_id: str, tenant_id: str, limit: int
     ) -> List[Dict[str, Any]]:
         """
-        Fetch recent episodic memories for extraction using MemoryRepository.
+        Fetch recent episodic memories for extraction using RAECoreService.
 
         Args:
             project_id: Project identifier
@@ -480,8 +480,13 @@ class GraphExtractionService:
         Returns:
             List of memory dictionaries with id, content, and metadata
         """
-        return await self.memory_repo.get_episodic_memories(
-            tenant_id=tenant_id, project=project_id, limit=limit
+        # Fetch memories using RAECoreService
+        # We assume 'episodic' layer.
+        return await self.rae_service.list_memories(
+            tenant_id=tenant_id,
+            layer="episodic", 
+            project=project_id,
+            limit=limit
         )
 
     def _format_memories(self, memories: List[Dict[str, Any]]) -> str:

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
 import asyncpg
 import structlog
@@ -7,12 +7,14 @@ from pydantic import BaseModel, Field
 from apps.memory_api import metrics
 from apps.memory_api.config import settings
 from apps.memory_api.repositories.graph_repository import GraphRepository
-from apps.memory_api.repositories.memory_repository import MemoryRepository
 from apps.memory_api.services.graph_extraction import (
     GraphExtractionResult,
     GraphExtractionService,
 )
 from apps.memory_api.services.llm import get_llm_provider
+
+if TYPE_CHECKING:
+    from apps.memory_api.services.rae_core_service import RAECoreService
 
 logger = structlog.get_logger(__name__)
 
@@ -76,12 +78,17 @@ class ReflectionEngine:
     - Integration with GraphExtractionService
     """
 
-    def __init__(self, pool: asyncpg.Pool, graph_repository: GraphRepository = None):
+    def __init__(
+        self, 
+        pool: asyncpg.Pool, 
+        rae_service: "RAECoreService",
+        graph_repository: GraphRepository = None
+    ):
         self.pool = pool
         self.graph_repo = graph_repository or GraphRepository(pool)
-        self.memory_repo = MemoryRepository(pool)
+        self.rae_service = rae_service
         self.llm_provider = get_llm_provider()
-        self.graph_extractor = GraphExtractionService(self.memory_repo, self.graph_repo)
+        self.graph_extractor = GraphExtractionService(self.rae_service, self.graph_repo)
 
     async def generate_reflection(self, project: str, tenant_id: str) -> str:
         """
@@ -164,20 +171,14 @@ class ReflectionEngine:
     async def _get_recent_episodes(self, project: str, tenant_id: str) -> List[Dict]:
         """
         Fetches episodic memories for a project that haven't been used for reflection yet.
-        This is a simplified implementation; a real one would use a flag.
         """
-        async with self.pool.acquire() as conn:
-            records = await conn.fetch(
-                """
-                SELECT id, content FROM memories
-                WHERE tenant_id = $1 AND project = $2 AND layer = 'em'
-                ORDER BY created_at DESC
-                LIMIT 10
-                """,
-                tenant_id,
-                project,
-            )
-            return [dict(r) for r in records]
+        # Using RAECoreService list_memories
+        return await self.rae_service.list_memories(
+            tenant_id=tenant_id,
+            layer="episodic",
+            project=project,
+            limit=10
+        )
 
     async def extract_knowledge_graph_enhanced(
         self,
@@ -334,33 +335,12 @@ class ReflectionEngine:
         Returns:
             List of episode dictionaries
         """
-        async with self.pool.acquire() as conn:
-            if limit:
-                records = await conn.fetch(
-                    """
-                    SELECT id, content, created_at, tags
-                    FROM memories
-                    WHERE tenant_id = $1 AND project = $2 AND layer = 'em'
-                    ORDER BY created_at DESC
-                    LIMIT $3
-                    """,
-                    tenant_id,
-                    project,
-                    limit,
-                )
-            else:
-                records = await conn.fetch(
-                    """
-                    SELECT id, content, created_at, tags
-                    FROM memories
-                    WHERE tenant_id = $1 AND project = $2 AND layer = 'em'
-                    ORDER BY created_at DESC
-                    """,
-                    tenant_id,
-                    project,
-                )
-
-            return [dict(r) for r in records]
+        return await self.rae_service.list_memories(
+            tenant_id=tenant_id,
+            layer="episodic",
+            project=project,
+            limit=limit or 1000 # Set a high default limit if not specified, as list_memories requires limit
+        )
 
     async def _summarize_episodes(self, episodes: List[Dict[str, Any]]) -> str:
         """

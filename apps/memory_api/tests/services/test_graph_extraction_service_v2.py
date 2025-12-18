@@ -12,7 +12,7 @@ from apps.memory_api.services.graph_extraction import (
 
 
 @pytest.fixture
-def mock_memory_repo():
+def mock_rae_service():
     return AsyncMock()
 
 
@@ -27,28 +27,28 @@ def mock_llm_provider():
 
 
 @pytest.fixture
-def service(mock_memory_repo, mock_graph_repo, mock_llm_provider):
+def service(mock_rae_service, mock_graph_repo, mock_llm_provider):
     with patch(
         "apps.memory_api.services.graph_extraction.get_llm_provider",
         return_value=mock_llm_provider,
     ), patch.object(
         GraphExtractionService, "_ensure_spacy_available", return_value=None
     ):
-        svc = GraphExtractionService(mock_memory_repo, mock_graph_repo)
+        svc = GraphExtractionService(mock_rae_service, mock_graph_repo)
         svc.llm_provider = mock_llm_provider
         yield svc
 
 
 @pytest.mark.asyncio
 async def test_extract_knowledge_graph_success(
-    service, mock_memory_repo, mock_llm_provider
+    service, mock_rae_service, mock_llm_provider
 ):
     # Setup
     project_id = "p-1"
     tenant_id = "t-1"
 
     # 1. Mock memories
-    mock_memory_repo.get_episodic_memories.return_value = [
+    mock_rae_service.list_memories.return_value = [
         {"id": uuid4(), "content": "User likes Python.", "created_at": "2023-01-01"}
     ]
 
@@ -90,8 +90,8 @@ async def test_extract_knowledge_graph_success(
 
 
 @pytest.mark.asyncio
-async def test_extract_knowledge_graph_no_memories(service, mock_memory_repo):
-    mock_memory_repo.get_episodic_memories.return_value = []
+async def test_extract_knowledge_graph_no_memories(service, mock_rae_service):
+    mock_rae_service.list_memories.return_value = []
 
     result = await service.extract_knowledge_graph("p-1", "t-1")
 
@@ -101,10 +101,10 @@ async def test_extract_knowledge_graph_no_memories(service, mock_memory_repo):
 
 @pytest.mark.asyncio
 async def test_extract_knowledge_graph_gatekeeper_filters_all(
-    service, mock_memory_repo, mock_llm_provider
+    service, mock_rae_service, mock_llm_provider
 ):
     # Memories exist but are non-factual
-    mock_memory_repo.get_episodic_memories.return_value = [
+    mock_rae_service.list_memories.return_value = [
         {"id": uuid4(), "content": "Hi there", "created_at": "2023-01-01"}
     ]
 

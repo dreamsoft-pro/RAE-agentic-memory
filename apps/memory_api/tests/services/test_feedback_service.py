@@ -8,10 +8,10 @@ from apps.memory_api.services.feedback_service import FeedbackService
 
 @pytest.mark.asyncio
 async def test_process_feedback_positive():
-    mock_repo = MagicMock()
-    mock_repo.update_importance = AsyncMock(return_value=0.7)
+    mock_rae = MagicMock()
+    mock_rae.adjust_importance = AsyncMock(return_value=0.7)
 
-    service = FeedbackService(mock_repo)
+    service = FeedbackService(rae_service=mock_rae)
 
     settings.ENABLE_FEEDBACK_LOOP = True
     settings.FEEDBACK_POSITIVE_DELTA = 0.1
@@ -21,17 +21,17 @@ async def test_process_feedback_positive():
     )
 
     assert result is True
-    mock_repo.update_importance.assert_called_once_with(
+    mock_rae.adjust_importance.assert_called_once_with(
         memory_id="m1", tenant_id="t1", delta=0.1
     )
 
 
 @pytest.mark.asyncio
 async def test_process_feedback_negative():
-    mock_repo = MagicMock()
-    mock_repo.update_importance = AsyncMock(return_value=0.4)
+    mock_rae = MagicMock()
+    mock_rae.adjust_importance = AsyncMock(return_value=0.4)
 
-    service = FeedbackService(mock_repo)
+    service = FeedbackService(rae_service=mock_rae)
 
     settings.ENABLE_FEEDBACK_LOOP = True
     settings.FEEDBACK_NEGATIVE_DELTA = 0.2
@@ -41,19 +41,19 @@ async def test_process_feedback_negative():
     )
 
     assert result is True
-    mock_repo.update_importance.assert_called_once_with(
+    mock_rae.adjust_importance.assert_called_once_with(
         memory_id="m1", tenant_id="t1", delta=-0.2
     )
 
 
 @pytest.mark.asyncio
 async def test_process_feedback_disabled():
-    mock_repo = MagicMock()
-    service = FeedbackService(mock_repo)
+    mock_rae = MagicMock()
+    service = FeedbackService(rae_service=mock_rae)
 
     settings.ENABLE_FEEDBACK_LOOP = False
 
     result = await service.process_feedback("t1", "m1", "positive")
 
     assert result is False
-    mock_repo.update_importance.assert_not_called()
+    mock_rae.adjust_importance.assert_not_called()

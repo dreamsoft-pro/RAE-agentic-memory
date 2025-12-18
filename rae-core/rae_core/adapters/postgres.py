@@ -276,8 +276,8 @@ class PostgreSQLStorage(IMemoryStorage):
     async def list_memories(
         self,
         tenant_id: str,
-        agent_id: str,
-        layer: str,
+        agent_id: str | None = None,
+        layer: str | None = None,
         filters: dict[str, Any] | None = None,
         limit: int = 100,
         offset: int = 0,
@@ -290,10 +290,19 @@ class PostgreSQLStorage(IMemoryStorage):
 
         conditions = [
             "tenant_id = $1",
-            "agent_id = $2",
-            "layer = $3",
         ]
-        params: list[Any] = [tenant_id, agent_id, layer]
+        params: list[Any] = [tenant_id]
+        param_idx = 2
+
+        if agent_id:
+            conditions.append(f"agent_id = ${param_idx}")
+            params.append(agent_id)
+            param_idx += 1
+
+        if layer:
+            conditions.append(f"layer = ${param_idx}")
+            params.append(layer)
+            param_idx += 1
 
         # Apply additional filters
         # (Similar to search_memories, omitted for brevity)
@@ -311,7 +320,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 FROM memories
                 WHERE {where_clause}
                 {order_clause}
-                LIMIT $4 OFFSET $5
+                LIMIT ${param_idx} OFFSET ${param_idx + 1}
                 """,
                 *params,
                 limit,

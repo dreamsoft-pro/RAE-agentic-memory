@@ -4,12 +4,15 @@ Feedback Service (Iteration 3)
 Implements the "Feedback Loop" (learning-to-remember) mechanism.
 """
 
-from typing import Optional
+from typing import Optional, TYPE_CHECKING
 
 import structlog
 
 from apps.memory_api.config import settings
-from apps.memory_api.repositories.memory_repository import MemoryRepository
+
+if TYPE_CHECKING:
+    from apps.memory_api.services.rae_core_service import RAECoreService
+    from apps.memory_api.repositories.memory_repository import MemoryRepository
 
 logger = structlog.get_logger(__name__)
 
@@ -19,8 +22,9 @@ class FeedbackService:
     Service for processing user/system feedback on memory retrieval quality.
     """
 
-    def __init__(self, memory_repo: MemoryRepository):
-        self.memory_repo = memory_repo
+    def __init__(self, rae_service: "RAECoreService", memory_repo: Optional["MemoryRepository"] = None):
+        self.rae_service = rae_service
+        self.memory_repo = memory_repo # Deprecated, kept for backward compat if needed
 
     async def process_feedback(
         self,
@@ -54,7 +58,7 @@ class FeedbackService:
             logger.warning("invalid_feedback_type", type=feedback_type)
             return False
 
-        new_score = await self.memory_repo.update_importance(
+        new_score = await self.rae_service.adjust_importance(
             memory_id=memory_id, tenant_id=tenant_id, delta=delta
         )
 

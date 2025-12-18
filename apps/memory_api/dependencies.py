@@ -120,53 +120,6 @@ def get_graph_repository(pool: asyncpg.Pool = None) -> GraphRepository:
 # ==========================================
 
 
-def get_graph_extraction_service(request: Request) -> GraphExtractionService:
-    """
-    Factory for GraphExtractionService with full dependency injection.
-
-    This is the Composition Root for graph extraction operations.
-    All dependencies are resolved and injected here.
-
-    Args:
-        request: FastAPI request object
-
-    Returns:
-        Fully configured GraphExtractionService instance
-    """
-    pool = get_db_pool(request)
-
-    # Instantiate repositories
-    memory_repo = get_memory_repository(pool)
-    graph_repo = get_graph_repository(pool)
-
-    # Inject repositories into service
-    return GraphExtractionService(memory_repo=memory_repo, graph_repo=graph_repo)
-
-
-def get_hybrid_search_service(request: Request) -> HybridSearchService:
-    """
-    Factory for HybridSearchService with full dependency injection.
-
-    This is the Composition Root for hybrid search operations.
-    All dependencies are resolved and injected here.
-
-    Args:
-        request: FastAPI request object
-
-    Returns:
-        Fully configured HybridSearchService instance
-    """
-    pool = get_db_pool(request)
-
-    # Instantiate repository
-    graph_repo = get_graph_repository(pool)
-
-    # Inject dependencies into service
-    return HybridSearchService(
-        graph_repo=graph_repo, pool=pool  # Still needed for vector store
-    )
-
-
 def get_rae_core_service(request: Request) -> RAECoreService:
     """
     Factory for RAECoreService with full dependency injection.
@@ -183,3 +136,27 @@ def get_rae_core_service(request: Request) -> RAECoreService:
     if not hasattr(request.app.state, "rae_core_service"):
         raise HTTPException(status_code=500, detail="RAE-Core service not initialized")
     return request.app.state.rae_core_service
+
+
+def get_graph_extraction_service(request: Request) -> GraphExtractionService:
+    """
+    Factory for GraphExtractionService with full dependency injection.
+
+    This is the Composition Root for graph extraction operations.
+    All dependencies are resolved and injected here.
+
+    Args:
+        request: FastAPI request object
+
+    Returns:
+        Fully configured GraphExtractionService instance
+    """
+    pool = get_db_pool(request)
+    rae_service = get_rae_core_service(request)
+
+    # Instantiate repositories
+    # memory_repo = get_memory_repository(pool) # Deprecated
+    graph_repo = get_graph_repository(pool)
+
+    # Inject repositories into service
+    return GraphExtractionService(rae_service=rae_service, graph_repo=graph_repo)
