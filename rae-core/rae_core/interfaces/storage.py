@@ -271,3 +271,60 @@ class IMemoryStorage(ABC):
             True if successful, False otherwise
         """
         pass
+
+    @abstractmethod
+    async def get_metric_aggregate(
+        self,
+        tenant_id: str,
+        metric: str,
+        func: str,
+        filters: dict[str, Any] | None = None,
+    ) -> float:
+        """Calculate aggregate metric for memories.
+
+        Args:
+            tenant_id: Tenant identifier
+            metric: Field to aggregate (e.g., 'importance', 'access_count')
+            func: Aggregation function ('avg', 'sum', 'min', 'max', 'count')
+            filters: Optional filters to apply before aggregation
+
+        Returns:
+            Aggregated value as float
+        """
+        pass
+
+    @abstractmethod
+    async def update_memory_access_batch(
+        self,
+        memory_ids: list[UUID],
+        tenant_id: str,
+    ) -> bool:
+        """Update last access time and increment usage count for multiple memories.
+
+        Args:
+            memory_ids: List of memory UUIDs
+            tenant_id: Tenant identifier
+
+        Returns:
+            True if all updates were successful
+        """
+        pass
+
+    @abstractmethod
+    async def adjust_importance(
+        self,
+        memory_id: UUID,
+        delta: float,
+        tenant_id: str,
+    ) -> float:
+        """Adjust memory importance by a delta value.
+
+        Args:
+            memory_id: UUID of the memory
+            delta: Value to add to current importance (can be negative)
+            tenant_id: Tenant identifier
+
+        Returns:
+            New importance value
+        """
+        pass

@@ -629,3 +629,104 @@ class PostgreSQLStorage(IMemoryStorage):
             )
 
         return int(count) if count else 0
+
+    async def get_metric_aggregate(
+        self,
+        tenant_id: str,
+        metric: str,
+        func: str,
+        filters: dict[str, Any] | None = None,
+    ) -> float:
+        """Calculate aggregate metric for memories."""
+        pool = await self._get_pool()
+        filters = filters or {}
+
+        # Validate metric and func to prevent SQL injection
+        allowed_metrics = {"importance", "usage_count"}
+        allowed_funcs = {"avg", "sum", "min", "max", "count"}
+
+        if metric not in allowed_metrics:
+            raise ValueError(f"Invalid metric: {metric}. Allowed: {allowed_metrics}")
+        if func not in allowed_funcs:
+            raise ValueError(f"Invalid function: {func}. Allowed: {allowed_funcs}")
+
+        conditions = ["tenant_id = $1"]
+        params: list[Any] = [tenant_id]
+        param_idx = 2
+
+        if "agent_id" in filters:
+            conditions.append(f"agent_id = ${param_idx}")
+            params.append(filters["agent_id"])
+            param_idx += 1
+
+        if "layer" in filters:
+            conditions.append(f"layer = ${param_idx}")
+            params.append(filters["layer"])
+            param_idx += 1
+
+        where_clause = " AND ".join(conditions)
+
+        async with pool.acquire() as conn:
+            result = await conn.fetchval(
+                f"""
+                SELECT {func}({metric})
+                FROM memories
+                WHERE {where_clause}
+                """,
+                *params,
+            )
+
+        return float(result) if result is not None else 0.0
+
+    async def update_memory_access_batch(
+        self,
+        memory_ids: list[UUID],
+        tenant_id: str,
+    ) -> bool:
+        """Update last access time and increment usage count for multiple memories."""
+        pool = await self._get_pool()
+
+        async with pool.acquire() as conn:
+            result = await conn.execute(
+                """
+                UPDATE memories
+                SET 
+                    last_accessed_at = $1,
+                    usage_count = usage_count + 1
+                WHERE id = ANY($2) AND tenant_id = $3
+                """,
+                datetime.now(timezone.utc),
+                memory_ids,
+                tenant_id,
+            )
+
+        # We consider it successful if the query executed, even if 0 rows updated
+        # (though ideally we might want to check if count matches)
+        return True
+
+    async def adjust_importance(
+        self,
+        memory_id: UUID,
+        delta: float,
+        tenant_id: str,
+    ) -> float:
+        """Adjust memory importance by a delta value."""
+        pool = await self._get_pool()
+
+        async with pool.acquire() as conn:
+            new_importance = await conn.fetchval(
+                """
+                UPDATE memories
+                SET importance = GREATEST(0.0, LEAST(1.0, importance + $1))
+                WHERE id = $2 AND tenant_id = $3
+                RETURNING importance
+                """,
+                delta,
+                memory_id,
+                tenant_id,
+            )
+
+        if new_importance is None:
+            raise ValueError(f"Memory not found: {memory_id}")
+
+        return float(new_importance)

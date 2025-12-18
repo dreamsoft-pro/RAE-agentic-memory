@@ -7,9 +7,7 @@ from uuid import uuid4
 
 import pytest
 
-# Mock asyncpg if not available
-with patch.dict(sys.modules, {"asyncpg": MagicMock()}):
-    from rae_core.adapters.postgres import PostgreSQLStorage
+from rae_core.adapters.postgres import PostgreSQLStorage
 
 
 class TestPostgreSQLStorage:

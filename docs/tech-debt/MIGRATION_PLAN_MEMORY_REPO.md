@@ -1,6 +1,6 @@
 # Migration Plan: MemoryRepository to RAE-Core Adapters
 
-**Status**: Draft
+**Status**: In Progress
 **Target**: Eliminate `apps/memory_api/repositories/memory_repository.py`
 **Goal**: Unified, backend-agnostic data access via `rae-core`.
 
@@ -17,18 +17,18 @@ The following features exist in `MemoryRepository` but are missing or different 
 | :--- | :--- | :--- |
 | `insert_memory` | `store_memory` | **Compatible**. Check `project` vs `agent_id` mapping. |
 | `get_memory_by_id` | `get_memory` | **Compatible**. |
-| `delete_memory` | `delete_memory` | **Compatible**. |
+| `delete_memory` | `delete_memory` | **Compatible`. |
 | `get_semantic_memories` | `list_memories(layer='sm')` | **Compatible**. Use generic list with filters. |
 | `get_reflective_memories` | `list_memories(layer='rm')` | **Compatible**. |
 | `get_episodic_memories` | `list_memories(layer='em')` | **Compatible**. |
 | `count_memories_by_layer` | `count_memories` | **Compatible**. |
-| `get_average_strength` | **MISSING** | **Action**: Add `get_average_strength` or generic aggregation to `IMemoryStorage`. |
-| `update_memory_access_stats` (Batch) | `update_memory_access` (Single) | **Action**: Add `update_memory_access_batch` to `IMemoryStorage`. Essential for performance. |
-| `update_importance` (Delta) | `update_memory` (Set value) | **Action**: Add `adjust_importance(delta)` to `IMemoryStorage` for atomic updates. |
+| `get_average_strength` | **MISSING** | **Implemented in Phase 1**: `get_metric_aggregate(metric='importance', func='avg')`. |
+| `update_memory_access_stats` (Batch) | `update_memory_access` (Single) | **Implemented in Phase 1**: `update_memory_access_batch`. |
+| `update_importance` (Delta) | `update_memory` (Set value) | **Implemented in Phase 1**: `adjust_importance(delta)`. |
 
 ## Migration Strategy
 
-### Phase 1: Extend RAE-Core Interfaces (PR 1)
+### Phase 1: Extend RAE-Core Interfaces (PR 1) **Completed**
 1.  Update `IMemoryStorage` in `rae-core` to include:
     *   `get_metric_aggregate(metric: str, func: str, filters: dict) -> float` (Generic aggregation)
     *   `update_memory_access_batch(memory_ids: list[UUID], tenant_id: str)`
