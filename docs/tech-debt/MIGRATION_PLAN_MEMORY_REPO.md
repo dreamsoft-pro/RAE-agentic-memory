@@ -1,6 +1,6 @@
 # Migration Plan: MemoryRepository to RAE-Core Adapters
 
-**Status**: In Progress
+**Status**: Completed
 **Target**: Eliminate `apps/memory_api/repositories/memory_repository.py`
 **Goal**: Unified, backend-agnostic data access via `rae-core`.
 
@@ -43,9 +43,10 @@ The following features exist in `MemoryRepository` but are missing or different 
     *   Replace `MemoryRepository.get_*_memories` -> `RAECoreService.list_memories`
 3.  Run parallel tests (Dual Write/Read if risky, or Feature Flag). -> **Verified via Unit Tests**
 
-### Phase 3: Cleanup (PR 3)
+### Phase 3: Cleanup (PR 3) **Completed**
 1.  Delete `apps/memory_api/repositories/memory_repository.py`.
 2.  Remove direct `asyncpg` dependency from `memory_api` (except for `main.py` pool creation, if still needed for adapter factory).
+3.  Cleaned up all services and tests referencing `MemoryRepository`.
 
 ## Benefits
 - **Zero Tech Debt**: Single source of truth for DB queries.
