@@ -64,3 +64,4 @@ docs/*-claude-*.md
 .mypy_cache/
 .claude/settings.local.json
 junit.xml
+junit.xml

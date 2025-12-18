@@ -75,3 +75,10 @@ Different branches = Different testing levels.
 - Blocking other devs (broken develop/main).
 - Security leaks (missing `tenant_id`).
 - Wasted CI credits (full tests on feature branches).
+
+## 7. RESOURCE & COMMUNICATION EFFICIENCY
+
+- **RAE First**: **ALWAYS** consult RAE (memory/context) first. Input/Output MUST flow through RAE to minimize token usage.
+- **Model Economy**: Use cheaper/lighter models for simple tasks (formatting, basic logic). Reserve SOTA models for complex reasoning.
+- **Rate Limits (CLI)**: **STRICTLY** adhere to Requests Per Minute (RPM) limits. This applies especially to Gemini CLI.
+- **Quality Over Speed**: Do not rush. "Done Well" > "Done Fast". Take time to verify. Correctness is paramount.
