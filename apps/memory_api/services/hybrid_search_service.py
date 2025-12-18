@@ -755,7 +755,9 @@ class HybridSearchService:
                 result_map[memory_id]["rrf_score"] += weight * rrf_contribution
 
                 # Keep original raw scores for debugging/metadata
-                result_map[memory_id]["strategy_scores"][strategy.value] = result["score"]
+                result_map[memory_id]["strategy_scores"][strategy.value] = result[
+                    "score"
+                ]
                 if strategy not in result_map[memory_id]["strategies_used"]:
                     result_map[memory_id]["strategies_used"].append(strategy)
 
