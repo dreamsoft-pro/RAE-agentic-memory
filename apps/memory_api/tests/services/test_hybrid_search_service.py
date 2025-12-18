@@ -210,11 +210,12 @@ async def test_fuse_results(service):
     assert len(fused) == 2
 
     m1 = next(r for r in fused if str(r.memory_id) == mem_id1)
-    # Check hybrid score calculation logic
-    # Vector norm: 0.9/0.9 = 1.0 * 0.8 = 0.8
-    # Fulltext norm: 0.5/0.8 = 0.625 * 0.2 = 0.125
-    # Total: 0.925
-    assert m1.hybrid_score == pytest.approx(0.925)
+    # Check hybrid score calculation logic (RRF)
+    # RRF_K = 60
+    # mem_id1 rank 0 in VECTOR: 1/(60+0) * 0.8 = 0.8/60 = 0.01333...
+    # mem_id1 rank 0 in FULLTEXT: 1/(60+0) * 0.2 = 0.2/60 = 0.00333...
+    # Total: 1.0/60 = 0.01666...
+    assert m1.hybrid_score == pytest.approx(1.0 / 60)
 
 
 @pytest.mark.asyncio
