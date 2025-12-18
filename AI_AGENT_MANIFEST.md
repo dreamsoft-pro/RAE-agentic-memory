@@ -16,14 +16,13 @@
 
 | # | Document | Time | Purpose |
 |---|----------|------|---------|
-| 1 | **CRITICAL_AGENT_RULES.md** | 5 min | ⭐ 8 MANDATORY rules (testing, workflow, security) |
+| 1 | **docs/rules/AGENT_CORE_PROTOCOL.md** | 5 min | ⭐ SINGLE SOURCE OF TRUTH (Rules, Workflow, Testing) |
 | 2 | **This Manifest** | 3 min | Navigation guide & documentation hierarchy |
-| 3 | **.ai-agent-rules.md** | 5 min | Forbidden commands & hybrid testing strategy |
-| 4 | **docs/BRANCHING.md** | 3 min | Git workflow (feature → develop → main) |
-| 5 | **docs/CI_WORKFLOW.md** | 5 min | CI/CD workflow (local → develop → main) |
-| 6 | **docs/AGENTS_TEST_POLICY.md** | 3 min | Tests as contracts philosophy |
+| 3 | **docs/BRANCHING.md** | 3 min | Git workflow details |
+| 4 | **docs/CI_WORKFLOW.md** | 5 min | CI/CD workflow details |
+| 5 | **docs/AGENTS_TEST_POLICY.md** | 3 min | Tests as contracts philosophy |
 
-**Total Time**: ~20-25 minutes to read critical documentation before starting any work.
+**Total Time**: ~20 minutes to read critical documentation before starting any work.
 
 ---
 
@@ -33,26 +32,19 @@
 
 Must read before touching ANY code:
 
-- **CRITICAL_AGENT_RULES.md** - 8 mandatory rules that cannot be violated
-- **.ai-agent-rules.md** - Forbidden interactive commands, hybrid testing strategy
+- **docs/rules/AGENT_CORE_PROTOCOL.md** - The Master Protocol (Rules, Workflow, Testing, Git)
 - **docs/BRANCHING.md** - Git workflow (feature/develop/main branches)
 - **docs/CI_WORKFLOW.md** - CI/CD workflow (local tests → develop → main)
 - **docs/AGENTS_TEST_POLICY.md** - Tests are contracts, not snapshots
 
-**Key Rules from Tier 1 (All 8 Critical Rules):**
-1. ❌ **RULE #1**: NEVER run full test suite on feature branches (only `pytest --no-cov`)
-2. ✅ **RULE #2**: ALWAYS work autonomously (don't ask obvious questions)
-3. ✅ **RULE #3**: Follow 3-phase workflow (Feature → Develop → Main)
-   - Feature: test ONLY new code
-   - Develop: `make test-unit` MANDATORY before main!
-   - Main: CI tests automatically
-4. ✅ **RULE #4**: ALWAYS include `tenant_id` in database queries (security!)
-5. ✅ **RULE #5**: ALWAYS use templates from `.ai-templates/`
-6. ❌ **RULE #6**: NEVER use interactive commands (nano, vim, git -i)
-7. ✅ **RULE #7**: Tests are contracts - fix CODE, not tests (when tests fail correctly)
-8. ✅ **RULE #8**: Documentation updates
-   - DON'T EDIT: Auto-generated files (`CHANGELOG.md`, `STATUS.md`, `TODO.md`, `docs/.auto-generated/`)
-   - DO EDIT: Manual files (`CONVENTIONS.md`, `PROJECT_STRUCTURE.md`, `docs/guides/`)
+**Key Rules from Protocol:**
+1. ❌ **Autonomy**: Work autonomously (don't ask obvious questions)
+2. ✅ **Workflow**: 4-Phase (Feature → Develop → Release → Main)
+3. ✅ **Testing**: Feature=NewOnly, Develop=FullSuite
+4. ✅ **Security**: `tenant_id` in all queries
+5. ✅ **Templates**: Use `.ai-templates/`
+6. ❌ **No Interactive**: `nano`, `vim` forbidden
+
 
 ### 🟡 Tier 2: Essential (Read before first commit)
 
@@ -240,13 +232,12 @@ Different AI agents read different config files:
 
 | Agent | Primary Config | Secondary Configs | Notes |
 |-------|---------------|-------------------|-------|
-| **Claude Code** | `.clauderc` | This manifest | JSON format, now includes all rules |
+| **Claude Code** | `docs/rules/CLAUDE_PROFILE.md` | This manifest | Specific tool usage (Task/TodoWrite) |
+| **Google Gemini** | `docs/rules/GEMINI_PROFILE.md` | This manifest | Memory usage & bootstrapping |
 | **Cursor AI** | `.cursorrules` | This manifest | Most complete rules file |
-| **Google Gemini** | `GEMINI.md` | This manifest | Now includes manifest reference |
-| **GitHub Copilot** | `.github/copilot-instructions.md` | This manifest | (If created) |
-| **Any AI Agent** | **This file first** | Then specific config | Universal baseline |
+| **Any AI Agent** | **docs/rules/AGENT_CORE_PROTOCOL.md** | This manifest | Universal baseline |
 
-**Recommendation**: All agents should read this manifest FIRST for baseline understanding, then consult their agent-specific files for customizations.
+**Recommendation**: All agents should read `AGENT_CORE_PROTOCOL.md` FIRST for baseline understanding.
 
 ---
 

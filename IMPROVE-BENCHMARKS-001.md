@@ -1,6 +1,6 @@
-# RAE – Plan poprawy benchmarków pamięci i rozumowania
+# RAE – Plan to improve memory and reasoning benchmarks
 
-Ten dokument opisuje, jak z poziomu obecnych wyników:
+This document describes how to move from current results:
 
 - **LECT:** 100% episodic consistency (1,000 cycles)  
 - **MMIT:** 99.4% isolation (3 leaks / 500 ops)  
@@ -9,288 +9,288 @@ Ten dokument opisuje, jak z poziomu obecnych wyników:
 - **MPEB:** 95.7% adaptation  
 - **ORB:** 3/6 Pareto-optimal configs  
 
-dojść do bardziej „pro” poziomu, bez naruszania stabilności systemu.
+to a more "pro" level, without compromising system stability.
 
 ---
 
-## 1. Cele ilościowe
+## 1. Quantitative Goals
 
-| Benchmark | Stan obecny                         | Cel „pro”                         |
-|-----------|-------------------------------------|-----------------------------------|
-| LECT      | 100% (1,000 cykli)                 | Utrzymać 100%, rozszerzyć do 10k |
-| MMIT      | 99.4% (3/500 leaków)               | ≥ 99.8% (≤ 1 leak / 500 ops)     |
+| Benchmark | Current state                      | "Pro" goal                       |
+|-----------|------------------------------------|----------------------------------|
+| LECT      | 100% (1,000 cycles)                | Maintain 100%, extend to 10k     |
+| MMIT      | 99.4% (3/500 leaks)                | ≥ 99.8% (≤ 1 leak / 500 ops)     |
 | GRDT      | depth = 10, 58.3% coherence        | depth ≥ 12, ≥ 70% coherence      |
-| RST       | 62.5% consistency, noise do 60%    | ≥ 75% consistency, noise do 70%  |
-| MPEB      | 95.7% adaptation                   | ≥ 97% + brak regresji w LECT/MMIT|
-| ORB       | 3/6 konfiguracji Pareto-optimal    | ≥ 5/6 konfiguracji Pareto-optimal|
+| RST       | 62.5% consistency, noise up to 60% | ≥ 75% consistency, noise up to 70% |
+| MPEB      | 95.7% adaptation                   | ≥ 97% + no regression in LECT/MMIT|
+| ORB       | 3/6 Pareto-optimal configurations  | ≥ 5/6 Pareto-optimal configurations|
 
-Dodatkowo: utrzymanie **healthy services** (Postgres, Redis, Qdrant) w docelowych progach opóźnień.
-
----
-
-## 2. LECT – utrzymanie 100% konsystencji epizodycznej
-
-LECT już ma wynik **idealny**. Celem jest **utrzymanie jakości** przy większej skali.
-
-### 2.1. Działania
-
-- [ ] Zwiększyć liczbę cykli testowych z **1,000 → 10,000** w trybie nightly.
-- [ ] Dodać wariant testów z:
-  - [ ] Różnymi rozmiarami epizodów (mikro / średnie / długie sekwencje).
-  - [ ] Różnymi typami eventów (dialog, task, system, meta).
-- [ ] Wprowadzić **„LECT regression suite”**:
-  - [ ] Zestaw kanonicznych historii, które muszą być zawsze odtwarzane 1:1.
-  - [ ] Oznaczyć je jako krytyczne w CI (przerwanie pipeline przy regresji).
-- [ ] Dodać metrykę:
-  - [ ] `% driftu czasowego` (czy kolejność zdarzeń jest zachowana).
-  - [ ] `% utraconych eventów` (should remain 0).
-
-### 2.2. Warunek zaliczenia
-
-- [ ] 10,000 cykli testowych LECT, 0 błędów, brak regresji w kolejnych 5 uruchomieniach CI.
+Additionally: maintain **healthy services** (Postgres, Redis, Qdrant) within target latency thresholds.
 
 ---
 
-## 3. MMIT – poprawa izolacji pamięci (99.4% → 99.8%+)
+## 2. LECT – maintaining 100% episodic consistency
 
-Celem jest redukcja leaków między:
+LECT already has an **ideal** score. The goal is to **maintain quality** at a larger scale.
 
-- różnymi agentami,
-- różnymi sesjami,
-- różnymi warstwami pamięci.
+### 2.1. Actions
 
-### 3.1. Zmiany architektoniczne
+- [ ] Increase the number of test cycles from **1,000 → 10,000** in nightly mode.
+- [ ] Add a test variant with:
+  - [ ] Different episode sizes (micro / medium / long sequences).
+  - [ ] Different event types (dialog, task, system, meta).
+- [ ] Introduce a **"LECT regression suite"**:
+  - [ ] A set of canonical histories that must always be replayed 1:1.
+  - [ ] Mark them as critical in CI (pipeline break on regression).
+- [ ] Add a metric:
+  - [ ] `% temporal drift` (is event order preserved).
+  - [ ] `% lost events` (should remain 0).
 
-- [ ] Wprowadzić **twardą separację namespace’ów**:
-  - [ ] jawny `agent_id` + `session_id` w każdej operacji pamięci,
-  - [ ] odseparowane klucze w Redis (prefiks per agent + session),
-  - [ ] odseparowane kolekcje / payload tags w Qdrant.
-- [ ] Dodać warstwę **„memory isolation guard”**:
-  - [ ] Funkcje, które sprawdzają, czy wynik wyszukiwania:
-    - nie zawiera obcych `agent_id`,
-    - nie zawiera obcych `session_id`.
-  - [ ] Logowanie każdej operacji oznaczonej jako potencjalny leak.
+### 2.2. Passing condition
 
-### 3.2. Zmiany w testach
-
-- [ ] Rozszerzyć MMIT do np. **2,000 operacji** per run.
-- [ ] Wprowadzić testy:
-  - [ ] „agent A” i „agent B” z konfliktującymi epizodami – brak krzyżowego dostępu.
-  - [ ] równoległe operacje (concurrency) z wysokim obciążeniem.
-- [ ] Wprowadzić metrykę:
-  - [ ] `leaks_per_1000_ops` (docelowo < 2).
-
-### 3.3. Warunek zaliczenia
-
-- [ ] ≤ 1 leak / 500 operacji w 10 kolejnych runach.  
-- [ ] Brak leaków w testach z agresywną równoległością (przynajmniej 3 różne scenariusze).
+- [ ] 10,000 LECT test cycles, 0 errors, no regression in the next 5 CI runs.
 
 ---
 
-## 4. GRDT – głębokość i spójność rozumowania
+## 3. MMIT – improving memory isolation (99.4% → 99.8%+)
 
-Chcemy:
-- zwiększyć **maksymalną głębokość reasoning** (10 → 12+),
-- podnieść **spójność** (58.3% → ≥ 70%).
+The goal is to reduce leaks between:
 
-### 4.1. Sterownik warstwy „math”
+- different agents,
+- different sessions,
+- different memory layers.
 
-- [ ] Wyodrębnić **„reasoning controller”** jako osobny moduł:
-  - [ ] z parametrami:
-    - maksymalna głębokość,
-    - dopuszczalny poziom niepewności,
-    - „budget tokenów / krok”.
-  - [ ] dodać heurystyki:
-    - wcześniejsze ucinanie ścieżek ewidentnie sprzecznych,
-    - nagradzanie spójności między warstwami pamięci (episodic/semantic/reflective).
+### 3.1. Architectural changes
 
-### 4.2. Curriculum zadań reasoning
+- [ ] Introduce **hard separation of namespaces**:
+  - [ ] explicit `agent_id` + `session_id` in every memory operation,
+  - [ ] separate keys in Redis (prefix per agent + session),
+  - [ ] separate collections / payload tags in Qdrant.
+- [ ] Add a **"memory isolation guard"** layer:
+  - [ ] Functions that check if the search result:
+    - does not contain foreign `agent_id`,
+    - does not contain foreign `session_id`.
+  - [ ] Logging of every operation marked as a potential leak.
 
-- [ ] Przygotować zestaw benchmarków:
-  - [ ] proste łańcuchy przyczynowo-skutkowe (depth 3–5),
-  - [ ] scenariusze planowania (depth 5–8),
-  - [ ] złożone scenariusze wieloetapowe (depth 8–12).
-- [ ] Dla każdego zadania:
-  - [ ] zdefiniować **złoty standard** (idealny przebieg reasoning),
-  - [ ] mierzyć:
-    - **coherence score** (porównanie przebiegu vs wzorzec),
-    - **deviation score** (liczba zbędnych kroków / sprzeczności).
+### 3.2. Test changes
 
-### 4.3. Telemetria reasoning
+- [ ] Extend MMIT to, for example, **2,000 operations** per run.
+- [ ] Introduce tests:
+  - [ ] "agent A" and "agent B" with conflicting episodes – no cross-access.
+  - [ ] parallel operations (concurrency) with high load.
+- [ ] Introduce a metric:
+  - [ ] `leaks_per_1000_ops` (target < 2).
 
-- [ ] Logować:
-  - [ ] liczbę kroków reasoning per zadanie,
-  - [ ] punkty, w których reasoning „odjeżdża” od wzorca,
-  - [ ] wpływ głębokości na koszty i czas.
-- [ ] Na tej podstawie:
-  - [ ] dostroić parametry kontrolera (np. różne profile: „strict”, „balanced”, „fast”).
+### 3.3. Passing condition
 
-### 4.4. Warunek zaliczenia
-
-- [ ] Średnia spójność ≥ 70% w 3 kolejnych runach benchmarku.  
-- [ ] Brak spadku LECT/MMIT w wyniku zmian w warstwie math.
+- [ ] ≤ 1 leak / 500 operations in 10 consecutive runs.  
+- [ ] No leaks in tests with aggressive concurrency (at least 3 different scenarios).
 
 ---
 
-## 5. RST – odporność na szum (62.5% → 75%+)
+## 4. GRDT – depth and coherence of reasoning
 
-Celem jest:
+We want to:
+- increase the **maximum reasoning depth** (10 → 12+),
+- increase **coherence** (58.3% → ≥ 70%).
 
-- podniesienie stabilności odpowiedzi przy zakłóconych danych,
-- zwiększenie tolerowanego poziomu szumu z 60% do 70%.
+### 4.1. "Math" layer controller
 
-### 5.1. Pipeline szumu
+- [ ] Extract the **"reasoning controller"** as a separate module:
+  - [ ] with parameters:
+    - maximum depth,
+    - acceptable level of uncertainty,
+    - "token budget / step".
+  - [ ] add heuristics:
+    - earlier pruning of obviously contradictory paths,
+    - rewarding coherence between memory layers (episodic/semantic/reflective).
 
-- [ ] Zaimplementować moduł dodawania szumu:
-  - [ ] losowe usuwanie fragmentów promptów,
-  - [ ] semantyczne parafrazy,
-  - [ ] wtrącenia mylących informacji.
-- [ ] Testować 3 poziomy:
-  - [ ] niski (20–30%),
-  - [ ] średni (40–50%),
-  - [ ] wysoki (60–70%).
+### 4.2. Reasoning task curriculum
 
-### 5.2. Strategie obronne
+- [ ] Prepare a set of benchmarks:
+  - [ ] simple cause-and-effect chains (depth 3–5),
+  - [ ] planning scenarios (depth 5–8),
+  - [ ] complex multi-stage scenarios (depth 8–12).
+- [ ] For each task:
+  - [ ] define the **golden standard** (ideal reasoning process),
+  - [ ] measure:
+    - **coherence score** (comparison of process vs standard),
+    - **deviation score** (number of unnecessary steps / contradictions).
 
-- [ ] Dodać „noise-aware retrieval”:
-  - [ ] zwiększenie wagi ostatnich wiarygodnych epizodów,
-  - [ ] penalizacja sprzecznych wektorów w Qdrant.
-- [ ] Dodać „sanity checks” przed reasoning:
-  - [ ] wykrywanie oczywistych sprzeczności w wejściu,
-  - [ ] fallback: dopytanie (jeśli w trybie interaktywnym) lub ostrożniejsza odpowiedź.
+### 4.3. Reasoning telemetry
 
-### 5.3. Warunek zaliczenia
+- [ ] Log:
+  - [ ] number of reasoning steps per task,
+  - [ ] points where reasoning "strays" from the standard,
+  - [ ] impact of depth on costs and time.
+- [ ] Based on this:
+  - [ ] fine-tune controller parameters (e.g., different profiles: "strict", "balanced", "fast").
 
-- [ ] ≥ 75% stabilnych odpowiedzi przy szumie 60–70%.  
-- [ ] Brak istotnego wzrostu błędów w testach bez szumu.
+### 4.4. Passing condition
+
+- [ ] Average coherence ≥ 70% in 3 consecutive benchmark runs.  
+- [ ] No drop in LECT/MMIT due to changes in the math layer.
 
 ---
 
-## 6. MPEB – adaptacja (95.7% → 97%+)
+## 5. RST – noise resistance (62.5% → 75%+)
 
-Chcemy wzmocnić adaptację bez rozbijania stabilności.
+The goal is to:
+
+- increase the stability of responses to disturbed data,
+- increase the tolerated noise level from 60% to 70%.
+
+### 5.1. Noise pipeline
+
+- [ ] Implement a noise addition module:
+  - [ ] random removal of prompt fragments,
+  - [ ] semantic paraphrases,
+  - [ ] insertion of misleading information.
+- [ ] Test 3 levels:
+  - [ ] low (20–30%),
+  - [ ] medium (40–50%),
+  - [ ] high (60–70%).
+
+### 5.2. Defense strategies
+
+- [ ] Add "noise-aware retrieval":
+  - [ ] increased weight of the last reliable episodes,
+  - [ ] penalization of contradictory vectors in Qdrant.
+- [ ] Add "sanity checks" before reasoning:
+  - [ ] detection of obvious contradictions in the input,
+  - [ ] fallback: ask for clarification (if in interactive mode) or a more cautious response.
+
+### 5.3. Passing condition
+
+- [ ] ≥ 75% stable responses at 60–70% noise.  
+- [ ] No significant increase in errors in tests without noise.
+
+---
+
+## 6. MPEB – adaptation (95.7% → 97%+)
+
+We want to strengthen adaptation without breaking stability.
 
 ### 6.1. Multi-episode adaptation runs
 
-- [ ] Projekt testów, gdzie:
-  - [ ] system dostaje serię zadań z tą samą domeną, ale zmieniającymi się regułami,
-  - [ ] mierzymy, jak szybko adaptuje się do nowych reguł.
-- [ ] Dodać metryki:
-  - [ ] liczba epizodów do pełnej adaptacji,
-  - [ ] wpływ adaptacji na inne zadania (czy nie degraduje wcześniejszych umiejętności).
+- [ ] Design tests where:
+  - [ ] the system receives a series of tasks within the same domain, but with changing rules,
+  - [ ] we measure how quickly it adapts to new rules.
+- [ ] Add metrics:
+  - [ ] number of episodes to full adaptation,
+  - [ ] impact of adaptation on other tasks (does it not degrade previous skills).
 
-### 6.2. „Safe adaptation guard”
+### 6.2. "Safe adaptation guard"
 
-- [ ] Wprowadzić warstwę, która:
-  - [ ] odróżnia „tymczasową adaptację” (sandbox) od „permanentnej zmiany”,
-  - [ ] nie pozwala na nadpisanie kluczowych reguł bez wielokrotnej walidacji.
+- [ ] Introduce a layer that:
+  - [ ] distinguishes "temporary adaptation" (sandbox) from "permanent change",
+  - [ ] does not allow overwriting key rules without multiple validations.
 
-### 6.3. Warunek zaliczenia
+### 6.3. Passing condition
 
-- [ ] ≥ 97% adaptation score w 3 runach.  
-- [ ] Brak regresji w LECT / MMIT po długich sekwencjach adaptacji.
+- [ ] ≥ 97% adaptation score in 3 runs.  
+- [ ] No regression in LECT / MMIT after long adaptation sequences.
 
 ---
 
-## 7. ORB – więcej konfiguracji Pareto-optymalnych (3/6 → 5/6)
+## 7. ORB – more Pareto-optimal configurations (3/6 → 5/6)
 
-Chcemy znaleźć i utrwalić więcej konfiguracji:
+We want to find and solidify more configurations that are:
 
-- **tanie + szybkie**,
-- **dokładne + stabilne**,
-- **zbalansowane**.
+- **cheap + fast**,
+- **accurate + stable**,
+- **balanced**.
 
-### 7.1. Auto-tuner konfiguracji
+### 7.1. Configuration auto-tuner
 
-- [ ] Zdefiniować przestrzeń parametrów:
-  - [ ] rozmiar kontekstu,
-  - [ ] strategia buforowania w Redis,
-  - [ ] głębokość reasoning,
-  - [ ] progi podobieństwa w Qdrant,
-  - [ ] wagi warstw pamięci.
-- [ ] Uruchomić:
+- [ ] Define parameter space:
+  - [ ] context size,
+  - [ ] Redis caching strategy,
+  - [ ] reasoning depth,
+  - [ ] Qdrant similarity thresholds,
+  - [ ] memory layer weights.
+- [ ] Run:
   - [ ] grid search / random search,
-  - [ ] opcjonalnie prosty Bayesian search.
-- [ ] Dla każdej konfiguracji:
-  - [ ] mierzyć: koszty, czas, jakość (benchmarki LECT/MMIT/GRDT/RST/MPEB).
+  - [ ] optionally simple Bayesian search.
+- [ ] For each configuration:
+  - [ ] measure: costs, time, quality (LECT/MMIT/GRDT/RST/MPEB benchmarks).
 
-### 7.2. Budowa frontu Pareto
+### 7.2. Building the Pareto front
 
-- [ ] Zdefiniować:
-  - [ ] cel „quality” (łączny score benchmarków),
-  - [ ] cel „cost” (czas + tokeny),
-  - [ ] cel „stability” (liczba regresji).
-- [ ] Wyliczyć front Pareto i zapisać:
-  - [ ] min. 5 konfiguracji w katalogu `profiles/` jako:
+- [ ] Define:
+  - [ ] "quality" objective (combined benchmark score),
+  - [ ] "cost" objective (time + tokens),
+  - [ ] "stability" objective (number of regressions).
+- [ ] Calculate the Pareto front and save:
+  - [ ] min. 5 configurations in the `profiles/` directory as:
     - `profile_research.yaml`,
     - `profile_enterprise_safe.yaml`,
     - `profile_fast_dev.yaml`,
-    - `profile_mobile_lite.yaml` (jeśli dotyczy),
+    - `profile_mobile_lite.yaml` (if applicable),
     - `profile_balanced_default.yaml`.
 
-### 7.3. Warunek zaliczenia
+### 7.3. Passing condition
 
-- [ ] ≥ 5/6 konfiguracji wchodzących do frontu Pareto.  
-- [ ] Udokumentowane profile + opis użycia w README.
-
----
-
-## 8. Telemetria i CI – spinanie wszystkiego w jeden system
-
-### 8.1. Telemetria benchmarków
-
-- [ ] Wysłać metryki do systemu telemetrycznego:
-  - [ ] LECT/MMIT/GRDT/RST/MPEB/ORB w formie „time series”.
-- [ ] Zbudować dashboard:
-  - [ ] trendy wyników w czasie,
-  - [ ] wykrywanie regresji (alerty).
-
-### 8.2. CI / CD jako strażnik jakości
-
-- [ ] Dodać „Benchmark Gate” do CI:
-  - [ ] jeśli którykolwiek benchmark spada poniżej ustalonego progu:
-    - CI czerwony,
-    - blokada merge do `main`.
-- [ ] Dodać job „nightly full benchmarks”:
-  - [ ] pełny pakiet testów (dłuższe runy, większa liczba cykli),
-  - [ ] archiwizacja wyników do analizy.
+- [ ] ≥ 5/6 configurations entering the Pareto front.  
+- [ ] Documented profiles + usage description in README.
 
 ---
 
-## 9. Harmonogram wdrożenia
+## 8. Telemetry and CI – tying everything into one system
 
-Propozycja w ujęciu iteracyjnym (może być tygodniami lub sprintami):
+### 8.1. Benchmark telemetry
 
-### Iteracja 1 – Szybkie wygrane
+- [ ] Send metrics to the telemetry system:
+  - [ ] LECT/MMIT/GRDT/RST/MPEB/ORB in "time series" format.
+- [ ] Build a dashboard:
+  - [ ] trends of results over time,
+  - [ ] regression detection (alerts).
 
-- [ ] Rozszerzenie LECT do 10,000 cykli.  
-- [ ] Namespace’y w pamięci (MMIT), podstawowy guard izolacji.  
-- [ ] Telemetria dla wszystkich benchmarków.
+### 8.2. CI / CD as a quality guardian
 
-### Iteracja 2 – Reasoning i noise
+- [ ] Add a "Benchmark Gate" to CI:
+  - [ ] if any benchmark falls below a set threshold:
+    - CI red,
+    - block merge to `main`.
+- [ ] Add a "nightly full benchmarks" job:
+  - [ ] full test suite (longer runs, more cycles),
+  - [ ] archive results for analysis.
 
-- [ ] Wyodrębnienie „reasoning controller” (GRDT).  
-- [ ] Pipeline szumu + noise-aware retrieval (RST).  
-- [ ] Pierwsza wersja auto-tunera konfiguracji (ORB).
+---
 
-### Iteracja 3 – Adaptacja i Pareto
+## 9. Implementation Schedule
+
+Proposed iterative approach (can be in weeks or sprints):
+
+### Iteration 1 – Quick wins
+
+- [ ] Extend LECT to 10,000 cycles.  
+- [ ] Memory namespaces (MMIT), basic isolation guard.  
+- [ ] Telemetry for all benchmarks.
+
+### Iteration 2 – Reasoning and noise
+
+- [ ] Extract "reasoning controller" (GRDT).  
+- [ ] Noise pipeline + noise-aware retrieval (RST).  
+- [ ] First version of configuration auto-tuner (ORB).
+
+### Iteration 3 – Adaptation and Pareto
 
 - [ ] Multi-episode adaptation runs (MPEB).  
-- [ ] Budowa profili `profiles/*.yaml` i frontu Pareto (ORB).  
-- [ ] Spinanie wszystkiego z CI / Benchmark Gate.
+- [ ] Build `profiles/*.yaml` and Pareto front (ORB).  
+- [ ] Connect everything with CI / Benchmark Gate.
 
 ---
 
-## 10. Definicja „DONE” dla planu
+## 10. Definition of "DONE" for the plan
 
-Plan można uznać za zrealizowany, gdy:
+The plan can be considered implemented when:
 
-- [ ] LECT stabilnie 100% na 10,000 cykli.  
-- [ ] MMIT ≤ 1 leak / 500 ops w 10 runach.  
+- [ ] LECT is stably 100% on 10,000 cycles.  
+- [ ] MMIT ≤ 1 leak / 500 ops in 10 runs.  
 - [ ] GRDT: depth ≥ 12, coherence ≥ 70%.  
-- [ ] RST: ≥ 75% consistency przy noise 60–70%.  
-- [ ] MPEB: ≥ 97% adaptation bez regresji w innych benchmarkach.  
-- [ ] ORB: ≥ 5/6 konfiguracji Pareto-optymalnych + opisane profile.  
-- [ ] CI blokuje merge przy regresji benchmarków.  
-- [ ] Telemetria i dashboard pozwalają śledzić trendy jakości w czasie.
+- [ ] RST: ≥ 75% consistency at 60–70% noise.  
+- [ ] MPEB: ≥ 97% adaptation without regression in other benchmarks.  
+- [ ] ORB: ≥ 5/6 Pareto-optimal configurations + described profiles.  
+- [ ] CI blocks merge on benchmark regression.  
+- [ ] Telemetry and dashboard allow tracking quality trends over time.
 

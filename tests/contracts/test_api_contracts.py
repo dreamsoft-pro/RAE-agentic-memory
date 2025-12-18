@@ -12,6 +12,7 @@ If infrastructure is not available, tests will be skipped.
 
 from datetime import datetime
 from typing import Any, Dict, List
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -87,8 +88,12 @@ def assert_fields_not_present(data: Dict[str, Any], forbidden_fields: List[str])
 class TestMemoryStoreContract:
     """Contract tests for /v1/memory/store endpoint"""
 
-    def test_store_memory_response_schema(self, client_with_overrides):
+    @patch("apps.memory_api.services.pii_scrubber.scrub_text")
+    def test_store_memory_response_schema(self, mock_scrub, client_with_overrides):
         """Ensure store memory returns correct schema"""
+        # Mock PII scrubber to avoid dependency requirement
+        mock_scrub.side_effect = lambda text: text
+
         payload = {
             "content": "Test memory content",
             "source": "test",
@@ -247,8 +252,35 @@ class TestAgentExecuteContract:
 class TestHealthContract:
     """Contract tests for /health endpoint"""
 
-    def test_health_response_schema(self, client_with_overrides):
+    @patch("apps.memory_api.api.v1.health.check_database")
+    @patch("apps.memory_api.api.v1.health.check_redis")
+    @patch("apps.memory_api.api.v1.health.check_vector_store")
+    def test_health_response_schema(
+        self, mock_vector, mock_redis, mock_db, client_with_overrides
+    ):
         """Ensure health check returns correct schema"""
+        from apps.memory_api.api.v1.health import ComponentHealth
+
+        # Setup mocks with async side effects
+        async def healthy_db():
+            return ComponentHealth(
+                status="healthy", message="DB Connected", response_time_ms=1.0
+            )
+
+        async def healthy_redis():
+            return ComponentHealth(
+                status="healthy", message="Redis Connected", response_time_ms=1.0
+            )
+
+        async def healthy_vector():
+            return ComponentHealth(
+                status="healthy", message="Vector Connected", response_time_ms=1.0
+            )
+
+        mock_db.side_effect = healthy_db
+        mock_redis.side_effect = healthy_redis
+        mock_vector.side_effect = healthy_vector
+
         response = client_with_overrides.get("/health")
 
         # Health check may return 503 in test environment (some services mocked)
@@ -355,8 +387,23 @@ class TestPaginationContract:
 class TestBackwardCompatibility:
     """Ensure we don't break backward compatibility"""
 
-    def test_no_removed_endpoints(self, client_with_overrides):
+    @patch("apps.memory_api.api.v1.health.check_database")
+    @patch("apps.memory_api.api.v1.health.check_redis")
+    @patch("apps.memory_api.api.v1.health.check_vector_store")
+    def test_no_removed_endpoints(
+        self, mock_vector, mock_redis, mock_db, client_with_overrides
+    ):
         """Ensure critical endpoints still exist"""
+        from apps.memory_api.api.v1.health import ComponentHealth
+
+        # Setup mocks with async side effects
+        async def healthy():
+            return ComponentHealth(status="healthy")
+
+        mock_db.side_effect = healthy
+        mock_redis.side_effect = healthy
+        mock_vector.side_effect = healthy
+
         critical_endpoints = [
             ("/health", "GET"),
             ("/v1/memory/store", "POST"),
@@ -384,8 +431,23 @@ class TestBackwardCompatibility:
                 response.status_code != 404
             ), f"Critical endpoint {method} {endpoint} not found!"
 
-    def test_api_version_in_header(self, client_with_overrides):
+    @patch("apps.memory_api.api.v1.health.check_database")
+    @patch("apps.memory_api.api.v1.health.check_redis")
+    @patch("apps.memory_api.api.v1.health.check_vector_store")
+    def test_api_version_in_header(
+        self, mock_vector, mock_redis, mock_db, client_with_overrides
+    ):
         """Ensure API version is returned in headers"""
+        from apps.memory_api.api.v1.health import ComponentHealth
+
+        # Setup mocks with async side effects
+        async def healthy():
+            return ComponentHealth(status="healthy")
+
+        mock_db.side_effect = healthy
+        mock_redis.side_effect = healthy
+        mock_vector.side_effect = healthy
+
         response = client_with_overrides.get("/health")
 
         # Check for version header (if implemented)

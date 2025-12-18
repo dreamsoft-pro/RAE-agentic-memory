@@ -1,49 +1,49 @@
-# Tutorial - Pierwsze Kroki z Orkiestratorem
+# Tutorial - First Steps with Orchestrator
 
-## 🎯 Cel
-Nauka używania orkiestratora w 5 minut.
+## 🎯 Goal
+Learn to use the orchestrator in 5 minutes.
 
 ---
 
-## Krok 1: Sprawdź czy działa (30 sekund)
+## Step 1: Check if it works (30 seconds)
 
 ```bash
 cd orchestrator
 python test_simple.py
 ```
 
-**Oczekiwany wynik:**
+**Expected output:**
 ```
 🎉 All tests passed! Orchestrator is ready to use.
 Passed: 4/4
 ```
 
-✅ Jeśli widzisz to - możesz kontynuować!
-❌ Jeśli błąd - sprawdź QUICK_START.md sekcję "Troubleshooting"
+✅ If you see this - you can continue!
+❌ If an error - check QUICK_START.md "Troubleshooting" section
 
 ---
 
-## Krok 2: Zobacz dostępne zadania (10 sekund)
+## Step 2: See available tasks (10 seconds)
 
 ```bash
-cd ..  # Wróć do głównego katalogu projektu
+cd ..  # Go back to the main project directory
 cat .orchestrator/tasks.yaml
 ```
 
-**Dostępne przykłady:**
-- `TEST-001` - Dodaj docstrings (prosty, **DARMOWY** - Gemini)
-- `TEST-002` - Dodaj testy (średni, **DARMOWY** - Gemini Pro)
-- `RAE-PHASE2-001` - Core implementation (trudny, **$0.10-0.20** - Claude)
-- `RAE-API-001` - REST endpoint (średni, **DARMOWY** - Gemini Pro)
+**Available examples:**
+- `TEST-001` - Add docstrings (simple, **FREE** - Gemini)
+- `TEST-002` - Add tests (medium, **FREE** - Gemini Pro)
+- `RAE-PHASE2-001` - Core implementation (hard, **$0.10-0.20** - Claude)
+- `RAE-API-001` - REST endpoint (medium, **FREE** - Gemini Pro)
 
 ---
 
-## Krok 3A: Uruchom PROSTE zadanie (ZALECANE dla pierwszego razu)
+## Step 3A: Run a SIMPLE task (RECOMMENDED for the first time)
 
-### Dodaj NOWE proste zadanie do `.orchestrator/tasks.yaml`:
+### Add a NEW simple task to `.orchestrator/tasks.yaml`:
 
 ```yaml
-  # Twoje pierwsze zadanie - bardzo proste!
+  # Your first task - very simple!
   - id: MY-FIRST-001
     goal: "Write a simple hello_world() function in Python"
     risk: low
@@ -55,52 +55,52 @@ cat .orchestrator/tasks.yaml
       - Return greeting string
 ```
 
-### Uruchom:
+### Run:
 
 ```bash
 cd orchestrator
 python main.py --task-id MY-FIRST-001
 ```
 
-**Co się stanie:**
-1. Orkiestrator załaduje zadanie z YAML
-2. Smart routing wybierze **Gemini 2.5 Flash** (DARMOWY!)
-3. Planner utworzy plan implementacji
-4. Implementer napisze kod
-5. Reviewer sprawdzi jakość
-6. Wyniki zapisane w `ORCHESTRATOR_RUN_LOG.md`
+**What will happen:**
+1. Orchestrator will load the task from YAML
+2. Smart routing will select **Gemini 2.5 Flash** (FREE!)
+3. Planner will create an implementation plan
+4. Implementer will write the code
+5. Reviewer will check quality
+6. Results saved in `ORCHESTRATOR_RUN_LOG.md`
 
-**Czas:** ~2-3 minuty
-**Koszt:** $0.00 (Gemini FREE)
+**Time:** ~2-3 minutes
+**Cost:** $0.00 (Gemini FREE)
 
 ---
 
-## Krok 3B: Uruchom ISTNIEJĄCE zadanie
+## Step 3B: Run an EXISTING task
 
 ```bash
 cd orchestrator
 python main.py --task-id TEST-001
 ```
 
-To doda docstrings do `ContextBuilder` - prosty, darmowy task.
+This will add docstrings to `ContextBuilder` - a simple, free task.
 
 ---
 
-## Krok 4: Zobacz wyniki
+## Step 4: See results
 
-### Logi główne:
+### Main logs:
 ```bash
 cat ../ORCHESTRATOR_RUN_LOG.md | tail -100
 ```
 
-### Stan zadania:
+### Task status:
 ```bash
 cat state/MY-FIRST-001.json | jq .
-# lub bez jq:
+# or without jq:
 cat state/MY-FIRST-001.json
 ```
 
-### Podsumowanie:
+### Summary:
 ```bash
 python cli.py summary
 ```
@@ -117,24 +117,24 @@ Total Cost: $0.00
 
 ---
 
-## Krok 5: Dodaj własne zadanie
+## Step 5: Add your own task
 
-### Edytuj `.orchestrator/tasks.yaml`:
+### Edit `.orchestrator/tasks.yaml`:
 
 ```yaml
   - id: MY-TASK-001
-    goal: "Twój opis zadania..."
+    goal: "Your task description..."
     risk: low       # low, medium, high
     area: test      # test, docs, api, core
     repo: RAE-agentic-memory
-    context_files:  # Opcjonalne - pliki do przeczytania
+    context_files:  # Optional - files to read
       - path/to/file.py
-    constraints:    # Wymagania
+    constraints:    # Requirements
       - ZERO-WARNINGS
       - Add tests
 ```
 
-### Uruchom:
+### Run:
 ```bash
 cd orchestrator
 python main.py --task-id MY-TASK-001
@@ -142,119 +142,119 @@ python main.py --task-id MY-TASK-001
 
 ---
 
-## 💡 Wskazówki
+## 💡 Tips
 
-### 1. **Wybór Risk Level:**
+### 1. **Selecting Risk Level:**
 ```yaml
 risk: low     # Gemini Flash Lite → FREE
 risk: medium  # Gemini Pro → FREE
-risk: high    # Claude Sonnet → ~$0.05-0.15 (płatny)
+risk: high    # Claude Sonnet → ~$0.05-0.15 (paid)
 ```
 
-### 2. **Wybór Area:**
+### 2. **Selecting Area:**
 ```yaml
-area: docs    # Dokumentacja → Gemini Flash Lite (najszybszy, FREE)
-area: tests   # Testy → Gemini Flash (FREE)
+area: docs    # Documentation → Gemini Flash Lite (fastest, FREE)
+area: tests   # Tests → Gemini Flash (FREE)
 area: api     # API → Gemini Pro (FREE)
-area: core    # Core logic → Claude Sonnet (płatny, ale najlepszy)
+area: core    # Core logic → Claude Sonnet (paid, but best)
 ```
 
-### 3. **Batch Processing (wiele zadań naraz):**
+### 3. **Batch Processing (multiple tasks at once):**
 ```bash
-# Uruchom wszystkie zadania z pliku
+# Run all tasks from the file
 cd orchestrator
 python main.py
 ```
 
-To wykona **wszystkie** zadania z `tasks.yaml` po kolei.
+This will execute **all** tasks from `tasks.yaml` sequentially.
 
-### 4. **Monitorowanie:**
+### 4. **Monitoring:**
 ```bash
-# Zobacz aktywne zadania
+# See active tasks
 cd orchestrator
 python cli.py summary
 
-# Zobacz zadania wymagające review
+# See tasks requiring review
 python cli.py review
 ```
 
 ---
 
-## 🎓 Przykład: Praktyczny Workflow
+## 🎓 Example: Practical Workflow
 
-### Scenariusz: Dodaj feature do RAE
+### Scenario: Add a feature to RAE
 
-**1. Zaplanuj zadania w YAML:**
+**1. Plan tasks in YAML:**
 ```yaml
 tasks:
-  # Krok 1: Dokumentacja (darmowy)
+  # Step 1: Documentation (free)
   - id: FEATURE-001-DOCS
     goal: "Document new caching strategy in API_DOCS.md"
     risk: low
     area: docs
 
-  # Krok 2: Implementacja (darmowy)
+  # Step 2: Implementation (free)
   - id: FEATURE-002-IMPL
     goal: "Implement Redis caching layer"
     risk: medium
     area: api
 
-  # Krok 3: Testy (darmowy)
+  # Step 3: Tests (free)
   - id: FEATURE-003-TESTS
     goal: "Add integration tests for caching"
     risk: medium
     area: tests
 ```
 
-**2. Uruchom wszystkie:**
+**2. Run all:**
 ```bash
 cd orchestrator
 python main.py
 ```
 
-**3. Zobacz wyniki:**
+**3. See results:**
 ```bash
 python cli.py summary
 cat ../ORCHESTRATOR_RUN_LOG.md | tail -200
 ```
 
-**Koszt całości:** $0.00 (wszystkie na Gemini!)
-**Czas:** ~10-15 minut total
+**Total Cost:** $0.00 (all on Gemini!)
+**Time:** ~10-15 minutes total
 
 ---
 
 ## ❓ FAQ
 
-**Q: Czy muszę mieć klucz API Claude?**
-A: NIE - większość zadań (70-80%) działa na Gemini (FREE). Claude potrzebny tylko dla high-risk tasks.
+**Q: Do I need an API key for Claude?**
+A: NO - most tasks (70-80%) work on Gemini (FREE). Claude is only needed for high-risk tasks.
 
-**Q: Jak zmniejszyć koszty?**
-A: Ustaw `risk: low` lub `risk: medium` - użyje darmowego Gemini.
+**Q: How to reduce costs?**
+A: Set `risk: low` or `risk: medium` - it will use free Gemini.
 
-**Q: Co jeśli zadanie się nie uda?**
-A: Sprawdź logi w `ORCHESTRATOR_RUN_LOG.md`. Orkiestrator ma retry logic (3 próby).
+**Q: What if a task fails?**
+A: Check logs in `ORCHESTRATOR_RUN_LOG.md`. The orchestrator has retry logic (3 attempts).
 
-**Q: Czy mogę uruchomić zadanie bez YAML?**
-A: Nie bezpośrednio, ale możesz użyć Python API (przykład w QUICK_START.md).
+**Q: Can I run a task without YAML?**
+A: Not directly, but you can use the Python API (example in QUICK_START.md).
 
-**Q: Jak wyłączyć Claude i używać tylko Gemini?**
-A: W `.orchestrator/providers.yaml` ustaw `claude: enabled: false`
-
----
-
-## 🚀 Następne Kroki
-
-1. ✅ Uruchom `MY-FIRST-001` - proste zadanie testowe
-2. ✅ Zobacz wyniki w logach
-3. ✅ Dodaj własne zadanie do YAML
-4. ✅ Eksperymentuj z różnymi `risk` i `area`
-5. 📖 Przeczytaj `QUICK_START.md` dla zaawansowanych opcji
+**Q: How to disable Claude and use only Gemini?**
+A: In `.orchestrator/providers.yaml` set `claude: enabled: false`
 
 ---
 
-**Potrzebujesz pomocy?**
-- `orchestrator/QUICK_START.md` - Kompletny przewodnik
-- `orchestrator/README.md` - Pełna dokumentacja
+## 🚀 Next Steps
+
+1. ✅ Run `MY-FIRST-001` - simple test task
+2. ✅ See results in logs
+3. ✅ Add your own task to YAML
+4. ✅ Experiment with different `risk` and `area`
+5. 📖 Read `QUICK_START.md` for advanced options
+
+---
+
+**Need help?**
+- `orchestrator/QUICK_START.md` - Complete guide
+- `orchestrator/README.md` - Full documentation
 - `docs/ORCHESTRATOR_PHASE2.5_COMPLETE.md` - Provider system
 - `docs/ORCHESTRATOR_PHASE3_COMPLETE.md` - Intelligence & learning
 

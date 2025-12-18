@@ -113,6 +113,24 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
-## License
+
+## Filesystem Portability
+
+RAE does not rely on hardcoded filesystem paths.
+All paths are resolved relative to `PROJECT_ROOT` and can be overridden
+using the `RAE_PROJECT_ROOT` environment variable.
+
+### Directory Structure
+- `data/` - Persistent storage (memory, logs)
+- `config/` - Configuration files
+- `core/paths.py` - Single source of truth for paths
+
+To override the root directory (e.g., in Docker):
+```bash
+export RAE_PROJECT_ROOT=/app
+```
+
+## Contributing
+
 
 This project is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file for details.

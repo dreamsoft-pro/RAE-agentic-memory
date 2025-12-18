@@ -16,6 +16,12 @@ Prerequisites:
 import asyncpg
 import pytest
 
+try:
+    import spacy
+    HAS_SPACY = True
+except ImportError:
+    HAS_SPACY = False
+
 from apps.memory_api.config import settings
 from apps.memory_api.repositories.graph_repository import GraphRepository
 from apps.memory_api.repositories.memory_repository import MemoryRepository
@@ -30,14 +36,17 @@ from apps.memory_api.services.hybrid_search import (
 )
 from apps.memory_api.services.reflection_engine import ReflectionEngine
 
-pytestmark = pytest.mark.integration
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.skipif(not HAS_SPACY, reason="spaCy not installed (required for graph extraction)"),
+]
 
 
 @pytest.fixture
 async def db_pool():
     """Create a database connection pool for testing."""
     pool = await asyncpg.create_pool(
-        host=settings.POSTGRES_HOST,
+        host="localhost",
         database=settings.POSTGRES_DB,
         user=settings.POSTGRES_USER,
         password=settings.POSTGRES_PASSWORD,
@@ -111,8 +120,8 @@ async def setup_test_memories(db_pool, test_tenant_id, test_project_id):
         for memory in test_memories:
             memory_id = await conn.fetchval(
                 """
-                INSERT INTO memories (tenant_id, project, content, layer, tags, source, created_at)
-                VALUES ($1, $2, $3, 'em', $4, $5, NOW())
+                INSERT INTO memories (tenant_id, project, content, layer, tags, source, created_at, memory_type)
+                VALUES ($1, $2, $3, 'em', $4, $5, NOW(), 'episodic')
                 RETURNING id
                 """,
                 test_tenant_id,

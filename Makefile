@@ -77,7 +77,7 @@ install-all:  ## Install all dependencies (including integrations)
 	@$(VENV_PIP) install --upgrade pip
 	@$(VENV_PIP) install -r requirements-dev.txt
 	@$(VENV_PIP) install -r apps/memory_api/requirements.txt
-	@$(VENV_PIP) install -r apps/reranker-service/requirements.txt || true
+	@$(VENV_PIP) install -r apps/reranker_service/requirements.txt || true
 	@$(VENV_PIP) install -r apps/ml_service/requirements.txt || true # New ML Service requirements
 	@$(VENV_PIP) install -r cli/agent-cli/requirements.txt || true
 	@$(VENV_PIP) install -r eval/requirements.txt || true
@@ -101,6 +101,14 @@ dev:  ## Start API in development mode (with auto-reload)
 	@echo "🔧 Starting development server..."
 	@$(VENV_ACTIVATE) && uvicorn apps.memory_api.main:app --reload --host 0.0.0.0 --port 8000
 
+dev-full:  ## Start full development environment (infra, API, Reranker, MCP)
+	@echo "🔧 Starting full development environment..."
+	./scripts/dev_mode.sh
+
+install-mcp-service:  ## Install MCP systemd service for auto-start
+	@echo "🔧 Installing MCP systemd service..."
+	./scripts/install_mcp_service.sh
+
 demo:  ## Run interactive quickstart demo
 	@echo "🎬 Running interactive demo..."
 	@$(VENV_PYTHON) examples/quickstart.py
@@ -109,11 +117,7 @@ demo:  ## Run interactive quickstart demo
 # CODE QUALITY
 # ==============================================================================
 
-format:  ## Format code with black and isort
-	@echo "🎨 Formatting code..."
-	@$(VENV_ACTIVATE) && black apps/ sdk/ integrations/
-	@$(VENV_ACTIVATE) && isort apps/ sdk/ integrations/
-	@echo "✅ Code formatted"
+
 
 lint:  ## Run linters (ruff, black, isort, mypy)
 	@echo "🔍 Running linters..."
@@ -333,10 +337,7 @@ health:  ## Check health of all services
 # UTILITIES
 # ==============================================================================
 
-docs:  ## Auto-generate documentation (Changelog, TODOs, Status)
-	@echo "📚 Generating documentation..."
-	@python3 scripts/docs_automator.py
-	@echo "✅ Documentation updated"
+
 
 version:  ## Show version information
 	@echo "RAE - Reflective Agentic Memory Engine"
