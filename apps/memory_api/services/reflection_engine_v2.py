@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 from apps.memory_api.config import settings
 from apps.memory_api.models.reflection_v2_models import (
     Event,
+    LLMReflectionResponse, # Added import for LLMReflectionResponse
     OutcomeType,
     ReflectionContext,
     ReflectionResult,
@@ -86,18 +87,8 @@ Provide your analysis as a structured JSON with:
 
 
 # ============================================================================
-# Response Models for LLM
+# Response Models for LLM - MOVED TO apps/memory_api/models/reflection_v2_models.py
 # ============================================================================
-
-
-class LLMReflectionResponse(BaseModel):
-    """Structured response from LLM for reflection generation"""
-
-    reflection: str = Field(..., description="The reflection text")
-    strategy: Optional[str] = Field(None, description="Optional strategy text")
-    importance: float = Field(..., ge=0.0, le=1.0, description="Importance score")
-    confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score")
-    tags: List[str] = Field(default_factory=list, description="Relevant tags")
 
 
 # ============================================================================

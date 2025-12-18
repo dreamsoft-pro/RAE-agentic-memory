@@ -5,6 +5,7 @@ Tests the DecayWorker with real database operations to ensure
 memory importance decay works correctly across multiple scenarios.
 """
 
+import json
 import uuid
 from datetime import datetime, timedelta, timezone
 
@@ -27,8 +28,8 @@ async def test_decay_worker_basic_cycle(mock_app_state_pool):
         for i in range(5):
             memory_id = await conn.fetchval(
                 """
-                INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp)
-                VALUES ($1, $2, $3, 'em', 'default', $4, $5)
+                INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp, memory_type)
+                VALUES ($1, $2, $3, 'em', 'default', $4, $5, 'episodic')
                 RETURNING id
                 """,
                 tenant_id,
@@ -75,8 +76,8 @@ async def test_decay_worker_with_access_stats(mock_app_state_pool):
         recent_id = await conn.fetchval(
             """
             INSERT INTO memories (tenant_id, content, importance, layer, project,
-                                 created_at, timestamp, last_accessed_at, usage_count)
-            VALUES ($1, $2, $3, 'em', 'default', $4, $5, $6, 10)
+                                 created_at, timestamp, last_accessed_at, usage_count, memory_type)
+            VALUES ($1, $2, $3, 'em', 'default', $4, $5, $6, 10, 'episodic')
             RETURNING id
             """,
             tenant_id,
@@ -91,8 +92,8 @@ async def test_decay_worker_with_access_stats(mock_app_state_pool):
         stale_id = await conn.fetchval(
             """
             INSERT INTO memories (tenant_id, content, importance, layer, project,
-                                 created_at, timestamp, last_accessed_at, usage_count)
-            VALUES ($1, $2, $3, 'em', 'default', $4, $5, $6, 1)
+                                 created_at, timestamp, last_accessed_at, usage_count, memory_type)
+            VALUES ($1, $2, $3, 'em', 'default', $4, $5, $6, 1, 'episodic')
             RETURNING id
             """,
             tenant_id,
@@ -140,8 +141,8 @@ async def test_decay_worker_multiple_tenants(mock_app_state_pool):
             for i in range(3):
                 await conn.execute(
                     """
-                    INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp)
-                    VALUES ($1, $2, $3, 'em', 'default', $4, $5)
+                    INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp, memory_type)
+                    VALUES ($1, $2, $3, 'em', 'default', $4, $5, 'episodic')
                     """,
                     tenant_id,
                     f"Memory {i}",
@@ -171,8 +172,8 @@ async def test_decay_worker_importance_floor(mock_app_state_pool):
         timestamp_30_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
         memory_id = await conn.fetchval(
             """
-            INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp)
-            VALUES ($1, $2, $3, 'em', 'default', $4, $5)
+            INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp, memory_type)
+            VALUES ($1, $2, $3, 'em', 'default', $4, $5, 'episodic')
             RETURNING id
             """,
             tenant_id,
@@ -209,8 +210,8 @@ async def test_decay_worker_error_handling(mock_app_state_pool):
         timestamp_now = datetime.now(timezone.utc)
         await conn.execute(
             """
-            INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp)
-            VALUES ($1, $2, $3, 'em', 'default', $4, $5)
+            INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp, memory_type)
+            VALUES ($1, $2, $3, 'em', 'default', $4, $5, 'episodic')
             """,
             valid_tenant,
             "Valid memory",
@@ -243,8 +244,8 @@ async def test_decay_worker_get_all_tenants(mock_app_state_pool):
         for tenant_id in tenant_ids:
             await conn.execute(
                 """
-                INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp)
-                VALUES ($1, $2, $3, 'em', 'default', $4, $5)
+                INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp, memory_type)
+                VALUES ($1, $2, $3, 'em', 'default', $4, $5, 'episodic')
                 """,
                 tenant_id,
                 "Test memory",
@@ -287,15 +288,16 @@ async def test_decay_worker_preserves_metadata(mock_app_state_pool):
 
     # Insert memory with tags and session_id (metadata column doesn't exist)
     tags = ["important", "test"]
-    test_session_id = uuid.uuid4()  # Keep as UUID object for comparison
+    test_session_id = str(uuid.uuid4())  # Keep as string for JSON
 
     async with pool.acquire() as conn:
         timestamp_now = datetime.now(timezone.utc)
+        metadata_json = json.dumps({"session_id": test_session_id})
         memory_id = await conn.fetchval(
             """
             INSERT INTO memories (tenant_id, content, importance, layer, project,
-                                 created_at, timestamp, tags, session_id)
-            VALUES ($1, $2, $3, 'em', 'default', $4, $5, $6, $7)
+                                 created_at, timestamp, tags, metadata, memory_type)
+            VALUES ($1, $2, $3, 'em', 'default', $4, $5, $6, $7::jsonb, 'episodic')
             RETURNING id
             """,
             tenant_id,
@@ -304,7 +306,7 @@ async def test_decay_worker_preserves_metadata(mock_app_state_pool):
             timestamp_now,
             timestamp_now,
             tags,
-            test_session_id,
+            metadata_json,
         )
 
     # Run decay
@@ -315,7 +317,7 @@ async def test_decay_worker_preserves_metadata(mock_app_state_pool):
     async with pool.acquire() as conn:
         record = await conn.fetchrow(
             """
-            SELECT importance, tags, content, session_id
+            SELECT importance, tags, content, metadata
             FROM memories WHERE id = $1
             """,
             memory_id,
@@ -323,5 +325,7 @@ async def test_decay_worker_preserves_metadata(mock_app_state_pool):
 
     assert record["importance"] < 0.9, "Importance should be reduced"
     assert record["tags"] == tags, "Tags should be preserved"
-    assert record["session_id"] == test_session_id, "Session ID should be preserved"
+    
+    metadata = json.loads(record["metadata"]) if isinstance(record["metadata"], str) else record["metadata"]
+    assert metadata.get("session_id") == test_session_id, "Session ID should be preserved"
     assert record["content"] == "Test memory with tags", "Content should be preserved"

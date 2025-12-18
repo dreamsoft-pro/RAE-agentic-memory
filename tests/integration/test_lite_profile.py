@@ -23,7 +23,7 @@ import pytest
 pytestmark = pytest.mark.integration
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="module", autouse=True)
 def lite_profile_services():
     """
     Start docker-compose.lite.yml services for integration testing.
@@ -34,20 +34,31 @@ def lite_profile_services():
     3. Yields control to tests
     4. Tears down services after tests complete
     """
-    # Check if docker-compose is available and if not in CI
-    docker_compose_missing = (
-        subprocess.run(["which", "docker-compose"], capture_output=True).returncode != 0
+    # Check if docker compose is available and if not in CI
+    docker_compose_check = subprocess.run(
+        ["docker", "compose", "version"], capture_output=True
     )
+    docker_compose_missing = docker_compose_check.returncode != 0
+    
     in_ci = "CI" in os.environ
 
     if docker_compose_missing or in_ci:
         pytest.skip(
-            "Skipping lite profile tests: docker-compose not available or running in CI (services pre-provisioned)"
+            "Skipping lite profile tests: docker compose not available or running in CI (services pre-provisioned)"
+        )
+
+    # Check for existing Full Stack services to avoid conflicts
+    current_services = subprocess.run(
+        ["docker", "compose", "ps", "--services"], capture_output=True, text=True
+    ).stdout
+    if "ml-service" in current_services:
+        pytest.skip(
+            "Skipping lite profile tests: Full Stack environment detected (ml-service running). Stop it to run Lite tests."
         )
 
     # Start services
     subprocess.run(
-        ["docker-compose", "-f", "docker-compose.lite.yml", "up", "-d"],
+        ["docker", "compose", "-f", "docker-compose.lite.yml", "up", "-d"],
         check=True,
         capture_output=True,
     )
@@ -72,7 +83,7 @@ def lite_profile_services():
     if not api_ready:
         # Cleanup on failure
         subprocess.run(
-            ["docker-compose", "-f", "docker-compose.lite.yml", "down"],
+            ["docker", "compose", "-f", "docker-compose.lite.yml", "down"],
             capture_output=True,
         )
         pytest.fail("RAE API failed to start within 60 seconds")
@@ -82,7 +93,7 @@ def lite_profile_services():
 
     # Teardown: Stop services
     subprocess.run(
-        ["docker-compose", "-f", "docker-compose.lite.yml", "down", "-v"],
+        ["docker", "compose", "-f", "docker-compose.lite.yml", "down", "-v"],
         capture_output=True,
     )
 
@@ -168,9 +179,9 @@ def test_lite_profile_query_memory(lite_profile_services):
 
 def test_lite_profile_services_running():
     """Test that all required Lite Profile services are running"""
-    # Check services via docker-compose
+    # Check services via docker compose
     result = subprocess.run(
-        ["docker-compose", "-f", "docker-compose.lite.yml", "ps", "--services"],
+        ["docker", "compose", "-f", "docker-compose.lite.yml", "ps", "--services"],
         capture_output=True,
         text=True,
     )
@@ -188,7 +199,7 @@ def test_lite_profile_postgres_accessible():
     """Test that PostgreSQL is accessible"""
     # This is a basic check that postgres container is running
     result = subprocess.run(
-        ["docker-compose", "-f", "docker-compose.lite.yml", "ps", "postgres"],
+        ["docker", "compose", "-f", "docker-compose.lite.yml", "ps", "postgres"],
         capture_output=True,
         text=True,
     )
@@ -208,7 +219,7 @@ def test_lite_profile_qdrant_accessible():
 def test_lite_profile_redis_accessible():
     """Test that Redis cache is accessible"""
     result = subprocess.run(
-        ["docker-compose", "-f", "docker-compose.lite.yml", "ps", "redis"],
+        ["docker", "compose", "-f", "docker-compose.lite.yml", "ps", "redis"],
         capture_output=True,
         text=True,
     )
@@ -219,7 +230,7 @@ def test_lite_profile_redis_accessible():
 def test_lite_profile_no_ml_service():
     """Verify that ML service is NOT running in Lite Profile"""
     result = subprocess.run(
-        ["docker-compose", "-f", "docker-compose.lite.yml", "ps", "--services"],
+        ["docker", "compose", "-f", "docker-compose.lite.yml", "ps", "--services"],
         capture_output=True,
         text=True,
     )
@@ -239,7 +250,7 @@ def test_lite_profile_resource_efficiency():
     """Verify that Lite Profile uses less resources than full stack"""
     # Check container count
     result = subprocess.run(
-        ["docker-compose", "-f", "docker-compose.lite.yml", "ps", "--services"],
+        ["docker", "compose", "-f", "docker-compose.lite.yml", "ps", "--services"],
         capture_output=True,
         text=True,
     )
@@ -251,13 +262,13 @@ def test_lite_profile_resource_efficiency():
 
 
 @pytest.mark.skipif(
-    subprocess.run(["which", "docker-compose"], capture_output=True).returncode != 0,
-    reason="docker-compose not available",
+    subprocess.run(["docker", "compose", "version"], capture_output=True).returncode != 0,
+    reason="docker compose not available",
 )
 def test_lite_profile_config_valid():
     """Test that docker-compose.lite.yml is valid"""
     result = subprocess.run(
-        ["docker-compose", "-f", "docker-compose.lite.yml", "config"],
+        ["docker", "compose", "-f", "docker-compose.lite.yml", "config"],
         capture_output=True,
     )
 

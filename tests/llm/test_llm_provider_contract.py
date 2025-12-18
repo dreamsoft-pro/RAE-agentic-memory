@@ -5,10 +5,14 @@ All providers must pass these tests to ensure they implement
 the LLMProvider interface correctly.
 
 NOTE: These tests make real API calls and require valid API keys.
+If API keys are not set or are clearly test placeholders, tests are skipped.
 Run with: pytest -m llm tests/llm/
 """
 
 import os
+import json
+from unittest.mock import AsyncMock, patch
+from typing import AsyncIterator
 
 import pytest
 
@@ -20,60 +24,73 @@ from apps.llm import (
     LLMMessage,
     LLMRequest,
     LLMResponse,
+    LLMChunk,
     OpenAIProvider,
     QwenProvider,
+    TokenUsage,
 )
 
 # Mark all tests in this module as requiring LLM API access
 pytestmark = pytest.mark.llm
 
 
-# Fixtures for providers - skip if API keys not available
+def should_skip_provider_test(api_key: str | None) -> bool:
+    """Determine if a provider test should be skipped."""
+    if not api_key:
+        return True
+    # Common dummy/test keys
+    if api_key.startswith("sk-test-") or api_key.startswith("mock-") or api_key.startswith("dummy-"):
+        return True
+    return False
+
+
+# Fixtures for providers - skip if API keys not available or are test keys
 @pytest.fixture
 def openai_provider():
     api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        pytest.skip("OPENAI_API_KEY not set")
+    if should_skip_provider_test(api_key):
+        pytest.skip("OPENAI_API_KEY not set or is a test key")
+
     return OpenAIProvider(api_key=api_key)
 
 
 @pytest.fixture
 def anthropic_provider():
     api_key = os.getenv("ANTHROPIC_API_KEY")
-    if not api_key:
-        pytest.skip("ANTHROPIC_API_KEY not set")
+    if should_skip_provider_test(api_key):
+        pytest.skip("ANTHROPIC_API_KEY not set or is a test key")
     return AnthropicProvider(api_key=api_key)
 
 
 @pytest.fixture
 def gemini_provider():
     api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        pytest.skip("GEMINI_API_KEY not set")
+    if should_skip_provider_test(api_key):
+        pytest.skip("GEMINI_API_KEY not set or is a test key")
     return GeminiProvider(api_key=api_key)
 
 
 @pytest.fixture
 def deepseek_provider():
     api_key = os.getenv("DEEPSEEK_API_KEY")
-    if not api_key:
-        pytest.skip("DEEPSEEK_API_KEY not set")
+    if should_skip_provider_test(api_key):
+        pytest.skip("DEEPSEEK_API_KEY not set or is a test key")
     return DeepSeekProvider(api_key=api_key)
 
 
 @pytest.fixture
 def qwen_provider():
     api_key = os.getenv("QWEN_API_KEY")
-    if not api_key:
-        pytest.skip("QWEN_API_KEY not set")
+    if should_skip_provider_test(api_key):
+        pytest.skip("QWEN_API_KEY not set or is a test key")
     return QwenProvider(api_key=api_key)
 
 
 @pytest.fixture
 def grok_provider():
     api_key = os.getenv("GROK_API_KEY")
-    if not api_key:
-        pytest.skip("GROK_API_KEY not set")
+    if should_skip_provider_test(api_key):
+        pytest.skip("GROK_API_KEY not set or is a test key")
     return GrokProvider(api_key=api_key)
 
 
@@ -142,8 +159,7 @@ async def test_json_mode(openai_provider):
     assert isinstance(response, LLMResponse)
     assert response.text
     # Should be valid JSON
-    import json
-
+    # import json # Already imported for Anthropic Mock
     result = json.loads(response.text)
     assert "message" in result
 

@@ -66,6 +66,17 @@ class MemoryRepository:
                 if settings.TENANCY_ENABLED:
                     await conn.execute("SET app.tenant_id = $1", tenant_id)
 
+                # Determine memory_type from layer
+                memory_type = "semantic"  # Default
+                if layer == "em":
+                    memory_type = "episodic"
+                elif layer == "rm":
+                    memory_type = "reflection"
+                elif layer == "stm":
+                    memory_type = "sensory"
+                elif layer == "sm" or layer == "ltm":
+                    memory_type = "semantic"
+
                 columns = [
                     "tenant_id",
                     "content",
@@ -75,6 +86,7 @@ class MemoryRepository:
                     "tags",
                     "timestamp",
                     "project",
+                    "memory_type",
                 ]
                 values = [
                     tenant_id,
@@ -85,7 +97,13 @@ class MemoryRepository:
                     tags,
                     timestamp,
                     project,
+                    memory_type,
                 ]
+
+                # Check for session_id in metadata and add to column if present
+                if metadata and "session_id" in metadata:
+                    columns.append("session_id")
+                    values.append(metadata["session_id"])
 
                 if metadata is not None:
                     columns.append("metadata")
@@ -223,13 +241,19 @@ class MemoryRepository:
         async with self.pool.acquire() as conn:
             records = await conn.fetch(
                 """
-                SELECT id, content, tags, metadata, layer, created_at
+                SELECT id, content, tags, metadata, layer, created_at, importance, session_id, memory_type
                 FROM memories
                 WHERE tenant_id = $1 AND project = $2 AND layer = 'rm'
                 ORDER BY created_at DESC
                 """,
                 tenant_id,
                 project,
+            )
+            logger.debug(
+                "get_reflective_memories_retrieved",
+                tenant_id=tenant_id,
+                project=project,
+                count=len(records),
             )
             return [dict(r) for r in records]
 
