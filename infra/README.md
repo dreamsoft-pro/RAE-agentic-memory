@@ -4,11 +4,11 @@ This directory contains **advanced infrastructure configurations** for RAE, incl
 
 ## For Standard Deployment
 
-**Most users should use the root `docker-compose.yml`:**
+**Most users should use the root `docker compose.yml`:**
 
 ```bash
 # From project root
-docker-compose up -d
+docker compose up -d
 # or
 make start
 ```
@@ -23,7 +23,7 @@ This setup includes Prometheus and Grafana for monitoring:
 
 ```bash
 cd infra
-docker-compose up -d
+docker compose up -d
 ```
 
 **Services:**
@@ -47,7 +47,7 @@ For development with hot-reload:
 
 ```bash
 cd infra
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+docker compose -f docker compose.yml -f docker compose.dev.yml up
 ```
 
 **Development features:**
@@ -94,8 +94,8 @@ Pre-configured dashboards are available in `grafana/rae-dashboard.json`:
 
 ```
 infra/
-├── docker-compose.yml       # Full setup with monitoring
-├── docker-compose.dev.yml   # Development overrides
+├── docker compose.yml       # Full setup with monitoring
+├── docker compose.dev.yml   # Development overrides
 ├── postgres/
 │   └── ddl/                 # Database initialization scripts
 ├── qdrant/                  # Qdrant configuration
@@ -108,7 +108,7 @@ infra/
 
 ## Differences from Root Setup
 
-| Feature | Root `docker-compose.yml` | `infra/docker-compose.yml` |
+| Feature | Root `docker compose.yml` | `infra/docker compose.yml` |
 |---------|---------------------------|----------------------------|
 | Target | Production-like deployment | Development + Monitoring |
 | Monitoring | ❌ | ✅ Prometheus + Grafana |
@@ -128,17 +128,17 @@ sudo lsof -i :8000
 sudo lsof -i :3000
 sudo lsof -i :9090
 
-# Stop conflicting services or modify ports in docker-compose.yml
+# Stop conflicting services or modify ports in docker compose.yml
 ```
 
 ### Database Issues
 
 ```bash
 # Reset database
-docker-compose down -v
-docker-compose up -d postgres
+docker compose down -v
+docker compose up -d postgres
 # Wait for init
-docker-compose up -d
+docker compose up -d
 ```
 
 ### Monitoring Not Working

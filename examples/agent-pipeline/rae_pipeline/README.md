@@ -16,7 +16,7 @@ The script simulates a real-world scenario where an agent needs to perform a tas
 1.  **Ensure RAE is running.**
     You must have the full RAE environment running via Docker Compose from the project root:
     ```bash
-    docker-compose -f infra/docker-compose.yml up --build
+    docker compose -f infra/docker compose.yml up --build
     ```
 
 2.  **Install dependencies for this example.**

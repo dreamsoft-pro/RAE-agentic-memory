@@ -709,9 +709,12 @@ class HybridSearchService:
         k: int,
     ) -> List[SearchResultItem]:
         """
-        Fuse results from multiple strategies using weighted scoring.
+        Fuse results from multiple strategies using Reciprocal Rank Fusion (RRF).
 
-        Normalizes scores and combines using strategy weights.
+        RRF is robust and does not require score normalization, making it ideal
+        for combining vector (cosine) and fulltext (BM25) scores without an LLM.
+
+        Formula: score = sum(weight * (1 / (rrf_k + rank)))
 
         Args:
             results_by_strategy: Results from each strategy
@@ -721,26 +724,19 @@ class HybridSearchService:
         Returns:
             Fused and ranked list of SearchResultItem
         """
-        logger.info("fusing_results", strategies=len(results_by_strategy))
+        logger.info("fusing_results_rrf", strategies=len(results_by_strategy))
 
-        # Collect all unique results
+        # RRF constant (usually 60)
+        RRF_K = 60
         result_map = {}  # memory_id -> result data
 
         for strategy, results in results_by_strategy.items():
             weight = weights.get(strategy, 0.0)
-
-            if weight == 0:
+            if weight == 0 or not results:
                 continue
 
-            # Normalize scores within strategy (0-1 range)
-            if not results:
-                continue
-
-            max_score = max(r["score"] for r in results) or 1.0
-
-            for result in results:
+            for rank, result in enumerate(results):
                 memory_id = result["memory_id"]
-                normalized_score = result["score"] / max_score
 
                 if memory_id not in result_map:
                     result_map[memory_id] = {
@@ -748,28 +744,31 @@ class HybridSearchService:
                         "content": result["content"],
                         "metadata": result.get("metadata", {}),
                         "created_at": result["created_at"],
+                        "rrf_score": 0.0,
                         "strategy_scores": {},
                         "strategies_used": [],
                     }
 
-                # Add strategy score
-                result_map[memory_id]["strategy_scores"][
-                    strategy.value
-                ] = normalized_score
-                result_map[memory_id]["strategies_used"].append(strategy)
+                # RRF accumulation
+                # 1 / (k + rank) gives a score between ~0.016 (rank 0) and ~0 (rank N)
+                rrf_contribution = 1.0 / (RRF_K + rank)
+                result_map[memory_id]["rrf_score"] += weight * rrf_contribution
 
-        # Calculate hybrid scores
+                # Keep original raw scores for debugging/metadata
+                result_map[memory_id]["strategy_scores"][strategy.value] = result[
+                    "score"
+                ]
+                if strategy not in result_map[memory_id]["strategies_used"]:
+                    result_map[memory_id]["strategies_used"].append(strategy)
+
+        # Convert to SearchResultItem list
         fused_results = []
-
         for memory_id, data in result_map.items():
-            # Calculate weighted hybrid score
-            hybrid_score = 0.0
-            for strategy, score in data["strategy_scores"].items():
-                strategy_enum = SearchStrategy(strategy)
-                weight = weights.get(strategy_enum, 0.0)
-                hybrid_score += score * weight
+            # Normalize RRF score to be roughly 0-1 for compatibility (optional but good for UX)
+            # Max possible score is roughly sum(weights) * (1/60)
+            # We just use the raw RRF score as the hybrid_score
+            hybrid_score = data["rrf_score"]
 
-            # Create SearchResultItem
             item = SearchResultItem(
                 memory_id=memory_id,
                 content=data["content"],
@@ -779,15 +778,14 @@ class HybridSearchService:
                 graph_score=data["strategy_scores"].get("graph"),
                 fulltext_score=data["strategy_scores"].get("fulltext"),
                 hybrid_score=hybrid_score,
-                final_score=hybrid_score,  # Will be updated if re-ranked
-                rank=1,  # Will be assigned later, default to 1 for validation
+                final_score=hybrid_score,
+                rank=1,  # Will be reassigned after sort
                 search_strategies_used=data["strategies_used"],
                 created_at=data["created_at"],
             )
-
             fused_results.append(item)
 
-        # Sort by hybrid score
+        # Sort by hybrid (RRF) score descending
         fused_results.sort(key=lambda x: x.hybrid_score, reverse=True)
 
         logger.info("fusion_complete", total_results=len(fused_results))

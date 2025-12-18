@@ -16,11 +16,11 @@ RAE provides a development mode with **hot-reload** capabilities, allowing you t
 # Method 1: Using Makefile (recommended)
 make -f Makefile.dev dev-up
 
-# Method 2: Using docker-compose directly
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+# Method 2: Using docker compose directly
+docker compose -f docker compose.yml -f docker compose.dev.yml up -d
 
 # Method 3: Create an alias for convenience
-alias dc-dev='docker-compose -f docker-compose.yml -f docker-compose.dev.yml'
+alias dc-dev='docker compose -f docker compose.yml -f docker compose.dev.yml'
 dc-dev up -d
 ```
 
@@ -92,7 +92,7 @@ make -f Makefile.dev dev-logs
 make -f Makefile.dev dev-logs-api
 make -f Makefile.dev dev-logs-ml
 
-# Or with docker-compose
+# Or with docker compose
 dc-dev logs -f rae-api
 ```
 
@@ -298,7 +298,7 @@ You need to rebuild when you change:
 - `requirements.txt` / `pyproject.toml`
 - `Dockerfile`
 - System dependencies (apt packages)
-- Environment variables in `docker-compose.yml`
+- Environment variables in `docker compose.yml`
 
 ```bash
 # Rebuild all services

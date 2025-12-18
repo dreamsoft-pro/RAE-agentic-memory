@@ -71,7 +71,7 @@ Przeprowadziłem kompleksowy audyt projektu. Oto krytyczna ocena:
   examples/
   ├── chatbot-with-memory/          ← Chatbot pamiętający kontekst
   │   ├── README.md
-  │   ├── docker-compose.yml
+  │   ├── docker compose.yml
   │   └── app.py
   ├── document-qa-system/            ← System Q&A dla dokumentów
   ├── meeting-notes-analyzer/        ← Analiza notatek ze spotkań

@@ -252,7 +252,7 @@ async def search_memories(query: str) -> list[Memory]:
 ./scripts/init-database.sh
 
 # Start all services
-docker-compose up -d
+docker compose up -d
 
 # Check health
 curl http://localhost:8000/health

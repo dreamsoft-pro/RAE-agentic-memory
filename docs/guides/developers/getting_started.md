@@ -23,7 +23,7 @@ RAE's core infrastructure (PostgreSQL, Qdrant, Redis) is managed using Docker Co
 2.  **Start the services**:
     ```bash
     cd infra
-    docker-compose up -d
+    docker compose up -d
     cd ..
     ```
 

@@ -101,7 +101,7 @@ async def main():
             console.print("\nTo start RAE, run:")
             console.print("  [cyan]make start[/cyan]  (if Docker installed)")
             console.print("  or")
-            console.print("  [cyan]docker-compose up -d[/cyan]\n")
+            console.print("  [cyan]docker compose up -d[/cyan]\n")
             return
 
         progress.update(task, completed=True)

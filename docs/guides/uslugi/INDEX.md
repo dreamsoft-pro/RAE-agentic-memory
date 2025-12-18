@@ -675,10 +675,10 @@ POST /api/v1/projects/{project_id}/access
 grep RETENTION .env
 
 # Uruchom manualnie cleanup
-docker-compose exec rae-api python scripts/retention_cleanup.py
+docker compose exec rae-api python scripts/retention_cleanup.py
 
 # Sprawdź logi
-docker-compose logs celery-worker | grep retention
+docker compose logs celery-worker | grep retention
 ```
 
 ### Kontakt

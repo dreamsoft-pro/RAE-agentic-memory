@@ -341,13 +341,13 @@ Background tasks run automatically with Docker Compose:
 
 ```bash
 # Start all services including Celery
-docker-compose up -d
+docker compose up -d
 
 # View Celery worker logs
-docker-compose logs -f celery-worker
+docker compose logs -f celery-worker
 
 # View Celery beat logs
-docker-compose logs -f celery-beat
+docker compose logs -f celery-beat
 ```
 
 **Services:**
@@ -588,7 +588,7 @@ logger.error(
 
 ```bash
 # Horizontal scaling
-docker-compose up --scale celery-worker=4
+docker compose up --scale celery-worker=4
 
 # Vertical scaling (more threads per worker)
 celery -A apps.memory_api.celery_app worker --concurrency=8
@@ -603,10 +603,10 @@ celery -A apps.memory_api.celery_app worker --concurrency=8
 **Fix:**
 ```bash
 # Check worker status
-docker-compose ps celery-worker
+docker compose ps celery-worker
 
 # Restart worker
-docker-compose restart celery-worker
+docker compose restart celery-worker
 ```
 
 ### High memory usage
@@ -629,8 +629,8 @@ celery -A apps.memory_api.celery_app worker --max-tasks-per-child=100
 **Fix:**
 ```bash
 # Check Redis
-docker-compose ps redis
-docker-compose logs redis
+docker compose ps redis
+docker compose logs redis
 
 # Test connection
 redis-cli -h localhost -p 6379 ping

@@ -322,7 +322,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Setup environment
         run: |
-          docker-compose up -d postgres qdrant redis
+          docker compose up -d postgres qdrant redis
       - name: Run 2-hour benchmark session
         run: |
           ./benchmarking/run_2hour_comprehensive.sh

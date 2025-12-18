@@ -20,7 +20,7 @@ memories:
   - tenant_id: eval-tenant
     agent_id: eval-agent
     memory_type: procedural
-    content: "To deploy the system, you need to run 'docker-compose up -d --build'. Ensure all environment variables are set."
+    content: "To deploy the system, you need to run 'docker compose up -d --build'. Ensure all environment variables are set."
     source_id: doc_deployment
     tags: ["docker", "deployment"]
   - tenant_id: eval-tenant

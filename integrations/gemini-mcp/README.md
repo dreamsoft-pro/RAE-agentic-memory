@@ -92,7 +92,7 @@ Edit `~/.config/Claude/claude_desktop_config.json` (Linux) or equivalent:
 
 2. **RAE Memory API** must be running on port 8001:
    ```bash
-   docker-compose up rae-api
+   docker compose up rae-api
    ```
 
 3. **Gemini Account Switcher** (optional, for quota rotation):
@@ -254,7 +254,7 @@ pip install -e .
 curl http://localhost:8000/health
 
 # Start RAE if needed
-docker-compose up -d rae-api
+docker compose up -d rae-api
 ```
 
 ### Issue: Gemini CLI not authenticated

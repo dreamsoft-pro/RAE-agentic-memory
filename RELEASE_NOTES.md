@@ -183,7 +183,7 @@ See [docs/legacy/mcp.md](docs/legacy/mcp.md) for full migration guide.
 **Docker Compose:**
 ```bash
 git checkout v2.0.0-enterprise
-docker-compose up -d
+docker compose up -d
 ```
 
 **Kubernetes (Helm):**
@@ -642,7 +642,7 @@ git clone https://github.com/dreamsoft-pro/RAE-agentic-memory
 cd RAE-agentic-memory
 
 # Start services
-docker-compose up -d
+docker compose up -d
 
 # Seed demo data
 python3 scripts/seed_demo_data.py

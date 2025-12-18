@@ -309,7 +309,7 @@ else:
             """
         1. **Start RAE API**
            ```bash
-           docker-compose up -d
+           docker compose up -d
            ```
 
         2. **Configure Connection**

@@ -33,13 +33,13 @@ FORMAT WYJŚCIA (wymagany):
 
 ## 7.2 Prompt dla Jules (KOD → CI/TESTY/UTRZYMANIE)
 Rola: Senior DevOps & Test Engineer.
-Zadanie: Dockerfile + docker-compose, migracje (alembic), CI (GitHub Actions), Prometheus/Grafana, Makefile.
+Zadanie: Dockerfile + docker compose, migracje (alembic), CI (GitHub Actions), Prometheus/Grafana, Makefile.
 
 FORMAT WYJŚCIA:
 ```json
 {
   "changeset": [
-    {"path": "infra/docker-compose.yml", "content": "..."},
+    {"path": "infra/docker compose.yml", "content": "..."},
     {"path": "apps/memory-api/Dockerfile", "content": "..."},
     {"path": "apps/reranker-service/Dockerfile", "content": "..."},
     {"path": ".github/workflows/ci.yml", "content": "..."},

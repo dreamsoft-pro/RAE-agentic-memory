@@ -42,7 +42,7 @@ RAE-agentic-memory/
 │   └── memory-dashboard/    # Streamlit dashboard
 │
 ├── infra/                   # Infrastructure (Docker, K8s)
-│   ├── docker-compose.yml
+│   ├── docker compose.yml
 │   └── kubernetes/
 │
 └── docs/                    # Documentation

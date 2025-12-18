@@ -252,10 +252,10 @@ curl http://localhost:8000/health
 docker ps
 
 # Stop conflicting services
-docker-compose down
+docker compose down
 
 # Rebuild and start
-docker-compose up --build
+docker compose up --build
 ```
 
 #### Issue: Tests failing with "tenant_id required"
@@ -289,7 +289,7 @@ make health
 
 - **Prometheus:** `http://localhost:9090` (if enabled)
 - **Grafana:** `http://localhost:3000` (if enabled)
-- **Logs:** `make logs` or `docker-compose logs -f`
+- **Logs:** `make logs` or `docker compose logs -f`
 
 ### CI/CD Status
 

@@ -276,8 +276,8 @@ The dashboard visualizes:
 ### 🚀 Setup
 
 ```bash
-# 1. Start Grafana (via docker-compose)
-docker-compose up -d grafana
+# 1. Start Grafana (via docker compose)
+docker compose up -d grafana
 
 # 2. Access Grafana
 open http://localhost:3000
@@ -300,7 +300,7 @@ Select: infra/grafana/rae-dashboard.json
 
 ```bash
 # 1. Start full observability stack
-docker-compose -f docker-compose.observability.yml up -d
+docker compose -f docker compose.observability.yml up -d
 
 # Services available:
 # - Jaeger UI:     http://localhost:16686
@@ -312,7 +312,7 @@ export OTEL_TRACES_ENABLED=true
 export OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4317
 
 # 3. Start RAE
-docker-compose up -d
+docker compose up -d
 
 # 4. Generate some traffic
 python scripts/seed_demo_data.py

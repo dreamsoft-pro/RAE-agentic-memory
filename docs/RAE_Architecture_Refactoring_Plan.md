@@ -48,9 +48,9 @@ RAE-agentic-memory/
 ├── config/
 ├── migrations/
 ├── alembic/
-├── docker-compose.yml
-├── docker-compose.lite.yml  # ⚠️ Już istnieje RAE Lite!
-└── docker-compose.dev.yml
+├── docker compose.yml
+├── docker compose.lite.yml  # ⚠️ Już istnieje RAE Lite!
+└── docker compose.dev.yml
 1.2 Architektura pamięci (4 warstwy)
 WarstwaNazwaOpisTyp w APILayer 1SensoryRaw inputs, immediate observationslayer=stm, memory_type=sensoryLayer 2WorkingActive task context, reflectionslayer=stm/em, memory_type=episodicLayer 3Long-TermEpisodic + Semantic + Profileslayer=ltm/em, memory_type=episodic/semantic/profileLayer 4ReflectiveMeta-learnings, strategieslayer=rm, memory_type=reflection/strategy
 1.3 Architektura matematyczna (3 warstwy)
@@ -65,7 +65,7 @@ Full-Text Search (PostgreSQL FTS) - exact phrases
 1.5 Storage Layer
 KomponentTechnologiaFunkcjaRelational DBPostgreSQLMetadane, graf wiedzy, FTS, RLSVector DBQdrant / pgvectorDense embeddings, sparse vectorsCacheRedisQuery cache, Celery queue
 1.6 Istniejące RAE Lite
-RAE już ma docker-compose.lite.yml który zawiera:
+RAE już ma docker compose.lite.yml który zawiera:
 
 Core API
 PostgreSQL

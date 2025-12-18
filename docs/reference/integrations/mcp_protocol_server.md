@@ -736,7 +736,7 @@ All tool parameters are validated before processing:
 
 ### Benchmarks (v1.1.0)
 
-**Test Environment**: MacBook Pro M1 (8 cores, 16GB RAM), RAE Lite Profile (docker-compose.lite.yml)
+**Test Environment**: MacBook Pro M1 (8 cores, 16GB RAM), RAE Lite Profile (docker compose.lite.yml)
 
 #### Latency Percentiles
 
@@ -1104,7 +1104,7 @@ Errors: 25
 
 **1. Increase Worker Count**:
 ```bash
-# In docker-compose.lite.yml or .env
+# In docker compose.lite.yml or .env
 MAX_WORKERS=4  # default: 2
 ```
 

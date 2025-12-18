@@ -236,7 +236,7 @@ jobs:
 
 # Infrastructure - ONLY devops
 /infra/* @dreamsoft-pro/devops
-/docker-compose*.yml @dreamsoft-pro/devops
+/docker compose*.yml @dreamsoft-pro/devops
 
 # Core services - review by core team
 /apps/memory_api/services/* @dreamsoft-pro/core-maintainers

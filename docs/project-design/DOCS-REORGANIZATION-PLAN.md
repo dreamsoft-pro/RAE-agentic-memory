@@ -101,7 +101,7 @@ docs/
 │   │   ├── multi-tenancy.md
 │   │   └── background-workers.md
 │   ├── deployment/
-│   │   ├── docker-compose.md
+│   │   ├── docker compose.md
 │   │   ├── kubernetes.md
 │   │   ├── rae-lite.md
 │   │   └── production-ha.md

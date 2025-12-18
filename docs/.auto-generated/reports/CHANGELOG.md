@@ -1277,7 +1277,7 @@ await rbac_service.assign_role(
   - ✅ Test logic unchanged - only formatting adjustments (black, isort, ruff)
 
 ### Added - RAE Lite Profile & Enterprise Features
-- **RAE Lite Profile (docker-compose.lite.yml)**
+- **RAE Lite Profile (docker compose.lite.yml)**
   - Minimal deployment profile for small teams (1-10 users)
   - Only 4 services: Core API, PostgreSQL, Qdrant, Redis
   - Reduced resource requirements: 4 GB RAM, 2 CPU cores
@@ -1371,7 +1371,7 @@ await rbac_service.assign_role(
   - Port mapping: 8000 (API), 5432 (PostgreSQL), 6333 (Qdrant), 6379 (Redis)
 
 - **Test Architecture**
-  - Integration tests use docker-compose fixture with proper teardown
+  - Integration tests use docker compose fixture with proper teardown
   - 60-second startup timeout with 2-second retry intervals
   - Tests verify: health checks, memory storage, queries, service presence, resource efficiency
   - Validates lite profile constraints (no ML service, no Celery, exactly 4 services)

@@ -493,7 +493,7 @@ export SUMMARIZATION_ENABLED=True
 
 **Resources:** 4 GB RAM, 2 CPU cores
 
-**Deployment:** `docker-compose -f docker-compose.lite.yml up -d`
+**Deployment:** `docker compose -f docker compose.lite.yml up -d`
 
 ---
 

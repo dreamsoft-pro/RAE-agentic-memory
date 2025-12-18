@@ -18,7 +18,7 @@ Ensure RAE Memory API is running:
 
 ```bash
 # From project root
-docker-compose up -d
+docker compose up -d
 
 # Or run directly
 cd apps/memory-api
@@ -412,7 +412,7 @@ for AI agents with multi-layered architecture...
 
 **Getting Started:**
 1. Read the main README.md
-2. Run `docker-compose up` to start services
+2. Run `docker compose up` to start services
 3. Check out examples/ directory
 4. Look at recent PRs for coding patterns
 

@@ -19,7 +19,7 @@ Generate and import a Postman collection for all 116 API endpoints from the auto
 
 1. **Start the API**:
    ```bash
-   docker-compose up memory-api
+   docker compose up memory-api
    ```
 
 2. **Open Postman**
@@ -39,7 +39,7 @@ Generate a portable Postman collection JSON file:
 
 ```bash
 # 1. Ensure API is running
-docker-compose up memory-api
+docker compose up memory-api
 
 # 2. Download OpenAPI spec
 curl http://localhost:8000/openapi.json > openapi.json
@@ -379,7 +379,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Start API
-        run: docker-compose up -d memory-api
+        run: docker compose up -d memory-api
 
       - name: Wait for API
         run: |

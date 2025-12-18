@@ -51,7 +51,7 @@ Claude          Gemini          Cursor
 ### Step 1: Start RAE API
 
 ```bash
-docker-compose up -d rae-api
+docker compose up -d rae-api
 
 # Check if it's running
 curl http://localhost:8000/health
@@ -597,7 +597,7 @@ MCP server automatically maps human-friendly names → API codes.
 bash -x .local/setup-rae-mcp.sh
 
 # Check logs
-docker-compose logs rae-api
+docker compose logs rae-api
 ```
 
 ---

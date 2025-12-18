@@ -33,7 +33,7 @@
 - FastAPI (API endpoints)
 - PostgreSQL adaptery
 - Qdrant/pgvector adaptery
-- Docker, docker-compose
+- Docker, docker compose
 - Celery workers
 - Streamlit dashboard
 - Grafana, Prometheus
@@ -143,7 +143,7 @@ rae_core/
 - ❌ `dependencies.py` (FastAPI dependencies)
 - ❌ `main.py` (FastAPI app)
 - ❌ `celery_app.py` (Celery workers)
-- ❌ `Dockerfile`, `docker-compose.yml`
+- ❌ `Dockerfile`, `docker compose.yml`
 
 ---
 
@@ -286,7 +286,7 @@ make test-unit
 make benchmark-lite
 
 # Manual smoke test
-docker-compose up -d
+docker compose up -d
 curl http://localhost:8000/health
 ```
 

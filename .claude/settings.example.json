@@ -45,7 +45,7 @@
       "Bash(ruff:*)",
       "Bash(mypy:*)",
       "Bash(docker:*)",
-      "Bash(docker-compose:*)",
+      "Bash(docker compose:*)",
       "Bash(gh:*)",
       "Read(//home/grzegorz/cloud/Dockerized/**)",
       "Write(//home/grzegorz/cloud/Dockerized/RAE-agentic-memory/**)",

@@ -92,7 +92,7 @@ def mock_pii_scrubber():
 # ============================================================================
 # These tests were frozen due to PostgreSQL auth issues in CI
 # Now unfrozen - tests use mocks and don't require database connection
-# Database credentials have been fixed in docker-compose.yml and .env.example
+# Database credentials have been fixed in docker compose.yml and .env.example
 # ============================================================================
 
 

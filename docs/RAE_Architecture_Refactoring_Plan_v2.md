@@ -136,14 +136,14 @@ RAE-agentic-memory/
 ├── integrations/            # MCP, LangChain, Ollama
 ├── infra/                   # Docker, Prometheus
 ├── tools/memory-dashboard/  # Streamlit dashboard
-├── docker-compose.yml       # Full stack
-├── docker-compose.lite.yml  # Docker Lite (nie to samo co RAE-Lite!)
+├── docker compose.yml       # Full stack
+├── docker compose.lite.yml  # Docker Lite (nie to samo co RAE-Lite!)
 └── ...
 2.2 Co mamy vs czego potrzebujemy
 KomponentObecnieDocelowoLogika pamięciW apps/memory_api/Wydzielone do rae-coreStoragePostgreSQL hardcodedInterfejsy + adapteryVector DBQdrant hardcodedInterfejsy + adapteryLLMOpenAI/AnthropicInterfejsy + adapteryAPIFastAPI w coreFastAPI tylko w RAE-ServerDesktop appBrakRAE-Lite (.exe)Mobile appBrakRAE-Mobile (future)SyncBrakRAE-Sync protokół
-2.3 Istniejące docker-compose.lite.yml
-⚠️ Uwaga: Obecny docker-compose.lite.yml to mniejszy Docker stack, nie instalka .exe!
-docker-compose.lite.ymlRAE-Lite (nowy)Docker containersSingle .exe filePostgreSQLSQLiteQdrantsqlite-vecWymaga DockerZero dependenciesDla developerówDla end-users
+2.3 Istniejące docker compose.lite.yml
+⚠️ Uwaga: Obecny docker compose.lite.yml to mniejszy Docker stack, nie instalka .exe!
+docker compose.lite.ymlRAE-Lite (nowy)Docker containersSingle .exe filePostgreSQLSQLiteQdrantsqlite-vecWymaga DockerZero dependenciesDla developerówDla end-users
 
 3. RAE-core
 3.1 Cel RAE-core
@@ -808,7 +808,7 @@ RAE-agentic-memory/              # Repozytorium główne
 ├── infra/                       # Docker infrastructure
 ├── integrations/                # MCP, LangChain, etc.
 ├── tools/                       # Dashboard
-├── docker-compose.yml
+├── docker compose.yml
 └── ...
 4.3 Adapter przykład (PostgreSQL)
 python# rae_server/adapters/storage/postgres.py

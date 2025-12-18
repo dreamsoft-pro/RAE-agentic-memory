@@ -47,7 +47,7 @@ Total System Coverage:
 ### Prerequisites
 ```bash
 # Ensure database is running
-docker-compose up -d postgres qdrant
+docker compose up -d postgres qdrant
 
 # Activate environment
 source .venv/bin/activate
@@ -420,7 +420,7 @@ Research Benchmarks (9/5):
 **Database Connection Errors**
 ```bash
 # Ensure Postgres and Qdrant are running
-docker-compose up -d postgres qdrant
+docker compose up -d postgres qdrant
 
 # Verify connection
 psql -h localhost -U rae -d rae -c "SELECT 1"

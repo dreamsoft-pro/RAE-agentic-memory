@@ -225,7 +225,7 @@ No protection rules
 
 # Infrastructure
 /infra/* @dreamsoft-pro/devops
-/docker-compose*.yml @dreamsoft-pro/devops
+/docker compose*.yml @dreamsoft-pro/devops
 /.github/workflows/* @dreamsoft-pro/devops
 
 # Core services (high-risk changes)

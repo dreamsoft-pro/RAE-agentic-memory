@@ -16,9 +16,9 @@ RAE Lite Profile has been thoroughly audited and verified. All components are **
 
 ## Verification Results
 
-### ✅ 1. Core Configuration (docker-compose.lite.yml)
+### ✅ 1. Core Configuration (docker compose.lite.yml)
 
-**File:** `docker-compose.lite.yml` (149 lines)
+**File:** `docker compose.lite.yml` (149 lines)
 
 **Services Included:**
 - ✅ `rae-api` - Core API (port 8000)
@@ -92,7 +92,7 @@ RAE Lite Profile has been thoroughly audited and verified. All components are **
 **File:** `scripts/test_lite_profile.sh` (157 lines)
 
 **Tests Performed:**
-- ✅ docker-compose availability check
+- ✅ docker compose availability check
 - ✅ YAML syntax validation
 - ✅ .env file existence check
 - ✅ Service startup
@@ -150,7 +150,7 @@ RAE Lite Profile has been thoroughly audited and verified. All components are **
 **Content:**
 ```bash
 # For Development (RAE Lite - Minimal Resources):
-#   - Use: docker-compose -f docker-compose.lite.yml up -d
+#   - Use: docker compose -f docker compose.lite.yml up -d
 #   - Set ML_SERVICE_ENABLED=false, RERANKER_ENABLED=false, CELERY_ENABLED=false
 #   - Use ollama backend: RAE_LLM_BACKEND=ollama
 #   - Set RAE_APP_LOG_LEVEL=DEBUG for detailed logs
@@ -182,7 +182,7 @@ RAE Lite Profile has been thoroughly audited and verified. All components are **
 
 ### Service Ports
 
-| Component | docker-compose.lite.yml | Documentation | Tests |
+| Component | docker compose.lite.yml | Documentation | Tests |
 |-----------|------------------------|---------------|-------|
 | API | 8000 | 8000 | 8000 |
 | PostgreSQL | 5432 | 5432 | 5432 |
@@ -195,7 +195,7 @@ RAE Lite Profile has been thoroughly audited and verified. All components are **
 
 | Source | Services Count | Services |
 |--------|---------------|----------|
-| docker-compose.lite.yml | 4 | rae-api, postgres, qdrant, redis |
+| docker compose.lite.yml | 4 | rae-api, postgres, qdrant, redis |
 | Documentation | 4 | RAE Core API, PostgreSQL, Qdrant, Redis |
 | test_lite_profile.py | 4 | rae-api, postgres, qdrant, redis |
 | test_lite_profile.sh | 4 | All verified |
@@ -204,7 +204,7 @@ RAE Lite Profile has been thoroughly audited and verified. All components are **
 
 ### Environment Variables
 
-| Variable | docker-compose.lite.yml | Documentation | Purpose |
+| Variable | docker compose.lite.yml | Documentation | Purpose |
 |----------|------------------------|---------------|---------|
 | ML_SERVICE_ENABLED | false | ✅ Documented | Disable ML Service |
 | RERANKER_ENABLED | false | ✅ Documented | Disable Reranker |
@@ -278,7 +278,7 @@ These are **nice-to-have** improvements, not requirements:
 
 | Category | Grade | Notes |
 |----------|-------|-------|
-| **Configuration** | A+ | Perfect docker-compose.lite.yml |
+| **Configuration** | A+ | Perfect docker compose.lite.yml |
 | **Documentation** | A+ | 418 lines, comprehensive |
 | **Test Coverage** | A+ | 12 tests + smoke script |
 | **Consistency** | A+ | 100% aligned across all files |

@@ -299,7 +299,7 @@ incident/post-mortem memory.
 
  There is a minimal, end-to-end Quickstart for RAE Lite + reflective memory:
 
-spin up docker-compose for Lite,
+spin up docker compose for Lite,
 
 run single Python script that:
 

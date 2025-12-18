@@ -96,15 +96,15 @@ Start the stack using Docker Compose:
 
 ```bash
 # Standard setup
-docker-compose up -d --build
+docker compose up -d --build
 
 # Or use the lite profile (lower resource usage)
-docker-compose -f docker-compose.lite.yml up -d --build
+docker compose -f docker compose.lite.yml up -d --build
 ```
 
 ### Running Ollama via Docker (Optional)
 
-If you don't have Ollama installed on your host, add this service to your `docker-compose.yml`:
+If you don't have Ollama installed on your host, add this service to your `docker compose.yml`:
 
 ```yaml
   ollama:
@@ -119,7 +119,7 @@ If you don't have Ollama installed on your host, add this service to your `docke
 
 Then run:
 ```bash
-docker-compose up -d
+docker compose up -d
 docker exec -it rae-ollama ollama run llama3
 ```
 
@@ -164,12 +164,12 @@ If using **Local First** mode, check your Ollama logs to see the inference happe
 
 To stop the stack:
 ```bash
-docker-compose down
+docker compose down
 ```
 
 To remove all data (database, vectors, logs):
 ```bash
-docker-compose down -v
+docker compose down -v
 ```
 
 ---

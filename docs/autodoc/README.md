@@ -66,7 +66,7 @@ docs/autodoc/doc_fragments/memory_layers_overview.md
 ## Quick Start
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 Visit http://localhost:8000/docs
@@ -89,7 +89,7 @@ More content...
 ## Quick Start
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 Visit http://localhost:8000/docs

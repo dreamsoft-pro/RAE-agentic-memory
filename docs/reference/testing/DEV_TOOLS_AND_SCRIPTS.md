@@ -230,13 +230,13 @@ bandit apps/ # Security scan
 
 ```bash
 # Build all services
-docker-compose build
+docker compose build
 
 # Run tests in Docker
-docker-compose run --rm api pytest
+docker compose run --rm api pytest
 
 # Generate test reports
-docker-compose run --rm api pytest --html=report.html
+docker compose run --rm api pytest --html=report.html
 ```
 
 ## Tool Usage Matrix

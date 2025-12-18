@@ -125,7 +125,7 @@ All Pydantic v1 deprecations eliminated from codebase:
 pip install pytest pytest-asyncio pytest-cov pytest-mock
 
 # Ensure database is running
-docker-compose up -d postgres
+docker compose up -d postgres
 ```
 
 ### ML Dependencies (Optional)
@@ -583,7 +583,7 @@ async def test_api_e2e():
 
 **Script:** `scripts/test_lite_profile.sh`
 
-Comprehensive smoke test for the minimal deployment profile (`docker-compose.lite.yml`):
+Comprehensive smoke test for the minimal deployment profile (`docker compose.lite.yml`):
 
 **What It Tests:**
 - ✅ Docker Compose YAML syntax validation
@@ -598,7 +598,7 @@ Comprehensive smoke test for the minimal deployment profile (`docker-compose.lit
 ./scripts/test_lite_profile.sh
 
 # Expected output:
-# ✅ docker-compose found
+# ✅ docker compose found
 # ✅ Valid YAML syntax
 # ✅ .env file exists
 # 🚀 Starting RAE Lite services...
@@ -610,7 +610,7 @@ Comprehensive smoke test for the minimal deployment profile (`docker-compose.lit
 ```
 
 **When to Run:**
-- After changes to `docker-compose.lite.yml`
+- After changes to `docker compose.lite.yml`
 - Before deploying to production
 - As part of CI/CD pipeline for deployment validation
 - When troubleshooting deployment issues
@@ -819,7 +819,7 @@ def sample_event():
 **Issue:** Tests fail with database connection error
 ```bash
 # Solution: Ensure PostgreSQL is running
-docker-compose up -d postgres
+docker compose up -d postgres
 ```
 
 **Issue:** Async tests not running

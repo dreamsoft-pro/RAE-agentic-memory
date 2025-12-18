@@ -169,7 +169,7 @@ Dodać sekcję w `IDE_INTEGRATION.md`:
 
 ### 5.2. Quick Start (3 kroki)
 
-1. Uruchom RAE (np. `docker-compose.lite.yml`).
+1. Uruchom RAE (np. `docker compose.lite.yml`).
 2. Zainstaluj MCP:
    ```bash
    cd integrations/mcp

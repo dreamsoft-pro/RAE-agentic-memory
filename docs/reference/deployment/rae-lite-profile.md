@@ -95,13 +95,13 @@ POSTGRES_DB=rae
 
 ```bash
 # Start all services
-docker-compose -f docker-compose.lite.yml up -d
+docker compose -f docker compose.lite.yml up -d
 
 # Check status
-docker-compose -f docker-compose.lite.yml ps
+docker compose -f docker compose.lite.yml ps
 
 # View logs
-docker-compose -f docker-compose.lite.yml logs -f rae-api
+docker compose -f docker compose.lite.yml logs -f rae-api
 ```
 
 ### 4. Verify Installation
@@ -210,7 +210,7 @@ When ready to add enterprise features:
 
 Add ML Service for better entity resolution:
 ```bash
-# Edit docker-compose.lite.yml and add:
+# Edit docker compose.lite.yml and add:
 ml-service:
   build: ./apps/ml_service
   ports: ["8001:8001"]
@@ -221,10 +221,10 @@ ml-service:
 
 ```bash
 # Stop lite version
-docker-compose -f docker-compose.lite.yml down
+docker compose -f docker compose.lite.yml down
 
 # Start full stack
-docker-compose up -d
+docker compose up -d
 ```
 
 ### Option 3: Kubernetes Deployment
@@ -245,7 +245,7 @@ See [Kubernetes Deployment Guide](kubernetes.md) for details.
 If ports 8000, 5432, 6333, or 6379 are already in use:
 
 ```yaml
-# Edit docker-compose.lite.yml and change ports:
+# Edit docker compose.lite.yml and change ports:
 services:
   rae-api:
     ports:
@@ -261,7 +261,7 @@ If services crash due to OOM (Out of Memory):
 # Settings → Resources → Memory → 8 GB
 
 # Or reduce service memory usage:
-# Edit docker-compose.lite.yml:
+# Edit docker compose.lite.yml:
 redis:
   command: redis-server --maxmemory 128mb
 ```
@@ -272,13 +272,13 @@ If API can't connect to PostgreSQL:
 
 ```bash
 # Check database is healthy
-docker-compose -f docker-compose.lite.yml ps postgres
+docker compose -f docker compose.lite.yml ps postgres
 
 # View database logs
-docker-compose -f docker-compose.lite.yml logs postgres
+docker compose -f docker compose.lite.yml logs postgres
 
 # Restart database
-docker-compose -f docker-compose.lite.yml restart postgres
+docker compose -f docker compose.lite.yml restart postgres
 ```
 
 ### Vector Search Not Working
@@ -290,10 +290,10 @@ If Qdrant is not responding:
 curl http://localhost:6333/health
 
 # View Qdrant logs
-docker-compose -f docker-compose.lite.yml logs qdrant
+docker compose -f docker compose.lite.yml logs qdrant
 
 # Restart Qdrant
-docker-compose -f docker-compose.lite.yml restart qdrant
+docker compose -f docker compose.lite.yml restart qdrant
 ```
 
 ## Cost Optimization
@@ -353,10 +353,10 @@ docker stats rae-api-lite rae-postgres-lite rae-qdrant-lite rae-redis-lite
 
 ```bash
 # API logs
-docker-compose -f docker-compose.lite.yml logs -f rae-api
+docker compose -f docker compose.lite.yml logs -f rae-api
 
 # All services
-docker-compose -f docker-compose.lite.yml logs -f
+docker compose -f docker compose.lite.yml logs -f
 ```
 
 ## Security Considerations
@@ -388,7 +388,7 @@ For production deployments, we recommend **Kubernetes** with the official Helm c
 
 | Feature | Lite | Full (Docker Compose) | Enterprise (K8s) |
 |---------|------|----------------------|------------------|
-| **Deployment** | docker-compose.lite.yml | docker-compose.yml | Helm chart |
+| **Deployment** | docker compose.lite.yml | docker compose.yml | Helm chart |
 | **Services** | 4 (API, DB, Vector, Cache) | 9 (+ ML, Reranker, Celery, Dashboard, Monitoring) | 15+ (+ HPA, Ingress, NetworkPolicy) |
 | **Resources** | 4 GB RAM, 2 CPU | 8 GB RAM, 4 CPU | Auto-scaling |
 | **Max Memories** | 10,000 | 100,000 | Unlimited |

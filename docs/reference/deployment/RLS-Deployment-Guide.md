@@ -154,7 +154,7 @@ app.add_middleware(RLSContextMiddleware)     # NEW - Add this
 
 **Restart application:**
 ```bash
-docker-compose restart memory-api
+docker compose restart memory-api
 # or
 kubectl rollout restart deployment/memory-api
 ```

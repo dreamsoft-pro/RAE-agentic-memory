@@ -797,8 +797,8 @@ def main():
     if not check_rae_health():
         print("❌ ERROR: RAE API is not reachable or unhealthy\n")
         print("Please ensure RAE is running:")
-        print("  docker-compose ps")
-        print("  docker-compose logs rae-api")
+        print("  docker compose ps")
+        print("  docker compose logs rae-api")
         print("\nOr run: ./scripts/quickstart.sh")
         sys.exit(1)
 

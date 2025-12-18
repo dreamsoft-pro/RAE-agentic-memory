@@ -18,7 +18,7 @@ echo "Users: $USERS, Hatch Rate: $HATCH_RATE, Run Time: $RUN_TIME"
 
 # Ensure the RAE API is running.
 # In a real CI/CD environment, this would be part of the test setup.
-# For local execution, ensure your `docker-compose up` is running.
+# For local execution, ensure your `docker compose up` is running.
 
 # Run Locust in headless mode
 .venv/bin/locust -f "$TEST_FILE" \

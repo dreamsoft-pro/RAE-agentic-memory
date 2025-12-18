@@ -185,7 +185,7 @@ export TRACES_EXPORT_PATH=/data/traces
 
 ```bash
 # Start RAE with research profile
-docker-compose up -d
+docker compose up -d
 
 # Verify telemetry is working
 curl http://localhost:16686  # Jaeger UI

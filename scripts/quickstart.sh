@@ -61,11 +61,11 @@ fi
 
 log_success "Docker is installed and running"
 
-# Step 2: Check docker-compose
-log_info "Checking for docker-compose..."
-if ! command -v docker-compose &> /dev/null && ! docker compose version &> /dev/null; then
-    log_error "docker-compose is not installed"
-    echo "Please install docker-compose from: https://docs.docker.com/compose/install/"
+# Step 2: Check docker compose
+log_info "Checking for docker compose..."
+if ! command -v docker compose &> /dev/null && ! docker compose version &> /dev/null; then
+    log_error "docker compose is not installed"
+    echo "Please install docker compose from: https://docs.docker.com/compose/install/"
     exit 1
 fi
 
@@ -73,10 +73,10 @@ fi
 if docker compose version &> /dev/null; then
     COMPOSE_CMD="docker compose"
 else
-    COMPOSE_CMD="docker-compose"
+    COMPOSE_CMD="docker compose"
 fi
 
-log_success "docker-compose is available"
+log_success "docker compose is available"
 
 # Step 3: Set up .env file
 log_info "Setting up environment configuration..."

@@ -17,7 +17,7 @@ This directory contains ready-to-use configuration files for integrating RAE Mem
 
 3. **Start RAE API** (if not already running):
    ```bash
-   docker-compose -f docker-compose.lite.yml up -d
+   docker compose -f docker compose.lite.yml up -d
    ```
 
 ## Configuration Steps
@@ -130,7 +130,7 @@ After restarting your IDE, verify the integration works:
 
 - IDE should invoke MCP tools (`save_memory`, `search_memory`)
 - You should see confirmation messages in the chat
-- Check RAE API logs: `docker-compose logs -f memory-api`
+- Check RAE API logs: `docker compose logs -f memory-api`
 
 ## Troubleshooting
 

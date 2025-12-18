@@ -109,7 +109,7 @@ Created comprehensive permission list with wildcard patterns:
 
       // Docker (autonomous)
       "Bash(docker:*)",
-      "Bash(docker-compose:*)",
+      "Bash(docker compose:*)",
 
       // GitHub CLI (autonomous)
       "Bash(gh:*)"
