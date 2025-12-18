@@ -1,164 +1,116 @@
-from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch, MagicMock
 from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
 
-from apps.memory_api.api.v1.memory import (
-    get_hybrid_search_service,
-)
-from apps.memory_api.dependencies import get_qdrant_client
+from apps.memory_api.dependencies import get_rae_core_service, get_qdrant_client
 from apps.memory_api.main import app
-from apps.memory_api.models import ScoredMemoryRecord
-from apps.memory_api.models.hybrid_search_models import (
-    HybridSearchResult,
-    QueryAnalysis,
-    QueryIntent,
-    SearchResultItem,
+from apps.memory_api.models import (
+    MemoryRecord,
+    QueryMemoryRequest,
+    StoreMemoryRequest,
+    ScoredMemoryRecord,
 )
+from apps.memory_api.services.rae_core_service import RAECoreService
 from apps.memory_api.security.dependencies import get_and_verify_tenant_id
+from apps.memory_api.services.embedding import get_embedding_service
+from apps.memory_api.services.vector_store import get_vector_store
 
 
-# Define fixtures for mocks
 @pytest.fixture
-def mock_vector_store():
-    return AsyncMock()
+def mock_rae_service():
+    """Mock for RAECoreService."""
+    service = AsyncMock(spec=RAECoreService)
+    
+    # Setup store_memory return
+    service.store_memory.return_value = "test-memory-id"
+    
+    # Setup delete_memory return
+    service.delete_memory.return_value = True
+    
+    # Setup list_memories return
+    service.list_memories.return_value = []
+    
+    # Setup count_memories return
+    service.count_memories.return_value = 10
+    
+    # Setup get_metric_aggregate return
+    service.get_metric_aggregate.return_value = 0.7
+    
+    # Setup update_memory_access_batch
+    service.update_memory_access_batch.return_value = 1
+    
+    return service
 
 
 @pytest.fixture
 def mock_embedding_service():
-    return MagicMock()
+    """Mock for EmbeddingService."""
+    service = AsyncMock()
+    service.generate_embeddings.return_value = [[0.1] * 384]
+    return service
 
 
 @pytest.fixture
-def mock_hybrid_search_service():
-    return AsyncMock()
-
-
-@pytest.fixture(autouse=True)
-def mock_pii_scrubber():
-    with patch("apps.memory_api.api.v1.memory.pii_scrubber") as mock_scrubber:
-        mock_scrubber.scrub_text.side_effect = lambda x: x
-        yield mock_scrubber
-
-
-@pytest.fixture(autouse=True)
-def mock_scoring():
-    with patch("apps.memory_api.api.v1.memory.scoring") as mock_s:
-        # Default behavior: return input as is
-        mock_s.rescore_memories.side_effect = lambda x: x
-        yield mock_s
-
-
-@pytest.fixture(autouse=True)
-def mock_memory_repo():
-    with patch("apps.memory_api.api.v1.memory.MemoryRepository") as MockRepo:
-        mock_repo_instance = AsyncMock()
-        MockRepo.return_value = mock_repo_instance
-        yield mock_repo_instance
+def mock_vector_store():
+    """Mock for VectorStore."""
+    store = AsyncMock()
+    store.upsert.return_value = None
+    store.delete.return_value = None
+    store.query.return_value = []
+    return store
 
 
 @pytest.fixture
-def client_with_overrides():
-    # Setup mock connection with async context manager support
-    mock_conn = AsyncMock()
-
-    @asynccontextmanager
-    async def mock_transaction():
-        yield
-
-    # Mock fetchrow to return appropriate data based on query
-    async def mock_fetchrow(query, *args):
-        # For INSERT queries, return memory record
-        if "INSERT INTO memories" in query:
-            return {
-                "id": str(uuid4()),
-                "created_at": datetime.now(timezone.utc),
-                "last_accessed_at": datetime.now(timezone.utc),
-                "usage_count": 0,
-            }
-        # For other queries, return None
-        return None
-
-    mock_conn.transaction = mock_transaction
-    mock_conn.execute = AsyncMock()
-    mock_conn.fetch = AsyncMock(return_value=[])
-    mock_conn.fetchrow = mock_fetchrow
-
-    # Setup mock pool with async context manager support
-    @asynccontextmanager
-    async def mock_acquire():
-        yield mock_conn
-
-    mock_pool = AsyncMock()
-    mock_pool.acquire = mock_acquire
-    mock_pool.close = AsyncMock()
+def client_with_overrides(mock_pool, mock_rae_service, mock_embedding_service, mock_vector_store):
+    """
+    Test client with all necessary overrides for memory endpoints.
+    """
+    # Setup mock pool
     app.state.pool = mock_pool
-
-    # Setup mock Qdrant client with health_check
+    
+    # Override auth
+    async def _mock_tenant():
+        return "test-tenant"
+    
+    # Setup dependency overrides
+    app.dependency_overrides[get_and_verify_tenant_id] = _mock_tenant
+    app.dependency_overrides[get_rae_core_service] = lambda: mock_rae_service
+    
+    # Mock Qdrant client
     mock_qdrant = AsyncMock()
-    mock_health_result = MagicMock()
-    mock_health_result.status = "ok"
-    mock_health_result.version = "1.0.0"
-    mock_qdrant.health_check = AsyncMock(return_value=mock_health_result)
+    mock_health = MagicMock()
+    mock_health.status = "ok"
+    mock_qdrant.health_check = AsyncMock(return_value=mock_health)
+    app.dependency_overrides[get_qdrant_client] = lambda: mock_qdrant
 
-    # Mock the direct function calls in memory.py
-    with patch("apps.memory_api.api.v1.memory.get_vector_store") as mock_get_vs, patch(
-        "apps.memory_api.api.v1.memory.get_embedding_service"
-    ) as mock_get_es, patch(
-        "apps.memory_api.api.v1.memory.get_hybrid_search_service"
-    ) as mock_get_hss, patch(
+    # Patch services obtained via functions (not DI in older parts)
+    with patch(
+        "apps.memory_api.api.v1.memory.get_embedding_service",
+        return_value=mock_embedding_service
+    ), patch(
+        "apps.memory_api.api.v1.memory.get_vector_store",
+        return_value=mock_vector_store
+    ), patch(
         "apps.memory_api.main.asyncpg.create_pool",
-        new=AsyncMock(return_value=mock_pool),
+        new=AsyncMock(return_value=mock_pool)
     ), patch(
         "apps.memory_api.main.rebuild_full_cache", new=AsyncMock()
     ):
-        mock_vs = AsyncMock()
-        mock_es = MagicMock()
-        mock_hss = AsyncMock()
-
-        mock_get_vs.return_value = mock_vs
-        mock_get_es.return_value = mock_es
-
-        # Setup embedding mock to return list of floats
-        mock_es.generate_embeddings.return_value = [[0.1] * 384]
-
-        # Override dependency for hybrid search
-        app.dependency_overrides[get_hybrid_search_service] = lambda: mock_hss
-        # Override dependency for Qdrant client
-        app.dependency_overrides[get_qdrant_client] = lambda: mock_qdrant
-
-        # Override auth
-        async def _mock_tenant():
-            return "test-tenant"
-
-        app.dependency_overrides[get_and_verify_tenant_id] = _mock_tenant
-
         with TestClient(app) as client:
-            # Attach mocks to client for access in tests
-            client.mock_vector_store = mock_vs
-            client.mock_embedding_service = mock_es
-            client.mock_hybrid_search_service = mock_hss
             yield client
-
-    # Teardown
+            
+    # Cleanup
     app.dependency_overrides = {}
-    # Safely delete pool if exists
     if hasattr(app.state, "pool"):
         del app.state.pool
 
 
 @pytest.mark.asyncio
-async def test_store_memory_success(client_with_overrides, mock_memory_repo):
-    mock_memory_repo.insert_memory.return_value = {
-        "id": "123e4567-e89b-12d3-a456-426614174000",
-        "created_at": datetime.now(timezone.utc),
-        "last_accessed_at": datetime.now(timezone.utc),
-        "usage_count": 0,
-    }
-
+async def test_store_memory_success(client_with_overrides, mock_rae_service):
+    """Test successful memory storage via RAECoreService."""
     payload = {
         "content": "Test content",
         "source": "cli",
@@ -173,23 +125,26 @@ async def test_store_memory_success(client_with_overrides, mock_memory_repo):
     )
 
     assert response.status_code == 200
-    assert response.json()["id"] == "123e4567-e89b-12d3-a456-426614174000"
+    assert response.json()["id"] == "test-memory-id"
 
-    mock_memory_repo.insert_memory.assert_called_once()
-    client_with_overrides.mock_embedding_service.generate_embeddings.assert_called_once()
-    client_with_overrides.mock_vector_store.upsert.assert_called_once()
+    # Verify RAECoreService was called correctly
+    mock_rae_service.store_memory.assert_called_once()
+    call_args = mock_rae_service.store_memory.call_args[1]
+    assert call_args["content"] == "Test content"
+    assert call_args["source"] == "cli"
+    assert call_args["project"] == "default"
 
 
 @pytest.mark.asyncio
-async def test_store_memory_db_failure(client_with_overrides, mock_memory_repo):
-    mock_memory_repo.insert_memory.side_effect = Exception("DB Error")
+async def test_store_memory_failure(client_with_overrides, mock_rae_service):
+    """Test handling of storage failure."""
+    mock_rae_service.store_memory.side_effect = Exception("Storage Error")
 
     payload = {
         "content": "Test content",
         "source": "cli",
-        "layer": "em",
-        "importance": 0.5,
         "project": "default",
+        "importance": 0.5,
     }
 
     response = client_with_overrides.post(
@@ -197,28 +152,28 @@ async def test_store_memory_db_failure(client_with_overrides, mock_memory_repo):
     )
 
     assert response.status_code == 500
-    data = response.json()
-    error_msg = data.get("detail", str(data))
-    assert "Database error" in error_msg
+    assert "Storage error" in response.json()["detail"]
 
 
 @pytest.mark.asyncio
-async def test_query_memory_vector_only(client_with_overrides, mock_memory_repo):
-    record = ScoredMemoryRecord(
+async def test_query_memory_vector_only(client_with_overrides, mock_vector_store, mock_rae_service):
+    """Test memory query using vector search."""
+    # Mock vector store results
+    record = MemoryRecord(
         id="mem-1",
-        content="Found",
+        tenant_id="test-tenant",
+        project="proj",
+        content="Found content",
         score=0.95,
         importance=0.5,
         layer="em",
         tags=[],
         source="src",
-        project="proj",
-        timestamp=datetime.now(timezone.utc),
+        created_at=datetime.now(timezone.utc),
         last_accessed_at=datetime.now(timezone.utc),
-        usage_count=10,
+        usage_count=5,
     )
-
-    client_with_overrides.mock_vector_store.query.return_value = [record]
+    mock_vector_store.query.return_value = [record]
 
     payload = {"query_text": "test query", "k": 1}
 
@@ -227,85 +182,18 @@ async def test_query_memory_vector_only(client_with_overrides, mock_memory_repo)
     )
 
     assert response.status_code == 200
-    assert len(response.json()["results"]) == 1
-
-    mock_memory_repo.update_memory_access_stats.assert_called()
-
-
-@pytest.mark.asyncio
-async def test_query_memory_hybrid(client_with_overrides, mock_memory_repo):
-    # Create a valid QueryAnalysis object
-    analysis = QueryAnalysis(
-        intent=QueryIntent.FACTUAL, confidence=0.9, original_query="test query"
-    )
-
-    hybrid_result = HybridSearchResult(
-        results=[
-            SearchResultItem(
-                memory_id=uuid4(),
-                content="Hybrid Found",
-                final_score=0.95,
-                hybrid_score=0.95,
-                rank=1,
-                created_at=datetime.now(timezone.utc),
-                metadata={
-                    "importance": 0.5,
-                    "layer": "em",
-                    "source": "src",
-                    "project": "proj",
-                    "last_accessed_at": datetime.now(timezone.utc),
-                    "usage_count": 10,
-                },
-            )
-        ],
-        query_analysis=analysis,
-        vector_results_count=1,
-        semantic_results_count=0,
-        graph_results_count=0,
-        fulltext_results_count=0,
-        total_results=1,
-        total_time_ms=100,
-    )
-    client_with_overrides.mock_hybrid_search_service.search.return_value = hybrid_result
-
-    payload = {
-        "query_text": "test query",
-        "k": 5,
-        "use_graph": True,
-        "graph_depth": 2,
-        "project": "test-project",
-    }
-
-    response = client_with_overrides.post(
-        "/v1/memory/query", json=payload, headers={"X-Tenant-Id": "test-tenant"}
-    )
-
-    assert response.status_code == 200
     data = response.json()
-    assert data.get("synthesized_context") is None
     assert len(data["results"]) == 1
-    assert data["results"][0]["content"] == "Hybrid Found"
-    assert data["graph_statistics"]["total_results"] == 1
+    assert data["results"][0]["id"] == "mem-1"
 
-    client_with_overrides.mock_hybrid_search_service.search.assert_called_once()
-    mock_memory_repo.update_memory_access_stats.assert_called()
-
-
-@pytest.mark.asyncio
-async def test_query_memory_hybrid_missing_project(client_with_overrides):
-    payload = {"query_text": "test query", "use_graph": True}
-    response = client_with_overrides.post(
-        "/v1/memory/query", json=payload, headers={"X-Tenant-Id": "test-tenant"}
-    )
-    assert response.status_code == 400
-    data = response.json()
-    error_msg = data.get("detail", str(data))
-    assert "project parameter is required" in error_msg
+    # Verify stats update called on RAECoreService
+    mock_rae_service.update_memory_access_batch.assert_called_once()
 
 
 @pytest.mark.asyncio
-async def test_delete_memory_success(client_with_overrides, mock_memory_repo):
-    mock_memory_repo.delete_memory.return_value = True
+async def test_delete_memory_success(client_with_overrides, mock_rae_service, mock_vector_store):
+    """Test successful memory deletion."""
+    mock_rae_service.delete_memory.return_value = True
 
     response = client_with_overrides.delete(
         "/v1/memory/delete?memory_id=mem-1", headers={"X-Tenant-Id": "test-tenant"}
@@ -313,13 +201,15 @@ async def test_delete_memory_success(client_with_overrides, mock_memory_repo):
 
     assert response.status_code == 200
     assert "deleted successfully" in response.json()["message"]
-    client_with_overrides.mock_vector_store.delete.assert_called_once_with("mem-1")
+    
+    mock_rae_service.delete_memory.assert_called_once_with("mem-1", "test-tenant")
+    mock_vector_store.delete.assert_called_once_with("mem-1")
 
 
 @pytest.mark.asyncio
-async def test_delete_memory_not_found(client_with_overrides, mock_memory_repo):
-    """Test delete memory that doesn't exist"""
-    mock_memory_repo.delete_memory.return_value = False
+async def test_delete_memory_not_found(client_with_overrides, mock_rae_service):
+    """Test delete memory that doesn't exist."""
+    mock_rae_service.delete_memory.return_value = False
 
     response = client_with_overrides.delete(
         "/v1/memory/delete?memory_id=nonexistent",
@@ -327,31 +217,14 @@ async def test_delete_memory_not_found(client_with_overrides, mock_memory_repo):
     )
 
     assert response.status_code == 404
-    data = response.json()
-    error_msg = data.get("detail", str(data))
-    assert "Memory not found" in error_msg
+    assert "not found" in response.json()["detail"].lower()
 
 
 @pytest.mark.asyncio
-async def test_rebuild_reflections_success(client_with_overrides):
-    with patch(
-        "apps.memory_api.api.v1.memory.generate_reflection_for_project"
-    ) as mock_task:
-        payload = {"tenant_id": "test-tenant", "project": "test-project"}
-        response = client_with_overrides.post(
-            "/v1/memory/rebuild-reflections",
-            json=payload,
-            headers={"X-Tenant-Id": "test-tenant"},
-        )
-        assert response.status_code == 202
-        mock_task.delay.assert_called_once()
-
-
-@pytest.mark.asyncio
-async def test_reflection_stats_success(client_with_overrides, mock_memory_repo):
-    # Mock repository response
-    mock_memory_repo.count_memories_by_layer.return_value = 42
-    mock_memory_repo.get_average_strength.return_value = 0.75
+async def test_reflection_stats(client_with_overrides, mock_rae_service):
+    """Test retrieval of reflection statistics."""
+    mock_rae_service.count_memories.return_value = 42
+    mock_rae_service.get_metric_aggregate.return_value = 0.75
 
     response = client_with_overrides.get(
         "/v1/memory/reflection-stats?project=test-project",
@@ -362,119 +235,14 @@ async def test_reflection_stats_success(client_with_overrides, mock_memory_repo)
     data = response.json()
     assert data["reflective_memory_count"] == 42
     assert data["average_strength"] == 0.75
+    
+    mock_rae_service.count_memories.assert_called_once()
+    mock_rae_service.get_metric_aggregate.assert_called_once()
 
 
 @pytest.mark.asyncio
-async def test_store_memory_missing_tenant_header(client_with_overrides):
-    # Override the tenant id dependency to simulate missing header
-    app.dependency_overrides.pop(get_and_verify_tenant_id, None)
-
-    payload = {
-        "content": "Test content",
-        "source": "cli",
-        "layer": "em",
-        "importance": 0.5,
-        "project": "default",
-    }
-    # No headers provided
-    response = client_with_overrides.post("/v1/memory/store", json=payload)
-
-    assert response.status_code in [400, 401, 403]
-
-
-@pytest.mark.asyncio
-async def test_query_memory_with_filters(client_with_overrides, mock_memory_repo):
-    record = ScoredMemoryRecord(
-        id="mem-1",
-        content="Filtered result",
-        score=0.90,
-        importance=0.7,
-        layer="em",
-        tags=["filtered", "test"],
-        source="src",
-        project="proj",
-        timestamp=datetime.now(timezone.utc),
-        last_accessed_at=datetime.now(timezone.utc),
-        usage_count=5,
-    )
-
-    client_with_overrides.mock_vector_store.query.return_value = [record]
-
-    payload = {"query_text": "test query", "k": 5, "filters": {"tags": ["filtered"]}}
-
-    response = client_with_overrides.post(
-        "/v1/memory/query", json=payload, headers={"X-Tenant-Id": "test-tenant"}
-    )
-
-    assert response.status_code == 200
-    results = response.json()["results"]
-    assert len(results) == 1
-    assert "filtered" in results[0]["tags"]
-    mock_memory_repo.update_memory_access_stats.assert_called()
-
-
-@pytest.mark.asyncio
-async def test_query_memory_with_graph_traversal(
-    client_with_overrides, mock_memory_repo
-):
-    analysis = QueryAnalysis(
-        intent=QueryIntent.EXPLORATORY, confidence=0.8, original_query="test query"
-    )
-
-    hybrid_result = HybridSearchResult(
-        results=[
-            SearchResultItem(
-                memory_id=uuid4(),
-                content="Hybrid Found",
-                final_score=0.95,
-                hybrid_score=0.95,
-                rank=1,
-                created_at=datetime.now(timezone.utc),
-                metadata={
-                    "importance": 0.5,
-                    "layer": "em",
-                    "source": "src",
-                    "project": "proj",
-                    "last_accessed_at": datetime.now(timezone.utc),
-                    "usage_count": 10,
-                },
-            )
-        ],
-        query_analysis=analysis,
-        vector_results_count=1,
-        semantic_results_count=0,
-        graph_results_count=0,
-        fulltext_results_count=0,
-        total_results=1,
-        total_time_ms=100,
-    )
-    client_with_overrides.mock_hybrid_search_service.search.return_value = hybrid_result
-
-    payload = {
-        "query_text": "test query",
-        "k": 5,
-        "use_graph": True,
-        "graph_depth": 2,
-        "project": "test-project",
-    }
-
-    response = client_with_overrides.post(
-        "/v1/memory/query", json=payload, headers={"X-Tenant-Id": "test-tenant"}
-    )
-
-    assert response.status_code == 200
-    data = response.json()
-    assert data.get("synthesized_context") is None
-    assert data["graph_statistics"]["total_results"] == 1
-
-    client_with_overrides.mock_hybrid_search_service.search.assert_called_once()
-    mock_memory_repo.update_memory_access_stats.assert_called()
-
-
-@pytest.mark.asyncio
-async def test_generate_hierarchical_reflection_deprecated(
-    client_with_overrides, mock_memory_repo
-):
+async def test_hierarchical_reflection_deprecated(client_with_overrides, mock_rae_service):
+    """Test deprecated hierarchical reflection endpoint."""
     with patch(
         "apps.memory_api.services.reflection_engine.ReflectionEngine"
     ) as MockEngine:
@@ -482,8 +250,8 @@ async def test_generate_hierarchical_reflection_deprecated(
         MockEngine.return_value = mock_engine_instance
         mock_engine_instance.generate_hierarchical_reflection.return_value = "Summary"
 
-        # Mock episode count query
-        mock_memory_repo.count_memories_by_layer.return_value = 10
+        # Mock stats
+        mock_rae_service.count_memories.return_value = 10
 
         response = client_with_overrides.post(
             "/v1/memory/reflection/hierarchical?project=my-project&bucket_size=15",

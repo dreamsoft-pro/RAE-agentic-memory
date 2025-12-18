@@ -4,11 +4,11 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from apps.memory_api.dependencies import get_hybrid_search_service
+from apps.memory_api.dependencies import get_rae_core_service
 from apps.memory_api.main import app
 from apps.memory_api.security.dependencies import get_and_verify_tenant_id
 from apps.memory_api.services.graph_extraction import GraphExtractionResult
-from apps.memory_api.services.hybrid_search import HybridSearchResult
+from apps.memory_api.services.rae_core_service import RAECoreService
 
 
 # Mock data models
@@ -33,10 +33,9 @@ def mock_reflection_engine():
 
 
 @pytest.fixture
-def mock_hybrid_search():
-    service = AsyncMock()
-    service.search = AsyncMock()
-    service._traverse_bfs = AsyncMock()
+def mock_rae_service():
+    service = AsyncMock(spec=RAECoreService)
+    # Mock methods used in graph endpoints if any (currently mostly placeholders)
     return service
 
 
@@ -59,14 +58,14 @@ def mock_db_pool():
 
 
 @pytest.fixture
-def client_with_auth(mock_hybrid_search, mock_db_pool):
+def client_with_auth(mock_rae_service, mock_db_pool):
     pool, _ = mock_db_pool
 
     tenant_id = str(uuid4())  # Valid UUID for tests
 
     # Override auth dependency
     app.dependency_overrides[get_and_verify_tenant_id] = lambda: tenant_id
-    app.dependency_overrides[get_hybrid_search_service] = lambda: mock_hybrid_search
+    app.dependency_overrides[get_rae_core_service] = lambda: mock_rae_service
 
     # Patch asyncpg.create_pool to return our mock pool
     # And patch rebuild_full_cache since it's called in startup
@@ -248,13 +247,8 @@ async def test_get_graph_edges(client_with_auth, mock_db_pool):
 
 
 @pytest.mark.asyncio
-async def test_query_knowledge_graph(client_with_auth, mock_hybrid_search):
-    """Test POST /graph/query"""
-
-    mock_result = HybridSearchResult(
-        vector_matches=[], graph_nodes=[], graph_edges=[], synthesized_context="Context"
-    )
-    mock_hybrid_search.search.return_value = mock_result
+async def test_query_knowledge_graph_placeholder(client_with_auth, mock_rae_service):
+    """Test POST /graph/query (placeholder behavior)"""
 
     payload = {
         "query": "test query",
@@ -267,45 +261,16 @@ async def test_query_knowledge_graph(client_with_auth, mock_hybrid_search):
 
     assert response.status_code == 200
     data = response.json()
-    assert "synthesized_context" in data
-    mock_hybrid_search.search.assert_called_once()
+    # Check for placeholder message
+    assert "placeholder" in data.get("message", "").lower()
+    assert data["results"] == []
 
 
 @pytest.mark.asyncio
-async def test_get_subgraph(client_with_auth, mock_hybrid_search, mock_db_pool):
-    """Test GET /graph/subgraph"""
-    pool, conn = mock_db_pool
-
-    # Mock traversal result
+async def test_get_subgraph_placeholder(client_with_auth, mock_rae_service):
+    """Test GET /graph/subgraph (placeholder behavior)"""
+    
     node_id = str(uuid4())
-    edge_source_id = str(uuid4())
-    edge_target_id = str(uuid4())
-
-    mock_nodes = [MockNode(node_id)]
-    mock_edges = [MockEdge(edge_source_id, edge_target_id)]
-
-    mock_hybrid_search._traverse_bfs.return_value = (mock_nodes, mock_edges)
-
-    # Mock DB calls for enriching nodes and edges
-    mock_node_data = {
-        "id": uuid4(),
-        "node_id": "n1",
-        "label": "L",
-        "properties": {},
-        "created_at": "2023-01-01T00:00:00Z",
-    }
-    mock_edge_data = {
-        "id": uuid4(),
-        "source_node_id": uuid4(),
-        "target_node_id": uuid4(),
-        "relation": "R",
-        "properties": {},
-        "created_at": "2023-01-01T00:00:00Z",
-    }
-
-    # fetchrow is called for each node and edge
-    conn.fetchrow.side_effect = [mock_node_data, mock_edge_data]
-
     headers = {"X-Tenant-Id": client_with_auth.tenant_id}
     response = client_with_auth.get(
         f"/v1/graph/subgraph?project_id=test-project&node_ids={node_id}&depth=2",
@@ -314,9 +279,9 @@ async def test_get_subgraph(client_with_auth, mock_hybrid_search, mock_db_pool):
 
     assert response.status_code == 200
     data = response.json()
-    assert len(data["nodes"]) == 1
-    assert len(data["edges"]) == 1
-    mock_hybrid_search._traverse_bfs.assert_called_once()
+    # Check for placeholder message
+    assert "placeholder" in data.get("message", "").lower()
+    assert data["nodes"] == []
 
 
 @pytest.mark.asyncio
