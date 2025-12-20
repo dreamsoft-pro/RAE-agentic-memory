@@ -3,9 +3,10 @@ Pytest configuration and shared fixtures for RAE Memory API tests.
 """
 
 import asyncio
+import os
 import warnings
 from typing import Any, Generator
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, Mock
 
 import asyncpg
 import pytest
@@ -14,8 +15,6 @@ import pytest
 warnings.filterwarnings("ignore", message="Can't initialize NVML")
 # Suppress Click Parser Deprecation (via spacy)
 warnings.filterwarnings("ignore", module="spacy.cli._util")
-
-import os
 
 os.environ["RAE_DB_MODE"] = "ignore"
 

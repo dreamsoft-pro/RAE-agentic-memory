@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import pytest
 
+from apps.memory_api.services.rae_core_service import RAECoreService
 from apps.memory_api.workers.memory_maintenance import (
     DecayWorker,
     DreamingWorker,
@@ -11,7 +12,6 @@ from apps.memory_api.workers.memory_maintenance import (
     SessionSummaryResponse,
     SummarizationWorker,
 )
-from apps.memory_api.services.rae_core_service import RAECoreService
 
 
 @pytest.fixture
@@ -106,11 +106,16 @@ async def test_hourly_maintenance(mock_pool, mock_settings):
 
 @pytest.mark.asyncio
 async def test_summarize_session_success(mock_pool, mock_settings, mock_rae_service):
-    session_id_val = uuid4() # Capture the session_id
+    session_id_val = uuid4()  # Capture the session_id
 
     # Mock memories to include metadata with session_id
     memories = [
-        {"id": i, "content": f"event {i}", "importance": 0.5, "metadata": {"session_id": str(session_id_val)}}
+        {
+            "id": i,
+            "content": f"event {i}",
+            "importance": 0.5,
+            "metadata": {"session_id": str(session_id_val)},
+        }
         for i in range(12)
     ]
     mock_rae_service.list_memories.return_value = memories
@@ -126,7 +131,10 @@ async def test_summarize_session_success(mock_pool, mock_settings, mock_rae_serv
     worker.llm_provider.generate_structured.return_value = response_obj
 
     result = await worker.summarize_session(
-        tenant_id="tenant1", project_id="proj1", session_id=session_id_val, min_events=10
+        tenant_id="tenant1",
+        project_id="proj1",
+        session_id=session_id_val,
+        min_events=10,
     )
 
     assert result is not None
@@ -135,7 +143,9 @@ async def test_summarize_session_success(mock_pool, mock_settings, mock_rae_serv
 
 
 @pytest.mark.asyncio
-async def test_summarize_session_insufficient_events(mock_pool, mock_settings, mock_rae_service):
+async def test_summarize_session_insufficient_events(
+    mock_pool, mock_settings, mock_rae_service
+):
     mock_rae_service.list_memories.return_value = [{"id": 1}]
 
     worker = SummarizationWorker(pool=mock_pool, rae_service=mock_rae_service)
@@ -190,7 +200,9 @@ async def test_dreaming_cycle_success(mock_pool, mock_settings, mock_rae_service
     mock_reflection_engine.store_reflection.return_value = {"reflection_id": "ref1"}
 
     worker = DreamingWorker(
-        pool=mock_pool, rae_service=mock_rae_service, reflection_engine=mock_reflection_engine
+        pool=mock_pool,
+        rae_service=mock_rae_service,
+        reflection_engine=mock_reflection_engine,
     )
 
     # Mock DB query for high importance memories
@@ -236,7 +248,9 @@ async def test_dreaming_cycle_disabled(mock_pool, mock_settings, mock_rae_servic
 
 
 @pytest.mark.asyncio
-async def test_dreaming_cycle_insufficient_memories(mock_pool, mock_settings, mock_rae_service):
+async def test_dreaming_cycle_insufficient_memories(
+    mock_pool, mock_settings, mock_rae_service
+):
     worker = DreamingWorker(pool=mock_pool, rae_service=mock_rae_service)
 
     mock_conn = mock_pool.acquire.return_value.__aenter__.return_value

@@ -1,8 +1,7 @@
 import logging
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from qdrant_client import AsyncQdrantClient
-from qdrant_client.http.models import Distance
 
 from apps.memory_api.adapters.base import MemoryAdapter
 from apps.memory_api.core.contract import (
@@ -43,7 +42,8 @@ class QdrantAdapter(MemoryAdapter):
             return {
                 "status": "connected",
                 "cluster_status": cluster_info.status.value,
-                "peer_count": len(cluster_info.peers_bootstrap) + len(cluster_info.peers_web),
+                "peer_count": len(cluster_info.peers_bootstrap)
+                + len(cluster_info.peers_web),
                 "collections": collections_summary,
             }
         except Exception as e:
@@ -74,11 +74,11 @@ class QdrantAdapter(MemoryAdapter):
 
                 # Inspect collection config
                 col_info = await self.client.get_collection(col_contract.name)
-                
+
                 # Check vector size (assuming named vector 'dense' or default un-named)
                 # RAE usually uses named vectors, let's check config.
                 config = col_info.config.params.vectors
-                
+
                 # Qdrant config can be a single VectorParams or dict of VectorParams
                 actual_size = None
                 actual_distance = None
@@ -88,19 +88,19 @@ class QdrantAdapter(MemoryAdapter):
                 if isinstance(config, dict) and "dense" in config:
                     actual_size = config["dense"].size
                     actual_distance = config["dense"].distance
-                elif hasattr(config, "size"): # Single vector
-                     actual_size = config.size
-                     actual_distance = config.distance
+                elif hasattr(config, "size"):  # Single vector
+                    actual_size = config.size
+                    actual_distance = config.distance
                 else:
-                     # Fallback or error
-                     violations.append(
+                    # Fallback or error
+                    violations.append(
                         ValidationViolation(
                             entity=col_contract.name,
                             issue_type="CONFIG_ERROR",
                             details=f"Could not determine vector config for '{col_contract.name}'.",
                         )
                     )
-                     continue
+                    continue
 
                 if actual_size != col_contract.vector_size:
                     violations.append(
@@ -115,20 +115,21 @@ class QdrantAdapter(MemoryAdapter):
                 # Qdrant enums: Distance.COSINE, Distance.EUCLID, etc.
                 # Contract string: "Cosine"
                 # We can map contract string to Qdrant enum or just log warning if strict.
-                # For now let's be lenient or skip distance check if complexity is high, 
+                # For now let's be lenient or skip distance check if complexity is high,
                 # but let's try basic check.
-                expected_dist = col_contract.distance_metric.lower() # cosine
-                actual_dist_str = str(actual_distance).lower().replace("distance.", "") # cosine
-                
+                expected_dist = col_contract.distance_metric.lower()  # cosine
+                actual_dist_str = (
+                    str(actual_distance).lower().replace("distance.", "")
+                )  # cosine
+
                 if expected_dist != actual_dist_str:
-                     violations.append(
+                    violations.append(
                         ValidationViolation(
                             entity=col_contract.name,
                             issue_type="METRIC_MISMATCH",
                             details=f"Collection '{col_contract.name}' uses {actual_dist_str}, expected {expected_dist}.",
                         )
                     )
-
 
         except Exception as e:
             logger.error(f"Qdrant validation failed: {e}")

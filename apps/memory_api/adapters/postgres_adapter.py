@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List, Set, Any
+from typing import Any, Dict, List, Set
 
 import asyncpg
 
@@ -156,7 +156,13 @@ class PostgresAdapter(MemoryAdapter):
                 "double precision",
             ],
             DataType.BOOLEAN: ["bool", "boolean"],
-            DataType.TIMESTAMP: ["timestamp", "timestamptz", "date", "timestamp with time zone", "timestamp without time zone"],
+            DataType.TIMESTAMP: [
+                "timestamp",
+                "timestamptz",
+                "date",
+                "timestamp with time zone",
+                "timestamp without time zone",
+            ],
             DataType.JSONB: ["json", "jsonb"],
             DataType.UUID: ["uuid"],
             DataType.VECTOR: ["vector"],

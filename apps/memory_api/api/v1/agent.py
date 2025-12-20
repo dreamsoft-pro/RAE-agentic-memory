@@ -172,10 +172,10 @@ async def execute(
             try:
                 # Use RAECoreService to update stats
                 from apps.memory_api.dependencies import get_rae_core_service
+
                 rae_service = get_rae_core_service(request)
                 await rae_service.update_memory_access_batch(
-                    memory_ids=used_memory_ids,
-                    tenant_id=tenant_id
+                    memory_ids=used_memory_ids, tenant_id=tenant_id
                 )
             except Exception as e:
                 # Log error but don't fail request

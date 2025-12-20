@@ -482,10 +482,7 @@ class GraphExtractionService:
         # Fetch memories using RAECoreService
         # We assume 'episodic' layer.
         return await self.rae_service.list_memories(
-            tenant_id=tenant_id,
-            layer="episodic", 
-            project=project_id,
-            limit=limit
+            tenant_id=tenant_id, layer="episodic", project=project_id, limit=limit
         )
 
     def _format_memories(self, memories: List[Dict[str, Any]]) -> str:

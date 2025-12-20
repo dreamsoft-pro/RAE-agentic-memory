@@ -9,18 +9,18 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
-# Skip tests if spacy is not installed (ML dependency)
-# spacy = pytest.importorskip(
-#     "spacy",
-#     reason="Requires spacy – heavy ML dependency, not installed in lightweight CI",
-# )
-
 from apps.memory_api.services.graph_extraction import (  # noqa: E402
     GraphExtractionResult,
     GraphExtractionService,
     GraphTriple,
     _normalize_entity_name,
 )
+
+# Skip tests if spacy is not installed (ML dependency)
+# spacy = pytest.importorskip(
+#     "spacy",
+#     reason="Requires spacy – heavy ML dependency, not installed in lightweight CI",
+# )
 
 
 @pytest.fixture
@@ -234,9 +234,7 @@ class TestGraphExtractionService:
     async def test_extract_knowledge_graph_empty(self, extraction_service, mock_pool):
         """Test extraction with no memories."""
         # Mock repository to return no memories
-        extraction_service.rae_service.list_memories = AsyncMock(
-            return_value=[]
-        )
+        extraction_service.rae_service.list_memories = AsyncMock(return_value=[])
 
         result = await extraction_service.extract_knowledge_graph(
             project_id="proj1", tenant_id="tenant1", limit=10
@@ -289,7 +287,7 @@ class TestGraphExtractionService:
         # Mock memories
         # mock_pool._test_conn.fetch = AsyncMock(...) # Removed dependency on mock_pool internals
         extraction_service.rae_service.list_memories = AsyncMock(
-             return_value=[
+            return_value=[
                 {
                     "id": "1",
                     "content": "Test",

@@ -66,9 +66,9 @@ async def test_build_context_basic(
                 "last_accessed_at": None,
                 "usage_count": 0,
             }
-        ]
+        ],
     ]
-    
+
     mock_reflection_engine.query_reflections.return_value = [
         {
             "id": "r1",

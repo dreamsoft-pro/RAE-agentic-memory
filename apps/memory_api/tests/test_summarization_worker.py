@@ -4,11 +4,11 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
+from apps.memory_api.services.rae_core_service import RAECoreService
 from apps.memory_api.workers.memory_maintenance import (
     SessionSummaryResponse,
     SummarizationWorker,
 )
-from apps.memory_api.services.rae_core_service import RAECoreService
 
 
 @pytest.fixture
@@ -16,8 +16,8 @@ def mock_rae_service():
     """Mock for RAECoreService."""
     service = AsyncMock(spec=RAECoreService)
     # Configure mock behavior as needed for these tests
-    service.list_memories.return_value = [] # Default empty list for sessions
-    service.store_memory.return_value = "mock-summary-id" # For storing summary
+    service.list_memories.return_value = []  # Default empty list for sessions
+    service.store_memory.return_value = "mock-summary-id"  # For storing summary
     return service
 
 
@@ -62,7 +62,7 @@ async def test_summarize_session_llm(mock_rae_service):
     # Ensure mock memories have the matching session_id
     for m in memories:
         m["metadata"]["session_id"] = str(session_id)
-    
+
     result = await worker.summarize_session(
         tenant_id="tenant-1", project_id="default", session_id=session_id, min_events=2
     )

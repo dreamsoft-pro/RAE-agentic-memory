@@ -14,14 +14,12 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
-from apps.memory_api.dependencies import get_graph_repository, get_rae_core_service
-from apps.memory_api.metrics import memory_query_counter
+from apps.memory_api.dependencies import get_rae_core_service
 from apps.memory_api.models.graph import TraversalStrategy
 from apps.memory_api.security import auth
 from apps.memory_api.services.graph_extraction import GraphExtractionResult
-from apps.memory_api.services.llm import get_llm_provider
-from apps.memory_api.services.reflection_engine import ReflectionEngine
 from apps.memory_api.services.rae_core_service import RAECoreService
+from apps.memory_api.services.reflection_engine import ReflectionEngine
 
 logger = structlog.get_logger(__name__)
 
@@ -651,17 +649,19 @@ async def query_knowledge_graph(
     try:
         # TODO: Implement proper graph query using RAECoreService.
         # For now, return a placeholder.
-        logger.warning("graph_query_placeholder", detail="Actual graph query logic is not yet implemented using RAECoreService.")
-        
+        logger.warning(
+            "graph_query_placeholder",
+            detail="Actual graph query logic is not yet implemented using RAECoreService.",
+        )
+
         return {
             "message": "Graph query endpoint is under refactoring to use RAECoreService. Placeholder response.",
             "query": req.query,
             "project_id": req.project_id,
             "tenant_id": tenant_id,
             "results": [],
-            "statistics": {}
+            "statistics": {},
         }
-
 
     except Exception as e:
         logger.exception(
@@ -679,7 +679,7 @@ async def get_subgraph(
     project_id: str = Query(..., description="Project identifier"),
     node_ids: str = Query(..., description="Comma-separated node IDs to start from"),
     depth: int = Query(default=1, ge=1, le=5, description="Traversal depth"),
-    rae_service: RAECoreService = Depends(get_rae_core_service), # Use RAECoreService
+    rae_service: RAECoreService = Depends(get_rae_core_service),  # Use RAECoreService
 ):
     """
     Retrieve a subgraph starting from specific nodes.
@@ -722,7 +722,10 @@ async def get_subgraph(
     try:
         # TODO: Implement proper subgraph retrieval using RAECoreService or GraphRepository.
         # For now, return a placeholder.
-        logger.warning("subgraph_placeholder", detail="Actual subgraph logic is not yet implemented using RAECoreService.")
+        logger.warning(
+            "subgraph_placeholder",
+            detail="Actual subgraph logic is not yet implemented using RAECoreService.",
+        )
 
         return {
             "message": "Subgraph endpoint is under refactoring to use RAECoreService. Placeholder response.",
@@ -730,7 +733,7 @@ async def get_subgraph(
             "tenant_id": tenant_id,
             "nodes": [],
             "edges": [],
-            "statistics": {}
+            "statistics": {},
         }
 
     except Exception as e:

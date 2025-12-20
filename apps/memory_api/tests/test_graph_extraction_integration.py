@@ -12,8 +12,9 @@ Prerequisites:
 - testcontainers Python package installed
 """
 
+from unittest.mock import AsyncMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock
 
 # Skip tests if spacy is not installed (ML dependency)
 spacy = pytest.importorskip(
@@ -21,12 +22,13 @@ spacy = pytest.importorskip(
     reason="Requires spacy – heavy ML dependency, not installed in lightweight CI",
 )
 
-from apps.memory_api.repositories.graph_repository import GraphRepository
-from apps.memory_api.services.graph_extraction import (
+# Use noqa: E402 because these imports MUST be after the importorskip check
+from apps.memory_api.repositories.graph_repository import GraphRepository  # noqa: E402
+from apps.memory_api.services.graph_extraction import (  # noqa: E402
     GraphExtractionService,
     GraphTriple,
 )
-from apps.memory_api.services.rae_core_service import RAECoreService
+from apps.memory_api.services.rae_core_service import RAECoreService  # noqa: E402
 
 
 @pytest.mark.asyncio
@@ -37,7 +39,7 @@ async def test_fetch_episodic_memories_uses_service(db_pool):
     # Arrange: Create test episodic memories
     tenant_id = "test-tenant-extraction"
     project_id = "test-project-extraction"
-    
+
     mock_memories = [
         {
             "id": "1",
@@ -45,7 +47,7 @@ async def test_fetch_episodic_memories_uses_service(db_pool):
             "layer": "episodic",
             "tags": ["bug"],
             "source": "tracker",
-            "created_at": "2024-01-01T12:00:00"
+            "created_at": "2024-01-01T12:00:00",
         },
         {
             "id": "2",
@@ -53,8 +55,8 @@ async def test_fetch_episodic_memories_uses_service(db_pool):
             "layer": "episodic",
             "tags": ["fix"],
             "source": "git",
-            "created_at": "2024-01-02T12:00:00"
-        }
+            "created_at": "2024-01-02T12:00:00",
+        },
     ]
 
     # Mock RAECoreService
@@ -73,10 +75,7 @@ async def test_fetch_episodic_memories_uses_service(db_pool):
     assert len(memories) == 2
     assert memories == mock_memories
     mock_rae_service.list_memories.assert_called_once_with(
-        tenant_id=tenant_id,
-        layer="episodic",
-        project=project_id,
-        limit=10
+        tenant_id=tenant_id, layer="episodic", project=project_id, limit=10
     )
 
 
@@ -348,19 +347,19 @@ async def test_end_to_end_triple_storage_workflow(db_pool, use_real_db):
     mock_rae_service = AsyncMock(spec=RAECoreService)
     # We don't strictly need it to return anything if we just call store_graph_triples manually with mock triples
     # But if we were calling extract_knowledge_graph, we would need it.
-    # The original test populated DB and expected valid fetch. 
+    # The original test populated DB and expected valid fetch.
     # Here we skip the fetch part since we're testing storage workflow primarily in this test block.
     # Wait, the original test "test_end_to_end_triple_storage_workflow":
     # 1. Insert memories
     # 2. Mock triples
     # 3. Store triples
     # It didn't actually call extract_knowledge_graph! It called store_graph_triples directly.
-    # So the memory insertion was... redundant? Or maybe just for "realism"? 
-    # Actually, the original test inserted memories but didn't seem to use them in the Act phase 
+    # So the memory insertion was... redundant? Or maybe just for "realism"?
+    # Actually, the original test inserted memories but didn't seem to use them in the Act phase
     # (except maybe assuming store_graph_triples validates them? No, it doesn't seem to).
-    
+
     # So I can just use the mock service and skip memory insertion if not needed.
-    
+
     # Mock triples that would be extracted by LLM
     # Note: "auth_bug" will be normalized to "auth bug"
     mock_triples = [

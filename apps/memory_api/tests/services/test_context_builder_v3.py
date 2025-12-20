@@ -25,7 +25,7 @@ async def test_context_builder_uses_v3_when_enabled(mock_rae_service):
     # Mock repository return values (now on mock_rae_service)
     # Using side_effect to return items for the first call (episodic) and empty for others (semantic, etc)
     mock_rae_service.list_memories.side_effect = [
-        [ 
+        [
             {
                 "id": "1",
                 "content": "test",
@@ -34,7 +34,7 @@ async def test_context_builder_uses_v3_when_enabled(mock_rae_service):
                 "importance": 0.5,
             }
         ],
-        [] # Second call (e.g. semantic) returns empty
+        [],  # Second call (e.g. semantic) returns empty
     ]
     # No direct mocking for get_semantic_memories, assuming list_memories with filters covers it
 
@@ -71,8 +71,15 @@ async def test_context_builder_v3_integration_mock(mock_rae_service):
 
     # Mock return values for rae_service.list_memories
     mock_rae_service.list_memories.side_effect = [
-        [{"id": "1", "content": "test", "created_at": datetime.now(timezone.utc), "layer": "episodic"}],
-        []
+        [
+            {
+                "id": "1",
+                "content": "test",
+                "created_at": datetime.now(timezone.utc),
+                "layer": "episodic",
+            }
+        ],
+        [],
     ]
     reflection_engine.query_reflections = AsyncMock(return_value=[])
 

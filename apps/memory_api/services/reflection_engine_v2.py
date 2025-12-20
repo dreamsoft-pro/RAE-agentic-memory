@@ -6,7 +6,7 @@ the Actor → Evaluator → Reflector pattern described in the implementation pl
 """
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from uuid import UUID
 
 import asyncpg
@@ -14,8 +14,8 @@ import structlog
 
 from apps.memory_api.config import settings
 from apps.memory_api.models.reflection_v2_models import (
-    LLMReflectionResponse,
     Event,
+    LLMReflectionResponse,
     OutcomeType,
     ReflectionContext,
     ReflectionResult,
@@ -356,7 +356,8 @@ class ReflectionEngineV2:
                 project=project_id,
                 content=result.strategy_text,
                 source="reflection_engine_v2",
-                importance=result.importance * 1.1,  # Strategies slightly more important
+                importance=result.importance
+                * 1.1,  # Strategies slightly more important
                 layer="reflective",
                 tags=result.tags + ["strategy"],
             )
@@ -398,10 +399,7 @@ class ReflectionEngineV2:
         # For now, use basic repository query
         # In production, this would use vector search + filtering
         reflections = await self.rae_service.list_memories(
-            tenant_id=tenant_id, 
-            layer="reflective",
-            project=project_id,
-            limit=100
+            tenant_id=tenant_id, layer="reflective", project=project_id, limit=100
         )
 
         # Simple filtering by importance

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import asyncpg
 import structlog
@@ -79,10 +79,10 @@ class ReflectionEngine:
     """
 
     def __init__(
-        self, 
-        pool: asyncpg.Pool, 
+        self,
+        pool: asyncpg.Pool,
         rae_service: "RAECoreService",
-        graph_repository: GraphRepository = None
+        graph_repository: GraphRepository = None,
     ):
         self.pool = pool
         self.graph_repo = graph_repository or GraphRepository(pool)
@@ -174,10 +174,7 @@ class ReflectionEngine:
         """
         # Using RAECoreService list_memories
         return await self.rae_service.list_memories(
-            tenant_id=tenant_id,
-            layer="episodic",
-            project=project,
-            limit=10
+            tenant_id=tenant_id, layer="episodic", project=project, limit=10
         )
 
     async def extract_knowledge_graph_enhanced(
@@ -339,7 +336,8 @@ class ReflectionEngine:
             tenant_id=tenant_id,
             layer="episodic",
             project=project,
-            limit=limit or 1000 # Set a high default limit if not specified, as list_memories requires limit
+            limit=limit
+            or 1000,  # Set a high default limit if not specified, as list_memories requires limit
         )
 
     async def _summarize_episodes(self, episodes: List[Dict[str, Any]]) -> str:

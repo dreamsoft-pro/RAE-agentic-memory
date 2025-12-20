@@ -9,13 +9,11 @@ from apps.memory_api.metrics import (
     memory_query_counter,
     memory_store_counter,
 )
-from apps.memory_api.models import MemoryRecord  # NEW
 from apps.memory_api.models import RebuildReflectionsRequest  # NEW
 from apps.memory_api.models import (
     DeleteMemoryResponse,
     QueryMemoryRequest,
     QueryMemoryResponse,
-    ScoredMemoryRecord,
     StoreMemoryRequest,
     StoreMemoryResponse,
 )
@@ -24,8 +22,8 @@ from apps.memory_api.security import auth
 from apps.memory_api.security.dependencies import get_and_verify_tenant_id
 from apps.memory_api.services import pii_scrubber, scoring
 from apps.memory_api.services.embedding import get_embedding_service  # NEW
-from apps.memory_api.services.vector_store import get_vector_store  # NEW
 from apps.memory_api.services.rae_core_service import RAECoreService
+from apps.memory_api.services.vector_store import get_vector_store  # NEW
 from apps.memory_api.tasks.background_tasks import (  # NEW
     generate_reflection_for_project,
 )
@@ -83,7 +81,7 @@ async def store_memory(
             # RAE-Core Service handles vector storage internally now (via Engine)
             # But legacy API expected MemoryRecord object back or at least ID.
             # RAECoreService.store_memory returns ID string.
-            
+
             span.set_attribute("rae.memory.id", str(memory_id))
 
         except HTTPException:
@@ -125,9 +123,13 @@ async def query_memory(
             span.set_attribute("rae.project_id", req.project)
         span.set_attribute("rae.query.text_length", len(req.query_text))
         span.set_attribute("rae.query.k", req.k)
-        span.set_attribute("rae.query.use_graph", req.use_graph) # Still in request model
+        span.set_attribute(
+            "rae.query.use_graph", req.use_graph
+        )  # Still in request model
         if req.use_graph:
-            span.set_attribute("rae.query.graph_depth", req.graph_depth or 1) # Still in request model
+            span.set_attribute(
+                "rae.query.graph_depth", req.graph_depth or 1
+            )  # Still in request model
         if req.filters:
             span.set_attribute("rae.query.filters_count", len(req.filters))
 
@@ -238,16 +240,16 @@ async def delete_memory(
         #     except ValueError:
         #         return False
         #     return await self.postgres_adapter.delete_memory(mem_uuid, tenant_id)
-        
+
         # It calls adapter directly. So vector store deletion is NOT handled by RAECoreService yet if engine is not used.
         # To maintain vector store deletion, we should use RAEEngine if possible or keep explicit vector store delete.
         # Given we want to move logic to RAECore, RAEEngine should be used.
         # But RAECoreService wraps Engine and Adapters.
-        
+
         # Let's keep manual vector delete for now to be safe, or assume Engine handles it if we used engine.delete_memory.
         # But RAECoreService.delete_memory uses adapter.
         # Let's keep explicit vector delete for safety until Engine handles it fully.
-        
+
         try:
             vector_store = get_vector_store(pool=request.app.state.pool)
             await vector_store.delete(memory_id)
@@ -310,7 +312,11 @@ async def get_reflection_stats(
         span.set_attribute("rae.reflection.count", count)
 
         avg_strength = await rae_service.get_metric_aggregate(
-            tenant_id=tenant_id, layer="rm", project=project or "default", metric="importance", func="avg"
+            tenant_id=tenant_id,
+            layer="rm",
+            project=project or "default",
+            metric="importance",
+            func="avg",
         )
         span.set_attribute("rae.reflection.avg_strength", avg_strength or 0.0)
 

@@ -11,7 +11,7 @@ Implements the context injection pattern from RAE v1 Implementation Plan.
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import asyncpg
 import structlog
@@ -157,7 +157,9 @@ class ContextBuilder:
         """
         self.pool = pool
         self.rae_service = rae_service
-        self.reflection_engine = reflection_engine or ReflectionEngineV2(pool, rae_service)
+        self.reflection_engine = reflection_engine or ReflectionEngineV2(
+            pool, rae_service
+        )
         self.reranker = SmartReranker()
         self.config = config or ContextConfig()
 

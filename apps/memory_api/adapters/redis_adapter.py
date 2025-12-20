@@ -1,5 +1,5 @@
 import logging
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from redis.asyncio import Redis
 
@@ -88,7 +88,7 @@ class RedisAdapter(MemoryAdapter):
                             )
                         )
                 except Exception as e:
-                     violations.append(
+                    violations.append(
                         ValidationViolation(
                             entity="redis",
                             issue_type="ACCESS_DENIED",

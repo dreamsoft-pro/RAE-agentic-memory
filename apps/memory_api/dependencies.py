@@ -20,7 +20,6 @@ from redis.asyncio import Redis as AsyncRedis
 
 from .repositories.graph_repository import GraphRepository
 from .services.graph_extraction import GraphExtractionService
-from .services.hybrid_search import HybridSearchService
 from .services.rae_core_service import RAECoreService
 
 # ==========================================

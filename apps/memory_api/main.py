@@ -8,7 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
-from qdrant_client import QdrantClient
 from slowapi.errors import RateLimitExceeded
 
 from apps.memory_api.api.v1 import (
@@ -80,6 +79,7 @@ async def lifespan(app: FastAPI):
 
     # Initialize Async Qdrant client (Single source of truth)
     from qdrant_client import AsyncQdrantClient
+
     app.state.qdrant_client = AsyncQdrantClient(
         host=settings.QDRANT_HOST, port=settings.QDRANT_PORT
     )
@@ -87,8 +87,9 @@ async def lifespan(app: FastAPI):
     # Ensure Qdrant Schema exists before validation (Bootstrap)
     if settings.RAE_DB_MODE == "validate":
         try:
-            from apps.memory_api.core.contract_definition import RAE_MEMORY_CONTRACT_V1
             from qdrant_client.http import models as rest
+
+            from apps.memory_api.core.contract_definition import RAE_MEMORY_CONTRACT_V1
 
             if RAE_MEMORY_CONTRACT_V1.vector_store:
                 # Check connectivity first (fast fail if down)
@@ -97,15 +98,19 @@ async def lifespan(app: FastAPI):
 
                 for col in RAE_MEMORY_CONTRACT_V1.vector_store.collections:
                     if col.name not in existing_collections:
-                        logger.info(f"Auto-creating missing Qdrant collection: {col.name}")
+                        logger.info(
+                            f"Auto-creating missing Qdrant collection: {col.name}"
+                        )
                         # Map string distance to Qdrant Enum
                         distance_map = {
                             "Cosine": rest.Distance.COSINE,
                             "Euclid": rest.Distance.EUCLID,
                             "Dot": rest.Distance.DOT,
                         }
-                        metric = distance_map.get(col.distance_metric, rest.Distance.COSINE)
-                        
+                        metric = distance_map.get(
+                            col.distance_metric, rest.Distance.COSINE
+                        )
+
                         await app.state.qdrant_client.create_collection(
                             collection_name=col.name,
                             vectors_config=rest.VectorParams(
@@ -120,17 +125,17 @@ async def lifespan(app: FastAPI):
     # 2. Memory Contract Validation (Fail Fast)
     if settings.RAE_DB_MODE == "validate":
         logger.info("memory_validation_start", mode=settings.RAE_DB_MODE)
-        
+
         from apps.memory_api.adapters.postgres_adapter import PostgresAdapter
-        from apps.memory_api.adapters.redis_adapter import RedisAdapter
         from apps.memory_api.adapters.qdrant_adapter import QdrantAdapter
+        from apps.memory_api.adapters.redis_adapter import RedisAdapter
         from apps.memory_api.core.contract_definition import RAE_MEMORY_CONTRACT_V1
         from apps.memory_api.services.validation_service import ValidationService
 
         adapters = [
             PostgresAdapter(app.state.pool),
             RedisAdapter(app.state.redis_client),
-            QdrantAdapter(app.state.qdrant_client)
+            QdrantAdapter(app.state.qdrant_client),
         ]
         validation_service = ValidationService(adapters)
         result = await validation_service.validate_all(RAE_MEMORY_CONTRACT_V1)
@@ -138,12 +143,11 @@ async def lifespan(app: FastAPI):
         if not result.valid:
             error_msg = f"Memory Contract Validation Failed: {len(result.violations)} violations found."
             logger.error(
-                "memory_validation_failed", 
-                violations=[v.model_dump() for v in result.violations]
+                "memory_validation_failed",
+                violations=[v.model_dump() for v in result.violations],
             )
             # Raise exception to stop startup (Fail Fast)
             raise RuntimeError(f"{error_msg} See logs for details.")
-
 
         logger.info("memory_validation_success")
     elif settings.RAE_DB_MODE == "ignore":
@@ -165,7 +169,7 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down RAE Memory API...")
     await app.state.pool.close()
     await app.state.redis_client.aclose()  # Close Redis client
-    await app.state.qdrant_client.close() # Close Qdrant client
+    await app.state.qdrant_client.close()  # Close Qdrant client
 
 
 # --- App Initialization ---
