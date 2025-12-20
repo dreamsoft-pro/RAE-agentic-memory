@@ -84,6 +84,39 @@ async def lifespan(app: FastAPI):
         host=settings.QDRANT_HOST, port=settings.QDRANT_PORT
     )
 
+    # Ensure Qdrant Schema exists before validation (Bootstrap)
+    if settings.RAE_DB_MODE == "validate":
+        try:
+            from apps.memory_api.core.contract_definition import RAE_MEMORY_CONTRACT_V1
+            from qdrant_client.http import models as rest
+
+            if RAE_MEMORY_CONTRACT_V1.vector_store:
+                # Check connectivity first (fast fail if down)
+                collections_resp = await app.state.qdrant_client.get_collections()
+                existing_collections = {c.name for c in collections_resp.collections}
+
+                for col in RAE_MEMORY_CONTRACT_V1.vector_store.collections:
+                    if col.name not in existing_collections:
+                        logger.info(f"Auto-creating missing Qdrant collection: {col.name}")
+                        # Map string distance to Qdrant Enum
+                        distance_map = {
+                            "Cosine": rest.Distance.COSINE,
+                            "Euclid": rest.Distance.EUCLID,
+                            "Dot": rest.Distance.DOT,
+                        }
+                        metric = distance_map.get(col.distance_metric, rest.Distance.COSINE)
+                        
+                        await app.state.qdrant_client.create_collection(
+                            collection_name=col.name,
+                            vectors_config=rest.VectorParams(
+                                size=col.vector_size,
+                                distance=metric,
+                            ),
+                        )
+        except Exception as e:
+            logger.error(f"Failed to auto-initialize Qdrant schema: {e}")
+            # We continue; validation step will catch any remaining issues and Fail Fast
+
     # 2. Memory Contract Validation (Fail Fast)
     if settings.RAE_DB_MODE == "validate":
         logger.info("memory_validation_start", mode=settings.RAE_DB_MODE)
