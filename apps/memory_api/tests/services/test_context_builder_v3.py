@@ -5,31 +5,39 @@ import pytest
 
 from apps.memory_api.config import settings
 from apps.memory_api.services.context_builder import ContextBuilder
+from apps.memory_api.services.rae_core_service import RAECoreService
+
+
+@pytest.fixture
+def mock_rae_service():
+    service = AsyncMock(spec=RAECoreService)
+    service.list_memories.return_value = []
+    return service
 
 
 @pytest.mark.unit
-async def test_context_builder_uses_v3_when_enabled():
+async def test_context_builder_uses_v3_when_enabled(mock_rae_service):
     # Setup
     pool = MagicMock()
-    repo = MagicMock()
+    # repo = MagicMock() # no longer needed, replaced by rae_service
     reflection_engine = MagicMock()
 
-    # Mock repository return values
-    repo.get_episodic_memories = AsyncMock(
-        return_value=[
-            {
-                "id": "1",
-                "content": "test",
-                "created_at": datetime(2024, 1, 1, tzinfo=timezone.utc),
-                "layer": "episodic",
-                "importance": 0.5,
-            }
-        ]
-    )
-    repo.get_semantic_memories = AsyncMock(return_value=[])
+    # Mock repository return values (now on mock_rae_service)
+    mock_rae_service.list_memories.return_value = [ # Simulates get_episodic_memories behavior
+        {
+            "id": "1",
+            "content": "test",
+            "created_at": datetime(2024, 1, 1, tzinfo=timezone.utc),
+            "layer": "episodic",
+            "importance": 0.5,
+        }
+    ]
+    # No direct mocking for get_semantic_memories, assuming list_memories with filters covers it
+
     reflection_engine.query_reflections = AsyncMock(return_value=[])
 
-    builder = ContextBuilder(pool, repo, reflection_engine)
+    # Pass mock_rae_service instead of repo
+    builder = ContextBuilder(pool, mock_rae_service, reflection_engine)
 
     # Enable V3 temporarily
     original_flag = settings.ENABLE_MATH_V3
@@ -43,33 +51,28 @@ async def test_context_builder_uses_v3_when_enabled():
 
         # Assert
         assert len(ctx.ltm_items) == 1
-        # Ideally we check if V3 scoring was used, but since it's internal to _retrieve_ltm
-        # and we didn't mock compute_batch_scores_v3, we assume it ran if no error occurred
-        # and the flow completed.
-        # To be more robust, we could patch compute_batch_scores_v3.
 
     finally:
         settings.ENABLE_MATH_V3 = original_flag
 
 
 @pytest.mark.unit
-async def test_context_builder_v3_integration_mock():
+async def test_context_builder_v3_integration_mock(mock_rae_service):
     """Verify V3 is actually called using patch"""
     from unittest.mock import patch
 
     pool = MagicMock()
-    repo = MagicMock()
+    # repo = MagicMock() # no longer needed
     reflection_engine = MagicMock()
 
-    repo.get_episodic_memories = AsyncMock(
-        return_value=[
-            {"id": "1", "content": "test", "created_at": "2024-01-01T00:00:00Z"}
-        ]
-    )
-    repo.get_semantic_memories = AsyncMock(return_value=[])
+    # Mock return values for rae_service.list_memories
+    mock_rae_service.list_memories.return_value = [
+        {"id": "1", "content": "test", "created_at": datetime.now(timezone.utc), "layer": "episodic"}
+    ]
     reflection_engine.query_reflections = AsyncMock(return_value=[])
 
-    builder = ContextBuilder(pool, repo, reflection_engine)
+    # Pass mock_rae_service instead of repo
+    builder = ContextBuilder(pool, mock_rae_service, reflection_engine)
 
     original_flag = settings.ENABLE_MATH_V3
     settings.ENABLE_MATH_V3 = True

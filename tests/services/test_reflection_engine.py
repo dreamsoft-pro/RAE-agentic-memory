@@ -3,11 +3,22 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from apps.memory_api.services.llm.base import LLMResult, LLMResultUsage
+from apps.memory_api.services.rae_core_service import RAECoreService
 from apps.memory_api.services.reflection_engine import ReflectionEngine, Triples
 
 
+@pytest.fixture
+def mock_rae_service():
+    """Mock for RAECoreService."""
+    service = AsyncMock(spec=RAECoreService)
+    # Configure mock behavior as needed for these tests
+    service.get_episodic_memories_for_reflection.return_value = [{"id": "1", "content": "Event"}]
+    service.store_memory.return_value = "mock-reflection-id"
+    return service
+
+
 @pytest.mark.asyncio
-async def test_reflection_flow():
+async def test_reflection_flow(mock_rae_service):
     mock_pool = MagicMock()
     mock_conn = AsyncMock()
     mock_acquire_cm = AsyncMock()
@@ -15,7 +26,8 @@ async def test_reflection_flow():
     mock_acquire_cm.__aexit__.return_value = None
     mock_pool.acquire.return_value = mock_acquire_cm
 
-    mock_conn.fetch.return_value = [{"id": "1", "content": "Event"}]
+    # These mocks are now on mock_rae_service
+    # mock_conn.fetch.return_value = [{"id": "1", "content": "Event"}]
     mock_conn.execute = AsyncMock(return_value="INSERT 0 1")
     mock_conn.fetchrow = AsyncMock(return_value={"id": 1})
 
@@ -29,7 +41,7 @@ async def test_reflection_flow():
 
     mock_conn.transaction = MagicMock(return_value=TransactionContext())
 
-    engine = ReflectionEngine(mock_pool)
+    engine = ReflectionEngine(mock_pool, rae_service=mock_rae_service)
     engine.llm_provider = MagicMock()
     engine.llm_provider.generate = AsyncMock(
         return_value=LLMResult(

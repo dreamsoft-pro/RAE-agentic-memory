@@ -17,6 +17,7 @@ from apps.memory_api.services.rae_core_service import RAECoreService
 from apps.memory_api.security.dependencies import get_and_verify_tenant_id
 from apps.memory_api.services.embedding import get_embedding_service
 from apps.memory_api.services.vector_store import get_vector_store
+from apps.memory_api.tests.conftest import mock_pool
 
 
 @pytest.fixture

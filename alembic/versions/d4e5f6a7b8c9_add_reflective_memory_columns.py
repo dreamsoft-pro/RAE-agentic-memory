@@ -44,7 +44,7 @@ def upgrade():
 
     # Add session_id for episodic and reflective memories
     op.add_column(
-        "memories", sa.Column("session_id", UUID(as_uuid=True), nullable=True)
+        "memories", sa.Column("session_id", sa.Text(), nullable=True)
     )
 
     # Add qdrant_point_id for vector store integration

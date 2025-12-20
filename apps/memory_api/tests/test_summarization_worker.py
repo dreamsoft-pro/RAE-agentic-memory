@@ -8,14 +8,24 @@ from apps.memory_api.workers.memory_maintenance import (
     SessionSummaryResponse,
     SummarizationWorker,
 )
+from apps.memory_api.services.rae_core_service import RAECoreService
+
+
+@pytest.fixture
+def mock_rae_service():
+    """Mock for RAECoreService."""
+    service = AsyncMock(spec=RAECoreService)
+    # Configure mock behavior as needed for these tests
+    service.list_memories.return_value = [] # Default empty list for sessions
+    service.store_memory.return_value = "mock-summary-id" # For storing summary
+    return service
 
 
 @pytest.mark.asyncio
-async def test_summarize_session_llm():
+async def test_summarize_session_llm(mock_rae_service):
     """Test session summarization using LLM."""
-    # Mock pool and repo
+    # Mock pool (if needed for the worker itself, not passed to repo directly anymore)
     mock_pool = MagicMock()
-    mock_repo = AsyncMock()
 
     # Mock memories
     memories = [
@@ -32,8 +42,8 @@ async def test_summarize_session_llm():
             "metadata": {"session_id": "session-1"},
         },
     ]
-    mock_repo.get_episodic_memories.return_value = memories
-    mock_repo.insert_memory.return_value = {"id": "summary-id"}
+    mock_rae_service.list_memories.return_value = memories
+    mock_rae_service.store_memory.return_value = "summary-id"
 
     # Mock LLM provider
     mock_llm_provider = AsyncMock()
@@ -43,8 +53,8 @@ async def test_summarize_session_llm():
         sentiment="positive",
     )
 
-    # Create worker
-    worker = SummarizationWorker(pool=mock_pool, memory_repository=mock_repo)
+    # Create worker with rae_service
+    worker = SummarizationWorker(pool=mock_pool, rae_service=mock_rae_service)
     worker.llm_provider = mock_llm_provider
 
     # Run summarization (min_events=2 to trigger)
@@ -58,15 +68,15 @@ async def test_summarize_session_llm():
     assert result["id"] == "summary-id"
     mock_llm_provider.generate_structured.assert_called_once()
 
-    # Verify content passed to insert_memory
-    call_args = mock_repo.insert_memory.call_args[1]
+    # Verify content passed to store_memory
+    call_args = mock_rae_service.store_memory.call_args[1]
     assert "User asked for help and agent provided it." in call_args["content"]
     assert "Key Topics: help, support" in call_args["content"]
     assert "Sentiment: positive" in call_args["content"]
 
 
 @pytest.mark.asyncio
-async def test_summarize_long_sessions():
+async def test_summarize_long_sessions(mock_rae_service):
     """Test summarization of long sessions."""
     # Mock pool with fetch return value
     mock_pool = MagicMock()
@@ -81,11 +91,8 @@ async def test_summarize_long_sessions():
         {"session_id": session_id_2, "event_count": 200},
     ]
 
-    # Mock repo
-    mock_repo = AsyncMock()
-
-    # Create worker
-    worker = SummarizationWorker(pool=mock_pool, memory_repository=mock_repo)
+    # Create worker with rae_service
+    worker = SummarizationWorker(pool=mock_pool, rae_service=mock_rae_service)
 
     # Mock summarize_session to avoid real call
     worker.summarize_session = AsyncMock()

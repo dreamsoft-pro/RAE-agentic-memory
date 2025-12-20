@@ -15,6 +15,10 @@ warnings.filterwarnings("ignore", message="Can't initialize NVML")
 # Suppress Click Parser Deprecation (via spacy)
 warnings.filterwarnings("ignore", module="spacy.cli._util")
 
+import os
+
+os.environ["RAE_DB_MODE"] = "ignore"
+
 
 @pytest.fixture(scope="session")
 def event_loop() -> Generator:
