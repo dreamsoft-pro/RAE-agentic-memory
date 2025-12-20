@@ -1,34 +1,37 @@
-# Next Session Plan
+# Next Session Plan: Mypy "Zero Warnings" Completion
 
-## Priority: Fix Unit Test Failures (Migration Cleanup)
+## Status
+- **Progress:** Reduced Mypy errors from 1290 to 466.
+- **Fixed:** Pydantic models (plugins, constr replacement), logging (structlog migration), and Implicit Optional in key services.
+- **Branch:** feature/mypy-fixes (if applicable, otherwise current).
 
-The migration of `MemoryRepository` to `RAE-Core` is code-complete, but unit tests are failing due to environment configuration and mismatched signatures.
+## Priority: Fix Remaining 466 Mypy Errors
 
-### 1. Disable DB Validation in Tests
-**Error:** `RuntimeError: Database schema validation failed: 1 violations found.`
-**Cause:** The application startup validator runs against mock database pools in tests.
+### 1. Fix Dependency Injection in Background Tasks
+**Errors:** `Missing positional argument "rae_service"` in `apps/memory_api/tasks/background_tasks.py`.
 **Action:**
-- Modify `apps/memory_api/tests/conftest.py`.
-- In the `mock_env` or `app` fixture, ensure `RAE_DB_MODE` environment variable is set to `"ignore"`.
+- Update constructor calls for `ReflectionEngine`, `GraphExtractionService`, and `DreamingWorker` in `background_tasks.py`.
+- Ensure they all receive the required `rae_service`.
 
-### 2. Fix `tests/api/v1/test_memory.py`
-**Error:** `fixture 'mock_pool' not found`
+### 2. Fix Test Suite Type Errors
+**Errors:** Large number of `Missing named argument` and `Incompatible type` in `apps/memory_api/tests/`.
 **Action:**
-- Add `mock_pool` fixture to `tests/api/v1/test_memory.py` (copy from `apps/memory_api/tests/conftest.py` or import it).
+- Update test cases to match the refined Pydantic models (adding missing required fields in mocks).
+- Fix fixture types in `conftest.py` if necessary.
 
-### 3. Fix ReflectionEngineV2 Tests
-**Error:** `AttributeError: 'ReflectionEngineV2' object has no attribute 'generate_reflection'`
+### 3. Fix Attribute Errors in Services
+**Errors:** `BaseModel has no attribute "topics"` (and others) in `semantic_extractor.py` and `reflection_pipeline.py`.
 **Action:**
-- Inspect `apps/memory_api/services/reflection_engine_v2.py`.
-- Determine the correct method name (likely `store_reflection` or `generate_reflection_v2`).
-- Update `apps/memory_api/tests/services/test_reflection_engine_v2.py` to use the correct method.
+- Use `cast(SemanticExtractionResult, result)` after `generate_structured` calls.
+- Verify that `LLMResult` or `LLMResponse` models actually have the attributes being accessed (e.g., `cost_usd`).
 
-### 4. Fix Worker Tests (Dependency Injection)
-**Error:** `TypeError: SummarizationWorker.__init__() got an unexpected keyword argument 'memory_repository'`
-**Action:**
-- Update `apps/memory_api/tests/test_workers.py` and `apps/memory_api/tests/test_summarization_worker.py`.
-- Replace `memory_repository` mock with `rae_service` mock in worker instantiation.
+### 4. Final Verification
+- Run `.venv/bin/mypy apps/ sdk/`.
+- Run `make lint`.
+- Goal: **Success: no issues found in 279 source files.**
 
-### 5. Final Verification
-- Run `make test-unit`.
-- Ensure 0 errors, 0 warnings (per policy).
+## Start Command
+To pick up from where we left off, run:
+```bash
+.venv/bin/mypy apps/ sdk/
+```

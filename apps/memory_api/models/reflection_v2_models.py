@@ -128,7 +128,7 @@ class ReflectionContext:
     # Additional context
     user_preferences: Optional[Dict[str, Any]] = None
     previous_attempts: int = 0
-    related_memory_ids: List[UUID] = None
+    related_memory_ids: Optional[List[UUID]] = None
 
     def __post_init__(self):
         if self.related_memory_ids is None:
@@ -158,15 +158,15 @@ class ReflectionResult:
     confidence: float = 0.5  # 0.0 - 1.0
 
     # Categorization
-    tags: List[str] = None
+    tags: Optional[List[str]] = None
     error_category: Optional[ErrorCategory] = None
 
     # Relationships
-    source_event_ids: List[str] = None
-    related_memory_ids: List[UUID] = None
+    source_event_ids: Optional[List[str]] = None
+    related_memory_ids: Optional[List[UUID]] = None
 
     # Metadata
-    metadata: Dict[str, Any] = None
+    metadata: Optional[Dict[str, Any]] = None
     generated_at: Optional[datetime] = None
 
     def __post_init__(self):
@@ -239,7 +239,7 @@ class EvaluationResult:
     score: float  # 0.0 - 1.0
     reasons: List[str]
     criterion_scores: Dict[EvaluationCriterion, float]
-    recommendations: List[str] = None
+    recommendations: Optional[List[str]] = None
 
     def __post_init__(self):
         if self.recommendations is None:

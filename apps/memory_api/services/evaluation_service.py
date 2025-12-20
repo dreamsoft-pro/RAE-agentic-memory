@@ -179,7 +179,7 @@ class EvaluationService:
         end_time = datetime.now(timezone.utc)
         duration_ms = int((end_time - start_time).total_seconds() * 1000)
 
-        result = EvaluationResult(
+        evaluation_result = EvaluationResult(
             evaluation_id=uuid4(),
             tenant_id=tenant_id,
             project_id=project_id,
@@ -202,7 +202,7 @@ class EvaluationService:
             duration_ms=duration_ms,
         )
 
-        return result
+        return evaluation_result
 
     # ========================================================================
     # Metric Calculations
@@ -461,7 +461,7 @@ class EvaluationService:
         Returns:
             Dictionary: query_id -> {document_id -> relevance_score}
         """
-        organized = {}
+        organized: Dict[str, Dict[UUID, float]] = {}
 
         for judgment in judgments:
             if judgment.query_id not in organized:

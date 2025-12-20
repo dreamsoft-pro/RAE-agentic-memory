@@ -69,7 +69,7 @@ class EnhancedGraphRepository:
         project_id: str,
         node_id: str,
         label: str,
-        properties: Dict[str, Any] = None,
+        properties: Optional[Dict[str, Any]] = None,
     ) -> EnhancedGraphNode:
         """
         Create a knowledge graph node.
@@ -229,10 +229,10 @@ class EnhancedGraphRepository:
         edge_weight: float = 1.0,
         confidence: float = 0.8,
         bidirectional: bool = False,
-        properties: Dict[str, Any] = None,
-        metadata: Dict[str, Any] = None,
-        valid_from: datetime = None,
-        valid_to: datetime = None,
+        properties: Optional[Dict[str, Any]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        valid_from: Optional[datetime] = None,
+        valid_to: Optional[datetime] = None,
     ) -> EnhancedGraphEdge:
         """
         Create a weighted, temporal knowledge graph edge.
@@ -297,7 +297,7 @@ class EnhancedGraphRepository:
         return self._record_to_edge(record)
 
     async def update_edge_weight(
-        self, edge_id: UUID, new_weight: float, new_confidence: float = None
+        self, edge_id: UUID, new_weight: float, new_confidence: Optional[float] = None
     ) -> EnhancedGraphEdge:
         """Update edge weight and confidence"""
         if new_confidence is not None:
@@ -329,7 +329,7 @@ class EnhancedGraphRepository:
         return self._record_to_edge(record)
 
     async def deactivate_edge(
-        self, edge_id: UUID, reason: str = None
+        self, edge_id: UUID, reason: Optional[str] = None
     ) -> EnhancedGraphEdge:
         """Soft delete edge by setting is_active to False"""
         metadata_update = {"deactivation_reason": reason} if reason else {}
@@ -366,7 +366,7 @@ class EnhancedGraphRepository:
         return self._record_to_edge(record)
 
     async def set_edge_temporal_validity(
-        self, edge_id: UUID, valid_from: datetime, valid_to: datetime = None
+        self, edge_id: UUID, valid_from: datetime, valid_to: Optional[datetime] = None
     ) -> EnhancedGraphEdge:
         """Set temporal validity window for edge"""
         record = await self.pool.fetchrow(
@@ -446,8 +446,8 @@ class EnhancedGraphRepository:
         start_node_id: UUID,
         algorithm: TraversalAlgorithm = TraversalAlgorithm.BFS,
         max_depth: int = 3,
-        at_timestamp: datetime = None,
-        relation_filter: List[str] = None,
+        at_timestamp: Optional[datetime] = None,
+        relation_filter: Optional[List[str]] = None,
         min_weight: float = 0.0,
         min_confidence: float = 0.0,
     ) -> Tuple[List[EnhancedGraphNode], List[EnhancedGraphEdge]]:
@@ -543,7 +543,7 @@ class EnhancedGraphRepository:
         project_id: str,
         start_node_id: UUID,
         end_node_id: UUID,
-        at_timestamp: datetime = None,
+        at_timestamp: Optional[datetime] = None,
         max_depth: int = 10,
     ) -> Optional[GraphPath]:
         """
@@ -599,8 +599,8 @@ class EnhancedGraphRepository:
         tenant_id: str,
         project_id: str,
         snapshot_name: str,
-        description: str = None,
-        created_by: str = None,
+        description: Optional[str] = None,
+        created_by: Optional[str] = None,
     ) -> UUID:
         """
         Create a snapshot of current graph state.

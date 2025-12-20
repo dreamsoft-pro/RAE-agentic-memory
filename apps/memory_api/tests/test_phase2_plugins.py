@@ -28,10 +28,10 @@ class MockTestPlugin(Plugin):
             hooks=[PluginHook.AFTER_MEMORY_CREATE, PluginHook.BEFORE_QUERY],
         )
 
-    def __init__(self, config: Dict[str, Any] = None):
-        super().__init__(config)
-        self.memory_creates = []
-        self.queries = []
+    def __init__(self, config: dict[str, Any] | None = None):
+        self.config = config or {}
+        self.memory_creates: list[tuple[Any, str]] = []
+        self.queries: list[str] = []
 
     async def on_after_memory_create(
         self, tenant_id, memory_id: str, memory_data: Dict[str, Any]
@@ -409,7 +409,7 @@ class TestMultiplePlugins:
         registry.register(plugin2)
 
         tenant_id = uuid4()
-        params = {}
+        params: dict[str, Any] = {}
 
         # Execute transform hook
         await registry.execute_hook(

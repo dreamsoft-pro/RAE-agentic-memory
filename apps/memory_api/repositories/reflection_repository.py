@@ -49,13 +49,13 @@ async def create_reflection(
     priority: int,
     scoring: ReflectionScoring,
     parent_reflection_id: Optional[UUID] = None,
-    source_memory_ids: List[UUID] = None,
-    source_reflection_ids: List[UUID] = None,
+    source_memory_ids: Optional[List[UUID]] = None,
+    source_reflection_ids: Optional[List[UUID]] = None,
     embedding: Optional[List[float]] = None,
     cluster_id: Optional[str] = None,
-    tags: List[str] = None,
+    tags: Optional[List[str]] = None,
     telemetry: Optional[ReflectionTelemetry] = None,
-    metadata: Dict[str, Any] = None,
+    metadata: Optional[Dict[str, Any]] = None,
 ) -> ReflectionUnit:
     """
     Create a new reflection in the database.
@@ -347,7 +347,7 @@ async def create_reflection_relationship(
     relation_type: ReflectionRelationType,
     strength: float,
     confidence: float,
-    supporting_evidence: List[str] = None,
+    supporting_evidence: Optional[List[str]] = None,
     check_cycles: bool = True,
 ) -> ReflectionRelationship:
     """
@@ -611,7 +611,7 @@ async def log_reflection_usage(
     rank_position: Optional[int] = None,
     user_id: Optional[str] = None,
     session_id: Optional[str] = None,
-    metadata: Dict[str, Any] = None,
+    metadata: Optional[Dict[str, Any]] = None,
 ) -> UUID:
     """
     Log reflection usage for analytics.

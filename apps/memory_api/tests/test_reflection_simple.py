@@ -5,6 +5,7 @@ Tests the actual reflection pipeline API with proper mocks.
 """
 
 from datetime import datetime
+from typing import Any, cast
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
@@ -82,8 +83,8 @@ async def test_generate_reflections_basic(mock_pool, sample_memories):
     pipeline = ReflectionPipeline(mock_pool)
 
     # Mock LLM provider
-    pipeline.llm_provider.generate = AsyncMock(return_value="Test insight")
-    pipeline.llm_provider.generate_structured = AsyncMock(
+    cast(Any, pipeline.llm_provider).generate = AsyncMock(return_value="Test insight")
+    cast(Any, pipeline.llm_provider).generate_structured = AsyncMock(
         return_value={
             "novelty": 0.8,
             "importance": 0.9,
@@ -93,8 +94,8 @@ async def test_generate_reflections_basic(mock_pool, sample_memories):
     )
 
     # Mock ML client
-    pipeline.ml_client.get_embedding = AsyncMock(
-        return_value=np.random.rand(384).tolist()
+    cast(Any, pipeline.ml_client).generate_embeddings = AsyncMock(
+        return_value={"embeddings": [np.random.rand(384).tolist()]}
     )
 
     request = GenerateReflectionRequest(

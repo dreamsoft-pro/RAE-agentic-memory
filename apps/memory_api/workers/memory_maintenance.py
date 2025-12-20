@@ -573,32 +573,22 @@ class MaintenanceScheduler:
     cron/systemd timers.
     """
 
-    def __init__(self, pool: asyncpg.Pool):
+    def __init__(self, pool: asyncpg.Pool, rae_service: Optional[RAECoreService] = None):
         self.pool = pool
+        self.rae_service = rae_service
+        self.decay_worker = DecayWorker(pool)
+        self.summarization_worker: Optional[SummarizationWorker] = None
+        self.dreaming_worker: Optional[DreamingWorker] = None
 
-        # Instantiate RAECoreService dependencies manually for CLI context
-        # In a real app context, this should be injected.
-        # For CLI usage, we need to create it.
-        # Note: This requires Qdrant and Redis which might be heavy for a worker if not needed.
-        # But we need it for Memory replacement.
-        # HACK: For now we mock or create minimal service if possible, or assume full env.
-        # Assuming full env as it's a worker process.
-
-        # We need to initialize clients. Ideally these are passed in __init__
-        # But to keep signature simple for existing callers (if any), we might need to handle it.
-        # However, the CLI entry point below creates pool.
-        # We should update CLI entry point to create full service stack.
-        # For now, we'll assume we can't easily create RAECoreService inside __init__ without async.
-        # So we'll update the CLI entry point first to pass it, and update __init__ signature.
-        pass
+        if self.rae_service:
+            self.summarization_worker = SummarizationWorker(pool, self.rae_service)
+            self.dreaming_worker = DreamingWorker(pool, self.rae_service)
 
     @classmethod
     async def create(
         cls, pool: asyncpg.Pool, redis_url: str, qdrant_host: str, qdrant_port: int
     ):
         """Async factory"""
-        self = cls(pool)
-
         # Initialize dependencies
         import redis.asyncio as aioredis
         from qdrant_client import AsyncQdrantClient
@@ -608,15 +598,11 @@ class MaintenanceScheduler:
         )
         qdrant_client = AsyncQdrantClient(host=qdrant_host, port=qdrant_port)
 
-        self.rae_service = RAECoreService(
+        rae_service = RAECoreService(
             postgres_pool=pool, qdrant_client=qdrant_client, redis_client=redis_client
         )
 
-        self.decay_worker = DecayWorker(pool)
-        self.summarization_worker = SummarizationWorker(pool, self.rae_service)
-        self.dreaming_worker = DreamingWorker(pool, self.rae_service)
-
-        return self
+        return cls(pool, rae_service)
 
     async def run_daily_maintenance(
         self,
@@ -668,7 +654,11 @@ class MaintenanceScheduler:
             )
 
             # 2. Run dreaming cycles for each tenant (only if enabled)
-            if settings.REFLECTIVE_MEMORY_ENABLED and settings.DREAMING_ENABLED:
+            if (
+                settings.REFLECTIVE_MEMORY_ENABLED
+                and settings.DREAMING_ENABLED
+                and self.dreaming_worker
+            ):
                 if tenant_ids is None:
                     tenant_ids = await self.decay_worker._get_all_tenant_ids()
 

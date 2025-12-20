@@ -8,7 +8,7 @@ echo ""
 # Sprawdź czy jesteś w odpowiednim katalogu
 if [ ! -f "orchestrator/test_simple.py" ]; then
     echo "❌ Błąd: Uruchom ten skrypt z głównego katalogu projektu"
-    echo "   cd /home/grzegorz/cloud/Dockerized/RAE-agentic-memory"
+    echo "   (katalog zawierający folder 'orchestrator')"
     exit 1
 fi
 

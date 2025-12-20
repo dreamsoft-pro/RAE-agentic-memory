@@ -2,12 +2,18 @@
 LLM Error types.
 Unified error handling for all LLM providers.
 """
+from typing import Optional
 
 
 class LLMError(Exception):
     """Base exception for all LLM-related errors."""
 
-    def __init__(self, message: str, provider: str = None, raw_error: Exception = None):
+    def __init__(
+        self,
+        message: str,
+        provider: Optional[str] = None,
+        raw_error: Optional[Exception] = None,
+    ):
         self.message = message
         self.provider = provider
         self.raw_error = raw_error

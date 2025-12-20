@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
@@ -69,7 +70,7 @@ async def test_decay_worker_run_decay_cycle(mock_pool, mock_settings):
     # Mock getting tenant IDs with valid UUIDs
     tenant1 = str(uuid4())
     tenant2 = str(uuid4())
-    worker._get_all_tenant_ids = AsyncMock(return_value=[tenant1, tenant2])
+    cast(Any, worker)._get_all_tenant_ids = AsyncMock(return_value=[tenant1, tenant2])
 
     stats = await worker.run_decay_cycle(decay_rate=0.05, consider_access_stats=False)
 
@@ -84,7 +85,7 @@ async def test_decay_worker_run_decay_cycle_error(mock_pool, mock_settings):
     mock_scoring_service.decay_importance.side_effect = Exception("Decay failed")
 
     worker = DecayWorker(pool=mock_pool, scoring_service=mock_scoring_service)
-    worker._get_all_tenant_ids = AsyncMock(return_value=[str(uuid4())])
+    cast(Any, worker)._get_all_tenant_ids = AsyncMock(return_value=[str(uuid4())])
 
     stats = await worker.run_decay_cycle(decay_rate=0.05)
 
@@ -175,7 +176,7 @@ async def test_summarize_long_sessions(mock_pool, mock_settings, mock_rae_servic
     worker = SummarizationWorker(pool=mock_pool, rae_service=mock_rae_service)
 
     # Mock summarize_session
-    worker.summarize_session = AsyncMock(return_value={"id": "summary"})
+    cast(Any, worker).summarize_session = AsyncMock(return_value={"id": "summary"})
 
     # Mock DB query for long sessions
     mock_conn = mock_pool.acquire.return_value.__aenter__.return_value
@@ -186,8 +187,9 @@ async def test_summarize_long_sessions(mock_pool, mock_settings, mock_rae_servic
         tenant_id="tenant1", project_id="proj1", event_threshold=100
     )
 
+    # Verify results
     assert len(summaries) == 1
-    worker.summarize_session.assert_called_once()
+    cast(Any, worker).summarize_session.assert_called_once()
 
 
 # --- DreamingWorker Tests ---

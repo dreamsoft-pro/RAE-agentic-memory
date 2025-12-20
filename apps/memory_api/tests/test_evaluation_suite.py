@@ -10,6 +10,7 @@ Tests cover:
 """
 
 from datetime import datetime, timedelta, timezone
+from typing import Any, cast
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
@@ -173,7 +174,7 @@ async def test_ab_test_traffic_validation():
         {"name": "A", "traffic_percentage": 50.0},
         {"name": "B", "traffic_percentage": 50.0},
     ]
-    total = sum(v["traffic_percentage"] for v in variants)
+    total = sum(cast(float, v["traffic_percentage"]) for v in variants)
     assert 99.0 <= total <= 101.0  # Allow floating point error
 
     # Invalid allocation
@@ -181,5 +182,5 @@ async def test_ab_test_traffic_validation():
         {"name": "A", "traffic_percentage": 40.0},
         {"name": "B", "traffic_percentage": 40.0},
     ]
-    total_invalid = sum(v["traffic_percentage"] for v in variants_invalid)
+    total_invalid = sum(cast(float, v["traffic_percentage"]) for v in variants_invalid)
     assert not (99.0 <= total_invalid <= 101.0)

@@ -16,7 +16,7 @@ Includes:
 """
 
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import asyncpg
 import structlog
@@ -112,12 +112,12 @@ class HybridSearchService:
         enable_fulltext: bool = True,
         enable_reranking: bool = True,
         reranking_model: RerankingModel = RerankingModel.CLAUDE_HAIKU,
-        manual_weights: Dict[str, float] = None,
-        temporal_filter: datetime = None,
-        tag_filter: List[str] = None,
-        min_importance: float = None,
+        manual_weights: Optional[Dict[str, float]] = None,
+        temporal_filter: Optional[datetime] = None,
+        tag_filter: Optional[List[str]] = None,
+        min_importance: Optional[float] = None,
         graph_max_depth: int = 3,
-        conversation_history: List[str] = None,
+        conversation_history: Optional[List[str]] = None,
         bypass_cache: bool = False,
     ) -> HybridSearchResult:
         """
@@ -364,9 +364,9 @@ class HybridSearchService:
         project_id: str,
         query: str,
         k: int,
-        temporal_filter: datetime = None,
-        tag_filter: List[str] = None,
-        min_importance: float = None,
+        temporal_filter: Optional[datetime] = None,
+        tag_filter: Optional[List[str]] = None,
+        min_importance: Optional[float] = None,
     ) -> List[Dict[str, Any]]:
         """Execute vector similarity search"""
         logger.info("executing_vector_search", k=k)
@@ -648,8 +648,8 @@ class HybridSearchService:
         project_id: str,
         query: str,
         k: int,
-        temporal_filter: datetime = None,
-        tag_filter: List[str] = None,
+        temporal_filter: Optional[datetime] = None,
+        tag_filter: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
         """Execute full-text keyword search"""
         logger.info("executing_fulltext_search", k=k)

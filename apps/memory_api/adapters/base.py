@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import Any, Dict
 
+from apps.memory_api.core.contract import ValidationResult
+
 
 class MemoryAdapter(ABC):
     """
@@ -16,7 +18,7 @@ class MemoryAdapter(ABC):
         pass
 
     @abstractmethod
-    async def validate(self, contract: Any) -> Dict[str, Any]:
+    async def validate(self, contract: Any) -> ValidationResult:
         """
         Validates the memory layer against the provided contract.
 
@@ -24,7 +26,7 @@ class MemoryAdapter(ABC):
             contract: The contract object defining the expected state of the memory layer.
 
         Returns:
-            A dictionary containing validation results.
+            A ValidationResult object containing validation results.
         """
         pass
 

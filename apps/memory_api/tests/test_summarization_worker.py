@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -28,7 +29,7 @@ async def test_summarize_session_llm(mock_rae_service):
     mock_pool = MagicMock()
 
     # Mock memories
-    memories = [
+    memories: list[dict[str, Any]] = [
         {
             "id": 1,
             "content": "User asked for help",
@@ -99,8 +100,8 @@ async def test_summarize_long_sessions(mock_rae_service):
     worker = SummarizationWorker(pool=mock_pool, rae_service=mock_rae_service)
 
     # Mock summarize_session to avoid real call
-    worker.summarize_session = AsyncMock()
-    worker.summarize_session.return_value = {"id": "summary-id"}
+    cast(Any, worker).summarize_session = AsyncMock()
+    cast(Any, worker).summarize_session.return_value = {"id": "summary-id"}
 
     # Run long session summarization
     summaries = await worker.summarize_long_sessions(
@@ -109,9 +110,9 @@ async def test_summarize_long_sessions(mock_rae_service):
 
     # Verify results
     assert len(summaries) == 2
-    assert worker.summarize_session.call_count == 2
+    assert cast(Any, worker).summarize_session.call_count == 2
 
     # Verify calls
-    calls = worker.summarize_session.call_args_list
+    calls = cast(Any, worker).summarize_session.call_args_list
     assert str(calls[0].kwargs["session_id"]) == session_id_1
     assert str(calls[1].kwargs["session_id"]) == session_id_2

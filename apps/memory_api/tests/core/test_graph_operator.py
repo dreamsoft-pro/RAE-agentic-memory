@@ -7,14 +7,10 @@ Tests cover:
   3. Temporal decay of edge weights
   4. Convergence analysis
   5. Edge cases and error handling
-
-Mathematical validation:
-  - G_{t+1} = T(G_t, o_t, a_t) is deterministic
-  - Temporal decay: w(t) = w(t_0) * exp(-Δt / half_life)
-  - Convergence: node_churn < 5, edge_churn < 10, spectral_gap < 0.5
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from typing import Any
 
 import numpy as np
 import pytest
@@ -280,7 +276,7 @@ def test_add_node_duplicate(graph_operator, simple_graph):
 
 def test_add_node_missing_data(graph_operator, simple_graph):
     """Test adding node with missing data"""
-    observation = {}  # No node_data
+    observation: dict[str, Any] = {}  # No node_data
 
     new_graph = graph_operator.apply(
         graph=simple_graph,
@@ -489,7 +485,7 @@ def test_merge_nodes_redirect_edges(graph_operator):
 
 def test_merge_nodes_missing_parameters(graph_operator, simple_graph):
     """Test merge with missing parameters"""
-    parameters = {}  # No node IDs
+    parameters: dict[str, Any] = {}  # No node IDs
 
     new_graph = graph_operator.apply(
         graph=simple_graph,

@@ -14,15 +14,15 @@ ISO/IEC 42001 alignment:
 - Section 8: Information security (data segregation)
 """
 
-import logging
 from typing import Optional
 from uuid import UUID
 
 import asyncpg
+import structlog
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class RLSContextMiddleware(BaseHTTPMiddleware):

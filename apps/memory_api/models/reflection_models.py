@@ -13,7 +13,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, constr
+from pydantic import BaseModel, ConfigDict, Field
 
 # ============================================================================
 # Enums
@@ -272,8 +272,8 @@ class ReflectionCluster(BaseModel):
 class GenerateReflectionRequest(BaseModel):
     """Request model for generating a new reflection"""
 
-    project: constr(min_length=1, max_length=255)
-    tenant_id: constr(min_length=1, max_length=255)
+    project: str = Field(..., min_length=1, max_length=255)
+    tenant_id: str = Field(..., min_length=1, max_length=255)
 
     # Generation parameters
     reflection_type: Optional[ReflectionType] = Field(
@@ -314,12 +314,12 @@ class GenerateReflectionResponse(BaseModel):
 class QueryReflectionsRequest(BaseModel):
     """Request model for querying reflections"""
 
-    project: constr(min_length=1, max_length=255)
-    tenant_id: constr(min_length=1, max_length=255)
+    project: str = Field(..., min_length=1, max_length=255)
+    tenant_id: str = Field(..., min_length=1, max_length=255)
 
     # Query parameters
-    query_text: Optional[constr(min_length=1, max_length=1024)] = Field(
-        None, description="Semantic query text"
+    query_text: Optional[str] = Field(
+        None, min_length=1, max_length=1024, description="Semantic query text"
     )
     k: int = Field(10, gt=0, le=100, description="Number of results to return")
 
@@ -356,8 +356,8 @@ class QueryReflectionsResponse(BaseModel):
 class GetReflectionGraphRequest(BaseModel):
     """Request model for retrieving reflection graph"""
 
-    project: constr(min_length=1, max_length=255)
-    tenant_id: constr(min_length=1, max_length=255)
+    project: str = Field(..., min_length=1, max_length=255)
+    tenant_id: str = Field(..., min_length=1, max_length=255)
 
     # Starting point
     reflection_id: UUID = Field(..., description="Root reflection ID")
@@ -389,8 +389,8 @@ class GetReflectionGraphResponse(BaseModel):
 class CreateReflectionRelationshipRequest(BaseModel):
     """Request model for creating a reflection relationship"""
 
-    project: constr(min_length=1, max_length=255)
-    tenant_id: constr(min_length=1, max_length=255)
+    project: str = Field(..., min_length=1, max_length=255)
+    tenant_id: str = Field(..., min_length=1, max_length=255)
 
     # Relationship
     source_reflection_id: UUID

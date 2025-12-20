@@ -9,7 +9,7 @@ This service analyzes user queries to:
 """
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 
 import structlog
 from pydantic import BaseModel
@@ -162,6 +162,7 @@ class QueryAnalyzer:
                 model=settings.RAE_LLM_MODEL_DEFAULT,
                 response_model=QueryAnalysisResult,
             )
+            result = cast(QueryAnalysisResult, result)
 
             # Convert to QueryAnalysis
             analysis = QueryAnalysis(

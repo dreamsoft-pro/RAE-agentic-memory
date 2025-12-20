@@ -56,7 +56,7 @@ def _get_anonymizer() -> "AnonymizerEngine":
     return _anonymizer
 
 
-def scrub_text(text: str) -> str:
+def scrub_text(text: str | None) -> str:
     """
     Analyzes and anonymizes PII in the given text using Presidio.
 

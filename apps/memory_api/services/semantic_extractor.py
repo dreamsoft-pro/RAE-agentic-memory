@@ -9,7 +9,7 @@ This service extracts semantic knowledge from memories:
 - Automatic embedding generation
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 from uuid import UUID
 
 import asyncpg
@@ -335,6 +335,8 @@ class SemanticExtractor:
                 model=settings.RAE_LLM_MODEL_DEFAULT,
                 response_model=SemanticExtractionResult,
             )
+
+            result = cast(SemanticExtractionResult, result)
 
             logger.info(
                 "semantic_extraction_llm_complete",

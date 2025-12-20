@@ -6,7 +6,7 @@ the Actor → Evaluator → Reflector pattern described in the implementation pl
 """
 
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
 from uuid import UUID
 
 import asyncpg
@@ -246,6 +246,7 @@ class ReflectionEngineV2:
             model=settings.RAE_LLM_MODEL_DEFAULT,
             response_model=LLMReflectionResponse,
         )
+        result = cast(LLMReflectionResponse, result)
 
         return result
 
@@ -278,6 +279,7 @@ class ReflectionEngineV2:
             model=settings.RAE_LLM_MODEL_DEFAULT,
             response_model=LLMReflectionResponse,
         )
+        result = cast(LLMReflectionResponse, result)
 
         return result
 

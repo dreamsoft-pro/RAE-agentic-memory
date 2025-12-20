@@ -11,7 +11,7 @@ This module implements the complete reflection generation pipeline with:
 """
 
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, cast
 from uuid import UUID
 
 import asyncpg
@@ -218,9 +218,10 @@ class ReflectionPipeline:
                     )
                     insights.append(insight)
                     statistics["insights_generated"] += 1
-                    statistics["total_cost_usd"] += (
-                        insight.telemetry.generation_cost_usd or 0.0
-                    )
+                    if insight.telemetry:
+                        statistics["total_cost_usd"] += (
+                            insight.telemetry.generation_cost_usd or 0.0
+                        )
                 except Exception as e:
                     logger.error(
                         "cluster_insight_failed", cluster_id=cluster_id, error=str(e)
@@ -241,9 +242,10 @@ class ReflectionPipeline:
                     )
                     all_reflections.append(meta_insight)
                     statistics["meta_insights_generated"] += 1
-                    statistics["total_cost_usd"] += (
-                        meta_insight.telemetry.generation_cost_usd or 0.0
-                    )
+                    if meta_insight.telemetry:
+                        statistics["total_cost_usd"] += (
+                            meta_insight.telemetry.generation_cost_usd or 0.0
+                        )
                     span.set_attribute("rae.reflection.meta_insights_generated", 1)
                     logger.info("meta_insight_generated")
                 except Exception as e:
@@ -635,6 +637,7 @@ class ReflectionPipeline:
                 model=settings.RAE_LLM_MODEL_DEFAULT,
                 response_model=ScoreResponse,
             )
+            result = cast(ScoreResponse, result)
 
             return ReflectionScoring(
                 novelty_score=result.novelty,
@@ -656,8 +659,10 @@ class ReflectionPipeline:
     async def _generate_embedding(self, text: str) -> List[float]:
         """Generate embedding for reflection text"""
         try:
-            embedding = await self.ml_client.get_embedding(text)
-            return embedding
+            result = await self.ml_client.generate_embeddings([text])
+            if result and "embeddings" in result and len(result["embeddings"]) > 0:
+                return cast(List[float], result["embeddings"][0])
+            return [0.0] * 1536
         except Exception as e:
             logger.error("embedding_generation_failed", error=str(e))
             # Return zero vector as fallback

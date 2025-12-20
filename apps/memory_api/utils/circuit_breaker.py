@@ -15,15 +15,16 @@ States:
 - HALF_OPEN: Testing if service recovered
 """
 
-import logging
 import time
 from datetime import datetime
 from enum import Enum
 from typing import Any, Callable, Dict, Optional
 
+import structlog
+
 from apps.memory_api.utils.datetime_utils import utc_now
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class CircuitState(str, Enum):
