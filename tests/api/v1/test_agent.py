@@ -33,10 +33,7 @@ def mock_services():
         "apps.memory_api.api.v1.agent.estimate_tokens"
     ) as mock_est, patch(
         "apps.memory_api.api.v1.agent.track_request_cost"
-    ) as mock_track, patch(
-        "apps.memory_api.api.v1.agent._update_memory_access_stats",
-        new_callable=AsyncMock,
-    ):
+    ) as mock_track:
         # Setup default behaviors
         mock_embed.return_value.generate_embeddings.return_value = [[0.1] * 384]
 
@@ -62,10 +59,16 @@ def mock_services():
 def client_with_auth():
     # Override auth dependency
     app.dependency_overrides[get_and_verify_tenant_id] = lambda: "test-tenant"
+    
     # Mock pool state to avoid AttributeError
     mock_pool = MagicMock()
     mock_pool.close = AsyncMock()
     app.state.pool = mock_pool
+
+    # Mock RAE Core Service
+    mock_rae_service = AsyncMock()
+    mock_rae_service.update_memory_access_batch = AsyncMock()
+    app.state.rae_core_service = mock_rae_service
 
     # Mock lifespan dependencies to avoid real DB/Redis connections
     with patch(
@@ -78,6 +81,8 @@ def client_with_auth():
     app.dependency_overrides = {}
     if hasattr(app.state, "pool"):
         del app.state.pool
+    if hasattr(app.state, "rae_core_service"):
+        del app.state.rae_core_service
 
 
 @pytest.mark.asyncio

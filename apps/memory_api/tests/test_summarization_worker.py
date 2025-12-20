@@ -59,6 +59,10 @@ async def test_summarize_session_llm(mock_rae_service):
 
     # Run summarization (min_events=2 to trigger)
     session_id = uuid.uuid4()
+    # Ensure mock memories have the matching session_id
+    for m in memories:
+        m["metadata"]["session_id"] = str(session_id)
+    
     result = await worker.summarize_session(
         tenant_id="tenant-1", project_id="default", session_id=session_id, min_events=2
     )

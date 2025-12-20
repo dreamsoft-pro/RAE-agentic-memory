@@ -2,7 +2,7 @@
 Integration tests for GraphExtractionService using Testcontainers.
 
 These tests verify the refactored Repository/DAO pattern implementation:
-- GraphExtractionService uses MemoryRepository for memory access
+- GraphExtractionService uses RAECoreService for memory access
 - GraphExtractionService uses GraphRepository for graph operations
 - Proper JSONB serialization/deserialization
 - Complete triple storage workflow (nodes + edges)
@@ -13,6 +13,7 @@ Prerequisites:
 """
 
 import pytest
+from unittest.mock import AsyncMock, MagicMock
 
 # Skip tests if spacy is not installed (ML dependency)
 spacy = pytest.importorskip(
@@ -20,51 +21,63 @@ spacy = pytest.importorskip(
     reason="Requires spacy – heavy ML dependency, not installed in lightweight CI",
 )
 
-from apps.memory_api.repositories.graph_repository import GraphRepository  # noqa: E402
-from apps.memory_api.repositories.memory_repository import (  # noqa: E402
-    MemoryRepository,
-)
-from apps.memory_api.services.graph_extraction import (  # noqa: E402
+from apps.memory_api.repositories.graph_repository import GraphRepository
+from apps.memory_api.services.graph_extraction import (
     GraphExtractionService,
     GraphTriple,
 )
+from apps.memory_api.services.rae_core_service import RAECoreService
 
 
 @pytest.mark.asyncio
-async def test_fetch_episodic_memories_uses_repository(db_pool, use_real_db):
+async def test_fetch_episodic_memories_uses_service(db_pool):
     """
-    Test that GraphExtractionService uses MemoryRepository to fetch episodic memories.
+    Test that GraphExtractionService uses RAECoreService to fetch episodic memories.
     """
     # Arrange: Create test episodic memories
     tenant_id = "test-tenant-extraction"
     project_id = "test-project-extraction"
+    
+    mock_memories = [
+        {
+            "id": "1",
+            "content": "User reported bug in auth module",
+            "layer": "episodic",
+            "tags": ["bug"],
+            "source": "tracker",
+            "created_at": "2024-01-01T12:00:00"
+        },
+        {
+            "id": "2",
+            "content": "Developer fixed the authentication issue",
+            "layer": "episodic",
+            "tags": ["fix"],
+            "source": "git",
+            "created_at": "2024-01-02T12:00:00"
+        }
+    ]
 
-    async with db_pool.acquire() as conn:
-        # Insert test episodic memories
-        await conn.execute(
-            """
-            INSERT INTO memories (tenant_id, project, content, layer, tags, source, created_at)
-            VALUES
-                ($1, $2, 'User reported bug in auth module', 'em', ARRAY['bug'], 'tracker', NOW()),
-                ($1, $2, 'Developer fixed the authentication issue', 'em', ARRAY['fix'], 'git', NOW()),
-                ($1, $2, 'This is a semantic memory', 'sm', ARRAY['info'], 'system', NOW())
-            """,
-            tenant_id,
-            project_id,
-        )
+    # Mock RAECoreService
+    mock_rae_service = AsyncMock(spec=RAECoreService)
+    mock_rae_service.list_memories.return_value = mock_memories
 
-    # Act: Initialize repositories and service
-    memory_repo = MemoryRepository(db_pool)
     graph_repo = GraphRepository(db_pool)
-    service = GraphExtractionService(memory_repo, graph_repo)
+    service = GraphExtractionService(mock_rae_service, graph_repo)
+
+    # Act
     memories = await service._fetch_episodic_memories(
         project_id=project_id, tenant_id=tenant_id, limit=10
     )
 
-    # Assert: Should only return episodic memories (layer='em')
+    # Assert
     assert len(memories) == 2
-    assert all(mem["layer"] == "em" for mem in memories)
-    assert memories[0]["source"] in ["tracker", "git"]
+    assert memories == mock_memories
+    mock_rae_service.list_memories.assert_called_once_with(
+        tenant_id=tenant_id,
+        layer="episodic",
+        project=project_id,
+        limit=10
+    )
 
 
 @pytest.mark.asyncio
@@ -77,9 +90,9 @@ async def test_store_graph_triples_creates_nodes_and_edges(db_pool, use_real_db)
     tenant_id = "test-tenant-triples"
     project_id = "test-project-triples"
 
-    memory_repo = MemoryRepository(db_pool)
+    mock_rae_service = AsyncMock(spec=RAECoreService)
     graph_repo = GraphRepository(db_pool)
-    service = GraphExtractionService(memory_repo, graph_repo)
+    service = GraphExtractionService(mock_rae_service, graph_repo)
 
     # Create test triples
     # Note: Entity names will be normalized (underscores -> spaces)
@@ -195,9 +208,9 @@ async def test_store_triples_handles_duplicates_gracefully(db_pool, use_real_db)
     tenant_id = "test-tenant-duplicates"
     project_id = "test-project-duplicates"
 
-    memory_repo = MemoryRepository(db_pool)
+    mock_rae_service = AsyncMock(spec=RAECoreService)
     graph_repo = GraphRepository(db_pool)
-    service = GraphExtractionService(memory_repo, graph_repo)
+    service = GraphExtractionService(mock_rae_service, graph_repo)
 
     triple = GraphTriple(
         source="alice",
@@ -282,41 +295,6 @@ async def test_graph_repository_jsonb_serialization(db_pool, use_real_db):
 
 
 @pytest.mark.asyncio
-async def test_memory_repository_returns_source_field(db_pool, use_real_db):
-    """
-    Test that MemoryRepository.get_episodic_memories returns the 'source' field.
-
-    This verifies the fix where 'source' was added to the SELECT query.
-    """
-    # Arrange
-    tenant_id = "test-tenant-source"
-    project_id = "test-project-source"
-
-    repo = MemoryRepository(db_pool)
-
-    # Insert test memory with source field
-    async with db_pool.acquire() as conn:
-        await conn.execute(
-            """
-            INSERT INTO memories (tenant_id, project, content, layer, source, created_at)
-            VALUES ($1, $2, 'Test content', 'em', 'test-source', NOW())
-            """,
-            tenant_id,
-            project_id,
-        )
-
-    # Act: Fetch episodic memories
-    memories = await repo.get_episodic_memories(
-        tenant_id=tenant_id, project=project_id, limit=10
-    )
-
-    # Assert: Verify source field is present
-    assert len(memories) == 1
-    assert "source" in memories[0]
-    assert memories[0]["source"] == "test-source"
-
-
-@pytest.mark.asyncio
 async def test_graph_repository_get_node_internal_id(db_pool, use_real_db):
     """
     Test GraphRepository.get_node_internal_id method.
@@ -357,7 +335,7 @@ async def test_graph_repository_get_node_internal_id(db_pool, use_real_db):
 async def test_end_to_end_triple_storage_workflow(db_pool, use_real_db):
     """
     End-to-end test of the complete triple storage workflow:
-    1. Create memories
+    1. Create memories (MOCKED)
     2. Extract graph (mocked LLM)
     3. Store triples via service
     4. Verify nodes and edges in database
@@ -366,19 +344,23 @@ async def test_end_to_end_triple_storage_workflow(db_pool, use_real_db):
     tenant_id = "test-tenant-e2e"
     project_id = "test-project-e2e"
 
-    # Create test memories
-    async with db_pool.acquire() as conn:
-        await conn.execute(
-            """
-            INSERT INTO memories (tenant_id, project, content, layer, tags, source, created_at)
-            VALUES
-                ($1, $2, 'John reported bug in authentication', 'em', ARRAY['bug'], 'tracker', NOW()),
-                ($1, $2, 'Alice fixed the auth bug', 'em', ARRAY['fix'], 'git', NOW())
-            """,
-            tenant_id,
-            project_id,
-        )
-
+    # Mock RAE service returns
+    mock_rae_service = AsyncMock(spec=RAECoreService)
+    # We don't strictly need it to return anything if we just call store_graph_triples manually with mock triples
+    # But if we were calling extract_knowledge_graph, we would need it.
+    # The original test populated DB and expected valid fetch. 
+    # Here we skip the fetch part since we're testing storage workflow primarily in this test block.
+    # Wait, the original test "test_end_to_end_triple_storage_workflow":
+    # 1. Insert memories
+    # 2. Mock triples
+    # 3. Store triples
+    # It didn't actually call extract_knowledge_graph! It called store_graph_triples directly.
+    # So the memory insertion was... redundant? Or maybe just for "realism"? 
+    # Actually, the original test inserted memories but didn't seem to use them in the Act phase 
+    # (except maybe assuming store_graph_triples validates them? No, it doesn't seem to).
+    
+    # So I can just use the mock service and skip memory insertion if not needed.
+    
     # Mock triples that would be extracted by LLM
     # Note: "auth_bug" will be normalized to "auth bug"
     mock_triples = [
@@ -399,9 +381,8 @@ async def test_end_to_end_triple_storage_workflow(db_pool, use_real_db):
     ]
 
     # Act: Store triples
-    memory_repo = MemoryRepository(db_pool)
     graph_repo = GraphRepository(db_pool)
-    service = GraphExtractionService(memory_repo, graph_repo)
+    service = GraphExtractionService(mock_rae_service, graph_repo)
     result = await service.store_graph_triples(
         triples=mock_triples, project_id=project_id, tenant_id=tenant_id
     )

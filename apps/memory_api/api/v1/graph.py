@@ -16,6 +16,7 @@ from pydantic import BaseModel, Field
 
 from apps.memory_api.dependencies import get_graph_repository, get_rae_core_service
 from apps.memory_api.metrics import memory_query_counter
+from apps.memory_api.models.graph import TraversalStrategy
 from apps.memory_api.security import auth
 from apps.memory_api.services.graph_extraction import GraphExtractionResult
 from apps.memory_api.services.llm import get_llm_provider
