@@ -1,7 +1,7 @@
 import structlog
 from asyncpg.pool import Pool as AsyncpgPool
 from fastapi import APIRouter, Depends, HTTPException, status
-from qdrant_client import QdrantClient
+from qdrant_client import AsyncQdrantClient
 from redis.asyncio import Redis as AsyncRedis
 
 import apps.llm.broker.llm_router as llm_broker
@@ -42,12 +42,12 @@ async def check_redis(
 
 
 async def check_qdrant(
-    qdrant_client: QdrantClient = Depends(deps.get_qdrant_client),
+    qdrant_client: AsyncQdrantClient = Depends(deps.get_qdrant_client),
 ):  # Used deps.get_qdrant_client
     """Check Qdrant connection."""
     try:
         # Try to get collections list as a simple health check
-        collections = qdrant_client.get_collections()
+        collections = await qdrant_client.get_collections()
         return {"status": "UP", "collections_count": len(collections.collections)}
     except Exception as e:
         logger.error("health_check_qdrant_failed", error=str(e))

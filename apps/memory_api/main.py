@@ -67,6 +67,7 @@ async def lifespan(app: FastAPI):
         rate_limiting=settings.ENABLE_RATE_LIMITING,
     )
 
+    # 1. Initialize Connections
     app.state.pool = await asyncpg.create_pool(
         host=settings.POSTGRES_HOST,
         database=settings.POSTGRES_DB,
@@ -74,43 +75,57 @@ async def lifespan(app: FastAPI):
         password=settings.POSTGRES_PASSWORD,
     )
 
-    # --- RAE Schema Validation ---
+    # Initialize Redis client
+    app.state.redis_client = await create_redis_client(settings.REDIS_URL)
+
+    # Initialize Async Qdrant client (Single source of truth)
+    from qdrant_client import AsyncQdrantClient
+    app.state.qdrant_client = AsyncQdrantClient(
+        host=settings.QDRANT_HOST, port=settings.QDRANT_PORT
+    )
+
+    # 2. Memory Contract Validation (Fail Fast)
     if settings.RAE_DB_MODE == "validate":
-        logger.info("db_validation_start", mode=settings.RAE_DB_MODE)
-        from apps.memory_api.adapters.postgres_validator import PostgresValidator
+        logger.info("memory_validation_start", mode=settings.RAE_DB_MODE)
+        
+        from apps.memory_api.adapters.postgres_adapter import PostgresAdapter
+        from apps.memory_api.adapters.redis_adapter import RedisAdapter
+        from apps.memory_api.adapters.qdrant_adapter import QdrantAdapter
         from apps.memory_api.core.contract_definition import RAE_MEMORY_CONTRACT_V1
 
-        validator = PostgresValidator(app.state.pool)
-        result = await validator.validate(RAE_MEMORY_CONTRACT_V1)
+        adapters = [
+            PostgresAdapter(app.state.pool),
+            RedisAdapter(app.state.redis_client),
+            QdrantAdapter(app.state.qdrant_client)
+        ]
 
-        if not result.valid:
-            error_msg = f"Database schema validation failed: {len(result.violations)} violations found."
+        all_violations = []
+        for adapter in adapters:
+            try:
+                result = await adapter.validate(RAE_MEMORY_CONTRACT_V1)
+                if not result.valid:
+                    all_violations.extend(result.violations)
+            except Exception as e:
+                 logger.error(f"Validation adapter failed unexpectedly: {e}")
+                 all_violations.append({"entity": "system", "issue_type": "ADAPTER_CRASH", "details": str(e)})
+
+        if all_violations:
+            error_msg = f"Memory Contract Validation Failed: {len(all_violations)} violations found."
             logger.error(
-                "db_validation_failed", violations=[v.model_dump() for v in result.violations]
+                "memory_validation_failed", 
+                violations=[v.model_dump() if hasattr(v, 'model_dump') else v for v in all_violations]
             )
             # Raise exception to stop startup (Fail Fast)
             raise RuntimeError(f"{error_msg} See logs for details.")
 
-        logger.info("db_validation_success")
+        logger.info("memory_validation_success")
     elif settings.RAE_DB_MODE == "ignore":
-        logger.warning("db_validation_skipped", mode=settings.RAE_DB_MODE)
-
-    # Initialize Redis client
-    app.state.redis_client = await create_redis_client(settings.REDIS_URL)
-    # Initialize Qdrant client
-    app.state.qdrant_client = QdrantClient(
-        host=settings.QDRANT_HOST, port=settings.QDRANT_PORT
-    )
+        logger.warning("memory_validation_skipped", mode=settings.RAE_DB_MODE)
 
     # Initialize RAE-Core service
-    from qdrant_client import AsyncQdrantClient
-
-    async_qdrant = AsyncQdrantClient(
-        host=settings.QDRANT_HOST, port=settings.QDRANT_PORT
-    )
     app.state.rae_core_service = RAECoreService(
         postgres_pool=app.state.pool,
-        qdrant_client=async_qdrant,
+        qdrant_client=app.state.qdrant_client,
         redis_client=app.state.redis_client,
     )
     logger.info("RAE-Core service initialized")
@@ -123,6 +138,7 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down RAE Memory API...")
     await app.state.pool.close()
     await app.state.redis_client.aclose()  # Close Redis client
+    await app.state.qdrant_client.close() # Close Qdrant client
 
 
 # --- App Initialization ---

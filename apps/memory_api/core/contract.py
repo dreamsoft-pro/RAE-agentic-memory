@@ -26,6 +26,17 @@ class EntityContract(BaseModel):
     name: str
     fields: List[FieldContract]
 
+class CacheContract(BaseModel):
+    required_namespaces: List[str]
+
+class VectorCollectionContract(BaseModel):
+    name: str
+    vector_size: int
+    distance_metric: str = "Cosine"
+
+class VectorStoreContract(BaseModel):
+    collections: List[VectorCollectionContract]
+
 class MemoryContract(BaseModel):
     """
     Defines the abstract memory structure required by RAE.
@@ -33,6 +44,8 @@ class MemoryContract(BaseModel):
     """
     version: str
     entities: List[EntityContract]
+    cache: Optional[CacheContract] = None
+    vector_store: Optional[VectorStoreContract] = None
 
 class ValidationViolation(BaseModel):
     entity: str

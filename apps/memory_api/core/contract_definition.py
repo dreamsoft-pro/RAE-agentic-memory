@@ -1,5 +1,6 @@
 from apps.memory_api.core.contract import (
-    MemoryContract, EntityContract, FieldContract, DataType
+    MemoryContract, EntityContract, FieldContract, DataType,
+    CacheContract, VectorStoreContract, VectorCollectionContract
 )
 
 # Based on apps/memory_api/repositories/memory_repository.py and alembic migrations
@@ -28,5 +29,12 @@ RAE_MEMORY_CONTRACT_V1 = MemoryContract(
                 FieldContract(name="embedding", data_type=DataType.VECTOR, dimension=384, nullable=True)
             ]
         )
-    ]
+    ],
+    cache=CacheContract(required_namespaces=["rae:"]),
+    vector_store=VectorStoreContract(
+        collections=[
+            VectorCollectionContract(name="memories", vector_size=384, distance_metric="Cosine")
+        ]
+    )
 )
+

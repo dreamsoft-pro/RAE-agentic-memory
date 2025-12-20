@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, AsyncMock
-from apps.memory_api.adapters.postgres_validator import PostgresValidator
+from apps.memory_api.adapters.postgres_adapter import PostgresAdapter
 from apps.memory_api.core.contract_definition import RAE_MEMORY_CONTRACT_V1
 from apps.memory_api.core.contract import MemoryContract, EntityContract, FieldContract, DataType
 
@@ -44,7 +44,7 @@ async def test_validation_success():
         ]
     ]
 
-    validator = PostgresValidator(pool)
+    validator = PostgresAdapter(pool)
     result = await validator.validate(RAE_MEMORY_CONTRACT_V1)
     
     assert result.valid is True
@@ -65,7 +65,7 @@ async def test_validation_fail_missing_table():
     # Empty tables (first call returns empty list)
     conn.fetch.return_value = [] 
     
-    validator = PostgresValidator(pool)
+    validator = PostgresAdapter(pool)
     result = await validator.validate(RAE_MEMORY_CONTRACT_V1)
     
     assert result.valid is False
@@ -91,7 +91,7 @@ async def test_validation_fail_type_mismatch():
         ]
     ]
     
-    validator = PostgresValidator(pool)
+    validator = PostgresAdapter(pool)
     result = await validator.validate(RAE_MEMORY_CONTRACT_V1)
     
     assert result.valid is False

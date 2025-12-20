@@ -15,7 +15,7 @@ Enterprise Architecture Benefits:
 import asyncpg
 import redis.asyncio as aioredis
 from fastapi import HTTPException, Request
-from qdrant_client import QdrantClient
+from qdrant_client import AsyncQdrantClient
 from redis.asyncio import Redis as AsyncRedis
 
 from .repositories.graph_repository import GraphRepository
@@ -70,7 +70,7 @@ def get_redis_client(request: Request) -> AsyncRedis:
     return request.app.state.redis_client
 
 
-def get_qdrant_client(request: Request) -> QdrantClient:
+def get_qdrant_client(request: Request) -> AsyncQdrantClient:
     """
     Get the Qdrant client from application state.
     """
