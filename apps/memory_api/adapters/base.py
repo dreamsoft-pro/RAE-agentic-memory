@@ -1,25 +1,38 @@
 from abc import ABC, abstractmethod
-from typing import Any
-
-from apps.memory_api.core.contract import MemoryContract, ValidationResult
-
+from typing import Dict, Any
 
 class MemoryAdapter(ABC):
     """
-    Abstract base class for memory backend adapters.
-    Each adapter (Postgres, Redis, Qdrant, etc.) must implement this interface
-    to participate in the Memory Contract Validation process.
+    Abstract base class for memory adapters.
+    Defines the interface for validating different memory layers (e.g., Postgres, Redis, Qdrant).
     """
 
     @abstractmethod
-    async def validate(self, contract: MemoryContract) -> ValidationResult:
+    async def connect(self) -> None:
         """
-        Validates that the backend storage conforms to the provided memory contract.
+        Establishes a connection to the memory layer.
+        """
+        pass
+
+    @abstractmethod
+    async def validate(self, contract: Any) -> Dict[str, Any]:
+        """
+        Validates the memory layer against the provided contract.
 
         Args:
-            contract: The abstract memory contract definition.
+            contract: The contract object defining the expected state of the memory layer.
 
         Returns:
-            ValidationResult indicating validity and any violations.
+            A dictionary containing validation results.
+        """
+        pass
+
+    @abstractmethod
+    async def report(self) -> Dict[str, Any]:
+        """
+        Generates a report on the current state and configuration of the memory layer.
+
+        Returns:
+            A dictionary containing the report data.
         """
         pass

@@ -92,31 +92,25 @@ async def lifespan(app: FastAPI):
         from apps.memory_api.adapters.redis_adapter import RedisAdapter
         from apps.memory_api.adapters.qdrant_adapter import QdrantAdapter
         from apps.memory_api.core.contract_definition import RAE_MEMORY_CONTRACT_V1
+        from apps.memory_api.services.validation_service import ValidationService
 
         adapters = [
             PostgresAdapter(app.state.pool),
             RedisAdapter(app.state.redis_client),
             QdrantAdapter(app.state.qdrant_client)
         ]
+        validation_service = ValidationService(adapters)
+        result = await validation_service.validate_all(RAE_MEMORY_CONTRACT_V1)
 
-        all_violations = []
-        for adapter in adapters:
-            try:
-                result = await adapter.validate(RAE_MEMORY_CONTRACT_V1)
-                if not result.valid:
-                    all_violations.extend(result.violations)
-            except Exception as e:
-                 logger.error(f"Validation adapter failed unexpectedly: {e}")
-                 all_violations.append({"entity": "system", "issue_type": "ADAPTER_CRASH", "details": str(e)})
-
-        if all_violations:
-            error_msg = f"Memory Contract Validation Failed: {len(all_violations)} violations found."
+        if not result.valid:
+            error_msg = f"Memory Contract Validation Failed: {len(result.violations)} violations found."
             logger.error(
                 "memory_validation_failed", 
-                violations=[v.model_dump() if hasattr(v, 'model_dump') else v for v in all_violations]
+                violations=[v.model_dump() for v in result.violations]
             )
             # Raise exception to stop startup (Fail Fast)
             raise RuntimeError(f"{error_msg} See logs for details.")
+
 
         logger.info("memory_validation_success")
     elif settings.RAE_DB_MODE == "ignore":

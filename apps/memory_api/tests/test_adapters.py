@@ -71,7 +71,110 @@ async def test_redis_validation_write_fail():
     assert result.violations[0].issue_type == "WRITE_FAILED"
 
 
-# --- Qdrant Adapter Tests ---
+
+@pytest.mark.asyncio
+async def test_redis_connect_success():
+    mock_redis = AsyncMock()
+    mock_redis.ping.return_value = True
+    adapter = RedisAdapter(mock_redis)
+    await adapter.connect()
+    mock_redis.ping.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_redis_connect_fail():
+    mock_redis = AsyncMock()
+    mock_redis.ping.return_value = False
+    adapter = RedisAdapter(mock_redis)
+    with pytest.raises(ConnectionError, match="Redis server did not respond to PING."):
+        await adapter.connect()
+    mock_redis.ping.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_redis_report_success():
+    mock_redis = AsyncMock()
+    mock_redis.info.return_value = {
+        "redis_version": "6.0.0",
+        "uptime_in_seconds": "1000",
+        "connected_clients": "5",
+        "used_memory_human": "1M",
+        "rdb_bgsave_in_progress": "0",
+        "aof_rewrite_in_progress": "0",
+    }
+    adapter = RedisAdapter(mock_redis)
+    report = await adapter.report()
+    assert report["status"] == "connected"
+    assert report["version"] == "6.0.0"
+    assert report["persistence_enabled"] == "no"
+    mock_redis.info.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_redis_report_fail():
+    mock_redis = AsyncMock()
+    mock_redis.info.side_effect = Exception("Redis error")
+    adapter = RedisAdapter(mock_redis)
+    report = await adapter.report()
+    assert report["status"] == "error"
+    assert "Redis error" in report["details"]
+    mock_redis.info.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_qdrant_connect_success():
+    mock_qdrant = AsyncMock()
+    collections_resp = MagicMock()
+    collections_resp.collections = []
+    mock_qdrant.get_collections.return_value = collections_resp
+    adapter = QdrantAdapter(mock_qdrant)
+    await adapter.connect()
+    mock_qdrant.get_collections.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_qdrant_connect_fail():
+    mock_qdrant = AsyncMock()
+    mock_qdrant.get_collections.side_effect = Exception("Qdrant connection error")
+    adapter = QdrantAdapter(mock_qdrant)
+    with pytest.raises(Exception, match="Qdrant connection error"):
+        await adapter.connect()
+    mock_qdrant.get_collections.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_qdrant_report_success():
+    mock_qdrant = AsyncMock()
+    cluster_info = MagicMock()
+    cluster_info.status.value = "green"
+    cluster_info.peers_bootstrap = ["peer1"]
+    cluster_info.peers_web = ["peer2"]
+    mock_qdrant.cluster_info.return_value = cluster_info
+
+    collections_resp = MagicMock()
+    col_mock1 = MagicMock()
+    col_mock1.name = "memories"
+    col_mock2 = MagicMock()
+    col_mock2.name = "users"
+    collections_resp.collections = [col_mock1, col_mock2]
+    mock_qdrant.get_collections.return_value = collections_resp
+
+    adapter = QdrantAdapter(mock_qdrant)
+    report = await adapter.report()
+
+    assert report["status"] == "connected"
+    assert report["cluster_status"] == "green"
+    assert report["peer_count"] == 2
+    assert "memories" in report["collections"]
+    assert "users" in report["collections"]
+    mock_qdrant.cluster_info.assert_called_once()
+    mock_qdrant.get_collections.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_qdrant_report_fail():
+    mock_qdrant = AsyncMock()
+    mock_qdrant.cluster_info.side_effect = Exception("Qdrant report error")
+    adapter = QdrantAdapter(mock_qdrant)
+    report = await adapter.report()
+    assert report["status"] == "error"
+    assert "Qdrant report error" in report["details"]
+    mock_qdrant.cluster_info.assert_called_once()
+
 
 @pytest.mark.asyncio
 async def test_qdrant_validation_success():

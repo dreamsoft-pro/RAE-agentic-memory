@@ -1,5 +1,5 @@
 import logging
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Any
 
 import asyncpg
 
@@ -22,6 +22,36 @@ class PostgresAdapter(MemoryAdapter):
 
     def __init__(self, pool: asyncpg.Pool):
         self.pool = pool
+
+    async def connect(self) -> None:
+        """
+        Establishes a connection to the Postgres database by acquiring and releasing from the pool.
+        Raises an exception if connection fails.
+        """
+        async with self.pool.acquire() as conn:
+            await conn.fetchval("SELECT 1")
+        logger.info("Postgres connection successful.")
+
+    async def report(self) -> Dict[str, Any]:
+        """
+        Generates a report on the current state and configuration of the Postgres database.
+        """
+        try:
+            async with self.pool.acquire() as conn:
+                db_name = await conn.fetchval("SELECT current_database()")
+                db_user = await conn.fetchval("SELECT current_user")
+                server_version = await conn.fetchval("SHOW server_version")
+                return {
+                    "status": "connected",
+                    "database_name": db_name,
+                    "user": db_user,
+                    "server_version": server_version,
+                    "pool_size": self.pool.get_size(),
+                    "pool_free": self.pool.get_free(),
+                }
+        except Exception as e:
+            logger.error(f"Postgres report generation failed: {e}")
+            return {"status": "error", "details": str(e)}
 
     async def validate(self, contract: MemoryContract) -> ValidationResult:
         violations: List[ValidationViolation] = []

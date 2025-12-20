@@ -1,8 +1,76 @@
 import pytest
 from unittest.mock import MagicMock, AsyncMock
+import asyncpg
 from apps.memory_api.adapters.postgres_adapter import PostgresAdapter
 from apps.memory_api.core.contract_definition import RAE_MEMORY_CONTRACT_V1
 from apps.memory_api.core.contract import MemoryContract, EntityContract, FieldContract, DataType
+
+@pytest.mark.asyncio
+async def test_postgres_connect_success():
+    pool = MagicMock()
+    conn = AsyncMock()
+    acquire_ctx = AsyncMock()
+    acquire_ctx.__aenter__.return_value = conn
+    acquire_ctx.__aexit__.return_value = None
+    pool.acquire.return_value = acquire_ctx
+    conn.fetchval.return_value = 1 # Simulate successful query
+
+    adapter = PostgresAdapter(pool)
+    await adapter.connect()
+    pool.acquire.assert_called_once()
+    conn.fetchval.assert_called_once_with("SELECT 1")
+
+@pytest.mark.asyncio
+async def test_postgres_connect_fail():
+    pool = MagicMock()
+    pool.acquire.side_effect = asyncpg.exceptions.PostgresError("Connection refused")
+
+    adapter = PostgresAdapter(pool)
+    with pytest.raises(asyncpg.exceptions.PostgresError, match="Connection refused"):
+        await adapter.connect()
+    pool.acquire.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_postgres_report_success():
+    pool = MagicMock()
+    conn = AsyncMock()
+    acquire_ctx = AsyncMock()
+    acquire_ctx.__aenter__.return_value = conn
+    acquire_ctx.__aexit__.return_value = None
+    pool.acquire.return_value = acquire_ctx
+    
+    conn.fetchval.side_effect = [
+        "rae_db",  # current_database()
+        "test_user",  # current_user
+        "PostgreSQL 14.5",  # SHOW server_version
+    ]
+    pool.get_size.return_value = 10
+    pool.get_free.return_value = 5
+
+    adapter = PostgresAdapter(pool)
+    report = await adapter.report()
+
+    assert report["status"] == "connected"
+    assert report["database_name"] == "rae_db"
+    assert report["user"] == "test_user"
+    assert report["server_version"] == "PostgreSQL 14.5"
+    assert report["pool_size"] == 10
+    assert report["pool_free"] == 5
+    assert conn.fetchval.call_count == 3
+    pool.get_size.assert_called_once()
+    pool.get_free.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_postgres_report_fail():
+    pool = MagicMock()
+    pool.acquire.side_effect = asyncpg.exceptions.PostgresError("Report generation failed")
+
+    adapter = PostgresAdapter(pool)
+    report = await adapter.report()
+    assert report["status"] == "error"
+    assert "Report generation failed" in report["details"]
+    pool.acquire.assert_called_once()
+
 
 @pytest.mark.asyncio
 async def test_validation_success():

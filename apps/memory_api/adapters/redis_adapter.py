@@ -1,5 +1,5 @@
 import logging
-from typing import List
+from typing import List, Dict, Any
 
 from redis.asyncio import Redis
 
@@ -20,6 +20,37 @@ class RedisAdapter(MemoryAdapter):
 
     def __init__(self, client: Redis):
         self.client = client
+
+    async def connect(self) -> None:
+        """
+        Establishes a connection to the Redis server by performing a PING.
+        Raises an exception if connection fails.
+        """
+        if not await self.client.ping():
+            raise ConnectionError("Redis server did not respond to PING.")
+        logger.info("Redis connection successful.")
+
+    async def report(self) -> Dict[str, Any]:
+        """
+        Generates a report on the current state and configuration of the Redis server.
+        """
+        try:
+            info = await self.client.info()
+            persistence_enabled = (
+                str(info.get("rdb_bgsave_in_progress", "0")) != "0"
+                or str(info.get("aof_rewrite_in_progress", "0")) != "0"
+            )
+            return {
+                "status": "connected",
+                "version": info.get("redis_version"),
+                "uptime_in_seconds": info.get("uptime_in_seconds"),
+                "connected_clients": info.get("connected_clients"),
+                "used_memory_human": info.get("used_memory_human"),
+                "persistence_enabled": "yes" if persistence_enabled else "no",
+            }
+        except Exception as e:
+            logger.error(f"Redis report generation failed: {e}")
+            return {"status": "error", "details": str(e)}
 
     async def validate(self, contract: MemoryContract) -> ValidationResult:
         violations: List[ValidationViolation] = []

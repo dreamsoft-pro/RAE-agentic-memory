@@ -1,5 +1,5 @@
 import logging
-from typing import List
+from typing import List, Dict, Any
 
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http.models import Distance
@@ -21,6 +21,34 @@ class QdrantAdapter(MemoryAdapter):
 
     def __init__(self, client: AsyncQdrantClient):
         self.client = client
+
+    async def connect(self) -> None:
+        """
+        Establishes a connection to the Qdrant server by checking cluster health.
+        Raises an exception if connection fails.
+        """
+        # Attempt to get collections to verify connection
+        await self.client.get_collections()
+        logger.info("Qdrant connection successful.")
+
+    async def report(self) -> Dict[str, Any]:
+        """
+        Generates a report on the current state and configuration of the Qdrant service.
+        """
+        try:
+            cluster_info = await self.client.cluster_info()
+            collections_resp = await self.client.get_collections()
+            collections_summary = [c.name for c in collections_resp.collections]
+
+            return {
+                "status": "connected",
+                "cluster_status": cluster_info.status.value,
+                "peer_count": len(cluster_info.peers_bootstrap) + len(cluster_info.peers_web),
+                "collections": collections_summary,
+            }
+        except Exception as e:
+            logger.error(f"Qdrant report generation failed: {e}")
+            return {"status": "error", "details": str(e)}
 
     async def validate(self, contract: MemoryContract) -> ValidationResult:
         violations: List[ValidationViolation] = []

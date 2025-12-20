@@ -11,37 +11,33 @@ Naprawić implementację walidacji pamięci w RAE, aby była w pełni zgodna z w
 ## Plan Działania
 
 ### 1. Architektura i Kontrakt
-- [ ] **Stworzyć interfejs `MemoryAdapter`** (`apps/memory_api/adapters/base.py`):
+- [x] **Stworzyć interfejs `MemoryAdapter`** (`apps/memory_api/adapters/base.py`):
     - Metody abstrakcyjne: `connect()`, `validate(contract)`, `report()`.
-- [ ] **Rozszerzyć `MemoryContract`** (`apps/memory_api/core/contract.py`):
-    - Dodać modele dla `CacheContract` (np. wymagane namespace'y).
-    - Dodać modele dla `VectorStoreContract` (np. kolekcje, wymiary).
-    - Zaktualizować główny `MemoryContract` o pola `cache` i `vector_store`.
-- [ ] **Zaktualizować Definicję Kontraktu** (`apps/memory_api/core/contract_definition.py`):
-    - Dodać konkretne wymagania dla RAE (kolekcje Qdrant, klucze Redis).
+- [x] **Rozszerzyć `MemoryContract`** (`apps/memory_api/core/contract.py`): (Already implemented)
+- [x] **Zaktualizować Definicję Kontraktu** (`apps/memory_api/core/contract_definition.py`): (Already implemented)
 
 ### 2. Implementacja Adapterów
-- [ ] **Refaktoryzacja Postgres:**
+- [x] **Refaktoryzacja Postgres:**
     - Dostosować `PostgresValidator` (lub opakować go w `PostgresAdapter`) do interfejsu `MemoryAdapter`.
-- [ ] **Redis Adapter** (`apps/memory_api/adapters/redis_adapter.py`):
+- [x] **Redis Adapter** (`apps/memory_api/adapters/redis_adapter.py`):
     - Implementacja walidacji dostępności i podstawowej konfiguracji (np. czy persistence jest włączone, jeśli wymagane).
-- [ ] **Qdrant Adapter** (`apps/memory_api/adapters/qdrant_adapter.py`):
+- [x] **Qdrant Adapter** (`apps/memory_api/adapters/qdrant_adapter.py`):
     - Implementacja walidacji istnienia kolekcji i zgodności konfiguracji wektorów (wymiarowość, metryka).
 
 ### 3. Integracja i Start Systemu
-- [ ] **Unified Validation Logic** (`apps/memory_api/services/validation_service.py` lub w `main.py`):
+- [x] **Unified Validation Logic** (`apps/memory_api/services/validation_service.py`):
     - Stworzyć mechanizm, który pobiera listę skonfigurowanych adapterów.
     - Uruchamia walidację dla każdego z nich.
     - Agreguje wyniki i raportuje błędy.
-- [ ] **Aktualizacja `main.py`:**
+- [x] **Aktualizacja `main.py`:**
     - Zastąpić obecną logikę walidacji Postgres wywołaniem zunifikowanego walidatora.
     - Upewnić się, że błąd w DOWOLNEJ warstwie zatrzymuje start (Fail Fast).
 
 ### 4. Weryfikacja
-- [ ] **Testy Jednostkowe:**
+- [x] **Testy Jednostkowe:**
     - Testy dla nowych adapterów (Redis, Qdrant).
     - Testy dla logiki agregacji walidacji.
-- [ ] **Testy Integracyjne:**
+- [x] **Testy Integracyjne:**
     - Symulacja błędu w Redis/Qdrant i weryfikacja czy aplikacja odmawia startu.
 
 ## Oczekiwany Rezultat
