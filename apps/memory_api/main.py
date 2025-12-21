@@ -87,7 +87,7 @@ async def lifespan(app: FastAPI):
     )
 
     # Ensure Qdrant Schema exists before validation (Bootstrap)
-    if settings.RAE_DB_MODE == "validate":
+    if settings.RAE_DB_MODE in ["validate", "init", "migrate"]:
         try:
             from qdrant_client.http import models as rest
 
@@ -129,8 +129,25 @@ async def lifespan(app: FastAPI):
             logger.error(f"Failed to auto-initialize Qdrant schema: {e}")
             # We continue; validation step will catch any remaining issues and Fail Fast
 
-    # 2. Memory Contract Validation (Fail Fast)
-    if settings.RAE_DB_MODE == "validate":
+    # 2. Database Initialization / Migration
+    if settings.RAE_DB_MODE in ["init", "migrate"]:
+        logger.info("db_migration_start", mode=settings.RAE_DB_MODE)
+        try:
+            import asyncio
+            from alembic import command, config
+            
+            # Run Alembic migrations programmatically
+            # We run this in a thread because Alembic is synchronous
+            alembic_cfg = config.Config("alembic.ini")
+            await asyncio.to_thread(command.upgrade, alembic_cfg, "head")
+            logger.info("db_migration_success")
+        except Exception as e:
+            logger.error("db_migration_failed", error=str(e))
+            raise RuntimeError(f"Database migration failed: {e}")
+
+    # 3. Memory Contract Validation (Fail Fast)
+    # Validate if mode is 'validate', 'init', or 'migrate' (verify after migration)
+    if settings.RAE_DB_MODE in ["validate", "init", "migrate"]:
         logger.info("memory_validation_start", mode=settings.RAE_DB_MODE)
 
         from apps.memory_api.adapters.postgres_adapter import PostgresAdapter
