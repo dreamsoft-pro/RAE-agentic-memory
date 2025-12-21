@@ -80,6 +80,17 @@ Different branches = Different testing levels.
 ## 7. RESOURCE & COMMUNICATION EFFICIENCY
 
 - **RAE-First Communication**: **MANDATORY**. All communication and context exchange between agents MUST pass through RAE. Agents must consult RAE for context before acting and store results in RAE. Direct side-channels are prohibited to ensure full auditability and shared state. Input/Output MUST flow through RAE to minimize token usage.
-- **Model Economy**: Use cheaper/lighter models for simple tasks (formatting, basic logic). Reserve SOTA models for complex reasoning.
-- **Rate Limits (CLI)**: **STRICTLY** adhere to Requests Per Minute (RPM) limits. This applies especially to Gemini CLI.
-- **Quality Over Speed**: Do not rush. "Done Well" > "Done Fast". Take time to verify. Correctness is paramount.
+- **Model Economy**: Use cheaper/lighter models for simple tasks. Reserve SOTA models for complex reasoning.
+- **Compute Offloading**: For heavy tasks (embeddings, large benchmarks), utilize the Compute Cluster:
+  - **Node KUBUS**: RTX 4080 (GPU acceleration, Local LLMs).
+  - **Node PIOTREK**: 128GB RAM (Large-scale memory testing).
+- **Advanced Quality Metrics**: 
+  - **LECT**: Long-term episodic consistency (10k+ cycles).
+  - **RST**: Stability against contradictory/noisy data.
+  - **GRDT**: Deep graph reasoning (chains of thought).
+
+## 8. DEFINITION OF DONE (PRO)
+- All tests pass (Green).
+- Linter passed (No warnings).
+- Benchmarks verified against baseline.
+- PR ready for review.

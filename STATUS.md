@@ -11,8 +11,28 @@
 | **Test Coverage** | ✅ | 73.4% Coverage (Target 65% exceeded) |
 | **Token Savings** | ✅ | Full tracking implemented |
 | **ISO/IEC 42001** | ✅ | 100% compliance with test coverage |
-| **Knowledge Graph**| ✅ | Enhanced API implemented and tested |
+| Knowledge Graph| ✅ | Enhanced API implemented and tested |
 | **Code Quality** | ✅ | Ruff linting clean on modified files |
+
+## Benchmark Results (Small Test - 2025-12-21)
+
+**Context:** Verification of system stability after database contract refactor and CI alignment.
+
+### Standard Benchmarks (Search Quality)
+| Benchmark | MRR | Hit Rate @5 | Status |
+|-----------|-----|-------------|--------|
+| **Academic Lite** | 1.0000 | 1.0000 | ✅ PASSED |
+| **Academic Extended** | 1.0000 | 1.0000 | ✅ PASSED |
+| **Industrial Small** | 0.8056 | 0.9000 | ✅ PASSED |
+
+### Research Benchmarks (9/5 Suite)
+| Metric | Value | Target | Interpretation |
+|--------|-------|--------|----------------|
+| **LECT Consistency** | 0.9995 | > 0.90 | Excellent long-term stability |
+| **MMIT Interference** | 0.0306 | < 0.10 | High layer isolation |
+| **GRDT Max Depth** | 10 | >= 7 | Deep reasoning supported |
+| **RST Stability** | 0.6248 | > 0.50 | Robust against noise |
+| **MPEB Stability Index** | 0.9375 | > 0.70 | Highly adaptive policy |
 
 ## Implementation Summary (v2.3.0-stability)
 
