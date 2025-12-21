@@ -54,7 +54,7 @@ class LiteLLMProvider(LLMProvider):
         prompt: str,
         model: str,
         response_model: Type[BaseModel],
-        **kwargs
+        **kwargs,
     ) -> BaseModel:
         """
         Generates a structured response from the specified LLM model.

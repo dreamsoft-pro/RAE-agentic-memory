@@ -92,8 +92,8 @@ class PostgresAdapter(MemoryAdapter):
 
     async def _get_tables(self, conn: asyncpg.Connection) -> Set[str]:
         query = """
-            SELECT table_name 
-            FROM information_schema.tables 
+            SELECT table_name
+            FROM information_schema.tables
             WHERE table_schema = 'public'
         """
         rows = await conn.fetch(query)
@@ -105,7 +105,7 @@ class PostgresAdapter(MemoryAdapter):
         """Returns a dict of column_name -> data_type (or udt_name)"""
         query = """
             SELECT column_name, data_type, udt_name
-            FROM information_schema.columns 
+            FROM information_schema.columns
             WHERE table_name = $1 AND table_schema = 'public'
         """
         rows = await conn.fetch(query, table_name)

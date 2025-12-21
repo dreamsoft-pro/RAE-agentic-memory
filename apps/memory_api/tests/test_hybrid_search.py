@@ -76,9 +76,24 @@ def sample_vector_results():
 def sample_graph_nodes():
     """Sample graph nodes."""
     return [
-        GraphNode(id=UUID("00000000-0000-0000-0000-000000000001"), node_id="Module_A", label="Module A", depth=0),
-        GraphNode(id=UUID("00000000-0000-0000-0000-000000000002"), node_id="Module_B", label="Module B", depth=1),
-        GraphNode(id=UUID("00000000-0000-0000-0000-000000000003"), node_id="PostgreSQL", label="PostgreSQL", depth=2),
+        GraphNode(
+            id=UUID("00000000-0000-0000-0000-000000000001"),
+            node_id="Module_A",
+            label="Module A",
+            depth=0,
+        ),
+        GraphNode(
+            id=UUID("00000000-0000-0000-0000-000000000002"),
+            node_id="Module_B",
+            label="Module B",
+            depth=1,
+        ),
+        GraphNode(
+            id=UUID("00000000-0000-0000-0000-000000000003"),
+            node_id="PostgreSQL",
+            label="PostgreSQL",
+            depth=2,
+        ),
     ]
 
 
@@ -86,8 +101,16 @@ def sample_graph_nodes():
 def sample_graph_edges():
     """Sample graph edges."""
     return [
-        GraphEdge(source_id=UUID("00000000-0000-0000-0000-000000000001"), target_id=UUID("00000000-0000-0000-0000-000000000002"), relation="DEPENDS_ON"),
-        GraphEdge(source_id=UUID("00000000-0000-0000-0000-000000000002"), target_id=UUID("00000000-0000-0000-0000-000000000003"), relation="USES"),
+        GraphEdge(
+            source_id=UUID("00000000-0000-0000-0000-000000000001"),
+            target_id=UUID("00000000-0000-0000-0000-000000000002"),
+            relation="DEPENDS_ON",
+        ),
+        GraphEdge(
+            source_id=UUID("00000000-0000-0000-0000-000000000002"),
+            target_id=UUID("00000000-0000-0000-0000-000000000003"),
+            relation="USES",
+        ),
     ]
 
 

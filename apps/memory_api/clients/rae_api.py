@@ -598,6 +598,8 @@ class RAEAPIClient:
         """Reset statistics."""
         self.client.reset_stats()
 
-    def invalidate_cache(self, method: Optional[str] = None, path: Optional[str] = None):
+    def invalidate_cache(
+        self, method: Optional[str] = None, path: Optional[str] = None
+    ):
         """Invalidate cache."""
         self.client.invalidate_cache(method, path)

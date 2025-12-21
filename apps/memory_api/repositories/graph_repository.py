@@ -527,8 +527,17 @@ class GraphRepository:
                     confidence = triple.get("confidence", 1.0)
                     metadata = triple.get("metadata", {})
 
-                    if not isinstance(source, str) or not isinstance(target, str) or not isinstance(relation, str):
-                        logger.warning("invalid_triple_skipped", source=source, target=target, relation=relation)
+                    if (
+                        not isinstance(source, str)
+                        or not isinstance(target, str)
+                        or not isinstance(relation, str)
+                    ):
+                        logger.warning(
+                            "invalid_triple_skipped",
+                            source=source,
+                            target=target,
+                            relation=relation,
+                        )
                         continue
 
                     # Create source node

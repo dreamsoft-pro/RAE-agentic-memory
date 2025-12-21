@@ -190,11 +190,14 @@ async def test_process_event_flow(rules_engine, sample_event):
     )
 
     # Mock internal methods to focus on flow
-    with patch.object(
-        rules_engine, "_fetch_active_triggers", new_callable=AsyncMock
-    ) as mock_fetch, patch.object(
-        rules_engine, "_execute_trigger_actions", new_callable=AsyncMock
-    ) as mock_exec:
+    with (
+        patch.object(
+            rules_engine, "_fetch_active_triggers", new_callable=AsyncMock
+        ) as mock_fetch,
+        patch.object(
+            rules_engine, "_execute_trigger_actions", new_callable=AsyncMock
+        ) as mock_exec,
+    ):
         mock_fetch.return_value = [trigger]
         mock_exec.return_value = [
             MagicMock(status=ExecutionStatus.COMPLETED, success=True)
@@ -233,9 +236,12 @@ async def test_action_retry_logic(rules_engine, sample_event):
 
     # Mock execution to fail twice then succeed
     # Also mock asyncio.sleep to skip waiting
-    with patch.object(
-        rules_engine, "_execute_action_by_type", new_callable=AsyncMock
-    ) as mock_exec_type, patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+    with (
+        patch.object(
+            rules_engine, "_execute_action_by_type", new_callable=AsyncMock
+        ) as mock_exec_type,
+        patch("asyncio.sleep", new_callable=AsyncMock) as mock_sleep,
+    ):
         mock_exec_type.side_effect = [
             Exception("Fail 1"),
             Exception("Fail 2"),

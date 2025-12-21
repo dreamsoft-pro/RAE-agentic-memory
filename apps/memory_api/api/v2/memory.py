@@ -96,7 +96,9 @@ async def store_memory(
 
     except Exception as e:
         logger.error("store_memory_failed", error=str(e), tenant_id=tenant_id)
-        raise HTTPException(status_code=500, detail=f"Failed to store memory: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Failed to store memory: {str(e)}"
+        ) from e
 
 
 @router.post("/query", response_model=QueryMemoryResponseV2)
@@ -116,6 +118,7 @@ async def query_memories(
     """
     try:
         from typing import Any, cast
+
         response = await rae_service.query_memories(
             tenant_id=tenant_id,
             project=request.project,
@@ -176,7 +179,9 @@ async def consolidate_memories(
 
     except Exception as e:
         logger.error("consolidate_failed", error=str(e), tenant_id=tenant_id)
-        raise HTTPException(status_code=500, detail=f"Failed to consolidate: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Failed to consolidate: {str(e)}"
+        ) from e
 
 
 @router.post("/reflections")
@@ -198,6 +203,7 @@ async def generate_reflections(
         )
 
         from typing import Any, cast
+
         return {
             "message": "Reflections generated",
             "count": len(reflections),

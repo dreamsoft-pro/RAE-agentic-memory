@@ -349,7 +349,9 @@ async def get_reflection_graph(
 
     except Exception as e:
         logger.error("get_reflection_graph_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Graph retrieval failed: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Graph retrieval failed: {str(e)}"
+        ) from e
 
 
 # ============================================================================
@@ -507,4 +509,6 @@ async def delete_reflections_batch(
 
     except Exception as e:
         logger.error("delete_batch_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Batch deletion failed: {str(e)}") from e
+        raise HTTPException(
+            status_code=500, detail=f"Batch deletion failed: {str(e)}"
+        ) from e

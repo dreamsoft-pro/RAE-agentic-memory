@@ -44,7 +44,9 @@ class CommunitySummary(BaseModel):
 
 
 class CommunityDetectionService:
-    def __init__(self, pool: asyncpg.Pool, graph_repository: Optional[GraphRepository] = None):
+    def __init__(
+        self, pool: asyncpg.Pool, graph_repository: Optional[GraphRepository] = None
+    ):
         self.pool = pool
         self.graph_repo = graph_repository or GraphRepository(pool)
         self.llm_provider = get_llm_provider()

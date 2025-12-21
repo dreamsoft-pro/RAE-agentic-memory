@@ -574,7 +574,9 @@ class MaintenanceScheduler:
     cron/systemd timers.
     """
 
-    def __init__(self, pool: asyncpg.Pool, rae_service: Optional[RAECoreService] = None):
+    def __init__(
+        self, pool: asyncpg.Pool, rae_service: Optional[RAECoreService] = None
+    ):
         self.pool = pool
         self.rae_service = rae_service
         self.decay_worker = DecayWorker(pool)

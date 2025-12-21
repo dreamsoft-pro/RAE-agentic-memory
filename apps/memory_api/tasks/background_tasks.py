@@ -108,7 +108,8 @@ def apply_memory_decay():
         async with rae_context() as (pool, rae_service):
             # Apply decay
             await pool.execute(
-                "UPDATE memories SET strength = strength * $1", settings.MEMORY_DECAY_RATE
+                "UPDATE memories SET strength = strength * $1",
+                settings.MEMORY_DECAY_RATE,
             )
             # Delete expired memories
             await pool.execute(
@@ -205,6 +206,7 @@ def cleanup_expired_data_task(self, tenant_id: str | None = None):
                 raise self.retry(exc=e, countdown=300 * (2**self.request.retries))
 
     return asyncio.run(main())
+
 
 @celery_app.task(bind=True, max_retries=3)
 def gdpr_delete_user_data_task(

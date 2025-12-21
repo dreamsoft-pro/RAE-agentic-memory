@@ -126,7 +126,8 @@ class NLPService:
             for chunk in doc.noun_chunks:
                 # Skip if already in entities
                 if not any(
-                    cast(str, kw["text"]).lower() == chunk.text.lower() and kw["type"] == "entity"
+                    cast(str, kw["text"]).lower() == chunk.text.lower()
+                    and kw["type"] == "entity"
                     for kw in keywords
                 ):
                     keywords.append(
@@ -148,7 +149,8 @@ class NLPService:
                 if token.pos_ in ["NOUN", "PROPN", "ADJ"]:
                     # Skip if already in keywords
                     if not any(
-                        cast(str, kw["text"]).lower() == token.text.lower() for kw in keywords
+                        cast(str, kw["text"]).lower() == token.text.lower()
+                        for kw in keywords
                     ):
                         keywords.append(
                             {

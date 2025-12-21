@@ -54,7 +54,9 @@ class CircuitBreaker:
         name: str,
         failure_threshold: int = 5,
         recovery_timeout: int = 60,
-        expected_exception: Union[Type[BaseException], Tuple[Type[BaseException], ...]] = Exception,
+        expected_exception: Union[
+            Type[BaseException], Tuple[Type[BaseException], ...]
+        ] = Exception,
         success_threshold: int = 2,
     ):
         """

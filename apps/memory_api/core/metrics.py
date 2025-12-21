@@ -320,9 +320,9 @@ class MetricsTracker:
         # Average reward per action
         for action_type, rewards in self.action_rewards.items():
             if rewards:
-                self.mdp_metrics.avg_reward_per_action[action_type] = float(np.mean(
-                    rewards[-self.window_size :]
-                ))
+                self.mdp_metrics.avg_reward_per_action[action_type] = float(
+                    np.mean(rewards[-self.window_size :])
+                )
 
         # Average quality score
         if self.quality_window:
@@ -398,7 +398,9 @@ class MetricsTracker:
             )
 
         # Sort by average reward ascending
-        action_stats_sorted = sorted(action_stats, key=lambda x: cast(float, x["avg_reward"]))
+        action_stats_sorted = sorted(
+            action_stats, key=lambda x: cast(float, x["avg_reward"])
+        )
 
         return action_stats_sorted[:top_k]
 

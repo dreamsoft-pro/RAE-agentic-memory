@@ -102,7 +102,9 @@ async def hybrid_search(request: HybridSearchRequest, pool=Depends(get_pool)):
 
 
 @router.post("/analyze", response_model=QueryAnalysisResponse)
-async def analyze_query(req: Request, request: QueryAnalysisRequest, pool=Depends(get_pool)):
+async def analyze_query(
+    req: Request, request: QueryAnalysisRequest, pool=Depends(get_pool)
+):
     """
     Analyze query intent and recommend search strategies.
 
@@ -114,7 +116,9 @@ async def analyze_query(req: Request, request: QueryAnalysisRequest, pool=Depend
     """
     try:
         analyzer = QueryAnalyzer()
-        tenant_id = req.state.tenant_id if hasattr(req.state, "tenant_id") else "default"
+        tenant_id = (
+            req.state.tenant_id if hasattr(req.state, "tenant_id") else "default"
+        )
 
         analysis = await analyzer.analyze_intent(
             query=request.query,
@@ -265,7 +269,7 @@ async def calculate_weights_for_query(request: QueryAnalysisRequest):
         return {
             "query": request.query,
             "intent": analysis.intent.value,
-            "confidence": confidence,
+            "confidence": analysis.confidence,
             "weights": {k.value: v for k, v in weights.items()},
             "recommended_strategies": [
                 s.value for s in analysis.recommended_strategies

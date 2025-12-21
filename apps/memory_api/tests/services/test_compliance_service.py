@@ -147,31 +147,44 @@ async def test_get_active_risks(compliance_service):
 async def test_calculate_overall_score(compliance_service):
     """Test internal score calculation by mocking sub-metrics."""
 
-    with patch.object(
-        compliance_service, "_get_governance_metrics", new_callable=AsyncMock
-    ) as mock_gov, patch.object(
-        compliance_service, "_get_risk_management_metrics", new_callable=AsyncMock
-    ) as mock_risk, patch.object(
-        compliance_service, "_get_data_management_metrics", new_callable=AsyncMock
-    ) as mock_data, patch.object(
-        compliance_service, "_get_transparency_metrics", new_callable=AsyncMock
-    ) as mock_trans, patch.object(
-        compliance_service, "_get_human_oversight_metrics", new_callable=AsyncMock
-    ) as mock_human, patch.object(
-        compliance_service, "_get_security_privacy_metrics", new_callable=AsyncMock
-    ) as mock_sec, patch.object(
-        compliance_service, "_get_active_risks", new_callable=AsyncMock
-    ) as mock_active_risks, patch.object(
-        compliance_service, "_get_retention_metrics", new_callable=AsyncMock
-    ) as mock_retention, patch.object(
-        compliance_service, "_get_source_trust_metrics", new_callable=AsyncMock
-    ) as mock_source_trust, patch.object(
-        compliance_service, "_get_audit_trail_completeness", new_callable=AsyncMock
-    ) as mock_audit_comp, patch.object(
-        compliance_service, "_get_audit_entries_count", new_callable=AsyncMock
-    ) as mock_audit_count, patch.object(
-        compliance_service, "_update_compliance_metrics", new_callable=MagicMock
-    ) as mock_update_metrics:
+    with (
+        patch.object(
+            compliance_service, "_get_governance_metrics", new_callable=AsyncMock
+        ) as mock_gov,
+        patch.object(
+            compliance_service, "_get_risk_management_metrics", new_callable=AsyncMock
+        ) as mock_risk,
+        patch.object(
+            compliance_service, "_get_data_management_metrics", new_callable=AsyncMock
+        ) as mock_data,
+        patch.object(
+            compliance_service, "_get_transparency_metrics", new_callable=AsyncMock
+        ) as mock_trans,
+        patch.object(
+            compliance_service, "_get_human_oversight_metrics", new_callable=AsyncMock
+        ) as mock_human,
+        patch.object(
+            compliance_service, "_get_security_privacy_metrics", new_callable=AsyncMock
+        ) as mock_sec,
+        patch.object(
+            compliance_service, "_get_active_risks", new_callable=AsyncMock
+        ) as mock_active_risks,
+        patch.object(
+            compliance_service, "_get_retention_metrics", new_callable=AsyncMock
+        ) as mock_retention,
+        patch.object(
+            compliance_service, "_get_source_trust_metrics", new_callable=AsyncMock
+        ) as mock_source_trust,
+        patch.object(
+            compliance_service, "_get_audit_trail_completeness", new_callable=AsyncMock
+        ) as mock_audit_comp,
+        patch.object(
+            compliance_service, "_get_audit_entries_count", new_callable=AsyncMock
+        ) as mock_audit_count,
+        patch.object(
+            compliance_service, "_update_compliance_metrics", new_callable=MagicMock
+        ) as mock_update_metrics,
+    ):
         # Mock a metric with 100% score for one area, others empty
         compliant_metric = ISO42001Metric(
             requirement_id="T1",
@@ -214,16 +227,19 @@ async def test_get_governance_metrics_logic(compliance_service):
     """Test fetching and parsing governance metrics (which are hardcoded in the service)."""
     # The _get_governance_metrics method uses internal helper methods which are hardcoded true/false for simplicity
     # Patch the helper methods if needed, or just assert the expected output
-    with patch.object(
-        compliance_service,
-        "_check_roles_defined",
-        new_callable=AsyncMock,
-        return_value=True,
-    ), patch.object(
-        compliance_service,
-        "_check_policy_exists",
-        new_callable=AsyncMock,
-        return_value=True,
+    with (
+        patch.object(
+            compliance_service,
+            "_check_roles_defined",
+            new_callable=AsyncMock,
+            return_value=True,
+        ),
+        patch.object(
+            compliance_service,
+            "_check_policy_exists",
+            new_callable=AsyncMock,
+            return_value=True,
+        ),
     ):
         metrics = await compliance_service._get_governance_metrics("t1", "p1")
 

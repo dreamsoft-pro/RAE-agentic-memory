@@ -71,12 +71,15 @@ def mock_ml_client():
 
 @pytest.fixture
 def extractor(mock_pool, mock_llm_provider, mock_ml_client):
-    with patch(
-        "apps.memory_api.services.semantic_extractor.get_llm_provider",
-        return_value=mock_llm_provider,
-    ), patch(
-        "apps.memory_api.services.semantic_extractor.MLServiceClient",
-        return_value=mock_ml_client,
+    with (
+        patch(
+            "apps.memory_api.services.semantic_extractor.get_llm_provider",
+            return_value=mock_llm_provider,
+        ),
+        patch(
+            "apps.memory_api.services.semantic_extractor.MLServiceClient",
+            return_value=mock_ml_client,
+        ),
     ):
         svc = SemanticExtractor(mock_pool)
         svc.llm_provider = mock_llm_provider
@@ -258,11 +261,18 @@ async def test_node_creation_exceptions(extractor, mock_pool, mock_llm_provider)
     # Make create_or_update fail
     # We can patch the private method on the instance or use side_effect on pool calls if we knew exact sequence
     # Easier to patch the method on the extractor instance
-    with patch.object(
-        extractor, "_create_or_update_semantic_node", side_effect=Exception("DB Error")
-    ) as mock_create_node, patch.object(
-        extractor, "_create_semantic_relationship", side_effect=Exception("Rel Error")
-    ) as mock_create_rel:
+    with (
+        patch.object(
+            extractor,
+            "_create_or_update_semantic_node",
+            side_effect=Exception("DB Error"),
+        ) as mock_create_node,
+        patch.object(
+            extractor,
+            "_create_semantic_relationship",
+            side_effect=Exception("Rel Error"),
+        ) as mock_create_rel,
+    ):
         stats = await extractor.extract_from_memories(TENANT_ID, PROJECT_ID)
 
         assert stats["nodes_extracted"] == 0

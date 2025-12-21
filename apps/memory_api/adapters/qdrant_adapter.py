@@ -36,6 +36,7 @@ class QdrantAdapter(MemoryAdapter):
         """
         try:
             from typing import Any, cast
+
             cluster_info = await cast(Any, self.client).cluster_info()
             collections_resp = await self.client.get_collections()
             collections_summary = [c.name for c in collections_resp.collections]

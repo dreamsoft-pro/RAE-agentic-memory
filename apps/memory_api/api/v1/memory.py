@@ -13,7 +13,7 @@ from apps.memory_api.models import (
     DeleteMemoryResponse,
     QueryMemoryRequest,
     QueryMemoryResponse,
-    RebuildReflectionsRequest,  # NEW
+    RebuildReflectionsRequest,
     StoreMemoryRequest,
     StoreMemoryResponse,
 )
@@ -21,10 +21,10 @@ from apps.memory_api.observability.rae_tracing import get_tracer
 from apps.memory_api.security import auth
 from apps.memory_api.security.dependencies import get_and_verify_tenant_id
 from apps.memory_api.services import pii_scrubber, scoring
-from apps.memory_api.services.embedding import get_embedding_service  # NEW
+from apps.memory_api.services.embedding import get_embedding_service
 from apps.memory_api.services.rae_core_service import RAECoreService
-from apps.memory_api.services.vector_store import get_vector_store  # NEW
-from apps.memory_api.tasks.background_tasks import (  # NEW
+from apps.memory_api.services.vector_store import get_vector_store
+from apps.memory_api.tasks.background_tasks import (
     generate_reflection_for_project,
 )
 
@@ -119,7 +119,8 @@ async def query_memory(
     """
     if req.use_graph and not req.project:
         raise HTTPException(
-            status_code=400, detail="project parameter is required when use_graph is True"
+            status_code=400,
+            detail="project parameter is required when use_graph is True",
         )
 
     with tracer.start_as_current_span("rae.api.memory.query") as span:

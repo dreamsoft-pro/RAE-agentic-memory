@@ -33,7 +33,14 @@ ignore_missing_imports = true
 line-length = 88
 target-version = "py312"
 select = ["E", "F", "I", "B", "W"]
-ignore = ["E501"]  # Line too long (handled by black)
+ignore = [
+    "E501", # Line too long (handled by black)
+    "B008", # Do not perform function call in argument defaults (standard for FastAPI Depends)
+    "B904", # Within an except clause, raise exceptions with raise ... from err
+    "B905", # zip() without an explicit strict= parameter
+    "B007", # Loop control variable not used within loop body
+    "B017", # Do not assert blind exception: Exception
+]
 
 [tool.black]
 line-length = 88

@@ -115,7 +115,9 @@ class MLServiceClient:
     that have been offloaded to a separate service.
     """
 
-    def __init__(self, base_url: Optional[str] = None, enable_circuit_breaker: bool = True):
+    def __init__(
+        self, base_url: Optional[str] = None, enable_circuit_breaker: bool = True
+    ):
         """
         Initialize ML service client with resilience features.
 
@@ -123,9 +125,9 @@ class MLServiceClient:
             base_url: Base URL of the ML service (default: from settings)
             enable_circuit_breaker: Enable circuit breaker pattern (default: True)
         """
-        self.base_url: str = str(base_url or getattr(
-            settings, "ML_SERVICE_URL", "http://ml-service:8001"
-        ))
+        self.base_url: str = str(
+            base_url or getattr(settings, "ML_SERVICE_URL", "http://ml-service:8001")
+        )
         self.client = httpx.AsyncClient(base_url=self.base_url, timeout=30.0)
         self.circuit_breaker = CircuitBreaker() if enable_circuit_breaker else None
         logger.info(
@@ -358,7 +360,9 @@ class MLServiceClient:
         embeddings = result.get("embeddings", [])
 
         if not embeddings:
-            raise ValueError(f"No embeddings returned from ML service for text: {text[:50]}...")
+            raise ValueError(
+                f"No embeddings returned from ML service for text: {text[:50]}..."
+            )
 
         return cast(List[float], embeddings[0])
 

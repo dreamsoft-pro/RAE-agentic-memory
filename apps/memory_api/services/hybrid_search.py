@@ -173,9 +173,7 @@ class HybridSearchService:
                 )
 
                 # Generate query embedding
-                query_embedding = self.embedding_service.generate_embeddings(
-                    [query]
-                )
+                query_embedding = self.embedding_service.generate_embeddings([query])
                 query_emb = np.array(query_embedding[0])
 
                 # Convert vector results to MemoryItem format

@@ -44,7 +44,7 @@ async def test_context_builder_uses_v3_when_enabled(mock_rae_service):
         pool,
         mock_rae_service,
         reflection_engine,
-        config=ContextConfig(enable_scoring_v3=True)
+        config=ContextConfig(enable_scoring_v3=True),
     )
 
     # Act
@@ -84,7 +84,7 @@ async def test_context_builder_v3_integration_mock(mock_rae_service):
         pool,
         mock_rae_service,
         reflection_engine,
-        config=ContextConfig(enable_scoring_v3=True)
+        config=ContextConfig(enable_scoring_v3=True),
     )
 
     with patch(

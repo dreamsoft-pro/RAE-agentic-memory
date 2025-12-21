@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock
 
 import pytest
@@ -50,7 +50,7 @@ async def test_build_context_basic(
                 "id": "e1",
                 "content": "E1",
                 "layer": "em",
-                "created_at": datetime.now(),
+                "created_at": datetime.now(timezone.utc),
                 "importance": 0.5,
                 "last_accessed_at": None,
                 "usage_count": 0,
@@ -61,7 +61,7 @@ async def test_build_context_basic(
                 "id": "s1",
                 "content": "S1",
                 "layer": "sm",
-                "created_at": datetime.now(),
+                "created_at": datetime.now(timezone.utc),
                 "importance": 0.5,
                 "last_accessed_at": None,
                 "usage_count": 0,
@@ -75,7 +75,7 @@ async def test_build_context_basic(
             "content": "R1",
             "tags": ["learn"],
             "importance": 0.8,
-            "created_at": datetime.now(),
+            "created_at": datetime.now(timezone.utc),
         }
     ]
 

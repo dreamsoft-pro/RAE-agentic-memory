@@ -341,7 +341,9 @@ def validate_cost_calculation(
         >>> if not is_valid:
         ...     logger.error("Cost mismatch detected! Using our cost model instead.")
     """
-    our_cost = float(calculate_cost(model_name, input_tokens, output_tokens)["total_cost_usd"])
+    our_cost = float(
+        calculate_cost(model_name, input_tokens, output_tokens)["total_cost_usd"]
+    )
     difference = abs(our_cost - llm_reported_cost)
 
     is_valid = bool(difference <= tolerance)

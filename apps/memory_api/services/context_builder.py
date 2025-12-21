@@ -345,7 +345,9 @@ class ContextBuilder:
                 ),
             )
             # Use Any cast to avoid V3 vs V2 type mismatch
-            ranked_v3 = rank_memories_by_score(all_memories, cast(Any, score_results_v3))
+            ranked_v3 = rank_memories_by_score(
+                all_memories, cast(Any, score_results_v3)
+            )
 
             # --- Iteration 2: Smart Re-Ranker ---
             if settings.ENABLE_SMART_RERANKER:
@@ -367,7 +369,9 @@ class ContextBuilder:
                 similarity_scores=similarity_scores,
                 weights=self.config.scoring_weights,
             )
-            ranked_v2 = rank_memories_by_score(all_memories, cast(Any, score_results_v2))
+            ranked_v2 = rank_memories_by_score(
+                all_memories, cast(Any, score_results_v2)
+            )
             top_memories = ranked_v2[: self.config.max_ltm_items]
         else:
             # Basic ranking by similarity

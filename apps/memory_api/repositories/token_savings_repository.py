@@ -80,7 +80,7 @@ class TokenSavingsRepository:
 
         # Aggregation query
         query = f"""
-            SELECT 
+            SELECT
                 COALESCE(SUM(saved_tokens), 0) as total_tokens,
                 COALESCE(SUM(estimated_cost_saved_usd), 0) as total_usd,
                 savings_type,
@@ -132,7 +132,7 @@ class TokenSavingsRepository:
         trunc = "hour" if interval == "hour" else "day"
 
         query = """
-            SELECT 
+            SELECT
                 date_trunc($2, timestamp) as bucket,
                 SUM(saved_tokens) as saved_tokens,
                 SUM(estimated_cost_saved_usd) as saved_usd

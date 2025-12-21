@@ -150,7 +150,9 @@ async def test_semantic_search_3_stages(semantic_search, mock_pool):
 
     # Mock ML client embedding
     semantic_search.ml_client.get_embedding = AsyncMock(return_value=[0.1] * 768)
-    semantic_search.ml_client.generate_embeddings = AsyncMock(return_value={"embeddings": [[0.1] * 768]})
+    semantic_search.ml_client.generate_embeddings = AsyncMock(
+        return_value={"embeddings": [[0.1] * 768]}
+    )
 
     # Mock semantic extractor canonicalize_term
     semantic_search.semantic_extractor.canonicalize_term = AsyncMock(

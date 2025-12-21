@@ -65,21 +65,27 @@ def mock_llm_provider():
 @pytest.fixture
 def service(mock_pool, mock_query_analyzer, mock_ml_client, mock_llm_provider):
     # Need to patch internal components
-    with patch(
-        "apps.memory_api.services.hybrid_search_service.QueryAnalyzer",
-        return_value=mock_query_analyzer,
-    ), patch(
-        "apps.memory_api.services.hybrid_search_service.MLServiceClient",
-        return_value=mock_ml_client,
-    ), patch(
-        "apps.memory_api.services.hybrid_search_service.get_llm_provider",
-        return_value=mock_llm_provider,
-    ), patch(
-        "apps.memory_api.services.hybrid_search_service.get_hybrid_cache",
-        return_value=AsyncMock(),
-    ), patch(
-        "apps.memory_api.services.hybrid_search_service.TokenSavingsService",
-        return_value=AsyncMock(),
+    with (
+        patch(
+            "apps.memory_api.services.hybrid_search_service.QueryAnalyzer",
+            return_value=mock_query_analyzer,
+        ),
+        patch(
+            "apps.memory_api.services.hybrid_search_service.MLServiceClient",
+            return_value=mock_ml_client,
+        ),
+        patch(
+            "apps.memory_api.services.hybrid_search_service.get_llm_provider",
+            return_value=mock_llm_provider,
+        ),
+        patch(
+            "apps.memory_api.services.hybrid_search_service.get_hybrid_cache",
+            return_value=AsyncMock(),
+        ),
+        patch(
+            "apps.memory_api.services.hybrid_search_service.TokenSavingsService",
+            return_value=AsyncMock(),
+        ),
     ):
         svc = HybridSearchService(mock_pool, enable_cache=True)
         # Manually attach mocks if init created new instances (though patch return_value handles this for new instances)

@@ -302,13 +302,15 @@ class RAECoreService:
         search_results = []
         for res in results:
             # Map engine dict to SearchResult
-            search_results.append(SearchResult(
-                memory_id=str(res["id"]),
-                content=res["content"],
-                score=res.get("search_score", 0.0),
-                strategy_used=SearchStrategy.HYBRID,
-                metadata=res.get("metadata", {})
-            ))
+            search_results.append(
+                SearchResult(
+                    memory_id=str(res["id"]),
+                    content=res["content"],
+                    score=res.get("search_score", 0.0),
+                    strategy_used=SearchStrategy.HYBRID,
+                    metadata=res.get("metadata", {}),
+                )
+            )
 
         logger.info(
             "memories_queried",
@@ -322,7 +324,7 @@ class RAECoreService:
             total_found=len(results),
             query=query,
             strategy=SearchStrategy.HYBRID,
-            execution_time_ms=0.0  # Placeholder
+            execution_time_ms=0.0,  # Placeholder
         )
 
     async def consolidate_memories(

@@ -293,12 +293,15 @@ class LLMEvaluator:
 
         # Call LLM
         try:
-            response = cast(LLMEvaluationResponse, await self.llm_provider.generate_structured(
-                system="You are an expert evaluator of AI agent execution. Assess the quality and success of the following task execution.",
-                prompt=prompt,
-                model=settings.RAE_LLM_MODEL_DEFAULT,
-                response_model=LLMEvaluationResponse,
-            ))
+            response = cast(
+                LLMEvaluationResponse,
+                await self.llm_provider.generate_structured(
+                    system="You are an expert evaluator of AI agent execution. Assess the quality and success of the following task execution.",
+                    prompt=prompt,
+                    model=settings.RAE_LLM_MODEL_DEFAULT,
+                    response_model=LLMEvaluationResponse,
+                ),
+            )
 
             # Map outcome string to enum
             outcome_map = {

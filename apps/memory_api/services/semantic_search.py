@@ -168,7 +168,9 @@ class SemanticSearchPipeline:
         # Generate query embedding
         result = await self.ml_client.generate_embeddings([query])
         embeddings = result.get("embeddings", [])
-        query_embedding = cast(List[float], embeddings[0]) if embeddings else [0.0] * 1536
+        query_embedding = (
+            cast(List[float], embeddings[0]) if embeddings else [0.0] * 1536
+        )
 
         # Simple topic extraction (split query into key terms)
         # In production, use LLM for better topic extraction

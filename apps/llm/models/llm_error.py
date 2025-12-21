@@ -2,6 +2,7 @@
 LLM Error types.
 Unified error handling for all LLM providers.
 """
+
 from typing import Optional
 
 

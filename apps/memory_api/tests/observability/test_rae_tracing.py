@@ -33,10 +33,13 @@ def mock_tracer():
 @pytest.fixture
 def patch_opentelemetry(mock_tracer):
     tracer, span = mock_tracer
-    with patch(
-        "apps.memory_api.observability.rae_tracing.OPENTELEMETRY_AVAILABLE", True
-    ), patch(
-        "apps.memory_api.observability.rae_tracing.get_tracer", return_value=tracer
+    with (
+        patch(
+            "apps.memory_api.observability.rae_tracing.OPENTELEMETRY_AVAILABLE", True
+        ),
+        patch(
+            "apps.memory_api.observability.rae_tracing.get_tracer", return_value=tracer
+        ),
     ):
         yield tracer, span
 

@@ -250,7 +250,9 @@ class GeminiProvider:
                 chat_history = history[:-1]
                 chat = model.start_chat(history=cast(Any, chat_history))
                 response_stream = await chat.send_message_async(
-                    last_message, generation_config=cast(Any, generation_config), stream=True
+                    last_message,
+                    generation_config=cast(Any, generation_config),
+                    stream=True,
                 )
             else:
                 prompt = history[0]["parts"][0] if history else ""

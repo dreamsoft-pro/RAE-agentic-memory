@@ -20,7 +20,9 @@ def mock_ml_client():
     with patch("apps.memory_api.services.semantic_search.MLServiceClient") as mock:
         instance = mock.return_value
         instance.get_embedding = AsyncMock(return_value=[0.1] * 1536)
-        instance.generate_embeddings = AsyncMock(return_value={"embeddings": [[0.1] * 1536]})
+        instance.generate_embeddings = AsyncMock(
+            return_value={"embeddings": [[0.1] * 1536]}
+        )
         yield instance
 
 

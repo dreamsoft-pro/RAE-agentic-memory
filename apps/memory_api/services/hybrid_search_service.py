@@ -214,7 +214,7 @@ class HybridSearchService:
                 query=query,
                 tenant_id=tenant_id,
                 project_id=project_id,
-                context=conversation_history
+                context=conversation_history,
             )
 
         analysis_time = int((time.time() - analysis_start) * 1000)

@@ -134,8 +134,9 @@ async def lifespan(app: FastAPI):
         logger.info("db_migration_start", mode=settings.RAE_DB_MODE)
         try:
             import asyncio
+
             from alembic import command, config
-            
+
             # Run Alembic migrations programmatically
             # We run this in a thread because Alembic is synchronous
             alembic_cfg = config.Config("alembic.ini")
@@ -143,7 +144,7 @@ async def lifespan(app: FastAPI):
             logger.info("db_migration_success")
         except Exception as e:
             logger.error("db_migration_failed", error=str(e))
-            raise RuntimeError(f"Database migration failed: {e}")
+            raise RuntimeError(f"Database migration failed: {e}") from e
 
     # 3. Memory Contract Validation (Fail Fast)
     # Validate if mode is 'validate', 'init', or 'migrate' (verify after migration)
@@ -348,16 +349,19 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
     from fastapi import status
     from fastapi.encoders import jsonable_encoder
+
     return JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-        content=jsonable_encoder({
-            "detail": exc.errors(),
-            "error": {
-                "code": "422",
-                "message": "Validation Error",
-                "details": exc.errors(),
+        content=jsonable_encoder(
+            {
+                "detail": exc.errors(),
+                "error": {
+                    "code": "422",
+                    "message": "Validation Error",
+                    "details": exc.errors(),
+                },
             }
-        }),
+        ),
     )
 
 
@@ -365,6 +369,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 async def generic_exception_handler(request: Request, exc: Exception):
     logger.exception("unhandled_exception", exc_info=exc)
     from fastapi import status
+
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
@@ -372,7 +377,7 @@ async def generic_exception_handler(request: Request, exc: Exception):
             "error": {
                 "code": "500",
                 "message": "Internal Server Error",
-            }
+            },
         },
     )
 

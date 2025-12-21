@@ -540,7 +540,9 @@ class PluginRegistry:
                             plugin_instance = obj()
                             self.register(plugin_instance)
                 else:
-                    logger.warning("plugin_spec_or_loader_not_found", module=module_name)
+                    logger.warning(
+                        "plugin_spec_or_loader_not_found", module=module_name
+                    )
 
             except Exception as e:
                 logger.error("plugin_load_failed", module=module_name, error=str(e))

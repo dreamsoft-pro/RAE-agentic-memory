@@ -152,7 +152,9 @@ async def execute(
             except Exception as e:
                 span.set_attribute("rae.outcome.label", "reranker_error")
                 span.set_attribute("rae.error.message", str(e))
-                raise HTTPException(status_code=502, detail=f"Reranker error: {e}")
+                raise HTTPException(
+                    status_code=502, detail=f"Reranker error: {e}"
+                ) from e
 
             rerank_scores = {item["id"]: item["score"] for item in reranked_items}
 
@@ -231,7 +233,7 @@ async def execute(
         except Exception as e:
             span.set_attribute("rae.outcome.label", "llm_error")
             span.set_attribute("rae.error.message", str(e))
-            raise HTTPException(status_code=500, detail=f"LLM call failed: {e}")
+            raise HTTPException(status_code=500, detail=f"LLM call failed: {e}") from e
 
         # 7. Reflection hook
         try:

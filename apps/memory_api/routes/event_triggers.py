@@ -435,9 +435,7 @@ async def create_workflow(
             steps=[s.model_dump() for s in request.steps],
             created_by=request.created_by,
             description=request.description,
-            execution_mode=(
-                "parallel" if request.parallel_execution else "sequential"
-            ),
+            execution_mode=("parallel" if request.parallel_execution else "sequential"),
         )
 
         return CreateWorkflowResponse(

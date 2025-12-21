@@ -24,11 +24,14 @@ def mock_sentence_transformer_instance():
 # Fixture to mock sklearn components (AgglomerativeClustering and cosine_similarity)
 @pytest.fixture
 def mock_sklearn_components():
-    with patch(
-        "apps.ml_service.services.entity_resolution.AgglomerativeClustering"
-    ) as MockAgglomerativeClustering, patch(
-        "apps.ml_service.services.entity_resolution.cosine_similarity"
-    ) as MockCosineSimilarity:
+    with (
+        patch(
+            "apps.ml_service.services.entity_resolution.AgglomerativeClustering"
+        ) as MockAgglomerativeClustering,
+        patch(
+            "apps.ml_service.services.entity_resolution.cosine_similarity"
+        ) as MockCosineSimilarity,
+    ):
         mock_agg_instance = MagicMock()
         MockAgglomerativeClustering.return_value = mock_agg_instance
 

@@ -786,7 +786,9 @@ class RAEClient:
         }
         logger.info("stats_reset")
 
-    def invalidate_cache(self, method: Optional[str] = None, path: Optional[str] = None):
+    def invalidate_cache(
+        self, method: Optional[str] = None, path: Optional[str] = None
+    ):
         """
         Invalidate cache entries.
 

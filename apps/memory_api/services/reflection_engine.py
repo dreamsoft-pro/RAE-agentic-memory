@@ -109,12 +109,16 @@ class ReflectionEngine:
         final_prompt = REFLECTION_PROMPT.format(episodes=episode_content)
 
         from typing import cast
-        extracted_triples = cast(Triples, await self.llm_provider.generate_structured(
-            system=system_prompt,
-            prompt=final_prompt,
-            model=settings.RAE_LLM_MODEL_DEFAULT,
-            response_model=Triples,
-        ))
+
+        extracted_triples = cast(
+            Triples,
+            await self.llm_provider.generate_structured(
+                system=system_prompt,
+                prompt=final_prompt,
+                model=settings.RAE_LLM_MODEL_DEFAULT,
+                response_model=Triples,
+            ),
+        )
         logger.info("extracted_triples", triples=extracted_triples.model_dump_json())
 
         # 3. Store the new reflective memory (triples)

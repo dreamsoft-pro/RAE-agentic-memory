@@ -44,13 +44,17 @@ async def test_consolidate_episodic_to_working_success(service):
     ]
 
     # Mock internal methods
-    with patch.object(
-        service, "_get_consolidation_candidates", new_callable=AsyncMock
-    ) as mock_get_candidates, patch.object(
-        service, "_group_similar_memories", new_callable=AsyncMock
-    ) as mock_group, patch.object(
-        service, "_consolidate_group", new_callable=AsyncMock
-    ) as mock_consolidate:
+    with (
+        patch.object(
+            service, "_get_consolidation_candidates", new_callable=AsyncMock
+        ) as mock_get_candidates,
+        patch.object(
+            service, "_group_similar_memories", new_callable=AsyncMock
+        ) as mock_group,
+        patch.object(
+            service, "_consolidate_group", new_callable=AsyncMock
+        ) as mock_consolidate,
+    ):
         mock_get_candidates.return_value = memories
         mock_group.return_value = [memories]  # One group
 
@@ -93,13 +97,17 @@ async def test_consolidate_working_to_semantic_success(service):
     tenant_id = uuid4()
     memories = [{"id": str(uuid4()), "content": "w1"}]
 
-    with patch.object(
-        service, "_get_consolidation_candidates", new_callable=AsyncMock
-    ) as mock_get, patch.object(
-        service, "_group_by_patterns", new_callable=AsyncMock
-    ) as mock_group, patch.object(
-        service, "_consolidate_group", new_callable=AsyncMock
-    ) as mock_consolidate:
+    with (
+        patch.object(
+            service, "_get_consolidation_candidates", new_callable=AsyncMock
+        ) as mock_get,
+        patch.object(
+            service, "_group_by_patterns", new_callable=AsyncMock
+        ) as mock_group,
+        patch.object(
+            service, "_consolidate_group", new_callable=AsyncMock
+        ) as mock_consolidate,
+    ):
         mock_get.return_value = memories
         mock_group.return_value = [memories]
         mock_consolidate.return_value = ConsolidationResult(
@@ -118,11 +126,14 @@ async def test_consolidate_semantic_to_ltm_success(service):
     tenant_id = uuid4()
     memories = [{"id": str(uuid4()), "content": "s1"}]
 
-    with patch.object(
-        service, "_get_consolidation_candidates", new_callable=AsyncMock
-    ) as mock_get, patch.object(
-        service, "_consolidate_single", new_callable=AsyncMock
-    ) as mock_consolidate:
+    with (
+        patch.object(
+            service, "_get_consolidation_candidates", new_callable=AsyncMock
+        ) as mock_get,
+        patch.object(
+            service, "_consolidate_single", new_callable=AsyncMock
+        ) as mock_consolidate,
+    ):
         mock_get.return_value = memories
         mock_consolidate.return_value = ConsolidationResult(
             success=True, source_memory_ids=[]
@@ -140,13 +151,17 @@ async def test_run_automatic_consolidation(service):
     tenant_id = uuid4()
 
     # Mock phase methods
-    with patch.object(
-        service, "consolidate_episodic_to_working", new_callable=AsyncMock
-    ) as mock_p1, patch.object(
-        service, "consolidate_working_to_semantic", new_callable=AsyncMock
-    ) as mock_p2, patch.object(
-        service, "consolidate_semantic_to_ltm", new_callable=AsyncMock
-    ) as mock_p3:
+    with (
+        patch.object(
+            service, "consolidate_episodic_to_working", new_callable=AsyncMock
+        ) as mock_p1,
+        patch.object(
+            service, "consolidate_working_to_semantic", new_callable=AsyncMock
+        ) as mock_p2,
+        patch.object(
+            service, "consolidate_semantic_to_ltm", new_callable=AsyncMock
+        ) as mock_p3,
+    ):
         mock_p1.return_value = [ConsolidationResult(success=True, source_memory_ids=[])]
         mock_p2.return_value = [ConsolidationResult(success=True, source_memory_ids=[])]
         mock_p3.return_value = [ConsolidationResult(success=True, source_memory_ids=[])]
@@ -183,13 +198,17 @@ async def test_consolidate_group_logic(service):
     tenant_id = uuid4()
     memories = [{"id": "m1", "content": "content"}]
 
-    with patch.object(
-        service, "_generate_consolidated_content", new_callable=AsyncMock
-    ) as mock_gen, patch.object(
-        service, "_create_consolidated_memory", new_callable=AsyncMock
-    ) as mock_create, patch.object(
-        service, "_mark_as_consolidated", new_callable=AsyncMock
-    ) as mock_mark:
+    with (
+        patch.object(
+            service, "_generate_consolidated_content", new_callable=AsyncMock
+        ) as mock_gen,
+        patch.object(
+            service, "_create_consolidated_memory", new_callable=AsyncMock
+        ) as mock_create,
+        patch.object(
+            service, "_mark_as_consolidated", new_callable=AsyncMock
+        ) as mock_mark,
+    ):
         mock_gen.return_value = "Consolidated"
         mock_create.return_value = "new_id"
 

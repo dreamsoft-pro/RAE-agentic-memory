@@ -54,8 +54,7 @@ async def check_qdrant(
         ) from e
 
 
-async def check_llm_provider():
-    ...
+async def check_llm_provider(): ...
 
 
 @router.get("/health", response_model=dict, summary="Overall Health Check")
