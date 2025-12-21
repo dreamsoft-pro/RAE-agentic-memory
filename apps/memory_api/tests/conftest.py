@@ -206,15 +206,16 @@ async def db_pool(postgres_container):
         # Note: This requires alembic.ini to be configured properly
         # For now, we'll create minimal schema manually
         async with pool.acquire() as conn:
-            # Enable pgvector extension
+            # Enable pgvector and uuid extensions
             await conn.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+            await conn.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";')
 
             # Create minimal schema for tests
             # In production, this should be replaced with proper Alembic migrations
             await conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS memories (
-                    id SERIAL PRIMARY KEY,
+                    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                     tenant_id VARCHAR(255) NOT NULL,
                     project VARCHAR(255),
                     content TEXT NOT NULL,
@@ -227,7 +228,43 @@ async def db_pool(postgres_container):
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     last_accessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     usage_count INTEGER DEFAULT 0,
-                    strength FLOAT DEFAULT 0.5
+                    strength FLOAT DEFAULT 0.5,
+                    memory_type TEXT DEFAULT 'episodic',
+                    agent_id TEXT DEFAULT 'default_agent',
+                    session_id TEXT,
+                    qdrant_point_id TEXT,
+                    embedding vector(384)
+                );
+            """
+            )
+
+            await conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS token_savings_log (
+                    id SERIAL PRIMARY KEY,
+                    tenant_id VARCHAR(255) NOT NULL,
+                    project_id VARCHAR(255) NOT NULL,
+                    request_id VARCHAR(255),
+                    predicted_tokens INTEGER NOT NULL,
+                    real_tokens INTEGER NOT NULL,
+                    saved_tokens INTEGER NOT NULL,
+                    estimated_cost_saved_usd FLOAT NOT NULL,
+                    savings_type VARCHAR(50) NOT NULL,
+                    model VARCHAR(100),
+                    timestamp TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+                );
+            """
+            )
+
+            await conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS budgets (
+                    id SERIAL PRIMARY KEY,
+                    tenant_id VARCHAR(255) UNIQUE NOT NULL,
+                    total_budget_usd FLOAT NOT NULL,
+                    current_usage_usd FLOAT DEFAULT 0.0,
+                    last_reset_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    is_active BOOLEAN DEFAULT TRUE
                 );
             """
             )

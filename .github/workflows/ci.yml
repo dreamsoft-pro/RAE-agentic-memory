@@ -401,27 +401,25 @@ jobs:
           PGPASSWORD: postgres
         run: |
           # Wait for postgres
-          sleep 3
+          sleep 5
           # Test database connection
           python -c "import asyncpg; import asyncio; asyncio.run(asyncpg.connect(host='localhost', database='rae_memory', user='postgres', password='postgres'))"
           echo "✅ Database connection successful"
-          # Run DDL scripts to create base tables
-          for sql_file in infra/postgres/ddl/*.sql; do
-            echo "Running $sql_file..."
-            psql -h localhost -U postgres -d rae_memory -f "$sql_file"
-          done
-          echo "✅ Base schema created"
+          # Use Alembic to create the schema instead of raw SQL
+          pip install alembic sqlalchemy asyncpg
+          alembic upgrade head
+          echo "✅ Database schema created via Alembic"
 
       - name: Run lite benchmark
         env:
+          CUDA_VISIBLE_DEVICES: ""
           POSTGRES_HOST: localhost
           POSTGRES_PORT: 5432
           POSTGRES_DB: rae_memory
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          QDRANT_HOST: localhost
-          QDRANT_PORT: 6333
         run: |
+          export PYTHONPATH=.
           python benchmarking/scripts/run_benchmark.py --set academic_lite.yaml
 
       - name: Check benchmark results
