@@ -332,7 +332,7 @@ def custom_openapi():
     return app.openapi_schema
 
 
-app.openapi = custom_openapi
+cast(Any, app).openapi = custom_openapi
 
 # --- Exception Handlers ---
 

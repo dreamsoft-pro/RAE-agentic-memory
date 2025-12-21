@@ -133,10 +133,10 @@ class PIIScrubber:
 
             if preserve_structure:
                 # Replace with token of similar length
-                scrubbed = pattern.sub(
-                    lambda m, r=replacement: self._preserve_length(m.group(), r),
-                    scrubbed,
-                )
+                def replacer(m: Any, r: str = replacement) -> str:
+                    return self._preserve_length(m.group(), r)
+
+                scrubbed = pattern.sub(replacer, scrubbed)
             else:
                 # Simple replacement
                 scrubbed = pattern.sub(replacement, scrubbed)
