@@ -28,11 +28,12 @@ class TokenSavingsRepository:
                 request_id,
                 predicted_tokens,
                 real_tokens,
+                saved_tokens,
                 estimated_cost_saved_usd,
                 savings_type,
                 model,
                 timestamp
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, NOW()))
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE($10, NOW()))
         """
         try:
             await self.pool.execute(
@@ -42,6 +43,7 @@ class TokenSavingsRepository:
                 entry.request_id,
                 entry.predicted_tokens,
                 entry.real_tokens,
+                entry.saved_tokens,
                 entry.estimated_cost_saved_usd,
                 entry.savings_type,
                 entry.model,
