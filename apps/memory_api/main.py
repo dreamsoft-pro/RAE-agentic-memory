@@ -166,13 +166,23 @@ async def lifespan(app: FastAPI):
         result = await validation_service.validate_all(RAE_MEMORY_CONTRACT_V1)
 
         if not result.valid:
-            error_msg = f"Memory Contract Validation Failed: {len(result.violations)} violations found."
+            violations_summary = "\n".join(
+                [f"- [{v.issue_type}] {v.entity}: {v.details}" for v in result.violations]
+            )
+            error_msg = (
+                f"Memory Contract Validation Failed: {len(result.violations)} violations found.\n"
+                f"Violations:\n{violations_summary}\n\n"
+                "CRITICAL: The database schema does not match the RAE Memory Contract.\n"
+                "HINT: To automatically fix the schema (if possible), set the environment variable:\n"
+                "      RAE_DB_MODE=migrate\n"
+                "      and restart the container."
+            )
             logger.error(
                 "memory_validation_failed",
                 violations=[v.model_dump() for v in result.violations],
             )
             # Raise exception to stop startup (Fail Fast)
-            raise RuntimeError(f"{error_msg} See logs for details.")
+            raise RuntimeError(error_msg)
 
         logger.info("memory_validation_success")
     elif settings.RAE_DB_MODE == "ignore":
