@@ -97,7 +97,7 @@ class GraphRepository:
 
             nodes = [
                 GraphNode(
-                    id=str(record["id"]),
+                    id=record["id"],
                     node_id=record["node_id"],
                     label=record["label"],
                     properties=(
@@ -122,7 +122,7 @@ class GraphRepository:
 
             # Get edges between discovered nodes
             edges = await self.get_edges_between_nodes(
-                node_ids=[node.id for node in nodes],
+                node_ids=[str(node.id) for node in nodes],
                 tenant_id=tenant_id,
                 project_id=project_id,
             )
@@ -201,8 +201,8 @@ class GraphRepository:
 
             edges = [
                 GraphEdge(
-                    source_id=str(record["source_node_id"]),
-                    target_id=str(record["target_node_id"]),
+                    source_id=record["source_node_id"],
+                    target_id=record["target_node_id"],
                     relation=record["relation"],
                     properties=(
                         json.loads(record["properties"])
@@ -251,7 +251,7 @@ class GraphRepository:
                 return None
 
             return GraphNode(
-                id=str(record["id"]),
+                id=record["id"],
                 node_id=record["node_id"],
                 label=record["label"],
                 properties=record["properties"],
@@ -292,7 +292,7 @@ class GraphRepository:
 
             return [
                 GraphNode(
-                    id=str(record["id"]),
+                    id=record["id"],
                     node_id=record["node_id"],
                     label=record["label"],
                     properties=record["properties"],

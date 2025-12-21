@@ -5,6 +5,7 @@ Enterprise-grade test suite for hybrid vector + graph search functionality.
 """
 
 from unittest.mock import AsyncMock, Mock, patch
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -75,9 +76,9 @@ def sample_vector_results():
 def sample_graph_nodes():
     """Sample graph nodes."""
     return [
-        GraphNode(id="n1", node_id="Module_A", label="Module A", depth=0),
-        GraphNode(id="n2", node_id="Module_B", label="Module B", depth=1),
-        GraphNode(id="n3", node_id="PostgreSQL", label="PostgreSQL", depth=2),
+        GraphNode(id=UUID("00000000-0000-0000-0000-000000000001"), node_id="Module_A", label="Module A", depth=0),
+        GraphNode(id=UUID("00000000-0000-0000-0000-000000000002"), node_id="Module_B", label="Module B", depth=1),
+        GraphNode(id=UUID("00000000-0000-0000-0000-000000000003"), node_id="PostgreSQL", label="PostgreSQL", depth=2),
     ]
 
 
@@ -85,8 +86,8 @@ def sample_graph_nodes():
 def sample_graph_edges():
     """Sample graph edges."""
     return [
-        GraphEdge(source_id="n1", target_id="n2", relation="DEPENDS_ON"),
-        GraphEdge(source_id="n2", target_id="n3", relation="USES"),
+        GraphEdge(source_id=UUID("00000000-0000-0000-0000-000000000001"), target_id=UUID("00000000-0000-0000-0000-000000000002"), relation="DEPENDS_ON"),
+        GraphEdge(source_id=UUID("00000000-0000-0000-0000-000000000002"), target_id=UUID("00000000-0000-0000-0000-000000000003"), relation="USES"),
     ]
 
 
@@ -109,15 +110,16 @@ class TestGraphNode:
 
     def test_node_creation(self):
         """Test creating graph node."""
+        node_id = uuid4()
         node = GraphNode(
-            id="node1",
+            id=node_id,
             node_id="Entity1",
             label="Entity Label",
             properties={"type": "module"},
             depth=2,
         )
 
-        assert node.id == "node1"
+        assert node.id == node_id
         assert node.node_id == "Entity1"
         assert node.label == "Entity Label"
         assert node.depth == 2
@@ -128,15 +130,17 @@ class TestGraphEdge:
 
     def test_edge_creation(self):
         """Test creating graph edge."""
+        s_id = uuid4()
+        t_id = uuid4()
         edge = GraphEdge(
-            source_id="n1",
-            target_id="n2",
+            source_id=s_id,
+            target_id=t_id,
             relation="DEPENDS_ON",
             properties={"confidence": 0.9},
         )
 
-        assert edge.source_id == "n1"
-        assert edge.target_id == "n2"
+        assert edge.source_id == s_id
+        assert edge.target_id == t_id
         assert edge.relation == "DEPENDS_ON"
 
 

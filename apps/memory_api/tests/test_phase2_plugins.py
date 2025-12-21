@@ -45,6 +45,41 @@ class MockTestPlugin(Plugin):
         params["modified"] = True
         return params
 
+    async def on_after_memory_update(
+        self,
+        tenant_id,
+        memory_id: str,
+        old_data: Dict[str, Any],
+        new_data: Dict[str, Any],
+    ):
+        pass
+
+    async def on_before_memory_delete(self, tenant_id, memory_id: str):
+        pass
+
+    async def on_after_memory_delete(self, tenant_id, memory_id: str):
+        pass
+
+    async def on_after_query(
+        self, tenant_id, query: str, results: list[Dict[str, Any]]
+    ):
+        pass
+
+    async def on_notification(
+        self, tenant_id, notification_type: str, data: Dict[str, Any]
+    ):
+        pass
+
+    async def on_alert(
+        self,
+        tenant_id,
+        alert_type: str,
+        severity: str,
+        message: str,
+        data: Dict[str, Any],
+    ):
+        pass
+
 
 class TestPluginMetadata:
     """Test plugin metadata"""

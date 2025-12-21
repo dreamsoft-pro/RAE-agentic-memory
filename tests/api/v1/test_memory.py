@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from typing import Any
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -11,6 +12,36 @@ from apps.memory_api.models import (
 )
 from apps.memory_api.security.dependencies import get_and_verify_tenant_id
 from apps.memory_api.services.rae_core_service import RAECoreService
+
+
+class DummyAsyncContextManager:
+    """Helper class for mocking async context managers."""
+    def __init__(self, value: Any):
+        self._value = value
+    def __await__(self):
+        async def _impl():
+            return self
+        return _impl().__await__()
+    async def __aenter__(self):
+        return self._value
+    async def __aexit__(self, exc_type, exc, tb):
+        return False
+
+
+@pytest.fixture
+def mock_pool():
+    """Mock asyncpg connection pool."""
+    pool = Mock()
+    conn = AsyncMock()
+    conn.fetch = AsyncMock(return_value=[])
+    conn.fetchrow = AsyncMock(return_value=None)
+    conn.execute = AsyncMock(return_value="INSERT 0 1")
+    conn.transaction = Mock(return_value=DummyAsyncContextManager(None))
+    context_manager = DummyAsyncContextManager(conn)
+    pool.acquire = Mock(return_value=context_manager)
+    pool.close = AsyncMock()
+    pool._test_conn = conn
+    return pool
 
 
 @pytest.fixture

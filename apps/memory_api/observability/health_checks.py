@@ -4,9 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from qdrant_client import AsyncQdrantClient
 from redis.asyncio import Redis as AsyncRedis
 
-import apps.llm.broker.llm_router as llm_broker
 import apps.memory_api.dependencies as deps  # Modified import
-from apps.memory_api.config import settings
 
 router = APIRouter()
 logger = structlog.get_logger(__name__)
