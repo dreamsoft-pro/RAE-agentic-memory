@@ -25,7 +25,7 @@ def mock_pool():
 @pytest.fixture
 def mock_query_analyzer():
     analyzer = AsyncMock()
-    analyzer.analyze_query.return_value = QueryAnalysis(
+    analyzer.analyze_intent.return_value = QueryAnalysis(
         intent="exploratory",
         confidence=0.9,
         key_entities=["entity1"],
@@ -134,7 +134,7 @@ async def test_search_flow_uncached(service, mock_pool):
     assert isinstance(result, HybridSearchResult)
     assert len(result.results) > 0
     assert result.total_results > 0
-    service.query_analyzer.analyze_query.assert_called_once()
+    service.query_analyzer.analyze_intent.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -166,7 +166,7 @@ async def test_search_cached(service):
     result = await service.search("t", "p", "q", bypass_cache=False)
 
     assert result.total_results == 0
-    service.query_analyzer.analyze_query.assert_not_called()  # Should be skipped
+    service.query_analyzer.analyze_intent.assert_not_called()  # Should be skipped
     service.savings_service.track_savings.assert_called_once()
 
 
@@ -384,7 +384,7 @@ async def test_search_with_manual_weights(service, mock_pool):
     )
 
     # Should skip analysis
-    service.query_analyzer.analyze_query.assert_not_called()
+    service.query_analyzer.analyze_intent.assert_not_called()
     assert result.applied_weights["vector"] == 1.0
 
 

@@ -49,7 +49,7 @@ def mock_rae_service():
 @pytest.fixture
 def mock_embedding_service():
     """Mock for EmbeddingService."""
-    service = AsyncMock()
+    service = MagicMock()
     service.generate_embeddings.return_value = [[0.1] * 384]
     return service
 
@@ -153,7 +153,7 @@ async def test_store_memory_failure(client_with_overrides, mock_rae_service):
     )
 
     assert response.status_code == 500
-    assert "Storage error" in response.json()["detail"]
+    assert "Storage error" in response.json()["error"]["message"]
 
 
 @pytest.mark.asyncio
@@ -218,7 +218,7 @@ async def test_delete_memory_not_found(client_with_overrides, mock_rae_service):
     )
 
     assert response.status_code == 404
-    assert "not found" in response.json()["detail"].lower()
+    assert "not found" in response.json()["error"]["message"].lower()
 
 
 @pytest.mark.asyncio

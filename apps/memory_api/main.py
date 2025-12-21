@@ -330,16 +330,17 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         method=request.method,
     )
     from fastapi import status
+    from fastapi.encoders import jsonable_encoder
     return JSONResponse(
-        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-        content={
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        content=jsonable_encoder({
             "detail": exc.errors(),
             "error": {
                 "code": "422",
                 "message": "Validation Error",
                 "details": exc.errors(),
             }
-        },
+        }),
     )
 
 
@@ -406,7 +407,7 @@ app.include_router(compliance.router, tags=["ISO/IEC 42001 Compliance"])
 # API v1 endpoints - Enterprise Features
 app.include_router(event_triggers.router, tags=["Event Triggers"])
 app.include_router(reflections.router, tags=["Reflections"])
-app.include_router(hybrid_search.router, prefix="/v1", tags=["Hybrid Search"])
+app.include_router(hybrid_search.router, tags=["Hybrid Search"])
 app.include_router(evaluation.router, tags=["Evaluation"])
 app.include_router(dashboard.router, tags=["Dashboard"])
 app.include_router(graph_enhanced.router, tags=["Graph Management"])

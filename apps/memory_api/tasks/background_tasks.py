@@ -38,13 +38,12 @@ async def rae_context():
     """
     pool = await get_pool()
     # Handle host containing protocol (e.g. http://qdrant:6333)
-    host = settings.QDRANT_HOST
-    if "://" in host:
-        host = host.split("://")[-1]
-    if ":" in host:
-        host = host.split(":")[0]
-        
-    qdrant = AsyncQdrantClient(host=host, port=settings.QDRANT_PORT)
+    qdrant_host = settings.QDRANT_HOST
+    if "://" in qdrant_host:
+        qdrant = AsyncQdrantClient(url=qdrant_host)
+    else:
+        qdrant = AsyncQdrantClient(host=qdrant_host, port=settings.QDRANT_PORT)
+    
     redis = await create_redis_client(settings.REDIS_URL)
 
     rae_service = RAECoreService(
@@ -57,7 +56,7 @@ async def rae_context():
         yield pool, rae_service
     finally:
         await qdrant.close()
-        await redis.close()
+        await redis.aclose()
         await pool.close()
 
 

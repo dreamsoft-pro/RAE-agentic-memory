@@ -111,26 +111,6 @@ async def test_store_memory_vector_failure(
     # RAECoreService stores memory and returns ID
     mock_rae_service.store_memory.return_value = str(uuid4())
     
-    # Vector store failure simulation
-    # Note: store_memory endpoint might handle vector storage internally via RAE-Core now,
-    # but the API endpoint logic might still call vector store directly if legacy?
-    # Let's check api/v1/memory.py. It seems it DOES call RAE-Core service.
-    # But RAE-Core service might not raise Vector Error if configured to ignore?
-    # Actually the current API endpoint implementation DOES NOT call vector_store explicitly for store!
-    # It says: # RAE-Core Service handles vector storage internally now (via Engine)
-    
-    # So if we want to simulate vector failure, we need RAECoreService to raise it, 
-    # OR if the API endpoint was modified to NOT call vector store, this test is obsolete/needs update.
-    # The API endpoint:
-    # try:
-    #     memory_id = await rae_service.store_memory(...)
-    # except Exception as e:
-    #     ...
-    
-    # So we should make rae_service.store_memory raise an exception if we want to test error handling.
-    # But the test specifically checks for "Vector store error".
-    # If the vector store logic is inside RAE-Core, then RAE-Core should raise it.
-    
     # Let's simulate RAE-Core raising a generic exception that wraps vector error?
     mock_rae_service.store_memory.side_effect = Exception("Vector store error")
 
@@ -150,8 +130,9 @@ async def test_store_memory_vector_failure(
 
     data = response.json()
     # The API endpoint says: raise HTTPException(status_code=500, detail=f"Storage error: {e}")
-    assert "Storage error" in data["detail"]
-    assert "Vector store error" in data["detail"]
+    # Custom handler returns {"error": {"code": "500", "message": "..."}}
+    assert "Storage error" in data["error"]["message"]
+    assert "Vector store error" in data["error"]["message"]
 
 
 @pytest.mark.asyncio
@@ -174,12 +155,12 @@ async def test_store_memory_db_failure(
     assert response.status_code == 500
 
     data = response.json()
-    assert "Storage error" in data["detail"]
-    assert "DB Error" in data["detail"]
+    assert "Storage error" in data["error"]["message"]
+    assert "DB Error" in data["error"]["message"]
 
 
 @pytest.mark.asyncio
-async def test_query_memory_hybrid_missing_project(client_with_auth):
+async def test_query_memory_hybrid_missing_project(client_with_auth, mock_embedding_service):
     payload = {"query_text": "test query", "use_graph": True}
     response = client_with_auth.post(
         "/v1/memory/query", json=payload, headers={"X-Tenant-Id": "t1"}

@@ -19,15 +19,15 @@ PROJECT_ID = "p1"
 
 @pytest.fixture
 def mock_pool():
-    pool = AsyncMock()
-    conn = AsyncMock()
+    pool = MagicMock()
     # Mock acquire context manager
     mock_context = MagicMock()
+    conn = MagicMock()
     mock_context.__aenter__ = AsyncMock(return_value=conn)
     mock_context.__aexit__ = AsyncMock(return_value=None)
     pool.acquire.return_value = mock_context
 
-    # Mock fetch methods
+    # Mock fetch methods as AsyncMock because they are awaited
     pool.fetch = AsyncMock(return_value=[])
     pool.fetchrow = AsyncMock(return_value=None)
     pool.fetchval = AsyncMock(return_value=None)
@@ -38,8 +38,8 @@ def mock_pool():
 
 @pytest.fixture
 def mock_llm_provider():
-    provider = AsyncMock()
-    provider.generate.return_value = MagicMock(text="canonical_term")
+    provider = MagicMock()
+    provider.generate = AsyncMock(return_value=MagicMock(text="canonical_term"))
 
     # Mock structured response
     extraction_result = SemanticExtractionResult(
@@ -58,14 +58,14 @@ def mock_llm_provider():
         domain="tech",
         categories=["science"],
     )
-    provider.generate_structured.return_value = extraction_result
+    provider.generate_structured = AsyncMock(return_value=extraction_result)
     return provider
 
 
 @pytest.fixture
 def mock_ml_client():
-    client = AsyncMock()
-    client.get_embedding.return_value = [0.1] * 1536
+    client = MagicMock()
+    client.generate_embeddings = AsyncMock(return_value={"embeddings": [[0.1] * 1536]})
     return client
 
 
@@ -284,7 +284,7 @@ async def test_canonicalize_term_fallback(extractor, mock_llm_provider):
 @pytest.mark.asyncio
 async def test_generate_embedding_fallback(extractor, mock_ml_client):
     """Test embedding generation fallback."""
-    mock_ml_client.get_embedding.side_effect = Exception("ML Error")
+    mock_ml_client.generate_embeddings.side_effect = Exception("ML Error")
 
     emb = await extractor._generate_embedding("text")
     assert emb == [0.0] * 1536

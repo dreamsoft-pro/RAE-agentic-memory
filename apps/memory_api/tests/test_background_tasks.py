@@ -259,9 +259,9 @@ class TestGenerateReflection:
 class TestMemoryDecay:
     """Tests for memory decay maintenance task."""
 
-    @patch("apps.memory_api.tasks.background_tasks.get_pool")
+    @patch("apps.memory_api.tasks.background_tasks.rae_context")
     @patch("apps.memory_api.tasks.background_tasks.settings")
-    def test_apply_decay_updates_strength(self, mock_settings, mock_get_pool):
+    def test_apply_decay_updates_strength(self, mock_settings, mock_rae_context):
         """Test that decay is applied to memory strength.
 
         Verifies:
@@ -274,7 +274,10 @@ class TestMemoryDecay:
 
         # Mock pool
         mock_pool = AsyncMock()
-        mock_get_pool.return_value = mock_pool
+        
+        # Setup rae_context mock
+        # rae_context is an async context manager
+        mock_rae_context.return_value.__aenter__.return_value = (mock_pool, AsyncMock())
 
         # Execute
         apply_memory_decay()

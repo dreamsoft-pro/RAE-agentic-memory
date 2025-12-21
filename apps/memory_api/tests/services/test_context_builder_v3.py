@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from apps.memory_api.config import settings
-from apps.memory_api.services.context_builder import ContextBuilder
+from apps.memory_api.services.context_builder import ContextBuilder, ContextConfig
 from apps.memory_api.services.rae_core_service import RAECoreService
 
 
@@ -41,23 +41,20 @@ async def test_context_builder_uses_v3_when_enabled(mock_rae_service):
     reflection_engine.query_reflections = AsyncMock(return_value=[])
 
     # Pass mock_rae_service instead of repo
-    builder = ContextBuilder(pool, mock_rae_service, reflection_engine)
+    builder = ContextBuilder(
+        pool, 
+        mock_rae_service, 
+        reflection_engine,
+        config=ContextConfig(enable_scoring_v3=True)
+    )
 
-    # Enable V3 temporarily
-    original_flag = settings.ENABLE_MATH_V3
-    settings.ENABLE_MATH_V3 = True
+    # Act
+    ctx = await builder.build_context(
+        tenant_id="t1", project_id="p1", query="test query"
+    )
 
-    try:
-        # Act
-        ctx = await builder.build_context(
-            tenant_id="t1", project_id="p1", query="test query"
-        )
-
-        # Assert
-        assert len(ctx.ltm_items) == 1
-
-    finally:
-        settings.ENABLE_MATH_V3 = original_flag
+    # Assert
+    assert len(ctx.ltm_items) == 1
 
 
 @pytest.mark.unit
@@ -84,10 +81,12 @@ async def test_context_builder_v3_integration_mock(mock_rae_service):
     reflection_engine.query_reflections = AsyncMock(return_value=[])
 
     # Pass mock_rae_service instead of repo
-    builder = ContextBuilder(pool, mock_rae_service, reflection_engine)
-
-    original_flag = settings.ENABLE_MATH_V3
-    settings.ENABLE_MATH_V3 = True
+    builder = ContextBuilder(
+        pool, 
+        mock_rae_service, 
+        reflection_engine,
+        config=ContextConfig(enable_scoring_v3=True)
+    )
 
     with patch(
         "apps.memory_api.services.context_builder.compute_batch_scores_v3"
@@ -100,5 +99,3 @@ async def test_context_builder_v3_integration_mock(mock_rae_service):
         await builder.build_context("t1", "p1", "q")
 
         mock_v3.assert_called_once()
-
-    settings.ENABLE_MATH_V3 = original_flag

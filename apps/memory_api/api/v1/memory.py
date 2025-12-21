@@ -117,6 +117,11 @@ async def query_memory(
 
     **Security:** Requires authentication and tenant access with memories:read permission.
     """
+    if req.use_graph and not req.project:
+        raise HTTPException(
+            status_code=400, detail="project parameter is required when use_graph is True"
+        )
+
     with tracer.start_as_current_span("rae.api.memory.query") as span:
         span.set_attribute("rae.tenant_id", tenant_id)
         if req.project:

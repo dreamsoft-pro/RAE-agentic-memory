@@ -640,7 +640,7 @@ class RAEClient:
                 response.raise_for_status()
                 return cast(Dict[str, Any], response.json())
 
-            except httpx.HTTPStatusError as e:
+            except (httpx.HTTPStatusError, httpx.RequestError) as e:
                 last_error = e
 
                 # Get status code if available
