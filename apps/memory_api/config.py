@@ -41,11 +41,11 @@ class Settings(BaseSettings):
         return self
 
     # Database Validation Mode
-    # validate: Check schema and fail fast on mismatch (default)
-    # init: (Not Implemented) Initialize empty DB
-    # migrate: (Not Implemented) Run migrations
+    # migrate: Run migrations automatically on startup (default for DX)
+    # validate: Check schema and fail fast on mismatch (safe for prod)
+    # init: Initialize empty DB (same as migrate)
     # ignore: Skip validation
-    RAE_DB_MODE: str = "validate"
+    RAE_DB_MODE: str = "migrate"
 
     # --- Security Settings ---
     OAUTH_ENABLED: bool = True
