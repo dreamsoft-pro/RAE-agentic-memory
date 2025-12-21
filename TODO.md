@@ -9,21 +9,19 @@
 
 **Priority Tasks:**
 
-1.  **Fix Remaining Mypy Attribute Errors:**
+1.  **🚨 CRITICAL: Fix Linter Errors (Zero Warning Policy)**
 
-    - [x] **DONE**: Fixed `aclose` error in `background_tasks.py` and `tenant_id` error in `test_graph.py`. Mypy is clean for targeted directories.
+    - [ ] **Run `make lint`**: Currently failing with 420 errors (ruff/isort).
 
-2.  **FastAPI Deprecation Warnings:**
+    - [ ] **Auto-fix**: Run `ruff check . --fix` and `ruff format .`.
 
-    - [x] **DONE**: Investigated. Warnings originate from `litellm` dependency. `apps/memory_api/main.py` uses correct `HTTP_422_UNPROCESSABLE_CONTENT`. No internal action required.
+    - [ ] **Manual fix**: Address remaining complex linter errors (unused imports, exception handling).
 
-3.  **Investigate Skipped Tests:**
+    - **Goal**: CI must pass `make lint`.
 
-    - [x] **DONE**: Installed `testcontainers` which enabled ~24 integration tests (Graph Extraction, Hybrid Search) to pass. Remaining skipped tests are empty placeholders.
+2.  **Phase 3: Quality & Reliability (Target: 80% Coverage)**
 
-
-
-**Command to start next session:**
+    - [ ] **`apps/memory_api/routes/dashboard.py`** (Current: 0%)
 ```bash
 .venv/bin/mypy apps/ sdk/ | grep "has no attribute"
 ```

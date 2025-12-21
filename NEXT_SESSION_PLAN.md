@@ -1,18 +1,25 @@
-# Next Session Plan - Mypy & Maintenance
+# NEXT SESSION PLAN
 
-## Status
-- **Mypy Errors:** 388 (down from 462).
-- **Recent Fixes:** Corrected signatures in `PostgresStorage` and `InMemoryStorage`, added `TypedDict` for `ReflectionEngine`, and fixed type annotations in 5+ services.
+## 🚨 CRITICAL: CI/CD Hygiene
 
-## To Do
-1. **Finish `apps/memory_api/services/graph_algorithms.py`**: Fix `related` list type (currently `List[str]`, should be `List[Dict[str, Any]]`).
-2. **Fix `apps/memory_api/repositories/`**:
-    - `trigger_repository.py`: Resolve `no-any-return` (lines 278, 389, 644).
-    - `reflection_repository.py`: Fix 10+ `arg-type` errors (lines 237-510) where lists/ints are appended to list of strings.
-3. **FastAPI Deprecation Warnings**: Fix 2 warnings for `HTTP_422_UNPROCESSABLE_ENTITY`.
-4. **Unit Tests**: Investigate 22 skipped tests in `make test-unit`.
+The project currently fails `make lint` with **420 errors**. We cannot merge to `main` until this is fixed.
 
-## Command to Continue
-```bash
-.venv/bin/mypy apps/ sdk/ | head -n 20
-```
+1. **Auto-Fix Linter:**
+   ```bash
+   .venv/bin/ruff check . --fix
+   .venv/bin/ruff format .
+   ```
+2. **Manual Linter Fixes:**
+   - Address unused imports (F401).
+   - Fix bare exceptions (B904).
+   - Fix argument defaults (B008).
+3. **Verify:**
+   ```bash
+   make lint
+   make test-unit
+   ```
+4. **Push:**
+   Once `make lint` is green, push to `develop`.
+
+## Secondary Goals
+- Continue increasing test coverage for `apps/memory_api/routes/dashboard.py`.
