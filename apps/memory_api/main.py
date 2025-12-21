@@ -167,7 +167,10 @@ async def lifespan(app: FastAPI):
 
         if not result.valid:
             violations_summary = "\n".join(
-                [f"- [{v.issue_type}] {v.entity}: {v.details}" for v in result.violations]
+                [
+                    f"- [{v.issue_type}] {v.entity}: {v.details}"
+                    for v in result.violations
+                ]
             )
             error_msg = (
                 f"Memory Contract Validation Failed: {len(result.violations)} violations found.\n"
