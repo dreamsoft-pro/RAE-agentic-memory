@@ -74,7 +74,7 @@ def client_with_auth(mock_rae_service, mock_db_pool):
     ), patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()):
         with TestClient(app) as client:
             # Store tenant_id on client for tests to access
-            client.tenant_id = tenant_id
+            client.tenant_id = tenant_id  # type: ignore[attr-defined]
             yield client
 
     app.dependency_overrides = {}

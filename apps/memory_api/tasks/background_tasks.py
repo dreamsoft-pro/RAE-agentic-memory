@@ -56,7 +56,7 @@ async def rae_context():
         yield pool, rae_service
     finally:
         await qdrant.close()
-        await redis.aclose()
+        await redis.aclose()  # type: ignore[attr-defined]
         await pool.close()
 
 

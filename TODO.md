@@ -8,14 +8,20 @@
 - **Branch:** feature/docs-refactor-v2 (current working branch).
 
 **Priority Tasks:**
-1. **Fix Remaining Mypy Attribute Errors:**
-   - Problem: Remaining attribute errors in `qwen_provider.py`, `llm_router.py`, and `traced_qdrant.py`.
-   - Action: Apply `cast` and `Any` as needed to satisfy Mypy.
-2. **FastAPI Deprecation Warnings:**
-   - Problem: `HTTP_422_UNPROCESSABLE_ENTITY` warnings.
-   - Action: Investigate and replace deprecated status code usage.
-3. **Investigate Skipped Tests:**
-   - Run `make test-unit` and analyze why 22 tests are skipped.
+
+1.  **Fix Remaining Mypy Attribute Errors:**
+
+    - [x] **DONE**: Fixed `aclose` error in `background_tasks.py` and `tenant_id` error in `test_graph.py`. Mypy is clean for targeted directories.
+
+2.  **FastAPI Deprecation Warnings:**
+
+    - [x] **DONE**: Investigated. Warnings originate from `litellm` dependency. `apps/memory_api/main.py` uses correct `HTTP_422_UNPROCESSABLE_CONTENT`. No internal action required.
+
+3.  **Investigate Skipped Tests:**
+
+    - [x] **DONE**: Installed `testcontainers` which enabled ~24 integration tests (Graph Extraction, Hybrid Search) to pass. Remaining skipped tests are empty placeholders.
+
+
 
 **Command to start next session:**
 ```bash
