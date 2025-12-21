@@ -73,7 +73,7 @@ class RAECoreService:
         self.redis_client = redis_client
 
         # Initialize adapters
-        self.postgres_adapter = PostgresMemoryAdapter(postgres_pool)
+        self.postgres_adapter = PostgresMemoryAdapter(pool=postgres_pool)
         self.qdrant_adapter = QdrantVectorAdapter(client=cast(Any, qdrant_client))
         self.redis_adapter = RedisCacheAdapter(redis_client=redis_client)
 

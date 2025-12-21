@@ -97,6 +97,7 @@ class PostgreSQLStorage(IMemoryStorage):
         embedding: list[float] | None = None,
         importance: float | None = None,
         expires_at: datetime | None = None,
+        memory_type: str = "text",
     ) -> UUID:
         """Store a new memory in PostgreSQL."""
         pool = await self._get_pool()
@@ -106,15 +107,16 @@ class PostgreSQLStorage(IMemoryStorage):
         metadata = metadata or {}
         importance = importance if importance is not None else 0.5
 
+        import json
         async with pool.acquire() as conn:
             await conn.execute(
                 """
                 INSERT INTO memories (
                     id, content, layer, tenant_id, agent_id, 
                     tags, metadata, embedding, importance, expires_at,
-                    created_at, last_accessed_at
+                    created_at, last_accessed_at, memory_type
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11, $12)
                 """,
                 memory_id,
                 content,
@@ -122,11 +124,12 @@ class PostgreSQLStorage(IMemoryStorage):
                 tenant_id,
                 agent_id,
                 tags,
-                metadata,
+                json.dumps(metadata),
                 embedding,
                 importance,
                 expires_at,
-                datetime.now(timezone.utc),
+                datetime.now(timezone.utc).replace(tzinfo=None),
+                memory_type,
             )
 
         return memory_id

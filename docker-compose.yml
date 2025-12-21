@@ -7,6 +7,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: rae-api
+    command: uvicorn apps.memory_api.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/apps --reload-dir /app/rae-core
     ports:
       - "8000:8000"
     environment:
@@ -33,6 +34,11 @@ services:
       - OTEL_SERVICE_NAME=rae-memory-api
       - OTEL_SERVICE_VERSION=2.2.0-enterprise
       - OTEL_EXPORTER_TYPE=otlp
+    volumes:
+      - ./apps:/app/apps
+      - ./rae-core:/app/rae-core
+      - ./sdk:/app/sdk
+      - ./integrations:/app/integrations
     depends_on:
       postgres:
         condition: service_healthy
@@ -153,6 +159,11 @@ services:
       - OTEL_SERVICE_NAME=rae-celery-worker
       - OTEL_SERVICE_VERSION=2.2.0-enterprise
       - OTEL_EXPORTER_TYPE=otlp
+    volumes:
+      - ./apps:/app/apps
+      - ./rae-core:/app/rae-core
+      - ./sdk:/app/sdk
+      - ./integrations:/app/integrations
     depends_on:
       - postgres
       - redis
@@ -188,6 +199,11 @@ services:
       - OTEL_SERVICE_NAME=rae-celery-beat
       - OTEL_SERVICE_VERSION=2.2.0-enterprise
       - OTEL_EXPORTER_TYPE=otlp
+    volumes:
+      - ./apps:/app/apps
+      - ./rae-core:/app/rae-core
+      - ./sdk:/app/sdk
+      - ./integrations:/app/integrations
     depends_on:
       - postgres
       - redis

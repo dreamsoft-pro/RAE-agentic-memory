@@ -115,10 +115,15 @@ async def lifespan(app: FastAPI):
 
                         await app.state.qdrant_client.create_collection(
                             collection_name=col.name,
-                            vectors_config=rest.VectorParams(
-                                size=col.vector_size,
-                                distance=metric,
-                            ),
+                            vectors_config={
+                                "dense": rest.VectorParams(
+                                    size=col.vector_size,
+                                    distance=metric,
+                                )
+                            },
+                            sparse_vectors_config={
+                                "text": rest.SparseVectorParams(),
+                            },
                         )
         except Exception as e:
             logger.error(f"Failed to auto-initialize Qdrant schema: {e}")
