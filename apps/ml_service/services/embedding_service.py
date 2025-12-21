@@ -5,7 +5,7 @@ This service handles embedding generation for the ML microservice,
 keeping heavy dependencies isolated from the main API.
 """
 
-from typing import Any, List, cast
+from typing import List, cast
 
 import structlog
 from sentence_transformers import SentenceTransformer

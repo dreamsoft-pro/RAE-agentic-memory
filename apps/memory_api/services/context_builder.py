@@ -329,7 +329,7 @@ class ContextBuilder:
 
         # Phase 3: Selection and Ranking
         top_memories: List[Dict[str, Any]] = []
-        
+
         if self.config.enable_scoring_v3:
             # Use Iteration 3 Scoring (Formal RAE Objective)
             score_results_v3 = compute_batch_scores_v3(

@@ -14,14 +14,12 @@ This module provides an enhanced API client for the RAE Memory API with:
 import asyncio
 import hashlib
 import json
-import time
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Union, cast
+from typing import Any, Callable, Dict, List, Optional, cast
 
 import httpx
 import structlog
-from pydantic import BaseModel, Field
 
 logger = structlog.get_logger(__name__)
 
@@ -610,7 +608,7 @@ class RAEClient:
                 f"Request failed: {str(e)}",
                 category=classify_error(e),
                 original_error=e,
-            )
+            ) from e
 
     async def _request_with_retry(
         self,

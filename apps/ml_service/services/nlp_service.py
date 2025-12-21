@@ -5,9 +5,9 @@ This service handles keyword extraction, named entity recognition,
 and other NLP tasks for the ML microservice.
 """
 
-import spacy
-import structlog
 from typing import Any, Dict, List, cast
+
+import structlog
 
 logger = structlog.get_logger(__name__)
 

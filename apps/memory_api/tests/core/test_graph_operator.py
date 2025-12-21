@@ -9,7 +9,7 @@ Tests cover:
   5. Edge cases and error handling
 """
 
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import Any
 
 import numpy as np

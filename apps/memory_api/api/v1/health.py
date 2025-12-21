@@ -5,7 +5,7 @@ Provides comprehensive health checks for all system components.
 """
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, cast
+from typing import Any, Dict, cast
 
 import asyncpg
 import httpx

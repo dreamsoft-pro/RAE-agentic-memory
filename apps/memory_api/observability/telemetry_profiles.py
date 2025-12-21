@@ -16,7 +16,7 @@ Based on improvements plan:
 import os
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Optional, Set, cast
+from typing import Optional, Set, cast
 
 import structlog
 

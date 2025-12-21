@@ -1,6 +1,5 @@
 """Unit tests for extended PostgreSQLStorage adapter methods."""
 
-from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
@@ -65,7 +64,7 @@ class TestPostgreSQLStorageExtended:
         """Test validation of metrics and functions."""
         with pytest.raises(ValueError, match="Invalid metric"):
             await pg_storage.get_metric_aggregate("tenant1", "bad_metric", "avg")
-        
+
         with pytest.raises(ValueError, match="Invalid function"):
             await pg_storage.get_metric_aggregate("tenant1", "importance", "bad_func")
 

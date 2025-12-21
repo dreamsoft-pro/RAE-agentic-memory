@@ -39,7 +39,7 @@ def lite_profile_services():
         ["docker", "compose", "version"], capture_output=True
     )
     docker_compose_missing = docker_compose_check.returncode != 0
-    
+
     in_ci = "CI" in os.environ
 
     if docker_compose_missing or in_ci:

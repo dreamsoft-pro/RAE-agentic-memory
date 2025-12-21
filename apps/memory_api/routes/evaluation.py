@@ -102,7 +102,7 @@ async def evaluate_search_results(
 
     except Exception as e:
         logger.error("search_evaluation_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/metrics/supported")
@@ -206,7 +206,7 @@ async def detect_drift(request: DetectDriftRequest, pool=Depends(get_pool)):
 
     except Exception as e:
         logger.error("drift_detection_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/drift/severity-levels")
@@ -322,7 +322,7 @@ async def create_ab_test(
         raise
     except Exception as e:
         logger.error("ab_test_creation_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/ab-test/{test_id}/compare")
@@ -394,7 +394,7 @@ async def compare_ab_test_variants(
         raise
     except Exception as e:
         logger.error("ab_test_comparison_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -441,7 +441,7 @@ async def get_quality_metrics(
 
     except Exception as e:
         logger.error("get_quality_metrics_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/quality/thresholds")
@@ -535,7 +535,7 @@ async def run_benchmark_suite(
         raise
     except Exception as e:
         logger.error("benchmark_run_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/benchmark/suites")
@@ -578,7 +578,7 @@ async def list_benchmark_suites(
 
     except Exception as e:
         logger.error("list_benchmark_suites_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================

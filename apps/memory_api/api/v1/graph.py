@@ -192,7 +192,7 @@ async def extract_knowledge_graph(req: GraphExtractionRequest, request: Request)
         )
         raise HTTPException(
             status_code=500, detail=f"Graph extraction failed: {str(e)}"
-        )
+        ) from e
 
 
 @router.post("/reflection/hierarchical", response_model=HierarchicalReflectionResponse)
@@ -277,7 +277,7 @@ async def generate_hierarchical_reflection(
         )
         raise HTTPException(
             status_code=500, detail=f"Hierarchical reflection failed: {str(e)}"
-        )
+        ) from e
 
 
 @router.get("/stats", response_model=GraphStatsResponse)
@@ -364,7 +364,7 @@ async def get_graph_statistics(
         )
         raise HTTPException(
             status_code=500, detail=f"Failed to retrieve graph statistics: {str(e)}"
-        )
+        ) from e
 
 
 @router.get("/nodes", response_model=List[GraphNodeResponse])
@@ -517,7 +517,7 @@ async def get_graph_nodes(
         )
         raise HTTPException(
             status_code=500, detail=f"Failed to retrieve graph nodes: {str(e)}"
-        )
+        ) from e
 
 
 @router.get("/edges", response_model=List[GraphEdgeResponse])
@@ -596,7 +596,7 @@ async def get_graph_edges(
         )
         raise HTTPException(
             status_code=500, detail=f"Failed to retrieve graph edges: {str(e)}"
-        )
+        ) from e
 
 
 @router.post("/query", response_model=Dict[str, Any])
@@ -676,7 +676,7 @@ async def query_knowledge_graph(
             project_id=req.project_id,
             error=str(e),
         )
-        raise HTTPException(status_code=500, detail=f"Graph query failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Graph query failed: {str(e)}") from e
 
 
 @router.get("/subgraph", response_model=Dict[str, Any])
@@ -748,4 +748,4 @@ async def get_subgraph(
         )
         raise HTTPException(
             status_code=500, detail=f"Failed to retrieve subgraph: {str(e)}"
-        )
+        ) from e

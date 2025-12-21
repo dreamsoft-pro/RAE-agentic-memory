@@ -3,7 +3,6 @@
 import json
 from typing import Any, Dict
 
-
 from .base import AgentResponse, AgentTask, BaseAgent
 
 

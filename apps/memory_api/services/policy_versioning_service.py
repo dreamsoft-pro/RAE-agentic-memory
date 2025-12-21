@@ -15,12 +15,12 @@ Key features:
 - Audit trail for policy changes
 """
 
-import structlog
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
+import structlog
 from pydantic import BaseModel, Field
 
 from apps.memory_api.utils.datetime_utils import utc_now

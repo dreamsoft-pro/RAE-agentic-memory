@@ -274,7 +274,7 @@ class TestMemoryDecay:
 
         # Mock pool
         mock_pool = AsyncMock()
-        
+
         # Setup rae_context mock
         # rae_context is an async context manager
         mock_rae_context.return_value.__aenter__.return_value = (mock_pool, AsyncMock())

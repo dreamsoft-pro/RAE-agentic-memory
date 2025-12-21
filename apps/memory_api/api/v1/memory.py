@@ -9,11 +9,11 @@ from apps.memory_api.metrics import (
     memory_query_counter,
     memory_store_counter,
 )
-from apps.memory_api.models import RebuildReflectionsRequest  # NEW
 from apps.memory_api.models import (
     DeleteMemoryResponse,
     QueryMemoryRequest,
     QueryMemoryResponse,
+    RebuildReflectionsRequest,  # NEW
     StoreMemoryRequest,
     StoreMemoryResponse,
 )
@@ -88,7 +88,7 @@ async def store_memory(
             raise
         except Exception as e:
             span.set_attribute("rae.outcome.label", "storage_error")
-            raise HTTPException(status_code=500, detail=f"Storage error: {e}")
+            raise HTTPException(status_code=500, detail=f"Storage error: {e}") from e
 
         span.set_attribute("rae.outcome.label", "success")
         memory_store_counter.labels(
@@ -174,7 +174,7 @@ async def query_memory(
             span.set_attribute("rae.outcome.label", "vector_store_query_error")
             raise HTTPException(
                 status_code=502, detail=f"Vector store query error: {e}"
-            )
+            ) from e
 
         # 4. Rescore memories using additional heuristics (optional)
         rescored_results = scoring.rescore_memories(raw_results)
@@ -232,7 +232,7 @@ async def delete_memory(
             raise
         except Exception as e:
             span.set_attribute("rae.outcome.label", "database_error")
-            raise HTTPException(status_code=500, detail=f"Database error: {e}")
+            raise HTTPException(status_code=500, detail=f"Database error: {e}") from e
 
         # 2. Delete from vector store - HANDLED BY RAE-CORE ENGINE via DELETE_MEMORY
         # Assuming RAE-Core engine handles both storage and vector store deletion.
@@ -450,4 +450,4 @@ async def generate_hierarchical_reflection(
             raise HTTPException(
                 status_code=500,
                 detail=f"Hierarchical reflection generation failed: {str(e)}",
-            )
+            ) from e

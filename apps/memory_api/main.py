@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, cast
 
 import asyncpg
 import structlog
@@ -301,7 +301,7 @@ def custom_openapi():
     return app.openapi_schema
 
 
-setattr(app, "openapi", custom_openapi)
+app.openapi = custom_openapi
 
 # --- Exception Handlers ---
 

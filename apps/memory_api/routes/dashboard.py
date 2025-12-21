@@ -236,7 +236,7 @@ async def get_dashboard_metrics(
 
     except Exception as e:
         logger.error("get_dashboard_metrics_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/metrics/timeseries/{metric_name}")
@@ -338,7 +338,7 @@ async def get_metric_timeseries(
 
     except Exception as e:
         logger.error("get_metric_timeseries_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -415,7 +415,7 @@ async def get_visualization(request: GetVisualizationRequest, pool=Depends(get_p
         raise
     except Exception as e:
         logger.error("get_visualization_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -461,7 +461,7 @@ async def get_system_health(request: GetSystemHealthRequest, pool=Depends(get_po
 
     except Exception as e:
         logger.error("get_system_health_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/health/simple")
@@ -485,7 +485,7 @@ async def simple_health_check(pool=Depends(get_pool)):
 
     except Exception as e:
         logger.error("health_check_failed", error=str(e))
-        raise HTTPException(status_code=503, detail="Service unhealthy")
+        raise HTTPException(status_code=503, detail="Service unhealthy") from e
 
 
 # ============================================================================
@@ -530,7 +530,7 @@ async def get_activity_log(
 
     except Exception as e:
         logger.error("get_activity_log_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -1062,7 +1062,7 @@ async def get_compliance_report(
         )
         raise HTTPException(
             status_code=500, detail=f"Failed to generate compliance report: {str(e)}"
-        )
+        ) from e
 
 
 @router.post(
@@ -1139,7 +1139,7 @@ async def get_compliance_metrics(
         )
         raise HTTPException(
             status_code=500, detail=f"Failed to get compliance metrics: {str(e)}"
-        )
+        ) from e
 
 
 @router.post(
@@ -1207,7 +1207,7 @@ async def get_risk_register(
         )
         raise HTTPException(
             status_code=500, detail=f"Failed to get risk register: {str(e)}"
-        )
+        ) from e
 
 
 @router.post(
@@ -1257,7 +1257,7 @@ async def get_audit_trail(
         )
         raise HTTPException(
             status_code=500, detail=f"Failed to get audit trail: {str(e)}"
-        )
+        ) from e
 
 
 @router.get(
@@ -1307,4 +1307,4 @@ async def get_rls_status(
         )
         raise HTTPException(
             status_code=500, detail=f"Failed to verify RLS status: {str(e)}"
-        )
+        ) from e

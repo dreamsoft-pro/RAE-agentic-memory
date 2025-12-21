@@ -10,7 +10,7 @@ Tests cover:
 """
 
 from datetime import datetime, timedelta, timezone
-from typing import Any, cast
+from typing import cast
 from unittest.mock import AsyncMock
 from uuid import uuid4
 

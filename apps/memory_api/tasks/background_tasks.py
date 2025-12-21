@@ -1,6 +1,5 @@
-from contextlib import asynccontextmanager
-
 import asyncio
+from contextlib import asynccontextmanager
 
 import asyncpg
 import structlog
@@ -43,7 +42,7 @@ async def rae_context():
         qdrant = AsyncQdrantClient(url=qdrant_host)
     else:
         qdrant = AsyncQdrantClient(host=qdrant_host, port=settings.QDRANT_PORT)
-    
+
     redis = await create_redis_client(settings.REDIS_URL)
 
     rae_service = RAECoreService(
@@ -206,7 +205,7 @@ def cleanup_expired_data_task(self, tenant_id: str | None = None):
                 raise self.retry(exc=e, countdown=300 * (2**self.request.retries))
 
     return asyncio.run(main())
-    
+
 @celery_app.task(bind=True, max_retries=3)
 def gdpr_delete_user_data_task(
     self, tenant_id: str, user_identifier: str, deleted_by: str

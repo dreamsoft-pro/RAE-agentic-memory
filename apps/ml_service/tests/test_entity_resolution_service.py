@@ -43,13 +43,13 @@ def entity_resolution_service(mock_sentence_transformer_instance):
         return_value=mock_sentence_transformer_instance,
     ):
         # Ensure get_embedding_model's internal singleton cache is cleared for isolation
-        setattr(get_embedding_model, "_EMBEDDING_MODEL", None)
+        get_embedding_model._EMBEDDING_MODEL = None
 
         service = EntityResolutionMLService(similarity_threshold=0.8)
         yield service
 
         # Clean up after test
-        setattr(get_embedding_model, "_EMBEDDING_MODEL", None)
+        get_embedding_model._EMBEDDING_MODEL = None
 
 
 def test_entity_resolution_init(

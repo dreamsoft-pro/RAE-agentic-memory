@@ -22,9 +22,9 @@ async def test_reflection_flow(mock_rae_service):
     mock_pool = MagicMock()
     # We don't need detailed DB mocks if we mock RAECoreService properly
     # But ReflectionEngine constructor takes pool, so we pass a mock.
-    
+
     engine = ReflectionEngine(mock_pool, rae_service=mock_rae_service)
-    
+
     # Mock LLM Provider
     engine.llm_provider = MagicMock()
     engine.llm_provider.generate = AsyncMock(
@@ -60,7 +60,7 @@ async def test_reflection_flow(mock_rae_service):
         # The generate_reflection method returns: f"Generated reflection for project {project}: ..."
         assert isinstance(res, str)
         assert "p1" in res
-        
+
         # Verify RAECoreService was used to fetch episodes
         mock_rae_service.list_memories.assert_called_with(
             tenant_id="t1",

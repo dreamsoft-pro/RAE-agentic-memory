@@ -7,7 +7,6 @@ This service implements enterprise semantic search with:
 - Stage 3: Semantic re-ranking
 """
 
-import math
 from typing import Any, Dict, List, Optional, Tuple, cast
 
 import asyncpg

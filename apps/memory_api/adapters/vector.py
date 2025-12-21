@@ -4,6 +4,7 @@ Configures RAE-core QdrantVectorStore with RAE-Server settings.
 """
 
 from typing import Any, cast
+
 from qdrant_client import AsyncQdrantClient
 from rae_core.adapters import QdrantVectorStore
 

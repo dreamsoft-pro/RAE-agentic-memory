@@ -211,7 +211,7 @@ class HybridSearchService:
             )
         else:
             query_analysis = await self.query_analyzer.analyze_intent(
-                query=query, 
+                query=query,
                 tenant_id=tenant_id,
                 project_id=project_id,
                 context=conversation_history

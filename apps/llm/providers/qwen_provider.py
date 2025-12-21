@@ -200,32 +200,32 @@ class QwenProvider:
                     f"Qwen rate limit exceeded: {error_body}",
                     provider="qwen",
                     raw_error=e,
-                )
+                ) from e
             elif status_code == 401 or status_code == 403:
                 raise LLMAuthError(
                     f"Qwen authentication failed: {error_body}",
                     provider="qwen",
                     raw_error=e,
-                )
+                ) from e
             elif status_code >= 500:
                 raise LLMTransientError(
                     f"Qwen server error: {error_body}",
                     provider="qwen",
                     raw_error=e,
-                )
+                ) from e
             else:
                 raise LLMProviderError(
                     f"Qwen HTTP error {status_code}: {error_body}",
                     provider="qwen",
                     raw_error=e,
-                )
+                ) from e
 
         except httpx.TimeoutException as e:
             raise LLMTransientError(
                 f"Qwen request timed out: {str(e)}",
                 provider="qwen",
                 raw_error=e,
-            )
+            ) from e
         except Exception as e:
             error_str = str(e).lower()
             if "context" in error_str or "too long" in error_str:
@@ -233,13 +233,13 @@ class QwenProvider:
                     f"Qwen context length exceeded: {str(e)}",
                     provider="qwen",
                     raw_error=e,
-                )
+                ) from e
             else:
                 raise LLMProviderError(
                     f"Qwen error: {str(e)}",
                     provider="qwen",
                     raw_error=e,
-                )
+                ) from e
 
     async def stream(self, request: LLMRequest) -> AsyncIterator[LLMChunk]:
         """
@@ -306,22 +306,22 @@ class QwenProvider:
                     f"Qwen rate limit exceeded: {e.response.text}",
                     provider="qwen",
                     raw_error=e,
-                )
+                ) from e
             elif e.response.status_code in (401, 403):
                 raise LLMAuthError(
                     f"Qwen authentication failed: {e.response.text}",
                     provider="qwen",
                     raw_error=e,
-                )
+                ) from e
             else:
                 raise LLMTransientError(
                     f"Qwen streaming error: {e.response.text}",
                     provider="qwen",
                     raw_error=e,
-                )
+                ) from e
         except Exception as e:
             raise LLMTransientError(
                 f"Qwen streaming error: {str(e)}",
                 provider="qwen",
                 raw_error=e,
-            )
+            ) from e

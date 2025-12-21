@@ -14,10 +14,8 @@ Goal: Learn policy π* that maximizes cumulative reward:
   π* = argmax_π E[Σ γ^t · R(s_t, a_t, s_{t+1})]
 """
 
-import math
-import time
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, Optional
 
 import structlog
 

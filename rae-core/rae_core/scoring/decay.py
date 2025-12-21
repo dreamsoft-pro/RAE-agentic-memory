@@ -2,7 +2,6 @@
 
 import math
 from datetime import datetime, timedelta, timezone
-from typing import Optional
 
 from rae_core.models.scoring import DecayConfig, DecayResult
 
@@ -18,7 +17,7 @@ class ImportanceDecay:
     - Logarithmic decay
     """
 
-    def __init__(self, config: Optional[DecayConfig] = None):
+    def __init__(self, config: DecayConfig | None = None):
         """Initialize with decay configuration."""
         self.config = config or DecayConfig()
 

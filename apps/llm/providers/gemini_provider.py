@@ -4,7 +4,7 @@ Google Gemini LLM Provider.
 Implements the LLM provider interface for Google Gemini models.
 """
 
-from typing import Any, AsyncIterator, Dict, List, Optional, Tuple, cast
+from typing import Any, AsyncIterator, Dict, cast
 
 import google.generativeai as genai
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -185,31 +185,31 @@ class GeminiProvider:
                     f"Gemini rate limit exceeded: {str(e)}",
                     provider="gemini",
                     raw_error=e,
-                )
+                ) from e
             elif "api key" in error_str or "authentication" in error_str:
                 raise LLMAuthError(
                     f"Gemini authentication failed: {str(e)}",
                     provider="gemini",
                     raw_error=e,
-                )
+                ) from e
             elif "timeout" in error_str or "connection" in error_str:
                 raise LLMTransientError(
                     f"Gemini transient error: {str(e)}",
                     provider="gemini",
                     raw_error=e,
-                )
+                ) from e
             elif "context" in error_str or "too long" in error_str:
                 raise LLMContextLengthError(
                     f"Gemini context length exceeded: {str(e)}",
                     provider="gemini",
                     raw_error=e,
-                )
+                ) from e
             else:
                 raise LLMProviderError(
                     f"Gemini error: {str(e)}",
                     provider="gemini",
                     raw_error=e,
-                )
+                ) from e
 
     async def stream(self, request: LLMRequest) -> AsyncIterator[LLMChunk]:
         """
@@ -269,16 +269,16 @@ class GeminiProvider:
                     f"Gemini rate limit exceeded: {str(e)}",
                     provider="gemini",
                     raw_error=e,
-                )
+                ) from e
             elif "api key" in error_str or "authentication" in error_str:
                 raise LLMAuthError(
                     f"Gemini authentication failed: {str(e)}",
                     provider="gemini",
                     raw_error=e,
-                )
+                ) from e
             else:
                 raise LLMTransientError(
                     f"Gemini streaming error: {str(e)}",
                     provider="gemini",
                     raw_error=e,
-                )
+                ) from e

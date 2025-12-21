@@ -3,7 +3,7 @@
 Implements IVectorStore interface using Qdrant for similarity search.
 """
 
-from typing import Any, List, Optional, cast
+from typing import Any, Optional, cast
 from uuid import UUID
 
 try:
@@ -195,8 +195,8 @@ class QdrantVectorStore(IVectorStore):
 
             points.append(
                 PointStruct(
-                    id=str(memory_id), 
-                    vector={"dense": embedding}, 
+                    id=str(memory_id),
+                    vector={"dense": embedding},
                     payload=payload
                 )
             )
@@ -287,7 +287,7 @@ class QdrantVectorStore(IVectorStore):
                 # Verify tenant_id matches
                 payload = result[0].payload
                 if payload and payload.get("tenant_id") == tenant_id:
-                    return cast(List[float], result[0].vector)
+                    return cast(list[float], result[0].vector)
         except Exception:
             pass
 
@@ -310,7 +310,7 @@ class QdrantVectorStore(IVectorStore):
 
             if not result:
                 return False
-            
+
             payload = result[0].payload
             if not payload or payload.get("tenant_id") != tenant_id:
                 return False

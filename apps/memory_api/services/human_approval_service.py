@@ -15,13 +15,13 @@ Key features:
 - Multi-approver support for critical operations
 """
 
-import structlog
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 import asyncpg
+import structlog
 from pydantic import BaseModel, Field
 
 from apps.memory_api.models import OperationRiskLevel

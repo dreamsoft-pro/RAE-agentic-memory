@@ -59,7 +59,7 @@ def mock_services():
 def client_with_auth():
     # Override auth dependency
     app.dependency_overrides[get_and_verify_tenant_id] = lambda: "test-tenant"
-    
+
     # Mock pool state to avoid AttributeError
     mock_pool = MagicMock()
     mock_pool.close = AsyncMock()

@@ -1,7 +1,6 @@
 """Math Layer Controller - orchestrates all mathematical operations."""
 
 
-from typing import Any, Dict, List, Optional, cast
 
 # Import available functions
 from rae_core.math.dynamics import calculate_recency_score

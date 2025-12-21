@@ -1,16 +1,8 @@
 from typing import Any, Dict, List, Optional, cast
 
 import httpx
-
 import structlog
-
-from pydantic import ConfigDict
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-
-
-
 
 from .models import (
     DeleteMemoryResponse,

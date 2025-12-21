@@ -1,6 +1,6 @@
 """Main RAE Engine - Orchestrates all RAE-core components."""
 
-from typing import Any, Dict, List, cast
+from typing import Any, cast
 from uuid import UUID
 
 from rae_core.config import RAESettings
@@ -57,8 +57,8 @@ class RAEEngine:
         self.sync_provider = sync_provider
 
         # Initialize sub-engines
-        from rae_core.search.strategies.vector import VectorSearchStrategy
         from rae_core.search.strategies import SearchStrategy
+        from rae_core.search.strategies.vector import VectorSearchStrategy
 
         strategies: dict[str, SearchStrategy] = {}
         if vector_store and embedding_provider:
@@ -214,7 +214,7 @@ class RAEEngine:
             )
 
         # Fetch actual memories
-        memories: List[Dict[str, Any]] = []
+        memories: list[dict[str, Any]] = []
         for memory_id, score in results:
             memory = await self.memory_storage.get_memory(memory_id, tenant_id)
             if memory:
@@ -241,7 +241,7 @@ class RAEEngine:
         Returns:
             Cycle execution summary
         """
-        return cast(Dict[str, Any], await self.reflection_engine.run_reflection_cycle(
+        return cast(dict[str, Any], await self.reflection_engine.run_reflection_cycle(
             tenant_id=tenant_id,
             agent_id=agent_id,
             trigger_type=trigger_type,
@@ -265,7 +265,7 @@ class RAEEngine:
         Returns:
             Reflection result
         """
-        return cast(Dict[str, Any], await self.reflection_engine.generate_reflection(
+        return cast(dict[str, Any], await self.reflection_engine.generate_reflection(
             memory_ids=memory_ids,
             tenant_id=tenant_id,
             agent_id=agent_id,

@@ -12,9 +12,10 @@ Enterprise Architecture Benefits:
 - No hidden dependencies
 """
 
+from typing import cast
+
 import asyncpg
 import redis.asyncio as aioredis
-from typing import Any, cast
 from fastapi import HTTPException, Request
 from qdrant_client import AsyncQdrantClient
 from redis.asyncio import Redis as AsyncRedis

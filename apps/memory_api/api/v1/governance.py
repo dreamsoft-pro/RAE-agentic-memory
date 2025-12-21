@@ -99,7 +99,7 @@ class TenantBudgetStatus(BaseModel):
 async def get_governance_overview(
     days: int = Query(30, ge=1, le=365, description="Number of days to analyze"),
     pool=Depends(get_db_pool),
-    _: bool = Depends(require_admin),
+    admin_access: bool = Depends(require_admin),
 ):
     """
     Get system-wide governance overview.
@@ -202,7 +202,7 @@ async def get_governance_overview(
             logger.error("governance_overview_error", error=str(e))
             raise HTTPException(
                 status_code=500, detail=f"Failed to get governance overview: {str(e)}"
-            )
+            ) from e
 
 
 @router.get("/tenant/{tenant_id}", response_model=TenantGovernanceStats)
@@ -210,7 +210,7 @@ async def get_tenant_governance_stats(
     tenant_id: str,
     days: int = Query(30, ge=1, le=365, description="Number of days to analyze"),
     pool=Depends(get_db_pool),
-    _: bool = Depends(verify_tenant_access),
+    tenant_access: bool = Depends(verify_tenant_access),
 ):
     """
     Get comprehensive governance statistics for a specific tenant.
@@ -358,14 +358,14 @@ async def get_tenant_governance_stats(
             logger.error("tenant_governance_error", tenant_id=tenant_id, error=str(e))
             raise HTTPException(
                 status_code=500, detail=f"Failed to get tenant statistics: {str(e)}"
-            )
+            ) from e
 
 
 @router.get("/tenant/{tenant_id}/budget", response_model=TenantBudgetStatus)
 async def get_tenant_budget_status(
     tenant_id: str,
     pool=Depends(get_db_pool),
-    _: bool = Depends(verify_tenant_access),
+    tenant_access: bool = Depends(verify_tenant_access),
 ):
     """
     Get current budget status and projections for a tenant.
@@ -503,4 +503,4 @@ async def get_tenant_budget_status(
             )
             raise HTTPException(
                 status_code=500, detail=f"Failed to get budget status: {str(e)}"
-            )
+            ) from e

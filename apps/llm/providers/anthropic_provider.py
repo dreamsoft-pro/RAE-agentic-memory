@@ -4,9 +4,7 @@ Anthropic LLM Provider.
 Implements the LLM provider interface for Anthropic Claude models.
 """
 
-from typing import Any, AsyncIterator, Dict, List, Optional, Tuple, cast
-
-import httpx
+from typing import Any, AsyncIterator, cast
 
 from anthropic import APIError, AsyncAnthropic, AuthenticationError, RateLimitError
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -162,13 +160,13 @@ class AnthropicProvider:
                 f"Anthropic rate limit exceeded: {str(e)}",
                 provider="anthropic",
                 raw_error=e,
-            )
+            ) from e
         except AuthenticationError as e:
             raise LLMAuthError(
                 f"Anthropic authentication failed: {str(e)}",
                 provider="anthropic",
                 raw_error=e,
-            )
+            ) from e
         except APIError as e:
             error_str = str(e).lower()
             if "timeout" in error_str or "connection" in error_str:
@@ -176,25 +174,25 @@ class AnthropicProvider:
                     f"Anthropic transient error: {str(e)}",
                     provider="anthropic",
                     raw_error=e,
-                )
+                ) from e
             elif "maximum context length" in error_str:
                 raise LLMContextLengthError(
                     f"Anthropic context length exceeded: {str(e)}",
                     provider="anthropic",
                     raw_error=e,
-                )
+                ) from e
             else:
                 raise LLMProviderError(
                     f"Anthropic error: {str(e)}",
                     provider="anthropic",
                     raw_error=e,
-                )
+                ) from e
         except Exception as e:
             raise LLMProviderError(
                 f"Anthropic unexpected error: {str(e)}",
                 provider="anthropic",
                 raw_error=e,
-            )
+            ) from e
 
     async def stream(self, request: LLMRequest) -> AsyncIterator[LLMChunk]:
         """
@@ -233,16 +231,16 @@ class AnthropicProvider:
                 f"Anthropic rate limit exceeded: {str(e)}",
                 provider="anthropic",
                 raw_error=e,
-            )
+            ) from e
         except AuthenticationError as e:
             raise LLMAuthError(
                 f"Anthropic authentication failed: {str(e)}",
                 provider="anthropic",
                 raw_error=e,
-            )
+            ) from e
         except Exception as e:
             raise LLMTransientError(
                 f"Anthropic streaming error: {str(e)}",
                 provider="anthropic",
                 raw_error=e,
-            )
+            ) from e

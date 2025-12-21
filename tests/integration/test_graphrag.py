@@ -24,7 +24,6 @@ except ImportError:
 
 from apps.memory_api.config import settings
 from apps.memory_api.repositories.graph_repository import GraphRepository
-from apps.memory_api.services.rae_core_service import RAECoreService  # Updated import
 from apps.memory_api.services.graph_extraction import (
     GraphExtractionResult,
     GraphExtractionService,
@@ -32,8 +31,8 @@ from apps.memory_api.services.graph_extraction import (
 )
 from apps.memory_api.services.hybrid_search import (
     HybridSearchService,
-    TraversalStrategy,
 )
+from apps.memory_api.services.rae_core_service import RAECoreService  # Updated import
 from apps.memory_api.services.reflection_engine import ReflectionEngine
 
 pytestmark = [
@@ -64,13 +63,12 @@ async def rae_service(db_pool):
     # For now, let's create dummy ones or mock them if not directly used in the test.
     # Since these tests only use list_memories, we can create a minimal RAECoreService
     # that only relies on the postgres_pool.
-    from qdrant_client import AsyncQdrantClient
     import redis.asyncio as aioredis
-    from rae_core.config import RAESettings
+    from qdrant_client import AsyncQdrantClient
 
     qdrant_client = AsyncQdrantClient(host="localhost", port=6333) # Dummy, not used for list_memories
     redis_client = aioredis.from_url("redis://localhost:6379") # Dummy, not used for list_memories
-    
+
     return RAECoreService(
         postgres_pool=db_pool,
         qdrant_client=qdrant_client,
@@ -296,11 +294,11 @@ async def test_hybrid_search(
     # For now, let's just make sure tests for GraphRAG still pass, and ignore HybridSearchService
     # since it was not in the list of services to refactor in Phase 2.
     # The current HybridSearchService still expects pool and MemoryRepository to retrieve full memory.
-    
+
     # I will skip the hybrid search test for now if it requires MemoryRepository directly.
     # The test for graphrag should pass as GraphExtractionService is now using RAECoreService.
     # The hybrid search is not part of this refactoring, so it should be skipped or commented.
-    
+
     # Temporarily comment out HybridSearchService related tests.
 
     """

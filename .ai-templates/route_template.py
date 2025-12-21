@@ -19,6 +19,8 @@ WHY THIS PATTERN:
 """
 
 import structlog
+from apps.memory_api.repositories.entity_repository import EntityRepository
+from apps.memory_api.services.my_business_service import MyBusinessService
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 
@@ -26,10 +28,8 @@ from apps.memory_api.models import (  # Import your Pydantic models here
     EntityInput,
     EntityOutput,
 )
-from apps.memory_api.repositories.entity_repository import EntityRepository
 from apps.memory_api.security import auth
 from apps.memory_api.security.dependencies import get_and_verify_tenant_id
-from apps.memory_api.services.my_business_service import MyBusinessService
 
 # WHY: Router with prefix groups related endpoints
 # WHY: Tags organize endpoints in Swagger UI

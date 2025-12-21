@@ -10,7 +10,7 @@ This service orchestrates the resolution process while delegating
 heavy ML operations to the ML microservice.
 """
 
-from typing import Any, Dict, List, Optional, Tuple, cast
+from typing import Dict, List, Optional, cast
 
 import asyncpg
 import structlog

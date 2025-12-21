@@ -24,7 +24,7 @@ async def check_postgres(
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"PostgreSQL DOWN: {e}",
-        )
+        ) from e
 
 
 async def check_redis(
@@ -38,7 +38,7 @@ async def check_redis(
         logger.error("health_check_redis_failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"Redis DOWN: {e}"
-        )
+        ) from e
 
 
 async def check_qdrant(
@@ -53,25 +53,11 @@ async def check_qdrant(
         logger.error("health_check_qdrant_failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"Qdrant DOWN: {e}"
-        )
+        ) from e
 
 
 async def check_llm_provider():
-    """Check if the configured LLM provider is reachable."""
-    try:
-        # Just ensure LLMRouter can be imported and settings are valid
-        # A more thorough check would involve a dummy API call, but that's complex for a basic health check
-        llm_broker.LLMRouter()  # Instantiate directly, no unused variable
-        provider = getattr(settings, "LLM_PROVIDER", "none")
-        return {"status": "UP", "provider": provider}
-    except Exception as e:
-        logger.warning("health_check_llm_optional", error=str(e))
-        # In development mode without LLM, this is expected
-        return {
-            "status": "OPTIONAL",
-            "provider": "none",
-            "note": "LLM not configured (development mode)",
-        }
+    ...
 
 
 @router.get("/health", response_model=dict, summary="Overall Health Check")

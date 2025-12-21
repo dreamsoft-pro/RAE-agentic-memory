@@ -7,7 +7,7 @@ Handles provider selection, fallbacks, cost validation, and telemetry.
 
 import logging
 import os
-from typing import Any, AsyncIterator, Dict, List, Optional, cast
+from typing import Any, AsyncIterator, Dict, Optional, cast
 
 import yaml
 

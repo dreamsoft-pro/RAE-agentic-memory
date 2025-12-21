@@ -10,7 +10,7 @@ This module provides FastAPI routes for event trigger operations including:
 """
 
 from datetime import timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 from uuid import UUID, uuid4
 
 import structlog
@@ -113,7 +113,7 @@ async def create_trigger(
 
     except Exception as e:
         logger.error("trigger_creation_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/{trigger_id}", response_model=TriggerRule)
@@ -133,7 +133,7 @@ async def get_trigger(
         raise
     except Exception as e:
         logger.error("get_trigger_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.put("/{trigger_id}")
@@ -189,7 +189,7 @@ async def update_trigger(
         raise
     except Exception as e:
         logger.error("update_trigger_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.delete("/{trigger_id}")
@@ -211,7 +211,7 @@ async def delete_trigger(
         raise
     except Exception as e:
         logger.error("delete_trigger_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/{trigger_id}/enable")
@@ -228,7 +228,7 @@ async def enable_trigger(trigger_id: str, pool=Depends(get_pool)):
 
     except Exception as e:
         logger.error("enable_trigger_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/{trigger_id}/disable")
@@ -245,7 +245,7 @@ async def disable_trigger(trigger_id: str, pool=Depends(get_pool)):
 
     except Exception as e:
         logger.error("disable_trigger_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/list")
@@ -277,7 +277,7 @@ async def list_triggers(
 
     except Exception as e:
         logger.error("list_triggers_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -325,7 +325,7 @@ async def emit_event(request: EmitEventRequest, pool=Depends(get_pool)):
 
     except Exception as e:
         logger.error("emit_event_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/events/types")
@@ -401,7 +401,7 @@ async def get_trigger_executions(
 
     except Exception as e:
         logger.error("get_executions_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -447,7 +447,7 @@ async def create_workflow(
 
     except Exception as e:
         logger.error("workflow_creation_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/workflows/{workflow_id}")
@@ -467,7 +467,7 @@ async def get_workflow(
         raise
     except Exception as e:
         logger.error("get_workflow_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/workflows")
@@ -491,7 +491,7 @@ async def list_workflows(
 
     except Exception as e:
         logger.error("list_workflows_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -542,7 +542,7 @@ async def get_trigger_template(template_id: str):
         raise
     except Exception as e:
         logger.error("get_template_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post(
@@ -597,7 +597,7 @@ async def instantiate_template(
         raise
     except Exception as e:
         logger.error("instantiate_template_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================

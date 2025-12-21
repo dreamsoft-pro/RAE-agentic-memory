@@ -22,9 +22,8 @@ Environment Variables:
 - OTEL_EXPORTER_TYPE: otlp, jaeger, console (default: otlp)
 """
 
-import logging
 import os
-from typing import Any, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import structlog
 

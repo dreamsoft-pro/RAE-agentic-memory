@@ -5,7 +5,7 @@ Implements the LLM provider interface for Grok (xAI) models.
 Grok API is OpenAI-compatible with some differences in semantics.
 """
 
-from typing import Any, AsyncIterator, Dict, List, Optional, cast
+from typing import Any, AsyncIterator, cast
 
 from openai import AsyncOpenAI, RateLimitError
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -178,7 +178,7 @@ class GrokProvider:
                 f"Grok rate limit exceeded: {str(e)}",
                 provider="grok",
                 raw_error=e,
-            )
+            ) from e
         except Exception as e:
             error_str = str(e).lower()
             if (
@@ -190,13 +190,13 @@ class GrokProvider:
                     f"Grok authentication failed: {str(e)}",
                     provider="grok",
                     raw_error=e,
-                )
+                ) from e
             elif "timeout" in error_str or "connection" in error_str:
                 raise LLMTransientError(
                     f"Grok transient error: {str(e)}",
                     provider="grok",
                     raw_error=e,
-                )
+                ) from e
             elif (
                 "context_length_exceeded" in error_str or "maximum context" in error_str
             ):
@@ -204,19 +204,19 @@ class GrokProvider:
                     f"Grok context length exceeded: {str(e)}",
                     provider="grok",
                     raw_error=e,
-                )
+                ) from e
             elif "500" in error_str or "502" in error_str or "503" in error_str:
                 raise LLMTransientError(
                     f"Grok server error: {str(e)}",
                     provider="grok",
                     raw_error=e,
-                )
+                ) from e
             else:
                 raise LLMProviderError(
                     f"Grok error: {str(e)}",
                     provider="grok",
                     raw_error=e,
-                )
+                ) from e
 
     async def stream(self, request: LLMRequest) -> AsyncIterator[LLMChunk]:
         """
@@ -270,16 +270,16 @@ class GrokProvider:
                     f"Grok rate limit exceeded: {str(e)}",
                     provider="grok",
                     raw_error=e,
-                )
+                ) from e
             elif "authentication" in error_str or "api key" in error_str:
                 raise LLMAuthError(
                     f"Grok authentication failed: {str(e)}",
                     provider="grok",
                     raw_error=e,
-                )
+                ) from e
             else:
                 raise LLMTransientError(
                     f"Grok streaming error: {str(e)}",
                     provider="grok",
                     raw_error=e,
-                )
+                ) from e

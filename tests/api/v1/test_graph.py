@@ -269,7 +269,7 @@ async def test_query_knowledge_graph_placeholder(client_with_auth, mock_rae_serv
 @pytest.mark.asyncio
 async def test_get_subgraph_placeholder(client_with_auth, mock_rae_service):
     """Test GET /graph/subgraph (placeholder behavior)"""
-    
+
     node_id = str(uuid4())
     headers = {"X-Tenant-Id": client_with_auth.tenant_id}
     response = client_with_auth.get(

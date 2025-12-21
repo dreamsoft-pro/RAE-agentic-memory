@@ -492,7 +492,7 @@ class InMemoryStorage(IMemoryStorage):
             memory = self._memories.get(memory_id)
             if not memory or memory["tenant_id"] != tenant_id:
                 return 0.0
-            
+
             new_imp = float(memory.get("importance", 0.5)) + delta
             new_imp = max(0.0, min(1.0, new_imp))
             memory["importance"] = new_imp

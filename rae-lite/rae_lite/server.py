@@ -14,6 +14,7 @@ from rae_core.adapters.sqlite import (
     SQLiteVectorStore,
 )
 from rae_core.engine import RAEEngine
+
 from rae_lite.config import settings
 
 logger = structlog.get_logger(__name__)

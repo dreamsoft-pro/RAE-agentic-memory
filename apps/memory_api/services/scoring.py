@@ -1,6 +1,6 @@
 import math
 from datetime import datetime, timezone
-from typing import List, cast
+from typing import List
 
 from ..models import ScoredMemoryRecord
 

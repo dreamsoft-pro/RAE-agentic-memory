@@ -130,19 +130,19 @@ class OllamaProvider:
                 f"Could not connect to Ollama server at {self.api_url}: {str(e)}",
                 provider="ollama",
                 raw_error=e,
-            )
+            ) from e
         except httpx.TimeoutException as e:
             raise LLMTransientError(
                 f"Ollama request timed out: {str(e)}",
                 provider="ollama",
                 raw_error=e,
-            )
+            ) from e
         except Exception as e:
             raise LLMProviderError(
                 f"Ollama error: {str(e)}",
                 provider="ollama",
                 raw_error=e,
-            )
+            ) from e
 
     async def stream(self, request: LLMRequest) -> AsyncIterator[LLMChunk]:
         """
@@ -203,10 +203,10 @@ class OllamaProvider:
                 f"Could not connect to Ollama server at {self.api_url}: {str(e)}",
                 provider="ollama",
                 raw_error=e,
-            )
+            ) from e
         except Exception as e:
             raise LLMTransientError(
                 f"Ollama streaming error: {str(e)}",
                 provider="ollama",
                 raw_error=e,
-            )
+            ) from e

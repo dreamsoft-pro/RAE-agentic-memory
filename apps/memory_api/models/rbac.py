@@ -4,7 +4,7 @@ Role-Based Access Control (RBAC) models
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, List, Optional, cast
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field

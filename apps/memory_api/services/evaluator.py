@@ -8,10 +8,7 @@ Pattern: Actor → **Evaluator** → Reflector
 """
 
 from dataclasses import dataclass
-from enum import Enum
-from typing import Any, Dict, List, Optional, Protocol, Type, cast
-
-import structlog
+from typing import Any, Dict, List, Optional, Protocol, cast
 
 from pydantic import BaseModel
 

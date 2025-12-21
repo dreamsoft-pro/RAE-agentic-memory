@@ -5,9 +5,9 @@ Adapts the new LLM Orchestrator (apps.llm) to the old LLMProvider interface
 used by the memory API (apps.memory_api).
 """
 
-import structlog
 from typing import Type
 
+import structlog
 from pydantic import BaseModel
 
 from apps.llm.broker.orchestrator import LLMOrchestrator

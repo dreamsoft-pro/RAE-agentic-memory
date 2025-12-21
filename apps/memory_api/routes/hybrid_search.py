@@ -93,7 +93,7 @@ async def hybrid_search(request: HybridSearchRequest, pool=Depends(get_pool)):
 
     except Exception as e:
         logger.error("hybrid_search_failed", error=str(e), query=request.query)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -137,7 +137,7 @@ async def analyze_query(req: Request, request: QueryAnalysisRequest, pool=Depend
 
     except Exception as e:
         logger.error("query_analysis_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/analyze/explain")
@@ -172,7 +172,7 @@ async def explain_query_analysis(req: Request, request: QueryAnalysisRequest):
 
     except Exception as e:
         logger.error("explain_analysis_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -199,7 +199,7 @@ async def get_weight_profiles():
 
     except Exception as e:
         logger.error("get_profiles_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/weights/profiles/{profile_name}")
@@ -233,7 +233,7 @@ async def get_weight_profile(profile_name: str):
         raise
     except Exception as e:
         logger.error("get_profile_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/weights/calculate")
@@ -265,7 +265,7 @@ async def calculate_weights_for_query(request: QueryAnalysisRequest):
         return {
             "query": request.query,
             "intent": analysis.intent.value,
-            "confidence": analysis.confidence,
+            "confidence": confidence,
             "weights": {k.value: v for k, v in weights.items()},
             "recommended_strategies": [
                 s.value for s in analysis.recommended_strategies
@@ -275,7 +275,7 @@ async def calculate_weights_for_query(request: QueryAnalysisRequest):
 
     except Exception as e:
         logger.error("calculate_weights_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -380,7 +380,7 @@ async def compare_search_strategies(
 
     except Exception as e:
         logger.error("comparison_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -437,7 +437,7 @@ async def test_custom_weights(
         raise
     except Exception as e:
         logger.error("test_weights_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================

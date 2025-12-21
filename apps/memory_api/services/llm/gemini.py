@@ -1,5 +1,4 @@
-import math
-from typing import Any, List, Optional, Type, cast
+from typing import Any, Optional, Type, cast
 
 import google.generativeai as genai
 import instructor

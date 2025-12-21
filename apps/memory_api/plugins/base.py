@@ -185,6 +185,7 @@ class Plugin(ABC):
         """
         return memory_data
 
+    @abstractmethod
     async def on_after_memory_create(
         self, tenant_id: UUID, memory_id: str, memory_data: Dict[str, Any]
     ):
@@ -214,6 +215,7 @@ class Plugin(ABC):
         """
         return update_data
 
+    @abstractmethod
     async def on_after_memory_update(
         self,
         tenant_id: UUID,
@@ -232,6 +234,7 @@ class Plugin(ABC):
         """
         pass
 
+    @abstractmethod
     async def on_before_memory_delete(self, tenant_id: UUID, memory_id: str):
         """
         Called before deleting a memory
@@ -242,6 +245,7 @@ class Plugin(ABC):
         """
         pass
 
+    @abstractmethod
     async def on_after_memory_delete(self, tenant_id: UUID, memory_id: str):
         """
         Called after deleting a memory
@@ -268,6 +272,7 @@ class Plugin(ABC):
         """
         return params
 
+    @abstractmethod
     async def on_after_query(
         self, tenant_id: UUID, query: str, results: List[Dict[str, Any]]
     ):
@@ -296,6 +301,7 @@ class Plugin(ABC):
         """
         return results
 
+    @abstractmethod
     async def on_notification(
         self, tenant_id: UUID, notification_type: str, data: Dict[str, Any]
     ):
@@ -309,6 +315,7 @@ class Plugin(ABC):
         """
         pass
 
+    @abstractmethod
     async def on_alert(
         self,
         tenant_id: UUID,
@@ -523,7 +530,7 @@ class PluginRegistry:
                     spec.loader.exec_module(module)
 
                     # Find Plugin classes in module
-                    for name, obj in inspect.getmembers(module):
+                    for _name, obj in inspect.getmembers(module):
                         if (
                             inspect.isclass(obj)
                             and issubclass(obj, Plugin)

@@ -3,7 +3,6 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from apps.memory_api.config import settings
 from apps.memory_api.services.context_builder import ContextBuilder, ContextConfig
 from apps.memory_api.services.rae_core_service import RAECoreService
 
@@ -42,8 +41,8 @@ async def test_context_builder_uses_v3_when_enabled(mock_rae_service):
 
     # Pass mock_rae_service instead of repo
     builder = ContextBuilder(
-        pool, 
-        mock_rae_service, 
+        pool,
+        mock_rae_service,
         reflection_engine,
         config=ContextConfig(enable_scoring_v3=True)
     )
@@ -82,8 +81,8 @@ async def test_context_builder_v3_integration_mock(mock_rae_service):
 
     # Pass mock_rae_service instead of repo
     builder = ContextBuilder(
-        pool, 
-        mock_rae_service, 
+        pool,
+        mock_rae_service,
         reflection_engine,
         config=ContextConfig(enable_scoring_v3=True)
     )

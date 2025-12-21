@@ -5,8 +5,7 @@ Extracts structured knowledge in the form of (subject, predicate, object) triple
 using spaCy's dependency parsing.
 """
 
-import logging
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional
 
 import structlog
 

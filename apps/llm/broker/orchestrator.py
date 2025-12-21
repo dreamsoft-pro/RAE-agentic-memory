@@ -7,7 +7,7 @@ Implements strategies (Single, Fallback) and handles configuration.
 
 import logging
 import os
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, Dict, Optional, cast
 
 import yaml
 

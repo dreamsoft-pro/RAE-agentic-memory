@@ -4,9 +4,8 @@ OpenAI LLM Provider.
 Implements the LLM provider interface for OpenAI models.
 """
 
-from typing import Any, AsyncIterator, Dict, List, Optional, cast
+from typing import Any, AsyncIterator, Optional, cast
 
-import httpx
 from openai import AsyncOpenAI, RateLimitError
 from tenacity import retry, stop_after_attempt, wait_exponential
 
@@ -161,7 +160,7 @@ class OpenAIProvider:
                 f"OpenAI rate limit exceeded: {str(e)}",
                 provider="openai",
                 raw_error=e,
-            )
+            ) from e
         except Exception as e:
             error_str = str(e).lower()
             if "authentication" in error_str or "api key" in error_str:
@@ -169,25 +168,25 @@ class OpenAIProvider:
                     f"OpenAI authentication failed: {str(e)}",
                     provider="openai",
                     raw_error=e,
-                )
+                ) from e
             elif "timeout" in error_str or "connection" in error_str:
                 raise LLMTransientError(
                     f"OpenAI transient error: {str(e)}",
                     provider="openai",
                     raw_error=e,
-                )
+                ) from e
             elif "context_length_exceeded" in error_str:
                 raise LLMContextLengthError(
                     f"OpenAI context length exceeded: {str(e)}",
                     provider="openai",
                     raw_error=e,
-                )
+                ) from e
             else:
                 raise LLMProviderError(
                     f"OpenAI error: {str(e)}",
                     provider="openai",
                     raw_error=e,
-                )
+                ) from e
 
     async def stream(self, request: LLMRequest) -> AsyncIterator[LLMChunk]:
         """
@@ -235,16 +234,16 @@ class OpenAIProvider:
                     f"OpenAI rate limit exceeded: {str(e)}",
                     provider="openai",
                     raw_error=e,
-                )
+                ) from e
             elif "authentication" in error_str or "api key" in error_str:
                 raise LLMAuthError(
                     f"OpenAI authentication failed: {str(e)}",
                     provider="openai",
                     raw_error=e,
-                )
+                ) from e
             else:
                 raise LLMTransientError(
                     f"OpenAI streaming error: {str(e)}",
                     provider="openai",
                     raw_error=e,
-                )
+                ) from e

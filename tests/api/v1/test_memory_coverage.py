@@ -1,14 +1,13 @@
-from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
 from fastapi.testclient import TestClient
 
+from apps.memory_api.dependencies import get_rae_core_service
 from apps.memory_api.main import app
 from apps.memory_api.security import auth
 from apps.memory_api.security.dependencies import get_and_verify_tenant_id
-from apps.memory_api.dependencies import get_rae_core_service
 from apps.memory_api.services.rae_core_service import RAECoreService
 
 
@@ -48,7 +47,7 @@ def client_with_auth(mock_pool, mock_rae_service):
     }
     # Override tenant verification
     app.dependency_overrides[get_and_verify_tenant_id] = lambda: "t1"
-    
+
     # Override RAE Core Service
     app.dependency_overrides[get_rae_core_service] = lambda: mock_rae_service
 
@@ -110,7 +109,7 @@ async def test_store_memory_vector_failure(
 ):
     # RAECoreService stores memory and returns ID
     mock_rae_service.store_memory.return_value = str(uuid4())
-    
+
     # Let's simulate RAE-Core raising a generic exception that wraps vector error?
     mock_rae_service.store_memory.side_effect = Exception("Vector store error")
 
@@ -172,16 +171,16 @@ async def test_query_memory_hybrid_missing_project(client_with_auth, mock_embedd
     if "detail" in data:
         # Pydantic validation error format
         # "Field required" or similar
-        # For missing project in request body? 
+        # For missing project in request body?
         # QueryMemoryRequest defines project as Optional[str] = None?
         # Let's check model definition.
         # If use_graph is True, maybe validation requires project?
         # The test expects "project parameter is required".
         # This logic is likely in the validator of the request model.
-        pass 
+        pass
     elif "error" in data:
         assert "project parameter is required" in data["error"]["message"]
-    
+
     # Asserting content based on what typically Pydantic returns for missing fields
     # But wait, if project is Optional in the model, why does it fail?
     # Maybe a validator?

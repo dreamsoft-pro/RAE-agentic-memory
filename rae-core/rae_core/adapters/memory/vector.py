@@ -6,7 +6,7 @@ Ideal for testing, development, and lightweight deployments.
 
 import asyncio
 from collections import defaultdict
-from typing import Any, List, Optional, cast
+from typing import Any, cast
 from uuid import UUID
 
 import numpy as np
@@ -172,7 +172,7 @@ class InMemoryVectorStore(IVectorStore):
                 return None
 
             # Convert numpy array back to list
-            return cast(List[float], vector_data["embedding"].tolist())
+            return cast(list[float], vector_data["embedding"].tolist())
 
     async def batch_store_vectors(
         self,

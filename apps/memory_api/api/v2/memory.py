@@ -96,7 +96,7 @@ async def store_memory(
 
     except Exception as e:
         logger.error("store_memory_failed", error=str(e), tenant_id=tenant_id)
-        raise HTTPException(status_code=500, detail=f"Failed to store memory: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to store memory: {str(e)}") from e
 
 
 @router.post("/query", response_model=QueryMemoryResponseV2)
@@ -146,7 +146,7 @@ async def query_memories(
         logger.error("query_memories_failed", error=str(e), tenant_id=tenant_id)
         raise HTTPException(
             status_code=500, detail=f"Failed to query memories: {str(e)}"
-        )
+        ) from e
 
 
 @router.post("/consolidate")
@@ -176,7 +176,7 @@ async def consolidate_memories(
 
     except Exception as e:
         logger.error("consolidate_failed", error=str(e), tenant_id=tenant_id)
-        raise HTTPException(status_code=500, detail=f"Failed to consolidate: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to consolidate: {str(e)}") from e
 
 
 @router.post("/reflections")
@@ -216,7 +216,7 @@ async def generate_reflections(
         logger.error("generate_reflections_failed", error=str(e), tenant_id=tenant_id)
         raise HTTPException(
             status_code=500, detail=f"Failed to generate reflections: {str(e)}"
-        )
+        ) from e
 
 
 @router.get("/stats")
@@ -248,4 +248,4 @@ async def get_statistics(
         logger.error("get_statistics_failed", error=str(e), tenant_id=tenant_id)
         raise HTTPException(
             status_code=500, detail=f"Failed to get statistics: {str(e)}"
-        )
+        ) from e
