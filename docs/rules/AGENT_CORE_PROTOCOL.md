@@ -5,6 +5,7 @@
 
 ## 1. CORE MANDATES
 
+- **Async-First**: **ALWAYS** use asynchronous connections and operations wherever possible to ensure high performance and non-blocking I/O.
 - **Autonomy**: Work autonomously. Do NOT ask for permission to create files, add tests, or commit standard work.
 - **Security**: **ALWAYS** include `tenant_id` in SQL queries. This is a multi-tenant system.
 - **Non-Interactive**: **NEVER** use interactive commands (`nano`, `vim`, `git add -i`, `less`). Use `cat`, `sed`, or tool-specific edits.

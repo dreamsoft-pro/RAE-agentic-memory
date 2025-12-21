@@ -48,7 +48,7 @@ class LLMProvider(Protocol):
         """
         ...
 
-    async def stream(self, request: LLMRequest) -> AsyncIterator[LLMChunk]:
+    def stream(self, request: LLMRequest) -> AsyncIterator[LLMChunk]:
         """
         Generate a streaming response from the LLM.
 

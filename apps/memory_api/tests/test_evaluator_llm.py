@@ -46,7 +46,7 @@ async def test_llm_evaluator_evaluate_success():
     assert result.outcome == OutcomeType.SUCCESS
     assert result.is_ok is True
     assert result.quality_score == 0.9
-    assert "Good response quality" in result.reasons
+    assert result.reasons and "Good response quality" in result.reasons
     assert result.should_reflect is False
     assert result.importance_hint == 0.2
     assert result.evaluation_method == "llm"

@@ -4,8 +4,9 @@ OpenAI LLM Provider.
 Implements the LLM provider interface for OpenAI models.
 """
 
-from typing import AsyncIterator
+from typing import Any, AsyncIterator, Dict, List, Optional, cast
 
+import httpx
 from openai import AsyncOpenAI, RateLimitError
 from tenacity import retry, stop_after_attempt, wait_exponential
 
@@ -27,7 +28,12 @@ class OpenAIProvider:
     LLM provider for OpenAI models (GPT-4, GPT-3.5, etc.).
     """
 
-    def __init__(self, api_key: str, api_base: str = None):
+    def __init__(
+        self,
+        api_key: str,
+        api_base: Optional[str] = None,
+        organization: Optional[str] = None,
+    ):
         """
         Initialize the OpenAI provider.
 
@@ -122,7 +128,7 @@ class OpenAIProvider:
             if request.stop_sequences:
                 params["stop"] = request.stop_sequences
 
-            response = await self.client.chat.completions.create(**params)
+            response = await self.client.chat.completions.create(**cast(Any, params))
 
             usage = TokenUsage(
                 prompt_tokens=response.usage.prompt_tokens,
@@ -213,7 +219,7 @@ class OpenAIProvider:
             if tools:
                 params["tools"] = tools
 
-            stream = await self.client.chat.completions.create(**params)
+            stream = await self.client.chat.completions.create(**cast(Any, params))
 
             async for chunk in stream:
                 if chunk.choices and chunk.choices[0].delta.content:

@@ -14,12 +14,14 @@ This module provides an enhanced API client for the RAE Memory API with:
 import asyncio
 import hashlib
 import json
+import time
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Union, cast
 
 import httpx
 import structlog
+from pydantic import BaseModel, Field
 
 logger = structlog.get_logger(__name__)
 
@@ -400,6 +402,9 @@ class RAEClient:
     - Comprehensive error handling
     """
 
+    circuit_breaker: Optional[CircuitBreaker]
+    cache: Optional[ResponseCache]
+
     def __init__(
         self,
         base_url: str,
@@ -485,7 +490,7 @@ class RAEClient:
         )
 
         # Statistics
-        self.stats = {
+        self.stats: Dict[str, Any] = {
             "total_requests": 0,
             "successful_requests": 0,
             "failed_requests": 0,
@@ -559,7 +564,7 @@ class RAEClient:
             cached_response = self.cache.get(method, url, params)
             if cached_response is not None:
                 self.stats["cache_hits"] += 1
-                return cached_response
+                return cast(Dict[str, Any], cached_response)
             self.stats["cache_misses"] += 1
 
         # Prepare headers
@@ -595,7 +600,7 @@ class RAEClient:
                 self.cache.set(method, url, response, params, cache_ttl)
 
             self.stats["successful_requests"] += 1
-            return response
+            return cast(Dict[str, Any], response)
 
         except Exception as e:
             self.stats["failed_requests"] += 1
@@ -617,7 +622,7 @@ class RAEClient:
         retry_on_errors: List[ErrorCategory],
     ) -> Dict[str, Any]:
         """Execute request with exponential backoff retry."""
-        last_error = None
+        last_error: Optional[Exception] = None
         backoff_ms = self.initial_backoff_ms
 
         for attempt in range(self.max_retries + 1):
@@ -631,13 +636,11 @@ class RAEClient:
                     headers=headers,
                 )
 
-                # Check response status
+                # Check for success
                 response.raise_for_status()
+                return cast(Dict[str, Any], response.json())
 
-                # Parse JSON
-                return response.json()
-
-            except Exception as e:
+            except httpx.HTTPStatusError as e:
                 last_error = e
 
                 # Get status code if available
@@ -691,8 +694,8 @@ class RAEClient:
         else:
             raise RAEClientError(
                 f"Request failed after {self.max_retries + 1} attempts: {str(last_error)}",
-                category=classify_error(last_error),
-                original_error=last_error,
+                category=classify_error(cast(Exception, last_error)),
+                original_error=cast(Exception, last_error),
             )
 
     def _prepare_headers(self, additional_headers: Optional[Dict] = None) -> Dict:
@@ -785,7 +788,7 @@ class RAEClient:
         }
         logger.info("stats_reset")
 
-    def invalidate_cache(self, method: str = None, path: str = None):
+    def invalidate_cache(self, method: Optional[str] = None, path: Optional[str] = None):
         """
         Invalidate cache entries.
 

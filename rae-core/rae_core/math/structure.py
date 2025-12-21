@@ -14,6 +14,7 @@ Author: Grzegorz Leśniowski <lesniowskig@gmail.com>
 
 import math
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -171,7 +172,7 @@ class MemoryScoreResult:
     access_count: int
     effective_decay_rate: float
 
-    def to_dict(self) -> dict[str, float]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize to dictionary"""
         return {
             "final_score": self.final_score,
@@ -183,3 +184,22 @@ class MemoryScoreResult:
             "access_count": self.access_count,
             "effective_decay_rate": self.effective_decay_rate,
         }
+
+
+def cosine_similarity(vec1: list[float], vec2: list[float]) -> float:
+    """
+    Compute cosine similarity between two vectors.
+
+    Formula: (A · B) / (||A|| * ||B||)
+    """
+    if not vec1 or not vec2 or len(vec1) != len(vec2):
+        return 0.0
+
+    dot_product = sum(a * b for a, b in zip(vec1, vec2))
+    norm_a = sum(a * a for a in vec1) ** 0.5
+    norm_b = sum(b * b for b in vec2) ** 0.5
+
+    if norm_a == 0 or norm_b == 0:
+        return 0.0
+
+    return float(dot_product / (norm_a * norm_b))

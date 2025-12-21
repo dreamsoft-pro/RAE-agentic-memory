@@ -7,7 +7,7 @@ Handles provider selection, fallbacks, cost validation, and telemetry.
 
 import logging
 import os
-from typing import AsyncIterator, Dict, Optional
+from typing import Any, AsyncIterator, Dict, List, Optional, cast
 
 import yaml
 
@@ -62,13 +62,13 @@ class LLMRouter:
             # Default to config file in same directory as this module
             import pathlib
 
-            config_path = (
+            config_path = str(
                 pathlib.Path(__file__).parent.parent / "config" / "providers.yaml"
             )
 
         try:
             with open(config_path, "r") as f:
-                return yaml.safe_load(f)
+                return cast(Dict[str, Any], yaml.safe_load(f))
         except FileNotFoundError:
             logger.warning(f"Config file not found: {config_path}. Using empty config.")
             return {"providers": {}}

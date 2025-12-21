@@ -3,7 +3,7 @@
 The Evaluator assesses the quality and outcomes of actions.
 """
 
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
 from rae_core.interfaces.storage import IMemoryStorage
@@ -89,7 +89,7 @@ class Evaluator:
             completeness_result.score * 0.3
         )
 
-        return metrics
+        return cast(dict[str, float], metrics)
 
     async def evaluate_action_outcome(
         self,

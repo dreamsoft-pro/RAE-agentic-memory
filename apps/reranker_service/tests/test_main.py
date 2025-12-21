@@ -26,16 +26,12 @@ def client(mock_reranker_dependencies):
 
     # Now import
     try:
-        from apps.reranker_service.main import app
+        from apps.reranker_service import main as reranker_main
     except ImportError:
         # Try local import if package structure is different
-        try:
-            from main import app
-        except ImportError:
-            sys.path.append(str(service_dir))
-            from main import app
+        import main as reranker_main  # type: ignore
 
-    return TestClient(app)
+    return TestClient(reranker_main.app)
 
 
 def test_health(client):

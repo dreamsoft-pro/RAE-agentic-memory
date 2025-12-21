@@ -16,7 +16,7 @@ Based on improvements plan:
 import os
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, Set
+from typing import Any, Optional, Set, cast
 
 import structlog
 
@@ -181,7 +181,7 @@ class TelemetryProfileManager:
     @property
     def profile(self) -> ProfileConfig:
         """Get current profile configuration."""
-        return self._current_profile
+        return cast(ProfileConfig, self._current_profile)
 
     def should_sample_span(self, span_name: str) -> bool:
         """
@@ -201,7 +201,7 @@ class TelemetryProfileManager:
             return True
 
         # Sample based on profile rate
-        return random.random() < self._current_profile.sampling_rate
+        return random.random() < self.profile.sampling_rate
 
     def should_include_attribute(self, attribute_name: str) -> bool:
         """
@@ -213,7 +213,7 @@ class TelemetryProfileManager:
         Returns:
             True if attribute should be included
         """
-        return attribute_name not in self._current_profile.excluded_attributes
+        return attribute_name not in self.profile.excluded_attributes
 
     def filter_attribute_value(self, value: str) -> str:
         """
@@ -229,12 +229,12 @@ class TelemetryProfileManager:
             return value
 
         # Truncate to max length
-        max_len = self._current_profile.max_attribute_length
+        max_len = self.profile.max_attribute_length
         if len(value) > max_len:
             return value[:max_len] + "... [truncated]"
 
         # Apply PII scrubbing if enabled
-        if self._current_profile.enable_pii_scrubbing:
+        if self.profile.enable_pii_scrubbing:
             # Import here to avoid circular dependency
             from .pii_scrubber import scrub_pii
 
@@ -250,11 +250,11 @@ class TelemetryProfileManager:
             Dictionary with exporter configuration
         """
         return {
-            "format": self._current_profile.export_format,
-            "sampling_rate": self._current_profile.sampling_rate,
-            "retention_days": self._current_profile.retention_days,
-            "enable_metrics": self._current_profile.enable_metrics,
-            "enable_logging": self._current_profile.enable_logging,
+            "format": self.profile.export_format,
+            "sampling_rate": self.profile.sampling_rate,
+            "retention_days": self.profile.retention_days,
+            "enable_metrics": self.profile.enable_metrics,
+            "enable_logging": self.profile.enable_logging,
         }
 
 

@@ -3,6 +3,7 @@ Base Plugin System - Core plugin infrastructure
 """
 
 import importlib
+import importlib.util
 import inspect
 from abc import ABC, abstractmethod
 from datetime import datetime, timezone
@@ -517,19 +518,22 @@ class PluginRegistry:
                 spec = importlib.util.spec_from_file_location(
                     f"plugins.{module_name}", plugin_file
                 )
-                module = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(module)
+                if spec is not None and spec.loader is not None:
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
 
-                # Find Plugin classes in module
-                for name, obj in inspect.getmembers(module):
-                    if (
-                        inspect.isclass(obj)
-                        and issubclass(obj, Plugin)
-                        and obj is not Plugin
-                    ):
-                        # Instantiate and register plugin
-                        plugin_instance = obj()
-                        self.register(plugin_instance)
+                    # Find Plugin classes in module
+                    for name, obj in inspect.getmembers(module):
+                        if (
+                            inspect.isclass(obj)
+                            and issubclass(obj, Plugin)
+                            and obj is not Plugin
+                        ):
+                            # Instantiate and register plugin
+                            plugin_instance = obj()
+                            self.register(plugin_instance)
+                else:
+                    logger.warning("plugin_spec_or_loader_not_found", module=module_name)
 
             except Exception as e:
                 logger.error("plugin_load_failed", module=module_name, error=str(e))

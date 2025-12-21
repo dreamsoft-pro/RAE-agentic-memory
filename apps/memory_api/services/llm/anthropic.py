@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Any, Optional, Type, cast
 
 import instructor
 from anthropic import AsyncAnthropic
@@ -14,7 +14,7 @@ class AnthropicProvider(LLMProvider):
     An LLM provider that uses the Anthropic API (for Claude models).
     """
 
-    def __init__(self, api_key: str = None):
+    def __init__(self, api_key: Optional[str] = None):
         key = api_key or settings.ANTHROPIC_API_KEY
         if not key:
             raise ValueError("ANTHROPIC_API_KEY is not set.")
@@ -28,7 +28,7 @@ class AnthropicProvider(LLMProvider):
         Generates content using an Anthropic Claude model.
         """
         try:
-            response = await self.client.messages.create(
+            response = await cast(Any, self.client).messages.create(
                 model=model,
                 system=system,
                 messages=[
@@ -72,7 +72,7 @@ class AnthropicProvider(LLMProvider):
                 max_tokens=4096,  # Anthropic requires max_tokens
                 response_model=response_model,
             )
-            return response
+            return cast(BaseModel, response)
         except Exception as e:
             print(f"Anthropic API call failed: {e}")
             raise

@@ -3,14 +3,15 @@
 Implements IVectorStore interface using Qdrant for similarity search.
 """
 
-from typing import Any, Optional
+from typing import Any, List, Optional, cast
 from uuid import UUID
 
 try:
-    from qdrant_client import QdrantClient
+    from qdrant_client import QdrantClient as QdrantClientRaw
     from qdrant_client.models import Distance, PointStruct, VectorParams
+    QdrantClient = QdrantClientRaw
 except ImportError:
-    QdrantClient = None
+    QdrantClient: Any = None # type: ignore
 
 from ..interfaces.vector import IVectorStore
 
@@ -252,7 +253,9 @@ class QdrantVectorStore(IVectorStore):
             )
 
             return [
-                (UUID(result.payload["memory_id"]), result.score) for result in results
+                (UUID(result.payload["memory_id"]), result.score)
+                for result in results
+                if result.payload and "memory_id" in result.payload
             ]
         except Exception:
             return []
@@ -273,8 +276,9 @@ class QdrantVectorStore(IVectorStore):
 
             if result and len(result) > 0:
                 # Verify tenant_id matches
-                if result[0].payload.get("tenant_id") == tenant_id:
-                    return result[0].vector
+                payload = result[0].payload
+                if payload and payload.get("tenant_id") == tenant_id:
+                    return cast(List[float], result[0].vector)
         except Exception:
             pass
 
@@ -295,7 +299,11 @@ class QdrantVectorStore(IVectorStore):
                 ids=[str(memory_id)],
             )
 
-            if not result or result[0].payload.get("tenant_id") != tenant_id:
+            if not result:
+                return False
+            
+            payload = result[0].payload
+            if not payload or payload.get("tenant_id") != tenant_id:
                 return False
 
             self.client.delete(
@@ -490,7 +498,7 @@ class QdrantVectorStore(IVectorStore):
         if mag_a == 0.0 or mag_b == 0.0:
             return 0.0
 
-        return dot_product / (mag_a * mag_b)
+        return float(dot_product / (mag_a * mag_b))
 
     def close(self):
         """Close Qdrant client."""

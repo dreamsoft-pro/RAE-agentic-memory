@@ -136,9 +136,11 @@ async def query_memory(
         # Standard vector search
         span.set_attribute("rae.query.mode", "vector_only")
 
-        # 1. Generate embedding for the query text
+        # Get embedding service
         embedding_service = get_embedding_service()
-        query_embedding = embedding_service.generate_embeddings([req.query_text])[0]
+
+        # Get query embedding for vector search
+        query_embedding = (embedding_service.generate_embeddings([req.query_text]))[0]
         span.set_attribute("rae.query.embedding_dimension", len(query_embedding))
 
         # 2. Build filters

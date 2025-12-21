@@ -1,6 +1,6 @@
 import asyncio
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, cast
 from uuid import UUID, uuid4
 
 import pytest
@@ -110,7 +110,7 @@ class MockMemoryStorage(IMemoryStorage):
 
             # Sort results
             reverse = order_direction.lower() == "desc"
-            results.sort(key=lambda m: m.get(order_by, ""), reverse=reverse)
+            results.sort(key=lambda m: m.get(order_by, ""), reverse=reverse)  # type: ignore[arg-type,return-value]
 
             return results[offset : offset + limit]
 
@@ -272,6 +272,39 @@ class MockMemoryStorage(IMemoryStorage):
                 memory["expires_at"] = expires_at
                 return True
             return False
+
+    async def get_metric_aggregate(
+        self,
+        tenant_id: str,
+        metric: str,
+        func: str,
+        filters: dict[str, Any] | None = None,
+    ) -> float:
+        return 0.0
+
+    async def update_memory_access_batch(
+        self,
+        memory_ids: list[UUID],
+        tenant_id: str,
+    ) -> bool:
+        for mid in memory_ids:
+            await self.update_memory_access(mid, tenant_id)
+        return True
+
+    async def adjust_importance(
+        self,
+        memory_id: UUID,
+        delta: float,
+        tenant_id: str,
+    ) -> float:
+        async with self._lock:
+            memory = self._memories.get(memory_id)
+            if memory and memory["tenant_id"] == tenant_id:
+                new_imp = float(memory.get("importance", 0.5)) + delta
+                new_imp = max(0.0, min(1.0, new_imp))
+                memory["importance"] = new_imp
+                return new_imp
+            return 0.0
 
     async def increment_access_count(self, memory_id: UUID, tenant_id: str) -> bool:
         async with self._lock:

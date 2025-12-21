@@ -293,7 +293,7 @@ def apply_merge_results(
     Returns:
         Summary of applied changes
     """
-    summary = {
+    summary: dict[str, Any] = {
         "total": len(merge_results),
         "successful": 0,
         "failed": 0,

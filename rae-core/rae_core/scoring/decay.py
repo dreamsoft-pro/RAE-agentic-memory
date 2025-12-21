@@ -41,7 +41,17 @@ class ImportanceDecay:
 
         # Calculate decay
         decay_factor = math.exp(-decay_rate * periods)
+        decayed = importance * decay_factor
+
+        decayed = max(self.config.min_importance, min(self.config.max_importance, decayed))
+
+        return DecayResult(
+            original_importance=importance,
+            decayed_importance=decayed,
+            decay_amount=importance - decayed,
+            time_elapsed=time_elapsed,
             next_decay_at=datetime.now(timezone.utc) + self.config.decay_period
+        )
 
     def linear_decay(
         self,

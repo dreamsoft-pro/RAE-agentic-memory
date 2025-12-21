@@ -1,6 +1,7 @@
 """Unit tests for InMemoryVectorStore adapter."""
 
-from uuid import uuid4
+from typing import Any
+from uuid import UUID, uuid4
 
 import numpy as np
 import pytest
@@ -268,7 +269,7 @@ class TestInMemoryVectorStore:
     @pytest.mark.asyncio
     async def test_batch_store_vectors_with_invalid(self, store):
         """Test batch storing with some invalid vectors."""
-        vectors = [
+        vectors: list[tuple[UUID, Any, dict[str, Any]]] = [
             (uuid4(), [1.0, 0.0, 0.0], {}),
             (uuid4(), "invalid", {}),  # Invalid embedding
             (uuid4(), [0.0, 1.0, 0.0], {}),

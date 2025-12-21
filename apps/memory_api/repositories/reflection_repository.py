@@ -16,7 +16,7 @@ Implements enterprise features:
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 from uuid import UUID
 
 import asyncpg
@@ -229,7 +229,7 @@ async def query_reflections(
 
     # Build query conditions
     conditions = ["tenant_id = $1", "project_id = $2"]
-    params = [tenant_id, project_id]
+    params: List[Any] = [tenant_id, project_id]
     param_idx = 3
 
     if reflection_types:
@@ -441,7 +441,7 @@ async def get_reflection_relationships(
         List of relationships
     """
     conditions = []
-    params = [reflection_id]
+    params: List[Any] = [reflection_id]
     param_idx = 2
 
     if direction == "outgoing":
@@ -497,7 +497,7 @@ async def get_reflection_graph(
 
     # Build relation type filter
     relation_filter = ""
-    relation_params = []
+    relation_params: List[Any] = []
     if relation_types:
         relation_filter = "AND relation_type = ANY($2)"
         relation_params = [[rt.value for rt in relation_types]]
@@ -656,7 +656,7 @@ async def log_reflection_usage(
         metadata,
     )
 
-    return record["id"]
+    return cast(UUID, record["id"])
 
 
 # ============================================================================

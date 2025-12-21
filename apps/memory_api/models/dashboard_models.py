@@ -493,7 +493,7 @@ class AlertMessage(WebSocketMessage):
     Pushed for quality degradation, drift detection, etc.
     """
 
-    event_type: Union[DashboardEventType, str]
+    event_type: DashboardEventType
 
     alert_id: UUID = Field(default_factory=lambda: __import__("uuid").uuid4())
     severity: str  # 'warning', 'error', 'critical'

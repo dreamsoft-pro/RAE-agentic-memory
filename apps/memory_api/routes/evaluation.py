@@ -9,6 +9,8 @@ This module provides FastAPI routes for evaluation operations including:
 - Benchmarking
 """
 
+from typing import Any, cast
+
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 
@@ -283,24 +285,25 @@ async def create_ab_test(
         variant_b = request.variants[1]
 
         # Create test in database
+        req_any = cast(Any, request)
         test_record = await repo.create_test(
             tenant_id=request.tenant_id,
             project_id=request.project_id,
             test_name=request.test_name,
             description=request.description,
-            hypothesis=request.hypothesis,
+            hypothesis=req_any.hypothesis,
             variant_a_name=variant_a.variant_name,
-            variant_a_config=variant_a.config,
+            variant_a_config=variant_a.configuration,
             variant_b_name=variant_b.variant_name,
-            variant_b_config=variant_b.config,
+            variant_b_config=variant_b.configuration,
             traffic_split=variant_b.traffic_percentage / 100.0,
-            min_sample_size=request.min_sample_size,
+            min_sample_size=req_any.min_sample_size,
             confidence_level=request.confidence_level,
-            primary_metric=request.primary_metric,
-            secondary_metrics=request.secondary_metrics,
-            created_by=request.created_by,
-            tags=request.tags,
-            metadata=request.metadata,
+            primary_metric=req_any.primary_metric,
+            secondary_metrics=req_any.secondary_metrics,
+            created_by=req_any.created_by,
+            tags=req_any.tags,
+            metadata=req_any.metadata,
         )
 
         logger.info(

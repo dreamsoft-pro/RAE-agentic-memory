@@ -5,7 +5,7 @@ Implements the LLM provider interface for Grok (xAI) models.
 Grok API is OpenAI-compatible with some differences in semantics.
 """
 
-from typing import AsyncIterator
+from typing import Any, AsyncIterator, Dict, List, Optional, cast
 
 from openai import AsyncOpenAI, RateLimitError
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -141,7 +141,7 @@ class GrokProvider:
             if request.stop_sequences:
                 params["stop"] = request.stop_sequences
 
-            response = await self.client.chat.completions.create(**params)
+            response = await self.client.chat.completions.create(**cast(Any, params))
 
             usage = TokenUsage(
                 prompt_tokens=response.usage.prompt_tokens,
@@ -248,7 +248,7 @@ class GrokProvider:
             if tools:
                 params["tools"] = tools
 
-            stream = await self.client.chat.completions.create(**params)
+            stream = await self.client.chat.completions.create(**cast(Any, params))
 
             async for chunk in stream:
                 if chunk.choices and chunk.choices[0].delta.content:

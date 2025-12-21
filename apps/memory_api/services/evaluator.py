@@ -8,7 +8,10 @@ Pattern: Actor → **Evaluator** → Reflector
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Protocol
+from enum import Enum
+from typing import Any, Dict, List, Optional, Protocol, Type, cast
+
+import structlog
 
 from pydantic import BaseModel
 
@@ -90,7 +93,7 @@ class EvaluationResult:
 
     # Quality assessment
     quality_score: float = 0.5  # 0.0-1.0 quality rating
-    reasons: List[str] = None  # Explanation of assessment
+    reasons: Optional[List[str]] = None  # Explanation of assessment
     notes: Optional[str] = None  # Additional context
 
     # Reflection hints
@@ -293,14 +296,12 @@ class LLMEvaluator:
 
         # Call LLM
         try:
-            response: LLMEvaluationResponse = (
-                await self.llm_provider.generate_structured(
-                    system="You are an expert evaluator of AI agent execution. Assess the quality and success of the following task execution.",
-                    prompt=prompt,
-                    model=settings.RAE_LLM_MODEL_DEFAULT,
-                    response_model=LLMEvaluationResponse,
-                )
-            )
+            response = cast(LLMEvaluationResponse, await self.llm_provider.generate_structured(
+                system="You are an expert evaluator of AI agent execution. Assess the quality and success of the following task execution.",
+                prompt=prompt,
+                model=settings.RAE_LLM_MODEL_DEFAULT,
+                response_model=LLMEvaluationResponse,
+            ))
 
             # Map outcome string to enum
             outcome_map = {

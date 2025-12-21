@@ -8,7 +8,7 @@ This service handles the computationally expensive parts:
 The main API retains orchestration, database operations, and LLM calls.
 """
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np
 import structlog
@@ -54,7 +54,7 @@ class EntityResolutionMLService:
         self.model = get_embedding_model()
 
     def resolve_entities(
-        self, nodes: List[Dict[str, Any]], similarity_threshold: float = None
+        self, nodes: List[Dict[str, Any]], similarity_threshold: Optional[float] = None
     ) -> Tuple[List[List[str]], Dict[str, Any]]:
         """
         Identify groups of similar entities that should potentially be merged.
@@ -102,7 +102,7 @@ class EntityResolutionMLService:
         cluster_labels = clustering.fit_predict(embeddings)
 
         # Group nodes by cluster
-        clusters = {}
+        clusters: Dict[int, List[int]] = {}
         for idx, label in enumerate(cluster_labels):
             if label not in clusters:
                 clusters[label] = []
@@ -183,4 +183,4 @@ class EntityResolutionMLService:
         """
         embeddings = self.model.encode(labels)
         similarity_matrix = cosine_similarity(embeddings)
-        return similarity_matrix
+        return cast(np.ndarray, similarity_matrix)

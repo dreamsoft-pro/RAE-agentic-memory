@@ -51,17 +51,18 @@ logger = structlog.get_logger(__name__)
 
 class RAETracingContext:
     """
-    Global tracing context for correlation IDs and experiment tracking.
+    Context manager for tracking RAE operations across services.
 
-    Usage:
-        with RAETracingContext.session("user-123"):
-            with RAETracingContext.task("analyze-document"):
-                # All spans created here will have session and task IDs
-                process_document()
+    Supports:
+    - Session tracking
+    - Task/Subtask relationships
+    - Experiment variant tracking
+    - User/Tenant context propagation
     """
 
     _session_id: Optional[str] = None
     _task_id: Optional[str] = None
+    _task_name: Optional[str] = None
     _subtask_id: Optional[str] = None
     _experiment_id: Optional[str] = None
     _experiment_variant: Optional[str] = None

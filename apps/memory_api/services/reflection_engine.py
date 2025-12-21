@@ -82,7 +82,7 @@ class ReflectionEngine:
         self,
         pool: asyncpg.Pool,
         rae_service: "RAECoreService",
-        graph_repository: GraphRepository = None,
+        graph_repository: Optional[GraphRepository] = None,
     ):
         self.pool = pool
         self.graph_repo = graph_repository or GraphRepository(pool)
@@ -108,12 +108,13 @@ class ReflectionEngine:
         system_prompt = "You are a helpful assistant that synthesizes insights."
         final_prompt = REFLECTION_PROMPT.format(episodes=episode_content)
 
-        extracted_triples = await self.llm_provider.generate_structured(
+        from typing import cast
+        extracted_triples = cast(Triples, await self.llm_provider.generate_structured(
             system=system_prompt,
             prompt=final_prompt,
             model=settings.RAE_LLM_MODEL_DEFAULT,
             response_model=Triples,
-        )
+        ))
         logger.info("extracted_triples", triples=extracted_triples.model_dump_json())
 
         # 3. Store the new reflective memory (triples)

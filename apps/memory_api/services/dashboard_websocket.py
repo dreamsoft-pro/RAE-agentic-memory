@@ -64,7 +64,7 @@ class ConnectionManager:
         websocket: WebSocket,
         tenant_id: str,
         project_id: str,
-        event_types: List[DashboardEventType] = None,
+        event_types: Optional[List[DashboardEventType]] = None,
     ) -> str:
         """
         Accept WebSocket connection and register subscription.
@@ -279,7 +279,7 @@ class DashboardWebSocketService:
         websocket: WebSocket,
         tenant_id: str,
         project_id: str,
-        event_types: List[DashboardEventType] = None,
+        event_types: Optional[List[DashboardEventType]] = None,
     ) -> str:
         """
         Handle new WebSocket connection.
@@ -380,7 +380,7 @@ class DashboardWebSocketService:
         severity: str,
         title: str,
         description: str,
-        actions: List[str] = None,
+        actions: Optional[List[str]] = None,
     ):
         """Broadcast quality degradation alert."""
         alert_message = AlertMessage(
@@ -404,7 +404,7 @@ class DashboardWebSocketService:
         metric_name: str,
         drift_severity: str,
         drift_magnitude: float,
-        actions: List[str] = None,
+        actions: Optional[List[str]] = None,
     ):
         """Broadcast drift detection alert."""
         alert_message = AlertMessage(

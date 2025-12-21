@@ -4,7 +4,7 @@ RAE-Core integration service.
 Wraps RAEEngine and adapters for use in FastAPI application.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 from uuid import UUID
 
 import asyncpg
@@ -74,7 +74,7 @@ class RAECoreService:
 
         # Initialize adapters
         self.postgres_adapter = PostgresMemoryAdapter(postgres_pool)
-        self.qdrant_adapter = QdrantVectorAdapter(qdrant_client)
+        self.qdrant_adapter = QdrantVectorAdapter(client=cast(Any, qdrant_client))
         self.redis_adapter = RedisCacheAdapter(redis_client=redis_client)
 
         # Initialize embedding provider
@@ -297,11 +297,18 @@ class RAECoreService:
         # The NEW engine has search_memories returning List[Dict].
         # So I need to adapt the response.
 
-        from rae_core.models.search import SearchResult
+        from rae_core.models.search import SearchResult, SearchStrategy
 
         search_results = []
         for res in results:
-            search_results.append(SearchResult(**res))  # Assuming dict matches
+            # Map engine dict to SearchResult
+            search_results.append(SearchResult(
+                memory_id=str(res["id"]),
+                content=res["content"],
+                score=res.get("search_score", 0.0),
+                strategy_used=SearchStrategy.HYBRID,
+                metadata=res.get("metadata", {})
+            ))
 
         logger.info(
             "memories_queried",
@@ -310,7 +317,13 @@ class RAECoreService:
             result_count=len(results),
         )
 
-        return SearchResponse(results=search_results, total=len(results), query=query)
+        return SearchResponse(
+            results=search_results,
+            total_found=len(results),
+            query=query,
+            strategy=SearchStrategy.HYBRID,
+            execution_time_ms=0.0  # Placeholder
+        )
 
     async def consolidate_memories(
         self,

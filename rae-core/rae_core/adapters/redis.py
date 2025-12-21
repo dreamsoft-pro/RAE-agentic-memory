@@ -7,9 +7,10 @@ import json
 from typing import Any, Optional
 
 try:
-    import redis.asyncio as aioredis
+    import redis.asyncio as aioredis_mod
+    aioredis = aioredis_mod
 except ImportError:
-    aioredis = None
+    aioredis = None # type: ignore
 
 from ..interfaces.cache import ICacheProvider
 

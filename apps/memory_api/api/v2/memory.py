@@ -115,6 +115,7 @@ async def query_memories(
     - Multi-strategy fusion (RRF, weighted sum)
     """
     try:
+        from typing import Any, cast
         response = await rae_service.query_memories(
             tenant_id=tenant_id,
             project=request.project,
@@ -125,20 +126,20 @@ async def query_memories(
 
         results = [
             MemoryResult(
-                id=result.id,
+                id=(result := cast(Any, res)).id,
                 content=result.content,
                 score=result.score,
                 layer=result.layer,
                 importance=result.importance,
                 tags=result.tags or [],
             )
-            for result in response.results
+            for res in cast(Any, response).results
         ]
 
         return QueryMemoryResponseV2(
             results=results,
             total_count=len(results),
-            synthesized_context=response.synthesized_context,
+            synthesized_context=cast(Any, response).synthesized_context,
         )
 
     except Exception as e:
@@ -196,15 +197,16 @@ async def generate_reflections(
             project=project,
         )
 
+        from typing import Any, cast
         return {
             "message": "Reflections generated",
             "count": len(reflections),
             "reflections": [
                 {
-                    "id": r.id,
-                    "content": r.content,
-                    "importance": r.importance,
-                    "tags": r.tags or [],
+                    "id": (ref := cast(Any, r)).id,
+                    "content": ref.content,
+                    "importance": ref.importance,
+                    "tags": ref.tags or [],
                 }
                 for r in reflections
             ],

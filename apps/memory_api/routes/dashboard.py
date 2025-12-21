@@ -11,7 +11,7 @@ This module provides FastAPI routes for dashboard operations including:
 
 import asyncio
 from datetime import datetime, timedelta, timezone
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 import structlog
@@ -1231,7 +1231,7 @@ async def get_audit_trail(
     try:
         # Placeholder - would query audit_trail_log table
         # For now, return empty result
-        entries = []
+        entries: List[Dict[str, Any]] = []
         total_count = 0
         completeness = 85.0  # Placeholder
 

@@ -1,6 +1,6 @@
 import math
 from datetime import datetime, timezone
-from typing import List
+from typing import List, cast
 
 from ..models import ScoredMemoryRecord
 
@@ -61,7 +61,7 @@ def calculate_final_score(memory: ScoredMemoryRecord) -> float:
         + importance_score * weights["importance"]
         + usage_score * weights["usage"]
     )
-    return final_score
+    return float(final_score)
 
 
 def rescore_memories(memories: List[ScoredMemoryRecord]) -> List[ScoredMemoryRecord]:

@@ -31,15 +31,15 @@ def reflection_engine(mock_storage, mock_llm):
         engine = ReflectionEngine(memory_storage=mock_storage, llm_provider=mock_llm)
 
         # Setup mocks on the instance
-        engine.actor = MockActor.return_value
-        engine.evaluator = MockEvaluator.return_value
-        engine.reflector = MockReflector.return_value
+        engine.actor = MockActor.return_value  # type: ignore[method-assign]
+        engine.evaluator = MockEvaluator.return_value  # type: ignore[method-assign]
+        engine.reflector = MockReflector.return_value  # type: ignore[method-assign]
 
         # Configure async methods
-        engine.actor.execute_action = AsyncMock()
-        engine.evaluator.evaluate_action_outcome = AsyncMock()
-        engine.reflector.identify_reflection_candidates = AsyncMock()
-        engine.reflector.generate_reflection = AsyncMock()
+        engine.actor.execute_action = AsyncMock()  # type: ignore[method-assign]
+        engine.evaluator.evaluate_action_outcome = AsyncMock()  # type: ignore[method-assign]
+        engine.reflector.identify_reflection_candidates = AsyncMock()  # type: ignore[method-assign]
+        engine.reflector.generate_reflection = AsyncMock()  # type: ignore[method-assign]
 
         yield engine
 

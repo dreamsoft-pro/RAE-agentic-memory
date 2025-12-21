@@ -6,7 +6,7 @@ and their execution histories.
 """
 
 import json
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 from uuid import UUID
 
 import asyncpg
@@ -270,7 +270,7 @@ class TriggerRepository:
                 tenant_id,
             )
 
-        deleted = result.endswith("1")  # "DELETE 1" means one row deleted
+        deleted = bool(result.endswith("1"))  # "DELETE 1" means one row deleted
 
         if deleted:
             logger.info("trigger_deleted", trigger_id=trigger_id, tenant_id=tenant_id)
@@ -386,7 +386,7 @@ class TriggerRepository:
             status=status,
         )
 
-        return execution_id
+        return cast(UUID, execution_id)
 
     async def update_execution(
         self, execution_id: UUID, updates: Dict[str, Any]
@@ -634,7 +634,7 @@ class WorkflowRepository:
                 tenant_id,
             )
 
-        deleted = result.endswith("1")
+        deleted = bool(result.endswith("1"))
 
         if deleted:
             logger.info(

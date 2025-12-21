@@ -361,7 +361,7 @@ class ReflectionEngineV2:
                 importance=result.importance
                 * 1.1,  # Strategies slightly more important
                 layer="reflective",
-                tags=result.tags + ["strategy"],
+                tags=(result.tags or []) + ["strategy"],
             )
 
             stored_ids["strategy_id"] = strategy_id

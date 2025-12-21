@@ -5,7 +5,7 @@ Implements the LLM provider interface for local Ollama models.
 """
 
 import json
-from typing import AsyncIterator
+from typing import Any, AsyncIterator, Dict, cast
 
 import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -82,7 +82,7 @@ class OllamaProvider:
         try:
             system, prompt = self._convert_messages(request)
 
-            payload = {
+            payload: Dict[str, Any] = {
                 "model": request.model,
                 "prompt": prompt,
                 "stream": False,
@@ -91,17 +91,19 @@ class OllamaProvider:
                 },
             }
 
+            options = cast(Dict[str, Any], payload["options"])
+
             if system:
                 payload["system"] = system
 
             if request.max_tokens:
-                payload["options"]["num_predict"] = request.max_tokens
+                options["num_predict"] = request.max_tokens
 
             if request.json_mode:
                 payload["format"] = "json"
 
             if request.stop_sequences:
-                payload["options"]["stop"] = request.stop_sequences
+                options["stop"] = request.stop_sequences
 
             response = await self.client.post("/api/generate", json=payload)
             response.raise_for_status()
@@ -155,7 +157,7 @@ class OllamaProvider:
         try:
             system, prompt = self._convert_messages(request)
 
-            payload = {
+            payload: Dict[str, Any] = {
                 "model": request.model,
                 "prompt": prompt,
                 "stream": True,
@@ -164,14 +166,19 @@ class OllamaProvider:
                 },
             }
 
+            options = cast(Dict[str, Any], payload["options"])
+
             if system:
                 payload["system"] = system
 
             if request.max_tokens:
-                payload["options"]["num_predict"] = request.max_tokens
+                options["num_predict"] = request.max_tokens
 
             if request.json_mode:
                 payload["format"] = "json"
+
+            if request.stop_sequences:
+                options["stop"] = request.stop_sequences
 
             async with self.client.stream(
                 "POST", "/api/generate", json=payload

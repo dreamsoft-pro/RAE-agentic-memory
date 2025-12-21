@@ -160,7 +160,7 @@ async def test_store_memory_failure(client_with_overrides, mock_rae_service):
 async def test_query_memory_vector_only(client_with_overrides, mock_vector_store, mock_rae_service):
     """Test memory query using vector search."""
     # Mock vector store results
-    record = MemoryRecord(
+    record = ScoredMemoryRecord(
         id="mem-1",
         tenant_id="test-tenant",
         project="proj",

@@ -10,6 +10,7 @@ This module provides FastAPI routes for event trigger operations including:
 """
 
 from datetime import timezone
+from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 import structlog
@@ -88,9 +89,13 @@ async def create_trigger(
             tenant_id=request.tenant_id,
             project_id=request.project_id,
             rule_name=request.rule_name,
-            event_types=request.condition.event_types,
-            conditions=request.condition.condition_group,
-            actions=request.actions,
+            event_types=[et.value for et in request.condition.event_types],
+            conditions=(
+                request.condition.condition_group.model_dump()["conditions"]
+                if request.condition.condition_group
+                else []
+            ),
+            actions=[a.model_dump() for a in request.actions],
             created_by=request.created_by,
             description=request.description,
             condition_operator="AND",  # Default as it's not in request
@@ -149,7 +154,7 @@ async def update_trigger(
     """
     try:
         # Prepare updates dict
-        updates = {}
+        updates: Dict[str, Any] = {}
         if request.rule_name is not None:
             updates["rule_name"] = request.rule_name
         if request.description is not None:
@@ -247,7 +252,7 @@ async def disable_trigger(trigger_id: str, pool=Depends(get_pool)):
 async def list_triggers(
     tenant_id: str,
     project_id: str,
-    status_filter: str = None,
+    status_filter: Optional[str] = None,
     limit: int = 100,
     repo: TriggerRepository = Depends(get_trigger_repo),
 ):
@@ -370,14 +375,14 @@ async def get_trigger_executions(
         # Get execution history from database
         tenant_id = "default"  # TODO: Get from auth context
         executions = await repo.get_execution_history(
-            trigger_id=UUID(request.trigger_id),
+            trigger_id=request.trigger_id,
             tenant_id=tenant_id,
             limit=request.limit,
             status_filter=request.status_filter,
         )
 
         # Get trigger info for summary
-        trigger = await repo.get_trigger(UUID(request.trigger_id), tenant_id)
+        trigger = await repo.get_trigger(request.trigger_id, tenant_id)
 
         from datetime import datetime, timedelta
 
@@ -427,10 +432,12 @@ async def create_workflow(
             tenant_id=request.tenant_id,
             project_id=request.project_id,
             workflow_name=request.workflow_name,
-            steps=request.steps,
+            steps=[s.model_dump() for s in request.steps],
             created_by=request.created_by,
             description=request.description,
-            parallel_execution=request.parallel_execution,
+            execution_mode=(
+                "parallel" if request.parallel_execution else "sequential"
+            ),
         )
 
         return CreateWorkflowResponse(

@@ -22,8 +22,9 @@ Environment Variables:
 - OTEL_EXPORTER_TYPE: otlp, jaeger, console (default: otlp)
 """
 
+import logging
 import os
-from typing import TYPE_CHECKING
+from typing import Any, Optional, TYPE_CHECKING
 
 import structlog
 
@@ -155,7 +156,7 @@ def setup_opentelemetry():
         # Configure exporter based on type
         if OTEL_EXPORTER_TYPE == "console":
             # Console exporter for debugging
-            span_exporter = ConsoleSpanExporter()  # type: ignore[misc]
+            span_exporter: Any = ConsoleSpanExporter()  # type: ignore[misc]
             logger.info("opentelemetry_console_exporter", service=OTEL_SERVICE_NAME)
         elif OTEL_EXPORTER_TYPE == "otlp":
             # OTLP exporter (default) for Jaeger, Tempo, etc.

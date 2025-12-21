@@ -362,7 +362,7 @@ class SemanticExtractor:
         confidence: float,
         source_memory_ids: List[UUID],
         domain: Optional[str] = None,
-        categories: List[str] = None,
+        categories: Optional[List[str]] = None,
         definition: Optional[str] = None,
     ) -> Optional[UUID]:
         """Create or update a semantic node"""
@@ -408,7 +408,7 @@ class SemanticExtractor:
             )
 
             logger.info("semantic_node_reinforced", node_id=node_id)
-            return existing["id"]
+            return cast(UUID, existing["id"])
 
         else:
             # Create new node
@@ -439,7 +439,7 @@ class SemanticExtractor:
             )
 
             logger.info("semantic_node_created", node_id=node_id)
-            return record["id"]
+            return cast(UUID, record["id"])
 
     async def _create_semantic_relationship(
         self,
@@ -517,8 +517,11 @@ class SemanticExtractor:
     async def _generate_embedding(self, text: str) -> List[float]:
         """Generate embedding for semantic node"""
         try:
-            embedding = await self.ml_client.get_embedding(text)
-            return embedding
+            result = await self.ml_client.generate_embeddings([text])
+            embeddings = result.get("embeddings", [])
+            if embeddings:
+                return cast(List[float], embeddings[0])
+            return [0.0] * 1536
         except Exception as e:
             logger.error("embedding_generation_failed", error=str(e))
             return [0.0] * 1536

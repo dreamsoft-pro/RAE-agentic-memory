@@ -11,7 +11,7 @@ Metrics Categories:
 from collections import defaultdict, deque
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import numpy as np
 import structlog
@@ -152,8 +152,8 @@ class MetricsTracker:
 
         # MDP metrics
         self.mdp_metrics = MDPMetrics()
-        self.reward_window = deque(maxlen=window_size)
-        self.quality_window = deque(maxlen=window_size)
+        self.reward_window: deque[float] = deque(maxlen=window_size)
+        self.quality_window: deque[float] = deque(maxlen=window_size)
 
         # Action-specific tracking
         self.action_rewards: Dict[str, List[float]] = defaultdict(list)
@@ -320,13 +320,13 @@ class MetricsTracker:
         # Average reward per action
         for action_type, rewards in self.action_rewards.items():
             if rewards:
-                self.mdp_metrics.avg_reward_per_action[action_type] = np.mean(
+                self.mdp_metrics.avg_reward_per_action[action_type] = float(np.mean(
                     rewards[-self.window_size :]
-                )
+                ))
 
         # Average quality score
         if self.quality_window:
-            self.mdp_metrics.avg_quality_score = np.mean(self.quality_window)
+            self.mdp_metrics.avg_quality_score = float(np.mean(self.quality_window))
 
         # Budget efficiency: quality per dollar
         if self.mdp_metrics.total_cost_usd > 0:
@@ -374,7 +374,7 @@ class MetricsTracker:
 
         # Sort by average reward
         action_stats_sorted = sorted(
-            action_stats, key=lambda x: x["avg_reward"], reverse=True
+            action_stats, key=lambda x: cast(float, x["avg_reward"]), reverse=True
         )
 
         return action_stats_sorted[:top_k]
@@ -398,7 +398,7 @@ class MetricsTracker:
             )
 
         # Sort by average reward ascending
-        action_stats_sorted = sorted(action_stats, key=lambda x: x["avg_reward"])
+        action_stats_sorted = sorted(action_stats, key=lambda x: cast(float, x["avg_reward"]))
 
         return action_stats_sorted[:top_k]
 

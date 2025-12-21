@@ -90,14 +90,7 @@ class MemoryConsolidationService:
         Returns:
             List of consolidation results
         """
-        logger.info(
-            "consolidating_episodic_to_working",
-            tenant_id=str(tenant_id),
-            max_memories=max_memories,
-            min_importance=min_importance,
-        )
-
-        results = []
+        results: List[ConsolidationResult] = []
 
         # Get episodic memories ready for consolidation
         candidate_memories = await self._get_consolidation_candidates(
@@ -155,7 +148,7 @@ class MemoryConsolidationService:
             min_age_days=min_age_days,
         )
 
-        results = []
+        results: List[ConsolidationResult] = []
 
         # Get working memories ready for semantic consolidation
         cutoff_date = datetime.now(timezone.utc) - timedelta(days=min_age_days)
@@ -221,7 +214,7 @@ class MemoryConsolidationService:
             min_importance=min_importance,
         )
 
-        results = []
+        results: List[ConsolidationResult] = []
 
         cutoff_date = datetime.now(timezone.utc) - timedelta(days=min_age_days)
 
@@ -566,7 +559,7 @@ Consolidated Memory:"""
         """
         logger.info("starting_automatic_consolidation", tenant_id=str(tenant_id))
 
-        summary = {
+        summary: Dict[str, Any] = {
             "tenant_id": str(tenant_id),
             "started_at": datetime.now(timezone.utc).isoformat(),
             "episodic_to_working": [],
@@ -685,7 +678,7 @@ Consolidated Memory:"""
             Preview with consolidated content
         """
         # Fetch memories
-        memories = []  # In production, fetch from DB
+        memories: List[Dict[str, Any]] = []  # In production, fetch from DB
 
         # Generate preview content
         preview_content = await self._generate_consolidated_content(

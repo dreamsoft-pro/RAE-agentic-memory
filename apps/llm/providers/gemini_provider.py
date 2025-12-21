@@ -4,7 +4,7 @@ Google Gemini LLM Provider.
 Implements the LLM provider interface for Google Gemini models.
 """
 
-from typing import AsyncIterator
+from typing import Any, AsyncIterator, Dict, List, Optional, Tuple, cast
 
 import google.generativeai as genai
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -102,7 +102,7 @@ class GeminiProvider:
             system_instruction, history = self._convert_messages(request)
             tools = self._convert_tools(request)
 
-            generation_config = {
+            generation_config: Dict[str, Any] = {
                 "temperature": request.temperature,
             }
 
@@ -119,7 +119,7 @@ class GeminiProvider:
             if request.json_mode:
                 generation_config["response_mime_type"] = "application/json"
 
-            model_kwargs = {"model_name": request.model}
+            model_kwargs: Dict[str, Any] = {"model_name": request.model}
 
             if system_instruction:
                 model_kwargs["system_instruction"] = system_instruction
@@ -127,7 +127,7 @@ class GeminiProvider:
             if tools:
                 model_kwargs["tools"] = tools
 
-            model = genai.GenerativeModel(**model_kwargs)
+            model = genai.GenerativeModel(**cast(Any, model_kwargs))
 
             # If we have history, we need to use a chat
             if len(history) > 1:
@@ -135,15 +135,15 @@ class GeminiProvider:
                 last_message = history[-1]["parts"][0]
                 chat_history = history[:-1]  # Everything except last message
 
-                chat = model.start_chat(history=chat_history)
+                chat = model.start_chat(history=cast(Any, chat_history))
                 response = await chat.send_message_async(
-                    last_message, generation_config=generation_config
+                    last_message, generation_config=cast(Any, generation_config)
                 )
             else:
                 # Single message, use generate_content
                 prompt = history[0]["parts"][0] if history else ""
                 response = await model.generate_content_async(
-                    prompt, generation_config=generation_config
+                    prompt, generation_config=cast(Any, generation_config)
                 )
 
             usage = TokenUsage(
@@ -225,7 +225,7 @@ class GeminiProvider:
             system_instruction, history = self._convert_messages(request)
             tools = self._convert_tools(request)
 
-            generation_config = {
+            generation_config: Dict[str, Any] = {
                 "temperature": request.temperature,
             }
 
@@ -235,7 +235,7 @@ class GeminiProvider:
             if request.json_mode:
                 generation_config["response_mime_type"] = "application/json"
 
-            model_kwargs = {"model_name": request.model}
+            model_kwargs: Dict[str, Any] = {"model_name": request.model}
 
             if system_instruction:
                 model_kwargs["system_instruction"] = system_instruction
@@ -243,19 +243,19 @@ class GeminiProvider:
             if tools:
                 model_kwargs["tools"] = tools
 
-            model = genai.GenerativeModel(**model_kwargs)
+            model = genai.GenerativeModel(**cast(Any, model_kwargs))
 
             if len(history) > 1:
                 last_message = history[-1]["parts"][0]
                 chat_history = history[:-1]
-                chat = model.start_chat(history=chat_history)
+                chat = model.start_chat(history=cast(Any, chat_history))
                 response_stream = await chat.send_message_async(
-                    last_message, generation_config=generation_config, stream=True
+                    last_message, generation_config=cast(Any, generation_config), stream=True
                 )
             else:
                 prompt = history[0]["parts"][0] if history else ""
                 response_stream = await model.generate_content_async(
-                    prompt, generation_config=generation_config, stream=True
+                    prompt, generation_config=cast(Any, generation_config), stream=True
                 )
 
             async for chunk in response_stream:

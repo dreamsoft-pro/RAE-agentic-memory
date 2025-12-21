@@ -12,7 +12,7 @@ This service provides:
 import hashlib
 import json
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 import structlog
 
@@ -137,7 +137,7 @@ class HybridSearchCache:
                     tenant_id=tenant_id,
                     hit_rate=self.get_hit_rate(),
                 )
-                return result
+                return cast(Optional[Dict[str, Any]], result)
             else:
                 # Remove expired entry
                 del self._cache[cache_key]

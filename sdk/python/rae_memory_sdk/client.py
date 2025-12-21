@@ -1,9 +1,16 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import httpx
+
 import structlog
+
 from pydantic import ConfigDict
-from pydantic_settings import BaseSettings
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+
+
 
 from .models import (
     DeleteMemoryResponse,
@@ -25,7 +32,7 @@ class RAEClientConfig(BaseSettings):
     RAE_API_KEY: str = "your-rae-api-key"
     RAE_TENANT_ID: str = "default-tenant"
 
-    model_config = ConfigDict(
+    model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         extra="ignore",  # Ignore extra fields from .env file
@@ -63,14 +70,14 @@ class MemoryClient:
             "Content-Type": "application/json",
         }
 
-    def _request(self, method: str, url: str, **kwargs) -> Dict[str, Any]:
+    def _request(self, method: str, url: str, **kwargs) -> Any:
         """Synchronous HTTP request wrapper."""
         try:
             response = self._http_client.request(
                 method, url, headers=self._headers, **kwargs
             )
             response.raise_for_status()
-            return response.json()
+            return cast(Any, response.json())
         except httpx.HTTPStatusError as e:
             logger.error(
                 "http_error",
@@ -83,14 +90,14 @@ class MemoryClient:
             logger.error("request_error", url=url, error=str(e))
             raise
 
-    async def _async_request(self, method: str, url: str, **kwargs) -> Dict[str, Any]:
+    async def _async_request(self, method: str, url: str, **kwargs) -> Any:
         """Asynchronous HTTP request wrapper."""
         try:
             response = await self._async_http_client.request(
                 method, url, headers=self._headers, **kwargs
             )
             response.raise_for_status()
-            return response.json()
+            return cast(Any, response.json())
         except httpx.HTTPStatusError as e:
             logger.error(
                 "async_http_error",
@@ -152,55 +159,52 @@ class MemoryClient:
         Returns:
             Dict containing extracted triples, entities, and statistics
         """
-        request_body = {
+        request_body: Dict[str, Any] = {
             "project_id": project_id,
             "limit": limit,
             "min_confidence": min_confidence,
             "auto_store": auto_store,
         }
-        return self._request("POST", "/v1/graph/extract", json=request_body)
+        return cast(Dict[str, Any], self._request("POST", "/v1/graph/extract", json=request_body))
 
     def query_graph(
         self,
-        query: str,
         project_id: str,
-        top_k_vector: int = 5,
-        graph_depth: int = 2,
-        traversal_strategy: str = "bfs",
+        query: str,
+        limit: int = 20,
+        similarity_threshold: float = 0.7,
     ) -> Dict[str, Any]:
         """
-        Advanced hybrid search combining vector and graph traversal.
+        Query the knowledge graph for relevant nodes and edges.
 
         Args:
-            query: Search query
             project_id: Project identifier
-            top_k_vector: Number of vector results
-            graph_depth: Maximum graph traversal depth
-            traversal_strategy: 'bfs' or 'dfs'
+            query: Search query
+            limit: Maximum items to return
+            similarity_threshold: Minimum similarity for nodes
 
         Returns:
-            Dict with vector_matches, graph_nodes, graph_edges, and synthesized_context
+            Dict with matching nodes and edges
         """
-        request_body = {
+        request_body: Dict[str, Any] = {
             "query": query,
             "project_id": project_id,
-            "top_k_vector": top_k_vector,
-            "graph_depth": graph_depth,
-            "traversal_strategy": traversal_strategy,
+            "limit": limit,
+            "similarity_threshold": similarity_threshold,
         }
-        return self._request("POST", "/v1/graph/query", json=request_body)
+        return cast(Dict[str, Any], self._request("POST", "/v1/graph/query", json=request_body))
 
     def get_graph_stats(self, project_id: str) -> Dict[str, Any]:
         """
-        Get knowledge graph statistics for a project.
+        Get knowledge graph statistics.
 
         Args:
             project_id: Project identifier
 
         Returns:
-            Dict with total_nodes, total_edges, unique_relations, and statistics
+            Dict with node/edge counts and distribution
         """
-        return self._request("GET", f"/v1/graph/stats?project_id={project_id}")
+        return cast(Dict[str, Any], self._request("GET", f"/v1/graph/stats?project_id={project_id}"))
 
     def get_graph_nodes(
         self,
@@ -227,7 +231,7 @@ class MemoryClient:
             "use_pagerank": use_pagerank,
             "min_pagerank_score": min_pagerank_score,
         }
-        return self._request("GET", "/v1/graph/nodes", params=params)
+        return cast(List[Dict[str, Any]], self._request("GET", "/v1/graph/nodes", params=params))
 
     def get_graph_edges(
         self, project_id: str, limit: int = 100, relation: Optional[str] = None
@@ -246,7 +250,7 @@ class MemoryClient:
         params = {"project_id": project_id, "limit": limit}
         if relation:
             params["relation"] = relation
-        return self._request("GET", "/v1/graph/edges", params=params)
+        return cast(List[Dict[str, Any]], self._request("GET", "/v1/graph/edges", params=params))
 
     def get_subgraph(
         self, project_id: str, node_ids: List[str], depth: int = 1
@@ -262,12 +266,10 @@ class MemoryClient:
         Returns:
             Dict with nodes, edges, and statistics
         """
-        params = {
-            "project_id": project_id,
-            "node_ids": ",".join(node_ids),
-            "depth": depth,
-        }
-        return self._request("GET", "/v1/graph/subgraph", params=params)
+        request_body: Dict[str, Any] = {"node_ids": node_ids, "depth": depth}
+        return cast(Dict[str, Any], self._request(
+            "POST", f"/v1/graph/subgraph?project_id={project_id}", json=request_body
+        ))
 
     # Agent Methods
 
@@ -293,8 +295,8 @@ class MemoryClient:
         Returns:
             Dict with answer, used_memories, and cost breakdown
         """
-        request_body = {"tenant_id": tenant_id, "project": project, "prompt": prompt}
-        return self._request("POST", "/v1/agent/execute", json=request_body)
+        request_body: Dict[str, Any] = {"tenant_id": tenant_id, "project": project, "prompt": prompt}
+        return cast(Dict[str, Any], self._request("POST", "/v1/agent/execute", json=request_body))
 
     # Governance Methods
 
@@ -306,9 +308,9 @@ class MemoryClient:
             days: Number of days to analyze
 
         Returns:
-            Dict with total costs, calls, tokens, and top tenants/models
+            Dict with cross-tenant governance metrics
         """
-        return self._request("GET", f"/v1/governance/overview?days={days}")
+        return cast(Dict[str, Any], self._request("GET", f"/v1/governance/overview?days={days}"))
 
     def get_tenant_governance(self, tenant_id: str, days: int = 30) -> Dict[str, Any]:
         """
@@ -319,9 +321,9 @@ class MemoryClient:
             days: Number of days to analyze
 
         Returns:
-            Dict with costs, usage, cache stats, breakdowns by project/model/operation
+            Dict with tenant-specific metrics
         """
-        return self._request("GET", f"/v1/governance/tenant/{tenant_id}?days={days}")
+        return cast(Dict[str, Any], self._request("GET", f"/v1/governance/tenant/{tenant_id}?days={days}"))
 
     def get_tenant_budget(self, tenant_id: str) -> Dict[str, Any]:
         """
@@ -333,7 +335,7 @@ class MemoryClient:
         Returns:
             Dict with budget limits, current usage, projections, and alerts
         """
-        return self._request("GET", f"/v1/governance/tenant/{tenant_id}/budget")
+        return cast(Dict[str, Any], self._request("GET", f"/v1/governance/tenant/{tenant_id}/budget"))
 
     # ISO/IEC 42001 Compliance Methods
 
@@ -368,7 +370,7 @@ class MemoryClient:
         Returns:
             Dict with request_id, status, risk_level, expires_at, min_approvals
         """
-        request_body = {
+        request_body: Dict[str, Any] = {
             "tenant_id": tenant_id,
             "project_id": project_id,
             "operation_type": operation_type,
@@ -383,7 +385,7 @@ class MemoryClient:
         if metadata:
             request_body["metadata"] = metadata
 
-        return self._request("POST", "/v1/compliance/approvals", json=request_body)
+        return cast(Dict[str, Any], self._request("POST", "/v1/compliance/approvals", json=request_body))
 
     def check_approval_status(self, request_id: str) -> Dict[str, Any]:
         """
@@ -395,7 +397,7 @@ class MemoryClient:
         Returns:
             Dict with full approval details including status, approvers, and timestamps
         """
-        return self._request("GET", f"/v1/compliance/approvals/{request_id}")
+        return cast(Dict[str, Any], self._request("GET", f"/v1/compliance/approvals/{request_id}"))
 
     def process_approval_decision(
         self,
@@ -414,15 +416,15 @@ class MemoryClient:
             reason: Optional reason for the decision
 
         Returns:
-            Dict with updated approval status
+            Dict with confirmation and updated status
         """
-        request_body = {"approved": approved, "approver_id": approver_id}
+        request_body: Dict[str, Any] = {"approved": approved, "approver_id": approver_id}
         if reason:
             request_body["reason"] = reason
 
-        return self._request(
+        return cast(Dict[str, Any], self._request(
             "POST", f"/v1/compliance/approvals/{request_id}/decide", json=request_body
-        )
+        ))
 
     def create_decision_context(
         self,
@@ -445,7 +447,7 @@ class MemoryClient:
         Returns:
             Dict with context_id and quality metrics
         """
-        request_body = {
+        request_body: Dict[str, Any] = {
             "tenant_id": tenant_id,
             "project_id": project_id,
             "query": query,
@@ -454,9 +456,9 @@ class MemoryClient:
         if metadata:
             request_body["metadata"] = metadata
 
-        return self._request(
+        return cast(Dict[str, Any], self._request(
             "POST", "/v1/compliance/provenance/context", json=request_body
-        )
+        ))
 
     def record_decision(
         self,
@@ -487,7 +489,7 @@ class MemoryClient:
         Returns:
             Dict with decision_id and confirmation
         """
-        request_body = {
+        request_body: Dict[str, Any] = {
             "tenant_id": tenant_id,
             "project_id": project_id,
             "context_id": context_id,
@@ -501,9 +503,9 @@ class MemoryClient:
         if metadata:
             request_body["metadata"] = metadata
 
-        return self._request(
+        return cast(Dict[str, Any], self._request(
             "POST", "/v1/compliance/provenance/decision", json=request_body
-        )
+        ))
 
     def get_decision_lineage(self, decision_id: str) -> Dict[str, Any]:
         """
@@ -515,7 +517,7 @@ class MemoryClient:
         Returns:
             Dict with query, context, sources, and decision details
         """
-        return self._request("GET", f"/v1/compliance/provenance/lineage/{decision_id}")
+        return cast(Dict[str, Any], self._request("GET", f"/v1/compliance/provenance/lineage/{decision_id}"))
 
     def get_all_circuit_breakers(self) -> List[Dict[str, Any]]:
         """
@@ -524,7 +526,7 @@ class MemoryClient:
         Returns:
             List of circuit breaker states with metrics
         """
-        return self._request("GET", "/v1/compliance/circuit-breakers")
+        return cast(List[Dict[str, Any]], self._request("GET", "/v1/compliance/circuit-breakers"))
 
     def get_circuit_breaker_state(self, name: str) -> Dict[str, Any]:
         """
@@ -536,7 +538,7 @@ class MemoryClient:
         Returns:
             Dict with state, failure count, and metrics
         """
-        return self._request("GET", f"/v1/compliance/circuit-breakers/{name}")
+        return cast(Dict[str, Any], self._request("GET", f"/v1/compliance/circuit-breakers/{name}"))
 
     def reset_circuit_breaker(self, name: str) -> Dict[str, Any]:
         """
@@ -548,7 +550,7 @@ class MemoryClient:
         Returns:
             Dict with confirmation message
         """
-        return self._request("POST", f"/v1/compliance/circuit-breakers/{name}/reset")
+        return cast(Dict[str, Any], self._request("POST", f"/v1/compliance/circuit-breakers/{name}/reset"))
 
     def list_policies(
         self,
@@ -567,13 +569,13 @@ class MemoryClient:
         Returns:
             Dict with policies list
         """
-        params = {"tenant_id": tenant_id}
+        params: Dict[str, Any] = {"tenant_id": tenant_id}
         if policy_type:
             params["policy_type"] = policy_type
         if status:
             params["status"] = status
 
-        return self._request("GET", "/v1/compliance/policies", params=params)
+        return cast(Dict[str, Any], self._request("GET", "/v1/compliance/policies", params=params))
 
     def create_policy(
         self,
@@ -600,7 +602,7 @@ class MemoryClient:
         Returns:
             Dict with version_id and confirmation
         """
-        request_body = {
+        request_body: Dict[str, Any] = {
             "tenant_id": tenant_id,
             "policy_id": policy_id,
             "policy_type": policy_type,
@@ -612,7 +614,7 @@ class MemoryClient:
         if metadata:
             request_body["metadata"] = metadata
 
-        return self._request("POST", "/v1/compliance/policies", json=request_body)
+        return cast(Dict[str, Any], self._request("POST", "/v1/compliance/policies", json=request_body))
 
     def activate_policy(
         self, policy_id: str, version_id: str, tenant_id: str
@@ -628,10 +630,10 @@ class MemoryClient:
         Returns:
             Dict with confirmation and updated status
         """
-        request_body = {"version_id": version_id, "tenant_id": tenant_id}
-        return self._request(
+        request_body: Dict[str, Any] = {"version_id": version_id, "tenant_id": tenant_id}
+        return cast(Dict[str, Any], self._request(
             "POST", f"/v1/compliance/policies/{policy_id}/activate", json=request_body
-        )
+        ))
 
     def enforce_policy(
         self, policy_id: str, tenant_id: str, context: Dict[str, Any]
@@ -647,10 +649,10 @@ class MemoryClient:
         Returns:
             Dict with enforcement result, violations, and warnings
         """
-        request_body = {"tenant_id": tenant_id, "context": context}
-        return self._request(
+        request_body: Dict[str, Any] = {"tenant_id": tenant_id, "context": context}
+        return cast(Dict[str, Any], self._request(
             "POST", f"/v1/compliance/policies/{policy_id}/enforce", json=request_body
-        )
+        ))
 
     # Reflection Methods
 
@@ -665,10 +667,10 @@ class MemoryClient:
         Returns:
             Dict with confirmation message
         """
-        request_body = {"tenant_id": tenant_id, "project": project}
-        return self._request(
+        request_body: Dict[str, Any] = {"tenant_id": tenant_id, "project": project}
+        return cast(Dict[str, Any], self._request(
             "POST", "/v1/memory/rebuild-reflections", json=request_body
-        )
+        ))
 
     def get_reflection_stats(self, project: str) -> Dict[str, Any]:
         """
@@ -680,7 +682,7 @@ class MemoryClient:
         Returns:
             Dict with reflective_memory_count and average_strength
         """
-        return self._request("GET", f"/v1/memory/reflection-stats?project={project}")
+        return cast(Dict[str, Any], self._request("GET", f"/v1/memory/reflection-stats?project={project}"))
 
     def generate_hierarchical_reflection(
         self, project: str, bucket_size: int = 10, max_episodes: Optional[int] = None
@@ -696,22 +698,22 @@ class MemoryClient:
         Returns:
             Dict with summary and statistics
         """
-        params = {"project": project, "bucket_size": bucket_size}
+        params: Dict[str, Any] = {"project": project, "bucket_size": bucket_size}
         if max_episodes:
             params["max_episodes"] = max_episodes
-        return self._request(
+        return cast(Dict[str, Any], self._request(
             "POST", "/v1/memory/reflection/hierarchical", params=params
-        )
+        ))
 
     # Health & Cache Methods
 
     def get_health(self) -> Dict[str, Any]:
         """Get comprehensive health check of all system components."""
-        return self._request("GET", "/health")
+        return cast(Dict[str, Any], self._request("GET", "/health"))
 
     def rebuild_cache(self) -> Dict[str, Any]:
         """Trigger background task to rebuild context cache."""
-        return self._request("POST", "/v1/cache/rebuild")
+        return cast(Dict[str, Any], self._request("POST", "/v1/cache/rebuild"))
 
     # Async methods for non-blocking operations
 
@@ -785,13 +787,13 @@ class MemoryClient:
         auto_store: bool = True,
     ) -> Dict[str, Any]:
         """Async version of extract_knowledge_graph."""
-        request_body = {
+        request_body: Dict[str, Any] = {
             "project_id": project_id,
             "limit": limit,
             "min_confidence": min_confidence,
             "auto_store": auto_store,
         }
-        return await self._async_request("POST", "/v1/graph/extract", json=request_body)
+        return cast(Dict[str, Any], await self._async_request("POST", "/v1/graph/extract", json=request_body))
 
     async def query_graph_async(
         self,
@@ -802,27 +804,27 @@ class MemoryClient:
         traversal_strategy: str = "bfs",
     ) -> Dict[str, Any]:
         """Async version of query_graph."""
-        request_body = {
+        request_body: Dict[str, Any] = {
             "query": query,
             "project_id": project_id,
             "top_k_vector": top_k_vector,
             "graph_depth": graph_depth,
             "traversal_strategy": traversal_strategy,
         }
-        return await self._async_request("POST", "/v1/graph/query", json=request_body)
+        return cast(Dict[str, Any], await self._async_request("POST", "/v1/graph/query", json=request_body))
 
     async def get_graph_stats_async(self, project_id: str) -> Dict[str, Any]:
         """Async version of get_graph_stats."""
-        return await self._async_request(
+        return cast(Dict[str, Any], await self._async_request(
             "GET", f"/v1/graph/stats?project_id={project_id}"
-        )
+        ))
 
     async def execute_agent_async(
         self, tenant_id: str, project: str, prompt: str
     ) -> Dict[str, Any]:
         """Async version of execute_agent."""
-        request_body = {"tenant_id": tenant_id, "project": project, "prompt": prompt}
-        return await self._async_request("POST", "/v1/agent/execute", json=request_body)
+        request_body: Dict[str, Any] = {"tenant_id": tenant_id, "project": project, "prompt": prompt}
+        return cast(Dict[str, Any], await self._async_request("POST", "/v1/agent/execute", json=request_body))
 
     # Async ISO/IEC 42001 Compliance Methods
 
@@ -840,7 +842,7 @@ class MemoryClient:
         metadata: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Async version of request_approval."""
-        request_body = {
+        request_body: Dict[str, Any] = {
             "tenant_id": tenant_id,
             "project_id": project_id,
             "operation_type": operation_type,
@@ -855,15 +857,15 @@ class MemoryClient:
         if metadata:
             request_body["metadata"] = metadata
 
-        return await self._async_request(
+        return cast(Dict[str, Any], await self._async_request(
             "POST", "/v1/compliance/approvals", json=request_body
-        )
+        ))
 
     async def check_approval_status_async(self, request_id: str) -> Dict[str, Any]:
         """Async version of check_approval_status."""
-        return await self._async_request(
+        return cast(Dict[str, Any], await self._async_request(
             "GET", f"/v1/compliance/approvals/{request_id}"
-        )
+        ))
 
     async def process_approval_decision_async(
         self,
@@ -873,13 +875,13 @@ class MemoryClient:
         reason: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Async version of process_approval_decision."""
-        request_body = {"approved": approved, "approver_id": approver_id}
+        request_body: Dict[str, Any] = {"approved": approved, "approver_id": approver_id}
         if reason:
             request_body["reason"] = reason
 
-        return await self._async_request(
+        return cast(Dict[str, Any], await self._async_request(
             "POST", f"/v1/compliance/approvals/{request_id}/decide", json=request_body
-        )
+        ))
 
     async def create_decision_context_async(
         self,
@@ -890,7 +892,7 @@ class MemoryClient:
         metadata: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Async version of create_decision_context."""
-        request_body = {
+        request_body: Dict[str, Any] = {
             "tenant_id": tenant_id,
             "project_id": project_id,
             "query": query,
@@ -899,9 +901,9 @@ class MemoryClient:
         if metadata:
             request_body["metadata"] = metadata
 
-        return await self._async_request(
+        return cast(Dict[str, Any], await self._async_request(
             "POST", "/v1/compliance/provenance/context", json=request_body
-        )
+        ))
 
     async def record_decision_async(
         self,
@@ -916,7 +918,7 @@ class MemoryClient:
         metadata: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Async version of record_decision."""
-        request_body = {
+        request_body: Dict[str, Any] = {
             "tenant_id": tenant_id,
             "project_id": project_id,
             "context_id": context_id,
@@ -930,31 +932,31 @@ class MemoryClient:
         if metadata:
             request_body["metadata"] = metadata
 
-        return await self._async_request(
+        return cast(Dict[str, Any], await self._async_request(
             "POST", "/v1/compliance/provenance/decision", json=request_body
-        )
+        ))
 
     async def get_decision_lineage_async(self, decision_id: str) -> Dict[str, Any]:
         """Async version of get_decision_lineage."""
-        return await self._async_request(
+        return cast(Dict[str, Any], await self._async_request(
             "GET", f"/v1/compliance/provenance/lineage/{decision_id}"
-        )
+        ))
 
     async def get_all_circuit_breakers_async(self) -> List[Dict[str, Any]]:
         """Async version of get_all_circuit_breakers."""
-        return await self._async_request("GET", "/v1/compliance/circuit-breakers")
+        return cast(List[Dict[str, Any]], await self._async_request("GET", "/v1/compliance/circuit-breakers"))
 
     async def get_circuit_breaker_state_async(self, name: str) -> Dict[str, Any]:
         """Async version of get_circuit_breaker_state."""
-        return await self._async_request(
+        return cast(Dict[str, Any], await self._async_request(
             "GET", f"/v1/compliance/circuit-breakers/{name}"
-        )
+        ))
 
     async def reset_circuit_breaker_async(self, name: str) -> Dict[str, Any]:
         """Async version of reset_circuit_breaker."""
-        return await self._async_request(
+        return cast(Dict[str, Any], await self._async_request(
             "POST", f"/v1/compliance/circuit-breakers/{name}/reset"
-        )
+        ))
 
     async def list_policies_async(
         self,
@@ -963,15 +965,15 @@ class MemoryClient:
         status: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Async version of list_policies."""
-        params = {"tenant_id": tenant_id}
+        params: Dict[str, Any] = {"tenant_id": tenant_id}
         if policy_type:
             params["policy_type"] = policy_type
         if status:
             params["status"] = status
 
-        return await self._async_request(
+        return cast(Dict[str, Any], await self._async_request(
             "GET", "/v1/compliance/policies", params=params
-        )
+        ))
 
     async def create_policy_async(
         self,
@@ -984,7 +986,7 @@ class MemoryClient:
         metadata: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Async version of create_policy."""
-        request_body = {
+        request_body: Dict[str, Any] = {
             "tenant_id": tenant_id,
             "policy_id": policy_id,
             "policy_type": policy_type,
@@ -996,27 +998,66 @@ class MemoryClient:
         if metadata:
             request_body["metadata"] = metadata
 
-        return await self._async_request(
+        return cast(Dict[str, Any], await self._async_request(
             "POST", "/v1/compliance/policies", json=request_body
-        )
+        ))
 
     async def activate_policy_async(
         self, policy_id: str, version_id: str, tenant_id: str
     ) -> Dict[str, Any]:
         """Async version of activate_policy."""
-        request_body = {"version_id": version_id, "tenant_id": tenant_id}
-        return await self._async_request(
+        request_body: Dict[str, Any] = {"version_id": version_id, "tenant_id": tenant_id}
+        return cast(Dict[str, Any], await self._async_request(
             "POST", f"/v1/compliance/policies/{policy_id}/activate", json=request_body
-        )
+        ))
 
     async def enforce_policy_async(
         self, policy_id: str, tenant_id: str, context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Async version of enforce_policy."""
-        request_body = {"tenant_id": tenant_id, "context": context}
-        return await self._async_request(
+        request_body: Dict[str, Any] = {"tenant_id": tenant_id, "context": context}
+        return cast(Dict[str, Any], await self._async_request(
             "POST", f"/v1/compliance/policies/{policy_id}/enforce", json=request_body
-        )
+        ))
+
+    # Async Reflection Methods
+
+    async def rebuild_reflections_async(
+        self, tenant_id: str, project: str
+    ) -> Dict[str, Any]:
+        """Async version of rebuild_reflections."""
+        request_body: Dict[str, Any] = {"tenant_id": tenant_id, "project": project}
+        return cast(Dict[str, Any], await self._async_request(
+            "POST", "/v1/memory/rebuild-reflections", json=request_body
+        ))
+
+    async def get_reflection_stats_async(self, project: str) -> Dict[str, Any]:
+        """Async version of get_reflection_stats."""
+        return cast(Dict[str, Any], await self._async_request(
+            "GET", f"/v1/memory/reflection-stats?project={project}"
+        ))
+
+    async def generate_hierarchical_reflection_async(
+        self, project: str, bucket_size: int = 10, max_episodes: Optional[int] = None
+    ) -> Dict[str, Any]:
+        """Async version of generate_hierarchical_reflection."""
+        params: Dict[str, Any] = {"project": project, "bucket_size": bucket_size}
+        if max_episodes:
+            params["max_episodes"] = max_episodes
+        return cast(Dict[str, Any], await self._async_request(
+            "POST", "/v1/memory/reflection/hierarchical", params=params
+        ))
+
+    # Async Health & Cache Methods
+
+    async def get_health_async(self) -> Dict[str, Any]:
+        """Async version of get_health."""
+        return cast(Dict[str, Any], await self._async_request("GET", "/health"))
+
+    async def rebuild_cache_async(self) -> Dict[str, Any]:
+        """Async version of rebuild_cache."""
+        return cast(Dict[str, Any], await self._async_request("POST", "/v1/cache/rebuild"))
+
 
     async def close(self):
         """Close async HTTP client connections."""

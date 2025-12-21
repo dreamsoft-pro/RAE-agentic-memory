@@ -173,7 +173,7 @@ class HybridSearchService:
                 )
 
                 # Generate query embedding
-                query_embedding = await self.embedding_service.generate_embeddings(
+                query_embedding = self.embedding_service.generate_embeddings(
                     [query]
                 )
                 query_emb = np.array(query_embedding[0])
@@ -306,7 +306,7 @@ class HybridSearchService:
                 budget_state=BudgetState(
                     # Context tokens used (approximation)
                     remaining_tokens=initial_state.budget_state.remaining_tokens
-                    - statistics.get("context_length", 0),
+                    - int(statistics.get("context_length", 0)),
                     # No direct LLM cost in search
                     remaining_cost_usd=initial_state.budget_state.remaining_cost_usd,
                     latency_budget_ms=initial_state.budget_state.latency_budget_ms,

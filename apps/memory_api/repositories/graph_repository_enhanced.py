@@ -12,7 +12,7 @@ knowledge graph with temporal, weighted, and versioned features including:
 """
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 from uuid import UUID
 
 import asyncpg
@@ -628,7 +628,7 @@ class EnhancedGraphRepository:
             "snapshot_created", snapshot_id=snapshot_id, snapshot_name=snapshot_name
         )
 
-        return snapshot_id
+        return cast(UUID, snapshot_id)
 
     async def get_snapshot(self, snapshot_id: UUID) -> Optional[GraphSnapshot]:
         """Get snapshot by ID"""

@@ -4,7 +4,8 @@ Tests vector storage with struct serialization, cosine similarity search,
 and layer filtering.
 """
 
-from uuid import uuid4
+from typing import Any
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -464,7 +465,7 @@ class TestSQLiteVectorStoreBatchOperations:
     @pytest.mark.asyncio
     async def test_batch_store_vectors_partial_failure(self, vector_store):
         """Test batch store with some invalid vectors."""
-        vectors = [
+        vectors: list[tuple[UUID, list[float], dict[str, Any]]] = [
             (uuid4(), [1.0, 0.0, 0.0], {}),
             # Note: All valid vectors in this test
             (uuid4(), [0.0, 1.0, 0.0], {}),

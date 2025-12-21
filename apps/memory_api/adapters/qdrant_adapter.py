@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 
 from qdrant_client import AsyncQdrantClient
 
@@ -35,7 +35,8 @@ class QdrantAdapter(MemoryAdapter):
         Generates a report on the current state and configuration of the Qdrant service.
         """
         try:
-            cluster_info = await self.client.cluster_info()
+            from typing import Any, cast
+            cluster_info = await cast(Any, self.client).cluster_info()
             collections_resp = await self.client.get_collections()
             collections_summary = [c.name for c in collections_resp.collections]
 
@@ -85,12 +86,13 @@ class QdrantAdapter(MemoryAdapter):
 
                 # Handle different vector configs (single vs multi-vector)
                 # Assuming 'dense' vector for RAE based on qdrant_store.py
+                config_any = cast(Any, config)
                 if isinstance(config, dict) and "dense" in config:
                     actual_size = config["dense"].size
                     actual_distance = config["dense"].distance
                 elif hasattr(config, "size"):  # Single vector
-                    actual_size = config.size
-                    actual_distance = config.distance
+                    actual_size = config_any.size
+                    actual_distance = config_any.distance
                 else:
                     # Fallback or error
                     violations.append(

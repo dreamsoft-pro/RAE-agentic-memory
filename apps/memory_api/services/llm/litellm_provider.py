@@ -67,6 +67,5 @@ class LiteLLMProvider(LLMProvider):
         # Call litellm
         response = await litellm.acompletion(model=model, messages=messages, **kwargs)
 
-        # Here we could do more processing, e.g., on usage stats
-        # For now, just return the text
-        return response.choices[0].message.content
+        content = response.choices[0].message.content
+        return response_model.model_validate_json(content)

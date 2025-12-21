@@ -160,7 +160,10 @@ async def extract_knowledge_graph(req: GraphExtractionRequest, request: Request)
 
     try:
         # Initialize reflection engine
-        reflection_engine = ReflectionEngine(request.app.state.pool)
+        reflection_engine = ReflectionEngine(
+            pool=request.app.state.pool,
+            rae_service=request.app.state.rae_core_service
+        )
 
         # Perform enhanced graph extraction
         result = await reflection_engine.extract_knowledge_graph_enhanced(
@@ -228,7 +231,10 @@ async def generate_hierarchical_reflection(
 
     try:
         # Initialize reflection engine
-        reflection_engine = ReflectionEngine(request.app.state.pool)
+        reflection_engine = ReflectionEngine(
+            pool=request.app.state.pool,
+            rae_service=request.app.state.rae_core_service
+        )
 
         # Generate hierarchical reflection
         summary = await reflection_engine.generate_hierarchical_reflection(

@@ -4,7 +4,7 @@ Role-Based Access Control (RBAC) models
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, cast
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -206,7 +206,7 @@ async def check_permission(
     # Import here to avoid circular dependency
     from apps.memory_api.services.rbac_service import RBACService
 
-    service = RBACService()
+    service = cast(Any, RBACService)(None)
     user_role = await service.get_user_role(user_id, tenant_id)
 
     if not user_role:

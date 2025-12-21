@@ -29,7 +29,7 @@ class MockTestPlugin(Plugin):
         )
 
     def __init__(self, config: dict[str, Any] | None = None):
-        self.config = config or {}
+        super().__init__(config)
         self.memory_creates: list[tuple[Any, str]] = []
         self.queries: list[str] = []
 

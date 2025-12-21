@@ -6,7 +6,7 @@ Provides storage and retrieval operations for dashboard metrics time series data
 
 import json
 from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import asyncpg
 import structlog
@@ -58,7 +58,7 @@ class MetricsRepository:
                 tags or [],
             )
 
-        return metric_id
+        return cast(int, metric_id)
 
     async def record_metrics_batch(
         self,
@@ -353,7 +353,7 @@ class MetricsRepository:
 
         logger.info("old_metrics_cleaned", deleted_count=deleted_count)
 
-        return deleted_count
+        return cast(int, deleted_count)
 
     async def get_metrics_by_dimensions(
         self,

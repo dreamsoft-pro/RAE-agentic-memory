@@ -14,8 +14,10 @@ Goal: Learn policy π* that maximizes cumulative reward:
   π* = argmax_π E[Σ γ^t · R(s_t, a_t, s_{t+1})]
 """
 
+import math
+import time
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import structlog
 
@@ -282,7 +284,7 @@ class RewardFunction:
         # Combine
         quality = 0.6 * relevance_score + 0.4 * count_score
 
-        return quality
+        return float(quality)
 
     def _evaluate_llm_quality(self, execution_result: Optional[Dict]) -> float:
         """
@@ -342,7 +344,7 @@ class RewardFunction:
 
         if scores:
             avg_quality = sum(scores) / len(scores)
-            return avg_quality
+            return float(avg_quality)
         else:
             return 0.6  # Default if no scoring available
 
@@ -375,7 +377,7 @@ class RewardFunction:
         # Quality = compression achieved (good pruning removes a lot)
         quality = min(1.0, compression_ratio * 2)  # Max at 50% compression
 
-        return quality
+        return float(quality)
 
     def _evaluate_graph_update_quality(
         self, state_before: RAEState, state_after: RAEState

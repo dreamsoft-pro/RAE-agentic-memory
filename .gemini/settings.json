@@ -9,7 +9,7 @@
   },
   "mcpServers": {
     "rae-memory": {
-      "command": "/home/grzegorz-lesniowski/cloud/RAE-agentic-memory/.venv/bin/rae-mcp-server",
+      "command": ".venv/bin/rae-mcp-server",
       "args": [],
       "env": {
         "RAE_API_URL": "http://localhost:8000",

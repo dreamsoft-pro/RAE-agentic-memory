@@ -435,7 +435,7 @@ async def get_tenant_budget_status(
                     budget_used_percent = (current_cost / budget_usd) * 100
 
                 # Generate alerts
-                alerts = []
+                alerts: List[str] = []
                 status = "OK"
 
                 if budget_usd:

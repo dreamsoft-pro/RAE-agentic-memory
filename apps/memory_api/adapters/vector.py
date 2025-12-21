@@ -3,6 +3,7 @@
 Configures RAE-core QdrantVectorStore with RAE-Server settings.
 """
 
+from typing import Any, cast
 from qdrant_client import AsyncQdrantClient
 from rae_core.adapters import QdrantVectorStore
 
@@ -23,7 +24,7 @@ def get_vector_adapter(
         Configured QdrantVectorStore instance
     """
     return QdrantVectorStore(
-        client=client,
+        client=cast(Any, client),
         collection_name=collection_name,
-        dimension=dimension,
+        embedding_dim=dimension,
     )

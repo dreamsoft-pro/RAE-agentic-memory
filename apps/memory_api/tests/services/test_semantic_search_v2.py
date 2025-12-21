@@ -20,6 +20,7 @@ def mock_ml_client():
     with patch("apps.memory_api.services.semantic_search.MLServiceClient") as mock:
         instance = mock.return_value
         instance.get_embedding = AsyncMock(return_value=[0.1] * 1536)
+        instance.generate_embeddings = AsyncMock(return_value={"embeddings": [[0.1] * 1536]})
         yield instance
 
 
@@ -101,7 +102,7 @@ async def test_search_stage1_only(
     assert stats["stage1_results"] == 1
     assert stats["stage2_results"] == 0
     assert len(stats["identified_topics"]) > 0
-    semantic_search_service.ml_client.get_embedding.assert_called_once()
+    semantic_search_service.ml_client.generate_embeddings.assert_called_once()
     mock_pool.fetch.assert_called_once()
 
 

@@ -1,5 +1,29 @@
 # RAE Agentic Memory - Roadmap & Implementation Plan
 
+## 🚨 NEXT SESSION: Mypy "Zero Warnings" Completion (Final Step)
+
+**Current Status (2025-12-20):**
+- **Progress:** Fixed ~40 attribute and type errors. Mypy errors reduced to 462. All targeted attribute errors in `semantic_extractor.py`, `reflection_pipeline.py`, and `semantic_search.py` are resolved.
+- **Paths:** Refactored hardcoded absolute paths in `.gemini/settings.json`, `.claude/mcp.json`, and benchmark scripts to relative paths.
+- **Branch:** feature/docs-refactor-v2 (current working branch).
+
+**Priority Tasks:**
+1. **Fix Remaining Mypy Attribute Errors:**
+   - Problem: Remaining attribute errors in `qwen_provider.py`, `llm_router.py`, and `traced_qdrant.py`.
+   - Action: Apply `cast` and `Any` as needed to satisfy Mypy.
+2. **FastAPI Deprecation Warnings:**
+   - Problem: `HTTP_422_UNPROCESSABLE_ENTITY` warnings.
+   - Action: Investigate and replace deprecated status code usage.
+3. **Investigate Skipped Tests:**
+   - Run `make test-unit` and analyze why 22 tests are skipped.
+
+**Command to start next session:**
+```bash
+.venv/bin/mypy apps/ sdk/ | grep "has no attribute"
+```
+
+---
+
 **Status as of 2025-12-02:** ✅ **ALL MAJOR BACKEND FUNCTIONALITIES COMPLETED**
 
 This document tracks the implementation status of RAE features and defines the roadmap for quality assurance and future extensions.

@@ -1,7 +1,7 @@
 import os
 
 from pydantic import ConfigDict, model_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     def validate_vector_backend(self):
         """Backward compatibility: Support legacy VECTOR_STORE_BACKEND variable"""
         if os.getenv("VECTOR_STORE_BACKEND") and not os.getenv("RAE_VECTOR_BACKEND"):
-            self.RAE_VECTOR_BACKEND = os.getenv("VECTOR_STORE_BACKEND")
+            self.RAE_VECTOR_BACKEND = str(os.getenv("VECTOR_STORE_BACKEND"))
         return self
 
     # Database Validation Mode
@@ -179,7 +179,7 @@ class Settings(BaseSettings):
             self.REFLECTIVE_LESSONS_TOKEN_BUDGET = 1024
         return self
 
-    model_config = ConfigDict(
+    model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )
 

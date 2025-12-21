@@ -4,7 +4,9 @@ Anthropic LLM Provider.
 Implements the LLM provider interface for Anthropic Claude models.
 """
 
-from typing import AsyncIterator
+from typing import Any, AsyncIterator, Dict, List, Optional, Tuple, cast
+
+import httpx
 
 from anthropic import APIError, AsyncAnthropic, AuthenticationError, RateLimitError
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -115,7 +117,7 @@ class AnthropicProvider:
             if request.stop_sequences:
                 params["stop_sequences"] = request.stop_sequences
 
-            response = await self.client.messages.create(**params)
+            response = await self.client.messages.create(**cast(Any, params))
 
             usage = TokenUsage(
                 prompt_tokens=response.usage.input_tokens,
@@ -222,7 +224,7 @@ class AnthropicProvider:
             if tools:
                 params["tools"] = tools
 
-            async with self.client.messages.stream(**params) as stream:
+            async with self.client.messages.stream(**cast(Any, params)) as stream:
                 async for text in stream.text_stream:
                     yield LLMChunk(text=text)
 

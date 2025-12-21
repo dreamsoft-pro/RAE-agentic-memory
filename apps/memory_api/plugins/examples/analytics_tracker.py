@@ -119,7 +119,7 @@ class AnalyticsTrackerPlugin(Plugin):
     async def on_metrics_collected(self, tenant_id: UUID, metrics: Dict[str, Any]):
         """Handle metrics collection event"""
         # Add our tracked metrics to the collection
-        metrics.update(await self.get_analytics())
+        metrics.update(self.get_analytics())
 
     def get_analytics(self) -> Dict[str, Any]:
         """

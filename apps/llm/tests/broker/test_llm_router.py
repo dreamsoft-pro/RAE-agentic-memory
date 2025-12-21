@@ -54,12 +54,22 @@ def mock_provider_classes():
 
 @pytest.fixture
 def mock_llm_request():
-    return LLMRequest(model="gpt-4", prompt="Hello")
+    from apps.llm.models.llm_request import LLMMessage
+    return LLMRequest(
+        model="gpt-4", 
+        messages=[LLMMessage(role="user", content="Hello")]
+    )
 
 
 @pytest.fixture
 def mock_llm_response():
-    return LLMResponse(text="Hello world", usage=MagicMock(), finish_reason="stop")
+    return LLMResponse(
+        text="Hello world", 
+        usage=MagicMock(), 
+        finish_reason="stop",
+        raw={},
+        model_name="gpt-4"
+    )
 
 
 @pytest.fixture

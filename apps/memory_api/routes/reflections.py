@@ -8,7 +8,7 @@ This module provides FastAPI routes for:
 - Retrieving reflection statistics and analytics
 """
 
-from typing import List
+from typing import Dict, List
 from uuid import UUID
 
 import structlog
@@ -329,7 +329,7 @@ async def get_reflection_graph(
         )
 
         # Calculate statistics
-        depth_distribution = {}
+        depth_distribution: Dict[int, int] = {}
         for node in nodes:
             depth = node.depth_level
             depth_distribution[depth] = depth_distribution.get(depth, 0) + 1

@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 from unittest.mock import AsyncMock
 from uuid import UUID, uuid4
 
@@ -25,7 +25,7 @@ class MockStrategy(SearchStrategy):
         limit: int = 10,
     ) -> list[tuple[UUID, float]]:
         # Call the mock to track usage
-        return await self.search_mock(query, tenant_id, filters, limit)
+        return cast(list[tuple[UUID, float]], await self.search_mock(query, tenant_id, filters, limit))
 
     def get_strategy_name(self) -> str:
         return self.name

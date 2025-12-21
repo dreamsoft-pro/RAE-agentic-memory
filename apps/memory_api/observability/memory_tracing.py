@@ -16,6 +16,7 @@ Traces include:
 """
 
 import functools
+import inspect
 import time
 from contextlib import contextmanager
 from typing import Any, Callable, Dict, Optional
@@ -294,7 +295,7 @@ def trace_memory(
                 return result
 
         # Return appropriate wrapper based on function type
-        if functools.iscoroutinefunction(func):
+        if inspect.iscoroutinefunction(func):
             return async_wrapper
         else:
             return sync_wrapper

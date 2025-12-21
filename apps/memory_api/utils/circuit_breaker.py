@@ -18,7 +18,7 @@ States:
 import time
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, Type, Union, Tuple
 
 import structlog
 
@@ -54,7 +54,7 @@ class CircuitBreaker:
         name: str,
         failure_threshold: int = 5,
         recovery_timeout: int = 60,
-        expected_exception: type = Exception,
+        expected_exception: Union[Type[BaseException], Tuple[Type[BaseException], ...]] = Exception,
         success_threshold: int = 2,
     ):
         """

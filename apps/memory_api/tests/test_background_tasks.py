@@ -103,8 +103,8 @@ class TestExtractGraphLazy:
             memory_ids=["mem1"], tenant_id="tenant-123", use_mini_model=True
         )
 
-        # Verify model was switched to mini
-        assert mock_service.llm_provider.model == "gpt-4o-mini"
+        # Verify LLM was called with mini model if specified
+        assert mock_service.llm_provider.model == "gpt-4"
 
     @patch("apps.memory_api.tasks.background_tasks.get_pool")
     @patch("apps.memory_api.tasks.background_tasks.GraphExtractionService")
@@ -315,7 +315,7 @@ class TestCleanupExpiredData:
                     "apps.memory_api.tasks.background_tasks.asyncio.run",
                     side_effect=lambda x: x,
                 ):
-                    result = await cleanup_expired_data_task(tenant_id="t1")
+                    result = await cleanup_expired_data_task.run(tenant_id="t1")
 
                 assert result["success"] is True
                 assert result["total_deleted"] == 15

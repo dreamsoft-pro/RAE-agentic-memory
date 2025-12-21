@@ -11,8 +11,9 @@ Features:
 - Timeout handling
 """
 
+import logging
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import httpx
 import structlog
@@ -114,7 +115,7 @@ class MLServiceClient:
     that have been offloaded to a separate service.
     """
 
-    def __init__(self, base_url: str = None, enable_circuit_breaker: bool = True):
+    def __init__(self, base_url: Optional[str] = None, enable_circuit_breaker: bool = True):
         """
         Initialize ML service client with resilience features.
 
@@ -122,9 +123,9 @@ class MLServiceClient:
             base_url: Base URL of the ML service (default: from settings)
             enable_circuit_breaker: Enable circuit breaker pattern (default: True)
         """
-        self.base_url = base_url or getattr(
+        self.base_url: str = str(base_url or getattr(
             settings, "ML_SERVICE_URL", "http://ml-service:8001"
-        )
+        ))
         self.client = httpx.AsyncClient(base_url=self.base_url, timeout=30.0)
         self.circuit_breaker = CircuitBreaker() if enable_circuit_breaker else None
         logger.info(
@@ -167,7 +168,7 @@ class MLServiceClient:
             stop=stop_after_attempt(3),
             wait=wait_exponential(multiplier=0.2, min=0.2, max=0.8),
             retry=retry_if_exception_type((httpx.TimeoutException, httpx.NetworkError)),
-            before_sleep=before_sleep_log(logger, logging_level="WARNING"),
+            before_sleep=before_sleep_log(logger, log_level=logging.WARNING),
         )
         async def _make_request():
             if method.upper() == "GET":
@@ -185,7 +186,7 @@ class MLServiceClient:
             if self.circuit_breaker:
                 self.circuit_breaker.record_success()
 
-            return response
+            return cast(httpx.Response, response)
 
         except Exception as e:
             # Record failure
@@ -239,7 +240,7 @@ class MLServiceClient:
                 groups_found=len(result.get("merge_groups", [])),
             )
 
-            return result
+            return cast(Dict[str, Any], result)
 
         except Exception as e:
             logger.error(
@@ -285,7 +286,7 @@ class MLServiceClient:
                 "ml_service_extract_triples_completed", triples_found=len(triples)
             )
 
-            return triples
+            return cast(List[Dict[str, str]], triples)
 
         except Exception as e:
             logger.error(
@@ -328,13 +329,38 @@ class MLServiceClient:
                 dimension=result.get("dimension", 0),
             )
 
-            return result
+            return cast(Dict[str, Any], result)
 
         except Exception as e:
             logger.error(
                 "ml_service_embeddings_failed", error=str(e), text_count=len(texts)
             )
             raise
+
+    async def get_embedding(
+        self, text: str, model: str = "all-MiniLM-L6-v2"
+    ) -> List[float]:
+        """
+        Convenience wrapper to get a single embedding for a single text.
+
+        Args:
+            text: Text to embed
+            model: Name of the embedding model to use
+
+        Returns:
+            List of floats representing the embedding
+
+        Raises:
+            httpx.HTTPError: If ML service call fails
+            ValueError: If no embeddings were returned
+        """
+        result = await self.generate_embeddings([text], model=model)
+        embeddings = result.get("embeddings", [])
+
+        if not embeddings:
+            raise ValueError(f"No embeddings returned from ML service for text: {text[:50]}...")
+
+        return cast(List[float], embeddings[0])
 
     async def extract_keywords(
         self, text: str, max_keywords: int = 10, language: str = "en"
@@ -374,7 +400,7 @@ class MLServiceClient:
                 "ml_service_extract_keywords_completed", keywords_found=len(keywords)
             )
 
-            return keywords
+            return cast(List[Dict[str, Any]], keywords)
 
         except Exception as e:
             logger.error(

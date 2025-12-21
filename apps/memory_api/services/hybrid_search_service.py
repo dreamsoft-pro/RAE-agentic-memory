@@ -152,7 +152,7 @@ class HybridSearchService:
         logger.info("hybrid_search_started", tenant_id=tenant_id, query=query, k=k)
 
         # Check cache if enabled
-        if self.enable_cache and not bypass_cache:
+        if self.enable_cache and self.cache is not None and not bypass_cache:
             cache_filters = {
                 "k": k,
                 "enable_vector": enable_vector,
@@ -210,8 +210,11 @@ class HybridSearchService:
                 original_query=query,
             )
         else:
-            query_analysis = await self.query_analyzer.analyze_query(
-                query=query, context=conversation_history
+            query_analysis = await self.query_analyzer.analyze_intent(
+                query=query, 
+                tenant_id=tenant_id,
+                project_id=project_id,
+                context=conversation_history
             )
 
         analysis_time = int((time.time() - analysis_start) * 1000)
@@ -291,8 +294,8 @@ class HybridSearchService:
         final_results = fused_results[:k]
 
         # Assign final ranks
-        for idx, result in enumerate(final_results):
-            result.rank = idx + 1
+        for idx, item in enumerate(final_results):
+            item.rank = idx + 1
 
         total_time = int((time.time() - start_time) * 1000)
 
@@ -305,7 +308,7 @@ class HybridSearchService:
             reranking_time=reranking_time,
         )
 
-        result = HybridSearchResult(
+        final_response = HybridSearchResult(
             results=final_results,
             total_results=len(final_results),
             query_analysis=query_analysis,
@@ -329,7 +332,7 @@ class HybridSearchService:
         )
 
         # Cache result if enabled
-        if self.enable_cache and not bypass_cache:
+        if self.enable_cache and self.cache is not None and not bypass_cache:
             cache_filters = {
                 "k": k,
                 "enable_vector": enable_vector,
@@ -348,11 +351,11 @@ class HybridSearchService:
                 query=query,
                 tenant_id=tenant_id,
                 project_id=project_id,
-                result=result.model_dump(),
+                result=final_response.model_dump(),
                 filters=cache_filters,
             )
 
-        return result
+        return final_response
 
     # ========================================================================
     # Strategy Implementations
@@ -384,7 +387,7 @@ class HybridSearchService:
                 WHERE tenant_id = $1 AND project = $2
                     AND embedding IS NOT NULL
             """
-            params = [tenant_id, project_id, query_embedding]
+            params: List[Any] = [tenant_id, project_id, query_embedding]
             param_idx = 4
 
             if temporal_filter:
@@ -662,7 +665,7 @@ class HybridSearchService:
                 WHERE tenant_id = $1 AND project = $2
                     AND to_tsvector('english', content) @@ plainto_tsquery('english', $3)
             """
-            params = [tenant_id, project_id, query]
+            params: List[Any] = [tenant_id, project_id, query]
             param_idx = 4
 
             if temporal_filter:

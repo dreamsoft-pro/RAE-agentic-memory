@@ -128,7 +128,7 @@ class QdrantStore(MemoryVectorStore):
         }
 
         # Use dict to handle hash collisions and ensure unique indices
-        index_values = {}
+        index_values: Dict[int, float] = {}
 
         for word in set(words):
             if word not in stopwords:

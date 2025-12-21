@@ -12,7 +12,7 @@ These tasks should be run periodically (cron, scheduler, or task queue)
 import asyncio
 from datetime import datetime, timedelta, timezone
 from time import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 from uuid import UUID
 
 import asyncpg
@@ -299,9 +299,10 @@ Provide a concise summary, list key topics, and determine the overall sentiment.
                 model=settings.RAE_LLM_MODEL_DEFAULT,
                 response_model=SessionSummaryResponse,
             )
+            res = cast(SessionSummaryResponse, response)
 
             # Format the summary
-            summary = f"{response.summary}\n\nKey Topics: {', '.join(response.key_topics)}\n\nSentiment: {response.sentiment}"
+            summary = f"{res.summary}\n\nKey Topics: {', '.join(res.key_topics)}\n\nSentiment: {res.sentiment}"
             return summary
 
         except Exception as e:

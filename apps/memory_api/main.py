@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from typing import Any, Dict, List, Optional, cast
 
 import asyncpg
 import structlog
@@ -36,6 +37,7 @@ from apps.memory_api.routes import (
     evaluation,
     event_triggers,
     graph_enhanced,
+    hybrid_search,
     reflections,
     token_savings,
 )
@@ -208,7 +210,7 @@ Instrumentator().instrument(app).expose(app)
 app.state.limiter = limiter
 
 # Add rate limit exception handler
-app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+app.add_exception_handler(RateLimitExceeded, cast(Any, rate_limit_exceeded_handler))
 
 # Module-level logger for exception handlers
 logger = structlog.get_logger(__name__)
@@ -294,7 +296,7 @@ def custom_openapi():
     return app.openapi_schema
 
 
-app.openapi = custom_openapi
+setattr(app, "openapi", custom_openapi)
 
 # --- Exception Handlers ---
 
@@ -322,9 +324,11 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         path=request.url.path,
         method=request.method,
     )
+    from fastapi import status
     return JSONResponse(
-        status_code=422,
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content={
+            "detail": exc.errors(),
             "error": {
                 "code": "422",
                 "message": "Validation Error",
@@ -337,9 +341,16 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: Request, exc: Exception):
     logger.exception("unhandled_exception", exc_info=exc)
+    from fastapi import status
     return JSONResponse(
-        status_code=500,
-        content={"error": {"code": "500", "message": "Internal Server Error"}},
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "detail": str(exc),
+            "error": {
+                "code": "500",
+                "message": "Internal Server Error",
+            }
+        },
     )
 
 
@@ -390,6 +401,7 @@ app.include_router(compliance.router, tags=["ISO/IEC 42001 Compliance"])
 # API v1 endpoints - Enterprise Features
 app.include_router(event_triggers.router, tags=["Event Triggers"])
 app.include_router(reflections.router, tags=["Reflections"])
+app.include_router(hybrid_search.router, prefix="/v1", tags=["Hybrid Search"])
 app.include_router(evaluation.router, tags=["Evaluation"])
 app.include_router(dashboard.router, tags=["Dashboard"])
 app.include_router(graph_enhanced.router, tags=["Graph Management"])

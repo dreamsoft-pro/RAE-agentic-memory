@@ -122,6 +122,7 @@ def mock_pool():
     # Make pool.acquire() return the context manager directly
     # This works because DummyAsyncContextManager is both awaitable AND a context manager
     pool.acquire = Mock(return_value=context_manager)
+    pool.close = AsyncMock()
 
     # Expose conn and context for test customization
     pool._test_conn = conn

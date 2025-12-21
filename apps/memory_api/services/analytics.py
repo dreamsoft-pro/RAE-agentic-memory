@@ -602,7 +602,7 @@ class AnalyticsService:
         Returns:
             List of active alerts
         """
-        alerts = []
+        alerts: List[Dict[str, Any]] = []
 
         # Check various thresholds
         # In production, this would check against tenant.config limits

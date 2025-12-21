@@ -37,7 +37,14 @@ async def rae_context():
     Context manager to manage lifecycle of RAE dependencies in Celery tasks.
     """
     pool = await get_pool()
-    qdrant = AsyncQdrantClient(host=settings.QDRANT_HOST, port=settings.QDRANT_PORT)
+    # Handle host containing protocol (e.g. http://qdrant:6333)
+    host = settings.QDRANT_HOST
+    if "://" in host:
+        host = host.split("://")[-1]
+    if ":" in host:
+        host = host.split(":")[0]
+        
+    qdrant = AsyncQdrantClient(host=host, port=settings.QDRANT_PORT)
     redis = await create_redis_client(settings.REDIS_URL)
 
     rae_service = RAECoreService(
@@ -198,8 +205,8 @@ def cleanup_expired_data_task(self, tenant_id: str | None = None):
                     error=str(e),
                 )
                 raise self.retry(exc=e, countdown=300 * (2**self.request.retries))
-    
-        return asyncio.run(main())
+
+    return asyncio.run(main())
     
 @celery_app.task(bind=True, max_retries=3)
 def gdpr_delete_user_data_task(

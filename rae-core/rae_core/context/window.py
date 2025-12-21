@@ -36,6 +36,7 @@ class ContextWindowManager:
         if not self.current_window:
             self.create_window()
 
+        assert self.current_window is not None
         if self.current_window.current_tokens + tokens > self.max_tokens:
             return False
 
@@ -48,6 +49,7 @@ class ContextWindowManager:
         if not self.current_window or item_id not in self.current_window.items:
             return False
 
+        assert self.current_window is not None
         self.current_window.items.remove(item_id)
         self.current_window.current_tokens = max(
             0, self.current_window.current_tokens - tokens
@@ -64,10 +66,13 @@ class ContextWindowManager:
         if not self.current_window:
             return 0
 
+        assert self.current_window is not None
         original_count = len(self.current_window.items)
         self.current_window.items = [
             item for item in self.current_window.items if item in keep_items
         ]
+        # Re-calculate tokens if we had them, but we don't store individual tokens
+        # For now, just count items
         return original_count - len(self.current_window.items)
 
     def get_utilization(self) -> float:

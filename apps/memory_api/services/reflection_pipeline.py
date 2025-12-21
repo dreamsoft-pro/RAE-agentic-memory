@@ -284,7 +284,7 @@ class ReflectionPipeline:
     ) -> List[Dict[str, Any]]:
         """Fetch memories for reflection generation"""
         conditions = ["tenant_id = $1", "project = $2"]
-        params = [tenant_id, project_id]
+        params: List[Any] = [tenant_id, project_id]
         param_idx = 3
 
         # Add filters
@@ -397,7 +397,7 @@ class ReflectionPipeline:
             span.set_attribute("rae.reflection.cluster.algorithm", algorithm_used)
 
             # Group memories by cluster
-            clusters = {}
+            clusters: Dict[str, List[Dict[str, Any]]] = {}
             for memory, label in zip(valid_memories, cluster_labels):
                 if label == -1:  # Skip noise in HDBSCAN
                     continue
@@ -485,9 +485,7 @@ class ReflectionPipeline:
                 generation_tokens_used=(
                     result.usage.total_tokens if result.usage else None
                 ),
-                generation_cost_usd=(
-                    result.cost_usd if hasattr(result, "cost_usd") else None
-                ),
+                generation_cost_usd=getattr(cast(Any, result), "cost_usd", None),
             )
 
             # Determine priority based on cluster size and importance
@@ -574,9 +572,7 @@ class ReflectionPipeline:
                 generation_tokens_used=(
                     result.usage.total_tokens if result.usage else None
                 ),
-                generation_cost_usd=(
-                    result.cost_usd if hasattr(result, "cost_usd") else None
-                ),
+                generation_cost_usd=getattr(cast(Any, result), "cost_usd", None),
             )
 
             # Meta-insights get high priority

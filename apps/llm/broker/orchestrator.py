@@ -7,7 +7,7 @@ Implements strategies (Single, Fallback) and handles configuration.
 
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import yaml
 
@@ -63,13 +63,13 @@ class LLMOrchestrator:
             # Default to apps/llm/config/llm_config.yaml
             import pathlib
 
-            config_path = (
+            config_path = str(
                 pathlib.Path(__file__).parent.parent / "config" / "llm_config.yaml"
             )
 
         try:
             with open(config_path, "r") as f:
-                return yaml.safe_load(f)
+                return cast(Dict[str, Any], yaml.safe_load(f))
         except FileNotFoundError:
             logger.warning(
                 f"Orchestrator config not found: {config_path}. Using defaults."

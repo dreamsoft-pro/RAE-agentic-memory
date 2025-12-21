@@ -5,9 +5,9 @@ This service handles keyword extraction, named entity recognition,
 and other NLP tasks for the ML microservice.
 """
 
-from typing import Any, Dict, List
-
+import spacy
 import structlog
+from typing import Any, Dict, List, cast
 
 logger = structlog.get_logger(__name__)
 
@@ -20,7 +20,7 @@ class NLPService:
     """
 
     _instance = None
-    _nlp = None
+    _nlp: Any = None
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
@@ -126,7 +126,7 @@ class NLPService:
             for chunk in doc.noun_chunks:
                 # Skip if already in entities
                 if not any(
-                    kw["text"].lower() == chunk.text.lower() and kw["type"] == "entity"
+                    cast(str, kw["text"]).lower() == chunk.text.lower() and kw["type"] == "entity"
                     for kw in keywords
                 ):
                     keywords.append(
@@ -148,7 +148,7 @@ class NLPService:
                 if token.pos_ in ["NOUN", "PROPN", "ADJ"]:
                     # Skip if already in keywords
                     if not any(
-                        kw["text"].lower() == token.text.lower() for kw in keywords
+                        cast(str, kw["text"]).lower() == token.text.lower() for kw in keywords
                     ):
                         keywords.append(
                             {

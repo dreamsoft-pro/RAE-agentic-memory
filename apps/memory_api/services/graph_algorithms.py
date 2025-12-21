@@ -354,7 +354,7 @@ class GraphAlgorithmsService:
 
                 # Adopt most common label
                 if label_counts:
-                    most_common_label = max(label_counts, key=label_counts.get)
+                    most_common_label = max(label_counts, key=lambda k: label_counts[k])
 
                     if labels[node_id] != most_common_label:
                         labels[node_id] = most_common_label
@@ -444,7 +444,7 @@ class GraphAlgorithmsService:
         if source_id not in graph.nodes or target_id not in graph.nodes:
             return []
 
-        paths = []
+        paths: List[List[str]] = []
 
         def dfs(current_id: str, path: List[str], visited: Set[str]):
             if len(paths) >= max_paths:
@@ -492,7 +492,7 @@ class GraphAlgorithmsService:
         # BFS to find related entities
         queue = deque([(entity_id, 0)])
         visited = {entity_id}
-        related = []
+        related: List[Dict[str, Any]] = []
 
         while queue and len(related) < limit:
             current_id, distance = queue.popleft()
@@ -663,7 +663,7 @@ class GraphAlgorithmsService:
             List of edge tuples (source_id, target_id)
         """
         await self.load_tenant_graph(tenant_id)
-        bridges = []
+        bridges: List[Tuple[str, str]] = []
 
         # Tarjan's bridge-finding algorithm would be used here
         # Simplified for now
@@ -683,7 +683,7 @@ class GraphAlgorithmsService:
             List of node IDs that are articulation points
         """
         await self.load_tenant_graph(tenant_id)
-        articulation_points = []
+        articulation_points: List[str] = []
 
         # Tarjan's algorithm would be used here
         # Simplified for now

@@ -414,7 +414,7 @@ class TemporalGraphService:
         # Group changes by time bucket (e.g., hourly)
         timeline = []
         current_bucket = None
-        bucket_changes = []
+        bucket_changes: List[GraphChange] = []
 
         for change in changes:
             # Create hourly buckets
@@ -442,7 +442,7 @@ class TemporalGraphService:
         self, bucket_time: datetime, changes: List[GraphChange]
     ) -> Dict[str, Any]:
         """Summarize changes in a time bucket"""
-        change_type_counts = {}
+        change_type_counts: Dict[str, int] = {}
         for change in changes:
             change_type = change.change_type.value
             change_type_counts[change_type] = change_type_counts.get(change_type, 0) + 1
@@ -547,7 +547,7 @@ class TemporalGraphService:
         patterns = []
 
         # Find rapidly growing entities (entities with many new connections)
-        entity_connection_count = {}
+        entity_connection_count: Dict[str, int] = {}
         for change in changes:
             if change.change_type == ChangeType.EDGE_ADDED:
                 if change.new_value and isinstance(change.new_value, dict):

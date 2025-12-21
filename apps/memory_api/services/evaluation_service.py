@@ -9,7 +9,7 @@ This service implements:
 """
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 import numpy as np
@@ -55,7 +55,7 @@ class EvaluationService:
         relevance_judgments: List[RelevanceJudgment],
         search_results: Dict[str, List[RankedResult]],
         metrics_to_compute: List[MetricType],
-        k_values: List[int] = None,
+        k_values: Optional[List[int]] = None,
     ) -> EvaluationResult:
         """
         Evaluate search results against ground truth relevance judgments.
@@ -304,7 +304,7 @@ class EvaluationService:
             precision = relevant_in_k / min(k, len(results)) if results else 0.0
             precision_scores.append(precision)
 
-        precision = np.mean(precision_scores) if precision_scores else 0.0
+        precision = float(np.mean(precision_scores)) if precision_scores else 0.0
         return float(precision)
 
     def _calculate_recall_at_k(
@@ -340,7 +340,7 @@ class EvaluationService:
             recall = relevant_in_k / total_relevant
             recall_scores.append(recall)
 
-        recall = np.mean(recall_scores) if recall_scores else 0.0
+        recall = float(np.mean(recall_scores)) if recall_scores else 0.0
         return float(recall)
 
     def _calculate_map(
