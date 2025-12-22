@@ -87,15 +87,16 @@ Significant effort was invested in restoring system stability after major refact
 
 
 
+
 ## Live Metrics (Auto-generated)
 | Metric | Value |
 |--------|-------|
 | **Branch** | `main` |
-| **Commit** | `63b2515` |
-| **Coverage** | N/A |
-| **Tests** | 0 total, 0 failed, 0 skipped |
-| **Pass Rate** | 0.0% |
-| **Last Update** | 2025-12-22 17:51:26 |
+| **Commit** | `abcc6df` |
+| **Coverage** | 21.0% |
+| **Tests** | 9 total, 0 failed, 6 skipped |
+| **Pass Rate** | 100.0% |
+| **Last Update** | 2025-12-22 18:01:48 |
 
 ## Quick Links
 - [Agent Core Protocol](docs/rules/AGENT_CORE_PROTOCOL.md)
