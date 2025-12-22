@@ -2,6 +2,14 @@
 
 *Last updated: 2025-12-22 11:14 • Branch: develop • Commit: 398a716*
 
+### v2.4.0 (2025-12-22)
+
+**Highlights:**
+- Stabilized System Architecture & DB Validation
+- Distributed Compute Control Plane (Node Agent Foundation)
+- Zero Warning Policy Compliance (mypy/linter fixes)
+- Memory Repository Migration Phase 1
+
 ### ✨ Features
 
 - implement distributed compute control plane and node agent foundation ([`bd65077`](../../commit/bd65077))
