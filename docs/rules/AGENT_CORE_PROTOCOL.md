@@ -38,8 +38,9 @@ Different branches = Different testing levels.
 
 ### Phase 2: Develop Branch (`develop`)
 - **Goal**: Integrity & Regression.
-- **Command**: `make test-unit` (and `make lint`)
-- **Rule**: **MANDATORY** before proceeding to Release/Main. Fix ALL failures here.
+- **Command**: `make lint` and `make test-unit`
+- **CRITICAL RULE**: **MANDATORY** before **EVERY** push to `develop`. You **MUST** run both commands locally. 
+- **ENFORCEMENT**: Never push to `develop` if there are any linting errors or test failures. Fix ALL issues locally first.
 
 ### Phase 3: Main/Release
 - **Goal**: Production Guarantee.

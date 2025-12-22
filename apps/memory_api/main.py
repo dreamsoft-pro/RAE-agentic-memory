@@ -131,7 +131,10 @@ async def lifespan(app: FastAPI):
             # We continue; validation step will catch any remaining issues and Fail Fast
 
     # 2. Database Initialization / Migration
-    if settings.RAE_DB_MODE in ["init", "migrate"] and "PYTEST_CURRENT_TEST" not in os.environ:
+    if (
+        settings.RAE_DB_MODE in ["init", "migrate"]
+        and "PYTEST_CURRENT_TEST" not in os.environ
+    ):
         logger.info("db_migration_start", mode=settings.RAE_DB_MODE)
         try:
             import asyncio
@@ -151,7 +154,10 @@ async def lifespan(app: FastAPI):
 
     # 3. Memory Contract Validation (Fail Fast)
     # Validate if mode is 'validate', 'init', or 'migrate' (verify after migration)
-    if settings.RAE_DB_MODE in ["validate", "init", "migrate"] and "PYTEST_CURRENT_TEST" not in os.environ:
+    if (
+        settings.RAE_DB_MODE in ["validate", "init", "migrate"]
+        and "PYTEST_CURRENT_TEST" not in os.environ
+    ):
         logger.info("memory_validation_start", mode=settings.RAE_DB_MODE)
 
         from apps.memory_api.adapters.postgres_adapter import PostgresAdapter

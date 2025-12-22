@@ -45,7 +45,9 @@ class Settings(BaseSettings):
     # validate: Check schema and fail fast on mismatch (safe for prod)
     # init: Initialize empty DB (same as migrate)
     # ignore: Skip validation
-    RAE_DB_MODE: str = os.getenv("RAE_DB_MODE", "ignore" if "PYTEST_CURRENT_TEST" in os.environ else "migrate")
+    RAE_DB_MODE: str = os.getenv(
+        "RAE_DB_MODE", "ignore" if "PYTEST_CURRENT_TEST" in os.environ else "migrate"
+    )
 
     # --- Security Settings ---
     OAUTH_ENABLED: bool = True
