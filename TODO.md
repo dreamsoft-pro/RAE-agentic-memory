@@ -1,30 +1,31 @@
 # RAE Agentic Memory - Roadmap & Implementation Plan
 
-## 🚨 NEXT SESSION: Restore rae-core Tests & Complete Linter Cleanup
+## 🚨 NEXT SESSION: Implement Control Plane & Connect node1
 
-**Current Status (2025-12-21):**
-- **Unit Tests:** ✅ **885 passing** (Restored stability).
-- **Graph API:** ✅ Fully implemented `apps/memory_api/api/v1/graph.py` using `EnhancedGraphRepository`.
-- **Linter Errors Remaining:** **169** (down from 420).
-- **Core Discovery:** `rae-core/tests` are missing from `pytest.ini` `testpaths`, explaining the drop from >900 to 885 tests.
+**Current Status (2025-12-22):**
+- **Core Stability:** ✅ **83% coverage** achieved. Zero warnings project-wide.
+- **API Status:** ✅ **v2.2.2-enterprise** released and merged to main.
+- **Infrastructure:** ✅ **node1** (GPU optimized) is configured and automated.
 
 **Priority Tasks:**
 
-1.  **🚨 CRITICAL: Restore Core Test Coverage**
-    - [ ] **Action**: Add `rae-core/tests` to `pytest.ini` testpaths.
-    - [ ] **Goal**: Verify core logic and restore 100% core coverage.
-    - [ ] **Command**: `make test-unit` (expect >900 tests).
+1.  **🚀 Distributed Compute: Control Node API**
+    - [x] **Plan**: [CONTROL_NODE_IMPLEMENTATION_PLAN.md](docs/infra/CONTROL_NODE_IMPLEMENTATION_PLAN.md) created.
+    - [x] **Action**: Implement Node Registry API (`/nodes/register`, `/nodes/heartbeat`) in `apps/memory_api`.
+    - [x] **Action**: Implement Task Queue API for remote worker polling (`/tasks/poll`, `/tasks/result`).
+    - [ ] **Goal**: Allow remote nodes to announce availability and request pending jobs.
 
-2.  **🚨 CRITICAL: Finish Linter Errors (Zero Warning Policy)**
-    - [ ] **Remaining B008/B904**: Clean up remaining manual fixes.
-    - [ ] **Goal**: CI must pass `make lint`.
+2.  **🚀 Distributed Compute: Connect node1**
+    - [ ] **Action**: Update node1 agent to communicate with the new Control Node API.
+    - [ ] **Action**: Configure secure tunneling (Cloudflare/Tailscale) for API access between node1 and local RAE.
+    - [ ] **Goal**: Successfully pull a 'no-op' task from the local module to node1.
 
-3.  **Mypy Cleanup**
-    - [ ] **Current Status**: ~462 errors remaining.
-    - [ ] **Task**: `.venv/bin/mypy apps/ sdk/ | grep "has no attribute"`
+3.  **🧠 Integration: Heavy Workload Delegation**
+    - [ ] **Action**: Integrate task delegation into `RAEEngine` for heavy embedding generation and LLM inference.
+    - [ ] **Goal**: Offload compute-intensive tasks to node1/node2 when available.
 
-4.  **Documentation Sync**
-    - [ ] Update `CONVENTIONS.md` with the "No Absolute Paths" rule verified this session.
+4.  **📊 Node3 Performance Tests**
+    - [ ] **Action**: Prepare node3 (128GB RAM) for large-scale memory stress tests and benchmark its throughput.
 
 ---
 
@@ -50,14 +51,17 @@
 - [ ] **E2E/Integration Polish**
 
 ## Technical Debt (Auto-generated from code)
-*Last scan: 2025-12-22 09:56*
+*Last scan: 2025-12-22 10:04*
 
-- [ ] **CHANGELOG.md:253** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
-- [ ] **CHANGELOG.md:316** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:317** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:811** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
-- [ ] **CHANGELOG.md:874** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:875** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:253** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:316** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:317** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:801** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
+- [ ] **CHANGELOG.md:864** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:865** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:1359** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
+- [ ] **CHANGELOG.md:1422** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:1423** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
 - [ ] **INTEGRATION_CHECKLIST.md:51** - - [ ] Did NOT edit `TODO.md` (CI extracts from code comments)
 - [ ] **CONTRIBUTING.md:163** - Run the documentation automator to update status and TODOs:
 - [ ] **ONBOARDING_GUIDE.md:366** - - ❌ DON'T: Edit `CHANGELOG.md`, `STATUS.md`, `TODO.md`, `docs/.auto-generated/`
