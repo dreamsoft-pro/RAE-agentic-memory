@@ -10,6 +10,7 @@ This module implements the complete reflection generation pipeline with:
 - Full telemetry and cost tracking
 """
 
+import asyncio
 from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, cast
 from uuid import UUID
@@ -375,7 +376,10 @@ class ReflectionPipeline:
                     min_samples=max(2, min_cluster_size // 2),
                     metric="euclidean",
                 )
-                cluster_labels = clusterer.fit_predict(embeddings_scaled)
+                # Offload CPU-bound clustering to thread pool
+                cluster_labels = await asyncio.to_thread(
+                    clusterer.fit_predict, embeddings_scaled
+                )
 
                 # Check if we got meaningful clusters (not all noise)
                 unique_labels = set(cluster_labels)
@@ -392,7 +396,10 @@ class ReflectionPipeline:
                 # Fall back to k-means with heuristic for number of clusters
                 n_clusters = max(2, min(len(embeddings) // min_cluster_size, 10))
                 clusterer = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
-                cluster_labels = clusterer.fit_predict(embeddings_scaled)
+                # Offload CPU-bound clustering to thread pool
+                cluster_labels = await asyncio.to_thread(
+                    clusterer.fit_predict, embeddings_scaled
+                )
 
             span.set_attribute("rae.reflection.cluster.algorithm", algorithm_used)
 

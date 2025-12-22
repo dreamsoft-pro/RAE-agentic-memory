@@ -10,6 +10,7 @@ from apps.memory_api.config import settings
 from apps.memory_api.dependencies import create_redis_client
 from apps.memory_api.repositories.graph_repository import GraphRepository
 from apps.memory_api.services.community_detection import CommunityDetectionService
+from apps.memory_api.services.consistency_service import ConsistencyService
 from apps.memory_api.services.context_cache import rebuild_full_cache
 from apps.memory_api.services.entity_resolution import EntityResolutionService
 from apps.memory_api.services.graph_extraction import GraphExtractionService
@@ -690,6 +691,39 @@ def run_dreaming_task(tenant_id: str, project_id: str = "default"):
     return asyncio.run(main())
 
 
+@celery_app.task(bind=True, max_retries=3)
+def run_consistency_check_task(self, tenant_id: str = "default"):
+    """
+    Periodic task to fix 'Dual Write' inconsistencies (Ghost Memories).
+    Scans Qdrant for orphaned embeddings and removes them.
+    """
+
+    async def main():
+        async with rae_context() as (pool, rae_service):
+            try:
+                # We access qdrant client from rae_service's internals or rebuild it?
+                # rae_service.qdrant_client is available.
+                consistency_service = ConsistencyService(
+                    pool, rae_service.qdrant_client
+                )
+
+                removed = await consistency_service.reconcile_vectors(
+                    tenant_id=tenant_id
+                )
+
+                logger.info(
+                    "consistency_check_task_complete",
+                    tenant_id=tenant_id,
+                    orphans_removed=removed,
+                )
+                return {"orphans_removed": removed}
+            except Exception as e:
+                logger.error("consistency_check_task_failed", error=str(e))
+                raise self.retry(exc=e, countdown=300 * (2**self.request.retries))
+
+    return asyncio.run(main())
+
+
 # --- Celery Beat Schedule ---
 @celery_app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
@@ -740,4 +774,10 @@ def setup_periodic_tasks(sender, **kwargs):
         crontab(hour=3, minute=0),
         run_maintenance_cycle_task.s(),
         name="run full maintenance cycle daily at 3 AM",
+    )
+    # Schedule Data Consistency Check daily at 4 AM
+    sender.add_periodic_task(
+        crontab(hour=4, minute=0),
+        run_consistency_check_task.s(),
+        name="run consistency check daily at 4 AM",
     )

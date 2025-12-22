@@ -469,7 +469,7 @@ class TestInMemoryStorage:
         """Test deleting expired memories."""
         from datetime import timedelta
         now = datetime.now(timezone.utc)
-        
+
         await storage.store_memory(
             content="Expired", layer="w", tenant_id="t", agent_id="a",
             expires_at=now - timedelta(hours=1)
@@ -495,11 +495,11 @@ class TestInMemoryStorage:
         memory_id = await storage.store_memory(
             content="Test", layer="w", tenant_id="t", agent_id="a"
         )
-        
+
         new_expiry = datetime.now(timezone.utc)
         success = await storage.update_memory_expiration(memory_id, "t", new_expiry)
         assert success is True
-        
+
         memory = await storage.get_memory(memory_id, "t")
         assert memory["expires_at"] == new_expiry
 
@@ -509,13 +509,13 @@ class TestInMemoryStorage:
         memory_id = await storage.store_memory(
             content="Test", layer="w", tenant_id="t", agent_id="a", importance=0.5
         )
-        
+
         new_val = await storage.adjust_importance(memory_id, 0.2, "t")
         assert new_val == 0.7
-        
+
         # Test clamping
         new_val = await storage.adjust_importance(memory_id, 1.0, "t")
         assert new_val == 1.0
-        
+
         new_val = await storage.adjust_importance(memory_id, -2.0, "t")
         assert new_val == 0.0

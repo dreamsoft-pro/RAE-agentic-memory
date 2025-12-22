@@ -119,7 +119,7 @@ class TestPostgreSQLStorageExtended:
     async def test_delete_below_importance(self, pg_storage, mock_conn):
         """Test deleting memories below importance threshold."""
         mock_conn.execute.return_value = "DELETE 3"
-        
+
         count = await pg_storage.delete_memories_below_importance("t1", "a1", "w1", 0.3)
         assert count == 3
         mock_conn.execute.assert_called_once()
@@ -164,12 +164,12 @@ class TestPostgreSQLStorageExtended:
     async def test_search_memories_with_filters(self, pg_storage, mock_conn):
         """Test search with various filters."""
         mock_conn.fetch.return_value = []
-        
+
         await pg_storage.search_memories(
             "query", "t", "a", "l",
             filters={"not_expired": True, "tags": ["tag1"], "min_importance": 0.7}
         )
-        
+
         query = mock_conn.fetch.call_args[0][0]
         assert "expires_at IS NULL OR expires_at > $4" in query
         assert "tags && $5" in query
@@ -181,7 +181,7 @@ class TestPostgreSQLStorageExtended:
         from datetime import datetime, timezone
         mock_conn.execute.return_value = "UPDATE 1"
         expiry = datetime.now(timezone.utc)
-        
+
         success = await pg_storage.update_memory_expiration(uuid4(), "t1", expiry)
         assert success is True
         mock_conn.execute.assert_called_once()

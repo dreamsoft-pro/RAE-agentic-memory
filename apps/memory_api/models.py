@@ -93,7 +93,7 @@ class MemoryRecord(BaseModel):
     content: str
     source: Optional[str] = None
     importance: float = 0.5
-    layer: MemoryLayer = MemoryLayer.ltm  # See MEMORY_MODEL.md for layer mapping
+    layer: MemoryLayer = MemoryLayer.semantic  # See MEMORY_MODEL.md for layer mapping
     tags: Optional[List[str]] = None
     timestamp: datetime = Field(default_factory=datetime.now)
     last_accessed_at: Optional[datetime] = None
