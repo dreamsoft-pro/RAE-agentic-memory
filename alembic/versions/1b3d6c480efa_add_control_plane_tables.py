@@ -5,9 +5,10 @@ Revises: f2g3h4i5j6k7
 Create Date: 2025-12-22 11:18:22.988154
 
 """
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '1b3d6c480efa'
@@ -32,7 +33,7 @@ def upgrade():
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('node_id')
     )
-    
+
     # Create delegated_tasks table
     op.create_table(
         'delegated_tasks',
@@ -49,7 +50,7 @@ def upgrade():
         sa.Column('completed_at', sa.DateTime(timezone=True), nullable=True),
         sa.PrimaryKeyConstraint('id')
     )
-    
+
     # Create index for task polling
     op.create_index('ix_delegated_tasks_status_priority', 'delegated_tasks', ['status', 'priority'])
 

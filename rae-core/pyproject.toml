@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rae-core"
-version = "0.4.1"
-description = "RAE Core - Pure Python memory system for AI agents"
+version = "0.5.0"
+description = "Core domain logic for Reflective Agentic Engine"
 readme = "README.md"
 authors = [
     {name = "Grzegorz Leśniowski", email = "contact@dreamsoft.pro"}

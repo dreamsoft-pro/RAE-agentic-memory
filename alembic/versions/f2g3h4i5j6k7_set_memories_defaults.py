@@ -5,9 +5,9 @@ Revises: 833152c0b02f
 Create Date: 2025-12-21 23:55:00.000000
 
 """
-from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = 'f2g3h4i5j6k7'
@@ -19,7 +19,7 @@ depends_on = None
 def upgrade() -> None:
     # Ensure uuid-ossp extension exists
     op.execute('CREATE EXTENSION IF NOT EXISTS "uuid-ossp"')
-    
+
     # Set defaults for memories table
     op.alter_column('memories', 'id', server_default=sa.text('uuid_generate_v4()'))
     op.alter_column('memories', 'memory_type', server_default='episodic')

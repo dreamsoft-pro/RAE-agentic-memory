@@ -34,7 +34,7 @@ async def register_node(
     service: ControlPlaneService = Depends(get_control_plane_service),
 ):
     # Security: Verify IP is from Tailscale (100.x.x.x) or localhost
-    client_host = request.client.host
+    client_host = request.client.host if request.client else "unknown"
     # In production, we might want to enforce this check if binding isn't restrictive enough
 
     return await service.register_node(
