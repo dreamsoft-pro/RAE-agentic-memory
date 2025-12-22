@@ -68,15 +68,16 @@ Significant effort was invested in restoring system stability after major refact
 - `tests/api/v1/test_graph.py` - Updated tests for real implementation.
 
 
+
 ## Live Metrics (Auto-generated)
 | Metric | Value |
 |--------|-------|
 | **Branch** | `main` |
-| **Commit** | `0b24594` |
-| **Coverage** | N/A |
-| **Tests** | 0 total, 0 failed, 0 skipped |
-| **Pass Rate** | 0.0% |
-| **Last Update** | 2025-12-22 08:23:37 |
+| **Commit** | `9c14b2b` |
+| **Coverage** | 20.8% |
+| **Tests** | 9 total, 0 failed, 6 skipped |
+| **Pass Rate** | 100.0% |
+| **Last Update** | 2025-12-22 08:32:19 |
 
 ## Quick Links
 - [Agent Core Protocol](docs/rules/AGENT_CORE_PROTOCOL.md)
