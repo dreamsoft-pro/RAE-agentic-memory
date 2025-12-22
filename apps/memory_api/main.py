@@ -222,9 +222,9 @@ async def lifespan(app: FastAPI):
 # --- App Initialization ---
 app = FastAPI(
     title="RAE Memory API",
-    version="2.2.1-enterprise",
+    description="Agentic Memory Service for RAE (Reflection-Action-Engine)",
+    version="2.2.2-enterprise",
     lifespan=lifespan,
-    description="""
     ## The Cognitive Memory Engine for AI Agents
 
     RAE provides a sophisticated memory system that allows AI agents to:

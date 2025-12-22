@@ -1,6 +1,19 @@
 ## Recent Changes (Auto-generated)
 
-*Last updated: 2025-12-22 07:35 • Branch: develop • Commit: 4684b92*
+*Last updated: 2025-12-22 08:45 • Branch: develop • Commit: [current]*
+
+### v2.2.2-enterprise (2025-12-22)
+
+#### ✨ Features
+- **rae-core**: Significantly increased unit test coverage from 66% to 83%.
+- **rae-core**: Added ~70 new unit tests covering storage adapters, math layer, search engine, reflection system, and isolation guards.
+- **security**: Achieved 100% test coverage for `MemoryIsolationGuard` to ensure robust multi-tenancy.
+- **dx**: Implemented project-wide "Zero Warning Policy", eliminating all deprecation and runtime warnings.
+
+#### 🐛 Bug Fixes
+- **math**: Fixed critical signature mismatch in `MathLayerController.apply_decay`.
+- **tests**: Fixed collection name mismatch in Qdrant adapter tests.
+- **tests**: Fixed asynchronous mocking issues in search engine tests.
 
 ### ✨ Features
 
