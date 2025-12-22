@@ -50,11 +50,8 @@
 - [ ] **E2E/Integration Polish**
 
 ## Technical Debt (Auto-generated from code)
-*Last scan: 2025-12-22 07:16*
+*Last scan: 2025-12-22 07:35*
 
-- [ ] **CHANGELOG.md:229** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
-- [ ] **CHANGELOG.md:292** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:293** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
 - [ ] **INTEGRATION_CHECKLIST.md:51** - - [ ] Did NOT edit `TODO.md` (CI extracts from code comments)
 - [ ] **SESSION_STATE.md:34** - - [TODO] Fix test environment (DB validation).
 - [ ] **SESSION_STATE.md:35** - - [TODO] Fix updated test files.
