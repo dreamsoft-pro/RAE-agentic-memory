@@ -29,9 +29,7 @@ module = [
 ]
 ignore_missing_imports = true
 
-[tool.ruff]
-line-length = 88
-target-version = "py312"
+[tool.ruff.lint]
 select = ["E", "F", "I", "B", "W"]
 ignore = [
     "E501", # Line too long (handled by black)

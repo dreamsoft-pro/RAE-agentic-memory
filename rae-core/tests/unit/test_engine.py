@@ -131,32 +131,39 @@ async def test_retrieve_memory(rae_engine, mock_memory_storage):
 
 
 @pytest.mark.asyncio
-async def test_search_memories(rae_engine, mock_search_engine):
+async def test_search_memories(rae_engine, mock_search_engine, mock_memory_storage):
     tenant_id = "test-tenant"
     query = "test query"
-    expected_results = [{"id": uuid4(), "score": 0.9}]
+    mem_id = uuid4()
+    expected_results = [(mem_id, 0.9)]
+    expected_memory = {"id": mem_id, "content": "found"}
 
     mock_search_engine.search.return_value = expected_results
+    mock_memory_storage.get_memory.return_value = expected_memory
 
     results = await rae_engine.search_memories(
         query=query,
         tenant_id=tenant_id,
     )
 
-    assert results == expected_results
+    assert len(results) == 1
+    assert results[0]["id"] == mem_id
+    assert results[0]["search_score"] == 0.9
     mock_search_engine.search.assert_called_once()
-    # Check arguments if necessary, usually filtering is processed
 
 
 @pytest.mark.asyncio
-async def test_search_memories_with_rerank(rae_engine, mock_search_engine):
+async def test_search_memories_with_rerank(rae_engine, mock_search_engine, mock_memory_storage):
     tenant_id = "test-tenant"
     query = "test query"
-    search_results = [{"id": i, "score": 0.5} for i in range(5)]
-    reranked_results = [{"id": 0, "score": 0.9}]
+    mem_id = uuid4()
+    search_results = [(mem_id, 0.5)]
+    reranked_results = [(mem_id, 0.9)]
+    expected_memory = {"id": mem_id, "content": "found"}
 
     mock_search_engine.search.return_value = search_results
     mock_search_engine.rerank.return_value = reranked_results
+    mock_memory_storage.get_memory.return_value = expected_memory
 
     results = await rae_engine.search_memories(
         query=query,
@@ -164,7 +171,8 @@ async def test_search_memories_with_rerank(rae_engine, mock_search_engine):
         use_reranker=True,
     )
 
-    assert results == reranked_results
+    assert len(results) == 1
+    assert results[0]["search_score"] == 0.9
     mock_search_engine.search.assert_called_once()
     mock_search_engine.rerank.assert_called_once()
 

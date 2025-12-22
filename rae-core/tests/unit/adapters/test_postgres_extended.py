@@ -114,3 +114,75 @@ class TestPostgreSQLStorageExtended:
                 delta=0.1,
                 tenant_id="tenant1"
             )
+
+    @pytest.mark.asyncio
+    async def test_delete_below_importance(self, pg_storage, mock_conn):
+        """Test deleting memories below importance threshold."""
+        mock_conn.execute.return_value = "DELETE 3"
+        
+        count = await pg_storage.delete_memories_below_importance("t1", "a1", "w1", 0.3)
+        assert count == 3
+        mock_conn.execute.assert_called_once()
+        assert "importance < $4" in mock_conn.execute.call_args[0][0]
+
+    @pytest.mark.asyncio
+    async def test_delete_with_metadata_filter(self, pg_storage, mock_conn):
+        """Test deleting memories with metadata filter."""
+        # Setup mock results for the SELECT part
+        mem_id1 = uuid4()
+        mem_id2 = uuid4()
+        mock_conn.fetch.return_value = [
+            {"id": mem_id1, "metadata": {"status": "archived", "priority": 1}},
+            {"id": mem_id2, "metadata": {"status": "active", "priority": 2}},
+        ]
+        mock_conn.execute.return_value = "DELETE 1"
+
+        # Filter by status="archived"
+        count = await pg_storage.delete_memories_with_metadata_filter(
+            "t1", "a1", "w1", {"status": "archived"}
+        )
+        assert count == 1
+        assert mock_conn.execute.call_count == 1
+        assert mem_id1 in mock_conn.execute.call_args[0][1]
+
+    @pytest.mark.asyncio
+    async def test_delete_with_metadata_filter_operator(self, pg_storage, mock_conn):
+        """Test deleting memories with metadata filter using __lt operator."""
+        mem_id1 = uuid4()
+        mock_conn.fetch.return_value = [
+            {"id": mem_id1, "metadata": {"confidence": 0.2}},
+        ]
+        mock_conn.execute.return_value = "DELETE 1"
+
+        count = await pg_storage.delete_memories_with_metadata_filter(
+            "t1", "a1", "w1", {"confidence__lt": 0.5}
+        )
+        assert count == 1
+        assert mem_id1 in mock_conn.execute.call_args[0][1]
+
+    @pytest.mark.asyncio
+    async def test_search_memories_with_filters(self, pg_storage, mock_conn):
+        """Test search with various filters."""
+        mock_conn.fetch.return_value = []
+        
+        await pg_storage.search_memories(
+            "query", "t", "a", "l",
+            filters={"not_expired": True, "tags": ["tag1"], "min_importance": 0.7}
+        )
+        
+        query = mock_conn.fetch.call_args[0][0]
+        assert "expires_at IS NULL OR expires_at > $4" in query
+        assert "tags && $5" in query
+        assert "importance >= $6" in query
+
+    @pytest.mark.asyncio
+    async def test_update_memory_expiration(self, pg_storage, mock_conn):
+        """Test updating memory expiration."""
+        from datetime import datetime, timezone
+        mock_conn.execute.return_value = "UPDATE 1"
+        expiry = datetime.now(timezone.utc)
+        
+        success = await pg_storage.update_memory_expiration(uuid4(), "t1", expiry)
+        assert success is True
+        mock_conn.execute.assert_called_once()
+        assert "SET expires_at = $1" in mock_conn.execute.call_args[0][0]

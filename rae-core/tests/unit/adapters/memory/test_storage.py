@@ -1,5 +1,6 @@
 """Unit tests for InMemoryStorage adapter."""
 
+from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest
@@ -396,3 +397,125 @@ class TestInMemoryStorage:
 
         count = await storage.count_memories("tenant1")
         assert count == 10
+
+    @pytest.mark.asyncio
+    async def test_delete_memories_with_metadata_filter(self, storage):
+        """Test deleting memories matching metadata filter."""
+        await storage.store_memory(
+            content="M1", layer="working", tenant_id="tenant1", agent_id="agent1",
+            metadata={"category": "tech", "priority": "high"}
+        )
+        await storage.store_memory(
+            content="M2", layer="working", tenant_id="tenant1", agent_id="agent1",
+            metadata={"category": "news", "priority": "low"}
+        )
+        await storage.store_memory(
+            content="M3", layer="working", tenant_id="tenant1", agent_id="agent1",
+            metadata={"category": "tech", "priority": "low"}
+        )
+
+        # Delete tech category
+        count = await storage.delete_memories_with_metadata_filter(
+            "tenant1", "agent1", "working", {"category": "tech"}
+        )
+        assert count == 2
+
+        memories = await storage.list_memories("tenant1")
+        assert len(memories) == 1
+        assert memories[0]["metadata"]["category"] == "news"
+
+    @pytest.mark.asyncio
+    async def test_delete_memories_below_importance(self, storage):
+        """Test deleting memories below importance threshold."""
+        await storage.store_memory(
+            content="High", layer="working", tenant_id="t1", agent_id="a1", importance=0.9
+        )
+        await storage.store_memory(
+            content="Med", layer="working", tenant_id="t1", agent_id="a1", importance=0.5
+        )
+        await storage.store_memory(
+            content="Low", layer="working", tenant_id="t1", agent_id="a1", importance=0.2
+        )
+
+        # Delete below 0.6
+        count = await storage.delete_memories_below_importance("t1", "a1", "working", 0.6)
+        assert count == 2
+
+        memories = await storage.list_memories("t1")
+        assert len(memories) == 1
+        assert memories[0]["content"] == "High"
+
+    @pytest.mark.asyncio
+    async def test_search_memories_substring(self, storage):
+        """Test simple substring search."""
+        await storage.store_memory(
+            content="Python programming is fun", layer="w", tenant_id="t", agent_id="a"
+        )
+        await storage.store_memory(
+            content="Java is also a language", layer="w", tenant_id="t", agent_id="a"
+        )
+        await storage.store_memory(
+            content="Coding in Python is productive", layer="w", tenant_id="t", agent_id="a"
+        )
+
+        results = await storage.search_memories("python", "t", "a", "w")
+        assert len(results) == 2
+        # Verify scores (higher score for earlier position)
+        assert results[0]["score"] > results[1]["score"]
+        assert "Python" in results[0]["memory"]["content"]
+
+    @pytest.mark.asyncio
+    async def test_delete_expired_memories(self, storage):
+        """Test deleting expired memories."""
+        from datetime import timedelta
+        now = datetime.now(timezone.utc)
+        
+        await storage.store_memory(
+            content="Expired", layer="w", tenant_id="t", agent_id="a",
+            expires_at=now - timedelta(hours=1)
+        )
+        await storage.store_memory(
+            content="Valid", layer="w", tenant_id="t", agent_id="a",
+            expires_at=now + timedelta(hours=1)
+        )
+        await storage.store_memory(
+            content="NoExpiry", layer="w", tenant_id="t", agent_id="a"
+        )
+
+        count = await storage.delete_expired_memories("t", "a", "w")
+        assert count == 1
+
+        memories = await storage.list_memories("t")
+        assert len(memories) == 2
+        assert "Expired" not in [m["content"] for m in memories]
+
+    @pytest.mark.asyncio
+    async def test_update_memory_expiration(self, storage):
+        """Test updating memory expiration time."""
+        memory_id = await storage.store_memory(
+            content="Test", layer="w", tenant_id="t", agent_id="a"
+        )
+        
+        new_expiry = datetime.now(timezone.utc)
+        success = await storage.update_memory_expiration(memory_id, "t", new_expiry)
+        assert success is True
+        
+        memory = await storage.get_memory(memory_id, "t")
+        assert memory["expires_at"] == new_expiry
+
+    @pytest.mark.asyncio
+    async def test_adjust_importance(self, storage):
+        """Test adjusting memory importance."""
+        memory_id = await storage.store_memory(
+            content="Test", layer="w", tenant_id="t", agent_id="a", importance=0.5
+        )
+        
+        new_val = await storage.adjust_importance(memory_id, 0.2, "t")
+        assert new_val == 0.7
+        
+        # Test clamping
+        new_val = await storage.adjust_importance(memory_id, 1.0, "t")
+        assert new_val == 1.0
+        
+        new_val = await storage.adjust_importance(memory_id, -2.0, "t")
+        assert new_val == 0.0
