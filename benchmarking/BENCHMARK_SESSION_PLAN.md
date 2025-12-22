@@ -256,7 +256,8 @@ python benchmarking/scripts/analyze_results.py
 # Save this as: benchmarking/run_full_session.sh
 
 export POSTGRES_USER=rae POSTGRES_PASSWORD=rae_password POSTGRES_DB=rae
-cd /home/grzegorz/cloud/Dockerized/RAE-agentic-memory
+# Ensure you are in the project root
+# cd /path/to/RAE-agentic-memory
 
 echo "🚀 RAE 2-Hour Benchmark Session Starting..."
 echo "Start time: $(date)"

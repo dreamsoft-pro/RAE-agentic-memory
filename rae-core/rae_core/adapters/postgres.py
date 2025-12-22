@@ -4,7 +4,7 @@ Implements IMemoryStorage interface using asyncpg for async PostgreSQL access.
 """
 
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any, Optional, cast
 from uuid import UUID, uuid4
 
 try:
@@ -97,6 +97,7 @@ class PostgreSQLStorage(IMemoryStorage):
         embedding: list[float] | None = None,
         importance: float | None = None,
         expires_at: datetime | None = None,
+        memory_type: str = "text",
     ) -> UUID:
         """Store a new memory in PostgreSQL."""
         pool = await self._get_pool()
@@ -106,15 +107,16 @@ class PostgreSQLStorage(IMemoryStorage):
         metadata = metadata or {}
         importance = importance if importance is not None else 0.5
 
+        import json
         async with pool.acquire() as conn:
             await conn.execute(
                 """
                 INSERT INTO memories (
                     id, content, layer, tenant_id, agent_id, 
                     tags, metadata, embedding, importance, expires_at,
-                    created_at, last_accessed_at
+                    created_at, last_accessed_at, memory_type
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11, $12)
                 """,
                 memory_id,
                 content,
@@ -122,11 +124,12 @@ class PostgreSQLStorage(IMemoryStorage):
                 tenant_id,
                 agent_id,
                 tags,
-                metadata,
+                json.dumps(metadata),
                 embedding,
                 importance,
                 expires_at,
-                datetime.now(timezone.utc),
+                datetime.now(timezone.utc).replace(tzinfo=None),
+                memory_type,
             )
 
         return memory_id
@@ -278,6 +281,7 @@ class PostgreSQLStorage(IMemoryStorage):
         tenant_id: str,
         agent_id: str | None = None,
         layer: str | None = None,
+        tags: list[str] | None = None,
         filters: dict[str, Any] | None = None,
         limit: int = 100,
         offset: int = 0,
@@ -302,6 +306,11 @@ class PostgreSQLStorage(IMemoryStorage):
         if layer:
             conditions.append(f"layer = ${param_idx}")
             params.append(layer)
+            param_idx += 1
+
+        if tags:
+            conditions.append(f"tags && ${param_idx}")
+            params.append(tags)
             param_idx += 1
 
         # Apply additional filters
@@ -371,7 +380,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 tenant_id,
             )
 
-        return result == "UPDATE 1"
+        return cast(str, result) == "UPDATE 1"
 
     async def update_memory_expiration(
         self,
@@ -394,7 +403,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 tenant_id,
             )
 
-        return result == "UPDATE 1"
+        return cast(str, result) == "UPDATE 1"
 
     async def update_memory(
         self,
@@ -443,7 +452,7 @@ class PostgreSQLStorage(IMemoryStorage):
         async with pool.acquire() as conn:
             result = await conn.execute(query, *params)
 
-        return result == "UPDATE 1"
+        return cast(str, result) == "UPDATE 1"
 
     async def increment_access_count(
         self,
@@ -475,7 +484,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 tenant_id,
             )
 
-        return result == "UPDATE 1"
+        return cast(str, result) == "UPDATE 1"
 
     async def delete_memory(
         self,
@@ -495,7 +504,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 tenant_id,
             )
 
-        return result == "DELETE 1"
+        return cast(str, result) == "DELETE 1"
 
     async def delete_expired_memories(
         self,
@@ -523,7 +532,9 @@ class PostgreSQLStorage(IMemoryStorage):
             )
 
         # Parse "DELETE N" to get count
-        count = int(result.split()[-1]) if result.startswith("DELETE") else 0
+        # Parse "DELETE N" to get count
+        status = cast(str, result)
+        count = int(status.split()[-1]) if status.startswith("DELETE") else 0
         return count
 
     async def delete_memories_below_importance(
@@ -551,7 +562,9 @@ class PostgreSQLStorage(IMemoryStorage):
                 importance_threshold,
             )
 
-        count = int(result.split()[-1]) if result.startswith("DELETE") else 0
+        # Parse "DELETE N" to get count
+        status = cast(str, result)
+        count = int(status.split()[-1]) if status.startswith("DELETE") else 0
         return count
 
     async def delete_memories_with_metadata_filter(
@@ -619,25 +632,35 @@ class PostgreSQLStorage(IMemoryStorage):
     async def count_memories(
         self,
         tenant_id: str,
-        agent_id: str,
-        layer: str,
+        agent_id: str | None = None,
+        layer: str | None = None,
     ) -> int:
         """Count memories in a layer."""
         pool = await self._get_pool()
 
-        async with pool.acquire() as conn:
-            count = await conn.fetchval(
-                """
-                SELECT COUNT(*)
-                FROM memories
-                WHERE tenant_id = $1 AND agent_id = $2 AND layer = $3
-                """,
-                tenant_id,
-                agent_id,
-                layer,
-            )
+        conditions = ["tenant_id = $1"]
+        params = [tenant_id]
+        param_idx = 2
 
-        return int(count) if count else 0
+        if agent_id:
+            conditions.append(f"agent_id = ${param_idx}")
+            params.append(agent_id)
+            param_idx += 1
+
+        if layer:
+            conditions.append(f"layer = ${param_idx}")
+            params.append(layer)
+            param_idx += 1
+
+        where_clause = " AND ".join(conditions)
+
+        async with pool.acquire() as conn:
+            result = await conn.fetchval(
+                f"SELECT COUNT(*) FROM memories WHERE {where_clause}",
+                *params,
+            )
+            return cast(int, result or 0)
+
 
     async def get_metric_aggregate(
         self,

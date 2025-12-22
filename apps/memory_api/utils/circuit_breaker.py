@@ -15,15 +15,16 @@ States:
 - HALF_OPEN: Testing if service recovered
 """
 
-import logging
 import time
 from datetime import datetime
 from enum import Enum
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, Tuple, Type, Union
+
+import structlog
 
 from apps.memory_api.utils.datetime_utils import utc_now
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class CircuitState(str, Enum):
@@ -53,7 +54,9 @@ class CircuitBreaker:
         name: str,
         failure_threshold: int = 5,
         recovery_timeout: int = 60,
-        expected_exception: type = Exception,
+        expected_exception: Union[
+            Type[BaseException], Tuple[Type[BaseException], ...]
+        ] = Exception,
         success_threshold: int = 2,
     ):
         """

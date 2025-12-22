@@ -1,12 +1,10 @@
 import structlog
 from asyncpg.pool import Pool as AsyncpgPool
 from fastapi import APIRouter, Depends, HTTPException, status
-from qdrant_client import QdrantClient
+from qdrant_client import AsyncQdrantClient
 from redis.asyncio import Redis as AsyncRedis
 
-import apps.llm.broker.llm_router as llm_broker
 import apps.memory_api.dependencies as deps  # Modified import
-from apps.memory_api.config import settings
 
 router = APIRouter()
 logger = structlog.get_logger(__name__)
@@ -24,7 +22,7 @@ async def check_postgres(
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail=f"PostgreSQL DOWN: {e}",
-        )
+        ) from e
 
 
 async def check_redis(
@@ -38,40 +36,25 @@ async def check_redis(
         logger.error("health_check_redis_failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"Redis DOWN: {e}"
-        )
+        ) from e
 
 
 async def check_qdrant(
-    qdrant_client: QdrantClient = Depends(deps.get_qdrant_client),
+    qdrant_client: AsyncQdrantClient = Depends(deps.get_qdrant_client),
 ):  # Used deps.get_qdrant_client
     """Check Qdrant connection."""
     try:
         # Try to get collections list as a simple health check
-        collections = qdrant_client.get_collections()
+        collections = await qdrant_client.get_collections()
         return {"status": "UP", "collections_count": len(collections.collections)}
     except Exception as e:
         logger.error("health_check_qdrant_failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"Qdrant DOWN: {e}"
-        )
+        ) from e
 
 
-async def check_llm_provider():
-    """Check if the configured LLM provider is reachable."""
-    try:
-        # Just ensure LLMRouter can be imported and settings are valid
-        # A more thorough check would involve a dummy API call, but that's complex for a basic health check
-        llm_broker.LLMRouter()  # Instantiate directly, no unused variable
-        provider = getattr(settings, "LLM_PROVIDER", "none")
-        return {"status": "UP", "provider": provider}
-    except Exception as e:
-        logger.warning("health_check_llm_optional", error=str(e))
-        # In development mode without LLM, this is expected
-        return {
-            "status": "OPTIONAL",
-            "provider": "none",
-            "note": "LLM not configured (development mode)",
-        }
+async def check_llm_provider(): ...
 
 
 @router.get("/health", response_model=dict, summary="Overall Health Check")

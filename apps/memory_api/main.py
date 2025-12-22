@@ -1,4 +1,6 @@
+import os
 from contextlib import asynccontextmanager
+from typing import Any, cast
 
 import asyncpg
 import structlog
@@ -8,7 +10,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
-from qdrant_client import QdrantClient
 from slowapi.errors import RateLimitExceeded
 
 from apps.memory_api.api.v1 import (
@@ -37,6 +38,7 @@ from apps.memory_api.routes import (
     evaluation,
     event_triggers,
     graph_enhanced,
+    hybrid_search,
     reflections,
     token_savings,
 )
@@ -67,6 +69,7 @@ async def lifespan(app: FastAPI):
         rate_limiting=settings.ENABLE_RATE_LIMITING,
     )
 
+    # 1. Initialize Connections
     app.state.pool = await asyncpg.create_pool(
         host=settings.POSTGRES_HOST,
         database=settings.POSTGRES_DB,
@@ -74,43 +77,133 @@ async def lifespan(app: FastAPI):
         password=settings.POSTGRES_PASSWORD,
     )
 
-    # --- RAE Schema Validation ---
-    if settings.RAE_DB_MODE == "validate":
-        logger.info("db_validation_start", mode=settings.RAE_DB_MODE)
-        from apps.memory_api.adapters.postgres_validator import PostgresValidator
-        from apps.memory_api.core.contract_definition import RAE_MEMORY_CONTRACT_V1
-
-        validator = PostgresValidator(app.state.pool)
-        result = await validator.validate(RAE_MEMORY_CONTRACT_V1)
-
-        if not result.valid:
-            error_msg = f"Database schema validation failed: {len(result.violations)} violations found."
-            logger.error(
-                "db_validation_failed", violations=[v.model_dump() for v in result.violations]
-            )
-            # Raise exception to stop startup (Fail Fast)
-            raise RuntimeError(f"{error_msg} See logs for details.")
-
-        logger.info("db_validation_success")
-    elif settings.RAE_DB_MODE == "ignore":
-        logger.warning("db_validation_skipped", mode=settings.RAE_DB_MODE)
-
     # Initialize Redis client
     app.state.redis_client = await create_redis_client(settings.REDIS_URL)
-    # Initialize Qdrant client
-    app.state.qdrant_client = QdrantClient(
-        host=settings.QDRANT_HOST, port=settings.QDRANT_PORT
-    )
 
-    # Initialize RAE-Core service
+    # Initialize Async Qdrant client (Single source of truth)
     from qdrant_client import AsyncQdrantClient
 
-    async_qdrant = AsyncQdrantClient(
+    app.state.qdrant_client = AsyncQdrantClient(
         host=settings.QDRANT_HOST, port=settings.QDRANT_PORT
     )
+
+    # Ensure Qdrant Schema exists before validation (Bootstrap)
+    if settings.RAE_DB_MODE in ["validate", "init", "migrate"]:
+        try:
+            from qdrant_client.http import models as rest
+
+            from apps.memory_api.core.contract_definition import RAE_MEMORY_CONTRACT_V1
+
+            if RAE_MEMORY_CONTRACT_V1.vector_store:
+                # Check connectivity first (fast fail if down)
+                collections_resp = await app.state.qdrant_client.get_collections()
+                existing_collections = {c.name for c in collections_resp.collections}
+
+                for col in RAE_MEMORY_CONTRACT_V1.vector_store.collections:
+                    if col.name not in existing_collections:
+                        logger.info(
+                            f"Auto-creating missing Qdrant collection: {col.name}"
+                        )
+                        # Map string distance to Qdrant Enum
+                        distance_map = {
+                            "Cosine": rest.Distance.COSINE,
+                            "Euclid": rest.Distance.EUCLID,
+                            "Dot": rest.Distance.DOT,
+                        }
+                        metric = distance_map.get(
+                            col.distance_metric, rest.Distance.COSINE
+                        )
+
+                        await app.state.qdrant_client.create_collection(
+                            collection_name=col.name,
+                            vectors_config={
+                                "dense": rest.VectorParams(
+                                    size=col.vector_size,
+                                    distance=metric,
+                                )
+                            },
+                            sparse_vectors_config={
+                                "text": rest.SparseVectorParams(),
+                            },
+                        )
+        except Exception as e:
+            logger.error(f"Failed to auto-initialize Qdrant schema: {e}")
+            # We continue; validation step will catch any remaining issues and Fail Fast
+
+    # 2. Database Initialization / Migration
+    if (
+        settings.RAE_DB_MODE in ["init", "migrate"]
+        and "PYTEST_CURRENT_TEST" not in os.environ
+    ):
+        logger.info("db_migration_start", mode=settings.RAE_DB_MODE)
+        try:
+            import asyncio
+
+            from alembic import command, config
+
+            # Run Alembic migrations programmatically
+            # We run this in a thread because Alembic is synchronous
+            alembic_cfg = config.Config("alembic.ini")
+            await asyncio.to_thread(command.upgrade, alembic_cfg, "head")
+            logger.info("db_migration_success")
+        except Exception as e:
+            logger.error("db_migration_failed", error=str(e))
+            raise RuntimeError(f"Database migration failed: {e}") from e
+    elif "PYTEST_CURRENT_TEST" in os.environ:
+        logger.info("db_migration_skipped_test_mode")
+
+    # 3. Memory Contract Validation (Fail Fast)
+    # Validate if mode is 'validate', 'init', or 'migrate' (verify after migration)
+    if (
+        settings.RAE_DB_MODE in ["validate", "init", "migrate"]
+        and "PYTEST_CURRENT_TEST" not in os.environ
+    ):
+        logger.info("memory_validation_start", mode=settings.RAE_DB_MODE)
+
+        from apps.memory_api.adapters.postgres_adapter import PostgresAdapter
+        from apps.memory_api.adapters.qdrant_adapter import QdrantAdapter
+        from apps.memory_api.adapters.redis_adapter import RedisAdapter
+        from apps.memory_api.core.contract_definition import RAE_MEMORY_CONTRACT_V1
+        from apps.memory_api.services.validation_service import ValidationService
+
+        adapters = [
+            PostgresAdapter(app.state.pool),
+            RedisAdapter(app.state.redis_client),
+            QdrantAdapter(app.state.qdrant_client),
+        ]
+        validation_service = ValidationService(adapters)
+        result = await validation_service.validate_all(RAE_MEMORY_CONTRACT_V1)
+
+        if not result.valid:
+            violations_summary = "\n".join(
+                [
+                    f"- [{v.issue_type}] {v.entity}: {v.details}"
+                    for v in result.violations
+                ]
+            )
+            error_msg = (
+                f"Memory Contract Validation Failed: {len(result.violations)} violations found.\n"
+                f"Violations:\n{violations_summary}\n\n"
+                "CRITICAL: The database schema does not match the RAE Memory Contract.\n"
+                "HINT: To automatically fix the schema (if possible), set the environment variable:\n"
+                "      RAE_DB_MODE=migrate\n"
+                "      and restart the container."
+            )
+            logger.error(
+                "memory_validation_failed",
+                violations=[v.model_dump() for v in result.violations],
+            )
+            # Raise exception to stop startup (Fail Fast)
+            raise RuntimeError(error_msg)
+
+        logger.info("memory_validation_success")
+    elif settings.RAE_DB_MODE == "ignore":
+        logger.warning("memory_validation_skipped", mode=settings.RAE_DB_MODE)
+
+    # Initialize RAE-Core service
     app.state.rae_core_service = RAECoreService(
         postgres_pool=app.state.pool,
-        qdrant_client=async_qdrant,
+        qdrant_client=app.state.qdrant_client,
         redis_client=app.state.redis_client,
     )
     logger.info("RAE-Core service initialized")
@@ -123,12 +216,13 @@ async def lifespan(app: FastAPI):
     logger.info("Shutting down RAE Memory API...")
     await app.state.pool.close()
     await app.state.redis_client.aclose()  # Close Redis client
+    await app.state.qdrant_client.close()  # Close Qdrant client
 
 
 # --- App Initialization ---
 app = FastAPI(
     title="RAE Memory API",
-    version="2.2.0-enterprise",
+    version="2.2.1-enterprise",
     lifespan=lifespan,
     description="""
     ## The Cognitive Memory Engine for AI Agents
@@ -161,7 +255,7 @@ Instrumentator().instrument(app).expose(app)
 app.state.limiter = limiter
 
 # Add rate limit exception handler
-app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+app.add_exception_handler(RateLimitExceeded, cast(Any, rate_limit_exceeded_handler))
 
 # Module-level logger for exception handlers
 logger = structlog.get_logger(__name__)
@@ -247,7 +341,7 @@ def custom_openapi():
     return app.openapi_schema
 
 
-app.openapi = custom_openapi
+cast(Any, app).openapi = custom_openapi
 
 # --- Exception Handlers ---
 
@@ -275,24 +369,38 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         path=request.url.path,
         method=request.method,
     )
+    from fastapi import status
+    from fastapi.encoders import jsonable_encoder
+
     return JSONResponse(
-        status_code=422,
-        content={
-            "error": {
-                "code": "422",
-                "message": "Validation Error",
-                "details": exc.errors(),
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        content=jsonable_encoder(
+            {
+                "detail": exc.errors(),
+                "error": {
+                    "code": "422",
+                    "message": "Validation Error",
+                    "details": exc.errors(),
+                },
             }
-        },
+        ),
     )
 
 
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: Request, exc: Exception):
     logger.exception("unhandled_exception", exc_info=exc)
+    from fastapi import status
+
     return JSONResponse(
-        status_code=500,
-        content={"error": {"code": "500", "message": "Internal Server Error"}},
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        content={
+            "detail": str(exc),
+            "error": {
+                "code": "500",
+                "message": "Internal Server Error",
+            },
+        },
     )
 
 
@@ -343,6 +451,7 @@ app.include_router(compliance.router, tags=["ISO/IEC 42001 Compliance"])
 # API v1 endpoints - Enterprise Features
 app.include_router(event_triggers.router, tags=["Event Triggers"])
 app.include_router(reflections.router, tags=["Reflections"])
+app.include_router(hybrid_search.router, tags=["Hybrid Search"])
 app.include_router(evaluation.router, tags=["Evaluation"])
 app.include_router(dashboard.router, tags=["Dashboard"])
 app.include_router(graph_enhanced.router, tags=["Graph Management"])

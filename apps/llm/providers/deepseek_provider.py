@@ -5,7 +5,7 @@ Implements the LLM provider interface for DeepSeek models.
 DeepSeek API is very similar to OpenAI's API.
 """
 
-from typing import AsyncIterator
+from typing import Any, AsyncIterator, cast
 
 from openai import AsyncOpenAI, RateLimitError
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -125,7 +125,7 @@ class DeepSeekProvider:
             if request.stop_sequences:
                 params["stop"] = request.stop_sequences
 
-            response = await self.client.chat.completions.create(**params)
+            response = await self.client.chat.completions.create(**cast(Any, params))
 
             usage = TokenUsage(
                 prompt_tokens=response.usage.prompt_tokens,
@@ -158,7 +158,7 @@ class DeepSeekProvider:
                 f"DeepSeek rate limit exceeded: {str(e)}",
                 provider="deepseek",
                 raw_error=e,
-            )
+            ) from e
         except Exception as e:
             error_str = str(e).lower()
             if (
@@ -170,13 +170,13 @@ class DeepSeekProvider:
                     f"DeepSeek authentication failed: {str(e)}",
                     provider="deepseek",
                     raw_error=e,
-                )
+                ) from e
             elif "timeout" in error_str or "connection" in error_str:
                 raise LLMTransientError(
                     f"DeepSeek transient error: {str(e)}",
                     provider="deepseek",
                     raw_error=e,
-                )
+                ) from e
             elif (
                 "context_length_exceeded" in error_str or "maximum context" in error_str
             ):
@@ -184,19 +184,19 @@ class DeepSeekProvider:
                     f"DeepSeek context length exceeded: {str(e)}",
                     provider="deepseek",
                     raw_error=e,
-                )
+                ) from e
             elif "500" in error_str or "502" in error_str or "503" in error_str:
                 raise LLMTransientError(
                     f"DeepSeek server error: {str(e)}",
                     provider="deepseek",
                     raw_error=e,
-                )
+                ) from e
             else:
                 raise LLMProviderError(
                     f"DeepSeek error: {str(e)}",
                     provider="deepseek",
                     raw_error=e,
-                )
+                ) from e
 
     async def stream(self, request: LLMRequest) -> AsyncIterator[LLMChunk]:
         """
@@ -228,7 +228,7 @@ class DeepSeekProvider:
             if tools:
                 params["tools"] = tools
 
-            stream = await self.client.chat.completions.create(**params)
+            stream = await self.client.chat.completions.create(**cast(Any, params))
 
             async for chunk in stream:
                 if chunk.choices and chunk.choices[0].delta.content:
@@ -244,16 +244,16 @@ class DeepSeekProvider:
                     f"DeepSeek rate limit exceeded: {str(e)}",
                     provider="deepseek",
                     raw_error=e,
-                )
+                ) from e
             elif "authentication" in error_str or "api key" in error_str:
                 raise LLMAuthError(
                     f"DeepSeek authentication failed: {str(e)}",
                     provider="deepseek",
                     raw_error=e,
-                )
+                ) from e
             else:
                 raise LLMTransientError(
                     f"DeepSeek streaming error: {str(e)}",
                     provider="deepseek",
                     raw_error=e,
-                )
+                ) from e

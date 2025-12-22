@@ -10,7 +10,7 @@ This module defines models for the interactive dashboard including:
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -493,7 +493,7 @@ class AlertMessage(WebSocketMessage):
     Pushed for quality degradation, drift detection, etc.
     """
 
-    event_type: Union[DashboardEventType, str]
+    event_type: DashboardEventType
 
     alert_id: UUID = Field(default_factory=lambda: __import__("uuid").uuid4())
     severity: str  # 'warning', 'error', 'critical'

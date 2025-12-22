@@ -74,6 +74,7 @@ def test_get_model_rates_success(mock_cost_model):
     rates = get_model_rates("test-model")
 
     # Verify
+    assert rates is not None
     assert rates["input"] == 0.5
     assert rates["output"] == 1.5
 

@@ -74,7 +74,7 @@ def client_with_auth(mock_rae_service, mock_db_pool):
     ), patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()):
         with TestClient(app) as client:
             # Store tenant_id on client for tests to access
-            client.tenant_id = tenant_id
+            client.tenant_id = tenant_id  # type: ignore[attr-defined]
             yield client
 
     app.dependency_overrides = {}
@@ -247,41 +247,64 @@ async def test_get_graph_edges(client_with_auth, mock_db_pool):
 
 
 @pytest.mark.asyncio
-async def test_query_knowledge_graph_placeholder(client_with_auth, mock_rae_service):
-    """Test POST /graph/query (placeholder behavior)"""
+async def test_query_knowledge_graph(client_with_auth, mock_db_pool):
+    """Test POST /graph/query"""
+    # Mock HybridSearchService
+    with patch("apps.memory_api.api.v1.graph.HybridSearchService") as MockService:
+        service_instance = MockService.return_value
+        mock_result = MagicMock()
+        mock_result.results = []
+        mock_result.graph_results_count = 0
+        mock_result.model_dump.return_value = {
+            "results": [],
+            "graph_results_count": 0,
+            "total_results": 0
+        }
+        service_instance.search = AsyncMock(return_value=mock_result)
 
-    payload = {
-        "query": "test query",
-        "project_id": "test-project",
-        "traversal_strategy": "bfs",
-    }
-    headers = {"X-Tenant-Id": client_with_auth.tenant_id}
+        payload = {
+            "query": "test query",
+            "project_id": "test-project",
+            "traversal_strategy": "bfs",
+        }
+        headers = {"X-Tenant-Id": client_with_auth.tenant_id}
 
-    response = client_with_auth.post("/v1/graph/query", json=payload, headers=headers)
+        response = client_with_auth.post("/v1/graph/query", json=payload, headers=headers)
 
-    assert response.status_code == 200
-    data = response.json()
-    # Check for placeholder message
-    assert "placeholder" in data.get("message", "").lower()
-    assert data["results"] == []
+        assert response.status_code == 200
+        data = response.json()
+        assert "results" in data
+        service_instance.search.assert_called_once()
 
 
 @pytest.mark.asyncio
-async def test_get_subgraph_placeholder(client_with_auth, mock_rae_service):
-    """Test GET /graph/subgraph (placeholder behavior)"""
-    
-    node_id = str(uuid4())
-    headers = {"X-Tenant-Id": client_with_auth.tenant_id}
-    response = client_with_auth.get(
-        f"/v1/graph/subgraph?project_id=test-project&node_ids={node_id}&depth=2",
-        headers=headers,
-    )
+async def test_get_subgraph(client_with_auth, mock_db_pool):
+    """Test GET /graph/subgraph"""
+    with patch("apps.memory_api.api.v1.graph.EnhancedGraphRepository") as MockRepo:
+        repo_instance = MockRepo.return_value
 
-    assert response.status_code == 200
-    data = response.json()
-    # Check for placeholder message
-    assert "placeholder" in data.get("message", "").lower()
-    assert data["nodes"] == []
+        # Mock node resolution
+        node_uuid = uuid4()
+        mock_node_obj = MagicMock()
+        mock_node_obj.id = node_uuid
+        repo_instance.get_node_by_node_id = AsyncMock(return_value=mock_node_obj)
+
+        # Mock traversal
+        repo_instance.traverse_temporal = AsyncMock(return_value=([], []))
+
+        node_id = "test-node-id"
+        headers = {"X-Tenant-Id": client_with_auth.tenant_id}
+        response = client_with_auth.get(
+            f"/v1/graph/subgraph?project_id=test-project&node_ids={node_id}&depth=2",
+            headers=headers,
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "nodes" in data
+        assert "edges" in data
+        repo_instance.get_node_by_node_id.assert_called_once()
+        repo_instance.traverse_temporal.assert_called_once()
 
 
 @pytest.mark.asyncio

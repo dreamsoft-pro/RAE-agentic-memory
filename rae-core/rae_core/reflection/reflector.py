@@ -92,7 +92,7 @@ class Reflector:
             all_tags.extend(m.get("tags", []))
 
         # Find common tags
-        tag_counts = {}
+        tag_counts: dict[str, int] = {}
         for tag in all_tags:
             tag_counts[tag] = tag_counts.get(tag, 0) + 1
 
@@ -151,7 +151,7 @@ class Reflector:
         for m in memories:
             all_tags.extend(m.get("tags", []))
 
-        tag_freq = {}
+        tag_freq: dict[str, int] = {}
         for tag in all_tags:
             tag_freq[tag] = tag_freq.get(tag, 0) + 1
 
@@ -202,7 +202,7 @@ class Reflector:
 
         # Analyze layers
         layers = [m.get("layer", "unknown") for m in memories]
-        layer_dist = {}
+        layer_dist: dict[str, int] = {}
         for layer in layers:
             layer_dist[layer] = layer_dist.get(layer, 0) + 1
 
@@ -275,7 +275,7 @@ class Reflector:
             return []
 
         # Group by tags
-        tag_groups = {}
+        tag_groups: dict[str, list[UUID]] = {}
         for memory in memories:
             tags = memory.get("tags", [])
             for tag in tags:

@@ -9,7 +9,7 @@ This service analyzes user queries to:
 """
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, cast
 
 import structlog
 from pydantic import BaseModel
@@ -128,11 +128,13 @@ class QueryAnalyzer:
         self.llm_provider = get_llm_provider()
         self.weight_profiles = DEFAULT_WEIGHT_PROFILES
 
-    async def analyze_query(
+    async def analyze_intent(
         self,
         query: str,
-        context: List[str] = None,
-        user_preferences: Dict[str, Any] = None,
+        tenant_id: str,
+        project_id: str,
+        context: Optional[List[str]] = None,
+        user_preferences: Optional[Dict[str, Any]] = None,
     ) -> QueryAnalysis:
         """
         Analyze query using LLM to determine intent and optimal strategies.
@@ -162,6 +164,7 @@ class QueryAnalyzer:
                 model=settings.RAE_LLM_MODEL_DEFAULT,
                 response_model=QueryAnalysisResult,
             )
+            result = cast(QueryAnalysisResult, result)
 
             # Convert to QueryAnalysis
             analysis = QueryAnalysis(
@@ -401,4 +404,4 @@ class QueryAnalysisResult(BaseModel):
     strategy_weights: Dict[str, float]
     requires_temporal_filtering: bool
     requires_graph_traversal: bool
-    suggested_depth: int = None
+    suggested_depth: Optional[int] = None

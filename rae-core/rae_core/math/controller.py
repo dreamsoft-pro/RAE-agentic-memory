@@ -1,34 +1,11 @@
 """Math Layer Controller - orchestrates all mathematical operations."""
 
 
-# Import available functions or create stubs
-try:
-    from rae_core.math.dynamics import compute_recency_score
-except ImportError:
 
-    def compute_recency_score(age_hours: float, usage_count: int = 0) -> float:
-        """Stub: compute recency score."""
-        import math
-
-        return math.exp(-0.01 * age_hours)
-
-
-try:
-    from rae_core.math.policy import compute_memory_score
-except ImportError:
-
-    def compute_memory_score(memory: dict, query: str = None) -> float:
-        """Stub: compute memory score."""
-        return 0.5
-
-
-try:
-    from rae_core.math.structure import cosine_similarity
-except ImportError:
-
-    def cosine_similarity(vec1: list[float], vec2: list[float]) -> float:
-        """Stub: compute cosine similarity."""
-        return 0.5
+# Import available functions
+from rae_core.math.dynamics import calculate_recency_score
+from rae_core.math.policy import compute_memory_score
+from rae_core.math.structure import cosine_similarity
 
 
 class MathLayerController:
@@ -46,13 +23,27 @@ class MathLayerController:
         """Initialize controller with optional config."""
         self.config = config or {}
 
-    def score_memory(self, memory: dict, query: str | None = None) -> float:
+    def score_memory(self, memory: dict, query_similarity: float = 0.5) -> float:
         """Score a memory's importance."""
-        return compute_memory_score(memory, query)
+        result = compute_memory_score(
+            similarity=query_similarity,
+            importance=memory.get("importance", 0.5),
+            last_accessed_at=memory.get("last_accessed_at"),
+            created_at=memory.get("created_at"),  # type: ignore
+            access_count=memory.get("access_count", 0),
+        )
+        return float(result.final_score)
 
     def apply_decay(self, age_hours: float, usage_count: int = 0) -> float:
         """Apply time-based decay to importance."""
-        return compute_recency_score(age_hours, usage_count)
+        # recency_score, age_seconds, effective_decay
+        score, _, _ = calculate_recency_score(
+            last_accessed_at=None,
+            created_at=None,  # type: ignore
+            access_count=usage_count,
+            age_seconds=age_hours * 3600,
+        )
+        return float(score)
 
     def compute_similarity(
         self, embedding1: list[float], embedding2: list[float]

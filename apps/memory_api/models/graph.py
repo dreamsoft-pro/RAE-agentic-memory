@@ -7,6 +7,7 @@ used by both repositories and services.
 
 from enum import Enum
 from typing import Any, Dict, Optional
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -21,7 +22,7 @@ class TraversalStrategy(str, Enum):
 class GraphNode(BaseModel):
     """Represents a node in the knowledge graph."""
 
-    id: str
+    id: UUID | str | int
     node_id: str
     label: str
     properties: Optional[Dict[str, Any]] = None
@@ -31,7 +32,7 @@ class GraphNode(BaseModel):
 class GraphEdge(BaseModel):
     """Represents an edge in the knowledge graph."""
 
-    source_id: str
-    target_id: str
+    source_id: UUID | str | int
+    target_id: UUID | str | int
     relation: str
     properties: Optional[Dict[str, Any]] = None

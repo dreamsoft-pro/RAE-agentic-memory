@@ -28,11 +28,12 @@ class TokenSavingsRepository:
                 request_id,
                 predicted_tokens,
                 real_tokens,
+                saved_tokens,
                 estimated_cost_saved_usd,
                 savings_type,
                 model,
                 timestamp
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, NOW()))
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE($10, NOW()))
         """
         try:
             await self.pool.execute(
@@ -42,6 +43,7 @@ class TokenSavingsRepository:
                 entry.request_id,
                 entry.predicted_tokens,
                 entry.real_tokens,
+                entry.saved_tokens,
                 entry.estimated_cost_saved_usd,
                 entry.savings_type,
                 entry.model,
@@ -80,7 +82,7 @@ class TokenSavingsRepository:
 
         # Aggregation query
         query = f"""
-            SELECT 
+            SELECT
                 COALESCE(SUM(saved_tokens), 0) as total_tokens,
                 COALESCE(SUM(estimated_cost_saved_usd), 0) as total_usd,
                 savings_type,
@@ -132,7 +134,7 @@ class TokenSavingsRepository:
         trunc = "hour" if interval == "hour" else "day"
 
         query = """
-            SELECT 
+            SELECT
                 date_trunc($2, timestamp) as bucket,
                 SUM(saved_tokens) as saved_tokens,
                 SUM(estimated_cost_saved_usd) as saved_usd

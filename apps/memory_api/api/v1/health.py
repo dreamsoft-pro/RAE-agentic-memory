@@ -5,7 +5,7 @@ Provides comprehensive health checks for all system components.
 """
 
 from datetime import datetime, timezone
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 import asyncpg
 import httpx
@@ -122,8 +122,8 @@ async def check_redis() -> ComponentHealth:
             details={
                 "version": info.get("redis_version"),
                 "used_memory_mb": (
-                    info.get("used_memory") / 1024 / 1024
-                    if info.get("used_memory")
+                    float(info["used_memory"]) / 1024 / 1024
+                    if info.get("used_memory") is not None
                     else None
                 ),
                 "connected_clients": info.get("connected_clients"),
@@ -242,10 +242,10 @@ async def health_check() -> HealthCheckResponse:
     if isinstance(vector_health, Exception):
         vector_health = ComponentHealth(status="unhealthy", message=str(vector_health))
 
-    components = {
-        "database": db_health,
-        "redis": redis_health,
-        "vector_store": vector_health,
+    components: Dict[str, ComponentHealth] = {
+        "database": cast(ComponentHealth, db_health),
+        "redis": cast(ComponentHealth, redis_health),
+        "vector_store": cast(ComponentHealth, vector_health),
     }
 
     overall_status = determine_overall_status(components)
@@ -284,7 +284,7 @@ async def readiness_check() -> Dict[str, str]:
     if db_health.status == "healthy":
         return {"status": "ready"}
     else:
-        return {"status": "not_ready", "reason": db_health.message}
+        return {"status": "not_ready", "reason": db_health.message or "unknown"}
 
 
 @router.get(
@@ -331,16 +331,17 @@ async def get_system_metrics() -> MetricsResponse:
     memory_mb = memory_info.rss / 1024 / 1024
 
     # Get component stats
-    db_stats = {}
-    redis_stats = {}
-    vector_stats = {}
+    db_stats: Dict[str, Any] = {}
+    redis_stats: Dict[str, Any] = {}
+    vector_stats: Dict[str, Any] = {}
 
     try:
         redis_client = Redis.from_url(settings.REDIS_URL, socket_connect_timeout=1)
         info = redis_client.info()
+        used_mem = info.get("used_memory")
         redis_stats = {
             "used_memory_mb": (
-                info.get("used_memory") / 1024 / 1024 if info.get("used_memory") else 0
+                float(used_mem) / 1024 / 1024 if used_mem is not None else 0.0
             ),
             "connected_clients": info.get("connected_clients", 0),
             "total_commands": info.get("total_commands_processed", 0),

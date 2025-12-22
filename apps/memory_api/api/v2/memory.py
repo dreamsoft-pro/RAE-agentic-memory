@@ -96,7 +96,9 @@ async def store_memory(
 
     except Exception as e:
         logger.error("store_memory_failed", error=str(e), tenant_id=tenant_id)
-        raise HTTPException(status_code=500, detail=f"Failed to store memory: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to store memory: {str(e)}"
+        ) from e
 
 
 @router.post("/query", response_model=QueryMemoryResponseV2)
@@ -115,6 +117,8 @@ async def query_memories(
     - Multi-strategy fusion (RRF, weighted sum)
     """
     try:
+        from typing import Any, cast
+
         response = await rae_service.query_memories(
             tenant_id=tenant_id,
             project=request.project,
@@ -125,27 +129,27 @@ async def query_memories(
 
         results = [
             MemoryResult(
-                id=result.id,
+                id=(result := cast(Any, res)).id,
                 content=result.content,
                 score=result.score,
                 layer=result.layer,
                 importance=result.importance,
                 tags=result.tags or [],
             )
-            for result in response.results
+            for res in cast(Any, response).results
         ]
 
         return QueryMemoryResponseV2(
             results=results,
             total_count=len(results),
-            synthesized_context=response.synthesized_context,
+            synthesized_context=cast(Any, response).synthesized_context,
         )
 
     except Exception as e:
         logger.error("query_memories_failed", error=str(e), tenant_id=tenant_id)
         raise HTTPException(
             status_code=500, detail=f"Failed to query memories: {str(e)}"
-        )
+        ) from e
 
 
 @router.post("/consolidate")
@@ -175,7 +179,9 @@ async def consolidate_memories(
 
     except Exception as e:
         logger.error("consolidate_failed", error=str(e), tenant_id=tenant_id)
-        raise HTTPException(status_code=500, detail=f"Failed to consolidate: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to consolidate: {str(e)}"
+        ) from e
 
 
 @router.post("/reflections")
@@ -196,15 +202,17 @@ async def generate_reflections(
             project=project,
         )
 
+        from typing import Any, cast
+
         return {
             "message": "Reflections generated",
             "count": len(reflections),
             "reflections": [
                 {
-                    "id": r.id,
-                    "content": r.content,
-                    "importance": r.importance,
-                    "tags": r.tags or [],
+                    "id": (ref := cast(Any, r)).id,
+                    "content": ref.content,
+                    "importance": ref.importance,
+                    "tags": ref.tags or [],
                 }
                 for r in reflections
             ],
@@ -214,7 +222,7 @@ async def generate_reflections(
         logger.error("generate_reflections_failed", error=str(e), tenant_id=tenant_id)
         raise HTTPException(
             status_code=500, detail=f"Failed to generate reflections: {str(e)}"
-        )
+        ) from e
 
 
 @router.get("/stats")
@@ -246,4 +254,4 @@ async def get_statistics(
         logger.error("get_statistics_failed", error=str(e), tenant_id=tenant_id)
         raise HTTPException(
             status_code=500, detail=f"Failed to get statistics: {str(e)}"
-        )
+        ) from e

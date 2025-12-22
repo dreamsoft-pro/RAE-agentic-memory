@@ -6,7 +6,7 @@ transforming unstructured episodic memories into structured knowledge graphs.
 """
 
 import re
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any, Dict, List, cast
 
 import structlog
 from pydantic import BaseModel, Field, field_validator
@@ -273,6 +273,7 @@ class GraphExtractionService:
         tenant_id: str,
         limit: int = 50,
         min_confidence: float = 0.5,
+        model: str | None = None,
     ) -> GraphExtractionResult:
         """
         Extract knowledge graph triples from episodic memories.
@@ -288,6 +289,7 @@ class GraphExtractionService:
             tenant_id: The tenant ID for multi-tenancy
             limit: Maximum number of memories to process (default: 50)
             min_confidence: Minimum confidence threshold for triples (default: 0.5)
+            model: Optional LLM model name to override default
 
         Returns:
             GraphExtractionResult with triples, entities, and statistics
@@ -296,11 +298,13 @@ class GraphExtractionService:
             ValueError: If project_id or tenant_id is invalid
             RuntimeError: If extraction fails
         """
+        target_model = model or settings.EXTRACTION_MODEL
         logger.info(
             "starting_graph_extraction",
             project_id=project_id,
             tenant_id=tenant_id,
             limit=limit,
+            model=target_model,
         )
 
         # 1. Fetch recent episodic memories
@@ -349,9 +353,10 @@ class GraphExtractionService:
             extraction_result = await self.llm_provider.generate_structured(
                 system=system_prompt,
                 prompt=prompt,
-                model=settings.EXTRACTION_MODEL,
+                model=target_model,
                 response_model=GraphExtractionResult,
             )
+            extraction_result = cast(GraphExtractionResult, extraction_result)
 
             # 5. Filter by confidence threshold
             filtered_triples = [
@@ -367,7 +372,7 @@ class GraphExtractionService:
                         "project_id": project_id,
                         "tenant_id": tenant_id,
                         "extraction_method": "llm_structured",
-                        "model": settings.EXTRACTION_MODEL,
+                        "model": target_model,
                     }
                 )
 
@@ -452,6 +457,7 @@ class GraphExtractionService:
                 model=settings.EXTRACTION_MODEL,
                 response_model=FactualIndices,
             )
+            result = cast(FactualIndices, result)
 
             indices_set = set(result.indices)
             for i, memory in enumerate(memories, 1):
@@ -482,10 +488,7 @@ class GraphExtractionService:
         # Fetch memories using RAECoreService
         # We assume 'episodic' layer.
         return await self.rae_service.list_memories(
-            tenant_id=tenant_id,
-            layer="episodic", 
-            project=project_id,
-            limit=limit
+            tenant_id=tenant_id, layer="episodic", project=project_id, limit=limit
         )
 
     def _format_memories(self, memories: List[Dict[str, Any]]) -> str:

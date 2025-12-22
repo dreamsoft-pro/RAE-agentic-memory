@@ -7,7 +7,7 @@ Provides database operations for:
 - Statistical analysis and comparison
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 from uuid import UUID
 
 from asyncpg import Pool
@@ -254,7 +254,7 @@ class ABTestRepository:
         """Delete an A/B test (cascades to results)."""
         async with self.pool.acquire() as conn:
             result = await conn.execute("DELETE FROM ab_tests WHERE id = $1", test_id)
-        return result != "DELETE 0"
+        return cast(bool, result != "DELETE 0")
 
 
 class BenchmarkRepository:
@@ -569,4 +569,4 @@ class BenchmarkRepository:
             result = await conn.execute(
                 "DELETE FROM benchmark_suites WHERE id = $1", suite_id
             )
-        return result != "DELETE 0"
+        return cast(bool, result != "DELETE 0")

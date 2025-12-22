@@ -24,3 +24,11 @@ On every new session:
 - **Context Window**: You have a large context, but use `read_file` judiciously to avoid "lost in the middle" phenomena.
 - **Thinking**: Explicitly state your plan using `write_todos` for complex tasks.
 - **Silence**: Do not be verbose. 1-2 sentences max per turn unless explaining a complex issue.
+- **Docker & Migrations**: Always delete `alembic/versions/__pycache__` after modifying migration files to prevent Docker using stale bytecode.
+
+## 4. RATE LIMITS & RESOURCE EFFICIENCY
+
+- **Respect Limits**: Strictly adhere to tool usage limits. Do not loop excessively.
+- **Batching**: Prefer batch operations over single-item loops where possible.
+- **Memory**: "Input/Output MUST flow through RAE to minimize token usage."
+

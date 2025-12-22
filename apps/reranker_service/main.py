@@ -52,6 +52,6 @@ def rerank(req: RerankRequest):
         item.score = float(score)
 
     # Sort items by the new score in descending order
-    sorted_items = sorted(req.items, key=lambda x: x.score, reverse=True)
+    sorted_items = sorted(req.items, key=lambda x: x.score or 0.0, reverse=True)
 
     return RerankResponse(items=sorted_items)

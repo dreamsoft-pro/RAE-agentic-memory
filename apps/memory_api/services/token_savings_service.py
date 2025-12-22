@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Optional
 
 import structlog
@@ -67,9 +68,15 @@ class TokenSavingsService:
         )
 
     async def get_summary(
-        self, tenant_id: str, project_id: Optional[str] = None
+        self,
+        tenant_id: str,
+        project_id: Optional[str] = None,
+        start_date: Optional[datetime] = None,
+        end_date: Optional[datetime] = None,
     ) -> SavingsSummary:
-        return await self.repository.get_savings_summary(tenant_id, project_id)
+        return await self.repository.get_savings_summary(
+            tenant_id, project_id, start_date, end_date
+        )
 
     async def get_timeseries(self, tenant_id: str) -> list[dict]:
         return await self.repository.get_timeseries(tenant_id)

@@ -70,7 +70,7 @@ class RBACService:
         tenant_id: UUID,
         role: Role,
         assigned_by: str,
-        project_ids: List[str] = None,
+        project_ids: Optional[List[str]] = None,
         expires_at: Optional[datetime] = None,
     ) -> UserRole:
         """

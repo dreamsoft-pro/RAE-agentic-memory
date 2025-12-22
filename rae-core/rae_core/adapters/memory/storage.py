@@ -7,7 +7,7 @@ Ideal for testing, development, and lightweight deployments.
 import asyncio
 from collections import defaultdict
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, cast
 from uuid import UUID, uuid4
 
 from rae_core.interfaces.storage import IMemoryStorage
@@ -54,6 +54,7 @@ class InMemoryStorage(IMemoryStorage):
         metadata: dict[str, Any] | None = None,
         embedding: list[float] | None = None,
         importance: float | None = None,
+        expires_at: Any | None = None,
     ) -> UUID:
         """Store a new memory."""
         async with self._lock:
@@ -71,10 +72,9 @@ class InMemoryStorage(IMemoryStorage):
                 "embedding": embedding,
                 "importance": importance or 0.5,
                 "created_at": now,
-                "modified_at": now,
                 "last_accessed_at": now,
-                "access_count": 0,
-                "version": 1,
+                "expires_at": expires_at,
+                "usage_count": 0,
             }
 
             # Store memory
@@ -136,8 +136,8 @@ class InMemoryStorage(IMemoryStorage):
             new_layer = updates.get("layer", old_layer)
 
             if old_layer != new_layer:
-                self._by_layer[(tenant_id, old_layer)].discard(memory_id)
-                self._by_layer[(tenant_id, new_layer)].add(memory_id)
+                self._by_layer[(tenant_id, cast(str, old_layer))].discard(memory_id)
+                self._by_layer[(tenant_id, cast(str, new_layer))].add(memory_id)
 
             # Update memory
             memory.update(updates)
@@ -177,8 +177,11 @@ class InMemoryStorage(IMemoryStorage):
         agent_id: str | None = None,
         layer: str | None = None,
         tags: list[str] | None = None,
+        filters: dict[str, Any] | None = None,
         limit: int = 100,
         offset: int = 0,
+        order_by: str = "created_at",
+        order_direction: str = "desc",
     ) -> list[dict[str, Any]]:
         """List memories with filtering."""
         async with self._lock:
@@ -455,6 +458,46 @@ class InMemoryStorage(IMemoryStorage):
             memory["modified_at"] = datetime.now(timezone.utc)
 
             return True
+
+    async def get_metric_aggregate(
+        self,
+        tenant_id: str,
+        metric: str,
+        func: str,
+        filters: dict[str, Any] | None = None,
+    ) -> float:
+        """Calculate aggregate metric."""
+        async with self._lock:
+            # Stub implementation
+            return 0.0
+
+    async def update_memory_access_batch(
+        self,
+        memory_ids: list[UUID],
+        tenant_id: str,
+    ) -> bool:
+        """Update access count for multiple memories."""
+        for mid in memory_ids:
+            await self.update_memory_access(mid, tenant_id)
+        return True
+
+    async def adjust_importance(
+        self,
+        memory_id: UUID,
+        delta: float,
+        tenant_id: str,
+    ) -> float:
+        """Adjust memory importance."""
+        async with self._lock:
+            memory = self._memories.get(memory_id)
+            if not memory or memory["tenant_id"] != tenant_id:
+                return 0.0
+
+            new_imp = float(memory.get("importance", 0.5)) + delta
+            new_imp = max(0.0, min(1.0, new_imp))
+            memory["importance"] = new_imp
+            memory["modified_at"] = datetime.now(timezone.utc)
+            return new_imp
 
     def _matches_metadata_filter(
         self, metadata: dict[str, Any], filter_dict: dict[str, Any]

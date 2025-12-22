@@ -3,14 +3,15 @@
 Implements IVectorStore interface using Qdrant for similarity search.
 """
 
-from typing import Any, Optional
+from typing import Any, Optional, cast
 from uuid import UUID
 
 try:
-    from qdrant_client import QdrantClient
+    from qdrant_client import QdrantClient as QdrantClientRaw
     from qdrant_client.models import Distance, PointStruct, VectorParams
+    QdrantClient = QdrantClientRaw
 except ImportError:
-    QdrantClient = None
+    QdrantClient: Any = None # type: ignore
 
 from ..interfaces.vector import IVectorStore
 
@@ -36,11 +37,11 @@ class QdrantVectorStore(IVectorStore):
 
     def __init__(
         self,
-        collection_name: str = "rae_memories",
+        collection_name: str = "memories",
         url: str | None = None,
         api_key: str | None = None,
         client: Optional["QdrantClient"] = None,
-        embedding_dim: int = 1536,
+        embedding_dim: int = 384,
         distance: str = "Cosine",
     ):
         """Initialize Qdrant vector store.
@@ -89,12 +90,16 @@ class QdrantVectorStore(IVectorStore):
             self.client.get_collection(self.collection_name)
         except Exception:
             # Collection doesn't exist, create it
+            from qdrant_client.models import SparseVectorParams
             self.client.create_collection(
                 collection_name=self.collection_name,
-                vectors_config=VectorParams(
-                    size=self.embedding_dim,
-                    distance=self.distance,
-                ),
+                vectors_config={
+                    "dense": VectorParams(
+                        size=self.embedding_dim,
+                        distance=self.distance,
+                    )
+                },
+                sparse_vectors_config={"text": SparseVectorParams()},
             )
 
         self._initialized = True
@@ -129,7 +134,7 @@ class QdrantVectorStore(IVectorStore):
                 points=[
                     PointStruct(
                         id=str(memory_id),
-                        vector=embedding,
+                        vector={"dense": embedding},
                         payload=payload,
                     )
                 ],
@@ -189,7 +194,11 @@ class QdrantVectorStore(IVectorStore):
             }
 
             points.append(
-                PointStruct(id=str(memory_id), vector=embedding, payload=payload)
+                PointStruct(
+                    id=str(memory_id),
+                    vector={"dense": embedding},
+                    payload=payload
+                )
             )
 
         if not points:
@@ -243,16 +252,19 @@ class QdrantVectorStore(IVectorStore):
         query_filter = {"must": must_conditions} if must_conditions else None
 
         try:
+            from qdrant_client.models import NamedVector
             results = self.client.search(
                 collection_name=self.collection_name,
-                query_vector=query_embedding,
+                query_vector=NamedVector(name="dense", vector=query_embedding),
                 query_filter=query_filter,
                 limit=limit,
                 score_threshold=score_threshold,
             )
 
             return [
-                (UUID(result.payload["memory_id"]), result.score) for result in results
+                (UUID(result.payload["memory_id"]), result.score)
+                for result in results
+                if result.payload and "memory_id" in result.payload
             ]
         except Exception:
             return []
@@ -273,8 +285,9 @@ class QdrantVectorStore(IVectorStore):
 
             if result and len(result) > 0:
                 # Verify tenant_id matches
-                if result[0].payload.get("tenant_id") == tenant_id:
-                    return result[0].vector
+                payload = result[0].payload
+                if payload and payload.get("tenant_id") == tenant_id:
+                    return cast(list[float], result[0].vector)
         except Exception:
             pass
 
@@ -295,7 +308,11 @@ class QdrantVectorStore(IVectorStore):
                 ids=[str(memory_id)],
             )
 
-            if not result or result[0].payload.get("tenant_id") != tenant_id:
+            if not result:
+                return False
+
+            payload = result[0].payload
+            if not payload or payload.get("tenant_id") != tenant_id:
                 return False
 
             self.client.delete(
@@ -490,7 +507,7 @@ class QdrantVectorStore(IVectorStore):
         if mag_a == 0.0 or mag_b == 0.0:
             return 0.0
 
-        return dot_product / (mag_a * mag_b)
+        return float(dot_product / (mag_a * mag_b))
 
     def close(self):
         """Close Qdrant client."""

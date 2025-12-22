@@ -291,7 +291,7 @@ class ImportanceScoringService:
 
     async def recalculate_all_scores(
         self, tenant_id: UUID, batch_size: int = 100
-    ) -> Dict[str, int]:
+    ) -> Dict[str, Any]:
         """
         Recalculate importance scores for all memories
 
@@ -529,7 +529,7 @@ class ImportanceScoringService:
         Returns:
             List of potentially undervalued memories with reasons
         """
-        undervalued = []
+        undervalued: List[Dict[str, Any]] = []
 
         # In production, query for memories with:
         # - High graph_centrality but low importance_score
@@ -593,7 +593,7 @@ class ImportanceScoringService:
             min_age_days=min_age_days,
         )
 
-        archived = []
+        archived: List[str] = []
 
         # In production:
         # 1. Find memories with importance < threshold

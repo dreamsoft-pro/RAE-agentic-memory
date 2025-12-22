@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from typing import Any, cast
 
 import pytest
 
@@ -69,4 +70,4 @@ def test_mismatched_lengths():
         compute_batch_scores([{}], [0.1, 0.2])
 
     with pytest.raises(ValueError):
-        rank_memories_by_score([{}], [{}, {}])  # type: ignore (mocking result objects)
+        rank_memories_by_score([{}], [cast(Any, {}), cast(Any, {})])

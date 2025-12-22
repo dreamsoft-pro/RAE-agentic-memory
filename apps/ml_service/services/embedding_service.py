@@ -5,7 +5,7 @@ This service handles embedding generation for the ML microservice,
 keeping heavy dependencies isolated from the main API.
 """
 
-from typing import List
+from typing import List, cast
 
 import structlog
 from sentence_transformers import SentenceTransformer
@@ -57,7 +57,8 @@ class EmbeddingMLService:
         logger.info("generating_embeddings", text_count=len(texts))
 
         # Generate embeddings using SentenceTransformer
-        embeddings = self._model.encode(texts, show_progress_bar=False)
+        model = cast(SentenceTransformer, self._model)
+        embeddings = model.encode(texts, show_progress_bar=False)
 
         # Convert numpy arrays to Python lists
         result = [emb.tolist() for emb in embeddings]
@@ -77,4 +78,5 @@ class EmbeddingMLService:
         Returns:
             Integer dimension of embedding vectors
         """
-        return self._model.get_sentence_embedding_dimension()
+        dim = cast(SentenceTransformer, self._model).get_sentence_embedding_dimension()
+        return int(dim or 0)

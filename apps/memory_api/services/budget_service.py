@@ -108,6 +108,12 @@ class BudgetService:
 
         return False, 999999.0, 999999.0  # Not exceeded or unlimited
 
+    async def increment_usage(
+        self, tenant_id: str, project_id: str, usage: BudgetUsageIncrement
+    ) -> None:
+        """Increment budget usage."""
+        await increment_usage(self.pool, tenant_id, project_id, usage)
+
 
 async def get_or_create_budget(
     pool: asyncpg.Pool, tenant_id: str, project_id: str

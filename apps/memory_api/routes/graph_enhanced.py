@@ -91,7 +91,7 @@ async def create_node(request: CreateGraphNodeRequest, pool=Depends(get_pool)):
 
     except Exception as e:
         logger.error("node_creation_failed", error=str(e))
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.get("/nodes/{node_id}/metrics", response_model=GetNodeMetricsResponse)
@@ -119,7 +119,7 @@ async def get_node_metrics(
 
     except Exception as e:
         logger.error("get_node_metrics_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/nodes/connected", response_model=FindConnectedNodesResponse)
@@ -148,7 +148,7 @@ async def find_connected_nodes(
 
     except Exception as e:
         logger.error("find_connected_nodes_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -200,7 +200,7 @@ async def create_edge(request: CreateGraphEdgeRequest, pool=Depends(get_pool)):
 
     except Exception as e:
         logger.error("edge_creation_failed", error=str(e))
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
 
 
 @router.put("/edges/{edge_id}/weight", response_model=EnhancedGraphEdge)
@@ -223,7 +223,7 @@ async def update_edge_weight(
 
     except Exception as e:
         logger.error("update_edge_weight_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/edges/{edge_id}/deactivate", response_model=EnhancedGraphEdge)
@@ -242,7 +242,7 @@ async def deactivate_edge(
 
     except Exception as e:
         logger.error("deactivate_edge_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/edges/{edge_id}/activate", response_model=EnhancedGraphEdge)
@@ -261,7 +261,7 @@ async def activate_edge(
 
     except Exception as e:
         logger.error("activate_edge_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.put("/edges/{edge_id}/temporal", response_model=EnhancedGraphEdge)
@@ -284,7 +284,7 @@ async def set_edge_temporal_validity(
 
     except Exception as e:
         logger.error("set_temporal_validity_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -358,7 +358,7 @@ async def traverse_graph(request: TraverseGraphRequest, pool=Depends(get_pool)):
 
     except Exception as e:
         logger.error("graph_traversal_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -414,7 +414,7 @@ async def find_shortest_path(request: FindPathRequest, pool=Depends(get_pool)):
 
     except Exception as e:
         logger.error("find_shortest_path_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -454,7 +454,7 @@ async def detect_cycle(request: DetectCycleRequest, pool=Depends(get_pool)):
 
     except Exception as e:
         logger.error("cycle_detection_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -501,7 +501,7 @@ async def create_snapshot(request: CreateSnapshotRequest, pool=Depends(get_pool)
 
     except Exception as e:
         logger.error("snapshot_creation_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/snapshots/{snapshot_id}", response_model=GraphSnapshot)
@@ -523,7 +523,7 @@ async def get_snapshot(snapshot_id: str, pool=Depends(get_pool)):
         raise
     except Exception as e:
         logger.error("get_snapshot_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/snapshots", response_model=List[GraphSnapshot])
@@ -542,7 +542,7 @@ async def list_snapshots(
 
     except Exception as e:
         logger.error("list_snapshots_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/snapshots/{snapshot_id}/restore", response_model=RestoreSnapshotResponse)
@@ -578,7 +578,7 @@ async def restore_snapshot(
 
     except Exception as e:
         logger.error("snapshot_restoration_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -614,7 +614,7 @@ async def get_graph_statistics(
 
     except Exception as e:
         logger.error("get_statistics_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -651,7 +651,7 @@ async def batch_create_nodes(request: BatchCreateNodesRequest, pool=Depends(get_
 
     except Exception as e:
         logger.error("batch_create_nodes_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/edges/batch", response_model=BatchOperationResponse, status_code=201)
@@ -703,7 +703,7 @@ async def batch_create_edges(request: BatchCreateEdgesRequest, pool=Depends(get_
 
     except Exception as e:
         logger.error("batch_create_edges_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================

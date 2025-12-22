@@ -7,7 +7,7 @@ Implements:
 - Super-Node Creation
 """
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
 
 import asyncpg
 import networkx as nx
@@ -44,7 +44,9 @@ class CommunitySummary(BaseModel):
 
 
 class CommunityDetectionService:
-    def __init__(self, pool: asyncpg.Pool, graph_repository: GraphRepository = None):
+    def __init__(
+        self, pool: asyncpg.Pool, graph_repository: Optional[GraphRepository] = None
+    ):
         self.pool = pool
         self.graph_repo = graph_repository or GraphRepository(pool)
         self.llm_provider = get_llm_provider()
@@ -83,7 +85,7 @@ class CommunityDetectionService:
         partition = community_louvain.best_partition(graph)
 
         # Group nodes by community
-        communities = {}
+        communities: Dict[int, List[Any]] = {}
         for node, community_id in partition.items():
             if community_id not in communities:
                 communities[community_id] = []
@@ -104,7 +106,7 @@ class CommunityDetectionService:
     async def _process_community(
         self,
         community_id: int,
-        node_ids: List[str],
+        node_ids: List[Any],
         graph: nx.Graph,
         project_id: str,
         tenant_id: str,
@@ -159,7 +161,7 @@ class CommunityDetectionService:
                 model=settings.SYNTHESIS_MODEL,
                 response_model=CommunitySummary,
             )
-            return result
+            return cast(CommunitySummary, result)
         except Exception as e:
             logger.error("community_summarization_failed", error=str(e))
             return CommunitySummary(

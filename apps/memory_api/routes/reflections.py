@@ -8,7 +8,7 @@ This module provides FastAPI routes for:
 - Retrieving reflection statistics and analytics
 """
 
-from typing import List
+from typing import Dict, List
 from uuid import UUID
 
 import structlog
@@ -103,7 +103,7 @@ async def generate_reflections(
         logger.error("generate_reflections_failed", error=str(e))
         raise HTTPException(
             status_code=500, detail=f"Reflection generation failed: {str(e)}"
-        )
+        ) from e
 
 
 # ============================================================================
@@ -197,7 +197,7 @@ async def query_reflections(request: QueryReflectionsRequest, pool=Depends(get_p
 
     except Exception as e:
         logger.error("query_reflections_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Query failed: {str(e)}") from e
 
 
 # ============================================================================
@@ -329,7 +329,7 @@ async def get_reflection_graph(
         )
 
         # Calculate statistics
-        depth_distribution = {}
+        depth_distribution: Dict[int, int] = {}
         for node in nodes:
             depth = node.depth_level
             depth_distribution[depth] = depth_distribution.get(depth, 0) + 1
@@ -349,7 +349,9 @@ async def get_reflection_graph(
 
     except Exception as e:
         logger.error("get_reflection_graph_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Graph retrieval failed: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Graph retrieval failed: {str(e)}"
+        ) from e
 
 
 # ============================================================================
@@ -414,12 +416,12 @@ async def create_reflection_relationship(
 
     except ValueError as e:
         # Cycle detected
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from e
     except Exception as e:
         logger.error("create_relationship_failed", error=str(e))
         raise HTTPException(
             status_code=500, detail=f"Relationship creation failed: {str(e)}"
-        )
+        ) from e
 
 
 # ============================================================================
@@ -507,4 +509,6 @@ async def delete_reflections_batch(
 
     except Exception as e:
         logger.error("delete_batch_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Batch deletion failed: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Batch deletion failed: {str(e)}"
+        ) from e

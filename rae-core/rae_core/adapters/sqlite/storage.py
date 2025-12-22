@@ -149,6 +149,7 @@ class SQLiteStorage(IMemoryStorage):
         metadata: dict[str, Any] | None = None,
         embedding: list[float] | None = None,
         importance: float | None = None,
+        expires_at: Any | None = None,
     ) -> UUID:
         """Store a new memory."""
         await self.initialize()
@@ -159,14 +160,22 @@ class SQLiteStorage(IMemoryStorage):
         tags_json = json.dumps(tags or [])
         metadata_json = json.dumps(metadata or {})
 
+        # Convert expires_at to ISO string if it's a datetime
+        expires_at_str = None
+        if expires_at:
+            if hasattr(expires_at, "isoformat"):
+                expires_at_str = expires_at.isoformat()
+            else:
+                expires_at_str = str(expires_at)
+
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
                 """
                 INSERT INTO memories (
                     id, content, layer, tenant_id, agent_id, tags, metadata,
                     importance, created_at, modified_at, last_accessed_at,
-                    access_count, version
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 1)
+                    access_count, version, expires_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 1, ?)
                 """,
                 (
                     str(memory_id),
@@ -180,6 +189,7 @@ class SQLiteStorage(IMemoryStorage):
                     now,
                     now,
                     now,
+                    expires_at_str,
                 ),
             )
             await db.commit()
@@ -280,15 +290,18 @@ class SQLiteStorage(IMemoryStorage):
         agent_id: str | None = None,
         layer: str | None = None,
         tags: list[str] | None = None,
+        filters: dict[str, Any] | None = None,
         limit: int = 100,
         offset: int = 0,
+        order_by: str = "created_at",
+        order_direction: str = "desc",
     ) -> list[dict[str, Any]]:
         """List memories with filtering."""
         await self.initialize()
 
         # Build dynamic WHERE clause
         where_clauses = ["tenant_id = ?"]
-        params = [tenant_id]
+        params: list[Any] = [tenant_id]
 
         if agent_id:
             where_clauses.append("agent_id = ?")
@@ -307,7 +320,26 @@ class SQLiteStorage(IMemoryStorage):
                 params.append(f'%"{tag}"%')
             where_clauses.append(f"({' OR '.join(tag_conditions)})")
 
+        # Additional metadata filters
+        if filters:
+            for key, value in filters.items():
+                where_clauses.append("json_extract(metadata, '$.' || ?) = ?")
+                params.extend([key, value])
+
         where_clause = " AND ".join(where_clauses)
+
+        # Validate order_by to prevent SQL injection
+        allowed_order_by = {
+            "created_at",
+            "modified_at",
+            "last_accessed_at",
+            "importance",
+            "access_count",
+        }
+        if order_by not in allowed_order_by:
+            order_by = "created_at"
+
+        direction = "DESC" if order_direction.lower() == "desc" else "ASC"
 
         params.extend([limit, offset])
 
@@ -317,7 +349,7 @@ class SQLiteStorage(IMemoryStorage):
                 f"""
                 SELECT * FROM memories
                 WHERE {where_clause}
-                ORDER BY created_at DESC
+                ORDER BY {order_by} {direction}
                 LIMIT ? OFFSET ?
                 """,
                 params,
@@ -650,25 +682,54 @@ class SQLiteStorage(IMemoryStorage):
         if hasattr(expires_at, "isoformat"):
             expires_at_str = expires_at.isoformat()
         else:
-            expires_at_str = expires_at
+            expires_at_str = str(expires_at)
 
         async with aiosqlite.connect(self.db_path) as db:
             cursor = await db.execute(
                 """
                 UPDATE memories
-                SET expires_at = ?,
-                    modified_at = ?
+                SET expires_at = ?, modified_at = ?
                 WHERE id = ? AND tenant_id = ?
                 """,
-                (
-                    expires_at_str,
-                    datetime.now(timezone.utc).isoformat(),
-                    str(memory_id),
-                    tenant_id,
-                ),
+                (expires_at_str, datetime.now(timezone.utc).isoformat(), str(memory_id), tenant_id),
             )
             await db.commit()
+
             return cursor.rowcount > 0
+
+    async def get_metric_aggregate(
+        self,
+        tenant_id: str,
+        metric: str,
+        func: str,
+        filters: dict[str, Any] | None = None,
+    ) -> float:
+        """Calculate aggregate metric."""
+        await self.initialize()
+        # Stub implementation
+        return 0.0
+
+    async def update_memory_access_batch(
+        self,
+        memory_ids: list[UUID],
+        tenant_id: str,
+    ) -> bool:
+        """Update access count for multiple memories."""
+        await self.initialize()
+        for mid in memory_ids:
+            await self.update_memory_access(mid, tenant_id)
+        return True
+
+    async def adjust_importance(
+        self,
+        memory_id: UUID,
+        delta: float,
+        tenant_id: str,
+    ) -> float:
+        """Adjust memory importance."""
+        await self.initialize()
+        # Stub implementation
+        return 0.5
 
     def _matches_metadata_filter(
         self, metadata: dict[str, Any], filter_dict: dict[str, Any]

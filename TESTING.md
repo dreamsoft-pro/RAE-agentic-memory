@@ -116,6 +116,35 @@ All Pydantic v1 deprecations eliminated from codebase:
 
 ---
 
+## Testing Modes: Developer vs. Full
+
+RAE supports two distinct testing modes to balance speed/cost and reliability.
+
+### 1. Developer Mode (Default)
+**Goal:** Speed, zero cost, offline capable.
+**Mechanism:** Extensive mocking of external services (LLM APIs, Databases).
+**Command:** `make test-unit`
+**Key Characteristics:**
+- **No API Keys Required:** Runs without `OPENAI_API_KEY` or `ANTHROPIC_API_KEY`.
+- **Mocked LLMs:** All LLM calls (OpenAI, Anthropic) are intercepted and return predefined mock responses.
+- **Fast:** Runs in seconds/minutes.
+- **Usage:** Daily development, pre-commit checks, CI/CD PR checks.
+
+### 2. Full / Integration Mode
+**Goal:** Production reliability, verification of prompt engineering.
+**Mechanism:** Real calls to external services.
+**Command:** `pytest -m integration` (with proper env vars)
+**Key Characteristics:**
+- **API Keys REQUIRED:** You must provide valid keys (e.g., `ANTHROPIC_API_KEY`) in your `.env`.
+- **Real LLM Calls:** Validates that prompts actually work with the models and response formats are correct.
+- **Cost:** Incurs usage costs on LLM APIs.
+- **Slower:** Depends on API latency.
+- **Usage:** Before major releases, verifying complex reasoning chains.
+
+> **Note:** The current test suite defaults to Developer Mode. To run Full Mode, ensure you have the necessary keys and infrastructure (Docker) running.
+
+---
+
 ## Running Tests
 
 ### Prerequisites

@@ -10,6 +10,7 @@ This module provides FastAPI routes for event trigger operations including:
 """
 
 from datetime import timezone
+from typing import Any, Dict, Optional
 from uuid import UUID, uuid4
 
 import structlog
@@ -88,9 +89,13 @@ async def create_trigger(
             tenant_id=request.tenant_id,
             project_id=request.project_id,
             rule_name=request.rule_name,
-            event_types=request.condition.event_types,
-            conditions=request.condition.condition_group,
-            actions=request.actions,
+            event_types=[et.value for et in request.condition.event_types],
+            conditions=(
+                request.condition.condition_group.model_dump()["conditions"]
+                if request.condition.condition_group
+                else []
+            ),
+            actions=[a.model_dump() for a in request.actions],
             created_by=request.created_by,
             description=request.description,
             condition_operator="AND",  # Default as it's not in request
@@ -108,7 +113,7 @@ async def create_trigger(
 
     except Exception as e:
         logger.error("trigger_creation_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/{trigger_id}", response_model=TriggerRule)
@@ -128,7 +133,7 @@ async def get_trigger(
         raise
     except Exception as e:
         logger.error("get_trigger_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.put("/{trigger_id}")
@@ -149,7 +154,7 @@ async def update_trigger(
     """
     try:
         # Prepare updates dict
-        updates = {}
+        updates: Dict[str, Any] = {}
         if request.rule_name is not None:
             updates["rule_name"] = request.rule_name
         if request.description is not None:
@@ -184,7 +189,7 @@ async def update_trigger(
         raise
     except Exception as e:
         logger.error("update_trigger_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.delete("/{trigger_id}")
@@ -206,7 +211,7 @@ async def delete_trigger(
         raise
     except Exception as e:
         logger.error("delete_trigger_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/{trigger_id}/enable")
@@ -223,7 +228,7 @@ async def enable_trigger(trigger_id: str, pool=Depends(get_pool)):
 
     except Exception as e:
         logger.error("enable_trigger_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/{trigger_id}/disable")
@@ -240,14 +245,14 @@ async def disable_trigger(trigger_id: str, pool=Depends(get_pool)):
 
     except Exception as e:
         logger.error("disable_trigger_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/list")
 async def list_triggers(
     tenant_id: str,
     project_id: str,
-    status_filter: str = None,
+    status_filter: Optional[str] = None,
     limit: int = 100,
     repo: TriggerRepository = Depends(get_trigger_repo),
 ):
@@ -272,7 +277,7 @@ async def list_triggers(
 
     except Exception as e:
         logger.error("list_triggers_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -320,7 +325,7 @@ async def emit_event(request: EmitEventRequest, pool=Depends(get_pool)):
 
     except Exception as e:
         logger.error("emit_event_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/events/types")
@@ -370,14 +375,14 @@ async def get_trigger_executions(
         # Get execution history from database
         tenant_id = "default"  # TODO: Get from auth context
         executions = await repo.get_execution_history(
-            trigger_id=UUID(request.trigger_id),
+            trigger_id=request.trigger_id,
             tenant_id=tenant_id,
             limit=request.limit,
             status_filter=request.status_filter,
         )
 
         # Get trigger info for summary
-        trigger = await repo.get_trigger(UUID(request.trigger_id), tenant_id)
+        trigger = await repo.get_trigger(request.trigger_id, tenant_id)
 
         from datetime import datetime, timedelta
 
@@ -396,7 +401,7 @@ async def get_trigger_executions(
 
     except Exception as e:
         logger.error("get_executions_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -427,10 +432,10 @@ async def create_workflow(
             tenant_id=request.tenant_id,
             project_id=request.project_id,
             workflow_name=request.workflow_name,
-            steps=request.steps,
+            steps=[s.model_dump() for s in request.steps],
             created_by=request.created_by,
             description=request.description,
-            parallel_execution=request.parallel_execution,
+            execution_mode=("parallel" if request.parallel_execution else "sequential"),
         )
 
         return CreateWorkflowResponse(
@@ -440,7 +445,7 @@ async def create_workflow(
 
     except Exception as e:
         logger.error("workflow_creation_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/workflows/{workflow_id}")
@@ -460,7 +465,7 @@ async def get_workflow(
         raise
     except Exception as e:
         logger.error("get_workflow_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/workflows")
@@ -484,7 +489,7 @@ async def list_workflows(
 
     except Exception as e:
         logger.error("list_workflows_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -535,7 +540,7 @@ async def get_trigger_template(template_id: str):
         raise
     except Exception as e:
         logger.error("get_template_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post(
@@ -590,7 +595,7 @@ async def instantiate_template(
         raise
     except Exception as e:
         logger.error("instantiate_template_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================

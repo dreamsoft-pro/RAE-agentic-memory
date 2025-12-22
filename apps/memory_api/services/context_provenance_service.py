@@ -16,15 +16,15 @@ Key features:
 - Confidence scoring for context quality
 """
 
-import logging
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
+import structlog
 from pydantic import BaseModel, Field
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class ContextSourceType(str, Enum):

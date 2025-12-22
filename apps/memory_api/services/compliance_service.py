@@ -934,7 +934,7 @@ class ComplianceService:
             if not result or result["total"] == 0:
                 return 0.0
 
-            return result["verified"] / result["total"] * 100
+            return float(result["verified"] / result["total"] * 100)
 
     async def _get_retention_compliance_percentage(self, tenant_id: str) -> float:
         """Calculate data retention compliance percentage"""
@@ -1009,7 +1009,7 @@ class ComplianceService:
                 # No policy checks yet, assume 100% (no violations)
                 return 100.0
 
-            return result["compliant_checks"] / result["total_checks"] * 100
+            return float(result["compliant_checks"] / result["total_checks"] * 100)
 
     async def _get_circuit_breaker_health(self, tenant_id: str) -> float:
         """Calculate circuit breaker health score"""
@@ -1146,7 +1146,7 @@ class ComplianceService:
                 # No high-risk operations yet, assume 100%
                 return 100.0
 
-            return result["approved_count"] / result["total_high_risk"] * 100
+            return float(result["approved_count"] / result["total_high_risk"] * 100)
 
     def _update_compliance_metrics(
         self,

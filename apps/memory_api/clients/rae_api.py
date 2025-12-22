@@ -181,7 +181,7 @@ class RAEAPIClient:
         Returns:
             Generated reflection
         """
-        data = {
+        data: Dict[str, Any] = {
             "tenant_id": tenant_id or self.tenant_id,
             "project_id": project_id or self.project_id,
             "reflection_type": reflection_type,
@@ -598,6 +598,8 @@ class RAEAPIClient:
         """Reset statistics."""
         self.client.reset_stats()
 
-    def invalidate_cache(self, method: str = None, path: str = None):
+    def invalidate_cache(
+        self, method: Optional[str] = None, path: Optional[str] = None
+    ):
         """Invalidate cache."""
         self.client.invalidate_cache(method, path)

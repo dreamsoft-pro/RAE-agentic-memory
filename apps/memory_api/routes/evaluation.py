@@ -9,6 +9,8 @@ This module provides FastAPI routes for evaluation operations including:
 - Benchmarking
 """
 
+from typing import Any, cast
+
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 
@@ -100,7 +102,7 @@ async def evaluate_search_results(
 
     except Exception as e:
         logger.error("search_evaluation_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/metrics/supported")
@@ -204,7 +206,7 @@ async def detect_drift(request: DetectDriftRequest, pool=Depends(get_pool)):
 
     except Exception as e:
         logger.error("drift_detection_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/drift/severity-levels")
@@ -283,24 +285,25 @@ async def create_ab_test(
         variant_b = request.variants[1]
 
         # Create test in database
+        req_any = cast(Any, request)
         test_record = await repo.create_test(
             tenant_id=request.tenant_id,
             project_id=request.project_id,
             test_name=request.test_name,
             description=request.description,
-            hypothesis=request.hypothesis,
+            hypothesis=req_any.hypothesis,
             variant_a_name=variant_a.variant_name,
-            variant_a_config=variant_a.config,
+            variant_a_config=variant_a.configuration,
             variant_b_name=variant_b.variant_name,
-            variant_b_config=variant_b.config,
+            variant_b_config=variant_b.configuration,
             traffic_split=variant_b.traffic_percentage / 100.0,
-            min_sample_size=request.min_sample_size,
+            min_sample_size=req_any.min_sample_size,
             confidence_level=request.confidence_level,
-            primary_metric=request.primary_metric,
-            secondary_metrics=request.secondary_metrics,
-            created_by=request.created_by,
-            tags=request.tags,
-            metadata=request.metadata,
+            primary_metric=req_any.primary_metric,
+            secondary_metrics=req_any.secondary_metrics,
+            created_by=req_any.created_by,
+            tags=req_any.tags,
+            metadata=req_any.metadata,
         )
 
         logger.info(
@@ -319,7 +322,7 @@ async def create_ab_test(
         raise
     except Exception as e:
         logger.error("ab_test_creation_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/ab-test/{test_id}/compare")
@@ -391,7 +394,7 @@ async def compare_ab_test_variants(
         raise
     except Exception as e:
         logger.error("ab_test_comparison_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -438,7 +441,7 @@ async def get_quality_metrics(
 
     except Exception as e:
         logger.error("get_quality_metrics_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/quality/thresholds")
@@ -532,7 +535,7 @@ async def run_benchmark_suite(
         raise
     except Exception as e:
         logger.error("benchmark_run_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/benchmark/suites")
@@ -575,7 +578,7 @@ async def list_benchmark_suites(
 
     except Exception as e:
         logger.error("list_benchmark_suites_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================

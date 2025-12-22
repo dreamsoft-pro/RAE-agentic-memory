@@ -4,15 +4,15 @@ Memory Maintenance Workers - Async Tasks for Decay and Summarization
 This module implements background tasks for:
 1. Memory importance decay
 2. Session summarization
-3. Light "dreaming" (batch reflections)
+3. Light \"dreaming\" (batch reflections)
 
-These tasks should be run periodically (cron, scheduler, or task queue).
+These tasks should be run periodically (cron, scheduler, or task queue)
 """
 
 import asyncio
 from datetime import datetime, timedelta, timezone
 from time import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 from uuid import UUID
 
 import asyncpg
@@ -131,7 +131,7 @@ class DecayWorker:
                 )
 
             except Exception as e:
-                logger.error(
+                logger.info(
                     "tenant_decay_failed",
                     tenant_id=tenant_id,
                     error=str(e),
@@ -218,22 +218,21 @@ class SummarizationWorker:
         # Note: RAECoreService list_memories doesn't explicitly support session_id yet in its public method signature
         # We might need to extend it or pass filters dict.
         # list_memories supports filters param.
-        # Assuming filters can handle metadata
-        filters = {"metadata": {"session_id": str(session_id)}}
-        
+
         episodic_memories = await self.rae_service.list_memories(
-            tenant_id=tenant_id, 
-            project=project_id, 
-            layer="episodic", 
-            limit=100, 
+            tenant_id=tenant_id,
+            project=project_id,
+            layer="episodic",
+            limit=100,
             # filters=filters # Need to verify if filters pass through correctly
         )
-        
+
         # Manually filter by session_id if RAECoreService doesn't support metadata filtering yet in Postgres adapter fully
         # (Postgres adapter list_memories stub implementation was basic, we updated it but verify)
         # For now, let's filter in python to be safe as we did in other places
         episodic_memories = [
-            m for m in episodic_memories 
+            m
+            for m in episodic_memories
             if m.get("metadata", {}).get("session_id") == str(session_id)
         ]
 
@@ -300,9 +299,10 @@ Provide a concise summary, list key topics, and determine the overall sentiment.
                 model=settings.RAE_LLM_MODEL_DEFAULT,
                 response_model=SessionSummaryResponse,
             )
+            res = cast(SessionSummaryResponse, response)
 
             # Format the summary
-            summary = f"{response.summary}\n\nKey Topics: {', '.join(response.key_topics)}\n\nSentiment: {response.sentiment}"
+            summary = f"{res.summary}\n\nKey Topics: {', '.join(res.key_topics)}\n\nSentiment: {res.sentiment}"
             return summary
 
         except Exception as e:
@@ -421,7 +421,9 @@ class DreamingWorker:
     ):
         self.pool = pool
         self.rae_service = rae_service
-        self.reflection_engine = reflection_engine or ReflectionEngineV2(pool, rae_service)
+        self.reflection_engine = reflection_engine or ReflectionEngineV2(
+            pool, rae_service
+        )
 
     async def run_dreaming_cycle(
         self,
@@ -469,7 +471,7 @@ class DreamingWorker:
         # RAECoreService only supports basic equality filters currently.
         # We can implement extended filtering in RAECoreService or use direct SQL here.
         # Given this is a worker, direct SQL is acceptable for complex queries, BUT we should target 'memories' table using correct column names.
-        
+
         cutoff_time = datetime.now(timezone.utc) - timedelta(hours=lookback_hours)
 
         async with self.pool.acquire() as conn:
@@ -572,51 +574,42 @@ class MaintenanceScheduler:
     cron/systemd timers.
     """
 
-    def __init__(self, pool: asyncpg.Pool):
+    def __init__(
+        self, pool: asyncpg.Pool, rae_service: Optional[RAECoreService] = None
+    ):
         self.pool = pool
-        
-        # Instantiate RAECoreService dependencies manually for CLI context
-        # In a real app context, this should be injected.
-        # For CLI usage, we need to create it.
-        # Note: This requires Qdrant and Redis which might be heavy for a worker if not needed.
-        # But we need it for Memory replacement.
-        # HACK: For now we mock or create minimal service if possible, or assume full env.
-        # Assuming full env as it's a worker process.
-        
-        # We need to initialize clients. Ideally these are passed in __init__
-        # But to keep signature simple for existing callers (if any), we might need to handle it.
-        # However, the CLI entry point below creates pool.
-        # We should update CLI entry point to create full service stack.
-        # For now, we'll assume we can't easily create RAECoreService inside __init__ without async.
-        # So we'll update the CLI entry point first to pass it, and update __init__ signature.
-        pass
+        self.rae_service = rae_service
+        self.decay_worker = DecayWorker(pool)
+        self.summarization_worker: Optional[SummarizationWorker] = None
+        self.dreaming_worker: Optional[DreamingWorker] = None
+
+        if self.rae_service:
+            self.summarization_worker = SummarizationWorker(pool, self.rae_service)
+            self.dreaming_worker = DreamingWorker(pool, self.rae_service)
 
     @classmethod
-    async def create(cls, pool: asyncpg.Pool, redis_url: str, qdrant_host: str, qdrant_port: int):
+    async def create(
+        cls, pool: asyncpg.Pool, redis_url: str, qdrant_host: str, qdrant_port: int
+    ):
         """Async factory"""
-        self = cls(pool)
-        
         # Initialize dependencies
         import redis.asyncio as aioredis
         from qdrant_client import AsyncQdrantClient
-        
-        redis_client = aioredis.from_url(redis_url, encoding="utf-8", decode_responses=True)
-        qdrant_client = AsyncQdrantClient(host=qdrant_host, port=qdrant_port)
-        
-        self.rae_service = RAECoreService(
-            postgres_pool=pool,
-            qdrant_client=qdrant_client,
-            redis_client=redis_client
+
+        redis_client = aioredis.from_url(
+            redis_url, encoding="utf-8", decode_responses=True
         )
-        
-        self.decay_worker = DecayWorker(pool)
-        self.summarization_worker = SummarizationWorker(pool, self.rae_service)
-        self.dreaming_worker = DreamingWorker(pool, self.rae_service)
-        
-        return self
+        qdrant_client = AsyncQdrantClient(host=qdrant_host, port=qdrant_port)
+
+        rae_service = RAECoreService(
+            postgres_pool=pool, qdrant_client=qdrant_client, redis_client=redis_client
+        )
+
+        return cls(pool, rae_service)
 
     async def run_daily_maintenance(
-        self, tenant_ids: Optional[List[str]] = None
+        self,
+        tenant_ids: Optional[List[str]] = None,
     ) -> Dict[str, Any]:
         """
         Run daily maintenance tasks.
@@ -664,7 +657,11 @@ class MaintenanceScheduler:
             )
 
             # 2. Run dreaming cycles for each tenant (only if enabled)
-            if settings.REFLECTIVE_MEMORY_ENABLED and settings.DREAMING_ENABLED:
+            if (
+                settings.REFLECTIVE_MEMORY_ENABLED
+                and settings.DREAMING_ENABLED
+                and self.dreaming_worker
+            ):
                 if tenant_ids is None:
                     tenant_ids = await self.decay_worker._get_all_tenant_ids()
 
@@ -750,10 +747,10 @@ async def run_maintenance_cli():
     try:
         # Create scheduler
         scheduler = await MaintenanceScheduler.create(
-            pool, 
+            pool,
             redis_url=settings.REDIS_URL,
             qdrant_host=settings.QDRANT_HOST,
-            qdrant_port=settings.QDRANT_PORT
+            qdrant_port=settings.QDRANT_PORT,
         )
 
         # Run daily maintenance

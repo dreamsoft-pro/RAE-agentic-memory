@@ -4,7 +4,7 @@ Authentication and Authorization Module
 Provides API key authentication and optional JWT token verification.
 """
 
-from typing import Optional
+from typing import Optional, cast
 
 import structlog
 from fastapi import HTTPException, Request, Security, status
@@ -153,7 +153,7 @@ async def get_current_user(request: Request) -> dict:
         User information dictionary
     """
     if hasattr(request.state, "user"):
-        return request.state.user
+        return cast(dict, request.state.user)
 
     return {"authenticated": False}
 
@@ -170,9 +170,9 @@ async def get_user_id_from_token(request: Request) -> Optional[str]:
     """
     # Try to get from request state first
     if hasattr(request.state, "user"):
-        user = request.state.user
+        user = cast(dict, request.state.user)
         if user.get("user_id"):
-            return user["user_id"]
+            return str(user["user_id"])
 
     # Try to extract from token
     auth_header = request.headers.get("Authorization")
@@ -185,14 +185,15 @@ async def get_user_id_from_token(request: Request) -> Optional[str]:
 
             try:
                 decoded = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
-                return decoded.get("sub")
+                user_id_val = decoded.get("sub")
+                return str(user_id_val) if user_id_val is not None else None
             except JWTError:
                 return None
 
         # Fallback for testing/non-JWT mode: use token hash
         import hashlib
 
-        return hashlib.sha256(token.encode()).hexdigest()[:32]
+        return cast(str, hashlib.sha256(token.encode()).hexdigest()[:32])
 
     # Try API key as user identifier
     api_key = request.headers.get("X-API-Key")

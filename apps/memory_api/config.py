@@ -1,7 +1,7 @@
 import os
 
-from pydantic import ConfigDict, model_validator
-from pydantic_settings import BaseSettings
+from pydantic import model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -37,15 +37,17 @@ class Settings(BaseSettings):
     def validate_vector_backend(self):
         """Backward compatibility: Support legacy VECTOR_STORE_BACKEND variable"""
         if os.getenv("VECTOR_STORE_BACKEND") and not os.getenv("RAE_VECTOR_BACKEND"):
-            self.RAE_VECTOR_BACKEND = os.getenv("VECTOR_STORE_BACKEND")
+            self.RAE_VECTOR_BACKEND = str(os.getenv("VECTOR_STORE_BACKEND"))
         return self
 
     # Database Validation Mode
-    # validate: Check schema and fail fast on mismatch (default)
-    # init: (Not Implemented) Initialize empty DB
-    # migrate: (Not Implemented) Run migrations
+    # migrate: Run migrations automatically on startup (default for DX)
+    # validate: Check schema and fail fast on mismatch (safe for prod)
+    # init: Initialize empty DB (same as migrate)
     # ignore: Skip validation
-    RAE_DB_MODE: str = "validate"
+    RAE_DB_MODE: str = os.getenv(
+        "RAE_DB_MODE", "ignore" if "PYTEST_CURRENT_TEST" in os.environ else "migrate"
+    )
 
     # --- Security Settings ---
     OAUTH_ENABLED: bool = True
@@ -179,7 +181,7 @@ class Settings(BaseSettings):
             self.REFLECTIVE_LESSONS_TOKEN_BUDGET = 1024
         return self
 
-    model_config = ConfigDict(
+    model_config = SettingsConfigDict(
         env_file=".env", env_file_encoding="utf-8", extra="ignore"
     )
 

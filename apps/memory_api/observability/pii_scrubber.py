@@ -20,7 +20,7 @@ For production use with sensitive data, consider integrating:
 """
 
 import re
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import structlog
 
@@ -133,9 +133,10 @@ class PIIScrubber:
 
             if preserve_structure:
                 # Replace with token of similar length
-                scrubbed = pattern.sub(
-                    lambda m: self._preserve_length(m.group(), replacement), scrubbed
-                )
+                def replacer(m: Any, r: str = replacement) -> str:
+                    return self._preserve_length(m.group(), r)
+
+                scrubbed = pattern.sub(replacer, scrubbed)
             else:
                 # Simple replacement
                 scrubbed = pattern.sub(replacement, scrubbed)
@@ -267,7 +268,7 @@ def has_pii(text: str) -> bool:
 # ============================================================================
 
 
-def scrub_span_attributes(attributes: Dict[str, any]) -> Dict[str, any]:
+def scrub_span_attributes(attributes: Dict[str, Any]) -> Dict[str, Any]:
     """
     Scrub PII from span attributes.
 
@@ -280,7 +281,7 @@ def scrub_span_attributes(attributes: Dict[str, any]) -> Dict[str, any]:
     if not attributes:
         return attributes
 
-    scrubbed = {}
+    scrubbed: Dict[str, Any] = {}
     scrubber = get_scrubber()
 
     for key, value in attributes.items():

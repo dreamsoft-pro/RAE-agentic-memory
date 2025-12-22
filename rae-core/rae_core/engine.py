@@ -1,6 +1,6 @@
 """Main RAE Engine - Orchestrates all RAE-core components."""
 
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
 from rae_core.config import RAESettings
@@ -57,9 +57,10 @@ class RAEEngine:
         self.sync_provider = sync_provider
 
         # Initialize sub-engines
+        from rae_core.search.strategies import SearchStrategy
         from rae_core.search.strategies.vector import VectorSearchStrategy
 
-        strategies = {}
+        strategies: dict[str, SearchStrategy] = {}
         if vector_store and embedding_provider:
             strategies["vector"] = VectorSearchStrategy(
                 vector_store=vector_store,
@@ -202,8 +203,7 @@ class RAEEngine:
             query=query,
             tenant_id=tenant_id,
             filters=filters,
-            top_k=top_k,
-            similarity_threshold=similarity_threshold,
+            limit=top_k,
         )
 
         if use_reranker and len(results) > 0:
@@ -213,7 +213,15 @@ class RAEEngine:
                 results=results[:rerank_top_k],
             )
 
-        return results
+        # Fetch actual memories
+        memories: list[dict[str, Any]] = []
+        for memory_id, score in results:
+            memory = await self.memory_storage.get_memory(memory_id, tenant_id)
+            if memory:
+                memory["search_score"] = score
+                memories.append(memory)
+
+        return memories
 
     # Reflection operations
 
@@ -233,11 +241,11 @@ class RAEEngine:
         Returns:
             Cycle execution summary
         """
-        return await self.reflection_engine.run_reflection_cycle(
+        return cast(dict[str, Any], await self.reflection_engine.run_reflection_cycle(
             tenant_id=tenant_id,
             agent_id=agent_id,
             trigger_type=trigger_type,
-        )
+        ))
 
     async def generate_reflection(
         self,
@@ -257,12 +265,12 @@ class RAEEngine:
         Returns:
             Reflection result
         """
-        return await self.reflection_engine.generate_reflection(
+        return cast(dict[str, Any], await self.reflection_engine.generate_reflection(
             memory_ids=memory_ids,
             tenant_id=tenant_id,
             agent_id=agent_id,
             reflection_type=reflection_type,
-        )
+        ))
 
     # Sync operations
 

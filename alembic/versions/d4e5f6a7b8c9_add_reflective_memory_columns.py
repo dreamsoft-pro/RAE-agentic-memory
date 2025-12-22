@@ -7,7 +7,6 @@ Create Date: 2025-11-28 14:00:00.000000
 """
 
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import UUID
 
 from alembic import op
 
@@ -44,7 +43,7 @@ def upgrade():
 
     # Add session_id for episodic and reflective memories
     op.add_column(
-        "memories", sa.Column("session_id", UUID(as_uuid=True), nullable=True)
+        "memories", sa.Column("session_id", sa.Text(), nullable=True)
     )
 
     # Add qdrant_point_id for vector store integration

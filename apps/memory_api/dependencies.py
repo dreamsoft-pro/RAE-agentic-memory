@@ -12,15 +12,16 @@ Enterprise Architecture Benefits:
 - No hidden dependencies
 """
 
+from typing import cast
+
 import asyncpg
 import redis.asyncio as aioredis
 from fastapi import HTTPException, Request
-from qdrant_client import QdrantClient
+from qdrant_client import AsyncQdrantClient
 from redis.asyncio import Redis as AsyncRedis
 
 from .repositories.graph_repository import GraphRepository
 from .services.graph_extraction import GraphExtractionService
-from .services.hybrid_search import HybridSearchService
 from .services.rae_core_service import RAECoreService
 
 # ==========================================
@@ -67,16 +68,16 @@ def get_redis_client(request: Request) -> AsyncRedis:
     """
     if not hasattr(request.app.state, "redis_client"):
         raise HTTPException(status_code=500, detail="Redis client not initialized")
-    return request.app.state.redis_client
+    return cast(AsyncRedis, request.app.state.redis_client)
 
 
-def get_qdrant_client(request: Request) -> QdrantClient:
+def get_qdrant_client(request: Request) -> AsyncQdrantClient:
     """
     Get the Qdrant client from application state.
     """
     if not hasattr(request.app.state, "qdrant_client"):
         raise HTTPException(status_code=500, detail="Qdrant client not initialized")
-    return request.app.state.qdrant_client
+    return cast(AsyncQdrantClient, request.app.state.qdrant_client)
 
 
 # ==========================================
@@ -119,7 +120,7 @@ def get_rae_core_service(request: Request) -> RAECoreService:
     """
     if not hasattr(request.app.state, "rae_core_service"):
         raise HTTPException(status_code=500, detail="RAE-Core service not initialized")
-    return request.app.state.rae_core_service
+    return cast(RAECoreService, request.app.state.rae_core_service)
 
 
 def get_graph_extraction_service(request: Request) -> GraphExtractionService:

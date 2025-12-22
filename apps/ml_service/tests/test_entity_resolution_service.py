@@ -1,3 +1,4 @@
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 import numpy as np
@@ -24,11 +25,14 @@ def mock_sentence_transformer_instance():
 # Fixture to mock sklearn components (AgglomerativeClustering and cosine_similarity)
 @pytest.fixture
 def mock_sklearn_components():
-    with patch(
-        "apps.ml_service.services.entity_resolution.AgglomerativeClustering"
-    ) as MockAgglomerativeClustering, patch(
-        "apps.ml_service.services.entity_resolution.cosine_similarity"
-    ) as MockCosineSimilarity:
+    with (
+        patch(
+            "apps.ml_service.services.entity_resolution.AgglomerativeClustering"
+        ) as MockAgglomerativeClustering,
+        patch(
+            "apps.ml_service.services.entity_resolution.cosine_similarity"
+        ) as MockCosineSimilarity,
+    ):
         mock_agg_instance = MagicMock()
         MockAgglomerativeClustering.return_value = mock_agg_instance
 
@@ -43,13 +47,13 @@ def entity_resolution_service(mock_sentence_transformer_instance):
         return_value=mock_sentence_transformer_instance,
     ):
         # Ensure get_embedding_model's internal singleton cache is cleared for isolation
-        get_embedding_model._EMBEDDING_MODEL = None
+        cast(Any, get_embedding_model)._EMBEDDING_MODEL = None
 
         service = EntityResolutionMLService(similarity_threshold=0.8)
         yield service
 
         # Clean up after test
-        get_embedding_model._EMBEDDING_MODEL = None
+        cast(Any, get_embedding_model)._EMBEDDING_MODEL = None
 
 
 def test_entity_resolution_init(

@@ -1,5 +1,5 @@
 import json
-from typing import Type
+from typing import Optional, Type
 
 import httpx
 from pydantic import BaseModel
@@ -14,7 +14,7 @@ class OllamaProvider(LLMProvider):
     An LLM provider that uses a local Ollama server.
     """
 
-    def __init__(self, api_url: str = None):
+    def __init__(self, api_url: Optional[str] = None):
         self.api_url = api_url or settings.OLLAMA_API_URL
         if not self.api_url:
             raise ValueError("OLLAMA_API_URL is not set.")

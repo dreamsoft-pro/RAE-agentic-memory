@@ -66,6 +66,7 @@ async def execute(
         # 1. Build context using ContextBuilder (includes reflective memory)
         context_builder = ContextBuilder(
             pool=request.app.state.pool,
+            rae_service=request.app.state.rae_core_service,
             config=ContextConfig(
                 max_total_tokens=8000,
                 max_reflections_tokens=1024,
@@ -151,7 +152,9 @@ async def execute(
             except Exception as e:
                 span.set_attribute("rae.outcome.label", "reranker_error")
                 span.set_attribute("rae.error.message", str(e))
-                raise HTTPException(status_code=502, detail=f"Reranker error: {e}")
+                raise HTTPException(
+                    status_code=502, detail=f"Reranker error: {e}"
+                ) from e
 
             rerank_scores = {item["id"]: item["score"] for item in reranked_items}
 
@@ -172,10 +175,10 @@ async def execute(
             try:
                 # Use RAECoreService to update stats
                 from apps.memory_api.dependencies import get_rae_core_service
+
                 rae_service = get_rae_core_service(request)
                 await rae_service.update_memory_access_batch(
-                    memory_ids=used_memory_ids,
-                    tenant_id=tenant_id
+                    memory_ids=used_memory_ids, tenant_id=tenant_id
                 )
             except Exception as e:
                 # Log error but don't fail request
@@ -230,7 +233,7 @@ async def execute(
         except Exception as e:
             span.set_attribute("rae.outcome.label", "llm_error")
             span.set_attribute("rae.error.message", str(e))
-            raise HTTPException(status_code=500, detail=f"LLM call failed: {e}")
+            raise HTTPException(status_code=500, detail=f"LLM call failed: {e}") from e
 
         # 7. Reflection hook
         try:

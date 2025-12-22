@@ -149,7 +149,7 @@ class MemoryIsolationGuard:
                 f"(memory_id={memory_id})"
             )
 
-    def get_stats(self) -> dict[str, int]:
+    def get_stats(self) -> dict[str, Any]:
         """Get isolation guard statistics.
 
         Returns:

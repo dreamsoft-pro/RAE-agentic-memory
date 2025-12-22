@@ -457,12 +457,18 @@ class RAEBenchmarkRunner:
         benchmark_name = self.benchmark_data["name"]
 
         # Prepare results data
+        project_root = Path(__file__).parent.parent.parent
+        try:
+            rel_benchmark_file = self.benchmark_file.relative_to(project_root)
+        except ValueError:
+            rel_benchmark_file = self.benchmark_file
+
         results_data = {
             "benchmark": {
                 "name": benchmark_name,
                 "description": self.benchmark_data["description"],
                 "version": self.benchmark_data.get("version", "1.0"),
-                "file": str(self.benchmark_file),
+                "file": str(rel_benchmark_file),
             },
             "execution": {
                 "timestamp": datetime.now().isoformat(),

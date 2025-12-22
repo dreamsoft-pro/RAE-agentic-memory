@@ -15,17 +15,17 @@ Key features:
 - Audit trail for policy changes
 """
 
-import logging
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
+import structlog
 from pydantic import BaseModel, Field
 
 from apps.memory_api.utils.datetime_utils import utc_now
 
-logger = logging.getLogger(__name__)
+logger = structlog.get_logger(__name__)
 
 
 class PolicyStatus(str, Enum):

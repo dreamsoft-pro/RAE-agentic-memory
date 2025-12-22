@@ -1,9 +1,11 @@
 from datetime import datetime, timezone
+from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
 
+from apps.memory_api.services.rae_core_service import RAECoreService
 from apps.memory_api.workers.memory_maintenance import (
     DecayWorker,
     DreamingWorker,
@@ -46,6 +48,15 @@ def mock_settings(mocker):
     return settings
 
 
+@pytest.fixture
+def mock_rae_service():
+    """Mock for RAECoreService."""
+    service = AsyncMock(spec=RAECoreService)
+    service.list_memories.return_value = []  # Default empty list for sessions
+    service.store_memory.return_value = "mock-summary-id"  # For storing summary
+    return service
+
+
 # --- DecayWorker Tests ---
 
 
@@ -59,7 +70,7 @@ async def test_decay_worker_run_decay_cycle(mock_pool, mock_settings):
     # Mock getting tenant IDs with valid UUIDs
     tenant1 = str(uuid4())
     tenant2 = str(uuid4())
-    worker._get_all_tenant_ids = AsyncMock(return_value=[tenant1, tenant2])
+    cast(Any, worker)._get_all_tenant_ids = AsyncMock(return_value=[tenant1, tenant2])
 
     stats = await worker.run_decay_cycle(decay_rate=0.05, consider_access_stats=False)
 
@@ -74,7 +85,7 @@ async def test_decay_worker_run_decay_cycle_error(mock_pool, mock_settings):
     mock_scoring_service.decay_importance.side_effect = Exception("Decay failed")
 
     worker = DecayWorker(pool=mock_pool, scoring_service=mock_scoring_service)
-    worker._get_all_tenant_ids = AsyncMock(return_value=[str(uuid4())])
+    cast(Any, worker)._get_all_tenant_ids = AsyncMock(return_value=[str(uuid4())])
 
     stats = await worker.run_decay_cycle(decay_rate=0.05)
 
@@ -95,18 +106,24 @@ async def test_hourly_maintenance(mock_pool, mock_settings):
 
 
 @pytest.mark.asyncio
-async def test_summarize_session_success(mock_pool, mock_settings):
-    mock_repo = AsyncMock()
+async def test_summarize_session_success(mock_pool, mock_settings, mock_rae_service):
+    session_id_val = uuid4()  # Capture the session_id
 
-    # Mock memories
+    # Mock memories to include metadata with session_id
     memories = [
-        {"id": i, "content": f"event {i}", "importance": 0.5} for i in range(12)
+        {
+            "id": i,
+            "content": f"event {i}",
+            "importance": 0.5,
+            "metadata": {"session_id": str(session_id_val)},
+        }
+        for i in range(12)
     ]
-    mock_repo.get_episodic_memories.return_value = memories
+    mock_rae_service.list_memories.return_value = memories
 
-    mock_repo.insert_memory.return_value = {"id": "summary_id"}
+    mock_rae_service.store_memory.return_value = "summary_id"
 
-    worker = SummarizationWorker(pool=mock_pool, memory_repository=mock_repo)
+    worker = SummarizationWorker(pool=mock_pool, rae_service=mock_rae_service)
     worker.llm_provider = AsyncMock()
 
     response_obj = SessionSummaryResponse(
@@ -115,33 +132,37 @@ async def test_summarize_session_success(mock_pool, mock_settings):
     worker.llm_provider.generate_structured.return_value = response_obj
 
     result = await worker.summarize_session(
-        tenant_id="tenant1", project_id="proj1", session_id=uuid4(), min_events=10
+        tenant_id="tenant1",
+        project_id="proj1",
+        session_id=session_id_val,
+        min_events=10,
     )
 
     assert result is not None
     assert result["id"] == "summary_id"
-    mock_repo.insert_memory.assert_called_once()
+    mock_rae_service.store_memory.assert_called_once()
 
 
 @pytest.mark.asyncio
-async def test_summarize_session_insufficient_events(mock_pool, mock_settings):
-    mock_repo = AsyncMock()
-    mock_repo.get_episodic_memories.return_value = [{"id": 1}]
+async def test_summarize_session_insufficient_events(
+    mock_pool, mock_settings, mock_rae_service
+):
+    mock_rae_service.list_memories.return_value = [{"id": 1}]
 
-    worker = SummarizationWorker(pool=mock_pool, memory_repository=mock_repo)
+    worker = SummarizationWorker(pool=mock_pool, rae_service=mock_rae_service)
 
     result = await worker.summarize_session(
         tenant_id="tenant1", project_id="proj1", session_id=uuid4(), min_events=10
     )
 
     assert result is None
-    mock_repo.insert_memory.assert_not_called()
+    mock_rae_service.store_memory.assert_not_called()
 
 
 @pytest.mark.asyncio
-async def test_summarize_session_disabled(mock_pool, mock_settings):
+async def test_summarize_session_disabled(mock_pool, mock_settings, mock_rae_service):
     mock_settings.SUMMARIZATION_ENABLED = False
-    worker = SummarizationWorker(pool=mock_pool)
+    worker = SummarizationWorker(pool=mock_pool, rae_service=mock_rae_service)
 
     result = await worker.summarize_session(
         tenant_id="tenant1", project_id="proj1", session_id=uuid4()
@@ -151,12 +172,11 @@ async def test_summarize_session_disabled(mock_pool, mock_settings):
 
 
 @pytest.mark.asyncio
-async def test_summarize_long_sessions(mock_pool, mock_settings):
-    mock_repo = AsyncMock()
-    worker = SummarizationWorker(pool=mock_pool, memory_repository=mock_repo)
+async def test_summarize_long_sessions(mock_pool, mock_settings, mock_rae_service):
+    worker = SummarizationWorker(pool=mock_pool, rae_service=mock_rae_service)
 
     # Mock summarize_session
-    worker.summarize_session = AsyncMock(return_value={"id": "summary"})
+    cast(Any, worker).summarize_session = AsyncMock(return_value={"id": "summary"})
 
     # Mock DB query for long sessions
     mock_conn = mock_pool.acquire.return_value.__aenter__.return_value
@@ -167,20 +187,25 @@ async def test_summarize_long_sessions(mock_pool, mock_settings):
         tenant_id="tenant1", project_id="proj1", event_threshold=100
     )
 
+    # Verify results
     assert len(summaries) == 1
-    worker.summarize_session.assert_called_once()
+    cast(Any, worker).summarize_session.assert_called_once()
 
 
 # --- DreamingWorker Tests ---
 
 
 @pytest.mark.asyncio
-async def test_dreaming_cycle_success(mock_pool, mock_settings):
+async def test_dreaming_cycle_success(mock_pool, mock_settings, mock_rae_service):
     mock_reflection_engine = AsyncMock()
     mock_reflection_engine.generate_reflection.return_value = MagicMock()
     mock_reflection_engine.store_reflection.return_value = {"reflection_id": "ref1"}
 
-    worker = DreamingWorker(pool=mock_pool, reflection_engine=mock_reflection_engine)
+    worker = DreamingWorker(
+        pool=mock_pool,
+        rae_service=mock_rae_service,
+        reflection_engine=mock_reflection_engine,
+    )
 
     # Mock DB query for high importance memories
     mock_conn = mock_pool.acquire.return_value.__aenter__.return_value
@@ -216,17 +241,19 @@ async def test_dreaming_cycle_success(mock_pool, mock_settings):
 
 
 @pytest.mark.asyncio
-async def test_dreaming_cycle_disabled(mock_pool, mock_settings):
+async def test_dreaming_cycle_disabled(mock_pool, mock_settings, mock_rae_service):
     mock_settings.DREAMING_ENABLED = False
-    worker = DreamingWorker(pool=mock_pool)
+    worker = DreamingWorker(pool=mock_pool, rae_service=mock_rae_service)
 
     results = await worker.run_dreaming_cycle(tenant_id="t1", project_id="p1")
     assert results == []
 
 
 @pytest.mark.asyncio
-async def test_dreaming_cycle_insufficient_memories(mock_pool, mock_settings):
-    worker = DreamingWorker(pool=mock_pool)
+async def test_dreaming_cycle_insufficient_memories(
+    mock_pool, mock_settings, mock_rae_service
+):
+    worker = DreamingWorker(pool=mock_pool, rae_service=mock_rae_service)
 
     mock_conn = mock_pool.acquire.return_value.__aenter__.return_value
     mock_conn.fetch.return_value = []  # No memories

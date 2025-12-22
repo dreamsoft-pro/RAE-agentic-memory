@@ -1,6 +1,6 @@
 """Reflection Engine V2 - Orchestrates Actor-Evaluator-Reflector pattern."""
 
-from typing import Any
+from typing import Any, TypedDict
 from uuid import UUID
 
 from rae_core.interfaces.llm import ILLMProvider
@@ -8,6 +8,17 @@ from rae_core.interfaces.storage import IMemoryStorage
 from rae_core.reflection.actor import Actor
 from rae_core.reflection.evaluator import Evaluator
 from rae_core.reflection.reflector import Reflector
+
+
+class ReflectionCycleResult(TypedDict):
+    """Structure for reflection cycle results."""
+
+    trigger_type: str
+    reflections_generated: int
+    actions_executed: int
+    evaluations_performed: int
+    success: bool
+    reason: str | None
 
 
 class ReflectionEngine:
@@ -43,7 +54,7 @@ class ReflectionEngine:
         tenant_id: str,
         agent_id: str,
         trigger_type: str = "scheduled",
-    ) -> dict[str, Any]:
+    ) -> ReflectionCycleResult:
         """Run a complete reflection cycle.
 
         Steps:
@@ -60,12 +71,13 @@ class ReflectionEngine:
         Returns:
             Cycle execution summary
         """
-        results = {
+        results: ReflectionCycleResult = {
             "trigger_type": trigger_type,
             "reflections_generated": 0,
             "actions_executed": 0,
             "evaluations_performed": 0,
             "success": True,
+            "reason": None,
         }
 
         # Step 1: Identify candidates

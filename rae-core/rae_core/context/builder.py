@@ -219,7 +219,7 @@ class ContextBuilder:
             relevance = memory.get("score", 0.0)
             relevance_bonus = 0.3 * relevance
 
-            return importance + recency_bonus + relevance_bonus
+            return float(importance + recency_bonus + relevance_bonus)
 
         return sorted(memories, key=priority_score, reverse=True)
 
@@ -337,7 +337,7 @@ class ContextBuilder:
         utilization = self.window_manager.get_utilization()
         utilization_factor = 0.1 * utilization
 
-        return min(1.0, avg_importance + focus_boost + utilization_factor)
+        return float(min(1.0, avg_importance + focus_boost + utilization_factor))
 
     def reset(self):
         """Reset builder state and create new window."""

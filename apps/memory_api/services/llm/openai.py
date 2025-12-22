@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Any, Optional, Type, cast
 
 import instructor
 from openai import AsyncOpenAI
@@ -14,7 +14,7 @@ class OpenAIProvider(LLMProvider):
     An LLM provider that uses the OpenAI API.
     """
 
-    def __init__(self, api_key: str = None):
+    def __init__(self, api_key: Optional[str] = None):
         key = api_key or settings.OPENAI_API_KEY
         if not key:
             raise ValueError("OPENAI_API_KEY is not set.")
@@ -36,17 +36,18 @@ class OpenAIProvider(LLMProvider):
                 ],
             )
 
+            usage_data = cast(Any, response.usage)
             usage = LLMResultUsage(
-                prompt_tokens=response.usage.prompt_tokens,
-                candidates_tokens=response.usage.completion_tokens,
-                total_tokens=response.usage.total_tokens,
+                prompt_tokens=usage_data.prompt_tokens if usage_data else 0,
+                candidates_tokens=usage_data.completion_tokens if usage_data else 0,
+                total_tokens=usage_data.total_tokens if usage_data else 0,
             )
 
             return LLMResult(
-                text=response.choices[0].message.content,
+                text=response.choices[0].message.content or "",
                 usage=usage,
                 model_name=model,
-                finish_reason=response.choices[0].finish_reason,
+                finish_reason=response.choices[0].finish_reason or "stop",
             )
         except Exception as e:
             print(f"OpenAI API call failed: {e}")
@@ -62,7 +63,7 @@ class OpenAIProvider(LLMProvider):
         Generates structured content using the OpenAI model.
         """
         try:
-            response = await self.client.chat.completions.create(
+            response = await cast(Any, self.client).chat.completions.create(
                 model=model,
                 messages=[
                     {"role": "system", "content": system},
@@ -70,7 +71,7 @@ class OpenAIProvider(LLMProvider):
                 ],
                 response_model=response_model,
             )
-            return response
+            return cast(BaseModel, response)
         except Exception as e:
             print(f"OpenAI API call failed: {e}")
             raise

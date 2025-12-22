@@ -1,5 +1,5 @@
 import time
-from typing import Optional
+from typing import Dict, List, Optional
 
 import asyncpg
 import structlog
@@ -73,14 +73,14 @@ async def rebuild_full_cache():
     )
 
     # 2. Group by tenant and project
-    semantic_blocks = {}
+    semantic_blocks: Dict[tuple[str, str], List[str]] = {}
     for r in semantic_records:
         key = (r["tenant_id"], r["project"])
         if key not in semantic_blocks:
             semantic_blocks[key] = []
         semantic_blocks[key].append(r["content"])
 
-    reflective_blocks = {}
+    reflective_blocks: Dict[tuple[str, str], List[str]] = {}
     for r in reflective_records:
         key = (r["tenant_id"], r["project"])
         if key not in reflective_blocks:

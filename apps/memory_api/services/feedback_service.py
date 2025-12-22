@@ -4,7 +4,7 @@ Feedback Service (Iteration 3)
 Implements the "Feedback Loop" (learning-to-remember) mechanism.
 """
 
-from typing import Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 import structlog
 

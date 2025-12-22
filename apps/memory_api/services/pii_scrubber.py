@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional, cast
 
 # Optional ML dependencies
 try:  # pragma: no cover
@@ -56,7 +56,7 @@ def _get_anonymizer() -> "AnonymizerEngine":
     return _anonymizer
 
 
-def scrub_text(text: str) -> str:
+def scrub_text(text: str | None) -> str:
     """
     Analyzes and anonymizes PII in the given text using Presidio.
 
@@ -82,7 +82,7 @@ def scrub_text(text: str) -> str:
     # Anonymize the detected entities
     anonymized_text = anonymizer.anonymize(
         text=text,
-        analyzer_results=analyzer_results,
+        analyzer_results=cast(Any, analyzer_results),
         operators={"DEFAULT": OperatorConfig("replace", {"new_value": "<PII>"})},  # type: ignore[misc]
     )
 

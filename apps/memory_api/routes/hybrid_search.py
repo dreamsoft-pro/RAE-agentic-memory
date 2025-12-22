@@ -93,7 +93,7 @@ async def hybrid_search(request: HybridSearchRequest, pool=Depends(get_pool)):
 
     except Exception as e:
         logger.error("hybrid_search_failed", error=str(e), query=request.query)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -102,7 +102,9 @@ async def hybrid_search(request: HybridSearchRequest, pool=Depends(get_pool)):
 
 
 @router.post("/analyze", response_model=QueryAnalysisResponse)
-async def analyze_query(request: QueryAnalysisRequest, pool=Depends(get_pool)):
+async def analyze_query(
+    req: Request, request: QueryAnalysisRequest, pool=Depends(get_pool)
+):
     """
     Analyze query intent and recommend search strategies.
 
@@ -114,9 +116,14 @@ async def analyze_query(request: QueryAnalysisRequest, pool=Depends(get_pool)):
     """
     try:
         analyzer = QueryAnalyzer()
+        tenant_id = (
+            req.state.tenant_id if hasattr(req.state, "tenant_id") else "default"
+        )
 
-        analysis = await analyzer.analyze_query(
+        analysis = await analyzer.analyze_intent(
             query=request.query,
+            tenant_id=str(tenant_id),
+            project_id="default",  # Default project
             context=request.conversation_history,
             user_preferences=request.user_preferences,
         )
@@ -134,11 +141,11 @@ async def analyze_query(request: QueryAnalysisRequest, pool=Depends(get_pool)):
 
     except Exception as e:
         logger.error("query_analysis_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/analyze/explain")
-async def explain_query_analysis(request: QueryAnalysisRequest):
+async def explain_query_analysis(req: Request, request: QueryAnalysisRequest):
     """
     Get human-readable explanation of query analysis.
 
@@ -147,9 +154,14 @@ async def explain_query_analysis(request: QueryAnalysisRequest):
     """
     try:
         analyzer = QueryAnalyzer()
+        # In production, get from auth context
+        tenant_id = "default"
+        project_id = "default"
 
-        analysis = await analyzer.analyze_query(
+        analysis = await analyzer.analyze_intent(
             query=request.query,
+            tenant_id=tenant_id,
+            project_id=project_id,
             context=request.conversation_history,
             user_preferences=request.user_preferences,
         )
@@ -164,7 +176,7 @@ async def explain_query_analysis(request: QueryAnalysisRequest):
 
     except Exception as e:
         logger.error("explain_analysis_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -191,7 +203,7 @@ async def get_weight_profiles():
 
     except Exception as e:
         logger.error("get_profiles_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/weights/profiles/{profile_name}")
@@ -225,7 +237,7 @@ async def get_weight_profile(profile_name: str):
         raise
     except Exception as e:
         logger.error("get_profile_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.post("/weights/calculate")
@@ -239,8 +251,14 @@ async def calculate_weights_for_query(request: QueryAnalysisRequest):
         analyzer = QueryAnalyzer()
 
         # Analyze query
-        analysis = await analyzer.analyze_query(
+        # In production, get from auth context
+        tenant_id = "default"
+        project_id = "default"
+
+        analysis = await analyzer.analyze_intent(
             query=request.query,
+            tenant_id=tenant_id,
+            project_id=project_id,
             context=request.conversation_history,
             user_preferences=request.user_preferences,
         )
@@ -261,7 +279,7 @@ async def calculate_weights_for_query(request: QueryAnalysisRequest):
 
     except Exception as e:
         logger.error("calculate_weights_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -366,7 +384,7 @@ async def compare_search_strategies(
 
     except Exception as e:
         logger.error("comparison_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================
@@ -423,7 +441,7 @@ async def test_custom_weights(
         raise
     except Exception as e:
         logger.error("test_weights_failed", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 # ============================================================================

@@ -166,7 +166,7 @@ class PolicyEnforceRequest(BaseModel):
 async def request_approval(
     request: ApprovalRequest,
     pool=Depends(get_db_pool),
-    _: bool = Depends(verify_tenant_access),
+    tenant_access: bool = Depends(verify_tenant_access),
 ):
     """
     Request approval for a high-risk operation.
@@ -227,14 +227,14 @@ async def request_approval(
             logger.error("approval_request_error", error=str(e))
             raise HTTPException(
                 status_code=500, detail=f"Failed to request approval: {str(e)}"
-            )
+            ) from e
 
 
 @router.get("/approvals/{request_id}", response_model=ApprovalResponse)
 async def check_approval_status(
     request_id: UUID,
     pool=Depends(get_db_pool),
-    _: bool = Depends(auth.verify_token),
+    token_verified: bool = Depends(auth.verify_token),
 ):
     """
     Check the status of an approval request.
@@ -270,7 +270,7 @@ async def check_approval_status(
 
         except ValueError as e:
             span.set_attribute("rae.outcome.label", "not_found")
-            raise HTTPException(status_code=404, detail=str(e))
+            raise HTTPException(status_code=404, detail=str(e)) from e
         except Exception as e:
             span.set_attribute("rae.outcome.label", "error")
             span.set_attribute("rae.error.message", str(e))
@@ -279,7 +279,7 @@ async def check_approval_status(
             )
             raise HTTPException(
                 status_code=500, detail=f"Failed to check approval status: {str(e)}"
-            )
+            ) from e
 
 
 @router.post("/approvals/{request_id}/decide", response_model=ApprovalResponse)
@@ -287,7 +287,7 @@ async def process_approval_decision(
     request_id: UUID,
     decision: DecisionRequest,
     pool=Depends(get_db_pool),
-    _: bool = Depends(auth.verify_token),
+    token_verified: bool = Depends(auth.verify_token),
 ):
     """
     Approve or reject an approval request.
@@ -332,7 +332,7 @@ async def process_approval_decision(
 
         except ValueError as e:
             span.set_attribute("rae.outcome.label", "invalid_request")
-            raise HTTPException(status_code=400, detail=str(e))
+            raise HTTPException(status_code=400, detail=str(e)) from e
         except Exception as e:
             span.set_attribute("rae.outcome.label", "error")
             span.set_attribute("rae.error.message", str(e))
@@ -341,7 +341,7 @@ async def process_approval_decision(
             )
             raise HTTPException(
                 status_code=500, detail=f"Failed to process decision: {str(e)}"
-            )
+            ) from e
 
 
 # ============================================================================
@@ -352,7 +352,7 @@ async def process_approval_decision(
 @router.post("/provenance/context")
 async def create_decision_context(
     request: ContextCreationRequest,
-    _: bool = Depends(verify_tenant_access),
+    tenant_access: bool = Depends(verify_tenant_access),
 ):
     """
     Create a decision context for provenance tracking.
@@ -413,13 +413,13 @@ async def create_decision_context(
             logger.error("context_creation_error", error=str(e))
             raise HTTPException(
                 status_code=500, detail=f"Failed to create context: {str(e)}"
-            )
+            ) from e
 
 
 @router.post("/provenance/decision")
 async def record_decision(
     request: DecisionRecordRequest,
-    _: bool = Depends(verify_tenant_access),
+    tenant_access: bool = Depends(verify_tenant_access),
 ):
     """
     Record a decision for provenance tracking.
@@ -470,13 +470,13 @@ async def record_decision(
             logger.error("decision_recording_error", error=str(e))
             raise HTTPException(
                 status_code=500, detail=f"Failed to record decision: {str(e)}"
-            )
+            ) from e
 
 
 @router.get("/provenance/lineage/{decision_id}")
 async def get_decision_lineage(
     decision_id: UUID,
-    _: bool = Depends(auth.verify_token),
+    token_verified: bool = Depends(auth.verify_token),
 ):
     """
     Get the full provenance lineage for a decision.
@@ -497,7 +497,7 @@ async def get_decision_lineage(
 
         except ValueError as e:
             span.set_attribute("rae.outcome.label", "not_found")
-            raise HTTPException(status_code=404, detail=str(e))
+            raise HTTPException(status_code=404, detail=str(e)) from e
         except Exception as e:
             span.set_attribute("rae.outcome.label", "error")
             span.set_attribute("rae.error.message", str(e))
@@ -506,7 +506,7 @@ async def get_decision_lineage(
             )
             raise HTTPException(
                 status_code=500, detail=f"Failed to get lineage: {str(e)}"
-            )
+            ) from e
 
 
 # ============================================================================
@@ -516,7 +516,7 @@ async def get_decision_lineage(
 
 @router.get("/circuit-breakers", response_model=List[CircuitBreakerState])
 async def get_all_circuit_breakers(
-    _: bool = Depends(require_admin),
+    admin_access: bool = Depends(require_admin),
 ):
     """
     Get the state of all circuit breakers.
@@ -530,7 +530,7 @@ async def get_all_circuit_breakers(
     ) as span:
         try:
             states = []
-            for name, breaker in rae_circuit_breakers.items():
+            for _name, breaker in rae_circuit_breakers.items():
                 state = breaker.get_state()
                 states.append(
                     CircuitBreakerState(
@@ -554,13 +554,13 @@ async def get_all_circuit_breakers(
             raise HTTPException(
                 status_code=500,
                 detail=f"Failed to get circuit breaker states: {str(e)}",
-            )
+            ) from e
 
 
 @router.get("/circuit-breakers/{name}", response_model=CircuitBreakerState)
 async def get_circuit_breaker_state(
     name: str,
-    _: bool = Depends(require_admin),
+    admin_access: bool = Depends(require_admin),
 ):
     """
     Get the state of a specific circuit breaker.
@@ -607,13 +607,13 @@ async def get_circuit_breaker_state(
             logger.error("circuit_breaker_state_error", name=name, error=str(e))
             raise HTTPException(
                 status_code=500, detail=f"Failed to get circuit breaker state: {str(e)}"
-            )
+            ) from e
 
 
 @router.post("/circuit-breakers/{name}/reset")
 async def reset_circuit_breaker(
     name: str,
-    _: bool = Depends(require_admin),
+    admin_access: bool = Depends(require_admin),
 ):
     """
     Reset a circuit breaker to CLOSED state.
@@ -653,7 +653,7 @@ async def reset_circuit_breaker(
             logger.error("circuit_breaker_reset_error", name=name, error=str(e))
             raise HTTPException(
                 status_code=500, detail=f"Failed to reset circuit breaker: {str(e)}"
-            )
+            ) from e
 
 
 # ============================================================================
@@ -665,7 +665,7 @@ async def reset_circuit_breaker(
 async def list_policies(
     tenant_id: Optional[str] = Query(None),
     policy_type: Optional[PolicyType] = Query(None),
-    _: bool = Depends(auth.verify_token),
+    token_verified: bool = Depends(auth.verify_token),
 ):
     """
     List all policies, optionally filtered by tenant and type.
@@ -703,13 +703,13 @@ async def list_policies(
             logger.error("policy_list_error", error=str(e))
             raise HTTPException(
                 status_code=500, detail=f"Failed to list policies: {str(e)}"
-            )
+            ) from e
 
 
 @router.post("/policies")
 async def create_policy(
     request: PolicyRequest,
-    _: bool = Depends(verify_tenant_access),
+    tenant_access: bool = Depends(verify_tenant_access),
 ):
     """
     Create a new policy version.
@@ -756,14 +756,14 @@ async def create_policy(
             logger.error("policy_creation_error", error=str(e))
             raise HTTPException(
                 status_code=500, detail=f"Failed to create policy: {str(e)}"
-            )
+            ) from e
 
 
 @router.post("/policies/{policy_id}/activate")
 async def activate_policy(
     policy_id: str,
     version_id: UUID,
-    _: bool = Depends(require_admin),
+    admin_access: bool = Depends(require_admin),
 ):
     """
     Activate a policy version.
@@ -797,21 +797,21 @@ async def activate_policy(
 
         except ValueError as e:
             span.set_attribute("rae.outcome.label", "not_found")
-            raise HTTPException(status_code=404, detail=str(e))
+            raise HTTPException(status_code=404, detail=str(e)) from e
         except Exception as e:
             span.set_attribute("rae.outcome.label", "error")
             span.set_attribute("rae.error.message", str(e))
             logger.error("policy_activation_error", policy_id=policy_id, error=str(e))
             raise HTTPException(
                 status_code=500, detail=f"Failed to activate policy: {str(e)}"
-            )
+            ) from e
 
 
 @router.post("/policies/{policy_id}/enforce")
 async def enforce_policy(
     policy_id: str,
     request: PolicyEnforceRequest,
-    _: bool = Depends(auth.verify_token),
+    token_verified: bool = Depends(auth.verify_token),
 ):
     """
     Enforce a policy against a context.
@@ -848,4 +848,4 @@ async def enforce_policy(
             logger.error("policy_enforcement_error", policy_id=policy_id, error=str(e))
             raise HTTPException(
                 status_code=500, detail=f"Failed to enforce policy: {str(e)}"
-            )
+            ) from e

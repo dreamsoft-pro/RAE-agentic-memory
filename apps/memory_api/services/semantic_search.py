@@ -7,7 +7,7 @@ This service implements enterprise semantic search with:
 - Stage 3: Semantic re-ranking
 """
 
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import asyncpg
 import numpy as np
@@ -63,9 +63,9 @@ class SemanticSearchPipeline:
         enable_topic_matching: bool = True,
         enable_canonicalization: bool = True,
         enable_reranking: bool = True,
-        node_types: List[SemanticNodeType] = None,
-        domains: List[str] = None,
-        min_priority: int = None,
+        node_types: Optional[List[SemanticNodeType]] = None,
+        domains: Optional[List[str]] = None,
+        min_priority: Optional[int] = None,
         exclude_degraded: bool = True,
     ) -> Tuple[List[SemanticNode], Dict[str, Any]]:
         """
@@ -166,7 +166,11 @@ class SemanticSearchPipeline:
         logger.info("stage1_topic_matching", query=query)
 
         # Generate query embedding
-        query_embedding = await self.ml_client.get_embedding(query)
+        result = await self.ml_client.generate_embeddings([query])
+        embeddings = result.get("embeddings", [])
+        query_embedding = (
+            cast(List[float], embeddings[0]) if embeddings else [0.0] * 1536
+        )
 
         # Simple topic extraction (split query into key terms)
         # In production, use LLM for better topic extraction
@@ -356,9 +360,9 @@ class SemanticSearchPipeline:
     def _apply_filters(
         self,
         nodes: List[SemanticNode],
-        node_types: List[SemanticNodeType] = None,
-        domains: List[str] = None,
-        min_priority: int = None,
+        node_types: Optional[List[SemanticNodeType]] = None,
+        domains: Optional[List[str]] = None,
+        min_priority: Optional[int] = None,
         exclude_degraded: bool = True,
     ) -> List[SemanticNode]:
         """Apply filters to nodes"""

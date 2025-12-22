@@ -16,8 +16,14 @@ from apps.memory_api.models.tenant import Tenant, TenantConfig, TenantTier
 # Load models from the legacy models.py file
 models_file = Path(__file__).parent.parent / "models.py"
 spec = importlib.util.spec_from_file_location("rae_models_legacy", models_file)
-models_legacy = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(models_legacy)
+if spec is not None:
+    models_legacy = importlib.util.module_from_spec(spec)
+    if spec.loader is not None:
+        spec.loader.exec_module(models_legacy)
+    else:
+        raise ImportError(f"Could not load loader for {models_file}")
+else:
+    raise ImportError(f"Could not find spec for {models_file}")
 
 # Import core models from legacy models.py (only those that exist)
 MemoryLayer = models_legacy.MemoryLayer

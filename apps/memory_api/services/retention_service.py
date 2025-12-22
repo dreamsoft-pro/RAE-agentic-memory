@@ -21,7 +21,7 @@ ISO/IEC 42001 alignment:
 import logging
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 import asyncpg
@@ -146,7 +146,7 @@ class RetentionService:
             retention_days = 365
 
         # Build retention policies
-        policies = {}
+        policies: Dict[DataClass, RetentionPolicy] = {}
         for data_class, default_days in self.DEFAULT_RETENTION_POLICIES.items():
             # Override episodic memory retention from tenant config
             if data_class == DataClass.EPISODIC_MEMORY:
@@ -172,7 +172,7 @@ class RetentionService:
         Returns:
             Dict mapping data class to count of records deleted
         """
-        results = {}
+        results: Dict[DataClass, int] = {}
 
         if tenant_id:
             tenants = [tenant_id]
@@ -539,7 +539,7 @@ class RetentionService:
                 FROM deletion_audit_log
                 WHERE tenant_id = $1
             """
-            params = [tenant_id]
+            params: List[Any] = [tenant_id]
             param_idx = 2
 
             if start_date:

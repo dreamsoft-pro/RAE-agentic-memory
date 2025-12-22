@@ -4,7 +4,7 @@ OpenAI LLM Provider.
 Implements the LLM provider interface for OpenAI models.
 """
 
-from typing import AsyncIterator
+from typing import Any, AsyncIterator, Optional, cast
 
 from openai import AsyncOpenAI, RateLimitError
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -27,7 +27,12 @@ class OpenAIProvider:
     LLM provider for OpenAI models (GPT-4, GPT-3.5, etc.).
     """
 
-    def __init__(self, api_key: str, api_base: str = None):
+    def __init__(
+        self,
+        api_key: str,
+        api_base: Optional[str] = None,
+        organization: Optional[str] = None,
+    ):
         """
         Initialize the OpenAI provider.
 
@@ -122,7 +127,7 @@ class OpenAIProvider:
             if request.stop_sequences:
                 params["stop"] = request.stop_sequences
 
-            response = await self.client.chat.completions.create(**params)
+            response = await self.client.chat.completions.create(**cast(Any, params))
 
             usage = TokenUsage(
                 prompt_tokens=response.usage.prompt_tokens,
@@ -155,7 +160,7 @@ class OpenAIProvider:
                 f"OpenAI rate limit exceeded: {str(e)}",
                 provider="openai",
                 raw_error=e,
-            )
+            ) from e
         except Exception as e:
             error_str = str(e).lower()
             if "authentication" in error_str or "api key" in error_str:
@@ -163,25 +168,25 @@ class OpenAIProvider:
                     f"OpenAI authentication failed: {str(e)}",
                     provider="openai",
                     raw_error=e,
-                )
+                ) from e
             elif "timeout" in error_str or "connection" in error_str:
                 raise LLMTransientError(
                     f"OpenAI transient error: {str(e)}",
                     provider="openai",
                     raw_error=e,
-                )
+                ) from e
             elif "context_length_exceeded" in error_str:
                 raise LLMContextLengthError(
                     f"OpenAI context length exceeded: {str(e)}",
                     provider="openai",
                     raw_error=e,
-                )
+                ) from e
             else:
                 raise LLMProviderError(
                     f"OpenAI error: {str(e)}",
                     provider="openai",
                     raw_error=e,
-                )
+                ) from e
 
     async def stream(self, request: LLMRequest) -> AsyncIterator[LLMChunk]:
         """
@@ -213,7 +218,7 @@ class OpenAIProvider:
             if tools:
                 params["tools"] = tools
 
-            stream = await self.client.chat.completions.create(**params)
+            stream = await self.client.chat.completions.create(**cast(Any, params))
 
             async for chunk in stream:
                 if chunk.choices and chunk.choices[0].delta.content:
@@ -229,16 +234,16 @@ class OpenAIProvider:
                     f"OpenAI rate limit exceeded: {str(e)}",
                     provider="openai",
                     raw_error=e,
-                )
+                ) from e
             elif "authentication" in error_str or "api key" in error_str:
                 raise LLMAuthError(
                     f"OpenAI authentication failed: {str(e)}",
                     provider="openai",
                     raw_error=e,
-                )
+                ) from e
             else:
                 raise LLMTransientError(
                     f"OpenAI streaming error: {str(e)}",
                     provider="openai",
                     raw_error=e,
-                )
+                ) from e

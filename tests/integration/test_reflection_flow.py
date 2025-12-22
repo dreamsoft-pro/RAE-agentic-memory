@@ -10,9 +10,8 @@ Tests the complete Actor → Evaluator → Reflector pattern:
 """
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
 from unittest.mock import AsyncMock, patch
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
 
@@ -23,12 +22,14 @@ from apps.memory_api.models.reflection_v2_models import (
     EventType,
     LLMReflectionResponse,  # Added import
     OutcomeType,
-    ReflectionContext,
-    ReflectionResult,  # Imported for type hinting/mocking
+    ReflectionContext,  # Imported for type hinting/mocking
 )
-from apps.memory_api.services.rae_core_service import RAECoreService # Updated import
-from apps.memory_api.services.context_builder import ContextBuilder, ContextConfig # Added ContextConfig import
+from apps.memory_api.services.context_builder import (  # Added ContextConfig import
+    ContextBuilder,
+    ContextConfig,
+)
 from apps.memory_api.services.memory_scoring_v2 import compute_memory_score
+from apps.memory_api.services.rae_core_service import RAECoreService  # Updated import
 from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
 
 pytestmark = pytest.mark.integration
@@ -50,9 +51,9 @@ async def rae_service(db_pool):
     """RAECoreService for testing."""
     # This is a minimal RAECoreService for test purposes, only postgres_pool is needed here.
     # Other clients (Qdrant, Redis) are mocked in tests where they are actually used.
-    from qdrant_client import AsyncQdrantClient
     import redis.asyncio as aioredis
-    
+    from qdrant_client import AsyncQdrantClient
+
     # Create dummy clients, not actually used in this test file
     mock_qdrant_client = AsyncMock(spec=AsyncQdrantClient)
     mock_redis_client = AsyncMock(spec=aioredis.Redis)

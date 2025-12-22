@@ -28,11 +28,14 @@ def mock_llm_provider():
 
 @pytest.fixture
 def service(mock_rae_service, mock_graph_repo, mock_llm_provider):
-    with patch(
-        "apps.memory_api.services.graph_extraction.get_llm_provider",
-        return_value=mock_llm_provider,
-    ), patch.object(
-        GraphExtractionService, "_ensure_spacy_available", return_value=None
+    with (
+        patch(
+            "apps.memory_api.services.graph_extraction.get_llm_provider",
+            return_value=mock_llm_provider,
+        ),
+        patch.object(
+            GraphExtractionService, "_ensure_spacy_available", return_value=None
+        ),
     ):
         svc = GraphExtractionService(mock_rae_service, mock_graph_repo)
         svc.llm_provider = mock_llm_provider

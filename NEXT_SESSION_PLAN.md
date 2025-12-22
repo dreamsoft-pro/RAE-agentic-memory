@@ -1,34 +1,25 @@
-# Next Session Plan
+# NEXT SESSION PLAN
 
-## Priority: Fix Unit Test Failures (Migration Cleanup)
+## 🚨 CRITICAL: CI/CD Hygiene
 
-The migration of `MemoryRepository` to `RAE-Core` is code-complete, but unit tests are failing due to environment configuration and mismatched signatures.
+The project currently fails `make lint` with **420 errors**. We cannot merge to `main` until this is fixed.
 
-### 1. Disable DB Validation in Tests
-**Error:** `RuntimeError: Database schema validation failed: 1 violations found.`
-**Cause:** The application startup validator runs against mock database pools in tests.
-**Action:**
-- Modify `apps/memory_api/tests/conftest.py`.
-- In the `mock_env` or `app` fixture, ensure `RAE_DB_MODE` environment variable is set to `"ignore"`.
+1. **Auto-Fix Linter:**
+   ```bash
+   .venv/bin/ruff check . --fix
+   .venv/bin/ruff format .
+   ```
+2. **Manual Linter Fixes:**
+   - Address unused imports (F401).
+   - Fix bare exceptions (B904).
+   - Fix argument defaults (B008).
+3. **Verify:**
+   ```bash
+   make lint
+   make test-unit
+   ```
+4. **Push:**
+   Once `make lint` is green, push to `develop`.
 
-### 2. Fix `tests/api/v1/test_memory.py`
-**Error:** `fixture 'mock_pool' not found`
-**Action:**
-- Add `mock_pool` fixture to `tests/api/v1/test_memory.py` (copy from `apps/memory_api/tests/conftest.py` or import it).
-
-### 3. Fix ReflectionEngineV2 Tests
-**Error:** `AttributeError: 'ReflectionEngineV2' object has no attribute 'generate_reflection'`
-**Action:**
-- Inspect `apps/memory_api/services/reflection_engine_v2.py`.
-- Determine the correct method name (likely `store_reflection` or `generate_reflection_v2`).
-- Update `apps/memory_api/tests/services/test_reflection_engine_v2.py` to use the correct method.
-
-### 4. Fix Worker Tests (Dependency Injection)
-**Error:** `TypeError: SummarizationWorker.__init__() got an unexpected keyword argument 'memory_repository'`
-**Action:**
-- Update `apps/memory_api/tests/test_workers.py` and `apps/memory_api/tests/test_summarization_worker.py`.
-- Replace `memory_repository` mock with `rae_service` mock in worker instantiation.
-
-### 5. Final Verification
-- Run `make test-unit`.
-- Ensure 0 errors, 0 warnings (per policy).
+## Secondary Goals
+- Continue increasing test coverage for `apps/memory_api/routes/dashboard.py`.

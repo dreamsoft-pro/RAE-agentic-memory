@@ -9,10 +9,8 @@ If API keys are not set or are clearly test placeholders, tests are skipped.
 Run with: pytest -m llm tests/llm/
 """
 
-import os
 import json
-from unittest.mock import AsyncMock, patch
-from typing import AsyncIterator
+import os
 
 import pytest
 
@@ -24,10 +22,8 @@ from apps.llm import (
     LLMMessage,
     LLMRequest,
     LLMResponse,
-    LLMChunk,
     OpenAIProvider,
     QwenProvider,
-    TokenUsage,
 )
 
 # Mark all tests in this module as requiring LLM API access

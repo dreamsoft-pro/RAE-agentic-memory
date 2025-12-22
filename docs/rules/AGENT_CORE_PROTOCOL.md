@@ -5,6 +5,7 @@
 
 ## 1. CORE MANDATES
 
+- **Async-First**: **ALWAYS** use asynchronous connections and operations wherever possible to ensure high performance and non-blocking I/O.
 - **Autonomy**: Work autonomously. Do NOT ask for permission to create files, add tests, or commit standard work.
 - **Security**: **ALWAYS** include `tenant_id` in SQL queries. This is a multi-tenant system.
 - **Non-Interactive**: **NEVER** use interactive commands (`nano`, `vim`, `git add -i`, `less`). Use `cat`, `sed`, or tool-specific edits.
@@ -37,8 +38,9 @@ Different branches = Different testing levels.
 
 ### Phase 2: Develop Branch (`develop`)
 - **Goal**: Integrity & Regression.
-- **Command**: `make test-unit` (and `make lint`)
-- **Rule**: **MANDATORY** before proceeding to Release/Main. Fix ALL failures here.
+- **Command**: `make lint` and `make test-unit`
+- **CRITICAL RULE**: **MANDATORY** before **EVERY** push to `develop`. You **MUST** run both commands locally. 
+- **ENFORCEMENT**: Never push to `develop` if there are any linting errors or test failures. Fix ALL issues locally first.
 
 ### Phase 3: Main/Release
 - **Goal**: Production Guarantee.
@@ -78,7 +80,18 @@ Different branches = Different testing levels.
 
 ## 7. RESOURCE & COMMUNICATION EFFICIENCY
 
-- **RAE First**: **ALWAYS** consult RAE (memory/context) first. Input/Output MUST flow through RAE to minimize token usage.
-- **Model Economy**: Use cheaper/lighter models for simple tasks (formatting, basic logic). Reserve SOTA models for complex reasoning.
-- **Rate Limits (CLI)**: **STRICTLY** adhere to Requests Per Minute (RPM) limits. This applies especially to Gemini CLI.
-- **Quality Over Speed**: Do not rush. "Done Well" > "Done Fast". Take time to verify. Correctness is paramount.
+- **RAE-First Communication**: **MANDATORY**. All communication and context exchange between agents MUST pass through RAE. Agents must consult RAE for context before acting and store results in RAE. Direct side-channels are prohibited to ensure full auditability and shared state. Input/Output MUST flow through RAE to minimize token usage.
+- **Model Economy**: Use cheaper/lighter models for simple tasks. Reserve SOTA models for complex reasoning.
+- **Compute Offloading**: For heavy tasks (embeddings, large benchmarks), utilize the Compute Cluster:
+  - **Node KUBUS**: RTX 4080 (GPU acceleration, Local LLMs).
+  - **Node PIOTREK**: 128GB RAM (Large-scale memory testing).
+- **Advanced Quality Metrics**: 
+  - **LECT**: Long-term episodic consistency (10k+ cycles).
+  - **RST**: Stability against contradictory/noisy data.
+  - **GRDT**: Deep graph reasoning (chains of thought).
+
+## 8. DEFINITION OF DONE (PRO)
+- All tests pass (Green).
+- Linter passed (No warnings).
+- Benchmarks verified against baseline.
+- PR ready for review.

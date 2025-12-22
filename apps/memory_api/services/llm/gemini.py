@@ -1,4 +1,4 @@
-from typing import Type
+from typing import Any, Optional, Type, cast
 
 import google.generativeai as genai
 import instructor
@@ -14,7 +14,7 @@ class GeminiProvider(LLMProvider):
     An LLM provider that uses the Google Gemini API.
     """
 
-    def __init__(self, api_key: str = None):
+    def __init__(self, api_key: Optional[str] = None):
         key = api_key or settings.GEMINI_API_KEY
         if not key:
             raise ValueError("GEMINI_API_KEY is not set.")
@@ -29,7 +29,7 @@ class GeminiProvider(LLMProvider):
         Generates content using the Gemini model.
         """
         try:
-            generative_model = self.client(
+            generative_model: Any = self.client(
                 model_name=model,
                 system_instruction=system,
             )
@@ -61,14 +61,14 @@ class GeminiProvider(LLMProvider):
         Generates structured content using the Gemini model.
         """
         try:
-            generative_model = self.client(
+            generative_model: Any = self.client(
                 model_name=model,
                 system_instruction=system,
             )
             response = await generative_model.generate_content(
                 prompt, response_model=response_model
             )
-            return response
+            return cast(BaseModel, response)
         except Exception as e:
             print(f"Gemini API call failed: {e}")
             raise

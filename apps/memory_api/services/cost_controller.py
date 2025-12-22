@@ -171,7 +171,7 @@ def estimate_cost(
     cost_info = calculate_cost(
         model_name, estimated_input_tokens, estimated_output_tokens
     )
-    return cost_info["total_cost_usd"]
+    return float(cost_info["total_cost_usd"])
 
 
 def get_model_rates(model_name: str) -> Optional[Dict[str, float]]:
@@ -281,7 +281,7 @@ def calculate_gemini_cost(
     )
 
     cost_info = calculate_cost(model_name, input_tokens, output_tokens)
-    return cost_info["total_cost_usd"]
+    return float(cost_info["total_cost_usd"])
 
 
 # ============================================================================
@@ -341,10 +341,12 @@ def validate_cost_calculation(
         >>> if not is_valid:
         ...     logger.error("Cost mismatch detected! Using our cost model instead.")
     """
-    our_cost = calculate_cost(model_name, input_tokens, output_tokens)["total_cost_usd"]
+    our_cost = float(
+        calculate_cost(model_name, input_tokens, output_tokens)["total_cost_usd"]
+    )
     difference = abs(our_cost - llm_reported_cost)
 
-    is_valid = difference <= tolerance
+    is_valid = bool(difference <= tolerance)
 
     if not is_valid:
         logger.warning(

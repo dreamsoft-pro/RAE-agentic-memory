@@ -10,7 +10,7 @@ This service orchestrates the resolution process while delegating
 heavy ML operations to the ML microservice.
 """
 
-from typing import Dict, List
+from typing import Dict, List, Optional, cast
 
 import asyncpg
 import structlog
@@ -46,8 +46,8 @@ class EntityResolutionService:
     def __init__(
         self,
         pool: asyncpg.Pool,
-        ml_client: MLServiceClient = None,
-        graph_repository: GraphRepository = None,
+        ml_client: Optional[MLServiceClient] = None,
+        graph_repository: Optional[GraphRepository] = None,
     ):
         self.pool = pool
         self.graph_repo = graph_repository or GraphRepository(pool)
@@ -154,7 +154,7 @@ class EntityResolutionService:
                 model=settings.EXTRACTION_MODEL,  # Cheap model
                 response_model=MergeDecision,
             )
-            return result
+            return cast(MergeDecision, result)
         except Exception as e:
             logger.error("janitor_agent_failed", error=str(e))
             # Default to not merging if unsure
@@ -167,7 +167,7 @@ class EntityResolutionService:
         nodes: List[Dict],
         project_id: str,
         tenant_id: str,
-        canonical_name: str = None,
+        canonical_name: Optional[str] = None,
     ):
         """
         Merges multiple nodes into one using repository pattern.

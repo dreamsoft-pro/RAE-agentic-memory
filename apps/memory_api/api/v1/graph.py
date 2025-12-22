@@ -14,13 +14,15 @@ import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
-from apps.memory_api.dependencies import get_graph_repository, get_rae_core_service
-from apps.memory_api.metrics import memory_query_counter
+from apps.memory_api.models.graph import TraversalStrategy
+from apps.memory_api.models.graph_enhanced_models import TraversalAlgorithm
+from apps.memory_api.repositories.graph_repository_enhanced import (
+    EnhancedGraphRepository,
+)
 from apps.memory_api.security import auth
 from apps.memory_api.services.graph_extraction import GraphExtractionResult
-from apps.memory_api.services.llm import get_llm_provider
+from apps.memory_api.services.hybrid_search_service import HybridSearchService
 from apps.memory_api.services.reflection_engine import ReflectionEngine
-from apps.memory_api.services.rae_core_service import RAECoreService
 
 logger = structlog.get_logger(__name__)
 
@@ -161,7 +163,9 @@ async def extract_knowledge_graph(req: GraphExtractionRequest, request: Request)
 
     try:
         # Initialize reflection engine
-        reflection_engine = ReflectionEngine(request.app.state.pool)
+        reflection_engine = ReflectionEngine(
+            pool=request.app.state.pool, rae_service=request.app.state.rae_core_service
+        )
 
         # Perform enhanced graph extraction
         result = await reflection_engine.extract_knowledge_graph_enhanced(
@@ -190,7 +194,7 @@ async def extract_knowledge_graph(req: GraphExtractionRequest, request: Request)
         )
         raise HTTPException(
             status_code=500, detail=f"Graph extraction failed: {str(e)}"
-        )
+        ) from e
 
 
 @router.post("/reflection/hierarchical", response_model=HierarchicalReflectionResponse)
@@ -229,7 +233,9 @@ async def generate_hierarchical_reflection(
 
     try:
         # Initialize reflection engine
-        reflection_engine = ReflectionEngine(request.app.state.pool)
+        reflection_engine = ReflectionEngine(
+            pool=request.app.state.pool, rae_service=request.app.state.rae_core_service
+        )
 
         # Generate hierarchical reflection
         summary = await reflection_engine.generate_hierarchical_reflection(
@@ -272,7 +278,7 @@ async def generate_hierarchical_reflection(
         )
         raise HTTPException(
             status_code=500, detail=f"Hierarchical reflection failed: {str(e)}"
-        )
+        ) from e
 
 
 @router.get("/stats", response_model=GraphStatsResponse)
@@ -359,7 +365,7 @@ async def get_graph_statistics(
         )
         raise HTTPException(
             status_code=500, detail=f"Failed to retrieve graph statistics: {str(e)}"
-        )
+        ) from e
 
 
 @router.get("/nodes", response_model=List[GraphNodeResponse])
@@ -512,7 +518,7 @@ async def get_graph_nodes(
         )
         raise HTTPException(
             status_code=500, detail=f"Failed to retrieve graph nodes: {str(e)}"
-        )
+        ) from e
 
 
 @router.get("/edges", response_model=List[GraphEdgeResponse])
@@ -591,14 +597,13 @@ async def get_graph_edges(
         )
         raise HTTPException(
             status_code=500, detail=f"Failed to retrieve graph edges: {str(e)}"
-        )
+        ) from e
 
 
 @router.post("/query", response_model=Dict[str, Any])
 async def query_knowledge_graph(
     req: GraphSearchRequest,
     request: Request,
-    rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
     Advanced knowledge graph search with hybrid retrieval.
@@ -636,7 +641,7 @@ async def query_knowledge_graph(
         raise HTTPException(
             status_code=400,
             detail=f"Invalid traversal_strategy. Must be 'bfs' or 'dfs', got '{req.traversal_strategy}'",
-        )
+        ) from None
 
     logger.info(
         "graph_query_requested",
@@ -648,19 +653,31 @@ async def query_knowledge_graph(
     )
 
     try:
-        # TODO: Implement proper graph query using RAECoreService.
-        # For now, return a placeholder.
-        logger.warning("graph_query_placeholder", detail="Actual graph query logic is not yet implemented using RAECoreService.")
-        
-        return {
-            "message": "Graph query endpoint is under refactoring to use RAECoreService. Placeholder response.",
-            "query": req.query,
-            "project_id": req.project_id,
-            "tenant_id": tenant_id,
-            "results": [],
-            "statistics": {}
-        }
+        # Use HybridSearchService for comprehensive graph-enabled search
+        search_service = HybridSearchService(pool=request.app.state.pool)
 
+        result = await search_service.search(
+            tenant_id=tenant_id,
+            project_id=req.project_id,
+            query=req.query,
+            k=req.top_k_vector,
+            enable_graph=True,
+            graph_max_depth=req.graph_depth,
+            enable_vector=True,
+            enable_semantic=True,
+            enable_fulltext=True,
+            enable_reranking=True,
+        )
+
+        logger.info(
+            "graph_query_completed",
+            tenant_id=tenant_id,
+            project_id=req.project_id,
+            results_count=len(result.results),
+            graph_results=result.graph_results_count,
+        )
+
+        return result.model_dump()
 
     except Exception as e:
         logger.exception(
@@ -669,7 +686,9 @@ async def query_knowledge_graph(
             project_id=req.project_id,
             error=str(e),
         )
-        raise HTTPException(status_code=500, detail=f"Graph query failed: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Graph query failed: {str(e)}"
+        ) from e
 
 
 @router.get("/subgraph", response_model=Dict[str, Any])
@@ -678,7 +697,6 @@ async def get_subgraph(
     project_id: str = Query(..., description="Project identifier"),
     node_ids: str = Query(..., description="Comma-separated node IDs to start from"),
     depth: int = Query(default=1, ge=1, le=5, description="Traversal depth"),
-    rae_service: RAECoreService = Depends(get_rae_core_service), # Use RAECoreService
 ):
     """
     Retrieve a subgraph starting from specific nodes.
@@ -719,17 +737,51 @@ async def get_subgraph(
     )
 
     try:
-        # TODO: Implement proper subgraph retrieval using RAECoreService or GraphRepository.
-        # For now, return a placeholder.
-        logger.warning("subgraph_placeholder", detail="Actual subgraph logic is not yet implemented using RAECoreService.")
+        repo = EnhancedGraphRepository(request.app.state.pool)
+        all_nodes = {}
+        all_edges = {}
+
+        for start_node_id_str in start_nodes:
+            # Resolve node_id string to node object (to get UUID)
+            node_obj = await repo.get_node_by_node_id(
+                tenant_id=tenant_id, project_id=project_id, node_id=start_node_id_str
+            )
+
+            if not node_obj:
+                logger.warning(
+                    "subgraph_start_node_not_found", node_id=start_node_id_str
+                )
+                continue
+
+            # Traverse from this node
+            nodes, edges = await repo.traverse_temporal(
+                tenant_id=tenant_id,
+                project_id=project_id,
+                start_node_id=node_obj.id,
+                max_depth=depth,
+                algorithm=TraversalAlgorithm.BFS,
+            )
+
+            for n in nodes:
+                all_nodes[str(n.id)] = n
+            for e in edges:
+                all_edges[str(e.id)] = e
 
         return {
-            "message": "Subgraph endpoint is under refactoring to use RAECoreService. Placeholder response.",
             "project_id": project_id,
             "tenant_id": tenant_id,
-            "nodes": [],
-            "edges": [],
-            "statistics": {}
+            "nodes": [
+                n.model_dump() if hasattr(n, "model_dump") else n
+                for n in all_nodes.values()
+            ],
+            "edges": [
+                e.model_dump() if hasattr(e, "model_dump") else e
+                for e in all_edges.values()
+            ],
+            "statistics": {
+                "nodes_count": len(all_nodes),
+                "edges_count": len(all_edges),
+            },
         }
 
     except Exception as e:
@@ -738,4 +790,4 @@ async def get_subgraph(
         )
         raise HTTPException(
             status_code=500, detail=f"Failed to retrieve subgraph: {str(e)}"
-        )
+        ) from e

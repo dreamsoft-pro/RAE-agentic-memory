@@ -5,7 +5,7 @@ Extracts structured knowledge in the form of (subject, predicate, object) triple
 using spaCy's dependency parsing.
 """
 
-from typing import Dict, List
+from typing import Any, Dict, List, Optional
 
 import structlog
 
@@ -21,7 +21,7 @@ class TripleExtractionService:
     """
 
     _instance = None
-    _nlp = None
+    _nlp: Any = None
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
@@ -77,7 +77,7 @@ class TripleExtractionService:
                 logger.error("spacy_not_installed", error=str(e))
                 raise RuntimeError("spaCy not installed")
 
-    def extract_triples(self, text: str, language: str = "en") -> List[Dict[str, str]]:
+    def extract_triples(self, text: str, language: str = "en") -> List[Dict[str, Any]]:
         """
         Extract knowledge triples from text using dependency parsing.
 
@@ -113,7 +113,7 @@ class TripleExtractionService:
             logger.exception("triple_extraction_failed", error=str(e))
             return []
 
-    def _extract_triples_from_sentence(self, sent) -> List[Dict[str, str]]:
+    def _extract_triples_from_sentence(self, sent) -> List[Dict[str, Any]]:
         """
         Extract triples from a single sentence using dependency parsing.
 
@@ -162,7 +162,7 @@ class TripleExtractionService:
 
         return triples
 
-    def _find_subject(self, verb_token) -> str:
+    def _find_subject(self, verb_token) -> Optional[str]:
         """
         Find the subject of a verb.
 
@@ -180,7 +180,7 @@ class TripleExtractionService:
 
         return None
 
-    def _find_object(self, verb_token) -> str:
+    def _find_object(self, verb_token) -> Optional[str]:
         """
         Find the object of a verb.
 
@@ -224,7 +224,7 @@ class TripleExtractionService:
 
         return phrase.strip()
 
-    def extract_simple_triples(self, text: str) -> List[Dict[str, str]]:
+    def extract_simple_triples(self, text: str) -> List[Dict[str, Any]]:
         """
         Simplified triple extraction using basic patterns.
 

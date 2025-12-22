@@ -5,7 +5,7 @@ These tests ensure that feature flags actually affect system behavior.
 """
 
 from contextlib import asynccontextmanager
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -29,8 +29,11 @@ class TestReflectiveMemoryFlags:
 
         mock_pool = AsyncMock()
         mock_reflection_engine = AsyncMock()
+        mock_rae_service = AsyncMock()
         context_builder = ContextBuilder(
-            pool=mock_pool, reflection_engine=mock_reflection_engine
+            pool=mock_pool,
+            reflection_engine=mock_reflection_engine,
+            rae_service=mock_rae_service,
         )
 
         # Act
@@ -65,9 +68,12 @@ class TestReflectiveMemoryFlags:
                 }
             ]
         )
+        mock_rae_service = AsyncMock()
 
         context_builder = ContextBuilder(
-            pool=mock_pool, reflection_engine=mock_reflection_engine
+            pool=mock_pool,
+            reflection_engine=mock_reflection_engine,
+            rae_service=mock_rae_service,
         )
 
         # Act
@@ -98,9 +104,12 @@ class TestReflectiveMemoryMode:
         mock_pool = AsyncMock()
         mock_reflection_engine = AsyncMock()
         mock_reflection_engine.query_reflections = AsyncMock(return_value=[])
+        mock_rae_service = AsyncMock()
 
         context_builder = ContextBuilder(
-            pool=mock_pool, reflection_engine=mock_reflection_engine
+            pool=mock_pool,
+            reflection_engine=mock_reflection_engine,
+            rae_service=mock_rae_service,
         )
 
         # Act
@@ -130,9 +139,12 @@ class TestReflectiveMemoryMode:
         mock_pool = AsyncMock()
         mock_reflection_engine = AsyncMock()
         mock_reflection_engine.query_reflections = AsyncMock(return_value=[])
+        mock_rae_service = AsyncMock()
 
         context_builder = ContextBuilder(
-            pool=mock_pool, reflection_engine=mock_reflection_engine
+            pool=mock_pool,
+            reflection_engine=mock_reflection_engine,
+            rae_service=mock_rae_service,
         )
 
         # Act
@@ -158,14 +170,13 @@ class TestDreamingEnabled:
     async def test_dreaming_disabled_no_dreaming(self, mock_settings):
         """When DREAMING_ENABLED=False, dreaming should be skipped"""
         # Arrange
-        mock_settings.REFLECTIVE_MEMORY_ENABLED = True
         mock_settings.DREAMING_ENABLED = False
-
         mock_pool = AsyncMock()
-        dreaming_worker = DreamingWorker(pool=mock_pool)
+        mock_rae_service = AsyncMock()
+        worker = DreamingWorker(pool=mock_pool, rae_service=mock_rae_service)
 
         # Act
-        results = await dreaming_worker.run_dreaming_cycle(
+        results = await worker.run_dreaming_cycle(
             tenant_id="test_tenant", project_id="test_project"
         )
 
@@ -193,8 +204,9 @@ class TestDreamingEnabled:
 
         mock_pool = AsyncMock()
         mock_pool.acquire = mock_acquire
+        mock_rae_service = AsyncMock()
 
-        dreaming_worker = DreamingWorker(pool=mock_pool)
+        dreaming_worker = DreamingWorker(pool=mock_pool, rae_service=mock_rae_service)
 
         # Act
         results = await dreaming_worker.run_dreaming_cycle(
@@ -215,15 +227,16 @@ class TestSummarizationEnabled:
         """When SUMMARIZATION_ENABLED=False, summarization should be skipped"""
         # Arrange
         mock_settings.SUMMARIZATION_ENABLED = False
-
         mock_pool = AsyncMock()
-        summarization_worker = SummarizationWorker(pool=mock_pool)
+        mock_rae_service = AsyncMock()
+        worker = SummarizationWorker(pool=mock_pool, rae_service=mock_rae_service)
+        from uuid import uuid4
 
         # Act
-        result = await summarization_worker.summarize_session(
+        result = await worker.summarize_session(
             tenant_id="test_tenant",
             project_id="test_project",
-            session_id="test-session-id",
+            session_id=uuid4(),
         )
 
         # Assert
@@ -238,32 +251,36 @@ class TestSummarizationEnabled:
         mock_settings.SUMMARIZATION_MIN_EVENTS = 10
 
         mock_pool = AsyncMock()
-        mock_memory_repo = AsyncMock()
-        mock_memory_repo.get_episodic_memories = AsyncMock(
-            return_value=[
-                {"content": f"Event {i}", "importance": 0.5}
-                for i in range(12)  # Above min_events
-            ]
-        )
-        mock_memory_repo.insert_memory = AsyncMock(
-            return_value={"id": "summary-123", "content": "Summary content"}
+        mock_rae_service = AsyncMock()
+        mock_rae_service.list_memories.return_value = ["Event 1", "Event 2"]
+        mock_rae_service.store_memory.return_value = "summary-id"
+
+        mock_llm = AsyncMock()
+        mock_llm.generate_structured.return_value = MagicMock(
+            summary="Session Summary",
+            key_topics=["topic1"],
+            sentiment="positive",
+            user_intent="test",
+            suggested_actions=[],
         )
 
-        summarization_worker = SummarizationWorker(
-            pool=mock_pool, memory_repository=mock_memory_repo
-        )
+        worker = SummarizationWorker(pool=mock_pool, rae_service=mock_rae_service)
+        worker.llm_provider = mock_llm
+
+        from uuid import uuid4
 
         # Act
-        result = await summarization_worker.summarize_session(
-            tenant_id="test_tenant",
-            project_id="test_project",
-            session_id="test-session-id",
+        result = await worker.summarize_session(
+            tenant_id="test-tenant",
+            project_id="test-project",
+            session_id=uuid4(),
+            min_events=1,
         )
 
         # Assert
         assert result is not None
-        assert result["id"] == "summary-123"
-        mock_memory_repo.insert_memory.assert_called_once()
+        # Verify call to service
+        mock_rae_service.store_memory.assert_called_once()
 
 
 class TestMaintenanceScheduler:

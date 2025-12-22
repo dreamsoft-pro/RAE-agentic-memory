@@ -199,10 +199,10 @@ class TriggerCondition(BaseModel):
 
     # Time-based conditions
     time_window_seconds: Optional[int] = Field(
-        None, description="Only fire within time window"
+        default=None, description="Only fire within time window"
     )
     cooldown_seconds: Optional[int] = Field(
-        None, description="Min time between firings"
+        default=None, description="Min time between firings"
     )
 
     # Rate limiting
@@ -230,13 +230,13 @@ class ActionConfig(BaseModel):
     execute_if: Optional[ConditionGroup] = None
 
     # Error handling
-    retry_on_failure: bool = Field(False)
-    max_retries: int = Field(3, ge=0, le=10)
-    retry_delay_seconds: int = Field(60, gt=0)
+    retry_on_failure: bool = Field(default=False)
+    max_retries: int = Field(default=3, ge=0, le=10)
+    retry_delay_seconds: int = Field(default=60, gt=0)
 
     # Execution constraints
-    timeout_seconds: int = Field(300, gt=0)
-    run_async: bool = Field(True, description="Execute asynchronously")
+    timeout_seconds: int = Field(default=300, gt=0)
+    run_async: bool = Field(default=True, description="Execute asynchronously")
 
 
 class WorkflowStep(BaseModel):

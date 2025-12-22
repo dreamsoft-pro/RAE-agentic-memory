@@ -11,7 +11,7 @@ Implements the context injection pattern from RAE v1 Implementation Plan.
 """
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
 
 import asyncpg
 import structlog
@@ -60,6 +60,7 @@ class ContextConfig:
 
     # Scoring
     enable_enhanced_scoring: bool = True
+    enable_scoring_v3: bool = False
     scoring_weights: Optional[ScoringWeights] = None
 
 
@@ -157,7 +158,9 @@ class ContextBuilder:
         """
         self.pool = pool
         self.rae_service = rae_service
-        self.reflection_engine = reflection_engine or ReflectionEngineV2(pool, rae_service)
+        self.reflection_engine = reflection_engine or ReflectionEngineV2(
+            pool, rae_service
+        )
         self.reranker = SmartReranker()
         self.config = config or ContextConfig()
 
@@ -324,9 +327,12 @@ class ContextBuilder:
         # For now, use placeholder similarity
         similarity_scores = [0.8] * len(all_memories)
 
-        if settings.ENABLE_MATH_V3:
-            # Use Hybrid Math V3
-            score_results = compute_batch_scores_v3(
+        # Phase 3: Selection and Ranking
+        top_memories: List[Dict[str, Any]] = []
+
+        if self.config.enable_scoring_v3:
+            # Use Iteration 3 Scoring (Formal RAE Objective)
+            score_results_v3 = compute_batch_scores_v3(
                 memories=all_memories,
                 similarity_scores=similarity_scores,
                 weights=ScoringWeightsV3(
@@ -338,38 +344,43 @@ class ContextBuilder:
                     w6_density=settings.MATH_V3_W6_DENSITY,
                 ),
             )
-            ranked = rank_memories_by_score(all_memories, score_results)
+            # Use Any cast to avoid V3 vs V2 type mismatch
+            ranked_v3 = rank_memories_by_score(
+                all_memories, cast(Any, score_results_v3)
+            )
 
             # --- Iteration 2: Smart Re-Ranker ---
             if settings.ENABLE_SMART_RERANKER:
                 # Take a larger pool for re-ranking (e.g. top 50)
-                candidates = ranked[: settings.RERANKER_TOP_K_CANDIDATES]
+                candidates = ranked_v3[: settings.RERANKER_TOP_K_CANDIDATES]
                 # Apply re-ranking
-                ranked = await self.reranker.rerank(
+                ranked_v3 = await self.reranker.rerank(
                     candidates, query, limit=settings.RERANKER_FINAL_K
                 )
                 # Use this new list as top_memories (it's already limited)
-                top_memories = ranked
+                top_memories = ranked_v3
             else:
-                top_memories = ranked[: self.config.max_ltm_items]
+                top_memories = ranked_v3[: self.config.max_ltm_items]
 
         elif self.config.enable_enhanced_scoring:
             # Use enhanced scoring
-            score_results = compute_batch_scores(
+            score_results_v2 = compute_batch_scores(
                 memories=all_memories,
                 similarity_scores=similarity_scores,
                 weights=self.config.scoring_weights,
             )
-            ranked = rank_memories_by_score(all_memories, score_results)
-            top_memories = ranked[: self.config.max_ltm_items]
+            ranked_v2 = rank_memories_by_score(
+                all_memories, cast(Any, score_results_v2)
+            )
+            top_memories = ranked_v2[: self.config.max_ltm_items]
         else:
             # Basic ranking by similarity
-            ranked = sorted(
+            ranked_basic = sorted(
                 zip(all_memories, similarity_scores),
                 key=lambda x: x[1],
                 reverse=True,
             )
-            top_memories = [m[0] for m in ranked[: self.config.max_ltm_items]]
+            top_memories = [m[0] for m in ranked_basic[: self.config.max_ltm_items]]
 
         # Convert to components
         components = []

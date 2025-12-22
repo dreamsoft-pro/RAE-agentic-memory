@@ -16,7 +16,7 @@ Implements enterprise features:
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 from uuid import UUID
 
 import asyncpg
@@ -49,13 +49,13 @@ async def create_reflection(
     priority: int,
     scoring: ReflectionScoring,
     parent_reflection_id: Optional[UUID] = None,
-    source_memory_ids: List[UUID] = None,
-    source_reflection_ids: List[UUID] = None,
+    source_memory_ids: Optional[List[UUID]] = None,
+    source_reflection_ids: Optional[List[UUID]] = None,
     embedding: Optional[List[float]] = None,
     cluster_id: Optional[str] = None,
-    tags: List[str] = None,
+    tags: Optional[List[str]] = None,
     telemetry: Optional[ReflectionTelemetry] = None,
-    metadata: Dict[str, Any] = None,
+    metadata: Optional[Dict[str, Any]] = None,
 ) -> ReflectionUnit:
     """
     Create a new reflection in the database.
@@ -229,7 +229,7 @@ async def query_reflections(
 
     # Build query conditions
     conditions = ["tenant_id = $1", "project_id = $2"]
-    params = [tenant_id, project_id]
+    params: List[Any] = [tenant_id, project_id]
     param_idx = 3
 
     if reflection_types:
@@ -347,7 +347,7 @@ async def create_reflection_relationship(
     relation_type: ReflectionRelationType,
     strength: float,
     confidence: float,
-    supporting_evidence: List[str] = None,
+    supporting_evidence: Optional[List[str]] = None,
     check_cycles: bool = True,
 ) -> ReflectionRelationship:
     """
@@ -441,7 +441,7 @@ async def get_reflection_relationships(
         List of relationships
     """
     conditions = []
-    params = [reflection_id]
+    params: List[Any] = [reflection_id]
     param_idx = 2
 
     if direction == "outgoing":
@@ -497,7 +497,7 @@ async def get_reflection_graph(
 
     # Build relation type filter
     relation_filter = ""
-    relation_params = []
+    relation_params: List[Any] = []
     if relation_types:
         relation_filter = "AND relation_type = ANY($2)"
         relation_params = [[rt.value for rt in relation_types]]
@@ -611,7 +611,7 @@ async def log_reflection_usage(
     rank_position: Optional[int] = None,
     user_id: Optional[str] = None,
     session_id: Optional[str] = None,
-    metadata: Dict[str, Any] = None,
+    metadata: Optional[Dict[str, Any]] = None,
 ) -> UUID:
     """
     Log reflection usage for analytics.
@@ -656,7 +656,7 @@ async def log_reflection_usage(
         metadata,
     )
 
-    return record["id"]
+    return cast(UUID, record["id"])
 
 
 # ============================================================================

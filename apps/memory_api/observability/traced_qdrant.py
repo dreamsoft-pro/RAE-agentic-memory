@@ -14,7 +14,7 @@ Traces include:
 
 import time
 from contextlib import contextmanager
-from typing import Any, List, Optional
+from typing import Any, List, Optional, cast
 
 import structlog
 from qdrant_client import QdrantClient
@@ -272,7 +272,7 @@ class TracedQdrantClient:
             if span:
                 span.set_attribute("qdrant.count", count)
 
-            return count
+            return cast(int, count)
 
     # ============================================================================
     # Batch Operations

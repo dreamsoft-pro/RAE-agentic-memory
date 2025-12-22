@@ -3,20 +3,28 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from apps.memory_api.config import settings
-from apps.memory_api.services.context_builder import ContextBuilder
+from apps.memory_api.services.context_builder import ContextBuilder, ContextConfig
+from apps.memory_api.services.rae_core_service import RAECoreService
+
+
+@pytest.fixture
+def mock_rae_service():
+    service = AsyncMock(spec=RAECoreService)
+    service.list_memories.return_value = []
+    return service
 
 
 @pytest.mark.unit
-async def test_context_builder_uses_v3_when_enabled():
+async def test_context_builder_uses_v3_when_enabled(mock_rae_service):
     # Setup
     pool = MagicMock()
-    repo = MagicMock()
+    # repo = MagicMock() # no longer needed, replaced by rae_service
     reflection_engine = MagicMock()
 
-    # Mock repository return values
-    repo.get_episodic_memories = AsyncMock(
-        return_value=[
+    # Mock repository return values (now on mock_rae_service)
+    # Using side_effect to return items for the first call (episodic) and empty for others (semantic, etc)
+    mock_rae_service.list_memories.side_effect = [
+        [
             {
                 "id": "1",
                 "content": "test",
@@ -24,55 +32,60 @@ async def test_context_builder_uses_v3_when_enabled():
                 "layer": "episodic",
                 "importance": 0.5,
             }
-        ]
-    )
-    repo.get_semantic_memories = AsyncMock(return_value=[])
+        ],
+        [],  # Second call (e.g. semantic) returns empty
+    ]
+    # No direct mocking for get_semantic_memories, assuming list_memories with filters covers it
+
     reflection_engine.query_reflections = AsyncMock(return_value=[])
 
-    builder = ContextBuilder(pool, repo, reflection_engine)
+    # Pass mock_rae_service instead of repo
+    builder = ContextBuilder(
+        pool,
+        mock_rae_service,
+        reflection_engine,
+        config=ContextConfig(enable_scoring_v3=True),
+    )
 
-    # Enable V3 temporarily
-    original_flag = settings.ENABLE_MATH_V3
-    settings.ENABLE_MATH_V3 = True
+    # Act
+    ctx = await builder.build_context(
+        tenant_id="t1", project_id="p1", query="test query"
+    )
 
-    try:
-        # Act
-        ctx = await builder.build_context(
-            tenant_id="t1", project_id="p1", query="test query"
-        )
-
-        # Assert
-        assert len(ctx.ltm_items) == 1
-        # Ideally we check if V3 scoring was used, but since it's internal to _retrieve_ltm
-        # and we didn't mock compute_batch_scores_v3, we assume it ran if no error occurred
-        # and the flow completed.
-        # To be more robust, we could patch compute_batch_scores_v3.
-
-    finally:
-        settings.ENABLE_MATH_V3 = original_flag
+    # Assert
+    assert len(ctx.ltm_items) == 1
 
 
 @pytest.mark.unit
-async def test_context_builder_v3_integration_mock():
+async def test_context_builder_v3_integration_mock(mock_rae_service):
     """Verify V3 is actually called using patch"""
     from unittest.mock import patch
 
     pool = MagicMock()
-    repo = MagicMock()
+    # repo = MagicMock() # no longer needed
     reflection_engine = MagicMock()
 
-    repo.get_episodic_memories = AsyncMock(
-        return_value=[
-            {"id": "1", "content": "test", "created_at": "2024-01-01T00:00:00Z"}
-        ]
-    )
-    repo.get_semantic_memories = AsyncMock(return_value=[])
+    # Mock return values for rae_service.list_memories
+    mock_rae_service.list_memories.side_effect = [
+        [
+            {
+                "id": "1",
+                "content": "test",
+                "created_at": datetime.now(timezone.utc),
+                "layer": "episodic",
+            }
+        ],
+        [],
+    ]
     reflection_engine.query_reflections = AsyncMock(return_value=[])
 
-    builder = ContextBuilder(pool, repo, reflection_engine)
-
-    original_flag = settings.ENABLE_MATH_V3
-    settings.ENABLE_MATH_V3 = True
+    # Pass mock_rae_service instead of repo
+    builder = ContextBuilder(
+        pool,
+        mock_rae_service,
+        reflection_engine,
+        config=ContextConfig(enable_scoring_v3=True),
+    )
 
     with patch(
         "apps.memory_api.services.context_builder.compute_batch_scores_v3"
@@ -85,5 +98,3 @@ async def test_context_builder_v3_integration_mock():
         await builder.build_context("t1", "p1", "q")
 
         mock_v3.assert_called_once()
-
-    settings.ENABLE_MATH_V3 = original_flag

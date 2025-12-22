@@ -17,21 +17,15 @@ from apps.llm.models import (
 @pytest.fixture
 def mock_provider_classes():
     """Fixture to mock all LLMProvider classes."""
-    with patch(
-        "apps.llm.broker.llm_router.OpenAIProvider"
-    ) as MockOpenAIProvider, patch(
-        "apps.llm.broker.llm_router.AnthropicProvider"
-    ) as MockAnthropicProvider, patch(
-        "apps.llm.broker.llm_router.GeminiProvider"
-    ) as MockGeminiProvider, patch(
-        "apps.llm.broker.llm_router.OllamaProvider"
-    ) as MockOllamaProvider, patch(
-        "apps.llm.broker.llm_router.DeepSeekProvider"
-    ) as MockDeepSeekProvider, patch(
-        "apps.llm.broker.llm_router.QwenProvider"
-    ) as MockQwenProvider, patch(
-        "apps.llm.broker.llm_router.GrokProvider"
-    ) as MockGrokProvider:
+    with (
+        patch("apps.llm.broker.llm_router.OpenAIProvider") as MockOpenAIProvider,
+        patch("apps.llm.broker.llm_router.AnthropicProvider") as MockAnthropicProvider,
+        patch("apps.llm.broker.llm_router.GeminiProvider") as MockGeminiProvider,
+        patch("apps.llm.broker.llm_router.OllamaProvider") as MockOllamaProvider,
+        patch("apps.llm.broker.llm_router.DeepSeekProvider") as MockDeepSeekProvider,
+        patch("apps.llm.broker.llm_router.QwenProvider") as MockQwenProvider,
+        patch("apps.llm.broker.llm_router.GrokProvider") as MockGrokProvider,
+    ):
         # Configure mock instances if needed, e.g., to return a specific name
         MockOpenAIProvider.return_value.name = "openai"
         MockAnthropicProvider.return_value.name = "anthropic"
@@ -54,12 +48,22 @@ def mock_provider_classes():
 
 @pytest.fixture
 def mock_llm_request():
-    return LLMRequest(model="gpt-4", prompt="Hello")
+    from apps.llm.models.llm_request import LLMMessage
+
+    return LLMRequest(
+        model="gpt-4", messages=[LLMMessage(role="user", content="Hello")]
+    )
 
 
 @pytest.fixture
 def mock_llm_response():
-    return LLMResponse(text="Hello world", usage=MagicMock(), finish_reason="stop")
+    return LLMResponse(
+        text="Hello world",
+        usage=MagicMock(),
+        finish_reason="stop",
+        raw={},
+        model_name="gpt-4",
+    )
 
 
 @pytest.fixture

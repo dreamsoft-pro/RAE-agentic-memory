@@ -5,7 +5,7 @@ This repository encapsulates all database operations related to the knowledge gr
 following the Repository/DAO pattern to separate data access from business logic.
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import asyncpg
 import structlog
@@ -97,7 +97,7 @@ class GraphRepository:
 
             nodes = [
                 GraphNode(
-                    id=str(record["id"]),
+                    id=record["id"],
                     node_id=record["node_id"],
                     label=record["label"],
                     properties=(
@@ -122,7 +122,7 @@ class GraphRepository:
 
             # Get edges between discovered nodes
             edges = await self.get_edges_between_nodes(
-                node_ids=[node.id for node in nodes],
+                node_ids=[str(node.id) for node in nodes],
                 tenant_id=tenant_id,
                 project_id=project_id,
             )
@@ -201,8 +201,8 @@ class GraphRepository:
 
             edges = [
                 GraphEdge(
-                    source_id=str(record["source_node_id"]),
-                    target_id=str(record["target_node_id"]),
+                    source_id=record["source_node_id"],
+                    target_id=record["target_node_id"],
                     relation=record["relation"],
                     properties=(
                         json.loads(record["properties"])
@@ -251,7 +251,7 @@ class GraphRepository:
                 return None
 
             return GraphNode(
-                id=str(record["id"]),
+                id=record["id"],
                 node_id=record["node_id"],
                 label=record["label"],
                 properties=record["properties"],
@@ -292,7 +292,7 @@ class GraphRepository:
 
             return [
                 GraphNode(
-                    id=str(record["id"]),
+                    id=record["id"],
                     node_id=record["node_id"],
                     label=record["label"],
                     properties=record["properties"],
@@ -420,7 +420,7 @@ class GraphRepository:
                 properties_json,
             )
 
-            return result == "INSERT 0 1"
+            return bool(result == "INSERT 0 1")
 
     async def create_edge(
         self,
@@ -466,7 +466,7 @@ class GraphRepository:
                 properties_json,
             )
 
-            return result == "INSERT 0 1"
+            return bool(result == "INSERT 0 1")
 
     async def get_node_internal_id(
         self, tenant_id: str, project_id: str, node_id: str
@@ -526,6 +526,19 @@ class GraphRepository:
                     relation = triple.get("relation")
                     confidence = triple.get("confidence", 1.0)
                     metadata = triple.get("metadata", {})
+
+                    if (
+                        not isinstance(source, str)
+                        or not isinstance(target, str)
+                        or not isinstance(relation, str)
+                    ):
+                        logger.warning(
+                            "invalid_triple_skipped",
+                            source=source,
+                            target=target,
+                            relation=relation,
+                        )
+                        continue
 
                     # Create source node
                     node_created = await self.create_node(
@@ -661,7 +674,7 @@ class GraphRepository:
                 node_internal_id,
             )
 
-            return result == "UPDATE 1"
+            return bool(result == "UPDATE 1")
 
     async def merge_node_edges(
         self, source_node_id: int, target_node_id: int
@@ -773,7 +786,7 @@ class GraphRepository:
                 node_internal_id,
             )
 
-            success = result == "DELETE 1"
+            success = bool(result == "DELETE 1")
 
             if success:
                 logger.info("node_deleted", node_id=node_internal_id)
@@ -830,7 +843,7 @@ class GraphRepository:
                 properties_json,
             )
 
-            internal_id = record["id"]
+            internal_id = cast(int, record["id"])
 
             logger.info(
                 "node_upserted",

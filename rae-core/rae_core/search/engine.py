@@ -218,6 +218,25 @@ class HybridSearchEngine:
         """Get list of available strategy names."""
         return list(self.strategies.keys())
 
+    async def rerank(
+        self,
+        query: str,
+        results: list[tuple[UUID, float]],
+    ) -> list[tuple[UUID, float]]:
+        """Rerank search results.
+
+        Placeholder implementation that returns results as-is.
+        Should be overridden or extended to use a real reranker.
+
+        Args:
+            query: Search query
+            results: Results to rerank
+
+        Returns:
+            Reranked results
+        """
+        return results
+
 
 class NoiseAwareSearchEngine(HybridSearchEngine):
     """Noise-aware search engine that adjusts retrieval based on noise level.

@@ -1,7 +1,7 @@
 {
   "mcpServers": {
     "rae-memory": {
-      "command": "/home/grzegorz-lesniowski/cloud/RAE-agentic-memory/.venv/bin/rae-mcp-server",
+      "command": ".venv/bin/rae-mcp-server",
       "env": {
         "RAE_API_URL": "http://localhost:8000",
         "RAE_API_KEY": "dev-key",
@@ -10,7 +10,7 @@
       }
     },
     "gemini": {
-      "command": "/home/grzegorz-lesniowski/cloud/RAE-agentic-memory/.venv/bin/gemini-mcp-server",
+      "command": ".venv/bin/gemini-mcp-server",
       "env": {
         "RAE_API_URL": "http://localhost:8000",
         "RAE_API_KEY": "dev-key",

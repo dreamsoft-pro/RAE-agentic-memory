@@ -9,7 +9,7 @@ This service implements:
 """
 
 from datetime import datetime, timezone
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 import numpy as np
@@ -55,7 +55,7 @@ class EvaluationService:
         relevance_judgments: List[RelevanceJudgment],
         search_results: Dict[str, List[RankedResult]],
         metrics_to_compute: List[MetricType],
-        k_values: List[int] = None,
+        k_values: Optional[List[int]] = None,
     ) -> EvaluationResult:
         """
         Evaluate search results against ground truth relevance judgments.
@@ -179,7 +179,7 @@ class EvaluationService:
         end_time = datetime.now(timezone.utc)
         duration_ms = int((end_time - start_time).total_seconds() * 1000)
 
-        result = EvaluationResult(
+        evaluation_result = EvaluationResult(
             evaluation_id=uuid4(),
             tenant_id=tenant_id,
             project_id=project_id,
@@ -202,7 +202,7 @@ class EvaluationService:
             duration_ms=duration_ms,
         )
 
-        return result
+        return evaluation_result
 
     # ========================================================================
     # Metric Calculations
@@ -304,7 +304,7 @@ class EvaluationService:
             precision = relevant_in_k / min(k, len(results)) if results else 0.0
             precision_scores.append(precision)
 
-        precision = np.mean(precision_scores) if precision_scores else 0.0
+        precision = float(np.mean(precision_scores)) if precision_scores else 0.0
         return float(precision)
 
     def _calculate_recall_at_k(
@@ -340,7 +340,7 @@ class EvaluationService:
             recall = relevant_in_k / total_relevant
             recall_scores.append(recall)
 
-        recall = np.mean(recall_scores) if recall_scores else 0.0
+        recall = float(np.mean(recall_scores)) if recall_scores else 0.0
         return float(recall)
 
     def _calculate_map(
@@ -461,7 +461,7 @@ class EvaluationService:
         Returns:
             Dictionary: query_id -> {document_id -> relevance_score}
         """
-        organized = {}
+        organized: Dict[str, Dict[UUID, float]] = {}
 
         for judgment in judgments:
             if judgment.query_id not in organized:

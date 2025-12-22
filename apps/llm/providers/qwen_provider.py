@@ -4,7 +4,7 @@ Qwen LLM Provider.
 Implements the LLM provider interface for Qwen (Alibaba Cloud) models.
 """
 
-from typing import AsyncIterator
+from typing import Any, AsyncIterator, Dict, cast
 
 import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -118,7 +118,7 @@ class QwenProvider:
             messages = self._convert_messages(request)
             tools_dict = self._convert_tools(request)
 
-            payload = {
+            payload: Dict[str, Any] = {
                 "model": request.model,
                 "input": {"messages": messages},
                 "parameters": {
@@ -126,22 +126,24 @@ class QwenProvider:
                 },
             }
 
+            parameters = cast(Dict[str, Any], payload["parameters"])
+
             if request.max_tokens:
-                payload["parameters"]["max_tokens"] = request.max_tokens
+                parameters["max_tokens"] = request.max_tokens
 
             if request.top_p is not None:
-                payload["parameters"]["top_p"] = request.top_p
+                parameters["top_p"] = request.top_p
 
             if request.stop_sequences:
-                payload["parameters"]["stop"] = request.stop_sequences
+                parameters["stop"] = request.stop_sequences
 
             # JSON mode in Qwen
             if request.json_mode:
-                payload["parameters"]["result_format"] = "json"
+                parameters["result_format"] = "json"
 
             # Add tools if present
-            if tools_dict:
-                payload["parameters"].update(tools_dict)
+            if tools_dict is not None:
+                parameters.update(tools_dict)
 
             response = await self.client.post(
                 "/services/aigc/text-generation/generation",
@@ -198,32 +200,32 @@ class QwenProvider:
                     f"Qwen rate limit exceeded: {error_body}",
                     provider="qwen",
                     raw_error=e,
-                )
+                ) from e
             elif status_code == 401 or status_code == 403:
                 raise LLMAuthError(
                     f"Qwen authentication failed: {error_body}",
                     provider="qwen",
                     raw_error=e,
-                )
+                ) from e
             elif status_code >= 500:
                 raise LLMTransientError(
                     f"Qwen server error: {error_body}",
                     provider="qwen",
                     raw_error=e,
-                )
+                ) from e
             else:
                 raise LLMProviderError(
                     f"Qwen HTTP error {status_code}: {error_body}",
                     provider="qwen",
                     raw_error=e,
-                )
+                ) from e
 
         except httpx.TimeoutException as e:
             raise LLMTransientError(
                 f"Qwen request timed out: {str(e)}",
                 provider="qwen",
                 raw_error=e,
-            )
+            ) from e
         except Exception as e:
             error_str = str(e).lower()
             if "context" in error_str or "too long" in error_str:
@@ -231,13 +233,13 @@ class QwenProvider:
                     f"Qwen context length exceeded: {str(e)}",
                     provider="qwen",
                     raw_error=e,
-                )
+                ) from e
             else:
                 raise LLMProviderError(
                     f"Qwen error: {str(e)}",
                     provider="qwen",
                     raw_error=e,
-                )
+                ) from e
 
     async def stream(self, request: LLMRequest) -> AsyncIterator[LLMChunk]:
         """
@@ -253,7 +255,7 @@ class QwenProvider:
             messages = self._convert_messages(request)
             tools_dict = self._convert_tools(request)
 
-            payload = {
+            payload: Dict[str, Any] = {
                 "model": request.model,
                 "input": {"messages": messages},
                 "parameters": {
@@ -262,14 +264,16 @@ class QwenProvider:
                 },
             }
 
+            parameters = cast(Dict[str, Any], payload["parameters"])
+
             if request.max_tokens:
-                payload["parameters"]["max_tokens"] = request.max_tokens
+                parameters["max_tokens"] = request.max_tokens
 
             if request.json_mode:
-                payload["parameters"]["result_format"] = "json"
+                parameters["result_format"] = "json"
 
-            if tools_dict:
-                payload["parameters"].update(tools_dict)
+            if tools_dict is not None:
+                parameters.update(tools_dict)
 
             async with self.client.stream(
                 "POST",
@@ -302,22 +306,22 @@ class QwenProvider:
                     f"Qwen rate limit exceeded: {e.response.text}",
                     provider="qwen",
                     raw_error=e,
-                )
+                ) from e
             elif e.response.status_code in (401, 403):
                 raise LLMAuthError(
                     f"Qwen authentication failed: {e.response.text}",
                     provider="qwen",
                     raw_error=e,
-                )
+                ) from e
             else:
                 raise LLMTransientError(
                     f"Qwen streaming error: {e.response.text}",
                     provider="qwen",
                     raw_error=e,
-                )
+                ) from e
         except Exception as e:
             raise LLMTransientError(
                 f"Qwen streaming error: {str(e)}",
                 provider="qwen",
                 raw_error=e,
-            )
+            ) from e

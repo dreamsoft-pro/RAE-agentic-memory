@@ -1,54 +1,79 @@
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, patch, MagicMock
-from uuid import uuid4
+from typing import Any
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import pytest
 from fastapi.testclient import TestClient
 
-from apps.memory_api.dependencies import get_rae_core_service, get_qdrant_client
+from apps.memory_api.dependencies import get_qdrant_client, get_rae_core_service
 from apps.memory_api.main import app
 from apps.memory_api.models import (
-    MemoryRecord,
-    QueryMemoryRequest,
-    StoreMemoryRequest,
     ScoredMemoryRecord,
 )
-from apps.memory_api.services.rae_core_service import RAECoreService
 from apps.memory_api.security.dependencies import get_and_verify_tenant_id
-from apps.memory_api.services.embedding import get_embedding_service
-from apps.memory_api.services.vector_store import get_vector_store
+from apps.memory_api.services.rae_core_service import RAECoreService
+
+
+class DummyAsyncContextManager:
+    """Helper class for mocking async context managers."""
+    def __init__(self, value: Any):
+        self._value = value
+    def __await__(self):
+        async def _impl():
+            return self
+        return _impl().__await__()
+    async def __aenter__(self):
+        return self._value
+    async def __aexit__(self, exc_type, exc, tb):
+        return False
+
+
+@pytest.fixture
+def mock_pool():
+    """Mock asyncpg connection pool."""
+    pool = Mock()
+    conn = AsyncMock()
+    conn.fetch = AsyncMock(return_value=[])
+    conn.fetchrow = AsyncMock(return_value=None)
+    conn.execute = AsyncMock(return_value="INSERT 0 1")
+    conn.transaction = Mock(return_value=DummyAsyncContextManager(None))
+    context_manager = DummyAsyncContextManager(conn)
+    pool.acquire = Mock(return_value=context_manager)
+    pool.close = AsyncMock()
+    pool._test_conn = conn
+    return pool
 
 
 @pytest.fixture
 def mock_rae_service():
     """Mock for RAECoreService."""
     service = AsyncMock(spec=RAECoreService)
-    
+
     # Setup store_memory return
     service.store_memory.return_value = "test-memory-id"
-    
+
     # Setup delete_memory return
     service.delete_memory.return_value = True
-    
+
     # Setup list_memories return
     service.list_memories.return_value = []
-    
+
     # Setup count_memories return
     service.count_memories.return_value = 10
-    
+
     # Setup get_metric_aggregate return
     service.get_metric_aggregate.return_value = 0.7
-    
+
     # Setup update_memory_access_batch
     service.update_memory_access_batch.return_value = 1
-    
+
     return service
 
 
 @pytest.fixture
 def mock_embedding_service():
     """Mock for EmbeddingService."""
-    service = AsyncMock()
+    service = MagicMock()
     service.generate_embeddings.return_value = [[0.1] * 384]
     return service
 
@@ -70,15 +95,15 @@ def client_with_overrides(mock_pool, mock_rae_service, mock_embedding_service, m
     """
     # Setup mock pool
     app.state.pool = mock_pool
-    
+
     # Override auth
     async def _mock_tenant():
         return "test-tenant"
-    
+
     # Setup dependency overrides
     app.dependency_overrides[get_and_verify_tenant_id] = _mock_tenant
     app.dependency_overrides[get_rae_core_service] = lambda: mock_rae_service
-    
+
     # Mock Qdrant client
     mock_qdrant = AsyncMock()
     mock_health = MagicMock()
@@ -98,10 +123,13 @@ def client_with_overrides(mock_pool, mock_rae_service, mock_embedding_service, m
         new=AsyncMock(return_value=mock_pool)
     ), patch(
         "apps.memory_api.main.rebuild_full_cache", new=AsyncMock()
+    ), patch(
+        "apps.memory_api.services.pii_scrubber.scrub_text",
+        side_effect=lambda x: x  # Bypass PII scrubbing
     ):
         with TestClient(app) as client:
             yield client
-            
+
     # Cleanup
     app.dependency_overrides = {}
     if hasattr(app.state, "pool"):
@@ -152,14 +180,14 @@ async def test_store_memory_failure(client_with_overrides, mock_rae_service):
     )
 
     assert response.status_code == 500
-    assert "Storage error" in response.json()["detail"]
+    assert "Storage error" in response.json()["error"]["message"]
 
 
 @pytest.mark.asyncio
 async def test_query_memory_vector_only(client_with_overrides, mock_vector_store, mock_rae_service):
     """Test memory query using vector search."""
     # Mock vector store results
-    record = MemoryRecord(
+    record = ScoredMemoryRecord(
         id="mem-1",
         tenant_id="test-tenant",
         project="proj",
@@ -201,7 +229,7 @@ async def test_delete_memory_success(client_with_overrides, mock_rae_service, mo
 
     assert response.status_code == 200
     assert "deleted successfully" in response.json()["message"]
-    
+
     mock_rae_service.delete_memory.assert_called_once_with("mem-1", "test-tenant")
     mock_vector_store.delete.assert_called_once_with("mem-1")
 
@@ -217,7 +245,7 @@ async def test_delete_memory_not_found(client_with_overrides, mock_rae_service):
     )
 
     assert response.status_code == 404
-    assert "not found" in response.json()["detail"].lower()
+    assert "not found" in response.json()["error"]["message"].lower()
 
 
 @pytest.mark.asyncio
@@ -235,7 +263,7 @@ async def test_reflection_stats(client_with_overrides, mock_rae_service):
     data = response.json()
     assert data["reflective_memory_count"] == 42
     assert data["average_strength"] == 0.75
-    
+
     mock_rae_service.count_memories.assert_called_once()
     mock_rae_service.get_metric_aggregate.assert_called_once()
 

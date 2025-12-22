@@ -52,7 +52,8 @@ Przewodnik konfiguracji Claude Code z RAE Memory i Gemini CLI jako narzędziem w
 
 ```bash
 # 1. Uruchom RAE Memory API w Docker
-cd /home/grzegorz/cloud/Dockerized/RAE-agentic-memory
+# Upewnij się, że jesteś w głównym katalogu projektu
+cd /path/to/RAE-agentic-memory
 docker compose up -d rae-api
 
 # 2. Sprawdź czy działa
@@ -87,7 +88,7 @@ Edytuj `~/.config/Claude/claude_desktop_config.json`:
 {
   "mcpServers": {
     "rae-memory": {
-      "command": "/home/grzegorz/cloud/Dockerized/RAE-agentic-memory/.venv/bin/rae-mcp-server",
+      "command": "/path/to/RAE-agentic-memory/.venv/bin/rae-mcp-server",
       "env": {
         "RAE_API_URL": "http://localhost:8000",
         "RAE_API_KEY": "dev-key",
@@ -96,7 +97,7 @@ Edytuj `~/.config/Claude/claude_desktop_config.json`:
       }
     },
     "gemini": {
-      "command": "/home/grzegorz/cloud/Dockerized/RAE-agentic-memory/.venv/bin/gemini-mcp-server",
+      "command": "/path/to/RAE-agentic-memory/.venv/bin/gemini-mcp-server",
       "env": {
         "RAE_API_URL": "http://localhost:8000",
         "RAE_API_KEY": "dev-key",
@@ -343,8 +344,8 @@ gemini /auth
 cat ~/.config/Claude/claude_desktop_config.json
 
 # 2. Sprawdź ścieżki do serwerów
-ls -la /home/grzegorz/cloud/Dockerized/RAE-agentic-memory/.venv/bin/rae-mcp-server
-ls -la /home/grzegorz/cloud/Dockerized/RAE-agentic-memory/.venv/bin/gemini-mcp-server
+ls -la /path/to/RAE-agentic-memory/.venv/bin/rae-mcp-server
+ls -la /path/to/RAE-agentic-memory/.venv/bin/gemini-mcp-server
 
 # 3. Zrestartuj Claude Code
 ```
