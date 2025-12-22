@@ -123,6 +123,9 @@ def client_with_overrides(mock_pool, mock_rae_service, mock_embedding_service, m
         new=AsyncMock(return_value=mock_pool)
     ), patch(
         "apps.memory_api.main.rebuild_full_cache", new=AsyncMock()
+    ), patch(
+        "apps.memory_api.services.pii_scrubber.scrub_text",
+        side_effect=lambda x: x  # Bypass PII scrubbing
     ):
         with TestClient(app) as client:
             yield client
