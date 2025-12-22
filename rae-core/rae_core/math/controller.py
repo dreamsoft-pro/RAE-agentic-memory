@@ -36,12 +36,17 @@ class MathLayerController:
 
     def apply_decay(self, age_hours: float, usage_count: int = 0) -> float:
         """Apply time-based decay to importance."""
+        from datetime import datetime, timedelta, timezone
+        
+        now = datetime.now(timezone.utc)
+        created_at = now - timedelta(hours=age_hours)
+        
         # recency_score, age_seconds, effective_decay
         score, _, _ = calculate_recency_score(
             last_accessed_at=None,
-            created_at=None,  # type: ignore
+            created_at=created_at,
             access_count=usage_count,
-            age_seconds=age_hours * 3600,
+            now=now,
         )
         return float(score)
 

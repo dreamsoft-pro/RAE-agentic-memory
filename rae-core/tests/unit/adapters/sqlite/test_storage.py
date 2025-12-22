@@ -640,3 +640,75 @@ class TestSQLiteStorageEdgeCases:
         await storage.initialize()
         await storage.initialize()  # Should not raise error
         assert storage._initialized is True
+
+    @pytest.mark.asyncio
+    async def test_delete_memories_below_importance(self, storage):
+        """Test deleting memories below importance threshold."""
+        await storage.store_memory(content="High", layer="w", tenant_id="t", agent_id="a", importance=0.9)
+        await storage.store_memory(content="Low", layer="w", tenant_id="t", agent_id="a", importance=0.2)
+        
+        count = await storage.delete_memories_below_importance("t", "a", "w", 0.5)
+        assert count == 1
+        
+        memories = await storage.list_memories("t")
+        assert len(memories) == 1
+        assert memories[0]["content"] == "High"
+
+    @pytest.mark.asyncio
+    async def test_delete_memories_with_metadata_filter(self, storage):
+        """Test deleting memories with metadata filter."""
+        await storage.store_memory(content="M1", layer="w", tenant_id="t", agent_id="a", metadata={"cat": "A"})
+        await storage.store_memory(content="M2", layer="w", tenant_id="t", agent_id="a", metadata={"cat": "B"})
+        
+        count = await storage.delete_memories_with_metadata_filter("t", "a", "w", {"cat": "A"})
+        assert count == 1
+        
+        memories = await storage.list_memories("t")
+        assert len(memories) == 1
+        assert memories[0]["metadata"]["cat"] == "B"
+
+    @pytest.mark.asyncio
+    async def test_delete_expired_memories(self, storage):
+        """Test deleting expired memories."""
+        from datetime import datetime, timezone, timedelta
+        now = datetime.now(timezone.utc)
+        
+        await storage.store_memory(
+            content="Old", layer="w", tenant_id="t", agent_id="a",
+            expires_at=now - timedelta(days=1)
+        )
+        await storage.store_memory(
+            content="New", layer="w", tenant_id="t", agent_id="a",
+            expires_at=now + timedelta(days=1)
+        )
+        
+        count = await storage.delete_expired_memories("t", "a", "w")
+        assert count == 1
+        
+        memories = await storage.list_memories("t")
+        assert len(memories) == 1
+        assert memories[0]["content"] == "New"
+
+    @pytest.mark.asyncio
+    async def test_search_memories_wrapper(self, storage):
+        """Test the search_memories wrapper which uses FTS5."""
+        await storage.store_memory(content="RAE is agentic memory", layer="w", tenant_id="t", agent_id="a")
+        await storage.store_memory(content="Other content", layer="w", tenant_id="t", agent_id="a")
+        
+        results = await storage.search_memories("agentic", "t", "a", "w")
+        assert len(results) == 1
+        assert "RAE" in results[0]["memory"]["content"]
+
+    @pytest.mark.asyncio
+    async def test_update_memory_expiration(self, storage):
+        """Test updating memory expiration."""
+        from datetime import datetime, timezone
+        memory_id = await storage.store_memory(content="T", layer="w", tenant_id="t", agent_id="a")
+        
+        expiry = datetime.now(timezone.utc)
+        success = await storage.update_memory_expiration(memory_id, "t", expiry)
+        assert success is True
+        
+        memory = await storage.get_memory(memory_id, "t")
+        # SQLite stores as ISO string, so we compare ISO strings
+        assert memory["expires_at"] == expiry.isoformat()

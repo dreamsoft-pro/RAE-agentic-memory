@@ -69,7 +69,7 @@ class TestQdrantVectorStore:
 
         # Verify call arguments
         call_args = mock_client.upsert.call_args
-        assert call_args.kwargs["collection_name"] == "rae_memories"
+        assert call_args.kwargs["collection_name"] == "memories"
         points = call_args.kwargs["points"]
         assert len(points) == 1
 
@@ -184,3 +184,48 @@ class TestQdrantVectorStore:
         """Test close."""
         qdrant_store.close()
         mock_client.close.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_search_with_contradiction_penalty(self, qdrant_store, mock_client):
+        """Test search with contradiction penalty logic."""
+        mem_id1 = uuid4()
+        mem_id2 = uuid4()
+        
+        # 1. Mock initial search results
+        mock_res1 = MagicMock()
+        mock_res1.payload = {"memory_id": str(mem_id1)}
+        mock_res1.score = 0.9
+        
+        mock_res2 = MagicMock()
+        mock_res2.payload = {"memory_id": str(mem_id2)}
+        mock_res2.score = 0.8
+        
+        mock_client.search.return_value = [mock_res1, mock_res2]
+        
+        # 2. Mock vector retrieval for both memories
+        # Opposite vectors to trigger contradiction (similarity = -1.0)
+        vec1 = [1.0, 0.0]
+        vec2 = [-1.0, 0.0]
+        
+        mock_ret1 = MagicMock()
+        mock_ret1.payload = {"tenant_id": "t1"}
+        mock_ret1.vector = vec1
+        
+        mock_ret2 = MagicMock()
+        mock_ret2.payload = {"tenant_id": "t1"}
+        mock_ret2.vector = vec2
+        
+        # retrieve returns a list, we handle side_effect to return different ones
+        mock_client.retrieve.side_effect = [[mock_ret1], [mock_ret2]]
+        
+        results = await qdrant_store.search_with_contradiction_penalty(
+            query_embedding=[1.0, 0.0],
+            tenant_id="t1",
+            penalty_factor=0.5,
+            contradiction_threshold=0.1
+        )
+        
+        assert len(results) == 2
+        # Penalized scores: 0.9 * 0.5 = 0.45 and 0.8 * 0.5 = 0.4
+        assert results[0][1] == 0.45
+        assert results[1][1] == 0.4

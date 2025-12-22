@@ -5,11 +5,16 @@ Ideal for testing, development, and lightweight deployments.
 """
 
 import asyncio
+import sys
 from collections import defaultdict
 from typing import Any, cast
 from uuid import UUID
 
-import numpy as np
+# Robust NumPy import to avoid re-import warnings
+if "numpy" in sys.modules:
+    np = sys.modules["numpy"]
+else:
+    import numpy as np
 
 from rae_core.interfaces.vector import IVectorStore
 

@@ -67,17 +67,27 @@ Significant effort was invested in restoring system stability after major refact
 - `tests/api/v1/test_memory.py` - Added missing fixtures.
 - `tests/api/v1/test_graph.py` - Updated tests for real implementation.
 
+## Live Metrics
+| Metric | Value |
+|--------|-------|
+| **Branch** | `develop` |
+| **Commit** | `f28b8d0` (with local stability fixes) |
+| **Coverage** | 73.4% |
+| **Tests** | 885 passed, 14 skipped, 0 failed |
+| **Pass Rate** | 100.0% |
+| **Last Update** | 2025-12-21 21:30:00 |
+
 
 
 ## Live Metrics (Auto-generated)
 | Metric | Value |
 |--------|-------|
-| **Branch** | `main` |
-| **Commit** | `9c14b2b` |
+| **Branch** | `develop` |
+| **Commit** | `4684b92` |
 | **Coverage** | 20.8% |
 | **Tests** | 9 total, 0 failed, 6 skipped |
 | **Pass Rate** | 100.0% |
-| **Last Update** | 2025-12-22 08:32:19 |
+| **Last Update** | 2025-12-22 07:35:49 |
 
 ## Quick Links
 - [Agent Core Protocol](docs/rules/AGENT_CORE_PROTOCOL.md)
