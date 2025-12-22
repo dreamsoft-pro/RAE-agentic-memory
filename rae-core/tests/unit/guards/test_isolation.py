@@ -1,8 +1,11 @@
 """Unit tests for MemoryIsolationGuard."""
 
-import pytest
 from uuid import uuid4
+
+import pytest
+
 from rae_core.guards.isolation import MemoryIsolationGuard
+
 
 class TestMemoryIsolationGuard:
     @pytest.fixture
@@ -14,11 +17,11 @@ class TestMemoryIsolationGuard:
             {"id": uuid4(), "agent_id": "a1", "session_id": "s1", "tenant_id": "t1"},
             {"id": uuid4(), "agent_id": "a1", "session_id": "s1", "tenant_id": "t1"}
         ]
-        
+
         results = guard.validate_search_results(
             memories, expected_agent_id="a1", expected_session_id="s1", expected_tenant_id="t1"
         )
-        
+
         assert len(results) == 2
         assert guard.leak_count == 0
         assert guard.validation_count == 1
@@ -28,9 +31,9 @@ class TestMemoryIsolationGuard:
             {"id": uuid4(), "agent_id": "a1", "tenant_id": "t1"},
             {"id": uuid4(), "agent_id": "a2", "tenant_id": "t1"} # Leak!
         ]
-        
+
         results = guard.validate_search_results(memories, expected_agent_id="a1")
-        
+
         assert len(results) == 1
         assert results[0]["agent_id"] == "a1"
         assert guard.leak_count == 1
@@ -40,9 +43,9 @@ class TestMemoryIsolationGuard:
             {"id": uuid4(), "agent_id": "a1", "session_id": "s1"},
             {"id": uuid4(), "agent_id": "a1", "session_id": "s2"} # Wrong session
         ]
-        
+
         results = guard.validate_search_results(memories, expected_agent_id="a1", expected_session_id="s1")
-        
+
         assert len(results) == 1
         assert guard.leak_count == 1
 
@@ -51,26 +54,26 @@ class TestMemoryIsolationGuard:
             {"id": uuid4(), "agent_id": "a1", "tenant_id": "t1"},
             {"id": uuid4(), "agent_id": "a1", "tenant_id": "t2"} # Wrong tenant
         ]
-        
+
         results = guard.validate_search_results(memories, expected_agent_id="a1", expected_tenant_id="t1")
-        
+
         assert len(results) == 1
         assert guard.leak_count == 1
 
     def test_validate_single_memory(self, guard):
         memory = {"agent_id": "a1", "tenant_id": "t1"}
-        
+
         assert guard.validate_single_memory(memory, expected_agent_id="a1") is True
         assert guard.validate_single_memory(memory, expected_agent_id="a2") is False
 
     def test_stats_and_reset(self, guard):
         # Trigger 1 valid, 1 leak
         guard.validate_search_results([{"agent_id": "a1"}, {"agent_id": "bad"}], expected_agent_id="a1")
-        
+
         stats = guard.get_stats()
         assert stats["leak_count"] == 1
         assert stats["validation_count"] == 1
         assert stats["leak_rate"] == 1.0
-        
+
         guard.reset_stats()
         assert guard.get_stats()["leak_count"] == 0

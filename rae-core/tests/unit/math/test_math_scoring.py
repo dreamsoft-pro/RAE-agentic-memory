@@ -1,10 +1,13 @@
 """Unit tests for MathLayerController and ImportanceDecay."""
 
 from datetime import datetime, timedelta, timezone
+
 import pytest
+
 from rae_core.math.controller import MathLayerController
-from rae_core.scoring.decay import ImportanceDecay
 from rae_core.models.scoring import DecayConfig
+from rae_core.scoring.decay import ImportanceDecay
+
 
 class TestMathLayerController:
     @pytest.fixture
@@ -26,7 +29,7 @@ class TestMathLayerController:
         v1 = [1.0, 0.0]
         v2 = [1.0, 0.0]
         v3 = [0.0, 1.0]
-        
+
         assert controller.compute_similarity(v1, v2) == pytest.approx(1.0)
         assert controller.compute_similarity(v1, v3) == pytest.approx(0.0)
 
@@ -39,7 +42,7 @@ class TestImportanceDecay:
     @pytest.fixture
     def decay(self):
         config = DecayConfig(
-            decay_rate=0.1, 
+            decay_rate=0.1,
             decay_period=timedelta(days=1),
             min_importance=0.01,
             layer_rates={"test_layer": 0.1}
@@ -68,24 +71,24 @@ class TestImportanceDecay:
 
     def test_clamping(self, decay):
         # config min is 0.01
-        res = decay.linear_decay(0.05, timedelta(days=10), layer="test_layer") 
+        res = decay.linear_decay(0.05, timedelta(days=10), layer="test_layer")
         assert res.decayed_importance == pytest.approx(0.01)
 
 def test_decay_utils():
     from rae_core.scoring.decay import calculate_half_life, time_to_threshold
-    
+
     # Half life for rate 0.1 should be ln(2)/0.1 periods
     hl = calculate_half_life(0.1)
     assert hl.days > 0
-    
+
     # Zero/negative rate
     assert calculate_half_life(0).days == 36500
-    
+
     # Time to threshold
     # From 1.0 to 0.5 with rate 0.1
     tt = time_to_threshold(1.0, 0.5, 0.1)
     assert tt.days > 0
-    
+
     # Already below
     assert time_to_threshold(0.4, 0.5, 0.1) == timedelta(0)
 
