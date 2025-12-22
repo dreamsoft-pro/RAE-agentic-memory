@@ -1,4 +1,6 @@
-# RAE – Reflective Agentic Memory Architecture
+- 🧠 **Multi-Layer Memory Architecture**: STM, LTM, Episodic, and Reflective layers.
+- 🚀 **Distributed Compute**: Control Plane API for offloading heavy tasks (embeddings, LLM) to remote GPU nodes.
+- 🔍 **Hybrid Search**: Combining vector, semantic, and graph-based retrieval.
 *(czyt. „Rej”)*
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)

@@ -1,6 +1,6 @@
 ## Recent Changes (Auto-generated)
 
-*Last updated: 2025-12-22 10:00 • Branch: main • Commit: 7dc53b7*
+*Last updated: 2025-12-22 10:04 • Branch: develop • Commit: 0287f2d*
 
 ### ✨ Features
 
@@ -240,7 +240,6 @@
 ### 📚 Documentation
 
 - update coverage metrics in STATUS.md ([`0287f2d`](../../commit/0287f2d))
-- update coverage metrics in STATUS.md ([`40e0a61`](../../commit/40e0a61))
 - finalize session with compute cluster awareness and advanced benchmark specs ([`98936eb`](../../commit/98936eb))
 - Finalize migration plan status to Completed ([`5341569`](../../commit/5341569))
 - add migration plan for legacy memory repository ([`340958d`](../../commit/340958d))
@@ -372,12 +371,7 @@
 
 ### 🔧 Chore
 
-- **release**: final v2.2.2-enterprise push ([`7dc53b7`](../../commit/7dc53b7))
-- **release**: resolve merge conflicts for final v2.2.2-enterprise ([`cc15550`](../../commit/cc15550))
 - **security**: ignore and remove kubus.md from repository ([`432d5e7`](../../commit/432d5e7))
-- **security**: ignore and remove kubus.md from repository ([`7bd86fb`](../../commit/7bd86fb))
-- **release**: merge v2.2.2-enterprise with lint fixes ([`fdf488a`](../../commit/fdf488a))
-- **release**: resolve merge conflicts for v2.2.2-enterprise ([`0756106`](../../commit/0756106))
 - **release**: bump version to v2.2.2-enterprise and update CHANGELOG ([`9c30061`](../../commit/9c30061))
 - bump version to 2.2.1-enterprise and update changelog ([`9ce6a23`](../../commit/9ce6a23))
 - fix linting and strengthen Agent Core Protocol rules [full-test] ([`a732b62`](../../commit/a732b62))
@@ -409,7 +403,6 @@
 
 ### 📦 Other
 
-- Merge develop into main: Release v2.2.1-enterprise ([`a0df83c`](../../commit/a0df83c))
 - Fix linting and formatting issues ([`148bca3`](../../commit/148bca3))
 - Release Prep: Fix Auto-Init Bootstrap and update failing tests ([`da85d39`](../../commit/da85d39))
 - Merge branch 'develop' into main --resolved conflicts ([`862f254`](../../commit/862f254))
@@ -1652,6 +1645,16 @@
 ## Recent Changes (Auto-generated)
 
 *Last updated: 2025-12-22 08:45 • Branch: develop • Commit: [current]*
+
+### v2.3.0-enterprise (2025-12-22)
+
+#### ✨ Features
+- **compute**: Implement distributed compute control plane and node agent foundation ([`d0471bf`](../../commit/d0471bf))
+- **api**: Add /control/nodes API for registration, heartbeat and task polling ([`d0471bf`](../../commit/d0471bf))
+- **agent**: Add reference implementation for node agent with auto-discovery ([`d0471bf`](../../commit/d0471bf))
+
+#### 🐛 Bug Fixes
+- **api**: Fix JSONB serialization in node and task repositories ([`d0471bf`](../../commit/d0471bf))
 
 ### v2.2.2-enterprise (2025-12-22)
 

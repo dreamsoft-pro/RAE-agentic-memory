@@ -39,6 +39,7 @@ from apps.memory_api.routes import (
     event_triggers,
     graph_enhanced,
     hybrid_search,
+    nodes,
     reflections,
     token_savings,
 )
@@ -238,7 +239,7 @@ app = FastAPI(
     - [MCP Integration](https://github.com/dreamsoft-pro/RAE-agentic-memory/tree/main/integrations/mcp-server)
     - [Examples](https://github.com/dreamsoft-pro/RAE-agentic-memory/tree/main/examples)
     """,
-    version="2.2.2-enterprise",
+    version="2.3.0-enterprise",
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
@@ -271,7 +272,7 @@ def custom_openapi():
 
     openapi_schema = get_openapi(
         title="RAE Memory API",
-        version="2.2.0-enterprise",
+        version="2.3.0-enterprise",
         description=app.description,
         routes=app.routes,
     )
@@ -458,6 +459,7 @@ app.include_router(evaluation.router, tags=["Evaluation"])
 app.include_router(dashboard.router, tags=["Dashboard"])
 app.include_router(graph_enhanced.router, tags=["Graph Management"])
 app.include_router(token_savings.router, tags=["Metrics"])
+app.include_router(nodes.router)
 
 
 # Root endpoint
