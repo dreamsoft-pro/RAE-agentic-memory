@@ -50,14 +50,17 @@
 - [ ] **E2E/Integration Polish**
 
 ## Technical Debt (Auto-generated from code)
-*Last scan: 2025-12-22 09:56*
+*Last scan: 2025-12-22 10:00*
 
-- [ ] **CHANGELOG.md:253** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
-- [ ] **CHANGELOG.md:316** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:317** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:811** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
-- [ ] **CHANGELOG.md:874** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:875** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:253** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:316** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:317** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:801** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
+- [ ] **CHANGELOG.md:864** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:865** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:1359** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
+- [ ] **CHANGELOG.md:1422** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:1423** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
 - [ ] **INTEGRATION_CHECKLIST.md:51** - - [ ] Did NOT edit `TODO.md` (CI extracts from code comments)
 - [ ] **CONTRIBUTING.md:163** - Run the documentation automator to update status and TODOs:
 - [ ] **ONBOARDING_GUIDE.md:366** - - ❌ DON'T: Edit `CHANGELOG.md`, `STATUS.md`, `TODO.md`, `docs/.auto-generated/`
