@@ -2746,6 +2746,16 @@
 
 *Last updated: 2025-12-22 08:45 • Branch: develop • Commit: [current]*
 
+### v2.3.0-enterprise (2025-12-22)
+
+#### ✨ Features
+- **compute**: Implement distributed compute control plane and node agent foundation ([`d0471bf`](../../commit/d0471bf))
+- **api**: Add /control/nodes API for registration, heartbeat and task polling ([`d0471bf`](../../commit/d0471bf))
+- **agent**: Add reference implementation for node agent with auto-discovery ([`d0471bf`](../../commit/d0471bf))
+
+#### 🐛 Bug Fixes
+- **api**: Fix JSONB serialization in node and task repositories ([`d0471bf`](../../commit/d0471bf))
+
 ### v2.2.2-enterprise (2025-12-22)
 
 #### ✨ Features
