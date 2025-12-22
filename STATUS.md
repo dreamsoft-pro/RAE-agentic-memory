@@ -77,6 +77,17 @@ Significant effort was invested in restoring system stability after major refact
 | **Pass Rate** | 100.0% |
 | **Last Update** | 2025-12-21 21:30:00 |
 
+
+## Live Metrics (Auto-generated)
+| Metric | Value |
+|--------|-------|
+| **Branch** | `develop` |
+| **Commit** | `5459156` |
+| **Coverage** | N/A |
+| **Tests** | 0 total, 0 failed, 0 skipped |
+| **Pass Rate** | 0.0% |
+| **Last Update** | 2025-12-22 07:16:53 |
+
 ## Quick Links
 - [Agent Core Protocol](docs/rules/AGENT_CORE_PROTOCOL.md)
 - [Path Refactor Spec](docs/specs/RAE-path-refactor.md)
