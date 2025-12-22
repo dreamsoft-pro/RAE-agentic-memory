@@ -1,19 +1,31 @@
 """Storage adapter wrapper for RAE-Server.
 
-Configures RAE-core PostgreSQLStorage with RAE-Server settings.
+Configures storage adapters based on RAE-Server settings.
 """
+
+import os
 
 import asyncpg
 from rae_core.adapters import PostgreSQLStorage
+from rae_core.interfaces.storage import IMemoryStorage
 
 
-def get_storage_adapter(pool: asyncpg.Pool) -> PostgreSQLStorage:
-    """Get configured PostgreSQL storage adapter.
+def get_storage_adapter(pool: asyncpg.Pool) -> IMemoryStorage:
+    """Get configured storage adapter based on environment.
 
     Args:
-        pool: PostgreSQL connection pool from RAE-Server
+        pool: PostgreSQL connection pool from RAE-Server (if using Postgres)
 
     Returns:
-        Configured PostgreSQLStorage instance
+        Configured IMemoryStorage instance
     """
-    return PostgreSQLStorage(pool=pool)
+    storage_type = os.getenv("RAE_STORAGE_TYPE", "postgres").lower()
+
+    if storage_type == "postgres":
+        return PostgreSQLStorage(pool=pool)
+
+    # Placeholder for future adapters (e.g., sqlite, in-memory)
+    # elif storage_type == "sqlite":
+    #     return SQLiteStorage(...)
+
+    raise ValueError(f"Unsupported storage type: {storage_type}")

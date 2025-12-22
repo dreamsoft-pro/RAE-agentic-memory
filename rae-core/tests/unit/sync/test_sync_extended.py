@@ -1,11 +1,14 @@
 """Extended tests for SyncProtocol and Diff calculation."""
 
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
+
 import pytest
+
+from rae_core.sync.diff import ChangeType, calculate_memory_diff, get_sync_direction
 from rae_core.sync.protocol import SyncProtocol
-from rae_core.sync.diff import calculate_memory_diff, ChangeType, get_sync_direction
+
 
 class TestSyncProtocol:
     @pytest.fixture
@@ -53,7 +56,7 @@ class TestMemoryDiff:
         id1 = uuid4()
         local = []
         remote = [{"id": id1, "content": "R1", "version": 1}]
-        
+
         diff = calculate_memory_diff(local, remote, "t1", "a1")
         assert len(diff.created) == 1
         assert diff.created[0].memory_id == id1
@@ -63,7 +66,7 @@ class TestMemoryDiff:
         id1 = uuid4()
         local = [{"id": id1, "content": "L1"}]
         remote = []
-        
+
         diff = calculate_memory_diff(local, remote, "t1", "a1")
         assert len(diff.deleted) == 1
         assert diff.deleted[0].memory_id == id1
@@ -74,7 +77,7 @@ class TestMemoryDiff:
         # Both modified at different times with different content
         local = [{"id": id1, "content": "Local", "modified_at": now + timedelta(seconds=10)}]
         remote = [{"id": id1, "content": "Remote", "modified_at": now}]
-        
+
         diff = calculate_memory_diff(local, remote, "t1", "a1")
         assert len(diff.conflicts) == 1
         assert diff.conflicts[0].memory_id == id1
@@ -83,15 +86,15 @@ class TestMemoryDiff:
     def test_get_sync_direction(self):
         from rae_core.sync.diff import MemoryChange
         id1 = uuid4()
-        
+
         # Created -> Pull
         c1 = MemoryChange(memory_id=id1, change_type=ChangeType.CREATED)
         assert get_sync_direction(c1) == "pull"
-        
+
         # Deleted -> Push
         c2 = MemoryChange(memory_id=id1, change_type=ChangeType.DELETED)
         assert get_sync_direction(c2) == "push"
-        
+
         # Conflict -> Conflict
         c3 = MemoryChange(memory_id=id1, change_type=ChangeType.MODIFIED, conflicts=True)
         assert get_sync_direction(c3) == "conflict"

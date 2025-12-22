@@ -265,7 +265,10 @@ async def delete_memory(
         except Exception as e:
             # Log the error but don't fail the request, as the DB part succeeded.
             logger.warning(
-                "vector_store_deletion_failed", memory_id=memory_id, error=str(e)
+                "vector_store_deletion_failed",
+                memory_id=memory_id,
+                error=str(e),
+                risk_tag="[INTEGRITY_RISK]",
             )
             span.set_attribute("rae.memory.vector_deleted", False)
             span.set_attribute("rae.memory.vector_delete_error", str(e))

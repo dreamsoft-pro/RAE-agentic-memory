@@ -1,5 +1,14 @@
 # RAE Agentic Memory - Roadmap & Implementation Plan
 
+## 🛠️ Critical Engineering Remediation (PLAN_REPAIR_001)
+
+**Source:** [PLAN_REPAIR_001.md](docs/plans/PLAN_REPAIR_001.md)
+**Goal:** Fix architectural risks identified in Cold Review.
+
+- [x] **Phase 1: Stabilization** - Offload `HDBSCAN`/`KMeans` to thread pool to prevent Event Loop Starvation.
+- [x] **Phase 2: Data Integrity** - Implement `ConsistencyService` to remove orphaned Qdrant embeddings (Ghost Memories).
+- [x] **Phase 3: Architecture** - Decouple Storage Adapters and fix `stm`/`working` naming drift.
+
 ## 🚨 NEXT SESSION: Implement Control Plane & Connect node1
 
 **Current Status (2025-12-22):**
