@@ -65,3 +65,4 @@ docs/*-claude-*.md
 .claude/settings.local.json
 junit.xml
 junit.xml
+docs/infra/kubus.md
