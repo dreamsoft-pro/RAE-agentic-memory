@@ -51,20 +51,23 @@
 - [ ] **E2E/Integration Polish**
 
 ## Technical Debt (Auto-generated from code)
-*Last scan: 2025-12-22 11:06*
+*Last scan: 2025-12-22 11:15*
 
-- [ ] **CHANGELOG.md:254** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:317** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:318** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:802** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:865** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:866** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:1350** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
-- [ ] **CHANGELOG.md:1413** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:1414** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:1918** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
-- [ ] **CHANGELOG.md:1981** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:1982** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:256** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:319** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:320** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:813** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:876** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:877** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:1361** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:1424** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:1425** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:1909** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
+- [ ] **CHANGELOG.md:1972** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:1973** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:2477** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
+- [ ] **CHANGELOG.md:2540** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:2541** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
 - [ ] **INTEGRATION_CHECKLIST.md:51** - - [ ] Did NOT edit `TODO.md` (CI extracts from code comments)
 - [ ] **CONTRIBUTING.md:163** - Run the documentation automator to update status and TODOs:
 - [ ] **ONBOARDING_GUIDE.md:366** - - ❌ DON'T: Edit `CHANGELOG.md`, `STATUS.md`, `TODO.md`, `docs/.auto-generated/`
