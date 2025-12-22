@@ -222,9 +222,9 @@ async def lifespan(app: FastAPI):
 # --- App Initialization ---
 app = FastAPI(
     title="RAE Memory API",
-    description="Agentic Memory Service for RAE (Reflection-Action-Engine)",
-    version="2.2.2-enterprise",
-    lifespan=lifespan,
+    description="""
+    Agentic Memory Service for RAE (Reflection-Action-Engine)
+
     ## The Cognitive Memory Engine for AI Agents
 
     RAE provides a sophisticated memory system that allows AI agents to:
@@ -238,6 +238,8 @@ app = FastAPI(
     - [MCP Integration](https://github.com/dreamsoft-pro/RAE-agentic-memory/tree/main/integrations/mcp-server)
     - [Examples](https://github.com/dreamsoft-pro/RAE-agentic-memory/tree/main/examples)
     """,
+    version="2.2.2-enterprise",
+    lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
