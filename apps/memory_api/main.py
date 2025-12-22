@@ -39,6 +39,7 @@ from apps.memory_api.routes import (
     event_triggers,
     graph_enhanced,
     hybrid_search,
+    nodes,
     reflections,
     token_savings,
 )
@@ -458,6 +459,7 @@ app.include_router(evaluation.router, tags=["Evaluation"])
 app.include_router(dashboard.router, tags=["Dashboard"])
 app.include_router(graph_enhanced.router, tags=["Graph Management"])
 app.include_router(token_savings.router, tags=["Metrics"])
+app.include_router(nodes.router)
 
 
 # Root endpoint
