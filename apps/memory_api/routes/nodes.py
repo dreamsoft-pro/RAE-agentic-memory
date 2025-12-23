@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from apps.memory_api.dependencies import get_db_pool
 from apps.memory_api.models.control_plane import (
     ComputeNode,
+    CreateTaskRequest,
     DelegatedTask,
     HeartbeatRequest,
     RegisterNodeRequest,
@@ -25,6 +26,22 @@ def get_control_plane_service(
     node_repo = NodeRepository(pool)
     task_repo = TaskRepository(pool)
     return ControlPlaneService(node_repo, task_repo)
+
+
+@router.post("/tasks", response_model=DelegatedTask, status_code=201)
+async def create_task(
+    req: CreateTaskRequest,
+    service: ControlPlaneService = Depends(get_control_plane_service),
+):
+    """
+    Create a new task for delegation to a compute node.
+    """
+    try:
+        return await service.create_task(
+            type=req.type, payload=req.payload, priority=req.priority
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/nodes/register", response_model=ComputeNode)

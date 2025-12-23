@@ -21,6 +21,7 @@ from qdrant_client import AsyncQdrantClient
 from redis.asyncio import Redis as AsyncRedis
 
 from .repositories.graph_repository import GraphRepository
+from .repositories.graph_repository_enhanced import EnhancedGraphRepository
 from .services.analytics import AnalyticsService
 from .services.budget_service import BudgetService
 from .services.community_detection import CommunityDetectionService
@@ -113,6 +114,21 @@ def get_graph_repository(pool: asyncpg.Pool = None) -> GraphRepository:
     if pool is None:
         raise HTTPException(status_code=500, detail="Database pool not available")
     return GraphRepository(pool)
+
+
+def get_enhanced_graph_repository(pool: asyncpg.Pool = None) -> EnhancedGraphRepository:
+    """
+    Factory for EnhancedGraphRepository.
+
+    Args:
+        pool: Database connection pool (injected by FastAPI)
+
+    Returns:
+        Configured EnhancedGraphRepository instance
+    """
+    if pool is None:
+        raise HTTPException(status_code=500, detail="Database pool not available")
+    return EnhancedGraphRepository(pool)
 
 
 # ==========================================
