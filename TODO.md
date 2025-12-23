@@ -12,23 +12,23 @@
     - [x] Refactor high-level services (`MemoryConsolidation`, `Analytics`, `HybridSearch`, etc.) to use `RAECoreService`.
     - [x] Update Dependency Injection in `apps/memory_api/dependencies.py`.
     - [x] **NEXT**: Migrate background workers and tasks to use `RAECoreService`.
+- [x] **NEXT**: Migrate `apps/memory_api/routes/graph_enhanced.py` to `RAECoreService`.
 
 ## 🚨 NEXT SESSION: Finish Core Migration & Distributed Compute
 
-**Current Status (2025-12-22):**
-- **Architecture Migration:** ✅ Most services zmigrated to `RAECoreService`.
-- **Core Stability:** ✅ **83% coverage** (rae-core). Zero warnings project-wide.
-- **API Status:** ✅ **v2.4.0** released and merged to main.
-- **Infrastructure:** ✅ **node1** configured.
+**Current Status (2025-12-23):**
+- **Architecture Migration:** ✅ Graph Enhanced API zmigrated to `RAECoreService`.
+- **Distributed Compute:** ✅ Test task (`quality_loop`) delegated to **node1** (KUBUS).
+- **Core Stability:** ✅ **890 tests passed** (100% unit Green).
+- **Infrastructure:** ✅ **node1** connection verified via Tailscale tunnel.
 
 **Priority Tasks:**
 
-1.  **⚙️ Complete Faza 3 Migration**
-    - [x] **Action**: Refactor `DecayWorker` and `SummarizationWorker` in `memory_maintenance.py`.
-    - [x] **Action**: Update all tasks in `background_tasks.py` to use `rae_context` and `rae_service`.
-    - [x] **Action**: Final audit of `apps/memory_api` for any direct `asyncpg.Pool` usage outside repositories.
+1.  **🏗️ Agnostic Enforcement (CRITICAL)**
+    - [ ] **Action**: Refactor `EnhancedGraphRepository` to use a generic DB interface instead of `asyncpg.Pool` directly (preparation for RAE-Lite).
+    - [ ] **Action**: Implement `IEmbeddingProvider` for remote compute nodes to offload embedding generation without leaking node details.
 
-2.  **🚀 Distributed Compute: Connect node1**
+2.  **🚀 Distributed Compute: Expand Cluster**
     - [ ] **Action**: Update node1 agent to communicate with the new Control Node API.
     - [ ] **Action**: Successfully pull a 'no-op' task from the local module to node1.
 
