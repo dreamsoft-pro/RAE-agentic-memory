@@ -18,8 +18,8 @@ from apps.memory_api.services.temporal_graph import (
 
 
 @pytest.fixture
-def temporal_service(mock_pool):
-    return TemporalGraphService(db=mock_pool)
+def temporal_service():
+    return TemporalGraphService()
 
 
 @pytest.fixture

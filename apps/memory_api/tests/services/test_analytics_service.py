@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
@@ -7,20 +7,16 @@ from apps.memory_api.services.analytics import AnalyticsService
 
 
 @pytest.fixture
-def mock_db():
-    return MagicMock()
+def mock_rae_service():
+    service = AsyncMock()
+    service.redis_client = AsyncMock()
+    service.count_memories = AsyncMock(return_value=0)
+    return service
 
 
 @pytest.fixture
-def mock_redis():
-    # Redis needs async methods
-    redis = AsyncMock()
-    return redis
-
-
-@pytest.fixture
-def analytics_service(mock_db, mock_redis):
-    return AnalyticsService(db=mock_db, redis=mock_redis)
+def analytics_service(mock_rae_service):
+    return AnalyticsService(rae_service=mock_rae_service)
 
 
 @pytest.mark.asyncio
@@ -99,9 +95,6 @@ async def test_internal_helpers_execution(analytics_service):
     # This verifies that the internal methods run without error,
     # even if they just return mock data for now.
     tenant_id = uuid4()
-
-    # Mock db to avoid attribute errors if code tries to use it
-    analytics_service.db = MagicMock()
 
     # Call individual helpers directly or via get_tenant_stats
     # We'll use get_tenant_stats to cover all of them

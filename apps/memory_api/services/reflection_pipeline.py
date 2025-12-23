@@ -15,7 +15,6 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, cast
 from uuid import UUID
 
-import asyncpg
 import numpy as np
 import structlog
 
@@ -47,6 +46,7 @@ from apps.memory_api.observability.rae_tracing import get_tracer
 from apps.memory_api.repositories import reflection_repository
 from apps.memory_api.services.llm import get_llm_provider
 from apps.memory_api.services.ml_service_client import MLServiceClient
+from apps.memory_api.services.rae_core_service import RAECoreService
 
 logger = structlog.get_logger(__name__)
 tracer = get_tracer(__name__)
@@ -125,8 +125,8 @@ class ReflectionPipeline:
     - Full telemetry and cost tracking
     """
 
-    def __init__(self, pool: asyncpg.Pool):
-        self.pool = pool
+    def __init__(self, rae_service: RAECoreService):
+        self.rae_service = rae_service
         self.llm_provider = get_llm_provider()
         self.ml_client = MLServiceClient()
 
@@ -284,39 +284,23 @@ class ReflectionPipeline:
         since: Optional[datetime],
     ) -> List[Dict[str, Any]]:
         """Fetch memories for reflection generation"""
-        conditions = ["tenant_id = $1", "project = $2"]
-        params: List[Any] = [tenant_id, project_id]
-        param_idx = 3
-
-        # Add filters
+        # Build query filters for RAECoreService
+        query_filters = {}
         if since:
-            conditions.append(f"created_at >= ${param_idx}")
-            params.append(since)
-            param_idx += 1
+            query_filters["since"] = since
 
-        if filters:
-            if "layer" in filters:
-                conditions.append(f"layer = ${param_idx}")
-                params.append(filters["layer"])
-                param_idx += 1
+        layer = filters.get("layer") if filters else None
+        tags = filters.get("tags") if filters else None
 
-            if "tags" in filters:
-                conditions.append(f"tags && ${param_idx}")
-                params.append(filters["tags"])
-                param_idx += 1
-
-        where_clause = " AND ".join(conditions)
-        query = f"""
-            SELECT id, content, embedding, tags, importance, created_at
-            FROM memories
-            WHERE {where_clause}
-            ORDER BY created_at DESC
-            LIMIT ${param_idx}
-        """
-        params.append(limit)
-
-        records = await self.pool.fetch(query, *params)
-        return [dict(r) for r in records]
+        # Use RAECoreService instead of direct pool access
+        return await self.rae_service.list_memories(
+            tenant_id=tenant_id,
+            project=project_id,
+            layer=layer,
+            tags=tags,
+            filters=query_filters,
+            limit=limit,
+        )
 
     async def _cluster_memories(
         self, memories: List[Dict[str, Any]], min_cluster_size: int
@@ -499,8 +483,9 @@ class ReflectionPipeline:
             priority = self._calculate_priority(len(memories), scoring)
 
             # Create reflection in database
+            # Create reflection in database
             reflection = await reflection_repository.create_reflection(
-                pool=self.pool,
+                pool=self.rae_service.postgres_pool,
                 tenant_id=tenant_id,
                 project_id=project_id,
                 content=insight_text,
@@ -586,8 +571,9 @@ class ReflectionPipeline:
             priority = 5
 
             # Create meta-reflection in database
+            # Create reflection in database
             reflection = await reflection_repository.create_reflection(
-                pool=self.pool,
+                pool=self.rae_service.postgres_pool,
                 tenant_id=tenant_id,
                 project_id=project_id,
                 content=meta_insight_text,

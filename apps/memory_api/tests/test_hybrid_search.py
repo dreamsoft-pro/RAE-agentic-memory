@@ -4,7 +4,7 @@ Tests for Hybrid Search Service
 Enterprise-grade test suite for hybrid vector + graph search functionality.
 """
 
-from unittest.mock import AsyncMock, Mock, patch
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 from uuid import UUID, uuid4
 
 import pytest
@@ -16,6 +16,15 @@ sentence_transformers = pytest.importorskip(
 )
 
 from apps.memory_api.models import ScoredMemoryRecord  # noqa: E402
+from apps.memory_api.services.rae_core_service import RAECoreService  # noqa: E402
+
+
+@pytest.fixture
+def mock_graph_repo():
+    """Fixture for GraphRepository mock."""
+    return AsyncMock()
+
+
 from apps.memory_api.models.graph import (  # noqa: E402
     GraphEdge,
     GraphNode,
@@ -34,17 +43,19 @@ def mock_embedding_service():
 
 
 @pytest.fixture
-def hybrid_search(mock_pool, mock_embedding_service):
-    """Create hybrid search service with mocks (using DI pattern)."""
-    # Create mock repository
-    from apps.memory_api.repositories.graph_repository import GraphRepository
-
-    mock_graph_repo = Mock(spec=GraphRepository)
-
-    # Create service with injected repository
-    service = HybridSearchService(graph_repo=mock_graph_repo, pool=mock_pool)
-    service.embedding_service = mock_embedding_service
-    return service
+def hybrid_search(mock_pool, mock_graph_repo):
+    """Fixture for HybridSearchService."""
+    mock_rae_service = MagicMock(spec=RAECoreService)
+    mock_rae_service.postgres_pool = mock_pool
+    with patch(
+        "apps.memory_api.services.hybrid_search.get_embedding_service"
+    ) as mock_get_emb:
+        mock_emb = MagicMock()
+        mock_emb.generate_embeddings.return_value = [[0.1] * 384]
+        mock_get_emb.return_value = mock_emb
+        yield HybridSearchService(
+            rae_service=mock_rae_service, graph_repo=mock_graph_repo
+        )
 
 
 @pytest.fixture
@@ -173,8 +184,12 @@ class TestHybridSearchService:
 
     async def test_service_initialization(self, mock_pool):
         """Test service initialization."""
+        mock_rae_service = MagicMock(spec=RAECoreService)
+        mock_rae_service.postgres_pool = mock_pool
         mock_graph_repo = Mock(spec=GraphRepository)
-        service = HybridSearchService(mock_graph_repo, mock_pool)
+        service = HybridSearchService(
+            rae_service=mock_rae_service, graph_repo=mock_graph_repo
+        )
 
         # Test that service was created successfully (don't check private attributes)
         assert service is not None
@@ -910,7 +925,9 @@ class TestHybridSearchWithRealDatabase:
         from apps.memory_api.services.hybrid_search import HybridSearchService
 
         graph_repo = GraphRepository(db_pool)
-        service = HybridSearchService(graph_repo, db_pool)
+        rae_service = MagicMock(spec=RAECoreService)
+        rae_service.postgres_pool = db_pool
+        service = HybridSearchService(rae_service=rae_service, graph_repo=graph_repo)
         service.embedding_service = mock_embedding
 
         # Mock vector store

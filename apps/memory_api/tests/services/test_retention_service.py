@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import pytest
 
+from apps.memory_api.services.rae_core_service import RAECoreService
 from apps.memory_api.services.retention_service import (
     DataClass,
     RetentionPolicy,
@@ -13,27 +14,38 @@ from apps.memory_api.services.retention_service import (
 
 @pytest.fixture
 def mock_pool():
-    pool = AsyncMock()
+    pool = MagicMock()
     pool.fetch = AsyncMock(return_value=[])
     pool.fetchrow = AsyncMock(return_value=None)
     pool.execute = AsyncMock(return_value="DELETE 10")
-    pool.acquire = MagicMock()
-    # Setup transaction context manager
-    connection = AsyncMock()
-    transaction = AsyncMock()
-    pool.acquire.return_value.__aenter__.return_value = connection
 
-    # connection.transaction() is NOT async, it returns a context manager
-    connection.transaction = MagicMock()
-    connection.transaction.return_value.__aenter__.return_value = transaction
+    # Setup acquire() as an async context manager
+    connection = AsyncMock()
+    # pool.acquire is a regular Mock that returns an async context manager
+    pool.acquire.return_value.__aenter__ = AsyncMock(return_value=connection)
+    pool.acquire.return_value.__aexit__ = AsyncMock(return_value=None)
+
+    # connection.transaction() should return an async context manager
+    # transaction is a regular Mock that returns an async context manager
+    transaction_cm = MagicMock()
+    connection.transaction = MagicMock(return_value=transaction_cm)
+    transaction_cm.__aenter__ = AsyncMock(return_value=AsyncMock())
+    transaction_cm.__aexit__ = AsyncMock(return_value=None)
 
     connection.execute = AsyncMock(return_value="DELETE 5")
     return pool
 
 
 @pytest.fixture
-def retention_service(mock_pool):
-    return RetentionService(mock_pool)
+def mock_rae_service(mock_pool):
+    rae = MagicMock(spec=RAECoreService)
+    rae.postgres_pool = mock_pool
+    return rae
+
+
+@pytest.fixture
+def retention_service(mock_rae_service):
+    return RetentionService(mock_rae_service)
 
 
 @pytest.mark.asyncio

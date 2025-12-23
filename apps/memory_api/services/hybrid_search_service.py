@@ -18,7 +18,6 @@ Includes:
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-import asyncpg
 import structlog
 
 from apps.memory_api.models.hybrid_search_models import (
@@ -33,6 +32,7 @@ from apps.memory_api.services.hybrid_cache import get_hybrid_cache
 from apps.memory_api.services.llm import get_llm_provider
 from apps.memory_api.services.ml_service_client import MLServiceClient
 from apps.memory_api.services.query_analyzer import QueryAnalyzer
+from apps.memory_api.services.rae_core_service import RAECoreService
 from apps.memory_api.services.token_savings_service import TokenSavingsService
 
 logger = structlog.get_logger(__name__)
@@ -84,21 +84,23 @@ class HybridSearchService:
     - LLM re-ranking
     """
 
-    def __init__(self, pool: asyncpg.Pool, enable_cache: bool = True):
+    def __init__(self, rae_service: RAECoreService, enable_cache: bool = True):
         """
         Initialize hybrid search service.
 
         Args:
-            pool: Database connection pool
+            rae_service: RAECoreService instance
             enable_cache: Enable result caching (default: True)
         """
-        self.pool = pool
+        self.rae_service = rae_service
         self.query_analyzer = QueryAnalyzer()
         self.ml_client = MLServiceClient()
         self.llm_provider = get_llm_provider()
         self.enable_cache = enable_cache
         self.cache = get_hybrid_cache() if enable_cache else None
-        self.savings_service = TokenSavingsService(TokenSavingsRepository(pool))
+        self.savings_service = TokenSavingsService(
+            TokenSavingsRepository(rae_service.postgres_pool)
+        )
 
     async def search(
         self,
@@ -408,7 +410,7 @@ class HybridSearchService:
             sql += f" ORDER BY similarity DESC LIMIT ${param_idx}"
             params.append(k)
 
-            records = await self.pool.fetch(sql, *params)
+            records = await self.rae_service.postgres_pool.fetch(sql, *params)
 
             results = [
                 {
@@ -455,7 +457,9 @@ class HybridSearchService:
                 LIMIT $4
             """
 
-            records = await self.pool.fetch(sql, tenant_id, project_id, query, k)
+            records = await self.rae_service.postgres_pool.fetch(
+                sql, tenant_id, project_id, query, k
+            )
 
             # Expand to source memories
             results = []
@@ -463,7 +467,7 @@ class HybridSearchService:
                 memory_ids = record.get("source_memory_ids", [])
                 if memory_ids:
                     # Fetch source memories
-                    memories = await self.pool.fetch(
+                    memories = await self.rae_service.postgres_pool.fetch(
                         """
                         SELECT id, content, metadata, created_at
                         FROM memories
@@ -513,7 +517,7 @@ class HybridSearchService:
                 return []
 
             # Find graph nodes matching entities
-            node_records = await self.pool.fetch(
+            node_records = await self.rae_service.postgres_pool.fetch(
                 """
                 SELECT id, node_id, label, properties FROM knowledge_graph_nodes
                 WHERE tenant_id = $1 AND project_id = $2
@@ -536,7 +540,7 @@ class HybridSearchService:
             start_node_ids = [record["node_id"] for record in node_records]
 
             # Traverse graph using BFS to find connected nodes
-            traversed_nodes = await self.pool.fetch(
+            traversed_nodes = await self.rae_service.postgres_pool.fetch(
                 """
                 WITH RECURSIVE graph_traverse AS (
                     -- Base case: start nodes
@@ -607,7 +611,7 @@ class HybridSearchService:
                 return []
 
             # Fetch related memories
-            memories = await self.pool.fetch(
+            memories = await self.rae_service.postgres_pool.fetch(
                 """
                 SELECT id, content, metadata, created_at, importance
                 FROM memories
@@ -681,7 +685,7 @@ class HybridSearchService:
             sql += f" ORDER BY rank DESC LIMIT ${param_idx}"
             params.append(k)
 
-            records = await self.pool.fetch(sql, *params)
+            records = await self.rae_service.postgres_pool.fetch(sql, *params)
 
             results = [
                 {

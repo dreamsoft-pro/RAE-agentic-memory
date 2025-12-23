@@ -41,8 +41,8 @@ def mock_llm_provider():
 
 
 @pytest.fixture
-def engine(mock_pool, mock_rae_service, mock_llm_provider):
-    engine = ReflectionEngineV2(mock_pool, rae_service=mock_rae_service)
+def engine(mock_rae_service, mock_llm_provider):
+    engine = ReflectionEngineV2(rae_service=mock_rae_service)
     engine.llm_provider = mock_llm_provider
     return engine
 

@@ -277,7 +277,9 @@ class TestMemoryDecay:
 
         # Setup rae_context mock
         # rae_context is an async context manager
-        mock_rae_context.return_value.__aenter__.return_value = (mock_pool, AsyncMock())
+        mock_rae_service = AsyncMock()
+        mock_rae_service.postgres_pool = mock_pool
+        mock_rae_context.return_value.__aenter__.return_value = mock_rae_service
 
         # Execute
         apply_memory_decay()

@@ -1,20 +1,27 @@
 from datetime import datetime
-
-# POPRAWKA: Dodano MagicMock do importów
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from fastapi import HTTPException
 
-from apps.memory_api.services import budget_service
+from apps.memory_api.services.budget_service import BudgetService
+
+
+@pytest.fixture
+def mock_rae_service():
+    service = MagicMock()
+    service.postgres_pool = AsyncMock()
+    return service
+
+
+@pytest.fixture
+def budget_service(mock_rae_service):
+    return BudgetService(rae_service=mock_rae_service)
 
 
 @pytest.mark.asyncio
-async def test_check_budget():
-    mock_pool = MagicMock()
-    mock_pool.fetchrow = AsyncMock()
-
-    mock_pool.fetchrow.return_value = {
+async def test_check_budget(budget_service, mock_rae_service):
+    mock_rae_service.postgres_pool.fetchrow.return_value = {
         "id": "b1",
         "tenant_id": "t1",
         "project_id": "p1",
@@ -33,15 +40,12 @@ async def test_check_budget():
         "last_monthly_reset": datetime.now(),
     }
 
-    await budget_service.check_budget(mock_pool, "t1", "p1", 0.1, 100)
+    await budget_service.check_budget("t1", "p1", 0.1, 100)
 
 
 @pytest.mark.asyncio
-async def test_check_budget_fail():
-    mock_pool = MagicMock()
-    mock_pool.fetchrow = AsyncMock()
-
-    mock_pool.fetchrow.return_value = {
+async def test_check_budget_fail(budget_service, mock_rae_service):
+    mock_rae_service.postgres_pool.fetchrow.return_value = {
         "id": "b1",
         "tenant_id": "t1",
         "project_id": "p1",
@@ -61,5 +65,5 @@ async def test_check_budget_fail():
     }
 
     with pytest.raises(HTTPException) as exc:
-        await budget_service.check_budget(mock_pool, "t1", "p1", 0.2, 200)
+        await budget_service.check_budget("t1", "p1", 0.2, 200)
     assert exc.value.status_code == 402

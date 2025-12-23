@@ -9,6 +9,7 @@ from uuid import UUID
 
 import structlog
 
+from apps.memory_api.repositories.graph_repository import GraphRepository
 from apps.memory_api.services.graph_algorithms import (
     GraphEdge,
     GraphNode,
@@ -88,16 +89,14 @@ class GraphChange:
 class TemporalGraphService:
     """Service for temporal graph operations"""
 
-    def __init__(self, db=None, vector_store=None):
+    def __init__(self, graph_repo: Optional[GraphRepository] = None):
         """
         Initialize temporal graph service
 
         Args:
-            db: Database connection
-            vector_store: Vector store connection
+            graph_repo: Graph repository for persistence
         """
-        self.db = db
-        self.vector_store = vector_store
+        self.graph_repo = graph_repo
 
         # In-memory storage for development
         self._snapshots: Dict[UUID, List[GraphSnapshot]] = {}

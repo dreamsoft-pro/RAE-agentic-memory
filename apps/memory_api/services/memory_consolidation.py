@@ -61,17 +61,15 @@ class ConsolidationResult:
 class MemoryConsolidationService:
     """Service for automatic memory consolidation"""
 
-    def __init__(self, db=None, vector_store=None, llm_client=None):
+    def __init__(self, rae_service=None, llm_client=None):
         """
         Initialize memory consolidation service
 
         Args:
-            db: Database connection
-            vector_store: Vector store for similarity search
+            rae_service: RAECoreService instance for memory operations
             llm_client: LLM client for content generation
         """
-        self.db = db
-        self.vector_store = vector_store
+        self.rae_service = rae_service
         self.llm_client = llm_client
 
     async def consolidate_episodic_to_working(
@@ -269,8 +267,24 @@ class MemoryConsolidationService:
         Returns:
             List of memory dictionaries
         """
-        # In production, query database with filters
-        # For now, return empty list
+        if self.rae_service:
+            # Use RAECoreService to fetch memories
+            # Note: list_memories needs project (agent_id). Assuming 'default' or passed in context.
+            # Ideally tenant_id maps to agent_id or we iterate agents.
+            # For this service refactor, we assume a simple mapping or integration later.
+            from typing import cast
+
+            return cast(
+                List[Dict[str, Any]],
+                await self.rae_service.list_memories(
+                    tenant_id=str(tenant_id),
+                    layer=source_layer,
+                    project="default",  # Placeholder, should be contextual
+                    limit=max_memories,
+                ),
+            )
+
+        # Fallback if no service
         return []
 
     async def _group_similar_memories(

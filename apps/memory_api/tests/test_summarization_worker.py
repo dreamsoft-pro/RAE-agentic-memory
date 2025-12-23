@@ -55,7 +55,8 @@ async def test_summarize_session_llm(mock_rae_service):
     )
 
     # Create worker with rae_service
-    worker = SummarizationWorker(pool=mock_pool, rae_service=mock_rae_service)
+    mock_rae_service.postgres_pool = mock_pool
+    worker = SummarizationWorker(rae_service=mock_rae_service)
     worker.llm_provider = mock_llm_provider
 
     # Run summarization (min_events=2 to trigger)
@@ -97,7 +98,8 @@ async def test_summarize_long_sessions(mock_rae_service):
     ]
 
     # Create worker with rae_service
-    worker = SummarizationWorker(pool=mock_pool, rae_service=mock_rae_service)
+    mock_rae_service.postgres_pool = mock_pool
+    worker = SummarizationWorker(rae_service=mock_rae_service)
 
     # Mock summarize_session to avoid real call
     cast(Any, worker).summarize_session = AsyncMock()

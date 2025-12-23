@@ -6,6 +6,7 @@ following the Repository/DAO pattern to separate data access from business logic
 """
 
 from typing import Any, Dict, List, Optional, Tuple, cast
+import uuid
 
 import asyncpg
 import structlog
@@ -409,10 +410,11 @@ class GraphRepository:
             result = await conn.execute(
                 """
                 INSERT INTO knowledge_graph_nodes
-                (tenant_id, project_id, node_id, label, properties)
-                VALUES ($1, $2, $3, $4, $5::jsonb)
+                (id, tenant_id, project_id, node_id, label, properties)
+                VALUES ($1, $2, $3, $4, $5, $6::jsonb)
                 ON CONFLICT (tenant_id, project_id, node_id) DO NOTHING
                 """,
+                uuid.uuid4(),
                 tenant_id,
                 project_id,
                 node_id,
@@ -454,10 +456,11 @@ class GraphRepository:
             result = await conn.execute(
                 """
                 INSERT INTO knowledge_graph_edges
-                (tenant_id, project_id, source_node_id, target_node_id, relation, properties)
-                VALUES ($1, $2, $3, $4, $5, $6::jsonb)
+                (id, tenant_id, project_id, source_node_id, target_node_id, relation, properties)
+                VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)
                 ON CONFLICT DO NOTHING
                 """,
+                uuid.uuid4(),
                 tenant_id,
                 project_id,
                 source_node_internal_id,

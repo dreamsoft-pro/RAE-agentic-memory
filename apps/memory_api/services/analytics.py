@@ -14,20 +14,14 @@ logger = structlog.get_logger(__name__)
 class AnalyticsService:
     """Service for collecting and analyzing tenant usage statistics"""
 
-    def __init__(self, db=None, redis=None, vector_store=None):
+    def __init__(self, rae_service=None):
         """
         Initialize analytics service
 
         Args:
-            db: Database connection (PostgreSQL)
-            redis: Redis connection for caching
-            vector_store: Vector store connection (Qdrant)
+            rae_service: RAECoreService instance
         """
-        self.db = db
-        self.redis = redis
-        self.vector_store = vector_store
-
-        # In-memory cache for development
+        self.rae_service = rae_service
         self._cache: Dict[str, Any] = {}
 
     async def get_tenant_stats(
@@ -46,10 +40,9 @@ class AnalyticsService:
         cache_key = f"analytics:{tenant_id}:{period_days}"
 
         # Check cache first (5 minute TTL)
-        if self.redis:
-            cached = await self._get_from_cache(cache_key)
-            if cached:
-                return cached
+        cached = await self._get_from_cache(cache_key)
+        if cached:
+            return cached
 
         logger.info(
             "calculating_tenant_stats",
@@ -77,8 +70,7 @@ class AnalyticsService:
         }
 
         # Cache results
-        if self.redis:
-            await self._set_cache(cache_key, stats, ttl_seconds=300)
+        await self._set_cache(cache_key, stats, ttl_seconds=300)
 
         return stats
 
@@ -253,23 +245,29 @@ class AnalyticsService:
 
     async def _count_memories(self, tenant_id: UUID) -> int:
         """Count total memories for tenant"""
-        if self.db:
-            # SQL: SELECT COUNT(*) FROM memories WHERE tenant_id = ?
-            pass
+        if self.rae_service:
+            # Aggregate across all layers
+            count = 0
+            for layer in ["episodic", "working", "semantic", "ltm"]:
+                count += await self.rae_service.count_memories(
+                    tenant_id=str(tenant_id), layer=layer, project="default"
+                )
+            return count
         return 0
 
     async def _count_by_layer(self, tenant_id: UUID) -> Dict[str, int]:
         """Count memories by layer"""
-        if self.db:
-            # SQL: SELECT layer, COUNT(*) FROM memories WHERE tenant_id = ? GROUP BY layer
-            pass
-        return {"episodic": 0, "working": 0, "semantic": 0, "ltm": 0}
+        counts = {"episodic": 0, "working": 0, "semantic": 0, "ltm": 0}
+        if self.rae_service:
+            for layer in counts.keys():
+                counts[layer] = await self.rae_service.count_memories(
+                    tenant_id=str(tenant_id), layer=layer, project="default"
+                )
+        return counts
 
     async def _calculate_growth_rate(self, tenant_id: UUID, period_days: int) -> float:
         """Calculate memory growth rate per day"""
-        if self.db:
-            # Calculate based on created_at timestamps
-            pass
+        # Would need historical data from metrics repo or similar
         return 0.0
 
     async def _count_by_importance(self, tenant_id: UUID) -> Dict[str, int]:
@@ -336,13 +334,12 @@ class AnalyticsService:
 
     async def _count_graph_nodes(self, tenant_id: UUID) -> int:
         """Count knowledge graph nodes"""
-        if self.vector_store:
-            # Query vector store or graph database
-            pass
+        # In future, use GraphRepository
         return 0
 
     async def _count_graph_edges(self, tenant_id: UUID) -> int:
         """Count knowledge graph edges"""
+        # In future, use GraphRepository
         return 0
 
     async def _calculate_graph_density(
@@ -529,16 +526,37 @@ class AnalyticsService:
 
     async def _get_from_cache(self, key: str) -> Optional[Dict[str, Any]]:
         """Get value from cache"""
-        if self.redis:
-            # Use Redis
-            pass
+        if (
+            self.rae_service
+            and hasattr(self.rae_service, "redis_client")
+            and self.rae_service.redis_client
+        ):
+            try:
+                import json
+                from typing import cast
+
+                val = await self.rae_service.redis_client.get(key)
+                if val:
+                    return cast(Dict[str, Any], json.loads(val))
+            except Exception:
+                pass
         return self._cache.get(key)
 
     async def _set_cache(self, key: str, value: Dict[str, Any], ttl_seconds: int):
         """Set value in cache with TTL"""
-        if self.redis:
-            # Use Redis with expiration
-            pass
+        if (
+            self.rae_service
+            and hasattr(self.rae_service, "redis_client")
+            and self.rae_service.redis_client
+        ):
+            try:
+                import json
+
+                await self.rae_service.redis_client.set(
+                    key, json.dumps(value), ex=ttl_seconds
+                )
+            except Exception:
+                pass
         self._cache[key] = value
 
     async def generate_report(

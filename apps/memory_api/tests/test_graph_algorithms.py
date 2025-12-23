@@ -3,6 +3,7 @@ from uuid import uuid4
 
 import pytest
 
+from apps.memory_api.repositories.graph_repository import GraphRepository
 from apps.memory_api.services.graph_algorithms import (
     GraphAlgorithmsService,
     GraphEdge,
@@ -52,29 +53,28 @@ async def test_knowledge_graph():
     assert graph.get_neighbors("n3") == []
 
 
+@pytest.fixture
+def mock_graph_repo():
+    return AsyncMock(spec=GraphRepository)
+
+
 @pytest.mark.asyncio
-async def test_service_load_tenant_graph(mock_pool):
-    service = GraphAlgorithmsService(db=mock_pool)
+async def test_service_load_tenant_graph(mock_graph_repo):
+    service = GraphAlgorithmsService(graph_repo=mock_graph_repo)
     tenant_id = uuid4()
 
-    # Mock DB response
-    mock_conn = mock_pool._test_conn
-    # Setup fetch side effect to return nodes first, then edges
-    mock_conn.fetch.side_effect = [
-        # Nodes
-        [
-            {"id": "n1", "node_id": "n1", "label": "Person", "properties": {}},
-            {"id": "n2", "node_id": "n2", "label": "Person", "properties": {}},
-        ],
-        # Edges
-        [
-            {
-                "source_node_id": "n1",
-                "target_node_id": "n2",
-                "relation": "knows",
-                "properties": {},
-            }
-        ],
+    # Mock Repo response
+    mock_graph_repo.get_all_nodes.return_value = [
+        {"id": "n1", "node_id": "n1", "label": "Person", "properties": {}},
+        {"id": "n2", "node_id": "n2", "label": "Person", "properties": {}},
+    ]
+    mock_graph_repo.get_all_edges.return_value = [
+        {
+            "source_node_id": "n1",
+            "target_node_id": "n2",
+            "relation": "knows",
+            "properties": {},
+        }
     ]
 
     graph = await service.load_tenant_graph(tenant_id)
@@ -82,30 +82,28 @@ async def test_service_load_tenant_graph(mock_pool):
     assert graph.node_count() == 2
     assert graph.edge_count() == 1
 
-    # Verify DB calls
-    assert mock_conn.fetch.call_count == 2
+    # Verify Repo calls
+    mock_graph_repo.get_all_nodes.assert_called_once()
+    mock_graph_repo.get_all_edges.assert_called_once()
 
 
 @pytest.mark.asyncio
-async def test_pagerank(mock_pool):
-    service = GraphAlgorithmsService(db=mock_pool)
+async def test_pagerank(mock_graph_repo):
+    service = GraphAlgorithmsService(graph_repo=mock_graph_repo)
     tenant_id = uuid4()
 
-    # Mock DB loading a graph: n1 -> n2
-    mock_conn = mock_pool._test_conn
-    mock_conn.fetch.side_effect = [
-        [
-            {"id": "n1", "node_id": "n1", "label": "A", "properties": {}},
-            {"id": "n2", "node_id": "n2", "label": "B", "properties": {}},
-        ],
-        [
-            {
-                "source_node_id": "n1",
-                "target_node_id": "n2",
-                "relation": "link",
-                "properties": {},
-            }
-        ],
+    # Mock Repo loading a graph: n1 -> n2
+    mock_graph_repo.get_all_nodes.return_value = [
+        {"id": "n1", "node_id": "n1", "label": "A", "properties": {}},
+        {"id": "n2", "node_id": "n2", "label": "B", "properties": {}},
+    ]
+    mock_graph_repo.get_all_edges.return_value = [
+        {
+            "source_node_id": "n1",
+            "target_node_id": "n2",
+            "relation": "link",
+            "properties": {},
+        }
     ]
 
     scores = await service.pagerank(tenant_id)
@@ -118,32 +116,29 @@ async def test_pagerank(mock_pool):
 
 
 @pytest.mark.asyncio
-async def test_shortest_path(mock_pool):
-    service = GraphAlgorithmsService(db=mock_pool)
+async def test_shortest_path(mock_graph_repo):
+    service = GraphAlgorithmsService(graph_repo=mock_graph_repo)
     tenant_id = uuid4()
 
     # Graph: n1 -> n2 -> n3
-    mock_conn = mock_pool._test_conn
-    mock_conn.fetch.side_effect = [
-        [
-            {"id": "n1", "node_id": "n1", "label": "A", "properties": {}},
-            {"id": "n2", "node_id": "n2", "label": "A", "properties": {}},
-            {"id": "n3", "node_id": "n3", "label": "A", "properties": {}},
-        ],
-        [
-            {
-                "source_node_id": "n1",
-                "target_node_id": "n2",
-                "relation": "link",
-                "properties": {},
-            },
-            {
-                "source_node_id": "n2",
-                "target_node_id": "n3",
-                "relation": "link",
-                "properties": {},
-            },
-        ],
+    mock_graph_repo.get_all_nodes.return_value = [
+        {"id": "n1", "node_id": "n1", "label": "A", "properties": {}},
+        {"id": "n2", "node_id": "n2", "label": "A", "properties": {}},
+        {"id": "n3", "node_id": "n3", "label": "A", "properties": {}},
+    ]
+    mock_graph_repo.get_all_edges.return_value = [
+        {
+            "source_node_id": "n1",
+            "target_node_id": "n2",
+            "relation": "link",
+            "properties": {},
+        },
+        {
+            "source_node_id": "n2",
+            "target_node_id": "n3",
+            "relation": "link",
+            "properties": {},
+        },
     ]
 
     path = await service.shortest_path(tenant_id, "n1", "n3")
@@ -151,39 +146,36 @@ async def test_shortest_path(mock_pool):
 
 
 @pytest.mark.asyncio
-async def test_find_all_paths(mock_pool):
-    service = GraphAlgorithmsService(db=mock_pool)
+async def test_find_all_paths(mock_graph_repo):
+    service = GraphAlgorithmsService(graph_repo=mock_graph_repo)
     tenant_id = uuid4()
 
     # Graph: n1 -> n2 -> n3
     #          n1 -> n3
-    mock_conn = mock_pool._test_conn
-    mock_conn.fetch.side_effect = [
-        [
-            {"id": "n1", "node_id": "n1", "label": "A", "properties": {}},
-            {"id": "n2", "node_id": "n2", "label": "A", "properties": {}},
-            {"id": "n3", "node_id": "n3", "label": "A", "properties": {}},
-        ],
-        [
-            {
-                "source_node_id": "n1",
-                "target_node_id": "n2",
-                "relation": "link",
-                "properties": {},
-            },
-            {
-                "source_node_id": "n2",
-                "target_node_id": "n3",
-                "relation": "link",
-                "properties": {},
-            },
-            {
-                "source_node_id": "n1",
-                "target_node_id": "n3",
-                "relation": "direct",
-                "properties": {},
-            },
-        ],
+    mock_graph_repo.get_all_nodes.return_value = [
+        {"id": "n1", "node_id": "n1", "label": "A", "properties": {}},
+        {"id": "n2", "node_id": "n2", "label": "A", "properties": {}},
+        {"id": "n3", "node_id": "n3", "label": "A", "properties": {}},
+    ]
+    mock_graph_repo.get_all_edges.return_value = [
+        {
+            "source_node_id": "n1",
+            "target_node_id": "n2",
+            "relation": "link",
+            "properties": {},
+        },
+        {
+            "source_node_id": "n2",
+            "target_node_id": "n3",
+            "relation": "link",
+            "properties": {},
+        },
+        {
+            "source_node_id": "n1",
+            "target_node_id": "n3",
+            "relation": "direct",
+            "properties": {},
+        },
     ]
 
     paths = await service.find_all_paths(tenant_id, "n1", "n3")
@@ -194,32 +186,29 @@ async def test_find_all_paths(mock_pool):
 
 
 @pytest.mark.asyncio
-async def test_find_related_entities(mock_pool):
-    service = GraphAlgorithmsService(db=mock_pool)
+async def test_find_related_entities(mock_graph_repo):
+    service = GraphAlgorithmsService(graph_repo=mock_graph_repo)
     tenant_id = uuid4()
 
     # Graph: n1 -> n2 (dist 1) -> n3 (dist 2)
-    mock_conn = mock_pool._test_conn
-    mock_conn.fetch.side_effect = [
-        [
-            {"id": "n1", "node_id": "n1", "label": "A", "properties": {}},
-            {"id": "n2", "node_id": "n2", "label": "B", "properties": {}},
-            {"id": "n3", "node_id": "n3", "label": "C", "properties": {}},
-        ],
-        [
-            {
-                "source_node_id": "n1",
-                "target_node_id": "n2",
-                "relation": "r1",
-                "properties": {},
-            },
-            {
-                "source_node_id": "n2",
-                "target_node_id": "n3",
-                "relation": "r2",
-                "properties": {},
-            },
-        ],
+    mock_graph_repo.get_all_nodes.return_value = [
+        {"id": "n1", "node_id": "n1", "label": "A", "properties": {}},
+        {"id": "n2", "node_id": "n2", "label": "B", "properties": {}},
+        {"id": "n3", "node_id": "n3", "label": "C", "properties": {}},
+    ]
+    mock_graph_repo.get_all_edges.return_value = [
+        {
+            "source_node_id": "n1",
+            "target_node_id": "n2",
+            "relation": "r1",
+            "properties": {},
+        },
+        {
+            "source_node_id": "n2",
+            "target_node_id": "n3",
+            "relation": "r2",
+            "properties": {},
+        },
     ]
 
     related = await service.find_related_entities(tenant_id, "n1", max_distance=2)
@@ -235,11 +224,11 @@ async def test_find_related_entities(mock_pool):
 
 
 @pytest.mark.asyncio
-async def test_graph_summary(mock_pool):
-    service = GraphAlgorithmsService(db=mock_pool)
+async def test_graph_summary(mock_graph_repo):
+    service = GraphAlgorithmsService(graph_repo=mock_graph_repo)
     tenant_id = uuid4()
 
-    # Use a constructed graph mock to avoid multiple DB calls
+    # Use a constructed graph mock to avoid multiple Repo calls
     graph = KnowledgeGraph()
     graph.add_node(GraphNode("n1", "Person"))
     graph.add_node(GraphNode("n2", "Place"))
@@ -257,8 +246,8 @@ async def test_graph_summary(mock_pool):
 
 
 @pytest.mark.asyncio
-async def test_community_detection(mock_pool):
-    service = GraphAlgorithmsService(db=mock_pool)
+async def test_community_detection(mock_graph_repo):
+    service = GraphAlgorithmsService(graph_repo=mock_graph_repo)
     tenant_id = uuid4()
 
     graph = KnowledgeGraph()
@@ -285,8 +274,8 @@ async def test_community_detection(mock_pool):
 
 
 @pytest.mark.asyncio
-async def test_calculate_centrality(mock_pool):
-    service = GraphAlgorithmsService(db=mock_pool)
+async def test_calculate_centrality(mock_graph_repo):
+    service = GraphAlgorithmsService(graph_repo=mock_graph_repo)
     tenant_id = uuid4()
 
     graph = KnowledgeGraph()
@@ -325,8 +314,8 @@ async def test_calculate_centrality(mock_pool):
 
 
 @pytest.mark.asyncio
-async def test_graph_density(mock_pool):
-    service = GraphAlgorithmsService(db=mock_pool)
+async def test_graph_density(mock_graph_repo):
+    service = GraphAlgorithmsService(graph_repo=mock_graph_repo)
     tenant_id = uuid4()
 
     graph = KnowledgeGraph()
@@ -348,8 +337,8 @@ async def test_graph_density(mock_pool):
 
 
 @pytest.mark.asyncio
-async def test_subgraph_extraction(mock_pool):
-    service = GraphAlgorithmsService(db=mock_pool)
+async def test_subgraph_extraction(mock_graph_repo):
+    service = GraphAlgorithmsService(graph_repo=mock_graph_repo)
     tenant_id = uuid4()
 
     graph = KnowledgeGraph()
@@ -386,48 +375,44 @@ async def test_repr_methods():
 
 @pytest.mark.asyncio
 async def test_load_tenant_graph_no_db():
-    """Test loading graph without DB connection"""
-    service = GraphAlgorithmsService(db=None)
+    """Test loading graph without Repo"""
+    from typing import cast
+
+    service = GraphAlgorithmsService(graph_repo=cast(GraphRepository, None))
     graph = await service.load_tenant_graph(uuid4())
     assert graph.node_count() == 0
 
 
 @pytest.mark.asyncio
-async def test_load_tenant_graph_with_project_id(mock_pool):
+async def test_load_tenant_graph_with_project_id(mock_graph_repo):
     """Test loading graph with project_id filter"""
-    service = GraphAlgorithmsService(db=mock_pool)
+    service = GraphAlgorithmsService(graph_repo=mock_graph_repo)
     tenant_id = uuid4()
     project_id = "proj-123"
 
-    mock_conn = mock_pool._test_conn
-    mock_conn.fetch.side_effect = [
-        [],  # nodes
-        [],  # edges
-    ]
+    mock_graph_repo.get_all_nodes.return_value = []
+    mock_graph_repo.get_all_edges.return_value = []
 
     await service.load_tenant_graph(tenant_id, project_id=project_id)
 
-    # Verify SQL queries contained project_id
-    assert mock_conn.fetch.call_count == 2
-    args, _ = mock_conn.fetch.call_args_list[0]
-    assert "AND project_id = $2" in args[0]
+    # Verify Repo calls contained project_id
+    mock_graph_repo.get_all_nodes.assert_called_once_with(str(tenant_id), project_id)
 
 
 @pytest.mark.asyncio
-async def test_load_tenant_graph_exception(mock_pool):
+async def test_load_tenant_graph_exception(mock_graph_repo):
     """Test exception handling during graph load"""
-    service = GraphAlgorithmsService(db=mock_pool)
-    mock_conn = mock_pool._test_conn
-    mock_conn.fetch.side_effect = Exception("DB Error")
+    service = GraphAlgorithmsService(graph_repo=mock_graph_repo)
+    mock_graph_repo.get_all_nodes.side_effect = Exception("Repo Error")
 
     with pytest.raises(Exception):
         await service.load_tenant_graph(uuid4())
 
 
 @pytest.mark.asyncio
-async def test_empty_graph_algorithms(mock_pool):
+async def test_empty_graph_algorithms(mock_graph_repo):
     """Test algorithms on empty graph"""
-    service = GraphAlgorithmsService(db=mock_pool)
+    service = GraphAlgorithmsService(graph_repo=mock_graph_repo)
     tenant_id = uuid4()
     empty_graph = KnowledgeGraph()
 
@@ -443,9 +428,9 @@ async def test_empty_graph_algorithms(mock_pool):
 
 
 @pytest.mark.asyncio
-async def test_find_all_paths_edge_cases(mock_pool):
+async def test_find_all_paths_edge_cases(mock_graph_repo):
     """Test find_all_paths edge cases"""
-    service = GraphAlgorithmsService(db=mock_pool)
+    service = GraphAlgorithmsService(graph_repo=mock_graph_repo)
     tenant_id = uuid4()
 
     graph = KnowledgeGraph()
@@ -460,9 +445,9 @@ async def test_find_all_paths_edge_cases(mock_pool):
 
 
 @pytest.mark.asyncio
-async def test_find_bridges_and_articulation_points(mock_pool):
+async def test_find_bridges_and_articulation_points(mock_graph_repo):
     """Test bridge and articulation point placeholders"""
-    service = GraphAlgorithmsService(db=mock_pool)
+    service = GraphAlgorithmsService(graph_repo=mock_graph_repo)
     tenant_id = uuid4()
 
     # Just verify they run without error for now as they are placeholders

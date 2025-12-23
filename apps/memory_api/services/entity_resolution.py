@@ -12,7 +12,6 @@ heavy ML operations to the ML microservice.
 
 from typing import Dict, List, Optional, cast
 
-import asyncpg
 import structlog
 from pydantic import BaseModel, Field
 
@@ -20,6 +19,7 @@ from apps.memory_api.config import settings
 from apps.memory_api.repositories.graph_repository import GraphRepository
 from apps.memory_api.services.llm import get_llm_provider
 from apps.memory_api.services.ml_service_client import MLServiceClient
+from apps.memory_api.services.rae_core_service import RAECoreService
 
 logger = structlog.get_logger(__name__)
 
@@ -45,12 +45,13 @@ class EntityResolutionService:
 
     def __init__(
         self,
-        pool: asyncpg.Pool,
+        rae_service: "RAECoreService",
         ml_client: Optional[MLServiceClient] = None,
         graph_repository: Optional[GraphRepository] = None,
     ):
-        self.pool = pool
-        self.graph_repo = graph_repository or GraphRepository(pool)
+        self.rae_service = rae_service
+        self.pool = rae_service.postgres_pool
+        self.graph_repo = graph_repository or GraphRepository(self.pool)
         self.llm_provider = get_llm_provider()
         self.ml_client = ml_client or MLServiceClient()
         self.similarity_threshold_high = 0.95

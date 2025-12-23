@@ -12,7 +12,6 @@ This service extracts semantic knowledge from memories:
 from typing import Any, Dict, List, Optional, cast
 from uuid import UUID
 
-import asyncpg
 import structlog
 
 from apps.memory_api.config import settings
@@ -23,6 +22,7 @@ from apps.memory_api.models.semantic_models import (
 )
 from apps.memory_api.services.llm import get_llm_provider
 from apps.memory_api.services.ml_service_client import MLServiceClient
+from apps.memory_api.services.rae_core_service import RAECoreService
 
 logger = structlog.get_logger(__name__)
 
@@ -108,8 +108,8 @@ class SemanticExtractor:
     - Database storage with deduplication
     """
 
-    def __init__(self, pool: asyncpg.Pool):
-        self.pool = pool
+    def __init__(self, rae_service: RAECoreService):
+        self.rae_service = rae_service
         self.llm_provider = get_llm_provider()
         self.ml_client = MLServiceClient()
 
@@ -274,36 +274,16 @@ class SemanticExtractor:
         max_memories: int,
     ) -> List[Dict[str, Any]]:
         """Fetch memories for extraction"""
+        query_filters = {}
         if memory_ids:
-            # Fetch specific memories
-            records = await self.pool.fetch(
-                """
-                SELECT id, content, tags, importance, created_at
-                FROM memories
-                WHERE tenant_id = $1 AND project = $2 AND id = ANY($3)
-                LIMIT $4
-                """,
-                tenant_id,
-                project_id,
-                memory_ids,
-                max_memories,
-            )
-        else:
-            # Fetch recent memories
-            records = await self.pool.fetch(
-                """
-                SELECT id, content, tags, importance, created_at
-                FROM memories
-                WHERE tenant_id = $1 AND project = $2
-                ORDER BY created_at DESC
-                LIMIT $3
-                """,
-                tenant_id,
-                project_id,
-                max_memories,
-            )
+            query_filters["memory_ids"] = memory_ids
 
-        return [dict(r) for r in records]
+        return await self.rae_service.list_memories(
+            tenant_id=tenant_id,
+            project=project_id,
+            filters=query_filters,
+            limit=max_memories,
+        )
 
     async def _extract_semantic_knowledge(
         self, memories: List[Dict[str, Any]]
@@ -372,7 +352,7 @@ class SemanticExtractor:
         node_id = normalized_topic.replace(" ", "_").lower()
 
         # Check if node exists
-        existing = await self.pool.fetchrow(
+        existing = await self.rae_service.postgres_pool.fetchrow(
             """
             SELECT id, reinforcement_count, source_memory_ids
             FROM semantic_nodes
@@ -389,7 +369,7 @@ class SemanticExtractor:
                 set(existing["source_memory_ids"] + source_memory_ids)
             )
 
-            await self.pool.execute(
+            await self.rae_service.postgres_pool.execute(
                 """
                 SELECT reinforce_semantic_node($1)
                 """,
@@ -397,7 +377,7 @@ class SemanticExtractor:
             )
 
             # Update source memory IDs
-            await self.pool.execute(
+            await self.rae_service.postgres_pool.execute(
                 """
                 UPDATE semantic_nodes
                 SET source_memory_ids = $1
@@ -415,7 +395,7 @@ class SemanticExtractor:
             # Generate embedding
             embedding = await self._generate_embedding(normalized_topic)
 
-            record = await self.pool.fetchrow(
+            record = await self.rae_service.postgres_pool.fetchrow(
                 """
                 INSERT INTO semantic_nodes (
                     tenant_id, project_id, node_id, label, node_type,
@@ -461,14 +441,14 @@ class SemanticExtractor:
             return False
 
         # Get node UUIDs
-        source_uuid = await self.pool.fetchval(
+        source_uuid = await self.rae_service.postgres_pool.fetchval(
             "SELECT id FROM semantic_nodes WHERE tenant_id = $1 AND project_id = $2 AND node_id = $3",
             tenant_id,
             project_id,
             source_node_id,
         )
 
-        target_uuid = await self.pool.fetchval(
+        target_uuid = await self.rae_service.postgres_pool.fetchval(
             "SELECT id FROM semantic_nodes WHERE tenant_id = $1 AND project_id = $2 AND node_id = $3",
             tenant_id,
             project_id,
@@ -485,7 +465,7 @@ class SemanticExtractor:
 
         # Insert relationship (ignore if exists)
         try:
-            await self.pool.execute(
+            await self.rae_service.postgres_pool.execute(
                 """
                 INSERT INTO semantic_relationships (
                     tenant_id, project_id,

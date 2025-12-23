@@ -45,6 +45,14 @@ def mock_pool():
 
 
 @pytest.fixture
+def mock_rae_service(mock_pool):
+    service = MagicMock()
+    service.postgres_pool = mock_pool
+    service.list_memories = AsyncMock(return_value=[])
+    return service
+
+
+@pytest.fixture
 def mock_llm_provider():
     provider = AsyncMock()
     # Default text response
@@ -73,7 +81,7 @@ def mock_ml_client():
 
 
 @pytest.fixture
-def pipeline(mock_pool, mock_llm_provider, mock_ml_client):
+def pipeline(mock_rae_service, mock_llm_provider, mock_ml_client):
     # Patch dependencies using parenthesized context managers
     with (
         patch(
@@ -85,7 +93,7 @@ def pipeline(mock_pool, mock_llm_provider, mock_ml_client):
             return_value=mock_ml_client,
         ),
     ):
-        pipeline = ReflectionPipeline(mock_pool)
+        pipeline = ReflectionPipeline(mock_rae_service)
         # Ensure mocks are attached
         pipeline.llm_provider = mock_llm_provider
         pipeline.ml_client = mock_ml_client
@@ -93,31 +101,24 @@ def pipeline(mock_pool, mock_llm_provider, mock_ml_client):
 
 
 @pytest.mark.asyncio
-async def test_fetch_memories_filters(pipeline, mock_pool):
-    """Test _fetch_memories constructs correct query with filters."""
-    conn_mock = mock_pool
-    conn_mock.fetch.return_value = []
+async def test_fetch_memories_filters(pipeline, mock_rae_service):
+    """Test _fetch_memories calls rae_service.list_memories correctly."""
+    mock_rae_service.list_memories.return_value = []
 
     filters = {"layer": "episodic", "tags": ["important"]}
     since = datetime(2024, 1, 1)
 
     await pipeline._fetch_memories(TENANT_ID, PROJECT_ID, 10, filters, since)
 
-    # Check arguments passed to fetch
-    call_args = conn_mock.fetch.call_args
-    query = call_args[0][0]
-    params = call_args[0][1:]
-
-    assert "tenant_id = $1" in query
-    assert "project = $2" in query
-    assert "created_at >= $3" in query
-    assert "layer = $4" in query
-    assert "tags && $5" in query
-    assert params[0] == TENANT_ID
-    assert params[1] == PROJECT_ID
-    assert params[2] == since
-    assert params[3] == "episodic"
-    assert params[4] == ["important"]
+    # Check arguments passed to list_memories
+    mock_rae_service.list_memories.assert_called_once_with(
+        tenant_id=TENANT_ID,
+        project=PROJECT_ID,
+        layer="episodic",
+        tags=["important"],
+        filters={"since": since},
+        limit=10,
+    )
 
 
 @pytest.mark.asyncio
@@ -336,27 +337,24 @@ def test_calculate_priority(pipeline):
 
 
 @pytest.mark.asyncio
-async def test_fetch_memories_full_filters(pipeline, mock_pool):
+async def test_fetch_memories_full_filters(pipeline, mock_rae_service):
     """Test _fetch_memories with all filter options."""
-    conn_mock = mock_pool
-    conn_mock.fetch.return_value = []
+    mock_rae_service.list_memories.return_value = []
 
     filters = {"layer": "episodic", "tags": ["tag1", "tag2"]}
     since = datetime(2024, 1, 1)
 
     await pipeline._fetch_memories(TENANT_ID, PROJECT_ID, 10, filters, since)
 
-    # Verify query construction
-    call_args = conn_mock.fetch.call_args
-    query = call_args[0][0]
-    params = call_args[0][1:]
-
-    assert "created_at >= $3" in query
-    assert "layer = $4" in query
-    assert "tags && $5" in query
-    assert params[2] == since
-    assert params[3] == "episodic"
-    assert params[4] == ["tag1", "tag2"]
+    # Verify list_memories call
+    mock_rae_service.list_memories.assert_called_once_with(
+        tenant_id=TENANT_ID,
+        project=PROJECT_ID,
+        layer="episodic",
+        tags=["tag1", "tag2"],
+        filters={"since": since},
+        limit=10,
+    )
 
 
 @pytest.mark.asyncio

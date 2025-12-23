@@ -10,8 +10,16 @@ from apps.memory_api.services.importance_scoring import ImportanceScoringService
 
 
 @pytest.fixture
-def scoring_service():
-    return ImportanceScoringService(db=AsyncMock(), vector_store=AsyncMock())
+def mock_rae_service():
+    service = AsyncMock()
+    service.postgres_pool = AsyncMock()
+    service.qdrant_client = AsyncMock()
+    return service
+
+
+@pytest.fixture
+def scoring_service(mock_rae_service):
+    return ImportanceScoringService(rae_service=mock_rae_service)
 
 
 @pytest.fixture
@@ -82,7 +90,7 @@ async def test_calculate_importance_access_boost(scoring_service, sample_memory)
 @pytest.mark.asyncio
 async def test_decay_importance(scoring_service):
     """Test temporal decay logic"""
-    mock_db = scoring_service.db
+    mock_db = scoring_service.rae_service.postgres_pool
     mock_db.execute.return_value = "UPDATE 10"
 
     updated = await scoring_service.decay_importance(

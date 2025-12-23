@@ -10,6 +10,8 @@ from uuid import UUID
 
 import structlog
 
+from apps.memory_api.services.rae_core_service import RAECoreService
+
 logger = structlog.get_logger(__name__)
 
 
@@ -119,20 +121,17 @@ class ImportanceScoringService:
 
     def __init__(
         self,
-        db=None,
-        vector_store=None,
+        rae_service: RAECoreService,
         scoring_factors: Optional[ScoringFactors] = None,
     ):
         """
         Initialize importance scoring service
 
         Args:
-            db: Database connection
-            vector_store: Vector store for semantic similarity
+            rae_service: RAECoreService instance
             scoring_factors: Custom scoring factor weights
         """
-        self.db = db
-        self.vector_store = vector_store
+        self.rae_service = rae_service
         self.scoring_factors = scoring_factors or ScoringFactors()
 
     async def calculate_importance(
@@ -254,7 +253,7 @@ class ImportanceScoringService:
         if not recent_queries:
             return 0.5  # Neutral score if no context
 
-        if not self.vector_store:
+        if not self.rae_service or not self.rae_service.qdrant_client:
             return 0.5  # Neutral if vector store unavailable
 
         # In production, calculate semantic similarity
@@ -421,11 +420,11 @@ class ImportanceScoringService:
             consider_access_stats=consider_access_stats,
         )
 
-        if not self.db:
+        if not self.rae_service or not self.rae_service.postgres_pool:
             logger.warning(
                 "decay_importance_skipped",
                 tenant_id=str(tenant_id),
-                reason="no_database_connection",
+                reason="no_rae_service_pool",
             )
             return 0
 
@@ -439,12 +438,12 @@ class ImportanceScoringService:
                         0.01,  -- Floor at 0.01
                         CASE
                             -- Accelerated decay for stale memories (not accessed > 30 days)
-                            WHEN EXTRACT(EPOCH FROM ($1 - COALESCE(last_accessed_at, timestamp))) / 86400 > 30
+                            WHEN EXTRACT(EPOCH FROM ($1 - COALESCE(last_accessed_at, created_at))) / 86400 > 30
                             THEN importance * (
-                                1 - ($2 * (1 + (EXTRACT(EPOCH FROM ($1 - COALESCE(last_accessed_at, timestamp))) / 86400) / 30))
+                                1 - ($2 * (1 + (EXTRACT(EPOCH FROM ($1 - COALESCE(last_accessed_at, created_at))) / 86400) / 30))
                             )
                             -- Protected decay for recent memories (accessed < 7 days ago)
-                            WHEN EXTRACT(EPOCH FROM ($1 - COALESCE(last_accessed_at, timestamp))) / 86400 < 7
+                            WHEN EXTRACT(EPOCH FROM ($1 - COALESCE(last_accessed_at, created_at))) / 86400 < 7
                             THEN importance * (1 - ($2 * 0.5))
                             -- Standard decay for everything else
                             ELSE importance * (1 - $2)
@@ -452,12 +451,12 @@ class ImportanceScoringService:
                     )
                 WHERE tenant_id = $3
                   AND importance > 0.01
-                  AND ($4 = TRUE OR $4 = FALSE)  -- consider_access_stats parameter (always applies logic above)
+                  AND ($4 = TRUE OR $4 = FALSE)  -- consider_access_stats parameter
             """
 
-            result = await self.db.execute(
+            result = await self.rae_service.postgres_pool.execute(
                 query,
-                now,
+                now.replace(tzinfo=None),  # standard for some DB drivers
                 decay_rate,
                 str(tenant_id),
                 consider_access_stats,

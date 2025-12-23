@@ -413,10 +413,12 @@ async def get_graph_nodes(
             # Import here to avoid circular dependency
             from uuid import UUID
 
+            from apps.memory_api.repositories.graph_repository import GraphRepository
             from apps.memory_api.services.graph_algorithms import GraphAlgorithmsService
 
             # Calculate PageRank scores
-            graph_service = GraphAlgorithmsService(db=request.app.state.pool)
+            graph_repo = GraphRepository(request.app.state.pool)
+            graph_service = GraphAlgorithmsService(graph_repo=graph_repo)
             pagerank_scores = await graph_service.pagerank(
                 tenant_id=UUID(tenant_id) if isinstance(tenant_id, str) else tenant_id,
                 project_id=project_id,
@@ -654,7 +656,9 @@ async def query_knowledge_graph(
 
     try:
         # Use HybridSearchService for comprehensive graph-enabled search
-        search_service = HybridSearchService(pool=request.app.state.pool)
+        search_service = HybridSearchService(
+            rae_service=request.app.state.rae_core_service
+        )
 
         result = await search_service.search(
             tenant_id=tenant_id,

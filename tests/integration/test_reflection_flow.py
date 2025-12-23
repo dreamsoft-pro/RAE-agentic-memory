@@ -10,7 +10,7 @@ Tests the complete Actor → Evaluator → Reflector pattern:
 """
 
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
@@ -76,38 +76,40 @@ async def graph_repo(db_pool):
 @pytest.fixture
 async def mock_llm():
     """Mock LLM provider to avoid external calls"""
-    with patch(
-        "apps.memory_api.services.llm.orchestrator_adapter.OrchestratorAdapter.generate_structured"
-    ) as mock_generate:
-        # Default mock response
-        mock_result = LLMReflectionResponse(
-            reflection="This is a mocked reflection about a timeout error in SQL query. It should also mention authentication issues.",
-            importance=0.8,
-            confidence=0.9,
-            tags=["mock", "reflection", "sql", "timeout", "performance", "auth", "unauthorized"],
-            strategy="Mocked strategy for success: always check auth headers and add LIMIT to queries.",
-        )
-        mock_generate.return_value = mock_result
-        yield mock_generate
+    # Create a provider object with mocked generate_structured
+    from apps.memory_api.services.llm.orchestrator_adapter import OrchestratorAdapter
+    mock_provider = MagicMock(spec=OrchestratorAdapter)
+    
+    # Default mock response
+    mock_result = LLMReflectionResponse(
+        reflection="This is a mocked reflection about a timeout error in SQL query. It should also mention authentication issues.",
+        importance=0.8,
+        confidence=0.9,
+        tags=["mock", "reflection", "sql", "timeout", "performance", "auth", "unauthorized"],
+        strategy="Mocked strategy for success: always check auth headers and add LIMIT to queries.",
+    )
+    
+    mock_provider.generate_structured = AsyncMock(return_value=mock_result)
+    return mock_provider
 
 
 @pytest.fixture
-async def reflection_engine(db_pool, rae_service, mock_llm):
+async def reflection_engine(rae_service, mock_llm):
     """Reflection engine v2 with mocked LLM"""
-    engine = ReflectionEngineV2(db_pool, rae_service)
+    engine = ReflectionEngineV2(rae_service)
     engine.llm_provider = mock_llm
     return engine
 
 
 @pytest.fixture
-async def context_builder(db_pool, rae_service, reflection_engine):
+async def context_builder(rae_service, reflection_engine):
     """Context builder"""
     config = ContextConfig(
         max_reflection_items=5,
         min_reflection_importance=0.5,
         enable_enhanced_scoring=True,
     )
-    return ContextBuilder(db_pool, rae_service, reflection_engine, config)
+    return ContextBuilder(rae_service, reflection_engine, config)
 
 
 @pytest.fixture

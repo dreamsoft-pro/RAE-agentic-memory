@@ -1,10 +1,10 @@
 from typing import Any, List, Set
 from uuid import UUID
 
-import asyncpg
 import structlog
-from qdrant_client import AsyncQdrantClient
 from qdrant_client.http import models
+
+from apps.memory_api.services.rae_core_service import RAECoreService
 
 logger = structlog.get_logger(__name__)
 
@@ -14,9 +14,8 @@ class ConsistencyService:
     Service for ensuring data integrity across distributed stores (Postgres <-> Qdrant).
     """
 
-    def __init__(self, pool: asyncpg.Pool, qdrant_client: AsyncQdrantClient):
-        self.pool = pool
-        self.qdrant_client = qdrant_client
+    def __init__(self, rae_service: RAECoreService):
+        self.rae_service = rae_service
 
     async def reconcile_vectors(
         self, tenant_id: str, collection_name: str = "memories", batch_size: int = 100
@@ -51,7 +50,7 @@ class ConsistencyService:
                 )
 
                 # Fetch a batch of points from Qdrant
-                points, next_offset = await self.qdrant_client.scroll(
+                points, next_offset = await self.rae_service.qdrant_client.scroll(
                     collection_name=collection_name,
                     scroll_filter=scroll_filter,
                     limit=batch_size,
@@ -79,13 +78,10 @@ class ConsistencyService:
                     )
 
                     # Delete orphans from Qdrant
-                    await self.qdrant_client.delete(
+                    await self.rae_service.qdrant_client.delete(
                         collection_name=collection_name,
                         points_selector=models.PointIdsList(
-                            points=[
-                                UUID(oid) if self._is_uuid(oid) else oid
-                                for oid in orphans
-                            ]
+                            points=[str(oid) for oid in orphans]
                         ),
                     )
                     orphans_removed += len(orphans)
@@ -121,7 +117,7 @@ class ConsistencyService:
             WHERE tenant_id = $1 AND id = ANY($2::uuid[])
         """
 
-        async with self.pool.acquire() as conn:
+        async with self.rae_service.postgres_pool.acquire() as conn:
             rows = await conn.fetch(query, tenant_id, uuid_ids)
 
         return {r["id"] for r in rows}

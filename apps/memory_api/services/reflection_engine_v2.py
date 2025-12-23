@@ -9,7 +9,6 @@ from datetime import datetime, timezone
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
 from uuid import UUID
 
-import asyncpg
 import structlog
 
 from apps.memory_api.config import settings
@@ -111,17 +110,14 @@ class ReflectionEngineV2:
 
     def __init__(
         self,
-        pool: asyncpg.Pool,
         rae_service: "RAECoreService",
     ):
         """
         Initialize ReflectionEngineV2
 
         Args:
-            pool: Database connection pool
             rae_service: RAECoreService for memory operations
         """
-        self.pool = pool
         self.rae_service = rae_service
         self.llm_provider = get_llm_provider()
 

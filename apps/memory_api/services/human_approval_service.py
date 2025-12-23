@@ -20,11 +20,11 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
-import asyncpg
 import structlog
 from pydantic import BaseModel, Field
 
 from apps.memory_api.models import OperationRiskLevel
+from apps.memory_api.services.rae_core_service import RAECoreService
 from apps.memory_api.utils.datetime_utils import utc_now
 
 logger = structlog.get_logger(__name__)
@@ -124,8 +124,8 @@ class HumanApprovalService:
         OperationRiskLevel.none: 0,
     }
 
-    def __init__(self, pool: asyncpg.Pool):
-        self.pool = pool
+    def __init__(self, rae_service: RAECoreService):
+        self.rae_service = rae_service
 
     async def request_approval(
         self,
