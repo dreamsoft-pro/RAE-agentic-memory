@@ -113,6 +113,7 @@ async def websocket_endpoint(
     tenant_id: str = Query(...),
     project_id: str = Query(...),
     event_types: Optional[str] = Query(None, description="Comma-separated event types"),
+    rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
     WebSocket endpoint for real-time dashboard updates.
@@ -317,18 +318,39 @@ async def get_metric_timeseries(
             period_end=end_time,
         )
 
-        # Calculate trend if we have data
+        # Calculate trend if we have data using simple linear regression for stability
         if len(data_points) > 1:
-            first_value = data_points[0]["metric_value"]
-            last_value = data_points[-1]["metric_value"]
-            if first_value > 0:
-                percent_change = ((last_value - first_value) / first_value) * 100
-                time_series.trend_direction = (
-                    "up"
-                    if percent_change > 5
-                    else "down" if percent_change < -5 else "stable"
-                )
-                time_series.percent_change = round(percent_change, 2)
+            n = len(data_points)
+            x = list(range(n))
+            y = [dp["metric_value"] for dp in data_points]
+
+            # Simple linear regression formula: slope = (n*sum(xy) - sum(x)*sum(y)) / (n*sum(x^2) - (sum(x))^2)
+            sum_x = sum(x)
+            sum_y = sum(y)
+            sum_xx = sum(xi * xi for xi in x)
+            sum_xy = sum(xi * yi for xi, yi in zip(x, y))
+
+            denominator = n * sum_xx - sum_x * sum_x
+            if denominator != 0:
+                slope = (n * sum_xy - sum_x * sum_y) / denominator
+
+                # Calculate percent change relative to the first point estimate (intercept)
+                # or just use the overall slope trend.
+                # For consistency with UI, we keep percent_change based on first/last but use slope for direction.
+                first_val = y[0]
+                last_val = y[-1]
+
+                if first_val > 0:
+                    percent_change = ((last_val - first_val) / first_val) * 100
+                    time_series.percent_change = round(percent_change, 2)
+
+                # Direction is decided by slope to avoid noise of single points
+                if slope > 0.01:  # Positive slope
+                    time_series.trend_direction = "up"
+                elif slope < -0.01:  # Negative slope
+                    time_series.trend_direction = "down"
+                else:
+                    time_series.trend_direction = "stable"
 
         logger.info(
             "timeseries_metric_retrieved",
