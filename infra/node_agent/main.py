@@ -97,11 +97,45 @@ class NodeAgent:
             await asyncio.sleep(self.heartbeat_interval)
 
     async def process_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        logger.info(f"Processing task {task.get('id')} of type {task.get('type')}")
-        # TODO: Implement actual task processing logic here
-        # For now, simulation
-        await asyncio.sleep(2)
+        task_type = task.get('type')
+        payload = task.get('payload', {})
+        logger.info(f"Processing task {task.get('id')} of type {task_type}")
+        
+        if task_type == "llm_inference":
+            return await self._execute_ollama(payload)
+        
+        # Fallback/Simulation for other types
+        await asyncio.sleep(1)
         return {"status": "success", "output": "processed_by_node_v1"}
+
+    async def _execute_ollama(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute inference using local Ollama."""
+        model = payload.get("model", "deepseek-coder")
+        prompt = payload.get("prompt", "")
+        system = payload.get("system", "")
+        
+        ollama_url = self.config.get("ollama_api_url", "http://localhost:11434")
+        
+        async with httpx.AsyncClient(timeout=300.0) as client:
+            try:
+                ollama_payload = {
+                    "model": model,
+                    "prompt": prompt,
+                    "system": system,
+                    "stream": False
+                }
+                resp = await client.post(f"{ollama_url}/api/generate", json=ollama_payload)
+                resp.raise_for_status()
+                result = resp.json()
+                return {
+                    "status": "success",
+                    "model": model,
+                    "response": result.get("response"),
+                    "done": True
+                }
+            except Exception as e:
+                logger.error(f"Ollama execution failed: {e}")
+                return {"status": "error", "error": str(e)}
 
     async def task_loop(self, client: httpx.AsyncClient):
         poll_url = f"{self.base_url}/control/tasks/poll"
