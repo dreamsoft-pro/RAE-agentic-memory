@@ -103,39 +103,63 @@ class NodeAgent:
         
         if task_type == "llm_inference":
             return await self._execute_ollama(payload)
+        elif task_type == "code_verify_cycle":
+            return await self._execute_code_cycle(payload)
         
-        # Fallback/Simulation for other types
-        await asyncio.sleep(1)
-        return {"status": "success", "output": "processed_by_node_v1"}
+        return {"status": "success", "output": "unknown_task_type"}
 
-    async def _execute_ollama(self, payload: Dict[str, Any]) -> Dict[str, Any]:
-        """Execute inference using local Ollama."""
-        model = payload.get("model", "deepseek-coder")
+    async def _execute_code_cycle(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Writer/Reviewer cycle for high quality code."""
+        writer_model = payload.get("writer_model", "deepseek-coder:33b")
+        reviewer_model = payload.get("reviewer_model", "deepseek-coder:6.7b") # Szybszy do recenzji
         prompt = payload.get("prompt", "")
-        system = payload.get("system", "")
-        
+
+        # 1. WRITE
+        logger.info(f"Phase 1: Writing code with {writer_model}")
+        write_result = await self._call_ollama(writer_model, prompt)
+        if write_result["status"] == "error": return write_result
+        code = write_result["response"]
+
+        # 2. REVIEW
+        logger.info(f"Phase 2: Reviewing code with {reviewer_model}")
+        review_prompt = f"Review this Python code for bugs and logic errors. Return 'PASSED' if it is perfect, or list issues otherwise:\n\n{code}"
+        review_result = await self._call_ollama(reviewer_model, review_prompt)
+        if review_result["status"] == "error": return review_result
+        review_output = review_result["response"]
+
+        # 3. SELF-CORRECT (if needed)
+        if "PASSED" not in review_output.upper():
+            logger.info("Phase 3: Self-correction triggered")
+            fix_prompt = f"The previous code has issues:\n{review_output}\n\nPlease provide the corrected version of the code:\n\n{code}"
+            fix_result = await self._call_ollama(writer_model, fix_prompt)
+            if fix_result["status"] == "success":
+                code = fix_result["response"]
+
+        return {
+            "status": "success",
+            "final_code": code,
+            "review": review_output,
+            "corrected": "PASSED" not in review_output.upper()
+        }
+
+    async def _call_ollama(self, model: str, prompt: str, system: str = "") -> Dict[str, Any]:
         ollama_url = self.config.get("ollama_api_url", "http://localhost:11434")
-        
         async with httpx.AsyncClient(timeout=300.0) as client:
             try:
-                ollama_payload = {
-                    "model": model,
-                    "prompt": prompt,
-                    "system": system,
-                    "stream": False
-                }
-                resp = await client.post(f"{ollama_url}/api/generate", json=ollama_payload)
+                resp = await client.post(f"{ollama_url}/api/generate", json={
+                    "model": model, "prompt": prompt, "system": system, "stream": False
+                })
                 resp.raise_for_status()
-                result = resp.json()
-                return {
-                    "status": "success",
-                    "model": model,
-                    "response": result.get("response"),
-                    "done": True
-                }
+                return {"status": "success", "response": resp.json().get("response")}
             except Exception as e:
-                logger.error(f"Ollama execution failed: {e}")
                 return {"status": "error", "error": str(e)}
+
+    async def _execute_ollama(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        return await self._call_ollama(
+            payload.get("model", "deepseek-coder:33b"),
+            payload.get("prompt", ""),
+            payload.get("system", "")
+        )
 
     async def task_loop(self, client: httpx.AsyncClient):
         poll_url = f"{self.base_url}/control/tasks/poll"
