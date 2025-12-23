@@ -1,5 +1,25 @@
 ## Recent Changes (Auto-generated)
 
+*Last updated: 2025-12-23 07:17 • Branch: main • Commit: b5f7cf5*
+
+### 🐛 Bug Fixes
+
+- **lint**: sort imports in graph_repository.py ([`a514607`](../../commit/a514607))
+
+### 🔧 Chore
+
+- accept remote doc updates to resolve conflicts ([`b5f7cf5`](../../commit/b5f7cf5))
+- resolve auto-generated doc conflicts during merge to main ([`954d510`](../../commit/954d510))
+- resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+
+### 📦 Other
+
+- Merge branch 'develop' of github.com:dreamsoft-pro/RAE-agentic-memory into develop ([`9c7710d`](../../commit/9c7710d))
+
+---
+
+## Recent Changes (Auto-generated)
+
 *Last updated: 2025-12-22 18:03 • Branch: develop • Commit: 252381c*
 
 ### 📦 Other
