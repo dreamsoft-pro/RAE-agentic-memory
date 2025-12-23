@@ -53,7 +53,7 @@ async def rae_context():
     )
 
     try:
-        yield pool, rae_service
+        yield rae_service
     finally:
         await qdrant.close()
         await redis.aclose()  # type: ignore[attr-defined]
@@ -67,8 +67,10 @@ def generate_reflection_for_project(project: str, tenant_id: str):
     """
 
     async def main():
-        async with rae_context() as (pool, rae_service):
-            engine = ReflectionEngine(pool, rae_service=rae_service)
+        async with rae_context() as rae_service:
+            engine = ReflectionEngine(
+                rae_service.postgres_pool, rae_service=rae_service
+            )
             await engine.generate_reflection(project, tenant_id)
 
     asyncio.run(main())
@@ -81,10 +83,10 @@ def schedule_reflections():
     """
 
     async def main():
-        async with rae_context() as (pool, rae_service):
+        async with rae_context() as rae_service:
             # Find unique project/tenant pairs with recent episodic memories
             # A real implementation would be more sophisticated.
-            records = await pool.fetch(
+            records = await rae_service.postgres_pool.fetch(
                 """
                 SELECT DISTINCT project, tenant_id
                 FROM memories
@@ -106,14 +108,14 @@ def apply_memory_decay():
     """
 
     async def main():
-        async with rae_context() as (pool, rae_service):
+        async with rae_context() as rae_service:
             # Apply decay
-            await pool.execute(
+            await rae_service.postgres_pool.execute(
                 "UPDATE memories SET strength = strength * $1",
                 settings.MEMORY_DECAY_RATE,
             )
             # Delete expired memories
-            await pool.execute(
+            await rae_service.postgres_pool.execute(
                 "DELETE FROM memories WHERE expires_at IS NOT NULL AND expires_at < NOW()"
             )
 
@@ -131,10 +133,10 @@ def prune_old_memories():
         if settings.MEMORY_RETENTION_DAYS <= 0:
             return  # Pruning is disabled
 
-        async with rae_context() as (pool, rae_service):
+        async with rae_context() as rae_service:
             interval = f"{settings.MEMORY_RETENTION_DAYS} days"
             # We only prune episodic memories, as semantic/reflective are meant to be long-term.
-            result = await pool.execute(
+            result = await rae_service.postgres_pool.execute(
                 "DELETE FROM memories WHERE layer = 'em' AND created_at < NOW() - $1::interval",
                 interval,
             )
@@ -171,9 +173,9 @@ def cleanup_expired_data_task(self, tenant_id: str | None = None):
     from apps.memory_api.services.retention_service import RetentionService
 
     async def main():
-        async with rae_context() as (pool, rae_service):
+        async with rae_context() as rae_service:
             try:
-                service = RetentionService(pool)
+                service = RetentionService(rae_service.postgres_pool)
 
                 logger.info(
                     "retention_cleanup_started",
@@ -237,9 +239,9 @@ def gdpr_delete_user_data_task(
     from apps.memory_api.services.retention_service import RetentionService
 
     async def main():
-        async with rae_context() as (pool, rae_service):
+        async with rae_context() as rae_service:
             try:
-                service = RetentionService(pool)
+                service = RetentionService(rae_service.postgres_pool)
 
                 logger.info(
                     "gdpr_deletion_started",
@@ -327,10 +329,10 @@ def extract_graph_lazy(
             "extract_graph_lazy_rate_limit_delay", delay=delay, tenant_id=tenant_id
         )
         await asyncio.sleep(delay)
-        async with rae_context() as (pool, rae_service):
+        async with rae_context() as rae_service:
             try:
                 # Initialize service with repositories
-                graph_repo = GraphRepository(pool)
+                graph_repo = GraphRepository(rae_service.postgres_pool)
                 service = GraphExtractionService(
                     rae_service=rae_service, graph_repo=graph_repo
                 )
@@ -387,9 +389,9 @@ def process_graph_extraction_queue():
     """
 
     async def main():
-        async with rae_context() as (pool, rae_service):
+        async with rae_context() as rae_service:
             # Find memories without graph extraction
-            records = await pool.fetch(
+            records = await rae_service.postgres_pool.fetch(
                 """
                 SELECT DISTINCT tenant_id, ARRAY_AGG(id) as memory_ids
                 FROM memories m
@@ -430,8 +432,8 @@ def run_entity_resolution_task(project_id: str = "default", tenant_id: str = "de
     """
 
     async def main():
-        async with rae_context() as (pool, rae_service):
-            service = EntityResolutionService(pool)
+        async with rae_context() as rae_service:
+            service = EntityResolutionService(rae_service=rae_service)
             await service.run_clustering_and_merging(project_id, tenant_id)
 
     asyncio.run(main())
@@ -447,8 +449,8 @@ def run_community_detection_task(
     """
 
     async def main():
-        async with rae_context() as (pool, rae_service):
-            service = CommunityDetectionService(pool)
+        async with rae_context() as rae_service:
+            service = CommunityDetectionService(rae_service=rae_service)
             await service.run_community_detection_and_summarization(
                 project_id, tenant_id
             )
@@ -482,10 +484,10 @@ def decay_memory_importance_task(self, tenant_id: str | None = None):
     from apps.memory_api.services.importance_scoring import ImportanceScoringService
 
     async def main():
-        async with rae_context() as (pool, rae_service):
+        async with rae_context() as rae_service:
             try:
                 # Initialize scoring service
-                scoring_service = ImportanceScoringService(db=pool)
+                scoring_service = ImportanceScoringService(rae_service=rae_service)
 
                 # Get decay configuration from settings
                 decay_rate = settings.MEMORY_DECAY_RATE
@@ -523,7 +525,7 @@ def decay_memory_importance_task(self, tenant_id: str | None = None):
                 else:
                     # Process all tenants
                     # Get unique tenant IDs from memories table
-                    tenant_records = await pool.fetch(
+                    tenant_records = await rae_service.postgres_pool.fetch(
                         """
                         SELECT DISTINCT tenant_id
                         FROM memories
@@ -622,9 +624,9 @@ def run_maintenance_cycle_task(self):
     from apps.memory_api.workers.memory_maintenance import MaintenanceScheduler
 
     async def main():
-        async with rae_context() as (pool, rae_service):
+        async with rae_context() as rae_service:
             try:
-                scheduler = MaintenanceScheduler(pool, rae_service=rae_service)
+                scheduler = MaintenanceScheduler(rae_service=rae_service)
                 stats = await scheduler.run_daily_maintenance()
 
                 logger.info(
@@ -666,8 +668,8 @@ def run_dreaming_task(tenant_id: str, project_id: str = "default"):
             )
             return {"skipped": True, "reason": "disabled_by_config"}
 
-        async with rae_context() as (pool, rae_service):
-            worker = DreamingWorker(pool, rae_service=rae_service)
+        async with rae_context() as rae_service:
+            worker = DreamingWorker(rae_service=rae_service)
             results = await worker.run_dreaming_cycle(
                 tenant_id=tenant_id,
                 project_id=project_id,
@@ -699,13 +701,10 @@ def run_consistency_check_task(self, tenant_id: str = "default"):
     """
 
     async def main():
-        async with rae_context() as (pool, rae_service):
+        async with rae_context() as rae_service:
             try:
-                # We access qdrant client from rae_service's internals or rebuild it?
-                # rae_service.qdrant_client is available.
-                consistency_service = ConsistencyService(
-                    pool, rae_service.qdrant_client
-                )
+                # Use RAECoreService directly
+                consistency_service = ConsistencyService(rae_service=rae_service)
 
                 removed = await consistency_service.reconcile_vectors(
                     tenant_id=tenant_id

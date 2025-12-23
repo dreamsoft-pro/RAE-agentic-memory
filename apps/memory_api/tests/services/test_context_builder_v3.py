@@ -17,7 +17,6 @@ def mock_rae_service():
 @pytest.mark.unit
 async def test_context_builder_uses_v3_when_enabled(mock_rae_service):
     # Setup
-    pool = MagicMock()
     # repo = MagicMock() # no longer needed, replaced by rae_service
     reflection_engine = MagicMock()
 
@@ -41,7 +40,6 @@ async def test_context_builder_uses_v3_when_enabled(mock_rae_service):
 
     # Pass mock_rae_service instead of repo
     builder = ContextBuilder(
-        pool,
         mock_rae_service,
         reflection_engine,
         config=ContextConfig(enable_scoring_v3=True),
@@ -61,7 +59,6 @@ async def test_context_builder_v3_integration_mock(mock_rae_service):
     """Verify V3 is actually called using patch"""
     from unittest.mock import patch
 
-    pool = MagicMock()
     # repo = MagicMock() # no longer needed
     reflection_engine = MagicMock()
 
@@ -81,7 +78,6 @@ async def test_context_builder_v3_integration_mock(mock_rae_service):
 
     # Pass mock_rae_service instead of repo
     builder = ContextBuilder(
-        pool,
         mock_rae_service,
         reflection_engine,
         config=ContextConfig(enable_scoring_v3=True),

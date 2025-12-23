@@ -17,8 +17,6 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 
-import asyncpg
-
 from apps.memory_api.metrics import (
     rae_iso42001_compliance_score,
     rae_iso42001_requirements_compliant,
@@ -40,6 +38,7 @@ from apps.memory_api.models.dashboard_models import (
     RLSVerificationStatus,
     SourceTrustMetric,
 )
+from apps.memory_api.services.rae_core_service import RAECoreService
 
 logger = logging.getLogger(__name__)
 
@@ -123,8 +122,8 @@ class ComplianceService:
         },
     }
 
-    def __init__(self, pool: asyncpg.Pool):
-        self.pool = pool
+    def __init__(self, rae_service: RAECoreService):
+        self.rae_service = rae_service
 
     async def generate_compliance_report(
         self,
@@ -309,7 +308,7 @@ class ComplianceService:
         tables_with_rls = []
         tables_without_rls = []
 
-        async with self.pool.acquire() as conn:
+        async with self.rae_service.postgres_pool.acquire() as conn:
             # Check RLS status for each table
             for table in critical_tables:
                 result = await conn.fetchrow(
@@ -824,7 +823,7 @@ class ComplianceService:
         self, tenant_id: str, project_id: str
     ) -> SourceTrustMetric:
         """Get source trust distribution"""
-        async with self.pool.acquire() as conn:
+        async with self.rae_service.postgres_pool.acquire() as conn:
             result = await conn.fetchrow(
                 """
                 SELECT
@@ -919,7 +918,7 @@ class ComplianceService:
 
     async def _get_source_trust_verified_percentage(self, tenant_id: str) -> float:
         """Get percentage of sources with verified trust level"""
-        async with self.pool.acquire() as conn:
+        async with self.rae_service.postgres_pool.acquire() as conn:
             result = await conn.fetchrow(
                 """
                 SELECT
@@ -992,7 +991,7 @@ class ComplianceService:
 
     async def _get_policy_compliance_rate(self, tenant_id: str) -> float:
         """Get policy compliance rate from enforcement results"""
-        async with self.pool.acquire() as conn:
+        async with self.rae_service.postgres_pool.acquire() as conn:
             result = await conn.fetchrow(
                 """
                 SELECT
@@ -1013,7 +1012,7 @@ class ComplianceService:
 
     async def _get_circuit_breaker_health(self, tenant_id: str) -> float:
         """Calculate circuit breaker health score"""
-        async with self.pool.acquire() as conn:
+        async with self.rae_service.postgres_pool.acquire() as conn:
             result = await conn.fetchrow(
                 """
                 SELECT
@@ -1043,7 +1042,7 @@ class ComplianceService:
         self, tenant_id: str, project_id: str
     ) -> float:
         """Calculate context provenance quality score"""
-        async with self.pool.acquire() as conn:
+        async with self.rae_service.postgres_pool.acquire() as conn:
             result = await conn.fetchrow(
                 """
                 SELECT
@@ -1076,7 +1075,7 @@ class ComplianceService:
         self, tenant_id: str, project_id: str
     ) -> float:
         """Calculate decision audit coverage percentage"""
-        async with self.pool.acquire() as conn:
+        async with self.rae_service.postgres_pool.acquire() as conn:
             result = await conn.fetchrow(
                 """
                 SELECT COUNT(*) as decision_count
@@ -1102,7 +1101,7 @@ class ComplianceService:
         self, tenant_id: str, project_id: str
     ) -> float:
         """Calculate approval workflow coverage for high-risk operations"""
-        async with self.pool.acquire() as conn:
+        async with self.rae_service.postgres_pool.acquire() as conn:
             result = await conn.fetchrow(
                 """
                 SELECT
@@ -1127,7 +1126,7 @@ class ComplianceService:
         self, tenant_id: str, project_id: str
     ) -> float:
         """Calculate approval rate for high-risk operations"""
-        async with self.pool.acquire() as conn:
+        async with self.rae_service.postgres_pool.acquire() as conn:
             result = await conn.fetchrow(
                 """
                 SELECT

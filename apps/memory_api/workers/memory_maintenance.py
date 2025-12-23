@@ -65,11 +65,13 @@ class DecayWorker:
 
     def __init__(
         self,
-        pool: asyncpg.Pool,
+        rae_service: RAECoreService,
         scoring_service: Optional[ImportanceScoringService] = None,
     ):
-        self.pool = pool
-        self.scoring_service = scoring_service or ImportanceScoringService(db=pool)
+        self.rae_service = rae_service
+        self.scoring_service = scoring_service or ImportanceScoringService(
+            rae_service=rae_service
+        )
 
     async def run_decay_cycle(
         self,
@@ -149,7 +151,7 @@ class DecayWorker:
 
     async def _get_all_tenant_ids(self) -> List[str]:
         """Get all unique tenant IDs from memories table"""
-        async with self.pool.acquire() as conn:
+        async with self.rae_service.postgres_pool.acquire() as conn:
             records = await conn.fetch(
                 "SELECT DISTINCT tenant_id FROM memories WHERE tenant_id IS NOT NULL"
             )
@@ -170,10 +172,8 @@ class SummarizationWorker:
 
     def __init__(
         self,
-        pool: asyncpg.Pool,
         rae_service: RAECoreService,
     ):
-        self.pool = pool
         self.rae_service = rae_service
         self.llm_provider = get_llm_provider()
 
@@ -347,12 +347,8 @@ Provide a concise summary, list key topics, and determine the overall sentiment.
         summaries = []
 
         # Find sessions with many events
-        async with self.pool.acquire() as conn:
+        async with self.rae_service.postgres_pool.acquire() as conn:
             # Query to find sessions with event count above threshold
-            # Note: This direct SQL query depends on schema structure which RAECore mostly abstracts
-            # but for analytics/aggregation we might still need direct access or extended RAECore methods.
-            # RAECore has count_memories but no "group by session_id".
-            # We keep direct SQL here as it's a worker task, but acknowledge it as a leaky abstraction or future feature for RAECore.
             sql = """
                 SELECT
                     metadata->>'session_id' as session_id,
@@ -409,20 +405,18 @@ class DreamingWorker:
     """
     Worker for generating reflections from historical memory patterns.
 
-    Implements "light dreaming" - periodic analysis of memory to find
+    Implements \"light dreaming\" - periodic analysis of memory to find
     patterns, repeated errors, and generate high-level strategies.
     """
 
     def __init__(
         self,
-        pool: asyncpg.Pool,
         rae_service: RAECoreService,
         reflection_engine: Optional[ReflectionEngineV2] = None,
     ):
-        self.pool = pool
         self.rae_service = rae_service
         self.reflection_engine = reflection_engine or ReflectionEngineV2(
-            pool, rae_service
+            rae_service=rae_service
         )
 
     async def run_dreaming_cycle(
@@ -467,14 +461,11 @@ class DreamingWorker:
         )
 
         # Get high-importance episodic memories from recent period
-        # Using RAECoreService list_memories would be ideal but it lacks complex filtering (created_at > X, importance > Y)
-        # RAECoreService only supports basic equality filters currently.
-        # We can implement extended filtering in RAECoreService or use direct SQL here.
-        # Given this is a worker, direct SQL is acceptable for complex queries, BUT we should target 'memories' table using correct column names.
+        cutoff_time = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(
+            hours=lookback_hours
+        )
 
-        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=lookback_hours)
-
-        async with self.pool.acquire() as conn:
+        async with self.rae_service.postgres_pool.acquire() as conn:
             records = await conn.fetch(
                 """
                 SELECT id, content, importance, created_at, tags
@@ -574,18 +565,11 @@ class MaintenanceScheduler:
     cron/systemd timers.
     """
 
-    def __init__(
-        self, pool: asyncpg.Pool, rae_service: Optional[RAECoreService] = None
-    ):
-        self.pool = pool
+    def __init__(self, rae_service: RAECoreService):
         self.rae_service = rae_service
-        self.decay_worker = DecayWorker(pool)
-        self.summarization_worker: Optional[SummarizationWorker] = None
-        self.dreaming_worker: Optional[DreamingWorker] = None
-
-        if self.rae_service:
-            self.summarization_worker = SummarizationWorker(pool, self.rae_service)
-            self.dreaming_worker = DreamingWorker(pool, self.rae_service)
+        self.decay_worker = DecayWorker(rae_service=rae_service)
+        self.summarization_worker = SummarizationWorker(rae_service=rae_service)
+        self.dreaming_worker = DreamingWorker(rae_service=rae_service)
 
     @classmethod
     async def create(
@@ -605,7 +589,7 @@ class MaintenanceScheduler:
             postgres_pool=pool, qdrant_client=qdrant_client, redis_client=redis_client
         )
 
-        return cls(pool, rae_service)
+        return cls(rae_service)
 
     async def run_daily_maintenance(
         self,

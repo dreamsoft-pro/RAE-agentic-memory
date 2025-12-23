@@ -13,7 +13,6 @@ Implements the context injection pattern from RAE v1 Implementation Plan.
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
 
-import asyncpg
 import structlog
 
 from apps.memory_api.config import settings
@@ -142,7 +141,6 @@ class ContextBuilder:
 
     def __init__(
         self,
-        pool: asyncpg.Pool,
         rae_service: "RAECoreService",
         reflection_engine: Optional[ReflectionEngineV2] = None,
         config: Optional[ContextConfig] = None,
@@ -151,15 +149,13 @@ class ContextBuilder:
         Initialize ContextBuilder
 
         Args:
-            pool: Database connection pool
             rae_service: RAECoreService for retrieval
             reflection_engine: Reflection engine for querying reflections
             config: Context configuration
         """
-        self.pool = pool
         self.rae_service = rae_service
         self.reflection_engine = reflection_engine or ReflectionEngineV2(
-            pool, rae_service
+            rae_service=rae_service
         )
         self.reranker = SmartReranker()
         self.config = config or ContextConfig()

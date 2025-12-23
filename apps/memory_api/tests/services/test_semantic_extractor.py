@@ -70,7 +70,15 @@ def mock_ml_client():
 
 
 @pytest.fixture
-def extractor(mock_pool, mock_llm_provider, mock_ml_client):
+def mock_rae_service(mock_pool):
+    service = MagicMock()
+    service.postgres_pool = mock_pool
+    service.list_memories = AsyncMock(return_value=[])
+    return service
+
+
+@pytest.fixture
+def extractor(mock_rae_service, mock_llm_provider, mock_ml_client):
     with (
         patch(
             "apps.memory_api.services.semantic_extractor.get_llm_provider",
@@ -81,43 +89,43 @@ def extractor(mock_pool, mock_llm_provider, mock_ml_client):
             return_value=mock_ml_client,
         ),
     ):
-        svc = SemanticExtractor(mock_pool)
+        svc = SemanticExtractor(mock_rae_service)
         svc.llm_provider = mock_llm_provider
         svc.ml_client = mock_ml_client
         return svc
 
 
 @pytest.mark.asyncio
-async def test_initialization(extractor, mock_pool):
-    assert extractor.pool == mock_pool
+async def test_initialization(extractor, mock_rae_service):
+    assert extractor.rae_service == mock_rae_service
     assert extractor.llm_provider is not None
     assert extractor.ml_client is not None
 
 
 @pytest.mark.asyncio
-async def test_extract_from_memories_no_memories(extractor, mock_pool):
+async def test_extract_from_memories_no_memories(extractor, mock_rae_service):
     """Test early exit when no memories found."""
-    mock_pool.fetch.return_value = []
+    mock_rae_service.list_memories.return_value = []
 
     stats = await extractor.extract_from_memories(
         TENANT_ID, PROJECT_ID, max_memories=10
     )
 
     assert stats["memories_processed"] == 0
-    mock_pool.fetch.assert_called_once()
+    mock_rae_service.list_memories.assert_called_once()
 
 
 @pytest.mark.asyncio
-async def test_extract_from_memories_success(extractor, mock_pool, mock_llm_provider):
+async def test_extract_from_memories_success(
+    extractor, mock_rae_service, mock_llm_provider
+):
     """Test full extraction flow."""
     # Mock memories
     memories = [{"id": uuid4(), "content": "text"}]
-    mock_pool.fetch.return_value = memories
+    mock_rae_service.list_memories.return_value = memories
 
     # Mock node creation returns (UUIDs)
-    # For each node (Topic, Term):
-    # 1. Check if exists (fetchrow) -> None (does not exist)
-    # 2. Insert (fetchrow) -> {"id": uuid}
+    mock_pool = mock_rae_service.postgres_pool
     mock_pool.fetchrow.side_effect = [
         None,  # Topic check
         {"id": uuid4()},  # Topic insert
@@ -227,21 +235,21 @@ async def test_extract_semantic_knowledge_error(extractor, mock_llm_provider):
 
 
 @pytest.mark.asyncio
-async def test_extract_from_memories_with_ids(extractor, mock_pool):
+async def test_extract_from_memories_with_ids(extractor, mock_rae_service):
     """Test fetching specific memories."""
     memory_ids = [uuid4(), uuid4()]
-    mock_pool.fetch.return_value = []
+    mock_rae_service.list_memories.return_value = []
 
     await extractor.extract_from_memories(TENANT_ID, PROJECT_ID, memory_ids=memory_ids)
 
-    # Verify fetch called with memory_ids query (contains "id = ANY($3)")
-    call_args = mock_pool.fetch.call_args
-    assert "id = ANY($3)" in call_args[0][0]
-    assert call_args[0][3] == memory_ids
+    # Verify list_memories call
+    mock_rae_service.list_memories.assert_called_once()
+    call_args = mock_rae_service.list_memories.call_args
+    assert call_args.kwargs["filters"]["memory_ids"] == memory_ids
 
 
 @pytest.mark.asyncio
-async def test_node_creation_exceptions(extractor, mock_pool, mock_llm_provider):
+async def test_node_creation_exceptions(extractor, mock_rae_service, mock_llm_provider):
     """Test exception handling during node creation loop."""
     # Setup extraction result
     result = SemanticExtractionResult(
@@ -256,7 +264,7 @@ async def test_node_creation_exceptions(extractor, mock_pool, mock_llm_provider)
         categories=[],
     )
     mock_llm_provider.generate_structured.return_value = result
-    mock_pool.fetch.return_value = [{"id": uuid4()}]
+    mock_rae_service.list_memories.return_value = [{"id": uuid4()}]
 
     # Make create_or_update fail
     # We can patch the private method on the instance or use side_effect on pool calls if we knew exact sequence

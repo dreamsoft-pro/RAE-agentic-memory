@@ -14,7 +14,6 @@ between entities in the knowledge graph.
 
 from typing import Any, Dict, List, Optional, Tuple
 
-import asyncpg
 import structlog
 from pydantic import BaseModel, Field
 
@@ -22,6 +21,7 @@ from apps.memory_api.models import ScoredMemoryRecord
 from apps.memory_api.models.graph import GraphEdge, GraphNode, TraversalStrategy
 from apps.memory_api.repositories.graph_repository import GraphRepository
 from apps.memory_api.services.embedding import get_embedding_service
+from apps.memory_api.services.rae_core_service import RAECoreService
 from apps.memory_api.services.vector_store import get_vector_store
 
 logger = structlog.get_logger(__name__)
@@ -68,18 +68,19 @@ class HybridSearchService:
 
     def __init__(
         self,
-        graph_repo: GraphRepository,
-        pool: asyncpg.Pool,  # Still needed for vector store
+        rae_service: RAECoreService,
+        graph_repo: Optional[GraphRepository] = None,
     ):
         """
         Initialize hybrid search service.
 
         Args:
-            graph_repo: GraphRepository instance for knowledge graph operations
-            pool: AsyncPG connection pool for vector store operations
+            rae_service: RAECoreService instance
+            graph_repo: Optional GraphRepository instance
         """
-        self.pool = pool
-        self.graph_repository = graph_repo
+        self.rae_service = rae_service
+        self.pool = rae_service.postgres_pool
+        self.graph_repository = graph_repo or GraphRepository(self.pool)
         self.embedding_service = get_embedding_service()
 
     async def search(

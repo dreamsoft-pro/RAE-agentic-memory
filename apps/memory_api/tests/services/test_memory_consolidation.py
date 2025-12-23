@@ -11,12 +11,7 @@ from apps.memory_api.services.memory_consolidation import (
 
 
 @pytest.fixture
-def mock_db():
-    return AsyncMock()
-
-
-@pytest.fixture
-def mock_vector_store():
+def mock_rae_service():
     return AsyncMock()
 
 
@@ -28,9 +23,9 @@ def mock_llm_client():
 
 
 @pytest.fixture
-def service(mock_db, mock_vector_store, mock_llm_client):
+def service(mock_rae_service, mock_llm_client):
     return MemoryConsolidationService(
-        db=mock_db, vector_store=mock_vector_store, llm_client=mock_llm_client
+        rae_service=mock_rae_service, llm_client=mock_llm_client
     )
 
 

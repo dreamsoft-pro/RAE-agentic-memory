@@ -24,9 +24,9 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-import asyncpg
 from pydantic import BaseModel, Field
 
+from apps.memory_api.services.rae_core_service import RAECoreService
 from apps.memory_api.utils.datetime_utils import utc_now
 
 logger = logging.getLogger(__name__)
@@ -111,8 +111,9 @@ class RetentionService:
         DataClass.EMBEDDINGS: 365,  # 1 year (can be regenerated)
     }
 
-    def __init__(self, db: asyncpg.Pool):
-        self.db = db
+    def __init__(self, rae_service: RAECoreService):
+        self.rae_service = rae_service
+        self.db = rae_service.postgres_pool
         self.logger = logging.getLogger(__name__)
 
     async def get_tenant_retention_policies(

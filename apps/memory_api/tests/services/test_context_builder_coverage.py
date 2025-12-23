@@ -28,9 +28,8 @@ def mock_reflection_engine():
 
 
 @pytest.fixture
-def context_builder(mock_pool, mock_rae_service, mock_reflection_engine):
+def context_builder(mock_rae_service, mock_reflection_engine):
     return ContextBuilder(
-        pool=mock_pool,
         rae_service=mock_rae_service,
         reflection_engine=mock_reflection_engine,
         config=ContextConfig(),

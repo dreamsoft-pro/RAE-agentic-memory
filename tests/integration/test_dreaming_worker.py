@@ -12,6 +12,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from apps.memory_api.models.reflection_v2_models import ReflectionResult
+from apps.memory_api.services.rae_core_service import RAECoreService
 from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
 from apps.memory_api.workers.memory_maintenance import DreamingWorker
 
@@ -32,14 +33,14 @@ async def test_dreaming_worker_basic_cycle(mock_app_state_pool, mock_env_and_set
                 for i in range(5):
                     await conn.execute(
                         """
-                        INSERT INTO memories (tenant_id, content, importance, layer, project, created_at)
-                        VALUES ($1, $2, $3, 'em', $4, $5)
+                        INSERT INTO memories (tenant_id, content, importance, layer, agent_id, project, created_at)
+                        VALUES ($1, $2, $3, 'episodic', $4::text, $4::text, $5)
                         """,
                         tenant_id,
                         f"Important event {i}: User encountered error and found solution",
                         0.8,  # High importance
                         project_id,
-                        datetime.now(timezone.utc) - timedelta(hours=2),
+                        datetime.now().replace(tzinfo=None) - timedelta(hours=2),
                     )
 
             # Mock reflection engine
@@ -59,7 +60,11 @@ async def test_dreaming_worker_basic_cycle(mock_app_state_pool, mock_env_and_set
             )
 
             # Create worker
-            worker = DreamingWorker(pool=pool, reflection_engine=mock_reflection_engine)
+            # Create worker
+
+            mock_rae_service = MagicMock(spec=RAECoreService)
+            mock_rae_service.postgres_pool = pool
+            worker = DreamingWorker(rae_service=mock_rae_service, reflection_engine=mock_reflection_engine)
 
             # Run dreaming cycle
             results = await worker.run_dreaming_cycle(
@@ -86,7 +91,10 @@ async def test_dreaming_worker_disabled(mock_app_state_pool):
 
     # Disable dreaming
     with patch("apps.memory_api.config.settings.DREAMING_ENABLED", False):
-        worker = DreamingWorker(pool=pool)
+
+        mock_rae_service = MagicMock(spec=RAECoreService)
+        mock_rae_service.postgres_pool = pool
+        worker = DreamingWorker(rae_service=mock_rae_service)
 
         # Run dreaming cycle
         results = await worker.run_dreaming_cycle(
@@ -116,17 +124,20 @@ async def test_dreaming_worker_insufficient_memories(
                 for i in range(2):
                     await conn.execute(
                         """
-                        INSERT INTO memories (tenant_id, content, importance, layer, project, created_at)
-                        VALUES ($1, $2, $3, 'em', $4, $5)
+                        INSERT INTO memories (tenant_id, content, importance, layer, agent_id, project, created_at)
+                        VALUES ($1, $2, $3, 'episodic', $4::text, $4::text, $5)
                         """,
                         tenant_id,
                         f"Important event {i}",
                         0.8,
                         project_id,
-                        datetime.now(timezone.utc),
+                        datetime.now(timezone.utc).replace(tzinfo=None),
                     )
 
-            worker = DreamingWorker(pool=pool)
+
+            mock_rae_service = MagicMock(spec=RAECoreService)
+            mock_rae_service.postgres_pool = pool
+            worker = DreamingWorker(rae_service=mock_rae_service)
 
             # Run dreaming cycle
             results = await worker.run_dreaming_cycle(
@@ -158,28 +169,28 @@ async def test_dreaming_worker_lookback_window(
                 for i in range(3):
                     await conn.execute(
                         """
-                        INSERT INTO memories (tenant_id, content, importance, layer, project, created_at)
-                        VALUES ($1, $2, $3, 'em', $4, $5)
+                        INSERT INTO memories (tenant_id, content, importance, layer, agent_id, project, created_at)
+                        VALUES ($1, $2, $3, 'episodic', $4::text, $4::text, $5)
                         """,
                         tenant_id,
                         f"Recent memory {i}",
                         0.8,
                         project_id,
-                        datetime.now(timezone.utc) - timedelta(hours=2),
+                        datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=2),
                     )
 
                 # Old memories (outside lookback window)
                 for i in range(3):
                     await conn.execute(
                         """
-                        INSERT INTO memories (tenant_id, content, importance, layer, project, created_at)
-                        VALUES ($1, $2, $3, 'em', $4, $5)
+                        INSERT INTO memories (tenant_id, content, importance, layer, agent_id, project, created_at)
+                        VALUES ($1, $2, $3, 'episodic', $4::text, $4::text, $5)
                         """,
                         tenant_id,
                         f"Old memory {i}",
                         0.8,
                         project_id,
-                        datetime.now(timezone.utc) - timedelta(hours=50),  # > 24h
+                        datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=50),
                     )
 
             # Mock reflection engine
@@ -195,7 +206,11 @@ async def test_dreaming_worker_lookback_window(
                 return_value={"reflection_id": uuid.uuid4()}
             )
 
-            worker = DreamingWorker(pool=pool, reflection_engine=mock_reflection_engine)
+            # Create worker
+
+            mock_rae_service = MagicMock(spec=RAECoreService)
+            mock_rae_service.postgres_pool = pool
+            worker = DreamingWorker(rae_service=mock_rae_service, reflection_engine=mock_reflection_engine)
 
             # Run with 24-hour lookback
             results = await worker.run_dreaming_cycle(
@@ -231,28 +246,28 @@ async def test_dreaming_worker_importance_filter(
                 for i in range(4):
                     await conn.execute(
                         """
-                        INSERT INTO memories (tenant_id, content, importance, layer, project, created_at)
-                        VALUES ($1, $2, $3, 'em', $4, $5)
+                        INSERT INTO memories (tenant_id, content, importance, layer, agent_id, project, created_at)
+                        VALUES ($1, $2, $3, 'episodic', $4::text, $4::text, $5)
                         """,
                         tenant_id,
                         f"High importance memory {i}",
                         0.8,
                         project_id,
-                        datetime.now(timezone.utc),
+                        datetime.now(timezone.utc).replace(tzinfo=None),
                     )
 
                 # Low importance (should be filtered out)
                 for i in range(5):
                     await conn.execute(
                         """
-                        INSERT INTO memories (tenant_id, content, importance, layer, project, created_at)
-                        VALUES ($1, $2, $3, 'em', $4, $5)
+                        INSERT INTO memories (tenant_id, content, importance, layer, agent_id, project, created_at)
+                        VALUES ($1, $2, $3, 'episodic', $4::text, $4::text, $5)
                         """,
                         tenant_id,
                         f"Low importance memory {i}",
                         0.3,  # Below threshold
                         project_id,
-                        datetime.now(timezone.utc),
+                        datetime.now(timezone.utc).replace(tzinfo=None),
                     )
 
             # Mock reflection engine
@@ -268,7 +283,11 @@ async def test_dreaming_worker_importance_filter(
                 return_value={"reflection_id": uuid.uuid4()}
             )
 
-            worker = DreamingWorker(pool=pool, reflection_engine=mock_reflection_engine)
+            # Create worker
+
+            mock_rae_service = MagicMock(spec=RAECoreService)
+            mock_rae_service.postgres_pool = pool
+            worker = DreamingWorker(rae_service=mock_rae_service, reflection_engine=mock_reflection_engine)
 
             # Run with importance threshold
             results = await worker.run_dreaming_cycle(
@@ -306,14 +325,14 @@ async def test_dreaming_worker_max_samples_limit(
                 for i in range(30):  # More than max_samples
                     await conn.execute(
                         """
-                        INSERT INTO memories (tenant_id, content, importance, layer, project, created_at)
-                        VALUES ($1, $2, $3, 'em', $4, $5)
+                        INSERT INTO memories (tenant_id, content, importance, layer, agent_id, project, created_at)
+                        VALUES ($1, $2, $3, 'episodic', $4::text, $4::text, $5)
                         """,
                         tenant_id,
                         f"Memory {i}",
                         0.8,
                         project_id,
-                        datetime.now(timezone.utc),
+                        datetime.now(timezone.utc).replace(tzinfo=None),
                     )
 
             # Mock reflection engine
@@ -329,7 +348,11 @@ async def test_dreaming_worker_max_samples_limit(
                 return_value={"reflection_id": uuid.uuid4()}
             )
 
-            worker = DreamingWorker(pool=pool, reflection_engine=mock_reflection_engine)
+            # Create worker
+
+            mock_rae_service = MagicMock(spec=RAECoreService)
+            mock_rae_service.postgres_pool = pool
+            worker = DreamingWorker(rae_service=mock_rae_service, reflection_engine=mock_reflection_engine)
 
             # Run with max_samples limit
             await worker.run_dreaming_cycle(
@@ -362,14 +385,14 @@ async def test_dreaming_worker_error_handling(
                 for i in range(5):
                     await conn.execute(
                         """
-                        INSERT INTO memories (tenant_id, content, importance, layer, project, created_at)
-                        VALUES ($1, $2, $3, 'em', $4, $5)
+                        INSERT INTO memories (tenant_id, content, importance, layer, agent_id, project, created_at)
+                        VALUES ($1, $2, $3, 'episodic', $4::text, $4::text, $5)
                         """,
                         tenant_id,
                         f"Memory {i}",
                         0.8,
                         project_id,
-                        datetime.now(timezone.utc),
+                        datetime.now(timezone.utc).replace(tzinfo=None),
                     )
 
             # Mock reflection engine to raise error
@@ -378,7 +401,11 @@ async def test_dreaming_worker_error_handling(
                 side_effect=Exception("LLM service unavailable")
             )
 
-            worker = DreamingWorker(pool=pool, reflection_engine=mock_reflection_engine)
+            # Create worker
+
+            mock_rae_service = MagicMock(spec=RAECoreService)
+            mock_rae_service.postgres_pool = pool
+            worker = DreamingWorker(rae_service=mock_rae_service, reflection_engine=mock_reflection_engine)
 
             # Run dreaming cycle
             results = await worker.run_dreaming_cycle(
@@ -408,17 +435,20 @@ async def test_dreaming_worker_no_recent_memories(
                 for i in range(5):
                     await conn.execute(
                         """
-                        INSERT INTO memories (tenant_id, content, importance, layer, project, created_at)
-                        VALUES ($1, $2, $3, 'em', $4, $5)
+                        INSERT INTO memories (tenant_id, content, importance, layer, agent_id, project, created_at)
+                        VALUES ($1, $2, $3, 'episodic', $4::text, $4::text, $5)
                         """,
                         tenant_id,
                         f"Old memory {i}",
                         0.8,
                         project_id,
-                        datetime.now(timezone.utc) - timedelta(days=10),
+                        datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=10),
                     )
 
-            worker = DreamingWorker(pool=pool)
+
+            mock_rae_service = MagicMock(spec=RAECoreService)
+            mock_rae_service.postgres_pool = pool
+            worker = DreamingWorker(rae_service=mock_rae_service)
 
             # Run with 24-hour lookback
             results = await worker.run_dreaming_cycle(

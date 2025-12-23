@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
@@ -7,8 +7,16 @@ from apps.memory_api.services.analytics import AnalyticsService
 
 
 @pytest.fixture
-def analytics_service(mock_pool):
-    return AnalyticsService(db=mock_pool, redis=MagicMock(), vector_store=MagicMock())
+def mock_rae_service():
+    service = AsyncMock()
+    service.redis_client = AsyncMock()
+    service.count_memories = AsyncMock(return_value=0)
+    return service
+
+
+@pytest.fixture
+def analytics_service(mock_rae_service):
+    return AnalyticsService(rae_service=mock_rae_service)
 
 
 @pytest.mark.asyncio
@@ -127,19 +135,18 @@ async def test_calculate_graph_density(analytics_service):
 @pytest.mark.asyncio
 async def test_cache_operations(analytics_service):
     # _get_from_cache (mocked redis)
-    analytics_service.redis = MagicMock()
     await analytics_service._get_from_cache("key")
-    # analytics_service.redis.get.assert_called() # Implementation specific
+    analytics_service.rae_service.redis_client.get.assert_called_once_with("key")
 
     # _set_cache
     await analytics_service._set_cache("key", {"a": 1}, 300)
-    # analytics_service.redis.set.assert_called()
+    analytics_service.rae_service.redis_client.set.assert_called_once()
 
     # In-memory fallback check
-    analytics_service.redis = None
-    await analytics_service._set_cache("key", {"a": 1}, 300)
-    assert analytics_service._cache["key"] == {"a": 1}
-    assert await analytics_service._get_from_cache("key") == {"a": 1}
+    analytics_service.rae_service = None
+    await analytics_service._set_cache("key2", {"a": 1}, 300)
+    assert analytics_service._cache["key2"] == {"a": 1}
+    assert await analytics_service._get_from_cache("key2") == {"a": 1}
 
 
 @pytest.mark.asyncio

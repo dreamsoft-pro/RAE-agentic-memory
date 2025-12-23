@@ -8,6 +8,8 @@ from uuid import UUID
 
 import structlog
 
+from apps.memory_api.repositories.graph_repository import GraphRepository
+
 logger = structlog.get_logger(__name__)
 
 
@@ -96,16 +98,14 @@ class KnowledgeGraph:
 class GraphAlgorithmsService:
     """Service for advanced graph algorithms"""
 
-    def __init__(self, db=None, vector_store=None):
+    def __init__(self, graph_repo: GraphRepository):
         """
         Initialize graph algorithms service
 
         Args:
-            db: Database connection
-            vector_store: Vector store connection
+            graph_repo: Graph repository for data access
         """
-        self.db = db
-        self.vector_store = vector_store
+        self.graph_repo = graph_repo
 
     async def load_tenant_graph(
         self, tenant_id: UUID, project_id: Optional[str] = None
@@ -122,71 +122,48 @@ class GraphAlgorithmsService:
         """
         graph = KnowledgeGraph()
 
-        if not self.db:
-            logger.warning("no_db_connection", tenant_id=str(tenant_id))
+        if not self.graph_repo:
+            logger.warning("no_graph_repo", tenant_id=str(tenant_id))
             return graph
 
         logger.info("loading_graph", tenant_id=str(tenant_id), project_id=project_id)
 
         try:
-            async with self.db.acquire() as conn:
-                # Load nodes
-                if project_id:
-                    nodes_query = """
-                        SELECT id, node_id, label, properties
-                        FROM knowledge_graph_nodes
-                        WHERE tenant_id = $1 AND project_id = $2
-                    """
-                    nodes = await conn.fetch(nodes_query, str(tenant_id), project_id)
-                else:
-                    nodes_query = """
-                        SELECT id, node_id, label, properties
-                        FROM knowledge_graph_nodes
-                        WHERE tenant_id = $1
-                    """
-                    nodes = await conn.fetch(nodes_query, str(tenant_id))
+            # Load nodes
+            # If project_id is None, we need to handle it. GraphRepository methods currently require project_id.
+            # Assuming 'default' or similar if not provided, or we might need a get_all_nodes_for_tenant method.
+            target_project = project_id or "default"
 
-                # Add nodes to graph
-                for node_row in nodes:
-                    node = GraphNode(
-                        id=str(node_row["id"]),
-                        entity_type=node_row["label"],
-                        properties=node_row["properties"] or {},
-                    )
-                    graph.add_node(node)
+            nodes = await self.graph_repo.get_all_nodes(str(tenant_id), target_project)
 
-                # Load edges
-                if project_id:
-                    edges_query = """
-                        SELECT source_node_id, target_node_id, relation, properties
-                        FROM knowledge_graph_edges
-                        WHERE tenant_id = $1 AND project_id = $2
-                    """
-                    edges = await conn.fetch(edges_query, str(tenant_id), project_id)
-                else:
-                    edges_query = """
-                        SELECT source_node_id, target_node_id, relation, properties
-                        FROM knowledge_graph_edges
-                        WHERE tenant_id = $1
-                    """
-                    edges = await conn.fetch(edges_query, str(tenant_id))
-
-                # Add edges to graph
-                for edge_row in edges:
-                    edge = GraphEdge(
-                        source_id=str(edge_row["source_node_id"]),
-                        target_id=str(edge_row["target_node_id"]),
-                        relation_type=edge_row["relation"],
-                        properties=edge_row["properties"] or {},
-                    )
-                    graph.add_edge(edge)
-
-                logger.info(
-                    "graph_loaded",
-                    tenant_id=str(tenant_id),
-                    nodes=graph.node_count(),
-                    edges=graph.edge_count(),
+            # Add nodes to graph
+            for node_row in nodes:
+                node = GraphNode(
+                    id=str(node_row["id"]),
+                    entity_type=node_row["label"],
+                    properties=node_row["properties"] or {},
                 )
+                graph.add_node(node)
+
+            # Load edges
+            edges = await self.graph_repo.get_all_edges(str(tenant_id), target_project)
+
+            # Add edges to graph
+            for edge_row in edges:
+                edge = GraphEdge(
+                    source_id=str(edge_row["source_node_id"]),
+                    target_id=str(edge_row["target_node_id"]),
+                    relation_type=edge_row["relation"],
+                    properties=edge_row["properties"] or {},
+                )
+                graph.add_edge(edge)
+
+            logger.info(
+                "graph_loaded",
+                tenant_id=str(tenant_id),
+                nodes=graph.node_count(),
+                edges=graph.edge_count(),
+            )
 
         except Exception as e:
             logger.error("graph_load_failed", tenant_id=str(tenant_id), error=str(e))

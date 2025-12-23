@@ -24,16 +24,17 @@ def mock_logger(mocker):
 
 
 @pytest.fixture
-def mock_pool(mocker):
-    """Mock asyncpg pool"""
-    pool = mocker.AsyncMock()
-    return pool
+def mock_rae_service(mocker):
+    """Mock RAECoreService"""
+    service = mocker.MagicMock()
+    service.postgres_pool = mocker.AsyncMock()
+    return service
 
 
 @pytest.fixture
-def approval_service(mock_pool):
+def approval_service(mock_rae_service):
     """Create HumanApprovalService instance"""
-    return HumanApprovalService(mock_pool)
+    return HumanApprovalService(mock_rae_service)
 
 
 class TestRequestApproval:

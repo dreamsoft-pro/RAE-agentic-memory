@@ -167,8 +167,10 @@ class RAECoreService:
     async def list_memories(
         self,
         tenant_id: str,
-        layer: str,
-        project: str,  # Required as agent_id mapping
+        layer: Optional[str] = None,
+        project: Optional[str] = None,
+        tags: Optional[List[str]] = None,
+        filters: Optional[Dict[str, Any]] = None,
         limit: int = 100,
         offset: int = 0,
     ) -> List[Dict[str, Any]]:
@@ -177,6 +179,8 @@ class RAECoreService:
             tenant_id=tenant_id,
             agent_id=project,
             layer=layer,
+            tags=tags,
+            filters=filters,
             limit=limit,
             offset=offset,
         )

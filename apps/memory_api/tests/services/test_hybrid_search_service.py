@@ -63,7 +63,15 @@ def mock_llm_provider():
 
 
 @pytest.fixture
-def service(mock_pool, mock_query_analyzer, mock_ml_client, mock_llm_provider):
+def mock_rae_service(mock_pool):
+    service = MagicMock()
+    service.postgres_pool = mock_pool
+    service.qdrant_client = AsyncMock()
+    return service
+
+
+@pytest.fixture
+def service(mock_rae_service, mock_query_analyzer, mock_ml_client, mock_llm_provider):
     # Need to patch internal components
     with (
         patch(
@@ -87,8 +95,8 @@ def service(mock_pool, mock_query_analyzer, mock_ml_client, mock_llm_provider):
             return_value=AsyncMock(),
         ),
     ):
-        svc = HybridSearchService(mock_pool, enable_cache=True)
-        # Manually attach mocks if init created new instances (though patch return_value handles this for new instances)
+        svc = HybridSearchService(mock_rae_service, enable_cache=True)
+        # Manually attach mocks
         svc.query_analyzer = mock_query_analyzer
         svc.ml_client = mock_ml_client
         svc.llm_provider = mock_llm_provider
@@ -96,8 +104,9 @@ def service(mock_pool, mock_query_analyzer, mock_ml_client, mock_llm_provider):
 
 
 @pytest.mark.asyncio
-async def test_search_flow_uncached(service, mock_pool):
+async def test_search_flow_uncached(service, mock_rae_service):
     # Setup db mocks for individual search strategies
+    mock_pool = mock_rae_service.postgres_pool
     # Vector Search Mock
     mock_pool.fetch.side_effect = [
         # Vector results

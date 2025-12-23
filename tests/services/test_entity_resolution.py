@@ -17,17 +17,18 @@ from apps.memory_api.services.entity_resolution import (
 @pytest.fixture
 def mock_dependencies():
     """Create mock dependencies for EntityResolutionService."""
-    mock_pool = MagicMock()
+    mock_rae_service = MagicMock()
+    mock_rae_service.postgres_pool = MagicMock()
     mock_graph_repo = AsyncMock()
     mock_ml_client = AsyncMock()
 
-    return mock_pool, mock_graph_repo, mock_ml_client
+    return mock_rae_service, mock_graph_repo, mock_ml_client
 
 
 @pytest.mark.asyncio
 async def test_fetch_nodes_uses_repository(mock_dependencies):
     """Test that _fetch_nodes uses GraphRepository."""
-    mock_pool, mock_graph_repo, mock_ml_client = mock_dependencies
+    mock_rae_service, mock_graph_repo, mock_ml_client = mock_dependencies
 
     # Mock repository response
     mock_graph_repo.get_all_nodes.return_value = [
@@ -35,8 +36,9 @@ async def test_fetch_nodes_uses_repository(mock_dependencies):
         {"id": 2, "node_id": "node2", "label": "Entity2"},
     ]
 
-    service = EntityResolutionService(
-        pool=mock_pool, ml_client=mock_ml_client, graph_repository=mock_graph_repo
+    service = EntityResolutionService(rae_service=mock_rae_service,
+        ml_client=mock_ml_client,
+        graph_repository=mock_graph_repo,
     )
 
     nodes = await service._fetch_nodes(project_id="project1", tenant_id="tenant1")
@@ -51,7 +53,7 @@ async def test_fetch_nodes_uses_repository(mock_dependencies):
 @pytest.mark.asyncio
 async def test_merge_nodes_with_canonical_name(mock_dependencies):
     """Test merging nodes with canonical name using repository."""
-    mock_pool, mock_graph_repo, mock_ml_client = mock_dependencies
+    mock_rae_service, mock_graph_repo, mock_ml_client = mock_dependencies
 
     # Mock repository methods
     mock_graph_repo.update_node_label.return_value = True
@@ -62,8 +64,7 @@ async def test_merge_nodes_with_canonical_name(mock_dependencies):
     mock_graph_repo.delete_node_edges.return_value = 3
     mock_graph_repo.delete_node.return_value = True
 
-    service = EntityResolutionService(
-        pool=mock_pool, ml_client=mock_ml_client, graph_repository=mock_graph_repo
+    service = EntityResolutionService(rae_service=mock_rae_service, ml_client=mock_ml_client, graph_repository=mock_graph_repo
     )
 
     nodes = [{"id": 1, "label": "Apple Inc"}, {"id": 2, "label": "Apple Company"}]
@@ -87,7 +88,7 @@ async def test_merge_nodes_with_canonical_name(mock_dependencies):
 @pytest.mark.asyncio
 async def test_merge_nodes_without_canonical_name(mock_dependencies):
     """Test merging nodes without canonical name (longest label heuristic)."""
-    mock_pool, mock_graph_repo, mock_ml_client = mock_dependencies
+    mock_rae_service, mock_graph_repo, mock_ml_client = mock_dependencies
 
     # Mock repository methods
     mock_graph_repo.merge_node_edges.return_value = {
@@ -97,8 +98,7 @@ async def test_merge_nodes_without_canonical_name(mock_dependencies):
     mock_graph_repo.delete_node_edges.return_value = 2
     mock_graph_repo.delete_node.return_value = True
 
-    service = EntityResolutionService(
-        pool=mock_pool, ml_client=mock_ml_client, graph_repository=mock_graph_repo
+    service = EntityResolutionService(rae_service=mock_rae_service, ml_client=mock_ml_client, graph_repository=mock_graph_repo
     )
 
     nodes = [{"id": 1, "label": "Short"}, {"id": 2, "label": "Much Longer Label"}]
@@ -118,10 +118,9 @@ async def test_merge_nodes_without_canonical_name(mock_dependencies):
 @pytest.mark.asyncio
 async def test_merge_nodes_empty_list(mock_dependencies):
     """Test merging with empty node list."""
-    mock_pool, mock_graph_repo, mock_ml_client = mock_dependencies
+    mock_rae_service, mock_graph_repo, mock_ml_client = mock_dependencies
 
-    service = EntityResolutionService(
-        pool=mock_pool, ml_client=mock_ml_client, graph_repository=mock_graph_repo
+    service = EntityResolutionService(rae_service=mock_rae_service, ml_client=mock_ml_client, graph_repository=mock_graph_repo
     )
 
     # Should handle empty list gracefully
@@ -137,15 +136,14 @@ async def test_merge_nodes_empty_list(mock_dependencies):
 @pytest.mark.asyncio
 async def test_run_clustering_with_insufficient_nodes(mock_dependencies):
     """Test that clustering skips when less than 2 nodes."""
-    mock_pool, mock_graph_repo, mock_ml_client = mock_dependencies
+    mock_rae_service, mock_graph_repo, mock_ml_client = mock_dependencies
 
     # Mock single node
     mock_graph_repo.get_all_nodes.return_value = [
         {"id": 1, "node_id": "node1", "label": "OnlyNode"}
     ]
 
-    service = EntityResolutionService(
-        pool=mock_pool, ml_client=mock_ml_client, graph_repository=mock_graph_repo
+    service = EntityResolutionService(rae_service=mock_rae_service, ml_client=mock_ml_client, graph_repository=mock_graph_repo
     )
 
     await service.run_clustering_and_merging(project_id="project1", tenant_id="tenant1")
@@ -157,10 +155,9 @@ async def test_run_clustering_with_insufficient_nodes(mock_dependencies):
 @pytest.mark.asyncio
 async def test_process_group_with_merge_approval(mock_dependencies):
     """Test processing a group when Janitor Agent approves merge."""
-    mock_pool, mock_graph_repo, mock_ml_client = mock_dependencies
+    mock_rae_service, mock_graph_repo, mock_ml_client = mock_dependencies
 
-    service = EntityResolutionService(
-        pool=mock_pool, ml_client=mock_ml_client, graph_repository=mock_graph_repo
+    service = EntityResolutionService(rae_service=mock_rae_service, ml_client=mock_ml_client, graph_repository=mock_graph_repo
     )
 
     # Mock LLM provider
@@ -191,10 +188,9 @@ async def test_process_group_with_merge_approval(mock_dependencies):
 @pytest.mark.asyncio
 async def test_process_group_with_merge_rejection(mock_dependencies):
     """Test processing a group when Janitor Agent rejects merge."""
-    mock_pool, mock_graph_repo, mock_ml_client = mock_dependencies
+    mock_rae_service, mock_graph_repo, mock_ml_client = mock_dependencies
 
-    service = EntityResolutionService(
-        pool=mock_pool, ml_client=mock_ml_client, graph_repository=mock_graph_repo
+    service = EntityResolutionService(rae_service=mock_rae_service, ml_client=mock_ml_client, graph_repository=mock_graph_repo
     )
 
     # Mock LLM provider to reject merge
@@ -223,7 +219,7 @@ async def test_process_group_with_merge_rejection(mock_dependencies):
 @pytest.mark.asyncio
 async def test_run_clustering_success(mock_dependencies):
     """Test full clustering workflow success."""
-    mock_pool, mock_graph_repo, mock_ml_client = mock_dependencies
+    mock_rae_service, mock_graph_repo, mock_ml_client = mock_dependencies
 
     # Mock nodes
     mock_graph_repo.get_all_nodes.return_value = [
@@ -238,8 +234,7 @@ async def test_run_clustering_success(mock_dependencies):
         "statistics": {},
     }
 
-    service = EntityResolutionService(
-        pool=mock_pool, ml_client=mock_ml_client, graph_repository=mock_graph_repo
+    service = EntityResolutionService(rae_service=mock_rae_service, ml_client=mock_ml_client, graph_repository=mock_graph_repo
     )
 
     # Mock process group to avoid complex interactions
@@ -263,7 +258,7 @@ async def test_run_clustering_success(mock_dependencies):
 @pytest.mark.asyncio
 async def test_run_clustering_ml_failure(mock_dependencies):
     """Test handling of ML service failure."""
-    mock_pool, mock_graph_repo, mock_ml_client = mock_dependencies
+    mock_rae_service, mock_graph_repo, mock_ml_client = mock_dependencies
 
     mock_graph_repo.get_all_nodes.return_value = [
         {"id": 1, "label": "A"},
@@ -272,8 +267,7 @@ async def test_run_clustering_ml_failure(mock_dependencies):
 
     mock_ml_client.resolve_entities.side_effect = Exception("ML Down")
 
-    service = EntityResolutionService(
-        pool=mock_pool, ml_client=mock_ml_client, graph_repository=mock_graph_repo
+    service = EntityResolutionService(rae_service=mock_rae_service, ml_client=mock_ml_client, graph_repository=mock_graph_repo
     )
 
     await service.run_clustering_and_merging("p1", "t1")
@@ -285,10 +279,9 @@ async def test_run_clustering_ml_failure(mock_dependencies):
 @pytest.mark.asyncio
 async def test_ask_janitor_failure(mock_dependencies):
     """Test handling of Janitor LLM failure."""
-    mock_pool, mock_graph_repo, mock_ml_client = mock_dependencies
+    mock_rae_service, mock_graph_repo, mock_ml_client = mock_dependencies
 
-    service = EntityResolutionService(
-        pool=mock_pool, ml_client=mock_ml_client, graph_repository=mock_graph_repo
+    service = EntityResolutionService(rae_service=mock_rae_service, ml_client=mock_ml_client, graph_repository=mock_graph_repo
     )
 
     service.llm_provider = MagicMock()

@@ -7,10 +7,12 @@ memory importance decay works correctly across multiple scenarios.
 
 import json
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
+from unittest.mock import MagicMock
 
 import pytest
 
+from apps.memory_api.services.rae_core_service import RAECoreService
 from apps.memory_api.workers.memory_maintenance import DecayWorker
 
 
@@ -24,7 +26,8 @@ async def test_decay_worker_basic_cycle(mock_app_state_pool):
     # Insert test memories with high importance
     async with pool.acquire() as conn:
         memory_ids = []
-        timestamp_10_days_ago = datetime.now(timezone.utc) - timedelta(days=10)
+        # Use naive datetimes because DB schema uses TIMESTAMP (not TIMESTAMPTZ)
+        timestamp_10_days_ago = datetime.now() - timedelta(days=10)
         for i in range(5):
             memory_id = await conn.fetchval(
                 """
@@ -41,7 +44,9 @@ async def test_decay_worker_basic_cycle(mock_app_state_pool):
             memory_ids.append(memory_id)
 
     # Create worker and run decay cycle
-    worker = DecayWorker(pool=pool)
+    mock_rae_service = MagicMock(spec=RAECoreService)
+    mock_rae_service.postgres_pool = pool
+    worker = DecayWorker(rae_service=mock_rae_service)
     stats = await worker.run_decay_cycle(
         tenant_ids=[tenant_id], decay_rate=0.05, consider_access_stats=False
     )
@@ -69,8 +74,8 @@ async def test_decay_worker_with_access_stats(mock_app_state_pool):
 
     # Insert two memories: one recently accessed, one stale
     async with pool.acquire() as conn:
-        timestamp_30_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
-        timestamp_60_days_ago = datetime.now(timezone.utc) - timedelta(days=60)
+        timestamp_30_days_ago = datetime.now() - timedelta(days=30)
+        timestamp_60_days_ago = datetime.now() - timedelta(days=60)
 
         # Recently accessed memory
         recent_id = await conn.fetchval(
@@ -85,7 +90,7 @@ async def test_decay_worker_with_access_stats(mock_app_state_pool):
             0.8,
             timestamp_30_days_ago,
             timestamp_30_days_ago,
-            datetime.now(timezone.utc) - timedelta(hours=2),  # Accessed 2 hours ago
+            datetime.now() - timedelta(hours=2),  # Accessed 2 hours ago
         )
 
         # Stale memory (not accessed in 60 days)
@@ -101,11 +106,13 @@ async def test_decay_worker_with_access_stats(mock_app_state_pool):
             0.8,
             timestamp_60_days_ago,
             timestamp_60_days_ago,
-            datetime.now(timezone.utc) - timedelta(days=60),  # Not accessed in 60 days
+            datetime.now() - timedelta(days=60),  # Not accessed in 60 days
         )
 
-    # Run decay with access stats consideration
-    worker = DecayWorker(pool=pool)
+    # Run decay cycle
+    mock_rae_service = MagicMock(spec=RAECoreService)
+    mock_rae_service.postgres_pool = pool
+    worker = DecayWorker(rae_service=mock_rae_service)
     await worker.run_decay_cycle(
         tenant_ids=[tenant_id], decay_rate=0.02, consider_access_stats=True
     )
@@ -136,7 +143,7 @@ async def test_decay_worker_multiple_tenants(mock_app_state_pool):
 
     # Insert memories for each tenant
     async with pool.acquire() as conn:
-        timestamp_5_days_ago = datetime.now(timezone.utc) - timedelta(days=5)
+        timestamp_5_days_ago = datetime.now() - timedelta(days=5)
         for tenant_id in tenant_ids:
             for i in range(3):
                 await conn.execute(
@@ -152,7 +159,10 @@ async def test_decay_worker_multiple_tenants(mock_app_state_pool):
                 )
 
     # Run decay for all tenants
-    worker = DecayWorker(pool=pool)
+
+    mock_rae_service = MagicMock(spec=RAECoreService)
+    mock_rae_service.postgres_pool = pool
+    worker = DecayWorker(rae_service=mock_rae_service)
     stats = await worker.run_decay_cycle(tenant_ids=tenant_ids, decay_rate=0.03)
 
     # Verify all tenants processed
@@ -169,7 +179,7 @@ async def test_decay_worker_importance_floor(mock_app_state_pool):
 
     # Insert memory with very low importance
     async with pool.acquire() as conn:
-        timestamp_30_days_ago = datetime.now(timezone.utc) - timedelta(days=30)
+        timestamp_30_days_ago = datetime.now() - timedelta(days=30)
         memory_id = await conn.fetchval(
             """
             INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp, memory_type)
@@ -184,7 +194,10 @@ async def test_decay_worker_importance_floor(mock_app_state_pool):
         )
 
     # Run decay multiple times
-    worker = DecayWorker(pool=pool)
+
+    mock_rae_service = MagicMock(spec=RAECoreService)
+    mock_rae_service.postgres_pool = pool
+    worker = DecayWorker(rae_service=mock_rae_service)
     for _ in range(5):
         await worker.run_decay_cycle(tenant_ids=[tenant_id], decay_rate=0.05)
 
@@ -207,7 +220,7 @@ async def test_decay_worker_error_handling(mock_app_state_pool):
 
     # Insert memory for valid tenant
     async with pool.acquire() as conn:
-        timestamp_now = datetime.now(timezone.utc)
+        timestamp_now = datetime.now()
         await conn.execute(
             """
             INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp, memory_type)
@@ -221,7 +234,10 @@ async def test_decay_worker_error_handling(mock_app_state_pool):
         )
 
     # Run decay with both valid and invalid tenant
-    worker = DecayWorker(pool=pool)
+
+    mock_rae_service = MagicMock(spec=RAECoreService)
+    mock_rae_service.postgres_pool = pool
+    worker = DecayWorker(rae_service=mock_rae_service)
     stats = await worker.run_decay_cycle(
         tenant_ids=[valid_tenant, invalid_tenant], decay_rate=0.02
     )
@@ -240,7 +256,7 @@ async def test_decay_worker_get_all_tenants(mock_app_state_pool):
 
     # Insert memories for multiple tenants
     async with pool.acquire() as conn:
-        timestamp_now = datetime.now(timezone.utc)
+        timestamp_now = datetime.now()
         for tenant_id in tenant_ids:
             await conn.execute(
                 """
@@ -255,7 +271,10 @@ async def test_decay_worker_get_all_tenants(mock_app_state_pool):
             )
 
     # Get all tenants
-    worker = DecayWorker(pool=pool)
+
+    mock_rae_service = MagicMock(spec=RAECoreService)
+    mock_rae_service.postgres_pool = pool
+    worker = DecayWorker(rae_service=mock_rae_service)
     retrieved_tenants = await worker._get_all_tenant_ids()
 
     # Verify all tenants retrieved
@@ -271,7 +290,10 @@ async def test_decay_worker_empty_database(mock_app_state_pool):
     pool = mock_app_state_pool
 
     # Run decay on empty database
-    worker = DecayWorker(pool=pool)
+
+    mock_rae_service = MagicMock(spec=RAECoreService)
+    mock_rae_service.postgres_pool = pool
+    worker = DecayWorker(rae_service=mock_rae_service)
     stats = await worker.run_decay_cycle(tenant_ids=[], decay_rate=0.02)
 
     # Should complete without errors
@@ -291,7 +313,7 @@ async def test_decay_worker_preserves_metadata(mock_app_state_pool):
     test_session_id = str(uuid.uuid4())  # Keep as string for JSON
 
     async with pool.acquire() as conn:
-        timestamp_now = datetime.now(timezone.utc)
+        timestamp_now = datetime.now()
         metadata_json = json.dumps({"session_id": test_session_id})
         memory_id = await conn.fetchval(
             """
@@ -310,7 +332,10 @@ async def test_decay_worker_preserves_metadata(mock_app_state_pool):
         )
 
     # Run decay
-    worker = DecayWorker(pool=pool)
+
+    mock_rae_service = MagicMock(spec=RAECoreService)
+    mock_rae_service.postgres_pool = pool
+    worker = DecayWorker(rae_service=mock_rae_service)
     await worker.run_decay_cycle(tenant_ids=[tenant_id], decay_rate=0.05)
 
     # Verify tags and session_id preserved

@@ -69,8 +69,15 @@ def mock_pool():
 
 
 @pytest.fixture
-def compliance_service(mock_pool):
-    return ComplianceService(mock_pool)
+def mock_rae_service(mock_pool):
+    service = MagicMock()
+    service.postgres_pool = mock_pool
+    return service
+
+
+@pytest.fixture
+def compliance_service(mock_rae_service):
+    return ComplianceService(mock_rae_service)
 
 
 @pytest.mark.asyncio

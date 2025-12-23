@@ -65,7 +65,6 @@ async def execute(
 
         # 1. Build context using ContextBuilder (includes reflective memory)
         context_builder = ContextBuilder(
-            pool=request.app.state.pool,
             rae_service=request.app.state.rae_core_service,
             config=ContextConfig(
                 max_total_tokens=8000,

@@ -6,57 +6,56 @@
 **Goal:** Fix architectural risks identified in Cold Review.
 
 - [x] **Phase 1: Stabilization** - Offload `HDBSCAN`/`KMeans` to thread pool to prevent Event Loop Starvation.
-- [x] **Phase 2: Data Integrity** - Implement `ConsistencyService` to remove orphaned Qdrant embeddings (Ghost Memories).
-- [x] **Phase 3: Architecture** - Decouple Storage Adapters and fix `stm`/`working` naming drift.
+- [x] **Phase 2: Data Integrity** - Implement `ConsistencyService` to remove orphaned Qdrant embeddings.
+- [x] **Phase 3: Architecture** - Decouple Storage Adapters and fix naming drift.
+    - [x] Create abstract interfaces in `rae-core`.
+    - [x] Refactor high-level services (`MemoryConsolidation`, `Analytics`, `HybridSearch`, etc.) to use `RAECoreService`.
+    - [x] Update Dependency Injection in `apps/memory_api/dependencies.py`.
+    - [x] **NEXT**: Migrate background workers and tasks to use `RAECoreService`.
 
-## 🚨 NEXT SESSION: Implement Control Plane & Connect node1
+## 🚨 NEXT SESSION: Finish Core Migration & Distributed Compute
 
 **Current Status (2025-12-22):**
-- **Core Stability:** ✅ **83% coverage** achieved. Zero warnings project-wide.
-- **API Status:** ✅ **v2.2.2-enterprise** released and merged to main.
-- **Infrastructure:** ✅ **node1** (GPU optimized) is configured and automated.
+- **Architecture Migration:** ✅ Most services zmigrated to `RAECoreService`.
+- **Core Stability:** ✅ **83% coverage** (rae-core). Zero warnings project-wide.
+- **API Status:** ✅ **v2.4.0** released and merged to main.
+- **Infrastructure:** ✅ **node1** configured.
 
 **Priority Tasks:**
 
-1.  **🚀 Distributed Compute: Control Node API**
-    - [x] **Plan**: [CONTROL_NODE_IMPLEMENTATION_PLAN.md](docs/infra/CONTROL_NODE_IMPLEMENTATION_PLAN.md) created.
-    - [x] **Action**: Implement Node Registry API (`/nodes/register`, `/nodes/heartbeat`) in `apps/memory_api`.
-    - [x] **Action**: Implement Task Queue API for remote worker polling (`/tasks/poll`, `/tasks/result`).
-    - [ ] **Goal**: Allow remote nodes to announce availability and request pending jobs.
+1.  **⚙️ Complete Faza 3 Migration**
+    - [x] **Action**: Refactor `DecayWorker` and `SummarizationWorker` in `memory_maintenance.py`.
+    - [x] **Action**: Update all tasks in `background_tasks.py` to use `rae_context` and `rae_service`.
+    - [x] **Action**: Final audit of `apps/memory_api` for any direct `asyncpg.Pool` usage outside repositories.
 
 2.  **🚀 Distributed Compute: Connect node1**
     - [ ] **Action**: Update node1 agent to communicate with the new Control Node API.
-    - [ ] **Action**: Configure secure tunneling (Cloudflare/Tailscale) for API access between node1 and local RAE.
-    - [ ] **Goal**: Successfully pull a 'no-op' task from the local module to node1.
+    - [ ] **Action**: Successfully pull a 'no-op' task from the local module to node1.
 
-3.  **🧠 Integration: Heavy Workload Delegation**
+3.  **🧠 Heavy Workload Delegation**
     - [ ] **Action**: Integrate task delegation into `RAEEngine` for heavy embedding generation and LLM inference.
-    - [ ] **Goal**: Offload compute-intensive tasks to node1/node2 when available.
-
-4.  **📊 Node3 Performance Tests**
-    - [ ] **Action**: Prepare node3 (128GB RAM) for large-scale memory stress tests and benchmark its throughput.
 
 ---
 
 ## Phase 3: Quality & Reliability (Target: 80% Coverage)
 
-### Iteration 1: Foundation Layer (Repositories & Basic Services) ✅
+### Iteration 1: Foundation Layer ✅
 - [x] **`apps/memory_api/repositories/cost_logs_repository.py`**
 - [x] **`apps/memory_api/repositories/trigger_repository.py`**
 - [x] **`apps/memory_api/services/cost_controller.py`**
-- [x] **`apps/memory_api/services/analytics.py`**
+- [x] **`apps/memory_api/services/analytics.py`** (Refactored to RAECoreService)
 
-### Iteration 2: Core Logic (Complex Services) ✅
-- [x] **`apps/memory_api/services/hybrid_search_service.py`** 
+### Iteration 2: Core Logic ✅
+- [x] **`apps/memory_api/services/hybrid_search_service.py`** (Refactored to RAECoreService)
 - [x] **`apps/memory_api/services/graph_extraction.py`**
-- [x] **`apps/memory_api/services/reflection_pipeline.py`**
+- [x] **`apps/memory_api/services/reflection_pipeline.py`** (Refactored to RAECoreService)
 
 ### Iteration 3: Knowledge Graph API Restoration ✅
-- [x] **`apps/memory_api/api/v1/graph.py`** (Fully functional & tested)
+- [x] **`apps/memory_api/api/v1/graph.py`** (Updated to new architecture)
 
 ### Iteration 4: Safety Net (Routes & Dashboard) 🛡️
-- [ ] **`apps/memory_api/routes/dashboard.py`** (Current: 0%)
-- [ ] **`apps/memory_api/routes/graph_enhanced.py`** (Current: 0%)
+- [ ] **`apps/memory_api/routes/dashboard.py`**
+- [ ] **`apps/memory_api/routes/graph_enhanced.py`**
 - [ ] **E2E/Integration Polish**
 
 ## Technical Debt (Auto-generated from code)

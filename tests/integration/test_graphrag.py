@@ -22,6 +22,7 @@ try:
 except ImportError:
     HAS_SPACY = False
 
+from unittest.mock import AsyncMock, MagicMock, patch
 from apps.memory_api.config import settings
 from apps.memory_api.repositories.graph_repository import GraphRepository
 from apps.memory_api.services.graph_extraction import (
@@ -34,11 +35,47 @@ from apps.memory_api.services.hybrid_search import (
 )
 from apps.memory_api.services.rae_core_service import RAECoreService  # Updated import
 from apps.memory_api.services.reflection_engine import ReflectionEngine
+from apps.llm.models.llm_response import LLMResponse, TokenUsage
 
 pytestmark = [
     pytest.mark.integration,
     pytest.mark.skipif(not HAS_SPACY, reason="spaCy not installed (required for graph extraction)"),
 ]
+
+
+@pytest.fixture
+def mock_llm():
+    """Mock LLM provider for graph extraction and reflection."""
+    from apps.memory_api.services.llm.orchestrator_adapter import OrchestratorAdapter
+    mock_provider = MagicMock(spec=OrchestratorAdapter)
+    
+    # Mock for graph extraction (generate_structured)
+    mock_extraction_result = GraphExtractionResult(
+        triples=[
+            GraphTriple(source="User John", relation="reported", target="bug #123", confidence=0.9),
+            GraphTriple(source="bug #123", relation="located_in", target="authentication module", confidence=0.85),
+            GraphTriple(source="Developer Alice", relation="fixed", target="bug #123", confidence=0.95),
+            GraphTriple(source="AuthService", relation="depends_on", target="EncryptionService", confidence=0.9),
+        ],
+        statistics={
+            "memories_processed": 4,
+            "entities_count": 6,
+            "triples_count": 4,
+        }
+    )
+    mock_provider.generate_structured = AsyncMock(return_value=mock_extraction_result)
+    
+    # Mock for hierarchical reflection (generate)
+    mock_reflection_result = LLMResponse(
+        text="This is a coherent summary of the processed episodes.",
+        usage=TokenUsage(prompt_tokens=10, completion_tokens=10, total_tokens=20),
+        finish_reason="stop",
+        raw={},
+        model_name="gpt-4o-mini"
+    )
+    mock_provider.generate = AsyncMock(return_value=mock_reflection_result)
+    
+    return mock_provider
 
 
 @pytest.fixture
@@ -135,8 +172,8 @@ async def setup_test_memories(db_pool, test_tenant_id, test_project_id):
         for memory in test_memories:
             memory_id = await conn.fetchval(
                 """
-                INSERT INTO memories (tenant_id, project, content, layer, tags, source, created_at, memory_type)
-                VALUES ($1, $2, $3, 'em', $4, $5, NOW(), 'episodic')
+                INSERT INTO memories (tenant_id, agent_id, project, content, layer, tags, source, created_at, memory_type, importance, usage_count)
+                VALUES ($1, $2::text, $2::text, $3, 'episodic', $4, $5, NOW(), 'episodic', 0.5, 0)
                 RETURNING id
                 """,
                 test_tenant_id,
@@ -170,7 +207,7 @@ async def setup_test_memories(db_pool, test_tenant_id, test_project_id):
 
 @pytest.mark.asyncio
 async def test_graph_extraction_basic(
-    rae_service, graph_repo, test_tenant_id, test_project_id, setup_test_memories
+    rae_service, graph_repo, mock_llm, test_tenant_id, test_project_id, setup_test_memories
 ):
     """
     Test basic knowledge graph extraction from episodic memories.
@@ -182,6 +219,7 @@ async def test_graph_extraction_basic(
     """
     # Initialize graph extraction service
     graph_service = GraphExtractionService(rae_service, graph_repo)
+    graph_service.llm_provider = mock_llm
 
     # Perform extraction
     result = await graph_service.extract_knowledge_graph(
@@ -212,7 +250,7 @@ async def test_graph_extraction_basic(
 
 @pytest.mark.asyncio
 async def test_graph_storage(
-    rae_service, graph_repo, db_pool, test_tenant_id, test_project_id, setup_test_memories
+    rae_service, graph_repo, db_pool, mock_llm, test_tenant_id, test_project_id, setup_test_memories
 ):
     """
     Test that extracted triples are correctly stored in the database.
@@ -224,6 +262,7 @@ async def test_graph_storage(
     """
     # Initialize services
     graph_service = GraphExtractionService(rae_service, graph_repo)
+    graph_service.llm_provider = mock_llm
 
     # Extract and store
     result = await graph_service.extract_knowledge_graph(
@@ -261,7 +300,7 @@ async def test_graph_storage(
 
 @pytest.mark.asyncio
 async def test_hybrid_search(
-    rae_service, graph_repo, db_pool, test_tenant_id, test_project_id, setup_test_memories
+    rae_service, graph_repo, db_pool, mock_llm, test_tenant_id, test_project_id, setup_test_memories
 ):
     """
     Test hybrid search combining vector search and graph traversal.
@@ -273,6 +312,7 @@ async def test_hybrid_search(
     """
     # First, extract and store graph
     graph_service = GraphExtractionService(rae_service, graph_repo)
+    graph_service.llm_provider = mock_llm
     extraction_result = await graph_service.extract_knowledge_graph(
         project_id=test_project_id,
         tenant_id=test_tenant_id,
@@ -286,7 +326,7 @@ async def test_hybrid_search(
         tenant_id=test_tenant_id,
     )
 
-    hybrid_search = HybridSearchService(db_pool) # Needs rae_service for MemoryRepository replacement too.
+    hybrid_search = HybridSearchService(rae_service) # Needs rae_service for MemoryRepository replacement too. # Needs rae_service for MemoryRepository replacement too.
     # HybridSearchService expects pool.
     # It does not take MemoryRepository or RAECoreService directly in its __init__
     # HybridSearchService needs to be refactored too for RAECoreService in Phase 2
@@ -330,17 +370,14 @@ async def test_hybrid_search(
 
 @pytest.mark.asyncio
 async def test_graph_traversal_depth(
-    rae_service, graph_repo, db_pool, test_tenant_id, test_project_id, setup_test_memories
+    rae_service, graph_repo, db_pool, mock_llm, test_tenant_id, test_project_id, setup_test_memories
 ):
     """
-    Test that graph traversal respects depth limits.
-
-    Verifies that:
-    - Traversal stops at specified depth
-    - Different depths return different result sizes
+    Test that hybrid search respects traversal depth.
     """
-    # Setup graph
+    # 1. Populate graph
     graph_service = GraphExtractionService(rae_service, graph_repo)
+    graph_service.llm_provider = mock_llm
     extraction_result = await graph_service.extract_knowledge_graph(
         project_id=test_project_id,
         tenant_id=test_tenant_id,
@@ -354,7 +391,7 @@ async def test_graph_traversal_depth(
         tenant_id=test_tenant_id,
     )
 
-    hybrid_search = HybridSearchService(db_pool)
+    hybrid_search = HybridSearchService(rae_service) # Needs rae_service for MemoryRepository replacement too.
 
     # Test different depths
     """
@@ -390,7 +427,7 @@ async def test_graph_traversal_depth(
 
 @pytest.mark.asyncio
 async def test_hierarchical_reflection(
-    db_pool, test_tenant_id, test_project_id, setup_test_memories
+    db_pool, rae_service, mock_llm, test_tenant_id, test_project_id, setup_test_memories
 ):
     """
     Test hierarchical (map-reduce) reflection generation.
@@ -401,7 +438,8 @@ async def test_hierarchical_reflection(
     - Final reflection is coherent
     """
     # Initialize reflection engine
-    reflection_engine = ReflectionEngine(db_pool)
+    reflection_engine = ReflectionEngine(db_pool, rae_service=rae_service)
+    reflection_engine.llm_provider = mock_llm
 
     # Generate hierarchical reflection
     summary = await reflection_engine.generate_hierarchical_reflection(

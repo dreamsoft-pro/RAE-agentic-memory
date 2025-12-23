@@ -18,16 +18,17 @@ from apps.memory_api.services.community_detection import (
 @pytest.fixture
 def mock_dependencies():
     """Create mock dependencies for CommunityDetectionService."""
-    mock_pool = MagicMock()
+    mock_rae_service = MagicMock()
+    mock_rae_service.postgres_pool = MagicMock()
     mock_graph_repo = AsyncMock()
 
-    return mock_pool, mock_graph_repo
+    return mock_rae_service, mock_graph_repo
 
 
 @pytest.mark.asyncio
 async def test_load_graph_uses_repository(mock_dependencies):
     """Test that _load_graph_from_db uses GraphRepository."""
-    mock_pool, mock_graph_repo = mock_dependencies
+    mock_rae_service, mock_graph_repo = mock_dependencies
 
     # Mock repository responses
     mock_graph_repo.get_all_nodes.return_value = [
@@ -42,7 +43,7 @@ async def test_load_graph_uses_repository(mock_dependencies):
     ]
 
     service = CommunityDetectionService(
-        pool=mock_pool, graph_repository=mock_graph_repo
+        rae_service=mock_rae_service, graph_repository=mock_graph_repo
     )
 
     graph = await service._load_graph_from_db(
@@ -66,7 +67,7 @@ async def test_load_graph_uses_repository(mock_dependencies):
 @pytest.mark.asyncio
 async def test_load_graph_with_disconnected_edges(mock_dependencies):
     """Test loading graph with edges referencing non-existent nodes."""
-    mock_pool, mock_graph_repo = mock_dependencies
+    mock_rae_service, mock_graph_repo = mock_dependencies
 
     # Mock nodes and edges where an edge references missing node
     mock_graph_repo.get_all_nodes.return_value = [
@@ -84,7 +85,7 @@ async def test_load_graph_with_disconnected_edges(mock_dependencies):
     ]
 
     service = CommunityDetectionService(
-        pool=mock_pool, graph_repository=mock_graph_repo
+        rae_service=mock_rae_service, graph_repository=mock_graph_repo
     )
 
     graph = await service._load_graph_from_db(
@@ -99,13 +100,13 @@ async def test_load_graph_with_disconnected_edges(mock_dependencies):
 @pytest.mark.asyncio
 async def test_store_super_node_uses_repository(mock_dependencies):
     """Test that _store_super_node uses GraphRepository."""
-    mock_pool, mock_graph_repo = mock_dependencies
+    mock_rae_service, mock_graph_repo = mock_dependencies
 
     # Mock upsert to return internal ID
     mock_graph_repo.upsert_node.return_value = 123
 
     service = CommunityDetectionService(
-        pool=mock_pool, graph_repository=mock_graph_repo
+        rae_service=mock_rae_service, graph_repository=mock_graph_repo
     )
 
     summary = CommunitySummary(
@@ -144,7 +145,7 @@ async def test_store_super_node_uses_repository(mock_dependencies):
 @pytest.mark.asyncio
 async def test_run_community_detection_insufficient_nodes(mock_dependencies):
     """Test that community detection skips for small graphs."""
-    mock_pool, mock_graph_repo = mock_dependencies
+    mock_rae_service, mock_graph_repo = mock_dependencies
 
     # Mock small graph (less than 5 nodes)
     mock_graph_repo.get_all_nodes.return_value = [
@@ -154,7 +155,7 @@ async def test_run_community_detection_insufficient_nodes(mock_dependencies):
     mock_graph_repo.get_all_edges.return_value = []
 
     service = CommunityDetectionService(
-        pool=mock_pool, graph_repository=mock_graph_repo
+        rae_service=mock_rae_service, graph_repository=mock_graph_repo
     )
 
     # Should complete without processing
@@ -169,10 +170,10 @@ async def test_run_community_detection_insufficient_nodes(mock_dependencies):
 @pytest.mark.asyncio
 async def test_generate_summary_llm_integration(mock_dependencies):
     """Test that _generate_summary calls LLM provider."""
-    mock_pool, mock_graph_repo = mock_dependencies
+    mock_rae_service, mock_graph_repo = mock_dependencies
 
     service = CommunityDetectionService(
-        pool=mock_pool, graph_repository=mock_graph_repo
+        rae_service=mock_rae_service, graph_repository=mock_graph_repo
     )
 
     # Mock LLM provider
@@ -199,10 +200,10 @@ async def test_generate_summary_llm_integration(mock_dependencies):
 @pytest.mark.asyncio
 async def test_generate_summary_llm_failure(mock_dependencies):
     """Test that _generate_summary handles LLM failures gracefully."""
-    mock_pool, mock_graph_repo = mock_dependencies
+    mock_rae_service, mock_graph_repo = mock_dependencies
 
     service = CommunityDetectionService(
-        pool=mock_pool, graph_repository=mock_graph_repo
+        rae_service=mock_rae_service, graph_repository=mock_graph_repo
     )
 
     # Mock LLM provider to raise exception
@@ -225,10 +226,10 @@ async def test_generate_summary_llm_failure(mock_dependencies):
 @pytest.mark.asyncio
 async def test_process_community_workflow(mock_dependencies):
     """Test complete _process_community workflow."""
-    mock_pool, mock_graph_repo = mock_dependencies
+    mock_rae_service, mock_graph_repo = mock_dependencies
 
     service = CommunityDetectionService(
-        pool=mock_pool, graph_repository=mock_graph_repo
+        rae_service=mock_rae_service, graph_repository=mock_graph_repo
     )
 
     # Mock LLM provider
@@ -270,13 +271,13 @@ async def test_process_community_workflow(mock_dependencies):
 @pytest.mark.asyncio
 async def test_empty_graph_handling(mock_dependencies):
     """Test handling of empty graph."""
-    mock_pool, mock_graph_repo = mock_dependencies
+    mock_rae_service, mock_graph_repo = mock_dependencies
 
     mock_graph_repo.get_all_nodes.return_value = []
     mock_graph_repo.get_all_edges.return_value = []
 
     service = CommunityDetectionService(
-        pool=mock_pool, graph_repository=mock_graph_repo
+        rae_service=mock_rae_service, graph_repository=mock_graph_repo
     )
 
     graph = await service._load_graph_from_db(

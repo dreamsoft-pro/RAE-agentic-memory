@@ -55,32 +55,32 @@ def sample_memories():
     ]
 
 
-@pytest.mark.asyncio
-async def test_reflection_pipeline_initialization(mock_pool):
-    """Test that ReflectionPipeline initializes correctly"""
-    pipeline = ReflectionPipeline(mock_pool)
+@pytest.fixture
+def mock_rae_service():
+    """Mock RAECoreService"""
+    service = AsyncMock()
+    service.postgres_pool = AsyncMock()
+    service.list_memories = AsyncMock(return_value=[])
+    return service
 
-    assert pipeline.pool == mock_pool
+
+@pytest.mark.asyncio
+async def test_reflection_pipeline_initialization(mock_rae_service):
+    """Test that ReflectionPipeline initializes correctly"""
+    pipeline = ReflectionPipeline(mock_rae_service)
+
+    assert pipeline.rae_service == mock_rae_service
     assert pipeline.llm_provider is not None
     assert pipeline.ml_client is not None
 
 
 @pytest.mark.asyncio
-async def test_generate_reflections_basic(mock_pool, sample_memories):
+async def test_generate_reflections_basic(mock_rae_service, sample_memories):
     """Test basic reflection generation"""
     # Setup mocks
-    mock_conn = AsyncMock()
-    mock_conn.fetch = AsyncMock(return_value=sample_memories)
-    mock_conn.fetchrow = AsyncMock(return_value={"id": uuid4()})
-    mock_conn.execute = AsyncMock()
+    mock_rae_service.list_memories.return_value = sample_memories
 
-    mock_pool.acquire = AsyncMock(
-        return_value=AsyncMock(
-            __aenter__=AsyncMock(return_value=mock_conn), __aexit__=AsyncMock()
-        )
-    )
-
-    pipeline = ReflectionPipeline(mock_pool)
+    pipeline = ReflectionPipeline(mock_rae_service)
 
     # Mock LLM provider
     cast(Any, pipeline.llm_provider).generate = AsyncMock(return_value="Test insight")

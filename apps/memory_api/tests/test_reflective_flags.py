@@ -27,14 +27,9 @@ class TestReflectiveMemoryFlags:
         # Arrange
         mock_settings.REFLECTIVE_MEMORY_ENABLED = False
 
-        mock_pool = AsyncMock()
         mock_reflection_engine = AsyncMock()
         mock_rae_service = AsyncMock()
-        context_builder = ContextBuilder(
-            pool=mock_pool,
-            reflection_engine=mock_reflection_engine,
-            rae_service=mock_rae_service,
-        )
+        context_builder = ContextBuilder(rae_service=mock_rae_service)
 
         # Act
         reflections = await context_builder._retrieve_reflections(
@@ -55,7 +50,6 @@ class TestReflectiveMemoryFlags:
         mock_settings.REFLECTIVE_MAX_ITEMS_PER_QUERY = 5
         mock_settings.REFLECTION_MIN_IMPORTANCE_THRESHOLD = 0.5
 
-        mock_pool = AsyncMock()
         mock_reflection_engine = AsyncMock()
         mock_reflection_engine.query_reflections = AsyncMock(
             return_value=[
@@ -70,11 +64,7 @@ class TestReflectiveMemoryFlags:
         )
         mock_rae_service = AsyncMock()
 
-        context_builder = ContextBuilder(
-            pool=mock_pool,
-            reflection_engine=mock_reflection_engine,
-            rae_service=mock_rae_service,
-        )
+        context_builder = ContextBuilder(rae_service=mock_rae_service)
 
         # Act
         reflections = await context_builder._retrieve_reflections(
@@ -101,16 +91,11 @@ class TestReflectiveMemoryMode:
         mock_settings.REFLECTIVE_MAX_ITEMS_PER_QUERY = 3  # Lower in lite mode
         mock_settings.REFLECTION_MIN_IMPORTANCE_THRESHOLD = 0.5
 
-        mock_pool = AsyncMock()
         mock_reflection_engine = AsyncMock()
         mock_reflection_engine.query_reflections = AsyncMock(return_value=[])
         mock_rae_service = AsyncMock()
 
-        context_builder = ContextBuilder(
-            pool=mock_pool,
-            reflection_engine=mock_reflection_engine,
-            rae_service=mock_rae_service,
-        )
+        context_builder = ContextBuilder(rae_service=mock_rae_service)
 
         # Act
         await context_builder._retrieve_reflections(
@@ -136,16 +121,11 @@ class TestReflectiveMemoryMode:
         mock_settings.REFLECTIVE_MAX_ITEMS_PER_QUERY = 5  # Higher in full mode
         mock_settings.REFLECTION_MIN_IMPORTANCE_THRESHOLD = 0.5
 
-        mock_pool = AsyncMock()
         mock_reflection_engine = AsyncMock()
         mock_reflection_engine.query_reflections = AsyncMock(return_value=[])
         mock_rae_service = AsyncMock()
 
-        context_builder = ContextBuilder(
-            pool=mock_pool,
-            reflection_engine=mock_reflection_engine,
-            rae_service=mock_rae_service,
-        )
+        context_builder = ContextBuilder(rae_service=mock_rae_service)
 
         # Act
         await context_builder._retrieve_reflections(
@@ -171,9 +151,8 @@ class TestDreamingEnabled:
         """When DREAMING_ENABLED=False, dreaming should be skipped"""
         # Arrange
         mock_settings.DREAMING_ENABLED = False
-        mock_pool = AsyncMock()
         mock_rae_service = AsyncMock()
-        worker = DreamingWorker(pool=mock_pool, rae_service=mock_rae_service)
+        worker = DreamingWorker(rae_service=mock_rae_service)
 
         # Act
         results = await worker.run_dreaming_cycle(
@@ -202,11 +181,10 @@ class TestDreamingEnabled:
         async def mock_acquire():
             yield mock_conn
 
-        mock_pool = AsyncMock()
-        mock_pool.acquire = mock_acquire
         mock_rae_service = AsyncMock()
+        mock_rae_service.postgres_pool.acquire = mock_acquire
 
-        dreaming_worker = DreamingWorker(pool=mock_pool, rae_service=mock_rae_service)
+        dreaming_worker = DreamingWorker(rae_service=mock_rae_service)
 
         # Act
         results = await dreaming_worker.run_dreaming_cycle(
@@ -227,9 +205,8 @@ class TestSummarizationEnabled:
         """When SUMMARIZATION_ENABLED=False, summarization should be skipped"""
         # Arrange
         mock_settings.SUMMARIZATION_ENABLED = False
-        mock_pool = AsyncMock()
         mock_rae_service = AsyncMock()
-        worker = SummarizationWorker(pool=mock_pool, rae_service=mock_rae_service)
+        worker = SummarizationWorker(rae_service=mock_rae_service)
         from uuid import uuid4
 
         # Act
@@ -250,7 +227,6 @@ class TestSummarizationEnabled:
         mock_settings.SUMMARIZATION_ENABLED = True
         mock_settings.SUMMARIZATION_MIN_EVENTS = 10
 
-        mock_pool = AsyncMock()
         mock_rae_service = AsyncMock()
         mock_rae_service.list_memories.return_value = ["Event 1", "Event 2"]
         mock_rae_service.store_memory.return_value = "summary-id"
@@ -264,7 +240,7 @@ class TestSummarizationEnabled:
             suggested_actions=[],
         )
 
-        worker = SummarizationWorker(pool=mock_pool, rae_service=mock_rae_service)
+        worker = SummarizationWorker(rae_service=mock_rae_service)
         worker.llm_provider = mock_llm
 
         from uuid import uuid4
@@ -297,12 +273,12 @@ class TestMaintenanceScheduler:
         mock_settings.MEMORY_BASE_DECAY_RATE = 0.01
         mock_settings.MEMORY_ACCESS_COUNT_BOOST = True
 
-        mock_pool = AsyncMock()
         mock_decay_worker = AsyncMock()
         mock_decay_worker.run_decay_cycle = AsyncMock(return_value={"updated": 100})
         mock_decay_worker._get_all_tenant_ids = AsyncMock(return_value=["tenant1"])
 
-        scheduler = MaintenanceScheduler(pool=mock_pool)
+        mock_rae_service = AsyncMock()
+        scheduler = MaintenanceScheduler(rae_service=mock_rae_service)
         scheduler.decay_worker = mock_decay_worker
 
         # Act
@@ -331,15 +307,12 @@ class TestMaintenanceScheduler:
         mock_conn = AsyncMock()
         mock_conn.fetch = AsyncMock(return_value=[])
 
-        mock_pool = AsyncMock()
-        mock_pool.acquire.return_value.__aenter__.return_value = mock_conn
-        mock_pool.acquire.return_value.__aexit__.return_value = None
-
         mock_decay_worker = AsyncMock()
         mock_decay_worker.run_decay_cycle = AsyncMock(return_value={"updated": 100})
         mock_decay_worker._get_all_tenant_ids = AsyncMock(return_value=["tenant1"])
 
-        scheduler = MaintenanceScheduler(pool=mock_pool)
+        mock_rae_service = AsyncMock()
+        scheduler = MaintenanceScheduler(rae_service=mock_rae_service)
         scheduler.decay_worker = mock_decay_worker
 
         # Act

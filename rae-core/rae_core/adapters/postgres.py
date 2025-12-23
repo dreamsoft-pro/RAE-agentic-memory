@@ -114,9 +114,9 @@ class PostgreSQLStorage(IMemoryStorage):
                 INSERT INTO memories (
                     id, content, layer, tenant_id, agent_id, 
                     tags, metadata, embedding, importance, expires_at,
-                    created_at, last_accessed_at, memory_type
+                    created_at, last_accessed_at, memory_type, usage_count
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11, $12)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11, $12, 0)
                 """,
                 memory_id,
                 content,
@@ -166,7 +166,7 @@ class PostgreSQLStorage(IMemoryStorage):
             "tenant_id": row["tenant_id"],
             "agent_id": row["agent_id"],
             "tags": list(row["tags"]) if row["tags"] else [],
-            "metadata": dict(row["metadata"]) if row["metadata"] else {},
+            "metadata": row["metadata"] if row["metadata"] else {},
             "embedding": list(row["embedding"]) if row["embedding"] else None,
             "importance": float(row["importance"]),
             "usage_count": int(row["usage_count"]),
@@ -259,7 +259,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 "tenant_id": row["tenant_id"],
                 "agent_id": row["agent_id"],
                 "tags": list(row["tags"]) if row["tags"] else [],
-                "metadata": dict(row["metadata"]) if row["metadata"] else {},
+                "metadata": row["metadata"] if row["metadata"] else {},
                 "embedding": list(row["embedding"]) if row["embedding"] else None,
                 "importance": float(row["importance"]),
                 "usage_count": int(row["usage_count"]),
@@ -314,7 +314,16 @@ class PostgreSQLStorage(IMemoryStorage):
             param_idx += 1
 
         # Apply additional filters
-        # (Similar to search_memories, omitted for brevity)
+        if filters:
+            if "since" in filters:
+                conditions.append(f"created_at >= ${param_idx}")
+                params.append(filters["since"])
+                param_idx += 1
+
+            if "memory_ids" in filters:
+                conditions.append(f"id = ANY(${param_idx}::uuid[])")
+                params.append(filters["memory_ids"])
+                param_idx += 1
 
         where_clause = " AND ".join(conditions)
         order_clause = f"ORDER BY {order_by} {order_direction.upper()}"
@@ -346,7 +355,7 @@ class PostgreSQLStorage(IMemoryStorage):
                     "tenant_id": row["tenant_id"],
                     "agent_id": row["agent_id"],
                     "tags": list(row["tags"]) if row["tags"] else [],
-                    "metadata": dict(row["metadata"]) if row["metadata"] else {},
+                    "metadata": row["metadata"] if row["metadata"] else {},
                     "embedding": list(row["embedding"]) if row["embedding"] else None,
                     "importance": float(row["importance"]),
                     "usage_count": int(row["usage_count"]),
