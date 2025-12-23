@@ -111,35 +111,51 @@ class NodeAgent:
     async def _execute_code_cycle(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         """Writer/Reviewer cycle for high quality code."""
         writer_model = payload.get("writer_model", "deepseek-coder:33b")
-        reviewer_model = payload.get("reviewer_model", "deepseek-coder:6.7b") # Szybszy do recenzji
+        reviewer_model = payload.get("reviewer_model", "deepseek-coder:6.7b")
         prompt = payload.get("prompt", "")
 
         # 1. WRITE
         logger.info(f"Phase 1: Writing code with {writer_model}")
         write_result = await self._call_ollama(writer_model, prompt)
         if write_result["status"] == "error": return write_result
-        code = write_result["response"]
+        initial_code = write_result["response"]
 
         # 2. REVIEW
         logger.info(f"Phase 2: Reviewing code with {reviewer_model}")
-        review_prompt = f"Review this Python code for bugs and logic errors. Return 'PASSED' if it is perfect, or list issues otherwise:\n\n{code}"
+        review_prompt = (
+            "You are a Senior Python Architect. Review the following code for: "
+            "1. Architectural alignment with RAECoreService pattern (no direct DB pool usage). "
+            "2. Security issues. 3. Logic errors. "
+            "If the code is perfect, respond ONLY with 'PASSED'. Otherwise, list specific issues.\n\n"
+            f"CODE TO REVIEW:\n{initial_code}"
+        )
         review_result = await self._call_ollama(reviewer_model, review_prompt)
         if review_result["status"] == "error": return review_result
         review_output = review_result["response"]
 
         # 3. SELF-CORRECT (if needed)
+        final_code = initial_code
+        corrected = False
         if "PASSED" not in review_output.upper():
             logger.info("Phase 3: Self-correction triggered")
-            fix_prompt = f"The previous code has issues:\n{review_output}\n\nPlease provide the corrected version of the code:\n\n{code}"
+            corrected = True
+            fix_prompt = (
+                f"The Senior Architect found issues in your code:\n{review_output}\n\n"
+                f"Original Prompt: {prompt}\n\n"
+                f"Please provide the full CORRECTED version of the code:\n\n{initial_code}"
+            )
             fix_result = await self._call_ollama(writer_model, fix_prompt)
             if fix_result["status"] == "success":
-                code = fix_result["response"]
+                final_code = fix_result["response"]
 
         return {
             "status": "success",
-            "final_code": code,
+            "final_code": final_code,
+            "initial_code": initial_code,
             "review": review_output,
-            "corrected": "PASSED" not in review_output.upper()
+            "corrected": corrected,
+            "writer": writer_model,
+            "reviewer": reviewer_model
         }
 
     async def _call_ollama(self, model: str, prompt: str, system: str = "") -> Dict[str, Any]:
