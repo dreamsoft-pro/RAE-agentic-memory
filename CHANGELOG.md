@@ -1,5 +1,40 @@
 ## Recent Changes (Auto-generated)
 
+*Last updated: 2025-12-23 20:25 • Branch: develop • Commit: ec9c48b*
+
+### ✨ Features
+
+- **infra**: implement Writer/Reviewer quality loop and add install guide for new nodes ([`d056613`](../../commit/d056613))
+- **infra**: enable real Ollama/DeepSeek task execution on remote nodes ([`a41d5a1`](../../commit/a41d5a1))
+- **infra**: establish robust SSH reverse tunnel for remote compute node ([`7e64074`](../../commit/7e64074))
+
+### 🐛 Bug Fixes
+
+- **lint**: remove unused uuid import in graph_repository.py ([`4a151f9`](../../commit/4a151f9))
+- **graph**: use autoincrement ID for graph nodes and edges ([`2d41420`](../../commit/2d41420))
+- **lint**: sort imports in graph_repository.py ([`a514607`](../../commit/a514607))
+
+### ♻️ Refactoring
+
+- **dashboard**: migrate to RAECoreService and fix trend logic caught by Node1 audit ([`ec9c48b`](../../commit/ec9c48b))
+
+### 📚 Documentation
+
+- **use-case**: add distributed code audit case study and refactor dashboard ([`b17a1a8`](../../commit/b17a1a8))
+- **infra**: update node1 status to kubus-gpu-01 and document tailscale fix ([`e88c6c4`](../../commit/e88c6c4))
+
+### 🔧 Chore
+
+- resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+
+### 📦 Other
+
+- Merge branch 'develop' of github.com:dreamsoft-pro/RAE-agentic-memory into develop ([`9c7710d`](../../commit/9c7710d))
+
+---
+
+## Recent Changes (Auto-generated)
+
 *Last updated: 2025-12-23 19:57 • Branch: develop • Commit: ffa4e7b*
 
 ### ✨ Features
