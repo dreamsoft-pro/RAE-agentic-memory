@@ -96,7 +96,15 @@ When delegating tasks to external nodes (e.g., node1/KUBUS), follow the **Agenti
 - **Graceful Fallback**: If a node is unavailable, tasks MUST automatically fall back to local execution or cloud-based providers to ensure continuity.
 - **Implementation**: Check node status via `ControlPlaneService` before task creation.
 
-## 9. DEFINITION OF DONE (PRO)
+## 9. SCHEDULED QUALITY MAINTENANCE (Autonomous Improvement)
+
+To ensure long-term stability without human intervention, RAE implements **Autonomous Maintenance Windows**:
+- **Nocturnal Audit (Daily, 02:00 AM)**: RAE automatically scans all commits from the last 24h and delegates a `quality_loop` task to available compute nodes (node1/KUBUS).
+- **Weekly Deep Refactor (Every Sunday)**: A more intensive cycle focusing on technical debt (TODOs) and strict agnosticism compliance across the entire codebase.
+- **Principle of Non-Interference**: These tasks MUST have lower priority than active user tasks and should only run on nodes with `status=ONLINE` and low current load.
+- **Outcome**: Results are stored in RAE Memory and a summary report is prepared for the user's morning review.
+
+## 10. DEFINITION OF DONE (PRO)
 - All tests pass (Green).
 - Linter passed (No warnings).
 - Benchmarks verified against baseline.

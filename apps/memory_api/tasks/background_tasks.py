@@ -723,6 +723,64 @@ def run_consistency_check_task(self, tenant_id: str = "default"):
     return asyncio.run(main())
 
 
+@celery_app.task(bind=True, max_retries=3)
+def run_nightly_quality_audit(self):
+    """
+    Automated Nocturnal Quality Audit.
+    Scans the codebase for recent changes and delegates deep analysis to compute nodes.
+    """
+    from apps.memory_api.services.control_plane_service import ControlPlaneService
+    from apps.memory_api.repositories.node_repository import NodeRepository
+    from apps.memory_api.repositories.task_repository import TaskRepository
+
+    async def main():
+        async with rae_context() as rae_service:
+            try:
+                # 1. Check for available nodes
+                node_repo = NodeRepository(rae_service.postgres_pool)
+                task_repo = TaskRepository(rae_service.postgres_pool)
+                service = ControlPlaneService(node_repo, task_repo)
+                
+                # Fetch online nodes
+                nodes = await node_repo.list_online_nodes()
+                if not nodes:
+                    logger.info("nightly_audit_skipped", reason="no_online_nodes")
+                    return {"skipped": True, "reason": "no_online_nodes"}
+
+                # 2. Get diff for the last 24h (Simple placeholder for now)
+                # In real scenario, we'd use git commands if available in the env
+                try:
+                    import subprocess
+                    diff = subprocess.check_output(
+                        ["git", "diff", "HEAD@{24hours}..HEAD"],
+                        stderr=subprocess.STDOUT
+                    ).decode("utf-8")
+                except Exception as e:
+                    logger.warning("nightly_audit_git_diff_failed", error=str(e))
+                    diff = "Could not fetch git diff. Perform full codebase consistency check instead."
+
+                # 3. Create task
+                task = await service.create_task(
+                    type="quality_loop",
+                    payload={
+                        "task": "Perform nocturnal quality audit. Focus on code consistency, agnosticism, and potential logic regressions.",
+                        "diff": diff,
+                        "writer_model": "deepseek-coder:33b",
+                        "reviewer_model": "deepseek-coder:6.7b"
+                    },
+                    priority=5 # Lower than interactive tasks
+                )
+
+                logger.info("nightly_audit_delegated", task_id=str(task.id))
+                return {"success": True, "task_id": str(task.id)}
+
+            except Exception as e:
+                logger.error("nightly_audit_failed", error=str(e))
+                raise self.retry(exc=e, countdown=600)
+
+    return asyncio.run(main())
+
+
 # --- Celery Beat Schedule ---
 @celery_app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
