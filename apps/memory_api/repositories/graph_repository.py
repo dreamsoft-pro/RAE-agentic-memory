@@ -5,8 +5,8 @@ This repository encapsulates all database operations related to the knowledge gr
 following the Repository/DAO pattern to separate data access from business logic.
 """
 
-from typing import Any, Dict, List, Optional, Tuple, cast
 import uuid
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import asyncpg
 import structlog
