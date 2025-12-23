@@ -6,93 +6,92 @@
 **Goal:** Fix architectural risks identified in Cold Review.
 
 - [x] **Phase 1: Stabilization** - Offload `HDBSCAN`/`KMeans` to thread pool to prevent Event Loop Starvation.
-- [x] **Phase 2: Data Integrity** - Implement `ConsistencyService` to remove orphaned Qdrant embeddings (Ghost Memories).
-- [x] **Phase 3: Architecture** - Decouple Storage Adapters and fix `stm`/`working` naming drift.
+- [x] **Phase 2: Data Integrity** - Implement `ConsistencyService` to remove orphaned Qdrant embeddings.
+- [x] **Phase 3: Architecture** - Decouple Storage Adapters and fix naming drift.
+    - [x] Create abstract interfaces in `rae-core`.
+    - [x] Refactor high-level services (`MemoryConsolidation`, `Analytics`, `HybridSearch`, etc.) to use `RAECoreService`.
+    - [x] Update Dependency Injection in `apps/memory_api/dependencies.py`.
+    - [x] **NEXT**: Migrate background workers and tasks to use `RAECoreService`.
 
-## 🚨 NEXT SESSION: Implement Control Plane & Connect node1
+## 🚨 NEXT SESSION: Finish Core Migration & Distributed Compute
 
 **Current Status (2025-12-22):**
-- **Core Stability:** ✅ **83% coverage** achieved. Zero warnings project-wide.
-- **API Status:** ✅ **v2.2.2-enterprise** released and merged to main.
-- **Infrastructure:** ✅ **node1** (GPU optimized) is configured and automated.
+- **Architecture Migration:** ✅ Most services zmigrated to `RAECoreService`.
+- **Core Stability:** ✅ **83% coverage** (rae-core). Zero warnings project-wide.
+- **API Status:** ✅ **v2.4.0** released and merged to main.
+- **Infrastructure:** ✅ **node1** configured.
 
 **Priority Tasks:**
 
-1.  **🚀 Distributed Compute: Control Node API**
-    - [x] **Plan**: [CONTROL_NODE_IMPLEMENTATION_PLAN.md](docs/infra/CONTROL_NODE_IMPLEMENTATION_PLAN.md) created.
-    - [x] **Action**: Implement Node Registry API (`/nodes/register`, `/nodes/heartbeat`) in `apps/memory_api`.
-    - [x] **Action**: Implement Task Queue API for remote worker polling (`/tasks/poll`, `/tasks/result`).
-    - [ ] **Goal**: Allow remote nodes to announce availability and request pending jobs.
+1.  **⚙️ Complete Faza 3 Migration**
+    - [x] **Action**: Refactor `DecayWorker` and `SummarizationWorker` in `memory_maintenance.py`.
+    - [x] **Action**: Update all tasks in `background_tasks.py` to use `rae_context` and `rae_service`.
+    - [x] **Action**: Final audit of `apps/memory_api` for any direct `asyncpg.Pool` usage outside repositories.
 
 2.  **🚀 Distributed Compute: Connect node1**
     - [ ] **Action**: Update node1 agent to communicate with the new Control Node API.
-    - [ ] **Action**: Configure secure tunneling (Cloudflare/Tailscale) for API access between node1 and local RAE.
-    - [ ] **Goal**: Successfully pull a 'no-op' task from the local module to node1.
+    - [ ] **Action**: Successfully pull a 'no-op' task from the local module to node1.
 
-3.  **🧠 Integration: Heavy Workload Delegation**
+3.  **🧠 Heavy Workload Delegation**
     - [ ] **Action**: Integrate task delegation into `RAEEngine` for heavy embedding generation and LLM inference.
-    - [ ] **Goal**: Offload compute-intensive tasks to node1/node2 when available.
-
-4.  **📊 Node3 Performance Tests**
-    - [ ] **Action**: Prepare node3 (128GB RAM) for large-scale memory stress tests and benchmark its throughput.
 
 ---
 
 ## Phase 3: Quality & Reliability (Target: 80% Coverage)
 
-### Iteration 1: Foundation Layer (Repositories & Basic Services) ✅
+### Iteration 1: Foundation Layer ✅
 - [x] **`apps/memory_api/repositories/cost_logs_repository.py`**
 - [x] **`apps/memory_api/repositories/trigger_repository.py`**
 - [x] **`apps/memory_api/services/cost_controller.py`**
-- [x] **`apps/memory_api/services/analytics.py`**
+- [x] **`apps/memory_api/services/analytics.py`** (Refactored to RAECoreService)
 
-### Iteration 2: Core Logic (Complex Services) ✅
-- [x] **`apps/memory_api/services/hybrid_search_service.py`** 
+### Iteration 2: Core Logic ✅
+- [x] **`apps/memory_api/services/hybrid_search_service.py`** (Refactored to RAECoreService)
 - [x] **`apps/memory_api/services/graph_extraction.py`**
-- [x] **`apps/memory_api/services/reflection_pipeline.py`**
+- [x] **`apps/memory_api/services/reflection_pipeline.py`** (Refactored to RAECoreService)
 
 ### Iteration 3: Knowledge Graph API Restoration ✅
-- [x] **`apps/memory_api/api/v1/graph.py`** (Fully functional & tested)
+- [x] **`apps/memory_api/api/v1/graph.py`** (Updated to new architecture)
 
 ### Iteration 4: Safety Net (Routes & Dashboard) 🛡️
-- [ ] **`apps/memory_api/routes/dashboard.py`** (Current: 0%)
-- [ ] **`apps/memory_api/routes/graph_enhanced.py`** (Current: 0%)
+- [ ] **`apps/memory_api/routes/dashboard.py`**
+- [ ] **`apps/memory_api/routes/graph_enhanced.py`**
 - [ ] **E2E/Integration Polish**
 
 ## Technical Debt (Auto-generated from code)
-*Last scan: 2025-12-23 07:37*
+*Last scan: 2025-12-23 07:01*
 
-- [ ] **CHANGELOG.md:13** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:297** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:360** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:361** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:858** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:921** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:922** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:1426** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:1489** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:1490** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:1986** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:2049** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:2050** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:2545** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:2608** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:2609** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:3095** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:3158** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:3159** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:3644** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:3707** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:3708** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:4192** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:4255** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:4256** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:4740** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
-- [ ] **CHANGELOG.md:4803** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:4804** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:5308** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
-- [ ] **CHANGELOG.md:5371** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:5372** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:11** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:295** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:358** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:359** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:856** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:919** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:920** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:1424** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:1487** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:1488** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:1984** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:2047** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:2048** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:2543** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:2606** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:2607** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:3093** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:3156** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:3157** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:3642** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:3705** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:3706** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:4190** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:4253** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:4254** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:4738** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
+- [ ] **CHANGELOG.md:4801** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:4802** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:5306** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
+- [ ] **CHANGELOG.md:5369** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:5370** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
 - [ ] **INTEGRATION_CHECKLIST.md:51** - - [ ] Did NOT edit `TODO.md` (CI extracts from code comments)
 - [ ] **SESSION_STATE.md:29** - 5. [TODO] Final audit for direct `pool` injections.
 - [ ] **SESSION_STATE.md:30** - 6. [TODO] Performance verification with `make benchmark-lite`.
