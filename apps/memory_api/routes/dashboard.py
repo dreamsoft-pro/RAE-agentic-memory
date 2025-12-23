@@ -20,11 +20,11 @@ from fastapi import (
     Depends,
     HTTPException,
     Query,
-    Request,
     WebSocket,
     WebSocketDisconnect,
 )
 
+from apps.memory_api.dependencies import get_rae_core_service
 from apps.memory_api.models.dashboard_models import (
     ActivityLog,
     ComplianceArea,
@@ -61,6 +61,7 @@ from apps.memory_api.models.dashboard_models import (
 from apps.memory_api.repositories.metrics_repository import MetricsRepository
 from apps.memory_api.services.compliance_service import ComplianceService
 from apps.memory_api.services.dashboard_websocket import DashboardWebSocketService
+from apps.memory_api.services.rae_core_service import RAECoreService
 
 logger = structlog.get_logger(__name__)
 
@@ -75,26 +76,27 @@ _websocket_service: Optional[DashboardWebSocketService] = None
 # ============================================================================
 
 
-async def get_pool(request: Request):
-    """Get database connection pool from app state"""
-    return request.app.state.pool
-
-
-async def get_metrics_repo(pool=Depends(get_pool)) -> MetricsRepository:
+async def get_metrics_repo(
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+) -> MetricsRepository:
     """Get metrics repository instance"""
-    return MetricsRepository(pool)
+    return MetricsRepository(rae_service.postgres_pool)
 
 
-async def get_compliance_service(pool=Depends(get_pool)) -> ComplianceService:
+async def get_compliance_service(
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+) -> ComplianceService:
     """Get compliance service instance"""
-    return ComplianceService(pool)
+    return ComplianceService(rae_service.postgres_pool)
 
 
-def get_websocket_service(pool=Depends(get_pool)) -> DashboardWebSocketService:
+def get_websocket_service(
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+) -> DashboardWebSocketService:
     """Get or create WebSocket service instance."""
     global _websocket_service
     if _websocket_service is None:
-        _websocket_service = DashboardWebSocketService(pool)
+        _websocket_service = DashboardWebSocketService(rae_service.postgres_pool)
         # Start background tasks
         asyncio.create_task(_websocket_service.start_background_tasks())
     return _websocket_service
@@ -192,7 +194,8 @@ async def websocket_endpoint(
 
 @router.post("/metrics", response_model=GetDashboardMetricsResponse)
 async def get_dashboard_metrics(
-    request: GetDashboardMetricsRequest, pool=Depends(get_pool)
+    request: GetDashboardMetricsRequest,
+    rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
     Get dashboard metrics for a time period.
@@ -203,7 +206,7 @@ async def get_dashboard_metrics(
     """
     try:
         # Get WebSocket service for metrics collection
-        service = get_websocket_service()
+        service = get_websocket_service(rae_service)
 
         # Collect current metrics
         system_metrics = await service._collect_system_metrics(
@@ -212,12 +215,15 @@ async def get_dashboard_metrics(
 
         # Get time series metrics
         time_series_metrics = await _get_time_series_metrics(
-            pool, request.tenant_id, request.project_id, request.period
+            rae_service.postgres_pool,
+            request.tenant_id,
+            request.project_id,
+            request.period,
         )
 
         # Get recent activity
         recent_activity = await _get_recent_activity(
-            pool, request.tenant_id, request.project_id, limit=50
+            rae_service.postgres_pool, request.tenant_id, request.project_id, limit=50
         )
 
         logger.info(
@@ -347,7 +353,10 @@ async def get_metric_timeseries(
 
 
 @router.post("/visualizations", response_model=GetVisualizationResponse)
-async def get_visualization(request: GetVisualizationRequest, pool=Depends(get_pool)):
+async def get_visualization(
+    request: GetVisualizationRequest,
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
     """
     Generate visualization data.
 
@@ -361,6 +370,7 @@ async def get_visualization(request: GetVisualizationRequest, pool=Depends(get_p
     **Use Case:** Interactive visualizations in dashboard.
     """
     try:
+        pool = rae_service.postgres_pool
         response = GetVisualizationResponse(
             visualization_type=request.visualization_type
         )
@@ -424,7 +434,10 @@ async def get_visualization(request: GetVisualizationRequest, pool=Depends(get_p
 
 
 @router.post("/health", response_model=GetSystemHealthResponse)
-async def get_system_health(request: GetSystemHealthRequest, pool=Depends(get_pool)):
+async def get_system_health(
+    request: GetSystemHealthRequest,
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
     """
     Get system health status.
 
@@ -434,7 +447,7 @@ async def get_system_health(request: GetSystemHealthRequest, pool=Depends(get_po
     """
     try:
         # Get WebSocket service for health check
-        service = get_websocket_service()
+        service = get_websocket_service(rae_service)
 
         system_health = await service._check_system_health(
             request.tenant_id, request.project_id
@@ -442,7 +455,9 @@ async def get_system_health(request: GetSystemHealthRequest, pool=Depends(get_po
 
         # Add component details if requested
         if request.include_sub_components:
-            system_health.components = await _get_component_health(pool)
+            system_health.components = await _get_component_health(
+                rae_service.postgres_pool
+            )
 
         # Generate recommendations based on health
         recommendations = _generate_health_recommendations(system_health)
@@ -465,7 +480,9 @@ async def get_system_health(request: GetSystemHealthRequest, pool=Depends(get_po
 
 
 @router.get("/health/simple")
-async def simple_health_check(pool=Depends(get_pool)):
+async def simple_health_check(
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
     """
     Simple health check endpoint.
 
@@ -475,7 +492,7 @@ async def simple_health_check(pool=Depends(get_pool)):
     """
     try:
         # Check database connectivity
-        await pool.fetchval("SELECT 1")
+        await rae_service.postgres_pool.fetchval("SELECT 1")
 
         return {
             "status": "healthy",
@@ -499,7 +516,7 @@ async def get_activity_log(
     project_id: str,
     limit: int = 100,
     event_types: Optional[str] = Query(None),
-    pool=Depends(get_pool),
+    rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
     Get recent activity log.
@@ -515,7 +532,7 @@ async def get_activity_log(
             event_type_filter = [et.strip() for et in event_types.split(",")]
 
         activity_logs = await _get_recent_activity(
-            pool, tenant_id, project_id, limit, event_type_filter
+            rae_service.postgres_pool, tenant_id, project_id, limit, event_type_filter
         )
 
         logger.info(
