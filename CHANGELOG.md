@@ -1,5 +1,33 @@
 ## Recent Changes (Auto-generated)
 
+*Last updated: 2025-12-23 17:35 • Branch: main • Commit: 797f081*
+
+### ✨ Features
+
+- **infra**: establish robust SSH reverse tunnel for remote compute node ([`7e64074`](../../commit/7e64074))
+
+### 🐛 Bug Fixes
+
+- **lint**: remove unused uuid import in graph_repository.py ([`4a151f9`](../../commit/4a151f9))
+- **graph**: use autoincrement ID for graph nodes and edges ([`2d41420`](../../commit/2d41420))
+- **lint**: sort imports in graph_repository.py ([`a514607`](../../commit/a514607))
+
+### 🔧 Chore
+
+- resolve documentation conflicts during merge from develop to main ([`53a50fe`](../../commit/53a50fe))
+- accept remote doc updates to resolve conflicts ([`b5f7cf5`](../../commit/b5f7cf5))
+- resolve auto-generated doc conflicts during merge to main ([`954d510`](../../commit/954d510))
+- resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+
+### 📦 Other
+
+- Merge branch 'release/v2.5.0' ([`797f081`](../../commit/797f081))
+- Merge branch 'develop' of github.com:dreamsoft-pro/RAE-agentic-memory into develop ([`9c7710d`](../../commit/9c7710d))
+
+---
+
+## Recent Changes (Auto-generated)
+
 *Last updated: 2025-12-23 07:01 • Branch: develop • Commit: 3c722c6*
 
 ### 🐛 Bug Fixes
