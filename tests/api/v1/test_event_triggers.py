@@ -196,7 +196,7 @@ async def test_enable_disable_trigger(mock_pool):
     trigger_id = str(uuid4())
 
     # Test enable
-    with patch("apps.memory_api.routes.event_triggers.logger") as mock_logger:
+    with patch("apps.memory_api.routes.event_triggers.logger"):
         resp_enable = await enable_trigger(trigger_id, mock_pool)
         assert resp_enable["status"] == TriggerStatus.ACTIVE
 

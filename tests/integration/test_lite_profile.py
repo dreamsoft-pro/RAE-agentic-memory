@@ -262,7 +262,8 @@ def test_lite_profile_resource_efficiency():
 
 
 @pytest.mark.skipif(
-    subprocess.run(["docker", "compose", "version"], capture_output=True).returncode != 0,
+    subprocess.run(["docker", "compose", "version"], capture_output=True).returncode
+    != 0,
     reason="docker compose not available",
 )
 def test_lite_profile_config_valid():

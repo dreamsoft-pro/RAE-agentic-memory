@@ -36,7 +36,8 @@ async def test_fetch_nodes_uses_repository(mock_dependencies):
         {"id": 2, "node_id": "node2", "label": "Entity2"},
     ]
 
-    service = EntityResolutionService(rae_service=mock_rae_service,
+    service = EntityResolutionService(
+        rae_service=mock_rae_service,
         ml_client=mock_ml_client,
         graph_repository=mock_graph_repo,
     )
@@ -64,7 +65,10 @@ async def test_merge_nodes_with_canonical_name(mock_dependencies):
     mock_graph_repo.delete_node_edges.return_value = 3
     mock_graph_repo.delete_node.return_value = True
 
-    service = EntityResolutionService(rae_service=mock_rae_service, ml_client=mock_ml_client, graph_repository=mock_graph_repo
+    service = EntityResolutionService(
+        rae_service=mock_rae_service,
+        ml_client=mock_ml_client,
+        graph_repository=mock_graph_repo,
     )
 
     nodes = [{"id": 1, "label": "Apple Inc"}, {"id": 2, "label": "Apple Company"}]
@@ -98,7 +102,10 @@ async def test_merge_nodes_without_canonical_name(mock_dependencies):
     mock_graph_repo.delete_node_edges.return_value = 2
     mock_graph_repo.delete_node.return_value = True
 
-    service = EntityResolutionService(rae_service=mock_rae_service, ml_client=mock_ml_client, graph_repository=mock_graph_repo
+    service = EntityResolutionService(
+        rae_service=mock_rae_service,
+        ml_client=mock_ml_client,
+        graph_repository=mock_graph_repo,
     )
 
     nodes = [{"id": 1, "label": "Short"}, {"id": 2, "label": "Much Longer Label"}]
@@ -120,7 +127,10 @@ async def test_merge_nodes_empty_list(mock_dependencies):
     """Test merging with empty node list."""
     mock_rae_service, mock_graph_repo, mock_ml_client = mock_dependencies
 
-    service = EntityResolutionService(rae_service=mock_rae_service, ml_client=mock_ml_client, graph_repository=mock_graph_repo
+    service = EntityResolutionService(
+        rae_service=mock_rae_service,
+        ml_client=mock_ml_client,
+        graph_repository=mock_graph_repo,
     )
 
     # Should handle empty list gracefully
@@ -143,7 +153,10 @@ async def test_run_clustering_with_insufficient_nodes(mock_dependencies):
         {"id": 1, "node_id": "node1", "label": "OnlyNode"}
     ]
 
-    service = EntityResolutionService(rae_service=mock_rae_service, ml_client=mock_ml_client, graph_repository=mock_graph_repo
+    service = EntityResolutionService(
+        rae_service=mock_rae_service,
+        ml_client=mock_ml_client,
+        graph_repository=mock_graph_repo,
     )
 
     await service.run_clustering_and_merging(project_id="project1", tenant_id="tenant1")
@@ -157,7 +170,10 @@ async def test_process_group_with_merge_approval(mock_dependencies):
     """Test processing a group when Janitor Agent approves merge."""
     mock_rae_service, mock_graph_repo, mock_ml_client = mock_dependencies
 
-    service = EntityResolutionService(rae_service=mock_rae_service, ml_client=mock_ml_client, graph_repository=mock_graph_repo
+    service = EntityResolutionService(
+        rae_service=mock_rae_service,
+        ml_client=mock_ml_client,
+        graph_repository=mock_graph_repo,
     )
 
     # Mock LLM provider
@@ -190,7 +206,10 @@ async def test_process_group_with_merge_rejection(mock_dependencies):
     """Test processing a group when Janitor Agent rejects merge."""
     mock_rae_service, mock_graph_repo, mock_ml_client = mock_dependencies
 
-    service = EntityResolutionService(rae_service=mock_rae_service, ml_client=mock_ml_client, graph_repository=mock_graph_repo
+    service = EntityResolutionService(
+        rae_service=mock_rae_service,
+        ml_client=mock_ml_client,
+        graph_repository=mock_graph_repo,
     )
 
     # Mock LLM provider to reject merge
@@ -234,7 +253,10 @@ async def test_run_clustering_success(mock_dependencies):
         "statistics": {},
     }
 
-    service = EntityResolutionService(rae_service=mock_rae_service, ml_client=mock_ml_client, graph_repository=mock_graph_repo
+    service = EntityResolutionService(
+        rae_service=mock_rae_service,
+        ml_client=mock_ml_client,
+        graph_repository=mock_graph_repo,
     )
 
     # Mock process group to avoid complex interactions
@@ -267,7 +289,10 @@ async def test_run_clustering_ml_failure(mock_dependencies):
 
     mock_ml_client.resolve_entities.side_effect = Exception("ML Down")
 
-    service = EntityResolutionService(rae_service=mock_rae_service, ml_client=mock_ml_client, graph_repository=mock_graph_repo
+    service = EntityResolutionService(
+        rae_service=mock_rae_service,
+        ml_client=mock_ml_client,
+        graph_repository=mock_graph_repo,
     )
 
     await service.run_clustering_and_merging("p1", "t1")
@@ -281,7 +306,10 @@ async def test_ask_janitor_failure(mock_dependencies):
     """Test handling of Janitor LLM failure."""
     mock_rae_service, mock_graph_repo, mock_ml_client = mock_dependencies
 
-    service = EntityResolutionService(rae_service=mock_rae_service, ml_client=mock_ml_client, graph_repository=mock_graph_repo
+    service = EntityResolutionService(
+        rae_service=mock_rae_service,
+        ml_client=mock_ml_client,
+        graph_repository=mock_graph_repo,
     )
 
     service.llm_provider = MagicMock()

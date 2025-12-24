@@ -122,7 +122,7 @@ class TestControllerBanditIntegration:
         # Check that arm was updated
         arm_key = (decision.selected_level, decision.strategy_id)
         if arm_key in controller.bandit.arm_map:
-            arm = controller.bandit.arm_map[arm_key]
+            controller.bandit.arm_map[arm_key]
             # Arm should have been updated (pulls > 0 after feedback)
             # Note: update happens in bandit.update(), which is called from _update_bandit_with_outcome
             # So we need to verify the flow happened

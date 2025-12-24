@@ -5,7 +5,8 @@ Implements the LLM provider interface for Grok (xAI) models.
 Grok API is OpenAI-compatible with some differences in semantics.
 """
 
-from typing import Any, AsyncIterator, cast
+from collections.abc import AsyncIterator
+from typing import Any, cast
 
 from openai import AsyncOpenAI, RateLimitError
 from tenacity import retry, stop_after_attempt, wait_exponential

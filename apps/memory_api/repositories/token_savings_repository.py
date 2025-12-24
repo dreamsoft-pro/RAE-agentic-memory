@@ -126,7 +126,10 @@ class TokenSavingsRepository:
         )
 
     async def get_timeseries(
-        self, tenant_id: str, interval: str = "day", limit: int = 30  # 'hour', 'day'
+        self,
+        tenant_id: str,
+        interval: str = "day",
+        limit: int = 30,  # 'hour', 'day'
     ) -> List[dict]:
         """
         Get savings over time for charting.

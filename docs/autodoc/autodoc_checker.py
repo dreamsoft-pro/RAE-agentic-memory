@@ -90,7 +90,7 @@ class DocChecker:
         matches = re.finditer(pattern, content)
 
         for match in matches:
-            link_text = match.group(1)
+            match.group(1)
             link_path = match.group(2)
 
             # Skip external links

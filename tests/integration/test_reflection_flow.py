@@ -10,19 +10,23 @@ Tests the complete Actor → Evaluator → Reflector pattern:
 """
 
 from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
 
 from apps.memory_api.models.reflection_v2_models import (
+    LLMReflectionResponse,  # Added import
+)
+from apps.memory_api.models.reflection_v2_models import (
+    ReflectionContext,  # Imported for type hinting/mocking
+)
+from apps.memory_api.models.reflection_v2_models import (
     ErrorCategory,
     ErrorInfo,
     Event,
     EventType,
-    LLMReflectionResponse,  # Added import
     OutcomeType,
-    ReflectionContext,  # Imported for type hinting/mocking
 )
 from apps.memory_api.services.context_builder import (  # Added ContextConfig import
     ContextBuilder,
@@ -70,6 +74,7 @@ async def graph_repo(db_pool):
     """Graph repository"""
     # GraphRepository does not directly use MemoryRepository
     from apps.memory_api.repositories.graph_repository import GraphRepository
+
     return GraphRepository(db_pool)
 
 
@@ -78,17 +83,26 @@ async def mock_llm():
     """Mock LLM provider to avoid external calls"""
     # Create a provider object with mocked generate_structured
     from apps.memory_api.services.llm.orchestrator_adapter import OrchestratorAdapter
+
     mock_provider = MagicMock(spec=OrchestratorAdapter)
-    
+
     # Default mock response
     mock_result = LLMReflectionResponse(
         reflection="This is a mocked reflection about a timeout error in SQL query. It should also mention authentication issues.",
         importance=0.8,
         confidence=0.9,
-        tags=["mock", "reflection", "sql", "timeout", "performance", "auth", "unauthorized"],
+        tags=[
+            "mock",
+            "reflection",
+            "sql",
+            "timeout",
+            "performance",
+            "auth",
+            "unauthorized",
+        ],
         strategy="Mocked strategy for success: always check auth headers and add LIMIT to queries.",
     )
-    
+
     mock_provider.generate_structured = AsyncMock(return_value=mock_result)
     return mock_provider
 

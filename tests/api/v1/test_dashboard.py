@@ -3,10 +3,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
-from fastapi import HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi import HTTPException, WebSocket, WebSocketDisconnect
 
 from apps.memory_api.models.dashboard_models import (
-    GetAuditTrailRequest,
     GetDashboardMetricsRequest,
     GetSystemHealthRequest,
     GetVisualizationRequest,
@@ -369,7 +368,9 @@ async def test_get_visualization_unsupported(mock_rae_service):
 
 
 @pytest.mark.asyncio
-async def test_error_handling_dashboard_metrics(mock_rae_service, mock_websocket_service):
+async def test_error_handling_dashboard_metrics(
+    mock_rae_service, mock_websocket_service
+):
     from apps.memory_api.routes.dashboard import get_dashboard_metrics
 
     mock_websocket_service._collect_system_metrics.side_effect = Exception("DB Error")

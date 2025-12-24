@@ -35,7 +35,7 @@ class BenchmarkPlotter:
         """Initialize plotter with style"""
         try:
             plt.style.use(style)
-        except:
+        except Exception:
             plt.style.use("default")
         sns.set_palette("husl")
 

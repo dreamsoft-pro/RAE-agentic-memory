@@ -16,14 +16,19 @@ from apps.memory_api.services.rae_core_service import RAECoreService
 
 class DummyAsyncContextManager:
     """Helper class for mocking async context managers."""
+
     def __init__(self, value: Any):
         self._value = value
+
     def __await__(self):
         async def _impl():
             return self
+
         return _impl().__await__()
+
     async def __aenter__(self):
         return self._value
+
     async def __aexit__(self, exc_type, exc, tb):
         return False
 
@@ -89,7 +94,9 @@ def mock_vector_store():
 
 
 @pytest.fixture
-def client_with_overrides(mock_pool, mock_rae_service, mock_embedding_service, mock_vector_store):
+def client_with_overrides(
+    mock_pool, mock_rae_service, mock_embedding_service, mock_vector_store
+):
     """
     Test client with all necessary overrides for memory endpoints.
     """
@@ -112,20 +119,24 @@ def client_with_overrides(mock_pool, mock_rae_service, mock_embedding_service, m
     app.dependency_overrides[get_qdrant_client] = lambda: mock_qdrant
 
     # Patch services obtained via functions (not DI in older parts)
-    with patch(
-        "apps.memory_api.api.v1.memory.get_embedding_service",
-        return_value=mock_embedding_service
-    ), patch(
-        "apps.memory_api.api.v1.memory.get_vector_store",
-        return_value=mock_vector_store
-    ), patch(
-        "apps.memory_api.main.asyncpg.create_pool",
-        new=AsyncMock(return_value=mock_pool)
-    ), patch(
-        "apps.memory_api.main.rebuild_full_cache", new=AsyncMock()
-    ), patch(
-        "apps.memory_api.services.pii_scrubber.scrub_text",
-        side_effect=lambda x: x  # Bypass PII scrubbing
+    with (
+        patch(
+            "apps.memory_api.api.v1.memory.get_embedding_service",
+            return_value=mock_embedding_service,
+        ),
+        patch(
+            "apps.memory_api.api.v1.memory.get_vector_store",
+            return_value=mock_vector_store,
+        ),
+        patch(
+            "apps.memory_api.main.asyncpg.create_pool",
+            new=AsyncMock(return_value=mock_pool),
+        ),
+        patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()),
+        patch(
+            "apps.memory_api.services.pii_scrubber.scrub_text",
+            side_effect=lambda x: x,  # Bypass PII scrubbing
+        ),
     ):
         with TestClient(app) as client:
             yield client
@@ -184,7 +195,9 @@ async def test_store_memory_failure(client_with_overrides, mock_rae_service):
 
 
 @pytest.mark.asyncio
-async def test_query_memory_vector_only(client_with_overrides, mock_vector_store, mock_rae_service):
+async def test_query_memory_vector_only(
+    client_with_overrides, mock_vector_store, mock_rae_service
+):
     """Test memory query using vector search."""
     # Mock vector store results
     record = ScoredMemoryRecord(
@@ -219,7 +232,9 @@ async def test_query_memory_vector_only(client_with_overrides, mock_vector_store
 
 
 @pytest.mark.asyncio
-async def test_delete_memory_success(client_with_overrides, mock_rae_service, mock_vector_store):
+async def test_delete_memory_success(
+    client_with_overrides, mock_rae_service, mock_vector_store
+):
     """Test successful memory deletion."""
     mock_rae_service.delete_memory.return_value = True
 
@@ -269,7 +284,9 @@ async def test_reflection_stats(client_with_overrides, mock_rae_service):
 
 
 @pytest.mark.asyncio
-async def test_hierarchical_reflection_deprecated(client_with_overrides, mock_rae_service):
+async def test_hierarchical_reflection_deprecated(
+    client_with_overrides, mock_rae_service
+):
     """Test deprecated hierarchical reflection endpoint."""
     with patch(
         "apps.memory_api.services.reflection_engine.ReflectionEngine"

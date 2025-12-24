@@ -14,6 +14,7 @@ Operational Excellence:
 - Application logs maintain INFO level for visibility
 - All levels are configurable via environment variables
 """
+
 import logging
 import sys
 

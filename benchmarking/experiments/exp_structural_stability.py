@@ -79,7 +79,7 @@ class StructuralStabilityExperiment:
             content = f"{prefix} memory {i}: This is test content for structural stability analysis"
 
             # Generate embedding
-            embedding = embedding_service.generate_embeddings([content])[0]
+            embedding_service.generate_embeddings([content])[0]
 
             # Insert into database
             async with self.pool.acquire() as conn:

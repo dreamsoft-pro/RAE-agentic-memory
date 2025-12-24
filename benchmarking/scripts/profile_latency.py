@@ -79,7 +79,7 @@ class LatencyProfiler:
 
             # Measure vector search
             search_start = time.perf_counter()
-            results = await self.vector_store.search(
+            await self.vector_store.search(
                 tenant_id=tenant_id, query_embedding=query_embedding, top_k=top_k
             )
             search_time = time.perf_counter() - search_start

@@ -88,17 +88,17 @@ def test_default_settings():
 
     # Sync parameters
     assert (
-        settings.sync_enabled == False
+        not settings.sync_enabled
     )  # Default for sync_enabled is False in settings.py
     assert settings.sync_batch_size == DEFAULT_SYNC_BATCH_SIZE
     assert settings.sync_timeout == DEFAULT_SYNC_TIMEOUT
     assert settings.sync_retry_attempts == DEFAULT_SYNC_RETRY_ATTEMPTS
     assert (
-        settings.sync_encryption_enabled == True
+        settings.sync_encryption_enabled
     )  # Default for sync_encryption_enabled is True
 
     # Cache parameters
-    assert settings.cache_enabled == True  # Default for cache_enabled is True
+    assert settings.cache_enabled  # Default for cache_enabled is True
     assert settings.cache_ttl == DEFAULT_CACHE_TTL
     assert settings.cache_max_size == DEFAULT_CACHE_MAX_SIZE
 
@@ -123,7 +123,7 @@ def test_env_var_override():
 
     assert settings.sensory_max_size == 200
     assert settings.decay_rate == 0.5
-    assert settings.sync_enabled == True
+    assert settings.sync_enabled
     assert settings.otel_endpoint == "http://localhost:4317"
 
     # Ensure other settings remain at their defaults

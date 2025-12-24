@@ -56,7 +56,7 @@ class MathLayerController:
         """Compute cosine similarity between embeddings."""
         try:
             return cosine_similarity(embedding1, embedding2)
-        except:
+        except Exception:
             # Fallback if function doesn't exist
             import math
 

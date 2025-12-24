@@ -152,10 +152,8 @@ class ConflictResolver:
 
         if (local_modified or datetime.min) > (remote_modified or datetime.min):
             merged = local.copy()
-            other = remote
         else:
             merged = remote.copy()
-            other = local
 
         # Merge specific fields
         for field in conflict_fields:

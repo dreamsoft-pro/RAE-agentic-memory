@@ -4,7 +4,8 @@ OpenAI LLM Provider.
 Implements the LLM provider interface for OpenAI models.
 """
 
-from typing import Any, AsyncIterator, Optional, cast
+from collections.abc import AsyncIterator
+from typing import Any, Optional, cast
 
 from openai import AsyncOpenAI, RateLimitError
 from tenacity import retry, stop_after_attempt, wait_exponential

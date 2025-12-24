@@ -368,7 +368,7 @@ class TestBanditMonitor:
         alerts = monitor.check_health()
 
         # Should have arm imbalance warning
-        imbalance = [a for a in alerts if a.category == "arm_imbalance"]
+        [a for a in alerts if a.category == "arm_imbalance"]
         # May or may not trigger depending on exact distribution
 
     def test_get_summary(self, monitor, bandit, features):

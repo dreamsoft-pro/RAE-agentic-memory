@@ -113,7 +113,7 @@ class Orchestrator:
         task_id = task_def["id"]
         task_area = task_def.get("area", "unknown")
         task_risk_str = task_def.get("risk", "medium")
-        task_risk = TaskRisk[task_risk_str.upper()]
+        TaskRisk[task_risk_str.upper()]
 
         logger.info(f"Starting task {task_id}: {task_def['goal']}")
 

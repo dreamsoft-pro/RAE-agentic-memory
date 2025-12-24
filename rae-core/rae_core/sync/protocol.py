@@ -212,7 +212,7 @@ class SyncProtocol:
         Returns:
             Sync response with results
         """
-        request = SyncRequest(
+        SyncRequest(
             tenant_id=tenant_id,
             agent_id=agent_id,
             sync_type="sync",

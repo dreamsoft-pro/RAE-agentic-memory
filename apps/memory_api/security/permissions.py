@@ -6,8 +6,6 @@ Separated from models to avoid circular dependencies and keep models pure.
 from typing import Any, Optional, cast
 from uuid import UUID
 
-from apps.memory_api.models.rbac import Role
-
 
 async def check_permission(
     user_id: str, tenant_id: UUID, action: str, project_id: Optional[str] = None

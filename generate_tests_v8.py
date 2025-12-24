@@ -25,7 +25,7 @@ def mock_env_and_settings(monkeypatch):
         "REDIS_URL": "redis://localhost:6379/0",
         "RAE_LLM_BACKEND": "openai",
         "OPENAI_API_KEY": "sk-test-key",
-        "API_KEY": "test-api-key", 
+        "API_KEY": "test-api-key",
         "OAUTH_ENABLED": "False"
     }
     for k, v in envs.items():
@@ -72,9 +72,9 @@ def mock_app_state_pool():
     mock_acquire_cm = AsyncMock()
     mock_acquire_cm.__aenter__.return_value = mock_conn
     mock_acquire_cm.__aexit__.return_value = None
-    
+
     mock_pool.acquire.return_value = mock_acquire_cm
-    
+
     app.state.pool = mock_pool
     yield mock_pool
     del app.state.pool
@@ -98,7 +98,7 @@ def mock_vector_store():
         instance.upsert = AsyncMock()
         instance.query = AsyncMock(return_value=[])
         instance.delete = AsyncMock()
-        
+
         mock.return_value = instance
         yield instance
 
@@ -113,7 +113,7 @@ def mock_embedding_service():
 @pytest.mark.asyncio
 async def test_store_memory_success(mock_app_state_pool, mock_vector_store, mock_embedding_service):
     mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
-    
+
     mock_conn.fetchrow.return_value = {
         "id": "123e4567-e89b-12d3-a456-426614174000",
         "created_at": datetime.now(),
@@ -128,15 +128,15 @@ async def test_store_memory_success(mock_app_state_pool, mock_vector_store, mock
         "layer": "ltm",
         "tags": ["test"],
         "project": "default",
-        "importance": 0.5 
+        "importance": 0.5
     }
-    
+
     response = client.post(
-        "/v1/memory/store", 
+        "/v1/memory/store",
         json=payload,
         headers={"X-Tenant-Id": "test-tenant"}
     )
-    
+
     if response.status_code != 200:
         print("STORE ERROR:", response.json())
 
@@ -189,7 +189,7 @@ async def test_delete_memory_success(mock_app_state_pool, mock_vector_store):
 TEST_SERVICES_BUDGET_PY = """
 import pytest
 # POPRAWKA: Dodano MagicMock do importów
-from unittest.mock import AsyncMock, MagicMock 
+from unittest.mock import AsyncMock, MagicMock
 from datetime import datetime
 from apps.memory_api.services import budget_service
 from fastapi import HTTPException
@@ -198,7 +198,7 @@ from fastapi import HTTPException
 async def test_check_budget():
     mock_pool = MagicMock()
     mock_pool.fetchrow = AsyncMock()
-    
+
     mock_pool.fetchrow.return_value = {
         "id": "b1", "tenant_id": "t1", "project_id": "p1",
         "monthly_limit": 10.0, "monthly_usage": 5.0,
@@ -212,7 +212,7 @@ async def test_check_budget():
 async def test_check_budget_fail():
     mock_pool = MagicMock()
     mock_pool.fetchrow = AsyncMock()
-    
+
     mock_pool.fetchrow.return_value = {
         "id": "b1", "tenant_id": "t1", "project_id": "p1",
         "monthly_limit": 10.0, "monthly_usage": 5.0,
@@ -246,13 +246,13 @@ async def test_agent_execute_direct(mock_app_state_pool):
         mock_cache_instance = MagicMock()
         mock_cache_instance.get_context.return_value = "Mocked Context"
         mock_get_cache.return_value = mock_cache_instance
-        
+
         mock_embed.return_value.generate_embeddings.return_value = [[0.1]*384]
-        
+
         mock_vec_inst = AsyncMock()
-        mock_vec_inst.query = AsyncMock(return_value=[]) 
+        mock_vec_inst.query = AsyncMock(return_value=[])
         mock_vec.return_value = mock_vec_inst
-        
+
         mock_llm_inst = MagicMock()
         mock_llm_inst.generate = AsyncMock(return_value=LLMResult(
             text="Direct Answer",
@@ -261,7 +261,7 @@ async def test_agent_execute_direct(mock_app_state_pool):
             finish_reason="stop"
         ))
         mock_llm.return_value = mock_llm_inst
-        
+
         mock_hclient = AsyncMock()
         mock_httpx.return_value.__aenter__.return_value = mock_hclient
         mock_hclient.post.return_value.json = AsyncMock(return_value={"items": []})
@@ -280,9 +280,9 @@ async def test_agent_execute_direct(mock_app_state_pool):
             original_func = execute.__wrapped__
         else:
             original_func = execute
-        
+
         response = await original_func(payload, mock_request)
-        
+
         assert response.answer == "Direct Answer"
         mock_cache_instance.get_context.assert_called()
 """
@@ -312,18 +312,18 @@ async def test_openai_generate():
     with patch("apps.memory_api.services.llm.openai.AsyncOpenAI") as mock_client_cls:
         mock_client = MagicMock()
         mock_client_cls.return_value = mock_client
-        
+
         mock_resp = MagicMock()
         mock_resp.choices = [MagicMock(message=MagicMock(content="Hello"), finish_reason="stop")]
         mock_resp.usage.prompt_tokens = 10
         mock_resp.usage.completion_tokens = 10
         mock_resp.usage.total_tokens = 20
-        
+
         mock_client.chat.completions.create = AsyncMock(return_value=mock_resp)
 
         provider = OpenAIProvider(api_key="test")
         res = await provider.generate(system="sys", prompt="user", model="gpt-4")
-        
+
         assert res.text == "Hello"
 """
 
@@ -336,7 +336,7 @@ from apps.memory_api.services.context_cache import ContextCache
 def test_context_cache_flow(mock_get_redis):
     mock_redis_instance = MagicMock()
     mock_get_redis.return_value = mock_redis_instance
-    
+
     cache = ContextCache()
     cache.set_context("t1", "p1", "semantic", "data")
     mock_redis_instance.setex.assert_called_once()
@@ -356,7 +356,7 @@ async def test_reflection_flow():
     mock_acquire_cm.__aenter__.return_value = mock_conn
     mock_acquire_cm.__aexit__.return_value = None
     mock_pool.acquire.return_value = mock_acquire_cm
-    
+
     mock_conn.fetch.return_value = [{"id": "1", "content": "Event"}]
 
     engine = ReflectionEngine(mock_pool)
@@ -370,15 +370,15 @@ async def test_reflection_flow():
 
     with patch("apps.memory_api.services.reflection_engine.settings") as mock_settings, \
          patch("httpx.AsyncClient") as mock_http:
-        
+
         mock_settings.API_KEY = "key"
         mock_settings.MEMORY_API_URL = "http://mem"
         mock_settings.RAE_LLM_MODEL_DEFAULT = "gpt"
-        
+
         mock_http.return_value.__aenter__.return_value.post = AsyncMock()
-        
+
         res = await engine.generate_reflection("p1", "t1")
-        
+
         assert "Insight" in res
 """
 
@@ -390,7 +390,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 current_file = Path(__file__).resolve()
-service_dir = current_file.parent.parent 
+service_dir = current_file.parent.parent
 sys.path.insert(0, str(service_dir))
 
 try:

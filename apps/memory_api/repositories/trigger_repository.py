@@ -230,7 +230,7 @@ class TriggerRepository:
             filtered_updates["metadata"] = json.dumps(filtered_updates["metadata"])
 
         # Build SET clause
-        set_clauses = [f"{k} = ${i+3}" for i, k in enumerate(filtered_updates.keys())]
+        set_clauses = [f"{k} = ${i + 3}" for i, k in enumerate(filtered_updates.keys())]
         set_clause = ", ".join(set_clauses)
 
         query = f"""
@@ -429,7 +429,7 @@ class TriggerRepository:
                 filtered_updates["action_results"]
             )
 
-        set_clauses = [f"{k} = ${i+2}" for i, k in enumerate(filtered_updates.keys())]
+        set_clauses = [f"{k} = ${i + 2}" for i, k in enumerate(filtered_updates.keys())]
         set_clause = ", ".join(set_clauses)
 
         query = f"""

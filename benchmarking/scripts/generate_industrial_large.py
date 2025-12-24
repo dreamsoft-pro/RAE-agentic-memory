@@ -192,7 +192,6 @@ class IndustrialDataGenerator:
 
         paths = ["users", "posts", "comments", "auth", "metrics"]
         methods = ["GET", "POST", "PUT", "DELETE"]
-        components = ["API Gateway", "Auth Service", "Database", "Cache Layer"]
 
         text = f"Documentation ({doc_type}): API endpoint /{random.choice(paths)} - {random.choice(methods)} method"
 

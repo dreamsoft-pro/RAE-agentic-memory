@@ -20,9 +20,8 @@ from fastapi import HTTPException, Request
 from qdrant_client import AsyncQdrantClient
 from redis.asyncio import Redis as AsyncRedis
 
+from .repo_dependencies import get_graph_repository
 from .repositories.graph_repository import GraphRepository
-from .repositories.graph_repository_enhanced import EnhancedGraphRepository
-from .repo_dependencies import get_graph_repository, get_enhanced_graph_repository
 from .services.analytics import AnalyticsService
 from .services.budget_service import BudgetService
 from .services.community_detection import CommunityDetectionService

@@ -276,12 +276,12 @@ class TelemetryEventCorrelation(MathMetricBase):
         error_rate = error_count / len(errors)
         avg_latency = np.mean(latencies)
         avg_latency_on_error = (
-            np.mean([l for l, e in zip(latencies, errors) if e == 1.0])
+            np.mean([lat for lat, e in zip(latencies, errors) if e == 1.0])
             if error_count > 0
             else 0.0
         )
         avg_latency_on_success = (
-            np.mean([l for l, e in zip(latencies, errors) if e == 0.0])
+            np.mean([lat for lat, e in zip(latencies, errors) if e == 0.0])
             if error_count < len(errors)
             else 0.0
         )

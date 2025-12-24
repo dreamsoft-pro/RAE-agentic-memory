@@ -40,9 +40,7 @@ async def test_reflection_flow(mock_rae_service):
         return_value=Triples(triples=[])
     )
 
-    with patch(
-        "apps.memory_api.services.reflection_engine.settings"
-    ) as mock_settings:
+    with patch("apps.memory_api.services.reflection_engine.settings") as mock_settings:
         mock_settings.API_KEY = "key"
         mock_settings.MEMORY_API_URL = "http://mem"
         mock_settings.RAE_LLM_MODEL_DEFAULT = "gpt"
@@ -51,7 +49,10 @@ async def test_reflection_flow(mock_rae_service):
         # Actually ReflectionEngine takes graph_repository in init, or creates one.
         # We can pass a mock graph repository.
         mock_graph_repo = AsyncMock()
-        mock_graph_repo.store_graph_triples.return_value = {"nodes_created": 0, "edges_created": 0}
+        mock_graph_repo.store_graph_triples.return_value = {
+            "nodes_created": 0,
+            "edges_created": 0,
+        }
         engine.graph_repo = mock_graph_repo
 
         res = await engine.generate_reflection("p1", "t1")
@@ -63,8 +64,5 @@ async def test_reflection_flow(mock_rae_service):
 
         # Verify RAECoreService was used to fetch episodes
         mock_rae_service.list_memories.assert_called_with(
-            tenant_id="t1",
-            layer="episodic",
-            project="p1",
-            limit=10
+            tenant_id="t1", layer="episodic", project="p1", limit=10
         )

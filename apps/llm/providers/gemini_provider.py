@@ -4,7 +4,8 @@ Google Gemini LLM Provider.
 Implements the LLM provider interface for Google Gemini models.
 """
 
-from typing import Any, AsyncIterator, Dict, cast
+from collections.abc import AsyncIterator
+from typing import Any, Dict, cast
 
 import google.generativeai as genai
 from tenacity import retry, stop_after_attempt, wait_exponential

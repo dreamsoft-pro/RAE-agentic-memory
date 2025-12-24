@@ -390,7 +390,7 @@ class RAEBenchmarkRunner:
         # Prepare data for metric calculation
         results_tuple = [(r["expected"], r["retrieved"]) for r in self.results]
 
-        config = self.benchmark_data.get("config", {})
+        self.benchmark_data.get("config", {})
         k_values = [3, 5, 10]
 
         metrics = {

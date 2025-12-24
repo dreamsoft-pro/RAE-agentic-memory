@@ -308,7 +308,7 @@ class ReflectionEngine:
         # 4. Map phase: Summarize each bucket
         summaries = []
         for i, bucket in enumerate(buckets):
-            logger.info(f"summarizing_bucket_{i+1}/{len(buckets)}")
+            logger.info(f"summarizing_bucket_{i + 1}/{len(buckets)}")
             summary = await self._summarize_episodes(bucket)
             summaries.append(summary)
 
@@ -383,7 +383,7 @@ class ReflectionEngine:
             Meta-summary text
         """
         formatted_summaries = "\n\n---\n\n".join(
-            [f"Summary {i+1}:\n{summary}" for i, summary in enumerate(summaries)]
+            [f"Summary {i + 1}:\n{summary}" for i, summary in enumerate(summaries)]
         )
 
         prompt = HIERARCHICAL_SUMMARY_PROMPT.format(content=formatted_summaries)

@@ -100,7 +100,7 @@ class Reflector:
 
         # Generate reflection content
         if self.llm_provider:
-            prompt = f"Consolidate these {len(memories)} memory fragments into a coherent insight:\n{all_content[:1000]}"
+            f"Consolidate these {len(memories)} memory fragments into a coherent insight:\n{all_content[:1000]}"
             reflection_content = await self.llm_provider.summarize(
                 all_content, max_length=300
             )
@@ -214,7 +214,7 @@ class Reflector:
                 insight_content = await self.llm_provider.generate(
                     prompt, max_tokens=200
                 )
-            except:
+            except Exception:
                 insight_content = f"Key insight: {len(memories)} memories with average importance {avg_importance:.2f}"
         else:
             insight_content = f"Analyzed {len(memories)} memories across layers: {', '.join(layer_dist.keys())}"

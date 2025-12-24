@@ -336,9 +336,9 @@ class LLMEvaluator:
         events_str = "\n".join([f"- {e}" for e in context.events])
 
         return f"""
-        Task Goal: {context.task_goal or 'Not specified'}
-        Task Description: {context.task_description or 'Not specified'}
-        Expected Outcome: {context.expected_outcome or 'Not specified'}
+        Task Goal: {context.task_goal or "Not specified"}
+        Task Description: {context.task_description or "Not specified"}
+        Expected Outcome: {context.expected_outcome or "Not specified"}
 
         Execution Events:
         {events_str}
@@ -347,7 +347,7 @@ class LLMEvaluator:
         {context.response}
 
         Error Info:
-        {context.error if context.error else 'None'}
+        {context.error if context.error else "None"}
 
         Evaluate whether the task was successful, assign a quality score (0.0-1.0), and determine if this execution is worth reflecting on (e.g. for learning from mistakes or saving successful strategies).
         """

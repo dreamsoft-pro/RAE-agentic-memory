@@ -1,7 +1,7 @@
 """create_memories_table_initial
 
 Revision ID: 000000000000
-Revises: 
+Revises:
 Create Date: 2024-01-01 00:00:00.000000
 
 """

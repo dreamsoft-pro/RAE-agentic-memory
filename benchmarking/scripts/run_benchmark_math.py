@@ -100,7 +100,7 @@ class MathBenchmarkRunner(RAEBenchmarkRunner):
         # Lazy import to avoid initialization issues
         from apps.memory_api.services.vector_store import get_vector_store
 
-        vector_store = get_vector_store(self.pool)
+        get_vector_store(self.pool)
 
         # Fetch all memories for this tenant
         async with self.pool.acquire() as conn:

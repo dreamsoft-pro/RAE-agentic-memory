@@ -2,7 +2,7 @@
 import json
 import subprocess
 import urllib.request
-import os
+
 
 def get_last_commit_diff():
     return subprocess.check_output(["git", "diff", "HEAD~1..HEAD"]).decode("utf-8")
@@ -20,14 +20,14 @@ def delegate():
             "reviewer_model": "deepseek-coder:6.7b"
         }
     }
-    
+
     req = urllib.request.Request(
         "http://localhost:8000/control/tasks",
         data=json.dumps(payload).encode("utf-8"),
         headers={"Content-Type": "application/json", "X-API-Key": "dev-key"},
         method="POST"
     )
-    
+
     with urllib.request.urlopen(req) as f:
         res = json.loads(f.read().decode("utf-8"))
         print(f"Task Created: {res['id']}")

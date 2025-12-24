@@ -14,9 +14,10 @@ This module provides an enhanced API client for the RAE Memory API with:
 import asyncio
 import hashlib
 import json
+from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, cast
+from typing import Any, Dict, List, Optional, cast
 
 import httpx
 import structlog

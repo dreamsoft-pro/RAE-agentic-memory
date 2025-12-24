@@ -5,7 +5,8 @@ Implements the LLM provider interface for local Ollama models.
 """
 
 import json
-from typing import Any, AsyncIterator, Dict, cast
+from collections.abc import AsyncIterator
+from typing import Any, Dict, cast
 
 import httpx
 from tenacity import retry, stop_after_attempt, wait_exponential

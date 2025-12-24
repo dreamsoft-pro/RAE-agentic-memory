@@ -35,7 +35,11 @@ def should_skip_provider_test(api_key: str | None) -> bool:
     if not api_key:
         return True
     # Common dummy/test keys
-    if api_key.startswith("sk-test-") or api_key.startswith("mock-") or api_key.startswith("dummy-"):
+    if (
+        api_key.startswith("sk-test-")
+        or api_key.startswith("mock-")
+        or api_key.startswith("dummy-")
+    ):
         return True
     return False
 

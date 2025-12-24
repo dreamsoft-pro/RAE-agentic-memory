@@ -4,9 +4,10 @@ import os
 import platform
 import socket
 import sys
-import yaml
-import httpx
 from typing import Any, Dict, List, Optional
+
+import httpx
+import yaml
 
 # Constants
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'config.yaml')
@@ -35,7 +36,7 @@ class NodeAgent:
         self.base_url = self.config.get('rae_endpoint', DEFAULT_API_URL).rstrip('/')
         self.heartbeat_interval = self.config.get('heartbeat_interval_sec', 30)
         self.capabilities = self.config.get('capabilities', {})
-        
+
         # Override capabilities with auto-detection if enabled
         if self.config.get('auto_detect_capabilities', True):
             self._detect_capabilities()
@@ -55,7 +56,7 @@ class NodeAgent:
         self.capabilities['hostname'] = socket.gethostname()
         self.capabilities['cpu_count'] = os.cpu_count()
         self.capabilities['arch'] = platform.machine()
-        
+
         # GPU Detection (NVIDIA)
         try:
             import subprocess
@@ -93,19 +94,19 @@ class NodeAgent:
                 logger.debug("Heartbeat sent")
             except Exception as e:
                 logger.error(f"Heartbeat failed: {e}")
-            
+
             await asyncio.sleep(self.heartbeat_interval)
 
     async def process_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
         task_type = task.get('type')
         payload = task.get('payload', {})
         logger.info(f"Processing task {task.get('id')} of type {task_type}")
-        
+
         if task_type == "llm_inference":
             return await self._execute_ollama(payload)
         elif task_type in ["code_verify_cycle", "quality_loop"]:
             return await self._execute_code_cycle(payload)
-        
+
         return {"status": "success", "output": "unknown_task_type"}
 
     async def _call_ollama(self, model: str, prompt: str, system: str = "") -> Dict[str, Any]:
@@ -201,7 +202,7 @@ class NodeAgent:
             "If the analysis is solid, respond 'PASSED'. Otherwise, explain what is missing.\n\n"
             f"AUDIT TO REVIEW:\n{initial_output}"
         )
-        review_result = await self._call_ollama(
+        await self._call_ollama(
             reviewer_model, review_prompt, system=reviewer_system
         )
 
@@ -227,7 +228,7 @@ class NodeAgent:
                         except Exception as e:
                             logger.error(f"Task execution failed: {e}")
                             error = str(e)
-                        
+
                         # Submit result
                         submit_url = (
                             f"{self.base_url}/control/tasks/{task['id']}/result"

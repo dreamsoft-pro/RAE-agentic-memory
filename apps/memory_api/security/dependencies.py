@@ -4,7 +4,7 @@ FastAPI dependencies for RBAC and tenant access control.
 These dependencies can be used with Depends() in route definitions.
 """
 
-from typing import Callable
+from collections.abc import Callable
 
 import structlog
 from fastapi import HTTPException, Request, status
