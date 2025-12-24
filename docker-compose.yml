@@ -26,6 +26,7 @@ services:
       - TENANCY_ENABLED=false
       - ENABLE_API_KEY_AUTH=false
       - ENABLE_JWT_AUTH=false
+      - ALLOWED_ORIGINS=["*"]
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
