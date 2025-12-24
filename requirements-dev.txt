@@ -8,6 +8,8 @@ pytest-sugar
 pytest-html
 pytest-json-report
 pytest-xdist
+pytest-testmon
+pytest-picked
 black
 isort
 ruff

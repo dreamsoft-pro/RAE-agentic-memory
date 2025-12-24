@@ -135,7 +135,7 @@ class StoreMemoryRequest(BaseModel):
     Supports source trust scoring and provenance tracking
     """
 
-    content: constr(min_length=1, max_length=8192)
+    content: constr(min_length=1, max_length=65536)
     source: Optional[constr(max_length=255)] = None
     importance: Optional[float] = Field(default=None, ge=0.0, le=1.0)
     layer: Optional[MemoryLayer] = None

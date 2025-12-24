@@ -1,62 +1,359 @@
 ## Recent Changes (Auto-generated)
 
-*Last updated: 2025-12-24 02:51 • Branch: main • Commit: ba5ab32*
+*Last updated: 2025-12-24 09:41 • Branch: develop • Commit: dea17ee*
 
 ### ✨ Features
 
+- **infra**: enable remote windows connection (CORS, docs) ([`cad3366`](../../commit/cad3366))
+- **infra**: automate nocturnal quality audit and improve agent prompt handling ([`8659304`](../../commit/8659304))
+- **infra**: implement Writer/Reviewer quality loop and add install guide for new nodes ([`d056613`](../../commit/d056613))
+- **infra**: enable real Ollama/DeepSeek task execution on remote nodes ([`a41d5a1`](../../commit/a41d5a1))
 - **infra**: establish robust SSH reverse tunnel for remote compute node ([`7e64074`](../../commit/7e64074))
 
 ### 🐛 Bug Fixes
 
+- **core**: fix graph repo typing and update release protocol ([`fc72873`](../../commit/fc72873))
+- **ci**: add missing pytest-testmon dependency ([`24736ca`](../../commit/24736ca))
+- **core**: resolve deprecation warnings and graph repository uuid bug ([`54abd8e`](../../commit/54abd8e))
 - **lint**: remove unused uuid import in graph_repository.py ([`4a151f9`](../../commit/4a151f9))
 - **graph**: use autoincrement ID for graph nodes and edges ([`2d41420`](../../commit/2d41420))
 - **lint**: sort imports in graph_repository.py ([`a514607`](../../commit/a514607))
 
+### ♻️ Refactoring
+
+- **graph**: migrate enhanced graph routes to RAECoreService and update agent protocol for distributed compute ([`227c13f`](../../commit/227c13f))
+- **dashboard**: migrate to RAECoreService and fix trend logic caught by Node1 audit ([`ec9c48b`](../../commit/ec9c48b))
+
+### 📚 Documentation
+
+- **use-case**: add distributed code audit case study and refactor dashboard ([`b17a1a8`](../../commit/b17a1a8))
+- **infra**: update node1 status to kubus-gpu-01 and document tailscale fix ([`e88c6c4`](../../commit/e88c6c4))
+
 ### 🔧 Chore
 
-- resolve documentation conflicts during merge from develop to main ([`53a50fe`](../../commit/53a50fe))
-- accept remote doc updates to resolve conflicts ([`b5f7cf5`](../../commit/b5f7cf5))
-- resolve auto-generated doc conflicts during merge to main ([`954d510`](../../commit/954d510))
+- **qa**: fix lint warnings and stabilize unit tests for graph-management ([`1f6592b`](../../commit/1f6592b))
 - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
 
 ### 📦 Other
 
-- Merge branch 'release/v2.5.0' ([`797f081`](../../commit/797f081))
 - Merge branch 'develop' of github.com:dreamsoft-pro/RAE-agentic-memory into develop ([`9c7710d`](../../commit/9c7710d))
 
 ---
 
 ## Recent Changes (Auto-generated)
 
-*Last updated: 2025-12-23 17:41 • Branch: main • Commit: aa6f025*
+*Last updated: 2025-12-24 09:34 • Branch: develop • Commit: fc72873*
 
 ### ✨ Features
 
+- **infra**: enable remote windows connection (CORS, docs) ([`cad3366`](../../commit/cad3366))
+- **infra**: automate nocturnal quality audit and improve agent prompt handling ([`8659304`](../../commit/8659304))
+- **infra**: implement Writer/Reviewer quality loop and add install guide for new nodes ([`d056613`](../../commit/d056613))
+- **infra**: enable real Ollama/DeepSeek task execution on remote nodes ([`a41d5a1`](../../commit/a41d5a1))
 - **infra**: establish robust SSH reverse tunnel for remote compute node ([`7e64074`](../../commit/7e64074))
 
 ### 🐛 Bug Fixes
 
+- **core**: fix graph repo typing and update release protocol ([`fc72873`](../../commit/fc72873))
+- **ci**: add missing pytest-testmon dependency ([`24736ca`](../../commit/24736ca))
+- **core**: resolve deprecation warnings and graph repository uuid bug ([`54abd8e`](../../commit/54abd8e))
 - **lint**: remove unused uuid import in graph_repository.py ([`4a151f9`](../../commit/4a151f9))
 - **graph**: use autoincrement ID for graph nodes and edges ([`2d41420`](../../commit/2d41420))
 - **lint**: sort imports in graph_repository.py ([`a514607`](../../commit/a514607))
 
+### ♻️ Refactoring
+
+- **graph**: migrate enhanced graph routes to RAECoreService and update agent protocol for distributed compute ([`227c13f`](../../commit/227c13f))
+- **dashboard**: migrate to RAECoreService and fix trend logic caught by Node1 audit ([`ec9c48b`](../../commit/ec9c48b))
+
+### 📚 Documentation
+
+- **use-case**: add distributed code audit case study and refactor dashboard ([`b17a1a8`](../../commit/b17a1a8))
+- **infra**: update node1 status to kubus-gpu-01 and document tailscale fix ([`e88c6c4`](../../commit/e88c6c4))
+
 ### 🔧 Chore
 
-- resolve documentation conflicts during merge from develop to main ([`53a50fe`](../../commit/53a50fe))
-- accept remote doc updates to resolve conflicts ([`b5f7cf5`](../../commit/b5f7cf5))
-- resolve auto-generated doc conflicts during merge to main ([`954d510`](../../commit/954d510))
+- **qa**: fix lint warnings and stabilize unit tests for graph-management ([`1f6592b`](../../commit/1f6592b))
 - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
 
 ### 📦 Other
 
-- Merge branch 'release/v2.5.0' ([`797f081`](../../commit/797f081))
 - Merge branch 'develop' of github.com:dreamsoft-pro/RAE-agentic-memory into develop ([`9c7710d`](../../commit/9c7710d))
 
 ---
 
 ## Recent Changes (Auto-generated)
 
-*Last updated: 2025-12-23 17:35 • Branch: main • Commit: 797f081*
+*Last updated: 2025-12-24 09:00 • Branch: develop • Commit: ee8c7e1*
+
+### ✨ Features
+
+- **infra**: enable remote windows connection (CORS, docs) ([`cad3366`](../../commit/cad3366))
+- **infra**: automate nocturnal quality audit and improve agent prompt handling ([`8659304`](../../commit/8659304))
+- **infra**: implement Writer/Reviewer quality loop and add install guide for new nodes ([`d056613`](../../commit/d056613))
+- **infra**: enable real Ollama/DeepSeek task execution on remote nodes ([`a41d5a1`](../../commit/a41d5a1))
+- **infra**: establish robust SSH reverse tunnel for remote compute node ([`7e64074`](../../commit/7e64074))
+
+### 🐛 Bug Fixes
+
+- **ci**: add missing pytest-testmon dependency ([`24736ca`](../../commit/24736ca))
+- **core**: resolve deprecation warnings and graph repository uuid bug ([`54abd8e`](../../commit/54abd8e))
+- **lint**: remove unused uuid import in graph_repository.py ([`4a151f9`](../../commit/4a151f9))
+- **graph**: use autoincrement ID for graph nodes and edges ([`2d41420`](../../commit/2d41420))
+- **lint**: sort imports in graph_repository.py ([`a514607`](../../commit/a514607))
+
+### ♻️ Refactoring
+
+- **graph**: migrate enhanced graph routes to RAECoreService and update agent protocol for distributed compute ([`227c13f`](../../commit/227c13f))
+- **dashboard**: migrate to RAECoreService and fix trend logic caught by Node1 audit ([`ec9c48b`](../../commit/ec9c48b))
+
+### 📚 Documentation
+
+- **use-case**: add distributed code audit case study and refactor dashboard ([`b17a1a8`](../../commit/b17a1a8))
+- **infra**: update node1 status to kubus-gpu-01 and document tailscale fix ([`e88c6c4`](../../commit/e88c6c4))
+
+### 🔧 Chore
+
+- **qa**: fix lint warnings and stabilize unit tests for graph-management ([`1f6592b`](../../commit/1f6592b))
+- resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+
+### 📦 Other
+
+- Merge branch 'develop' of github.com:dreamsoft-pro/RAE-agentic-memory into develop ([`9c7710d`](../../commit/9c7710d))
+
+---
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2025-12-24 08:49 • Branch: develop • Commit: 2692b7e*
+
+### ✨ Features
+
+- **infra**: enable remote windows connection (CORS, docs) ([`cad3366`](../../commit/cad3366))
+- **infra**: automate nocturnal quality audit and improve agent prompt handling ([`8659304`](../../commit/8659304))
+- **infra**: implement Writer/Reviewer quality loop and add install guide for new nodes ([`d056613`](../../commit/d056613))
+- **infra**: enable real Ollama/DeepSeek task execution on remote nodes ([`a41d5a1`](../../commit/a41d5a1))
+- **infra**: establish robust SSH reverse tunnel for remote compute node ([`7e64074`](../../commit/7e64074))
+
+### 🐛 Bug Fixes
+
+- **ci**: add missing pytest-testmon dependency ([`24736ca`](../../commit/24736ca))
+- **core**: resolve deprecation warnings and graph repository uuid bug ([`54abd8e`](../../commit/54abd8e))
+- **lint**: remove unused uuid import in graph_repository.py ([`4a151f9`](../../commit/4a151f9))
+- **graph**: use autoincrement ID for graph nodes and edges ([`2d41420`](../../commit/2d41420))
+- **lint**: sort imports in graph_repository.py ([`a514607`](../../commit/a514607))
+
+### ♻️ Refactoring
+
+- **graph**: migrate enhanced graph routes to RAECoreService and update agent protocol for distributed compute ([`227c13f`](../../commit/227c13f))
+- **dashboard**: migrate to RAECoreService and fix trend logic caught by Node1 audit ([`ec9c48b`](../../commit/ec9c48b))
+
+### 📚 Documentation
+
+- **use-case**: add distributed code audit case study and refactor dashboard ([`b17a1a8`](../../commit/b17a1a8))
+- **infra**: update node1 status to kubus-gpu-01 and document tailscale fix ([`e88c6c4`](../../commit/e88c6c4))
+
+### 🔧 Chore
+
+- **qa**: fix lint warnings and stabilize unit tests for graph-management ([`1f6592b`](../../commit/1f6592b))
+- resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+
+### 📦 Other
+
+- Merge branch 'develop' of github.com:dreamsoft-pro/RAE-agentic-memory into develop ([`9c7710d`](../../commit/9c7710d))
+
+---
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2025-12-23 20:32 • Branch: develop • Commit: b737e3d*
+
+### ✨ Features
+
+- **infra**: implement Writer/Reviewer quality loop and add install guide for new nodes ([`d056613`](../../commit/d056613))
+- **infra**: enable real Ollama/DeepSeek task execution on remote nodes ([`a41d5a1`](../../commit/a41d5a1))
+- **infra**: establish robust SSH reverse tunnel for remote compute node ([`7e64074`](../../commit/7e64074))
+
+### 🐛 Bug Fixes
+
+- **lint**: remove unused uuid import in graph_repository.py ([`4a151f9`](../../commit/4a151f9))
+- **graph**: use autoincrement ID for graph nodes and edges ([`2d41420`](../../commit/2d41420))
+- **lint**: sort imports in graph_repository.py ([`a514607`](../../commit/a514607))
+
+### ♻️ Refactoring
+
+- **dashboard**: migrate to RAECoreService and fix trend logic caught by Node1 audit ([`ec9c48b`](../../commit/ec9c48b))
+
+### 📚 Documentation
+
+- **use-case**: add distributed code audit case study and refactor dashboard ([`b17a1a8`](../../commit/b17a1a8))
+- **infra**: update node1 status to kubus-gpu-01 and document tailscale fix ([`e88c6c4`](../../commit/e88c6c4))
+
+### 🔧 Chore
+
+- resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+
+### 📦 Other
+
+- Merge branch 'develop' of github.com:dreamsoft-pro/RAE-agentic-memory into develop ([`9c7710d`](../../commit/9c7710d))
+
+---
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2025-12-23 20:25 • Branch: develop • Commit: ec9c48b*
+
+### ✨ Features
+
+- **infra**: implement Writer/Reviewer quality loop and add install guide for new nodes ([`d056613`](../../commit/d056613))
+- **infra**: enable real Ollama/DeepSeek task execution on remote nodes ([`a41d5a1`](../../commit/a41d5a1))
+- **infra**: establish robust SSH reverse tunnel for remote compute node ([`7e64074`](../../commit/7e64074))
+
+### 🐛 Bug Fixes
+
+- **lint**: remove unused uuid import in graph_repository.py ([`4a151f9`](../../commit/4a151f9))
+- **graph**: use autoincrement ID for graph nodes and edges ([`2d41420`](../../commit/2d41420))
+- **lint**: sort imports in graph_repository.py ([`a514607`](../../commit/a514607))
+
+### ♻️ Refactoring
+
+- **dashboard**: migrate to RAECoreService and fix trend logic caught by Node1 audit ([`ec9c48b`](../../commit/ec9c48b))
+
+### 📚 Documentation
+
+- **use-case**: add distributed code audit case study and refactor dashboard ([`b17a1a8`](../../commit/b17a1a8))
+- **infra**: update node1 status to kubus-gpu-01 and document tailscale fix ([`e88c6c4`](../../commit/e88c6c4))
+
+### 🔧 Chore
+
+- resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+
+### 📦 Other
+
+- Merge branch 'develop' of github.com:dreamsoft-pro/RAE-agentic-memory into develop ([`9c7710d`](../../commit/9c7710d))
+
+---
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2025-12-23 19:57 • Branch: develop • Commit: ffa4e7b*
+
+### ✨ Features
+
+- **infra**: implement Writer/Reviewer quality loop and add install guide for new nodes ([`d056613`](../../commit/d056613))
+- **infra**: enable real Ollama/DeepSeek task execution on remote nodes ([`a41d5a1`](../../commit/a41d5a1))
+- **infra**: establish robust SSH reverse tunnel for remote compute node ([`7e64074`](../../commit/7e64074))
+
+### 🐛 Bug Fixes
+
+- **lint**: remove unused uuid import in graph_repository.py ([`4a151f9`](../../commit/4a151f9))
+- **graph**: use autoincrement ID for graph nodes and edges ([`2d41420`](../../commit/2d41420))
+- **lint**: sort imports in graph_repository.py ([`a514607`](../../commit/a514607))
+
+### 📚 Documentation
+
+- **infra**: update node1 status to kubus-gpu-01 and document tailscale fix ([`e88c6c4`](../../commit/e88c6c4))
+
+### 🔧 Chore
+
+- resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+
+### 📦 Other
+
+- Merge branch 'develop' of github.com:dreamsoft-pro/RAE-agentic-memory into develop ([`9c7710d`](../../commit/9c7710d))
+
+---
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2025-12-23 19:50 • Branch: develop • Commit: d056613*
+
+### ✨ Features
+
+- **infra**: implement Writer/Reviewer quality loop and add install guide for new nodes ([`d056613`](../../commit/d056613))
+- **infra**: enable real Ollama/DeepSeek task execution on remote nodes ([`a41d5a1`](../../commit/a41d5a1))
+- **infra**: establish robust SSH reverse tunnel for remote compute node ([`7e64074`](../../commit/7e64074))
+
+### 🐛 Bug Fixes
+
+- **lint**: remove unused uuid import in graph_repository.py ([`4a151f9`](../../commit/4a151f9))
+- **graph**: use autoincrement ID for graph nodes and edges ([`2d41420`](../../commit/2d41420))
+- **lint**: sort imports in graph_repository.py ([`a514607`](../../commit/a514607))
+
+### 📚 Documentation
+
+- **infra**: update node1 status to kubus-gpu-01 and document tailscale fix ([`e88c6c4`](../../commit/e88c6c4))
+
+### 🔧 Chore
+
+- resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+
+### 📦 Other
+
+- Merge branch 'develop' of github.com:dreamsoft-pro/RAE-agentic-memory into develop ([`9c7710d`](../../commit/9c7710d))
+
+---
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2025-12-23 19:35 • Branch: develop • Commit: a41d5a1*
+
+### ✨ Features
+
+- **infra**: enable real Ollama/DeepSeek task execution on remote nodes ([`a41d5a1`](../../commit/a41d5a1))
+- **infra**: establish robust SSH reverse tunnel for remote compute node ([`7e64074`](../../commit/7e64074))
+
+### 🐛 Bug Fixes
+
+- **lint**: remove unused uuid import in graph_repository.py ([`4a151f9`](../../commit/4a151f9))
+- **graph**: use autoincrement ID for graph nodes and edges ([`2d41420`](../../commit/2d41420))
+- **lint**: sort imports in graph_repository.py ([`a514607`](../../commit/a514607))
+
+### 📚 Documentation
+
+- **infra**: update node1 status to kubus-gpu-01 and document tailscale fix ([`e88c6c4`](../../commit/e88c6c4))
+
+### 🔧 Chore
+
+- resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+
+### 📦 Other
+
+- Merge branch 'develop' of github.com:dreamsoft-pro/RAE-agentic-memory into develop ([`9c7710d`](../../commit/9c7710d))
+
+---
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2025-12-23 19:28 • Branch: develop • Commit: e88c6c4*
+
+### ✨ Features
+
+- **infra**: establish robust SSH reverse tunnel for remote compute node ([`7e64074`](../../commit/7e64074))
+
+### 🐛 Bug Fixes
+
+- **lint**: remove unused uuid import in graph_repository.py ([`4a151f9`](../../commit/4a151f9))
+- **graph**: use autoincrement ID for graph nodes and edges ([`2d41420`](../../commit/2d41420))
+- **lint**: sort imports in graph_repository.py ([`a514607`](../../commit/a514607))
+
+### 📚 Documentation
+
+- **infra**: update node1 status to kubus-gpu-01 and document tailscale fix ([`e88c6c4`](../../commit/e88c6c4))
+
+### 🔧 Chore
+
+- resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+
+### 📦 Other
+
+- Merge branch 'develop' of github.com:dreamsoft-pro/RAE-agentic-memory into develop ([`9c7710d`](../../commit/9c7710d))
+
+---
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2025-12-23 17:40 • Branch: develop • Commit: 105a0be*
 
 ### ✨ Features
 
@@ -70,14 +367,34 @@
 
 ### 🔧 Chore
 
-- resolve documentation conflicts during merge from develop to main ([`53a50fe`](../../commit/53a50fe))
-- accept remote doc updates to resolve conflicts ([`b5f7cf5`](../../commit/b5f7cf5))
-- resolve auto-generated doc conflicts during merge to main ([`954d510`](../../commit/954d510))
 - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
 
 ### 📦 Other
 
-- Merge branch 'release/v2.5.0' ([`797f081`](../../commit/797f081))
+- Merge branch 'develop' of github.com:dreamsoft-pro/RAE-agentic-memory into develop ([`9c7710d`](../../commit/9c7710d))
+
+---
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2025-12-23 17:33 • Branch: develop • Commit: 4a151f9*
+
+### ✨ Features
+
+- **infra**: establish robust SSH reverse tunnel for remote compute node ([`7e64074`](../../commit/7e64074))
+
+### 🐛 Bug Fixes
+
+- **lint**: remove unused uuid import in graph_repository.py ([`4a151f9`](../../commit/4a151f9))
+- **graph**: use autoincrement ID for graph nodes and edges ([`2d41420`](../../commit/2d41420))
+- **lint**: sort imports in graph_repository.py ([`a514607`](../../commit/a514607))
+
+### 🔧 Chore
+
+- resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+
+### 📦 Other
+
 - Merge branch 'develop' of github.com:dreamsoft-pro/RAE-agentic-memory into develop ([`9c7710d`](../../commit/9c7710d))
 
 ---
