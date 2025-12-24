@@ -59,7 +59,7 @@
 - [ ] **E2E/Integration Polish**
 
 ## Technical Debt (Auto-generated from code)
-*Last scan: 2025-12-24 10:32*
+*Last scan: 2025-12-24 20:34*
 
 - [ ] **CHANGELOG.md:35** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
 - [ ] **CHANGELOG.md:77** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
@@ -122,7 +122,7 @@
 - [ ] **apps/memory_api/routes/event_triggers.py:175** - tenant_id = "default"   TODO: Get from auth context
 - [ ] **apps/memory_api/routes/event_triggers.py:202** - tenant_id = "default"   TODO: Get from auth context
 - [ ] **apps/memory_api/routes/event_triggers.py:376** - tenant_id = "default"   TODO: Get from auth context
-- [ ] **apps/memory_api/core/graph_operator.py:751** - Use embedding similarity for semantic matching with similarity_threshold
+- [ ] **apps/memory_api/core/graph_operator.py:415** - Use embedding similarity for semantic matching with similarity_threshold
 - [ ] **apps/memory_api/core/reward.py:278** - Add relevance scoring when available
 - [ ] **apps/memory_api/core/action_executor.py:248** - Integrate with actual services
 - [ ] **apps/memory_api/core/action_executor.py:275** - Mock action implementations (TODO: Replace with real integrations)
@@ -130,7 +130,7 @@
 - [ ] **apps/memory_api/repositories/metrics_repository.py:83** - Implement COPY-based bulk insert for better performance
 - [ ] **scripts/validate_docs.py:44** - r"\[TODO:.*?\]",
 - [ ] **scripts/validate_docs.py:45** - r"\[FIXME:.*?\]",
-- [ ] **scripts/metrics_tracker.py:151** - metrics.record_file("TODO.md", "update_todo")
+- [ ] **scripts/metrics_tracker.py:150** - metrics.record_file("TODO.md", "update_todo")
 - [ ] **scripts/docs_automator.py:4** - Generates/Updates CHANGELOG.md, TODO.md, STATUS.md, and TESTING_STATUS.md.
 - [ ] **scripts/docs_automator.py:26** - _FILE = "TODO.md"
 - [ ] **scripts/docs_automator.py:164** - print(f"Updating {TODO_FILE}...")
@@ -181,6 +181,7 @@
 - [ ] **docs/orkiestrator-idea.md:270** - zapisuje efekty do projektu (pliki, TODO, testy),
 - [ ] **docs/RAE_MATHEMATICAL_REFACTORING_GUIDE.md:2196** - Add relevance scoring when available
 - [ ] **docs/RAE_MATHEMATICAL_REFACTORING_GUIDE.md:3935** - Use embedding similarity for semantic matching
+- [ ] **docs/paths/developer.md:164** - **(TODO: Extract detailed steps from `docs/PRODUCTION_PROXMOX_HA.md` and add them here.)**
 - [ ] **docs/paths/scientist.md:139** - -   **Retrieval Quality (Lines 258-283):** Quality is a function of the number of memories retrieved (with diminishing returns) and their average relevance. The code includes a `TODO` to incorporate relevance scores, indicating an area of active development.
 - [ ] **docs/autodoc/autodoc_checker.py:9** - - API endpoint consistency (TODO)
 - [ ] **docs/autodoc/autodoc_checker.py:83** - Implement fragment injection
