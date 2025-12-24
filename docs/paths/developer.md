@@ -1,297 +1,198 @@
-# RAE Developer Handbook: The Complete Engineering Guide
+# RAE for Developers: Quick Start & API Integration
 
-> **Version:** 2.2.0-enterprise
-> **Audience:** Software Engineers, AI Engineers, System Architects
-> **Goal:** To provide a comprehensive, code-first guide to understanding, deploying, and integrating with the Reflective Agentic-memory Engine.
+This guide provides developers with a comprehensive overview of how to set up, deploy, and integrate with the RAE (Reasoning and Action Engine).
 
----
+## Quick Start: 5-Minute Hello World
 
-## 1. Introduction: Beyond Vector Databases
+This quick start uses the **RAE Lite** profile, which is the fastest way to get a functional RAE instance running on your local machine.
 
-As an engineer building AI agents, you are likely familiar with the limitations of standard RAG (Retrieval-Augmented Generation):
-1.  **Context Window Flooding:** Filling the prompt with marginally relevant chunks degrades reasoning quality.
-2.  **Loss of Procedural Knowledge:** Vector DBs store *facts* but struggle with *procedures* ("how we did X last time") and *reasoning* ("why we chose Y over Z").
-3.  **Ephemeral Memory:** Agents start fresh every session or rely on primitive sliding windows.
+**Prerequisites:**
+- Docker and Docker Compose installed.
+- Git installed.
 
-**RAE (Reflective Agentic-memory Engine)** is designed to solve these specific engineering challenges. It is not just a database; it is a **cognitive architecture** that acts as a persistent, learning memory layer for your agents.
+**Steps:**
 
-### 1.1 The "3x First" Engineering Philosophy
-
--   **Privacy-First:** We assume you run in a VPC or air-gapped environment. No telemetry leaves your containers unless explicitly configured.
--   **Local-First:** Docker Compose is a first-class citizen. You can run the entire stack on a MacBook Pro or a single EC2 instance.
--   **Open-Source-First:** The core logic is Apache 2.0. No "open core" crippling of essential APIs.
-
----
-
-## 2. System Architecture
-
-RAE follows a clean, hexagonal-inspired architecture to ensure modularity and testability.
-
-### 2.1 High-Level Component Diagram
-
-```mermaid
-graph TD
-    Client[Agent / Client App] -->|HTTP/REST| API[RAE API Service]
-    Client -->|WebSocket| Stream[Dashboard Stream]
-    
-    subgraph "RAE Core (Docker)"
-        API -->|CRUD| PG[(PostgreSQL)]
-        API -->|Vector Search| Qdrant[(Qdrant Vector DB)]
-        API -->|Cache/Broker| Redis[(Redis)]
-        
-        API -->|Async Task| Celery[Celery Worker]
-        Celery -->|Read/Write| PG
-        Celery -->|Vector Ops| Qdrant
-        
-        subgraph "Intelligence Layer"
-            API -->|LLM Calls| Providers[LLM Providers]
-            Celery -->|Reflections| Providers
-            Providers --> OpenAI
-            Providers --> Anthropic
-            Providers --> Local[Ollama/LocalLLM]
-        end
-    end
-```
-
-### 2.2 Data Flow: The Memory Lifecycle
-
-1.  **Ingestion (Episodic):** Raw events (user msg, tool output) are stored in `episodic_memory` (PostgreSQL) and embedded (Qdrant).
-2.  **Consolidation (Semantic):** Background workers (Celery) analyze episodes to extract entities and facts, updating the Knowledge Graph.
-3.  **Retrieval (Working):** When a query arrives:
-    *   **Vector Search:** Finds semantically similar items.
-    *   **Graph Traversal:** Finds related entities (2-hop).
-    *   **Information Bottleneck:** A mathematical optimization algorithm selects the *optimal* subset of memories to fit the context window budget.
-4.  **Reflection (Reflective):** After a task, the engine evaluates success/failure and generates a "Lesson Learned," stored in `reflective_memory` for future retrieval.
-
----
-
-## 3. Quick Start: Local Development
-
-For everyday development, we recommend the Docker Compose setup.
-
-### 3.1 Prerequisites
--   Docker Engine 24+ & Docker Compose v2
--   Python 3.11+ (for local SDK/testing)
--   Git
-
-### 3.2 Setup
-
-```bash
-# 1. Clone
-git clone https://github.com/dreamsoft-pro/RAE-agentic-memory.git
-cd RAE-agentic-memory
-
-# 2. Configure Environment
-cp .env.example .env
-# Edit .env to add your API keys (OPENAI_API_KEY, etc.) if using cloud models.
-# For local models, configure OLLAMA_BASE_URL.
-
-# 3. Start RAE Lite (Minimal stack: API, DB, Redis, Qdrant)
-./scripts/setup_autostart.sh
-# OR manually:
-docker compose -f docker-compose.lite.yml up -d
-```
-
-### 3.3 Verifying the Deployment
-
--   **Health Check:** `curl http://localhost:8000/health`
--   **API Docs:** Open `http://localhost:8000/docs` (Swagger UI)
--   **Dashboard:** Open `http://localhost:8501` (if running full stack)
-
----
-
-## 4. API Reference Cookbook
-
-This section provides practical, copy-pasteable examples for common tasks.
-
-### 4.1 Storing a Memory
-
-**Use Case:** Your agent just completed a step or received user input.
-
-**Python SDK:**
-```python
-from rae_memory_sdk import MemoryClient
-
-client = MemoryClient(base_url="http://localhost:8000")
-
-async def store_interaction():
-    await client.add_memory(
-        tenant_id="default",
-        project_id="my-agent",
-        content="User requested a refund for order #999. Refund policy checked: valid.",
-        source="agent-conversation-log",
-        layer="episodic",  # 'episodic' is for raw events
-        tags=["refund", "customer-service", "order-999"]
-    )
-```
-
-**cURL:**
-```bash
-curl -X POST "http://localhost:8000/v1/memory/store" \
-     -H "X-Tenant-Id: default" \
-     -H "Content-Type: application/json" \
-     -d 
-{
-           "project_id": "my-agent",
-           "content": "User requested a refund...",
-           "layer": "episodic",
-           "source": "curl-test"
-         }
-```
-
-### 4.2 Querying Memory (Hybrid Search)
-
-**Use Case:** Your agent needs context before answering a user.
-
-**Python SDK:**
-```python
-async def get_context(user_query: str):
-    results = await client.query_memory(
-        tenant_id="default",
-        project_id="my-agent",
-        query_text=user_query,
-        limit=5,
-        # Hybrid Search Parameters
-        filters={
-            "layer": ["episodic", "semantic"],
-            "tags": ["customer-service"]
-        }
-    )
-    
-    context_str = "\n".join([f"- {r.content}" for r in results])
-    return context_str
-```
-
-### 4.3 Triggering a Reflection
-
-**Use Case:** The task is finished. Force the system to learn from it.
-
-**Python SDK:**
-```python
-async def reflect_on_task():
-    # Typically, reflections run in background, but you can force one
-    await client.trigger_reflection(
-        tenant_id="default",
-        project_id="my-agent",
-        context_summary="Handled refund #999 successfully. Used Policy v2.",
-        outcome="success"
-    )
-```
-
----
-
-## 5. Configuration & Environment Variables
-
-RAE is highly configurable via environment variables.
-
-| Variable | Default | Description |
-| :--- | :--- | :--- |
-| `POSTGRES_HOST` | `postgres` | Database hostname |
-| `QDRANT_HOST` | `qdrant` | Vector DB hostname |
-| `RAE_VECTOR_BACKEND` | `qdrant` | `qdrant` or `pgvector` |
-| `ML_SERVICE_URL` | `http://ml-service:8001` | URL for external ML/Embedding service |
-| `LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING`, `ERROR` |
-| `OTEL_TRACES_ENABLED` | `true` | Enable OpenTelemetry tracing |
-| `OPENAI_API_KEY` | - | Required if using OpenAI for reflections |
-| `OLLAMA_BASE_URL` | - | Required if using local LLMs |
-
----
-
-## 6. Advanced Integration: MCP Server
-
-RAE implements the **Model Context Protocol (MCP)**, allowing it to be used natively by AI coding assistants like Claude Desktop or IDE extensions.
-
-### 6.1 Configuration (`claude_desktop_config.json`)
-
-```json
-{
-  "mcpServers": {
-    "rae": {
-      "command": "docker",
-      "args": [
-        "exec",
-        "-i",
-        "rae-api",
-        "rae-mcp-server"
-      ],
-      "env": {
-        "RAE_API_URL": "http://localhost:8000"
-      }
-    }
-  }
-}
-```
-
-This allows you to ask Claude: *"Check RAE memory for past solutions to this bug"* directly within your chat.
-
----
-
-## 7. Troubleshooting & Debugging
-
-### 7.1 Common Issues
-
-**Issue: "Connection Refused" to Database**
--   **Check:** Is the container running? `docker compose ps`
--   **Check:** Logs `docker compose logs postgres`
--   **Fix:** Ensure volumes are not corrupted. Try `docker compose down -v` to reset data (WARNING: data loss).
-
-**Issue: LLM Authentication Error**
--   **Check:** `.env` file for valid API keys.
--   **Check:** Are keys passed to the container? Inspect `docker compose config`.
-
-**Issue: Migrations Failed (`alembic`)
--   **Fix:** Run `docker compose exec rae-api alembic upgrade head` manually.
-
-### 7.2 Accessing Logs
-
--   **API Logs:** `docker compose logs -f rae-api`
--   **Worker Logs:** `docker compose logs -f celery-worker`
--   **Database Logs:** `docker compose logs -f postgres`
-
-### 7.3 Accessing the Database Directly
-
-```bash
-# PostgreSQL CLI
-docker compose exec postgres psql -U rae -d rae
-
-# Redis CLI
-docker compose exec redis redis-cli
-```
-
----
-
-## 8. Developing RAE (Contributing)
-
-If you want to modify RAE source code itself:
-
-1.  **Install Dev Dependencies:**
+1.  **Clone the repository:**
     ```bash
-    python -m venv .venv
-    source .venv/bin/activate
-    pip install -r requirements-dev.txt
-    pip install -e sdk/python/rae_memory_sdk
+    git clone https://github.com/dreamsoft-pro/RAE-agentic-memory.git
+    cd RAE-agentic-memory
     ```
 
-2.  **Run Tests:**
+2.  **Start the RAE Lite stack:**
     ```bash
-    # Unit tests (fast)
-    make test-unit
-    
-    # Integration tests (requires running containers)
-    make test-integration
+    docker-compose -f docker-compose.lite.yml up -d
+    ```
+    This command will start the core RAE API, a PostgreSQL database, a Redis cache, and a Qdrant vector database.
+
+3.  **Verify the services are running:**
+    You can check the status of the containers:
+    ```bash
+    docker-compose -f docker-compose.lite.yml ps
+    ```
+    You should also be able to access the health check endpoint:
+    [http://localhost:8000/health](http://localhost:8000/health)
+
+4.  **Interact with the API using the Python SDK:**
+    *(Assuming you have Python and `pip` installed on your host machine)*
+
+    a. **Install the SDK:**
+    ```bash
+    pip install -e ./sdk/python/
     ```
 
-3.  **Code Style:**
-    We use `ruff`, `black`, and `isort`.
-    ```bash
-    make format
-    make lint
+    b. **Create a Python script (`hello_rae.py`):**
+    ```python
+    import asyncio
+    from rae_memory_sdk.memory_client import MemoryClient, MemoryOperation
+
+    async def main():
+        # Connect to the local RAE API
+        client = MemoryClient()
+
+        # Define a tenant and project
+        tenant_id = "my-test-tenant"
+        project_id = "my-first-project"
+
+        # Add a memory
+        memory_text = "The user is interested in learning about cognitive architectures."
+        await client.add_memory(
+            tenant_id,
+            project_id,
+            memory_text,
+            importance=0.8,
+            source="hello_world_script"
+        )
+        print(f"Added memory: '{memory_text}'")
+
+        # Retrieve the memory
+        query = "What is the user interested in?"
+        results = await client.query_memory(tenant_id, project_id, query)
+
+        print(f"\nQuerying for: '{query}'")
+        if results:
+            print("Found matching memories:")
+            for res in results:
+                print(f"- {res.content} (Score: {res.score:.2f})")
+        else:
+            print("No matching memories found.")
+
+    if __name__ == "__main__":
+        asyncio.run(main())
+
     ```
+
+    c. **Run the script:**
+    ```bash
+    python hello_rae.py
+    ```
+
+You have now successfully added a memory to RAE and retrieved it!
 
 ---
 
-## 9. Next Steps
+## Deployment Options
 
--   Explore **[Scientific Background](scientist.md)** to understand the math behind the scoring.
--   Check **[Industrial Use Cases](industry.md)** for deployment architectures.
--   Join our **[Discord/Community](link)** to discuss integrations.
+RAE offers several deployment profiles tailored to different use cases, from local development with hot-reloading to a full production-ready stack.
+
+### 1. Local Development (Hot Reload)
+
+This is the recommended setup for active development on the RAE codebase. It uses `docker-compose.dev.yml` as an override file to enable hot-reloading.
+
+**Key Features:**
+-   **Hot-Reloading:** The `uvicorn` web server is started with the `--reload` flag. Any changes you make to the source code on your host machine will be immediately reflected in the running container without needing to rebuild the image.
+-   **Source Code Mounting:** The `./apps` and `./sdk` directories are mounted as read-only volumes into the containers. This allows the reload mechanism to detect file changes.
+-   **Debug-Friendly:** Log levels are set to `DEBUG`, and the observability stack (OpenTelemetry) is disabled to maximize performance.
+-   **Dev Tools:** Includes `Adminer`, a web-based database management tool accessible at `http://localhost:8080`.
+
+**How to Run:**
+```bash
+# Use both the base and dev override files
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+
+# To stop
+docker-compose -f docker-compose.yml -f docker-compose.dev.yml down
+```
+
+### 2. RAE Lite (Minimal Deployment)
+
+This profile is perfect for small teams, demos, or development environments where the full observability and background processing stack is not required. It's a single-server setup that is easy to manage.
+
+**Source File:** `docker-compose.lite.yml`
+
+**Stack:**
+-   **Included:** `rae-api`, `postgres`, `redis`, `qdrant`
+-   **Excluded:** `ml-service`, `celery-worker`, `celery-beat`, observability stack, dashboard.
+
+**How it Works:**
+Features are disabled via environment variables in the `rae-api` service:
+```yaml
+environment:
+  - ML_SERVICE_ENABLED=false
+  - RERANKER_ENABLED=false
+  - CELERY_ENABLED=false
+```
+
+**How to Run:**
+```bash
+docker-compose -f docker-compose.lite.yml up -d
+```
+
+### 3. RAE Server (Standard Production)
+
+This is the standard, full-stack deployment for a production environment on a single node. It includes all services for full functionality, observability, and asynchronous processing.
+
+**Source File:** `docker-compose.yml`
+
+**Full Stack:**
+-   `rae-api`: The main API.
+-   `ml-service`: A separate service for heavy ML models, isolating them from the main API.
+-   `postgres`: The primary database with `pgvector`.
+-   `redis`: Caching and Celery broker.
+-   `qdrant`: Dedicated vector database.
+-   `celery-worker` & `celery-beat`: For background tasks like memory consolidation and reflection.
+-   `otel-collector` & `jaeger`: A full observability stack for distributed tracing.
+-   `rae-dashboard`: An optional Streamlit dashboard for visualizing memory.
+
+**How to Run:**
+```bash
+docker-compose -f docker-compose.yml up -d
+```
+
+### 4. Proxmox HA (High Availability)
+For enterprise-grade, high-availability deployments, RAE can be deployed in a multi-node cluster using Proxmox. This setup involves load balancers, replicated services, and failover mechanisms.
+
+**(TODO: Extract detailed steps from `docs/PRODUCTION_PROXMOX_HA.md` and add them here.)**
+
+---
+
+## Architecture Deep Dive
+
+RAE follows a clean, 3-layer architecture pattern within its services:
+
+**Repository Layer → Service Layer → Route Layer**
+
+1.  **Repository Layer:**
+    -   **Purpose:** Handles all direct communication with the database (PostgreSQL and Qdrant). It abstracts away the specifics of data storage and retrieval.
+    -   **Example:** `apps/memory_api/repositories/memory_repository.py` contains methods like `insert_memory` and `query_memories_by_vector`.
+
+2.  **Service Layer:**
+    -   **Purpose:** Contains the core business logic of the application. It orchestrates calls to one or more repositories and implements the complex features of the engine.
+    -   **Example:** `apps/memory_api/services/memory_scoring_v3.py` implements the hybrid math scoring model, and `apps/memory_api/services/reflection_engine_v2.py` implements the reflection logic.
+
+3.  **Route Layer (API):**
+    -   **Purpose:** Defines the external-facing API endpoints. It handles incoming HTTP requests, performs validation (using Pydantic), calls the relevant service layer methods, and formats the HTTP response.
+    -   **Example:** `apps/memory_api/routes/memory.py` defines the `/v1/memory/query` endpoint, which calls the memory service to perform a search.
+
+This separation of concerns makes the codebase modular, easier to test, and easier to maintain.
+
+---
+
+## Testing Your Integration
+
+RAE includes a comprehensive testing suite. When developing an application that integrates with RAE, you should follow these testing principles:
+
+-   **Phase 1 (Feature Branch):** Test only your new code. If you add a feature that interacts with RAE, write specific tests for that interaction. You can run a subset of tests quickly using `pytest --no-cov path/to/your/tests`.
+-   **Phase 2 (Develop Branch):** Before merging to a main branch, run the full unit test suite using `make test-unit`. This ensures your changes have not caused regressions elsewhere in the system.
+-   **Use Templates:** When adding new code, use the templates provided in the `.ai-templates/` directory to ensure consistency.
+
+**(For more details, see `docs/AGENTS_TEST_POLICY.md`.)**

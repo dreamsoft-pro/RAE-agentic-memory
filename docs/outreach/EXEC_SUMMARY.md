@@ -161,7 +161,7 @@ We invite researchers, students, and AI labs to:
 
 2. Start RAE Lite:
    ```bash
-   docker compose -f docker compose.lite.yml up -d
+   docker compose -f docker-compose.lite.yml up -d
    ```
 
 3. Run tests:
