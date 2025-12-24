@@ -15,10 +15,8 @@ from typing import List
 import structlog
 from fastapi import APIRouter, Depends, HTTPException
 
-from apps.memory_api.dependencies import (
-    get_enhanced_graph_repository,
-    get_rae_core_service,
-)
+from apps.memory_api.dependencies import get_rae_core_service
+from apps.memory_api.repo_dependencies import get_enhanced_graph_repository
 from apps.memory_api.models.graph_enhanced_models import (  # Request/Response models; Data models
     ActivateEdgeRequest,
     BatchCreateEdgesRequest,

@@ -29,8 +29,8 @@ logger = structlog.get_logger(__name__)
 class LocalEmbeddingProvider(IEmbeddingProvider):
     """Local embedding provider wrapping the embedding service."""
 
-    def __init__(self):
-        self.service = get_embedding_service()
+    def __init__(self, embedding_service: Any = None):
+        self.service = embedding_service or get_embedding_service()
 
     async def embed_text(self, text: str) -> List[float]:
         """Generate embedding for text."""
