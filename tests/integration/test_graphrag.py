@@ -17,8 +17,6 @@ import asyncpg
 import pytest
 
 try:
-    import spacy
-
     HAS_SPACY = True
 except ImportError:
     HAS_SPACY = False
@@ -88,7 +86,15 @@ def mock_llm():
             "triples_count": 4,
         },
     )
-    mock_provider.generate_structured = AsyncMock(return_value=mock_extraction_result)
+
+    async def mock_generate_structured(system, prompt, model, response_model):
+        model_name = getattr(response_model, "__name__", str(response_model))
+        if "FactualIndices" in model_name or "indices" in str(response_model):
+            # This is the gatekeeper filter
+            return MagicMock(indices=[1, 2, 3, 4])
+        return mock_extraction_result
+
+    mock_provider.generate_structured = AsyncMock(side_effect=mock_generate_structured)
 
     # Mock for hierarchical reflection (generate)
     mock_reflection_result = LLMResponse(

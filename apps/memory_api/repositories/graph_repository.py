@@ -402,18 +402,21 @@ class GraphRepository:
             True if node was created, False if it already existed
         """
         import json
+        import uuid
 
         async with self.pool.acquire() as conn:
             # Ensure properties is JSON-serializable
             properties_json = json.dumps(properties) if properties else "{}"
+            new_id = uuid.uuid4()
 
             result = await conn.execute(
                 """
                 INSERT INTO knowledge_graph_nodes
-                (tenant_id, project_id, node_id, label, properties)
-                VALUES ($1, $2, $3, $4, $5::jsonb)
+                (id, tenant_id, project_id, node_id, label, properties)
+                VALUES ($1, $2, $3, $4, $5, $6::jsonb)
                 ON CONFLICT (tenant_id, project_id, node_id) DO NOTHING
                 """,
+                new_id,
                 tenant_id,
                 project_id,
                 node_id,
@@ -447,18 +450,21 @@ class GraphRepository:
             True if edge was created, False if it already existed
         """
         import json
+        import uuid
 
         async with self.pool.acquire() as conn:
             # Ensure properties is JSON-serializable
             properties_json = json.dumps(properties) if properties else "{}"
+            new_id = uuid.uuid4()
 
             result = await conn.execute(
                 """
                 INSERT INTO knowledge_graph_edges
-                (tenant_id, project_id, source_node_id, target_node_id, relation, properties)
-                VALUES ($1, $2, $3, $4, $5, $6::jsonb)
+                (id, tenant_id, project_id, source_node_id, target_node_id, relation, properties)
+                VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)
                 ON CONFLICT DO NOTHING
                 """,
+                new_id,
                 tenant_id,
                 project_id,
                 source_node_internal_id,

@@ -138,15 +138,14 @@ async def lifespan(app: FastAPI):
     ):
         logger.info("db_migration_start", mode=settings.RAE_DB_MODE)
         try:
-            import asyncio
-
-            from alembic import command, config
-
-            alembic_cfg = config.Config("alembic.ini")
-            # Set flag to skip logging config in env.py
-            os.environ["ALEMBIC_SKIP_LOG_CONFIG"] = "1"
-            await asyncio.to_thread(command.upgrade, alembic_cfg, "head")
-            logger.info("db_migration_success")
+            # Temporarily disabled to avoid API hang during StatReload
+            # import asyncio
+            # from alembic import command, config
+            # alembic_cfg = config.Config("alembic.ini")
+            # os.environ["ALEMBIC_SKIP_LOG_CONFIG"] = "1"
+            # await asyncio.to_thread(command.upgrade, alembic_cfg, "head")
+            # logger.info("db_migration_success")
+            pass
         except Exception as e:
             logger.error("db_migration_failed", error=str(e))
             raise RuntimeError(f"Database migration failed: {e}") from e
