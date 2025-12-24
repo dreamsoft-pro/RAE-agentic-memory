@@ -69,9 +69,12 @@ def client_with_auth(mock_rae_service, mock_db_pool):
 
     # Patch asyncpg.create_pool to return our mock pool
     # And patch rebuild_full_cache since it's called in startup
-    with patch(
-        "apps.memory_api.main.asyncpg.create_pool", new=AsyncMock(return_value=pool)
-    ), patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()):
+    with (
+        patch(
+            "apps.memory_api.main.asyncpg.create_pool", new=AsyncMock(return_value=pool)
+        ),
+        patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()),
+    ):
         with TestClient(app) as client:
             # Store tenant_id on client for tests to access
             client.tenant_id = tenant_id  # type: ignore[attr-defined]
@@ -258,7 +261,7 @@ async def test_query_knowledge_graph(client_with_auth, mock_db_pool):
         mock_result.model_dump.return_value = {
             "results": [],
             "graph_results_count": 0,
-            "total_results": 0
+            "total_results": 0,
         }
         service_instance.search = AsyncMock(return_value=mock_result)
 
@@ -269,7 +272,9 @@ async def test_query_knowledge_graph(client_with_auth, mock_db_pool):
         }
         headers = {"X-Tenant-Id": client_with_auth.tenant_id}
 
-        response = client_with_auth.post("/v1/graph/query", json=payload, headers=headers)
+        response = client_with_auth.post(
+            "/v1/graph/query", json=payload, headers=headers
+        )
 
         assert response.status_code == 200
         data = response.json()

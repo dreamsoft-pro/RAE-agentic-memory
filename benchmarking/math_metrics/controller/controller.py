@@ -423,7 +423,7 @@ class MathLayerController:
         Returns:
             Strategy identifier string
         """
-        available_strategies = self.config.strategies.get(level, ["default"])
+        self.config.strategies.get(level, ["default"])
 
         if level == MathLevel.L1:
             # L1 strategies based on task type

@@ -7,8 +7,9 @@ This module provides decorators for automatic memory tracing of function executi
 import asyncio
 import functools
 import json
+from collections.abc import Callable
 from datetime import datetime, timezone
-from typing import TYPE_CHECKING, Any, Callable, List, Optional
+from typing import TYPE_CHECKING, Any, List, Optional
 
 import structlog
 

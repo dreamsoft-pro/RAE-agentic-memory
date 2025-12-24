@@ -479,7 +479,7 @@ class MemoryConsolidationService:
         """Build LLM prompt for consolidation"""
 
         memory_contents = "\n\n".join(
-            [f"Memory {i+1}:\n{m.get('content', '')}" for i, m in enumerate(memories)]
+            [f"Memory {i + 1}:\n{m.get('content', '')}" for i, m in enumerate(memories)]
         )
 
         if target_layer == "working":

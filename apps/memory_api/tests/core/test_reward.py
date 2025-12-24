@@ -374,7 +374,10 @@ def test_metrics_best_and_worst_actions(reward_function, base_state):
     state_after_bad = base_state.model_copy(deep=True)
     state_after_bad.budget_state.remaining_tokens -= 5000  # High cost
     reward_bad = reward_function.compute_reward(
-        base_state, action_bad, state_after_bad, {"memories_retrieved": 0}  # No results
+        base_state,
+        action_bad,
+        state_after_bad,
+        {"memories_retrieved": 0},  # No results
     )
     tracker.record_transition(base_state, action_bad, state_after_bad, reward_bad)
 

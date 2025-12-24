@@ -23,17 +23,13 @@ def mock_context_builder():
 
 @pytest.fixture
 def mock_services():
-    with patch(
-        "apps.memory_api.api.v1.agent.get_embedding_service"
-    ) as mock_embed, patch(
-        "apps.memory_api.api.v1.agent.get_vector_store"
-    ) as mock_vec, patch(
-        "apps.memory_api.api.v1.agent.get_llm_provider"
-    ) as mock_llm, patch(
-        "apps.memory_api.api.v1.agent.estimate_tokens"
-    ) as mock_est, patch(
-        "apps.memory_api.api.v1.agent.track_request_cost"
-    ) as mock_track:
+    with (
+        patch("apps.memory_api.api.v1.agent.get_embedding_service") as mock_embed,
+        patch("apps.memory_api.api.v1.agent.get_vector_store") as mock_vec,
+        patch("apps.memory_api.api.v1.agent.get_llm_provider") as mock_llm,
+        patch("apps.memory_api.api.v1.agent.estimate_tokens") as mock_est,
+        patch("apps.memory_api.api.v1.agent.track_request_cost") as mock_track,
+    ):
         # Setup default behaviors
         mock_embed.return_value.generate_embeddings.return_value = [[0.1] * 384]
 
@@ -71,10 +67,13 @@ def client_with_auth():
     app.state.rae_core_service = mock_rae_service
 
     # Mock lifespan dependencies to avoid real DB/Redis connections
-    with patch(
-        "apps.memory_api.main.asyncpg.create_pool",
-        new=AsyncMock(return_value=mock_pool),
-    ), patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()):
+    with (
+        patch(
+            "apps.memory_api.main.asyncpg.create_pool",
+            new=AsyncMock(return_value=mock_pool),
+        ),
+        patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()),
+    ):
         with TestClient(app) as client:
             yield client
 

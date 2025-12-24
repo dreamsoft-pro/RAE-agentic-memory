@@ -64,7 +64,9 @@ async def test_dreaming_worker_basic_cycle(mock_app_state_pool, mock_env_and_set
 
             mock_rae_service = MagicMock(spec=RAECoreService)
             mock_rae_service.postgres_pool = pool
-            worker = DreamingWorker(rae_service=mock_rae_service, reflection_engine=mock_reflection_engine)
+            worker = DreamingWorker(
+                rae_service=mock_rae_service, reflection_engine=mock_reflection_engine
+            )
 
             # Run dreaming cycle
             results = await worker.run_dreaming_cycle(
@@ -134,7 +136,6 @@ async def test_dreaming_worker_insufficient_memories(
                         datetime.now(timezone.utc).replace(tzinfo=None),
                     )
 
-
             mock_rae_service = MagicMock(spec=RAECoreService)
             mock_rae_service.postgres_pool = pool
             worker = DreamingWorker(rae_service=mock_rae_service)
@@ -176,7 +177,8 @@ async def test_dreaming_worker_lookback_window(
                         f"Recent memory {i}",
                         0.8,
                         project_id,
-                        datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=2),
+                        datetime.now(timezone.utc).replace(tzinfo=None)
+                        - timedelta(hours=2),
                     )
 
                 # Old memories (outside lookback window)
@@ -190,7 +192,8 @@ async def test_dreaming_worker_lookback_window(
                         f"Old memory {i}",
                         0.8,
                         project_id,
-                        datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=50),
+                        datetime.now(timezone.utc).replace(tzinfo=None)
+                        - timedelta(hours=50),
                     )
 
             # Mock reflection engine
@@ -210,7 +213,9 @@ async def test_dreaming_worker_lookback_window(
 
             mock_rae_service = MagicMock(spec=RAECoreService)
             mock_rae_service.postgres_pool = pool
-            worker = DreamingWorker(rae_service=mock_rae_service, reflection_engine=mock_reflection_engine)
+            worker = DreamingWorker(
+                rae_service=mock_rae_service, reflection_engine=mock_reflection_engine
+            )
 
             # Run with 24-hour lookback
             results = await worker.run_dreaming_cycle(
@@ -287,7 +292,9 @@ async def test_dreaming_worker_importance_filter(
 
             mock_rae_service = MagicMock(spec=RAECoreService)
             mock_rae_service.postgres_pool = pool
-            worker = DreamingWorker(rae_service=mock_rae_service, reflection_engine=mock_reflection_engine)
+            worker = DreamingWorker(
+                rae_service=mock_rae_service, reflection_engine=mock_reflection_engine
+            )
 
             # Run with importance threshold
             results = await worker.run_dreaming_cycle(
@@ -352,7 +359,9 @@ async def test_dreaming_worker_max_samples_limit(
 
             mock_rae_service = MagicMock(spec=RAECoreService)
             mock_rae_service.postgres_pool = pool
-            worker = DreamingWorker(rae_service=mock_rae_service, reflection_engine=mock_reflection_engine)
+            worker = DreamingWorker(
+                rae_service=mock_rae_service, reflection_engine=mock_reflection_engine
+            )
 
             # Run with max_samples limit
             await worker.run_dreaming_cycle(
@@ -405,7 +414,9 @@ async def test_dreaming_worker_error_handling(
 
             mock_rae_service = MagicMock(spec=RAECoreService)
             mock_rae_service.postgres_pool = pool
-            worker = DreamingWorker(rae_service=mock_rae_service, reflection_engine=mock_reflection_engine)
+            worker = DreamingWorker(
+                rae_service=mock_rae_service, reflection_engine=mock_reflection_engine
+            )
 
             # Run dreaming cycle
             results = await worker.run_dreaming_cycle(
@@ -442,9 +453,9 @@ async def test_dreaming_worker_no_recent_memories(
                         f"Old memory {i}",
                         0.8,
                         project_id,
-                        datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(days=10),
+                        datetime.now(timezone.utc).replace(tzinfo=None)
+                        - timedelta(days=10),
                     )
-
 
             mock_rae_service = MagicMock(spec=RAECoreService)
             mock_rae_service.postgres_pool = pool

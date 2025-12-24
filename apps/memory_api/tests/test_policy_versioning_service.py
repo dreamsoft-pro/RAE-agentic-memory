@@ -240,8 +240,8 @@ class TestGetPolicyHistory:
                 tenant_id="test-tenant",
                 policy_id="test_policy",
                 policy_type=PolicyType.TRUST_SCORING,
-                policy_name=f"Test Policy v{i+1}",
-                policy_description=f"Version {i+1}",
+                policy_name=f"Test Policy v{i + 1}",
+                policy_description=f"Version {i + 1}",
                 rules={"version": i + 1},
                 created_by="admin@example.com",
             )

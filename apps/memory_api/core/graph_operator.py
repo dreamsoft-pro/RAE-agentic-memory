@@ -343,7 +343,9 @@ class GraphUpdateOperator:
             from apps.memory_api.core import graph_transformations as ops
 
             if action_type == GraphActionType.ADD_NODE:
-                G_next = ops.add_node(G_next, observation, parameters, self._find_duplicate_node)
+                G_next = ops.add_node(
+                    G_next, observation, parameters, self._find_duplicate_node
+                )
 
             elif action_type == GraphActionType.ADD_EDGE:
                 G_next = ops.add_edge(G_next, observation, parameters)

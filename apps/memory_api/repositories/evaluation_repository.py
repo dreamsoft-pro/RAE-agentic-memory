@@ -157,7 +157,7 @@ class ABTestRepository:
 
             query = f"""
                 UPDATE ab_tests
-                SET {', '.join(update_fields)}
+                SET {", ".join(update_fields)}
                 WHERE id = $1
                 RETURNING *
             """
@@ -350,7 +350,7 @@ class BenchmarkRepository:
             params.extend([limit, offset])
             query = f"""
                 SELECT * FROM benchmark_suites
-                WHERE {' AND '.join(conditions)}
+                WHERE {" AND ".join(conditions)}
                 ORDER BY created_at DESC
                 LIMIT ${param_idx} OFFSET ${param_idx + 1}
             """
@@ -487,7 +487,7 @@ class BenchmarkRepository:
 
             query = f"""
                 UPDATE benchmark_executions
-                SET {', '.join(update_fields)}
+                SET {", ".join(update_fields)}
                 WHERE id = $1
                 RETURNING *
             """

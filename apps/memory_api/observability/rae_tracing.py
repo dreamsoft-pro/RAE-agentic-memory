@@ -16,8 +16,9 @@ import functools
 import inspect
 import time
 import uuid
+from collections.abc import Callable
 from contextlib import contextmanager
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Dict, Optional
 
 import structlog
 

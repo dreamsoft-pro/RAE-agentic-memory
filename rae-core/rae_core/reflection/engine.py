@@ -126,7 +126,7 @@ class ReflectionEngine:
                     results["actions_executed"] += 1
 
                     # Step 4: Evaluate outcome
-                    evaluation = await self.evaluator.evaluate_action_outcome(
+                    await self.evaluator.evaluate_action_outcome(
                         action_type="consolidate_memories",
                         action_result=action_result,
                         context=action_context,

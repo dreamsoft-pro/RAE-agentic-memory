@@ -4,7 +4,8 @@ Anthropic LLM Provider.
 Implements the LLM provider interface for Anthropic Claude models.
 """
 
-from typing import Any, AsyncIterator, cast
+from collections.abc import AsyncIterator
+from typing import Any, cast
 
 from anthropic import APIError, AsyncAnthropic, AuthenticationError, RateLimitError
 from tenacity import retry, stop_after_attempt, wait_exponential

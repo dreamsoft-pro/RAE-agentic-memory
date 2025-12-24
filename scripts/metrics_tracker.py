@@ -6,10 +6,11 @@ Lightweight JSON-based metrics - NO OpenTelemetry overhead.
 """
 
 import json
+import logging
 import os
+import subprocess
 import time
 from datetime import datetime
-from typing import Dict
 
 
 class DocsMetrics:
@@ -64,17 +65,15 @@ class DocsMetrics:
 
         # Get git info
         try:
-            import subprocess
-
-            branch = subprocess.run(
+            branch = subprocess.check_output(
                 ["git", "rev-parse", "--abbrev-ref", "HEAD"],
                 capture_output=True,
                 text=True,
             ).stdout.strip()
-            commit = subprocess.run(
+            commit = subprocess.check_output(
                 ["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True
             ).stdout.strip()
-        except:
+        except Exception:
             branch, commit = "unknown", "unknown"
 
         return {

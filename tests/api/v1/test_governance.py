@@ -25,10 +25,13 @@ def client_with_auth(mock_app_state_pool):
     app.dependency_overrides[verify_tenant_access] = lambda tenant_id: True
 
     # Mock lifespan dependencies (use the same pool from mock_app_state_pool)
-    with patch(
-        "apps.memory_api.main.asyncpg.create_pool",
-        new=AsyncMock(return_value=mock_app_state_pool),
-    ), patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()):
+    with (
+        patch(
+            "apps.memory_api.main.asyncpg.create_pool",
+            new=AsyncMock(return_value=mock_app_state_pool),
+        ),
+        patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()),
+    ):
         with TestClient(app) as client:
             yield client
 

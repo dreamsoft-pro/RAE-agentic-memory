@@ -160,7 +160,8 @@ def setup_opentelemetry():
         elif OTEL_EXPORTER_TYPE == "otlp":
             # OTLP exporter (default) for Jaeger, Tempo, etc.
             span_exporter = OTLPSpanExporter(  # type: ignore[misc]
-                endpoint=OTEL_EXPORTER_ENDPOINT, insecure=True  # Use TLS in production
+                endpoint=OTEL_EXPORTER_ENDPOINT,
+                insecure=True,  # Use TLS in production
             )
             logger.info(
                 "opentelemetry_otlp_exporter",

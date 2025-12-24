@@ -102,7 +102,10 @@ class SemanticSearchPipeline:
         # Stage 1: Topic Identification → Vector Search
         if enable_topic_matching:
             stage1_results, topics = await self._stage1_topic_matching(
-                tenant_id, project_id, query, k * 3  # Get more for filtering
+                tenant_id,
+                project_id,
+                query,
+                k * 3,  # Get more for filtering
             )
             results.extend(stage1_results)
             statistics["stage1_results"] = len(stage1_results)

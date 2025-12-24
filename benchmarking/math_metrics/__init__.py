@@ -47,7 +47,7 @@ from .structure_metrics import (
 
 # Try importing reflection metrics (may not exist yet if agent is still working)
 try:
-    from .reflection_metrics import (
+    from .reflection_metrics import (  # noqa: F401
         ContradictionAvoidanceScore,
         CriticalEventDetectionScore,
         InsightPrecision,

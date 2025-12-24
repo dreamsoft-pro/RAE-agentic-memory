@@ -125,7 +125,7 @@ class SQLiteVectorStore(IVectorStore):
         """Search for similar vectors using cosine similarity."""
         await self.initialize()
 
-        query_bytes = struct.pack(f"{len(query_embedding)}f", *query_embedding)
+        struct.pack(f"{len(query_embedding)}f", *query_embedding)
 
         # Calculate query norm once
         query_norm_sq = sum(x * x for x in query_embedding)

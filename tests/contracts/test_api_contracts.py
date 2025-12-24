@@ -448,7 +448,7 @@ class TestBackwardCompatibility:
         mock_redis.side_effect = healthy
         mock_vector.side_effect = healthy
 
-        response = client_with_overrides.get("/health")
+        client_with_overrides.get("/health")
 
         # Check for version header (if implemented)
         # assert "X-API-Version" in response.headers

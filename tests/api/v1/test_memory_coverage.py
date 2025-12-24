@@ -52,10 +52,13 @@ def client_with_auth(mock_pool, mock_rae_service):
     app.dependency_overrides[get_rae_core_service] = lambda: mock_rae_service
 
     # Mock lifespan dependencies to avoid real DB/Redis connections
-    with patch(
-        "apps.memory_api.main.asyncpg.create_pool",
-        new=AsyncMock(return_value=mock_pool),
-    ), patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()):
+    with (
+        patch(
+            "apps.memory_api.main.asyncpg.create_pool",
+            new=AsyncMock(return_value=mock_pool),
+        ),
+        patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()),
+    ):
         with TestClient(app) as client:
             yield client
 
@@ -125,7 +128,9 @@ async def test_store_memory_vector_failure(
     response = client_with_auth.post(
         "/v1/memory/store", json=payload, headers={"X-Tenant-Id": "t1"}
     )
-    assert response.status_code == 500 # The API maps generic exceptions to 500 Storage error usually
+    assert (
+        response.status_code == 500
+    )  # The API maps generic exceptions to 500 Storage error usually
 
     data = response.json()
     # The API endpoint says: raise HTTPException(status_code=500, detail=f"Storage error: {e}")
@@ -159,7 +164,9 @@ async def test_store_memory_db_failure(
 
 
 @pytest.mark.asyncio
-async def test_query_memory_hybrid_missing_project(client_with_auth, mock_embedding_service):
+async def test_query_memory_hybrid_missing_project(
+    client_with_auth, mock_embedding_service
+):
     payload = {"query_text": "test query", "use_graph": True}
     response = client_with_auth.post(
         "/v1/memory/query", json=payload, headers={"X-Tenant-Id": "t1"}

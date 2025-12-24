@@ -28,7 +28,9 @@ class RAEAPISetup:
                 print(f"Request error calling {endpoint}: {e}")
                 raise
 
-    def store_memory(self, content, layer, tags=[]):
+    def store_memory(self, content, layer, tags=None):
+        if tags is None:
+            tags = []
         payload = {
             "content": content,
             "layer": layer,

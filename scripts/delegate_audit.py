@@ -6,9 +6,10 @@ Creates a quality_loop task in RAE Control Plane for remote execution.
 
 import os
 import subprocess
-import httpx
 import sys
-from typing import Dict, Any
+
+import httpx
+
 
 def get_git_diff() -> str:
     """Get unstaged changes."""
@@ -42,19 +43,19 @@ async def delegate_task(diff: str):
     }
 
     print(f"🚀 Delegating audit ({len(diff)} chars) to RAE Control Plane...")
-    
+
     async with httpx.AsyncClient() as client:
         try:
             headers = {"X-API-Key": api_key}
             resp = await client.post(f"{api_url}/control/tasks", json=payload, headers=headers)
             resp.raise_for_status()
             task_data = resp.json()
-            
-            print(f"✅ Task created successfully!")
+
+            print("✅ Task created successfully!")
             print(f"📝 Task ID: {task_data['id']}")
             print(f"🤖 Assigned node: {task_data.get('assigned_node_id', 'Pending polling...')}")
             print(f"📊 Status: {task_data['status']}")
-            
+
         except httpx.HTTPStatusError as e:
             print(f"❌ API Error: {e.response.status_code} - {e.response.text}")
         except Exception as e:
@@ -65,6 +66,6 @@ if __name__ == "__main__":
     if not diff_content:
         print("ℹ️ No changes to audit.")
         sys.exit(0)
-        
+
     import asyncio
     asyncio.run(delegate_task(diff_content))

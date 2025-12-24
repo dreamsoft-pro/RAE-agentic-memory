@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import json
-import urllib.request
 import os
+import urllib.request
 
 API_BASE = "http://localhost:8000"
 HEADERS = {
@@ -35,12 +35,12 @@ def main():
         mem_id = memory["id"]
         print(f"✅ Memory stored! ID: {mem_id}")
 
-        print(f"🚀 Delegating audit to KUBUS using memory_id...")
+        print("🚀 Delegating audit to KUBUS using memory_id...")
         task_data = {
             "type": "code_verify_cycle",
             "priority": 10,
             "payload": {
-                "prompt": f"Perform a full architectural audit of the code linked by memory_id. Focus on agnosticism.",
+                "prompt": "Perform a full architectural audit of the code linked by memory_id. Focus on agnosticism.",
                 "memory_id": mem_id,
                 "writer_model": "deepseek-coder:33b",
                 "reviewer_model": "deepseek-coder:6.7b"

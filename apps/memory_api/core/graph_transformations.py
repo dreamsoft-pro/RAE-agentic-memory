@@ -4,7 +4,7 @@ Extracted from graph_operator.py to reduce file size.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict
 
 import numpy as np
 import structlog
@@ -13,7 +13,6 @@ from apps.memory_api.core.graph_operator import (
     GraphEdge,
     GraphNode,
     KnowledgeGraph,
-    tracer,
 )
 
 logger = structlog.get_logger(__name__)
@@ -37,9 +36,7 @@ def add_node(
     # Check for duplicates
     existing = find_duplicate_fn(graph, node_data["label"])
     if existing:
-        logger.info(
-            "node_already_exists", node_id=existing.id, label=existing.label
-        )
+        logger.info("node_already_exists", node_id=existing.id, label=existing.label)
         return graph
 
     # Create new node

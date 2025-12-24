@@ -18,8 +18,9 @@ Traces include:
 import functools
 import inspect
 import time
+from collections.abc import Callable
 from contextlib import contextmanager
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Dict, Optional
 
 import structlog
 
@@ -245,7 +246,7 @@ def trace_memory(
 
     def decorator(func: Callable) -> Callable:
         op = operation or _infer_operation(func.__name__)
-        
+
         if inspect.iscoroutinefunction(func):
             return _create_async_wrapper(func, layer, op, extract_params)
         else:
@@ -268,6 +269,7 @@ def _create_async_wrapper(
             if isinstance(result, dict) and span:
                 _extract_result_metrics(span, result, layer)
             return result
+
     return async_wrapper
 
 
@@ -285,6 +287,7 @@ def _create_sync_wrapper(
             if isinstance(result, dict) and span:
                 _extract_result_metrics(span, result, layer)
             return result
+
     return sync_wrapper
 
 

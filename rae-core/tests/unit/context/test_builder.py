@@ -200,7 +200,7 @@ class TestContextBuilder:
     def test_memory_ranking_with_recency(self, builder):
         """Test that ranking considers recency."""
         now = datetime.now(timezone.utc)
-        memories = [
+        [
             {
                 "id": "1",
                 "content": "Recent memory",

@@ -18,11 +18,14 @@ import pytest
 
 try:
     import spacy
+
     HAS_SPACY = True
 except ImportError:
     HAS_SPACY = False
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
+
+from apps.llm.models.llm_response import LLMResponse, TokenUsage
 from apps.memory_api.config import settings
 from apps.memory_api.repositories.graph_repository import GraphRepository
 from apps.memory_api.services.graph_extraction import (
@@ -35,11 +38,12 @@ from apps.memory_api.services.hybrid_search import (
 )
 from apps.memory_api.services.rae_core_service import RAECoreService  # Updated import
 from apps.memory_api.services.reflection_engine import ReflectionEngine
-from apps.llm.models.llm_response import LLMResponse, TokenUsage
 
 pytestmark = [
     pytest.mark.integration,
-    pytest.mark.skipif(not HAS_SPACY, reason="spaCy not installed (required for graph extraction)"),
+    pytest.mark.skipif(
+        not HAS_SPACY, reason="spaCy not installed (required for graph extraction)"
+    ),
 ]
 
 
@@ -47,34 +51,55 @@ pytestmark = [
 def mock_llm():
     """Mock LLM provider for graph extraction and reflection."""
     from apps.memory_api.services.llm.orchestrator_adapter import OrchestratorAdapter
+
     mock_provider = MagicMock(spec=OrchestratorAdapter)
-    
+
     # Mock for graph extraction (generate_structured)
     mock_extraction_result = GraphExtractionResult(
         triples=[
-            GraphTriple(source="User John", relation="reported", target="bug #123", confidence=0.9),
-            GraphTriple(source="bug #123", relation="located_in", target="authentication module", confidence=0.85),
-            GraphTriple(source="Developer Alice", relation="fixed", target="bug #123", confidence=0.95),
-            GraphTriple(source="AuthService", relation="depends_on", target="EncryptionService", confidence=0.9),
+            GraphTriple(
+                source="User John",
+                relation="reported",
+                target="bug #123",
+                confidence=0.9,
+            ),
+            GraphTriple(
+                source="bug #123",
+                relation="located_in",
+                target="authentication module",
+                confidence=0.85,
+            ),
+            GraphTriple(
+                source="Developer Alice",
+                relation="fixed",
+                target="bug #123",
+                confidence=0.95,
+            ),
+            GraphTriple(
+                source="AuthService",
+                relation="depends_on",
+                target="EncryptionService",
+                confidence=0.9,
+            ),
         ],
         statistics={
             "memories_processed": 4,
             "entities_count": 6,
             "triples_count": 4,
-        }
+        },
     )
     mock_provider.generate_structured = AsyncMock(return_value=mock_extraction_result)
-    
+
     # Mock for hierarchical reflection (generate)
     mock_reflection_result = LLMResponse(
         text="This is a coherent summary of the processed episodes.",
         usage=TokenUsage(prompt_tokens=10, completion_tokens=10, total_tokens=20),
         finish_reason="stop",
         raw={},
-        model_name="gpt-4o-mini"
+        model_name="gpt-4o-mini",
     )
     mock_provider.generate = AsyncMock(return_value=mock_reflection_result)
-    
+
     return mock_provider
 
 
@@ -103,8 +128,12 @@ async def rae_service(db_pool):
     import redis.asyncio as aioredis
     from qdrant_client import AsyncQdrantClient
 
-    qdrant_client = AsyncQdrantClient(host="localhost", port=6333) # Dummy, not used for list_memories
-    redis_client = aioredis.from_url("redis://localhost:6379") # Dummy, not used for list_memories
+    qdrant_client = AsyncQdrantClient(
+        host="localhost", port=6333
+    )  # Dummy, not used for list_memories
+    redis_client = aioredis.from_url(
+        "redis://localhost:6379"
+    )  # Dummy, not used for list_memories
 
     return RAECoreService(
         postgres_pool=db_pool,
@@ -207,7 +236,12 @@ async def setup_test_memories(db_pool, test_tenant_id, test_project_id):
 
 @pytest.mark.asyncio
 async def test_graph_extraction_basic(
-    rae_service, graph_repo, mock_llm, test_tenant_id, test_project_id, setup_test_memories
+    rae_service,
+    graph_repo,
+    mock_llm,
+    test_tenant_id,
+    test_project_id,
+    setup_test_memories,
 ):
     """
     Test basic knowledge graph extraction from episodic memories.
@@ -250,7 +284,13 @@ async def test_graph_extraction_basic(
 
 @pytest.mark.asyncio
 async def test_graph_storage(
-    rae_service, graph_repo, db_pool, mock_llm, test_tenant_id, test_project_id, setup_test_memories
+    rae_service,
+    graph_repo,
+    db_pool,
+    mock_llm,
+    test_tenant_id,
+    test_project_id,
+    setup_test_memories,
 ):
     """
     Test that extracted triples are correctly stored in the database.
@@ -282,13 +322,13 @@ async def test_graph_storage(
 
     # Verify data in database
     async with db_pool.acquire() as conn:
-        node_count = await conn.fetchval(
+        await conn.fetchval(
             "SELECT COUNT(*) FROM knowledge_graph_nodes WHERE tenant_id = $1 AND project_id = $2",
             test_tenant_id,
             test_project_id,
         )
 
-        edge_count = await conn.fetchval(
+        await conn.fetchval(
             "SELECT COUNT(*) FROM knowledge_graph_edges WHERE tenant_id = $1 AND project_id = $2",
             test_tenant_id,
             test_project_id,
@@ -300,7 +340,13 @@ async def test_graph_storage(
 
 @pytest.mark.asyncio
 async def test_hybrid_search(
-    rae_service, graph_repo, db_pool, mock_llm, test_tenant_id, test_project_id, setup_test_memories
+    rae_service,
+    graph_repo,
+    db_pool,
+    mock_llm,
+    test_tenant_id,
+    test_project_id,
+    setup_test_memories,
 ):
     """
     Test hybrid search combining vector search and graph traversal.
@@ -326,7 +372,9 @@ async def test_hybrid_search(
         tenant_id=test_tenant_id,
     )
 
-    hybrid_search = HybridSearchService(rae_service) # Needs rae_service for MemoryRepository replacement too. # Needs rae_service for MemoryRepository replacement too.
+    HybridSearchService(
+        rae_service
+    )  # Needs rae_service for MemoryRepository replacement too. # Needs rae_service for MemoryRepository replacement too.
     # HybridSearchService expects pool.
     # It does not take MemoryRepository or RAECoreService directly in its __init__
     # HybridSearchService needs to be refactored too for RAECoreService in Phase 2
@@ -370,7 +418,13 @@ async def test_hybrid_search(
 
 @pytest.mark.asyncio
 async def test_graph_traversal_depth(
-    rae_service, graph_repo, db_pool, mock_llm, test_tenant_id, test_project_id, setup_test_memories
+    rae_service,
+    graph_repo,
+    db_pool,
+    mock_llm,
+    test_tenant_id,
+    test_project_id,
+    setup_test_memories,
 ):
     """
     Test that hybrid search respects traversal depth.
@@ -391,7 +445,9 @@ async def test_graph_traversal_depth(
         tenant_id=test_tenant_id,
     )
 
-    hybrid_search = HybridSearchService(rae_service) # Needs rae_service for MemoryRepository replacement too.
+    HybridSearchService(
+        rae_service
+    )  # Needs rae_service for MemoryRepository replacement too.
 
     # Test different depths
     """

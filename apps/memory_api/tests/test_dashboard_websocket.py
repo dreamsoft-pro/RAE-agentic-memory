@@ -160,7 +160,9 @@ async def test_metrics_changed_significantly(dashboard_service):
     )
 
     new_metrics = SystemMetrics(
-        total_memories=110, memories_last_24h=10, total_reflections=5  # +10 changed
+        total_memories=110,
+        memories_last_24h=10,
+        total_reflections=5,  # +10 changed
     )
 
     changed = dashboard_service._metrics_changed_significantly(old_metrics, new_metrics)

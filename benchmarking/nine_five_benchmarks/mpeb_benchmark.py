@@ -558,7 +558,7 @@ class MPEBBenchmark:
         duration = (end_time - start_time).total_seconds()
 
         # Calculate final metrics
-        final_convergence = self._calculate_convergence()
+        self._calculate_convergence()
         final_stability = self._calculate_stability()
         final_quality = self.policy.get_quality_score()
 

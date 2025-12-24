@@ -4,7 +4,8 @@ Base LLM Provider interface.
 This module defines the contract that all LLM providers must implement.
 """
 
-from typing import AsyncIterator, Protocol
+from collections.abc import AsyncIterator
+from typing import Protocol
 
 from ..models import LLMChunk, LLMRequest, LLMResponse
 

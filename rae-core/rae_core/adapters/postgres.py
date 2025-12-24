@@ -112,7 +112,7 @@ class PostgreSQLStorage(IMemoryStorage):
             await conn.execute(
                 """
                 INSERT INTO memories (
-                    id, content, layer, tenant_id, agent_id, 
+                    id, content, layer, tenant_id, agent_id,
                     tags, metadata, embedding, importance, expires_at,
                     created_at, last_accessed_at, memory_type, usage_count
                 )
@@ -145,7 +145,7 @@ class PostgreSQLStorage(IMemoryStorage):
         async with pool.acquire() as conn:
             row = await conn.fetchrow(
                 """
-                SELECT 
+                SELECT
                     id, content, layer, tenant_id, agent_id,
                     tags, metadata, embedding, importance, usage_count,
                     created_at, last_accessed_at, expires_at
@@ -231,12 +231,12 @@ class PostgreSQLStorage(IMemoryStorage):
         async with pool.acquire() as conn:
             rows = await conn.fetch(
                 f"""
-                SELECT 
+                SELECT
                     id, content, layer, tenant_id, agent_id,
                     tags, metadata, embedding, importance, usage_count,
                     created_at, last_accessed_at, expires_at,
                     -- Simple relevance scoring
-                    CASE 
+                    CASE
                         WHEN content ILIKE ${param_idx} THEN 1.0
                         ELSE 0.5
                     END as score
@@ -331,7 +331,7 @@ class PostgreSQLStorage(IMemoryStorage):
         async with pool.acquire() as conn:
             rows = await conn.fetch(
                 f"""
-                SELECT 
+                SELECT
                     id, content, layer, tenant_id, agent_id,
                     tags, metadata, embedding, importance, usage_count,
                     created_at, last_accessed_at, expires_at
@@ -379,7 +379,7 @@ class PostgreSQLStorage(IMemoryStorage):
             result = await conn.execute(
                 """
                 UPDATE memories
-                SET 
+                SET
                     last_accessed_at = $1,
                     usage_count = usage_count + 1
                 WHERE id = $2 AND tenant_id = $3
@@ -728,10 +728,10 @@ class PostgreSQLStorage(IMemoryStorage):
         pool = await self._get_pool()
 
         async with pool.acquire() as conn:
-            result = await conn.execute(
+            await conn.execute(
                 """
                 UPDATE memories
-                SET 
+                SET
                     last_accessed_at = $1,
                     usage_count = usage_count + 1
                 WHERE id = ANY($2) AND tenant_id = $3
