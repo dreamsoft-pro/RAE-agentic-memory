@@ -182,7 +182,7 @@ class NodeAgent:
         )
 
         logger.info(
-            f"Phase 1: Writing analysis with {writer_model} (RAE context included)"
+            f"Phase 1: Writing code/analysis with {writer_model} (RAE context included)"
         )
         write_result = await self._call_ollama(
             writer_model, write_prompt, system=writer_system
@@ -194,17 +194,29 @@ class NodeAgent:
         # 2. REVIEW
         logger.info(f"Phase 2: Reviewing output with {reviewer_model}")
         reviewer_system = (
-            "You are a Senior Python Architect checking the quality of an automated audit."
+            "You are a Senior Python Architect at RAE Project. Your mission is to enforce the highest quality standards. "
+            "You MUST check if the code/analysis: "
+            "1. Includes OpenTelemetry instrumentation (@trace_agent_operation). "
+            "2. Includes unit tests (mocking async dependencies). "
+            "3. Follows Async-First principles. "
+            "4. Has NO absolute paths."
         )
         review_prompt = (
-            "Review the following analysis for correctness. "
-            "Ensure the auditor actually analyzed the code provided in the previous step. "
-            "If the analysis is solid, respond 'PASSED'. Otherwise, explain what is missing.\n\n"
-            f"AUDIT TO REVIEW:\n{initial_output}"
+            "Critically review the following code/analysis. "
+            "If it meets ALL RAE standards, respond with 'PASSED' followed by a short summary. "
+            "If anything is missing (especially Telemetry or Tests), respond with 'REJECTED' and list specific issues.\n\n"
+            f"OUTPUT TO REVIEW:\n{initial_output}"
         )
-        await self._call_ollama(
+        review_result = await self._call_ollama(
             reviewer_model, review_prompt, system=reviewer_system
         )
+        
+        return {
+            "status": "success",
+            "writer_output": initial_output,
+            "review_report": review_result.get("response", "Review failed"),
+            "is_passed": "PASSED" in review_result.get("response", "")
+        }
 
     async def _execute_ollama(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         return await self._call_ollama(

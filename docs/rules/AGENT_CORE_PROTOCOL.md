@@ -92,11 +92,17 @@ Different branches = Different testing levels.
 ## 8. DISTRIBUTED COMPUTE WORKFLOW (Writer/Reviewer)
 
 When delegating tasks to external nodes (e.g., node1/KUBUS), follow the **Agentic Quality Loop**:
-- **Phase 1: Writer**: Typically **DeepSeek** (e.g., `deepseek-coder:33b`) writes the code or performs deep analysis.
-- **Phase 2: Reviewer**: Typically **Ollama** running a secondary model (e.g., `deepseek-coder:6.7b` or `senior-architect` persona) checks the code.
-- **Opportunistic Availability**: External nodes are **NOT** permanent resources. They must be used only when `ONLINE` and without disturbing their primary users. 
-- **Graceful Fallback**: If a node is unavailable, tasks MUST automatically fall back to local execution or cloud-based providers to ensure continuity.
-- **Implementation**: Check node status via `ControlPlaneService` before task creation.
+- **Phase 1: Writer**: Typically **DeepSeek** (e.g., `deepseek-coder:33b`) writes the code or performs analysis.
+- **Phase 2: Reviewer**: Typically **Ollama** running a secondary model (e.g., `senior-architect` persona) checks the code.
+- **Atomic Tasking**: Tasks for Node1 MUST be atomic (max 1-2 files, <50 LOC). Large tasks must be split into iterations.
+- **Mandatory Quality Gates for Delegated Code**:
+    - **Telemetry**: New code MUST include OpenTelemetry instrumentation (e.g., `LLMTracer`, `RAETracing`).
+    - **Tests**: Every code change MUST be accompanied by unit tests (target 80% coverage).
+    - **No Regression**: Node1 results MUST be verified against local linting and project contracts.
+    - **Agnosticism**: No absolute paths or provider lock-in allowed.
+- **RAE-First Context**: Every delegated task MUST include a `context_id` referencing latest memories in RAE to prevent hallucinating APIs.
+- **Opportunistic Availability**: External nodes are **NOT** permanent resources. Check status via `ControlPlaneService`.
+- **Graceful Fallback**: If a node is unavailable, fallback to local or cloud providers.
 
 ## 9. SCHEDULED QUALITY MAINTENANCE (Autonomous Improvement)
 
