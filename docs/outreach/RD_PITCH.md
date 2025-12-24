@@ -181,7 +181,7 @@ git clone https://github.com/dreamsoft-pro/RAE-agentic-memory
 cd RAE-agentic-memory
 
 # Start RAE Lite
-docker compose -f docker compose.lite.yml up -d
+docker compose -f docker-compose.lite.yml up -d
 
 # Verify installation
 curl http://localhost:8000/health

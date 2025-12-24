@@ -107,10 +107,10 @@ COST_GUARD_MONTHLY_BUDGET_USD=500
 EOF
 
 # Start services
-docker compose -f docker compose.standard.yml up -d
+docker-compose -f docker-compose.standard.yml up -d
 
 # Run migrations
-docker compose exec api alembic upgrade head
+docker-compose exec api alembic upgrade head
 
 # Verify deployment
 curl http://localhost:8000/health
@@ -505,7 +505,7 @@ export REFLECTIVE_MEMORY_MODE=full
 export DREAMING_ENABLED=true
 
 # 2. Deploy workers
-docker compose up -d worker
+docker-compose up -d worker
 
 # 3. Migrate data (if needed)
 python scripts/migrate_lite_to_standard.py
