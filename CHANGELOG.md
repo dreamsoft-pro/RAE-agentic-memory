@@ -1,5 +1,32 @@
 ## Recent Changes (Auto-generated)
 
+*Last updated: 2025-12-24 21:03 • Branch: main • Commit: 2632425*
+
+### ✨ Features
+
+- **tests**: enable E2E/OTel/Performance tests and resolve architectural debt ([`4ce986d`](../../commit/4ce986d))
+
+### 🐛 Bug Fixes
+
+- Correct concatenated package names in requirements-dev.txt ([`c69d149`](../../commit/c69d149))
+
+### 🔧 Chore
+
+- Manual sync of documentation from origin/change-readme ([`70c09ca`](../../commit/70c09ca))
+
+### 💄 Style
+
+- Unified ruff config and fixed scattered lint errors in scripts/tests ([`5d7f4e6`](../../commit/5d7f4e6))
+- Full lint and format fix across apps, sdk, integrations and tests ([`be7ea2f`](../../commit/be7ea2f))
+
+### 📦 Other
+
+- Merge remote-tracking branch 'origin/main' into develop ([`fbc29d5`](../../commit/fbc29d5))
+
+---
+
+## Recent Changes (Auto-generated)
+
 *Last updated: 2025-12-24 20:52 • Branch: main • Commit: c69d149*
 
 ### ✨ Features
