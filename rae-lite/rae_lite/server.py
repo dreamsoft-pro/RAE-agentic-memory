@@ -10,28 +10,51 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from rae_core.adapters.sqlite import (
     SQLiteGraphStore,
-    SQLiteMemoryStorage,
+    SQLiteStorage,
     SQLiteVectorStore,
 )
 from rae_core.engine import RAEEngine
+from rae_core.interfaces.embedding import IEmbeddingProvider
+from rae_core.config.settings import RAESettings
 
 from rae_lite.config import settings
 
 logger = structlog.get_logger(__name__)
 
+# Simple Mock Embedding Provider for RAE-Lite Smoke Test
+class LocalEmbeddingProvider(IEmbeddingProvider):
+    def __init__(self):
+        self.dimension = 384
+    
+    async def embed_text(self, text: str) -> list[float]:
+        # Return deterministic mock vector based on text length
+        val = (len(text) % 100) / 100.0
+        return [val] * self.dimension
+        
+    async def embed_batch(self, texts: list[str]) -> list[list[float]]:
+        return [await self.embed_text(t) for t in texts]
+        
+    def get_dimension(self) -> int:
+        return self.dimension
+
 # Initialize SQLite adapters
-memory_storage = SQLiteMemoryStorage(str(settings.db_path))
+memory_storage = SQLiteStorage(str(settings.db_path))
 vector_store = SQLiteVectorStore(str(settings.vector_db_path))
 graph_store = SQLiteGraphStore(str(settings.graph_db_path))
+embedding_provider = LocalEmbeddingProvider()
+
+# Configure RAE Core Settings
+rae_settings = RAESettings()
+rae_settings.sensory_max_size = 50
+rae_settings.working_max_size = 50
+rae_settings.vector_backend = "sqlite" # Important for RAE-Lite
 
 # Initialize RAE Engine
 engine = RAEEngine(
-    sensory_max_size=50,
-    sensory_retention_seconds=30,
-    working_max_size=50,
-    working_retention_minutes=60,
-    enable_auto_consolidation=settings.enable_auto_consolidation,
-    enable_reflections=settings.enable_reflections,
+    memory_storage=memory_storage,
+    vector_store=vector_store,
+    embedding_provider=embedding_provider,
+    settings=rae_settings
 )
 
 # FastAPI app
@@ -92,29 +115,18 @@ async def health():
 async def store_memory(request: StoreMemoryRequest):
     """Store a memory."""
     try:
-        # Store in engine
+        # Store in engine (which handles both volatile and persistent layers)
         memory_id = await engine.store_memory(
             content=request.content,
             source=request.source,
             importance=request.importance,
             tags=request.tags,
             tenant_id="local",
+            agent_id="rae-lite-user",
             project=request.project,
         )
 
-        # Also persist to SQLite
-        await memory_storage.insert_memory(
-            tenant_id="local",
-            project=request.project,
-            content=request.content,
-            source=request.source,
-            importance=request.importance,
-            layer="ltm",
-            tags=request.tags,
-            timestamp=None,
-        )
-
-        return {"memory_id": memory_id, "status": "stored"}
+        return {"memory_id": str(memory_id), "status": "stored"}
 
     except Exception as e:
         logger.error("store_memory_failed", error=str(e))
