@@ -46,6 +46,7 @@ Different branches = Different testing levels.
 - **Goal**: Production Guarantee.
 - **Command**: CI (GitHub Actions).
 - **Rule**: If CI fails, fix immediately on `develop` and propagate up.
+- **Versioning**: Always check `git tag` and GitHub Releases before bumping versions. Do NOT rely solely on code files. Update `AGENT_CORE_PROTOCOL.md` if this rule is missing.
 
 ## 4. DOCUMENTATION STRATEGY
 
