@@ -61,6 +61,7 @@ Different branches = Different testing levels.
 ## 6. HIGH STANDARDS & QUALITY GATES
 
 - **Zero Warning Policy**: Treat warnings as errors. Fix them immediately. Do not ignore them.
+  - *Exception*: If a warning originates from a 3rd party library and is beyond the agent's control, document it and suppress it if possible, ensuring it doesn't clutter the CI output.
 - **No Drift**: Ensure architectural decisions are persistent. Do not re-introduce fixed bugs or deprecated patterns.
 - **Best Practices**:
   - **Clean Code**: Follow SOLID, DRY, and KISS principles.
