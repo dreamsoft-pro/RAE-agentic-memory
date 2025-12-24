@@ -5,7 +5,7 @@ This repository encapsulates all database operations related to the knowledge gr
 following the Repository/DAO pattern to separate data access from business logic.
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 from uuid import UUID, uuid4
 
 import asyncpg
@@ -846,7 +846,7 @@ class GraphRepository:
                 properties_json,
             )
 
-            internal_id = record["id"]
+            internal_id = cast(UUID | int, record["id"])
 
             logger.info(
                 "node_upserted",
