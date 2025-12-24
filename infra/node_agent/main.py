@@ -6,7 +6,7 @@ import socket
 import sys
 import yaml
 import httpx
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 # Constants
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'config.yaml')
@@ -97,11 +97,120 @@ class NodeAgent:
             await asyncio.sleep(self.heartbeat_interval)
 
     async def process_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        logger.info(f"Processing task {task.get('id')} of type {task.get('type')}")
-        # TODO: Implement actual task processing logic here
-        # For now, simulation
-        await asyncio.sleep(2)
-        return {"status": "success", "output": "processed_by_node_v1"}
+        task_type = task.get('type')
+        payload = task.get('payload', {})
+        logger.info(f"Processing task {task.get('id')} of type {task_type}")
+        
+        if task_type == "llm_inference":
+            return await self._execute_ollama(payload)
+        elif task_type in ["code_verify_cycle", "quality_loop"]:
+            return await self._execute_code_cycle(payload)
+        
+        return {"status": "success", "output": "unknown_task_type"}
+
+    async def _call_ollama(self, model: str, prompt: str, system: str = "") -> Dict[str, Any]:
+        ollama_url = self.config.get("ollama_api_url", "http://localhost:11434")
+        async with httpx.AsyncClient(timeout=300.0) as client:
+            try:
+                resp = await client.post(f"{ollama_url}/api/generate", json={
+                    "model": model, "prompt": prompt, "system": system, "stream": False
+                })
+                resp.raise_for_status()
+                return {"status": "success", "response": resp.json().get("response")}
+            except Exception as e:
+                return {"status": "error", "error": str(e)}
+
+    async def _fetch_from_rae(self, memory_id: str) -> Optional[str]:
+        """Fetch a specific memory content from the Control Node."""
+        try:
+            async with httpx.AsyncClient() as client:
+                headers = {"X-API-Key": self.api_key}
+                resp = await client.get(f"{self.base_url}/v1/memory/{memory_id}", headers=headers)
+                if resp.status_code == 200:
+                    return resp.json().get("content")
+        except Exception as e:
+            logger.error(f"Failed to fetch from RAE: {e}")
+        return None
+
+    async def _search_rae(self, query: str) -> List[Dict[str, Any]]:
+        """Search RAE for relevant context."""
+        try:
+            async with httpx.AsyncClient() as client:
+                headers = {"X-API-Key": self.api_key}
+                payload = {"query": query, "k": 5}
+                resp = await client.post(f"{self.base_url}/v1/memory/query", json=payload, headers=headers)
+                if resp.status_code == 200:
+                    return resp.json().get("results", [])
+        except Exception as e:
+            logger.error(f"RAE Search failed: {e}")
+        return []
+
+    async def _execute_code_cycle(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Writer/Reviewer cycle with RAE context awareness."""
+        writer_model = payload.get("writer_model", "deepseek-coder:33b")
+        reviewer_model = payload.get("reviewer_model", "deepseek-coder:6.7b")
+        instruction = payload.get("prompt") or payload.get("task", "")
+
+        # 0. FETCH CONTEXT FROM RAE
+        rae_context = ""
+        # Pull protocol automatically to ensure compliance
+        protocol = await self._search_rae("AGENT_CORE_PROTOCOL agnosticism rules")
+        if protocol:
+            rae_context += "### RAE PROTOCOL RULES\n" + protocol[0]["content"] + "\n\n"
+
+        # Pull specific code if memory_id provided
+        mem_id = payload.get("memory_id")
+        code_content = payload.get("diff") or payload.get("code") or ""
+        if mem_id:
+            fetched_code = await self._fetch_from_rae(mem_id)
+            if fetched_code:
+                code_content = fetched_code
+
+        # 1. WRITE (Analysis/Drafting)
+        writer_system = (
+            "You are an expert Security and Performance Auditor with access to RAE Memory. "
+            "Analyze the code provided in the prompt against the RAE Protocol rules. "
+            "Be precise, technical, and focused on agnosticism."
+        )
+        write_prompt = (
+            f"{rae_context}"
+            f"INSTRUCTION: {instruction}\n\n"
+            "CODE TO ANALYZE:\n"
+            f"{code_content}\n\n"
+            "Perform the analysis now."
+        )
+
+        logger.info(
+            f"Phase 1: Writing analysis with {writer_model} (RAE context included)"
+        )
+        write_result = await self._call_ollama(
+            writer_model, write_prompt, system=writer_system
+        )
+        if write_result["status"] == "error":
+            return write_result
+        initial_output = write_result["response"]
+
+        # 2. REVIEW
+        logger.info(f"Phase 2: Reviewing output with {reviewer_model}")
+        reviewer_system = (
+            "You are a Senior Python Architect checking the quality of an automated audit."
+        )
+        review_prompt = (
+            "Review the following analysis for correctness. "
+            "Ensure the auditor actually analyzed the code provided in the previous step. "
+            "If the analysis is solid, respond 'PASSED'. Otherwise, explain what is missing.\n\n"
+            f"AUDIT TO REVIEW:\n{initial_output}"
+        )
+        review_result = await self._call_ollama(
+            reviewer_model, review_prompt, system=reviewer_system
+        )
+
+    async def _execute_ollama(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        return await self._call_ollama(
+            payload.get("model", "deepseek-coder:33b"),
+            payload.get("prompt", ""),
+            payload.get("system", "")
+        )
 
     async def task_loop(self, client: httpx.AsyncClient):
         poll_url = f"{self.base_url}/control/tasks/poll"
@@ -120,24 +229,27 @@ class NodeAgent:
                             error = str(e)
                         
                         # Submit result
-                        submit_url = f"{self.base_url}/control/tasks/{task['id']}/result"
-                        payload = {"task_id": task['id'], "result": result, "error": error}
+                        submit_url = (
+                            f"{self.base_url}/control/tasks/{task['id']}/result"
+                        )
+                        payload = {
+                            "task_id": task["id"],
+                            "result": result,
+                            "error": error,
+                        }
                         await client.post(submit_url, json=payload)
                         logger.info(f"Task {task['id']} result submitted")
-            except Exception as e:
-                # logger.error(f"Task polling error: {e}")
+            except Exception:
                 # Reduce noise
                 pass
-            
-            await asyncio.sleep(2) # Normal poll interval
+
+            await asyncio.sleep(2)  # Normal poll interval
 
     async def run(self):
         async with httpx.AsyncClient(timeout=10.0) as client:
             await self.register(client)
-            await asyncio.gather(
-                self.heartbeat_loop(client),
-                self.task_loop(client)
-            )
+            await asyncio.gather(self.heartbeat_loop(client), self.task_loop(client))
+
 
 if __name__ == "__main__":
     agent = NodeAgent()

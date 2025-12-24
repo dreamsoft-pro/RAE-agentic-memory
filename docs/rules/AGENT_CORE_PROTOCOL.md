@@ -46,6 +46,7 @@ Different branches = Different testing levels.
 - **Goal**: Production Guarantee.
 - **Command**: CI (GitHub Actions).
 - **Rule**: If CI fails, fix immediately on `develop` and propagate up.
+- **Versioning**: Always check `git tag` and GitHub Releases before bumping versions. Do NOT rely solely on code files. Update `AGENT_CORE_PROTOCOL.md` if this rule is missing.
 
 ## 4. DOCUMENTATION STRATEGY
 
@@ -61,6 +62,7 @@ Different branches = Different testing levels.
 ## 6. HIGH STANDARDS & QUALITY GATES
 
 - **Zero Warning Policy**: Treat warnings as errors. Fix them immediately. Do not ignore them.
+  - *Exception*: If a warning originates from a 3rd party library and is beyond the agent's control, document it and suppress it if possible, ensuring it doesn't clutter the CI output.
 - **No Drift**: Ensure architectural decisions are persistent. Do not re-introduce fixed bugs or deprecated patterns.
 - **Best Practices**:
   - **Clean Code**: Follow SOLID, DRY, and KISS principles.
@@ -83,14 +85,28 @@ Different branches = Different testing levels.
 - **RAE-First Communication**: **MANDATORY**. All communication and context exchange between agents MUST pass through RAE. Agents must consult RAE for context before acting and store results in RAE. Direct side-channels are prohibited to ensure full auditability and shared state. Input/Output MUST flow through RAE to minimize token usage.
 - **Model Economy**: Use cheaper/lighter models for simple tasks. Reserve SOTA models for complex reasoning.
 - **Compute Offloading**: For heavy tasks (embeddings, large benchmarks), utilize the Compute Cluster:
-  - **Node KUBUS**: RTX 4080 (GPU acceleration, Local LLMs).
+  - **Node KUBUS**: RTX 4080 (GPU acceleration, Local LLMs). Primary for high-quality code generation and audits.
   - **Node PIOTREK**: 128GB RAM (Large-scale memory testing).
-- **Advanced Quality Metrics**: 
-  - **LECT**: Long-term episodic consistency (10k+ cycles).
-  - **RST**: Stability against contradictory/noisy data.
-  - **GRDT**: Deep graph reasoning (chains of thought).
+  - **Other Nodes**: Emerging compute resources should be integrated via RAECoreService.
 
-## 8. DEFINITION OF DONE (PRO)
+## 8. DISTRIBUTED COMPUTE WORKFLOW (Writer/Reviewer)
+
+When delegating tasks to external nodes (e.g., node1/KUBUS), follow the **Agentic Quality Loop**:
+- **Phase 1: Writer**: Typically **DeepSeek** (e.g., `deepseek-coder:33b`) writes the code or performs deep analysis.
+- **Phase 2: Reviewer**: Typically **Ollama** running a secondary model (e.g., `deepseek-coder:6.7b` or `senior-architect` persona) checks the code.
+- **Opportunistic Availability**: External nodes are **NOT** permanent resources. They must be used only when `ONLINE` and without disturbing their primary users. 
+- **Graceful Fallback**: If a node is unavailable, tasks MUST automatically fall back to local execution or cloud-based providers to ensure continuity.
+- **Implementation**: Check node status via `ControlPlaneService` before task creation.
+
+## 9. SCHEDULED QUALITY MAINTENANCE (Autonomous Improvement)
+
+To ensure long-term stability without human intervention, RAE implements **Autonomous Maintenance Windows**:
+- **Nocturnal Audit (Daily, 02:00 AM)**: RAE automatically scans all commits from the last 24h and delegates a `quality_loop` task to available compute nodes (node1/KUBUS).
+- **Weekly Deep Refactor (Every Sunday)**: A more intensive cycle focusing on technical debt (TODOs) and strict agnosticism compliance across the entire codebase.
+- **Principle of Non-Interference**: These tasks MUST have lower priority than active user tasks and should only run on nodes with `status=ONLINE` and low current load.
+- **Outcome**: Results are stored in RAE Memory and a summary report is prepared for the user's morning review.
+
+## 10. DEFINITION OF DONE (PRO)
 - All tests pass (Green).
 - Linter passed (No warnings).
 - Benchmarks verified against baseline.

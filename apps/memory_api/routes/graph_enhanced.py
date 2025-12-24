@@ -13,8 +13,12 @@ This module provides FastAPI routes for enhanced graph operations including:
 from typing import List
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException
 
+from apps.memory_api.dependencies import (
+    get_enhanced_graph_repository,
+    get_rae_core_service,
+)
 from apps.memory_api.models.graph_enhanced_models import (  # Request/Response models; Data models
     ActivateEdgeRequest,
     BatchCreateEdgesRequest,
@@ -44,23 +48,11 @@ from apps.memory_api.models.graph_enhanced_models import (  # Request/Response m
     TraverseGraphResponse,
     UpdateEdgeWeightRequest,
 )
-from apps.memory_api.repositories.graph_repository_enhanced import (
-    EnhancedGraphRepository,
-)
+from apps.memory_api.services.rae_core_service import RAECoreService
 
 logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/v1/graph-management", tags=["Graph Management"])
-
-
-# ============================================================================
-# Dependency Injection
-# ============================================================================
-
-
-async def get_pool(request: Request):
-    """Get database connection pool from app state"""
-    return request.app.state.pool
 
 
 # ============================================================================
@@ -69,7 +61,10 @@ async def get_pool(request: Request):
 
 
 @router.post("/nodes", response_model=EnhancedGraphNode, status_code=201)
-async def create_node(request: CreateGraphNodeRequest, pool=Depends(get_pool)):
+async def create_node(
+    request: CreateGraphNodeRequest,
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
     """
     Create a knowledge graph node.
 
@@ -77,7 +72,7 @@ async def create_node(request: CreateGraphNodeRequest, pool=Depends(get_pool)):
     within a tenant/project scope.
     """
     try:
-        repo = EnhancedGraphRepository(pool)
+        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
         node = await repo.create_node(
             tenant_id=request.tenant_id,
             project_id=request.project_id,
@@ -96,7 +91,10 @@ async def create_node(request: CreateGraphNodeRequest, pool=Depends(get_pool)):
 
 @router.get("/nodes/{node_id}/metrics", response_model=GetNodeMetricsResponse)
 async def get_node_metrics(
-    tenant_id: str, project_id: str, node_id: str, pool=Depends(get_pool)
+    tenant_id: str,
+    project_id: str,
+    node_id: str,
+    rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
     Get connectivity metrics for a node.
@@ -106,7 +104,7 @@ async def get_node_metrics(
     try:
         from uuid import UUID
 
-        repo = EnhancedGraphRepository(pool)
+        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
 
         node_uuid = UUID(node_id)
         metrics = await repo.get_node_metrics(tenant_id, project_id, node_uuid)
@@ -124,7 +122,8 @@ async def get_node_metrics(
 
 @router.post("/nodes/connected", response_model=FindConnectedNodesResponse)
 async def find_connected_nodes(
-    request: FindConnectedNodesRequest, pool=Depends(get_pool)
+    request: FindConnectedNodesRequest,
+    rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
     Find all nodes connected to a given node.
@@ -132,7 +131,7 @@ async def find_connected_nodes(
     Returns nodes within max_depth distance with their distance values.
     """
     try:
-        repo = EnhancedGraphRepository(pool)
+        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
         connected = await repo.find_connected_nodes(
             tenant_id=request.tenant_id,
             project_id=request.project_id,
@@ -157,7 +156,10 @@ async def find_connected_nodes(
 
 
 @router.post("/edges", response_model=EnhancedGraphEdge, status_code=201)
-async def create_edge(request: CreateGraphEdgeRequest, pool=Depends(get_pool)):
+async def create_edge(
+    request: CreateGraphEdgeRequest,
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
     """
     Create a weighted, temporal knowledge graph edge.
 
@@ -165,7 +167,7 @@ async def create_edge(request: CreateGraphEdgeRequest, pool=Depends(get_pool)):
     and bidirectionality.
     """
     try:
-        repo = EnhancedGraphRepository(pool)
+        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
 
         # Optional: Check for cycles before creating edge
         cycle_result = await repo.detect_cycle(
@@ -205,13 +207,15 @@ async def create_edge(request: CreateGraphEdgeRequest, pool=Depends(get_pool)):
 
 @router.put("/edges/{edge_id}/weight", response_model=EnhancedGraphEdge)
 async def update_edge_weight(
-    edge_id: str, request: UpdateEdgeWeightRequest, pool=Depends(get_pool)
+    edge_id: str,
+    request: UpdateEdgeWeightRequest,
+    rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """Update edge weight and optionally confidence"""
     try:
         from uuid import UUID
 
-        repo = EnhancedGraphRepository(pool)
+        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
 
         edge = await repo.update_edge_weight(
             edge_id=UUID(edge_id),
@@ -228,13 +232,15 @@ async def update_edge_weight(
 
 @router.post("/edges/{edge_id}/deactivate", response_model=EnhancedGraphEdge)
 async def deactivate_edge(
-    edge_id: str, request: DeactivateEdgeRequest, pool=Depends(get_pool)
+    edge_id: str,
+    request: DeactivateEdgeRequest,
+    rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """Deactivate an edge (soft delete)"""
     try:
         from uuid import UUID
 
-        repo = EnhancedGraphRepository(pool)
+        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
 
         edge = await repo.deactivate_edge(edge_id=UUID(edge_id), reason=request.reason)
 
@@ -247,13 +253,15 @@ async def deactivate_edge(
 
 @router.post("/edges/{edge_id}/activate", response_model=EnhancedGraphEdge)
 async def activate_edge(
-    edge_id: str, request: ActivateEdgeRequest, pool=Depends(get_pool)
+    edge_id: str,
+    request: ActivateEdgeRequest,
+    rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """Reactivate a deactivated edge"""
     try:
         from uuid import UUID
 
-        repo = EnhancedGraphRepository(pool)
+        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
 
         edge = await repo.activate_edge(edge_id=UUID(edge_id))
 
@@ -266,13 +274,15 @@ async def activate_edge(
 
 @router.put("/edges/{edge_id}/temporal", response_model=EnhancedGraphEdge)
 async def set_edge_temporal_validity(
-    edge_id: str, request: SetEdgeTemporalValidityRequest, pool=Depends(get_pool)
+    edge_id: str,
+    request: SetEdgeTemporalValidityRequest,
+    rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """Set temporal validity window for an edge"""
     try:
         from uuid import UUID
 
-        repo = EnhancedGraphRepository(pool)
+        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
 
         edge = await repo.set_edge_temporal_validity(
             edge_id=UUID(edge_id),
@@ -293,7 +303,10 @@ async def set_edge_temporal_validity(
 
 
 @router.post("/traverse", response_model=TraverseGraphResponse)
-async def traverse_graph(request: TraverseGraphRequest, pool=Depends(get_pool)):
+async def traverse_graph(
+    request: TraverseGraphRequest,
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
     """
     Perform temporal graph traversal with BFS or DFS.
 
@@ -308,7 +321,7 @@ async def traverse_graph(request: TraverseGraphRequest, pool=Depends(get_pool)):
 
         start_time = time.time()
 
-        repo = EnhancedGraphRepository(pool)
+        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
 
         nodes, edges = await repo.traverse_temporal(
             tenant_id=request.tenant_id,
@@ -367,7 +380,10 @@ async def traverse_graph(request: TraverseGraphRequest, pool=Depends(get_pool)):
 
 
 @router.post("/path/shortest", response_model=FindPathResponse)
-async def find_shortest_path(request: FindPathRequest, pool=Depends(get_pool)):
+async def find_shortest_path(
+    request: FindPathRequest,
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
     """
     Find weighted shortest path between two nodes using Dijkstra.
 
@@ -378,7 +394,7 @@ async def find_shortest_path(request: FindPathRequest, pool=Depends(get_pool)):
 
         start_time = time.time()
 
-        repo = EnhancedGraphRepository(pool)
+        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
 
         path = await repo.find_shortest_path(
             tenant_id=request.tenant_id,
@@ -423,14 +439,17 @@ async def find_shortest_path(request: FindPathRequest, pool=Depends(get_pool)):
 
 
 @router.post("/cycles/detect", response_model=DetectCycleResponse)
-async def detect_cycle(request: DetectCycleRequest, pool=Depends(get_pool)):
+async def detect_cycle(
+    request: DetectCycleRequest,
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
     """
     Detect if adding an edge would create a cycle.
 
     Uses DFS to check if there's a path from target back to source.
     """
     try:
-        repo = EnhancedGraphRepository(pool)
+        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
 
         result = await repo.detect_cycle(
             tenant_id=request.tenant_id,
@@ -463,7 +482,10 @@ async def detect_cycle(request: DetectCycleRequest, pool=Depends(get_pool)):
 
 
 @router.post("/snapshots", response_model=CreateSnapshotResponse, status_code=201)
-async def create_snapshot(request: CreateSnapshotRequest, pool=Depends(get_pool)):
+async def create_snapshot(
+    request: CreateSnapshotRequest,
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
     """
     Create a versioned snapshot of the graph.
 
@@ -471,7 +493,7 @@ async def create_snapshot(request: CreateSnapshotRequest, pool=Depends(get_pool)
     versioning, rollback, and historical analysis.
     """
     try:
-        repo = EnhancedGraphRepository(pool)
+        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
 
         snapshot_id = await repo.create_snapshot(
             tenant_id=request.tenant_id,
@@ -505,12 +527,15 @@ async def create_snapshot(request: CreateSnapshotRequest, pool=Depends(get_pool)
 
 
 @router.get("/snapshots/{snapshot_id}", response_model=GraphSnapshot)
-async def get_snapshot(snapshot_id: str, pool=Depends(get_pool)):
+async def get_snapshot(
+    snapshot_id: str,
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
     """Get snapshot details by ID"""
     try:
         from uuid import UUID
 
-        repo = EnhancedGraphRepository(pool)
+        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
 
         snapshot = await repo.get_snapshot(UUID(snapshot_id))
 
@@ -528,11 +553,14 @@ async def get_snapshot(snapshot_id: str, pool=Depends(get_pool)):
 
 @router.get("/snapshots", response_model=List[GraphSnapshot])
 async def list_snapshots(
-    tenant_id: str, project_id: str, limit: int = 10, pool=Depends(get_pool)
+    tenant_id: str,
+    project_id: str,
+    limit: int = 10,
+    rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """List recent snapshots"""
     try:
-        repo = EnhancedGraphRepository(pool)
+        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
 
         snapshots = await repo.list_snapshots(
             tenant_id=tenant_id, project_id=project_id, limit=limit
@@ -547,7 +575,9 @@ async def list_snapshots(
 
 @router.post("/snapshots/{snapshot_id}/restore", response_model=RestoreSnapshotResponse)
 async def restore_snapshot(
-    snapshot_id: str, request: RestoreSnapshotRequest, pool=Depends(get_pool)
+    snapshot_id: str,
+    request: RestoreSnapshotRequest,
+    rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
     Restore graph from snapshot.
@@ -557,7 +587,7 @@ async def restore_snapshot(
     try:
         from uuid import UUID
 
-        repo = EnhancedGraphRepository(pool)
+        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
 
         nodes_restored, edges_restored = await repo.restore_snapshot(
             snapshot_id=UUID(snapshot_id), clear_existing=request.clear_existing
@@ -588,7 +618,8 @@ async def restore_snapshot(
 
 @router.post("/statistics", response_model=GetGraphStatisticsResponse)
 async def get_graph_statistics(
-    request: GetGraphStatisticsRequest, pool=Depends(get_pool)
+    request: GetGraphStatisticsRequest,
+    rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
     Get comprehensive graph statistics.
@@ -596,7 +627,7 @@ async def get_graph_statistics(
     Returns node count, edge count, connectivity metrics, and snapshot info.
     """
     try:
-        repo = EnhancedGraphRepository(pool)
+        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
 
         statistics = await repo.get_graph_statistics(
             tenant_id=request.tenant_id, project_id=request.project_id
@@ -623,14 +654,17 @@ async def get_graph_statistics(
 
 
 @router.post("/nodes/batch", response_model=BatchOperationResponse, status_code=201)
-async def batch_create_nodes(request: BatchCreateNodesRequest, pool=Depends(get_pool)):
+async def batch_create_nodes(
+    request: BatchCreateNodesRequest,
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
     """
     Create multiple nodes in batch.
 
     More efficient than individual create calls for bulk operations.
     """
     try:
-        repo = EnhancedGraphRepository(pool)
+        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
 
         successful, errors = await repo.batch_create_nodes(
             tenant_id=request.tenant_id,
@@ -655,14 +689,17 @@ async def batch_create_nodes(request: BatchCreateNodesRequest, pool=Depends(get_
 
 
 @router.post("/edges/batch", response_model=BatchOperationResponse, status_code=201)
-async def batch_create_edges(request: BatchCreateEdgesRequest, pool=Depends(get_pool)):
+async def batch_create_edges(
+    request: BatchCreateEdgesRequest,
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
     """
     Create multiple edges in batch.
 
     More efficient than individual create calls for bulk operations.
     """
     try:
-        repo = EnhancedGraphRepository(pool)
+        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
 
         successful = 0
         failed = 0

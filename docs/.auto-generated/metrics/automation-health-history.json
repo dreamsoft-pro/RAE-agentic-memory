@@ -1,37 +1,5 @@
 [
   {
-    "run_id": "20251207-170539",
-    "timestamp": "2025-12-07T17:05:39.910001",
-    "duration_seconds": 0.21,
-    "status": "success",
-    "files_count": 8,
-    "errors_count": 0
-  },
-  {
-    "run_id": "20251207-185216",
-    "timestamp": "2025-12-07T18:52:16.046105",
-    "duration_seconds": 0.18,
-    "status": "success",
-    "files_count": 8,
-    "errors_count": 0
-  },
-  {
-    "run_id": "20251207-192841",
-    "timestamp": "2025-12-07T19:28:41.699991",
-    "duration_seconds": 0.18,
-    "status": "success",
-    "files_count": 8,
-    "errors_count": 0
-  },
-  {
-    "run_id": "20251207-195327",
-    "timestamp": "2025-12-07T19:53:27.133919",
-    "duration_seconds": 0.2,
-    "status": "success",
-    "files_count": 8,
-    "errors_count": 0
-  },
-  {
     "run_id": "20251207-201811",
     "timestamp": "2025-12-07T20:18:11.673250",
     "duration_seconds": 0.2,
@@ -384,17 +352,49 @@
     "errors_count": 0
   },
   {
-    "run_id": "20251223-174137",
-    "timestamp": "2025-12-23T17:41:37.830486",
+    "run_id": "20251223-174023",
+    "timestamp": "2025-12-23T17:40:23.765907",
+    "duration_seconds": 0.18,
+    "status": "success",
+    "files_count": 8,
+    "errors_count": 0
+  },
+  {
+    "run_id": "20251223-193501",
+    "timestamp": "2025-12-23T19:35:01.578658",
     "duration_seconds": 0.2,
     "status": "success",
     "files_count": 8,
     "errors_count": 0
   },
   {
-    "run_id": "20251224-025159",
-    "timestamp": "2025-12-24T02:51:59.630432",
-    "duration_seconds": 0.22,
+    "run_id": "20251223-195718",
+    "timestamp": "2025-12-23T19:57:18.067761",
+    "duration_seconds": 0.2,
+    "status": "success",
+    "files_count": 8,
+    "errors_count": 0
+  },
+  {
+    "run_id": "20251223-203202",
+    "timestamp": "2025-12-23T20:32:02.414211",
+    "duration_seconds": 0.18,
+    "status": "success",
+    "files_count": 8,
+    "errors_count": 0
+  },
+  {
+    "run_id": "20251224-090011",
+    "timestamp": "2025-12-24T09:00:11.198579",
+    "duration_seconds": 0.19,
+    "status": "success",
+    "files_count": 8,
+    "errors_count": 0
+  },
+  {
+    "run_id": "20251224-094138",
+    "timestamp": "2025-12-24T09:41:38.643191",
+    "duration_seconds": 0.2,
     "status": "success",
     "files_count": 8,
     "errors_count": 0

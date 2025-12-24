@@ -50,6 +50,12 @@ class RegisterNodeRequest(BaseModel):
     capabilities: Dict[str, Any]
 
 
+class CreateTaskRequest(BaseModel):
+    type: str
+    payload: Dict[str, Any]
+    priority: int = 0
+
+
 class HeartbeatRequest(BaseModel):
     node_id: str
     status: NodeStatus

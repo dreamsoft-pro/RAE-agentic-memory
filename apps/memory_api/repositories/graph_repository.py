@@ -6,6 +6,7 @@ following the Repository/DAO pattern to separate data access from business logic
 """
 
 from typing import Any, Dict, List, Optional, Tuple, cast
+from uuid import UUID, uuid4
 
 import asyncpg
 import structlog
@@ -802,7 +803,7 @@ class GraphRepository:
         node_id: str,
         label: str,
         properties: Dict[str, Any],
-    ) -> int:
+    ) -> UUID | int:
         """
         Insert or update a node (upsert operation).
 
@@ -824,18 +825,20 @@ class GraphRepository:
         async with self.pool.acquire() as conn:
             # Ensure properties is JSON-serializable
             properties_json = json.dumps(properties) if properties else "{}"
+            technical_id = uuid4()
 
             record = await conn.fetchrow(
                 """
                 INSERT INTO knowledge_graph_nodes
-                (tenant_id, project_id, node_id, label, properties)
-                VALUES ($1, $2, $3, $4, $5::jsonb)
+                (id, tenant_id, project_id, node_id, label, properties)
+                VALUES ($1, $2, $3, $4, $5, $6::jsonb)
                 ON CONFLICT (tenant_id, project_id, node_id)
                 DO UPDATE SET
                     label = EXCLUDED.label,
                     properties = EXCLUDED.properties
                 RETURNING id
                 """,
+                technical_id,
                 tenant_id,
                 project_id,
                 node_id,
@@ -843,7 +846,7 @@ class GraphRepository:
                 properties_json,
             )
 
-            internal_id = cast(int, record["id"])
+            internal_id = cast(UUID | int, record["id"])
 
             logger.info(
                 "node_upserted",
