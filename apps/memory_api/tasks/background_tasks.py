@@ -729,9 +729,9 @@ def run_nightly_quality_audit(self):
     Automated Nocturnal Quality Audit.
     Scans the codebase for recent changes and delegates deep analysis to compute nodes.
     """
-    from apps.memory_api.services.control_plane_service import ControlPlaneService
     from apps.memory_api.repositories.node_repository import NodeRepository
     from apps.memory_api.repositories.task_repository import TaskRepository
+    from apps.memory_api.services.control_plane_service import ControlPlaneService
 
     async def main():
         async with rae_context() as rae_service:
@@ -740,7 +740,7 @@ def run_nightly_quality_audit(self):
                 node_repo = NodeRepository(rae_service.postgres_pool)
                 task_repo = TaskRepository(rae_service.postgres_pool)
                 service = ControlPlaneService(node_repo, task_repo)
-                
+
                 # Fetch online nodes
                 nodes = await node_repo.list_online_nodes()
                 if not nodes:
@@ -751,9 +751,10 @@ def run_nightly_quality_audit(self):
                 # In real scenario, we'd use git commands if available in the env
                 try:
                     import subprocess
+
                     diff = subprocess.check_output(
                         ["git", "diff", "HEAD@{24hours}..HEAD"],
-                        stderr=subprocess.STDOUT
+                        stderr=subprocess.STDOUT,
                     ).decode("utf-8")
                 except Exception as e:
                     logger.warning("nightly_audit_git_diff_failed", error=str(e))
@@ -766,9 +767,9 @@ def run_nightly_quality_audit(self):
                         "task": "Perform nocturnal quality audit. Focus on code consistency, agnosticism, and potential logic regressions.",
                         "diff": diff,
                         "writer_model": "deepseek-coder:33b",
-                        "reviewer_model": "deepseek-coder:6.7b"
+                        "reviewer_model": "deepseek-coder:6.7b",
                     },
-                    priority=5 # Lower than interactive tasks
+                    priority=5,  # Lower than interactive tasks
                 )
 
                 logger.info("nightly_audit_delegated", task_id=str(task.id))
