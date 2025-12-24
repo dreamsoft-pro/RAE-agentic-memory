@@ -18,8 +18,6 @@ import pytest
 
 # Check if test infrastructure is available
 try:
-    from tests.api.v1.test_memory import client_with_overrides
-
     HAS_TEST_INFRASTRUCTURE = True
 except ImportError:
     HAS_TEST_INFRASTRUCTURE = False
@@ -48,10 +46,10 @@ def assert_schema(data: Dict[str, Any], expected_schema: Dict[str, type]):
             continue
 
         # Handle list types
-        if expected_type == list:
+        if expected_type is list:
             assert isinstance(value, list), f"{field} should be list, got {type(value)}"
         # Handle dict types
-        elif expected_type == dict:
+        elif expected_type is dict:
             assert isinstance(value, dict), f"{field} should be dict, got {type(value)}"
         # Handle datetime strings
         elif expected_type == "datetime":

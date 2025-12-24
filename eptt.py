@@ -1,7 +1,7 @@
 import os
 import sys
-from pathlib import Path
 from collections.abc import Callable, Iterable
+from pathlib import Path
 
 from gitignore_parser import parse_gitignore
 

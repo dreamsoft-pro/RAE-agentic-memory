@@ -20,14 +20,6 @@ from apps.memory_api.routes.dashboard import get_metric_timeseries
 
 
 @pytest.fixture
-def mock_websocket_service():
-    with patch("apps.memory_api.routes.dashboard.get_websocket_service") as mock_get:
-        service_mock = MagicMock()
-        mock_get.return_value = service_mock
-        yield service_mock
-
-
-@pytest.fixture
 def mock_metrics_repo():
     with patch("apps.memory_api.routes.dashboard.get_metrics_repo") as mock_get:
         repo_mock = AsyncMock()

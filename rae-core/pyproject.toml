@@ -92,7 +92,15 @@ disallow_untyped_defs = true
 [tool.ruff]
 line-length = 88
 target-version = "py310"
+
+[tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
+ignore = [
+    "E501", # Line too long
+    "UP035", # Deprecated types
+    "B008", # Function call in argument defaults
+    "N806", # Variable name should be lowercase
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

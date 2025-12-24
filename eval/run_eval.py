@@ -14,8 +14,8 @@ if str(PROJECT_ROOT) not in sys.path:
 
 ROOT_DIR = PROJECT_ROOT
 
-import requests
-import yaml
+import requests  # noqa: E402
+import yaml  # noqa: E402
 
 API = os.environ.get("MEMORY_API_URL", "http://localhost:8000")
 TENANT_ID = "eval-tenant"

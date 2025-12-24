@@ -22,7 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 sys.modules["apps.memory_api.services.embedding"] = Mock()
 sys.modules["apps.memory_api.services.vector_store"] = Mock()
 
-from run_benchmark import BenchmarkMetrics
+from run_benchmark import BenchmarkMetrics  # noqa: E402
 
 
 class TestBenchmarkMetrics:

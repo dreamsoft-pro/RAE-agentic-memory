@@ -33,6 +33,7 @@ ignore_missing_imports = true
 select = ["E", "F", "I", "B", "W"]
 ignore = [
     "E501", # Line too long (handled by black)
+    "UP035", # Deprecated types (typing.Dict -> dict)
     "B008", # Do not perform function call in argument defaults (standard for FastAPI Depends)
     "B904", # Within an except clause, raise exceptions with raise ... from err
     "B905", # zip() without an explicit strict= parameter

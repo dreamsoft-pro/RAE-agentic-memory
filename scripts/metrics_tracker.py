@@ -6,11 +6,11 @@ Lightweight JSON-based metrics - NO OpenTelemetry overhead.
 """
 
 import json
-import logging
 import os
 import subprocess
 import time
 from datetime import datetime
+from typing import Dict
 
 
 class DocsMetrics:

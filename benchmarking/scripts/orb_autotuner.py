@@ -7,10 +7,10 @@ on the Pareto frontier (optimal quality/cost trade-offs).
 
 import itertools
 import json
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-from collections.abc import Callable
 
 from benchmarking.nine_five_benchmarks.orb_benchmark import Configuration
 

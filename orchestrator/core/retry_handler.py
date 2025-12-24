@@ -2,10 +2,10 @@
 
 import asyncio
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, Optional
-from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 

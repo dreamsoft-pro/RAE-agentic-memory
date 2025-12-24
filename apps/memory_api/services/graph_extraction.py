@@ -459,6 +459,12 @@ class GraphExtractionService:
             )
             result = cast(FactualIndices, result)
 
+            if not hasattr(result, "indices"):
+                logger.warning(
+                    "gatekeeper_result_missing_indices", model=str(type(result))
+                )
+                return memories
+
             indices_set = set(result.indices)
             for i, memory in enumerate(memories, 1):
                 if i in indices_set:

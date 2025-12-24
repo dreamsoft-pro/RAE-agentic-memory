@@ -39292,3 +39292,1002 @@
   },
   "confidence": 0.7999999999999999
 }
+{
+  "decision_id": "728c17b4",
+  "timestamp": "2025-12-24T20:11:05.416701+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "10",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 10,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": null,
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "99bb0037",
+  "timestamp": "2025-12-24T20:11:05.417469+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "10",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 10,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": "deterministic_heuristic",
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "c07d9569",
+  "timestamp": "2025-12-24T20:11:05.418070+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "10",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 10,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": "deterministic_heuristic",
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "3b57deb5",
+  "timestamp": "2025-12-24T20:11:05.418648+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "10",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 10,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": "deterministic_heuristic",
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "cb12b43d",
+  "timestamp": "2025-12-24T20:11:05.419237+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "10",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 10,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": "deterministic_heuristic",
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "42c5413d",
+  "timestamp": "2025-12-24T20:11:05.419829+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "10",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 10,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": "deterministic_heuristic",
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "5655e494",
+  "timestamp": "2025-12-24T20:11:05.420405+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "10",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 10,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": "deterministic_heuristic",
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "d0fd02f3",
+  "timestamp": "2025-12-24T20:11:24.814359+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "35",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 35,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": null,
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "e831aba0",
+  "timestamp": "2025-12-24T20:11:24.815088+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "35",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 35,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": "deterministic_heuristic",
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "897c386f",
+  "timestamp": "2025-12-24T20:11:24.815681+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "35",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 35,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": "deterministic_heuristic",
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "764c2669",
+  "timestamp": "2025-12-24T20:11:24.816264+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "35",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 35,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": "deterministic_heuristic",
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "14c45a51",
+  "timestamp": "2025-12-24T20:11:24.816817+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "35",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 35,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": "deterministic_heuristic",
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "268ccd76",
+  "timestamp": "2025-12-24T20:11:24.817397+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "35",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 35,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": "deterministic_heuristic",
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "ee6ef8be",
+  "timestamp": "2025-12-24T20:11:24.817982+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "35",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 35,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": "deterministic_heuristic",
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "da9e0d2a",
+  "timestamp": "2025-12-24T20:11:24.818541+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "35",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 35,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": "deterministic_heuristic",
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "8bee11e1",
+  "timestamp": "2025-12-24T20:11:24.819062+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "35",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 35,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": "deterministic_heuristic",
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "2a7f8735",
+  "timestamp": "2025-12-24T20:11:24.819584+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "35",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 35,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": "deterministic_heuristic",
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "f5505ee0",
+  "timestamp": "2025-12-24T20:11:24.820099+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "35",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 35,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": "deterministic_heuristic",
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "ce4a9787",
+  "timestamp": "2025-12-24T20:11:24.820617+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "35",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 35,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": "deterministic_heuristic",
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "ec680bbd",
+  "timestamp": "2025-12-24T20:11:24.821156+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "35",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 35,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": "deterministic_heuristic",
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "e46afb2b",
+  "timestamp": "2025-12-24T20:11:24.821674+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "35",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 35,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": "deterministic_heuristic",
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "f8777fdc",
+  "timestamp": "2025-12-24T20:11:24.822198+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "35",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 35,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": "deterministic_heuristic",
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "246d60de",
+  "timestamp": "2025-12-24T20:11:24.822705+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "35",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 35,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": "deterministic_heuristic",
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "306513c1",
+  "timestamp": "2025-12-24T20:11:24.823244+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "35",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 35,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": "deterministic_heuristic",
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "f7c77599",
+  "timestamp": "2025-12-24T20:11:24.823757+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "35",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 35,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": "deterministic_heuristic",
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "b8fa87e3",
+  "timestamp": "2025-12-24T20:11:24.824399+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "35",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 35,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": "deterministic_heuristic",
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
+{
+  "decision_id": "e0defb5a",
+  "timestamp": "2025-12-24T20:11:24.824908+00:00",
+  "selected_level": "deterministic_heuristic",
+  "strategy_id": "relevance_scoring",
+  "params": {
+    "use_recency": true,
+    "recency_weight": 0.3,
+    "importance_threshold": 0.3
+  },
+  "explanation": "Selected deterministic_heuristic (Rule-based scoring (fastest, lowest cost)) | Reason: Task type 'memory_retrieve' works well with L1 | Strategy: relevance_scoring",
+  "telemetry_tags": {
+    "math.level": "deterministic_heuristic",
+    "math.strategy": "relevance_scoring",
+    "math.task_type": "memory_retrieve",
+    "math.profile": "research",
+    "session.length": "0",
+    "memory.count": "35",
+    "tenant.id": "unknown"
+  },
+  "features": {
+    "task_type": "memory_retrieve",
+    "memory_count": 35,
+    "graph_density": 0.0,
+    "session_length": 0,
+    "memory_entropy": 0.0,
+    "recent_mrr": 0.0,
+    "recent_gcs": 0.0,
+    "recent_scs": 0.0,
+    "cost_budget": null,
+    "latency_budget_ms": null,
+    "previous_level": "deterministic_heuristic",
+    "previous_level_success": null,
+    "custom": {}
+  },
+  "confidence": 0.7
+}
