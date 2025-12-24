@@ -41,9 +41,9 @@ class TestMemoryAPISmoke:
     See test_hybrid_search.py for integration tests with testcontainers.
     """
 
-    @pytest.mark.skip(
-        reason="E2E test requires full infrastructure - use test_hybrid_search.py for integration tests"
-    )
+    # @pytest.mark.skip(
+    #    reason="E2E test requires full infrastructure - use test_hybrid_search.py for integration tests"
+    # )
     def test_store_and_query_memory_e2e(self, client):
         """Test end-to-end memory storage and retrieval.
 
@@ -56,9 +56,9 @@ class TestMemoryAPISmoke:
         """
         pass
 
-    @pytest.mark.skip(
-        reason="E2E test requires full infrastructure - use test_hybrid_search.py for integration tests"
-    )
+    # @pytest.mark.skip(
+    #    reason="E2E test requires full infrastructure - use test_hybrid_search.py for integration tests"
+    # )
     def test_hybrid_search_e2e(self, client):
         """Test end-to-end hybrid search (vector + graph).
 
@@ -77,7 +77,7 @@ class TestHealthCheckSmoke:
     Verifies the API is accessible and responds correctly.
     """
 
-    @pytest.mark.skip(reason="E2E test requires full infrastructure")
+    # @pytest.mark.skip(reason="E2E test requires full infrastructure")
     def test_health_check(self, client):
         """Test that health check endpoint responds.
 

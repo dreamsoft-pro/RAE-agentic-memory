@@ -142,9 +142,9 @@ async def lifespan(app: FastAPI):
 
             from alembic import command, config
 
-            # Run Alembic migrations programmatically
-            # We run this in a thread because Alembic is synchronous
             alembic_cfg = config.Config("alembic.ini")
+            # Set flag to skip logging config in env.py
+            os.environ["ALEMBIC_SKIP_LOG_CONFIG"] = "1"
             await asyncio.to_thread(command.upgrade, alembic_cfg, "head")
             logger.info("db_migration_success")
         except Exception as e:

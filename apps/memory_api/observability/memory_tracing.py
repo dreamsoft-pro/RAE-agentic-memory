@@ -241,66 +241,51 @@ def trace_memory(
 ):
     """
     Decorator to trace memory operations.
-
-    Args:
-        layer: Memory layer (episodic, semantic, graph, reflective)
-        operation: Operation type (auto-detected from function name if not provided)
-        extract_params: Optional function to extract span attributes from function args
-
-    Example:
-        @trace_memory(layer="semantic", operation="search")
-        async def search_semantic_memory(query: str, limit: int = 10):
-            # ... implementation ...
-            return results
-
-        @trace_memory(
-            layer="graph",
-            extract_params=lambda kwargs: {"entity_type": kwargs.get("entity_type")}
-        )
-        async def extract_entities(text: str, entity_type: str):
-            # ... implementation ...
-            return entities
     """
 
     def decorator(func: Callable) -> Callable:
-        # Auto-detect operation from function name if not provided
         op = operation or _infer_operation(func.__name__)
-
-        @functools.wraps(func)
-        async def async_wrapper(*args, **kwargs):
-            # Extract additional attributes from function parameters
-            attrs = extract_params(kwargs) if extract_params else {}
-
-            with _memory_tracer.trace_operation(layer, op, **attrs) as span:
-                result = await func(*args, **kwargs)
-
-                # Try to extract metrics from result if it's a dict
-                if isinstance(result, dict) and span:
-                    _extract_result_metrics(span, result, layer)
-
-                return result
-
-        @functools.wraps(func)
-        def sync_wrapper(*args, **kwargs):
-            # Extract additional attributes from function parameters
-            attrs = extract_params(kwargs) if extract_params else {}
-
-            with _memory_tracer.trace_operation(layer, op, **attrs) as span:
-                result = func(*args, **kwargs)
-
-                # Try to extract metrics from result if it's a dict
-                if isinstance(result, dict) and span:
-                    _extract_result_metrics(span, result, layer)
-
-                return result
-
-        # Return appropriate wrapper based on function type
+        
         if inspect.iscoroutinefunction(func):
-            return async_wrapper
+            return _create_async_wrapper(func, layer, op, extract_params)
         else:
-            return sync_wrapper
+            return _create_sync_wrapper(func, layer, op, extract_params)
 
     return decorator
+
+
+def _create_async_wrapper(
+    func: Callable,
+    layer: str,
+    op: str,
+    extract_params: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None,
+) -> Callable:
+    @functools.wraps(func)
+    async def async_wrapper(*args, **kwargs):
+        attrs = extract_params(kwargs) if extract_params else {}
+        with _memory_tracer.trace_operation(layer, op, **attrs) as span:
+            result = await func(*args, **kwargs)
+            if isinstance(result, dict) and span:
+                _extract_result_metrics(span, result, layer)
+            return result
+    return async_wrapper
+
+
+def _create_sync_wrapper(
+    func: Callable,
+    layer: str,
+    op: str,
+    extract_params: Optional[Callable[[Dict[str, Any]], Dict[str, Any]]] = None,
+) -> Callable:
+    @functools.wraps(func)
+    def sync_wrapper(*args, **kwargs):
+        attrs = extract_params(kwargs) if extract_params else {}
+        with _memory_tracer.trace_operation(layer, op, **attrs) as span:
+            result = func(*args, **kwargs)
+            if isinstance(result, dict) and span:
+                _extract_result_metrics(span, result, layer)
+            return result
+    return sync_wrapper
 
 
 def _infer_operation(func_name: str) -> str:
