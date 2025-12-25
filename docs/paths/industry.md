@@ -65,6 +65,18 @@ To prevent cascading failures in production:
 -   **Automatic Cut-off:** If the Vector DB or LLM provider fails, RAE trips a "Circuit Breaker" to fail fast and protect the system.
 -   **Graceful Degradation:** The system can fall back to keyword search if semantic search is unavailable.
 
+### 4. Advanced GraphRAG (Knowledge Graphs)
+RAE goes beyond vector search by building a **Knowledge Graph** of your data.
+-   **Hidden Connections:** Automatically detects relationships between entities (e.g., "Project X depends on Module Y").
+-   **Deep Traversal:** Can "walk" the graph to find answers that require hopping through multiple documents.
+-   **Snapshotting:** Create point-in-time snapshots of the graph for historical analysis or rollback.
+
+### 5. Event-Driven Automation
+Automate workflows based on system events using the **Event Triggers API**.
+-   **Real-time Alerts:** Trigger a webhook when a specific memory type is created (e.g., "Critical Incident").
+-   **Auto-Reflection:** Automatically summarize memories when a project hits 100 new items.
+-   **Drift Detection:** Alert engineers if the quality of search results drops below a threshold.
+
 ---
 
 ## Deployment Considerations

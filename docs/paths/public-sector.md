@@ -59,6 +59,17 @@ For high-risk actions (e.g., deleting records), RAE supports a **Human Approval 
 -   **Risk Levels:** Operations can be flagged as "Low", "Medium", or "Critical".
 -   **Approval Gates:** Critical actions require explicit approval from a human operator before execution.
 
+### 3. Semantic Drift Detection (Policy Consistency)
+Ensure that AI interpretations remain consistent over time using the **Evaluation API**.
+-   **Drift Monitoring:** Detects if the system's understanding of key concepts (e.g., "Tax Eligibility") shifts significantly.
+-   **Alerting:** Notifies administrators if "Reasoning Drift" exceeds 1%, preventing gradual policy misalignment.
+
+### 4. Hierarchical Reflections (Citizen Feedback Analysis)
+Process vast amounts of unstructured data (e.g., thousands of town hall comments) into actionable insights.
+-   **Clustering:** Automatically groups similar memories (e.g., "Complaints about Potholes").
+-   **Map-Reduce Summarization:** recursively summarizes clusters to provide high-level insights without losing specific details.
+-   **Scale:** Designed to handle millions of data points, making it ideal for national-scale feedback analysis.
+
 ---
 
 ## Deployment & Security
