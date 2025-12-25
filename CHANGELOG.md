@@ -1,5 +1,71 @@
 ## Recent Changes (Auto-generated)
 
+*Last updated: 2025-12-25 20:00 • Branch: main • Commit: 619edfc*
+
+### ✨ Features
+
+- **metadata**: add .zenodo.json for DOI integration ([`dfc3569`](../../commit/dfc3569))
+- **infra**: implement delegated inference providers and task queue integration ([`bd4ce66`](../../commit/bd4ce66))
+- **infra**: finalize distributed compute and RAE-Lite support ([`fabc7b1`](../../commit/fabc7b1))
+- **infra**: implement InfrastructureFactory and decouple main.py ([`f1ba852`](../../commit/f1ba852))
+- **core**: implement database agnostic interface for EnhancedGraphRepository ([`75fab75`](../../commit/75fab75))
+- **test**: fully integrate testing profiles and updated protocol ([`f2090b0`](../../commit/f2090b0))
+- **infra**: integrate local Ollama LLM with hybrid orchestration support ([`ff5cc6c`](../../commit/ff5cc6c))
+- implement RAE-Lite node build system and fix control plane communication ([`d1b5de5`](../../commit/d1b5de5))
+- implement RAE-Lite node build system and fix control plane communication ([`d97175d`](../../commit/d97175d))
+- RAE-Lite MVP Complete. Implemented SQLite Graph, Storage, and NumPy-optimized Vector Store. ([`4bc61d8`](../../commit/4bc61d8))
+- **tests**: enable E2E/OTel/Performance tests and resolve architectural debt ([`4ce986d`](../../commit/4ce986d))
+
+### 🐛 Bug Fixes
+
+- linting errors and integration test database schema ([`db6c101`](../../commit/db6c101))
+- ensure deterministic ordering in graph BFS traversal to fix CI failure ([`60d9a90`](../../commit/60d9a90))
+- linting errors and integration test database schema ([`bd4b263`](../../commit/bd4b263))
+- Correct concatenated package names in requirements-dev.txt ([`c69d149`](../../commit/c69d149))
+
+### ♻️ Refactoring
+
+- **core**: enforce architectural agnosticism across all APIs and background tasks ([`75856de`](../../commit/75856de))
+- **core**: finalize background tasks migration and fix unit tests ([`48b276b`](../../commit/48b276b))
+
+### 📚 Documentation
+
+- finalize audit plan and standardization roadmap ([`57c3155`](../../commit/57c3155))
+- update README and status with stable test results and distributed architecture details ([`8ad7376`](../../commit/8ad7376))
+- add strategic reasoning case study demonstrating active intelligence ([`a951d07`](../../commit/a951d07))
+- add self-optimization use case demonstrating RAE improving RAE ([`2581060`](../../commit/2581060))
+- add CONCEPT.md explaining RAE philosophy and distributed architecture (Node1) ([`14bc8f9`](../../commit/14bc8f9))
+- integrate orphaned technical docs (reports, production guides, testing) into path guides ([`629aa06`](../../commit/629aa06))
+- update healthcare and scientist guides with advanced features and graphrag details ([`63b21e7`](../../commit/63b21e7))
+- expand industry and public sector guides with advanced enterprise features ([`476dcc1`](../../commit/476dcc1))
+- refine README comparison and expand guides for lite/industry/public-sector ([`27b995b`](../../commit/27b995b))
+- add performance benchmarks and usage example to main README ([`92583e5`](../../commit/92583e5))
+- sync API documentation with codebase (add missing Feedback, Compliance, Control Plane APIs) ([`b2b3096`](../../commit/b2b3096))
+- restore visibility of API_DOCUMENTATION.md in README and developer guide ([`21034f7`](../../commit/21034f7))
+- update branching strategy and agent protocol with strict merge verification ([`1d7a534`](../../commit/1d7a534))
+- Updated protocol for Node1 delegation and initiated RAE-Lite Graph iteration ([`9bdea81`](../../commit/9bdea81))
+
+### 🔧 Chore
+
+- Manual sync of documentation from origin/change-readme ([`70c09ca`](../../commit/70c09ca))
+
+### 💄 Style
+
+- **tests**: fix ruff formatting errors in test files ([`5047c92`](../../commit/5047c92))
+- **core**: fix linting and Mypy errors across core services and tests ([`dbb9815`](../../commit/dbb9815))
+- Unified ruff config and fixed scattered lint errors in scripts/tests ([`5d7f4e6`](../../commit/5d7f4e6))
+- Full lint and format fix across apps, sdk, integrations and tests ([`be7ea2f`](../../commit/be7ea2f))
+
+### 📦 Other
+
+- Merge pull request #12 from dreamsoft-pro/release/v2.6.0 ([`7dba9ee`](../../commit/7dba9ee))
+- Merge branch 'develop' ([`91a0969`](../../commit/91a0969))
+- Merge remote-tracking branch 'origin/main' into develop ([`fbc29d5`](../../commit/fbc29d5))
+
+---
+
+## Recent Changes (Auto-generated)
+
 *Last updated: 2025-12-25 19:53 • Branch: main • Commit: dfc3569*
 
 ### ✨ Features
