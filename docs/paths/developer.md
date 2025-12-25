@@ -179,6 +179,28 @@ For enterprise-grade, high-availability deployments, RAE can be deployed in a mu
 
 **(TODO: Extract detailed steps from `docs/PRODUCTION_PROXMOX_HA.md` and add them here.)**
 
+### 5. Advanced Deployment Scenarios
+For specific infrastructure needs, consult our detailed guides:
+- **[Single Node Production](../../docs/PRODUCTION_SINGLE_NODE.md)**: Standard reference architecture for bare-metal or VM deployment.
+- **[Proxmox High Availability](../../docs/PRODUCTION_PROXMOX_HA.md)**: Clustering guide for zero-downtime environments.
+- **[CI/CD Workflow](../../docs/CI_WORKFLOW.md)**: Deep dive into the continuous integration pipeline.
+
+---
+
+## Testing Strategy
+
+Building reliable agents requires a robust testing culture. RAE provides specialized tools for testing non-deterministic behavior.
+
+-   **[Agent Testing Guide](../../docs/AGENT_TESTING_GUIDE.md)**: How to write unit, integration, and e2e tests for agents.
+-   **[Test Policy](../../docs/AGENTS_TEST_POLICY.md)**: Standards for test coverage and "Zero Flake" policy.
+
+## Troubleshooting
+
+Encountering issues? Check the **[Troubleshooting Guide](../../TROUBLESHOOTING.md)** for solutions to common problems like:
+-   Database migration locks (`alembic` issues)
+-   Vector store connection failures
+-   Memory leaks in long-running workers
+
 ---
 
 ## Architecture Deep Dive
