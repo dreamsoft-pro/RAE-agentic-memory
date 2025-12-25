@@ -40,11 +40,12 @@ def mock_pool():
 def mock_rae_service(mock_pool):
     rae = MagicMock(spec=RAECoreService)
     rae.postgres_pool = mock_pool
-    
+
     # Mock the 'db' property to return an actual provider wrapping our mock pool
     from rae_core.adapters.postgres_db import PostgresDatabaseProvider
+
     rae.db = PostgresDatabaseProvider(mock_pool)
-    
+
     return rae
 
 
