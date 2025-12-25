@@ -23,6 +23,7 @@ from ..models import (
 from ..providers import (
     AnthropicProvider,
     DeepSeekProvider,
+    DelegatedLLMProvider,
     GeminiProvider,
     GrokProvider,
     LLMProvider,
@@ -46,14 +47,16 @@ class LLMRouter:
     - Validate cost constraints (future enhancement)
     """
 
-    def __init__(self, config_path: Optional[str] = None):
+    def __init__(self, config_path: Optional[str] = None, task_repo: Any = None):
         """
         Initialize the LLM router.
 
         Args:
             config_path: Path to providers.yaml configuration file
+            task_repo: Optional repository for delegating tasks
         """
         self.providers: Dict[str, LLMProvider] = {}
+        self.task_repo = task_repo
         self.config = self._load_config(config_path)
         self._initialize_providers()
 
@@ -84,7 +87,13 @@ class LLMRouter:
             "deepseek": DeepSeekProvider,
             "qwen": QwenProvider,
             "grok": GrokProvider,
+            "delegated": DelegatedLLMProvider,
         }
+
+        # Initialize delegated provider if repo is available
+        if self.task_repo:
+            self.providers["delegated"] = DelegatedLLMProvider(task_repo=self.task_repo)
+            logger.info("Initialized provider: delegated")
 
         for provider_name, provider_config in self.config.get("providers", {}).items():
             try:
