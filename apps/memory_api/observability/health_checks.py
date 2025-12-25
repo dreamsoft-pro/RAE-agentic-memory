@@ -15,9 +15,10 @@ async def check_postgres(
 ):
     """Check PostgreSQL connection."""
     from apps.memory_api.config import settings
+
     if settings.RAE_PROFILE == "lite" and pool is None:
         return {"status": "UP (In-Memory)"}
-    
+
     try:
         if pool is None:
             raise ValueError("Postgres pool is not initialized")
@@ -36,6 +37,7 @@ async def check_redis(
 ):  # Used deps.get_redis_client
     """Check Redis connection."""
     from apps.memory_api.config import settings
+
     if settings.RAE_PROFILE == "lite" and redis_client is None:
         return {"status": "UP (In-Memory)"}
 
@@ -56,6 +58,7 @@ async def check_qdrant(
 ):  # Used deps.get_qdrant_client
     """Check Qdrant connection."""
     from apps.memory_api.config import settings
+
     if settings.RAE_PROFILE == "lite" and qdrant_client is None:
         return {"status": "UP (In-Memory)"}
 

@@ -3,9 +3,14 @@ Tests for EnhancedGraphRepository ensuring database agnosticism.
 """
 
 from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-from apps.memory_api.repositories.graph_repository_enhanced import EnhancedGraphRepository
 from rae_core.interfaces.database import IDatabaseProvider
+
+from apps.memory_api.repositories.graph_repository_enhanced import (
+    EnhancedGraphRepository,
+)
+
 
 class MockDatabaseProvider(IDatabaseProvider):
     def __init__(self):
@@ -14,19 +19,19 @@ class MockDatabaseProvider(IDatabaseProvider):
         self.fetchval_mock = AsyncMock()
         self.execute_mock = AsyncMock()
         self.acquire_mock = MagicMock()
-        
+
     async def fetchrow(self, query: str, *args):
         return await self.fetchrow_mock(query, *args)
-        
+
     async def fetch(self, query: str, *args):
         return await self.fetch_mock(query, *args)
-        
+
     async def fetchval(self, query: str, *args):
         return await self.fetchval_mock(query, *args)
-        
+
     async def execute(self, query: str, *args):
         return await self.execute_mock(query, *args)
-        
+
     def acquire(self):
         # Must return an async context manager
         cm = MagicMock()
@@ -35,22 +40,27 @@ class MockDatabaseProvider(IDatabaseProvider):
         self.acquire_mock.return_value = cm
         return self.acquire_mock()
 
+
 @pytest.fixture
 def mock_db():
     return MockDatabaseProvider()
+
 
 @pytest.mark.asyncio
 async def test_repository_initialization_with_provider(mock_db):
     """Test that repository accepts IDatabaseProvider."""
     repo = EnhancedGraphRepository(mock_db)
     assert repo.db == mock_db
-    assert not hasattr(repo, "pool") # Should not have pool attribute if provider passed
+    assert not hasattr(
+        repo, "pool"
+    )  # Should not have pool attribute if provider passed
+
 
 @pytest.mark.asyncio
 async def test_create_node_uses_provider(mock_db):
     """Test that create_node uses provider methods, not asyncpg directly."""
     repo = EnhancedGraphRepository(mock_db)
-    
+
     mock_db.fetchrow_mock.return_value = {
         "id": "123e4567-e89b-12d3-a456-426614174000",
         "node_id": "test-node",
@@ -59,11 +69,11 @@ async def test_create_node_uses_provider(mock_db):
         "label": "Test",
         "properties": {},
         "created_at": "2025-01-01T00:00:00",
-        "updated_at": "2025-01-01T00:00:00"
+        "updated_at": "2025-01-01T00:00:00",
     }
-    
+
     await repo.create_node("tenant1", "proj1", "test-node", "Test")
-    
+
     assert mock_db.fetchrow_mock.called
     args = mock_db.fetchrow_mock.call_args
     assert "INSERT INTO knowledge_graph_nodes" in args[0][0]

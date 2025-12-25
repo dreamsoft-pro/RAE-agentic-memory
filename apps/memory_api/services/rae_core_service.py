@@ -77,6 +77,7 @@ class RAECoreService:
             self.postgres_adapter = PostgresMemoryAdapter(pool=postgres_pool)
         else:
             from rae_core.adapters import InMemoryStorage
+
             logger.warning("using_in_memory_storage_fallback")
             self.postgres_adapter = InMemoryStorage()
 
@@ -84,6 +85,7 @@ class RAECoreService:
             self.qdrant_adapter = QdrantVectorAdapter(client=cast(Any, qdrant_client))
         else:
             from rae_core.adapters import InMemoryVectorStore
+
             logger.warning("using_in_memory_vector_fallback")
             self.qdrant_adapter = InMemoryVectorStore()
 
@@ -91,6 +93,7 @@ class RAECoreService:
             self.redis_adapter = RedisCacheAdapter(redis_client=redis_client)
         else:
             from rae_core.adapters import InMemoryCache
+
             logger.warning("using_in_memory_cache_fallback")
             self.redis_adapter = InMemoryCache()
 
@@ -274,6 +277,19 @@ class RAECoreService:
             logger.error("adjust_importance_failed", memory_id=memory_id, error=str(e))
             return None
 
+    async def decay_importance(
+        self,
+        tenant_id: str,
+        decay_rate: float,
+        consider_access_stats: bool = True,
+    ) -> int:
+        """Apply time-based decay to all memories."""
+        return await self.postgres_adapter.decay_importance(
+            tenant_id=tenant_id,
+            decay_rate=decay_rate,
+            consider_access_stats=consider_access_stats
+        )
+
     async def query_memories(
         self,
         tenant_id: str,
@@ -433,3 +449,112 @@ class RAECoreService:
         # No clear_all in new engine?
         # I'll return empty for now to pass init tests.
         return {"deleted": 0}
+
+    async def list_unique_tenants(self) -> List[str]:
+        """List all unique tenant IDs in the system."""
+        # This might be storage specific, but for now we assume Postgres
+        if hasattr(self.postgres_adapter, "list_unique_tenants"):
+            return await self.postgres_adapter.list_unique_tenants()
+        
+        # Fallback for PostgresMemoryAdapter
+        async with self.postgres_pool.acquire() as conn:
+            records = await conn.fetch(
+                "SELECT DISTINCT tenant_id FROM memories WHERE tenant_id IS NOT NULL"
+            )
+            return [str(r["tenant_id"]) for r in records]
+
+    async def list_unique_projects(self, tenant_id: str) -> List[str]:
+        """List all unique project IDs for a tenant."""
+        # agent_id maps to project in RAE-Core
+        async with self.postgres_pool.acquire() as conn:
+            records = await conn.fetch(
+                "SELECT DISTINCT agent_id FROM memories WHERE tenant_id = $1 AND agent_id IS NOT NULL",
+                tenant_id
+            )
+            return [str(r["agent_id"]) for r in records]
+
+    async def list_active_project_tenants(self, since: datetime) -> List[Dict[str, str]]:
+        """List unique (project, tenant_id) pairs with recent activity."""
+        # agent_id maps to project in RAE-Core
+        async with self.postgres_pool.acquire() as conn:
+            records = await conn.fetch(
+                """
+                SELECT DISTINCT agent_id as project, tenant_id
+                FROM memories
+                WHERE created_at >= $1 AND agent_id IS NOT NULL
+                """,
+                since.replace(tzinfo=None)
+            )
+            return [{"project": r["project"], "tenant_id": r["tenant_id"]} for r in records]
+
+    async def list_long_sessions(self, tenant_id: str, project: str, threshold: int) -> List[Dict[str, Any]]:
+        """List sessions with event count above threshold."""
+        async with self.postgres_pool.acquire() as conn:
+            sql = """
+                SELECT
+                    metadata->>'session_id' as session_id,
+                    COUNT(*) as event_count
+                FROM memories
+                WHERE tenant_id = $1
+                  AND agent_id = $2
+                  AND layer = 'episodic'
+                  AND metadata->>'session_id' IS NOT NULL
+                GROUP BY metadata->>'session_id'
+                HAVING COUNT(*) >= $3
+                ORDER BY COUNT(*) DESC
+            """
+            records = await conn.fetch(sql, tenant_id, project, threshold)
+            return [dict(r) for r in records]
+
+    async def apply_global_memory_decay(self, decay_rate: float) -> None:
+        """Apply decay to all memories strength."""
+        async with self.postgres_pool.acquire() as conn:
+            await conn.execute(
+                "UPDATE memories SET strength = strength * $1",
+                decay_rate
+            )
+
+    async def delete_expired_memories(self) -> int:
+        """Delete all expired memories in the system."""
+        async with self.postgres_pool.acquire() as conn:
+            result = await conn.execute(
+                "DELETE FROM memories WHERE expires_at IS NOT NULL AND expires_at < NOW()"
+            )
+            # Parse "DELETE N"
+            if result and isinstance(result, str) and result.startswith("DELETE"):
+                return int(result.split()[-1])
+            return 0
+
+    async def delete_old_episodic_memories(self, days: int) -> int:
+        """Delete old episodic memories to manage data lifecycle."""
+        async with self.postgres_pool.acquire() as conn:
+            interval = f"{days} days"
+            result = await conn.execute(
+                "DELETE FROM memories WHERE layer = 'em' AND created_at < NOW() - $1::interval",
+                interval,
+            )
+            if result and isinstance(result, str) and result.startswith("DELETE"):
+                return int(result.split()[-1])
+            return 0
+
+    async def list_memories_for_graph_extraction(self, limit: int = 100) -> List[Dict[str, Any]]:
+        """List memories that are pending graph extraction."""
+        async with self.postgres_pool.acquire() as conn:
+            records = await conn.fetch(
+                """
+                SELECT DISTINCT tenant_id, ARRAY_AGG(id) as memory_ids
+                FROM memories m
+                WHERE layer = 'em'
+                  AND created_at > NOW() - INTERVAL '1 hour'
+                  AND NOT EXISTS (
+                      SELECT 1 FROM knowledge_graph_edges ke
+                      WHERE ke.tenant_id = m.tenant_id
+                        AND (ke.source_node_id IN (SELECT id FROM knowledge_graph_nodes WHERE node_id = m.id::text)
+                             OR ke.target_node_id IN (SELECT id FROM knowledge_graph_nodes WHERE node_id = m.id::text))
+                  )
+                GROUP BY tenant_id
+                LIMIT $1
+                """,
+                limit
+            )
+            return [dict(r) for r in records]

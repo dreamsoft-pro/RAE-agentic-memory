@@ -2,7 +2,6 @@ import os
 from contextlib import asynccontextmanager
 from typing import Any, cast
 
-import asyncpg
 import structlog
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
@@ -22,7 +21,6 @@ from apps.memory_api.api.v1 import (
     memory,
 )
 from apps.memory_api.config import settings
-from apps.memory_api.dependencies import create_redis_client
 from apps.memory_api.logging_config import setup_logging
 from apps.memory_api.middleware.budget_enforcer import BudgetEnforcementMiddleware
 from apps.memory_api.middleware.rate_limiter import limiter, rate_limit_exceeded_handler
