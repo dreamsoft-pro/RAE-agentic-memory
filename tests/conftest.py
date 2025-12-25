@@ -1,6 +1,7 @@
 import sys
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
+from typing import Any, cast
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -86,3 +87,141 @@ def mock_app_state_pool():
     app.state.pool = mock_pool
     yield mock_pool
     del app.state.pool
+
+
+class DummyAsyncContextManager:
+    """Helper class for mocking async context managers."""
+
+    def __init__(self, value: Any):
+        self._value = value
+
+    def __await__(self):
+        async def _impl():
+            return self
+
+        return _impl().__await__()
+
+    async def __aenter__(self):
+        return self._value
+
+    async def __aexit__(self, exc_type, exc, tb):
+        return False
+
+
+@pytest.fixture
+def mock_pool():
+    """Mock asyncpg connection pool."""
+    pool = MagicMock()
+    conn = AsyncMock()
+    conn.fetch = AsyncMock(return_value=[])
+    conn.fetchrow = AsyncMock(return_value=None)
+    conn.execute = AsyncMock(return_value="INSERT 0 1")
+    conn.transaction = MagicMock(return_value=DummyAsyncContextManager(None))
+    context_manager = DummyAsyncContextManager(conn)
+    pool.acquire = MagicMock(return_value=context_manager)
+    pool.close = AsyncMock()
+    pool._test_conn = conn
+    return pool
+
+
+@pytest.fixture
+def mock_rae_service():
+    """Mock for RAECoreService."""
+    from apps.memory_api.services.rae_core_service import RAECoreService
+
+    service = AsyncMock(spec=RAECoreService)
+
+    # Setup store_memory return
+    service.store_memory.return_value = "test-memory-id"
+
+    # Setup delete_memory return
+    service.delete_memory.return_value = True
+
+    # Setup list_memories return
+    service.list_memories.return_value = []
+
+    # Setup count_memories return
+    service.count_memories.return_value = 10
+
+    # Setup get_metric_aggregate return
+    service.get_metric_aggregate.return_value = 0.7
+
+    # Setup update_memory_access_batch
+    service.update_memory_access_batch.return_value = 1
+
+    return service
+
+
+@pytest.fixture
+def mock_embedding_service():
+    """Mock for EmbeddingService."""
+    service = MagicMock()
+    service.generate_embeddings.return_value = [[0.1] * 384]
+    return service
+
+
+@pytest.fixture
+def mock_vector_store():
+    """Mock for VectorStore."""
+    store = AsyncMock()
+    store.upsert.return_value = None
+    store.delete.return_value = None
+    store.query.return_value = []
+    return store
+
+
+@pytest.fixture
+def client_with_overrides(
+    mock_pool, mock_rae_service, mock_embedding_service, mock_vector_store
+):
+    """
+    Test client with all necessary overrides for memory endpoints.
+    """
+    from fastapi.testclient import TestClient
+
+    from apps.memory_api.dependencies import get_qdrant_client, get_rae_core_service
+    from apps.memory_api.security.dependencies import get_and_verify_tenant_id
+
+    # Setup mock pool
+    app.state.pool = mock_pool
+
+    # Override auth
+    async def _mock_tenant():
+        return "test-tenant"
+
+    # Setup dependency overrides
+    app.dependency_overrides[get_and_verify_tenant_id] = _mock_tenant
+    app.dependency_overrides[get_rae_core_service] = lambda: mock_rae_service
+
+    # Mock Qdrant client
+    mock_qdrant = AsyncMock()
+    mock_health = MagicMock()
+    mock_health.status = "ok"
+    mock_qdrant.health_check = AsyncMock(return_value=mock_health)
+    app.dependency_overrides[get_qdrant_client] = lambda: mock_qdrant
+
+    # Patch services obtained via functions (not DI in older parts)
+    with (
+        patch(
+            "apps.memory_api.api.v1.memory.get_embedding_service",
+            return_value=mock_embedding_service,
+        ),
+        patch(
+            "apps.memory_api.api.v1.memory.get_vector_store",
+            return_value=mock_vector_store,
+        ),
+        patch(
+            "apps.memory_api.main.asyncpg.create_pool",
+            new=AsyncMock(return_value=mock_pool),
+        ),
+        patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()),
+        patch(
+            "apps.memory_api.services.pii_scrubber.scrub_text",
+            side_effect=lambda x: x,  # Bypass PII scrubbing
+        ),
+    ):
+        with TestClient(app) as client:
+            yield client
+
+    # Cleanup overrides
+    app.dependency_overrides = {}
