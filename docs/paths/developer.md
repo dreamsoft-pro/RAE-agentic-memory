@@ -121,29 +121,37 @@ docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 docker-compose -f docker-compose.yml -f docker-compose.dev.yml down
 ```
 
-### 2. RAE Lite (Minimal Deployment)
+### 2. RAE Lite (Minimal Deployment) - Recommended for Starters
 
-This profile is perfect for small teams, demos, or development environments where the full observability and background processing stack is not required. It's a single-server setup that is easy to manage.
+**RAE Lite** is a highly optimized, lightweight profile designed for rapid development and resource-constrained environments (like laptops). It removes all heavy ML dependencies while keeping the core memory and reasoning logic intact.
 
-**Source File:** `docker-compose.lite.yml`
+**Why use Lite?**
+- 🚀 **Fast Startup:** Boots in < 5 seconds.
+- 📉 **Low Resources:** Runs comfortably on 4GB RAM (vs 16GB+ for full stack).
+- 🧩 **External LLMs Only:** Relies entirely on OpenAI/Anthropic/Gemini APIs instead of local models.
 
-**Stack:**
--   **Included:** `rae-api`, `postgres`, `redis`, `qdrant`
--   **Excluded:** `ml-service`, `celery-worker`, `celery-beat`, observability stack, dashboard.
-
-**How it Works:**
-Features are disabled via environment variables in the `rae-api` service:
-```yaml
-environment:
-  - ML_SERVICE_ENABLED=false
-  - RERANKER_ENABLED=false
-  - CELERY_ENABLED=false
-```
+**Architecture Differences:**
+| Feature | Full Stack | RAE Lite |
+| :--- | :--- | :--- |
+| **ML Service** | Enabled (Local Embeddings/Re-ranking) | **Disabled** (APIs only) |
+| **Vector DB** | Qdrant (Full) | Qdrant (Optimized for Low Memory) |
+| **Async Tasks** | Celery Workers + Redis Broker | **Disabled** (Synchronous Execution) |
+| **Observability** | OpenTelemetry + Jaeger | **Disabled** |
 
 **How to Run:**
 ```bash
+# 1. Ensure your .env file has valid API keys (OPENAI_API_KEY, etc.)
+# 2. Start the Lite stack
 docker-compose -f docker-compose.lite.yml up -d
 ```
+
+**Under the Hood:**
+It sets specific environment flags in `rae-api`:
+- `ML_SERVICE_ENABLED=false`: Bypasses the internal ML microservice.
+- `RERANKER_ENABLED=false`: Skips the heavy Cross-Encoder re-ranking step.
+- `CELERY_ENABLED=false`: Runs background tasks inline for simplicity.
+
+**Use Case:** Ideal for building initial prototypes, testing logic, or running CI/CD pipelines.
 
 ### 3. RAE Server (Standard Production)
 

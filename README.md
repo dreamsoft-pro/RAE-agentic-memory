@@ -23,11 +23,12 @@ RAE solves this by introducing a structured memory architecture that preserves d
 
 ### Performance Impact
 
-| Metric | Standard RAG | RAE (Industrial) |
-| :--- | :--- | :--- |
-| **Recall (Hit Rate)** | ~70% | **90%** |
-| **Precision (MRR)** | ~0.65 | **0.81** |
-| **Reasoning Drift** | High | **< 1%** |
+| Metric | Vector DB (Raw) | Standard RAG | RAE (Industrial) |
+| :--- | :--- | :--- | :--- |
+| **Role** | Storage | Retrieval | **Reasoning Engine** |
+| **Recall (Hit Rate)** | High (No Filter) | ~70% | **90%** |
+| **Precision** | Low (Noise) | ~65% | **81%** |
+| **Reasoning Drift** | N/A | High | **< 1%** |
 
 *> See full [Benchmark Reports](benchmarking/README.md)*
 

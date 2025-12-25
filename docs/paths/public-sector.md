@@ -45,6 +45,22 @@ These performance metrics translate to tangible benefits for government agencies
 
 ---
 
+## ISO/IEC 42001 & Auditability
+
+For public administration, "why" a decision was made is often more important than the decision itself. RAE includes specific features to support **Algorithmic Transparency**.
+
+### 1. Decision Lineage (Provenance)
+Every retrieval and decision is cryptographically linked to its source.
+-   **Traceability:** You can trace an AI answer back to the exact PDF, law paragraph, or meeting note it cited.
+-   **Context Snapshot:** RAE freezes the "Context" used at the moment of decision, so you can audit it years later, even if the original documents change.
+
+### 2. Human-in-the-Loop Oversight
+For high-risk actions (e.g., deleting records), RAE supports a **Human Approval Workflow** (via the Compliance API).
+-   **Risk Levels:** Operations can be flagged as "Low", "Medium", or "Critical".
+-   **Approval Gates:** Critical actions require explicit approval from a human operator before execution.
+
+---
+
 ## Deployment & Security
 
 For public sector use, data security, sovereignty, and auditability are critical. RAE is designed to be deployed **fully on-premise** within a government's own secure data centers.
