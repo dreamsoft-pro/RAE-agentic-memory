@@ -46,10 +46,8 @@ async def create_task(
 
 @router.get("/tasks_poll", response_model=Optional[DelegatedTask])
 async def poll_task(
-    node_id: str = Query(
-        ..., description="The unique ID of the compute node polling for tasks"
-    ),
-    service: ControlPlaneService = Depends(get_control_plane_service),
+    node_id: str = Query(..., description="The unique ID of the compute node polling for tasks"),
+    service: ControlPlaneService = Depends(get_control_plane_service)
 ):
     try:
         return await service.poll_task(node_id)
@@ -94,9 +92,7 @@ async def register_node(
     """
     Register a new compute node.
     """
-    ip_address = req.ip_address or (
-        request.client.host if request.client else "unknown"
-    )
+    ip_address = req.ip_address or (request.client.host if request.client else "unknown")
     return await service.register_node(
         node_id=req.node_id,
         api_key=req.api_key,
