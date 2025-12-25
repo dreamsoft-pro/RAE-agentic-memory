@@ -66,17 +66,26 @@ git push origin feature/your-feature-name
 git checkout develop
 git merge feature/your-feature-name --no-ff
 
-# 6. KRYTYCZNE: Uruchom WSZYSTKIE testy lokalnie na develop
+# 6. 🚨 STRICT MERGE VERIFICATION (Zero-Diff Check)
+# Must execute these checks BEFORE deleting feature branch:
+# A. Check for unmerged commits (Must be empty)
+git log feature/your-feature-name ^develop
+# B. Check for diffs (Must be empty)
+git diff develop...feature/your-feature-name
+# IF ANY OUTPUT IS PRESENT -> MERGE FAILED. DO NOT PROCEED.
+
+# 7. KRYTYCZNE: Uruchom WSZYSTKIE testy lokalnie na develop
 make test-unit
 make lint
 make security-scan
 
-# 7. Jeśli wszystkie testy przechodzą lokalnie:
+# 8. Jeśli wszystkie testy przechodzą lokalnie i weryfikacja (6) OK:
+git branch -d feature/your-feature-name
 git checkout main
 git merge develop --no-ff
 git push origin main develop
 
-# 8. Sprawdź GitHub Actions - main musi mieć zielony CI
+# 9. Sprawdź GitHub Actions - main musi mieć zielony CI
 ```
 
 ### ⚠️ ZASADY KRYTYCZNE
