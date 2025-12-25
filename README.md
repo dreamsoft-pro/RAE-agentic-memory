@@ -21,6 +21,16 @@ In long-running systems (scientific, industrial, or agent-based), context is los
 
 RAE solves this by introducing a structured memory architecture that preserves decision rationale as a first-class object.
 
+### Performance Impact
+
+| Metric | Standard RAG | RAE (Industrial) |
+| :--- | :--- | :--- |
+| **Recall (Hit Rate)** | ~70% | **90%** |
+| **Precision (MRR)** | ~0.65 | **0.81** |
+| **Reasoning Drift** | High | **< 1%** |
+
+*> See full [Benchmark Reports](benchmarking/README.md)*
+
 ---
 
 ## The Core Idea: Structured Memory
@@ -92,6 +102,34 @@ You can set up RAE to start automatically on system boot with hot-reload enabled
 ```
 
 For more detailed instructions, see the [Getting Started Guide](docs/LOCAL_SETUP.md).
+
+---
+
+## RAE in Action
+
+Don't just store text. Store the *context* and *reasoning*.
+
+```python
+from rae_sdk import RAEClient
+
+client = RAEClient()
+
+# 1. Store memory with semantic importance
+await client.store(
+    content="User prefers local processing for PII data.",
+    layer="semantic",  # Logic layer
+    importance=0.9,
+    tags=["privacy", "gdpr"]
+)
+
+# 2. Agent retrieves with reasoning trace
+response = await client.agent.execute(
+    "Should I upload the payroll file to the public cloud?",
+    project="finance-bot"
+)
+
+# Result: "No. Strict Block. Rationale: User prefers local processing for PII data."
+```
 
 ---
 
