@@ -197,6 +197,7 @@ Building reliable agents requires a robust testing culture. RAE provides special
 ### Real-World Case Studies
 See RAE in action optimizing its own code:
 - **[Autonomous Self-Optimization](../../docs/use-cases/SELF_OPTIMIZATION_LOOP.md)**: How RAE diagnosed a 20x latency regression and fixed it by tuning its Math Controller.
+- **[Strategic Reasoning Pivot](../../docs/use-cases/STRATEGIC_REASONING_PIVOT.md)**: How RAE saved resources by challenging a user request and proposing a better architectural solution.
 - **[Distributed Code Audit](../../docs/use-cases/DISTRIBUTED_CODE_AUDIT.md)**: Using Node1 (GPU) to audit code quality.
 
 ## Troubleshooting

@@ -77,6 +77,13 @@ Automate workflows based on system events using the **Event Triggers API**.
 -   **Auto-Reflection:** Automatically summarize memories when a project hits 100 new items.
 -   **Drift Detection:** Alert engineers if the quality of search results drops below a threshold.
 
+### 6. Strategic Intelligence (ROI Case Study)
+RAE helps avoid waste by reasoning about tasks before executing them.
+-   **[Case Study: Strategic Reasoning & Optimization](../../docs/use-cases/STRATEGIC_REASONING_PIVOT.md)**
+    *   **Scenario:** Agent refused to execute a wasteful translation task.
+    *   **Outcome:** Saved ~70% of project costs by consolidating documentation instead of blindly processing it.
+    *   **Value:** RAE acts as a proactive partner, not just a passive tool.
+
 ---
 
 ## Deployment Considerations
