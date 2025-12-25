@@ -153,6 +153,10 @@ test-unit:  ## Run unit tests only
 	@echo "🧪 Running unit tests..."
 	@PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "not integration and not llm and not contract and not performance" -v
 
+test-smoke: ## Run quick E2E smoke tests to verify critical paths
+	@echo "🧪 Running smoke tests..."
+	@RAE_DB_MODE=migrate PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "smoke" -v
+
 test-integration:  ## Run integration tests only
 	@echo "🧪 Running integration tests..."
 	@OTEL_TRACES_ENABLED=false RAE_DB_MODE=migrate PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "integration" -v
@@ -160,6 +164,14 @@ test-integration:  ## Run integration tests only
 test-full-stack: ## Run all collected tests (Unit + Integration + LLM + OTEL)
 	@echo "🧪 Running absolute full stack verification (970+ tests)..."
 	@OTEL_TRACES_ENABLED=true RAE_DB_MODE=migrate PYTHONPATH=. $(VENV_PYTHON) -m pytest -v
+
+test-local-llm: ## Run tests using local Ollama LLM
+	@echo "🧪 Running tests with Local LLM (Ollama)..."
+	@RAE_LLM_BACKEND=ollama OLLAMA_API_URL=http://localhost:11434 RAE_DB_MODE=migrate PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "llm" -v
+
+test-architecture: ## Run architectural and dependency tests
+	@echo "🧪 Running architectural tests..."
+	@PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "architecture" -v
 
 mcp-test-integration:  ## Run MCP integration tests (requires RAE API running)
 
