@@ -49,6 +49,12 @@ class Settings(BaseSettings):
         "RAE_DB_MODE", "ignore" if "PYTEST_CURRENT_TEST" in os.environ else "migrate"
     )
 
+    # RAE Profile (standard, lite, research)
+    # standard: Full infrastructure (DB, Redis, Qdrant)
+    # lite: Minimal dependencies (Memory/Mock implementations where possible)
+    # research: Specialized for experiments
+    RAE_PROFILE: str = os.getenv("RAE_PROFILE", "standard")
+
     # --- Security Settings ---
     OAUTH_ENABLED: bool = True
     OAUTH_DOMAIN: str = ""  # e.g., "your-tenant.us.auth0.com"

@@ -62,7 +62,7 @@ async def lifespan(app: FastAPI):
     logger = structlog.get_logger(__name__)
 
     # Startup
-    logger.info("Starting up RAE Memory API...")
+    logger.info("Starting up RAE Memory API...", profile=settings.RAE_PROFILE)
     logger.info(
         "security_settings",
         api_key_auth=settings.ENABLE_API_KEY_AUTH,
@@ -70,153 +70,153 @@ async def lifespan(app: FastAPI):
         rate_limiting=settings.ENABLE_RATE_LIMITING,
     )
 
-    # 1. Initialize Connections
-    app.state.pool = await asyncpg.create_pool(
-        host=settings.POSTGRES_HOST,
-        database=settings.POSTGRES_DB,
-        user=settings.POSTGRES_USER,
-        password=settings.POSTGRES_PASSWORD,
-    )
+    # 1. Initialize Connections (via Factory)
+    from rae_core.factories.infra_factory import InfrastructureFactory
 
-    # Initialize Redis client
-    app.state.redis_client = await create_redis_client(settings.REDIS_URL)
+    await InfrastructureFactory.initialize(app, settings)
 
-    # Initialize Async Qdrant client (Single source of truth)
-    from qdrant_client import AsyncQdrantClient
+    if settings.RAE_PROFILE == "standard":
+        # Ensure Qdrant Schema exists before validation (Bootstrap)
+        if settings.RAE_DB_MODE in ["validate", "init", "migrate"]:
+            try:
+                from qdrant_client.http import models as rest
 
-    app.state.qdrant_client = AsyncQdrantClient(
-        host=settings.QDRANT_HOST, port=settings.QDRANT_PORT
-    )
+                from apps.memory_api.core.contract_definition import (
+                    RAE_MEMORY_CONTRACT_V1,
+                )
 
-    # Ensure Qdrant Schema exists before validation (Bootstrap)
-    if settings.RAE_DB_MODE in ["validate", "init", "migrate"]:
-        try:
-            from qdrant_client.http import models as rest
+                if RAE_MEMORY_CONTRACT_V1.vector_store:
+                    # Check connectivity first (fast fail if down)
+                    collections_resp = await app.state.qdrant_client.get_collections()
+                    existing_collections = {
+                        c.name for c in collections_resp.collections
+                    }
 
-            from apps.memory_api.core.contract_definition import RAE_MEMORY_CONTRACT_V1
+                    for col in RAE_MEMORY_CONTRACT_V1.vector_store.collections:
+                        if col.name not in existing_collections:
+                            logger.info(
+                                f"Auto-creating missing Qdrant collection: {col.name}"
+                            )
+                            # Map string distance to Qdrant Enum
+                            distance_map = {
+                                "Cosine": rest.Distance.COSINE,
+                                "Euclid": rest.Distance.EUCLID,
+                                "Dot": rest.Distance.DOT,
+                            }
+                            metric = distance_map.get(
+                                col.distance_metric, rest.Distance.COSINE
+                            )
 
-            if RAE_MEMORY_CONTRACT_V1.vector_store:
-                # Check connectivity first (fast fail if down)
-                collections_resp = await app.state.qdrant_client.get_collections()
-                existing_collections = {c.name for c in collections_resp.collections}
+                            await app.state.qdrant_client.create_collection(
+                                collection_name=col.name,
+                                vectors_config={
+                                    "dense": rest.VectorParams(
+                                        size=col.vector_size,
+                                        distance=metric,
+                                    )
+                                },
+                                sparse_vectors_config={
+                                    "text": rest.SparseVectorParams(),
+                                },
+                            )
+            except Exception as e:
+                logger.error(f"Failed to auto-initialize Qdrant schema: {e}")
+                # We continue; validation step will catch any remaining issues and Fail Fast
 
-                for col in RAE_MEMORY_CONTRACT_V1.vector_store.collections:
-                    if col.name not in existing_collections:
-                        logger.info(
-                            f"Auto-creating missing Qdrant collection: {col.name}"
-                        )
-                        # Map string distance to Qdrant Enum
-                        distance_map = {
-                            "Cosine": rest.Distance.COSINE,
-                            "Euclid": rest.Distance.EUCLID,
-                            "Dot": rest.Distance.DOT,
-                        }
-                        metric = distance_map.get(
-                            col.distance_metric, rest.Distance.COSINE
-                        )
+        # 2. Database Initialization / Migration
+        if (
+            settings.RAE_DB_MODE in ["init", "migrate"]
+            and "PYTEST_CURRENT_TEST" not in os.environ
+        ):
+            logger.info("db_migration_start", mode=settings.RAE_DB_MODE)
+            try:
+                # Temporarily disabled to avoid API hang during StatReload
+                # import asyncio
+                # from alembic import command, config
+                # alembic_cfg = config.Config("alembic.ini")
+                # os.environ["ALEMBIC_SKIP_LOG_CONFIG"] = "1"
+                # await asyncio.to_thread(command.upgrade, alembic_cfg, "head")
+                # logger.info("db_migration_success")
+                pass
+            except Exception as e:
+                logger.error("db_migration_failed", error=str(e))
+                raise RuntimeError(f"Database migration failed: {e}") from e
+        elif "PYTEST_CURRENT_TEST" in os.environ:
+            logger.info("db_migration_skipped_test_mode")
 
-                        await app.state.qdrant_client.create_collection(
-                            collection_name=col.name,
-                            vectors_config={
-                                "dense": rest.VectorParams(
-                                    size=col.vector_size,
-                                    distance=metric,
-                                )
-                            },
-                            sparse_vectors_config={
-                                "text": rest.SparseVectorParams(),
-                            },
-                        )
-        except Exception as e:
-            logger.error(f"Failed to auto-initialize Qdrant schema: {e}")
-            # We continue; validation step will catch any remaining issues and Fail Fast
+        # 3. Memory Contract Validation (Fail Fast)
+        # Validate if mode is 'validate', 'init', or 'migrate' (verify after migration)
+        if (
+            settings.RAE_DB_MODE in ["validate", "init", "migrate"]
+            and "PYTEST_CURRENT_TEST" not in os.environ
+        ):
+            logger.info("memory_validation_start", mode=settings.RAE_DB_MODE)
 
-    # 2. Database Initialization / Migration
-    if (
-        settings.RAE_DB_MODE in ["init", "migrate"]
-        and "PYTEST_CURRENT_TEST" not in os.environ
-    ):
-        logger.info("db_migration_start", mode=settings.RAE_DB_MODE)
-        try:
-            # Temporarily disabled to avoid API hang during StatReload
-            # import asyncio
-            # from alembic import command, config
-            # alembic_cfg = config.Config("alembic.ini")
-            # os.environ["ALEMBIC_SKIP_LOG_CONFIG"] = "1"
-            # await asyncio.to_thread(command.upgrade, alembic_cfg, "head")
-            # logger.info("db_migration_success")
-            pass
-        except Exception as e:
-            logger.error("db_migration_failed", error=str(e))
-            raise RuntimeError(f"Database migration failed: {e}") from e
-    elif "PYTEST_CURRENT_TEST" in os.environ:
-        logger.info("db_migration_skipped_test_mode")
-
-    # 3. Memory Contract Validation (Fail Fast)
-    # Validate if mode is 'validate', 'init', or 'migrate' (verify after migration)
-    if (
-        settings.RAE_DB_MODE in ["validate", "init", "migrate"]
-        and "PYTEST_CURRENT_TEST" not in os.environ
-    ):
-        logger.info("memory_validation_start", mode=settings.RAE_DB_MODE)
-
-        from apps.memory_api.adapters.postgres_adapter import PostgresAdapter
-        from apps.memory_api.adapters.qdrant_adapter import QdrantAdapter
-        from apps.memory_api.adapters.redis_adapter import RedisAdapter
-        from apps.memory_api.core.contract_definition import RAE_MEMORY_CONTRACT_V1
-        from apps.memory_api.services.validation_service import ValidationService
-
-        adapters = [
-            PostgresAdapter(app.state.pool),
-            RedisAdapter(app.state.redis_client),
-            QdrantAdapter(app.state.qdrant_client),
-        ]
-        validation_service = ValidationService(adapters)
-        result = await validation_service.validate_all(RAE_MEMORY_CONTRACT_V1)
-
-        if not result.valid:
-            violations_summary = "\n".join(
-                [
-                    f"- [{v.issue_type}] {v.entity}: {v.details}"
-                    for v in result.violations
-                ]
+            from apps.memory_api.adapters.postgres_adapter import PostgresAdapter
+            from apps.memory_api.adapters.qdrant_adapter import QdrantAdapter
+            from apps.memory_api.adapters.redis_adapter import RedisAdapter
+            from apps.memory_api.core.contract_definition import (
+                RAE_MEMORY_CONTRACT_V1,
             )
-            error_msg = (
-                f"Memory Contract Validation Failed: {len(result.violations)} violations found.\n"
-                f"Violations:\n{violations_summary}\n\n"
-                "CRITICAL: The database schema does not match the RAE Memory Contract.\n"
-                "HINT: To automatically fix the schema (if possible), set the environment variable:\n"
-                "      RAE_DB_MODE=migrate\n"
-                "      and restart the container."
-            )
-            logger.error(
-                "memory_validation_failed",
-                violations=[v.model_dump() for v in result.violations],
-            )
-            # Raise exception to stop startup (Fail Fast)
-            raise RuntimeError(error_msg)
+            from apps.memory_api.services.validation_service import ValidationService
 
-        logger.info("memory_validation_success")
-    elif settings.RAE_DB_MODE == "ignore":
-        logger.warning("memory_validation_skipped", mode=settings.RAE_DB_MODE)
+            adapters = [
+                PostgresAdapter(app.state.pool),
+                RedisAdapter(app.state.redis_client),
+                QdrantAdapter(app.state.qdrant_client),
+            ]
+            validation_service = ValidationService(adapters)
+            result = await validation_service.validate_all(RAE_MEMORY_CONTRACT_V1)
 
-    # Initialize RAE-Core service
-    app.state.rae_core_service = RAECoreService(
-        postgres_pool=app.state.pool,
-        qdrant_client=app.state.qdrant_client,
-        redis_client=app.state.redis_client,
-    )
-    logger.info("RAE-Core service initialized")
+            if not result.valid:
+                violations_summary = "\n".join(
+                    [
+                        f"- [{v.issue_type}] {v.entity}: {v.details}"
+                        for v in result.violations
+                    ]
+                )
+                error_msg = (
+                    f"Memory Contract Validation Failed: {len(result.violations)} violations found.\n"
+                    f"Violations:\n{violations_summary}\n\n"
+                    "CRITICAL: The database schema does not match the RAE Memory Contract.\n"
+                    "HINT: To automatically fix the schema (if possible), set the environment variable:\n"
+                    "      RAE_DB_MODE=migrate\n"
+                    "      and restart the container."
+                )
+                logger.error(
+                    "memory_validation_failed",
+                    violations=[v.model_dump() for v in result.violations],
+                )
+                # Raise exception to stop startup (Fail Fast)
+                raise RuntimeError(error_msg)
 
-    await rebuild_full_cache()
+            logger.info("memory_validation_success")
+        elif settings.RAE_DB_MODE == "ignore":
+            logger.warning("memory_validation_skipped", mode=settings.RAE_DB_MODE)
+
+        # Initialize RAE-Core service
+        app.state.rae_core_service = RAECoreService(
+            postgres_pool=app.state.pool,
+            qdrant_client=app.state.qdrant_client,
+            redis_client=app.state.redis_client,
+        )
+        logger.info("RAE-Core service initialized")
+
+        await rebuild_full_cache()
+
+    elif settings.RAE_PROFILE == "lite":
+        logger.info("lite_mode_active", details="Skipping heavy initialization")
 
     yield  # Application is running
 
     # Shutdown
     logger.info("Shutting down RAE Memory API...")
-    await app.state.pool.close()
-    await app.state.redis_client.aclose()  # Close Redis client
-    await app.state.qdrant_client.close()  # Close Qdrant client
+    if getattr(app.state, "pool", None):
+        await app.state.pool.close()
+    if getattr(app.state, "redis_client", None):
+        await app.state.redis_client.aclose()  # Close Redis client
+    if getattr(app.state, "qdrant_client", None):
+        await app.state.qdrant_client.close()  # Close Qdrant client
 
 
 # --- App Initialization ---
