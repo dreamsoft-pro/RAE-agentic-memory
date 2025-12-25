@@ -84,15 +84,12 @@ def schedule_reflections():
 
     async def main():
         async with rae_context() as rae_service:
+            from datetime import datetime, timedelta, timezone
+            since = datetime.now(timezone.utc) - timedelta(hours=1)
+            
             # Find unique project/tenant pairs with recent episodic memories
-            # A real implementation would be more sophisticated.
-            records = await rae_service.postgres_pool.fetch(
-                """
-                SELECT DISTINCT project, tenant_id
-                FROM memories
-                WHERE layer = 'em' AND created_at > NOW() - INTERVAL '1 hour'
-            """
-            )
+            records = await rae_service.list_active_project_tenants(since=since)
+            
             for record in records:
                 generate_reflection_for_project.delay(
                     record["project"], record["tenant_id"]
@@ -110,14 +107,9 @@ def apply_memory_decay():
     async def main():
         async with rae_context() as rae_service:
             # Apply decay
-            await rae_service.postgres_pool.execute(
-                "UPDATE memories SET strength = strength * $1",
-                settings.MEMORY_DECAY_RATE,
-            )
+            await rae_service.apply_global_memory_decay(settings.MEMORY_DECAY_RATE)
             # Delete expired memories
-            await rae_service.postgres_pool.execute(
-                "DELETE FROM memories WHERE expires_at IS NOT NULL AND expires_at < NOW()"
-            )
+            await rae_service.delete_expired_memories()
 
     asyncio.run(main())
 
@@ -134,14 +126,9 @@ def prune_old_memories():
             return  # Pruning is disabled
 
         async with rae_context() as rae_service:
-            interval = f"{settings.MEMORY_RETENTION_DAYS} days"
             # We only prune episodic memories, as semantic/reflective are meant to be long-term.
-            result = await rae_service.postgres_pool.execute(
-                "DELETE FROM memories WHERE layer = 'em' AND created_at < NOW() - $1::interval",
-                interval,
-            )
-            # A structured logger would be better here, but for now, print.
-            print(f"Pruned old memories: {result}")
+            deleted_count = await rae_service.delete_old_episodic_memories(settings.MEMORY_RETENTION_DAYS)
+            logger.info("pruned_old_memories", count=deleted_count)
 
     asyncio.run(main())
 
@@ -391,20 +378,7 @@ def process_graph_extraction_queue():
     async def main():
         async with rae_context() as rae_service:
             # Find memories without graph extraction
-            records = await rae_service.postgres_pool.fetch(
-                """
-                SELECT DISTINCT tenant_id, ARRAY_AGG(id) as memory_ids
-                FROM memories m
-                WHERE layer = 'em'
-                  AND created_at > NOW() - INTERVAL '1 hour'
-                  AND NOT EXISTS (
-                      SELECT 1 FROM graph_triples gt
-                      WHERE gt.source_memory_id = m.id
-                  )
-                GROUP BY tenant_id
-                LIMIT 100
-            """
-            )
+            records = await rae_service.list_memories_for_graph_extraction(limit=100)
 
             for record in records:
                 tenant_id = record["tenant_id"]
@@ -524,24 +498,16 @@ def decay_memory_importance_task(self, tenant_id: str | None = None):
                         failed_tenants.append({"tenant_id": tenant_id, "error": str(e)})
                 else:
                     # Process all tenants
-                    # Get unique tenant IDs from memories table
-                    tenant_records = await rae_service.postgres_pool.fetch(
-                        """
-                        SELECT DISTINCT tenant_id
-                        FROM memories
-                        WHERE importance > 0.01
-                        """
-                    )
+                    tenant_ids = await rae_service.list_unique_tenants()
 
                     logger.info(
                         "decay_processing_all_tenants",
-                        tenant_count=len(tenant_records),
+                        tenant_count=len(tenant_ids),
                         decay_rate=decay_rate,
                     )
 
-                    for record in tenant_records:
+                    for tenant_id_str in tenant_ids:
                         try:
-                            tenant_id_str = record["tenant_id"]
                             # Try to parse as UUID, if fails use as string
                             try:
                                 tenant_uuid = UUID(tenant_id_str)
@@ -569,11 +535,11 @@ def decay_memory_importance_task(self, tenant_id: str | None = None):
                         except Exception as e:
                             logger.error(
                                 "decay_tenant_failed",
-                                tenant_id=record["tenant_id"],
+                                tenant_id=tenant_id_str,
                                 error=str(e),
                             )
                             failed_tenants.append(
-                                {"tenant_id": record["tenant_id"], "error": str(e)}
+                                {"tenant_id": tenant_id_str, "error": str(e)}
                             )
                             # Continue processing other tenants
 

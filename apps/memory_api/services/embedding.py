@@ -1,6 +1,5 @@
 from typing import TYPE_CHECKING, Any, List, Optional
 
-from apps.memory_api.config import settings
 from apps.memory_api.metrics import embedding_time_histogram
 
 try:  # pragma: no cover
@@ -27,6 +26,7 @@ class EmbeddingService:
     @property
     def settings(self):
         from apps.memory_api.config import settings as default_settings
+
         return self._settings or default_settings
 
     def _ensure_available(self) -> None:
@@ -75,20 +75,23 @@ class EmbeddingService:
         """
         # If remote ML service is configured and RAE_PROFILE is distributed, use it
         if self.settings.RAE_PROFILE == "distributed" or (
-            self.settings.ML_SERVICE_URL and "localhost" not in self.settings.ML_SERVICE_URL
+            self.settings.ML_SERVICE_URL
+            and "localhost" not in self.settings.ML_SERVICE_URL
             and "127.0.0.1" not in self.settings.ML_SERVICE_URL
         ):
             from apps.memory_api.services.ml_service_client import MLServiceClient
+
             client = MLServiceClient(base_url=self.settings.ML_SERVICE_URL)
             try:
                 result = await client.generate_embeddings(texts)
                 return result.get("embeddings", [])
             finally:
                 await client.close()
-        
-        # Fallback to local execution (offloaded to thread pool if needed, 
+
+        # Fallback to local execution (offloaded to thread pool if needed,
         # but here we just call the sync version for simplicity)
         import asyncio
+
         return await asyncio.to_thread(self.generate_embeddings, texts)
 
 

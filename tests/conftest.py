@@ -211,7 +211,7 @@ def client_with_overrides(
             return_value=mock_vector_store,
         ),
         patch(
-            "apps.memory_api.main.asyncpg.create_pool",
+            "rae_core.factories.infra_factory.asyncpg.create_pool",
             new=AsyncMock(return_value=mock_pool),
         ),
         patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()),

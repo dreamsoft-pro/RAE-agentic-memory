@@ -17,9 +17,8 @@ from uuid import UUID
 
 import asyncpg
 import structlog
-
-from rae_core.interfaces.database import IDatabaseProvider
 from rae_core.adapters.postgres_db import PostgresDatabaseProvider
+from rae_core.interfaces.database import IDatabaseProvider
 
 from apps.memory_api.models.graph_enhanced_models import (
     CycleDetectionResult,
