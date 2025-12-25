@@ -32,6 +32,11 @@ class IDatabaseProvider(ABC):
         pass
 
     @abstractmethod
+    async def executemany(self, query: str, args: list[Any]) -> str:
+        """Execute a command for multiple sets of arguments."""
+        pass
+
+    @abstractmethod
     def acquire(self) -> Any:
         """Acquire a connection from the pool."""
         pass

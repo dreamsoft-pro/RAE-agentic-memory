@@ -20,6 +20,7 @@ class MetricsRepository:
     """Repository for time series metrics operations."""
 
     def __init__(self, pool: asyncpg.Pool | IDatabaseProvider):
+        self.db: IDatabaseProvider
         if isinstance(pool, (asyncpg.Pool, asyncpg.Connection)):
             self.db = PostgresDatabaseProvider(pool)
         else:
@@ -137,7 +138,9 @@ class MetricsRepository:
                 end_time,
                 aggregation_interval,
             )
-        except Exception: # Fallback to manual query if function doesn't exist or other error
+        except (
+            Exception
+        ):  # Fallback to manual query if function doesn't exist or other error
             # Fallback to manual query
             records = await self.db.fetch(
                 """
@@ -278,9 +281,7 @@ class MetricsRepository:
             )
         except Exception:
             # Fallback to manual deletion
-            cutoff_date = datetime.now(timezone.utc) - timedelta(
-                days=retention_days
-            )
+            cutoff_date = datetime.now(timezone.utc) - timedelta(days=retention_days)
             result = await self.db.execute(
                 "DELETE FROM metrics_timeseries WHERE timestamp < $1", cutoff_date
             )

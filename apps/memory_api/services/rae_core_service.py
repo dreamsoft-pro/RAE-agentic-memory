@@ -19,14 +19,16 @@ from rae_core.adapters import (
 )
 from rae_core.config import RAESettings
 from rae_core.engine import RAEEngine
-from rae_core.interfaces.embedding import IEmbeddingProvider
+from rae_core.interfaces.cache import ICacheProvider
 from rae_core.interfaces.database import IDatabaseProvider
+from rae_core.interfaces.embedding import IEmbeddingProvider
+from rae_core.interfaces.storage import IMemoryStorage
+from rae_core.interfaces.vector import IVectorStore
 from rae_core.models.search import SearchResponse
 
 from apps.memory_api.services.embedding import (
     LocalEmbeddingProvider,
     RemoteEmbeddingProvider,
-    get_embedding_service,
 )
 from apps.memory_api.services.llm import get_llm_provider
 
@@ -58,6 +60,11 @@ class RAECoreService:
         self.qdrant_client = qdrant_client
         self.redis_client = redis_client
 
+        self.postgres_adapter: IMemoryStorage
+        self.qdrant_adapter: IVectorStore
+        self.redis_adapter: ICacheProvider
+        self.embedding_provider: IEmbeddingProvider
+
         # Initialize adapters with Lite mode support
         if postgres_pool:
             self.postgres_adapter = PostgresMemoryAdapter(pool=postgres_pool)
@@ -85,8 +92,11 @@ class RAECoreService:
 
         # Initialize embedding provider
         from apps.memory_api.config import settings
+
         if getattr(settings, "RAE_PROFILE", "standard") == "distributed":
-            self.embedding_provider = RemoteEmbeddingProvider(base_url=settings.ML_SERVICE_URL)
+            self.embedding_provider = RemoteEmbeddingProvider(
+                base_url=settings.ML_SERVICE_URL
+            )
             logger.info("using_remote_embedding_provider", url=settings.ML_SERVICE_URL)
         else:
             self.embedding_provider = LocalEmbeddingProvider()
@@ -117,8 +127,9 @@ class RAECoreService:
         """Get agnostic database provider."""
         if self.postgres_pool:
             from rae_core.adapters.postgres_db import PostgresDatabaseProvider
+
             return PostgresDatabaseProvider(self.postgres_pool)
-        
+
         # Fallback for Lite mode - if we have a generic IDatabaseProvider in rae-core
         # that supports in-memory, we should return it here.
         # For now, let's assume we might need a dummy or failing provider if not available.
@@ -127,7 +138,10 @@ class RAECoreService:
     @property
     def enhanced_graph_repo(self) -> Any:
         """Get enhanced graph repository."""
-        from apps.memory_api.repositories.graph_repository_enhanced import EnhancedGraphRepository
+        from apps.memory_api.repositories.graph_repository_enhanced import (
+            EnhancedGraphRepository,
+        )
+
         return EnhancedGraphRepository(self.db)
 
     async def store_memory(
@@ -297,10 +311,13 @@ class RAECoreService:
         consider_access_stats: bool = True,
     ) -> int:
         """Apply time-based decay to all memories."""
-        return await self.postgres_adapter.decay_importance(
-            tenant_id=tenant_id,
-            decay_rate=decay_rate,
-            consider_access_stats=consider_access_stats
+        return cast(
+            int,
+            await cast(Any, self.postgres_adapter).decay_importance(
+                tenant_id=tenant_id,
+                decay_rate=decay_rate,
+                consider_access_stats=consider_access_stats,
+            ),
         )
 
     async def query_memories(
@@ -467,8 +484,10 @@ class RAECoreService:
         """List all unique tenant IDs in the system."""
         # This might be storage specific, but for now we assume Postgres
         if hasattr(self.postgres_adapter, "list_unique_tenants"):
-            return await self.postgres_adapter.list_unique_tenants()
-        
+            return cast(
+                List[str], await cast(Any, self.postgres_adapter).list_unique_tenants()
+            )
+
         # Fallback for PostgresMemoryAdapter
         records = await self.db.fetch(
             "SELECT DISTINCT tenant_id FROM memories WHERE tenant_id IS NOT NULL"
@@ -480,11 +499,13 @@ class RAECoreService:
         # agent_id maps to project in RAE-Core
         records = await self.db.fetch(
             "SELECT DISTINCT agent_id as project FROM memories WHERE tenant_id = $1 AND agent_id IS NOT NULL",
-            tenant_id
+            tenant_id,
         )
         return [str(r["project"]) for r in records]
 
-    async def list_active_project_tenants(self, since: datetime) -> List[Dict[str, str]]:
+    async def list_active_project_tenants(
+        self, since: datetime
+    ) -> List[Dict[str, str]]:
         """List unique (project, tenant_id) pairs with recent activity."""
         # agent_id maps to project in RAE-Core
         records = await self.db.fetch(
@@ -493,11 +514,13 @@ class RAECoreService:
             FROM memories
             WHERE created_at >= $1 AND agent_id IS NOT NULL
             """,
-            since.replace(tzinfo=None)
+            since.replace(tzinfo=None),
         )
         return [{"project": r["project"], "tenant_id": r["tenant_id"]} for r in records]
 
-    async def list_long_sessions(self, tenant_id: str, project: str, threshold: int) -> List[Dict[str, Any]]:
+    async def list_long_sessions(
+        self, tenant_id: str, project: str, threshold: int
+    ) -> List[Dict[str, Any]]:
         """List sessions with event count above threshold."""
         sql = """
             SELECT
@@ -518,8 +541,7 @@ class RAECoreService:
     async def apply_global_memory_decay(self, decay_rate: float) -> None:
         """Apply decay to all memories strength."""
         await self.db.execute(
-            "UPDATE memories SET strength = strength * $1",
-            decay_rate
+            "UPDATE memories SET strength = strength * $1", decay_rate
         )
 
     async def delete_expired_memories(self) -> int:
@@ -543,7 +565,9 @@ class RAECoreService:
             return int(result.split()[-1])
         return 0
 
-    async def list_memories_for_graph_extraction(self, limit: int = 100) -> List[Dict[str, Any]]:
+    async def list_memories_for_graph_extraction(
+        self, limit: int = 100
+    ) -> List[Dict[str, Any]]:
         """List memories that are pending graph extraction."""
         records = await self.db.fetch(
             """
@@ -560,6 +584,6 @@ class RAECoreService:
             GROUP BY tenant_id
             LIMIT $1
             """,
-            limit
+            limit,
         )
         return [dict(r) for r in records]

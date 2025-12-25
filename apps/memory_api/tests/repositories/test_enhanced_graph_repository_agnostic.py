@@ -18,6 +18,7 @@ class MockDatabaseProvider(IDatabaseProvider):
         self.fetch_mock = AsyncMock()
         self.fetchval_mock = AsyncMock()
         self.execute_mock = AsyncMock()
+        self.executemany_mock = AsyncMock()
         self.acquire_mock = MagicMock()
 
     async def fetchrow(self, query: str, *args):
@@ -31,6 +32,9 @@ class MockDatabaseProvider(IDatabaseProvider):
 
     async def execute(self, query: str, *args):
         return await self.execute_mock(query, *args)
+
+    async def executemany(self, query: str, args: list):
+        return await self.executemany_mock(query, args)
 
     def acquire(self):
         # Must return an async context manager

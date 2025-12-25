@@ -29,7 +29,7 @@ def mock_pool():
     mock_context_manager.__aexit__ = AsyncMock(return_value=None)
 
     pool_mock.acquire = MagicMock(return_value=mock_context_manager)
-    
+
     # Pool-level methods
     pool_mock.fetch = AsyncMock(return_value=[])
     pool_mock.fetchrow = AsyncMock(return_value=None)
@@ -45,11 +45,12 @@ def mock_pool():
 def mock_rae_service(mock_pool):
     service = MagicMock()
     service.postgres_pool = mock_pool
-    
+
     # Mock the 'db' property to return an actual provider wrapping our mock pool
     from rae_core.adapters.postgres_db import PostgresDatabaseProvider
+
     service.db = PostgresDatabaseProvider(mock_pool)
-    
+
     return service
 
 

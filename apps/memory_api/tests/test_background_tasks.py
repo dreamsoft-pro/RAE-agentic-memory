@@ -182,17 +182,17 @@ class TestProcessGraphExtractionQueue:
             {"tenant_id": "tenant1", "memory_ids": ["mem1", "mem2"]},
             {"tenant_id": "tenant2", "memory_ids": ["mem3", "mem4", "mem5"]},
         ]
-        
+
         # Mock pool
         mock_pool = AsyncMock()
         # Mock acquire to be an async context manager returning mock_conn
         mock_pool.acquire.return_value.__aenter__ = AsyncMock(return_value=mock_conn)
         mock_pool.acquire.return_value.__aexit__ = AsyncMock(return_value=None)
         mock_pool.close = AsyncMock()
-        
+
         # Shortcut methods on pool
         mock_pool.fetch = mock_conn.fetch
-        
+
         mock_get_pool.return_value = mock_pool
 
         # Mock the delay method
@@ -216,16 +216,16 @@ class TestProcessGraphExtractionQueue:
         # Mock connection
         mock_conn = AsyncMock()
         mock_conn.fetch.return_value = []
-        
+
         # Mock pool
         mock_pool = AsyncMock()
         mock_pool.acquire.return_value.__aenter__ = AsyncMock(return_value=mock_conn)
         mock_pool.acquire.return_value.__aexit__ = AsyncMock(return_value=None)
         mock_pool.close = AsyncMock()
-        
+
         # Shortcut methods on pool
         mock_pool.fetch = mock_conn.fetch
-        
+
         mock_get_pool.return_value = mock_pool
 
         # Should not raise exception
@@ -280,7 +280,7 @@ class TestMemoryDecay:
         mock_rae_service = AsyncMock()
         mock_rae_service.apply_global_memory_decay = AsyncMock()
         mock_rae_service.delete_expired_memories = AsyncMock()
-        
+
         # Setup rae_context mock
         mock_rae_context.return_value.__aenter__.return_value = mock_rae_service
 

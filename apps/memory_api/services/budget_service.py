@@ -96,7 +96,7 @@ class BudgetService:
         logger.info("get_or_create_budget", tenant_id=tenant_id, project_id=project_id)
 
         # Try to fetch existing budget
-        record = await self.rae_service.postgres_pool.fetchrow(
+        record = await self.rae_service.db.fetchrow(
             """
             SELECT * FROM budgets
             WHERE tenant_id = $1 AND project_id = $2
@@ -110,7 +110,7 @@ class BudgetService:
             logger.info(
                 "creating_new_budget", tenant_id=tenant_id, project_id=project_id
             )
-            record = await self.rae_service.postgres_pool.fetchrow(
+            record = await self.rae_service.db.fetchrow(
                 """
                 INSERT INTO budgets (
                     tenant_id,
@@ -229,7 +229,7 @@ class BudgetService:
             total_tokens=usage.total_tokens,
         )
 
-        await self.rae_service.postgres_pool.execute(
+        await self.rae_service.db.execute(
             """
             UPDATE budgets
             SET
@@ -302,7 +302,7 @@ class BudgetService:
         # Ensure budget exists
         await self.get_or_create_budget(tenant_id, project_id)
 
-        record = await self.rae_service.postgres_pool.fetchrow(
+        record = await self.rae_service.db.fetchrow(
             """
             UPDATE budgets
             SET

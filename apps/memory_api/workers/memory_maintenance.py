@@ -344,9 +344,7 @@ Provide a concise summary, list key topics, and determine the overall sentiment.
 
         # Find sessions with many events
         long_sessions = await self.rae_service.list_long_sessions(
-            tenant_id=tenant_id,
-            project=project_id,
-            threshold=event_threshold
+            tenant_id=tenant_id, project=project_id, threshold=event_threshold
         )
 
         # Summarize each long session
