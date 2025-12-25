@@ -113,7 +113,7 @@ class RetentionService:
 
     def __init__(self, rae_service: RAECoreService):
         self.rae_service = rae_service
-        self.db = rae_service.postgres_pool
+        self.db = rae_service.db
         self.logger = logging.getLogger(__name__)
 
     async def get_tenant_retention_policies(

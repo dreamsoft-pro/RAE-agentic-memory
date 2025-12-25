@@ -46,6 +46,7 @@ from apps.memory_api.models.graph_enhanced_models import (  # Request/Response m
     UpdateEdgeWeightRequest,
 )
 from apps.memory_api.services.rae_core_service import RAECoreService
+
 logger = structlog.get_logger(__name__)
 
 router = APIRouter(prefix="/v1/graph-management", tags=["Graph Management"])

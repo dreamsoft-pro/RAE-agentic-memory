@@ -85,11 +85,12 @@ def schedule_reflections():
     async def main():
         async with rae_context() as rae_service:
             from datetime import datetime, timedelta, timezone
+
             since = datetime.now(timezone.utc) - timedelta(hours=1)
-            
+
             # Find unique project/tenant pairs with recent episodic memories
             records = await rae_service.list_active_project_tenants(since=since)
-            
+
             for record in records:
                 generate_reflection_for_project.delay(
                     record["project"], record["tenant_id"]
@@ -127,7 +128,9 @@ def prune_old_memories():
 
         async with rae_context() as rae_service:
             # We only prune episodic memories, as semantic/reflective are meant to be long-term.
-            deleted_count = await rae_service.delete_old_episodic_memories(settings.MEMORY_RETENTION_DAYS)
+            deleted_count = await rae_service.delete_old_episodic_memories(
+                settings.MEMORY_RETENTION_DAYS
+            )
             logger.info("pruned_old_memories", count=deleted_count)
 
     asyncio.run(main())

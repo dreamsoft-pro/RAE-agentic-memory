@@ -477,9 +477,7 @@ async def get_system_health(
 
         # Add component details if requested
         if request.include_sub_components:
-            system_health.components = await _get_component_health(
-                rae_service.db
-            )
+            system_health.components = await _get_component_health(rae_service.db)
 
         # Generate recommendations based on health
         recommendations = _generate_health_recommendations(system_health)

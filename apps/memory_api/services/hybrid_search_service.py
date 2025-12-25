@@ -410,7 +410,7 @@ class HybridSearchService:
             sql += f" ORDER BY similarity DESC LIMIT ${param_idx}"
             params.append(k)
 
-            records = await self.rae_service.postgres_pool.fetch(sql, *params)
+            records = await self.rae_service.db.fetch(sql, *params)
 
             results = [
                 {
@@ -457,7 +457,7 @@ class HybridSearchService:
                 LIMIT $4
             """
 
-            records = await self.rae_service.postgres_pool.fetch(
+            records = await self.rae_service.db.fetch(
                 sql, tenant_id, project_id, query, k
             )
 
@@ -467,7 +467,7 @@ class HybridSearchService:
                 memory_ids = record.get("source_memory_ids", [])
                 if memory_ids:
                     # Fetch source memories
-                    memories = await self.rae_service.postgres_pool.fetch(
+                    memories = await self.rae_service.db.fetch(
                         """
                         SELECT id, content, metadata, created_at
                         FROM memories
@@ -517,7 +517,7 @@ class HybridSearchService:
                 return []
 
             # Find graph nodes matching entities
-            node_records = await self.rae_service.postgres_pool.fetch(
+            node_records = await self.rae_service.db.fetch(
                 """
                 SELECT id, node_id, label, properties FROM knowledge_graph_nodes
                 WHERE tenant_id = $1 AND project_id = $2
@@ -540,7 +540,7 @@ class HybridSearchService:
             start_node_ids = [record["node_id"] for record in node_records]
 
             # Traverse graph using BFS to find connected nodes
-            traversed_nodes = await self.rae_service.postgres_pool.fetch(
+            traversed_nodes = await self.rae_service.db.fetch(
                 """
                 WITH RECURSIVE graph_traverse AS (
                     -- Base case: start nodes
@@ -611,7 +611,7 @@ class HybridSearchService:
                 return []
 
             # Fetch related memories
-            memories = await self.rae_service.postgres_pool.fetch(
+            memories = await self.rae_service.db.fetch(
                 """
                 SELECT id, content, metadata, created_at, importance
                 FROM memories
@@ -685,7 +685,7 @@ class HybridSearchService:
             sql += f" ORDER BY rank DESC LIMIT ${param_idx}"
             params.append(k)
 
-            records = await self.rae_service.postgres_pool.fetch(sql, *params)
+            records = await self.rae_service.db.fetch(sql, *params)
 
             results = [
                 {

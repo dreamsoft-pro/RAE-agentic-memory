@@ -1,4 +1,6 @@
-from typing import TYPE_CHECKING, Any, List, Optional
+from typing import TYPE_CHECKING, Any, List, Optional, cast
+
+from rae_core.interfaces.embedding import IEmbeddingProvider
 
 from apps.memory_api.metrics import embedding_time_histogram
 
@@ -84,7 +86,7 @@ class EmbeddingService:
             client = MLServiceClient(base_url=self.settings.ML_SERVICE_URL)
             try:
                 result = await client.generate_embeddings(texts)
-                return result.get("embeddings", [])
+                return cast(List[List[float]], result.get("embeddings", []))
             finally:
                 await client.close()
 
@@ -94,8 +96,6 @@ class EmbeddingService:
 
         return await asyncio.to_thread(self.generate_embeddings, texts)
 
-
-from rae_core.interfaces.embedding import IEmbeddingProvider
 
 class LocalEmbeddingProvider(IEmbeddingProvider):
     """Local embedding provider wrapping the embedding service."""
@@ -137,13 +137,14 @@ class RemoteEmbeddingProvider(IEmbeddingProvider):
         client = MLServiceClient(base_url=self.base_url)
         try:
             result = await client.generate_embeddings(texts)
-            return result.get("embeddings", [])
+            return cast(List[List[float]], result.get("embeddings", []))
         finally:
             await client.close()
 
     def get_dimension(self) -> int:
         """Get embedding dimension."""
         return self.dimension
+
 
 class TaskQueueEmbeddingProvider(IEmbeddingProvider):
     """Embedding provider that offloads by creating tasks in the Control Plane queue."""
@@ -166,43 +167,55 @@ class TaskQueueEmbeddingProvider(IEmbeddingProvider):
         task_payload = {
             "texts": texts,
             "model": "all-MiniLM-L6-v2",
-            "goal": "Generate embeddings for batch"
+            "goal": "Generate embeddings for batch",
         }
-        
-        # We need a way to create the task. 
+
+        # We need a way to create the task.
         # This provider is initialized with task_repo (which might be raw pool or repo)
         # Assuming task_repo has create_task method
         from apps.memory_api.repositories.task_repository import TaskRepository
+
         if not isinstance(self.task_repo, TaskRepository):
-             from apps.memory_api.repositories.task_repository import TaskRepository
-             repo = TaskRepository(self.task_repo)
+            from apps.memory_api.repositories.task_repository import TaskRepository
+
+            repo = TaskRepository(self.task_repo)
         else:
-             repo = self.task_repo
+            repo = self.task_repo
 
         task = await repo.create_task(
-            type="llm_inference", # Node agent handles llm_inference by calling Ollama
+            type="llm_inference",  # Node agent handles llm_inference by calling Ollama
             payload=task_payload,
-            priority=10
+            priority=10,
         )
-        
+
         task_id = task.id
-        
+
         # 2. Poll for result
         import asyncio
         import time
+
         start_time = time.time()
         while time.time() - start_time < self.timeout_sec:
             updated_task = await repo.get_task(task_id)
             if updated_task and updated_task.status == "COMPLETED":
                 import json
-                result_data = json.loads(updated_task.result) if isinstance(updated_task.result, str) else updated_task.result
-                return result_data.get("embeddings", [])
+
+                result_data = (
+                    json.loads(updated_task.result)
+                    if isinstance(updated_task.result, str)
+                    else updated_task.result
+                )
+                if result_data is None:
+                    result_data = {}
+                return cast(List[List[float]], result_data.get("embeddings", []))
             elif updated_task and updated_task.status == "FAILED":
                 raise RuntimeError(f"Task {task_id} failed: {updated_task.error}")
-            
+
             await asyncio.sleep(1.0)
-            
-        raise TimeoutError(f"Embedding task {task_id} timed out after {self.timeout_sec}s")
+
+        raise TimeoutError(
+            f"Embedding task {task_id} timed out after {self.timeout_sec}s"
+        )
 
     def get_dimension(self) -> int:
         return self.dimension

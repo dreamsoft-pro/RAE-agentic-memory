@@ -59,6 +59,7 @@ class EnhancedGraphRepository:
         Args:
             pool: AsyncPG connection pool or IDatabaseProvider
         """
+        self.db: IDatabaseProvider
         if isinstance(pool, (asyncpg.Pool, asyncpg.Connection)):
             self.db = PostgresDatabaseProvider(pool)
         else:
@@ -186,6 +187,9 @@ class EnhancedGraphRepository:
             project_id,
             node_id,
         )
+
+        if not record or not weighted_record:
+            raise RuntimeError(f"Failed to retrieve metrics for node {node_id}")
 
         return NodeDegreeMetrics(
             node_id=node_id,
@@ -424,6 +428,15 @@ class EnhancedGraphRepository:
             target_node_id,
             max_depth,
         )
+
+        if not record:
+            return CycleDetectionResult(
+                has_cycle=False,
+                cycle_path=[],
+                cycle_length=0,
+                source_node_id=source_node_id,
+                target_node_id=target_node_id,
+            )
 
         result = CycleDetectionResult(
             has_cycle=record["has_cycle"],
@@ -681,6 +694,9 @@ class EnhancedGraphRepository:
         record = await self.db.fetchrow(
             "SELECT * FROM restore_graph_snapshot($1, $2)", snapshot_id, clear_existing
         )
+
+        if not record:
+            return 0, 0
 
         nodes_restored = record["nodes_restored"]
         edges_restored = record["edges_restored"]

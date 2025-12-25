@@ -231,6 +231,7 @@ class DashboardWebSocketService:
         Args:
             pool: Database connection pool or IDatabaseProvider
         """
+        self.db: IDatabaseProvider
         if isinstance(pool, (asyncpg.Pool, asyncpg.Connection)):
             self.db = PostgresDatabaseProvider(pool)
         else:
@@ -594,6 +595,15 @@ class DashboardWebSocketService:
             )
 
             # Build metrics object
+            if (
+                not memory_stats
+                or not reflection_stats
+                or not semantic_stats
+                or not graph_stats
+                or not trigger_stats
+            ):
+                return SystemMetrics()
+
             metrics = SystemMetrics(
                 total_memories=memory_stats["total_memories"] or 0,
                 memories_last_24h=memory_stats["memories_last_24h"] or 0,
