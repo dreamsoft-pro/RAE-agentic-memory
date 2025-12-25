@@ -5,8 +5,15 @@ set -e
 
 echo "Building RAE-Lite..."
 
-# Install dependencies
-pip install -e ".[dev]"
+echo "Setting up virtual environment..."
+python3 -m venv build_venv
+source build_venv/bin/activate
+
+echo "Installing dependencies..."
+pip install --upgrade pip
+pip install pyinstaller fastapi uvicorn httpx numpy aiosqlite pydantic pydantic-settings structlog pystray pillow
+pip install -e ../rae-core
+
 
 # Clean previous builds
 rm -rf build/ dist/

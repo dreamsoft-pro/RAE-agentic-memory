@@ -106,8 +106,41 @@ class NodeAgent:
             return await self._execute_ollama(payload)
         elif task_type in ["code_verify_cycle", "quality_loop"]:
             return await self._execute_code_cycle(payload)
+        elif task_type == "shell_command":
+            return await self._execute_shell_command(payload)
 
         return {"status": "success", "output": "unknown_task_type"}
+
+    async def _execute_shell_command(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute a shell command and return output."""
+        command = payload.get("command")
+        cwd = payload.get("cwd", os.getcwd())
+        env = {**os.environ, **payload.get("env", {})}
+
+        if not command:
+            return {"status": "error", "error": "No command provided"}
+
+        logger.info(f"Executing shell command: {command} in {cwd}")
+        
+        try:
+            import subprocess
+            process = await asyncio.create_subprocess_shell(
+                command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                cwd=cwd,
+                env=env
+            )
+            stdout, stderr = await process.communicate()
+            
+            return {
+                "status": "success" if process.returncode == 0 else "error",
+                "returncode": process.returncode,
+                "stdout": stdout.decode(),
+                "stderr": stderr.decode()
+            }
+        except Exception as e:
+            return {"status": "error", "error": str(e)}
 
     async def _call_ollama(self, model: str, prompt: str, system: str = "") -> Dict[str, Any]:
         ollama_url = self.config.get("ollama_api_url", "http://localhost:11434")
@@ -226,7 +259,7 @@ class NodeAgent:
         )
 
     async def task_loop(self, client: httpx.AsyncClient):
-        poll_url = f"{self.base_url}/control/tasks/poll"
+        poll_url = f"{self.base_url}/control/tasks_poll"
         while True:
             try:
                 resp = await client.get(poll_url, params={"node_id": self.node_id})
