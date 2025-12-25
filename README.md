@@ -95,6 +95,18 @@ For more detailed instructions, see the [Getting Started Guide](docs/LOCAL_SETUP
 
 ---
 
+## API Documentation
+
+Full API reference is available in [API_DOCUMENTATION.md](API_DOCUMENTATION.md).
+
+It includes comprehensive details on:
+- **Memory & Agent APIs** (Store, Query, Execute)
+- **GraphRAG & Hybrid Search**
+- **Governance & Monitoring**
+- **Interactive Swagger UI** (available locally at `http://localhost:8000/docs`)
+
+---
+
 ## Project Status
 
 RAE is an active research and engineering project. The architecture is stable, and the implementation is "Enterprise Ready" for many use cases.

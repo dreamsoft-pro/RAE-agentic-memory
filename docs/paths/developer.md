@@ -90,6 +90,14 @@ You have now successfully added a memory to RAE and retrieved it!
 
 ---
 
+## API Reference
+
+For a complete list of all 96+ endpoints, including Memory, GraphRAG, Governance, and more, please refer to the full [API Documentation](../../API_DOCUMENTATION.md).
+
+You can also browse the interactive Swagger UI locally at `http://localhost:8000/docs` when the service is running.
+
+---
+
 ## Deployment Options
 
 RAE offers several deployment profiles tailored to different use cases, from local development with hot-reloading to a full production-ready stack.
