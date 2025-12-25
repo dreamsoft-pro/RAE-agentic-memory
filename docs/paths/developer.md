@@ -201,6 +201,16 @@ Encountering issues? Check the **[Troubleshooting Guide](../../TROUBLESHOOTING.m
 -   Vector store connection failures
 -   Memory leaks in long-running workers
 
+**(TODO: Extract detailed steps from `docs/PRODUCTION_PROXMOX_HA.md` and add them here.)**
+
+### 5. Distributed Compute (Control Plane)
+RAE includes a unique feature for scaling: **Distributed Compute Nodes**.
+Unlike typical RAG systems that run everything on one server, RAE can offload heavy cognitive tasks (like embedding generation, graph extraction, or large-scale re-ranking) to dedicated nodes (e.g., "Node1" or "KUBUS").
+
+-   **Control Plane API (`/control`):** The central RAE instance acts as a task dispatcher.
+-   **Compute Nodes:** Worker machines (with GPUs) register via `/control/nodes/register` and poll for tasks.
+-   **Benefit:** Allows the Orchestrator to run on a lightweight laptop while heavy lifting happens on a dedicated rig.
+
 ---
 
 ## Architecture Deep Dive

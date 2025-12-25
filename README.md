@@ -9,6 +9,9 @@
 [![Coverage](https://img.shields.io/badge/coverage-69%25-green.svg)]())
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
+> **💡 New to RAE? Start Here:** [**What is RAE? Architecture & Philosophy**](docs/CONCEPT.md)  
+> *Learn why RAE is not just a Vector DB, how the "Hive Mind" works, and the "RAE-First" workflow.*
+
 RAE is an open-source reference architecture for **long-term memory and reasoning continuity** in complex systems. It addresses the fundamental problem of **Reasoning Drift**—the gradual loss of alignment between past decisions, their original rationales, and present system behavior.
 
 ---
