@@ -45,6 +45,33 @@ These performance metrics translate to tangible benefits for government agencies
 
 ---
 
+## ISO/IEC 42001 & Auditability
+
+For public administration, "why" a decision was made is often more important than the decision itself. RAE includes specific features to support **Algorithmic Transparency**.
+
+### 1. Decision Lineage (Provenance)
+Every retrieval and decision is cryptographically linked to its source.
+-   **Traceability:** You can trace an AI answer back to the exact PDF, law paragraph, or meeting note it cited.
+-   **Context Snapshot:** RAE freezes the "Context" used at the moment of decision, so you can audit it years later, even if the original documents change.
+
+### 2. Human-in-the-Loop Oversight
+For high-risk actions (e.g., deleting records), RAE supports a **Human Approval Workflow** (via the Compliance API).
+-   **Risk Levels:** Operations can be flagged as "Low", "Medium", or "Critical".
+-   **Approval Gates:** Critical actions require explicit approval from a human operator before execution.
+
+### 3. Semantic Drift Detection (Policy Consistency)
+Ensure that AI interpretations remain consistent over time using the **Evaluation API**.
+-   **Drift Monitoring:** Detects if the system's understanding of key concepts (e.g., "Tax Eligibility") shifts significantly.
+-   **Alerting:** Notifies administrators if "Reasoning Drift" exceeds 1%, preventing gradual policy misalignment.
+
+### 4. Hierarchical Reflections (Citizen Feedback Analysis)
+Process vast amounts of unstructured data (e.g., thousands of town hall comments) into actionable insights.
+-   **Clustering:** Automatically groups similar memories (e.g., "Complaints about Potholes").
+-   **Map-Reduce Summarization:** recursively summarizes clusters to provide high-level insights without losing specific details.
+-   **Scale:** Designed to handle millions of data points, making it ideal for national-scale feedback analysis.
+
+---
+
 ## Deployment & Security
 
 For public sector use, data security, sovereignty, and auditability are critical. RAE is designed to be deployed **fully on-premise** within a government's own secure data centers.

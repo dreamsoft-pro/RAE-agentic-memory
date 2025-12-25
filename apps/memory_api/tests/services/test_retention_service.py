@@ -40,6 +40,12 @@ def mock_pool():
 def mock_rae_service(mock_pool):
     rae = MagicMock(spec=RAECoreService)
     rae.postgres_pool = mock_pool
+
+    # Mock the 'db' property to return an actual provider wrapping our mock pool
+    from rae_core.adapters.postgres_db import PostgresDatabaseProvider
+
+    rae.db = PostgresDatabaseProvider(mock_pool)
+
     return rae
 
 
@@ -88,7 +94,7 @@ async def test_cleanup_expired_data_single_tenant(retention_service, mock_pool):
     # Assert
     assert results[DataClass.EPISODIC_MEMORY] == 10
     # assert results[DataClass.EMBEDDINGS] == 2 # Embeddings might be called later
-    assert retention_service.db.execute.call_count >= 1
+    assert mock_pool.execute.call_count >= 1
 
 
 @pytest.mark.asyncio

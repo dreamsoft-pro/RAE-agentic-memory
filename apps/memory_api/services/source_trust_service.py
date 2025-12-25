@@ -20,7 +20,7 @@ ISO/IEC 42001 alignment:
 import logging
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -91,7 +91,8 @@ class SourceTrustService:
         SourceTrustLevel.UNVERIFIED: 30,  # 1 month for unverified
     }
 
-    def __init__(self):
+    def __init__(self, settings: Optional[Any] = None):
+        self.settings = settings
         self.logger = logging.getLogger(__name__)
 
     def assess_source_trust(

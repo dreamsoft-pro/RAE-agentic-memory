@@ -1,6 +1,7 @@
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, Any, List, Optional, cast
 
-from apps.memory_api.config import settings
+from rae_core.interfaces.embedding import IEmbeddingProvider
+
 from apps.memory_api.metrics import embedding_time_histogram
 
 try:  # pragma: no cover
@@ -19,9 +20,16 @@ if TYPE_CHECKING:
 
 
 class EmbeddingService:
-    def __init__(self):
+    def __init__(self, settings: Optional[Any] = None):
+        self._settings = settings
         self.model: Optional["SentenceTransformer"] = None
         self._initialized = False
+
+    @property
+    def settings(self):
+        from apps.memory_api.config import settings as default_settings
+
+        return self._settings or default_settings
 
     def _ensure_available(self) -> None:
         """Ensure sentence-transformers is available."""
@@ -38,12 +46,12 @@ class EmbeddingService:
 
         self._ensure_available()
 
-        if settings.ONNX_EMBEDDER_PATH:
+        if self.settings.ONNX_EMBEDDER_PATH:
             # Placeholder for a real ONNX embedder class
             # A real implementation would load the model and tokenizer here.
-            # self.model = self._get_onnx_embedder(settings.ONNX_EMBEDDER_PATH)
+            # self.model = self._get_onnx_embedder(self.settings.ONNX_EMBEDDER_PATH)
             print(
-                f"Using ONNX embedder (placeholder) from: {settings.ONNX_EMBEDDER_PATH}"
+                f"Using ONNX embedder (placeholder) from: {self.settings.ONNX_EMBEDDER_PATH}"
             )
             # For now, we fall back to SentenceTransformer even if ONNX path is set,
             # as the ONNX implementation is just a placeholder.
@@ -57,11 +65,160 @@ class EmbeddingService:
     @embedding_time_histogram.time()
     def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
         """
-        Generates dense embeddings for a list of texts.
+        Generates dense embeddings for a list of texts (synchronous).
         """
         self._initialize_model()
         embeddings = self.model.encode(texts)  # type: ignore[union-attr]
         return [emb.tolist() for emb in embeddings]
+
+    async def generate_embeddings_async(self, texts: List[str]) -> List[List[float]]:
+        """
+        Generates dense embeddings for a list of texts (asynchronous).
+        """
+        # If remote ML service is configured and RAE_PROFILE is distributed, use it
+        if self.settings.RAE_PROFILE == "distributed" or (
+            self.settings.ML_SERVICE_URL
+            and "localhost" not in self.settings.ML_SERVICE_URL
+            and "127.0.0.1" not in self.settings.ML_SERVICE_URL
+        ):
+            from apps.memory_api.services.ml_service_client import MLServiceClient
+
+            client = MLServiceClient(base_url=self.settings.ML_SERVICE_URL)
+            try:
+                result = await client.generate_embeddings(texts)
+                return cast(List[List[float]], result.get("embeddings", []))
+            finally:
+                await client.close()
+
+        # Fallback to local execution (offloaded to thread pool if needed,
+        # but here we just call the sync version for simplicity)
+        import asyncio
+
+        return await asyncio.to_thread(self.generate_embeddings, texts)
+
+
+class LocalEmbeddingProvider(IEmbeddingProvider):
+    """Local embedding provider wrapping the embedding service."""
+
+    def __init__(self, embedding_service: Any = None):
+        self.service = embedding_service or get_embedding_service()
+
+    async def embed_text(self, text: str) -> List[float]:
+        """Generate embedding for text."""
+        results = await self.service.generate_embeddings_async([text])
+        return results[0] if results else []
+
+    async def embed_batch(self, texts: List[str]) -> List[List[float]]:
+        """Generate embeddings for multiple texts."""
+        return await self.service.generate_embeddings_async(texts)
+
+    def get_dimension(self) -> int:
+        """Get embedding dimension."""
+        # Assuming default model dimension for now, or could query model if loaded
+        return 384  # Default for all-MiniLM-L6-v2
+
+
+class RemoteEmbeddingProvider(IEmbeddingProvider):
+    """Embedding provider that offloads to a remote ML service (e.g., Node1)."""
+
+    def __init__(self, base_url: str, dimension: int = 384):
+        self.base_url = base_url
+        self.dimension = dimension
+
+    async def embed_text(self, text: str) -> List[float]:
+        """Generate embedding for text by calling remote service."""
+        results = await self.embed_batch([text])
+        return results[0] if results else []
+
+    async def embed_batch(self, texts: List[str]) -> List[List[float]]:
+        """Generate embeddings for multiple texts by calling remote service."""
+        from apps.memory_api.services.ml_service_client import MLServiceClient
+
+        client = MLServiceClient(base_url=self.base_url)
+        try:
+            result = await client.generate_embeddings(texts)
+            return cast(List[List[float]], result.get("embeddings", []))
+        finally:
+            await client.close()
+
+    def get_dimension(self) -> int:
+        """Get embedding dimension."""
+        return self.dimension
+
+
+class TaskQueueEmbeddingProvider(IEmbeddingProvider):
+    """Embedding provider that offloads by creating tasks in the Control Plane queue."""
+
+    def __init__(self, task_repo: Any, dimension: int = 384, timeout_sec: int = 60):
+        self.task_repo = task_repo
+        self.dimension = dimension
+        self.timeout_sec = timeout_sec
+
+    async def embed_text(self, text: str) -> List[float]:
+        results = await self.embed_batch([text])
+        return results[0] if results else []
+
+    async def embed_batch(self, texts: List[str]) -> List[List[float]]:
+        """
+        Offload embedding generation to a compute node via Task Queue.
+        Waits for the task to be completed.
+        """
+        # 1. Create task
+        task_payload = {
+            "texts": texts,
+            "model": "all-MiniLM-L6-v2",
+            "goal": "Generate embeddings for batch",
+        }
+
+        # We need a way to create the task.
+        # This provider is initialized with task_repo (which might be raw pool or repo)
+        # Assuming task_repo has create_task method
+        from apps.memory_api.repositories.task_repository import TaskRepository
+
+        if not isinstance(self.task_repo, TaskRepository):
+            from apps.memory_api.repositories.task_repository import TaskRepository
+
+            repo = TaskRepository(self.task_repo)
+        else:
+            repo = self.task_repo
+
+        task = await repo.create_task(
+            type="llm_inference",  # Node agent handles llm_inference by calling Ollama
+            payload=task_payload,
+            priority=10,
+        )
+
+        task_id = task.id
+
+        # 2. Poll for result
+        import asyncio
+        import time
+
+        start_time = time.time()
+        while time.time() - start_time < self.timeout_sec:
+            updated_task = await repo.get_task(task_id)
+            if updated_task and updated_task.status == "COMPLETED":
+                import json
+
+                result_data = (
+                    json.loads(updated_task.result)
+                    if isinstance(updated_task.result, str)
+                    else updated_task.result
+                )
+                if result_data is None:
+                    result_data = {}
+                return cast(List[List[float]], result_data.get("embeddings", []))
+            elif updated_task and updated_task.status == "FAILED":
+                raise RuntimeError(f"Task {task_id} failed: {updated_task.error}")
+
+            await asyncio.sleep(1.0)
+
+        raise TimeoutError(
+            f"Embedding task {task_id} timed out after {self.timeout_sec}s"
+        )
+
+    def get_dimension(self) -> int:
+        return self.dimension
 
 
 # Singleton instance

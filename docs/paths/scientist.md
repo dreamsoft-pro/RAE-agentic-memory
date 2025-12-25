@@ -37,6 +37,41 @@ RAE employs a 4-layer memory architecture inspired by human cognitive systems. E
 -   **Generation Pattern:** Reflections are generated via the **Actor-Evaluator-Reflector** pattern. After an action is taken, the `Evaluator` assesses the outcome. If the outcome is significant (a notable success or failure), the `Reflector` is triggered to generate a new reflection.
 -   **Storage Mechanism:** Stored as distinct memory items with high importance scores, often including actionable strategies.
 
+### 5. Knowledge Graph (GraphRAG)
+-   **Purpose:** Captures structural relationships between entities that are often missed by vector similarity.
+-   **Extraction:** Uses LLM-based information extraction to identify triples (Subject, Predicate, Object) from episodic memories.
+-   **Traversal:** Supports advanced algorithms like **PageRank** for node importance and **Shortest Path** for finding connections between distant concepts.
+-   **Hybrid Search:** Combines vector search results with graph traversal results using a weighted fusion algorithm.
+
+### 6. Scientific Evaluation Framework
+RAE includes a comprehensive **Evaluation API** for rigorous scientific testing.
+-   **Drift Detection:** Uses statistical tests (Kolmogorov-Smirnov, PSI) to detect when the distribution of memory scores shifts significantly over time.
+-   **A/B Testing:** Native support for running experiments with different retrieval strategies (e.g., Vector vs. Hybrid) and comparing metrics.
+-   **IR Metrics:** Built-in calculation of MRR, NDCG, Precision, and Recall for every query.
+
+---
+
+## Architecture & Mathematical Deep Dive
+
+For researchers requiring a granular understanding of the system's theoretical underpinning and design evolution, we provide detailed internal documentation.
+
+### Core Mathematical Specification
+- **[RAE Mathematical Refactoring Guide](../../docs/RAE_MATHEMATICAL_REFACTORING_GUIDE.md)**: A comprehensive definition of RAE as a **Markov Decision Process (MDP)**. It details the state space representation, action space formalization, and the **Information Bottleneck** implementation for context selection.
+
+### Architectural Decision Records (ADR)
+A series of reports documenting the key architectural decisions, trade-offs, and philosophies behind RAE:
+
+| Report | Topic | Description |
+| :--- | :--- | :--- |
+| **[REPORT_01](../../REPORT_01_ARCH_AGNOSTICISM.md)** | **Arch Agnosticism** | Decoupling logic from specific LLM providers and frameworks. |
+| **[REPORT_02](../../REPORT_02_ASYNC_EXECUTION.md)** | **Async Execution** | Handling long-running cognitive tasks and parallel processing. |
+| **[REPORT_03](../../REPORT_03_COLD_START.md)** | **Cold Start** | Strategies for system bootstrapping and initial memory seeding. |
+| **[REPORT_04](../../REPORT_04_MIGRATIONS.md)** | **Migrations** | Evolution of memory schemas without data loss. |
+| **[REPORT_05](../../REPORT_05_DATA_CONSISTENCY.md)** | **Data Consistency** | Managing distributed state across SQL, Vector, and Graph stores. |
+| **[REPORT_06](../../REPORT_06_TEST_PHILOSOPHY.md)** | **Test Philosophy** | Strategy for testing non-deterministic agents. |
+| **[REPORT_07](../../REPORT_07_FAILURE_RECOVERY.md)** | **Failure Recovery** | Self-healing mechanisms and circuit breakers. |
+| **[REPORT_08](../../REPORT_08_CONCEPTUAL_COHERENCE.md)** | **Conceptual Coherence** | Maintaining logical integrity across all system layers. |
+
 ---
 
 ## Mathematical Foundations
@@ -178,9 +213,7 @@ score = w1*relevance + w2*importance + w3*recency + w4*graph_centrality + w5*div
 
 This section summarizes real performance metrics extracted from benchmark runs to provide a transparent view of RAE's capabilities. We analyze two contrasting examples to illustrate performance characteristics.
 
-**Source Files:**
-- `benchmarking/results/industrial_small_20251207_131859.json`
-- `benchmarking/results/academic_lite_20251207_114508.json`
+*> Full datasets and reproduction scripts are available in [benchmarking/README.md](../../benchmarking/README.md).*
 
 ### Summary of Key Metrics
 

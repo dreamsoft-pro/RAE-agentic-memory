@@ -1,45 +1,5 @@
 [
   {
-    "run_id": "20251207-235117",
-    "timestamp": "2025-12-07T23:51:17.885998",
-    "duration_seconds": 0.21,
-    "status": "success",
-    "files_count": 8,
-    "errors_count": 0
-  },
-  {
-    "run_id": "20251208-071351",
-    "timestamp": "2025-12-08T07:13:51.348409",
-    "duration_seconds": 0.22,
-    "status": "success",
-    "files_count": 8,
-    "errors_count": 0
-  },
-  {
-    "run_id": "20251208-072923",
-    "timestamp": "2025-12-08T07:29:23.610393",
-    "duration_seconds": 0.19,
-    "status": "success",
-    "files_count": 8,
-    "errors_count": 0
-  },
-  {
-    "run_id": "20251208-134033",
-    "timestamp": "2025-12-08T13:40:33.431471",
-    "duration_seconds": 0.26,
-    "status": "success",
-    "files_count": 8,
-    "errors_count": 0
-  },
-  {
-    "run_id": "20251208-141616",
-    "timestamp": "2025-12-08T14:16:16.406195",
-    "duration_seconds": 0.19,
-    "status": "success",
-    "files_count": 8,
-    "errors_count": 0
-  },
-  {
     "run_id": "20251208-145032",
     "timestamp": "2025-12-08T14:50:32.663796",
     "duration_seconds": 0.23,
@@ -376,25 +336,65 @@
     "errors_count": 0
   },
   {
-    "run_id": "20251224-210324",
-    "timestamp": "2025-12-24T21:03:24.546994",
+    "run_id": "20251224-204035",
+    "timestamp": "2025-12-24T20:40:35.618492",
+    "duration_seconds": 0.19,
+    "status": "success",
+    "files_count": 8,
+    "errors_count": 0
+  },
+  {
+    "run_id": "20251225-062723",
+    "timestamp": "2025-12-25T06:27:23.736524",
+    "duration_seconds": 0.18,
+    "status": "success",
+    "files_count": 8,
+    "errors_count": 0
+  },
+  {
+    "run_id": "20251225-071010",
+    "timestamp": "2025-12-25T07:10:10.662420",
     "duration_seconds": 0.21,
     "status": "success",
     "files_count": 8,
     "errors_count": 0
   },
   {
-    "run_id": "20251225-025402",
-    "timestamp": "2025-12-25T02:54:02.344650",
+    "run_id": "20251225-083821",
+    "timestamp": "2025-12-25T08:38:21.196648",
+    "duration_seconds": 0.19,
+    "status": "success",
+    "files_count": 8,
+    "errors_count": 0
+  },
+  {
+    "run_id": "20251225-113743",
+    "timestamp": "2025-12-25T11:37:43.365232",
+    "duration_seconds": 0.18,
+    "status": "success",
+    "files_count": 8,
+    "errors_count": 0
+  },
+  {
+    "run_id": "20251225-132317",
+    "timestamp": "2025-12-25T13:23:17.616291",
     "duration_seconds": 0.21,
     "status": "success",
     "files_count": 8,
     "errors_count": 0
   },
   {
-    "run_id": "20251225-073714",
-    "timestamp": "2025-12-25T07:37:14.404065",
-    "duration_seconds": 0.2,
+    "run_id": "20251225-133633",
+    "timestamp": "2025-12-25T13:36:33.755019",
+    "duration_seconds": 0.21,
+    "status": "success",
+    "files_count": 8,
+    "errors_count": 0
+  },
+  {
+    "run_id": "20251225-140121",
+    "timestamp": "2025-12-25T14:01:21.059157",
+    "duration_seconds": 0.19,
     "status": "success",
     "files_count": 8,
     "errors_count": 0

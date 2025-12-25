@@ -15,52 +15,25 @@ from apps.memory_api.services.compliance_service import ComplianceService
 
 @pytest.fixture
 def mock_pool():
-    pool_mock = AsyncMock()
+    pool_mock = MagicMock()
 
     # Connection mock needs async methods for fetch/fetchrow/fetchval
-    conn_mock = MagicMock()
-
-    async def async_fetch(*args, **kwargs):
-        return []
-
-    conn_mock.fetch.side_effect = async_fetch
-
-    async def async_fetchrow(*args, **kwargs):
-        return None
-
-    conn_mock.fetchrow.side_effect = async_fetchrow
-
-    async def async_fetchval(*args, **kwargs):
-        return 0
-
-    conn_mock.fetchval.side_effect = async_fetchval
+    conn_mock = AsyncMock()
+    conn_mock.fetch.return_value = []
+    conn_mock.fetchrow.return_value = None
+    conn_mock.fetchval.return_value = 0
 
     # Context Manager Mock
-    # __aenter__ must return the conn_mock
-    async def aenter(*args, **kwargs):
-        return conn_mock
-
-    async def aexit(*args, **kwargs):
-        return None
-
     mock_context_manager = MagicMock()
-    mock_context_manager.__aenter__ = AsyncMock(side_effect=aenter)
-    mock_context_manager.__aexit__ = AsyncMock(side_effect=aexit)
-
-    # pool.acquire() returns the context manager (NOT awaited itself in `async with pool.acquire()`)
-    # wait, pool.acquire() IS awaited?
-    # No, `async with pool.acquire() as conn` -> calls pool.acquire(), gets object, awaits obj.__aenter__()
-    # Actually asyncpg Pool.acquire IS an async method, so it returns a coroutine that resolves to a connection context manager?
-    # Let's double check asyncpg docs.
-    # `async with pool.acquire() as connection:`
-    # If pool.acquire() is async, then `pool.acquire()` returns a coroutine.
-    # `async with` takes an object that has `__aenter__` and `__aexit__`.
-    # If the expression in `async with EXPR` returns a coroutine, Python DOES NOT await it automatically unless you write `async with await EXPR`.
-    # BUT asyncpg Pool.acquire is NOT async def. It returns a `PoolAcquireContext` synchronously.
-    # `class PoolAcquireContext:` has `async def __aenter__`.
-    # So `pool.acquire()` is a synchronous call returning a context manager.
+    mock_context_manager.__aenter__ = AsyncMock(return_value=conn_mock)
+    mock_context_manager.__aexit__ = AsyncMock(return_value=None)
 
     pool_mock.acquire = MagicMock(return_value=mock_context_manager)
+
+    # Pool-level methods
+    pool_mock.fetch = AsyncMock(return_value=[])
+    pool_mock.fetchrow = AsyncMock(return_value=None)
+    pool_mock.fetchval = AsyncMock(return_value=0)
 
     # We store the conn_mock on the pool_mock for easy access in tests to set side effects
     pool_mock._conn_mock = conn_mock
@@ -72,6 +45,12 @@ def mock_pool():
 def mock_rae_service(mock_pool):
     service = MagicMock()
     service.postgres_pool = mock_pool
+
+    # Mock the 'db' property to return an actual provider wrapping our mock pool
+    from rae_core.adapters.postgres_db import PostgresDatabaseProvider
+
+    service.db = PostgresDatabaseProvider(mock_pool)
+
     return service
 
 

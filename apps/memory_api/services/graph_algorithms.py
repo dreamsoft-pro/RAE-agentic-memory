@@ -60,7 +60,8 @@ class GraphEdge:
 class KnowledgeGraph:
     """In-memory knowledge graph representation"""
 
-    def __init__(self):
+    def __init__(self, settings: Optional[Any] = None):
+        self.settings = settings
         self.nodes: Dict[str, GraphNode] = {}
         self.edges: List[GraphEdge] = []
 

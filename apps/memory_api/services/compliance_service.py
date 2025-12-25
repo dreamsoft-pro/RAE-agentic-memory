@@ -308,7 +308,7 @@ class ComplianceService:
         tables_with_rls = []
         tables_without_rls = []
 
-        async with self.rae_service.postgres_pool.acquire() as conn:
+        async with self.rae_service.db.acquire() as conn:
             # Check RLS status for each table
             for table in critical_tables:
                 result = await conn.fetchrow(
@@ -823,7 +823,7 @@ class ComplianceService:
         self, tenant_id: str, project_id: str
     ) -> SourceTrustMetric:
         """Get source trust distribution"""
-        async with self.rae_service.postgres_pool.acquire() as conn:
+        async with self.rae_service.db.acquire() as conn:
             result = await conn.fetchrow(
                 """
                 SELECT
@@ -918,7 +918,7 @@ class ComplianceService:
 
     async def _get_source_trust_verified_percentage(self, tenant_id: str) -> float:
         """Get percentage of sources with verified trust level"""
-        async with self.rae_service.postgres_pool.acquire() as conn:
+        async with self.rae_service.db.acquire() as conn:
             result = await conn.fetchrow(
                 """
                 SELECT
@@ -991,7 +991,7 @@ class ComplianceService:
 
     async def _get_policy_compliance_rate(self, tenant_id: str) -> float:
         """Get policy compliance rate from enforcement results"""
-        async with self.rae_service.postgres_pool.acquire() as conn:
+        async with self.rae_service.db.acquire() as conn:
             result = await conn.fetchrow(
                 """
                 SELECT
@@ -1012,7 +1012,7 @@ class ComplianceService:
 
     async def _get_circuit_breaker_health(self, tenant_id: str) -> float:
         """Calculate circuit breaker health score"""
-        async with self.rae_service.postgres_pool.acquire() as conn:
+        async with self.rae_service.db.acquire() as conn:
             result = await conn.fetchrow(
                 """
                 SELECT
@@ -1042,7 +1042,7 @@ class ComplianceService:
         self, tenant_id: str, project_id: str
     ) -> float:
         """Calculate context provenance quality score"""
-        async with self.rae_service.postgres_pool.acquire() as conn:
+        async with self.rae_service.db.acquire() as conn:
             result = await conn.fetchrow(
                 """
                 SELECT
@@ -1075,7 +1075,7 @@ class ComplianceService:
         self, tenant_id: str, project_id: str
     ) -> float:
         """Calculate decision audit coverage percentage"""
-        async with self.rae_service.postgres_pool.acquire() as conn:
+        async with self.rae_service.db.acquire() as conn:
             result = await conn.fetchrow(
                 """
                 SELECT COUNT(*) as decision_count
@@ -1101,7 +1101,7 @@ class ComplianceService:
         self, tenant_id: str, project_id: str
     ) -> float:
         """Calculate approval workflow coverage for high-risk operations"""
-        async with self.rae_service.postgres_pool.acquire() as conn:
+        async with self.rae_service.db.acquire() as conn:
             result = await conn.fetchrow(
                 """
                 SELECT
@@ -1126,7 +1126,7 @@ class ComplianceService:
         self, tenant_id: str, project_id: str
     ) -> float:
         """Calculate approval rate for high-risk operations"""
-        async with self.rae_service.postgres_pool.acquire() as conn:
+        async with self.rae_service.db.acquire() as conn:
             result = await conn.fetchrow(
                 """
                 SELECT

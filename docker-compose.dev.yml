@@ -117,6 +117,28 @@ services:
     restart: unless-stopped  # Auto-restart after system reboot
 
   # ============================================================================
+  # Local LLM (Ollama) - Optional Profile
+  # ============================================================================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: rae-ollama
+    profiles: ["local-llm"]  # Only start if --profile local-llm is used
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+    restart: unless-stopped
+    labels:
+      - "dev.description=Local LLM (Ollama) - port 11434"
+
+  # ============================================================================
   # Database Services - No changes needed, but expose ports
   # ============================================================================
   postgres:
@@ -157,5 +179,8 @@ services:
     labels:
       - "dev.tool=true"
       - "dev.description=Database UI - http://localhost:8080"
+
+volumes:
+  ollama_data:
 
 # Networks and volumes are inherited from docker compose.yml

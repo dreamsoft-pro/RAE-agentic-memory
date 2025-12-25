@@ -45,7 +45,6 @@ from apps.memory_api.models.graph_enhanced_models import (  # Request/Response m
     TraverseGraphResponse,
     UpdateEdgeWeightRequest,
 )
-from apps.memory_api.repo_dependencies import get_enhanced_graph_repository
 from apps.memory_api.services.rae_core_service import RAECoreService
 
 logger = structlog.get_logger(__name__)
@@ -70,7 +69,7 @@ async def create_node(
     within a tenant/project scope.
     """
     try:
-        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
+        repo = rae_service.enhanced_graph_repo
         node = await repo.create_node(
             tenant_id=request.tenant_id,
             project_id=request.project_id,
@@ -102,7 +101,7 @@ async def get_node_metrics(
     try:
         from uuid import UUID
 
-        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
+        repo = rae_service.enhanced_graph_repo
 
         node_uuid = UUID(node_id)
         metrics = await repo.get_node_metrics(tenant_id, project_id, node_uuid)
@@ -129,7 +128,7 @@ async def find_connected_nodes(
     Returns nodes within max_depth distance with their distance values.
     """
     try:
-        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
+        repo = rae_service.enhanced_graph_repo
         connected = await repo.find_connected_nodes(
             tenant_id=request.tenant_id,
             project_id=request.project_id,
@@ -165,7 +164,7 @@ async def create_edge(
     and bidirectionality.
     """
     try:
-        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
+        repo = rae_service.enhanced_graph_repo
 
         # Optional: Check for cycles before creating edge
         cycle_result = await repo.detect_cycle(
@@ -213,7 +212,7 @@ async def update_edge_weight(
     try:
         from uuid import UUID
 
-        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
+        repo = rae_service.enhanced_graph_repo
 
         edge = await repo.update_edge_weight(
             edge_id=UUID(edge_id),
@@ -238,7 +237,7 @@ async def deactivate_edge(
     try:
         from uuid import UUID
 
-        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
+        repo = rae_service.enhanced_graph_repo
 
         edge = await repo.deactivate_edge(edge_id=UUID(edge_id), reason=request.reason)
 
@@ -259,7 +258,7 @@ async def activate_edge(
     try:
         from uuid import UUID
 
-        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
+        repo = rae_service.enhanced_graph_repo
 
         edge = await repo.activate_edge(edge_id=UUID(edge_id))
 
@@ -280,7 +279,7 @@ async def set_edge_temporal_validity(
     try:
         from uuid import UUID
 
-        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
+        repo = rae_service.enhanced_graph_repo
 
         edge = await repo.set_edge_temporal_validity(
             edge_id=UUID(edge_id),
@@ -319,7 +318,7 @@ async def traverse_graph(
 
         start_time = time.time()
 
-        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
+        repo = rae_service.enhanced_graph_repo
 
         nodes, edges = await repo.traverse_temporal(
             tenant_id=request.tenant_id,
@@ -392,7 +391,7 @@ async def find_shortest_path(
 
         start_time = time.time()
 
-        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
+        repo = rae_service.enhanced_graph_repo
 
         path = await repo.find_shortest_path(
             tenant_id=request.tenant_id,
@@ -447,7 +446,7 @@ async def detect_cycle(
     Uses DFS to check if there's a path from target back to source.
     """
     try:
-        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
+        repo = rae_service.enhanced_graph_repo
 
         result = await repo.detect_cycle(
             tenant_id=request.tenant_id,
@@ -491,7 +490,7 @@ async def create_snapshot(
     versioning, rollback, and historical analysis.
     """
     try:
-        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
+        repo = rae_service.enhanced_graph_repo
 
         snapshot_id = await repo.create_snapshot(
             tenant_id=request.tenant_id,
@@ -533,7 +532,7 @@ async def get_snapshot(
     try:
         from uuid import UUID
 
-        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
+        repo = rae_service.enhanced_graph_repo
 
         snapshot = await repo.get_snapshot(UUID(snapshot_id))
 
@@ -558,7 +557,7 @@ async def list_snapshots(
 ):
     """List recent snapshots"""
     try:
-        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
+        repo = rae_service.enhanced_graph_repo
 
         snapshots = await repo.list_snapshots(
             tenant_id=tenant_id, project_id=project_id, limit=limit
@@ -585,7 +584,7 @@ async def restore_snapshot(
     try:
         from uuid import UUID
 
-        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
+        repo = rae_service.enhanced_graph_repo
 
         nodes_restored, edges_restored = await repo.restore_snapshot(
             snapshot_id=UUID(snapshot_id), clear_existing=request.clear_existing
@@ -625,7 +624,7 @@ async def get_graph_statistics(
     Returns node count, edge count, connectivity metrics, and snapshot info.
     """
     try:
-        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
+        repo = rae_service.enhanced_graph_repo
 
         statistics = await repo.get_graph_statistics(
             tenant_id=request.tenant_id, project_id=request.project_id
@@ -662,7 +661,7 @@ async def batch_create_nodes(
     More efficient than individual create calls for bulk operations.
     """
     try:
-        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
+        repo = rae_service.enhanced_graph_repo
 
         successful, errors = await repo.batch_create_nodes(
             tenant_id=request.tenant_id,
@@ -697,7 +696,7 @@ async def batch_create_edges(
     More efficient than individual create calls for bulk operations.
     """
     try:
-        repo = get_enhanced_graph_repository(rae_service.postgres_pool)
+        repo = rae_service.enhanced_graph_repo
 
         successful = 0
         failed = 0

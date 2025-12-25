@@ -16,6 +16,7 @@ class ConsistencyService:
 
     def __init__(self, rae_service: RAECoreService):
         self.rae_service = rae_service
+        self.db = rae_service.db
 
     async def reconcile_vectors(
         self, tenant_id: str, collection_name: str = "memories", batch_size: int = 100
@@ -31,6 +32,11 @@ class ConsistencyService:
         Returns:
             Count of orphaned vectors removed.
         """
+        client = self.rae_service.qdrant_client
+        if client is None:
+            logger.error("reconciliation_skipped_no_qdrant")
+            return 0
+
         logger.info(
             "reconciliation_start", tenant_id=tenant_id, collection=collection_name
         )
@@ -50,7 +56,7 @@ class ConsistencyService:
                 )
 
                 # Fetch a batch of points from Qdrant
-                points, next_offset = await self.rae_service.qdrant_client.scroll(
+                points, next_offset = await client.scroll(
                     collection_name=collection_name,
                     scroll_filter=scroll_filter,
                     limit=batch_size,
@@ -78,7 +84,7 @@ class ConsistencyService:
                     )
 
                     # Delete orphans from Qdrant
-                    await self.rae_service.qdrant_client.delete(
+                    await client.delete(
                         collection_name=collection_name,
                         points_selector=models.PointIdsList(
                             points=[str(oid) for oid in orphans]
@@ -117,7 +123,7 @@ class ConsistencyService:
             WHERE tenant_id = $1 AND id = ANY($2::uuid[])
         """
 
-        async with self.rae_service.postgres_pool.acquire() as conn:
+        async with self.db.acquire() as conn:
             rows = await conn.fetch(query, tenant_id, uuid_ids)
 
         return {r["id"] for r in rows}

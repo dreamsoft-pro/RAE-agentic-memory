@@ -370,48 +370,6 @@ class ImportanceScoringService:
     ) -> int:
         """
         Apply time-based decay to all memories with temporal considerations.
-
-        Called periodically (e.g., daily) to reduce importance of memories
-        that haven't been accessed recently. Implements enterprise-grade
-        temporal decay with configurable parameters.
-
-        Decay Strategy:
-        - Base decay: All memories decay at the specified rate
-        - Accelerated decay: Memories not accessed recently decay faster
-        - Protected memories: Recently accessed memories decay slower
-
-        Formula:
-            if consider_access_stats:
-                days_since_access = (now - last_accessed_at).days
-                if days_since_access > 30:
-                    # Accelerated decay for stale memories
-                    effective_rate = decay_rate * (1 + days_since_access / 30)
-                elif days_since_access < 7:
-                    # Protected decay for recent memories
-                    effective_rate = decay_rate * 0.5
-                else:
-                    effective_rate = decay_rate
-            else:
-                effective_rate = decay_rate
-
-            new_importance = old_importance * (1 - effective_rate)
-            new_importance = max(0.01, new_importance)  # Floor at 0.01
-
-        Args:
-            tenant_id: Tenant UUID for isolation
-            decay_rate: Base decay rate per day (default: 0.01 = 1% per day)
-            consider_access_stats: Whether to use last_accessed_at for decay calculation
-
-        Returns:
-            Number of memories updated
-
-        Example:
-            # Daily cron job
-            await scoring_service.decay_importance(
-                tenant_id=tenant_uuid,
-                decay_rate=0.01,  # 1% per day
-                consider_access_stats=True
-            )
         """
         logger.info(
             "applying_importance_decay",
@@ -420,55 +378,20 @@ class ImportanceScoringService:
             consider_access_stats=consider_access_stats,
         )
 
-        if not self.rae_service or not self.rae_service.postgres_pool:
+        if not self.rae_service:
             logger.warning(
                 "decay_importance_skipped",
                 tenant_id=str(tenant_id),
-                reason="no_rae_service_pool",
+                reason="no_rae_service",
             )
             return 0
 
         try:
-            now = datetime.now(timezone.utc)
-
-            # SQL query implementing decay with temporal considerations
-            query = """
-                UPDATE memories SET
-                    importance = GREATEST(
-                        0.01,  -- Floor at 0.01
-                        CASE
-                            -- Accelerated decay for stale memories (not accessed > 30 days)
-                            WHEN EXTRACT(EPOCH FROM ($1 - COALESCE(last_accessed_at, created_at))) / 86400 > 30
-                            THEN importance * (
-                                1 - ($2 * (1 + (EXTRACT(EPOCH FROM ($1 - COALESCE(last_accessed_at, created_at))) / 86400) / 30))
-                            )
-                            -- Protected decay for recent memories (accessed < 7 days ago)
-                            WHEN EXTRACT(EPOCH FROM ($1 - COALESCE(last_accessed_at, created_at))) / 86400 < 7
-                            THEN importance * (1 - ($2 * 0.5))
-                            -- Standard decay for everything else
-                            ELSE importance * (1 - $2)
-                        END
-                    )
-                WHERE tenant_id = $3
-                  AND importance > 0.01
-                  AND ($4 = TRUE OR $4 = FALSE)  -- consider_access_stats parameter
-            """
-
-            result = await self.rae_service.postgres_pool.execute(
-                query,
-                now.replace(tzinfo=None),  # standard for some DB drivers
-                decay_rate,
-                str(tenant_id),
-                consider_access_stats,
+            updated_count = await self.rae_service.decay_importance(
+                tenant_id=str(tenant_id),
+                decay_rate=decay_rate,
+                consider_access_stats=consider_access_stats,
             )
-
-            # Extract number of updated rows from result string
-            # Result format: "UPDATE N" where N is the count
-            updated_count = 0
-            if result and isinstance(result, str):
-                parts = result.split()
-                if len(parts) == 2 and parts[0] == "UPDATE":
-                    updated_count = int(parts[1])
 
             logger.info(
                 "importance_decay_complete",

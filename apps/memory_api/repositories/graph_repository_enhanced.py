@@ -17,6 +17,8 @@ from uuid import UUID
 
 import asyncpg
 import structlog
+from rae_core.adapters.postgres_db import PostgresDatabaseProvider
+from rae_core.interfaces.database import IDatabaseProvider
 
 from apps.memory_api.models.graph_enhanced_models import (
     CycleDetectionResult,
@@ -50,14 +52,19 @@ class EnhancedGraphRepository:
     - Batch operations for performance
     """
 
-    def __init__(self, pool: asyncpg.Pool):
+    def __init__(self, pool: asyncpg.Pool | IDatabaseProvider):
         """
         Initialize enhanced graph repository.
 
         Args:
-            pool: AsyncPG connection pool
+            pool: AsyncPG connection pool or IDatabaseProvider
         """
-        self.pool = pool
+        self.db: IDatabaseProvider
+        if isinstance(pool, (asyncpg.Pool, asyncpg.Connection)):
+            self.db = PostgresDatabaseProvider(pool)
+        else:
+            self.db = pool
+        # Maintain backward compatibility for properties if needed, but methods should use self.db
 
     # ========================================================================
     # Node Operations
@@ -89,7 +96,7 @@ class EnhancedGraphRepository:
         """
         properties = properties or {}
 
-        record = await self.pool.fetchrow(
+        record = await self.db.fetchrow(
             """
             INSERT INTO knowledge_graph_nodes (
                 tenant_id, project_id, node_id, label, properties
@@ -111,7 +118,7 @@ class EnhancedGraphRepository:
         self, tenant_id: str, project_id: str, node_id: UUID
     ) -> Optional[EnhancedGraphNode]:
         """Get node by UUID"""
-        record = await self.pool.fetchrow(
+        record = await self.db.fetchrow(
             """
             SELECT * FROM knowledge_graph_nodes
             WHERE tenant_id = $1 AND project_id = $2 AND id = $3
@@ -130,7 +137,7 @@ class EnhancedGraphRepository:
         self, tenant_id: str, project_id: str, node_id: str
     ) -> Optional[EnhancedGraphNode]:
         """Get node by string node_id"""
-        record = await self.pool.fetchrow(
+        record = await self.db.fetchrow(
             """
             SELECT * FROM knowledge_graph_nodes
             WHERE tenant_id = $1 AND project_id = $2 AND node_id = $3
@@ -159,7 +166,7 @@ class EnhancedGraphRepository:
         Returns:
             NodeDegreeMetrics with in/out/total degree
         """
-        record = await self.pool.fetchrow(
+        record = await self.db.fetchrow(
             "SELECT * FROM calculate_node_degree($1, $2, $3)",
             tenant_id,
             project_id,
@@ -167,7 +174,7 @@ class EnhancedGraphRepository:
         )
 
         # Calculate weighted degrees
-        weighted_record = await self.pool.fetchrow(
+        weighted_record = await self.db.fetchrow(
             """
             SELECT
                 COALESCE(SUM(edge_weight) FILTER (WHERE target_node_id = $3), 0) as weighted_in,
@@ -180,6 +187,9 @@ class EnhancedGraphRepository:
             project_id,
             node_id,
         )
+
+        if not record or not weighted_record:
+            raise RuntimeError(f"Failed to retrieve metrics for node {node_id}")
 
         return NodeDegreeMetrics(
             node_id=node_id,
@@ -205,7 +215,7 @@ class EnhancedGraphRepository:
         Returns:
             List of (node_id, distance) tuples
         """
-        records = await self.pool.fetch(
+        records = await self.db.fetch(
             "SELECT * FROM find_connected_nodes($1, $2, $3, $4)",
             tenant_id,
             project_id,
@@ -261,7 +271,7 @@ class EnhancedGraphRepository:
         metadata = metadata or {}
         valid_from = valid_from or datetime.now(timezone.utc)
 
-        record = await self.pool.fetchrow(
+        record = await self.db.fetchrow(
             """
             INSERT INTO knowledge_graph_edges (
                 tenant_id, project_id,
@@ -301,7 +311,7 @@ class EnhancedGraphRepository:
     ) -> EnhancedGraphEdge:
         """Update edge weight and confidence"""
         if new_confidence is not None:
-            record = await self.pool.fetchrow(
+            record = await self.db.fetchrow(
                 """
                 UPDATE knowledge_graph_edges
                 SET edge_weight = $2, confidence = $3
@@ -313,7 +323,7 @@ class EnhancedGraphRepository:
                 new_confidence,
             )
         else:
-            record = await self.pool.fetchrow(
+            record = await self.db.fetchrow(
                 """
                 UPDATE knowledge_graph_edges
                 SET edge_weight = $2
@@ -334,7 +344,7 @@ class EnhancedGraphRepository:
         """Soft delete edge by setting is_active to False"""
         metadata_update = {"deactivation_reason": reason} if reason else {}
 
-        record = await self.pool.fetchrow(
+        record = await self.db.fetchrow(
             """
             UPDATE knowledge_graph_edges
             SET is_active = FALSE, metadata = metadata || $2::jsonb
@@ -351,7 +361,7 @@ class EnhancedGraphRepository:
 
     async def activate_edge(self, edge_id: UUID) -> EnhancedGraphEdge:
         """Reactivate a deactivated edge"""
-        record = await self.pool.fetchrow(
+        record = await self.db.fetchrow(
             """
             UPDATE knowledge_graph_edges
             SET is_active = TRUE
@@ -369,7 +379,7 @@ class EnhancedGraphRepository:
         self, edge_id: UUID, valid_from: datetime, valid_to: Optional[datetime] = None
     ) -> EnhancedGraphEdge:
         """Set temporal validity window for edge"""
-        record = await self.pool.fetchrow(
+        record = await self.db.fetchrow(
             """
             UPDATE knowledge_graph_edges
             SET valid_from = $2, valid_to = $3
@@ -410,7 +420,7 @@ class EnhancedGraphRepository:
         Returns:
             CycleDetectionResult with cycle information
         """
-        record = await self.pool.fetchrow(
+        record = await self.db.fetchrow(
             "SELECT * FROM detect_graph_cycle_dfs($1, $2, $3, $4, $5)",
             tenant_id,
             project_id,
@@ -418,6 +428,15 @@ class EnhancedGraphRepository:
             target_node_id,
             max_depth,
         )
+
+        if not record:
+            return CycleDetectionResult(
+                has_cycle=False,
+                cycle_path=[],
+                cycle_length=0,
+                source_node_id=source_node_id,
+                target_node_id=target_node_id,
+            )
 
         result = CycleDetectionResult(
             has_cycle=record["has_cycle"],
@@ -471,7 +490,7 @@ class EnhancedGraphRepository:
         at_timestamp = at_timestamp or datetime.now(timezone.utc)
 
         # Call temporal traversal function
-        records = await self.pool.fetch(
+        records = await self.db.fetch(
             "SELECT * FROM traverse_graph_temporal($1, $2, $3, $4, $5, $6, $7, $8)",
             tenant_id,
             project_id,
@@ -489,7 +508,7 @@ class EnhancedGraphRepository:
         # Fetch full node data
         nodes = []
         if node_ids:
-            node_records = await self.pool.fetch(
+            node_records = await self.db.fetch(
                 """
                 SELECT * FROM knowledge_graph_nodes
                 WHERE tenant_id = $1 AND project_id = $2 AND id = ANY($3)
@@ -503,7 +522,7 @@ class EnhancedGraphRepository:
         # Fetch edges between discovered nodes
         edges = []
         if len(node_ids) > 1:
-            edge_records = await self.pool.fetch(
+            edge_records = await self.db.fetch(
                 """
                 SELECT * FROM knowledge_graph_edges
                 WHERE tenant_id = $1 AND project_id = $2
@@ -562,7 +581,7 @@ class EnhancedGraphRepository:
         """
         at_timestamp = at_timestamp or datetime.now(timezone.utc)
 
-        record = await self.pool.fetchrow(
+        record = await self.db.fetchrow(
             "SELECT * FROM find_shortest_path_weighted($1, $2, $3, $4, $5, $6)",
             tenant_id,
             project_id,
@@ -615,7 +634,7 @@ class EnhancedGraphRepository:
         Returns:
             Snapshot UUID
         """
-        snapshot_id = await self.pool.fetchval(
+        snapshot_id = await self.db.fetchval(
             "SELECT create_graph_snapshot($1, $2, $3, $4, $5)",
             tenant_id,
             project_id,
@@ -632,7 +651,7 @@ class EnhancedGraphRepository:
 
     async def get_snapshot(self, snapshot_id: UUID) -> Optional[GraphSnapshot]:
         """Get snapshot by ID"""
-        record = await self.pool.fetchrow(
+        record = await self.db.fetchrow(
             "SELECT * FROM knowledge_graph_snapshots WHERE id = $1", snapshot_id
         )
 
@@ -645,7 +664,7 @@ class EnhancedGraphRepository:
         self, tenant_id: str, project_id: str, limit: int = 10
     ) -> List[GraphSnapshot]:
         """List recent snapshots"""
-        records = await self.pool.fetch(
+        records = await self.db.fetch(
             """
             SELECT * FROM knowledge_graph_snapshots
             WHERE tenant_id = $1 AND project_id = $2
@@ -672,9 +691,12 @@ class EnhancedGraphRepository:
         Returns:
             Tuple of (nodes_restored, edges_restored)
         """
-        record = await self.pool.fetchrow(
+        record = await self.db.fetchrow(
             "SELECT * FROM restore_graph_snapshot($1, $2)", snapshot_id, clear_existing
         )
+
+        if not record:
+            return 0, 0
 
         nodes_restored = record["nodes_restored"]
         edges_restored = record["edges_restored"]
@@ -705,7 +727,7 @@ class EnhancedGraphRepository:
         Returns:
             GraphStatistics with comprehensive metrics
         """
-        record = await self.pool.fetchrow(
+        record = await self.db.fetchrow(
             """
             SELECT * FROM knowledge_graph_statistics
             WHERE tenant_id = $1 AND project_id = $2
@@ -719,7 +741,7 @@ class EnhancedGraphRepository:
             return GraphStatistics(tenant_id=tenant_id, project_id=project_id)
 
         # Get snapshot count
-        snapshot_count = await self.pool.fetchval(
+        snapshot_count = await self.db.fetchval(
             """
             SELECT COUNT(*) FROM knowledge_graph_snapshots
             WHERE tenant_id = $1 AND project_id = $2
@@ -728,7 +750,7 @@ class EnhancedGraphRepository:
             project_id,
         )
 
-        latest_snapshot = await self.pool.fetchval(
+        latest_snapshot = await self.db.fetchval(
             """
             SELECT MAX(created_at) FROM knowledge_graph_snapshots
             WHERE tenant_id = $1 AND project_id = $2
@@ -778,7 +800,7 @@ class EnhancedGraphRepository:
         successful = 0
         errors = []
 
-        async with self.pool.acquire() as conn:
+        async with self.db.acquire() as conn:
             async with conn.transaction():
                 for node_data in nodes:
                     try:

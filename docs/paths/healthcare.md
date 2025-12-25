@@ -19,6 +19,16 @@ RAE's ability to understand context and retrieve relevant information from vast,
 -   **EHR Data Navigation:** Providing a natural language interface to navigate complex EHR systems, allowing clinicians to ask questions like "What were the patient's last three potassium levels?" or "Summarize all cardiology consults for this patient."
 -   **Compliance and Audit:** Quickly retrieving all documentation related to a specific patient or procedure to satisfy audit and compliance requirements.
 
+### Advanced Patient Analytics (GraphRAG)
+RAE's GraphRAG capabilities allow for finding hidden connections in patient data.
+-   **Cohort Identification:** "Find all patients with Type 2 Diabetes who have also been prescribed Beta Blockers and have a history of falls." (Graph traversal finds these complex relationships).
+-   **Interaction Detection:** Automatically maps relationships between medications, conditions, and adverse events across the entire patient population.
+
+### Regulatory Compliance (ISO 42001 & HIPAA)
+RAE includes a dedicated **Compliance API** to support governance.
+-   **Decision Lineage:** Every AI output can be traced back to the specific medical record or guideline it used.
+-   **Human Oversight:** High-risk actions (e.g., flagging a patient for discharge) can be routed through a **Human Approval Workflow** before execution.
+
 **We're seeking pilot partners to document real-world use cases in the healthcare sector. If you are interested in a pilot program, please contact us.**
 
 ---

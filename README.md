@@ -6,8 +6,13 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Tests](https://img.shields.io/badge/tests-892%20passing-brightgreen.svg)]()
-[![Coverage](https://img.shields.io/badge/coverage-69%25-green.svg)]())
+[![Coverage](https://img.shields.io/badge/coverage-73.3%25-green.svg)]()
+[![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/tests-931%20passed-brightgreen.svg)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+
+> **💡 New to RAE? Start Here:** [**What is RAE? Architecture & Philosophy**](docs/CONCEPT.md)  
+> *Learn why RAE is not just a Vector DB, how the "Hive Mind" works, and the "RAE-First" workflow.*
 
 RAE is an open-source reference architecture for **long-term memory and reasoning continuity** in complex systems. It addresses the fundamental problem of **Reasoning Drift**—the gradual loss of alignment between past decisions, their original rationales, and present system behavior.
 
@@ -20,6 +25,17 @@ Most systems can store information. Few can preserve **why decisions were made**
 In long-running systems (scientific, industrial, or agent-based), context is lost as contributors rotate and time passes. This leads to an inability to audit reasoning paths, an accumulation of contradictory knowledge, and a degradation of decision quality.
 
 RAE solves this by introducing a structured memory architecture that preserves decision rationale as a first-class object.
+
+### Performance Impact
+
+| Metric | Vector DB (Raw) | Standard RAG | RAE (Industrial) |
+| :--- | :--- | :--- | :--- |
+| **Role** | Storage | Retrieval | **Reasoning Engine** |
+| **Recall (Hit Rate)** | High (No Filter) | ~70% | **90%** |
+| **Precision** | Low (Noise) | ~65% | **81%** |
+| **Reasoning Drift** | N/A | High | **< 1%** |
+
+*> See full [Benchmark Reports](benchmarking/README.md)*
 
 ---
 
@@ -63,6 +79,17 @@ RAE is built on three core principles:
 
 ---
 
+- **Multi-Tenant & Secure**: Row-level security (RLS) ensures data isolation between projects and users.
+- **Local & Hybrid LLM Support**: Run completely offline with Ollama or in hybrid mode with Gemini/Claude.
+- **Distributed Memory Architecture**: Run RAE as a central memory engine on Linux while connecting agents from Windows, Mac, or Cloud environments.
+- **Forensic Intelligence**: Reconstruct agent knowledge and reasoning paths at any point in time using temporal graph snapshots.
+
+## 🚀 Key Use Cases
+
+- **Cross-Platform Knowledge Bridge**: Connect a Windows-based AI agent (like Cursor or Claude) to a high-performance RAE instance running on a Linux server.
+- **Persistent Project Context**: Ensure your agent remembers architectural decisions across sessions and model switches.
+- **Autonomous Quality Maintenance**: Periodic "Dreaming" cycles that compress and optimize memory for better retrieval.
+
 ## Choose Your Path
 
 - 👨‍💻 **For Developers** – See [Quick Start & API Integration](docs/paths/developer.md)
@@ -92,6 +119,46 @@ You can set up RAE to start automatically on system boot with hot-reload enabled
 ```
 
 For more detailed instructions, see the [Getting Started Guide](docs/LOCAL_SETUP.md).
+
+---
+
+## RAE in Action
+
+Don't just store text. Store the *context* and *reasoning*.
+
+```python
+from rae_sdk import RAEClient
+
+client = RAEClient()
+
+# 1. Store memory with semantic importance
+await client.store(
+    content="User prefers local processing for PII data.",
+    layer="semantic",  # Logic layer
+    importance=0.9,
+    tags=["privacy", "gdpr"]
+)
+
+# 2. Agent retrieves with reasoning trace
+response = await client.agent.execute(
+    "Should I upload the payroll file to the public cloud?",
+    project="finance-bot"
+)
+
+# Result: "No. Strict Block. Rationale: User prefers local processing for PII data."
+```
+
+---
+
+## API Documentation
+
+Full API reference is available in [API_DOCUMENTATION.md](API_DOCUMENTATION.md).
+
+It includes comprehensive details on:
+- **Memory & Agent APIs** (Store, Query, Execute)
+- **GraphRAG & Hybrid Search**
+- **Governance & Monitoring**
+- **Interactive Swagger UI** (available locally at `http://localhost:8000/docs`)
 
 ---
 
