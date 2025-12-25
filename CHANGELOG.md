@@ -1,5 +1,15 @@
 ## Recent Changes (Auto-generated)
 
+*Last updated: 2025-12-25 20:50 • Branch: develop • Commit: c65f253*
+
+### 📚 Documentation
+
+- add Zenodo DOI badge to README ([`9e8eaf3`](../../commit/9e8eaf3))
+
+---
+
+## Recent Changes (Auto-generated)
+
 *Last updated: 2025-12-25 20:43 • Branch: develop • Commit: 9e8eaf3*
 
 ### 📚 Documentation
