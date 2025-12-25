@@ -1,0 +1,10 @@
+{
+  "title": "RAE – Reflective Agentic-Memory Engine",
+  "upload_type": "software",
+  "description": "Provider-agnostic, privacy-first external memory engine for LLM agents.",
+  "creators": [
+    { "name": "Leśniowski, Grzegorz" }
+  ],
+  "license": "Apache-2.0",
+  "keywords": ["LLM", "agents", "memory", "RAG", "MCP", "privacy-first", "local-first"]
+}
