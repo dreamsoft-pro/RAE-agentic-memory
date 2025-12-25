@@ -234,7 +234,7 @@ class SQLiteGraphStore(IGraphStore):
     ) -> dict[str, Any]:
         """Extract a subgraph."""
         await self.initialize()
-        result = {"nodes": [], "edges": []}
+        result: dict[str, Any] = {"nodes": [], "edges": []}
 
         async with aiosqlite.connect(self.db_path) as db:
             db.row_factory = aiosqlite.Row
