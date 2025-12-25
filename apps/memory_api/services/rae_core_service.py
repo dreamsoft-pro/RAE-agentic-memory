@@ -34,12 +34,12 @@ class LocalEmbeddingProvider(IEmbeddingProvider):
 
     async def embed_text(self, text: str) -> List[float]:
         """Generate embedding for text."""
-        results = self.service.generate_embeddings([text])
+        results = await self.service.generate_embeddings_async([text])
         return results[0] if results else []
 
     async def embed_batch(self, texts: List[str]) -> List[List[float]]:
         """Generate embeddings for multiple texts."""
-        return self.service.generate_embeddings(texts)
+        return await self.service.generate_embeddings_async(texts)
 
     def get_dimension(self) -> int:
         """Get embedding dimension."""
@@ -56,9 +56,9 @@ class RAECoreService:
 
     def __init__(
         self,
-        postgres_pool: asyncpg.Pool,
-        qdrant_client: AsyncQdrantClient,
-        redis_client: redis.Redis,
+        postgres_pool: Optional[asyncpg.Pool] = None,
+        qdrant_client: Optional[AsyncQdrantClient] = None,
+        redis_client: Optional[redis.Redis] = None,
     ):
         """
         Initialize service with infrastructure clients.
@@ -72,10 +72,27 @@ class RAECoreService:
         self.qdrant_client = qdrant_client
         self.redis_client = redis_client
 
-        # Initialize adapters
-        self.postgres_adapter = PostgresMemoryAdapter(pool=postgres_pool)
-        self.qdrant_adapter = QdrantVectorAdapter(client=cast(Any, qdrant_client))
-        self.redis_adapter = RedisCacheAdapter(redis_client=redis_client)
+        # Initialize adapters with Lite mode support
+        if postgres_pool:
+            self.postgres_adapter = PostgresMemoryAdapter(pool=postgres_pool)
+        else:
+            from rae_core.adapters import InMemoryStorage
+            logger.warning("using_in_memory_storage_fallback")
+            self.postgres_adapter = InMemoryStorage()
+
+        if qdrant_client:
+            self.qdrant_adapter = QdrantVectorAdapter(client=cast(Any, qdrant_client))
+        else:
+            from rae_core.adapters import InMemoryVectorStore
+            logger.warning("using_in_memory_vector_fallback")
+            self.qdrant_adapter = InMemoryVectorStore()
+
+        if redis_client:
+            self.redis_adapter = RedisCacheAdapter(redis_client=redis_client)
+        else:
+            from rae_core.adapters import InMemoryCache
+            logger.warning("using_in_memory_cache_fallback")
+            self.redis_adapter = InMemoryCache()
 
         # Initialize embedding provider
         self.embedding_provider = LocalEmbeddingProvider()

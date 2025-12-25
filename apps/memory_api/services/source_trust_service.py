@@ -91,7 +91,8 @@ class SourceTrustService:
         SourceTrustLevel.UNVERIFIED: 30,  # 1 month for unverified
     }
 
-    def __init__(self):
+    def __init__(self, settings: Optional[Any] = None):
+        self.settings = settings
         self.logger = logging.getLogger(__name__)
 
     def assess_source_trust(

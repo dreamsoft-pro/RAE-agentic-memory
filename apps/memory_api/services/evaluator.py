@@ -275,8 +275,8 @@ class LLMEvaluator:
     Evaluator that uses an LLM to assess execution outcomes.
     """
 
-    def __init__(self):
-        self.llm_provider = get_llm_provider()
+    def __init__(self, llm_provider: Optional[Any] = None):
+        self.llm_provider = llm_provider or get_llm_provider()
 
     async def evaluate(self, context: ExecutionContext) -> EvaluationResult:
         """

@@ -194,18 +194,18 @@ async def lifespan(app: FastAPI):
         elif settings.RAE_DB_MODE == "ignore":
             logger.warning("memory_validation_skipped", mode=settings.RAE_DB_MODE)
 
-        # Initialize RAE-Core service
-        app.state.rae_core_service = RAECoreService(
-            postgres_pool=app.state.pool,
-            qdrant_client=app.state.qdrant_client,
-            redis_client=app.state.redis_client,
-        )
-        logger.info("RAE-Core service initialized")
-
+        logger.info("memory_validation_success")
         await rebuild_full_cache()
-
     elif settings.RAE_PROFILE == "lite":
         logger.info("lite_mode_active", details="Skipping heavy initialization")
+
+    # Initialize RAE-Core service (will use fallbacks if clients are None)
+    app.state.rae_core_service = RAECoreService(
+        postgres_pool=getattr(app.state, "pool", None),
+        qdrant_client=getattr(app.state, "qdrant_client", None),
+        redis_client=getattr(app.state, "redis_client", None),
+    )
+    logger.info("RAE-Core service initialized", profile=settings.RAE_PROFILE)
 
     yield  # Application is running
 
