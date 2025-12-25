@@ -90,6 +90,14 @@ You have now successfully added a memory to RAE and retrieved it!
 
 ---
 
+## API Reference
+
+For a complete list of all 96+ endpoints, including Memory, GraphRAG, Governance, and more, please refer to the full [API Documentation](../../API_DOCUMENTATION.md).
+
+You can also browse the interactive Swagger UI locally at `http://localhost:8000/docs` when the service is running.
+
+---
+
 ## Deployment Options
 
 RAE offers several deployment profiles tailored to different use cases, from local development with hot-reloading to a full production-ready stack.
@@ -113,29 +121,37 @@ docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 docker-compose -f docker-compose.yml -f docker-compose.dev.yml down
 ```
 
-### 2. RAE Lite (Minimal Deployment)
+### 2. RAE Lite (Minimal Deployment) - Recommended for Starters
 
-This profile is perfect for small teams, demos, or development environments where the full observability and background processing stack is not required. It's a single-server setup that is easy to manage.
+**RAE Lite** is a highly optimized, lightweight profile designed for rapid development and resource-constrained environments (like laptops). It removes all heavy ML dependencies while keeping the core memory and reasoning logic intact.
 
-**Source File:** `docker-compose.lite.yml`
+**Why use Lite?**
+- 🚀 **Fast Startup:** Boots in < 5 seconds.
+- 📉 **Low Resources:** Runs comfortably on 4GB RAM (vs 16GB+ for full stack).
+- 🧩 **External LLMs Only:** Relies entirely on OpenAI/Anthropic/Gemini APIs instead of local models.
 
-**Stack:**
--   **Included:** `rae-api`, `postgres`, `redis`, `qdrant`
--   **Excluded:** `ml-service`, `celery-worker`, `celery-beat`, observability stack, dashboard.
-
-**How it Works:**
-Features are disabled via environment variables in the `rae-api` service:
-```yaml
-environment:
-  - ML_SERVICE_ENABLED=false
-  - RERANKER_ENABLED=false
-  - CELERY_ENABLED=false
-```
+**Architecture Differences:**
+| Feature | Full Stack | RAE Lite |
+| :--- | :--- | :--- |
+| **ML Service** | Enabled (Local Embeddings/Re-ranking) | **Disabled** (APIs only) |
+| **Vector DB** | Qdrant (Full) | Qdrant (Optimized for Low Memory) |
+| **Async Tasks** | Celery Workers + Redis Broker | **Disabled** (Synchronous Execution) |
+| **Observability** | OpenTelemetry + Jaeger | **Disabled** |
 
 **How to Run:**
 ```bash
+# 1. Ensure your .env file has valid API keys (OPENAI_API_KEY, etc.)
+# 2. Start the Lite stack
 docker-compose -f docker-compose.lite.yml up -d
 ```
+
+**Under the Hood:**
+It sets specific environment flags in `rae-api`:
+- `ML_SERVICE_ENABLED=false`: Bypasses the internal ML microservice.
+- `RERANKER_ENABLED=false`: Skips the heavy Cross-Encoder re-ranking step.
+- `CELERY_ENABLED=false`: Runs background tasks inline for simplicity.
+
+**Use Case:** Ideal for building initial prototypes, testing logic, or running CI/CD pipelines.
 
 ### 3. RAE Server (Standard Production)
 
@@ -162,6 +178,44 @@ docker-compose -f docker-compose.yml up -d
 For enterprise-grade, high-availability deployments, RAE can be deployed in a multi-node cluster using Proxmox. This setup involves load balancers, replicated services, and failover mechanisms.
 
 **(TODO: Extract detailed steps from `docs/PRODUCTION_PROXMOX_HA.md` and add them here.)**
+
+### 5. Advanced Deployment Scenarios
+For specific infrastructure needs, consult our detailed guides:
+- **[Single Node Production](../../docs/PRODUCTION_SINGLE_NODE.md)**: Standard reference architecture for bare-metal or VM deployment.
+- **[Proxmox High Availability](../../docs/PRODUCTION_PROXMOX_HA.md)**: Clustering guide for zero-downtime environments.
+- **[CI/CD Workflow](../../docs/CI_WORKFLOW.md)**: Deep dive into the continuous integration pipeline.
+
+---
+
+## Testing Strategy
+
+Building reliable agents requires a robust testing culture. RAE provides specialized tools for testing non-deterministic behavior.
+
+-   **[Agent Testing Guide](../../docs/AGENT_TESTING_GUIDE.md)**: How to write unit, integration, and e2e tests for agents.
+-   **[Test Policy](../../docs/AGENTS_TEST_POLICY.md)**: Standards for test coverage and "Zero Flake" policy.
+
+### Real-World Case Studies
+See RAE in action optimizing its own code:
+- **[Autonomous Self-Optimization](../../docs/use-cases/SELF_OPTIMIZATION_LOOP.md)**: How RAE diagnosed a 20x latency regression and fixed it by tuning its Math Controller.
+- **[Strategic Reasoning Pivot](../../docs/use-cases/STRATEGIC_REASONING_PIVOT.md)**: How RAE saved resources by challenging a user request and proposing a better architectural solution.
+- **[Distributed Code Audit](../../docs/use-cases/DISTRIBUTED_CODE_AUDIT.md)**: Using Node1 (GPU) to audit code quality.
+
+## Troubleshooting
+
+Encountering issues? Check the **[Troubleshooting Guide](../../TROUBLESHOOTING.md)** for solutions to common problems like:
+-   Database migration locks (`alembic` issues)
+-   Vector store connection failures
+-   Memory leaks in long-running workers
+
+**(TODO: Extract detailed steps from `docs/PRODUCTION_PROXMOX_HA.md` and add them here.)**
+
+### 5. Distributed Compute (Control Plane)
+RAE includes a unique feature for scaling: **Distributed Compute Nodes**.
+Unlike typical RAG systems that run everything on one server, RAE can offload heavy cognitive tasks (like embedding generation, graph extraction, or large-scale re-ranking) to dedicated nodes (e.g., "Node1" or "KUBUS").
+
+-   **Control Plane API (`/control`):** The central RAE instance acts as a task dispatcher.
+-   **Compute Nodes:** Worker machines (with GPUs) register via `/control/nodes/register` and poll for tasks.
+-   **Benefit:** Allows the Orchestrator to run on a lightweight laptop while heavy lifting happens on a dedicated rig.
 
 ---
 

@@ -185,15 +185,14 @@ async def test_summarize_session_disabled(mock_pool, mock_settings, mock_rae_ser
 
 @pytest.mark.asyncio
 async def test_summarize_long_sessions(mock_pool, mock_settings, mock_rae_service):
-    mock_rae_service.postgres_pool = mock_pool
     worker = SummarizationWorker(rae_service=mock_rae_service)
 
     # Mock summarize_session
     cast(Any, worker).summarize_session = AsyncMock(return_value={"id": "summary"})
 
-    # Mock DB query for long sessions
+    # Mock return of long sessions
     session_id = str(uuid4())
-    mock_pool.acquire.return_value.__aenter__.return_value.fetch.return_value = [
+    mock_rae_service.list_long_sessions.return_value = [
         {"session_id": session_id, "event_count": 150}
     ]
 
@@ -211,7 +210,6 @@ async def test_summarize_long_sessions(mock_pool, mock_settings, mock_rae_servic
 
 @pytest.mark.asyncio
 async def test_dreaming_cycle_success(mock_pool, mock_settings, mock_rae_service):
-    mock_rae_service.postgres_pool = mock_pool
     mock_reflection_engine = AsyncMock()
     mock_reflection_engine.generate_reflection.return_value = MagicMock()
     mock_reflection_engine.store_reflection.return_value = {"reflection_id": "ref1"}
@@ -220,7 +218,7 @@ async def test_dreaming_cycle_success(mock_pool, mock_settings, mock_rae_service
         rae_service=mock_rae_service, reflection_engine=mock_reflection_engine
     )
 
-    # Mock DB query for high importance memories
+    # Mock return of high importance memories
     records = [
         {
             "id": uuid4(),
@@ -231,7 +229,7 @@ async def test_dreaming_cycle_success(mock_pool, mock_settings, mock_rae_service
         }
         for _ in range(5)
     ]
-    mock_pool.acquire.return_value.__aenter__.return_value.fetch.return_value = records
+    mock_rae_service.list_memories.return_value = records
 
     results = await worker.run_dreaming_cycle(tenant_id="tenant1", project_id="proj1")
 

@@ -44,6 +44,48 @@ These metrics translate directly to business value:
 
 ---
 
+## Enterprise-Grade Features (Ready Now)
+
+RAE is not just a research project; it includes specific features designed for enterprise governance and stability.
+
+### 1. Cost Governance & Budgeting
+RAE includes a built-in **Governance API** to track and control LLM spend.
+-   **Granular Tracking:** Track token usage and costs per Tenant, Project, or even specific User.
+-   **Budget Limits:** Set monthly hard limits (e.g., "$500/month for Marketing Project").
+-   **Alerting:** Receive webhooks when budget consumption hits 80% or 90%.
+
+### 2. Strict Multi-Tenancy
+Data isolation is enforced at the database level.
+-   **Logical Isolation:** Every query *must* carry a `tenant_id`.
+-   **RLS-Ready:** Designed to work with Postgres Row-Level Security policies.
+-   **Zero Leakage:** Memories from one tenant (e.g., "HR Dept") are mathematically invisible to another (e.g., "IT Dept").
+
+### 3. Circuit Breakers & Resilience
+To prevent cascading failures in production:
+-   **Automatic Cut-off:** If the Vector DB or LLM provider fails, RAE trips a "Circuit Breaker" to fail fast and protect the system.
+-   **Graceful Degradation:** The system can fall back to keyword search if semantic search is unavailable.
+
+### 4. Advanced GraphRAG (Knowledge Graphs)
+RAE goes beyond vector search by building a **Knowledge Graph** of your data.
+-   **Hidden Connections:** Automatically detects relationships between entities (e.g., "Project X depends on Module Y").
+-   **Deep Traversal:** Can "walk" the graph to find answers that require hopping through multiple documents.
+-   **Snapshotting:** Create point-in-time snapshots of the graph for historical analysis or rollback.
+
+### 5. Event-Driven Automation
+Automate workflows based on system events using the **Event Triggers API**.
+-   **Real-time Alerts:** Trigger a webhook when a specific memory type is created (e.g., "Critical Incident").
+-   **Auto-Reflection:** Automatically summarize memories when a project hits 100 new items.
+-   **Drift Detection:** Alert engineers if the quality of search results drops below a threshold.
+
+### 6. Strategic Intelligence (ROI Case Study)
+RAE helps avoid waste by reasoning about tasks before executing them.
+-   **[Case Study: Strategic Reasoning & Optimization](../../docs/use-cases/STRATEGIC_REASONING_PIVOT.md)**
+    *   **Scenario:** Agent refused to execute a wasteful translation task.
+    *   **Outcome:** Saved ~70% of project costs by consolidating documentation instead of blindly processing it.
+    *   **Value:** RAE acts as a proactive partner, not just a passive tool.
+
+---
+
 ## Deployment Considerations
 
 For industrial applications, we recommend the **RAE Server** or **Proxmox HA** deployment options.

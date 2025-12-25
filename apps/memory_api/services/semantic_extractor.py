@@ -352,7 +352,7 @@ class SemanticExtractor:
         node_id = normalized_topic.replace(" ", "_").lower()
 
         # Check if node exists
-        existing = await self.rae_service.postgres_pool.fetchrow(
+        existing = await self.rae_service.db.fetchrow(
             """
             SELECT id, reinforcement_count, source_memory_ids
             FROM semantic_nodes
@@ -369,7 +369,7 @@ class SemanticExtractor:
                 set(existing["source_memory_ids"] + source_memory_ids)
             )
 
-            await self.rae_service.postgres_pool.execute(
+            await self.rae_service.db.execute(
                 """
                 SELECT reinforce_semantic_node($1)
                 """,
@@ -377,7 +377,7 @@ class SemanticExtractor:
             )
 
             # Update source memory IDs
-            await self.rae_service.postgres_pool.execute(
+            await self.rae_service.db.execute(
                 """
                 UPDATE semantic_nodes
                 SET source_memory_ids = $1
@@ -395,7 +395,7 @@ class SemanticExtractor:
             # Generate embedding
             embedding = await self._generate_embedding(normalized_topic)
 
-            record = await self.rae_service.postgres_pool.fetchrow(
+            record = await self.rae_service.db.fetchrow(
                 """
                 INSERT INTO semantic_nodes (
                     tenant_id, project_id, node_id, label, node_type,
@@ -419,6 +419,8 @@ class SemanticExtractor:
             )
 
             logger.info("semantic_node_created", node_id=node_id)
+            if not record:
+                return None
             return cast(UUID, record["id"])
 
     async def _create_semantic_relationship(
@@ -441,14 +443,14 @@ class SemanticExtractor:
             return False
 
         # Get node UUIDs
-        source_uuid = await self.rae_service.postgres_pool.fetchval(
+        source_uuid = await self.rae_service.db.fetchval(
             "SELECT id FROM semantic_nodes WHERE tenant_id = $1 AND project_id = $2 AND node_id = $3",
             tenant_id,
             project_id,
             source_node_id,
         )
 
-        target_uuid = await self.rae_service.postgres_pool.fetchval(
+        target_uuid = await self.rae_service.db.fetchval(
             "SELECT id FROM semantic_nodes WHERE tenant_id = $1 AND project_id = $2 AND node_id = $3",
             tenant_id,
             project_id,
@@ -465,7 +467,7 @@ class SemanticExtractor:
 
         # Insert relationship (ignore if exists)
         try:
-            await self.rae_service.postgres_pool.execute(
+            await self.rae_service.db.execute(
                 """
                 INSERT INTO semantic_relationships (
                     tenant_id, project_id,

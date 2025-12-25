@@ -1,6 +1,6 @@
 """PostgreSQL implementation of IDatabaseProvider."""
 
-from typing import Any
+from typing import Any, cast
 
 import asyncpg
 
@@ -25,7 +25,10 @@ class PostgresDatabaseProvider(IDatabaseProvider):
         return await self.pool.fetchval(query, *args)
 
     async def execute(self, query: str, *args: Any) -> str:
-        return await self.pool.execute(query, *args)
+        return cast(str, await self.pool.execute(query, *args))
 
-    async def acquire(self) -> Any:
+    async def executemany(self, query: str, args: list[Any]) -> str:
+        return cast(str, await self.pool.executemany(query, args))
+
+    def acquire(self) -> Any:
         return self.pool.acquire()

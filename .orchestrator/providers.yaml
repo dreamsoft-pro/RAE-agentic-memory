@@ -12,44 +12,40 @@ providers:
       api_key: ${ANTHROPIC_API_KEY}
 
   # Gemini (Google) - Uses default model from ~/.gemini/settings.json
-  # Note: -m flag causes 404 errors, so we use whatever model is default
+  # Note: -m flag causes 404 errors, so we rely on default settings
   gemini:
-    enabled: true  # Enabled - uses default Gemini model
-    default_model: gemini-default
+    enabled: true
+    default_model: gemini-2.0-flash-exp
     settings:
-      cli_path: gemini
-      rate_limit_delay: true
-      min_delay: 1.0
-      max_delay: 10.0
+      api_key: ${GEMINI_API_KEY}
 
-  # Ollama - Local models (free, but requires Ollama running)
+  # Ollama (Local) - Cost-free, privacy-focused, offline capable
+  # Ideal for: Code reviews, simple reasoning, drafting
   ollama:
-    enabled: false  # Disabled by default (requires local setup)
-    default_model: llama3:70b
+    enabled: true
+    default_model: deepseek-coder:1.3b
     settings:
-      # Ollama API endpoint
-      endpoint: http://localhost:11434
+      api_url: ${OLLAMA_API_URL:-http://localhost:11434}
 
-# Routing Configuration
 routing:
-  # Prefer local models when available (cost-saving)
-  prefer_local: false
+  # Strategy: 'cost', 'performance', 'manual'
+  strategy: manual
+  
+  # Default provider for tasks if not specified
+  default_provider: claude
 
-  # Maximum cost per task (USD)
-  max_cost_per_task: 1.0
+  # Task-specific routing overrides
+  overrides:
+    code_review: 
+      provider: ollama
+      model: deepseek-coder:1.3b
+    complex_reasoning:
+      provider: claude
+      model: claude-sonnet-4-5-20250929
+    creative_writing:
+      provider: gemini
+      model: gemini-2.0-flash-exp
 
-  # Fallback provider if preferred is unavailable
-  fallback_provider: claude
-
-# Model Selection Strategy
-# The orchestrator will:
-# 1. Choose models based on task risk, complexity, and area
-# 2. Prefer cheaper models when quality is sufficient
-# 3. Use cross-review (different models review each other's work)
-# 4. Respect cost constraints while maintaining quality
-
-# Cost Optimization Tips:
-# - Use gemini-2.0-flash for low-risk tasks (docs, simple code)
-# - Use gemini-2.0-pro for medium-risk tasks (tests, APIs)
-# - Use claude-sonnet-4-5 for high-risk tasks (core logic, algorithms)
-# - Enable Ollama for free local inference (requires setup)
+usage_limits:
+  daily_cost_limit_usd: 5.00
+  max_tokens_per_request: 8192

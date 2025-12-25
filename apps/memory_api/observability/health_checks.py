@@ -14,7 +14,14 @@ async def check_postgres(
     pool: AsyncpgPool = Depends(deps.get_db_pool),
 ):
     """Check PostgreSQL connection."""
+    from apps.memory_api.config import settings
+
+    if settings.RAE_PROFILE == "lite" and pool is None:
+        return {"status": "UP (In-Memory)"}
+
     try:
+        if pool is None:
+            raise ValueError("Postgres pool is not initialized")
         await pool.fetchval("SELECT 1")
         return {"status": "UP"}
     except Exception as e:
@@ -29,7 +36,14 @@ async def check_redis(
     redis_client: AsyncRedis = Depends(deps.get_redis_client),
 ):  # Used deps.get_redis_client
     """Check Redis connection."""
+    from apps.memory_api.config import settings
+
+    if settings.RAE_PROFILE == "lite" and redis_client is None:
+        return {"status": "UP (In-Memory)"}
+
     try:
+        if redis_client is None:
+            raise ValueError("Redis client is not initialized")
         await redis_client.ping()
         return {"status": "UP"}
     except Exception as e:
@@ -43,7 +57,14 @@ async def check_qdrant(
     qdrant_client: AsyncQdrantClient = Depends(deps.get_qdrant_client),
 ):  # Used deps.get_qdrant_client
     """Check Qdrant connection."""
+    from apps.memory_api.config import settings
+
+    if settings.RAE_PROFILE == "lite" and qdrant_client is None:
+        return {"status": "UP (In-Memory)"}
+
     try:
+        if qdrant_client is None:
+            raise ValueError("Qdrant client is not initialized")
         # Try to get collections list as a simple health check
         collections = await qdrant_client.get_collections()
         return {"status": "UP", "collections_count": len(collections.collections)}

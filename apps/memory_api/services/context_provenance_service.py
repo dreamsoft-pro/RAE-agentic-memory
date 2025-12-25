@@ -130,8 +130,8 @@ class DecisionRecord(BaseModel):
 class ContextProvenanceService:
     """Service for tracking context provenance and decision lineage"""
 
-    def __init__(self):
-        pass
+    def __init__(self, settings: Optional[Any] = None):
+        self.settings = settings
 
     async def create_decision_context(
         self,

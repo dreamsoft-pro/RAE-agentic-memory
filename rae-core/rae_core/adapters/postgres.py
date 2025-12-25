@@ -315,9 +315,15 @@ class PostgreSQLStorage(IMemoryStorage):
 
         # Apply additional filters
         if filters:
-            if "since" in filters:
+            if "since" in filters or "created_after" in filters:
+                since = filters.get("since") or filters.get("created_after")
                 conditions.append(f"created_at >= ${param_idx}")
-                params.append(filters["since"])
+                params.append(since)
+                param_idx += 1
+
+            if "min_importance" in filters:
+                conditions.append(f"importance >= ${param_idx}")
+                params.append(filters["min_importance"])
                 param_idx += 1
 
             if "memory_ids" in filters:
@@ -771,3 +777,49 @@ class PostgreSQLStorage(IMemoryStorage):
             raise ValueError(f"Memory not found: {memory_id}")
 
         return float(new_importance)
+
+    async def decay_importance(
+        self,
+        tenant_id: str,
+        decay_rate: float,
+        consider_access_stats: bool = True,
+    ) -> int:
+        """Apply time-based decay to all memories with temporal considerations."""
+        pool = await self._get_pool()
+        now = datetime.now(timezone.utc)
+
+        # SQL query implementing decay with temporal considerations
+        query = """
+            UPDATE memories SET
+                importance = GREATEST(
+                    0.01,  -- Floor at 0.01
+                    CASE
+                        -- Accelerated decay for stale memories (not accessed > 30 days)
+                        WHEN $4 = TRUE AND EXTRACT(EPOCH FROM ($1 - COALESCE(last_accessed_at, created_at))) / 86400 > 30
+                        THEN importance * (
+                            1 - ($2 * (1 + (EXTRACT(EPOCH FROM ($1 - COALESCE(last_accessed_at, created_at))) / 86400) / 30))
+                        )
+                        -- Protected decay for recent memories (accessed < 7 days ago)
+                        WHEN $4 = TRUE AND EXTRACT(EPOCH FROM ($1 - COALESCE(last_accessed_at, created_at))) / 86400 < 7
+                        THEN importance * (1 - ($2 * 0.5))
+                        -- Standard decay for everything else
+                        ELSE importance * (1 - $2)
+                    END
+                )
+            WHERE tenant_id = $3
+              AND importance > 0.01
+        """
+
+        async with pool.acquire() as conn:
+            result = await conn.execute(
+                query,
+                now.replace(tzinfo=None),
+                decay_rate,
+                tenant_id,
+                consider_access_stats,
+            )
+
+        # Parse "UPDATE N"
+        if result and isinstance(result, str) and result.startswith("UPDATE"):
+            return int(result.split()[-1])
+        return 0

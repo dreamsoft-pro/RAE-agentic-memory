@@ -151,11 +151,7 @@ class DecayWorker:
 
     async def _get_all_tenant_ids(self) -> List[str]:
         """Get all unique tenant IDs from memories table"""
-        async with self.rae_service.postgres_pool.acquire() as conn:
-            records = await conn.fetch(
-                "SELECT DISTINCT tenant_id FROM memories WHERE tenant_id IS NOT NULL"
-            )
-            return [str(r["tenant_id"]) for r in records]
+        return await self.rae_service.list_unique_tenants()
 
 
 # ============================================================================
@@ -347,45 +343,29 @@ Provide a concise summary, list key topics, and determine the overall sentiment.
         summaries = []
 
         # Find sessions with many events
-        async with self.rae_service.postgres_pool.acquire() as conn:
-            # Query to find sessions with event count above threshold
-            sql = """
-                SELECT
-                    metadata->>'session_id' as session_id,
-                    COUNT(*) as event_count
-                FROM memories
-                WHERE tenant_id = $1
-                  AND agent_id = $2 -- agent_id maps to project
-                  AND layer = 'episodic'
-                  AND metadata->>'session_id' IS NOT NULL
-                GROUP BY metadata->>'session_id'
-                HAVING COUNT(*) >= $3
-                ORDER BY COUNT(*) DESC
-            """
+        long_sessions = await self.rae_service.list_long_sessions(
+            tenant_id=tenant_id, project=project_id, threshold=event_threshold
+        )
 
-            long_sessions = await conn.fetch(
-                sql, tenant_id, project_id, event_threshold
-            )
-
-            # Summarize each long session
-            for session_row in long_sessions:
-                session_id = UUID(session_row["session_id"])
-                try:
-                    summary = await self.summarize_session(
-                        tenant_id=tenant_id,
-                        project_id=project_id,
-                        session_id=session_id,
-                        min_events=event_threshold,
-                    )
-                    if summary:
-                        summaries.append(summary)
-                except Exception as e:
-                    logger.warning(
-                        "session_summarization_failed",
-                        tenant_id=tenant_id,
-                        session_id=str(session_id),
-                        error=str(e),
-                    )
+        # Summarize each long session
+        for session_row in long_sessions:
+            session_id = UUID(session_row["session_id"])
+            try:
+                summary = await self.summarize_session(
+                    tenant_id=tenant_id,
+                    project_id=project_id,
+                    session_id=session_id,
+                    min_events=event_threshold,
+                )
+                if summary:
+                    summaries.append(summary)
+            except Exception as e:
+                logger.warning(
+                    "session_summarization_failed",
+                    tenant_id=tenant_id,
+                    session_id=str(session_id),
+                    error=str(e),
+                )
 
         logger.info(
             "long_session_summarization_completed",
@@ -461,29 +441,18 @@ class DreamingWorker:
         )
 
         # Get high-importance episodic memories from recent period
-        cutoff_time = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(
-            hours=lookback_hours
-        )
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=lookback_hours)
 
-        async with self.rae_service.postgres_pool.acquire() as conn:
-            records = await conn.fetch(
-                """
-                SELECT id, content, importance, created_at, tags
-                FROM memories
-                WHERE tenant_id = $1
-                  AND agent_id = $2 -- agent_id maps to project
-                  AND layer = 'episodic'
-                  AND importance >= $3
-                  AND created_at >= $4
-                ORDER BY importance DESC, created_at DESC
-                LIMIT $5
-                """,
-                tenant_id,
-                project_id,
-                min_importance,
-                cutoff_time,
-                max_samples,
-            )
+        records = await self.rae_service.list_memories(
+            tenant_id=tenant_id,
+            project=project_id,
+            layer="episodic",
+            filters={
+                "min_importance": min_importance,
+                "created_after": cutoff_time,
+            },
+            limit=max_samples,
+        )
 
         if len(records) < 3:
             logger.info(

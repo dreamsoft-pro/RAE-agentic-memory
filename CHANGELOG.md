@@ -1,6 +1,492 @@
 ## Recent Changes (Auto-generated)
 
-*Last updated: 2025-12-25 07:37 • Branch: main • Commit: 7a3fbda*
+*Last updated: 2025-12-25 14:01 • Branch: develop • Commit: 9d98167*
+
+### ✨ Features
+
+- **test**: fully integrate testing profiles and updated protocol ([`f2090b0`](../../commit/f2090b0))
+- **infra**: integrate local Ollama LLM with hybrid orchestration support ([`ff5cc6c`](../../commit/ff5cc6c))
+- implement RAE-Lite node build system and fix control plane communication ([`d1b5de5`](../../commit/d1b5de5))
+- implement RAE-Lite node build system and fix control plane communication ([`d97175d`](../../commit/d97175d))
+- RAE-Lite MVP Complete. Implemented SQLite Graph, Storage, and NumPy-optimized Vector Store. ([`4bc61d8`](../../commit/4bc61d8))
+- **tests**: enable E2E/OTel/Performance tests and resolve architectural debt ([`4ce986d`](../../commit/4ce986d))
+
+### 🐛 Bug Fixes
+
+- linting errors and integration test database schema ([`db6c101`](../../commit/db6c101))
+- ensure deterministic ordering in graph BFS traversal to fix CI failure ([`60d9a90`](../../commit/60d9a90))
+- linting errors and integration test database schema ([`bd4b263`](../../commit/bd4b263))
+- Correct concatenated package names in requirements-dev.txt ([`c69d149`](../../commit/c69d149))
+
+### 📚 Documentation
+
+- finalize audit plan and standardization roadmap ([`57c3155`](../../commit/57c3155))
+- update README and status with stable test results and distributed architecture details ([`8ad7376`](../../commit/8ad7376))
+- add strategic reasoning case study demonstrating active intelligence ([`a951d07`](../../commit/a951d07))
+- add self-optimization use case demonstrating RAE improving RAE ([`2581060`](../../commit/2581060))
+- add CONCEPT.md explaining RAE philosophy and distributed architecture (Node1) ([`14bc8f9`](../../commit/14bc8f9))
+- integrate orphaned technical docs (reports, production guides, testing) into path guides ([`629aa06`](../../commit/629aa06))
+- update healthcare and scientist guides with advanced features and graphrag details ([`63b21e7`](../../commit/63b21e7))
+- expand industry and public sector guides with advanced enterprise features ([`476dcc1`](../../commit/476dcc1))
+- refine README comparison and expand guides for lite/industry/public-sector ([`27b995b`](../../commit/27b995b))
+- add performance benchmarks and usage example to main README ([`92583e5`](../../commit/92583e5))
+- sync API documentation with codebase (add missing Feedback, Compliance, Control Plane APIs) ([`b2b3096`](../../commit/b2b3096))
+- restore visibility of API_DOCUMENTATION.md in README and developer guide ([`21034f7`](../../commit/21034f7))
+- update branching strategy and agent protocol with strict merge verification ([`1d7a534`](../../commit/1d7a534))
+- Updated protocol for Node1 delegation and initiated RAE-Lite Graph iteration ([`9bdea81`](../../commit/9bdea81))
+
+### 🔧 Chore
+
+- Manual sync of documentation from origin/change-readme ([`70c09ca`](../../commit/70c09ca))
+
+### 💄 Style
+
+- Unified ruff config and fixed scattered lint errors in scripts/tests ([`5d7f4e6`](../../commit/5d7f4e6))
+- Full lint and format fix across apps, sdk, integrations and tests ([`be7ea2f`](../../commit/be7ea2f))
+
+### 📦 Other
+
+- Merge remote-tracking branch 'origin/main' into develop ([`fbc29d5`](../../commit/fbc29d5))
+
+---
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2025-12-25 13:54 • Branch: develop • Commit: 57c3155*
+
+### ✨ Features
+
+- **test**: fully integrate testing profiles and updated protocol ([`f2090b0`](../../commit/f2090b0))
+- **infra**: integrate local Ollama LLM with hybrid orchestration support ([`ff5cc6c`](../../commit/ff5cc6c))
+- implement RAE-Lite node build system and fix control plane communication ([`d1b5de5`](../../commit/d1b5de5))
+- implement RAE-Lite node build system and fix control plane communication ([`d97175d`](../../commit/d97175d))
+- RAE-Lite MVP Complete. Implemented SQLite Graph, Storage, and NumPy-optimized Vector Store. ([`4bc61d8`](../../commit/4bc61d8))
+- **tests**: enable E2E/OTel/Performance tests and resolve architectural debt ([`4ce986d`](../../commit/4ce986d))
+
+### 🐛 Bug Fixes
+
+- linting errors and integration test database schema ([`db6c101`](../../commit/db6c101))
+- ensure deterministic ordering in graph BFS traversal to fix CI failure ([`60d9a90`](../../commit/60d9a90))
+- linting errors and integration test database schema ([`bd4b263`](../../commit/bd4b263))
+- Correct concatenated package names in requirements-dev.txt ([`c69d149`](../../commit/c69d149))
+
+### 📚 Documentation
+
+- finalize audit plan and standardization roadmap ([`57c3155`](../../commit/57c3155))
+- update README and status with stable test results and distributed architecture details ([`8ad7376`](../../commit/8ad7376))
+- add strategic reasoning case study demonstrating active intelligence ([`a951d07`](../../commit/a951d07))
+- add self-optimization use case demonstrating RAE improving RAE ([`2581060`](../../commit/2581060))
+- add CONCEPT.md explaining RAE philosophy and distributed architecture (Node1) ([`14bc8f9`](../../commit/14bc8f9))
+- integrate orphaned technical docs (reports, production guides, testing) into path guides ([`629aa06`](../../commit/629aa06))
+- update healthcare and scientist guides with advanced features and graphrag details ([`63b21e7`](../../commit/63b21e7))
+- expand industry and public sector guides with advanced enterprise features ([`476dcc1`](../../commit/476dcc1))
+- refine README comparison and expand guides for lite/industry/public-sector ([`27b995b`](../../commit/27b995b))
+- add performance benchmarks and usage example to main README ([`92583e5`](../../commit/92583e5))
+- sync API documentation with codebase (add missing Feedback, Compliance, Control Plane APIs) ([`b2b3096`](../../commit/b2b3096))
+- restore visibility of API_DOCUMENTATION.md in README and developer guide ([`21034f7`](../../commit/21034f7))
+- update branching strategy and agent protocol with strict merge verification ([`1d7a534`](../../commit/1d7a534))
+- Updated protocol for Node1 delegation and initiated RAE-Lite Graph iteration ([`9bdea81`](../../commit/9bdea81))
+
+### 🔧 Chore
+
+- Manual sync of documentation from origin/change-readme ([`70c09ca`](../../commit/70c09ca))
+
+### 💄 Style
+
+- Unified ruff config and fixed scattered lint errors in scripts/tests ([`5d7f4e6`](../../commit/5d7f4e6))
+- Full lint and format fix across apps, sdk, integrations and tests ([`be7ea2f`](../../commit/be7ea2f))
+
+### 📦 Other
+
+- Merge remote-tracking branch 'origin/main' into develop ([`fbc29d5`](../../commit/fbc29d5))
+
+---
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2025-12-25 13:36 • Branch: develop • Commit: c10d16a*
+
+### ✨ Features
+
+- **test**: fully integrate testing profiles and updated protocol ([`f2090b0`](../../commit/f2090b0))
+- **infra**: integrate local Ollama LLM with hybrid orchestration support ([`ff5cc6c`](../../commit/ff5cc6c))
+- implement RAE-Lite node build system and fix control plane communication ([`d1b5de5`](../../commit/d1b5de5))
+- implement RAE-Lite node build system and fix control plane communication ([`d97175d`](../../commit/d97175d))
+- RAE-Lite MVP Complete. Implemented SQLite Graph, Storage, and NumPy-optimized Vector Store. ([`4bc61d8`](../../commit/4bc61d8))
+- **tests**: enable E2E/OTel/Performance tests and resolve architectural debt ([`4ce986d`](../../commit/4ce986d))
+
+### 🐛 Bug Fixes
+
+- linting errors and integration test database schema ([`db6c101`](../../commit/db6c101))
+- ensure deterministic ordering in graph BFS traversal to fix CI failure ([`60d9a90`](../../commit/60d9a90))
+- linting errors and integration test database schema ([`bd4b263`](../../commit/bd4b263))
+- Correct concatenated package names in requirements-dev.txt ([`c69d149`](../../commit/c69d149))
+
+### 📚 Documentation
+
+- update README and status with stable test results and distributed architecture details ([`8ad7376`](../../commit/8ad7376))
+- add strategic reasoning case study demonstrating active intelligence ([`a951d07`](../../commit/a951d07))
+- add self-optimization use case demonstrating RAE improving RAE ([`2581060`](../../commit/2581060))
+- add CONCEPT.md explaining RAE philosophy and distributed architecture (Node1) ([`14bc8f9`](../../commit/14bc8f9))
+- integrate orphaned technical docs (reports, production guides, testing) into path guides ([`629aa06`](../../commit/629aa06))
+- update healthcare and scientist guides with advanced features and graphrag details ([`63b21e7`](../../commit/63b21e7))
+- expand industry and public sector guides with advanced enterprise features ([`476dcc1`](../../commit/476dcc1))
+- refine README comparison and expand guides for lite/industry/public-sector ([`27b995b`](../../commit/27b995b))
+- add performance benchmarks and usage example to main README ([`92583e5`](../../commit/92583e5))
+- sync API documentation with codebase (add missing Feedback, Compliance, Control Plane APIs) ([`b2b3096`](../../commit/b2b3096))
+- restore visibility of API_DOCUMENTATION.md in README and developer guide ([`21034f7`](../../commit/21034f7))
+- update branching strategy and agent protocol with strict merge verification ([`1d7a534`](../../commit/1d7a534))
+- Updated protocol for Node1 delegation and initiated RAE-Lite Graph iteration ([`9bdea81`](../../commit/9bdea81))
+
+### 🔧 Chore
+
+- Manual sync of documentation from origin/change-readme ([`70c09ca`](../../commit/70c09ca))
+
+### 💄 Style
+
+- Unified ruff config and fixed scattered lint errors in scripts/tests ([`5d7f4e6`](../../commit/5d7f4e6))
+- Full lint and format fix across apps, sdk, integrations and tests ([`be7ea2f`](../../commit/be7ea2f))
+
+### 📦 Other
+
+- Merge remote-tracking branch 'origin/main' into develop ([`fbc29d5`](../../commit/fbc29d5))
+
+---
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2025-12-25 13:29 • Branch: develop • Commit: f2090b0*
+
+### ✨ Features
+
+- **test**: fully integrate testing profiles and updated protocol ([`f2090b0`](../../commit/f2090b0))
+- **infra**: integrate local Ollama LLM with hybrid orchestration support ([`ff5cc6c`](../../commit/ff5cc6c))
+- implement RAE-Lite node build system and fix control plane communication ([`d1b5de5`](../../commit/d1b5de5))
+- implement RAE-Lite node build system and fix control plane communication ([`d97175d`](../../commit/d97175d))
+- RAE-Lite MVP Complete. Implemented SQLite Graph, Storage, and NumPy-optimized Vector Store. ([`4bc61d8`](../../commit/4bc61d8))
+- **tests**: enable E2E/OTel/Performance tests and resolve architectural debt ([`4ce986d`](../../commit/4ce986d))
+
+### 🐛 Bug Fixes
+
+- linting errors and integration test database schema ([`db6c101`](../../commit/db6c101))
+- ensure deterministic ordering in graph BFS traversal to fix CI failure ([`60d9a90`](../../commit/60d9a90))
+- linting errors and integration test database schema ([`bd4b263`](../../commit/bd4b263))
+- Correct concatenated package names in requirements-dev.txt ([`c69d149`](../../commit/c69d149))
+
+### 📚 Documentation
+
+- update README and status with stable test results and distributed architecture details ([`8ad7376`](../../commit/8ad7376))
+- add strategic reasoning case study demonstrating active intelligence ([`a951d07`](../../commit/a951d07))
+- add self-optimization use case demonstrating RAE improving RAE ([`2581060`](../../commit/2581060))
+- add CONCEPT.md explaining RAE philosophy and distributed architecture (Node1) ([`14bc8f9`](../../commit/14bc8f9))
+- integrate orphaned technical docs (reports, production guides, testing) into path guides ([`629aa06`](../../commit/629aa06))
+- update healthcare and scientist guides with advanced features and graphrag details ([`63b21e7`](../../commit/63b21e7))
+- expand industry and public sector guides with advanced enterprise features ([`476dcc1`](../../commit/476dcc1))
+- refine README comparison and expand guides for lite/industry/public-sector ([`27b995b`](../../commit/27b995b))
+- add performance benchmarks and usage example to main README ([`92583e5`](../../commit/92583e5))
+- sync API documentation with codebase (add missing Feedback, Compliance, Control Plane APIs) ([`b2b3096`](../../commit/b2b3096))
+- restore visibility of API_DOCUMENTATION.md in README and developer guide ([`21034f7`](../../commit/21034f7))
+- update branching strategy and agent protocol with strict merge verification ([`1d7a534`](../../commit/1d7a534))
+- Updated protocol for Node1 delegation and initiated RAE-Lite Graph iteration ([`9bdea81`](../../commit/9bdea81))
+
+### 🔧 Chore
+
+- Manual sync of documentation from origin/change-readme ([`70c09ca`](../../commit/70c09ca))
+
+### 💄 Style
+
+- Unified ruff config and fixed scattered lint errors in scripts/tests ([`5d7f4e6`](../../commit/5d7f4e6))
+- Full lint and format fix across apps, sdk, integrations and tests ([`be7ea2f`](../../commit/be7ea2f))
+
+### 📦 Other
+
+- Merge remote-tracking branch 'origin/main' into develop ([`fbc29d5`](../../commit/fbc29d5))
+
+---
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2025-12-25 13:23 • Branch: develop • Commit: 92fff69*
+
+### ✨ Features
+
+- **infra**: integrate local Ollama LLM with hybrid orchestration support ([`ff5cc6c`](../../commit/ff5cc6c))
+- implement RAE-Lite node build system and fix control plane communication ([`d1b5de5`](../../commit/d1b5de5))
+- implement RAE-Lite node build system and fix control plane communication ([`d97175d`](../../commit/d97175d))
+- RAE-Lite MVP Complete. Implemented SQLite Graph, Storage, and NumPy-optimized Vector Store. ([`4bc61d8`](../../commit/4bc61d8))
+- **tests**: enable E2E/OTel/Performance tests and resolve architectural debt ([`4ce986d`](../../commit/4ce986d))
+
+### 🐛 Bug Fixes
+
+- linting errors and integration test database schema ([`db6c101`](../../commit/db6c101))
+- ensure deterministic ordering in graph BFS traversal to fix CI failure ([`60d9a90`](../../commit/60d9a90))
+- linting errors and integration test database schema ([`bd4b263`](../../commit/bd4b263))
+- Correct concatenated package names in requirements-dev.txt ([`c69d149`](../../commit/c69d149))
+
+### 📚 Documentation
+
+- update README and status with stable test results and distributed architecture details ([`8ad7376`](../../commit/8ad7376))
+- add strategic reasoning case study demonstrating active intelligence ([`a951d07`](../../commit/a951d07))
+- add self-optimization use case demonstrating RAE improving RAE ([`2581060`](../../commit/2581060))
+- add CONCEPT.md explaining RAE philosophy and distributed architecture (Node1) ([`14bc8f9`](../../commit/14bc8f9))
+- integrate orphaned technical docs (reports, production guides, testing) into path guides ([`629aa06`](../../commit/629aa06))
+- update healthcare and scientist guides with advanced features and graphrag details ([`63b21e7`](../../commit/63b21e7))
+- expand industry and public sector guides with advanced enterprise features ([`476dcc1`](../../commit/476dcc1))
+- refine README comparison and expand guides for lite/industry/public-sector ([`27b995b`](../../commit/27b995b))
+- add performance benchmarks and usage example to main README ([`92583e5`](../../commit/92583e5))
+- sync API documentation with codebase (add missing Feedback, Compliance, Control Plane APIs) ([`b2b3096`](../../commit/b2b3096))
+- restore visibility of API_DOCUMENTATION.md in README and developer guide ([`21034f7`](../../commit/21034f7))
+- update branching strategy and agent protocol with strict merge verification ([`1d7a534`](../../commit/1d7a534))
+- Updated protocol for Node1 delegation and initiated RAE-Lite Graph iteration ([`9bdea81`](../../commit/9bdea81))
+
+### 🔧 Chore
+
+- Manual sync of documentation from origin/change-readme ([`70c09ca`](../../commit/70c09ca))
+
+### 💄 Style
+
+- Unified ruff config and fixed scattered lint errors in scripts/tests ([`5d7f4e6`](../../commit/5d7f4e6))
+- Full lint and format fix across apps, sdk, integrations and tests ([`be7ea2f`](../../commit/be7ea2f))
+
+### 📦 Other
+
+- Merge remote-tracking branch 'origin/main' into develop ([`fbc29d5`](../../commit/fbc29d5))
+
+---
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2025-12-25 13:16 • Branch: develop • Commit: 8ad7376*
+
+### ✨ Features
+
+- **infra**: integrate local Ollama LLM with hybrid orchestration support ([`ff5cc6c`](../../commit/ff5cc6c))
+- implement RAE-Lite node build system and fix control plane communication ([`d1b5de5`](../../commit/d1b5de5))
+- implement RAE-Lite node build system and fix control plane communication ([`d97175d`](../../commit/d97175d))
+- RAE-Lite MVP Complete. Implemented SQLite Graph, Storage, and NumPy-optimized Vector Store. ([`4bc61d8`](../../commit/4bc61d8))
+- **tests**: enable E2E/OTel/Performance tests and resolve architectural debt ([`4ce986d`](../../commit/4ce986d))
+
+### 🐛 Bug Fixes
+
+- linting errors and integration test database schema ([`db6c101`](../../commit/db6c101))
+- ensure deterministic ordering in graph BFS traversal to fix CI failure ([`60d9a90`](../../commit/60d9a90))
+- linting errors and integration test database schema ([`bd4b263`](../../commit/bd4b263))
+- Correct concatenated package names in requirements-dev.txt ([`c69d149`](../../commit/c69d149))
+
+### 📚 Documentation
+
+- update README and status with stable test results and distributed architecture details ([`8ad7376`](../../commit/8ad7376))
+- add strategic reasoning case study demonstrating active intelligence ([`a951d07`](../../commit/a951d07))
+- add self-optimization use case demonstrating RAE improving RAE ([`2581060`](../../commit/2581060))
+- add CONCEPT.md explaining RAE philosophy and distributed architecture (Node1) ([`14bc8f9`](../../commit/14bc8f9))
+- integrate orphaned technical docs (reports, production guides, testing) into path guides ([`629aa06`](../../commit/629aa06))
+- update healthcare and scientist guides with advanced features and graphrag details ([`63b21e7`](../../commit/63b21e7))
+- expand industry and public sector guides with advanced enterprise features ([`476dcc1`](../../commit/476dcc1))
+- refine README comparison and expand guides for lite/industry/public-sector ([`27b995b`](../../commit/27b995b))
+- add performance benchmarks and usage example to main README ([`92583e5`](../../commit/92583e5))
+- sync API documentation with codebase (add missing Feedback, Compliance, Control Plane APIs) ([`b2b3096`](../../commit/b2b3096))
+- restore visibility of API_DOCUMENTATION.md in README and developer guide ([`21034f7`](../../commit/21034f7))
+- update branching strategy and agent protocol with strict merge verification ([`1d7a534`](../../commit/1d7a534))
+- Updated protocol for Node1 delegation and initiated RAE-Lite Graph iteration ([`9bdea81`](../../commit/9bdea81))
+
+### 🔧 Chore
+
+- Manual sync of documentation from origin/change-readme ([`70c09ca`](../../commit/70c09ca))
+
+### 💄 Style
+
+- Unified ruff config and fixed scattered lint errors in scripts/tests ([`5d7f4e6`](../../commit/5d7f4e6))
+- Full lint and format fix across apps, sdk, integrations and tests ([`be7ea2f`](../../commit/be7ea2f))
+
+### 📦 Other
+
+- Merge remote-tracking branch 'origin/main' into develop ([`fbc29d5`](../../commit/fbc29d5))
+
+---
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2025-12-25 11:37 • Branch: develop • Commit: 6605b50*
+
+### ✨ Features
+
+- implement RAE-Lite node build system and fix control plane communication ([`d1b5de5`](../../commit/d1b5de5))
+- implement RAE-Lite node build system and fix control plane communication ([`d97175d`](../../commit/d97175d))
+- RAE-Lite MVP Complete. Implemented SQLite Graph, Storage, and NumPy-optimized Vector Store. ([`4bc61d8`](../../commit/4bc61d8))
+- **tests**: enable E2E/OTel/Performance tests and resolve architectural debt ([`4ce986d`](../../commit/4ce986d))
+
+### 🐛 Bug Fixes
+
+- linting errors and integration test database schema ([`db6c101`](../../commit/db6c101))
+- ensure deterministic ordering in graph BFS traversal to fix CI failure ([`60d9a90`](../../commit/60d9a90))
+- linting errors and integration test database schema ([`bd4b263`](../../commit/bd4b263))
+- Correct concatenated package names in requirements-dev.txt ([`c69d149`](../../commit/c69d149))
+
+### 📚 Documentation
+
+- add strategic reasoning case study demonstrating active intelligence ([`a951d07`](../../commit/a951d07))
+- add self-optimization use case demonstrating RAE improving RAE ([`2581060`](../../commit/2581060))
+- add CONCEPT.md explaining RAE philosophy and distributed architecture (Node1) ([`14bc8f9`](../../commit/14bc8f9))
+- integrate orphaned technical docs (reports, production guides, testing) into path guides ([`629aa06`](../../commit/629aa06))
+- update healthcare and scientist guides with advanced features and graphrag details ([`63b21e7`](../../commit/63b21e7))
+- expand industry and public sector guides with advanced enterprise features ([`476dcc1`](../../commit/476dcc1))
+- refine README comparison and expand guides for lite/industry/public-sector ([`27b995b`](../../commit/27b995b))
+- add performance benchmarks and usage example to main README ([`92583e5`](../../commit/92583e5))
+- sync API documentation with codebase (add missing Feedback, Compliance, Control Plane APIs) ([`b2b3096`](../../commit/b2b3096))
+- restore visibility of API_DOCUMENTATION.md in README and developer guide ([`21034f7`](../../commit/21034f7))
+- update branching strategy and agent protocol with strict merge verification ([`1d7a534`](../../commit/1d7a534))
+- Updated protocol for Node1 delegation and initiated RAE-Lite Graph iteration ([`9bdea81`](../../commit/9bdea81))
+
+### 🔧 Chore
+
+- Manual sync of documentation from origin/change-readme ([`70c09ca`](../../commit/70c09ca))
+
+### 💄 Style
+
+- Unified ruff config and fixed scattered lint errors in scripts/tests ([`5d7f4e6`](../../commit/5d7f4e6))
+- Full lint and format fix across apps, sdk, integrations and tests ([`be7ea2f`](../../commit/be7ea2f))
+
+### 📦 Other
+
+- Merge remote-tracking branch 'origin/main' into develop ([`fbc29d5`](../../commit/fbc29d5))
+
+---
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2025-12-25 11:31 • Branch: develop • Commit: a951d07*
+
+### ✨ Features
+
+- implement RAE-Lite node build system and fix control plane communication ([`d1b5de5`](../../commit/d1b5de5))
+- implement RAE-Lite node build system and fix control plane communication ([`d97175d`](../../commit/d97175d))
+- RAE-Lite MVP Complete. Implemented SQLite Graph, Storage, and NumPy-optimized Vector Store. ([`4bc61d8`](../../commit/4bc61d8))
+- **tests**: enable E2E/OTel/Performance tests and resolve architectural debt ([`4ce986d`](../../commit/4ce986d))
+
+### 🐛 Bug Fixes
+
+- linting errors and integration test database schema ([`db6c101`](../../commit/db6c101))
+- ensure deterministic ordering in graph BFS traversal to fix CI failure ([`60d9a90`](../../commit/60d9a90))
+- linting errors and integration test database schema ([`bd4b263`](../../commit/bd4b263))
+- Correct concatenated package names in requirements-dev.txt ([`c69d149`](../../commit/c69d149))
+
+### 📚 Documentation
+
+- add strategic reasoning case study demonstrating active intelligence ([`a951d07`](../../commit/a951d07))
+- add self-optimization use case demonstrating RAE improving RAE ([`2581060`](../../commit/2581060))
+- add CONCEPT.md explaining RAE philosophy and distributed architecture (Node1) ([`14bc8f9`](../../commit/14bc8f9))
+- integrate orphaned technical docs (reports, production guides, testing) into path guides ([`629aa06`](../../commit/629aa06))
+- update healthcare and scientist guides with advanced features and graphrag details ([`63b21e7`](../../commit/63b21e7))
+- expand industry and public sector guides with advanced enterprise features ([`476dcc1`](../../commit/476dcc1))
+- refine README comparison and expand guides for lite/industry/public-sector ([`27b995b`](../../commit/27b995b))
+- add performance benchmarks and usage example to main README ([`92583e5`](../../commit/92583e5))
+- sync API documentation with codebase (add missing Feedback, Compliance, Control Plane APIs) ([`b2b3096`](../../commit/b2b3096))
+- restore visibility of API_DOCUMENTATION.md in README and developer guide ([`21034f7`](../../commit/21034f7))
+- update branching strategy and agent protocol with strict merge verification ([`1d7a534`](../../commit/1d7a534))
+- Updated protocol for Node1 delegation and initiated RAE-Lite Graph iteration ([`9bdea81`](../../commit/9bdea81))
+
+### 🔧 Chore
+
+- Manual sync of documentation from origin/change-readme ([`70c09ca`](../../commit/70c09ca))
+
+### 💄 Style
+
+- Unified ruff config and fixed scattered lint errors in scripts/tests ([`5d7f4e6`](../../commit/5d7f4e6))
+- Full lint and format fix across apps, sdk, integrations and tests ([`be7ea2f`](../../commit/be7ea2f))
+
+### 📦 Other
+
+- Merge remote-tracking branch 'origin/main' into develop ([`fbc29d5`](../../commit/fbc29d5))
+
+---
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2025-12-25 08:38 • Branch: develop • Commit: b5126a8*
+
+### ✨ Features
+
+- implement RAE-Lite node build system and fix control plane communication ([`d1b5de5`](../../commit/d1b5de5))
+- implement RAE-Lite node build system and fix control plane communication ([`d97175d`](../../commit/d97175d))
+- RAE-Lite MVP Complete. Implemented SQLite Graph, Storage, and NumPy-optimized Vector Store. ([`4bc61d8`](../../commit/4bc61d8))
+- **tests**: enable E2E/OTel/Performance tests and resolve architectural debt ([`4ce986d`](../../commit/4ce986d))
+
+### 🐛 Bug Fixes
+
+- linting errors and integration test database schema ([`db6c101`](../../commit/db6c101))
+- ensure deterministic ordering in graph BFS traversal to fix CI failure ([`60d9a90`](../../commit/60d9a90))
+- linting errors and integration test database schema ([`bd4b263`](../../commit/bd4b263))
+- Correct concatenated package names in requirements-dev.txt ([`c69d149`](../../commit/c69d149))
+
+### 📚 Documentation
+
+- refine README comparison and expand guides for lite/industry/public-sector ([`27b995b`](../../commit/27b995b))
+- add performance benchmarks and usage example to main README ([`92583e5`](../../commit/92583e5))
+- sync API documentation with codebase (add missing Feedback, Compliance, Control Plane APIs) ([`b2b3096`](../../commit/b2b3096))
+- restore visibility of API_DOCUMENTATION.md in README and developer guide ([`21034f7`](../../commit/21034f7))
+- update branching strategy and agent protocol with strict merge verification ([`1d7a534`](../../commit/1d7a534))
+- Updated protocol for Node1 delegation and initiated RAE-Lite Graph iteration ([`9bdea81`](../../commit/9bdea81))
+
+### 🔧 Chore
+
+- Manual sync of documentation from origin/change-readme ([`70c09ca`](../../commit/70c09ca))
+
+### 💄 Style
+
+- Unified ruff config and fixed scattered lint errors in scripts/tests ([`5d7f4e6`](../../commit/5d7f4e6))
+- Full lint and format fix across apps, sdk, integrations and tests ([`be7ea2f`](../../commit/be7ea2f))
+
+### 📦 Other
+
+- Merge remote-tracking branch 'origin/main' into develop ([`fbc29d5`](../../commit/fbc29d5))
+
+---
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2025-12-25 08:31 • Branch: develop • Commit: 27b995b*
+
+### ✨ Features
+
+- implement RAE-Lite node build system and fix control plane communication ([`d1b5de5`](../../commit/d1b5de5))
+- implement RAE-Lite node build system and fix control plane communication ([`d97175d`](../../commit/d97175d))
+- RAE-Lite MVP Complete. Implemented SQLite Graph, Storage, and NumPy-optimized Vector Store. ([`4bc61d8`](../../commit/4bc61d8))
+- **tests**: enable E2E/OTel/Performance tests and resolve architectural debt ([`4ce986d`](../../commit/4ce986d))
+
+### 🐛 Bug Fixes
+
+- linting errors and integration test database schema ([`db6c101`](../../commit/db6c101))
+- ensure deterministic ordering in graph BFS traversal to fix CI failure ([`60d9a90`](../../commit/60d9a90))
+- linting errors and integration test database schema ([`bd4b263`](../../commit/bd4b263))
+- Correct concatenated package names in requirements-dev.txt ([`c69d149`](../../commit/c69d149))
+
+### 📚 Documentation
+
+- refine README comparison and expand guides for lite/industry/public-sector ([`27b995b`](../../commit/27b995b))
+- add performance benchmarks and usage example to main README ([`92583e5`](../../commit/92583e5))
+- sync API documentation with codebase (add missing Feedback, Compliance, Control Plane APIs) ([`b2b3096`](../../commit/b2b3096))
+- restore visibility of API_DOCUMENTATION.md in README and developer guide ([`21034f7`](../../commit/21034f7))
+- update branching strategy and agent protocol with strict merge verification ([`1d7a534`](../../commit/1d7a534))
+- Updated protocol for Node1 delegation and initiated RAE-Lite Graph iteration ([`9bdea81`](../../commit/9bdea81))
+
+### 🔧 Chore
+
+- Manual sync of documentation from origin/change-readme ([`70c09ca`](../../commit/70c09ca))
+
+### 💄 Style
+
+- Unified ruff config and fixed scattered lint errors in scripts/tests ([`5d7f4e6`](../../commit/5d7f4e6))
+- Full lint and format fix across apps, sdk, integrations and tests ([`be7ea2f`](../../commit/be7ea2f))
+
+### 📦 Other
+
+- Merge remote-tracking branch 'origin/main' into develop ([`fbc29d5`](../../commit/fbc29d5))
+
+---
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2025-12-25 07:10 • Branch: develop • Commit: d4ecfcf*
 
 ### ✨ Features
 
@@ -32,14 +518,13 @@
 
 ### 📦 Other
 
-- Merge branch 'develop' ([`91a0969`](../../commit/91a0969))
 - Merge remote-tracking branch 'origin/main' into develop ([`fbc29d5`](../../commit/fbc29d5))
 
 ---
 
 ## Recent Changes (Auto-generated)
 
-*Last updated: 2025-12-25 07:30 • Branch: main • Commit: 91a0969*
+*Last updated: 2025-12-25 07:03 • Branch: develop • Commit: 1d7a534*
 
 ### ✨ Features
 
@@ -71,14 +556,83 @@
 
 ### 📦 Other
 
-- Merge branch 'develop' ([`91a0969`](../../commit/91a0969))
 - Merge remote-tracking branch 'origin/main' into develop ([`fbc29d5`](../../commit/fbc29d5))
 
 ---
 
 ## Recent Changes (Auto-generated)
 
-*Last updated: 2025-12-25 02:54 • Branch: main • Commit: 4cbb63e*
+*Last updated: 2025-12-25 06:27 • Branch: develop • Commit: a67458c*
+
+### ✨ Features
+
+- implement RAE-Lite node build system and fix control plane communication ([`d97175d`](../../commit/d97175d))
+- RAE-Lite MVP Complete. Implemented SQLite Graph, Storage, and NumPy-optimized Vector Store. ([`4bc61d8`](../../commit/4bc61d8))
+- **tests**: enable E2E/OTel/Performance tests and resolve architectural debt ([`4ce986d`](../../commit/4ce986d))
+
+### 🐛 Bug Fixes
+
+- ensure deterministic ordering in graph BFS traversal to fix CI failure ([`60d9a90`](../../commit/60d9a90))
+- linting errors and integration test database schema ([`bd4b263`](../../commit/bd4b263))
+- Correct concatenated package names in requirements-dev.txt ([`c69d149`](../../commit/c69d149))
+
+### 📚 Documentation
+
+- Updated protocol for Node1 delegation and initiated RAE-Lite Graph iteration ([`9bdea81`](../../commit/9bdea81))
+
+### 🔧 Chore
+
+- Manual sync of documentation from origin/change-readme ([`70c09ca`](../../commit/70c09ca))
+
+### 💄 Style
+
+- Unified ruff config and fixed scattered lint errors in scripts/tests ([`5d7f4e6`](../../commit/5d7f4e6))
+- Full lint and format fix across apps, sdk, integrations and tests ([`be7ea2f`](../../commit/be7ea2f))
+
+### 📦 Other
+
+- Merge remote-tracking branch 'origin/main' into develop ([`fbc29d5`](../../commit/fbc29d5))
+
+---
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2025-12-25 06:21 • Branch: develop • Commit: 60d9a90*
+
+### ✨ Features
+
+- implement RAE-Lite node build system and fix control plane communication ([`d97175d`](../../commit/d97175d))
+- RAE-Lite MVP Complete. Implemented SQLite Graph, Storage, and NumPy-optimized Vector Store. ([`4bc61d8`](../../commit/4bc61d8))
+- **tests**: enable E2E/OTel/Performance tests and resolve architectural debt ([`4ce986d`](../../commit/4ce986d))
+
+### 🐛 Bug Fixes
+
+- ensure deterministic ordering in graph BFS traversal to fix CI failure ([`60d9a90`](../../commit/60d9a90))
+- linting errors and integration test database schema ([`bd4b263`](../../commit/bd4b263))
+- Correct concatenated package names in requirements-dev.txt ([`c69d149`](../../commit/c69d149))
+
+### 📚 Documentation
+
+- Updated protocol for Node1 delegation and initiated RAE-Lite Graph iteration ([`9bdea81`](../../commit/9bdea81))
+
+### 🔧 Chore
+
+- Manual sync of documentation from origin/change-readme ([`70c09ca`](../../commit/70c09ca))
+
+### 💄 Style
+
+- Unified ruff config and fixed scattered lint errors in scripts/tests ([`5d7f4e6`](../../commit/5d7f4e6))
+- Full lint and format fix across apps, sdk, integrations and tests ([`be7ea2f`](../../commit/be7ea2f))
+
+### 📦 Other
+
+- Merge remote-tracking branch 'origin/main' into develop ([`fbc29d5`](../../commit/fbc29d5))
+
+---
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2025-12-24 20:40 • Branch: develop • Commit: 57b6ce7*
 
 ### ✨ Features
 
@@ -105,34 +659,7 @@
 
 ## Recent Changes (Auto-generated)
 
-*Last updated: 2025-12-24 21:03 • Branch: main • Commit: 2632425*
-
-### ✨ Features
-
-- **tests**: enable E2E/OTel/Performance tests and resolve architectural debt ([`4ce986d`](../../commit/4ce986d))
-
-### 🐛 Bug Fixes
-
-- Correct concatenated package names in requirements-dev.txt ([`c69d149`](../../commit/c69d149))
-
-### 🔧 Chore
-
-- Manual sync of documentation from origin/change-readme ([`70c09ca`](../../commit/70c09ca))
-
-### 💄 Style
-
-- Unified ruff config and fixed scattered lint errors in scripts/tests ([`5d7f4e6`](../../commit/5d7f4e6))
-- Full lint and format fix across apps, sdk, integrations and tests ([`be7ea2f`](../../commit/be7ea2f))
-
-### 📦 Other
-
-- Merge remote-tracking branch 'origin/main' into develop ([`fbc29d5`](../../commit/fbc29d5))
-
----
-
-## Recent Changes (Auto-generated)
-
-*Last updated: 2025-12-24 20:52 • Branch: main • Commit: c69d149*
+*Last updated: 2025-12-24 20:34 • Branch: develop • Commit: c69d149*
 
 ### ✨ Features
 
