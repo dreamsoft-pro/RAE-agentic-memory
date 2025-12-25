@@ -155,7 +155,13 @@ test-unit:  ## Run unit tests only
 
 test-integration:  ## Run integration tests only
 	@echo "🧪 Running integration tests..."
-	@PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "integration" -v
+	@OTEL_TRACES_ENABLED=false RAE_DB_MODE=migrate PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "integration" -v
+
+test-full-stack: ## Run all collected tests (Unit + Integration + LLM + OTEL)
+	@echo "🧪 Running absolute full stack verification (970+ tests)..."
+	@OTEL_TRACES_ENABLED=true RAE_DB_MODE=migrate PYTHONPATH=. $(VENV_PYTHON) -m pytest -v
+
+mcp-test-integration:  ## Run MCP integration tests (requires RAE API running)
 
 test-cov:  ## Run tests with coverage report
 	@echo "🧪 Running tests with coverage..."

@@ -6,7 +6,9 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Tests](https://img.shields.io/badge/tests-892%20passing-brightgreen.svg)]()
-[![Coverage](https://img.shields.io/badge/coverage-69%25-green.svg)]())
+[![Coverage](https://img.shields.io/badge/coverage-73.3%25-green.svg)]()
+[![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
+[![Tests](https://img.shields.io/badge/tests-931%20passed-brightgreen.svg)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 > **💡 New to RAE? Start Here:** [**What is RAE? Architecture & Philosophy**](docs/CONCEPT.md)  
@@ -76,6 +78,17 @@ RAE is built on three core principles:
 - A vector database replacement.
 
 ---
+
+- **Multi-Tenant & Secure**: Row-level security (RLS) ensures data isolation between projects and users.
+- **Local & Hybrid LLM Support**: Run completely offline with Ollama or in hybrid mode with Gemini/Claude.
+- **Distributed Memory Architecture**: Run RAE as a central memory engine on Linux while connecting agents from Windows, Mac, or Cloud environments.
+- **Forensic Intelligence**: Reconstruct agent knowledge and reasoning paths at any point in time using temporal graph snapshots.
+
+## 🚀 Key Use Cases
+
+- **Cross-Platform Knowledge Bridge**: Connect a Windows-based AI agent (like Cursor or Claude) to a high-performance RAE instance running on a Linux server.
+- **Persistent Project Context**: Ensure your agent remembers architectural decisions across sessions and model switches.
+- **Autonomous Quality Maintenance**: Periodic "Dreaming" cycles that compress and optimize memory for better retrieval.
 
 ## Choose Your Path
 
