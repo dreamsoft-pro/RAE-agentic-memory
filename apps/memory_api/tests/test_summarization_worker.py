@@ -84,21 +84,15 @@ async def test_summarize_session_llm(mock_rae_service):
 @pytest.mark.asyncio
 async def test_summarize_long_sessions(mock_rae_service):
     """Test summarization of long sessions."""
-    # Mock pool with fetch return value
-    mock_pool = MagicMock()
-    mock_conn = AsyncMock()
-    mock_pool.acquire.return_value.__aenter__.return_value = mock_conn
-
-    # Mock return of long sessions query
+    # Mock return of long sessions
     session_id_1 = str(uuid.uuid4())
     session_id_2 = str(uuid.uuid4())
-    mock_conn.fetch.return_value = [
+    mock_rae_service.list_long_sessions.return_value = [
         {"session_id": session_id_1, "event_count": 150},
         {"session_id": session_id_2, "event_count": 200},
     ]
 
     # Create worker with rae_service
-    mock_rae_service.postgres_pool = mock_pool
     worker = SummarizationWorker(rae_service=mock_rae_service)
 
     # Mock summarize_session to avoid real call

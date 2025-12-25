@@ -4,6 +4,7 @@ RAE-Core integration service.
 Wraps RAEEngine and adapters for use in FastAPI application.
 """
 
+from datetime import datetime
 from typing import Any, Dict, List, Optional, cast
 from uuid import UUID
 
@@ -21,30 +22,14 @@ from rae_core.engine import RAEEngine
 from rae_core.interfaces.embedding import IEmbeddingProvider
 from rae_core.models.search import SearchResponse
 
-from apps.memory_api.services.embedding import get_embedding_service
+from apps.memory_api.services.embedding import (
+    LocalEmbeddingProvider,
+    RemoteEmbeddingProvider,
+    get_embedding_service,
+)
+from apps.memory_api.services.llm import get_llm_provider
 
 logger = structlog.get_logger(__name__)
-
-
-class LocalEmbeddingProvider(IEmbeddingProvider):
-    """Local embedding provider wrapping the embedding service."""
-
-    def __init__(self, embedding_service: Any = None):
-        self.service = embedding_service or get_embedding_service()
-
-    async def embed_text(self, text: str) -> List[float]:
-        """Generate embedding for text."""
-        results = await self.service.generate_embeddings_async([text])
-        return results[0] if results else []
-
-    async def embed_batch(self, texts: List[str]) -> List[List[float]]:
-        """Generate embeddings for multiple texts."""
-        return await self.service.generate_embeddings_async(texts)
-
-    def get_dimension(self) -> int:
-        """Get embedding dimension."""
-        # Assuming default model dimension for now, or could query model if loaded
-        return 384  # Default for all-MiniLM-L6-v2
 
 
 class RAECoreService:
@@ -98,7 +83,15 @@ class RAECoreService:
             self.redis_adapter = InMemoryCache()
 
         # Initialize embedding provider
-        self.embedding_provider = LocalEmbeddingProvider()
+        from apps.memory_api.config import settings
+        if getattr(settings, "RAE_PROFILE", "standard") == "distributed":
+            self.embedding_provider = RemoteEmbeddingProvider(base_url=settings.ML_SERVICE_URL)
+            logger.info("using_remote_embedding_provider", url=settings.ML_SERVICE_URL)
+        else:
+            self.embedding_provider = LocalEmbeddingProvider()
+
+        # Initialize LLM provider with delegation support
+        self.llm_provider = get_llm_provider(task_repo=postgres_pool)
 
         # Initialize Settings
         self.settings = RAESettings(
@@ -111,6 +104,7 @@ class RAECoreService:
             memory_storage=self.postgres_adapter,
             vector_store=self.qdrant_adapter,
             embedding_provider=self.embedding_provider,
+            llm_provider=cast(Any, self.llm_provider),
             settings=self.settings,
             cache_provider=self.redis_adapter,
         )

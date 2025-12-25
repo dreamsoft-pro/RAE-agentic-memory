@@ -352,22 +352,22 @@ Provide a concise summary, list key topics, and determine the overall sentiment.
         # Summarize each long session
         for session_row in long_sessions:
             session_id = UUID(session_row["session_id"])
-                try:
-                    summary = await self.summarize_session(
-                        tenant_id=tenant_id,
-                        project_id=project_id,
-                        session_id=session_id,
-                        min_events=event_threshold,
-                    )
-                    if summary:
-                        summaries.append(summary)
-                except Exception as e:
-                    logger.warning(
-                        "session_summarization_failed",
-                        tenant_id=tenant_id,
-                        session_id=str(session_id),
-                        error=str(e),
-                    )
+            try:
+                summary = await self.summarize_session(
+                    tenant_id=tenant_id,
+                    project_id=project_id,
+                    session_id=session_id,
+                    min_events=event_threshold,
+                )
+                if summary:
+                    summaries.append(summary)
+            except Exception as e:
+                logger.warning(
+                    "session_summarization_failed",
+                    tenant_id=tenant_id,
+                    session_id=str(session_id),
+                    error=str(e),
+                )
 
         logger.info(
             "long_session_summarization_completed",

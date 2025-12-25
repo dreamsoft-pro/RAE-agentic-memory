@@ -95,6 +95,119 @@ class EmbeddingService:
         return await asyncio.to_thread(self.generate_embeddings, texts)
 
 
+from rae_core.interfaces.embedding import IEmbeddingProvider
+
+class LocalEmbeddingProvider(IEmbeddingProvider):
+    """Local embedding provider wrapping the embedding service."""
+
+    def __init__(self, embedding_service: Any = None):
+        self.service = embedding_service or get_embedding_service()
+
+    async def embed_text(self, text: str) -> List[float]:
+        """Generate embedding for text."""
+        results = await self.service.generate_embeddings_async([text])
+        return results[0] if results else []
+
+    async def embed_batch(self, texts: List[str]) -> List[List[float]]:
+        """Generate embeddings for multiple texts."""
+        return await self.service.generate_embeddings_async(texts)
+
+    def get_dimension(self) -> int:
+        """Get embedding dimension."""
+        # Assuming default model dimension for now, or could query model if loaded
+        return 384  # Default for all-MiniLM-L6-v2
+
+
+class RemoteEmbeddingProvider(IEmbeddingProvider):
+    """Embedding provider that offloads to a remote ML service (e.g., Node1)."""
+
+    def __init__(self, base_url: str, dimension: int = 384):
+        self.base_url = base_url
+        self.dimension = dimension
+
+    async def embed_text(self, text: str) -> List[float]:
+        """Generate embedding for text by calling remote service."""
+        results = await self.embed_batch([text])
+        return results[0] if results else []
+
+    async def embed_batch(self, texts: List[str]) -> List[List[float]]:
+        """Generate embeddings for multiple texts by calling remote service."""
+        from apps.memory_api.services.ml_service_client import MLServiceClient
+
+        client = MLServiceClient(base_url=self.base_url)
+        try:
+            result = await client.generate_embeddings(texts)
+            return result.get("embeddings", [])
+        finally:
+            await client.close()
+
+    def get_dimension(self) -> int:
+        """Get embedding dimension."""
+        return self.dimension
+
+class TaskQueueEmbeddingProvider(IEmbeddingProvider):
+    """Embedding provider that offloads by creating tasks in the Control Plane queue."""
+
+    def __init__(self, task_repo: Any, dimension: int = 384, timeout_sec: int = 60):
+        self.task_repo = task_repo
+        self.dimension = dimension
+        self.timeout_sec = timeout_sec
+
+    async def embed_text(self, text: str) -> List[float]:
+        results = await self.embed_batch([text])
+        return results[0] if results else []
+
+    async def embed_batch(self, texts: List[str]) -> List[List[float]]:
+        """
+        Offload embedding generation to a compute node via Task Queue.
+        Waits for the task to be completed.
+        """
+        # 1. Create task
+        task_payload = {
+            "texts": texts,
+            "model": "all-MiniLM-L6-v2",
+            "goal": "Generate embeddings for batch"
+        }
+        
+        # We need a way to create the task. 
+        # This provider is initialized with task_repo (which might be raw pool or repo)
+        # Assuming task_repo has create_task method
+        from apps.memory_api.repositories.task_repository import TaskRepository
+        if not isinstance(self.task_repo, TaskRepository):
+             from apps.memory_api.repositories.task_repository import TaskRepository
+             repo = TaskRepository(self.task_repo)
+        else:
+             repo = self.task_repo
+
+        task = await repo.create_task(
+            type="llm_inference", # Node agent handles llm_inference by calling Ollama
+            payload=task_payload,
+            priority=10
+        )
+        
+        task_id = task.id
+        
+        # 2. Poll for result
+        import asyncio
+        import time
+        start_time = time.time()
+        while time.time() - start_time < self.timeout_sec:
+            updated_task = await repo.get_task(task_id)
+            if updated_task and updated_task.status == "COMPLETED":
+                import json
+                result_data = json.loads(updated_task.result) if isinstance(updated_task.result, str) else updated_task.result
+                return result_data.get("embeddings", [])
+            elif updated_task and updated_task.status == "FAILED":
+                raise RuntimeError(f"Task {task_id} failed: {updated_task.error}")
+            
+            await asyncio.sleep(1.0)
+            
+        raise TimeoutError(f"Embedding task {task_id} timed out after {self.timeout_sec}s")
+
+    def get_dimension(self) -> int:
+        return self.dimension
+
+
 # Singleton instance
 embedding_service = EmbeddingService()
 

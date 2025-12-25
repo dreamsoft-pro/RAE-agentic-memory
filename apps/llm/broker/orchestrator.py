@@ -29,6 +29,7 @@ class LLMOrchestrator:
         self,
         router: Optional[LLMRouter] = None,
         config_path: Optional[str] = None,
+        task_repo: Any = None,
     ):
         """
         Initialize Orchestrator.
@@ -36,8 +37,9 @@ class LLMOrchestrator:
         Args:
             router: Initialized LLMRouter (if None, creates new one)
             config_path: Path to llm_config.yaml
+            task_repo: Optional repository for delegating tasks
         """
-        self.router = router or LLMRouter()
+        self.router = router or LLMRouter(task_repo=task_repo)
         self.config = self._load_config(config_path)
 
         # Override default model_name with environment variable if set

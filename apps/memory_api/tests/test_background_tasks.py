@@ -175,21 +175,21 @@ class TestProcessGraphExtractionQueue:
     @patch("apps.memory_api.tasks.background_tasks.get_pool")
     @patch("apps.memory_api.tasks.background_tasks.extract_graph_lazy")
     def test_queue_processor_schedules_tasks(self, mock_extract_task, mock_get_pool):
-        """Test that queue processor schedules extraction tasks.
-
-        Verifies:
-        - Queries for pending memories
-        - Schedules lazy extraction for each tenant
-        - Passes correct parameters
-        """
-        # Mock pool with pending memories
-        mock_pool = AsyncMock()
-        mock_pool.fetch = AsyncMock(
-            return_value=[
-                {"tenant_id": "tenant1", "memory_ids": ["mem1", "mem2"]},
-                {"tenant_id": "tenant2", "memory_ids": ["mem3", "mem4", "mem5"]},
-            ]
-        )
+        """Test that queue processor schedules extraction tasks."""
+        # Mock connection
+        mock_conn = AsyncMock()
+        mock_conn.fetch.return_value = [
+            {"tenant_id": "tenant1", "memory_ids": ["mem1", "mem2"]},
+            {"tenant_id": "tenant2", "memory_ids": ["mem3", "mem4", "mem5"]},
+        ]
+        
+        # Mock pool
+        mock_pool = Mock()
+        # Mock acquire to be an async context manager returning mock_conn
+        mock_pool.acquire.return_value.__aenter__ = AsyncMock(return_value=mock_conn)
+        mock_pool.acquire.return_value.__aexit__ = AsyncMock(return_value=None)
+        mock_pool.close = AsyncMock()
+        
         mock_get_pool.return_value = mock_pool
 
         # Mock the delay method
@@ -209,13 +209,17 @@ class TestProcessGraphExtractionQueue:
 
     @patch("apps.memory_api.tasks.background_tasks.get_pool")
     def test_queue_processor_no_pending_memories(self, mock_get_pool):
-        """Test queue processor with no pending memories.
-
-        Should complete without errors.
-        """
-        # Mock pool with no results
-        mock_pool = AsyncMock()
-        mock_pool.fetch = AsyncMock(return_value=[])
+        """Test queue processor with no pending memories."""
+        # Mock connection
+        mock_conn = AsyncMock()
+        mock_conn.fetch.return_value = []
+        
+        # Mock pool
+        mock_pool = Mock()
+        mock_pool.acquire.return_value.__aenter__ = AsyncMock(return_value=mock_conn)
+        mock_pool.acquire.return_value.__aexit__ = AsyncMock(return_value=None)
+        mock_pool.close = AsyncMock()
+        
         mock_get_pool.return_value = mock_pool
 
         # Should not raise exception
@@ -262,34 +266,24 @@ class TestMemoryDecay:
     @patch("apps.memory_api.tasks.background_tasks.rae_context")
     @patch("apps.memory_api.tasks.background_tasks.settings")
     def test_apply_decay_updates_strength(self, mock_settings, mock_rae_context):
-        """Test that decay is applied to memory strength.
-
-        Verifies:
-        - Decay rate is applied
-        - Expired memories are deleted
-        - SQL is executed correctly
-        """
+        """Test that decay is applied to memory strength."""
         # Mock settings
         mock_settings.MEMORY_DECAY_RATE = 0.95
 
-        # Mock pool
-        mock_pool = AsyncMock()
-
-        # Setup rae_context mock
-        # rae_context is an async context manager
+        # Mock service
         mock_rae_service = AsyncMock()
-        mock_rae_service.postgres_pool = mock_pool
+        mock_rae_service.apply_global_memory_decay = AsyncMock()
+        mock_rae_service.delete_expired_memories = AsyncMock()
+        
+        # Setup rae_context mock
         mock_rae_context.return_value.__aenter__.return_value = mock_rae_service
 
         # Execute
         apply_memory_decay()
 
-        # Verify execute was called twice (decay + delete)
-        assert mock_pool.execute.call_count == 2
-
-        # Check decay call
-        decay_call = mock_pool.execute.call_args_list[0]
-        assert "strength = strength *" in decay_call[0][0]
+        # Verify service methods were called
+        mock_rae_service.apply_global_memory_decay.assert_called_once_with(0.95)
+        mock_rae_service.delete_expired_memories.assert_called_once()
 
 
 @pytest.mark.asyncio
@@ -397,14 +391,12 @@ class TestGDPRDeletion:
 class TestDecayMemoryImportance:
     async def test_decay_task_all_tenants(self, mock_pool):
         """Test decay task iterating over tenants"""
-        mock_pool.close = AsyncMock()
-
         # Use valid UUIDs
         t1 = str(uuid4())
         t2 = str(uuid4())
 
-        # Explicitly set fetch as AsyncMock to avoid "object list can't be used in await"
-        mock_pool.fetch = AsyncMock(return_value=[{"tenant_id": t1}, {"tenant_id": t2}])
+        # Configure the mock connection provided by the fixture
+        mock_pool._test_conn.fetch.return_value = [{"tenant_id": t1}, {"tenant_id": t2}]
 
         with patch(
             "apps.memory_api.services.importance_scoring.ImportanceScoringService"

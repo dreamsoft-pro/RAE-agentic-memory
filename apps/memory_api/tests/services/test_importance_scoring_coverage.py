@@ -90,17 +90,15 @@ async def test_calculate_importance_access_boost(scoring_service, sample_memory)
 @pytest.mark.asyncio
 async def test_decay_importance(scoring_service):
     """Test temporal decay logic"""
-    mock_db = scoring_service.rae_service.postgres_pool
-    mock_db.execute.return_value = "UPDATE 10"
+    # Configure rae_service mock
+    scoring_service.rae_service.decay_importance = AsyncMock(return_value=10)
 
     updated = await scoring_service.decay_importance(
         tenant_id=uuid4(), decay_rate=0.05, consider_access_stats=True
     )
 
     assert updated == 10
-    mock_db.execute.assert_called_once()
-    args = mock_db.execute.call_args[0]
-    assert "UPDATE memories" in args[0]
+    scoring_service.rae_service.decay_importance.assert_called_once()
 
 
 @pytest.mark.asyncio
