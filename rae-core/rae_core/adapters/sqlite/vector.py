@@ -10,6 +10,7 @@ from typing import Any
 from uuid import UUID
 
 import aiosqlite
+import numpy as np
 
 from rae_core.interfaces.vector import IVectorStore
 
@@ -19,13 +20,13 @@ class SQLiteVectorStore(IVectorStore):
 
     Features:
     - File-based vector storage
-    - Cosine similarity search
+    - Cosine similarity search (optimized with numpy)
     - Metadata storage alongside vectors
     - Layer filtering support
     - Batch operations
     - ACID transactions
 
-    Note: Requires sqlite-vec extension. Falls back to manual
+    Note: Requires sqlite-vec extension. Falls back to numpy
     cosine similarity if extension is not available.
     """
 
@@ -125,11 +126,15 @@ class SQLiteVectorStore(IVectorStore):
         """Search for similar vectors using cosine similarity."""
         await self.initialize()
 
-        struct.pack(f"{len(query_embedding)}f", *query_embedding)
+        if self._has_vec_extension:
+            # TODO: Implement sqlite-vec specific search when extension is present
+            pass
 
-        # Calculate query norm once
-        query_norm_sq = sum(x * x for x in query_embedding)
-        if query_norm_sq == 0:
+        # Fallback to optimized numpy search
+        query_vec = np.array(query_embedding, dtype=np.float32)
+        query_norm = np.linalg.norm(query_vec)
+        
+        if query_norm == 0:
             return []
 
         async with aiosqlite.connect(self.db_path) as db:
@@ -145,7 +150,7 @@ class SQLiteVectorStore(IVectorStore):
 
             where_clause = " AND ".join(where_clauses)
 
-            # Fetch all vectors (we'll calculate similarity in Python)
+            # Fetch all vectors for this tenant/layer
             async with db.execute(
                 f"""
                 SELECT memory_id, embedding, dimension
@@ -159,31 +164,26 @@ class SQLiteVectorStore(IVectorStore):
                 if not rows:
                     return []
 
-                # Calculate cosine similarities
-                results = []
+                # Extract and deserialize all embeddings at once
+                ids = [row["memory_id"] for row in rows]
+                embeddings = []
                 for row in rows:
-                    embedding_bytes = row["embedding"]
-                    dimension = row["dimension"]
+                    embeddings.append(np.frombuffer(row["embedding"], dtype=np.float32))
+                
+                # Convert to matrix for bulk calculation
+                matrix = np.stack(embeddings)
+                
+                # Bulk cosine similarity calculation
+                dot_products = np.dot(matrix, query_vec)
+                norms = np.linalg.norm(matrix, axis=1)
+                similarities = dot_products / (query_norm * norms)
 
-                    # Deserialize embedding
-                    embedding = struct.unpack(f"{dimension}f", embedding_bytes)
-
-                    # Calculate cosine similarity
-                    dot_product = sum(q * e for q, e in zip(query_embedding, embedding))
-                    embedding_norm_sq = sum(e * e for e in embedding)
-
-                    if embedding_norm_sq == 0:
-                        continue
-
-                    similarity = dot_product / (
-                        query_norm_sq**0.5 * embedding_norm_sq**0.5
-                    )
-
-                    # Apply threshold
+                # Filter and format results
+                results = []
+                for i, similarity in enumerate(similarities):
                     if score_threshold is not None and similarity < score_threshold:
                         continue
-
-                    results.append((UUID(row["memory_id"]), float(similarity)))
+                    results.append((UUID(ids[i]), float(similarity)))
 
                 # Sort by similarity (descending) and limit
                 results.sort(key=lambda x: x[1], reverse=True)

@@ -1,32 +1,27 @@
-<state_snapshot>
-    <overall_goal>
-        Complete Phase 3 of the Core Architecture refactor, migrating all components in `apps/memory_api` to use `RAECoreService` (Contract over Implementation).
-    </overall_goal>
+# RAE Session State - 2025-12-24
 
-    <key_knowledge>
-        - **Migration Status**: ~95% complete. Core services, workers, and tasks migrated.
-        - **Test Stability**: 892 unit tests passing (100% green). Integration tests in progress.
-        - **Mocking Strategy**: Standardized `DummyAsyncContextManager` for mocking `rae_service.postgres_pool`.
-        - **Data Constraints**: `memories` table uses naive `TIMESTAMP`, requiring naive `datetime` in Python.
-        - **Performance**: `test_hybrid_search.py` patched to bypass CUDA dependency in CPU-only test environments.
-    </key_knowledge>
+## 1. CURRENT CONTEXT
+- **Branch**: `feature/rae-lite-node-implementation`
+- **Goal**: Autonomous implementation of RAE-Lite using Node1 (KUBUS).
+- **Status**: Iterations 1-3 Complete. RAE-Lite Core is functional.
 
-    <file_system_state>
-        - **Modified**:
-            - `apps/memory_api/services/`: Retention, EntityResolution, CommunityDetection, HybridSearch, ContextBuilder, ReflectionEngineV2.
-            - `apps/memory_api/workers/`: `memory_maintenance.py` (Decay, Summarization, Dreaming).
-            - `apps/memory_api/tasks/`: `background_tasks.py` (Celery integration).
-            - `apps/memory_api/dependencies.py`: Added factories for all core services.
-            - `apps/memory_api/tests/`: Extensive updates to unit tests.
-            - `tests/integration/`: Migration to `rae_service`.
-    </file_system_state>
+## 2. NODE1 (KUBUS) STATUS
+- **ID**: `kubus-gpu-01` (100.68.166.117)
+- **Agent Version**: v3.0 (Supports `quality_loop` and Writer/Reviewer model).
+- **Parallel Mode**: `detect_active_user: false` (Node works even when you are logged in).
+- **Security**: Safety scripts (`check_gpu_load.py`) are active.
 
-    <current_plan>
-        1. [DONE] Refactor Workers (`DecayWorker`, `SummarizationWorker`, `DreamingWorker`) to use `rae_service`.
-        2. [DONE] Refactor Background Tasks and Celery `rae_context`.
-        3. [DONE] Refactor remaining services: `RetentionService`, `EntityResolutionService`, `CommunityDetectionService`.
-        4. [IN_PROGRESS] Fix remaining integration test failures (`test_decay_worker.py`, `test_dreaming_worker.py`).
-        5. [TODO] Final audit for direct `pool` injections.
-        6. [TODO] Performance verification with `make benchmark-lite`.
-    </current_plan>
-</state_snapshot>
+## 3. RAE-LITE PROGRESS
+- **SQLiteStorage**: Full implementation with FTS5 search.
+- **SQLiteGraphStore**: Full implementation with BFS traversal and subgraph extraction.
+- **SQLiteVectorStore**: Optimized with **NumPy bulk matrix operations** (high performance without Qdrant).
+- **Server**: FastAPI server updated to match `rae-core` engine. Verified to start on port 8765.
+
+## 4. NEXT SESSION: PHASE 4 (Build & Packaging)
+- **Objective**: Create a standalone executable (.exe/.app) using PyInstaller/Nuitka.
+- **Node1 Usage**: Delegate heavy compilation tasks to KUBUS.
+- **Blockers**: None. Core logic is stable.
+
+## 5. RECENT MEMORIES (RAE ID)
+- Summary: `a7fecf2a-6c83-4427-a11d-acfe62d8c3d4`
+- Implementation: `db3dcd0a-7a27-4cb6-b6b5-80d3e4241afe`

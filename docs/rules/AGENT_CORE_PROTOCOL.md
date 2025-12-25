@@ -23,6 +23,18 @@ Strictly follow the flow: `feature/*` → `develop` → `release/*` → `main`.
 | **3. QA** | `release/vX` | Create from `develop`. Final QA. | High. 1 Approval. |
 | **4. Prod** | `main` | Merge `release` via PR. **HOLY**. | **MAX**. 2 Approvals. |
 
+### STRICT MERGE PROTOCOL (Anti-Data-Loss)
+To prevent "lost work" or partial merges, execute this EXACT sequence when finishing a feature:
+
+1. **Update**: `git checkout develop && git pull origin develop`
+2. **Merge**: `git merge --no-ff feature/name` (Forces a merge commit for visibility)
+3. **Verify (The "Zero-Diff" Check)**:
+   - Run: `git log feature/name ^develop` -> **MUST BE EMPTY**
+   - Run: `git diff develop...feature/name` -> **MUST BE EMPTY**
+   - *If output exists, the merge failed. DO NOT PROCEED.*
+4. **Test**: `make lint && make test-unit`
+5. **Delete**: Only after passing step 3 & 4: `git branch -d feature/name`
+
 **Crucial**:
 - **NEVER** push directly to `main` or `release` (except PRs).
 - **NEVER** leave `main` or `develop` with red CI.
@@ -92,11 +104,17 @@ Different branches = Different testing levels.
 ## 8. DISTRIBUTED COMPUTE WORKFLOW (Writer/Reviewer)
 
 When delegating tasks to external nodes (e.g., node1/KUBUS), follow the **Agentic Quality Loop**:
-- **Phase 1: Writer**: Typically **DeepSeek** (e.g., `deepseek-coder:33b`) writes the code or performs deep analysis.
-- **Phase 2: Reviewer**: Typically **Ollama** running a secondary model (e.g., `deepseek-coder:6.7b` or `senior-architect` persona) checks the code.
-- **Opportunistic Availability**: External nodes are **NOT** permanent resources. They must be used only when `ONLINE` and without disturbing their primary users. 
-- **Graceful Fallback**: If a node is unavailable, tasks MUST automatically fall back to local execution or cloud-based providers to ensure continuity.
-- **Implementation**: Check node status via `ControlPlaneService` before task creation.
+- **Phase 1: Writer**: Typically **DeepSeek** (e.g., `deepseek-coder:33b`) writes the code or performs analysis.
+- **Phase 2: Reviewer**: Typically **Ollama** running a secondary model (e.g., `senior-architect` persona) checks the code.
+- **Atomic Tasking**: Tasks for Node1 MUST be atomic (max 1-2 files, <50 LOC). Large tasks must be split into iterations.
+- **Mandatory Quality Gates for Delegated Code**:
+    - **Telemetry**: New code MUST include OpenTelemetry instrumentation (e.g., `LLMTracer`, `RAETracing`).
+    - **Tests**: Every code change MUST be accompanied by unit tests (target 80% coverage).
+    - **No Regression**: Node1 results MUST be verified against local linting and project contracts.
+    - **Agnosticism**: No absolute paths or provider lock-in allowed.
+- **RAE-First Context**: Every delegated task MUST include a `context_id` referencing latest memories in RAE to prevent hallucinating APIs.
+- **Opportunistic Availability**: External nodes are **NOT** permanent resources. Check status via `ControlPlaneService`.
+- **Graceful Fallback**: If a node is unavailable, fallback to local or cloud providers.
 
 ## 9. SCHEDULED QUALITY MAINTENANCE (Autonomous Improvement)
 

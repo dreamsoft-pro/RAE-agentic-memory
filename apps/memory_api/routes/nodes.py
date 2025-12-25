@@ -2,7 +2,7 @@ from typing import Optional
 from uuid import UUID
 
 import asyncpg
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from apps.memory_api.dependencies import get_db_pool
 from apps.memory_api.models.control_plane import (
@@ -44,40 +44,31 @@ async def create_task(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/nodes/register", response_model=ComputeNode)
-async def register_node(
-    req: RegisterNodeRequest,
-    request: Request,
-    service: ControlPlaneService = Depends(get_control_plane_service),
-):
-    # Security: Verify IP is from Tailscale (100.x.x.x) or localhost
-    client_host = request.client.host if request.client else "unknown"
-    # In production, we might want to enforce this check if binding isn't restrictive enough
-
-    return await service.register_node(
-        req.node_id, req.api_key, req.capabilities, client_host
-    )
-
-
-@router.post("/nodes/heartbeat", response_model=ComputeNode)
-async def heartbeat(
-    req: HeartbeatRequest,
-    service: ControlPlaneService = Depends(get_control_plane_service),
-):
-    try:
-        return await service.process_heartbeat(req.node_id, req.status)
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
-
-
-@router.get("/tasks/poll", response_model=Optional[DelegatedTask])
+@router.get("/tasks_poll", response_model=Optional[DelegatedTask])
 async def poll_task(
-    node_id: str, service: ControlPlaneService = Depends(get_control_plane_service)
+    node_id: str = Query(
+        ..., description="The unique ID of the compute node polling for tasks"
+    ),
+    service: ControlPlaneService = Depends(get_control_plane_service),
 ):
     try:
         return await service.poll_task(node_id)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.get("/tasks/{task_id}", response_model=DelegatedTask)
+async def get_task(
+    task_id: UUID,
+    service: ControlPlaneService = Depends(get_control_plane_service),
+):
+    """
+    Get task details by ID.
+    """
+    task = await service.get_task(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    return task
 
 
 @router.post("/tasks/{task_id}/result", response_model=DelegatedTask)
@@ -92,3 +83,47 @@ async def submit_result(
         return await service.submit_result(task_id, req.result, req.error)
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.post("/nodes/register", response_model=ComputeNode)
+async def register_node(
+    req: RegisterNodeRequest,
+    request: Request,
+    service: ControlPlaneService = Depends(get_control_plane_service),
+):
+    """
+    Register a new compute node.
+    """
+    ip_address = req.ip_address or (
+        request.client.host if request.client else "unknown"
+    )
+    return await service.register_node(
+        node_id=req.node_id,
+        api_key=req.api_key,
+        capabilities=req.capabilities,
+        ip_address=ip_address,
+    )
+
+
+@router.post("/nodes/heartbeat", response_model=ComputeNode)
+async def heartbeat(
+    req: HeartbeatRequest,
+    service: ControlPlaneService = Depends(get_control_plane_service),
+):
+    """
+    Update compute node heartbeat and status.
+    """
+    try:
+        return await service.process_heartbeat(node_id=req.node_id, status=req.status)
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.get("/nodes", response_model=list[ComputeNode])
+async def list_nodes(
+    service: ControlPlaneService = Depends(get_control_plane_service),
+):
+    """
+    List all online compute nodes.
+    """
+    return await service.list_online_nodes()
