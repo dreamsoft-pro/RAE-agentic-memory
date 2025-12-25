@@ -23,6 +23,18 @@ Strictly follow the flow: `feature/*` → `develop` → `release/*` → `main`.
 | **3. QA** | `release/vX` | Create from `develop`. Final QA. | High. 1 Approval. |
 | **4. Prod** | `main` | Merge `release` via PR. **HOLY**. | **MAX**. 2 Approvals. |
 
+### STRICT MERGE PROTOCOL (Anti-Data-Loss)
+To prevent "lost work" or partial merges, execute this EXACT sequence when finishing a feature:
+
+1. **Update**: `git checkout develop && git pull origin develop`
+2. **Merge**: `git merge --no-ff feature/name` (Forces a merge commit for visibility)
+3. **Verify (The "Zero-Diff" Check)**:
+   - Run: `git log feature/name ^develop` -> **MUST BE EMPTY**
+   - Run: `git diff develop...feature/name` -> **MUST BE EMPTY**
+   - *If output exists, the merge failed. DO NOT PROCEED.*
+4. **Test**: `make lint && make test-unit`
+5. **Delete**: Only after passing step 3 & 4: `git branch -d feature/name`
+
 **Crucial**:
 - **NEVER** push directly to `main` or `release` (except PRs).
 - **NEVER** leave `main` or `develop` with red CI.
