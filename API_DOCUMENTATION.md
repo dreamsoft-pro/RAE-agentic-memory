@@ -24,8 +24,12 @@ Complete API reference for RAE Memory Engine v2.0 Enterprise
 | [Dashboard API](#dashboard-api) | 7 | Real-time monitoring and visualizations |
 | [Graph Management API](#graph-management-api) | 19 | Advanced graph operations and analytics |
 | [Health API](#health-api) | 4 | Health checks and system metrics |
+| [Feedback API](#feedback-api) | 1 | RLHF feedback submission |
+| [Compliance API](#compliance-api) | 12 | ISO 42001 governance and approvals |
+| [Control Plane API](#control-plane-api) | 7 | Distributed compute node management |
+| [Metrics API](#metrics-api) | 2 | Token savings and additional metrics |
 
-**Total:** 96 enterprise-ready endpoints
+**Total:** 118 enterprise-ready endpoints
 
 ---
 
@@ -1305,7 +1309,7 @@ Content-Type: application/json
 
 ## Graph Management API
 
-Base path: `/v1/graph/manage`
+Base path: `/v1/graph-management`
 
 The Graph Management API provides advanced graph operations including temporal graphs, snapshots, traversal algorithms, and batch operations.
 
@@ -1418,6 +1422,122 @@ Content-Type: application/json
 **Centrality Metrics:** `degree`, `betweenness`, `closeness`, `eigenvector`, `pagerank`
 
 **Graph Statistics:** Node count, edge count, density, diameter, clustering coefficient, component analysis
+
+---
+
+## Feedback API
+
+Base path: `/v1/feedback`
+
+Submit feedback for retrieved memories to support Reinforcement Learning from Human Feedback (RLHF) and dynamic importance adjustment.
+
+### Submit Feedback
+
+```http
+POST /v1/feedback
+Content-Type: application/json
+X-Tenant-Id: tenant-1
+
+{
+  "memory_id": "550e8400-e29b-41d4-a716-446655440000",
+  "feedback_type": "positive",
+  "comment": "This memory was highly relevant to the context."
+}
+```
+
+**Feedback Types:** `positive`, `negative`, `neutral`
+
+**Response:**
+```json
+{
+  "status": "success",
+  "message": "Feedback recorded"
+}
+```
+
+---
+
+## ISO/IEC 42001 Compliance API
+
+Base path: `/v1/compliance`
+
+Comprehensive AI governance API for managing human approvals, decision provenance, and circuit breakers.
+
+### Human Approvals
+
+Request and manage human oversight for high-risk operations.
+
+**Request Approval:**
+```http
+POST /v1/compliance/approvals
+Content-Type: application/json
+X-Tenant-Id: tenant-1
+
+{
+  "project_id": "project-1",
+  "operation_type": "delete_memory",
+  "operation_description": "Bulk deletion of user data",
+  "risk_level": "high",
+  "resource_type": "memory",
+  "resource_id": "all",
+  "requested_by": "user-123"
+}
+```
+
+**Check Status:** `GET /v1/compliance/approvals/{request_id}`
+**Decide:** `POST /v1/compliance/approvals/{request_id}/decide`
+
+### Circuit Breakers
+
+Monitor and reset system protection mechanisms.
+
+**List All:** `GET /v1/compliance/circuit-breakers` (Admin only)
+**Reset:** `POST /v1/compliance/circuit-breakers/{name}/reset` (Admin only)
+
+---
+
+## Control Plane API
+
+Base path: `/control`
+
+Manages distributed compute nodes for offloading heavy tasks (embeddings, LLM inference).
+
+### Register Node
+
+Register a new compute node to the cluster.
+
+```http
+POST /control/nodes/register
+Content-Type: application/json
+
+{
+  "node_id": "node-gpu-01",
+  "api_key": "secret-node-key",
+  "capabilities": ["embedding", "llm"]
+}
+```
+
+### Task Delegation
+
+**Create Task:** `POST /control/tasks`
+**Poll for Tasks:** `GET /control/tasks_poll?node_id={node_id}`
+**Submit Result:** `POST /control/tasks/{task_id}/result`
+
+---
+
+## Metrics API
+
+Base path: `/metrics`
+
+Additional system metrics and savings analysis.
+
+### Token Savings
+
+Get analysis of tokens saved via context caching.
+
+```http
+GET /metrics/savings?period=30d
+```
 
 ---
 
