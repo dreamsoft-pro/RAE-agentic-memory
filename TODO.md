@@ -25,7 +25,7 @@
 **Priority Tasks:**
 
 1.  **🏗️ Agnostic Enforcement (CRITICAL)**
-    - [ ] **Action**: Refactor `EnhancedGraphRepository` to use a generic DB interface instead of `asyncpg.Pool` directly (preparation for RAE-Lite).
+    - [x] **Action**: Refactor `EnhancedGraphRepository` to use a generic DB interface instead of `asyncpg.Pool` directly (preparation for RAE-Lite).
     - [ ] **Action**: Implement `IEmbeddingProvider` for remote compute nodes to offload embedding generation without leaking node details.
 
 2.  **🚀 Distributed Compute: Expand Cluster**
