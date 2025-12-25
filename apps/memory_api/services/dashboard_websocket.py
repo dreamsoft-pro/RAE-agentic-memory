@@ -17,6 +17,8 @@ from uuid import UUID, uuid4
 import asyncpg
 import structlog
 from fastapi import WebSocket
+from rae_core.adapters.postgres_db import PostgresDatabaseProvider
+from rae_core.interfaces.database import IDatabaseProvider
 
 from apps.memory_api.models.dashboard_models import (
     AlertMessage,
@@ -222,14 +224,17 @@ class DashboardWebSocketService:
     Manages real-time updates, metrics collection, and event broadcasting.
     """
 
-    def __init__(self, pool: asyncpg.Pool):
+    def __init__(self, pool: asyncpg.Pool | IDatabaseProvider):
         """
         Initialize dashboard WebSocket service.
 
         Args:
-            pool: Database connection pool
+            pool: Database connection pool or IDatabaseProvider
         """
-        self.pool = pool
+        if isinstance(pool, (asyncpg.Pool, asyncpg.Connection)):
+            self.db = PostgresDatabaseProvider(pool)
+        else:
+            self.db = pool
         self.connection_manager = ConnectionManager()
 
         # Background tasks
@@ -513,7 +518,7 @@ class DashboardWebSocketService:
         # Query database for various metrics
         try:
             # Memory metrics
-            memory_stats = await self.pool.fetchrow(
+            memory_stats = await self.db.fetchrow(
                 """
                 SELECT
                     COUNT(*) as total_memories,
@@ -527,7 +532,7 @@ class DashboardWebSocketService:
             )
 
             # Reflection metrics
-            reflection_stats = await self.pool.fetchrow(
+            reflection_stats = await self.db.fetchrow(
                 """
                 SELECT
                     COUNT(*) as total_reflections,
@@ -541,7 +546,7 @@ class DashboardWebSocketService:
             )
 
             # Semantic node metrics
-            semantic_stats = await self.pool.fetchrow(
+            semantic_stats = await self.db.fetchrow(
                 """
                 SELECT
                     COUNT(*) as total_nodes,
@@ -555,7 +560,7 @@ class DashboardWebSocketService:
             )
 
             # Graph metrics
-            graph_stats = await self.pool.fetchrow(
+            graph_stats = await self.db.fetchrow(
                 """
                 SELECT
                     COUNT(DISTINCT id) as total_nodes,
@@ -569,7 +574,7 @@ class DashboardWebSocketService:
             )
 
             # Trigger metrics
-            trigger_stats = await self.pool.fetchrow(
+            trigger_stats = await self.db.fetchrow(
                 """
                 SELECT
                     COUNT(*) FILTER (WHERE status = 'active' AND is_enabled = TRUE) as active_triggers,
@@ -720,7 +725,7 @@ class DashboardWebSocketService:
 
         try:
             # Check database connectivity
-            await self.pool.fetchval("SELECT 1")
+            await self.db.fetchval("SELECT 1")
 
             return SystemHealth(
                 overall_status=HealthStatus.HEALTHY,

@@ -32,6 +32,6 @@ class IDatabaseProvider(ABC):
         pass
 
     @abstractmethod
-    async def acquire(self) -> Any:
+    def acquire(self) -> Any:
         """Acquire a connection from the pool."""
         pass

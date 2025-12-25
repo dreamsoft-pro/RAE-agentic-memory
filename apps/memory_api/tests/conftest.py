@@ -111,7 +111,17 @@ def mock_pool():
     # Set up default connection behavior
     conn.fetch = AsyncMock(return_value=[])
     conn.fetchrow = AsyncMock(return_value=None)
+    conn.fetchval = AsyncMock(return_value=None)
     conn.execute = AsyncMock(return_value="INSERT 0 1")
+    conn.executemany = AsyncMock(return_value="OK")
+
+    # Set up pool-level shortcut methods (asyncpg.Pool supports these)
+    # These should delegate to the connection methods
+    pool.fetch = conn.fetch
+    pool.fetchrow = conn.fetchrow
+    pool.fetchval = conn.fetchval
+    pool.execute = conn.execute
+    pool.executemany = conn.executemany
 
     # Make conn.transaction() return proper async context manager
     # transaction() should work with: async with conn.transaction():

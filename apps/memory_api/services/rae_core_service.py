@@ -20,6 +20,7 @@ from rae_core.adapters import (
 from rae_core.config import RAESettings
 from rae_core.engine import RAEEngine
 from rae_core.interfaces.embedding import IEmbeddingProvider
+from rae_core.interfaces.database import IDatabaseProvider
 from rae_core.models.search import SearchResponse
 
 from apps.memory_api.services.embedding import (
@@ -110,6 +111,24 @@ class RAECoreService:
         )
 
         logger.info("rae_core_service_initialized")
+
+    @property
+    def db(self) -> IDatabaseProvider:
+        """Get agnostic database provider."""
+        if self.postgres_pool:
+            from rae_core.adapters.postgres_db import PostgresDatabaseProvider
+            return PostgresDatabaseProvider(self.postgres_pool)
+        
+        # Fallback for Lite mode - if we have a generic IDatabaseProvider in rae-core
+        # that supports in-memory, we should return it here.
+        # For now, let's assume we might need a dummy or failing provider if not available.
+        raise RuntimeError("Database provider not available (RAE-Lite mode with no DB)")
+
+    @property
+    def enhanced_graph_repo(self) -> Any:
+        """Get enhanced graph repository."""
+        from apps.memory_api.repositories.graph_repository_enhanced import EnhancedGraphRepository
+        return EnhancedGraphRepository(self.db)
 
     async def store_memory(
         self,
@@ -451,104 +470,96 @@ class RAECoreService:
             return await self.postgres_adapter.list_unique_tenants()
         
         # Fallback for PostgresMemoryAdapter
-        async with self.postgres_pool.acquire() as conn:
-            records = await conn.fetch(
-                "SELECT DISTINCT tenant_id FROM memories WHERE tenant_id IS NOT NULL"
-            )
-            return [str(r["tenant_id"]) for r in records]
+        records = await self.db.fetch(
+            "SELECT DISTINCT tenant_id FROM memories WHERE tenant_id IS NOT NULL"
+        )
+        return [str(r["tenant_id"]) for r in records]
 
     async def list_unique_projects(self, tenant_id: str) -> List[str]:
         """List all unique project IDs for a tenant."""
         # agent_id maps to project in RAE-Core
-        async with self.postgres_pool.acquire() as conn:
-            records = await conn.fetch(
-                "SELECT DISTINCT agent_id FROM memories WHERE tenant_id = $1 AND agent_id IS NOT NULL",
-                tenant_id
-            )
-            return [str(r["agent_id"]) for r in records]
+        records = await self.db.fetch(
+            "SELECT DISTINCT agent_id as project FROM memories WHERE tenant_id = $1 AND agent_id IS NOT NULL",
+            tenant_id
+        )
+        return [str(r["project"]) for r in records]
 
     async def list_active_project_tenants(self, since: datetime) -> List[Dict[str, str]]:
         """List unique (project, tenant_id) pairs with recent activity."""
         # agent_id maps to project in RAE-Core
-        async with self.postgres_pool.acquire() as conn:
-            records = await conn.fetch(
-                """
-                SELECT DISTINCT agent_id as project, tenant_id
-                FROM memories
-                WHERE created_at >= $1 AND agent_id IS NOT NULL
-                """,
-                since.replace(tzinfo=None)
-            )
-            return [{"project": r["project"], "tenant_id": r["tenant_id"]} for r in records]
+        records = await self.db.fetch(
+            """
+            SELECT DISTINCT agent_id as project, tenant_id
+            FROM memories
+            WHERE created_at >= $1 AND agent_id IS NOT NULL
+            """,
+            since.replace(tzinfo=None)
+        )
+        return [{"project": r["project"], "tenant_id": r["tenant_id"]} for r in records]
 
     async def list_long_sessions(self, tenant_id: str, project: str, threshold: int) -> List[Dict[str, Any]]:
         """List sessions with event count above threshold."""
-        async with self.postgres_pool.acquire() as conn:
-            sql = """
-                SELECT
-                    metadata->>'session_id' as session_id,
-                    COUNT(*) as event_count
-                FROM memories
-                WHERE tenant_id = $1
-                  AND agent_id = $2
-                  AND layer = 'episodic'
-                  AND metadata->>'session_id' IS NOT NULL
-                GROUP BY metadata->>'session_id'
-                HAVING COUNT(*) >= $3
-                ORDER BY COUNT(*) DESC
-            """
-            records = await conn.fetch(sql, tenant_id, project, threshold)
-            return [dict(r) for r in records]
+        sql = """
+            SELECT
+                metadata->>'session_id' as session_id,
+                COUNT(*) as event_count
+            FROM memories
+            WHERE tenant_id = $1
+                AND agent_id = $2
+                AND layer = 'episodic'
+                AND metadata->>'session_id' IS NOT NULL
+            GROUP BY metadata->>'session_id'
+            HAVING COUNT(*) >= $3
+            ORDER BY COUNT(*) DESC
+        """
+        records = await self.db.fetch(sql, tenant_id, project, threshold)
+        return [dict(r) for r in records]
 
     async def apply_global_memory_decay(self, decay_rate: float) -> None:
         """Apply decay to all memories strength."""
-        async with self.postgres_pool.acquire() as conn:
-            await conn.execute(
-                "UPDATE memories SET strength = strength * $1",
-                decay_rate
-            )
+        await self.db.execute(
+            "UPDATE memories SET strength = strength * $1",
+            decay_rate
+        )
 
     async def delete_expired_memories(self) -> int:
         """Delete all expired memories in the system."""
-        async with self.postgres_pool.acquire() as conn:
-            result = await conn.execute(
-                "DELETE FROM memories WHERE expires_at IS NOT NULL AND expires_at < NOW()"
-            )
-            # Parse "DELETE N"
-            if result and isinstance(result, str) and result.startswith("DELETE"):
-                return int(result.split()[-1])
-            return 0
+        result = await self.db.execute(
+            "DELETE FROM memories WHERE expires_at IS NOT NULL AND expires_at < NOW()"
+        )
+        # IDatabaseProvider.execute might return different things, but usually it's the result string or None
+        if result and isinstance(result, str) and result.startswith("DELETE"):
+            return int(result.split()[-1])
+        return 0
 
     async def delete_old_episodic_memories(self, days: int) -> int:
         """Delete old episodic memories to manage data lifecycle."""
-        async with self.postgres_pool.acquire() as conn:
-            interval = f"{days} days"
-            result = await conn.execute(
-                "DELETE FROM memories WHERE layer = 'em' AND created_at < NOW() - $1::interval",
-                interval,
-            )
-            if result and isinstance(result, str) and result.startswith("DELETE"):
-                return int(result.split()[-1])
-            return 0
+        interval = f"{days} days"
+        result = await self.db.execute(
+            "DELETE FROM memories WHERE layer = 'em' AND created_at < NOW() - $1::interval",
+            interval,
+        )
+        if result and isinstance(result, str) and result.startswith("DELETE"):
+            return int(result.split()[-1])
+        return 0
 
     async def list_memories_for_graph_extraction(self, limit: int = 100) -> List[Dict[str, Any]]:
         """List memories that are pending graph extraction."""
-        async with self.postgres_pool.acquire() as conn:
-            records = await conn.fetch(
-                """
-                SELECT DISTINCT tenant_id, ARRAY_AGG(id) as memory_ids
-                FROM memories m
-                WHERE layer = 'em'
-                  AND created_at > NOW() - INTERVAL '1 hour'
-                  AND NOT EXISTS (
-                      SELECT 1 FROM knowledge_graph_edges ke
-                      WHERE ke.tenant_id = m.tenant_id
-                        AND (ke.source_node_id IN (SELECT id FROM knowledge_graph_nodes WHERE node_id = m.id::text)
-                             OR ke.target_node_id IN (SELECT id FROM knowledge_graph_nodes WHERE node_id = m.id::text))
-                  )
-                GROUP BY tenant_id
-                LIMIT $1
-                """,
-                limit
-            )
-            return [dict(r) for r in records]
+        records = await self.db.fetch(
+            """
+            SELECT DISTINCT tenant_id, ARRAY_AGG(id) as memory_ids
+            FROM memories m
+            WHERE layer = 'em'
+                AND created_at > NOW() - INTERVAL '1 hour'
+                AND NOT EXISTS (
+                    SELECT 1 FROM knowledge_graph_edges ke
+                    WHERE ke.tenant_id = m.tenant_id
+                    AND (ke.source_node_id IN (SELECT id FROM knowledge_graph_nodes WHERE node_id = m.id::text)
+                            OR ke.target_node_id IN (SELECT id FROM knowledge_graph_nodes WHERE node_id = m.id::text))
+                )
+            GROUP BY tenant_id
+            LIMIT $1
+            """,
+            limit
+        )
+        return [dict(r) for r in records]

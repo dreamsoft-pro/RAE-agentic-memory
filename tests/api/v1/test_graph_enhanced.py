@@ -55,18 +55,14 @@ from apps.memory_api.routes.graph_enhanced import (
 
 @pytest.fixture
 def mock_repo():
-    repo_instance = AsyncMock()
-    with patch(
-        "apps.memory_api.routes.graph_enhanced.get_enhanced_graph_repository"
-    ) as mock:
-        mock.return_value = repo_instance
-        yield repo_instance
+    return AsyncMock()
 
 
 @pytest.fixture
-def mock_rae_service():
+def mock_rae_service(mock_repo):
     service = MagicMock()
     service.postgres_pool = AsyncMock()
+    service.enhanced_graph_repo = mock_repo
     return service
 
 
