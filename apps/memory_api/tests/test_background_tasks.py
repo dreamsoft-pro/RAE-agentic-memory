@@ -184,11 +184,14 @@ class TestProcessGraphExtractionQueue:
         ]
         
         # Mock pool
-        mock_pool = Mock()
+        mock_pool = AsyncMock()
         # Mock acquire to be an async context manager returning mock_conn
         mock_pool.acquire.return_value.__aenter__ = AsyncMock(return_value=mock_conn)
         mock_pool.acquire.return_value.__aexit__ = AsyncMock(return_value=None)
         mock_pool.close = AsyncMock()
+        
+        # Shortcut methods on pool
+        mock_pool.fetch = mock_conn.fetch
         
         mock_get_pool.return_value = mock_pool
 
@@ -215,10 +218,13 @@ class TestProcessGraphExtractionQueue:
         mock_conn.fetch.return_value = []
         
         # Mock pool
-        mock_pool = Mock()
+        mock_pool = AsyncMock()
         mock_pool.acquire.return_value.__aenter__ = AsyncMock(return_value=mock_conn)
         mock_pool.acquire.return_value.__aexit__ = AsyncMock(return_value=None)
         mock_pool.close = AsyncMock()
+        
+        # Shortcut methods on pool
+        mock_pool.fetch = mock_conn.fetch
         
         mock_get_pool.return_value = mock_pool
 

@@ -80,14 +80,14 @@ async def get_metrics_repo(
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ) -> MetricsRepository:
     """Get metrics repository instance"""
-    return MetricsRepository(rae_service.postgres_pool)
+    return MetricsRepository(rae_service.db)
 
 
 async def get_compliance_service(
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ) -> ComplianceService:
     """Get compliance service instance"""
-    return ComplianceService(rae_service.postgres_pool)
+    return ComplianceService(rae_service)
 
 
 def get_websocket_service(
@@ -96,7 +96,7 @@ def get_websocket_service(
     """Get or create WebSocket service instance."""
     global _websocket_service
     if _websocket_service is None:
-        _websocket_service = DashboardWebSocketService(rae_service.postgres_pool)
+        _websocket_service = DashboardWebSocketService(rae_service.db)
         # Start background tasks
         asyncio.create_task(_websocket_service.start_background_tasks())
     return _websocket_service
@@ -216,7 +216,7 @@ async def get_dashboard_metrics(
 
         # Get time series metrics
         time_series_metrics = await _get_time_series_metrics(
-            rae_service.postgres_pool,
+            rae_service.db,
             request.tenant_id,
             request.project_id,
             request.period,
@@ -224,7 +224,7 @@ async def get_dashboard_metrics(
 
         # Get recent activity
         recent_activity = await _get_recent_activity(
-            rae_service.postgres_pool, request.tenant_id, request.project_id, limit=50
+            rae_service.db, request.tenant_id, request.project_id, limit=50
         )
 
         logger.info(
@@ -392,7 +392,7 @@ async def get_visualization(
     **Use Case:** Interactive visualizations in dashboard.
     """
     try:
-        pool = rae_service.postgres_pool
+        pool = rae_service.db
         response = GetVisualizationResponse(
             visualization_type=request.visualization_type
         )
@@ -478,7 +478,7 @@ async def get_system_health(
         # Add component details if requested
         if request.include_sub_components:
             system_health.components = await _get_component_health(
-                rae_service.postgres_pool
+                rae_service.db
             )
 
         # Generate recommendations based on health
@@ -514,7 +514,7 @@ async def simple_health_check(
     """
     try:
         # Check database connectivity
-        await rae_service.postgres_pool.fetchval("SELECT 1")
+        await rae_service.db.fetchval("SELECT 1")
 
         return {
             "status": "healthy",
@@ -554,7 +554,7 @@ async def get_activity_log(
             event_type_filter = [et.strip() for et in event_types.split(",")]
 
         activity_logs = await _get_recent_activity(
-            rae_service.postgres_pool, tenant_id, project_id, limit, event_type_filter
+            rae_service.db, tenant_id, project_id, limit, event_type_filter
         )
 
         logger.info(
@@ -578,7 +578,7 @@ async def get_activity_log(
 
 
 async def _get_time_series_metrics(
-    pool, tenant_id: str, project_id: str, period: MetricPeriod
+    db, tenant_id: str, project_id: str, period: MetricPeriod
 ) -> List[TimeSeriesMetric]:
     """Generate time series metrics for dashboard."""
     # Placeholder - would fetch from metrics table
@@ -586,7 +586,7 @@ async def _get_time_series_metrics(
 
 
 async def _get_recent_activity(
-    pool,
+    db,
     tenant_id: str,
     project_id: str,
     limit: int = 50,
@@ -595,7 +595,7 @@ async def _get_recent_activity(
     """Fetch recent activity logs."""
     try:
         # Fetch recent memories
-        memory_records = await pool.fetch(
+        memory_records = await db.fetch(
             """
             SELECT id, content, importance, created_at
             FROM memories
@@ -625,7 +625,7 @@ async def _get_recent_activity(
             activity_logs.append(log)
 
         # Fetch recent reflections
-        reflection_records = await pool.fetch(
+        reflection_records = await db.fetch(
             """
             SELECT id, content, score, created_at
             FROM reflections
@@ -663,13 +663,13 @@ async def _get_recent_activity(
 
 
 async def _generate_reflection_tree(
-    pool, tenant_id: str, project_id: str, root_id: Optional[UUID], max_depth: int
+    db, tenant_id: str, project_id: str, root_id: Optional[UUID], max_depth: int
 ) -> Optional[ReflectionTreeNode]:
     """Generate hierarchical reflection tree."""
     try:
         # If no root specified, get top-level reflections
         if root_id is None:
-            records = await pool.fetch(
+            records = await db.fetch(
                 """
                 SELECT id, content, type, score, depth_level,
                        parent_reflection_id, cluster_id,
@@ -688,7 +688,7 @@ async def _generate_reflection_tree(
                 return None
             root_record = records[0]
         else:
-            root_record = await pool.fetchrow(
+            root_record = await db.fetchrow(
                 """
                 SELECT id, content, type, score, depth_level,
                        parent_reflection_id, cluster_id,
@@ -719,7 +719,7 @@ async def _generate_reflection_tree(
 
         # Recursively fetch children if within max depth
         if root_node.depth_level < max_depth:
-            children_records = await pool.fetch(
+            children_records = await db.fetch(
                 """
                 SELECT id, content, type, score, depth_level,
                        parent_reflection_id, cluster_id,
@@ -737,7 +737,7 @@ async def _generate_reflection_tree(
 
             for child_record in children_records:
                 child_node = await _generate_reflection_tree(
-                    pool, tenant_id, project_id, child_record["id"], max_depth
+                    db, tenant_id, project_id, child_record["id"], max_depth
                 )
                 if child_node:
                     root_node.children.append(child_node)
@@ -750,12 +750,12 @@ async def _generate_reflection_tree(
 
 
 async def _generate_semantic_graph(
-    pool, tenant_id: str, project_id: str, limit: int
+    db, tenant_id: str, project_id: str, limit: int
 ) -> Optional[SemanticGraph]:
     """Generate semantic knowledge graph."""
     try:
         # Fetch semantic nodes
-        node_records = await pool.fetch(
+        node_records = await db.fetch(
             """
             SELECT id, label, node_type, canonical_form,
                    importance_score, reinforcement_count, is_degraded
@@ -786,7 +786,7 @@ async def _generate_semantic_graph(
             node_ids.add(record["id"])
 
         # Fetch edges between these nodes
-        edge_records = await pool.fetch(
+        edge_records = await db.fetch(
             """
             SELECT source_node_id, target_node_id, relation_type,
                    edge_weight, confidence
@@ -827,7 +827,7 @@ async def _generate_semantic_graph(
 
 
 async def _generate_memory_timeline(
-    pool,
+    db,
     tenant_id: str,
     project_id: str,
     start_time: Optional[datetime],
@@ -842,7 +842,7 @@ async def _generate_memory_timeline(
             start_time = end_time - timedelta(days=7)
 
         # Fetch memory events
-        records = await pool.fetch(
+        records = await db.fetch(
             """
             SELECT id, content, importance, created_at
             FROM memories
@@ -886,7 +886,7 @@ async def _generate_memory_timeline(
 
 
 async def _generate_quality_trend(
-    pool,
+    db,
     tenant_id: str,
     project_id: str,
     start_time: Optional[datetime],
@@ -912,13 +912,13 @@ async def _generate_quality_trend(
     return trend
 
 
-async def _get_component_health(pool) -> List[ComponentHealth]:
+async def _get_component_health(db) -> List[ComponentHealth]:
     """Get health status for all components."""
     components = []
 
     # Database component
     try:
-        await pool.fetchval("SELECT 1")
+        await db.fetchval("SELECT 1")
         db_health = ComponentHealth(
             component_name="database",
             status=HealthStatus.HEALTHY,

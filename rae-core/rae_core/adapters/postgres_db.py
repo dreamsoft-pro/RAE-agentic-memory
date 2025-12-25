@@ -27,5 +27,5 @@ class PostgresDatabaseProvider(IDatabaseProvider):
     async def execute(self, query: str, *args: Any) -> str:
         return await self.pool.execute(query, *args)
 
-    async def acquire(self) -> Any:
+    def acquire(self) -> Any:
         return self.pool.acquire()

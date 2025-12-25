@@ -125,11 +125,18 @@ def mock_pool():
 
 
 @pytest.fixture
-def mock_rae_service():
+def mock_rae_service(mock_pool):
     """Mock for RAECoreService."""
     from apps.memory_api.services.rae_core_service import RAECoreService
 
     service = AsyncMock(spec=RAECoreService)
+    
+    # Mock the 'db' property to return an actual provider wrapping our mock pool
+    from rae_core.adapters.postgres_db import PostgresDatabaseProvider
+    service.db = PostgresDatabaseProvider(mock_pool)
+    
+    # Mock enhanced_graph_repo property
+    service.enhanced_graph_repo = AsyncMock()
 
     # Setup store_memory return
     service.store_memory.return_value = "test-memory-id"
