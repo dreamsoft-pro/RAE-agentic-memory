@@ -37,6 +37,18 @@ RAE employs a 4-layer memory architecture inspired by human cognitive systems. E
 -   **Generation Pattern:** Reflections are generated via the **Actor-Evaluator-Reflector** pattern. After an action is taken, the `Evaluator` assesses the outcome. If the outcome is significant (a notable success or failure), the `Reflector` is triggered to generate a new reflection.
 -   **Storage Mechanism:** Stored as distinct memory items with high importance scores, often including actionable strategies.
 
+### 5. Knowledge Graph (GraphRAG)
+-   **Purpose:** Captures structural relationships between entities that are often missed by vector similarity.
+-   **Extraction:** Uses LLM-based information extraction to identify triples (Subject, Predicate, Object) from episodic memories.
+-   **Traversal:** Supports advanced algorithms like **PageRank** for node importance and **Shortest Path** for finding connections between distant concepts.
+-   **Hybrid Search:** Combines vector search results with graph traversal results using a weighted fusion algorithm.
+
+### 6. Scientific Evaluation Framework
+RAE includes a comprehensive **Evaluation API** for rigorous scientific testing.
+-   **Drift Detection:** Uses statistical tests (Kolmogorov-Smirnov, PSI) to detect when the distribution of memory scores shifts significantly over time.
+-   **A/B Testing:** Native support for running experiments with different retrieval strategies (e.g., Vector vs. Hybrid) and comparing metrics.
+-   **IR Metrics:** Built-in calculation of MRR, NDCG, Precision, and Recall for every query.
+
 ---
 
 ## Mathematical Foundations
@@ -178,9 +190,7 @@ score = w1*relevance + w2*importance + w3*recency + w4*graph_centrality + w5*div
 
 This section summarizes real performance metrics extracted from benchmark runs to provide a transparent view of RAE's capabilities. We analyze two contrasting examples to illustrate performance characteristics.
 
-**Source Files:**
-- `benchmarking/results/industrial_small_20251207_131859.json`
-- `benchmarking/results/academic_lite_20251207_114508.json`
+*> Full datasets and reproduction scripts are available in [benchmarking/README.md](../../benchmarking/README.md).*
 
 ### Summary of Key Metrics
 
