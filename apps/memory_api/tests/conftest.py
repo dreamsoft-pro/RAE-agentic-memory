@@ -273,7 +273,7 @@ async def db_pool(postgres_container):
             await conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS knowledge_graph_nodes (
-                    id SERIAL PRIMARY KEY,
+                    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                     tenant_id VARCHAR(255) NOT NULL,
                     project_id VARCHAR(255) NOT NULL,
                     node_id VARCHAR(255) NOT NULL,
@@ -288,11 +288,11 @@ async def db_pool(postgres_container):
             await conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS knowledge_graph_edges (
-                    id SERIAL PRIMARY KEY,
+                    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
                     tenant_id VARCHAR(255) NOT NULL,
                     project_id VARCHAR(255) NOT NULL,
-                    source_node_id INTEGER REFERENCES knowledge_graph_nodes(id) ON DELETE CASCADE,
-                    target_node_id INTEGER REFERENCES knowledge_graph_nodes(id) ON DELETE CASCADE,
+                    source_node_id UUID REFERENCES knowledge_graph_nodes(id) ON DELETE CASCADE,
+                    target_node_id UUID REFERENCES knowledge_graph_nodes(id) ON DELETE CASCADE,
                     relation VARCHAR(255) NOT NULL,
                     properties JSONB,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

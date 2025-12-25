@@ -48,6 +48,7 @@ class RegisterNodeRequest(BaseModel):
     node_id: str
     api_key: str
     capabilities: Dict[str, Any]
+    ip_address: Optional[str] = None
 
 
 class CreateTaskRequest(BaseModel):

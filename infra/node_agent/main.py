@@ -106,8 +106,41 @@ class NodeAgent:
             return await self._execute_ollama(payload)
         elif task_type in ["code_verify_cycle", "quality_loop"]:
             return await self._execute_code_cycle(payload)
+        elif task_type == "shell_command":
+            return await self._execute_shell_command(payload)
 
         return {"status": "success", "output": "unknown_task_type"}
+
+    async def _execute_shell_command(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute a shell command and return output."""
+        command = payload.get("command")
+        cwd = payload.get("cwd", os.getcwd())
+        env = {**os.environ, **payload.get("env", {})}
+
+        if not command:
+            return {"status": "error", "error": "No command provided"}
+
+        logger.info(f"Executing shell command: {command} in {cwd}")
+        
+        try:
+            import subprocess
+            process = await asyncio.create_subprocess_shell(
+                command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                cwd=cwd,
+                env=env
+            )
+            stdout, stderr = await process.communicate()
+            
+            return {
+                "status": "success" if process.returncode == 0 else "error",
+                "returncode": process.returncode,
+                "stdout": stdout.decode(),
+                "stderr": stderr.decode()
+            }
+        except Exception as e:
+            return {"status": "error", "error": str(e)}
 
     async def _call_ollama(self, model: str, prompt: str, system: str = "") -> Dict[str, Any]:
         ollama_url = self.config.get("ollama_api_url", "http://localhost:11434")
@@ -182,7 +215,7 @@ class NodeAgent:
         )
 
         logger.info(
-            f"Phase 1: Writing analysis with {writer_model} (RAE context included)"
+            f"Phase 1: Writing code/analysis with {writer_model} (RAE context included)"
         )
         write_result = await self._call_ollama(
             writer_model, write_prompt, system=writer_system
@@ -194,17 +227,29 @@ class NodeAgent:
         # 2. REVIEW
         logger.info(f"Phase 2: Reviewing output with {reviewer_model}")
         reviewer_system = (
-            "You are a Senior Python Architect checking the quality of an automated audit."
+            "You are a Senior Python Architect at RAE Project. Your mission is to enforce the highest quality standards. "
+            "You MUST check if the code/analysis: "
+            "1. Includes OpenTelemetry instrumentation (@trace_agent_operation). "
+            "2. Includes unit tests (mocking async dependencies). "
+            "3. Follows Async-First principles. "
+            "4. Has NO absolute paths."
         )
         review_prompt = (
-            "Review the following analysis for correctness. "
-            "Ensure the auditor actually analyzed the code provided in the previous step. "
-            "If the analysis is solid, respond 'PASSED'. Otherwise, explain what is missing.\n\n"
-            f"AUDIT TO REVIEW:\n{initial_output}"
+            "Critically review the following code/analysis. "
+            "If it meets ALL RAE standards, respond with 'PASSED' followed by a short summary. "
+            "If anything is missing (especially Telemetry or Tests), respond with 'REJECTED' and list specific issues.\n\n"
+            f"OUTPUT TO REVIEW:\n{initial_output}"
         )
-        await self._call_ollama(
+        review_result = await self._call_ollama(
             reviewer_model, review_prompt, system=reviewer_system
         )
+        
+        return {
+            "status": "success",
+            "writer_output": initial_output,
+            "review_report": review_result.get("response", "Review failed"),
+            "is_passed": "PASSED" in review_result.get("response", "")
+        }
 
     async def _execute_ollama(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         return await self._call_ollama(
@@ -214,7 +259,7 @@ class NodeAgent:
         )
 
     async def task_loop(self, client: httpx.AsyncClient):
-        poll_url = f"{self.base_url}/control/tasks/poll"
+        poll_url = f"{self.base_url}/control/tasks_poll"
         while True:
             try:
                 resp = await client.get(poll_url, params={"node_id": self.node_id})

@@ -84,8 +84,11 @@ class GraphRepository:
                     AND n.tenant_id = $1
                     AND n.project_id = $2
                 )
-                SELECT DISTINCT ON (id) * FROM graph_traverse
-                ORDER BY id, depth;
+                SELECT * FROM (
+                    SELECT DISTINCT ON (id) * FROM graph_traverse
+                    ORDER BY id, depth
+                ) as results
+                ORDER BY depth, id;
                 """,
                 tenant_id,
                 project_id,

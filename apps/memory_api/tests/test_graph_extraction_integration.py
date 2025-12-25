@@ -13,6 +13,7 @@ Prerequisites:
 """
 
 from unittest.mock import AsyncMock
+from uuid import UUID
 
 import pytest
 
@@ -320,7 +321,7 @@ async def test_graph_repository_get_node_internal_id(db_pool, use_real_db):
 
     # Assert
     assert internal_id is not None
-    assert isinstance(internal_id, int)
+    assert isinstance(internal_id, UUID)
 
     # Try to get non-existent node
     non_existent_id = await repo.get_node_internal_id(

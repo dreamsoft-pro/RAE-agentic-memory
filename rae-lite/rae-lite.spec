@@ -3,23 +3,38 @@
 
 import sys
 from pathlib import Path
+import site
 
 block_cipher = None
 
+rae_core_src = str(Path('../rae-core/rae_core').absolute())
+datas_list = [(rae_core_src, 'rae_core')]
+
 a = Analysis(
     ['rae_lite/main.py'],
-    pathex=[],
+    pathex=['../rae-core'], # Add to path for analysis
     binaries=[],
-    datas=[
-        # Include rae-core package
-        ('../.venv/lib/python*/site-packages/rae_core', 'rae_core'),
-    ],
+    datas=datas_list,
     hiddenimports=[
         'rae_core',
         'rae_core.engine',
+        'rae_core.adapters',
         'rae_core.adapters.sqlite',
+        'rae_core.adapters.sqlite.storage',
+        'rae_core.adapters.sqlite.vector',
+        'rae_core.adapters.sqlite.graph',
         'rae_core.layers',
+        'rae_core.layers.working',
+        'rae_core.layers.longterm',
+        'rae_core.layers.sensory',
+        'rae_core.layers.reflective',
         'rae_core.search',
+        'rae_core.search.engine',
+        'rae_core.search.strategies',
+        'rae_core.search.strategies.vector',
+        'rae_core.search.strategies.sparse',
+        'rae_core.search.strategies.fulltext',
+        'rae_core.search.strategies.graph',
         'fastapi',
         'uvicorn',
         'pystray',

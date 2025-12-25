@@ -572,32 +572,31 @@ class SQLiteStorage(IMemoryStorage):
             agent_id: Agent identifier
             layer: Memory layer
             limit: Maximum number of results
-            filters: Optional additional filters (not implemented yet)
+            filters: Optional additional filters (unused in FTS5 basic)
 
         Returns:
-            List of dictionaries with 'memory' and 'score' keys
+            List of memory dictionaries
         """
         await self.initialize()
 
+        if not query or not tenant_id:
+            return []
+
         async with aiosqlite.connect(self.db_path) as db:
             db.row_factory = aiosqlite.Row
-            async with db.execute(
+            # FTS5 search joining with main table
+            cursor = await db.execute(
                 """
-                SELECT m.*, bm25(memories_fts) as score
-                FROM memories m
-                JOIN memories_fts ON m.rowid = memories_fts.rowid
-                WHERE memories_fts MATCH ?
+                SELECT m.* FROM memories m
+                JOIN memories_fts f ON m.rowid = f.rowid
+                WHERE f.content MATCH ? 
                 AND m.tenant_id = ? AND m.agent_id = ? AND m.layer = ?
-                ORDER BY bm25(memories_fts)
                 LIMIT ?
                 """,
                 (query, tenant_id, agent_id, layer, limit),
-            ) as cursor:
-                rows = await cursor.fetchall()
-                return [
-                    {"memory": self._row_to_dict(row), "score": abs(row["score"])}
-                    for row in rows
-                ]
+            )
+            rows = await cursor.fetchall()
+            return [self._row_to_dict(row) for row in rows]
 
     async def delete_expired_memories(
         self,

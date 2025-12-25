@@ -71,3 +71,9 @@ class ControlPlaneService:
         task = await self.task_repo.create_task(type, payload, priority)
         logger.info("task_created", task_id=str(task.id), type=type)
         return task
+
+    async def get_task(self, task_id: UUID) -> Optional[DelegatedTask]:
+        return await self.task_repo.get_task(task_id)
+
+    async def list_online_nodes(self) -> list[ComputeNode]:
+        return await self.node_repo.list_online_nodes()
