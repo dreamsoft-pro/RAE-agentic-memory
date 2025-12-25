@@ -194,6 +194,11 @@ Building reliable agents requires a robust testing culture. RAE provides special
 -   **[Agent Testing Guide](../../docs/AGENT_TESTING_GUIDE.md)**: How to write unit, integration, and e2e tests for agents.
 -   **[Test Policy](../../docs/AGENTS_TEST_POLICY.md)**: Standards for test coverage and "Zero Flake" policy.
 
+### Real-World Case Studies
+See RAE in action optimizing its own code:
+- **[Autonomous Self-Optimization](../../docs/use-cases/SELF_OPTIMIZATION_LOOP.md)**: How RAE diagnosed a 20x latency regression and fixed it by tuning its Math Controller.
+- **[Distributed Code Audit](../../docs/use-cases/DISTRIBUTED_CODE_AUDIT.md)**: Using Node1 (GPU) to audit code quality.
+
 ## Troubleshooting
 
 Encountering issues? Check the **[Troubleshooting Guide](../../TROUBLESHOOTING.md)** for solutions to common problems like:
