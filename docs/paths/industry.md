@@ -44,6 +44,29 @@ These metrics translate directly to business value:
 
 ---
 
+## Enterprise-Grade Features (Ready Now)
+
+RAE is not just a research project; it includes specific features designed for enterprise governance and stability.
+
+### 1. Cost Governance & Budgeting
+RAE includes a built-in **Governance API** to track and control LLM spend.
+-   **Granular Tracking:** Track token usage and costs per Tenant, Project, or even specific User.
+-   **Budget Limits:** Set monthly hard limits (e.g., "$500/month for Marketing Project").
+-   **Alerting:** Receive webhooks when budget consumption hits 80% or 90%.
+
+### 2. Strict Multi-Tenancy
+Data isolation is enforced at the database level.
+-   **Logical Isolation:** Every query *must* carry a `tenant_id`.
+-   **RLS-Ready:** Designed to work with Postgres Row-Level Security policies.
+-   **Zero Leakage:** Memories from one tenant (e.g., "HR Dept") are mathematically invisible to another (e.g., "IT Dept").
+
+### 3. Circuit Breakers & Resilience
+To prevent cascading failures in production:
+-   **Automatic Cut-off:** If the Vector DB or LLM provider fails, RAE trips a "Circuit Breaker" to fail fast and protect the system.
+-   **Graceful Degradation:** The system can fall back to keyword search if semantic search is unavailable.
+
+---
+
 ## Deployment Considerations
 
 For industrial applications, we recommend the **RAE Server** or **Proxmox HA** deployment options.
