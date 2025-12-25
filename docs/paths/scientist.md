@@ -51,6 +51,29 @@ RAE includes a comprehensive **Evaluation API** for rigorous scientific testing.
 
 ---
 
+## Architecture & Mathematical Deep Dive
+
+For researchers requiring a granular understanding of the system's theoretical underpinning and design evolution, we provide detailed internal documentation.
+
+### Core Mathematical Specification
+- **[RAE Mathematical Refactoring Guide](../../docs/RAE_MATHEMATICAL_REFACTORING_GUIDE.md)**: A comprehensive definition of RAE as a **Markov Decision Process (MDP)**. It details the state space representation, action space formalization, and the **Information Bottleneck** implementation for context selection.
+
+### Architectural Decision Records (ADR)
+A series of reports documenting the key architectural decisions, trade-offs, and philosophies behind RAE:
+
+| Report | Topic | Description |
+| :--- | :--- | :--- |
+| **[REPORT_01](../../REPORT_01_ARCH_AGNOSTICISM.md)** | **Arch Agnosticism** | Decoupling logic from specific LLM providers and frameworks. |
+| **[REPORT_02](../../REPORT_02_ASYNC_EXECUTION.md)** | **Async Execution** | Handling long-running cognitive tasks and parallel processing. |
+| **[REPORT_03](../../REPORT_03_COLD_START.md)** | **Cold Start** | Strategies for system bootstrapping and initial memory seeding. |
+| **[REPORT_04](../../REPORT_04_MIGRATIONS.md)** | **Migrations** | Evolution of memory schemas without data loss. |
+| **[REPORT_05](../../REPORT_05_DATA_CONSISTENCY.md)** | **Data Consistency** | Managing distributed state across SQL, Vector, and Graph stores. |
+| **[REPORT_06](../../REPORT_06_TEST_PHILOSOPHY.md)** | **Test Philosophy** | Strategy for testing non-deterministic agents. |
+| **[REPORT_07](../../REPORT_07_FAILURE_RECOVERY.md)** | **Failure Recovery** | Self-healing mechanisms and circuit breakers. |
+| **[REPORT_08](../../REPORT_08_CONCEPTUAL_COHERENCE.md)** | **Conceptual Coherence** | Maintaining logical integrity across all system layers. |
+
+---
+
 ## Mathematical Foundations
 
 This section details the core mathematical models implemented in RAE. Each formula is directly extracted from the source code and includes references to the relevant files and line numbers.
