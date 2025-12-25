@@ -1,5 +1,40 @@
 ## Recent Changes (Auto-generated)
 
+*Last updated: 2025-12-25 06:27 • Branch: develop • Commit: a67458c*
+
+### ✨ Features
+
+- implement RAE-Lite node build system and fix control plane communication ([`d97175d`](../../commit/d97175d))
+- RAE-Lite MVP Complete. Implemented SQLite Graph, Storage, and NumPy-optimized Vector Store. ([`4bc61d8`](../../commit/4bc61d8))
+- **tests**: enable E2E/OTel/Performance tests and resolve architectural debt ([`4ce986d`](../../commit/4ce986d))
+
+### 🐛 Bug Fixes
+
+- ensure deterministic ordering in graph BFS traversal to fix CI failure ([`60d9a90`](../../commit/60d9a90))
+- linting errors and integration test database schema ([`bd4b263`](../../commit/bd4b263))
+- Correct concatenated package names in requirements-dev.txt ([`c69d149`](../../commit/c69d149))
+
+### 📚 Documentation
+
+- Updated protocol for Node1 delegation and initiated RAE-Lite Graph iteration ([`9bdea81`](../../commit/9bdea81))
+
+### 🔧 Chore
+
+- Manual sync of documentation from origin/change-readme ([`70c09ca`](../../commit/70c09ca))
+
+### 💄 Style
+
+- Unified ruff config and fixed scattered lint errors in scripts/tests ([`5d7f4e6`](../../commit/5d7f4e6))
+- Full lint and format fix across apps, sdk, integrations and tests ([`be7ea2f`](../../commit/be7ea2f))
+
+### 📦 Other
+
+- Merge remote-tracking branch 'origin/main' into develop ([`fbc29d5`](../../commit/fbc29d5))
+
+---
+
+## Recent Changes (Auto-generated)
+
 *Last updated: 2025-12-25 06:21 • Branch: develop • Commit: 60d9a90*
 
 ### ✨ Features
