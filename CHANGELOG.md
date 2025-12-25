@@ -1,5 +1,53 @@
 ## Recent Changes (Auto-generated)
 
+*Last updated: 2025-12-25 11:31 • Branch: develop • Commit: a951d07*
+
+### ✨ Features
+
+- implement RAE-Lite node build system and fix control plane communication ([`d1b5de5`](../../commit/d1b5de5))
+- implement RAE-Lite node build system and fix control plane communication ([`d97175d`](../../commit/d97175d))
+- RAE-Lite MVP Complete. Implemented SQLite Graph, Storage, and NumPy-optimized Vector Store. ([`4bc61d8`](../../commit/4bc61d8))
+- **tests**: enable E2E/OTel/Performance tests and resolve architectural debt ([`4ce986d`](../../commit/4ce986d))
+
+### 🐛 Bug Fixes
+
+- linting errors and integration test database schema ([`db6c101`](../../commit/db6c101))
+- ensure deterministic ordering in graph BFS traversal to fix CI failure ([`60d9a90`](../../commit/60d9a90))
+- linting errors and integration test database schema ([`bd4b263`](../../commit/bd4b263))
+- Correct concatenated package names in requirements-dev.txt ([`c69d149`](../../commit/c69d149))
+
+### 📚 Documentation
+
+- add strategic reasoning case study demonstrating active intelligence ([`a951d07`](../../commit/a951d07))
+- add self-optimization use case demonstrating RAE improving RAE ([`2581060`](../../commit/2581060))
+- add CONCEPT.md explaining RAE philosophy and distributed architecture (Node1) ([`14bc8f9`](../../commit/14bc8f9))
+- integrate orphaned technical docs (reports, production guides, testing) into path guides ([`629aa06`](../../commit/629aa06))
+- update healthcare and scientist guides with advanced features and graphrag details ([`63b21e7`](../../commit/63b21e7))
+- expand industry and public sector guides with advanced enterprise features ([`476dcc1`](../../commit/476dcc1))
+- refine README comparison and expand guides for lite/industry/public-sector ([`27b995b`](../../commit/27b995b))
+- add performance benchmarks and usage example to main README ([`92583e5`](../../commit/92583e5))
+- sync API documentation with codebase (add missing Feedback, Compliance, Control Plane APIs) ([`b2b3096`](../../commit/b2b3096))
+- restore visibility of API_DOCUMENTATION.md in README and developer guide ([`21034f7`](../../commit/21034f7))
+- update branching strategy and agent protocol with strict merge verification ([`1d7a534`](../../commit/1d7a534))
+- Updated protocol for Node1 delegation and initiated RAE-Lite Graph iteration ([`9bdea81`](../../commit/9bdea81))
+
+### 🔧 Chore
+
+- Manual sync of documentation from origin/change-readme ([`70c09ca`](../../commit/70c09ca))
+
+### 💄 Style
+
+- Unified ruff config and fixed scattered lint errors in scripts/tests ([`5d7f4e6`](../../commit/5d7f4e6))
+- Full lint and format fix across apps, sdk, integrations and tests ([`be7ea2f`](../../commit/be7ea2f))
+
+### 📦 Other
+
+- Merge remote-tracking branch 'origin/main' into develop ([`fbc29d5`](../../commit/fbc29d5))
+
+---
+
+## Recent Changes (Auto-generated)
+
 *Last updated: 2025-12-25 08:38 • Branch: develop • Commit: b5126a8*
 
 ### ✨ Features
