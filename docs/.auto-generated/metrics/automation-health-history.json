@@ -376,24 +376,24 @@
     "errors_count": 0
   },
   {
-    "run_id": "20251225-180426",
-    "timestamp": "2025-12-25T18:04:26.610640",
-    "duration_seconds": 0.25,
+    "run_id": "20251225-173729",
+    "timestamp": "2025-12-25T17:37:29.187099",
+    "duration_seconds": 0.19,
     "status": "success",
     "files_count": 8,
     "errors_count": 0
   },
   {
-    "run_id": "20251225-200049",
-    "timestamp": "2025-12-25T20:00:49.829280",
-    "duration_seconds": 0.2,
+    "run_id": "20251225-194859",
+    "timestamp": "2025-12-25T19:48:59.269958",
+    "duration_seconds": 0.21,
     "status": "success",
     "files_count": 8,
     "errors_count": 0
   },
   {
-    "run_id": "20251226-025341",
-    "timestamp": "2025-12-26T02:53:41.431214",
+    "run_id": "20251225-205042",
+    "timestamp": "2025-12-25T20:50:42.357331",
     "duration_seconds": 0.19,
     "status": "success",
     "files_count": 8,

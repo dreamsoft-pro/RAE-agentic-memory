@@ -3,6 +3,7 @@
 - 🔍 **Hybrid Search**: Combining vector, semantic, and graph-based retrieval.
 *(czyt. „Rej”)*
 
+[![DOI](https://zenodo.org/badge/1088095844.svg)](https://zenodo.org/badge/latestdoi/1088095844)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Tests](https://img.shields.io/badge/tests-892%20passing-brightgreen.svg)]()
