@@ -1,5 +1,20 @@
 ## Recent Changes (Auto-generated)
 
+*Last updated: 2025-12-26 09:24 • Branch: develop • Commit: 0650902*
+
+### 📚 Documentation
+
+- add Zenodo DOI badge to README ([`9e8eaf3`](../../commit/9e8eaf3))
+
+### 🔧 Chore
+
+- **release**: bump version to 2.7.1 ([`0650902`](../../commit/0650902))
+- **zenodo**: update .zenodo.json metadata ([`7be5ab7`](../../commit/7be5ab7))
+
+---
+
+## Recent Changes (Auto-generated)
+
 *Last updated: 2025-12-26 08:57 • Branch: develop • Commit: c952787*
 
 ### 📚 Documentation
