@@ -1,5 +1,19 @@
 ## Recent Changes (Auto-generated)
 
+*Last updated: 2025-12-26 08:57 • Branch: develop • Commit: c952787*
+
+### 📚 Documentation
+
+- add Zenodo DOI badge to README ([`9e8eaf3`](../../commit/9e8eaf3))
+
+### 🔧 Chore
+
+- **zenodo**: update .zenodo.json metadata ([`7be5ab7`](../../commit/7be5ab7))
+
+---
+
+## Recent Changes (Auto-generated)
+
 *Last updated: 2025-12-26 08:50 • Branch: develop • Commit: 7be5ab7*
 
 ### 📚 Documentation
