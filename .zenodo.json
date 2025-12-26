@@ -1,5 +1,6 @@
 {
   "title": "RAE – Reflective Agentic-Memory Engine",
+  "version": "2.7.1",
   "upload_type": "software",
   "description": "Provider-agnostic, privacy-first external memory engine for LLM agents.",
   "creators": [
