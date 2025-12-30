@@ -174,7 +174,7 @@ class HybridSearchService:
                 )
 
                 # Generate query embedding
-                query_embedding = self.embedding_service.generate_embeddings([query])
+                query_embedding = await self.embedding_service.generate_embeddings_async([query])
                 query_emb = np.array(query_embedding[0])
 
                 # Convert vector results to MemoryItem format
@@ -366,7 +366,7 @@ class HybridSearchService:
             List of scored memory records
         """
         # Generate query embedding
-        query_embedding = self.embedding_service.generate_embeddings([query])[0]
+        query_embedding = (await self.embedding_service.generate_embeddings_async([query]))[0]
 
         # Build filters
         query_filters = {

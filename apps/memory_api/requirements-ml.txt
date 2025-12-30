@@ -5,10 +5,6 @@
 # WARNING: These dependencies make Docker image very large
 # Consider using dedicated microservice (reranker-service) or external API instead
 
-# Embeddings (Local)
-# Updated to fix compatibility with huggingface_hub
-sentence-transformers>=2.7.0
-
 # NLP & Entity Recognition
 spacy
 en-core-web-lg @ https://github.com/explosion/spacy-models/releases/download/en_core_web_lg-3.7.1/en_core_web_lg-3.7.1-py3-none-any.whl

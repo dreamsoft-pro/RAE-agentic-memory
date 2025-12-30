@@ -149,6 +149,32 @@ response = await client.agent.execute(
 # Result: "No. Strict Block. Rationale: User prefers local processing for PII data."
 ```
 
+### 🔬 Scientific Use Case: Dynamic Hypothesis Refinement
+
+This example demonstrates how RAE's 4-layer memory and 3-layer Math Control Plane enable autonomous scientific discovery.
+
+**Scenario:** An agent is testing a new catalyst (Compound X) and encounters unexpected results.
+
+1.  **Semantic Memory Retrieval (Math-1)**:
+    *   *Agent Query:* "Expected reaction rate for Compound X?"
+    *   *RAE:* Retrieves established theory: "Compound X should accelerate reaction at > 50°C." (Confidence: 0.95)
+
+2.  **Episodic Memory Recording (Sensory -> Episodic)**:
+    *   *Experiment:* Agent runs test at 60°C. Reaction fails.
+    *   *RAE:* Records: `Episode(Action="Test 60C", Outcome="Failure", Surprise=High)`
+
+3.  **Reflective Loop (Math-3 + Reflection)**:
+    *   *Trigger:* `Surprise > Threshold`. The **Math-3** layer detects high Information Entropy (Theory vs. Observation divergence).
+    *   *Reflection Engine:* Activates. It correlates this failure with a past vague episode "Compound X degrades in high humidity."
+    *   *Consolidation:* RAE updates Semantic Memory: "Compound X is humidity-sensitive." (New Rule).
+
+4.  **Policy Update (Math-2)**:
+    *   *Adaptation:* The **Math-2 Controller** updates the retrieval policy for future chemistry queries to prioritize "Environmental Conditions" (Beta weight increased).
+
+```python
+# Detailed simulation available in: examples/scientific_discovery_simulation.py
+```
+
 ---
 
 ## API Documentation

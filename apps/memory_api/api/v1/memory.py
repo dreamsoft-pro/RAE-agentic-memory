@@ -146,7 +146,7 @@ async def query_memory(
         embedding_service = get_embedding_service()
 
         # Get query embedding for vector search
-        query_embedding = (embedding_service.generate_embeddings([req.query_text]))[0]
+        query_embedding = (await embedding_service.generate_embeddings_async([req.query_text]))[0]
         span.set_attribute("rae.query.embedding_dimension", len(query_embedding))
 
         # 2. Build filters
