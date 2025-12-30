@@ -38,7 +38,10 @@ from apps.memory_api.services.hybrid_search import HybridSearchService  # noqa: 
 def mock_embedding_service():
     """Mock embedding service."""
     service = Mock()
-    service.generate_embeddings = Mock(return_value=[[0.1, 0.2, 0.3]])
+    # Mock synchronous method
+    service.generate_embeddings = Mock(return_value=[[0.1] * 384])
+    # Mock asynchronous method
+    service.generate_embeddings_async = AsyncMock(return_value=[[0.1] * 384])
     return service
 
 
@@ -52,6 +55,7 @@ def hybrid_search(mock_pool, mock_graph_repo):
     ) as mock_get_emb:
         mock_emb = MagicMock()
         mock_emb.generate_embeddings.return_value = [[0.1] * 384]
+        mock_emb.generate_embeddings_async = AsyncMock(return_value=[[0.1] * 384])
         mock_get_emb.return_value = mock_emb
         yield HybridSearchService(
             rae_service=mock_rae_service, graph_repo=mock_graph_repo
@@ -919,7 +923,8 @@ class TestHybridSearchWithRealDatabase:
         from apps.memory_api.models import ScoredMemoryRecord
 
         mock_embedding = Mock()
-        mock_embedding.generate_embeddings = Mock(return_value=[[0.1, 0.2, 0.3]])
+        mock_embedding.generate_embeddings = Mock(return_value=[[0.1] * 384])
+        mock_embedding.generate_embeddings_async = AsyncMock(return_value=[[0.1] * 384])
 
         # Create service with real db_pool
         from apps.memory_api.services.hybrid_search import HybridSearchService
