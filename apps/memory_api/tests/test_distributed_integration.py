@@ -51,7 +51,7 @@ async def test_embedding_service_local_fallback():
     settings.RAE_PROFILE = "standard"
 
     # Mock SentenceTransformer to avoid torch/cuda warnings during initialization
-    with patch("apps.memory_api.services.embedding.SentenceTransformer") as MockST:
+    with patch("apps.memory_api.services.embedding.SentenceTransformer"):
         service = EmbeddingService()
 
         # Mock local generate_embeddings (sync)
