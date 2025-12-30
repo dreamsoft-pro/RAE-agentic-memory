@@ -3,6 +3,7 @@
 services:
   # Main RAE API Service
   rae-api:
+    image: rae-memory:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -21,8 +22,6 @@ services:
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=6333
       - RAE_VECTOR_BACKEND=${RAE_VECTOR_BACKEND:-qdrant}
-      - ML_SERVICE_URL=http://ml-service:8001
-      - RERANKER_API_URL=http://ml-service:8001
       - TENANCY_ENABLED=false
       - ENABLE_API_KEY_AUTH=false
       - ENABLE_JWT_AUTH=false
@@ -35,11 +34,6 @@ services:
       - OTEL_SERVICE_NAME=rae-memory-api
       - OTEL_SERVICE_VERSION=2.2.0-enterprise
       - OTEL_EXPORTER_TYPE=otlp
-    volumes:
-      - ./apps:/app/apps
-      - ./rae-core:/app/rae-core
-      - ./sdk:/app/sdk
-      - ./integrations:/app/integrations
     depends_on:
       postgres:
         condition: service_healthy
@@ -47,8 +41,6 @@ services:
         condition: service_healthy
       qdrant:
         condition: service_started
-      ml-service:
-        condition: service_healthy
       otel-collector:
         condition: service_started
     healthcheck:
@@ -57,24 +49,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    restart: unless-stopped
-    networks:
-      - rae-network
-
-  # ML Service - Heavy ML operations isolated from main API
-  ml-service:
-    build:
-      context: ./apps/ml_service
-      dockerfile: Dockerfile
-    container_name: rae-ml-service
-    ports:
-      - "8001:8001"
-    healthcheck:
-      test: ["CMD-SHELL", "python3 -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8001/health\")' || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 40s
     restart: unless-stopped
     networks:
       - rae-network
@@ -137,6 +111,7 @@ services:
 
   # Celery worker for async tasks
   celery-worker:
+    image: rae-memory:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -160,11 +135,6 @@ services:
       - OTEL_SERVICE_NAME=rae-celery-worker
       - OTEL_SERVICE_VERSION=2.2.0-enterprise
       - OTEL_EXPORTER_TYPE=otlp
-    volumes:
-      - ./apps:/app/apps
-      - ./rae-core:/app/rae-core
-      - ./sdk:/app/sdk
-      - ./integrations:/app/integrations
     depends_on:
       - postgres
       - redis
@@ -182,6 +152,7 @@ services:
 
   # Celery beat for scheduled tasks
   celery-beat:
+    image: rae-memory:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -200,11 +171,6 @@ services:
       - OTEL_SERVICE_NAME=rae-celery-beat
       - OTEL_SERVICE_VERSION=2.2.0-enterprise
       - OTEL_EXPORTER_TYPE=otlp
-    volumes:
-      - ./apps:/app/apps
-      - ./rae-core:/app/rae-core
-      - ./sdk:/app/sdk
-      - ./integrations:/app/integrations
     depends_on:
       - postgres
       - redis
@@ -221,6 +187,7 @@ services:
 
   # Streamlit Dashboard (optional)
   rae-dashboard:
+    image: rae-dashboard:latest
     build:
       context: ./tools/memory-dashboard
       dockerfile: Dockerfile

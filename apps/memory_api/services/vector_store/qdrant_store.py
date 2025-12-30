@@ -50,21 +50,8 @@ class QdrantStore(MemoryVectorStore):
         self.qdrant_client = QdrantClient(
             host=settings.QDRANT_HOST, port=settings.QDRANT_PORT
         )
-        if settings.ONNX_EMBEDDER_PATH:
-            # In a real scenario, this would be a proper ONNX embedder class
-            # For now, it returns dummy embeddings.
-            self.embedding_model = self._get_onnx_embedder(settings.ONNX_EMBEDDER_PATH)
-            print(
-                f"Using ONNX embedder (placeholder) from: {settings.ONNX_EMBEDDER_PATH}"
-            )
-        else:
-            if not SENTENCE_TRANSFORMERS_AVAILABLE:
-                raise RuntimeError(
-                    "QdrantStore requires sentence-transformers. "
-                    "Install ML extras or run: `pip install sentence-transformers`."
-                )
-            self.embedding_model = SentenceTransformer("all-MiniLM-L6-v2")  # type: ignore[misc]
-            print("Using SentenceTransformer 'all-MiniLM-L6-v2'")
+        # self.embedding_model was removed as it is not used in QdrantStore.
+        # Embeddings are passed explicitly to upsert/query methods.
 
         self.ensure_collection_exists()
 

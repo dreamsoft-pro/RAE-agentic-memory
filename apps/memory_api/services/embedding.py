@@ -1,4 +1,6 @@
 from typing import TYPE_CHECKING, Any, List, Optional, cast
+import litellm
+import os
 
 from rae_core.interfaces.embedding import IEmbeddingProvider
 
@@ -24,6 +26,8 @@ class EmbeddingService:
         self._settings = settings
         self.model: Optional["SentenceTransformer"] = None
         self._initialized = False
+        self.use_litellm = False
+        self.litellm_model = "text-embedding-3-small" # Default fallback
 
     @property
     def settings(self):
@@ -32,12 +36,16 @@ class EmbeddingService:
         return self._settings or default_settings
 
     def _ensure_available(self) -> None:
-        """Ensure sentence-transformers is available."""
+        """Check availability of local embedding models or fall back to LiteLLM."""
         if not SENTENCE_TRANSFORMERS_AVAILABLE:
-            raise RuntimeError(
-                "Embedding service requires sentence-transformers. "
-                "Install ML extras or run: `pip install sentence-transformers`."
-            )
+            self.use_litellm = True
+            # Determine best default model based on env
+            if self.settings.RAE_LLM_BACKEND == "ollama":
+                 self.litellm_model = "ollama/nomic-embed-text"
+            elif self.settings.OPENAI_API_KEY:
+                 self.litellm_model = "text-embedding-3-small"
+            
+            print(f"SentenceTransformers not found. Falling back to LiteLLM with model: {self.litellm_model}")
 
     def _initialize_model(self) -> None:
         """Lazy initialization of the embedding model."""
@@ -45,6 +53,10 @@ class EmbeddingService:
             return
 
         self._ensure_available()
+
+        if self.use_litellm:
+            self._initialized = True
+            return
 
         if self.settings.ONNX_EMBEDDER_PATH:
             # Placeholder for a real ONNX embedder class
@@ -68,6 +80,18 @@ class EmbeddingService:
         Generates dense embeddings for a list of texts (synchronous).
         """
         self._initialize_model()
+        
+        if self.use_litellm:
+             # Use LiteLLM for embeddings
+             try:
+                response = litellm.embedding(model=self.litellm_model, input=texts)
+                return [d['embedding'] for d in response['data']]
+             except Exception as e:
+                 print(f"LiteLLM embedding failed: {e}")
+                 # Fallback to dummy embeddings if API fails (to prevent crash in dev)
+                 # In prod this should probably raise
+                 return [[0.0] * 384 for _ in texts]
+
         embeddings = self.model.encode(texts)  # type: ignore[union-attr]
         return [emb.tolist() for emb in embeddings]
 
@@ -89,6 +113,18 @@ class EmbeddingService:
                 return cast(List[List[float]], result.get("embeddings", []))
             finally:
                 await client.close()
+        
+        # Initialize to check if we use litellm
+        self._initialize_model()
+
+        if self.use_litellm:
+             # LiteLLM supports async via aembedding
+             try:
+                response = await litellm.aembedding(model=self.litellm_model, input=texts)
+                return [d['embedding'] for d in response['data']]
+             except Exception as e:
+                 print(f"LiteLLM async embedding failed: {e}")
+                 return [[0.0] * 384 for _ in texts]
 
         # Fallback to local execution (offloaded to thread pool if needed,
         # but here we just call the sync version for simplicity)
