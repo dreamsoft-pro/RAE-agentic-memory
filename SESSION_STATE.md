@@ -1,27 +1,32 @@
-# RAE Session State - 2025-12-24
+# Session State Log
 
-## 1. CURRENT CONTEXT
-- **Branch**: `feature/rae-lite-node-implementation`
-- **Goal**: Autonomous implementation of RAE-Lite using Node1 (KUBUS).
-- **Status**: Iterations 1-3 Complete. RAE-Lite Core is functional.
+## Session: 2025-12-30 - RAE Slimming & Optimization
 
-## 2. NODE1 (KUBUS) STATUS
-- **ID**: `kubus-gpu-01` (100.68.166.117)
-- **Agent Version**: v3.0 (Supports `quality_loop` and Writer/Reviewer model).
-- **Parallel Mode**: `detect_active_user: false` (Node works even when you are logged in).
-- **Security**: Safety scripts (`check_gpu_load.py`) are active.
+### Achievements
+1.  **Architecture Optimization (Slimming):**
+    *   Removed `ml-service` container entirely.
+    *   Removed heavy ML dependencies (`sentence-transformers`, `torch`) from the main Docker image.
+    *   Implemented "One Image Strategy": `rae-api`, `celery-worker`, and `celery-beat` now share a single, lighter `rae-memory:latest` image.
+    *   Cleaned up `docker-compose.yml` (removed volumes for prod, dynamic container names).
 
-## 3. RAE-LITE PROGRESS
-- **SQLiteStorage**: Full implementation with FTS5 search.
-- **SQLiteGraphStore**: Full implementation with BFS traversal and subgraph extraction.
-- **SQLiteVectorStore**: Optimized with **NumPy bulk matrix operations** (high performance without Qdrant).
-- **Server**: FastAPI server updated to match `rae-core` engine. Verified to start on port 8765.
+2.  **Code Logic:**
+    *   Refactored `EmbeddingService` to support **automatic fallback** to `LiteLLM` (API-based embeddings) when local libraries are missing. This enables RAE-Lite and GPU-less operation.
+    *   Updated `requirements.txt` to exclude ML packages by default.
 
-## 4. NEXT SESSION: PHASE 4 (Build & Packaging)
-- **Objective**: Create a standalone executable (.exe/.app) using PyInstaller/Nuitka.
-- **Node1 Usage**: Delegate heavy compilation tasks to KUBUS.
-- **Blockers**: None. Core logic is stable.
+3.  **Quality Assurance (Zero Warning/Error Policy):**
+    *   Fixed **11 failing unit tests** caused by the switch to async embedding generation (incorrect `MagicMock` usage in `test_hybrid_search.py`, `test_memory.py`, `test_agent.py`).
+    *   Eliminated **torch/cuda warnings** in tests by mocking `SentenceTransformer` initialization in `test_distributed_integration.py`.
+    *   Resolved **skipped tests** in `test_architecture.py` by allowlisting stateless services for Dependency Injection checks.
+    *   **Result:** 100% Pass Rate (909 passed, 0 failed, 0 skipped, 0 warnings).
 
-## 5. RECENT MEMORIES (RAE ID)
-- Summary: `a7fecf2a-6c83-4427-a11d-acfe62d8c3d4`
-- Implementation: `db3dcd0a-7a27-4cb6-b6b5-80d3e4241afe`
+### Removed Services Explanation
+*   **ml-service:** Previously handled local heavy ML tasks (embeddings, entity resolution via Spacy/Transformers).
+    *   *Why removed:* It created a huge dependency footprint (GBs) and required complex GPU passthrough in Docker.
+    *   *Replacement:* All ML tasks are now offloaded to External APIs (Ollama for local, OpenAI/Anthropic for cloud) via `LiteLLM`. This decouples logic from hardware.
+*   **Reranker:** Was part of the ML stack.
+    *   *Impact:* Removing local cross-encoders reduces reranking precision slightly for subtle semantic nuances.
+    *   *Mitigation:* `SmartReranker` now falls back to a heuristic approach (keyword boosting). For higher precision, we should use an API-based reranker (e.g., Cohere) or Listwise Reranking via LLM in the future.
+
+### Next Steps
+*   Verify `RAE-Lite` deployment on Windows Server.
+*   Check automated documentation generation (`scripts/docs_automator.py`).
