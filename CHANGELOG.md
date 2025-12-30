@@ -1,3 +1,23 @@
+# Changelog
+
+## [2.8.0] - 2025-12-30
+
+### 🚀 Architecture Optimization (Slimming)
+- **Removed ml-service:** The separate ML service container has been removed to reduce complexity and resource usage. ML operations are now handled via API or lightweight fallback.
+- **One Image Strategy:** `rae-api`, `celery-worker`, and `celery-beat` services now share a single, optimized Docker image (`rae-memory:latest`), significantly reducing build time and storage requirements.
+- **Dependency Cleanup:** Removed heavy ML libraries (`sentence-transformers`, `torch`) from the main Docker image. The system now defaults to API-based embeddings (LiteLLM) for a much lighter footprint.
+
+### ✨ Features
+- **Auto-Fallback Embeddings:** `EmbeddingService` now automatically detects if local ML libraries are missing and seamlessly switches to LiteLLM (supporting OpenAI, Ollama, etc.) without crashing.
+- **Optimized Docker Compose:** Cleaned up `docker-compose.yml`, removing unnecessary volumes for production-like consistency and using dynamic container names.
+
+### 🐛 Bug Fixes
+- **Async Mocking:** Fixed critical unit test failures caused by the transition to asynchronous embedding generation.
+- **Linter & Warnings:** Resolved all linter errors and suppressed distracting torch/CUDA warnings in the test suite.
+- **Zero Drift:** Achieved 100% green test suite (909 passed tests).
+
+## [2.7.1] - 2025-12-30
+... (previous entries)
 ## Recent Changes (Auto-generated)
 
 *Last updated: 2025-12-30 23:10 • Branch: develop • Commit: a4df36d*
