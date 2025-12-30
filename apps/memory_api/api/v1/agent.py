@@ -92,7 +92,9 @@ async def execute(
         # 3. Retrieve episodic context from vector store
         try:
             embedding_service = get_embedding_service()
-            query_embedding = (await embedding_service.generate_embeddings_async([req.prompt]))[0]
+            query_embedding = (
+                await embedding_service.generate_embeddings_async([req.prompt])
+            )[0]
 
             query_filters = {
                 "must": [

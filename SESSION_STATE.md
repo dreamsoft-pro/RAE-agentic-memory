@@ -17,6 +17,7 @@
     *   Fixed **11 failing unit tests** caused by the switch to async embedding generation (incorrect `MagicMock` usage in `test_hybrid_search.py`, `test_memory.py`, `test_agent.py`).
     *   Eliminated **torch/cuda warnings** in tests by mocking `SentenceTransformer` initialization in `test_distributed_integration.py`.
     *   Resolved **skipped tests** in `test_architecture.py` by allowlisting stateless services for Dependency Injection checks.
+    *   **Lint Fixes:** Fixed import sorting, unused imports in `embedding.py` and unused variables in `test_distributed_integration.py` to ensure CI/CD compliance.
     *   **Result:** 100% Pass Rate (909 passed, 0 failed, 0 skipped, 0 warnings).
 
 ### Removed Services Explanation
