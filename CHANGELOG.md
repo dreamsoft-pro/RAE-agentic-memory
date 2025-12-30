@@ -1,5 +1,34 @@
 ## Recent Changes (Auto-generated)
 
+*Last updated: 2025-12-30 23:10 • Branch: develop • Commit: a4df36d*
+
+### 🐛 Bug Fixes
+
+- **lint**: resolve linting errors in embedding service and tests ([`a798df5`](../../commit/a798df5))
+
+### ♻️ Refactoring
+
+- slim down RAE and fix all test failures/warnings/skips ([`6e31d1f`](../../commit/6e31d1f))
+- **infra**: remove ml-service and unify docker images ([`316169f`](../../commit/316169f))
+
+### 📚 Documentation
+
+- update session state with slimming and test results ([`d778af9`](../../commit/d778af9))
+- **node_agent**: add instructions for setting up new worker nodes ([`3922fba`](../../commit/3922fba))
+
+### 🔧 Chore
+
+- **release**: bump version to 2.7.1 ([`0650902`](../../commit/0650902))
+
+### 📦 Other
+
+- Merge remote-tracking branch 'origin/develop' into develop ([`4c65a01`](../../commit/4c65a01))
+- Merge fix/rae-recovery-async-embeddings into develop (resolve conflicts using theirs) ([`9d2a729`](../../commit/9d2a729))
+
+---
+
+## Recent Changes (Auto-generated)
+
 *Last updated: 2025-12-30 23:03 • Branch: develop • Commit: a798df5*
 
 ### 🐛 Bug Fixes
