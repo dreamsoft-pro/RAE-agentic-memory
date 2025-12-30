@@ -3,6 +3,7 @@
 services:
   # Main RAE API Service
   rae-api:
+    image: rae-memory:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -35,11 +36,6 @@ services:
       - OTEL_SERVICE_NAME=rae-memory-api
       - OTEL_SERVICE_VERSION=2.2.0-enterprise
       - OTEL_EXPORTER_TYPE=otlp
-    volumes:
-      - ./apps:/app/apps
-      - ./rae-core:/app/rae-core
-      - ./sdk:/app/sdk
-      - ./integrations:/app/integrations
     depends_on:
       postgres:
         condition: service_healthy
@@ -63,6 +59,7 @@ services:
 
   # ML Service - Heavy ML operations isolated from main API
   ml-service:
+    image: rae-ml-service:latest
     build:
       context: ./apps/ml_service
       dockerfile: Dockerfile
@@ -137,6 +134,7 @@ services:
 
   # Celery worker for async tasks
   celery-worker:
+    image: rae-memory:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -160,11 +158,6 @@ services:
       - OTEL_SERVICE_NAME=rae-celery-worker
       - OTEL_SERVICE_VERSION=2.2.0-enterprise
       - OTEL_EXPORTER_TYPE=otlp
-    volumes:
-      - ./apps:/app/apps
-      - ./rae-core:/app/rae-core
-      - ./sdk:/app/sdk
-      - ./integrations:/app/integrations
     depends_on:
       - postgres
       - redis
@@ -182,6 +175,7 @@ services:
 
   # Celery beat for scheduled tasks
   celery-beat:
+    image: rae-memory:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -200,11 +194,6 @@ services:
       - OTEL_SERVICE_NAME=rae-celery-beat
       - OTEL_SERVICE_VERSION=2.2.0-enterprise
       - OTEL_EXPORTER_TYPE=otlp
-    volumes:
-      - ./apps:/app/apps
-      - ./rae-core:/app/rae-core
-      - ./sdk:/app/sdk
-      - ./integrations:/app/integrations
     depends_on:
       - postgres
       - redis
@@ -221,6 +210,7 @@ services:
 
   # Streamlit Dashboard (optional)
   rae-dashboard:
+    image: rae-dashboard:latest
     build:
       context: ./tools/memory-dashboard
       dockerfile: Dockerfile
