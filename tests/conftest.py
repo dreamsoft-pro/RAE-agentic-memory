@@ -164,6 +164,7 @@ def mock_embedding_service():
     """Mock for EmbeddingService."""
     service = MagicMock()
     service.generate_embeddings.return_value = [[0.1] * 384]
+    service.generate_embeddings_async = AsyncMock(return_value=[[0.1] * 384])
     return service
 
 

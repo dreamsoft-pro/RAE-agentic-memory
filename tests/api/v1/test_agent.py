@@ -32,6 +32,9 @@ def mock_services():
     ):
         # Setup default behaviors
         mock_embed.return_value.generate_embeddings.return_value = [[0.1] * 384]
+        mock_embed.return_value.generate_embeddings_async = AsyncMock(
+            return_value=[[0.1] * 384]
+        )
 
         mock_vec_inst = AsyncMock()
         mock_vec.return_value = mock_vec_inst
