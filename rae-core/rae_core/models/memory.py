@@ -84,6 +84,16 @@ class MemoryItem(BaseModel):
         default=None, description="Context when memory was created"
     )
 
+    # Synchronization & Provenance (Layer 2 Telemetry)
+    provenance: dict[str, Any] | None = Field(
+        default_factory=dict,
+        description="Origin and trust details (e.g., origin_device, trust_level)",
+    )
+    sync_metadata: dict[str, Any] | None = Field(
+        default_factory=dict,
+        description="Sync protocol data (e.g., version, path, conflict info)",
+    )
+
     model_config = ConfigDict(
         json_schema_extra={
             "example": {
