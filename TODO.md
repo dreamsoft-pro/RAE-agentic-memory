@@ -57,7 +57,7 @@
 - [x] **E2E/Integration Polish** (Verified with 908 passing unit tests)
 
 ## Technical Debt (Auto-generated from code)
-*Last scan: 2025-12-30 23:46*
+*Last scan: 2025-12-31 10:27*
 
 - [ ] **CHANGELOG.md:1099** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
 - [ ] **CHANGELOG.md:1141** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
@@ -122,7 +122,7 @@
 - [ ] **apps/memory_api/core/reward.py:278** - Add relevance scoring when available
 - [ ] **apps/memory_api/core/action_executor.py:248** - Integrate with actual services
 - [ ] **apps/memory_api/core/action_executor.py:275** - Mock action implementations (TODO: Replace with real integrations)
-- [ ] **apps/memory_api/workers/memory_maintenance.py:627** - project_id="default",   TODO: Get actual projects
+- [ ] **apps/memory_api/workers/memory_maintenance.py:629** - project_id="default",   TODO: Get actual projects
 - [ ] **scripts/validate_docs.py:44** - r"\[TODO:.*?\]",
 - [ ] **scripts/validate_docs.py:45** - r"\[FIXME:.*?\]",
 - [ ] **scripts/metrics_tracker.py:150** - metrics.record_file("TODO.md", "update_todo")
