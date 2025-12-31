@@ -304,7 +304,9 @@ class GenerateReflectionRequest(BaseModel):
 class GenerateReflectionResponse(BaseModel):
     """Response model for reflection generation"""
 
-    reflection: ReflectionUnit = Field(..., description="Generated reflection")
+    reflection: Optional[ReflectionUnit] = Field(
+        None, description="Generated reflection"
+    )
     statistics: Dict[str, Any] = Field(
         default_factory=dict, description="Generation statistics"
     )

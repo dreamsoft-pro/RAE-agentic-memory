@@ -74,22 +74,24 @@ async def test_query_memory_vector_only(
     client_with_overrides, mock_vector_store, mock_rae_service
 ):
     """Test memory query using vector search."""
-    # Mock vector store results
-    record = ScoredMemoryRecord(
-        id="mem-1",
-        tenant_id="test-tenant",
-        project="proj",
+    # Mock RAECoreService response
+    from rae_core.models.search import SearchResponse, SearchResult, SearchStrategy
+    
+    mock_result = SearchResult(
+        memory_id="mem-1",
         content="Found content",
         score=0.95,
-        importance=0.5,
-        layer="em",
-        tags=[],
-        source="src",
-        created_at=datetime.now(timezone.utc),
-        last_accessed_at=datetime.now(timezone.utc),
-        usage_count=5,
+        strategy_used=SearchStrategy.HYBRID,
+        metadata={"project": "proj", "source": "src"}
     )
-    mock_vector_store.query.return_value = [record]
+    
+    mock_rae_service.query_memories.return_value = SearchResponse(
+        results=[mock_result],
+        total_found=1,
+        query="test query",
+        strategy=SearchStrategy.HYBRID,
+        execution_time_ms=10.0
+    )
 
     payload = {"query_text": "test query", "k": 1}
 
