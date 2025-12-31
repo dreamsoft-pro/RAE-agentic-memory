@@ -237,7 +237,7 @@ app = FastAPI(
     - [MCP Integration](https://github.com/dreamsoft-pro/RAE-agentic-memory/tree/main/integrations/mcp-server)
     - [Examples](https://github.com/dreamsoft-pro/RAE-agentic-memory/tree/main/examples)
     """,
-    version="2.8.0",
+    version="2.9.0",
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
@@ -270,7 +270,7 @@ def custom_openapi():
 
     openapi_schema = get_openapi(
         title="RAE Memory API",
-        version="2.8.0",
+        version="2.9.0",
         description=app.description,
         routes=app.routes,
     )

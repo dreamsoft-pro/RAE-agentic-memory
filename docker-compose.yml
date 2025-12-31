@@ -32,7 +32,7 @@ services:
       - OTEL_TRACES_ENABLED=${OTEL_TRACES_ENABLED:-true}
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
       - OTEL_SERVICE_NAME=rae-memory-api
-      - OTEL_SERVICE_VERSION=2.2.0-enterprise
+      - OTEL_SERVICE_VERSION=2.9.0-enterprise
       - OTEL_EXPORTER_TYPE=otlp
     depends_on:
       postgres:
@@ -133,7 +133,7 @@ services:
       - OTEL_TRACES_ENABLED=${OTEL_TRACES_ENABLED:-true}
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
       - OTEL_SERVICE_NAME=rae-celery-worker
-      - OTEL_SERVICE_VERSION=2.2.0-enterprise
+      - OTEL_SERVICE_VERSION=2.9.0-enterprise
       - OTEL_EXPORTER_TYPE=otlp
     depends_on:
       - postgres
@@ -169,7 +169,7 @@ services:
       - OTEL_TRACES_ENABLED=${OTEL_TRACES_ENABLED:-true}
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
       - OTEL_SERVICE_NAME=rae-celery-beat
-      - OTEL_SERVICE_VERSION=2.2.0-enterprise
+      - OTEL_SERVICE_VERSION=2.9.0-enterprise
       - OTEL_EXPORTER_TYPE=otlp
     depends_on:
       - postgres
