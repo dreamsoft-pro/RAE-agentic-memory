@@ -19,6 +19,7 @@ from apps.memory_api.api.v1 import (
     governance,
     graph,
     memory,
+    system,
 )
 from apps.memory_api.config import settings
 from apps.memory_api.logging_config import setup_logging
@@ -446,6 +447,7 @@ app.include_router(graph.router, prefix="/v1", tags=["Graph"])
 app.include_router(feedback.router, prefix="/v1", tags=["Feedback"])
 app.include_router(governance.router, tags=["Governance"])
 app.include_router(compliance.router, tags=["ISO/IEC 42001 Compliance"])
+app.include_router(system.router, prefix="/v1", tags=["System"])
 
 # API v1 endpoints - Enterprise Features
 app.include_router(event_triggers.router, tags=["Event Triggers"])
