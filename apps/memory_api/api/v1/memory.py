@@ -11,17 +11,18 @@ from apps.memory_api.metrics import (
 )
 from apps.memory_api.models import (
     DeleteMemoryResponse,
+    MemoryLayer,
     QueryMemoryRequest,
     QueryMemoryResponse,
     RebuildReflectionsRequest,
+    ScoredMemoryRecord,
     StoreMemoryRequest,
     StoreMemoryResponse,
 )
 from apps.memory_api.observability.rae_tracing import get_tracer
 from apps.memory_api.security import auth
 from apps.memory_api.security.dependencies import get_and_verify_tenant_id
-from apps.memory_api.services import pii_scrubber, scoring
-from apps.memory_api.services.embedding import get_embedding_service
+from apps.memory_api.services import pii_scrubber
 from apps.memory_api.services.rae_core_service import RAECoreService
 from apps.memory_api.services.vector_store import get_vector_store
 from apps.memory_api.tasks.background_tasks import (
@@ -139,51 +140,45 @@ async def query_memory(
         if req.filters:
             span.set_attribute("rae.query.filters_count", len(req.filters))
 
-        # Standard vector search
-        span.set_attribute("rae.query.mode", "vector_only")
+        # Standard vector search mode (using RAECoreService)
+        span.set_attribute("rae.query.mode", "vector_via_rae_core")
 
-        # Get embedding service
-        embedding_service = get_embedding_service()
-
-        # Get query embedding for vector search
-        query_embedding = (
-            await embedding_service.generate_embeddings_async([req.query_text])
-        )[0]
-        span.set_attribute("rae.query.embedding_dimension", len(query_embedding))
-
-        # 2. Build filters
-        # This part needs to be adapted to be backend-agnostic.
-        # For now, we'll create a dictionary that can be interpreted by the stores.
-        query_filters = {"must": [{"key": "tenant_id", "match": {"value": tenant_id}}]}
-        if req.filters:
-            # A more robust implementation would map API filters to backend-specific filters.
-            # This is a simplified example.
-            for key, value in req.filters.items():
-                if key == "tags" and isinstance(value, list):
-                    query_filters["must"].append(
-                        {"key": "tags", "match": {"any": value}}
-                    )
-
-        # 3. Query the vector store
+        # 3. Query using RAECoreService
         try:
-            vector_store = get_vector_store(pool=request.app.state.pool)
-            raw_results = await vector_store.query(
-                query_embedding=query_embedding,
-                top_k=req.k,
-                filters=query_filters,
+            # RAECoreService.query_memories returns SearchResponse object
+            # It internally handles embedding generation and vector store querying
+            search_response = await rae_service.query_memories(
+                tenant_id=tenant_id,
+                project=req.project or "default",
+                query=req.query_text,
+                k=req.k,
             )
-            span.set_attribute("rae.query.raw_results_count", len(raw_results))
+
+            # Convert RAE-Core SearchResponse results back to the format expected by the API
+            # SearchResult to ScoredMemoryRecord mapping
+            rescored_results = []
+            for item in search_response.results:
+                rescored_results.append(
+                    ScoredMemoryRecord(
+                        id=item.memory_id,
+                        content=item.content,
+                        score=item.score,
+                        metadata=item.metadata,
+                        tenant_id=tenant_id,
+                        project=req.project or "default",
+                        layer=MemoryLayer.semantic,  # Default for standard query
+                    )
+                )
+
+            span.set_attribute("rae.query.results_count", len(rescored_results))
         except Exception as e:
-            span.set_attribute("rae.outcome.label", "vector_store_query_error")
+            span.set_attribute("rae.outcome.label", "rae_core_query_error")
+            logger.error("rae_core_query_failed", error=str(e))
             raise HTTPException(
-                status_code=502, detail=f"Vector store query error: {e}"
+                status_code=502, detail=f"Memory search error: {e}"
             ) from e
 
-        # 4. Rescore memories using additional heuristics (optional)
-        rescored_results = scoring.rescore_memories(raw_results)
-        span.set_attribute("rae.query.rescored_results_count", len(rescored_results))
-
-        # 5. Update access statistics for retrieved memories
+        # 4. Update access statistics for retrieved memories
         memory_ids = [item.id for item in rescored_results]
         if memory_ids:
             try:

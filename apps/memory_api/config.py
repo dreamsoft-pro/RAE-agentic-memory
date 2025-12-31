@@ -26,9 +26,10 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str | None = None
     OPENAI_API_KEY: str | None = None
     ANTHROPIC_API_KEY: str | None = None
-    OLLAMA_API_URL: str = "http://localhost:11434"
+    OLLAMA_API_URL: str = "http://rae-ollama:11434"
+    OLLAMA_HOSTS: list[str] = ["http://100.66.252.117:11434", "http://rae-ollama:11434"]
     RAE_LLM_BACKEND: str = "ollama"
-    RAE_LLM_MODEL_DEFAULT: str = "llama3"
+    RAE_LLM_MODEL_DEFAULT: str = "ollama/deepseek-coder:1.3b"
     EXTRACTION_MODEL: str = "gpt-4o-mini"
     SYNTHESIS_MODEL: str = "gpt-4o"
     RAE_VECTOR_BACKEND: str = "qdrant"
