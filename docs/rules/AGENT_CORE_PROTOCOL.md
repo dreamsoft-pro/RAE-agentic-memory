@@ -62,7 +62,13 @@ Different branches = Different testing levels.
 
 ## 4. DOCUMENTATION STRATEGY
 
-- **Auto-Generated (DO NOT EDIT)**: `CHANGELOG.md`, `STATUS.md`, `TODO.md`, `docs/.auto-generated/`.
+### 4.1 Synchronization Rule (Zero Drift Strategy)
+**Problem**: CI automatically updates `CHANGELOG.md` and metrics files, creating new commits on remote branches. This causes local branches to fall behind (`git pull` conflicts).
+**Solution**: **ALWAYS run `make docs` locally before pushing.**
+- **Why**: The CI workflow checks `if git diff --quiet`. If you generate and commit the docs locally, the CI sees no changes and **skips creating a new commit**.
+- **Result**: Local and Remote branches stay perfectly synchronized (same commit hash). No more "your branch is behind" errors.
+
+- **Auto-Generated (DO NOT EDIT MANUALLY)**: `CHANGELOG.md`, `STATUS.md`, `TODO.md`, `docs/.auto-generated/`.
 - **Manual (EDIT THESE)**: `CONVENTIONS.md`, `PROJECT_STRUCTURE.md`, `docs/guides/`, `.ai-templates/`.
 
 ## 5. SESSION STARTUP ROUTINE
