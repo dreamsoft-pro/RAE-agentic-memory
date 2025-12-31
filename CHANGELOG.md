@@ -3,6 +3,17 @@
 <<<<<<< HEAD
 
 
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2025-12-31 15:22 • Branch: develop • Commit: d755b04*
+
+### 📚 Documentation
+
+- **rules**: add mandatory local docs generation rule to prevent CI drift ([`140dbdb`](../../commit/140dbdb))
+
+---
+
 ## Recent Changes (Auto-generated)
 
 *Last updated: 2025-12-31 15:19 • Branch: develop • Commit: 140dbdb*
