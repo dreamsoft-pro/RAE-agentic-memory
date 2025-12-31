@@ -1,5 +1,22 @@
 # Changelog
 
+## [2.9.0] - 2025-12-31
+
+### ✨ Dashboard & System Discovery
+- **Dynamic Tenant/Project Discovery:** Updated the Dashboard Sidebar to use searchable dropdowns (`st.selectbox`) for Tenant ID and Project ID. The lists are now dynamically fetched from the API.
+- **New System API Endpoints:** Added `/v1/system/tenants` and `/v1/system/projects` to enable environment discovery.
+- **Improved Dashboard UX:** Implemented automatic fallback to text input if discovery fails, ensuring a smooth configuration experience.
+
+### 🧪 Quality & Testing
+- **Integration Test Fixes:** Resolved critical failures in `DecayWorker` and `DreamingWorker` integration tests by migrating from mocks to real `RAECoreService` instances.
+- **Datetime Standardization:** Fixed `TypeError` in database queries by enforcing offset-naive datetimes for PostgreSQL `TIMESTAMP` columns.
+- **Data Integrity:** Ensured `usage_count` is correctly initialized to `0` in test data to prevent `NULL` related errors during retrieval.
+- **Unit Test Cleanup:** Removed redundant and broken patches for `get_embedding_service`, achieving 100% green status for all 909 unit tests.
+
+### ⚙️ Performance & Infrastructure
+- **CPU Embedding Support:** Forced local `SentenceTransformer` models to use the CPU device, eliminating CUDA initialization errors on systems without Nvidia drivers.
+- **OpenTelemetry Versioning:** Updated all service versions to 2.9.0 in `docker-compose.yml` and the main application.
+
 ## [2.8.0] - 2025-12-30
 
 ### 🚀 Architecture Optimization (Slimming)

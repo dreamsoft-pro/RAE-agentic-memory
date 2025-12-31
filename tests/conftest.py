@@ -211,10 +211,6 @@ def client_with_overrides(
     # Patch services obtained via functions (not DI in older parts)
     with (
         patch(
-            "apps.memory_api.api.v1.memory.get_embedding_service",
-            return_value=mock_embedding_service,
-        ),
-        patch(
             "apps.memory_api.api.v1.memory.get_vector_store",
             return_value=mock_vector_store,
         ),

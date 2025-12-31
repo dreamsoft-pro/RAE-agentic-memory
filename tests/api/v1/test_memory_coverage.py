@@ -67,15 +67,6 @@ def client_with_auth(mock_pool, mock_rae_service):
 
 
 @pytest.fixture
-def mock_embedding_service():
-    with patch("apps.memory_api.api.v1.memory.get_embedding_service") as mock:
-        service = MagicMock()
-        service.generate_embeddings.return_value = [[0.1, 0.2, 0.3]]
-        mock.return_value = service
-        yield service
-
-
-@pytest.fixture
 def mock_vector_store():
     with patch("apps.memory_api.api.v1.memory.get_vector_store") as mock:
         store = AsyncMock()
@@ -106,7 +97,6 @@ def mock_pii_scrubber():
 async def test_store_memory_vector_failure(
     client_with_auth,
     mock_rae_service,
-    mock_embedding_service,
     mock_vector_store,
     mock_pii_scrubber,
 ):
@@ -165,7 +155,7 @@ async def test_store_memory_db_failure(
 
 @pytest.mark.asyncio
 async def test_query_memory_hybrid_missing_project(
-    client_with_auth, mock_embedding_service
+    client_with_auth
 ):
     payload = {"query_text": "test query", "use_graph": True}
     response = client_with_auth.post(

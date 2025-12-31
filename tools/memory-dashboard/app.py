@@ -81,17 +81,80 @@ with st.sidebar:
             help="API authentication key",
         )
 
-        tenant_id = st.text_input(
-            "Tenant ID",
-            value=st.session_state.config["tenant_id"],
-            help="Tenant identifier for multi-tenancy",
-        )
+        # Dynamic Tenant Loading
+        tenants_list = []
+        if api_url and api_key:
+            try:
+                # Use a temporary client to fetch tenants (system-level discovery)
+                # We use a dummy tenant_id because the list_tenants endpoint doesn't require a specific one,
+                # but the client init requires one.
+                temp_client = RAEClient(
+                    api_url=api_url,
+                    api_key=api_key,
+                    tenant_id="system-discovery",
+                    timeout=5.0,
+                )
+                tenants_list = temp_client.get_tenants()
+            except Exception:
+                # Silent failure for UX smoothness, fallback to text input
+                pass
 
-        project_id = st.text_input(
-            "Project ID",
-            value=st.session_state.config["project_id"],
-            help="Project identifier",
-        )
+        if tenants_list:
+            # If current config tenant is in list, index it
+            try:
+                default_tenant_index = tenants_list.index(
+                    st.session_state.config["tenant_id"]
+                )
+            except ValueError:
+                default_tenant_index = 0
+
+            tenant_id = st.selectbox(
+                "Tenant ID",
+                options=tenants_list,
+                index=default_tenant_index,
+                help="Select Tenant identifier",
+            )
+        else:
+            tenant_id = st.text_input(
+                "Tenant ID",
+                value=st.session_state.config["tenant_id"],
+                help="Tenant identifier for multi-tenancy",
+            )
+
+        # Dynamic Project Loading
+        projects_list = []
+        if api_url and api_key and tenant_id:
+            try:
+                temp_client = RAEClient(
+                    api_url=api_url,
+                    api_key=api_key,
+                    tenant_id=tenant_id,
+                    timeout=5.0,
+                )
+                projects_list = temp_client.get_projects()
+            except Exception:
+                pass
+
+        if projects_list:
+            try:
+                default_project_index = projects_list.index(
+                    st.session_state.config["project_id"]
+                )
+            except ValueError:
+                default_project_index = 0
+
+            project_id = st.selectbox(
+                "Project ID",
+                options=projects_list,
+                index=default_project_index,
+                help="Select Project identifier",
+            )
+        else:
+            project_id = st.text_input(
+                "Project ID",
+                value=st.session_state.config["project_id"],
+                help="Project identifier",
+            )
 
     # Connection button
     col1, col2 = st.columns(2)
