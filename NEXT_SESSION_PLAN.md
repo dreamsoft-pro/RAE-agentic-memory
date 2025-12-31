@@ -1,19 +1,22 @@
-# Next Session Plan: Distributed Compute Integration
+# Plan for Next Session: Telemetry Implementation Audit
 
-**Status**: 
-- Iteration 1 (Abstraction): COMPLETED.
-- Iteration 2 (Infrastructure Decoupling): COMPLETED (InfrastructureFactory implemented, Lite mode verified).
+## Objective
+Verify 100% compliance of the codebase with `docs/specs/TELEMETRY_IMPLEMENTATION_PLAN.md` (Phases 1-4).
 
-## 🎯 Primary Goal: Iteration 3 - Distributed Compute (Node1 Integration)
-With `main.py` decoupled, we can now focus on offloading heavy computations (Embeddings, Graph Processing) to the GPU node (Kubus/Node1).
+## Role: Quality Assurance & Node1 Delegate
 
-### Steps to Execute:
-1.  **Remote Provider Check**: Verify `apps/memory_api/repositories/enhanced_graph_repository.py` and `apps/memory_api/services/rae_core_service.py` support remote execution configuration.
-2.  **Node1 Configuration**: Ensure `RAE_PROFILE=standard` or a new `RAE_PROFILE=distributed` can point to Node1 for embeddings/reranking.
-3.  **Smoke Test Node1**: Verify connection to Node1 services from the local RAE instance.
+## Instructions
+1. **Delegate to Node1 (`codebase_investigator`)**:
+   - Task: "Deep audit of Telemetry & Sync implementation."
+   - Checkpoints:
+     - **Phase 1 (Ops):** Is `otel-collector` removed from `docker-compose.yml`? Are `rae_uptime_seconds` and `rae_memory_count_total` registered in `metrics.py`?
+     - **Phase 2 (Cognitive):** Does `MemoryItem` in `rae-core` have `provenance` and `sync_metadata`? Does `ReflectionEngine` use them?
+     - **Phase 3 (Sync):** Is `SyncManager` implemented in `rae-core`? Are `/system/sync` endpoints exposed in `rae-api`?
+     - **Phase 4 (Research):** Does `run_research_mode.sh` exist? Is `httpx` instrumented in `opentelemetry_config.py`?
 
-### 🚀 Secondary Goal: RAE-Lite Refinement
-Ensure "Lite" mode is actually usable (e.g., provides meaningful mocks or in-memory fallbacks for critical services if they are None).
+2. **Auto-Fix Protocol**:
+   - If ANY file is missing or code is divergent from the plan, **fix it immediately** without asking for permission.
+   - Run tests: `make test-unit` (focus on `test_sync_manager.py` and `test_reflection_simple.py`).
 
-## 💡 Start Command
-> `run-distributed-integration`
+3. **Final Report**:
+   - Generate `AUDIT_REPORT_TELEMETRY.md` with status of each phase (Pass/Fail -> Fixed).

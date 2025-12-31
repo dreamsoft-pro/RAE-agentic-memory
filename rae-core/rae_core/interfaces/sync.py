@@ -107,3 +107,22 @@ class ISyncProvider(ABC):
             Sync status information
         """
         pass
+
+    @abstractmethod
+    async def handshake(
+        self,
+        tenant_id: str,
+        agent_id: str,
+        capabilities: dict[str, Any],
+    ) -> dict[str, Any]:
+        """Perform handshake to negotiate sync capabilities.
+
+        Args:
+            tenant_id: Tenant identifier
+            agent_id: Agent identifier
+            capabilities: Dictionary of supported capabilities and versions
+
+        Returns:
+            Negotiated capabilities and session info
+        """
+        pass

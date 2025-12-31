@@ -20,7 +20,7 @@ class SyncService:
                 "peer_id": p.peer_id,
                 "role": p.role,
                 "last_seen": p.last_seen,
-                "status": "connected"
+                "status": "connected",
             }
             for p in self.manager.peers.values()
         ]

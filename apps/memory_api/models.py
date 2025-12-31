@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, constr
+from pydantic import BaseModel, Field
 
 # --- Core Memory Models ---
 
@@ -114,6 +114,16 @@ class MemoryRecord(BaseModel):
         None, max_length=1024, description="Notes from verification process"
     )
 
+    # Phase 2: Telemetry & Sync Fields
+    provenance: Optional[Dict[str, Any]] = Field(
+        default_factory=dict,
+        description="Origin and lineage of the memory (e.g., source file, url, author)",
+    )
+    sync_metadata: Optional[Dict[str, Any]] = Field(
+        default_factory=dict,
+        description="Synchronization state metadata (e.g., vector_clock, version)",
+    )
+
 
 class ScoredMemoryRecord(MemoryRecord):
     """
@@ -135,23 +145,23 @@ class StoreMemoryRequest(BaseModel):
     Supports source trust scoring and provenance tracking
     """
 
-    content: constr(min_length=1, max_length=65536)
-    source: Optional[constr(max_length=255)] = None
+    content: str = Field(min_length=1, max_length=65536)
+    source: Optional[str] = Field(None, max_length=255)
     importance: Optional[float] = Field(default=None, ge=0.0, le=1.0)
     layer: Optional[MemoryLayer] = None
     tags: Optional[List[str]] = None
     timestamp: Optional[datetime] = None
-    project: Optional[constr(max_length=255)] = None
+    project: Optional[str] = Field(None, max_length=255)
 
     # ISO/IEC 42001 - Source Trust & Provenance
-    source_owner: Optional[constr(max_length=255)] = Field(
-        None, description="Owner/responsible party for this source"
+    source_owner: Optional[str] = Field(
+        None, max_length=255, description="Owner/responsible party for this source"
     )
     trust_level: Optional[SourceTrustLevel] = Field(
         None, description="Trust level of the source (high/medium/low/unverified)"
     )
-    verification_notes: Optional[constr(max_length=1024)] = Field(
-        None, description="Notes about source verification"
+    verification_notes: Optional[str] = Field(
+        None, max_length=1024, description="Notes about source verification"
     )
 
     model_config = {
@@ -179,7 +189,7 @@ class StoreMemoryResponse(BaseModel):
 
 
 class QueryMemoryRequest(BaseModel):
-    query_text: constr(min_length=1, max_length=1024)
+    query_text: str = Field(min_length=1, max_length=1024)
     k: int = Field(default=10, gt=0, le=100)
     filters: Optional[Dict[str, Any]] = None
     # Hybrid search parameters
@@ -189,8 +199,8 @@ class QueryMemoryRequest(BaseModel):
     graph_depth: int = Field(
         default=2, ge=1, le=5, description="Maximum graph traversal depth"
     )
-    project: Optional[constr(max_length=255)] = Field(
-        default=None, description="Project identifier for graph search"
+    project: Optional[str] = Field(
+        default=None, max_length=255, description="Project identifier for graph search"
     )
 
     model_config = {
@@ -234,17 +244,17 @@ class DeleteMemoryResponse(BaseModel):
 
 
 class RebuildReflectionsRequest(BaseModel):
-    project: constr(min_length=1, max_length=255)
-    tenant_id: constr(min_length=1, max_length=255)
+    project: str = Field(min_length=1, max_length=255)
+    tenant_id: str = Field(min_length=1, max_length=255)
 
 
 # --- Agent-related Models ---
 
 
 class AgentExecuteRequest(BaseModel):
-    tenant_id: constr(min_length=1, max_length=255)
-    project: constr(min_length=1, max_length=255)
-    prompt: constr(min_length=1, max_length=8192)
+    tenant_id: str = Field(min_length=1, max_length=255)
+    project: str = Field(min_length=1, max_length=255)
+    prompt: str = Field(min_length=1, max_length=8192)
     tools_allowed: Optional[List[str]] = None
     budget_tokens: int = Field(default=20000, gt=0, le=100000)
 
