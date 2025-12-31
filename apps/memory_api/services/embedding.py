@@ -68,9 +68,9 @@ class EmbeddingService:
             )
             # For now, we fall back to SentenceTransformer even if ONNX path is set,
             # as the ONNX implementation is just a placeholder.
-            self.model = SentenceTransformer("all-MiniLM-L6-v2")  # type: ignore[misc]
+            self.model = SentenceTransformer("all-MiniLM-L6-v2", device="cpu")  # type: ignore[misc]
         else:
-            self.model = SentenceTransformer("all-MiniLM-L6-v2")  # type: ignore[misc]
+            self.model = SentenceTransformer("all-MiniLM-L6-v2", device="cpu")  # type: ignore[misc]
             print("Using SentenceTransformer 'all-MiniLM-L6-v2'")
 
         self._initialized = True

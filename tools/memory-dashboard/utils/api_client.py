@@ -366,6 +366,33 @@ class RAEClient:
             st.warning(f"Could not fetch reflection: {e}")
             return "Reflection unavailable"
 
+    def get_tenants(self) -> List[str]:
+        """
+        Get list of all unique tenants.
+
+        Returns:
+            List of tenant IDs
+        """
+        try:
+            return self._request("GET", "/v1/system/tenants")
+        except Exception as e:
+            st.warning(f"Could not fetch tenants: {e}")
+            return []
+
+    def get_projects(self) -> List[str]:
+        """
+        Get list of all unique projects for the current tenant.
+
+        Returns:
+            List of project IDs
+        """
+        try:
+            # Headers are already set with X-Tenant-Id in __init__
+            return self._request("GET", "/v1/system/projects")
+        except Exception as e:
+            st.warning(f"Could not fetch projects: {e}")
+            return []
+
     def test_connection(self) -> bool:
         """
         Test API connection.
