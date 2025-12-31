@@ -185,6 +185,14 @@ class ReflectionPipeline:
                 request.since,
             )
 
+            logger.info(
+                "memories_fetch_result",
+                tenant_id=request.tenant_id,
+                project=request.project,
+                count=len(memories) if memories else 0,
+                filters=request.memory_filters,
+            )
+
             if not memories:
                 span.set_attribute("rae.reflection.memories_count", 0)
                 span.set_attribute("rae.outcome.label", "no_memories")
@@ -196,7 +204,15 @@ class ReflectionPipeline:
             logger.info("memories_fetched", count=len(memories))
 
             # Step 2: Cluster memories
-            clusters = await self._cluster_memories(memories, request.min_cluster_size)
+            if request.enable_clustering:
+                clusters = await self._cluster_memories(
+                    memories, request.min_cluster_size
+                )
+            else:
+                # Treat all memories as a single cluster
+                clusters = {"global": memories}
+                logger.info("clustering_disabled_using_single_global_cluster")
+
             statistics["clusters_found"] = len(clusters)
             span.set_attribute("rae.reflection.clusters_count", len(clusters))
             logger.info("clustering_complete", clusters=len(clusters))
@@ -330,10 +346,26 @@ class ReflectionPipeline:
             embeddings = []
             valid_memories = []
 
+            # Determine target dimension dynamically from the first valid memory
+            target_dim = None
+
             for memory in memories:
-                if memory.get("embedding"):
-                    embeddings.append(memory["embedding"])
-                    valid_memories.append(memory)
+                emb = memory.get("embedding")
+                if emb and isinstance(emb, (list, np.ndarray)) and len(emb) > 0:
+                    if target_dim is None:
+                        target_dim = len(emb)
+
+                    # Strictly filter for consistent dimension in the current batch
+                    if len(emb) == target_dim:
+                        embeddings.append(emb)
+                        valid_memories.append(memory)
+                    else:
+                        logger.warning(
+                            "skipping_incompatible_embedding",
+                            expected=target_dim,
+                            got=len(emb),
+                            memory_id=memory.get("id"),
+                        )
 
             if len(embeddings) < min_cluster_size:
                 span.set_attribute(

@@ -441,7 +441,9 @@ class DreamingWorker:
         )
 
         # Get high-importance episodic memories from recent period
-        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=lookback_hours)
+        cutoff_time = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(
+            hours=lookback_hours
+        )
 
         records = await self.rae_service.list_memories(
             tenant_id=tenant_id,
