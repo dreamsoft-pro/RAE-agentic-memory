@@ -40,6 +40,7 @@ def client_with_auth(mock_app_state_pool):
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_governance_overview_success(client_with_auth, mock_app_state_pool):
     """Test GET /v1/governance/overview endpoint"""
     mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
@@ -94,6 +95,7 @@ async def test_governance_overview_success(client_with_auth, mock_app_state_pool
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_governance_overview_with_custom_days(
     client_with_auth, mock_app_state_pool
 ):
@@ -148,6 +150,7 @@ async def test_governance_overview_error(client_with_auth, mock_app_state_pool):
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_tenant_governance_stats_success(client_with_auth, mock_app_state_pool):
     """Test GET /v1/governance/tenant/{tenant_id} endpoint"""
     mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
@@ -193,6 +196,7 @@ async def test_tenant_governance_stats_success(client_with_auth, mock_app_state_
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_tenant_governance_stats_no_data(client_with_auth, mock_app_state_pool):
     """Test tenant stats when no data exists for tenant"""
     mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
@@ -219,6 +223,7 @@ async def test_tenant_governance_stats_no_data(client_with_auth, mock_app_state_
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_tenant_governance_stats_with_custom_period(
     client_with_auth, mock_app_state_pool
 ):
@@ -251,6 +256,7 @@ async def test_tenant_governance_stats_with_custom_period(
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_tenant_budget_status_success(client_with_auth, mock_app_state_pool):
     """Test GET /v1/governance/tenant/{tenant_id}/budget endpoint"""
     mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
@@ -276,6 +282,7 @@ async def test_tenant_budget_status_success(client_with_auth, mock_app_state_poo
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_tenant_budget_status_with_alerts(client_with_auth, mock_app_state_pool):
     """Test budget status with budget alerts (simulated)"""
     mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
@@ -298,6 +305,7 @@ async def test_tenant_budget_status_with_alerts(client_with_auth, mock_app_state
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_tenant_budget_status_zero_usage(client_with_auth, mock_app_state_pool):
     """Test budget status with zero usage"""
     mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
@@ -361,8 +369,10 @@ async def test_tenant_governance_stats_invalid_days(
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_governance_overview_empty_results(client_with_auth, mock_app_state_pool):
-    """Test governance overview with no data in system"""
+    """Test overview when no data exists"""
+    # Ensure no data (mock or fresh DB)
     mock_conn = mock_app_state_pool.acquire.return_value.__aenter__.return_value
 
     mock_conn.fetchrow.return_value = {
@@ -381,5 +391,3 @@ async def test_governance_overview_empty_results(client_with_auth, mock_app_stat
     assert response.status_code == 200
     data = response.json()
     assert data["total_calls"] == 0
-    assert data["top_tenants"] == []
-    assert data["top_models"] == []

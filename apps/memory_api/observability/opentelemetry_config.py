@@ -34,11 +34,11 @@ try:  # pragma: no cover
     from opentelemetry.instrumentation.asyncpg import AsyncPGInstrumentor
     from opentelemetry.instrumentation.celery import CeleryInstrumentor
     from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+    from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
     from opentelemetry.instrumentation.logging import LoggingInstrumentor
     from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
     from opentelemetry.instrumentation.redis import RedisInstrumentor
     from opentelemetry.instrumentation.requests import RequestsInstrumentor
-    from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
     from opentelemetry.sdk.resources import SERVICE_NAME, SERVICE_VERSION, Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
@@ -71,6 +71,9 @@ if TYPE_CHECKING:
     from opentelemetry.instrumentation.asyncpg import AsyncPGInstrumentor  # noqa: F401
     from opentelemetry.instrumentation.celery import CeleryInstrumentor  # noqa: F401
     from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor  # noqa: F401
+    from opentelemetry.instrumentation.httpx import (  # noqa: F401
+        HTTPXClientInstrumentor,
+    )
     from opentelemetry.instrumentation.logging import LoggingInstrumentor  # noqa: F401
     from opentelemetry.instrumentation.psycopg2 import (  # noqa: F401
         Psycopg2Instrumentor,
@@ -78,9 +81,6 @@ if TYPE_CHECKING:
     from opentelemetry.instrumentation.redis import RedisInstrumentor  # noqa: F401
     from opentelemetry.instrumentation.requests import (  # noqa: F401
         RequestsInstrumentor,
-    )
-    from opentelemetry.instrumentation.httpx import (  # noqa: F401
-        HTTPXClientInstrumentor,
     )
     from opentelemetry.sdk.resources import (  # noqa: F401
         SERVICE_NAME,
@@ -245,7 +245,7 @@ def instrument_libraries():
         logger.info("opentelemetry_requests_instrumented")
 
         # Instrument HTTPX (for async external HTTP calls)
-        if HTTPXClientInstrumentor:
+        if HTTPXClientInstrumentor is not None:
             HTTPXClientInstrumentor().instrument()  # type: ignore[misc]
             logger.info("opentelemetry_httpx_instrumented")
 

@@ -142,28 +142,33 @@ format:  ## Format code with black, isort, and ruff
 	@echo "✅ Code formatted"
 
 # ==============================================================================
-# TESTING
+# TESTING (PROFILES)
 # ==============================================================================
 
-test:  ## Run all tests
-	@echo "🧪 Running tests..."
-	@PYTHONPATH=. $(VENV_PYTHON) -m pytest
+test:  ## Run tests using LITE profile (default)
+	@echo "🧪 Running tests (LITE PROFILE)..."
+	@$(MAKE) test-lite
 
-test-unit:  ## Run unit tests only
-	@echo "🧪 Running unit tests..."
-	@PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "not integration and not llm and not contract and not performance" -v
+test-lite:  ## [PROFILE: LITE] Run unit tests (CI/CPU safe)
+	@echo "🧪 Running LITE tests (Unit + No-GPU)..."
+	@RAE_PROFILE=lite PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "not slow and not gpu and not integration" -v
+
+test-int:  ## [PROFILE: INTEGRATION] Run integration tests (Requires Docker Stack)
+	@echo "🧪 Running INTEGRATION tests (API/DB Contracts)..."
+	@RAE_PROFILE=standard RAE_DB_MODE=migrate OTEL_TRACES_ENABLED=false PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "integration" -v
+
+test-gpu:  ## [PROFILE: FULL_GPU] Run GPU/LLM tests (Requires Local LLM)
+	@echo "🧪 Running FULL_GPU tests (Reranking/Benchmarks)..."
+	@RAE_PROFILE=research RAE_RERANKER_MODE=llm PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "gpu or benchmark" -v
 
 test-smoke: ## Run quick E2E smoke tests to verify critical paths
 	@echo "🧪 Running smoke tests..."
 	@RAE_DB_MODE=migrate PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "smoke" -v
 
-test-integration:  ## Run integration tests only
-	@echo "🧪 Running integration tests..."
-	@OTEL_TRACES_ENABLED=false RAE_DB_MODE=migrate PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "integration" -v
-
 test-full-stack: ## Run all collected tests (Unit + Integration + LLM + OTEL)
 	@echo "🧪 Running absolute full stack verification (970+ tests)..."
 	@OTEL_TRACES_ENABLED=true RAE_DB_MODE=migrate PYTHONPATH=. $(VENV_PYTHON) -m pytest -v
+
 
 test-local-llm: ## Run tests using local Ollama LLM
 	@echo "🧪 Running tests with Local LLM (Ollama)..."

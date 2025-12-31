@@ -277,3 +277,25 @@ class SyncProtocol:
             agent_id=agent_id,
             sync_id=sync_id,
         )
+
+    async def handshake(
+        self,
+        tenant_id: str,
+        agent_id: str,
+        capabilities: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Perform handshake to negotiate sync capabilities.
+
+        Args:
+            tenant_id: Tenant identifier
+            agent_id: Agent identifier
+            capabilities: Optional dictionary of supported capabilities
+
+        Returns:
+            Negotiated capabilities and session info
+        """
+        return await self.sync_provider.handshake(
+            tenant_id=tenant_id,
+            agent_id=agent_id,
+            capabilities=capabilities or {},
+        )

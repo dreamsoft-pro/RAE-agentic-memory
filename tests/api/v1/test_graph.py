@@ -111,6 +111,7 @@ async def test_extract_knowledge_graph(client_with_auth, mock_reflection_engine)
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_generate_hierarchical_reflection(
     client_with_auth, mock_reflection_engine, mock_db_pool
 ):
@@ -139,6 +140,7 @@ async def test_generate_hierarchical_reflection(
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_get_graph_statistics(client_with_auth, mock_db_pool):
     """Test GET /graph/stats"""
     pool, conn = mock_db_pool
@@ -161,6 +163,7 @@ async def test_get_graph_statistics(client_with_auth, mock_db_pool):
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_get_graph_nodes(client_with_auth, mock_db_pool):
     """Test GET /graph/nodes"""
     pool, conn = mock_db_pool
@@ -187,6 +190,7 @@ async def test_get_graph_nodes(client_with_auth, mock_db_pool):
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_get_graph_nodes_with_pagerank(client_with_auth, mock_db_pool):
     """Test GET /graph/nodes with PageRank"""
     pool, conn = mock_db_pool
@@ -222,6 +226,7 @@ async def test_get_graph_nodes_with_pagerank(client_with_auth, mock_db_pool):
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_get_graph_edges(client_with_auth, mock_db_pool):
     """Test GET /graph/edges"""
     pool, conn = mock_db_pool

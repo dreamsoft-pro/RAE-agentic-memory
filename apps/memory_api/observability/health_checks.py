@@ -96,7 +96,8 @@ async def get_overall_health(
     """
     logger.info("overall_health_check_successful")
     return {
-        "status": "UP",
+        "status": "healthy",
+        "version": "2.9.0",
         "services": {
             "postgres": pg_status,
             "redis": redis_status,

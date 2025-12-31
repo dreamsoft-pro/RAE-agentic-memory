@@ -139,6 +139,8 @@ class Settings(BaseSettings):
 
     # Iteration 2: Smart Re-Ranker
     ENABLE_SMART_RERANKER: bool = False  # Enable ML-based re-ranking
+    # RAE_RERANKER_MODE: 'math' (default) or 'llm' (requires LLM service)
+    RAE_RERANKER_MODE: str = os.getenv("RAE_RERANKER_MODE", "math")
     RERANKER_MODEL_PATH: str | None = None
     RERANKER_TIMEOUT_MS: int = 10
     RERANKER_TOP_K_CANDIDATES: int = 50
