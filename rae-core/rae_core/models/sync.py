@@ -43,3 +43,38 @@ class SyncConflict(BaseModel):
     remote_version: dict[str, Any]
     resolved: bool = Field(default=False)
     resolution: dict[str, Any] | None = None
+
+
+class SyncPeer(BaseModel):
+    """Represents a connected RAE instance (node)."""
+
+    peer_id: str
+    role: str = Field(description="e.g., 'server', 'lite', 'mobile'")
+    address: str | None = None
+    last_seen: datetime = Field(default_factory=datetime.now)
+    protocol_version: str = "1.0"
+    tags: dict[str, str] = Field(default_factory=dict)
+
+
+class SyncHandshake(BaseModel):
+    """Handshake payload for establishing sync session."""
+
+    peer_id: str
+    role: str
+    protocol_version: str
+    timestamp: datetime = Field(default_factory=datetime.now)
+    capabilities: list[str] = Field(default_factory=list)
+
+
+class SyncLog(BaseModel):
+    """Log entry for sync events (Layer 2 Telemetry)."""
+
+    id: UUID = Field(description="Unique sync event ID")
+    timestamp: datetime = Field(default_factory=datetime.now)
+    peer_id: str
+    direction: str  # "incoming", "outgoing"
+    status: str     # "success", "failed", "conflict"
+    items_synced: int = 0
+    conflicts_resolved: int = 0
+    duration_ms: float = 0.0
+    metadata: dict[str, Any] = Field(default_factory=dict)
