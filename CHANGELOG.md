@@ -1,5 +1,17 @@
 # Changelog
 
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2025-12-31 10:27 • Branch: develop • Commit: 7a553fe*
+
+### ✨ Features
+
+- **dashboard**: add dynamic tenant/project discovery and fix integration tests ([`7a553fe`](../../commit/7a553fe))
+- implement multi-node Ollama support and integrate token savings tracking ([`7d14a39`](../../commit/7d14a39))
+
+---
+
 ## [2.8.0] - 2025-12-30
 
 ### 🚀 Architecture Optimization (Slimming)
