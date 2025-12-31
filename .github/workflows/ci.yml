@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main, develop, 'feature/**' ]
+    branches: [ main, develop, 'feature/**', 'release/**' ]
   pull_request:
-    branches: [ main, develop, 'feature/**' ]
+    branches: [ main, develop, 'feature/**', 'release/**' ]
   schedule:
     - cron: '0 2 * * *'  # Daily at 2 AM UTC for flaky detection
 
