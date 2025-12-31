@@ -41,6 +41,7 @@ from apps.memory_api.routes import (
     hybrid_search,
     nodes,
     reflections,
+    sync,  # Sync Router
     token_savings,
 )
 from apps.memory_api.security import auth
@@ -337,6 +338,10 @@ def custom_openapi():
             "name": "Graph Management",
             "description": "Advanced graph operations: snapshots, traversal, analytics, and batch operations",
         },
+        {
+            "name": "Sync",
+            "description": "RAE-Sync Mesh topology and statistics",
+        },
     ]
 
     app.openapi_schema = openapi_schema
@@ -459,6 +464,7 @@ app.include_router(dashboard.router, tags=["Dashboard"])
 app.include_router(graph_enhanced.router, tags=["Graph Management"])
 app.include_router(token_savings.router, tags=["Metrics"])
 app.include_router(nodes.router)
+app.include_router(sync.router)  # Register Sync Router
 
 
 # Root endpoint
