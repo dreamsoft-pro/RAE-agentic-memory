@@ -38,6 +38,7 @@ try:  # pragma: no cover
     from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
     from opentelemetry.instrumentation.redis import RedisInstrumentor
     from opentelemetry.instrumentation.requests import RequestsInstrumentor
+    from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
     from opentelemetry.sdk.resources import SERVICE_NAME, SERVICE_VERSION, Resource
     from opentelemetry.sdk.trace import TracerProvider
     from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
@@ -53,6 +54,7 @@ except ImportError:  # pragma: no cover
     Psycopg2Instrumentor = None  # type: ignore[assignment,misc]
     RedisInstrumentor = None  # type: ignore[assignment,misc]
     RequestsInstrumentor = None  # type: ignore[assignment,misc]
+    HTTPXClientInstrumentor = None  # type: ignore[assignment,misc]
     SERVICE_NAME = None  # type: ignore[assignment]
     SERVICE_VERSION = None  # type: ignore[assignment]
     Resource = None  # type: ignore[assignment,misc]
@@ -76,6 +78,9 @@ if TYPE_CHECKING:
     from opentelemetry.instrumentation.redis import RedisInstrumentor  # noqa: F401
     from opentelemetry.instrumentation.requests import (  # noqa: F401
         RequestsInstrumentor,
+    )
+    from opentelemetry.instrumentation.httpx import (  # noqa: F401
+        HTTPXClientInstrumentor,
     )
     from opentelemetry.sdk.resources import (  # noqa: F401
         SERVICE_NAME,
@@ -238,6 +243,11 @@ def instrument_libraries():
         # Instrument requests library (for external HTTP calls)
         RequestsInstrumentor().instrument()  # type: ignore[misc]
         logger.info("opentelemetry_requests_instrumented")
+
+        # Instrument HTTPX (for async external HTTP calls)
+        if HTTPXClientInstrumentor:
+            HTTPXClientInstrumentor().instrument()  # type: ignore[misc]
+            logger.info("opentelemetry_httpx_instrumented")
 
         # Instrument PostgreSQL (psycopg2)
         Psycopg2Instrumentor().instrument()  # type: ignore[misc]

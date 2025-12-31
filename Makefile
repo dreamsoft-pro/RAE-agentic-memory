@@ -448,3 +448,6 @@ docs-validate:  ## Validate documentation (check broken links, placeholders)
 docs-validate-fix:  ## Validate and auto-fix documentation issues
 	@echo "🔍 Validating and fixing documentation..."
 	@python3 scripts/validate_docs.py --fix
+
+run-research:
+	@./scripts/run_research_mode.sh
