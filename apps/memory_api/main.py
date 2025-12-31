@@ -31,6 +31,7 @@ from apps.memory_api.observability import (
     instrument_fastapi,
     instrument_libraries,
     setup_opentelemetry,
+    metrics,  # Register custom metrics
 )
 from apps.memory_api.routes import (
     dashboard,

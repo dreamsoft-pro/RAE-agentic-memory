@@ -43,9 +43,9 @@ class Triples(BaseModel):
 REFLECTION_PROMPT = """
 You are a reasoning engine that synthesizes key insights from a list of recent events.
 Your task is to extract significant relationships between entities as (Subject) -> [RELATION] -> (Object) triples.
-Focus on extracting the most important information from the provided context.
+Focus on extracting the most important information from the provided context, paying attention to the SOURCE of information.
 
-Recent Events:
+Recent Events (Format: [Source] Content):
 {episodes}
 """
 
@@ -59,6 +59,7 @@ Focus on:
 2. Critical decisions and their rationale
 3. Important events and their impact
 4. Relationships between concepts
+5. Source reliability and consensus (if multiple sources are present)
 
 Content to analyze:
 {content}
@@ -102,7 +103,19 @@ class ReflectionEngine:
             )
             return "No new episodes, skipping."
 
-        episode_content = "\n".join([f"- {e['content']}" for e in episodes])
+        episode_lines = []
+        for e in episodes:
+            # Safely access provenance since it might be missing in old memories
+            provenance = e.get("provenance") or {}
+            source_dev = (
+                provenance.get("origin_device")
+                or provenance.get("rae.sync.origin")
+                or e.get("source")
+                or "unknown"
+            )
+            episode_lines.append(f"- [{source_dev}] {e['content']}")
+
+        episode_content = "\n".join(episode_lines)
 
         # 2. Use LLM to synthesize a lesson
         system_prompt = "You are a helpful assistant that synthesizes insights."
@@ -355,12 +368,20 @@ class ReflectionEngine:
         Returns:
             Summarized text
         """
-        formatted_episodes = "\n".join(
-            [
-                f"- [{ep.get('created_at', 'unknown')}] {ep.get('content', '')}"
-                for ep in episodes
-            ]
-        )
+        episode_lines = []
+        for ep in episodes:
+            provenance = ep.get("provenance") or {}
+            source_dev = (
+                provenance.get("origin_device")
+                or provenance.get("rae.sync.origin")
+                or ep.get("source")
+                or "unknown"
+            )
+            episode_lines.append(
+                f"- [{ep.get('created_at', 'unknown')}] [{source_dev}] {ep.get('content', '')}"
+            )
+
+        formatted_episodes = "\n".join(episode_lines)
 
         prompt = HIERARCHICAL_SUMMARY_PROMPT.format(content=formatted_episodes)
 
