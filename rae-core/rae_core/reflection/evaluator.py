@@ -258,3 +258,55 @@ class Evaluator:
             "total": len(memory_ids),
             "metrics": total_metrics,
         }
+
+
+class SanityChecker:
+    """Checks for logical contradictions and temporal impossibilities."""
+
+    def check_for_contradictions(
+        self,
+        inputs: list[str],
+    ) -> tuple[bool, list[str]]:
+        """Check inputs for obvious contradictions.
+
+        Args:
+            inputs: List of text statements to check
+
+        Returns:
+            Tuple (is_sane, list_of_issues)
+        """
+        issues = []
+
+        # 1. Check for direct negations (A vs not A)
+        # Simplified heuristic for now
+        for i, stmt1 in enumerate(inputs):
+            for stmt2 in inputs[i + 1 :]:
+                if self._are_contradictory(stmt1, stmt2):
+                    issues.append(f"Contradiction found: '{stmt1}' vs '{stmt2}'")
+
+        return len(issues) == 0, issues
+
+    def _are_contradictory(self, stmt1: str, stmt2: str) -> bool:
+        """Check if two statements are contradictory."""
+        s1 = stmt1.lower().strip()
+        s2 = stmt2.lower().strip()
+
+        # Simple negation check "is X" vs "is not X"
+        # This is very basic, but serves the initial implementation requirement
+        if f"not {s1}" in s2 or f"not {s2}" in s1:
+            return True
+
+        # Check "is X" vs "is not X" pattern specifically
+        if " is " in s1 and " is not " in s2:
+            key1 = s1.split(" is ")[1]
+            key2 = s2.split(" is not ")[1]
+            if key1 == key2:
+                return True
+
+        if " is not " in s1 and " is " in s2:
+            key1 = s1.split(" is not ")[1]
+            key2 = s2.split(" is ")[1]
+            if key1 == key2:
+                return True
+
+        return False

@@ -8,7 +8,7 @@ from rae_core.math.reasoning import ReasoningController, ReasoningPath
 class TestReasoningPath:
     def test_add_step(self):
         path = ReasoningPath()
-        node_id = uuid4()
+        node_id = str(uuid4())
         path.add_step(node_id, "Step 1", uncertainty_delta=-0.1, tokens=100)
 
         assert path.depth == 1
@@ -19,7 +19,7 @@ class TestReasoningPath:
 
     def test_aligns_with(self):
         path = ReasoningPath()
-        path.add_step(uuid4(), "User likes Python")
+        path.add_step(str(uuid4()), "User likes Python")
 
         assert path.aligns_with({"content": "Python"}) is True
         assert path.aligns_with({"content": "Java"}) is False
@@ -27,8 +27,8 @@ class TestReasoningPath:
 
     def test_count_unverified_assumptions(self):
         path = ReasoningPath()
-        path.add_step(uuid4(), "User lives in Warsaw")
-        path.add_step(uuid4(), "User likes cats")
+        path.add_step(str(uuid4()), "User lives in Warsaw")
+        path.add_step(str(uuid4()), "User likes cats")
 
         verified = {"Warsaw"}
         assert path.count_unverified_assumptions(verified) == 1 # cats unverified

@@ -3,10 +3,10 @@
 Implements IMemoryStorage interface using asyncpg for async PostgreSQL access.
 """
 
+import json
 from datetime import datetime, timezone
 from typing import Any, Optional, cast
 from uuid import UUID, uuid4
-import json
 
 try:
     import asyncpg
@@ -812,7 +812,7 @@ class PostgreSQLStorage(IMemoryStorage):
         """
 
         async with pool.acquire() as conn:
-            result = await conn.execute(
+            await conn.execute(
                 query,
                 now.replace(tzinfo=None),
                 decay_rate,
