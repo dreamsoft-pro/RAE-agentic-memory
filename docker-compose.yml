@@ -11,6 +11,8 @@ services:
       - "8000:8000"
     volumes:
       - ./benchmarking:/app/benchmarking
+      - ./apps:/app/apps
+      - ./rae-core:/app/rae-core
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=${POSTGRES_DB:-rae}
@@ -116,6 +118,9 @@ services:
       dockerfile: Dockerfile
     container_name: rae-celery-worker
     command: celery -A apps.memory_api.celery_app worker --loglevel=info --concurrency=2
+    volumes:
+      - ./apps:/app/apps
+      - ./rae-core:/app/rae-core
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=${POSTGRES_DB:-rae}
@@ -157,6 +162,9 @@ services:
       dockerfile: Dockerfile
     container_name: rae-celery-beat
     command: celery -A apps.memory_api.celery_app beat --loglevel=info
+    volumes:
+      - ./apps:/app/apps
+      - ./rae-core:/app/rae-core
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=${POSTGRES_DB:-rae}

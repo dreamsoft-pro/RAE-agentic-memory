@@ -85,7 +85,13 @@ class EmbeddingService:
         if self.use_litellm:
             # Use LiteLLM for embeddings
             try:
-                response = litellm.embedding(model=self.litellm_model, input=texts)
+                kwargs = {}
+                if self.litellm_model.startswith("ollama/"):
+                    kwargs["api_base"] = self.settings.OLLAMA_API_URL
+
+                response = litellm.embedding(
+                    model=self.litellm_model, input=texts, **kwargs
+                )
                 return [d["embedding"] for d in response["data"]]
             except Exception as e:
                 print(f"LiteLLM embedding failed: {e}")
@@ -121,8 +127,12 @@ class EmbeddingService:
         if self.use_litellm:
             # LiteLLM supports async via aembedding
             try:
+                kwargs = {}
+                if self.litellm_model.startswith("ollama/"):
+                    kwargs["api_base"] = self.settings.OLLAMA_API_URL
+
                 response = await litellm.aembedding(
-                    model=self.litellm_model, input=texts
+                    model=self.litellm_model, input=texts, **kwargs
                 )
                 return [d["embedding"] for d in response["data"]]
             except Exception as e:
@@ -153,8 +163,16 @@ class LocalEmbeddingProvider(IEmbeddingProvider):
 
     def get_dimension(self) -> int:
         """Get embedding dimension."""
-        # Assuming default model dimension for now, or could query model if loaded
-        return 384  # Default for all-MiniLM-L6-v2
+        # Ensure we check availability to set use_litellm correctly
+        self.service._ensure_available()
+
+        # Check if using Ollama which usually has 768 dims for nomic-embed-text
+        if self.service.use_litellm:
+            if self.service.litellm_model.startswith("ollama/"):
+                return 768
+
+        # Default for all-MiniLM-L6-v2
+        return 384
 
 
 class RemoteEmbeddingProvider(IEmbeddingProvider):
