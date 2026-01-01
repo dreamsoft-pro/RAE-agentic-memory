@@ -26,6 +26,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
+from rae_core.math.reasoning import ReasoningController, ReasoningPath
 
 
 class RelationType(Enum):
@@ -122,6 +123,7 @@ class GRDTResults:
     total_nodes: int = 0
     total_edges: int = 0
     avg_path_length: float = 0.0
+    deviation_stats: Dict[str, Any] = field(default_factory=dict)
 
     # Per-depth analysis
     depth_stats: Dict[int, Dict[str, Any]] = field(default_factory=dict)
@@ -150,6 +152,7 @@ class GRDTResults:
                 "total_nodes": self.total_nodes,
                 "total_edges": self.total_edges,
                 "avg_path_length": self.avg_path_length,
+                "deviation_stats": self.deviation_stats,
             },
             "depth_stats": self.depth_stats,
             "query_results": self.query_results[:50],  # Limit output
@@ -188,6 +191,7 @@ class GRDTBenchmark:
         self,
         embedding_dim: int = 384,
         seed: Optional[int] = 42,
+        controller_config: Optional[Dict[str, Any]] = None,
     ):
         """
         Initialize GRDT benchmark.
@@ -195,6 +199,7 @@ class GRDTBenchmark:
         Args:
             embedding_dim: Dimensionality of node embeddings
             seed: Random seed for reproducibility
+            controller_config: Configuration for ReasoningController
         """
         self.embedding_dim = embedding_dim
         self.seed = seed
@@ -211,6 +216,9 @@ class GRDTBenchmark:
         # Queries
         self.queries: List[ReasoningQuery] = []
         self.results: List[ReasoningResult] = []
+
+        # Reasoning Controller
+        self.controller = ReasoningController(**(controller_config or {}))
 
     def _generate_embedding(self, content: str) -> NDArray[np.float32]:
         """Generate embedding for content."""
@@ -446,23 +454,42 @@ class GRDTBenchmark:
         noise_level: float = 0.1,
     ) -> ReasoningResult:
         """
-        Simulate agent reasoning on a query.
+        Simulate agent reasoning on a query using ReasoningController.
 
         Includes realistic noise/errors to test robustness.
         """
         start_time = time.time()
 
-        # Simulate reasoning steps
-        reasoning_steps = []
-        found_path = [query.start_node]
-        found_relations = []
+        # Initialize ReasoningPath
+        path = ReasoningPath()
+        path.add_step(query.start_node, f"Start at {query.start_node}")
 
+        # Track internal state for simulation
         current_node = query.start_node
         expected_idx = 0
         correct_so_far = True
-        depth_reached = 0
 
-        for step in range(query.depth):
+        found_relations = []
+        reasoning_steps = []
+
+        # Token simulation
+        tokens_per_step = 50
+
+        while True:
+            # Check with Controller
+            should_continue = self.controller.should_continue_reasoning(
+                current_depth=path.depth - 1,
+                uncertainty=path.uncertainty,
+                tokens_used=path.tokens_used,
+            )
+
+            if not should_continue:
+                break
+
+            # Stop if we reached the target
+            if current_node == query.end_node:
+                break
+
             # Get expected next step
             if expected_idx + 1 < len(query.expected_path):
                 expected_next = query.expected_path[expected_idx + 1]
@@ -475,39 +502,59 @@ class GRDTBenchmark:
             if not neighbors:
                 break
 
+            # Decision logic (simulating Agent's choice)
             # With probability (1-noise), pick correct path; else random
             if random.random() > noise_level and any(
                 n[0] == expected_next for n in neighbors
             ):
                 next_node = expected_next
                 relation = expected_relation
+                uncertainty_drop = 0.0
             else:
                 # Random choice (simulates error)
                 next_node, relation = random.choice(neighbors)
                 if next_node != expected_next:
                     correct_so_far = False
+                uncertainty_drop = (
+                    -0.1
+                )  # Penalty for uncertainty if we were "guessing" (simulated)
 
-            found_path.append(next_node)
+            # Update Path
+            path.add_step(
+                node_id=next_node,
+                description=f"Moved to {next_node} via {relation.value}",
+                uncertainty_delta=uncertainty_drop,
+                tokens=tokens_per_step,
+            )
+
             found_relations.append(relation.value)
 
             reasoning_steps.append(
                 {
-                    "step": step + 1,
+                    "step": path.depth - 1,
                     "from": current_node,
                     "to": next_node,
                     "relation": relation.value,
                     "expected_next": expected_next,
                     "correct": next_node == expected_next,
+                    "uncertainty": path.uncertainty,
                 }
             )
 
             current_node = next_node
             expected_idx += 1
-            depth_reached = step + 1
+
+            # Use controller to prune if contradictory (simulated check)
+            kept_paths = self.controller.prune_contradictory_paths([path])
+            if not kept_paths:
+                # Controller decided to prune our only path -> Stop
+                break
 
         # Check final correctness
+        depth_reached = path.depth - 1
+
         correct = (
-            found_path[-1] == query.end_node
+            path.nodes[-1] == query.end_node
             and correct_so_far
             and depth_reached == query.depth
         )
@@ -519,7 +566,7 @@ class GRDTBenchmark:
 
         return ReasoningResult(
             query_id=query.query_id,
-            found_path=found_path,
+            found_path=path.nodes,
             found_relations=found_relations,
             correct=correct,
             depth_reached=depth_reached,
@@ -638,6 +685,29 @@ class GRDTBenchmark:
         # Average path length
         avg_path_length = total_path_length / len(self.results) if self.results else 0.0
 
+        # Deviation Stats
+        total_steps = 0
+        total_deviations = 0
+        deviation_depths = []
+
+        for r in self.results:
+            for step in r.reasoning_steps:
+                total_steps += 1
+                if not step["correct"]:
+                    total_deviations += 1
+                    deviation_depths.append(step["step"])
+
+        deviation_stats = {
+            "total_steps": total_steps,
+            "total_deviations": total_deviations,
+            "deviation_rate": (
+                total_deviations / total_steps if total_steps > 0 else 0.0
+            ),
+            "avg_deviation_depth": (
+                float(np.mean(deviation_depths)) if deviation_depths else 0.0
+            ),
+        }
+
         results = GRDTResults(
             max_reasoning_depth=max_correct_depth,
             reasoning_accuracy=reasoning_accuracy,
@@ -647,6 +717,7 @@ class GRDTBenchmark:
             total_nodes=len(self.nodes),
             total_edges=len(self.edges),
             avg_path_length=avg_path_length,
+            deviation_stats=deviation_stats,
             depth_stats=depth_stats,
             query_results=[
                 {
@@ -675,6 +746,57 @@ class GRDTBenchmark:
             for depth, accuracy in sorted(reasoning_accuracy.items()):
                 print(f"    Depth {depth}: {accuracy:.4f}")
             print(f"\n  Duration: {duration:.2f}s")
+
+        return results
+
+    def run_curriculum(self, noise_level: float = 0.1) -> Dict[str, GRDTResults]:
+        """
+        Run a curriculum of reasoning scenarios with increasing complexity.
+
+        Scenarios:
+        - Simple causal chains (depth 3-5)
+        - Planning scenarios (depth 5-8)
+        - Complex multi-stage (depth 8-12)
+
+        Args:
+            noise_level: Noise level for simulation
+
+        Returns:
+            Dictionary of results keyed by scenario name
+        """
+        scenarios = [
+            ("simple_causal", 3, 5),
+            ("planning", 5, 8),
+            ("complex_multistage", 8, 12),
+        ]
+
+        results = {}
+        print("\nStarting GRDT Curriculum...")
+
+        for name, min_d, max_d in scenarios:
+            print(f"\n>> Scenario: {name} (Depth {min_d}-{max_d})")
+
+            # Configure controller for this scenario
+            # Ensure max depth is sufficient
+            self.controller.max_depth = max_d + 2
+            # Reset stats between scenarios
+            self.controller.reset_stats()
+
+            res = self.run(
+                num_queries=50,
+                min_depth=min_d,
+                max_depth=max_d,
+                noise_level=noise_level,
+                verbose=True,
+            )
+            res.benchmark_name = f"GRDT_{name}"
+            results[name] = res
+
+            # Print Controller Stats
+            print("Controller Stats:")
+            for k, v in self.controller.get_stats().items():
+                if v > 0:
+                    print(f"  {k}: {v}")
 
         return results
 
