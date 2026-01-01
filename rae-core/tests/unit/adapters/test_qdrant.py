@@ -1,7 +1,7 @@
 """Unit tests for QdrantVectorStore adapter."""
 
 import sys
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
@@ -19,7 +19,7 @@ class TestQdrantVectorStore:
     @pytest.fixture
     def mock_client(self):
         """Create a mock Qdrant client."""
-        client = MagicMock()
+        client = AsyncMock()
         return client
 
     @pytest.fixture
@@ -182,7 +182,7 @@ class TestQdrantVectorStore:
     @pytest.mark.asyncio
     async def test_close(self, qdrant_store, mock_client):
         """Test close."""
-        qdrant_store.close()
+        await qdrant_store.close()
         mock_client.close.assert_called_once()
 
     @pytest.mark.asyncio
