@@ -2,7 +2,7 @@
 
 import sys
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 class TestQdrantVectorStoreCoverage:
@@ -22,7 +22,7 @@ class TestQdrantVectorStoreCoverage:
     async def test_add_vector_failure(self):
         """Test add_vector returning False on exception."""
         from rae_core.adapters.qdrant import QdrantVectorStore
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_client.upsert.side_effect = Exception("Upsert failed")
         
         with patch("rae_core.adapters.qdrant.QdrantClient", return_value=mock_client):
@@ -34,7 +34,7 @@ class TestQdrantVectorStoreCoverage:
     async def test_update_vector(self):
         """Test the update_vector wrapper."""
         from rae_core.adapters.qdrant import QdrantVectorStore
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         with patch("rae_core.adapters.qdrant.QdrantClient", return_value=mock_client):
             store = QdrantVectorStore(client=mock_client)
             mid = uuid4()
@@ -46,7 +46,7 @@ class TestQdrantVectorStoreCoverage:
     async def test_search_similar_with_filters(self):
         """Test search_similar with layer and threshold to cover those branches."""
         from rae_core.adapters.qdrant import QdrantVectorStore
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_client.search.return_value = []
         with patch("rae_core.adapters.qdrant.QdrantClient", return_value=mock_client):
             store = QdrantVectorStore(client=mock_client)
@@ -62,7 +62,7 @@ class TestQdrantVectorStoreCoverage:
     async def test_delete_vector_not_found(self):
         """Test delete_vector when vector is not found."""
         from rae_core.adapters.qdrant import QdrantVectorStore
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_client.retrieve.return_value = []
         with patch("rae_core.adapters.qdrant.QdrantClient", return_value=mock_client):
             store = QdrantVectorStore(client=mock_client)
@@ -74,7 +74,7 @@ class TestQdrantVectorStoreCoverage:
     async def test_delete_vector_wrong_tenant(self):
         """Test delete_vector when tenant doesn't match."""
         from rae_core.adapters.qdrant import QdrantVectorStore
-        mock_client = MagicMock()
+        mock_client = AsyncMock()
         mock_res = MagicMock()
         mock_res.payload = {"tenant_id": "other"}
         mock_client.retrieve.return_value = [mock_res]
