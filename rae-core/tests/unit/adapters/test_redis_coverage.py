@@ -1,9 +1,11 @@
 """Unit tests for RedisCache to achieve 100% coverage."""
 
-import sys
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
 from rae_core.adapters.redis import RedisCache
+
 
 class TestRedisCacheCoverage:
     """Test suite for RedisCache coverage gaps."""
@@ -72,7 +74,9 @@ class TestRedisCacheCoverage:
     @pytest.mark.asyncio
     async def test_clear_exception(self):
         """Test clear returning 0 on exception."""
-        mock_redis = MagicMock() # scan_iter is usually not AsyncMock but returns async iterator
+        mock_redis = (
+            MagicMock()
+        )  # scan_iter is usually not AsyncMock but returns async iterator
         mock_redis.scan_iter.side_effect = Exception("Redis error")
         cache = RedisCache(redis_client=mock_redis)
         res = await cache.clear("*")

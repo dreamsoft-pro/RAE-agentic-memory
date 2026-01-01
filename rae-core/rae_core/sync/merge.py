@@ -279,7 +279,7 @@ def merge_memories(
     return results
 
 
-def apply_merge_results(
+async def apply_merge_results(
     merge_results: list[MergeResult],
     storage_update_fn: Any,
 ) -> dict[str, Any]:
@@ -302,7 +302,7 @@ def apply_merge_results(
     for result in merge_results:
         if result.success and result.merged_memory:
             try:
-                # This would be called with: await storage_update_fn(result.merged_memory)
+                await storage_update_fn(result.merged_memory)
                 summary["successful"] += 1
             except Exception as e:
                 summary["failed"] += 1

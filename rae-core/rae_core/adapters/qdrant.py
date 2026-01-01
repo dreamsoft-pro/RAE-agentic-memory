@@ -3,17 +3,18 @@
 Implements IVectorStore interface using Qdrant for similarity search.
 """
 
-from typing import Any, Optional, cast
+from typing import Any, cast
 from uuid import UUID
 
 try:
-    from qdrant_client import QdrantClient as QdrantClientRaw
     from qdrant_client import AsyncQdrantClient
+    from qdrant_client import QdrantClient as QdrantClientRaw
     from qdrant_client.models import Distance, PointStruct, VectorParams
+
     QdrantClient = QdrantClientRaw
 except ImportError:
-    QdrantClient: Any = None # type: ignore
-    AsyncQdrantClient: Any = None # type: ignore
+    QdrantClient: Any = None  # type: ignore
+    AsyncQdrantClient: Any = None  # type: ignore
 
 from ..interfaces.vector import IVectorStore
 
@@ -42,7 +43,7 @@ class QdrantVectorStore(IVectorStore):
         collection_name: str = "memories",
         url: str | None = None,
         api_key: str | None = None,
-        client: Optional[Any] = None,
+        client: Any | None = None,
         embedding_dim: int = 384,
         distance: str = "Cosine",
     ):
@@ -76,16 +77,16 @@ class QdrantVectorStore(IVectorStore):
         if client:
             self.client = client
         elif url:
-            # Default to Async client if not provided but url is? 
-            # Original code used QdrantClient (sync). 
+            # Default to Async client if not provided but url is?
+            # Original code used QdrantClient (sync).
             # To support async by default for this adapter when used in async context:
-            # But here we stick to what was passed or default. 
+            # But here we stick to what was passed or default.
             # If we want async, we should probably default to AsyncQdrantClient if we can?
             # For now, let's keep it sync by default if no client passed, to avoid breaking other usages?
             # But wait, RAE-Core might be used in sync context?
             # The adapter methods are `async def`, so they imply async usage.
             # So `self.client` SHOULD be async for `await` to work.
-            
+
             # If we initialize it ourselves, we should use AsyncQdrantClient.
             self.client = AsyncQdrantClient(url=url, api_key=api_key)
         else:
@@ -104,6 +105,7 @@ class QdrantVectorStore(IVectorStore):
         except Exception:
             # Collection doesn't exist, create it
             from qdrant_client.models import SparseVectorParams
+
             await self.client.create_collection(
                 collection_name=self.collection_name,
                 vectors_config={
@@ -209,9 +211,7 @@ class QdrantVectorStore(IVectorStore):
 
             points.append(
                 PointStruct(
-                    id=str(memory_id),
-                    vector={"dense": embedding},
-                    payload=payload
+                    id=str(memory_id), vector={"dense": embedding}, payload=payload
                 )
             )
 
@@ -219,7 +219,9 @@ class QdrantVectorStore(IVectorStore):
             return 0
 
         try:
-            await self.client.upsert(collection_name=self.collection_name, points=points)
+            await self.client.upsert(
+                collection_name=self.collection_name, points=points
+            )
             return len(points)
         except Exception:
             return 0
@@ -267,6 +269,7 @@ class QdrantVectorStore(IVectorStore):
 
         try:
             from qdrant_client.models import NamedVector
+
             results = await self.client.search(
                 collection_name=self.collection_name,
                 query_vector=NamedVector(name="dense", vector=query_embedding),

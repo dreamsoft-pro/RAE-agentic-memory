@@ -610,10 +610,7 @@ class SQLiteStorage(IMemoryStorage):
                 (query, tenant_id, agent_id, layer, limit),
             )
             rows = await cursor.fetchall()
-            return [
-                {"memory": self._row_to_dict(row), "score": 1.0}
-                for row in rows
-            ]
+            return [{"memory": self._row_to_dict(row), "score": 1.0} for row in rows]
 
     async def delete_expired_memories(
         self,
@@ -707,7 +704,12 @@ class SQLiteStorage(IMemoryStorage):
                 SET expires_at = ?, modified_at = ?
                 WHERE id = ? AND tenant_id = ?
                 """,
-                (expires_at_str, datetime.now(timezone.utc).isoformat(), str(memory_id), tenant_id),
+                (
+                    expires_at_str,
+                    datetime.now(timezone.utc).isoformat(),
+                    str(memory_id),
+                    tenant_id,
+                ),
             )
             await db.commit()
 
@@ -790,7 +792,12 @@ class SQLiteStorage(IMemoryStorage):
                     modified_at = ?
                 WHERE id = ? AND tenant_id = ?
                 """,
-                (delta, datetime.now(timezone.utc).isoformat(), str(memory_id), tenant_id),
+                (
+                    delta,
+                    datetime.now(timezone.utc).isoformat(),
+                    str(memory_id),
+                    tenant_id,
+                ),
             )
             await db.commit()
 

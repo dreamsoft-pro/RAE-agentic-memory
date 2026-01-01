@@ -1,7 +1,9 @@
 """Additional unit tests for InMemoryCache to achieve 100% coverage."""
 
 import pytest
+
 from rae_core.adapters.memory.cache import InMemoryCache
+
 
 class TestInMemoryCacheCoverage:
     """Test suite for InMemoryCache coverage gaps."""
@@ -18,9 +20,12 @@ class TestInMemoryCacheCoverage:
         await cache.set("key", "val", agent_id="agent1")
         assert await cache.get("key", agent_id="agent1") == "val"
         assert await cache.get("key") is None
-        
+
         await cache.set("key", "val_session", agent_id="agent1", session_id="sess1")
-        assert await cache.get("key", agent_id="agent1", session_id="sess1") == "val_session"
+        assert (
+            await cache.get("key", agent_id="agent1", session_id="sess1")
+            == "val_session"
+        )
         assert await cache.get("key", agent_id="agent1") == "val"
 
     @pytest.mark.asyncio
@@ -29,7 +34,7 @@ class TestInMemoryCacheCoverage:
         await cache.set("key1", "val1", agent_id="agent1")
         await cache.set("key2", "val2", agent_id="agent1")
         await cache.set("key3", "val3", agent_id="agent2")
-        
+
         # Clear only agent1
         count = await cache.clear(agent_id="agent1")
         assert count == 2
@@ -42,7 +47,7 @@ class TestInMemoryCacheCoverage:
         """Test clearing keys filtered by agent_id and session_id."""
         await cache.set("key1", "val1", agent_id="agent1", session_id="sess1")
         await cache.set("key2", "val2", agent_id="agent1", session_id="sess2")
-        
+
         count = await cache.clear(agent_id="agent1", session_id="sess1")
         assert count == 1
         assert await cache.get("key1", agent_id="agent1", session_id="sess1") is None
@@ -54,7 +59,7 @@ class TestInMemoryCacheCoverage:
         await cache.set("user:1", "data1", agent_id="agent1")
         await cache.set("admin:1", "data2", agent_id="agent1")
         await cache.set("user:1", "data3", agent_id="agent2")
-        
+
         # Clear user:* for agent1
         count = await cache.clear(pattern="user:*", agent_id="agent1")
         assert count == 1
@@ -68,11 +73,11 @@ class TestInMemoryCacheCoverage:
         await cache.set("key_list", [1, 2])
         val = await cache.increment("key_list")
         assert val == 1
-        
+
         await cache.set("key_dict", {"a": 1})
         val = await cache.increment("key_dict")
         assert val == 1
-        
+
         await cache.set("key_none", None)
         val = await cache.increment("key_none")
         assert val == 1

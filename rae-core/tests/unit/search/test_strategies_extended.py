@@ -15,6 +15,7 @@ def mock_storage():
     storage.list_memories = AsyncMock()
     return storage
 
+
 class TestFullTextStrategy:
     def test_compute_match_score(self, mock_storage):
         strat = FullTextStrategy(memory_storage=mock_storage)
@@ -24,7 +25,9 @@ class TestFullTextStrategy:
         assert score == 1.0
 
         # Tag match
-        score = strat._compute_match_score("important", "content", ["important", "news"])
+        score = strat._compute_match_score(
+            "important", "content", ["important", "news"]
+        )
         assert score >= 0.8
 
         # Word match
@@ -44,6 +47,7 @@ class TestFullTextStrategy:
         assert results[0][0] == mem_id
         assert results[0][1] > 0
 
+
 class TestSparseVectorStrategy:
     @pytest.mark.asyncio
     async def test_bm25_scoring(self, mock_storage):
@@ -54,7 +58,7 @@ class TestSparseVectorStrategy:
         # Query: "python" -> only id1 matches
         mock_storage.list_memories.return_value = [
             {"id": id1, "content": "python coding"},
-            {"id": id2, "content": "java coding"}
+            {"id": id2, "content": "java coding"},
         ]
 
         results = await strat.search("python", "t1")

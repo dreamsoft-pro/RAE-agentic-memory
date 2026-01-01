@@ -8,9 +8,10 @@ from typing import Any, Optional
 
 try:
     import redis.asyncio as aioredis_mod
+
     aioredis = aioredis_mod
 except ImportError:
-    aioredis = None # type: ignore
+    aioredis = None  # type: ignore
 
 from ..interfaces.cache import ICacheProvider
 

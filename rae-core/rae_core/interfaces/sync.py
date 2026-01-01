@@ -20,7 +20,10 @@ class ISyncProvider(Protocol):
         ...
 
     async def resolve_conflict(
-        self, memory_id: UUID, local_version: dict[str, Any], remote_version: dict[str, Any]
+        self,
+        memory_id: UUID,
+        local_version: dict[str, Any],
+        remote_version: dict[str, Any],
     ) -> dict[str, Any]:
         """Resolve conflict using CRDT merge strategy."""
         ...

@@ -133,7 +133,7 @@ class SQLiteVectorStore(IVectorStore):
         # Fallback to optimized numpy search
         query_vec = np.array(query_embedding, dtype=np.float32)
         query_norm = np.linalg.norm(query_vec)
-        
+
         if query_norm == 0:
             return []
 
@@ -169,10 +169,10 @@ class SQLiteVectorStore(IVectorStore):
                 embeddings = []
                 for row in rows:
                     embeddings.append(np.frombuffer(row["embedding"], dtype=np.float32))
-                
+
                 # Convert to matrix for bulk calculation
                 matrix = np.stack(embeddings)
-                
+
                 # Bulk cosine similarity calculation
                 dot_products = np.dot(matrix, query_vec)
                 norms = np.linalg.norm(matrix, axis=1)

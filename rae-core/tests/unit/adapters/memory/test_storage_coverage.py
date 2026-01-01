@@ -1,8 +1,11 @@
 """Additional unit tests for InMemoryStorage to achieve 100% coverage."""
 
-import pytest
 from uuid import uuid4
+
+import pytest
+
 from rae_core.adapters.memory.storage import InMemoryStorage
+
 
 class TestInMemoryStorageCoverage:
     """Test suite for InMemoryStorage coverage gaps."""
@@ -24,16 +27,16 @@ class TestInMemoryStorageCoverage:
         mid = await storage.store_memory("content", "layer", "tenant", "agent")
         success = await storage.save_embedding(mid, "model", [0.1, 0.2])
         assert success is True
-        
+
     @pytest.mark.asyncio
     async def test_delete_memory_not_found_or_wrong_tenant(self, storage):
         """Test deleting non-existent memory or with wrong tenant."""
         mid = await storage.store_memory("content", "layer", "tenant1", "agent")
-        
+
         # Wrong tenant
         success = await storage.delete_memory(mid, "tenant2")
         assert success is False
-        
+
         # Non-existent
         success = await storage.delete_memory(uuid4(), "tenant1")
         assert success is False
@@ -44,7 +47,7 @@ class TestInMemoryStorageCoverage:
         await storage.store_memory("c1", "l1", "t1", "a1")
         await storage.store_memory("c2", "l2", "t1", "a1")
         await storage.store_memory("c3", "l1", "t2", "a1")
-        
+
         await storage.clear_tenant("t1")
         assert await storage.count_memories("t1") == 0
         assert await storage.count_memories("t2") == 1
@@ -72,10 +75,10 @@ class TestInMemoryStorageCoverage:
         """Test update_memory_access_batch."""
         mid1 = await storage.store_memory("c1", "l1", "t1", "a1")
         mid2 = await storage.store_memory("c2", "l1", "t1", "a1")
-        
+
         success = await storage.update_memory_access_batch([mid1, mid2], "t1")
         assert success is True
-        
+
         m1 = await storage.get_memory(mid1, "t1")
         m2 = await storage.get_memory(mid2, "t1")
         assert m1["access_count"] == 1
@@ -91,11 +94,11 @@ class TestInMemoryStorageCoverage:
     async def test_adjust_importance_clamping(self, storage):
         """Test adjust_importance clamping logic."""
         mid = await storage.store_memory("c", "l", "t", "a", importance=0.9)
-        
+
         # Upward clamping
         new_val = await storage.adjust_importance(mid, 0.5, "t")
         assert new_val == 1.0
-        
+
         # Downward clamping
         new_val = await storage.adjust_importance(mid, -1.5, "t")
         assert new_val == 0.0

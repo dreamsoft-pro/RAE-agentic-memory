@@ -48,7 +48,7 @@ class TestPostgreSQLStorageExtended:
             tenant_id="tenant1",
             metric="importance",
             func="avg",
-            filters={"agent_id": "agent1", "layer": "working"}
+            filters={"agent_id": "agent1", "layer": "working"},
         )
 
         assert result == 0.75
@@ -75,8 +75,7 @@ class TestPostgreSQLStorageExtended:
         memory_ids = [uuid4(), uuid4()]
 
         result = await pg_storage.update_memory_access_batch(
-            memory_ids=memory_ids,
-            tenant_id="tenant1"
+            memory_ids=memory_ids, tenant_id="tenant1"
         )
 
         assert result is True
@@ -92,9 +91,7 @@ class TestPostgreSQLStorageExtended:
         memory_id = uuid4()
 
         new_importance = await pg_storage.adjust_importance(
-            memory_id=memory_id,
-            delta=0.1,
-            tenant_id="tenant1"
+            memory_id=memory_id, delta=0.1, tenant_id="tenant1"
         )
 
         assert new_importance == 0.8
@@ -110,9 +107,7 @@ class TestPostgreSQLStorageExtended:
 
         with pytest.raises(ValueError, match="Memory not found"):
             await pg_storage.adjust_importance(
-                memory_id=uuid4(),
-                delta=0.1,
-                tenant_id="tenant1"
+                memory_id=uuid4(), delta=0.1, tenant_id="tenant1"
             )
 
     @pytest.mark.asyncio
@@ -166,8 +161,11 @@ class TestPostgreSQLStorageExtended:
         mock_conn.fetch.return_value = []
 
         await pg_storage.search_memories(
-            "query", "t", "a", "l",
-            filters={"not_expired": True, "tags": ["tag1"], "min_importance": 0.7}
+            "query",
+            "t",
+            "a",
+            "l",
+            filters={"not_expired": True, "tags": ["tag1"], "min_importance": 0.7},
         )
 
         query = mock_conn.fetch.call_args[0][0]
@@ -179,6 +177,7 @@ class TestPostgreSQLStorageExtended:
     async def test_update_memory_expiration(self, pg_storage, mock_conn):
         """Test updating memory expiration."""
         from datetime import datetime, timezone
+
         mock_conn.execute.return_value = "UPDATE 1"
         expiry = datetime.now(timezone.utc)
 

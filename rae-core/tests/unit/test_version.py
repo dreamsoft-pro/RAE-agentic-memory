@@ -1,4 +1,5 @@
-from rae_core.version import __version__, __author__, __email__, __license__
+from rae_core.version import __author__, __email__, __license__, __version__
+
 
 def test_version_info():
     assert isinstance(__version__, str)

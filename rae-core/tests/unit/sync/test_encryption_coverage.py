@@ -1,7 +1,7 @@
 """Unit tests for encryption.py to achieve 100% coverage."""
 
-import pytest
-from rae_core.sync.encryption import E2EEncryption, encrypt_batch, decrypt_batch
+from rae_core.sync.encryption import E2EEncryption, decrypt_batch, encrypt_batch
+
 
 class TestEncryptionCoverage:
     """Test suite for encryption.py coverage gaps."""
@@ -11,7 +11,7 @@ class TestEncryptionCoverage:
         e1 = E2EEncryption(password="test-password")
         e2 = E2EEncryption(password="test-password")
         assert e1.key == e2.key
-        
+
         e3 = E2EEncryption(password="different")
         assert e1.key != e3.key
 
@@ -36,15 +36,15 @@ class TestEncryptionCoverage:
             "id": "123",
             "content": "top secret",
             "metadata": {"sensitive": True},
-            "public": "visible"
+            "public": "visible",
         }
-        
+
         enc = e.encrypt_memory(memory)
         assert enc["content"] != "top secret"
         assert enc["content_encrypted"] is True
         assert enc["metadata_encrypted"] is True
         assert enc["public"] == "visible"
-        
+
         dec = e.decrypt_memory(enc)
         assert dec["content"] == "top secret"
         assert dec["metadata"] == {"sensitive": True}
@@ -53,15 +53,12 @@ class TestEncryptionCoverage:
     def test_batch_operations(self):
         """Test batch encryption and decryption."""
         e = E2EEncryption()
-        mems = [
-            {"content": "c1", "metadata": {}},
-            {"content": "c2"}
-        ]
-        
+        mems = [{"content": "c1", "metadata": {}}, {"content": "c2"}]
+
         enc_mems = encrypt_batch(mems, e)
         assert len(enc_mems) == 2
         assert enc_mems[0]["content_encrypted"] is True
-        
+
         dec_mems = decrypt_batch(enc_mems, e)
         assert dec_mems == mems
 

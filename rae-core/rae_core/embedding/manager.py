@@ -1,14 +1,18 @@
-from typing import Dict, List, Optional
 from rae_core.interfaces.embedding import IEmbeddingProvider
+
 
 class EmbeddingManager(IEmbeddingProvider):
     """
     Manages multiple embedding providers.
     Implements IEmbeddingProvider to act as a default provider/proxy.
     """
-    
-    def __init__(self, default_provider: IEmbeddingProvider, default_model_name: str = "default") -> None:
-        self.providers: Dict[str, IEmbeddingProvider] = {default_model_name: default_provider}
+
+    def __init__(
+        self, default_provider: IEmbeddingProvider, default_model_name: str = "default"
+    ) -> None:
+        self.providers: dict[str, IEmbeddingProvider] = {
+            default_model_name: default_provider
+        }
         self.default_model_name = default_model_name
         self._default_provider = default_provider
 
@@ -16,21 +20,23 @@ class EmbeddingManager(IEmbeddingProvider):
         """Register a provider for a specific model/profile name."""
         self.providers[model_name] = provider
 
-    def get_provider(self, model_name: str) -> Optional[IEmbeddingProvider]:
+    def get_provider(self, model_name: str) -> IEmbeddingProvider | None:
         return self.providers.get(model_name)
 
     # IEmbeddingProvider implementation (delegates to default)
-    async def embed_text(self, text: str) -> List[float]:
+    async def embed_text(self, text: str) -> list[float]:
         return await self._default_provider.embed_text(text)
 
-    async def embed_batch(self, texts: List[str]) -> List[List[float]]:
+    async def embed_batch(self, texts: list[str]) -> list[list[float]]:
         return await self._default_provider.embed_batch(texts)
 
     def get_dimension(self) -> int:
         return self._default_provider.get_dimension()
-    
+
     # Manager methods
-    async def generate_all_embeddings(self, texts: List[str]) -> Dict[str, List[List[float]]]:
+    async def generate_all_embeddings(
+        self, texts: list[str]
+    ) -> dict[str, list[list[float]]]:
         """
         Generate embeddings for all registered models.
         Returns: Dict[model_name, embeddings_list]
@@ -46,6 +52,6 @@ class EmbeddingManager(IEmbeddingProvider):
                 # Log error but continue with other models?
                 # For now print/log and skip
                 print(f"Failed to generate embeddings for {model_name}: {e}")
-                results[model_name] = [] 
-                
+                results[model_name] = []
+
         return results

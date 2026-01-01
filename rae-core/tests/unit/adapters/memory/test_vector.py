@@ -375,7 +375,7 @@ class TestInMemoryVectorStore:
             test_name="cosine_similarity_memory_correctness",
             inputs={"query": vec1, "vecs": [vec1, vec2, vec3]},
             output=results,
-            metadata={"adapter": "InMemoryVectorStore"}
+            metadata={"adapter": "InMemoryVectorStore"},
         )
 
         # Find results by ID

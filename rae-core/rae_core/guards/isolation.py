@@ -4,7 +4,7 @@ Provides post-search validation to ensure data isolation between agents and sess
 """
 
 import logging
-from typing import Any, List, Dict, Union
+from typing import Any
 
 from ..models.memory import MemoryItem
 
@@ -32,12 +32,12 @@ class MemoryIsolationGuard:
 
     def validate_search_results(
         self,
-        results: List[Union[MemoryItem, Dict[str, Any]]],
+        results: list[MemoryItem | dict[str, Any]],
         expected_agent_id: str,
         expected_session_id: str | None = None,
         expected_tenant_id: str | None = None,
         raise_on_leak: bool = False,
-    ) -> List[Union[MemoryItem, Dict[str, Any]]]:
+    ) -> list[MemoryItem | dict[str, Any]]:
         """
         Filter out any memories that don't match expected IDs.
 
@@ -56,7 +56,9 @@ class MemoryIsolationGuard:
         leaks_detected = 0
 
         for memory in results:
-            if self.validate_single_memory(memory, expected_agent_id, expected_session_id, expected_tenant_id):
+            if self.validate_single_memory(
+                memory, expected_agent_id, expected_session_id, expected_tenant_id
+            ):
                 validated.append(memory)
             else:
                 leaks_detected += 1
@@ -69,19 +71,22 @@ class MemoryIsolationGuard:
             )
             if raise_on_leak or self.strict_mode:
                 from ..exceptions.base import RAEError
-                raise RAEError(f"Security Violation: Cross-agent memory leak detected ({leaks_detected} items)")
+
+                raise RAEError(
+                    f"Security Violation: Cross-agent memory leak detected ({leaks_detected} items)"
+                )
 
         return validated
 
     def validate_single_memory(
         self,
-        memory: Union[MemoryItem, Dict[str, Any]],
+        memory: MemoryItem | dict[str, Any],
         expected_agent_id: str,
         expected_session_id: str | None = None,
         expected_tenant_id: str | None = None,
     ) -> bool:
         """Validate isolation for a single memory."""
-        
+
         # Get values from object or dict
         if isinstance(memory, dict):
             agent_id = memory.get("agent_id")
@@ -109,7 +114,7 @@ class MemoryIsolationGuard:
                 f"({session_id} != expected {expected_session_id})"
             )
             return False
-            
+
         # Check tenant_id match (only if expected_tenant_id is provided)
         if expected_tenant_id and tenant_id != expected_tenant_id:
             logger.warning(
@@ -120,13 +125,17 @@ class MemoryIsolationGuard:
 
         return True
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get guard statistics."""
-        leak_rate = (self.leak_count / self.validation_count) if self.validation_count > 0 else 0.0
+        leak_rate = (
+            (self.leak_count / self.validation_count)
+            if self.validation_count > 0
+            else 0.0
+        )
         return {
             "leak_count": self.leak_count,
             "validation_count": self.validation_count,
-            "leak_rate": leak_rate
+            "leak_rate": leak_rate,
         }
 
     def reset_stats(self) -> None:

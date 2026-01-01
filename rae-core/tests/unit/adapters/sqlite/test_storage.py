@@ -645,8 +645,12 @@ class TestSQLiteStorageEdgeCases:
     @pytest.mark.asyncio
     async def test_delete_memories_below_importance(self, storage):
         """Test deleting memories below importance threshold."""
-        await storage.store_memory(content="High", layer="w", tenant_id="t", agent_id="a", importance=0.9)
-        await storage.store_memory(content="Low", layer="w", tenant_id="t", agent_id="a", importance=0.2)
+        await storage.store_memory(
+            content="High", layer="w", tenant_id="t", agent_id="a", importance=0.9
+        )
+        await storage.store_memory(
+            content="Low", layer="w", tenant_id="t", agent_id="a", importance=0.2
+        )
 
         count = await storage.delete_memories_below_importance("t", "a", "w", 0.5)
         assert count == 1
@@ -658,10 +662,16 @@ class TestSQLiteStorageEdgeCases:
     @pytest.mark.asyncio
     async def test_delete_memories_with_metadata_filter(self, storage):
         """Test deleting memories with metadata filter."""
-        await storage.store_memory(content="M1", layer="w", tenant_id="t", agent_id="a", metadata={"cat": "A"})
-        await storage.store_memory(content="M2", layer="w", tenant_id="t", agent_id="a", metadata={"cat": "B"})
+        await storage.store_memory(
+            content="M1", layer="w", tenant_id="t", agent_id="a", metadata={"cat": "A"}
+        )
+        await storage.store_memory(
+            content="M2", layer="w", tenant_id="t", agent_id="a", metadata={"cat": "B"}
+        )
 
-        count = await storage.delete_memories_with_metadata_filter("t", "a", "w", {"cat": "A"})
+        count = await storage.delete_memories_with_metadata_filter(
+            "t", "a", "w", {"cat": "A"}
+        )
         assert count == 1
 
         memories = await storage.list_memories("t")
@@ -672,15 +682,22 @@ class TestSQLiteStorageEdgeCases:
     async def test_delete_expired_memories(self, storage):
         """Test deleting expired memories."""
         from datetime import datetime, timedelta, timezone
+
         now = datetime.now(timezone.utc)
 
         await storage.store_memory(
-            content="Old", layer="w", tenant_id="t", agent_id="a",
-            expires_at=now - timedelta(days=1)
+            content="Old",
+            layer="w",
+            tenant_id="t",
+            agent_id="a",
+            expires_at=now - timedelta(days=1),
         )
         await storage.store_memory(
-            content="New", layer="w", tenant_id="t", agent_id="a",
-            expires_at=now + timedelta(days=1)
+            content="New",
+            layer="w",
+            tenant_id="t",
+            agent_id="a",
+            expires_at=now + timedelta(days=1),
         )
 
         count = await storage.delete_expired_memories("t", "a", "w")
@@ -693,8 +710,12 @@ class TestSQLiteStorageEdgeCases:
     @pytest.mark.asyncio
     async def test_search_memories_wrapper(self, storage):
         """Test the search_memories wrapper which uses FTS5."""
-        await storage.store_memory(content="RAE is agentic memory", layer="w", tenant_id="t", agent_id="a")
-        await storage.store_memory(content="Other content", layer="w", tenant_id="t", agent_id="a")
+        await storage.store_memory(
+            content="RAE is agentic memory", layer="w", tenant_id="t", agent_id="a"
+        )
+        await storage.store_memory(
+            content="Other content", layer="w", tenant_id="t", agent_id="a"
+        )
 
         results = await storage.search_memories("agentic", "t", "a", "w")
         assert len(results) == 1
@@ -704,7 +725,10 @@ class TestSQLiteStorageEdgeCases:
     async def test_update_memory_expiration(self, storage):
         """Test updating memory expiration."""
         from datetime import datetime, timezone
-        memory_id = await storage.store_memory(content="T", layer="w", tenant_id="t", agent_id="a")
+
+        memory_id = await storage.store_memory(
+            content="T", layer="w", tenant_id="t", agent_id="a"
+        )
 
         expiry = datetime.now(timezone.utc)
         success = await storage.update_memory_expiration(memory_id, "t", expiry)
@@ -721,8 +745,12 @@ class TestSQLiteStorageExtendedOperations:
     @pytest.mark.asyncio
     async def test_get_metric_aggregate(self, storage):
         """Test calculating aggregate metrics."""
-        await storage.store_memory(content="M1", layer="w", tenant_id="t", agent_id="a", importance=0.8)
-        await storage.store_memory(content="M2", layer="w", tenant_id="t", agent_id="a", importance=0.2)
+        await storage.store_memory(
+            content="M1", layer="w", tenant_id="t", agent_id="a", importance=0.8
+        )
+        await storage.store_memory(
+            content="M2", layer="w", tenant_id="t", agent_id="a", importance=0.2
+        )
 
         # Sum of importance
         sum_imp = await storage.get_metric_aggregate("t", "importance", "sum")
@@ -733,8 +761,12 @@ class TestSQLiteStorageExtendedOperations:
         assert avg_imp == pytest.approx(0.5)
 
         # Min/Max
-        assert await storage.get_metric_aggregate("t", "importance", "min") == pytest.approx(0.2)
-        assert await storage.get_metric_aggregate("t", "importance", "max") == pytest.approx(0.8)
+        assert await storage.get_metric_aggregate(
+            "t", "importance", "min"
+        ) == pytest.approx(0.2)
+        assert await storage.get_metric_aggregate(
+            "t", "importance", "max"
+        ) == pytest.approx(0.8)
 
         # Invalid metric/func should return 0
         assert await storage.get_metric_aggregate("t", "invalid", "avg") == 0.0
@@ -743,8 +775,12 @@ class TestSQLiteStorageExtendedOperations:
     @pytest.mark.asyncio
     async def test_update_memory_access_batch(self, storage):
         """Test batch updating access count."""
-        id1 = await storage.store_memory(content="M1", layer="w", tenant_id="t", agent_id="a")
-        id2 = await storage.store_memory(content="M2", layer="w", tenant_id="t", agent_id="a")
+        id1 = await storage.store_memory(
+            content="M1", layer="w", tenant_id="t", agent_id="a"
+        )
+        id2 = await storage.store_memory(
+            content="M2", layer="w", tenant_id="t", agent_id="a"
+        )
 
         success = await storage.update_memory_access_batch([id1, id2], "t")
         assert success is True
@@ -757,7 +793,9 @@ class TestSQLiteStorageExtendedOperations:
     @pytest.mark.asyncio
     async def test_adjust_importance(self, storage):
         """Test adjusting memory importance."""
-        memory_id = await storage.store_memory(content="T", layer="w", tenant_id="t", agent_id="a", importance=0.5)
+        memory_id = await storage.store_memory(
+            content="T", layer="w", tenant_id="t", agent_id="a", importance=0.5
+        )
 
         # Positive adjustment
         new_val = await storage.adjust_importance(memory_id, 0.2, "t")
@@ -771,27 +809,37 @@ class TestSQLiteStorageExtendedOperations:
         new_val = await storage.adjust_importance(memory_id, 2.0, "t")
         assert new_val == 1.0
 
+
 class TestSQLiteStorageEmbeddings:
     """Test multi-model embedding storage."""
 
     @pytest.mark.asyncio
     async def test_save_embedding(self, storage):
         """Test saving and replacing embeddings."""
-        memory_id = await storage.store_memory(content="T", layer="w", tenant_id="t", agent_id="a")
-        
+        memory_id = await storage.store_memory(
+            content="T", layer="w", tenant_id="t", agent_id="a"
+        )
+
         emb = [0.1, 0.2, 0.3]
-        success = await storage.save_embedding(memory_id, "model-v1", emb, metadata={"dim": 3})
+        success = await storage.save_embedding(
+            memory_id, "model-v1", emb, metadata={"dim": 3}
+        )
         assert success is True
 
         # Verify in DB
         import sqlite3
+
         conn = sqlite3.connect(storage.db_path)
         cursor = conn.cursor()
-        cursor.execute("SELECT embedding FROM memory_embeddings WHERE memory_id = ?", (str(memory_id),))
+        cursor.execute(
+            "SELECT embedding FROM memory_embeddings WHERE memory_id = ?",
+            (str(memory_id),),
+        )
         row = cursor.fetchone()
         assert row is not None
         assert json.loads(row[0]) == emb
         conn.close()
+
 
 class TestSQLiteStorageTagsAndFilters:
     """Test advanced tag filtering and metadata filters."""
@@ -799,8 +847,20 @@ class TestSQLiteStorageTagsAndFilters:
     @pytest.mark.asyncio
     async def test_list_memories_advanced_filters(self, storage):
         """Test metadata filtering using json_extract."""
-        await storage.store_memory(content="M1", layer="w", tenant_id="t", agent_id="a", metadata={"priority": "high"})
-        await storage.store_memory(content="M2", layer="w", tenant_id="t", agent_id="a", metadata={"priority": "low"})
+        await storage.store_memory(
+            content="M1",
+            layer="w",
+            tenant_id="t",
+            agent_id="a",
+            metadata={"priority": "high"},
+        )
+        await storage.store_memory(
+            content="M2",
+            layer="w",
+            tenant_id="t",
+            agent_id="a",
+            metadata={"priority": "low"},
+        )
 
         results = await storage.list_memories("t", filters={"priority": "high"})
         assert len(results) == 1
@@ -811,5 +871,7 @@ class TestSQLiteStorageTagsAndFilters:
         """Test fallback for invalid order_by field."""
         await storage.store_memory(content="M1", layer="w", tenant_id="t", agent_id="a")
         # Should not crash and use default ordering
-        results = await storage.list_memories("t", order_by="dangerous_injection; DROP TABLE memories;")
+        results = await storage.list_memories(
+            "t", order_by="dangerous_injection; DROP TABLE memories;"
+        )
         assert len(results) == 1
