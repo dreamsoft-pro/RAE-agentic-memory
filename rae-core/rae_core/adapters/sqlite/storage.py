@@ -589,7 +589,7 @@ class SQLiteStorage(IMemoryStorage):
                 """
                 SELECT m.* FROM memories m
                 JOIN memories_fts f ON m.rowid = f.rowid
-                WHERE f.content MATCH ? 
+                WHERE f.content MATCH ?
                 AND m.tenant_id = ? AND m.agent_id = ? AND m.layer = ?
                 LIMIT ?
                 """,

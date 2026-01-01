@@ -6,7 +6,6 @@ Centralizes control of reasoning depth, uncertainty handling, and path pruning.
 import logging
 from dataclasses import dataclass, field
 from typing import Any
-from uuid import UUID
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +22,7 @@ class ReasoningPath:
     - metadata: Additional path information
     """
 
-    nodes: list[UUID] = field(default_factory=list)
+    nodes: list[str] = field(default_factory=list)
     steps: list[str] = field(default_factory=list)
     uncertainty: float = 1.0  # Start with full confidence
     contradictions: list[str] = field(default_factory=list)
@@ -42,7 +41,7 @@ class ReasoningPath:
 
     def add_step(
         self,
-        node_id: UUID,
+        node_id: str,
         description: str,
         uncertainty_delta: float = 0.0,
         tokens: int = 0,
