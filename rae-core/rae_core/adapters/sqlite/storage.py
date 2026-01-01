@@ -722,8 +722,31 @@ class SQLiteStorage(IMemoryStorage):
     ) -> float:
         """Calculate aggregate metric."""
         await self.initialize()
-        # Stub implementation
-        return 0.0
+
+        # Validate metric and func
+        allowed_metrics = {"importance", "access_count", "version"}
+        allowed_funcs = {"avg", "sum", "min", "max", "count"}
+
+        if metric not in allowed_metrics or func not in allowed_funcs:
+            return 0.0
+
+        where_clauses = ["tenant_id = ?"]
+        params: list[Any] = [tenant_id]
+
+        if filters:
+            for key, value in filters.items():
+                where_clauses.append("json_extract(metadata, '$.' || ?) = ?")
+                params.extend([key, value])
+
+        where_clause = " AND ".join(where_clauses)
+
+        async with aiosqlite.connect(self.db_path) as db:
+            async with db.execute(
+                f"SELECT {func}({metric}) FROM memories WHERE {where_clause}",
+                params,
+            ) as cursor:
+                row = await cursor.fetchone()
+                return float(row[0]) if row and row[0] is not None else 0.0
 
     async def update_memory_access_batch(
         self,
@@ -732,8 +755,21 @@ class SQLiteStorage(IMemoryStorage):
     ) -> bool:
         """Update access count for multiple memories."""
         await self.initialize()
-        for mid in memory_ids:
-            await self.update_memory_access(mid, tenant_id)
+        now = datetime.now(timezone.utc).isoformat()
+        ids_str = [str(mid) for mid in memory_ids]
+
+        async with aiosqlite.connect(self.db_path) as db:
+            placeholders = ",".join("?" * len(ids_str))
+            await db.execute(
+                f"""
+                UPDATE memories
+                SET access_count = access_count + 1,
+                    last_accessed_at = ?
+                WHERE id IN ({placeholders}) AND tenant_id = ?
+                """,
+                [now] + ids_str + [tenant_id],
+            )
+            await db.commit()
         return True
 
     async def adjust_importance(
@@ -744,8 +780,26 @@ class SQLiteStorage(IMemoryStorage):
     ) -> float:
         """Adjust memory importance."""
         await self.initialize()
-        # Stub implementation
-        return 0.5
+
+        async with aiosqlite.connect(self.db_path) as db:
+            # SQLite doesn't have GREATEST/LEAST like Postgres, use MIN/MAX
+            await db.execute(
+                """
+                UPDATE memories
+                SET importance = MAX(0.0, MIN(1.0, importance + ?)),
+                    modified_at = ?
+                WHERE id = ? AND tenant_id = ?
+                """,
+                (delta, datetime.now(timezone.utc).isoformat(), str(memory_id), tenant_id),
+            )
+            await db.commit()
+
+            async with db.execute(
+                "SELECT importance FROM memories WHERE id = ? AND tenant_id = ?",
+                (str(memory_id), tenant_id),
+            ) as cursor:
+                row = await cursor.fetchone()
+                return float(row[0]) if row else 0.0
 
     async def save_embedding(
         self,
