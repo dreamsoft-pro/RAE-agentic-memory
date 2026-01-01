@@ -5,6 +5,33 @@
 
 
 
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2026-01-01 11:44 • Branch: develop • Commit: 52f5f770*
+
+### ✨ Features
+
+- **benchmarks**: implement Iteration 3 (GRDT Controller, Curriculum, RST Sanity) ([`379e8bfc`](../../commit/379e8bfc))
+- **benchmarks**: complete iteration 1 & 2 + federation query impl ([`c28ff5b5`](../../commit/c28ff5b5))
+- **telemetry**: Implement Phase 4 - Research Mode & HTTPX Tracing ([`2c393cfd`](../../commit/2c393cfd))
+- **sync**: Implement Phase 3 - RAE-Sync Protocol MVP ([`3ae3ea47`](../../commit/3ae3ea47))
+- **telemetry**: Implement Phase 1 & 2 - Ops Metrics, Slim Containers, and Source Awareness ([`ced0bed2`](../../commit/ced0bed2))
+
+### 🐛 Bug Fixes
+
+- **core**: restore stability - lite profile tests, health check contract, and linting errors ([`c527d4f4`](../../commit/c527d4f4))
+
+### 📚 Documentation
+
+- **rules**: add mandatory local docs generation rule to prevent CI drift ([`140dbdbb`](../../commit/140dbdbb))
+
+### 📦 Other
+
+- Implement Multimodel Embedding support and Federation API initial structure. ([`a13b35d5`](../../commit/a13b35d5))
+
+---
+
 ## Recent Changes (Auto-generated)
 
 *Last updated: 2025-12-31 15:26 • Branch: develop • Commit: 7ca2382*

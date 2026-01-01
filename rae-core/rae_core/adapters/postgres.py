@@ -812,7 +812,7 @@ class PostgreSQLStorage(IMemoryStorage):
         """
 
         async with pool.acquire() as conn:
-            await conn.execute(
+            status = await conn.execute(
                 query,
                 now.replace(tzinfo=None),
                 decay_rate,
@@ -821,6 +821,12 @@ class PostgreSQLStorage(IMemoryStorage):
             )
 
         # Parse "UPDATE N"
+        if status and status.startswith("UPDATE "):
+            try:
+                return int(status.split(" ")[1])
+            except (IndexError, ValueError):
+                return 0
+        return 0
     async def save_embedding(
         self,
         memory_id: UUID,
