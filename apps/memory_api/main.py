@@ -34,13 +34,13 @@ from apps.memory_api.routes import (
     dashboard,
     evaluation,
     event_triggers,
+    federation,
     graph_enhanced,
     hybrid_search,
     nodes,
     reflections,
     sync,
     token_savings,
-    federation,
 )
 from apps.memory_api.services.context_cache import rebuild_full_cache
 from apps.memory_api.services.rae_core_service import RAECoreService

@@ -346,7 +346,7 @@ class MPEBBenchmark:
 
     def __init__(
         self,
-        learning_rate: float = 0.1,
+        learning_rate: float = 0.12,
         discount_factor: float = 0.95,
         snapshot_interval: int = 100,
         seed: Optional[int] = 42,
@@ -846,7 +846,7 @@ def main():
     parser.add_argument(
         "--learning-rate",
         type=float,
-        default=0.1,
+        default=0.12,
         help="Q-learning learning rate",
     )
     parser.add_argument(

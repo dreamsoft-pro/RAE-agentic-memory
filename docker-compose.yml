@@ -9,6 +9,8 @@ services:
     command: uvicorn apps.memory_api.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/apps --reload-dir /app/rae-core
     ports:
       - "8000:8000"
+    volumes:
+      - ./benchmarking:/app/benchmarking
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=${POSTGRES_DB:-rae}

@@ -1,171 +1,77 @@
-"""Memory isolation guard for preventing cross-agent/session leaks.
+"""Memory isolation guard for RAE-core.
 
-Post-search validation that results belong to correct agent/session.
-This is a defensive layer that catches any leaks that slip through
-the primary namespace guards in adapters.
+Provides post-search validation to ensure data isolation between agents and sessions.
 """
 
 import logging
-from typing import Any
-from uuid import UUID
+from typing import Any, List
+
+from ..models.memory import Memory
 
 logger = logging.getLogger(__name__)
 
 
 class MemoryIsolationGuard:
-    """Validates that memory search results match expected agent/session IDs.
-
-    This is a defensive layer that provides post-search validation.
-    Even if adapter-level namespace guards have bugs, this catches leaks.
-
-    Usage:
-        guard = MemoryIsolationGuard()
-        validated_memories = guard.validate_search_results(
-            results=raw_results,
-            expected_agent_id="agent-123",
-            expected_session_id="session-456"
-        )
     """
+    Guards against multi-layer memory interference (MMIT).
 
-    def __init__(self, strict_mode: bool = True):
-        """Initialize isolation guard.
-
-        Args:
-            strict_mode: If True, log warnings for any detected leaks.
-                        If False, silently filter leaks.
-        """
-        self.strict_mode = strict_mode
-        self.leak_count = 0
-        self.validation_count = 0
+    Validates that search results belong to the correct agent and session
+    before returning them to the caller.
+    """
 
     def validate_search_results(
         self,
-        results: list[dict[str, Any]],
+        results: List[Memory],
         expected_agent_id: str,
-        expected_session_id: str | None = None,
-        expected_tenant_id: str | None = None,
-    ) -> list[dict[str, Any]]:
-        """Filter out any memories that don't match expected IDs.
+        expected_session_id: str,
+        raise_on_leak: bool = False,
+    ) -> List[Memory]:
+        """
+        Filter out any memories that don't match expected IDs.
 
         Args:
-            results: Raw search results from adapter
-            expected_agent_id: Expected agent ID
-            expected_session_id: Expected session ID (optional)
-            expected_tenant_id: Expected tenant ID (optional)
+            results: List of memories retrieved from storage
+            expected_agent_id: The ID of the agent performing the search
+            expected_session_id: The current session ID
+            raise_on_leak: Whether to raise an exception if a leak is detected
 
         Returns:
-            Filtered list of memories that pass validation
+            Filtered list of memories belonging only to the expected agent/session
         """
-        self.validation_count += 1
         validated = []
+        leaks_detected = 0
 
         for memory in results:
-            # Extract IDs from memory
-            memory_agent_id = memory.get("agent_id")
-            memory_session_id = memory.get("session_id")
-            memory_tenant_id = memory.get("tenant_id")
+            agent_id = getattr(memory, "agent_id", None)
+            session_id = getattr(memory, "session_id", None)
 
-            # Validate agent_id (mandatory)
-            if memory_agent_id != expected_agent_id:
-                self._log_leak(
-                    "agent_id",
-                    expected=expected_agent_id,
-                    actual=memory_agent_id,
-                    memory_id=memory.get("id"),
+            # Check agent_id match
+            if agent_id != expected_agent_id:
+                logger.warning(
+                    f"MMIT LEAK DETECTED: Memory {memory.id} has wrong agent_id "
+                    f"({agent_id} != expected {expected_agent_id})"
                 )
+                leaks_detected += 1
                 continue
 
-            # Validate session_id if provided
-            if expected_session_id and memory_session_id != expected_session_id:
-                self._log_leak(
-                    "session_id",
-                    expected=expected_session_id,
-                    actual=memory_session_id,
-                    memory_id=memory.get("id"),
+            # Check session_id match
+            if session_id != expected_session_id:
+                logger.warning(
+                    f"MMIT LEAK DETECTED: Memory {memory.id} has wrong session_id "
+                    f"({session_id} != expected {expected_session_id})"
                 )
+                leaks_detected += 1
                 continue
 
-            # Validate tenant_id if provided
-            if expected_tenant_id and memory_tenant_id != expected_tenant_id:
-                self._log_leak(
-                    "tenant_id",
-                    expected=expected_tenant_id,
-                    actual=memory_tenant_id,
-                    memory_id=memory.get("id"),
-                )
-                continue
-
-            # All validations passed
             validated.append(memory)
 
-        # Log summary if any leaks detected
-        leaks_detected = len(results) - len(validated)
         if leaks_detected > 0:
-            logger.warning(
-                f"MemoryIsolationGuard: Filtered {leaks_detected}/{len(results)} "
-                f"leaked memories (agent_id={expected_agent_id}, "
-                f"session_id={expected_session_id})"
+            logger.error(
+                f"MMIT Isolation Violation: Blocked {leaks_detected} leaking memories "
+                f"for agent {expected_agent_id}"
             )
+            if raise_on_leak:
+                from ..exceptions.base import RAEError
+                raise RAEError(f"Security Violation: Cross-agent memory leak detected ({leaks_detected} items)")
 
         return validated
-
-    def validate_single_memory(
-        self,
-        memory: dict[str, Any],
-        expected_agent_id: str,
-        expected_session_id: str | None = None,
-        expected_tenant_id: str | None = None,
-    ) -> bool:
-        """Validate a single memory.
-
-        Args:
-            memory: Memory dictionary
-            expected_agent_id: Expected agent ID
-            expected_session_id: Expected session ID (optional)
-            expected_tenant_id: Expected tenant ID (optional)
-
-        Returns:
-            True if memory passes validation, False otherwise
-        """
-        results = self.validate_search_results(
-            [memory], expected_agent_id, expected_session_id, expected_tenant_id
-        )
-        return len(results) > 0
-
-    def _log_leak(
-        self,
-        field: str,
-        expected: Any,
-        actual: Any,
-        memory_id: UUID | None = None,
-    ):
-        """Log a detected memory leak."""
-        self.leak_count += 1
-
-        if self.strict_mode:
-            logger.warning(
-                f"MEMORY LEAK DETECTED: Wrong {field} - "
-                f"expected '{expected}', got '{actual}' "
-                f"(memory_id={memory_id})"
-            )
-
-    def get_stats(self) -> dict[str, Any]:
-        """Get isolation guard statistics.
-
-        Returns:
-            Dictionary with leak_count and validation_count
-        """
-        return {
-            "leak_count": self.leak_count,
-            "validation_count": self.validation_count,
-            "leak_rate": (
-                self.leak_count / self.validation_count
-                if self.validation_count > 0
-                else 0
-            ),
-        }
-
-    def reset_stats(self):
-        """Reset leak and validation counters."""
-        self.leak_count = 0
-        self.validation_count = 0
