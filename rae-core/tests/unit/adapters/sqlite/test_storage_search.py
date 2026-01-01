@@ -38,7 +38,7 @@ async def test_search_memories_fts5(sqlite_storage):
         layer="episodic"
     )
     assert len(results) == 1
-    assert "fox" in results[0]["content"]
+    assert "fox" in results[0]["memory"]["content"]
 
     # Test search 2: multiple words (FTS5)
     results = await sqlite_storage.search_memories(
@@ -48,7 +48,7 @@ async def test_search_memories_fts5(sqlite_storage):
         layer="episodic"
     )
     assert len(results) == 1
-    assert "intelligence" in results[0]["content"]
+    assert "intelligence" in results[0]["memory"]["content"]
 
     # Test search 3: no results
     results = await sqlite_storage.search_memories(

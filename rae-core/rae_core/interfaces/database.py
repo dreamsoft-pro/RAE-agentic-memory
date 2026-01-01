@@ -1,42 +1,28 @@
-"""Abstract database provider interface for RAE-core.
+"""Abstract database provider interface for RAE-core."""
 
-Allows RAE to run on different database backends (PostgreSQL, SQLite, etc.)
-while keeping high-level logic (like graph operations) agnostic.
-"""
-
-from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 
 
-class IDatabaseProvider(ABC):
-    """Abstract interface for low-level database operations."""
+@runtime_checkable
+class IDatabaseProvider(Protocol):
+    """Abstract interface for database providers."""
 
-    @abstractmethod
-    async def fetchrow(self, query: str, *args: Any) -> dict[str, Any] | None:
-        """Fetch a single row from the database."""
-        pass
-
-    @abstractmethod
-    async def fetch(self, query: str, *args: Any) -> list[dict[str, Any]]:
-        """Fetch multiple rows from the database."""
-        pass
-
-    @abstractmethod
-    async def fetchval(self, query: str, *args: Any) -> Any:
-        """Fetch a single value from the database."""
-        pass
-
-    @abstractmethod
     async def execute(self, query: str, *args: Any) -> str:
-        """Execute a command (INSERT, UPDATE, DELETE)."""
-        pass
+        """Execute a SQL query."""
+        ...
 
-    @abstractmethod
-    async def executemany(self, query: str, args: list[Any]) -> str:
-        """Execute a command for multiple sets of arguments."""
-        pass
+    async def fetch(self, query: str, *args: Any) -> list[dict[str, Any]]:
+        """Fetch multiple rows from a SQL query."""
+        ...
 
-    @abstractmethod
-    def acquire(self) -> Any:
-        """Acquire a connection from the pool."""
-        pass
+    async def fetchrow(self, query: str, *args: Any) -> dict[str, Any] | None:
+        """Fetch a single row from a SQL query."""
+        ...
+
+    async def fetchval(self, query: str, *args: Any) -> Any:
+        """Fetch a single value from a SQL query."""
+        ...
+
+    async def close(self) -> None:
+        """Close the database connection."""
+        ...

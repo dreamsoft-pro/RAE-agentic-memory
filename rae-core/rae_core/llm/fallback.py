@@ -13,7 +13,7 @@ class NoLLMFallback(ILLMProvider):
     Useful for testing, offline mode, or when LLM budget is exhausted.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize fallback provider."""
         self.name = "NoLLM Fallback"
 

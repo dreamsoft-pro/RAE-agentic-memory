@@ -24,7 +24,7 @@ class InMemoryStorage(IMemoryStorage):
     - Access count tracking
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize in-memory storage."""
         # Main storage: {memory_id: memory_dict}
         self._memories: dict[UUID, dict[str, Any]] = {}
@@ -530,7 +530,7 @@ class InMemoryStorage(IMemoryStorage):
                 return False
         return True
 
-    async def _delete_memory_internal(self, memory_id: UUID):
+    async def _delete_memory_internal(self, memory_id: UUID) -> None:
         """Internal delete helper (assumes lock is held)."""
         memory = self._memories.get(memory_id)
         if not memory:

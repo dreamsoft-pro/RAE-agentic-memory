@@ -153,6 +153,10 @@ test-lite:  ## [PROFILE: LITE] Run unit tests (CI/CPU safe)
 	@echo "🧪 Running LITE tests (Unit + No-GPU)..."
 	@RAE_PROFILE=lite PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "not slow and not gpu and not integration" -v
 
+test-core:  ## [PROFILE: CORE] Run rae-core unit tests with coverage
+	@echo "🧪 Running RAE-CORE tests..."
+	@PYTHONPATH=. $(VENV_PYTHON) -m pytest rae-core/tests/ --cov=rae-core/rae_core --cov-report=term-missing -v
+
 test-int:  ## [PROFILE: INTEGRATION] Run integration tests (Requires Docker Stack)
 	@echo "🧪 Running INTEGRATION tests (API/DB Contracts)..."
 	@RAE_PROFILE=standard RAE_DB_MODE=migrate OTEL_TRACES_ENABLED=false PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "integration" -v

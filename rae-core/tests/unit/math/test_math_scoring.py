@@ -14,7 +14,7 @@ class TestMathLayerController:
     def controller(self):
         return MathLayerController()
 
-    def test_score_memory(self, controller):
+    def test_score_memory(self, controller, golden_snapshot):
         now = datetime.now(timezone.utc)
         memory = {
             "importance": 0.8,
@@ -23,15 +23,35 @@ class TestMathLayerController:
             "access_count": 5
         }
         score = controller.score_memory(memory, query_similarity=0.9)
+        
+        # Record golden snapshot
+        golden_snapshot(
+            test_name="math_score_memory_standard",
+            inputs={"memory": memory, "query_similarity": 0.9},
+            output=score,
+            metadata={"component": "MathLayerController"}
+        )
+        
         assert 0.0 <= score <= 1.0
 
-    def test_compute_similarity(self, controller):
+    def test_compute_similarity(self, controller, golden_snapshot):
         v1 = [1.0, 0.0]
         v2 = [1.0, 0.0]
         v3 = [0.0, 1.0]
 
-        assert controller.compute_similarity(v1, v2) == pytest.approx(1.0)
-        assert controller.compute_similarity(v1, v3) == pytest.approx(0.0)
+        res1 = controller.compute_similarity(v1, v2)
+        res2 = controller.compute_similarity(v1, v3)
+
+        # Record golden snapshot
+        golden_snapshot(
+            test_name="math_cosine_similarity",
+            inputs={"v1": v1, "v2": v2, "v3": v3},
+            output={"v1_v2": res1, "v1_v3": res2},
+            metadata={"component": "MathLayerController"}
+        )
+
+        assert res1 == pytest.approx(1.0)
+        assert res2 == pytest.approx(0.0)
 
     def test_apply_decay(self, controller):
         # 24 hours age

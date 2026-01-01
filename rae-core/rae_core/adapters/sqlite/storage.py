@@ -35,7 +35,7 @@ class SQLiteStorage(IMemoryStorage):
         self.db_path = db_path
         self._initialized = False
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize database schema and indexes."""
         if self._initialized:
             return
@@ -132,6 +132,20 @@ class SQLiteStorage(IMemoryStorage):
                 """
                 CREATE INDEX IF NOT EXISTS idx_memories_created_at
                 ON memories(tenant_id, created_at DESC)
+            """
+            )
+
+            # Memory embeddings table
+            await db.execute(
+                """
+                CREATE TABLE IF NOT EXISTS memory_embeddings (
+                    memory_id TEXT NOT NULL,
+                    model_name TEXT NOT NULL,
+                    embedding BLOB NOT NULL,
+                    metadata TEXT,
+                    created_at TEXT NOT NULL,
+                    PRIMARY KEY (memory_id, model_name)
+                )
             """
             )
 
@@ -446,7 +460,7 @@ class SQLiteStorage(IMemoryStorage):
                 rows = await cursor.fetchall()
                 return [self._row_to_dict(row) for row in rows]
 
-    async def close(self):
+    async def close(self) -> None:
         """Close database connection (if needed)."""
         # aiosqlite uses context managers, so explicit close not needed
         pass
@@ -596,7 +610,10 @@ class SQLiteStorage(IMemoryStorage):
                 (query, tenant_id, agent_id, layer, limit),
             )
             rows = await cursor.fetchall()
-            return [self._row_to_dict(row) for row in rows]
+            return [
+                {"memory": self._row_to_dict(row), "score": 1.0}
+                for row in rows
+            ]
 
     async def delete_expired_memories(
         self,
@@ -729,6 +746,36 @@ class SQLiteStorage(IMemoryStorage):
         await self.initialize()
         # Stub implementation
         return 0.5
+
+    async def save_embedding(
+        self,
+        memory_id: UUID,
+        model_name: str,
+        embedding: list[float],
+        metadata: dict[str, Any] | None = None,
+    ) -> bool:
+        """Save a vector embedding for a memory."""
+        await self.initialize()
+        now = datetime.now(timezone.utc).isoformat()
+        metadata_json = json.dumps(metadata or {})
+        # Convert float list to BLOB (JSON string for simplicity in SQLite adapter)
+        embedding_json = json.dumps(embedding)
+
+        async with aiosqlite.connect(self.db_path) as db:
+            await db.execute(
+                """
+                INSERT INTO memory_embeddings (
+                    memory_id, model_name, embedding, metadata, created_at
+                ) VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(memory_id, model_name) DO UPDATE SET
+                    embedding = excluded.embedding,
+                    metadata = excluded.metadata,
+                    created_at = excluded.created_at
+                """,
+                (str(memory_id), model_name, embedding_json, metadata_json, now),
+            )
+            await db.commit()
+            return True
 
     def _matches_metadata_filter(
         self, metadata: dict[str, Any], filter_dict: dict[str, Any]

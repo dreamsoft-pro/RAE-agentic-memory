@@ -24,7 +24,7 @@ class SQLiteGraphStore(IGraphStore):
         self.db_path = db_path
         self._initialized = False
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize database schema for graph operations."""
         if self._initialized:
             return

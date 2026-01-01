@@ -7,12 +7,12 @@ class EmbeddingManager(IEmbeddingProvider):
     Implements IEmbeddingProvider to act as a default provider/proxy.
     """
     
-    def __init__(self, default_provider: IEmbeddingProvider, default_model_name: str = "default"):
+    def __init__(self, default_provider: IEmbeddingProvider, default_model_name: str = "default") -> None:
         self.providers: Dict[str, IEmbeddingProvider] = {default_model_name: default_provider}
         self.default_model_name = default_model_name
         self._default_provider = default_provider
 
-    def register_provider(self, model_name: str, provider: IEmbeddingProvider):
+    def register_provider(self, model_name: str, provider: IEmbeddingProvider) -> None:
         """Register a provider for a specific model/profile name."""
         self.providers[model_name] = provider
 

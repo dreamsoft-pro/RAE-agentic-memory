@@ -30,11 +30,11 @@ class RedisCache(ICacheProvider):
     def __init__(
         self,
         url: str | None = None,
-        redis_client: Optional["aioredis.Redis"] = None,
+        redis_client: Optional["aioredis.Redis[Any]"] = None,
         prefix: str = "rae:",
         default_ttl: int = 3600,
-        **redis_kwargs,
-    ):
+        **redis_kwargs: Any,
+    ) -> None:
         """Initialize Redis cache.
 
         Args:
@@ -269,7 +269,7 @@ class RedisCache(ICacheProvider):
         except Exception:
             return False
 
-    async def close(self):
+    async def close(self) -> None:
         """Close Redis connection."""
         try:
             await self.redis.close()

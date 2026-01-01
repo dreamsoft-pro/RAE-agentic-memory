@@ -339,7 +339,7 @@ class ContextBuilder:
 
         return float(min(1.0, avg_importance + focus_boost + utilization_factor))
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset builder state and create new window."""
         self.window_manager.create_window()
 

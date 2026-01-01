@@ -23,7 +23,7 @@ class InMemoryCache(ICacheProvider):
     - JSON serialization for complex types
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize in-memory cache."""
         # Main storage: {key: (value, expiry_time)}
         self._cache: dict[str, tuple[Any, datetime | None]] = {}

@@ -81,7 +81,7 @@ class QdrantVectorStore(IVectorStore):
 
         self._initialized = False
 
-    async def _ensure_collection(self):
+    async def _ensure_collection(self) -> None:
         """Ensure collection exists with proper schema."""
         if self._initialized:
             return
@@ -509,7 +509,7 @@ class QdrantVectorStore(IVectorStore):
 
         return float(dot_product / (mag_a * mag_b))
 
-    def close(self):
+    def close(self) -> None:
         """Close Qdrant client."""
         if hasattr(self.client, "close"):
             self.client.close()

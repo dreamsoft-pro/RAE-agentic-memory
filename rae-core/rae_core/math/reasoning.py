@@ -45,7 +45,7 @@ class ReasoningPath:
         description: str,
         uncertainty_delta: float = 0.0,
         tokens: int = 0,
-    ):
+    ) -> None:
         """Add a reasoning step to the path.
 
         Args:
@@ -370,12 +370,12 @@ class ReasoningController:
         """
         return self.stats.copy()
 
-    def reset_stats(self):
+    def reset_stats(self) -> None:
         """Reset statistics counters."""
         for key in self.stats:
             self.stats[key] = 0
 
-    def mark_path_as_false(self, path: ReasoningPath):
+    def mark_path_as_false(self, path: ReasoningPath) -> None:
         """Mark a path as known-false for future pruning.
 
         Args:
@@ -384,7 +384,7 @@ class ReasoningController:
         self.known_false_paths.append(path)
         logger.debug(f"Marked path (depth {path.depth}) as known-false")
 
-    def clear_known_false_paths(self):
+    def clear_known_false_paths(self) -> None:
         """Clear the list of known-false paths."""
         count = len(self.known_false_paths)
         self.known_false_paths.clear()

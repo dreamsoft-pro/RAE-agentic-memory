@@ -30,7 +30,7 @@ class InMemoryVectorStore(IVectorStore):
     - Batch operations
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize in-memory vector store."""
         # Main storage: {memory_id: vector_data}
         # vector_data = {"embedding": np.array, "tenant_id": str, "metadata": dict}
