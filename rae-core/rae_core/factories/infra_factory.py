@@ -1,8 +1,8 @@
-import structlog
 from typing import Any
 
 import asyncpg
 import redis.asyncio as aioredis
+import structlog
 from qdrant_client import AsyncQdrantClient
 
 logger = structlog.get_logger(__name__)
@@ -17,7 +17,7 @@ class InfrastructureFactory:
     async def initialize(app: Any, settings: Any) -> None:
         """
         Initialize infrastructure connections and attach them to app.state.
-        
+
         Args:
             app: The FastAPI application instance.
             settings: The application settings object.
