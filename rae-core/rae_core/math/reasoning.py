@@ -275,31 +275,16 @@ class ReasoningController:
                 logger.debug(f"Pruning path (depth {path.depth}): Has contradictions")
                 continue
 
-            # Heuristic 1a: Check alignment with episodic memory
-            if episodic_memories:
-                contradicts_episodic = self._contradicts_memories(
-                    path, episodic_memories
-                )
-                if contradicts_episodic:
+            # Heuristic 1a: Check alignment with combined memories
+            all_memories = (episodic_memories or []) + (semantic_memories or [])
+            if all_memories:
+                is_contradictory = self._contradicts_memories(path, all_memories)
+                if is_contradictory:
                     self.stats["paths_pruned"] += 1
                     self.stats["paths_pruned_contradictory"] += 1
                     logger.debug(
                         f"Pruning path (depth {path.depth}): "
-                        "Contradicts episodic memory"
-                    )
-                    continue
-
-            # Heuristic 1b: Check alignment with semantic memory
-            if semantic_memories:
-                contradicts_semantic = self._contradicts_memories(
-                    path, semantic_memories
-                )
-                if contradicts_semantic:
-                    self.stats["paths_pruned"] += 1
-                    self.stats["paths_pruned_contradictory"] += 1
-                    logger.debug(
-                        f"Pruning path (depth {path.depth}): "
-                        "Contradicts semantic knowledge"
+                        "Contradicts available memories"
                     )
                     continue
 
