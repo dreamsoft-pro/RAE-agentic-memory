@@ -67,12 +67,14 @@ def mock_rae_service(mock_pool):
     service = MagicMock()
     service.postgres_pool = mock_pool
     service.qdrant_client = AsyncMock()
+    
+    # Mock embedding provider as AsyncMock since it's awaited
+    service.embedding_provider = AsyncMock()
+    service.embedding_provider.embed_text.return_value = [0.1, 0.2, 0.3]
 
-    # Mock the 'db' property to return an actual provider wrapping our mock pool
-    from rae_core.adapters.postgres_db import PostgresDatabaseProvider
-
-    service.db = PostgresDatabaseProvider(mock_pool)
-
+    # Mock DB as AsyncMock to simplify testing service logic without provider overhead
+    service.db = AsyncMock()
+    
     return service
 
 
@@ -112,9 +114,8 @@ def service(mock_rae_service, mock_query_analyzer, mock_ml_client, mock_llm_prov
 @pytest.mark.asyncio
 async def test_search_flow_uncached(service, mock_rae_service):
     # Setup db mocks for individual search strategies
-    mock_pool = mock_rae_service.postgres_pool
     # Vector Search Mock
-    mock_pool.fetch.side_effect = [
+    mock_rae_service.db.fetch.side_effect = [
         # Vector results
         [
             {
@@ -277,8 +278,8 @@ async def test_rerank_results(service, mock_llm_provider):
 
 
 @pytest.mark.asyncio
-async def test_vector_search_execution(service, mock_pool, mock_ml_client):
-    mock_pool.fetch.return_value = [
+async def test_vector_search_execution(service, mock_rae_service, mock_ml_client):
+    mock_rae_service.db.fetch.return_value = [
         {
             "id": uuid4(),
             "content": "res",
@@ -292,14 +293,16 @@ async def test_vector_search_execution(service, mock_pool, mock_ml_client):
 
     assert len(results) == 1
     assert results[0]["score"] == 0.8
-    mock_ml_client.get_embedding.assert_called_once()
-    mock_pool.fetch.assert_called_once()
+    # We mock internal client but the service actually uses rae_service.embedding_provider
+    # So we check if that was called
+    service.rae_service.embedding_provider.embed_text.assert_called_once()
+    mock_rae_service.db.fetch.assert_called_once()
 
 
 @pytest.mark.asyncio
-async def test_semantic_search_execution(service, mock_pool):
+async def test_semantic_search_execution(service, mock_rae_service):
     # Mock search nodes
-    mock_pool.fetch.side_effect = [
+    mock_rae_service.db.fetch.side_effect = [
         # Nodes query
         [
             {
@@ -330,9 +333,9 @@ async def test_semantic_search_execution(service, mock_pool):
 
 
 @pytest.mark.asyncio
-async def test_graph_search_execution(service, mock_pool):
+async def test_graph_search_execution(service, mock_rae_service):
     # Mock nodes found
-    mock_pool.fetch.side_effect = [
+    mock_rae_service.db.fetch.side_effect = [
         # Find nodes
         [{"id": 1, "node_id": "n1", "label": "entity", "properties": {}}],
         # Traverse
@@ -364,8 +367,8 @@ async def test_graph_search_execution(service, mock_pool):
 
 
 @pytest.mark.asyncio
-async def test_fulltext_search_execution(service, mock_pool):
-    mock_pool.fetch.return_value = [
+async def test_fulltext_search_execution(service, mock_rae_service):
+    mock_rae_service.db.fetch.return_value = [
         {
             "id": uuid4(),
             "content": "res",
@@ -382,13 +385,13 @@ async def test_fulltext_search_execution(service, mock_pool):
 
 
 @pytest.mark.asyncio
-async def test_search_with_manual_weights(service, mock_pool):
+async def test_search_with_manual_weights(service, mock_rae_service):
     """Test search with manual weights provided."""
     # Ensure cache miss
     service.cache.get.return_value = None
 
     # Mock vector search results
-    mock_pool.fetch.return_value = [
+    mock_rae_service.db.fetch.return_value = [
         {
             "id": uuid4(),
             "content": "res",
@@ -410,9 +413,9 @@ async def test_search_with_manual_weights(service, mock_pool):
 
 
 @pytest.mark.asyncio
-async def test_vector_search_error_handling(service, mock_pool, mock_ml_client):
+async def test_vector_search_error_handling(service, mock_rae_service):
     """Test vector search error handling."""
-    mock_ml_client.get_embedding.side_effect = Exception("ML Service Down")
+    mock_rae_service.embedding_provider.embed_text.side_effect = Exception("ML Service Down")
 
     results = await service._vector_search("t", "p", "q", 5)
 

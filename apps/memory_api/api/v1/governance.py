@@ -30,7 +30,7 @@ from apps.memory_api.security.dependencies import require_admin, verify_tenant_a
 logger = structlog.get_logger(__name__)
 tracer = get_tracer(__name__)
 router = APIRouter(
-    prefix="/v1/governance",
+    prefix="/governance",
     tags=["Governance"],
     dependencies=[Depends(auth.verify_token)],  # All endpoints require auth
 )
