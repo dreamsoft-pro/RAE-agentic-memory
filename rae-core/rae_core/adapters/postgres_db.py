@@ -30,5 +30,8 @@ class PostgresDatabaseProvider(IDatabaseProvider):
     async def executemany(self, query: str, args: list[Any]) -> str:
         return cast(str, await self.pool.executemany(query, args))
 
+    async def close(self) -> None:
+        await self.pool.close()
+
     def acquire(self) -> Any:
         return self.pool.acquire()
