@@ -40,6 +40,7 @@ from apps.memory_api.routes import (
     reflections,
     sync,
     token_savings,
+    federation,
 )
 from apps.memory_api.services.context_cache import rebuild_full_cache
 from apps.memory_api.services.rae_core_service import RAECoreService
@@ -197,6 +198,7 @@ app.include_router(nodes.router, prefix="/v1", tags=["Knowledge Graph Nodes"])
 app.include_router(reflections.router, prefix="/v1", tags=["Reflections"])
 app.include_router(sync.router, prefix="/v1", tags=["Sync"])
 app.include_router(token_savings.router, prefix="/v1", tags=["Token Savings"])
+app.include_router(federation.router, prefix="/v1", tags=["Federation"])
 
 
 # Custom OpenAPI Schema

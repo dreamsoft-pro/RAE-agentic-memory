@@ -328,3 +328,24 @@ class IMemoryStorage(ABC):
             New importance value
         """
         pass
+
+    @abstractmethod
+    async def save_embedding(
+        self,
+        memory_id: UUID,
+        model_name: str,
+        embedding: list[float],
+        metadata: dict[str, Any] | None = None,
+    ) -> bool:
+        """Save a vector embedding for a memory.
+
+        Args:
+            memory_id: UUID of the memory
+            model_name: Name of the embedding model
+            embedding: Vector embedding list
+            metadata: Optional metadata
+
+        Returns:
+            True if successful
+        """
+        pass

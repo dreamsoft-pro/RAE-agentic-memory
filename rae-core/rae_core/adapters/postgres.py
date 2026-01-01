@@ -6,6 +6,7 @@ Implements IMemoryStorage interface using asyncpg for async PostgreSQL access.
 from datetime import datetime, timezone
 from typing import Any, Optional, cast
 from uuid import UUID, uuid4
+import json
 
 try:
     import asyncpg
@@ -820,6 +821,33 @@ class PostgreSQLStorage(IMemoryStorage):
             )
 
         # Parse "UPDATE N"
-        if result and isinstance(result, str) and result.startswith("UPDATE"):
-            return int(result.split()[-1])
-        return 0
+    async def save_embedding(
+        self,
+        memory_id: UUID,
+        model_name: str,
+        embedding: list[float],
+        metadata: dict[str, Any] | None = None,
+    ) -> bool:
+        """Save a vector embedding for a memory."""
+        pool = await self._get_pool()
+        metadata = metadata or {}
+
+        async with pool.acquire() as conn:
+            await conn.execute(
+                """
+                INSERT INTO memory_embeddings (
+                    memory_id, model_name, embedding, metadata, created_at
+                ) VALUES ($1, $2, $3, $4, NOW())
+                ON CONFLICT (memory_id, model_name)
+                DO UPDATE SET
+                    embedding = EXCLUDED.embedding,
+                    metadata = EXCLUDED.metadata,
+                    created_at = NOW()
+                """,
+                memory_id,
+                model_name,
+                embedding,
+                json.dumps(metadata),
+            )
+
+        return True
