@@ -106,6 +106,82 @@ class FeatureExtractor:
         return features
 
 
+class SafeAdaptationGuard:
+    """
+    Guard mechanism for safe policy adaptation.
+
+    Ensures that changes to decision rules (adaptations) are validated
+    in a sandbox environment before being promoted to permanent rules.
+    Prevents instability from rapid, unchecked adaptation.
+    """
+
+    def __init__(self):
+        self.sandbox_adaptations: Dict[str, Any] = {}  # Temporary changes
+        self.permanent_adaptations: Dict[str, Any] = {}  # Validated changes
+        self.validation_counts: Dict[str, int] = {}  # Count of successful validations
+
+    def propose_adaptation(self, rule_id: str, new_rule: Any) -> None:
+        """
+        Propose a new adaptation (add to sandbox).
+
+        Args:
+            rule_id: Identifier for the rule
+            new_rule: The new rule value/object
+        """
+        self.sandbox_adaptations[rule_id] = new_rule
+        self.validation_counts[rule_id] = 0  # Reset validation count for new proposal
+
+    def validate_adaptation(self, rule_id: str, success: bool) -> bool:
+        """
+        Validate a proposed adaptation based on outcome.
+
+        Args:
+            rule_id: Identifier for the rule
+            success: Whether the adaptation led to a successful outcome
+
+        Returns:
+            True if adaptation was promoted to permanent, False otherwise
+        """
+        if rule_id not in self.sandbox_adaptations:
+            return False
+
+        if success:
+            self.validation_counts[rule_id] += 1
+            # Promote if validated enough times (e.g. 3)
+            if self.validation_counts[rule_id] >= 3:
+                self.permanent_adaptations[rule_id] = self.sandbox_adaptations[rule_id]
+                # Cleanup sandbox
+                del self.sandbox_adaptations[rule_id]
+                del self.validation_counts[rule_id]
+                return True
+        else:
+            # Penalize or remove on failure
+            # For now, aggressive pruning: one failure removes the proposal
+            del self.sandbox_adaptations[rule_id]
+            del self.validation_counts[rule_id]
+
+        return False
+
+    def get_active_rule(self, rule_id: str, default: Any = None) -> Any:
+        """
+        Get the currently active rule (permanent takes precedence, unless testing).
+
+        Args:
+            rule_id: Rule identifier
+            default: Default value if no rule exists
+
+        Returns:
+            The active rule value
+        """
+        # In a real system, we might probabilisticly return sandbox rules for testing
+        # Here we return permanent if exists, else sandbox (testing phase), else default
+        if rule_id in self.permanent_adaptations:
+            return self.permanent_adaptations[rule_id]
+        elif rule_id in self.sandbox_adaptations:
+            return self.sandbox_adaptations[rule_id]
+        return default
+
+
 class MathLayerController:
     """
     Central controller for math level selection in RAE.
