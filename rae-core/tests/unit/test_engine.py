@@ -99,6 +99,7 @@ async def test_store_memory(rae_engine, mock_memory_storage):
     )
 
     assert result == expected_uuid
+    from unittest.mock import ANY
     mock_memory_storage.store_memory.assert_called_once_with(
         tenant_id=tenant_id,
         agent_id=agent_id,
@@ -107,6 +108,7 @@ async def test_store_memory(rae_engine, mock_memory_storage):
         importance=0.5,
         tags=[],
         metadata={},
+        embedding=ANY,
     )
 
 

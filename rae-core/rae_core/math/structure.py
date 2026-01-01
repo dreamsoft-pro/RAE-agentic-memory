@@ -55,7 +55,7 @@ class ScoringWeights:
     beta: float = 0.3  # Importance weight
     gamma: float = 0.2  # Recency weight
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate that weights sum to 1.0 (with small tolerance for float precision)"""
         total = self.alpha + self.beta + self.gamma
         if not math.isclose(total, 1.0, rel_tol=1e-5):

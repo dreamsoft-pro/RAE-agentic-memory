@@ -1,6 +1,7 @@
 """LLM orchestration strategies."""
 
 from abc import ABC, abstractmethod
+from typing import Any
 
 from rae_core.interfaces.llm import ILLMProvider
 
@@ -13,7 +14,7 @@ class LLMStrategy(ABC):
         self,
         providers: dict[str, ILLMProvider],
         prompt: str,
-        **kwargs,
+        **kwargs: Any,
     ) -> tuple[str, str]:
         """Execute LLM call using strategy.
 
@@ -43,7 +44,7 @@ class SingleLLMStrategy(LLMStrategy):
         self,
         providers: dict[str, ILLMProvider],
         prompt: str,
-        **kwargs,
+        **kwargs: Any,
     ) -> tuple[str, str]:
         """Execute using single provider.
 
@@ -78,7 +79,7 @@ class FallbackStrategy(LLMStrategy):
         self,
         providers: dict[str, ILLMProvider],
         prompt: str,
-        **kwargs,
+        **kwargs: Any,
     ) -> tuple[str, str]:
         """Execute with fallback.
 
@@ -127,7 +128,7 @@ class LoadBalancingStrategy(LLMStrategy):
         self,
         providers: dict[str, ILLMProvider],
         prompt: str,
-        **kwargs,
+        **kwargs: Any,
     ) -> tuple[str, str]:
         """Execute with load balancing.
 
@@ -180,7 +181,7 @@ class RoundRobinStrategy(LLMStrategy):
         self,
         providers: dict[str, ILLMProvider],
         prompt: str,
-        **kwargs,
+        **kwargs: Any,
     ) -> tuple[str, str]:
         """Execute round-robin selection.
 

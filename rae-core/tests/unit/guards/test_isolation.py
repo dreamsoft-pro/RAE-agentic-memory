@@ -5,12 +5,13 @@ from uuid import uuid4
 import pytest
 
 from rae_core.guards.isolation import MemoryIsolationGuard
+from rae_core.exceptions.base import RAEError
 
 
 class TestMemoryIsolationGuard:
     @pytest.fixture
     def guard(self):
-        return MemoryIsolationGuard(strict_mode=True)
+        return MemoryIsolationGuard(strict_mode=False)
 
     def test_validate_search_results_success(self, guard):
         memories = [
@@ -37,6 +38,11 @@ class TestMemoryIsolationGuard:
         assert len(results) == 1
         assert results[0]["agent_id"] == "a1"
         assert guard.leak_count == 1
+
+    def test_raise_on_leak(self, guard):
+        memories = [{"agent_id": "bad"}]
+        with pytest.raises(RAEError):
+            guard.validate_search_results(memories, expected_agent_id="good", raise_on_leak=True)
 
     def test_filter_wrong_session(self, guard):
         memories = [

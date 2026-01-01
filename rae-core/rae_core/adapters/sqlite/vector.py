@@ -40,7 +40,7 @@ class SQLiteVectorStore(IVectorStore):
         self._initialized = False
         self._has_vec_extension = False
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize database schema."""
         if self._initialized:
             return
@@ -369,7 +369,7 @@ class SQLiteVectorStore(IVectorStore):
                 "has_vec_extension": self._has_vec_extension,
             }
 
-    async def close(self):
+    async def close(self) -> None:
         """Close database connection."""
         # aiosqlite uses context managers, so explicit close not needed
         pass

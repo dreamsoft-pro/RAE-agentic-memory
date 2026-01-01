@@ -24,6 +24,9 @@ class MockSyncProvider(ISyncProvider):
     async def get_sync_status(self, tenant_id, agent_id, sync_id):
         return {}
 
+    async def handshake(self, tenant_id, agent_id, capabilities):
+        return {"protocol_version": "1.0", "capabilities": capabilities}
+
 @pytest.mark.asyncio
 async def test_handshake_flow():
     provider = MockSyncProvider()

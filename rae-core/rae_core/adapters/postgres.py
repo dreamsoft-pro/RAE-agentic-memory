@@ -54,8 +54,8 @@ class PostgreSQLStorage(IMemoryStorage):
         self,
         dsn: str | None = None,
         pool: Optional["asyncpg.Pool"] = None,
-        **pool_kwargs,
-    ):
+        **pool_kwargs: Any,
+    ) -> None:
         """Initialize PostgreSQL storage.
 
         Args:
@@ -79,9 +79,9 @@ class PostgreSQLStorage(IMemoryStorage):
             if self.dsn is None:
                 raise ValueError("Either dsn or pool must be provided")
             self._pool = await asyncpg.create_pool(self.dsn, **self._pool_kwargs)
-        return self._pool
+        return cast("asyncpg.Pool", self._pool)
 
-    async def close(self):
+    async def close(self) -> None:
         """Close connection pool."""
         if self._pool:
             await self._pool.close()

@@ -36,7 +36,7 @@ class RAEEngine:
         llm_provider: ILLMProvider | None = None,
         cache_provider: ICacheProvider | None = None,
         sync_provider: ISyncProvider | None = None,
-    ):
+    ) -> None:
         """Initialize RAE Engine.
 
         Args:
@@ -144,7 +144,7 @@ class RAEEngine:
 
         if hasattr(self.embedding_provider, "generate_all_embeddings"):
             # Use EmbeddingManager to generate for all profiles
-            embeddings_map = await self.embedding_provider.generate_all_embeddings([content])  # type: ignore
+            embeddings_map = await self.embedding_provider.generate_all_embeddings([content])
             
             # Determine default embedding
             if "default" in embeddings_map and embeddings_map["default"]:
@@ -157,7 +157,7 @@ class RAEEngine:
             embs = await self.embedding_provider.embed_batch([content])
             if embs:
                 default_embedding = embs[0]
-                embeddings_map = {"default": embs}
+                embeddings_map = {"default": [embs[0]]} # Fixed map format to match logic
 
         # 2. Store in Memory Storage (Postgres)
         memory_id = await self.memory_storage.store_memory(
@@ -172,12 +172,12 @@ class RAEEngine:
         )
 
         # 3. Save all embeddings to memory_embeddings table
-        for model_name, embs in embeddings_map.items():
-            if embs:
+        for model_name, model_embs in embeddings_map.items():
+            if model_embs:
                 await self.memory_storage.save_embedding(
                     memory_id=memory_id,
                     model_name=model_name,
-                    embedding=embs[0],
+                    embedding=model_embs[0],
                     metadata={"source_length": len(content)}
                 )
 
@@ -295,11 +295,14 @@ class RAEEngine:
         Returns:
             Cycle execution summary
         """
-        return cast(dict[str, Any], await self.reflection_engine.run_reflection_cycle(
-            tenant_id=tenant_id,
-            agent_id=agent_id,
-            trigger_type=trigger_type,
-        ))
+        return cast(
+            dict[str, Any],
+            await self.reflection_engine.run_reflection_cycle(
+                tenant_id=tenant_id,
+                agent_id=agent_id,
+                trigger_type=trigger_type,
+            ),
+        )
 
     async def generate_reflection(
         self,
@@ -319,12 +322,12 @@ class RAEEngine:
         Returns:
             Reflection result
         """
-        return cast(dict[str, Any], await self.reflection_engine.generate_reflection(
+        return await self.reflection_engine.generate_reflection(
             memory_ids=memory_ids,
             tenant_id=tenant_id,
             agent_id=agent_id,
             reflection_type=reflection_type,
-        ))
+        )
 
     # Sync operations
 
@@ -363,7 +366,7 @@ class RAEEngine:
         self,
         prompt: str,
         provider_name: str | None = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> str | None:
         """Generate text using LLM.
 

@@ -4,19 +4,18 @@ This module defines the storage interface that all storage adapters must impleme
 Storage can be PostgreSQL, SQLite, in-memory, or any other backend.
 """
 
-from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 from uuid import UUID
 
 
-class IMemoryStorage(ABC):
+@runtime_checkable
+class IMemoryStorage(Protocol):
     """Abstract interface for memory storage.
 
     Implementations must provide persistent storage for memories across
     all memory layers (sensory, working, episodic, semantic, reflective).
     """
 
-    @abstractmethod
     async def store_memory(
         self,
         content: str,
@@ -27,7 +26,7 @@ class IMemoryStorage(ABC):
         metadata: dict[str, Any] | None = None,
         embedding: list[float] | None = None,
         importance: float | None = None,
-        expires_at: Any | None = None,  # Added parameter
+        expires_at: Any | None = None,
     ) -> UUID:
         """Store a new memory.
 
@@ -45,9 +44,8 @@ class IMemoryStorage(ABC):
         Returns:
             UUID of the stored memory
         """
-        pass
+        ...
 
-    @abstractmethod
     async def get_memory(
         self,
         memory_id: UUID,
@@ -62,9 +60,8 @@ class IMemoryStorage(ABC):
         Returns:
             Memory dictionary or None if not found
         """
-        pass
+        ...
 
-    @abstractmethod
     async def update_memory(
         self,
         memory_id: UUID,
@@ -81,9 +78,8 @@ class IMemoryStorage(ABC):
         Returns:
             True if successful, False otherwise
         """
-        pass
+        ...
 
-    @abstractmethod
     async def delete_memory(
         self,
         memory_id: UUID,
@@ -98,9 +94,8 @@ class IMemoryStorage(ABC):
         Returns:
             True if successful, False otherwise
         """
-        pass
+        ...
 
-    @abstractmethod
     async def list_memories(
         self,
         tenant_id: str,
@@ -129,9 +124,8 @@ class IMemoryStorage(ABC):
         Returns:
             List of memory dictionaries
         """
-        pass
+        ...
 
-    @abstractmethod
     async def delete_memories_with_metadata_filter(
         self,
         tenant_id: str,
@@ -150,9 +144,8 @@ class IMemoryStorage(ABC):
         Returns:
             Number of memories deleted
         """
-        pass
+        ...
 
-    @abstractmethod
     async def delete_memories_below_importance(
         self,
         tenant_id: str,
@@ -171,9 +164,8 @@ class IMemoryStorage(ABC):
         Returns:
             Number of memories deleted
         """
-        pass
+        ...
 
-    @abstractmethod
     async def count_memories(
         self,
         tenant_id: str,
@@ -190,9 +182,8 @@ class IMemoryStorage(ABC):
         Returns:
             Count of matching memories
         """
-        pass
+        ...
 
-    @abstractmethod
     async def search_memories(
         self,
         query: str,
@@ -215,9 +206,8 @@ class IMemoryStorage(ABC):
         Returns:
             List of dictionaries containing 'memory' (dict) and 'score' (float)
         """
-        pass
+        ...
 
-    @abstractmethod
     async def delete_expired_memories(
         self,
         tenant_id: str,
@@ -234,9 +224,8 @@ class IMemoryStorage(ABC):
         Returns:
             Number of memories deleted
         """
-        pass
+        ...
 
-    @abstractmethod
     async def update_memory_access(
         self,
         memory_id: UUID,
@@ -251,9 +240,8 @@ class IMemoryStorage(ABC):
         Returns:
             True if successful, False otherwise
         """
-        pass
+        ...
 
-    @abstractmethod
     async def update_memory_expiration(
         self,
         memory_id: UUID,
@@ -270,9 +258,8 @@ class IMemoryStorage(ABC):
         Returns:
             True if successful, False otherwise
         """
-        pass
+        ...
 
-    @abstractmethod
     async def get_metric_aggregate(
         self,
         tenant_id: str,
@@ -291,9 +278,8 @@ class IMemoryStorage(ABC):
         Returns:
             Aggregated value as float
         """
-        pass
+        ...
 
-    @abstractmethod
     async def update_memory_access_batch(
         self,
         memory_ids: list[UUID],
@@ -308,9 +294,8 @@ class IMemoryStorage(ABC):
         Returns:
             True if all updates were successful
         """
-        pass
+        ...
 
-    @abstractmethod
     async def adjust_importance(
         self,
         memory_id: UUID,
@@ -327,9 +312,8 @@ class IMemoryStorage(ABC):
         Returns:
             New importance value
         """
-        pass
+        ...
 
-    @abstractmethod
     async def save_embedding(
         self,
         memory_id: UUID,
@@ -348,4 +332,4 @@ class IMemoryStorage(ABC):
         Returns:
             True if successful
         """
-        pass
+        ...
