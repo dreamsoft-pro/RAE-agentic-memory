@@ -31,58 +31,89 @@ class InMemoryCache(ICacheProvider):
         # Thread safety
         self._lock = asyncio.Lock()
 
-    async def get(self, key: str) -> Any | None:
+    async def get(
+        self,
+        key: str,
+        agent_id: str | None = None,
+        session_id: str | None = None,
+    ) -> Any | None:
         """Get value from cache."""
         async with self._lock:
-            if key not in self._cache:
+            full_key = self._get_full_key(key, agent_id, session_id)
+            if full_key not in self._cache:
                 return None
 
-            value, expiry = self._cache[key]
+            value, expiry = self._cache[full_key]
 
             if expiry and datetime.now(timezone.utc) > expiry:
                 # Remove expired entry
-                del self._cache[key]
+                del self._cache[full_key]
                 return None
 
             return value
 
-    async def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
+    async def set(
+        self,
+        key: str,
+        value: Any,
+        ttl: int | None = None,
+        agent_id: str | None = None,
+        session_id: str | None = None,
+    ) -> bool:
         """Set value in cache with optional TTL in seconds."""
         async with self._lock:
+            full_key = self._get_full_key(key, agent_id, session_id)
             expiry = None
             if ttl:
                 expiry = datetime.now(timezone.utc) + timedelta(seconds=ttl)
 
             # Store value
-            self._cache[key] = (value, expiry)
+            self._cache[full_key] = (value, expiry)
 
             return True
 
-    async def delete(self, key: str) -> bool:
+    async def delete(
+        self,
+        key: str,
+        agent_id: str | None = None,
+        session_id: str | None = None,
+    ) -> bool:
         """Delete value from cache."""
         async with self._lock:
-            if key in self._cache:
-                del self._cache[key]
+            full_key = self._get_full_key(key, agent_id, session_id)
+            if full_key in self._cache:
+                del self._cache[full_key]
                 return True
 
             return False
 
-    async def exists(self, key: str) -> bool:
+    async def exists(
+        self,
+        key: str,
+        agent_id: str | None = None,
+        session_id: str | None = None,
+    ) -> bool:
         """Check if key exists in cache."""
         async with self._lock:
-            if key not in self._cache:
+            full_key = self._get_full_key(key, agent_id, session_id)
+            if full_key not in self._cache:
                 return False
 
             # Check if expired
-            value, expiry = self._cache[key]
+            value, expiry = self._cache[full_key]
             if expiry and datetime.now(timezone.utc) > expiry:
                 # Remove expired entry
-                del self._cache[key]
+                del self._cache[full_key]
                 return False
 
             return True
 
-    async def clear(self, pattern: str | None = None) -> int:
+    async def clear(
+        self,
+        pattern: str | None = None,
+        agent_id: str | None = None,
+        session_id: str | None = None,
+    ) -> int:
         """Clear cache keys matching pattern (all if None).
 
         Pattern supports glob-style wildcards:
@@ -95,19 +126,38 @@ class InMemoryCache(ICacheProvider):
 
         Args:
             pattern: Optional glob-style pattern
+            agent_id: Optional agent filter
+            session_id: Optional session filter
 
         Returns:
             Number of keys deleted
         """
         async with self._lock:
-            if pattern is None:
-                # Clear all keys
-                count = len(self._cache)
-                self._cache.clear()
-                return count
+            # Construct prefix if agent_id/session_id provided
+            prefix = ""
+            if agent_id:
+                prefix = f"{agent_id}:"
+                if session_id:
+                    prefix = f"{agent_id}:{session_id}:"
 
-            # Convert glob pattern to regex
-            regex_pattern = self._glob_to_regex(pattern)
+            if pattern is None:
+                if not prefix:
+                    # Clear all keys
+                    count = len(self._cache)
+                    self._cache.clear()
+                    return count
+                else:
+                    # Clear all keys for this agent/session
+                    matching_keys = [
+                        key for key in self._cache.keys() if key.startswith(prefix)
+                    ]
+                    for key in matching_keys:
+                        del self._cache[key]
+                    return len(matching_keys)
+
+            # Convert glob pattern to regex, considering prefix
+            search_pattern = f"{prefix}{pattern}" if prefix else pattern
+            regex_pattern = self._glob_to_regex(search_pattern)
             compiled_pattern = re.compile(regex_pattern)
 
             # Find matching keys
@@ -120,6 +170,19 @@ class InMemoryCache(ICacheProvider):
                 del self._cache[key]
 
             return len(matching_keys)
+
+    def _get_full_key(
+        self,
+        key: str,
+        agent_id: str | None = None,
+        session_id: str | None = None,
+    ) -> str:
+        """Get full cache key incorporating agent and session IDs."""
+        if not agent_id:
+            return key
+        if not session_id:
+            return f"{agent_id}:{key}"
+        return f"{agent_id}:{session_id}:{key}"
 
     @staticmethod
     def _glob_to_regex(pattern: str) -> str:
