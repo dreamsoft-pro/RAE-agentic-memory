@@ -278,9 +278,7 @@ class QualityScorer:
     might prioritize simple metrics, Server might use semantic ones).
     """
 
-    def __init__(
-        self, metrics: list[IMetric], weights: dict[str, float] | None = None
-    ):
+    def __init__(self, metrics: list[IMetric], weights: dict[str, float] | None = None):
         self.metrics = metrics
         self.weights = weights or {m.name: 1.0 for m in metrics}
 

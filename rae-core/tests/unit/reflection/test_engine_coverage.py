@@ -1,9 +1,12 @@
 """Unit tests for ReflectionEngine to achieve 100% coverage."""
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
+
+import pytest
+
 from rae_core.reflection.engine import ReflectionEngine
+
 
 class TestReflectionEngineCoverage:
     """Test suite for ReflectionEngine coverage gaps."""
@@ -14,7 +17,7 @@ class TestReflectionEngineCoverage:
         ms.list_memories = AsyncMock(return_value=[])
         ms.get_memory = AsyncMock()
         ms.store_memory = AsyncMock(return_value=uuid4())
-        
+
         llm = MagicMock()
         return ms, llm
 
@@ -41,12 +44,16 @@ class TestReflectionEngineCoverage:
     async def test_execute_action_and_evaluate(self, mock_deps):
         ms, llm = mock_deps
         engine = ReflectionEngine(ms, llm)
-        
+
         # Mock actor and evaluator explicitly if needed, but they are initialized in __init__
         # We can patch them on the engine instance
-        engine.actor.execute_action = AsyncMock(return_value={"success": True, "action": "test"})
-        engine.evaluator.evaluate_action_outcome = AsyncMock(return_value={"score": 1.0})
-        
+        engine.actor.execute_action = AsyncMock(
+            return_value={"success": True, "action": "test"}
+        )
+        engine.evaluator.evaluate_action_outcome = AsyncMock(
+            return_value={"score": 1.0}
+        )
+
         res = await engine.execute_action("consolidate", {}, "t", evaluate=True)
         assert res["success"] is True
         assert "evaluation" in res
@@ -56,7 +63,9 @@ class TestReflectionEngineCoverage:
     async def test_evaluate_memory_quality(self, mock_deps):
         ms, llm = mock_deps
         engine = ReflectionEngine(ms, llm)
-        engine.evaluator.evaluate_memory_quality = AsyncMock(return_value={"quality": 0.8})
+        engine.evaluator.evaluate_memory_quality = AsyncMock(
+            return_value={"quality": 0.8}
+        )
         res = await engine.evaluate_memory_quality(uuid4(), "t")
         assert res["quality"] == 0.8
 
@@ -66,8 +75,10 @@ class TestReflectionEngineCoverage:
         mid1 = uuid4()
         ms.list_memories.return_value = [{"id": mid1}]
         engine = ReflectionEngine(ms, llm)
-        engine.evaluator.evaluate_memory_quality = AsyncMock(return_value={"quality": 0.1})
-        
+        engine.evaluator.evaluate_memory_quality = AsyncMock(
+            return_value={"quality": 0.1}
+        )
+
         low = await engine.identify_low_quality_memories("t", quality_threshold=0.4)
         assert len(low) == 1
         assert low[0] == mid1
@@ -87,9 +98,13 @@ class TestReflectionEngineCoverage:
         mid = uuid4()
         ms.list_memories.return_value = [{"id": mid}]
         engine = ReflectionEngine(ms, llm)
-        engine.evaluator.evaluate_memory_quality = AsyncMock(return_value={"quality": 0.1})
-        engine.actor.execute_action = AsyncMock(return_value={"success": True, "count": 1})
-        
+        engine.evaluator.evaluate_memory_quality = AsyncMock(
+            return_value={"quality": 0.1}
+        )
+        engine.actor.execute_action = AsyncMock(
+            return_value={"success": True, "count": 1}
+        )
+
         res = await engine.prune_low_quality_memories("t")
         assert res["success"] is True
         engine.actor.execute_action.assert_called_once()

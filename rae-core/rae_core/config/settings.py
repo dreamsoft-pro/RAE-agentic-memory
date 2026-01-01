@@ -1,7 +1,7 @@
 """RAE-core configuration using pydantic-settings."""
 
-
 from typing import Any
+
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 

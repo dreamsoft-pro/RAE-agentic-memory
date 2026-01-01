@@ -1,9 +1,11 @@
 """Unit tests for SyncProtocol to achieve 100% coverage."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
-from datetime import datetime, timezone
+
+import pytest
+
 from rae_core.sync.protocol import SyncProtocol
+
 
 class TestSyncProtocolCoverage:
     """Test suite for SyncProtocol coverage gaps."""

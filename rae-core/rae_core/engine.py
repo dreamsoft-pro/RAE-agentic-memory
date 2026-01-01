@@ -144,8 +144,10 @@ class RAEEngine:
 
         if hasattr(self.embedding_provider, "generate_all_embeddings"):
             # Use EmbeddingManager to generate for all profiles
-            embeddings_map = await self.embedding_provider.generate_all_embeddings([content])
-            
+            embeddings_map = await self.embedding_provider.generate_all_embeddings(
+                [content]
+            )
+
             # Determine default embedding
             if "default" in embeddings_map and embeddings_map["default"]:
                 default_embedding = embeddings_map["default"][0]
@@ -157,7 +159,9 @@ class RAEEngine:
             embs = await self.embedding_provider.embed_batch([content])
             if embs:
                 default_embedding = embs[0]
-                embeddings_map = {"default": [embs[0]]} # Fixed map format to match logic
+                embeddings_map = {
+                    "default": [embs[0]]
+                }  # Fixed map format to match logic
 
         # 2. Store in Memory Storage (Postgres)
         memory_id = await self.memory_storage.store_memory(
@@ -168,7 +172,7 @@ class RAEEngine:
             importance=importance,
             tags=tags,
             metadata=metadata,
-            embedding=default_embedding, # Store default in legacy column
+            embedding=default_embedding,  # Store default in legacy column
         )
 
         # 3. Save all embeddings to memory_embeddings table
@@ -178,7 +182,7 @@ class RAEEngine:
                     memory_id=memory_id,
                     model_name=model_name,
                     embedding=model_embs[0],
-                    metadata={"source_length": len(content)}
+                    metadata={"source_length": len(content)},
                 )
 
         # 4. Store in Vector Store (Qdrant) - Default embedding only
@@ -187,7 +191,7 @@ class RAEEngine:
                 "agent_id": agent_id,
                 "layer": layer,
                 "content": content,
-                **metadata
+                **metadata,
             }
             await self.vector_store.store_vector(
                 memory_id=memory_id,

@@ -1,9 +1,12 @@
 """Unit tests for PostgreSQLStorage to achieve 100% coverage."""
 
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
-from rae_core.adapters.postgres import PostgreSQLStorage
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
+
+import pytest
+
+from rae_core.adapters.postgres import PostgreSQLStorage
+
 
 class TestPostgreSQLStorageCoverage:
     """Test suite for PostgreSQLStorage coverage gaps."""
@@ -37,26 +40,23 @@ class TestPostgreSQLStorageCoverage:
     @pytest.mark.asyncio
     async def test_list_memories_with_many_filters(self):
         """Test list_memories with since, min_importance, and memory_ids filters."""
-        mock_pool = MagicMock() # Changed to MagicMock for acquire
+        mock_pool = MagicMock()  # Changed to MagicMock for acquire
         conn = AsyncMock()
         mock_pool.acquire.return_value.__aenter__.return_value = conn
         conn.fetch.return_value = []
-        
+
         with patch("rae_core.adapters.postgres.asyncpg", MagicMock()):
             storage = PostgreSQLStorage(pool=mock_pool)
             from datetime import datetime, timezone
+
             since = datetime.now(timezone.utc)
             ids = [uuid4()]
-            
+
             await storage.list_memories(
                 tenant_id="t1",
-                filters={
-                    "since": since,
-                    "min_importance": 0.8,
-                    "memory_ids": ids
-                }
+                filters={"since": since, "min_importance": 0.8, "memory_ids": ids},
             )
-            
+
             query = conn.fetch.call_args[0][0]
             assert "created_at >= $2" in query
             assert "importance >= $3" in query
@@ -69,12 +69,14 @@ class TestPostgreSQLStorageCoverage:
         conn = AsyncMock()
         mock_pool.acquire.return_value.__aenter__.return_value = conn
         conn.fetch.return_value = []
-        
+
         with patch("rae_core.adapters.postgres.asyncpg", MagicMock()):
             storage = PostgreSQLStorage(pool=mock_pool)
             # search_memories requires agent_id and layer
-            await storage.search_memories("query", tenant_id="t1", agent_id="a1", layer="l1")
-            
+            await storage.search_memories(
+                "query", tenant_id="t1", agent_id="a1", layer="l1"
+            )
+
             query = conn.fetch.call_args[0][0]
             # When agent_id and layer are provided, tenant_id is $1
             assert "tenant_id = $1" in query
@@ -98,11 +100,13 @@ class TestPostgreSQLStorageCoverage:
         with patch("rae_core.adapters.postgres.asyncpg") as mock_asyncpg:
             mock_pool = MagicMock()
             mock_asyncpg.create_pool = AsyncMock(return_value=mock_pool)
-            
+
             storage = PostgreSQLStorage(dsn="postgresql://localhost/test")
             assert storage._pool is None
-            
+
             pool = await storage._get_pool()
             assert pool == mock_pool
             assert storage._pool == mock_pool
-            mock_asyncpg.create_pool.assert_called_once_with("postgresql://localhost/test")
+            mock_asyncpg.create_pool.assert_called_once_with(
+                "postgresql://localhost/test"
+            )

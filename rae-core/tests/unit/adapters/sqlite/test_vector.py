@@ -658,7 +658,7 @@ class TestSQLiteVectorStoreEdgeCases:
             test_name="cosine_similarity_sqlite_correctness",
             inputs={"query": v1, "stored": v2},
             output=results,
-            metadata={"adapter": "SQLiteVectorStore"}
+            metadata={"adapter": "SQLiteVectorStore"},
         )
 
         assert len(results) == 1

@@ -25,9 +25,11 @@ def mock_llm():
 @pytest.fixture
 def reflection_engine(mock_storage, mock_llm):
     # Patch sub-components to test orchestration logic independently
-    with patch("rae_core.reflection.engine.Actor") as MockActor, patch(
-        "rae_core.reflection.engine.Evaluator"
-    ) as MockEvaluator, patch("rae_core.reflection.engine.Reflector") as MockReflector:
+    with (
+        patch("rae_core.reflection.engine.Actor") as MockActor,
+        patch("rae_core.reflection.engine.Evaluator") as MockEvaluator,
+        patch("rae_core.reflection.engine.Reflector") as MockReflector,
+    ):
         engine = ReflectionEngine(memory_storage=mock_storage, llm_provider=mock_llm)
 
         # Setup mocks on the instance

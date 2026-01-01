@@ -117,9 +117,11 @@ class ContextBuilder:
             total_items=len(memories),
             active_items=len(included_memories),
             token_usage=total_tokens,
-            last_compaction=datetime.now(timezone.utc)
-            if len(included_memories) < len(memories)
-            else None,
+            last_compaction=(
+                datetime.now(timezone.utc)
+                if len(included_memories) < len(memories)
+                else None
+            ),
             statistics={
                 "format": format_type,
                 "truncated": len(included_memories) < len(memories),

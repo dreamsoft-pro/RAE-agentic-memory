@@ -1,5 +1,7 @@
 import asyncio
+import json
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -329,9 +331,9 @@ class MockMemoryStorage(IMemoryStorage):
 
 class MockVectorStore(IVectorStore):
     def __init__(self):
-        self._vectors: dict[
-            tuple[UUID, str], dict[str, Any]
-        ] = {}  # (memory_id, tenant_id) -> {embedding, metadata}
+        self._vectors: dict[tuple[UUID, str], dict[str, Any]] = (
+            {}
+        )  # (memory_id, tenant_id) -> {embedding, metadata}
         self._lock = asyncio.Lock()
 
     async def store_vector(
@@ -389,9 +391,7 @@ class MockVectorStore(IVectorStore):
                 return True
             return False
 
-    async def get_vector(
-        self, memory_id: UUID, tenant_id: str
-    ) -> list[float] | None:
+    async def get_vector(self, memory_id: UUID, tenant_id: str) -> list[float] | None:
         async with self._lock:
             vec_data = self._vectors.get((memory_id, tenant_id))
             return vec_data["embedding"] if vec_data else None
@@ -473,24 +473,27 @@ async def mock_llm_provider() -> MockLLMProvider:
     return MockLLMProvider()
 
 
-import json
-from pathlib import Path
-
 @pytest.fixture
 def golden_snapshot(request: Any) -> Any:
     """Fixture to record and verify golden snapshots for Rust migration."""
-    def _record(test_name: str, inputs: dict[str, Any], output: Any, metadata: dict[str, Any] | None = None) -> None:
+
+    def _record(
+        test_name: str,
+        inputs: dict[str, Any],
+        output: Any,
+        metadata: dict[str, Any] | None = None,
+    ) -> None:
         snapshot = {
             "test_name": test_name,
             "inputs": inputs,
             "output": output,
-            "metadata": metadata or {}
+            "metadata": metadata or {},
         }
-        
+
         # Ensure directory exists
         golden_dir = Path("rae-core/tests/golden")
         golden_dir.mkdir(parents=True, exist_ok=True)
-        
+
         file_path = golden_dir / f"{test_name}.json"
         with open(file_path, "w") as f:
             # Handle non-serializable objects (like UUIDs)
@@ -500,7 +503,7 @@ def golden_snapshot(request: Any) -> Any:
                 if isinstance(obj, datetime):
                     return obj.isoformat()
                 raise TypeError(f"Type {type(obj)} not serializable")
-                
+
             json.dump(snapshot, f, indent=2, default=serializer)
-            
+
     return _record

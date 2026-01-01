@@ -7,6 +7,7 @@ from qdrant_client import AsyncQdrantClient
 
 logger = structlog.get_logger(__name__)
 
+
 class InfrastructureFactory:
     """
     Factory for initializing infrastructure components based on RAE_PROFILE.

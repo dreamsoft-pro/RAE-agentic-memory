@@ -1,9 +1,12 @@
 """Unit tests for search strategies to achieve 100% coverage."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
+
+import pytest
+
 from rae_core.search.strategies.graph import GraphTraversalStrategy
+
 
 class TestGraphTraversalStrategyCoverage:
     """Test suite for GraphTraversalStrategy coverage gaps."""
@@ -19,13 +22,15 @@ class TestGraphTraversalStrategyCoverage:
     async def test_search_with_seed_ids(self, mock_deps):
         gs, ms = mock_deps
         strat = GraphTraversalStrategy(graph_store=gs, memory_storage=ms)
-        
+
         sid = uuid4()
         nid = uuid4()
         gs.get_neighbors.return_value = [nid]
-        
+
         # Test with string seed_id
-        res = await strat.search("query", "t1", filters={"seed_ids": [str(sid)], "edge_type": "link"})
+        res = await strat.search(
+            "query", "t1", filters={"seed_ids": [str(sid)], "edge_type": "link"}
+        )
         assert len(res) == 1
         assert res[0][0] == nid
         gs.get_neighbors.assert_called_once()
@@ -41,6 +46,8 @@ class TestGraphTraversalStrategyCoverage:
 
     def test_getters(self, mock_deps):
         gs, ms = mock_deps
-        strat = GraphTraversalStrategy(graph_store=gs, memory_storage=ms, default_weight=0.5)
+        strat = GraphTraversalStrategy(
+            graph_store=gs, memory_storage=ms, default_weight=0.5
+        )
         assert strat.get_strategy_name() == "graph"
         assert strat.get_strategy_weight() == 0.5

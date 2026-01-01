@@ -1,15 +1,16 @@
 """Unit tests for diff.py to achieve 100% coverage."""
 
-import pytest
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
-from datetime import datetime, timezone, timedelta
+
 from rae_core.sync.diff import (
+    ChangeType,
+    DiffResult,
+    MemoryChange,
     calculate_memory_diff,
     get_sync_direction,
-    ChangeType,
-    MemoryChange,
-    DiffResult
 )
+
 
 class TestDiffCoverage:
     """Test suite for diff.py coverage gaps."""
@@ -19,12 +20,14 @@ class TestDiffCoverage:
         mid = uuid4()
         c1 = MemoryChange(memory_id=mid, change_type=ChangeType.CREATED)
         res = DiffResult(tenant_id="t1", agent_id="a1", created=[c1])
-        
+
         assert res.has_changes is True
         assert res.has_conflicts is False
         assert res.total_changes == 1
-        
-        c2 = MemoryChange(memory_id=mid, change_type=ChangeType.MODIFIED, conflicts=True)
+
+        c2 = MemoryChange(
+            memory_id=mid, change_type=ChangeType.MODIFIED, conflicts=True
+        )
         res.conflicts = [c2]
         assert res.has_conflicts is True
 
@@ -33,7 +36,7 @@ class TestDiffCoverage:
         mid = uuid4()
         local = [{"id": str(mid), "content": "same", "version": 1}]
         remote = [{"id": str(mid), "content": "same", "version": 1}]
-        
+
         res = calculate_memory_diff(local, remote, "t1", "a1")
         assert len(res.unchanged) == 1
         assert res.unchanged[0].memory_id == mid
@@ -46,7 +49,7 @@ class TestDiffCoverage:
         # Local modified, Remote NOT modified (None timestamp)
         local = [{"id": str(mid), "content": "new", "modified_at": now}]
         remote = [{"id": str(mid), "content": "old", "modified_at": None}]
-        
+
         res = calculate_memory_diff(local, remote, "t1", "a1")
         assert len(res.modified) == 1
         assert res.modified[0].conflicts is False
@@ -56,8 +59,14 @@ class TestDiffCoverage:
         mid = uuid4()
         now = datetime.now(timezone.utc)
         local = [{"id": str(mid), "content": "L", "modified_at": now}]
-        remote = [{"id": str(mid), "content": "R", "modified_at": now + timedelta(milliseconds=500)}]
-        
+        remote = [
+            {
+                "id": str(mid),
+                "content": "R",
+                "modified_at": now + timedelta(milliseconds=500),
+            }
+        ]
+
         res = calculate_memory_diff(local, remote, "t1", "a1")
         assert len(res.modified) == 1
         assert res.modified[0].conflicts is False
@@ -66,22 +75,22 @@ class TestDiffCoverage:
         """Test get_sync_direction based on timestamps."""
         mid = uuid4()
         now = datetime.now(timezone.utc)
-        
+
         # Local newer -> Push
         c1 = MemoryChange(
-            memory_id=mid, 
+            memory_id=mid,
             change_type=ChangeType.MODIFIED,
             local_modified=now + timedelta(minutes=1),
-            remote_modified=now
+            remote_modified=now,
         )
         assert get_sync_direction(c1) == "push"
-        
+
         # Remote newer -> Pull
         c2 = MemoryChange(
-            memory_id=mid, 
+            memory_id=mid,
             change_type=ChangeType.MODIFIED,
             local_modified=now,
-            remote_modified=now + timedelta(minutes=1)
+            remote_modified=now + timedelta(minutes=1),
         )
         assert get_sync_direction(c2) == "pull"
 
@@ -89,9 +98,11 @@ class TestDiffCoverage:
         """Test default sync directions."""
         mid = uuid4()
         # MODIFIED but missing one timestamp -> Pull
-        c = MemoryChange(memory_id=mid, change_type=ChangeType.MODIFIED, local_modified=None)
+        c = MemoryChange(
+            memory_id=mid, change_type=ChangeType.MODIFIED, local_modified=None
+        )
         assert get_sync_direction(c) == "pull"
-        
+
         # UNCHANGED -> Pull (default)
         c2 = MemoryChange(memory_id=mid, change_type=ChangeType.UNCHANGED)
         assert get_sync_direction(c2) == "pull"

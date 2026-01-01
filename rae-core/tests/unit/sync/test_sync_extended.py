@@ -26,7 +26,9 @@ class TestSyncProtocol:
     @pytest.mark.asyncio
     async def test_push_success(self, protocol, mock_provider):
         mock_provider.push_memories.return_value = {
-            "success": True, "sync_id": "s1", "synced_memory_ids": ["m1"]
+            "success": True,
+            "sync_id": "s1",
+            "synced_memory_ids": ["m1"],
         }
         res = await protocol.push("t1", "a1")
         assert res.success is True
@@ -50,6 +52,7 @@ class TestSyncProtocol:
         mock_provider.sync_memories.return_value = {"success": True}
         res = await protocol.sync("t1", "a1")
         assert res.success is True
+
 
 class TestMemoryDiff:
     def test_calculate_diff_created_remote(self):
@@ -75,7 +78,9 @@ class TestMemoryDiff:
         id1 = uuid4()
         now = datetime.now(timezone.utc)
         # Both modified at different times with different content
-        local = [{"id": id1, "content": "Local", "modified_at": now + timedelta(seconds=10)}]
+        local = [
+            {"id": id1, "content": "Local", "modified_at": now + timedelta(seconds=10)}
+        ]
         remote = [{"id": id1, "content": "Remote", "modified_at": now}]
 
         diff = calculate_memory_diff(local, remote, "t1", "a1")
@@ -85,6 +90,7 @@ class TestMemoryDiff:
 
     def test_get_sync_direction(self):
         from rae_core.sync.diff import MemoryChange
+
         id1 = uuid4()
 
         # Created -> Pull
@@ -96,5 +102,7 @@ class TestMemoryDiff:
         assert get_sync_direction(c2) == "push"
 
         # Conflict -> Conflict
-        c3 = MemoryChange(memory_id=id1, change_type=ChangeType.MODIFIED, conflicts=True)
+        c3 = MemoryChange(
+            memory_id=id1, change_type=ChangeType.MODIFIED, conflicts=True
+        )
         assert get_sync_direction(c3) == "conflict"

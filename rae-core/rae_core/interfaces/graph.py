@@ -66,10 +66,7 @@ class IGraphStore(Protocol):
         ...
 
     async def get_subgraph(
-        self,
-        node_ids: list[UUID],
-        tenant_id: str,
-        include_edges: bool = True
+        self, node_ids: list[UUID], tenant_id: str, include_edges: bool = True
     ) -> dict[str, Any]:
         """Extract a subgraph."""
         ...

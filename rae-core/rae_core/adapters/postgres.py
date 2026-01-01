@@ -109,10 +109,11 @@ class PostgreSQLStorage(IMemoryStorage):
         importance = importance if importance is not None else 0.5
 
         import json
+
         async with pool.acquire() as conn:
             # Convert embedding to string for pgvector compatibility if using asyncpg without codec
             embedding_val = str(embedding) if embedding is not None else None
-            
+
             await conn.execute(
                 """
                 INSERT INTO memories (
@@ -172,10 +173,14 @@ class PostgreSQLStorage(IMemoryStorage):
             "tags": list(row["tags"]) if row["tags"] else [],
             "metadata": row["metadata"] if row["metadata"] else {},
             "embedding": (
-                json.loads(row["embedding"])
-                if isinstance(row["embedding"], str)
-                else list(row["embedding"])
-            ) if row["embedding"] else None,
+                (
+                    json.loads(row["embedding"])
+                    if isinstance(row["embedding"], str)
+                    else list(row["embedding"])
+                )
+                if row["embedding"]
+                else None
+            ),
             "importance": float(row["importance"]),
             "usage_count": int(row["usage_count"]),
             "created_at": row["created_at"],
@@ -269,10 +274,14 @@ class PostgreSQLStorage(IMemoryStorage):
                 "tags": list(row["tags"]) if row["tags"] else [],
                 "metadata": row["metadata"] if row["metadata"] else {},
                 "embedding": (
-                    json.loads(row["embedding"])
-                    if isinstance(row["embedding"], str)
-                    else list(row["embedding"])
-                ) if row["embedding"] else None,
+                    (
+                        json.loads(row["embedding"])
+                        if isinstance(row["embedding"], str)
+                        else list(row["embedding"])
+                    )
+                    if row["embedding"]
+                    else None
+                ),
                 "importance": float(row["importance"]),
                 "usage_count": int(row["usage_count"]),
                 "created_at": row["created_at"],
@@ -375,10 +384,14 @@ class PostgreSQLStorage(IMemoryStorage):
                     "tags": list(row["tags"]) if row["tags"] else [],
                     "metadata": row["metadata"] if row["metadata"] else {},
                     "embedding": (
-                        json.loads(row["embedding"])
-                        if isinstance(row["embedding"], str)
-                        else list(row["embedding"])
-                    ) if row["embedding"] else None,
+                        (
+                            json.loads(row["embedding"])
+                            if isinstance(row["embedding"], str)
+                            else list(row["embedding"])
+                        )
+                        if row["embedding"]
+                        else None
+                    ),
                     "importance": float(row["importance"]),
                     "usage_count": int(row["usage_count"]),
                     "created_at": row["created_at"],
@@ -692,7 +705,6 @@ class PostgreSQLStorage(IMemoryStorage):
             )
             return cast(int, result or 0)
 
-
     async def get_metric_aggregate(
         self,
         tenant_id: str,
@@ -842,6 +854,7 @@ class PostgreSQLStorage(IMemoryStorage):
             except (IndexError, ValueError):
                 return 0
         return 0
+
     async def save_embedding(
         self,
         memory_id: UUID,

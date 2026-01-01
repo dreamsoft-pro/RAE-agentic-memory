@@ -31,36 +31,59 @@ class TestReasoningPath:
         path.add_step(str(uuid4()), "User likes cats")
 
         verified = {"Warsaw"}
-        assert path.count_unverified_assumptions(verified) == 1 # cats unverified
+        assert path.count_unverified_assumptions(verified) == 1  # cats unverified
 
     def test_similarity_to(self):
         path1 = ReasoningPath(steps=["A", "B", "C"])
         path2 = ReasoningPath(steps=["B", "C", "D"])
 
         sim = path1.similarity_to(path2)
-        assert 0.4 < sim < 0.6 # Intersect {B,C}, Union {A,B,C,D} -> 2/4 = 0.5
+        assert 0.4 < sim < 0.6  # Intersect {B,C}, Union {A,B,C,D} -> 2/4 = 0.5
+
 
 class TestReasoningController:
     def test_should_continue_reasoning(self):
-        ctrl = ReasoningController(max_depth=5, uncertainty_threshold=0.5, token_budget_per_step=1000)
+        ctrl = ReasoningController(
+            max_depth=5, uncertainty_threshold=0.5, token_budget_per_step=1000
+        )
 
         # OK
-        assert ctrl.should_continue_reasoning(current_depth=2, uncertainty=0.8, tokens_used=500) is True
+        assert (
+            ctrl.should_continue_reasoning(
+                current_depth=2, uncertainty=0.8, tokens_used=500
+            )
+            is True
+        )
 
         # Max depth
-        assert ctrl.should_continue_reasoning(current_depth=5, uncertainty=0.8, tokens_used=500) is False
+        assert (
+            ctrl.should_continue_reasoning(
+                current_depth=5, uncertainty=0.8, tokens_used=500
+            )
+            is False
+        )
 
         # Uncertainty
-        assert ctrl.should_continue_reasoning(current_depth=2, uncertainty=0.4, tokens_used=500) is False
+        assert (
+            ctrl.should_continue_reasoning(
+                current_depth=2, uncertainty=0.4, tokens_used=500
+            )
+            is False
+        )
 
         # Budget
-        assert ctrl.should_continue_reasoning(current_depth=2, uncertainty=0.8, tokens_used=1500) is False
+        assert (
+            ctrl.should_continue_reasoning(
+                current_depth=2, uncertainty=0.8, tokens_used=1500
+            )
+            is False
+        )
 
     def test_prune_contradictory_paths(self):
         ctrl = ReasoningController(max_unverified_assumptions=1)
 
         p_ok = ReasoningPath(steps=["Verified step"])
-        p_bad_unverified = ReasoningPath(steps=["Step X", "Step Y"]) # 2 unverified
+        p_bad_unverified = ReasoningPath(steps=["Step X", "Step Y"])  # 2 unverified
         p_bad_contradictory = ReasoningPath(steps=["Step Z"], contradictions=["Error"])
 
         paths = [p_ok, p_bad_unverified, p_bad_contradictory]
@@ -103,36 +126,36 @@ class TestReasoningController:
 
     def test_prune_with_memory_alignment(self, golden_snapshot):
         ctrl = ReasoningController(enable_pruning=True)
-        
+
         # Path aligns with episodic memory
         p_ok = ReasoningPath(steps=["Alice is 30"])
         episodic = [{"content": "Alice"}]
-        
+
         # Path aligns with semantic memory
         p_also_ok = ReasoningPath(steps=["Charlie is 50"])
         semantic = [{"content": "Charlie"}]
-        
+
         # Path aligns with neither -> will be pruned by current logic
         p_bad = ReasoningPath(steps=["Bob is 40"])
-        
+
         pruned = ctrl.prune_contradictory_paths(
-            [p_ok, p_also_ok, p_bad], 
+            [p_ok, p_also_ok, p_bad],
             episodic_memories=episodic,
-            semantic_memories=semantic
+            semantic_memories=semantic,
         )
-        
+
         # Record golden snapshot for pruning logic
         golden_snapshot(
             test_name="math_reasoning_pruning",
             inputs={
                 "paths": [{"steps": p.steps} for p in [p_ok, p_also_ok, p_bad]],
                 "episodic": episodic,
-                "semantic": semantic
+                "semantic": semantic,
             },
             output={"pruned_count": 1, "remaining_steps": [p.steps for p in pruned]},
-            metadata={"component": "ReasoningController"}
+            metadata={"component": "ReasoningController"},
         )
-        
+
         assert len(pruned) == 2
         assert p_ok in pruned
         assert p_also_ok in pruned
@@ -142,30 +165,29 @@ class TestReasoningController:
         ctrl = ReasoningController(enable_pruning=False)
         p = ReasoningPath(steps=["X"], contradictions=["Error"])
         pruned = ctrl.prune_contradictory_paths([p])
-        assert len(pruned) == 1 # Should not prune if disabled
+        assert len(pruned) == 1  # Should not prune if disabled
 
     def test_similarity_empty(self):
         p1 = ReasoningPath(steps=[])
         p2 = ReasoningPath(steps=["A"])
         assert p1.similarity_to(p2) == 0.0
-        
+
         p3 = ReasoningPath(steps=["A"])
-        p4 = ReasoningPath(steps=["!"]) # No words after split
+        p4 = ReasoningPath(steps=["!"])  # No words after split
         assert p3.similarity_to(p4) == 0.0
 
     def test_should_continue_golden(self, golden_snapshot):
         ctrl = ReasoningController()
-        
+
         res_ok = ctrl.should_continue_reasoning(5, 0.8, 100)
-        res_stop = ctrl.should_continue_reasoning(15, 0.8, 100) # Max depth 12
-        
+        res_stop = ctrl.should_continue_reasoning(15, 0.8, 100)  # Max depth 12
+
         golden_snapshot(
             test_name="math_reasoning_should_continue",
             inputs={
                 "case_ok": {"depth": 5, "unc": 0.8, "tokens": 100},
-                "case_stop": {"depth": 15, "unc": 0.8, "tokens": 100}
+                "case_stop": {"depth": 15, "unc": 0.8, "tokens": 100},
             },
             output={"case_ok": res_ok, "case_stop": res_stop},
-            metadata={"component": "ReasoningController"}
+            metadata={"component": "ReasoningController"},
         )
-

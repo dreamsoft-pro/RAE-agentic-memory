@@ -1,9 +1,16 @@
 """Unit tests for LLMOrchestrator and strategies to achieve 100% coverage."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock
-from rae_core.llm.orchestrator import LLMOrchestrator, LLMConfig
-from rae_core.llm.strategies import SingleLLMStrategy, FallbackStrategy, LoadBalancingStrategy, RoundRobinStrategy
+
+import pytest
+
+from rae_core.llm.orchestrator import LLMConfig, LLMOrchestrator
+from rae_core.llm.strategies import (
+    FallbackStrategy,
+    LoadBalancingStrategy,
+    RoundRobinStrategy,
+)
+
 
 class TestOrchestratorCoverage:
     @pytest.fixture
@@ -48,7 +55,6 @@ class TestOrchestratorCoverage:
         # NoLLMFallback.summarize returns text + "."
         assert res == "text."
 
-
     @pytest.mark.asyncio
     async def test_fallback_strategy_success(self, mock_p1):
         providers = {"p1": mock_p1}
@@ -73,7 +79,7 @@ class TestOrchestratorCoverage:
         res, name = await strat.execute(providers, "q")
         assert res == "r1"
         assert name == "p1"
-        
+
         # Test skip missing
         strat = LoadBalancingStrategy(["missing", "p1"])
         res, name = await strat.execute(providers, "q")
@@ -85,9 +91,9 @@ class TestOrchestratorCoverage:
         strat = RoundRobinStrategy(["p1"])
         res, name = await strat.execute(providers, "q")
         assert res == "r1"
-        
+
         with pytest.raises(ValueError, match="No providers configured"):
             await RoundRobinStrategy([]).execute(providers, "q")
-        
+
         with pytest.raises(ValueError, match="Provider 'missing' not found"):
             await RoundRobinStrategy(["missing"]).execute(providers, "q")

@@ -222,7 +222,7 @@ class TestQdrantVectorStore:
             query_embedding=[1.0, 0.0],
             tenant_id="t1",
             penalty_factor=0.5,
-            contradiction_threshold=0.1
+            contradiction_threshold=0.1,
         )
 
         assert len(results) == 2
