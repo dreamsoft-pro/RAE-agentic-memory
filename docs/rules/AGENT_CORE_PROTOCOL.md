@@ -101,7 +101,8 @@ Different branches = Different testing levels.
 ## 7. RESOURCE & COMMUNICATION EFFICIENCY
 
 - **RAE-First Communication**: **MANDATORY**. All communication and context exchange between agents MUST pass through RAE. Agents must consult RAE for context before acting and store results in RAE. Direct side-channels are prohibited to ensure full auditability and shared state. Input/Output MUST flow through RAE to minimize token usage.
-- **Model Economy**: Use cheaper/lighter models for simple tasks. Reserve SOTA models for complex reasoning.
+- **RAE-First Infrastructure**: **MANDATORY**. ALWAYS use the existing Docker infrastructure (`rae-api`, `postgres`, `qdrant`, etc.) for running tests, benchmarks, and scripts. DO NOT install dependencies or run heavy processes on the host machine if they can be executed inside a container. Use `docker compose exec` to run commands in the correct environment.
+- **Model Economy**: **MANDATORY**. Save tokens by using cheaper/lighter models (e.g., L1 heuristics, "cheap" profile in `math_controller.yaml`) for simple tasks, boilerplate, and routine checks. Reserve SOTA models (Gemini 1.5 Pro, Claude 3.5 Sonnet) only for complex reasoning, architectural decisions, and final reviews.
 - **Compute Offloading**: For heavy tasks (embeddings, large benchmarks), utilize the Compute Cluster:
   - **Node KUBUS**: RTX 4080 (GPU acceleration, Local LLMs). Primary for high-quality code generation and audits.
   - **Node PIOTREK**: 128GB RAM (Large-scale memory testing).

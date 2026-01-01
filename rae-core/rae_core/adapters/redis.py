@@ -63,13 +63,28 @@ class RedisCache(ICacheProvider):
                 host="localhost", port=6379, db=0, **redis_kwargs
             )
 
-    def _make_key(self, key: str) -> str:
-        """Add prefix to key."""
-        return f"{self.prefix}{key}"
+    def _make_key(
+        self,
+        key: str,
+        agent_id: str | None = None,
+        session_id: str | None = None,
+    ) -> str:
+        """Add prefix and optional namespace scopes to key."""
+        base = f"{self.prefix}"
+        if agent_id:
+            base += f"{agent_id}:"
+        if session_id:
+            base += f"{session_id}:"
+        return f"{base}{key}"
 
-    async def get(self, key: str) -> Any | None:
+    async def get(
+        self,
+        key: str,
+        agent_id: str | None = None,
+        session_id: str | None = None,
+    ) -> Any | None:
         """Get value from cache."""
-        full_key = self._make_key(key)
+        full_key = self._make_key(key, agent_id, session_id)
 
         try:
             value = await self.redis.get(full_key)
@@ -90,9 +105,11 @@ class RedisCache(ICacheProvider):
         key: str,
         value: Any,
         ttl: int | None = None,
+        agent_id: str | None = None,
+        session_id: str | None = None,
     ) -> bool:
         """Set value in cache with optional TTL."""
-        full_key = self._make_key(key)
+        full_key = self._make_key(key, agent_id, session_id)
         ttl = ttl if ttl is not None else self.default_ttl
 
         try:
@@ -111,9 +128,14 @@ class RedisCache(ICacheProvider):
         except Exception:
             return False
 
-    async def delete(self, key: str) -> bool:
+    async def delete(
+        self,
+        key: str,
+        agent_id: str | None = None,
+        session_id: str | None = None,
+    ) -> bool:
         """Delete value from cache."""
-        full_key = self._make_key(key)
+        full_key = self._make_key(key, agent_id, session_id)
 
         try:
             result = await self.redis.delete(full_key)
@@ -121,9 +143,14 @@ class RedisCache(ICacheProvider):
         except Exception:
             return False
 
-    async def exists(self, key: str) -> bool:
+    async def exists(
+        self,
+        key: str,
+        agent_id: str | None = None,
+        session_id: str | None = None,
+    ) -> bool:
         """Check if key exists in cache."""
-        full_key = self._make_key(key)
+        full_key = self._make_key(key, agent_id, session_id)
 
         try:
             result = await self.redis.exists(full_key)
@@ -131,9 +158,15 @@ class RedisCache(ICacheProvider):
         except Exception:
             return False
 
-    async def increment(self, key: str, amount: int = 1) -> int | None:
+    async def increment(
+        self,
+        key: str,
+        amount: int = 1,
+        agent_id: str | None = None,
+        session_id: str | None = None,
+    ) -> int | None:
         """Increment a counter."""
-        full_key = self._make_key(key)
+        full_key = self._make_key(key, agent_id, session_id)
 
         try:
             result = await self.redis.incrby(full_key, amount)
@@ -141,9 +174,15 @@ class RedisCache(ICacheProvider):
         except Exception:
             return None
 
-    async def decrement(self, key: str, amount: int = 1) -> int | None:
+    async def decrement(
+        self,
+        key: str,
+        amount: int = 1,
+        agent_id: str | None = None,
+        session_id: str | None = None,
+    ) -> int | None:
         """Decrement a counter."""
-        full_key = self._make_key(key)
+        full_key = self._make_key(key, agent_id, session_id)
 
         try:
             result = await self.redis.decrby(full_key, amount)
@@ -151,9 +190,14 @@ class RedisCache(ICacheProvider):
         except Exception:
             return None
 
-    async def get_ttl(self, key: str) -> int | None:
+    async def get_ttl(
+        self,
+        key: str,
+        agent_id: str | None = None,
+        session_id: str | None = None,
+    ) -> int | None:
         """Get remaining TTL for a key in seconds."""
-        full_key = self._make_key(key)
+        full_key = self._make_key(key, agent_id, session_id)
 
         try:
             ttl = await self.redis.ttl(full_key)
@@ -163,9 +207,15 @@ class RedisCache(ICacheProvider):
         except Exception:
             return None
 
-    async def expire(self, key: str, ttl: int) -> bool:
+    async def expire(
+        self,
+        key: str,
+        ttl: int,
+        agent_id: str | None = None,
+        session_id: str | None = None,
+    ) -> bool:
         """Set expiration on existing key."""
-        full_key = self._make_key(key)
+        full_key = self._make_key(key, agent_id, session_id)
 
         try:
             result = await self.redis.expire(full_key, ttl)
@@ -173,20 +223,32 @@ class RedisCache(ICacheProvider):
         except Exception:
             return False
 
-    async def clear(self, pattern: str | None = None) -> int:
+    async def clear(
+        self,
+        pattern: str | None = None,
+        agent_id: str | None = None,
+        session_id: str | None = None,
+    ) -> int:
         """Clear cache keys matching pattern (all if None)."""
-        return await self.clear_prefix(pattern or "*")
+        return await self.clear_prefix(pattern or "*", agent_id, session_id)
 
-    async def clear_prefix(self, pattern: str = "*") -> int:
+    async def clear_prefix(
+        self,
+        pattern: str = "*",
+        agent_id: str | None = None,
+        session_id: str | None = None,
+    ) -> int:
         """Clear all keys matching pattern under prefix.
 
         Args:
             pattern: Pattern to match (default: "*" = all keys with prefix)
+            agent_id: Optional agent ID for namespace isolation
+            session_id: Optional session ID for namespace isolation
 
         Returns:
             Number of keys deleted
         """
-        full_pattern = self._make_key(pattern)
+        full_pattern = self._make_key(pattern, agent_id, session_id)
 
         try:
             keys = []

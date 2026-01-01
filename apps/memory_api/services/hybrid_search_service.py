@@ -378,7 +378,9 @@ class HybridSearchService:
 
         try:
             # Generate query embedding
-            query_embedding = await self.rae_service.embedding_provider.embed_text(query)
+            query_embedding = await self.rae_service.embedding_provider.embed_text(
+                query
+            )
 
             # Build SQL query
             sql = """

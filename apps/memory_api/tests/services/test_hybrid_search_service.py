@@ -67,14 +67,14 @@ def mock_rae_service(mock_pool):
     service = MagicMock()
     service.postgres_pool = mock_pool
     service.qdrant_client = AsyncMock()
-    
+
     # Mock embedding provider as AsyncMock since it's awaited
     service.embedding_provider = AsyncMock()
     service.embedding_provider.embed_text.return_value = [0.1, 0.2, 0.3]
 
     # Mock DB as AsyncMock to simplify testing service logic without provider overhead
     service.db = AsyncMock()
-    
+
     return service
 
 
@@ -415,7 +415,9 @@ async def test_search_with_manual_weights(service, mock_rae_service):
 @pytest.mark.asyncio
 async def test_vector_search_error_handling(service, mock_rae_service):
     """Test vector search error handling."""
-    mock_rae_service.embedding_provider.embed_text.side_effect = Exception("ML Service Down")
+    mock_rae_service.embedding_provider.embed_text.side_effect = Exception(
+        "ML Service Down"
+    )
 
     results = await service._vector_search("t", "p", "q", 5)
 

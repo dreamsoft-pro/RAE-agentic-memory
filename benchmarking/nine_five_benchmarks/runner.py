@@ -136,7 +136,7 @@ class NineFiveBenchmarkRunner:
     def run_mmit(
         self,
         num_operations: int = 5000,
-        similarity_threshold: float = 0.95,
+        similarity_threshold: float = 0.97,
         **kwargs,
     ) -> MMITResults:
         """Run MMIT benchmark."""

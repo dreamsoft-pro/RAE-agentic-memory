@@ -1,23 +1,28 @@
-from unittest.mock import AsyncMock, patch, MagicMock
-from uuid import uuid4
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import uuid4
 
 import pytest
 from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 from apps.memory_api.main import app
-from apps.memory_api.models.hybrid_search_models import HybridSearchResult, SearchResultItem
+from apps.memory_api.models.hybrid_search_models import (
+    HybridSearchResult,
+    SearchResultItem,
+)
 from apps.memory_api.security import auth
+
 
 @pytest.fixture
 def client_with_mocks():
     # Mock app state
     app.state.pool = AsyncMock()
     app.state.rae_core_service = MagicMock()
-    
+
     with TestClient(app) as c:
         yield c
+
 
 @pytest.fixture
 def mock_hybrid_search():
@@ -25,16 +30,17 @@ def mock_hybrid_search():
         service_instance = MockService.return_value
         yield service_instance
 
+
 def test_federation_query_unauthorized(client_with_mocks):
     """Test that federation endpoint requires authentication"""
     # Since auth might be disabled in test config, we verify the dependency is wired
     # by overriding it to raise an exception.
-    
+
     def mock_verify_token_fail():
         raise HTTPException(status_code=403, detail="Not authenticated")
 
     app.dependency_overrides[auth.verify_token] = mock_verify_token_fail
-    
+
     try:
         response = client_with_mocks.post(
             "/v1/federation/query",
@@ -42,12 +48,13 @@ def test_federation_query_unauthorized(client_with_mocks):
                 "query_text": "test",
                 "tenant_id": "test-tenant",
                 "project_id": "test-project",
-                "limit": 5
-            }
+                "limit": 5,
+            },
         )
         assert response.status_code == 403
     finally:
         app.dependency_overrides = {}
+
 
 @pytest.mark.asyncio
 async def test_federation_query_success(client_with_mocks, mock_hybrid_search):
@@ -61,27 +68,40 @@ async def test_federation_query_success(client_with_mocks, mock_hybrid_search):
         rank=1,
         metadata={"source": "local"},
         created_at=datetime.now(),
-        search_strategies_used=["vector"]
+        search_strategies_used=["vector"],
     )
 
     mock_result = HybridSearchResult(
         results=[item],
         total_results=1,
-        query_analysis={"intent": "exploratory", "confidence": 1.0, "key_entities": [], "key_concepts": [], "temporal_markers": [], "relation_types": [], "recommended_strategies": [], "strategy_weights": {}, "original_query": "q"},
+        query_analysis={
+            "intent": "exploratory",
+            "confidence": 1.0,
+            "key_entities": [],
+            "key_concepts": [],
+            "temporal_markers": [],
+            "relation_types": [],
+            "recommended_strategies": [],
+            "strategy_weights": {},
+            "original_query": "q",
+        },
         vector_results_count=1,
         semantic_results_count=0,
         graph_results_count=0,
         fulltext_results_count=0,
         total_time_ms=10,
         applied_weights={},
-        reranking_used=False
+        reranking_used=False,
     )
-    
+
     mock_hybrid_search.search = AsyncMock(return_value=mock_result)
 
     # Override auth dependency to simulate authenticated user
-    app.dependency_overrides[auth.verify_token] = lambda: {"sub": "federation-user", "permissions": ["read"]}
-    
+    app.dependency_overrides[auth.verify_token] = lambda: {
+        "sub": "federation-user",
+        "permissions": ["read"],
+    }
+
     try:
         response = client_with_mocks.post(
             "/v1/federation/query",
@@ -89,8 +109,8 @@ async def test_federation_query_success(client_with_mocks, mock_hybrid_search):
                 "query_text": "test query",
                 "tenant_id": "t-1",
                 "project_id": "p-1",
-                "limit": 10
-            }
+                "limit": 10,
+            },
         )
 
         assert response.status_code == 200
@@ -98,6 +118,6 @@ async def test_federation_query_success(client_with_mocks, mock_hybrid_search):
         assert len(data["results"]) == 1
         assert data["results"][0]["content_snippet"] == "Federated content"
         assert data["results"][0]["memory_id"] == str(item.memory_id)
-        
+
     finally:
         app.dependency_overrides = {}
