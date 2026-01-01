@@ -1,22 +1,41 @@
-# Plan for Next Session: Telemetry Implementation Audit
+# Plan for Next Session: Audit, Tech Debt & Modernization
 
-## Objective
-Verify 100% compliance of the codebase with `docs/specs/TELEMETRY_IMPLEMENTATION_PLAN.md` (Phases 1-4).
+**Status:** Ready for execution
+**Target Branch:** `feature/maintenance-deps-and-audit` (create from `develop`)
 
-## Role: Quality Assurance & Node1 Delegate
+## 1. Telemetry Implementation Audit (High Priority)
+**Objective:** Verify 100% compliance with `docs/specs/TELEMETRY_IMPLEMENTATION_PLAN.md`.
 
-## Instructions
-1. **Delegate to Node1 (`codebase_investigator`)**:
-   - Task: "Deep audit of Telemetry & Sync implementation."
-   - Checkpoints:
-     - **Phase 1 (Ops):** Is `otel-collector` removed from `docker-compose.yml`? Are `rae_uptime_seconds` and `rae_memory_count_total` registered in `metrics.py`?
-     - **Phase 2 (Cognitive):** Does `MemoryItem` in `rae-core` have `provenance` and `sync_metadata`? Does `ReflectionEngine` use them?
-     - **Phase 3 (Sync):** Is `SyncManager` implemented in `rae-core`? Are `/system/sync` endpoints exposed in `rae-api`?
-     - **Phase 4 (Research):** Does `run_research_mode.sh` exist? Is `httpx` instrumented in `opentelemetry_config.py`?
+- [ ] **Phase 1 (Ops):** Verify `otel-collector` is removed from `docker-compose.yml`. Check `metrics.py` for `rae_uptime_seconds`.
+- [ ] **Phase 2 (Cognitive):** Verify `MemoryItem` in `rae-core` has `provenance` and `sync_metadata`.
+- [ ] **Phase 3 (Sync):** Verify `SyncManager` structure in `rae-core` and endpoints in `rae-api`.
+- [ ] **Phase 4 (Research):** Verify `run_research_mode.sh` exists and `httpx` instrumentation is active in `opentelemetry_config.py`.
+- [ ] **Deliverable:** Create `AUDIT_REPORT_TELEMETRY.md` with Pass/Fail status.
 
-2. **Auto-Fix Protocol**:
-   - If ANY file is missing or code is divergent from the plan, **fix it immediately** without asking for permission.
-   - Run tests: `make test-unit` (focus on `test_sync_manager.py` and `test_reflection_simple.py`).
+## 2. Fix FastAPI Deprecation Warnings
+**Objective:** Eliminate noise in logs to maintain "Zero Warning Policy".
 
-3. **Final Report**:
-   - Generate `AUDIT_REPORT_TELEMETRY.md` with status of each phase (Pass/Fail -> Fixed).
+- [ ] **Search:** grep for `HTTP_422_UNPROCESSABLE_ENTITY` (deprecated in newer Starlette/FastAPI versions).
+- [ ] **Replace:** Update to use `fastapi.status.HTTP_422_UNPROCESSABLE_ENTITY` or integer `422`.
+- [ ] **Pydantic V2:** Check for any remaining Pydantic V1 patterns that cause warnings (e.g., `dict()` -> `model_dump()`, `parse_obj()` -> `model_validate()`).
+
+## 3. Dependency Modernization (Critical)
+**Objective:** Update outdated libraries to ensure security and performance.
+
+- [ ] **Audit:** Run `pip list --outdated` inside the container/venv.
+- [ ] **Update:**
+    - `apps/memory_api/requirements.txt`: Focus on `fastapi`, `uvicorn`, `pydantic`, `langchain`, `qdrant-client`.
+    - `requirements-dev.txt`: Focus on `pytest`, `ruff`, `mypy`, `black`.
+- [ ] **Constraint:** Update strictly **one major library at a time** and run tests to isolate breaking changes.
+- [ ] **Lock:** Regenerate any lock files if present (or just ensure `requirements.txt` versions are pinned).
+
+## 4. Full Verification
+**Objective:** Ensure no regression after dependency updates.
+
+- [ ] **Unit Tests:** `make test-lite` (Fast check).
+- [ ] **Integration Tests:** `make test-int` (Verify DB/API contracts with new libs).
+- [ ] **Sanity Check:** Run `make lint` to ensure new linter versions don't introduce new rules that fail.
+
+## 5. Final Polish
+- [ ] Update `CHANGELOG.md` with "Maintenance: Dependencies updated & Telemetry Audited".
+- [ ] Merge to `develop`.

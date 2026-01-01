@@ -110,6 +110,9 @@ class PostgreSQLStorage(IMemoryStorage):
 
         import json
         async with pool.acquire() as conn:
+            # Convert embedding to string for pgvector compatibility if using asyncpg without codec
+            embedding_val = str(embedding) if embedding is not None else None
+            
             await conn.execute(
                 """
                 INSERT INTO memories (
@@ -126,7 +129,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 agent_id,
                 tags,
                 json.dumps(metadata),
-                embedding,
+                embedding_val,
                 importance,
                 expires_at,
                 datetime.now(timezone.utc).replace(tzinfo=None),
@@ -168,7 +171,11 @@ class PostgreSQLStorage(IMemoryStorage):
             "agent_id": row["agent_id"],
             "tags": list(row["tags"]) if row["tags"] else [],
             "metadata": row["metadata"] if row["metadata"] else {},
-            "embedding": list(row["embedding"]) if row["embedding"] else None,
+            "embedding": (
+                json.loads(row["embedding"])
+                if isinstance(row["embedding"], str)
+                else list(row["embedding"])
+            ) if row["embedding"] else None,
             "importance": float(row["importance"]),
             "usage_count": int(row["usage_count"]),
             "created_at": row["created_at"],
@@ -261,7 +268,11 @@ class PostgreSQLStorage(IMemoryStorage):
                 "agent_id": row["agent_id"],
                 "tags": list(row["tags"]) if row["tags"] else [],
                 "metadata": row["metadata"] if row["metadata"] else {},
-                "embedding": list(row["embedding"]) if row["embedding"] else None,
+                "embedding": (
+                    json.loads(row["embedding"])
+                    if isinstance(row["embedding"], str)
+                    else list(row["embedding"])
+                ) if row["embedding"] else None,
                 "importance": float(row["importance"]),
                 "usage_count": int(row["usage_count"]),
                 "created_at": row["created_at"],
@@ -363,7 +374,11 @@ class PostgreSQLStorage(IMemoryStorage):
                     "agent_id": row["agent_id"],
                     "tags": list(row["tags"]) if row["tags"] else [],
                     "metadata": row["metadata"] if row["metadata"] else {},
-                    "embedding": list(row["embedding"]) if row["embedding"] else None,
+                    "embedding": (
+                        json.loads(row["embedding"])
+                        if isinstance(row["embedding"], str)
+                        else list(row["embedding"])
+                    ) if row["embedding"] else None,
                     "importance": float(row["importance"]),
                     "usage_count": int(row["usage_count"]),
                     "created_at": row["created_at"],
@@ -837,6 +852,7 @@ class PostgreSQLStorage(IMemoryStorage):
         """Save a vector embedding for a memory."""
         pool = await self._get_pool()
         metadata = metadata or {}
+        embedding_val = str(embedding) if embedding is not None else None
 
         async with pool.acquire() as conn:
             await conn.execute(
@@ -852,7 +868,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 """,
                 memory_id,
                 model_name,
-                embedding,
+                embedding_val,
                 json.dumps(metadata),
             )
 
