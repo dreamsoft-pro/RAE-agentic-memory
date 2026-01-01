@@ -25,6 +25,7 @@ from rae_core.interfaces.embedding import IEmbeddingProvider
 from rae_core.interfaces.storage import IMemoryStorage
 from rae_core.interfaces.vector import IVectorStore
 from rae_core.models.search import SearchResponse
+from rae_core.embedding.manager import EmbeddingManager
 
 from apps.memory_api.repositories.token_savings_repository import TokenSavingsRepository
 from apps.memory_api.services.embedding import (
@@ -103,14 +104,17 @@ class RAECoreService:
 
         # Initialize embedding provider
         from apps.memory_api.config import settings
-
+        
+        base_provider: IEmbeddingProvider
         if getattr(settings, "RAE_PROFILE", "standard") == "distributed":
-            self.embedding_provider = RemoteEmbeddingProvider(
+            base_provider = RemoteEmbeddingProvider(
                 base_url=settings.ML_SERVICE_URL
             )
             logger.info("using_remote_embedding_provider", url=settings.ML_SERVICE_URL)
         else:
-            self.embedding_provider = LocalEmbeddingProvider()
+            base_provider = LocalEmbeddingProvider()
+            
+        self.embedding_provider = EmbeddingManager(default_provider=base_provider)
 
         # Initialize LLM provider with delegation support
         self.llm_provider = get_llm_provider(task_repo=postgres_pool)

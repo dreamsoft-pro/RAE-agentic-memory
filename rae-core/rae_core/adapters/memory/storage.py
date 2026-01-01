@@ -41,8 +41,30 @@ class InMemoryStorage(IMemoryStorage):
             set
         )  # (tenant, tag)
 
+        # Multi-model embeddings storage: {memory_id: {model_name: {embedding: ..., metadata: ...}}}
+        self._embeddings: dict[UUID, dict[str, dict[str, Any]]] = defaultdict(dict)
+
         # Thread safety
         self._lock = asyncio.Lock()
+
+    async def save_embedding(
+        self,
+        memory_id: UUID,
+        model_name: str,
+        embedding: list[float],
+        metadata: dict[str, Any] | None = None,
+    ) -> bool:
+        """Save a vector embedding for a memory."""
+        async with self._lock:
+            if memory_id not in self._memories:
+                return False
+
+            self._embeddings[memory_id][model_name] = {
+                "embedding": embedding,
+                "metadata": metadata or {},
+                "created_at": datetime.now(timezone.utc),
+            }
+            return True
 
     async def store_memory(
         self,

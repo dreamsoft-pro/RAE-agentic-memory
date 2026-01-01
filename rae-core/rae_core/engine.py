@@ -134,15 +134,69 @@ class RAEEngine:
         Returns:
             Memory ID
         """
-        return await self.memory_storage.store_memory(
+        # 0. Prepare data
+        tags = tags or []
+        metadata = metadata or {}
+
+        # 1. Generate embeddings
+        default_embedding = None
+        embeddings_map = {}
+
+        if hasattr(self.embedding_provider, "generate_all_embeddings"):
+            # Use EmbeddingManager to generate for all profiles
+            embeddings_map = await self.embedding_provider.generate_all_embeddings([content])  # type: ignore
+            
+            # Determine default embedding
+            if "default" in embeddings_map and embeddings_map["default"]:
+                default_embedding = embeddings_map["default"][0]
+            elif embeddings_map:
+                # Fallback: pick first available
+                default_embedding = list(embeddings_map.values())[0][0]
+        else:
+            # Standard Provider
+            embs = await self.embedding_provider.embed_batch([content])
+            if embs:
+                default_embedding = embs[0]
+                embeddings_map = {"default": embs}
+
+        # 2. Store in Memory Storage (Postgres)
+        memory_id = await self.memory_storage.store_memory(
             tenant_id=tenant_id,
             agent_id=agent_id,
             content=content,
             layer=layer,
             importance=importance,
-            tags=tags or [],
-            metadata=metadata or {},
+            tags=tags,
+            metadata=metadata,
+            embedding=default_embedding, # Store default in legacy column
         )
+
+        # 3. Save all embeddings to memory_embeddings table
+        for model_name, embs in embeddings_map.items():
+            if embs:
+                await self.memory_storage.save_embedding(
+                    memory_id=memory_id,
+                    model_name=model_name,
+                    embedding=embs[0],
+                    metadata={"source_length": len(content)}
+                )
+
+        # 4. Store in Vector Store (Qdrant) - Default embedding only
+        if self.vector_store and default_embedding:
+            vector_metadata = {
+                "agent_id": agent_id,
+                "layer": layer,
+                "content": content,
+                **metadata
+            }
+            await self.vector_store.store_vector(
+                memory_id=memory_id,
+                embedding=default_embedding,
+                tenant_id=tenant_id,
+                metadata=vector_metadata,
+            )
+
+        return memory_id
 
     async def retrieve_memory(
         self,
