@@ -1,33 +1,26 @@
-# Session State Log
+# Session State - 2026-01-01
 
-## Session: 2025-12-30 - RAE Slimming & Optimization
+## Status: RAE-core Coverage Improvement
+- **Overall Coverage:** Increased from 84% to 92%.
+- **Key Modules at 100% (or near):**
+    - `rae_core/adapters/memory/cache.py` (99%)
+    - `rae_core/adapters/memory/storage.py` (99%)
+    - `rae_core/sync/diff.py` (100%)
+    - `rae_core/sync/protocol.py` (100%)
+    - `rae_core/search/strategies/graph.py` (100%)
+    - `rae_core/reflection/engine.py` (98%)
+    - `rae_core/reflection/reflector.py` (99%)
+    - `rae_core/reflection/evaluator.py` (97%)
 
-### Achievements
-1.  **Architecture Optimization (Slimming):**
-    *   Removed `ml-service` container entirely.
-    *   Removed heavy ML dependencies (`sentence-transformers`, `torch`) from the main Docker image.
-    *   Implemented "One Image Strategy": `rae-api`, `celery-worker`, and `celery-beat` now share a single, lighter `rae-memory:latest` image.
-    *   Cleaned up `docker-compose.yml` (removed volumes for prod, dynamic container names).
+## Bug Fixes
+- `rae_core/sync/merge.py`: Moved UUID conversion inside `try-except` to avoid crashes on invalid data.
+- `rae_core/sync/merge.py`: Made `memory_id` optional in `MergeResult` to support graceful error reporting.
+- `rae_core/sync/merge.py`: Fixed `UnboundLocalError` in exception handler.
 
-2.  **Code Logic:**
-    *   Refactored `EmbeddingService` to support **automatic fallback** to `LiteLLM` (API-based embeddings) when local libraries are missing. This enables RAE-Lite and GPU-less operation.
-    *   Updated `requirements.txt` to exclude ML packages by default.
+## New Test Files
+- Created 14 new `*_coverage.py` files in `rae-core/tests/unit/` covering adapters, sync, search, and reflection.
 
-3.  **Quality Assurance (Zero Warning/Error Policy):**
-    *   Fixed **11 failing unit tests** caused by the switch to async embedding generation (incorrect `MagicMock` usage in `test_hybrid_search.py`, `test_memory.py`, `test_agent.py`).
-    *   Eliminated **torch/cuda warnings** in tests by mocking `SentenceTransformer` initialization in `test_distributed_integration.py`.
-    *   Resolved **skipped tests** in `test_architecture.py` by allowlisting stateless services for Dependency Injection checks.
-    *   **Lint Fixes:** Fixed import sorting, unused imports in `embedding.py` and unused variables in `test_distributed_integration.py` to ensure CI/CD compliance.
-    *   **Result:** 100% Pass Rate (909 passed, 0 failed, 0 skipped, 0 warnings).
-
-### Removed Services Explanation
-*   **ml-service:** Previously handled local heavy ML tasks (embeddings, entity resolution via Spacy/Transformers).
-    *   *Why removed:* It created a huge dependency footprint (GBs) and required complex GPU passthrough in Docker.
-    *   *Replacement:* All ML tasks are now offloaded to External APIs (Ollama for local, OpenAI/Anthropic for cloud) via `LiteLLM`. This decouples logic from hardware.
-*   **Reranker:** Was part of the ML stack.
-    *   *Impact:* Removing local cross-encoders reduces reranking precision slightly for subtle semantic nuances.
-    *   *Mitigation:* `SmartReranker` now falls back to a heuristic approach (keyword boosting). For higher precision, we should use an API-based reranker (e.g., Cohere) or Listwise Reranking via LLM in the future.
-
-### Next Steps
-*   Verify `RAE-Lite` deployment on Windows Server.
-*   Check automated documentation generation (`scripts/docs_automator.py`).
+## Next Steps
+- Port coverage improvements to remaining modules (math policy, metrics, engine).
+- Reach 100% total coverage for `rae-core`.
+- Continue Phase 4 of Rust migration (concurrency/DAG).
