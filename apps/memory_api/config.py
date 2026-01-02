@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str | None = None
     OPENAI_API_KEY: str | None = None
     ANTHROPIC_API_KEY: str | None = None
+    OLLAMA_API_BASE: str = "http://rae-ollama:11434"
     OLLAMA_API_URL: str = "http://rae-ollama:11434"
     OLLAMA_HOSTS: list[str] = ["http://100.66.252.117:11434", "http://rae-ollama:11434"]
     RAE_LLM_BACKEND: str = "ollama"
