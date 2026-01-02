@@ -190,7 +190,7 @@ class IndustrialDataGenerator:
         domain = self.domains["documentation"]
         doc_type = random.choice(domain["types"])
 
-        paths = ["users", "posts", "comments", "auth", "metrics"]
+        paths = ["users", "posts", "comments", "auth", "metrics", "database"]
         methods = ["GET", "POST", "PUT", "DELETE"]
 
         text = f"Documentation ({doc_type}): API endpoint /{random.choice(paths)} - {random.choice(methods)} method"
@@ -298,31 +298,87 @@ class IndustrialDataGenerator:
             template_info = random.choice(query_templates)
             template = template_info["template"]
 
-            # Generate query text
+            # Select parameters first to allow filtering
+            service_param = random.choice(["api-gateway", "auth-service", "database"])
+            metric_param = random.choice(["cpu_usage", "memory", "disk_io"])
+            component_param = random.choice(["API", "authentication", "database"])
+
+            # Format query
             query_text = template.format(
-                service=random.choice(["api-gateway", "auth-service", "database"]),
-                metric=random.choice(["cpu_usage", "memory", "disk_io"]),
-                component=random.choice(["API", "authentication", "database"]),
+                service=service_param,
+                metric=metric_param,
+                component=component_param,
             )
 
-            # Find relevant memories
+            # Determine relevance keyword based on what's in the template
+            relevance_keyword = None
+            if "{service}" in template:
+                relevance_keyword = service_param
+            elif "{metric}" in template:
+                relevance_keyword = metric_param
+            elif "{component}" in template:
+                if component_param == "API":
+                    relevance_keyword = "api"
+                elif component_param == "authentication":
+                    relevance_keyword = "auth"
+                else:
+                    relevance_keyword = component_param.lower()
+
+            # Find relevant memories (tag + content match)
             filter_tag = template_info["filter_tag"]
-            relevant_memories = [m for m in memories if filter_tag in m["tags"]]
+            relevant_memories = []
+            
+            for m in memories:
+                if filter_tag not in m["tags"]:
+                    continue
+                
+                # If we have a specific keyword, check for it
+                if relevance_keyword:
+                    # Check text and specific metadata fields
+                    text_match = relevance_keyword in m["text"].lower()
+                    meta_match = any(
+                        str(v).lower() == relevance_keyword 
+                        for v in m["metadata"].values()
+                    )
+                    # For docs, check if the keyword appears in the path
+                    doc_match = False
+                    if filter_tag == "documentation" and relevance_keyword in m["text"].lower():
+                         doc_match = True
 
-            # Sample some as expected results
-            num_expected = min(random.randint(1, 3), len(relevant_memories))
-            expected = (
-                random.sample(relevant_memories, num_expected)
-                if relevant_memories
-                else []
-            )
-            expected_ids = [m["id"] for m in expected]
+                    if text_match or meta_match or doc_match:
+                        relevant_memories.append(m)
+                else:
+                    # No keyword (e.g. "critical incidents"), just tag/severity check might be needed
+                    # For "critical incidents", checking severity='sev1' might be good, but template says "critical"
+                    if "critical" in template:
+                        if "critical" in m.get("tags", []) or m.get("metadata", {}).get("priority") == "critical":
+                             relevant_memories.append(m)
+                        # For incidents, sev1 is critical
+                        elif m.get("metadata", {}).get("severity") == "sev1":
+                             relevant_memories.append(m)
+                        else:
+                             continue # Skip non-critical
+                    elif "high priority" in template:
+                        if m.get("metadata", {}).get("priority") == "high":
+                            relevant_memories.append(m)
+                        else:
+                            continue
+                    else:
+                        relevant_memories.append(m)
+
+            # Use ALL relevant memories as expected results
+            # This ensures that retrieving ANY relevant memory counts as a success
+            if not relevant_memories:
+                continue
+
+            expected_ids = [m["id"] for m in relevant_memories]
+            num_expected = len(expected_ids)
 
             difficulty = (
                 "easy"
-                if num_expected <= 1
+                if num_expected <= 5
                 else "medium"
-                if num_expected <= 2
+                if num_expected <= 20
                 else "hard"
             )
 
