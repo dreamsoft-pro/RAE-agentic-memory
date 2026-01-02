@@ -50,7 +50,7 @@ def rae_lite_services():
 
     # Start services
     subprocess.run(
-        ["docker compose", "-f", str(compose_file), "up", "-d"],
+        ["docker", "compose", "-f", str(compose_file), "up", "-d"],
         check=True,
         capture_output=True,
         cwd=project_root,
@@ -76,7 +76,7 @@ def rae_lite_services():
     if not api_ready:
         # Cleanup on failure
         subprocess.run(
-            ["docker compose", "-f", str(compose_file), "down"],
+            ["docker", "compose", "-f", str(compose_file), "down"],
             capture_output=True,
             cwd=project_root,
         )
@@ -85,9 +85,10 @@ def rae_lite_services():
     # Services are ready
     yield
 
-    # Teardown: Stop services
+    # Teardown
     subprocess.run(
-        ["docker compose", "-f", str(compose_file), "down", "-v"],
+        ["docker", "compose", "-f", str(compose_file), "down"],
+        check=True,
         capture_output=True,
         cwd=project_root,
     )
