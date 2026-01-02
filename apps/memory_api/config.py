@@ -14,9 +14,11 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = "rae"
     POSTGRES_USER: str = "rae"
     POSTGRES_PASSWORD: str = "rae_password"
+    DATABASE_URL: str | None = None
 
     QDRANT_HOST: str = "localhost"
     QDRANT_PORT: int = 6333
+    QDRANT_URL: str | None = None
 
     RERANKER_API_URL: str = "http://localhost:8001"
     ML_SERVICE_URL: str = "http://localhost:8001"
@@ -47,15 +49,13 @@ class Settings(BaseSettings):
     # validate: Check schema and fail fast on mismatch (safe for prod)
     # init: Initialize empty DB (same as migrate)
     # ignore: Skip validation
-    RAE_DB_MODE: str = os.getenv(
-        "RAE_DB_MODE", "ignore" if "PYTEST_CURRENT_TEST" in os.environ else "migrate"
-    )
+    RAE_DB_MODE: str = "migrate"
 
     # RAE Profile (standard, lite, research)
     # standard: Full infrastructure (DB, Redis, Qdrant)
     # lite: Minimal dependencies (Memory/Mock implementations where possible)
     # research: Specialized for experiments
-    RAE_PROFILE: str = os.getenv("RAE_PROFILE", "standard")
+    RAE_PROFILE: str = "standard"
 
     # --- Security Settings ---
     OAUTH_ENABLED: bool = True
