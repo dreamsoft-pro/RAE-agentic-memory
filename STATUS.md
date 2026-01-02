@@ -8,15 +8,15 @@
 | **CI/CD** | ✅ **PASSING** | All unit tests pass (972 tests) |
 | **Python** | ✅ | Python 3.12 |
 | **Documentation** | ✅ | AGENT_CORE_PROTOCOL.md implemented as SOT |
-| **Test Coverage** | ✅ | 73.8% Coverage (Stable) |
+| **Test Coverage** | ✅ | 99% (rae-core), 94%+ (memory_api/core) |
 | **Token Savings** | ✅ | Full tracking implemented |
 | **ISO/IEC 42001** | ✅ | 100% compliance with test coverage |
 | **Knowledge Graph**| ✅ | Enhanced API implemented and tested |
 | **Code Quality** | ✅ | Zero Warning Policy implemented project-wide |
 
-## Benchmark Results (Small Test - 2025-12-21)
+## Benchmark Results (Full Suite - 2026-01-02)
 
-**Context:** Verification of system stability after database contract refactor and CI alignment.
+**Context:** Full system verification after IRON RAE stabilization and coverage improvement.
 
 ### Standard Benchmarks (Search Quality)
 | Benchmark | MRR | Hit Rate @5 | Status |
@@ -24,6 +24,8 @@
 | **Academic Lite** | 1.0000 | 1.0000 | ✅ PASSED |
 | **Academic Extended** | 1.0000 | 1.0000 | ✅ PASSED |
 | **Industrial Small** | 0.8056 | 0.9000 | ✅ PASSED |
+| **Industrial Large** | 0.7634 | 0.7634 | ✅ PASSED |
+| **Memory Drift** | 0.8725 | 1.0000 | ✅ PASSED |
 
 ### Research Benchmarks (9/5 Suite)
 | Metric | Value | Target | Interpretation |

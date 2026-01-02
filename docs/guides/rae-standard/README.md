@@ -505,7 +505,7 @@ export REFLECTIVE_MEMORY_MODE=full
 export DREAMING_ENABLED=true
 
 # 2. Deploy workers
-docker-compose up -d worker
+docker compose up -d worker
 
 # 3. Migrate data (if needed)
 python scripts/migrate_lite_to_standard.py
