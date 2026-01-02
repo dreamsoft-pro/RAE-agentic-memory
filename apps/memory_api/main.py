@@ -82,6 +82,28 @@ async def lifespan(app: FastAPI):
 
         await InfrastructureFactory.initialize(app, settings)
 
+        # 1.1 Ensure Default Tenant exists (Iteration 1 Bootstrapping)
+        if settings.RAE_DB_MODE in ["migrate", "init"]:
+            try:
+                from uuid import UUID
+                default_tenant_id = UUID("00000000-0000-0000-0000-000000000000")
+                async with app.state.pool.acquire() as conn:
+                    # Check if any tenant exists
+                    exists = await conn.fetchval("SELECT EXISTS(SELECT 1 FROM tenants WHERE id = $1)", default_tenant_id)
+                    if not exists:
+                        logger.info("creating_default_tenant", id=str(default_tenant_id))
+                        await conn.execute(
+                            "INSERT INTO tenants (id, name, tier, config) VALUES ($1, $2, $3, $4)",
+                            default_tenant_id, "Default Tenant", "enterprise", "{}"
+                        )
+                        # Assign default role to 'admin' (mock/default user)
+                        await conn.execute(
+                            "INSERT INTO user_tenant_roles (id, user_id, tenant_id, role) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING",
+                            UUID("00000000-0000-0000-0000-000000000001"), "admin", default_tenant_id, "owner"
+                        )
+            except Exception as e:
+                logger.warning("default_tenant_initialization_failed", error=str(e))
+
     # 2. Setup Background Components
     # Initialize RAE Core Service (Agnostic)
     app.state.rae_core_service = RAECoreService(

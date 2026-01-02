@@ -250,9 +250,11 @@ async def check_tenant_access(
 
     # Convert tenant_id to UUID
     try:
-        tenant_uuid = UUID(tenant_id)
+        if tenant_id == "default-tenant":
+            tenant_uuid = UUID("00000000-0000-0000-0000-000000000000")
+        else:
+            tenant_uuid = UUID(tenant_id)
     except (ValueError, AttributeError):
-        logger.warning("check_tenant_access_invalid_tenant_id", tenant_id=tenant_id)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Invalid tenant ID format: {tenant_id}",
@@ -371,7 +373,10 @@ async def require_permission(
 
     # Convert tenant_id to UUID
     try:
-        tenant_uuid = UUID(tenant_id)
+        if tenant_id == "default-tenant":
+            tenant_uuid = UUID("00000000-0000-0000-0000-000000000000")
+        else:
+            tenant_uuid = UUID(tenant_id)
     except (ValueError, AttributeError):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
