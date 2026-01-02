@@ -86,7 +86,9 @@ async def lifespan(app: FastAPI):
                 from alembic.config import Config
                 
                 # Load alembic config from project root
-                alembic_cfg = Config("alembic.ini")
+                project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                ini_path = os.path.join(project_root, "alembic.ini")
+                alembic_cfg = Config(ini_path)
                 # Force silent logging for migrations during startup to avoid hanging
                 os.environ["ALEMBIC_SKIP_LOG_CONFIG"] = "1"
                 command.upgrade(alembic_cfg, "head")
