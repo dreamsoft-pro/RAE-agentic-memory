@@ -1,5 +1,5 @@
-from contextlib import asynccontextmanager
 import os
+from contextlib import asynccontextmanager
 
 import structlog
 from fastapi import FastAPI, HTTPException, Request
@@ -77,6 +77,7 @@ async def lifespan(app: FastAPI):
         app.state.pool = None
     else:
         from rae_core.factories.infra_factory import InfrastructureFactory
+
         await InfrastructureFactory.initialize(app, settings)
 
     # 2. Setup Background Components
