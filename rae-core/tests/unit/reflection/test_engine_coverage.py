@@ -18,7 +18,7 @@ class TestReflectionEngineCoverage:
         ms.delete_memory = AsyncMock(return_value=True)
 
         llm = MagicMock()
-        llm.generate = AsyncMock(return_value=("reflection", {{}}))
+        llm.generate = AsyncMock(return_value=("reflection", {}))
 
         return ms, llm
 
@@ -28,8 +28,8 @@ class TestReflectionEngineCoverage:
         engine = ReflectionEngine(ms, llm)
         # Mocking to skip initial checks
         res = await engine.run_reflection_cycle("t", "a")
-        assert res["success"] is True
-        assert "no_memories" in (res.get("reason") or "")
+        assert res["success"] is False
+        assert res["reason"] == "No reflection candidates found"
 
     @pytest.mark.asyncio
     async def test_execute_action_with_evaluation(self, mock_deps):
