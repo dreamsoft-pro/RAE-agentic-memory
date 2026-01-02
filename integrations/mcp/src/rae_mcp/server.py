@@ -401,7 +401,7 @@ class RAEMemoryClient:
                         "memory_searched", query=query, result_count=len(results)
                     )
 
-                    return result  # type: ignore[no-any-return]
+                    return results  # type: ignore[no-any-return]
 
             except httpx.HTTPStatusError as e:
                 span.set_attribute("error", True)
