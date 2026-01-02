@@ -121,16 +121,20 @@ class SparseVectorStrategy(SearchStrategy):
         # Tokenize query
         query_terms = self._tokenize(query)
 
-        # Build corpus statistics
+        # Build corpus statistics and prepare memories for scoring
         doc_count = len(memories)
         total_doc_length = 0
         term_doc_freq: dict[str, int] = {}
-        doc_terms_cache: dict[UUID, list[str]] = {}
+        processed_memories: list[tuple[UUID, list[str]]] = []
 
         for memory in memories:
+            memory_id = memory["id"]
+            if isinstance(memory_id, str):
+                memory_id = UUID(memory_id)
+            
             content = memory.get("content", "")
             doc_terms = self._tokenize(content)
-            doc_terms_cache[memory["id"]] = doc_terms
+            processed_memories.append((memory_id, doc_terms))
             total_doc_length += len(doc_terms)
 
             # Count document frequency for each term
@@ -138,16 +142,11 @@ class SparseVectorStrategy(SearchStrategy):
             for term in unique_terms:
                 term_doc_freq[term] = term_doc_freq.get(term, 0) + 1
 
-        avg_doc_length = total_doc_length / doc_count if doc_count > 0 else 0
+        avg_doc_length = total_doc_length / doc_count
 
         # Score each document
         results: list[tuple[UUID, float]] = []
-        for memory in memories:
-            memory_id = memory["id"]
-            if isinstance(memory_id, str):
-                memory_id = UUID(memory_id)
-
-            doc_terms = doc_terms_cache[memory_id]
+        for memory_id, doc_terms in processed_memories:
             score = self._compute_bm25_score(
                 query_terms,
                 doc_terms,

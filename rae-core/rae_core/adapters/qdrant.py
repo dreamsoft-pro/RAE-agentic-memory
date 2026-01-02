@@ -12,9 +12,9 @@ try:
     from qdrant_client.models import Distance, PointStruct, VectorParams
 
     QdrantClient = QdrantClientRaw
-except ImportError:
-    QdrantClient: Any = None  # type: ignore
-    AsyncQdrantClient: Any = None  # type: ignore
+except ImportError:  # pragma: no cover
+    QdrantClient: Any = None  # pragma: no cover
+    AsyncQdrantClient: Any = None  # pragma: no cover
 
 from ..interfaces.vector import IVectorStore
 

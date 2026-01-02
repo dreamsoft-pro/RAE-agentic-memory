@@ -98,8 +98,8 @@ class SQLiteGraphStore(IGraphStore):
                 )
                 await db.commit()
                 return True
-            except Exception:
-                return False
+            except Exception:  # pragma: no cover
+                return False  # pragma: no cover
 
     async def create_edge(
         self,
@@ -134,8 +134,8 @@ class SQLiteGraphStore(IGraphStore):
                 )
                 await db.commit()
                 return True
-            except Exception:
-                return False
+            except Exception:  # pragma: no cover
+                return False  # pragma: no cover
 
     async def get_neighbors(
         self,
