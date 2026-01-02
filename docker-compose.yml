@@ -9,6 +9,11 @@ services:
     environment:
       - RAE_PROFILE=standard
       - RAE_DB_MODE=migrate
+      - PYTHONUNBUFFERED=1
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DB=${POSTGRES_DB:-rae}
+      - POSTGRES_USER=${POSTGRES_USER:-rae}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-rae_password}
     ports:
       - "8000:8000"
     volumes:
