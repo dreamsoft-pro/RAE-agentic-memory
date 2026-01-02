@@ -4,6 +4,7 @@ RBAC Service - Role-Based Access Control
 Database-backed service for managing user roles and permissions.
 """
 
+import json
 from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import UUID, uuid4
@@ -243,7 +244,7 @@ class RBACService:
             ip_address,
             user_agent,
             timestamp,
-            metadata,
+            json.dumps(metadata),
         )
 
         logger.info(
