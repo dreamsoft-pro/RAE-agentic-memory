@@ -6,7 +6,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: rae-api
-    command: uvicorn apps.memory_api.main:app --host 0.0.0.0 --port 8000 --reload --reload-dir /app/apps --reload-dir /app/rae-core
+    environment:
+      - RAE_PROFILE=standard
     ports:
       - "8000:8000"
     volumes:
