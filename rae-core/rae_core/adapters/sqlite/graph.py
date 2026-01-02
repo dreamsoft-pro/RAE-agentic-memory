@@ -8,7 +8,6 @@ from typing import Any
 from uuid import UUID
 
 import aiosqlite
-
 from rae_core.interfaces.graph import IGraphStore
 
 

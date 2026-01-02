@@ -58,39 +58,56 @@ class QdrantStore(MemoryVectorStore):
     def ensure_collection_exists(self):
         """
         Ensures that the Qdrant collection exists with the correct configuration.
-        Creates it if it doesn't exist.
+        Creates it if it doesn't exist. Supports Multi-Vector config.
         """
         collection_name = "memories"
         try:
             # Determine vector dimension from EmbeddingService
-            from apps.memory_api.services.embedding import LocalEmbeddingProvider, get_embedding_service
-            
+            from apps.memory_api.services.embedding import (
+                LocalEmbeddingProvider,
+                get_embedding_service,
+            )
+
             try:
                 embedding_service = get_embedding_service()
                 provider = LocalEmbeddingProvider(embedding_service)
                 dimension = provider.get_dimension()
             except Exception as e:
-                logger.warning(f"Could not determine embedding dimension from service: {e}. using default 384.")
+                logger.warning(
+                    f"Could not determine embedding dimension from service: {e}. using default 384."
+                )
                 dimension = 384
 
             collections = self.qdrant_client.get_collections().collections
             exists = any(c.name == collection_name for c in collections)
 
             if not exists:
-                logger.info(f"Collection '{collection_name}' not found. Creating with dim={dimension}...")
+                logger.info(
+                    f"Collection '{collection_name}' not found. Creating with Multi-Vector support..."
+                )
                 self.qdrant_client.create_collection(
                     collection_name=collection_name,
                     vectors_config={
                         "dense": models.VectorParams(
                             size=dimension,
                             distance=models.Distance.COSINE,
-                        )
+                        ),
+                        # Additional vectors for Multi-Vector Fusion (MATH-2)
+                        "openai": models.VectorParams(
+                            size=1536,
+                            distance=models.Distance.COSINE,
+                        ),
+                        "ollama": models.VectorParams(
+                            size=384,
+                            distance=models.Distance.COSINE,
+                        ),
                     },
                     sparse_vectors_config={"text": models.SparseVectorParams()},
                 )
                 logger.info(f"Collection '{collection_name}' created successfully.")
             else:
                 logger.debug(f"Collection '{collection_name}' already exists.")
+                # TODO: Check if existing collection supports named vectors and migrate if needed
         except Exception as e:
             logger.error(f"Failed to ensure collection exists: {e}")
             # Don't raise here to allow app startup even if Qdrant is temporarily down
@@ -153,34 +170,43 @@ class QdrantStore(MemoryVectorStore):
         before_sleep=before_sleep_log(logger, logging.WARNING),
         reraise=True,
     )
-    async def upsert(self, memories: List[MemoryRecord], embeddings: List[List[float]]):
+    async def upsert(self, memories: List[MemoryRecord], embeddings: List[Any]):
         """
         Upserts a list of memories into the Qdrant collection.
 
-        Implements retry logic with exponential backoff to handle:
-        - Network failures
-        - Temporary Qdrant unavailability
-        - Timeout errors
+        Supports both simple List[float] (mapped to "dense") and
+        Dict[str, List[float]] (mapped to named vectors).
 
-        Retry strategy:
-        - Max 3 attempts
-        - Wait: 2s, 4s, 8s (exponential backoff)
-        - Logs warnings before each retry
+        Implements retry logic with exponential backoff.
         """
         if len(memories) != len(embeddings):
             raise ValueError("The number of memories and embeddings must be the same.")
 
         try:
             points_to_upsert = []
-            for memory, dense_vector in zip(memories, embeddings):
+            for memory, embedding in zip(memories, embeddings):
                 sparse_vector = self._get_sparse_vector(memory.content)
+
+                # Handle Multi-Vector input
+                if isinstance(embedding, dict):
+                    # It's a dictionary of named vectors
+                    vector_payload = embedding
+                    # Ensure "text" sparse vector is added
+                    vector_payload["text"] = sparse_vector
+                    # Ensure "dense" exists for backward compatibility if possible
+                    if "dense" not in vector_payload and "ollama" in vector_payload:
+                        vector_payload["dense"] = vector_payload["ollama"]  # Fallback
+                else:
+                    # Legacy: single list of floats
+                    vector_payload = {
+                        "dense": embedding,
+                        "text": sparse_vector,
+                    }
+
                 points_to_upsert.append(
                     models.PointStruct(
                         id=str(memory.id),
-                        vector={
-                            "dense": dense_vector,
-                            "text": sparse_vector,
-                        },
+                        vector=vector_payload,
                         payload=memory.model_dump(),
                     )
                 )
@@ -201,17 +227,26 @@ class QdrantStore(MemoryVectorStore):
 
     @vector_query_time_histogram.time()
     async def query(
-        self, query_embedding: List[float], top_k: int, filters: Dict[str, Any]
+        self,
+        query_embedding: List[float],
+        top_k: int,
+        filters: Dict[str, Any],
+        vector_name: str = "dense",
     ) -> List[ScoredMemoryRecord]:
         """
         Queries the Qdrant collection using a dense vector embedding.
-        Note: This is a simplified implementation that doesn't include hybrid search for now.
+
+        Args:
+            query_embedding: Vector to search with
+            top_k: Number of results
+            filters: Search filters
+            vector_name: Name of the vector to search ("dense", "openai", "ollama")
         """
         qdrant_filters = models.Filter(**filters) if filters else None
 
         search_results = self.qdrant_client.search(
             collection_name="memories",
-            query_vector=models.NamedVector(name="dense", vector=query_embedding),
+            query_vector=models.NamedVector(name=vector_name, vector=query_embedding),
             query_filter=qdrant_filters,
             limit=top_k,
             with_payload=True,

@@ -6,7 +6,6 @@ from typing import Any
 from uuid import UUID, uuid4
 
 import pytest
-
 from rae_core.interfaces.llm import ILLMProvider
 from rae_core.interfaces.storage import IMemoryStorage
 from rae_core.interfaces.vector import IVectorStore
@@ -207,7 +206,7 @@ class MockMemoryStorage(IMemoryStorage):
                         )
                         results.append({"memory": memory.copy(), "score": score})
 
-            results.sort(key=lambda x: x["score"], reverse=True)
+            results.sort(key=lambda x: x["score"], reverse=True)  # type: ignore[arg-type, return-value]
             return results[:limit]
 
     async def delete_expired_memories(

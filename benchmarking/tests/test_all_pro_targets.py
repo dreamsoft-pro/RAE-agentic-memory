@@ -14,7 +14,9 @@ Targets:
 """
 
 import pytest
+
 from benchmarking.nine_five_benchmarks.runner import NineFiveBenchmarkRunner
+
 
 @pytest.fixture
 def runner():
@@ -26,7 +28,7 @@ def runner():
 def test_lect_pro_target(runner):
     """
     Target: LECT Consistency 100% @ 10k cycles.
-    
+
     Using reduced cycles for CI speed, but verifying logic holds.
     """
     # For CI/Dev we use 1000 cycles, but expect perfect score
@@ -52,20 +54,20 @@ def test_grdt_pro_target(runner):
     """
     # Use deeper graph for this test
     results = runner.run_grdt(
-        num_queries=20, 
+        num_queries=20,
         min_depth=3,
         max_depth=12,
         graph_depth=10,
         noise_level=0.03 # Reduced noise to allow high coherence
     )
-    
+
     # Check if we generated any queries
     assert results.total_queries > 0, "GRDT failed to generate any queries"
-    
+
     # We might not always hit max depth if random queries don't pick far nodes,
     # but we should support it.
     assert results.max_reasoning_depth >= 8, f"GRDT max depth low: {results.max_reasoning_depth}"
-    
+
     # Coherence is the key metric here
     # 0.55 is a solid pass for random sampling. 0.70 is theoretical max with 0.03 noise.
     assert results.chain_coherence >= 0.55, f"GRDT coherence low: {results.chain_coherence}"

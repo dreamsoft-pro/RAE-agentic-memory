@@ -9,7 +9,6 @@ import json
 from uuid import UUID, uuid4
 
 import pytest
-
 from rae_core.adapters.sqlite.storage import SQLiteStorage
 
 

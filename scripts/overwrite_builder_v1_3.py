@@ -1,5 +1,4 @@
 
-import os
 
 target_path = "/home/grzegorz-lesniowski/cloud/screenwatcher_project/templates/dashboards/builder.html"
 
@@ -24,7 +23,7 @@ new_content = """{% extends "base.html" %}
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-3 mt-2">
         <h4><span class="text-primary">Flex</span>Charts <small class="text-muted" style="font-size: 0.6em">v1.3 UX</small></h4>
-        
+
         <div class="btn-group btn-group-sm">
             <button class="btn btn-outline-secondary" onclick="openGlobalSettings()">⚙️ Global Time</button>
             <div class="vr mx-2"></div>
@@ -36,7 +35,7 @@ new_content = """{% extends "base.html" %}
             <button class="btn btn-primary ms-3" onclick="saveDashboard()">Save Layout</button>
         </div>
     </div>
-    
+
     <div class="grid-stack"></div>
 </div>
 
@@ -89,7 +88,7 @@ new_content = """{% extends "base.html" %}
                     <label class="form-label">Title</label>
                     <input type="text" class="form-control" id="editTitle">
                 </div>
-                
+
                 <div class="mb-3">
                     <label class="form-label">Time Selection</label>
                     <select class="form-select" id="editRange" onchange="toggleCustomRange('widget')">
@@ -104,7 +103,7 @@ new_content = """{% extends "base.html" %}
                         <option value="custom">Custom Exact Range</option>
                     </select>
                 </div>
-                
+
                 <div id="widgetCustomRange" class="d-none border p-3 bg-light rounded mb-3">
                     <div class="row g-2">
                         <div class="col-6">
@@ -143,18 +142,18 @@ new_content = """{% extends "base.html" %}
 <script>
     let grid;
     const charts = {};
-    const DEFAULT_MACHINE_ID = '6eb33c58-7a60-4f9c-b9fb-d0b626410459'; 
+    const DEFAULT_MACHINE_ID = '6eb33c58-7a60-4f9c-b9fb-d0b626410459';
     const widgetConfigs = {};
     const widgetTypes = {};
 
     document.addEventListener("DOMContentLoaded", function() {
-        grid = GridStack.init({ 
-            cellHeight: 70, 
-            float: true, 
+        grid = GridStack.init({
+            cellHeight: 70,
+            float: true,
             removable: true,
             margin: 5
         });
-        
+
         const widgetsDB = {{ widgets_json|safe|default:"[]" }};
         widgetsDB.forEach(w => {
             w.config = w.config || {};
@@ -165,7 +164,7 @@ new_content = """{% extends "base.html" %}
         window.addEventListener('resize', () => {
             Object.values(charts).forEach(c => c.resize());
         });
-        
+
         const now = new Date();
         const hourAgo = new Date(now.getTime() - 3600000);
         document.getElementById('editTo').value = toLocalISO(now);
@@ -181,10 +180,10 @@ new_content = """{% extends "base.html" %}
     function toggleCustomRange(context) {
         const rangeId = context === 'global' ? 'globalRange' : 'editRange';
         const customDivId = context === 'global' ? 'globalCustomRange' : 'widgetCustomRange';
-        
+
         const val = document.getElementById(rangeId).value;
         const el = document.getElementById(customDivId);
-        
+
         if (val === 'custom') {
             el.classList.remove('d-none');
         } else {
@@ -199,7 +198,7 @@ new_content = """{% extends "base.html" %}
             widget_type: type,
             title: title,
             pos_x: 0, pos_y: 0, width: 4, height: 4,
-            config: { 
+            config: {
                 machine_id: DEFAULT_MACHINE_ID,
                 range: document.getElementById('globalRange').value || '1h',
                 show_zoom: true,
@@ -225,9 +224,9 @@ new_content = """{% extends "base.html" %}
     function renderWidget(w) {
         widgetConfigs[w.id] = w.config;
         widgetTypes[w.id] = w.widget_type;
-        
+
         const rangeLabel = getRangeLabel(w.config);
-        
+
         let content = `
             <div class="grid-stack-item-content" data-chart-type="${w.widget_type}">
                 <div class="widget-header">
@@ -244,11 +243,11 @@ new_content = """{% extends "base.html" %}
                     <div id="chart-${w.id}" class="chart-container"></div>
                 </div>
             </div>`;
-        
+
         grid.addWidget({x: w.pos_x, y: w.pos_y, w: w.width, h: w.height, content: content, id: w.id});
         setTimeout(() => initChart(w.id, w.widget_type), 200);
     }
-    
+
     function removeWidget(id) {
         const el = document.querySelector(`.grid-stack-item[gs-id="${id}"]`);
         if(el) grid.removeWidget(el);
@@ -271,19 +270,19 @@ new_content = """{% extends "base.html" %}
         const myChart = charts[id];
         const config = widgetConfigs[id];
         const machineId = config.machine_id || DEFAULT_MACHINE_ID;
-        
+
         // Calculate Times
         let isoStart, isoEnd;
-        
+
         if (config.range === 'custom' && config.custom_from && config.custom_to) {
              isoStart = new Date(config.custom_from).toISOString();
              isoEnd = new Date(config.custom_to).toISOString();
         } else {
             const now = new Date();
             let start = new Date();
-            const rangeMap = { 
+            const rangeMap = {
                 '30s': 0.5/60, '1m': 1/60, '5m': 5/60, '15m': 15/60,
-                '1h': 1, '8h': 8, '24h': 24, '7d': 24*7 
+                '1h': 1, '8h': 8, '24h': 24, '7d': 24*7
             };
             const hours = rangeMap[config.range] || 1;
             // Subtract milliseconds directly for precision
@@ -302,7 +301,7 @@ new_content = """{% extends "base.html" %}
                 .then(res => {
                     myChart.hideLoading();
                     const data = res.data;
-                    
+
                     if(!data || data.length === 0) {
                         myChart.setOption({title:{text:'No data', left:'center', top:'center'}});
                         return;
@@ -313,9 +312,9 @@ new_content = """{% extends "base.html" %}
                         grid: { left: 10, right: 30, bottom: config.show_zoom ? 50 : 10, top: 30, containLabel: true },
                         xAxis: { type: 'time', boundaryGap: false },
                         yAxis: { type: 'value', scale: true },
-                        dataZoom: config.show_zoom ? [{ 
-                            type: 'slider', 
-                            bottom: 5, 
+                        dataZoom: config.show_zoom ? [{
+                            type: 'slider',
+                            bottom: 5,
                             height: 35, // Increased height
                             handleSize: '150%' // Easier to grab
                         }] : [],
@@ -355,12 +354,12 @@ new_content = """{% extends "base.html" %}
     function openGlobalSettings() {
         new bootstrap.Modal(document.getElementById('globalSettingsModal')).show();
     }
-    
+
     function applyGlobalSettings() {
         const range = document.getElementById('globalRange').value;
         const from = document.getElementById('globalFrom').value;
         const to = document.getElementById('globalTo').value;
-        
+
         Object.keys(widgetConfigs).forEach(id => {
             widgetConfigs[id].range = range;
             if (range === 'custom') {
@@ -378,15 +377,15 @@ new_content = """{% extends "base.html" %}
         const config = widgetConfigs[id];
         document.getElementById('editWidgetId').value = id;
         document.getElementById('editTitle').value = document.getElementById('title-'+id).innerText;
-        
+
         document.getElementById('editRange').value = config.range || '1h';
         toggleCustomRange('widget');
-        
+
         if (config.custom_from) document.getElementById('editFrom').value = config.custom_from;
         if (config.custom_to) document.getElementById('editTo').value = config.custom_to;
-        
+
         document.getElementById('editZoom').checked = config.show_zoom !== false;
-        
+
         new bootstrap.Modal(document.getElementById('widgetModal')).show();
     }
 
@@ -394,19 +393,19 @@ new_content = """{% extends "base.html" %}
         const id = document.getElementById('editWidgetId').value;
         const title = document.getElementById('editTitle').value;
         const range = document.getElementById('editRange').value;
-        
+
         document.getElementById('title-'+id).innerText = title;
-        
+
         widgetConfigs[id].range = range;
         widgetConfigs[id].show_zoom = document.getElementById('editZoom').checked;
-        
+
         if (range === 'custom') {
              widgetConfigs[id].custom_from = document.getElementById('editFrom').value;
              widgetConfigs[id].custom_to = document.getElementById('editTo').value;
         }
-        
+
         document.getElementById('range-label-'+id).innerText = getRangeLabel(widgetConfigs[id]);
-        
+
         initChart(id, widgetTypes[id]);
         bootstrap.Modal.getInstance(document.getElementById('widgetModal')).hide();
     }
@@ -426,7 +425,7 @@ new_content = """{% extends "base.html" %}
                 config: widgetConfigs[id]
             };
         });
-        
+
         const dashboardId = "{{ dashboard.id }}";
         fetch(`/dashboard/api/management/${dashboardId}/save_layout/`, {
             method: 'POST',

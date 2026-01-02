@@ -1,7 +1,6 @@
 from uuid import UUID
 
 import pytest
-
 from rae_core.layers.reflective import ReflectiveLayer
 from rae_core.models.memory import MemoryLayer
 from rae_core.models.reflection import Reflection, ReflectionPriority, ReflectionType

@@ -1,5 +1,7 @@
 """Unit tests for encryption.py to achieve 100% coverage."""
 
+from typing import Any, cast
+
 from rae_core.sync.encryption import E2EEncryption, decrypt_batch, encrypt_batch
 
 
@@ -55,7 +57,7 @@ class TestEncryptionCoverage:
         e = E2EEncryption()
         mems = [{"content": "c1", "metadata": {}}, {"content": "c2"}]
 
-        enc_mems = encrypt_batch(mems, e)
+        enc_mems = encrypt_batch(cast(list[dict[str, Any]], mems), e)
         assert len(enc_mems) == 2
         assert enc_mems[0]["content_encrypted"] is True
 

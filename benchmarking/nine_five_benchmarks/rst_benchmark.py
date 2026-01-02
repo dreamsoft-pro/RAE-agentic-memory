@@ -247,22 +247,22 @@ class RSTBenchmark:
             "performance data",
             "feedback signals",
         ]
-        
+
         now = datetime.now()
 
         for i in range(num_memories):
             memory_id = f"mem_{i:04d}"
             topic = random.choice(topics)
             content = f"Memory about {topic}: observation_{i} with data_{random.randint(1, 100)}"
-            
+
             # Random age between 0 and 60 days
             age_days = random.randint(0, 60)
             timestamp = datetime.fromtimestamp(now.timestamp() - age_days * 86400)
-            
+
             # Confidence correlates with recency (older = less confident/stale)
             # This simulates real world where older data might be less reliable
             base_confidence = random.uniform(0.5, 1.0)
-            
+
             self.source_memories[memory_id] = {
                 "id": memory_id,
                 "content": content,
@@ -274,19 +274,19 @@ class RSTBenchmark:
             }
 
     def _retrieve_memories(
-        self, 
+        self,
         query_topic: str,
         n: int = 5,
         noise_level: float = 0.0
     ) -> List[str]:
         """
         Simulate noise-aware retrieval.
-        
+
         If noise_level > 0.5, boosts recent and high-confidence memories.
         """
         candidates = []
         now = datetime.now()
-        
+
         # Calculate scores
         for mem_id, mem in self.source_memories.items():
             # Base similarity (simulated 1.0 if topic matches, else random low)
@@ -294,33 +294,33 @@ class RSTBenchmark:
                 similarity = random.uniform(0.8, 0.99)
             else:
                 similarity = random.uniform(0.0, 0.3)
-            
+
             # SIMULATE NOISE DEGRADATION:
             # High noise scrambles vector similarity
             if noise_level > 0.0:
                 noise_factor = random.uniform(-noise_level, noise_level)
                 similarity = max(0.0, min(1.0, similarity + noise_factor))
-                
+
             score = similarity
-            
+
             # Apply Noise-Aware Boosting (Task 4.3 logic)
             if noise_level > 0.5:
                 # Recency boost
                 age_days = (now - mem["timestamp"]).days
                 recency_boost = 1.0 / (1.0 + age_days / 7.0)
-                
+
                 # Confidence boost
                 confidence_boost = mem["confidence"]
-                
+
                 # Intensity of boost depends on noise
                 noise_intensity = (noise_level - 0.5) / 0.5
-                
+
                 # Stronger boost to overcome noise degradation
                 score *= (1.0 + recency_boost * noise_intensity * 2.0)
                 score *= (1.0 + confidence_boost * noise_intensity * 1.5)
-                
+
             candidates.append((mem_id, score))
-            
+
         # Sort and pick top N
         candidates.sort(key=lambda x: x[1], reverse=True)
         return [c[0] for c in candidates[:n]]
@@ -504,7 +504,7 @@ class RSTBenchmark:
         for i in range(num_insights):
             # Select random topic
             topic = random.choice(topics)
-            
+
             # Use retrieval to find sources (Clean Baseline)
             source_ids = self._retrieve_memories(topic, n=5, noise_level=0.0)
 
@@ -524,7 +524,7 @@ class RSTBenchmark:
                         noisy_source_ids = self._retrieve_memories(
                             topic, n=5, noise_level=noise_level
                         )
-                        
+
                         noisy_insight = self._generate_insight(
                             noisy_source_ids,
                             noise_level=noise_level,

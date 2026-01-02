@@ -1,7 +1,7 @@
-import sys
 import os
+import sys
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -133,11 +133,11 @@ def mock_rae_service(mock_pool):
     from apps.memory_api.services.rae_core_service import RAECoreService
 
     service = AsyncMock(spec=RAECoreService)
-    
+
     # Mock the 'db' property to return an actual provider wrapping our mock pool
     from rae_core.adapters.postgres_db import PostgresDatabaseProvider
     service.db = PostgresDatabaseProvider(mock_pool)
-    
+
     # Mock enhanced_graph_repo property
     service.enhanced_graph_repo = AsyncMock()
 

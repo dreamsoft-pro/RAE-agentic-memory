@@ -1,17 +1,6 @@
-from datetime import datetime, timezone
-from typing import Any
-from unittest.mock import AsyncMock, MagicMock, Mock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
-from fastapi.testclient import TestClient
-
-from apps.memory_api.dependencies import get_qdrant_client, get_rae_core_service
-from apps.memory_api.main import app
-from apps.memory_api.models import (
-    ScoredMemoryRecord,
-)
-from apps.memory_api.security.dependencies import get_and_verify_tenant_id
-from apps.memory_api.services.rae_core_service import RAECoreService
 
 
 class TestMemoryAPI:
@@ -76,7 +65,7 @@ async def test_query_memory_vector_only(
     """Test memory query using vector search."""
     # Mock RAECoreService response
     from rae_core.models.search import SearchResponse, SearchResult, SearchStrategy
-    
+
     mock_result = SearchResult(
         memory_id="mem-1",
         content="Found content",
@@ -84,7 +73,7 @@ async def test_query_memory_vector_only(
         strategy_used=SearchStrategy.HYBRID,
         metadata={"project": "proj", "source": "src"}
     )
-    
+
     mock_rae_service.query_memories.return_value = SearchResponse(
         results=[mock_result],
         total_found=1,

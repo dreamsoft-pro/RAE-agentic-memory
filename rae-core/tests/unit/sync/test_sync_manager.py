@@ -1,5 +1,4 @@
 import pytest
-
 from rae_core.interfaces.sync import ISyncProvider
 from rae_core.models.sync import SyncHandshake
 from rae_core.sync.manager import SyncManager

@@ -204,8 +204,11 @@ class RAEBenchmarkRunner:
         # Check collection dimensionality and recreate if necessary
         try:
             # Determine expected dimension from EmbeddingService
-            from apps.memory_api.services.embedding import LocalEmbeddingProvider, get_embedding_service
-            
+            from apps.memory_api.services.embedding import (
+                LocalEmbeddingProvider,
+                get_embedding_service,
+            )
+
             embedding_service = get_embedding_service()
             # Force initialization to detect model and dimension
             embedding_service._initialize_model()
@@ -216,11 +219,11 @@ class RAEBenchmarkRunner:
             collection_info = vector_store.qdrant_client.get_collection(
                 collection_name="memories"
             )
-            
+
             # Extract size safely
             current_size = None
             vectors_config = collection_info.config.params.vectors
-            
+
             # Case 1: Single unnamed vector config (VectorParams object)
             if hasattr(vectors_config, "size"):
                 current_size = vectors_config.size
