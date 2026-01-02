@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
@@ -16,12 +17,22 @@ from apps.memory_api.security import auth
 
 @pytest.fixture
 def client_with_mocks():
-    # Mock app state
-    app.state.pool = AsyncMock()
-    app.state.rae_core_service = MagicMock()
+    # Set env vars to match conftest container or default expectations
+    with patch.dict(
+        os.environ,
+        {
+            "POSTGRES_USER": "rae",
+            "POSTGRES_PASSWORD": "rae_password",
+            "POSTGRES_DB": "rae",
+            "POSTGRES_HOST": "localhost",
+        },
+    ):
+        # Mock app state
+        app.state.pool = AsyncMock()
+        app.state.rae_core_service = MagicMock()
 
-    with TestClient(app) as c:
-        yield c
+        with TestClient(app) as c:
+            yield c
 
 
 @pytest.fixture

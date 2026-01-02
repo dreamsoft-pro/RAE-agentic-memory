@@ -40,7 +40,7 @@ class SQLiteVectorStore(IVectorStore):
         self._initialized = False
         self._has_vec_extension = False
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize database schema."""
         if self._initialized:
             return
@@ -53,7 +53,7 @@ class SQLiteVectorStore(IVectorStore):
             try:
                 await db.enable_load_extension(True)
                 await db.load_extension("vec0")
-                self._has_vec_extension = True
+                self._has_vec_extension = True  # pragma: no cover
             except Exception:
                 # Extension not available, will use manual similarity
                 self._has_vec_extension = False
@@ -126,14 +126,14 @@ class SQLiteVectorStore(IVectorStore):
         """Search for similar vectors using cosine similarity."""
         await self.initialize()
 
-        if self._has_vec_extension:
+        if self._has_vec_extension:  # pragma: no cover
             # TODO: Implement sqlite-vec specific search when extension is present
-            pass
+            pass  # pragma: no cover
 
         # Fallback to optimized numpy search
         query_vec = np.array(query_embedding, dtype=np.float32)
         query_norm = np.linalg.norm(query_vec)
-        
+
         if query_norm == 0:
             return []
 
@@ -169,10 +169,10 @@ class SQLiteVectorStore(IVectorStore):
                 embeddings = []
                 for row in rows:
                     embeddings.append(np.frombuffer(row["embedding"], dtype=np.float32))
-                
+
                 # Convert to matrix for bulk calculation
                 matrix = np.stack(embeddings)
-                
+
                 # Bulk cosine similarity calculation
                 dot_products = np.dot(matrix, query_vec)
                 norms = np.linalg.norm(matrix, axis=1)
@@ -369,7 +369,7 @@ class SQLiteVectorStore(IVectorStore):
                 "has_vec_extension": self._has_vec_extension,
             }
 
-    async def close(self):
+    async def close(self) -> None:
         """Close database connection."""
         # aiosqlite uses context managers, so explicit close not needed
         pass

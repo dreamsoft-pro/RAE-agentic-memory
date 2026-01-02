@@ -402,16 +402,25 @@ class TestInMemoryStorage:
     async def test_delete_memories_with_metadata_filter(self, storage):
         """Test deleting memories matching metadata filter."""
         await storage.store_memory(
-            content="M1", layer="working", tenant_id="tenant1", agent_id="agent1",
-            metadata={"category": "tech", "priority": "high"}
+            content="M1",
+            layer="working",
+            tenant_id="tenant1",
+            agent_id="agent1",
+            metadata={"category": "tech", "priority": "high"},
         )
         await storage.store_memory(
-            content="M2", layer="working", tenant_id="tenant1", agent_id="agent1",
-            metadata={"category": "news", "priority": "low"}
+            content="M2",
+            layer="working",
+            tenant_id="tenant1",
+            agent_id="agent1",
+            metadata={"category": "news", "priority": "low"},
         )
         await storage.store_memory(
-            content="M3", layer="working", tenant_id="tenant1", agent_id="agent1",
-            metadata={"category": "tech", "priority": "low"}
+            content="M3",
+            layer="working",
+            tenant_id="tenant1",
+            agent_id="agent1",
+            metadata={"category": "tech", "priority": "low"},
         )
 
         # Delete tech category
@@ -428,17 +437,31 @@ class TestInMemoryStorage:
     async def test_delete_memories_below_importance(self, storage):
         """Test deleting memories below importance threshold."""
         await storage.store_memory(
-            content="High", layer="working", tenant_id="t1", agent_id="a1", importance=0.9
+            content="High",
+            layer="working",
+            tenant_id="t1",
+            agent_id="a1",
+            importance=0.9,
         )
         await storage.store_memory(
-            content="Med", layer="working", tenant_id="t1", agent_id="a1", importance=0.5
+            content="Med",
+            layer="working",
+            tenant_id="t1",
+            agent_id="a1",
+            importance=0.5,
         )
         await storage.store_memory(
-            content="Low", layer="working", tenant_id="t1", agent_id="a1", importance=0.2
+            content="Low",
+            layer="working",
+            tenant_id="t1",
+            agent_id="a1",
+            importance=0.2,
         )
 
         # Delete below 0.6
-        count = await storage.delete_memories_below_importance("t1", "a1", "working", 0.6)
+        count = await storage.delete_memories_below_importance(
+            "t1", "a1", "working", 0.6
+        )
         assert count == 2
 
         memories = await storage.list_memories("t1")
@@ -455,7 +478,10 @@ class TestInMemoryStorage:
             content="Java is also a language", layer="w", tenant_id="t", agent_id="a"
         )
         await storage.store_memory(
-            content="Coding in Python is productive", layer="w", tenant_id="t", agent_id="a"
+            content="Coding in Python is productive",
+            layer="w",
+            tenant_id="t",
+            agent_id="a",
         )
 
         results = await storage.search_memories("python", "t", "a", "w")
@@ -468,15 +494,22 @@ class TestInMemoryStorage:
     async def test_delete_expired_memories(self, storage):
         """Test deleting expired memories."""
         from datetime import timedelta
+
         now = datetime.now(timezone.utc)
 
         await storage.store_memory(
-            content="Expired", layer="w", tenant_id="t", agent_id="a",
-            expires_at=now - timedelta(hours=1)
+            content="Expired",
+            layer="w",
+            tenant_id="t",
+            agent_id="a",
+            expires_at=now - timedelta(hours=1),
         )
         await storage.store_memory(
-            content="Valid", layer="w", tenant_id="t", agent_id="a",
-            expires_at=now + timedelta(hours=1)
+            content="Valid",
+            layer="w",
+            tenant_id="t",
+            agent_id="a",
+            expires_at=now + timedelta(hours=1),
         )
         await storage.store_memory(
             content="NoExpiry", layer="w", tenant_id="t", agent_id="a"

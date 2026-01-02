@@ -80,9 +80,11 @@ class MathDecision:
         """Deserialize from dictionary"""
         return cls(
             decision_id=data.get("decision_id", str(uuid.uuid4())[:8]),
-            timestamp=datetime.fromisoformat(data["timestamp"])
-            if "timestamp" in data
-            else datetime.now(timezone.utc),
+            timestamp=(
+                datetime.fromisoformat(data["timestamp"])
+                if "timestamp" in data
+                else datetime.now(timezone.utc)
+            ),
             selected_level=MathLevel(
                 data.get("selected_level", "deterministic_heuristic")
             ),
@@ -124,9 +126,11 @@ class DecisionWithOutcome:
     def to_training_example(self) -> Dict[str, Any]:
         """Convert to format suitable for policy training"""
         return {
-            "features": self.decision.features_used.to_dict()
-            if self.decision.features_used
-            else {},
+            "features": (
+                self.decision.features_used.to_dict()
+                if self.decision.features_used
+                else {}
+            ),
             "action": {
                 "level": self.decision.selected_level.value,
                 "strategy": self.decision.strategy_id,

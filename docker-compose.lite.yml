@@ -3,68 +3,36 @@ version: '3.8'
 # RAE Lite Profile
 # Minimal single-server deployment with core features only
 # Perfect for small teams, development, and getting started quickly
-#
-# What's included:
-# - Core API (port 8000)
-# - PostgreSQL with pgvector
-# - Qdrant vector database
-# - Redis cache
-#
-# What's excluded (compared to full stack):
-# - ML Service (heavy ML dependencies)
-# - Reranker Service (optional re-ranking)
-# - Celery Worker/Beat (async background tasks)
-# - Dashboard (optional UI)
-# - Monitoring (Prometheus/Grafana)
-#
-# Usage:
-#   docker compose -f docker compose.lite.yml up -d
-#
-# Access:
-#   API: http://localhost:8000
-#   API Docs: http://localhost:8000/docs
-#   Health: http://localhost:8000/health
 
 services:
   # Core RAE API Service (Lightweight - no ML dependencies)
-  rae-api:
+  rae-api-lite:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: rae-api-lite
     ports:
-      - "8000:8000"
+      - "${RAE_LITE_PORT:-8002}:8000"
     environment:
-      # Database
-      - DATABASE_URL=postgresql://${POSTGRES_USER:-rae}:${POSTGRES_PASSWORD:-rae_password}@postgres:5432/${POSTGRES_DB:-rae}
-
-      # Cache
-      - REDIS_URL=redis://redis:6379/0
-
-      # Vector Backend
+      # Database - links to postgres-lite
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-rae}:${POSTGRES_PASSWORD:-rae_password}@postgres-lite:5432/${POSTGRES_DB:-rae}
+      - REDIS_URL=redis://redis-lite:6379/0
       - RAE_VECTOR_BACKEND=${RAE_VECTOR_BACKEND:-qdrant}
-      - QDRANT_URL=http://qdrant:6333
-
-      # LLM API Keys
+      - QDRANT_URL=http://qdrant-lite:6333
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
-
-      # Lite Mode: Disable ML service and heavy features
       - ML_SERVICE_ENABLED=false
       - RERANKER_ENABLED=false
       - CELERY_ENABLED=false
-
-      # Performance tuning for lite mode
       - MAX_WORKERS=2
       - EMBEDDING_CACHE_TTL=3600
-
     depends_on:
-      postgres:
+      postgres-lite:
         condition: service_healthy
-      redis:
+      redis-lite:
         condition: service_healthy
-      qdrant:
+      qdrant-lite:
         condition: service_started
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -77,7 +45,7 @@ services:
       - rae-lite-network
 
   # PostgreSQL with pgvector extension
-  postgres:
+  postgres-lite:
     image: ankane/pgvector:latest
     container_name: rae-postgres-lite
     environment:
@@ -89,7 +57,7 @@ services:
       - postgres_lite_data:/var/lib/postgresql/data
       - ./infra/init-scripts:/docker-entrypoint-initdb.d
     ports:
-      - "5432:5432"
+      - "${RAE_LITE_PG_PORT:-5434}:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-rae}"]
       interval: 10s
@@ -100,12 +68,12 @@ services:
       - rae-lite-network
 
   # Redis for caching and rate limiting
-  redis:
+  redis-lite:
     image: redis:7-alpine
     container_name: rae-redis-lite
     command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     ports:
-      - "6379:6379"
+      - "${RAE_LITE_REDIS_PORT:-6380}:6379"
     volumes:
       - redis_lite_data:/data
     healthcheck:
@@ -118,19 +86,16 @@ services:
       - rae-lite-network
 
   # Qdrant vector database
-  qdrant:
+  qdrant-lite:
     image: qdrant/qdrant:latest
     container_name: rae-qdrant-lite
     ports:
-      - "6333:6333"
-      - "6334:6334"
+      - "${RAE_LITE_QDRANT_PORT:-6335}:6333"
+      - "${RAE_LITE_QDRANT_GRPC_PORT:-6336}:6334"
     volumes:
       - qdrant_lite_data:/qdrant/storage
     environment:
       - QDRANT__SERVICE__GRPC_PORT=6334
-      # Lite mode: limit memory usage
-      - QDRANT__STORAGE__OPTIMIZERS__INDEXING_THRESHOLD=10000
-      - QDRANT__STORAGE__OPTIMIZERS__MEMMAP_THRESHOLD=50000
     restart: unless-stopped
     networks:
       - rae-lite-network

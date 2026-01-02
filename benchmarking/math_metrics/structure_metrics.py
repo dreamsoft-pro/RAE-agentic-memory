@@ -224,7 +224,7 @@ class GraphEntropyMetric(MathMetricBase):
 
         # Calculate degree frequency distribution
         max_degree = max(degrees)
-        degree_freq = np.zeros(max_degree + 1)
+        degree_freq = np.zeros(max_degree + 1, dtype=np.float32)
 
         for deg in degrees:
             degree_freq[deg] += 1

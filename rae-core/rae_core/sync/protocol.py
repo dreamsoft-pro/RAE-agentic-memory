@@ -95,9 +95,11 @@ class SyncProtocol:
             result = await self.sync_provider.push_memories(
                 tenant_id=tenant_id,
                 agent_id=agent_id,
-                memory_ids=[UUID(mid) for mid in request.memory_ids]
-                if request.memory_ids
-                else None,
+                memory_ids=(
+                    [UUID(mid) for mid in request.memory_ids]
+                    if request.memory_ids
+                    else None
+                ),
                 since=since,
             )
 
@@ -161,9 +163,11 @@ class SyncProtocol:
             result = await self.sync_provider.pull_memories(
                 tenant_id=tenant_id,
                 agent_id=agent_id,
-                memory_ids=[UUID(mid) for mid in request.memory_ids]
-                if request.memory_ids
-                else None,
+                memory_ids=(
+                    [UUID(mid) for mid in request.memory_ids]
+                    if request.memory_ids
+                    else None
+                ),
                 since=since,
             )
 

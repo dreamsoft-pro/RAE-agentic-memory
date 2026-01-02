@@ -1,0 +1,44 @@
+{
+  "test_name": "cosine_similarity_memory_correctness",
+  "inputs": {
+    "query": [
+      1.0,
+      0.0,
+      0.0
+    ],
+    "vecs": [
+      [
+        1.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        1.0,
+        0.0
+      ],
+      [
+        1.0,
+        0.0,
+        0.0
+      ]
+    ]
+  },
+  "output": [
+    [
+      "d5bbe727-c4c9-4285-b528-2de67b89d2cd",
+      1.0
+    ],
+    [
+      "ca5d9bc4-6adc-4d96-af5d-8f9b5f6519a1",
+      1.0
+    ],
+    [
+      "3a63f3f5-06c6-4e92-82d0-7e9bbc67a2ab",
+      0.0
+    ]
+  ],
+  "metadata": {
+    "adapter": "InMemoryVectorStore"
+  }
+}

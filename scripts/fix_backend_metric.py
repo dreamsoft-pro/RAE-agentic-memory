@@ -1,5 +1,4 @@
 
-import os
 
 target_path = "/home/grzegorz-lesniowski/cloud/screenwatcher_project/apps/dashboards/views.py"
 

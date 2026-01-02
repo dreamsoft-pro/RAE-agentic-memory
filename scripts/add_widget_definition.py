@@ -1,5 +1,4 @@
 
-import os
 
 target_path = "/home/grzegorz-lesniowski/cloud/screenwatcher_project/apps/dashboards/models.py"
 
@@ -15,7 +14,7 @@ new_model_code = """class WidgetDefinition(BaseModel):
     description = models.TextField(blank=True)
     default_config = models.JSONField(default=dict, help_text="Default configuration (JSON)")
     is_active = models.BooleanField(default=True)
-    
+
     def __str__(self):
         return self.name
 
@@ -23,7 +22,7 @@ new_model_code = """class WidgetDefinition(BaseModel):
 
 if "class WidgetDefinition" not in content:
     new_content = content.replace(insertion_point, new_model_code + insertion_point)
-    
+
     with open(target_path, 'w') as f:
         f.write(new_content)
     print("Added WidgetDefinition model.")

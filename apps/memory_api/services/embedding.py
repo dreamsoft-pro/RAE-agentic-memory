@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING, Any, List, Optional, cast
 
 import litellm
-from rae_core.interfaces.embedding import IEmbeddingProvider
 
 from apps.memory_api.metrics import embedding_time_histogram
+from rae_core.interfaces.embedding import IEmbeddingProvider
 
 try:  # pragma: no cover
     from sentence_transformers import SentenceTransformer
@@ -85,7 +85,13 @@ class EmbeddingService:
         if self.use_litellm:
             # Use LiteLLM for embeddings
             try:
-                response = litellm.embedding(model=self.litellm_model, input=texts)
+                kwargs = {}
+                if self.litellm_model.startswith("ollama/"):
+                    kwargs["api_base"] = self.settings.OLLAMA_API_URL
+
+                response = litellm.embedding(
+                    model=self.litellm_model, input=texts, **kwargs
+                )
                 return [d["embedding"] for d in response["data"]]
             except Exception as e:
                 print(f"LiteLLM embedding failed: {e}")
@@ -121,8 +127,12 @@ class EmbeddingService:
         if self.use_litellm:
             # LiteLLM supports async via aembedding
             try:
+                kwargs = {}
+                if self.litellm_model.startswith("ollama/"):
+                    kwargs["api_base"] = self.settings.OLLAMA_API_URL
+
                 response = await litellm.aembedding(
-                    model=self.litellm_model, input=texts
+                    model=self.litellm_model, input=texts, **kwargs
                 )
                 return [d["embedding"] for d in response["data"]]
             except Exception as e:
@@ -134,6 +144,32 @@ class EmbeddingService:
         import asyncio
 
         return await asyncio.to_thread(self.generate_embeddings, texts)
+
+    async def generate_embeddings_for_model(
+        self, texts: List[str], model_name: str
+    ) -> List[List[float]]:
+        """
+        Generates embeddings for a specific model via LiteLLM.
+        Useful for Multi-Vector Fusion where we need embeddings from multiple models.
+        """
+        try:
+            kwargs = {}
+            if model_name.startswith("ollama/"):
+                kwargs["api_base"] = self.settings.OLLAMA_API_URL
+
+            # Determine dimension for fallback
+            dim = 384
+            if "openai" in model_name or "text-embedding-3" in model_name:
+                dim = 1536
+            elif "nomic" in model_name:
+                dim = 768
+
+            response = await litellm.aembedding(model=model_name, input=texts, **kwargs)
+            return [d["embedding"] for d in response["data"]]
+        except Exception as e:
+            print(f"LiteLLM embedding for {model_name} failed: {e}")
+            # Return zeros to allow fusion to continue with other models
+            return [[0.0] * dim for _ in texts]
 
 
 class LocalEmbeddingProvider(IEmbeddingProvider):
@@ -153,8 +189,16 @@ class LocalEmbeddingProvider(IEmbeddingProvider):
 
     def get_dimension(self) -> int:
         """Get embedding dimension."""
-        # Assuming default model dimension for now, or could query model if loaded
-        return 384  # Default for all-MiniLM-L6-v2
+        # Ensure we check availability to set use_litellm correctly
+        self.service._ensure_available()
+
+        # Check if using Ollama which usually has 768 dims for nomic-embed-text
+        if self.service.use_litellm:
+            if self.service.litellm_model.startswith("ollama/"):
+                return 768
+
+        # Default for all-MiniLM-L6-v2
+        return 384
 
 
 class RemoteEmbeddingProvider(IEmbeddingProvider):

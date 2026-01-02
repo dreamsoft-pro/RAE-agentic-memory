@@ -11,11 +11,11 @@ from apps.memory_api.services.budget_service import BudgetService
 def mock_rae_service():
     service = MagicMock()
     service.postgres_pool = AsyncMock()
-    
+
     # Mock the 'db' property to return an actual provider wrapping our mock pool
     from rae_core.adapters.postgres_db import PostgresDatabaseProvider
     service.db = PostgresDatabaseProvider(service.postgres_pool)
-    
+
     return service
 
 

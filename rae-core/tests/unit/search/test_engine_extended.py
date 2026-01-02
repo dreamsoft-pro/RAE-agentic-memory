@@ -30,7 +30,7 @@ class TestHybridSearchEngineExtended:
         # Strategy 2 results: id2 at rank 1, id1 at rank 2
         strategy_results = {
             "s1": [(id1, 0.9), (id2, 0.8)],
-            "s2": [(id2, 0.9), (id1, 0.8)]
+            "s2": [(id2, 0.9), (id1, 0.8)],
         }
         weights = {"s1": 1.0, "s2": 1.0}
 
@@ -71,6 +71,7 @@ class TestHybridSearchEngineExtended:
         assert len(results) == 1
         assert results[0][0] == mem_id
 
+
 class TestNoiseAwareSearchEngine:
     @pytest.fixture
     def mock_strategy(self):
@@ -81,7 +82,9 @@ class TestNoiseAwareSearchEngine:
 
     @pytest.fixture
     def engine(self, mock_strategy):
-        return NoiseAwareSearchEngine(strategies={"s1": mock_strategy}, noise_threshold=0.5)
+        return NoiseAwareSearchEngine(
+            strategies={"s1": mock_strategy}, noise_threshold=0.5
+        )
 
     def test_apply_noise_aware_boost(self, engine):
         id_recent = uuid4()
@@ -91,7 +94,7 @@ class TestNoiseAwareSearchEngine:
         results = [(id_recent, 0.5), (id_old, 0.5)]
         metadata = {
             id_recent: {"created_at": now, "confidence_score": 1.0},
-            id_old: {"created_at": now - timedelta(days=30), "confidence_score": 0.5}
+            id_old: {"created_at": now - timedelta(days=30), "confidence_score": 0.5},
         }
 
         # High noise (0.8 > 0.5 threshold)
@@ -107,11 +110,15 @@ class TestNoiseAwareSearchEngine:
         metadata = {mem_id: {"created_at": datetime.now(timezone.utc)}}
 
         # Baseline (no noise)
-        results_clean = await engine.search("q", "t1", noise_level=0.0, memory_metadata=metadata)
+        results_clean = await engine.search(
+            "q", "t1", noise_level=0.0, memory_metadata=metadata
+        )
         score_clean = results_clean[0][1]
 
         # With noise (0.8 > 0.5 threshold)
-        results_noisy = await engine.search("q", "t1", noise_level=0.8, memory_metadata=metadata)
+        results_noisy = await engine.search(
+            "q", "t1", noise_level=0.8, memory_metadata=metadata
+        )
         score_noisy = results_noisy[0][1]
 
         assert score_noisy > score_clean

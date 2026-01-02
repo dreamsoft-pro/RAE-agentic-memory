@@ -14,26 +14,36 @@
     - [x] Migrate background workers and tasks to use `RAECoreService`.
 - [x] Migrate `apps/memory_api/routes/graph_enhanced.py` to `RAECoreService`.
 
-## 🚨 NEXT SESSION: Finish Core Migration & Distributed Compute
+## 🚀 IRON RAE Optimization (MATH Layer Refactor)
 
-**Current Status (2025-12-25):**
-- **Architecture Migration:** ✅ All services, routes, and background tasks migrated to `RAECoreService`.
-- **Distributed Compute:** ✅ Node1 (KUBUS) integration verified and active.
-- **Core Stability:** ✅ **908 tests passed** (100% unit Green).
-- **Infrastructure:** ✅ RAE-Lite mode supported with in-memory fallbacks.
+**Source:** [IRON_RAE_OPTIMIZATION_PLAN.md](docs/plans/IRON_RAE_OPTIMIZATION_PLAN.md)
+**Goal:** Enhance mathematical core for stability and multi-vector support.
+
+- [x] **Phase 1: MATH-2 – Multi-Vector Fusion**
+    - [x] Implement Reciprocal Rank Fusion (RRF) in `rae-core`.
+    - [x] Update `QdrantStore` for named vectors (OpenAI/Ollama).
+    - [x] Update `HybridSearchService` for concurrent multi-model search.
+- [x] **Phase 2: MATH-1 – Deterministic Topological Logic**
+    - [x] Implement `GraphTopologyEngine` (NetworkX based).
+    - [x] Add path proving and centrality analysis.
+- [x] **Phase 3: MATH-3 – Dynamics Control**
+    - [x] Implement PID Controller and Kalman Filter in `rae-core`.
+- [x] **Infrastructure**: Fix Gemini Auth (Token/ADC fallback).
+- [x] **Quality**: Zero Warning Policy enforcement.
+
+## 🚨 NEXT SESSION: Full Benchmark Suite Execution
+
+**Current Status (2026-01-02):**
+- **Tests:** ✅ 972 passed, 0 failed.
+- **Linting:** ✅ Zero warnings.
+- **Features:** ✅ IRON RAE implemented.
 
 **Priority Tasks:**
 
-1.  **🏗️ Agnostic Enforcement (CRITICAL)**
-    - [x] **Action**: Refactor `EnhancedGraphRepository` to use a generic DB interface instead of `asyncpg.Pool` directly (preparation for RAE-Lite).
-    - [x] **Action**: Implement `IEmbeddingProvider` for remote compute nodes to offload embedding generation without leaking node details.
-
-2.  **🚀 Distributed Compute: Expand Cluster**
-    - [x] **Action**: Update node1 agent to communicate with the new Control Node API.
-    - [x] **Action**: Successfully pull a 'no-op' task from the local module to node1.
-
-3.  **🧠 Heavy Workload Delegation**
-    - [x] **Action**: Integrate task delegation into `RAEEngine` for heavy embedding generation and LLM inference.
+1.  **📊 Benchmarking (Verification)**
+    - [ ] Run `make benchmark-full`.
+    - [ ] Verify LECT > 0.9999.
+    - [ ] Verify GRDT > 0.8.
 
 ---
 
@@ -57,52 +67,52 @@
 - [x] **E2E/Integration Polish** (Verified with 908 passing unit tests)
 
 ## Technical Debt (Auto-generated from code)
-*Last scan: 2026-01-01 03:04*
+*Last scan: 2026-01-02 21:18*
 
-- [ ] **CHANGELOG.md:1116** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:1158** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:1199** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:1240** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:1275** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:1310** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:1340** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:1370** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:1399** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:1427** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:1451** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:1475** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:1493** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:1511** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:1795** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:1858** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:1859** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:2356** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:2419** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:2420** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:2924** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:2987** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:2988** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:3484** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:3547** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:3548** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:4043** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:4106** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:4107** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:4593** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:4656** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:4657** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:5142** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:5205** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:5206** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:5690** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:5753** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:5754** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:6238** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
-- [ ] **CHANGELOG.md:6301** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:6302** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:6806** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
-- [ ] **CHANGELOG.md:6869** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:6870** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:1308** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:1350** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:1391** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:1432** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:1467** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:1502** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:1532** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:1562** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:1591** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:1619** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:1643** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:1667** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:1685** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:1703** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:1987** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:2050** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:2051** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:2548** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:2611** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:2612** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:3116** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:3179** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:3180** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:3676** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:3739** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:3740** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:4235** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:4298** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:4299** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:4785** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:4848** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:4849** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:5334** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:5397** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:5398** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:5882** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:5945** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:5946** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:6430** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
+- [ ] **CHANGELOG.md:6493** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:6494** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:6998** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
+- [ ] **CHANGELOG.md:7061** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:7062** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
 - [ ] **INTEGRATION_CHECKLIST.md:51** - - [ ] Did NOT edit `TODO.md` (CI extracts from code comments)
 - [ ] **CONTRIBUTING.md:163** - Run the documentation automator to update status and TODOs:
 - [ ] **ONBOARDING_GUIDE.md:366** - - ❌ DON'T: Edit `CHANGELOG.md`, `STATUS.md`, `TODO.md`, `docs/.auto-generated/`
@@ -112,9 +122,9 @@
 - [ ] **AI_AGENT_MANIFEST.md:348** - | **Pending Work** | `TODO.md` | Extracted TODOs from code |
 - [ ] **AGENT_QUALITY_SYSTEM.md:275** - - ❌ `TODO.md` - Extracted TODOs/FIXMEs
 - [ ] **apps/memory_api/services/hybrid_search.py:319** - connected_components=1,   TODO: compute from graph
-- [ ] **apps/memory_api/services/smart_reranker.py:122** - "recency_seconds": 0,   TODO: calc
 - [ ] **apps/memory_api/services/context_builder.py:322** - In production, use vector search to get similarity scores
 - [ ] **apps/memory_api/services/context_builder.py:476** - Implement profile retrieval
+- [ ] **apps/memory_api/services/vector_store/qdrant_store.py:110** - Check if existing collection supports named vectors and migrate if needed
 - [ ] **apps/memory_api/routes/event_triggers.py:175** - tenant_id = "default"   TODO: Get from auth context
 - [ ] **apps/memory_api/routes/event_triggers.py:202** - tenant_id = "default"   TODO: Get from auth context
 - [ ] **apps/memory_api/routes/event_triggers.py:376** - tenant_id = "default"   TODO: Get from auth context
@@ -154,10 +164,12 @@
 - [ ] **orchestrator/intelligence/rae_integration.py:121** - Implement RAE aggregation query
 - [ ] **orchestrator/intelligence/rae_integration.py:185** - Implement cross-deployment sync
 - [ ] **orchestrator/intelligence/rae_integration.py:213** - Load from config file
+- [ ] **rae-core/rae_core/search/strategies/multi_vector.py:103** - Add logging
+- [ ] **rae-core/rae_core/embedding/manager.py:46** - Add parallelism here using asyncio.gather if providers are async/remote
 - [ ] **rae-core/rae_core/adapters/sqlite/vector.py:130** - Implement sqlite-vec specific search when extension is present
 - [ ] **.orchestrator/tasks.yaml:90** - - If implemented mark as DONE, if not mark TODO
 - [ ] **benchmarking/scripts/generate_math_report.py:183** - Implement detailed comparative analysis
-- [ ] **benchmarking/math_metrics/controller/reward.py:165** - level_churn = 0.0   TODO: Calculate from decision history
+- [ ] **benchmarking/math_metrics/controller/reward.py:167** - level_churn = 0.0   TODO: Calculate from decision history
 - [ ] **docs/RAE–Docs-vs-Code.md:396** - 11. Priorytetowa lista TODO (szczególnie pod RAE Lite)
 - [ ] **docs/RAE_DOCUMENTATION_OVERHAUL_IMPLEMENTATION_PLAN.md:608** - 3. **Set up tracking** in TODO.md or project management tool
 - [ ] **docs/RAE_CORE_REFACTOR_PLAN.md:332** - - **TODO list** w każdej iteracji (TodoWrite!)
@@ -229,8 +241,8 @@
 - [ ] **docs/project-design/research/RAE-improve_01.md:16** - Implement proper tenant access control
 - [ ] **docs/project-design/research/RAE_Code_vs_Docs_Feature_Gaps.md:9** - > - głównym `README.md`, `STATUS.md`, `TESTING_STATUS.md`, `TODO.md`,
 - [ ] **docs/testing/AUTO_HEALING_GUIDE.md:617** - Implement cost tracking to database
-- [ ] **docs/rules/AGENT_CORE_PROTOCOL.md:65** - - **Auto-Generated (DO NOT EDIT)**: `CHANGELOG.md`, `STATUS.md`, `TODO.md`, `docs/.auto-generated/`.
-- [ ] **docs/rules/AGENT_CORE_PROTOCOL.md:123** - - **Weekly Deep Refactor (Every Sunday)**: A more intensive cycle focusing on technical debt (TODOs) and strict agnosticism compliance across the entire codebase.
+- [ ] **docs/rules/AGENT_CORE_PROTOCOL.md:71** - - **Auto-Generated (DO NOT EDIT MANUALLY)**: `CHANGELOG.md`, `STATUS.md`, `TODO.md`, `docs/.auto-generated/`.
+- [ ] **docs/rules/AGENT_CORE_PROTOCOL.md:132** - - **Weekly Deep Refactor (Every Sunday)**: A more intensive cycle focusing on technical debt (TODOs) and strict agnosticism compliance across the entire codebase.
 - [ ] **docs/guides/administracja/INDEX.md:411** - Zobacz [TODO.md](../../../TODO.md) dla pełnej roadmapy.
 - [ ] **docs/guides/developers/INDEX.md:350** - See [TODO.md](../../../TODO.md) for complete roadmap.
 - [ ] **docs/guides/rae-lite/RAE-lite.md:10** - Sam projekt deklaruje, że 80%+ coverage to wciąż cel, nie stan – w TODO.md jest to nadal HIGH priority.

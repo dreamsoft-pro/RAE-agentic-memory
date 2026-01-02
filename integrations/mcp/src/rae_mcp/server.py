@@ -43,13 +43,13 @@ OTEL_EXPORTER = os.getenv("OTEL_EXPORTER", "console")  # console, jaeger, otlp
 
 if OTEL_ENABLED:
     # Set up tracer provider
-    trace.set_tracer_provider(TracerProvider())
-    tracer_provider = trace.get_tracer_provider()
+    tp = TracerProvider()
+    trace.set_tracer_provider(tp)
 
     # Configure exporter
     if OTEL_EXPORTER == "console":
         span_processor = BatchSpanProcessor(ConsoleSpanExporter())
-        tracer_provider.add_span_processor(span_processor)
+        tp.add_span_processor(span_processor)
     # Add support for other exporters (Jaeger, OTLP) in future
 
     # Instrument httpx for automatic HTTP tracing
@@ -333,7 +333,7 @@ class RAEMemoryClient:
                         layer=layer,
                     )
 
-                    return result
+                    return result  # type: ignore[no-any-return]
 
             except httpx.HTTPStatusError as e:
                 span.set_attribute("error", True)
@@ -401,7 +401,7 @@ class RAEMemoryClient:
                         "memory_searched", query=query, result_count=len(results)
                     )
 
-                    return results
+                    return results  # type: ignore[no-any-return]
 
             except httpx.HTTPStatusError as e:
                 span.set_attribute("error", True)
@@ -466,7 +466,7 @@ class RAEMemoryClient:
                     "reflection_retrieved", project=project, summary_length=len(summary)
                 )
 
-                return summary
+                return summary  # type: ignore[no-any-return]
 
         except httpx.HTTPStatusError as e:
             logger.error(
@@ -543,7 +543,7 @@ class RAEMemoryClient:
                     timeout=30.0,
                 )
                 response.raise_for_status()
-                return response.json()
+                return response.json()  # type: ignore[no-any-return]
 
         except Exception as e:
             logger.error("approval_request_error", error=str(e))
@@ -567,7 +567,7 @@ class RAEMemoryClient:
                     timeout=30.0,
                 )
                 response.raise_for_status()
-                return response.json()
+                return response.json()  # type: ignore[no-any-return]
 
         except Exception as e:
             logger.error("approval_status_error", error=str(e))
@@ -588,7 +588,7 @@ class RAEMemoryClient:
                     timeout=30.0,
                 )
                 response.raise_for_status()
-                return response.json()
+                return response.json()  # type: ignore[no-any-return]
 
         except Exception as e:
             logger.error("circuit_breakers_error", error=str(e))
@@ -617,7 +617,7 @@ class RAEMemoryClient:
                     timeout=30.0,
                 )
                 response.raise_for_status()
-                return response.json()
+                return response.json()  # type: ignore[no-any-return]
 
         except Exception as e:
             logger.error("policies_list_error", error=str(e))
@@ -1144,12 +1144,12 @@ async def handle_call_tool(
 
             # Request approval
             result = await rae_client.request_approval(
-                operation_type=operation_type,
-                operation_description=operation_description,
-                risk_level=risk_level,
-                resource_type=resource_type,
-                resource_id=resource_id,
-                requested_by=requested_by,
+                operation_type=str(operation_type),
+                operation_description=str(operation_description),
+                risk_level=str(risk_level),
+                resource_type=str(resource_type),
+                resource_id=str(resource_id),
+                requested_by=str(requested_by),
             )
 
             request_id = result.get("request_id", "unknown")

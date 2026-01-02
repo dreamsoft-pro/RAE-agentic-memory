@@ -95,7 +95,7 @@ We want to:
 
 ### 4.1. "Math" layer controller
 
-- [ ] Extract the **"reasoning controller"** as a separate module:
+- [x] Extract the **"reasoning controller"** as a separate module:
   - [ ] with parameters:
     - maximum depth,
     - acceptable level of uncertainty,
@@ -269,7 +269,7 @@ Proposed iterative approach (can be in weeks or sprints):
 
 ### Iteration 2 – Reasoning and noise
 
-- [ ] Extract "reasoning controller" (GRDT).  
+- [x] Extract "reasoning controller" (GRDT).  
 - [ ] Noise pipeline + noise-aware retrieval (RST).  
 - [ ] First version of configuration auto-tuner (ORB).
 

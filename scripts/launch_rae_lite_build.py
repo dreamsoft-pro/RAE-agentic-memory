@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import json
-import urllib.request
 import os
+import urllib.request
 
 API_BASE = "http://localhost:8000"
 HEADERS = {
@@ -17,27 +17,27 @@ def post_request(url, data):
 
 def main():
     print("🚀 Launching RAE-Lite Build Task to Node1 (KUBUS)...")
-    
+
     # We assume the node agent is running in a directory where 'rae-lite' is accessible.
     # If it's running from repo root, then cwd should be '.'
-    
+
     task_data = {
         "type": "shell_command",
         "priority": 20,
         "payload": {
             "command": "cd rae-lite && ./build.sh",
-            "cwd": os.getcwd() # This will be the absolute path on the local machine, 
+            "cwd": os.getcwd() # This will be the absolute path on the local machine,
                                # which might not match KUBUS if it's different.
-                               # Better to use relative path if possible, but our agent 
+                               # Better to use relative path if possible, but our agent
                                # implementation uses payload.get("cwd", os.getcwd())
         }
     }
-    
+
     # If we don't know the remote path, we should probably use a relative path or '.'
     # Let's try to find out where the node agent is running from.
     # Actually, let's just use command "cd rae-lite && ./build.sh" and omit cwd to use agent's default.
-    
-    task_data["payload"].pop("cwd") 
+
+    task_data["payload"].pop("cwd")
 
     try:
         task = post_request(f"{API_BASE}/control/tasks", task_data)

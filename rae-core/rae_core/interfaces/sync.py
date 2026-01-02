@@ -1,34 +1,33 @@
 """Abstract sync provider interface for RAE-core."""
 
-from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 from uuid import UUID
 
 
-class ISyncProvider(ABC):
+@runtime_checkable
+class ISyncProvider(Protocol):
     """Abstract interface for sync protocol (RAE-Sync)."""
 
-    @abstractmethod
     async def push_changes(self, tenant_id: str, changes: list[dict[str, Any]]) -> bool:
         """Push local changes to sync endpoint."""
-        pass
+        ...
 
-    @abstractmethod
     async def pull_changes(
         self, tenant_id: str, since_timestamp: str
     ) -> list[dict[str, Any]]:
         """Pull changes from sync endpoint since timestamp."""
-        pass
+        ...
 
-    @abstractmethod
     async def resolve_conflict(
-        self, memory_id: UUID, local_version: dict, remote_version: dict
+        self,
+        memory_id: UUID,
+        local_version: dict[str, Any],
+        remote_version: dict[str, Any],
     ) -> dict[str, Any]:
         """Resolve conflict using CRDT merge strategy."""
-        pass
+        ...
 
-    @abstractmethod
     async def push_memories(
         self,
         tenant_id: str,
@@ -47,9 +46,8 @@ class ISyncProvider(ABC):
         Returns:
             Dictionary with sync results
         """
-        pass
+        ...
 
-    @abstractmethod
     async def pull_memories(
         self,
         tenant_id: str,
@@ -68,9 +66,8 @@ class ISyncProvider(ABC):
         Returns:
             Dictionary with sync results
         """
-        pass
+        ...
 
-    @abstractmethod
     async def sync_memories(
         self,
         tenant_id: str,
@@ -87,9 +84,8 @@ class ISyncProvider(ABC):
         Returns:
             Dictionary with sync results
         """
-        pass
+        ...
 
-    @abstractmethod
     async def get_sync_status(
         self,
         tenant_id: str,
@@ -106,9 +102,8 @@ class ISyncProvider(ABC):
         Returns:
             Sync status information
         """
-        pass
+        ...
 
-    @abstractmethod
     async def handshake(
         self,
         tenant_id: str,
@@ -125,4 +120,4 @@ class ISyncProvider(ABC):
         Returns:
             Negotiated capabilities and session info
         """
-        pass
+        ...

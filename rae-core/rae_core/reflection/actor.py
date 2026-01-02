@@ -135,9 +135,9 @@ class Actor:
 
             if memory_id and new_importance is not None:
                 success = await self.memory_storage.update_memory(
-                    memory_id=UUID(memory_id)
-                    if isinstance(memory_id, str)
-                    else memory_id,
+                    memory_id=(
+                        UUID(memory_id) if isinstance(memory_id, str) else memory_id
+                    ),
                     tenant_id=tenant_id,
                     updates={"importance": new_importance},
                 )

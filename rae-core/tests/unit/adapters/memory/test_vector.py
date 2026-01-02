@@ -347,7 +347,7 @@ class TestInMemoryVectorStore:
         assert stats["total_vectors"] == 0
 
     @pytest.mark.asyncio
-    async def test_cosine_similarity_correctness(self, store):
+    async def test_cosine_similarity_correctness(self, store, golden_snapshot):
         """Test that cosine similarity is calculated correctly."""
         # Orthogonal vectors (similarity = 0)
         vec1 = [1.0, 0.0, 0.0]
@@ -368,6 +368,14 @@ class TestInMemoryVectorStore:
             query_embedding=vec1,
             tenant_id="tenant1",
             limit=10,
+        )
+
+        # Record golden snapshot
+        golden_snapshot(
+            test_name="cosine_similarity_memory_correctness",
+            inputs={"query": vec1, "vecs": [vec1, vec2, vec3]},
+            output=results,
+            metadata={"adapter": "InMemoryVectorStore"},
         )
 
         # Find results by ID

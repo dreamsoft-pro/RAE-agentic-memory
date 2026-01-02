@@ -65,6 +65,7 @@ class ReflectionGainExperiment(StructuralStabilityExperiment):
 
         try:
             # Clean up
+            assert self.pool is not None
             async with self.pool.acquire() as conn:
                 await conn.execute(
                     "DELETE FROM memories WHERE tenant_id = $1", self.tenant_id

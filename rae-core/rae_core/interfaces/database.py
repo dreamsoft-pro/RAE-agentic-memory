@@ -1,42 +1,82 @@
-"""Abstract database provider interface for RAE-core.
+"""Abstract database provider interface for RAE-core."""
 
-Allows RAE to run on different database backends (PostgreSQL, SQLite, etc.)
-while keeping high-level logic (like graph operations) agnostic.
-"""
-
-from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, AsyncContextManager, Protocol, runtime_checkable
 
 
-class IDatabaseProvider(ABC):
-    """Abstract interface for low-level database operations."""
+@runtime_checkable
+class ITransaction(Protocol):
+    """Abstract interface for database transactions."""
 
-    @abstractmethod
-    async def fetchrow(self, query: str, *args: Any) -> dict[str, Any] | None:
-        """Fetch a single row from the database."""
-        pass
+    async def __aenter__(self) -> "ITransaction": ...
 
-    @abstractmethod
-    async def fetch(self, query: str, *args: Any) -> list[dict[str, Any]]:
-        """Fetch multiple rows from the database."""
-        pass
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None: ...
 
-    @abstractmethod
-    async def fetchval(self, query: str, *args: Any) -> Any:
-        """Fetch a single value from the database."""
-        pass
+    async def commit(self) -> None:
+        """Commit the transaction."""
+        ...
 
-    @abstractmethod
+    async def rollback(self) -> None:
+        """Rollback the transaction."""
+        ...
+
+
+@runtime_checkable
+class IDatabaseConnection(Protocol):
+    """Abstract interface for database connections."""
+
     async def execute(self, query: str, *args: Any) -> str:
-        """Execute a command (INSERT, UPDATE, DELETE)."""
-        pass
+        """Execute a SQL query."""
+        ...
 
-    @abstractmethod
+    async def fetch(self, query: str, *args: Any) -> list[dict[str, Any]]:
+        """Fetch multiple rows from a SQL query."""
+        ...
+
+    async def fetchrow(self, query: str, *args: Any) -> dict[str, Any] | None:
+        """Fetch a single row from a SQL query."""
+        ...
+
+    async def fetchval(self, query: str, *args: Any) -> Any:
+        """Fetch a single value from a SQL query."""
+        ...
+
     async def executemany(self, query: str, args: list[Any]) -> str:
-        """Execute a command for multiple sets of arguments."""
-        pass
+        """Execute a SQL query for multiple arguments."""
+        ...
 
-    @abstractmethod
-    def acquire(self) -> Any:
+    def transaction(self) -> ITransaction:
+        """Start a new transaction."""
+        ...
+
+
+@runtime_checkable
+class IDatabaseProvider(Protocol):
+    """Abstract interface for database providers."""
+
+    async def execute(self, query: str, *args: Any) -> str:
+        """Execute a SQL query."""
+        ...
+
+    async def fetch(self, query: str, *args: Any) -> list[dict[str, Any]]:
+        """Fetch multiple rows from a SQL query."""
+        ...
+
+    async def fetchrow(self, query: str, *args: Any) -> dict[str, Any] | None:
+        """Fetch a single row from a SQL query."""
+        ...
+
+    async def fetchval(self, query: str, *args: Any) -> Any:
+        """Fetch a single value from a SQL query."""
+        ...
+
+    async def executemany(self, query: str, args: list[Any]) -> str:
+        """Execute a SQL query for multiple arguments."""
+        ...
+
+    async def close(self) -> None:
+        """Close the database connection."""
+        ...
+
+    def acquire(self) -> AsyncContextManager[IDatabaseConnection]:
         """Acquire a connection from the pool."""
-        pass
+        ...

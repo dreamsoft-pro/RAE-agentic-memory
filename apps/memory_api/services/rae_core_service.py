@@ -12,6 +12,14 @@ import asyncpg
 import redis.asyncio as redis
 import structlog
 from qdrant_client import AsyncQdrantClient
+
+from apps.memory_api.repositories.token_savings_repository import TokenSavingsRepository
+from apps.memory_api.services.embedding import (
+    LocalEmbeddingProvider,
+    RemoteEmbeddingProvider,
+)
+from apps.memory_api.services.llm import get_llm_provider
+from apps.memory_api.services.token_savings_service import TokenSavingsService
 from rae_core.adapters import (
     PostgresMemoryAdapter,
     QdrantVectorAdapter,
@@ -26,14 +34,6 @@ from rae_core.interfaces.embedding import IEmbeddingProvider
 from rae_core.interfaces.storage import IMemoryStorage
 from rae_core.interfaces.vector import IVectorStore
 from rae_core.models.search import SearchResponse
-
-from apps.memory_api.repositories.token_savings_repository import TokenSavingsRepository
-from apps.memory_api.services.embedding import (
-    LocalEmbeddingProvider,
-    RemoteEmbeddingProvider,
-)
-from apps.memory_api.services.llm import get_llm_provider
-from apps.memory_api.services.token_savings_service import TokenSavingsService
 
 logger = structlog.get_logger(__name__)
 
@@ -66,10 +66,21 @@ class RAECoreService:
         self.postgres_adapter: IMemoryStorage
         self.qdrant_adapter: IVectorStore
         self.redis_adapter: ICacheProvider
-        self.embedding_provider: IEmbeddingProvider
         self.savings_service: Optional[TokenSavingsService]
 
-        # Initialize Token Savings Service
+        # 1. Initialize embedding provider (needed for adapter config)
+        from apps.memory_api.config import settings
+
+        base_provider: IEmbeddingProvider
+        if getattr(settings, "RAE_PROFILE", "standard") == "distributed":
+            base_provider = RemoteEmbeddingProvider(base_url=settings.ML_SERVICE_URL)
+            logger.info("using_remote_embedding_provider", url=settings.ML_SERVICE_URL)
+        else:
+            base_provider = LocalEmbeddingProvider()
+
+        self.embedding_provider = EmbeddingManager(default_provider=base_provider)
+
+        # 2. Initialize Token Savings Service
         if postgres_pool:
             self.savings_service = TokenSavingsService(
                 TokenSavingsRepository(postgres_pool)
@@ -77,7 +88,7 @@ class RAECoreService:
         else:
             self.savings_service = None
 
-        # Initialize adapters with Lite mode support
+        # 3. Initialize adapters with Lite mode support
         if postgres_pool:
             self.postgres_adapter = PostgresMemoryAdapter(pool=postgres_pool)
         else:
@@ -87,7 +98,12 @@ class RAECoreService:
             self.postgres_adapter = InMemoryStorage()
 
         if qdrant_client:
-            self.qdrant_adapter = QdrantVectorAdapter(client=cast(Any, qdrant_client))
+            # Get dimension from embedding provider
+            dim = self.embedding_provider.get_dimension()
+
+            self.qdrant_adapter = QdrantVectorAdapter(
+                client=cast(Any, qdrant_client), embedding_dim=dim
+            )
         else:
             from rae_core.adapters import InMemoryVectorStore
 
@@ -102,17 +118,7 @@ class RAECoreService:
             logger.warning("using_in_memory_cache_fallback")
             self.redis_adapter = InMemoryCache()
 
-        # Initialize embedding provider
-        from apps.memory_api.config import settings
-
-        base_provider: IEmbeddingProvider
-        if getattr(settings, "RAE_PROFILE", "standard") == "distributed":
-            base_provider = RemoteEmbeddingProvider(base_url=settings.ML_SERVICE_URL)
-            logger.info("using_remote_embedding_provider", url=settings.ML_SERVICE_URL)
-        else:
-            base_provider = LocalEmbeddingProvider()
-
-        self.embedding_provider = EmbeddingManager(default_provider=base_provider)
+        # Initialize LLM provider with delegation support
 
         # Initialize LLM provider with delegation support
         self.llm_provider = get_llm_provider(task_repo=postgres_pool)
@@ -160,7 +166,7 @@ class RAECoreService:
     async def store_memory(
         self,
         tenant_id: str,
-        project: str,
+        project: Optional[str],
         content: str,
         source: str,
         importance: Optional[float] = None,
@@ -172,7 +178,7 @@ class RAECoreService:
 
         Args:
             tenant_id: Tenant identifier
-            project: Project identifier
+            project: Project identifier (defaults to 'default')
             content: Memory content
             source: Memory source
             importance: Importance score (0-1)
@@ -182,16 +188,19 @@ class RAECoreService:
         Returns:
             Memory ID
         """
+        # Ensure project is not None for RAE-Core agent_id mapping
+        project_id = project or "default"
+
         # Store in RAEEngine
         # Mapping project to agent_id for multi-tenancy within RAE-Core
         memory_id = await self.engine.store_memory(
             tenant_id=tenant_id,
-            agent_id=project,  # Use project as agent_id
+            agent_id=project_id,  # Use project_id as agent_id
             content=content,
             layer=layer or "episodic",
             importance=importance or 0.5,
             tags=tags,
-            metadata={"project": project, "source": source},
+            metadata={"project": project_id, "source": source},
         )
 
         logger.info(
@@ -377,10 +386,20 @@ class RAECoreService:
         # The NEW engine has search_memories returning List[Dict].
         # So I need to adapt the response.
 
+        import json
+
         from rae_core.models.search import SearchResult, SearchStrategy
 
         search_results = []
         for res in results:
+            # Ensure metadata is a dict
+            metadata = res.get("metadata", {})
+            if isinstance(metadata, str):
+                try:
+                    metadata = json.loads(metadata)
+                except json.JSONDecodeError:
+                    metadata = {"raw_metadata": metadata}
+
             # Map engine dict to SearchResult
             search_results.append(
                 SearchResult(
@@ -388,7 +407,7 @@ class RAECoreService:
                     content=res["content"],
                     score=res.get("search_score", 0.0),
                     strategy_used=SearchStrategy.HYBRID,
-                    metadata=res.get("metadata", {}),
+                    metadata=metadata,
                 )
             )
 

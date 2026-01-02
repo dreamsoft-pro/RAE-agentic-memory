@@ -8,9 +8,10 @@ from typing import Any, Optional
 
 try:
     import redis.asyncio as aioredis_mod
+
     aioredis = aioredis_mod
-except ImportError:
-    aioredis = None # type: ignore
+except ImportError:  # pragma: no cover
+    aioredis = None  # type: ignore[assignment]
 
 from ..interfaces.cache import ICacheProvider
 
@@ -30,11 +31,11 @@ class RedisCache(ICacheProvider):
     def __init__(
         self,
         url: str | None = None,
-        redis_client: Optional["aioredis.Redis"] = None,
+        redis_client: Optional["aioredis.Redis[Any]"] = None,
         prefix: str = "rae:",
         default_ttl: int = 3600,
-        **redis_kwargs,
-    ):
+        **redis_kwargs: Any,
+    ) -> None:
         """Initialize Redis cache.
 
         Args:
@@ -269,7 +270,7 @@ class RedisCache(ICacheProvider):
         except Exception:
             return False
 
-    async def close(self):
+    async def close(self) -> None:
         """Close Redis connection."""
         try:
             await self.redis.close()

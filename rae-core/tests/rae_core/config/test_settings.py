@@ -87,9 +87,7 @@ def test_default_settings():
     assert settings.llm_timeout == DEFAULT_LLM_TIMEOUT
 
     # Sync parameters
-    assert (
-        not settings.sync_enabled
-    )  # Default for sync_enabled is False in settings.py
+    assert not settings.sync_enabled  # Default for sync_enabled is False in settings.py
     assert settings.sync_batch_size == DEFAULT_SYNC_BATCH_SIZE
     assert settings.sync_timeout == DEFAULT_SYNC_TIMEOUT
     assert settings.sync_retry_attempts == DEFAULT_SYNC_RETRY_ATTEMPTS

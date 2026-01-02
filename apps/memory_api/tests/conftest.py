@@ -166,9 +166,9 @@ def postgres_container():
     # Start PostgreSQL container with pgvector
     container = PostgresContainer(
         image="ankane/pgvector:latest",
-        username="test_user",
-        password="test_password",
-        dbname="test_db",
+        username="rae",
+        password="rae_password",
+        dbname="rae",
     )
     container.start()
 

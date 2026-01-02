@@ -635,7 +635,7 @@ class TestSQLiteVectorStoreEdgeCases:
         assert vector_store._initialized is True
 
     @pytest.mark.asyncio
-    async def test_cosine_similarity_correctness(self, vector_store):
+    async def test_cosine_similarity_correctness(self, vector_store, golden_snapshot):
         """Test cosine similarity calculation correctness."""
         # Test vectors with known cosine similarities
         v1 = [1.0, 0.0, 0.0]
@@ -651,6 +651,14 @@ class TestSQLiteVectorStoreEdgeCases:
         results = await vector_store.search_similar(
             query_embedding=v1,
             tenant_id="tenant-1",
+        )
+
+        # Record golden snapshot
+        golden_snapshot(
+            test_name="cosine_similarity_sqlite_correctness",
+            inputs={"query": v1, "stored": v2},
+            output=results,
+            metadata={"adapter": "SQLiteVectorStore"},
         )
 
         assert len(results) == 1

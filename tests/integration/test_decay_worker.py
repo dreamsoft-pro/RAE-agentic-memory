@@ -8,7 +8,6 @@ memory importance decay works correctly across multiple scenarios.
 import json
 import uuid
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock
 
 import pytest
 

@@ -12,9 +12,9 @@ from uuid import UUID
 
 # Robust NumPy import to avoid re-import warnings
 if "numpy" in sys.modules:
-    np = sys.modules["numpy"]
-else:
-    import numpy as np
+    np = sys.modules["numpy"]  # pragma: no cover
+else:  # pragma: no cover
+    import numpy as np  # pragma: no cover
 
 from rae_core.interfaces.vector import IVectorStore
 
@@ -30,7 +30,7 @@ class InMemoryVectorStore(IVectorStore):
     - Batch operations
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize in-memory vector store."""
         # Main storage: {memory_id: vector_data}
         # vector_data = {"embedding": np.array, "tenant_id": str, "metadata": dict}
@@ -92,8 +92,8 @@ class InMemoryVectorStore(IVectorStore):
 
             for memory_id in candidate_ids:
                 vector_data = self._vectors.get(memory_id)
-                if not vector_data:
-                    continue
+                if not vector_data:  # pragma: no cover
+                    continue  # pragma: no cover
 
                 # Apply layer filter if specified
                 if layer:

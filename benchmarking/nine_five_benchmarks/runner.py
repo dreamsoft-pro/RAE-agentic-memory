@@ -17,7 +17,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
 from benchmarking.telemetry import BenchmarkTelemetry
 
@@ -588,6 +588,17 @@ def main():
         }
     else:
         quick_params = {}
+
+    # Results union type
+    results: Union[
+        NineFiveResults,
+        LECTResults,
+        MMITResults,
+        GRDTResults,
+        RSTResults,
+        MPEBResults,
+        ORBResults,
+    ]
 
     if args.benchmark == "all":
         results = runner.run_all(**quick_params)

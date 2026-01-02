@@ -94,7 +94,9 @@ def test_scored_memory_item():
 
     assert scored_item.score == 0.9
     assert scored_item.memory.content == "test"
-    assert scored_item.score_breakdown and scored_item.score_breakdown["similarity"] == 0.9
+    assert (
+        scored_item.score_breakdown and scored_item.score_breakdown["similarity"] == 0.9
+    )
 
     # Invalid score
     with pytest.raises(ValueError):

@@ -21,7 +21,7 @@ class ConflictResolutionStrategy(str, Enum):
 class MergeResult(BaseModel):
     """Result of memory merge operation."""
 
-    memory_id: UUID
+    memory_id: UUID | None = None
     success: bool
     strategy_used: ConflictResolutionStrategy
     merged_memory: dict[str, Any] | None = None
@@ -62,9 +62,10 @@ class ConflictResolver:
             MergeResult with resolved memory
         """
         strategy = strategy or self.default_strategy
-        memory_id = UUID(local["id"])
+        memory_id: UUID | None = None
 
         try:
+            memory_id = UUID(local["id"])
             if strategy == ConflictResolutionStrategy.LAST_WRITE_WINS:
                 merged = self._last_write_wins(local, remote, conflict_fields)
             elif strategy == ConflictResolutionStrategy.MERGE_FIELDS:
@@ -278,7 +279,7 @@ def merge_memories(
     return results
 
 
-def apply_merge_results(
+async def apply_merge_results(
     merge_results: list[MergeResult],
     storage_update_fn: Any,
 ) -> dict[str, Any]:
@@ -301,7 +302,7 @@ def apply_merge_results(
     for result in merge_results:
         if result.success and result.merged_memory:
             try:
-                # This would be called with: await storage_update_fn(result.merged_memory)
+                await storage_update_fn(result.merged_memory)
                 summary["successful"] += 1
             except Exception as e:
                 summary["failed"] += 1
