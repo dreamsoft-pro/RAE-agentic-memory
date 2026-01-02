@@ -26,6 +26,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
+
 from rae_core.math.reasoning import ReasoningController, ReasoningPath
 
 
@@ -344,11 +345,7 @@ class GRDTBenchmark:
         end_id: str,
         max_depth: int = 10,
     ) -> Optional[Tuple[List[str], List[RelationType]]]:
-        """
-        Find path between nodes using BFS.
-
-        Returns tuple of (node_path, relation_path) or None if not found.
-        """
+        """Find path between two nodes using BFS."""
         if start_id not in self.nodes or end_id not in self.nodes:
             return None
 
@@ -356,7 +353,9 @@ class GRDTBenchmark:
             return [start_id], []
 
         # BFS with path tracking
-        queue = deque([(start_id, [start_id], [])])
+        queue: deque[tuple[str, list[str], list[RelationType]]] = deque(
+            [(start_id, [start_id], [])]
+        )
         visited = {start_id}
 
         while queue:
@@ -492,7 +491,10 @@ class GRDTBenchmark:
 
                 # Stop if we reached the target
                 if current_node == query.end_node:
-                    if best_completed_path is None or path.uncertainty > best_completed_path.uncertainty:
+                    if (
+                        best_completed_path is None
+                        or path.uncertainty > best_completed_path.uncertainty
+                    ):
                         best_completed_path = path
                     continue
 
@@ -503,7 +505,7 @@ class GRDTBenchmark:
                 # We want the node that comes AFTER the current path
                 # Current path has N nodes. Next node is at index N in expected_path.
                 if len(path.nodes) < len(query.expected_path):
-                     expected_next = query.expected_path[len(path.nodes)]
+                    expected_next = query.expected_path[len(path.nodes)]
 
                 # Expand neighbors
                 neighbors = self.adjacency.get(current_node, [])
@@ -532,7 +534,9 @@ class GRDTBenchmark:
                     candidates.append(correct_move)
 
                 # Add distractions
-                random_candidates = random.sample(neighbors, min(len(neighbors), beam_width))
+                random_candidates = random.sample(
+                    neighbors, min(len(neighbors), beam_width)
+                )
                 for rc in random_candidates:
                     if rc != correct_move:
                         candidates.append(rc)
@@ -545,7 +549,7 @@ class GRDTBenchmark:
                         uncertainty=path.uncertainty,
                         contradictions=path.contradictions.copy(),
                         metadata=path.metadata.copy(),
-                        tokens_used=path.tokens_used
+                        tokens_used=path.tokens_used,
                     )
 
                     # Uncertainty penalty for deviation
@@ -577,7 +581,11 @@ class GRDTBenchmark:
                 break
 
         # Select best path
-        final_path = best_completed_path if best_completed_path else (beam[0] if beam else initial_path)
+        final_path = (
+            best_completed_path
+            if best_completed_path
+            else (beam[0] if beam else initial_path)
+        )
 
         # Construct result based on final_path
         # Reconstruct reasoning steps for validation
@@ -586,7 +594,7 @@ class GRDTBenchmark:
 
         # Skip start node in loop
         for i in range(1, len(final_path.nodes)):
-            curr = final_path.nodes[i-1]
+            curr = final_path.nodes[i - 1]
             next_n = final_path.nodes[i]
             # Find relation (hacky lookup)
             rel_val = "unknown"
@@ -605,21 +613,22 @@ class GRDTBenchmark:
                 if next_n == expected_n:
                     is_correct = True
 
-            reasoning_steps.append({
-                "step": i,
-                "from": curr,
-                "to": next_n,
-                "relation": rel_val,
-                "expected_next": expected_n,
-                "correct": is_correct,
-                "uncertainty": final_path.uncertainty
-            })
+            reasoning_steps.append(
+                {
+                    "step": i,
+                    "from": curr,
+                    "to": next_n,
+                    "relation": rel_val,
+                    "expected_next": expected_n,
+                    "correct": is_correct,
+                    "uncertainty": final_path.uncertainty,
+                }
+            )
 
         # Final correctness
-        correct = (
-            final_path.nodes[-1] == query.end_node
-            and len(final_path.nodes) == len(query.expected_path)
-        )
+        correct = final_path.nodes[-1] == query.end_node and len(
+            final_path.nodes
+        ) == len(query.expected_path)
 
         coherent = all(step["correct"] for step in reasoning_steps)
         latency = (time.time() - start_time) * 1000

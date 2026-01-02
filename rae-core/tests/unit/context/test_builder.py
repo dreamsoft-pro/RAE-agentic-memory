@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 import pytest
+
 from rae_core.context.builder import ContextBuilder, ContextFormat
 from rae_core.models.context import ContextMetadata
 

@@ -49,12 +49,12 @@ class MemoryLayerBase(ABC):
         Returns:
             UUID of the created memory
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def get_memory(self, memory_id: UUID) -> MemoryItem | None:
         """Retrieve a memory by ID."""
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def search_memories(
@@ -73,7 +73,7 @@ class MemoryLayerBase(ABC):
         Returns:
             List of scored memory items
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     async def cleanup(self) -> int:
@@ -82,7 +82,7 @@ class MemoryLayerBase(ABC):
         Returns:
             Number of memories affected
         """
-        pass
+        pass  # pragma: no cover
 
     async def count_memories(self) -> int:
         """Count total memories in this layer."""

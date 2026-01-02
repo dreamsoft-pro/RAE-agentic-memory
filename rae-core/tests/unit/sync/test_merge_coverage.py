@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
+
 from rae_core.sync.merge import (
     ConflictResolutionStrategy,
     ConflictResolver,

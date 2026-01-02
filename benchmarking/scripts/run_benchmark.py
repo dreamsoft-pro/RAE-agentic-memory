@@ -19,7 +19,7 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import asyncpg
 import yaml
@@ -146,9 +146,9 @@ class RAEBenchmarkRunner:
         self.project_id = "benchmark_project"
 
         # Statistics
-        self.insert_times = []
-        self.query_times = []
-        self.results = []
+        self.insert_times: List[float] = []
+        self.query_times: List[float] = []
+        self.results: List[Dict[str, Any]] = []
 
         # Database pool (if using direct DB access)
         self.pool = None
@@ -160,10 +160,19 @@ class RAEBenchmarkRunner:
         with open(self.benchmark_file, "r") as f:
             self.benchmark_data = yaml.safe_load(f)
 
-        print(f"   Name: {self.benchmark_data['name']}")
-        print(f"   Description: {self.benchmark_data['description']}")
-        print(f"   Memories: {len(self.benchmark_data['memories'])}")
-        print(f"   Queries: {len(self.benchmark_data['queries'])}")
+        if not self.benchmark_data:
+            raise ValueError(
+                f"Failed to load benchmark data from {self.benchmark_file}"
+            )
+
+        # Type assertion for Mypy
+        assert isinstance(self.benchmark_data, dict)
+
+        data = self.benchmark_data
+        print(f"   Name: {data.get('name', 'Unknown')}")
+        print(f"   Description: {data.get('description', 'No description')}")
+        print(f"   Memories: {len(data.get('memories', []))}")
+        print(f"   Queries: {len(data.get('queries', []))}")
 
     async def setup_database(self):
         """Setup direct database connection"""
@@ -281,6 +290,7 @@ class RAEBenchmarkRunner:
         except Exception as e:
             print(f"   ⚠️  Qdrant cleanup failed: {e}")
 
+        assert self.pool is not None
         async with self.pool.acquire() as conn:
             # Delete from PostgreSQL
             await conn.execute(
@@ -299,8 +309,11 @@ class RAEBenchmarkRunner:
         print("   ✅ Cleanup complete")
 
     async def insert_memories(self):
-        """Insert all benchmark memories into RAE"""
-        print(f"\n📝 Inserting {len(self.benchmark_data['memories'])} memories...")
+        """Insert memories into RAE"""
+        assert self.benchmark_data is not None
+        data = self.benchmark_data
+        memories = data["memories"]
+        print(f"\n📝 Inserting {len(memories)} memories...")
 
         # Lazy import to avoid initialization issues in test environments
         from apps.memory_api.services.vector_store import get_vector_store
@@ -308,7 +321,11 @@ class RAEBenchmarkRunner:
         embedding_service = get_embedding_service()
         vector_store = get_vector_store(self.pool)
 
-        for i, memory in enumerate(self.benchmark_data["memories"], 1):
+        memories = self.benchmark_data.get("memories", [])
+        assert isinstance(memories, list)
+
+        for i, memory in enumerate(memories, 1):
+            assert isinstance(memory, dict)
             start_time = time.time()
 
             try:
@@ -366,7 +383,9 @@ class RAEBenchmarkRunner:
                     )
 
             except Exception as e:
-                print(f"   ❌ Error inserting memory {memory.get('id', 'unknown')}: {e}")
+                print(
+                    f"   ❌ Error inserting memory {memory.get('id', 'unknown')}: {e}"
+                )
                 raise
 
         avg_time = (
@@ -376,7 +395,9 @@ class RAEBenchmarkRunner:
 
     async def run_queries(self):
         """Execute all benchmark queries and collect results"""
-        print(f"\n🔍 Running {len(self.benchmark_data['queries'])} queries...")
+        assert self.benchmark_data is not None
+        data = self.benchmark_data
+        print(f"\n🔍 Running {len(data['queries'])} queries...")
 
         # Lazy import to avoid initialization issues in test environments
         from apps.memory_api.services.vector_store import get_vector_store
@@ -384,10 +405,14 @@ class RAEBenchmarkRunner:
         embedding_service = get_embedding_service()
         vector_store = get_vector_store(self.pool)
 
-        config = self.benchmark_data.get("config", {})
+        config: Dict[str, Any] = data.get("config", {})
         top_k = config.get("top_k", 5)
 
-        for i, query_data in enumerate(self.benchmark_data["queries"], 1):
+        queries = data.get("queries", [])
+        assert isinstance(queries, list)
+
+        for i, query_data in enumerate(queries, 1):
+            assert isinstance(query_data, dict)
             query_text = query_data["query"]
             expected_ids = query_data["expected_source_ids"]
 
@@ -410,9 +435,13 @@ class RAEBenchmarkRunner:
 
                 # Map DB IDs back to benchmark IDs
                 retrieved_ids = []
+                memories_list = self.benchmark_data.get("memories", [])
+                assert isinstance(memories_list, list)
+
                 for result in search_results:
                     # Find the original benchmark ID
-                    for memory in self.benchmark_data["memories"]:
+                    for memory in memories_list:
+                        assert isinstance(memory, dict)
                         if str(memory.get("_db_id")) == str(result.id):
                             retrieved_ids.append(memory["id"])
                             break
@@ -443,17 +472,20 @@ class RAEBenchmarkRunner:
         )
         print(f"   ⏱️  Average query time: {avg_time*1000:.2f}ms")
 
-    def calculate_metrics(self) -> Dict:
+    def calculate_metrics(self) -> Dict[str, Any]:
         """Calculate all benchmark metrics"""
         print("\n📊 Calculating metrics...")
 
         # Prepare data for metric calculation
         results_tuple = [(r["expected"], r["retrieved"]) for r in self.results]
 
-        self.benchmark_data.get("config", {})
+        # Ensure benchmark data is loaded for config access
+        if self.benchmark_data:
+            self.benchmark_data.get("config", {})
+
         k_values = [3, 5, 10]
 
-        metrics = {
+        metrics: Dict[str, Any] = {
             "mrr": BenchmarkMetrics.calculate_mrr(results_tuple),
             "hit_rate": {},
             "precision": {},
@@ -461,46 +493,57 @@ class RAEBenchmarkRunner:
         }
 
         for k in k_values:
-            metrics["hit_rate"][f"@{k}"] = BenchmarkMetrics.calculate_hit_rate(
+            # Cast sub-dictionaries for Mypy
+            hit_rate_dict = cast(Dict[str, float], metrics["hit_rate"])
+            precision_dict = cast(Dict[str, float], metrics["precision"])
+            recall_dict = cast(Dict[str, float], metrics["recall"])
+
+            hit_rate_dict[f"@{k}"] = BenchmarkMetrics.calculate_hit_rate(
                 results_tuple, k
             )
-            metrics["precision"][f"@{k}"] = BenchmarkMetrics.calculate_precision_at_k(
+            precision_dict[f"@{k}"] = BenchmarkMetrics.calculate_precision_at_k(
                 results_tuple, k
             )
-            metrics["recall"][f"@{k}"] = BenchmarkMetrics.calculate_recall_at_k(
+            recall_dict[f"@{k}"] = BenchmarkMetrics.calculate_recall_at_k(
                 results_tuple, k
             )
 
         # Performance metrics
         metrics["performance"] = {
             "avg_insert_time_ms": (
-                sum(self.insert_times) / len(self.insert_times) * 1000
-            )
-            if self.insert_times
-            else 0,
-            "avg_query_time_ms": (sum(self.query_times) / len(self.query_times) * 1000)
-            if self.query_times
-            else 0,
-            "p95_query_time_ms": sorted(self.query_times)[
-                int(len(self.query_times) * 0.95)
-            ]
-            * 1000
-            if self.query_times
-            else 0,
-            "p99_query_time_ms": sorted(self.query_times)[
-                int(len(self.query_times) * 0.99)
-            ]
-            * 1000
-            if self.query_times
-            else 0,
+                (sum(self.insert_times) / len(self.insert_times) * 1000)
+                if self.insert_times
+                else 0
+            ),
+            "avg_query_time_ms": (
+                (sum(self.query_times) / len(self.query_times) * 1000)
+                if self.query_times
+                else 0
+            ),
+            "p95_query_time_ms": (
+                sorted(self.query_times)[int(len(self.query_times) * 0.95)] * 1000
+                if self.query_times
+                else 0
+            ),
+            "p99_query_time_ms": (
+                sorted(self.query_times)[int(len(self.query_times) * 0.99)] * 1000
+                if self.query_times
+                else 0
+            ),
         }
 
         # Quality score (weighted average)
-        metrics["overall_quality_score"] = (
-            metrics["mrr"] * 0.4
-            + metrics["hit_rate"]["@5"] * 0.3
-            + metrics["precision"]["@5"] * 0.15
-            + metrics["recall"]["@5"] * 0.15
+        # Cast to typed dicts to avoid "object" errors
+        hit_rate = cast(Dict[str, float], metrics["hit_rate"])
+        precision = cast(Dict[str, float], metrics["precision"])
+        recall = cast(Dict[str, float], metrics["recall"])
+        mrr = cast(float, metrics["mrr"])
+
+        metrics["overall_quality_score"] = float(
+            mrr * 0.4
+            + hit_rate["@5"] * 0.3
+            + precision["@5"] * 0.15
+            + recall["@5"] * 0.15
         )
 
         print(f"   MRR: {metrics['mrr']:.4f}")
@@ -509,12 +552,15 @@ class RAEBenchmarkRunner:
 
         return metrics
 
-    def save_results(self, metrics: Dict):
+    def save_results(self, metrics: Dict[str, Any]):
         """Save benchmark results to JSON and Markdown"""
+        assert self.benchmark_data is not None
+        assert isinstance(self.benchmark_data, dict)
+        data = self.benchmark_data
         print("\n💾 Saving results...")
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        benchmark_name = self.benchmark_data["name"]
+        benchmark_name = data["name"]
 
         # Prepare results data
         project_root = Path(__file__).parent.parent.parent
@@ -526,14 +572,14 @@ class RAEBenchmarkRunner:
         results_data = {
             "benchmark": {
                 "name": benchmark_name,
-                "description": self.benchmark_data["description"],
-                "version": self.benchmark_data.get("version", "1.0"),
+                "description": data["description"],
+                "version": data.get("version", "1.0"),
                 "file": str(rel_benchmark_file),
             },
             "execution": {
                 "timestamp": datetime.now().isoformat(),
-                "num_memories": len(self.benchmark_data["memories"]),
-                "num_queries": len(self.benchmark_data["queries"]),
+                "num_memories": len(data["memories"]),
+                "num_queries": len(data["queries"]),
                 "total_time_seconds": sum(self.insert_times) + sum(self.query_times),
             },
             "metrics": metrics,

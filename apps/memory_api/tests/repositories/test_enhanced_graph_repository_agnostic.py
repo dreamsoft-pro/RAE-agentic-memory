@@ -5,11 +5,11 @@ Tests for EnhancedGraphRepository ensuring database agnosticism.
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from rae_core.interfaces.database import IDatabaseProvider
 
 from apps.memory_api.repositories.graph_repository_enhanced import (
     EnhancedGraphRepository,
 )
+from rae_core.interfaces.database import IDatabaseProvider
 
 
 class MockDatabaseProvider(IDatabaseProvider):

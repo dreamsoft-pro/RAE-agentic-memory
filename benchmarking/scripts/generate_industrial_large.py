@@ -108,11 +108,9 @@ class IndustrialDataGenerator:
             "tags": ["log", level.lower(), service],
             "metadata": {
                 "source": "System Logs",
-                "importance": 0.3
-                if level == "INFO"
-                else 0.6
-                if level == "WARN"
-                else 0.9,
+                "importance": (
+                    0.3 if level == "INFO" else 0.6 if level == "WARN" else 0.9
+                ),
                 "timestamp": timestamp.isoformat(),
                 "service": service,
                 "level": level,
@@ -252,7 +250,7 @@ class IndustrialDataGenerator:
 
         for idx in range(count):
             rand = random.random()
-            cumulative = 0
+            cumulative: float = 0.0
             for threshold, generator in distributions:
                 cumulative += threshold
                 if rand < cumulative:
@@ -327,23 +325,26 @@ class IndustrialDataGenerator:
             # Find relevant memories (tag + content match)
             filter_tag = template_info["filter_tag"]
             relevant_memories = []
-            
+
             for m in memories:
                 if filter_tag not in m["tags"]:
                     continue
-                
+
                 # If we have a specific keyword, check for it
                 if relevance_keyword:
                     # Check text and specific metadata fields
                     text_match = relevance_keyword in m["text"].lower()
                     meta_match = any(
-                        str(v).lower() == relevance_keyword 
+                        str(v).lower() == relevance_keyword
                         for v in m["metadata"].values()
                     )
                     # For docs, check if the keyword appears in the path
                     doc_match = False
-                    if filter_tag == "documentation" and relevance_keyword in m["text"].lower():
-                         doc_match = True
+                    if (
+                        filter_tag == "documentation"
+                        and relevance_keyword in m["text"].lower()
+                    ):
+                        doc_match = True
 
                     if text_match or meta_match or doc_match:
                         relevant_memories.append(m)
@@ -351,13 +352,16 @@ class IndustrialDataGenerator:
                     # No keyword (e.g. "critical incidents"), just tag/severity check might be needed
                     # For "critical incidents", checking severity='sev1' might be good, but template says "critical"
                     if "critical" in template:
-                        if "critical" in m.get("tags", []) or m.get("metadata", {}).get("priority") == "critical":
-                             relevant_memories.append(m)
+                        if (
+                            "critical" in m.get("tags", [])
+                            or m.get("metadata", {}).get("priority") == "critical"
+                        ):
+                            relevant_memories.append(m)
                         # For incidents, sev1 is critical
                         elif m.get("metadata", {}).get("severity") == "sev1":
-                             relevant_memories.append(m)
+                            relevant_memories.append(m)
                         else:
-                             continue # Skip non-critical
+                            continue  # Skip non-critical
                     elif "high priority" in template:
                         if m.get("metadata", {}).get("priority") == "high":
                             relevant_memories.append(m)
@@ -377,9 +381,7 @@ class IndustrialDataGenerator:
             difficulty = (
                 "easy"
                 if num_expected <= 5
-                else "medium"
-                if num_expected <= 20
-                else "hard"
+                else "medium" if num_expected <= 20 else "hard"
             )
 
             queries.append(

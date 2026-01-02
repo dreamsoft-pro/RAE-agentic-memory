@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID, uuid4
 
 import pytest
+
 from rae_core.search.strategies.fulltext import FullTextStrategy
 from rae_core.search.strategies.sparse import SparseVectorStrategy
 

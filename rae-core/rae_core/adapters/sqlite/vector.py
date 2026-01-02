@@ -11,6 +11,7 @@ from uuid import UUID
 
 import aiosqlite
 import numpy as np
+
 from rae_core.interfaces.vector import IVectorStore
 
 

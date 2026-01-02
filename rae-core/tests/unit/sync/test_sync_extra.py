@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
 from cryptography.fernet import Fernet
+
 from rae_core.sync.encryption import E2EEncryption
 from rae_core.sync.merge import ConflictResolutionStrategy, ConflictResolver
 

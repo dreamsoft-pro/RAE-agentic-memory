@@ -3,6 +3,7 @@
 from typing import Any, AsyncContextManager, cast
 
 import asyncpg
+
 from rae_core.interfaces.database import (
     IDatabaseConnection,
     IDatabaseProvider,

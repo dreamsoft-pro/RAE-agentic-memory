@@ -340,7 +340,7 @@ class InsightPrecision(MathMetricBase):
             return 0.0
 
         num_insights = len(generated_insights)
-        scores = {
+        scores: Dict[str, List[float]] = {
             "semantic": [],
             "term": [],
             "manual": [],

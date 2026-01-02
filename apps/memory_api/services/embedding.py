@@ -1,9 +1,9 @@
 from typing import TYPE_CHECKING, Any, List, Optional, cast
 
 import litellm
-from rae_core.interfaces.embedding import IEmbeddingProvider
 
 from apps.memory_api.metrics import embedding_time_histogram
+from rae_core.interfaces.embedding import IEmbeddingProvider
 
 try:  # pragma: no cover
     from sentence_transformers import SentenceTransformer

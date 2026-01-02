@@ -237,9 +237,7 @@ class MMITBenchmark:
         self.blocked_attacks = 0
 
     def _generate_embedding(
-        self,
-        content: str,
-        noise: float = 0.0
+        self, content: str, noise: float = 0.0
     ) -> NDArray[np.float32]:
         """Generate embedding for content."""
         content_hash = hashlib.md5(content.encode()).hexdigest()
@@ -312,8 +310,8 @@ class MMITBenchmark:
 
                     # Strict Isolation Check: Must belong to same agent/session
                     is_cross_agent = (
-                        other_mem.agent_id != memory.agent_id or
-                        other_mem.session_id != memory.session_id
+                        other_mem.agent_id != memory.agent_id
+                        or other_mem.session_id != memory.session_id
                     )
 
                     if not is_legitimate or is_cross_agent:
@@ -337,7 +335,7 @@ class MMITBenchmark:
                                 "source_memory_id": other_id,
                                 "similarity": sim,
                                 "source_agent": other_mem.agent_id,
-                                "target_agent": memory.agent_id
+                                "target_agent": memory.agent_id,
                             },
                         )
                         return event
@@ -372,7 +370,7 @@ class MMITBenchmark:
             timestamp=datetime.now(),
             origin_layer=layer,
             agent_id=agent_id,
-            session_id=session_id
+            session_id=session_id,
         )
 
         event = None
@@ -535,8 +533,12 @@ class MMITBenchmark:
                         # Only count as interference if it belongs to same agent context
                         # Different agents having same content is fine (coincidence)
                         # BUT same agent having duplicated content in wrong layers is interference
-                        source_mem_id = [mid for mid, m in source_memories.items()
-                                       if self._content_hash(m.content) == self._content_hash(mem.content)][0]
+                        source_mem_id = [
+                            mid
+                            for mid, m in source_memories.items()
+                            if self._content_hash(m.content)
+                            == self._content_hash(mem.content)
+                        ][0]
                         source_mem = source_memories[source_mem_id]
 
                         if source_mem.agent_id == mem.agent_id:
@@ -594,7 +596,7 @@ class MMITBenchmark:
         for op in range(num_operations):
             # Pick active agent for this op
             current_agent = random.choice(agents)
-            current_session = f"session_{current_agent}_{op % 5}" # Rotate sessions
+            current_session = f"session_{current_agent}_{op % 5}"  # Rotate sessions
 
             # Randomly select operation type
             op_type = random.choice(["create", "create", "create", "transfer", "leak"])
@@ -622,7 +624,9 @@ class MMITBenchmark:
                     event=f"event_{op % 50}",
                     content=f"content_{op}",
                 )
-                self._add_to_layer(content, layer, agent_id=current_agent, session_id=current_session)
+                self._add_to_layer(
+                    content, layer, agent_id=current_agent, session_id=current_session
+                )
 
             elif op_type == "transfer":
                 # Legitimate transfer between layers
@@ -631,7 +635,8 @@ class MMITBenchmark:
                     source, target = random.choice(valid_paths)
                     # Filter memories belonging to current agent
                     source_memories = [
-                        mid for mid, m in self.layers[source].items()
+                        mid
+                        for mid, m in self.layers[source].items()
                         if m.agent_id == current_agent
                     ]
 
@@ -654,8 +659,10 @@ class MMITBenchmark:
                     # Scenario B: Leak to wrong agent (critical violation!)
 
                     target_agent = current_agent
-                    if random.random() < 0.3: # 30% chance of cross-agent leak attempt
-                        target_agent = random.choice([a for a in agents if a != source_mem.agent_id])
+                    if random.random() < 0.3:  # 30% chance of cross-agent leak attempt
+                        target_agent = random.choice(
+                            [a for a in agents if a != source_mem.agent_id]
+                        )
 
                     # Pick a non-adjacent layer (illegitimate target)
                     illegitimate_targets = [
@@ -674,7 +681,7 @@ class MMITBenchmark:
                             target,
                             agent_id=target_agent,
                             session_id=current_session,
-                            check_leakage=True
+                            check_leakage=True,
                         )
 
             if verbose and (op + 1) % 1000 == 0:
@@ -782,8 +789,8 @@ class MMITBenchmark:
             print(f"  Legitimate Transfers: {self.legitimate_transfers}")
             print(f"  Illegitimate Leakages: {self.illegitimate_leakages}")
             print("\n  Layer Isolation Scores:")
-            for layer, score in layer_isolation.items():
-                print(f"    {layer}: {score:.4f}")
+            for layer_name, score in layer_isolation.items():
+                print(f"    {layer_name}: {score:.4f}")
             print(f"\n  Duration: {duration:.2f}s")
 
         return results

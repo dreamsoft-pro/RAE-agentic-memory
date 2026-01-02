@@ -1,6 +1,7 @@
 from uuid import uuid4
 
 import pytest
+
 from rae_core.adapters.memory.vector import InMemoryVectorStore
 
 

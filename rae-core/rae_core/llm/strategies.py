@@ -26,7 +26,7 @@ class LLMStrategy(ABC):
         Returns:
             Tuple of (response, provider_name_used)
         """
-        pass
+        pass  # pragma: no cover
 
 
 class SingleLLMStrategy(LLMStrategy):

@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 import pytest
+
 from rae_core.sync.diff import ChangeType, calculate_memory_diff, get_sync_direction
 from rae_core.sync.protocol import SyncProtocol
 

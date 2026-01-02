@@ -8,7 +8,6 @@ Tests cover:
 - Configuration system
 """
 
-
 import pytest
 
 from benchmarking.math_metrics.controller import (

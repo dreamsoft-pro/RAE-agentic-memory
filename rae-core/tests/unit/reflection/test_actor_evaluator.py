@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 import pytest
+
 from rae_core.reflection.actor import Actor
 from rae_core.reflection.evaluator import Evaluator
 

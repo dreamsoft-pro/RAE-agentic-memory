@@ -277,7 +277,7 @@ def main():
     print("=" * 60)
 
     # Define parameter grid
-    param_grid = {
+    param_grid: Dict[str, List[Any]] = {
         "math_level": [1, 2, 3, 4],
         "batch_size": [5, 10, 25, 50, 100],
         "cache_enabled": [True, False],
@@ -297,7 +297,7 @@ def main():
         quality += min(batch_size, 50) / 50 * 15  # Diminishing returns
         quality += 10 if cache else 0
 
-        return quality
+        return float(quality)
 
     def cost_fn(config: Configuration) -> float:
         """Simulate cost based on parameters."""
@@ -312,7 +312,7 @@ def main():
         cost += batch_size * 0.5
         cost += 15 if cache else 0
 
-        return cost
+        return float(cost)
 
     # Run auto-tuner
     tuner = ORBAutoTuner(verbose=True)

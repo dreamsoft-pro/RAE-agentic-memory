@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock
 from uuid import UUID, uuid4
 
 import pytest
+
 from rae_core.search.engine import HybridSearchEngine
 from rae_core.search.strategies import SearchStrategy
 

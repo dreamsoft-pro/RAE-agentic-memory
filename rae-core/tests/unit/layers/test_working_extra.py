@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
+
 from rae_core.layers.working import WorkingLayer
 from rae_core.models.memory import MemoryItem
 
