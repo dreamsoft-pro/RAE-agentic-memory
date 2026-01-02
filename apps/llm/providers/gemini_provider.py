@@ -28,19 +28,25 @@ class GeminiProvider:
     LLM provider for Google Gemini models.
     """
 
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str | None = None, credentials: Any = None):
         """
         Initialize the Gemini provider.
 
         Args:
             api_key: Google API key
+            credentials: Optional OAuth2 credentials
         """
         self.name = "gemini"
         self.max_context_tokens = 1000000  # Gemini 1.5 Pro has 1M context
         self.supports_streaming = True
         self.supports_tools = True
 
-        genai.configure(api_key=api_key)
+        if api_key:
+            genai.configure(api_key=api_key)
+        elif credentials:
+            genai.configure(credentials=credentials)
+        else:
+            raise ValueError("Either api_key or credentials must be provided")
 
     def _convert_messages(self, request: LLMRequest) -> tuple[str, list[dict]]:
         """

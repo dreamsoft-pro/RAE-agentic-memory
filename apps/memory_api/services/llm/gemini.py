@@ -14,11 +14,19 @@ class GeminiProvider(LLMProvider):
     An LLM provider that uses the Google Gemini API.
     """
 
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: Optional[str] = None, credentials: Any = None):
         key = api_key or settings.GEMINI_API_KEY
-        if not key:
-            raise ValueError("GEMINI_API_KEY is not set.")
-        genai.configure(api_key=key)
+        if key:
+            genai.configure(api_key=key)
+        elif credentials:
+            genai.configure(credentials=credentials)
+        else:
+            try:
+                import google.auth
+                credentials, project_id = google.auth.default()
+                genai.configure(credentials=credentials)
+            except Exception as e:
+                raise ValueError(f"GEMINI_API_KEY is not set and ADC failed: {e}")
         self.client = instructor.patch(genai.GenerativeModel)
 
     @retry(

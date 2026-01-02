@@ -62,16 +62,27 @@ class QdrantStore(MemoryVectorStore):
         """
         collection_name = "memories"
         try:
+            # Determine vector dimension from EmbeddingService
+            from apps.memory_api.services.embedding import LocalEmbeddingProvider, get_embedding_service
+            
+            try:
+                embedding_service = get_embedding_service()
+                provider = LocalEmbeddingProvider(embedding_service)
+                dimension = provider.get_dimension()
+            except Exception as e:
+                logger.warning(f"Could not determine embedding dimension from service: {e}. using default 384.")
+                dimension = 384
+
             collections = self.qdrant_client.get_collections().collections
             exists = any(c.name == collection_name for c in collections)
 
             if not exists:
-                logger.info(f"Collection '{collection_name}' not found. Creating...")
+                logger.info(f"Collection '{collection_name}' not found. Creating with dim={dimension}...")
                 self.qdrant_client.create_collection(
                     collection_name=collection_name,
                     vectors_config={
                         "dense": models.VectorParams(
-                            size=384,  # Default for all-MiniLM-L6-v2
+                            size=dimension,
                             distance=models.Distance.COSINE,
                         )
                     },
