@@ -60,7 +60,7 @@ def hybrid_search(mock_pool, mock_graph_repo):
         mock_emb.generate_embeddings_async = AsyncMock(return_value=[[0.1] * 384])
         # Mock the new method for Multi-Vector
         mock_emb.generate_embeddings_for_model = AsyncMock(return_value=[[0.1] * 384])
-        
+
         mock_get_emb.return_value = mock_emb
         yield HybridSearchService(
             rae_service=mock_rae_service, graph_repo=mock_graph_repo
@@ -931,7 +931,9 @@ class TestHybridSearchWithRealDatabase:
         mock_embedding.generate_embeddings = Mock(return_value=[[0.1] * 384])
         mock_embedding.generate_embeddings_async = AsyncMock(return_value=[[0.1] * 384])
         # Add generate_embeddings_for_model mock for Multi-Vector support
-        mock_embedding.generate_embeddings_for_model = AsyncMock(return_value=[[0.1] * 384])
+        mock_embedding.generate_embeddings_for_model = AsyncMock(
+            return_value=[[0.1] * 384]
+        )
 
         # Create service with real db_pool
         from apps.memory_api.services.hybrid_search import HybridSearchService
