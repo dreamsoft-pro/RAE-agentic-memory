@@ -49,7 +49,7 @@ class MockDatabaseProvider(IDatabaseProvider):
         conn.fetchval = AsyncMock()
         conn.executemany = AsyncMock()
         conn.transaction = MagicMock()
-        
+
         cm = MagicMock()
         cm.__aenter__ = AsyncMock(return_value=conn)
         cm.__aexit__ = AsyncMock(return_value=None)

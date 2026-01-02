@@ -195,10 +195,67 @@ class RAEBenchmarkRunner:
 
         # Lazy import to avoid initialization issues
         from qdrant_client import models
+        from qdrant_client.http import models as rest_models
 
         from apps.memory_api.services.vector_store import get_vector_store
 
         vector_store = get_vector_store(self.pool)
+
+        # Check collection dimensionality and recreate if necessary
+        try:
+            # Determine expected dimension from EmbeddingService
+            from apps.memory_api.services.embedding import LocalEmbeddingProvider, get_embedding_service
+            
+            embedding_service = get_embedding_service()
+            # Force initialization to detect model and dimension
+            embedding_service._initialize_model()
+            provider = LocalEmbeddingProvider(embedding_service)
+            expected_dim = provider.get_dimension()
+            print(f"   ℹ️ Expected embedding dimension: {expected_dim}")
+
+            collection_info = vector_store.qdrant_client.get_collection(
+                collection_name="memories"
+            )
+            
+            # Extract size safely
+            current_size = None
+            vectors_config = collection_info.config.params.vectors
+            
+            # Case 1: Single unnamed vector config (VectorParams object)
+            if hasattr(vectors_config, "size"):
+                current_size = vectors_config.size
+            # Case 2: Dictionary of named vectors (common in RAE)
+            elif isinstance(vectors_config, dict):
+                if "dense" in vectors_config:
+                    dense_config = vectors_config["dense"]
+                    if hasattr(dense_config, "size"):
+                        current_size = dense_config.size
+                    elif isinstance(dense_config, dict) and "size" in dense_config:
+                        current_size = dense_config["size"]
+            # Case 3: Just a dictionary (legacy or other client version)
+            elif isinstance(vectors_config, dict) and "size" in vectors_config:
+                current_size = vectors_config["size"]
+
+            print(f"   ℹ️ Current collection dimension: {current_size}")
+
+            # Recreate if dimensions mismatch
+            if current_size is not None and current_size != expected_dim:
+                print(
+                    f"   ⚠️ Collection dimension mismatch (found {current_size}, expected {expected_dim}). Recreating..."
+                )
+                vector_store.qdrant_client.delete_collection("memories")
+                vector_store.qdrant_client.create_collection(
+                    collection_name="memories",
+                    vectors_config={
+                        "dense": rest_models.VectorParams(
+                            size=expected_dim, distance=rest_models.Distance.COSINE
+                        )
+                    },
+                    sparse_vectors_config={"text": models.SparseVectorParams()},
+                )
+                print(f"   ✅ Collection recreated with dim={expected_dim}")
+        except Exception as e:
+            print(f"   ℹ️ Could not check/recreate collection: {e}")
 
         # Delete ALL vectors with this tenant_id from Qdrant using filter-based deletion
         # This is more thorough than deleting only vectors that are in PostgreSQL
