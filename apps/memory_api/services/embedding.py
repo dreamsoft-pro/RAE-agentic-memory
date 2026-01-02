@@ -87,7 +87,7 @@ class EmbeddingService:
             try:
                 kwargs = {}
                 if self.litellm_model.startswith("ollama/"):
-                    kwargs["api_base"] = self.settings.OLLAMA_API_URL
+                    kwargs["api_base"] = self.settings.OLLAMA_API_BASE or self.settings.OLLAMA_API_URL
 
                 response = litellm.embedding(
                     model=self.litellm_model, input=texts, **kwargs
@@ -129,7 +129,7 @@ class EmbeddingService:
             try:
                 kwargs = {}
                 if self.litellm_model.startswith("ollama/"):
-                    kwargs["api_base"] = self.settings.OLLAMA_API_URL
+                    kwargs["api_base"] = self.settings.OLLAMA_API_BASE or self.settings.OLLAMA_API_URL
 
                 response = await litellm.aembedding(
                     model=self.litellm_model, input=texts, **kwargs
@@ -155,7 +155,7 @@ class EmbeddingService:
         try:
             kwargs = {}
             if model_name.startswith("ollama/"):
-                kwargs["api_base"] = self.settings.OLLAMA_API_URL
+                kwargs["api_base"] = self.settings.OLLAMA_API_BASE or self.settings.OLLAMA_API_URL
 
             # Determine dimension for fallback
             dim = 384
