@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import os
 
 import structlog
 from fastapi import FastAPI, HTTPException, Request
@@ -70,14 +71,18 @@ async def lifespan(app: FastAPI):
     )
 
     # 1. Initialize Connections (via Factory)
-    from rae_core.factories.infra_factory import InfrastructureFactory
-
-    await InfrastructureFactory.initialize(app, settings)
+    if os.getenv("RAE_DB_MODE") == "ignore":
+        logger.info("db_initialization_skipped", reason="RAE_DB_MODE=ignore")
+        # Mock pool for tests if needed, or let tests handle it
+        app.state.pool = None
+    else:
+        from rae_core.factories.infra_factory import InfrastructureFactory
+        await InfrastructureFactory.initialize(app, settings)
 
     # 2. Setup Background Components
     # Initialize RAE Core Service (Agnostic)
     app.state.rae_core_service = RAECoreService(
-        app.state.pool,
+        getattr(app.state, "pool", None),
         getattr(app.state, "qdrant_client", None),
         getattr(app.state, "redis_client", None),
     )
