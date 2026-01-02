@@ -20,6 +20,7 @@ class MockDatabaseProvider(IDatabaseProvider):
         self.execute_mock = AsyncMock()
         self.executemany_mock = AsyncMock()
         self.acquire_mock = MagicMock()
+        self.close_mock = AsyncMock()
 
     async def fetchrow(self, query: str, *args):
         return await self.fetchrow_mock(query, *args)
@@ -36,10 +37,21 @@ class MockDatabaseProvider(IDatabaseProvider):
     async def executemany(self, query: str, args: list):
         return await self.executemany_mock(query, args)
 
+    async def close(self):
+        return await self.close_mock()
+
     def acquire(self):
-        # Must return an async context manager
+        # Must return an async context manager yielding IDatabaseConnection
+        conn = MagicMock()
+        conn.execute = AsyncMock()
+        conn.fetch = AsyncMock()
+        conn.fetchrow = AsyncMock()
+        conn.fetchval = AsyncMock()
+        conn.executemany = AsyncMock()
+        conn.transaction = MagicMock()
+        
         cm = MagicMock()
-        cm.__aenter__ = AsyncMock(return_value="connection")
+        cm.__aenter__ = AsyncMock(return_value=conn)
         cm.__aexit__ = AsyncMock(return_value=None)
         self.acquire_mock.return_value = cm
         return self.acquire_mock()

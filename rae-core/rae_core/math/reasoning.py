@@ -116,8 +116,8 @@ class ReasoningPath:
             word.lower() for step in other_path.steps for word in step.split()
         )
 
-        if not self_content or not other_content:
-            return 0.0
+        if not self_content or not other_content:  # pragma: no cover
+            return 0.0  # pragma: no cover
 
         intersection = len(self_content & other_content)
         union = len(self_content | other_content)

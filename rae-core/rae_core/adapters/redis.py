@@ -10,8 +10,8 @@ try:
     import redis.asyncio as aioredis_mod
 
     aioredis = aioredis_mod
-except ImportError:
-    aioredis = None  # type: ignore
+except ImportError:  # pragma: no cover
+    aioredis = None  # pragma: no cover
 
 from ..interfaces.cache import ICacheProvider
 

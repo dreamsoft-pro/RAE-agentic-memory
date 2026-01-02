@@ -67,6 +67,16 @@ class TestInMemoryCacheCoverage:
         assert full_key not in cache._cache
 
 
+    @pytest.mark.asyncio
+    async def test_set_if_not_exists_with_ttl(self):
+        """Test set_if_not_exists method with a TTL value (line 277)."""
+        cache = InMemoryCache()
+        await cache.set_if_not_exists("key_with_ttl", "value", ttl=10)
+        assert "key_with_ttl" in cache._cache
+        val, expiry = cache._cache["key_with_ttl"]
+        assert val == "value"
+        assert expiry is not None
+
 class TestInMemoryStorageCoverage:
     """Coverage tests for InMemoryStorage."""
 
@@ -113,6 +123,47 @@ class TestInMemoryStorageCoverage:
         assert mem_id not in storage._by_layer[("t", "old_layer")]
         assert mem_id in storage._by_layer[("t", "new_layer")]
 
+
+    @pytest.mark.asyncio
+    async def test_clear_tenant_with_tags(self):
+        """Test clear_tenant removing memory with tags (covers 295)."""
+        storage = InMemoryStorage()
+        await storage.store_memory("c", "l", "t1", "a1", tags=["tag1"])
+        await storage.clear_tenant("t1")
+        assert ("t1", "tag1") not in storage._by_tags or not storage._by_tags[("t1", "tag1")]
+
+    @pytest.mark.asyncio
+    async def test_delete_memory_with_tags(self):
+        """Test deleting a memory that has tags to cover lines 189, 295, 552."""
+        storage = InMemoryStorage()
+        mem_id = await storage.store_memory("c", "l", "t", "a", tags=["tag1", "tag2"])
+        
+        # Verify tag index
+        assert mem_id in storage._by_tags[("t", "tag1")]
+        
+        # Delete (covers 189)
+        await storage.delete_memory(mem_id, "t")
+        assert ("t", "tag1") not in storage._by_tags or mem_id not in storage._by_tags.get(("t", "tag1"), set())
+
+    @pytest.mark.asyncio
+    async def test_delete_expired_with_tags(self):
+        """Test delete_expired_memories removing memory with tags (covers 295)."""
+        storage = InMemoryStorage()
+        # Set expiry in the past
+        past = datetime.now(timezone.utc) - timedelta(days=1)
+        mem_id = await storage.store_memory("c", "l", "t", "a", tags=["tag1"], expires_at=past)
+        
+        await storage.delete_expired_memories("t", "a", "l")
+        assert mem_id not in storage._memories
+
+    @pytest.mark.asyncio
+    async def test_delete_memories_with_metadata_filter_with_tags(self):
+        """Test delete_memories_with_metadata_filter removing memory with tags (covers 552)."""
+        storage = InMemoryStorage()
+        mem_id = await storage.store_memory("c", "l", "t", "a", tags=["tag1"], metadata={"key": "val"})
+        
+        await storage.delete_memories_with_metadata_filter("t", "a", "l", {"key": "val"})
+        assert mem_id not in storage._memories
 
 class TestInMemoryVectorStoreCoverage:
     """Coverage tests for InMemoryVectorStore."""

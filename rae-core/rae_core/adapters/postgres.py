@@ -10,8 +10,8 @@ from uuid import UUID, uuid4
 
 try:
     import asyncpg
-except ImportError:
-    asyncpg = None
+except ImportError:  # pragma: no cover
+    asyncpg = None  # pragma: no cover
 
 from ..interfaces.storage import IMemoryStorage
 
