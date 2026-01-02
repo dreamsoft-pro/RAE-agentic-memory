@@ -18,12 +18,15 @@ from apps.memory_api.security import auth
 @pytest.fixture
 def client_with_mocks():
     # Set env vars to match conftest container or default expectations
-    with patch.dict(os.environ, {
-        "POSTGRES_USER": "rae",
-        "POSTGRES_PASSWORD": "rae_password",
-        "POSTGRES_DB": "rae",
-        "POSTGRES_HOST": "localhost"
-    }):
+    with patch.dict(
+        os.environ,
+        {
+            "POSTGRES_USER": "rae",
+            "POSTGRES_PASSWORD": "rae_password",
+            "POSTGRES_DB": "rae",
+            "POSTGRES_HOST": "localhost",
+        },
+    ):
         # Mock app state
         app.state.pool = AsyncMock()
         app.state.rae_core_service = MagicMock()
