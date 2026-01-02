@@ -14,5 +14,18 @@ The cluster offloading to Node1 was highly successful. RAE demonstrated extreme 
 - **Industrial Large**: MRR 0.76, Latency 18ms, P99 32ms.
 - **Memory Drift**: MRR 0.87, Hit Rate 1.0, Latency 14ms.
 
+## Memory Dynamics
+Analysis of memory flow between hierarchical layers.
+
+### Memory Evolution
+This plot shows the growth of the Working and Episodic layers as new data is ingested. It demonstrates how RAE filters and promotes information from short-term to medium-term storage.
+
+![Memory Evolution](../../benchmarking/plots/memory_evolution.png)
+
+### Full Lifecycle Flow
+By simulating long-term operation (warping time by 40-day steps), we can observe the complete path of a memory: **Episodic -> Working -> Semantic -> LTM**. 
+
+![Full Lifecycle](../../benchmarking/plots/memory_lifecycle_full.png)
+
 ## Conclusion
 The system is fully stable and optimized for high-performance enterprise tasks on specialized hardware.
