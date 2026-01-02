@@ -2,7 +2,6 @@ from datetime import datetime
 from uuid import UUID, uuid4
 
 import pytest
-
 from rae_core.models.reflection import (
     Reflection,
     ReflectionPolicy,

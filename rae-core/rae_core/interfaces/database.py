@@ -1,17 +1,15 @@
 """Abstract database provider interface for RAE-core."""
 
-from typing import Any, Protocol, runtime_checkable, AsyncContextManager
+from typing import Any, AsyncContextManager, Protocol, runtime_checkable
 
 
 @runtime_checkable
 class ITransaction(Protocol):
     """Abstract interface for database transactions."""
 
-    async def __aenter__(self) -> "ITransaction":
-        ...
+    async def __aenter__(self) -> "ITransaction": ...
 
-    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
-        ...
+    async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None: ...
 
     async def commit(self) -> None:
         """Commit the transaction."""

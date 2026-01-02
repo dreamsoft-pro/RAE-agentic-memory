@@ -535,10 +535,10 @@ class MMITBenchmark:
                         # Only count as interference if it belongs to same agent context
                         # Different agents having same content is fine (coincidence)
                         # BUT same agent having duplicated content in wrong layers is interference
-                        source_mem_id = [mid for mid, m in source_memories.items() 
+                        source_mem_id = [mid for mid, m in source_memories.items()
                                        if self._content_hash(m.content) == self._content_hash(mem.content)][0]
                         source_mem = source_memories[source_mem_id]
-                        
+
                         if source_mem.agent_id == mem.agent_id:
                             shared += 1
 
@@ -587,7 +587,7 @@ class MMITBenchmark:
         topics = ["AI", "memory", "learning", "reasoning", "graphs", "search"]
         actions = ["query", "update", "create", "delete", "link"]
         concepts = ["entity", "relation", "node", "edge", "path", "tree"]
-        
+
         # Simulate 3 different agents to test isolation
         agents = ["agent_alpha", "agent_beta", "agent_gamma"]
 
@@ -631,10 +631,10 @@ class MMITBenchmark:
                     source, target = random.choice(valid_paths)
                     # Filter memories belonging to current agent
                     source_memories = [
-                        mid for mid, m in self.layers[source].items() 
+                        mid for mid, m in self.layers[source].items()
                         if m.agent_id == current_agent
                     ]
-                    
+
                     if source_memories:
                         mem_id = random.choice(source_memories)
                         self._transfer_memory(mem_id, source, target)
@@ -649,10 +649,10 @@ class MMITBenchmark:
                 ]
                 if all_memories:
                     source_layer, source_mem = random.choice(all_memories)
-                    
+
                     # Scenario A: Leak to wrong layer (same agent)
                     # Scenario B: Leak to wrong agent (critical violation!)
-                    
+
                     target_agent = current_agent
                     if random.random() < 0.3: # 30% chance of cross-agent leak attempt
                         target_agent = random.choice([a for a in agents if a != source_mem.agent_id])
@@ -664,15 +664,15 @@ class MMITBenchmark:
                         if layer != source_layer
                         and (source_layer, layer) not in self.LEGITIMATE_TRANSFERS
                     ]
-                    
+
                     if illegitimate_targets:
                         target = random.choice(illegitimate_targets)
                         # Add slightly modified content
                         leaked_content = source_mem.content + f" (leaked at {op})"
                         self._add_to_layer(
-                            leaked_content, 
-                            target, 
-                            agent_id=target_agent, 
+                            leaked_content,
+                            target,
+                            agent_id=target_agent,
                             session_id=current_session,
                             check_leakage=True
                         )

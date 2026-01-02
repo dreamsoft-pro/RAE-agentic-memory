@@ -23,6 +23,7 @@ class GeminiProvider(LLMProvider):
         else:
             try:
                 import google.auth
+
                 credentials, project_id = google.auth.default()
                 genai.configure(credentials=credentials)
             except Exception as e:

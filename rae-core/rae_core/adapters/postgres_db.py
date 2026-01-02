@@ -1,9 +1,8 @@
 """PostgreSQL implementation of IDatabaseProvider."""
 
-from typing import Any, cast, AsyncContextManager
+from typing import Any, AsyncContextManager, cast
 
 import asyncpg
-
 from rae_core.interfaces.database import (
     IDatabaseConnection,
     IDatabaseProvider,
@@ -110,4 +109,6 @@ class PostgresDatabaseProvider(IDatabaseProvider):
         await self.pool.close()
 
     def acquire(self) -> AsyncContextManager[IDatabaseConnection]:
-        return cast(AsyncContextManager[IDatabaseConnection], PostgresAcquireContext(self.pool))
+        return cast(
+            AsyncContextManager[IDatabaseConnection], PostgresAcquireContext(self.pool)
+        )

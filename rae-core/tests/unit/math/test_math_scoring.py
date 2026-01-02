@@ -3,7 +3,6 @@
 from datetime import datetime, timedelta, timezone
 
 import pytest
-
 from rae_core.math.controller import MathLayerController
 from rae_core.models.scoring import DecayConfig
 from rae_core.scoring.decay import ImportanceDecay

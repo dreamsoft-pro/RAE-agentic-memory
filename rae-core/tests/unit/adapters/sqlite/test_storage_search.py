@@ -1,5 +1,4 @@
 import pytest
-
 from rae_core.adapters.sqlite.storage import SQLiteStorage
 
 

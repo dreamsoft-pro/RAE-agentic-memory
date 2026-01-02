@@ -3,7 +3,6 @@
 from uuid import uuid4
 
 import pytest
-
 from rae_core.exceptions.base import RAEError
 from rae_core.guards.isolation import MemoryIsolationGuard
 

@@ -3,7 +3,6 @@
 from uuid import uuid4
 
 import pytest
-
 from rae_core.context.window import ContextWindowManager, estimate_tokens
 from rae_core.models.context import ContextWindow
 

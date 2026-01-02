@@ -131,7 +131,7 @@ class SparseVectorStrategy(SearchStrategy):
             memory_id = memory["id"]
             if isinstance(memory_id, str):
                 memory_id = UUID(memory_id)
-            
+
             content = memory.get("content", "")
             doc_terms = self._tokenize(content)
             processed_memories.append((memory_id, doc_terms))

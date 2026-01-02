@@ -3,7 +3,6 @@
 import asyncio
 
 import pytest
-
 from rae_core.adapters.memory.cache import InMemoryCache
 
 

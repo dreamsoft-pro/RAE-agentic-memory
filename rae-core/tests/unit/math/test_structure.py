@@ -1,5 +1,4 @@
 import pytest
-
 from rae_core.math.structure import DecayConfig, MemoryScoreResult, ScoringWeights
 
 

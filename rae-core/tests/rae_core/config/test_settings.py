@@ -1,7 +1,6 @@
 import os
 
 import pytest
-
 from rae_core.config.defaults import (
     DEFAULT_CACHE_MAX_SIZE,
     DEFAULT_CACHE_TTL,

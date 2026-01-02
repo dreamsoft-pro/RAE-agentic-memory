@@ -2,7 +2,6 @@ from datetime import datetime, timezone
 from typing import Any, cast
 
 import pytest
-
 from rae_core.math.policy import (
     compute_batch_scores,
     compute_memory_score,

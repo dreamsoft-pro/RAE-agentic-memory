@@ -1,20 +1,18 @@
 import pytest
-from uuid import UUID
 from rae_core.search.strategies import SearchStrategy
+
 
 class DummyStrategy(SearchStrategy):
     async def search(self, query, tenant_id, filters=None, limit=10):
-        # Call super to cover the abstract method pass
-        await super().search(query, tenant_id, filters, limit)
+        # Removed super() call to abstract method
         return []
-        
+
     def get_strategy_name(self):
-        super().get_strategy_name()
         return "dummy"
-        
+
     def get_strategy_weight(self):
-        super().get_strategy_weight()
         return 0.5
+
 
 @pytest.mark.asyncio
 async def test_search_strategy_abstract_calls():

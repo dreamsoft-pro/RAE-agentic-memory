@@ -4,7 +4,6 @@ from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 import pytest
-
 from rae_core.reflection.actor import Actor
 from rae_core.reflection.evaluator import Evaluator
 
@@ -122,9 +121,9 @@ class TestEvaluator:
         assert outcome["score"] == 0.7
 
         # Failure case
-        result = {"success": False, "error": "Disk full"}
+        fail_result = {"success": False, "error": "Disk full"}
         outcome = await evaluator.evaluate_action_outcome(
-            "prune_duplicates", result, {}
+            "prune_duplicates", fail_result, {}
         )
         assert outcome["outcome"] == "failure"
         assert outcome["score"] == 0.0

@@ -121,9 +121,8 @@ class NodeAgent:
             return {"status": "error", "error": "No command provided"}
 
         logger.info(f"Executing shell command: {command} in {cwd}")
-        
+
         try:
-            import subprocess
             process = await asyncio.create_subprocess_shell(
                 command,
                 stdout=asyncio.subprocess.PIPE,
@@ -132,7 +131,7 @@ class NodeAgent:
                 env=env
             )
             stdout, stderr = await process.communicate()
-            
+
             return {
                 "status": "success" if process.returncode == 0 else "error",
                 "returncode": process.returncode,
@@ -243,7 +242,7 @@ class NodeAgent:
         review_result = await self._call_ollama(
             reviewer_model, review_prompt, system=reviewer_system
         )
-        
+
         return {
             "status": "success",
             "writer_output": initial_output,

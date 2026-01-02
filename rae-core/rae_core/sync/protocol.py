@@ -5,7 +5,6 @@ from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, Field
-
 from rae_core.interfaces.sync import ISyncProvider
 
 

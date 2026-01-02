@@ -1,11 +1,11 @@
 """Extended tests for SyncProtocol and Diff calculation."""
 
 from datetime import datetime, timedelta, timezone
+from typing import Any
 from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 import pytest
-
 from rae_core.sync.diff import ChangeType, calculate_memory_diff, get_sync_direction
 from rae_core.sync.protocol import SyncProtocol
 
@@ -57,8 +57,8 @@ class TestSyncProtocol:
 class TestMemoryDiff:
     def test_calculate_diff_created_remote(self):
         id1 = uuid4()
-        local = []
-        remote = [{"id": id1, "content": "R1", "version": 1}]
+        local: list[dict[str, Any]] = []
+        remote: list[dict[str, Any]] = [{"id": id1, "content": "R1", "version": 1}]
 
         diff = calculate_memory_diff(local, remote, "t1", "a1")
         assert len(diff.created) == 1
@@ -67,8 +67,8 @@ class TestMemoryDiff:
 
     def test_calculate_diff_deleted_local(self):
         id1 = uuid4()
-        local = [{"id": id1, "content": "L1"}]
-        remote = []
+        local: list[dict[str, Any]] = [{"id": id1, "content": "L1"}]
+        remote: list[dict[str, Any]] = []
 
         diff = calculate_memory_diff(local, remote, "t1", "a1")
         assert len(diff.deleted) == 1
@@ -78,10 +78,12 @@ class TestMemoryDiff:
         id1 = uuid4()
         now = datetime.now(timezone.utc)
         # Both modified at different times with different content
-        local = [
+        local: list[dict[str, Any]] = [
             {"id": id1, "content": "Local", "modified_at": now + timedelta(seconds=10)}
         ]
-        remote = [{"id": id1, "content": "Remote", "modified_at": now}]
+        remote: list[dict[str, Any]] = [
+            {"id": id1, "content": "Remote", "modified_at": now}
+        ]
 
         diff = calculate_memory_diff(local, remote, "t1", "a1")
         assert len(diff.conflicts) == 1

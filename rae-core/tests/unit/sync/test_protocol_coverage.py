@@ -3,7 +3,6 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from rae_core.sync.protocol import SyncProtocol
 
 

@@ -1,5 +1,4 @@
 
-import os
 
 target_path = "/home/grzegorz-lesniowski/cloud/screenwatcher_project/templates/dashboards/builder.html"
 
@@ -21,14 +20,14 @@ debug_block = """.then(res => {
 
 if fetch_block in content:
     new_content = content.replace(fetch_block, debug_block)
-    
+
     # Also fix potential issue with ECharts and ISO dates with microseconds
     # ECharts < 5.0 might struggle, but we included 5.4.3.
     # Let's explicitly parse date to timestamp in JS to be safe.
-    
+
     map_fix_old = "data.map(d => [d.t, d.v])"
     map_fix_new = "data.map(d => [new Date(d.t).getTime(), d.v])"
-    
+
     new_content = new_content.replace(map_fix_old, map_fix_new)
 
     with open(target_path, 'w') as f:

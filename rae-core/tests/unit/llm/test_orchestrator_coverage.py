@@ -3,7 +3,6 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from rae_core.llm.orchestrator import LLMConfig, LLMOrchestrator
 from rae_core.llm.strategies import (
     FallbackStrategy,
@@ -65,12 +64,16 @@ class TestOrchestratorCoverage:
 
     @pytest.mark.asyncio
     async def test_fallback_strategy_all_fail(self):
+        from typing import cast
+
+        from rae_core.interfaces.llm import ILLMProvider
+
         p_fail = MagicMock()
         p_fail.generate = AsyncMock(side_effect=Exception("Err"))
         providers = {"p1": p_fail}
         strat = FallbackStrategy(["p1"])
         with pytest.raises(RuntimeError, match="All providers failed"):
-            await strat.execute(providers, "q")
+            await strat.execute(cast(dict[str, ILLMProvider], providers), "q")
 
     @pytest.mark.asyncio
     async def test_load_balancing_strategy(self, mock_p1):

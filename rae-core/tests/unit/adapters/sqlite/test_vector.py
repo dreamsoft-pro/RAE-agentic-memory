@@ -8,7 +8,6 @@ from typing import Any
 from uuid import UUID, uuid4
 
 import pytest
-
 from rae_core.adapters.sqlite.vector import SQLiteVectorStore
 
 

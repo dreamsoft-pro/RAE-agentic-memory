@@ -145,6 +145,32 @@ class EmbeddingService:
 
         return await asyncio.to_thread(self.generate_embeddings, texts)
 
+    async def generate_embeddings_for_model(
+        self, texts: List[str], model_name: str
+    ) -> List[List[float]]:
+        """
+        Generates embeddings for a specific model via LiteLLM.
+        Useful for Multi-Vector Fusion where we need embeddings from multiple models.
+        """
+        try:
+            kwargs = {}
+            if model_name.startswith("ollama/"):
+                kwargs["api_base"] = self.settings.OLLAMA_API_URL
+
+            # Determine dimension for fallback
+            dim = 384
+            if "openai" in model_name or "text-embedding-3" in model_name:
+                dim = 1536
+            elif "nomic" in model_name:
+                dim = 768
+
+            response = await litellm.aembedding(model=model_name, input=texts, **kwargs)
+            return [d["embedding"] for d in response["data"]]
+        except Exception as e:
+            print(f"LiteLLM embedding for {model_name} failed: {e}")
+            # Return zeros to allow fusion to continue with other models
+            return [[0.0] * dim for _ in texts]
+
 
 class LocalEmbeddingProvider(IEmbeddingProvider):
     """Local embedding provider wrapping the embedding service."""

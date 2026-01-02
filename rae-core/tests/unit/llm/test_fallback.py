@@ -1,5 +1,4 @@
 import pytest
-
 from rae_core.llm.fallback import NoLLMFallback
 
 

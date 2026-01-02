@@ -7,14 +7,11 @@ from typing import Any, cast
 from uuid import UUID
 
 try:
-    from qdrant_client import AsyncQdrantClient
-    from qdrant_client import QdrantClient as QdrantClientRaw
+    from qdrant_client import AsyncQdrantClient, QdrantClient
     from qdrant_client.models import Distance, PointStruct, VectorParams
-
-    QdrantClient = QdrantClientRaw
 except ImportError:  # pragma: no cover
-    QdrantClient: Any = None  # pragma: no cover
-    AsyncQdrantClient: Any = None  # pragma: no cover
+    QdrantClient = Any  # type: ignore # pragma: no cover
+    AsyncQdrantClient = Any  # type: ignore # pragma: no cover
 
 from ..interfaces.vector import IVectorStore
 
