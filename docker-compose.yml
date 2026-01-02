@@ -8,6 +8,7 @@ services:
     container_name: rae-api
     environment:
       - RAE_PROFILE=standard
+      - RAE_DB_MODE=migrate
     ports:
       - "8000:8000"
     volumes:
