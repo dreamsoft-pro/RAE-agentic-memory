@@ -107,11 +107,27 @@ RAE is built on three core principles:
 
 The easiest way to run RAE locally is with Docker.
 
+### Standard Profile (Full Features)
 ```bash
 git clone https://github.com/dreamsoft-pro/RAE-agentic-memory.git
 cd RAE-agentic-memory
+# Starts API on port 8000
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+```
+
+### Lite Profile (Minimal Resource Usage)
+Ideal for small teams or running alongside the Standard profile ("Mesh Mode").
+```bash
+# Starts API on port 8002 (to avoid conflict with Standard 8000)
 docker compose -f docker-compose.lite.yml up -d
 ```
+
+**Mesh Mode:**
+You can run both profiles simultaneously. The Lite profile uses distinct container names (`*-lite`) and ports:
+- API: 8002
+- Postgres: 5434
+- Redis: 6380
+- Qdrant: 6335
 
 **For Developers (Hot-Reload & Autostart):**
 You can set up RAE to start automatically on system boot with hot-reload enabled:

@@ -276,13 +276,8 @@ Plan osiągnięcia celów "PRO" w benchmarkach RAE w 4 realistycznych iteracjach
 
 ---
 
-## Iteration 3: GRDT Reasoning Controller + RST Foundations (Week 4-5)
-
-**Goal:** Build foundations for hardest metrics
-
-### Tasks
-
-#### Task 3.1: Reasoning Controller (v1)
+## Iteration 3: GRDT Reasoning Controller + RST Foundations (Week 4-5) [DONE]
+#### Task 3.1: Reasoning Controller (v1) [DONE]
 - **File:** NEW `rae-core/rae_core/math/reasoning.py`
 - **Purpose:** Centralized controller for graph reasoning with configurable parameters
 - **Implementation:**
