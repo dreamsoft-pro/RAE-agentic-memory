@@ -15,6 +15,7 @@ services:
     environment:
       # Database - links to postgres-lite
       - RAE_PROFILE=lite
+      - RAE_DB_MODE=migrate
       - DATABASE_URL=postgresql://${POSTGRES_USER:-rae}:${POSTGRES_PASSWORD:-rae_password}@postgres-lite:5432/${POSTGRES_DB:-rae}
       - REDIS_URL=redis://redis-lite:6379/0
       - RAE_VECTOR_BACKEND=${RAE_VECTOR_BACKEND:-qdrant}

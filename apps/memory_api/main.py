@@ -78,6 +78,23 @@ async def lifespan(app: FastAPI):
         app.state.redis_client = None
         app.state.qdrant_client = None
     else:
+        # Run migrations if mode is migrate/init
+        if settings.RAE_DB_MODE in ["migrate", "init"]:
+            logger.info("running_database_migrations", mode=settings.RAE_DB_MODE)
+            try:
+                from alembic import command
+                from alembic.config import Config
+                
+                # Load alembic config from project root
+                alembic_cfg = Config("alembic.ini")
+                # Force silent logging for migrations during startup to avoid hanging
+                os.environ["ALEMBIC_SKIP_LOG_CONFIG"] = "1"
+                command.upgrade(alembic_cfg, "head")
+                logger.info("database_migrations_completed")
+            except Exception as e:
+                logger.error("database_migration_failed", error=str(e))
+                # Continue anyway, as some tables might already exist
+
         from rae_core.factories.infra_factory import InfrastructureFactory
 
         await InfrastructureFactory.initialize(app, settings)
