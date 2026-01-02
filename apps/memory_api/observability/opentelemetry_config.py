@@ -145,8 +145,8 @@ def setup_opentelemetry():
     # Check if we are in a container and trying to export to localhost
     if os.path.exists("/.dockerenv") and "localhost" in OTEL_EXPORTER_ENDPOINT:
         logger.info(
-            "opentelemetry_disabled", 
-            reason="Inside container but endpoint points to localhost. Set correct OTEL_EXPORTER_OTLP_ENDPOINT if tracing is needed."
+            "opentelemetry_disabled",
+            reason="Inside container but endpoint points to localhost. Set correct OTEL_EXPORTER_OTLP_ENDPOINT if tracing is needed.",
         )
         return None
 
