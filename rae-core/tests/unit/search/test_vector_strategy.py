@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 import pytest
+
 from rae_core.interfaces.embedding import IEmbeddingProvider
 from rae_core.interfaces.vector import IVectorStore
 from rae_core.search.strategies.vector import VectorSearchStrategy

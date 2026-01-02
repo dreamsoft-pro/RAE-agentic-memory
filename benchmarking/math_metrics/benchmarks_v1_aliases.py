@@ -189,7 +189,7 @@ if _REFLECTION_AVAILABLE:
 # METRIC REGISTRY
 # ==============================================================================
 
-BENCHMARKS_V1_METRICS = {
+BENCHMARKS_V1_METRICS: Dict[str, Dict[str, Any]] = {
     # Memory Benchmarks
     "CQS": {
         "name": "Context Quality Score",

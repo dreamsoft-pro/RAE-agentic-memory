@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 import pytest
+
 from rae_core.math.dynamics import (
     calculate_decay_rate_from_half_life,
     calculate_half_life,

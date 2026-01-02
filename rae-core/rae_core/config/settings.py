@@ -4,6 +4,7 @@ from typing import Any
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
 from rae_core.config.defaults import (
     DEFAULT_CACHE_MAX_SIZE,
     DEFAULT_CACHE_TTL,

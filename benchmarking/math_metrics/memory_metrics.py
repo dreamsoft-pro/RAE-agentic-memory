@@ -14,7 +14,7 @@ These metrics help evaluate how well Working Memory captures and retains
 relevant information for the agent's current task.
 """
 
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Set
 
 import numpy as np
 from numpy.typing import NDArray
@@ -97,8 +97,7 @@ class WorkingMemoryPrecisionRecall(MathMetricBase):
         relevant_embeddings: Optional[List[NDArray[np.float32]]] = None,
         matching_mode: str = "exact",
         similarity_threshold: float = 0.85,
-        return_f1: bool = True,
-    ) -> Union[float, Tuple[float, float]]:
+    ) -> float:
         """
         Calculate Working Memory Precision and Recall.
 
@@ -112,11 +111,9 @@ class WorkingMemoryPrecisionRecall(MathMetricBase):
                 - "embedding": Match by embedding similarity above threshold
                 - "hybrid": Combine exact + embedding matching
             similarity_threshold: Cosine similarity threshold for embedding matching
-            return_f1: If True, return F1 score. If False, return (precision, recall) tuple.
 
         Returns:
-            If return_f1=True: F1 score (0.0 to 1.0)
-            If return_f1=False: Tuple of (precision, recall)
+            F1 score (0.0 to 1.0)
         """
         # Handle empty cases
         if not working_memory_items and not relevant_items:
@@ -137,7 +134,7 @@ class WorkingMemoryPrecisionRecall(MathMetricBase):
                 "matching_mode": matching_mode,
                 "reason": "Both WM and relevant sets are empty",
             }
-            return f1 if return_f1 else (precision, recall)
+            return f1
 
         if not working_memory_items:
             # Empty WM when there are relevant items = 0 recall
@@ -157,7 +154,7 @@ class WorkingMemoryPrecisionRecall(MathMetricBase):
                 "matching_mode": matching_mode,
                 "reason": "Working Memory is empty but relevant items exist",
             }
-            return f1 if return_f1 else (precision, recall)
+            return f1
 
         if not relevant_items:
             # WM has items but nothing is relevant = 0 precision
@@ -177,7 +174,7 @@ class WorkingMemoryPrecisionRecall(MathMetricBase):
                 "matching_mode": matching_mode,
                 "reason": "Working Memory has items but no relevant items defined",
             }
-            return f1 if return_f1 else (precision, recall)
+            return f1
 
         # Calculate matches based on matching mode
         if matching_mode == "exact":
@@ -236,13 +233,13 @@ class WorkingMemoryPrecisionRecall(MathMetricBase):
             "false_positives": false_positives,
             "false_negatives": false_negatives,
             "matching_mode": matching_mode,
-            "similarity_threshold": similarity_threshold
-            if matching_mode != "exact"
-            else None,
+            "similarity_threshold": (
+                similarity_threshold if matching_mode != "exact" else None
+            ),
             "matched_items": list(matches)[:10],  # First 10 matched items
         }
 
-        return f1 if return_f1 else (precision, recall)
+        return f1
 
     def _exact_matching(
         self,
@@ -352,7 +349,6 @@ class WorkingMemoryPrecisionRecall(MathMetricBase):
                 relevant_items=relevant,
                 working_memory_embeddings=wm_emb,
                 relevant_embeddings=rel_emb,
-                return_f1=True,
             )
 
             metadata = self.get_metadata()

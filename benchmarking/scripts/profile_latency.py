@@ -21,7 +21,7 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict
+from typing import Any, Dict, List, cast
 
 import asyncpg
 import numpy as np
@@ -43,7 +43,7 @@ class LatencyProfiler:
         self.pool = db_pool
         self.embedding_service = get_embedding_service()
         self.vector_store = get_vector_store(db_pool)
-        self.results = []
+        self.results: List[Dict[str, Any]] = []
 
     async def profile_single_query(
         self, query_text: str, tenant_id: str, top_k: int = 5, num_runs: int = 100
@@ -79,7 +79,7 @@ class LatencyProfiler:
 
             # Measure vector search
             search_start = time.perf_counter()
-            await self.vector_store.search(
+            await self.vector_store.search(  # type: ignore
                 tenant_id=tenant_id, query_embedding=query_embedding, top_k=top_k
             )
             search_time = time.perf_counter() - search_start
@@ -97,7 +97,7 @@ class LatencyProfiler:
         embedding_np = np.array(embedding_times)
         search_np = np.array(search_times)
 
-        stats = {
+        stats: Dict[str, Any] = {
             "query": query_text,
             "num_runs": num_runs,
             "total_latency": {
@@ -121,9 +121,11 @@ class LatencyProfiler:
             },
             "breakdown": {
                 "embedding_pct": float(
-                    np.mean(embedding_np) / np.mean(latencies_np) * 100
+                    cast(float, np.mean(embedding_np) / np.mean(latencies_np) * 100)
                 ),
-                "search_pct": float(np.mean(search_np) / np.mean(latencies_np) * 100),
+                "search_pct": float(
+                    cast(float, np.mean(search_np) / np.mean(latencies_np) * 100)
+                ),
             },
         }
 

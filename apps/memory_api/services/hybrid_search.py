@@ -368,9 +368,8 @@ class HybridSearchService:
         Returns:
             List of scored memory records
         """
-        from rae_core.math.fusion import reciprocal_rank_fusion
-
         from apps.memory_api.config import settings
+        from rae_core.math.fusion import reciprocal_rank_fusion
 
         # Build filters
         query_filters = {

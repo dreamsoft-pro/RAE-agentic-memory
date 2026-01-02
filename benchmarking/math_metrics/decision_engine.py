@@ -62,7 +62,7 @@ class Action:
     priority: Priority
     reason: str
     params: Dict[str, Any]
-    metric_values: Dict[str, float] = None
+    metric_values: Optional[Dict[str, float]] = None
 
     def __lt__(self, other):
         """For priority queue sorting"""

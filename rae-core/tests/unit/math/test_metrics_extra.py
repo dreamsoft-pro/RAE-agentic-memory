@@ -1,4 +1,4 @@
-from rae_core.math.metrics import (
+from rae_core.math.quality_metrics import (
     CompletenessMetric,
     EntropyMetric,
     IMetric,
@@ -117,3 +117,31 @@ def test_quality_scorer_extra():
     )
     res = scorer.evaluate("test")
     assert res.score == 0.0
+
+
+def test_text_coherence_metric_extra():
+    metric = TextCoherenceMetric()
+
+    # Test non-string input (Line 53 part 1)
+    res = metric.compute(None)
+    assert res.score == 0.0
+    assert res.metadata["reason"] == "empty_content"
+
+    res = metric.compute(123)
+    assert res.score == 0.0
+
+    # Test whitespace string (Line 53 part 2)
+    res = metric.compute("   ")
+    assert res.score == 0.0
+    assert res.metadata["reason"] == "empty_content"
+
+    # Test exactly 3 words (Line 69 boundary)
+    # "one two three" -> 3 words. word_count < 3 is False.
+    res = metric.compute("one two three")
+    # Score starts 0.5.
+    # word_count > 5 is False (3 words).
+    # has_punctuation False.
+    # capitalized False.
+    # Result 0.5.
+    assert res.score == 0.5
+    assert res.metadata["word_count"] == 3

@@ -1,6 +1,7 @@
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+
 from rae_core.adapters.postgres_db import (
     PostgresAcquireContext,
     PostgresDatabaseConnection,

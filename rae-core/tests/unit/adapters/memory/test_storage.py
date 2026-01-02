@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest
+
 from rae_core.adapters.memory.storage import InMemoryStorage
 
 

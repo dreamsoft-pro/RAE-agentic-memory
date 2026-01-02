@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
+
 from rae_core.models.sync import SyncHandshake, SyncPeer
 from rae_core.sync.manager import SyncManager
 from rae_core.sync.merge import (

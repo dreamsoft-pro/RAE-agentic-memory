@@ -9,7 +9,7 @@ This module provides foundational classes for memory analysis:
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -57,7 +57,7 @@ class MemorySnapshot:
         """Get embedding for a specific memory ID"""
         try:
             idx = self.memory_ids.index(memory_id)
-            return self.embeddings[idx]
+            return cast(NDArray[np.float32], self.embeddings[idx])
         except ValueError:
             return None
 

@@ -10,6 +10,7 @@ from typing import Any
 from uuid import UUID, uuid4
 
 import aiosqlite
+
 from rae_core.interfaces.storage import IMemoryStorage
 
 

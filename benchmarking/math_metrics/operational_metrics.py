@@ -100,9 +100,9 @@ class LLMCostIndex(MathMetricBase):
             "total_operations": total_operations,
             "cost_per_operation_usd": round(lci, 6),
             "operations_by_type": operations_by_type,
-            "time_window_hours": time_window.total_seconds() / 3600
-            if time_window
-            else None,
+            "time_window_hours": (
+                time_window.total_seconds() / 3600 if time_window else None
+            ),
         }
 
         return lci
@@ -293,12 +293,12 @@ class TelemetryEventCorrelation(MathMetricBase):
             "error_count": int(error_count),
             "error_rate": round(error_rate, 4),
             "avg_latency_ms": round(avg_latency, 2),
-            "avg_latency_on_error_ms": round(avg_latency_on_error, 2)
-            if error_count > 0
-            else None,
-            "avg_latency_on_success_ms": round(avg_latency_on_success, 2)
-            if error_count < len(errors)
-            else None,
+            "avg_latency_on_error_ms": (
+                round(avg_latency_on_error, 2) if error_count > 0 else None
+            ),
+            "avg_latency_on_success_ms": (
+                round(avg_latency_on_success, 2) if error_count < len(errors) else None
+            ),
             "warning": warning,
         }
 

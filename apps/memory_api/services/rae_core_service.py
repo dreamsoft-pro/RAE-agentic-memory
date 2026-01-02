@@ -12,6 +12,14 @@ import asyncpg
 import redis.asyncio as redis
 import structlog
 from qdrant_client import AsyncQdrantClient
+
+from apps.memory_api.repositories.token_savings_repository import TokenSavingsRepository
+from apps.memory_api.services.embedding import (
+    LocalEmbeddingProvider,
+    RemoteEmbeddingProvider,
+)
+from apps.memory_api.services.llm import get_llm_provider
+from apps.memory_api.services.token_savings_service import TokenSavingsService
 from rae_core.adapters import (
     PostgresMemoryAdapter,
     QdrantVectorAdapter,
@@ -26,14 +34,6 @@ from rae_core.interfaces.embedding import IEmbeddingProvider
 from rae_core.interfaces.storage import IMemoryStorage
 from rae_core.interfaces.vector import IVectorStore
 from rae_core.models.search import SearchResponse
-
-from apps.memory_api.repositories.token_savings_repository import TokenSavingsRepository
-from apps.memory_api.services.embedding import (
-    LocalEmbeddingProvider,
-    RemoteEmbeddingProvider,
-)
-from apps.memory_api.services.llm import get_llm_provider
-from apps.memory_api.services.token_savings_service import TokenSavingsService
 
 logger = structlog.get_logger(__name__)
 

@@ -18,11 +18,8 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List, cast
 
-import matplotlib
-
-matplotlib.use("Agg")  # Non-interactive backend
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
@@ -39,10 +36,11 @@ class BenchmarkPlotter:
             plt.style.use("default")
         sns.set_palette("husl")
 
-    def load_results(self, results_file: Path) -> Dict:
+    def load_results(self, results_file: Path) -> Dict[str, Any]:
         """Load benchmark results from JSON"""
         with open(results_file, "r") as f:
-            return json.load(f)
+            data = json.load(f)
+            return cast(Dict[str, Any], data)
 
     def plot_latency_distribution(self, results: Dict, output_file: Path):
         """
@@ -102,7 +100,7 @@ class BenchmarkPlotter:
         detailed_results = results["detailed_results"]
 
         # Group by difficulty
-        difficulty_groups = {}
+        difficulty_groups: Dict[str, List[float]] = {}
         for r in detailed_results:
             diff = r.get("difficulty", "unknown")
             if diff not in difficulty_groups:

@@ -1,6 +1,7 @@
 from uuid import UUID
 
 import pytest
+
 from rae_core.layers.longterm import LongTermLayer
 from rae_core.models.memory import MemoryItem, MemoryLayer
 

@@ -2,6 +2,7 @@ from datetime import datetime
 from uuid import UUID
 
 import pytest
+
 from rae_core.models.memory import (
     MemoryItem,
     MemoryLayer,

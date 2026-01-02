@@ -27,14 +27,14 @@ class SearchStrategy(ABC):
         Returns:
             List of (memory_id, score) tuples sorted by score descending
         """
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def get_strategy_name(self) -> str:
         """Return the name of this strategy."""
-        pass
+        pass  # pragma: no cover
 
     @abstractmethod
     def get_strategy_weight(self) -> float:
         """Return default weight for hybrid search fusion (0.0-1.0)."""
-        pass
+        pass  # pragma: no cover

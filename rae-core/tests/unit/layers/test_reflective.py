@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, Mock
 from uuid import uuid4
 
 import pytest
+
 from rae_core.interfaces.storage import IMemoryStorage
 from rae_core.layers.reflective import ReflectiveLayer
 from rae_core.models.memory import MemoryLayer

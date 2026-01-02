@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 import pytest
+
 from rae_core.layers.sensory import SensoryLayer
 from rae_core.models.memory import MemoryLayer
 

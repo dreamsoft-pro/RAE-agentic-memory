@@ -153,7 +153,7 @@ class RetentionCurve(MathMetricBase):
             "retention_decay": mrrs[0] - mrrs[-1],
         }
 
-        return normalized_auc
+        return float(normalized_auc)
 
 
 class ReflectionGainScore(MathMetricBase):

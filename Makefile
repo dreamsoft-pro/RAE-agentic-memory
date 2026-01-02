@@ -121,10 +121,10 @@ demo:  ## Run interactive quickstart demo
 
 lint:  ## Run linters (ruff, black, isort, mypy)
 	@echo "🔍 Running linters..."
-	@$(VENV_ACTIVATE) && ruff check apps/ sdk/ integrations/
-	@$(VENV_ACTIVATE) && black --check apps/ sdk/ integrations/
-	@$(VENV_ACTIVATE) && isort --check apps/ sdk/ integrations/
-	@$(VENV_ACTIVATE) && mypy apps/ sdk/ || true
+	@$(VENV_ACTIVATE) && ruff check apps/ sdk/ integrations/ rae-core/ benchmarking/ eval/
+	@$(VENV_ACTIVATE) && black --check apps/ sdk/ integrations/ rae-core/ benchmarking/ eval/
+	@$(VENV_ACTIVATE) && isort --check apps/ sdk/ integrations/ rae-core/ benchmarking/ eval/
+	@$(VENV_ACTIVATE) && mypy apps/ sdk/ rae-core/ integrations/ benchmarking/ eval/
 	@echo "✅ Linting complete"
 
 security:  ## Run security scans (safety, bandit)
@@ -136,9 +136,9 @@ security:  ## Run security scans (safety, bandit)
 
 format:  ## Format code with black, isort, and ruff
 	@echo "🎨 Formatting code..."
-	@$(VENV_ACTIVATE) && black apps/ sdk/ integrations/
-	@$(VENV_ACTIVATE) && isort apps/ sdk/ integrations/
-	@$(VENV_ACTIVATE) && ruff check --fix apps/ sdk/ integrations/
+	@$(VENV_ACTIVATE) && black apps/ sdk/ integrations/ rae-core/ benchmarking/ eval/
+	@$(VENV_ACTIVATE) && isort apps/ sdk/ integrations/ rae-core/ benchmarking/ eval/
+	@$(VENV_ACTIVATE) && ruff check --fix apps/ sdk/ integrations/ rae-core/ benchmarking/ eval/
 	@echo "✅ Code formatted"
 
 # ==============================================================================
