@@ -7,6 +7,74 @@
 
 
 
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2026-01-02 21:10 • Branch: develop • Commit: 8ae1b17*
+
+### ✨ Features
+
+- **core**: implement IRON RAE Optimization (MATH-1/2/3) and fix Gemini Auth ([`248851a`](../../commit/248851a))
+- **core**: increase test coverage to 94% (policy 100%, sync 99%) ([`fc8ab38`](../../commit/fc8ab38))
+- **benchmarks**: complete Iteration 4 (GRDT Beam Search, RST Noise-Aware, MPEB Guard) ([`0cef09f`](../../commit/0cef09f))
+- **benchmarks**: implement Iteration 3 (GRDT Controller, Curriculum, RST Sanity) ([`379e8bf`](../../commit/379e8bf))
+- **benchmarks**: complete iteration 1 & 2 + federation query impl ([`c28ff5b`](../../commit/c28ff5b))
+- **telemetry**: Implement Phase 4 - Research Mode & HTTPX Tracing ([`2c393cf`](../../commit/2c393cf))
+- **sync**: Implement Phase 3 - RAE-Sync Protocol MVP ([`3ae3ea4`](../../commit/3ae3ea4))
+- **telemetry**: Implement Phase 1 & 2 - Ops Metrics, Slim Containers, and Source Awareness ([`ced0bed`](../../commit/ced0bed))
+
+### 🐛 Bug Fixes
+
+- **init**: initialize redis/qdrant clients to None when DB ignored to pass lite mode tests ([`8ae1b17`](../../commit/8ae1b17))
+- **mesh**: unique service names in lite profile to avoid overriding standard profile ([`701f3be`](../../commit/701f3be))
+- **qdrant-lite**: remove conflicting optimizer environment variables ([`8f6f1cd`](../../commit/8f6f1cd))
+- **factory**: initialize infra in lite mode using standard logic to fix connection errors ([`4e8c865`](../../commit/4e8c865))
+- **main**: respect RAE_DB_MODE=ignore to skip db init in tests ([`af4db27`](../../commit/af4db27))
+- **tests**: align test database credentials and patch env vars in federation tests ([`0098bd9`](../../commit/0098bd9))
+- **mcp**: resolve search_memory return type and docker command execution in tests ([`7d19ec7`](../../commit/7d19ec7))
+- **benchmarks**: repair industrial_large generation logic ([`6ac9ce3`](../../commit/6ac9ce3))
+- stabilize benchmarks and provider auth ([`c74a705`](../../commit/c74a705))
+- **test**: update Qdrant unit tests to use AsyncMock for async compatibility ([`3d64afa`](../../commit/3d64afa))
+- **deps**: downgrade pydantic-settings to 2.12.0 (latest available) to fix CI build ([`775dc47`](../../commit/775dc47))
+- **infra**: repair rae-core integration, qdrant async adapter, and docker networking ([`0f146e1`](../../commit/0f146e1))
+- **core**: resolve asyncpg vector handling error and update dependencies ([`2f73b79`](../../commit/2f73b79))
+- **core**: restore stability - lite profile tests, health check contract, and linting errors ([`c527d4f`](../../commit/c527d4f))
+
+### ♻️ Refactoring
+
+- reach 100% coverage for rae-core and fix IDatabaseProvider technical debt in apps ([`78f2fed`](../../commit/78f2fed))
+- **core**: prepare for Rust migration - Phase 1 ([`68396de`](../../commit/68396de))
+
+### 📚 Documentation
+
+- **rules**: add mandatory local docs generation rule to prevent CI drift ([`140dbdb`](../../commit/140dbdb))
+
+### 🧪 Tests
+
+- **rae-core**: finalize coverage at 99% ([`a6bc08d`](../../commit/a6bc08d))
+- **rae-core**: increase coverage to 99% ([`b96232c`](../../commit/b96232c))
+- **rae-core**: increase coverage to 92% and fix merge.py bugs ([`f5a04b5`](../../commit/f5a04b5))
+- **core**: achieve 100% coverage for reasoning and database - Phase 3 ([`d893344`](../../commit/d893344))
+- **core**: increase coverage and add golden snapshots - Phase 2 ([`edb2912`](../../commit/edb2912))
+
+### 🔧 Chore
+
+- optimize docker profiles for mesh mode, update docs, and verify coverage ([`b5ae17c`](../../commit/b5ae17c))
+- update documentation and fix linting/mypy issues in rae-core ([`7cb0753`](../../commit/7cb0753))
+
+### 💄 Style
+
+- fix import sorting in main.py ([`d1c5ae2`](../../commit/d1c5ae2))
+- fix formatting in test_federation.py to satisfy CI lint ([`1ec11f3`](../../commit/1ec11f3))
+- format test_hybrid_search.py to fix linter warning ([`dcb54d9`](../../commit/dcb54d9))
+
+### 📦 Other
+
+- Merge branch 'main' of github.com:dreamsoft-pro/RAE-agentic-memory into main ([`70f64f8`](../../commit/70f64f8))
+- Implement Multimodel Embedding support and Federation API initial structure. ([`a13b35d`](../../commit/a13b35d))
+
+---
+
 ## Recent Changes (Auto-generated)
 
 *Last updated: 2026-01-01 12:08 • Branch: feature/benchmark-improvements-iter4 • Commit: 7cb0753c*
