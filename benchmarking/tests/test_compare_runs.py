@@ -9,11 +9,9 @@ Tests cover:
 """
 
 import json
-
-# Import from scripts
 import sys
 from pathlib import Path
-from typing import Dict
+from typing import Any, Dict, cast
 
 import pytest
 
@@ -56,16 +54,16 @@ class TestBenchmarkComparator:
         }
 
     @pytest.fixture
-    def sample_improved_data(self, sample_baseline_data) -> Dict:
+    def sample_improved_data(self, sample_baseline_data) -> Dict[str, Any]:
         """Create sample improved benchmark data"""
         improved = sample_baseline_data.copy()
         improved["execution"]["timestamp"] = "2024-12-06T10:00:00"
         improved["metrics"] = {
             "mrr": 0.8500,  # +13.33%
             "hit_rate": {
-                "@3": 0.8000,  # +14.29%
-                "@5": 0.9000,  # +12.50%
-                "@10": 0.9500,  # +5.56%
+                "@3": 0.8000,
+                "@5": 0.9000,
+                "@10": 0.9500,
             },
             "precision": {
                 "@3": 0.7000,  # +16.67%
@@ -85,10 +83,10 @@ class TestBenchmarkComparator:
                 "p99_query_time_ms": 80.0,  # -20%
             },
         }
-        return improved
+        return cast(Dict[str, Any], improved)
 
     @pytest.fixture
-    def sample_regressed_data(self, sample_baseline_data) -> Dict:
+    def sample_regressed_data(self, sample_baseline_data) -> Dict[str, Any]:
         """Create sample regressed benchmark data"""
         regressed = sample_baseline_data.copy()
         regressed["execution"]["timestamp"] = "2024-12-06T10:00:00"
@@ -117,7 +115,7 @@ class TestBenchmarkComparator:
                 "p99_query_time_ms": 120.0,  # +20%
             },
         }
-        return regressed
+        return cast(Dict[str, Any], regressed)
 
     def test_improvements_detected(
         self, tmp_path, sample_baseline_data, sample_improved_data

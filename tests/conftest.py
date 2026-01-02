@@ -1,6 +1,7 @@
+import os
 import sys
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -21,7 +22,9 @@ def mock_env_and_settings(monkeypatch):
         "QDRANT_HOST": "localhost",
         "REDIS_URL": "redis://localhost:6379/0",
         "RAE_LLM_BACKEND": "openai",
-        "OPENAI_API_KEY": "sk-test-key",
+        "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY") or "sk-test-key",
+        "ANTHROPIC_API_KEY": os.getenv("ANTHROPIC_API_KEY") or "sk-ant-test-key",
+        "GEMINI_API_KEY": os.getenv("GEMINI_API_KEY") or "gemini-test-key",
         "API_KEY": "test-api-key",
         "OAUTH_ENABLED": "False",
         "LOG_LEVEL": "INFO",
@@ -130,11 +133,11 @@ def mock_rae_service(mock_pool):
     from apps.memory_api.services.rae_core_service import RAECoreService
 
     service = AsyncMock(spec=RAECoreService)
-    
+
     # Mock the 'db' property to return an actual provider wrapping our mock pool
     from rae_core.adapters.postgres_db import PostgresDatabaseProvider
     service.db = PostgresDatabaseProvider(mock_pool)
-    
+
     # Mock enhanced_graph_repo property
     service.enhanced_graph_repo = AsyncMock()
 

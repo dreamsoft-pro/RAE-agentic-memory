@@ -1,4 +1,3 @@
-import os
 
 target_path = "/home/grzegorz-lesniowski/cloud/screenwatcher_project/screenwatcher_project/settings.py"
 
@@ -6,7 +5,7 @@ with open(target_path, 'r') as f:
     content = f.read()
 
 # 1. Disable SSL Redirect for Dev
-content = content.replace("SECURE_SSL_REDIRECT = env.bool('SECURE_SSL_REDIRECT', default=True)", 
+content = content.replace("SECURE_SSL_REDIRECT = env.bool('SECURE_SSL_REDIRECT', default=True)",
                           "SECURE_SSL_REDIRECT = False # Disabled for local dev")
 
 # 2. Add CORS Headers
@@ -14,7 +13,7 @@ if "'corsheaders'," not in content:
     content = content.replace("'daphne',", "'daphne',\n    'corsheaders',")
 
 if "'corsheaders.middleware.CorsMiddleware'," not in content:
-    content = content.replace("'django.middleware.security.SecurityMiddleware',", 
+    content = content.replace("'django.middleware.security.SecurityMiddleware',",
                               "'django.middleware.security.SecurityMiddleware',\n    'corsheaders.middleware.CorsMiddleware',")
 
 # 3. Add CORS Config at the end

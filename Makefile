@@ -121,10 +121,10 @@ demo:  ## Run interactive quickstart demo
 
 lint:  ## Run linters (ruff, black, isort, mypy)
 	@echo "🔍 Running linters..."
-	@$(VENV_ACTIVATE) && ruff check apps/ sdk/ integrations/
-	@$(VENV_ACTIVATE) && black --check apps/ sdk/ integrations/
-	@$(VENV_ACTIVATE) && isort --check apps/ sdk/ integrations/
-	@$(VENV_ACTIVATE) && mypy apps/ sdk/ || true
+	@$(VENV_ACTIVATE) && ruff check apps/ sdk/ integrations/ rae-core/ benchmarking/ eval/
+	@$(VENV_ACTIVATE) && black --check apps/ sdk/ integrations/ rae-core/ benchmarking/ eval/
+	@$(VENV_ACTIVATE) && isort --check apps/ sdk/ integrations/ rae-core/ benchmarking/ eval/
+	@$(VENV_ACTIVATE) && mypy apps/ sdk/ rae-core/ integrations/ benchmarking/ eval/
 	@echo "✅ Linting complete"
 
 security:  ## Run security scans (safety, bandit)
@@ -136,9 +136,9 @@ security:  ## Run security scans (safety, bandit)
 
 format:  ## Format code with black, isort, and ruff
 	@echo "🎨 Formatting code..."
-	@$(VENV_ACTIVATE) && black apps/ sdk/ integrations/
-	@$(VENV_ACTIVATE) && isort apps/ sdk/ integrations/
-	@$(VENV_ACTIVATE) && ruff check --fix apps/ sdk/ integrations/
+	@$(VENV_ACTIVATE) && black apps/ sdk/ integrations/ rae-core/ benchmarking/ eval/
+	@$(VENV_ACTIVATE) && isort apps/ sdk/ integrations/ rae-core/ benchmarking/ eval/
+	@$(VENV_ACTIVATE) && ruff check --fix apps/ sdk/ integrations/ rae-core/ benchmarking/ eval/
 	@echo "✅ Code formatted"
 
 # ==============================================================================
@@ -152,6 +152,10 @@ test:  ## Run tests using LITE profile (default)
 test-lite:  ## [PROFILE: LITE] Run unit tests (CI/CPU safe)
 	@echo "🧪 Running LITE tests (Unit + No-GPU)..."
 	@RAE_PROFILE=lite PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "not slow and not gpu and not integration" -v
+
+test-core:  ## [PROFILE: CORE] Run rae-core unit tests with coverage
+	@echo "🧪 Running RAE-CORE tests..."
+	@PYTHONPATH=. $(VENV_PYTHON) -m pytest rae-core/tests/ --cov=rae-core/rae_core --cov-report=term-missing -v
 
 test-int:  ## [PROFILE: INTEGRATION] Run integration tests (Requires Docker Stack)
 	@echo "🧪 Running INTEGRATION tests (API/DB Contracts)..."

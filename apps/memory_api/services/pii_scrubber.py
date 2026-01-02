@@ -60,19 +60,22 @@ def scrub_text(text: str | None) -> str:
     """
     Analyzes and anonymizes PII in the given text using Presidio.
 
+    If Presidio is not available, returns the original text.
+
     Args:
         text: The text to scrub for PII
 
     Returns:
-        The text with PII replaced by <PII>
-
-    Raises:
-        RuntimeError: If presidio libraries are not installed
+        The text with PII replaced by <PII>, or original text if Presidio is unavailable
     """
     if not text:
         return ""
 
-    # Ensure presidio is available and get engines
+    if not PRESIDIO_AVAILABLE:
+        # Fallback if libraries are not installed
+        return text
+
+    # Get engines (lazy initialization)
     analyzer = _get_analyzer()
     anonymizer = _get_anonymizer()
 

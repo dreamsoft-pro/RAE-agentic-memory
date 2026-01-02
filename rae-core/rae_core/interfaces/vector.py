@@ -4,19 +4,18 @@ This module defines the vector store interface for similarity search.
 Implementations can use Qdrant, sqlite-vec, FAISS, or any other vector DB.
 """
 
-from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 from uuid import UUID
 
 
-class IVectorStore(ABC):
+@runtime_checkable
+class IVectorStore(Protocol):
     """Abstract interface for vector storage and similarity search.
 
     Implementations must provide vector storage and efficient similarity search
     capabilities for memory embeddings.
     """
 
-    @abstractmethod
     async def store_vector(
         self,
         memory_id: UUID,
@@ -35,9 +34,8 @@ class IVectorStore(ABC):
         Returns:
             True if successful, False otherwise
         """
-        pass
+        ...
 
-    @abstractmethod
     async def search_similar(
         self,
         query_embedding: list[float],
@@ -58,9 +56,8 @@ class IVectorStore(ABC):
         Returns:
             List of (memory_id, similarity_score) tuples, sorted by score descending
         """
-        pass
+        ...
 
-    @abstractmethod
     async def delete_vector(
         self,
         memory_id: UUID,
@@ -75,9 +72,8 @@ class IVectorStore(ABC):
         Returns:
             True if successful, False otherwise
         """
-        pass
+        ...
 
-    @abstractmethod
     async def update_vector(
         self,
         memory_id: UUID,
@@ -96,9 +92,8 @@ class IVectorStore(ABC):
         Returns:
             True if successful, False otherwise
         """
-        pass
+        ...
 
-    @abstractmethod
     async def get_vector(
         self,
         memory_id: UUID,
@@ -113,9 +108,8 @@ class IVectorStore(ABC):
         Returns:
             Vector embedding or None if not found
         """
-        pass
+        ...
 
-    @abstractmethod
     async def batch_store_vectors(
         self,
         vectors: list[tuple[UUID, list[float], dict[str, Any]]],
@@ -130,4 +124,4 @@ class IVectorStore(ABC):
         Returns:
             Number of successfully stored vectors
         """
-        pass
+        ...

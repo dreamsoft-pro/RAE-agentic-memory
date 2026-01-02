@@ -246,17 +246,17 @@ class MathLayerController:
         if self.policy_version >= 2:
             policy_v2_config = PolicyV2Config()
             # Transfer thresholds from main config
-            policy_v2_config.l2_memory_threshold = self.config.thresholds.get(
-                "l2_memory_threshold", 30
+            policy_v2_config.l2_memory_threshold = int(
+                self.config.thresholds.get("l2_memory_threshold", 30)
             )
             policy_v2_config.l2_entropy_threshold = self.config.thresholds.get(
                 "l2_entropy_threshold", 0.7
             )
-            policy_v2_config.l3_memory_threshold = self.config.thresholds.get(
-                "l3_memory_threshold", 500
+            policy_v2_config.l3_memory_threshold = int(
+                self.config.thresholds.get("l3_memory_threshold", 500)
             )
-            policy_v2_config.l3_session_threshold = self.config.thresholds.get(
-                "l3_session_threshold", 10
+            policy_v2_config.l3_session_threshold = int(
+                self.config.thresholds.get("l3_session_threshold", 10)
             )
             self.policy_v2 = PolicyV2(policy_v2_config)
 
@@ -570,9 +570,9 @@ class MathLayerController:
                 {
                     "l1_weight": 0.5,
                     "l2_weight": 0.5,
-                    "exploration_rate": 0.1
-                    if self.config.profile == "research"
-                    else 0.0,
+                    "exploration_rate": (
+                        0.1 if self.config.profile == "research" else 0.0
+                    ),
                 }
             )
 
@@ -707,6 +707,9 @@ class MathLayerController:
 
     def _append_to_log_file(self, decision: MathDecision) -> None:
         """Append decision to JSON Lines log file"""
+        if not self.config.logging.file_path:
+            return
+
         log_path = Path(self.config.logging.file_path)
         log_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -783,6 +786,9 @@ class MathLayerController:
 
     def _save_outcome(self, outcome: DecisionWithOutcome) -> None:
         """Save outcome for future learning (Iteration 2+)"""
+        if not self.config.logging.outcome_file_path:
+            return
+
         outcome_path = Path(self.config.logging.outcome_file_path)
         outcome_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -827,20 +833,12 @@ class MathLayerController:
     def _decide_with_bandit(self, features: FeaturesV2) -> tuple[MathLevel, str, str]:
         """
         Make decision using bandit (online learning).
-
-        Decision Flow:
-        1. Get baseline from Policy v2
-        2. Check safety (degradation, exploration limits)
-        3. If safe: select arm using UCB
-        4. Monitor records the decision
-        5. Return (level, strategy, explanation)
-
-        Args:
-            features: Task features (must be FeaturesV2)
-
-        Returns:
-            Tuple of (level, strategy, explanation)
+        ...
         """
+        assert self.policy_v2 is not None, "Policy v2 must be initialized for bandit"
+        assert self.bandit is not None, "Bandit must be initialized"
+        assert self.bandit_monitor is not None, "Bandit monitor must be initialized"
+
         # Get baseline decision from Policy v2
         baseline_level = self.policy_v2.select_level(features)
         baseline_strategy = self.select_strategy(baseline_level, features)
@@ -952,19 +950,12 @@ class MathLayerController:
         )
 
     def _update_bandit_with_outcome(
-        self,
-        decision: MathDecision,
-        outcome: DecisionWithOutcome,
+        self, decision: MathDecision, outcome: DecisionWithOutcome
     ) -> None:
-        """
-        Update bandit with outcome reward.
+        """Update bandit statistics with reward feedback"""
+        assert self.bandit is not None
+        assert self.bandit_monitor is not None
 
-        Calculates reward from outcome and updates the arm that was selected.
-
-        Args:
-            decision: Original decision
-            outcome: Decision with outcome metrics
-        """
         from .reward import RewardCalculator, RewardConfig
 
         # Calculate reward
@@ -985,10 +976,14 @@ class MathLayerController:
         arm = self.bandit.arm_map[arm_key]
 
         # Update arm with reward
+        from typing import cast
+
+        from .features_v2 import FeaturesV2
+
         self.bandit.update(
             arm=arm,
             reward=reward,
-            features=decision.features_used,
+            features=cast(FeaturesV2, decision.features_used),
         )
 
         # Record in monitor

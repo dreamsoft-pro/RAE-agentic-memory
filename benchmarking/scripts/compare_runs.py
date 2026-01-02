@@ -13,7 +13,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Dict
+from typing import Any, Dict
 
 
 class BenchmarkComparator:
@@ -23,10 +23,10 @@ class BenchmarkComparator:
         self.baseline_file = baseline_file
         self.comparison_file = comparison_file
 
-        self.baseline = None
-        self.comparison = None
+        self.baseline: Dict[str, Any] = {}
+        self.comparison: Dict[str, Any] = {}
 
-    def load_results(self):
+    def load_results(self) -> None:
         """Load both result files"""
         print("📂 Loading results...")
         print(f"   Baseline: {self.baseline_file.name}")
@@ -38,18 +38,23 @@ class BenchmarkComparator:
         with open(self.comparison_file, "r") as f:
             self.comparison = json.load(f)
 
-    def calculate_changes(self) -> Dict:
+    def calculate_changes(self) -> Dict[str, Any]:
         """Calculate differences between runs"""
         print("\n📊 Calculating changes...")
+
+        if not self.baseline or not self.comparison:
+            return {}
 
         baseline_metrics = self.baseline["metrics"]
         comparison_metrics = self.comparison["metrics"]
 
-        changes = {
+        changes: Dict[str, Any] = {
             "quality": {},
             "performance": {},
             "summary": {"improvements": 0, "regressions": 0, "unchanged": 0},
         }
+
+        summary: Dict[str, int] = changes["summary"]
 
         # Quality metrics changes
         quality_keys = ["mrr", "overall_quality_score"]
@@ -67,11 +72,11 @@ class BenchmarkComparator:
             }
 
             if abs(change_pct) < 1:
-                changes["summary"]["unchanged"] += 1
+                summary["unchanged"] += 1
             elif change > 0:
-                changes["summary"]["improvements"] += 1
+                summary["improvements"] += 1
             else:
-                changes["summary"]["regressions"] += 1
+                summary["regressions"] += 1
 
         # Hit rate changes
         for k in ["@3", "@5", "@10"]:
@@ -88,11 +93,11 @@ class BenchmarkComparator:
             }
 
             if abs(change_pct) < 1:
-                changes["summary"]["unchanged"] += 1
+                summary["unchanged"] += 1
             elif change > 0:
-                changes["summary"]["improvements"] += 1
+                summary["improvements"] += 1
             else:
-                changes["summary"]["regressions"] += 1
+                summary["regressions"] += 1
 
         # Precision and Recall changes
         for metric_type in ["precision", "recall"]:
@@ -110,11 +115,11 @@ class BenchmarkComparator:
                 }
 
                 if abs(change_pct) < 1:
-                    changes["summary"]["unchanged"] += 1
+                    summary["unchanged"] += 1
                 elif change > 0:
-                    changes["summary"]["improvements"] += 1
+                    summary["improvements"] += 1
                 else:
-                    changes["summary"]["regressions"] += 1
+                    summary["regressions"] += 1
 
         # Performance metrics changes
         perf_keys = [
@@ -139,11 +144,11 @@ class BenchmarkComparator:
 
             # For performance, lower is better
             if abs(change_pct) < 5:
-                changes["summary"]["unchanged"] += 1
+                summary["unchanged"] += 1
             elif change < 0:
-                changes["summary"]["improvements"] += 1
+                summary["improvements"] += 1
             else:
-                changes["summary"]["regressions"] += 1
+                summary["regressions"] += 1
 
         return changes
 
@@ -164,9 +169,7 @@ class BenchmarkComparator:
                 emoji = (
                     "✅"
                     if data["percent_change"] > 1
-                    else "❌"
-                    if data["percent_change"] < -1
-                    else "➡️"
+                    else "❌" if data["percent_change"] < -1 else "➡️"
                 )
                 print(
                     f"   {emoji} {key.upper()}: {data['baseline']:.4f} → {data['comparison']:.4f} ({data['percent_change']:+.2f}%)"
@@ -178,17 +181,23 @@ class BenchmarkComparator:
             emoji = (
                 "✅"
                 if data["improved"] and abs(data["percent_change"]) > 5
-                else "❌"
-                if not data["improved"] and abs(data["percent_change"]) > 5
-                else "➡️"
+                else (
+                    "❌"
+                    if not data["improved"] and abs(data["percent_change"]) > 5
+                    else "➡️"
+                )
             )
             print(
                 f"   {emoji} {key}: {data['baseline']:.2f}ms → {data['comparison']:.2f}ms ({data['percent_change']:+.2f}%)"
             )
 
-    def generate_markdown_report(self, output_file: Path, changes: Dict):
+    def generate_markdown_report(
+        self, output_file: Path, changes: Dict[str, Any]
+    ) -> None:
         """Generate detailed Markdown comparison report"""
         print(f"\n💾 Generating report: {output_file}")
+
+        assert self.baseline and self.comparison, "Results must be loaded"
 
         with open(output_file, "w") as f:
             f.write("# RAE Benchmark Comparison Report\n\n")
@@ -221,9 +230,7 @@ class BenchmarkComparator:
                 status = (
                     "✅ Better"
                     if data["percent_change"] > 1
-                    else "❌ Worse"
-                    if data["percent_change"] < -1
-                    else "➡️ Same"
+                    else "❌ Worse" if data["percent_change"] < -1 else "➡️ Same"
                 )
 
                 f.write(
@@ -243,9 +250,11 @@ class BenchmarkComparator:
                 status = (
                     "✅ Faster"
                     if data["improved"] and abs(data["percent_change"]) > 5
-                    else "❌ Slower"
-                    if not data["improved"] and abs(data["percent_change"]) > 5
-                    else "➡️ Same"
+                    else (
+                        "❌ Slower"
+                        if not data["improved"] and abs(data["percent_change"]) > 5
+                        else "➡️ Same"
+                    )
                 )
 
                 f.write(

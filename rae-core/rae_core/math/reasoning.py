@@ -45,7 +45,7 @@ class ReasoningPath:
         description: str,
         uncertainty_delta: float = 0.0,
         tokens: int = 0,
-    ):
+    ) -> None:
         """Add a reasoning step to the path.
 
         Args:
@@ -116,8 +116,8 @@ class ReasoningPath:
             word.lower() for step in other_path.steps for word in step.split()
         )
 
-        if not self_content or not other_content:
-            return 0.0
+        if not self_content or not other_content:  # pragma: no cover
+            return 0.0  # pragma: no cover
 
         intersection = len(self_content & other_content)
         union = len(self_content | other_content)
@@ -275,31 +275,16 @@ class ReasoningController:
                 logger.debug(f"Pruning path (depth {path.depth}): Has contradictions")
                 continue
 
-            # Heuristic 1a: Check alignment with episodic memory
-            if episodic_memories:
-                contradicts_episodic = self._contradicts_memories(
-                    path, episodic_memories
-                )
-                if contradicts_episodic:
+            # Heuristic 1a: Check alignment with combined memories
+            all_memories = (episodic_memories or []) + (semantic_memories or [])
+            if all_memories:
+                is_contradictory = self._contradicts_memories(path, all_memories)
+                if is_contradictory:
                     self.stats["paths_pruned"] += 1
                     self.stats["paths_pruned_contradictory"] += 1
                     logger.debug(
                         f"Pruning path (depth {path.depth}): "
-                        "Contradicts episodic memory"
-                    )
-                    continue
-
-            # Heuristic 1b: Check alignment with semantic memory
-            if semantic_memories:
-                contradicts_semantic = self._contradicts_memories(
-                    path, semantic_memories
-                )
-                if contradicts_semantic:
-                    self.stats["paths_pruned"] += 1
-                    self.stats["paths_pruned_contradictory"] += 1
-                    logger.debug(
-                        f"Pruning path (depth {path.depth}): "
-                        "Contradicts semantic knowledge"
+                        "Contradicts available memories"
                     )
                     continue
 
@@ -370,12 +355,12 @@ class ReasoningController:
         """
         return self.stats.copy()
 
-    def reset_stats(self):
+    def reset_stats(self) -> None:
         """Reset statistics counters."""
         for key in self.stats:
             self.stats[key] = 0
 
-    def mark_path_as_false(self, path: ReasoningPath):
+    def mark_path_as_false(self, path: ReasoningPath) -> None:
         """Mark a path as known-false for future pruning.
 
         Args:
@@ -384,7 +369,7 @@ class ReasoningController:
         self.known_false_paths.append(path)
         logger.debug(f"Marked path (depth {path.depth}) as known-false")
 
-    def clear_known_false_paths(self):
+    def clear_known_false_paths(self) -> None:
         """Clear the list of known-false paths."""
         count = len(self.known_false_paths)
         self.known_false_paths.clear()

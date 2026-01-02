@@ -1,8 +1,8 @@
 """Math Layer Controller - orchestrates all mathematical operations."""
 
-
-
 # Import available functions
+from typing import Any
+
 from rae_core.math.dynamics import calculate_recency_score
 from rae_core.math.policy import compute_memory_score
 from rae_core.math.structure import cosine_similarity
@@ -19,11 +19,13 @@ class MathLayerController:
     - Quality metrics
     """
 
-    def __init__(self, config: dict | None = None):
+    def __init__(self, config: dict[str, Any] | None = None) -> None:
         """Initialize controller with optional config."""
         self.config = config or {}
 
-    def score_memory(self, memory: dict, query_similarity: float = 0.5) -> float:
+    def score_memory(
+        self, memory: dict[str, Any], query_similarity: float = 0.5
+    ) -> float:
         """Score a memory's importance."""
         result = compute_memory_score(
             similarity=query_similarity,

@@ -99,6 +99,8 @@ async def test_store_memory(rae_engine, mock_memory_storage):
     )
 
     assert result == expected_uuid
+    from unittest.mock import ANY
+
     mock_memory_storage.store_memory.assert_called_once_with(
         tenant_id=tenant_id,
         agent_id=agent_id,
@@ -107,6 +109,7 @@ async def test_store_memory(rae_engine, mock_memory_storage):
         importance=0.5,
         tags=[],
         metadata={},
+        embedding=ANY,
     )
 
 
@@ -153,7 +156,9 @@ async def test_search_memories(rae_engine, mock_search_engine, mock_memory_stora
 
 
 @pytest.mark.asyncio
-async def test_search_memories_with_rerank(rae_engine, mock_search_engine, mock_memory_storage):
+async def test_search_memories_with_rerank(
+    rae_engine, mock_search_engine, mock_memory_storage
+):
     tenant_id = "test-tenant"
     query = "test query"
     mem_id = uuid4()

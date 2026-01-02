@@ -7,7 +7,7 @@ from typing import Any, cast
 from uuid import UUID
 
 from rae_core.interfaces.storage import IMemoryStorage
-from rae_core.math.metrics import (
+from rae_core.math.quality_metrics import (
     CompletenessMetric,
     EntropyMetric,
     QualityScorer,

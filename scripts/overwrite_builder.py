@@ -1,5 +1,4 @@
 
-import os
 
 target_path = "/home/grzegorz-lesniowski/cloud/screenwatcher_project/templates/dashboards/builder.html"
 
@@ -24,7 +23,7 @@ new_content = """{% extends "base.html" %}
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-3 mt-2">
         <h4><span class="text-primary">Flex</span>Charts <small class="text-muted" style="font-size: 0.6em">v1.1</small></h4>
-        
+
         <!-- Global Toolbar -->
         <div class="btn-group btn-group-sm">
             <button class="btn btn-outline-secondary" onclick="openGlobalSettings()">⚙️ Global Time</button>
@@ -33,11 +32,11 @@ new_content = """{% extends "base.html" %}
             <button class="btn btn-outline-primary" onclick="addNewWidget('temp_trend', 'Temp Trend')">+ Temp</button>
             <button class="btn btn-outline-primary" onclick="addNewWidget('oee_gauge', 'OEE')">+ OEE</button>
             <button class="btn btn-outline-primary" onclick="addNewWidget('status_card', 'Status')">+ Status</button>
-            
+
             <button class="btn btn-primary ms-3" onclick="saveDashboard()">Save Layout</button>
         </div>
     </div>
-    
+
     <div class="grid-stack"></div>
 </div>
 
@@ -112,20 +111,20 @@ new_content = """{% extends "base.html" %}
     let grid;
     const charts = {};
     const DEFAULT_MACHINE_ID = '6eb33c58-7a60-4f9c-b9fb-d0b626410459'; // Your TM01 Machine
-    
+
     // Internal state of widget configs (synced with DB/DOM)
     const widgetConfigs = {};
     // Store types to allow reloading
     const widgetTypes = {};
 
     document.addEventListener("DOMContentLoaded", function() {
-        grid = GridStack.init({ 
-            cellHeight: 70, 
-            float: true, 
+        grid = GridStack.init({
+            cellHeight: 70,
+            float: true,
             removable: true,
             margin: 5
         });
-        
+
         // Load existing widgets
         const widgetsDB = {{ widgets_json|safe|default:"[]" }};
         widgetsDB.forEach(w => {
@@ -148,7 +147,7 @@ new_content = """{% extends "base.html" %}
             widget_type: type,
             title: title,
             pos_x: 0, pos_y: 0, width: 4, height: 4,
-            config: { 
+            config: {
                 machine_id: DEFAULT_MACHINE_ID,
                 range: document.getElementById('globalRange').value || '1h',
                 show_zoom: true
@@ -161,7 +160,7 @@ new_content = """{% extends "base.html" %}
         // Save state
         widgetConfigs[w.id] = w.config;
         widgetTypes[w.id] = w.widget_type;
-        
+
         let content = `
             <div class="grid-stack-item-content" data-chart-type="${w.widget_type}">
                 <div class="widget-header">
@@ -175,12 +174,12 @@ new_content = """{% extends "base.html" %}
                     <div id="chart-${w.id}" class="chart-container"></div>
                 </div>
             </div>`;
-        
+
         grid.addWidget({x: w.pos_x, y: w.pos_y, w: w.width, h: w.height, content: content, id: w.id});
-        
+
         setTimeout(() => initChart(w.id, w.widget_type), 200);
     }
-    
+
     function removeWidget(id) {
         const el = document.querySelector(`.grid-stack-item[gs-id="${id}"]`);
         if(el) grid.removeWidget(el);
@@ -201,7 +200,7 @@ new_content = """{% extends "base.html" %}
         const myChart = echarts.init(dom);
         charts[id] = myChart;
         myChart.showLoading();
-        
+
         loadChartData(id, type);
     }
 
@@ -209,18 +208,18 @@ new_content = """{% extends "base.html" %}
         const myChart = charts[id];
         const config = widgetConfigs[id];
         const machineId = config.machine_id || DEFAULT_MACHINE_ID;
-        
+
         // Calculate Times
         const now = new Date();
         let start = new Date();
-        
+
         const rangeMap = {
-            '1h': 1, '8h': 8, '24h': 24, 
+            '1h': 1, '8h': 8, '24h': 24,
             '7d': 24*7, '30d': 24*30, '1y': 24*365
         };
         const hours = rangeMap[config.range] || 1;
         start.setHours(start.getHours() - hours);
-        
+
         const isoStart = start.toISOString();
         const isoEnd = now.toISOString();
 
@@ -235,7 +234,7 @@ new_content = """{% extends "base.html" %}
                 .then(res => {
                     myChart.hideLoading();
                     const data = res.data;
-                    
+
                     if(!data || data.length === 0) {
                         myChart.setOption({title:{text:'No data', left:'center', top:'center'}});
                         return;
@@ -303,7 +302,7 @@ new_content = """{% extends "base.html" %}
     function openGlobalSettings() {
         new bootstrap.Modal(document.getElementById('globalSettingsModal')).show();
     }
-    
+
     function applyGlobalSettings() {
         const range = document.getElementById('globalRange').value;
         // Update all configs
@@ -321,7 +320,7 @@ new_content = """{% extends "base.html" %}
         document.getElementById('editTitle').value = document.getElementById('title-'+id).innerText;
         document.getElementById('editRange').value = config.range || '1h';
         document.getElementById('editZoom').checked = config.show_zoom !== false;
-        
+
         new bootstrap.Modal(document.getElementById('widgetModal')).show();
     }
 
@@ -330,17 +329,17 @@ new_content = """{% extends "base.html" %}
         const title = document.getElementById('editTitle').value;
         const range = document.getElementById('editRange').value;
         const zoom = document.getElementById('editZoom').checked;
-        
+
         // Update UI
         document.getElementById('title-'+id).innerText = title;
-        
+
         // Update Config
         widgetConfigs[id].range = range;
         widgetConfigs[id].show_zoom = zoom;
-        
+
         // Reload Chart
         initChart(id, widgetTypes[id]);
-        
+
         bootstrap.Modal.getInstance(document.getElementById('widgetModal')).hide();
     }
 
@@ -349,7 +348,7 @@ new_content = """{% extends "base.html" %}
         const widgets = items.map(item => {
             const id = item.getAttribute('gs-id');
             const type = widgetTypes[id];
-            
+
             return {
                 id: id.startsWith('new') ? null : id,
                 type: type,
@@ -361,7 +360,7 @@ new_content = """{% extends "base.html" %}
                 config: widgetConfigs[id]
             };
         });
-        
+
         // We need to fetch/post logic from original file or assume standard Django save
         const dashboardId = "{{ dashboard.id }}";
         fetch(`/dashboard/api/management/${dashboardId}/save_layout/`, {

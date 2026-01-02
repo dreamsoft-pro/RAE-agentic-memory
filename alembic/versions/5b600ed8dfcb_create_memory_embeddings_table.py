@@ -5,11 +5,11 @@ Revises: 1b3d6c480efa
 Create Date: 2026-01-01 07:38:26.499383
 
 """
-from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import UUID, JSONB
 from pgvector.sqlalchemy import Vector
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '5b600ed8dfcb'
@@ -29,10 +29,10 @@ def upgrade():
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now()),
         sa.Column('metadata', JSONB, server_default='{}'),
     )
-    
+
     # Create index on memory_id
     op.create_index('ix_memory_embeddings_memory_id', 'memory_embeddings', ['memory_id'])
-    
+
     # Composite index for memory_id + model_name (unique constraint)
     op.create_unique_constraint('uq_memory_embeddings_memory_model', 'memory_embeddings', ['memory_id', 'model_name'])
 

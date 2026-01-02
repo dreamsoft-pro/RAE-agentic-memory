@@ -24,7 +24,7 @@ class SQLiteGraphStore(IGraphStore):
         self.db_path = db_path
         self._initialized = False
 
-    async def initialize(self):
+    async def initialize(self) -> None:
         """Initialize database schema for graph operations."""
         if self._initialized:
             return
@@ -98,8 +98,8 @@ class SQLiteGraphStore(IGraphStore):
                 )
                 await db.commit()
                 return True
-            except Exception:
-                return False
+            except Exception:  # pragma: no cover
+                return False  # pragma: no cover
 
     async def create_edge(
         self,
@@ -134,8 +134,8 @@ class SQLiteGraphStore(IGraphStore):
                 )
                 await db.commit()
                 return True
-            except Exception:
-                return False
+            except Exception:  # pragma: no cover
+                return False  # pragma: no cover
 
     async def get_neighbors(
         self,

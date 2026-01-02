@@ -75,9 +75,9 @@ class Features:
             "recent_scs": self.recent_scs,
             "cost_budget": self.cost_budget,
             "latency_budget_ms": self.latency_budget_ms,
-            "previous_level": self.previous_level.value
-            if self.previous_level
-            else None,
+            "previous_level": (
+                self.previous_level.value if self.previous_level else None
+            ),
             "previous_level_success": self.previous_level_success,
             "custom": self.custom,
         }

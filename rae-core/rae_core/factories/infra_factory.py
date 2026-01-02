@@ -7,6 +7,7 @@ from qdrant_client import AsyncQdrantClient
 
 logger = structlog.get_logger(__name__)
 
+
 class InfrastructureFactory:
     """
     Factory for initializing infrastructure components based on RAE_PROFILE.
@@ -26,36 +27,33 @@ class InfrastructureFactory:
         logger.info("initializing_infrastructure", profile=profile)
 
         # 1. Postgres Initialization
-        # in Lite mode we might skip or use SQLite (future)
-        if profile == "standard":
-            logger.info("connecting_postgres", host=settings.POSTGRES_HOST)
+        logger.info("connecting_postgres", host=settings.POSTGRES_HOST)
+        # Use DATABASE_URL if available (common in Lite/Docker), else individual fields
+        dsn = getattr(settings, "DATABASE_URL", None)
+        if dsn:
+            app.state.pool = await asyncpg.create_pool(dsn=dsn)
+        else:
             app.state.pool = await asyncpg.create_pool(
                 host=settings.POSTGRES_HOST,
                 database=settings.POSTGRES_DB,
                 user=settings.POSTGRES_USER,
                 password=settings.POSTGRES_PASSWORD,
             )
-        else:
-            logger.info("postgres_connection_skipped", profile=profile)
-            # Ensure attribute exists to avoid AttributeErrors, even if None
-            app.state.pool = None
 
         # 2. Redis Initialization
-        if profile == "standard":
-            logger.info("connecting_redis", url=settings.REDIS_URL)
-            app.state.redis_client = await aioredis.from_url(
-                settings.REDIS_URL, encoding="utf-8", decode_responses=True
-            )
-        else:
-            logger.info("redis_connection_skipped", profile=profile)
-            app.state.redis_client = None
+        logger.info("connecting_redis", url=settings.REDIS_URL)
+        app.state.redis_client = await aioredis.from_url(
+            settings.REDIS_URL, encoding="utf-8", decode_responses=True
+        )
 
         # 3. Qdrant Initialization
-        if profile == "standard":
-            logger.info("connecting_qdrant", host=settings.QDRANT_HOST)
+        # Check for QDRANT_URL (Lite) or split host/port (Standard)
+        qdrant_url = getattr(settings, "QDRANT_URL", None)
+        if qdrant_url:
+            logger.info("connecting_qdrant_url", url=qdrant_url)
+            app.state.qdrant_client = AsyncQdrantClient(url=qdrant_url)
+        else:
+            logger.info("connecting_qdrant_host", host=settings.QDRANT_HOST)
             app.state.qdrant_client = AsyncQdrantClient(
                 host=settings.QDRANT_HOST, port=settings.QDRANT_PORT
             )
-        else:
-            logger.info("qdrant_connection_skipped", profile=profile)
-            app.state.qdrant_client = None

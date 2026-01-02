@@ -73,7 +73,7 @@ class SyncLog(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.now)
     peer_id: str
     direction: str  # "incoming", "outgoing"
-    status: str     # "success", "failed", "conflict"
+    status: str  # "success", "failed", "conflict"
     items_synced: int = 0
     conflicts_resolved: int = 0
     duration_ms: float = 0.0

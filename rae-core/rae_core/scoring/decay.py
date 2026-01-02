@@ -22,10 +22,7 @@ class ImportanceDecay:
         self.config = config or DecayConfig()
 
     def exponential_decay(
-        self,
-        importance: float,
-        time_elapsed: timedelta,
-        layer: str = "working"
+        self, importance: float, time_elapsed: timedelta, layer: str = "working"
     ) -> DecayResult:
         """
         Apply exponential decay to importance.
@@ -42,21 +39,20 @@ class ImportanceDecay:
         decay_factor = math.exp(-decay_rate * periods)
         decayed = importance * decay_factor
 
-        decayed = max(self.config.min_importance, min(self.config.max_importance, decayed))
+        decayed = max(
+            self.config.min_importance, min(self.config.max_importance, decayed)
+        )
 
         return DecayResult(
             original_importance=importance,
             decayed_importance=decayed,
             decay_amount=importance - decayed,
             time_elapsed=time_elapsed,
-            next_decay_at=datetime.now(timezone.utc) + self.config.decay_period
+            next_decay_at=datetime.now(timezone.utc) + self.config.decay_period,
         )
 
     def linear_decay(
-        self,
-        importance: float,
-        time_elapsed: timedelta,
-        layer: str = "working"
+        self, importance: float, time_elapsed: timedelta, layer: str = "working"
     ) -> DecayResult:
         """
         Apply linear decay to importance.
@@ -69,21 +65,20 @@ class ImportanceDecay:
         decay_amount = decay_rate * periods
         decayed = importance - decay_amount
 
-        decayed = max(self.config.min_importance, min(self.config.max_importance, decayed))
+        decayed = max(
+            self.config.min_importance, min(self.config.max_importance, decayed)
+        )
 
         return DecayResult(
             original_importance=importance,
             decayed_importance=decayed,
             decay_amount=importance - decayed,
             time_elapsed=time_elapsed,
-            next_decay_at=datetime.now(timezone.utc) + self.config.decay_period
+            next_decay_at=datetime.now(timezone.utc) + self.config.decay_period,
         )
 
     def logarithmic_decay(
-        self,
-        importance: float,
-        time_elapsed: timedelta,
-        layer: str = "working"
+        self, importance: float, time_elapsed: timedelta, layer: str = "working"
     ) -> DecayResult:
         """
         Apply logarithmic decay (slow initial, then faster).
@@ -96,14 +91,16 @@ class ImportanceDecay:
         decay_factor = 1 + (decay_rate * math.log(1 + periods))
         decayed = importance / decay_factor
 
-        decayed = max(self.config.min_importance, min(self.config.max_importance, decayed))
+        decayed = max(
+            self.config.min_importance, min(self.config.max_importance, decayed)
+        )
 
         return DecayResult(
             original_importance=importance,
             decayed_importance=decayed,
             decay_amount=importance - decayed,
             time_elapsed=time_elapsed,
-            next_decay_at=datetime.now(timezone.utc) + self.config.decay_period
+            next_decay_at=datetime.now(timezone.utc) + self.config.decay_period,
         )
 
     def step_decay(
@@ -111,7 +108,7 @@ class ImportanceDecay:
         importance: float,
         time_elapsed: timedelta,
         layer: str = "working",
-        step_size: float = 0.1
+        step_size: float = 0.1,
     ) -> DecayResult:
         """
         Apply step decay (discrete drops at intervals).
@@ -122,14 +119,16 @@ class ImportanceDecay:
         decay_amount = step_size * periods * decay_rate
         decayed = importance - decay_amount
 
-        decayed = max(self.config.min_importance, min(self.config.max_importance, decayed))
+        decayed = max(
+            self.config.min_importance, min(self.config.max_importance, decayed)
+        )
 
         return DecayResult(
             original_importance=importance,
             decayed_importance=decayed,
             decay_amount=importance - decayed,
             time_elapsed=time_elapsed,
-            next_decay_at=datetime.now(timezone.utc) + self.config.decay_period
+            next_decay_at=datetime.now(timezone.utc) + self.config.decay_period,
         )
 
 
@@ -143,9 +142,7 @@ def calculate_half_life(decay_rate: float) -> timedelta:
 
 
 def time_to_threshold(
-    initial_importance: float,
-    threshold: float,
-    decay_rate: float
+    initial_importance: float, threshold: float, decay_rate: float
 ) -> timedelta:
     """Calculate time until importance reaches threshold."""
     if initial_importance <= threshold or decay_rate <= 0:

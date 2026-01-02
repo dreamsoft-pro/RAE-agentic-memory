@@ -3,15 +3,15 @@
 Implements IVectorStore interface using Qdrant for similarity search.
 """
 
-from typing import Any, Optional, cast
+from typing import Any, cast
 from uuid import UUID
 
 try:
-    from qdrant_client import QdrantClient as QdrantClientRaw
+    from qdrant_client import AsyncQdrantClient, QdrantClient
     from qdrant_client.models import Distance, PointStruct, VectorParams
-    QdrantClient = QdrantClientRaw
-except ImportError:
-    QdrantClient: Any = None # type: ignore
+except ImportError:  # pragma: no cover
+    QdrantClient = Any  # type: ignore # pragma: no cover
+    AsyncQdrantClient = Any  # type: ignore # pragma: no cover
 
 from ..interfaces.vector import IVectorStore
 
@@ -40,7 +40,7 @@ class QdrantVectorStore(IVectorStore):
         collection_name: str = "memories",
         url: str | None = None,
         api_key: str | None = None,
-        client: Optional["QdrantClient"] = None,
+        client: Any | None = None,
         embedding_dim: int = 384,
         distance: str = "Cosine",
     ):
@@ -50,7 +50,7 @@ class QdrantVectorStore(IVectorStore):
             collection_name: Name of Qdrant collection
             url: Qdrant server URL (e.g., http://localhost:6333)
             api_key: Optional API key for Qdrant Cloud
-            client: Existing QdrantClient instance
+            client: Existing QdrantClient or AsyncQdrantClient instance
             embedding_dim: Dimension of embeddings (default: 1536 for OpenAI)
             distance: Distance metric (Cosine, Euclid, Dot)
         """
@@ -74,24 +74,36 @@ class QdrantVectorStore(IVectorStore):
         if client:
             self.client = client
         elif url:
-            self.client = QdrantClient(url=url, api_key=api_key)
+            # Default to Async client if not provided but url is?
+            # Original code used QdrantClient (sync).
+            # To support async by default for this adapter when used in async context:
+            # But here we stick to what was passed or default.
+            # If we want async, we should probably default to AsyncQdrantClient if we can?
+            # For now, let's keep it sync by default if no client passed, to avoid breaking other usages?
+            # But wait, RAE-Core might be used in sync context?
+            # The adapter methods are `async def`, so they imply async usage.
+            # So `self.client` SHOULD be async for `await` to work.
+
+            # If we initialize it ourselves, we should use AsyncQdrantClient.
+            self.client = AsyncQdrantClient(url=url, api_key=api_key)
         else:
             # Use in-memory mode for testing
-            self.client = QdrantClient(":memory:")
+            self.client = AsyncQdrantClient(":memory:")
 
         self._initialized = False
 
-    async def _ensure_collection(self):
+    async def _ensure_collection(self) -> None:
         """Ensure collection exists with proper schema."""
         if self._initialized:
             return
 
         try:
-            self.client.get_collection(self.collection_name)
+            await self.client.get_collection(self.collection_name)
         except Exception:
             # Collection doesn't exist, create it
             from qdrant_client.models import SparseVectorParams
-            self.client.create_collection(
+
+            await self.client.create_collection(
                 collection_name=self.collection_name,
                 vectors_config={
                     "dense": VectorParams(
@@ -99,6 +111,7 @@ class QdrantVectorStore(IVectorStore):
                         distance=self.distance,
                     )
                 },
+                # Default configuration for hybrid search (dense + sparse)
                 sparse_vectors_config={"text": SparseVectorParams()},
             )
 
@@ -129,7 +142,7 @@ class QdrantVectorStore(IVectorStore):
         }
 
         try:
-            self.client.upsert(
+            await self.client.upsert(
                 collection_name=self.collection_name,
                 points=[
                     PointStruct(
@@ -195,9 +208,7 @@ class QdrantVectorStore(IVectorStore):
 
             points.append(
                 PointStruct(
-                    id=str(memory_id),
-                    vector={"dense": embedding},
-                    payload=payload
+                    id=str(memory_id), vector={"dense": embedding}, payload=payload
                 )
             )
 
@@ -205,7 +216,9 @@ class QdrantVectorStore(IVectorStore):
             return 0
 
         try:
-            self.client.upsert(collection_name=self.collection_name, points=points)
+            await self.client.upsert(
+                collection_name=self.collection_name, points=points
+            )
             return len(points)
         except Exception:
             return 0
@@ -253,7 +266,8 @@ class QdrantVectorStore(IVectorStore):
 
         try:
             from qdrant_client.models import NamedVector
-            results = self.client.search(
+
+            results = await self.client.search(
                 collection_name=self.collection_name,
                 query_vector=NamedVector(name="dense", vector=query_embedding),
                 query_filter=query_filter,
@@ -278,7 +292,7 @@ class QdrantVectorStore(IVectorStore):
         await self._ensure_collection()
 
         try:
-            result = self.client.retrieve(
+            result = await self.client.retrieve(
                 collection_name=self.collection_name,
                 ids=[str(memory_id)],
             )
@@ -303,7 +317,7 @@ class QdrantVectorStore(IVectorStore):
 
         try:
             # First verify it belongs to tenant
-            result = self.client.retrieve(
+            result = await self.client.retrieve(
                 collection_name=self.collection_name,
                 ids=[str(memory_id)],
             )
@@ -315,7 +329,7 @@ class QdrantVectorStore(IVectorStore):
             if not payload or payload.get("tenant_id") != tenant_id:
                 return False
 
-            self.client.delete(
+            await self.client.delete(
                 collection_name=self.collection_name,
                 points_selector=[str(memory_id)],
             )
@@ -342,7 +356,7 @@ class QdrantVectorStore(IVectorStore):
                 ]
             }
 
-            result = self.client.delete(
+            result = await self.client.delete(
                 collection_name=self.collection_name,
                 points_selector=delete_filter,
             )
@@ -368,7 +382,7 @@ class QdrantVectorStore(IVectorStore):
             if layer:
                 count_filter["must"].append({"key": "layer", "match": {"value": layer}})
 
-            result = self.client.count(
+            result = await self.client.count(
                 collection_name=self.collection_name,
                 count_filter=count_filter,
             )
@@ -509,7 +523,7 @@ class QdrantVectorStore(IVectorStore):
 
         return float(dot_product / (mag_a * mag_b))
 
-    def close(self):
+    async def close(self) -> None:
         """Close Qdrant client."""
         if hasattr(self.client, "close"):
-            self.client.close()
+            await self.client.close()

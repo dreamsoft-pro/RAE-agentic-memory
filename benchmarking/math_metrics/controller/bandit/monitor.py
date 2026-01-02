@@ -137,10 +137,12 @@ class BanditMonitor:
                 metadata={
                     "drop": drop,
                     "baseline": self.bandit.baseline_mean_reward,
-                    "current": sum(self.bandit.last_100_rewards)
-                    / len(self.bandit.last_100_rewards)
-                    if self.bandit.last_100_rewards
-                    else 0.0,
+                    "current": (
+                        sum(self.bandit.last_100_rewards)
+                        / len(self.bandit.last_100_rewards)
+                        if self.bandit.last_100_rewards
+                        else 0.0
+                    ),
                 },
             )
         return None
@@ -288,7 +290,7 @@ class BanditMonitor:
         }
 
         # Arm selection distribution (recent window)
-        arm_distribution = {}
+        arm_distribution: Dict[str, int] = {}
         for arm_id in self.arm_selection_window:
             arm_distribution[arm_id] = arm_distribution.get(arm_id, 0) + 1
 

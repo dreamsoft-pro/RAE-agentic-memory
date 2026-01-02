@@ -17,7 +17,7 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, cast
 
 import numpy as np
 
@@ -103,6 +103,7 @@ class MathBenchmarkRunner(RAEBenchmarkRunner):
         get_vector_store(self.pool)
 
         # Fetch all memories for this tenant
+        assert self.pool is not None
         async with self.pool.acquire() as conn:
             rows = await conn.fetch(
                 """
@@ -160,6 +161,7 @@ class MathBenchmarkRunner(RAEBenchmarkRunner):
             List of (source_id, target_id, weight) tuples
         """
         # Check if graph tables exist
+        assert self.pool is not None
         async with self.pool.acquire() as conn:
             table_exists = await conn.fetchval(
                 """
@@ -207,7 +209,7 @@ class MathBenchmarkRunner(RAEBenchmarkRunner):
 
         print("\n🔬 Calculating mathematical metrics...")
 
-        math_results = {
+        math_results: Dict[str, Any] = {
             "structure": {},
             "dynamics": {},
             "policy": {},
@@ -271,7 +273,7 @@ class MathBenchmarkRunner(RAEBenchmarkRunner):
 
     def _calculate_dynamics_metrics(self) -> Dict[str, Any]:
         """Calculate dynamics metrics from multiple snapshots"""
-        results = {}
+        results: Dict[str, Any] = {}
 
         if len(self.snapshots) < 2:
             return results
@@ -346,6 +348,7 @@ class MathBenchmarkRunner(RAEBenchmarkRunner):
             snapshot = self.snapshots[-1]
 
         # Make a decision for each query
+        assert self.benchmark_data is not None
         queries = self.benchmark_data.get("queries", [])
         for idx, query_item in enumerate(queries):
             query_text = query_item.get("query", "")
@@ -357,11 +360,16 @@ class MathBenchmarkRunner(RAEBenchmarkRunner):
                 session_metadata={
                     "query_index": idx,
                     "query_text": query_text,
-                    "benchmark_name": self.benchmark_data.get("name", "unknown"),
+                    "benchmark_name": (
+                        self.benchmark_data.get("name", "unknown")
+                        if self.benchmark_data
+                        else "unknown"
+                    ),
                 },
             )
 
             # Get decision from controller
+            assert self.math_controller is not None
             decision = self.math_controller.decide(context)
 
             # Store decision
@@ -376,10 +384,13 @@ class MathBenchmarkRunner(RAEBenchmarkRunner):
 
         print(f"   ✅ Made {len(self.controller_decisions)} decisions")
 
-    def calculate_metrics(self) -> Dict:
+    def calculate_metrics(self) -> Dict[str, Any]:
         """Override to include mathematical metrics"""
         # Calculate standard metrics
-        metrics = super().calculate_metrics()
+        metrics = cast(Dict[str, Any], super().calculate_metrics())
+
+        # Mypy assertion
+        assert isinstance(metrics, dict)
 
         # Calculate mathematical metrics
         if self.enable_math:
@@ -388,10 +399,12 @@ class MathBenchmarkRunner(RAEBenchmarkRunner):
 
         return metrics
 
-    def save_results(self, metrics: Dict):
+    def save_results(self, metrics: Dict[str, Any]):
         """Override to save additional mathematical metric files"""
         # Save standard results
         super().save_results(metrics)
+
+        assert self.benchmark_data is not None
 
         # Save mathematical metrics separately
         if self.enable_math and "math" in metrics:

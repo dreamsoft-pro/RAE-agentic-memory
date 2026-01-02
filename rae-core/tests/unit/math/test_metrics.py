@@ -1,4 +1,4 @@
-from rae_core.math.metrics import (
+from rae_core.math.quality_metrics import (
     EntropyMetric,
     QualityScorer,
     TextCoherenceMetric,

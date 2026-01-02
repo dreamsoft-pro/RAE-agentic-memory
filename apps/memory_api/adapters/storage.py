@@ -6,6 +6,7 @@ Configures storage adapters based on RAE-Server settings.
 import os
 
 import asyncpg
+
 from rae_core.adapters import PostgreSQLStorage
 from rae_core.interfaces.storage import IMemoryStorage
 

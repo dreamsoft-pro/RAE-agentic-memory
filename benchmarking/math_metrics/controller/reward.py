@@ -21,13 +21,13 @@ class RewardConfig:
     w_stability: float = 0.2  # Light stability preference
 
     # Quality sub-weights
-    quality_weights: Dict[str, float] = None
+    quality_weights: Optional[Dict[str, float]] = None
 
     # Stability sub-weights
-    stability_weights: Dict[str, float] = None
+    stability_weights: Optional[Dict[str, float]] = None
 
     # Catastrophic penalties
-    penalties: Dict[str, float] = None
+    penalties: Optional[Dict[str, float]] = None
 
     def __post_init__(self):
         if self.quality_weights is None:
@@ -109,6 +109,7 @@ class RewardCalculator:
 
     def _calculate_quality(self, metrics: Dict) -> float:
         """Calculate quality component from outcome metrics"""
+        assert self.config.quality_weights is not None
         w = self.config.quality_weights
 
         # Extract metrics with defaults
@@ -126,7 +127,7 @@ class RewardCalculator:
             + w["orr"] * orr
         )
 
-        return quality
+        return float(quality)
 
     def _calculate_cost(self, decision: MathDecision, metrics: Dict) -> float:
         """Calculate cost component"""
@@ -153,6 +154,7 @@ class RewardCalculator:
 
     def _calculate_stability(self, metrics: Dict) -> float:
         """Calculate stability penalty"""
+        assert self.config.stability_weights is not None
         w = self.config.stability_weights
 
         # Memory drift (0.0 = stable, 1.0 = high drift)
@@ -170,12 +172,13 @@ class RewardCalculator:
             + w["level_churn"] * level_churn
         )
 
-        return stability_penalty
+        return float(stability_penalty)
 
     def _calculate_penalty(
         self, decision_with_outcome: DecisionWithOutcome, baseline_mrr: float
     ) -> float:
         """Calculate catastrophic failure penalties"""
+        assert self.config.penalties is not None
         penalty = 0.0
         p = self.config.penalties
 
@@ -213,9 +216,9 @@ class RewardCalculator:
         """Calculate rewards for a batch of decisions"""
         # Calculate baseline MRR from successful outcomes
         successful_mrrs = [
-            d.outcome.metrics.get("mrr", 0.0)
+            d.outcome_metrics.get("mrr", 0.0)
             for d in decisions_with_outcomes
-            if d.outcome.success
+            if d.success
         ]
         baseline_mrr = (
             sum(successful_mrrs) / len(successful_mrrs) if successful_mrrs else 0.5

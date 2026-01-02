@@ -18,6 +18,7 @@ def mock_storage():
     storage.delete_memory = AsyncMock()
     return storage
 
+
 class TestActor:
     @pytest.mark.asyncio
     async def test_consolidate_memories(self, mock_storage):
@@ -27,7 +28,7 @@ class TestActor:
 
         mock_storage.get_memory.side_effect = [
             {"content": "I like cats", "tenant_id": "t1"},
-            {"content": "Cats are fuzzy", "tenant_id": "t1"}
+            {"content": "Cats are fuzzy", "tenant_id": "t1"},
         ]
         mock_storage.store_memory.return_value = uuid4()
 
@@ -61,12 +62,19 @@ class TestActor:
         tgt_id = uuid4()
         mock_storage.update_memory.return_value = True
 
-        context = {"source_id": src_id, "target_id": tgt_id, "relation_type": "supports"}
+        context = {
+            "source_id": src_id,
+            "target_id": tgt_id,
+            "relation_type": "supports",
+        }
         result = await actor.execute_action("create_semantic_link", context, "t1")
 
         assert result["success"] is True
         mock_storage.update_memory.assert_called_once()
-        assert "link_supports" in mock_storage.update_memory.call_args.kwargs["updates"]["metadata"]
+        assert (
+            "link_supports"
+            in mock_storage.update_memory.call_args.kwargs["updates"]["metadata"]
+        )
 
     @pytest.mark.asyncio
     async def test_prune_duplicates(self, mock_storage):
@@ -79,7 +87,10 @@ class TestActor:
 
         assert result["success"] is True
         assert result["pruned_count"] == 1
-        mock_storage.delete_memory.assert_called_once_with(memory_id=mem_id, tenant_id="t1")
+        mock_storage.delete_memory.assert_called_once_with(
+            memory_id=mem_id, tenant_id="t1"
+        )
+
 
 class TestEvaluator:
     @pytest.mark.asyncio
@@ -90,7 +101,7 @@ class TestEvaluator:
             "content": "This is a very long and coherent sentence that should score well.",
             "tenant_id": "t1",
             "tags": ["a"],
-            "metadata": {"b": 1}
+            "metadata": {"b": 1},
         }
 
         metrics = await evaluator.evaluate_memory_quality(mem_id, "t1")
@@ -104,13 +115,17 @@ class TestEvaluator:
 
         # Consolidation outcome
         result = {"success": True, "consolidated_count": 3}
-        outcome = await evaluator.evaluate_action_outcome("consolidate_memories", result, {})
+        outcome = await evaluator.evaluate_action_outcome(
+            "consolidate_memories", result, {}
+        )
         assert outcome["outcome"] == "success"
         assert outcome["score"] == 0.7
 
         # Failure case
-        result = {"success": False, "error": "Disk full"}
-        outcome = await evaluator.evaluate_action_outcome("prune_duplicates", result, {})
+        fail_result = {"success": False, "error": "Disk full"}
+        outcome = await evaluator.evaluate_action_outcome(
+            "prune_duplicates", fail_result, {}
+        )
         assert outcome["outcome"] == "failure"
         assert outcome["score"] == 0.0
 

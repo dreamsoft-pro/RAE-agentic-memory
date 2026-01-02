@@ -4,18 +4,17 @@ This module defines the LLM interface for language model operations.
 Implementations can use OpenAI, Anthropic, Ollama, or rule-based fallback.
 """
 
-from abc import ABC, abstractmethod
-from typing import Any
+from typing import Any, Protocol, runtime_checkable
 
 
-class ILLMProvider(ABC):
+@runtime_checkable
+class ILLMProvider(Protocol):
     """Abstract interface for LLM providers.
 
     Implementations must provide text generation capabilities for
     reflection, summarization, and other cognitive operations.
     """
 
-    @abstractmethod
     async def generate(
         self,
         prompt: str,
@@ -36,9 +35,8 @@ class ILLMProvider(ABC):
         Returns:
             Generated text
         """
-        pass
+        ...
 
-    @abstractmethod
     async def generate_with_context(
         self,
         messages: list[dict[str, str]],
@@ -55,9 +53,8 @@ class ILLMProvider(ABC):
         Returns:
             Generated text
         """
-        pass
+        ...
 
-    @abstractmethod
     async def count_tokens(
         self,
         text: str,
@@ -70,18 +67,16 @@ class ILLMProvider(ABC):
         Returns:
             Number of tokens
         """
-        pass
+        ...
 
-    @abstractmethod
     def supports_function_calling(self) -> bool:
         """Check if provider supports function calling.
 
         Returns:
             True if function calling is supported
         """
-        pass
+        ...
 
-    @abstractmethod
     async def extract_entities(
         self,
         text: str,
@@ -94,9 +89,8 @@ class ILLMProvider(ABC):
         Returns:
             List of entity dictionaries with 'text', 'type', 'confidence'
         """
-        pass
+        ...
 
-    @abstractmethod
     async def summarize(
         self,
         text: str,
@@ -111,4 +105,4 @@ class ILLMProvider(ABC):
         Returns:
             Summary text
         """
-        pass
+        ...
