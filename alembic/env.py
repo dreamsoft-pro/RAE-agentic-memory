@@ -37,6 +37,13 @@ def get_db_url():
     """
     from apps.memory_api.config import settings
 
+    if settings.DATABASE_URL:
+        # Standardize URL for SQLAlchemy if needed (ensure it starts with postgresql://)
+        url = settings.DATABASE_URL
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql://", 1)
+        return url
+
     host = os.environ.get("POSTGRES_HOST", settings.POSTGRES_HOST)
     return f"postgresql://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{host}/{settings.POSTGRES_DB}"
 
