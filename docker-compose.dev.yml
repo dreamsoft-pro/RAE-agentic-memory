@@ -44,6 +44,7 @@ services:
   # ML Service with Hot Reload
   # ============================================================================
   ml-service:
+    image: rae-memory:latest
     command: uvicorn main:app --host 0.0.0.0 --port 8001 --reload --reload-dir /app
     volumes:
       # Mount only ml_service code

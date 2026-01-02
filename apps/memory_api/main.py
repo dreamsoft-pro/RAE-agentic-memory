@@ -75,6 +75,8 @@ async def lifespan(app: FastAPI):
         logger.info("db_initialization_skipped", reason="RAE_DB_MODE=ignore")
         # Mock pool for tests if needed, or let tests handle it
         app.state.pool = None
+        app.state.redis_client = None
+        app.state.qdrant_client = None
     else:
         from rae_core.factories.infra_factory import InfrastructureFactory
 
