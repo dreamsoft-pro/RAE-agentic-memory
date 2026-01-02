@@ -78,9 +78,60 @@ async def lifespan(app: FastAPI):
         app.state.redis_client = None
         app.state.qdrant_client = None
     else:
+        # Run migrations if mode is migrate/init
+        if settings.RAE_DB_MODE in ["migrate", "init"]:
+            logger.info("running_database_migrations", mode=settings.RAE_DB_MODE)
+            try:
+                from alembic import command
+                from alembic.config import Config
+                
+                # Load alembic config from project root
+                alembic_cfg = Config("alembic.ini")
+                # Force silent logging for migrations during startup to avoid hanging
+                os.environ["ALEMBIC_SKIP_LOG_CONFIG"] = "1"
+                command.upgrade(alembic_cfg, "head")
+                logger.info("database_migrations_completed")
+            except Exception as e:
+                logger.error("database_migration_failed", error=str(e))
+                # Continue anyway, as some tables might already exist
+
         from rae_core.factories.infra_factory import InfrastructureFactory
 
         await InfrastructureFactory.initialize(app, settings)
+
+        # 1.1 Ensure Default Tenant exists (Iteration 1 Bootstrapping)
+        if settings.RAE_DB_MODE in ["migrate", "init"]:
+            try:
+                from uuid import UUID
+
+                default_tenant_id = UUID("00000000-0000-0000-0000-000000000000")
+                async with app.state.pool.acquire() as conn:
+                    # Check if any tenant exists
+                    exists = await conn.fetchval(
+                        "SELECT EXISTS(SELECT 1 FROM tenants WHERE id = $1)",
+                        default_tenant_id,
+                    )
+                    if not exists:
+                        logger.info(
+                            "creating_default_tenant", id=str(default_tenant_id)
+                        )
+                        await conn.execute(
+                            "INSERT INTO tenants (id, name, tier, config) VALUES ($1, $2, $3, $4)",
+                            default_tenant_id,
+                            "Default Tenant",
+                            "enterprise",
+                            "{}",
+                        )
+                        # Assign default role to 'admin' (mock/default user)
+                        await conn.execute(
+                            "INSERT INTO user_tenant_roles (id, user_id, tenant_id, role) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING",
+                            UUID("00000000-0000-0000-0000-000000000001"),
+                            "admin",
+                            default_tenant_id,
+                            "owner",
+                        )
+            except Exception as e:
+                logger.warning("default_tenant_initialization_failed", error=str(e))
 
     # 2. Setup Background Components
     # Initialize RAE Core Service (Agnostic)
