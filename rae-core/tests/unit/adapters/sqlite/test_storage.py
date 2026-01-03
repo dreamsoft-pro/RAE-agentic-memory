@@ -822,7 +822,7 @@ class TestSQLiteStorageEmbeddings:
 
         emb = [0.1, 0.2, 0.3]
         success = await storage.save_embedding(
-            memory_id, "model-v1", emb, metadata={"dim": 3}
+            memory_id, "model-v1", emb, "t", metadata={"dim": 3}
         )
         assert success is True
 
@@ -839,6 +839,17 @@ class TestSQLiteStorageEmbeddings:
         assert row is not None
         assert json.loads(row[0]) == emb
         conn.close()
+
+    @pytest.mark.asyncio
+    async def test_save_embedding_access_denied(self, storage):
+        """Test saving embedding with wrong tenant."""
+        memory_id = await storage.store_memory(
+            content="T", layer="w", tenant_id="t1", agent_id="a"
+        )
+        with pytest.raises(ValueError, match="Access Denied"):
+             await storage.save_embedding(
+                memory_id, "model-v1", [0.1], "t2"
+             )
 
 
 class TestSQLiteStorageTagsAndFilters:

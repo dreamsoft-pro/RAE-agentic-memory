@@ -111,9 +111,13 @@ async def test_save_embedding_coverage(mock_pool):
     storage = PostgreSQLStorage(dsn="postgresql://localhost/db")
     storage._pool = pool
 
-    res = await storage.save_embedding(uuid4(), "model1", [0.1, 0.2])
+    # Mock existence check
+    conn.fetchval.return_value = 1
+
+    res = await storage.save_embedding(uuid4(), "model1", [0.1, 0.2], "t1")
     assert res is True
     assert conn.execute.called
+    assert conn.fetchval.called  # SEC-02 check
 
 
 @pytest.mark.asyncio

@@ -9,11 +9,11 @@ description: "Tests connectivity between local node and remote Node1/Cloud LLMs"
 llm:
   default_provider: "deepseek_node1"
   providers:
-    deepseek_node1:
-      provider_type: "ollama"
-      base_url: "http://100.66.252.117:11434"
-      model: "deepseek-coder:1.3b"
-      max_tokens: 500
+  deepseek_node1:
+    type: "ollama"
+    model: "deepseek-coder:1.3b"
+    base_url: "http://100.66.252.117:11434"
+    options:
       temperature: 0.1
     claude_anthropic:
       provider_type: "anthropic"

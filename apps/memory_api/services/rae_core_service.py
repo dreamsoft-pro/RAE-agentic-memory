@@ -104,6 +104,13 @@ class RAECoreService:
             self.qdrant_adapter = QdrantVectorAdapter(
                 client=cast(Any, qdrant_client), embedding_dim=dim
             )
+        elif settings.RAE_VECTOR_BACKEND == "pgvector" and postgres_pool:
+            from apps.memory_api.services.vector_store.postgres_adapter import (
+                PostgresVectorAdapter,
+            )
+
+            logger.info("using_postgres_vector_adapter")
+            self.qdrant_adapter = PostgresVectorAdapter(pool=postgres_pool)
         else:
             from rae_core.adapters import InMemoryVectorStore
 

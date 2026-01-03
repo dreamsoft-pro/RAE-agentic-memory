@@ -88,8 +88,8 @@ async def verify():
         print("  - Claude Provider Configured")
 
     # DeepSeek (Ollama on Node1)
-    # Using ollama/deepseek-coder:1.3b as seen in curl output
     ollama_url = "http://100.66.252.117:11434"
+    try:
     deepseek_provider = LiteLLMProvider(
         name="deepseek",
         model="ollama/deepseek-coder:1.3b",

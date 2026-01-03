@@ -177,13 +177,15 @@ This is a critical architectural pattern. Here are some of the key quality heuri
 
 -   **Reflection Quality (Lines 318-341):** This is more advanced. The quality of generating a reflection is determined by the `composite_score` of the reflection itself, which is calculated based on its novelty, importance, and utility. This creates a tight feedback loop for the meta-learning process.
 
-### 3. Memory Scoring V3 (Hybrid Math)
+### 3. Memory Scoring V3 (Match Layers Architecture)
 
-When retrieving memories, RAE needs to score them to determine which are most valuable for the current context. The v3 scoring model is a weighted linear combination of six different factors.
+When retrieving memories, RAE needs to score them to determine which are most valuable for the current context. The v3 scoring model (refactored 2026-01-02) is a weighted linear combination of six different factors, grouped into three **Match Layers (Math-1/2/3)**.
 
-**Code Reference:** [`apps/memory_api/services/memory_scoring_v3.py`](../../apps/memory_api/services/memory_scoring_v3.py)
+**Live Benchmark Data:** For the latest real-time execution results, scale tests (up to 100k memories), and current OpenScience status, refer to the **[Main README - OpenScience Section](../../README.md#benchmarking-performance-current-baseline)**.
 
-**Formula (Lines 1-8):**
+**Scoring Formula (Lines 1-8):**
+
+
 
 ```
 score = w1*relevance + w2*importance + w3*recency + w4*graph_centrality + w5*diversity + w6*density

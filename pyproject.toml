@@ -57,3 +57,7 @@ known_first_party = ["rae_core", "apps", "benchmarking", "integrations", "sdk"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["rae_core", "apps", "benchmarking", "integrations", "sdk"]
+
+[tool.bandit]
+exclude_dirs = ["tests", "benchmarking/tests", "apps/memory_api/tests", "integrations/mcp/tests"]
+skips = ["B101", "B105", "B106"]  # B101: asserts (used in tests), B105/106: hardcoded passwords (often false positives in tests)

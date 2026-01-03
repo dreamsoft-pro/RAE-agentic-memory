@@ -181,8 +181,8 @@ class PostgreSQLStorage(IMemoryStorage):
                 if row["embedding"]
                 else None
             ),
-            "importance": float(row["importance"]),
-            "usage_count": int(row["usage_count"]),
+            "importance": float(row["importance"] or 0.5),
+            "usage_count": int(row["usage_count"] or 0),
             "created_at": row["created_at"],
             "last_accessed_at": row["last_accessed_at"],
             "expires_at": row["expires_at"],
@@ -860,14 +860,34 @@ class PostgreSQLStorage(IMemoryStorage):
         memory_id: UUID,
         model_name: str,
         embedding: list[float],
+        tenant_id: str,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
-        """Save a vector embedding for a memory."""
+        """Save a vector embedding for a memory.
+
+        [ISO 27001] Verifies tenant ownership before saving.
+        """
         pool = await self._get_pool()
         metadata = metadata or {}
         embedding_val = str(embedding) if embedding is not None else None
 
         async with pool.acquire() as conn:
+            # 1. Verify ownership (SEC-02)
+            # We could do this in one query with CTE, but explicit check is safer for logic
+            exists = await conn.fetchval(
+                "SELECT 1 FROM memories WHERE id = $1 AND tenant_id = $2",
+                memory_id,
+                tenant_id,
+            )
+            if not exists:
+                # Security: fail silently or raise?
+                # Raising helps debugging, silent is safer against enumeration.
+                # Given UUIDs are unguessable, raising is fine.
+                raise ValueError(
+                    f"Access Denied: Memory {memory_id} not found for tenant {tenant_id}"
+                )
+
+            # 2. Insert/Update
             await conn.execute(
                 """
                 INSERT INTO memory_embeddings (

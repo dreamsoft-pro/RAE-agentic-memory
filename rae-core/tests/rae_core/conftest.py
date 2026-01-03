@@ -322,6 +322,7 @@ class MockMemoryStorage(IMemoryStorage):
         memory_id: UUID,
         model_name: str,
         embedding: list[float],
+        tenant_id: str,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
         async with self._lock:
