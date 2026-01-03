@@ -182,6 +182,7 @@ class RAEEngine:
                     memory_id=memory_id,
                     model_name=model_name,
                     embedding=model_embs[0],
+                    tenant_id=tenant_id,
                     metadata={"source_length": len(content)},
                 )
 

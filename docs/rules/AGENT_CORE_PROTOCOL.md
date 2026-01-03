@@ -58,8 +58,19 @@ Different branches = Different testing levels.
 - **Goal**: Production Guarantee.
 - **Command**: CI (GitHub Actions).
 - **Rule**: If CI fails, fix immediately on `develop` and propagate up.
-- **Versioning**: Always check `git tag` and GitHub Releases before bumping versions. Do NOT rely solely on code files. Update `AGENT_CORE_PROTOCOL.md` if this rule is missing.
+## 4. Git & Version Control
+- **Atomic Commits:** One logical change per commit.
+- **Messages:** "Why" over "What". Format: `type(scope): description`.
+- **Pre-push:** Run `make lint` and `make test-lite` locally.
+- **Branches:** `feature/name`, `fix/name`. Never push to `main` directly.
 
+## 5. Infrastructure & Cluster Strategy ("Cluster First")
+- **Mandate:** Always offload heavy tasks (Benchmarks, Training, Bulk Inference) to the Cluster.
+- **Node1 (Lumina):** Primary Compute (i7/4080). Use for Logic/Math benchmarks.
+- **Node2 (Julia):** Secondary Compute (i9/4080). Use for Training/Validation.
+- **Node3 (Piotrek):** Inference Engine (128GB RAM). Use for LLM/Embeddings via Ollama Proxy.
+- **Startup:** At session start, run `python scripts/connect_cluster.py` to verify connectivity.
+- **Security:** NEVER commit passwords or private keys. Use `config/cluster.yaml` and SSH keys.
 ## 4. DOCUMENTATION STRATEGY
 
 ### 4.1 Synchronization Rule (Zero Drift Strategy)

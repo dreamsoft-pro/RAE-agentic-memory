@@ -52,12 +52,17 @@ class InMemoryStorage(IMemoryStorage):
         memory_id: UUID,
         model_name: str,
         embedding: list[float],
+        tenant_id: str,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
         """Save a vector embedding for a memory."""
         async with self._lock:
+            # Check existence and tenant ownership (SEC-02)
             if memory_id not in self._memories:
                 return False
+            
+            if self._memories[memory_id]["tenant_id"] != tenant_id:
+                raise ValueError(f"Access Denied: Memory {memory_id} not found for tenant {tenant_id}")
 
             self._embeddings[memory_id][model_name] = {
                 "embedding": embedding,

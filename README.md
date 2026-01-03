@@ -1,4 +1,4 @@
-- 🧠 **Multi-Layer Memory Architecture**: STM, LTM, Episodic, and Reflective layers.
+- 🧠 **Multi-Layer Memory Architecture**: STM, LTM, Episodic, and Reflective layers governed by a **3-layer Math Engine (Match Layers)**.
 - 🚀 **Distributed Compute**: Control Plane API for offloading heavy tasks (embeddings, LLM) to remote GPU nodes.
 - 🔍 **Hybrid Search**: Combining vector, semantic, and graph-based retrieval.
 *(czyt. „Rej”)*
@@ -84,6 +84,52 @@ RAE is built on three core principles:
 - **Local & Hybrid LLM Support**: Run completely offline with Ollama or in hybrid mode with Gemini/Claude.
 - **Distributed Memory Architecture**: Run RAE as a central memory engine on Linux while connecting agents from Windows, Mac, or Cloud environments.
 - **Forensic Intelligence**: Reconstruct agent knowledge and reasoning paths at any point in time using temporal graph snapshots.
+
+## 🔬 OpenScience & Benchmarking
+
+RAE is committed to **Full OpenScience Transparency**. We publish not only our best results but also our current failures and scaling limits. Benchmarking is integrated into every stage of RAE's development to ensure mathematical rigor and prevent reasoning drift.
+
+### 📊 Benchmark Performance (Current Baseline)
+
+| Suite | Scale | MRR | Status | Note |
+| :--- | :--- | :--- | :--- | :--- |
+| **Academic Lite** | 10 mems | **1.0000** | ✅ PASS | Stable Baseline |
+| **Industrial Large** | 1k mems | **0.7634** | ✅ PASS | Recovered from 0.015 |
+| **Industrial Extreme** | 10k mems | **0.8200** | ✅ PASS | **New (2026-01-03)** |
+| **Industrial Ultra** | 100k mems| **0.0000** | ❌ FAIL | Scale issue: Ground Truth Drift |
+
+> **OpenScience Alert:** As of **2026-01-03**, the `Industrial Ultra` (100k) benchmark shows 0.0 MRR. This is a known limitation in our automated ground truth generation logic for ultra-scale datasets, currently under investigation. [See scaling research logs](benchmarking/results/industrial_ultra_20260103_093152.md).
+
+> **🔬 Deep Dive for Researchers:** For a comprehensive overview of our MDP formalization, Information Bottleneck implementation, and the 9/5 methodology, see the **[RAE for Scientists & Researchers](docs/paths/scientist.md)** guide.
+
+### 🧪 Research Benchmarks (The 9/5 Suite)
+
+For researchers and scientists, RAE provides the **9/5 Suite**—specialized tests for cognitive architecture:
+
+- **LECT** (Long-term Episodic Consistency): **0.9995** stability over 10,000+ cycles.
+- **MMIT** (Multi-Layer Interference): **0.0000** interference (Perfect layer isolation).
+- **GRDT** (Graph Reasoning Depth): Validated up to **10-hop** reasoning chains.
+- **RST** (Reflective Stability): Measures insight robustness under noise.
+- **MPEB** (Math-3 Policy Evolution): Evaluates how the system adapts its retrieval policy.
+
+> For detailed methodology and latest execution logs, see **[RAE Benchmarking Suite - Complete Guide](benchmarking/README.md)**.
+
+---
+
+## 📐 The "Match Layers" Architecture (Refactored 2026-01-02)
+
+RAE uses a unified mathematical engine to prevent Reasoning Drift. Following the **January 2026 refactoring**, the scoring logic is partitioned into three pure mathematical components:
+
+1.  **Relevance (Math-1)**: Semantic similarity using vector embeddings.
+2.  **Importance (Math-2)**: Intrinsic content value and structural graph centrality.
+3.  **Dynamics (Math-3)**: Temporal decay and access frequency (Recency).
+
+**Unified Scoring Formula:**
+`S(m, q, t) = α·Relevance(m, q) + β·Importance(m) + γ·Dynamics(m, t)`
+
+This multi-objective ranking ensures that retrieved context is not just "similar" but **logically and temporally coherent** with the current reasoning path.
+
+---
 
 ## 🚀 Key Use Cases
 

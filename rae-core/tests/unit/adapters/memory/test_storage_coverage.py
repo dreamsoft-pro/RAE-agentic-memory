@@ -18,15 +18,22 @@ class TestInMemoryStorageCoverage:
     @pytest.mark.asyncio
     async def test_save_embedding_nonexistent(self, storage):
         """Test saving embedding for non-existent memory."""
-        success = await storage.save_embedding(uuid4(), "model", [0.1, 0.2])
+        success = await storage.save_embedding(uuid4(), "model", [0.1, 0.2], "tenant")
         assert success is False
 
     @pytest.mark.asyncio
     async def test_save_embedding_success(self, storage):
         """Test saving embedding for existing memory."""
         mid = await storage.store_memory("content", "layer", "tenant", "agent")
-        success = await storage.save_embedding(mid, "model", [0.1, 0.2])
+        success = await storage.save_embedding(mid, "model", [0.1, 0.2], "tenant")
         assert success is True
+
+    @pytest.mark.asyncio
+    async def test_save_embedding_access_denied(self, storage):
+        """Test saving embedding with wrong tenant."""
+        mid = await storage.store_memory("content", "layer", "tenant1", "agent")
+        with pytest.raises(ValueError, match="Access Denied"):
+             await storage.save_embedding(mid, "model", [0.1, 0.2], "tenant2")
 
     @pytest.mark.asyncio
     async def test_delete_memory_not_found_or_wrong_tenant(self, storage):

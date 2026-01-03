@@ -813,6 +813,7 @@ class SQLiteStorage(IMemoryStorage):
         memory_id: UUID,
         model_name: str,
         embedding: list[float],
+        tenant_id: str,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
         """Save a vector embedding for a memory."""
@@ -823,6 +824,14 @@ class SQLiteStorage(IMemoryStorage):
         embedding_json = json.dumps(embedding)
 
         async with aiosqlite.connect(self.db_path) as db:
+            # Check existence and tenant ownership (SEC-02)
+            async with db.execute(
+                "SELECT 1 FROM memories WHERE id = ? AND tenant_id = ?",
+                (str(memory_id), tenant_id),
+            ) as cursor:
+                if not await cursor.fetchone():
+                    raise ValueError(f"Access Denied: Memory {memory_id} not found for tenant {tenant_id}")
+
             await db.execute(
                 """
                 INSERT INTO memory_embeddings (

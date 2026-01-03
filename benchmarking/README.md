@@ -123,8 +123,10 @@ START: What do you need?
 | **[industrial_small](./sets/industrial_small.yaml)** | 35 | 20 | ~2min | Real-world messy data | Production readiness |
 | **[stress_memory_drift](./sets/stress_memory_drift.yaml)** | 19 | 17 | ~10s | Memory stability | Drift detection |
 | **[industrial_large](./sets/industrial_large.yaml)** | 1,000 | 100 | ~4min | Large-scale stress | Performance limits |
+| **[industrial_extreme](./sets/industrial_extreme.yaml)** | 10,000 | 200 | ~15min | Ultra-scale testing | Enterprise stress |
+| **[industrial_ultra](./sets/industrial_ultra.yaml)** | 100,000 | 500 | ~2h | Mega-scale research | **Current Fail (GT Drift)** |
 
-**Total Standard:** 1,109 memories | 164 queries
+**Total Standard:** 111,109+ memories | 864+ queries
 
 ### Research Benchmarks (9/5)
 
@@ -136,6 +138,20 @@ START: What do you need?
 | **[RST](./nine_five_benchmarks/README.md#4-rst---reflective-stability-test)** | Reflective Stability | ~2min | `stability_score`, `noise_threshold` | Insight robustness |
 | **[MPEB](./nine_five_benchmarks/README.md#5-mpeb---math-3-policy-evolution-benchmark)** | Math-3 Policy Evolution | ~3min | `policy_quality`, `convergence_rate` | Policy learning |
 | **[ORB](./nine_five_benchmarks/README.md#6-orb---opentelemetry-research-benchmark)** | OpenTelemetry Research | ~2min | `pareto_frontier`, `quality_cost_curve` | Cost-quality trade-offs |
+
+### 🧪 Experiments & Specialized Tests
+
+Beyond standard benchmarks, RAE includes scripts for deep system analysis and component validation:
+
+**Experimental Research (`benchmarking/experiments/`)**
+- **Drift Dynamics** (`exp_drift_dynamics.py`): Analyzes how memory context shifts over time.
+- **Reflection Gain** (`exp_reflection_gain.py`): Measures the qualitative improvement from reflection steps.
+- **Structural Stability** (`exp_structural_stability.py`): Tests the resilience of the memory graph structure.
+
+**System Component Tests (`benchmarking/tests/`)**
+- **Bandit Algorithm** (`test_bandit.py`): Validates Multi-Armed Bandit decision logic.
+- **Math Controller** (`test_math_controller.py`): Tests profile switching (Research vs Cheap) and heuristics.
+- **Policy V2** (`test_policy_v2.py`): Verifies memory management policies.
 
 ---
 
@@ -473,5 +489,5 @@ Apache 2.0 License - See [LICENSE](../LICENSE) for details.
 
 ---
 
-*Last Updated: 2025-12-07 | Version: 2.0*
+*Last Updated: 2026-01-03 | Version: 2.1*
 *Questions? Open an issue or check [TROUBLESHOOTING.md](../TROUBLESHOOTING.md)*

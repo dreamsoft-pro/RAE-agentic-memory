@@ -20,7 +20,8 @@ depends_on = None
 
 def upgrade():
     op.execute("CREATE EXTENSION IF NOT EXISTS vector")
-    op.add_column("memories", sa.Column("embedding", Vector(384)))
+    # Using unconstrained Vector() to allow swapping models (384, 768, 1536, etc.)
+    op.add_column("memories", sa.Column("embedding", Vector()))
 
 
 def downgrade():
