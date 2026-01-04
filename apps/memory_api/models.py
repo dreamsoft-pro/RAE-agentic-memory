@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 # --- Core Memory Models ---
 
@@ -163,6 +163,22 @@ class StoreMemoryRequest(BaseModel):
     verification_notes: Optional[str] = Field(
         None, max_length=1024, description="Notes about source verification"
     )
+
+    @field_validator("layer", mode="before")
+    @classmethod
+    def normalize_layer(cls, v: Any) -> Any:
+        """Normalize legacy short layer codes to full standard names."""
+        mapping = {
+            "em": "episodic",
+            "stm": "working",
+            "wm": "working",
+            "sm": "semantic",
+            "ltm": "semantic",
+            "rm": "reflective",
+        }
+        if isinstance(v, str) and v.lower() in mapping:
+            return mapping[v.lower()]
+        return v
 
     model_config = {
         "json_schema_extra": {
