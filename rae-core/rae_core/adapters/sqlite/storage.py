@@ -830,7 +830,9 @@ class SQLiteStorage(IMemoryStorage):
                 (str(memory_id), tenant_id),
             ) as cursor:
                 if not await cursor.fetchone():
-                    raise ValueError(f"Access Denied: Memory {memory_id} not found for tenant {tenant_id}")
+                    raise ValueError(
+                        f"Access Denied: Memory {memory_id} not found for tenant {tenant_id}"
+                    )
 
             await db.execute(
                 """
@@ -846,6 +848,45 @@ class SQLiteStorage(IMemoryStorage):
             )
             await db.commit()
             return True
+
+    async def decay_importance(
+        self,
+        tenant_id: str,
+        decay_rate: float,
+        consider_access_stats: bool = False,
+    ) -> int:
+        """Apply importance decay to all memories for a tenant."""
+        await self.initialize()
+        now = datetime.now(timezone.utc).isoformat()
+
+        async with aiosqlite.connect(self.db_path) as db:
+            if not consider_access_stats:
+                # Simple linear decay for all
+                cursor = await db.execute(
+                    """
+                    UPDATE memories
+                    SET importance = MAX(0.0, importance - ?),
+                        modified_at = ?
+                    WHERE tenant_id = ?
+                    """,
+                    (decay_rate, now, tenant_id),
+                )
+            else:
+                # Slower decay for used memories
+                # Note: LOG1P equivalent in SQLite is not standard,
+                # using a simpler usage-based dampening: decay / (1 + usage_count)
+                cursor = await db.execute(
+                    """
+                    UPDATE memories
+                    SET importance = MAX(0.0, importance - (? / (1.0 + access_count))),
+                        modified_at = ?
+                    WHERE tenant_id = ?
+                    """,
+                    (decay_rate, now, tenant_id),
+                )
+
+            await db.commit()
+            return cursor.rowcount
 
     def _matches_metadata_filter(
         self, metadata: dict[str, Any], filter_dict: dict[str, Any]

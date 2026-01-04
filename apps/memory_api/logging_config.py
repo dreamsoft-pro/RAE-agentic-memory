@@ -16,16 +16,19 @@ Operational Excellence:
 """
 
 import logging
+import re
 import sys
 
-import re
 import structlog
 from opentelemetry.trace import get_current_span  # New import
 from structlog.types import Processor
 
 # Pre-compile regex for performance
-EMAIL_REGEX = re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b')
-KEY_REGEX = re.compile(r'(api[_-]?key|secret|token)=([\'"]?)([a-zA-Z0-9\-_]{8,})\2', re.IGNORECASE)
+EMAIL_REGEX = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b")
+KEY_REGEX = re.compile(
+    r'(api[_-]?key|secret|token)=([\'"]?)([a-zA-Z0-9\-_]{8,})\2', re.IGNORECASE
+)
+
 
 def pii_masking_processor(logger, method_name, event_dict):
     """
@@ -34,19 +37,23 @@ def pii_masking_processor(logger, method_name, event_dict):
     # 1. Mask message if it's a string
     if isinstance(event_dict.get("event"), str):
         event_dict["event"] = EMAIL_REGEX.sub("[EMAIL]", event_dict["event"])
-        event_dict["event"] = KEY_REGEX.sub(r'\1=[REDACTED]', event_dict["event"])
+        event_dict["event"] = KEY_REGEX.sub(r"\1=[REDACTED]", event_dict["event"])
 
     # 2. Iterate over keys to mask values
     for key, value in event_dict.items():
         if isinstance(value, str):
             # Mask common sensitive keys
-            if "key" in key.lower() or "secret" in key.lower() or "password" in key.lower():
-                 if len(value) > 4: # Don't mask short non-sensitive values
-                     event_dict[key] = "***"
+            if (
+                "key" in key.lower()
+                or "secret" in key.lower()
+                or "password" in key.lower()
+            ):
+                if len(value) > 4:  # Don't mask short non-sensitive values
+                    event_dict[key] = "***"
             else:
-                 # General regex masking
-                 value = EMAIL_REGEX.sub("[EMAIL]", value)
-                 event_dict[key] = value
+                # General regex masking
+                value = EMAIL_REGEX.sub("[EMAIL]", value)
+                event_dict[key] = value
 
     return event_dict
 
@@ -87,7 +94,7 @@ def setup_logging():
         structlog.stdlib.add_logger_name,
         structlog.processors.TimeStamper(fmt="iso"),
         add_trace_id_to_log,  # New processor
-        pii_masking_processor, # [ISO 27001]
+        pii_masking_processor,  # [ISO 27001]
         structlog.processors.StackInfoRenderer(),
     ]
 

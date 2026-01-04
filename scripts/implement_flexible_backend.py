@@ -39,7 +39,7 @@ from django.utils import timezone
 from datetime import timedelta
 
 class TelemetrySeriesAPI(APIView):
-    """
+    \"\"\"
     Universal API for flexible time-series data.
     Params:
         machine_id (uuid)
@@ -47,7 +47,7 @@ class TelemetrySeriesAPI(APIView):
         from (iso_date)
         to (iso_date)
         resolution (str): 'raw', '1m', '1h', '1d' (currently handles raw/downsampled)
-    """
+    \"\"\"
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request):

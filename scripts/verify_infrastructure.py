@@ -89,7 +89,6 @@ async def verify():
 
     # DeepSeek (Ollama on Node1)
     ollama_url = "http://100.66.252.117:11434"
-    try:
     deepseek_provider = LiteLLMProvider(
         name="deepseek",
         model="ollama/deepseek-coder:1.3b",

@@ -49,7 +49,7 @@ def get_db_url():
         url = url.replace("postgresql://", "postgresql+psycopg2://", 1)
     elif url.startswith("postgres://"):
         url = url.replace("postgres://", "postgresql+psycopg2://", 1)
-    
+
     return url
 
 

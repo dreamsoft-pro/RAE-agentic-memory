@@ -33,7 +33,7 @@ class TestInMemoryStorageCoverage:
         """Test saving embedding with wrong tenant."""
         mid = await storage.store_memory("content", "layer", "tenant1", "agent")
         with pytest.raises(ValueError, match="Access Denied"):
-             await storage.save_embedding(mid, "model", [0.1, 0.2], "tenant2")
+            await storage.save_embedding(mid, "model", [0.1, 0.2], "tenant2")
 
     @pytest.mark.asyncio
     async def test_delete_memory_not_found_or_wrong_tenant(self, storage):

@@ -1,7 +1,7 @@
-from mcp.server.fastmcp import FastMCP
-import httpx
 import os
-import sys
+
+import httpx
+from mcp.server.fastmcp import FastMCP
 
 # Configuration
 # Default to Piotrek's IP if not set
@@ -18,7 +18,7 @@ async def list_models() -> str:
             resp = await client.get(f"{OLLAMA_URL}/api/tags", timeout=5.0)
             if resp.status_code != 200:
                 return f"Error: HTTP {resp.status_code}"
-            
+
             data = resp.json()
             models = [m["name"] for m in data.get("models", [])]
             return f"Available models on {OLLAMA_URL}:\n" + "\n".join(models)
@@ -42,7 +42,7 @@ async def chat(model: str, prompt: str) -> str:
             )
             if resp.status_code != 200:
                 return f"Error: HTTP {resp.status_code} - {resp.text}"
-                
+
             return resp.json().get("response", "No response content")
         except Exception as e:
             return f"Error generating: {e}"
