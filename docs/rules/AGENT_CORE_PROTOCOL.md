@@ -85,8 +85,9 @@ Different branches = Different testing levels.
 ## 5. SESSION STARTUP ROUTINE
 
 1. **Read Protocol**: Read this file (`docs/rules/AGENT_CORE_PROTOCOL.md`).
-2. **Check Context**: Use `search_memory` (if available) for recent agent activity.
-3. **Plan**: Create a plan/todo list before editing code.
+2. **Verify Cluster**: **MANDATORY**. Run `.venv/bin/python3 scripts/connect_cluster.py` to check status of Node1, Node2, and Node3.
+3. **Check Context**: Use `search_memory` (if available) for recent agent activity.
+4. **Plan**: Create a plan/todo list before editing code.
 
 ## 6. HIGH STANDARDS & QUALITY GATES
 

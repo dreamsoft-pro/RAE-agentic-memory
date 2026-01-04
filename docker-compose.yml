@@ -14,17 +14,6 @@ services:
       - POSTGRES_DB=${POSTGRES_DB:-rae}
       - POSTGRES_USER=${POSTGRES_USER:-rae}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-rae_password}
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./benchmarking:/app/benchmarking
-      - ./apps:/app/apps
-      - ./rae-core:/app/rae-core
-    environment:
-      - POSTGRES_HOST=postgres
-      - POSTGRES_DB=${POSTGRES_DB:-rae}
-      - POSTGRES_USER=${POSTGRES_USER:-rae}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-rae_password}
       - REDIS_URL=redis://redis:6379/0
       - CELERY_BROKER_URL=redis://redis:6379/1
       - CELERY_RESULT_BACKEND=redis://redis:6379/2
@@ -44,7 +33,7 @@ services:
       - OTEL_SERVICE_NAME=rae-memory-api
       - OTEL_SERVICE_VERSION=2.9.0-enterprise
       - OTEL_EXPORTER_TYPE=otlp
-    depends_on:
+    ports:
       postgres:
         condition: service_healthy
       redis:

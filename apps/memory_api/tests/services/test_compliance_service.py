@@ -12,6 +12,8 @@ from apps.memory_api.models.dashboard_models import (
 )
 from apps.memory_api.services.compliance_service import ComplianceService
 
+pytestmark = pytest.mark.iso42001
+
 
 @pytest.fixture
 def mock_pool():

@@ -11,8 +11,7 @@ This script:
 
 import asyncio
 import os
-import subprocess
-import sys
+
 import httpx
 import yaml
 
@@ -46,9 +45,9 @@ async def check_http_node(node_id, url):
         return False
 
 async def main():
-    print(f"🔌 RAE Cluster Connector")
-    print(f"=======================")
-    
+    print("🔌 RAE Cluster Connector")
+    print("=======================")
+
     config = load_config()
     if not config:
         return
@@ -57,7 +56,7 @@ async def main():
     results = {}
 
     print(f"Checking {len(nodes)} nodes...")
-    
+
     tasks = []
     for key, node in nodes.items():
         if node["transport"] == "ssh_mcp":
@@ -80,7 +79,7 @@ async def main():
     print("\n💡 Usage Instructions:")
     print("   - Node1/2: Use MCP via SSH (Stdio)")
     print("   - Node3: Run proxy locally: `python infra/node_agent/ollama_proxy_mcp.py`")
-    
+
 if __name__ == "__main__":
     try:
         asyncio.run(main())

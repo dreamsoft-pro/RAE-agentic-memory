@@ -6,7 +6,7 @@ Create Date: 2026-01-02 23:55:00.000000
 
 """
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import JSONB, UUID, ARRAY
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 
 from alembic import op
 

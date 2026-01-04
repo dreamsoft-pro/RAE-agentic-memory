@@ -13,6 +13,8 @@ from apps.memory_api.utils.circuit_breaker import (
     DegradedModeService,
 )
 
+pytestmark = pytest.mark.iso42001
+
 
 @pytest.fixture(autouse=True)
 def mock_logger(mocker):
