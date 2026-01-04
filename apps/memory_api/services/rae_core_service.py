@@ -71,6 +71,22 @@ class RAECoreService:
         # 1. Initialize embedding provider (needed for adapter config)
         from apps.memory_api.config import settings
 
+        # Check if we should ignore DB based on settings/env
+        import os
+        db_mode = os.getenv("RAE_DB_MODE") or settings.RAE_DB_MODE
+        
+        # If postgres_pool is explicitly provided (e.g. in tests), 
+        # we should use it unless we are strictly in Lite mode with no DB.
+        ignore_db = (
+            postgres_pool is None 
+            or (db_mode == "ignore" and postgres_pool is None)
+            or (settings.RAE_PROFILE == "lite" and os.getenv("RAE_FORCE_DB") != "1")
+        )
+        
+        # BUT: For integration tests that pass a pool, we MUST NOT ignore it
+        if postgres_pool is not None and (os.getenv("RAE_DB_MODE") != "ignore" or os.getenv("RAE_FORCE_DB") == "1"):
+            ignore_db = False
+
         base_provider: IEmbeddingProvider
         if getattr(settings, "RAE_PROFILE", "standard") == "distributed":
             base_provider = RemoteEmbeddingProvider(base_url=settings.ML_SERVICE_URL)
@@ -81,7 +97,7 @@ class RAECoreService:
         self.embedding_provider = EmbeddingManager(default_provider=base_provider)
 
         # 2. Initialize Token Savings Service
-        if postgres_pool:
+        if postgres_pool and not ignore_db:
             self.savings_service = TokenSavingsService(
                 TokenSavingsRepository(postgres_pool)
             )
@@ -89,7 +105,7 @@ class RAECoreService:
             self.savings_service = None
 
         # 3. Initialize adapters with Lite mode support
-        if postgres_pool:
+        if postgres_pool and not ignore_db:
             self.postgres_adapter = PostgresMemoryAdapter(pool=postgres_pool)
         else:
             from rae_core.adapters import InMemoryStorage
@@ -97,14 +113,14 @@ class RAECoreService:
             logger.warning("using_in_memory_storage_fallback")
             self.postgres_adapter = InMemoryStorage()
 
-        if qdrant_client:
+        if qdrant_client and not ignore_db:
             # Get dimension from embedding provider
             dim = self.embedding_provider.get_dimension()
 
             self.qdrant_adapter = QdrantVectorAdapter(
                 client=cast(Any, qdrant_client), embedding_dim=dim
             )
-        elif settings.RAE_VECTOR_BACKEND == "pgvector" and postgres_pool:
+        elif settings.RAE_VECTOR_BACKEND == "pgvector" and postgres_pool and not ignore_db:
             from apps.memory_api.services.vector_store.postgres_adapter import (
                 PostgresVectorAdapter,
             )
@@ -117,7 +133,7 @@ class RAECoreService:
             logger.warning("using_in_memory_vector_fallback")
             self.qdrant_adapter = InMemoryVectorStore()
 
-        if redis_client:
+        if redis_client and not ignore_db:
             self.redis_adapter = RedisCacheAdapter(redis_client=redis_client)
         else:
             from rae_core.adapters import InMemoryCache
@@ -337,16 +353,12 @@ class RAECoreService:
         self,
         tenant_id: str,
         decay_rate: float,
-        consider_access_stats: bool = True,
+        consider_access_stats: bool = False,
     ) -> int:
-        """Apply time-based decay to all memories."""
-        return cast(
-            int,
-            await cast(Any, self.postgres_adapter).decay_importance(
-                tenant_id=tenant_id,
-                decay_rate=decay_rate,
-                consider_access_stats=consider_access_stats,
-            ),
+        """Apply importance decay to all memories for a tenant."""
+        # This is a storage-level operation supported by all adapters via IMemoryStorage
+        return await self.engine.memory_storage.decay_importance(
+            tenant_id, decay_rate, consider_access_stats
         )
 
     async def query_memories(
