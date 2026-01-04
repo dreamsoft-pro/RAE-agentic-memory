@@ -13,32 +13,35 @@ services:
       - ./apps:/app/apps
       - ./rae-core:/app/rae-core
     environment:
-      - POSTGRES_HOST=postgres
+      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
       - POSTGRES_DB=${POSTGRES_DB:-rae}
       - POSTGRES_USER=${POSTGRES_USER:-rae}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-rae_password}
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:6379/2
-      - QDRANT_HOST=qdrant
-      - QDRANT_PORT=6333
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/1}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND:-redis://redis:6379/2}
+      - QDRANT_HOST=${QDRANT_HOST:-qdrant}
+      - QDRANT_PORT=${QDRANT_PORT:-6333}
       - RAE_VECTOR_BACKEND=${RAE_VECTOR_BACKEND:-qdrant}
-      - TENANCY_ENABLED=false
-      - ENABLE_API_KEY_AUTH=false
-      - ENABLE_JWT_AUTH=false
-      - ALLOWED_ORIGINS=["*"]
+      - TENANCY_ENABLED=${TENANCY_ENABLED:-false}
+      - ENABLE_API_KEY_AUTH=${ENABLE_API_KEY_AUTH:-false}
+      - ENABLE_JWT_AUTH=${ENABLE_JWT_AUTH:-false}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-["*"]}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       # Telemetry Layer 1 (Default): Disabled external OTel
       - OTEL_TRACES_ENABLED=${OTEL_TRACES_ENABLED:-false}
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
-      - OTEL_SERVICE_NAME=rae-memory-api
-      - OTEL_SERVICE_VERSION=2.9.0-enterprise
-      - OTEL_EXPORTER_TYPE=otlp
-      - RAE_PROFILE=standard
-      - RAE_DB_MODE=migrate
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
+      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-rae-memory-api}
+      - OTEL_SERVICE_VERSION=${OTEL_SERVICE_VERSION:-2.9.0-enterprise}
+      - OTEL_EXPORTER_TYPE=${OTEL_EXPORTER_TYPE:-otlp}
+      - RAE_PROFILE=${RAE_PROFILE:-standard}
+      - RAE_DB_MODE=${RAE_DB_MODE:-migrate}
       - PYTHONUNBUFFERED=1
+      - RAE_LLM_BACKEND=${RAE_LLM_BACKEND:-ollama}
+      - OLLAMA_API_URL=${OLLAMA_API_URL:-http://host.docker.internal:11434}
+      - RAE_SIMILARITY_THRESHOLD=${RAE_SIMILARITY_THRESHOLD:-0.3}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -126,24 +129,26 @@ services:
       - ./apps:/app/apps
       - ./rae-core:/app/rae-core
     environment:
-      - POSTGRES_HOST=postgres
+      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
       - POSTGRES_DB=${POSTGRES_DB:-rae}
       - POSTGRES_USER=${POSTGRES_USER:-rae}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-rae_password}
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:6379/2
-      - QDRANT_HOST=qdrant
-      - QDRANT_PORT=6333
-      - RAE_VECTOR_BACKEND=qdrant
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/1}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND:-redis://redis:6379/2}
+      - QDRANT_HOST=${QDRANT_HOST:-qdrant}
+      - QDRANT_PORT=${QDRANT_PORT:-6333}
+      - RAE_VECTOR_BACKEND=${RAE_VECTOR_BACKEND:-qdrant}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       # Telemetry Layer 1 (Default): Disabled external OTel
       - OTEL_TRACES_ENABLED=${OTEL_TRACES_ENABLED:-false}
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
-      - OTEL_SERVICE_NAME=rae-celery-worker
-      - OTEL_SERVICE_VERSION=2.9.0-enterprise
-      - OTEL_EXPORTER_TYPE=otlp
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
+      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-rae-celery-worker}
+      - OTEL_SERVICE_VERSION=${OTEL_SERVICE_VERSION:-2.9.0-enterprise}
+      - OTEL_EXPORTER_TYPE=${OTEL_EXPORTER_TYPE:-otlp}
+      - RAE_LLM_BACKEND=${RAE_LLM_BACKEND:-ollama}
+      - OLLAMA_API_URL=${OLLAMA_API_URL:-http://host.docker.internal:11434}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -172,19 +177,21 @@ services:
       - ./apps:/app/apps
       - ./rae-core:/app/rae-core
     environment:
-      - POSTGRES_HOST=postgres
+      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
       - POSTGRES_DB=${POSTGRES_DB:-rae}
       - POSTGRES_USER=${POSTGRES_USER:-rae}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-rae_password}
-      - REDIS_URL=redis://redis:6379/0
-      - CELERY_BROKER_URL=redis://redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/1}
+      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND:-redis://redis:6379/2}
       # Telemetry Layer 1 (Default): Disabled external OTel
       - OTEL_TRACES_ENABLED=${OTEL_TRACES_ENABLED:-false}
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
-      - OTEL_SERVICE_NAME=rae-celery-beat
-      - OTEL_SERVICE_VERSION=2.9.0-enterprise
-      - OTEL_EXPORTER_TYPE=otlp
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}
+      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-rae-celery-beat}
+      - OTEL_SERVICE_VERSION=${OTEL_SERVICE_VERSION:-2.9.0-enterprise}
+      - OTEL_EXPORTER_TYPE=${OTEL_EXPORTER_TYPE:-otlp}
+      - RAE_LLM_BACKEND=${RAE_LLM_BACKEND:-ollama}
+      - OLLAMA_API_URL=${OLLAMA_API_URL:-http://host.docker.internal:11434}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -210,7 +217,7 @@ services:
     ports:
       - "8501:8501"
     environment:
-      - RAE_API_URL=http://rae-api:8000
+      - RAE_API_URL=${RAE_API_URL:-http://rae-api:8000}
       - RAE_TENANT_ID=${RAE_TENANT_ID:-default-tenant}
       - RAE_PROJECT_ID=${RAE_PROJECT_ID:-RAE-agentic-memory}
     depends_on:
