@@ -173,7 +173,7 @@ class StoreMemoryRequest(BaseModel):
             "stm": "working",
             "wm": "working",
             "sm": "semantic",
-            "ltm": "semantic",
+            "ltm": "ltm",  # Fix: Keep ltm distinct from semantic
             "rm": "reflective",
         }
         if isinstance(v, str) and v.lower() in mapping:
