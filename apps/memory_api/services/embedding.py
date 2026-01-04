@@ -36,17 +36,26 @@ class EmbeddingService:
 
     def _ensure_available(self) -> None:
         """Check availability of local embedding models or fall back to LiteLLM."""
-        if not SENTENCE_TRANSFORMERS_AVAILABLE:
+        # Check if we should force LiteLLM based on config
+        backend = getattr(self.settings, "RAE_LLM_BACKEND", "").lower()
+        force_litellm = backend == "ollama" or backend == "litellm"
+
+        if force_litellm or not SENTENCE_TRANSFORMERS_AVAILABLE:
             self.use_litellm = True
             # Determine best default model based on env
-            if self.settings.RAE_LLM_BACKEND == "ollama":
+            if backend == "ollama":
                 self.litellm_model = "ollama/nomic-embed-text"
             elif self.settings.OPENAI_API_KEY:
                 self.litellm_model = "text-embedding-3-small"
 
-            print(
-                f"SentenceTransformers not found. Falling back to LiteLLM with model: {self.litellm_model}"
-            )
+            if force_litellm:
+                print(
+                    f"Forcing usage of LiteLLM (Backend: {backend}) with model: {self.litellm_model}"
+                )
+            else:
+                print(
+                    f"SentenceTransformers not found. Falling back to LiteLLM with model: {self.litellm_model}"
+                )
 
     def _initialize_model(self) -> None:
         """Lazy initialization of the embedding model."""
