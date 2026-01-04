@@ -2,9 +2,10 @@
 
 ## 🎯 Current Objectives
 
-### 1. Quality & Coverage
-- [ ] 100% test coverage for all `rae-core` adapters.
-- [ ] Fix all remaining `mypy` errors in `apps/memory_api`.
+## Done
+- [x] Achieve ~99% coverage for rae-core (focus on adapters, policy, and manager).
+- [x] Fix IDatabaseProvider attribute errors in apps/memory_api.
+- [x] Unified linting configuration (isort settings in pyproject.toml).
 
 ### 2. Performance
 - [ ] Optimize memory retrieval for large-scale datasets (>1M items).

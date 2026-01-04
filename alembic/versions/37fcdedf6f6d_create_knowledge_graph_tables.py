@@ -1,8 +1,8 @@
-"""create_knowledge_graph_tables
+"""create knowledge graph tables
 
 Revision ID: 37fcdedf6f6d
-Revises: c3d4e5f6a7b8
-Create Date: 2025-11-20 12:00:00.000000
+Revises: c3d4e5f6a7ba
+Create Date: 2025-12-05 20:00:00.000000
 
 """
 
