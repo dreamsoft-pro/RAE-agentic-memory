@@ -6,14 +6,6 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: rae-api
-    environment:
-      - RAE_PROFILE=standard
-      - RAE_DB_MODE=migrate
-      - PYTHONUNBUFFERED=1
-      - POSTGRES_HOST=postgres
-      - POSTGRES_DB=${POSTGRES_DB:-rae}
-      - POSTGRES_USER=${POSTGRES_USER:-rae}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-rae_password}
     ports:
       - "8000:8000"
     volumes:
@@ -44,6 +36,14 @@ services:
       - OTEL_SERVICE_NAME=rae-memory-api
       - OTEL_SERVICE_VERSION=2.9.0-enterprise
       - OTEL_EXPORTER_TYPE=otlp
+      - RAE_PROFILE=standard
+      - RAE_DB_MODE=migrate
+      - PYTHONUNBUFFERED=1
+      - RAE_LLM_BACKEND=ollama
+      - OLLAMA_API_URL=http://host.docker.internal:11434
+      - RAE_SIMILARITY_THRESHOLD=0.3
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       postgres:
         condition: service_healthy
@@ -147,6 +147,10 @@ services:
       - OTEL_SERVICE_NAME=rae-celery-worker
       - OTEL_SERVICE_VERSION=2.9.0-enterprise
       - OTEL_EXPORTER_TYPE=otlp
+      - RAE_LLM_BACKEND=ollama
+      - OLLAMA_API_URL=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - postgres
       - redis
@@ -186,6 +190,10 @@ services:
       - OTEL_SERVICE_NAME=rae-celery-beat
       - OTEL_SERVICE_VERSION=2.9.0-enterprise
       - OTEL_EXPORTER_TYPE=otlp
+      - RAE_LLM_BACKEND=ollama
+      - OLLAMA_API_URL=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - postgres
       - redis
