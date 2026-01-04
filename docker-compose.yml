@@ -39,9 +39,6 @@ services:
       - RAE_PROFILE=standard
       - RAE_DB_MODE=migrate
       - PYTHONUNBUFFERED=1
-      - RAE_LLM_BACKEND=ollama
-      - OLLAMA_API_URL=http://host.docker.internal:11434
-      - RAE_SIMILARITY_THRESHOLD=0.3
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -147,8 +144,6 @@ services:
       - OTEL_SERVICE_NAME=rae-celery-worker
       - OTEL_SERVICE_VERSION=2.9.0-enterprise
       - OTEL_EXPORTER_TYPE=otlp
-      - RAE_LLM_BACKEND=ollama
-      - OLLAMA_API_URL=http://host.docker.internal:11434
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -190,8 +185,6 @@ services:
       - OTEL_SERVICE_NAME=rae-celery-beat
       - OTEL_SERVICE_VERSION=2.9.0-enterprise
       - OTEL_EXPORTER_TYPE=otlp
-      - RAE_LLM_BACKEND=ollama
-      - OLLAMA_API_URL=http://host.docker.internal:11434
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -219,7 +212,7 @@ services:
     environment:
       - RAE_API_URL=http://rae-api:8000
       - RAE_TENANT_ID=${RAE_TENANT_ID:-default-tenant}
-      - RAE_PROJECT_ID=${RAE_PROJECT_ID:-vector-verification-project}
+      - RAE_PROJECT_ID=${RAE_PROJECT_ID:-RAE-agentic-memory}
     depends_on:
       - rae-api
     restart: unless-stopped
