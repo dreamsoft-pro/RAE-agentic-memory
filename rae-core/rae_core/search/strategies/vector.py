@@ -44,7 +44,7 @@ class VectorSearchStrategy(SearchStrategy):
         Args:
             query: Search query text
             tenant_id: Tenant identifier
-            filters: Optional filters (layer, score_threshold, etc.)
+            filters: Optional filters (layer, agent_id, score_threshold, etc.)
             limit: Maximum number of results
 
         Returns:
@@ -55,13 +55,15 @@ class VectorSearchStrategy(SearchStrategy):
 
         # Extract filters
         layer = filters.get("layer") if filters else None
-        score_threshold = filters.get("score_threshold", 0.7) if filters else 0.7
+        agent_id = filters.get("agent_id") if filters else None
+        score_threshold = filters.get("score_threshold", 0.0) if filters else 0.0
 
         # Search similar vectors
         results = await self.vector_store.search_similar(
             query_embedding=query_embedding,
             tenant_id=tenant_id,
             layer=layer,
+            agent_id=agent_id,
             limit=limit,
             score_threshold=score_threshold,
         )

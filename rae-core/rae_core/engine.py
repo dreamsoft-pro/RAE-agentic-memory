@@ -256,6 +256,9 @@ class RAEEngine:
             filters["agent_id"] = agent_id
         if layer:
             filters["layer"] = layer
+        
+        # Pass threshold to strategies
+        filters["score_threshold"] = similarity_threshold
 
         results = await self.search_engine.search(
             query=query,

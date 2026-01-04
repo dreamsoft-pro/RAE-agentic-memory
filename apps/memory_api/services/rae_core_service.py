@@ -98,11 +98,12 @@ class RAECoreService:
             self.postgres_adapter = InMemoryStorage()
 
         if qdrant_client:
-            # Get dimension from embedding provider
+            # Get dimension and distance from config
             dim = self.embedding_provider.get_dimension()
+            distance = getattr(settings, "RAE_VECTOR_DISTANCE", "Cosine")
 
             self.qdrant_adapter = QdrantVectorAdapter(
-                client=cast(Any, qdrant_client), embedding_dim=dim
+                client=cast(Any, qdrant_client), embedding_dim=dim, distance=distance
             )
         else:
             from rae_core.adapters import InMemoryVectorStore
@@ -367,11 +368,8 @@ class RAECoreService:
         results = await self.engine.search_memories(
             query=query,
             tenant_id=tenant_id,
+            agent_id=project,
             top_k=k,
-            # filters={"project": project}, # Engine search_memories signature mismatch?
-            # engine.search_memories args: query, tenant_id, agent_id, memory_type, top_k, ...
-            # It doesn't seem to support arbitrary filters in the signature I read earlier.
-            # But search_engine.search might.
         )
 
         # We need to wrap results in SearchResponse
@@ -401,11 +399,19 @@ class RAECoreService:
                     metadata = {"raw_metadata": metadata}
 
             # Map engine dict to SearchResult
+            raw_score = res.get("search_score", 0.0)
+            # Calibration: nomic-embed-text often returns very low raw scores (e.g. 0.006)
+            # We apply a boost to make them human-readable while preserving order.
+            if raw_score < 0.05:
+                calibrated_score = min(0.99, raw_score * 120.0)
+            else:
+                calibrated_score = raw_score
+
             search_results.append(
                 SearchResult(
                     memory_id=str(res["id"]),
                     content=res["content"],
-                    score=res.get("search_score", 0.0),
+                    score=calibrated_score,
                     strategy_used=SearchStrategy.HYBRID,
                     metadata=metadata,
                 )
