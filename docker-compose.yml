@@ -218,8 +218,8 @@ services:
       - "8501:8501"
     environment:
       - RAE_API_URL=http://rae-api:8000
-      - RAE_TENANT_ID=${RAE_TENANT_ID:-demo-tenant}
-      - RAE_PROJECT_ID=${RAE_PROJECT_ID:-demo-project}
+      - RAE_TENANT_ID=${RAE_TENANT_ID:-default-tenant}
+      - RAE_PROJECT_ID=${RAE_PROJECT_ID:-vector-verification-project}
     depends_on:
       - rae-api
     restart: unless-stopped
