@@ -188,11 +188,13 @@ async def lifespan(app: FastAPI):
 
     # 2. Setup Background Components
     # Initialize RAE Core Service (Agnostic)
-    app.state.rae_core_service = RAECoreService(
+    service = RAECoreService(
         getattr(app.state, "pool", None),
         getattr(app.state, "qdrant_client", None),
         getattr(app.state, "redis_client", None),
     )
+    await service.ainit()
+    app.state.rae_core_service = service
 
     if settings.RAE_PROFILE == "lite":
         logger.info("lite_mode_active", details="Skipping heavy initialization")

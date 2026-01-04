@@ -225,7 +225,7 @@ class RAEBenchmarkRunner:
             expected_dim = provider.get_dimension()
             print(f"   ℹ️ Expected embedding dimension: {expected_dim}")
 
-            collection_info = vector_store.qdrant_client.get_collection(
+            collection_info = await vector_store.qdrant_client.get_collection(
                 collection_name="memories"
             )
 
@@ -255,8 +255,8 @@ class RAEBenchmarkRunner:
                 print(
                     f"   ⚠️ Collection dimension mismatch (found {current_size}, expected {expected_dim}). Recreating..."
                 )
-                vector_store.qdrant_client.delete_collection("memories")
-                vector_store.qdrant_client.create_collection(
+                await vector_store.qdrant_client.delete_collection("memories")
+                await vector_store.qdrant_client.create_collection(
                     collection_name="memories",
                     vectors_config={
                         "dense": rest_models.VectorParams(
@@ -273,7 +273,7 @@ class RAEBenchmarkRunner:
         # This is more thorough than deleting only vectors that are in PostgreSQL
         print(f"   Deleting all vectors for tenant '{self.tenant_id}' from Qdrant...")
         try:
-            vector_store.qdrant_client.delete(
+            await vector_store.qdrant_client.delete(
                 collection_name="memories",
                 points_selector=models.FilterSelector(
                     filter=models.Filter(
@@ -329,9 +329,12 @@ class RAEBenchmarkRunner:
             start_time = time.time()
 
             try:
-                # Generate embedding
+                # Generate embedding with explicit document prefix
                 content = memory["text"]
-                embedding = embedding_service.generate_embeddings([content])[0]
+                prefixed_content = f"search_document: {content}" if not content.startswith("search_") else content
+                
+                embeddings = await embedding_service.generate_embeddings_async([prefixed_content])
+                embedding = embeddings[0]
 
                 # Insert into database
                 async with self.pool.acquire() as conn:
@@ -372,6 +375,7 @@ class RAEBenchmarkRunner:
                         timestamp=created_at,
                         project=self.project_id,
                     )
+                    # Await the async upsert
                     await vector_store.upsert([memory_record], [embedding])
 
                 elapsed = time.time() - start_time
@@ -419,13 +423,16 @@ class RAEBenchmarkRunner:
             start_time = time.time()
 
             try:
-                # Generate query embedding
-                query_embedding = embedding_service.generate_embeddings([query_text])[0]
+                # Generate query embedding with explicit query prefix
+                prefixed_query = f"search_query: {query_text}" if not query_text.startswith("search_") else query_text
+                query_embeddings = await embedding_service.generate_embeddings_async([prefixed_query])
+                query_embedding = query_embeddings[0]
 
                 # Search vectors - use query method with filters
                 filters = {
                     "must": [{"key": "tenant_id", "match": {"value": self.tenant_id}}]
                 }
+                # Await the async query
                 search_results = await vector_store.query(
                     query_embedding=query_embedding, top_k=top_k, filters=filters
                 )

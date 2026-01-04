@@ -122,22 +122,22 @@ START: What do you need?
 | **[academic_extended](./sets/academic_extended.yaml)** | 45 | 20 | ~30s | Comprehensive quality | Pre-release testing |
 | **[industrial_small](./sets/industrial_small.yaml)** | 35 | 20 | ~2min | Real-world messy data | Production readiness |
 | **[stress_memory_drift](./sets/stress_memory_drift.yaml)** | 19 | 17 | ~10s | Memory stability | Drift detection |
-| **[industrial_large](./sets/industrial_large.yaml)** | 1,000 | 100 | ~4min | Large-scale stress | Performance limits |
-| **[industrial_extreme](./sets/industrial_extreme.yaml)** | 10,000 | 200 | ~15min | Ultra-scale testing | Enterprise stress |
-| **[industrial_ultra](./sets/industrial_ultra.yaml)** | 100,000 | 500 | ~2h | Mega-scale research | **Current Fail (GT Drift)** |
+| **[industrial_large](./sets/industrial_large.yaml)** | 1,000 | 100 | ~4min | **Calibrated retrieval** | Piotrek's SOTA baseline |
+| **[industrial_extreme](./sets/industrial_extreme.yaml)** | 10,000 | 200 | ~15min | Enterprise stress | Scale limits |
+| **[industrial_ultra](./sets/industrial_ultra.yaml)** | 100,000 | 500 | ~2h | Mega-scale research | GPU Cluster Node1/Node2 |
 
 **Total Standard:** 111,109+ memories | 864+ queries
 
 ### Research Benchmarks (9/5)
 
-| Benchmark | Full Name | Runtime | Key Metrics | Purpose |
-|-----------|-----------|---------|-------------|---------|
-| **[LECT](./nine_five_benchmarks/README.md#1-lect---long-term-episodic-consistency-test)** | Long-term Episodic Consistency | ~5min | `consistency_score`, `retention_rate` | 10,000+ cycle temporal testing |
-| **[MMIT](./nine_five_benchmarks/README.md#2-mmit---multi-layer-memory-interference-test)** | Multi-Layer Memory Interference | ~3min | `interference_score`, `layer_isolation` | Memory layer leak detection |
-| **[GRDT](./nine_five_benchmarks/README.md#3-grdt---graph-reasoning-depth-test)** | Graph Reasoning Depth | ~2min | `max_reasoning_depth`, `chain_coherence` | Multi-hop reasoning |
-| **[RST](./nine_five_benchmarks/README.md#4-rst---reflective-stability-test)** | Reflective Stability | ~2min | `stability_score`, `noise_threshold` | Insight robustness |
-| **[MPEB](./nine_five_benchmarks/README.md#5-mpeb---math-3-policy-evolution-benchmark)** | Math-3 Policy Evolution | ~3min | `policy_quality`, `convergence_rate` | Policy learning |
-| **[ORB](./nine_five_benchmarks/README.md#6-orb---opentelemetry-research-benchmark)** | OpenTelemetry Research | ~2min | `pareto_frontier`, `quality_cost_curve` | Cost-quality trade-offs |
+| Benchmark | Full Name | Runtime | Key Metrics | Purpose | What it verifies |
+|-----------|-----------|---------|-------------|---------|------------------|
+| **[LECT](./nine_five_benchmarks/README.md#1-lect---long-term-episodic-consistency-test)** | Long-term Episodic Consistency | ~5min | `consistency_score` | Temporal Testing | Verifies if events stored at different times remain logically consistent. |
+| **[MMIT](./nine_five_benchmarks/README.md#2-mmit---multi-layer-memory-interference-test)** | Multi-Layer Memory Interference | ~3min | `interference_score` | Isolation | Checks if short-term (STM) memories bleed into long-term (LTM) without processing. |
+| **[GRDT](./nine_five_benchmarks/README.md#3-grdt---graph-reasoning-depth-test)** | Graph Reasoning Depth | ~2min | `max_reasoning_depth` | Knowledge Graph | Tests how many "hops" the system can navigate in the graph to find an answer. |
+| **[RST](./nine_five_benchmarks/README.md#4-rst---reflective-stability-test)** | Reflective Stability | ~2min | `stability_score` | Meta-cognition | Checks if generated reflections remain stable when new, slightly conflicting data arrives. |
+| **[MPEB](./nine_five_benchmarks/README.md#5-mpeb---math-3-policy-evolution-benchmark)** | Math-3 Policy Evolution | ~3min | `convergence_rate` | ML Policy | Evaluates how fast the memory management policy learns to optimize storage. |
+| **[ORB](./nine_five_benchmarks/README.md#6-orb---opentelemetry-research-benchmark)** | OpenTelemetry Research | ~2min | `pareto_frontier` | System Optimization | Maps the optimal balance between token cost, query latency, and answer quality. |
 
 ### 🧪 Experiments & Specialized Tests
 
