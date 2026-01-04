@@ -82,6 +82,23 @@ class EmbeddingService:
         """
         self._initialize_model()
 
+        # Calibration: Apply Nomic prefixes if using nomic-embed-text
+        processed_texts = []
+        if "nomic" in self.litellm_model.lower():
+            for t in texts:
+                # Heuristic: if text is very short and doesn't look like a document, it's likely a query
+                # However, for RAE context, we usually know the intent. 
+                # For this service, we assume documents by default, unless query-like.
+                if not t.startswith("search_"):
+                    if len(t) < 100 and "?" in t:
+                        processed_texts.append(f"search_query: {t}")
+                    else:
+                        processed_texts.append(f"search_document: {t}")
+                else:
+                    processed_texts.append(t)
+        else:
+            processed_texts = texts
+
         if self.use_litellm:
             # Use LiteLLM for embeddings
             try:
@@ -90,16 +107,15 @@ class EmbeddingService:
                     kwargs["api_base"] = self.settings.OLLAMA_API_BASE or self.settings.OLLAMA_API_URL
 
                 response = litellm.embedding(
-                    model=self.litellm_model, input=texts, **kwargs
+                    model=self.litellm_model, input=processed_texts, **kwargs
                 )
                 return [d["embedding"] for d in response["data"]]
             except Exception as e:
                 print(f"LiteLLM embedding failed: {e}")
-                # Fallback to dummy embeddings if API fails (to prevent crash in dev)
-                # In prod this should probably raise
+                # Fallback to dummy embeddings if API fails
                 return [[0.0] * 384 for _ in texts]
 
-        embeddings = self.model.encode(texts)  # type: ignore[union-attr]
+        embeddings = self.model.encode(processed_texts)  # type: ignore[union-attr]
         return [emb.tolist() for emb in embeddings]
 
     async def generate_embeddings_async(self, texts: List[str]) -> List[List[float]]:

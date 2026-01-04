@@ -164,6 +164,14 @@ class RAECoreService:
 
         logger.info("rae_core_service_initialized")
 
+    async def ainit(self):
+        """Perform asynchronous initialization of adapters."""
+        if hasattr(self.qdrant_adapter, "ainit"):
+            await cast(Any, self.qdrant_adapter).ainit()
+        
+        # Add other async inits here if needed
+        logger.info("rae_core_service_async_initialized")
+
     @property
     def db(self) -> IDatabaseProvider:
         """Get agnostic database provider."""
