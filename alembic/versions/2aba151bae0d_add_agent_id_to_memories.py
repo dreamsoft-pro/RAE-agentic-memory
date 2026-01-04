@@ -1,7 +1,7 @@
 """add_agent_id_to_memories
 
 Revision ID: 2aba151bae0d
-Revises: 5c856338787b
+Revises: 602c7e62b29d
 Create Date: 2025-12-21 08:45:00.000000
 
 """
