@@ -264,14 +264,14 @@ class BenchmarkPlotter:
                 # results_file is a Path object here
                 with open(results_file, "r") as f:
                     results = json.load(f)
-                
+
                 # Verify it's a valid benchmark result
                 if "execution" not in results or "metrics" not in results:
                     continue
-                    
+
                 timestamps.append(results["execution"]["timestamp"])
                 mrr_scores.append(results["metrics"]["mrr"])
-                
+
                 # Handle inconsistent keys between different benchmark sets
                 perf = results["metrics"]["performance"]
                 if "average_query_time" in perf:
@@ -384,7 +384,7 @@ def main():
             else:
                 # Multiple results - trend analysis AND individual plots
                 output_path.mkdir(parents=True, exist_ok=True)
-                
+
                 # Individual plots for each file
                 for res_file in results_files:
                     try:

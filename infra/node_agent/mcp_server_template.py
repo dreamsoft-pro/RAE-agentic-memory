@@ -1,7 +1,6 @@
-from mcp.server.fastmcp import FastMCP
 import subprocess
-import os
-import sys
+
+from mcp.server.fastmcp import FastMCP
 
 # Initialize FastMCP server
 # This script is designed to run via SSH Stdio transport
@@ -36,11 +35,11 @@ def execute_shell(command: str) -> str:
 def get_system_info() -> str:
     """Get system hardware information (OS, GPU, RAM)."""
     info = []
-    
+
     # OS Info
     try:
         info.append(f"OS: {subprocess.check_output(['uname', '-a'], text=True).strip()}")
-    except: 
+    except:
         pass
 
     # GPU Info

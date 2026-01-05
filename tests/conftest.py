@@ -32,6 +32,7 @@ def mock_env_and_settings(monkeypatch):
         "ENABLE_API_KEY_AUTH": "False",
         "ENABLE_JWT_AUTH": "False",
         "ENABLE_RATE_LIMITING": "False",
+        "RAE_DB_MODE": "ignore",
     }
     for k, v in envs.items():
         monkeypatch.setenv(k, v)

@@ -342,3 +342,21 @@ class IMemoryStorage(Protocol):
             True if successful
         """
         ...
+
+    async def decay_importance(
+        self,
+        tenant_id: str,
+        decay_rate: float,
+        consider_access_stats: bool = False,
+    ) -> int:
+        """Apply importance decay to all memories for a tenant.
+
+        Args:
+            tenant_id: Tenant identifier
+            decay_rate: Rate of decay (0.0 to 1.0)
+            consider_access_stats: If True, decay is slower for frequently accessed memories
+
+        Returns:
+            Number of memories updated
+        """
+        ...
