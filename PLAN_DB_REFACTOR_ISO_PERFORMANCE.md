@@ -24,13 +24,13 @@ Poniższa tabela definiuje status każdej kolumny w kontekście refaktoryzacji.
 | `session_id` | TEXT | ✅ **DONE** | **Primary Source** | Grupowanie konwersacji. Niezbędne dla Dashboardu (widok sesji) i audytu kontekstu. |
 | `memory_type` | TEXT | ✅ **DONE** | **Primary Source** | Rozróżnienie typów (fakt, procedura, zasada). Ważne dla AI Control. |
 | `importance` | FLOAT | ✅ OK | Bez zmian | Priorytetyzacja danych (Risk Management). |
-| `strength` | FLOAT | ⚠️ **CZĘŚCIOWA** | **Explicit Update** | Siła pamięci. Musi być jawnie zapisywana, by sterować zapominaniem. |
+| `strength` | FLOAT | ✅ **DONE** | **Explicit Update** | Siła pamięci. Musi być jawnie zapisywana, by sterować zapominaniem. |
 | `ttl` | INT | ✅ **DONE** | **Active Logic** | Time-To-Live (via expires_at). Kluczowe dla retencji danych. |
 | `expires_at` | TIMESTAMP| ✅ OK | Bez zmian | Data wygaśnięcia. Powiązana z TTL. |
 | `created_at` | TIMESTAMP| ✅ OK | Bez zmian | Oś czasu (Timeline). |
 | `tags` | ARRAY | ✅ OK | Bez zmian | Kategoryzacja. |
 | `metadata` | JSONB | ✅ **CLEANED** | **Secondary Data** | Tylko dla danych niestandardowych, nie dla kluczowych pól. |
-| `qdrant_point_id`| TEXT | ❌ **MARTWA** | **Cleanup / Use** | Link do wektora. Decyzja: używać albo usunąć. |
+| `qdrant_point_id`| TEXT | ✅ **CLEANED** | **Cleanup / Use** | Link do wektora. Decyzja: używać albo usunąć. |
 
 ---
 
@@ -64,6 +64,8 @@ Naprawa istniejących danych (wyciągnięcie danych z JSON do kolumn).
 ### Faza 6: Cleanup & Finalize
 *   [x] Update Adapter documentation (`postgres.py`).
 *   [x] Generate Upgrade Notes.
+*   [x] **Fix Strength:** Added `strength` to MemoryRecord and read path in PostgresAdapter.
+*   [x] **Cleanup:** Created `alembic/versions/20260105_phase6_cleanup.py` to drop `qdrant_point_id`.
 
 ---
 

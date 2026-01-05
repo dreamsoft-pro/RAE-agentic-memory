@@ -173,7 +173,7 @@ class PostgreSQLStorage(IMemoryStorage):
                     id, content, layer, tenant_id, agent_id,
                     tags, metadata, embedding, importance, usage_count,
                     created_at, last_accessed_at, expires_at,
-                    project, session_id, memory_type, source
+                    project, session_id, memory_type, source, strength
                 FROM memories
                 WHERE id = $1 AND tenant_id = $2
                 """,
@@ -194,6 +194,7 @@ class PostgreSQLStorage(IMemoryStorage):
             "session_id": row["session_id"],
             "memory_type": row["memory_type"],
             "source": row["source"],
+            "strength": float(row["strength"]) if row["strength"] is not None else 1.0,
             "tags": list(row["tags"]) if row["tags"] else [],
             "metadata": row["metadata"] if row["metadata"] else {},
             "embedding": (
