@@ -59,15 +59,16 @@ Implementation of **IRON RAE Optimization Plan**:
 
 
 
+
 ## Live Metrics (Auto-generated)
 | Metric | Value |
 |--------|-------|
-| **Branch** | `develop` |
-| **Commit** | `77708a7` |
-| **Coverage** | 23.1% |
-| **Tests** | 9 total, 0 failed, 0 skipped |
-| **Pass Rate** | 100.0% |
-| **Last Update** | 2026-01-02 21:37:53 |
+| **Branch** | `main` |
+| **Commit** | `da6bf7f` |
+| **Coverage** | N/A |
+| **Tests** | 0 total, 0 failed, 0 skipped |
+| **Pass Rate** | 0.0% |
+| **Last Update** | 2026-01-05 00:12:43 |
 
 ## Quick Links
 - [Agent Core Protocol](docs/rules/AGENT_CORE_PROTOCOL.md)
