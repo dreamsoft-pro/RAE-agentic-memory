@@ -153,6 +153,20 @@ class StoreMemoryRequest(BaseModel):
     timestamp: Optional[datetime] = None
     project: Optional[str] = Field(None, max_length=255)
 
+    # Phase 1: Canonical fields for DB Refactor
+    session_id: Optional[str] = Field(
+        None, description="Session identifier for conversation grouping"
+    )
+    memory_type: Optional[str] = Field(
+        None, description="Functional type (text, code, image, etc.)"
+    )
+    ttl: Optional[int] = Field(
+        None, gt=0, description="Time-to-live in seconds"
+    )
+    strength: Optional[float] = Field(
+        default=1.0, ge=0.0, le=1.0, description="Memory strength (for decay)"
+    )
+
     # ISO/IEC 42001 - Source Trust & Provenance
     source_owner: Optional[str] = Field(
         None, max_length=255, description="Owner/responsible party for this source"
