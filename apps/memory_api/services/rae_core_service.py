@@ -173,6 +173,10 @@ class RAECoreService:
         importance: Optional[float] = None,
         tags: Optional[list] = None,
         layer: Optional[str] = None,
+        # New fields
+        session_id: Optional[str] = None,
+        memory_type: Optional[str] = None,
+        ttl: Optional[int] = None,
     ) -> str:
         """
         Store memory using RAEEngine.
@@ -185,6 +189,9 @@ class RAECoreService:
             importance: Importance score (0-1)
             tags: Optional tags
             layer: Target layer (auto if None)
+            session_id: Session identifier
+            memory_type: Memory type
+            ttl: Time to live in seconds
 
         Returns:
             Memory ID
@@ -201,7 +208,13 @@ class RAECoreService:
             layer=layer or "episodic",
             importance=importance or 0.5,
             tags=tags,
-            metadata={"project": project_id, "source": source},
+            metadata={},  # Cleared to avoid duplication (project/source are now explicit columns)
+            # Pass new fields
+            project=project_id,
+            session_id=session_id,
+            memory_type=memory_type or "text",
+            ttl=ttl,
+            source=source,
         )
 
         logger.info(
@@ -210,6 +223,8 @@ class RAECoreService:
             tenant_id=tenant_id,
             project=project,
             layer=layer,
+            session_id=session_id,
+            ttl=ttl,
         )
 
         return str(memory_id)

@@ -1,5 +1,6 @@
 """Main RAE Engine - Orchestrates all RAE-core components."""
 
+from datetime import datetime, timedelta, timezone
 from typing import Any, cast
 from uuid import UUID
 
@@ -119,6 +120,12 @@ class RAEEngine:
         importance: float = 0.5,
         tags: list[str] | None = None,
         metadata: dict[str, Any] | None = None,
+        memory_type: str = "text",
+        project: str | None = None,
+        session_id: str | None = None,
+        ttl: int | None = None,
+        source: str | None = None,
+        strength: float = 1.0,
     ) -> UUID:
         """Store a new memory.
 
@@ -130,13 +137,20 @@ class RAEEngine:
             importance: Importance score (0-1)
             tags: Optional tags
             metadata: Optional metadata
-
-        Returns:
-            Memory ID
+            memory_type: Type of memory
+            project: Project identifier
+            session_id: Session identifier
+            ttl: Time to live in seconds
+            source: Source of memory
+            strength: Memory strength
         """
         # 0. Prepare data
         tags = tags or []
         metadata = metadata or {}
+        
+        expires_at = None
+        if ttl:
+            expires_at = datetime.now(timezone.utc) + timedelta(seconds=ttl)
 
         # 1. Generate embeddings
         default_embedding = None
@@ -173,6 +187,12 @@ class RAEEngine:
             tags=tags,
             metadata=metadata,
             embedding=default_embedding,  # Store default in legacy column
+            memory_type=memory_type,
+            project=project,
+            session_id=session_id,
+            expires_at=expires_at,
+            source=source,
+            strength=strength,
         )
 
         # 3. Save all embeddings to memory_embeddings table

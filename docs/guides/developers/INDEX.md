@@ -336,6 +336,59 @@ We welcome contributions! See [CONTRIBUTING.md](../../../CONTRIBUTING.md) for gu
 - [ ] Write tests (see [Test Policy](../../AGENTS_TEST_POLICY.md))
 - [ ] Follow [Branching Strategy](../../BRANCHING.md)
 
+## 🚑 Data Recovery & Maintenance
+
+### Recovering "Lost" Memories (Layer Normalization)
+
+If you have upgraded from an older version of RAE, you might find that some memories seem to be missing. This is often due to a change in memory layer naming conventions (e.g., `ltm` -> `semantic`, `em` -> `episodic`).
+
+We provide a utility script to normalize these layer names and restore access to your data.
+
+**How to run:**
+
+```bash
+# Run the recovery script
+python scripts/recover_memory_layers.py
+```
+
+**What it does:**
+1. Connects to the RAE database.
+2. Updates legacy layer names to the new standard:
+   - `em` -> `episodic`
+   - `ltm` / `sm` -> `semantic`
+   - `stm` / `wm` -> `working`
+   - `rm` -> `reflective`
+3. Reports the number of recovered records.
+
+### Database Health Check
+
+To verify which tables are actually storing data and check the overall health of your database structure, use the stats utility:
+
+```bash
+# Check database usage
+python scripts/db_stats.py
+```
+
+This will output a report showing row counts for all tables, helping you verify data persistence and identify unused features.
+
+### Graph Snapshots & Restore
+
+For enterprise users employing the Knowledge Graph, RAE supports full point-in-time recovery via snapshots.
+
+**Restore a snapshot:**
+
+```bash
+curl -X POST http://localhost:8000/v1/graph-management/snapshots/{snapshot_id}/restore \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-key" \
+  -d '{
+    "restore_mode": "replace",
+    "create_backup": true
+  }'
+```
+
+See [Graph Enhanced Guide](../enterprise/GRAPH_ENHANCED_GUIDE.md) for full details.
+
 ## 🗺️ Roadmap
 
 **Current Version:** 1.0.0

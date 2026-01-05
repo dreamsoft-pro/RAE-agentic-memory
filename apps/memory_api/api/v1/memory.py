@@ -77,6 +77,10 @@ async def store_memory(
                 importance=req.importance,
                 layer=req.layer.value if req.layer else None,
                 tags=req.tags,
+                # Phase 3: Canonical fields
+                session_id=req.session_id,
+                memory_type=req.memory_type,
+                ttl=req.ttl,
             )
 
             # RAE-Core Service handles vector storage internally now (via Engine)
