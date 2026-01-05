@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 """
-Generator for industrial_large.yaml benchmark dataset
+Universal Generator for Industrial Benchmark Datasets
 
-Generates 1000-5000 memories with real-world patterns:
+Generates 1k - 1M memories with real-world patterns:
 - Time-series data (logs, events, metrics)
 - Duplicate/near-duplicate entries
 - Evolving concepts
 - Multi-domain knowledge
 
 Usage:
-    python generate_industrial_large.py --size 1000 --output ../sets/industrial_large.yaml
+    python generate_industrial_dataset.py --name industrial_extreme --size 10000 --queries 500 --output ../sets/industrial_extreme.yaml
 """
 
 import argparse
+import os
 import random
 from datetime import datetime, timedelta
 from typing import Dict, List
@@ -39,6 +40,9 @@ class IndustrialDataGenerator:
                     "db-cluster",
                     "cache-layer",
                     "ml-inference",
+                    "payment-gateway",
+                    "user-service",
+                    "notification-service",
                 ],
                 "templates": [
                     "{service} - {level}: Request processed in {latency}ms",
@@ -46,6 +50,8 @@ class IndustrialDataGenerator:
                     "{service} - {level}: Cache hit rate: {percent}%",
                     "{service} - {level}: Memory usage: {size}MB",
                     "{service} - {level}: Queue depth: {count} messages",
+                    "{service} - {level}: Failed to connect to {target} (retrying...)",
+                    "{service} - {level}: Transaction {tx_id} failed: {reason}",
                 ],
             },
             "tickets": {
@@ -56,22 +62,38 @@ class IndustrialDataGenerator:
                     "User reports {issue_type} with {component}: {description}",
                     "{issue_type} - {component} performance degradation: {metric}",
                     "Request for {feature} in {component} - priority: {priority}",
+                    "Customer complaint: {component} {description}",
                 ],
             },
             "metrics": {
-                "types": ["cpu_usage", "memory", "disk_io", "network", "requests"],
+                "types": [
+                    "cpu_usage",
+                    "memory",
+                    "disk_io",
+                    "network",
+                    "requests",
+                    "error_rate",
+                ],
                 "templates": [
                     "Server {server_id}: {metric_type} at {value}% - timestamp {time}",
                     "Alert: {metric_type} exceeded threshold ({threshold}%) on {server_id}",
+                    "Metric: {metric_type} for cluster {cluster_id}: {value}",
                 ],
             },
             "documentation": {
-                "types": ["api", "architecture", "deployment", "troubleshooting"],
+                "types": [
+                    "api",
+                    "architecture",
+                    "deployment",
+                    "troubleshooting",
+                    "onboarding",
+                ],
                 "templates": [
                     "API endpoint /{path} accepts {method} requests with {params} parameters",
                     "Architecture: {component} communicates with {other_component} via {protocol}",
                     "Deployment procedure for {service}: {steps}",
                     "Troubleshooting guide: {problem} - solution: {solution}",
+                    "Onboarding: How to setup {service} locally",
                 ],
             },
             "incidents": {
@@ -80,6 +102,7 @@ class IndustrialDataGenerator:
                     "Incident {id}: {service} outage - duration: {duration} mins",
                     "{severity} incident: {description} - affected users: {count}",
                     "Post-mortem: {incident_type} caused by {root_cause}",
+                    "Alert storm detected on {service}: {count} alerts in 5 mins",
                 ],
             },
         }
@@ -98,12 +121,17 @@ class IndustrialDataGenerator:
             count=random.randint(1, 100),
             percent=random.randint(50, 99),
             size=random.randint(100, 4000),
+            target=random.choice(["database", "redis", "kafka"]),
+            tx_id=f"tx-{random.randint(1000, 9999)}",
+            reason=random.choice(["timeout", "invalid_input", "deadlock"]),
         )
 
-        timestamp = self.base_date + timedelta(hours=idx)
+        timestamp = self.base_date + timedelta(
+            seconds=idx * 30
+        )  # More frequent for logs
 
         return {
-            "id": f"log_{idx:04d}",
+            "id": f"log_{idx:06d}",  # 6 digits for larger datasets
             "text": text,
             "tags": ["log", level.lower(), service],
             "metadata": {
@@ -124,7 +152,15 @@ class IndustrialDataGenerator:
         priority = random.choice(domain["priorities"])
         status = random.choice(domain["statuses"])
 
-        components = ["dashboard", "api", "database", "authentication", "reporting"]
+        components = [
+            "dashboard",
+            "api",
+            "database",
+            "authentication",
+            "reporting",
+            "billing",
+            "search",
+        ]
         component = random.choice(components)
 
         descriptions = [
@@ -133,14 +169,16 @@ class IndustrialDataGenerator:
             "incorrect data displayed",
             "timeout errors",
             "unable to access feature",
+            "crashes on startup",
+            "UI alignment issue",
         ]
 
         text = f"[{ticket_type.upper()}] {component}: {random.choice(descriptions)} - Priority: {priority}, Status: {status}"
 
-        timestamp = self.base_date + timedelta(hours=idx * 2)
+        timestamp = self.base_date + timedelta(hours=idx)
 
         return {
-            "id": f"ticket_{idx:04d}",
+            "id": f"ticket_{idx:06d}",
             "text": text,
             "tags": ["ticket", ticket_type, priority],
             "metadata": {
@@ -162,15 +200,24 @@ class IndustrialDataGenerator:
         """Generate a metrics memory"""
         domain = self.domains["metrics"]
         metric_type = random.choice(domain["types"])
-        server_id = f"srv-{random.randint(1, 50):02d}"
+        server_id = f"srv-{random.randint(1, 200):03d}"
+        cluster_id = f"cls-{random.choice(['alpha', 'beta', 'prod'])}"
 
         value = random.randint(20, 95)
-        timestamp = self.base_date + timedelta(minutes=idx * 5)
+        timestamp = self.base_date + timedelta(minutes=idx)
 
-        text = f"Metric {metric_type} on {server_id}: {value}% at {timestamp.strftime('%H:%M')}"
+        template = random.choice(domain["templates"])
+        text = template.format(
+            metric_type=metric_type,
+            server_id=server_id,
+            value=value,
+            time=timestamp.strftime("%H:%M"),
+            threshold=random.choice([80, 90, 95]),
+            cluster_id=cluster_id,
+        )
 
         return {
-            "id": f"metric_{idx:04d}",
+            "id": f"metric_{idx:06d}",
             "text": text,
             "tags": ["metric", metric_type, server_id],
             "metadata": {
@@ -188,13 +235,41 @@ class IndustrialDataGenerator:
         domain = self.domains["documentation"]
         doc_type = random.choice(domain["types"])
 
-        paths = ["users", "posts", "comments", "auth", "metrics", "database"]
-        methods = ["GET", "POST", "PUT", "DELETE"]
+        paths = [
+            "users",
+            "posts",
+            "comments",
+            "auth",
+            "metrics",
+            "database",
+            "payments",
+            "search",
+        ]
+        methods = ["GET", "POST", "PUT", "DELETE", "PATCH"]
+        components = ["API", "DB", "Cache", "Worker", "Frontend"]
 
-        text = f"Documentation ({doc_type}): API endpoint /{random.choice(paths)} - {random.choice(methods)} method"
+        template = random.choice(domain["templates"])
+        text = template.format(
+            path=random.choice(paths),
+            method=random.choice(methods),
+            params=random.choice(["id, name", "query, limit", "user_id"]),
+            component=random.choice(components),
+            other_component=random.choice(components),
+            protocol=random.choice(["HTTP", "gRPC", "AMQP"]),
+            service=random.choice(self.domains["logs"]["services"]),
+            steps="1. Install 2. Configure 3. Run",
+            problem="Service fails to start",
+            solution="Check configuration file",
+        )
+
+        # Ensure 'database' is covered if selected
+        if "database" in paths and "database" not in text:
+            # Randomly inject specific database docs to ensure coverage for common queries
+            if random.random() < 0.1:
+                text = f"Documentation ({doc_type}): Database schema and connection string configuration."
 
         return {
-            "id": f"doc_{idx:04d}",
+            "id": f"doc_{idx:06d}",
             "text": text,
             "tags": ["documentation", doc_type, "api"],
             "metadata": {
@@ -209,18 +284,28 @@ class IndustrialDataGenerator:
         domain = self.domains["incidents"]
         severity = random.choice(domain["severities"])
 
-        services = ["payment-gateway", "authentication", "database", "api-server"]
+        services = self.domains["logs"]["services"]
         service = random.choice(services)
 
         duration = random.randint(5, 240)
         affected_users = random.randint(10, 10000)
 
-        text = f"[{severity.upper()}] Incident #{idx:04d}: {service} outage for {duration} minutes, {affected_users} users affected"
+        template = random.choice(domain["templates"])
+        text = template.format(
+            id=idx,
+            service=service,
+            duration=duration,
+            severity=severity,
+            description="unexpected error rate increase",
+            count=affected_users,
+            incident_type="Database failover",
+            root_cause="Configuration drift",
+        )
 
-        timestamp = self.base_date + timedelta(days=idx // 10)
+        timestamp = self.base_date + timedelta(days=idx // 20)
 
         return {
-            "id": f"incident_{idx:04d}",
+            "id": f"incident_{idx:06d}",
             "text": text,
             "tags": ["incident", severity, service],
             "metadata": {
@@ -257,11 +342,16 @@ class IndustrialDataGenerator:
                     memories.append(generator(idx))
                     break
 
+        # Fallback if floating point weirdness
+        if len(memories) < count:
+            for i in range(count - len(memories)):
+                memories.append(self.generate_log_entry(count + i))
+
         return memories
 
     def generate_queries(self, num_queries: int, memories: List[Dict]) -> List[Dict]:
         """Generate queries based on memories"""
-        queries = []
+        queries: List[Dict] = []
 
         # Sample different types of queries
         query_templates = [
@@ -292,14 +382,22 @@ class IndustrialDataGenerator:
             },
         ]
 
-        for idx in range(num_queries):
+        attempts = 0
+        max_attempts = num_queries * 5  # Prevent infinite loops
+
+        while len(queries) < num_queries and attempts < max_attempts:
+            attempts += 1
             template_info = random.choice(query_templates)
             template = template_info["template"]
 
             # Select parameters first to allow filtering
-            service_param = random.choice(["api-gateway", "auth-service", "database"])
-            metric_param = random.choice(["cpu_usage", "memory", "disk_io"])
-            component_param = random.choice(["API", "authentication", "database"])
+            service_param = random.choice(self.domains["logs"]["services"])
+            metric_param = random.choice(
+                ["cpu_usage", "memory", "disk_io", "error_rate"]
+            )
+            component_param = random.choice(
+                ["API", "authentication", "database", "search", "billing"]
+            )
 
             # Format query
             query_text = template.format(
@@ -333,45 +431,45 @@ class IndustrialDataGenerator:
                 # If we have a specific keyword, check for it
                 if relevance_keyword:
                     # Check text and specific metadata fields
-                    text_match = relevance_keyword in m["text"].lower()
+                    text_lower = m["text"].lower()
+
+                    # Exact or partial match logic
+                    text_match = relevance_keyword in text_lower
                     meta_match = any(
                         str(v).lower() == relevance_keyword
                         for v in m["metadata"].values()
                     )
-                    # For docs, check if the keyword appears in the path
+
+                    # For docs, check if the keyword appears in the path or description
                     doc_match = False
-                    if (
-                        filter_tag == "documentation"
-                        and relevance_keyword in m["text"].lower()
-                    ):
-                        doc_match = True
+                    if filter_tag == "documentation":
+                        if relevance_keyword in text_lower:
+                            doc_match = True
 
                     if text_match or meta_match or doc_match:
                         relevant_memories.append(m)
                 else:
-                    # No keyword (e.g. "critical incidents"), just tag/severity check might be needed
-                    # For "critical incidents", checking severity='sev1' might be good, but template says "critical"
+                    # No keyword (e.g. "critical incidents")
                     if "critical" in template:
-                        if (
-                            "critical" in m.get("tags", [])
-                            or m.get("metadata", {}).get("priority") == "critical"
-                        ):
+                        # Check tags, priority, or severity
+                        is_crit = False
+                        if "critical" in m.get("tags", []):
+                            is_crit = True
+                        if m.get("metadata", {}).get("priority") == "critical":
+                            is_crit = True
+                        if m.get("metadata", {}).get("severity") == "sev1":
+                            is_crit = True
+
+                        if is_crit:
                             relevant_memories.append(m)
-                        # For incidents, sev1 is critical
-                        elif m.get("metadata", {}).get("severity") == "sev1":
-                            relevant_memories.append(m)
-                        else:
-                            continue  # Skip non-critical
+
                     elif "high priority" in template:
                         if m.get("metadata", {}).get("priority") == "high":
                             relevant_memories.append(m)
-                        else:
-                            continue
                     else:
                         relevant_memories.append(m)
 
             # Use ALL relevant memories as expected results
-            # This ensures that retrieving ANY relevant memory counts as a success
             if not relevant_memories:
                 continue
 
@@ -381,7 +479,7 @@ class IndustrialDataGenerator:
             difficulty = (
                 "easy"
                 if num_expected <= 5
-                else "medium" if num_expected <= 20 else "hard"
+                else "medium" if num_expected <= 50 else "hard"
             )
 
             queries.append(
@@ -398,7 +496,13 @@ class IndustrialDataGenerator:
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Generate industrial_large.yaml benchmark"
+        description="Generate industrial benchmark dataset"
+    )
+    parser.add_argument(
+        "--name",
+        type=str,
+        required=True,
+        help="Name of the benchmark (e.g. industrial_extreme)",
     )
     parser.add_argument(
         "--size", type=int, default=1000, help="Number of memories to generate"
@@ -409,7 +513,7 @@ def main():
     parser.add_argument(
         "--output",
         type=str,
-        default="../sets/industrial_large.yaml",
+        required=True,
         help="Output file path",
     )
     parser.add_argument(
@@ -418,7 +522,10 @@ def main():
 
     args = parser.parse_args()
 
-    print("🏭 Generating Industrial Large Benchmark")
+    # Ensure output directory exists
+    os.makedirs(os.path.dirname(args.output), exist_ok=True)
+
+    print(f"🏭 Generating {args.name} Benchmark")
     print(f"   Memories: {args.size}")
     print(f"   Queries: {args.queries}")
     print(f"   Output: {args.output}")
@@ -433,13 +540,13 @@ def main():
 
     # Create benchmark structure
     benchmark = {
-        "name": "industrial_large",
-        "description": f"Large-scale industrial benchmark with {args.size} memories simulating real-world production data",
-        "version": "1.0",
+        "name": args.name,
+        "description": f"{args.name} benchmark with {args.size} memories simulating real-world production data",
+        "version": "2.0",
         "memories": memories,
         "queries": queries,
         "config": {
-            "top_k": 10,
+            "top_k": 20 if args.size > 1000 else 10,
             "min_relevance_score": 0.25,
             "enable_reranking": True,
             "enable_reflection": True,
@@ -459,7 +566,7 @@ def main():
     print("\n✅ Generated successfully!")
     print(f"   Total memories: {len(memories)}")
     print(f"   Total queries: {len(queries)}")
-    print(f"   File size: {len(yaml.dump(benchmark)) / 1024:.1f} KB")
+    # print(f"   File size: {len(yaml.dump(benchmark)) / 1024:.1f} KB") # Avoid double dump
 
 
 if __name__ == "__main__":

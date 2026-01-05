@@ -54,7 +54,9 @@ def mock_db_pool():
 
     pool.acquire.return_value = cm
 
-    return pool, connection
+    app.state.pool = pool
+    yield pool, connection
+    del app.state.pool
 
 
 @pytest.fixture

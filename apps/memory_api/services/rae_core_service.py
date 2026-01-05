@@ -80,11 +80,18 @@ class RAECoreService:
         ignore_db = (
             postgres_pool is None 
             or (db_mode == "ignore" and postgres_pool is None)
+<<<<<<< HEAD
             or (settings.RAE_PROFILE == "lite" and os.getenv("RAE_FORCE_DB") != "1")
         )
         
         # BUT: For integration tests that pass a pool, we MUST NOT ignore it
         if postgres_pool is not None and (os.getenv("RAE_DB_MODE") != "ignore" or os.getenv("RAE_FORCE_DB") == "1"):
+=======
+        )
+        
+        # BUT: For integration tests that pass a pool, we MUST NOT ignore it
+        if postgres_pool is not None:
+>>>>>>> feature/integrated-recovery
             ignore_db = False
 
         base_provider: IEmbeddingProvider
@@ -114,7 +121,11 @@ class RAECoreService:
             self.postgres_adapter = InMemoryStorage()
 
         if qdrant_client and not ignore_db:
+<<<<<<< HEAD
             # Get dimension and distance from config
+=======
+            # Get dimension from embedding provider
+>>>>>>> feature/integrated-recovery
             dim = self.embedding_provider.get_dimension()
             distance = getattr(settings, "RAE_VECTOR_DISTANCE", "Cosine")
 

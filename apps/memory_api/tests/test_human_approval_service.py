@@ -16,6 +16,8 @@ from apps.memory_api.services.human_approval_service import (
 )
 from apps.memory_api.utils.datetime_utils import utc_now
 
+pytestmark = pytest.mark.iso42001
+
 
 @pytest.fixture(autouse=True)
 def mock_logger(mocker):

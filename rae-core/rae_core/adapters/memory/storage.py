@@ -60,9 +60,11 @@ class InMemoryStorage(IMemoryStorage):
             # Check existence and tenant ownership (SEC-02)
             if memory_id not in self._memories:
                 return False
-            
+
             if self._memories[memory_id]["tenant_id"] != tenant_id:
-                raise ValueError(f"Access Denied: Memory {memory_id} not found for tenant {tenant_id}")
+                raise ValueError(
+                    f"Access Denied: Memory {memory_id} not found for tenant {tenant_id}"
+                )
 
             self._embeddings[memory_id][model_name] = {
                 "embedding": embedding,
@@ -535,6 +537,46 @@ class InMemoryStorage(IMemoryStorage):
             memory["importance"] = new_imp
             memory["modified_at"] = datetime.now(timezone.utc)
             return new_imp
+
+    async def decay_importance(
+        self,
+        tenant_id: str,
+        decay_rate: float,
+        consider_access_stats: bool = False,
+    ) -> int:
+        """Apply importance decay to all memories for a tenant."""
+        async with self._lock:
+            count = 0
+            memory_ids = self._by_tenant.get(tenant_id, set())
+
+            for mid in memory_ids:
+                memory = self._memories.get(mid)
+                if not memory:
+                    continue
+
+                old_importance = float(memory.get("importance", 0.5))
+
+                # Simple linear decay
+                actual_decay = decay_rate
+
+                # Optional: boost based on access stats (slower decay)
+                if consider_access_stats:
+                    usage = int(memory.get("usage_count", 0))
+                    if usage > 0:
+                        # Logarithmic dampening of decay based on usage
+                        import math
+
+                        dampening = 1.0 / (1.0 + math.log1p(usage))
+                        actual_decay *= dampening
+
+                new_importance = max(0.0, old_importance - actual_decay)
+
+                if new_importance != old_importance:
+                    memory["importance"] = new_importance
+                    memory["modified_at"] = datetime.now(timezone.utc)
+                    count += 1
+
+            return count
 
     def _matches_metadata_filter(
         self, metadata: dict[str, Any], filter_dict: dict[str, Any]

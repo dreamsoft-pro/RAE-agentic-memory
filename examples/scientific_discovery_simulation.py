@@ -1,4 +1,5 @@
-"Scientific Discovery Simulation using RAE
+"""
+Scientific Discovery Simulation using RAE
 -----------------------------------------
 This script demonstrates the "Reflective Loop" in a scientific context.
 It simulates an agent conducting experiments, encountering anomalies,
@@ -6,7 +7,7 @@ and using RAE's multi-layered memory to refine its hypothesis.
 
 Requirements:
     pip install rae-sdk rich
-"
+"""
 
 import asyncio
 import time
