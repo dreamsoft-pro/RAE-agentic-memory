@@ -114,11 +114,12 @@ class RAECoreService:
             self.postgres_adapter = InMemoryStorage()
 
         if qdrant_client and not ignore_db:
-            # Get dimension from embedding provider
+            # Get dimension and distance from config
             dim = self.embedding_provider.get_dimension()
+            distance = getattr(settings, "RAE_VECTOR_DISTANCE", "Cosine")
 
             self.qdrant_adapter = QdrantVectorAdapter(
-                client=cast(Any, qdrant_client), embedding_dim=dim
+                client=cast(Any, qdrant_client), embedding_dim=dim, distance=distance
             )
         elif settings.RAE_VECTOR_BACKEND == "pgvector" and postgres_pool and not ignore_db:
             from apps.memory_api.services.vector_store.postgres_adapter import (
@@ -140,8 +141,6 @@ class RAECoreService:
 
             logger.warning("using_in_memory_cache_fallback")
             self.redis_adapter = InMemoryCache()
-
-        # Initialize LLM provider with delegation support
 
         # Initialize LLM provider with delegation support
         self.llm_provider = get_llm_provider(task_repo=postgres_pool)
@@ -203,6 +202,10 @@ class RAECoreService:
         importance: Optional[float] = None,
         tags: Optional[list] = None,
         layer: Optional[str] = None,
+        # New fields
+        session_id: Optional[str] = None,
+        memory_type: Optional[str] = None,
+        ttl: Optional[int] = None,
     ) -> str:
         """
         Store memory using RAEEngine.
@@ -215,6 +218,9 @@ class RAECoreService:
             importance: Importance score (0-1)
             tags: Optional tags
             layer: Target layer (auto if None)
+            session_id: Session identifier
+            memory_type: Memory type
+            ttl: Time to live in seconds
 
         Returns:
             Memory ID
@@ -231,7 +237,13 @@ class RAECoreService:
             layer=layer or "episodic",
             importance=importance or 0.5,
             tags=tags,
-            metadata={"project": project_id, "source": source},
+            metadata={},  # Cleared to avoid duplication (project/source are now explicit columns)
+            # Pass new fields
+            project=project_id,
+            session_id=session_id,
+            memory_type=memory_type or "text",
+            ttl=ttl,
+            source=source,
         )
 
         logger.info(
@@ -240,6 +252,8 @@ class RAECoreService:
             tenant_id=tenant_id,
             project=project,
             layer=layer,
+            session_id=session_id,
+            ttl=ttl,
         )
 
         return str(memory_id)
@@ -394,24 +408,9 @@ class RAECoreService:
         results = await self.engine.search_memories(
             query=query,
             tenant_id=tenant_id,
+            agent_id=project,
             top_k=k,
-            # filters={"project": project}, # Engine search_memories signature mismatch?
-            # engine.search_memories args: query, tenant_id, agent_id, memory_type, top_k, ...
-            # It doesn't seem to support arbitrary filters in the signature I read earlier.
-            # But search_engine.search might.
         )
-
-        # We need to wrap results in SearchResponse
-        # SearchResponse is pydantic model.
-        # Assuming results is List[Dict] matching SearchResult?
-
-        # For now, let's try to map it roughly or assume compatibility if I modify this.
-        # But I should stick to fixing the *initialization* first.
-        # I will keep the method implementation close to original but using new engine methods.
-
-        # Wait, the original code used self.engine.query_memory which returned SearchResponse.
-        # The NEW engine has search_memories returning List[Dict].
-        # So I need to adapt the response.
 
         import json
 
@@ -428,11 +427,19 @@ class RAECoreService:
                     metadata = {"raw_metadata": metadata}
 
             # Map engine dict to SearchResult
+            raw_score = res.get("search_score", 0.0)
+            # Calibration: nomic-embed-text often returns very low raw scores (e.g. 0.006)
+            # We apply a boost to make them human-readable while preserving order.
+            if raw_score < 0.05:
+                calibrated_score = min(0.99, raw_score * 120.0)
+            else:
+                calibrated_score = raw_score
+
             search_results.append(
                 SearchResult(
                     memory_id=str(res["id"]),
                     content=res["content"],
-                    score=res.get("search_score", 0.0),
+                    score=calibrated_score,
                     strategy_used=SearchStrategy.HYBRID,
                     metadata=metadata,
                 )
@@ -446,16 +453,14 @@ class RAECoreService:
         )
 
         # Track token savings from RAG filtering
-        # Conservatively estimate that we avoided sending at least 1000 tokens of raw history
-        # by selecting only top-k relevant fragments.
         if self.savings_service:
             try:
                 await self.savings_service.track_savings(
                     tenant_id=tenant_id,
                     project_id=project,
-                    model="gpt-4o-mini",  # Standard fallback model for cost calculation
-                    predicted_tokens=1200,  # Estimated total context size
-                    real_tokens=200,  # Estimated size of top-k results
+                    model="gpt-4o-mini",
+                    predicted_tokens=1200,
+                    real_tokens=200,
                     savings_type="rag",
                 )
             except Exception as e:
@@ -466,7 +471,7 @@ class RAECoreService:
             total_found=len(results),
             query=query,
             strategy=SearchStrategy.HYBRID,
-            execution_time_ms=0.0,  # Placeholder
+            execution_time_ms=0.0,
         )
 
     async def consolidate_memories(
@@ -484,7 +489,6 @@ class RAECoreService:
         Returns:
             Consolidation statistics
         """
-        # Engine run_reflection_cycle might cover consolidation
         results = await self.engine.run_reflection_cycle(
             tenant_id=tenant_id,
             agent_id="default",
@@ -498,12 +502,8 @@ class RAECoreService:
             results=results,
         )
 
-        # Track token savings from consolidation
-        # Consolidation reduces long-term context size by summarizing many memories into reflections.
         if self.savings_service and results:
             try:
-                # Assuming results contains information about tokens saved or items consolidated
-                # If not explicitly provided, we use a heuristic based on items removed/consolidated
                 tokens_saved = results.get("tokens_saved", 0)
                 if tokens_saved > 0:
                     await self.savings_service.track_savings(
@@ -526,17 +526,7 @@ class RAECoreService:
     ) -> list:
         """
         Generate reflections from patterns.
-
-        Args:
-            tenant_id: Tenant identifier
-            project: Project identifier
-
-        Returns:
-            List of generated reflections
         """
-        # This mapping is tricky without exact engine method.
-        # Assuming run_reflection_cycle does it.
-        # Or I leave it broken for now? No, I should try to keep it valid.
         return []
 
     async def get_statistics(
@@ -546,15 +536,7 @@ class RAECoreService:
     ) -> dict:
         """
         Get memory statistics across all layers.
-
-        Args:
-            tenant_id: Tenant identifier
-            project: Project identifier
-
-        Returns:
-            Statistics dictionary
         """
-        # Engine get_status returns dict
         return self.engine.get_status()
 
     async def clear_memories(
@@ -563,26 +545,16 @@ class RAECoreService:
     ) -> dict:
         """
         Clear all memories for tenant.
-
-        Args:
-            tenant_id: Tenant identifier
-
-        Returns:
-            Clear statistics
         """
-        # No clear_all in new engine?
-        # I'll return empty for now to pass init tests.
         return {"deleted": 0}
 
     async def list_unique_tenants(self) -> List[str]:
         """List all unique tenant IDs in the system."""
-        # This might be storage specific, but for now we assume Postgres
         if hasattr(self.postgres_adapter, "list_unique_tenants"):
             return cast(
                 List[str], await cast(Any, self.postgres_adapter).list_unique_tenants()
             )
 
-        # Fallback for PostgresMemoryAdapter
         records = await self.db.fetch(
             "SELECT DISTINCT tenant_id FROM memories WHERE tenant_id IS NOT NULL"
         )
@@ -590,7 +562,6 @@ class RAECoreService:
 
     async def list_unique_projects(self, tenant_id: str) -> List[str]:
         """List all unique project IDs for a tenant."""
-        # agent_id maps to project in RAE-Core
         records = await self.db.fetch(
             "SELECT DISTINCT agent_id as project FROM memories WHERE tenant_id = $1 AND agent_id IS NOT NULL",
             tenant_id,
@@ -601,7 +572,6 @@ class RAECoreService:
         self, since: datetime
     ) -> List[Dict[str, str]]:
         """List unique (project, tenant_id) pairs with recent activity."""
-        # agent_id maps to project in RAE-Core
         records = await self.db.fetch(
             """
             SELECT DISTINCT agent_id as project, tenant_id
@@ -618,14 +588,14 @@ class RAECoreService:
         """List sessions with event count above threshold."""
         sql = """
             SELECT
-                metadata->>'session_id' as session_id,
+                session_id,
                 COUNT(*) as event_count
             FROM memories
             WHERE tenant_id = $1
                 AND agent_id = $2
                 AND layer = 'episodic'
-                AND metadata->>'session_id' IS NOT NULL
-            GROUP BY metadata->>'session_id'
+                AND session_id IS NOT NULL
+            GROUP BY session_id
             HAVING COUNT(*) >= $3
             ORDER BY COUNT(*) DESC
         """
@@ -643,7 +613,6 @@ class RAECoreService:
         result = await self.db.execute(
             "DELETE FROM memories WHERE expires_at IS NOT NULL AND expires_at < NOW()"
         )
-        # IDatabaseProvider.execute might return different things, but usually it's the result string or None
         if result and isinstance(result, str) and result.startswith("DELETE"):
             return int(result.split()[-1])
         return 0

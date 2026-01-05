@@ -200,6 +200,11 @@ async def get_user_id_from_token(request: Request) -> Optional[str]:
     if api_key:
         return f"apikey_{api_key[:20]}"
 
+    # Fallback to X-User-Id header for dev/testing
+    user_id_header = request.headers.get("X-User-Id")
+    if user_id_header:
+        return user_id_header
+
     return None
 
 

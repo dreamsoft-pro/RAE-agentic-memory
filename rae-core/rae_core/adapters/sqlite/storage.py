@@ -164,6 +164,11 @@ class SQLiteStorage(IMemoryStorage):
         embedding: list[float] | None = None,
         importance: float | None = None,
         expires_at: Any | None = None,
+        memory_type: str = "text",
+        project: str | None = None,
+        session_id: str | None = None,
+        source: str | None = None,
+        strength: float = 1.0,
     ) -> UUID:
         """Store a new memory."""
         await self.initialize()

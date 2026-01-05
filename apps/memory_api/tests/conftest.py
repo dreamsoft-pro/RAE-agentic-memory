@@ -238,6 +238,7 @@ async def db_pool(postgres_container):
                     timestamp TIMESTAMP,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     last_accessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    expires_at TIMESTAMP,
                     usage_count INTEGER DEFAULT 0,
                     strength FLOAT DEFAULT 0.5,
                     memory_type TEXT DEFAULT 'episodic',
