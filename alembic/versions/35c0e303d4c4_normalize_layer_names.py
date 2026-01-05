@@ -18,12 +18,20 @@ depends_on = None
 
 def upgrade():
     # Normalize legacy short layer codes to full standard names
-    op.execute("UPDATE memories SET layer = 'episodic' WHERE layer = 'em'")
-    op.execute("UPDATE memories SET layer = 'working' WHERE layer = 'stm' OR layer = 'wm'")
-    op.execute("UPDATE memories SET layer = 'semantic' WHERE layer = 'ltm' OR layer = 'sm'")
-    op.execute("UPDATE memories SET layer = 'reflective' WHERE layer = 'rm'")
+    # Added check for table existence to prevent failure during fresh installs
+    op.execute("""
+        DO $$ 
+        BEGIN 
+            IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'memories') THEN
+                UPDATE memories SET layer = 'episodic' WHERE layer = 'em';
+                UPDATE memories SET layer = 'working' WHERE layer = 'stm' OR layer = 'wm';
+                UPDATE memories SET layer = 'semantic' WHERE layer = 'ltm' OR layer = 'sm';
+                UPDATE memories SET layer = 'reflective' WHERE layer = 'rm';
+            END IF;
+        END $$;
+    """)
 
 
 def downgrade():
-    # Optional: logic to revert to short names if needed, but we want to stick to the new standard
+    # Optional: logic to revert to short names if needed
     pass

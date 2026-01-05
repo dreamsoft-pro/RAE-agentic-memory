@@ -51,7 +51,7 @@ class PostgreSQLStorage(IMemoryStorage):
     CREATE INDEX idx_memories_expires_at ON memories(expires_at) WHERE expires_at IS NOT NULL;
     CREATE INDEX idx_memories_importance ON memories(importance);
     CREATE INDEX idx_memories_metadata ON memories USING GIN(metadata);
-    
+
     -- Performance Indexes (Phase 5)
     CREATE INDEX idx_memories_project ON memories(project);
     CREATE INDEX idx_memories_session_id ON memories(session_id);
@@ -273,6 +273,7 @@ class PostgreSQLStorage(IMemoryStorage):
                     id, content, layer, tenant_id, agent_id,
                     tags, metadata, embedding, importance, usage_count,
                     created_at, last_accessed_at, expires_at,
+                    project, session_id, source, strength, memory_type,
                     -- Simple relevance scoring
                     CASE
                         WHEN content ILIKE ${param_idx} THEN 1.0
@@ -296,6 +297,11 @@ class PostgreSQLStorage(IMemoryStorage):
                 "layer": row["layer"],
                 "tenant_id": row["tenant_id"],
                 "agent_id": row["agent_id"],
+                "project": row["project"],
+                "session_id": row["session_id"],
+                "source": row["source"],
+                "strength": float(row["strength"]) if row["strength"] is not None else 1.0,
+                "memory_type": row["memory_type"],
                 "tags": list(row["tags"]) if row["tags"] else [],
                 "metadata": row["metadata"] if row["metadata"] else {},
                 "embedding": (

@@ -24,5 +24,4 @@ types-setuptools
 watchdog[watchmedo]
 locust
 # ML dependencies for benchmarks and tests
-sentence-transformers
 pytest-benchmark

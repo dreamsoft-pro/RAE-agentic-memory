@@ -1,8 +1,7 @@
 import hashlib
 import logging
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import Any, Dict, List
 
-import numpy as np
 import structlog
 from qdrant_client import QdrantClient, models
 from tenacity import (
@@ -12,26 +11,6 @@ from tenacity import (
     stop_after_attempt,
     wait_exponential,
 )
-
-# Optional ML dependencies
-try:  # pragma: no cover
-    import onnxruntime
-
-    ONNXRUNTIME_AVAILABLE = True
-except ImportError:  # pragma: no cover
-    onnxruntime = None  # type: ignore[assignment]
-    ONNXRUNTIME_AVAILABLE = False
-
-try:  # pragma: no cover
-    from sentence_transformers import SentenceTransformer
-
-    SENTENCE_TRANSFORMERS_AVAILABLE = True
-except ImportError:  # pragma: no cover
-    SentenceTransformer = None  # type: ignore[assignment,misc]
-    SENTENCE_TRANSFORMERS_AVAILABLE = False
-
-if TYPE_CHECKING:
-    from sentence_transformers import SentenceTransformer  # noqa: F401
 
 from ...config import settings
 from ...metrics import vector_query_time_histogram
@@ -50,9 +29,6 @@ class QdrantStore(MemoryVectorStore):
         self.qdrant_client = QdrantClient(
             host=settings.QDRANT_HOST, port=settings.QDRANT_PORT
         )
-        # self.embedding_model was removed as it is not used in QdrantStore.
-        # Embeddings are passed explicitly to upsert/query methods.
-
         self.ensure_collection_exists()
 
     def ensure_collection_exists(self):
@@ -74,9 +50,9 @@ class QdrantStore(MemoryVectorStore):
                 dimension = provider.get_dimension()
             except Exception as e:
                 logger.warning(
-                    f"Could not determine embedding dimension from service: {e}. using default 384."
+                    f"Could not determine embedding dimension from service: {e}. using default 1536."
                 )
-                dimension = 384
+                dimension = 1536
 
             collections = self.qdrant_client.get_collections().collections
             exists = any(c.name == collection_name for c in collections)
@@ -98,7 +74,7 @@ class QdrantStore(MemoryVectorStore):
                             distance=models.Distance.COSINE,
                         ),
                         "ollama": models.VectorParams(
-                            size=384,
+                            size=768,
                             distance=models.Distance.COSINE,
                         ),
                     },
@@ -107,19 +83,8 @@ class QdrantStore(MemoryVectorStore):
                 logger.info(f"Collection '{collection_name}' created successfully.")
             else:
                 logger.debug(f"Collection '{collection_name}' already exists.")
-                # TODO: Check if existing collection supports named vectors and migrate if needed
         except Exception as e:
             logger.error(f"Failed to ensure collection exists: {e}")
-            # Don't raise here to allow app startup even if Qdrant is temporarily down
-            # Retry logic in upsert/query will handle connection issues
-
-    def _get_onnx_embedder(self, model_path: str):
-        # This is a placeholder for a real ONNX embedder
-        class OnnxEmbedder:
-            def encode(self, texts: List[str]) -> np.ndarray:
-                return np.random.rand(len(texts), 384).astype(np.float32)
-
-        return OnnxEmbedder()
 
     def _get_sparse_vector(self, text: str) -> models.SparseVector:
         """
@@ -127,19 +92,7 @@ class QdrantStore(MemoryVectorStore):
         """
         words = text.lower().split()
         stopwords = {
-            "a",
-            "an",
-            "the",
-            "is",
-            "in",
-            "on",
-            "of",
-            "for",
-            "to",
-            "with",
-            "and",
-            "or",
-            "but",
+            "a", "an", "the", "is", "in", "on", "of", "for", "to", "with", "and", "or", "but",
         }
 
         # Use dict to handle hash collisions and ensure unique indices
@@ -173,11 +126,6 @@ class QdrantStore(MemoryVectorStore):
     async def upsert(self, memories: List[MemoryRecord], embeddings: List[Any]):
         """
         Upserts a list of memories into the Qdrant collection.
-
-        Supports both simple List[float] (mapped to "dense") and
-        Dict[str, List[float]] (mapped to named vectors).
-
-        Implements retry logic with exponential backoff.
         """
         if len(memories) != len(embeddings):
             raise ValueError("The number of memories and embeddings must be the same.")
@@ -235,12 +183,6 @@ class QdrantStore(MemoryVectorStore):
     ) -> List[ScoredMemoryRecord]:
         """
         Queries the Qdrant collection using a dense vector embedding.
-
-        Args:
-            query_embedding: Vector to search with
-            top_k: Number of results
-            filters: Search filters
-            vector_name: Name of the vector to search ("dense", "openai", "ollama")
         """
         qdrant_filters = models.Filter(**filters) if filters else None
 
@@ -267,8 +209,6 @@ class QdrantStore(MemoryVectorStore):
     async def delete(self, memory_id: str):
         """
         Deletes a memory from the Qdrant collection by its ID.
-
-        Implements retry logic with exponential backoff.
         """
         try:
             self.qdrant_client.delete(

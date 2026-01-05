@@ -12,15 +12,17 @@ services:
       - ./benchmarking:/app/benchmarking
       - ./apps:/app/apps
       - ./rae-core:/app/rae-core
+      - ./alembic:/app/alembic
+      - ./alembic.ini:/app/alembic.ini
     environment:
-      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
+      - POSTGRES_HOST=postgres
       - POSTGRES_DB=${POSTGRES_DB:-rae}
       - POSTGRES_USER=${POSTGRES_USER:-rae}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-rae_password}
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
-      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/1}
-      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND:-redis://redis:6379/2}
-      - QDRANT_HOST=${QDRANT_HOST:-qdrant}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - QDRANT_HOST=qdrant
       - QDRANT_PORT=${QDRANT_PORT:-6333}
       - RAE_VECTOR_BACKEND=${RAE_VECTOR_BACKEND:-qdrant}
       - TENANCY_ENABLED=${TENANCY_ENABLED:-false}
@@ -128,15 +130,17 @@ services:
     volumes:
       - ./apps:/app/apps
       - ./rae-core:/app/rae-core
+      - ./alembic:/app/alembic
+      - ./alembic.ini:/app/alembic.ini
     environment:
-      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
+      - POSTGRES_HOST=postgres
       - POSTGRES_DB=${POSTGRES_DB:-rae}
       - POSTGRES_USER=${POSTGRES_USER:-rae}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-rae_password}
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
-      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/1}
-      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND:-redis://redis:6379/2}
-      - QDRANT_HOST=${QDRANT_HOST:-qdrant}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
+      - QDRANT_HOST=qdrant
       - QDRANT_PORT=${QDRANT_PORT:-6333}
       - RAE_VECTOR_BACKEND=${RAE_VECTOR_BACKEND:-qdrant}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
@@ -176,14 +180,16 @@ services:
     volumes:
       - ./apps:/app/apps
       - ./rae-core:/app/rae-core
+      - ./alembic:/app/alembic
+      - ./alembic.ini:/app/alembic.ini
     environment:
-      - POSTGRES_HOST=${POSTGRES_HOST:-postgres}
+      - POSTGRES_HOST=postgres
       - POSTGRES_DB=${POSTGRES_DB:-rae}
       - POSTGRES_USER=${POSTGRES_USER:-rae}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-rae_password}
-      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
-      - CELERY_BROKER_URL=${CELERY_BROKER_URL:-redis://redis:6379/1}
-      - CELERY_RESULT_BACKEND=${CELERY_RESULT_BACKEND:-redis://redis:6379/2}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/1
+      - CELERY_RESULT_BACKEND=redis://redis:6379/2
       # Telemetry Layer 1 (Default): Disabled external OTel
       - OTEL_TRACES_ENABLED=${OTEL_TRACES_ENABLED:-false}
       - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4317}

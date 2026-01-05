@@ -58,10 +58,14 @@ class RAEEngine:
         self.sync_provider = sync_provider
 
         # Initialize sub-engines
-        from rae_core.search.strategies import SearchStrategy
+        from rae_core.search.strategies.fulltext import FullTextStrategy
         from rae_core.search.strategies.vector import VectorSearchStrategy
 
         strategies: dict[str, SearchStrategy] = {}
+        
+        # Always include full-text strategy (run anywhere)
+        strategies["fulltext"] = FullTextStrategy(memory_storage=memory_storage)
+
         if vector_store and embedding_provider:
             strategies["vector"] = VectorSearchStrategy(
                 vector_store=vector_store,
@@ -294,13 +298,25 @@ class RAEEngine:
                 results=results[:rerank_top_k],
             )
 
-        # Fetch actual memories
+        # 4. Fetch actual memories and apply Math Layer scoring
+        from rae_core.math.controller import MathLayerController
+        math_controller = MathLayerController()
+
         memories: list[dict[str, Any]] = []
         for memory_id, score in results:
             memory = await self.memory_storage.get_memory(memory_id, tenant_id)
             if memory:
+                # Combine retrieval score with math heuristic score
+                math_score = math_controller.score_memory(
+                    memory=memory, 
+                    query_similarity=score
+                )
                 memory["search_score"] = score
+                memory["math_score"] = math_score
                 memories.append(memory)
+
+        # 5. Final sort by math score
+        memories.sort(key=lambda x: x["math_score"], reverse=True)
 
         return memories
 

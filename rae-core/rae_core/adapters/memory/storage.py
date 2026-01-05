@@ -77,6 +77,11 @@ class InMemoryStorage(IMemoryStorage):
         embedding: list[float] | None = None,
         importance: float | None = None,
         expires_at: Any | None = None,
+        memory_type: str = "text",
+        project: str | None = None,
+        session_id: str | None = None,
+        source: str | None = None,
+        strength: float = 1.0,
     ) -> UUID:
         """Store a new memory."""
         async with self._lock:
@@ -97,6 +102,11 @@ class InMemoryStorage(IMemoryStorage):
                 "last_accessed_at": now,
                 "expires_at": expires_at,
                 "usage_count": 0,
+                "memory_type": memory_type,
+                "project": project,
+                "session_id": session_id,
+                "source": source,
+                "strength": strength,
             }
 
             # Store memory

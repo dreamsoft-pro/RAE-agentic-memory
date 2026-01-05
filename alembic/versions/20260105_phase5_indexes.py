@@ -15,42 +15,45 @@ branch_labels = None
 depends_on = None
 
 def upgrade():
-    # 1. Index on project (High cardinality, frequent filtering in Dashboard)
-    op.create_index(
-        'idx_memories_project',
-        'memories',
-        ['project'],
-        unique=False,
-        postgresql_using='btree'
-    )
+    # 1. Index on project
+    op.execute("""
+        DO $$ 
+        BEGIN 
+            IF NOT EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE c.relname = 'idx_memories_project' AND n.nspname = 'public') THEN
+                CREATE INDEX idx_memories_project ON memories (project);
+            END IF;
+        END $$;
+    """)
 
-    # 2. Index on session_id (Medium cardinality, used for conversation history)
-    op.create_index(
-        'idx_memories_session_id',
-        'memories',
-        ['session_id'],
-        unique=False,
-        postgresql_using='btree'
-    )
+    # 2. Index on session_id
+    op.execute("""
+        DO $$ 
+        BEGIN 
+            IF NOT EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE c.relname = 'idx_memories_session_id' AND n.nspname = 'public') THEN
+                CREATE INDEX idx_memories_session_id ON memories (session_id);
+            END IF;
+        END $$;
+    """)
 
-    # 3. Index on source (Low-Medium cardinality, ISO 42001 audit trails)
-    op.create_index(
-        'idx_memories_source',
-        'memories',
-        ['source'],
-        unique=False,
-        postgresql_using='btree'
-    )
+    # 3. Index on source
+    op.execute("""
+        DO $$ 
+        BEGIN 
+            IF NOT EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE c.relname = 'idx_memories_source' AND n.nspname = 'public') THEN
+                CREATE INDEX idx_memories_source ON memories (source);
+            END IF;
+        END $$;
+    """)
     
     # 4. Composite Index for Dashboard Time-Range queries by Project
-    # Helps with: "Show me project X activity sorted by date"
-    op.create_index(
-        'idx_memories_project_created_at',
-        'memories',
-        ['project', 'created_at'],
-        unique=False,
-        postgresql_using='btree'
-    )
+    op.execute("""
+        DO $$ 
+        BEGIN 
+            IF NOT EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE c.relname = 'idx_memories_project_created_at' AND n.nspname = 'public') THEN
+                CREATE INDEX idx_memories_project_created_at ON memories (project, created_at);
+            END IF;
+        END $$;
+    """)
 
 def downgrade():
     op.drop_index('idx_memories_project_created_at', table_name='memories')
