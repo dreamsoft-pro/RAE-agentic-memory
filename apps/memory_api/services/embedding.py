@@ -1,32 +1,16 @@
-from typing import TYPE_CHECKING, Any, List, Optional, cast
+from typing import Any, List, Optional, cast
 
 import litellm
 
 from apps.memory_api.metrics import embedding_time_histogram
 from rae_core.interfaces.embedding import IEmbeddingProvider
 
-try:  # pragma: no cover
-    from sentence_transformers import SentenceTransformer
-
-    SENTENCE_TRANSFORMERS_AVAILABLE = True
-except ImportError:  # pragma: no cover
-    SentenceTransformer = None  # type: ignore[assignment,misc]
-    SENTENCE_TRANSFORMERS_AVAILABLE = False
-
-if TYPE_CHECKING:
-    from sentence_transformers import SentenceTransformer  # noqa: F401
-
-# --- Embedding Model Loading ---
-# This logic is moved from the old qdrant_client.py
-
 
 class EmbeddingService:
     def __init__(self, settings: Optional[Any] = None):
         self._settings = settings
-        self.model: Optional["SentenceTransformer"] = None
         self._initialized = False
-        self.use_litellm = False
-        self.litellm_model = "text-embedding-3-small"  # Default fallback
+        self.litellm_model = "text-embedding-3-small"  # Default
 
     @property
     def settings(self):
@@ -35,81 +19,49 @@ class EmbeddingService:
         return self._settings or default_settings
 
     def _ensure_available(self) -> None:
-        """Check availability of local embedding models or fall back to LiteLLM."""
-        # Check if we should force LiteLLM based on config
+        """Configure LiteLLM based on settings."""
         backend = getattr(self.settings, "RAE_LLM_BACKEND", "").lower()
-        force_litellm = backend == "ollama" or backend == "litellm"
-
-        if force_litellm or not SENTENCE_TRANSFORMERS_AVAILABLE:
-            self.use_litellm = True
-            # Determine best default model based on env
-            if backend == "ollama":
-                self.litellm_model = "ollama/nomic-embed-text"
-            elif self.settings.OPENAI_API_KEY:
-                self.litellm_model = "text-embedding-3-small"
-
-            if force_litellm:
-                print(
-                    f"Forcing usage of LiteLLM (Backend: {backend}) with model: {self.litellm_model}"
-                )
-            else:
-                print(
-                    f"SentenceTransformers not found. Falling back to LiteLLM with model: {self.litellm_model}"
-                )
+        
+        # Determine best default model based on env
+        if backend == "ollama":
+            self.litellm_model = "ollama/nomic-embed-text"
+        elif self.settings.OPENAI_API_KEY:
+            self.litellm_model = "text-embedding-3-small"
+        else:
+            # Fallback for Lite profile or when no keys provided
+            self.litellm_model = "ollama/nomic-embed-text"
 
     def _initialize_model(self) -> None:
-        """Lazy initialization of the embedding model."""
+        """Lazy initialization of the embedding service configuration."""
         if self._initialized:
             return
 
         self._ensure_available()
-
-        if self.use_litellm:
-            self._initialized = True
-            return
-
-        if self.settings.ONNX_EMBEDDER_PATH:
-            # Placeholder for a real ONNX embedder class
-            # A real implementation would load the model and tokenizer here.
-            # self.model = self._get_onnx_embedder(self.settings.ONNX_EMBEDDER_PATH)
-            print(
-                f"Using ONNX embedder (placeholder) from: {self.settings.ONNX_EMBEDDER_PATH}"
-            )
-            # For now, we fall back to SentenceTransformer even if ONNX path is set,
-            # as the ONNX implementation is just a placeholder.
-            self.model = SentenceTransformer("all-MiniLM-L6-v2", device="cpu")  # type: ignore[misc]
-        else:
-            self.model = SentenceTransformer("all-MiniLM-L6-v2", device="cpu")  # type: ignore[misc]
-            print("Using SentenceTransformer 'all-MiniLM-L6-v2'")
-
         self._initialized = True
 
     @embedding_time_histogram.time()
     def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
         """
         Generates dense embeddings for a list of texts (synchronous).
+        Always uses LiteLLM API.
         """
         self._initialize_model()
 
-        if self.use_litellm:
-            # Use LiteLLM for embeddings
-            try:
-                kwargs = {}
-                if self.litellm_model.startswith("ollama/"):
-                    kwargs["api_base"] = self.settings.OLLAMA_API_BASE or self.settings.OLLAMA_API_URL
+        try:
+            kwargs = {}
+            if self.litellm_model.startswith("ollama/"):
+                kwargs["api_base"] = self.settings.OLLAMA_API_BASE or self.settings.OLLAMA_API_URL
 
-                response = litellm.embedding(
-                    model=self.litellm_model, input=texts, **kwargs
-                )
-                return [d["embedding"] for d in response["data"]]
-            except Exception as e:
-                print(f"LiteLLM embedding failed: {e}")
-                # Fallback to dummy embeddings if API fails (to prevent crash in dev)
-                # In prod this should probably raise
-                return [[0.0] * 384 for _ in texts]
-
-        embeddings = self.model.encode(texts)  # type: ignore[union-attr]
-        return [emb.tolist() for emb in embeddings]
+            response = litellm.embedding(
+                model=self.litellm_model, input=texts, **kwargs
+            )
+            return [d["embedding"] for d in response["data"]]
+        except Exception as e:
+            print(f"LiteLLM embedding failed: {e}")
+            # Fallback to dummy embeddings if API fails (to prevent crash in dev)
+            # In prod this should probably raise or retry
+            dim = 768 if "nomic" in self.litellm_model else 1536
+            return [[0.0] * dim for _ in texts]
 
     async def generate_embeddings_async(self, texts: List[str]) -> List[List[float]]:
         """
@@ -130,29 +82,23 @@ class EmbeddingService:
             finally:
                 await client.close()
 
-        # Initialize to check if we use litellm
+        # Initialize to check model
         self._initialize_model()
 
-        if self.use_litellm:
-            # LiteLLM supports async via aembedding
-            try:
-                kwargs = {}
-                if self.litellm_model.startswith("ollama/"):
-                    kwargs["api_base"] = self.settings.OLLAMA_API_BASE or self.settings.OLLAMA_API_URL
+        # LiteLLM supports async via aembedding
+        try:
+            kwargs = {}
+            if self.litellm_model.startswith("ollama/"):
+                kwargs["api_base"] = self.settings.OLLAMA_API_BASE or self.settings.OLLAMA_API_URL
 
-                response = await litellm.aembedding(
-                    model=self.litellm_model, input=texts, **kwargs
-                )
-                return [d["embedding"] for d in response["data"]]
-            except Exception as e:
-                print(f"LiteLLM async embedding failed: {e}")
-                return [[0.0] * 384 for _ in texts]
-
-        # Fallback to local execution (offloaded to thread pool if needed,
-        # but here we just call the sync version for simplicity)
-        import asyncio
-
-        return await asyncio.to_thread(self.generate_embeddings, texts)
+            response = await litellm.aembedding(
+                model=self.litellm_model, input=texts, **kwargs
+            )
+            return [d["embedding"] for d in response["data"]]
+        except Exception as e:
+            print(f"LiteLLM async embedding failed: {e}")
+            dim = 768 if "nomic" in self.litellm_model else 1536
+            return [[0.0] * dim for _ in texts]
 
     async def generate_embeddings_for_model(
         self, texts: List[str], model_name: str
@@ -167,7 +113,7 @@ class EmbeddingService:
                 kwargs["api_base"] = self.settings.OLLAMA_API_BASE or self.settings.OLLAMA_API_URL
 
             # Determine dimension for fallback
-            dim = 384
+            dim = 768
             if "openai" in model_name or "text-embedding-3" in model_name:
                 dim = 1536
             elif "nomic" in model_name:
@@ -182,7 +128,7 @@ class EmbeddingService:
 
 
 class LocalEmbeddingProvider(IEmbeddingProvider):
-    """Local embedding provider wrapping the embedding service."""
+    """Local embedding provider wrapping the embedding service (via LiteLLM)."""
 
     def __init__(self, embedding_service: Any = None):
         self.service = embedding_service or get_embedding_service()
@@ -198,22 +144,20 @@ class LocalEmbeddingProvider(IEmbeddingProvider):
 
     def get_dimension(self) -> int:
         """Get embedding dimension."""
-        # Ensure we check availability to set use_litellm correctly
         self.service._ensure_available()
-
-        # Check if using Ollama which usually has 768 dims for nomic-embed-text
-        if self.service.use_litellm:
-            if self.service.litellm_model.startswith("ollama/"):
-                return 768
-
-        # Default for all-MiniLM-L6-v2
-        return 384
+        
+        if self.service.litellm_model.startswith("ollama/"):
+            return 768
+        if "text-embedding-3-small" in self.service.litellm_model:
+            return 1536
+            
+        return 1536
 
 
 class RemoteEmbeddingProvider(IEmbeddingProvider):
     """Embedding provider that offloads to a remote ML service (e.g., Node1)."""
 
-    def __init__(self, base_url: str, dimension: int = 384):
+    def __init__(self, base_url: str, dimension: int = 1536):
         self.base_url = base_url
         self.dimension = dimension
 
@@ -241,7 +185,7 @@ class RemoteEmbeddingProvider(IEmbeddingProvider):
 class TaskQueueEmbeddingProvider(IEmbeddingProvider):
     """Embedding provider that offloads by creating tasks in the Control Plane queue."""
 
-    def __init__(self, task_repo: Any, dimension: int = 384, timeout_sec: int = 60):
+    def __init__(self, task_repo: Any, dimension: int = 1536, timeout_sec: int = 60):
         self.task_repo = task_repo
         self.dimension = dimension
         self.timeout_sec = timeout_sec
@@ -255,34 +199,26 @@ class TaskQueueEmbeddingProvider(IEmbeddingProvider):
         Offload embedding generation to a compute node via Task Queue.
         Waits for the task to be completed.
         """
-        # 1. Create task
-        task_payload = {
-            "texts": texts,
-            "model": "all-MiniLM-L6-v2",
-            "goal": "Generate embeddings for batch",
-        }
-
-        # We need a way to create the task.
-        # This provider is initialized with task_repo (which might be raw pool or repo)
-        # Assuming task_repo has create_task method
         from apps.memory_api.repositories.task_repository import TaskRepository
 
         if not isinstance(self.task_repo, TaskRepository):
-            from apps.memory_api.repositories.task_repository import TaskRepository
-
             repo = TaskRepository(self.task_repo)
         else:
             repo = self.task_repo
 
+        task_payload = {
+            "texts": texts,
+            "goal": "Generate embeddings for batch",
+        }
+
         task = await repo.create_task(
-            type="llm_inference",  # Node agent handles llm_inference by calling Ollama
+            type="llm_inference",
             payload=task_payload,
             priority=10,
         )
 
         task_id = task.id
 
-        # 2. Poll for result
         import asyncio
         import time
 

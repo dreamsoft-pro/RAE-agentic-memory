@@ -40,7 +40,7 @@ RAE_API_URL = "http://localhost:8000"
 # SCENARIO 1: PROJECT PHOENIX - Software Development
 # ============================================================================
 
-PHOENIX_TENANT_ID = "demo-tenant"
+PHOENIX_TENANT_ID = "00000000-0000-0000-0000-000000000100"
 PHOENIX_PROJECT_ID = "phoenix-project"
 
 PHOENIX_MEMORIES = [
@@ -328,7 +328,7 @@ PHOENIX_MEMORIES = [
 # SCENARIO 2: CITY HALL CUSTOMER SERVICE - Public Administration
 # ============================================================================
 
-CITYHALL_TENANT_ID = "cityhall-tenant"
+CITYHALL_TENANT_ID = "00000000-0000-0000-0000-000000000200"
 CITYHALL_PROJECT_ID = "customer-service"
 
 CITYHALL_MEMORIES = [
@@ -674,7 +674,10 @@ def create_memory(
     """Create a single memory in RAE."""
     try:
         payload = {"project": project_id, **memory_data}
-        headers = {"X-Tenant-Id": tenant_id}
+        headers = {
+            "X-Tenant-Id": tenant_id,
+            "X-User-Id": "admin"
+        }
 
         response = client.post(
             f"{RAE_API_URL}/v1/memory/store",

@@ -1,17 +1,16 @@
 """Phase 4: Backfill canonical columns from metadata
 
 Revision ID: 20260105_phase4
-Revises: 
+Revises:
 Create Date: 2026-01-05 20:30:00.000000
 
 """
+
 from alembic import op
-import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = '20260105_phase4'
-down_revision = None # Set this to the previous migration ID if available, or keep None if this is standalone for now
+down_revision = '35c0e303d4c4'
 branch_labels = None
 depends_on = None
 
@@ -38,7 +37,7 @@ def upgrade():
     """)
 
     # 4. Optional: Backfill memory_type from layer if missing
-    # Defaulting to 'text' or mapping based on layer if needed. 
+    # Defaulting to 'text' or mapping based on layer if needed.
     # For now, we leave it as default or explicit.
 
 def downgrade():
