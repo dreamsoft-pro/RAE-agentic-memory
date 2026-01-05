@@ -27,6 +27,11 @@ class IMemoryStorage(Protocol):
         embedding: list[float] | None = None,
         importance: float | None = None,
         expires_at: Any | None = None,
+        memory_type: str = "text",
+        project: str | None = None,
+        session_id: str | None = None,
+        source: str | None = None,
+        strength: float = 1.0,
     ) -> UUID:
         """Store a new memory.
 
@@ -40,9 +45,11 @@ class IMemoryStorage(Protocol):
             embedding: Optional vector embedding
             importance: Optional importance score (0.0-1.0)
             expires_at: Optional expiration timestamp
-
-        Returns:
-            UUID of the stored memory
+            memory_type: Type of memory (default: text)
+            project: Project identifier (primary source)
+            session_id: Session identifier
+            source: Source of the memory
+            strength: Memory strength (default 1.0)
         """
         ...
 

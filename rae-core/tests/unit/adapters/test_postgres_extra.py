@@ -70,6 +70,11 @@ async def test_list_memories_with_data(mock_pool):
             "created_at": datetime.now(),
             "last_accessed_at": None,
             "expires_at": None,
+            "project": None,
+            "session_id": None,
+            "source": None,
+            "memory_type": "text",
+            "strength": 1.0,
         }
     ]
 
@@ -142,6 +147,11 @@ async def test_search_memories_coverage(mock_pool):
             "last_accessed_at": None,
             "expires_at": None,
             "score": 0.9,
+            "project": None,
+            "session_id": None,
+            "source": None,
+            "memory_type": "text",
+            "strength": 1.0,
         }
     ]
 
