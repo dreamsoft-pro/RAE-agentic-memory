@@ -25,7 +25,7 @@ def upgrade():
     # 1. Memories
     op.create_table(
         'memories',
-        sa.Column('id', postgresql.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
+        sa.Column('id', postgresql.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False, primary_key=True),
         sa.Column('tenant_id', postgresql.UUID(), nullable=False),
         sa.Column('content', sa.Text(), nullable=False),
         sa.Column('source', sa.String(length=255), nullable=True),
