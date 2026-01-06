@@ -19,7 +19,7 @@ class IVectorStore(Protocol):
     async def store_vector(
         self,
         memory_id: UUID,
-        embedding: list[float],
+        embedding: list[float] | dict[str, list[float]],
         tenant_id: str,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
@@ -27,7 +27,7 @@ class IVectorStore(Protocol):
 
         Args:
             memory_id: UUID of the memory
-            embedding: Vector embedding (typically 1536 dimensions for OpenAI)
+            embedding: Vector embedding (list) or dict of named vectors
             tenant_id: Tenant identifier
             metadata: Optional metadata to store with the vector
 
@@ -79,7 +79,7 @@ class IVectorStore(Protocol):
     async def update_vector(
         self,
         memory_id: UUID,
-        embedding: list[float],
+        embedding: list[float] | dict[str, list[float]],
         tenant_id: str,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
@@ -87,7 +87,7 @@ class IVectorStore(Protocol):
 
         Args:
             memory_id: UUID of the memory
-            embedding: New vector embedding
+            embedding: New vector embedding (list) or dict of named vectors
             tenant_id: Tenant identifier
             metadata: Optional new metadata
 

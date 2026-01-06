@@ -240,10 +240,10 @@ class RAEEngine:
                 "content": content,
                 **metadata,
             }
-            
+
             # Use the most specific vector payload if we have one, otherwise fallback to default
             store_data = vector_payload if vector_payload else default_embedding
-            
+
             if store_data is not None:
                 await self.vector_store.store_vector(
                     memory_id=memory_id,
