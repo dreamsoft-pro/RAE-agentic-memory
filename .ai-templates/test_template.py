@@ -549,7 +549,7 @@ async def pool():
     NOTE: This is a placeholder - implement based on your setup
     """
     # Setup: Create pool, run migrations, etc.
-    pool = await create_test_pool()
+    pool = await create_test_pool()  # noqa: F821
 
     yield pool
 

@@ -19,8 +19,8 @@ def upgrade():
     # 1. Index on project
     op.execute(
         """
-        DO $$ 
-        BEGIN 
+        DO $$
+        BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE c.relname = 'idx_memories_project' AND n.nspname = 'public') THEN
                 CREATE INDEX idx_memories_project ON memories (project);
             END IF;
@@ -31,8 +31,8 @@ def upgrade():
     # 2. Index on session_id
     op.execute(
         """
-        DO $$ 
-        BEGIN 
+        DO $$
+        BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE c.relname = 'idx_memories_session_id' AND n.nspname = 'public') THEN
                 CREATE INDEX idx_memories_session_id ON memories (session_id);
             END IF;
@@ -43,8 +43,8 @@ def upgrade():
     # 3. Index on source
     op.execute(
         """
-        DO $$ 
-        BEGIN 
+        DO $$
+        BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE c.relname = 'idx_memories_source' AND n.nspname = 'public') THEN
                 CREATE INDEX idx_memories_source ON memories (source);
             END IF;
@@ -55,8 +55,8 @@ def upgrade():
     # 4. Composite Index for Dashboard Time-Range queries by Project
     op.execute(
         """
-        DO $$ 
-        BEGIN 
+        DO $$
+        BEGIN
             IF NOT EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE c.relname = 'idx_memories_project_created_at' AND n.nspname = 'public') THEN
                 CREATE INDEX idx_memories_project_created_at ON memories (project, created_at);
             END IF;

@@ -45,9 +45,9 @@ class ExperimentRunner:
         if experiment_name not in self.experiments:
             raise ValueError(f"Unknown experiment: {experiment_name}")
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"🧪 Running Experiment: {experiment_name}")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         experiment_class = self.experiments[experiment_name]
         experiment = experiment_class(output_dir=self.output_dir)

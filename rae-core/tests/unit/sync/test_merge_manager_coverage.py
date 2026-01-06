@@ -18,7 +18,6 @@ from rae_core.sync.merge import (
 
 
 class TestMergeCoverageExtended:
-
     def test_merge_fields_content_collision(self):
         """Test merging content field (should pass through newer)."""
         resolver = ConflictResolver()
@@ -91,7 +90,6 @@ class TestMergeCoverageExtended:
 
 
 class TestSyncManagerCoverage:
-
     @pytest.mark.asyncio
     async def test_handshake_bad_version(self):
         manager = SyncManager("agent1", "primary", MagicMock())

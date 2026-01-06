@@ -96,7 +96,7 @@ class EvolutionTracker:
 
         for i in range(0, total, batch_size):
             batch = memories[i : i + batch_size]
-            print(f"🚀 Processing batch {i//batch_size + 1} ({i}/{total})...")
+            print(f"🚀 Processing batch {i // batch_size + 1} ({i}/{total})...")
 
             # 1. Insert memories into episodic layer
             for mem in batch:

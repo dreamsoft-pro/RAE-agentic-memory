@@ -707,12 +707,12 @@ def seed_scenario(
 ) -> tuple[int, int]:
     """Seed a specific scenario and return (success_count, failed_count)."""
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"  SCENARIO: {scenario_name}")
     print(f"  Tenant: {tenant_id}")
     print(f"  Project: {project_id}")
     print(f"  Memories: {len(memories)}")
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
 
     success_count = 0
     failed_count = 0

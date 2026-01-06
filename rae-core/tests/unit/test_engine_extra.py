@@ -118,7 +118,6 @@ async def test_search_memories_with_reranker(
             engine.search_engine, "rerank", AsyncMock(return_value=[(mem_id, 0.9)])
         ) as mock_rerank,
     ):
-
         mock_storage.get_memory.return_value = {"id": mem_id, "content": "test"}
 
         results = await engine.search_memories(

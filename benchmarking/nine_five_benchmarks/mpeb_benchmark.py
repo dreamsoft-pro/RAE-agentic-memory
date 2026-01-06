@@ -731,7 +731,7 @@ class MPEBBenchmark:
 
                 if verbose and (iter_num + 1) % 20 == 0:
                     print(
-                        f"  Iteration {iter_num+1}/{iterations_per_episode}: "
+                        f"  Iteration {iter_num + 1}/{iterations_per_episode}: "
                         f"Convergence={convergence:.3f}"
                     )
 

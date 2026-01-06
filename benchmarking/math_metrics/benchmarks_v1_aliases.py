@@ -402,8 +402,8 @@ def print_metric_coverage():
     print("BENCHMARKS_v1 Metric Coverage")
     print("=" * 70)
     print(f"Total Metrics:       {total}")
-    print(f"Implemented:         {impl_count} ({impl_count/total*100:.1f}%)")
-    print(f"Missing:             {missing_count} ({missing_count/total*100:.1f}%)")
+    print(f"Implemented:         {impl_count} ({impl_count / total * 100:.1f}%)")
+    print(f"Missing:             {missing_count} ({missing_count / total * 100:.1f}%)")
     print("=" * 70)
 
     print("\n✅ IMPLEMENTED METRICS:")

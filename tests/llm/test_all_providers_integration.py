@@ -33,7 +33,6 @@ OPENAI_MODEL = "gpt-3.5-turbo"
 @pytest.mark.asyncio
 @pytest.mark.llm
 class TestAllProvidersIntegration:
-
     async def test_local_ollama_connectivity(self):
         """Verify Local Ollama is reachable."""
         print(f"\nTesting Local Ollama at {LOCAL_OLLAMA_URL}...")

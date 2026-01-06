@@ -401,7 +401,7 @@ class RAEBenchmarkRunner:
         avg_time = (
             sum(self.insert_times) / len(self.insert_times) if self.insert_times else 0
         )
-        print(f"   ⏱️  Average insert time: {avg_time*1000:.2f}ms")
+        print(f"   ⏱️  Average insert time: {avg_time * 1000:.2f}ms")
 
     async def run_queries(self):
         """Execute all benchmark queries and collect results"""
@@ -489,7 +489,7 @@ class RAEBenchmarkRunner:
         avg_time = (
             sum(self.query_times) / len(self.query_times) if self.query_times else 0
         )
-        print(f"   ⏱️  Average query time: {avg_time*1000:.2f}ms")
+        print(f"   ⏱️  Average query time: {avg_time * 1000:.2f}ms")
 
     def calculate_metrics(self) -> Dict[str, Any]:
         """Calculate all benchmark metrics"""

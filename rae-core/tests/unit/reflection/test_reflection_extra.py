@@ -49,7 +49,6 @@ async def test_actor_extra(mock_storage):
 
 @pytest.mark.asyncio
 async def test_reflection_engine_find_low_quality_string_id(mock_storage):
-
     engine = ReflectionEngine(mock_storage)
 
     # Mock evaluator to return low quality
@@ -59,7 +58,6 @@ async def test_reflection_engine_find_low_quality_string_id(mock_storage):
         "evaluate_memory_quality",
         AsyncMock(return_value={"quality": 0.1}),
     ):
-
         # Mock storage to return memory with string ID
 
         mock_storage.list_memories.return_value = [

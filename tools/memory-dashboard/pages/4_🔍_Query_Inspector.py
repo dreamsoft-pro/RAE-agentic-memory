@@ -333,7 +333,7 @@ if not st.session_state.comparison_mode:
                         layer_counts.items(), key=lambda x: x[1], reverse=True
                     ):
                         st.write(
-                            f"**{layer}:** {count} ({count/len(results)*100:.1f}%)"
+                            f"**{layer}:** {count} ({count / len(results) * 100:.1f}%)"
                         )
 
                 with col2:

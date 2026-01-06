@@ -44,14 +44,14 @@ def generate_code_metrics():
 
 **Auto-Generated** from static analysis tools
 
-**Last Updated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**Last Updated:** {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 ## Summary
 
 | Metric | Value |
 |--------|-------|
 | **Python Files** | {py_files} |
-| **Lines of Code** | {py_lines if py_lines else 'N/A'} |
+| **Lines of Code** | {py_lines if py_lines else "N/A"} |
 | **Test Files** | {len(list(Path("apps").rglob("test_*.py")))} |
 | **Average Complexity** | To be implemented (radon) |
 
@@ -84,7 +84,7 @@ pip install radon lizard
 
 **Auto-Generated** from requirements files
 
-**Last Updated:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**Last Updated:** {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
 ## Core Dependencies
 
