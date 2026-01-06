@@ -11,6 +11,53 @@
 
 
 
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2026-01-06 14:36 • Branch: develop • Commit: 7ec16752*
+
+### ✨ Features
+
+- implement hardware-agnostic search and robust DB bootstrap for RAE-Lite ([`4ebc5b45`](../../commit/4ebc5b45))
+- Finalize DB refactor - add strength field and cleanup qdrant_point_id ([`c387a08f`](../../commit/c387a08f))
+- complete Nomic calibration experiment and async infrastructure ([`5a2d1c30`](../../commit/5a2d1c30))
+- incorporate valuable recovery and calibration changes from Piotrek ([`c6aa8fad`](../../commit/c6aa8fad))
+- **api**: ensure Pydantic validator for layer normalization is fully committed ([`d68d615c`](../../commit/d68d615c))
+- **db**: add alembic migration to normalize layer names ([`317b931a`](../../commit/317b931a))
+- **api**: add Pydantic validator to normalize layer names ([`a0a1a3d4`](../../commit/a0a1a3d4))
+- **dashboard**: unify layer naming to full standard names ([`4792a591`](../../commit/4792a591))
+- **search**: fix project isolation and apply score calibration ([`5e54a1d5`](../../commit/5e54a1d5))
+- **ml**: force Ollama/LiteLLM for embeddings and bypass SentenceTransformers ([`5b90690a`](../../commit/5b90690a))
+- **db**: consolidate DDL schema and reset alembic migrations ([`d488fc62`](../../commit/d488fc62))
+- implement ISO 27001 plan, cluster infrastructure, and Rust migration prep ([`a5f82fc4`](../../commit/a5f82fc4))
+
+### 🐛 Bug Fixes
+
+- **migrations**: add primary key to memories table in baseline ([`7ec16752`](../../commit/7ec16752))
+- **migrations**: populate baseline migration with full schema ([`201afbaf`](../../commit/201afbaf))
+- **core**: achieve 100% test coverage and stabilize sandbox automation ([`95338b5e`](../../commit/95338b5e))
+- resolve CI lint/smoke failures, update mocks and test coverage ([`a55f0f6c`](../../commit/a55f0f6c))
+- **api**: stop remapping 'ltm' layer to 'semantic' in memory store requests ([`b2ce1ffd`](../../commit/b2ce1ffd))
+- **api**: ensure RAECoreService respects lite profile for adapter selection ([`b33b019a`](../../commit/b33b019a))
+- **lite**: resolve migration cycles, implementation of automatic sandbox, and robust bootstrap ([`8afd3524`](../../commit/8afd3524))
+
+### ♻️ Refactoring
+
+- **db**: Implement ISO 42001 DB schema changes (Phases 1-6) ([`86592112`](../../commit/86592112))
+
+### 🔧 Chore
+
+- linting and minor fixes after core merges ([`e9dd84ff`](../../commit/e9dd84ff))
+- add extreme and ultra industrial benchmark sets ([`23ccfafd`](../../commit/23ccfafd))
+- add cluster dispatch scripts to develop ([`9314c9e4`](../../commit/9314c9e4))
+- save local work tree state after recovery integration ([`9a94f119`](../../commit/9a94f119))
+- **config**: parameterize docker-compose and update .env.example ([`0d0d7bb6`](../../commit/0d0d7bb6))
+- **config**: finalize docker-compose with threshold and dashboard updates ([`767cac85`](../../commit/767cac85))
+- **dashboard**: align default tenant and project with verification data ([`cb0b82d8`](../../commit/cb0b82d8))
+- **config**: update docker environment and add vector verification script ([`4173baaa`](../../commit/4173baaa))
+
+---
+
 ## Recent Changes (Auto-generated)
 
 *Last updated: 2026-01-06 14:07 • Branch: develop • Commit: 201afbaf*
