@@ -15,7 +15,7 @@ DROP TABLE IF EXISTS memories CASCADE;
 -- 1. Memories
 CREATE TABLE memories (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  tenant_id UUID NOT NULL,
+  tenant_id VARCHAR(255) NOT NULL,
   content TEXT NOT NULL,
   source VARCHAR(255),
   importance REAL DEFAULT 0.5,
@@ -50,7 +50,7 @@ CREATE TABLE memory_embeddings (
 
 -- 3. Tenants
 CREATE TABLE tenants (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id VARCHAR(255) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     tier VARCHAR(50) DEFAULT 'free' NOT NULL,
     config JSONB DEFAULT '{}',
@@ -70,7 +70,7 @@ CREATE TABLE tenants (
 CREATE TABLE user_tenant_roles (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id VARCHAR(255) NOT NULL,
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id VARCHAR(255) NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     role VARCHAR(50) NOT NULL,
     project_ids TEXT[] DEFAULT '{}',
     assigned_at TIMESTAMPTZ DEFAULT NOW(),
@@ -84,7 +84,7 @@ CREATE INDEX idx_utr_tenant_id ON user_tenant_roles (tenant_id);
 -- 5. Budgets
 CREATE TABLE budgets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL,
+    tenant_id VARCHAR(255) NOT NULL,
     project_id VARCHAR NOT NULL,
     monthly_limit FLOAT,
     monthly_usage FLOAT DEFAULT 0.0 NOT NULL,
@@ -97,7 +97,7 @@ CREATE TABLE budgets (
 -- 6. Access Logs
 CREATE TABLE access_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
+    tenant_id VARCHAR(255) NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,
     user_id VARCHAR(255) NOT NULL,
     action VARCHAR(100) NOT NULL,
     resource VARCHAR(100) NOT NULL,
@@ -116,7 +116,7 @@ CREATE INDEX ix_access_logs_user_id ON access_logs (user_id);
 -- 7. Token Savings
 CREATE TABLE token_savings_log (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL,
+    tenant_id VARCHAR(255) NOT NULL,
     project_id VARCHAR NOT NULL,
     request_id VARCHAR,
     predicted_tokens INTEGER DEFAULT 0,
@@ -131,7 +131,7 @@ CREATE TABLE token_savings_log (
 -- 8. Knowledge Graph
 CREATE TABLE knowledge_graph_nodes (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL,
+    tenant_id VARCHAR(255) NOT NULL,
     project_id VARCHAR NOT NULL,
     node_id VARCHAR NOT NULL,
     label VARCHAR NOT NULL,
@@ -144,7 +144,7 @@ CREATE INDEX idx_kg_nodes_tp ON knowledge_graph_nodes (tenant_id, project_id);
 
 CREATE TABLE knowledge_graph_edges (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id UUID NOT NULL,
+    tenant_id VARCHAR(255) NOT NULL,
     project_id VARCHAR NOT NULL,
     source_node_id UUID NOT NULL REFERENCES knowledge_graph_nodes(id) ON DELETE CASCADE,
     target_node_id UUID NOT NULL REFERENCES knowledge_graph_nodes(id) ON DELETE CASCADE,
