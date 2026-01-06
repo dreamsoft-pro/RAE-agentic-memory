@@ -120,11 +120,15 @@ class RAEClient:
                 # results count gives us a hint
                 count = len(res.get("results", []))
                 # Update local stats object
-                if layer == "episodic": stats["episodic"] = count
-                elif layer == "working": stats["working"] = count
-                elif layer == "semantic": stats["semantic"] = count
-                elif layer == "reflective": stats["ltm"] = count # Mapping reflective to dashboard's LTM column
-                
+                if layer == "episodic":
+                    stats["episodic"] = count
+                elif layer == "working":
+                    stats["working"] = count
+                elif layer == "semantic":
+                    stats["semantic"] = count
+                elif layer == "reflective":
+                    stats["ltm"] = count  # Mapping reflective to dashboard's LTM column
+
                 stats["total"] += count
 
             return stats

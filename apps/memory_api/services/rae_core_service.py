@@ -69,29 +69,23 @@ class RAECoreService:
         self.savings_service: Optional[TokenSavingsService]
 
         # 1. Initialize embedding provider (needed for adapter config)
-        from apps.memory_api.config import settings
-
         # Check if we should ignore DB based on settings/env
         import os
+
+        from apps.memory_api.config import settings
+
         db_mode = os.getenv("RAE_DB_MODE") or settings.RAE_DB_MODE
-        
-        # If postgres_pool is explicitly provided (e.g. in tests), 
+
+        # If postgres_pool is explicitly provided (e.g. in tests),
         # we should use it unless we are strictly in Lite mode with no DB.
         ignore_db = (
-            postgres_pool is None 
+            postgres_pool is None
             or (db_mode == "ignore" and postgres_pool is None)
-<<<<<<< HEAD
             or (settings.RAE_PROFILE == "lite" and os.getenv("RAE_FORCE_DB") != "1")
         )
-        
-        # BUT: For integration tests that pass a pool, we MUST NOT ignore it
-        if postgres_pool is not None and (os.getenv("RAE_DB_MODE") != "ignore" or os.getenv("RAE_FORCE_DB") == "1"):
-=======
-        )
-        
+
         # BUT: For integration tests that pass a pool, we MUST NOT ignore it
         if postgres_pool is not None:
->>>>>>> feature/integrated-recovery
             ignore_db = False
 
         base_provider: IEmbeddingProvider
@@ -121,18 +115,18 @@ class RAECoreService:
             self.postgres_adapter = InMemoryStorage()
 
         if qdrant_client and not ignore_db:
-<<<<<<< HEAD
             # Get dimension and distance from config
-=======
-            # Get dimension from embedding provider
->>>>>>> feature/integrated-recovery
             dim = self.embedding_provider.get_dimension()
             distance = getattr(settings, "RAE_VECTOR_DISTANCE", "Cosine")
 
             self.qdrant_adapter = QdrantVectorAdapter(
                 client=cast(Any, qdrant_client), embedding_dim=dim, distance=distance
             )
-        elif settings.RAE_VECTOR_BACKEND == "pgvector" and postgres_pool and not ignore_db:
+        elif (
+            settings.RAE_VECTOR_BACKEND == "pgvector"
+            and postgres_pool
+            and not ignore_db
+        ):
             from apps.memory_api.services.vector_store.postgres_adapter import (
                 PostgresVectorAdapter,
             )
@@ -178,7 +172,7 @@ class RAECoreService:
         """Perform asynchronous initialization of adapters."""
         if hasattr(self.qdrant_adapter, "ainit"):
             await cast(Any, self.qdrant_adapter).ainit()
-        
+
         # Add other async inits here if needed
         logger.info("rae_core_service_async_initialized")
 
@@ -190,9 +184,7 @@ class RAECoreService:
 
             return PostgresDatabaseProvider(self.postgres_pool)
 
-        # Fallback for Lite mode - if we have a generic IDatabaseProvider in rae-core
-        # that supports in-memory, we should return it here.
-        # For now, let's assume we might need a dummy or failing provider if not available.
+        # Fallback for Lite mode
         raise RuntimeError("Database provider not available (RAE-Lite mode with no DB)")
 
     @property
@@ -220,36 +212,18 @@ class RAECoreService:
     ) -> str:
         """
         Store memory using RAEEngine.
-
-        Args:
-            tenant_id: Tenant identifier
-            project: Project identifier (defaults to 'default')
-            content: Memory content
-            source: Memory source
-            importance: Importance score (0-1)
-            tags: Optional tags
-            layer: Target layer (auto if None)
-            session_id: Session identifier
-            memory_type: Memory type
-            ttl: Time to live in seconds
-
-        Returns:
-            Memory ID
         """
-        # Ensure project is not None for RAE-Core agent_id mapping
         project_id = project or "default"
 
         # Store in RAEEngine
-        # Mapping project to agent_id for multi-tenancy within RAE-Core
         memory_id = await self.engine.store_memory(
             tenant_id=tenant_id,
-            agent_id=project_id,  # Use project_id as agent_id
+            agent_id=project_id,
             content=content,
             layer=layer or "episodic",
             importance=importance or 0.5,
             tags=tags,
-            metadata={},  # Cleared to avoid duplication (project/source are now explicit columns)
-            # Pass new fields
+            metadata={},
             project=project_id,
             session_id=session_id,
             memory_type=memory_type or "text",
@@ -389,7 +363,6 @@ class RAECoreService:
         consider_access_stats: bool = False,
     ) -> int:
         """Apply importance decay to all memories for a tenant."""
-        # This is a storage-level operation supported by all adapters via IMemoryStorage
         return await self.engine.memory_storage.decay_importance(
             tenant_id, decay_rate, consider_access_stats
         )
@@ -404,18 +377,7 @@ class RAECoreService:
     ) -> SearchResponse:
         """
         Query memories across layers.
-
-        Args:
-            tenant_id: Tenant identifier
-            project: Project identifier
-            query: Query text
-            k: Number of results
-            layers: Layers to search (default: all)
-
-        Returns:
-            Query response with results
         """
-        # Engine's search_memories returns List[Dict], not SearchResponse
         results = await self.engine.search_memories(
             query=query,
             tenant_id=tenant_id,
@@ -439,8 +401,6 @@ class RAECoreService:
 
             # Map engine dict to SearchResult
             raw_score = res.get("search_score", 0.0)
-            # Calibration: nomic-embed-text often returns very low raw scores (e.g. 0.006)
-            # We apply a boost to make them human-readable while preserving order.
             if raw_score < 0.05:
                 calibrated_score = min(0.99, raw_score * 120.0)
             else:
@@ -463,7 +423,6 @@ class RAECoreService:
             result_count=len(results),
         )
 
-        # Track token savings from RAG filtering
         if self.savings_service:
             try:
                 await self.savings_service.track_savings(
@@ -492,13 +451,6 @@ class RAECoreService:
     ) -> dict:
         """
         Trigger memory consolidation.
-
-        Args:
-            tenant_id: Tenant identifier
-            project: Project identifier
-
-        Returns:
-            Consolidation statistics
         """
         results = await self.engine.run_reflection_cycle(
             tenant_id=tenant_id,

@@ -300,7 +300,9 @@ class PostgreSQLStorage(IMemoryStorage):
                 "project": row["project"],
                 "session_id": row["session_id"],
                 "source": row["source"],
-                "strength": float(row["strength"]) if row["strength"] is not None else 1.0,
+                "strength": (
+                    float(row["strength"]) if row["strength"] is not None else 1.0
+                ),
                 "memory_type": row["memory_type"],
                 "tags": list(row["tags"]) if row["tags"] else [],
                 "metadata": row["metadata"] if row["metadata"] else {},
@@ -416,7 +418,9 @@ class PostgreSQLStorage(IMemoryStorage):
                     "project": row["project"],
                     "session_id": row["session_id"],
                     "source": row["source"],
-                    "strength": float(row["strength"]) if row["strength"] is not None else 1.0,
+                    "strength": (
+                        float(row["strength"]) if row["strength"] is not None else 1.0
+                    ),
                     "memory_type": row["memory_type"],
                     "tags": list(row["tags"]) if row["tags"] else [],
                     "metadata": row["metadata"] if row["metadata"] else {},

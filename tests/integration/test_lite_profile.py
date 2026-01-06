@@ -45,17 +45,26 @@ def lite_profile_services():
 
     # Start services with a specific project name for isolation
     subprocess.run(
-        ["docker", "compose", "-f", "docker-compose.test-sandbox.yml", "-p", "rae-lite-sandbox", "up", "-d"],
+        [
+            "docker",
+            "compose",
+            "-f",
+            "docker-compose.test-sandbox.yml",
+            "-p",
+            "rae-lite-sandbox",
+            "up",
+            "-d",
+        ],
         check=True,
         capture_output=True,
-        env=env
+        env=env,
     )
 
     # Wait for services to be ready (up to 60 seconds)
     max_retries = 30
     retry_count = 0
     api_ready = False
-    
+
     api_port = "8010"
 
     while retry_count < max_retries and not api_ready:
@@ -64,7 +73,13 @@ def lite_profile_services():
             if response.status_code == 200:
                 api_ready = True
                 break
-        except (httpx.ConnectError, httpx.TimeoutException, httpx.RemoteProtocolError, httpx.ReadError, httpx.RequestError):
+        except (
+            httpx.ConnectError,
+            httpx.TimeoutException,
+            httpx.RemoteProtocolError,
+            httpx.ReadError,
+            httpx.RequestError,
+        ):
             pass
 
         retry_count += 1
@@ -73,9 +88,18 @@ def lite_profile_services():
     if not api_ready:
         # Cleanup on failure
         subprocess.run(
-            ["docker", "compose", "-f", "docker-compose.test-sandbox.yml", "-p", "rae-lite-sandbox", "down", "-v"],
+            [
+                "docker",
+                "compose",
+                "-f",
+                "docker-compose.test-sandbox.yml",
+                "-p",
+                "rae-lite-sandbox",
+                "down",
+                "-v",
+            ],
             capture_output=True,
-            env=env
+            env=env,
         )
         pytest.fail(f"RAE API failed to start on port {api_port} within 60 seconds")
 
@@ -84,9 +108,18 @@ def lite_profile_services():
 
     # Teardown: Stop services and remove volumes
     subprocess.run(
-        ["docker", "compose", "-f", "docker-compose.test-sandbox.yml", "-p", "rae-lite-sandbox", "down", "-v"],
+        [
+            "docker",
+            "compose",
+            "-f",
+            "docker-compose.test-sandbox.yml",
+            "-p",
+            "rae-lite-sandbox",
+            "down",
+            "-v",
+        ],
         capture_output=True,
-        env=env
+        env=env,
     )
 
 
@@ -124,7 +157,10 @@ def test_lite_profile_store_memory(lite_profile_services):
     response = httpx.post(
         f"http://127.0.0.1:{api_port}/v1/memory/store",
         json=payload,
-        headers={"X-Tenant-Id": "00000000-0000-0000-0000-000000000000", "X-API-Key": "secret"},
+        headers={
+            "X-Tenant-Id": "00000000-0000-0000-0000-000000000000",
+            "X-API-Key": "secret",
+        },
         timeout=10.0,
     )
 
@@ -149,7 +185,10 @@ def test_lite_profile_query_memory(lite_profile_services):
     store_response = httpx.post(
         f"http://127.0.0.1:{api_port}/v1/memory/store",
         json=store_payload,
-        headers={"X-Tenant-Id": "00000000-0000-0000-0000-000000000000", "X-API-Key": "secret"},
+        headers={
+            "X-Tenant-Id": "00000000-0000-0000-0000-000000000000",
+            "X-API-Key": "secret",
+        },
         timeout=10.0,
     )
     assert store_response.status_code == 200
@@ -163,7 +202,10 @@ def test_lite_profile_query_memory(lite_profile_services):
     response = httpx.post(
         f"http://127.0.0.1:{api_port}/v1/memory/query",
         json=query_payload,
-        headers={"X-Tenant-Id": "00000000-0000-0000-0000-000000000000", "X-API-Key": "secret"},
+        headers={
+            "X-Tenant-Id": "00000000-0000-0000-0000-000000000000",
+            "X-API-Key": "secret",
+        },
         timeout=10.0,
     )
 
@@ -177,7 +219,16 @@ def test_lite_profile_services_running():
     """Test that all required Lite Profile services are running"""
     # Check services via docker compose
     result = subprocess.run(
-        ["docker", "compose", "-f", "docker-compose.test-sandbox.yml", "-p", "rae-lite-sandbox", "ps", "--services"],
+        [
+            "docker",
+            "compose",
+            "-f",
+            "docker-compose.test-sandbox.yml",
+            "-p",
+            "rae-lite-sandbox",
+            "ps",
+            "--services",
+        ],
         capture_output=True,
         text=True,
     )
@@ -195,7 +246,18 @@ def test_lite_profile_postgres_accessible():
     """Test that PostgreSQL is accessible"""
     # This is a basic check that postgres container is running
     result = subprocess.run(
-        ["docker", "compose", "-f", "docker-compose.test-sandbox.yml", "-p", "rae-lite-sandbox", "ps", "postgres-lite", "--format", "json"],
+        [
+            "docker",
+            "compose",
+            "-f",
+            "docker-compose.test-sandbox.yml",
+            "-p",
+            "rae-lite-sandbox",
+            "ps",
+            "postgres-lite",
+            "--format",
+            "json",
+        ],
         capture_output=True,
         text=True,
     )
@@ -217,7 +279,18 @@ def test_lite_profile_qdrant_accessible():
 def test_lite_profile_redis_accessible():
     """Test that Redis cache is accessible"""
     result = subprocess.run(
-        ["docker", "compose", "-f", "docker-compose.test-sandbox.yml", "-p", "rae-lite-sandbox", "ps", "redis-lite", "--format", "json"],
+        [
+            "docker",
+            "compose",
+            "-f",
+            "docker-compose.test-sandbox.yml",
+            "-p",
+            "rae-lite-sandbox",
+            "ps",
+            "redis-lite",
+            "--format",
+            "json",
+        ],
         capture_output=True,
         text=True,
     )
@@ -228,7 +301,16 @@ def test_lite_profile_redis_accessible():
 def test_lite_profile_no_ml_service():
     """Verify that ML service is NOT running in Lite Profile"""
     result = subprocess.run(
-        ["docker", "compose", "-f", "docker-compose.test-sandbox.yml", "-p", "rae-lite-sandbox", "ps", "--services"],
+        [
+            "docker",
+            "compose",
+            "-f",
+            "docker-compose.test-sandbox.yml",
+            "-p",
+            "rae-lite-sandbox",
+            "ps",
+            "--services",
+        ],
         capture_output=True,
         text=True,
     )
@@ -248,7 +330,16 @@ def test_lite_profile_resource_efficiency():
     """Verify that Lite Profile uses less resources than full stack"""
     # Check container count
     result = subprocess.run(
-        ["docker", "compose", "-f", "docker-compose.test-sandbox.yml", "-p", "rae-lite-sandbox", "ps", "--services"],
+        [
+            "docker",
+            "compose",
+            "-f",
+            "docker-compose.test-sandbox.yml",
+            "-p",
+            "rae-lite-sandbox",
+            "ps",
+            "--services",
+        ],
         capture_output=True,
         text=True,
     )
@@ -267,7 +358,15 @@ def test_lite_profile_resource_efficiency():
 def test_lite_profile_config_valid():
     """Test that docker-compose.test-sandbox.yml is valid"""
     result = subprocess.run(
-        ["docker", "compose", "-f", "docker-compose.test-sandbox.yml", "-p", "rae-lite-sandbox", "config"],
+        [
+            "docker",
+            "compose",
+            "-f",
+            "docker-compose.test-sandbox.yml",
+            "-p",
+            "rae-lite-sandbox",
+            "config",
+        ],
         capture_output=True,
     )
 

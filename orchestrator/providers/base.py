@@ -115,7 +115,7 @@ class LLMProvider(ABC):
         system_prompt: Optional[str] = None,
         max_tokens: int = 4096,
         temperature: float = 0.7,
-        **kwargs
+        **kwargs,
     ) -> GenerationResult:
         """Generate completion from model.
 

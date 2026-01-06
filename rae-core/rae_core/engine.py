@@ -58,11 +58,12 @@ class RAEEngine:
         self.sync_provider = sync_provider
 
         # Initialize sub-engines
+        from rae_core.search.strategies import SearchStrategy
         from rae_core.search.strategies.fulltext import FullTextStrategy
         from rae_core.search.strategies.vector import VectorSearchStrategy
 
         strategies: dict[str, SearchStrategy] = {}
-        
+
         # Always include full-text strategy (run anywhere)
         strategies["fulltext"] = FullTextStrategy(memory_storage=memory_storage)
 
@@ -151,7 +152,7 @@ class RAEEngine:
         # 0. Prepare data
         tags = tags or []
         metadata = metadata or {}
-        
+
         expires_at = None
         if ttl:
             expires_at = datetime.now(timezone.utc) + timedelta(seconds=ttl)
@@ -281,7 +282,7 @@ class RAEEngine:
             filters["agent_id"] = agent_id
         if layer:
             filters["layer"] = layer
-        
+
         # Pass threshold to strategies
         filters["score_threshold"] = similarity_threshold
 
@@ -301,6 +302,7 @@ class RAEEngine:
 
         # 4. Fetch actual memories and apply Math Layer scoring
         from rae_core.math.controller import MathLayerController
+
         math_controller = MathLayerController()
 
         memories: list[dict[str, Any]] = []
@@ -309,8 +311,7 @@ class RAEEngine:
             if memory:
                 # Combine retrieval score with math heuristic score
                 math_score = math_controller.score_memory(
-                    memory=memory, 
-                    query_similarity=score
+                    memory=memory, query_similarity=score
                 )
                 memory["search_score"] = score
                 memory["math_score"] = math_score

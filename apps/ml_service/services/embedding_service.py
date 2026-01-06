@@ -5,8 +5,7 @@ This service handles embedding generation for the ML microservice,
 now using external APIs via LiteLLM to eliminate heavy local dependencies.
 """
 
-import asyncio
-from typing import List, Optional
+from typing import List
 
 import litellm
 import structlog
@@ -44,15 +43,14 @@ class EmbeddingMLService:
         if not texts:
             return []
 
-        logger.info("generating_embeddings", text_count=len(texts), model=self.model_name)
+        logger.info(
+            "generating_embeddings", text_count=len(texts), model=self.model_name
+        )
 
         try:
-            response = litellm.embedding(
-                model=self.model_name,
-                input=texts
-            )
+            response = litellm.embedding(model=self.model_name, input=texts)
             result = [d["embedding"] for d in response["data"]]
-            
+
             logger.info(
                 "embeddings_generated",
                 text_count=len(texts),
@@ -73,10 +71,7 @@ class EmbeddingMLService:
             return []
 
         try:
-            response = await litellm.aembedding(
-                model=self.model_name,
-                input=texts
-            )
+            response = await litellm.aembedding(model=self.model_name, input=texts)
             return [d["embedding"] for d in response["data"]]
         except Exception as e:
             logger.error("async_embedding_generation_failed", error=str(e))

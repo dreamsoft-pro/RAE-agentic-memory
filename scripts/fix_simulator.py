@@ -1,5 +1,3 @@
-
-
 target_path = "/home/grzegorz-lesniowski/cloud/screenwatcher_project/tools/simulator.py"
 
 new_content = """import random

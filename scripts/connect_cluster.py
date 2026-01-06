@@ -19,12 +19,14 @@ import yaml
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CONFIG_PATH = os.path.join(PROJECT_ROOT, "config", "cluster.yaml")
 
+
 def load_config():
     if not os.path.exists(CONFIG_PATH):
         print(f"❌ Config not found: {CONFIG_PATH}")
         return None
-    with open(CONFIG_PATH, 'r') as f:
+    with open(CONFIG_PATH, "r") as f:
         return yaml.safe_load(f)
+
 
 async def check_ssh_node(node_id, host, user):
     """Check SSH connectivity"""
@@ -35,14 +37,16 @@ async def check_ssh_node(node_id, host, user):
     await proc.wait()
     return proc.returncode == 0
 
+
 async def check_http_node(node_id, url):
     """Check HTTP connectivity"""
     try:
         async with httpx.AsyncClient(timeout=2.0) as client:
             resp = await client.get(url)
             return resp.status_code == 200
-    except:
+    except Exception:
         return False
+
 
 async def main():
     print("🔌 RAE Cluster Connector")
@@ -73,12 +77,15 @@ async def main():
         status = "✅ ONLINE" if is_online else "❌ OFFLINE"
         print(f"[{node['id'].upper()}] {key}: {status}")
         if is_online and node["transport"] == "local_proxy":
-             print(f"   ℹ️  Proxy Script: {node['proxy_script']}")
-             print(f"   ℹ️  Target: {node['url']}")
+            print(f"   ℹ️  Proxy Script: {node['proxy_script']}")
+            print(f"   ℹ️  Target: {node['url']}")
 
     print("\n💡 Usage Instructions:")
     print("   - Node1/2: Use MCP via SSH (Stdio)")
-    print("   - Node3: Run proxy locally: `python infra/node_agent/ollama_proxy_mcp.py`")
+    print(
+        "   - Node3: Run proxy locally: `python infra/node_agent/ollama_proxy_mcp.py`"
+    )
+
 
 if __name__ == "__main__":
     try:

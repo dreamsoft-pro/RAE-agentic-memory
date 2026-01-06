@@ -674,10 +674,7 @@ def create_memory(
     """Create a single memory in RAE."""
     try:
         payload = {"project": project_id, **memory_data}
-        headers = {
-            "X-Tenant-Id": tenant_id,
-            "X-User-Id": "admin"
-        }
+        headers = {"X-Tenant-Id": tenant_id, "X-User-Id": "admin"}
 
         response = client.post(
             f"{RAE_API_URL}/v1/memory/store",

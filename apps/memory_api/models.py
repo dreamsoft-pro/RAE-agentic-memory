@@ -161,9 +161,7 @@ class StoreMemoryRequest(BaseModel):
     memory_type: Optional[str] = Field(
         None, description="Functional type (text, code, image, etc.)"
     )
-    ttl: Optional[int] = Field(
-        None, gt=0, description="Time-to-live in seconds"
-    )
+    ttl: Optional[int] = Field(None, gt=0, description="Time-to-live in seconds")
     strength: Optional[float] = Field(
         default=1.0, ge=0.0, le=1.0, description="Memory strength (for decay)"
     )

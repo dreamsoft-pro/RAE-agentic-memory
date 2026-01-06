@@ -534,24 +534,24 @@ Consolidated Memory:"""
         """
         if self.rae_service:
             # Use RAE Service to store
-            # Note: We need a project ID. Consolidation service context might not have it easily available 
-            # if running across multiple projects. 
+            # Note: We need a project ID. Consolidation service context might not have it easily available
+            # if running across multiple projects.
             # However, usually we operate within a tenant context.
             # Ideally we should pick the project from one of the source memories or have it passed down.
             # For now, we'll assume 'default' or need to fetch it.
             # But wait, store_memory REQUIRES project in the new signature (Optional but good practice).
-            
+
             # Use "system" or "consolidation" as source
             memory_id = await self.rae_service.store_memory(
                 tenant_id=str(tenant_id),
-                project="default", # Fallback, ideally derived from source group
+                project="default",  # Fallback, ideally derived from source group
                 content=content,
                 source="consolidation_service",
                 layer=layer,
-                importance=1.0, # Consolidated memories are high value
+                importance=1.0,  # Consolidated memories are high value
                 tags=["consolidated", strategy.value],
                 memory_type="text",
-                session_id=None
+                session_id=None,
             )
             return memory_id
 

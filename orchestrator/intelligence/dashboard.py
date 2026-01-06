@@ -164,7 +164,9 @@ class PerformanceDashboard:
         click.echo("=" * 60 + "\n")
 
         click.echo(f"Total Attempts: {pattern.total_attempts}")
-        click.echo(f"  ✅ Successful: {pattern.successful} ({pattern.success_rate:.1%})")
+        click.echo(
+            f"  ✅ Successful: {pattern.successful} ({pattern.success_rate:.1%})"
+        )
         click.echo(f"  ❌ Failed: {pattern.failed}")
 
         if pattern.best_planner:
@@ -209,7 +211,9 @@ class PerformanceDashboard:
         click.echo("=" * 60 + "\n")
 
         click.echo(f"Total Tasks: {perf.total_tasks}")
-        click.echo(f"  ✅ Successful: {perf.successful_tasks} ({perf.success_rate:.1%})")
+        click.echo(
+            f"  ✅ Successful: {perf.successful_tasks} ({perf.success_rate:.1%})"
+        )
         click.echo(f"  ❌ Failed: {perf.failed_tasks}")
 
         click.echo("\n💰 Cost Metrics:")

@@ -9,8 +9,6 @@ class TestMemoryAPI:
     """
 
 
-
-
 @pytest.mark.asyncio
 async def test_store_memory_success(client_with_overrides, mock_rae_service):
     """Test successful memory storage via RAECoreService."""
@@ -71,7 +69,7 @@ async def test_query_memory_vector_only(
         content="Found content",
         score=0.95,
         strategy_used=SearchStrategy.HYBRID,
-        metadata={"project": "proj", "source": "src"}
+        metadata={"project": "proj", "source": "src"},
     )
 
     mock_rae_service.query_memories.return_value = SearchResponse(
@@ -79,7 +77,7 @@ async def test_query_memory_vector_only(
         total_found=1,
         query="test query",
         strategy=SearchStrategy.HYBRID,
-        execution_time_ms=10.0
+        execution_time_ms=10.0,
     )
 
     payload = {"query_text": "test query", "k": 1}

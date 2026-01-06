@@ -154,9 +154,7 @@ async def test_store_memory_db_failure(
 
 
 @pytest.mark.asyncio
-async def test_query_memory_hybrid_missing_project(
-    client_with_auth
-):
+async def test_query_memory_hybrid_missing_project(client_with_auth):
     payload = {"query_text": "test query", "use_graph": True}
     response = client_with_auth.post(
         "/v1/memory/query", json=payload, headers={"X-Tenant-Id": "t1"}

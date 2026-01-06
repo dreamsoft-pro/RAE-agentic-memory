@@ -20,8 +20,11 @@ except ImportError:
     print("Error: litellm not installed. Please install it.")
     sys.exit(1)
 
+
 class LiteLLMProvider(ILLMProvider):
-    def __init__(self, name: str, model: str, api_base: str = None, api_key: str = None):
+    def __init__(
+        self, name: str, model: str, api_base: str = None, api_key: str = None
+    ):
         self.name = name
         self.model = model
         self.api_base = api_base
@@ -39,7 +42,7 @@ class LiteLLMProvider(ILLMProvider):
                 messages=messages,
                 api_base=self.api_base,
                 api_key=self.api_key,
-                **kwargs
+                **kwargs,
             )
             return response.choices[0].message.content
         except Exception as e:
@@ -52,7 +55,7 @@ class LiteLLMProvider(ILLMProvider):
             messages=messages,
             api_base=self.api_base,
             api_key=self.api_key,
-            **kwargs
+            **kwargs,
         )
         return response.choices[0].message.content
 
@@ -68,6 +71,7 @@ class LiteLLMProvider(ILLMProvider):
     async def summarize(self, text: str, max_length: int = 200) -> str:
         return text[:max_length]
 
+
 async def verify():
     print("=== Starting Infrastructure Verification ===")
 
@@ -82,17 +86,15 @@ async def verify():
     else:
         claude_provider = LiteLLMProvider(
             name="claude",
-            model="claude-3-opus-20240229", # Or sonnet
-            api_key=claude_key
+            model="claude-3-opus-20240229",  # Or sonnet
+            api_key=claude_key,
         )
         print("  - Claude Provider Configured")
 
     # DeepSeek (Ollama on Node1)
     ollama_url = "http://100.66.252.117:11434"
     deepseek_provider = LiteLLMProvider(
-        name="deepseek",
-        model="ollama/deepseek-coder:1.3b",
-        api_base=ollama_url
+        name="deepseek", model="ollama/deepseek-coder:1.3b", api_base=ollama_url
     )
     print(f"  - DeepSeek Provider Configured (Node1: {ollama_url})")
 
@@ -102,14 +104,18 @@ async def verify():
     if claude_provider:
         print("  > Sending ping to Claude...")
         try:
-            resp = await claude_provider.generate("Hello, reply with 'Pong from Claude'", max_tokens=20)
+            resp = await claude_provider.generate(
+                "Hello, reply with 'Pong from Claude'", max_tokens=20
+            )
             print(f"  < Claude Response: {resp}")
         except Exception as e:
             print(f"  ! Claude Check Failed: {e}")
 
     print("  > Sending ping to DeepSeek (Node1)...")
     try:
-        resp = await deepseek_provider.generate("print('Hello from DeepSeek')", max_tokens=50)
+        resp = await deepseek_provider.generate(
+            "print('Hello from DeepSeek')", max_tokens=50
+        )
         print(f"  < DeepSeek Response: {resp}")
     except Exception as e:
         print(f"  ! DeepSeek Check Failed: {e}")
@@ -123,9 +129,9 @@ async def verify():
     providers["deepseek"] = deepseek_provider
 
     config = LLMConfig(
-        providers={}, # We inject instances directly
-        default_provider="deepseek", # Default to local for safety/cost in test
-        enable_fallback=True
+        providers={},  # We inject instances directly
+        default_provider="deepseek",  # Default to local for safety/cost in test
+        enable_fallback=True,
     )
 
     orchestrator = LLMOrchestrator(config, providers=providers)
@@ -136,10 +142,13 @@ async def verify():
 
     if "claude" in providers:
         print("  > Orchestrator forced routing to Claude...")
-        res, provider = await orchestrator.generate("What is 3+3?", provider_name="claude")
+        res, provider = await orchestrator.generate(
+            "What is 3+3?", provider_name="claude"
+        )
         print(f"  < Orchestrator Result: '{res.strip()}' (via {provider})")
 
     print("\n=== Verification Complete ===")
+
 
 if __name__ == "__main__":
     asyncio.run(verify())
