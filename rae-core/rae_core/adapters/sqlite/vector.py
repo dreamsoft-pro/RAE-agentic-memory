@@ -122,6 +122,7 @@ class SQLiteVectorStore(IVectorStore):
         layer: str | None = None,
         limit: int = 10,
         score_threshold: float | None = None,
+        agent_id: str | None = None,
     ) -> list[tuple[UUID, float]]:
         """Search for similar vectors using cosine similarity."""
         await self.initialize()

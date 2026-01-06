@@ -553,7 +553,7 @@ Consolidated Memory:"""
                 memory_type="text",
                 session_id=None,
             )
-            return memory_id
+            return str(memory_id)
 
         # In production, create memory in database
         # For now, return mock ID

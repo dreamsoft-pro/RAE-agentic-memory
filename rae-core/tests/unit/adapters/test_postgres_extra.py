@@ -21,7 +21,7 @@ def mock_pool():
     # Setup context manager for pool.acquire()
     acq_ctx = MagicMock()
     acq_ctx.__aenter__ = AsyncMock(return_value=conn)
-    acq_ctx.__aexit__ = AsyncMock()
+    acq_ctx.__aexit__ = AsyncMock(return_value=False)
     pool.acquire.return_value = acq_ctx
 
     return pool, conn
@@ -123,6 +123,21 @@ async def test_save_embedding_coverage(mock_pool):
     assert res is True
     assert conn.execute.called
     assert conn.fetchval.called  # SEC-02 check
+
+
+@pytest.mark.asyncio
+async def test_postgres_save_embedding_access_denied(mock_pool):
+    """Test save_embedding access denial (line 927) with proper async exception handling."""
+    pool, conn = mock_pool
+    storage = PostgreSQLStorage(dsn="postgresql://localhost/db")
+    storage._pool = pool
+
+    # Mock exists check to return None (not found)
+    conn.fetchval.return_value = None
+
+    # Try to save embedding for tenant 2 - should raise ValueError
+    with pytest.raises(ValueError, match="Access Denied"):
+        await storage.save_embedding(uuid4(), "model", [0.1], "t2")
 
 
 @pytest.mark.asyncio
@@ -316,12 +331,8 @@ async def test_delete_memories_with_metadata_filter_coverage(mock_pool):
 @pytest.mark.asyncio
 async def test_adjust_importance_not_found(mock_pool):
     pool, conn = mock_pool
-
     storage = PostgreSQLStorage(dsn="postgresql://localhost/db")
-
     storage._pool = pool
-
     conn.fetchval.return_value = None
-
     with pytest.raises(ValueError, match="Memory not found"):
         await storage.adjust_importance(uuid4(), 0.9, "t1")

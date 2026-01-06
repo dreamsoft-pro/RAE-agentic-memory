@@ -8,7 +8,9 @@ from apps.ml_service.services.entity_resolution import EntityResolutionMLService
 
 @pytest.fixture
 def mock_embedding_service():
-    with patch("apps.ml_service.services.entity_resolution.EmbeddingMLService") as mock_class:
+    with patch(
+        "apps.ml_service.services.entity_resolution.EmbeddingMLService"
+    ) as mock_class:
         mock_instance = MagicMock()
         mock_class.return_value = mock_instance
         # Default embeddings for nodes
@@ -43,7 +45,9 @@ def test_entity_resolution_init(entity_resolution_service):
     assert entity_resolution_service.embedding_service is not None
 
 
-def test_resolve_entities_empty_nodes(entity_resolution_service, mock_embedding_service):
+def test_resolve_entities_empty_nodes(
+    entity_resolution_service, mock_embedding_service
+):
     """Test resolving entities with an empty list of nodes."""
     merge_groups, statistics = entity_resolution_service.resolve_entities([])
     assert merge_groups == []
@@ -75,7 +79,10 @@ def test_resolve_entities_multiple_nodes(
 
     # Mock embeddings
     mock_embedding_service.generate_embeddings.return_value = [
-        [0.1, 0.2], [0.11, 0.21], [0.9, 0.8], [0.91, 0.81]
+        [0.1, 0.2],
+        [0.11, 0.21],
+        [0.9, 0.8],
+        [0.91, 0.81],
     ]
 
     # Mock clustering result

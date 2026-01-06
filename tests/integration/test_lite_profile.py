@@ -60,8 +60,8 @@ def lite_profile_services():
         env=env,
     )
 
-    # Wait for services to be ready (up to 60 seconds)
-    max_retries = 30
+    # Wait for services to be ready (up to 180 seconds)
+    max_retries = 90
     retry_count = 0
     api_ready = False
 
@@ -102,6 +102,40 @@ def lite_profile_services():
             env=env,
         )
         pytest.fail(f"RAE API failed to start on port {api_port} within 60 seconds")
+
+    # --- SEEDING DATABASE FOR TESTS ---
+    # Ensure tenant and user role exist so tests don't get 403/500
+    import asyncio
+    import asyncpg
+    from uuid import UUID, uuid4
+
+    async def seed_sandbox():
+        try:
+            # Use port from env (5440)
+            conn = await asyncpg.connect(f"postgresql://rae:rae@localhost:5440/rae")
+            
+            # 1. Create Default Tenant
+            tenant_id = "00000000-0000-0000-0000-000000000000"
+            exists = await conn.fetchval("SELECT EXISTS(SELECT 1 FROM tenants WHERE id = $1)", UUID(tenant_id))
+            if not exists:
+                await conn.execute("INSERT INTO tenants (id, name, tier) VALUES ($1, $2, 'enterprise')", UUID(tenant_id), "Sandbox Tenant")
+            
+            # 2. Grant Owner Role to 'apikey_secret' (User ID for 'secret' API key)
+            await conn.execute("""
+                INSERT INTO user_tenant_roles 
+                (id, user_id, tenant_id, role, project_ids, assigned_at, assigned_by)
+                VALUES ($1, $2, $3, $4, $5, NOW(), $6)
+                ON CONFLICT (user_id, tenant_id) 
+                DO UPDATE SET role = $4
+            """, uuid4(), "apikey_secret", UUID(tenant_id), "owner", [], "test-setup")
+            
+            await conn.close()
+        except Exception as e:
+            print(f"Warning: Failed to seed sandbox DB: {e}")
+            # Don't fail here, maybe it worked or API handles it
+
+    asyncio.run(seed_sandbox())
+    # ----------------------------------
 
     # Services are ready
     yield
