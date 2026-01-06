@@ -315,7 +315,6 @@ async def test_delete_memories_with_metadata_filter_coverage(mock_pool):
 
 @pytest.mark.asyncio
 async def test_adjust_importance_not_found(mock_pool):
-
     pool, conn = mock_pool
 
     storage = PostgreSQLStorage(dsn="postgresql://localhost/db")
@@ -325,5 +324,4 @@ async def test_adjust_importance_not_found(mock_pool):
     conn.fetchval.return_value = None
 
     with pytest.raises(ValueError, match="Memory not found"):
-
         await storage.adjust_importance(uuid4(), 0.9, "t1")

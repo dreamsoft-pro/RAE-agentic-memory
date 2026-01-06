@@ -55,7 +55,8 @@ async def test_gemini_provider():
     try:
         # Create Gemini provider with rate limiting disabled for testing
         provider = GeminiProvider(
-            cli_path="gemini", rate_limit_delay=False  # Disable for faster testing
+            cli_path="gemini",
+            rate_limit_delay=False,  # Disable for faster testing
         )
 
         print("✅ Gemini provider created")
@@ -88,7 +89,8 @@ async def test_generation():
 
     try:
         provider = GeminiProvider(
-            cli_path="gemini", rate_limit_delay=False  # Fast for testing
+            cli_path="gemini",
+            rate_limit_delay=False,  # Fast for testing
         )
 
         # Check if available first

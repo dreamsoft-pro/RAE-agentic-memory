@@ -50,7 +50,6 @@ class TestReflectionEngineCoverage:
                 AsyncMock(return_value={"score": 1.0}),
             ),
         ):
-
             await engine.execute_action("consolidate", {}, "t", evaluate=True)
 
     @pytest.mark.asyncio
@@ -108,7 +107,6 @@ class TestReflectionEngineCoverage:
                 AsyncMock(return_value={"success": True, "count": 1}),
             ) as mock_exec,
         ):
-
             res = await engine.prune_low_quality_memories("t")
             assert res["success"] is True
             mock_exec.assert_called_once()

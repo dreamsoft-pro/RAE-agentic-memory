@@ -43,6 +43,7 @@ class IVectorStore(Protocol):
         layer: str | None = None,
         limit: int = 10,
         score_threshold: float | None = None,
+        agent_id: str | None = None,
     ) -> list[tuple[UUID, float]]:
         """Search for similar vectors using cosine similarity.
 
@@ -52,6 +53,7 @@ class IVectorStore(Protocol):
             layer: Optional layer filter
             limit: Maximum number of results
             score_threshold: Optional minimum similarity score (0.0-1.0)
+            agent_id: Optional agent identifier for filtering
 
         Returns:
             List of (memory_id, similarity_score) tuples, sorted by score descending

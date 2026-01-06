@@ -5,6 +5,7 @@ Exit 1 if unknown warnings detected.
 
 Part of RAE CI Quality Implementation - Iteration 1: Zero Warnings
 """
+
 import re
 import sys
 from pathlib import Path

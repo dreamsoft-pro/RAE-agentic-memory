@@ -118,7 +118,7 @@ REVIEW CRITERIA:
 
 OUTPUT FORMAT (JSON):
 {{
-  "step_id": "{step.get('id') if step else 'unknown'}",
+  "step_id": "{step.get("id") if step else "unknown"}",
   "status": "approved|rejected|needs_changes",
   "review": {{
     "correctness": 1-10,

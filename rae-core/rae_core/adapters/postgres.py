@@ -530,7 +530,7 @@ class PostgreSQLStorage(IMemoryStorage):
 
         query = f"""
             UPDATE memories
-            SET {', '.join(set_clauses)}
+            SET {", ".join(set_clauses)}
             WHERE id = ${param_idx} AND tenant_id = ${param_idx + 1}
         """
 

@@ -277,7 +277,7 @@ class RAEEngine:
             similarity_threshold or search_config["similarity_threshold"]
         )
 
-        filters = {}
+        filters: dict[str, Any] = {}
         if agent_id:
             filters["agent_id"] = agent_id
         if layer:

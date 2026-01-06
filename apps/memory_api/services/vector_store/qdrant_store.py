@@ -163,7 +163,7 @@ class QdrantStore(MemoryVectorStore):
         # Use query_points with the most compatible signature for 1.11+
         try:
             # Try new query_points API first
-            search_results = self.qdrant_client.query_points(
+            query_response = self.qdrant_client.query_points(
                 collection_name="memories",
                 query=query_embedding,  # Bare list for the default/single vector, or specific for named
                 using=vector_name,
@@ -173,11 +173,12 @@ class QdrantStore(MemoryVectorStore):
             )
             return [
                 ScoredMemoryRecord(score=point.score, **point.payload)
-                for point in search_results.points
+                for point in query_response.points
+                if point.payload
             ]
         except Exception:
             # Fallback to legacy search
-            search_results = self.qdrant_client.search(
+            legacy_results = self.qdrant_client.search(
                 collection_name="memories",
                 query_vector=models.NamedVector(
                     name=vector_name, vector=query_embedding
@@ -188,7 +189,8 @@ class QdrantStore(MemoryVectorStore):
             )
             return [
                 ScoredMemoryRecord(score=point.score, **point.payload)
-                for point in search_results
+                for point in legacy_results
+                if point.payload
             ]
 
     @retry(

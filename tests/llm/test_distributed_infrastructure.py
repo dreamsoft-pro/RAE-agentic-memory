@@ -25,7 +25,6 @@ CLAUDE_MODEL = "claude-3-haiku-20240307"
 @pytest.mark.asyncio
 @pytest.mark.llm
 class TestDistributedInfrastructure:
-
     async def test_node1_connectivity(self):
         """Verify Node1 (DeepSeek/Ollama) is reachable and responding."""
         # Ollama doesn't need a real key, but the client might require non-empty

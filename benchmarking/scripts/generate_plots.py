@@ -76,7 +76,7 @@ class BenchmarkPlotter:
         ax.set_xlabel("Query Latency (ms)", fontsize=12)
         ax.set_ylabel("Frequency", fontsize=12)
         ax.set_title(
-            f'Query Latency Distribution - {results["benchmark"]["name"]}',
+            f"Query Latency Distribution - {results['benchmark']['name']}",
             fontsize=14,
             fontweight="bold",
         )
@@ -149,7 +149,7 @@ class BenchmarkPlotter:
         ax.set_xlabel("Query Difficulty", fontsize=12)
         ax.set_ylabel("MRR", fontsize=12)
         ax.set_title(
-            f'MRR by Query Difficulty - {results["benchmark"]["name"]}',
+            f"MRR by Query Difficulty - {results['benchmark']['name']}",
             fontsize=14,
             fontweight="bold",
         )

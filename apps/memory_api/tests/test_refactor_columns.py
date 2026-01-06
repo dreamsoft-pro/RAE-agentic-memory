@@ -91,14 +91,16 @@ async def test_store_memory_canonical_fields(mock_pool):
     # Verify expires_at is set (ttl was provided)
     # It should be a datetime object
     from datetime import timezone
+
     for arg in args:
-        if hasattr(arg, 'isoformat') and not isinstance(arg, str): # simple check for datetime
+        if hasattr(arg, "isoformat") and not isinstance(
+            arg, str
+        ):  # simple check for datetime
             # Found a datetime, check if it's in the future
             # Ensure comparison is timezone-aware
             arg_aware = arg.replace(tzinfo=timezone.utc) if arg.tzinfo is None else arg
             assert arg_aware > datetime.now(timezone.utc)
             break
-
 
     # 6. Verify Metadata (Phase 1 Requirement)
     metadata_arg = None

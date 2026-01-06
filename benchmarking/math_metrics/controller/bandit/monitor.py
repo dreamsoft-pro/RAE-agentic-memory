@@ -225,7 +225,7 @@ class BanditMonitor:
             return MonitorAlert(
                 severity="warning",
                 category="reward_anomaly",
-                message=f"High outlier rate: {len(outliers)/len(rewards):.1%} of rewards",
+                message=f"High outlier rate: {len(outliers) / len(rewards):.1%} of rewards",
                 metadata={
                     "outlier_count": len(outliers),
                     "total_count": len(rewards),
@@ -253,7 +253,7 @@ class BanditMonitor:
             return MonitorAlert(
                 severity="warning",
                 category="staleness",
-                message=f"No bandit updates in {age/60:.0f} minutes",
+                message=f"No bandit updates in {age / 60:.0f} minutes",
                 metadata={
                     "age_seconds": age,
                     "last_update": most_recent,

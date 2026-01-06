@@ -274,7 +274,7 @@ class SQLiteStorage(IMemoryStorage):
             cursor = await db.execute(
                 f"""
                 UPDATE memories
-                SET {', '.join(set_clauses)}
+                SET {", ".join(set_clauses)}
                 WHERE id = ? AND tenant_id = ?
                 """,
                 params,

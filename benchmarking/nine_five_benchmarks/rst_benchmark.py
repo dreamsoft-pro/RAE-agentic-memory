@@ -631,7 +631,7 @@ class RSTBenchmark:
             print(f"  Stable Measurements: {stable_count}/{len(self.measurements)}")
             print("\n  Stability by Noise Level:")
             for level, stability in sorted(stability_score.items()):
-                print(f"    {level*100:.0f}%: {stability:.4f}")
+                print(f"    {level * 100:.0f}%: {stability:.4f}")
             print("\n  Noise Type Robustness:")
             for nt_val, stats in noise_type_analysis.items():
                 print(f"    {nt_val}: mean={stats['mean_stability']:.4f}")
