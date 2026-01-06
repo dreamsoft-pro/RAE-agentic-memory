@@ -26,7 +26,7 @@ def upgrade():
     op.create_table(
         'memories',
         sa.Column('id', postgresql.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False, primary_key=True),
-        sa.Column('tenant_id', postgresql.UUID(), nullable=False),
+        sa.Column('tenant_id', sa.String(length=255), nullable=False),
         sa.Column('content', sa.Text(), nullable=False),
         sa.Column('source', sa.String(length=255), nullable=True),
         sa.Column('importance', sa.Float(), server_default='0.5', nullable=True),
@@ -71,7 +71,7 @@ def upgrade():
     # 3. Tenants
     op.create_table(
         'tenants',
-        sa.Column('id', postgresql.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
+        sa.Column('id', sa.String(length=255), nullable=False),
         sa.Column('name', sa.String(length=255), nullable=False),
         sa.Column('tier', sa.String(length=50), server_default='free', nullable=False),
         sa.Column('config', postgresql.JSONB(), server_default='{}', nullable=True),
@@ -93,7 +93,7 @@ def upgrade():
         'user_tenant_roles',
         sa.Column('id', postgresql.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
         sa.Column('user_id', sa.String(length=255), nullable=False),
-        sa.Column('tenant_id', postgresql.UUID(), nullable=False),
+        sa.Column('tenant_id', sa.String(length=255), nullable=False),
         sa.Column('role', sa.String(length=50), nullable=False),
         sa.Column('project_ids', postgresql.ARRAY(sa.Text()), server_default='{}', nullable=True),
         sa.Column('assigned_at', sa.DateTime(timezone=True), server_default=sa.text('NOW()'), nullable=True),
@@ -110,7 +110,7 @@ def upgrade():
     op.create_table(
         'budgets',
         sa.Column('id', postgresql.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
-        sa.Column('tenant_id', postgresql.UUID(), nullable=False),
+        sa.Column('tenant_id', sa.String(length=255), nullable=False),
         sa.Column('project_id', sa.String(), nullable=False),
         sa.Column('monthly_limit', sa.Float(), nullable=True),
         sa.Column('monthly_usage', sa.Float(), server_default='0.0', nullable=False),
@@ -125,7 +125,7 @@ def upgrade():
     op.create_table(
         'access_logs',
         sa.Column('id', postgresql.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
-        sa.Column('tenant_id', postgresql.UUID(), nullable=False),
+        sa.Column('tenant_id', sa.String(length=255), nullable=False),
         sa.Column('user_id', sa.String(length=255), nullable=False),
         sa.Column('action', sa.String(length=100), nullable=False),
         sa.Column('resource', sa.String(length=100), nullable=False),
@@ -147,7 +147,7 @@ def upgrade():
     op.create_table(
         'token_savings_log',
         sa.Column('id', postgresql.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
-        sa.Column('tenant_id', postgresql.UUID(), nullable=False),
+        sa.Column('tenant_id', sa.String(length=255), nullable=False),
         sa.Column('project_id', sa.String(), nullable=False),
         sa.Column('request_id', sa.String(), nullable=True),
         sa.Column('predicted_tokens', sa.Integer(), server_default='0', nullable=True),
@@ -164,7 +164,7 @@ def upgrade():
     op.create_table(
         'knowledge_graph_nodes',
         sa.Column('id', postgresql.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
-        sa.Column('tenant_id', postgresql.UUID(), nullable=False),
+        sa.Column('tenant_id', sa.String(length=255), nullable=False),
         sa.Column('project_id', sa.String(), nullable=False),
         sa.Column('node_id', sa.String(), nullable=False),
         sa.Column('label', sa.String(), nullable=False),
@@ -179,7 +179,7 @@ def upgrade():
     op.create_table(
         'knowledge_graph_edges',
         sa.Column('id', postgresql.UUID(), server_default=sa.text('gen_random_uuid()'), nullable=False),
-        sa.Column('tenant_id', postgresql.UUID(), nullable=False),
+        sa.Column('tenant_id', sa.String(length=255), nullable=False),
         sa.Column('project_id', sa.String(), nullable=False),
         sa.Column('source_node_id', postgresql.UUID(), nullable=False),
         sa.Column('target_node_id', postgresql.UUID(), nullable=False),
