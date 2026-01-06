@@ -162,7 +162,7 @@ class QdrantVectorStore(IVectorStore):
     async def add_vector(
         self,
         memory_id: UUID,
-        embedding: list[float],
+        embedding: list[float] | dict[str, list[float]],
         tenant_id: str,
         agent_id: str,
         layer: str,
@@ -183,7 +183,13 @@ class QdrantVectorStore(IVectorStore):
             **metadata,
         }
 
-        vector_name = self._get_vector_name(len(embedding))
+        if isinstance(embedding, dict):
+            # Already mapped to named vectors
+            vector_data = embedding
+        else:
+            # Single vector, map by dimension
+            vector_name = self._get_vector_name(len(embedding))
+            vector_data = {vector_name: embedding}
 
         try:
             await self.client.upsert(
@@ -191,7 +197,7 @@ class QdrantVectorStore(IVectorStore):
                 points=[
                     PointStruct(
                         id=str(memory_id),
-                        vector={vector_name: embedding},
+                        vector=vector_data,
                         payload=payload,
                     )
                 ],
@@ -203,7 +209,7 @@ class QdrantVectorStore(IVectorStore):
     async def store_vector(
         self,
         memory_id: UUID,
-        embedding: list[float],
+        embedding: list[float] | dict[str, list[float]],
         tenant_id: str,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
@@ -377,9 +383,11 @@ class QdrantVectorStore(IVectorStore):
             if not payload or payload.get("tenant_id") != tenant_id:
                 return False
 
+            from qdrant_client.models import PointIdsList
+
             await self.client.delete(
                 collection_name=self.collection_name,
-                points_selector=[str(memory_id)],
+                points_selector=PointIdsList(points=[str(memory_id)]),
             )
             return True
         except Exception:
@@ -395,14 +403,16 @@ class QdrantVectorStore(IVectorStore):
         await self._ensure_collection()
 
         try:
+            from qdrant_client.models import Filter, MatchValue
+
             # Use filter to delete
-            delete_filter = {
-                "must": [
-                    {"key": "tenant_id", "match": {"value": tenant_id}},
-                    {"key": "agent_id", "match": {"value": agent_id}},
-                    {"key": "layer", "match": {"value": layer}},
+            delete_filter = Filter(
+                must=[
+                    MatchValue(key="tenant_id", value=tenant_id),
+                    MatchValue(key="agent_id", value=agent_id),
+                    MatchValue(key="layer", value=layer),
                 ]
-            }
+            )
 
             result = await self.client.delete(
                 collection_name=self.collection_name,
