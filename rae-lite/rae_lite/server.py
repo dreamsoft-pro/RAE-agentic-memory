@@ -8,6 +8,7 @@ import structlog
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from rae_lite.config import settings
 
 from rae_core.adapters.sqlite import (
     SQLiteGraphStore,
@@ -17,7 +18,6 @@ from rae_core.adapters.sqlite import (
 from rae_core.config.settings import RAESettings
 from rae_core.engine import RAEEngine
 from rae_core.interfaces.embedding import IEmbeddingProvider
-from rae_lite.config import settings
 
 logger = structlog.get_logger(__name__)
 

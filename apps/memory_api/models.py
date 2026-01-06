@@ -10,24 +10,8 @@ from pydantic import BaseModel, Field, field_validator
 class MemoryLayer(str, Enum):
     """
     Enum for memory layers, representing different levels of processing and retention.
-
-    Logicalwarstwa przetwarzania (STM/LTM/episodic/reflective).
-    See: docs/MEMORY_MODEL.md for complete layer mapping.
-
-    - stm/working: Short-term memory (Layer 1/2), volatile and immediate
-    - ltm/semantic: Long-term memory (Layer 3), consolidated and durable
-    - em/episodic: Episodic memory (Layer 2/3), time-sequenced events
-    - rm/reflective: Reflective memory (Layer 4), synthesized meta-learning
-    - sensory: Sensory buffer (Layer 0), immediate perception
     """
 
-    # Short codes (legacy)
-    stm = "stm"
-    ltm = "ltm"
-    rm = "rm"
-    em = "em"
-
-    # Full names (new standard from RAE-core)
     working = "working"
     semantic = "semantic"
     reflective = "reflective"
@@ -183,11 +167,16 @@ class StoreMemoryRequest(BaseModel):
         """Normalize legacy short layer codes to full standard names."""
         mapping = {
             "em": "episodic",
+            "episodic": "episodic",
             "stm": "working",
             "wm": "working",
+            "working": "working",
             "sm": "semantic",
             "ltm": "semantic",
+            "semantic": "semantic",
             "rm": "reflective",
+            "reflective": "reflective",
+            "sensory": "sensory",
         }
         if isinstance(v, str) and v.lower() in mapping:
             return mapping[v.lower()]
@@ -284,6 +273,9 @@ class AgentExecuteRequest(BaseModel):
     tenant_id: str = Field(min_length=1, max_length=255)
     project: str = Field(min_length=1, max_length=255)
     prompt: str = Field(min_length=1, max_length=8192)
+    session_id: Optional[str] = Field(
+        None, description="Session identifier for context management"
+    )
     tools_allowed: Optional[List[str]] = None
     budget_tokens: int = Field(default=20000, gt=0, le=100000)
 

@@ -34,6 +34,10 @@ class MemoryRecord(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.now)
     last_accessed_at: Optional[datetime] = None
     usage_count: int = 0
+    session_id: Optional[str] = None
+    memory_type: Optional[str] = None
+    ttl: Optional[int] = None
+    expires_at: Optional[datetime] = None
 
 
 class ScoredMemoryRecord(MemoryRecord):
@@ -60,6 +64,10 @@ class StoreMemoryRequest(BaseModel):
     tags: Optional[List[str]] = None
     timestamp: Optional[datetime] = None
     project: Optional[str] = None  # Added for project-scoped memories
+    session_id: Optional[str] = None
+    memory_type: Optional[str] = None
+    ttl: Optional[int] = None
+    strength: Optional[float] = None
 
 
 class StoreMemoryResponse(BaseModel):

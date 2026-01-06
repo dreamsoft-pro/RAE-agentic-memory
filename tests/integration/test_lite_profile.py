@@ -106,29 +106,44 @@ def lite_profile_services():
     # --- SEEDING DATABASE FOR TESTS ---
     # Ensure tenant and user role exist so tests don't get 403/500
     import asyncio
-    import asyncpg
     from uuid import UUID, uuid4
+
+    import asyncpg
 
     async def seed_sandbox():
         try:
             # Use port from env (5440)
-            conn = await asyncpg.connect(f"postgresql://rae:rae@localhost:5440/rae")
-            
+            conn = await asyncpg.connect("postgresql://rae:rae@localhost:5440/rae")
+
             # 1. Create Default Tenant
             tenant_id = "00000000-0000-0000-0000-000000000000"
-            exists = await conn.fetchval("SELECT EXISTS(SELECT 1 FROM tenants WHERE id = $1)", UUID(tenant_id))
+            exists = await conn.fetchval(
+                "SELECT EXISTS(SELECT 1 FROM tenants WHERE id = $1)", UUID(tenant_id)
+            )
             if not exists:
-                await conn.execute("INSERT INTO tenants (id, name, tier) VALUES ($1, $2, 'enterprise')", UUID(tenant_id), "Sandbox Tenant")
-            
+                await conn.execute(
+                    "INSERT INTO tenants (id, name, tier) VALUES ($1, $2, 'enterprise')",
+                    UUID(tenant_id),
+                    "Sandbox Tenant",
+                )
+
             # 2. Grant Owner Role to 'apikey_secret' (User ID for 'secret' API key)
-            await conn.execute("""
+            await conn.execute(
+                """
                 INSERT INTO user_tenant_roles 
                 (id, user_id, tenant_id, role, project_ids, assigned_at, assigned_by)
                 VALUES ($1, $2, $3, $4, $5, NOW(), $6)
                 ON CONFLICT (user_id, tenant_id) 
                 DO UPDATE SET role = $4
-            """, uuid4(), "apikey_secret", UUID(tenant_id), "owner", [], "test-setup")
-            
+            """,
+                uuid4(),
+                "apikey_secret",
+                UUID(tenant_id),
+                "owner",
+                [],
+                "test-setup",
+            )
+
             await conn.close()
         except Exception as e:
             print(f"Warning: Failed to seed sandbox DB: {e}")
