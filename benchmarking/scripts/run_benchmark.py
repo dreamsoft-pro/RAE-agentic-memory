@@ -142,7 +142,7 @@ class RAEBenchmarkRunner:
         self.use_direct_db = use_direct_db
 
         self.benchmark_data = None
-        self.tenant_id = "benchmark_tenant"
+        self.tenant_id = "00000000-0000-0000-0000-000000000999"
         self.project_id = "benchmark_project"
 
         # Statistics
