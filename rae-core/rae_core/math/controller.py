@@ -39,7 +39,9 @@ class MathLayerController:
             importance=memory.get("importance", 0.5),
             last_accessed_at=memory.get("last_accessed_at"),
             created_at=created_at,  # type: ignore
-            access_count=memory.get("access_count", 0),
+            access_count=memory.get(
+                "usage_count", 0
+            ),  # Map DB 'usage_count' to Math 'access_count'
         )
         return float(result.final_score)
 

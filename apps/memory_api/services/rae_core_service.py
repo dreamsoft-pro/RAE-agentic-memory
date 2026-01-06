@@ -216,6 +216,9 @@ class RAECoreService:
         project_id = project or "default"
 
         # Store in RAEEngine
+        if layer == "sensory" and ttl is None:
+            ttl = 86400  # 24 hours default for sensory layer
+
         memory_id = await self.engine.store_memory(
             tenant_id=tenant_id,
             agent_id=project_id,
@@ -232,13 +235,12 @@ class RAECoreService:
         )
 
         logger.info(
-            "memory_stored",
-            memory_id=memory_id,
+            "memory_stored_in_engine",
+            memory_id=str(memory_id),
             tenant_id=tenant_id,
-            project=project,
-            layer=layer,
-            session_id=session_id,
-            ttl=ttl,
+            project=project_id,
+            layer=layer or "episodic",
+            type=memory_type or "text",
         )
 
         return str(memory_id)
@@ -510,6 +512,26 @@ class RAECoreService:
         Clear all memories for tenant.
         """
         return {"deleted": 0}
+
+    async def get_session_context(
+        self,
+        session_id: str,
+        tenant_id: str,
+        limit: int = 50,
+    ) -> List[Dict[str, Any]]:
+        """
+        Retrieve all memories associated with a specific session.
+        """
+        sql = """
+            SELECT *
+            FROM memories
+            WHERE tenant_id = $1
+                AND session_id = $2
+            ORDER BY timestamp ASC
+            LIMIT $3
+        """
+        records = await self.db.fetch(sql, tenant_id, session_id, limit)
+        return [dict(r) for r in records]
 
     async def list_unique_tenants(self) -> List[str]:
         """List all unique tenant IDs in the system."""

@@ -291,27 +291,39 @@ class MemoryConsolidationService:
         self, memories: List[Dict[str, Any]], similarity_threshold: float = 0.7
     ) -> List[List[Dict[str, Any]]]:
         """
-        Group memories by semantic similarity
-
-        Args:
-            memories: List of memory dictionaries
-            similarity_threshold: Minimum similarity for grouping
-
-        Returns:
-            List of memory groups
+        Group memories by semantic similarity using vector embeddings.
         """
         if not memories:
             return []
 
-        groups = []
+        # Simple greedy clustering for consolidation
+        groups: List[List[Dict[str, Any]]] = []
 
-        # In production:
-        # 1. Calculate embeddings for all memories
-        # 2. Use clustering (e.g., DBSCAN, hierarchical)
-        # 3. Group similar memories together
+        for mem in memories:
+            emb = mem.get("embedding")
+            if not emb:
+                groups.append([mem])
+                continue
 
-        # For now, return each memory as its own group
-        groups = [[memory] for memory in memories]
+            added = False
+            for group in groups:
+                # Compare with first item in group
+                target_emb = group[0].get("embedding")
+                if target_emb:
+                    # Use rae_service math if available
+                    similarity = 0.0
+                    if self.rae_service and hasattr(self.rae_service.engine, "math"):
+                        similarity = self.rae_service.engine.math.compute_similarity(
+                            emb, target_emb
+                        )
+
+                    if similarity >= similarity_threshold:
+                        group.append(mem)
+                        added = True
+                        break
+
+            if not added:
+                groups.append([mem])
 
         return groups
 
@@ -577,9 +589,20 @@ Consolidated Memory:"""
         Args:
             memory_ids: List of memory IDs to mark
         """
-        # In production, update memories in database
-        # Set is_consolidated=True, consolidation_timestamp=now
-        pass
+        if not self.rae_service:
+            return
+
+        for mid in memory_ids:
+            try:
+                # Add metadata flag instead of deleting, to preserve provenance
+                await self.rae_service.adjust_importance(
+                    mid, -0.2, "default"
+                )  # Decrease importance of raw sources
+                # In a full implementation, we would use update_memory to set a 'consolidated' flag
+            except Exception as e:
+                logger.warning(
+                    "failed_to_mark_memory_consolidated", memory_id=mid, error=str(e)
+                )
 
     async def run_automatic_consolidation(self, tenant_id: UUID) -> Dict[str, Any]:
         """
