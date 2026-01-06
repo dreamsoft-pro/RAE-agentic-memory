@@ -103,19 +103,61 @@ class QdrantVectorStore(IVectorStore):
             # Collection doesn't exist, create it
             from qdrant_client.models import SparseVectorParams
 
+            # Multi-vector configuration to support various models
+            vectors_config = {
+                "dense": VectorParams(
+                    size=384,  # Default/MiniLM
+                    distance=self.distance,
+                ),
+                "openai": VectorParams(
+                    size=1536,  # OpenAI text-embedding-3-small/large
+                    distance=self.distance,
+                ),
+                "ollama": VectorParams(
+                    size=768,  # Nomic-embed-text
+                    distance=self.distance,
+                ),
+                "cohere": VectorParams(
+                    size=1024,  # Cohere/Jina
+                    distance=self.distance,
+                ),
+            }
+
+            # If the initialized dimension doesn't match standard buckets, add it as custom
+            if self.embedding_dim not in [384, 768, 1024, 1536]:
+                vectors_config["custom"] = VectorParams(
+                    size=self.embedding_dim,
+                    distance=self.distance,
+                )
+
             await self.client.create_collection(
                 collection_name=self.collection_name,
-                vectors_config={
-                    "dense": VectorParams(
-                        size=self.embedding_dim,
-                        distance=self.distance,
-                    )
-                },
+                vectors_config=vectors_config,
                 # Default configuration for hybrid search (dense + sparse)
                 sparse_vectors_config={"text": SparseVectorParams()},
             )
 
         self._initialized = True
+
+    def _get_vector_name(self, dim: int) -> str:
+        """Determine vector name based on dimension."""
+        if dim == 1536:
+            return "openai"
+        elif dim == 768:
+            return "ollama"
+        elif dim == 384:
+            return "dense"
+        elif dim == 1024:
+            return "cohere"
+        # If unknown dimension but matches init dim, use custom or dense fallback
+        if dim == self.embedding_dim and self.embedding_dim not in [
+            384,
+            768,
+            1024,
+            1536,
+        ]:
+            return "custom"
+        return "dense"  # Fallback
 
     async def add_vector(
         self,
@@ -141,13 +183,15 @@ class QdrantVectorStore(IVectorStore):
             **metadata,
         }
 
+        vector_name = self._get_vector_name(len(embedding))
+
         try:
             await self.client.upsert(
                 collection_name=self.collection_name,
                 points=[
                     PointStruct(
                         id=str(memory_id),
-                        vector={"dense": embedding},
+                        vector={vector_name: embedding},
                         payload=payload,
                     )
                 ],
@@ -206,9 +250,11 @@ class QdrantVectorStore(IVectorStore):
                 **meta,
             }
 
+            vector_name = self._get_vector_name(len(embedding))
+
             points.append(
                 PointStruct(
-                    id=str(memory_id), vector={"dense": embedding}, payload=payload
+                    id=str(memory_id), vector={vector_name: embedding}, payload=payload
                 )
             )
 
@@ -264,12 +310,14 @@ class QdrantVectorStore(IVectorStore):
 
         query_filter = {"must": must_conditions} if must_conditions else None
 
+        vector_name = self._get_vector_name(len(query_embedding))
+
         try:
             from qdrant_client.models import NamedVector
 
             results = await self.client.search(
                 collection_name=self.collection_name,
-                query_vector=NamedVector(name="dense", vector=query_embedding),
+                query_vector=NamedVector(name=vector_name, vector=query_embedding),
                 query_filter=query_filter,
                 limit=limit,
                 score_threshold=score_threshold,
