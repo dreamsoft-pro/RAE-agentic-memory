@@ -561,7 +561,7 @@ class InMemoryStorage(IMemoryStorage):
 
                 # Optional: boost based on access stats (slower decay)
                 if consider_access_stats:
-                    usage = int(memory.get("usage_count", 0))
+                    usage = int(memory.get("access_count", 0))
                     if usage > 0:
                         # Logarithmic dampening of decay based on usage
                         import math

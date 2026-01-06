@@ -39,6 +39,7 @@ class PostgresVectorAdapter(IVectorStore):
         layer: Optional[str] = None,
         limit: int = 10,
         score_threshold: Optional[float] = None,
+        agent_id: Optional[str] = None,
     ) -> List[Tuple[UUID, float]]:
         # Convert embedding to string format for pgvector
         emb_str = "[" + ",".join(map(str, query_embedding)) + "]"

@@ -31,6 +31,8 @@ services:
       - POSTGRES_USER=rae
       - POSTGRES_PASSWORD=rae
       - POSTGRES_DB=rae
+    volumes:
+      - ./infra/db-init:/docker-entrypoint-initdb.d:ro
 
   qdrant-lite:
     image: qdrant/qdrant:latest

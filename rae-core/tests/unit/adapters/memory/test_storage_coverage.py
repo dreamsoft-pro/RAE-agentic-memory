@@ -111,8 +111,56 @@ class TestInMemoryStorageCoverage:
         assert new_val == 0.0
 
     @pytest.mark.asyncio
+    async def test_decay_importance_inconsistency(self, storage):
+        """Test decay when memory exists in index but not in main dictionary (line 555)."""
+        mid = await storage.store_memory("c1", "l1", "t1", "a1")
+
+        # Manually create inconsistency
+        async with storage._lock:
+            del storage._memories[mid]
+
+        count = await storage.decay_importance("t1", 0.1)
+        assert count == 0
+
+    @pytest.mark.asyncio
     async def test_delete_memory_internal_none(self, storage):
         """Test internal delete helper with None (should not raise)."""
         # This is harder to trigger via public API if not already covered
         # but we can try to call it if we really need 100%
         await storage._delete_memory_internal(uuid4())
+
+    @pytest.mark.asyncio
+    async def test_decay_importance(self, storage):
+        """Test importance decay logic."""
+        mid1 = await storage.store_memory("c1", "l1", "t1", "a1", importance=1.0)
+        mid2 = await storage.store_memory("c2", "l1", "t1", "a1", importance=0.5)
+
+        # Apply decay of 0.1
+        count = await storage.decay_importance("t1", 0.1)
+        assert count == 2
+
+        m1 = await storage.get_memory(mid1, "t1")
+        m2 = await storage.get_memory(mid2, "t1")
+        assert m1["importance"] == 0.9
+        assert m2["importance"] == 0.4
+
+    @pytest.mark.asyncio
+    async def test_decay_importance_with_access_stats(self, storage):
+        """Test importance decay with access stats boost."""
+        mid = await storage.store_memory("c1", "l1", "t1", "a1", importance=1.0)
+        # Increase access count to slow down decay
+        await storage.update_memory_access(mid, "t1")  # usage = 1
+
+        # Apply decay of 0.1 with stats
+        # dampening = 1.0 / (1.0 + ln(1+1)) = 1.0 / (1.0 + 0.693) = 0.59
+        # decay = 0.1 * 0.59 = 0.059
+        await storage.decay_importance("t1", 0.1, consider_access_stats=True)
+
+        m = await storage.get_memory(mid, "t1")
+        assert 0.94 < m["importance"] < 0.95
+
+    @pytest.mark.asyncio
+    async def test_decay_importance_no_memories(self, storage):
+        """Test decay when no memories exist for tenant."""
+        count = await storage.decay_importance("nonexistent", 0.1)
+        assert count == 0

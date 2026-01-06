@@ -50,7 +50,7 @@ class IMetric(ABC):
     @abstractmethod
     def name(self) -> str:
         """Unique identifier for the metric."""
-        pass
+        ...
 
     @abstractmethod
     def compute(
@@ -66,7 +66,7 @@ class IMetric(ABC):
         Returns:
             MetricResult object
         """
-        pass
+        ...
 
 
 class TextCoherenceMetric(IMetric):

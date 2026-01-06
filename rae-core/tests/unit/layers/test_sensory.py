@@ -17,6 +17,7 @@ def mock_storage():
     storage.count_memories = AsyncMock(return_value=0)
     storage.delete_expired_memories = AsyncMock(return_value=0)
     storage.update_memory_expiration = AsyncMock(return_value=True)
+    storage.search_memories = AsyncMock(return_value=[])
     return storage
 
 
@@ -140,3 +141,42 @@ async def test_extend_ttl(sensory_layer, mock_storage):
 
     # Should be old expires + 60s
     assert (new_expires - expires).total_seconds() == 60.0
+
+
+@pytest.mark.asyncio
+async def test_search_memories(sensory_layer, mock_storage):
+    """Test searching memories."""
+    # Mock storage returns list of dicts with 'memory' and 'score'
+    mock_storage.search_memories.return_value = [
+        {
+            "memory": {
+                "id": uuid4(),
+                "content": "found",
+                "layer": "sensory",
+                "tenant_id": "tenant_1",
+                "agent_id": "agent_1",
+                "importance": 0.5,
+                "created_at": datetime.now(timezone.utc),
+            },
+            "score": 0.9,
+        }
+    ]
+
+    results = await sensory_layer.search_memories("query")
+
+    assert len(results) == 1
+    assert results[0].memory.content == "found"
+    assert results[0].score == 0.9
+
+    # Verify filtering
+    call_kwargs = mock_storage.search_memories.call_args.kwargs
+    assert call_kwargs["filters"]["not_expired"] is True
+
+
+@pytest.mark.asyncio
+async def test_cleanup(sensory_layer, mock_storage):
+    """Test explicit cleanup."""
+    mock_storage.delete_expired_memories.return_value = 5
+    deleted = await sensory_layer.cleanup()
+    assert deleted == 5
+    mock_storage.delete_expired_memories.assert_called()

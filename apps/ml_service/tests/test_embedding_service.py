@@ -7,23 +7,22 @@ from apps.ml_service.services.embedding_service import EmbeddingMLService
 
 @pytest.fixture
 def mock_litellm_embedding():
-    with patch("apps.ml_service.services.embedding_service.litellm.embedding") as mock_emb:
+    with patch(
+        "apps.ml_service.services.embedding_service.litellm.embedding"
+    ) as mock_emb:
         mock_emb.return_value = {
-            "data": [
-                {"embedding": [0.1, 0.2]},
-                {"embedding": [0.3, 0.4]}
-            ]
+            "data": [{"embedding": [0.1, 0.2]}, {"embedding": [0.3, 0.4]}]
         }
         yield mock_emb
 
+
 @pytest.fixture
 def mock_litellm_aembedding():
-    with patch("apps.ml_service.services.embedding_service.litellm.aembedding") as mock_emb:
+    with patch(
+        "apps.ml_service.services.embedding_service.litellm.aembedding"
+    ) as mock_emb:
         mock_emb.return_value = {
-            "data": [
-                {"embedding": [0.1, 0.2]},
-                {"embedding": [0.3, 0.4]}
-            ]
+            "data": [{"embedding": [0.1, 0.2]}, {"embedding": [0.3, 0.4]}]
         }
         yield mock_emb
 
