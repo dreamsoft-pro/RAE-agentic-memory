@@ -225,7 +225,7 @@ class QdrantVectorStore(IVectorStore):
     async def update_vector(
         self,
         memory_id: UUID,
-        embedding: list[float],
+        embedding: list[float] | dict[str, list[float]],
         tenant_id: str,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
@@ -403,14 +403,14 @@ class QdrantVectorStore(IVectorStore):
         await self._ensure_collection()
 
         try:
-            from qdrant_client.models import Filter, MatchValue
+            from qdrant_client.models import FieldCondition, Filter, MatchValue
 
             # Use filter to delete
             delete_filter = Filter(
                 must=[
-                    MatchValue(key="tenant_id", value=tenant_id),
-                    MatchValue(key="agent_id", value=agent_id),
-                    MatchValue(key="layer", value=layer),
+                    FieldCondition(key="tenant_id", match=MatchValue(value=tenant_id)),
+                    FieldCondition(key="agent_id", match=MatchValue(value=agent_id)),
+                    FieldCondition(key="layer", match=MatchValue(value=layer)),
                 ]
             )
 

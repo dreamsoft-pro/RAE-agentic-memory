@@ -17,13 +17,24 @@ class PostgresVectorAdapter(IVectorStore):
     async def store_vector(
         self,
         memory_id: UUID,
-        embedding: List[float],
+        embedding: List[float] | dict[str, List[float]],
         tenant_id: str,
         metadata: Optional[dict] = None,
     ) -> bool:
         async with self.pool.acquire() as conn:
+            # Handle both list and dict input
+            if isinstance(embedding, dict):
+                if not embedding:
+                    return False
+                # For Postgres/pgvector (legacy single column), we take the first one
+                # Ideally, we should store all in `memory_embeddings` table, but
+                # this adapter targets the main `memories` table column.
+                vector_values = next(iter(embedding.values()))
+            else:
+                vector_values = embedding
+
             # Convert to pgvector format
-            emb_str = "[" + ",".join(map(str, embedding)) + "]"
+            emb_str = "[" + ",".join(map(str, vector_values)) + "]"
             await conn.execute(
                 "UPDATE memories SET embedding = $1 WHERE id = $2 AND tenant_id = $3",
                 emb_str,
@@ -80,7 +91,7 @@ class PostgresVectorAdapter(IVectorStore):
     async def update_vector(
         self,
         memory_id: UUID,
-        embedding: List[float],
+        embedding: List[float] | dict[str, List[float]],
         tenant_id: str,
         metadata: Optional[dict] = None,
     ) -> bool:
