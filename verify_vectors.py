@@ -89,12 +89,10 @@ TEST_DATA = [
 
 
 def store_memories():
-    print(f"Storing {len(TEST_DATA)} memories with Nomic prefixes...")
+    print(f"Storing {len(TEST_DATA)} memories...")
     for item in TEST_DATA:
-        # nomic-embed-text requires search_document prefix for indexing
-        prefixed_content = f"search_document: {item['content']}"
         payload = {
-            "content": prefixed_content,
+            "content": item["content"],
             "tags": item["tags"],
             "layer": "semantic",
             "importance": 0.8,
@@ -119,12 +117,10 @@ def test_search():
         "historical events and empires",
     ]
 
-    print("\n--- Testing Search with Nomic prefixes ---")
+    print("\n--- Testing Search ---")
     for q in queries:
-        # nomic-embed-text requires search_query prefix for retrieval
-        prefixed_query = f"search_query: {q}"
         print(f"\nQuery: '{q}'")
-        payload = {"query_text": prefixed_query, "k": 3, "project": PROJECT}
+        payload = {"query_text": q, "k": 3, "project": PROJECT}
         res = requests.post(f"{API_URL}/query", headers=HEADERS, json=payload)
         if res.status_code == 200:
             results = res.json().get("results", [])

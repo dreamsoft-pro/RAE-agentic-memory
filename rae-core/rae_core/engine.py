@@ -211,20 +211,46 @@ class RAEEngine:
                     metadata={"source_length": len(content)},
                 )
 
-        # 4. Store in Vector Store (Qdrant) - Default embedding only
-        if self.vector_store and default_embedding:
+        # 4. Store in Vector Store (Qdrant) - Support all generated embeddings
+        if self.vector_store and embeddings_map:
+            # Map RAE model names to Qdrant vector names
+            # embeddings_map structure: {model_name: [embedding_list]}
+            vector_payload = {}
+            for model_name, model_embs in embeddings_map.items():
+                if model_embs and model_embs[0]:
+                    emb = model_embs[0]
+                    # Determine vector name based on dimension for Qdrant
+                    dim = len(emb)
+                    if dim == 1536:
+                        vector_payload["openai"] = emb
+                    elif dim == 768:
+                        vector_payload["ollama"] = emb
+                    elif dim == 384:
+                        vector_payload["dense"] = emb
+                    elif dim == 1024:
+                        vector_payload["cohere"] = emb
+                    else:
+                        # Fallback to dense if unknown but it's the only one
+                        if len(embeddings_map) == 1:
+                            vector_payload["dense"] = emb
+
             vector_metadata = {
                 "agent_id": agent_id,
                 "layer": layer,
                 "content": content,
                 **metadata,
             }
-            await self.vector_store.store_vector(
-                memory_id=memory_id,
-                embedding=default_embedding,
-                tenant_id=tenant_id,
-                metadata=vector_metadata,
-            )
+            
+            # Use the most specific vector payload if we have one, otherwise fallback to default
+            store_data = vector_payload if vector_payload else default_embedding
+            
+            if store_data is not None:
+                await self.vector_store.store_vector(
+                    memory_id=memory_id,
+                    embedding=store_data,
+                    tenant_id=tenant_id,
+                    metadata=vector_metadata,
+                )
 
         return memory_id
 
