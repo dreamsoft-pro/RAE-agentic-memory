@@ -44,6 +44,7 @@ async def test_decay_worker_basic_cycle(mock_app_state_pool):
 
     # Create worker and run decay cycle
     from apps.memory_api.services.rae_core_service import RAECoreService
+
     rae_service = RAECoreService(postgres_pool=pool)
     worker = DecayWorker(rae_service=rae_service)
     stats = await worker.run_decay_cycle(

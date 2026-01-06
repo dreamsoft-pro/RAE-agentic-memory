@@ -331,9 +331,15 @@ class RAEBenchmarkRunner:
             try:
                 # Generate embedding with explicit document prefix
                 content = memory["text"]
-                prefixed_content = f"search_document: {content}" if not content.startswith("search_") else content
-                
-                embeddings = await embedding_service.generate_embeddings_async([prefixed_content])
+                prefixed_content = (
+                    f"search_document: {content}"
+                    if not content.startswith("search_")
+                    else content
+                )
+
+                embeddings = await embedding_service.generate_embeddings_async(
+                    [prefixed_content]
+                )
                 embedding = embeddings[0]
 
                 # Insert into database
@@ -424,8 +430,14 @@ class RAEBenchmarkRunner:
 
             try:
                 # Generate query embedding with explicit query prefix
-                prefixed_query = f"search_query: {query_text}" if not query_text.startswith("search_") else query_text
-                query_embeddings = await embedding_service.generate_embeddings_async([prefixed_query])
+                prefixed_query = (
+                    f"search_query: {query_text}"
+                    if not query_text.startswith("search_")
+                    else query_text
+                )
+                query_embeddings = await embedding_service.generate_embeddings_async(
+                    [prefixed_query]
+                )
                 query_embedding = query_embeddings[0]
 
                 # Search vectors - use query method with filters

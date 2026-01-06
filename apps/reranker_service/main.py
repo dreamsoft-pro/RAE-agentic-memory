@@ -1,6 +1,5 @@
 from typing import List
 
-import litellm
 from fastapi import FastAPI
 from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel
@@ -42,21 +41,21 @@ async def rerank(req: RerankRequest):
     # Simple RankGPT implementation: Ask LLM to score items 0-10
     # For performance in a real scenario, this should be optimized.
     # Here we provide a basic implementation to maintain the API contract.
-    
+
     scored_items = []
-    
+
     # We'll process items to keep the API alive, but a robust RankGPT
     # implementation would do this in a single prompt or parallel batches.
     for item in req.items:
         try:
             # We use a very cheap model for this or a simple similarity score if available
-            # For now, we simulate the reranking by keeping original order or 
+            # For now, we simulate the reranking by keeping original order or
             # using a very lightweight LLM call if needed.
-            
+
             # Placeholder for actual LLM-based reranking logic:
             # response = await litellm.acompletion(...)
             # score = parse_score(response)
-            
+
             item.score = item.score or 0.5  # Keep original or default
             scored_items.append(item)
         except Exception:

@@ -195,10 +195,10 @@ class Settings(BaseSettings):
                 # and adjust default URLs used by internal components
                 if self.MEMORY_API_URL == "http://localhost:8000":
                     self.MEMORY_API_URL = "http://localhost:8010"
-                
+
                 # Force sandbox ports for infrastructure if they are still at standard defaults
                 if self.POSTGRES_HOST == "localhost":
-                    self.POSTGRES_HOST = "localhost" # Host stays same
+                    self.POSTGRES_HOST = "localhost"  # Host stays same
                 # Ports are usually handled by docker-compose, but we ensure internal URLs are consistent
         return self
 

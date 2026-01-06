@@ -87,7 +87,7 @@ class EmbeddingService:
         if "nomic" in self.litellm_model.lower():
             for t in texts:
                 # Heuristic: if text is very short and doesn't look like a document, it's likely a query
-                # However, for RAE context, we usually know the intent. 
+                # However, for RAE context, we usually know the intent.
                 # For this service, we assume documents by default, unless query-like.
                 if not t.startswith("search_"):
                     if len(t) < 100 and "?" in t:

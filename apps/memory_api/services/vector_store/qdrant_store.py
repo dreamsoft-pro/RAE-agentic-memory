@@ -16,6 +16,7 @@ from tenacity import (
 # Optional ML dependencies
 try:  # pragma: no cover
     from sentence_transformers import SentenceTransformer
+
     SENTENCE_TRANSFORMERS_AVAILABLE = True
 except ImportError:  # pragma: no cover
     SentenceTransformer = None  # type: ignore[assignment,misc]
@@ -59,6 +60,7 @@ class QdrantStore(MemoryVectorStore):
                 LocalEmbeddingProvider,
                 get_embedding_service,
             )
+
             try:
                 embedding_service = get_embedding_service()
                 provider = LocalEmbeddingProvider(embedding_service)
@@ -74,9 +76,15 @@ class QdrantStore(MemoryVectorStore):
                 self.qdrant_client.create_collection(
                     collection_name=collection_name,
                     vectors_config={
-                        "dense": models.VectorParams(size=dimension, distance=models.Distance.COSINE),
-                        "openai": models.VectorParams(size=1536, distance=models.Distance.COSINE),
-                        "ollama": models.VectorParams(size=768, distance=models.Distance.COSINE),
+                        "dense": models.VectorParams(
+                            size=dimension, distance=models.Distance.COSINE
+                        ),
+                        "openai": models.VectorParams(
+                            size=1536, distance=models.Distance.COSINE
+                        ),
+                        "ollama": models.VectorParams(
+                            size=768, distance=models.Distance.COSINE
+                        ),
                     },
                     sparse_vectors_config={"text": models.SparseVectorParams()},
                 )
@@ -87,7 +95,10 @@ class QdrantStore(MemoryVectorStore):
         words = text.lower().split()
         index_values: Dict[int, float] = {}
         for word in set(words):
-            index = int(hashlib.md5(word.encode(), usedforsecurity=False).hexdigest(), 16) % 100000
+            index = (
+                int(hashlib.md5(word.encode(), usedforsecurity=False).hexdigest(), 16)
+                % 100000
+            )
             index_values[index] = index_values.get(index, 0.0) + 1.0
         indices = sorted(index_values.keys())
         values = [index_values[i] for i in indices]
@@ -116,19 +127,39 @@ class QdrantStore(MemoryVectorStore):
                 vector_payload = {"dense": embedding, "text": sparse_vector}
 
             points_to_upsert.append(
-                models.PointStruct(id=str(memory.id), vector=vector_payload, payload=memory.model_dump())
+                models.PointStruct(
+                    id=str(memory.id),
+                    vector=vector_payload,
+                    payload=memory.model_dump(),
+                )
             )
-        self.qdrant_client.upsert(collection_name="memories", points=points_to_upsert, wait=True)
+        self.qdrant_client.upsert(
+            collection_name="memories", points=points_to_upsert, wait=True
+        )
 
     @vector_query_time_histogram.time()
-    async def query(self, query_embedding: List[float], top_k: int, filters: Dict[str, Any], vector_name: str = "dense") -> List[ScoredMemoryRecord]:
+    async def query(
+        self,
+        query_embedding: List[float],
+        top_k: int,
+        filters: Dict[str, Any],
+        vector_name: str = "dense",
+    ) -> List[ScoredMemoryRecord]:
         if not self._initialized:
             await self.ainit()
-        return await asyncio.to_thread(self._sync_query, query_embedding, top_k, filters, vector_name)
+        return await asyncio.to_thread(
+            self._sync_query, query_embedding, top_k, filters, vector_name
+        )
 
-    def _sync_query(self, query_embedding: List[float], top_k: int, filters: Dict[str, Any], vector_name: str) -> List[ScoredMemoryRecord]:
+    def _sync_query(
+        self,
+        query_embedding: List[float],
+        top_k: int,
+        filters: Dict[str, Any],
+        vector_name: str,
+    ) -> List[ScoredMemoryRecord]:
         qdrant_filters = models.Filter(**filters) if filters else None
-        
+
         # Use query_points with the most compatible signature for 1.11+
         try:
             # Try new query_points API first
@@ -140,17 +171,25 @@ class QdrantStore(MemoryVectorStore):
                 limit=top_k,
                 with_payload=True,
             )
-            return [ScoredMemoryRecord(score=point.score, **point.payload) for point in search_results.points]
+            return [
+                ScoredMemoryRecord(score=point.score, **point.payload)
+                for point in search_results.points
+            ]
         except Exception:
             # Fallback to legacy search
             search_results = self.qdrant_client.search(
                 collection_name="memories",
-                query_vector=models.NamedVector(name=vector_name, vector=query_embedding),
+                query_vector=models.NamedVector(
+                    name=vector_name, vector=query_embedding
+                ),
                 query_filter=qdrant_filters,
                 limit=top_k,
                 with_payload=True,
             )
-            return [ScoredMemoryRecord(score=point.score, **point.payload) for point in search_results]
+            return [
+                ScoredMemoryRecord(score=point.score, **point.payload)
+                for point in search_results
+            ]
 
     @retry(
         stop=stop_after_attempt(3),
@@ -165,5 +204,5 @@ class QdrantStore(MemoryVectorStore):
         await asyncio.to_thread(
             self.qdrant_client.delete,
             collection_name="memories",
-            points_selector=models.PointIdsList(points=[memory_id])
+            points_selector=models.PointIdsList(points=[memory_id]),
         )

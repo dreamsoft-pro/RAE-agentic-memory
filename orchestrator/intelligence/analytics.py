@@ -226,7 +226,7 @@ class PerformanceAnalytics:
 
         # Find best performers (min 2 samples)
         def get_best(
-            perf_dict: Dict[str, Tuple[int, int]]
+            perf_dict: Dict[str, Tuple[int, int]],
         ) -> Optional[Tuple[str, float]]:
             valid = [
                 (model, succ / total)

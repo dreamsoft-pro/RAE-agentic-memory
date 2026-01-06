@@ -111,7 +111,7 @@ def mock_pool():
     # Set up default connection behavior
     conn.fetch = AsyncMock(return_value=[])
     conn.fetchrow = AsyncMock(return_value=None)
-    conn.fetchval = AsyncMock(return_value=None)
+    conn.fetchval = AsyncMock(return_value=1)
     conn.execute = AsyncMock(return_value="INSERT 0 1")
     conn.executemany = AsyncMock(return_value="OK")
 

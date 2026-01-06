@@ -76,15 +76,9 @@ async def lifespan(app: FastAPI):
         # Only set to None if not already provided (e.g. by a mock in tests)
         if not hasattr(app.state, "pool") or app.state.pool is None:
             app.state.pool = None
-        if (
-            not hasattr(app.state, "redis_client")
-            or app.state.redis_client is None
-        ):
+        if not hasattr(app.state, "redis_client") or app.state.redis_client is None:
             app.state.redis_client = None
-        if (
-            not hasattr(app.state, "qdrant_client")
-            or app.state.qdrant_client is None
-        ):
+        if not hasattr(app.state, "qdrant_client") or app.state.qdrant_client is None:
             app.state.qdrant_client = None
     else:
         # Run migrations if mode is migrate/init
@@ -158,7 +152,7 @@ async def lifespan(app: FastAPI):
                             "enterprise",
                             "{}",
                         )
-                    
+
                     # Ensure default roles exist regardless of whether tenant was just created
                     # Assign default role to 'admin' (mock/default user)
                     await conn.execute(

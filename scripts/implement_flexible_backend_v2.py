@@ -1,4 +1,3 @@
-
 import os
 
 BASE_DIR = "/home/grzegorz-lesniowski/cloud/screenwatcher_project/apps/dashboards"
@@ -24,13 +23,13 @@ class WidgetDefinitionAdmin(admin.ModelAdmin):
     list_display = ('name', 'type_code', 'is_active')
     list_filter = ('is_active',)
 """
-with open(admin_path, 'w') as f:
+with open(admin_path, "w") as f:
     f.write(admin_content)
 print("Updated admin.py")
 
 # 2. Update views.py (Append new API class)
 views_path = os.path.join(BASE_DIR, "views.py")
-with open(views_path, 'r') as f:
+with open(views_path, "r") as f:
     views_current = f.read()
 
 new_api_view = """
@@ -104,13 +103,13 @@ class TelemetrySeriesAPI(APIView):
 """
 
 if "class TelemetrySeriesAPI" not in views_current:
-    with open(views_path, 'a') as f:
+    with open(views_path, "a") as f:
         f.write(new_api_view)
     print("Appended TelemetrySeriesAPI to views.py")
 
 # 3. Update urls.py
 urls_path = os.path.join(BASE_DIR, "urls.py")
-with open(urls_path, 'r') as f:
+with open(urls_path, "r") as f:
     urls_content = f.read()
 
 if "TelemetrySeriesAPI" not in urls_content:
@@ -124,8 +123,10 @@ if "TelemetrySeriesAPI" not in urls_content:
     # Add path
     new_path = "    path('api/series/', TelemetrySeriesAPI.as_view(), name='telemetry-series'),\n"
     if "urlpatterns = [" in urls_content:
-        urls_content = urls_content.replace("urlpatterns = [", "urlpatterns = [\n" + new_path)
+        urls_content = urls_content.replace(
+            "urlpatterns = [", "urlpatterns = [\n" + new_path
+        )
 
-    with open(urls_path, 'w') as f:
+    with open(urls_path, "w") as f:
         f.write(urls_content)
     print("Updated urls.py")

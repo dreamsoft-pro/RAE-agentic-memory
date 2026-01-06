@@ -21,6 +21,7 @@ from rae_lite.config import settings
 
 logger = structlog.get_logger(__name__)
 
+
 # Simple Mock Embedding Provider for RAE-Lite Smoke Test
 class LocalEmbeddingProvider(IEmbeddingProvider):
     def __init__(self):
@@ -37,6 +38,7 @@ class LocalEmbeddingProvider(IEmbeddingProvider):
     def get_dimension(self) -> int:
         return self.dimension
 
+
 # Initialize SQLite adapters
 memory_storage = SQLiteStorage(str(settings.db_path))
 vector_store = SQLiteVectorStore(str(settings.vector_db_path))
@@ -47,14 +49,14 @@ embedding_provider = LocalEmbeddingProvider()
 rae_settings = RAESettings()
 rae_settings.sensory_max_size = 50
 rae_settings.working_max_size = 50
-rae_settings.vector_backend = "sqlite" # Important for RAE-Lite
+rae_settings.vector_backend = "sqlite"  # Important for RAE-Lite
 
 # Initialize RAE Engine
 engine = RAEEngine(
     memory_storage=memory_storage,
     vector_store=vector_store,
     embedding_provider=embedding_provider,
-    settings=rae_settings
+    settings=rae_settings,
 )
 
 # FastAPI app

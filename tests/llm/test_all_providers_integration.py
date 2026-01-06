@@ -8,6 +8,7 @@ Covers:
 4. Gemini (Cloud - Google)
 5. OpenAI (Cloud - if available)
 """
+
 import os
 
 import httpx
@@ -28,6 +29,7 @@ CLAUDE_MODEL = "claude-3-haiku-20240307"
 GEMINI_MODEL = "gemini-1.5-flash"
 OPENAI_MODEL = "gpt-3.5-turbo"
 
+
 @pytest.mark.asyncio
 @pytest.mark.llm
 class TestAllProvidersIntegration:
@@ -41,7 +43,7 @@ class TestAllProvidersIntegration:
             model=OLLAMA_MODEL,
             messages=[LLMMessage(role="user", content="Say 'Local Ollama OK'")],
             temperature=0.1,
-            max_tokens=20
+            max_tokens=20,
         )
 
         try:
@@ -49,9 +51,12 @@ class TestAllProvidersIntegration:
             async with httpx.AsyncClient() as client:
                 resp = await client.get(f"{LOCAL_OLLAMA_URL}/api/tags")
                 if resp.status_code == 200:
-                    models = [m['name'] for m in resp.json()['models']]
+                    models = [m["name"] for m in resp.json()["models"]]
                     print(f"  Available models: {models}")
-                    if OLLAMA_MODEL not in models and f"{OLLAMA_MODEL}:latest" not in models:
+                    if (
+                        OLLAMA_MODEL not in models
+                        and f"{OLLAMA_MODEL}:latest" not in models
+                    ):
                         print(f"  Warning: {OLLAMA_MODEL} not found in local tags.")
 
             response = await provider.complete(request)
@@ -69,7 +74,7 @@ class TestAllProvidersIntegration:
             model=OLLAMA_MODEL,
             messages=[LLMMessage(role="user", content="Say 'Node1 Ollama OK'")],
             temperature=0.1,
-            max_tokens=20
+            max_tokens=20,
         )
 
         try:
@@ -90,7 +95,7 @@ class TestAllProvidersIntegration:
         request = LLMRequest(
             model=CLAUDE_MODEL,
             messages=[LLMMessage(role="user", content="Say 'Claude OK'")],
-            max_tokens=20
+            max_tokens=20,
         )
 
         try:
@@ -107,7 +112,9 @@ class TestAllProvidersIntegration:
 
         # If API key is a placeholder, ignore it to force built-in Token/ADC logic
         if api_key and (api_key.startswith("your-") or "gemini-key" in api_key):
-            print("  Ignoring placeholder GEMINI_API_KEY, will use built-in Token/ADC fallback...")
+            print(
+                "  Ignoring placeholder GEMINI_API_KEY, will use built-in Token/ADC fallback..."
+            )
             api_key = None
 
         try:
@@ -116,7 +123,7 @@ class TestAllProvidersIntegration:
             request = LLMRequest(
                 model=GEMINI_MODEL,
                 messages=[LLMMessage(role="user", content="Say 'Gemini OK'")],
-                max_tokens=20
+                max_tokens=20,
             )
             response = await provider.complete(request)
             print(f"  Response: {response.text}")
@@ -128,8 +135,11 @@ class TestAllProvidersIntegration:
         except Exception as e:
             print(f"  Gemini Error detail: {e}")
             # If it's an auth error from the API (not our local check), we might still want to skip in some environments
-            if "api key not valid" in str(e).lower() or "authentication" in str(e).lower():
-                 pytest.skip(f"Gemini authentication failed (invalid key/token): {e}")
+            if (
+                "api key not valid" in str(e).lower()
+                or "authentication" in str(e).lower()
+            ):
+                pytest.skip(f"Gemini authentication failed (invalid key/token): {e}")
             pytest.fail(f"Gemini failed: {e}")
 
     async def test_openai_connectivity(self):
@@ -143,7 +153,7 @@ class TestAllProvidersIntegration:
         request = LLMRequest(
             model=OPENAI_MODEL,
             messages=[LLMMessage(role="user", content="Say 'OpenAI OK'")],
-            max_tokens=20
+            max_tokens=20,
         )
 
         try:
@@ -152,6 +162,7 @@ class TestAllProvidersIntegration:
             assert response.text
         except Exception as e:
             pytest.fail(f"OpenAI failed: {e}")
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "-s"])
