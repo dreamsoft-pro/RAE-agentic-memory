@@ -10,6 +10,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: rae-api-lite
+    env_file:
+      - .env
     ports:
       - "${RAE_LITE_PORT:-8000}:8000"
     environment:

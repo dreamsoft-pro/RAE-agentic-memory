@@ -6,6 +6,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: rae-api
+    env_file:
+      - .env
     ports:
       - "8000:8000"
     volumes:
@@ -26,8 +28,6 @@ services:
       - QDRANT_PORT=${QDRANT_PORT:-6333}
       - RAE_VECTOR_BACKEND=${RAE_VECTOR_BACKEND:-qdrant}
       - TENANCY_ENABLED=true
-      - ENABLE_API_KEY_AUTH=${ENABLE_API_KEY_AUTH:-false}
-      - ENABLE_JWT_AUTH=${ENABLE_JWT_AUTH:-false}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-["*" ]}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
