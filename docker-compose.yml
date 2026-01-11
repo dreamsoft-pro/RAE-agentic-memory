@@ -25,7 +25,7 @@ services:
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=${QDRANT_PORT:-6333}
       - RAE_VECTOR_BACKEND=${RAE_VECTOR_BACKEND:-qdrant}
-      - TENANCY_ENABLED=${TENANCY_ENABLED:-false}
+      - TENANCY_ENABLED=true
       - ENABLE_API_KEY_AUTH=${ENABLE_API_KEY_AUTH:-false}
       - ENABLE_JWT_AUTH=${ENABLE_JWT_AUTH:-false}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-["*" ]}
@@ -224,7 +224,7 @@ services:
       - "8501:8501"
     environment:
       - RAE_API_URL=${RAE_API_URL:-http://rae-api:8000}
-      - RAE_TENANT_ID=${RAE_TENANT_ID:-default-tenant}
+      - RAE_TENANT_ID=${RAE_TENANT_ID:-00000000-0000-0000-0000-000000000000}
       - RAE_PROJECT_ID=${RAE_PROJECT_ID:-RAE-agentic-memory}
     depends_on:
       - rae-api
