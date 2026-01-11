@@ -20,14 +20,14 @@ This quick start uses the **RAE Lite** profile, which is the fastest way to get 
 
 2.  **Start the RAE Lite stack:**
     ```bash
-    docker-compose -f docker-compose.lite.yml up -d
+    docker compose -f docker-compose.lite.yml up -d
     ```
     This command will start the core RAE API, a PostgreSQL database, a Redis cache, and a Qdrant vector database.
 
 3.  **Verify the services are running:**
     You can check the status of the containers:
     ```bash
-    docker-compose -f docker-compose.lite.yml ps
+    docker compose -f docker-compose.lite.yml ps
     ```
     You should also be able to access the health check endpoint:
     [http://localhost:8000/health](http://localhost:8000/health)
@@ -115,10 +115,10 @@ This is the recommended setup for active development on the RAE codebase. It use
 **How to Run:**
 ```bash
 # Use both the base and dev override files
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 
 # To stop
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml down
+docker compose -f docker-compose.yml -f docker-compose.dev.yml down
 ```
 
 ### 2. RAE Lite (Minimal Deployment) - Recommended for Starters
@@ -142,7 +142,7 @@ docker-compose -f docker-compose.yml -f docker-compose.dev.yml down
 ```bash
 # 1. Ensure your .env file has valid API keys (OPENAI_API_KEY, etc.)
 # 2. Start the Lite stack
-docker-compose -f docker-compose.lite.yml up -d
+docker compose -f docker-compose.lite.yml up -d
 ```
 
 **Under the Hood:**
@@ -171,7 +171,7 @@ This is the standard, full-stack deployment for a production environment on a si
 
 **How to Run:**
 ```bash
-docker-compose -f docker-compose.yml up -d
+docker compose -f docker-compose.yml up -d
 ```
 
 ### 4. Proxmox HA (High Availability)
