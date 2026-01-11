@@ -101,36 +101,28 @@ class RAEClient:
             Dictionary with memory counts by layer
         """
         try:
-            # Query for counts by layer
+            # Fetch a large batch of memories to calculate stats from.
+            # This is more efficient than multiple small queries.
+            all_memories = self.get_memories(limit=1000) # Increased limit for better accuracy
+
             stats = {"total": 0, "episodic": 0, "working": 0, "semantic": 0, "ltm": 0}
 
-            # Get count for each layer
-            for layer in ["episodic", "working", "semantic", "reflective"]:
-                res = self._request(
-                    "POST",
-                    "/v1/memory/query",
-                    json={
-                        "query_text": "*",
-                        "k": 1,
-                        "filters": {"layer": layer},
-                        "project": self.project_id,
-                    },
-                )
-                # This is approximate - would need dedicated stats endpoint
-                # results count gives us a hint
-                count = len(res.get("results", []))
-                # Update local stats object
+            if not all_memories:
+                return stats
+
+            stats["total"] = len(all_memories)
+
+            for memory in all_memories:
+                layer = memory.get("layer")
                 if layer == "episodic":
-                    stats["episodic"] = count
+                    stats["episodic"] += 1
                 elif layer == "working":
-                    stats["working"] = count
+                    stats["working"] += 1
                 elif layer == "semantic":
-                    stats["semantic"] = count
-                elif layer == "reflective":
-                    stats["ltm"] = count  # Mapping reflective to dashboard's LTM column
-
-                stats["total"] += count
-
+                    stats["semantic"] += 1
+                elif layer in ["reflective", "long-term"]: # Accomodate for different naming
+                    stats["ltm"] += 1
+            
             return stats
 
         except Exception as e:
@@ -155,32 +147,39 @@ class RAEClient:
             List of memory records
         """
         try:
-            # Query for memories
-            memories = []
+            # A single, more efficient query to get all memories up to the limit
+            response = self._request(
+                "POST",
+                "/v1/memory/query",
+                json={
+                    "query_text": "*",
+                    "k": limit,
+                    "filters": {}, # No server-side layer filter to ensure all are fetched
+                    "project": self.project_id,
+                },
+            )
+            
+            memories = response.get("results", [])
 
-            target_layers = layers or ["episodic", "working", "semantic", "reflective"]
-            for layer in target_layers:
-                response = self._request(
-                    "POST",
-                    "/v1/memory/query",
-                    json={
-                        "query_text": "*",
-                        "k": limit,
-                        "filters": {"layer": layer},
-                        "project": self.project_id,
-                    },
-                )
+            # Client-side filtering
+            if layers:
+                memories = [m for m in memories if m.get("layer") in layers]
 
-                results = response.get("results", [])
-                memories.extend(results)
-
-            # Filter by date if specified
             if since:
-                memories = [
-                    m
-                    for m in memories
-                    if datetime.fromisoformat(m.get("timestamp", "")) >= since
-                ]
+                # Ensure timestamp exists and is valid before comparing
+                filtered_memories = []
+                for m in memories:
+                    ts_str = m.get("timestamp")
+                    if ts_str:
+                        try:
+                            # Attempt to parse ISO format, ignoring timezone for naive comparison
+                            ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00")).replace(tzinfo=None)
+                            since_naive = since.replace(tzinfo=None)
+                            if ts >= since_naive:
+                                filtered_memories.append(m)
+                        except (ValueError, TypeError):
+                            continue # Skip memories with invalid timestamp format
+                memories = filtered_memories
 
             return memories[:limit]
 

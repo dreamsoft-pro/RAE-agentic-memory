@@ -316,7 +316,7 @@ class PostgreSQLStorage(IMemoryStorage):
                     else None
                 ),
                 "importance": float(row["importance"]),
-                "usage_count": int(row["usage_count"]),
+                "usage_count": int(row["usage_count"] or 0),
                 "created_at": row["created_at"],
                 "last_accessed_at": row["last_accessed_at"],
                 "expires_at": row["expires_at"],
@@ -434,7 +434,7 @@ class PostgreSQLStorage(IMemoryStorage):
                         else None
                     ),
                     "importance": float(row["importance"]),
-                    "usage_count": int(row["usage_count"]),
+                    "usage_count": int(row["usage_count"] or 0),
                     "created_at": row["created_at"],
                     "last_accessed_at": row["last_accessed_at"],
                     "expires_at": row["expires_at"],
