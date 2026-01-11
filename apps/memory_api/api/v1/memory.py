@@ -69,6 +69,8 @@ async def store_memory(
 
         try:
             # 1. Store metadata in Postgres using RAE-Core Service
+            session_id = req.session_id or getattr(request.state, "session_id", None)
+
             memory_id = await rae_service.store_memory(
                 tenant_id=tenant_id,
                 project=req.project,
@@ -77,6 +79,10 @@ async def store_memory(
                 importance=req.importance,
                 layer=req.layer.value if req.layer else None,
                 tags=req.tags,
+                # Phase 3: Canonical fields
+                session_id=session_id,
+                memory_type=req.memory_type,
+                ttl=req.ttl,
             )
 
             # RAE-Core Service handles vector storage internally now (via Engine)
@@ -275,6 +281,36 @@ async def delete_memory(
             tenant_id=tenant_id
         ).inc()  # Increment delete counter
         return DeleteMemoryResponse(message=f"Memory {memory_id} deleted successfully.")
+
+
+@router.get("/sessions/{session_id}/context")
+async def get_session_context(
+    session_id: str,
+    limit: int = Query(50, ge=1, le=1000),
+    tenant_id: str = Depends(get_and_verify_tenant_id),
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
+    """
+    Retrieves all memories associated with a specific session.
+    """
+    with tracer.start_as_current_span("rae.api.memory.session_context") as span:
+        span.set_attribute("rae.tenant_id", tenant_id)
+        span.set_attribute("rae.session_id", session_id)
+
+        try:
+            memories = await rae_service.get_session_context(
+                session_id=session_id,
+                tenant_id=tenant_id,
+                limit=limit,
+            )
+            span.set_attribute("rae.session.memories_count", len(memories))
+            return {"session_id": session_id, "memories": memories}
+        except Exception as e:
+            span.set_attribute("rae.outcome.label", "error")
+            logger.error(
+                "get_session_context_failed", session_id=session_id, error=str(e)
+            )
+            raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/rebuild-reflections", status_code=202)

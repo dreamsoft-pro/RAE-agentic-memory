@@ -24,6 +24,7 @@ from apps.memory_api.config import settings
 from apps.memory_api.logging_config import setup_logging
 from apps.memory_api.middleware.budget_enforcer import BudgetEnforcementMiddleware
 from apps.memory_api.middleware.rate_limiter import limiter, rate_limit_exceeded_handler
+from apps.memory_api.middleware.session import SessionContextMiddleware
 from apps.memory_api.middleware.tenant import TenantContextMiddleware
 from apps.memory_api.observability import health_checks as health_router
 from apps.memory_api.observability import (
@@ -73,23 +74,31 @@ async def lifespan(app: FastAPI):
     # 1. Initialize Connections (via Factory)
     if os.getenv("RAE_DB_MODE") == "ignore":
         logger.info("db_initialization_skipped", reason="RAE_DB_MODE=ignore")
-        # Mock pool for tests if needed, or let tests handle it
-        app.state.pool = None
-        app.state.redis_client = None
-        app.state.qdrant_client = None
+        # Only set to None if not already provided (e.g. by a mock in tests)
+        if not hasattr(app.state, "pool") or app.state.pool is None:
+            app.state.pool = None
+        if not hasattr(app.state, "redis_client") or app.state.redis_client is None:
+            app.state.redis_client = None
+        if not hasattr(app.state, "qdrant_client") or app.state.qdrant_client is None:
+            app.state.qdrant_client = None
     else:
         # Run migrations if mode is migrate/init
         if settings.RAE_DB_MODE in ["migrate", "init"]:
             logger.info("running_database_migrations", mode=settings.RAE_DB_MODE)
-            print(f"DEBUG: Starting database migrations (mode={settings.RAE_DB_MODE})...", flush=True)
+            print(
+                f"DEBUG: Starting database migrations (mode={settings.RAE_DB_MODE})...",
+                flush=True,
+            )
             try:
-                from alembic import command
-                from alembic.config import Config
-                
+                from alembic import command  # noqa: I001
+                from alembic.config import Config  # noqa: I001
+
                 # Load alembic config from project root
-                project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+                project_root = os.path.dirname(
+                    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+                )
                 ini_path = os.path.join(project_root, "alembic.ini")
-                
+
                 if not os.path.exists(ini_path):
                     print(f"ERROR: alembic.ini not found at {ini_path}", flush=True)
                     logger.error("alembic_ini_not_found", path=ini_path)
@@ -97,13 +106,19 @@ async def lifespan(app: FastAPI):
                     alembic_cfg = Config(ini_path)
                     # Force silent logging for migrations during startup to avoid hanging
                     os.environ["ALEMBIC_SKIP_LOG_CONFIG"] = "1"
-                    print(f"DEBUG: Running 'alembic upgrade head' using {ini_path}...", flush=True)
+                    print(
+                        f"DEBUG: Running 'alembic upgrade head' using {ini_path}...",
+                        flush=True,
+                    )
                     command.upgrade(alembic_cfg, "head")
-                    print("DEBUG: Database migrations completed successfully.", flush=True)
+                    print(
+                        "DEBUG: Database migrations completed successfully.", flush=True
+                    )
                     logger.info("database_migrations_completed")
             except Exception as e:
                 print(f"ERROR: Database migration failed: {str(e)}", flush=True)
                 import traceback
+
                 traceback.print_exc()
                 logger.error("database_migration_failed", error=str(e))
                 # Continue anyway, as some tables might already exist
@@ -113,7 +128,10 @@ async def lifespan(app: FastAPI):
         await InfrastructureFactory.initialize(app, settings)
 
         # 1.1 Ensure Default Tenant exists (Iteration 1 Bootstrapping)
-        if settings.RAE_DB_MODE in ["migrate", "init"]:
+        if (
+            settings.RAE_DB_MODE in ["migrate", "init"]
+            and os.getenv("RAE_DB_MODE") != "ignore"
+        ):
             try:
                 from uuid import UUID
 
@@ -135,26 +153,43 @@ async def lifespan(app: FastAPI):
                             "enterprise",
                             "{}",
                         )
-                        # Assign default role to 'admin' (mock/default user)
-                        await conn.execute(
-                            "INSERT INTO user_tenant_roles (id, user_id, tenant_id, role) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING",
-                            UUID("00000000-0000-0000-0000-000000000001"), "admin", default_tenant_id, "owner"
-                        )
-                        # Also assign role to developer key for easy access
-                        await conn.execute(
-                            "INSERT INTO user_tenant_roles (id, user_id, tenant_id, role) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING",
-                            UUID("00000000-0000-0000-0000-000000000002"), "apikey_dev-key", default_tenant_id, "owner"
-                        )
+
+                    # Ensure default roles exist regardless of whether tenant was just created
+                    # Assign default role to 'admin' (mock/default user)
+                    await conn.execute(
+                        "INSERT INTO user_tenant_roles (id, user_id, tenant_id, role) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING",
+                        UUID("00000000-0000-0000-0000-000000000001"),
+                        "admin",
+                        default_tenant_id,
+                        "owner",
+                    )
+                    # Also assign role to developer keys for easy access
+                    await conn.execute(
+                        "INSERT INTO user_tenant_roles (id, user_id, tenant_id, role) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING",
+                        UUID("00000000-0000-0000-0000-000000000002"),
+                        "apikey_dev-key",
+                        default_tenant_id,
+                        "owner",
+                    )
+                    await conn.execute(
+                        "INSERT INTO user_tenant_roles (id, user_id, tenant_id, role) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING",
+                        UUID("00000000-0000-0000-0000-000000000003"),
+                        "apikey_secret",
+                        default_tenant_id,
+                        "owner",
+                    )
             except Exception as e:
                 logger.warning("default_tenant_initialization_failed", error=str(e))
 
     # 2. Setup Background Components
     # Initialize RAE Core Service (Agnostic)
-    app.state.rae_core_service = RAECoreService(
+    service = RAECoreService(
         getattr(app.state, "pool", None),
         getattr(app.state, "qdrant_client", None),
         getattr(app.state, "redis_client", None),
     )
+    await service.ainit()
+    app.state.rae_core_service = service
 
     if settings.RAE_PROFILE == "lite":
         logger.info("lite_mode_active", details="Skipping heavy initialization")
@@ -200,7 +235,10 @@ app.add_middleware(
 # 2. Tenant Context
 app.add_middleware(TenantContextMiddleware)
 
-# 3. Budget Enforcement (Enterprise)
+# 3. Session Context
+app.add_middleware(SessionContextMiddleware)
+
+# 4. Budget Enforcement (Enterprise)
 app.add_middleware(BudgetEnforcementMiddleware)
 
 # 4. Global Rate Limiting (SlowAPI)

@@ -242,9 +242,9 @@ def update_status():
 | **Branch** | `{branch}` |
 | **Commit** | `{commit}` |
 | **Coverage** | {cov_str} |
-| **Tests** | {tests['total']} total, {tests['failures']} failed, {tests['skipped']} skipped |
+| **Tests** | {tests["total"]} total, {tests["failures"]} failed, {tests["skipped"]} skipped |
 | **Pass Rate** | {test_pass_rate:.1f}% |
-| **Last Update** | {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} |
+| **Last Update** | {datetime.now().strftime("%Y-%m-%d %H:%M:%S")} |
 """
 
     marker = "## Live Metrics (Auto-generated)"
@@ -281,22 +281,22 @@ def update_testing_status():
 
     content = f"""# Testing Status
 
-**Last Run:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**Last Run:** {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 **Commit:** {get_git_hash()}
 
 ## Summary
-- **Total Tests:** {tests['total']}
-- **Passed:** {tests['total'] - tests['failures'] - tests['errors']}
-- **Failed:** {tests['failures']}
-- **Errors:** {tests['errors']}
-- **Skipped:** {tests['skipped']}
+- **Total Tests:** {tests["total"]}
+- **Passed:** {tests["total"] - tests["failures"] - tests["errors"]}
+- **Failed:** {tests["failures"]}
+- **Errors:** {tests["errors"]}
+- **Skipped:** {tests["skipped"]}
 - **Coverage:** {f"{cov:.2f}%" if cov else "N/A"}
 
 ## Coverage Report
 See `htmlcov/index.html` for detailed report.
 
 ## Test Suite Health
-{'🟢 Excellent' if tests['failures'] == 0 and (cov or 0) > 80 else '🟡 Good' if tests['failures'] == 0 else '🔴 Failing'}
+{"🟢 Excellent" if tests["failures"] == 0 and (cov or 0) > 80 else "🟡 Good" if tests["failures"] == 0 else "🔴 Failing"}
 """
     # Check if dir exists
     os.makedirs(os.path.dirname(TESTING_FILE), exist_ok=True)
@@ -337,7 +337,7 @@ def update_changelog():
     # Generate markdown
     changelog_section = f"""## Recent Changes (Auto-generated)
 
-*Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M')} • Branch: {get_git_branch()} • Commit: {get_git_hash()}*
+*Last updated: {datetime.now().strftime("%Y-%m-%d %H:%M")} • Branch: {get_git_branch()} • Commit: {get_git_hash()}*
 
 """
 

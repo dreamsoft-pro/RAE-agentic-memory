@@ -90,7 +90,6 @@ async def test_dreaming_worker_disabled(mock_app_state_pool):
 
     # Disable dreaming
     with patch("apps.memory_api.config.settings.DREAMING_ENABLED", False):
-
         rae_service = RAECoreService(postgres_pool=pool)
         worker = DreamingWorker(rae_service=rae_service)
 

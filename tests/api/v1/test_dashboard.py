@@ -58,6 +58,7 @@ def mock_rae_service(mock_pool):
 
     # Mock the 'db' property to return an actual provider wrapping our mock pool
     from rae_core.adapters.postgres_db import PostgresDatabaseProvider
+
     rae_mock.db = PostgresDatabaseProvider(mock_pool)
 
     return rae_mock

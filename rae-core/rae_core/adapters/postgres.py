@@ -32,6 +32,10 @@ class PostgreSQLStorage(IMemoryStorage):
         layer TEXT NOT NULL,
         tenant_id TEXT NOT NULL,
         agent_id TEXT NOT NULL,
+        project TEXT,      -- Added in v2.7.0 (Phase 1)
+        session_id TEXT,   -- Added in v2.7.0 (Phase 1)
+        source TEXT,       -- Added in v2.7.0 (Phase 1)
+        memory_type TEXT DEFAULT 'text',
         tags TEXT[] DEFAULT '{}',
         metadata JSONB DEFAULT '{}',
         embedding VECTOR(1536),  -- Optional, requires pgvector
@@ -47,6 +51,12 @@ class PostgreSQLStorage(IMemoryStorage):
     CREATE INDEX idx_memories_expires_at ON memories(expires_at) WHERE expires_at IS NOT NULL;
     CREATE INDEX idx_memories_importance ON memories(importance);
     CREATE INDEX idx_memories_metadata ON memories USING GIN(metadata);
+
+    -- Performance Indexes (Phase 5)
+    CREATE INDEX idx_memories_project ON memories(project);
+    CREATE INDEX idx_memories_session_id ON memories(session_id);
+    CREATE INDEX idx_memories_source ON memories(source);
+    CREATE INDEX idx_memories_project_created_at ON memories(project, created_at);
     ```
     """
 
@@ -99,6 +109,10 @@ class PostgreSQLStorage(IMemoryStorage):
         importance: float | None = None,
         expires_at: datetime | None = None,
         memory_type: str = "text",
+        project: str | None = None,
+        session_id: str | None = None,
+        source: str | None = None,
+        strength: float = 1.0,
     ) -> UUID:
         """Store a new memory in PostgreSQL."""
         pool = await self._get_pool()
@@ -119,9 +133,10 @@ class PostgreSQLStorage(IMemoryStorage):
                 INSERT INTO memories (
                     id, content, layer, tenant_id, agent_id,
                     tags, metadata, embedding, importance, expires_at,
-                    created_at, last_accessed_at, memory_type, usage_count
+                    created_at, last_accessed_at, memory_type, usage_count,
+                    project, session_id, source, strength
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11, $12, 0)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11, $12, 0, $13, $14, $15, $16)
                 """,
                 memory_id,
                 content,
@@ -135,6 +150,10 @@ class PostgreSQLStorage(IMemoryStorage):
                 expires_at,
                 datetime.now(timezone.utc).replace(tzinfo=None),
                 memory_type,
+                project,
+                session_id,
+                source,
+                strength,
             )
 
         return memory_id
@@ -153,7 +172,8 @@ class PostgreSQLStorage(IMemoryStorage):
                 SELECT
                     id, content, layer, tenant_id, agent_id,
                     tags, metadata, embedding, importance, usage_count,
-                    created_at, last_accessed_at, expires_at
+                    created_at, last_accessed_at, expires_at,
+                    project, session_id, memory_type, source, strength
                 FROM memories
                 WHERE id = $1 AND tenant_id = $2
                 """,
@@ -170,6 +190,11 @@ class PostgreSQLStorage(IMemoryStorage):
             "layer": row["layer"],
             "tenant_id": row["tenant_id"],
             "agent_id": row["agent_id"],
+            "project": row["project"],
+            "session_id": row["session_id"],
+            "memory_type": row["memory_type"],
+            "source": row["source"],
+            "strength": float(row["strength"]) if row["strength"] is not None else 1.0,
             "tags": list(row["tags"]) if row["tags"] else [],
             "metadata": row["metadata"] if row["metadata"] else {},
             "embedding": (
@@ -181,8 +206,8 @@ class PostgreSQLStorage(IMemoryStorage):
                 if row["embedding"]
                 else None
             ),
-            "importance": float(row["importance"]),
-            "usage_count": int(row["usage_count"]),
+            "importance": float(row["importance"] or 0.5),
+            "usage_count": int(row["usage_count"] or 0),
             "created_at": row["created_at"],
             "last_accessed_at": row["last_accessed_at"],
             "expires_at": row["expires_at"],
@@ -248,6 +273,7 @@ class PostgreSQLStorage(IMemoryStorage):
                     id, content, layer, tenant_id, agent_id,
                     tags, metadata, embedding, importance, usage_count,
                     created_at, last_accessed_at, expires_at,
+                    project, session_id, source, strength, memory_type,
                     -- Simple relevance scoring
                     CASE
                         WHEN content ILIKE ${param_idx} THEN 1.0
@@ -271,6 +297,13 @@ class PostgreSQLStorage(IMemoryStorage):
                 "layer": row["layer"],
                 "tenant_id": row["tenant_id"],
                 "agent_id": row["agent_id"],
+                "project": row["project"],
+                "session_id": row["session_id"],
+                "source": row["source"],
+                "strength": (
+                    float(row["strength"]) if row["strength"] is not None else 1.0
+                ),
+                "memory_type": row["memory_type"],
                 "tags": list(row["tags"]) if row["tags"] else [],
                 "metadata": row["metadata"] if row["metadata"] else {},
                 "embedding": (
@@ -361,7 +394,8 @@ class PostgreSQLStorage(IMemoryStorage):
                 SELECT
                     id, content, layer, tenant_id, agent_id,
                     tags, metadata, embedding, importance, usage_count,
-                    created_at, last_accessed_at, expires_at
+                    created_at, last_accessed_at, expires_at,
+                    project, session_id, source, strength, memory_type
                 FROM memories
                 WHERE {where_clause}
                 {order_clause}
@@ -381,6 +415,13 @@ class PostgreSQLStorage(IMemoryStorage):
                     "layer": row["layer"],
                     "tenant_id": row["tenant_id"],
                     "agent_id": row["agent_id"],
+                    "project": row["project"],
+                    "session_id": row["session_id"],
+                    "source": row["source"],
+                    "strength": (
+                        float(row["strength"]) if row["strength"] is not None else 1.0
+                    ),
+                    "memory_type": row["memory_type"],
                     "tags": list(row["tags"]) if row["tags"] else [],
                     "metadata": row["metadata"] if row["metadata"] else {},
                     "embedding": (
@@ -489,7 +530,7 @@ class PostgreSQLStorage(IMemoryStorage):
 
         query = f"""
             UPDATE memories
-            SET {', '.join(set_clauses)}
+            SET {", ".join(set_clauses)}
             WHERE id = ${param_idx} AND tenant_id = ${param_idx + 1}
         """
 
@@ -860,14 +901,34 @@ class PostgreSQLStorage(IMemoryStorage):
         memory_id: UUID,
         model_name: str,
         embedding: list[float],
+        tenant_id: str,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
-        """Save a vector embedding for a memory."""
+        """Save a vector embedding for a memory.
+
+        [ISO 27001] Verifies tenant ownership before saving.
+        """
         pool = await self._get_pool()
         metadata = metadata or {}
         embedding_val = str(embedding) if embedding is not None else None
 
         async with pool.acquire() as conn:
+            # 1. Verify ownership (SEC-02)
+            # We could do this in one query with CTE, but explicit check is safer for logic
+            exists = await conn.fetchval(
+                "SELECT 1 FROM memories WHERE id = $1 AND tenant_id = $2",
+                memory_id,
+                tenant_id,
+            )
+            if not exists:
+                # Security: fail silently or raise?
+                # Raising helps debugging, silent is safer against enumeration.
+                # Given UUIDs are unguessable, raising is fine.
+                raise ValueError(
+                    f"Access Denied: Memory {memory_id} not found for tenant {tenant_id}"
+                )
+
+            # 2. Insert/Update
             await conn.execute(
                 """
                 INSERT INTO memory_embeddings (

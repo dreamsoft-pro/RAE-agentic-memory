@@ -28,6 +28,10 @@ class StoreMemoryRequestV2(BaseModel):
     layer: str | None = Field(
         default=None, pattern="^(sensory|working|longterm|reflective)$"
     )
+    # Phase 1: Canonical fields
+    session_id: str | None = Field(None, description="Session identifier")
+    memory_type: str | None = Field(None, description="Memory type (text, code, etc.)")
+    ttl: int | None = Field(None, gt=0, description="Time to live in seconds")
 
 
 class StoreMemoryResponseV2(BaseModel):
@@ -90,6 +94,9 @@ async def store_memory(
             importance=request.importance,
             tags=request.tags,
             layer=request.layer,
+            session_id=request.session_id,
+            memory_type=request.memory_type,
+            ttl=request.ttl,
         )
 
         return StoreMemoryResponseV2(memory_id=memory_id)

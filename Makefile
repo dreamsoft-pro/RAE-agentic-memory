@@ -131,8 +131,15 @@ security:  ## Run security scans (safety, bandit)
 	@echo "🔒 Running security scans..."
 	@$(VENV_ACTIVATE) && pip install safety bandit > /dev/null
 	@$(VENV_ACTIVATE) && safety check --file requirements-dev.txt || true
-	@$(VENV_ACTIVATE) && bandit -r apps/ sdk/ -ll || true
+	@$(VENV_ACTIVATE) && bandit -c pyproject.toml -r apps/ sdk/ rae-core/ -ll || true
 	@echo "✅ Security scan complete"
+
+security-check:  ## [ISO 27001] Strict security check (fails on error)
+	@echo "🔒 Running strict ISO 27001 security compliance check..."
+	@$(VENV_ACTIVATE) && pip install safety bandit > /dev/null
+	@$(VENV_ACTIVATE) && safety check --file requirements-dev.txt
+	@$(VENV_ACTIVATE) && bandit -c pyproject.toml -r apps/ sdk/ rae-core/ -ll
+	@echo "✅ Security compliance verified"
 
 format:  ## Format code with black, isort, and ruff
 	@echo "🎨 Formatting code..."
@@ -204,6 +211,25 @@ test-watch:  ## Run tests in watch mode
 # ==============================================================================
 # BENCHMARKING
 # ==============================================================================
+
+# Remote Node1 (KUBUS) configuration
+KUBUS_IP = 100.66.252.117
+
+benchmark-kubus: ## Run all benchmarks on Kubus (Node1)
+	@echo "🚀 Redirecting benchmarks to KUBUS (Node1) @ $(KUBUS_IP)..."
+	@POSTGRES_HOST=$(KUBUS_IP) \
+	 REDIS_URL=redis://$(KUBUS_IP):6379/0 \
+	 QDRANT_URL=http://$(KUBUS_IP):6333 \
+	 RAE_API_URL=http://$(KUBUS_IP):8000 \
+	 $(MAKE) benchmark-all
+
+benchmark-kubus-full: ## Run FULL heavy benchmarks on Kubus (Node1)
+	@echo "🚀 Redirecting HEAVY benchmarks to KUBUS (Node1) @ $(KUBUS_IP)..."
+	@POSTGRES_HOST=$(KUBUS_IP) \
+	 REDIS_URL=redis://$(KUBUS_IP):6379/0 \
+	 QDRANT_URL=http://$(KUBUS_IP):6333 \
+	 RAE_API_URL=http://$(KUBUS_IP):8000 \
+	 $(MAKE) benchmark-full
 
 benchmark-lite:  ## Run quick benchmark (academic_lite, <10s)
 	@echo "🔬 Running lite benchmark..."

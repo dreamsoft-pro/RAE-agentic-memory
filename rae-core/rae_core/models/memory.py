@@ -51,6 +51,12 @@ class MemoryItem(BaseModel):
     # Metadata
     tenant_id: str = Field(description="Tenant identifier for multi-tenancy")
     agent_id: str = Field(description="Agent that owns this memory")
+    project: str | None = Field(
+        default=None, description="Project identifier (primary source)"
+    )
+    session_id: str | None = Field(
+        default=None, description="Session identifier for grouping"
+    )
     tags: list[str] = Field(default_factory=list, description="Tags for filtering")
     metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional metadata"

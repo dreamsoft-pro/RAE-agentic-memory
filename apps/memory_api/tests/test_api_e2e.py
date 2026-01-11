@@ -29,6 +29,7 @@ def client():
     return TestClient(app)
 
 
+@pytest.mark.smoke
 class TestMemoryAPISmoke:
     """Smoke tests for core memory operations.
 

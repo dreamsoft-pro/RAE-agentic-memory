@@ -273,6 +273,7 @@ async def test_provider_contract_hello_world(provider_name, model, request):
     )
 
     from apps.llm.models import LLMAuthError
+
     try:
         response = await provider.complete(llm_request)
     except LLMAuthError as e:

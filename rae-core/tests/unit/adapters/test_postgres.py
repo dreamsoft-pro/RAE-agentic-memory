@@ -76,6 +76,11 @@ class TestPostgreSQLStorage:
             "created_at": now,
             "last_accessed_at": now,
             "expires_at": None,
+            "project": None,
+            "session_id": None,
+            "source": None,
+            "memory_type": "text",
+            "strength": 1.0,
         }
 
         memory = await pg_storage.get_memory(memory_id, "tenant1")
@@ -115,6 +120,11 @@ class TestPostgreSQLStorage:
                 "last_accessed_at": now,
                 "expires_at": None,
                 "score": 1.0,
+                "project": None,
+                "session_id": None,
+                "source": None,
+                "memory_type": "text",
+                "strength": 1.0,
             }
         ]
 

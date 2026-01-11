@@ -19,6 +19,7 @@ Exit codes:
     0 - Fix generated successfully
     1 - Error or fix not possible
 """
+
 import argparse
 import json
 import os
@@ -196,7 +197,7 @@ Include file path as a comment at the top: # File: path/to/file.py
         elif provider == "openai":
             if not HAS_OPENAI:
                 raise RuntimeError(
-                    "openai package not installed. " "Install with: pip install openai"
+                    "openai package not installed. Install with: pip install openai"
                 )
             api_key = os.getenv("OPENAI_API_KEY")
             if not api_key:

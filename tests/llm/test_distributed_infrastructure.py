@@ -7,6 +7,7 @@ Verifies connectivity and functionality of:
 
 Uses configuration similar to profiles/distributed_test.yaml.
 """
+
 import os
 
 import pytest
@@ -16,21 +17,18 @@ from apps.llm.providers.anthropic_provider import AnthropicProvider
 from apps.llm.providers.deepseek_provider import DeepSeekProvider
 
 # Configuration
-NODE1_URL = "http://100.66.252.117:11434/v1" # OpenAI compatible endpoint on Ollama
-NODE1_MODEL = "deepseek-coder:1.3b" # Verify model name from verification script
+NODE1_URL = "http://100.66.252.117:11434/v1"  # OpenAI compatible endpoint on Ollama
+NODE1_MODEL = "deepseek-coder:1.3b"  # Verify model name from verification script
 CLAUDE_MODEL = "claude-3-haiku-20240307"
+
 
 @pytest.mark.asyncio
 @pytest.mark.llm
 class TestDistributedInfrastructure:
-
     async def test_node1_connectivity(self):
         """Verify Node1 (DeepSeek/Ollama) is reachable and responding."""
         # Ollama doesn't need a real key, but the client might require non-empty
-        provider = DeepSeekProvider(
-            api_key="ollama",
-            api_base=NODE1_URL
-        )
+        provider = DeepSeekProvider(api_key="ollama", api_base=NODE1_URL)
 
         request = LLMRequest(
             model=NODE1_MODEL,
@@ -38,7 +36,7 @@ class TestDistributedInfrastructure:
                 LLMMessage(role="user", content="Print 'Hello Node1' in Python.")
             ],
             temperature=0.1,
-            max_tokens=50
+            max_tokens=50,
         )
 
         try:
@@ -60,11 +58,9 @@ class TestDistributedInfrastructure:
 
         request = LLMRequest(
             model=CLAUDE_MODEL,
-            messages=[
-                LLMMessage(role="user", content="Say 'Hello Claude'")
-            ],
+            messages=[LLMMessage(role="user", content="Say 'Hello Claude'")],
             temperature=0.5,
-            max_tokens=20
+            max_tokens=20,
         )
 
         try:
@@ -76,6 +72,7 @@ class TestDistributedInfrastructure:
         except Exception as e:
             print(f"\nClaude Error: {e}")
             pytest.fail(f"Anthropic connectivity failed: {e}")
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "-s"])

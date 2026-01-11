@@ -90,7 +90,7 @@ class LatencyProfiler:
             latencies.append(total_latency * 1000)  # Convert to ms
 
             if (i + 1) % 20 == 0:
-                print(f"   Progress: {i+1}/{num_runs} runs completed")
+                print(f"   Progress: {i + 1}/{num_runs} runs completed")
 
         # Calculate statistics
         latencies_np = np.array(latencies)

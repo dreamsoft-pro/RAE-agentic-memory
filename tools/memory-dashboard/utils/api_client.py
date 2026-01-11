@@ -105,14 +105,31 @@ class RAEClient:
             stats = {"total": 0, "episodic": 0, "working": 0, "semantic": 0, "ltm": 0}
 
             # Get count for each layer
-            for layer in ["em", "wm", "sm", "ltm"]:
-                self._request(
+            for layer in ["episodic", "working", "semantic", "reflective"]:
+                res = self._request(
                     "POST",
                     "/v1/memory/query",
-                    json={"query_text": "*", "k": 1, "filters": {"layer": layer}},
+                    json={
+                        "query_text": "*",
+                        "k": 1,
+                        "filters": {"layer": layer},
+                        "project": self.project_id,
+                    },
                 )
                 # This is approximate - would need dedicated stats endpoint
-                stats["total"] += 1
+                # results count gives us a hint
+                count = len(res.get("results", []))
+                # Update local stats object
+                if layer == "episodic":
+                    stats["episodic"] = count
+                elif layer == "working":
+                    stats["working"] = count
+                elif layer == "semantic":
+                    stats["semantic"] = count
+                elif layer == "reflective":
+                    stats["ltm"] = count  # Mapping reflective to dashboard's LTM column
+
+                stats["total"] += count
 
             return stats
 
@@ -141,11 +158,17 @@ class RAEClient:
             # Query for memories
             memories = []
 
-            for layer in layers or ["em", "wm", "sm", "ltm"]:
+            target_layers = layers or ["episodic", "working", "semantic", "reflective"]
+            for layer in target_layers:
                 response = self._request(
                     "POST",
                     "/v1/memory/query",
-                    json={"query_text": "*", "k": limit, "filters": {"layer": layer}},
+                    json={
+                        "query_text": "*",
+                        "k": limit,
+                        "filters": {"layer": layer},
+                        "project": self.project_id,
+                    },
                 )
 
                 results = response.get("results", [])

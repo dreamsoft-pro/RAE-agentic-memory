@@ -142,7 +142,7 @@ class RAEBenchmarkRunner:
         self.use_direct_db = use_direct_db
 
         self.benchmark_data = None
-        self.tenant_id = "benchmark_tenant"
+        self.tenant_id = "00000000-0000-0000-0000-000000000999"
         self.project_id = "benchmark_project"
 
         # Statistics
@@ -225,7 +225,7 @@ class RAEBenchmarkRunner:
             expected_dim = provider.get_dimension()
             print(f"   ℹ️ Expected embedding dimension: {expected_dim}")
 
-            collection_info = vector_store.qdrant_client.get_collection(
+            collection_info = await vector_store.qdrant_client.get_collection(
                 collection_name="memories"
             )
 
@@ -255,8 +255,8 @@ class RAEBenchmarkRunner:
                 print(
                     f"   ⚠️ Collection dimension mismatch (found {current_size}, expected {expected_dim}). Recreating..."
                 )
-                vector_store.qdrant_client.delete_collection("memories")
-                vector_store.qdrant_client.create_collection(
+                await vector_store.qdrant_client.delete_collection("memories")
+                await vector_store.qdrant_client.create_collection(
                     collection_name="memories",
                     vectors_config={
                         "dense": rest_models.VectorParams(
@@ -273,7 +273,7 @@ class RAEBenchmarkRunner:
         # This is more thorough than deleting only vectors that are in PostgreSQL
         print(f"   Deleting all vectors for tenant '{self.tenant_id}' from Qdrant...")
         try:
-            vector_store.qdrant_client.delete(
+            await vector_store.qdrant_client.delete(
                 collection_name="memories",
                 points_selector=models.FilterSelector(
                     filter=models.Filter(
@@ -329,9 +329,18 @@ class RAEBenchmarkRunner:
             start_time = time.time()
 
             try:
-                # Generate embedding
+                # Generate embedding with explicit document prefix
                 content = memory["text"]
-                embedding = embedding_service.generate_embeddings([content])[0]
+                prefixed_content = (
+                    f"search_document: {content}"
+                    if not content.startswith("search_")
+                    else content
+                )
+
+                embeddings = await embedding_service.generate_embeddings_async(
+                    [prefixed_content]
+                )
+                embedding = embeddings[0]
 
                 # Insert into database
                 async with self.pool.acquire() as conn:
@@ -372,6 +381,7 @@ class RAEBenchmarkRunner:
                         timestamp=created_at,
                         project=self.project_id,
                     )
+                    # Await the async upsert
                     await vector_store.upsert([memory_record], [embedding])
 
                 elapsed = time.time() - start_time
@@ -391,7 +401,7 @@ class RAEBenchmarkRunner:
         avg_time = (
             sum(self.insert_times) / len(self.insert_times) if self.insert_times else 0
         )
-        print(f"   ⏱️  Average insert time: {avg_time*1000:.2f}ms")
+        print(f"   ⏱️  Average insert time: {avg_time * 1000:.2f}ms")
 
     async def run_queries(self):
         """Execute all benchmark queries and collect results"""
@@ -419,13 +429,22 @@ class RAEBenchmarkRunner:
             start_time = time.time()
 
             try:
-                # Generate query embedding
-                query_embedding = embedding_service.generate_embeddings([query_text])[0]
+                # Generate query embedding with explicit query prefix
+                prefixed_query = (
+                    f"search_query: {query_text}"
+                    if not query_text.startswith("search_")
+                    else query_text
+                )
+                query_embeddings = await embedding_service.generate_embeddings_async(
+                    [prefixed_query]
+                )
+                query_embedding = query_embeddings[0]
 
                 # Search vectors - use query method with filters
                 filters = {
                     "must": [{"key": "tenant_id", "match": {"value": self.tenant_id}}]
                 }
+                # Await the async query
                 search_results = await vector_store.query(
                     query_embedding=query_embedding, top_k=top_k, filters=filters
                 )
@@ -470,7 +489,7 @@ class RAEBenchmarkRunner:
         avg_time = (
             sum(self.query_times) / len(self.query_times) if self.query_times else 0
         )
-        print(f"   ⏱️  Average query time: {avg_time*1000:.2f}ms")
+        print(f"   ⏱️  Average query time: {avg_time * 1000:.2f}ms")
 
     def calculate_metrics(self) -> Dict[str, Any]:
         """Calculate all benchmark metrics"""

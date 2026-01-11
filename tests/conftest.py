@@ -32,6 +32,7 @@ def mock_env_and_settings(monkeypatch):
         "ENABLE_API_KEY_AUTH": "False",
         "ENABLE_JWT_AUTH": "False",
         "ENABLE_RATE_LIMITING": "False",
+        "RAE_DB_MODE": "ignore",
     }
     for k, v in envs.items():
         monkeypatch.setenv(k, v)
@@ -136,6 +137,7 @@ def mock_rae_service(mock_pool):
 
     # Mock the 'db' property to return an actual provider wrapping our mock pool
     from rae_core.adapters.postgres_db import PostgresDatabaseProvider
+
     service.db = PostgresDatabaseProvider(mock_pool)
 
     # Mock enhanced_graph_repo property

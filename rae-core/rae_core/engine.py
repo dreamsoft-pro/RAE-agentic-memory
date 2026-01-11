@@ -1,5 +1,6 @@
 """Main RAE Engine - Orchestrates all RAE-core components."""
 
+from datetime import datetime, timedelta, timezone
 from typing import Any, cast
 from uuid import UUID
 
@@ -58,9 +59,14 @@ class RAEEngine:
 
         # Initialize sub-engines
         from rae_core.search.strategies import SearchStrategy
+        from rae_core.search.strategies.fulltext import FullTextStrategy
         from rae_core.search.strategies.vector import VectorSearchStrategy
 
         strategies: dict[str, SearchStrategy] = {}
+
+        # Always include full-text strategy (run anywhere)
+        strategies["fulltext"] = FullTextStrategy(memory_storage=memory_storage)
+
         if vector_store and embedding_provider:
             strategies["vector"] = VectorSearchStrategy(
                 vector_store=vector_store,
@@ -119,6 +125,12 @@ class RAEEngine:
         importance: float = 0.5,
         tags: list[str] | None = None,
         metadata: dict[str, Any] | None = None,
+        memory_type: str = "text",
+        project: str | None = None,
+        session_id: str | None = None,
+        ttl: int | None = None,
+        source: str | None = None,
+        strength: float = 1.0,
     ) -> UUID:
         """Store a new memory.
 
@@ -130,13 +142,20 @@ class RAEEngine:
             importance: Importance score (0-1)
             tags: Optional tags
             metadata: Optional metadata
-
-        Returns:
-            Memory ID
+            memory_type: Type of memory
+            project: Project identifier
+            session_id: Session identifier
+            ttl: Time to live in seconds
+            source: Source of memory
+            strength: Memory strength
         """
         # 0. Prepare data
         tags = tags or []
         metadata = metadata or {}
+
+        expires_at = None
+        if ttl:
+            expires_at = datetime.now(timezone.utc) + timedelta(seconds=ttl)
 
         # 1. Generate embeddings
         default_embedding = None
@@ -173,6 +192,12 @@ class RAEEngine:
             tags=tags,
             metadata=metadata,
             embedding=default_embedding,  # Store default in legacy column
+            memory_type=memory_type,
+            project=project,
+            session_id=session_id,
+            expires_at=expires_at,
+            source=source,
+            strength=strength,
         )
 
         # 3. Save all embeddings to memory_embeddings table
@@ -182,23 +207,50 @@ class RAEEngine:
                     memory_id=memory_id,
                     model_name=model_name,
                     embedding=model_embs[0],
+                    tenant_id=tenant_id,
                     metadata={"source_length": len(content)},
                 )
 
-        # 4. Store in Vector Store (Qdrant) - Default embedding only
-        if self.vector_store and default_embedding:
+        # 4. Store in Vector Store (Qdrant) - Support all generated embeddings
+        if self.vector_store and embeddings_map:
+            # Map RAE model names to Qdrant vector names
+            # embeddings_map structure: {model_name: [embedding_list]}
+            vector_payload = {}
+            for model_name, model_embs in embeddings_map.items():
+                if model_embs and model_embs[0]:
+                    emb = model_embs[0]
+                    # Determine vector name based on dimension for Qdrant
+                    dim = len(emb)
+                    if dim == 1536:
+                        vector_payload["openai"] = emb
+                    elif dim == 768:
+                        vector_payload["ollama"] = emb
+                    elif dim == 384:
+                        vector_payload["dense"] = emb
+                    elif dim == 1024:
+                        vector_payload["cohere"] = emb
+                    else:
+                        # Fallback to dense if unknown but it's the only one
+                        if len(embeddings_map) == 1:
+                            vector_payload["dense"] = emb
+
             vector_metadata = {
                 "agent_id": agent_id,
                 "layer": layer,
                 "content": content,
                 **metadata,
             }
-            await self.vector_store.store_vector(
-                memory_id=memory_id,
-                embedding=default_embedding,
-                tenant_id=tenant_id,
-                metadata=vector_metadata,
-            )
+
+            # Use the most specific vector payload if we have one, otherwise fallback to default
+            store_data = vector_payload if vector_payload else default_embedding
+
+            if store_data is not None:
+                await self.vector_store.store_vector(
+                    memory_id=memory_id,
+                    embedding=store_data,
+                    tenant_id=tenant_id,
+                    metadata=vector_metadata,
+                )
 
         return memory_id
 
@@ -251,11 +303,14 @@ class RAEEngine:
             similarity_threshold or search_config["similarity_threshold"]
         )
 
-        filters = {}
+        filters: dict[str, Any] = {}
         if agent_id:
             filters["agent_id"] = agent_id
         if layer:
             filters["layer"] = layer
+
+        # Pass threshold to strategies
+        filters["score_threshold"] = similarity_threshold
 
         results = await self.search_engine.search(
             query=query,
@@ -271,13 +326,25 @@ class RAEEngine:
                 results=results[:rerank_top_k],
             )
 
-        # Fetch actual memories
+        # 4. Fetch actual memories and apply Math Layer scoring
+        from rae_core.math.controller import MathLayerController
+
+        math_controller = MathLayerController()
+
         memories: list[dict[str, Any]] = []
         for memory_id, score in results:
             memory = await self.memory_storage.get_memory(memory_id, tenant_id)
             if memory:
+                # Combine retrieval score with math heuristic score
+                math_score = math_controller.score_memory(
+                    memory=memory, query_similarity=score
+                )
                 memory["search_score"] = score
+                memory["math_score"] = math_score
                 memories.append(memory)
+
+        # 5. Final sort by math score
+        memories.sort(key=lambda x: x["math_score"], reverse=True)
 
         return memories
 

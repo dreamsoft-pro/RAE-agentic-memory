@@ -8,6 +8,8 @@ import structlog
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from rae_lite.config import settings
+
 from rae_core.adapters.sqlite import (
     SQLiteGraphStore,
     SQLiteStorage,
@@ -17,9 +19,8 @@ from rae_core.config.settings import RAESettings
 from rae_core.engine import RAEEngine
 from rae_core.interfaces.embedding import IEmbeddingProvider
 
-from rae_lite.config import settings
-
 logger = structlog.get_logger(__name__)
+
 
 # Simple Mock Embedding Provider for RAE-Lite Smoke Test
 class LocalEmbeddingProvider(IEmbeddingProvider):
@@ -37,6 +38,7 @@ class LocalEmbeddingProvider(IEmbeddingProvider):
     def get_dimension(self) -> int:
         return self.dimension
 
+
 # Initialize SQLite adapters
 memory_storage = SQLiteStorage(str(settings.db_path))
 vector_store = SQLiteVectorStore(str(settings.vector_db_path))
@@ -47,14 +49,14 @@ embedding_provider = LocalEmbeddingProvider()
 rae_settings = RAESettings()
 rae_settings.sensory_max_size = 50
 rae_settings.working_max_size = 50
-rae_settings.vector_backend = "sqlite" # Important for RAE-Lite
+rae_settings.vector_backend = "sqlite"  # Important for RAE-Lite
 
 # Initialize RAE Engine
 engine = RAEEngine(
     memory_storage=memory_storage,
     vector_store=vector_store,
     embedding_provider=embedding_provider,
-    settings=rae_settings
+    settings=rae_settings,
 )
 
 # FastAPI app

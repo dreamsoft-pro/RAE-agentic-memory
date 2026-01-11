@@ -642,6 +642,9 @@ jupyter lab
 
 ### Data Export for Analysis
 
+**Data Recovery:**
+If you encounter missing data after an update, please refer to the [Data Recovery Guide](../developers/INDEX.md#data-recovery--maintenance) for instructions on normalizing memory layers.
+
 **Export memories for external analysis:**
 
 ```python

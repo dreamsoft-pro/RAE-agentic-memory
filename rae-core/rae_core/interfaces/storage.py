@@ -27,6 +27,11 @@ class IMemoryStorage(Protocol):
         embedding: list[float] | None = None,
         importance: float | None = None,
         expires_at: Any | None = None,
+        memory_type: str = "text",
+        project: str | None = None,
+        session_id: str | None = None,
+        source: str | None = None,
+        strength: float = 1.0,
     ) -> UUID:
         """Store a new memory.
 
@@ -40,9 +45,11 @@ class IMemoryStorage(Protocol):
             embedding: Optional vector embedding
             importance: Optional importance score (0.0-1.0)
             expires_at: Optional expiration timestamp
-
-        Returns:
-            UUID of the stored memory
+            memory_type: Type of memory (default: text)
+            project: Project identifier (primary source)
+            session_id: Session identifier
+            source: Source of the memory
+            strength: Memory strength (default 1.0)
         """
         ...
 
@@ -319,6 +326,7 @@ class IMemoryStorage(Protocol):
         memory_id: UUID,
         model_name: str,
         embedding: list[float],
+        tenant_id: str,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
         """Save a vector embedding for a memory.
@@ -327,9 +335,28 @@ class IMemoryStorage(Protocol):
             memory_id: UUID of the memory
             model_name: Name of the embedding model
             embedding: Vector embedding list
+            tenant_id: Tenant identifier
             metadata: Optional metadata
 
         Returns:
             True if successful
+        """
+        ...
+
+    async def decay_importance(
+        self,
+        tenant_id: str,
+        decay_rate: float,
+        consider_access_stats: bool = False,
+    ) -> int:
+        """Apply importance decay to all memories for a tenant.
+
+        Args:
+            tenant_id: Tenant identifier
+            decay_rate: Rate of decay (0.0 to 1.0)
+            consider_access_stats: If True, decay is slower for frequently accessed memories
+
+        Returns:
+            Number of memories updated
         """
         ...

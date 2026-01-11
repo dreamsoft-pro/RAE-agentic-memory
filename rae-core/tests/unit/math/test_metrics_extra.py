@@ -145,3 +145,8 @@ def test_text_coherence_metric_extra():
     # Result 0.5.
     assert res.score == 0.5
     assert res.metadata["word_count"] == 3
+
+    # Test short content (< 3 words)
+    res = metric.compute("Too short")
+    assert res.score == 0.2
+    assert res.metadata["reason"] == "too_short"

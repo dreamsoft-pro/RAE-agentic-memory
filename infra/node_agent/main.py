@@ -10,41 +10,42 @@ import httpx
 import yaml
 
 # Constants
-CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'config.yaml')
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), "config.yaml")
 DEFAULT_API_URL = "http://localhost:8000"
 
 # Logging setup
 # Ensure logs directory exists
-LOG_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'logs')
+LOG_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "logs")
 os.makedirs(LOG_DIR, exist_ok=True)
 
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler(os.path.join(LOG_DIR, 'agent.log'))
-    ]
+        logging.FileHandler(os.path.join(LOG_DIR, "agent.log")),
+    ],
 )
 logger = logging.getLogger("node_agent")
+
 
 class NodeAgent:
     def __init__(self):
         self.config = self._load_config()
-        self.node_id = self.config.get('node_id', socket.gethostname())
-        self.api_key = self.config.get('api_key', 'dev-secret')
-        self.base_url = self.config.get('rae_endpoint', DEFAULT_API_URL).rstrip('/')
-        self.heartbeat_interval = self.config.get('heartbeat_interval_sec', 30)
-        self.capabilities = self.config.get('capabilities', {})
+        self.node_id = self.config.get("node_id", socket.gethostname())
+        self.api_key = self.config.get("api_key", "dev-secret")
+        self.base_url = self.config.get("rae_endpoint", DEFAULT_API_URL).rstrip("/")
+        self.heartbeat_interval = self.config.get("heartbeat_interval_sec", 30)
+        self.capabilities = self.config.get("capabilities", {})
 
         # Override capabilities with auto-detection if enabled
-        if self.config.get('auto_detect_capabilities', True):
+        if self.config.get("auto_detect_capabilities", True):
             self._detect_capabilities()
 
     def _load_config(self) -> Dict[str, Any]:
         if os.path.exists(CONFIG_PATH):
             try:
-                with open(CONFIG_PATH, 'r') as f:
+                with open(CONFIG_PATH, "r") as f:
                     return yaml.safe_load(f) or {}
             except Exception as e:
                 logger.error(f"Failed to load config: {e}")
@@ -52,26 +53,27 @@ class NodeAgent:
 
     def _detect_capabilities(self):
         """Detect system hardware and software."""
-        self.capabilities['os'] = platform.system()
-        self.capabilities['hostname'] = socket.gethostname()
-        self.capabilities['cpu_count'] = os.cpu_count()
-        self.capabilities['arch'] = platform.machine()
+        self.capabilities["os"] = platform.system()
+        self.capabilities["hostname"] = socket.gethostname()
+        self.capabilities["cpu_count"] = os.cpu_count()
+        self.capabilities["arch"] = platform.machine()
 
         # GPU Detection (NVIDIA)
         try:
             import subprocess
-            smi_out = subprocess.check_output(['nvidia-smi', '-L'], text=True)
-            self.capabilities['gpu'] = True
-            self.capabilities['gpu_info'] = smi_out.strip()
-            self.capabilities['vram_gb'] = 16 # Placeholder/Estimate or parse smi_out
+
+            smi_out = subprocess.check_output(["nvidia-smi", "-L"], text=True)
+            self.capabilities["gpu"] = True
+            self.capabilities["gpu_info"] = smi_out.strip()
+            self.capabilities["vram_gb"] = 16  # Placeholder/Estimate or parse smi_out
         except Exception:
-            self.capabilities['gpu'] = False
+            self.capabilities["gpu"] = False
 
     async def register(self, client: httpx.AsyncClient):
         payload = {
             "node_id": self.node_id,
             "api_key": self.api_key,
-            "capabilities": self.capabilities
+            "capabilities": self.capabilities,
         }
         try:
             url = f"{self.base_url}/control/nodes/register"
@@ -90,7 +92,9 @@ class NodeAgent:
         while True:
             try:
                 payload = {"node_id": self.node_id, "status": "ONLINE"}
-                await client.post(f"{self.base_url}/control/nodes/heartbeat", json=payload)
+                await client.post(
+                    f"{self.base_url}/control/nodes/heartbeat", json=payload
+                )
                 logger.debug("Heartbeat sent")
             except Exception as e:
                 logger.error(f"Heartbeat failed: {e}")
@@ -98,8 +102,8 @@ class NodeAgent:
             await asyncio.sleep(self.heartbeat_interval)
 
     async def process_task(self, task: Dict[str, Any]) -> Dict[str, Any]:
-        task_type = task.get('type')
-        payload = task.get('payload', {})
+        task_type = task.get("type")
+        payload = task.get("payload", {})
         logger.info(f"Processing task {task.get('id')} of type {task_type}")
 
         if task_type == "llm_inference":
@@ -128,7 +132,7 @@ class NodeAgent:
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
                 cwd=cwd,
-                env=env
+                env=env,
             )
             stdout, stderr = await process.communicate()
 
@@ -136,18 +140,26 @@ class NodeAgent:
                 "status": "success" if process.returncode == 0 else "error",
                 "returncode": process.returncode,
                 "stdout": stdout.decode(),
-                "stderr": stderr.decode()
+                "stderr": stderr.decode(),
             }
         except Exception as e:
             return {"status": "error", "error": str(e)}
 
-    async def _call_ollama(self, model: str, prompt: str, system: str = "") -> Dict[str, Any]:
+    async def _call_ollama(
+        self, model: str, prompt: str, system: str = ""
+    ) -> Dict[str, Any]:
         ollama_url = self.config.get("ollama_api_url", "http://localhost:11434")
         async with httpx.AsyncClient(timeout=300.0) as client:
             try:
-                resp = await client.post(f"{ollama_url}/api/generate", json={
-                    "model": model, "prompt": prompt, "system": system, "stream": False
-                })
+                resp = await client.post(
+                    f"{ollama_url}/api/generate",
+                    json={
+                        "model": model,
+                        "prompt": prompt,
+                        "system": system,
+                        "stream": False,
+                    },
+                )
                 resp.raise_for_status()
                 return {"status": "success", "response": resp.json().get("response")}
             except Exception as e:
@@ -158,7 +170,9 @@ class NodeAgent:
         try:
             async with httpx.AsyncClient() as client:
                 headers = {"X-API-Key": self.api_key}
-                resp = await client.get(f"{self.base_url}/v1/memory/{memory_id}", headers=headers)
+                resp = await client.get(
+                    f"{self.base_url}/v1/memory/{memory_id}", headers=headers
+                )
                 if resp.status_code == 200:
                     return resp.json().get("content")
         except Exception as e:
@@ -171,7 +185,9 @@ class NodeAgent:
             async with httpx.AsyncClient() as client:
                 headers = {"X-API-Key": self.api_key}
                 payload = {"query": query, "k": 5}
-                resp = await client.post(f"{self.base_url}/v1/memory/query", json=payload, headers=headers)
+                resp = await client.post(
+                    f"{self.base_url}/v1/memory/query", json=payload, headers=headers
+                )
                 if resp.status_code == 200:
                     return resp.json().get("results", [])
         except Exception as e:
@@ -247,14 +263,14 @@ class NodeAgent:
             "status": "success",
             "writer_output": initial_output,
             "review_report": review_result.get("response", "Review failed"),
-            "is_passed": "PASSED" in review_result.get("response", "")
+            "is_passed": "PASSED" in review_result.get("response", ""),
         }
 
     async def _execute_ollama(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         return await self._call_ollama(
             payload.get("model", "deepseek-coder:33b"),
             payload.get("prompt", ""),
-            payload.get("system", "")
+            payload.get("system", ""),
         )
 
     async def task_loop(self, client: httpx.AsyncClient):

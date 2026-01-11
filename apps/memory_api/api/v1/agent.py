@@ -80,6 +80,7 @@ async def execute(
             project_id=req.project,
             query=req.prompt,
             recent_messages=[],  # Could pass conversation history if available
+            session_id=req.session_id,  # Added session_id support
         )
 
         # Use the formatted context as system instruction
@@ -102,6 +103,10 @@ async def execute(
                     {"key": "layer", "match": {"value": "em"}},
                 ]
             }
+            if req.session_id:
+                query_filters["must"].append(
+                    {"key": "session_id", "match": {"value": req.session_id}}
+                )
 
             vector_store = get_vector_store(pool=request.app.state.pool)
             retrieved_items = await vector_store.query(
@@ -244,6 +249,7 @@ async def execute(
                 source=f"reflection_on_{llm_result.finish_reason}",
                 layer="rm",
                 tags=["reflection"],
+                session_id=req.session_id,
             )
 
             async with httpx.AsyncClient() as client:

@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str | None = None
     OLLAMA_API_BASE: str = "http://rae-ollama:11434"
     OLLAMA_API_URL: str = "http://rae-ollama:11434"
+    # Ollama Configuration
     OLLAMA_HOSTS: list[str] = ["http://100.66.252.117:11434", "http://rae-ollama:11434"]
     RAE_LLM_BACKEND: str = "ollama"
     RAE_LLM_MODEL_DEFAULT: str = "ollama/deepseek-coder:1.3b"
@@ -175,6 +176,32 @@ class Settings(BaseSettings):
     SUMMARIZATION_EVENT_THRESHOLD: int = 100  # Threshold for long sessions
 
     # Mode-specific overrides
+    @model_validator(mode="after")
+    def validate_sandbox_mode(self):
+        """
+        Detect if RAE and RAE-Lite are co-existing on the same machine.
+        If port 8000 is occupied and we are in lite mode, force sandbox ports.
+        """
+        if self.RAE_PROFILE == "lite":
+            import socket
+
+            def is_port_in_use(port):
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    return s.connect_ex(("localhost", port)) == 0
+
+            # If standard RAE is detected, switch to sandbox defaults if not already set
+            if is_port_in_use(8000):
+                # We don't overwrite explicitly set env vars, but we can log it
+                # and adjust default URLs used by internal components
+                if self.MEMORY_API_URL == "http://localhost:8000":
+                    self.MEMORY_API_URL = "http://localhost:8010"
+
+                # Force sandbox ports for infrastructure if they are still at standard defaults
+                if self.POSTGRES_HOST == "localhost":
+                    self.POSTGRES_HOST = "localhost"  # Host stays same
+                # Ports are usually handled by docker-compose, but we ensure internal URLs are consistent
+        return self
+
     @model_validator(mode="after")
     def apply_mode_overrides(self):
         """Apply configuration based on lite/full mode"""

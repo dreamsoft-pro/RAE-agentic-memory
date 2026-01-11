@@ -1,11 +1,9 @@
-
-
 target_path = "/home/grzegorz-lesniowski/cloud/screenwatcher_project/templates/dashboards/builder.html"
 
 # I will inject a console.log into the fetch success handler to help debug in browser console
 # and handle the case where data might be null more gracefully.
 
-with open(target_path, 'r') as f:
+with open(target_path, "r") as f:
     content = f.read()
 
 # Locate the fetch success block
@@ -30,7 +28,7 @@ if fetch_block in content:
 
     new_content = new_content.replace(map_fix_old, map_fix_new)
 
-    with open(target_path, 'w') as f:
+    with open(target_path, "w") as f:
         f.write(new_content)
     print("Injected JS debugging and date parsing fix to builder.html")
 else:
