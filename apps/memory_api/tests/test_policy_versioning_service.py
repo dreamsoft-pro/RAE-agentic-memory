@@ -12,6 +12,8 @@ from apps.memory_api.services.policy_versioning_service import (
     PolicyVersioningService,
 )
 
+pytestmark = pytest.mark.iso42001
+
 
 @pytest.fixture(autouse=True)
 def mock_logger(mocker):

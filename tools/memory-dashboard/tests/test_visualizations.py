@@ -256,7 +256,7 @@ class TestChartProperties:
                 {
                     "id": f"m{i}",
                     "content": "test",
-                    "timestamp": f"2024-01-{i+1:02d}T10:00:00",
+                    "timestamp": f"2024-01-{i + 1:02d}T10:00:00",
                 }
             )
 
@@ -316,8 +316,8 @@ class TestEdgeCases:
                     "id": f"m{i}",
                     "content": f"Memory {i}",
                     "layer": ["em", "wm", "sm", "ltm"][i % 4],
-                    "timestamp": f"2024-01-01T{i%24:02d}:00:00",
-                    "tags": [f"tag{i%10}"],
+                    "timestamp": f"2024-01-01T{i % 24:02d}:00:00",
+                    "tags": [f"tag{i % 10}"],
                 }
             )
 

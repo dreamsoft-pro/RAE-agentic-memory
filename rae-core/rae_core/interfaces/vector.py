@@ -19,7 +19,7 @@ class IVectorStore(Protocol):
     async def store_vector(
         self,
         memory_id: UUID,
-        embedding: list[float],
+        embedding: list[float] | dict[str, list[float]],
         tenant_id: str,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
@@ -27,7 +27,7 @@ class IVectorStore(Protocol):
 
         Args:
             memory_id: UUID of the memory
-            embedding: Vector embedding (typically 1536 dimensions for OpenAI)
+            embedding: Vector embedding (list) or dict of named vectors
             tenant_id: Tenant identifier
             metadata: Optional metadata to store with the vector
 
@@ -43,6 +43,7 @@ class IVectorStore(Protocol):
         layer: str | None = None,
         limit: int = 10,
         score_threshold: float | None = None,
+        agent_id: str | None = None,
     ) -> list[tuple[UUID, float]]:
         """Search for similar vectors using cosine similarity.
 
@@ -52,6 +53,7 @@ class IVectorStore(Protocol):
             layer: Optional layer filter
             limit: Maximum number of results
             score_threshold: Optional minimum similarity score (0.0-1.0)
+            agent_id: Optional agent identifier for filtering
 
         Returns:
             List of (memory_id, similarity_score) tuples, sorted by score descending
@@ -77,7 +79,7 @@ class IVectorStore(Protocol):
     async def update_vector(
         self,
         memory_id: UUID,
-        embedding: list[float],
+        embedding: list[float] | dict[str, list[float]],
         tenant_id: str,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
@@ -85,7 +87,7 @@ class IVectorStore(Protocol):
 
         Args:
             memory_id: UUID of the memory
-            embedding: New vector embedding
+            embedding: New vector embedding (list) or dict of named vectors
             tenant_id: Tenant identifier
             metadata: Optional new metadata
 

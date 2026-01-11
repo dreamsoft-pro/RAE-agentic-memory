@@ -58,7 +58,8 @@ class GeminiAdapter(ModelAdapter):
             )
 
             stdout, stderr = await asyncio.wait_for(
-                proc.communicate(), timeout=300  # 5 minutes
+                proc.communicate(),
+                timeout=300,  # 5 minutes
             )
 
             if proc.returncode != 0:

@@ -27,12 +27,21 @@ class MathLayerController:
         self, memory: dict[str, Any], query_similarity: float = 0.5
     ) -> float:
         """Score a memory's importance."""
+        from datetime import datetime, timezone
+
+        # Handle missing created_at (default to now to avoid recency penalty/crash)
+        created_at = memory.get("created_at")
+        if created_at is None:
+            created_at = datetime.now(timezone.utc)
+
         result = compute_memory_score(
             similarity=query_similarity,
             importance=memory.get("importance", 0.5),
             last_accessed_at=memory.get("last_accessed_at"),
-            created_at=memory.get("created_at"),  # type: ignore
-            access_count=memory.get("access_count", 0),
+            created_at=created_at,  # type: ignore
+            access_count=memory.get(
+                "usage_count", 0
+            ),  # Map DB 'usage_count' to Math 'access_count'
         )
         return float(result.final_score)
 

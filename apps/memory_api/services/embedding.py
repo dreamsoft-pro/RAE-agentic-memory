@@ -1,32 +1,18 @@
-from typing import TYPE_CHECKING, Any, List, Optional, cast
+from typing import Any, List, Optional, cast
 
 import litellm
 
 from apps.memory_api.metrics import embedding_time_histogram
 from rae_core.interfaces.embedding import IEmbeddingProvider
 
-try:  # pragma: no cover
-    from sentence_transformers import SentenceTransformer
-
-    SENTENCE_TRANSFORMERS_AVAILABLE = True
-except ImportError:  # pragma: no cover
-    SentenceTransformer = None  # type: ignore[assignment,misc]
-    SENTENCE_TRANSFORMERS_AVAILABLE = False
-
-if TYPE_CHECKING:
-    from sentence_transformers import SentenceTransformer  # noqa: F401
-
 # --- Embedding Model Loading ---
-# This logic is moved from the old qdrant_client.py
 
 
 class EmbeddingService:
     def __init__(self, settings: Optional[Any] = None):
         self._settings = settings
-        self.model: Optional["SentenceTransformer"] = None
         self._initialized = False
-        self.use_litellm = False
-        self.litellm_model = "text-embedding-3-small"  # Default fallback
+        self.litellm_model = "text-embedding-3-small"  # Default
 
     @property
     def settings(self):
@@ -34,73 +20,65 @@ class EmbeddingService:
 
         return self._settings or default_settings
 
-    def _ensure_available(self) -> None:
-        """Check availability of local embedding models or fall back to LiteLLM."""
-        if not SENTENCE_TRANSFORMERS_AVAILABLE:
-            self.use_litellm = True
-            # Determine best default model based on env
-            if self.settings.RAE_LLM_BACKEND == "ollama":
-                self.litellm_model = "ollama/nomic-embed-text"
-            elif self.settings.OPENAI_API_KEY:
-                self.litellm_model = "text-embedding-3-small"
-
-            print(
-                f"SentenceTransformers not found. Falling back to LiteLLM with model: {self.litellm_model}"
-            )
-
     def _initialize_model(self) -> None:
-        """Lazy initialization of the embedding model."""
+        """Lazy initialization of the embedding model settings."""
         if self._initialized:
             return
 
-        self._ensure_available()
+        # Determine best default model based on env
+        if self.settings.RAE_LLM_BACKEND == "ollama":
+            self.litellm_model = "ollama/nomic-embed-text"
+        elif self.settings.OPENAI_API_KEY:
+            self.litellm_model = "text-embedding-3-small"
 
-        if self.use_litellm:
-            self._initialized = True
-            return
-
-        if self.settings.ONNX_EMBEDDER_PATH:
-            # Placeholder for a real ONNX embedder class
-            # A real implementation would load the model and tokenizer here.
-            # self.model = self._get_onnx_embedder(self.settings.ONNX_EMBEDDER_PATH)
-            print(
-                f"Using ONNX embedder (placeholder) from: {self.settings.ONNX_EMBEDDER_PATH}"
-            )
-            # For now, we fall back to SentenceTransformer even if ONNX path is set,
-            # as the ONNX implementation is just a placeholder.
-            self.model = SentenceTransformer("all-MiniLM-L6-v2", device="cpu")  # type: ignore[misc]
-        else:
-            self.model = SentenceTransformer("all-MiniLM-L6-v2", device="cpu")  # type: ignore[misc]
-            print("Using SentenceTransformer 'all-MiniLM-L6-v2'")
-
+        print(f"Embedding service initialized with LiteLLM model: {self.litellm_model}")
         self._initialized = True
 
     @embedding_time_histogram.time()
     def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
         """
-        Generates dense embeddings for a list of texts (synchronous).
+        Generates dense embeddings for a list of texts (synchronous) via LiteLLM.
         """
         self._initialize_model()
 
-        if self.use_litellm:
-            # Use LiteLLM for embeddings
-            try:
-                kwargs = {}
-                if self.litellm_model.startswith("ollama/"):
-                    kwargs["api_base"] = self.settings.OLLAMA_API_BASE or self.settings.OLLAMA_API_URL
+        # Calibration: Apply Nomic prefixes if using nomic-embed-text
+        processed_texts = []
+        if "nomic" in self.litellm_model.lower():
+            for t in texts:
+                if not t.startswith("search_"):
+                    if len(t) < 100 and "?" in t:
+                        processed_texts.append(f"search_query: {t}")
+                    else:
+                        processed_texts.append(f"search_document: {t}")
+                else:
+                    processed_texts.append(t)
+        else:
+            processed_texts = texts
 
-                response = litellm.embedding(
-                    model=self.litellm_model, input=texts, **kwargs
+        # Use LiteLLM for embeddings
+        try:
+            kwargs = {}
+            if self.litellm_model.startswith("ollama/"):
+                kwargs["api_base"] = (
+                    self.settings.OLLAMA_API_BASE or self.settings.OLLAMA_API_URL
                 )
-                return [d["embedding"] for d in response["data"]]
-            except Exception as e:
-                print(f"LiteLLM embedding failed: {e}")
-                # Fallback to dummy embeddings if API fails (to prevent crash in dev)
-                # In prod this should probably raise
-                return [[0.0] * 384 for _ in texts]
 
-        embeddings = self.model.encode(texts)  # type: ignore[union-attr]
-        return [emb.tolist() for emb in embeddings]
+            response = litellm.embedding(
+                model=self.litellm_model, input=processed_texts, **kwargs
+            )
+            return [d["embedding"] for d in response["data"]]
+        except Exception as e:
+            print(f"LiteLLM embedding failed: {e}")
+            # Return zero embeddings as ultimate safety fallback
+            dim = self.get_dimension_for_model(self.litellm_model)
+            return [[0.0] * dim for _ in texts]
+
+    def get_dimension_for_model(self, model_name: str) -> int:
+        if "openai" in model_name or "text-embedding-3" in model_name:
+            return 1536
+        if "nomic" in model_name:
+            return 768
+        return 384
 
     async def generate_embeddings_async(self, texts: List[str]) -> List[List[float]]:
         """
@@ -121,59 +99,48 @@ class EmbeddingService:
             finally:
                 await client.close()
 
-        # Initialize to check if we use litellm
         self._initialize_model()
 
-        if self.use_litellm:
-            # LiteLLM supports async via aembedding
-            try:
-                kwargs = {}
-                if self.litellm_model.startswith("ollama/"):
-                    kwargs["api_base"] = self.settings.OLLAMA_API_BASE or self.settings.OLLAMA_API_URL
-
-                response = await litellm.aembedding(
-                    model=self.litellm_model, input=texts, **kwargs
+        # LiteLLM supports async via aembedding
+        try:
+            kwargs = {}
+            if self.litellm_model.startswith("ollama/"):
+                kwargs["api_base"] = (
+                    self.settings.OLLAMA_API_BASE or self.settings.OLLAMA_API_URL
                 )
-                return [d["embedding"] for d in response["data"]]
-            except Exception as e:
-                print(f"LiteLLM async embedding failed: {e}")
-                return [[0.0] * 384 for _ in texts]
 
-        # Fallback to local execution (offloaded to thread pool if needed,
-        # but here we just call the sync version for simplicity)
-        import asyncio
-
-        return await asyncio.to_thread(self.generate_embeddings, texts)
+            response = await litellm.aembedding(
+                model=self.litellm_model, input=texts, **kwargs
+            )
+            return [d["embedding"] for d in response["data"]]
+        except Exception as e:
+            print(f"LiteLLM async embedding failed: {e}")
+            dim = self.get_dimension_for_model(self.litellm_model)
+            return [[0.0] * dim for _ in texts]
 
     async def generate_embeddings_for_model(
         self, texts: List[str], model_name: str
     ) -> List[List[float]]:
         """
         Generates embeddings for a specific model via LiteLLM.
-        Useful for Multi-Vector Fusion where we need embeddings from multiple models.
         """
         try:
             kwargs = {}
             if model_name.startswith("ollama/"):
-                kwargs["api_base"] = self.settings.OLLAMA_API_BASE or self.settings.OLLAMA_API_URL
-
-            # Determine dimension for fallback
-            dim = 384
-            if "openai" in model_name or "text-embedding-3" in model_name:
-                dim = 1536
-            elif "nomic" in model_name:
-                dim = 768
+                kwargs["api_base"] = (
+                    self.settings.OLLAMA_API_BASE or self.settings.OLLAMA_API_URL
+                )
 
             response = await litellm.aembedding(model=model_name, input=texts, **kwargs)
             return [d["embedding"] for d in response["data"]]
         except Exception as e:
             print(f"LiteLLM embedding for {model_name} failed: {e}")
-            # Return zeros to allow fusion to continue with other models
+            dim = self.get_dimension_for_model(model_name)
             return [[0.0] * dim for _ in texts]
 
 
 class LocalEmbeddingProvider(IEmbeddingProvider):
-    """Local embedding provider wrapping the embedding service."""
+    """Local embedding provider wrapping LiteLLM."""
 
     def __init__(self, embedding_service: Any = None):
         self.service = embedding_service or get_embedding_service()
@@ -189,16 +156,8 @@ class LocalEmbeddingProvider(IEmbeddingProvider):
 
     def get_dimension(self) -> int:
         """Get embedding dimension."""
-        # Ensure we check availability to set use_litellm correctly
-        self.service._ensure_available()
-
-        # Check if using Ollama which usually has 768 dims for nomic-embed-text
-        if self.service.use_litellm:
-            if self.service.litellm_model.startswith("ollama/"):
-                return 768
-
-        # Default for all-MiniLM-L6-v2
-        return 384
+        self.service._initialize_model()
+        return self.service.get_dimension_for_model(self.service.litellm_model)
 
 
 class RemoteEmbeddingProvider(IEmbeddingProvider):

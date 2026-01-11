@@ -21,11 +21,11 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 
+from apps.memory_api.models import EntityInput
+
 # Adjust imports based on what you're testing
 from apps.memory_api.repositories.entity_repository import EntityRepository
 from apps.memory_api.services.my_business_service import MyBusinessService
-
-from apps.memory_api.models import EntityInput
 
 # ═══════════════════════════════════════════════════════════════
 # FIXTURES (Reusable Test Data and Setup)
@@ -549,7 +549,7 @@ async def pool():
     NOTE: This is a placeholder - implement based on your setup
     """
     # Setup: Create pool, run migrations, etc.
-    pool = await create_test_pool()
+    pool = await create_test_pool()  # noqa: F821
 
     yield pool
 

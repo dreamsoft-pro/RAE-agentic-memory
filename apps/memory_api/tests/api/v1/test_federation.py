@@ -25,6 +25,7 @@ def client_with_mocks():
             "POSTGRES_PASSWORD": "rae_password",
             "POSTGRES_DB": "rae",
             "POSTGRES_HOST": "localhost",
+            "RAE_DB_MODE": "ignore",
         },
     ):
         # Mock app state

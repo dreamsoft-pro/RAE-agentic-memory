@@ -5,7 +5,7 @@ import urllib.request
 
 def launch_final_task():
     f_path = "apps/memory_api/services/hybrid_search_service.py"
-    with open(f_path, 'r') as f:
+    with open(f_path, "r") as f:
         content = f.read()
 
     # We put EVERYTHING in the prompt to bypass old agent limitations
@@ -22,21 +22,21 @@ def launch_final_task():
         "payload": {
             "prompt": instruction,
             "writer_model": "deepseek-coder:33b",
-            "reviewer_model": "deepseek-coder:6.7b"
-        }
+            "reviewer_model": "deepseek-coder:6.7b",
+        },
     }
 
     req = urllib.request.Request(
         "http://localhost:8000/control/tasks",
         data=json.dumps(payload).encode("utf-8"),
         headers={"Content-Type": "application/json", "X-API-Key": "dev-key"},
-        method="POST"
+        method="POST",
     )
 
     with urllib.request.urlopen(req) as f:
         res = json.loads(f.read().decode("utf-8"))
         print(f"🚀 FINAL Task Created: {res['id']}")
 
+
 if __name__ == "__main__":
     launch_final_task()
-

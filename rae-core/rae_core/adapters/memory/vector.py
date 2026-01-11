@@ -45,14 +45,26 @@ class InMemoryVectorStore(IVectorStore):
     async def store_vector(
         self,
         memory_id: UUID,
-        embedding: list[float],
+        embedding: list[float] | dict[str, list[float]],
         tenant_id: str,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
         """Store a vector embedding."""
         async with self._lock:
+            # Handle both list and dict input
+            if isinstance(embedding, dict):
+                # For in-memory store, we just pick the first available vector
+                # In a real multi-vector scenario, this adapter would need enhancement,
+                # but it serves as a simple fallback/test adapter.
+                if not embedding:
+                    return False
+                # Pick first value from dict
+                vector_values = next(iter(embedding.values()))
+            else:
+                vector_values = embedding
+
             vector_data = {
-                "embedding": np.array(embedding, dtype=np.float32),
+                "embedding": np.array(vector_values, dtype=np.float32),
                 "tenant_id": tenant_id,
                 "metadata": metadata or {},
             }
@@ -69,6 +81,7 @@ class InMemoryVectorStore(IVectorStore):
         layer: str | None = None,
         limit: int = 10,
         score_threshold: float | None = None,
+        agent_id: str | None = None,
     ) -> list[tuple[UUID, float]]:
         """Search for similar vectors using cosine similarity."""
         async with self._lock:
@@ -144,7 +157,7 @@ class InMemoryVectorStore(IVectorStore):
     async def update_vector(
         self,
         memory_id: UUID,
-        embedding: list[float],
+        embedding: list[float] | dict[str, list[float]],
         tenant_id: str,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
@@ -155,8 +168,16 @@ class InMemoryVectorStore(IVectorStore):
             if not vector_data or vector_data["tenant_id"] != tenant_id:
                 return False
 
+            # Handle both list and dict input
+            if isinstance(embedding, dict):
+                if not embedding:
+                    return False
+                vector_values = next(iter(embedding.values()))
+            else:
+                vector_values = embedding
+
             # Update embedding
-            vector_data["embedding"] = np.array(embedding, dtype=np.float32)
+            vector_data["embedding"] = np.array(vector_values, dtype=np.float32)
 
             # Update metadata if provided
             if metadata is not None:

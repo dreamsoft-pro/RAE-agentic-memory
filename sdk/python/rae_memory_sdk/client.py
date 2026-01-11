@@ -43,6 +43,7 @@ class MemoryClient:
         api_url: Optional[str] = None,
         api_key: Optional[str] = None,
         tenant_id: Optional[str] = None,
+        session_id: Optional[str] = None,
         config: Optional[RAEClientConfig] = None,
     ):
         if config:
@@ -54,6 +55,7 @@ class MemoryClient:
                 RAE_TENANT_ID=tenant_id or RAEClientConfig().RAE_TENANT_ID,
             )
 
+        self.session_id = session_id
         self._http_client = httpx.Client(base_url=self.config.RAE_API_URL)
         self._async_http_client = httpx.AsyncClient(base_url=self.config.RAE_API_URL)
         self._headers = {
@@ -61,6 +63,8 @@ class MemoryClient:
             "X-Tenant-Id": self.config.RAE_TENANT_ID,
             "Content-Type": "application/json",
         }
+        if self.session_id:
+            self._headers["X-Session-Id"] = self.session_id
 
     def _request(self, method: str, url: str, **kwargs) -> Any:
         """Synchronous HTTP request wrapper."""
@@ -106,6 +110,9 @@ class MemoryClient:
         """
         Stores a new memory record.
         """
+        if not memory.session_id and self.session_id:
+            memory.session_id = self.session_id
+
         response_data = self._request(
             "POST", "/memory/store", json=memory.model_dump(exclude_none=True)
         )
@@ -815,6 +822,9 @@ class MemoryClient:
             response = await client.store_async(memory_request)
             ```
         """
+        if not memory.session_id and self.session_id:
+            memory.session_id = self.session_id
+
         response_data = await self._async_request(
             "POST", "/memory/store", json=memory.model_dump(exclude_none=True)
         )
@@ -1207,6 +1217,30 @@ class MemoryClient:
         return cast(
             Dict[str, Any], await self._async_request("POST", "/v1/cache/rebuild")
         )
+
+    # Contextual Helpers
+
+    async def store_interaction(
+        self,
+        content: str,
+        role: str,
+        project: Optional[str] = None,
+        session_id: Optional[str] = None,
+    ) -> StoreMemoryResponse:
+        """
+        Specialized method to store agent-user interaction in the sensory layer.
+        Automatically sets layer="sensory" and memory_type="interaction".
+        """
+        request = StoreMemoryRequest(
+            content=content,
+            layer="sensory",
+            memory_type="interaction",
+            project=project,
+            session_id=session_id or self.session_id,
+            source=role,
+            importance=0.4,  # Sensory info starts with lower importance
+        )
+        return await self.store_async(request)
 
     async def close(self):
         """Close async HTTP client connections."""

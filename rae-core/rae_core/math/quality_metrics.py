@@ -50,7 +50,7 @@ class IMetric(ABC):
     @abstractmethod
     def name(self) -> str:
         """Unique identifier for the metric."""
-        pass
+        ...
 
     @abstractmethod
     def compute(
@@ -66,7 +66,7 @@ class IMetric(ABC):
         Returns:
             MetricResult object
         """
-        pass
+        ...
 
 
 class TextCoherenceMetric(IMetric):
@@ -83,7 +83,7 @@ class TextCoherenceMetric(IMetric):
 
     def compute(
         self, content: Any, context: dict[str, Any] | None = None
-    ) -> MetricResult:  # pragma: no cover
+    ) -> MetricResult:
         if not isinstance(content, str):
             return MetricResult(
                 score=0.0,
@@ -105,7 +105,7 @@ class TextCoherenceMetric(IMetric):
         word_count = len(words)
 
         # Heuristic 1: Very short texts are rarely coherent memories
-        if word_count < 3:  # pragma: no cover
+        if word_count < 3:
             return MetricResult(
                 score=0.2,
                 name=self.name,

@@ -40,7 +40,9 @@ def get_test_metrics():
         lines = output.split("\n")
 
         # Parse last line: "X selected, Y deselected, Z skipped"
-        last_line = [line for line in lines if "selected" in line or "tests collected" in line]
+        last_line = [
+            line for line in lines if "selected" in line or "tests collected" in line
+        ]
         if last_line:
             parts = last_line[-1].split()
             total = int(parts[0])

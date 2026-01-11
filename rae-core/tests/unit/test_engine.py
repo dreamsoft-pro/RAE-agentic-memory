@@ -110,6 +110,12 @@ async def test_store_memory(rae_engine, mock_memory_storage):
         tags=[],
         metadata={},
         embedding=ANY,
+        memory_type="text",
+        project=None,
+        session_id=None,
+        expires_at=None,
+        source=None,
+        strength=1.0,
     )
 
 

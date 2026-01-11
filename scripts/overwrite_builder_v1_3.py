@@ -1,5 +1,3 @@
-
-
 target_path = "/home/grzegorz-lesniowski/cloud/screenwatcher_project/templates/dashboards/builder.html"
 
 new_content = """{% extends "base.html" %}

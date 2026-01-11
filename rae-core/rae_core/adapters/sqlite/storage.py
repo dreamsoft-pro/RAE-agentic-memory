@@ -164,6 +164,11 @@ class SQLiteStorage(IMemoryStorage):
         embedding: list[float] | None = None,
         importance: float | None = None,
         expires_at: Any | None = None,
+        memory_type: str = "text",
+        project: str | None = None,
+        session_id: str | None = None,
+        source: str | None = None,
+        strength: float = 1.0,
     ) -> UUID:
         """Store a new memory."""
         await self.initialize()
@@ -269,7 +274,7 @@ class SQLiteStorage(IMemoryStorage):
             cursor = await db.execute(
                 f"""
                 UPDATE memories
-                SET {', '.join(set_clauses)}
+                SET {", ".join(set_clauses)}
                 WHERE id = ? AND tenant_id = ?
                 """,
                 params,
@@ -813,6 +818,7 @@ class SQLiteStorage(IMemoryStorage):
         memory_id: UUID,
         model_name: str,
         embedding: list[float],
+        tenant_id: str,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
         """Save a vector embedding for a memory."""
@@ -823,6 +829,16 @@ class SQLiteStorage(IMemoryStorage):
         embedding_json = json.dumps(embedding)
 
         async with aiosqlite.connect(self.db_path) as db:
+            # Check existence and tenant ownership (SEC-02)
+            async with db.execute(
+                "SELECT 1 FROM memories WHERE id = ? AND tenant_id = ?",
+                (str(memory_id), tenant_id),
+            ) as cursor:
+                if not await cursor.fetchone():
+                    raise ValueError(
+                        f"Access Denied: Memory {memory_id} not found for tenant {tenant_id}"
+                    )
+
             await db.execute(
                 """
                 INSERT INTO memory_embeddings (
@@ -837,6 +853,45 @@ class SQLiteStorage(IMemoryStorage):
             )
             await db.commit()
             return True
+
+    async def decay_importance(
+        self,
+        tenant_id: str,
+        decay_rate: float,
+        consider_access_stats: bool = False,
+    ) -> int:
+        """Apply importance decay to all memories for a tenant."""
+        await self.initialize()
+        now = datetime.now(timezone.utc).isoformat()
+
+        async with aiosqlite.connect(self.db_path) as db:
+            if not consider_access_stats:
+                # Simple linear decay for all
+                cursor = await db.execute(
+                    """
+                    UPDATE memories
+                    SET importance = MAX(0.0, importance - ?),
+                        modified_at = ?
+                    WHERE tenant_id = ?
+                    """,
+                    (decay_rate, now, tenant_id),
+                )
+            else:
+                # Slower decay for used memories
+                # Note: LOG1P equivalent in SQLite is not standard,
+                # using a simpler usage-based dampening: decay / (1 + usage_count)
+                cursor = await db.execute(
+                    """
+                    UPDATE memories
+                    SET importance = MAX(0.0, importance - (? / (1.0 + access_count))),
+                        modified_at = ?
+                    WHERE tenant_id = ?
+                    """,
+                    (decay_rate, now, tenant_id),
+                )
+
+            await db.commit()
+            return cursor.rowcount
 
     def _matches_metadata_filter(
         self, metadata: dict[str, Any], filter_dict: dict[str, Any]

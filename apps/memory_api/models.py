@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 # --- Core Memory Models ---
 
@@ -10,24 +10,8 @@ from pydantic import BaseModel, Field
 class MemoryLayer(str, Enum):
     """
     Enum for memory layers, representing different levels of processing and retention.
-
-    Logicalwarstwa przetwarzania (STM/LTM/episodic/reflective).
-    See: docs/MEMORY_MODEL.md for complete layer mapping.
-
-    - stm/working: Short-term memory (Layer 1/2), volatile and immediate
-    - ltm/semantic: Long-term memory (Layer 3), consolidated and durable
-    - em/episodic: Episodic memory (Layer 2/3), time-sequenced events
-    - rm/reflective: Reflective memory (Layer 4), synthesized meta-learning
-    - sensory: Sensory buffer (Layer 0), immediate perception
     """
 
-    # Short codes (legacy)
-    stm = "stm"
-    ltm = "ltm"
-    rm = "rm"
-    em = "em"
-
-    # Full names (new standard from RAE-core)
     working = "working"
     semantic = "semantic"
     reflective = "reflective"
@@ -93,6 +77,7 @@ class MemoryRecord(BaseModel):
     content: str
     source: Optional[str] = None
     importance: float = 0.5
+    strength: float = 1.0
     layer: MemoryLayer = MemoryLayer.semantic  # See MEMORY_MODEL.md for layer mapping
     tags: Optional[List[str]] = None
     timestamp: datetime = Field(default_factory=datetime.now)
@@ -153,6 +138,18 @@ class StoreMemoryRequest(BaseModel):
     timestamp: Optional[datetime] = None
     project: Optional[str] = Field(None, max_length=255)
 
+    # Phase 1: Canonical fields for DB Refactor
+    session_id: Optional[str] = Field(
+        None, description="Session identifier for conversation grouping"
+    )
+    memory_type: Optional[str] = Field(
+        None, description="Functional type (text, code, image, etc.)"
+    )
+    ttl: Optional[int] = Field(None, gt=0, description="Time-to-live in seconds")
+    strength: Optional[float] = Field(
+        default=1.0, ge=0.0, le=1.0, description="Memory strength (for decay)"
+    )
+
     # ISO/IEC 42001 - Source Trust & Provenance
     source_owner: Optional[str] = Field(
         None, max_length=255, description="Owner/responsible party for this source"
@@ -163,6 +160,27 @@ class StoreMemoryRequest(BaseModel):
     verification_notes: Optional[str] = Field(
         None, max_length=1024, description="Notes about source verification"
     )
+
+    @field_validator("layer", mode="before")
+    @classmethod
+    def normalize_layer(cls, v: Any) -> Any:
+        """Normalize legacy short layer codes to full standard names."""
+        mapping = {
+            "em": "episodic",
+            "episodic": "episodic",
+            "stm": "working",
+            "wm": "working",
+            "working": "working",
+            "sm": "semantic",
+            "ltm": "semantic",
+            "semantic": "semantic",
+            "rm": "reflective",
+            "reflective": "reflective",
+            "sensory": "sensory",
+        }
+        if isinstance(v, str) and v.lower() in mapping:
+            return mapping[v.lower()]
+        return v
 
     model_config = {
         "json_schema_extra": {
@@ -255,6 +273,9 @@ class AgentExecuteRequest(BaseModel):
     tenant_id: str = Field(min_length=1, max_length=255)
     project: str = Field(min_length=1, max_length=255)
     prompt: str = Field(min_length=1, max_length=8192)
+    session_id: Optional[str] = Field(
+        None, description="Session identifier for context management"
+    )
     tools_allowed: Optional[List[str]] = None
     budget_tokens: int = Field(default=20000, gt=0, le=100000)
 

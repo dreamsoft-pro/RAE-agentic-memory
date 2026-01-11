@@ -66,3 +66,11 @@ docs/*-claude-*.md
 junit.xml
 junit.xml
 docs/infra/kubus.md
+
+# RAE Cluster Configuration (Private)
+config/cluster.yaml
+config/cluster.local.yaml
+**/*.pem
+**/*.key
+pass_*.tmp
+

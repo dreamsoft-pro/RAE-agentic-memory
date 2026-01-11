@@ -104,7 +104,7 @@ REVIEW CRITERIA:
 
 OUTPUT FORMAT (JSON):
 {{
-  "plan_id": "{plan.get('task_id', 'unknown')}-v{plan.get('plan_version', 1)}",
+  "plan_id": "{plan.get("task_id", "unknown")}-v{plan.get("plan_version", 1)}",
   "status": "approved|rejected|needs_revision",
   "review": {{
     "completeness": 1-10,

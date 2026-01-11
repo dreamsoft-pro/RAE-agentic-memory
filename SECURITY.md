@@ -39,11 +39,18 @@ Include:
 
 ### 4. Disclosure Policy
 
+- **Embargo Period:** We request a 90-day embargo period before public disclosure to allow users to upgrade.
 - We will acknowledge your email within 48 hours
 - We will provide a more detailed response within 7 days
-- We will work with you to understand and validate the issue
-- We will notify you when the issue is fixed
-- We will credit you in the security advisory (unless you prefer to remain anonymous)
+
+## ISO 27001 Compliance
+
+RAE-Core is being developed in accordance with ISO/IEC 27001:2022 standards.
+See our [ISO 27001 Implementation Plan](docs/compliance/ISO_27001_IMPLEMENTATION_PLAN.md) for details on:
+- Secure Development Lifecycle (SDLC)
+- Access Control
+- Cryptography
+- Operations Security
 
 ## Security Best Practices
 

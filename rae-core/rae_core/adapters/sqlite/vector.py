@@ -86,15 +86,25 @@ class SQLiteVectorStore(IVectorStore):
     async def store_vector(
         self,
         memory_id: UUID,
-        embedding: list[float],
+        embedding: list[float] | dict[str, list[float]],
         tenant_id: str,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
         """Store a vector embedding."""
         await self.initialize()
 
+        # Handle both list and dict input
+        if isinstance(embedding, dict):
+            # For SQLite store, we just pick the first available vector
+            # In a real multi-vector scenario, this adapter would need enhancement.
+            if not embedding:
+                return False
+            vector_values = next(iter(embedding.values()))
+        else:
+            vector_values = embedding
+
         # Serialize embedding as BLOB (float32 array)
-        embedding_bytes = struct.pack(f"{len(embedding)}f", *embedding)
+        embedding_bytes = struct.pack(f"{len(vector_values)}f", *vector_values)
         metadata_json = json.dumps(metadata or {})
 
         async with aiosqlite.connect(self.db_path) as db:
@@ -106,7 +116,7 @@ class SQLiteVectorStore(IVectorStore):
                 (
                     str(memory_id),
                     embedding_bytes,
-                    len(embedding),
+                    len(vector_values),
                     tenant_id,
                     metadata_json,
                 ),
@@ -122,6 +132,7 @@ class SQLiteVectorStore(IVectorStore):
         layer: str | None = None,
         limit: int = 10,
         score_threshold: float | None = None,
+        agent_id: str | None = None,
     ) -> list[tuple[UUID, float]]:
         """Search for similar vectors using cosine similarity."""
         await self.initialize()
@@ -212,7 +223,7 @@ class SQLiteVectorStore(IVectorStore):
     async def update_vector(
         self,
         memory_id: UUID,
-        embedding: list[float],
+        embedding: list[float] | dict[str, list[float]],
         tenant_id: str,
         metadata: dict[str, Any] | None = None,
     ) -> bool:

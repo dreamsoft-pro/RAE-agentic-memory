@@ -359,7 +359,9 @@ if "connected" in st.session_state and st.session_state.connected:
 
 else:
     # Not connected - show welcome message
-    st.info("👈 Please configure connection settings in the sidebar and click 'Connect'")
+    st.info(
+        "👈 Please configure connection settings in the sidebar and click 'Connect'"
+    )
 
     st.divider()
 

@@ -101,6 +101,34 @@ async def test_store_memory_with_embedding_fallback(mock_storage, mock_vector_st
 
 
 @pytest.mark.asyncio
+async def test_store_memory_with_ttl(
+    mock_storage, mock_vector_store, mock_embedding_provider
+):
+    """Test storing memory with TTL to cover expiration logic."""
+    # Ensure generate_all_embeddings works if detected
+    mock_embedding_provider.generate_all_embeddings = AsyncMock(
+        return_value={"default": [[0.1] * 128]}
+    )
+
+    engine = RAEEngine(mock_storage, mock_vector_store, mock_embedding_provider)
+    mock_storage.store_memory.return_value = uuid4()
+
+    await engine.store_memory("t1", "a1", "content", ttl=60)
+
+    assert mock_storage.store_memory.called
+    call_args = mock_storage.store_memory.call_args
+    assert call_args.kwargs["expires_at"] is not None
+
+    # Check if expires_at is roughly 60s from now
+    from datetime import datetime, timezone
+
+    expires_at = call_args.kwargs["expires_at"]
+    now = datetime.now(timezone.utc)
+    diff = (expires_at - now).total_seconds()
+    assert 58 < diff < 62
+
+
+@pytest.mark.asyncio
 async def test_search_memories_with_reranker(
     mock_storage, mock_vector_store, mock_embedding_provider
 ):
@@ -118,7 +146,6 @@ async def test_search_memories_with_reranker(
             engine.search_engine, "rerank", AsyncMock(return_value=[(mem_id, 0.9)])
         ) as mock_rerank,
     ):
-
         mock_storage.get_memory.return_value = {"id": mem_id, "content": "test"}
 
         results = await engine.search_memories(

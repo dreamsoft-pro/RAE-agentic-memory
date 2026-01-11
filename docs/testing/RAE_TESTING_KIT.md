@@ -174,15 +174,40 @@ Evaluation Suite zwraca:
 
 ---
 
-# 7. Przygotowanie do benchmarków naukowych
+# 7. Benchmarki Systemowe i Naukowe
 
-Aby testerzy mogli przygotować regulaminowy eksperyment:
+RAE posiada rozbudowany system benchmarków podzielony na trzy główne kategorie. Szczegółowe opisy znajdują się w `benchmarking/README.md`.
 
-1. Stwórz osobny katalog: `benchmarking/`
-2. Użyj przykładowych zestawów z [BENCHMARK_STARTER.md](BENCHMARK_STARTER.md)
-3. Zdefiniuj konfigurację A/B (np. różne ustawienia pamięci / LLM)
-4. Zapisz wyniki zgodnie z szablonem raportu
-5. Dodaj wyniki do tabel benchmarków w RAE (opcjonalnie)
+## 7.1 Zestawy Przemysłowe (Standard v1)
+Testują system w scenariuszach rzeczywistych (RAG, biznes, messy data).
+
+| Komenda | Zestaw | Opis |
+|---------|--------|------|
+| `make benchmark-lite` | `academic_lite` | Szybka walidacja poprawności matematycznej (<10s). |
+| `make benchmark-extended` | `academic_extended` | Kompleksowa weryfikacja jakości odpowiedzi (~30s). |
+| `make benchmark-industrial` | `industrial_small` | Mała skala danych rzeczywistych (~2min). |
+| `make benchmark-large` | `industrial_large` | **SOTA Piotrek Baseline**: 1000+ pamięci, test kalibracji. |
+| `make benchmark-drift` | `stress_memory_drift` | Test stabilności przy dryfcie wektorowym. |
+
+## 7.2 Benchmarki Badawcze (Suite 9 of 5)
+Zaawansowane testy izolacji i spójności logicznej AI.
+
+- **LECT** (Logical Event Consistency): Czy system pamięta logiczną kolejność zdarzeń?
+- **MMIT** (Multi-Memory Interference): Czy nowe fakty nie "nadpisują" starych błędnie?
+- **GRDT** (Graph Reasoning Depth): Jak głęboko w grafie wiedzy system potrafi wnioskować?
+- **RST** (Retrieval Stability): Czy wyniki są powtarzalne przy dużym szumie informacyjnym?
+- **ORB** (Optimal Reasoning): Analiza Pareto: koszt vs jakość vs czas.
+
+**Uruchomienie Bramki CI (Nine-Five):**
+```bash
+make benchmark-gate
+```
+
+## 7.3 Testy Ekstremalne (Skalowanie)
+Dedykowane dla klastrów obliczeniowych (Node1/Node2).
+
+- `industrial_extreme.yaml`: 10,000 pamięci.
+- `industrial_ultra.yaml`: 100,000 pamięci (Wymaga Node1/Node2).
 
 ---
 

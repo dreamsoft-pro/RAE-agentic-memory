@@ -22,8 +22,9 @@ from typing import Any, Dict, List, Optional
 
 import asyncpg
 import structlog
-from apps.memory_api.repositories.entity_repository import EntityRepository
 from pydantic import BaseModel, Field
+
+from apps.memory_api.repositories.entity_repository import EntityRepository
 
 logger = structlog.get_logger(__name__)
 

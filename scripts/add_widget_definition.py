@@ -1,8 +1,8 @@
+target_path = (
+    "/home/grzegorz-lesniowski/cloud/screenwatcher_project/apps/dashboards/models.py"
+)
 
-
-target_path = "/home/grzegorz-lesniowski/cloud/screenwatcher_project/apps/dashboards/models.py"
-
-with open(target_path, 'r') as f:
+with open(target_path, "r") as f:
     content = f.read()
 
 # Insert WidgetDefinition before Widget class
@@ -23,7 +23,7 @@ new_model_code = """class WidgetDefinition(BaseModel):
 if "class WidgetDefinition" not in content:
     new_content = content.replace(insertion_point, new_model_code + insertion_point)
 
-    with open(target_path, 'w') as f:
+    with open(target_path, "w") as f:
         f.write(new_content)
     print("Added WidgetDefinition model.")
 else:

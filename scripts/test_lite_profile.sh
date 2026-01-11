@@ -1,6 +1,6 @@
 #!/bin/bash
 # Smoke test for RAE Lite Profile
-# Tests basic functionality of docker compose.lite.yml
+# Tests basic functionality of docker-compose.lite.yml
 
 set -e
 
@@ -23,8 +23,8 @@ fi
 echo "✅ docker compose found"
 
 # Validate YAML syntax
-echo -n "Validating docker compose.lite.yml syntax... "
-if docker compose -f docker compose.lite.yml config > /dev/null 2>&1; then
+echo -n "Validating docker-compose.lite.yml syntax... "
+if docker compose -f docker-compose.lite.yml config > /dev/null 2>&1; then
     echo -e "${GREEN}✅ Valid${NC}"
 else
     echo -e "${RED}❌ Invalid${NC}"
@@ -44,7 +44,7 @@ echo "✅ .env file exists"
 # Start services
 echo ""
 echo "🚀 Starting RAE Lite services..."
-docker compose -f docker compose.lite.yml up -d
+docker compose -f docker-compose.lite.yml up -d
 
 # Wait for services to be ready
 echo "⏳ Waiting for services to be healthy..."
@@ -53,9 +53,9 @@ sleep 10
 # Check if services are running
 echo ""
 echo "Checking service status:"
-SERVICES=$(docker compose -f docker compose.lite.yml ps --services)
+SERVICES=$(docker compose -f docker-compose.lite.yml ps --services)
 for service in $SERVICES; do
-    STATUS=$(docker compose -f docker compose.lite.yml ps -q $service | xargs docker inspect -f '{{.State.Status}}' 2>/dev/null || echo "not found")
+    STATUS=$(docker compose -f docker-compose.lite.yml ps -q $service | xargs docker inspect -f '{{.State.Status}}' 2>/dev/null || echo "not found")
     if [ "$STATUS" = "running" ]; then
         echo -e "  ${GREEN}✅${NC} $service: running"
     else
@@ -63,13 +63,18 @@ for service in $SERVICES; do
     fi
 done
 
+# Port configuration
+API_PORT="${RAE_LITE_PORT:-8002}"
+API_URL="http://localhost:${API_PORT}"
+TENANT_ID="00000000-0000-0000-0000-000000000000"
+
 # Wait for API to be ready
 echo ""
-echo "⏳ Waiting for API to be ready..."
+echo "⏳ Waiting for API to be ready on ${API_URL}..."
 MAX_RETRIES=30
 RETRY_COUNT=0
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-    if curl -s http://localhost:8000/health > /dev/null 2>&1; then
+    if curl -s ${API_URL}/health > /dev/null 2>&1; then
         echo -e "${GREEN}✅ API is ready${NC}"
         break
     fi
@@ -80,14 +85,14 @@ done
 
 if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
     echo -e "${RED}❌ API failed to start within timeout${NC}"
-    docker compose -f docker compose.lite.yml logs rae-api
+    docker compose -f docker-compose.lite.yml logs rae-api-lite
     exit 1
 fi
 
 # Test health endpoint
 echo ""
 echo "Testing /health endpoint..."
-HEALTH_RESPONSE=$(curl -s http://localhost:8000/health)
+HEALTH_RESPONSE=$(curl -s ${API_URL}/health)
 if echo "$HEALTH_RESPONSE" | grep -q "healthy"; then
     echo -e "${GREEN}✅ Health check passed${NC}"
     echo "Response: $HEALTH_RESPONSE"
@@ -103,9 +108,10 @@ echo "Testing API endpoints..."
 
 # Test store memory
 echo -n "  Testing POST /v1/memory/store... "
-STORE_RESPONSE=$(curl -s -X POST http://localhost:8000/v1/memory/store \
+STORE_RESPONSE=$(curl -s -X POST ${API_URL}/v1/memory/store \
     -H "Content-Type: application/json" \
-    -H "X-Tenant-Id: test-tenant" \
+    -H "X-Tenant-Id: ${TENANT_ID}" \
+    -H "X-API-Key: secret" \
     -d '{
         "content": "Smoke test memory",
         "source": "smoke-test",
@@ -122,9 +128,10 @@ fi
 
 # Test query memory
 echo -n "  Testing POST /v1/memory/query... "
-QUERY_RESPONSE=$(curl -s -X POST http://localhost:8000/v1/memory/query \
+QUERY_RESPONSE=$(curl -s -X POST ${API_URL}/v1/memory/query \
     -H "Content-Type: application/json" \
-    -H "X-Tenant-Id: test-tenant" \
+    -H "X-Tenant-Id: ${TENANT_ID}" \
+    -H "X-API-Key: secret" \
     -d '{
         "query_text": "smoke test",
         "k": 5
@@ -143,14 +150,8 @@ echo "================================"
 echo -e "${GREEN}✅ RAE Lite Profile smoke test PASSED${NC}"
 echo ""
 echo "Services running:"
-echo "  - API: http://localhost:8000"
-echo "  - API Docs: http://localhost:8000/docs"
-echo "  - PostgreSQL: localhost:5432"
-echo "  - Qdrant: localhost:6333"
-echo "  - Redis: localhost:6379"
-echo ""
-echo "To stop services:"
-echo "  docker compose -f docker compose.lite.yml down"
-echo ""
-echo "To view logs:"
-echo "  docker compose -f docker compose.lite.yml logs -f"
+echo "  - API: ${API_URL}"
+echo "  - API Docs: ${API_URL}/docs"
+echo "  - PostgreSQL: localhost:5434"
+echo "  - Qdrant: localhost:6335"
+echo "  - Redis: localhost:6380"

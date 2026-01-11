@@ -13,6 +13,8 @@ from apps.memory_api.services.context_provenance_service import (
     DecisionType,
 )
 
+pytestmark = pytest.mark.iso42001
+
 
 @pytest.fixture(autouse=True)
 def mock_logger(mocker):

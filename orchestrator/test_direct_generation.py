@@ -11,7 +11,8 @@ async def test_simple_generation():
     print("=" * 60)
 
     provider = GeminiProvider(
-        cli_path="gemini", rate_limit_delay=False  # Disable for testing
+        cli_path="gemini",
+        rate_limit_delay=False,  # Disable for testing
     )
 
     # Very simple prompt

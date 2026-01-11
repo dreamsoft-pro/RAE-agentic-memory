@@ -10,7 +10,6 @@ import time
 
 import structlog
 import uvicorn
-
 from rae_lite.config import settings
 from rae_lite.server import app
 from rae_lite.tray import RAETrayApp
