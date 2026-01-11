@@ -267,6 +267,12 @@ async def check_tenant_access(
 
     # Check RBAC
     rbac_service = RBACService(request.app.state.pool)
+    logger.info(
+        "checking_rbac_role",
+        user_id=user_id,
+        tenant_id=tenant_id, # This is the string representation
+        tenant_uuid=str(tenant_uuid) # This is the UUID representation
+    )
     user_role = await rbac_service.get_user_role(user_id, tenant_uuid)
 
     if not user_role:

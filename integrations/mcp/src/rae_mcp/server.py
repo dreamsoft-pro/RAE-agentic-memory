@@ -229,7 +229,7 @@ class PIIScrubber:
 
 # Configuration from environment
 RAE_API_URL = os.getenv("RAE_API_URL", "http://localhost:8000")
-RAE_API_KEY = os.getenv("RAE_API_KEY", "your-rae-api-key")
+RAE_API_KEY = os.getenv("RAE_API_KEY", "dev-key")
 RAE_PROJECT_ID = os.getenv("RAE_PROJECT_ID", "default-project")
 RAE_TENANT_ID = os.getenv("RAE_TENANT_ID", "default-tenant")
 
@@ -343,6 +343,7 @@ class RAEMemoryClient:
                     "memory_store_http_error",
                     status_code=e.response.status_code,
                     error=str(e),
+                    response_text=e.response.text,
                 )
                 raise
             except Exception as e:
@@ -411,6 +412,7 @@ class RAEMemoryClient:
                     "memory_search_http_error",
                     status_code=e.response.status_code,
                     error=str(e),
+                    response_text=e.response.text,
                 )
                 raise
             except Exception as e:

@@ -74,55 +74,10 @@ async def lifespan(app: FastAPI):
     # 1. Initialize Connections (via Factory)
     if os.getenv("RAE_DB_MODE") == "ignore":
         logger.info("db_initialization_skipped", reason="RAE_DB_MODE=ignore")
-        # Only set to None if not already provided (e.g. by a mock in tests)
-        if not hasattr(app.state, "pool") or app.state.pool is None:
-            app.state.pool = None
-        if not hasattr(app.state, "redis_client") or app.state.redis_client is None:
-            app.state.redis_client = None
-        if not hasattr(app.state, "qdrant_client") or app.state.qdrant_client is None:
-            app.state.qdrant_client = None
+        app.state.pool = None
+        app.state.redis_client = None
+        app.state.qdrant_client = None
     else:
-        # Run migrations if mode is migrate/init
-        if settings.RAE_DB_MODE in ["migrate", "init"]:
-            logger.info("running_database_migrations", mode=settings.RAE_DB_MODE)
-            print(
-                f"DEBUG: Starting database migrations (mode={settings.RAE_DB_MODE})...",
-                flush=True,
-            )
-            try:
-                from alembic import command  # noqa: I001
-                from alembic.config import Config  # noqa: I001
-
-                # Load alembic config from project root
-                project_root = os.path.dirname(
-                    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                )
-                ini_path = os.path.join(project_root, "alembic.ini")
-
-                if not os.path.exists(ini_path):
-                    print(f"ERROR: alembic.ini not found at {ini_path}", flush=True)
-                    logger.error("alembic_ini_not_found", path=ini_path)
-                else:
-                    alembic_cfg = Config(ini_path)
-                    # Force silent logging for migrations during startup to avoid hanging
-                    os.environ["ALEMBIC_SKIP_LOG_CONFIG"] = "1"
-                    print(
-                        f"DEBUG: Running 'alembic upgrade head' using {ini_path}...",
-                        flush=True,
-                    )
-                    command.upgrade(alembic_cfg, "head")
-                    print(
-                        "DEBUG: Database migrations completed successfully.", flush=True
-                    )
-                    logger.info("database_migrations_completed")
-            except Exception as e:
-                print(f"ERROR: Database migration failed: {str(e)}", flush=True)
-                import traceback
-
-                traceback.print_exc()
-                logger.error("database_migration_failed", error=str(e))
-                # Continue anyway, as some tables might already exist
-
         from rae_core.factories.infra_factory import InfrastructureFactory
 
         await InfrastructureFactory.initialize(app, settings)
@@ -203,6 +158,7 @@ async def lifespan(app: FastAPI):
 
     logger.info("RAE-Core service initialized", profile=settings.RAE_PROFILE)
 
+    # Force rebuild
     yield
 
     # Shutdown
