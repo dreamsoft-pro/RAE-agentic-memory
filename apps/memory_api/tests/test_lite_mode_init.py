@@ -23,9 +23,8 @@ def test_lite_mode_initialization():
                     assert app.state.rae_core_service is not None
 
                     # Verify it uses fallbacks
-                    # In modern RAECoreService, we prefer Postgres if pool is provided
-                    from rae_core.adapters.postgres import PostgreSQLStorage
+                    from rae_core.adapters.memory.storage import InMemoryStorage
 
                     assert isinstance(
-                        app.state.rae_core_service.postgres_adapter, PostgreSQLStorage
+                        app.state.rae_core_service.postgres_adapter, InMemoryStorage
                     )

@@ -25,3 +25,4 @@ watchdog[watchmedo]
 locust
 # ML dependencies for benchmarks and tests
 pytest-benchmark
+asyncpg

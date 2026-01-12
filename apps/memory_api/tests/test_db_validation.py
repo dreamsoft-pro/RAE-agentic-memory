@@ -100,7 +100,7 @@ async def test_validation_success():
         # Must match RAE_MEMORY_CONTRACT_V1
         [
             {"column_name": "id", "data_type": "uuid", "udt_name": "uuid"},
-            {"column_name": "tenant_id", "data_type": "text", "udt_name": "text"},
+            {"column_name": "tenant_id", "data_type": "uuid", "udt_name": "uuid"},
             {"column_name": "content", "data_type": "text", "udt_name": "text"},
             {"column_name": "source", "data_type": "text", "udt_name": "text"},
             {

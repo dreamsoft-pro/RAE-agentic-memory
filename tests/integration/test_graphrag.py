@@ -154,10 +154,13 @@ async def graph_repo(db_pool):
     return GraphRepository(db_pool)
 
 
+import uuid
+
+
 @pytest.fixture
 async def test_tenant_id():
     """Return a test tenant ID."""
-    return "test-tenant-graphrag"
+    return str(uuid.uuid4())
 
 
 @pytest.fixture

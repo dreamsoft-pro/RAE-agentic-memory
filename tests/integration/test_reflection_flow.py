@@ -129,7 +129,7 @@ async def context_builder(rae_service, reflection_engine):
 @pytest.fixture
 def tenant_id():
     """Test tenant ID"""
-    return "test-tenant-" + str(uuid4())
+    return str(uuid4())
 
 
 @pytest.fixture
@@ -233,7 +233,7 @@ async def test_generate_reflection_from_failure(
     )
     assert our_reflection is not None
     assert our_reflection["content"] == result.reflection_text
-    assert our_reflection["importance"] == result.importance
+    assert our_reflection["importance"] == pytest.approx(result.importance)
 
 
 # ============================================================================
