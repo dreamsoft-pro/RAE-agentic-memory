@@ -41,12 +41,22 @@ def mcp_client():
     """
     Create RAEMemoryClient connected to real RAE API.
 
-    Uses environment variables or defaults for configuration.
+    Uses environment variables for configuration and fails if they are not set.
     """
+    api_url = os.getenv("RAE_API_URL")
+    api_key = os.getenv("RAE_API_KEY")
+    tenant_id = os.getenv("RAE_TENANT_ID")
+
+    if not all([api_url, api_key, tenant_id]):
+        raise ValueError(
+            "Missing required environment variables for integration tests: "
+            "RAE_API_URL, RAE_API_KEY, RAE_TENANT_ID"
+        )
+
     return RAEMemoryClient(
-        api_url=os.getenv("RAE_API_URL", "http://localhost:8000"),
-        api_key=os.getenv("RAE_API_KEY", "test-api-key"),
-        tenant_id=os.getenv("RAE_TENANT_ID", "default-tenant"),
+        api_url=api_url,
+        api_key=api_key,
+        tenant_id=tenant_id,
     )
 
 
@@ -296,9 +306,10 @@ class TestMCPErrorHandling:
     @pytest.mark.asyncio
     async def test_search_memory_empty_query(self, mcp_client):
         """Test searching with empty query"""
-        # Empty query should still work (may return recent memories)
-        results = await mcp_client.search_memory(query="", top_k=5)
-        assert isinstance(results, list)
+        # Empty query should now raise a 422 error as query_text must have at least 1 character
+        with pytest.raises(httpx.HTTPStatusError) as exc_info:
+            await mcp_client.search_memory(query="", top_k=5)
+        assert exc_info.value.response.status_code == 422
 
 
 class TestMCPPerformance:
