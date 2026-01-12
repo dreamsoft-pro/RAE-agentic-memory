@@ -33,7 +33,7 @@ def upgrade():
             nullable=False,
             primary_key=True,
         ),
-        sa.Column("tenant_id", sa.String(length=255), nullable=False),
+        sa.Column("tenant_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("content", sa.Text(), nullable=False),
         sa.Column("source", sa.String(length=255), nullable=True),
         sa.Column("importance", sa.Float(), server_default="0.5", nullable=True),
