@@ -12,29 +12,79 @@ The server communicates via STDIO using JSON-RPC protocol.
 import asyncio
 import os
 import re
+import sys # Added for conditional logging
 import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+import logging # Added for conditional logging
 
 import httpx
 import mcp.server.stdio
 import mcp.types as types
 import structlog
+from structlog.stdlib import LoggerFactory, BoundLogger, add_logger_name, add_log_level
+from structlog.processors import TimeStamper, JSONRenderer, format_exc_info, StackInfoRenderer
+from structlog.dev import ConsoleRenderer
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
+
+def _configure_logging():
+    """
+    Configures structlog to output to stderr when stdin is not a TTY
+    (i.e., when piped), and to stdout otherwise. This prevents logs
+    from mixing with JSON-RPC responses when the script is used as a CLI tool.
+    """
+    shared_processors = [
+        add_logger_name,
+        add_log_level,
+        TimeStamper(fmt="iso"),
+        format_exc_info, # Includes exception info in logs
+        StackInfoRenderer(), # Includes stack info
+    ]
+
+    if not sys.stdin.isatty():
+        # Running in a non-interactive pipe, output structured logs to stderr
+        structlog.configure(
+            processors=shared_processors + [
+                JSONRenderer(),
+            ],
+            logger_factory=LoggerFactory(),
+            wrapper_class=BoundLogger,
+            cache_logger_on_first_use=True,
+        )
+        handler = logging.StreamHandler(sys.stderr)
+    else:
+        # Running interactively, output readable logs to stdout
+        structlog.configure(
+            processors=shared_processors + [
+                ConsoleRenderer(),
+            ],
+            logger_factory=LoggerFactory(),
+            wrapper_class=BoundLogger,
+            cache_logger_on_first_use=True,
+        )
+        handler = logging.StreamHandler(sys.stdout)
+
+    logging.basicConfig(handlers=[handler], level=logging.INFO)
+
+# Initialise logging before logger = structlog.get_logger()
+_configure_logging()
+
+logger = structlog.get_logger(__name__) # Moved here to be defined first
+
+# =============================================================================
+# OPENTELEMETRY CONFIGURATION
+# =============================================================================
 
 # OpenTelemetry imports
 from opentelemetry import trace
 from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
-from prometheus_client import Counter, Histogram
 
-logger = structlog.get_logger(__name__)
-
-# =============================================================================
-# OPENTELEMETRY CONFIGURATION
-# =============================================================================
+# Initialize a TracerProvider early to ensure `trace` is always available.
+tp = TracerProvider()
+trace.set_tracer_provider(tp)
 
 # Initialize OpenTelemetry (optional, disabled by default)
 OTEL_ENABLED = os.getenv("OTEL_ENABLED", "false").lower() == "true"
@@ -42,11 +92,7 @@ OTEL_SERVICE_NAME = os.getenv("OTEL_SERVICE_NAME", "rae-mcp-server")
 OTEL_EXPORTER = os.getenv("OTEL_EXPORTER", "console")  # console, jaeger, otlp
 
 if OTEL_ENABLED:
-    # Set up tracer provider
-    tp = TracerProvider()
-    trace.set_tracer_provider(tp)
-
-    # Configure exporter
+    # The tracer provider is already set above. Now configure exporters if enabled.
     if OTEL_EXPORTER == "console":
         span_processor = BatchSpanProcessor(ConsoleSpanExporter())
         tp.add_span_processor(span_processor)
@@ -63,11 +109,15 @@ if OTEL_ENABLED:
     )
 else:
     logger.info("opentelemetry_disabled")
+    # No additional action needed here, as a default TracerProvider is already set
+    # and acts as a no-op if no exporters are added.
 
-# Get tracer instance
+# Get tracer instance (will always work now)
 tracer = trace.get_tracer(__name__)
 
 # Prometheus Metrics
+from prometheus_client import Counter, Histogram
+
 TOOLS_CALLED = Counter(
     "mcp_tools_called_total", "Total MCP tool invocations", ["tool_name"]
 )
@@ -1526,19 +1576,26 @@ async def main():
         tenant_id=RAE_TENANT_ID,
     )
 
-    async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
-        await server.run(
-            read_stream,
-            write_stream,
-            InitializationOptions(
-                server_name="rae-memory",
-                server_version="1.0.0",
-                capabilities=server.get_capabilities(
-                    notification_options=NotificationOptions(),
-                    experimental_capabilities={},
+    try:
+        async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
+            await server.run(
+                read_stream,
+                write_stream,
+                InitializationOptions(
+                    server_name="rae-memory",
+                    server_version="1.0.0",
+                    capabilities=server.get_capabilities(
+                        notification_options=NotificationOptions(),
+                        experimental_capabilities={},
+                    ),
                 ),
-            ),
-        )
+            )
+    except asyncio.CancelledError:
+        logger.info("rae_mcp_server_shutdown", reason="stdin pipe closed gracefully")
+    except Exception as e: # Catch specific exception for logging
+        logger.exception("rae_mcp_server_fatal_error", error=str(e))
+        sys.exit(1) # Exit with a non-zero code for unhandled errors
+    sys.exit(0) # Exit cleanly on successful completion or graceful shutdown
 
 
 if __name__ == "__main__":
