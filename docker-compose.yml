@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: rae-api
     env_file:
-      - .env
+      - .env.docker
     ports:
       - "8000:8000"
     volumes:
