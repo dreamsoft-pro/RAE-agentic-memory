@@ -95,7 +95,7 @@ async def lifespan(app: FastAPI):
                     # Check if any tenant exists
                     exists = await conn.fetchval(
                         "SELECT EXISTS(SELECT 1 FROM tenants WHERE id = $1)",
-                        default_tenant_id,
+                        str(default_tenant_id),
                     )
                     if not exists:
                         logger.info(
@@ -103,7 +103,7 @@ async def lifespan(app: FastAPI):
                         )
                         await conn.execute(
                             "INSERT INTO tenants (id, name, tier, config) VALUES ($1, $2, $3, $4)",
-                            default_tenant_id,
+                            str(default_tenant_id),
                             "Default Tenant",
                             "enterprise",
                             "{}",
@@ -115,7 +115,7 @@ async def lifespan(app: FastAPI):
                         "INSERT INTO user_tenant_roles (id, user_id, tenant_id, role) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING",
                         UUID("00000000-0000-0000-0000-000000000001"),
                         "admin",
-                        default_tenant_id,
+                        str(default_tenant_id),
                         "owner",
                     )
                     # Also assign role to developer keys for easy access
@@ -123,14 +123,14 @@ async def lifespan(app: FastAPI):
                         "INSERT INTO user_tenant_roles (id, user_id, tenant_id, role) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING",
                         UUID("00000000-0000-0000-0000-000000000002"),
                         "apikey_dev-key",
-                        default_tenant_id,
+                        str(default_tenant_id),
                         "owner",
                     )
                     await conn.execute(
                         "INSERT INTO user_tenant_roles (id, user_id, tenant_id, role) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING",
                         UUID("00000000-0000-0000-0000-000000000003"),
                         "apikey_secret",
-                        default_tenant_id,
+                        str(default_tenant_id),
                         "owner",
                     )
             except Exception as e:
