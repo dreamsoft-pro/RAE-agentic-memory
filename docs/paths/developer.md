@@ -163,9 +163,27 @@ You can also browse the interactive Swagger UI locally at `http://localhost:8000
 
 ---
 
-## Deployment Options
+## Combining Profiles
 
-RAE offers several deployment profiles tailored to different use cases, from local development with hot-reloading to a full production-ready stack.
+It's often useful to combine profiles for specific development or testing scenarios. For instance, you might want to run the full `dev` environment (with hot-reloading for API, ML, and Celery services) while still leveraging the lightweight `lite` database and vector store setup.
+
+**How to Run (Combined Profiles):**
+```bash
+docker compose --profile dev --profile lite up -d
+
+# To stop the combined profiles
+docker compose --profile dev --profile lite down
+```
+
+This will bring up:
+-   `rae-api-dev` (hot-reloading API on port 8001)
+-   `ml-service-dev` (hot-reloading ML service on port 8003)
+-   `celery-worker-dev` and `celery-beat-dev` (hot-reloading Celery services)
+-   `rae-dashboard-dev` (hot-reloading Dashboard on port 8502)
+-   `adminer-dev` (database UI on port 8080)
+-   `ollama-dev` (local LLM on port 11434, if '--profile local-llm' is also included)
+-   `rae-api-lite` (lightweight API on port 8008)
+-   `postgres-lite`, `redis-lite`, `qdrant-lite` (lightweight database services)
 
 ### 4. Proxmox HA (High Availability)
 For enterprise-grade, high-availability deployments, RAE can be deployed in a multi-node cluster using Proxmox. This setup involves load balancers, replicated services, and failover mechanisms.
