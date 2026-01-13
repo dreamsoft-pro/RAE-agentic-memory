@@ -90,7 +90,7 @@ async def lifespan(app: FastAPI):
             try:
                 from uuid import UUID
 
-                default_tenant_id = UUID("00000000-0000-0000-0000-000000000000")
+                default_tenant_id = UUID(settings.DEFAULT_TENANT_UUID)
                 async with app.state.pool.acquire() as conn:
                     # Check if any tenant exists
                     exists = await conn.fetchval(

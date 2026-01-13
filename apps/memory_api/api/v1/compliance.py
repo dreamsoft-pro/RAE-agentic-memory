@@ -71,7 +71,7 @@ router = APIRouter(
 class ApprovalRequest(BaseModel):
     """Request for approval of high-risk operation"""
 
-    tenant_id: str
+    tenant_id: UUID
     project_id: str
     operation_type: str
     operation_description: str
@@ -106,7 +106,7 @@ class DecisionRequest(BaseModel):
 class ContextCreationRequest(BaseModel):
     """Create decision context"""
 
-    tenant_id: str
+    tenant_id: UUID
     project_id: str
     query: str
     sources: List[Dict]
@@ -115,7 +115,7 @@ class ContextCreationRequest(BaseModel):
 class DecisionRecordRequest(BaseModel):
     """Record a decision"""
 
-    tenant_id: str
+    tenant_id: UUID
     project_id: str
     decision_type: DecisionType
     decision_description: str
@@ -141,7 +141,7 @@ class CircuitBreakerState(BaseModel):
 class PolicyRequest(BaseModel):
     """Create policy request"""
 
-    tenant_id: str
+    tenant_id: UUID
     policy_id: str
     policy_type: PolicyType
     policy_name: str
@@ -663,7 +663,7 @@ async def reset_circuit_breaker(
 
 @router.get("/policies")
 async def list_policies(
-    tenant_id: Optional[str] = Query(None),
+    tenant_id: Optional[UUID] = Query(None),
     policy_type: Optional[PolicyType] = Query(None),
     token_verified: bool = Depends(auth.verify_token),
 ):

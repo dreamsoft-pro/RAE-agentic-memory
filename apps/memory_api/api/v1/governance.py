@@ -17,6 +17,7 @@ Endpoints:
 
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
+from uuid import UUID
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -61,7 +62,7 @@ class CostOverview(BaseModel):
 class TenantGovernanceStats(BaseModel):
     """Tenant-specific governance statistics"""
 
-    tenant_id: str
+    tenant_id: UUID
     total_cost_usd: float
     total_calls: int
     total_tokens: int
@@ -78,7 +79,7 @@ class TenantGovernanceStats(BaseModel):
 class TenantBudgetStatus(BaseModel):
     """Tenant budget status and alerts"""
 
-    tenant_id: str
+    tenant_id: UUID
     budget_usd_monthly: Optional[float] = None
     budget_tokens_monthly: Optional[int] = None
     current_month_cost_usd: float
@@ -207,7 +208,7 @@ async def get_governance_overview(
 
 @router.get("/tenant/{tenant_id}", response_model=TenantGovernanceStats)
 async def get_tenant_governance_stats(
-    tenant_id: str,
+    tenant_id: UUID,
     days: int = Query(30, ge=1, le=365, description="Number of days to analyze"),
     pool=Depends(get_db_pool),
     tenant_access: bool = Depends(verify_tenant_access),
@@ -363,7 +364,7 @@ async def get_tenant_governance_stats(
 
 @router.get("/tenant/{tenant_id}/budget", response_model=TenantBudgetStatus)
 async def get_tenant_budget_status(
-    tenant_id: str,
+    tenant_id: UUID,
     pool=Depends(get_db_pool),
     tenant_access: bool = Depends(verify_tenant_access),
 ):

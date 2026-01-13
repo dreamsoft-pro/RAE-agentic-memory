@@ -1,6 +1,7 @@
 from typing import List
 
 from fastapi import APIRouter, Depends
+from uuid import UUID
 
 from apps.memory_api.dependencies import get_rae_core_service
 from apps.memory_api.security import auth
@@ -26,7 +27,7 @@ async def list_tenants(
 
 @router.get("/projects", response_model=List[str])
 async def list_projects(
-    tenant_id: str = Depends(get_and_verify_tenant_id),
+    tenant_id: UUID = Depends(get_and_verify_tenant_id),
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """

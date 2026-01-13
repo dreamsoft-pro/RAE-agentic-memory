@@ -5,6 +5,7 @@ Provides API key authentication and optional JWT token verification.
 """
 
 from typing import Optional, cast
+from uuid import UUID
 
 import structlog
 from fastapi import HTTPException, Request, Security, status
@@ -255,7 +256,7 @@ async def get_user_id_from_token(request: Request) -> Optional[str]:
 
 async def check_tenant_access(
     request: Request,
-    tenant_id: str,
+    tenant_id: UUID,
 ) -> bool:
     """
     Check if user has access to specific tenant using RBAC.
@@ -277,8 +278,6 @@ async def check_tenant_access(
         )
         return True
 
-    from uuid import UUID
-
     from apps.memory_api.services.rbac_service import RBACService
 
     # Get user ID from authentication
@@ -298,27 +297,14 @@ async def check_tenant_access(
             detail="Database not initialized",
         )
 
-    # Convert tenant_id to UUID
-    try:
-        if tenant_id == "default-tenant":
-            tenant_uuid = UUID("00000000-0000-0000-0000-000000000000")
-        else:
-            tenant_uuid = UUID(tenant_id)
-    except (ValueError, AttributeError):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid tenant ID format: {tenant_id}",
-        )
-
     # Check RBAC
     rbac_service = RBACService(request.app.state.pool)
     logger.info(
         "checking_rbac_role",
         user_id=user_id,
-        tenant_id=tenant_id, # This is the string representation
-        tenant_uuid=str(tenant_uuid) # This is the UUID representation
+        tenant_id=tenant_id,
     )
-    user_role = await rbac_service.get_user_role(user_id, tenant_uuid)
+    user_role = await rbac_service.get_user_role(user_id, tenant_id)
 
     if not user_role:
         logger.warning(
@@ -329,7 +315,7 @@ async def check_tenant_access(
         )
         # Log access attempt
         await rbac_service.log_access(
-            tenant_id=tenant_uuid,
+            tenant_id=tenant_id,
             user_id=user_id,
             action="tenant:access",
             resource="tenant",
@@ -352,7 +338,7 @@ async def check_tenant_access(
             reason="role_expired",
         )
         await rbac_service.log_access(
-            tenant_id=tenant_uuid,
+            tenant_id=tenant_id,
             user_id=user_id,
             action="tenant:access",
             resource="tenant",
@@ -368,7 +354,7 @@ async def check_tenant_access(
 
     # Log successful access
     await rbac_service.log_access(
-        tenant_id=tenant_uuid,
+        tenant_id=tenant_id,
         user_id=user_id,
         action="tenant:access",
         resource="tenant",
@@ -389,7 +375,7 @@ async def check_tenant_access(
 
 async def require_permission(
     request: Request,
-    tenant_id: str,
+    tenant_id: UUID,
     action: str,
     project_id: Optional[str] = None,
 ) -> bool:
@@ -408,8 +394,6 @@ async def require_permission(
     Raises:
         HTTPException: If permission denied
     """
-    from uuid import UUID
-
     from apps.memory_api.services.rbac_service import RBACService
 
     # Get user ID from authentication
@@ -427,25 +411,13 @@ async def require_permission(
             detail="Database not initialized",
         )
 
-    # Convert tenant_id to UUID
-    try:
-        if tenant_id == "default-tenant":
-            tenant_uuid = UUID("00000000-0000-0000-0000-000000000000")
-        else:
-            tenant_uuid = UUID(tenant_id)
-    except (ValueError, AttributeError):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid tenant ID format: {tenant_id}",
-        )
-
     # Check permission
     rbac_service = RBACService(request.app.state.pool)
-    user_role = await rbac_service.get_user_role(user_id, tenant_uuid)
+    user_role = await rbac_service.get_user_role(user_id, tenant_id)
 
     if not user_role:
         await rbac_service.log_access(
-            tenant_id=tenant_uuid,
+            tenant_id=tenant_id,
             user_id=user_id,
             action=action,
             resource=action.split(":")[0],
@@ -466,7 +438,7 @@ async def require_permission(
             denial_reason = f"No access to project {project_id}"
 
         await rbac_service.log_access(
-            tenant_id=tenant_uuid,
+            tenant_id=tenant_id,
             user_id=user_id,
             action=action,
             resource=action.split(":")[0],
@@ -483,7 +455,7 @@ async def require_permission(
 
     # Log successful access
     await rbac_service.log_access(
-        tenant_id=tenant_uuid,
+        tenant_id=tenant_id,
         user_id=user_id,
         action=action,
         resource=action.split(":")[0],

@@ -64,6 +64,8 @@ class Settings(BaseSettings):
     OAUTH_DOMAIN: str = ""  # e.g., "your-tenant.us.auth0.com"
     OAUTH_AUDIENCE: str = ""  # e.g., "https://yourapi.com"
     TENANCY_ENABLED: bool = True
+    DEFAULT_TENANT_ALIAS: str = "default-tenant"
+    DEFAULT_TENANT_UUID: str = "00000000-0000-0000-0000-000000000000"
     API_KEY: str = "secret"
 
     # Authentication
