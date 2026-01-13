@@ -32,6 +32,11 @@ type(scope): short description
 - If direct RAE/MCP communication is not available, use `curl` for reading and writing data as a temporary measure.
 - The ultimate goal is to communicate with RAE via MCP (Master Control Protocol).
 
-### 5. **General Principles**
+### 5. **Docker Development Workflows**
+- **Use Profiles for Environments**: Employ distinct Docker Compose profiles (e.g., `dev`, `standard`, `lite`) to manage different operational modes. This allows for clean separation of concerns and easy switching between development (with hot-reload), production-like, and lightweight environments.
+- **Document Startup Commands**: The `README.md` file should be the single source of truth for starting the application. It must clearly document the available profiles and provide simple, one-command startup instructions for each. This is crucial for efficient developer onboarding and usability.
+- **Strive for One-Command Startup**: The primary goal is to enable any developer to get the entire application stack running with a single, simple command (e.g., `docker compose --profile dev up`).
+
+### 6. **General Principles**
 - Prioritize token and time efficiency in all operations.
 - For simple tasks, use "cheap" methods (like quick tests) to conserve resources.

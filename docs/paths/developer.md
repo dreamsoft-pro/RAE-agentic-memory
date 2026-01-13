@@ -18,19 +18,81 @@ This quick start uses the **RAE Lite** profile, which is the fastest way to get 
     cd RAE-agentic-memory
     ```
 
-2.  **Start the RAE Lite stack:**
-    ```bash
-    docker-compose -f docker-compose.lite.yml up -d
-    ```
-    This command will start the core RAE API, a PostgreSQL database, a Redis cache, and a Qdrant vector database.
+2.  **Choose and Start your RAE Environment:**
 
-3.  **Verify the services are running:**
+RAE offers several Docker Compose profiles tailored to different use cases:
+
+### 1. Development (Hot Reload) Profile
+
+This is the recommended setup for active development on the RAE codebase. It enables hot-reloading for rapid iteration.
+
+**Key Features:**
+-   **Hot-Reloading:** The `uvicorn` web server (for `rae-api-dev` and `ml-service-dev`) is started with the `--reload` flag. Any changes you make to the source code on your host machine will be immediately reflected in the running container without needing to rebuild the image. Celery workers and beat also have auto-reload configured.
+-   **Source Code Mounting:** Critical application directories (`./apps`, `./rae-core`, `./sdk`, `./alembic`) are mounted as volumes into the containers.
+-   **Debug-Friendly:** Log levels are set to `DEBUG`, and the observability stack (OpenTelemetry) is disabled to maximize performance.
+-   **Dev Tools:** Includes `Adminer` (a web-based database management tool accessible at `http://localhost:8080`) and an optional `ollama-dev` for local LLM inference.
+-   **Access:** `rae-api-dev` on `http://localhost:8001`, `rae-dashboard-dev` on `http://localhost:8502`.
+
+**How to Run:**
+```bash
+docker compose --profile dev up -d
+# To include Ollama for local LLM, use:
+# docker compose --profile dev --profile local-llm up -d
+
+# To stop
+docker compose --profile dev down
+# To stop with Ollama:
+# docker compose --profile dev --profile local-llm down
+```
+
+### 2. Standard Production Profile
+
+This is the standard, full-stack deployment for a production environment on a single node. It includes all services for full functionality, observability, and asynchronous processing.
+
+**Key Features:**
+-   **Full Stack:** Includes `rae-api`, `ml-service`, `reranker-service`, `postgres`, `redis`, `qdrant`, `celery-worker`, `celery-beat`, `otel-collector`, `jaeger`, and `rae-dashboard`.
+-   **Production Ready:** Configured for stability and performance.
+-   **Access:** `rae-api` on `http://localhost:8000`, `rae-dashboard` on `http://localhost:8501`.
+
+**How to Run:**
+```bash
+docker compose --profile standard up -d
+
+# To stop
+docker compose --profile standard down
+```
+
+### 3. RAE Lite Profile (Minimal Deployment) - Recommended for Starters
+
+**RAE Lite** is a highly optimized, lightweight profile designed for rapid development and resource-constrained environments (like laptops). It removes all heavy ML dependencies while keeping the core memory and reasoning logic intact.
+
+**Why use Lite?**
+- 🚀 **Fast Startup:** Boots in < 5 seconds.
+- 📉 **Low Resources:** Runs comfortably on 4GB RAM (vs 16GB+ for full stack).
+- 🧩 **External LLMs Only:** Relies entirely on OpenAI/Anthropic/Gemini APIs instead of local models.
+- **Access:** `rae-api-lite` on `http://localhost:8008`.
+
+**How to Run:**
+```bash
+# 1. Ensure your .env file has valid API keys (OPENAI_API_KEY, etc.)
+# 2. Start the Lite stack
+docker compose --profile lite up -d
+
+# To stop
+docker compose --profile lite down
+```
+
+3.  **Verify the services are running (for selected profile):**
     You can check the status of the containers:
     ```bash
-    docker-compose -f docker-compose.lite.yml ps
+    docker compose ps
     ```
-    You should also be able to access the health check endpoint:
+    For the `standard` profile, you should be able to access the health check endpoint:
     [http://localhost:8000/health](http://localhost:8000/health)
+    For the `dev` profile, you should be able to access:
+    [http://localhost:8001/health](http://localhost:8001/health)
+    For the `lite` profile, you should be able to access:
+    [http://localhost:8008/health](http://localhost:8008/health)
 
 4.  **Interact with the API using the Python SDK:**
     *(Assuming you have Python and `pip` installed on your host machine)*
@@ -46,8 +108,11 @@ This quick start uses the **RAE Lite** profile, which is the fastest way to get 
     from rae_memory_sdk.memory_client import MemoryClient, MemoryOperation
 
     async def main():
-        # Connect to the local RAE API
-        client = MemoryClient()
+        # Connect to the local RAE API (adjust port for dev/lite profiles)
+        # For standard: client = MemoryClient(base_url="http://localhost:8000")
+        # For dev: client = MemoryClient(base_url="http://localhost:8001")
+        # For lite: client = MemoryClient(base_url="http://localhost:8008")
+        client = MemoryClient() # Default to http://localhost:8000 for standard example
 
         # Define a tenant and project
         tenant_id = "my-test-tenant"
@@ -94,85 +159,13 @@ You have now successfully added a memory to RAE and retrieved it!
 
 For a complete list of all 96+ endpoints, including Memory, GraphRAG, Governance, and more, please refer to the full [API Documentation](../../API_DOCUMENTATION.md).
 
-You can also browse the interactive Swagger UI locally at `http://localhost:8000/docs` when the service is running.
+You can also browse the interactive Swagger UI locally at `http://localhost:8000/docs` (for standard profile) or `http://localhost:8001/docs` (for dev profile) or `http://localhost:8008/docs` (for lite profile) when the respective service is running.
 
 ---
 
 ## Deployment Options
 
 RAE offers several deployment profiles tailored to different use cases, from local development with hot-reloading to a full production-ready stack.
-
-### 1. Local Development (Hot Reload)
-
-This is the recommended setup for active development on the RAE codebase. It uses `docker-compose.dev.yml` as an override file to enable hot-reloading.
-
-**Key Features:**
--   **Hot-Reloading:** The `uvicorn` web server is started with the `--reload` flag. Any changes you make to the source code on your host machine will be immediately reflected in the running container without needing to rebuild the image.
--   **Source Code Mounting:** The `./apps` and `./sdk` directories are mounted as read-only volumes into the containers. This allows the reload mechanism to detect file changes.
--   **Debug-Friendly:** Log levels are set to `DEBUG`, and the observability stack (OpenTelemetry) is disabled to maximize performance.
--   **Dev Tools:** Includes `Adminer`, a web-based database management tool accessible at `http://localhost:8080`.
-
-**How to Run:**
-```bash
-# Use both the base and dev override files
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
-
-# To stop
-docker-compose -f docker-compose.yml -f docker-compose.dev.yml down
-```
-
-### 2. RAE Lite (Minimal Deployment) - Recommended for Starters
-
-**RAE Lite** is a highly optimized, lightweight profile designed for rapid development and resource-constrained environments (like laptops). It removes all heavy ML dependencies while keeping the core memory and reasoning logic intact.
-
-**Why use Lite?**
-- 🚀 **Fast Startup:** Boots in < 5 seconds.
-- 📉 **Low Resources:** Runs comfortably on 4GB RAM (vs 16GB+ for full stack).
-- 🧩 **External LLMs Only:** Relies entirely on OpenAI/Anthropic/Gemini APIs instead of local models.
-
-**Architecture Differences:**
-| Feature | Full Stack | RAE Lite |
-| :--- | :--- | :--- |
-| **ML Service** | Enabled (Local Embeddings/Re-ranking) | **Disabled** (APIs only) |
-| **Vector DB** | Qdrant (Full) | Qdrant (Optimized for Low Memory) |
-| **Async Tasks** | Celery Workers + Redis Broker | **Disabled** (Synchronous Execution) |
-| **Observability** | OpenTelemetry + Jaeger | **Disabled** |
-
-**How to Run:**
-```bash
-# 1. Ensure your .env file has valid API keys (OPENAI_API_KEY, etc.)
-# 2. Start the Lite stack
-docker-compose -f docker-compose.lite.yml up -d
-```
-
-**Under the Hood:**
-It sets specific environment flags in `rae-api`:
-- `ML_SERVICE_ENABLED=false`: Bypasses the internal ML microservice.
-- `RERANKER_ENABLED=false`: Skips the heavy Cross-Encoder re-ranking step.
-- `CELERY_ENABLED=false`: Runs background tasks inline for simplicity.
-
-**Use Case:** Ideal for building initial prototypes, testing logic, or running CI/CD pipelines.
-
-### 3. RAE Server (Standard Production)
-
-This is the standard, full-stack deployment for a production environment on a single node. It includes all services for full functionality, observability, and asynchronous processing.
-
-**Source File:** `docker-compose.yml`
-
-**Full Stack:**
--   `rae-api`: The main API.
--   `ml-service`: A separate service for heavy ML models, isolating them from the main API.
--   `postgres`: The primary database with `pgvector`.
--   `redis`: Caching and Celery broker.
--   `qdrant`: Dedicated vector database.
--   `celery-worker` & `celery-beat`: For background tasks like memory consolidation and reflection.
--   `otel-collector` & `jaeger`: A full observability stack for distributed tracing.
--   `rae-dashboard`: An optional Streamlit dashboard for visualizing memory.
-
-**How to Run:**
-```bash
-docker-compose -f docker-compose.yml up -d
-```
 
 ### 4. Proxmox HA (High Availability)
 For enterprise-grade, high-availability deployments, RAE can be deployed in a multi-node cluster using Proxmox. This setup involves load balancers, replicated services, and failover mechanisms.
@@ -196,9 +189,9 @@ Building reliable agents requires a robust testing culture. RAE provides special
 
 ### Real-World Case Studies
 See RAE in action optimizing its own code:
-- **[Autonomous Self-Optimization](../../docs/use-cases/SELF_OPTIMIZATION_LOOP.md)**: How RAE diagnosed a 20x latency regression and fixed it by tuning its Math Controller.
-- **[Strategic Reasoning Pivot](../../docs/use-cases/STRATEGIC_REASONING_PIVOT.md)**: How RAE saved resources by challenging a user request and proposing a better architectural solution.
-- **[Distributed Code Audit](../../docs/use-cases/DISTRIBUTED_CODE_AUDIT.md)**: Using Node1 (GPU) to audit code quality.
+-   **[Autonomous Self-Optimization](../../docs/use-cases/SELF_OPTIMIZATION_LOOP.md)**: How RAE diagnosed a 20x latency regression and fixed it by tuning its Math Controller.
+-   **[Strategic Reasoning Pivot](../../docs/use-cases/STRATEGIC_REASONING_PIVOT.md)**: How RAE saved resources by challenging a user request and proposing a better architectural solution.
+-   **[Distributed Code Audit](../../docs/use-cases/DISTRIBUTED_CODE_AUDIT.md)**: Using Node1 (GPU) to audit code quality.
 
 ## Troubleshooting
 
@@ -206,16 +199,6 @@ Encountering issues? Check the **[Troubleshooting Guide](../../TROUBLESHOOTING.m
 -   Database migration locks (`alembic` issues)
 -   Vector store connection failures
 -   Memory leaks in long-running workers
-
-**(TODO: Extract detailed steps from `docs/PRODUCTION_PROXMOX_HA.md` and add them here.)**
-
-### 5. Distributed Compute (Control Plane)
-RAE includes a unique feature for scaling: **Distributed Compute Nodes**.
-Unlike typical RAG systems that run everything on one server, RAE can offload heavy cognitive tasks (like embedding generation, graph extraction, or large-scale re-ranking) to dedicated nodes (e.g., "Node1" or "KUBUS").
-
--   **Control Plane API (`/control`):** The central RAE instance acts as a task dispatcher.
--   **Compute Nodes:** Worker machines (with GPUs) register via `/control/nodes/register` and poll for tasks.
--   **Benefit:** Allows the Orchestrator to run on a lightweight laptop while heavy lifting happens on a dedicated rig.
 
 ---
 
@@ -249,4 +232,4 @@ RAE includes a comprehensive testing suite. When developing an application that 
 -   **Phase 2 (Develop Branch):** Before merging to a main branch, run the full unit test suite using `make test-unit`. This ensures your changes have not caused regressions elsewhere in the system.
 -   **Use Templates:** When adding new code, use the templates provided in the `.ai-templates/` directory to ensure consistency.
 
-**(For more details, see `docs/AGENTS_TEST_POLICY.md`.)**
+(For more details, see `docs/AGENTS_TEST_POLICY.md`.)
