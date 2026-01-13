@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from rae_core.adapters.postgres_db import PostgresDatabaseProvider
+from apps.memory_api.adapters.postgres_db import PostgresDatabaseProvider
 
 
 class TestPostgresDatabaseProvider:

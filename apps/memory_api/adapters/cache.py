@@ -5,7 +5,7 @@ Configures RAE-core RedisCache with RAE-Server settings.
 
 from redis.asyncio import Redis
 
-from rae_core.adapters import RedisCache
+from .redis import RedisCache
 
 
 def get_cache_adapter(redis_client: Redis, prefix: str = "rae:") -> RedisCache:

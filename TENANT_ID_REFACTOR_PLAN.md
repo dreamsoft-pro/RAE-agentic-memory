@@ -98,8 +98,8 @@ This means `rae_core` is coupled to specific infrastructure choices, violating i
 
 This refactoring will be executed in a new dedicated session due to its complexity and architectural importance.
 
-1.  **Move Adapters**: Transfer all concrete adapter implementations from `rae-core/rae_core/adapters` to a new directory: `apps/memory_api/adapters`. This establishes `apps/memory_api` as the layer responsible for concrete infrastructure integrations.
-2.  **Update Imports**: Modify all Python files within `apps/memory_api` (and potentially other parts of the project that import these adapters) to reflect the new import paths, changing `from rae_core.adapters.<X> import <Y>` to `from apps.memory_api.adapters.<X> import <Y>`.
+1.  **[DONE] Move Adapters**: Transfer all concrete adapter implementations from `rae-core/rae_core/adapters` to a new directory: `apps/memory_api/adapters`. This establishes `apps/memory_api` as the layer responsible for concrete infrastructure integrations. *(Verified as complete from `TENANT_ID_REFACTOR_co-zrobiono.txt`)*.
+2.  **[DONE] Update Imports**: Modify all Python files within `apps/memory_api` (and potentially other parts of the project that import these adapters) to reflect the new import paths. *(Verified as complete from `TENANT_ID_REFACTOR_co-zrobiono.txt`)*.
 3.  **Validate `RAEEngine` Integration**: Confirm that `rae_core.engine.RAEEngine` (and any other `rae_core` components) are correctly designed to accept instances of the *interface* types (from `rae_core/rae_core/interfaces`), rather than directly depending on concrete adapter classes.
 4.  **Adjust `apps/memory_api/services/rae_core_service.py`**: This service is the primary instantiation point for `RAEEngine`. It must be updated to construct the now moved concrete adapters (from `apps/memory_api/adapters`) and pass them to the `RAEEngine` constructor as per the defined interfaces.
 5.  **Re-evaluate Testing Environment**: After moving the adapters, re-run tests. The original `ModuleNotFoundError` for `rae_core` should resolve itself for adapter-related imports. Further `ModuleNotFoundError` might indicate other paths issues, which we'll address then.

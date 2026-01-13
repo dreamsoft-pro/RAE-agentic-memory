@@ -10,7 +10,7 @@ import pytest
 with patch.dict(
     sys.modules, {"qdrant_client": MagicMock(), "qdrant_client.models": MagicMock()}
 ):
-    from rae_core.adapters.qdrant import QdrantVectorStore
+    from apps.memory_api.adapters.qdrant import QdrantVectorStore
 
 
 class TestQdrantVectorStore:

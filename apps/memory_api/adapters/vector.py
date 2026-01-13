@@ -7,7 +7,7 @@ from typing import Any, cast
 
 from qdrant_client import AsyncQdrantClient
 
-from rae_core.adapters import QdrantVectorStore
+from .qdrant import QdrantVectorStore
 
 
 def get_vector_adapter(
