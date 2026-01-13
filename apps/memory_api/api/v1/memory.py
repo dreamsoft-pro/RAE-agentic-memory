@@ -1,4 +1,5 @@
 from typing import Optional
+from uuid import UUID
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -44,7 +45,7 @@ router = APIRouter(
 async def store_memory(
     req: StoreMemoryRequest,
     request: Request,
-    tenant_id: str = Depends(get_and_verify_tenant_id),
+    tenant_id: UUID = Depends(get_and_verify_tenant_id),
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
@@ -108,7 +109,7 @@ async def store_memory(
 async def query_memory(
     req: QueryMemoryRequest,
     request: Request,
-    tenant_id: str = Depends(get_and_verify_tenant_id),
+    tenant_id: UUID = Depends(get_and_verify_tenant_id),
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
@@ -210,7 +211,7 @@ async def query_memory(
 async def delete_memory(
     memory_id: str,
     request: Request,
-    tenant_id: str = Depends(get_and_verify_tenant_id),
+    tenant_id: UUID = Depends(get_and_verify_tenant_id),
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
@@ -287,7 +288,7 @@ async def delete_memory(
 async def get_session_context(
     session_id: str,
     limit: int = Query(50, ge=1, le=1000),
-    tenant_id: str = Depends(get_and_verify_tenant_id),
+    tenant_id: UUID = Depends(get_and_verify_tenant_id),
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
@@ -336,7 +337,7 @@ async def rebuild_reflections(req: RebuildReflectionsRequest):
 @router.get("/reflection-stats")
 async def get_reflection_stats(
     request: Request,
-    tenant_id: str = Depends(get_and_verify_tenant_id),
+    tenant_id: UUID = Depends(get_and_verify_tenant_id),
     project: Optional[str] = None,
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
@@ -378,6 +379,7 @@ async def generate_hierarchical_reflection(
     max_episodes: Optional[int] = Query(
         None, description="Maximum episodes to process", ge=1
     ),
+    tenant_id: UUID = Depends(get_and_verify_tenant_id), # Added dependency
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
@@ -386,9 +388,6 @@ async def generate_hierarchical_reflection(
     This endpoint is deprecated and maintained only for backward compatibility.
     The canonical implementation is now in the Graph API at:
     `POST /v1/graph/reflection/hierarchical`
-
-    The Graph API version uses proper Pydantic models and is better integrated
-    with GraphRAG features.
 
     **Migration:**
     Instead of:
@@ -412,13 +411,8 @@ async def generate_hierarchical_reflection(
     with tracer.start_as_current_span(
         "rae.api.memory.hierarchical_reflection_deprecated"
     ) as span:
-        tenant_id = request.headers.get("X-Tenant-Id")
-        if not tenant_id:
-            span.set_attribute("rae.outcome.label", "missing_tenant_id")
-            raise HTTPException(
-                status_code=400, detail="X-Tenant-Id header is required."
-            )
-
+        # tenant_id is now provided by Depends(get_and_verify_tenant_id)
+        # Manual extraction and error handling removed
         span.set_attribute("rae.tenant_id", tenant_id)
         span.set_attribute("rae.project_id", project)
         span.set_attribute("rae.reflection.bucket_size", bucket_size)
