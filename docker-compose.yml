@@ -1,22 +1,12 @@
 services:
   # Main RAE API Service
-  rae-api:
-    profiles: ["standard"]
-    image: rae-memory:latest
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: rae-api
-    env_file:
-      - .env.docker
-    ports:
-      - "8000:8000"
     volumes:
       - ./benchmarking:/app/benchmarking
       - ./apps:/app/apps
       - ./rae-core:/app/rae-core
       - ./alembic:/app/alembic
       - ./alembic.ini:/app/alembic.ini
+      - ./rae_adapters:/app/rae_adapters
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=${POSTGRES_DB:-rae}
@@ -82,6 +72,7 @@ services:
       - ./rae-core:/app/rae-core
       - ./alembic:/app/alembic
       - ./alembic.ini:/app/alembic.ini
+      - ./rae_adapters:/app/rae_adapters
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=${POSTGRES_DB:-rae}
@@ -260,6 +251,7 @@ services:
       - ./rae-core:/app/rae-core
       - ./alembic:/app/alembic
       - ./alembic.ini:/app/alembic.ini
+      - ./rae_adapters:/app/rae_adapters
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=${POSTGRES_DB:-rae}
@@ -312,6 +304,7 @@ services:
     volumes:
       - ./apps:/app/apps:ro
       - ./sdk:/app/sdk:ro
+      - ./rae_adapters:/app/rae_adapters:ro
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=${POSTGRES_DB:-rae}
@@ -358,6 +351,7 @@ services:
       - ./rae-core:/app/rae-core
       - ./alembic:/app/alembic
       - ./alembic.ini:/app/alembic.ini
+      - ./rae_adapters:/app/rae_adapters
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=${POSTGRES_DB:-rae}
@@ -404,6 +398,7 @@ services:
     volumes:
       - ./apps:/app/apps:ro
       - ./sdk:/app/sdk:ro
+      - ./rae_adapters:/app/rae_adapters:ro
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=${POSTGRES_DB:-rae}
@@ -519,6 +514,7 @@ services:
       - ./rae-core:/app/rae-core
       - ./alembic:/app/alembic
       - ./alembic.ini:/app/alembic.ini
+      - ./rae_adapters:/app/rae_adapters
     command: ["/bin/bash", "-c", "alembic upgrade head && uvicorn apps.memory_api.main:app --host 0.0.0.0 --port 8001"]
     environment:
       # Database - links to postgres-lite

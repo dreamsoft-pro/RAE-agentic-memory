@@ -20,9 +20,9 @@ from apps.memory_api.services.embedding import (
 )
 from apps.memory_api.services.llm import get_llm_provider
 from apps.memory_api.services.token_savings_service import TokenSavingsService
-from apps.memory_api.adapters.postgres import PostgresMemoryAdapter
-from apps.memory_api.adapters.qdrant import QdrantVectorAdapter
-from apps.memory_api.adapters.redis import RedisCacheAdapter
+from rae_adapters.postgres import PostgresMemoryAdapter
+from rae_adapters.qdrant import QdrantVectorAdapter
+from rae_adapters.redis import RedisCacheAdapter
 from rae_core.config import RAESettings
 from rae_core.embedding.manager import EmbeddingManager
 from rae_core.engine import RAEEngine
@@ -107,7 +107,7 @@ class RAECoreService:
         if postgres_pool and not ignore_db:
             self.postgres_adapter = PostgresMemoryAdapter(pool=postgres_pool)
         else:
-            from apps.memory_api.adapters.memory import InMemoryStorage
+            from rae_adapters.memory import InMemoryStorage
 
             logger.warning("using_in_memory_storage_fallback")
             self.postgres_adapter = InMemoryStorage()
@@ -132,7 +132,7 @@ class RAECoreService:
             logger.info("using_postgres_vector_adapter")
             self.qdrant_adapter = PostgresVectorAdapter(pool=postgres_pool)
         else:
-            from apps.memory_api.adapters.memory import InMemoryVectorStore
+            from rae_adapters.memory import InMemoryVectorStore
 
             logger.warning("using_in_memory_vector_fallback")
             self.qdrant_adapter = InMemoryVectorStore()
@@ -140,7 +140,7 @@ class RAECoreService:
         if redis_client and not ignore_db:
             self.redis_adapter = RedisCacheAdapter(redis_client=redis_client)
         else:
-            from apps.memory_api.adapters.memory import InMemoryCache
+            from rae_adapters.memory import InMemoryCache
 
             logger.warning("using_in_memory_cache_fallback")
             self.redis_adapter = InMemoryCache()
@@ -178,7 +178,7 @@ class RAECoreService:
     def db(self) -> IDatabaseProvider:
         """Get agnostic database provider."""
         if self.postgres_pool:
-            from apps.memory_api.adapters.postgres_db import PostgresDatabaseProvider
+            from rae_adapters.postgres_db import PostgresDatabaseProvider
 
             return PostgresDatabaseProvider(self.postgres_pool)
 

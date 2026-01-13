@@ -2,22 +2,22 @@
 
 ## Date: 2025-12-11
 
-## Task: Fix adapters in `rae-core/adapters`
+## Task: Fix adapters (now located in apps/memory_api/adapters)
 
 ### Summary of Work:
 
-The task involved addressing potential issues and improving the test coverage for the database and cache adapters located in `rae-core/rae_core/adapters/`.
+The task involved addressing potential issues and improving the test coverage for the database and cache adapters located in `apps/memory_api/adapters/`.
 
 **Initial Assessment:**
-- Identified the presence of `redis.py`, `postgres.py`, and `qdrant.py` within `rae-core/rae_core/adapters/`.
+- Identified the presence of `redis.py`, `postgres.py`, and `qdrant.py` within `apps/memory_api/adapters/`.
 - Noted the absence of dedicated unit test files for these specific adapter implementations in `rae-core/tests/unit/adapters/`, though generic `InMemory` adapter tests existed.
 
 **Actions Taken:**
 
 1.  **Unit Test Creation:**
-    *   Developed and added `test_redis.py` to `rae-core/tests/unit/adapters/` to cover the `RedisCache` implementation.
-    *   Developed and added `test_postgres.py` to `rae-core/tests/unit/adapters/` to cover the `PostgreSQLStorage` implementation.
-    *   Developed and added `test_qdrant.py` to `rae-core/tests/unit/adapters/` to cover the `QdrantVectorStore` implementation.
+    *   Developed and added `test_redis.py` (later moved to `apps/memory_api/tests/adapters/`) to its original location in `rae-core/tests/unit/adapters/` to cover the `RedisCache` implementation.
+    *   Developed and added `test_postgres.py` (later moved to `apps/memory_api/tests/adapters/`) to its original location in `rae-core/tests/unit/adapters/` to cover the `PostgreSQLStorage` implementation.
+    *   Developed and added `test_qdrant.py` (later moved to `apps/memory_api/tests/adapters/`) to its original location in `rae-core/tests/unit/adapters/` to cover the `QdrantVectorStore` implementation.
     *   All new tests extensively utilized Python's `unittest.mock` (`AsyncMock`, `patch`, `MagicMock`) to simulate external dependencies (`redis.asyncio`, `asyncpg`, `qdrant_client`) without requiring actual running instances of these services.
 
 2.  **Test Refinements and Bug Fixing:**

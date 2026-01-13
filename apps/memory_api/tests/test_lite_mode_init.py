@@ -23,7 +23,7 @@ def test_lite_mode_initialization():
                     assert app.state.rae_core_service is not None
 
                     # Verify it uses fallbacks
-                    from rae_core.adapters.memory.storage import InMemoryStorage
+                    from rae_adapters.memory.storage import InMemoryStorage
 
                     assert isinstance(
                         app.state.rae_core_service.postgres_adapter, InMemoryStorage

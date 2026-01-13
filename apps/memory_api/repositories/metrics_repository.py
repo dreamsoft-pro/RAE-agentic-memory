@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 import asyncpg
 import structlog
 
-from apps.memory_api.adapters.postgres_db import PostgresDatabaseProvider
+from rae_adapters.postgres_db import PostgresDatabaseProvider
 from rae_core.interfaces.database import IDatabaseProvider
 
 logger = structlog.get_logger(__name__)

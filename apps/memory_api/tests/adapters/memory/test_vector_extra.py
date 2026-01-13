@@ -2,7 +2,7 @@ from uuid import uuid4
 
 import pytest
 
-from apps.memory_api.adapters.memory.vector import InMemoryVectorStore
+from rae_adapters.memory.vector import InMemoryVectorStore
 
 
 @pytest.mark.asyncio

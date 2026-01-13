@@ -2,7 +2,7 @@ from uuid import uuid4
 
 import pytest
 
-from apps.memory_api.adapters.sqlite.graph import SQLiteGraphStore
+from rae_adapters.sqlite.graph import SQLiteGraphStore
 
 
 @pytest.fixture

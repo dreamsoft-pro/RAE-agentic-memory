@@ -6,7 +6,7 @@ from uuid import UUID, uuid4
 import numpy as np
 import pytest
 
-from apps.memory_api.adapters.memory.vector import InMemoryVectorStore
+from rae_adapters.memory.vector import InMemoryVectorStore
 
 
 class TestInMemoryVectorStore:

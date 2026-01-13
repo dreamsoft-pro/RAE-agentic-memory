@@ -3,9 +3,9 @@ from uuid import uuid4
 
 import pytest
 
-from apps.memory_api.adapters.sqlite.graph import SQLiteGraphStore
-from apps.memory_api.adapters.sqlite.storage import SQLiteStorage
-from apps.memory_api.adapters.sqlite.vector import SQLiteVectorStore
+from rae_adapters.sqlite.graph import SQLiteGraphStore
+from rae_adapters.sqlite.storage import SQLiteStorage
+from rae_adapters.sqlite.vector import SQLiteVectorStore
 
 
 @pytest.fixture

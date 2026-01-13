@@ -4,7 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from apps.memory_api.adapters.redis import RedisCache
+from rae_adapters.redis import RedisCache
 
 
 class TestRedisCacheCoverage:
@@ -13,7 +13,7 @@ class TestRedisCacheCoverage:
     @pytest.mark.asyncio
     async def test_init_no_aioredis(self):
         """Test initialization when redis-client is not available."""
-        with patch("rae_core.adapters.redis.aioredis", None):
+        with patch("rae_adapters.redis.aioredis", None):
             with pytest.raises(ImportError, match="redis is required"):
                 RedisCache()
 
@@ -104,7 +104,7 @@ class TestRedisCacheCoverage:
     async def test_init_from_url(self):
         """Test initialization from URL."""
         mock_redis = MagicMock()
-        with patch("rae_core.adapters.redis.aioredis") as mock_aioredis:
+        with patch("rae_adapters.redis.aioredis") as mock_aioredis:
             mock_aioredis.from_url.return_value = mock_redis
             cache = RedisCache(url="redis://host:6379/0")
             assert cache.redis == mock_redis
@@ -114,7 +114,7 @@ class TestRedisCacheCoverage:
     async def test_init_default(self):
         """Test default initialization."""
         mock_redis = MagicMock()
-        with patch("rae_core.adapters.redis.aioredis") as mock_aioredis:
+        with patch("rae_adapters.redis.aioredis") as mock_aioredis:
             mock_aioredis.Redis.return_value = mock_redis
             cache = RedisCache()
             assert cache.redis == mock_redis

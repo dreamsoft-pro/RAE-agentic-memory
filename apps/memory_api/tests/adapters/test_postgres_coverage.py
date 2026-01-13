@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import pytest
 
-from apps.memory_api.adapters.postgres import PostgreSQLStorage
+from rae_adapters.postgres import PostgreSQLStorage
 
 
 class TestPostgreSQLStorageCoverage:
@@ -14,7 +14,7 @@ class TestPostgreSQLStorageCoverage:
     @pytest.mark.asyncio
     async def test_init_no_asyncpg(self):
         """Test initialization when asyncpg is not available."""
-        with patch("rae_core.adapters.postgres.asyncpg", None):
+        with patch("rae_adapters.postgres.asyncpg", None):
             with pytest.raises(ImportError, match="asyncpg is required"):
                 PostgreSQLStorage(dsn="test")
 
@@ -22,7 +22,7 @@ class TestPostgreSQLStorageCoverage:
     async def test_get_pool_no_dsn_or_pool(self):
         """Test _get_pool raises error when no dsn or pool provided."""
         # Patch asyncpg to avoid import error
-        with patch("rae_core.adapters.postgres.asyncpg", MagicMock()):
+        with patch("rae_adapters.postgres.asyncpg", MagicMock()):
             storage = PostgreSQLStorage()
             with pytest.raises(ValueError, match="Either dsn or pool must be provided"):
                 await storage._get_pool()
@@ -31,7 +31,7 @@ class TestPostgreSQLStorageCoverage:
     async def test_close_with_pool(self):
         """Test close method actually closes the pool."""
         mock_pool = AsyncMock()
-        with patch("rae_core.adapters.postgres.asyncpg", MagicMock()):
+        with patch("rae_adapters.postgres.asyncpg", MagicMock()):
             storage = PostgreSQLStorage(pool=mock_pool)
             await storage.close()
             mock_pool.close.assert_called_once()
@@ -45,7 +45,7 @@ class TestPostgreSQLStorageCoverage:
         mock_pool.acquire.return_value.__aenter__.return_value = conn
         conn.fetch.return_value = []
 
-        with patch("rae_core.adapters.postgres.asyncpg", MagicMock()):
+        with patch("rae_adapters.postgres.asyncpg", MagicMock()):
             storage = PostgreSQLStorage(pool=mock_pool)
             from datetime import datetime, timezone
 
@@ -70,7 +70,7 @@ class TestPostgreSQLStorageCoverage:
         mock_pool.acquire.return_value.__aenter__.return_value = conn
         conn.fetch.return_value = []
 
-        with patch("rae_core.adapters.postgres.asyncpg", MagicMock()):
+        with patch("rae_adapters.postgres.asyncpg", MagicMock()):
             storage = PostgreSQLStorage(pool=mock_pool)
             # search_memories requires agent_id and layer
             await storage.search_memories(
@@ -87,7 +87,7 @@ class TestPostgreSQLStorageCoverage:
     async def test_update_memory_no_updates(self):
         """Test update_memory with empty updates dictionary."""
         mock_pool = MagicMock()
-        with patch("rae_core.adapters.postgres.asyncpg", MagicMock()):
+        with patch("rae_adapters.postgres.asyncpg", MagicMock()):
             storage = PostgreSQLStorage(pool=mock_pool)
             # update_memory returns False if no valid set_clauses built
             res = await storage.update_memory(uuid4(), "t1", {})
@@ -97,7 +97,7 @@ class TestPostgreSQLStorageCoverage:
     @pytest.mark.asyncio
     async def test_get_pool_lazy_init(self):
         """Test lazy initialization of the connection pool."""
-        with patch("rae_core.adapters.postgres.asyncpg") as mock_asyncpg:
+        with patch("rae_adapters.postgres.asyncpg") as mock_asyncpg:
             mock_pool = MagicMock()
             mock_asyncpg.create_pool = AsyncMock(return_value=mock_pool)
 

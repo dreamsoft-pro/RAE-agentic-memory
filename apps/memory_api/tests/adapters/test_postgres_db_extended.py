@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from apps.memory_api.adapters.postgres_db import (
+from rae_adapters.postgres_db import (
     PostgresDatabaseProvider,
     acquire_with_timeout,
 )
