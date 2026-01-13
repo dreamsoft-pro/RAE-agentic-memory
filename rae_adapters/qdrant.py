@@ -13,7 +13,7 @@ except ImportError:  # pragma: no cover
     QdrantClient = Any  # type: ignore # pragma: no cover
     AsyncQdrantClient = Any  # type: ignore # pragma: no cover
 
-from ..interfaces.vector import IVectorStore
+from rae_core.interfaces.vector import IVectorStore
 
 
 class QdrantVectorStore(IVectorStore):

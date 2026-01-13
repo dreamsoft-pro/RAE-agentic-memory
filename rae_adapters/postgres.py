@@ -13,7 +13,7 @@ try:
 except ImportError:  # pragma: no cover
     asyncpg = None  # pragma: no cover
 
-from ..interfaces.storage import IMemoryStorage
+from rae_core.interfaces.storage import IMemoryStorage
 
 
 class PostgreSQLStorage(IMemoryStorage):
