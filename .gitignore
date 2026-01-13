@@ -43,6 +43,7 @@ soak_test_stats_stats_history.csv
 
 # venv/IDE
 .env
+.env.docker
 .mcp-test.env
 .vscode/
 .idea/
