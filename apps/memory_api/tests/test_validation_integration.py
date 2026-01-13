@@ -3,7 +3,7 @@ import os
 import asyncpg
 import pytest
 
-from apps.memory_api.adapters.postgres_adapter import PostgresAdapter
+from rae_adapters.postgres_adapter import PostgresAdapter
 from apps.memory_api.core.contract_definition import RAE_MEMORY_CONTRACT_V1
 
 # Only run this if we are in an environment that supports integration tests

@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from rae_lite.config import settings
 
-from apps.memory_api.adapters.sqlite import (
+from rae_adapters.sqlite import (
     SQLiteGraphStore,
     SQLiteStorage,
     SQLiteVectorStore,

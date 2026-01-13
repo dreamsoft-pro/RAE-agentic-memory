@@ -10,7 +10,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from apps.memory_api.adapters.sqlite.storage import SQLiteStorage
+from rae_adapters.sqlite.storage import SQLiteStorage
 
 
 @pytest.fixture

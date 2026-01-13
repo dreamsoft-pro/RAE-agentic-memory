@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import pytest
 
-from apps.memory_api.adapters.postgres import PostgreSQLStorage
+from rae_adapters.postgres import PostgreSQLStorage
 
 
 class TestPostgreSQLStorageExtended:
@@ -31,7 +31,7 @@ class TestPostgreSQLStorageExtended:
     def pg_storage(self, mock_pool):
         """Create PostgreSQLStorage instance with mock pool."""
         # Patch asyncpg to avoid import errors
-        with patch("rae_core.adapters.postgres.asyncpg") as mock_asyncpg:
+        with patch("rae_adapters.postgres.asyncpg") as mock_asyncpg:
             mock_asyncpg.create_pool.return_value = mock_pool
 
             storage = PostgreSQLStorage(

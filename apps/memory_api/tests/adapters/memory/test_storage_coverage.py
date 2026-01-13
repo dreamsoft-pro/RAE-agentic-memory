@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import pytest
 
-from apps.memory_api.adapters.memory.storage import InMemoryStorage
+from rae_adapters.memory.storage import InMemoryStorage
 
 
 class TestInMemoryStorageCoverage:

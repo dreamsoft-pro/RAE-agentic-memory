@@ -7,7 +7,7 @@ import pytest
 
 # Mock redis.asyncio if not available
 with patch.dict(sys.modules, {"redis.asyncio": MagicMock()}):
-    from apps.memory_api.adapters.redis import RedisCache
+    from rae_adapters.redis import RedisCache
 
 
 class TestRedisCache:
@@ -32,7 +32,7 @@ class TestRedisCache:
     def redis_cache(self, mock_redis_client):
         """Create RedisCache instance with mock client."""
         # Patch aioredis to avoid import errors and return mock client
-        with patch("rae_core.adapters.redis.aioredis") as mock_aioredis:
+        with patch("rae_adapters.redis.aioredis") as mock_aioredis:
             mock_aioredis.Redis.return_value = mock_redis_client
             mock_aioredis.from_url.return_value = mock_redis_client
 

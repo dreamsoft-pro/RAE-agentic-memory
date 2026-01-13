@@ -20,67 +20,112 @@ This quick start uses the **RAE Lite** profile, which is the fastest way to get 
 
 2.  **Choose and Start your RAE Environment:**
 
-RAE offers several Docker Compose profiles tailored to different use cases:
+RAE offers several Docker Compose profiles tailored to different use cases. This allows you to run multiple environments (like `dev` and `lite`) simultaneously without conflicts.
 
-### 1. Development (Hot Reload) Profile
+### 1. Development Environment (Hot Reload)
 
-This is the recommended setup for active development on the RAE codebase. It enables hot-reloading for rapid iteration.
+This is the recommended setup for active development. It enables hot-reloading for rapid iteration.
 
-**Key Features:**
--   **Hot-Reloading:** The `uvicorn` web server (for `rae-api-dev` and `ml-service-dev`) is started with the `--reload` flag. Any changes you make to the source code on your host machine will be immediately reflected in the running container without needing to rebuild the image. Celery workers and beat also have auto-reload configured.
--   **Source Code Mounting:** Critical application directories (`./apps`, `./rae-core`, `./sdk`, `./alembic`) are mounted as volumes into the containers.
--   **Debug-Friendly:** Log levels are set to `DEBUG`, and the observability stack (OpenTelemetry) is disabled to maximize performance.
--   **Dev Tools:** Includes `Adminer` (a web-based database management tool accessible at `http://localhost:8080`) and an optional `ollama-dev` for local LLM inference.
--   **Access:** `rae-api-dev` on `http://localhost:8001`, `rae-dashboard-dev` on `http://localhost:8502`.
+-   **Purpose:** Actively write and test code.
+-   **Features:** Hot-reloading, debug-level logging, development tools (`Adminer`).
+-   **API Port:** `http://localhost:8001`
+-   **Dashboard Port:** `http://localhost:8502`
 
 **How to Run:**
 ```bash
+# Start the development environment in the background
 docker compose --profile dev up -d
-# To include Ollama for local LLM, use:
-# docker compose --profile dev --profile local-llm up -d
 
 # To stop
 docker compose --profile dev down
-# To stop with Ollama:
-# docker compose --profile dev --profile local-llm down
 ```
 
-### 2. Standard Production Profile
+### 2. Full RAE Environment
 
-This is the standard, full-stack deployment for a production environment on a single node. It includes all services for full functionality, observability, and asynchronous processing.
+This is the complete, production-like stack with all services, including asynchronous workers and observability tools.
 
-**Key Features:**
--   **Full Stack:** Includes `rae-api`, `ml-service`, `reranker-service`, `postgres`, `redis`, `qdrant`, `celery-worker`, `celery-beat`, `otel-collector`, `jaeger`, and `rae-dashboard`.
--   **Production Ready:** Configured for stability and performance.
--   **Access:** `rae-api` on `http://localhost:8000`, `rae-dashboard` on `http://localhost:8501`.
+#### Option A: Running Standalone (on Default Ports)
+
+Use this when you only need to run the full RAE stack by itself.
+
+-   **Purpose:** Test the full application as it would run in a standard single-node production.
+-   **API Port:** `http://localhost:8000`
+-   **Dashboard Port:** `http://localhost:8501`
+-   **Warning:** This will use default ports (`8000`, `5432`, etc.) and will conflict with other applications or Docker containers using them.
 
 **How to Run:**
 ```bash
+# Start the standard environment in the background
 docker compose --profile standard up -d
 
 # To stop
 docker compose --profile standard down
 ```
 
-### 3. RAE Lite Profile (Minimal Deployment) - Recommended for Starters
+#### Option B: Running Sandboxed (Side-by-side with Dev)
 
-**RAE Lite** is a highly optimized, lightweight profile designed for rapid development and resource-constrained environments (like laptops). It removes all heavy ML dependencies while keeping the core memory and reasoning logic intact.
+Use this to run a full RAE instance simultaneously with your `dev` environment without port conflicts.
 
-**Why use Lite?**
-- 🚀 **Fast Startup:** Boots in < 5 seconds.
-- 📉 **Low Resources:** Runs comfortably on 4GB RAM (vs 16GB+ for full stack).
-- 🧩 **External LLMs Only:** Relies entirely on OpenAI/Anthropic/Gemini APIs instead of local models.
-- **Access:** `rae-api-lite` on `http://localhost:8008`.
+-   **Purpose:** Test against a stable, full RAE version while actively developing.
+-   **API Port:** `http://localhost:8020`
+-   **Database Port:** `5450`
 
 **How to Run:**
 ```bash
-# 1. Ensure your .env file has valid API keys (OPENAI_API_KEY, etc.)
-# 2. Start the Lite stack
+# Start the sandboxed full environment using its dedicated compose file
+docker-compose -f docker-compose.sandbox-full.yml up -d
+
+# To stop
+docker-compose -f docker-compose.sandbox-full.yml down
+```
+
+### 3. RAE-Lite Environment
+
+This is a lightweight, minimal-dependency version, perfect for quick tests or resource-constrained machines.
+
+#### Option A: Running Sandboxed (Side-by-side, Default)
+
+This is the default way to run `RAE-Lite` so it doesn't conflict with the `dev` or `standard` profiles.
+
+-   **Purpose:** Quickly test core logic or run on a laptop.
+-   **API Port:** `http://localhost:8008` (by default)
+
+**How to Run:**
+```bash
+# Ensure your .env file has API keys (e.g., OPENAI_API_KEY)
+# Start the lite environment in the background
 docker compose --profile lite up -d
 
 # To stop
 docker compose --profile lite down
 ```
+
+#### Option B: Running on a Custom Port (e.g., Default Port 8000)
+
+If you are only running the `lite` profile and want it to use the default API port `8000`, you can easily configure it.
+
+**Method 1: Using an Environment Variable (Recommended)**
+Run the `docker compose` command with the `RAE_LITE_PORT` variable set.
+```bash
+# This will start the lite API on http://localhost:8000
+RAE_LITE_PORT=8000 docker compose --profile lite up -d
+```
+
+**Method 2: Using the `.env` file**
+Add the following line to your `.env` file at the root of the project. Docker Compose will automatically pick it up.
+```
+RAE_LITE_PORT=8000
+```
+Then run the standard command: `docker compose --profile lite up -d`.
+
+### 4. Running Environments Simultaneously (Summary)
+
+The port mapping is designed to allow you to run multiple environments at once. For example:
+-   **Terminal 1 (Dev):** `docker compose --profile dev up -d` (API on port `8001`)
+-   **Terminal 2 (Lite):** `docker compose --profile lite up -d` (API on port `8008`)
+-   **Terminal 3 (Full Sandbox):** `docker-compose -f docker-compose.sandbox-full.yml up -d` (API on port `8020`)
+
+All three environments can run side-by-side without interfering with each other.
 
 3.  **Verify the services are running (for selected profile):**
     You can check the status of the containers:

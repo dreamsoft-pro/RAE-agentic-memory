@@ -83,8 +83,8 @@ The strategy focuses on centralizing `tenant_id` conversion and validation early
 During testing, a `ModuleNotFoundError: No module named 'rae_core'` was encountered. Investigation revealed a deeper architectural issue contradicting the mandate for `rae_core` to be **agnostic to infrastructure (database, disk, cache)**.
 
 Currently:
-1.  `rae-core/rae_core/adapters` exists and contains concrete implementations (e.g., `postgres_db.py`, `qdrant.py`, `redis.py`).
-2.  `apps/memory_api`'s modules (e.g., `graph_repository_enhanced.py`) attempt to import these concrete adapters directly from `rae_core.adapters`.
+1.  `rae-core/rae_core/adapters` was found to contain concrete implementations (e.g., `postgres_db.py`, `qdrant.py`, `redis.py`).
+2.  `apps/memory_api`'s modules (e.g., `graph_repository_enhanced.py`) were attempting to import these concrete adapters directly from `rae_core.adapters`.
 
 This means `rae_core` is coupled to specific infrastructure choices, violating its intended agnosticism. The `ModuleNotFoundError` is a symptom of this misplaced dependency.
 
@@ -98,10 +98,13 @@ This means `rae_core` is coupled to specific infrastructure choices, violating i
 
 This refactoring will be executed in a new dedicated session due to its complexity and architectural importance.
 
-1.  **[DONE] Move Adapters**: Transfer all concrete adapter implementations from `rae-core/rae_core/adapters` to a new directory: `apps/memory_api/adapters`. This establishes `apps/memory_api` as the layer responsible for concrete infrastructure integrations. *(Verified as complete from `TENANT_ID_REFACTOR_co-zrobiono.txt`)*.
-2.  **[DONE] Update Imports**: Modify all Python files within `apps/memory_api` (and potentially other parts of the project that import these adapters) to reflect the new import paths. *(Verified as complete from `TENANT_ID_REFACTOR_co-zrobiono.txt`)*.
-3.  **Validate `RAEEngine` Integration**: Confirm that `rae_core.engine.RAEEngine` (and any other `rae_core` components) are correctly designed to accept instances of the *interface* types (from `rae_core/rae_core/interfaces`), rather than directly depending on concrete adapter classes.
-4.  **Adjust `apps/memory_api/services/rae_core_service.py`**: This service is the primary instantiation point for `RAEEngine`. It must be updated to construct the now moved concrete adapters (from `apps/memory_api/adapters`) and pass them to the `RAEEngine` constructor as per the defined interfaces.
-5.  **Re-evaluate Testing Environment**: After moving the adapters, re-run tests. The original `ModuleNotFoundError` for `rae_core` should resolve itself for adapter-related imports. Further `ModuleNotFoundError` might indicate other paths issues, which we'll address then.
+#### Zadania ukończone
+*   **[DONE] Move Adapters**: Transfer all concrete adapter implementations from `rae-core/rae_core/adapters` to a new directory: `apps/memory_api/adapters`. This establishes `apps/memory_api` as the layer responsible for concrete infrastructure integrations.
+*   **[DONE] Update Imports**: Modify all Python files within `apps/memory_api` (and potentially other parts of the project that import these adapters) to reflect the new import paths.
+
+#### Pozostałe zadania (do wykonania)
+1.  **Validate `RAEEngine` Integration**: Confirm that `rae_core.engine.RAEEngine` (and any other `rae_core` components) are correctly designed to accept instances of the *interface* types (from `rae_core/rae_core/interfaces`), rather than directly depending on concrete adapter classes.
+2.  **Adjust `apps/memory_api/services/rae_core_service.py`**: This service is the primary instantiation point for `RAEEngine`. It must be updated to construct the now moved concrete adapters (from `apps/memory_api/adapters`) and pass them to the `RAEEngine` constructor as per the defined interfaces.
+3.  **Re-evaluate Testing Environment**: After moving the adapters, re-run tests. The original `ModuleNotFoundError` for `rae_core` should resolve itself for adapter-related imports. Further `ModuleNotFoundError` might indicate other paths issues, which we'll address then.
 
 **This refactoring directly addresses the `ModuleNotFoundError` by correcting the architectural placement of concrete adapter implementations and aligning with the `rae_core` agnosticism principle.**

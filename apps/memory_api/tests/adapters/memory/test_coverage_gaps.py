@@ -12,9 +12,9 @@ if "numpy" in sys.modules:
 else:
     pass
 
-from apps.memory_api.adapters.memory.cache import InMemoryCache
-from apps.memory_api.adapters.memory.storage import InMemoryStorage
-from apps.memory_api.adapters.memory.vector import InMemoryVectorStore
+from rae_adapters.memory.cache import InMemoryCache
+from rae_adapters.memory.storage import InMemoryStorage
+from rae_adapters.memory.vector import InMemoryVectorStore
 
 
 class TestInMemoryCacheCoverage:

@@ -4,7 +4,7 @@ import asyncio
 
 import pytest
 
-from apps.memory_api.adapters.memory.cache import InMemoryCache
+from rae_adapters.memory.cache import InMemoryCache
 
 
 class TestInMemoryCache:

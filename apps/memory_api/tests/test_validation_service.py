@@ -2,7 +2,7 @@ from typing import Any, Dict
 
 import pytest
 
-from apps.memory_api.adapters.base import MemoryAdapter
+from rae_adapters.base import MemoryAdapter
 from apps.memory_api.core.contract import (
     MemoryContract,
     ValidationResult,

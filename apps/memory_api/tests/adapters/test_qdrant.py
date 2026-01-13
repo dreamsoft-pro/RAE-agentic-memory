@@ -10,7 +10,7 @@ import pytest
 with patch.dict(
     sys.modules, {"qdrant_client": MagicMock(), "qdrant_client.models": MagicMock()}
 ):
-    from apps.memory_api.adapters.qdrant import QdrantVectorStore
+    from rae_adapters.qdrant import QdrantVectorStore
 
 
 class TestQdrantVectorStore:
@@ -26,7 +26,7 @@ class TestQdrantVectorStore:
     def qdrant_store(self, mock_client):
         """Create QdrantVectorStore instance with mock client."""
         # Patch QdrantClient to avoid import errors
-        with patch("rae_core.adapters.qdrant.QdrantClient") as mock_qdrant:
+        with patch("rae_adapters.qdrant.QdrantClient") as mock_qdrant:
             mock_qdrant.return_value = mock_client
 
             store = QdrantVectorStore(url="http://localhost:6333", client=mock_client)
