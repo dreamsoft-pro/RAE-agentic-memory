@@ -1,5 +1,11 @@
 services:
   # Main RAE API Service
+  rae-api:
+    image: rae-memory:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    profiles: ["standard"]
     volumes:
       - ./benchmarking:/app/benchmarking
       - ./apps:/app/apps

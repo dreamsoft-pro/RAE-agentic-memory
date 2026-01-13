@@ -13,7 +13,7 @@ try:
 except ImportError:  # pragma: no cover
     aioredis = None  # type: ignore[assignment]
 
-from ..interfaces.cache import ICacheProvider
+from rae_core.interfaces.cache import ICacheProvider
 
 
 class RedisCache(ICacheProvider):

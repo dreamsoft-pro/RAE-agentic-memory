@@ -20,9 +20,9 @@ from apps.memory_api.services.embedding import (
 )
 from apps.memory_api.services.llm import get_llm_provider
 from apps.memory_api.services.token_savings_service import TokenSavingsService
-from rae_adapters.postgres import PostgresMemoryAdapter
-from rae_adapters.qdrant import QdrantVectorAdapter
-from rae_adapters.redis import RedisCacheAdapter
+from rae_adapters.postgres import PostgreSQLStorage
+from rae_adapters.qdrant import QdrantVectorStore
+from rae_adapters.redis import RedisCache
 from rae_core.config import RAESettings
 from rae_core.embedding.manager import EmbeddingManager
 from rae_core.engine import RAEEngine
@@ -105,7 +105,7 @@ class RAECoreService:
 
         # 3. Initialize adapters with Lite mode support
         if postgres_pool and not ignore_db:
-            self.postgres_adapter = PostgresMemoryAdapter(pool=postgres_pool)
+            self.postgres_adapter = PostgreSQLStorage(pool=postgres_pool)
         else:
             from rae_adapters.memory import InMemoryStorage
 
@@ -117,7 +117,7 @@ class RAECoreService:
             dim = self.embedding_provider.get_dimension()
             distance = getattr(settings, "RAE_VECTOR_DISTANCE", "Cosine")
 
-            self.qdrant_adapter = QdrantVectorAdapter(
+            self.qdrant_adapter = QdrantVectorStore(
                 client=cast(Any, qdrant_client), embedding_dim=dim, distance=distance
             )
         elif (
@@ -138,7 +138,7 @@ class RAECoreService:
             self.qdrant_adapter = InMemoryVectorStore()
 
         if redis_client and not ignore_db:
-            self.redis_adapter = RedisCacheAdapter(redis_client=redis_client)
+            self.redis_adapter = RedisCache(redis_client=redis_client)
         else:
             from rae_adapters.memory import InMemoryCache
 
