@@ -112,6 +112,7 @@ class Settings(BaseSettings):
     # Logging configuration
     LOG_LEVEL: str = "WARNING"  # For external libraries (uvicorn, asyncpg, etc.)
     RAE_APP_LOG_LEVEL: str = "INFO"  # For RAE application logs
+    OTEL_TRACES_ENABLED: bool = False # For OpenTelemetry tracing
 
     # ============================================================================
     # Reflective Memory V1 Configuration (RAE Implementation Plan)
