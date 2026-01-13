@@ -75,3 +75,6 @@ config/cluster.local.yaml
 **/*.key
 pass_*.tmp
 
+# Temporary and log files from agent sessions
+*co-zrobiono.txt
+*.txt#

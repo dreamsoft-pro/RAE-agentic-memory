@@ -1,6 +1,6 @@
 import pytest
 
-from rae_core.adapters.sqlite.storage import SQLiteStorage
+from apps.memory_api.adapters.sqlite.storage import SQLiteStorage
 
 
 @pytest.fixture

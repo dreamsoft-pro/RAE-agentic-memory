@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from rae_core.adapters.redis import RedisCache
+from apps.memory_api.adapters.redis import RedisCache
 
 
 @pytest.mark.asyncio
@@ -39,9 +39,9 @@ async def test_redis_key_generation():
 @pytest.mark.asyncio
 async def test_redis_init_variants():
     # Patch the global aioredis variable in the rae_core.adapters.redis module
-    import rae_core.adapters.redis
+    import apps.memory_api.adapters.redis
 
-    with patch.object(rae_core.adapters.redis, "aioredis") as mock_aioredis:
+    with patch.object(apps.memory_api.adapters.redis, "aioredis") as mock_aioredis:
         mock_aioredis.from_url.return_value = MagicMock()
         mock_aioredis.Redis.return_value = MagicMock()
 

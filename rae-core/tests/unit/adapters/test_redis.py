@@ -7,7 +7,7 @@ import pytest
 
 # Mock redis.asyncio if not available
 with patch.dict(sys.modules, {"redis.asyncio": MagicMock()}):
-    from rae_core.adapters.redis import RedisCache
+    from apps.memory_api.adapters.redis import RedisCache
 
 
 class TestRedisCache:

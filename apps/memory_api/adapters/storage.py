@@ -7,8 +7,9 @@ import os
 
 import asyncpg
 
-from rae_core.adapters import PostgreSQLStorage
 from rae_core.interfaces.storage import IMemoryStorage
+
+from .postgres import PostgreSQLStorage
 
 
 def get_storage_adapter(pool: asyncpg.Pool) -> IMemoryStorage:

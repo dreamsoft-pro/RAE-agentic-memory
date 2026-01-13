@@ -2,7 +2,7 @@
 
 import pytest
 
-from rae_core.adapters.memory.cache import InMemoryCache
+from apps.memory_api.adapters.memory.cache import InMemoryCache
 
 
 class TestInMemoryCacheCoverage:

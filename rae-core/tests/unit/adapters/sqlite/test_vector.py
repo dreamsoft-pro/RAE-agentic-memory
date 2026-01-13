@@ -9,7 +9,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from rae_core.adapters.sqlite.vector import SQLiteVectorStore
+from apps.memory_api.adapters.sqlite.vector import SQLiteVectorStore
 
 
 @pytest.fixture

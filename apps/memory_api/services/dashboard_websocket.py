@@ -30,7 +30,7 @@ from apps.memory_api.models.dashboard_models import (
     WebSocketMessage,
     WebSocketSubscription,
 )
-from rae_core.adapters.postgres_db import PostgresDatabaseProvider
+from apps.memory_api.adapters.postgres_db import PostgresDatabaseProvider
 from rae_core.interfaces.database import IDatabaseProvider
 
 logger = structlog.get_logger(__name__)
