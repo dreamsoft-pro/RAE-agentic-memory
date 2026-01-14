@@ -155,6 +155,8 @@ class LLMRouter:
             "llama" in model_lower
             or "mistral" in model_lower
             or "local_deepseek" in model_lower
+            or "deepseek-r1" in model_lower
+            or "phi" in model_lower
         ):
             return self.providers.get("ollama")
         elif "deepseek" in model_lower:

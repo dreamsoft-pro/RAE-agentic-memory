@@ -1,5 +1,6 @@
-from typing import Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID
+from datetime import datetime
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -12,7 +13,9 @@ from apps.memory_api.metrics import (
 )
 from apps.memory_api.models import (
     DeleteMemoryResponse,
+    ListMemoryResponse,
     MemoryLayer,
+    MemoryRecord,
     QueryMemoryRequest,
     QueryMemoryResponse,
     RebuildReflectionsRequest,
@@ -39,6 +42,74 @@ router = APIRouter(
     tags=["memory-protocol"],
     dependencies=[Depends(auth.verify_token)],
 )
+
+
+@router.get("/list", response_model=ListMemoryResponse)
+async def list_memories(
+    limit: int = Query(50, ge=1, le=1000),
+    offset: int = Query(0, ge=0),
+    project: Optional[str] = None,
+    layer: Optional[MemoryLayer] = None,
+    tenant_id: UUID = Depends(get_and_verify_tenant_id),
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
+    """
+    List memories with pagination.
+
+    **Security:** Requires authentication and tenant access.
+    """
+    with tracer.start_as_current_span("rae.api.memory.list") as span:
+        span.set_attribute("rae.tenant_id", tenant_id)
+        if project:
+            span.set_attribute("rae.project_id", project)
+
+        try:
+            memories = await rae_service.list_memories(
+                tenant_id=str(tenant_id),
+                limit=limit,
+                offset=offset,
+                project=project,
+                layer=layer.value if layer else None,
+            )
+            
+            # Map dictionaries to MemoryRecord objects
+            results = []
+            layer_mapping = {
+                "ltm": "semantic",
+                "sm": "semantic",
+                "em": "episodic",
+                "stm": "working",
+                "wm": "working",
+                "rm": "reflective",
+            }
+            
+            for mem in memories:
+                # Ensure all required fields are present
+                if "timestamp" not in mem:
+                     mem["timestamp"] = datetime.now()
+                
+                # Normalize layer names
+                if "layer" in mem and mem["layer"] in layer_mapping:
+                    mem["layer"] = layer_mapping[mem["layer"]]
+                
+                # Convert UUID fields to strings for Pydantic
+                if "id" in mem and isinstance(mem["id"], UUID):
+                     mem["id"] = str(mem["id"])
+                if "tenant_id" in mem and isinstance(mem["tenant_id"], UUID):
+                     mem["tenant_id"] = str(mem["tenant_id"])
+                
+                results.append(MemoryRecord(**mem))
+
+            return ListMemoryResponse(
+                results=results,
+                total=len(results), # This is page size, real total requires separate count query
+                limit=limit,
+                offset=offset
+            )
+        except Exception as e:
+            span.set_attribute("rae.outcome.label", "list_error")
+            logger.error(f"List memories error: {e}")
+            raise HTTPException(status_code=500, detail=f"List error: {e}") from e
 
 
 @router.post("/store", response_model=StoreMemoryResponse)

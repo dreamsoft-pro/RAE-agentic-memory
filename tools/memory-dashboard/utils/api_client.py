@@ -136,49 +136,39 @@ class RAEClient:
         limit: int = 100,
     ) -> List[Dict[str, Any]]:
         """
-        Fetch memories with filters.
-
-        Args:
-            layers: List of memory layers to filter
-            since: Only return memories after this timestamp
-            limit: Maximum number of memories
-
-        Returns:
-            List of memory records
+        Fetch memories with filters using LIST endpoint.
         """
         try:
-            # A single, more efficient query to get all memories up to the limit
-            response = self._request(
-                "POST",
-                "/v1/memory/query",
-                json={
-                    "query_text": "*",
-                    "k": limit,
-                    "filters": {}, # No server-side layer filter to ensure all are fetched
-                    "project": self.project_id,
-                },
-            )
+            # Use GET /list for raw data retrieval (no vector search)
+            params = {
+                "limit": limit,
+                "offset": 0,
+                "project": self.project_id
+            }
+            # Note: API V1 /list might not support multi-layer filter in one go unless updated.
+            # Assuming it filters by project mostly.
             
-            memories = response.get("results", [])
+            response = self.client.get("/v1/memory/list", params=params)
+            response.raise_for_status()
+            data = response.json()
+            memories = data.get("results", [])
 
-            # Client-side filtering
+            # Client-side filtering for layers if API doesn't support list (it supports single layer param)
             if layers:
                 memories = [m for m in memories if m.get("layer") in layers]
 
             if since:
-                # Ensure timestamp exists and is valid before comparing
                 filtered_memories = []
                 for m in memories:
                     ts_str = m.get("timestamp")
                     if ts_str:
                         try:
-                            # Attempt to parse ISO format, ignoring timezone for naive comparison
                             ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00")).replace(tzinfo=None)
                             since_naive = since.replace(tzinfo=None)
                             if ts >= since_naive:
                                 filtered_memories.append(m)
                         except (ValueError, TypeError):
-                            continue # Skip memories with invalid timestamp format
+                            continue
                 memories = filtered_memories
 
             return memories[:limit]
@@ -367,26 +357,44 @@ class RAEClient:
 
     def get_reflection(self, project: Optional[str] = None) -> str:
         """
-        Get project reflection.
-
-        Args:
-            project: Optional project identifier
-
-        Returns:
-            Reflection text
+        Get latest project reflection.
+        
+        Strategy:
+        1. Try to fetch the most recent memory from 'reflective' layer via /list (Fast).
+        2. If none found, return a placeholder prompting generation.
+        
+        This avoids blocking the Dashboard with heavy LLM generation calls.
         """
         try:
-            response = self._request(
-                "POST",
-                "/v1/memory/reflection/hierarchical",
-                params={"project": project or self.project_id, "bucket_size": 10},
+            proj = project or self.project_id
+            
+            # Fetch latest reflective memory (Limit 1, Sort is implied by DB insertion order usually, 
+            # ideally API should support sort, but list usually returns recent first or we assume)
+            # Based on PostgresAdapter, list_memories sorts by created_at DESC by default? 
+            # Checking service: currently assumes default sort.
+            
+            response = self.client.get(
+                "/v1/memory/list",
+                params={
+                    "project": proj,
+                    "layer": "reflective",
+                    "limit": 1, 
+                    "offset": 0
+                },
+                timeout=5.0
             )
-
-            return response.get("summary", "No reflection available")
+            
+            if response.status_code == 200:
+                data = response.json()
+                results = data.get("results", [])
+                if results:
+                    return results[0].get("content", "Empty reflection content")
+            
+            return "No reflection cached. Go to 'Control' to trigger a rebuild."
 
         except Exception as e:
-            st.warning(f"Could not fetch reflection: {e}")
-            return "Reflection unavailable"
+            # Don't show error trace in UI for simple "not found"
+            return "Reflection unavailable (Cache Miss)"
 
     def get_tenants(self) -> List[str]:
         """

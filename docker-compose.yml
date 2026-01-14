@@ -303,10 +303,9 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: rae-celery-worker-dev
-    command: >
-      sh -c "pip install watchdog[watchmedo] &&
-             watchmedo auto-restart --directory=/app/apps --pattern='*.py' --recursive --
-             celery -A apps.memory_api.celery_app worker --loglevel=info --concurrency=2"
+    env_file:
+      - .env
+    command: celery -A apps.memory_api.celery_app worker --loglevel=info --concurrency=2
     volumes:
       - ./apps:/app/apps:ro
       - ./sdk:/app/sdk:ro
@@ -322,9 +321,6 @@ services:
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=${QDRANT_PORT:-6333}
       - RAE_VECTOR_BACKEND=${RAE_VECTOR_BACKEND:-qdrant}
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - RAE_APP_LOG_LEVEL=DEBUG
       - LOG_LEVEL=INFO
       - OTEL_TRACES_ENABLED=false
