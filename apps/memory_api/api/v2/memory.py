@@ -4,10 +4,11 @@ Memory API v2 - powered by RAE-Core.
 Uses RAEEngine with 4-layer architecture and hybrid search.
 """
 
+from uuid import UUID
+
 import structlog
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
-from uuid import UUID
 
 from apps.memory_api.dependencies import get_rae_core_service
 from apps.memory_api.security.dependencies import get_and_verify_tenant_id

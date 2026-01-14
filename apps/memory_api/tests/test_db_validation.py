@@ -3,8 +3,8 @@ from unittest.mock import AsyncMock, MagicMock
 import asyncpg
 import pytest
 
-from rae_adapters.postgres_adapter import PostgresAdapter
 from apps.memory_api.core.contract_definition import RAE_MEMORY_CONTRACT_V1
+from rae_adapters.postgres_adapter import PostgresAdapter
 
 
 @pytest.mark.asyncio

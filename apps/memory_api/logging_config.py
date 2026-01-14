@@ -25,6 +25,7 @@ from structlog.types import Processor
 # Conditionally import OpenTelemetry
 try:
     from opentelemetry.trace import get_current_span
+
     opentelemetry_installed = True
 except ImportError:
     opentelemetry_installed = False
@@ -70,7 +71,7 @@ def add_trace_id_to_log(logger, method_name, event_dict):
     """
     if not opentelemetry_installed:
         return event_dict
-        
+
     span = get_current_span()
     span_context = span.get_span_context()
     if span_context.is_valid:  # is_valid is a property, not a method
@@ -105,7 +106,7 @@ def setup_logging():
         pii_masking_processor,  # [ISO 27001]
         structlog.processors.StackInfoRenderer(),
     ]
-    
+
     # Conditionally add the OpenTelemetry processor
     if opentelemetry_installed and settings.OTEL_TRACES_ENABLED:
         shared_processors.insert(4, add_trace_id_to_log)

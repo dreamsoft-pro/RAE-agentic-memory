@@ -95,9 +95,9 @@ async def verify_token(
             return {"authenticated": True, "method": "bearer", "token": token}
 
         # --- JWT Verification Logic ---
-        from jose import JWTError, jwt
-        from google.oauth2 import id_token
         from google.auth.transport import requests as google_requests
+        from google.oauth2 import id_token
+        from jose import JWTError, jwt
 
         # 1. Try Google OIDC token verification
         try:
@@ -106,13 +106,18 @@ async def verify_token(
             # If not set, audience validation is skipped (less secure).
             audience = settings.OAUTH_AUDIENCE if settings.OAUTH_AUDIENCE else None
             decoded_token = id_token.verify_oauth2_token(
-                token, google_requests.Request(), audience=audience, clock_skew_in_seconds=10
+                token,
+                google_requests.Request(),
+                audience=audience,
+                clock_skew_in_seconds=10,
             )
 
             if "sub" not in decoded_token:
                 raise ValueError("Google token is missing 'sub' (subject) claim.")
 
-            logger.info("google_jwt_verification_succeeded", user_id=decoded_token["sub"])
+            logger.info(
+                "google_jwt_verification_succeeded", user_id=decoded_token["sub"]
+            )
             return {
                 "authenticated": True,
                 "method": "google_jwt",
@@ -129,7 +134,6 @@ async def verify_token(
         except Exception as e:
             logger.error("unexpected_google_auth_error", error=str(e), exc_info=True)
             # Fall through for safety, in case of unexpected google lib errors
-
 
         # 2. Try internal JWT verification (using SECRET_KEY)
         try:
@@ -208,15 +212,18 @@ async def get_user_id_from_token(request: Request) -> Optional[str]:
 
         # If JWT is enabled, decode it to get the real user_id
         if settings.ENABLE_JWT_AUTH:
-            from jose import JWTError, jwt
-            from google.oauth2 import id_token
             from google.auth.transport import requests as google_requests
+            from google.oauth2 import id_token
+            from jose import JWTError, jwt
 
             # 1. Try Google OIDC token to extract user ID
             try:
                 audience = settings.OAUTH_AUDIENCE if settings.OAUTH_AUDIENCE else None
                 decoded_token = id_token.verify_oauth2_token(
-                    token, google_requests.Request(), audience=audience, clock_skew_in_seconds=10
+                    token,
+                    google_requests.Request(),
+                    audience=audience,
+                    clock_skew_in_seconds=10,
                 )
                 user_id_val = decoded_token.get("sub")
                 if user_id_val:

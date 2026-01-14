@@ -1,7 +1,8 @@
+from uuid import UUID
+
 import httpx
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
-from uuid import UUID
 
 from apps.memory_api.config import settings
 from apps.memory_api.metrics import reflection_event_counter

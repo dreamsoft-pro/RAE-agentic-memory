@@ -17,7 +17,6 @@ Usage:
 """
 
 import os
-import subprocess
 import sys
 import time
 from pathlib import Path
@@ -31,9 +30,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 from rae_mcp.server import RAEMemoryClient
 
 pytestmark = pytest.mark.integration
-
-
-
 
 
 @pytest.fixture
@@ -352,6 +348,3 @@ class TestMCPPerformance:
 
         # Search should be fast (< 2 seconds)
         assert elapsed < 2.0
-
-
-

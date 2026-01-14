@@ -3,7 +3,7 @@ from uuid import uuid4
 
 import pytest
 
-from apps.memory_api.adapters.qdrant import QdrantVectorStore
+from rae_adapters.qdrant import QdrantVectorStore
 
 
 @pytest.mark.asyncio

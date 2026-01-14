@@ -96,6 +96,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - RAE_LLM_MODEL_DEFAULT=local_deepseek_coder
       # Dev-specific settings from docker-compose.dev.yml
       - RAE_APP_LOG_LEVEL=DEBUG
       - LOG_LEVEL=INFO
