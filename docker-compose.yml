@@ -103,11 +103,9 @@ services:
       - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-rae-memory-api-dev}
       - OTEL_SERVICE_VERSION=${OTEL_SERVICE_VERSION:-2.9.0-enterprise}
       - OTEL_EXPORTER_TYPE=${OTEL_EXPORTER_TYPE:-otlp}
-      - RAE_PROFILE=${RAE_PROFILE:-dev} # Set profile to dev
-      - RAE_DB_MODE=${RAE_DB_MODE:-migrate}
-      - PYTHONUNBUFFERED=1
       - RAE_LLM_BACKEND=${RAE_LLM_BACKEND:-ollama}
-      - OLLAMA_API_URL=${OLLAMA_API_URL:-http://host.docker.internal:11434}
+      - OLLAMA_API_BASE=http://ollama-dev:11434
+      - OLLAMA_API_URL=http://ollama-dev:11434
       - RAE_SIMILARITY_THRESHOLD=${RAE_SIMILARITY_THRESHOLD:-0.3}
     extra_hosts:
       - "host.docker.internal:host-gateway"
