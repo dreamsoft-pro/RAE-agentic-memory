@@ -134,12 +134,14 @@ class RAEBenchmarkRunner:
         api_url: Optional[str] = None,
         api_key: Optional[str] = None,
         use_direct_db: bool = True,
+        mock_embeddings: bool = False,
     ):
         self.benchmark_file = benchmark_file
         self.output_dir = output_dir
         self.api_url = api_url or "http://localhost:8000"
         self.api_key = api_key
         self.use_direct_db = use_direct_db
+        self.mock_embeddings = mock_embeddings
 
         self.benchmark_data = None
         self.tenant_id = "00000000-0000-0000-0000-000000000999"
@@ -152,6 +154,12 @@ class RAEBenchmarkRunner:
 
         # Database pool (if using direct DB access)
         self.pool = None
+
+    async def _get_embedding(self, service, texts: List[str]) -> List[List[float]]:
+        if self.mock_embeddings:
+            # Return dummy 768d vectors (standard for nomic)
+            return [[0.1] * 768 for _ in texts]
+        return await service.generate_embeddings_async(texts)
 
     async def load_benchmark(self):
         """Load benchmark YAML file"""
@@ -337,9 +345,7 @@ class RAEBenchmarkRunner:
                     else content
                 )
 
-                embeddings = await embedding_service.generate_embeddings_async(
-                    [prefixed_content]
-                )
+                embeddings = await self._get_embedding(embedding_service, [prefixed_content])
                 embedding = embeddings[0]
 
                 # Insert into database
@@ -356,7 +362,7 @@ class RAEBenchmarkRunner:
                         content,
                         memory.get("metadata", {}).get("source", "benchmark"),
                         memory.get("metadata", {}).get("importance", 0.5),
-                        "ltm",
+                        "semantic",
                         memory.get("tags", []),
                         self.project_id,
                     )
@@ -376,7 +382,7 @@ class RAEBenchmarkRunner:
                         content=content,
                         source=memory.get("metadata", {}).get("source", "benchmark"),
                         importance=memory.get("metadata", {}).get("importance", 0.5),
-                        layer=MemoryLayer.ltm,
+                        layer=MemoryLayer.semantic,
                         tags=memory.get("tags", []),
                         timestamp=created_at,
                         project=self.project_id,
@@ -435,9 +441,7 @@ class RAEBenchmarkRunner:
                     if not query_text.startswith("search_")
                     else query_text
                 )
-                query_embeddings = await embedding_service.generate_embeddings_async(
-                    [prefixed_query]
-                )
+                query_embeddings = await self._get_embedding(embedding_service, [prefixed_query])
                 query_embedding = query_embeddings[0]
 
                 # Search vectors - use query method with filters
@@ -693,6 +697,9 @@ async def main():
         "--api-url", type=str, help="RAE API URL (default: direct DB access)"
     )
     parser.add_argument("--api-key", type=str, help="API key for authentication")
+    parser.add_argument(
+        "--mock", action="store_true", help="Use mock embeddings for speed testing"
+    )
 
     args = parser.parse_args()
 
@@ -717,6 +724,7 @@ async def main():
         api_url=args.api_url,
         api_key=args.api_key,
         use_direct_db=True,  # Always use direct DB for benchmarks
+        mock_embeddings=args.mock,
     )
 
     try:
