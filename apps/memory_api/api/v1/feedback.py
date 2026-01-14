@@ -1,6 +1,7 @@
+from uuid import UUID
+
 import structlog
 from fastapi import APIRouter, Depends, Request
-from uuid import UUID
 
 from apps.memory_api.dependencies import get_rae_core_service
 from apps.memory_api.models.feedback import FeedbackRequest
@@ -41,4 +42,3 @@ async def submit_feedback(
         return {"status": "ignored_or_failed", "message": "Feedback not applied"}
 
     return {"status": "success", "message": "Feedback recorded"}
-

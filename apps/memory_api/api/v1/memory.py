@@ -380,7 +380,7 @@ async def generate_hierarchical_reflection(
     max_episodes: Optional[int] = Query(
         None, description="Maximum episodes to process", ge=1
     ),
-    tenant_id: UUID = Depends(get_and_verify_tenant_id), # Added dependency
+    tenant_id: UUID = Depends(get_and_verify_tenant_id),  # Added dependency
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """

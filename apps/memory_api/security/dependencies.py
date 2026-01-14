@@ -4,17 +4,11 @@ FastAPI dependencies for RBAC and tenant access control.
 These dependencies can be used with Depends() in route definitions.
 """
 
-"""
-FastAPI dependencies for RBAC and tenant access control.
-
-These dependencies can be used with Depends() in route definitions.
-"""
-
 from collections.abc import Callable
 from uuid import UUID
 
 import structlog
-from fastapi import HTTPException, Request, status, Header, Query
+from fastapi import Header, HTTPException, Query, Request, status
 
 from apps.memory_api.config import settings
 from apps.memory_api.security import auth
@@ -24,7 +18,7 @@ logger = structlog.get_logger(__name__)
 
 async def verify_tenant_access(
     request: Request,
-    tenant_id: UUID,  # Changed type to UUID
+    tenant_id: UUID,
 ) -> bool:
     """
     Dependency to verify user has access to tenant (for path parameters).
@@ -37,7 +31,6 @@ async def verify_tenant_access(
         ):
             ...
     """
-    # auth.check_tenant_access will now expect a UUID
     return await auth.check_tenant_access(request, tenant_id)
 
 
@@ -49,7 +42,7 @@ async def get_and_verify_tenant_id(
     query_tenant_id: str = Query(
         None, alias="tenant_id", description="Tenant ID query parameter"
     ),
-) -> UUID:  # Changed return type to UUID
+) -> UUID:
     """
     Dependency to extract tenant_id from X-Tenant-Id header or query parameter,
     convert it to UUID, handle 'default-tenant' alias, and verify access.
@@ -78,7 +71,7 @@ async def get_and_verify_tenant_id(
     # Store the validated UUID version of tenant_id in request.state for convenience
     request.state.tenant_id = tenant_uuid
 
-    # Verify user has access to this tenant (check_tenant_access needs to be updated to accept UUID)
+    # Verify user has access to this tenant
     await auth.check_tenant_access(request, tenant_uuid)
 
     return tenant_uuid
@@ -105,7 +98,7 @@ def require_action(action: str) -> Callable:
 
     async def _check_permission(
         request: Request,
-        tenant_id: UUID, # Changed type to UUID
+        tenant_id: UUID,
     ) -> bool:
         return await auth.require_permission(request, tenant_id, action)
 
@@ -126,33 +119,14 @@ async def require_admin(request: Request) -> bool:
         ):
             ...
     """
-    # For now, just verify authentication
-    # In production, this should check a system-wide admin role
     user_id = await auth.get_user_id_from_token(request)
     if not user_id:
-        from fastapi import HTTPException, status
-
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required for admin access",
         )
 
     # System-wide admin check
-    # NOTE: Implement system-wide admin verification:
-    # 1. Check if user_id exists in system_admins table
-    # 2. Or verify admin claim in JWT token
-    # 3. Or check against ADMIN_USER_IDS environment variable
-    #
-    # Example implementation:
-    # if hasattr(request.app.state, 'pool'):
-    #     result = await request.app.state.pool.fetchval(
-    #         "SELECT EXISTS(SELECT 1 FROM system_admins WHERE user_id = $1)",
-    #         user_id
-    #     )
-    #     if not result:
-    #         raise HTTPException(status_code=403, detail="Admin access required")
-    #
-    # For now, allow authenticated users (should be restricted in production)
     logger.warning(
         "system_admin_check_bypassed",
         user_id=user_id,
@@ -180,17 +154,13 @@ def require_tenant_role(min_role: str) -> Callable:
         ):
             ...
     """
-    from uuid import UUID
-
     from apps.memory_api.models.rbac import Role
     from apps.memory_api.services.rbac_service import RBACService
 
     async def _check_role(
         request: Request,
-        tenant_id: UUID, # Changed type to UUID
+        tenant_id: UUID,
     ) -> bool:
-        from fastapi import HTTPException, status
-
         # Get user ID
         user_id = await auth.get_user_id_from_token(request)
         if not user_id:
@@ -205,9 +175,6 @@ def require_tenant_role(min_role: str) -> Callable:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Database not initialized",
             )
-
-        # tenant_id is already a UUID from upstream dependency/path parameter
-        # No need for conversion here
 
         # Check role
         rbac_service = RBACService(request.app.state.pool)

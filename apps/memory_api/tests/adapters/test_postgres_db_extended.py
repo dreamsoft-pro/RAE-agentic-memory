@@ -3,8 +3,10 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from rae_adapters.postgres_db import (
+    PostgresAcquireContext,
+    PostgresDatabaseConnection,
     PostgresDatabaseProvider,
-    acquire_with_timeout,
+    PostgresTransaction,
 )
 
 

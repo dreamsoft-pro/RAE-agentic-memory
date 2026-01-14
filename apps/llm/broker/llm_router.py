@@ -151,7 +151,11 @@ class LLMRouter:
             return self.providers.get("anthropic")
         elif "gemini" in model_lower:
             return self.providers.get("gemini")
-        elif "llama" in model_lower or "mistral" in model_lower or "local_deepseek" in model_lower:
+        elif (
+            "llama" in model_lower
+            or "mistral" in model_lower
+            or "local_deepseek" in model_lower
+        ):
             return self.providers.get("ollama")
         elif "deepseek" in model_lower:
             return self.providers.get("deepseek")

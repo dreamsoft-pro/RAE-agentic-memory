@@ -10,23 +10,34 @@ The server communicates via STDIO using JSON-RPC protocol.
 """
 
 import asyncio
+import logging
 import os
 import re
-import sys # Added for conditional logging
+import sys
 import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-import logging # Added for conditional logging
 
 import httpx
 import mcp.server.stdio
 import mcp.types as types
 import structlog
-from structlog.stdlib import LoggerFactory, BoundLogger, add_logger_name, add_log_level
-from structlog.processors import TimeStamper, JSONRenderer, format_exc_info, StackInfoRenderer
-from structlog.dev import ConsoleRenderer
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
+from opentelemetry import trace
+from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+from prometheus_client import Counter, Histogram
+from structlog.dev import ConsoleRenderer
+from structlog.processors import (
+    JSONRenderer,
+    StackInfoRenderer,
+    TimeStamper,
+    format_exc_info,
+)
+from structlog.stdlib import BoundLogger, LoggerFactory, add_log_level, add_logger_name
+
 
 def _configure_logging():
     """
@@ -38,14 +49,15 @@ def _configure_logging():
         add_logger_name,
         add_log_level,
         TimeStamper(fmt="iso"),
-        format_exc_info, # Includes exception info in logs
-        StackInfoRenderer(), # Includes stack info
+        format_exc_info,  # Includes exception info in logs
+        StackInfoRenderer(),  # Includes stack info
     ]
 
     if not sys.stdin.isatty():
         # Running in a non-interactive pipe, output structured logs to stderr
         structlog.configure(
-            processors=shared_processors + [
+            processors=shared_processors
+            + [
                 JSONRenderer(),
             ],
             logger_factory=LoggerFactory(),
@@ -56,7 +68,8 @@ def _configure_logging():
     else:
         # Running interactively, output readable logs to stdout
         structlog.configure(
-            processors=shared_processors + [
+            processors=shared_processors
+            + [
                 ConsoleRenderer(),
             ],
             logger_factory=LoggerFactory(),
@@ -67,22 +80,18 @@ def _configure_logging():
 
     logging.basicConfig(handlers=[handler], level=logging.INFO)
 
+
 # Initialise logging before logger = structlog.get_logger()
 _configure_logging()
 
-logger = structlog.get_logger(__name__) # Moved here to be defined first
+logger = structlog.get_logger(__name__)
 
 # =============================================================================
 # OPENTELEMETRY CONFIGURATION
 # =============================================================================
 
-# OpenTelemetry imports
-from opentelemetry import trace
-from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
-
 # Initialize a TracerProvider early to ensure `trace` is always available.
+
 tp = TracerProvider()
 trace.set_tracer_provider(tp)
 
@@ -116,8 +125,6 @@ else:
 tracer = trace.get_tracer(__name__)
 
 # Prometheus Metrics
-from prometheus_client import Counter, Histogram
-
 TOOLS_CALLED = Counter(
     "mcp_tools_called_total", "Total MCP tool invocations", ["tool_name"]
 )
@@ -167,7 +174,7 @@ class PIIScrubber:
     # Patterns for PII detection
     PATTERNS = {
         "api_key": re.compile(
-            r'(?i)(api[_-]?key|token|secret|password|passwd|pwd)[\s:=]+["\']?([a-zA-Z0-9_\-\.]{16,})["\']?'
+            r'(?i)(api[_-]?key|token|secret|password|passwd|pwd)[\s:=]+["\"]?([a-zA-Z0-9_\-\.]){16,}["\"]?'
         ),
         "email": re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"),
         "credit_card": re.compile(r"\b\d{4}[\s\-]?\d{4}[\s\-]?\d{4}[\s\-]?\d{4}\b"),
@@ -197,16 +204,7 @@ class PIIScrubber:
 
     @classmethod
     def scrub(cls, data: Any, max_content_length: int = 100) -> Any:
-        """
-        Recursively scrub PII from data structure.
-
-        Args:
-            data: Data to scrub (dict, list, str, etc.)
-            max_content_length: Max length for content fields before truncation
-
-        Returns:
-            Scrubbed data with PII masked
-        """
+        """Scrub PII from data structure."""
         if isinstance(data, dict):
             return {
                 key: cls._scrub_value(key, value, max_content_length)
@@ -331,20 +329,7 @@ class RAEMemoryClient:
         project: str = RAE_PROJECT_ID,
         importance: float = 0.5,
     ) -> Dict[str, Any]:
-        """
-        Store a memory in RAE.
-
-        Args:
-            content: Memory content
-            source: Source identifier
-            layer: Memory layer (em, stm, ltm, rm)
-            tags: Optional list of tags
-            project: Project identifier
-            importance: Importance score (0.0-1.0)
-
-        Returns:
-            Response dict with memory ID
-        """
+        """Store a memory in RAE."""
         with tracer.start_as_current_span("rae.mcp.store_memory") as span:
             # Add span attributes for observability
             span.set_attribute("memory.layer", layer)
@@ -409,18 +394,7 @@ class RAEMemoryClient:
         project: Optional[str] = None,
         filters: Optional[Dict[str, Any]] = None,
     ) -> List[Dict[str, Any]]:
-        """
-        Search RAE memory for relevant information.
-
-        Args:
-            query: Search query
-            top_k: Number of results to return
-            project: Optional project filter
-            filters: Optional additional filters
-
-        Returns:
-            List of scored memory records
-        """
+        """Search RAE memory for relevant information."""
         with tracer.start_as_current_span("rae.mcp.search_memory") as span:
             # Add span attributes
             span.set_attribute("search.query", query)
@@ -472,18 +446,11 @@ class RAEMemoryClient:
                 raise
 
     async def get_file_context(
-        self, file_path: str, top_k: int = 10
+        self,
+        file_path: str,
+        top_k: int = 10,
     ) -> List[Dict[str, Any]]:
-        """
-        Get historical context about a file or module.
-
-        Args:
-            file_path: Path to the file
-            top_k: Number of results
-
-        Returns:
-            List of related memories
-        """
+        """Get historical context about a file or module."""
         # Search by file path in source field
         query = f"file:{file_path}"
 
@@ -492,15 +459,7 @@ class RAEMemoryClient:
         )
 
     async def get_latest_reflection(self, project: str = RAE_PROJECT_ID) -> str:
-        """
-        Get the latest project reflection.
-
-        Args:
-            project: Project identifier
-
-        Returns:
-            Latest reflection summary
-        """
+        """Get the latest project reflection."""
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
@@ -532,17 +491,10 @@ class RAEMemoryClient:
             return "Error retrieving reflection."
 
     async def get_project_guidelines(
-        self, project: str = RAE_PROJECT_ID
+        self,
+        project: str = RAE_PROJECT_ID,
     ) -> List[Dict[str, Any]]:
-        """
-        Get project guidelines from semantic memory.
-
-        Args:
-            project: Project identifier
-
-        Returns:
-            List of guideline memories
-        """
+        """Get project guidelines from semantic memory."""
         return await self.search_memory(
             query="coding guidelines project conventions best practices",
             top_k=10,
@@ -561,20 +513,7 @@ class RAEMemoryClient:
         resource_id: str,
         requested_by: str,
     ) -> Dict[str, Any]:
-        """
-        Request approval for a high-risk operation.
-
-        Args:
-            operation_type: Type of operation
-            operation_description: Description of the operation
-            risk_level: Risk level (none, low, medium, high, critical)
-            resource_type: Type of resource
-            resource_id: ID of the resource
-            requested_by: User requesting the operation
-
-        Returns:
-            Approval response with request_id and status
-        """
+        """Request approval for a high-risk operation."""
         payload = {
             "tenant_id": RAE_TENANT_ID,
             "project_id": RAE_PROJECT_ID,
@@ -602,15 +541,7 @@ class RAEMemoryClient:
             raise
 
     async def check_approval_status(self, request_id: str) -> Dict[str, Any]:
-        """
-        Check approval request status.
-
-        Args:
-            request_id: UUID of the approval request
-
-        Returns:
-            Approval status details
-        """
+        """Check approval request status."""
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
@@ -626,12 +557,7 @@ class RAEMemoryClient:
             raise
 
     async def get_circuit_breakers(self) -> List[Dict[str, Any]]:
-        """
-        Get all circuit breaker states.
-
-        Returns:
-            List of circuit breaker states
-        """
+        """Get all circuit breaker states."""
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
@@ -647,15 +573,7 @@ class RAEMemoryClient:
             raise
 
     async def list_policies(self, policy_type: Optional[str] = None) -> Dict[str, Any]:
-        """
-        List governance policies.
-
-        Args:
-            policy_type: Optional filter by policy type
-
-        Returns:
-            Policies list
-        """
+        """List governance policies."""
         params = {"tenant_id": RAE_TENANT_ID}
         if policy_type:
             params["policy_type"] = policy_type
@@ -693,30 +611,13 @@ class RateLimiter:
     """
 
     def __init__(self, max_requests: int = 100, window_seconds: int = 60):
-        """
-        Initialize rate limiter.
-
-        Args:
-            max_requests: Maximum requests per window (default: 100)
-            window_seconds: Time window in seconds (default: 60)
-        """
+        """Initialize rate limiter."""
         self.max_requests = max_requests
         self.window_seconds = window_seconds
         self._requests: Dict[str, List[float]] = {}  # tenant_id -> timestamps
 
     def check_rate_limit(self, tenant_id: str) -> bool:
-        """
-        Check if request is within rate limit.
-
-        Args:
-            tenant_id: Tenant identifier
-
-        Returns:
-            True if within limit, False if exceeded
-
-        Side Effects:
-            Records the request timestamp if within limit
-        """
+        """Check if request is within rate limit."""
         now = time.time()
         cutoff = now - self.window_seconds
 
@@ -744,15 +645,7 @@ class RateLimiter:
         return True
 
     def get_remaining(self, tenant_id: str) -> int:
-        """
-        Get remaining requests for tenant.
-
-        Args:
-            tenant_id: Tenant identifier
-
-        Returns:
-            Number of requests remaining in current window
-        """
+        """Get remaining requests for tenant."""
         now = time.time()
         cutoff = now - self.window_seconds
 
@@ -792,12 +685,7 @@ rae_client = RAEMemoryClient()
 
 @server.list_tools()
 async def handle_list_tools() -> list[types.Tool]:
-    """
-    List all available MCP tools.
-
-    Returns:
-        List of tool definitions
-    """
+    """List all available MCP tools."""
     return [
         types.Tool(
             name="save_memory",
@@ -1005,18 +893,10 @@ async def handle_list_tools() -> list[types.Tool]:
 
 @server.call_tool()
 async def handle_call_tool(
-    name: str, arguments: dict
+    name: str,
+    arguments: dict,
 ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
-    """
-    Handle MCP tool invocations.
-
-    Args:
-        name: Tool name
-        arguments: Tool arguments
-
-    Returns:
-        List of content items
-    """
+    """Handle MCP tool invocations."""
     # Track metrics
     start_time = time.time()
     TOOLS_CALLED.labels(tool_name=name).inc()
@@ -1247,7 +1127,7 @@ async def handle_call_tool(
 
             formatted = (
                 f"Approval Request Status\n"
-                f"{'=' * 40}\n\n"
+                f"{ '=' * 40}\n\n"
                 f"Request ID: {request_id}\n"
                 f"Status: {status}\n"
                 f"Risk Level: {risk_level}\n"
@@ -1355,12 +1235,7 @@ async def handle_call_tool(
 
 @server.list_resources()
 async def handle_list_resources() -> list[types.Resource]:
-    """
-    List available MCP resources.
-
-    Returns:
-        List of resource definitions
-    """
+    """List available MCP resources."""
     return [
         types.Resource(
             uri="rae://project/reflection",
@@ -1387,15 +1262,7 @@ async def handle_list_resources() -> list[types.Resource]:
 
 @server.read_resource()
 async def handle_read_resource(uri: str) -> str:
-    """
-    Read MCP resource content.
-
-    Args:
-        uri: Resource URI
-
-    Returns:
-        Resource content as string
-    """
+    """Read MCP resource content."""
     start_time = time.time()
     RESOURCES_READ.labels(resource_uri=uri).inc()
 
@@ -1446,12 +1313,7 @@ async def handle_read_resource(uri: str) -> str:
 
 @server.list_prompts()
 async def handle_list_prompts() -> list[types.Prompt]:
-    """
-    List available MCP prompts.
-
-    Returns:
-        List of prompt definitions
-    """
+    """List available MCP prompts."""
     return [
         types.Prompt(
             name="project-guidelines",
@@ -1475,16 +1337,7 @@ async def handle_list_prompts() -> list[types.Prompt]:
 
 @server.get_prompt()
 async def handle_get_prompt(name: str, arguments: dict) -> types.GetPromptResult:
-    """
-    Get MCP prompt content.
-
-    Args:
-        name: Prompt name
-        arguments: Prompt arguments
-
-    Returns:
-        Prompt result with messages
-    """
+    """Get MCP prompt content."""
     start_time = time.time()
     PROMPTS_REQUESTED.labels(prompt_name=name).inc()
 
@@ -1592,10 +1445,10 @@ async def main():
             )
     except asyncio.CancelledError:
         logger.info("rae_mcp_server_shutdown", reason="stdin pipe closed gracefully")
-    except Exception as e: # Catch specific exception for logging
+    except Exception as e:  # Catch specific exception for logging
         logger.exception("rae_mcp_server_fatal_error", error=str(e))
-        sys.exit(1) # Exit with a non-zero code for unhandled errors
-    sys.exit(0) # Exit cleanly on successful completion or graceful shutdown
+        sys.exit(1)  # Exit with a non-zero code for unhandled errors
+    sys.exit(0)  # Exit cleanly on successful completion or graceful shutdown
 
 
 if __name__ == "__main__":

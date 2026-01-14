@@ -1,7 +1,7 @@
 from typing import List
+from uuid import UUID
 
 from fastapi import APIRouter, Depends
-from uuid import UUID
 
 from apps.memory_api.dependencies import get_rae_core_service
 from apps.memory_api.security import auth
