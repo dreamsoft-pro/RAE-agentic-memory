@@ -253,6 +253,13 @@ class QueryMemoryResponse(BaseModel):
     )
 
 
+class ListMemoryResponse(BaseModel):
+    results: List[MemoryRecord]
+    total: int = 0
+    limit: int
+    offset: int
+
+
 class DeleteMemoryRequest(BaseModel):
     memory_id: str
 

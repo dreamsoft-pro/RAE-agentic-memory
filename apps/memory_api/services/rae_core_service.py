@@ -566,6 +566,17 @@ class RAECoreService:
         )
         return [str(r["tenant_id"]) for r in records]
 
+    async def list_tenants_with_details(self) -> List[Dict[str, str]]:
+        """List all tenants with their names."""
+        try:
+            records = await self.db.fetch("SELECT id, name FROM tenants ORDER BY name")
+            return [{"id": str(r["id"]), "name": r["name"] or "Unnamed"} for r in records]
+        except Exception as e:
+            logger.warning("failed_to_list_tenant_details", error=str(e))
+            # Fallback to IDs only
+            ids = await self.list_unique_tenants()
+            return [{"id": i, "name": f"Tenant {i[:8]}..."} for i in ids]
+
     async def list_unique_projects(self, tenant_id: str) -> List[str]:
         """List all unique project IDs for a tenant."""
         records = await self.db.fetch(

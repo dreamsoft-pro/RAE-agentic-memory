@@ -117,6 +117,43 @@ X-Tenant-Id: tenant-1
 
 ---
 
+### List Memories
+
+List memories with pagination support.
+
+```http
+GET /v1/memory/list?limit=50&offset=0
+X-Tenant-Id: tenant-1
+```
+
+**Query Parameters:**
+- `limit` (default: 50) - Number of records to return
+- `offset` (default: 0) - Pagination offset
+- `project` (optional) - Filter by project ID
+- `layer` (optional) - Filter by memory layer (e.g., `episodic`, `semantic`)
+
+**Response:**
+```json
+{
+  "results": [
+    {
+      "id": "uuid",
+      "content": "User prefers dark mode",
+      "source": "user_preference",
+      "importance": 0.8,
+      "layer": "episodic",
+      "project": "project-1",
+      "timestamp": "2025-11-22T10:00:00Z"
+    }
+  ],
+  "total": 50,
+  "limit": 50,
+  "offset": 0
+}
+```
+
+---
+
 ### Query Memory
 
 Query memories using vector search or hybrid search with graph traversal (GraphRAG).
