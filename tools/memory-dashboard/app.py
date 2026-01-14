@@ -92,7 +92,7 @@ with st.sidebar:
                     api_url=api_url,
                     api_key=api_key,
                     tenant_id="system-discovery",
-                    timeout=5.0,
+                    timeout=20.0,
                 )
                 tenants_list = temp_client.get_tenants()
             except Exception:
@@ -129,7 +129,7 @@ with st.sidebar:
                     api_url=api_url,
                     api_key=api_key,
                     tenant_id=tenant_id,
-                    timeout=5.0,
+                    timeout=20.0,
                 )
                 projects_list = temp_client.get_projects()
             except Exception:

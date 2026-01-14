@@ -30,7 +30,7 @@ class RAEClient:
         api_key: str = "default-key",
         tenant_id: str = "default-tenant",
         project_id: str = "default-project",
-        timeout: float = 30.0,
+        timeout: float = 300.0,
     ):
         """
         Initialize RAE API client.
