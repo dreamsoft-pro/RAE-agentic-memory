@@ -44,6 +44,7 @@ async def test_embedding_service_distributed_routing():
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip("Requires OPENAI_API_KEY for embedding generation or litellm mocking")
 async def test_embedding_service_local_fallback():
     """Test that EmbeddingService falls back to local when not in distributed mode."""
     # Setup

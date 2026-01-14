@@ -2,7 +2,6 @@ from typing import Any, Dict
 
 import pytest
 
-from apps.memory_api.adapters.base import MemoryAdapter
 from apps.memory_api.core.contract import (
     MemoryContract,
     ValidationResult,
@@ -10,6 +9,7 @@ from apps.memory_api.core.contract import (
 )
 from apps.memory_api.core.contract_definition import RAE_MEMORY_CONTRACT_V1
 from apps.memory_api.services.validation_service import ValidationService
+from rae_adapters.base import MemoryAdapter
 
 
 # Mock Adapters for testing ValidationService

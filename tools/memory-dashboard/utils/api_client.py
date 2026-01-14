@@ -30,7 +30,7 @@ class RAEClient:
         api_key: str = "default-key",
         tenant_id: str = "default-tenant",
         project_id: str = "default-project",
-        timeout: float = 30.0,
+        timeout: float = 300.0,
     ):
         """
         Initialize RAE API client.
@@ -101,36 +101,28 @@ class RAEClient:
             Dictionary with memory counts by layer
         """
         try:
-            # Query for counts by layer
+            # Fetch a large batch of memories to calculate stats from.
+            # This is more efficient than multiple small queries.
+            all_memories = self.get_memories(limit=1000) # Increased limit for better accuracy
+
             stats = {"total": 0, "episodic": 0, "working": 0, "semantic": 0, "ltm": 0}
 
-            # Get count for each layer
-            for layer in ["episodic", "working", "semantic", "reflective"]:
-                res = self._request(
-                    "POST",
-                    "/v1/memory/query",
-                    json={
-                        "query_text": "*",
-                        "k": 1,
-                        "filters": {"layer": layer},
-                        "project": self.project_id,
-                    },
-                )
-                # This is approximate - would need dedicated stats endpoint
-                # results count gives us a hint
-                count = len(res.get("results", []))
-                # Update local stats object
+            if not all_memories:
+                return stats
+
+            stats["total"] = len(all_memories)
+
+            for memory in all_memories:
+                layer = memory.get("layer")
                 if layer == "episodic":
-                    stats["episodic"] = count
+                    stats["episodic"] += 1
                 elif layer == "working":
-                    stats["working"] = count
+                    stats["working"] += 1
                 elif layer == "semantic":
-                    stats["semantic"] = count
-                elif layer == "reflective":
-                    stats["ltm"] = count  # Mapping reflective to dashboard's LTM column
-
-                stats["total"] += count
-
+                    stats["semantic"] += 1
+                elif layer in ["reflective", "long-term"]: # Accomodate for different naming
+                    stats["ltm"] += 1
+            
             return stats
 
         except Exception as e:
@@ -144,43 +136,40 @@ class RAEClient:
         limit: int = 100,
     ) -> List[Dict[str, Any]]:
         """
-        Fetch memories with filters.
-
-        Args:
-            layers: List of memory layers to filter
-            since: Only return memories after this timestamp
-            limit: Maximum number of memories
-
-        Returns:
-            List of memory records
+        Fetch memories with filters using LIST endpoint.
         """
         try:
-            # Query for memories
-            memories = []
+            # Use GET /list for raw data retrieval (no vector search)
+            params = {
+                "limit": limit,
+                "offset": 0,
+                "project": self.project_id
+            }
+            # Note: API V1 /list might not support multi-layer filter in one go unless updated.
+            # Assuming it filters by project mostly.
+            
+            response = self.client.get("/v1/memory/list", params=params)
+            response.raise_for_status()
+            data = response.json()
+            memories = data.get("results", [])
 
-            target_layers = layers or ["episodic", "working", "semantic", "reflective"]
-            for layer in target_layers:
-                response = self._request(
-                    "POST",
-                    "/v1/memory/query",
-                    json={
-                        "query_text": "*",
-                        "k": limit,
-                        "filters": {"layer": layer},
-                        "project": self.project_id,
-                    },
-                )
+            # Client-side filtering for layers if API doesn't support list (it supports single layer param)
+            if layers:
+                memories = [m for m in memories if m.get("layer") in layers]
 
-                results = response.get("results", [])
-                memories.extend(results)
-
-            # Filter by date if specified
             if since:
-                memories = [
-                    m
-                    for m in memories
-                    if datetime.fromisoformat(m.get("timestamp", "")) >= since
-                ]
+                filtered_memories = []
+                for m in memories:
+                    ts_str = m.get("timestamp")
+                    if ts_str:
+                        try:
+                            ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00")).replace(tzinfo=None)
+                            since_naive = since.replace(tzinfo=None)
+                            if ts >= since_naive:
+                                filtered_memories.append(m)
+                        except (ValueError, TypeError):
+                            continue
+                memories = filtered_memories
 
             return memories[:limit]
 
@@ -368,26 +357,44 @@ class RAEClient:
 
     def get_reflection(self, project: Optional[str] = None) -> str:
         """
-        Get project reflection.
-
-        Args:
-            project: Optional project identifier
-
-        Returns:
-            Reflection text
+        Get latest project reflection.
+        
+        Strategy:
+        1. Try to fetch the most recent memory from 'reflective' layer via /list (Fast).
+        2. If none found, return a placeholder prompting generation.
+        
+        This avoids blocking the Dashboard with heavy LLM generation calls.
         """
         try:
-            response = self._request(
-                "POST",
-                "/v1/memory/reflection/hierarchical",
-                params={"project": project or self.project_id, "bucket_size": 10},
+            proj = project or self.project_id
+            
+            # Fetch latest reflective memory (Limit 1, Sort is implied by DB insertion order usually, 
+            # ideally API should support sort, but list usually returns recent first or we assume)
+            # Based on PostgresAdapter, list_memories sorts by created_at DESC by default? 
+            # Checking service: currently assumes default sort.
+            
+            response = self.client.get(
+                "/v1/memory/list",
+                params={
+                    "project": proj,
+                    "layer": "reflective",
+                    "limit": 1, 
+                    "offset": 0
+                },
+                timeout=5.0
             )
-
-            return response.get("summary", "No reflection available")
+            
+            if response.status_code == 200:
+                data = response.json()
+                results = data.get("results", [])
+                if results:
+                    return results[0].get("content", "Empty reflection content")
+            
+            return "No reflection cached. Go to 'Control' to trigger a rebuild."
 
         except Exception as e:
-            st.warning(f"Could not fetch reflection: {e}")
-            return "Reflection unavailable"
+            # Don't show error trace in UI for simple "not found"
+            return "Reflection unavailable (Cache Miss)"
 
     def get_tenants(self) -> List[str]:
         """

@@ -456,31 +456,49 @@ class MemoryConsolidationService:
         strategy: ConsolidationStrategy,
     ) -> str:
         """
-        Generate consolidated content using LLM
-
+        Generate consolidated content using LLM or fallback to heuristic.
+        
         Args:
-            memories: Source memories
-            target_layer: Target layer
+            memories: List of memories to consolidate
+            target_layer: Target memory layer
             strategy: Consolidation strategy
-
+            
         Returns:
             Consolidated content string
         """
-        if not self.llm_client:
-            # Fallback: simple concatenation
-            return "\n\n".join(m.get("content", "") for m in memories)
+        # Fallback heuristic (Concatenation) - used on failure or for speed
+        def heuristic_consolidation():
+            # Sort by timestamp if available
+            sorted_memories = sorted(memories, key=lambda x: x.get("timestamp", "") or "")
+            summary_lines = [f"- {m.get('content', '').strip()}" for m in sorted_memories]
+            header = f"Consolidated Summary ({len(memories)} items):"
+            return f"{header}\n" + "\n".join(summary_lines)
 
-        # Prepare prompt based on target layer and strategy
-        self._build_consolidation_prompt(
-            memories=memories, target_layer=target_layer, strategy=strategy
-        )
+        try:
+            # Check for fast-path heuristic strategy explicitly
+            if strategy == ConsolidationStrategy.TIME_BASED: 
+                 # Time-based often implies simple chronological log
+                 return heuristic_consolidation()
 
-        # Call LLM
-        # In production: response = await self.llm_client.generate(prompt)
-        # For now, return placeholder
-        consolidated = f"Consolidated content from {len(memories)} memories"
+            prompt = self._build_consolidation_prompt(
+                memories, target_layer, strategy
+            )
 
-        return consolidated
+            # Use LLM with a strict timeout/fallback
+            # Note: We catch generic Exception to ensure fallback works
+            result = await self.llm_client.generate(
+                system="You are a memory consolidation expert. Summarize the following memories into a concise, coherent insight.",
+                prompt=prompt,
+                model="deepseek-coder:1.3b", # Force small model or default
+            )
+            
+            return result.text
+
+        except Exception as e:
+            # Log failure but return heuristic content so pipeline doesn't break
+            # This is crucial for "RAE on CPU" scenarios
+            print(f"Consolidation LLM failed ({str(e)}). Using heuristic fallback.")
+            return heuristic_consolidation()
 
     def _build_consolidation_prompt(
         self,

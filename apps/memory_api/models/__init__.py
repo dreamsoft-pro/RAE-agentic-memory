@@ -41,6 +41,7 @@ RebuildReflectionsRequest = models_legacy.RebuildReflectionsRequest
 AgentExecuteRequest = models_legacy.AgentExecuteRequest
 CostInfo = models_legacy.CostInfo
 AgentExecuteResponse = models_legacy.AgentExecuteResponse
+ListMemoryResponse = models_legacy.ListMemoryResponse
 
 __all__ = [
     # Core models
@@ -53,6 +54,7 @@ __all__ = [
     "StoreMemoryResponse",
     "QueryMemoryRequest",
     "QueryMemoryResponse",
+    "ListMemoryResponse",
     "DeleteMemoryRequest",
     "DeleteMemoryResponse",
     "RebuildReflectionsRequest",

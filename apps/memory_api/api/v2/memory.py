@@ -4,6 +4,8 @@ Memory API v2 - powered by RAE-Core.
 Uses RAEEngine with 4-layer architecture and hybrid search.
 """
 
+from uuid import UUID
+
 import structlog
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
@@ -72,7 +74,7 @@ class QueryMemoryResponseV2(BaseModel):
 @router.post("/", response_model=StoreMemoryResponseV2)
 async def store_memory(
     request: StoreMemoryRequestV2,
-    tenant_id: str = Depends(get_and_verify_tenant_id),
+    tenant_id: UUID = Depends(get_and_verify_tenant_id),
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
@@ -111,7 +113,7 @@ async def store_memory(
 @router.post("/query", response_model=QueryMemoryResponseV2)
 async def query_memories(
     request: QueryMemoryRequestV2,
-    tenant_id: str = Depends(get_and_verify_tenant_id),
+    tenant_id: UUID = Depends(get_and_verify_tenant_id),
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
@@ -162,7 +164,7 @@ async def query_memories(
 @router.post("/consolidate")
 async def consolidate_memories(
     project: str,
-    tenant_id: str = Depends(get_and_verify_tenant_id),
+    tenant_id: UUID = Depends(get_and_verify_tenant_id),
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
@@ -194,7 +196,7 @@ async def consolidate_memories(
 @router.post("/reflections")
 async def generate_reflections(
     project: str,
-    tenant_id: str = Depends(get_and_verify_tenant_id),
+    tenant_id: UUID = Depends(get_and_verify_tenant_id),
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
@@ -235,7 +237,7 @@ async def generate_reflections(
 @router.get("/stats")
 async def get_statistics(
     project: str,
-    tenant_id: str = Depends(get_and_verify_tenant_id),
+    tenant_id: UUID = Depends(get_and_verify_tenant_id),
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """

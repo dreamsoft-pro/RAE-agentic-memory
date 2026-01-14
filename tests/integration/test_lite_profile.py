@@ -198,7 +198,7 @@ def test_lite_profile_store_memory(lite_profile_services):
     payload = {
         "content": "Integration test memory for RAE Lite Profile",
         "source": "integration-test",
-        "layer": "em",
+        "layer": "episodic",
         "importance": 0.5,
         "tags": ["test", "integration"],
     }
@@ -226,7 +226,7 @@ def test_lite_profile_query_memory(lite_profile_services):
     store_payload = {
         "content": "Test memory for query operation",
         "source": "integration-test",
-        "layer": "em",
+        "layer": "episodic",
         "importance": 0.7,
         "tags": ["querytest"],
     }

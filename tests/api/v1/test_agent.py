@@ -99,7 +99,7 @@ async def test_agent_execute_happy_path(
     mock_item.content = "Episodic memory"
     mock_item.score = 0.9
     mock_item.source = "user"
-    mock_item.layer = "em"  # Must match enum in ScoredMemoryRecord (stm, ltm, rm, em)
+    mock_item.layer = "episodic"  # Must match enum in ScoredMemoryRecord (working, semantic, reflective, episodic, sensory)
     mock_item.project = "test-project"
     mock_item.importance = 0.5
     mock_item.tags = []

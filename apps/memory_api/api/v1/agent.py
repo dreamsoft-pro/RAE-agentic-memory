@@ -1,3 +1,5 @@
+from uuid import UUID
+
 import httpx
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -41,7 +43,7 @@ tracer = get_tracer(__name__)
 async def execute(
     req: AgentExecuteRequest,
     request: Request,
-    verified_tenant_id: str = Depends(get_and_verify_tenant_id),
+    verified_tenant_id: UUID = Depends(get_and_verify_tenant_id),
 ):
     """
     Pipeline agenta:
@@ -54,8 +56,10 @@ async def execute(
 
     **Security:** Requires authentication and tenant access.
     """
-    # Use verified tenant_id from RBAC, or fall back to request tenant_id
-    tenant_id = req.tenant_id or verified_tenant_id
+    # Use verified_tenant_id from RBAC, which is now a validated UUID.
+    # The tenant_id from req.tenant_id (request body) is no longer used
+    # as the verified one from the dependency is authoritative.
+    tenant_id: UUID = verified_tenant_id
 
     with tracer.start_as_current_span("rae.api.agent.execute") as span:
         span.set_attribute("rae.tenant_id", tenant_id)
@@ -253,7 +257,7 @@ async def execute(
             )
 
             async with httpx.AsyncClient() as client:
-                headers = {"X-Tenant-Id": tenant_id, "X-API-Key": settings.API_KEY}
+                headers = {"X-Tenant-Id": str(tenant_id), "X-API-Key": settings.API_KEY}
                 await client.post(
                     settings.MEMORY_API_URL + "/v1/memory/store",
                     json=reflection_payload.model_dump(exclude_none=True),

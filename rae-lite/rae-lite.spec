@@ -12,17 +12,16 @@ datas_list = [(rae_core_src, 'rae_core')]
 
 a = Analysis(
     ['rae_lite/main.py'],
-    pathex=['../rae-core'], # Add to path for analysis
+    pathex=['../rae-core', '../rae_adapters'], # Add to path for analysis
     binaries=[],
     datas=datas_list,
     hiddenimports=[
         'rae_core',
         'rae_core.engine',
-        'rae_core.adapters',
-        'rae_core.adapters.sqlite',
-        'rae_core.adapters.sqlite.storage',
-        'rae_core.adapters.sqlite.vector',
-        'rae_core.adapters.sqlite.graph',
+        'rae_adapters.sqlite',
+        'rae_adapters.sqlite.storage',
+        'rae_adapters.sqlite.vector',
+        'rae_adapters.sqlite.graph',
         'rae_core.layers',
         'rae_core.layers.working',
         'rae_core.layers.longterm',

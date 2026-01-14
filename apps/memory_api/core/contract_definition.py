@@ -16,7 +16,7 @@ RAE_MEMORY_CONTRACT_V1 = MemoryContract(
             name="memories",
             fields=[
                 FieldContract(name="id", data_type=DataType.UUID, is_primary_key=True),
-                FieldContract(name="tenant_id", data_type=DataType.TEXT),
+                FieldContract(name="tenant_id", data_type=DataType.UUID),
                 FieldContract(name="content", data_type=DataType.TEXT),
                 FieldContract(name="source", data_type=DataType.TEXT),
                 FieldContract(name="importance", data_type=DataType.FLOAT),
