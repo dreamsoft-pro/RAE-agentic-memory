@@ -155,7 +155,7 @@ async def query_memory(
             # RAECoreService.query_memories returns SearchResponse object
             # It internally handles embedding generation and vector store querying
             search_response = await rae_service.query_memories(
-                tenant_id=tenant_id,
+                tenant_id=str(tenant_id),
                 project=req.project or "default",
                 query=req.query_text,
                 k=req.k,
@@ -171,7 +171,7 @@ async def query_memory(
                         content=item.content,
                         score=item.score,
                         metadata=item.metadata,
-                        tenant_id=tenant_id,
+                        tenant_id=str(tenant_id),
                         project=req.project or "default",
                         layer=MemoryLayer.semantic,  # Default for standard query
                     )
@@ -179,10 +179,11 @@ async def query_memory(
 
             span.set_attribute("rae.query.results_count", len(rescored_results))
         except Exception as e:
+            err_msg = str(e)
             span.set_attribute("rae.outcome.label", "rae_core_query_error")
-            logger.error("rae_core_query_failed", error=str(e))
+            logger.error(f"rae_core_query_failed: {err_msg}")
             raise HTTPException(
-                status_code=502, detail=f"Memory search error: {e}"
+                status_code=502, detail=f"Memory search error: {err_msg}"
             ) from e
 
         # 4. Update access statistics for retrieved memories
