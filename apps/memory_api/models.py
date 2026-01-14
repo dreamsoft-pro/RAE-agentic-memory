@@ -208,7 +208,7 @@ class StoreMemoryResponse(BaseModel):
 
 class QueryMemoryRequest(BaseModel):
     query_text: str = Field(min_length=1, max_length=1024)
-    k: int = Field(default=10, gt=0, le=100)
+    k: int = Field(default=10, gt=0, le=10000)
     filters: Optional[Dict[str, Any]] = None
     # Hybrid search parameters
     use_graph: bool = Field(
