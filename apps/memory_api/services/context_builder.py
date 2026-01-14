@@ -12,6 +12,7 @@ Implements the context injection pattern from RAE v1 Implementation Plan.
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, cast
+from uuid import UUID
 
 import structlog
 
@@ -162,7 +163,7 @@ class ContextBuilder:
 
     async def build_context(
         self,
-        tenant_id: str,
+        tenant_id: UUID,
         project_id: str,
         query: str,
         recent_messages: Optional[List[Dict[str, Any]]] = None,
@@ -296,7 +297,7 @@ class ContextBuilder:
         return components
 
     async def _retrieve_ltm(
-        self, tenant_id: str, project_id: str, query: str
+        self, tenant_id: UUID, project_id: str, query: str
     ) -> List[ContextComponent]:
         """
         Retrieve relevant Long-Term Memories.
@@ -401,7 +402,7 @@ class ContextBuilder:
         return components
 
     async def _retrieve_reflections(
-        self, tenant_id: str, project_id: str, query: str
+        self, tenant_id: UUID, project_id: str, query: str
     ) -> List[ContextComponent]:
         """
         Retrieve relevant reflections (Lessons Learned).
@@ -468,7 +469,7 @@ class ContextBuilder:
 
     async def _retrieve_profile(
         self,
-        tenant_id: str,
+        tenant_id: UUID,
         project_id: str,
         user_id: Optional[str] = None,
     ) -> List[ContextComponent]:
@@ -540,7 +541,7 @@ class ContextBuilder:
     async def inject_reflections_into_prompt(
         self,
         base_prompt: str,
-        tenant_id: str,
+        tenant_id: UUID,
         project_id: str,
         query: str,
     ) -> str:

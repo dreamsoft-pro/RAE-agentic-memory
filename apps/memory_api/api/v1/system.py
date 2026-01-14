@@ -1,6 +1,8 @@
 from typing import List
+from uuid import UUID
 
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 
 from apps.memory_api.dependencies import get_rae_core_service
 from apps.memory_api.security import auth
@@ -13,20 +15,23 @@ router = APIRouter(
     dependencies=[Depends(auth.verify_token)],
 )
 
+class TenantBasicInfo(BaseModel):
+    id: str
+    name: str
 
-@router.get("/tenants", response_model=List[str])
+@router.get("/tenants", response_model=List[TenantBasicInfo])
 async def list_tenants(
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
-    List all unique tenant IDs.
+    List all unique tenant IDs with names.
     """
-    return await rae_service.list_unique_tenants()
+    return await rae_service.list_tenants_with_details()
 
 
 @router.get("/projects", response_model=List[str])
 async def list_projects(
-    tenant_id: str = Depends(get_and_verify_tenant_id),
+    tenant_id: UUID = Depends(get_and_verify_tenant_id),
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """

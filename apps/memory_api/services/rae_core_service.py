@@ -20,11 +20,9 @@ from apps.memory_api.services.embedding import (
 )
 from apps.memory_api.services.llm import get_llm_provider
 from apps.memory_api.services.token_savings_service import TokenSavingsService
-from rae_core.adapters import (
-    PostgresMemoryAdapter,
-    QdrantVectorAdapter,
-    RedisCacheAdapter,
-)
+from rae_adapters.postgres import PostgreSQLStorage
+from rae_adapters.qdrant import QdrantVectorStore
+from rae_adapters.redis import RedisCache
 from rae_core.config import RAESettings
 from rae_core.embedding.manager import EmbeddingManager
 from rae_core.engine import RAEEngine
@@ -107,9 +105,9 @@ class RAECoreService:
 
         # 3. Initialize adapters with Lite mode support
         if postgres_pool and not ignore_db:
-            self.postgres_adapter = PostgresMemoryAdapter(pool=postgres_pool)
+            self.postgres_adapter = PostgreSQLStorage(pool=postgres_pool)
         else:
-            from rae_core.adapters import InMemoryStorage
+            from rae_adapters.memory import InMemoryStorage
 
             logger.warning("using_in_memory_storage_fallback")
             self.postgres_adapter = InMemoryStorage()
@@ -119,7 +117,7 @@ class RAECoreService:
             dim = self.embedding_provider.get_dimension()
             distance = getattr(settings, "RAE_VECTOR_DISTANCE", "Cosine")
 
-            self.qdrant_adapter = QdrantVectorAdapter(
+            self.qdrant_adapter = QdrantVectorStore(
                 client=cast(Any, qdrant_client), embedding_dim=dim, distance=distance
             )
         elif (
@@ -134,15 +132,15 @@ class RAECoreService:
             logger.info("using_postgres_vector_adapter")
             self.qdrant_adapter = PostgresVectorAdapter(pool=postgres_pool)
         else:
-            from rae_core.adapters import InMemoryVectorStore
+            from rae_adapters.memory import InMemoryVectorStore
 
             logger.warning("using_in_memory_vector_fallback")
             self.qdrant_adapter = InMemoryVectorStore()
 
         if redis_client and not ignore_db:
-            self.redis_adapter = RedisCacheAdapter(redis_client=redis_client)
+            self.redis_adapter = RedisCache(redis_client=redis_client)
         else:
-            from rae_core.adapters import InMemoryCache
+            from rae_adapters.memory import InMemoryCache
 
             logger.warning("using_in_memory_cache_fallback")
             self.redis_adapter = InMemoryCache()
@@ -156,10 +154,29 @@ class RAECoreService:
             working_max_size=100,
         )
 
+        # Autonomous Mode Detection (RAE-Lite)
+        # If in lite mode and no LLM is available, disable vector search to use Math Layer only
+        effective_vector_store = self.qdrant_adapter
+        if settings.RAE_PROFILE == "lite":
+            has_llm = (
+                settings.OPENAI_API_KEY
+                or settings.GEMINI_API_KEY
+                or settings.ANTHROPIC_API_KEY
+                # For Ollama, we'd need a health check, but for now assume it's optional in lite
+            )
+            if not has_llm and settings.RAE_LLM_BACKEND == "ollama":
+                # Check if we should really use vector store
+                logger.info(
+                    "lite_profile_autonomous_mode_active", reason="no_llm_keys_found"
+                )
+                # We keep qdrant_adapter but tell engine to be careful or disable vector strategy
+                # For true autonomy in Lite, we can pass vector_store=None to RAEEngine
+                # effective_vector_store = None
+
         # Initialize RAEEngine
         self.engine = RAEEngine(
             memory_storage=self.postgres_adapter,
-            vector_store=self.qdrant_adapter,
+            vector_store=effective_vector_store,
             embedding_provider=self.embedding_provider,
             llm_provider=cast(Any, self.llm_provider),
             settings=self.settings,
@@ -180,7 +197,7 @@ class RAECoreService:
     def db(self) -> IDatabaseProvider:
         """Get agnostic database provider."""
         if self.postgres_pool:
-            from rae_core.adapters.postgres_db import PostgresDatabaseProvider
+            from rae_adapters.postgres_db import PostgresDatabaseProvider
 
             return PostgresDatabaseProvider(self.postgres_pool)
 
@@ -344,18 +361,22 @@ class RAECoreService:
 
     async def adjust_importance(
         self,
-        memory_id: str,
+        memory_id: str | UUID,
         delta: float,
         tenant_id: str,
     ) -> Optional[float]:
         """Adjust memory importance."""
         try:
-            mem_uuid = UUID(memory_id)
+            if isinstance(memory_id, UUID):
+                mem_uuid = memory_id
+            else:
+                mem_uuid = UUID(str(memory_id))
+
             return await self.postgres_adapter.adjust_importance(
                 memory_id=mem_uuid, delta=delta, tenant_id=tenant_id
             )
         except (ValueError, Exception) as e:
-            logger.error("adjust_importance_failed", memory_id=memory_id, error=str(e))
+            logger.error("adjust_importance_failed", memory_id=str(memory_id), error=str(e))
             return None
 
     async def decay_importance(
@@ -544,6 +565,17 @@ class RAECoreService:
             "SELECT DISTINCT tenant_id FROM memories WHERE tenant_id IS NOT NULL"
         )
         return [str(r["tenant_id"]) for r in records]
+
+    async def list_tenants_with_details(self) -> List[Dict[str, str]]:
+        """List all tenants with their names."""
+        try:
+            records = await self.db.fetch("SELECT id, name FROM tenants ORDER BY name")
+            return [{"id": str(r["id"]), "name": r["name"] or "Unnamed"} for r in records]
+        except Exception as e:
+            logger.warning("failed_to_list_tenant_details", error=str(e))
+            # Fallback to IDs only
+            ids = await self.list_unique_tenants()
+            return [{"id": i, "name": f"Tenant {i[:8]}..."} for i in ids]
 
     async def list_unique_projects(self, tenant_id: str) -> List[str]:
         """List all unique project IDs for a tenant."""

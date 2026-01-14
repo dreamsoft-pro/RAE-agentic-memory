@@ -1,8 +1,10 @@
 version: '3.8'
 
 services:
-  rae-api-full:
     image: rae-memory:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: rae-api-full-sandbox
     ports:
       - "8020:8000"
@@ -33,6 +35,9 @@ services:
 
   ml-service-full:
     image: rae-memory:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: ml-service-full-sandbox
     ports:
       - "8021:8001"
@@ -43,6 +48,9 @@ services:
 
   celery-worker-full:
     image: rae-memory:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: celery-worker-full-sandbox
     command: celery -A apps.memory_api.celery_app worker --loglevel=info --concurrency=2
     environment:

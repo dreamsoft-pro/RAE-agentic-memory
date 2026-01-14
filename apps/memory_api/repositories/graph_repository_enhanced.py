@@ -28,7 +28,7 @@ from apps.memory_api.models.graph_enhanced_models import (
     NodeDegreeMetrics,
     TraversalAlgorithm,
 )
-from rae_core.adapters.postgres_db import PostgresDatabaseProvider
+from rae_adapters.postgres_db import PostgresDatabaseProvider
 from rae_core.interfaces.database import IDatabaseProvider
 
 logger = structlog.get_logger(__name__)
