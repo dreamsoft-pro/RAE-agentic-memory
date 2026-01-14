@@ -361,18 +361,22 @@ class RAECoreService:
 
     async def adjust_importance(
         self,
-        memory_id: str,
+        memory_id: str | UUID,
         delta: float,
         tenant_id: str,
     ) -> Optional[float]:
         """Adjust memory importance."""
         try:
-            mem_uuid = UUID(memory_id)
+            if isinstance(memory_id, UUID):
+                mem_uuid = memory_id
+            else:
+                mem_uuid = UUID(str(memory_id))
+
             return await self.postgres_adapter.adjust_importance(
                 memory_id=mem_uuid, delta=delta, tenant_id=tenant_id
             )
         except (ValueError, Exception) as e:
-            logger.error("adjust_importance_failed", memory_id=memory_id, error=str(e))
+            logger.error("adjust_importance_failed", memory_id=str(memory_id), error=str(e))
             return None
 
     async def decay_importance(
