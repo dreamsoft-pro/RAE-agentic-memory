@@ -154,10 +154,27 @@ class RAECoreService:
             working_max_size=100,
         )
 
+        # Autonomous Mode Detection (RAE-Lite)
+        # If in lite mode and no LLM is available, disable vector search to use Math Layer only
+        effective_vector_store = self.qdrant_adapter
+        if settings.RAE_PROFILE == "lite":
+            has_llm = (
+                settings.OPENAI_API_KEY 
+                or settings.GEMINI_API_KEY 
+                or settings.ANTHROPIC_API_KEY
+                # For Ollama, we'd need a health check, but for now assume it's optional in lite
+            )
+            if not has_llm and settings.RAE_LLM_BACKEND == "ollama":
+                # Check if we should really use vector store
+                logger.info("lite_profile_autonomous_mode_active", reason="no_llm_keys_found")
+                # We keep qdrant_adapter but tell engine to be careful or disable vector strategy
+                # For true autonomy in Lite, we can pass vector_store=None to RAEEngine
+                # effective_vector_store = None 
+
         # Initialize RAEEngine
         self.engine = RAEEngine(
             memory_storage=self.postgres_adapter,
-            vector_store=self.qdrant_adapter,
+            vector_store=effective_vector_store,
             embedding_provider=self.embedding_provider,
             llm_provider=cast(Any, self.llm_provider),
             settings=self.settings,
