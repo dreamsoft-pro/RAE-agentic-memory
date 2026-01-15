@@ -305,7 +305,7 @@ class TestInMemoryStorage:
             assert success is True
 
         memory = await storage.get_memory(memory_id, "tenant1")
-        assert memory["access_count"] == 3
+        assert memory["usage_count"] == 3
 
     @pytest.mark.asyncio
     async def test_increment_access_count_nonexistent(self, storage):

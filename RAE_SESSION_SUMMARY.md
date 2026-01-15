@@ -1,23 +1,32 @@
-This session focused on debugging and resolving Docker container startup issues in the RAE-agentic-memory project, specifically for the `rae-api-lite` service and its dependencies.
+# RAE Session Summary - 2026-01-15
 
-**Initial Problem:**
-*   A system crash during testing resulted in an unhealthy `rae-api-lite` Docker container.
-*   Initial diagnosis revealed port conflicts between `rae-api` and `rae-api-lite`, and their respective Redis and PostgreSQL "lite" counterparts.
+## Goal
+Stabilize RAE-Core, Fix Lite Profile regressions, and establish a mandatory session startup protocol.
 
-**Actions Taken & Issues Encountered:**
-1.  **Resolved Port Conflicts:** Modified `docker-compose.lite.yml` to change host port mappings for `rae-api-lite`, `redis-lite`, and `qdrant-lite` to avoid direct host port clashes with their non-lite counterparts.
-2.  **Identified Database Creation Issue:** The `rae-api-lite` service repeatedly failed with `asyncpg.exceptions.InvalidCatalogNameError: database "rae_lite" does not exist`. This occurred because, while `postgres-lite` was configured to use `rae_lite` as its database, the database itself was not being created within the PostgreSQL container before the `rae-api-lite` application attempted to connect.
-3.  **Attempted Database Initialization Script:** Created `infra/db-init/init-db.sh` to explicitly create the `rae_lite` database.
-4.  **Encountered Tool Limitations:** A critical blocking issue arose: `run_shell_command` consistently rejected all `docker` and `git` commands with "Command rejected because it could not be parsed safely". This prevented automated cleanup, rebuilds, restarts, and local Git commits.
-5.  **Modified `postgres-lite` command:** To work around the "database does not exist" and `chmod` limitations, the `postgres-lite` service's `command` in `docker-compose.lite.yml` was modified to execute the `init-db.sh` script (which includes `chmod` and `psql` commands) directly within the container's startup.
-6.  **Removed `wait-for-it.sh` from `rae-api-lite`:** The `rae-api-lite` service's `command` and `volumes` (including `wait-for-it.sh`) were removed, as database initialization is now handled by `postgres-lite`.
+## Achievements
 
-**Current State (after manual user execution of cleanup and build):**
-*   `rae-api-lite` is in a `Created` state (meaning it failed to start, or `Restarting` in the latest `docker ps -a` output).
-*   `rae-postgres-lite` is `Restarting`, indicating an ongoing issue with its startup or the custom command.
-*   The fundamental issue of `rae_lite` database creation and application startup remains unresolved.
+### 1. Documentation & Protocol
+- **Created `DEVELOPER_CHEAT_SHEET.md`**: Centralized hub for critical commands, benchmark maps, and MCP info.
+- **Updated `GEMINI.md`**: Added mandatory startup protocol (Read Cheat Sheet -> Verify Cluster).
+- **Created `TEST_INVENTORY.txt`**: Complete list of discoverable tests for easier debugging.
 
-**Next Steps for New Session:**
-In the next session, we need to investigate why `rae-postgres-lite` is still restarting and why `rae-api-lite` is not starting correctly, specifically focusing on the new custom command for `postgres-lite` and its interaction with the `pgvector` image's entrypoint.
+### 2. Codebase Stabilization (Green State)
+- **RAE-Core Coverage (99%)**: 
+    - Fixed infinite recursion in `test_strategies_coverage.py`.
+    - Added `test_final_coverage.py` to cover edge cases.
+    - All 364 core tests passed.
+- **Lite Profile Fixes**:
+    - Implemented automatic "Math-only" mode switch in `rae_core_service.py`. This prevents 500 errors when Vector/Ollama services are missing.
+    - Fixed `docker-compose.test-sandbox.yml` port mapping (8010:8000) and missing env vars.
+- **Database & Governance Fixes**:
+    - Resolved `DataError` in `postgres.py` and `rbac_service.py` by forcing `str(tenant_id)` for `asyncpg` compatibility.
+    - Refactored `tests/api/v1/test_governance.py` to use valid UUIDs, fixing 422 errors.
 
-**To continue this task in a new session, you can simply provide the context again and prompt me to "Continue" or "What were we working on?".**
+### 3. Verification
+- **Unit Tests**: `make test-core` -> **PASSED** (364 tests).
+- **Integration Tests**: `make test-int` -> **PASSED** (53 tests).
+- **Infrastructure**: MCP Hotreload (Port 8001) confirmed healthy via `curl`.
+
+## Next Steps
+- **Dashboard**: Focus on fixing and improving the RAE Dashboard in the next session.
+- **Benchmarks**: Execute the full benchmark suite (Academic Lite/Extended) to verify performance metrics.

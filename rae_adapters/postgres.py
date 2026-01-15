@@ -141,7 +141,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 memory_id,
                 content,
                 layer,
-                tenant_id,
+                str(tenant_id),
                 agent_id,
                 tags,
                 json.dumps(metadata),
@@ -178,7 +178,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 WHERE id = $1 AND tenant_id = $2
                 """,
                 memory_id,
-                tenant_id,
+                str(tenant_id),
             )
 
         if not row:
@@ -238,7 +238,7 @@ class PostgreSQLStorage(IMemoryStorage):
             "agent_id = $2",
             "layer = $3",
         ]
-        params: list[Any] = [tenant_id, agent_id, layer]
+        params: list[Any] = [str(tenant_id), agent_id, layer]
         param_idx = 4
 
         # Handle not_expired filter
@@ -349,7 +349,7 @@ class PostgreSQLStorage(IMemoryStorage):
         conditions = [
             "tenant_id = $1",
         ]
-        params: list[Any] = [tenant_id]
+        params: list[Any] = [str(tenant_id)]
         param_idx = 2
 
         if agent_id:
@@ -462,7 +462,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 """,
                 datetime.now(timezone.utc),
                 memory_id,
-                tenant_id,
+                str(tenant_id),
             )
 
         return cast(str, result) == "UPDATE 1"
@@ -485,7 +485,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 """,
                 expires_at,
                 memory_id,
-                tenant_id,
+                str(tenant_id),
             )
 
         return cast(str, result) == "UPDATE 1"
@@ -526,7 +526,7 @@ class PostgreSQLStorage(IMemoryStorage):
         # (Note: current schema doesn't have modified_at, but this is future-proof)
 
         # Add WHERE clause parameters
-        params.extend([memory_id, tenant_id])
+        params.extend([memory_id, str(tenant_id)])
 
         query = f"""
             UPDATE memories
@@ -566,7 +566,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 """,
                 datetime.now(timezone.utc),
                 memory_id,
-                tenant_id,
+                str(tenant_id),
             )
 
         return cast(str, result) == "UPDATE 1"
@@ -586,7 +586,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 WHERE id = $1 AND tenant_id = $2
                 """,
                 memory_id,
-                tenant_id,
+                str(tenant_id),
             )
 
         return cast(str, result) == "DELETE 1"
@@ -610,7 +610,7 @@ class PostgreSQLStorage(IMemoryStorage):
                   AND expires_at IS NOT NULL
                   AND expires_at < $4
                 """,
-                tenant_id,
+                str(tenant_id),
                 agent_id,
                 layer,
                 datetime.now(timezone.utc),
@@ -641,7 +641,7 @@ class PostgreSQLStorage(IMemoryStorage):
                   AND layer = $3
                   AND importance < $4
                 """,
-                tenant_id,
+                str(tenant_id),
                 agent_id,
                 layer,
                 importance_threshold,
@@ -724,7 +724,7 @@ class PostgreSQLStorage(IMemoryStorage):
         pool = await self._get_pool()
 
         conditions = ["tenant_id = $1"]
-        params = [tenant_id]
+        params = [str(tenant_id)]
         param_idx = 2
 
         if agent_id:
@@ -767,7 +767,7 @@ class PostgreSQLStorage(IMemoryStorage):
             raise ValueError(f"Invalid function: {func}. Allowed: {allowed_funcs}")
 
         conditions = ["tenant_id = $1"]
-        params: list[Any] = [tenant_id]
+        params: list[Any] = [str(tenant_id)]
         param_idx = 2
 
         if "agent_id" in filters:
@@ -813,7 +813,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 """,
                 datetime.now(timezone.utc),
                 memory_ids,
-                tenant_id,
+                str(tenant_id),
             )
 
         # We consider it successful if the query executed, even if 0 rows updated
@@ -839,7 +839,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 """,
                 delta,
                 memory_id,
-                tenant_id,
+                str(tenant_id),
             )
 
         if new_importance is None:
@@ -884,7 +884,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 query,
                 now.replace(tzinfo=None),
                 decay_rate,
-                tenant_id,
+                str(tenant_id),
                 consider_access_stats,
             )
 
@@ -918,7 +918,7 @@ class PostgreSQLStorage(IMemoryStorage):
             exists = await conn.fetchval(
                 "SELECT 1 FROM memories WHERE id = $1 AND tenant_id = $2",
                 memory_id,
-                tenant_id,
+                str(tenant_id),
             )
             if not exists:
                 # Security: fail silently or raise?

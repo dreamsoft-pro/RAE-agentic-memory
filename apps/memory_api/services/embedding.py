@@ -263,6 +263,25 @@ class TaskQueueEmbeddingProvider(IEmbeddingProvider):
         return self.dimension
 
 
+class MathOnlyEmbeddingProvider(IEmbeddingProvider):
+    """
+    Embedding provider for RAE-Lite profile.
+    Returns empty/dummy embeddings, letting the Math Layer handle ranking.
+    """
+
+    def __init__(self, dimension: int = 384):
+        self.dimension = dimension
+
+    async def embed_text(self, text: str) -> List[float]:
+        return [0.0] * self.dimension
+
+    async def embed_batch(self, texts: List[str]) -> List[List[float]]:
+        return [[0.0] * self.dimension for _ in texts]
+
+    def get_dimension(self) -> int:
+        return self.dimension
+
+
 # Singleton instance
 embedding_service = EmbeddingService()
 
