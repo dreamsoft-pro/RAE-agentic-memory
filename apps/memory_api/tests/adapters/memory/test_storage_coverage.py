@@ -88,8 +88,8 @@ class TestInMemoryStorageCoverage:
 
         m1 = await storage.get_memory(mid1, "t1")
         m2 = await storage.get_memory(mid2, "t1")
-        assert m1["access_count"] == 1
-        assert m2["access_count"] == 1
+        assert m1["usage_count"] == 1
+        assert m2["usage_count"] == 1
 
     @pytest.mark.asyncio
     async def test_adjust_importance_not_found(self, storage):

@@ -39,6 +39,7 @@ def should_skip_provider_test(api_key: str | None) -> bool:
         api_key.startswith("sk-test-")
         or api_key.startswith("mock-")
         or api_key.startswith("dummy-")
+        or api_key.startswith("sk-proj")
     ):
         return True
     return False

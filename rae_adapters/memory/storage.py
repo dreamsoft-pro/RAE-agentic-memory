@@ -284,7 +284,7 @@ class InMemoryStorage(IMemoryStorage):
             if not memory or memory["tenant_id"] != tenant_id:
                 return False
 
-            memory["access_count"] = memory.get("access_count", 0) + 1
+            memory["usage_count"] = memory.get("usage_count", 0) + 1
             memory["last_accessed_at"] = datetime.now(timezone.utc)
 
             return True

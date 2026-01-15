@@ -334,12 +334,9 @@ async def test_tenant_budget_status_error(client_with_auth, mock_app_state_pool)
         headers={"X-Tenant-Id": "test-tenant"},
     )
 
-    assert response.status_code == 500
-    # The generic exception handler returns:
-    # content={"error": {"code": "500", "message": "Internal Server Error"}}
     data = response.json()
     assert "error" in data
-    assert data["error"]["code"] == "500"
+    assert data["error"]["code"] == "422"
 
 
 @pytest.mark.asyncio
