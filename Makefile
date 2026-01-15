@@ -231,6 +231,26 @@ benchmark-kubus-full: ## Run FULL heavy benchmarks on Kubus (Node1)
 	 RAE_API_URL=http://$(KUBUS_IP):8000 \
 	 $(MAKE) benchmark-full
 
+benchmark-local-lite: ## Run quick benchmark locally against dev infra
+	@echo "🔬 Running lite benchmark locally..."
+	@export $$(cat .env.benchmark | xargs) && PYTHONPATH=.:rae-core:apps $(VENV_PYTHON) benchmarking/scripts/run_benchmark.py --set academic_lite.yaml
+
+benchmark-local-extended: ## Run extended benchmark locally against dev infra
+	@echo "🔬 Running extended benchmark locally..."
+	@export $$(cat .env.benchmark | xargs) && PYTHONPATH=.:rae-core:apps $(VENV_PYTHON) benchmarking/scripts/run_benchmark.py --set academic_extended.yaml
+
+benchmark-local-industrial: ## Run industrial benchmark locally against dev infra
+	@echo "🔬 Running industrial benchmark locally..."
+	@export $$(cat .env.benchmark | xargs) && PYTHONPATH=.:rae-core:apps $(VENV_PYTHON) benchmarking/scripts/run_benchmark.py --set industrial_small.yaml
+
+benchmark-local-large: ## Run large-scale benchmark locally against dev infra
+	@echo "🔬 Running large-scale benchmark locally..."
+	@export $$(cat .env.benchmark | xargs) && PYTHONPATH=.:rae-core:apps $(VENV_PYTHON) benchmarking/scripts/run_benchmark.py --set industrial_large.yaml
+
+benchmark-local-nine-five: ## Run specialized 9/5 benchmarks locally
+	@echo "🚦 Running specialized 9/5 benchmarks locally..."
+	@export $$(cat .env.benchmark | xargs) && PYTHONPATH=.:rae-core:apps $(VENV_PYTHON) -m benchmarking.nine_five_benchmarks.runner --benchmark all
+
 benchmark-lite:  ## Run quick benchmark (academic_lite, <10s)
 	@echo "🔬 Running lite benchmark..."
 	@$(VENV_PYTHON) benchmarking/scripts/run_benchmark.py --set academic_lite.yaml
