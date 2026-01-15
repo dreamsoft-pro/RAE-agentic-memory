@@ -78,3 +78,4 @@ pass_*.tmp
 # Temporary and log files from agent sessions
 *co-zrobiono.txt
 *.txt#
+.env.benchmark

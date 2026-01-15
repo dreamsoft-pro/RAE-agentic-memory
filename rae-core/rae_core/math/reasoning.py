@@ -157,11 +157,11 @@ class ReasoningController:
     def __init__(
         self,
         max_depth: int = 12,
-        uncertainty_threshold: float = 0.3,
+        uncertainty_threshold: float = 0.6,  # Increased from 0.3 to improve coherence
         token_budget_per_step: int = 500,
         enable_pruning: bool = True,
         max_unverified_assumptions: int = 2,
-        known_false_similarity_threshold: float = 0.8,
+        known_false_similarity_threshold: float = 0.7,  # Decreased from 0.8
     ):
         """Initialize reasoning controller.
 
@@ -220,12 +220,17 @@ class ReasoningController:
             return False
 
         # Check uncertainty (higher uncertainty = less confident)
+        # Apply depth penalty: deeper paths require higher base confidence
+        depth_penalty = 0.05 * current_depth
+        effective_uncertainty = uncertainty - depth_penalty
+
         # If uncertainty drops below threshold, we're too uncertain to continue
-        if uncertainty < self.uncertainty_threshold:
+        if effective_uncertainty < self.uncertainty_threshold:
             self.stats["uncertainty_stops"] += 1
             logger.debug(
-                f"Stopping: Uncertainty {uncertainty:.2f} below threshold "
-                f"{self.uncertainty_threshold}"
+                f"Stopping: Effective uncertainty {effective_uncertainty:.2f} "
+                f"(base {uncertainty:.2f} - penalty {depth_penalty:.2f}) "
+                f"below threshold {self.uncertainty_threshold}"
             )
             return False
 

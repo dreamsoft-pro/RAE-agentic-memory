@@ -136,7 +136,7 @@ def mock_rae_service(mock_pool):
     service = AsyncMock(spec=RAECoreService)
 
     # Mock the 'db' property to return an actual provider wrapping our mock pool
-    from apps.memory_api.adapters.postgres_db import PostgresDatabaseProvider
+    from rae_adapters.postgres_db import PostgresDatabaseProvider
 
     service.db = PostgresDatabaseProvider(mock_pool)
 
