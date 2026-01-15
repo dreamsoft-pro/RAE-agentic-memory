@@ -90,6 +90,11 @@ class RAECoreService:
         if getattr(settings, "RAE_PROFILE", "standard") == "distributed":
             base_provider = RemoteEmbeddingProvider(base_url=settings.ML_SERVICE_URL)
             logger.info("using_remote_embedding_provider", url=settings.ML_SERVICE_URL)
+        elif getattr(settings, "RAE_PROFILE", "standard") == "lite":
+            from apps.memory_api.services.embedding import MathOnlyEmbeddingProvider
+
+            base_provider = MathOnlyEmbeddingProvider()
+            logger.info("using_math_only_embedding_provider_for_lite")
         else:
             base_provider = LocalEmbeddingProvider()
 
@@ -155,23 +160,11 @@ class RAECoreService:
         )
 
         # Autonomous Mode Detection (RAE-Lite)
-        # If in lite mode and no LLM is available, disable vector search to use Math Layer only
+        # If in lite mode, disable vector search to use Math Layer only
         effective_vector_store = self.qdrant_adapter
         if settings.RAE_PROFILE == "lite":
-            has_llm = (
-                settings.OPENAI_API_KEY
-                or settings.GEMINI_API_KEY
-                or settings.ANTHROPIC_API_KEY
-                # For Ollama, we'd need a health check, but for now assume it's optional in lite
-            )
-            if not has_llm and settings.RAE_LLM_BACKEND == "ollama":
-                # Check if we should really use vector store
-                logger.info(
-                    "lite_profile_autonomous_mode_active", reason="no_llm_keys_found"
-                )
-                # We keep qdrant_adapter but tell engine to be careful or disable vector strategy
-                # For true autonomy in Lite, we can pass vector_store=None to RAEEngine
-                # effective_vector_store = None
+            logger.info("lite_profile_math_mode_active", reason="math_only_strategy")
+            effective_vector_store = None  # Force Math-only search
 
         # Initialize RAEEngine
         self.engine = RAEEngine(
@@ -576,6 +569,61 @@ class RAECoreService:
             # Fallback to IDs only
             ids = await self.list_unique_tenants()
             return [{"id": i, "name": f"Tenant {i[:8]}..."} for i in ids]
+
+    async def update_tenant_name(self, tenant_id: str, name: str) -> bool:
+        """Update tenant name."""
+        try:
+            # Check if tenant exists in tenants table
+            exists = await self.db.fetchval(
+                "SELECT EXISTS(SELECT 1 FROM tenants WHERE id = $1)", tenant_id
+            )
+            
+            if exists:
+                await self.db.execute(
+                    "UPDATE tenants SET name = $1 WHERE id = $2", name, tenant_id
+                )
+            else:
+                # If not in tenants table but in memories (legacy), insert it
+                # Assuming 'enterprise' tier and empty config for now
+                await self.db.execute(
+                    """
+                    INSERT INTO tenants (id, name, tier, config) 
+                    VALUES ($1, $2, 'enterprise', '{}')
+                    ON CONFLICT (id) DO UPDATE SET name = $2
+                    """, 
+                    tenant_id, name
+                )
+            return True
+        except Exception as e:
+            logger.error("update_tenant_name_failed", tenant_id=tenant_id, error=str(e))
+            return False
+
+    async def rename_project(self, tenant_id: str, old_project_id: str, new_project_id: str) -> bool:
+        """
+        Rename a project (agent_id) by updating all references in the database.
+        This is a heavy operation affecting memories, metrics, etc.
+        """
+        try:
+            async with self.db.pool.acquire() as conn:
+                async with conn.transaction():
+                    # Update memories
+                    await conn.execute(
+                        """
+                        UPDATE memories 
+                        SET project = $1, agent_id = $1 
+                        WHERE tenant_id = $2 AND (project = $3 OR agent_id = $3)
+                        """,
+                        new_project_id, tenant_id, old_project_id
+                    )
+                    
+                    # Update metrics (if we had a project_id column, but metrics are timeseries so maybe skip or update)
+                    # For now, we only update memories as that's the source of truth for RAE
+                    
+                    logger.info("project_renamed", tenant_id=tenant_id, old=old_project_id, new=new_project_id)
+                    return True
+        except Exception as e:
+            logger.error("rename_project_failed", error=str(e))
+            return False
 
     async def list_unique_projects(self, tenant_id: str) -> List[str]:
         """List all unique project IDs for a tenant."""

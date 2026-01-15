@@ -3,7 +3,7 @@ import os
 
 import httpx
 
-API_URL = "http://localhost:8000/v1"
+API_URL = "http://localhost:8001/v1"
 NODE_ID = "kubus-gpu-01"
 DB_HOST = "100.66.252.117"
 

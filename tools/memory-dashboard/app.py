@@ -61,10 +61,11 @@ with st.sidebar:
     # Initialize session state for config if not exists
     if "config" not in st.session_state:
         st.session_state.config = {
-            "api_url": os.getenv("RAE_API_URL", "http://localhost:8000"),
+            "api_url": os.getenv("RAE_API_URL", "http://localhost:8001"),
             "api_key": os.getenv("RAE_API_KEY", "default-key"),
-            "tenant_id": os.getenv("RAE_TENANT_ID", "default-tenant"),
-            "project_id": os.getenv("RAE_PROJECT_ID", "default-project"),
+            # Default to the tenant with actual data found in DB
+            "tenant_id": os.getenv("RAE_TENANT_ID", "00000000-0000-0000-0000-000000000000"),
+            "project_id": os.getenv("RAE_PROJECT_ID", "benchmark_project"),
         }
 
     # Connection settings
@@ -112,7 +113,11 @@ with st.sidebar:
             def get_tenant_name(tid):
                 for t in tenants_data:
                     if t["id"] == tid:
-                        return f"{t['name']} ({tid[:8]}...)"
+                        # Use first 8 chars of ID if name is generic "Unknown"
+                        name = t['name']
+                        if name == "Unknown":
+                             return f"{tid[:8]}... (Default)"
+                        return f"{name} ({tid[:8]}...)"
                 return tid
 
             # Current selection index
@@ -196,6 +201,35 @@ with st.sidebar:
             else:
                 st.error("Connection failed with new settings")
 
+    # Tenant Settings (Renaming)
+    if st.session_state.get("connected", False) and selected_tenant_id:
+        with st.expander("⚙️ Tenant Settings"):
+            new_tenant_name = st.text_input("Rename Tenant", placeholder="New name...")
+            if st.button("Update Name"):
+                if new_tenant_name:
+                    success = st.session_state.client.update_tenant_name(selected_tenant_id, new_tenant_name)
+                    if success:
+                        st.success("Renamed! Refreshing...")
+                        time.sleep(1)
+                        st.rerun()
+                else:
+                    st.warning("Enter a name first")
+
+    # Project Settings (Renaming)
+    if st.session_state.get("connected", False) and selected_project_id:
+        with st.expander("📁 Project Settings"):
+            new_project_name = st.text_input("Rename Project", placeholder="New name...")
+            if st.button("Update Project Name"):
+                if new_project_name:
+                    success = st.session_state.client.rename_project(selected_project_id, new_project_name)
+                    if success:
+                        st.session_state.config["project_id"] = new_project_name
+                        st.success("Project Renamed! Refreshing...")
+                        time.sleep(1)
+                        st.rerun()
+                else:
+                    st.warning("Enter a name first")
+
     # Auto-Refresh Logic
     with st.expander("⏱️ Auto-Refresh", expanded=False):
         auto_refresh = st.checkbox("Enable Auto-Refresh", value=False)
@@ -254,7 +288,7 @@ if "connected" in st.session_state and st.session_state.connected:
 
     # Fetch statistics
     try:
-        stats = get_cached_stats(client)
+        stats = get_cached_stats(client, client.tenant_id, client.project_id)
 
         # Metrics row
         col1, col2, col3, col4, col5 = st.columns(5)

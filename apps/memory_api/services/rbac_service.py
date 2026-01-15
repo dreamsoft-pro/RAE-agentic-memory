@@ -48,7 +48,7 @@ class RBACService:
             WHERE user_id = $1 AND tenant_id = $2
             """,
             user_id,
-            tenant_id,
+            str(tenant_id),
         )
 
         if not record:
@@ -107,7 +107,7 @@ class RBACService:
             """,
             role_id,
             user_id,
-            tenant_id,
+            str(tenant_id),
             role.value,
             project_ids,
             assigned_at,
@@ -149,7 +149,7 @@ class RBACService:
             WHERE user_id = $1 AND tenant_id = $2
             """,
             user_id,
-            tenant_id,
+            str(tenant_id),
         )
 
         logger.info(
@@ -174,7 +174,7 @@ class RBACService:
             WHERE tenant_id = $1
             ORDER BY assigned_at DESC
             """,
-            tenant_id,
+            str(tenant_id),
         )
 
         return [
@@ -234,7 +234,7 @@ class RBACService:
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             """,
             log_id,
-            tenant_id,
+            str(tenant_id),
             user_id,
             action,
             resource,
