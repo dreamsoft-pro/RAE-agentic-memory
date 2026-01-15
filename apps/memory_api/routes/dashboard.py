@@ -65,7 +65,7 @@ from apps.memory_api.services.rae_core_service import RAECoreService
 
 logger = structlog.get_logger(__name__)
 
-router = APIRouter(prefix="/v1/dashboard", tags=["Dashboard"])
+router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
 
 # Global WebSocket service instance
 _websocket_service: Optional[DashboardWebSocketService] = None
@@ -579,8 +579,106 @@ async def _get_time_series_metrics(
     db, tenant_id: str, project_id: str, period: MetricPeriod
 ) -> List[TimeSeriesMetric]:
     """Generate time series metrics for dashboard."""
-    # Placeholder - would fetch from metrics table
-    return []
+    try:
+        repo = MetricsRepository(db)
+        metrics = []
+        
+        # Calculate time range
+        end_time = datetime.now(timezone.utc)
+        if period == MetricPeriod.LAST_HOUR:
+            start_time = end_time - timedelta(hours=1)
+            aggregation_interval = "5 minutes"
+        elif period == MetricPeriod.LAST_24H:
+            start_time = end_time - timedelta(hours=24)
+            aggregation_interval = "1 hour"
+        elif period == MetricPeriod.LAST_7D:
+            start_time = end_time - timedelta(days=7)
+            aggregation_interval = "6 hours"
+        elif period == MetricPeriod.LAST_30D:
+            start_time = end_time - timedelta(days=30)
+            aggregation_interval = "1 day"
+        else:
+            start_time = end_time - timedelta(hours=24)
+            aggregation_interval = "1 hour"
+
+        # Metrics to fetch
+        metric_names = [
+            "memory_count",
+            "reflection_count", 
+            "semantic_node_count",
+            "search_quality_mrr",
+            "avg_importance"
+        ]
+
+        for metric_name in metric_names:
+            try:
+                # Fetch metric data
+                data_points = await repo.get_timeseries(
+                    tenant_id=tenant_id,
+                    project_id=project_id,
+                    metric_name=metric_name,
+                    start_time=start_time,
+                    end_time=end_time,
+                    aggregation_interval=aggregation_interval,
+                )
+
+                if not data_points:
+                    continue
+
+                # Format data points
+                formatted_data_points = [
+                    {
+                        "timestamp": dp["timestamp"],
+                        "value": dp["metric_value"],
+                        "metadata": {
+                            k: v
+                            for k, v in dp.items()
+                            if k not in ["timestamp", "metric_value"]
+                        },
+                    }
+                    for dp in data_points
+                ]
+
+                # Create metric object
+                ts_metric = TimeSeriesMetric(
+                    metric_name=metric_name,
+                    metric_label=metric_name.replace("_", " ").title(),
+                    data_points=formatted_data_points,
+                    period_start=start_time,
+                    period_end=end_time,
+                )
+
+                # Calculate trend
+                if len(data_points) > 1:
+                    first_val = data_points[0]["metric_value"]
+                    last_val = data_points[-1]["metric_value"]
+                    
+                    if first_val > 0:
+                        percent_change = ((last_val - first_val) / first_val) * 100
+                        ts_metric.percent_change = round(percent_change, 2)
+                    
+                    if last_val > first_val:
+                        ts_metric.trend_direction = "up"
+                    elif last_val < first_val:
+                        ts_metric.trend_direction = "down"
+                    else:
+                        ts_metric.trend_direction = "stable"
+
+                metrics.append(ts_metric)
+
+            except Exception as e:
+                logger.warning(
+                    "metric_fetch_failed", 
+                    metric=metric_name, 
+                    error=str(e)
+                )
+                continue
+
+        return metrics
+
+    except Exception as e:
+        logger.error("get_time_series_metrics_failed", error=str(e))
+        return []
 
 
 async def _get_recent_activity(
@@ -891,23 +989,72 @@ async def _generate_quality_trend(
     end_time: Optional[datetime],
 ) -> Optional[QualityTrend]:
     """Generate quality metrics trend."""
-    # Placeholder - would fetch from metrics table
-    if end_time is None:
-        end_time = datetime.now(timezone.utc)
-    if start_time is None:
-        start_time = end_time - timedelta(days=7)
+    try:
+        repo = MetricsRepository(db)
+        
+        if end_time is None:
+            end_time = datetime.now(timezone.utc)
+        if start_time is None:
+            start_time = end_time - timedelta(days=7)
 
-    trend = QualityTrend(
-        metric_name="mrr",
-        time_points=[],
-        values=[],
-        trend_direction="stable",
-        percent_change=0.0,
-        current_value=0.0,
-        is_healthy=True,
-    )
+        # Get MRR data
+        data_points = await repo.get_timeseries(
+            tenant_id=tenant_id,
+            project_id=project_id,
+            metric_name="search_quality_mrr",
+            start_time=start_time,
+            end_time=end_time,
+            aggregation_interval="1 day",  # Daily trend
+        )
 
-    return trend
+        if not data_points:
+            # Return empty but valid trend if no data
+            return QualityTrend(
+                metric_name="mrr",
+                time_points=[],
+                values=[],
+                trend_direction="stable",
+                percent_change=0.0,
+                current_value=0.0,
+                is_healthy=True,
+            )
+
+        # Format for QualityTrend
+        time_points = [dp["timestamp"] for dp in data_points]
+        values = [dp["metric_value"] for dp in data_points]
+        
+        # Calculate stats
+        current_value = values[-1]
+        
+        percent_change = 0.0
+        trend_direction = "stable"
+        
+        if len(values) > 1:
+            first_val = values[0]
+            if first_val > 0:
+                percent_change = ((current_value - first_val) / first_val) * 100
+            
+            if current_value > first_val:
+                trend_direction = "up"
+            elif current_value < first_val:
+                trend_direction = "down"
+
+        # Determine health (example threshold)
+        is_healthy = current_value >= 0.5  # Assuming MRR range 0-1
+
+        return QualityTrend(
+            metric_name="mrr",
+            time_points=time_points,
+            values=values,
+            trend_direction=trend_direction,
+            percent_change=round(percent_change, 2),
+            current_value=current_value,
+            is_healthy=is_healthy,
+        )
+
+    except Exception as e:
+        logger.error("generate_quality_trend_failed", error=str(e))
+        return None
 
 
 async def _get_component_health(db) -> List[ComponentHealth]:

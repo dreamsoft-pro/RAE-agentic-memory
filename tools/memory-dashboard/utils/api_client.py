@@ -95,35 +95,41 @@ class RAEClient:
 
     def get_stats(self) -> Dict[str, int]:
         """
-        Get memory statistics.
+        Get memory statistics using the dedicated dashboard endpoint.
 
         Returns:
-            Dictionary with memory counts by layer
+            Dictionary with memory counts by layer/type
         """
         try:
-            # Fetch a large batch of memories to calculate stats from.
-            # This is more efficient than multiple small queries.
-            all_memories = self.get_memories(limit=1000) # Increased limit for better accuracy
-
-            stats = {"total": 0, "episodic": 0, "working": 0, "semantic": 0, "ltm": 0}
-
-            if not all_memories:
-                return stats
-
-            stats["total"] = len(all_memories)
-
-            for memory in all_memories:
-                layer = memory.get("layer")
-                if layer == "episodic":
-                    stats["episodic"] += 1
-                elif layer == "working":
-                    stats["working"] += 1
-                elif layer == "semantic":
-                    stats["semantic"] += 1
-                elif layer in ["reflective", "long-term"]: # Accomodate for different naming
-                    stats["ltm"] += 1
+            # Call the specialized dashboard metrics endpoint
+            response = self._request(
+                "POST",
+                "/v1/dashboard/metrics",
+                json={
+                    "tenant_id": self.tenant_id,
+                    "project_id": self.project_id,
+                    "period": "last_24h"
+                }
+            )
             
-            return stats
+            metrics = response.get("system_metrics", {})
+            
+            # Use backend's pre-calculated totals
+            total_count = metrics.get("total_memories", 0)
+            ltm_count = metrics.get("total_reflections", 0)
+            semantic_count = metrics.get("total_semantic_nodes", 0)
+            episodic_count = total_count - ltm_count - semantic_count
+            
+            # Avoid negative if something is weird with total vs layers
+            episodic_count = max(0, episodic_count)
+            
+            return {
+                "total": total_count,
+                "episodic": episodic_count,
+                "working": 0,
+                "semantic": semantic_count,
+                "ltm": ltm_count
+            }
 
         except Exception as e:
             st.warning(f"Could not fetch stats: {e}")
@@ -423,6 +429,46 @@ class RAEClient:
             st.warning(f"Could not fetch projects: {e}")
             return []
 
+    def update_tenant_name(self, tenant_id: str, new_name: str) -> bool:
+        """
+        Update the name of a tenant.
+        
+        Args:
+            tenant_id: ID of tenant to update
+            new_name: New name for the tenant
+            
+        Returns:
+            True if successful
+        """
+        try:
+            # We don't use _request here because system endpoints might have different auth requirements
+            # but for now assuming same API key works if authorized.
+            # System endpoints are under /v1/system
+            response = self.client.put(
+                f"/v1/system/tenants/{tenant_id}",
+                json={"name": new_name}
+            )
+            response.raise_for_status()
+            return response.json().get("success", False)
+        except Exception as e:
+            st.error(f"Failed to rename tenant: {e}")
+            return False
+
+    def rename_project(self, old_project_id: str, new_project_id: str) -> bool:
+        """
+        Rename the current project.
+        """
+        try:
+            response = self.client.put(
+                f"/v1/system/projects/{old_project_id}",
+                json={"name": new_project_id}
+            )
+            response.raise_for_status()
+            return response.json().get("success", False)
+        except Exception as e:
+            st.error(f"Failed to rename project: {e}")
+            return False
+
     def test_connection(self) -> bool:
         """
         Test API connection.
@@ -439,15 +485,9 @@ class RAEClient:
 
 
 @st.cache_data(ttl=60)
-def get_cached_stats(_client: RAEClient) -> Dict[str, int]:
+def get_cached_stats(_client: RAEClient, tenant_id: str, project_id: str) -> Dict[str, int]:
     """
     Cached version of get_stats.
-
-    Args:
-        _client: RAEClient instance
-
-    Returns:
-        Statistics dictionary
     """
     return _client.get_stats()
 
