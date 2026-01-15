@@ -13,6 +13,7 @@ Features:
 """
 
 import os
+import time
 
 import streamlit as st
 from utils.api_client import RAEClient, get_cached_stats
@@ -194,6 +195,16 @@ with st.sidebar:
                 st.rerun() # Refresh page with new data
             else:
                 st.error("Connection failed with new settings")
+
+    # Auto-Refresh Logic
+    with st.expander("⏱️ Auto-Refresh", expanded=False):
+        auto_refresh = st.checkbox("Enable Auto-Refresh", value=False)
+        refresh_rate = st.slider("Refresh Rate (seconds)", min_value=1, max_value=60, value=5)
+
+        if auto_refresh:
+            st.caption(f"Refreshing every {refresh_rate}s...")
+            time.sleep(refresh_rate)
+            st.rerun()
 
     # Status Indicator (Thinking Bar)
     # Mocking task status for now until backend supports /tasks/active
