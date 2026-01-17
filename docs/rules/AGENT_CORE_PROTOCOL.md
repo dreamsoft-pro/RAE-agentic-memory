@@ -46,6 +46,7 @@ Different branches = Different testing levels.
 ### Phase 1: Feature Branch (`feature/*`)
 - **Goal**: Speed & Focus.
 - **Command**: `pytest --no-cov path/to/new_test.py`
+- **Fast Loop**: Use `make test-fast` to stop on first error, then `make test-fix` to verify only the fixed tests.
 - **Rule**: Test **ONLY** your new code. Do NOT run full suite.
 
 ### Phase 2: Develop Branch (`develop`)

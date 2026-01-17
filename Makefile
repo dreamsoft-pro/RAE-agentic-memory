@@ -158,11 +158,22 @@ test:  ## Run tests using LITE profile (default)
 
 test-lite:  ## [PROFILE: LITE] Run unit tests (CI/CPU safe)
 	@echo "🧪 Running LITE tests (Unit + No-GPU)..."
-	@RAE_PROFILE=lite PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "not slow and not gpu and not integration" -v
+	@RAE_PROFILE=lite PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "not slow and not gpu and not integration" -v $(ARGS)
 
 test-core:  ## [PROFILE: CORE] Run rae-core unit tests with coverage
 	@echo "🧪 Running RAE-CORE tests..."
-	@PYTHONPATH=. $(VENV_PYTHON) -m pytest rae-core/tests/ --cov=rae-core/rae_core --cov-report=term-missing -v
+	@PYTHONPATH=. $(VENV_PYTHON) -m pytest rae-core/tests/ --cov=rae-core/rae_core --cov-report=term-missing -v $(ARGS)
+
+test-fast: ## Run tests and stop on first failure (Fail Fast)
+	@echo "🏃 Running tests in FAIL-FAST mode..."
+	@ARGS="-x $(ARGS)" $(MAKE) test-lite
+
+test-fix: ## Run ONLY tests that failed in the last run
+	@echo "🛠️  Running only LAST FAILED tests..."
+	@ARGS="--lf $(ARGS)" $(MAKE) test-lite
+
+test-failed: ## Alias for test-fix
+	@$(MAKE) test-fix
 
 test-int:  ## [PROFILE: INTEGRATION] Run integration tests (Requires Docker Stack)
 	@echo "🧪 Running INTEGRATION tests (API/DB Contracts)..."
