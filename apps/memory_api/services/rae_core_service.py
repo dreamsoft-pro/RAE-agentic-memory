@@ -60,7 +60,9 @@ class RAECoreService:
         self.postgres_adapter: IMemoryStorage
         self.qdrant_adapter: IVectorStore
         self.redis_adapter: ICacheProvider
-        self.savings_service: Optional[TokenSavingsService]
+        self.savings_service: Optional[TokenSavingsService] = None
+        if postgres_pool:
+            self.savings_service = TokenSavingsService(postgres_pool)
 
         # 1. Initialize embedding provider
         import os
