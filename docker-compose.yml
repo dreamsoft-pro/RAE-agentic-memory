@@ -476,7 +476,7 @@ services:
     image: ollama/ollama:latest
     container_name: rae-ollama-dev
     ports:
-      - "11434:11434"
+      - "11435:11434"
     volumes:
       - ollama_data:/root/.ollama
     restart: unless-stopped

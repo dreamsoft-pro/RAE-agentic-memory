@@ -328,27 +328,43 @@ class RAECoreService:
         self, info_class: str, target_layer: str | MemoryLayer
     ) -> None:
         """Enforce ISO 27000 security policies."""
-        if (
-            info_class == InformationClass.RESTRICTED
-            and target_layer != MemoryLayer.WORKING
-        ):
-            # Ensure target_layer is a string for logging/error message if it's an Enum
-            layer_value = (
-                target_layer.value
-                if isinstance(target_layer, MemoryLayer)
-                else target_layer
-            )
+        layer_value = (
+            target_layer.value if isinstance(target_layer, MemoryLayer) else target_layer
+        )
+        info_class = info_class.lower()
 
-            logger.error(
-                "security_policy_violation",
-                reason="RESTRICTED data blocked outside Working layer",
-                layer=layer_value,
-                info_class=info_class,
-            )
-            raise SecurityPolicyViolationError(
-                f"Security Policy Violation: RESTRICTED data cannot be stored in {layer_value} layer. "
-                "Only 'working' layer is allowed for restricted information."
-            )
+        # 1. RESTRICTED: Only allowed in Working layer
+        if info_class == InformationClass.RESTRICTED:
+            if layer_value != MemoryLayer.WORKING:
+                logger.error(
+                    "security_policy_violation",
+                    reason="RESTRICTED data blocked outside Working layer",
+                    layer=layer_value,
+                    info_class=info_class,
+                )
+                raise SecurityPolicyViolationError(
+                    f"Security Policy Violation: RESTRICTED data cannot be stored in {layer_value} layer. "
+                    "Only 'working' layer is allowed for restricted information."
+                )
+
+        # 2. CONFIDENTIAL: Blocked from Semantic layer
+        elif info_class == InformationClass.CONFIDENTIAL:
+            if layer_value == MemoryLayer.SEMANTIC:
+                logger.error(
+                    "security_policy_violation",
+                    reason="CONFIDENTIAL data blocked from Semantic layer",
+                    layer=layer_value,
+                    info_class=info_class,
+                )
+                raise SecurityPolicyViolationError(
+                    f"Security Policy Violation: CONFIDENTIAL data cannot be promoted to {layer_value} layer."
+                )
+
+        # 3. INTERNAL: Promotion to Semantic requires HITL/Sanitization (Policy placeholder)
+        elif info_class == InformationClass.INTERNAL:
+            if layer_value == MemoryLayer.SEMANTIC:
+                # In future this could trigger a mandatory HITL/Sanitization flag check
+                pass
 
     def _detect_agentic_patterns(self, governance: dict, tags: list[str]) -> list[str]:
         """Detect agentic patterns and return updated tags."""
@@ -393,6 +409,15 @@ class RAECoreService:
                         "confidence_delta_negative",
                         before=conf_before,
                         after=conf_after,
+                    )
+
+        elif pattern_type == "multi_agent_interaction":
+            conflicts = fields.get("conflict_points", [])
+            if conflicts:
+                if "coordination_failure" not in tags:
+                    tags.append("coordination_failure")
+                    logger.warning(
+                        "agent_coordination_conflict_detected", conflicts=conflicts
                     )
 
         return tags
