@@ -397,20 +397,16 @@ class ReflectionEngineV2:
                 query=query_text,
                 tenant_id=tenant_id,
                 agent_id=project_id,
-                layer="reflective", # Focus on Layer 4
-                top_k=k * 2 # Fetch more for filtering
+                layer="reflective",  # Focus on Layer 4
+                top_k=k * 2,  # Fetch more for filtering
             )
 
         # Filtering and post-processing
-        filtered = [
-            r for r in reflections
-            if r.get("importance", 0) >= min_importance
-        ]
+        filtered = [r for r in reflections if r.get("importance", 0) >= min_importance]
 
         if tags:
             filtered = [
-                r for r in filtered
-                if any(tag in r.get("tags", []) for tag in tags)
+                r for r in filtered if any(tag in r.get("tags", []) for tag in tags)
             ]
 
         return filtered[:k]

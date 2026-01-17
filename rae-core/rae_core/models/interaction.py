@@ -10,12 +10,13 @@ class AgentActionType(str, Enum):
     Defines the permissible types of actions an agent can emit.
     RAE-First: Agents do not 'speak', they emit typed actions.
     """
-    FINAL_ANSWER = "final_answer"   # The final response to the user
-    THOUGHT = "thought"             # Internal reasoning (Chain of Thought)
-    TOOL_CALL = "tool_call"         # Request to execute a tool
-    DELEGATION = "delegation"       # Delegating sub-task to another agent
-    ANALYSIS = "analysis"           # Deep analysis result
-    CLARIFICATION = "clarification" # Requesting more info from user/system
+
+    FINAL_ANSWER = "final_answer"  # The final response to the user
+    THOUGHT = "thought"  # Internal reasoning (Chain of Thought)
+    TOOL_CALL = "tool_call"  # Request to execute a tool
+    DELEGATION = "delegation"  # Delegating sub-task to another agent
+    ANALYSIS = "analysis"  # Deep analysis result
+    CLARIFICATION = "clarification"  # Requesting more info from user/system
 
 
 class RAEInput(BaseModel):
@@ -23,6 +24,7 @@ class RAEInput(BaseModel):
     The standardized input payload for any Agent in the RAE ecosystem.
     Agents MUST accept this and ONLY this structure.
     """
+
     request_id: UUID
     tenant_id: str
     user_id: str | None = None
@@ -45,6 +47,7 @@ class AgentAction(BaseModel):
     The ONLY allowed output from an Agent.
     Wraps the 'what' and 'why' into a structured event.
     """
+
     type: AgentActionType
 
     # The main payload (e.g., the answer text, or tool arguments)
@@ -63,8 +66,9 @@ class AgentAction(BaseModel):
     # Metadata for tools or specific extensions
     metadata: dict[str, Any] = Field(default_factory=dict)
 
-    @field_validator('content')
-    def validate_content_not_empty(self, v):
+    @field_validator("content")
+    @classmethod
+    def validate_content_not_empty(cls, v):
         if v is None:
             raise ValueError("Content cannot be None")
         return v

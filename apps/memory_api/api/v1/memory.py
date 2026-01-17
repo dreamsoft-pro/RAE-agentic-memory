@@ -86,7 +86,7 @@ async def list_memories(
             for mem in memories:
                 # Ensure all required fields are present
                 if "timestamp" not in mem:
-                     mem["timestamp"] = datetime.now()
+                    mem["timestamp"] = datetime.now()
 
                 # Normalize layer names
                 if "layer" in mem and mem["layer"] in layer_mapping:
@@ -94,17 +94,19 @@ async def list_memories(
 
                 # Convert UUID fields to strings for Pydantic
                 if "id" in mem and isinstance(mem["id"], UUID):
-                     mem["id"] = str(mem["id"])
+                    mem["id"] = str(mem["id"])
                 if "tenant_id" in mem and isinstance(mem["tenant_id"], UUID):
-                     mem["tenant_id"] = str(mem["tenant_id"])
+                    mem["tenant_id"] = str(mem["tenant_id"])
 
                 results.append(MemoryRecord(**mem))
 
             return ListMemoryResponse(
                 results=results,
-                total=len(results), # This is page size, real total requires separate count query
+                total=len(
+                    results
+                ),  # This is page size, real total requires separate count query
                 limit=limit,
-                offset=offset
+                offset=offset,
             )
         except Exception as e:
             span.set_attribute("rae.outcome.label", "list_error")
@@ -144,7 +146,7 @@ async def store_memory(
             session_id = req.session_id or getattr(request.state, "session_id", None)
 
             memory_id = await rae_service.store_memory(
-                tenant_id=tenant_id,
+                tenant_id=str(tenant_id),
                 project=req.project,
                 content=content,
                 source=req.source,
@@ -262,7 +264,7 @@ async def query_memory(
         if memory_ids:
             try:
                 await rae_service.update_memory_access_batch(
-                    memory_ids=memory_ids, tenant_id=tenant_id
+                    memory_ids=memory_ids, tenant_id=str(tenant_id)
                 )
             except Exception as e:
                 # Log but don't fail the query
@@ -297,7 +299,7 @@ async def delete_memory(
 
         # 1. Delete from database using RAE-Core Service
         try:
-            deleted = await rae_service.delete_memory(memory_id, tenant_id)
+            deleted = await rae_service.delete_memory(memory_id, str(tenant_id))
 
             if not deleted:
                 span.set_attribute("rae.outcome.label", "not_found")
@@ -373,7 +375,7 @@ async def get_session_context(
         try:
             memories = await rae_service.get_session_context(
                 session_id=session_id,
-                tenant_id=tenant_id,
+                tenant_id=str(tenant_id),
                 limit=limit,
             )
             span.set_attribute("rae.session.memories_count", len(memories))
@@ -424,12 +426,12 @@ async def get_reflection_stats(
             span.set_attribute("rae.project_id", project)
 
         count = await rae_service.count_memories(
-            tenant_id=tenant_id, layer="rm", project=project or "default"
+            tenant_id=str(tenant_id), layer="rm", project=project or "default"
         )
         span.set_attribute("rae.reflection.count", count)
 
         avg_strength = await rae_service.get_metric_aggregate(
-            tenant_id=tenant_id,
+            tenant_id=str(tenant_id),
             layer="rm",
             project=project or "default",
             metric="importance",
@@ -509,7 +511,7 @@ async def generate_hierarchical_reflection(
             # Generate hierarchical reflection
             summary = await reflection_engine.generate_hierarchical_reflection(
                 project=project,
-                tenant_id=tenant_id,
+                tenant_id=str(tenant_id),
                 bucket_size=bucket_size,
                 max_episodes=max_episodes,
             )
@@ -517,7 +519,7 @@ async def generate_hierarchical_reflection(
 
             # Fetch statistics using RAECoreService
             episode_count = await rae_service.count_memories(
-                tenant_id=tenant_id, layer="em", project=project
+                tenant_id=str(tenant_id), layer="em", project=project
             )
             span.set_attribute("rae.reflection.episode_count", episode_count)
 

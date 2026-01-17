@@ -193,12 +193,14 @@ async def websocket_endpoint(
 # ============================================================================
 
 
-@router.api_route("/metrics", methods=["GET", "POST"], response_model=GetDashboardMetricsResponse)
+@router.api_route(
+    "/metrics", methods=["GET", "POST"], response_model=GetDashboardMetricsResponse
+)
 async def get_dashboard_metrics(
     request_data: Optional[GetDashboardMetricsRequest] = None,
     tenant_id: Optional[str] = Query(None),
     project_id: Optional[str] = Query(None),
-    project: Optional[str] = Query(None), # Alternative for Streamlit
+    project: Optional[str] = Query(None),  # Alternative for Streamlit
     period: MetricPeriod = Query(MetricPeriod.LAST_24H),
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
@@ -209,7 +211,7 @@ async def get_dashboard_metrics(
     try:
         # Handle parameters from multiple sources
         t_id = tenant_id
-        p_id = project_id or project # Fallback to 'project'
+        p_id = project_id or project  # Fallback to 'project'
         m_period = period
 
         if request_data:
@@ -231,7 +233,10 @@ async def get_dashboard_metrics(
 
         # Get time series metrics
         time_series_metrics = await _get_time_series_metrics(
-            rae_service.db, t_id, p_id, m_period,
+            rae_service.db,
+            t_id,
+            p_id,
+            m_period,
         )
 
         # Get recent activity
@@ -612,7 +617,7 @@ async def _get_time_series_metrics(
             "reflection_count",
             "semantic_node_count",
             "search_quality_mrr",
-            "avg_importance"
+            "avg_importance",
         ]
 
         for metric_name in metric_names:
@@ -634,23 +639,31 @@ async def _get_time_series_metrics(
                         if metric_name == "memory_count":
                             live_val = await db.fetchval(
                                 "SELECT COUNT(*)::float FROM memories WHERE tenant_id = $1::uuid AND (project = $2 OR agent_id = $2)",
-                                tenant_id, project_id
+                                tenant_id,
+                                project_id,
                             )
                         elif metric_name == "reflection_count":
                             live_val = await db.fetchval(
                                 "SELECT COUNT(*)::float FROM memories WHERE tenant_id = $1::uuid AND (project = $2 OR agent_id = $2) AND layer IN ('reflective', 'rm')",
-                                tenant_id, project_id
+                                tenant_id,
+                                project_id,
                             )
 
                         if live_val is not None and live_val >= 0:
-                            data_points = [{
-                                "timestamp": datetime.now(timezone.utc),
-                                "metric_value": float(live_val)
-                            }]
+                            data_points = [
+                                {
+                                    "timestamp": datetime.now(timezone.utc),
+                                    "metric_value": float(live_val),
+                                }
+                            ]
                         else:
                             continue
                     except Exception as e:
-                        logger.warning("live_metric_fallback_failed", metric=metric_name, error=str(e))
+                        logger.warning(
+                            "live_metric_fallback_failed",
+                            metric=metric_name,
+                            error=str(e),
+                        )
                         continue
 
                 # Format data points
@@ -695,11 +708,7 @@ async def _get_time_series_metrics(
                 metrics.append(ts_metric)
 
             except Exception as e:
-                logger.warning(
-                    "metric_fetch_failed",
-                    metric=metric_name,
-                    error=str(e)
-                )
+                logger.warning("metric_fetch_failed", metric=metric_name, error=str(e))
                 continue
 
         return metrics

@@ -15,8 +15,9 @@ import httpx
 RAE_API_URL = os.getenv("RAE_API_URL", "http://localhost:8001")
 TENANT_DEFAULT = "00000000-0000-0000-0000-000000000000"
 
-logging.basicConfig(level=logging.INFO, format='%(message)s')
+logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
+
 
 class MemoryAnalyzer:
     def __init__(self, api_url: str):
@@ -34,7 +35,10 @@ class MemoryAnalyzer:
                 resp = await self.client.get(
                     f"{self.api_url}/v1/memory/list",
                     params={"limit": limit, "offset": offset},
-                    headers={"Content-Type": "application/json", "X-Tenant-Id": tenant_id}
+                    headers={
+                        "Content-Type": "application/json",
+                        "X-Tenant-Id": tenant_id,
+                    },
                 )
                 if resp.status_code != 200:
                     print(f"Error: {resp.status_code}")
@@ -57,12 +61,7 @@ class MemoryAnalyzer:
         return all_memories
 
     def analyze(self, memories: List[Dict[str, Any]]):
-        stats = {
-            "screenwatcher": 0,
-            "benchmark": 0,
-            "rae": 0,
-            "other": 0
-        }
+        stats = {"screenwatcher": 0, "benchmark": 0, "rae": 0, "other": 0}
 
         projects = {}
 
@@ -77,7 +76,12 @@ class MemoryAnalyzer:
             # Categorize
             if "screenwatcher" in content or "screenwatcher" in project:
                 stats["screenwatcher"] += 1
-            elif "benchmark" in content or "benchmark" in project or "mmit" in content or "lect" in content:
+            elif (
+                "benchmark" in content
+                or "benchmark" in project
+                or "mmit" in content
+                or "lect" in content
+            ):
                 stats["benchmark"] += 1
             elif "rae" in content or "rae" in project:
                 stats["rae"] += 1
@@ -91,7 +95,9 @@ class MemoryAnalyzer:
             print(f"  - {k.ljust(15)}: {v}")
 
         print("\nTop 10 Projects found in metadata:")
-        sorted_projects = sorted(projects.items(), key=lambda x: x[1], reverse=True)[:10]
+        sorted_projects = sorted(projects.items(), key=lambda x: x[1], reverse=True)[
+            :10
+        ]
         for p, count in sorted_projects:
             print(f"  - {p.ljust(30)}: {count}")
 
@@ -99,6 +105,7 @@ class MemoryAnalyzer:
         memories = await self.fetch_all(TENANT_DEFAULT)
         self.analyze(memories)
         await self.client.aclose()
+
 
 if __name__ == "__main__":
     asyncio.run(MemoryAnalyzer(RAE_API_URL).run())

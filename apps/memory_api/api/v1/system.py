@@ -15,15 +15,19 @@ router = APIRouter(
     dependencies=[Depends(auth.verify_token)],
 )
 
+
 class TenantBasicInfo(BaseModel):
     id: str
     name: str
 
+
 class TenantUpdate(BaseModel):
     name: str
 
+
 class ProjectUpdate(BaseModel):
     name: str
+
 
 @router.get("/tenants", response_model=List[TenantBasicInfo])
 async def list_tenants(
@@ -45,7 +49,10 @@ async def update_tenant(
     Update tenant name.
     """
     success = await rae_service.update_tenant_name(tenant_id, update.name)
-    return {"success": success, "message": "Tenant updated" if success else "Update failed"}
+    return {
+        "success": success,
+        "message": "Tenant updated" if success else "Update failed",
+    }
 
 
 @router.put("/projects/{project_id}")
@@ -59,7 +66,11 @@ async def rename_project(
     Rename a project (migrate data to new ID).
     """
     success = await rae_service.rename_project(str(tenant_id), project_id, update.name)
-    return {"success": success, "message": "Project renamed" if success else "Rename failed"}
+    return {
+        "success": success,
+        "message": "Project renamed" if success else "Rename failed",
+    }
+
 
 @router.get("/projects", response_model=List[str])
 async def list_projects(
@@ -69,4 +80,4 @@ async def list_projects(
     """
     List all unique project IDs for the authenticated tenant.
     """
-    return await rae_service.list_unique_projects(tenant_id=tenant_id)
+    return await rae_service.list_unique_projects(tenant_id=str(tenant_id))

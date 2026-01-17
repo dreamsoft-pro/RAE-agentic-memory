@@ -159,7 +159,7 @@ class RAEBenchmarkRunner:
         if self.mock_embeddings:
             # Return dummy 768d vectors (standard for nomic)
             return [[0.1] * 768 for _ in texts]
-        return await service.generate_embeddings_async(texts)
+        return cast(List[List[float]], await service.generate_embeddings_async(texts))
 
     async def load_benchmark(self):
         """Load benchmark YAML file"""
@@ -345,7 +345,9 @@ class RAEBenchmarkRunner:
                     else content
                 )
 
-                embeddings = await self._get_embedding(embedding_service, [prefixed_content])
+                embeddings = await self._get_embedding(
+                    embedding_service, [prefixed_content]
+                )
                 embedding = embeddings[0]
 
                 # Insert into database
@@ -441,7 +443,9 @@ class RAEBenchmarkRunner:
                     if not query_text.startswith("search_")
                     else query_text
                 )
-                query_embeddings = await self._get_embedding(embedding_service, [prefixed_query])
+                query_embeddings = await self._get_embedding(
+                    embedding_service, [prefixed_query]
+                )
                 query_embedding = query_embeddings[0]
 
                 # Search vectors - use query method with filters

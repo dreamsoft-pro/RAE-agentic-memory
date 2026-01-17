@@ -89,7 +89,7 @@ async def store_memory(
     """
     try:
         memory_id = await rae_service.store_memory(
-            tenant_id=tenant_id,
+            tenant_id=str(tenant_id),
             project=request.project,
             content=request.content,
             source=request.source,
@@ -129,7 +129,7 @@ async def query_memories(
         from typing import Any, cast
 
         response = await rae_service.query_memories(
-            tenant_id=tenant_id,
+            tenant_id=str(tenant_id),
             project=request.project,
             query=request.query,
             k=request.k,
@@ -177,7 +177,7 @@ async def consolidate_memories(
     """
     try:
         results = await rae_service.consolidate_memories(
-            tenant_id=tenant_id,
+            tenant_id=str(tenant_id),
             project=project,
         )
 
@@ -207,7 +207,7 @@ async def generate_reflections(
     """
     try:
         reflections = await rae_service.generate_reflections(
-            tenant_id=tenant_id,
+            tenant_id=str(tenant_id),
             project=project,
         )
 
@@ -251,7 +251,7 @@ async def get_statistics(
     """
     try:
         stats = await rae_service.get_statistics(
-            tenant_id=tenant_id,
+            tenant_id=str(tenant_id),
             project=project,
         )
 

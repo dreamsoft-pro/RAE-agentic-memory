@@ -116,7 +116,14 @@ async def test_governance_overview_with_custom_days(
     }
 
     mock_conn.fetch.side_effect = [
-        [{"tenant_id": str(uuid4()), "calls": 200, "cost_usd": 30.00, "tokens": 100000}],
+        [
+            {
+                "tenant_id": str(uuid4()),
+                "calls": 200,
+                "cost_usd": 30.00,
+                "tokens": 100000,
+            }
+        ],
         [{"model": "gpt-4", "calls": 200, "cost_usd": 30.00, "tokens": 100000}],
     ]
 
@@ -207,7 +214,8 @@ async def test_tenant_governance_stats_no_data(client_with_auth, mock_app_state_
     }
 
     response = client_with_auth.get(
-        f"/v1/governance/tenant/{NON_EXISTENT_TENANT_ID}", headers={"X-Tenant-Id": "admin"}
+        f"/v1/governance/tenant/{NON_EXISTENT_TENANT_ID}",
+        headers={"X-Tenant-Id": "admin"},
     )
 
     assert response.status_code == 404
@@ -306,7 +314,8 @@ async def test_tenant_budget_status_zero_usage(client_with_auth, mock_app_state_
     mock_conn.fetchrow.return_value = {"current_cost_usd": 0.0, "current_tokens": 0}
 
     response = client_with_auth.get(
-        f"/v1/governance/tenant/{NEW_TENANT_ID}/budget", headers={"X-Tenant-Id": NEW_TENANT_ID}
+        f"/v1/governance/tenant/{NEW_TENANT_ID}/budget",
+        headers={"X-Tenant-Id": NEW_TENANT_ID},
     )
 
     assert response.status_code == 200
@@ -356,7 +365,6 @@ async def test_tenant_governance_stats_invalid_days(
 
     # FastAPI should validate and return 422 for invalid parameter
     assert response.status_code == 422
-
 
 
 @pytest.mark.asyncio

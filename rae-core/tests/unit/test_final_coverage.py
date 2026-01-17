@@ -124,7 +124,7 @@ async def test_reflector_insight_and_error_coverage():
             "content": "test content",
             "importance": 0.8,
             "layer": "episodic",
-            "tags": ["tag1"]
+            "tags": ["tag1"],
         }
     )
     storage.store_memory = AsyncMock(return_value=uuid4())
@@ -181,5 +181,3 @@ async def test_graph_strategy_coverage():
     assert id_b in result_ids
     assert id_c in result_ids
     assert id_d in result_ids
-
-

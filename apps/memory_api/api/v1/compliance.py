@@ -194,7 +194,7 @@ async def request_approval(
         try:
             service = HumanApprovalService(pool)
             result = await service.request_approval(
-                tenant_id=request.tenant_id,
+                tenant_id=str(request.tenant_id),
                 project_id=request.project_id,
                 operation_type=request.operation_type,
                 operation_description=request.operation_description,
@@ -386,7 +386,7 @@ async def create_decision_context(
             ]
 
             result = await service.create_decision_context(
-                tenant_id=request.tenant_id,
+                tenant_id=str(request.tenant_id),
                 project_id=request.project_id,
                 query=request.query,
                 sources=sources,
@@ -438,7 +438,7 @@ async def record_decision(
             service = ContextProvenanceService()
 
             result = await service.record_decision(
-                tenant_id=request.tenant_id,
+                tenant_id=str(request.tenant_id),
                 project_id=request.project_id,
                 decision_type=request.decision_type,
                 decision_description=request.decision_description,
@@ -727,7 +727,7 @@ async def create_policy(
             service = PolicyVersioningService()
 
             result = await service.create_policy(
-                tenant_id=request.tenant_id,
+                tenant_id=str(request.tenant_id),
                 policy_id=request.policy_id,
                 policy_type=request.policy_type,
                 policy_name=request.policy_name,

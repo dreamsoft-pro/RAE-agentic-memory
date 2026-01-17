@@ -108,8 +108,8 @@ class RAEClient:
                 json={
                     "tenant_id": self.tenant_id,
                     "project_id": self.project_id,
-                    "period": "last_24h"
-                }
+                    "period": "last_24h",
+                },
             )
 
             metrics = response.get("system_metrics", {})
@@ -128,7 +128,7 @@ class RAEClient:
                 "episodic": episodic_count,
                 "working": 0,
                 "semantic": semantic_count,
-                "ltm": ltm_count
+                "ltm": ltm_count,
             }
 
         except Exception as e:
@@ -146,11 +146,7 @@ class RAEClient:
         """
         try:
             # Use GET /list for raw data retrieval (no vector search)
-            params = {
-                "limit": limit,
-                "offset": 0,
-                "project": self.project_id
-            }
+            params = {"limit": limit, "offset": 0, "project": self.project_id}
             # Note: API V1 /list might not support multi-layer filter in one go unless updated.
             # Assuming it filters by project mostly.
 
@@ -169,7 +165,9 @@ class RAEClient:
                     ts_str = m.get("timestamp")
                     if ts_str:
                         try:
-                            ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00")).replace(tzinfo=None)
+                            ts = datetime.fromisoformat(
+                                ts_str.replace("Z", "+00:00")
+                            ).replace(tzinfo=None)
                             since_naive = since.replace(tzinfo=None)
                             if ts >= since_naive:
                                 filtered_memories.append(m)
@@ -385,9 +383,9 @@ class RAEClient:
                     "project": proj,
                     "layer": "reflective",
                     "limit": 1,
-                    "offset": 0
+                    "offset": 0,
                 },
-                timeout=5.0
+                timeout=5.0,
             )
 
             if response.status_code == 200:
@@ -445,8 +443,7 @@ class RAEClient:
             # but for now assuming same API key works if authorized.
             # System endpoints are under /v1/system
             response = self.client.put(
-                f"/v1/system/tenants/{tenant_id}",
-                json={"name": new_name}
+                f"/v1/system/tenants/{tenant_id}", json={"name": new_name}
             )
             response.raise_for_status()
             return response.json().get("success", False)
@@ -460,8 +457,7 @@ class RAEClient:
         """
         try:
             response = self.client.put(
-                f"/v1/system/projects/{old_project_id}",
-                json={"name": new_project_id}
+                f"/v1/system/projects/{old_project_id}", json={"name": new_project_id}
             )
             response.raise_for_status()
             return response.json().get("success", False)
@@ -485,7 +481,9 @@ class RAEClient:
 
 
 @st.cache_data(ttl=60)
-def get_cached_stats(_client: RAEClient, tenant_id: str, project_id: str) -> Dict[str, int]:
+def get_cached_stats(
+    _client: RAEClient, tenant_id: str, project_id: str
+) -> Dict[str, int]:
     """
     Cached version of get_stats.
     """

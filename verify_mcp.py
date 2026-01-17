@@ -25,14 +25,16 @@ async def main():
     timestamp = time.time()
     unique_content = f"MCP verification test content at {timestamp}"
     source = "verify_mcp.py"
-    print(f"\n1. Storing memory:\n   Content: '{unique_content}'\n   Source: '{source}'")
+    print(
+        f"\n1. Storing memory:\n   Content: '{unique_content}'\n   Source: '{source}'"
+    )
 
     try:
         store_result = await client.store_memory(
             content=unique_content,
             source=source,
             layer="episodic",
-            tags=["mcp-verification"]
+            tags=["mcp-verification"],
         )
         memory_id = store_result.get("id")
         if not memory_id:
@@ -66,7 +68,9 @@ async def main():
         found = False
         for result in search_results:
             if result.get("content") == unique_content:
-                print("\n✅ VERIFICATION SUCCESS: Found the exact stored memory in search results!")
+                print(
+                    "\n✅ VERIFICATION SUCCESS: Found the exact stored memory in search results!"
+                )
                 found = True
                 print(f"   - ID: {result.get('id')}")
                 print(f"   - Score: {result.get('score')}")
@@ -74,7 +78,9 @@ async def main():
                 break
 
         if not found:
-            print("\n❌ VERIFICATION FAILED: The stored memory was not found in the search results.")
+            print(
+                "\n❌ VERIFICATION FAILED: The stored memory was not found in the search results."
+            )
             print("   Full search results:")
             for r in search_results:
                 print(f"   - {r}")

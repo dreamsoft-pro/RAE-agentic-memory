@@ -30,7 +30,7 @@ async def submit_feedback(
     service = FeedbackService(rae_service=rae_service)
 
     success = await service.process_feedback(
-        tenant_id=tenant_id,
+        tenant_id=str(tenant_id),
         memory_id=feedback.memory_id,
         feedback_type=feedback.feedback_type,
         comment=feedback.comment,

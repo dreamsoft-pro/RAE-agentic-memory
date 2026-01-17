@@ -336,7 +336,9 @@ class ReflectionPipeline:
                     created_at = memory.get("created_at")
                     if isinstance(created_at, str):
                         try:
-                            created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                            created_at = datetime.fromisoformat(
+                                created_at.replace("Z", "+00:00")
+                            )
                         except Exception:
                             created_at = datetime.now()
                     if created_at:
@@ -349,7 +351,9 @@ class ReflectionPipeline:
                         clusters[key].append(memory)
 
                 # Filter small clusters
-                valid_clusters = {k: v for k, v in clusters.items() if len(v) >= min_cluster_size}
+                valid_clusters = {
+                    k: v for k, v in clusters.items() if len(v) >= min_cluster_size
+                }
                 # If no time clusters, put everything in one global cluster
                 if not valid_clusters and len(memories) >= min_cluster_size:
                     valid_clusters = {"global_fallback": memories}
@@ -444,20 +448,20 @@ class ReflectionPipeline:
             span.set_attribute("rae.reflection.cluster.algorithm", algorithm_used)
 
             # Group memories by cluster
-            clusters: Dict[str, List[Dict[str, Any]]] = {}
+            ml_clusters: Dict[str, List[Dict[str, Any]]] = {}
             for memory, label in zip(valid_memories, cluster_labels):
                 if label == -1:  # Skip noise in HDBSCAN
                     continue
 
                 cluster_id = f"cluster_{label}"
-                if cluster_id not in clusters:
-                    clusters[cluster_id] = []
-                clusters[cluster_id].append(memory)
+                if cluster_id not in ml_clusters:
+                    ml_clusters[cluster_id] = []
+                ml_clusters[cluster_id].append(memory)
 
             # Filter out clusters below minimum size
             clusters = {
                 cid: mems
-                for cid, mems in clusters.items()
+                for cid, mems in ml_clusters.items()
                 if len(mems) >= min_cluster_size
             }
 
