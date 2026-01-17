@@ -35,6 +35,8 @@ class PostgreSQLStorage(IMemoryStorage):
         project TEXT,      -- Added in v2.7.0 (Phase 1)
         session_id TEXT,   -- Added in v2.7.0 (Phase 1)
         source TEXT,       -- Added in v2.7.0 (Phase 1)
+        info_class TEXT DEFAULT 'internal', -- Added in v2.9.0 (Phase 2)
+        governance JSONB DEFAULT '{}',      -- Added in v2.9.0 (Phase 2)
         memory_type TEXT DEFAULT 'text',
         tags TEXT[] DEFAULT '{}',
         metadata JSONB DEFAULT '{}',
@@ -51,11 +53,13 @@ class PostgreSQLStorage(IMemoryStorage):
     CREATE INDEX idx_memories_expires_at ON memories(expires_at) WHERE expires_at IS NOT NULL;
     CREATE INDEX idx_memories_importance ON memories(importance);
     CREATE INDEX idx_memories_metadata ON memories USING GIN(metadata);
+    CREATE INDEX idx_memories_governance ON memories USING GIN(governance); -- Phase 2
 
     -- Performance Indexes (Phase 5)
     CREATE INDEX idx_memories_project ON memories(project);
     CREATE INDEX idx_memories_session_id ON memories(session_id);
     CREATE INDEX idx_memories_source ON memories(source);
+    CREATE INDEX idx_memories_info_class ON memories(info_class); -- Phase 2
     CREATE INDEX idx_memories_project_created_at ON memories(project, created_at);
     ```
     """
@@ -113,6 +117,8 @@ class PostgreSQLStorage(IMemoryStorage):
         session_id: str | None = None,
         source: str | None = None,
         strength: float = 1.0,
+        info_class: str = "internal",
+        governance: dict[str, Any] | None = None,
     ) -> UUID:
         """Store a new memory in PostgreSQL."""
         pool = await self._get_pool()
@@ -120,6 +126,7 @@ class PostgreSQLStorage(IMemoryStorage):
         memory_id = uuid4()
         tags = tags or []
         metadata = metadata or {}
+        governance = governance or {}
         importance = importance if importance is not None else 0.5
 
         import json
@@ -134,9 +141,10 @@ class PostgreSQLStorage(IMemoryStorage):
                     id, content, layer, tenant_id, agent_id,
                     tags, metadata, embedding, importance, expires_at,
                     created_at, last_accessed_at, memory_type, usage_count,
-                    project, session_id, source, strength
+                    project, session_id, source, strength,
+                    info_class, governance
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11, $12, 0, $13, $14, $15, $16)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11, $12, 0, $13, $14, $15, $16, $17, $18)
                 """,
                 memory_id,
                 content,
@@ -154,6 +162,8 @@ class PostgreSQLStorage(IMemoryStorage):
                 session_id,
                 source,
                 strength,
+                info_class,
+                json.dumps(governance),
             )
 
         return memory_id
@@ -173,7 +183,8 @@ class PostgreSQLStorage(IMemoryStorage):
                     id, content, layer, tenant_id, agent_id,
                     tags, metadata, embedding, importance, usage_count,
                     created_at, last_accessed_at, expires_at,
-                    project, session_id, memory_type, source, strength
+                    project, session_id, memory_type, source, strength,
+                    info_class, governance
                 FROM memories
                 WHERE id = $1 AND tenant_id = $2
                 """,
@@ -195,6 +206,8 @@ class PostgreSQLStorage(IMemoryStorage):
             "memory_type": row["memory_type"],
             "source": row["source"],
             "strength": float(row["strength"]) if row["strength"] is not None else 1.0,
+            "info_class": row["info_class"] or "internal",
+            "governance": row["governance"] if row["governance"] else {},
             "tags": list(row["tags"]) if row["tags"] else [],
             "metadata": row["metadata"] if row["metadata"] else {},
             "embedding": (
@@ -274,6 +287,7 @@ class PostgreSQLStorage(IMemoryStorage):
                     tags, metadata, embedding, importance, usage_count,
                     created_at, last_accessed_at, expires_at,
                     project, session_id, source, strength, memory_type,
+                    info_class, governance,
                     -- Simple relevance scoring
                     CASE
                         WHEN content ILIKE ${param_idx} THEN 1.0
@@ -304,6 +318,8 @@ class PostgreSQLStorage(IMemoryStorage):
                     float(row["strength"]) if row["strength"] is not None else 1.0
                 ),
                 "memory_type": row["memory_type"],
+                "info_class": row["info_class"] or "internal",
+                "governance": row["governance"] if row["governance"] else {},
                 "tags": list(row["tags"]) if row["tags"] else [],
                 "metadata": row["metadata"] if row["metadata"] else {},
                 "embedding": (
@@ -395,7 +411,8 @@ class PostgreSQLStorage(IMemoryStorage):
                     id, content, layer, tenant_id, agent_id,
                     tags, metadata, embedding, importance, usage_count,
                     created_at, last_accessed_at, expires_at,
-                    project, session_id, source, strength, memory_type
+                    project, session_id, source, strength, memory_type,
+                    info_class, governance
                 FROM memories
                 WHERE {where_clause}
                 {order_clause}
@@ -422,6 +439,8 @@ class PostgreSQLStorage(IMemoryStorage):
                         float(row["strength"]) if row["strength"] is not None else 1.0
                     ),
                     "memory_type": row["memory_type"],
+                    "info_class": row["info_class"] or "internal",
+                    "governance": row["governance"] if row["governance"] else {},
                     "tags": list(row["tags"]) if row["tags"] else [],
                     "metadata": row["metadata"] if row["metadata"] else {},
                     "embedding": (

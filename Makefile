@@ -158,11 +158,22 @@ test:  ## Run tests using LITE profile (default)
 
 test-lite:  ## [PROFILE: LITE] Run unit tests (CI/CPU safe)
 	@echo "🧪 Running LITE tests (Unit + No-GPU)..."
-	@RAE_PROFILE=lite PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "not slow and not gpu and not integration" -v
+	@RAE_PROFILE=lite PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "not slow and not gpu and not integration" -v $(ARGS)
 
 test-core:  ## [PROFILE: CORE] Run rae-core unit tests with coverage
 	@echo "🧪 Running RAE-CORE tests..."
-	@PYTHONPATH=. $(VENV_PYTHON) -m pytest rae-core/tests/ --cov=rae-core/rae_core --cov-report=term-missing -v
+	@PYTHONPATH=. $(VENV_PYTHON) -m pytest rae-core/tests/ --cov=rae-core/rae_core --cov-report=term-missing -v $(ARGS)
+
+test-fast: ## Run tests and stop on first failure (Fail Fast)
+	@echo "🏃 Running tests in FAIL-FAST mode..."
+	@ARGS="-x $(ARGS)" $(MAKE) test-lite
+
+test-fix: ## Run ONLY tests that failed in the last run
+	@echo "🛠️  Running only LAST FAILED tests..."
+	@ARGS="--lf $(ARGS)" $(MAKE) test-lite
+
+test-failed: ## Alias for test-fix
+	@$(MAKE) test-fix
 
 test-int:  ## [PROFILE: INTEGRATION] Run integration tests (Requires Docker Stack)
 	@echo "🧪 Running INTEGRATION tests (API/DB Contracts)..."
@@ -179,6 +190,13 @@ test-smoke: ## Run quick E2E smoke tests to verify critical paths
 test-full-stack: ## Run all collected tests (Unit + Integration + LLM + OTEL)
 	@echo "🧪 Running absolute full stack verification (970+ tests)..."
 	@OTEL_TRACES_ENABLED=true RAE_DB_MODE=migrate PYTHONPATH=. $(VENV_PYTHON) -m pytest -v
+
+test-compliance: ## Run ISO 42001 Compliance tests
+	@echo "🛡️ Running ISO 42001 compliance tests..."
+	@PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "iso42001" --no-cov -v
+
+test-iso: ## Alias for test-compliance
+	@$(MAKE) test-compliance
 
 
 test-local-llm: ## Run tests using local Ollama LLM
@@ -394,6 +412,18 @@ shell-postgres:  ## Open shell in Postgres container
 # ==============================================================================
 # DEPLOYMENT
 # ==============================================================================
+
+pre-push:  ## [ZERO DRIFT] Run BEFORE pushing: Format -> Docs -> Lint -> Test
+	@echo "🚀 Starting Pre-Push Protocol (Zero Drift)..."
+	@echo "1️⃣  Formatting Code..."
+	@$(MAKE) format
+	@echo "2️⃣  Generating Documentation & Metrics (Prevents CI Commits)..."
+	@$(MAKE) docs
+	@echo "3️⃣  Linting (Strict)..."
+	@$(MAKE) lint
+	@echo "4️⃣  Running Unit Tests..."
+	@$(MAKE) test-lite
+	@echo "✅ READY TO PUSH! (Remember to commit any modified docs/metrics files)"
 
 deploy-prod:  ## Deploy to production (placeholder)
 	@echo "🚀 Deploying to production..."

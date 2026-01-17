@@ -4,34 +4,17 @@ Pydantic models for memory representation across all layers.
 """
 
 from datetime import datetime, timezone
-from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
-class MemoryLayer(str, Enum):
-    """Memory layer enumeration."""
-
-    SENSORY = "sensory"
-    WORKING = "working"
-    EPISODIC = "episodic"
-    SEMANTIC = "semantic"
-    REFLECTIVE = "reflective"
-
-
-class MemoryType(str, Enum):
-    """Type of memory content."""
-
-    TEXT = "text"
-    CODE = "code"
-    IMAGE = "image"
-    DOCUMENT = "document"
-    CONVERSATION = "conversation"
-    REFLECTION = "reflection"
-    ENTITY = "entity"
-    RELATIONSHIP = "relationship"
+from rae_core.types.enums import (
+    InformationClass,
+    MemoryLayer,
+    MemoryType,
+    OperationRiskLevel,
+)
 
 
 class MemoryItem(BaseModel):
@@ -46,6 +29,20 @@ class MemoryItem(BaseModel):
     layer: MemoryLayer = Field(description="Which memory layer this belongs to")
     memory_type: MemoryType = Field(
         default=MemoryType.TEXT, description="Type of memory content"
+    )
+
+    # ISO 27000/42001 Compliance (Smart Black Box Phase 2)
+    info_class: InformationClass = Field(
+        default=InformationClass.INTERNAL,
+        description="Information classification (public, internal, confidential, restricted)",
+    )
+    governance: dict[str, Any] = Field(
+        default_factory=lambda: {
+            "decision_rationale": None,
+            "confidence": 1.0,
+            "risk_level": OperationRiskLevel.NONE,
+        },
+        description="Governance metadata including rationale, confidence and risk",
     )
 
     # Metadata
