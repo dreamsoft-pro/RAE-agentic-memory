@@ -35,41 +35,42 @@ class EmbeddingService:
         print(f"Embedding service initialized with LiteLLM model: {self.litellm_model}")
         self._initialized = True
 
-        def _generate_hash_embedding(self, text: str, dimension: int) -> List[float]:
-            """
-            Generate a deterministic pseudo-random embedding using Bag-of-Words averaging.
-            This preserves some semantic similarity for identical words, aiding smoke tests.
-            """
-            words = text.lower().split()
-            if not words:
-                return [0.0] * dimension
-                
-            # Initialize zero vector
-            vector = [0.0] * dimension
-            
-            # Simple Linear Congruential Generator constants
-            a = 1664525
-            c = 1013904223
-            m = 2**32
-            
-            for word in words:
-                # Hash the word to seed the RNG
-                hash_obj = hashlib.md5(word.encode("utf-8"))
-                seed = int(hash_obj.hexdigest(), 16)
-                current = seed
-                
-                for i in range(dimension):
-                    current = (a * current + c) % m
-                    # Normalize to [-1, 1]
-                    val = (current / m) * 2 - 1
-                    vector[i] += val
-                    
-            # Normalize the result vector
-            magnitude = sum(x*x for x in vector) ** 0.5
-            if magnitude > 0:
-                vector = [x / magnitude for x in vector]
-                
-            return vector
+    def _generate_hash_embedding(self, text: str, dimension: int) -> List[float]:
+        """
+        Generate a deterministic pseudo-random embedding using Bag-of-Words averaging.
+        This preserves some semantic similarity for identical words, aiding smoke tests.
+        """
+        words = text.lower().split()
+        if not words:
+            return [0.0] * dimension
+
+        # Initialize zero vector
+        vector = [0.0] * dimension
+
+        # Simple Linear Congruential Generator constants
+        a = 1664525
+        c = 1013904223
+        m = 2**32
+
+        for word in words:
+            # Hash the word to seed the RNG
+            hash_obj = hashlib.md5(word.encode("utf-8"))
+            seed = int(hash_obj.hexdigest(), 16)
+            current = seed
+
+            for i in range(dimension):
+                current = (a * current + c) % m
+                # Normalize to [-1, 1]
+                val = (current / m) * 2 - 1
+                vector[i] += val
+
+        # Normalize the result vector
+        magnitude = sum(x * x for x in vector) ** 0.5
+        if magnitude > 0:
+            vector = [x / magnitude for x in vector]
+
+        return vector
+
     @embedding_time_histogram.time()
     def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
         """

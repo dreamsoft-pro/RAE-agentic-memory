@@ -45,7 +45,7 @@ def _configure_logging():
     (i.e., when piped), and to stdout otherwise. This prevents logs
     from mixing with JSON-RPC responses when the script is used as a CLI tool.
     """
-    shared_processors = [
+    shared_processors: List[Any] = [
         add_logger_name,
         add_log_level,
         TimeStamper(fmt="iso"),
