@@ -1,4 +1,4 @@
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
@@ -10,17 +10,6 @@ from rae_core.runtime import RAERuntime
 
 # --- Mocks ---
 
-class MockStorage(IMemoryStorage):
-    def __init__(self):
-        self.store_memory = AsyncMock()
-        # Mock other required methods to pass instantiation if needed,
-        # though Protocol usually doesn't require it for mocks unless called.
-        self.get_memory = AsyncMock()
-        self.update_memory = AsyncMock()
-        self.delete_memory = AsyncMock()
-        self.list_memories = AsyncMock()
-        self.search_memories = AsyncMock()
-        # ... add others if runtime calls them. For now it only calls store_memory.
 
 class CompliantAgent(BaseAgent):
     async def run(self, input_payload: RAEInput) -> AgentAction:
@@ -28,29 +17,35 @@ class CompliantAgent(BaseAgent):
             type=AgentActionType.FINAL_ANSWER,
             content="I am a compliant agent.",
             confidence=0.99,
-            reasoning="I followed the rules."
+            reasoning="I followed the rules.",
         )
+
 
 class RebelAgent(BaseAgent):
     async def run(self, input_payload: RAEInput) -> AgentAction:
         # Trying to use forbidden methods
         self.print("I will break the rules!")
         return AgentAction(
-            type=AgentActionType.FINAL_ANSWER,
-            content="Ignored",
-            confidence=0.0
+            type=AgentActionType.FINAL_ANSWER, content="Ignored", confidence=0.0
         )
 
+
 class IllegalReturnAgent(BaseAgent):
-    async def run(self, input_payload: RAEInput): # Missing return type hint intentionally
+    async def run(
+        self, input_payload: RAEInput
+    ):  # Missing return type hint intentionally
         return "Just a string"
 
+
 # --- Tests ---
+
 
 @pytest.mark.asyncio
 async def test_runtime_enforces_memory_hook():
     """Test that RAERuntime automatically stores memory for Final Answers."""
-    storage = MockStorage()
+    storage = MagicMock(spec=IMemoryStorage)
+    storage.store_memory = AsyncMock()
+
     agent = CompliantAgent()
     runtime = RAERuntime(storage, agent)
 
@@ -58,7 +53,7 @@ async def test_runtime_enforces_memory_hook():
         request_id=uuid4(),
         tenant_id="test-tenant",
         content="Hello",
-        context={"project": "test-project"}
+        context={"project": "test-project"},
     )
 
     result = await runtime.process(payload)
@@ -74,6 +69,7 @@ async def test_runtime_enforces_memory_hook():
     assert call_args["project"] == "test-project"
     assert "rae-first" in call_args["tags"]
 
+
 @pytest.mark.asyncio
 async def test_agent_cannot_use_print():
     """Test that calling print() raises NotImplementedError."""
@@ -85,10 +81,11 @@ async def test_agent_cannot_use_print():
 
     assert "VIOLATION" in str(exc.value)
 
+
 @pytest.mark.asyncio
 async def test_runtime_rejects_string_return():
     """Test that returning a raw string raises TypeError."""
-    storage = MockStorage()
+    storage = MagicMock(spec=IMemoryStorage)
     agent = IllegalReturnAgent()
     runtime = RAERuntime(storage, agent)
     payload = RAEInput(request_id=uuid4(), tenant_id="t", content="c")

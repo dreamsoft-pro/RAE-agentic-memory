@@ -17,12 +17,13 @@ async def test_openai():
         response = await client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": "Hello, say 'OpenAI OK'"}],
-            max_tokens=10
+            max_tokens=10,
         )
         content = response.choices[0].message.content
         print(f"✅ OpenAI Success: {content}")
     except Exception as e:
         print(f"❌ OpenAI Failed: {e}")
+
 
 async def test_anthropic():
     api_key = os.getenv("ANTHROPIC_API_KEY")
@@ -36,17 +37,20 @@ async def test_anthropic():
         response = await client.messages.create(
             model="claude-3-5-haiku-latest",
             max_tokens=10,
-            messages=[{"role": "user", "content": "Hello, say 'Anthropic OK'"}]
+            messages=[{"role": "user", "content": "Hello, say 'Anthropic OK'"}],
         )
-        content = response.content[0].text
+        block = response.content[0]
+        content = getattr(block, "text", str(block))
         print(f"✅ Anthropic Success: {content}")
     except Exception as e:
         print(f"❌ Anthropic Failed: {e}")
+
 
 async def main():
     print("🚀 Starting LLM Connection Test...")
     await test_openai()
     await test_anthropic()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

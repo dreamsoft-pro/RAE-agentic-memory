@@ -55,7 +55,7 @@ def _configure_logging():
 
     if not sys.stdin.isatty():
         # Running in a non-interactive pipe, output structured logs to stderr
-        structlog.configure(
+        structlog.configure(  # type: ignore[arg-type]
             processors=shared_processors
             + [
                 JSONRenderer(),
@@ -67,7 +67,7 @@ def _configure_logging():
         handler = logging.StreamHandler(sys.stderr)
     else:
         # Running interactively, output readable logs to stdout
-        structlog.configure(
+        structlog.configure(  # type: ignore[arg-type]
             processors=shared_processors
             + [
                 ConsoleRenderer(),

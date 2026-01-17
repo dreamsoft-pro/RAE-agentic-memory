@@ -59,7 +59,7 @@ async def test_agent_execute_happy_path(client_with_auth, mock_rae_service):
         content="Agent Answer",
         confidence=0.9,
         reasoning="Test Reasoning",
-        signals=[]
+        signals=[],
     )
     mock_rae_service.execute_action.return_value = mock_action
 
@@ -94,7 +94,7 @@ async def test_agent_execute_no_episodic_memories(client_with_auth, mock_rae_ser
         content="Answer without context",
         confidence=0.5,
         reasoning="Fallback",
-        signals=["fallback"]
+        signals=["fallback"],
     )
     mock_rae_service.execute_action.return_value = mock_action
 
@@ -154,7 +154,9 @@ async def test_agent_execute_llm_failure(client_with_auth, mock_rae_service):
 
 
 @pytest.mark.asyncio
-async def test_agent_execute_reflection_failure_ignored(client_with_auth, mock_rae_service):
+async def test_agent_execute_reflection_failure_ignored(
+    client_with_auth, mock_rae_service
+):
     """
     Test that reflection hook failure doesn't break the response.
 
@@ -169,7 +171,7 @@ async def test_agent_execute_reflection_failure_ignored(client_with_auth, mock_r
         content="Answer",
         confidence=0.9,
         reasoning="Success",
-        signals=[]
+        signals=[],
     )
     mock_rae_service.execute_action.return_value = mock_action
 

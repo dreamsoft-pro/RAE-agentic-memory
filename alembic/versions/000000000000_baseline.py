@@ -72,7 +72,7 @@ def upgrade():
         # But we can use op.execute for specific vector column creation or custom type.
         # Here we use sa.Column('embedding', ... ) with a custom type if defined, or just exec SQL.
         # Using execute for clarity and to ensure 'vector' type usage.
-        if_not_exists=True
+        if_not_exists=True,
     )
     # Add embedding column manually to ensure vector type is used
     op.execute("ALTER TABLE memories ADD COLUMN embedding vector")
@@ -95,7 +95,7 @@ def upgrade():
         ),
         sa.ForeignKeyConstraint(["memory_id"], ["memories.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("memory_id", "model_name"),
-        if_not_exists=True
+        if_not_exists=True,
     )
     op.execute("ALTER TABLE memory_embeddings ADD COLUMN embedding vector NOT NULL")
 
@@ -133,7 +133,7 @@ def upgrade():
         sa.Column("subscription_start", sa.DateTime(timezone=True), nullable=True),
         sa.Column("subscription_end", sa.DateTime(timezone=True), nullable=True),
         sa.PrimaryKeyConstraint("id"),
-        if_not_exists=True
+        if_not_exists=True,
     )
 
     # 4. Roles
@@ -165,7 +165,7 @@ def upgrade():
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("user_id", "tenant_id", name="uq_user_tenant_role"),
-        if_not_exists=True
+        if_not_exists=True,
     )
     op.create_index("idx_utr_user_id", "user_tenant_roles", ["user_id"])
     op.create_index("idx_utr_tenant_id", "user_tenant_roles", ["tenant_id"])
@@ -193,7 +193,7 @@ def upgrade():
         ),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("tenant_id", "project_id", name="uq_tenant_project_budget"),
-        if_not_exists=True
+        if_not_exists=True,
     )
 
     # 6. Access Logs
@@ -223,7 +223,7 @@ def upgrade():
         sa.Column("metadata", postgresql.JSONB(), server_default="{}", nullable=True),
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
-        if_not_exists=True
+        if_not_exists=True,
     )
     op.create_index("ix_access_logs_tenant_id", "access_logs", ["tenant_id"])
     op.create_index("ix_access_logs_timestamp", "access_logs", ["timestamp"])
@@ -256,7 +256,7 @@ def upgrade():
             nullable=True,
         ),
         sa.PrimaryKeyConstraint("id"),
-        if_not_exists=True
+        if_not_exists=True,
     )
 
     # 8. Knowledge Graph
@@ -289,7 +289,7 @@ def upgrade():
         sa.UniqueConstraint(
             "tenant_id", "project_id", "node_id", name="uq_tenant_project_node"
         ),
-        if_not_exists=True
+        if_not_exists=True,
     )
     op.create_index(
         "idx_kg_nodes_tp", "knowledge_graph_nodes", ["tenant_id", "project_id"]
@@ -336,7 +336,7 @@ def upgrade():
             "relation",
             name="uq_kg_edge",
         ),
-        if_not_exists=True
+        if_not_exists=True,
     )
     op.create_index("idx_kg_edges_relation", "knowledge_graph_edges", ["relation"])
 

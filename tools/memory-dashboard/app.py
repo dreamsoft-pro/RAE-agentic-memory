@@ -64,7 +64,9 @@ with st.sidebar:
             "api_url": os.getenv("RAE_API_URL", "http://localhost:8001"),
             "api_key": os.getenv("RAE_API_KEY", "default-key"),
             # Default to the tenant with actual data found in DB
-            "tenant_id": os.getenv("RAE_TENANT_ID", "00000000-0000-0000-0000-000000000000"),
+            "tenant_id": os.getenv(
+                "RAE_TENANT_ID", "00000000-0000-0000-0000-000000000000"
+            ),
             "project_id": os.getenv("RAE_PROJECT_ID", "benchmark_project"),
         }
 
@@ -84,8 +86,8 @@ with st.sidebar:
         )
 
         # Dynamic Tenant Loading
-        tenants_data = [] # List of dicts
-        tenants_options = [] # What to pass to selectbox
+        tenants_data = []  # List of dicts
+        tenants_options = []  # What to pass to selectbox
 
         if api_url and api_key:
             try:
@@ -99,7 +101,7 @@ with st.sidebar:
                 tenants_data = temp_client.get_tenants()
                 # Ensure compatibility if API returns old list of strings
                 if tenants_data and isinstance(tenants_data[0], str):
-                     tenants_data = [{"id": t, "name": "Unknown"} for t in tenants_data]
+                    tenants_data = [{"id": t, "name": "Unknown"} for t in tenants_data]
 
                 # Sort by name
                 tenants_data.sort(key=lambda x: x.get("name", ""))
@@ -114,9 +116,9 @@ with st.sidebar:
                 for t in tenants_data:
                     if t["id"] == tid:
                         # Use first 8 chars of ID if name is generic "Unknown"
-                        name = t['name']
+                        name = t["name"]
                         if name == "Unknown":
-                             return f"{tid[:8]}... (Default)"
+                            return f"{tid[:8]}... (Default)"
                         return f"{name} ({tid[:8]}...)"
                 return tid
 
@@ -158,7 +160,9 @@ with st.sidebar:
 
         if projects_list:
             try:
-                default_pid_idx = projects_list.index(st.session_state.config["project_id"])
+                default_pid_idx = projects_list.index(
+                    st.session_state.config["project_id"]
+                )
             except ValueError:
                 default_pid_idx = 0
 
@@ -175,16 +179,20 @@ with st.sidebar:
 
         # AUTO-UPDATE LOGIC
         # If selection changed, update config and client immediately
-        if (selected_tenant_id != st.session_state.config["tenant_id"] or
-            selected_project_id != st.session_state.config["project_id"] or
-            api_url != st.session_state.config["api_url"]):
+        if (
+            selected_tenant_id != st.session_state.config["tenant_id"]
+            or selected_project_id != st.session_state.config["project_id"]
+            or api_url != st.session_state.config["api_url"]
+        ):
 
-            st.session_state.config.update({
-                "api_url": api_url,
-                "api_key": api_key,
-                "tenant_id": selected_tenant_id,
-                "project_id": selected_project_id
-            })
+            st.session_state.config.update(
+                {
+                    "api_url": api_url,
+                    "api_key": api_key,
+                    "tenant_id": selected_tenant_id,
+                    "project_id": selected_project_id,
+                }
+            )
 
             # Re-init client
             new_client = RAEClient(
@@ -197,7 +205,7 @@ with st.sidebar:
             if new_client.test_connection():
                 st.session_state.client = new_client
                 st.session_state.connected = True
-                st.rerun() # Refresh page with new data
+                st.rerun()  # Refresh page with new data
             else:
                 st.error("Connection failed with new settings")
 
@@ -207,7 +215,9 @@ with st.sidebar:
             new_tenant_name = st.text_input("Rename Tenant", placeholder="New name...")
             if st.button("Update Name"):
                 if new_tenant_name:
-                    success = st.session_state.client.update_tenant_name(selected_tenant_id, new_tenant_name)
+                    success = st.session_state.client.update_tenant_name(
+                        selected_tenant_id, new_tenant_name
+                    )
                     if success:
                         st.success("Renamed! Refreshing...")
                         time.sleep(1)
@@ -218,10 +228,14 @@ with st.sidebar:
     # Project Settings (Renaming)
     if st.session_state.get("connected", False) and selected_project_id:
         with st.expander("📁 Project Settings"):
-            new_project_name = st.text_input("Rename Project", placeholder="New name...")
+            new_project_name = st.text_input(
+                "Rename Project", placeholder="New name..."
+            )
             if st.button("Update Project Name"):
                 if new_project_name:
-                    success = st.session_state.client.rename_project(selected_project_id, new_project_name)
+                    success = st.session_state.client.rename_project(
+                        selected_project_id, new_project_name
+                    )
                     if success:
                         st.session_state.config["project_id"] = new_project_name
                         st.success("Project Renamed! Refreshing...")
@@ -233,7 +247,9 @@ with st.sidebar:
     # Auto-Refresh Logic
     with st.expander("⏱️ Auto-Refresh", expanded=False):
         auto_refresh = st.checkbox("Enable Auto-Refresh", value=False)
-        refresh_rate = st.slider("Refresh Rate (seconds)", min_value=1, max_value=60, value=5)
+        refresh_rate = st.slider(
+            "Refresh Rate (seconds)", min_value=1, max_value=60, value=5
+        )
 
         if auto_refresh:
             st.caption(f"Refreshing every {refresh_rate}s...")
@@ -245,8 +261,8 @@ with st.sidebar:
     # In real impl, we would call client.get_active_tasks()
     if st.sidebar.button("🚀 Rebuild Reflection"):
         with st.spinner("Dispatching to Node1..."):
-             # Call API trigger logic here (simplified)
-             pass
+            # Call API trigger logic here (simplified)
+            pass
         st.sidebar.success("Task dispatched! Monitor logs.")
 
     # Connection status (Compact)

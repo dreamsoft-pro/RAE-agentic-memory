@@ -340,13 +340,14 @@ class LLMReflectionResponse(BaseModel):
         if isinstance(v, str):
             # Try to extract number from string (e.g. "0.8" or "80%")
             import re
+
             match = re.search(r"(\d+(\.\d+)?)", v)
             if match:
                 val = float(match.group(1))
                 if val > 1.0 and val <= 100.0:
                     val /= 100.0
                 return min(1.0, max(0.0, val))
-        return 0.5 # Default fallback
+        return 0.5  # Default fallback
 
     @field_validator("tags", mode="before")
     @classmethod
@@ -356,6 +357,7 @@ class LLMReflectionResponse(BaseModel):
         if isinstance(v, str):
             # Handle "['tag1', 'tag2']" or "tag1, tag2"
             import ast
+
             try:
                 # Try literal eval for "['a', 'b']"
                 res = ast.literal_eval(v)
@@ -364,5 +366,9 @@ class LLMReflectionResponse(BaseModel):
             except Exception:
                 pass
             # Fallback to comma split
-            return [t.strip() for t in v.replace("[", "").replace("]", "").replace("'", "").split(",") if t.strip()]
+            return [
+                t.strip()
+                for t in v.replace("[", "").replace("]", "").replace("'", "").split(",")
+                if t.strip()
+            ]
         return []

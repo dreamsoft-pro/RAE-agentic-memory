@@ -1,4 +1,3 @@
-
 import asyncio
 from uuid import UUID
 
@@ -9,6 +8,7 @@ from apps.memory_api.services.rae_core_service import RAECoreService
 # Mock required components or use simpler initialization if possible
 # Since we are inside the container, we can import actual services
 
+
 async def main():
     print("Initializing RAE Services for Manual Consolidation...")
 
@@ -18,7 +18,7 @@ async def main():
 
     # Simple mock app state to hold connections
     class MockApp:
-        state = type('obj', (object,), {})
+        state = type("obj", (object,), {})
 
     app = MockApp()
 
@@ -34,7 +34,9 @@ async def main():
 
         consolidation_service = MemoryConsolidationService(rae_service)
 
-        tenant_id = UUID(settings.DEFAULT_TENANT_UUID) # '00000000-0000-0000-0000-000000000000'
+        tenant_id = UUID(
+            settings.DEFAULT_TENANT_UUID
+        )  # '00000000-0000-0000-0000-000000000000'
 
         print(f"Triggering automatic consolidation for tenant {tenant_id}...")
 
@@ -48,11 +50,13 @@ async def main():
     except Exception as e:
         print(f"Error: {e}")
         import traceback
+
         traceback.print_exc()
     finally:
         # Cleanup
         if hasattr(app.state, "pool") and app.state.pool:
             await app.state.pool.close()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

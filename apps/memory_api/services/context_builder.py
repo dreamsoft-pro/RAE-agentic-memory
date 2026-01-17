@@ -309,10 +309,10 @@ class ContextBuilder:
 
         # Retrieve episodic and semantic memories
         episodic = await self.rae_service.list_memories(
-            tenant_id=tenant_id, project=project_id, layer="episodic", limit=50
+            tenant_id=str(tenant_id), project=project_id, layer="episodic", limit=50
         )
         semantic = await self.rae_service.list_memories(
-            tenant_id=tenant_id, project=project_id, layer="semantic"
+            tenant_id=str(tenant_id), project=project_id, layer="semantic"
         )
 
         all_memories = episodic + semantic
@@ -432,7 +432,7 @@ class ContextBuilder:
 
         # Query reflections using reflection engine
         reflections = await self.reflection_engine.query_reflections(
-            tenant_id=tenant_id,
+            tenant_id=str(tenant_id),
             project_id=project_id,
             query_text=query,
             k=max_items,

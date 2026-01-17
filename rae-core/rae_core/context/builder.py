@@ -161,7 +161,9 @@ class ContextBuilder:
             importance = memory.get("importance", 0.5)
             # Boost score if memory is in focus items
             mem_id = memory.get("id")
-            if mem_id and (mem_id in focus_items or str(mem_id) in [str(f) for f in focus_items]):
+            if mem_id and (
+                mem_id in focus_items or str(mem_id) in [str(f) for f in focus_items]
+            ):
                 importance = min(1.0, importance * 1.5)
             total_score += importance
 
@@ -169,12 +171,13 @@ class ContextBuilder:
 
         # Ensure focus items always boost the average if present
         if focus_items and len(focus_items) > 0:
-             avg_score = min(1.0, avg_score * 1.1)
+            avg_score = min(1.0, avg_score * 1.1)
 
         return avg_score
 
     def _rank_memories(self, memories: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """Rank memories by priority (importance, recency, relevance, and layer boost)."""
+
         def priority_score(memory: dict[str, Any]) -> float:
             importance = memory.get("importance", 0.5)
             created_at = memory.get("created_at")
@@ -182,14 +185,18 @@ class ContextBuilder:
             if created_at:
                 if isinstance(created_at, str):
                     try:
-                        created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                        created_at = datetime.fromisoformat(
+                            created_at.replace("Z", "+00:00")
+                        )
                     except ValueError:
                         created_at = None
 
                 if isinstance(created_at, datetime):
                     if created_at.tzinfo is None:
                         created_at = created_at.replace(tzinfo=timezone.utc)
-                    age_hours = (datetime.now(timezone.utc) - created_at).total_seconds() / 3600
+                    age_hours = (
+                        datetime.now(timezone.utc) - created_at
+                    ).total_seconds() / 3600
                     recency_bonus = 0.3 * (1.0 / (1.0 + age_hours / 24))
 
             layer = memory.get("layer", "episodic")
@@ -197,7 +204,7 @@ class ContextBuilder:
                 "reflective": 0.4,
                 "semantic": 0.2,
                 "episodic": 0.0,
-                "sensory": -0.2
+                "sensory": -0.2,
             }.get(layer, 0.0)
 
             relevance = memory.get("score", 0.5)
@@ -213,9 +220,16 @@ class ContextBuilder:
         elif format_type == ContextFormat.DETAILED:
             return f"## Search Query\n{query}\n\n## Retrieved Memories (ranked by relevance)\n"
         else:  # CONVERSATIONAL
-            return f"Based on your query: '{query}'\n\nHere are the relevant memories:\n\n"
+            return (
+                f"Based on your query: '{query}'\n\nHere are the relevant memories:\n\n"
+            )
 
-    def _format_memory(self, memory: dict[str, Any], format_type: ContextFormat, include_metadata: bool = True) -> str:
+    def _format_memory(
+        self,
+        memory: dict[str, Any],
+        format_type: ContextFormat,
+        include_metadata: bool = True,
+    ) -> str:
         content = memory.get("content", "")
         memory_id = memory.get("id", "unknown")
         importance = memory.get("importance", 0.0)
@@ -254,7 +268,7 @@ class ContextBuilder:
     def get_statistics(self) -> dict[str, Any]:
         window_tokens = 0
         if self.window_manager.current_window:
-             window_tokens = self.window_manager.current_window.current_tokens
+            window_tokens = self.window_manager.current_window.current_tokens
 
         return {
             "max_tokens": self.max_tokens,

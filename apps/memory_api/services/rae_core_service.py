@@ -124,7 +124,7 @@ class RAECoreService:
 
         self.engine = RAEEngine(
             memory_storage=self.postgres_adapter,
-            vector_store=self.qdrant_adapter if settings.RAE_PROFILE != "lite" else None,
+            vector_store=self.qdrant_adapter,
             embedding_provider=self.embedding_provider,
             llm_provider=cast(Any, self.llm_provider),
             settings=self.settings,
@@ -133,10 +133,13 @@ class RAECoreService:
 
         # New: Reflection Engine
         from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
+
         self.reflection_engine = ReflectionEngineV2(self)
 
         # New: RAERuntime for RAE-First flow
-        self.runtime = RAERuntime(self.postgres_adapter, None) # Agent set per execution
+        self.runtime = RAERuntime(
+            self.postgres_adapter, None
+        )  # Agent set per execution
 
         logger.info("rae_core_service_initialized", profile=settings.RAE_PROFILE)
 
@@ -157,12 +160,13 @@ class RAECoreService:
 
         # Create a transient agent wrapper for the LLM
         class TransientAgent(BaseAgent):
-            def __init__(self, service: 'RAECoreService'):
+            def __init__(self, service: "RAECoreService"):
                 self.service = service
 
             async def run(self, rae_input: RAEInput) -> AgentAction:
                 # 1. Build context using core ContextBuilder (Agnostic)
                 from rae_core.context.builder import ContextBuilder
+
                 builder = ContextBuilder(max_tokens=4000)
 
                 agent_id = rae_input.context.get("agent_id", "default")
@@ -172,13 +176,12 @@ class RAECoreService:
                     query=rae_input.content,
                     tenant_id=rae_input.tenant_id,
                     agent_id=agent_id,
-                    top_k=10
+                    top_k=10,
                 )
 
                 # Use core builder to assemble LLM-ready context
                 context_text, _ = builder.build_context(
-                    memories=search_results,
-                    query=rae_input.content
+                    memories=search_results, query=rae_input.content
                 )
 
                 system_prompt = f"RELEVANT PROJECT CONTEXT:\n{context_text}\n\nTask: {rae_input.content}"
@@ -186,13 +189,13 @@ class RAECoreService:
                 # 2. Generate response using LLM with Strict Timeout
                 try:
                     import asyncio
+
                     # RELAXED TIMEOUT for weak machines (120s)
                     llm_result = await asyncio.wait_for(
                         self.service.engine.generate_text(
-                            prompt=rae_input.content,
-                            system_prompt=system_prompt
+                            prompt=rae_input.content, system_prompt=system_prompt
                         ),
-                        timeout=120.0 # Wait max 120s
+                        timeout=120.0,  # Wait max 120s
                     )
                 except (asyncio.TimeoutError, Exception) as e:
                     # GRACEFUL DEGRADATION: Math-Only Fallback
@@ -200,11 +203,11 @@ class RAECoreService:
 
                     # Formulate answer using PURE MATHEMATICS (top search results)
                     if search_results:
-                        top_facts = [r['content'] for r in search_results[:3]]
+                        top_facts = [r["content"] for r in search_results[:3]]
                         llm_result = (
                             "STABILITY MODE ACTIVE (Math Fallback). "
-                            "Based on my memory, here are the core facts: " +
-                            " | ".join(top_facts)
+                            "Based on my memory, here are the core facts: "
+                            + " | ".join(top_facts)
                         )
                     else:
                         llm_result = "STABILITY MODE ACTIVE. No specific memories found to answer this."
@@ -220,12 +223,17 @@ class RAECoreService:
                     signals.append("decision")
 
                 from rae_core.models.interaction import AgentActionType
+
                 return AgentAction(
                     type=AgentActionType.FINAL_ANSWER,
                     content=llm_result,
                     confidence=0.5 if "FALLBACK" in llm_result else 0.9,
-                    reasoning="LLM with Math Fallback" if "FALLBACK" in llm_result else "LLM generation",
-                    signals=signals
+                    reasoning=(
+                        "LLM with Math Fallback"
+                        if "FALLBACK" in llm_result
+                        else "LLM generation"
+                    ),
+                    signals=signals,
                 )
 
         # Initialize Runtime with the transient agent
@@ -239,8 +247,8 @@ class RAECoreService:
             context={
                 "project": agent_id,
                 "session_id": session_id,
-                "agent_id": agent_id
-            }
+                "agent_id": agent_id,
+            },
         )
 
         # Execute through runtime
@@ -254,16 +262,23 @@ class RAECoreService:
                     OutcomeType,
                     ReflectionContext,
                 )
+
                 refl_ctx = ReflectionContext(
                     tenant_id=str(tenant_id),
                     project_id=agent_id,
                     outcome=OutcomeType.SUCCESS,
                     task_goal=prompt,
-                    events=[], # interaction history would go here
-                    session_id=UUID(session_id) if session_id and len(session_id) == 36 else None
+                    events=[],  # interaction history would go here
+                    session_id=(
+                        UUID(session_id)
+                        if session_id and len(session_id) == 36
+                        else None
+                    ),
                 )
                 refl_result = await self.reflection_engine.generate_reflection(refl_ctx)
-                await self.reflection_engine.store_reflection(refl_result, str(tenant_id), agent_id)
+                await self.reflection_engine.store_reflection(
+                    refl_result, str(tenant_id), agent_id
+                )
                 logger.info("automated_reflection_stored", project=agent_id)
             except Exception as e:
                 logger.warning("automated_reflection_failed", error=str(e))
@@ -468,7 +483,9 @@ class RAECoreService:
                 memory_id=mem_uuid, delta=delta, tenant_id=tenant_id
             )
         except (ValueError, Exception) as e:
-            logger.error("adjust_importance_failed", memory_id=str(memory_id), error=str(e))
+            logger.error(
+                "adjust_importance_failed", memory_id=str(memory_id), error=str(e)
+            )
             return None
 
     async def decay_importance(
@@ -662,7 +679,9 @@ class RAECoreService:
         """List all tenants with their names."""
         try:
             records = await self.db.fetch("SELECT id, name FROM tenants ORDER BY name")
-            return [{"id": str(r["id"]), "name": r["name"] or "Unnamed"} for r in records]
+            return [
+                {"id": str(r["id"]), "name": r["name"] or "Unnamed"} for r in records
+            ]
         except Exception as e:
             logger.warning("failed_to_list_tenant_details", error=str(e))
             # Fallback to IDs only
@@ -690,20 +709,25 @@ class RAECoreService:
                     VALUES ($1, $2, 'enterprise', '{}')
                     ON CONFLICT (id) DO UPDATE SET name = $2
                     """,
-                    tenant_id, name
+                    tenant_id,
+                    name,
                 )
             return True
         except Exception as e:
             logger.error("update_tenant_name_failed", tenant_id=tenant_id, error=str(e))
             return False
 
-    async def rename_project(self, tenant_id: str, old_project_id: str, new_project_id: str) -> bool:
+    async def rename_project(
+        self, tenant_id: str, old_project_id: str, new_project_id: str
+    ) -> bool:
         """
         Rename a project (agent_id) by updating all references in the database.
         This is a heavy operation affecting memories, metrics, etc.
         """
         try:
-            async with self.db.pool.acquire() as conn:
+            if not self.postgres_pool:
+                return False
+            async with self.postgres_pool.acquire() as conn:
                 async with conn.transaction():
                     # Update memories
                     await conn.execute(
@@ -712,13 +736,20 @@ class RAECoreService:
                         SET project = $1, agent_id = $1
                         WHERE tenant_id = $2 AND (project = $3 OR agent_id = $3)
                         """,
-                        new_project_id, tenant_id, old_project_id
+                        new_project_id,
+                        tenant_id,
+                        old_project_id,
                     )
 
                     # Update metrics (if we had a project_id column, but metrics are timeseries so maybe skip or update)
                     # For now, we only update memories as that's the source of truth for RAE
 
-                    logger.info("project_renamed", tenant_id=tenant_id, old=old_project_id, new=new_project_id)
+                    logger.info(
+                        "project_renamed",
+                        tenant_id=tenant_id,
+                        old=old_project_id,
+                        new=new_project_id,
+                    )
                     return True
         except Exception as e:
             logger.error("rename_project_failed", error=str(e))

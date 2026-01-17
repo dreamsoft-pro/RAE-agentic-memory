@@ -1,4 +1,3 @@
-
 import structlog
 
 from rae_core.interfaces.agent import BaseAgent
@@ -7,13 +6,14 @@ from rae_core.models.interaction import AgentAction, AgentActionType, RAEInput
 
 logger = structlog.get_logger(__name__)
 
+
 class RAERuntime:
     """
     The Operating System for Agents.
     Orchestrates the lifecycle: Input -> Agent -> Action -> Memory -> Output.
     """
 
-    def __init__(self, storage: IMemoryStorage, agent: BaseAgent):
+    def __init__(self, storage: IMemoryStorage, agent: BaseAgent | None = None):
         self.storage = storage
         self.agent = agent
 
@@ -22,6 +22,8 @@ class RAERuntime:
         Executes the agent within the RAE boundaries.
         Enforces memory persistence and policy checks.
         """
+        if not self.agent:
+            raise RuntimeError("No agent configured for Runtime")
 
         logger.info("rae_runtime_start", request_id=str(input_payload.request_id))
 
@@ -34,19 +36,17 @@ class RAERuntime:
 
         # 2. Validation (Architecture Enforcement)
         if not isinstance(action, AgentAction):
-             raise TypeError(
-                 f"Agent returned {type(action)} instead of AgentAction. "
-                 "Direct string return is FORBIDDEN."
-             )
+            raise TypeError(
+                f"Agent returned {type(action)} instead of AgentAction. "
+                "Direct string return is FORBIDDEN."
+            )
 
         # 3. Memory Hook (The "Side Effect")
         # Agent doesn't know this happens.
         await self._handle_memory_policy(input_payload, action)
 
         logger.info(
-            "rae_runtime_success",
-            action_type=action.type,
-            confidence=action.confidence
+            "rae_runtime_success", action_type=action.type, confidence=action.confidence
         )
 
         return action
@@ -74,18 +74,18 @@ class RAERuntime:
                     "request_id": str(input_payload.request_id),
                     "confidence": action.confidence,
                     "reasoning": action.reasoning,
-                    "input_preview": input_payload.content[:50]
+                    "input_preview": input_payload.content[:50],
                 },
                 project=project,
                 session_id=input_payload.context.get("session_id"),
-                source="RAERuntime"
+                source="RAERuntime",
             )
 
         # Policy: Store "Thoughts" if they contain crucial decisions
         elif action.type == AgentActionType.THOUGHT and "decision" in action.signals:
-             logger.info("memory_policy_triggered", rule="critical_thought_store")
+            logger.info("memory_policy_triggered", rule="critical_thought_store")
 
-             await self.storage.store_memory(
+            await self.storage.store_memory(
                 content=f"Reasoning: {action.reasoning} | Content: {str(action.content)}",
                 layer="working",
                 tenant_id=input_payload.tenant_id,
@@ -93,11 +93,11 @@ class RAERuntime:
                 tags=["rae-first", "thought", "decision"],
                 metadata={
                     "request_id": str(input_payload.request_id),
-                    "confidence": action.confidence
+                    "confidence": action.confidence,
                 },
                 project=input_payload.context.get("project"),
                 session_id=input_payload.context.get("session_id"),
-                source="RAERuntime"
+                source="RAERuntime",
             )
 
         # TODO: Add more rules here (e.g., Tool Calls logging)

@@ -58,13 +58,13 @@ async def execute(
                 session_id=req.session_id,
                 metadata={
                     "requested_model": settings.RAE_LLM_MODEL_DEFAULT,
-                    "source": "api_v1_agent_execute"
-                }
+                    "source": "api_v1_agent_execute",
+                },
             )
 
             # Metadata for response
             cost = CostInfo(
-                input_tokens=0, # Runtime doesn't return usage yet, but will track internally
+                input_tokens=0,  # Runtime doesn't return usage yet, but will track internally
                 output_tokens=0,
                 total_estimate=0.0,
             )
@@ -72,7 +72,9 @@ async def execute(
             # Return response matches the old contract but data was handled by RAERuntime
             return AgentExecuteResponse(
                 answer=str(action.content),
-                used_memories=QueryMemoryResponse(results=[]), # Context usage is now internal to RAE
+                used_memories=QueryMemoryResponse(
+                    results=[]
+                ),  # Context usage is now internal to RAE
                 cost=cost,
             )
 
@@ -80,4 +82,6 @@ async def execute(
             span.set_attribute("rae.outcome.label", "error")
             span.set_attribute("rae.error.message", str(e))
             logger.error("agent_execute_failed", error=str(e))
-            raise HTTPException(status_code=500, detail=f"RAE-First execution failed: {e}")
+            raise HTTPException(
+                status_code=500, detail=f"RAE-First execution failed: {e}"
+            )

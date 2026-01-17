@@ -115,7 +115,9 @@ async def test_get_dashboard_metrics(mock_rae_service, mock_websocket_service):
         tenant_id="test-tenant", project_id="test-project", period=MetricPeriod.LAST_24H
     )
 
-    response = await get_dashboard_metrics(request_data=request_data, rae_service=mock_rae_service)
+    response = await get_dashboard_metrics(
+        request_data=request_data, rae_service=mock_rae_service
+    )
 
     assert response.system_metrics.total_memories == 100
     assert response.recent_activity == []

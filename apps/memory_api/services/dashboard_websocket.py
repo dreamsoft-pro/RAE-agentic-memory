@@ -528,13 +528,18 @@ class DashboardWebSocketService:
 
             # Map common variants to standard names
             counts.get("episodic", 0) + counts.get("em", 0)
-            reflective = counts.get("reflective", 0) + counts.get("reflections", 0) + counts.get("long-term", 0) + counts.get("rm", 0)
+            reflective = (
+                counts.get("reflective", 0)
+                + counts.get("reflections", 0)
+                + counts.get("long-term", 0)
+                + counts.get("rm", 0)
+            )
             semantic = counts.get("semantic", 0) + counts.get("concepts", 0)
 
             total = sum(counts.values())
 
             # 2. Graph metrics
-            graph_stats = await self.db.fetchrow(
+            graph_stats_row = await self.db.fetchrow(
                 """
                 SELECT
                     (SELECT COUNT(*) FROM knowledge_graph_nodes WHERE tenant_id = $1::uuid) as total_nodes,
@@ -542,11 +547,12 @@ class DashboardWebSocketService:
                 """,
                 tenant_id,
             )
+            graph_stats = graph_stats_row or {"total_nodes": 0, "total_edges": 0}
 
             # Build metrics object
             metrics = SystemMetrics(
                 total_memories=total,
-                memories_last_24h=0, # Placeholder for now
+                memories_last_24h=0,  # Placeholder for now
                 avg_memory_importance=avg_imps.get("episodic", 0.5),
                 total_reflections=reflective,
                 reflections_last_24h=0,

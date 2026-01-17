@@ -16,13 +16,17 @@ from uuid import uuid4
 import pytest
 
 from apps.memory_api.models.reflection_v2_models import (
+    LLMReflectionResponse,  # Added import
+)
+from apps.memory_api.models.reflection_v2_models import (
+    ReflectionContext,  # Imported for type hinting/mocking
+)
+from apps.memory_api.models.reflection_v2_models import (
     ErrorCategory,
     ErrorInfo,
     Event,
     EventType,
-    LLMReflectionResponse,  # Added import
     OutcomeType,
-    ReflectionContext,  # Imported for type hinting/mocking
 )
 from apps.memory_api.services.context_builder import (  # Added ContextConfig import
     ContextBuilder,
