@@ -113,13 +113,14 @@ async def test_store_memory(rae_engine, mock_memory_storage):
         memory_type="text",
         project=None,
         session_id=None,
-                    expires_at=None,
-                    source=None,
-                    strength=1.0,
-                    info_class="internal",
-                    governance={},
-                )
-        
+        expires_at=None,
+        source=None,
+        strength=1.0,
+        info_class="internal",
+        governance={},
+    )
+
+
 @pytest.mark.asyncio
 async def test_retrieve_memory(rae_engine, mock_memory_storage):
     tenant_id = "test-tenant"
