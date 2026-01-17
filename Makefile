@@ -180,6 +180,13 @@ test-full-stack: ## Run all collected tests (Unit + Integration + LLM + OTEL)
 	@echo "🧪 Running absolute full stack verification (970+ tests)..."
 	@OTEL_TRACES_ENABLED=true RAE_DB_MODE=migrate PYTHONPATH=. $(VENV_PYTHON) -m pytest -v
 
+test-compliance: ## Run ISO 42001 Compliance tests
+	@echo "🛡️ Running ISO 42001 compliance tests..."
+	@PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "iso42001" --no-cov -v
+
+test-iso: ## Alias for test-compliance
+	@$(MAKE) test-compliance
+
 
 test-local-llm: ## Run tests using local Ollama LLM
 	@echo "🧪 Running tests with Local LLM (Ollama)..."
@@ -394,6 +401,18 @@ shell-postgres:  ## Open shell in Postgres container
 # ==============================================================================
 # DEPLOYMENT
 # ==============================================================================
+
+pre-push:  ## [ZERO DRIFT] Run BEFORE pushing: Format -> Docs -> Lint -> Test
+	@echo "🚀 Starting Pre-Push Protocol (Zero Drift)..."
+	@echo "1️⃣  Formatting Code..."
+	@$(MAKE) format
+	@echo "2️⃣  Generating Documentation & Metrics (Prevents CI Commits)..."
+	@$(MAKE) docs
+	@echo "3️⃣  Linting (Strict)..."
+	@$(MAKE) lint
+	@echo "4️⃣  Running Unit Tests..."
+	@$(MAKE) test-lite
+	@echo "✅ READY TO PUSH! (Remember to commit any modified docs/metrics files)"
 
 deploy-prod:  ## Deploy to production (placeholder)
 	@echo "🚀 Deploying to production..."

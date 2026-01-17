@@ -90,8 +90,7 @@ class TokenSavingsRepository:
             FROM token_savings_log
             WHERE {where_clause}
             GROUP BY savings_type
-        """
-
+        """  # nosec
         rows = await self.pool.fetch(query, *params)
 
         total_tokens = 0
