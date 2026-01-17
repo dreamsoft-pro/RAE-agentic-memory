@@ -50,7 +50,7 @@ async def process_record(client, pool, record):
                 async with pool.acquire() as conn:
                     # 1. Primary storage: memory_embeddings
                     await conn.execute(
-                        """INSERT INTO memory_embeddings (memory_id, model_name, embedding) 
+                        """INSERT INTO memory_embeddings (memory_id, model_name, embedding)
                            VALUES ($1, $2, $3)
                            ON CONFLICT (memory_id, model_name) DO UPDATE SET embedding = $3""",
                         record["id"],

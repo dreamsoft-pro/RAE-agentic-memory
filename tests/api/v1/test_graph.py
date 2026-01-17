@@ -73,7 +73,7 @@ def client_with_auth(mock_rae_service, mock_db_pool):
     # And patch rebuild_full_cache since it's called in startup
     with (
         patch(
-            "rae_core.factories.infra_factory.asyncpg.create_pool",
+            "rae_adapters.infra_factory.asyncpg.create_pool",
             new=AsyncMock(return_value=pool),
         ),
         patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()),

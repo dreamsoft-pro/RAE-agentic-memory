@@ -45,10 +45,10 @@ async def setup_sandbox():
         print(f"ℹ️ Granting '{ROLE}' to API Key User '{API_KEY_USER_ID}'...")
         await conn.execute(
             """
-            INSERT INTO user_tenant_roles 
+            INSERT INTO user_tenant_roles
             (id, user_id, tenant_id, role, project_ids, assigned_at, assigned_by)
             VALUES ($1, $2, $3, $4, $5, NOW(), $6)
-            ON CONFLICT (user_id, tenant_id) 
+            ON CONFLICT (user_id, tenant_id)
             DO UPDATE SET role = $4
         """,
             uuid4(),

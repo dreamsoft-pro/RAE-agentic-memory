@@ -382,8 +382,8 @@ class ReflectionEngineV2:
     ) -> List[Dict[str, Any]]:
         """
         Query reflections using Hybrid Search (Vector + Full-Text).
-        
-        This ensures that even specific technical codes or exact matches 
+
+        This ensures that even specific technical codes or exact matches
         are found and used during the reflection process.
         """
         if not query_text:
@@ -403,13 +403,13 @@ class ReflectionEngineV2:
 
         # Filtering and post-processing
         filtered = [
-            r for r in reflections 
+            r for r in reflections
             if r.get("importance", 0) >= min_importance
         ]
-        
+
         if tags:
             filtered = [
-                r for r in filtered 
+                r for r in filtered
                 if any(tag in r.get("tags", []) for tag in tags)
             ]
 

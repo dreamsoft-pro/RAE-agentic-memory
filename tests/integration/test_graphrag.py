@@ -13,6 +13,8 @@ Prerequisites:
 - Configured LLM provider (OpenAI, Anthropic, or Gemini)
 """
 
+import uuid
+
 import asyncpg
 import pytest
 
@@ -152,9 +154,6 @@ async def rae_service(db_pool):
 async def graph_repo(db_pool):
     """Graph repository fixture."""
     return GraphRepository(db_pool)
-
-
-import uuid
 
 
 @pytest.fixture

@@ -1,10 +1,11 @@
-import pytest
+from unittest.mock import AsyncMock
 from uuid import uuid4
-from unittest.mock import AsyncMock, MagicMock
 
-from rae_core.models.interaction import RAEInput, AgentAction, AgentActionType
+import pytest
+
 from rae_core.interfaces.agent import BaseAgent
 from rae_core.interfaces.storage import IMemoryStorage
+from rae_core.models.interaction import AgentAction, AgentActionType, RAEInput
 from rae_core.runtime import RAERuntime
 
 # --- Mocks ---
@@ -12,7 +13,7 @@ from rae_core.runtime import RAERuntime
 class MockStorage(IMemoryStorage):
     def __init__(self):
         self.store_memory = AsyncMock()
-        # Mock other required methods to pass instantiation if needed, 
+        # Mock other required methods to pass instantiation if needed,
         # though Protocol usually doesn't require it for mocks unless called.
         self.get_memory = AsyncMock()
         self.update_memory = AsyncMock()
@@ -52,19 +53,19 @@ async def test_runtime_enforces_memory_hook():
     storage = MockStorage()
     agent = CompliantAgent()
     runtime = RAERuntime(storage, agent)
-    
+
     payload = RAEInput(
         request_id=uuid4(),
         tenant_id="test-tenant",
         content="Hello",
         context={"project": "test-project"}
     )
-    
+
     result = await runtime.process(payload)
-    
+
     assert isinstance(result, AgentAction)
     assert result.content == "I am a compliant agent."
-    
+
     # Verify memory hook triggered
     storage.store_memory.assert_called_once()
     call_args = storage.store_memory.call_args[1]
@@ -78,10 +79,10 @@ async def test_agent_cannot_use_print():
     """Test that calling print() raises NotImplementedError."""
     agent = RebelAgent()
     payload = RAEInput(request_id=uuid4(), tenant_id="t", content="c")
-    
+
     with pytest.raises(NotImplementedError) as exc:
         await agent.run(payload)
-    
+
     assert "VIOLATION" in str(exc.value)
 
 @pytest.mark.asyncio
@@ -91,9 +92,9 @@ async def test_runtime_rejects_string_return():
     agent = IllegalReturnAgent()
     runtime = RAERuntime(storage, agent)
     payload = RAEInput(request_id=uuid4(), tenant_id="t", content="c")
-    
+
     with pytest.raises(TypeError) as exc:
         await runtime.process(payload)
-        
+
     assert "Agent returned <class 'str'>" in str(exc.value)
     assert "FORBIDDEN" in str(exc.value)

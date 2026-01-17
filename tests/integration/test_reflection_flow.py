@@ -16,17 +16,13 @@ from uuid import uuid4
 import pytest
 
 from apps.memory_api.models.reflection_v2_models import (
-    LLMReflectionResponse,  # Added import
-)
-from apps.memory_api.models.reflection_v2_models import (
-    ReflectionContext,  # Imported for type hinting/mocking
-)
-from apps.memory_api.models.reflection_v2_models import (
     ErrorCategory,
     ErrorInfo,
     Event,
     EventType,
+    LLMReflectionResponse,  # Added import
     OutcomeType,
+    ReflectionContext,  # Imported for type hinting/mocking
 )
 from apps.memory_api.services.context_builder import (  # Added ContextConfig import
     ContextBuilder,
@@ -528,7 +524,7 @@ async def test_end_to_end_reflection_flow(
     # === Phase 2: Second execution retrieves lesson ===
 
     # Build context for similar task
-    query = "I need to call the external API again"
+    query = "I need to call the external API again and fix authentication issues"
     working_memory = await context_builder.build_context(
         tenant_id=tenant_id, project_id=project_id, query=query
     )

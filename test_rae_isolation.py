@@ -1,9 +1,10 @@
-import httpx
 import asyncio
 import uuid
 
+import httpx
+
 API_URL = "http://localhost:8001/v1"
-API_KEY = "dev-key" 
+API_KEY = "dev-key"
 TENANT_ID = "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b22" # rae-core
 
 async def interact(project: str, prompt: str):
@@ -37,12 +38,12 @@ async def main():
     print("--- PHASE 1: Building isolated knowledge ---")
     await interact("Project-Alpha", "The secret code for Project Alpha is 'DRAGON-2026'. Remember it.")
     await interact("Project-Beta", "The secret code for Project Beta is 'PHOENIX-99'. Remember it.")
-    
+
     # Krok 2: Sprawdzamy czy RAE-First izoluje kontekst
     print("\n--- PHASE 2: Verifying Isolation ---")
     # Zapytamy Project Alpha o kod Bety - nie powinien go znać
     await interact("Project-Alpha", "What is the secret code for Project Beta?")
-    
+
     # Zapytamy Project Beta o jego własny kod - powinien go znać z pamięci
     await interact("Project-Beta", "What is my secret code?")
 

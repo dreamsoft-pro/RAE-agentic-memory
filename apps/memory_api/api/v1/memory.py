@@ -1,6 +1,6 @@
-from typing import Any, Dict, List, Optional
-from uuid import UUID
 from datetime import datetime
+from typing import Optional
+from uuid import UUID
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
@@ -71,7 +71,7 @@ async def list_memories(
                 project=project,
                 layer=layer.value if layer else None,
             )
-            
+
             # Map dictionaries to MemoryRecord objects
             results = []
             layer_mapping = {
@@ -82,22 +82,22 @@ async def list_memories(
                 "wm": "working",
                 "rm": "reflective",
             }
-            
+
             for mem in memories:
                 # Ensure all required fields are present
                 if "timestamp" not in mem:
                      mem["timestamp"] = datetime.now()
-                
+
                 # Normalize layer names
                 if "layer" in mem and mem["layer"] in layer_mapping:
                     mem["layer"] = layer_mapping[mem["layer"]]
-                
+
                 # Convert UUID fields to strings for Pydantic
                 if "id" in mem and isinstance(mem["id"], UUID):
                      mem["id"] = str(mem["id"])
                 if "tenant_id" in mem and isinstance(mem["tenant_id"], UUID):
                      mem["tenant_id"] = str(mem["tenant_id"])
-                
+
                 results.append(MemoryRecord(**mem))
 
             return ListMemoryResponse(

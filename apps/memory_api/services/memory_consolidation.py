@@ -457,12 +457,12 @@ class MemoryConsolidationService:
     ) -> str:
         """
         Generate consolidated content using LLM or fallback to heuristic.
-        
+
         Args:
             memories: List of memories to consolidate
             target_layer: Target memory layer
             strategy: Consolidation strategy
-            
+
         Returns:
             Consolidated content string
         """
@@ -476,7 +476,7 @@ class MemoryConsolidationService:
 
         try:
             # Check for fast-path heuristic strategy explicitly
-            if strategy == ConsolidationStrategy.TIME_BASED: 
+            if strategy == ConsolidationStrategy.TIME_BASED:
                  # Time-based often implies simple chronological log
                  return heuristic_consolidation()
 
@@ -491,7 +491,7 @@ class MemoryConsolidationService:
                 prompt=prompt,
                 model="deepseek-coder:1.3b", # Force small model or default
             )
-            
+
             return result.text
 
         except Exception as e:

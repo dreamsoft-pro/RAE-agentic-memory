@@ -218,8 +218,10 @@ async def get_dashboard_metrics(
             m_period = request_data.period
 
         # Final safety check
-        if not t_id: t_id = "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b22"
-        if not p_id: p_id = "default"
+        if not t_id:
+            t_id = "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b22"
+        if not p_id:
+            p_id = "default"
 
         # Get WebSocket service for metrics collection
         service = get_websocket_service(rae_service)
@@ -585,7 +587,7 @@ async def _get_time_series_metrics(
     try:
         repo = MetricsRepository(db)
         metrics = []
-        
+
         # Calculate time range
         end_time = datetime.now(timezone.utc)
         if period == MetricPeriod.LAST_HOUR:
@@ -607,7 +609,7 @@ async def _get_time_series_metrics(
         # Metrics to fetch
         metric_names = [
             "memory_count",
-            "reflection_count", 
+            "reflection_count",
             "semantic_node_count",
             "search_quality_mrr",
             "avg_importance"
@@ -639,7 +641,7 @@ async def _get_time_series_metrics(
                                 "SELECT COUNT(*)::float FROM memories WHERE tenant_id = $1::uuid AND (project = $2 OR agent_id = $2) AND layer IN ('reflective', 'rm')",
                                 tenant_id, project_id
                             )
-                        
+
                         if live_val is not None and live_val >= 0:
                             data_points = [{
                                 "timestamp": datetime.now(timezone.utc),
@@ -678,11 +680,11 @@ async def _get_time_series_metrics(
                 if len(data_points) > 1:
                     first_val = data_points[0]["metric_value"]
                     last_val = data_points[-1]["metric_value"]
-                    
+
                     if first_val > 0:
                         percent_change = ((last_val - first_val) / first_val) * 100
                         ts_metric.percent_change = round(percent_change, 2)
-                    
+
                     if last_val > first_val:
                         ts_metric.trend_direction = "up"
                     elif last_val < first_val:
@@ -694,8 +696,8 @@ async def _get_time_series_metrics(
 
             except Exception as e:
                 logger.warning(
-                    "metric_fetch_failed", 
-                    metric=metric_name, 
+                    "metric_fetch_failed",
+                    metric=metric_name,
                     error=str(e)
                 )
                 continue
@@ -1017,7 +1019,7 @@ async def _generate_quality_trend(
     """Generate quality metrics trend."""
     try:
         repo = MetricsRepository(db)
-        
+
         if end_time is None:
             end_time = datetime.now(timezone.utc)
         if start_time is None:
@@ -1048,18 +1050,18 @@ async def _generate_quality_trend(
         # Format for QualityTrend
         time_points = [dp["timestamp"] for dp in data_points]
         values = [dp["metric_value"] for dp in data_points]
-        
+
         # Calculate stats
         current_value = values[-1]
-        
+
         percent_change = 0.0
         trend_direction = "stable"
-        
+
         if len(values) > 1:
             first_val = values[0]
             if first_val > 0:
                 percent_change = ((current_value - first_val) / first_val) * 100
-            
+
             if current_value > first_val:
                 trend_direction = "up"
             elif current_value < first_val:

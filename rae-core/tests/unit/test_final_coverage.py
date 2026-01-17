@@ -81,13 +81,13 @@ async def test_rae_engine_vector_mapping_coverage():
         emb_provider.generate_all_embeddings = AsyncMock(
             return_value={"model": [[0.1] * dim]}
         )
-        
+
         # Reset mocks
         vector_store.store_vector.reset_mock()
-        
+
         engine = RAEEngine(storage, vector_store, emb_provider)
         await engine.store_memory("t", "a", "content")
-        
+
         call_kwargs = vector_store.store_vector.call_args.kwargs
         assert expected_key in call_kwargs["embedding"]
         assert len(call_kwargs["embedding"][expected_key]) == dim
@@ -97,7 +97,7 @@ async def test_rae_engine_vector_mapping_coverage():
     await verify_mapping(768, "ollama")
     await verify_mapping(384, "dense")
     await verify_mapping(1024, "cohere")
-    
+
     # Test Fallback
     emb_provider_unknown = MagicMock()
     emb_provider_unknown.generate_all_embeddings = AsyncMock(
@@ -106,7 +106,7 @@ async def test_rae_engine_vector_mapping_coverage():
     vector_store.store_vector.reset_mock()
     engine_fallback = RAEEngine(storage, vector_store, emb_provider_unknown)
     await engine_fallback.store_memory("t", "a", "content")
-    
+
     call_kwargs = vector_store.store_vector.call_args.kwargs
     assert "dense" in call_kwargs["embedding"]
     assert len(call_kwargs["embedding"]["dense"]) == 128

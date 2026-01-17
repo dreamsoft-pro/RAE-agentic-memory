@@ -111,18 +111,18 @@ class RAEClient:
                     "period": "last_24h"
                 }
             )
-            
+
             metrics = response.get("system_metrics", {})
-            
+
             # Use backend's pre-calculated totals
             total_count = metrics.get("total_memories", 0)
             ltm_count = metrics.get("total_reflections", 0)
             semantic_count = metrics.get("total_semantic_nodes", 0)
             episodic_count = total_count - ltm_count - semantic_count
-            
+
             # Avoid negative if something is weird with total vs layers
             episodic_count = max(0, episodic_count)
-            
+
             return {
                 "total": total_count,
                 "episodic": episodic_count,
@@ -153,7 +153,7 @@ class RAEClient:
             }
             # Note: API V1 /list might not support multi-layer filter in one go unless updated.
             # Assuming it filters by project mostly.
-            
+
             response = self.client.get("/v1/memory/list", params=params)
             response.raise_for_status()
             data = response.json()
@@ -364,41 +364,41 @@ class RAEClient:
     def get_reflection(self, project: Optional[str] = None) -> str:
         """
         Get latest project reflection.
-        
+
         Strategy:
         1. Try to fetch the most recent memory from 'reflective' layer via /list (Fast).
         2. If none found, return a placeholder prompting generation.
-        
+
         This avoids blocking the Dashboard with heavy LLM generation calls.
         """
         try:
             proj = project or self.project_id
-            
-            # Fetch latest reflective memory (Limit 1, Sort is implied by DB insertion order usually, 
+
+            # Fetch latest reflective memory (Limit 1, Sort is implied by DB insertion order usually,
             # ideally API should support sort, but list usually returns recent first or we assume)
-            # Based on PostgresAdapter, list_memories sorts by created_at DESC by default? 
+            # Based on PostgresAdapter, list_memories sorts by created_at DESC by default?
             # Checking service: currently assumes default sort.
-            
+
             response = self.client.get(
                 "/v1/memory/list",
                 params={
                     "project": proj,
                     "layer": "reflective",
-                    "limit": 1, 
+                    "limit": 1,
                     "offset": 0
                 },
                 timeout=5.0
             )
-            
+
             if response.status_code == 200:
                 data = response.json()
                 results = data.get("results", [])
                 if results:
                     return results[0].get("content", "Empty reflection content")
-            
+
             return "No reflection cached. Go to 'Control' to trigger a rebuild."
 
-        except Exception as e:
+        except Exception:
             # Don't show error trace in UI for simple "not found"
             return "Reflection unavailable (Cache Miss)"
 
@@ -432,11 +432,11 @@ class RAEClient:
     def update_tenant_name(self, tenant_id: str, new_name: str) -> bool:
         """
         Update the name of a tenant.
-        
+
         Args:
             tenant_id: ID of tenant to update
             new_name: New name for the tenant
-            
+
         Returns:
             True if successful
         """

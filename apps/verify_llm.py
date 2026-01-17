@@ -1,7 +1,9 @@
-import os
 import asyncio
-from openai import AsyncOpenAI
+import os
+
 from anthropic import AsyncAnthropic
+from openai import AsyncOpenAI
+
 
 async def test_openai():
     api_key = os.getenv("OPENAI_API_KEY")

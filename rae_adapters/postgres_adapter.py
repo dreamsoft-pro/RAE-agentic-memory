@@ -3,7 +3,6 @@ from typing import Any, Dict, List, Set
 
 import asyncpg
 
-from rae_adapters.base import MemoryAdapter
 from apps.memory_api.core.contract import (
     DataType,
     EntityContract,
@@ -11,6 +10,7 @@ from apps.memory_api.core.contract import (
     ValidationResult,
     ValidationViolation,
 )
+from rae_adapters.base import MemoryAdapter
 
 logger = logging.getLogger(__name__)
 

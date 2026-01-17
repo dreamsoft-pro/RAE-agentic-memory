@@ -3,6 +3,7 @@ from typing import NoReturn
 
 from rae_core.models.interaction import AgentAction, RAEInput
 
+
 class BaseAgent(ABC):
     """
     RAE-First Agent Contract.

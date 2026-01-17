@@ -1,10 +1,9 @@
-import structlog
-from typing import Optional, Dict, Any
-from uuid import uuid4
 
-from rae_core.models.interaction import RAEInput, AgentAction, AgentActionType
+import structlog
+
 from rae_core.interfaces.agent import BaseAgent
 from rae_core.interfaces.storage import IMemoryStorage
+from rae_core.models.interaction import AgentAction, AgentActionType, RAEInput
 
 logger = structlog.get_logger(__name__)
 
@@ -23,7 +22,7 @@ class RAERuntime:
         Executes the agent within the RAE boundaries.
         Enforces memory persistence and policy checks.
         """
-        
+
         logger.info("rae_runtime_start", request_id=str(input_payload.request_id))
 
         # 1. Execute Agent (Pure Function)
@@ -45,11 +44,11 @@ class RAERuntime:
         await self._handle_memory_policy(input_payload, action)
 
         logger.info(
-            "rae_runtime_success", 
-            action_type=action.type, 
+            "rae_runtime_success",
+            action_type=action.type,
             confidence=action.confidence
         )
-        
+
         return action
 
     async def _handle_memory_policy(self, input_payload: RAEInput, action: AgentAction):
@@ -57,14 +56,14 @@ class RAERuntime:
         Decides if and how to store the action in memory.
         This represents the 'Memory Policy Engine'.
         """
-        
+
         # Default Policy: Store "Final Answers" as Episodic Memory
         agent_id = input_payload.context.get("agent_id", "agent-runtime")
         project = input_payload.context.get("project")
 
         if action.type == AgentActionType.FINAL_ANSWER:
             logger.info("memory_policy_triggered", rule="final_answer_store")
-            
+
             await self.storage.store_memory(
                 content=str(action.content),
                 layer="episodic",
@@ -85,7 +84,7 @@ class RAERuntime:
         # Policy: Store "Thoughts" if they contain crucial decisions
         elif action.type == AgentActionType.THOUGHT and "decision" in action.signals:
              logger.info("memory_policy_triggered", rule="critical_thought_store")
-             
+
              await self.storage.store_memory(
                 content=f"Reasoning: {action.reasoning} | Content: {str(action.content)}",
                 layer="working",
@@ -100,5 +99,5 @@ class RAERuntime:
                 session_id=input_payload.context.get("session_id"),
                 source="RAERuntime"
             )
-            
+
         # TODO: Add more rules here (e.g., Tool Calls logging)
