@@ -50,3 +50,10 @@ def test_check_service_failure():
         
         result = bootstrap_session.check_service("test", "http://test")
         assert result["status"] == "OFFLINE"
+
+def test_check_gemini_config():
+    # Basic smoke test for the function
+    with patch("builtins.open", create=True) as mock_open:
+        mock_open.return_value.__enter__.return_value.read.return_value = '{"env": {"RAE_API_URL": "http://localhost:8001"}}'
+        # Should not print warning
+        bootstrap_session.check_gemini_config("http://localhost:8001")
