@@ -1,18 +1,28 @@
 # Gemini Agent Rules for RAE Project
 
-## 🚀 SESSION STARTUP PROTOCOL (EXECUTE FIRST)
+## 🛑 MANDATORY STARTUP PROTOCOL (STEP 0)
 
-**Step 1: Read the Map**
-> **MANDATORY**: Before doing ANYTHING, read **`DEVELOPER_CHEAT_SHEET.md`**.
-> It contains the exact commands for Tests, Benchmarks, and MCP Configuration. Do not guess paths.
+> **CRITICAL INSTRUCTION:**
+> You are an AI Agent operating within the **RAE-First Ecosystem**.
+> Your memory is external. Your context is in the Hive Mind.
+> Before reading any files or executing tasks, you **MUST** run the bootstrap connector:
 
-**Step 2: Connect via RAE-First (MCP)**
-> Use the **`rae-dev`** MCP server configuration (Port **8001** for Hotreload).
-> Verify connection immediately: `curl -s http://localhost:8001/health`
+```bash
+python scripts/bootstrap_session.py
+```
+
+> **IF THIS FAILS:** Stop. Fix the infrastructure (Docker). Do not proceed blindly.
+> **IF THIS SUCCEEDS:** You are connected. Proceed with the task using insights from the script output.
 
 ---
 
-This document contains key operational rules for AI agents working on the RAE (Robotic Agent Emulation) project. These rules are designed to ensure efficient, non-interactive, and token-conscious operation within the project's ecosystem.
+## 🚀 Session Context Map
+
+**1. Cheat Sheet:** `DEVELOPER_CHEAT_SHEET.md` (Paths, Commands, Tests)
+**2. Agent Manifest:** `AI_AGENT_MANIFEST.md` (Your Identity & Capabilities)
+**3. RAE Contract:** `docs/contracts/RAE_AGENTIC_CONTRACT.md` (Security & Patterns)
+
+---
 
 ## 🚨 Critical Rules - MUST FOLLOW
 
@@ -38,10 +48,9 @@ type(scope): short description
 ```
 - **Types**: `feat`, `fix`, `test`, `refactor`, `docs`, `ci`, `perf`, `chore`.
 
-### 4. **RAE & Communication**
-- The project follows a "RAE-First" ideology where communication should pass through the RAE system to conserve tokens and maintain context.
-- Avoid asking the same questions repeatedly.
-- If direct RAE/MCP communication is not available, use `curl` for reading and writing data as a temporary measure.
+### 4. **RAE & Communication (RAE-First)**
+- **Do not guess.** If you need project context, query RAE first.
+- **Protocol:** `python scripts/bootstrap_session.py` is your handshake.
 - The ultimate goal is to communicate with RAE via MCP (Master Control Protocol).
 
 ### 5. **Docker Development Workflows**
