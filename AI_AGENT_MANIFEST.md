@@ -2,27 +2,20 @@
 
 > **Start Here**: Complete navigation guide for all AI agents working on RAE
 >
-> **Version**: 1.0.0
-> **Last Updated**: 2025-12-06
+> **Version**: 1.1.0
+> **Last Updated**: 2026-01-17
 > **Status**: 🟢 ACTIVE - Universal baseline for all AI agents
+> **Enforcement**: rae_first_enforced: true
 
 ---
 
-## 🚨 CRITICAL - READ FIRST (15 minutes)
+## 🚨 CRITICAL - READ FIRST (STEP 0)
 
-> ⚠️ **MANDATORY**: These documents contain rules that CANNOT be violated.
-
-### Must-Read Documents (in order):
-
-| # | Document | Time | Purpose |
-|---|----------|------|---------|
-| 1 | **docs/rules/AGENT_CORE_PROTOCOL.md** | 5 min | ⭐ SINGLE SOURCE OF TRUTH (Rules, Workflow, Testing) |
-| 2 | **This Manifest** | 3 min | Navigation guide & documentation hierarchy |
-| 3 | **docs/BRANCHING.md** | 3 min | Git workflow details |
-| 4 | **docs/CI_WORKFLOW.md** | 5 min | CI/CD workflow details |
-| 5 | **docs/AGENTS_TEST_POLICY.md** | 3 min | Tests as contracts philosophy |
-
-**Total Time**: ~20 minutes to read critical documentation before starting any work.
+> ⚠️ **MANDATORY STARTUP**: Before any work, you MUST execute:
+> ```bash
+> python scripts/bootstrap_session.py
+> ```
+> This script connects you to the RAE Mind and validates infrastructure.
 
 ---
 
@@ -44,6 +37,7 @@ Must read before touching ANY code:
 4. ✅ **Security**: `tenant_id` in all queries
 5. ✅ **Templates**: Use `.ai-templates/`
 6. ❌ **No Interactive**: `nano`, `vim` forbidden
+7. 🚀 **RAE-First**: Use `bootstrap_session.py` immediately.
 
 
 ### 🟡 Tier 2: Essential (Read before first commit)
@@ -381,6 +375,7 @@ You're succeeding when:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 1.1.0 | 2026-01-17 | Enforced RAE-First Startup Protocol |
 | 1.0.0 | 2025-12-06 | Initial unified manifest for all AI agents |
 
 ---
