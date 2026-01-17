@@ -20,6 +20,129 @@
 
 
 
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2026-01-17 22:03 • Branch: main • Commit: 01455ef3*
+
+### ✨ Features
+
+- **ops**: enforce RAE-First via mandatory bootstrap_session.py script ([`ac371b90`](../../commit/ac371b90))
+- **dashboard**: enable backend websocket broadcasting for memory events ([`60fe0231`](../../commit/60fe0231))
+- **security**: finalize Phase 3 security enforcement and documentation ([`e77b2090`](../../commit/e77b2090))
+- **security**: implement Phase 3 enforcement logic and agentic pattern detection ([`81038718`](../../commit/81038718))
+- **db**: extend memories with info_class and governance_metadata (Phase 2) ([`93980afb`](../../commit/93980afb))
+- **governance**: activate RAE Agentic Pattern & Security Contract v1 ([`3d5bc21b`](../../commit/3d5bc21b))
+- **api**: implement RAE-First architecture in agent execution ([`33153380`](../../commit/33153380))
+- **core**: merge RAE-First architecture to develop-proxy ([`5bfe76ff`](../../commit/5bfe76ff))
+- **core**: implement RAE-First architecture enforcement ([`c84fc09a`](../../commit/c84fc09a))
+- **dashboard**: stabilize metrics, add management features & security cleanup ([`af75b94d`](../../commit/af75b94d))
+- **dashboard**: add real-time auto-refresh and improve project visibility ([`3c578d9b`](../../commit/3c578d9b))
+- **api**: add memory listing and modernize dashboard UX ([`3161fa13`](../../commit/3161fa13))
+- Unify tenant_id handling and fix type inconsistencies ([`532ce1d4`](../../commit/532ce1d4))
+- **docker**: Refactor docker-compose for multi-profile development ([`28d0bece`](../../commit/28d0bece))
+- **tests**: require env vars for MCP integration tests ([`ccb1801c`](../../commit/ccb1801c))
+- **auth**: enable gemini cli authentication ([`486ea16f`](../../commit/486ea16f))
+- **rae-core**: restore multi-vector support in Qdrant adapter ([`7bf3de3e`](../../commit/7bf3de3e))
+- activate full RAE potential with session management and lightning backfill ([`68fb74be`](../../commit/68fb74be))
+- implement hardware-agnostic search and robust DB bootstrap for RAE-Lite ([`4ebc5b45`](../../commit/4ebc5b45))
+- Finalize DB refactor - add strength field and cleanup qdrant_point_id ([`c387a08f`](../../commit/c387a08f))
+- complete Nomic calibration experiment and async infrastructure ([`5a2d1c30`](../../commit/5a2d1c30))
+- incorporate valuable recovery and calibration changes from Piotrek ([`c6aa8fad`](../../commit/c6aa8fad))
+- **api**: ensure Pydantic validator for layer normalization is fully committed ([`d68d615c`](../../commit/d68d615c))
+- **db**: add alembic migration to normalize layer names ([`317b931a`](../../commit/317b931a))
+- **api**: add Pydantic validator to normalize layer names ([`a0a1a3d4`](../../commit/a0a1a3d4))
+- **dashboard**: unify layer naming to full standard names ([`4792a591`](../../commit/4792a591))
+- **search**: fix project isolation and apply score calibration ([`5e54a1d5`](../../commit/5e54a1d5))
+- **ml**: force Ollama/LiteLLM for embeddings and bypass SentenceTransformers ([`5b90690a`](../../commit/5b90690a))
+- **db**: consolidate DDL schema and reset alembic migrations ([`d488fc62`](../../commit/d488fc62))
+- implement ISO 27001 plan, cluster infrastructure, and Rust migration prep ([`a5f82fc4`](../../commit/a5f82fc4))
+
+### 🐛 Bug Fixes
+
+- **core**: refactor store_memory to reduce complexity and fix lint errors ([`1393d59d`](../../commit/1393d59d))
+- **ops**: correct MCP port in .gemini/settings.json and enhance bootstrap script ([`13e423e9`](../../commit/13e423e9))
+- **security**: resolve bandit warnings and enforce zero-drift protocol ([`28d1571a`](../../commit/28d1571a))
+- **ci**: repair embedding fallback logic and linter errors ([`caa304cd`](../../commit/caa304cd))
+- **mcp**: update default port to 8001 for better dev experience ([`7ff8758d`](../../commit/7ff8758d))
+- **mcp**: initialize savings_service in RAECoreService to fix 502 error ([`161a719d`](../../commit/161a719d))
+- **benchmark**: improve hash embedding with bag-of-words averaging for semantic similarity ([`a74c73ef`](../../commit/a74c73ef))
+- **lint**: reformat embedding service with black ([`49c40dc9`](../../commit/49c40dc9))
+- **benchmark**: implement deterministic hash embedding fallback for smoke tests ([`a477aa77`](../../commit/a477aa77))
+- **benchmark**: enable LocalEmbeddingProvider in Lite mode to support semantic search quality ([`62745424`](../../commit/62745424))
+- **ci**: resolve linting errors, pydantic validation, and type mismatches ([`6c71a63c`](../../commit/6c71a63c))
+- **core**: stabilize RAE-First architecture, fix dashboard metrics and resolve test failures ([`91e84e58`](../../commit/91e84e58))
+- **arch**: stabilize RAE-First, dashboard metrics, and add audit documentation ([`169c88db`](../../commit/169c88db))
+- **tests**: repair Lite and Core profile tests ([`c5e4d39b`](../../commit/c5e4d39b))
+- **core**: optimize reasoning coherence and reflection stability ([`09b701f4`](../../commit/09b701f4))
+- **benchmarking**: update layer names and add mock mode for speed testing ([`90140732`](../../commit/90140732))
+- **llm**: override ollama endpoint with OLLAMA_API_URL env var and add local_deepseek mapping ([`55eaf56d`](../../commit/55eaf56d))
+- **dashboard**: increase query limit k and disable dev tenancy for better DX ([`2224ed1d`](../../commit/2224ed1d))
+- **core**: enable wildcard search support in FullTextStrategy for dashboard ([`6688fa15`](../../commit/6688fa15))
+- **all**: repair build, mcp config, and api bugs ([`5da63a95`](../../commit/5da63a95))
+- **api**: Resolve RAE API lite startup issues and adapter imports ([`a65912db`](../../commit/a65912db))
+- **rae-lite**: Resolve multiple startup issues for RAE-Lite profile ([`ba46ee9d`](../../commit/ba46ee9d))
+- **rae-mcp-server**: Handle graceful exit, separate logs to stderr, and correct JSON-RPC initialization ([`55ff1097`](../../commit/55ff1097))
+- **lint**: align all vector store adapters with multi-vector interface ([`c5607115`](../../commit/c5607115))
+- **rae-core**: complete multi-vector support implementation ([`79309665`](../../commit/79309665))
+- **schema**: change tenant_id from UUID to VARCHAR(255) for compatibility ([`5e5167be`](../../commit/5e5167be))
+- **migrations**: add primary key to memories table in baseline ([`7ec16752`](../../commit/7ec16752))
+- **migrations**: populate baseline migration with full schema ([`201afbaf`](../../commit/201afbaf))
+- **core**: achieve 100% test coverage and stabilize sandbox automation ([`95338b5e`](../../commit/95338b5e))
+- resolve CI lint/smoke failures, update mocks and test coverage ([`a55f0f6c`](../../commit/a55f0f6c))
+- **api**: stop remapping 'ltm' layer to 'semantic' in memory store requests ([`b2ce1ffd`](../../commit/b2ce1ffd))
+- **api**: ensure RAECoreService respects lite profile for adapter selection ([`b33b019a`](../../commit/b33b019a))
+- **lite**: resolve migration cycles, implementation of automatic sandbox, and robust bootstrap ([`8afd3524`](../../commit/8afd3524))
+
+### ♻️ Refactoring
+
+- **core**: architectural cleanup and screenwatcher removal ([`dfdeb12e`](../../commit/dfdeb12e))
+- **adapters**: Centralize and clarify adapter architecture for multi-profile Docker builds ([`e64817b5`](../../commit/e64817b5))
+- **compose**: revert RAE_DB_MODE to default ([`41186642`](../../commit/41186642))
+- **db**: Implement ISO 42001 DB schema changes (Phases 1-6) ([`86592112`](../../commit/86592112))
+
+### 📚 Documentation
+
+- update session plan with benchmark fix details ([`d541b65d`](../../commit/d541b65d))
+- sync agent rules with develop and improve lite profile ([`02c929b2`](../../commit/02c929b2))
+- **developer**: Add combined Docker Compose profile instructions ([`68359222`](../../commit/68359222))
+- update agent protocol with CI workflow and Sandbox strategy ([`ae9ca5e9`](../../commit/ae9ca5e9))
+
+### 🔧 Chore
+
+- **benchmarking**: sync main with benchmarking cleanup ([`75be4caf`](../../commit/75be4caf))
+- **benchmarking**: move heavy artifacts to RAE-benchmarks repo ([`1877e433`](../../commit/1877e433))
+- **llm**: default to local deepseek-coder in llm_config for dev environment ([`13013c43`](../../commit/13013c43))
+- **gitignore**: Add .env.docker to gitignore ([`158939aa`](../../commit/158939aa))
+- **benchmarking**: use valid UUID for tenant_id ([`60b32468`](../../commit/60b32468))
+- linting and minor fixes after core merges ([`e9dd84ff`](../../commit/e9dd84ff))
+- add extreme and ultra industrial benchmark sets ([`23ccfafd`](../../commit/23ccfafd))
+- add cluster dispatch scripts to develop ([`9314c9e4`](../../commit/9314c9e4))
+- save local work tree state after recovery integration ([`9a94f119`](../../commit/9a94f119))
+- **config**: parameterize docker-compose and update .env.example ([`0d0d7bb6`](../../commit/0d0d7bb6))
+- **config**: finalize docker-compose with threshold and dashboard updates ([`767cac85`](../../commit/767cac85))
+- **dashboard**: align default tenant and project with verification data ([`cb0b82d8`](../../commit/cb0b82d8))
+- **config**: update docker environment and add vector verification script ([`4173baaa`](../../commit/4173baaa))
+
+### 📦 Other
+
+- Merge develop into main (Hotfix for CI) ([`01455ef3`](../../commit/01455ef3))
+- Merge develop into main (Fix MCP Port) ([`c4227c50`](../../commit/c4227c50))
+- Merge develop into main (Enforce RAE-First Bootstrap) ([`f55040fe`](../../commit/f55040fe))
+- Merge develop into main (Phase 3 Security + Dashboard WS) ([`c1dbcb11`](../../commit/c1dbcb11))
+- Merge remote-tracking branch 'origin/main' into main ([`3f817f0b`](../../commit/3f817f0b))
+- Merge develop into main ([`3c92f86e`](../../commit/3c92f86e))
+- Merge remote-tracking branch 'origin/develop' into develop ([`54fab92e`](../../commit/54fab92e))
+- Merge develop into main (Fix conflicts) ([`ac71082b`](../../commit/ac71082b))
+- Merge branch 'feature/recovery-and-ux-modernization' into develop ([`05def8a1`](../../commit/05def8a1))
+- Add consolidation trigger and update consolidation services ([`be86af48`](../../commit/be86af48))
+- Refactor adapters: move rae-core adapters into apps/memory_api + update tests ([`90bd7d51`](../../commit/90bd7d51))
+- Fix IndentationError in auth.py and verify Docker changes ([`8940cb12`](../../commit/8940cb12))
+- Change docker-compose commands to docker compose ([`6149566c`](../../commit/6149566c))
+- Merge develop into main (resolved conflicts using develop versions) ([`b00ff6de`](../../commit/b00ff6de))
+
+---
+
 ## Recent Changes (Auto-generated)
 
 *Last updated: 2026-01-17 17:36 • Branch: main • Commit: 169790b2*
