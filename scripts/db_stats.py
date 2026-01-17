@@ -20,9 +20,9 @@ async def check_db_stats():
         # Get all tables in public schema
         tables = await conn.fetch(
             """
-            SELECT table_name 
-            FROM information_schema.tables 
-            WHERE table_schema = 'public' 
+            SELECT table_name
+            FROM information_schema.tables
+            WHERE table_schema = 'public'
             ORDER BY table_name;
         """
         )

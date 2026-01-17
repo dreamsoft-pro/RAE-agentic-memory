@@ -86,7 +86,7 @@ with st.sidebar:
         # Dynamic Tenant Loading
         tenants_data = [] # List of dicts
         tenants_options = [] # What to pass to selectbox
-        
+
         if api_url and api_key:
             try:
                 temp_client = RAEClient(
@@ -100,11 +100,11 @@ with st.sidebar:
                 # Ensure compatibility if API returns old list of strings
                 if tenants_data and isinstance(tenants_data[0], str):
                      tenants_data = [{"id": t, "name": "Unknown"} for t in tenants_data]
-                
+
                 # Sort by name
                 tenants_data.sort(key=lambda x: x.get("name", ""))
                 tenants_options = [t["id"] for t in tenants_data]
-                
+
             except Exception:
                 pass
 
@@ -161,7 +161,7 @@ with st.sidebar:
                 default_pid_idx = projects_list.index(st.session_state.config["project_id"])
             except ValueError:
                 default_pid_idx = 0
-                
+
             selected_project_id = st.selectbox(
                 "Project",
                 options=projects_list,
@@ -175,17 +175,17 @@ with st.sidebar:
 
         # AUTO-UPDATE LOGIC
         # If selection changed, update config and client immediately
-        if (selected_tenant_id != st.session_state.config["tenant_id"] or 
+        if (selected_tenant_id != st.session_state.config["tenant_id"] or
             selected_project_id != st.session_state.config["project_id"] or
             api_url != st.session_state.config["api_url"]):
-            
+
             st.session_state.config.update({
                 "api_url": api_url,
                 "api_key": api_key,
                 "tenant_id": selected_tenant_id,
                 "project_id": selected_project_id
             })
-            
+
             # Re-init client
             new_client = RAEClient(
                 api_url=api_url,
@@ -193,7 +193,7 @@ with st.sidebar:
                 tenant_id=selected_tenant_id,
                 project_id=selected_project_id,
             )
-            
+
             if new_client.test_connection():
                 st.session_state.client = new_client
                 st.session_state.connected = True
@@ -246,7 +246,7 @@ with st.sidebar:
     if st.sidebar.button("🚀 Rebuild Reflection"):
         with st.spinner("Dispatching to Node1..."):
              # Call API trigger logic here (simplified)
-             pass 
+             pass
         st.sidebar.success("Task dispatched! Monitor logs.")
 
     # Connection status (Compact)

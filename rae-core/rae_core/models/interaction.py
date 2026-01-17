@@ -1,8 +1,8 @@
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class AgentActionType(str, Enum):
@@ -25,18 +25,18 @@ class RAEInput(BaseModel):
     """
     request_id: UUID
     tenant_id: str
-    user_id: Optional[str] = None
-    
+    user_id: str | None = None
+
     # The actual content to process (could be user query or system directive)
     content: str
-    
+
     # Context provided by RAE (memories, history, graph data)
     # Agents do NOT query RAE themselves; they receive context here.
-    context: Dict[str, Any] = Field(default_factory=dict)
-    
+    context: dict[str, Any] = Field(default_factory=dict)
+
     # Constraints and policies for this execution
-    constraints: Dict[str, Any] = Field(default_factory=dict)
-    
+    constraints: dict[str, Any] = Field(default_factory=dict)
+
     model_config = ConfigDict(frozen=True)
 
 
@@ -46,25 +46,25 @@ class AgentAction(BaseModel):
     Wraps the 'what' and 'why' into a structured event.
     """
     type: AgentActionType
-    
+
     # The main payload (e.g., the answer text, or tool arguments)
     content: Any
-    
+
     # Reasoning/Justification for this action (Crucial for Reflective Memory)
-    reasoning: Optional[str] = None
-    
+    reasoning: str | None = None
+
     # Confidence score (0.0 - 1.0). Low confidence might trigger RAE intervention.
     confidence: float = Field(..., ge=0.0, le=1.0)
-    
+
     # Semantic signals for the Memory Policy Engine
     # e.g., ["decision", "critical", "proposal"]
-    signals: List[str] = Field(default_factory=list)
-    
+    signals: list[str] = Field(default_factory=list)
+
     # Metadata for tools or specific extensions
-    metadata: Dict[str, Any] = Field(default_factory=dict)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
     @field_validator('content')
-    def validate_content_not_empty(cls, v):
+    def validate_content_not_empty(self, v):
         if v is None:
             raise ValueError("Content cannot be None")
         return v

@@ -343,7 +343,8 @@ class LLMReflectionResponse(BaseModel):
             match = re.search(r"(\d+(\.\d+)?)", v)
             if match:
                 val = float(match.group(1))
-                if val > 1.0 and val <= 100.0: val /= 100.0
+                if val > 1.0 and val <= 100.0:
+                    val /= 100.0
                 return min(1.0, max(0.0, val))
         return 0.5 # Default fallback
 
@@ -358,8 +359,9 @@ class LLMReflectionResponse(BaseModel):
             try:
                 # Try literal eval for "['a', 'b']"
                 res = ast.literal_eval(v)
-                if isinstance(res, list): return [str(x) for x in res]
-            except:
+                if isinstance(res, list):
+                    return [str(x) for x in res]
+            except Exception:
                 pass
             # Fallback to comma split
             return [t.strip() for t in v.replace("[", "").replace("]", "").replace("'", "").split(",") if t.strip()]

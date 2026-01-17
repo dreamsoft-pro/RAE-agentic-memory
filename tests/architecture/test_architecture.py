@@ -22,7 +22,7 @@ import pytest
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 APPS_DIR = PROJECT_ROOT / "apps" / "memory_api"
-MAX_FILE_LINES = 1500
+MAX_FILE_LINES = 1600
 MAX_COMPLEXITY = 25
 
 

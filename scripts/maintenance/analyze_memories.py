@@ -6,10 +6,11 @@ Scans memories to categorize them by topic.
 """
 
 import asyncio
-import os
 import logging
+import os
+from typing import Any, Dict, List
+
 import httpx
-from typing import List, Dict, Any
 
 RAE_API_URL = os.getenv("RAE_API_URL", "http://localhost:8001")
 TENANT_DEFAULT = "00000000-0000-0000-0000-000000000000"
@@ -26,7 +27,7 @@ class MemoryAnalyzer:
         all_memories = []
         offset = 0
         limit = 1000
-        
+
         print(f"Scanning tenant {tenant_id}...")
         while True:
             try:
@@ -38,16 +39,16 @@ class MemoryAnalyzer:
                 if resp.status_code != 200:
                     print(f"Error: {resp.status_code}")
                     break
-                
+
                 data = resp.json()
                 results = data.get("results", [])
                 if not results:
                     break
-                
+
                 all_memories.extend(results)
                 offset += limit
                 print(f"Fetched {len(all_memories)}...")
-                
+
                 if len(results) < limit:
                     break
             except Exception as e:
@@ -62,17 +63,17 @@ class MemoryAnalyzer:
             "rae": 0,
             "other": 0
         }
-        
+
         projects = {}
-        
+
         for m in memories:
             content = str(m.get("content", "")).lower()
             project = str(m.get("project", "")).lower()
-            
+
             # Count projects
             if project:
                 projects[project] = projects.get(project, 0) + 1
-            
+
             # Categorize
             if "screenwatcher" in content or "screenwatcher" in project:
                 stats["screenwatcher"] += 1
@@ -88,7 +89,7 @@ class MemoryAnalyzer:
         print("\nBy Category (Content/Project Keyword):")
         for k, v in stats.items():
             print(f"  - {k.ljust(15)}: {v}")
-            
+
         print("\nTop 10 Projects found in metadata:")
         sorted_projects = sorted(projects.items(), key=lambda x: x[1], reverse=True)[:10]
         for p, count in sorted_projects:

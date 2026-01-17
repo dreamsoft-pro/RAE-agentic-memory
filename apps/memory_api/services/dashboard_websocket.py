@@ -522,15 +522,15 @@ class DashboardWebSocketService:
                 tenant_id,
                 project_id,
             )
-            
+
             counts = {r["layer"]: r["count"] for r in layer_counts}
             avg_imps = {r["layer"]: float(r["avg_imp"] or 0.0) for r in layer_counts}
-            
+
             # Map common variants to standard names
-            episodic = counts.get("episodic", 0) + counts.get("em", 0)
+            counts.get("episodic", 0) + counts.get("em", 0)
             reflective = counts.get("reflective", 0) + counts.get("reflections", 0) + counts.get("long-term", 0) + counts.get("rm", 0)
             semantic = counts.get("semantic", 0) + counts.get("concepts", 0)
-            
+
             total = sum(counts.values())
 
             # 2. Graph metrics

@@ -326,7 +326,7 @@ class ReflectionPipeline:
         """
         with tracer.start_as_current_span("rae.reflection_pipeline.cluster") as span:
             span.set_attribute("rae.reflection.cluster.memory_count", len(memories))
-            
+
             # --- Fallback Clustering (No scikit-learn) ---
             if not SKLEARN_AVAILABLE:
                 logger.info("clustering_fallback_active", reason="sklearn_missing")
@@ -335,23 +335,25 @@ class ReflectionPipeline:
                 for memory in memories:
                     created_at = memory.get("created_at")
                     if isinstance(created_at, str):
-                        try: created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
-                        except: created_at = datetime.now()
-                    
+                        try:
+                            created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                        except Exception:
+                            created_at = datetime.now()
                     if created_at:
                         # Bucket by 4 hours
                         bucket = created_at.strftime("%Y-%m-%d-%H")
                         bucket_id = f"time_bucket_{int(created_at.hour // 4)}"
                         key = f"{bucket}-{bucket_id}"
-                        if key not in clusters: clusters[key] = []
+                        if key not in clusters:
+                            clusters[key] = []
                         clusters[key].append(memory)
-                
+
                 # Filter small clusters
                 valid_clusters = {k: v for k, v in clusters.items() if len(v) >= min_cluster_size}
                 # If no time clusters, put everything in one global cluster
                 if not valid_clusters and len(memories) >= min_cluster_size:
                     valid_clusters = {"global_fallback": memories}
-                
+
                 return valid_clusters
 
             # --- Standard ML Clustering ---

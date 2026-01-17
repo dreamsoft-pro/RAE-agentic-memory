@@ -130,10 +130,10 @@ def lite_profile_services():
             # 2. Grant Owner Role to 'apikey_secret' (User ID for 'secret' API key)
             await conn.execute(
                 """
-                INSERT INTO user_tenant_roles 
+                INSERT INTO user_tenant_roles
                 (id, user_id, tenant_id, role, project_ids, assigned_at, assigned_by)
                 VALUES ($1, $2, $3, $4, $5, NOW(), $6)
-                ON CONFLICT (user_id, tenant_id) 
+                ON CONFLICT (user_id, tenant_id)
                 DO UPDATE SET role = $4
             """,
                 uuid4(),

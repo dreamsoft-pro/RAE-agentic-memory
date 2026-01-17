@@ -16,12 +16,12 @@ Date: 2026-01-14
 """
 
 import asyncio
-import os
-import json
 import logging
-import httpx
-from typing import List, Dict, Any
+import os
 from datetime import datetime
+from typing import Any, Dict, List
+
+import httpx
 
 # Configuration
 RAE_API_URL = os.getenv("RAE_API_URL", "http://localhost:8001")
@@ -39,7 +39,7 @@ TARGET_TENANTS = {
 }
 
 # Scan only valid UUID tenants (or mapping friendly names for logging)
-SOURCE_TENANTS = [TENANT_DEFAULT] 
+SOURCE_TENANTS = [TENANT_DEFAULT]
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -54,9 +54,9 @@ class MemoryRefactor:
         all_memories = []
         offset = 0
         limit = 100
-        
+
         logger.info(f"Fetching memories for tenant: {tenant_id}...")
-        
+
         while True:
             try:
                 response = await self.client.get(
@@ -67,18 +67,18 @@ class MemoryRefactor:
                         "X-Tenant-Id": tenant_id
                     }
                 )
-                
+
                 if response.status_code == 200:
                     data = response.json()
                     results = data.get("results", [])
-                    total = data.get("total", 0)
-                    
+                    data.get("total", 0)
+
                     if not results:
                         break
-                        
+
                     all_memories.extend(results)
                     offset += limit
-                    
+
                     if len(results) < limit:
                         break # End of list
                 elif response.status_code == 404:
@@ -90,7 +90,7 @@ class MemoryRefactor:
             except Exception as e:
                 logger.error(f"Exception fetching from {tenant_id}: {e}")
                 break
-                
+
         return all_memories
 
     def analyze_memory(self, memory: Dict[str, Any], current_tenant: str) -> Dict[str, Any]:
@@ -99,14 +99,14 @@ class MemoryRefactor:
         metadata = memory.get("metadata", {}) or {}
         project = str(memory.get("project", "") or metadata.get("project", "") or "").lower()
         source = str(metadata.get("source", "")).lower()
-        
+
         # Heuristics
         is_screenwatcher = (
-            "screenwatcher" in content or 
+            "screenwatcher" in content or
             "screenwatcher" in project or
             "screenwatcher" in source
         )
-        
+
         is_rae_core = (
             "rae-core" in project or
             "rae-agentic-memory-agnostic-core" in project or
@@ -122,11 +122,11 @@ class MemoryRefactor:
         elif is_rae_core:
             target_tenant = TARGET_TENANTS["core"]
             target_project = "rae-core"
-        
-        # If still default tenant and no classification, assume RAE Core if we are running in RAE Core repo? 
-        # No, safer to leave in default or mark as unknown. 
+
+        # If still default tenant and no classification, assume RAE Core if we are running in RAE Core repo?
+        # No, safer to leave in default or mark as unknown.
         # But user asked to organize.
-        
+
         # Check if change is needed
         if target_tenant != current_tenant or target_project != memory.get("project"):
             return {
@@ -137,13 +137,13 @@ class MemoryRefactor:
                 "target_project": target_project,
                 "original_memory": memory
             }
-        
+
         return {"action": "skip"}
 
     async def move_memory(self, plan: Dict[str, Any]):
         """Moves memory by creating a copy in the new tenant and deleting the old one."""
         original = plan["original_memory"]
-        
+
         new_payload = {
             "content": original.get("content"),
             "layer": original.get("layer", "episodic"),
@@ -152,14 +152,14 @@ class MemoryRefactor:
             "importance": original.get("importance", 0.5),
             "tags": original.get("tags", [])
         }
-        
+
         # Metadata tracking
         new_payload["metadata"]["migrated_from_tenant"] = plan["current_tenant"]
         new_payload["metadata"]["original_id"] = original.get("id")
         new_payload["metadata"]["migration_ts"] = str(datetime.now())
 
         logger.info(f"MOVING {plan['id'][:8]}... -> {plan['target_tenant']} (Proj: {plan['target_project']})")
-        
+
         if not DRY_RUN:
             # CREATE
             resp = await self.client.post(
@@ -188,14 +188,14 @@ class MemoryRefactor:
         for tenant in SOURCE_TENANTS:
             memories = await self.fetch_memories(tenant)
             logger.info(f"Tenant '{tenant}': Found {len(memories)} memories.")
-            
+
             for mem in memories:
                 analysis = self.analyze_memory(mem, tenant)
                 if analysis["action"] == "move":
                     tasks.append(analysis)
 
         logger.info(f"Found {len(tasks)} memories needing migration.")
-        
+
         for task in tasks:
             print(f"[PLAN] {task['id'][:8]}... | {task['current_tenant'][:8]} -> {task['target_tenant'][:8]} | {task['target_project']}")
             if not DRY_RUN:

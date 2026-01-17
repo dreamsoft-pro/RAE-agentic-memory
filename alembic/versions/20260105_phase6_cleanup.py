@@ -21,8 +21,8 @@ def upgrade():
     # Remove dead column qdrant_point_id safely
     op.execute(
         """
-        DO $$ 
-        BEGIN 
+        DO $$
+        BEGIN
             IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'memories' AND column_name = 'qdrant_point_id') THEN
                 ALTER TABLE memories DROP COLUMN qdrant_point_id;
             END IF;

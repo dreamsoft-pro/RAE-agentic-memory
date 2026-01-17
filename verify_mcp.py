@@ -1,13 +1,14 @@
 import asyncio
 import os
 import sys
-from pathlib import Path
 import time
+from pathlib import Path
 
 # Add src to path to import rae_mcp
 sys.path.insert(0, str(Path(__file__).parent / "integrations/mcp/src"))
 
 from rae_mcp.server import RAEMemoryClient
+
 
 async def main():
     """
@@ -38,7 +39,7 @@ async def main():
             print("❌ ERROR: Failed to store memory. Response did not contain an ID.")
             print(f"   Response: {store_result}")
             sys.exit(1)
-        
+
         print(f"✅ Memory stored successfully. ID: {memory_id}")
 
     except Exception as e:
@@ -51,7 +52,7 @@ async def main():
 
     # 2. Search for the stored memory
     print(f"\n2. Searching for memory with query: '{unique_content}'")
-    
+
     try:
         search_results = await client.search_memory(query=unique_content, top_k=5)
 
@@ -71,7 +72,7 @@ async def main():
                 print(f"   - Score: {result.get('score')}")
                 print(f"   - Source: {result.get('source')}")
                 break
-        
+
         if not found:
             print("\n❌ VERIFICATION FAILED: The stored memory was not found in the search results.")
             print("   Full search results:")

@@ -139,7 +139,7 @@ class MetricsRepository:
                 end_time,
                 aggregation_interval,
             )
-            
+
             # LIVE FALLBACK: If no data points, try to get current count from memories
             if not records:
                 live_val = 0.0
@@ -153,7 +153,7 @@ class MetricsRepository:
                         "SELECT COUNT(*)::float FROM memories WHERE tenant_id = $1::uuid AND (project = $2 OR agent_id = $2) AND layer IN ('reflective', 'rm')",
                         tenant_id, project_id
                     )
-                
+
                 if live_val and live_val > 0:
                     return [{
                         "timestamp": datetime.now(timezone.utc),

@@ -3,12 +3,12 @@ from typing import Any, Dict, List, cast
 
 from qdrant_client import AsyncQdrantClient
 
-from rae_adapters.base import MemoryAdapter
 from apps.memory_api.core.contract import (
     MemoryContract,
     ValidationResult,
     ValidationViolation,
 )
+from rae_adapters.base import MemoryAdapter
 
 logger = logging.getLogger(__name__)
 

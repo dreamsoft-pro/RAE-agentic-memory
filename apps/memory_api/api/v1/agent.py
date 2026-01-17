@@ -1,32 +1,18 @@
 from uuid import UUID
 
-import httpx
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 
 from apps.memory_api.config import settings
-from apps.memory_api.metrics import reflection_event_counter
 from apps.memory_api.models import (
     AgentExecuteRequest,
     AgentExecuteResponse,
     CostInfo,
     QueryMemoryResponse,
-    ScoredMemoryRecord,
-    StoreMemoryRequest,
 )
 from apps.memory_api.observability.rae_tracing import get_tracer
 from apps.memory_api.security import auth
 from apps.memory_api.security.dependencies import get_and_verify_tenant_id
-from apps.memory_api.services.context_builder import (  # NEW
-    ContextBuilder,
-    ContextConfig,
-)
-from apps.memory_api.services.embedding import get_embedding_service  # NEW
-from apps.memory_api.services.llm import get_llm_provider  # NEW import
-from apps.memory_api.services.llm.base import LLMResult  # NEW import - for type hinting
-from apps.memory_api.services.token_estimator import estimate_tokens  # NEW
-from apps.memory_api.services.vector_store import get_vector_store  # NEW
-from apps.memory_api.utils.cost_tracker import track_request_cost  # NEW
 
 # All agent endpoints require authentication
 router = APIRouter(
@@ -51,7 +37,7 @@ async def execute(
     2) Automated context building (Hybrid Search + Rerank)
     3) Agent execution (LLM) within RAE boundaries
     4) Outcome evaluation & automatic storage (Episodic/Semantic)
-    
+
     **Security:** Requires authentication and tenant access.
     """
     tenant_id: UUID = verified_tenant_id

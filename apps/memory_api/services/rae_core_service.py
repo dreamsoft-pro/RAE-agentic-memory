@@ -13,7 +13,6 @@ import redis.asyncio as redis
 import structlog
 from qdrant_client import AsyncQdrantClient
 
-from apps.memory_api.repositories.token_savings_repository import TokenSavingsRepository
 from apps.memory_api.services.embedding import (
     LocalEmbeddingProvider,
     RemoteEmbeddingProvider,
@@ -165,9 +164,9 @@ class RAECoreService:
                 # 1. Build context using core ContextBuilder (Agnostic)
                 from rae_core.context.builder import ContextBuilder
                 builder = ContextBuilder(max_tokens=4000)
-                
+
                 agent_id = rae_input.context.get("agent_id", "default")
-                
+
                 # Search for relevant memories in RAE across ALL layers
                 search_results = await self.service.engine.search_memories(
                     query=rae_input.content,
@@ -175,13 +174,13 @@ class RAECoreService:
                     agent_id=agent_id,
                     top_k=10
                 )
-                
+
                 # Use core builder to assemble LLM-ready context
                 context_text, _ = builder.build_context(
                     memories=search_results,
                     query=rae_input.content
                 )
-                
+
                 system_prompt = f"RELEVANT PROJECT CONTEXT:\n{context_text}\n\nTask: {rae_input.content}"
 
                 # 2. Generate response using LLM with Strict Timeout
@@ -198,24 +197,25 @@ class RAECoreService:
                 except (asyncio.TimeoutError, Exception) as e:
                     # GRACEFUL DEGRADATION: Math-Only Fallback
                     logger.warning("llm_fallback_triggered", reason=str(e))
-                    
+
                     # Formulate answer using PURE MATHEMATICS (top search results)
                     if search_results:
                         top_facts = [r['content'] for r in search_results[:3]]
                         llm_result = (
                             "STABILITY MODE ACTIVE (Math Fallback). "
-                            "Based on my memory, here are the core facts: " + 
+                            "Based on my memory, here are the core facts: " +
                             " | ".join(top_facts)
                         )
                     else:
                         llm_result = "STABILITY MODE ACTIVE. No specific memories found to answer this."
-                
+
                 if not llm_result:
                     llm_result = "I couldn't generate a response."
-                
+
                 # Extract signals for importance
                 signals = []
-                if "stability" in llm_result.lower(): signals.append("fallback")
+                if "stability" in llm_result.lower():
+                    signals.append("fallback")
                 if "decision" in llm_result.lower() or "rule" in llm_result.lower():
                     signals.append("decision")
 
@@ -239,7 +239,7 @@ class RAECoreService:
             context={
                 "project": agent_id,
                 "session_id": session_id,
-                "agent_id": agent_id 
+                "agent_id": agent_id
             }
         )
 
@@ -676,7 +676,7 @@ class RAECoreService:
             exists = await self.db.fetchval(
                 "SELECT EXISTS(SELECT 1 FROM tenants WHERE id = $1)", tenant_id
             )
-            
+
             if exists:
                 await self.db.execute(
                     "UPDATE tenants SET name = $1 WHERE id = $2", name, tenant_id
@@ -686,10 +686,10 @@ class RAECoreService:
                 # Assuming 'enterprise' tier and empty config for now
                 await self.db.execute(
                     """
-                    INSERT INTO tenants (id, name, tier, config) 
+                    INSERT INTO tenants (id, name, tier, config)
                     VALUES ($1, $2, 'enterprise', '{}')
                     ON CONFLICT (id) DO UPDATE SET name = $2
-                    """, 
+                    """,
                     tenant_id, name
                 )
             return True
@@ -708,16 +708,16 @@ class RAECoreService:
                     # Update memories
                     await conn.execute(
                         """
-                        UPDATE memories 
-                        SET project = $1, agent_id = $1 
+                        UPDATE memories
+                        SET project = $1, agent_id = $1
                         WHERE tenant_id = $2 AND (project = $3 OR agent_id = $3)
                         """,
                         new_project_id, tenant_id, old_project_id
                     )
-                    
+
                     # Update metrics (if we had a project_id column, but metrics are timeseries so maybe skip or update)
                     # For now, we only update memories as that's the source of truth for RAE
-                    
+
                     logger.info("project_renamed", tenant_id=tenant_id, old=old_project_id, new=new_project_id)
                     return True
         except Exception as e:
