@@ -20,7 +20,7 @@ from typing import Dict, Any
 
 # Configuration
 RAE_API_URL = os.getenv("RAE_API_URL", "http://localhost:8001")
-MCP_URL = os.getenv("MCP_URL", "http://localhost:9001")
+MCP_URL = os.getenv("MCP_URL", "http://localhost:8001")
 HEADERS = {
     "Content-Type": "application/json",
     "X-API-Key": os.getenv("RAE_API_KEY", "secret"),
