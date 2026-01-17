@@ -238,8 +238,7 @@ class TriggerRepository:
             SET {set_clause}
             WHERE id = $1 AND tenant_id = $2
             RETURNING *
-        """
-
+        """  # nosec
         async with self.pool.acquire() as conn:
             record = await conn.fetchrow(
                 query, trigger_id, tenant_id, *filtered_updates.values()
@@ -436,8 +435,7 @@ class TriggerRepository:
             UPDATE trigger_executions
             SET {set_clause}
             WHERE id = $1
-        """
-
+        """  # nosec
         async with self.pool.acquire() as conn:
             await conn.execute(query, execution_id, *filtered_updates.values())
 

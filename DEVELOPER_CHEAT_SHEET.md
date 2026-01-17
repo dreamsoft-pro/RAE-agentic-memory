@@ -15,6 +15,7 @@ Use `make` targets when possible, or direct paths for specific files.
 | **Core Tests** | `make test-core` | Runs `rae-core` tests with coverage. |
 | **Unit Tests** | `make test-lite` | Runs standard unit tests (CPU only). |
 | **Integration** | `make test-int` | Runs DB/API contract tests (requires Docker). |
+| **Compliance (ISO)** | `make test-compliance` | Runs ISO 42001 governance & approval tests. |
 | **Specific File** | `./.venv/bin/pytest --no-cov path/to/test.py` | **BEST for dev loop.** Skips coverage checks. |
 | **Focus Mode** | `make test-focus FILE=path/to/test.py` | Same as above, via Makefile. |
 | **All Tests** | `make test-full-stack` | Runs everything (Unit + Int + LLM). Slow. |

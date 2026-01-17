@@ -48,6 +48,39 @@ Comprehensive guide for testing the RAE (Reflective Agentic Memory Engine) syste
 - ✅ **CI Pipeline Fixes** - All tests passing on GitHub Actions run 50767197624 (2025-11-25)
 
 | Module | Test File | Status | Tests |
+|---|---|---|---|
+| **Governance** | `test_governance.py` | ✅ | 13 |
+| **Compliance** | `test_iso42001_*.py` | ✅ | 82+ |
+| **Security** | `test_pii_scrubber.py` | ✅ | 100% Cov |
+
+## Compliance & Security Testing (ISO 42001 / ISO 27001)
+
+RAE includes a dedicated test suite for verifying compliance with AI management and security standards.
+
+### Running Compliance Tests
+Use the specialized Makefile target:
+```bash
+make test-compliance
+# or
+make test-iso
+```
+
+### Scope
+These tests verify:
+1.  **ISO 42001 (AI Management):**
+    -   **Human Approval:** Verifies that high-risk operations trigger approval workflows (`test_human_approval_service.py`).
+    -   **Provenance:** Checks if decisions are traceable to their source (`test_context_provenance_service.py`).
+    -   **Risk Management:** Validates policy enforcement.
+2.  **ISO 27001 (Information Security):**
+    -   **Data Isolation:** Tests tenant isolation in DB and API (`test_tenant_isolation.py`).
+    -   **PII Protection:** Verifies scrubbing of sensitive data (`test_pii_scrubber.py`).
+    -   **Audit Logs:** Ensures all critical actions are logged.
+
+### Security Checks
+For static security analysis (dependencies, secrets):
+```bash
+make security-check
+```
 |--------|-----------|--------|-------|
 | **Graph Repository** | `test_graph_repository.py` | ⚠️ 12/14 PASSED | 14 |
 | **Entity Resolution** | `test_entity_resolution.py` | ✅ 7/7 PASSED | 7 |

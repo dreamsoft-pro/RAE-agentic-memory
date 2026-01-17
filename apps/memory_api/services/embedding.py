@@ -54,7 +54,7 @@ class EmbeddingService:
 
         for word in words:
             # Hash the word to seed the RNG
-            hash_obj = hashlib.md5(word.encode("utf-8"))
+            hash_obj = hashlib.md5(word.encode("utf-8"), usedforsecurity=False)
             seed = int(hash_obj.hexdigest(), 16)
             current = seed
 
