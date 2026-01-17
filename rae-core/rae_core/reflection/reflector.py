@@ -59,6 +59,16 @@ class Reflector:
         if not memories:
             return {"success": False, "error": "No valid memories found"}
 
+        # --- NOISE GATE (RST Optimization) ---
+        # Filter out low-importance memories (noise) to improve stability
+        # Only apply if we have enough memories to spare
+        if len(memories) > 3:
+            filtered_memories = [m for m in memories if m.get("importance", 0.0) >= 0.2]
+            # Fallback if filtering removed too many
+            if len(filtered_memories) >= 2:
+                memories = filtered_memories
+        # -------------------------------------
+
         # Generate reflection based on type
         if reflection_type == "consolidation":
             return await self._generate_consolidation_reflection(

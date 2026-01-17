@@ -3,8 +3,8 @@ from unittest.mock import AsyncMock, MagicMock
 import asyncpg
 import pytest
 
-from apps.memory_api.adapters.postgres_adapter import PostgresAdapter
 from apps.memory_api.core.contract_definition import RAE_MEMORY_CONTRACT_V1
+from rae_adapters.postgres_adapter import PostgresAdapter
 
 
 @pytest.mark.asyncio
@@ -100,7 +100,7 @@ async def test_validation_success():
         # Must match RAE_MEMORY_CONTRACT_V1
         [
             {"column_name": "id", "data_type": "uuid", "udt_name": "uuid"},
-            {"column_name": "tenant_id", "data_type": "text", "udt_name": "text"},
+            {"column_name": "tenant_id", "data_type": "uuid", "udt_name": "uuid"},
             {"column_name": "content", "data_type": "text", "udt_name": "text"},
             {"column_name": "source", "data_type": "text", "udt_name": "text"},
             {

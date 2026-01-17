@@ -29,7 +29,9 @@ class TestGraphTraversalStrategyCoverage:
 
         # Test with string seed_id
         res = await strat.search(
-            "query", "t1", filters={"seed_ids": [str(sid)], "edge_type": "link"}
+            "query",
+            "t1",
+            filters={"seed_ids": [str(sid)], "edge_type": "link", "max_depth": 1},
         )
         assert len(res) == 1
         assert res[0][0] == nid

@@ -13,6 +13,8 @@ Prerequisites:
 - Configured LLM provider (OpenAI, Anthropic, or Gemini)
 """
 
+import uuid
+
 import asyncpg
 import pytest
 
@@ -157,7 +159,7 @@ async def graph_repo(db_pool):
 @pytest.fixture
 async def test_tenant_id():
     """Return a test tenant ID."""
-    return "test-tenant-graphrag"
+    return str(uuid.uuid4())
 
 
 @pytest.fixture

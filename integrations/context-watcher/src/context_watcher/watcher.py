@@ -1,3 +1,5 @@
+from typing import Any
+
 from watchdog.events import PatternMatchingEventHandler
 from watchdog.observers import Observer
 
@@ -38,7 +40,12 @@ class FileChangeHandler(PatternMatchingEventHandler):
                 "*.log",
             ]
 
-        super().__init__(patterns, ignore_patterns, ignore_directories, case_sensitive)
+        super().__init__(
+            patterns=patterns,
+            ignore_patterns=ignore_patterns,
+            ignore_directories=ignore_directories,
+            case_sensitive=case_sensitive,
+        )
         self.callback = callback
 
     def on_modified(self, event):
@@ -52,7 +59,7 @@ class FileChangeHandler(PatternMatchingEventHandler):
         self.callback(event.src_path)
 
 
-def start_watching(path: str, callback) -> Observer:
+def start_watching(path: str, callback) -> Any:
     """
     Starts a file system observer for a given path.
 

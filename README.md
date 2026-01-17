@@ -151,29 +151,35 @@ This multi-objective ranking ensures that retrieved context is not just "similar
 
 ## Quick Start
 
-The easiest way to run RAE locally is with Docker.
+The easiest way to run RAE is with Docker Compose, now simplified with profiles.
 
-### Standard Profile (Full Features)
+First, clone the repository if you haven't already:
 ```bash
 git clone https://github.com/dreamsoft-pro/RAE-agentic-memory.git
 cd RAE-agentic-memory
-# Starts API on port 8000
+```
+
+### 1. Development Environment (Hot-Reload)
+This is the **recommended setup for local development**. It enables hot-reloading for your code changes. The "Standard Profile" mentioned previously corresponds to this dev setup.
+```bash
+# Starts the full environment with hot-reload on port 8000
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
 ```
+*(Note: This command will be simplified to `docker compose --profile dev up -d` in a future step).*
 
-### Lite Profile (Minimal Resource Usage)
-Ideal for small teams or running alongside the Standard profile ("Mesh Mode").
+### 2. Lite Environment (Minimal, Sandboxed)
+A self-contained, minimal environment. Ideal for lightweight tasks or running in parallel with the main dev environment.
 ```bash
-# Starts API on port 8002 (to avoid conflict with Standard 8000)
-docker compose -f docker-compose.lite.yml up -d
+# Starts the lite environment on port 8008
+docker compose --profile lite up -d
 ```
 
-**Mesh Mode:**
-You can run both profiles simultaneously. The Lite profile uses distinct container names (`*-lite`) and ports:
-- API: 8002
-- Postgres: 5434
-- Redis: 6380
-- Qdrant: 6335
+### 3. Standard Environment (Production-like)
+This runs the base services without any development overrides (no hot-reload).
+```bash
+# Starts the base environment on port 8000
+docker compose up -d
+```
 
 **For Developers (Hot-Reload & Autostart):**
 You can set up RAE to start automatically on system boot with hot-reload enabled:

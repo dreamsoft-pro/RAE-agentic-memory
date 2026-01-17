@@ -59,7 +59,7 @@ pip install rae-core[dev]
 
 ```python
 from rae_core import RAEEngine
-from rae_core.adapters import InMemoryStorage, InMemoryVectorStore
+from apps.memory_api.adapters.memory import InMemoryStorage, InMemoryVectorStore
 
 # Initialize with in-memory storage (no dependencies)
 engine = RAEEngine(
@@ -92,7 +92,7 @@ for result in results:
 
 ```python
 from rae_core import RAEEngine
-from rae_core.adapters import PostgreSQLStorage
+from apps.memory_api.adapters.postgres import PostgreSQLStorage
 
 engine = RAEEngine(
     storage=PostgreSQLStorage(
@@ -104,7 +104,7 @@ engine = RAEEngine(
 ### Redis Cache
 
 ```python
-from rae_core.adapters import RedisCache
+from apps.memory_api.adapters.redis import RedisCache
 
 cache = RedisCache(
     host="localhost",
@@ -116,7 +116,7 @@ cache = RedisCache(
 ### Qdrant Vector Store
 
 ```python
-from rae_core.adapters import QdrantVectorStore
+from apps.memory_api.adapters.qdrant import QdrantVectorStore
 
 vector_store = QdrantVectorStore(
     url="http://localhost:6333",

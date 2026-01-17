@@ -64,6 +64,8 @@ class Settings(BaseSettings):
     OAUTH_DOMAIN: str = ""  # e.g., "your-tenant.us.auth0.com"
     OAUTH_AUDIENCE: str = ""  # e.g., "https://yourapi.com"
     TENANCY_ENABLED: bool = True
+    DEFAULT_TENANT_ALIAS: str = "default-tenant"
+    DEFAULT_TENANT_UUID: str = "00000000-0000-0000-0000-000000000000"
     API_KEY: str = "secret"
 
     # Authentication
@@ -112,6 +114,7 @@ class Settings(BaseSettings):
     # Logging configuration
     LOG_LEVEL: str = "WARNING"  # For external libraries (uvicorn, asyncpg, etc.)
     RAE_APP_LOG_LEVEL: str = "INFO"  # For RAE application logs
+    OTEL_TRACES_ENABLED: bool = False  # For OpenTelemetry tracing
 
     # ============================================================================
     # Reflective Memory V1 Configuration (RAE Implementation Plan)

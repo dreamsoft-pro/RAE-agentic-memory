@@ -13,6 +13,7 @@ Features:
 """
 
 import os
+import time
 
 import streamlit as st
 from utils.api_client import RAEClient, get_cached_stats
@@ -60,10 +61,13 @@ with st.sidebar:
     # Initialize session state for config if not exists
     if "config" not in st.session_state:
         st.session_state.config = {
-            "api_url": os.getenv("RAE_API_URL", "http://localhost:8000"),
+            "api_url": os.getenv("RAE_API_URL", "http://localhost:8001"),
             "api_key": os.getenv("RAE_API_KEY", "default-key"),
-            "tenant_id": os.getenv("RAE_TENANT_ID", "default-tenant"),
-            "project_id": os.getenv("RAE_PROJECT_ID", "default-project"),
+            # Default to the tenant with actual data found in DB
+            "tenant_id": os.getenv(
+                "RAE_TENANT_ID", "00000000-0000-0000-0000-000000000000"
+            ),
+            "project_id": os.getenv("RAE_PROJECT_ID", "benchmark_project"),
         }
 
     # Connection settings
@@ -82,127 +86,190 @@ with st.sidebar:
         )
 
         # Dynamic Tenant Loading
-        tenants_list = []
+        tenants_data = []  # List of dicts
+        tenants_options = []  # What to pass to selectbox
+
         if api_url and api_key:
             try:
-                # Use a temporary client to fetch tenants (system-level discovery)
-                # We use a dummy tenant_id because the list_tenants endpoint doesn't require a specific one,
-                # but the client init requires one.
                 temp_client = RAEClient(
                     api_url=api_url,
                     api_key=api_key,
                     tenant_id="system-discovery",
                     timeout=5.0,
                 )
-                tenants_list = temp_client.get_tenants()
+                # fetch dicts {id, name}
+                tenants_data = temp_client.get_tenants()
+                # Ensure compatibility if API returns old list of strings
+                if tenants_data and isinstance(tenants_data[0], str):
+                    tenants_data = [{"id": t, "name": "Unknown"} for t in tenants_data]
+
+                # Sort by name
+                tenants_data.sort(key=lambda x: x.get("name", ""))
+                tenants_options = [t["id"] for t in tenants_data]
+
             except Exception:
-                # Silent failure for UX smoothness, fallback to text input
                 pass
 
-        if tenants_list:
-            # If current config tenant is in list, index it
-            try:
-                default_tenant_index = tenants_list.index(
-                    st.session_state.config["tenant_id"]
-                )
-            except ValueError:
-                default_tenant_index = 0
+        if tenants_options:
+            # Helper to find name by ID
+            def get_tenant_name(tid):
+                for t in tenants_data:
+                    if t["id"] == tid:
+                        # Use first 8 chars of ID if name is generic "Unknown"
+                        name = t["name"]
+                        if name == "Unknown":
+                            return f"{tid[:8]}... (Default)"
+                        return f"{name} ({tid[:8]}...)"
+                return tid
 
-            tenant_id = st.selectbox(
-                "Tenant ID",
-                options=tenants_list,
-                index=default_tenant_index,
-                help="Select Tenant identifier",
+            # Current selection index
+            current_tid = st.session_state.config["tenant_id"]
+            try:
+                default_idx = tenants_options.index(current_tid)
+            except ValueError:
+                default_idx = 0
+
+            selected_tenant_id = st.selectbox(
+                "Tenant",
+                options=tenants_options,
+                index=default_idx,
+                format_func=get_tenant_name,
+                help="Select Workspace/Tenant",
             )
         else:
-            tenant_id = st.text_input(
+            selected_tenant_id = st.text_input(
                 "Tenant ID",
                 value=st.session_state.config["tenant_id"],
                 help="Tenant identifier for multi-tenancy",
             )
 
-        # Dynamic Project Loading
+        # Dynamic Project Loading (Needs selected tenant)
         projects_list = []
-        if api_url and api_key and tenant_id:
+        if api_url and api_key and selected_tenant_id:
             try:
-                temp_client = RAEClient(
+                # Need to init client with new tenant to fetch projects
+                temp_client_proj = RAEClient(
                     api_url=api_url,
                     api_key=api_key,
-                    tenant_id=tenant_id,
+                    tenant_id=selected_tenant_id,
                     timeout=5.0,
                 )
-                projects_list = temp_client.get_projects()
+                projects_list = sorted(temp_client_proj.get_projects())
             except Exception:
                 pass
 
         if projects_list:
             try:
-                default_project_index = projects_list.index(
+                default_pid_idx = projects_list.index(
                     st.session_state.config["project_id"]
                 )
             except ValueError:
-                default_project_index = 0
+                default_pid_idx = 0
 
-            project_id = st.selectbox(
-                "Project ID",
+            selected_project_id = st.selectbox(
+                "Project",
                 options=projects_list,
-                index=default_project_index,
-                help="Select Project identifier",
+                index=default_pid_idx,
             )
         else:
-            project_id = st.text_input(
+            selected_project_id = st.text_input(
                 "Project ID",
                 value=st.session_state.config["project_id"],
-                help="Project identifier",
             )
 
-    # Connection button
-    col1, col2 = st.columns(2)
+        # AUTO-UPDATE LOGIC
+        # If selection changed, update config and client immediately
+        if (
+            selected_tenant_id != st.session_state.config["tenant_id"]
+            or selected_project_id != st.session_state.config["project_id"]
+            or api_url != st.session_state.config["api_url"]
+        ):
 
-    with col1:
-        if st.button("🔌 Connect", type="primary", use_container_width=True):
-            try:
-                # Update config in session state
-                st.session_state.config.update(
-                    {
-                        "api_url": api_url,
-                        "api_key": api_key,
-                        "tenant_id": tenant_id,
-                        "project_id": project_id,
-                    }
-                )
+            st.session_state.config.update(
+                {
+                    "api_url": api_url,
+                    "api_key": api_key,
+                    "tenant_id": selected_tenant_id,
+                    "project_id": selected_project_id,
+                }
+            )
 
-                client = RAEClient(
-                    api_url=api_url,
-                    api_key=api_key,
-                    tenant_id=tenant_id,
-                    project_id=project_id,
-                )
+            # Re-init client
+            new_client = RAEClient(
+                api_url=api_url,
+                api_key=api_key,
+                tenant_id=selected_tenant_id,
+                project_id=selected_project_id,
+            )
 
-                # Test connection
-                if client.test_connection():
-                    st.session_state.client = client
-                    st.session_state.connected = True
-                    st.success("✓ Connected!")
-                    st.rerun()
+            if new_client.test_connection():
+                st.session_state.client = new_client
+                st.session_state.connected = True
+                st.rerun()  # Refresh page with new data
+            else:
+                st.error("Connection failed with new settings")
+
+    # Tenant Settings (Renaming)
+    if st.session_state.get("connected", False) and selected_tenant_id:
+        with st.expander("⚙️ Tenant Settings"):
+            new_tenant_name = st.text_input("Rename Tenant", placeholder="New name...")
+            if st.button("Update Name"):
+                if new_tenant_name:
+                    success = st.session_state.client.update_tenant_name(
+                        selected_tenant_id, new_tenant_name
+                    )
+                    if success:
+                        st.success("Renamed! Refreshing...")
+                        time.sleep(1)
+                        st.rerun()
                 else:
-                    st.error("❌ Connection failed")
-                    st.session_state.connected = False
+                    st.warning("Enter a name first")
 
-            except Exception as e:
-                st.error(f"❌ Connection error: {e}")
-                st.session_state.connected = False
+    # Project Settings (Renaming)
+    if st.session_state.get("connected", False) and selected_project_id:
+        with st.expander("📁 Project Settings"):
+            new_project_name = st.text_input(
+                "Rename Project", placeholder="New name..."
+            )
+            if st.button("Update Project Name"):
+                if new_project_name:
+                    success = st.session_state.client.rename_project(
+                        selected_project_id, new_project_name
+                    )
+                    if success:
+                        st.session_state.config["project_id"] = new_project_name
+                        st.success("Project Renamed! Refreshing...")
+                        time.sleep(1)
+                        st.rerun()
+                else:
+                    st.warning("Enter a name first")
 
-    with col2:
-        if st.button("🔄 Refresh", use_container_width=True):
-            st.cache_data.clear()
+    # Auto-Refresh Logic
+    with st.expander("⏱️ Auto-Refresh", expanded=False):
+        auto_refresh = st.checkbox("Enable Auto-Refresh", value=False)
+        refresh_rate = st.slider(
+            "Refresh Rate (seconds)", min_value=1, max_value=60, value=5
+        )
+
+        if auto_refresh:
+            st.caption(f"Refreshing every {refresh_rate}s...")
+            time.sleep(refresh_rate)
             st.rerun()
 
-    # Connection status
+    # Status Indicator (Thinking Bar)
+    # Mocking task status for now until backend supports /tasks/active
+    # In real impl, we would call client.get_active_tasks()
+    if st.sidebar.button("🚀 Rebuild Reflection"):
+        with st.spinner("Dispatching to Node1..."):
+            # Call API trigger logic here (simplified)
+            pass
+        st.sidebar.success("Task dispatched! Monitor logs.")
+
+    # Connection status (Compact)
     if st.session_state.get("connected", False):
-        st.success("🟢 Connected")
+        st.sidebar.success(f"Connected: {st.session_state.config['project_id']}")
     else:
-        st.warning("🔴 Not connected")
+        st.sidebar.warning("🔴 Not connected")
 
     # Help section
     with st.expander("ℹ️ Help"):
@@ -237,7 +304,7 @@ if "connected" in st.session_state and st.session_state.connected:
 
     # Fetch statistics
     try:
-        stats = get_cached_stats(client)
+        stats = get_cached_stats(client, client.tenant_id, client.project_id)
 
         # Metrics row
         col1, col2, col3, col4, col5 = st.columns(5)

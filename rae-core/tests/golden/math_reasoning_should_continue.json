@@ -13,7 +13,7 @@
     }
   },
   "output": {
-    "case_ok": true,
+    "case_ok": false,
     "case_stop": false
   },
   "metadata": {

@@ -89,4 +89,4 @@ def scrub_text(text: str | None) -> str:
         operators={"DEFAULT": OperatorConfig("replace", {"new_value": "<PII>"})},  # type: ignore[misc]
     )
 
-    return anonymized_text.text
+    return cast(str, anonymized_text.text)

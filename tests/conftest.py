@@ -32,7 +32,7 @@ def mock_env_and_settings(monkeypatch):
         "ENABLE_API_KEY_AUTH": "False",
         "ENABLE_JWT_AUTH": "False",
         "ENABLE_RATE_LIMITING": "False",
-        "RAE_DB_MODE": "ignore",
+        "RAE_DB_MODE": "migrate",
     }
     for k, v in envs.items():
         monkeypatch.setenv(k, v)
@@ -136,7 +136,7 @@ def mock_rae_service(mock_pool):
     service = AsyncMock(spec=RAECoreService)
 
     # Mock the 'db' property to return an actual provider wrapping our mock pool
-    from rae_core.adapters.postgres_db import PostgresDatabaseProvider
+    from rae_adapters.postgres_db import PostgresDatabaseProvider
 
     service.db = PostgresDatabaseProvider(mock_pool)
 
@@ -220,7 +220,7 @@ def client_with_overrides(
             return_value=mock_vector_store,
         ),
         patch(
-            "rae_core.factories.infra_factory.asyncpg.create_pool",
+            "rae_adapters.infra_factory.asyncpg.create_pool",
             new=AsyncMock(return_value=mock_pool),
         ),
         patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()),

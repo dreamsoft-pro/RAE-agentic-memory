@@ -57,7 +57,7 @@ def mock_rae_service(mock_pool):
     rae_mock.qdrant_client = AsyncMock()
 
     # Mock the 'db' property to return an actual provider wrapping our mock pool
-    from rae_core.adapters.postgres_db import PostgresDatabaseProvider
+    from rae_adapters.postgres_db import PostgresDatabaseProvider
 
     rae_mock.db = PostgresDatabaseProvider(mock_pool)
 
@@ -115,7 +115,9 @@ async def test_get_dashboard_metrics(mock_rae_service, mock_websocket_service):
         tenant_id="test-tenant", project_id="test-project", period=MetricPeriod.LAST_24H
     )
 
-    response = await get_dashboard_metrics(request_data, mock_rae_service)
+    response = await get_dashboard_metrics(
+        request_data=request_data, rae_service=mock_rae_service
+    )
 
     assert response.system_metrics.total_memories == 100
     assert response.recent_activity == []

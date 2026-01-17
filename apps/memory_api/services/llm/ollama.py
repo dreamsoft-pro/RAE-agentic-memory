@@ -25,7 +25,7 @@ class OllamaProvider(LLMProvider):
 
         # Current active client (will be updated by _get_client)
         self.active_url = self.hosts[0]
-        self.client = httpx.AsyncClient(base_url=self.active_url, timeout=120.0)
+        self.client = httpx.AsyncClient(base_url=self.active_url, timeout=300.0)
         logger.info("ollama_provider_initialized", available_hosts=self.hosts)
 
     async def _get_client(self):
@@ -41,7 +41,7 @@ class OllamaProvider(LLMProvider):
                                 "switching_ollama_host", old=self.active_url, new=url
                             )
                             self.active_url = url
-                            self.client = httpx.AsyncClient(base_url=url, timeout=120.0)
+                            self.client = httpx.AsyncClient(base_url=url, timeout=300.0)
                         return self.client
             except Exception:
                 continue

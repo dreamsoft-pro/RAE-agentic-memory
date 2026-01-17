@@ -32,7 +32,7 @@ def client_with_mock_service():
                 return_value=AsyncMock(),
             ),
             patch(
-                "rae_core.factories.infra_factory.asyncpg.create_pool",
+                "rae_adapters.infra_factory.asyncpg.create_pool",
                 new=AsyncMock(return_value=mock_pool),
             ),
             patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()),
