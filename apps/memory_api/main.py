@@ -74,56 +74,11 @@ async def lifespan(app: FastAPI):
     # 1. Initialize Connections (via Factory)
     if os.getenv("RAE_DB_MODE") == "ignore":
         logger.info("db_initialization_skipped", reason="RAE_DB_MODE=ignore")
-        # Only set to None if not already provided (e.g. by a mock in tests)
-        if not hasattr(app.state, "pool") or app.state.pool is None:
-            app.state.pool = None
-        if not hasattr(app.state, "redis_client") or app.state.redis_client is None:
-            app.state.redis_client = None
-        if not hasattr(app.state, "qdrant_client") or app.state.qdrant_client is None:
-            app.state.qdrant_client = None
+        app.state.pool = None
+        app.state.redis_client = None
+        app.state.qdrant_client = None
     else:
-        # Run migrations if mode is migrate/init
-        if settings.RAE_DB_MODE in ["migrate", "init"]:
-            logger.info("running_database_migrations", mode=settings.RAE_DB_MODE)
-            print(
-                f"DEBUG: Starting database migrations (mode={settings.RAE_DB_MODE})...",
-                flush=True,
-            )
-            try:
-                from alembic import command  # noqa: I001
-                from alembic.config import Config  # noqa: I001
-
-                # Load alembic config from project root
-                project_root = os.path.dirname(
-                    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-                )
-                ini_path = os.path.join(project_root, "alembic.ini")
-
-                if not os.path.exists(ini_path):
-                    print(f"ERROR: alembic.ini not found at {ini_path}", flush=True)
-                    logger.error("alembic_ini_not_found", path=ini_path)
-                else:
-                    alembic_cfg = Config(ini_path)
-                    # Force silent logging for migrations during startup to avoid hanging
-                    os.environ["ALEMBIC_SKIP_LOG_CONFIG"] = "1"
-                    print(
-                        f"DEBUG: Running 'alembic upgrade head' using {ini_path}...",
-                        flush=True,
-                    )
-                    command.upgrade(alembic_cfg, "head")
-                    print(
-                        "DEBUG: Database migrations completed successfully.", flush=True
-                    )
-                    logger.info("database_migrations_completed")
-            except Exception as e:
-                print(f"ERROR: Database migration failed: {str(e)}", flush=True)
-                import traceback
-
-                traceback.print_exc()
-                logger.error("database_migration_failed", error=str(e))
-                # Continue anyway, as some tables might already exist
-
-        from rae_core.factories.infra_factory import InfrastructureFactory
+        from rae_adapters.infra_factory import InfrastructureFactory
 
         await InfrastructureFactory.initialize(app, settings)
 
@@ -135,12 +90,12 @@ async def lifespan(app: FastAPI):
             try:
                 from uuid import UUID
 
-                default_tenant_id = UUID("00000000-0000-0000-0000-000000000000")
+                default_tenant_id = UUID(settings.DEFAULT_TENANT_UUID)
                 async with app.state.pool.acquire() as conn:
                     # Check if any tenant exists
                     exists = await conn.fetchval(
                         "SELECT EXISTS(SELECT 1 FROM tenants WHERE id = $1)",
-                        default_tenant_id,
+                        str(default_tenant_id),
                     )
                     if not exists:
                         logger.info(
@@ -148,7 +103,7 @@ async def lifespan(app: FastAPI):
                         )
                         await conn.execute(
                             "INSERT INTO tenants (id, name, tier, config) VALUES ($1, $2, $3, $4)",
-                            default_tenant_id,
+                            str(default_tenant_id),
                             "Default Tenant",
                             "enterprise",
                             "{}",
@@ -160,7 +115,7 @@ async def lifespan(app: FastAPI):
                         "INSERT INTO user_tenant_roles (id, user_id, tenant_id, role) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING",
                         UUID("00000000-0000-0000-0000-000000000001"),
                         "admin",
-                        default_tenant_id,
+                        str(default_tenant_id),
                         "owner",
                     )
                     # Also assign role to developer keys for easy access
@@ -168,14 +123,14 @@ async def lifespan(app: FastAPI):
                         "INSERT INTO user_tenant_roles (id, user_id, tenant_id, role) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING",
                         UUID("00000000-0000-0000-0000-000000000002"),
                         "apikey_dev-key",
-                        default_tenant_id,
+                        str(default_tenant_id),
                         "owner",
                     )
                     await conn.execute(
                         "INSERT INTO user_tenant_roles (id, user_id, tenant_id, role) VALUES ($1, $2, $3, $4) ON CONFLICT DO NOTHING",
                         UUID("00000000-0000-0000-0000-000000000003"),
                         "apikey_secret",
-                        default_tenant_id,
+                        str(default_tenant_id),
                         "owner",
                     )
             except Exception as e:
@@ -203,6 +158,7 @@ async def lifespan(app: FastAPI):
 
     logger.info("RAE-Core service initialized", profile=settings.RAE_PROFILE)
 
+    # Force rebuild
     yield
 
     # Shutdown
@@ -307,11 +263,11 @@ app.include_router(system.router, prefix="/v1", tags=["System Control"])
 # New Routes
 app.include_router(dashboard.router, prefix="/v1", tags=["Dashboard"])
 app.include_router(evaluation.router, prefix="/v1", tags=["Evaluation"])
-app.include_router(event_triggers.router, prefix="/v1", tags=["Automation"])
+app.include_router(event_triggers.router, tags=["Automation"])
 app.include_router(graph_enhanced.router, prefix="/v1", tags=["Knowledge Graph+"])
 app.include_router(hybrid_search.router, prefix="/v1", tags=["Search"])
 app.include_router(nodes.router, prefix="/v1", tags=["Knowledge Graph Nodes"])
-app.include_router(reflections.router, prefix="/v1", tags=["Reflections"])
+app.include_router(reflections.router, tags=["Reflections"])
 app.include_router(sync.router, prefix="/v1", tags=["Sync"])
 app.include_router(token_savings.router, prefix="/v1", tags=["Token Savings"])
 app.include_router(federation.router, prefix="/v1", tags=["Federation"])

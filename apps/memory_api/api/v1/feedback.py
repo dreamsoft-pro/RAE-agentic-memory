@@ -1,3 +1,5 @@
+from uuid import UUID
+
 import structlog
 from fastapi import APIRouter, Depends, Request
 
@@ -16,7 +18,7 @@ router = APIRouter(prefix="/feedback", tags=["feedback"])
 async def submit_feedback(
     feedback: FeedbackRequest,
     request: Request,
-    tenant_id: str = Depends(get_and_verify_tenant_id),
+    tenant_id: UUID = Depends(get_and_verify_tenant_id),
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
@@ -28,7 +30,7 @@ async def submit_feedback(
     service = FeedbackService(rae_service=rae_service)
 
     success = await service.process_feedback(
-        tenant_id=tenant_id,
+        tenant_id=str(tenant_id),
         memory_id=feedback.memory_id,
         feedback_type=feedback.feedback_type,
         comment=feedback.comment,

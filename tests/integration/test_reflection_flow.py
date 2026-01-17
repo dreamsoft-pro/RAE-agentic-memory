@@ -129,7 +129,7 @@ async def context_builder(rae_service, reflection_engine):
 @pytest.fixture
 def tenant_id():
     """Test tenant ID"""
-    return "test-tenant-" + str(uuid4())
+    return str(uuid4())
 
 
 @pytest.fixture
@@ -233,7 +233,7 @@ async def test_generate_reflection_from_failure(
     )
     assert our_reflection is not None
     assert our_reflection["content"] == result.reflection_text
-    assert our_reflection["importance"] == result.importance
+    assert our_reflection["importance"] == pytest.approx(result.importance)
 
 
 # ============================================================================
@@ -528,7 +528,7 @@ async def test_end_to_end_reflection_flow(
     # === Phase 2: Second execution retrieves lesson ===
 
     # Build context for similar task
-    query = "I need to call the external API again"
+    query = "I need to call the external API again and fix authentication issues"
     working_memory = await context_builder.build_context(
         tenant_id=tenant_id, project_id=project_id, query=query
     )

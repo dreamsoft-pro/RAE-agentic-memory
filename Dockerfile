@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     postgresql-client \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -21,6 +22,12 @@ COPY rae-core /app/rae-core
 
 # Install rae-core
 RUN pip install --no-cache-dir -e /app/rae-core
+
+# Copy rae_adapters
+COPY rae_adapters /app/rae_adapters
+
+# Install rae_adapters
+RUN pip install --no-cache-dir -e /app/rae_adapters
 
 # Copy requirements files
 COPY apps/memory_api/requirements-base.txt /app/requirements-base.txt

@@ -18,6 +18,9 @@ services:
       - CELERY_BROKER_URL=redis://redis-lite:6379/0
       - CELERY_RESULT_BACKEND=redis://redis-lite:6379/0
       - X_API_KEY=secret
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
     depends_on:
       - postgres-lite
       - qdrant-lite

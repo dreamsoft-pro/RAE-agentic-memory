@@ -130,10 +130,10 @@ def lite_profile_services():
             # 2. Grant Owner Role to 'apikey_secret' (User ID for 'secret' API key)
             await conn.execute(
                 """
-                INSERT INTO user_tenant_roles 
+                INSERT INTO user_tenant_roles
                 (id, user_id, tenant_id, role, project_ids, assigned_at, assigned_by)
                 VALUES ($1, $2, $3, $4, $5, NOW(), $6)
-                ON CONFLICT (user_id, tenant_id) 
+                ON CONFLICT (user_id, tenant_id)
                 DO UPDATE SET role = $4
             """,
                 uuid4(),
@@ -198,7 +198,7 @@ def test_lite_profile_store_memory(lite_profile_services):
     payload = {
         "content": "Integration test memory for RAE Lite Profile",
         "source": "integration-test",
-        "layer": "em",
+        "layer": "episodic",
         "importance": 0.5,
         "tags": ["test", "integration"],
     }
@@ -226,7 +226,7 @@ def test_lite_profile_query_memory(lite_profile_services):
     store_payload = {
         "content": "Test memory for query operation",
         "source": "integration-test",
-        "layer": "em",
+        "layer": "episodic",
         "importance": 0.7,
         "tags": ["querytest"],
     }

@@ -9,6 +9,5 @@ class TenantContextMiddleware(BaseHTTPMiddleware):
             "tenant_id"
         )
         request.state.tenant_id = tenant_id
-        # Tu w realu: SET LOCAL app.current_tenant_id = :tenant_id na połączeniu DB
         response: Response = await call_next(request)
         return response

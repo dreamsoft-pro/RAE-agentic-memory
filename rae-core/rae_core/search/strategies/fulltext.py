@@ -117,6 +117,8 @@ class FullTextStrategy(SearchStrategy):
 
         # Score each memory
         results: list[tuple[UUID, float]] = []
+        is_wildcard = query.strip() == "*"
+
         for memory in memories:
             memory_id = memory["id"]
             if isinstance(memory_id, str):
@@ -125,7 +127,10 @@ class FullTextStrategy(SearchStrategy):
             content = memory.get("content", "")
             tags = memory.get("tags", [])
 
-            score = self._compute_match_score(query, content, tags)
+            if is_wildcard:
+                score = 1.0
+            else:
+                score = self._compute_match_score(query, content, tags)
 
             if score > 0:
                 results.append((memory_id, score))

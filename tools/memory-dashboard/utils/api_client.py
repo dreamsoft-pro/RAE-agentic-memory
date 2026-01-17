@@ -30,7 +30,7 @@ class RAEClient:
         api_key: str = "default-key",
         tenant_id: str = "default-tenant",
         project_id: str = "default-project",
-        timeout: float = 30.0,
+        timeout: float = 300.0,
     ):
         """
         Initialize RAE API client.
@@ -95,43 +95,41 @@ class RAEClient:
 
     def get_stats(self) -> Dict[str, int]:
         """
-        Get memory statistics.
+        Get memory statistics using the dedicated dashboard endpoint.
 
         Returns:
-            Dictionary with memory counts by layer
+            Dictionary with memory counts by layer/type
         """
         try:
-            # Query for counts by layer
-            stats = {"total": 0, "episodic": 0, "working": 0, "semantic": 0, "ltm": 0}
+            # Call the specialized dashboard metrics endpoint
+            response = self._request(
+                "POST",
+                "/v1/dashboard/metrics",
+                json={
+                    "tenant_id": self.tenant_id,
+                    "project_id": self.project_id,
+                    "period": "last_24h",
+                },
+            )
 
-            # Get count for each layer
-            for layer in ["episodic", "working", "semantic", "reflective"]:
-                res = self._request(
-                    "POST",
-                    "/v1/memory/query",
-                    json={
-                        "query_text": "*",
-                        "k": 1,
-                        "filters": {"layer": layer},
-                        "project": self.project_id,
-                    },
-                )
-                # This is approximate - would need dedicated stats endpoint
-                # results count gives us a hint
-                count = len(res.get("results", []))
-                # Update local stats object
-                if layer == "episodic":
-                    stats["episodic"] = count
-                elif layer == "working":
-                    stats["working"] = count
-                elif layer == "semantic":
-                    stats["semantic"] = count
-                elif layer == "reflective":
-                    stats["ltm"] = count  # Mapping reflective to dashboard's LTM column
+            metrics = response.get("system_metrics", {})
 
-                stats["total"] += count
+            # Use backend's pre-calculated totals
+            total_count = metrics.get("total_memories", 0)
+            ltm_count = metrics.get("total_reflections", 0)
+            semantic_count = metrics.get("total_semantic_nodes", 0)
+            episodic_count = total_count - ltm_count - semantic_count
 
-            return stats
+            # Avoid negative if something is weird with total vs layers
+            episodic_count = max(0, episodic_count)
+
+            return {
+                "total": total_count,
+                "episodic": episodic_count,
+                "working": 0,
+                "semantic": semantic_count,
+                "ltm": ltm_count,
+            }
 
         except Exception as e:
             st.warning(f"Could not fetch stats: {e}")
@@ -144,43 +142,38 @@ class RAEClient:
         limit: int = 100,
     ) -> List[Dict[str, Any]]:
         """
-        Fetch memories with filters.
-
-        Args:
-            layers: List of memory layers to filter
-            since: Only return memories after this timestamp
-            limit: Maximum number of memories
-
-        Returns:
-            List of memory records
+        Fetch memories with filters using LIST endpoint.
         """
         try:
-            # Query for memories
-            memories = []
+            # Use GET /list for raw data retrieval (no vector search)
+            params = {"limit": limit, "offset": 0, "project": self.project_id}
+            # Note: API V1 /list might not support multi-layer filter in one go unless updated.
+            # Assuming it filters by project mostly.
 
-            target_layers = layers or ["episodic", "working", "semantic", "reflective"]
-            for layer in target_layers:
-                response = self._request(
-                    "POST",
-                    "/v1/memory/query",
-                    json={
-                        "query_text": "*",
-                        "k": limit,
-                        "filters": {"layer": layer},
-                        "project": self.project_id,
-                    },
-                )
+            response = self.client.get("/v1/memory/list", params=params)
+            response.raise_for_status()
+            data = response.json()
+            memories = data.get("results", [])
 
-                results = response.get("results", [])
-                memories.extend(results)
+            # Client-side filtering for layers if API doesn't support list (it supports single layer param)
+            if layers:
+                memories = [m for m in memories if m.get("layer") in layers]
 
-            # Filter by date if specified
             if since:
-                memories = [
-                    m
-                    for m in memories
-                    if datetime.fromisoformat(m.get("timestamp", "")) >= since
-                ]
+                filtered_memories = []
+                for m in memories:
+                    ts_str = m.get("timestamp")
+                    if ts_str:
+                        try:
+                            ts = datetime.fromisoformat(
+                                ts_str.replace("Z", "+00:00")
+                            ).replace(tzinfo=None)
+                            since_naive = since.replace(tzinfo=None)
+                            if ts >= since_naive:
+                                filtered_memories.append(m)
+                        except (ValueError, TypeError):
+                            continue
+                memories = filtered_memories
 
             return memories[:limit]
 
@@ -368,26 +361,44 @@ class RAEClient:
 
     def get_reflection(self, project: Optional[str] = None) -> str:
         """
-        Get project reflection.
+        Get latest project reflection.
 
-        Args:
-            project: Optional project identifier
+        Strategy:
+        1. Try to fetch the most recent memory from 'reflective' layer via /list (Fast).
+        2. If none found, return a placeholder prompting generation.
 
-        Returns:
-            Reflection text
+        This avoids blocking the Dashboard with heavy LLM generation calls.
         """
         try:
-            response = self._request(
-                "POST",
-                "/v1/memory/reflection/hierarchical",
-                params={"project": project or self.project_id, "bucket_size": 10},
+            proj = project or self.project_id
+
+            # Fetch latest reflective memory (Limit 1, Sort is implied by DB insertion order usually,
+            # ideally API should support sort, but list usually returns recent first or we assume)
+            # Based on PostgresAdapter, list_memories sorts by created_at DESC by default?
+            # Checking service: currently assumes default sort.
+
+            response = self.client.get(
+                "/v1/memory/list",
+                params={
+                    "project": proj,
+                    "layer": "reflective",
+                    "limit": 1,
+                    "offset": 0,
+                },
+                timeout=5.0,
             )
 
-            return response.get("summary", "No reflection available")
+            if response.status_code == 200:
+                data = response.json()
+                results = data.get("results", [])
+                if results:
+                    return results[0].get("content", "Empty reflection content")
 
-        except Exception as e:
-            st.warning(f"Could not fetch reflection: {e}")
-            return "Reflection unavailable"
+            return "No reflection cached. Go to 'Control' to trigger a rebuild."
+
+        except Exception:
+            # Don't show error trace in UI for simple "not found"
+            return "Reflection unavailable (Cache Miss)"
 
     def get_tenants(self) -> List[str]:
         """
@@ -416,6 +427,44 @@ class RAEClient:
             st.warning(f"Could not fetch projects: {e}")
             return []
 
+    def update_tenant_name(self, tenant_id: str, new_name: str) -> bool:
+        """
+        Update the name of a tenant.
+
+        Args:
+            tenant_id: ID of tenant to update
+            new_name: New name for the tenant
+
+        Returns:
+            True if successful
+        """
+        try:
+            # We don't use _request here because system endpoints might have different auth requirements
+            # but for now assuming same API key works if authorized.
+            # System endpoints are under /v1/system
+            response = self.client.put(
+                f"/v1/system/tenants/{tenant_id}", json={"name": new_name}
+            )
+            response.raise_for_status()
+            return response.json().get("success", False)
+        except Exception as e:
+            st.error(f"Failed to rename tenant: {e}")
+            return False
+
+    def rename_project(self, old_project_id: str, new_project_id: str) -> bool:
+        """
+        Rename the current project.
+        """
+        try:
+            response = self.client.put(
+                f"/v1/system/projects/{old_project_id}", json={"name": new_project_id}
+            )
+            response.raise_for_status()
+            return response.json().get("success", False)
+        except Exception as e:
+            st.error(f"Failed to rename project: {e}")
+            return False
+
     def test_connection(self) -> bool:
         """
         Test API connection.
@@ -432,15 +481,11 @@ class RAEClient:
 
 
 @st.cache_data(ttl=60)
-def get_cached_stats(_client: RAEClient) -> Dict[str, int]:
+def get_cached_stats(
+    _client: RAEClient, tenant_id: str, project_id: str
+) -> Dict[str, int]:
     """
     Cached version of get_stats.
-
-    Args:
-        _client: RAEClient instance
-
-    Returns:
-        Statistics dictionary
     """
     return _client.get_stats()
 

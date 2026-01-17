@@ -20,8 +20,15 @@ import re
 import sys
 
 import structlog
-from opentelemetry.trace import get_current_span  # New import
 from structlog.types import Processor
+
+# Conditionally import OpenTelemetry
+try:
+    from opentelemetry.trace import get_current_span
+
+    opentelemetry_installed = True
+except ImportError:
+    opentelemetry_installed = False
 
 # Pre-compile regex for performance
 EMAIL_REGEX = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b")
@@ -62,6 +69,9 @@ def add_trace_id_to_log(logger, method_name, event_dict):
     """
     Processor to add the current OpenTelemetry trace_id and span_id to log events.
     """
+    if not opentelemetry_installed:
+        return event_dict
+
     span = get_current_span()
     span_context = span.get_span_context()
     if span_context.is_valid:  # is_valid is a property, not a method
@@ -93,10 +103,13 @@ def setup_logging():
         structlog.stdlib.add_log_level,
         structlog.stdlib.add_logger_name,
         structlog.processors.TimeStamper(fmt="iso"),
-        add_trace_id_to_log,  # New processor
         pii_masking_processor,  # [ISO 27001]
         structlog.processors.StackInfoRenderer(),
     ]
+
+    # Conditionally add the OpenTelemetry processor
+    if opentelemetry_installed and settings.OTEL_TRACES_ENABLED:
+        shared_processors.insert(4, add_trace_id_to_log)
 
     structlog.configure(
         processors=shared_processors

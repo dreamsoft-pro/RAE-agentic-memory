@@ -2,14 +2,14 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from apps.memory_api.adapters.qdrant_adapter import QdrantAdapter
-from apps.memory_api.adapters.redis_adapter import RedisAdapter
 from apps.memory_api.core.contract import (
     CacheContract,
     MemoryContract,
     VectorCollectionContract,
     VectorStoreContract,
 )
+from rae_adapters.qdrant_adapter import QdrantAdapter
+from rae_adapters.redis_adapter import RedisAdapter
 
 # --- Redis Adapter Tests ---
 

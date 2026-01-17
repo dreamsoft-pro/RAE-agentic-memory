@@ -65,30 +65,48 @@ class GraphTraversalStrategy(SearchStrategy):
             # (Graph search requires starting points)
             return []
 
-        # Traverse graph from seed nodes
+        # Traverse graph from seed nodes with BFS and Confidence Decay
         visited: set[UUID] = set()
         results: dict[UUID, float] = {}
+        decay_factor = 0.6  # Confidence decay per hop
+        min_score_threshold = 0.05
 
+        # Queue format: (node_id, current_depth, current_score)
+        queue = []
         for seed_id in seed_ids:
             if isinstance(seed_id, str):
                 seed_id = UUID(seed_id)
+            queue.append((seed_id, 0, 1.0))
+            visited.add(seed_id)
 
-            # Get neighbors at each depth level
+        while queue:
+            current_id, depth, score = queue.pop(0)
+
+            if depth >= max_depth:
+                continue
+
+            # Calculate score for neighbors (decayed)
+            next_score = score * decay_factor
+            if next_score < min_score_threshold:
+                continue
+
+            # Get immediate neighbors (depth=1)
             neighbors = await self.graph_store.get_neighbors(
-                node_id=seed_id,
+                node_id=current_id,
                 tenant_id=tenant_id,
                 edge_type=edge_type,
                 direction="both",
-                max_depth=max_depth,
+                max_depth=1,
             )
 
-            # Score by inverse depth (closer = higher score)
             for neighbor_id in neighbors:
                 if neighbor_id not in visited:
                     visited.add(neighbor_id)
-                    # Simple scoring: inverse of depth + random factor
-                    score = 1.0 / (max_depth + 1)
-                    results[neighbor_id] = score
+                    results[neighbor_id] = next_score
+                    queue.append((neighbor_id, depth + 1, next_score))
+                elif neighbor_id in results:
+                    # Boost score if reached via another path (reinforcement)
+                    results[neighbor_id] = max(results[neighbor_id], next_score)
 
         # Convert to sorted list
         sorted_results = sorted(results.items(), key=lambda x: x[1], reverse=True)[
