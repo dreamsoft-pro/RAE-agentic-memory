@@ -276,7 +276,7 @@ class PIIScrubber:
 
 
 # Configuration from environment
-RAE_API_URL = os.getenv("RAE_API_URL", "http://localhost:8000")
+RAE_API_URL = os.getenv("RAE_API_URL", "http://localhost:8001")
 RAE_API_KEY = os.getenv("RAE_API_KEY", "dev-key")
 RAE_PROJECT_ID = os.getenv("RAE_PROJECT_ID", "default-project")
 RAE_TENANT_ID = os.getenv("RAE_TENANT_ID", "default-tenant")
