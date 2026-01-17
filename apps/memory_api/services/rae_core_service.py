@@ -80,10 +80,6 @@ class RAECoreService:
         base_provider: IEmbeddingProvider
         if getattr(settings, "RAE_PROFILE", "standard") == "distributed":
             base_provider = RemoteEmbeddingProvider(base_url=settings.ML_SERVICE_URL)
-        elif getattr(settings, "RAE_PROFILE", "standard") == "lite":
-            from apps.memory_api.services.embedding import MathOnlyEmbeddingProvider
-
-            base_provider = MathOnlyEmbeddingProvider()
         else:
             base_provider = LocalEmbeddingProvider()
 
