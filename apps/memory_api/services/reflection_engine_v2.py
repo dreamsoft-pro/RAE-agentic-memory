@@ -381,27 +381,36 @@ class ReflectionEngineV2:
         tags: Optional[List[str]] = None,
     ) -> List[Dict[str, Any]]:
         """
-        Query reflections from memory.
-
-        Args:
-            tenant_id: Tenant identifier
-            project_id: Project identifier
-            query_text: Optional semantic query
-            k: Number of results
-            min_importance: Minimum importance threshold
-            tags: Optional tag filters
-
-        Returns:
-            List of reflection records
+        Query reflections using Hybrid Search (Vector + Full-Text).
+        
+        This ensures that even specific technical codes or exact matches 
+        are found and used during the reflection process.
         """
-        # For now, use basic repository query
-        # In production, this would use vector search + filtering
-        reflections = await self.rae_service.list_memories(
-            tenant_id=tenant_id, layer="reflective", project=project_id, limit=100
-        )
+        if not query_text:
+            # Fallback to listing if no query provided
+            reflections = await self.rae_service.list_memories(
+                tenant_id=tenant_id, layer="reflective", project=project_id, limit=100
+            )
+        else:
+            # HYBRID SEARCH: The core of RAE's multi-strategy retrieval
+            reflections = await self.rae_service.engine.search_memories(
+                query=query_text,
+                tenant_id=tenant_id,
+                agent_id=project_id,
+                layer="reflective", # Focus on Layer 4
+                top_k=k * 2 # Fetch more for filtering
+            )
 
-        # Simple filtering by importance
-        filtered = [r for r in reflections if r.get("importance", 0) >= min_importance]
+        # Filtering and post-processing
+        filtered = [
+            r for r in reflections 
+            if r.get("importance", 0) >= min_importance
+        ]
+        
+        if tags:
+            filtered = [
+                r for r in filtered 
+                if any(tag in r.get("tags", []) for tag in tags)
+            ]
 
-        # Limit results
         return filtered[:k]

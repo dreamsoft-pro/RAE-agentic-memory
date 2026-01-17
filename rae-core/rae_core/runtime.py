@@ -59,6 +59,9 @@ class RAERuntime:
         """
         
         # Default Policy: Store "Final Answers" as Episodic Memory
+        agent_id = input_payload.context.get("agent_id", "agent-runtime")
+        project = input_payload.context.get("project")
+
         if action.type == AgentActionType.FINAL_ANSWER:
             logger.info("memory_policy_triggered", rule="final_answer_store")
             
@@ -66,7 +69,7 @@ class RAERuntime:
                 content=str(action.content),
                 layer="episodic",
                 tenant_id=input_payload.tenant_id,
-                agent_id="agent-runtime", # To be refined
+                agent_id=agent_id,
                 tags=["rae-first", "final_answer"] + action.signals,
                 metadata={
                     "request_id": str(input_payload.request_id),
@@ -74,7 +77,7 @@ class RAERuntime:
                     "reasoning": action.reasoning,
                     "input_preview": input_payload.content[:50]
                 },
-                project=input_payload.context.get("project"),
+                project=project,
                 session_id=input_payload.context.get("session_id"),
                 source="RAERuntime"
             )
@@ -87,7 +90,7 @@ class RAERuntime:
                 content=f"Reasoning: {action.reasoning} | Content: {str(action.content)}",
                 layer="working",
                 tenant_id=input_payload.tenant_id,
-                agent_id="agent-runtime",
+                agent_id=agent_id,
                 tags=["rae-first", "thought", "decision"],
                 metadata={
                     "request_id": str(input_payload.request_id),

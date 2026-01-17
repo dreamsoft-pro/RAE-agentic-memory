@@ -78,7 +78,7 @@ async def lifespan(app: FastAPI):
         app.state.redis_client = None
         app.state.qdrant_client = None
     else:
-        from rae_core.factories.infra_factory import InfrastructureFactory
+        from rae_adapters.infra_factory import InfrastructureFactory
 
         await InfrastructureFactory.initialize(app, settings)
 
@@ -263,11 +263,11 @@ app.include_router(system.router, prefix="/v1", tags=["System Control"])
 # New Routes
 app.include_router(dashboard.router, prefix="/v1", tags=["Dashboard"])
 app.include_router(evaluation.router, prefix="/v1", tags=["Evaluation"])
-app.include_router(event_triggers.router, prefix="/v1", tags=["Automation"])
+app.include_router(event_triggers.router, tags=["Automation"])
 app.include_router(graph_enhanced.router, prefix="/v1", tags=["Knowledge Graph+"])
 app.include_router(hybrid_search.router, prefix="/v1", tags=["Search"])
 app.include_router(nodes.router, prefix="/v1", tags=["Knowledge Graph Nodes"])
-app.include_router(reflections.router, prefix="/v1", tags=["Reflections"])
+app.include_router(reflections.router, tags=["Reflections"])
 app.include_router(sync.router, prefix="/v1", tags=["Sync"])
 app.include_router(token_savings.router, prefix="/v1", tags=["Token Savings"])
 app.include_router(federation.router, prefix="/v1", tags=["Federation"])

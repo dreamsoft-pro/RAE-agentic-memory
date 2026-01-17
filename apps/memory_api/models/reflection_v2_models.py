@@ -11,7 +11,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from apps.memory_api.utils.datetime_utils import utc_now
 
@@ -328,6 +328,39 @@ class LLMReflectionResponse(BaseModel):
 
     reflection: str = Field(..., description="The reflection text")
     strategy: Optional[str] = Field(None, description="Optional strategy text")
-    importance: float = Field(..., ge=0.0, le=1.0, description="Importance score")
-    confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score")
+    importance: float = Field(0.5, description="Importance score")
+    confidence: float = Field(0.5, description="Confidence score")
     tags: List[str] = Field(default_factory=list, description="Relevant tags")
+
+    @field_validator("importance", "confidence", mode="before")
+    @classmethod
+    def parse_numeric(cls, v):
+        if isinstance(v, (int, float)):
+            return float(min(1.0, max(0.0, v)))
+        if isinstance(v, str):
+            # Try to extract number from string (e.g. "0.8" or "80%")
+            import re
+            match = re.search(r"(\d+(\.\d+)?)", v)
+            if match:
+                val = float(match.group(1))
+                if val > 1.0 and val <= 100.0: val /= 100.0
+                return min(1.0, max(0.0, val))
+        return 0.5 # Default fallback
+
+    @field_validator("tags", mode="before")
+    @classmethod
+    def parse_tags(cls, v):
+        if isinstance(v, list):
+            return [str(tag) for tag in v]
+        if isinstance(v, str):
+            # Handle "['tag1', 'tag2']" or "tag1, tag2"
+            import ast
+            try:
+                # Try literal eval for "['a', 'b']"
+                res = ast.literal_eval(v)
+                if isinstance(res, list): return [str(x) for x in res]
+            except:
+                pass
+            # Fallback to comma split
+            return [t.strip() for t in v.replace("[", "").replace("]", "").replace("'", "").split(",") if t.strip()]
+        return []

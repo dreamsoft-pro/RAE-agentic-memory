@@ -4,7 +4,7 @@ import uuid
 
 API_URL = "http://localhost:8001/v1"
 API_KEY = "dev-key" 
-TENANT_ID = "00000000-0000-0000-0000-000000000000"
+TENANT_ID = "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b22" # rae-core
 
 async def interact(project: str, prompt: str):
     print(f"\n[Project: {project}] Sending: {prompt}")
