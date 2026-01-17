@@ -1,5 +1,5 @@
-from typing import Any, List, Optional, cast
 import hashlib
+from typing import Any, List, Optional, cast
 
 import litellm
 
@@ -41,13 +41,13 @@ class EmbeddingService:
         hash_obj = hashlib.md5(text.encode("utf-8"))
         # Create a seed from the hash
         seed = int(hash_obj.hexdigest(), 16)
-        
+
         # Simple Linear Congruential Generator for determinism without numpy
         # vector[i] = (a * vector[i-1] + c) % m
         a = 1664525
         c = 1013904223
         m = 2**32
-        
+
         vector = []
         current = seed
         for _ in range(dimension):
@@ -55,7 +55,7 @@ class EmbeddingService:
             # Normalize to [-1, 1] range roughly
             val = (current / m) * 2 - 1
             vector.append(val)
-            
+
         return vector
 
     @embedding_time_histogram.time()
