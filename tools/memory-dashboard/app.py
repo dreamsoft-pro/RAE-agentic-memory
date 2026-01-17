@@ -253,6 +253,7 @@ with st.sidebar:
 
         if auto_refresh:
             st.caption(f"Refreshing every {refresh_rate}s...")
+            st.caption("Backend WebSocket broadcasting is enabled for real-time consumers.")
             time.sleep(refresh_rate)
             st.rerun()
 

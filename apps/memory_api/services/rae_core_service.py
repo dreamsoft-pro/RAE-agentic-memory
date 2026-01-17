@@ -13,6 +13,7 @@ import redis.asyncio as redis
 import structlog
 from qdrant_client import AsyncQdrantClient
 
+from apps.memory_api.services.dashboard_websocket import DashboardWebSocketService
 from apps.memory_api.services.embedding import (
     LocalEmbeddingProvider,
     RemoteEmbeddingProvider,
@@ -63,8 +64,11 @@ class RAECoreService:
         self.qdrant_adapter: IVectorStore
         self.redis_adapter: ICacheProvider
         self.savings_service: Optional[TokenSavingsService] = None
+        self.websocket_service: Optional[DashboardWebSocketService] = None
+
         if postgres_pool:
             self.savings_service = TokenSavingsService(postgres_pool)
+            self.websocket_service = DashboardWebSocketService(postgres_pool)
 
         # 1. Initialize embedding provider
         import os
@@ -434,6 +438,24 @@ class RAECoreService:
             layer=target_layer,
             type=memory_type or "text",
         )
+
+        # Broadcast update if WebSocket service is available
+        if self.websocket_service:
+            try:
+                # We use asyncio.create_task to not block the main flow
+                import asyncio
+
+                asyncio.create_task(
+                    self.websocket_service.broadcast_memory_created(
+                        tenant_id=tenant_id,
+                        project_id=project_id,
+                        memory_id=memory_id,
+                        content=content,
+                        importance=importance or 0.5,
+                    )
+                )
+            except Exception as e:
+                logger.warning("websocket_broadcast_failed", error=str(e))
 
         return str(memory_id)
 
