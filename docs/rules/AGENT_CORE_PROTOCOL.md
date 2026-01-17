@@ -46,6 +46,7 @@ Different branches = Different testing levels.
 ### Phase 1: Feature Branch (`feature/*`)
 - **Goal**: Speed & Focus.
 - **Command**: `pytest --no-cov path/to/new_test.py`
+- **Fast Loop**: Use `make test-fast` to stop on first error, then `make test-fix` to verify only the fixed tests.
 - **Rule**: Test **ONLY** your new code. Do NOT run full suite.
 
 ### Phase 2: Develop Branch (`develop`)
@@ -133,28 +134,33 @@ When delegating tasks to external nodes (e.g., node1/KUBUS), follow the **Agenti
 - **Opportunistic Availability**: External nodes are **NOT** permanent resources. Check status via `ControlPlaneService`.
 - **Graceful Fallback**: If a node is unavailable, fallback to local or cloud providers.
 
-## 11. DEPLOYMENT & CI PROTOCOL (DevOps V2)
+## 11. DEPLOYMENT & CI PROTOCOL (DevOps V2 - Zero Drift)
 
 **Mandatory Workflow for Code Changes**:
 
-1. **Pre-Commit Check**:
-   - `make lint` (Ensure 0 warnings)
-   - `make test-lite` (Or `make test-core` for core changes)
-   - Do NOT push if red.
+1. **Pre-Push Sequence (The "Golden Command")**:
+   - Run: `make pre-push`
+   - **What this does**:
+     1. Formats code (Black/Isort/Ruff).
+     2. **Generates Documentation & Metrics** (Crucial! Prevents CI from creating "fix" commits that drift history).
+     3. Lints strictly.
+     4. Runs Unit Tests.
+   - **If Failed**: Fix issues and repeat.
 
-2. **Push**:
-   - Push to `develop` (or feature branch).
+2. **Commit Generated Artifacts**:
+   - `make pre-push` will likely modify files like `CHANGELOG.md` or `docs/metrics/`.
+   - **MANDATORY**: Add these changes to your commit (or create a new one: `chore: update docs`).
+   - *Example*: `git add . && git commit --amend --no-edit` (if amending) or `git commit -m "chore: auto-update docs"`.
 
-3. **Post-Commit Verification**:
+3. **Push**:
+   - `git push origin develop` (or feature branch).
+   - Because you already generated the docs, the CI "Auto-Update" job will see 0 changes and skip its commit. **History stays clean.**
+
+4. **Post-Commit Verification**:
    - Run: `gh run list --branch develop --limit 1`
    - **Requirement**: Monitor status until `success`.
-   - **If Failed**:
-     - Run: `gh run view <run_id> --log-failed`
-     - Analyze logs.
-     - Fix locally -> Pre-Commit -> Push again.
-     - **REPEAT UNTIL GREEN**.
 
-4. **Sandbox Strategy**:
+5. **Sandbox Strategy**:
    - **Dev**: Port 8000 (`docker-compose.yml` + `dev.yml`). Hot Reload.
    - **Lite Sandbox**: Port 8010 (`docker-compose.test-sandbox.yml`). Integration Tests.
    - **Full Sandbox**: Port 8020 (`docker-compose.sandbox-full.yml`). Full Stack verification.
@@ -166,3 +172,19 @@ When delegating tasks to external nodes (e.g., node1/KUBUS), follow the **Agenti
 - Benchmarks verified against baseline.
 - PR ready for review.
 - CI Workflow Green.
+
+## 13. SECURITY & COMPLIANCE PROTOCOL (ISO 42001/27001)
+
+- **Mandatory Compliance Checks**:
+  - Every new feature MUST pass `make test-compliance`.
+  - Every security-related change MUST pass `make security-check`.
+  - Do NOT merge code with High/Medium security vulnerabilities (unless explicitly approved and documented with `# nosec`).
+
+- **Feature Requirements**:
+  - **Human Approval**: Any high-risk operation MUST implement `HumanApprovalService`.
+  - **Audit Logs**: Critical state changes MUST be logged via `AuditService`.
+  - **Data Isolation**: New tables MUST include `tenant_id` and have RLS policies.
+
+- **Zero Errors / Zero Drift**:
+  - Maintain 0 failures in `test-compliance`.
+  - Do not introduce regressions in ISO 42001 coverage (currently 100% for key services).

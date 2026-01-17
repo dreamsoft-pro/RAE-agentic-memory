@@ -55,6 +55,15 @@ class OperationRiskLevel(str, Enum):
     none = "none"
 
 
+class InformationClass(str, Enum):
+    """Information classification per ISO 27000."""
+
+    public = "public"
+    internal = "internal"
+    confidential = "confidential"
+    restricted = "restricted"
+
+
 class MemoryRecord(BaseModel):
     """
     The standard, unified format for a memory record.
@@ -97,6 +106,14 @@ class MemoryRecord(BaseModel):
     )
     verification_notes: Optional[str] = Field(
         None, max_length=1024, description="Notes from verification process"
+    )
+
+    # ISO 27000/42001 - Smart Black Box Phase 2
+    info_class: InformationClass = Field(
+        InformationClass.internal, description="Information classification"
+    )
+    governance: Optional[Dict[str, Any]] = Field(
+        None, description="Governance metadata (rationale, confidence, risk)"
     )
 
     # Phase 2: Telemetry & Sync Fields
@@ -159,6 +176,15 @@ class StoreMemoryRequest(BaseModel):
     )
     verification_notes: Optional[str] = Field(
         None, max_length=1024, description="Notes about source verification"
+    )
+
+    # ISO 27000/42001 - Smart Black Box Phase 2
+    info_class: Optional[InformationClass] = Field(
+        None,
+        description="Information classification (public, internal, confidential, restricted)",
+    )
+    governance: Optional[Dict[str, Any]] = Field(
+        None, description="Governance metadata (rationale, confidence, risk)"
     )
 
     @field_validator("layer", mode="before")

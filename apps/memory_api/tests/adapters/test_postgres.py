@@ -81,6 +81,8 @@ class TestPostgreSQLStorage:
             "source": None,
             "memory_type": "text",
             "strength": 1.0,
+            "info_class": "internal",
+            "governance": {},
         }
 
         memory = await pg_storage.get_memory(memory_id, "tenant1")
@@ -125,6 +127,8 @@ class TestPostgreSQLStorage:
                 "source": None,
                 "memory_type": "text",
                 "strength": 1.0,
+                "info_class": "internal",
+                "governance": {},
             }
         ]
 

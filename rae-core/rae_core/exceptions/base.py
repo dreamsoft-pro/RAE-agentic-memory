@@ -17,3 +17,9 @@ class ValidationError(RAEError):
     """Exception raised for validation failures."""
 
     pass
+
+
+class SecurityPolicyViolation(RAEError):
+    """Exception raised when a security policy is violated (ISO 27000)."""
+
+    pass
