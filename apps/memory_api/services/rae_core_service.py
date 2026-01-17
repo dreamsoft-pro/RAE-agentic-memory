@@ -31,7 +31,9 @@ from rae_core.interfaces.database import IDatabaseProvider
 from rae_core.interfaces.embedding import IEmbeddingProvider
 from rae_core.interfaces.storage import IMemoryStorage
 from rae_core.interfaces.vector import IVectorStore
+from rae_core.models.interaction import AgentAction, RAEInput
 from rae_core.models.search import SearchResponse
+from rae_core.runtime import RAERuntime
 
 logger = structlog.get_logger(__name__)
 
@@ -40,7 +42,7 @@ class RAECoreService:
     """
     Integration service for RAE-Core.
 
-    Manages RAEEngine lifecycle and provides high-level API.
+    Manages RAEEngine and RAERuntime lifecycles.
     """
 
     def __init__(
@@ -51,11 +53,6 @@ class RAECoreService:
     ):
         """
         Initialize service with infrastructure clients.
-
-        Args:
-            postgres_pool: PostgreSQL connection pool
-            qdrant_client: Qdrant async client
-            redis_client: Redis async client
         """
         self.postgres_pool = postgres_pool
         self.qdrant_client = qdrant_client
@@ -66,80 +63,50 @@ class RAECoreService:
         self.redis_adapter: ICacheProvider
         self.savings_service: Optional[TokenSavingsService]
 
-        # 1. Initialize embedding provider (needed for adapter config)
-        # Check if we should ignore DB based on settings/env
+        # 1. Initialize embedding provider
         import os
 
         from apps.memory_api.config import settings
 
         db_mode = os.getenv("RAE_DB_MODE") or settings.RAE_DB_MODE
-
-        # If postgres_pool is explicitly provided (e.g. in tests),
-        # we should use it unless we are strictly in Lite mode with no DB.
         ignore_db = (
             postgres_pool is None
             or (db_mode == "ignore" and postgres_pool is None)
             or (settings.RAE_PROFILE == "lite" and os.getenv("RAE_FORCE_DB") != "1")
         )
 
-        # BUT: For integration tests that pass a pool, we MUST NOT ignore it
         if postgres_pool is not None:
             ignore_db = False
 
         base_provider: IEmbeddingProvider
         if getattr(settings, "RAE_PROFILE", "standard") == "distributed":
             base_provider = RemoteEmbeddingProvider(base_url=settings.ML_SERVICE_URL)
-            logger.info("using_remote_embedding_provider", url=settings.ML_SERVICE_URL)
         elif getattr(settings, "RAE_PROFILE", "standard") == "lite":
             from apps.memory_api.services.embedding import MathOnlyEmbeddingProvider
 
             base_provider = MathOnlyEmbeddingProvider()
-            logger.info("using_math_only_embedding_provider_for_lite")
         else:
             base_provider = LocalEmbeddingProvider()
 
         self.embedding_provider = EmbeddingManager(default_provider=base_provider)
 
-        # 2. Initialize Token Savings Service
-        if postgres_pool and not ignore_db:
-            self.savings_service = TokenSavingsService(
-                TokenSavingsRepository(postgres_pool)
-            )
-        else:
-            self.savings_service = None
-
-        # 3. Initialize adapters with Lite mode support
+        # 2. Initialize adapters
         if postgres_pool and not ignore_db:
             self.postgres_adapter = PostgreSQLStorage(pool=postgres_pool)
         else:
             from rae_adapters.memory import InMemoryStorage
 
-            logger.warning("using_in_memory_storage_fallback")
             self.postgres_adapter = InMemoryStorage()
 
         if qdrant_client and not ignore_db:
-            # Get dimension and distance from config
             dim = self.embedding_provider.get_dimension()
             distance = getattr(settings, "RAE_VECTOR_DISTANCE", "Cosine")
-
             self.qdrant_adapter = QdrantVectorStore(
                 client=cast(Any, qdrant_client), embedding_dim=dim, distance=distance
             )
-        elif (
-            settings.RAE_VECTOR_BACKEND == "pgvector"
-            and postgres_pool
-            and not ignore_db
-        ):
-            from apps.memory_api.services.vector_store.postgres_adapter import (
-                PostgresVectorAdapter,
-            )
-
-            logger.info("using_postgres_vector_adapter")
-            self.qdrant_adapter = PostgresVectorAdapter(pool=postgres_pool)
         else:
             from rae_adapters.memory import InMemoryVectorStore
 
-            logger.warning("using_in_memory_vector_fallback")
             self.qdrant_adapter = InMemoryVectorStore()
 
         if redis_client and not ignore_db:
@@ -147,36 +114,113 @@ class RAECoreService:
         else:
             from rae_adapters.memory import InMemoryCache
 
-            logger.warning("using_in_memory_cache_fallback")
             self.redis_adapter = InMemoryCache()
 
-        # Initialize LLM provider with delegation support
+        # 3. Initialize Engine & Runtime
         self.llm_provider = get_llm_provider(task_repo=postgres_pool)
-
-        # Initialize Settings
         self.settings = RAESettings(
             sensory_max_size=100,
             working_max_size=100,
         )
 
-        # Autonomous Mode Detection (RAE-Lite)
-        # If in lite mode, disable vector search to use Math Layer only
-        effective_vector_store = self.qdrant_adapter
-        if settings.RAE_PROFILE == "lite":
-            logger.info("lite_profile_math_mode_active", reason="math_only_strategy")
-            effective_vector_store = None  # Force Math-only search
-
-        # Initialize RAEEngine
         self.engine = RAEEngine(
             memory_storage=self.postgres_adapter,
-            vector_store=effective_vector_store,
+            vector_store=self.qdrant_adapter if settings.RAE_PROFILE != "lite" else None,
             embedding_provider=self.embedding_provider,
             llm_provider=cast(Any, self.llm_provider),
             settings=self.settings,
             cache_provider=self.redis_adapter,
         )
 
-        logger.info("rae_core_service_initialized")
+        logger.info("rae_core_service_initialized", profile=settings.RAE_PROFILE)
+
+    async def execute_action(
+        self,
+        tenant_id: str | UUID,
+        agent_id: str,
+        prompt: str,
+        session_id: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> AgentAction:
+        """
+        Execute an agent action through RAERuntime (RAE-First).
+        """
+        from uuid import uuid4
+
+        from rae_core.interfaces.agent import BaseAgent
+
+        # Create a transient agent wrapper for the LLM
+        class TransientAgent(BaseAgent):
+            def __init__(self, engine: RAEEngine):
+                self.engine = engine
+
+            async def run(self, rae_input: RAEInput) -> AgentAction:
+                # 1. Build context using RAEEngine (Hybrid Search)
+                agent_id = rae_input.context.get("agent_id", "default")
+                
+                # Search for relevant memories in RAE
+                search_results = await self.engine.search_memories(
+                    query=rae_input.content,
+                    tenant_id=rae_input.tenant_id,
+                    agent_id=agent_id,
+                    top_k=5
+                )
+                
+                context_block = "\n".join([f"- {res['content']}" for res in search_results])
+                system_prompt = f"RELEVANT PROJECT CONTEXT:\n{context_block}\n\nTask: {rae_input.content}"
+
+                # 2. Generate response using LLM
+                llm_result = await self.engine.generate_text(
+                    prompt=rae_input.content,
+                    system_prompt=system_prompt
+                )
+                
+                if not llm_result:
+                    llm_result = "I couldn't generate a response."
+                
+                # Check if it should be elevated to semantic based on internal signals
+                signals = []
+                if "decision" in llm_result.lower():
+                    signals.append("decision")
+                if "recommendation" in llm_result.lower():
+                    signals.append("recommendation")
+
+                from rae_core.models.interaction import AgentActionType
+                return AgentAction(
+                    type=AgentActionType.FINAL_ANSWER,
+                    content=llm_result,
+                    confidence=0.9,
+                    reasoning="LLM generation via RAEEngine",
+                    signals=signals
+                )
+
+        # Initialize Runtime with the transient agent
+        runtime = RAERuntime(storage=self.postgres_adapter, agent=TransientAgent(self.engine))
+
+        # Create input with context
+        # agent_id is not in RAEInput but in context/metadata in this version
+        rae_input = RAEInput(
+            request_id=uuid4(),
+            tenant_id=str(tenant_id),
+            content=prompt,
+            context={
+                "project": agent_id,
+                "session_id": session_id,
+                "agent_id": agent_id # For TransientAgent compatibility
+            }
+        )
+
+        # Execute through runtime
+        action = await runtime.process(rae_input)
+
+        logger.info(
+            "action_executed_via_runtime",
+            tenant_id=str(tenant_id),
+            agent_id=agent_id,
+            action_type=action.type,
+        )
+
+        return action
 
     async def ainit(self):
         """Perform asynchronous initialization of adapters."""
