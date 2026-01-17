@@ -131,6 +131,8 @@ class RAEEngine:
         ttl: int | None = None,
         source: str | None = None,
         strength: float = 1.0,
+        info_class: str = "internal",
+        governance: dict[str, Any] | None = None,
     ) -> UUID:
         """Store a new memory.
 
@@ -148,10 +150,13 @@ class RAEEngine:
             ttl: Time to live in seconds
             source: Source of memory
             strength: Memory strength
+            info_class: Information classification
+            governance: Governance metadata
         """
         # 0. Prepare data
         tags = tags or []
         metadata = metadata or {}
+        governance = governance or {}
 
         expires_at = None
         if ttl:
@@ -198,6 +203,8 @@ class RAEEngine:
             expires_at=expires_at,
             source=source,
             strength=strength,
+            info_class=info_class,
+            governance=governance,
         )
 
         # 3. Save all embeddings to memory_embeddings table

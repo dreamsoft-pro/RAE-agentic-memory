@@ -75,6 +75,8 @@ async def test_list_memories_with_data(mock_pool):
             "source": None,
             "memory_type": "text",
             "strength": 1.0,
+            "info_class": "internal",
+            "governance": {},
         }
     ]
 
@@ -167,6 +169,8 @@ async def test_search_memories_coverage(mock_pool):
             "source": None,
             "memory_type": "text",
             "strength": 1.0,
+            "info_class": "internal",
+            "governance": {},
         }
     ]
 

@@ -9,6 +9,7 @@ import webbrowser
 import structlog
 from PIL import Image, ImageDraw
 from pystray import Icon, Menu, MenuItem
+
 from rae_lite.config import settings
 
 logger = structlog.get_logger(__name__)

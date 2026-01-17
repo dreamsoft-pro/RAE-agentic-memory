@@ -62,7 +62,9 @@ class SQLiteStorage(IMemoryStorage):
                     last_accessed_at TEXT NOT NULL,
                     access_count INTEGER DEFAULT 0,
                     version INTEGER DEFAULT 1,
-                    expires_at TEXT
+                    expires_at TEXT,
+                    info_class TEXT DEFAULT 'internal',
+                    governance TEXT DEFAULT '{}'
                 )
             """
             )
@@ -169,6 +171,8 @@ class SQLiteStorage(IMemoryStorage):
         session_id: str | None = None,
         source: str | None = None,
         strength: float = 1.0,
+        info_class: str = "internal",
+        governance: dict[str, Any] | None = None,
     ) -> UUID:
         """Store a new memory."""
         await self.initialize()
@@ -178,6 +182,7 @@ class SQLiteStorage(IMemoryStorage):
 
         tags_json = json.dumps(tags or [])
         metadata_json = json.dumps(metadata or {})
+        governance_json = json.dumps(governance or {})
 
         # Convert expires_at to ISO string if it's a datetime
         expires_at_str = None
@@ -193,8 +198,8 @@ class SQLiteStorage(IMemoryStorage):
                 INSERT INTO memories (
                     id, content, layer, tenant_id, agent_id, tags, metadata,
                     importance, created_at, modified_at, last_accessed_at,
-                    access_count, version, expires_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 1, ?)
+                    access_count, version, expires_at, info_class, governance
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 1, ?, ?, ?)
                 """,
                 (
                     str(memory_id),
@@ -209,6 +214,8 @@ class SQLiteStorage(IMemoryStorage):
                     now,
                     now,
                     expires_at_str,
+                    info_class,
+                    governance_json,
                 ),
             )
             await db.commit()
