@@ -26,7 +26,7 @@ from rae_adapters.redis import RedisCache
 from rae_core.config import RAESettings
 from rae_core.embedding.manager import EmbeddingManager
 from rae_core.engine import RAEEngine
-from rae_core.exceptions.base import SecurityPolicyViolation
+from rae_core.exceptions.base import SecurityPolicyViolationError
 from rae_core.interfaces.cache import ICacheProvider
 from rae_core.interfaces.database import IDatabaseProvider
 from rae_core.interfaces.embedding import IEmbeddingProvider
@@ -324,6 +324,79 @@ class RAECoreService:
 
         return EnhancedGraphRepository(self.db)
 
+    def _enforce_security_policy(
+        self, info_class: str, target_layer: str | MemoryLayer
+    ) -> None:
+        """Enforce ISO 27000 security policies."""
+        if (
+            info_class == InformationClass.RESTRICTED
+            and target_layer != MemoryLayer.WORKING
+        ):
+            # Ensure target_layer is a string for logging/error message if it's an Enum
+            layer_value = (
+                target_layer.value
+                if isinstance(target_layer, MemoryLayer)
+                else target_layer
+            )
+
+            logger.error(
+                "security_policy_violation",
+                reason="RESTRICTED data blocked outside Working layer",
+                layer=layer_value,
+                info_class=info_class,
+            )
+            raise SecurityPolicyViolationError(
+                f"Security Policy Violation: RESTRICTED data cannot be stored in {layer_value} layer. "
+                "Only 'working' layer is allowed for restricted information."
+            )
+
+    def _detect_agentic_patterns(self, governance: dict, tags: list[str]) -> list[str]:
+        """Detect agentic patterns and return updated tags."""
+        pattern_type = governance.get("pattern_type")
+        fields = governance.get("fields", {})
+
+        if pattern_type == "prompt_chaining":
+            chain_length = fields.get("chain_length", 0)
+            if chain_length > 5:
+                if "high_risk_sequence" not in tags:
+                    tags.append("high_risk_sequence")
+                    logger.warning(
+                        "high_risk_sequence_detected", chain_length=chain_length
+                    )
+
+        elif pattern_type == "routing_decision":
+            confidence = fields.get("decision_basis_confidence") or fields.get(
+                "confidence", 1.0
+            )
+            if confidence < 0.5:
+                if "hitl_review_required" not in tags:
+                    tags.append("hitl_review_required")
+                    logger.warning(
+                        "low_confidence_routing_detected", confidence=confidence
+                    )
+
+        elif pattern_type == "tool_invocation":
+            cost_metrics = fields.get("cost_metrics", {})
+            token_count = cost_metrics.get("token_count", 0)
+            if token_count > 10000:
+                if "heavy_tool_use" not in tags:
+                    tags.append("heavy_tool_use")
+                    logger.info("heavy_tool_use_detected", token_count=token_count)
+
+        elif pattern_type == "reflection":
+            conf_before = fields.get("confidence_before", 1.0)
+            conf_after = fields.get("confidence_after", 1.0)
+            if conf_after < conf_before:
+                if "deeper_reflection_needed" not in tags:
+                    tags.append("deeper_reflection_needed")
+                    logger.warning(
+                        "confidence_delta_negative",
+                        before=conf_before,
+                        after=conf_after,
+                    )
+
+        return tags
+
     async def store_memory(
         self,
         tenant_id: str,
@@ -345,67 +418,12 @@ class RAECoreService:
         """
         # 1. Enforcement Logic (ISO 27000)
         target_layer = layer or MemoryLayer.EPISODIC
-        if (
-            info_class == InformationClass.RESTRICTED
-            and target_layer != MemoryLayer.WORKING
-        ):
-            logger.error(
-                "security_policy_violation",
-                reason="RESTRICTED data blocked outside Working layer",
-                layer=target_layer,
-                info_class=info_class,
-            )
-            raise SecurityPolicyViolation(
-                f"Security Policy Violation: RESTRICTED data cannot be stored in {target_layer.value} layer. "
-                "Only 'working' layer is allowed for restricted information."
-            )
+        self._enforce_security_policy(info_class, target_layer)
 
         # 2. Agentic Pattern Detection (Governance logic)
+        tags = tags or []
         if governance:
-            pattern_type = governance.get("pattern_type")
-            fields = governance.get("fields", {})
-            if tags is None:
-                tags = []
-
-            if pattern_type == "prompt_chaining":
-                chain_length = fields.get("chain_length", 0)
-                if chain_length > 5:
-                    if "high_risk_sequence" not in tags:
-                        tags.append("high_risk_sequence")
-                        logger.warning(
-                            "high_risk_sequence_detected", chain_length=chain_length
-                        )
-
-            elif pattern_type == "routing_decision":
-                confidence = fields.get("decision_basis_confidence") or fields.get(
-                    "confidence", 1.0
-                )
-                if confidence < 0.5:
-                    if "hitl_review_required" not in tags:
-                        tags.append("hitl_review_required")
-                        logger.warning(
-                            "low_confidence_routing_detected", confidence=confidence
-                        )
-
-            elif pattern_type == "tool_invocation":
-                cost_metrics = fields.get("cost_metrics", {})
-                token_count = cost_metrics.get("token_count", 0)
-                if token_count > 10000:
-                    if "heavy_tool_use" not in tags:
-                        tags.append("heavy_tool_use")
-                        logger.info("heavy_tool_use_detected", token_count=token_count)
-
-            elif pattern_type == "reflection":
-                conf_before = fields.get("confidence_before", 1.0)
-                conf_after = fields.get("confidence_after", 1.0)
-                if conf_after < conf_before:
-                    if "deeper_reflection_needed" not in tags:
-                        tags.append("deeper_reflection_needed")
-                        logger.warning(
-                            "confidence_delta_negative",
-                            before=conf_before,
-                            after=conf_after,
-                        )
+            tags = self._detect_agentic_patterns(governance, tags)
 
         project_id = project or "default"
 
