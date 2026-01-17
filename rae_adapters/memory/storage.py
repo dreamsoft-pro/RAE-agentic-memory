@@ -89,6 +89,8 @@ class InMemoryStorage(IMemoryStorage):
         session_id: str | None = None,
         source: str | None = None,
         strength: float = 1.0,
+        info_class: str = "internal",
+        governance: dict[str, Any] | None = None,
     ) -> UUID:
         """Store a new memory."""
         async with self._lock:
@@ -114,6 +116,8 @@ class InMemoryStorage(IMemoryStorage):
                 "session_id": session_id,
                 "source": source,
                 "strength": strength,
+                "info_class": info_class,
+                "governance": governance or {},
             }
 
             # Store memory

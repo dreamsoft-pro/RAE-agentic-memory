@@ -32,6 +32,8 @@ class IMemoryStorage(Protocol):
         session_id: str | None = None,
         source: str | None = None,
         strength: float = 1.0,
+        info_class: str = "internal",
+        governance: dict[str, Any] | None = None,
     ) -> UUID:
         """Store a new memory.
 
@@ -50,6 +52,8 @@ class IMemoryStorage(Protocol):
             session_id: Session identifier
             source: Source of the memory
             strength: Memory strength (default 1.0)
+            info_class: Information classification (Smart Black Box Phase 2)
+            governance: Governance metadata (Smart Black Box Phase 2)
         """
         ...
 

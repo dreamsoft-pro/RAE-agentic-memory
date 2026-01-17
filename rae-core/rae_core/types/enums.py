@@ -54,3 +54,22 @@ class ReflectionType(str, Enum):
     PATTERN = "pattern"
     ANOMALY = "anomaly"
     META = "meta"
+
+
+class InformationClass(str, Enum):
+    """Information classification per ISO 27000."""
+
+    PUBLIC = "public"
+    INTERNAL = "internal"
+    CONFIDENTIAL = "confidential"
+    RESTRICTED = "restricted"
+
+
+class OperationRiskLevel(str, Enum):
+    """Risk level for AI operations per ISO 42001."""
+
+    CRITICAL = "critical"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+    NONE = "none"

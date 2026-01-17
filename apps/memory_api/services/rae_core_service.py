@@ -331,6 +331,8 @@ class RAECoreService:
         session_id: Optional[str] = None,
         memory_type: Optional[str] = None,
         ttl: Optional[int] = None,
+        info_class: str = "internal",
+        governance: Optional[dict] = None,
     ) -> str:
         """
         Store memory using RAEEngine.
@@ -354,6 +356,8 @@ class RAECoreService:
             memory_type=memory_type or "text",
             ttl=ttl,
             source=source,
+            info_class=info_class,
+            governance=governance,
         )
 
         logger.info(
