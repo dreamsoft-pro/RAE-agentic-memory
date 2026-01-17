@@ -261,19 +261,26 @@ class RAEBenchmarkRunner:
             # Recreate if dimensions mismatch
             if current_size is not None and current_size != expected_dim:
                 print(
-                    f"   ⚠️ Collection dimension mismatch (found {current_size}, expected {expected_dim}). Recreating..."
+                    f"   ⚠️ Collection dimension mismatch (found {current_size}, expected {expected_dim}). Recreating with Named Vectors..."
                 )
                 await vector_store.qdrant_client.delete_collection("memories")
+                # Use standard RAE vectors config to maintain model agnosticism
                 await vector_store.qdrant_client.create_collection(
                     collection_name="memories",
                     vectors_config={
                         "dense": rest_models.VectorParams(
                             size=expected_dim, distance=rest_models.Distance.COSINE
-                        )
+                        ),
+                        "openai": rest_models.VectorParams(
+                            size=1536, distance=rest_models.Distance.COSINE
+                        ),
+                        "ollama": rest_models.VectorParams(
+                            size=768, distance=rest_models.Distance.COSINE
+                        ),
                     },
                     sparse_vectors_config={"text": models.SparseVectorParams()},
                 )
-                print(f"   ✅ Collection recreated with dim={expected_dim}")
+                print(f"   ✅ Collection recreated with Named Vectors (dense={expected_dim}, ollama=768, openai=1536)")
         except Exception as e:
             print(f"   ℹ️ Could not check/recreate collection: {e}")
 
