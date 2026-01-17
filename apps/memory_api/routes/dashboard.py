@@ -193,45 +193,48 @@ async def websocket_endpoint(
 # ============================================================================
 
 
-@router.post("/metrics", response_model=GetDashboardMetricsResponse)
+@router.api_route("/metrics", methods=["GET", "POST"], response_model=GetDashboardMetricsResponse)
 async def get_dashboard_metrics(
-    request: GetDashboardMetricsRequest,
+    request_data: Optional[GetDashboardMetricsRequest] = None,
+    tenant_id: Optional[str] = Query(None),
+    project_id: Optional[str] = Query(None),
+    project: Optional[str] = Query(None), # Alternative for Streamlit
+    period: MetricPeriod = Query(MetricPeriod.LAST_24H),
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
     Get dashboard metrics for a time period.
-
-    Returns current system metrics, time series data, and recent activity.
-
-    **Use Case:** Dashboard overview, metrics display.
+    Supports both POST (JSON body) and GET (Query params).
     """
     try:
+        # Handle parameters from multiple sources
+        t_id = tenant_id
+        p_id = project_id or project # Fallback to 'project'
+        m_period = period
+
+        if request_data:
+            t_id = t_id or request_data.tenant_id
+            p_id = p_id or request_data.project_id
+            m_period = request_data.period
+
+        # Final safety check
+        if not t_id: t_id = "b0eebc99-9c0b-4ef8-bb6d-6bb9bd380b22"
+        if not p_id: p_id = "default"
+
         # Get WebSocket service for metrics collection
         service = get_websocket_service(rae_service)
 
         # Collect current metrics
-        system_metrics = await service._collect_system_metrics(
-            request.tenant_id, request.project_id
-        )
+        system_metrics = await service._collect_system_metrics(t_id, p_id)
 
         # Get time series metrics
         time_series_metrics = await _get_time_series_metrics(
-            rae_service.db,
-            request.tenant_id,
-            request.project_id,
-            request.period,
+            rae_service.db, t_id, p_id, m_period,
         )
 
         # Get recent activity
         recent_activity = await _get_recent_activity(
-            rae_service.db, request.tenant_id, request.project_id, limit=50
-        )
-
-        logger.info(
-            "dashboard_metrics_retrieved",
-            tenant_id=request.tenant_id,
-            project_id=request.project_id,
-            period=request.period.value,
+            rae_service.db, t_id, p_id, limit=50
         )
 
         return GetDashboardMetricsResponse(
@@ -622,8 +625,31 @@ async def _get_time_series_metrics(
                     aggregation_interval=aggregation_interval,
                 )
 
+                # Fallback: If no historical data, create a 'live' point from memories table
                 if not data_points:
-                    continue
+                    try:
+                        live_val = 0.0
+                        if metric_name == "memory_count":
+                            live_val = await db.fetchval(
+                                "SELECT COUNT(*)::float FROM memories WHERE tenant_id = $1::uuid AND (project = $2 OR agent_id = $2)",
+                                tenant_id, project_id
+                            )
+                        elif metric_name == "reflection_count":
+                            live_val = await db.fetchval(
+                                "SELECT COUNT(*)::float FROM memories WHERE tenant_id = $1::uuid AND (project = $2 OR agent_id = $2) AND layer IN ('reflective', 'rm')",
+                                tenant_id, project_id
+                            )
+                        
+                        if live_val is not None and live_val >= 0:
+                            data_points = [{
+                                "timestamp": datetime.now(timezone.utc),
+                                "metric_value": float(live_val)
+                            }]
+                        else:
+                            continue
+                    except Exception as e:
+                        logger.warning("live_metric_fallback_failed", metric=metric_name, error=str(e))
+                        continue
 
                 # Format data points
                 formatted_data_points = [

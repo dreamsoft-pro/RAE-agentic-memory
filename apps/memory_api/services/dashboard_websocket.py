@@ -511,11 +511,12 @@ class DashboardWebSocketService:
         """
         try:
             # 1. Fetch count per layer for this project
+            # Explicitly cast tenant_id to UUID to match schema
             layer_counts = await self.db.fetch(
                 """
                 SELECT layer, COUNT(*) as count, AVG(importance) as avg_imp
                 FROM memories
-                WHERE tenant_id = $1 AND (project = $2 OR agent_id = $2)
+                WHERE tenant_id = $1::uuid AND (project = $2 OR agent_id = $2)
                 GROUP BY layer
                 """,
                 tenant_id,
@@ -527,7 +528,7 @@ class DashboardWebSocketService:
             
             # Map common variants to standard names
             episodic = counts.get("episodic", 0) + counts.get("em", 0)
-            reflective = counts.get("reflective", 0) + counts.get("reflections", 0) + counts.get("long-term", 0)
+            reflective = counts.get("reflective", 0) + counts.get("reflections", 0) + counts.get("long-term", 0) + counts.get("rm", 0)
             semantic = counts.get("semantic", 0) + counts.get("concepts", 0)
             
             total = sum(counts.values())
@@ -536,8 +537,8 @@ class DashboardWebSocketService:
             graph_stats = await self.db.fetchrow(
                 """
                 SELECT
-                    (SELECT COUNT(*) FROM knowledge_graph_nodes WHERE tenant_id = $1) as total_nodes,
-                    (SELECT COUNT(*) FROM knowledge_graph_edges WHERE tenant_id = $1) as total_edges
+                    (SELECT COUNT(*) FROM knowledge_graph_nodes WHERE tenant_id = $1::uuid) as total_nodes,
+                    (SELECT COUNT(*) FROM knowledge_graph_edges WHERE tenant_id = $1::uuid) as total_edges
                 """,
                 tenant_id,
             )

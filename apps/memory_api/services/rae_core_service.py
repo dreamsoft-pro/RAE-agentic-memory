@@ -132,6 +132,13 @@ class RAECoreService:
             cache_provider=self.redis_adapter,
         )
 
+        # New: Reflection Engine
+        from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
+        self.reflection_engine = ReflectionEngineV2(self)
+
+        # New: RAERuntime for RAE-First flow
+        self.runtime = RAERuntime(self.postgres_adapter, None) # Agent set per execution
+
         logger.info("rae_core_service_initialized", profile=settings.RAE_PROFILE)
 
     async def execute_action(
@@ -151,54 +158,80 @@ class RAECoreService:
 
         # Create a transient agent wrapper for the LLM
         class TransientAgent(BaseAgent):
-            def __init__(self, engine: RAEEngine):
-                self.engine = engine
+            def __init__(self, service: 'RAECoreService'):
+                self.service = service
 
             async def run(self, rae_input: RAEInput) -> AgentAction:
-                # 1. Build context using RAEEngine (Hybrid Search)
+                # 1. Build context using core ContextBuilder (Agnostic)
+                from rae_core.context.builder import ContextBuilder
+                builder = ContextBuilder(max_tokens=4000)
+                
                 agent_id = rae_input.context.get("agent_id", "default")
                 
-                # Search for relevant memories in RAE
-                search_results = await self.engine.search_memories(
+                # Search for relevant memories in RAE across ALL layers
+                search_results = await self.service.engine.search_memories(
                     query=rae_input.content,
                     tenant_id=rae_input.tenant_id,
                     agent_id=agent_id,
-                    top_k=5
+                    top_k=10
                 )
                 
-                context_block = "\n".join([f"- {res['content']}" for res in search_results])
-                system_prompt = f"RELEVANT PROJECT CONTEXT:\n{context_block}\n\nTask: {rae_input.content}"
-
-                # 2. Generate response using LLM
-                llm_result = await self.engine.generate_text(
-                    prompt=rae_input.content,
-                    system_prompt=system_prompt
+                # Use core builder to assemble LLM-ready context
+                context_text, _ = builder.build_context(
+                    memories=search_results,
+                    query=rae_input.content
                 )
+                
+                system_prompt = f"RELEVANT PROJECT CONTEXT:\n{context_text}\n\nTask: {rae_input.content}"
+
+                # 2. Generate response using LLM with Strict Timeout
+                try:
+                    import asyncio
+                    # RELAXED TIMEOUT for weak machines (120s)
+                    llm_result = await asyncio.wait_for(
+                        self.service.engine.generate_text(
+                            prompt=rae_input.content,
+                            system_prompt=system_prompt
+                        ),
+                        timeout=120.0 # Wait max 120s
+                    )
+                except (asyncio.TimeoutError, Exception) as e:
+                    # GRACEFUL DEGRADATION: Math-Only Fallback
+                    logger.warning("llm_fallback_triggered", reason=str(e))
+                    
+                    # Formulate answer using PURE MATHEMATICS (top search results)
+                    if search_results:
+                        top_facts = [r['content'] for r in search_results[:3]]
+                        llm_result = (
+                            "STABILITY MODE ACTIVE (Math Fallback). "
+                            "Based on my memory, here are the core facts: " + 
+                            " | ".join(top_facts)
+                        )
+                    else:
+                        llm_result = "STABILITY MODE ACTIVE. No specific memories found to answer this."
                 
                 if not llm_result:
                     llm_result = "I couldn't generate a response."
                 
-                # Check if it should be elevated to semantic based on internal signals
+                # Extract signals for importance
                 signals = []
-                if "decision" in llm_result.lower():
+                if "stability" in llm_result.lower(): signals.append("fallback")
+                if "decision" in llm_result.lower() or "rule" in llm_result.lower():
                     signals.append("decision")
-                if "recommendation" in llm_result.lower():
-                    signals.append("recommendation")
 
                 from rae_core.models.interaction import AgentActionType
                 return AgentAction(
                     type=AgentActionType.FINAL_ANSWER,
                     content=llm_result,
-                    confidence=0.9,
-                    reasoning="LLM generation via RAEEngine",
+                    confidence=0.5 if "FALLBACK" in llm_result else 0.9,
+                    reasoning="LLM with Math Fallback" if "FALLBACK" in llm_result else "LLM generation",
                     signals=signals
                 )
 
         # Initialize Runtime with the transient agent
-        runtime = RAERuntime(storage=self.postgres_adapter, agent=TransientAgent(self.engine))
+        self.runtime.agent = TransientAgent(self)
 
         # Create input with context
-        # agent_id is not in RAEInput but in context/metadata in this version
         rae_input = RAEInput(
             request_id=uuid4(),
             tenant_id=str(tenant_id),
@@ -206,12 +239,34 @@ class RAECoreService:
             context={
                 "project": agent_id,
                 "session_id": session_id,
-                "agent_id": agent_id # For TransientAgent compatibility
+                "agent_id": agent_id 
             }
         )
 
         # Execute through runtime
-        action = await runtime.process(rae_input)
+        action = await self.runtime.process(rae_input)
+
+        # 3. SIDE EFFECT: Automatic Reflection Cycle
+        # Trigger reflection if the action has important signals
+        if action.signals:
+            try:
+                from apps.memory_api.models.reflection_v2_models import (
+                    OutcomeType,
+                    ReflectionContext,
+                )
+                refl_ctx = ReflectionContext(
+                    tenant_id=str(tenant_id),
+                    project_id=agent_id,
+                    outcome=OutcomeType.SUCCESS,
+                    task_goal=prompt,
+                    events=[], # interaction history would go here
+                    session_id=UUID(session_id) if session_id and len(session_id) == 36 else None
+                )
+                refl_result = await self.reflection_engine.generate_reflection(refl_ctx)
+                await self.reflection_engine.store_reflection(refl_result, str(tenant_id), agent_id)
+                logger.info("automated_reflection_stored", project=agent_id)
+            except Exception as e:
+                logger.warning("automated_reflection_failed", error=str(e))
 
         logger.info(
             "action_executed_via_runtime",

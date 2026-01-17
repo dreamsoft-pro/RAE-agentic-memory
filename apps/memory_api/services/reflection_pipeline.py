@@ -322,17 +322,39 @@ class ReflectionPipeline:
         self, memories: List[Dict[str, Any]], min_cluster_size: int
     ) -> Dict[str, List[Dict[str, Any]]]:
         """
-        Cluster memories using HDBSCAN or k-means.
-
-        Args:
-            memories: List of memory dictionaries with embeddings
-            min_cluster_size: Minimum cluster size
-
-        Returns:
-            Dictionary mapping cluster_id to list of memories
+        Cluster memories using HDBSCAN/k-means or a simple time-based fallback.
         """
         with tracer.start_as_current_span("rae.reflection_pipeline.cluster") as span:
-            # Ensure scikit-learn is available for clustering
+            span.set_attribute("rae.reflection.cluster.memory_count", len(memories))
+            
+            # --- Fallback Clustering (No scikit-learn) ---
+            if not SKLEARN_AVAILABLE:
+                logger.info("clustering_fallback_active", reason="sklearn_missing")
+                # Simple strategy: Group by 4-hour time windows
+                clusters: Dict[str, List[Dict[str, Any]]] = {}
+                for memory in memories:
+                    created_at = memory.get("created_at")
+                    if isinstance(created_at, str):
+                        try: created_at = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
+                        except: created_at = datetime.now()
+                    
+                    if created_at:
+                        # Bucket by 4 hours
+                        bucket = created_at.strftime("%Y-%m-%d-%H")
+                        bucket_id = f"time_bucket_{int(created_at.hour // 4)}"
+                        key = f"{bucket}-{bucket_id}"
+                        if key not in clusters: clusters[key] = []
+                        clusters[key].append(memory)
+                
+                # Filter small clusters
+                valid_clusters = {k: v for k, v in clusters.items() if len(v) >= min_cluster_size}
+                # If no time clusters, put everything in one global cluster
+                if not valid_clusters and len(memories) >= min_cluster_size:
+                    valid_clusters = {"global_fallback": memories}
+                
+                return valid_clusters
+
+            # --- Standard ML Clustering ---
             self._ensure_sklearn_available()
 
             span.set_attribute("rae.reflection.cluster.memory_count", len(memories))
