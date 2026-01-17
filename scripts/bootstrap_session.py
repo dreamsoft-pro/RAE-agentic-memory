@@ -64,11 +64,32 @@ def get_latest_context() -> str:
     except Exception:
         return "Context retrieval failed. defaulting to manual inspection."
 
+def check_gemini_config(rae_url: str):
+    """Checks if .gemini/settings.json matches the running RAE API."""
+    try:
+        config_path = ".gemini/settings.json"
+        if os.path.exists(config_path):
+            with open(config_path, "r") as f:
+                content = f.read()
+                # Check if the active port is in the config
+                active_port = "8001" if "8001" in rae_url else "8000"
+                if f"localhost:{active_port}" not in content and f"rae-api:{active_port}" not in content:
+                    print(f"\n⚠️  WARNING: .gemini/settings.json might have wrong port. Active RAE is on {active_port}.")
+    except Exception:
+        pass
+
 def main():
     print("🔌 RAE-First Session Bootstrap Initiated...")
     
     # 1. Infrastructure Check
     rae_status = check_service("RAE-Core", RAE_API_URL)
+    
+    # Fix URL for further checks if fallback occurred
+    if "url" in rae_status:
+        # Update global var effectively for this run
+        active_url = rae_status["url"]
+        check_gemini_config(active_url)
+
     mcp_status = check_service("MCP-Server", MCP_URL)
     
     infra_ok = rae_status["status"] == "OK" # MCP is optional but recommended
