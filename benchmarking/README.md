@@ -1,4 +1,14 @@
-# 📊 RAE Benchmarking Suite - Complete Guide
+# RAE Benchmarking Suite
+
+This directory contains the code and logic for performance and quality benchmarks.
+
+## 📊 Benchmark Results & Artifacts
+To keep this repository lightweight, all heavy artifacts (PNG plots, large JSON reports) are stored in a dedicated repository:
+👉 **[RAE-benchmarks](https://github.com/vproject111/RAE-benchmarks)**
+
+---
+
+## Structure
 
 > **Comprehensive evaluation framework for RAE Memory System**
 > *11 benchmarks | 1,100+ test memories | 10,000+ cycle temporal testing | Full telemetry support*
