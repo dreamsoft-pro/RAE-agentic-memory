@@ -48,7 +48,8 @@ def make_request(url, method='GET', data=None, timeout=5):
 def get_active_url():
     """Finds the working RAE API URL."""
     print("🔍 Probing RAE Nodes...")
-    urls = [DEFAULT_URL, LUMINA_URL, LITE_URL]
+    # Prioritize Stable Node 1 (Lumina) over potentially broken Local Dev
+    urls = [LUMINA_URL, DEFAULT_URL, LITE_URL]
     
     for url in urls:
         print(f"   Target: {url} ... ", end="", flush=True)
@@ -122,23 +123,33 @@ def log_session_start(base_url):
         pass
 
 def main():
-    print("🔌 RAE-First Bootstrap (Zero-Dep Mode)...")
+    import argparse
+    parser = argparse.ArgumentParser(description="RAE Bootstrap")
+    parser.add_argument("--node", type=str, choices=["local", "node1"], default="local", help="Node to connect to")
+    args = parser.parse_args()
+
+    print(f"🔌 RAE-First Bootstrap (Node: {args.node.upper()})...")
     
-    active_url = get_active_url()
+    if args.node == "node1":
+        active_url = LUMINA_URL
+    else:
+        # Check Local Dev first, then Lite
+        print("🔍 Probing Local Nodes...")
+        active_url = None
+        for url in [DEFAULT_URL, LITE_URL]:
+            code, _ = make_request(f"{url}/health", timeout=1)
+            if code == 200:
+                active_url = url
+                break
     
     if not active_url:
-        print("\n❌ CRITICAL: RAE IS UNREACHABLE.")
-        print("Infrastructure is broken. Agent must perform REPAIR.")
-        print("1. Kill ghosts: ss -lptn 'sport = :8001'")
-        print("2. Reset Docker: docker compose down && docker network prune -f && docker compose up -d rae-api-dev")
-        print("3. Try Lumina: ssh operator@100.68.166.117")
+        print("\n❌ CRITICAL: Selected RAE Node is unreachable.")
         sys.exit(1)
     
-    # Success path
+    print(f"Connected to {active_url} ✅")
     log_session_start(active_url)
     fetch_black_box_context(active_url)
-    
-    print("\n✅ SESSION READY. Proceed with RAE context.")
+    print("\n✅ SESSION READY.")
 
 if __name__ == "__main__":
     main()

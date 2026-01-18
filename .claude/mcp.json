@@ -1,6 +1,24 @@
 {
   "mcpServers": {
-    "rae-dev": {
+    "node1-rae-dev": {
+      "command": "/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/.venv/bin/rae-mcp-server",
+      "env": {
+        "RAE_API_URL": "http://100.68.166.117:8001",
+        "RAE_PROJECT_ID": "RAE-agentic-memory",
+        "RAE_TENANT_ID": "default-tenant",
+        "RAE_PROFILE": "dev"
+      }
+    },
+    "node1-rae-lite": {
+      "command": "/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/.venv/bin/rae-mcp-server",
+      "env": {
+        "RAE_API_URL": "http://100.68.166.117:8008",
+        "RAE_PROJECT_ID": "RAE-agentic-memory",
+        "RAE_TENANT_ID": "default-tenant",
+        "RAE_PROFILE": "lite"
+      }
+    },
+    "local-rae-dev": {
       "command": "/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/.venv/bin/rae-mcp-server",
       "env": {
         "RAE_API_URL": "http://localhost:8001",
@@ -9,21 +27,10 @@
         "RAE_PROFILE": "dev"
       }
     },
-    "rae-standard": {
-      "command": "/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/.venv/bin/rae-mcp-server",
-      "env": {
-        "RAE_API_URL": "http://localhost:8000",
-        "RAE_API_KEY": "secret",
-        "RAE_PROJECT_ID": "RAE-agentic-memory",
-        "RAE_TENANT_ID": "default-tenant",
-        "RAE_PROFILE": "standard"
-      }
-    },
-    "rae-lite": {
+    "local-rae-lite": {
       "command": "/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/.venv/bin/rae-mcp-server",
       "env": {
         "RAE_API_URL": "http://localhost:8008",
-        "RAE_API_KEY": "secret",
         "RAE_PROJECT_ID": "RAE-agentic-memory",
         "RAE_TENANT_ID": "default-tenant",
         "RAE_PROFILE": "lite"

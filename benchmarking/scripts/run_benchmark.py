@@ -157,8 +157,16 @@ class RAEBenchmarkRunner:
 
     async def _get_embedding(self, service, texts: List[str]) -> List[List[float]]:
         if self.mock_embeddings:
-            # Return dummy 768d vectors (standard for nomic)
-            return [[0.1] * 768 for _ in texts]
+            # Determine actual dimension from service/provider
+            try:
+                from apps.memory_api.services.embedding import LocalEmbeddingProvider
+                provider = LocalEmbeddingProvider(service)
+                dim = provider.get_dimension()
+            except Exception:
+                dim = 768  # Fallback
+            
+            # Return dummy vectors of correct dimension
+            return [[0.1] * dim for _ in texts]
         return cast(List[List[float]], await service.generate_embeddings_async(texts))
 
     async def load_benchmark(self):

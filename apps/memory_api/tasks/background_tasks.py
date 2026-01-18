@@ -751,37 +751,7 @@ def run_nightly_quality_audit(self):
     return asyncio.run(main())
 
 
-@celery_app.task(bind=True, max_retries=3)
-def run_bayesian_tuning_task(self, tenant_id: str = "default"):
-    """
-    Automated Bayesian Weight Tuning.
-    Learns optimal weights (alpha, beta, gamma) from user feedback.
-    """
-    from apps.memory_api.services.tuning_service import TuningService
-
-    async def main():
-        async with rae_context() as rae_service:
-            try:
-                service = TuningService(rae_service)
-                result = await service.run_tuning_cycle(tenant_id)
-                
-                if result.get("posterior"):
-                    logger.info(
-                        "bayesian_tuning_complete",
-                        tenant_id=tenant_id,
-                        new_weights=result["posterior"]["new_weights"],
-                        confidence=result["posterior"]["confidence"]
-                    )
-                return result
-            except Exception as e:
-                logger.error("bayesian_tuning_failed", error=str(e))
-                raise self.retry(exc=e, countdown=300)
-
-    return asyncio.run(main())
-
-
 # --- Celery Beat Schedule ---
-
 @celery_app.on_after_configure.connect
 def setup_periodic_tasks(sender, **kwargs):
     from celery.schedules import crontab
@@ -838,10 +808,3 @@ def setup_periodic_tasks(sender, **kwargs):
         run_consistency_check_task.s(),
         name="run consistency check daily at 4 AM",
     )
-    # Schedule Bayesian Weight Tuning every 10 minutes
-    sender.add_periodic_task(
-        600.0,
-        run_bayesian_tuning_task.s(),
-        name="run bayesian weight tuning every 10 mins",
-    )
-
