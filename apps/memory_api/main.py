@@ -43,7 +43,9 @@ from apps.memory_api.routes import (
     reflections,
     sync,
     token_savings,
+    tuning, # Phase 4
 )
+
 from apps.memory_api.services.context_cache import rebuild_full_cache
 from apps.memory_api.services.rae_core_service import RAECoreService
 
@@ -269,7 +271,9 @@ app.include_router(hybrid_search.router, prefix="/v1", tags=["Search"])
 app.include_router(nodes.router, prefix="/v1", tags=["Knowledge Graph Nodes"])
 app.include_router(reflections.router, tags=["Reflections"])
 app.include_router(sync.router, prefix="/v1", tags=["Sync"])
+app.include_router(tuning.router, prefix="/v1", tags=["Self-Improvement"])
 app.include_router(token_savings.router, prefix="/v1", tags=["Token Savings"])
+
 app.include_router(federation.router, prefix="/v1", tags=["Federation"])
 
 

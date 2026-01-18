@@ -34,6 +34,10 @@ async def submit_feedback(
         memory_id=feedback.memory_id,
         feedback_type=feedback.feedback_type,
         comment=feedback.comment,
+        score=feedback.score,
+        query_text=feedback.query_text,
+        weights_snapshot=feedback.weights_snapshot,
+        metadata=feedback.metadata,
     )
 
     if not success:

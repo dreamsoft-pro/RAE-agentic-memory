@@ -24,12 +24,15 @@ class MathLayerController:
         self.config = config or {}
 
     def score_memory(
-        self, memory: dict[str, Any], query_similarity: float = 0.5
+        self,
+        memory: dict[str, Any],
+        query_similarity: float = 0.5,
+        weights: Any | None = None,
     ) -> float:
-        """Score a memory's importance."""
+        """Score a memory's importance with optional weights."""
         from datetime import datetime, timezone
 
-        # Handle missing created_at (default to now to avoid recency penalty/crash)
+        # Handle missing created_at
         created_at = memory.get("created_at")
         if created_at is None:
             created_at = datetime.now(timezone.utc)
@@ -39,11 +42,11 @@ class MathLayerController:
             importance=memory.get("importance", 0.5),
             last_accessed_at=memory.get("last_accessed_at"),
             created_at=created_at,  # type: ignore
-            access_count=memory.get(
-                "usage_count", 0
-            ),  # Map DB 'usage_count' to Math 'access_count'
+            access_count=memory.get("usage_count", 0),
+            weights=weights,
         )
         return float(result.final_score)
+
 
     def apply_decay(self, age_hours: float, usage_count: int = 0) -> float:
         """Apply time-based decay to importance."""

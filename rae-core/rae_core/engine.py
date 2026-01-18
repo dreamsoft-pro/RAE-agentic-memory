@@ -289,6 +289,7 @@ class RAEEngine:
         top_k: int | None = None,
         similarity_threshold: float | None = None,
         use_reranker: bool = False,
+        custom_weights: Any = None,  # Added for Phase 4
     ) -> list[dict[str, Any]]:
         """Search memories using hybrid search.
 
@@ -300,6 +301,7 @@ class RAEEngine:
             top_k: Number of results (uses settings default if not specified)
             similarity_threshold: Similarity threshold (uses settings default if not specified)
             use_reranker: Whether to use reranking
+            custom_weights: Optional custom scoring weights (alpha, beta, gamma)
 
         Returns:
             List of matching memories
@@ -343,12 +345,21 @@ class RAEEngine:
             memory = await self.memory_storage.get_memory(memory_id, tenant_id)
             if memory:
                 # Combine retrieval score with math heuristic score
-                math_score = math_controller.score_memory(
-                    memory=memory, query_similarity=score
-                )
+                # Phase 4: Use custom weights if provided
+                if custom_weights:
+                    # We need to update controller to accept weights in score_memory
+                    math_score = math_controller.score_memory(
+                        memory=memory, query_similarity=score, weights=custom_weights
+                    )
+                else:
+                    math_score = math_controller.score_memory(
+                        memory=memory, query_similarity=score
+                    )
+                
                 memory["search_score"] = score
                 memory["math_score"] = math_score
                 memories.append(memory)
+
 
         # 5. Final sort by math score
         memories.sort(key=lambda x: x["math_score"], reverse=True)
