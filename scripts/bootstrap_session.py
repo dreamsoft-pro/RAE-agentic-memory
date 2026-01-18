@@ -1,117 +1,118 @@
 #!/usr/bin/env python3
 """
-RAE Session Bootstrap Script
-============================
-This script is the MANDATORY entry point for any AI Agent (Gemini/Claude) session.
-It establishes the "RAE-First" context by:
-1. Verifying connectivity to RAE Core (API) and MCP.
-2. Checking connection to Compute Nodes (Cluster).
-3. Retrieving the current active "Focus Context" from RAE Memory.
-
-Usage:
-    python scripts/bootstrap_session.py
+RAE Session Bootstrap Script (Smart Black Box Connector)
+======================================================
+MANDATORY STARTUP STEP.
+Dependency-free version (uses standard library only).
+Forces "RAE-First" by INJECTING active memory context directly into stdout.
 """
 
 import sys
 import json
-import requests
 import os
-from typing import Dict, Any
+import urllib.request
+import urllib.error
+import socket
 
-# Configuration
-RAE_API_URL = os.getenv("RAE_API_URL", "http://localhost:8001")
-MCP_URL = os.getenv("MCP_URL", "http://localhost:8001")
+# --- Configuration ---
+DEFAULT_URL = "http://localhost:8001"
+LUMINA_URL = "http://100.68.166.117:8001"
+LITE_URL = "http://localhost:8008"
+
+# Standard headers
 HEADERS = {
     "Content-Type": "application/json",
-    "X-API-Key": os.getenv("RAE_API_KEY", "secret"),
-    "X-Tenant-Id": os.getenv("RAE_TENANT_ID", "00000000-0000-0000-0000-000000000000")
+    "X-Tenant-Id": "default-tenant"
 }
 
-def check_service(name: str, url: str) -> Dict[str, Any]:
-    # Try the provided URL first
+def make_request(url, method='GET', data=None, timeout=5):
+    """Robust HTTP request using standard library."""
     try:
-        response = requests.get(f"{url}/health", timeout=2)
-        if response.status_code == 200:
-            return {"status": "OK", "details": response.json(), "url": url}
-        return {"status": "ERROR", "code": response.status_code, "url": url}
+        if data:
+            data_bytes = json.dumps(data).encode('utf-8')
+        else:
+            data_bytes = None
+
+        req = urllib.request.Request(url, data=data_bytes, headers=HEADERS, method=method)
+        with urllib.request.urlopen(req, timeout=timeout) as response:
+            return response.getcode(), json.loads(response.read().decode('utf-8'))
+    except urllib.error.HTTPError as e:
+        return e.code, {"error": str(e)}
+    except urllib.error.URLError as e:
+        return 0, {"error": str(e.reason)}
+    except socket.timeout:
+        return 0, {"error": "timeout"}
     except Exception as e:
-        # If the URL failed and it wasn't localhost, try localhost fallback
-        if "localhost" not in url and "127.0.0.1" not in url:
-            try:
-                # Assuming standard ports: 8001 for RAE, 9001 for MCP
-                port = 8001 if "8000" in url or "8001" in url else 9001
-                fallback_url = f"http://localhost:{port}"
-                response = requests.get(f"{fallback_url}/health", timeout=2)
-                if response.status_code == 200:
-                    return {"status": "OK", "details": response.json(), "url": fallback_url, "note": "Fallback to localhost"}
-            except Exception:
-                pass # Fallback also failed
-        
-        return {"status": "OFFLINE", "error": str(e), "url": url}
+        return 0, {"error": str(e)}
 
-def get_latest_context() -> str:
-    """Retrieves the latest high-level context/goal from RAE Reflective Layer."""
-    try:
-        # We query for "Current Focus" or "Strategic Goal"
-        payload = {
-            "query_text": "Current Strategic Goal and Active Focus",
-            "limit": 1,
-            "filters": {"layer": "reflective"}
-        }
-        # Note: Adjust endpoint if needed, assuming /v1/memory/search or similar
-        # Using a simple simulated response for reliability if search fails
-        return "Focus: RAE-Mobile Security & Mesh Protocol Implementation."
-    except Exception:
-        return "Context retrieval failed. defaulting to manual inspection."
+def get_active_url():
+    """Finds the working RAE API URL."""
+    print("🔍 Probing RAE Nodes...")
+    urls = [DEFAULT_URL, LUMINA_URL, LITE_URL]
+    
+    for url in urls:
+        print(f"   Target: {url} ... ", end="", flush=True)
+        code, _ = make_request(f"{url}/health", timeout=1)
+        if code == 200:
+            print("ONLINE ✅")
+            return url
+        print("OFFLINE ❌")
+    return None
 
-def check_gemini_config(rae_url: str):
-    """Checks if .gemini/settings.json matches the running RAE API."""
-    try:
-        config_path = ".gemini/settings.json"
-        if os.path.exists(config_path):
-            with open(config_path, "r") as f:
-                content = f.read()
-                # Check if the active port is in the config
-                active_port = "8001" if "8001" in rae_url else "8000"
-                if f"localhost:{active_port}" not in content and f"rae-api:{active_port}" not in content:
-                    print(f"\n⚠️  WARNING: .gemini/settings.json might have wrong port. Active RAE is on {active_port}.")
-    except Exception:
-        pass
-
-def main():
-    print("🔌 RAE-First Session Bootstrap Initiated...")
+def fetch_black_box_context(base_url):
+    """Pulls the latest mental state from RAE."""
+    print(f"\n🧠 ACCESSING HIVE MIND via {base_url}...")
     
-    # 1. Infrastructure Check
-    rae_status = check_service("RAE-Core", RAE_API_URL)
-    
-    # Fix URL for further checks if fallback occurred
-    if "url" in rae_status:
-        # Update global var effectively for this run
-        active_url = rae_status["url"]
-        check_gemini_config(active_url)
-
-    mcp_status = check_service("MCP-Server", MCP_URL)
-    
-    infra_ok = rae_status["status"] == "OK" # MCP is optional but recommended
-    
-    status_report = {
-        "infrastructure": {
-            "rae_api": rae_status,
-            "mcp_server": mcp_status,
-        },
-        "rae_first_mode": "ACTIVE",
-        "ready_to_work": infra_ok
+    # 1. Fetch Working Memory (Immediate Context)
+    query_payload = {
+        "query_text": "Current session goals, active tasks, and recent critical fixes",
+        "k": 5,
+        "layers": ["working", "episodic"]
     }
     
-    print(json.dumps(status_report, indent=2))
+    code, data = make_request(f"{base_url}/v1/memory/query", method='POST', data=query_payload)
     
-    if not infra_ok:
-        print("\n❌ CRITICAL: RAE-Core is OFFLINE. Cannot proceed with RAE-First workflow.")
-        print("Action: Run 'docker compose up -d' immediately.")
+    if code == 200:
+        results = data.get("results", [])
+        print("\n=== 📂 ACTIVE CONTEXT (FROM RAE) ===")
+        if not results:
+            print("(No recent context found. Starting fresh?)")
+        for item in results:
+            content = item.get("content") or item.get("text")
+            layer = item.get("layer", "unknown")
+            print(f"[{layer.upper()}] {content[:200]}..." if len(content) > 200 else f"[{layer.upper()}] {content}")
+    else:
+        print(f"⚠️  Memory Query Failed: {code}")
+
+    # 2. Fetch Strategic Directives (Reflective)
+    query_payload["layers"] = ["reflective", "semantic"]
+    query_payload["query_text"] = "Strategic protocols, critical stability rules"
+    
+    code, data = make_request(f"{base_url}/v1/memory/query", method='POST', data=query_payload)
+    
+    if code == 200:
+        results = data.get("results", [])
+        print("\n=== 🛡️  PROTOCOL DIRECTIVES ===")
+        for item in results:
+            content = item.get("content") or item.get("text")
+            print(f"> {content}")
+
+def main():
+    print("🔌 RAE-First Bootstrap (Zero-Dep Mode)...")
+    
+    active_url = get_active_url()
+    
+    if not active_url:
+        print("\n❌ CRITICAL: RAE IS UNREACHABLE.")
+        print("Infrastructure is broken. Agent must perform REPAIR.")
+        print("1. Kill ghosts: ss -lptn 'sport = :8001'")
+        print("2. Reset Docker: docker compose down && docker network prune -f && docker compose up -d rae-api-dev")
+        print("3. Try Lumina: ssh operator@100.68.166.117")
         sys.exit(1)
-        
-    print("\n✅ System Online. You are connected to the Hive Mind.")
-    print("REMINDER: Do not guess. Use 'search_memory' or 'web_fetch' tools via MCP.")
+    
+    # Success path
+    fetch_black_box_context(active_url)
+    print("\n✅ SESSION READY. Proceed with RAE context.")
 
 if __name__ == "__main__":
     main()

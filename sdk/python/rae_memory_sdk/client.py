@@ -114,7 +114,7 @@ class MemoryClient:
             memory.session_id = self.session_id
 
         response_data = self._request(
-            "POST", "/memory/store", json=memory.model_dump(exclude_none=True)
+            "POST", "/v1/memory/store", json=memory.model_dump(exclude_none=True)
         )
         return StoreMemoryResponse(**response_data)
 
@@ -126,7 +126,7 @@ class MemoryClient:
         """
         request_body = QueryMemoryRequest(query_text=query_text, k=k, filters=filters)
         response_data = self._request(
-            "POST", "/memory/query", json=request_body.model_dump(exclude_none=True)
+            "POST", "/v1/memory/query", json=request_body.model_dump(exclude_none=True)
         )
         return QueryMemoryResponse(**response_data)
 
@@ -134,7 +134,7 @@ class MemoryClient:
         """
         Deletes a memory record by its ID.
         """
-        response_data = self._request("DELETE", f"/memory/delete?memory_id={memory_id}")
+        response_data = self._request("DELETE", f"/v1/memory/delete?memory_id={memory_id}")
         return DeleteMemoryResponse(**response_data)
 
     # GraphRAG Methods
@@ -826,7 +826,7 @@ class MemoryClient:
             memory.session_id = self.session_id
 
         response_data = await self._async_request(
-            "POST", "/memory/store", json=memory.model_dump(exclude_none=True)
+            "POST", "/v1/memory/store", json=memory.model_dump(exclude_none=True)
         )
         return StoreMemoryResponse(**response_data)
 
@@ -846,7 +846,7 @@ class MemoryClient:
         """
         request_body = QueryMemoryRequest(query_text=query_text, k=k, filters=filters)
         response_data = await self._async_request(
-            "POST", "/memory/query", json=request_body.model_dump(exclude_none=True)
+            "POST", "/v1/memory/query", json=request_body.model_dump(exclude_none=True)
         )
         return QueryMemoryResponse(**response_data)
 
@@ -861,7 +861,7 @@ class MemoryClient:
             DeleteMemoryResponse with confirmation
         """
         response_data = await self._async_request(
-            "DELETE", f"/memory/delete?memory_id={memory_id}"
+            "DELETE", f"/v1/memory/delete?memory_id={memory_id}"
         )
         return DeleteMemoryResponse(**response_data)
 
