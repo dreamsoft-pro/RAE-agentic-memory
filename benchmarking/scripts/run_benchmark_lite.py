@@ -12,11 +12,19 @@ from rae_adapters.sqlite import SQLiteStorage, SQLiteGraphStore, SQLiteVectorSto
 from rae_core.engine import RAEEngine
 from rae_core.interfaces.embedding import IEmbeddingProvider
 
-# Simple Mock Embedding for speed consistency in Lite Benchmarks
+# Simple Heuristic Embedder (Deterministic, No LLM)
 class LiteEmbedder(IEmbeddingProvider):
     def get_dimension(self) -> int: return 384
-    async def embed_text(self, text: str): return [0.1] * 384
-    async def embed_batch(self, texts): return [[0.1]*384 for _ in texts]
+    async def embed_text(self, text: str):
+        # Deterministic 'math' embedding based on character distribution
+        # Simulates a vector space without an LLM
+        vec = [0.0] * 384
+        for i, char in enumerate(text[:384]):
+            vec[i] = ord(char) / 255.0
+        return vec
+    async def embed_batch(self, texts):
+        return [await self.embed_text(t) for t in texts]
+
 
 
 async def run_lite_benchmark(set_name: str):
