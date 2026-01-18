@@ -2,58 +2,50 @@ import pytest
 from unittest.mock import patch, MagicMock
 import sys
 import os
+import json
 
 # Add project root to path
 sys.path.append(os.getcwd())
 
-# Import the module to test (we might need to import it by path if it's a script)
+# Import the module to test
 import importlib.util
 spec = importlib.util.spec_from_file_location("bootstrap_session", "scripts/bootstrap_session.py")
 bootstrap_session = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(bootstrap_session)
 
-def test_check_service_success():
-    with patch('requests.get') as mock_get:
+def test_make_request_success():
+    with patch('urllib.request.urlopen') as mock_urlopen:
         mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {"status": "ok"}
-        mock_get.return_value = mock_response
+        mock_response.getcode.return_value = 200
+        mock_response.read.return_value = json.dumps({"status": "healthy"}).encode('utf-8')
+        mock_response.__enter__.return_value = mock_response
+        mock_urlopen.return_value = mock_response
         
-        result = bootstrap_session.check_service("test", "http://test")
-        assert result["status"] == "OK"
-        assert result["details"] == {"status": "ok"}
+        code, data = bootstrap_session.make_request("http://test/health")
+        assert code == 200
+        assert data == {"status": "healthy"}
 
-def test_check_service_fallback():
-    with patch('requests.get') as mock_get:
-        # First call fails (ConnectionError)
-        # Second call (fallback) succeeds
-        
-        mock_response_ok = MagicMock()
-        mock_response_ok.status_code = 200
-        mock_response_ok.json.return_value = {"status": "ok_fallback"}
-        
-        def side_effect(url, timeout):
-            if "localhost" in url:
-                return mock_response_ok
-            raise Exception("Connection failed")
+def test_get_active_url():
+    # Patching the function directly on the loaded module object
+    with patch.object(bootstrap_session, 'make_request') as mock_req:
+        # Lumina offline, Local Dev online
+        def side_effect(url, timeout=5):
+            if "100.68.166.117" in url:
+                return 0, {}
+            if "localhost:8001" in url:
+                return 200, {"status": "ok"}
+            return 0, {}
             
-        mock_get.side_effect = side_effect
+        mock_req.side_effect = side_effect
         
-        result = bootstrap_session.check_service("test", "http://remote:8000")
-        assert result["status"] == "OK"
-        assert result["note"] == "Fallback to localhost"
-        assert "localhost" in result["url"]
+        url = bootstrap_session.get_active_url()
+        assert url == bootstrap_session.DEFAULT_URL
 
-def test_check_service_failure():
-    with patch('requests.get') as mock_get:
-        mock_get.side_effect = Exception("All dead")
+def test_fetch_context_success():
+    with patch.object(bootstrap_session, 'make_request') as mock_req:
+        mock_req.return_value = (200, {"results": [{"content": "test context", "layer": "working"}]})
         
-        result = bootstrap_session.check_service("test", "http://test")
-        assert result["status"] == "OFFLINE"
+        # Should not crash
+        bootstrap_session.fetch_black_box_context("http://localhost:8001")
+        assert mock_req.called
 
-def test_check_gemini_config():
-    # Basic smoke test for the function
-    with patch("builtins.open", create=True) as mock_open:
-        mock_open.return_value.__enter__.return_value.read.return_value = '{"env": {"RAE_API_URL": "http://localhost:8001"}}'
-        # Should not print warning
-        bootstrap_session.check_gemini_config("http://localhost:8001")

@@ -55,6 +55,14 @@ class ScoringWeights:
     beta: float = 0.3  # Importance weight
     gamma: float = 0.2  # Recency weight
 
+    @classmethod
+    def szubar_profile(cls) -> "ScoringWeights":
+        """
+        Get weights for Szubar Mode.
+        Focuses on Importance (Pressure) and Usage over simple Similarity.
+        """
+        return cls(alpha=0.3, beta=0.5, gamma=0.2)
+
     def __post_init__(self) -> None:
         """Validate that weights sum to 1.0 (with small tolerance for float precision)"""
         total = self.alpha + self.beta + self.gamma

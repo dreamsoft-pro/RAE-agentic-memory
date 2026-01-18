@@ -151,9 +151,10 @@ async def test_confidential_data_blocked_in_semantic():
         )
 
     assert "Security Policy Violation" in str(excinfo.value)
-    assert "confidential data cannot be promoted to semantic layer" in str(
-        excinfo.value
-    ).lower()
+    assert (
+        "confidential data cannot be promoted to semantic layer"
+        in str(excinfo.value).lower()
+    )
 
 
 @pytest.mark.asyncio

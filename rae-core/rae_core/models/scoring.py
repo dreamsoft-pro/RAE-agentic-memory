@@ -13,6 +13,16 @@ class ScoringWeights(BaseModel):
     importance: float = Field(default=0.2, ge=0.0, le=1.0)
     usage: float = Field(default=0.1, ge=0.0, le=1.0)
 
+    @classmethod
+    def get_szubar_weights(cls) -> "ScoringWeights":
+        """Get predefined weights for Szubar Mode (Pressure on Importance and Usage)."""
+        return cls(
+            recency=0.1,
+            relevance=0.2,
+            importance=0.5,
+            usage=0.2,
+        )
+
 
 class QualityMetrics(BaseModel):
     """Quality metrics for memory assessment."""

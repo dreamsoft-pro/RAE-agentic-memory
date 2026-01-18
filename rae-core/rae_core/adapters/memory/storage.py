@@ -60,9 +60,11 @@ class InMemoryStorage(IMemoryStorage):
             # Check existence and tenant ownership (SEC-02)
             if memory_id not in self._memories:
                 return False
-            
+
             if self._memories[memory_id]["tenant_id"] != tenant_id:
-                raise ValueError(f"Access Denied: Memory {memory_id} not found for tenant {tenant_id}")
+                raise ValueError(
+                    f"Access Denied: Memory {memory_id} not found for tenant {tenant_id}"
+                )
 
             self._embeddings[memory_id][model_name] = {
                 "embedding": embedding,

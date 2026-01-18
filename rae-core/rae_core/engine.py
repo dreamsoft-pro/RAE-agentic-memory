@@ -64,6 +64,7 @@ class RAEEngine:
         search_cache = None
         if cache_provider:
             from rae_core.search.cache import SearchCache
+
             search_cache = SearchCache(cache_provider=cache_provider)
 
         self.search_engine = HybridSearchEngine(
@@ -79,6 +80,7 @@ class RAEEngine:
         self.llm_orchestrator: LLMOrchestrator | None = None
         if llm_provider:
             from rae_core.llm.config import LLMConfig
+
             llm_config = LLMConfig(
                 default_provider="default",
                 providers={},
@@ -129,7 +131,9 @@ class RAEEngine:
         embeddings_map = {}
 
         if hasattr(self.embedding_provider, "generate_all_embeddings"):
-            embeddings_map = await self.embedding_provider.generate_all_embeddings([content])
+            embeddings_map = await self.embedding_provider.generate_all_embeddings(
+                [content]
+            )
             if "default" in embeddings_map and embeddings_map["default"]:
                 default_embedding = embeddings_map["default"][0]
             elif embeddings_map:
@@ -175,13 +179,23 @@ class RAEEngine:
                 if model_embs and model_embs[0]:
                     emb = model_embs[0]
                     dim = len(emb)
-                    if dim == 1536: vector_payload["openai"] = emb
-                    elif dim == 768: vector_payload["ollama"] = emb
-                    elif dim == 384: vector_payload["dense"] = emb
-                    elif dim == 1024: vector_payload["cohere"] = emb
-                    elif len(embeddings_map) == 1: vector_payload["dense"] = emb
+                    if dim == 1536:
+                        vector_payload["openai"] = emb
+                    elif dim == 768:
+                        vector_payload["ollama"] = emb
+                    elif dim == 384:
+                        vector_payload["dense"] = emb
+                    elif dim == 1024:
+                        vector_payload["cohere"] = emb
+                    elif len(embeddings_map) == 1:
+                        vector_payload["dense"] = emb
 
-            vector_metadata = {"agent_id": agent_id, "layer": layer, "content": content, **metadata}
+            vector_metadata = {
+                "agent_id": agent_id,
+                "layer": layer,
+                "content": content,
+                **metadata,
+            }
             store_data = vector_payload if vector_payload else default_embedding
 
             if store_data is not None:
@@ -194,9 +208,13 @@ class RAEEngine:
 
         return memory_id
 
-    async def retrieve_memory(self, memory_id: UUID, tenant_id: str) -> dict[str, Any] | None:
+    async def retrieve_memory(
+        self, memory_id: UUID, tenant_id: str
+    ) -> dict[str, Any] | None:
         """Retrieve a memory by ID."""
-        return await self.memory_storage.get_memory(memory_id=memory_id, tenant_id=tenant_id)
+        return await self.memory_storage.get_memory(
+            memory_id=memory_id, tenant_id=tenant_id
+        )
 
     async def search_memories(
         self,
@@ -208,22 +226,32 @@ class RAEEngine:
         similarity_threshold: float | None = None,
         use_reranker: bool = False,
         custom_weights: Any = None,
+        filters: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
         """Search memories using hybrid search with Semantic Resonance."""
         search_config = self.settings.get_search_config()
         top_k = top_k or search_config["top_k"]
-        similarity_threshold = similarity_threshold or search_config["similarity_threshold"]
+        similarity_threshold = (
+            similarity_threshold or search_config["similarity_threshold"]
+        )
 
-        filters: dict[str, Any] = {}
-        if agent_id: filters["agent_id"] = agent_id
-        if layer: filters["layer"] = layer
-        filters["score_threshold"] = similarity_threshold
+        # Merge filters
+        search_filters = filters.copy() if filters else {}
+        if agent_id:
+            search_filters["agent_id"] = agent_id
+        if layer:
+            search_filters["layer"] = layer
+        search_filters["score_threshold"] = similarity_threshold
 
-        results = await self.search_engine.search(query=query, tenant_id=tenant_id, filters=filters, limit=top_k)
+        results = await self.search_engine.search(
+            query=query, tenant_id=tenant_id, filters=search_filters, limit=top_k
+        )
 
         if use_reranker and len(results) > 0:
             rerank_top_k = search_config["rerank_top_k"]
-            results = await self.search_engine.rerank(query=query, results=results[:rerank_top_k])
+            results = await self.search_engine.rerank(
+                query=query, results=results[:rerank_top_k]
+            )
 
         # 4. Fetch actual memories and apply Math Layer scoring + Resonance
         from rae_core.math.controller import MathLayerController
@@ -234,24 +262,31 @@ class RAEEngine:
 
         memories: list[dict[str, Any]] = []
         memory_ids = [str(mid) for mid, _ in results]
-        
+
         graph_edges = []
         if hasattr(self.memory_storage, "get_edges_between"):
-            graph_edges = await self.memory_storage.get_edges_between(memory_ids, tenant_id)
+            graph_edges = await self.memory_storage.get_edges_between(
+                memory_ids, tenant_id
+            )
 
         for memory_id, score in results:
             memory = await self.memory_storage.get_memory(memory_id, tenant_id)
             if memory:
                 if custom_weights:
                     from rae_core.math.structure import ScoringWeights
+
                     if isinstance(custom_weights, dict):
                         weights_obj = ScoringWeights(**custom_weights)
                     else:
                         weights_obj = custom_weights
-                    math_score = math_controller.score_memory(memory=memory, query_similarity=score, weights=weights_obj)
+                    math_score = math_controller.score_memory(
+                        memory=memory, query_similarity=score, weights=weights_obj
+                    )
                 else:
-                    math_score = math_controller.score_memory(memory=memory, query_similarity=score)
-                
+                    math_score = math_controller.score_memory(
+                        memory=memory, query_similarity=score
+                    )
+
                 memory["search_score"] = score
                 memory["math_score"] = math_score
                 memories.append(memory)
@@ -263,33 +298,76 @@ class RAEEngine:
 
         return memories
 
-    async def run_reflection_cycle(self, tenant_id: str, agent_id: str, trigger_type: str = "scheduled") -> dict[str, Any]:
+    async def run_reflection_cycle(
+        self, tenant_id: str, agent_id: str, trigger_type: str = "scheduled"
+    ) -> dict[str, Any]:
         """Run a reflection cycle."""
-        return cast(dict[str, Any], await self.reflection_engine.run_reflection_cycle(tenant_id=tenant_id, agent_id=agent_id, trigger_type=trigger_type))
+        return cast(
+            dict[str, Any],
+            await self.reflection_engine.run_reflection_cycle(
+                tenant_id=tenant_id, agent_id=agent_id, trigger_type=trigger_type
+            ),
+        )
 
-    async def generate_reflection(self, memory_ids: list[UUID], tenant_id: str, agent_id: str, reflection_type: str = "consolidation") -> dict[str, Any]:
+    async def generate_reflection(
+        self,
+        memory_ids: list[UUID],
+        tenant_id: str,
+        agent_id: str,
+        reflection_type: str = "consolidation",
+    ) -> dict[str, Any]:
         """Generate a reflection from specific memories."""
-        return await self.reflection_engine.generate_reflection(memory_ids=memory_ids, tenant_id=tenant_id, agent_id=agent_id, reflection_type=reflection_type)
+        return await self.reflection_engine.generate_reflection(
+            memory_ids=memory_ids,
+            tenant_id=tenant_id,
+            agent_id=agent_id,
+            reflection_type=reflection_type,
+        )
 
-    async def sync_memories(self, tenant_id: str, agent_id: str) -> dict[str, Any] | None:
+    async def sync_memories(
+        self, tenant_id: str, agent_id: str
+    ) -> dict[str, Any] | None:
         """Synchronize memories with remote."""
-        if not self.sync_protocol: return None
+        if not self.sync_protocol:
+            return None
         response = await self.sync_protocol.sync(tenant_id=tenant_id, agent_id=agent_id)
-        return {"success": response.success, "synced_count": len(response.synced_memory_ids), "conflicts": len(response.conflicts), "error": response.error_message}
+        return {
+            "success": response.success,
+            "synced_count": len(response.synced_memory_ids),
+            "conflicts": len(response.conflicts),
+            "error": response.error_message,
+        }
 
-    async def generate_text(self, prompt: str, provider_name: str | None = None, **kwargs: Any) -> str | None:
+    async def generate_text(
+        self, prompt: str, provider_name: str | None = None, **kwargs: Any
+    ) -> str | None:
         """Generate text using LLM."""
-        if not self.llm_orchestrator: return None
+        if not self.llm_orchestrator:
+            return None
         llm_config = self.settings.get_llm_config()
         kwargs.setdefault("temperature", llm_config["temperature"])
         kwargs.setdefault("max_tokens", llm_config["max_tokens"])
-        response, _ = await self.llm_orchestrator.generate(prompt=prompt, provider_name=provider_name, **kwargs)
+        response, _ = await self.llm_orchestrator.generate(
+            prompt=prompt, provider_name=provider_name, **kwargs
+        )
         return response
 
     def get_status(self) -> dict[str, Any]:
         """Get engine status."""
         return {
-            "settings": {"sensory_max_size": self.settings.sensory_max_size, "working_max_size": self.settings.working_max_size, "episodic_max_size": self.settings.episodic_max_size, "semantic_max_size": self.settings.semantic_max_size, "decay_rate": self.settings.decay_rate, "vector_backend": self.settings.vector_backend},
-            "features": {"llm_enabled": self.llm_orchestrator is not None, "cache_enabled": self.settings.cache_enabled, "sync_enabled": self.sync_protocol is not None, "otel_enabled": self.settings.otel_enabled},
-            "version": "0.4.0"
+            "settings": {
+                "sensory_max_size": self.settings.sensory_max_size,
+                "working_max_size": self.settings.working_max_size,
+                "episodic_max_size": self.settings.episodic_max_size,
+                "semantic_max_size": self.settings.semantic_max_size,
+                "decay_rate": self.settings.decay_rate,
+                "vector_backend": self.settings.vector_backend,
+            },
+            "features": {
+                "llm_enabled": self.llm_orchestrator is not None,
+                "cache_enabled": self.settings.cache_enabled,
+                "sync_enabled": self.sync_protocol is not None,
+                "otel_enabled": self.settings.otel_enabled,
+            },
+            "version": "0.4.0",
         }

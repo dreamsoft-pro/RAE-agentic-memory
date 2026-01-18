@@ -830,7 +830,9 @@ class SQLiteStorage(IMemoryStorage):
                 (str(memory_id), tenant_id),
             ) as cursor:
                 if not await cursor.fetchone():
-                    raise ValueError(f"Access Denied: Memory {memory_id} not found for tenant {tenant_id}")
+                    raise ValueError(
+                        f"Access Denied: Memory {memory_id} not found for tenant {tenant_id}"
+                    )
 
             await db.execute(
                 """

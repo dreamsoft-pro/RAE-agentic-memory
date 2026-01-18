@@ -735,8 +735,12 @@ class TestSQLiteStorageEdgeCases:
         assert success is True
 
         memory = await storage.get_memory(memory_id, "t")
-        # SQLite stores as ISO string, so we compare ISO strings
-        assert memory["expires_at"] == expiry.isoformat()
+        # Ensure we compare as datetime objects if memory returns datetime
+        actual_expiry = memory["expires_at"]
+        if isinstance(actual_expiry, str):
+            assert actual_expiry == expiry.isoformat()
+        else:
+            assert actual_expiry == expiry
 
 
 class TestSQLiteStorageExtendedOperations:
