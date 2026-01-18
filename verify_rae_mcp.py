@@ -4,8 +4,8 @@ import json
 import sys
 
 async def main():
-    # RAE Lite on Lumina
-    base_url = "http://100.68.166.117:8008"
+    # Local RAE Dev
+    base_url = "http://localhost:8001"
     
     # Check Health
     async with aiohttp.ClientSession() as session:
