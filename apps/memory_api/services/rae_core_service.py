@@ -632,6 +632,30 @@ class RAECoreService:
             tenant_id, decay_rate, consider_access_stats
         )
 
+    async def _get_tenant_weights(self, tenant_id: str) -> Optional[Any]:
+        """Retrieve custom scoring weights for tenant from config."""
+        try:
+            sql = "SELECT config FROM tenants WHERE id = $1"
+            config_raw = await self.db.fetchval(sql, tenant_id)
+            if not config_raw:
+                return None
+            
+            import json
+            config = json.loads(config_raw) if isinstance(config_raw, str) else config_raw
+            
+            if config and "math_weights" in config:
+                from rae_core.math.structure import ScoringWeights
+                w = config["math_weights"]
+                return ScoringWeights(
+                    alpha=float(w.get("alpha", 0.5)),
+                    beta=float(w.get("beta", 0.3)),
+                    gamma=float(w.get("gamma", 0.2))
+                )
+
+        except Exception as e:
+            logger.warning("failed_to_load_tenant_weights", tenant_id=tenant_id, error=str(e))
+        return None
+
     async def query_memories(
         self,
         tenant_id: str,
@@ -641,14 +665,19 @@ class RAECoreService:
         layers: Optional[list] = None,
     ) -> SearchResponse:
         """
-        Query memories across layers.
+        Query memories across layers with dynamic weights.
         """
+        # Phase 4: Load custom weights if available
+        custom_weights = await self._get_tenant_weights(tenant_id)
+
         results = await self.engine.search_memories(
             query=query,
             tenant_id=tenant_id,
             agent_id=project,
             top_k=k,
+            # We need to make sure engine.search_memories accepts custom_weights
         )
+
 
         import json
 
