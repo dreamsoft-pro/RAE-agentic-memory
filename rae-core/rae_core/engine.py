@@ -243,7 +243,12 @@ class RAEEngine:
             memory = await self.memory_storage.get_memory(memory_id, tenant_id)
             if memory:
                 if custom_weights:
-                    math_score = math_controller.score_memory(memory=memory, query_similarity=score, weights=custom_weights)
+                    from rae_core.math.structure import ScoringWeights
+                    if isinstance(custom_weights, dict):
+                        weights_obj = ScoringWeights(**custom_weights)
+                    else:
+                        weights_obj = custom_weights
+                    math_score = math_controller.score_memory(memory=memory, query_similarity=score, weights=weights_obj)
                 else:
                     math_score = math_controller.score_memory(memory=memory, query_similarity=score)
                 

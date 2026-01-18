@@ -1,17 +1,26 @@
-# RAE Session State - 2026-01-06 (Final Update)
+# RAE Session State - 2026-01-18
 
-## Osiągnięcia (RAE Full Potential Activation)
-- ✅ **Zarządzanie Sesjami**: Pełna propagacja `session_id` (SDK -> API -> Agent).
-- ✅ **Warstwa Sensoryczna**: Aktywowano domyślny TTL (24h) dla interakcji.
-- ✅ **Lightning Backfill Complete**: Przetworzono **18 749** rekordów przy użyciu Node1 GPU (Ollama via SSH Tunnel). Wszystkie wspomnienia mają teraz embeddingi.
-- ✅ **Stabilność Infrastruktury**: `ml_service` na Node1 działa stabilnie w modelu API-first.
-- ✅ **Clean Code**: Całkowita eliminacja `sentence-transformers`.
-- ✅ **Różne Wymiary Wektorów**: Baza danych potwierdzona jako elastyczna (`atttypmod: -1`), gotowa na wektory o różnej długości.
+## Status: 🟢 RECOVERED & STABLE
 
-## Stan Backfillu
-- Status: **ZAKOŃCZONY (100%)**
-- Metoda: SSH Tunnel `localhost:11434` -> Node1 GPU (Parallel Processing).
+### Accomplishments:
+1.  **Infrastructure Repair:**
+    *   Killed ghost SSH tunnel blocking port 8001.
+    *   Reset Docker network to fix DNS resolution issues (`Temporary failure in name resolution`).
+    *   Restored local `rae-api-dev` container functionality.
+2.  **Code Fixes (Critical):**
+    *   `RAECoreService`: Initialized `tuning_service` to fix `AttributeError`.
+    *   `TuningService`: Fixed database access (postgres_pool) and implemented missing `get_current_weights` method.
+    *   `RAEEngine`: Implemented dictionary-to-ScoringWeights conversion for hybrid search scoring.
+3.  **Verification:**
+    *   Phase 3 (Security) verified: 8/8 tests passed.
+    *   Phase 4 (Dashboard) verified: 200 OK on port 9000.
+    *   RAE API verified: Responding correctly on port 8001.
 
-## Następne kroki
-1. Przetestować agenta w scenariuszu wielosesyjnym z wykorzystaniem pełnej bazy semantycznej.
-2. Zweryfikować wydajność wyszukiwania hybrydowego przy pełnym obciążeniu wektorami.
+### Next Steps:
+*   [ ] Run full integration test suite (`make test-int`).
+*   [ ] Offload 1M records benchmark to Node 1 (Lumina).
+*   [ ] Optimize Search Latency.
+
+### Configuration Note:
+*   **MCP URL:** `http://localhost:8001` (Fixed via tunnel/docker reset).
+*   **Node 1:** `100.68.166.117:8001` (Active & Healthy).

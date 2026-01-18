@@ -65,10 +65,15 @@ class RAECoreService:
         self.redis_adapter: ICacheProvider
         self.savings_service: Optional[TokenSavingsService] = None
         self.websocket_service: Optional[DashboardWebSocketService] = None
+        self.tuning_service: Any = None  # Phase 4
 
         if postgres_pool:
             self.savings_service = TokenSavingsService(postgres_pool)
             self.websocket_service = DashboardWebSocketService(postgres_pool)
+            
+            # Phase 4: Self-improvement service
+            from apps.memory_api.services.tuning_service import TuningService
+            self.tuning_service = TuningService(self)
 
         # 1. Initialize embedding provider
         import os
@@ -667,102 +672,64 @@ class RAECoreService:
         """
         Query memories across layers with dynamic weights.
         """
-        # 2. Execute Engine search
+        import time
+        start_time = time.time()
+        
+        # 1. Get dynamic weights from tuning service
         weights = await self.tuning_service.get_current_weights(str(tenant_id))
         
-        results = await self.engine.search_memories(
+        # 2. Execute Engine search
+        raw_results = await self.engine.search_memories(
             query=query,
             tenant_id=str(tenant_id),
-            agent_id=agent_id,
-            layer=layer,
-            top_k=top_k,
-            similarity_threshold=similarity_threshold,
-            use_reranker=use_reranker,
+            agent_id=project,
+            layer=layers[0] if layers else None,
+            top_k=k,
+            similarity_threshold=0.5,
+            use_reranker=True,
             custom_weights=weights
         )
 
-        # 3. AUDIT: Record this search in the Working Layer (The 'Black Box' capture)
-        # This makes every search auditable and recoverable
+        # 3. Map to SearchResponse model
+        from rae_core.models.search import SearchResponse, SearchResult, SearchStrategy
+        
+        results_list = []
+        for res in raw_results:
+            results_list.append(SearchResult(
+                memory_id=str(res.get("id")),
+                content=res.get("content", ""),
+                score=res.get("search_score", 0.0),
+                strategy_used=SearchStrategy.HYBRID,
+                metadata=res.get("metadata", {})
+            ))
+
+        response = SearchResponse(
+            results=results_list,
+            query=query,
+            strategy=SearchStrategy.HYBRID,
+            total_found=len(results_list),
+            execution_time_ms=(time.time() - start_time) * 1000
+        )
+
+        # 4. AUDIT: Record this search in the Working Layer
         try:
-            audit_content = f"Search Query: {query} | Results: {len(results)} | Weights: {weights}"
+            audit_content = f"Search Query: {query} | Results: {len(results_list)} | Weights: {weights}"
             await self.engine.store_memory(
                 tenant_id=str(tenant_id),
-                agent_id=agent_id or "system",
+                agent_id=project or "system",
                 content=audit_content,
-                layer="working",
-                importance=0.1, # Low importance for raw logs
+                layer=MemoryLayer.WORKING,
+                importance=0.1,
                 tags=["audit", "search_trace"],
                 metadata={
                     "query": query,
-                    "weights": weights,
-                    "top_result_id": str(results[0]["id"]) if results else None
+                    "weights": weights
                 }
             )
         except Exception as e:
             logger.warning("search_audit_failed", error=str(e))
 
-        return results
-
-
-
-        import json
-
-        from rae_core.models.search import SearchResult, SearchStrategy
-
-        search_results = []
-        for res in results:
-            # Ensure metadata is a dict
-            metadata = res.get("metadata", {})
-            if isinstance(metadata, str):
-                try:
-                    metadata = json.loads(metadata)
-                except json.JSONDecodeError:
-                    metadata = {"raw_metadata": metadata}
-
-            # Map engine dict to SearchResult
-            raw_score = res.get("search_score", 0.0)
-            if raw_score < 0.05:
-                calibrated_score = min(0.99, raw_score * 120.0)
-            else:
-                calibrated_score = raw_score
-
-            search_results.append(
-                SearchResult(
-                    memory_id=str(res["id"]),
-                    content=res["content"],
-                    score=calibrated_score,
-                    strategy_used=SearchStrategy.HYBRID,
-                    metadata=metadata,
-                )
-            )
-
-        logger.info(
-            "memories_queried",
-            tenant_id=tenant_id,
-            project=project,
-            result_count=len(results),
-        )
-
-        if self.savings_service:
-            try:
-                await self.savings_service.track_savings(
-                    tenant_id=tenant_id,
-                    project_id=project,
-                    model="gpt-4o-mini",
-                    predicted_tokens=1200,
-                    real_tokens=200,
-                    savings_type="rag",
-                )
-            except Exception as e:
-                logger.warning("failed_to_track_query_savings", error=str(e))
-
-        return SearchResponse(
-            results=search_results,
-            total_found=len(results),
-            query=query,
-            strategy=SearchStrategy.HYBRID,
-            execution_time_ms=0.0,
-        )
+        return response
 
     async def consolidate_memories(
         self,
