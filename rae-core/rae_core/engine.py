@@ -335,36 +335,87 @@ class RAEEngine:
                 results=results[:rerank_top_k],
             )
 
-        # 4. Fetch actual memories and apply Math Layer scoring
-        from rae_core.math.controller import MathLayerController
+                # 4. Fetch actual memories and apply Math Layer scoring
 
-        math_controller = MathLayerController()
+                from rae_core.math.controller import MathLayerController
 
-        memories: list[dict[str, Any]] = []
-        for memory_id, score in results:
-            memory = await self.memory_storage.get_memory(memory_id, tenant_id)
-            if memory:
-                # Combine retrieval score with math heuristic score
-                # Phase 4: Use custom weights if provided
-                if custom_weights:
-                    # We need to update controller to accept weights in score_memory
-                    math_score = math_controller.score_memory(
-                        memory=memory, query_similarity=score, weights=custom_weights
-                    )
-                else:
-                    math_score = math_controller.score_memory(
-                        memory=memory, query_similarity=score
-                    )
+                from rae_core.math.resonance import SemanticResonanceEngine
+
+        
+
+                math_controller = MathLayerController()
+
+                resonance_engine = SemanticResonanceEngine()
+
+        
+
+                memories: list[dict[str, Any]] = []
+
+                memory_ids = [mid for mid, _ in results]
+
                 
-                memory["search_score"] = score
-                memory["math_score"] = math_score
-                memories.append(memory)
 
+                # Phase 4.1: Fetch graph edges for retrieved memories to compute resonance
 
-        # 5. Final sort by math score
-        memories.sort(key=lambda x: x["math_score"], reverse=True)
+                graph_edges = []
 
-        return memories
+                if hasattr(self.memory_storage, "get_edges_between"):
+
+                    graph_edges = await self.memory_storage.get_edges_between(memory_ids, tenant_id)
+
+        
+
+                for memory_id, score in results:
+
+                    memory = await self.memory_storage.get_memory(memory_id, tenant_id)
+
+                    if memory:
+
+                        # Combine retrieval score with math heuristic score
+
+                        if custom_weights:
+
+                            math_score = math_controller.score_memory(
+
+                                memory=memory, query_similarity=score, weights=custom_weights
+
+                            )
+
+                        else:
+
+                            math_score = math_controller.score_memory(
+
+                                memory=memory, query_similarity=score
+
+                            )
+
+                        
+
+                        memory["search_score"] = score
+
+                        memory["math_score"] = math_score
+
+                        memories.append(memory)
+
+        
+
+                # 5. Apply Semantic Resonance (The 'Brilliant' Refactor)
+
+                if len(memories) > 1 and graph_edges:
+
+                    memories = resonance_engine.compute_resonance(memories, graph_edges)
+
+                else:
+
+                    # Final sort by math score if resonance is not possible
+
+                    memories.sort(key=lambda x: x["math_score"], reverse=True)
+
+        
+
+                return memories
+
+        
 
     # Reflection operations
 
