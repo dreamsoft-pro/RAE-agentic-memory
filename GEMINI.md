@@ -1,3 +1,4 @@
+# READ docs/contracts/RAE_AGENTIC_CONTRACT.md FIRST
 # 🛑 CRITICAL STARTUP PROTOCOL (AGENT: READ THIS FIRST)
 
 You are an interface to **RAE (The Hive Mind)**. You are NOT a standalone script runner.
