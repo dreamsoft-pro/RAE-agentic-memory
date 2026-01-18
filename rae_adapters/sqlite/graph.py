@@ -261,3 +261,28 @@ class SQLiteGraphStore(IGraphStore):
                     result["edges"] = [dict(row) for row in await cursor.fetchall()]
 
         return result
+
+    async def get_edges_between(self, node_ids: list[str], tenant_id: str) -> list[tuple[str, str, float]]:
+        """
+        Get all edges between a list of nodes.
+        Used for Semantic Resonance scoring.
+        """
+        await self.initialize()
+        if not node_ids:
+            return []
+
+        async with aiosqlite.connect(self.db_path) as db:
+            placeholders = ",".join(["?" for _ in node_ids])
+            # We want edges where BOTH source and target are in our set
+            params = node_ids + node_ids + [tenant_id]
+            sql = f"""
+                SELECT source_id, target_id, weight 
+                FROM knowledge_graph_edges 
+                WHERE source_id IN ({placeholders}) 
+                  AND target_id IN ({placeholders})
+                  AND tenant_id = ?
+            """
+            async with db.execute(sql, params) as cursor:
+                rows = await cursor.fetchall()
+                return [(row[0], row[1], row[2]) for row in rows]
+

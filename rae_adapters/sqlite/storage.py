@@ -900,6 +900,37 @@ class SQLiteStorage(IMemoryStorage):
             await db.commit()
             return cursor.rowcount
 
+    async def get_edges_between(self, node_ids: list[str], tenant_id: str) -> list[tuple[str, str, float]]:
+        """
+        Retrieve edges between nodes for resonance calculation.
+        Note: In SQLite adapter, edges might be in a separate database file
+        specified by settings, but for RAE-Lite we often use the same file.
+        """
+        await self.initialize()
+        if not node_ids:
+            return []
+
+        # We assume the table knowledge_graph_edges exists in the same DB 
+        # or was attached. For RAE-Lite simplicity, we check if it exists.
+        try:
+            async with aiosqlite.connect(self.db_path) as db:
+                placeholders = ",".join(["?" for _ in node_ids])
+                params = node_ids + node_ids + [tenant_id]
+                sql = f"""
+                    SELECT source_id, target_id, weight 
+                    FROM knowledge_graph_edges 
+                    WHERE source_id IN ({placeholders}) 
+                      AND target_id IN ({placeholders})
+                      AND tenant_id = ?
+                """
+                async with db.execute(sql, params) as cursor:
+                    rows = await cursor.fetchall()
+                    return [(row[0], row[1], row[2]) for row in rows]
+        except Exception:
+            # If table doesn't exist yet, return empty
+            return []
+
+
     def _matches_metadata_filter(
         self, metadata: dict[str, Any], filter_dict: dict[str, Any]
     ) -> bool:
