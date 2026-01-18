@@ -492,11 +492,20 @@ class SQLiteStorage(IMemoryStorage):
         else:  # pragma: no cover
             memory["metadata"] = {}  # pragma: no cover
 
+        # Parse timestamps into datetime objects
+        for field in ["created_at", "modified_at", "last_accessed_at", "expires_at"]:
+            if memory.get(field) and isinstance(memory[field], str):
+                try:
+                    memory[field] = datetime.fromisoformat(memory[field])
+                except ValueError:
+                    pass
+
         # Convert UUID string back to UUID
         if memory.get("id"):
             memory["id"] = UUID(memory["id"])
 
         return memory
+
 
     async def delete_memories_with_metadata_filter(
         self,
