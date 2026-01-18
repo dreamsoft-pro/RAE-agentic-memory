@@ -7,7 +7,7 @@ Orchestrates the Bayesian update cycle for tenant scoring weights.
 import json
 
 # Important: Keep the import for type hinting if needed, but avoid circular at runtime
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING, Dict, Optional, cast
 
 import structlog
 
@@ -53,10 +53,10 @@ class TuningService:
         """
         # 1. Fetch feedback history from DB
         sql = """
-            SELECT query_text, score, weights_snapshot 
-            FROM memory_feedback 
-            WHERE tenant_id = $1 
-            ORDER BY created_at DESC 
+            SELECT query_text, score, weights_snapshot
+            FROM memory_feedback
+            WHERE tenant_id = $1
+            ORDER BY created_at DESC
             LIMIT 50
         """
         if not self.rae_service.postgres_pool:
@@ -95,7 +95,7 @@ class TuningService:
         if result.confidence > 0.1:  # Only update if we have a significant signal
             try:
                 update_sql = """
-                    UPDATE tenants 
+                    UPDATE tenants
                     SET config = jsonb_set(COALESCE(config, '{}'::jsonb), '{math_weights}', $1::jsonb)
                     WHERE id = $2
                 """
@@ -107,6 +107,3 @@ class TuningService:
                 logger.error("tuning_persistence_failed", error=str(e))
 
         return None
-
-
-from typing import cast

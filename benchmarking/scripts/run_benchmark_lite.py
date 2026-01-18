@@ -10,7 +10,7 @@ from uuid import uuid4
 
 import yaml
 
-from rae_adapters.sqlite import SQLiteGraphStore, SQLiteStorage, SQLiteVectorStore
+from rae_adapters.sqlite import SQLiteStorage, SQLiteVectorStore
 from rae_core.engine import RAEEngine
 from rae_core.interfaces.embedding import IEmbeddingProvider
 
@@ -41,7 +41,6 @@ async def run_lite_benchmark(set_name: str):
 
     db_path = f"lite_bench_{uuid4().hex[:8]}.db"
     storage = SQLiteStorage(db_path)
-    graph = SQLiteGraphStore(db_path)
     vector = SQLiteVectorStore(db_path)
     embedder = LiteEmbedder()
 
@@ -60,8 +59,6 @@ async def run_lite_benchmark(set_name: str):
     t0 = time.time()
     for q in data["queries"]:
         results = await engine.search_memories(q["query"], "local", top_k=5)
-        # Simple HitRate check
-        retrieved_ids = [r["id"] for r in results]
         # In this lite mock test, we just check if we get results
         if results:
             hits += 1
