@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
@@ -125,6 +126,21 @@ class MemoryRecord(BaseModel):
         default_factory=dict,
         description="Synchronization state metadata (e.g., vector_clock, version)",
     )
+
+    @field_validator("governance", "provenance", "sync_metadata", mode="before")
+    @classmethod
+    def parse_json_fields(cls, v: Any) -> Any:
+        """Parse JSON fields if they come as strings from DB."""
+        if isinstance(v, str):
+            try:
+                # Handle empty string or just brackets
+                if not v or v == "{}":
+                    return {}
+                return json.loads(v)
+            except json.JSONDecodeError:
+                # If it's not valid JSON, return as is (Pydantic might fail, which is correct)
+                return v
+        return v
 
 
 class ScoredMemoryRecord(MemoryRecord):

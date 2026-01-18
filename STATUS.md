@@ -25,11 +25,13 @@
 - verify `info_class` enforcement in integration tests.
 - monitor Agentic Pattern detection metrics.
 
+
 ## Live Metrics (Auto-generated)
 | Metric | Value |
 |--------|-------|
 | **Branch** | `develop` |
-| **Commit** | `21e413b7` |
-| **Coverage** | 99% (Core) |
-| **Tests** | 972 total, 0 failed |
-| **Last Update** | 2026-01-18 10:25:00 |
+| **Commit** | `4fd3bfd1` |
+| **Coverage** | 72.0% |
+| **Tests** | 1229 total, 0 failed, 18 skipped |
+| **Pass Rate** | 100.0% |
+| **Last Update** | 2026-01-18 21:03:19 |
