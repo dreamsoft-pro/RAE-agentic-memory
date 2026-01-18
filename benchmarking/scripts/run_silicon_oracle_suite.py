@@ -60,16 +60,22 @@ async def main():
     
     # 2. Research 9/5 Suite (Direct Integration)
     print("\n--- 2. RESEARCH 9/5 SUITE (MATH-3) ---")
-    runner = NineFiveBenchmarkRunner(engine=engine, verbose=False)
+    runner = NineFiveBenchmarkRunner(verbose=False)
     # Using small params for speed but covering all benchmarks
+    # Relaxation of uncertainty threshold for Oracle (pure math) mode
+    controller_config = {
+        "uncertainty_threshold": 0.3,
+        "max_depth": 12
+    }
 
-    results = await runner.run_all(
+    results = runner.run_all(
         lect_cycles=100, 
         mmit_operations=100,
-        grdt_queries=10,
+        grdt_queries=50, # Increased for better statistical significance
         rst_insights=10,
         mpeb_iterations=100,
-        orb_samples=5
+        orb_samples=5,
+        controller_config=controller_config
     )
     
     summary = results.summary

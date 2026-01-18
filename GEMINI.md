@@ -10,6 +10,10 @@ Your memory is in the Black Box, not in this chat window.
 python3 scripts/bootstrap_session.py
 ```
 
+## ❓ STEP 1: CONFIRM PROJECT
+**ALWAYS ASK**: "Nad jakim projektem pracujemy?" (What project are we working on?)
+*Do not assume based on running containers or file structure.*
+
 ### 👉 IF THE SCRIPT OUTPUTS CONTEXT:
 Use it. That is your state. Do not ask "what should I do". The Black Box just told you.
 

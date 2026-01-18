@@ -695,12 +695,21 @@ class RAECoreService:
         
         results_list = []
         for res in raw_results:
+            metadata_val = res.get("metadata", {})
+            # Fix for Pydantic validation error if DB/Qdrant returns stringified JSON
+            if isinstance(metadata_val, str):
+                try:
+                    import json
+                    metadata_val = json.loads(metadata_val)
+                except Exception:
+                    metadata_val = {}
+
             results_list.append(SearchResult(
                 memory_id=str(res.get("id")),
                 content=res.get("content", ""),
                 score=res.get("search_score", 0.0),
                 strategy_used=SearchStrategy.HYBRID,
-                metadata=res.get("metadata", {})
+                metadata=metadata_val
             ))
 
         response = SearchResponse(
