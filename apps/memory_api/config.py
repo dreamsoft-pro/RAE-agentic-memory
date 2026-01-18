@@ -80,7 +80,12 @@ class Settings(BaseSettings):
     ENABLE_COST_TRACKING: bool = False  # Set to True to track request costs
 
     # CORS
-    ALLOWED_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:8501"]
+    ALLOWED_ORIGINS: list[str] = [
+        "*",
+        "http://localhost:3000",
+        "http://localhost:8501",
+        "http://localhost:8502",
+    ]
 
     # --- LLM Provider API Keys ---
     # These are loaded from environment variables automatically by pydantic-settings.
