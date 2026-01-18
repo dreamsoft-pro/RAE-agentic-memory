@@ -667,16 +667,42 @@ class RAECoreService:
         """
         Query memories across layers with dynamic weights.
         """
-        # Phase 4: Load custom weights if available
-        custom_weights = await self._get_tenant_weights(tenant_id)
-
+        # 2. Execute Engine search
+        weights = await self.tuning_service.get_current_weights(str(tenant_id))
+        
         results = await self.engine.search_memories(
             query=query,
-            tenant_id=tenant_id,
-            agent_id=project,
-            top_k=k,
-            # We need to make sure engine.search_memories accepts custom_weights
+            tenant_id=str(tenant_id),
+            agent_id=agent_id,
+            layer=layer,
+            top_k=top_k,
+            similarity_threshold=similarity_threshold,
+            use_reranker=use_reranker,
+            custom_weights=weights
         )
+
+        # 3. AUDIT: Record this search in the Working Layer (The 'Black Box' capture)
+        # This makes every search auditable and recoverable
+        try:
+            audit_content = f"Search Query: {query} | Results: {len(results)} | Weights: {weights}"
+            await self.engine.store_memory(
+                tenant_id=str(tenant_id),
+                agent_id=agent_id or "system",
+                content=audit_content,
+                layer="working",
+                importance=0.1, # Low importance for raw logs
+                tags=["audit", "search_trace"],
+                metadata={
+                    "query": query,
+                    "weights": weights,
+                    "top_result_id": str(results[0]["id"]) if results else None
+                }
+            )
+        except Exception as e:
+            logger.warning("search_audit_failed", error=str(e))
+
+        return results
+
 
 
         import json
