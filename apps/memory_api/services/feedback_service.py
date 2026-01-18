@@ -66,7 +66,7 @@ class FeedbackService:
 
             sql = """
                 INSERT INTO memory_feedback (
-                    id, tenant_id, query_text, memory_id, score, 
+                    id, tenant_id, query_text, memory_id, score,
                     weights_snapshot, metadata
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7)
             """

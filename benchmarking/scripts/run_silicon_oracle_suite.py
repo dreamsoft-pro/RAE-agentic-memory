@@ -14,7 +14,7 @@ from uuid import uuid4
 import yaml
 
 from benchmarking.nine_five_benchmarks.runner import NineFiveBenchmarkRunner
-from rae_adapters.sqlite import SQLiteGraphStore, SQLiteStorage, SQLiteVectorStore
+from rae_adapters.sqlite import SQLiteStorage, SQLiteVectorStore
 from rae_core.engine import RAEEngine
 from rae_core.interfaces.embedding import IEmbeddingProvider
 
@@ -62,7 +62,6 @@ async def main():
 
     db_path = f"oracle_suite_{uuid4().hex[:8]}.db"
     storage = SQLiteStorage(db_path)
-    graph = SQLiteGraphStore(db_path)
     vector = SQLiteVectorStore(db_path)
     embedder = HeuristicEmbedder()
     engine = RAEEngine(storage, vector, embedder)

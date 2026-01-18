@@ -56,7 +56,7 @@ def load_checkpoint():
         try:
             with open(CHECKPOINT_PATH, "r") as f:
                 return json.load(f).get("last_index", 0)
-        except:
+        except Exception:
             return 0
     return 0
 

@@ -15,7 +15,6 @@ async def calculate_mrr():
     # 1. Load ONLY queries from YAML (to save memory and avoid content mapping)
     print(f"📂 Loading queries from {YAML_PATH}...")
     queries = []
-    in_queries = False
     with open(YAML_PATH, "r") as f:
         # Simple manual parser to get only the queries section
         all_content = f.read()

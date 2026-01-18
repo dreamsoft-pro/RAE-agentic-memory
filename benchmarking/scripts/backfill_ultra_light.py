@@ -29,13 +29,12 @@ async def get_embeddings_batch(client, texts):
             OLLAMA_URL, json={"model": MODEL, "input": prefixed_texts}, timeout=120.0
         )
         return resp.json().get("embeddings") if resp.status_code == 200 else None
-    except:
+    except Exception:
         return None
 
 
 def stream_memories(path):
     """Extremely lightweight YAML parser for this specific file format."""
-    memories = []
     current_mem = {}
     in_memories = False
 
