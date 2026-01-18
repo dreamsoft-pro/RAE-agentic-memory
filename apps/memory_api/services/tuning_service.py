@@ -4,17 +4,20 @@ RAE Tuning Service - Phase 4 Self-improvement.
 Orchestrates the Bayesian update cycle for tenant scoring weights.
 """
 
-from typing import Dict, List, Optional
-import structlog
 import json
-from rae_core.math.tuning import BayesianPolicyTuner
 
 # Important: Keep the import for type hinting if needed, but avoid circular at runtime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Dict, Optional
+
+import structlog
+
+from rae_core.math.tuning import BayesianPolicyTuner
+
 if TYPE_CHECKING:
     from apps.memory_api.services.rae_core_service import RAECoreService
 
 logger = structlog.get_logger(__name__)
+
 
 class TuningService:
     def __init__(self, rae_service: "RAECoreService"):
@@ -29,19 +32,19 @@ class TuningService:
         try:
             sql = "SELECT config FROM tenants WHERE id = $1"
             config_json = await self.rae_service.postgres_pool.fetchval(sql, tenant_id)
-            
+
             if config_json:
                 if isinstance(config_json, str):
                     config = json.loads(config_json)
                 else:
                     config = config_json
-                
+
                 weights = config.get("math_weights")
                 if weights:
                     return cast(Dict[str, float], weights)
         except Exception as e:
             logger.error("get_weights_failed", tenant_id=tenant_id, error=str(e))
-            
+
         return {"alpha": 0.5, "beta": 0.3, "gamma": 0.2}  # Default
 
     async def tune_tenant_weights(self, tenant_id: str) -> Optional[Dict[str, float]]:
@@ -58,9 +61,9 @@ class TuningService:
         """
         if not self.rae_service.postgres_pool:
             return None
-            
+
         feedback_rows = await self.rae_service.postgres_pool.fetch(sql, tenant_id)
-        
+
         if not feedback_rows:
             logger.info("tuning_skipped_no_feedback", tenant_id=tenant_id)
             return None
@@ -71,28 +74,25 @@ class TuningService:
         # 3. Format data for tuner
         feedback_loop = []
         for row in feedback_rows:
-            weights = row['weights_snapshot']
+            weights = row["weights_snapshot"]
             if isinstance(weights, str):
                 weights = json.loads(weights)
-            
-            feedback_loop.append({
-                "score": row['score'],
-                "weights": weights
-            })
+
+            feedback_loop.append({"score": row["score"], "weights": weights})
 
         # 4. Compute Bayes Posterior
         result = self.tuner.compute_posterior(current_weights, feedback_loop)
-        
+
         logger.info(
             "tuning_cycle_complete",
             tenant_id=tenant_id,
             old_weights=current_weights,
             new_weights=result.new_weights,
-            confidence=result.confidence
+            confidence=result.confidence,
         )
 
         # 5. Persist to tenant config (Section 14.2)
-        if result.confidence > 0.1: # Only update if we have a significant signal
+        if result.confidence > 0.1:  # Only update if we have a significant signal
             try:
                 update_sql = """
                     UPDATE tenants 
@@ -100,14 +100,13 @@ class TuningService:
                     WHERE id = $2
                 """
                 await self.rae_service.postgres_pool.execute(
-                    update_sql,
-                    json.dumps(result.new_weights),
-                    tenant_id
+                    update_sql, json.dumps(result.new_weights), tenant_id
                 )
                 return result.new_weights
             except Exception as e:
                 logger.error("tuning_persistence_failed", error=str(e))
-        
+
         return None
+
 
 from typing import cast

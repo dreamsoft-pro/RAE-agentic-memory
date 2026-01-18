@@ -847,9 +847,7 @@ class TestSQLiteStorageEmbeddings:
             content="T", layer="w", tenant_id="t1", agent_id="a"
         )
         with pytest.raises(ValueError, match="Access Denied"):
-             await storage.save_embedding(
-                memory_id, "model-v1", [0.1], "t2"
-             )
+            await storage.save_embedding(memory_id, "model-v1", [0.1], "t2")
 
 
 class TestSQLiteStorageTagsAndFilters:

@@ -47,7 +47,6 @@ class MathLayerController:
         )
         return float(result.final_score)
 
-
     def apply_decay(self, age_hours: float, usage_count: int = 0) -> float:
         """Apply time-based decay to importance."""
         from datetime import datetime, timedelta, timezone

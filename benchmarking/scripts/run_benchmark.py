@@ -160,11 +160,12 @@ class RAEBenchmarkRunner:
             # Determine actual dimension from service/provider
             try:
                 from apps.memory_api.services.embedding import LocalEmbeddingProvider
+
                 provider = LocalEmbeddingProvider(service)
                 dim = provider.get_dimension()
             except Exception:
                 dim = 768  # Fallback
-            
+
             # Return dummy vectors of correct dimension
             return [[0.1] * dim for _ in texts]
         return cast(List[List[float]], await service.generate_embeddings_async(texts))
@@ -288,7 +289,9 @@ class RAEBenchmarkRunner:
                     },
                     sparse_vectors_config={"text": models.SparseVectorParams()},
                 )
-                print(f"   ✅ Collection recreated with Named Vectors (dense={expected_dim}, ollama=768, openai=1536)")
+                print(
+                    f"   ✅ Collection recreated with Named Vectors (dense={expected_dim}, ollama=768, openai=1536)"
+                )
         except Exception as e:
             print(f"   ℹ️ Could not check/recreate collection: {e}")
 

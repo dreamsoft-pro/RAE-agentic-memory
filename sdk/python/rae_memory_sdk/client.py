@@ -134,7 +134,9 @@ class MemoryClient:
         """
         Deletes a memory record by its ID.
         """
-        response_data = self._request("DELETE", f"/v1/memory/delete?memory_id={memory_id}")
+        response_data = self._request(
+            "DELETE", f"/v1/memory/delete?memory_id={memory_id}"
+        )
         return DeleteMemoryResponse(**response_data)
 
     # GraphRAG Methods

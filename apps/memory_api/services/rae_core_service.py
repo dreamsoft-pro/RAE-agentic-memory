@@ -70,9 +70,10 @@ class RAECoreService:
         if postgres_pool:
             self.savings_service = TokenSavingsService(postgres_pool)
             self.websocket_service = DashboardWebSocketService(postgres_pool)
-            
+
             # Phase 4: Self-improvement service
             from apps.memory_api.services.tuning_service import TuningService
+
             self.tuning_service = TuningService(self)
 
         # 1. Initialize embedding provider
@@ -150,7 +151,14 @@ class RAECoreService:
             self.postgres_adapter, None
         )  # Agent set per execution
 
+        self.szubar_mode = False  # Tryb Szubartowskiego (Pressure/Emergent Learning)
+
         logger.info("rae_core_service_initialized", profile=settings.RAE_PROFILE)
+
+    def enable_szubar_mode(self, enabled: bool = True) -> None:
+        """Enable or disable RAE-SZUBAR Mode (Evolutionary Pressure)."""
+        self.szubar_mode = enabled
+        logger.info("szubar_mode_changed", enabled=enabled)
 
     async def execute_action(
         self,
@@ -193,7 +201,30 @@ class RAECoreService:
                     memories=search_results, query=rae_input.content
                 )
 
-                system_prompt = f"RELEVANT PROJECT CONTEXT:\n{context_text}\n\nTask: {rae_input.content}"
+                # RAE-SZUBAR PRESSURE: Inject failures
+                pressure_constraints = ""
+                if self.service.szubar_mode:
+                    # Search specifically for failures in the same context
+                    failures = await self.service.engine.search_memories(
+                        query=rae_input.content,
+                        tenant_id=rae_input.tenant_id,
+                        agent_id=agent_id,
+                        top_k=5,
+                        filters={"governance.is_failure": True},
+                    )
+                    if failures:
+                        pressure_constraints = (
+                            "\nCRITICAL: DO NOT REPEAT THESE FAILURES:\n"
+                        )
+                        for f in failures:
+                            trace = f.get("governance", {}).get(
+                                "failure_trace", "Unknown failure"
+                            )
+                            pressure_constraints += (
+                                f"- {f['content']} (Reason: {trace})\n"
+                            )
+
+                system_prompt = f"RELEVANT PROJECT CONTEXT:\n{context_text}\n{pressure_constraints}\n\nTask: {rae_input.content}"
 
                 # 2. Generate response using LLM with Strict Timeout
                 try:
@@ -334,7 +365,9 @@ class RAECoreService:
     ) -> None:
         """Enforce ISO 27000 security policies."""
         layer_value = (
-            target_layer.value if isinstance(target_layer, MemoryLayer) else target_layer
+            target_layer.value
+            if isinstance(target_layer, MemoryLayer)
+            else target_layer
         )
         info_class = info_class.lower()
 
@@ -644,21 +677,27 @@ class RAECoreService:
             config_raw = await self.db.fetchval(sql, tenant_id)
             if not config_raw:
                 return None
-            
+
             import json
-            config = json.loads(config_raw) if isinstance(config_raw, str) else config_raw
-            
+
+            config = (
+                json.loads(config_raw) if isinstance(config_raw, str) else config_raw
+            )
+
             if config and "math_weights" in config:
                 from rae_core.math.structure import ScoringWeights
+
                 w = config["math_weights"]
                 return ScoringWeights(
                     alpha=float(w.get("alpha", 0.5)),
                     beta=float(w.get("beta", 0.3)),
-                    gamma=float(w.get("gamma", 0.2))
+                    gamma=float(w.get("gamma", 0.2)),
                 )
 
         except Exception as e:
-            logger.warning("failed_to_load_tenant_weights", tenant_id=tenant_id, error=str(e))
+            logger.warning(
+                "failed_to_load_tenant_weights", tenant_id=tenant_id, error=str(e)
+            )
         return None
 
     async def query_memories(
@@ -673,11 +712,19 @@ class RAECoreService:
         Query memories across layers with dynamic weights.
         """
         import time
+
         start_time = time.time()
-        
+
         # 1. Get dynamic weights from tuning service
         weights = await self.tuning_service.get_current_weights(str(tenant_id))
-        
+
+        # Override weights for Szubar Mode
+        if self.szubar_mode:
+            from rae_core.math.structure import ScoringWeights
+
+            weights = ScoringWeights.szubar_profile()
+            logger.debug("using_szubar_weights_for_query")
+
         # 2. Execute Engine search
         raw_results = await self.engine.search_memories(
             query=query,
@@ -687,12 +734,12 @@ class RAECoreService:
             top_k=k,
             similarity_threshold=0.5,
             use_reranker=True,
-            custom_weights=weights
+            custom_weights=weights,
         )
 
         # 3. Map to SearchResponse model
         from rae_core.models.search import SearchResponse, SearchResult, SearchStrategy
-        
+
         results_list = []
         for res in raw_results:
             metadata_val = res.get("metadata", {})
@@ -700,24 +747,27 @@ class RAECoreService:
             if isinstance(metadata_val, str):
                 try:
                     import json
+
                     metadata_val = json.loads(metadata_val)
                 except Exception:
                     metadata_val = {}
 
-            results_list.append(SearchResult(
-                memory_id=str(res.get("id")),
-                content=res.get("content", ""),
-                score=res.get("search_score", 0.0),
-                strategy_used=SearchStrategy.HYBRID,
-                metadata=metadata_val
-            ))
+            results_list.append(
+                SearchResult(
+                    memory_id=str(res.get("id")),
+                    content=res.get("content", ""),
+                    score=res.get("search_score", 0.0),
+                    strategy_used=SearchStrategy.HYBRID,
+                    metadata=metadata_val,
+                )
+            )
 
         response = SearchResponse(
             results=results_list,
             query=query,
             strategy=SearchStrategy.HYBRID,
             total_found=len(results_list),
-            execution_time_ms=(time.time() - start_time) * 1000
+            execution_time_ms=(time.time() - start_time) * 1000,
         )
 
         # 4. AUDIT: Record this search in the Working Layer
@@ -730,10 +780,7 @@ class RAECoreService:
                 layer=MemoryLayer.WORKING,
                 importance=0.1,
                 tags=["audit", "search_trace"],
-                metadata={
-                    "query": query,
-                    "weights": weights
-                }
+                metadata={"query": query, "weights": weights},
             )
         except Exception as e:
             logger.warning("search_audit_failed", error=str(e))

@@ -9,7 +9,8 @@ class FeedbackRequest(BaseModel):
         ..., pattern="^(positive|negative)$", description="Type of feedback"
     )
     score: Optional[float] = Field(
-        None, description="Numeric score from -1.0 to 1.0 (derived from type if missing)"
+        None,
+        description="Numeric score from -1.0 to 1.0 (derived from type if missing)",
     )
     query_text: Optional[str] = Field(
         None, description="The query that triggered this result"
@@ -22,4 +23,3 @@ class FeedbackRequest(BaseModel):
         None, description="Weights used during query (alpha, beta, gamma)"
     )
     metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
-
