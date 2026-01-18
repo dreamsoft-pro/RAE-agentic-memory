@@ -185,6 +185,26 @@ When delegating tasks to external nodes (e.g., node1/KUBUS), follow the **Agenti
   - **Audit Logs**: Critical state changes MUST be logged via `AuditService`.
   - **Data Isolation**: New tables MUST include `tenant_id` and have RLS policies.
 
-- **Zero Errors / Zero Drift**:
-  - Maintain 0 failures in `test-compliance`.
+- Zero Errors / Zero Drift:
+  - Maintain 0 failures in test-compliance.
   - Do not introduce regressions in ISO 42001 coverage (currently 100% for key services).
+
+## 14. ANTI-LOOPING & STABILITY PROTOCOL
+
+### 14.1 Agent (CLI) Self-Correction Rule
+- **The "Rule of Three"**: If a specific command or operation fails **3 times** in a row with the same error, the Agent **MUST** stop the loop.
+- **Action on Failure**:
+    1. Stop the current retry chain.
+    2. Read the underlying source code or configuration files related to the error.
+    3. Perform a root-cause analysis (RCA).
+    4. Propose a code-based fix instead of a configuration-based retry.
+- **No Infinite Retries**: Blindly repeating `docker restart` or `curl` commands without changing the state is forbidden.
+
+### 14.2 System (RAE Self-Improvement) Stability Rule
+- **Weight Guardrails**: Any automated tuning of mathematical weights (e.g., alpha, beta, gamma) MUST adhere to:
+    - **Sum Constraint**: Weights must always sum to **1.0**.
+    - **Boundary Limits**: Each weight must be within range `[0.05, 0.85]` to prevent complete loss of a signal (e.g., ignoring recency entirely).
+- **Update Frequency**: Automated updates to tenant configuration MUST be throttled (max once per 10 feedback events or a fixed time interval).
+- **Oscillation Detection**: If a weight change is reversed by the next tuning cycle (A -> B -> A), the system MUST halt automated tuning for that tenant and request HITL (Human-in-the-loop) review.
+- **Baseline Fallback**: Always maintain a "Golden Baseline" configuration. If performance (MRR/HitRate) drops by >15% after tuning, revert to baseline immediately.
+
