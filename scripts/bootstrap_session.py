@@ -97,6 +97,30 @@ def fetch_black_box_context(base_url):
             content = item.get("content") or item.get("text")
             print(f"> {content}")
 
+def log_session_start(base_url):
+    """Automatically creates a memory trace that a new session has started."""
+    import getpass
+    import platform
+    
+    user = getpass.getuser()
+    node = platform.node()
+    
+    payload = {
+        "content": f"Session Bootstrap Initiated by {user} on {node}. Infrastructure Check: ONLINE.",
+        "layer": "working",
+        "importance": 0.1,
+        "tags": ["session-start", "audit", "bootstrap"],
+        "source": "bootstrap_script"
+    }
+    
+    # Fire and forget (don't block startup if write fails, but try)
+    try:
+        make_request(f"{base_url}/v1/memory/store", method='POST', data=payload)
+        # We don't print confirmation to keep stdout clean for the agent context, 
+        # but the memory is stored.
+    except:
+        pass
+
 def main():
     print("🔌 RAE-First Bootstrap (Zero-Dep Mode)...")
     
@@ -111,7 +135,9 @@ def main():
         sys.exit(1)
     
     # Success path
+    log_session_start(active_url)
     fetch_black_box_context(active_url)
+    
     print("\n✅ SESSION READY. Proceed with RAE context.")
 
 if __name__ == "__main__":
