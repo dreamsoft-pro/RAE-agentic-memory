@@ -99,6 +99,12 @@ class PostgreSQLStorage(IMemoryStorage):
         importance: float | None = None,
         expires_at: datetime | None = None,
         memory_type: str = "text",
+        project: str | None = None,
+        session_id: str | None = None,
+        source: str | None = None,
+        strength: float = 1.0,
+        info_class: str = "internal",
+        governance: dict[str, Any] | None = None,
     ) -> UUID:
         """Store a new memory in PostgreSQL."""
         pool = await self._get_pool()
@@ -107,6 +113,7 @@ class PostgreSQLStorage(IMemoryStorage):
         tags = tags or []
         metadata = metadata or {}
         importance = importance if importance is not None else 0.5
+        governance = governance or {}
 
         import json
 
@@ -119,9 +126,10 @@ class PostgreSQLStorage(IMemoryStorage):
                 INSERT INTO memories (
                     id, content, layer, tenant_id, agent_id,
                     tags, metadata, embedding, importance, expires_at,
-                    created_at, last_accessed_at, memory_type, usage_count
+                    created_at, last_accessed_at, memory_type, usage_count,
+                    project, session_id, source, strength, info_class, governance
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11, $12, 0)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11, $12, 0, $13, $14, $15, $16, $17, $18)
                 """,
                 memory_id,
                 content,
@@ -135,6 +143,12 @@ class PostgreSQLStorage(IMemoryStorage):
                 expires_at,
                 datetime.now(timezone.utc).replace(tzinfo=None),
                 memory_type,
+                project,
+                session_id,
+                source,
+                strength,
+                info_class,
+                json.dumps(governance),
             )
 
         return memory_id

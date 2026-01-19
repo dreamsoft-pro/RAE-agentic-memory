@@ -32,7 +32,6 @@ from apps.memory_api.observability import (
     instrument_libraries,
     setup_opentelemetry,
 )
-from apps.memory_api.routes import tuning  # Phase 4
 from apps.memory_api.routes import (
     dashboard,
     evaluation,
@@ -44,6 +43,7 @@ from apps.memory_api.routes import (
     reflections,
     sync,
     token_savings,
+    tuning,  # Phase 4
 )
 from apps.memory_api.services.context_cache import rebuild_full_cache
 from apps.memory_api.services.rae_core_service import RAECoreService

@@ -28,10 +28,25 @@ class MockMemoryStorage(IMemoryStorage):
         embedding: list[float] | None = None,
         importance: float | None = None,
         expires_at: datetime | None = None,
+        memory_type: str = "text",
+        project: str | None = None,
+        session_id: str | None = None,
+        source: str | None = None,
+        strength: float = 1.0,
+        info_class: str = "internal",
+        governance: dict[str, Any] | None = None,
     ) -> UUID:
         async with self._lock:
             memory_id = uuid4()
             now = datetime.now(timezone.utc)
+
+            # Merge extra fields into metadata for mock
+            meta = metadata or {}
+            if project:
+                meta["project"] = project
+            if session_id:
+                meta["session_id"] = session_id
+
             memory = {
                 "id": memory_id,
                 "content": content,
@@ -39,16 +54,33 @@ class MockMemoryStorage(IMemoryStorage):
                 "tenant_id": tenant_id,
                 "agent_id": agent_id,
                 "tags": tags or [],
-                "metadata": metadata or {},
+                "metadata": meta,
                 "embedding": embedding,
                 "importance": importance or 0.5,
                 "created_at": now,
                 "last_accessed_at": now,
                 "expires_at": expires_at,
                 "usage_count": 0,
+                "memory_type": memory_type,
             }
             self._memories[memory_id] = memory
             return memory_id
+
+    async def decay_importance(
+        self,
+        tenant_id: str,
+        decay_rate: float,
+        consider_access_stats: bool = False,
+    ) -> int:
+        async with self._lock:
+            count = 0
+            for memory in self._memories.values():
+                if memory["tenant_id"] == tenant_id:
+                    memory["importance"] = (
+                        float(memory.get("importance", 0.5)) * decay_rate
+                    )
+                    count += 1
+            return count
 
     async def get_memory(
         self, memory_id: UUID, tenant_id: str
@@ -340,13 +372,22 @@ class MockVectorStore(IVectorStore):
     async def store_vector(
         self,
         memory_id: UUID,
-        embedding: list[float],
+        embedding: list[float] | dict[str, list[float]],
         tenant_id: str,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
         async with self._lock:
+            # Handle multi-vector mock
+            vec_list = embedding
+            if isinstance(embedding, dict):
+                vec_list = (
+                    embedding.get("default")
+                    or embedding.get("dense")
+                    or next(iter(embedding.values()))
+                )
+
             self._vectors[(memory_id, tenant_id)] = {
-                "embedding": embedding,
+                "embedding": vec_list,
                 "metadata": metadata or {},
             }
             return True
@@ -358,6 +399,7 @@ class MockVectorStore(IVectorStore):
         layer: str | None = None,
         limit: int = 10,
         score_threshold: float | None = None,
+        agent_id: str | None = None,
     ) -> list[tuple[UUID, float]]:
         async with self._lock:
             results: list[tuple[UUID, float]] = []
@@ -380,14 +422,23 @@ class MockVectorStore(IVectorStore):
     async def update_vector(
         self,
         memory_id: UUID,
-        embedding: list[float],
+        embedding: list[float] | dict[str, list[float]],
         tenant_id: str,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
         async with self._lock:
             if (memory_id, tenant_id) in self._vectors:
+                # Handle multi-vector mock
+                vec_list = embedding
+                if isinstance(embedding, dict):
+                    vec_list = (
+                        embedding.get("default")
+                        or embedding.get("dense")
+                        or next(iter(embedding.values()))
+                    )
+
                 self._vectors[(memory_id, tenant_id)].update(
-                    {"embedding": embedding, "metadata": metadata or {}}
+                    {"embedding": vec_list, "metadata": metadata or {}}
                 )
                 return True
             return False
@@ -398,13 +449,26 @@ class MockVectorStore(IVectorStore):
             return vec_data["embedding"] if vec_data else None
 
     async def batch_store_vectors(
-        self, vectors: list[tuple[UUID, list[float], dict[str, Any]]], tenant_id: str
+        self,
+        vectors: list[
+            tuple[UUID, list[float] | dict[str, list[float]], dict[str, Any]]
+        ],
+        tenant_id: str,
     ) -> int:
         async with self._lock:
             count = 0
             for mem_id, embedding, metadata in vectors:
+                # Handle multi-vector mock
+                vec_list = embedding
+                if isinstance(embedding, dict):
+                    vec_list = (
+                        embedding.get("default")
+                        or embedding.get("dense")
+                        or next(iter(embedding.values()))
+                    )
+
                 self._vectors[(mem_id, tenant_id)] = {
-                    "embedding": embedding,
+                    "embedding": vec_list,
                     "metadata": metadata or {},
                 }
                 count += 1

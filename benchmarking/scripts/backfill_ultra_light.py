@@ -35,7 +35,7 @@ async def get_embeddings_batch(client, texts):
 
 def stream_memories(path):
     """Extremely lightweight YAML parser for this specific file format."""
-    current_mem = {}
+    current_mem: dict[str, str] = {}
     in_memories = False
 
     with open(path, "r") as f:
@@ -80,7 +80,7 @@ async def backfill():
                 embeddings = await get_embeddings_batch(client, texts)
 
                 if embeddings:
-                    db_rows = []
+                    db_rows: list[tuple] = []
                     points = []
                     for m, emb in zip(batch, embeddings):
                         m_id = str(uuid4())

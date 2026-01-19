@@ -163,7 +163,14 @@ class SQLiteStorage(IMemoryStorage):
         metadata: dict[str, Any] | None = None,
         embedding: list[float] | None = None,
         importance: float | None = None,
-        expires_at: Any | None = None,
+        expires_at: datetime | None = None,
+        memory_type: str = "text",
+        project: str | None = None,
+        session_id: str | None = None,
+        source: str | None = None,
+        strength: float = 1.0,
+        info_class: str = "internal",
+        governance: dict[str, Any] | None = None,
     ) -> UUID:
         """Store a new memory."""
         await self.initialize()
@@ -172,7 +179,20 @@ class SQLiteStorage(IMemoryStorage):
         now = datetime.now(timezone.utc).isoformat()
 
         tags_json = json.dumps(tags or [])
-        metadata_json = json.dumps(metadata or {})
+
+        # Merge optional fields into metadata for SQLite
+        meta = metadata or {}
+        if project:
+            meta["project"] = project
+        if session_id:
+            meta["session_id"] = session_id
+        if source:
+            meta["source"] = source
+        meta["info_class"] = info_class
+        if governance:
+            meta["governance"] = governance
+
+        metadata_json = json.dumps(meta)
 
         # Convert expires_at to ISO string if it's a datetime
         expires_at_str = None
@@ -807,6 +827,33 @@ class SQLiteStorage(IMemoryStorage):
             ) as cursor:
                 row = await cursor.fetchone()
                 return float(row[0]) if row else 0.0
+
+    async def decay_importance(
+        self,
+        tenant_id: str,
+        decay_rate: float,
+        consider_access_stats: bool = False,
+    ) -> int:
+        """Apply importance decay to all memories for a tenant."""
+        await self.initialize()
+        async with aiosqlite.connect(self.db_path) as db:
+            # Simple decay logic: importance = importance * decay_rate
+            # More complex logic with access stats would require complex SQL in SQLite or Python processing
+            # For simplicity in Lite/SQLite, we use basic decay
+            await db.execute(
+                """
+                UPDATE memories
+                SET importance = importance * ?,
+                    modified_at = ?
+                WHERE tenant_id = ?
+                """,
+                (decay_rate, datetime.now(timezone.utc).isoformat(), tenant_id),
+            )
+            await db.commit()
+
+            # Use separate query to get count as 'execute' returns cursor but rowcount might not be reliable across drivers
+            # But standard aiosqlite cursor.rowcount works for UPDATE
+            return db.total_changes
 
     async def save_embedding(
         self,

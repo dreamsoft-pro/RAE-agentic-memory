@@ -120,7 +120,7 @@ class QdrantVectorStore(IVectorStore):
     async def add_vector(
         self,
         memory_id: UUID,
-        embedding: list[float],
+        embedding: list[float] | dict[str, list[float]],
         tenant_id: str,
         agent_id: str,
         layer: str,
@@ -141,13 +141,20 @@ class QdrantVectorStore(IVectorStore):
             **metadata,
         }
 
+        # Handle Named Vectors
+        vector_data: dict[str, list[float]] | list[float]
+        if isinstance(embedding, dict):
+            vector_data = embedding
+        else:
+            vector_data = {"dense": embedding}
+
         try:
             await self.client.upsert(
                 collection_name=self.collection_name,
                 points=[
                     PointStruct(
                         id=str(memory_id),
-                        vector={"dense": embedding},
+                        vector=vector_data,
                         payload=payload,
                     )
                 ],
@@ -159,7 +166,7 @@ class QdrantVectorStore(IVectorStore):
     async def store_vector(
         self,
         memory_id: UUID,
-        embedding: list[float],
+        embedding: list[float] | dict[str, list[float]],
         tenant_id: str,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
@@ -175,7 +182,7 @@ class QdrantVectorStore(IVectorStore):
     async def update_vector(
         self,
         memory_id: UUID,
-        embedding: list[float],
+        embedding: list[float] | dict[str, list[float]],
         tenant_id: str,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
@@ -184,7 +191,9 @@ class QdrantVectorStore(IVectorStore):
 
     async def batch_store_vectors(
         self,
-        vectors: list[tuple[UUID, list[float], dict[str, Any]]],
+        vectors: list[
+            tuple[UUID, list[float] | dict[str, list[float]], dict[str, Any]]
+        ],
         tenant_id: str,
     ) -> int:
         """Store multiple vectors in a batch."""
@@ -206,10 +215,15 @@ class QdrantVectorStore(IVectorStore):
                 **meta,
             }
 
+            # Handle Named Vectors
+            vector_data: dict[str, list[float]] | list[float]
+            if isinstance(embedding, dict):
+                vector_data = embedding
+            else:
+                vector_data = {"dense": embedding}
+
             points.append(
-                PointStruct(
-                    id=str(memory_id), vector={"dense": embedding}, payload=payload
-                )
+                PointStruct(id=str(memory_id), vector=vector_data, payload=payload)
             )
 
         if not points:

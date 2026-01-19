@@ -86,15 +86,25 @@ class SQLiteVectorStore(IVectorStore):
     async def store_vector(
         self,
         memory_id: UUID,
-        embedding: list[float],
+        embedding: list[float] | dict[str, list[float]],
         tenant_id: str,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
         """Store a vector embedding."""
         await self.initialize()
 
+        # Handle multi-vector
+        if isinstance(embedding, dict):
+            vec_list = (
+                embedding.get("default")
+                or embedding.get("dense")
+                or next(iter(embedding.values()))
+            )
+        else:
+            vec_list = embedding
+
         # Serialize embedding as BLOB (float32 array)
-        embedding_bytes = struct.pack(f"{len(embedding)}f", *embedding)
+        embedding_bytes = struct.pack(f"{len(vec_list)}f", *vec_list)
         metadata_json = json.dumps(metadata or {})
 
         async with aiosqlite.connect(self.db_path) as db:
@@ -106,7 +116,7 @@ class SQLiteVectorStore(IVectorStore):
                 (
                     str(memory_id),
                     embedding_bytes,
-                    len(embedding),
+                    len(vec_list),
                     tenant_id,
                     metadata_json,
                 ),
@@ -122,6 +132,7 @@ class SQLiteVectorStore(IVectorStore):
         layer: str | None = None,
         limit: int = 10,
         score_threshold: float | None = None,
+        agent_id: str | None = None,
     ) -> list[tuple[UUID, float]]:
         """Search for similar vectors using cosine similarity."""
         await self.initialize()
@@ -147,6 +158,10 @@ class SQLiteVectorStore(IVectorStore):
             if layer:
                 where_clauses.append("json_extract(metadata, '$.layer') = ?")
                 params.append(layer)
+
+            if agent_id:
+                where_clauses.append("json_extract(metadata, '$.agent_id') = ?")
+                params.append(agent_id)
 
             where_clause = " AND ".join(where_clauses)
 
@@ -212,7 +227,7 @@ class SQLiteVectorStore(IVectorStore):
     async def update_vector(
         self,
         memory_id: UUID,
-        embedding: list[float],
+        embedding: list[float] | dict[str, list[float]],
         tenant_id: str,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
@@ -266,7 +281,9 @@ class SQLiteVectorStore(IVectorStore):
 
     async def batch_store_vectors(
         self,
-        vectors: list[tuple[UUID, list[float], dict[str, Any]]],
+        vectors: list[
+            tuple[UUID, list[float] | dict[str, list[float]], dict[str, Any]]
+        ],
         tenant_id: str,
     ) -> int:
         """Store multiple vectors in a batch."""
@@ -277,7 +294,17 @@ class SQLiteVectorStore(IVectorStore):
         async with aiosqlite.connect(self.db_path) as db:
             for memory_id, embedding, metadata in vectors:
                 try:
-                    embedding_bytes = struct.pack(f"{len(embedding)}f", *embedding)
+                    # Handle multi-vector
+                    if isinstance(embedding, dict):
+                        vec_list = (
+                            embedding.get("default")
+                            or embedding.get("dense")
+                            or next(iter(embedding.values()))
+                        )
+                    else:
+                        vec_list = embedding
+
+                    embedding_bytes = struct.pack(f"{len(vec_list)}f", *vec_list)
                     metadata_json = json.dumps(metadata)
 
                     await db.execute(
@@ -288,7 +315,7 @@ class SQLiteVectorStore(IVectorStore):
                         (
                             str(memory_id),
                             embedding_bytes,
-                            len(embedding),
+                            len(vec_list),
                             tenant_id,
                             metadata_json,
                         ),

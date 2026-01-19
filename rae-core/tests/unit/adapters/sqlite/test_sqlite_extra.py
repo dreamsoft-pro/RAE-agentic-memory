@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
@@ -46,14 +47,17 @@ async def test_sqlite_storage_extra(db_path):
     storage = SQLiteStorage(db_path)
     await storage.initialize()
 
-    mid = await storage.store_memory("c", "l", "t", "a", expires_at="tomorrow")
+    future = datetime.now(timezone.utc) + timedelta(days=1)
+
+    mid = await storage.store_memory("c", "l", "t", "a", expires_at=future)
     await storage.update_memory(mid, "t", {"tags": ["t1"], "metadata": {"m": 1}})
 
     # search_memories with empty query
     assert await storage.search_memories("", "t1", "a1", "l1") == []
 
-    # update_memory_expiration without isoformat
-    await storage.update_memory_expiration(mid, "t", "next week")
+    # update_memory_expiration with datetime
+    future_week = datetime.now(timezone.utc) + timedelta(weeks=1)
+    await storage.update_memory_expiration(mid, "t", future_week)
 
     # get_metric_aggregate with filters
     await storage.get_metric_aggregate("t", "importance", "avg", filters={"key": "val"})
