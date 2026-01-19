@@ -123,6 +123,7 @@ lint:  ## Run linters (ruff, black, isort, mypy)
 	@echo "🔍 Running linters..."
 	@$(VENV_ACTIVATE) && ruff check apps/ sdk/ integrations/ rae-core/ benchmarking/ eval/
 	@$(VENV_ACTIVATE) && black --check apps/ sdk/ integrations/ rae-core/ benchmarking/ eval/
+	@$(VENV_ACTIVATE) && isort --check apps/ sdk/ integrations/ rae-core/ benchmarking/ eval/
 	@$(VENV_ACTIVATE) && mypy apps/ sdk/ rae-core/ integrations/ benchmarking/ eval/
 	@echo "✅ Linting complete"
 
