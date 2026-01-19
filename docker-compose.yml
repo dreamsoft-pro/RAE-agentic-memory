@@ -309,6 +309,7 @@ services:
     volumes:
       - ./apps:/app/apps:ro
       - ./sdk:/app/sdk:ro
+      - ./rae-core:/app/rae-core:ro
       - ./rae_adapters:/app/rae_adapters:ro
     environment:
       - POSTGRES_HOST=postgres
@@ -400,6 +401,7 @@ services:
     volumes:
       - ./apps:/app/apps:ro
       - ./sdk:/app/sdk:ro
+      - ./rae-core:/app/rae-core:ro
       - ./rae_adapters:/app/rae_adapters:ro
     environment:
       - POSTGRES_HOST=postgres
