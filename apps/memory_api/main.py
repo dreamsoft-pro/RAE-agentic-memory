@@ -172,7 +172,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="RAE Memory API",
     description="Reflective Agentic Memory Engine - Enterprise API",
-    version="2.9.0",
+    version="3.0.1",
     lifespan=lifespan,
     docs_url="/docs",
     redoc_url="/redoc",
