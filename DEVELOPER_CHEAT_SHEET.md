@@ -59,11 +59,18 @@ For **RAE-First** communication in `hotreload` mode:
 
 - **Config File:** `.claude/mcp.json`
 - **Server Name:** `rae-dev`
-- **API URL:** `http://localhost:8001`
+- **API URL (Local):** `http://localhost:8001` (If unstable, use Lumina)
+- **API URL (Lumina):** `http://100.68.166.117:8001` (Stable, Production-like)
 - **Port Mapping:** `8001` (Dev/Hotreload), `8008` (Lite)
 - **Startup:**
     1. Ensure Dev API is running: `make dev` or `docker compose up rae-api-dev`
     2. Connection check: `curl http://localhost:8001/health`
+
+## 🖥️ Node 1 (Lumina) Management
+- **IP:** `100.68.166.117`
+- **SSH:** `ssh operator@100.68.166.117`
+- **Restart API:** `ssh operator@100.68.166.117 "cd ~/rae-node-agent && docker compose restart rae-api-dev"`
+- **Hard Reset:** `ssh operator@100.68.166.117 "cd ~/rae-node-agent && docker compose down && docker network prune -f && docker compose up -d"`
 
 ## 🐳 Docker Profiles
 | Profile | Command | Ports | Description |
@@ -77,3 +84,13 @@ For **RAE-First** communication in `hotreload` mode:
 - **Config:** `config/` (Default settings), `.env` (Secrets)
 - **Core Logic:** `rae-core/`
 - **API Logic:** `apps/memory_api/`
+
+## 🔧 Troubleshooting & Known Issues
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| **502 Bad Gateway / Connection Refused** | Docker Network/DNS corruption or Ghost Process. | 1. Check ports: `ss -lptn 'sport = :8001'`<br>2. Hard Reset: `docker compose down && docker network prune -f && docker compose up -d` |
+| **AttributeError: 'RAECoreService' object has no attribute 'tuning_service'** | Phase 4 Regression. | Ensure `self.tuning_service` is initialized in `rae_core_service.py` `__init__`. |
+| **AttributeError: 'dict' object has no attribute 'alpha'** | RAEEngine Weights mismatch. | `custom_weights` is a dict, but `score_memory` expects `ScoringWeights` object. Cast it. |
+| **Lumina (Node 1) Unreachable** | Service crash or SSH timeout. | SSH in and restart: `ssh operator@100.68.166.117 "cd ~/rae-node-agent && docker compose restart rae-api-dev"` |
+

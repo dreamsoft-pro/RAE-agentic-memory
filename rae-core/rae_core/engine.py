@@ -38,17 +38,7 @@ class RAEEngine:
         cache_provider: ICacheProvider | None = None,
         sync_provider: ISyncProvider | None = None,
     ) -> None:
-        """Initialize RAE Engine.
-
-        Args:
-            memory_storage: Memory storage provider
-            vector_store: Vector database provider
-            embedding_provider: Embedding provider
-            settings: Optional RAE settings (creates default if not provided)
-            llm_provider: Optional LLM provider
-            cache_provider: Optional cache provider
-            sync_provider: Optional sync provider
-        """
+        """Initialize RAE Engine."""
         self.memory_storage = memory_storage
         self.vector_store = vector_store
         self.embedding_provider = embedding_provider
@@ -63,8 +53,6 @@ class RAEEngine:
         from rae_core.search.strategies.vector import VectorSearchStrategy
 
         strategies: dict[str, SearchStrategy] = {}
-
-        # Always include full-text strategy (run anywhere)
         strategies["fulltext"] = FullTextStrategy(memory_storage=memory_storage)
 
         if vector_store and embedding_provider:
@@ -89,7 +77,6 @@ class RAEEngine:
             llm_provider=llm_provider,
         )
 
-        # Initialize LLM orchestrator if LLM provider is available
         self.llm_orchestrator: LLMOrchestrator | None = None
         if llm_provider:
             from rae_core.llm.config import LLMConfig
@@ -106,15 +93,12 @@ class RAEEngine:
                 cache=cache_provider,
             )
 
-        # Initialize sync protocol if sync provider is available
         self.sync_protocol: SyncProtocol | None = None
         if sync_provider and self.settings.sync_enabled:
             self.sync_protocol = SyncProtocol(
                 sync_provider=sync_provider,
                 encryption_enabled=self.settings.sync_encryption_enabled,
             )
-
-    # Memory operations
 
     async def store_memory(
         self,
@@ -134,26 +118,7 @@ class RAEEngine:
         info_class: str = "internal",
         governance: dict[str, Any] | None = None,
     ) -> UUID:
-        """Store a new memory.
-
-        Args:
-            tenant_id: Tenant identifier
-            agent_id: Agent identifier
-            content: Memory content
-            layer: Memory layer (sensory, working, episodic, semantic, reflective)
-            importance: Importance score (0-1)
-            tags: Optional tags
-            metadata: Optional metadata
-            memory_type: Type of memory
-            project: Project identifier
-            session_id: Session identifier
-            ttl: Time to live in seconds
-            source: Source of memory
-            strength: Memory strength
-            info_class: Information classification
-            governance: Governance metadata
-        """
-        # 0. Prepare data
+        """Store a new memory."""
         tags = tags or []
         metadata = metadata or {}
         governance = governance or {}
@@ -162,32 +127,23 @@ class RAEEngine:
         if ttl:
             expires_at = datetime.now(timezone.utc) + timedelta(seconds=ttl)
 
-        # 1. Generate embeddings
         default_embedding = None
         embeddings_map = {}
 
         if hasattr(self.embedding_provider, "generate_all_embeddings"):
-            # Use EmbeddingManager to generate for all profiles
             embeddings_map = await self.embedding_provider.generate_all_embeddings(
                 [content]
             )
-
-            # Determine default embedding
             if "default" in embeddings_map and embeddings_map["default"]:
                 default_embedding = embeddings_map["default"][0]
             elif embeddings_map:
-                # Fallback: pick first available
                 default_embedding = list(embeddings_map.values())[0][0]
         else:
-            # Standard Provider
             embs = await self.embedding_provider.embed_batch([content])
             if embs:
                 default_embedding = embs[0]
-                embeddings_map = {
-                    "default": [embs[0]]
-                }  # Fixed map format to match logic
+                embeddings_map = {"default": [embs[0]]}
 
-        # 2. Store in Memory Storage (Postgres)
         memory_id = await self.memory_storage.store_memory(
             tenant_id=tenant_id,
             agent_id=agent_id,
@@ -196,7 +152,7 @@ class RAEEngine:
             importance=importance,
             tags=tags,
             metadata=metadata,
-            embedding=default_embedding,  # Store default in legacy column
+            embedding=default_embedding,
             memory_type=memory_type,
             project=project,
             session_id=session_id,
@@ -207,7 +163,6 @@ class RAEEngine:
             governance=governance,
         )
 
-        # 3. Save all embeddings to memory_embeddings table
         for model_name, model_embs in embeddings_map.items():
             if model_embs:
                 await self.memory_storage.save_embedding(
@@ -218,15 +173,11 @@ class RAEEngine:
                     metadata={"source_length": len(content)},
                 )
 
-        # 4. Store in Vector Store (Qdrant) - Support all generated embeddings
         if self.vector_store and embeddings_map:
-            # Map RAE model names to Qdrant vector names
-            # embeddings_map structure: {model_name: [embedding_list]}
             vector_payload = {}
             for model_name, model_embs in embeddings_map.items():
                 if model_embs and model_embs[0]:
                     emb = model_embs[0]
-                    # Determine vector name based on dimension for Qdrant
                     dim = len(emb)
                     if dim == 1536:
                         vector_payload["openai"] = emb
@@ -236,10 +187,8 @@ class RAEEngine:
                         vector_payload["dense"] = emb
                     elif dim == 1024:
                         vector_payload["cohere"] = emb
-                    else:
-                        # Fallback to dense if unknown but it's the only one
-                        if len(embeddings_map) == 1:
-                            vector_payload["dense"] = emb
+                    elif len(embeddings_map) == 1:
+                        vector_payload["dense"] = emb
 
             vector_metadata = {
                 "agent_id": agent_id,
@@ -247,8 +196,6 @@ class RAEEngine:
                 "content": content,
                 **metadata,
             }
-
-            # Use the most specific vector payload if we have one, otherwise fallback to default
             store_data = vector_payload if vector_payload else default_embedding
 
             if store_data is not None:
@@ -262,22 +209,11 @@ class RAEEngine:
         return memory_id
 
     async def retrieve_memory(
-        self,
-        memory_id: UUID,
-        tenant_id: str,
+        self, memory_id: UUID, tenant_id: str
     ) -> dict[str, Any] | None:
-        """Retrieve a memory by ID.
-
-        Args:
-            memory_id: Memory identifier
-            tenant_id: Tenant identifier
-
-        Returns:
-            Memory record or None if not found
-        """
+        """Retrieve a memory by ID."""
         return await self.memory_storage.get_memory(
-            memory_id=memory_id,
-            tenant_id=tenant_id,
+            memory_id=memory_id, tenant_id=tenant_id
         )
 
     async def search_memories(
@@ -289,96 +225,87 @@ class RAEEngine:
         top_k: int | None = None,
         similarity_threshold: float | None = None,
         use_reranker: bool = False,
+        custom_weights: Any = None,
+        filters: dict[str, Any] | None = None,
     ) -> list[dict[str, Any]]:
-        """Search memories using hybrid search.
-
-        Args:
-            query: Search query
-            tenant_id: Tenant identifier
-            agent_id: Optional agent filter
-            layer: Optional memory layer filter
-            top_k: Number of results (uses settings default if not specified)
-            similarity_threshold: Similarity threshold (uses settings default if not specified)
-            use_reranker: Whether to use reranking
-
-        Returns:
-            List of matching memories
-        """
+        """Search memories using hybrid search with Semantic Resonance."""
         search_config = self.settings.get_search_config()
         top_k = top_k or search_config["top_k"]
         similarity_threshold = (
             similarity_threshold or search_config["similarity_threshold"]
         )
 
-        filters: dict[str, Any] = {}
+        # Merge filters
+        search_filters = filters.copy() if filters else {}
         if agent_id:
-            filters["agent_id"] = agent_id
+            search_filters["agent_id"] = agent_id
         if layer:
-            filters["layer"] = layer
-
-        # Pass threshold to strategies
-        filters["score_threshold"] = similarity_threshold
+            search_filters["layer"] = layer
+        search_filters["score_threshold"] = similarity_threshold
 
         results = await self.search_engine.search(
-            query=query,
-            tenant_id=tenant_id,
-            filters=filters,
-            limit=top_k,
+            query=query, tenant_id=tenant_id, filters=search_filters, limit=top_k
         )
 
         if use_reranker and len(results) > 0:
             rerank_top_k = search_config["rerank_top_k"]
             results = await self.search_engine.rerank(
-                query=query,
-                results=results[:rerank_top_k],
+                query=query, results=results[:rerank_top_k]
             )
 
-        # 4. Fetch actual memories and apply Math Layer scoring
+        # 4. Fetch actual memories and apply Math Layer scoring + Resonance
         from rae_core.math.controller import MathLayerController
+        from rae_core.math.resonance import SemanticResonanceEngine
 
         math_controller = MathLayerController()
+        resonance_engine = SemanticResonanceEngine()
 
         memories: list[dict[str, Any]] = []
+        memory_ids = [str(mid) for mid, _ in results]
+
+        graph_edges = []
+        if hasattr(self.memory_storage, "get_edges_between"):
+            graph_edges = await self.memory_storage.get_edges_between(
+                memory_ids, tenant_id
+            )
+
         for memory_id, score in results:
             memory = await self.memory_storage.get_memory(memory_id, tenant_id)
             if memory:
-                # Combine retrieval score with math heuristic score
-                math_score = math_controller.score_memory(
-                    memory=memory, query_similarity=score
-                )
+                if custom_weights:
+                    from rae_core.math.structure import ScoringWeights
+
+                    if isinstance(custom_weights, dict):
+                        weights_obj = ScoringWeights(**custom_weights)
+                    else:
+                        weights_obj = custom_weights
+                    math_score = math_controller.score_memory(
+                        memory=memory, query_similarity=score, weights=weights_obj
+                    )
+                else:
+                    math_score = math_controller.score_memory(
+                        memory=memory, query_similarity=score
+                    )
+
                 memory["search_score"] = score
                 memory["math_score"] = math_score
                 memories.append(memory)
 
-        # 5. Final sort by math score
-        memories.sort(key=lambda x: x["math_score"], reverse=True)
+        if len(memories) > 1 and graph_edges:
+            memories = resonance_engine.compute_resonance(memories, graph_edges)
+        else:
+            memories.sort(key=lambda x: x["math_score"], reverse=True)
 
         return memories
 
-    # Reflection operations
-
     async def run_reflection_cycle(
-        self,
-        tenant_id: str,
-        agent_id: str,
-        trigger_type: str = "scheduled",
+        self, tenant_id: str, agent_id: str, trigger_type: str = "scheduled"
     ) -> dict[str, Any]:
-        """Run a reflection cycle.
-
-        Args:
-            tenant_id: Tenant identifier
-            agent_id: Agent identifier
-            trigger_type: Type of trigger
-
-        Returns:
-            Cycle execution summary
-        """
+        """Run a reflection cycle."""
         return cast(
             dict[str, Any],
             await self.reflection_engine.run_reflection_cycle(
-                tenant_id=tenant_id,
-                agent_id=agent_id,
-                trigger_type=trigger_type,
+                tenant_id=tenant_id, agent_id=agent_id, trigger_type=trigger_type
             ),
         )
 
@@ -389,17 +316,7 @@ class RAEEngine:
         agent_id: str,
         reflection_type: str = "consolidation",
     ) -> dict[str, Any]:
-        """Generate a reflection from specific memories.
-
-        Args:
-            memory_ids: List of memory IDs
-            tenant_id: Tenant identifier
-            agent_id: Agent identifier
-            reflection_type: Type of reflection
-
-        Returns:
-            Reflection result
-        """
+        """Generate a reflection from specific memories."""
         return await self.reflection_engine.generate_reflection(
             memory_ids=memory_ids,
             tenant_id=tenant_id,
@@ -407,30 +324,13 @@ class RAEEngine:
             reflection_type=reflection_type,
         )
 
-    # Sync operations
-
     async def sync_memories(
-        self,
-        tenant_id: str,
-        agent_id: str,
+        self, tenant_id: str, agent_id: str
     ) -> dict[str, Any] | None:
-        """Synchronize memories with remote.
-
-        Args:
-            tenant_id: Tenant identifier
-            agent_id: Agent identifier
-
-        Returns:
-            Sync result or None if sync is not enabled
-        """
+        """Synchronize memories with remote."""
         if not self.sync_protocol:
             return None
-
-        response = await self.sync_protocol.sync(
-            tenant_id=tenant_id,
-            agent_id=agent_id,
-        )
-
+        response = await self.sync_protocol.sync(tenant_id=tenant_id, agent_id=agent_id)
         return {
             "success": response.success,
             "synced_count": len(response.synced_memory_ids),
@@ -438,48 +338,22 @@ class RAEEngine:
             "error": response.error_message,
         }
 
-    # LLM operations
-
     async def generate_text(
-        self,
-        prompt: str,
-        provider_name: str | None = None,
-        **kwargs: Any,
+        self, prompt: str, provider_name: str | None = None, **kwargs: Any
     ) -> str | None:
-        """Generate text using LLM.
-
-        Args:
-            prompt: Prompt text
-            provider_name: Optional provider name
-            **kwargs: Additional arguments
-
-        Returns:
-            Generated text or None if LLM is not available
-        """
+        """Generate text using LLM."""
         if not self.llm_orchestrator:
             return None
-
-        # Use settings defaults
         llm_config = self.settings.get_llm_config()
         kwargs.setdefault("temperature", llm_config["temperature"])
         kwargs.setdefault("max_tokens", llm_config["max_tokens"])
-
         response, _ = await self.llm_orchestrator.generate(
-            prompt=prompt,
-            provider_name=provider_name,
-            **kwargs,
+            prompt=prompt, provider_name=provider_name, **kwargs
         )
-
         return response
 
-    # Health and status
-
     def get_status(self) -> dict[str, Any]:
-        """Get engine status.
-
-        Returns:
-            Status information
-        """
+        """Get engine status."""
         return {
             "settings": {
                 "sensory_max_size": self.settings.sensory_max_size,

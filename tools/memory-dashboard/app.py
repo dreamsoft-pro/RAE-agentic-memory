@@ -16,6 +16,7 @@ import os
 import time
 
 import streamlit as st
+import streamlit.components.v1 as components
 from utils.api_client import RAEClient, get_cached_stats
 from utils.visualizations import (
     apply_custom_css,

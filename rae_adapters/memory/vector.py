@@ -202,9 +202,9 @@ class InMemoryVectorStore(IVectorStore):
 
     async def batch_store_vectors(
         self,
-        vectors: list[tuple[UUID, list[float], dict[str, Any]]],
+        vectors: list[tuple[UUID, list[float] | dict[str, list[float]], dict[str, Any]]],
         tenant_id: str,
-    ) -> int:
+    ) -> int:  # type: ignore[override]
         """Store multiple vectors in a batch."""
         async with self._lock:
             count = 0

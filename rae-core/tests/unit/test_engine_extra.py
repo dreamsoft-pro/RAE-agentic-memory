@@ -147,6 +147,8 @@ async def test_search_memories_with_reranker(
         ) as mock_rerank,
     ):
         mock_storage.get_memory.return_value = {"id": mem_id, "content": "test"}
+        # Fix: Mock get_edges_between as AsyncMock
+        mock_storage.get_edges_between = AsyncMock(return_value=[])
 
         results = await engine.search_memories(
             "query", "t1", agent_id="a1", layer="episodic", use_reranker=True

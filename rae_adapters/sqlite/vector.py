@@ -183,11 +183,21 @@ class SQLiteVectorStore(IVectorStore):
 
                 # Convert to matrix for bulk calculation
                 matrix = np.stack(embeddings)
+                query_vec = query_vec.flatten() # Ensure it's 1D
 
                 # Bulk cosine similarity calculation
                 dot_products = np.dot(matrix, query_vec)
                 norms = np.linalg.norm(matrix, axis=1)
-                similarities = dot_products / (query_norm * norms)
+                
+                # Prevent division by zero
+                query_norm = np.linalg.norm(query_vec)
+                if query_norm == 0:
+                    return []
+                
+                denom = query_norm * norms
+                denom[denom == 0] = 1e-9 # Prevent div zero
+                similarities = dot_products / denom
+
 
                 # Filter and format results
                 results = []
@@ -277,9 +287,11 @@ class SQLiteVectorStore(IVectorStore):
 
     async def batch_store_vectors(
         self,
-        vectors: list[tuple[UUID, list[float], dict[str, Any]]],
+        vectors: list[
+            tuple[UUID, list[float] | dict[str, list[float]], dict[str, Any]]
+        ],
         tenant_id: str,
-    ) -> int:
+    ) -> int:  # type: ignore[override]
         """Store multiple vectors in a batch."""
         await self.initialize()
 

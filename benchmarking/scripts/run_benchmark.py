@@ -157,8 +157,17 @@ class RAEBenchmarkRunner:
 
     async def _get_embedding(self, service, texts: List[str]) -> List[List[float]]:
         if self.mock_embeddings:
-            # Return dummy 768d vectors (standard for nomic)
-            return [[0.1] * 768 for _ in texts]
+            # Determine actual dimension from service/provider
+            try:
+                from apps.memory_api.services.embedding import LocalEmbeddingProvider
+
+                provider = LocalEmbeddingProvider(service)
+                dim = provider.get_dimension()
+            except Exception:
+                dim = 768  # Fallback
+
+            # Return dummy vectors of correct dimension
+            return [[0.1] * dim for _ in texts]
         return cast(List[List[float]], await service.generate_embeddings_async(texts))
 
     async def load_benchmark(self):
@@ -261,19 +270,28 @@ class RAEBenchmarkRunner:
             # Recreate if dimensions mismatch
             if current_size is not None and current_size != expected_dim:
                 print(
-                    f"   ⚠️ Collection dimension mismatch (found {current_size}, expected {expected_dim}). Recreating..."
+                    f"   ⚠️ Collection dimension mismatch (found {current_size}, expected {expected_dim}). Recreating with Named Vectors..."
                 )
                 await vector_store.qdrant_client.delete_collection("memories")
+                # Use standard RAE vectors config to maintain model agnosticism
                 await vector_store.qdrant_client.create_collection(
                     collection_name="memories",
                     vectors_config={
                         "dense": rest_models.VectorParams(
                             size=expected_dim, distance=rest_models.Distance.COSINE
-                        )
+                        ),
+                        "openai": rest_models.VectorParams(
+                            size=1536, distance=rest_models.Distance.COSINE
+                        ),
+                        "ollama": rest_models.VectorParams(
+                            size=768, distance=rest_models.Distance.COSINE
+                        ),
                     },
                     sparse_vectors_config={"text": models.SparseVectorParams()},
                 )
-                print(f"   ✅ Collection recreated with dim={expected_dim}")
+                print(
+                    f"   ✅ Collection recreated with Named Vectors (dense={expected_dim}, ollama=768, openai=1536)"
+                )
         except Exception as e:
             print(f"   ℹ️ Could not check/recreate collection: {e}")
 

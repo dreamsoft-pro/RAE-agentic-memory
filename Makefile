@@ -444,7 +444,7 @@ health:  ## Check health of all services
 
 version:  ## Show version information
 	@echo "RAE - Reflective Agentic Memory Engine"
-	@echo "Version: 2.9.0"
+	@echo "Version: 3.0.1"
 	@echo "Python: $(shell python --version)"
 	@echo "Docker: $(shell docker --version)"
 
