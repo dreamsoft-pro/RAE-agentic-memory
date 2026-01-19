@@ -122,12 +122,19 @@ class PostgresVectorAdapter(IVectorStore):
 
     async def batch_store_vectors(
         self,
-        vectors: List[Tuple[UUID, List[float], dict]],
+        vectors: List[Tuple[UUID, List[float] | dict[str, List[float]], dict]],
         tenant_id: str,
-    ) -> int:
+    ) -> int:  # type: ignore[override]
         data = []
         for mid, emb, meta in vectors:
-            emb_str = "[" + ",".join(map(str, emb)) + "]"
+            if isinstance(emb, dict):
+                if not emb:
+                    continue
+                vector_values = next(iter(emb.values()))
+            else:
+                vector_values = emb
+
+            emb_str = "[" + ",".join(map(str, vector_values)) + "]"
             data.append((emb_str, mid, tenant_id))
 
         async with self.pool.acquire() as conn:

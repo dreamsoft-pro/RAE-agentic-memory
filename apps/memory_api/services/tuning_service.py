@@ -30,6 +30,10 @@ class TuningService:
         Used by search strategies for dynamic weighting.
         """
         try:
+            if not self.rae_service.postgres_pool:
+                logger.warning("postgres_pool_missing", tenant_id=tenant_id)
+                return {"alpha": 0.5, "beta": 0.3, "gamma": 0.2}
+
             sql = "SELECT config FROM tenants WHERE id = $1"
             config_json = await self.rae_service.postgres_pool.fetchval(sql, tenant_id)
 

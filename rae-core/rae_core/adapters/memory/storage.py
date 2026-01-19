@@ -83,12 +83,31 @@ class InMemoryStorage(IMemoryStorage):
         metadata: dict[str, Any] | None = None,
         embedding: list[float] | None = None,
         importance: float | None = None,
-        expires_at: Any | None = None,
+        expires_at: datetime | None = None,
+        memory_type: str = "text",
+        project: str | None = None,
+        session_id: str | None = None,
+        source: str | None = None,
+        strength: float = 1.0,
+        info_class: str = "internal",
+        governance: dict[str, Any] | None = None,
     ) -> UUID:
         """Store a new memory."""
         async with self._lock:
             memory_id = uuid4()
             now = datetime.now(timezone.utc)
+
+            # Store additional fields in metadata if not explicit columns in this simple adapter
+            meta = metadata or {}
+            if project:
+                meta["project"] = project
+            if session_id:
+                meta["session_id"] = session_id
+            if source:
+                meta["source"] = source
+            meta["info_class"] = info_class
+            if governance:
+                meta["governance"] = governance
 
             memory = {
                 "id": memory_id,
@@ -97,13 +116,15 @@ class InMemoryStorage(IMemoryStorage):
                 "tenant_id": tenant_id,
                 "agent_id": agent_id,
                 "tags": tags or [],
-                "metadata": metadata or {},
+                "metadata": meta,
                 "embedding": embedding,
                 "importance": importance or 0.5,
                 "created_at": now,
                 "last_accessed_at": now,
                 "expires_at": expires_at,
                 "usage_count": 0,
+                "memory_type": memory_type,
+                "strength": strength,
             }
 
             # Store memory
@@ -527,6 +548,28 @@ class InMemoryStorage(IMemoryStorage):
             memory["importance"] = new_imp
             memory["modified_at"] = datetime.now(timezone.utc)
             return new_imp
+
+    async def decay_importance(
+        self,
+        tenant_id: str,
+        decay_rate: float,
+        consider_access_stats: bool = False,
+    ) -> int:
+        """Apply importance decay to all memories for a tenant."""
+        async with self._lock:
+            count = 0
+            for memory_id in self._by_tenant[tenant_id]:
+                memory = self._memories.get(memory_id)
+                if not memory:
+                    continue
+
+                # Apply simple decay
+                current = float(memory.get("importance", 0.5))
+                # If consider_access_stats, we could check last_accessed_at, but keeping it simple for now
+                new_val = current * decay_rate
+                memory["importance"] = new_val
+                count += 1
+            return count
 
     def _matches_metadata_filter(
         self, metadata: dict[str, Any], filter_dict: dict[str, Any]

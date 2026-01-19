@@ -4,6 +4,7 @@ This module defines the storage interface that all storage adapters must impleme
 Storage can be PostgreSQL, SQLite, in-memory, or any other backend.
 """
 
+from datetime import datetime
 from typing import Any, Protocol, runtime_checkable
 from uuid import UUID
 
@@ -26,7 +27,7 @@ class IMemoryStorage(Protocol):
         metadata: dict[str, Any] | None = None,
         embedding: list[float] | None = None,
         importance: float | None = None,
-        expires_at: Any | None = None,
+        expires_at: datetime | None = None,
         memory_type: str = "text",
         project: str | None = None,
         session_id: str | None = None,

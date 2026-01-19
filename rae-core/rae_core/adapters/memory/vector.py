@@ -45,14 +45,25 @@ class InMemoryVectorStore(IVectorStore):
     async def store_vector(
         self,
         memory_id: UUID,
-        embedding: list[float],
+        embedding: list[float] | dict[str, list[float]],
         tenant_id: str,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
         """Store a vector embedding."""
         async with self._lock:
+            # Handle multi-vector: take first vector or specific 'default' key
+            if isinstance(embedding, dict):
+                # Simple strategy: prefer 'default' or 'dense', else first available
+                vec_list = (
+                    embedding.get("default")
+                    or embedding.get("dense")
+                    or next(iter(embedding.values()))
+                )
+            else:
+                vec_list = embedding
+
             vector_data = {
-                "embedding": np.array(embedding, dtype=np.float32),
+                "embedding": np.array(vec_list, dtype=np.float32),
                 "tenant_id": tenant_id,
                 "metadata": metadata or {},
             }
@@ -69,6 +80,7 @@ class InMemoryVectorStore(IVectorStore):
         layer: str | None = None,
         limit: int = 10,
         score_threshold: float | None = None,
+        agent_id: str | None = None,
     ) -> list[tuple[UUID, float]]:
         """Search for similar vectors using cosine similarity."""
         async with self._lock:
@@ -99,6 +111,12 @@ class InMemoryVectorStore(IVectorStore):
                 if layer:
                     vector_layer = vector_data["metadata"].get("layer")
                     if vector_layer != layer:
+                        continue
+
+                # Apply agent filter if specified
+                if agent_id:
+                    vector_agent = vector_data["metadata"].get("agent_id")
+                    if vector_agent and vector_agent != agent_id:
                         continue
 
                 # Calculate cosine similarity
@@ -144,7 +162,7 @@ class InMemoryVectorStore(IVectorStore):
     async def update_vector(
         self,
         memory_id: UUID,
-        embedding: list[float],
+        embedding: list[float] | dict[str, list[float]],
         tenant_id: str,
         metadata: dict[str, Any] | None = None,
     ) -> bool:
@@ -155,8 +173,18 @@ class InMemoryVectorStore(IVectorStore):
             if not vector_data or vector_data["tenant_id"] != tenant_id:
                 return False
 
+            # Handle multi-vector
+            if isinstance(embedding, dict):
+                vec_list = (
+                    embedding.get("default")
+                    or embedding.get("dense")
+                    or next(iter(embedding.values()))
+                )
+            else:
+                vec_list = embedding
+
             # Update embedding
-            vector_data["embedding"] = np.array(embedding, dtype=np.float32)
+            vector_data["embedding"] = np.array(vec_list, dtype=np.float32)
 
             # Update metadata if provided
             if metadata is not None:
@@ -181,7 +209,9 @@ class InMemoryVectorStore(IVectorStore):
 
     async def batch_store_vectors(
         self,
-        vectors: list[tuple[UUID, list[float], dict[str, Any]]],
+        vectors: list[
+            tuple[UUID, list[float] | dict[str, list[float]], dict[str, Any]]
+        ],
         tenant_id: str,
     ) -> int:
         """Store multiple vectors in a batch."""
@@ -190,8 +220,18 @@ class InMemoryVectorStore(IVectorStore):
 
             for memory_id, embedding, metadata in vectors:
                 try:
+                    # Handle multi-vector
+                    if isinstance(embedding, dict):
+                        vec_list = (
+                            embedding.get("default")
+                            or embedding.get("dense")
+                            or next(iter(embedding.values()))
+                        )
+                    else:
+                        vec_list = embedding
+
                     vector_data = {
-                        "embedding": np.array(embedding, dtype=np.float32),
+                        "embedding": np.array(vec_list, dtype=np.float32),
                         "tenant_id": tenant_id,
                         "metadata": metadata,
                     }
