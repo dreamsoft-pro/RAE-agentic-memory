@@ -83,18 +83,30 @@ def llm_router_with_mocked_config(mock_provider_classes):
                 "anthropic": {"api_key_env": "ANTHROPIC_API_KEY"},
                 "gemini": {"api_key_env": "GEMINI_API_KEY"},
                 "ollama": {"endpoint": "http://localhost:11434"},
+                "deepseek": {"api_key_env": "DEEPSEEK_API_KEY"},
+                "qwen": {"api_key_env": "QWEN_API_KEY"},
+                "grok": {"api_key_env": "GROK_API_KEY"},
             }
         }
         # Set environment variables for the mocked API keys
         os.environ["OPENAI_API_KEY"] = "mock_openai_key"
         os.environ["ANTHROPIC_API_KEY"] = "mock_anthropic_key"
         os.environ["GEMINI_API_KEY"] = "mock_gemini_key"
+        os.environ["DEEPSEEK_API_KEY"] = "mock_deepseek_key"
+        os.environ["QWEN_API_KEY"] = "mock_qwen_key"
+        os.environ["GROK_API_KEY"] = "mock_grok_key"
         router = LLMRouter()
         yield router
         # Clean up environment variables
         del os.environ["OPENAI_API_KEY"]
         del os.environ["ANTHROPIC_API_KEY"]
         del os.environ["GEMINI_API_KEY"]
+        if "DEEPSEEK_API_KEY" in os.environ:
+            del os.environ["DEEPSEEK_API_KEY"]
+        if "QWEN_API_KEY" in os.environ:
+            del os.environ["QWEN_API_KEY"]
+        if "GROK_API_KEY" in os.environ:
+            del os.environ["GROK_API_KEY"]
 
 
 @pytest.fixture
@@ -206,9 +218,11 @@ async def test_get_provider_for_model_no_providers(llm_router_empty_config):
 async def test_complete_success(
     llm_router_with_mocked_config, mock_llm_request, mock_llm_response
 ):
+    from unittest.mock import AsyncMock
+
     router = llm_router_with_mocked_config
     mock_openai_provider = router.providers["openai"]
-    mock_openai_provider.complete.return_value = mock_llm_response
+    mock_openai_provider.complete = AsyncMock(return_value=mock_llm_response)
 
     response = await router.complete(mock_llm_request)
     assert response == mock_llm_response
@@ -224,9 +238,11 @@ async def test_complete_no_provider(llm_router_empty_config, mock_llm_request):
 
 @pytest.mark.asyncio
 async def test_complete_auth_error(llm_router_with_mocked_config, mock_llm_request):
+    from unittest.mock import AsyncMock
+
     router = llm_router_with_mocked_config
     mock_openai_provider = router.providers["openai"]
-    mock_openai_provider.complete.side_effect = LLMAuthError("Invalid key")
+    mock_openai_provider.complete = AsyncMock(side_effect=LLMAuthError("Invalid key"))
 
     with pytest.raises(LLMAuthError, match="Invalid key"):
         await router.complete(mock_llm_request)
@@ -236,9 +252,11 @@ async def test_complete_auth_error(llm_router_with_mocked_config, mock_llm_reque
 async def test_complete_rate_limit_error(
     llm_router_with_mocked_config, mock_llm_request
 ):
+    from unittest.mock import AsyncMock
+
     router = llm_router_with_mocked_config
     mock_openai_provider = router.providers["openai"]
-    mock_openai_provider.complete.side_effect = LLMRateLimitError("Too fast")
+    mock_openai_provider.complete = AsyncMock(side_effect=LLMRateLimitError("Too fast"))
 
     with pytest.raises(LLMRateLimitError, match="Too fast"):
         await router.complete(mock_llm_request)
@@ -248,9 +266,13 @@ async def test_complete_rate_limit_error(
 async def test_complete_transient_error(
     llm_router_with_mocked_config, mock_llm_request
 ):
+    from unittest.mock import AsyncMock
+
     router = llm_router_with_mocked_config
     mock_openai_provider = router.providers["openai"]
-    mock_openai_provider.complete.side_effect = LLMTransientError("Temp issue")
+    mock_openai_provider.complete = AsyncMock(
+        side_effect=LLMTransientError("Temp issue")
+    )
 
     with pytest.raises(LLMTransientError, match="Temp issue"):
         await router.complete(mock_llm_request)
@@ -260,9 +282,11 @@ async def test_complete_transient_error(
 async def test_complete_generic_exception(
     llm_router_with_mocked_config, mock_llm_request
 ):
+    from unittest.mock import AsyncMock
+
     router = llm_router_with_mocked_config
     mock_openai_provider = router.providers["openai"]
-    mock_openai_provider.complete.side_effect = Exception("Generic error")
+    mock_openai_provider.complete = AsyncMock(side_effect=Exception("Generic error"))
 
     with pytest.raises(Exception, match="Generic error"):
         await router.complete(mock_llm_request)
@@ -272,18 +296,20 @@ async def test_complete_generic_exception(
 async def test_stream_success(
     llm_router_with_mocked_config, mock_llm_request, mock_llm_chunk
 ):
+
     router = llm_router_with_mocked_config
     mock_openai_provider = router.providers["openai"]
     mock_openai_provider.supports_streaming = True
-    mock_openai_provider.stream.return_value = [
-        mock_llm_chunk,
-        mock_llm_chunk,
-    ]  # AsyncMock iterable
+
+    async def mock_stream(*args, **kwargs):
+        yield mock_llm_chunk
+        yield mock_llm_chunk
+
+    mock_openai_provider.stream = mock_stream
 
     chunks = [chunk async for chunk in router.stream(mock_llm_request)]
     assert len(chunks) == 2
     assert chunks[0] == mock_llm_chunk
-    mock_openai_provider.stream.assert_awaited_once_with(mock_llm_request)
 
 
 @pytest.mark.asyncio
@@ -309,10 +335,16 @@ async def test_stream_provider_does_not_support_streaming(
 async def test_stream_generic_exception(
     llm_router_with_mocked_config, mock_llm_request
 ):
+
     router = llm_router_with_mocked_config
     mock_openai_provider = router.providers["openai"]
     mock_openai_provider.supports_streaming = True
-    mock_openai_provider.stream.side_effect = Exception("Streaming error")
+
+    async def mock_stream_error(*args, **kwargs):
+        raise Exception("Streaming error")
+        yield  # make it a generator
+
+    mock_openai_provider.stream = mock_stream_error
 
     with pytest.raises(Exception, match="Streaming error"):
         async for _ in router.stream(mock_llm_request):

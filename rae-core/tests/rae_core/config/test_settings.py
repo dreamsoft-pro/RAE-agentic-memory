@@ -43,7 +43,19 @@ def clean_env():
     for k in original_rae_env:
         del os.environ[k]
 
+    # Explicitly clear RAE_SIMILARITY_THRESHOLD if present
+    if "RAE_SIMILARITY_THRESHOLD" in os.environ:
+        del os.environ["RAE_SIMILARITY_THRESHOLD"]
+
+    # ISOLATION FIX: Temporarily disable loading from .env file for these tests
+    # This ensures asserts check against hardcoded defaults, not local dev config
+    original_env_file = RAESettings.model_config.get("env_file")
+    RAESettings.model_config["env_file"] = None
+
     yield
+
+    # Restore .env file config
+    RAESettings.model_config["env_file"] = original_env_file
 
     # Restore original RAE_ prefixed env vars
     for k in os.environ:
