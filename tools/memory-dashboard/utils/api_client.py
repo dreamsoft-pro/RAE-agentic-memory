@@ -480,7 +480,7 @@ class RAEClient:
             return False
 
 
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=5)
 def get_cached_stats(
     _client: RAEClient, tenant_id: str, project_id: str
 ) -> Dict[str, int]:

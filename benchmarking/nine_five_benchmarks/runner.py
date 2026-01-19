@@ -158,6 +158,7 @@ class NineFiveBenchmarkRunner:
         num_queries: int = 100,
         min_depth: int = 3,
         max_depth: int = 10,
+        controller_config: Optional[Dict[str, Any]] = None,
         **kwargs,
     ) -> GRDTResults:
         """Run GRDT benchmark."""
@@ -166,7 +167,10 @@ class NineFiveBenchmarkRunner:
             print("Running GRDT (Graph Reasoning Depth Test)")
             print("=" * 60)
 
-        benchmark = GRDTBenchmark(seed=self.seed)
+        benchmark = GRDTBenchmark(
+            seed=self.seed,
+            controller_config=controller_config,
+        )
         return benchmark.run(
             num_queries=num_queries,
             min_depth=min_depth,
@@ -241,6 +245,7 @@ class NineFiveBenchmarkRunner:
         rst_insights: int = 50,
         mpeb_iterations: int = 1000,
         orb_samples: int = 20,
+        **kwargs,
     ) -> NineFiveResults:
         """
         Run all 6 benchmarks.
@@ -252,6 +257,7 @@ class NineFiveBenchmarkRunner:
             rst_insights: RST insight count
             mpeb_iterations: MPEB iteration count
             orb_samples: ORB samples per config
+            **kwargs: Extra parameters passed to all benchmarks
 
         Returns:
             NineFiveResults with all benchmark results
@@ -281,7 +287,7 @@ class NineFiveBenchmarkRunner:
 
         # 3. GRDT
         t0 = time.time()
-        grdt_results = self.run_grdt(num_queries=grdt_queries)
+        grdt_results = self.run_grdt(num_queries=grdt_queries, **kwargs)
         durations["grdt"] = time.time() - t0
         results.grdt = grdt_results.to_dict()
 

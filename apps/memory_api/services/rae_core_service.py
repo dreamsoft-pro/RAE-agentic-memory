@@ -65,10 +65,16 @@ class RAECoreService:
         self.redis_adapter: ICacheProvider
         self.savings_service: Optional[TokenSavingsService] = None
         self.websocket_service: Optional[DashboardWebSocketService] = None
+        self.tuning_service: Any = None  # Phase 4
 
         if postgres_pool:
             self.savings_service = TokenSavingsService(postgres_pool)
             self.websocket_service = DashboardWebSocketService(postgres_pool)
+
+            # Phase 4: Self-improvement service
+            from apps.memory_api.services.tuning_service import TuningService
+
+            self.tuning_service = TuningService(self)
 
         # 1. Initialize embedding provider
         import os
@@ -145,7 +151,14 @@ class RAECoreService:
             self.postgres_adapter, None
         )  # Agent set per execution
 
+        self.szubar_mode = False  # Tryb Szubartowskiego (Pressure/Emergent Learning)
+
         logger.info("rae_core_service_initialized", profile=settings.RAE_PROFILE)
+
+    def enable_szubar_mode(self, enabled: bool = True) -> None:
+        """Enable or disable RAE-SZUBAR Mode (Evolutionary Pressure)."""
+        self.szubar_mode = enabled
+        logger.info("szubar_mode_changed", enabled=enabled)
 
     async def execute_action(
         self,
@@ -188,7 +201,30 @@ class RAECoreService:
                     memories=search_results, query=rae_input.content
                 )
 
-                system_prompt = f"RELEVANT PROJECT CONTEXT:\n{context_text}\n\nTask: {rae_input.content}"
+                # RAE-SZUBAR PRESSURE: Inject failures
+                pressure_constraints = ""
+                if self.service.szubar_mode:
+                    # Search specifically for failures in the same context
+                    failures = await self.service.engine.search_memories(
+                        query=rae_input.content,
+                        tenant_id=rae_input.tenant_id,
+                        agent_id=agent_id,
+                        top_k=5,
+                        filters={"governance.is_failure": True},
+                    )
+                    if failures:
+                        pressure_constraints = (
+                            "\nCRITICAL: DO NOT REPEAT THESE FAILURES:\n"
+                        )
+                        for f in failures:
+                            trace = f.get("governance", {}).get(
+                                "failure_trace", "Unknown failure"
+                            )
+                            pressure_constraints += (
+                                f"- {f['content']} (Reason: {trace})\n"
+                            )
+
+                system_prompt = f"RELEVANT PROJECT CONTEXT:\n{context_text}\n{pressure_constraints}\n\nTask: {rae_input.content}"
 
                 # 2. Generate response using LLM with Strict Timeout
                 try:
@@ -328,27 +364,45 @@ class RAECoreService:
         self, info_class: str, target_layer: str | MemoryLayer
     ) -> None:
         """Enforce ISO 27000 security policies."""
-        if (
-            info_class == InformationClass.RESTRICTED
-            and target_layer != MemoryLayer.WORKING
-        ):
-            # Ensure target_layer is a string for logging/error message if it's an Enum
-            layer_value = (
-                target_layer.value
-                if isinstance(target_layer, MemoryLayer)
-                else target_layer
-            )
+        layer_value = (
+            target_layer.value
+            if isinstance(target_layer, MemoryLayer)
+            else target_layer
+        )
+        info_class = info_class.lower()
 
-            logger.error(
-                "security_policy_violation",
-                reason="RESTRICTED data blocked outside Working layer",
-                layer=layer_value,
-                info_class=info_class,
-            )
-            raise SecurityPolicyViolationError(
-                f"Security Policy Violation: RESTRICTED data cannot be stored in {layer_value} layer. "
-                "Only 'working' layer is allowed for restricted information."
-            )
+        # 1. RESTRICTED: Only allowed in Working layer
+        if info_class == InformationClass.RESTRICTED:
+            if layer_value != MemoryLayer.WORKING:
+                logger.error(
+                    "security_policy_violation",
+                    reason="RESTRICTED data blocked outside Working layer",
+                    layer=layer_value,
+                    info_class=info_class,
+                )
+                raise SecurityPolicyViolationError(
+                    f"Security Policy Violation: RESTRICTED data cannot be stored in {layer_value} layer. "
+                    "Only 'working' layer is allowed for restricted information."
+                )
+
+        # 2. CONFIDENTIAL: Blocked from Semantic layer
+        elif info_class == InformationClass.CONFIDENTIAL:
+            if layer_value == MemoryLayer.SEMANTIC:
+                logger.error(
+                    "security_policy_violation",
+                    reason="CONFIDENTIAL data blocked from Semantic layer",
+                    layer=layer_value,
+                    info_class=info_class,
+                )
+                raise SecurityPolicyViolationError(
+                    f"Security Policy Violation: CONFIDENTIAL data cannot be promoted to {layer_value} layer."
+                )
+
+        # 3. INTERNAL: Promotion to Semantic requires HITL/Sanitization (Policy placeholder)
+        elif info_class == InformationClass.INTERNAL:
+            if layer_value == MemoryLayer.SEMANTIC:
+                # In future this could trigger a mandatory HITL/Sanitization flag check
+                pass
 
     def _detect_agentic_patterns(self, governance: dict, tags: list[str]) -> list[str]:
         """Detect agentic patterns and return updated tags."""
@@ -393,6 +447,15 @@ class RAECoreService:
                         "confidence_delta_negative",
                         before=conf_before,
                         after=conf_after,
+                    )
+
+        elif pattern_type == "multi_agent_interaction":
+            conflicts = fields.get("conflict_points", [])
+            if conflicts:
+                if "coordination_failure" not in tags:
+                    tags.append("coordination_failure")
+                    logger.warning(
+                        "agent_coordination_conflict_detected", conflicts=conflicts
                     )
 
         return tags
@@ -607,6 +670,36 @@ class RAECoreService:
             tenant_id, decay_rate, consider_access_stats
         )
 
+    async def _get_tenant_weights(self, tenant_id: str) -> Optional[Any]:
+        """Retrieve custom scoring weights for tenant from config."""
+        try:
+            sql = "SELECT config FROM tenants WHERE id = $1"
+            config_raw = await self.db.fetchval(sql, tenant_id)
+            if not config_raw:
+                return None
+
+            import json
+
+            config = (
+                json.loads(config_raw) if isinstance(config_raw, str) else config_raw
+            )
+
+            if config and "math_weights" in config:
+                from rae_core.math.structure import ScoringWeights
+
+                w = config["math_weights"]
+                return ScoringWeights(
+                    alpha=float(w.get("alpha", 0.5)),
+                    beta=float(w.get("beta", 0.3)),
+                    gamma=float(w.get("gamma", 0.2)),
+                )
+
+        except Exception as e:
+            logger.warning(
+                "failed_to_load_tenant_weights", tenant_id=tenant_id, error=str(e)
+            )
+        return None
+
     async def query_memories(
         self,
         tenant_id: str,
@@ -616,73 +709,83 @@ class RAECoreService:
         layers: Optional[list] = None,
     ) -> SearchResponse:
         """
-        Query memories across layers.
+        Query memories across layers with dynamic weights.
         """
-        results = await self.engine.search_memories(
+        import time
+
+        start_time = time.time()
+
+        # 1. Get dynamic weights from tuning service
+        weights = await self.tuning_service.get_current_weights(str(tenant_id))
+
+        # Override weights for Szubar Mode
+        if self.szubar_mode:
+            from rae_core.math.structure import ScoringWeights
+
+            weights = ScoringWeights.szubar_profile()
+            logger.debug("using_szubar_weights_for_query")
+
+        # 2. Execute Engine search
+        raw_results = await self.engine.search_memories(
             query=query,
-            tenant_id=tenant_id,
+            tenant_id=str(tenant_id),
             agent_id=project,
+            layer=layers[0] if layers else None,
             top_k=k,
+            similarity_threshold=0.5,
+            use_reranker=True,
+            custom_weights=weights,
         )
 
-        import json
+        # 3. Map to SearchResponse model
+        from rae_core.models.search import SearchResponse, SearchResult, SearchStrategy
 
-        from rae_core.models.search import SearchResult, SearchStrategy
-
-        search_results = []
-        for res in results:
-            # Ensure metadata is a dict
-            metadata = res.get("metadata", {})
-            if isinstance(metadata, str):
+        results_list = []
+        for res in raw_results:
+            metadata_val = res.get("metadata", {})
+            # Fix for Pydantic validation error if DB/Qdrant returns stringified JSON
+            if isinstance(metadata_val, str):
                 try:
-                    metadata = json.loads(metadata)
-                except json.JSONDecodeError:
-                    metadata = {"raw_metadata": metadata}
+                    import json
 
-            # Map engine dict to SearchResult
-            raw_score = res.get("search_score", 0.0)
-            if raw_score < 0.05:
-                calibrated_score = min(0.99, raw_score * 120.0)
-            else:
-                calibrated_score = raw_score
+                    metadata_val = json.loads(metadata_val)
+                except Exception:
+                    metadata_val = {}
 
-            search_results.append(
+            results_list.append(
                 SearchResult(
-                    memory_id=str(res["id"]),
-                    content=res["content"],
-                    score=calibrated_score,
+                    memory_id=str(res.get("id")),
+                    content=res.get("content", ""),
+                    score=res.get("search_score", 0.0),
                     strategy_used=SearchStrategy.HYBRID,
-                    metadata=metadata,
+                    metadata=metadata_val,
                 )
             )
 
-        logger.info(
-            "memories_queried",
-            tenant_id=tenant_id,
-            project=project,
-            result_count=len(results),
-        )
-
-        if self.savings_service:
-            try:
-                await self.savings_service.track_savings(
-                    tenant_id=tenant_id,
-                    project_id=project,
-                    model="gpt-4o-mini",
-                    predicted_tokens=1200,
-                    real_tokens=200,
-                    savings_type="rag",
-                )
-            except Exception as e:
-                logger.warning("failed_to_track_query_savings", error=str(e))
-
-        return SearchResponse(
-            results=search_results,
-            total_found=len(results),
+        response = SearchResponse(
+            results=results_list,
             query=query,
             strategy=SearchStrategy.HYBRID,
-            execution_time_ms=0.0,
+            total_found=len(results_list),
+            execution_time_ms=(time.time() - start_time) * 1000,
         )
+
+        # 4. AUDIT: Record this search in the Working Layer
+        try:
+            audit_content = f"Search Query: {query} | Results: {len(results_list)} | Weights: {weights}"
+            await self.engine.store_memory(
+                tenant_id=str(tenant_id),
+                agent_id=project or "system",
+                content=audit_content,
+                layer=MemoryLayer.WORKING,
+                importance=0.1,
+                tags=["audit", "search_trace"],
+                metadata={"query": query, "weights": weights},
+            )
+        except Exception as e:
+            logger.warning("search_audit_failed", error=str(e))
+
+        return response
 
     async def consolidate_memories(
         self,

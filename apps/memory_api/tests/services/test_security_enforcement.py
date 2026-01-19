@@ -133,3 +133,47 @@ async def test_negative_confidence_delta_tagging():
     memory = await service.get_memory(memory_id, "test-tenant")
     assert memory is not None
     assert "deeper_reflection_needed" in memory["tags"]
+
+
+@pytest.mark.asyncio
+async def test_confidential_data_blocked_in_semantic():
+    service = RAECoreService(postgres_pool=None, qdrant_client=None, redis_client=None)
+
+    # Attempt to store CONFIDENTIAL data in SEMANTIC layer
+    with pytest.raises(SecurityPolicyViolationError) as excinfo:
+        await service.store_memory(
+            tenant_id="test-tenant",
+            project="test-project",
+            content="Sensitive Business Strategy",
+            source="user",
+            layer=MemoryLayer.SEMANTIC,
+            info_class=InformationClass.CONFIDENTIAL,
+        )
+
+    assert "Security Policy Violation" in str(excinfo.value)
+    assert (
+        "confidential data cannot be promoted to semantic layer"
+        in str(excinfo.value).lower()
+    )
+
+
+@pytest.mark.asyncio
+async def test_multi_agent_conflict_tagging():
+    service = RAECoreService(postgres_pool=None, qdrant_client=None, redis_client=None)
+
+    governance = {
+        "pattern_type": "multi_agent_interaction",
+        "fields": {"conflict_points": ["Resource contention on CPU"]},
+    }
+
+    memory_id = await service.store_memory(
+        tenant_id="test-tenant",
+        project="test-project",
+        content="Agents fighting for resources",
+        source="agent",
+        governance=governance,
+    )
+
+    memory = await service.get_memory(memory_id, "test-tenant")
+    assert memory is not None
+    assert "coordination_failure" in memory["tags"]

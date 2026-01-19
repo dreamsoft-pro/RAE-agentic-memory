@@ -41,6 +41,8 @@ class MemoryItem(BaseModel):
             "decision_rationale": None,
             "confidence": 1.0,
             "risk_level": OperationRiskLevel.NONE,
+            "is_failure": False,  # Szubar Mode: Flag for failure traces
+            "failure_trace": None,  # Szubar Mode: Detailed error trace
         },
         description="Governance metadata including rationale, confidence and risk",
     )
@@ -56,7 +58,8 @@ class MemoryItem(BaseModel):
     )
     tags: list[str] = Field(default_factory=list, description="Tags for filtering")
     metadata: dict[str, Any] = Field(
-        default_factory=dict, description="Additional metadata"
+        default_factory=dict,
+        description="Additional metadata (Szubar Mode: decision_forks, epistemic_status)",
     )
 
     # Vector embedding

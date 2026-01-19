@@ -309,6 +309,7 @@ services:
     volumes:
       - ./apps:/app/apps:ro
       - ./sdk:/app/sdk:ro
+      - ./rae-core:/app/rae-core:ro
       - ./rae_adapters:/app/rae_adapters:ro
     environment:
       - POSTGRES_HOST=postgres
@@ -400,6 +401,7 @@ services:
     volumes:
       - ./apps:/app/apps:ro
       - ./sdk:/app/sdk:ro
+      - ./rae-core:/app/rae-core:ro
       - ./rae_adapters:/app/rae_adapters:ro
     environment:
       - POSTGRES_HOST=postgres
@@ -476,7 +478,7 @@ services:
     image: ollama/ollama:latest
     container_name: rae-ollama-dev
     ports:
-      - "11434:11434"
+      - "11435:11434"
     volumes:
       - ollama_data:/root/.ollama
     restart: unless-stopped
