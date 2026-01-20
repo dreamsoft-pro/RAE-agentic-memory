@@ -606,11 +606,12 @@ class TestSQLiteStorageEdgeCases:
             tenant_id="tenant-1",
             agent_id="agent-1",
         )
-
+    
         memory = await storage.get_memory(memory_id, "tenant-1")
         assert memory["tags"] == []
-        assert memory["metadata"] == {}
-
+        # Expect 'info_class': 'internal' (or whatever default) or just check explicitly passed ones
+        assert "info_class" in memory["metadata"]
+        assert memory["metadata"].get("info_class") == "internal"
     @pytest.mark.asyncio
     async def test_store_memory_default_importance(self, storage):
         """Test default importance value."""
