@@ -1,47 +1,14 @@
+# Auto-apply hard frames BEFORE other imports if in secure mode
 import os
+from rae_agent.security import apply_hard_frames, SecureSocket
+
+if os.getenv("RAE_AGENT_MODE") == "secure":
+    apply_hard_frames()
+
 import sys
 import time
 import requests
 import socket
-
-# --- HARD FRAME: PROTOCOL EXCLUSIVITY (Phase 2.1) ---
-_real_socket = socket.socket
-_kernel_host = os.getenv("RAE_KERNEL_URL", "172.29.99.2").split("//")[-1].split(":")[0]
-
-def secure_socket(*args, **kwargs):
-    # This is a very basic example of a semantic socket gate
-    # In production, this would be more robust.
-    caller_frame = sys._getframe(1)
-    # Check if we are being called by 'requests' or internal library
-    # For this test, we just throw if it's not our allowed host
-    s = _real_socket(*args, **kwargs)
-    
-    _orig_connect = s.connect
-    def gated_connect(address):
-        host = address[0]
-        if host != _kernel_host and host != "127.0.0.1":
-            raise RuntimeError(f"Use RAE Protocol. Connection to {host} denied.")
-        return _orig_connect(address)
-    
-    # In some python versions/environments, setting s.connect might fail if s is a C extension type.
-    # We wrap strictly for containment simulation.
-    try:
-        s.connect = gated_connect
-    except AttributeError:
-        # Fallback: If we can't patch the instance, we can't enforce at this level easily without
-        # subclassing. For the prototype, we log a warning or accept the risk.
-        pass 
-    return s
-
-def apply_hard_frames():
-    """Enable process-level network restrictions."""
-    print("🔒 APPLYING HARD FRAMES: Network restricted to Kernel.")
-    socket.socket = secure_socket
-
-# Auto-apply ONLY if running as the main agent application
-if os.getenv("RAE_AGENT_MODE") == "secure":
-    apply_hard_frames()
-# ----------------------------------------------------
 
 def check_internet_leak():
     print("🕵️  SECURITY CHECK: Attempting to access google.com...")
@@ -51,8 +18,9 @@ def check_internet_leak():
         requests.get("https://google.com", timeout=2)
         print("❌ CRITICAL FAIL: Internet is accessible! Hard Frames breached.")
         return False
-    except (requests.exceptions.ConnectionError, socket.gaierror):
-        print("✅ SUCCESS: Internet is unreachable.")
+    except (requests.exceptions.ConnectionError, socket.gaierror, RuntimeError) as e:
+        # RuntimeError is raised by our secure_socket
+        print(f"✅ SUCCESS: Access blocked ({type(e).__name__}: {e})")
         return True
     except Exception as e:
         print(f"✅ SUCCESS: Access failed with {type(e).__name__}: {e}")
@@ -79,7 +47,8 @@ def main():
     print(f"🔒 UID: {os.getuid()} (Should be non-root)")
     
     # Force application if not already done by import side-effect (paranoid check)
-    if socket.socket != secure_socket:
+    if socket.socket != SecureSocket:
+        print("⚠️  Warning: Hard Frames were not applied at module level. Applying now (might be too late for some libs).")
         apply_hard_frames()
     
     # 1. Verify Isolation

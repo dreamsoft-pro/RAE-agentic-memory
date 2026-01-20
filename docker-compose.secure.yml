@@ -23,9 +23,25 @@ services:
       - RAE_KERNEL_URL=http://rae-kernel:8000
     command: ["python", "-m", "rae_agent.main", "--soak-test"]
 
+  # The Prisoner Test - Real Integration
+  rae-agent-integration:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent_secure
+    networks:
+      - rae_network_external # Connect to real RAE
+    environment:
+      - RAE_KERNEL_URL=http://rae-api-dev:8000
+      - RAE_AGENT_MODE=secure
+      - PYTHONPATH=/app
+    command: ["python", "/app/tests/hard_frames/verify_real_integration.py"]
+
 networks:
   rae_internal:
     internal: true # CRITICAL: No external access
     driver: bridge
   public_net:
     driver: bridge
+  rae_network_external:
+    external: true
+    name: rae-node-agent_rae-network
