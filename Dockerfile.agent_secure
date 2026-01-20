@@ -11,7 +11,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     # CRITICAL: Disable pip index to prevent accidental installs
-    PIP_NO_INDEX=1
+    PIP_NO_INDEX=1 \
+    # HARD FRAMES: Enforce secure mode
+    RAE_AGENT_MODE=secure
 
 WORKDIR /app
 
