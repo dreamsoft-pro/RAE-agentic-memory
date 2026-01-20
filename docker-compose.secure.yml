@@ -21,6 +21,7 @@ services:
       - rae-kernel
     environment:
       - RAE_KERNEL_URL=http://rae-kernel:8000
+    command: ["python", "-m", "rae_agent.main", "--soak-test"]
 
 networks:
   rae_internal:
