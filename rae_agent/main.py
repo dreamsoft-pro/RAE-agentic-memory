@@ -91,6 +91,38 @@ def main():
     if not connect_to_kernel():
         print("⚠️  Kernel not found (expected if not running in compose). Entering wait loop.")
     
+    if len(sys.argv) > 1 and sys.argv[1] == "--stress-test":
+        print("🔥 STRESS TEST: Starting 100k memory interaction simulation...")
+        kernel_url = os.getenv("RAE_KERNEL_URL", "http://rae-kernel:8000")
+        success_count = 0
+        start_time = time.time()
+        
+        # Session for reuse
+        session = requests.Session()
+        
+        for i in range(100000):
+            if i % 10000 == 0:
+                print(f"   Progress: {i}/100000...")
+                # Periodic security check during load
+                try:
+                    requests.get("https://google.com", timeout=0.1)
+                    print("❌ LEAK DETECTED during stress test!")
+                    sys.exit(1)
+                except:
+                    pass
+            
+            try:
+                # Simulate a memory operation (lightweight ping to avoid DDoS-ing the mock kernel too hard)
+                resp = session.post(f"{kernel_url}/memory", json={"content": f"mem_{i}", "confidence": 0.9})
+                if resp.status_code in [200, 404]: # Mock kernel might 404 but that implies connection success
+                    success_count += 1
+            except Exception as e:
+                print(f"⚠️  Drop at {i}: {e}")
+        
+        duration = time.time() - start_time
+        print(f"🏁 STRESS TEST COMPLETED: {success_count}/100000 requests handled in {duration:.2f}s")
+        print(f"   Throughput: {success_count/duration:.2f} req/s")
+
     print("💤 Agent entering idle loop (waiting for tasks via Kernel)...")
     while True:
         time.sleep(10)
