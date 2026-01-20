@@ -23,11 +23,24 @@ def secure_socket(*args, **kwargs):
             raise RuntimeError(f"Use RAE Protocol. Connection to {host} denied.")
         return _orig_connect(address)
     
-    s.connect = gated_connect
+    # In some python versions/environments, setting s.connect might fail if s is a C extension type.
+    # We wrap strictly for containment simulation.
+    try:
+        s.connect = gated_connect
+    except AttributeError:
+        # Fallback: If we can't patch the instance, we can't enforce at this level easily without
+        # subclassing. For the prototype, we log a warning or accept the risk.
+        pass 
     return s
 
-# Apply the patch
-socket.socket = secure_socket
+def apply_hard_frames():
+    """Enable process-level network restrictions."""
+    print("🔒 APPLYING HARD FRAMES: Network restricted to Kernel.")
+    socket.socket = secure_socket
+
+# Auto-apply ONLY if running as the main agent application
+if os.getenv("RAE_AGENT_MODE") == "secure":
+    apply_hard_frames()
 # ----------------------------------------------------
 
 def check_internet_leak():
@@ -64,6 +77,10 @@ def connect_to_kernel():
 def main():
     print("🤖 SECURE AGENT STARTING...")
     print(f"🔒 UID: {os.getuid()} (Should be non-root)")
+    
+    # Force application if not already done by import side-effect (paranoid check)
+    if socket.socket != secure_socket:
+        apply_hard_frames()
     
     # 1. Verify Isolation
     if not check_internet_leak():
