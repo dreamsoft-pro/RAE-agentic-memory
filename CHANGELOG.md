@@ -31,6 +31,38 @@
 
 
 
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2026-01-20 23:45 • Branch: develop • Commit: c7b802cc*
+
+### ✨ Features
+
+- **security**: implement robust hard frames with SecureSocket and lazy IP resolution ([`fcd4d752`](../../commit/fcd4d752))
+- **testing**: add soak test mode with variable latency ([`48d6aea8`](../../commit/48d6aea8))
+- **security**: verified 100k stress test under hard frames isolation ([`d26aa3c8`](../../commit/d26aa3c8))
+- **security**: finalize hard frames implementation and fix test suite ([`539a9478`](../../commit/539a9478))
+- **security**: implement Hard Frames architecture (Phase 1-3) with full containment test suite [full-test] ([`7ffa6412`](../../commit/7ffa6412))
+
+### 📚 Documentation
+
+- document ongoing soak test on Lumina ([`4e9b152e`](../../commit/4e9b152e))
+- update session summary with hard frames validation results ([`320e34f9`](../../commit/320e34f9))
+
+### 🧪 Tests
+
+- **fix**: update metadata expectations for sqlite storage test ([`421d0abb`](../../commit/421d0abb))
+
+### 🔧 Chore
+
+- update test golden files and add dockerignore ([`44596fc6`](../../commit/44596fc6))
+
+### 📦 Other
+
+- Merge branch 'main' of github.com:dreamsoft-pro/RAE-agentic-memory ([`fd2efb04`](../../commit/fd2efb04))
+
+---
+
 ## Recent Changes (Auto-generated)
 
 *Last updated: 2026-01-20 23:40 • Branch: develop • Commit: 44596fc6*
