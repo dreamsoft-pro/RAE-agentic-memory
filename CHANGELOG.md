@@ -26,6 +26,26 @@
 
 
 
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2026-01-20 21:31 • Branch: develop • Commit: 320e34f9*
+
+### ✨ Features
+
+- **security**: finalize hard frames implementation and fix test suite ([`539a9478`](../../commit/539a9478))
+- **security**: implement Hard Frames architecture (Phase 1-3) with full containment test suite [full-test] ([`7ffa6412`](../../commit/7ffa6412))
+
+### 📚 Documentation
+
+- update session summary with hard frames validation results ([`320e34f9`](../../commit/320e34f9))
+
+### 📦 Other
+
+- Merge branch 'main' of github.com:dreamsoft-pro/RAE-agentic-memory ([`fd2efb04`](../../commit/fd2efb04))
+
+---
+
 ## Recent Changes (Auto-generated)
 
 *Last updated: 2026-01-20 22:02 • Branch: develop • Commit: c0434a1e*
