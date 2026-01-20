@@ -1,0 +1,30 @@
+services:
+  # The Kernel (Mock) - Lightweight HTTP server for connectivity tests
+  rae-kernel:
+    image: python:3.12-slim
+    command: python3 /app/tests/hard_frames/mock_kernel.py
+    networks:
+      - rae_internal
+      - public_net
+    volumes:
+      - .:/app # Mount project root to access the script
+    working_dir: /app
+
+  # The Agent - NO internet access
+  rae-agent-secure:
+    build:
+      context: .
+      dockerfile: Dockerfile.agent_secure
+    networks:
+      - rae_internal
+    depends_on:
+      - rae-kernel
+    environment:
+      - RAE_KERNEL_URL=http://rae-kernel:8000
+
+networks:
+  rae_internal:
+    internal: true # CRITICAL: No external access
+    driver: bridge
+  public_net:
+    driver: bridge
