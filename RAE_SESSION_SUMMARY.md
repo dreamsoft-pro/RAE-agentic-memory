@@ -37,3 +37,11 @@ Stabilize RAE-Core, Fix Lite Profile regressions, and establish a mandatory sess
 - Secure Agent isolated successfully (No Internet, Kernel-only access).
 - UID enforcement confirmed (running as non-root user 999).
 - Zero socket leakage detected during 100k stress tests.
+
+
+## Soak Test Launch (2026-01-20)
+- Status: RUNNING (Background) on Lumina Node 1.
+- Type: Endurance (Variable Latency, Variable Payload).
+- Goal: Verify memory stability and socket leaks over time.
+- Monitoring: Logs capture RSS every 50 requests.
+- Recovery: If agent crashes, check docker logs for OOM or exceptions.
