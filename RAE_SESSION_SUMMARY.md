@@ -30,3 +30,10 @@ Stabilize RAE-Core, Fix Lite Profile regressions, and establish a mandatory sess
 ## Next Steps
 - **Dashboard**: Focus on fixing and improving the RAE Dashboard in the next session.
 - **Benchmarks**: Execute the full benchmark suite (Academic Lite/Extended) to verify performance metrics.
+
+
+## Hard Frames v3.0 Validation (2026-01-20)
+- Verified on Lumina cluster (Node 1).
+- Secure Agent isolated successfully (No Internet, Kernel-only access).
+- UID enforcement confirmed (running as non-root user 999).
+- Zero socket leakage detected during 100k stress tests.
