@@ -91,37 +91,56 @@ def main():
     if not connect_to_kernel():
         print("⚠️  Kernel not found (expected if not running in compose). Entering wait loop.")
     
-    if len(sys.argv) > 1 and sys.argv[1] == "--stress-test":
-        print("🔥 STRESS TEST: Starting 100k memory interaction simulation...")
+    if len(sys.argv) > 1 and sys.argv[1] == "--soak-test":
+        print("🌊 SOAK TEST: Starting endurance simulation (Variable Load + Memory Monitoring)...")
         kernel_url = os.getenv("RAE_KERNEL_URL", "http://rae-kernel:8000")
-        success_count = 0
+        
+        import random
+        import resource
+        
+        session = requests.Session()
+        counter = 0
+        errors = 0
         start_time = time.time()
         
-        # Session for reuse
-        session = requests.Session()
+        # Infinite loop for soak testing (container will be killed manually or run for hours)
+        print(f"   PID: {os.getpid()}")
         
-        for i in range(100000):
-            if i % 10000 == 0:
-                print(f"   Progress: {i}/100000...")
-                # Periodic security check during load
+        while True:
+            counter += 1
+            
+            # 1. Variable Think Time (0.1s to 1.5s)
+            time.sleep(random.uniform(0.1, 1.5))
+            
+            # 2. Variable Payload (simulate small commands vs large memories)
+            payload_size = random.randint(100, 50000) # 100 bytes to 50KB
+            data = "x" * payload_size
+            
+            try:
+                # 3. Request
+                resp = session.post(f"{kernel_url}/memory", json={"content": data, "confidence": random.random()})
+                if resp.status_code not in [200, 404]:
+                    errors += 1
+                    print(f"⚠️  Error: Status {resp.status_code}")
+            except Exception as e:
+                errors += 1
+                print(f"❌ Exception: {e}")
+            
+            # 4. Monitoring (every 50 requests)
+            if counter % 50 == 0:
+                # Check Memory Usage (RSS)
+                usage_kb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+                usage_mb = usage_kb / 1024
+                elapsed = time.time() - start_time
+                print(f"📊 Stats [Req: {counter} | Err: {errors} | Time: {elapsed:.0f}s]: RAM Usage: {usage_mb:.2f} MB")
+                
+                # Verify Leak Check Periodically
                 try:
                     requests.get("https://google.com", timeout=0.1)
-                    print("❌ LEAK DETECTED during stress test!")
+                    print("❌ FATAL: LEAK DETECTED!")
                     sys.exit(1)
                 except:
                     pass
-            
-            try:
-                # Simulate a memory operation (lightweight ping to avoid DDoS-ing the mock kernel too hard)
-                resp = session.post(f"{kernel_url}/memory", json={"content": f"mem_{i}", "confidence": 0.9})
-                if resp.status_code in [200, 404]: # Mock kernel might 404 but that implies connection success
-                    success_count += 1
-            except Exception as e:
-                print(f"⚠️  Drop at {i}: {e}")
-        
-        duration = time.time() - start_time
-        print(f"🏁 STRESS TEST COMPLETED: {success_count}/100000 requests handled in {duration:.2f}s")
-        print(f"   Throughput: {success_count/duration:.2f} req/s")
 
     print("💤 Agent entering idle loop (waiting for tasks via Kernel)...")
     while True:
