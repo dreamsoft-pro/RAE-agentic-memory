@@ -202,6 +202,9 @@ class StoreMemoryRequest(BaseModel):
     governance: Optional[Dict[str, Any]] = Field(
         None, description="Governance metadata (rationale, confidence, risk)"
     )
+    metadata: Optional[Dict[str, Any]] = Field(
+        default_factory=dict, description="Generic metadata for the memory"
+    )
 
     @field_validator("layer", mode="before")
     @classmethod

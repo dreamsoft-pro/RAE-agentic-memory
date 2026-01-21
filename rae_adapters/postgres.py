@@ -401,6 +401,17 @@ class PostgreSQLStorage(IMemoryStorage):
                 params.append(filters["memory_ids"])
                 param_idx += 1
 
+            # Generic JSONB metadata filters
+            for key, value in filters.items():
+                # Skip already handled keys
+                if key in ["since", "created_after", "min_importance", "memory_ids"]:
+                    continue
+                
+                # Check if it's a metadata field
+                conditions.append(f"metadata->>${param_idx} = ${param_idx + 1}")
+                params.extend([key, str(value)])
+                param_idx += 2
+
         where_clause = " AND ".join(conditions)
         order_clause = f"ORDER BY {order_by} {order_direction.upper()}"
 
