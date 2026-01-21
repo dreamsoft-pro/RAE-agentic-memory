@@ -45,13 +45,15 @@ class PostgresVectorAdapter(IVectorStore):
 
     async def search_similar(
         self,
-        query_embedding: List[float],
+        query_embedding: list[float],
         tenant_id: str,
-        layer: Optional[str] = None,
+        layer: str | None = None,
         limit: int = 10,
-        score_threshold: Optional[float] = None,
-        agent_id: Optional[str] = None,
-    ) -> List[Tuple[UUID, float]]:
+        score_threshold: float | None = None,
+        agent_id: str | None = None,
+        session_id: str | None = None,
+        filters: dict[str, Any] | None = None,
+    ) -> list[tuple[UUID, float]]:
         # Convert embedding to string format for pgvector
         emb_str = "[" + ",".join(map(str, query_embedding)) + "]"
 

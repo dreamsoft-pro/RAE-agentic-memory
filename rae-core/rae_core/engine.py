@@ -276,7 +276,7 @@ class RAEEngine:
                 # If we have an exact match or strong vector signal, we must rescale.
                 # For Lite mode, we treat score > 0.01 as a strong signal.
                 adjusted_similarity = min(1.0, score * 50.0) if score < 0.1 else score
-                
+
                 if custom_weights:
                     from rae_core.math.structure import ScoringWeights
 
@@ -285,7 +285,9 @@ class RAEEngine:
                     else:
                         weights_obj = custom_weights
                     math_score = math_controller.score_memory(
-                        memory=memory, query_similarity=adjusted_similarity, weights=weights_obj
+                        memory=memory,
+                        query_similarity=adjusted_similarity,
+                        weights=weights_obj,
                     )
                 else:
                     math_score = math_controller.score_memory(
