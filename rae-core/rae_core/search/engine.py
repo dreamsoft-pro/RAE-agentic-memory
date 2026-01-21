@@ -167,12 +167,12 @@ class HybridSearchEngine:
                 # Actually, we should check if strategies already filtered.
                 # For now, let's trust the 'must' logic, but here we enforce it.
                 final_results.append((memory_id, score))
-            
-            # Since we can't easily fetch 100k metadata here, 
+
+            # Since we can't easily fetch 100k metadata here,
             # we will rely on fixing the strategies instead.
-            # But wait, I see why it fails: Qdrant matches 'Machine=CNC-02' in content 
+            # But wait, I see why it fails: Qdrant matches 'Machine=CNC-02' in content
             # if we don't have metadata.
-            
+
             return fused_results[:limit]
 
         return fused_results[:limit]

@@ -475,7 +475,7 @@ class RAECoreService:
         ttl: Optional[int] = None,
         info_class: str = "internal",
         governance: Optional[dict] = None,
-        metadata: Optional[dict] = None, # <--- NEW
+        metadata: Optional[dict] = None,  # <--- NEW
     ) -> str:
         """
         Store memory using RAEEngine.
@@ -490,7 +490,7 @@ class RAECoreService:
             tags = self._detect_agentic_patterns(governance, tags)
 
         project_id = project or "default"
-        metadata = metadata or {} # <--- NEW
+        metadata = metadata or {}  # <--- NEW
 
         # Store in RAEEngine
         if layer == "sensory" and ttl is None:
@@ -503,7 +503,7 @@ class RAECoreService:
             layer=target_layer,
             importance=importance or 0.5,
             tags=tags,
-            metadata=metadata, # <--- FIXED (passed real metadata instead of {})
+            metadata=metadata,  # <--- FIXED (passed real metadata instead of {})
             project=project_id,
             session_id=session_id,
             memory_type=memory_type or "text",
@@ -709,7 +709,7 @@ class RAECoreService:
         query: str,
         k: int = 10,
         layers: Optional[list] = None,
-        filters: Optional[dict] = None, # <--- NEW
+        filters: Optional[dict] = None,  # <--- NEW
     ) -> SearchResponse:
         """
         Query memories across layers with dynamic weights.
@@ -738,7 +738,7 @@ class RAECoreService:
             similarity_threshold=0.5,
             use_reranker=True,
             custom_weights=weights,
-            filters=filters, # <--- FIXED
+            filters=filters,  # <--- FIXED
         )
 
         # 3. Map to SearchResponse model
@@ -761,7 +761,11 @@ class RAECoreService:
                     memory_id=str(res.get("id")),
                     content=res.get("content", ""),
                     # Use math_score if available (from MathLayer), fallback to search_score (RRF)
-                    score=res.get("math_score") if res.get("math_score") is not None else res.get("search_score", 0.0),
+                    score=(
+                        res.get("math_score")
+                        if res.get("math_score") is not None
+                        else res.get("search_score", 0.0)
+                    ),
                     strategy_used=SearchStrategy.HYBRID,
                     metadata=metadata_val,
                 )

@@ -282,14 +282,20 @@ class QdrantVectorStore(IVectorStore):
         if filters:
             for key, value in filters.items():
                 # Skip reserved keys already handled
-                if key in ["tenant_id", "agent_id", "session_id", "layer", "score_threshold"]:
+                if key in [
+                    "tenant_id",
+                    "agent_id",
+                    "session_id",
+                    "layer",
+                    "score_threshold",
+                ]:
                     continue
-                
+
                 # Handle list values (match any) vs scalar values
                 if isinstance(value, list):
                     # Qdrant 'match' doesn't support list directly for 'any' in simple syntax
                     # We need 'should' condition or multiple 'match' if checking for inclusion
-                    # Assuming basic scalar match for now to keep it safe, 
+                    # Assuming basic scalar match for now to keep it safe,
                     # or 'match': {'any': value} if qdrant client supports it (it usually does for keyword fields)
                     must_conditions.append({"key": key, "match": {"any": value}})
                 else:

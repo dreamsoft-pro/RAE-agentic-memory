@@ -157,7 +157,7 @@ async def store_memory(
                 session_id=session_id,
                 memory_type=req.memory_type,
                 ttl=req.ttl,
-                metadata=req.metadata, # <--- NEW
+                metadata=req.metadata,  # <--- NEW
             )
 
             # RAE-Core Service handles vector storage internally now (via Engine)
@@ -233,7 +233,7 @@ async def query_memory(
                 project=req.project or "default",
                 query=req.query_text,
                 k=req.k,
-                filters=req.filters, # <--- FIXED
+                filters=req.filters,  # <--- FIXED
             )
 
             # Convert RAE-Core SearchResponse results back to the format expected by the API
