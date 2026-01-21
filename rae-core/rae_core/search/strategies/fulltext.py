@@ -109,6 +109,7 @@ class FullTextStrategy(SearchStrategy):
             agent_id=agent_id,
             layer=layer,
             tags=tag_filter,
+            filters=filters,  # Pass all filters for JSONB matching
             limit=500,  # Limit corpus for performance
         )
 

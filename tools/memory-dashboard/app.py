@@ -245,18 +245,25 @@ with st.sidebar:
                 else:
                     st.warning("Enter a name first")
 
-    # Auto-Refresh Logic
-    with st.expander("⏱️ Auto-Refresh", expanded=False):
-        auto_refresh = st.checkbox("Enable Auto-Refresh", value=False)
-        refresh_rate = st.slider(
-            "Refresh Rate (seconds)", min_value=1, max_value=60, value=5
-        )
-
-        if auto_refresh:
-            st.caption(f"Refreshing every {refresh_rate}s...")
-            st.caption("Backend WebSocket broadcasting is enabled for real-time consumers.")
-            time.sleep(refresh_rate)
-            st.rerun()
+    # Auto-Refresh Logic (Prominent & Enabled by Default)
+    st.sidebar.divider()
+    st.sidebar.subheader("⏱️ Live Updates")
+    
+    # Session state for auto-refresh to persist across reruns
+    if "auto_refresh" not in st.session_state:
+        st.session_state.auto_refresh = True
+    
+    auto_refresh = st.sidebar.checkbox("Enable Auto-Refresh", value=st.session_state.auto_refresh)
+    # Update session state
+    st.session_state.auto_refresh = auto_refresh
+    
+    if auto_refresh:
+        refresh_rate = st.sidebar.slider("Interval (s)", 2, 60, 10, help="How often to poll for new data")
+        st.sidebar.caption(f"Refreshing in {refresh_rate}s...")
+        time.sleep(refresh_rate)
+        st.rerun()
+    else:
+        st.sidebar.caption("Auto-refresh paused.")
 
     # Status Indicator (Thinking Bar)
     # Mocking task status for now until backend supports /tasks/active
@@ -304,41 +311,27 @@ if "connected" in st.session_state and st.session_state.connected:
     # Overview section
     st.header("📊 Overview")
 
-    # Fetch statistics
+    # Metrics row
     try:
         stats = get_cached_stats(client, client.tenant_id, client.project_id)
-
-        # Metrics row
         col1, col2, col3, col4, col5 = st.columns(5)
 
         with col1:
-            st.metric(
-                "Total Memories",
-                stats.get("total", 0),
-                help="Total number of memories stored",
-            )
-
+            st.metric("Total Memories", stats.get("total", 0), help="Total number of memories stored")
         with col2:
-            st.metric(
-                "Episodic", stats.get("episodic", 0), help="Recent event memories"
-            )
-
+            st.metric("Episodic", stats.get("episodic", 0), help="Recent event memories")
         with col3:
-            st.metric(
-                "Working", stats.get("working", 0), help="Current context memories"
-            )
-
+            st.metric("Working", stats.get("working", 0), help="Current context memories")
         with col4:
-            st.metric(
-                "Semantic",
-                stats.get("semantic", 0),
-                help="Concept and guideline memories",
-            )
-
+            st.metric("Semantic", stats.get("semantic", 0), help="Concept and guideline memories")
         with col5:
-            st.metric(
-                "Long-term", stats.get("ltm", 0), help="Consolidated long-term memories"
-            )
+            st.metric("Long-term", stats.get("ltm", 0), help="Consolidated long-term memories")
+
+        # Manual Refresh Button
+        if st.button("🔄 Refresh Data"):
+            # Clearing cache to force reload
+            get_cached_stats.clear()
+            st.rerun()
 
     except Exception as e:
         st.error(f"Error fetching statistics: {e}")
@@ -348,42 +341,62 @@ if "connected" in st.session_state and st.session_state.connected:
     # Quick visualizations
     st.header("📈 Quick Analytics")
 
-    tab1, tab2, tab3 = st.tabs(["Recent Activity", "Layer Distribution", "Top Tags"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Recent Activity", "Search", "Layer Distribution", "Top Tags"])
 
     with tab1:
         try:
             recent_memories = client.get_memories(limit=50)
-
             if recent_memories:
                 st.subheader("Recent Memory Activity")
                 st.caption(f"Showing last {len(recent_memories)} memories")
-
-                # Display recent memories
                 for memory in recent_memories[:10]:
                     with st.container():
                         col1, col2, col3 = st.columns([3, 1, 1])
-
                         with col1:
                             content = memory.get("content", "")
                             if len(content) > 100:
                                 content = content[:100] + "..."
                             st.text(content)
-
                         with col2:
                             st.caption(memory.get("layer", "N/A"))
-
                         with col3:
                             if "timestamp" in memory:
                                 st.caption(memory["timestamp"][:10])
-
                         st.divider()
             else:
                 st.info("No recent memories found")
-
         except Exception as e:
             st.error(f"Error fetching recent memories: {e}")
 
     with tab2:
+        st.subheader("🔍 Search Memories")
+        search_query = st.text_input("Enter search query", placeholder="e.g. 'project requirements' or 'user preferences'")
+        col_s1, col_s2 = st.columns([1, 4])
+        with col_s1:
+            top_k = st.number_input("Results", min_value=1, max_value=50, value=10)
+        
+        if st.button("Search", type="primary"):
+            if search_query:
+                with st.spinner("Searching vector database..."):
+                    try:
+                        results = client.search_memories(query=search_query, top_k=top_k)
+                        if results:
+                            st.success(f"Found {len(results)} results")
+                            for res in results:
+                                with st.container():
+                                    st.markdown(f"**{res.get('content')}**")
+                                    st.caption(f"Score: {res.get('score', 0.0):.4f} | Layer: {res.get('layer', 'unknown')} | ID: {res.get('id')}")
+                                    with st.expander("Details"):
+                                        st.json(res)
+                                    st.divider()
+                        else:
+                            st.warning("No matching memories found.")
+                    except Exception as e:
+                        st.error(f"Search failed: {e}")
+            else:
+                st.warning("Please enter a query.")
+
+    with tab3:
         try:
             memories = client.get_memories(limit=100)
 

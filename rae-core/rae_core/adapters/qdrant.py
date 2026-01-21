@@ -246,6 +246,7 @@ class QdrantVectorStore(IVectorStore):
         score_threshold: float | None = None,
         agent_id: str | None = None,
         session_id: str | None = None,
+        filters: dict[str, Any] | None = None,
     ) -> list[tuple[UUID, float]]:
         """Search for similar vectors using cosine similarity.
 
@@ -257,6 +258,7 @@ class QdrantVectorStore(IVectorStore):
             score_threshold: Minimum similarity score
             agent_id: Optional agent ID for namespace isolation
             session_id: Optional session ID for namespace isolation
+            filters: Optional dictionary of generic metadata filters
         """
         await self._ensure_collection()
 
@@ -275,6 +277,29 @@ class QdrantVectorStore(IVectorStore):
 
         if layer:
             must_conditions.append({"key": "layer", "match": {"value": layer}})
+
+        # Apply generic metadata filters
+        if filters:
+            for key, value in filters.items():
+                # Skip reserved keys already handled
+                if key in [
+                    "tenant_id",
+                    "agent_id",
+                    "session_id",
+                    "layer",
+                    "score_threshold",
+                ]:
+                    continue
+
+                # Handle list values (match any) vs scalar values
+                if isinstance(value, list):
+                    # Qdrant 'match' doesn't support list directly for 'any' in simple syntax
+                    # We need 'should' condition or multiple 'match' if checking for inclusion
+                    # Assuming basic scalar match for now to keep it safe,
+                    # or 'match': {'any': value} if qdrant client supports it (it usually does for keyword fields)
+                    must_conditions.append({"key": key, "match": {"any": value}})
+                else:
+                    must_conditions.append({"key": key, "match": {"value": value}})
 
         query_filter = {"must": must_conditions} if must_conditions else None
 
