@@ -23,18 +23,18 @@ services:
       - RAE_KERNEL_URL=http://rae-kernel:8000
     command: ["python", "-m", "rae_agent.main", "--soak-test"]
 
-  # The Prisoner Test - Real Integration
-  rae-agent-integration:
+  # Real 100k Data Ingestion (Slow & Heavy)
+  rae-agent-ingest:
     build:
       context: .
       dockerfile: Dockerfile.agent_secure
     networks:
-      - rae_network_external # Connect to real RAE
+      - rae_network_external
     environment:
       - RAE_KERNEL_URL=http://rae-api-dev:8000
       - RAE_AGENT_MODE=secure
       - PYTHONPATH=/app
-    command: ["python", "/app/tests/hard_frames/verify_real_integration.py"]
+    command: ["python", "/app/tests/hard_frames/real_100k_ingestion.py"]
 
 networks:
   rae_internal:
