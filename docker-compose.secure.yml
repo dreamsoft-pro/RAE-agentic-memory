@@ -23,8 +23,8 @@ services:
       - RAE_KERNEL_URL=http://rae-kernel:8000
     command: ["python", "-m", "rae_agent.main", "--soak-test"]
 
-  # Real 100k Data Ingestion (Slow & Heavy)
-  rae-agent-ingest:
+  # Real Memory Retrieval Test
+  rae-agent-recall:
     build:
       context: .
       dockerfile: Dockerfile.agent_secure
@@ -34,7 +34,7 @@ services:
       - RAE_KERNEL_URL=http://rae-api-dev:8000
       - RAE_AGENT_MODE=secure
       - PYTHONPATH=/app
-    command: ["python", "/app/tests/hard_frames/real_100k_ingestion.py"]
+    command: ["python", "/app/tests/hard_frames/recall_check.py"]
 
 networks:
   rae_internal:
