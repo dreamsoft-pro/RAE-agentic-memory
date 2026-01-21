@@ -1,31 +1,28 @@
-# Plan Sesji: RAE Smart Black Box - Weryfikacja i Optymalizacja (Post-Faza 4)
+# RAE SESSION PLAN
 
-**Stan:** 🟢 FAZY 3 i 4 ZAKOŃCZONE
-**Data:** 2026-01-18
+## 🚀 PRIORITY: 100k Memory Hard Frames Stress Test (CLUSTER)
 
-## 🚀 Cel Główny
-Weryfikacja spójności systemu po wdrożeniu Fazy 3 (Security Enforcement) i Fazy 4 (Integration), oraz przygotowanie do optymalizacji (Faza 5).
+**Context:** Local tests for "Hard Frames" passed (Physical/Protocol/Semantic containment). Now we must test **System Degradation** at scale (100k memories) on Node 1 (Lumina).
 
-## 🛠️ Protokół Startowy
-
-1.  **Szybki Start:**
+### 📋 Checklist for Lumina Session:
+1.  **Sync Code:**
     ```bash
-    python scripts/bootstrap_session.py
+    rsync -avz --exclude '.git' --exclude '__pycache__' ./ operator@100.68.166.117:~/rae-node-agent/
     ```
+2.  **Remote Startup (Lumina):**
+    *   SSH into Lumina.
+    *   Build the secure agent:
+        ```bash
+        docker compose -f docker-compose.secure.yml -p hard_frames up -d --build
+        ```
+3.  **Execute Stress Test:**
+    *   We need to verify if the Agent degrades safely when flooded with 100k memories.
+    *   Run the degradation test suite in a loop:
+        ```bash
+        .venv/bin/pytest tests/hard_frames/test_degradation_stability.py
+        ```
+    *   *Note:* Real 100k injection might require connecting the `rae-kernel` to the real Qdrant on Lumina (edit `docker-compose.secure.yml` on remote to point to `rae-qdrant`).
 
-## 📋 Lista Zadań (Verification & Polish)
-
-1.  **Weryfikacja Fazy 3 (Security):**
-    *   Upewnij się, że testy bezpieczeństwa (`test_security_enforcement.py`) przechodzą.
-    *   Sprawdź, czy `RAECoreService` poprawnie odrzuca dane `RESTRICTED` w warstwach innych niż `Working`.
-
-2.  **Weryfikacja Fazy 4 (Dashboard/Integration):**
-    *   Potwierdź działanie `builder_v4.html` z backendem.
-    *   Sprawdź status synchronizacji z Node 1.
-
-3.  **Przygotowanie do Fazy 5 (Optimization):**
-    *   Przegląd metryk wydajności po wdrożeniu zabezpieczeń.
-    *   Identifikacja wąskich gardeł w `Agentic Pattern Detection`.
-
-## ⚠️ WAŻNE
-**NIE COFAJ SIĘ DO FAZY 3 ANI 4.** Te funkcjonalności są już wdrożone. Jeśli coś nie działa, traktuj to jako *bug fix*, a nie *feature implementation*.
+## 🛠️ Pending Tasks
+- [ ] Refactor `rae-sdk` to be fully compliant with the new Thin Client protocol.
+- [ ] Merge "Hard Frames" into `develop` once 100k test passes.

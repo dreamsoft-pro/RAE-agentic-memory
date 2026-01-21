@@ -475,6 +475,7 @@ class RAECoreService:
         ttl: Optional[int] = None,
         info_class: str = "internal",
         governance: Optional[dict] = None,
+        metadata: Optional[dict] = None,  # <--- NEW
     ) -> str:
         """
         Store memory using RAEEngine.
@@ -489,6 +490,7 @@ class RAECoreService:
             tags = self._detect_agentic_patterns(governance, tags)
 
         project_id = project or "default"
+        metadata = metadata or {}  # <--- NEW
 
         # Store in RAEEngine
         if layer == "sensory" and ttl is None:
@@ -501,7 +503,7 @@ class RAECoreService:
             layer=target_layer,
             importance=importance or 0.5,
             tags=tags,
-            metadata={},
+            metadata=metadata,  # <--- FIXED (passed real metadata instead of {})
             project=project_id,
             session_id=session_id,
             memory_type=memory_type or "text",
@@ -707,6 +709,7 @@ class RAECoreService:
         query: str,
         k: int = 10,
         layers: Optional[list] = None,
+        filters: Optional[dict] = None,  # <--- NEW
     ) -> SearchResponse:
         """
         Query memories across layers with dynamic weights.
@@ -735,6 +738,7 @@ class RAECoreService:
             similarity_threshold=0.5,
             use_reranker=True,
             custom_weights=weights,
+            filters=filters,  # <--- FIXED
         )
 
         # 3. Map to SearchResponse model
@@ -756,7 +760,12 @@ class RAECoreService:
                 SearchResult(
                     memory_id=str(res.get("id")),
                     content=res.get("content", ""),
-                    score=res.get("search_score", 0.0),
+                    # Use math_score if available (from MathLayer), fallback to search_score (RRF)
+                    score=(
+                        res.get("math_score")
+                        if res.get("math_score") is not None
+                        else res.get("search_score", 0.0)
+                    ),
                     strategy_used=SearchStrategy.HYBRID,
                     metadata=metadata_val,
                 )
@@ -770,20 +779,12 @@ class RAECoreService:
             execution_time_ms=(time.time() - start_time) * 1000,
         )
 
-        # 4. AUDIT: Record this search in the Working Layer
-        try:
-            audit_content = f"Search Query: {query} | Results: {len(results_list)} | Weights: {weights}"
-            await self.engine.store_memory(
-                tenant_id=str(tenant_id),
-                agent_id=project or "system",
-                content=audit_content,
-                layer=MemoryLayer.WORKING,
-                importance=0.1,
-                tags=["audit", "search_trace"],
-                metadata={"query": query, "weights": weights},
-            )
-        except Exception as e:
-            logger.warning("search_audit_failed", error=str(e))
+        # 4. AUDIT: Record this search in the Working Layer (DISABLED FOR PERFORMANCE/NOISE)
+        # try:
+        #     audit_content = f"Search Query: {query} | Results: {len(results_list)} | Weights: {weights}"
+        #     await self.engine.store_memory(...)
+        # except Exception as e:
+        #     logger.warning("search_audit_failed", error=str(e))
 
         return response
 

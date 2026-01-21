@@ -56,6 +56,7 @@ class VectorSearchStrategy(SearchStrategy):
         # Extract filters
         layer = filters.get("layer") if filters else None
         agent_id = filters.get("agent_id") if filters else None
+        session_id = filters.get("session_id") if filters else None
         score_threshold = filters.get("score_threshold", 0.0) if filters else 0.0
 
         # Search similar vectors
@@ -64,8 +65,10 @@ class VectorSearchStrategy(SearchStrategy):
             tenant_id=tenant_id,
             layer=layer,
             agent_id=agent_id,
+            session_id=session_id,
             limit=limit,
             score_threshold=score_threshold,
+            filters=filters,  # Pass full filters dict for generic metadata
         )
 
         return results

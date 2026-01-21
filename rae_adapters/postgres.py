@@ -321,7 +321,11 @@ class PostgreSQLStorage(IMemoryStorage):
                 "info_class": row["info_class"] or "internal",
                 "governance": row["governance"] if row["governance"] else {},
                 "tags": list(row["tags"]) if row["tags"] else [],
-                "metadata": row["metadata"] if row["metadata"] else {},
+                "metadata": (
+                    json.loads(row["metadata"])
+                    if isinstance(row["metadata"], str)
+                    else dict(row["metadata"])
+                ) if row["metadata"] else {},
                 "embedding": (
                     (
                         json.loads(row["embedding"])
@@ -400,6 +404,17 @@ class PostgreSQLStorage(IMemoryStorage):
                 conditions.append(f"id = ANY(${param_idx}::uuid[])")
                 params.append(filters["memory_ids"])
                 param_idx += 1
+
+            # Generic JSONB metadata filters
+            for key, value in filters.items():
+                # Skip already handled keys
+                if key in ["since", "created_after", "min_importance", "memory_ids"]:
+                    continue
+                
+                # Check if it's a metadata field
+                conditions.append(f"metadata->>${param_idx} = ${param_idx + 1}")
+                params.extend([key, str(value)])
+                param_idx += 2
 
         where_clause = " AND ".join(conditions)
         order_clause = f"ORDER BY {order_by} {order_direction.upper()}"

@@ -54,50 +54,63 @@ class RAERuntime:
     async def _handle_memory_policy(self, input_payload: RAEInput, action: AgentAction):
         """
         Decides if and how to store the action in memory.
-        This represents the 'Memory Policy Engine'.
+        Enforces "Implicit Capture" policy.
         """
-
-        # Default Policy: Store "Final Answers" as Episodic Memory
         agent_id = input_payload.context.get("agent_id", "agent-runtime")
         project = input_payload.context.get("project")
+        session_id = input_payload.context.get("session_id")
 
+        # Base tags and metadata
+        base_tags = ["rae-first", f"action-{action.type.value}"] + action.signals
+        base_metadata = {
+            "request_id": str(input_payload.request_id),
+            "confidence": action.confidence,
+            "reasoning": action.reasoning,
+            "input_preview": input_payload.content[:100],
+        }
+
+        # Policy: Capture EVERYTHING significant (RAE-First Enforcement)
+        # 1. Final Answers -> Episodic
         if action.type == AgentActionType.FINAL_ANSWER:
             logger.info("memory_policy_triggered", rule="final_answer_store")
-
             await self.storage.store_memory(
                 content=str(action.content),
                 layer="episodic",
                 tenant_id=input_payload.tenant_id,
                 agent_id=agent_id,
-                tags=["rae-first", "final_answer"] + action.signals,
-                metadata={
-                    "request_id": str(input_payload.request_id),
-                    "confidence": action.confidence,
-                    "reasoning": action.reasoning,
-                    "input_preview": input_payload.content[:50],
-                },
+                tags=base_tags + ["final_answer"],
+                metadata=base_metadata,
                 project=project,
-                session_id=input_payload.context.get("session_id"),
+                session_id=session_id,
                 source="RAERuntime",
             )
 
-        # Policy: Store "Thoughts" if they contain crucial decisions
-        elif action.type == AgentActionType.THOUGHT and "decision" in action.signals:
-            logger.info("memory_policy_triggered", rule="critical_thought_store")
-
+        # 2. Thoughts & Decisions -> Working
+        elif action.type == AgentActionType.THOUGHT:
+            logger.info("memory_policy_triggered", rule="cognitive_trace_store")
             await self.storage.store_memory(
-                content=f"Reasoning: {action.reasoning} | Content: {str(action.content)}",
+                content=f"Reasoning: {action.reasoning} | Output: {str(action.content)}",
                 layer="working",
                 tenant_id=input_payload.tenant_id,
                 agent_id=agent_id,
-                tags=["rae-first", "thought", "decision"],
-                metadata={
-                    "request_id": str(input_payload.request_id),
-                    "confidence": action.confidence,
-                },
-                project=input_payload.context.get("project"),
-                session_id=input_payload.context.get("session_id"),
+                tags=base_tags + ["trace"],
+                metadata=base_metadata,
+                project=project,
+                session_id=session_id,
                 source="RAERuntime",
             )
 
-        # TODO: Add more rules here (e.g., Tool Calls logging)
+        # 3. Tool Invocations -> Working (The Audit Trail)
+        elif action.type == AgentActionType.TOOL_CALL:
+            logger.info("memory_policy_triggered", rule="tool_audit_store")
+            await self.storage.store_memory(
+                content=f"Tool Call: {action.content} | Reasoning: {action.reasoning}",
+                layer="working",
+                tenant_id=input_payload.tenant_id,
+                agent_id=agent_id,
+                tags=base_tags + ["audit", "tool_call"],
+                metadata=base_metadata,
+                project=project,
+                session_id=session_id,
+                source="RAERuntime",
+            )

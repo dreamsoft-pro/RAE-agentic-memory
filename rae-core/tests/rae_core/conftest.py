@@ -400,6 +400,8 @@ class MockVectorStore(IVectorStore):
         limit: int = 10,
         score_threshold: float | None = None,
         agent_id: str | None = None,
+        session_id: str | None = None,
+        filters: dict[str, Any] | None = None,
     ) -> list[tuple[UUID, float]]:
         async with self._lock:
             results: list[tuple[UUID, float]] = []
