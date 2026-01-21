@@ -40,8 +40,19 @@ Stabilize RAE-Core, Fix Lite Profile regressions, and establish a mandatory sess
 
 
 ## Soak Test Launch (2026-01-20)
-- Status: RUNNING (Background) on Lumina Node 1.
-- Type: Endurance (Variable Latency, Variable Payload).
-- Goal: Verify memory stability and socket leaks over time.
-- Monitoring: Logs capture RSS every 50 requests.
-- Recovery: If agent crashes, check docker logs for OOM or exceptions.
+- Status: COMPLETED (Success).
+- Duration: ~1 hour (3600+ requests).
+- Stability: RAM flat at ~31MB. No leaks.
+- Isolation: Google access blocked consistently.
+
+## Hard Frames v3.0 Final Report (2026-01-20)
+### 1. "The Prisoner Test" (Real Integration)
+- **Objective**: Verify if a Hard-Framed Agent can communicate with REAL RAE API while blocked from the internet.
+- **Result**: PASSED.
+- **Mechanism**: Implemented `SecureSocket` class (inheriting from `socket.socket`) to support SSL/TLS correctly.
+- **Discovery**: Auto-whitelisting of Kernel IP (lazy DNS resolution) was added to `rae_agent/security.py`.
+- **Outcome**: Agent successfully hit `rae-api-dev` (Health 200 OK) but was blocked from Google (RuntimeError).
+
+### 2. Infrastructure Optimizations
+- Added `.dockerignore` to root, reducing build context from 1.7GB to <10MB.
+- Tests running on Lumina (Node 1) are now fast and stable.
