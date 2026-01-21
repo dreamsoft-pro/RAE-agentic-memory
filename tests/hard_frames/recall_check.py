@@ -4,15 +4,10 @@ import requests
 from rae_agent.security import apply_hard_frames
 
 def query_rae(session, url, query_text, api_key, tenant_id):
-    # Use exact keywords from the known content format:
-    # "Machine=CNC-01 Sensor=pressure"
     payload = {
         "query_text": query_text,
-        "k": 5,
+        "k": 20, # Increase recall window
         "project": "industrial_ultra_test"
-        # We don't use 'filters' here because we learned that we didn't ingest structured metadata keys,
-        # only tags. And RAE API might not map filters['machine_id'] to tags automatically.
-        # So we rely on Content Matching (Hybrid Search logic inside RAE).
     }
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -24,27 +19,39 @@ def query_rae(session, url, query_text, api_key, tenant_id):
         resp = session.post(f"{url}/v1/memory/query", json=payload, headers=headers, timeout=10)
         if resp.status_code == 200:
             results = resp.json().get("results", [])
-            print(f"✅ Found {len(results)} results.")
-            for i, res in enumerate(results):
+            print(f"✅ Found {len(results)} results (Top 5 shown):")
+            
+            # Extract keywords for naive validation
+            keywords = []
+            if "PRESS-A" in query_text: keywords.append("PRESS-A")
+            if "CRITICAL" in query_text: keywords.append("CRITICAL")
+            if "ROBOT-ARM-Z" in query_text: keywords.append("ROBOT-ARM-Z")
+            if "vibration" in query_text: keywords.append("vibration")
+            
+            hits = 0
+            for i, res in enumerate(results[:5]): # Show top 5
                 content = res.get('content')
                 score = res.get('score', 0.0)
                 
-                # Check alignment with query keywords
-                # E.g. if query is "Machine=CNC-01", content must have it.
-                keywords = [w for w in query_text.split() if "=" in w]
-                matches = [k for k in keywords if k in content]
+                # Check match
+                is_hit = all(k in content for k in keywords)
+                if is_hit: hits += 1
                 
-                is_perfect = len(matches) == len(keywords)
+                status_icon = "🟢" if is_hit else "🔴"
+                print(f"   [{i+1}] {status_icon} (Score: {score:.4f}) {content[:100]}...")
+            
+            if hits > 0:
+                print(f"🎯 Precision@5: {hits}/5 relevant results.")
+            else:
+                print(f"⚠️  Precision@5: 0/5. Retrieval struggled.")
                 
-                status_icon = "🟢" if is_perfect else "🔴"
-                print(f"   [{i+1}] {status_icon} (Score: {score:.4f}) {content[:120]}...")
         else:
             print(f"❌ Error {resp.status_code}: {resp.text}")
     except Exception as e:
         print(f"❌ Exception: {e}")
 
 def run_recall_check():
-    print("🧠 STARTING PRECISION RECALL CHECK 🧠")
+    print("🧠 STARTING NATURAL LANGUAGE RECALL CHECK 🧠")
     
     base_url = os.getenv("RAE_KERNEL_URL", "http://rae-api-dev:8000")
     api_key = os.getenv("RAE_API_KEY", "dev-key")
@@ -54,12 +61,11 @@ def run_recall_check():
     
     session = requests.Session()
     
-    # Queries constructed to leverage the exact format of ingested data
-    # format: "Machine=X Sensor=Y Status=Z"
+    # Natural Language Queries tailored for Embedding Models
     queries = [
-        "Machine=PRESS-A Status=CRITICAL",
-        "Sensor=vibration Machine=ROBOT-ARM-Z",
-        "Machine=CNC-02 Sensor=temp Status=WARNING"
+        "Find log entries where Machine is PRESS-A and Status is CRITICAL",
+        "Retrieve vibration sensor readings for machine ROBOT-ARM-Z",
+        "Search for warnings related to temperature on CNC-02"
     ]
     
     for q in queries:
