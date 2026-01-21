@@ -112,3 +112,36 @@ VS Code / Cursor nie mogą mieć własnych kluczy API.
 3. **Stability at Scale:** Przy 100k pamięci agent nadal komunikuje się wyłącznie przez protokół RAE, nawet jeśli jego logika decyzyjna degraduje.
 
 > **UWAGA:** Testy izolacji sieciowej (Hard Frames) NALEŻY uruchamiać na klastrze (Node1 Lumina). Lokalne maszyny deweloperskie często mają "przeciekającą" konfigurację sieci Docker (np. przez bridge z hostem), co daje fałszywe wyniki (false negatives).
+
+## 7. INSTRUKCJA URUCHOMIENIA (USER GUIDE)
+
+### Jak uruchomić Izolowanego Agenta (RAE-First Mode)?
+
+1.  **Pojedynczy Agent (Tryb Standardowy):**
+    Uruchamia agenta w szczelnym kontenerze, podłączonego do działającego `rae-api-dev`.
+    ```bash
+    make secure-shell
+    # Wewnątrz kontenera:
+    # python scripts/bootstrap_session.py
+    ```
+
+2.  **Wieloagentowość (Swarm Mode):**
+    System RAE-First jest z natury bezstanowy i skalowalny. Możesz uruchomić dowolną liczbę izolowanych agentów. Każdy z nich otrzyma własne `SESSION_ID` i będzie komunikował się z Kernelem równolegle.
+
+    ```bash
+    # Uruchomienie 5 niezależnych agentów w tle
+    docker compose -f docker-compose.secure.yml up -d --scale rae-agent-secure=5
+    ```
+
+    Każdy kontener:
+    *   Jest izolowany od Internetu.
+    *   Widzi RAE Kernel.
+    *   Jego akcje (Thought, Tool Call, Final Answer) są **automatycznie logowane** w bazie RAE z odpowiednim `session_id` i `project_id`.
+
+3.  **Weryfikacja Działania:**
+    Aby sprawdzić, co robią agenci, zapytaj RAE (z poziomu Dashboardu lub CLI):
+    ```
+    "Pokaż ostatnie akcje w warstwie Working dla projektu X"
+    ```
+    Dzięki **Implicit Capture**, nie musisz szukać logów w plikach tekstowych kontenerów. Pamięć RAE jest jedynym źródłem prawdy.
+
