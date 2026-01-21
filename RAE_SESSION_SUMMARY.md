@@ -61,10 +61,12 @@ Stabilize RAE-Core, Fix Lite Profile regressions, and establish a mandatory sess
 - **Conclusion**: RAE system is stable for massive ingestion campaigns while fully isolated from the public internet.
 
 ### 4. Search Quality Audit (Recall Check)
-- **Status**: **POOR PRECISION** (Needs Improvement).
-- **Finding**: While data is successfully ingested, retrieval via pure vector search struggles to distinguish between similar machine logs (e.g., confusing 'PRESS-A' with 'ROBOT-ARM-Z').
-- **Scores**: Low similarity scores (~0.006) indicate the embedding model needs fine-tuning for structured log data.
-- **Recommendation**: Implement **Sparse Vectors (BM25)** or strict Metadata Filtering for future industrial deployments to ensure exact matches for machine IDs.
+- **Status**: **PASS WITH WARNINGS**.
+- **Finding**: Retrieval Precision varies significantly based on query phrasing.
+    - **Keyword Queries**: Poor precision (~0%).
+    - **Natural Language Queries**: High precision (up to **100%** for complex queries like "Search for warnings related to temperature on CNC-02").
+- **Observation**: Strong **Recency Bias** detected (system prefers retrieving recent query logs over older data).
+- **Recommendation**: Enable **Re-ranking (LLM)** or Metadata Filtering for production to filter out system noise.
 
 ### 5. Infrastructure Optimizations
 - Added `.dockerignore` to root, reducing build context from 1.7GB to <10MB.
