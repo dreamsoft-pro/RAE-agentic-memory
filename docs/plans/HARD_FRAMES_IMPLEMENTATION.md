@@ -1,7 +1,7 @@
 # PLAN IMPLEMENTACJI: TWARDE RAMY (HARD FRAMES)
-**Data:** 2026-01-20
+**Data:** 2026-01-21
 **Cel:** Przejście z zabezpieczeń deklaratywnych (prompty, kontrakty) na zabezpieczenia fizyczne (runtime enforcement).
-**Status:** DRAFT
+**Status:** IN PROGRESS (Phase 1 & 2 Verified)
 **Inspiracja:** Analiza zachowań LLM przy skali 100k pamięci (System Drift).
 
 ---
@@ -17,9 +17,9 @@ Agent nie jest "użytkownikiem" API. Agent jest **niezaufanym procesem**, który
 - **Brak Bezpośredniego IO:** Agent nie ma prawa "widzieć" Internetu ani modeli. Widzi tylko RAE.
 
 **Zadania:**
-- [ ] Utworzyć `docs/architecture/HARD_FRAMES_MANIFESTO.md` (Formalny opis doktryny).
-- [ ] Zaktualizować `README.md` z ostrzeżeniem: "Prompt-based alignment fails at scale".
-- [ ] Zdefiniować "RAE-First Contract v2" – koniec z "prośbami", początek "fizycznych barier".
+- [x] Utworzyć `docs/architecture/HARD_FRAMES_MANIFESTO.md` (Formalny opis doktryny).
+- [x] Zaktualizować `README.md` z ostrzeżeniem: "Prompt-based alignment fails at scale".
+- [x] Zdefiniować "RAE-First Contract v2" – koniec z "prośbami", początek "fizycznych barier".
 
 ---
 
@@ -30,19 +30,20 @@ Cel: Stworzenie środowiska Docker, w którym agent fizycznie nie posiada narzę
 Agent nie może mieć zainstalowanych bibliotek, których nie powinien używać.
 
 **Zadania:**
-- [ ] Stworzyć `Dockerfile.agent_secure` (bazujący na `python:3.12-slim`).
-- [ ] **Usunięcie binariów sieciowych:** `RUN rm -rf /usr/bin/curl /usr/bin/wget /usr/bin/nc`.
-- [ ] **Usunięcie SDK LLM:** Zablokowanie instalacji `openai`, `anthropic`, `google-generativeai`.
-- [ ] **Blokada PIP w runtime:** `ENV PIP_NO_INDEX=1`, usunięcie `pip` po instalacji zależności.
+- [x] Stworzyć `Dockerfile.agent_secure` (bazujący na `python:3.12-slim`).
+- [x] **Usunięcie binariów sieciowych:** `RUN rm -rf /usr/bin/curl /usr/bin/wget /usr/bin/nc`.
+- [x] **Usunięcie SDK LLM:** Zablokowanie instalacji `openai`, `anthropic`, `google-generativeai`.
+- [x] **Blokada PIP w runtime:** `ENV PIP_NO_INDEX=1`, usunięcie `pip` po instalacji zależności.
 
 ### 2.2. Izolacja Sieciowa (Network Jail)
 Agent nie może mieć trasy do Internetu.
 
 **Zadania:**
-- [ ] Konfiguracja `docker-compose.secure.yml`.
-- [ ] Sieć `rae_internal`: brak bramy domyślnej (no default gateway).
-- [ ] **Allowlist:** Agent widzi TYLKO `rae-api` (po nazwie hosta lub socket).
-- [ ] Test penetracyjny: Próba wykonania `requests.get('google.com')` z wnętrza kontenera musi zakończyć się natychmiastowym błędem sieci (nie timeoutem).
+- [x] Konfiguracja `docker-compose.secure.yml`.
+- [x] Sieć `rae_internal`: brak bramy domyślnej (no default gateway).
+- [x] **Allowlist:** Agent widzi TYLKO `rae-api` (po nazwie hosta lub socket).
+- [x] Test penetracyjny: Próba wykonania `requests.get('google.com')` z wnętrza kontenera musi zakończyć się natychmiastowym błędem sieci (nie timeoutem).
+- **Status:** Zweryfikowano 2026-01-21 (`test_containment.py` PASSED).
 
 ---
 
@@ -53,16 +54,17 @@ Agent nie może wiedzieć, z jakim modelem rozmawia.
 Zamiast pełnych SDK, agent otrzymuje "cienkiego klienta".
 
 **Zadania:**
-- [ ] Refaktoryzacja `rae-sdk`: Usunięcie wszelkich zależności od `langchain` czy `openai` w warstwie klienta.
-- [ ] Jedyny interfejs: `rae.ask(intent, context)` oraz `rae.perform(tool_name, args)`.
-- [ ] Agent nie importuje `models`, importuje `capabilities`.
+- [x] Refaktoryzacja `rae-sdk`: Usunięcie wszelkich zależności od `langchain` czy `openai` w warstwie klienta.
+- [x] Jedyny interfejs: `rae.ask(intent, context)` oraz `rae.perform(tool_name, args)`.
+- [x] Agent nie importuje `models`, importuje `capabilities`.
 
 ### 3.2. Monkey Patching (Opcjonalne, ale zalecane)
 Dla pewności, wstrzykujemy kod blokujący standardowe biblioteki w runtime Pythona.
 
 **Zadania:**
-- [ ] Skrypt startowy nadpisujący `socket.socket` tak, aby pozwalał na połączenie tylko z adresem RAE API.
-- [ ] Każda inna próba otwarcia socketu rzuca `RuntimeError("Use RAE Protocol")`.
+- [x] Skrypt startowy nadpisujący `socket.socket` tak, aby pozwalał na połączenie tylko z adresem RAE API.
+- [x] Każda inna próba otwarcia socketu rzuca `RuntimeError("Use RAE Protocol")`.
+- **Status:** Zweryfikowano 2026-01-21 (`test_protocol_bypass_attempt` PASSED).
 
 ---
 
