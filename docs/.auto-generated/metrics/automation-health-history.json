@@ -1,13 +1,5 @@
 [
   {
-    "run_id": "20251218-063037",
-    "timestamp": "2025-12-18T06:30:37.621634",
-    "duration_seconds": 0.24,
-    "status": "success",
-    "files_count": 8,
-    "errors_count": 0
-  },
-  {
     "run_id": "20251218-070408",
     "timestamp": "2025-12-18T07:04:08.635028",
     "duration_seconds": 0.39,
@@ -395,6 +387,14 @@
     "run_id": "20260120-234530",
     "timestamp": "2026-01-20T23:45:30.678217",
     "duration_seconds": 0.63,
+    "status": "success",
+    "files_count": 8,
+    "errors_count": 0
+  },
+  {
+    "run_id": "20260121-054454",
+    "timestamp": "2026-01-21T05:44:54.506807",
+    "duration_seconds": 0.78,
     "status": "success",
     "files_count": 8,
     "errors_count": 0
