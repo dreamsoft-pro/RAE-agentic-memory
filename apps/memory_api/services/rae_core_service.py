@@ -760,7 +760,8 @@ class RAECoreService:
                 SearchResult(
                     memory_id=str(res.get("id")),
                     content=res.get("content", ""),
-                    score=res.get("search_score", 0.0),
+                    # Use math_score if available (from MathLayer), fallback to search_score (RRF)
+                    score=res.get("math_score") if res.get("math_score") is not None else res.get("search_score", 0.0),
                     strategy_used=SearchStrategy.HYBRID,
                     metadata=metadata_val,
                 )
