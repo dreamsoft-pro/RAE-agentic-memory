@@ -112,7 +112,17 @@ Instead of trusting the Agent to "behave" via system prompts (Soft Alignment), R
 -   **Protocol Exclusivity**: The Agent can communicate **ONLY** with the RAE Kernel (API). It cannot reach OpenAI, Google, or any external tool directly.
 -   **Runtime Enforcement**: Custom Python `SecureSocket` prevents any unauthorized socket creation at the process level.
 
-### 2. Implicit Capture (RAE-First)
+### 2. Why Isolation Fixes Memory (The "Stateless Mind" Philosophy)
+Hard Frames are not just about security; they are essential for solving the **LLM Context Window Paradox**.
+
+*   **The Problem (Standard Agents):** Most agents keep a growing list of "Chat History" in their context window. As the session grows, this data must be compressed (summarized), leading to **"Data Decay"** (loss of specific IDs, exact quotes, and nuance).
+*   **The RAE Solution (Forced Statelessness):** By physically isolating the agent, we force it to be **Stateless**. The Agent cannot "remember" the previous turn in its own RAM because the Hard Frame resets the immediate context.
+    *   **Result:** The Agent *must* query RAE for the exact "Ground Truth" needed for the current task.
+    *   **Benefit:** We replace "Lossy Summarization" with **"Lossless Retrieval"**. The Agent operates on a small, precise slice of data (High Precision), avoiding the "Lost in the Middle" phenomenon typical of massive context windows.
+
+> **👉 See Evidence:** [Case Study: Impact of Hard Isolation on 100k Memory Scale](docs/case-studies/ISOLATION_IMPACT_100K.md) (RAM Usage dropped from 4.2GB to 31MB).
+
+### 3. Implicit Capture (RAE-First)
 Because the Agent is isolated, it **must** use the RAE Pipeline for every thought and action.
 -   **Zero Hidden Actions**: The RAE Kernel automatically logs every `Thought`, `Tool Call`, and `Final Answer` into the Working Memory.
 -   **Audit Trail**: No need for manual `save_memory` calls. If the Agent thinks it, RAE records it.
