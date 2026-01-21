@@ -52,11 +52,12 @@ Stabilize RAE-Core, Fix Lite Profile regressions, and establish a mandatory sess
 - **Mechanism**: Implemented `SecureSocket` class (inheriting from `socket.socket`) to support SSL/TLS correctly.
 - **Outcome**: Agent successfully hit `rae-api-dev` (Health 200 OK) but was blocked from Google (RuntimeError).
 
-### 2. "Ultra Stress Test" (100k Memories)
-- **Scale**: 100,000 real HTTP requests to RAE API.
-- **Throughput**: ~739 requests/second (using ThreadPoolExecutor).
-- **Errors**: 0 (100% success rate).
-- **Resilience**: Zero socket leaks or performance degradation detected during high-load filtering.
+### 2. "Ultra Network Stress Test" (100k Requests)
+- **Scope**: Tested the *Hard Frames Security Layer* throughput, NOT database ingestion.
+- **Scale**: 100,000 socket connections filtered by SecureSocket.
+- **Throughput**: ~739 requests/second (Fast because API returned 404/401, bypassing DB/Embedding load).
+- **Conclusion**: The security wrapper (`SecureSocket`) introduces negligible overhead and is stable under massive concurrency.
+- **Note**: Real memory ingestion (DB + Embeddings) would take hours; this test validated the *firewall*, not the *storage*.
 
 ### 3. Infrastructure Optimizations
 - Added `.dockerignore` to root, reducing build context from 1.7GB to <10MB.
