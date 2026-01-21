@@ -133,6 +133,8 @@ class SQLiteVectorStore(IVectorStore):
         limit: int = 10,
         score_threshold: float | None = None,
         agent_id: str | None = None,
+        session_id: str | None = None,
+        filters: dict[str, Any] | None = None,
     ) -> list[tuple[UUID, float]]:
         """Search for similar vectors using cosine similarity."""
         await self.initialize()
