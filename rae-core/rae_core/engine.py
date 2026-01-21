@@ -272,6 +272,11 @@ class RAEEngine:
         for memory_id, score in results:
             memory = await self.memory_storage.get_memory(memory_id, tenant_id)
             if memory:
+                # INTEGRITY FIX: RRF scores (0.016) crush the Math Layer.
+                # If we have an exact match or strong vector signal, we must rescale.
+                # For Lite mode, we treat score > 0.01 as a strong signal.
+                adjusted_similarity = min(1.0, score * 50.0) if score < 0.1 else score
+                
                 if custom_weights:
                     from rae_core.math.structure import ScoringWeights
 
@@ -280,11 +285,11 @@ class RAEEngine:
                     else:
                         weights_obj = custom_weights
                     math_score = math_controller.score_memory(
-                        memory=memory, query_similarity=score, weights=weights_obj
+                        memory=memory, query_similarity=adjusted_similarity, weights=weights_obj
                     )
                 else:
                     math_score = math_controller.score_memory(
-                        memory=memory, query_similarity=score
+                        memory=memory, query_similarity=adjusted_similarity
                     )
 
                 memory["search_score"] = score

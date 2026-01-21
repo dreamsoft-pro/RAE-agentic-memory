@@ -118,6 +118,9 @@ class MemoryRecord(BaseModel):
     )
 
     # Phase 2: Telemetry & Sync Fields
+    metadata: Optional[Dict[str, Any]] = Field(
+        default_factory=dict, description="Generic metadata for the memory"
+    )
     provenance: Optional[Dict[str, Any]] = Field(
         default_factory=dict,
         description="Origin and lineage of the memory (e.g., source file, url, author)",
@@ -127,7 +130,7 @@ class MemoryRecord(BaseModel):
         description="Synchronization state metadata (e.g., vector_clock, version)",
     )
 
-    @field_validator("governance", "provenance", "sync_metadata", mode="before")
+    @field_validator("metadata", "governance", "provenance", "sync_metadata", mode="before")
     @classmethod
     def parse_json_fields(cls, v: Any) -> Any:
         """Parse JSON fields if they come as strings from DB."""
