@@ -75,9 +75,10 @@ To RAE (API/Server) decyduje o wszystkim.
 RAE API musi analizować żądania agenta ZANIM trafią do modelu.
 
 **Zadania:**
-- [ ] Wdrożenie `IntentFilter` w `rae-api`.
-- [ ] Egzekucja limitów tokenów i budżetu "na sztywno" (hard caps).
-- [ ] **Memory Gating:** Przy 100k wspomnień, RAE API (nie LLM) decyduje, które 50 jest istotnych (Retrieval-First Enforcement).
+- [x] Wdrożenie `IntentFilter` w `rae-api`.
+- [x] Egzekucja limitów tokenów i budżetu "na sztywno" (hard caps).
+- [x] **Memory Gating:** Przy 100k wspomnień, RAE API (nie LLM) decyduje, które 50 jest istotnych (Retrieval-First Enforcement).
+- **Status:** Zweryfikowano 2026-01-21 (`test_firewall.py` PASSED, implementation in `apps/memory_api/firewall.py`).
 
 ### 4.2. Edytory jako "Głupie Terminale"
 VS Code / Cursor nie mogą mieć własnych kluczy API.
