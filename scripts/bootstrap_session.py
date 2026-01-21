@@ -13,17 +13,32 @@ import os
 import urllib.request
 import urllib.error
 import socket
+import uuid
 
 # --- Configuration ---
 DEFAULT_URL = "http://localhost:8001"
 LUMINA_URL = "http://100.68.166.117:8001"
 LITE_URL = "http://localhost:8008"
+SESSION_FILE = ".rae_session"
 
 # Standard headers
 HEADERS = {
     "Content-Type": "application/json",
     "X-Tenant-Id": "default-tenant"
 }
+
+def get_or_create_session_id():
+    """Maintains session continuity across bootstrap calls."""
+    if os.path.exists(SESSION_FILE):
+        with open(SESSION_FILE, "r") as f:
+            sid = f.read().strip()
+            if sid:
+                return sid
+    
+    new_sid = str(uuid.uuid4())
+    with open(SESSION_FILE, "w") as f:
+        f.write(new_sid)
+    return new_sid
 
 def make_request(url, method='GET', data=None, timeout=5):
     """Robust HTTP request using standard library."""
@@ -98,7 +113,7 @@ def fetch_black_box_context(base_url):
             content = item.get("content") or item.get("text")
             print(f"> {content}")
 
-def log_session_start(base_url):
+def log_session_start(base_url, session_id):
     """Automatically creates a memory trace that a new session has started."""
     import getpass
     import platform
@@ -107,20 +122,16 @@ def log_session_start(base_url):
     node = platform.node()
     
     payload = {
-        "content": f"Session Bootstrap Initiated by {user} on {node}. Infrastructure Check: ONLINE.",
+        "content": f"RAE-First Session Activated. User: {user} | Node: {node} | Protocol: HARD_FRAMES_V1",
         "layer": "working",
-        "importance": 0.1,
-        "tags": ["session-start", "audit", "bootstrap"],
-        "source": "bootstrap_script"
+        "importance": 0.2,
+        "tags": ["session-start", "rae-first", "implicit-capture"],
+        "source": "bootstrap_script",
+        "session_id": session_id
     }
     
-    # Fire and forget (don't block startup if write fails, but try)
-    try:
-        make_request(f"{base_url}/v1/memory/store", method='POST', data=payload)
-        # We don't print confirmation to keep stdout clean for the agent context, 
-        # but the memory is stored.
-    except:
-        pass
+    # Fire and forget
+    make_request(f"{base_url}/v1/memory/store", method='POST', data=payload)
 
 def main():
     import argparse
@@ -128,13 +139,14 @@ def main():
     parser.add_argument("--node", type=str, choices=["local", "node1"], default="local", help="Node to connect to")
     args = parser.parse_args()
 
+    session_id = get_or_create_session_id()
     print(f"🔌 RAE-First Bootstrap (Node: {args.node.upper()})...")
+    print(f"🆔 SESSION_ID: {session_id}")
     
     if args.node == "node1":
         active_url = LUMINA_URL
     else:
         # Check Local Dev first, then Lite
-        print("🔍 Probing Local Nodes...")
         active_url = None
         for url in [DEFAULT_URL, LITE_URL]:
             code, _ = make_request(f"{url}/health", timeout=1)
@@ -147,9 +159,9 @@ def main():
         sys.exit(1)
     
     print(f"Connected to {active_url} ✅")
-    log_session_start(active_url)
+    log_session_start(active_url, session_id)
     fetch_black_box_context(active_url)
-    print("\n✅ SESSION READY.")
+    print(f"\n✅ SESSION READY. All subsequent actions will be captured under {session_id}.")
 
 if __name__ == "__main__":
     main()

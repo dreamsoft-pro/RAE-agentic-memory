@@ -110,3 +110,5 @@ VS Code / Cursor nie mogą mieć własnych kluczy API.
 1. **Zero Egress:** `docker exec agent curl google.com` -> `Command not found` / `Network unreachable`.
 2. **Zero Hallucinated API:** Agent próbujący importować `openai` dostaje `ImportError`.
 3. **Stability at Scale:** Przy 100k pamięci agent nadal komunikuje się wyłącznie przez protokół RAE, nawet jeśli jego logika decyzyjna degraduje.
+
+> **UWAGA:** Testy izolacji sieciowej (Hard Frames) NALEŻY uruchamiać na klastrze (Node1 Lumina). Lokalne maszyny deweloperskie często mają "przeciekającą" konfigurację sieci Docker (np. przez bridge z hostem), co daje fałszywe wyniki (false negatives).

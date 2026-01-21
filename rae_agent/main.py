@@ -34,6 +34,32 @@ def connect_to_kernel():
         resp = requests.get(f"{kernel_url}/health", timeout=5)
         if resp.status_code == 200:
             print("✅ SUCCESS: Connected to RAE Kernel.")
+            
+            # --- PROOF OF LIFE (IMPLICIT CAPTURE TEST) ---
+            print("💾 SENDING BOOT SIGNAL (Testing Implicit Capture)...")
+            payload = {
+                "tenant_id": "default-tenant",
+                "project": "secure-agent-boot",
+                "prompt": "Secure Container Boot Sequence Complete. Reporting for duty.",
+                "session_id": "secure-boot-session"
+            }
+            try:
+                # We hit the Agent Pipeline. The Kernel should IMPLICITLY save this.
+                # Endpoint is /v1/agent/execute (without /api prefix in app.include_router)
+                act_resp = requests.post(
+                    f"{kernel_url}/v1/agent/execute", 
+                    json=payload, 
+                    headers={"X-Tenant-Id": "default-tenant"},
+                    timeout=10
+                )
+                if act_resp.status_code == 200:
+                    print(f"✅ SIGNAL RECEIVED by Kernel. Response: {act_resp.json().get('answer')}")
+                else:
+                    print(f"⚠️  SIGNAL REJECTED: {act_resp.status_code} - {act_resp.text}")
+            except Exception as ex:
+                print(f"❌ SIGNAL FAILED: {ex}")
+            # ---------------------------------------------
+            
             return True
         else:
             print(f"⚠️  WARNING: Kernel reachable but returned {resp.status_code}")
