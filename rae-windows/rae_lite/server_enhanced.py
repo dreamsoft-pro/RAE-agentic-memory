@@ -7,6 +7,7 @@ Serves static UI and provides API for ingestion and search.
 
 import os
 import shutil
+import yaml # Requires pyyaml
 from pathlib import Path
 from typing import List, Optional
 
@@ -20,14 +21,33 @@ from rae_lite.service import RAELiteService
 
 logger = structlog.get_logger(__name__)
 
-# Config
-STORAGE_PATH = "rae_lite_storage"
+# Config Loader
+CONFIG_FILE = Path("config.yaml")
+config = {
+    "storage": {"data_dir": "rae_lite_storage"},
+    "observer": {"enabled": False} 
+}
+
+if CONFIG_FILE.exists():
+    try:
+        with open(CONFIG_FILE, "r") as f:
+            loaded_config = yaml.safe_load(f)
+            if loaded_config:
+                # Deep merge simplifiction
+                if "storage" in loaded_config: config["storage"].update(loaded_config["storage"])
+                if "observer" in loaded_config: config["observer"].update(loaded_config["observer"])
+        logger.info(f"Loaded config from {CONFIG_FILE}")
+    except Exception as e:
+        logger.error(f"Failed to load config: {e}")
+
+STORAGE_PATH = config["storage"]["data_dir"]
 UPLOAD_DIR = "uploaded_files"
 
-# Initialize Service (Reuse logic from service.py)
+# Initialize Service with Configured Policy
 service = RAELiteService(
     storage_path=STORAGE_PATH,
-    watch_dir=UPLOAD_DIR # Watch uploads for auto-ingestion
+    watch_dir=UPLOAD_DIR,
+    enable_observer=config["observer"]["enabled"] # Policy Driven
 )
 
 # Ensure dirs exist

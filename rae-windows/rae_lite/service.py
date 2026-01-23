@@ -13,6 +13,7 @@ from rae_core.math.fusion import reciprocal_rank_fusion
 from rae_lite.ingestion.ingestor import UniversalIngestor
 from rae_lite.ingestion.watcher import DirectoryWatcher
 from rae_lite.ingestion.channels.email import EmailConnector
+from rae_lite.ingestion.channels.ui_observer import UIObserver
 
 logger = logging.getLogger(__name__)
 
@@ -21,9 +22,10 @@ class RAELiteService:
     Main Service for RAE-Lite.
     Connects Ingestor -> Runtime -> Storage -> Math Layer (Full Power).
     """
-    def __init__(self, storage_path: str, watch_dir: str | None = None):
+    def __init__(self, storage_path: str, watch_dir: str | None = None, enable_observer: bool = False):
         self.storage_path = storage_path
         self.watch_dir = watch_dir
+        self.enable_observer = enable_observer
         
         # 1. Storage & Runtime
         self.storage = SQLiteStorage(db_path=f"{storage_path}/memories.db")
@@ -36,21 +38,56 @@ class RAELiteService:
         # 3. Ingestion
         self.ingestor = UniversalIngestor()
         self.email_connector = EmailConnector()
+        self.ui_observer = UIObserver() # Experimental
         self.watcher = None
         self.ingest_queue = asyncio.Queue()
 
     async def start(self):
         await self.storage.initialize()
         logger.info("RAE-Lite Storage initialized.")
+        
+        # Start File Watcher
         if self.watch_dir:
             self._scan_directory(self.watch_dir)
             self.watcher = DirectoryWatcher(self.watch_dir, self._on_file_change)
             self.watcher.start()
             asyncio.create_task(self._process_queue())
+            
+        # Start UI Observer (Opt-in)
+        if self.enable_observer:
+            self.ui_observer.start()
+            asyncio.create_task(self._ui_observer_loop())
 
     async def stop(self):
         if self.watcher:
             self.watcher.stop()
+        self.ui_observer.stop()
+
+    async def _ui_observer_loop(self):
+        """Background loop for UI scraping."""
+        logger.info("Starting UI Observer Loop...")
+        while self.enable_observer:
+            try:
+                # Run blocking UI call in thread executor to not freeze async loop
+                # Although uiautomation is mostly fast, it interacts with OS.
+                loop = asyncio.get_event_loop()
+                memory_item = await loop.run_in_executor(None, self.ui_observer.scan_active_window)
+                
+                if memory_item:
+                    await self.storage.store_memory(
+                        content=memory_item["content"],
+                        layer="working", # RESTRICTED -> Working Layer
+                        tenant_id="local-user",
+                        agent_id="rae-lite-observer",
+                        tags=memory_item["tags"],
+                        metadata=memory_item["metadata"],
+                        info_class=memory_item["info_class"],
+                        importance=0.7
+                    )
+            except Exception as e:
+                logger.error(f"UI Observer Loop Error: {e}")
+            
+            await asyncio.sleep(5) # Poll every 5 seconds
 
     async def query(self, text: str, tenant_id: str) -> List[Dict[str, Any]]:
         """
