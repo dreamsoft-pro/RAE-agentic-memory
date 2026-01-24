@@ -67,6 +67,12 @@ def main():
         data_dir=str(settings.data_dir),
     )
 
+    # 0. Load YAML config if exists
+    yaml_config = Path("config.yaml")
+    if yaml_config.exists():
+        settings.load_from_yaml(yaml_config)
+        logger.info("yaml_config_loaded", path=str(yaml_config))
+
     # Ensure data directory exists
     settings.ensure_data_dir()
     
@@ -96,8 +102,15 @@ def main():
     server_thread = ServerThread()
     server_thread.start()
 
-    # Give server time to start
-    time.sleep(2)
+    from rae_lite.service import RAELiteService
+    # Use data_dir from settings (might be changed by yaml load)
+    service = RAELiteService(storage_path=str(settings.data_dir))
+    
+    # Start service components
+    import asyncio
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(service.start())
 
     logger.info(
         "server_started",
@@ -106,7 +119,7 @@ def main():
 
     # Run system tray (blocks until quit)
     try:
-        tray_app = RAETrayApp(server_thread)
+        tray_app = RAETrayApp(server_thread, service)
         tray_app.run()
     except KeyboardInterrupt:
         logger.info("keyboard_interrupt")

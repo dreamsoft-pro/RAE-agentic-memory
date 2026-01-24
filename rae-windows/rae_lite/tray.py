@@ -31,16 +31,31 @@ def create_icon_image():
 class RAETrayApp:
     """System tray application for RAE-Lite."""
 
-    def __init__(self, server_thread: threading.Thread):
+    def __init__(self, server_thread: threading.Thread, service):
         """
         Initialize tray app.
 
         Args:
             server_thread: Thread running the FastAPI server
+            service: RAELiteService instance
         """
         self.server_thread = server_thread
+        self.service = service
         self.icon = None
         self.running = False
+
+    def toggle_observer(self, icon, item):
+        """Toggle UI Observer state."""
+        new_state = not self.service.enable_observer
+        self.service.enable_observer = new_state
+        
+        if new_state:
+            # We need to ensure the loop is running or start it
+            import asyncio
+            asyncio.run_coroutine_threadsafe(self.service._ui_observer_loop(), asyncio.get_event_loop())
+            logger.info("ui_observer_enabled")
+        else:
+            logger.info("ui_observer_disabled")
 
     def open_dashboard(self, icon, item):
         """Open dashboard in browser."""
@@ -87,6 +102,11 @@ class RAETrayApp:
                 "Open Dashboard",
                 self.open_dashboard,
                 default=True,
+            ),
+            MenuItem(
+                "Enable UI Observer",
+                self.toggle_observer,
+                checked=lambda item: self.service.enable_observer
             ),
             Menu.SEPARATOR,
             MenuItem("Open Data Folder", self.open_data_folder),
