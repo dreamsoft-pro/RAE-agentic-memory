@@ -450,24 +450,23 @@ services:
     networks:
       - rae-network
 
-  # Streamlit Dashboard (Development with Hot Reload)
+  # NiceGUI Dashboard (Development with Hot Reload)
   rae-dashboard-dev:
     profiles: ["dev"]
-    image: rae-dashboard:latest
     build:
-      context: ./tools/memory-dashboard
+      context: ./tools/memory-dashboard-nicegui
       dockerfile: Dockerfile
     container_name: rae-dashboard-dev
     ports:
-      - "8502:8501" # Mapped to different port
+      - "8502:8501" # Mapped to same port as before to avoid breakages
     volumes:
-      - ./tools/memory-dashboard:/app:ro
+      - ./tools/memory-dashboard-nicegui:/app
     environment:
-      - RAE_API_URL=${RAE_API_URL:-http://rae-api-dev:8000} # Point to dev API
-      - RAE_TENANT_ID=${RAE_TENANT_ID:-00000000-0000-0000-0000-000000000000}
-      - RAE_PROJECT_ID=${RAE_PROJECT_ID:-RAE-agentic-memory}
+      - RAE_API_URL=http://rae-api-dev:8000
+      - RAE_TENANT_ID=00000000-0000-0000-0000-000000000000
+      - RAE_PROJECT_ID=RAE-agentic-memory
       - LOG_LEVEL=DEBUG
-    command: ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0", "--server.runOnSave=true"]
+    command: ["python", "main.py"]
     restart: unless-stopped
     networks:
       - rae-network

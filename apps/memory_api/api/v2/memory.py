@@ -34,6 +34,7 @@ class StoreMemoryRequestV2(BaseModel):
     session_id: str | None = Field(None, description="Session identifier")
     memory_type: str | None = Field(None, description="Memory type (text, code, etc.)")
     ttl: int | None = Field(None, gt=0, description="Time to live in seconds")
+    metadata: dict | None = Field(default=None, description="Additional metadata")
 
 
 class StoreMemoryResponseV2(BaseModel):
@@ -50,6 +51,7 @@ class QueryMemoryRequestV2(BaseModel):
     project: str = Field(..., min_length=1, max_length=255)
     k: int = Field(default=10, gt=0, le=100)
     layers: list[str] | None = Field(default=None)
+    filters: dict | None = Field(default=None, description="Metadata filters (e.g. {'user_id': '123'})")
 
 
 class MemoryResult(BaseModel):
@@ -61,6 +63,7 @@ class MemoryResult(BaseModel):
     layer: str
     importance: float
     tags: list[str] = Field(default_factory=list)
+    metadata: dict | None = Field(default=None)
 
 
 class QueryMemoryResponseV2(BaseModel):
@@ -69,6 +72,12 @@ class QueryMemoryResponseV2(BaseModel):
     results: list[MemoryResult]
     total_count: int
     synthesized_context: str | None = None
+
+
+class DeleteMemoryResponseV2(BaseModel):
+    """Delete memory response for v2 API."""
+    message: str
+    memory_id: str
 
 
 @router.post("/", response_model=StoreMemoryResponseV2)
@@ -99,6 +108,7 @@ async def store_memory(
             session_id=request.session_id,
             memory_type=request.memory_type,
             ttl=request.ttl,
+            metadata=request.metadata,
         )
 
         return StoreMemoryResponseV2(memory_id=memory_id)
@@ -134,6 +144,7 @@ async def query_memories(
             query=request.query,
             k=request.k,
             layers=request.layers,
+            filters=request.filters,
         )
 
         results = [
@@ -144,6 +155,7 @@ async def query_memories(
                 layer=result.layer,
                 importance=result.importance,
                 tags=result.tags or [],
+                metadata=result.metadata,
             )
             for res in cast(Any, response).results
         ]
@@ -158,6 +170,34 @@ async def query_memories(
         logger.error("query_memories_failed", error=str(e), tenant_id=tenant_id)
         raise HTTPException(
             status_code=500, detail=f"Failed to query memories: {str(e)}"
+        ) from e
+
+
+@router.delete("/{memory_id}", response_model=DeleteMemoryResponseV2)
+async def delete_memory(
+    memory_id: str,
+    tenant_id: UUID = Depends(get_and_verify_tenant_id),
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
+    """
+    Delete a memory record using RAE-Core.
+    """
+    try:
+        success = await rae_service.delete_memory(memory_id, str(tenant_id))
+        
+        if not success:
+            raise HTTPException(status_code=404, detail="Memory not found or could not be deleted")
+            
+        return DeleteMemoryResponseV2(
+            message="Memory deleted successfully",
+            memory_id=memory_id
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("delete_memory_failed", error=str(e), tenant_id=tenant_id, memory_id=memory_id)
+        raise HTTPException(
+            status_code=500, detail=f"Failed to delete memory: {str(e)}"
         ) from e
 
 
