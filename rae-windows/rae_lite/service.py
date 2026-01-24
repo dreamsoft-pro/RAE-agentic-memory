@@ -14,6 +14,8 @@ from rae_lite.ingestion.ingestor import UniversalIngestor
 from rae_lite.ingestion.watcher import DirectoryWatcher
 from rae_lite.ingestion.channels.email import EmailConnector
 from rae_lite.ingestion.channels.ui_observer import UIObserver
+from rae_lite.llm_adapter import LlamaCppAdapter
+from rae_lite.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +36,13 @@ class RAELiteService:
         # 2. The "Brains" (Math Layer)
         self.math_controller = MathLayerController()
         self.resonance_engine = SemanticResonanceEngine(resonance_factor=0.3)
+        
+        # 2.5 Hardware-Aware LLM Adapter
+        self.llm_adapter = LlamaCppAdapter(
+            llama_path=settings.llama_path,
+            model_path=settings.model_path,
+            profile=settings.selected_profile
+        )
         
         # 3. Ingestion
         self.ingestor = UniversalIngestor()
@@ -92,13 +101,18 @@ class RAELiteService:
     async def query(self, text: str, tenant_id: str) -> List[Dict[str, Any]]:
         """
         Smart Query utilizing FULL RAE-Lite Math Capabilities:
-        1. Retrieval (FTS)
-        2. Math Scoring (Recency, Importance)
-        3. Semantic Resonance (Graph Topology)
-        4. Fusion (Optional, prepped for vector hybrid)
+        1. Query Normalization (LLM if available)
+        2. Retrieval (FTS)
+        3. Math Scoring (Recency, Importance)
+        4. Semantic Resonance (Graph Topology)
+        5. Synthesis (LLM if available)
         """
+        # 0. Query Normalization
+        search_text = self.llm_adapter.normalize_query(text)
+        logger.info(f"Query normalized: '{text}' -> '{search_text}'")
+
         # A. Raw Retrieval (FTS)
-        raw_results = await self.storage.search_full_text(text, tenant_id=tenant_id)
+        raw_results = await self.storage.search_full_text(search_text, tenant_id=tenant_id)
         
         if not raw_results:
             return []
