@@ -20,6 +20,7 @@ from apps.memory_api.api.v1 import (
     memory,
     system,
 )
+from apps.memory_api.api.v2 import memory as memory_v2
 from apps.memory_api.config import settings
 from apps.memory_api.logging_config import setup_logging
 from apps.memory_api.middleware.budget_enforcer import BudgetEnforcementMiddleware
@@ -253,6 +254,7 @@ app.include_router(health_router.router, tags=["System"])
 
 # API V1
 app.include_router(memory.router, prefix="/v1", tags=["Memory Operations"])
+app.include_router(memory_v2.router)
 app.include_router(agent.router, prefix="/v1", tags=["Agent Integration"])
 app.include_router(graph.router, prefix="/v1", tags=["Knowledge Graph"])
 app.include_router(governance.router, prefix="/v1", tags=["Governance"])

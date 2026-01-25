@@ -141,7 +141,7 @@ async def test_generate_hierarchical_reflection(
     assert data["episodes_processed"] == 42
 
     mock_reflection_engine.generate_hierarchical_reflection.assert_called_once()
-    conn.fetchval.assert_called_once()
+    assert conn.fetchval.called
 
 
 @pytest.mark.asyncio

@@ -1,28 +1,25 @@
-# RAE SESSION PLAN
+# Next Session Plan: Dashboard Debugging & API v1 Cleanup
 
-## 🚀 PRIORITY: 100k Memory Hard Frames Stress Test (CLUSTER)
+## 1. Dashboard "Zero Memories" Investigation
+- **Symptom:** Dashboard connects, but stats show 0 and feed is empty.
+- **Hypothesis A:** Tenant/Project ID mismatch (default vs actual data).
+- **Hypothesis B:** API v2 Stats response structure mismatch in `api_client.py`.
+- **Action:** Add detailed logging to `api_client.py` response parsing and debug locally.
 
-**Context:** Local tests for "Hard Frames" passed (Physical/Protocol/Semantic containment). Now we must test **System Degradation** at scale (100k memories) on Node 1 (Lumina).
+## 2. API v1 Retirement
+- **Goal:** Remove `apps/memory_api/api/v1/memory.py` and switch all consumers to v2.
+- **Prerequisite:** Ensure Dashboard works 100% on v2.
+- **Task:** Audit other clients (SDK, Agents) for v1 usage.
 
-### 📋 Checklist for Lumina Session:
-1.  **Sync Code:**
-    ```bash
-    rsync -avz --exclude '.git' --exclude '__pycache__' ./ operator@100.68.166.117:~/rae-node-agent/
-    ```
-2.  **Remote Startup (Lumina):**
-    *   SSH into Lumina.
-    *   Build the secure agent:
-        ```bash
-        docker compose -f docker-compose.secure.yml -p hard_frames up -d --build
-        ```
-3.  **Execute Stress Test:**
-    *   We need to verify if the Agent degrades safely when flooded with 100k memories.
-    *   Run the degradation test suite in a loop:
-        ```bash
-        .venv/bin/pytest tests/hard_frames/test_degradation_stability.py
-        ```
-    *   *Note:* Real 100k injection might require connecting the `rae-kernel` to the real Qdrant on Lumina (edit `docker-compose.secure.yml` on remote to point to `rae-qdrant`).
+## 3. Dashboard Features Expansion
+- **Timeline:** Implement Timeline visualization using Plotly/NiceGUI.
+- **Graph:** Implement 3D Graph using `ag-grid` or `vis-network`.
+- **Query Lab:** Add "Szubar Mode" toggle and weight sliders.
 
-## 🛠️ Pending Tasks
-- [ ] Refactor `rae-sdk` to be fully compliant with the new Thin Client protocol.
-- [ ] Merge "Hard Frames" into `develop` once 100k test passes.
+## 4. RAE-Windows Hardware Adaptation (Continued)
+- [ ] Hardware Probe implementation.
+- [ ] Profile Mapping logic.
+- [ ] LlamaCppAdapter for local inference.
+
+## 5. RAE-Mesh & Federation
+- Verify federation endpoints with the new v2 API structure.

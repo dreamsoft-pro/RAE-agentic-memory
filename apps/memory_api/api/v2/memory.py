@@ -51,7 +51,9 @@ class QueryMemoryRequestV2(BaseModel):
     project: str = Field(..., min_length=1, max_length=255)
     k: int = Field(default=10, gt=0, le=100)
     layers: list[str] | None = Field(default=None)
-    filters: dict | None = Field(default=None, description="Metadata filters (e.g. {'user_id': '123'})")
+    filters: dict | None = Field(
+        default=None, description="Metadata filters (e.g. {'user_id': '123'})"
+    )
 
 
 class MemoryResult(BaseModel):
@@ -76,6 +78,7 @@ class QueryMemoryResponseV2(BaseModel):
 
 class DeleteMemoryResponseV2(BaseModel):
     """Delete memory response for v2 API."""
+
     message: str
     memory_id: str
 
@@ -184,18 +187,24 @@ async def delete_memory(
     """
     try:
         success = await rae_service.delete_memory(memory_id, str(tenant_id))
-        
+
         if not success:
-            raise HTTPException(status_code=404, detail="Memory not found or could not be deleted")
-            
+            raise HTTPException(
+                status_code=404, detail="Memory not found or could not be deleted"
+            )
+
         return DeleteMemoryResponseV2(
-            message="Memory deleted successfully",
-            memory_id=memory_id
+            message="Memory deleted successfully", memory_id=memory_id
         )
     except HTTPException:
         raise
     except Exception as e:
-        logger.error("delete_memory_failed", error=str(e), tenant_id=tenant_id, memory_id=memory_id)
+        logger.error(
+            "delete_memory_failed",
+            error=str(e),
+            tenant_id=tenant_id,
+            memory_id=memory_id,
+        )
         raise HTTPException(
             status_code=500, detail=f"Failed to delete memory: {str(e)}"
         ) from e
