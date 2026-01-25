@@ -25,6 +25,71 @@
 
 
 
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2026-01-25 09:54 • Branch: release/v3.0.2 • Commit: 586409a4*
+
+### ✨ Features
+
+- **dashboard**: enable V2 API and fix contract tests ([`586409a4`](../../commit/586409a4))
+- **dashboard**: migrate to NiceGUI and upgrade API v2 ([`fa864e6e`](../../commit/fa864e6e))
+- **windows**: implement hardware-aware profile adaptation and LLM adapter ([`b5041e99`](../../commit/b5041e99))
+- **windows**: finalize RAE-Windows with UI Observer and Config ([`3765d7f9`](../../commit/3765d7f9))
+- **windows**: create RAE-Windows (Universal Node) with offline math-core and ISO 27001 email handling ([`20be1852`](../../commit/20be1852))
+- **dashboard**: add search tab and enable auto-refresh by default ([`c1b63d6e`](../../commit/c1b63d6e))
+- **security**: implement Hard Frames (Phases 1-3) and Implicit Capture architecture ([`a1cb615b`](../../commit/a1cb615b))
+- **memory**: implement Multi-Vector Discovery and strict metadata filtering ([`4e79cd8b`](../../commit/4e79cd8b))
+- **security**: implement robust hard frames with SecureSocket and lazy IP resolution ([`fcd4d752`](../../commit/fcd4d752))
+- **testing**: add soak test mode with variable latency ([`48d6aea8`](../../commit/48d6aea8))
+- **security**: verified 100k stress test under hard frames isolation ([`d26aa3c8`](../../commit/d26aa3c8))
+- **security**: finalize hard frames implementation and fix test suite ([`539a9478`](../../commit/539a9478))
+- **security**: implement Hard Frames architecture (Phase 1-3) with full containment test suite [full-test] ([`7ffa6412`](../../commit/7ffa6412))
+
+### 🐛 Bug Fixes
+
+- **windows**: resolve configuration loading and tray integration issues ([`4c4f8e54`](../../commit/4c4f8e54))
+- **tests**: silence broken legacy qdrant multivector tests ([`525dd937`](../../commit/525dd937))
+- **core**: align VectorStore adapters with IVectorStore interface and fix Qdrant tests ([`96c895ee`](../../commit/96c895ee))
+
+### ♻️ Refactoring
+
+- **memory**: align all vector store adapters with updated IVectorStore interface ([`3e6687a5`](../../commit/3e6687a5))
+
+### 📚 Documentation
+
+- add 100k isolation case study and link in README ([`d5e5f794`](../../commit/d5e5f794))
+- describe Silicon Oracle and Semantic Resonance Engine for RAE-Lite ([`9acd9148`](../../commit/9acd9148))
+- update README with 100k benchmark success, Hard Frames, and Szubar Mode ([`8b83481c`](../../commit/8b83481c))
+- add user guide for secure agent and multi-agent scaling ([`6640c158`](../../commit/6640c158))
+- confirm verification of Hard Frames Phase 3 (Semantic Firewall) ([`706e56c4`](../../commit/706e56c4))
+- update hard frames plan with verification status (Phase 1-2 completed) ([`6e759c78`](../../commit/6e759c78))
+- **benchmarking**: add 100k industrial precision report and math-scaling fix ([`c8a53115`](../../commit/c8a53115))
+- update search quality findings (natural language improved precision) ([`57fa73f6`](../../commit/57fa73f6))
+- add search quality audit findings (poor precision in pure vector mode) ([`2d38b847`](../../commit/2d38b847))
+- certify 100k industrial ingestion success on Lumina ([`d7db69e4`](../../commit/d7db69e4))
+- clarify 100k test scope (network stress vs data ingestion) ([`ef58530f`](../../commit/ef58530f))
+- finalize 100k ultra stress test certification ([`d1d83c39`](../../commit/d1d83c39))
+- save final hard frames v3.0 test results from Lumina ([`76b03471`](../../commit/76b03471))
+- document ongoing soak test on Lumina ([`4e9b152e`](../../commit/4e9b152e))
+- update session summary with hard frames validation results ([`320e34f9`](../../commit/320e34f9))
+
+### 🧪 Tests
+
+- **fix**: update metadata expectations for sqlite storage test ([`421d0abb`](../../commit/421d0abb))
+
+### 🔧 Chore
+
+- **release**: bump versions to v3.0.2 in manifests ([`48250f90`](../../commit/48250f90))
+- fix linting and formatting issues to satisfy CI ([`5843a2e3`](../../commit/5843a2e3))
+- update test golden files and add dockerignore ([`44596fc6`](../../commit/44596fc6))
+
+### 📦 Other
+
+- Merge branch 'main' of github.com:dreamsoft-pro/RAE-agentic-memory ([`fd2efb04`](../../commit/fd2efb04))
+
+---
+
 ## Recent Changes (Auto-generated)
 
 *Last updated: 2026-01-19 15:12 • Branch: main • Commit: a434c37f*
