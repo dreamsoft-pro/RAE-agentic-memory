@@ -21,6 +21,7 @@ class RAEEngine:
         settings: Any = None,
         cache_provider: Any = None,
         search_engine: Any = None,
+        math_controller: Any = None,
     ):
         self.memory_storage = memory_storage
         self.vector_store = vector_store
@@ -28,6 +29,10 @@ class RAEEngine:
         self.llm_provider = llm_provider
         self.settings = settings
         
+        # Initialize Math Layer Controller (The Brain)
+        from rae_core.math.controller import MathLayerController
+        self.math_ctrl = math_controller or MathLayerController(config=settings)
+
         # Modular Search Engine with ORB 4.0
         if search_engine:
             self.search_engine = search_engine
@@ -63,11 +68,16 @@ class RAEEngine:
         RAE Reflective Search: Retrieval -> Math Scoring -> Manifold Adjustment.
         """
         # 1. RETRIEVAL (Vector + Keyword)
-        # The search_engine uses ORB to balance these signals
         search_filters = {"agent_id": agent_id, "project": project, "layer": layer, **(filters or {})}
         
-        # Avoid in-place modification of kwargs
-        strategy_weights = kwargs.get("custom_weights", {}).copy() if kwargs.get("custom_weights") else None
+        # Dynamic Weight Selection via Math Controller (Bandit)
+        # If weights are provided in kwargs, they override the autonomous controller
+        strategy_weights = kwargs.get("custom_weights")
+        if not strategy_weights:
+            # autonomous tuning
+            strategy_weights = self.math_ctrl.get_retrieval_weights(query)
+            logger.info("autonomous_tuning_applied", weights=strategy_weights)
+        
         active_strategies = kwargs.get("strategies")
 
         candidates = await self.search_engine.search(
@@ -80,9 +90,7 @@ class RAEEngine:
         )
 
         # 2. DESIGNED MATH SCORING (The Manifold)
-        from rae_core.math.controller import MathLayerController
         from rae_core.math.structure import ScoringWeights
-        math_ctrl = MathLayerController()
         
         raw_weights = kwargs.get("custom_weights")
         if isinstance(raw_weights, dict):
@@ -97,7 +105,7 @@ class RAEEngine:
             memory = await self.memory_storage.get_memory(m_id, tenant_id)
             if memory:
                 # Math Layer weighs similarity against system-wide importance and topology
-                math_score = math_ctrl.score_memory(
+                math_score = self.math_ctrl.score_memory(
                     memory, 
                     query_similarity=sim_score,
                     weights=scoring_weights

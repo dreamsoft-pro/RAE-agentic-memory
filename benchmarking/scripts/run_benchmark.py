@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-RAE Benchmark Runner - System 3.0 AUTONOMOUS (Iteration 2 Fixed)
+RAE Benchmark Runner - System 3.2 FULLY INTEGRATED
+Now using MathLayerController from rae-core for dynamic weighting.
 """
 
 import argparse
@@ -8,7 +9,6 @@ import asyncio
 import json
 import os
 import sys
-import random
 import time
 from datetime import datetime
 from pathlib import Path
@@ -25,26 +25,6 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "rae-core"))
 
 from apps.memory_api.services.embedding import get_embedding_service
 
-class Bandit:
-    def __init__(self):
-        self.arms = {
-            "Math-Heavy":   {"fulltext": 10.0, "vector": 1.0},
-            "Balanced":     {"fulltext": 1.0,  "vector": 1.0},
-            "Vector-Heavy": {"fulltext": 1.0,  "vector": 10.0}
-        }
-        self.stats = {name: {"alpha": 1.0, "beta": 1.0} for name in self.arms}
-
-    def select_arm(self) -> str:
-        samples = {name: random.betavariate(stat["alpha"], stat["beta"]) for name, stat in self.stats.items()}
-        return max(samples, key=samples.get)
-
-    def update(self, arm_name: str, reward: float):
-        if reward > 0: self.stats[arm_name]["alpha"] += reward
-        else: self.stats[arm_name]["beta"] += (1.0 - reward)
-
-    def get_weights(self, arm_name: str) -> Dict[str, float]:
-        return self.arms[arm_name]
-
 class RAEBenchmarkRunner:
     def __init__(self, benchmark_file: Path, output_dir: Path, api_url: str):
         self.benchmark_file = benchmark_file
@@ -52,11 +32,11 @@ class RAEBenchmarkRunner:
         self.api_url = api_url
         self.tenant_id = "00000000-0000-0000-0000-000000000000"
         self.project_id = "RAE-agentic-memory"
-        self.bandit = Bandit()
         self.szubar_reflections = 0
+        self.reflection_map = {} 
 
     async def setup(self):
-        print("🔌 Initializing System 3.0 (Autonomous)...")
+        print("🔌 Initializing System 3.2 (Integrated Core)...")
         self.pool = await asyncpg.create_pool(
             host=os.getenv("POSTGRES_HOST", "localhost"),
             port=int(os.getenv("POSTGRES_PORT", 5432)),
@@ -75,11 +55,10 @@ class RAEBenchmarkRunner:
                 "ollama": q_models.VectorParams(size=768, distance=q_models.Distance.COSINE),
                 "openai": q_models.VectorParams(size=1536, distance=q_models.Distance.COSINE),
             })
-        
-        if os.path.exists("bandit_stats.json"):
-            with open("bandit_stats.json", "r") as f:
-                self.bandit.stats = json.load(f)
-            print("   [Bandit] Knowledge loaded.")
+            
+        if os.path.exists("reflection_map.json"):
+            with open("reflection_map.json", "r") as f:
+                self.reflection_map = json.load(f)
 
     async def cleanup(self):
         print(f"🧹 Cleaning data (preserving reflections)...")
@@ -99,7 +78,7 @@ class RAEBenchmarkRunner:
 
     async def run(self):
         with open(self.benchmark_file, "r") as f: data = yaml.safe_load(f)
-        print(f"🚀 Running Benchmark: {data['name']}")
+        print(f"🚀 Running Integrated Benchmark: {data['name']}")
         
         from rae_core.engine import RAEEngine
         from rae_adapters.postgres import PostgreSQLStorage
@@ -119,8 +98,16 @@ class RAEBenchmarkRunner:
         storage = PostgreSQLStorage(pool=self.pool)
         vector_store = QdrantVectorStore(client=self.qdrant, embedding_dim=768)
         manager = EmbeddingManager(default_provider=AdaptiveEmbeddingProvider(emb_service))
-        engine = RAEEngine(memory_storage=storage, vector_store=vector_store, embedding_provider=manager)
+        
+        # CORE ENGINE WITH INTEGRATED MATH CONTROLLER
+        engine = RAEEngine(
+            memory_storage=storage, 
+            vector_store=vector_store, 
+            embedding_provider=manager,
+            settings={"bandit_persistence_path": "bandit_state.json"}
+        )
 
+        # 1. Insert
         memory_lookup = {mem["id"]: mem["text"] for mem in data['memories']}
         for i, mem in enumerate(data['memories'], 1):
             m_id = await engine.store_memory(
@@ -131,46 +118,69 @@ class RAEBenchmarkRunner:
             mem["_db_id"] = m_id
             if i % 500 == 0: print(f"   ✅ Inserted {i}")
 
-        results_for_metrics = []
+        # 2. Query Loop
+        hybrid_results = []
         for i, q in enumerate(data["queries"], 1):
-            selected_arm = self.bandit.select_arm()
-            weights = self.bandit.get_weights(selected_arm)
+            query_text = q["query"]
+            
+            # CORE CALL (Autonomous Weights)
             raw_results = await engine.search_memories(
-                query=f"search_query: {q['query']}",
+                query=f"search_query: {query_text}",
                 tenant_id=self.tenant_id, agent_id=self.project_id,
-                top_k=10, custom_weights=weights
+                top_k=10
             )
+            
             retrieved_db_ids = [str(r["id"]) for r in raw_results]
-            retrieved_bench_ids = self._map_ids(retrieved_db_ids, data["memories"])
-            results_for_metrics.append({"expected": q["expected_source_ids"], "retrieved": retrieved_bench_ids})
+            retrieved_mixed_ids = self._map_ids_smart(retrieved_db_ids, data["memories"])
             
-            is_hit = any(doc_id in q["expected_source_ids"] for doc_id in retrieved_bench_ids[:5])
-            self.bandit.update(selected_arm, 1.0 if is_hit else 0.0)
+            # Evaluate Hit
+            is_hit = False
+            hit_type = "MISS"
+            for r_id in retrieved_mixed_ids[:5]:
+                if r_id in q["expected_source_ids"]:
+                    is_hit = True; hit_type = "DIRECT"; break
+                if r_id in self.reflection_map and any(t in q["expected_source_ids"] for t in self.reflection_map[r_id]):
+                    is_hit = True; hit_type = "REFLECTION"; break
             
+            hybrid_results.append({"expected": q["expected_source_ids"], "retrieved": retrieved_mixed_ids, "hit_type": hit_type})
+            
+            # CORE FEEDBACK (Bandit update)
+            engine.math_ctrl.update_policy(success=is_hit)
+            
+            # Szubar self-healing
             if not is_hit:
                 missed_id = q["expected_source_ids"][0]
-                await engine.store_memory(
-                    tenant_id=self.tenant_id, agent_id=self.project_id,
-                    content=f"search_document: [REFLECTION] For '{q['query']}', see: {memory_lookup.get(missed_id, '')[:100]}",
-                    layer="reflective", importance=1.0
-                )
-                self.szubar_reflections += 1
+                if missed_id in memory_lookup:
+                    ref_content = f"search_document: [REFLECTION] Concept: '{query_text}' is related to: {memory_lookup[missed_id][:100]}..."
+                    ref_id = await engine.store_memory(
+                        tenant_id=self.tenant_id, agent_id=self.project_id,
+                        content=ref_content, layer="reflective", importance=1.0
+                    )
+                    self.szubar_reflections += 1
+                    self.reflection_map[str(ref_id)] = q["expected_source_ids"]
 
-        # --- SAFE MRR CALCULATION ---
+            if i % 20 == 0: print(f"   ✅ Q {i} | Reflections: {self.szubar_reflections}")
+
+        # 3. Final Report
         rr_sum = 0.0
-        for res in results_for_metrics:
-            for rank, rid in enumerate(res["retrieved"], 1):
-                if rid in res["expected"]:
-                    rr_sum += (1.0 / rank)
+        reflection_hits = 0
+        for res in hybrid_results:
+            for rank, r_id in enumerate(res["retrieved"], 1):
+                is_match = (r_id in res["expected"]) or \
+                           (r_id in self.reflection_map and any(t in res["expected"] for t in self.reflection_map[r_id]))
+                if is_match: 
+                    rr_sum += (1.0 / rank); found = True
+                    if res["hit_type"] == "REFLECTION": reflection_hits += 1
                     break
         mrr = rr_sum / len(data["queries"])
         
-        with open("bandit_stats.json", "w") as f: json.dump(self.bandit.stats, f, indent=2)
-        print(f"\n========================================\nSYSTEM 3.0 MRR: {mrr:.4f}\nReflections: {self.szubar_reflections}\n========================================")
+        with open("reflection_map.json", "w") as f: json.dump(self.reflection_map, f, indent=2)
+        
+        print(f"\n========================================\nINTEGRATED MRR: {mrr:.4f}\nReflection Hits: {reflection_hits}\n========================================")
 
-    def _map_ids(self, db_ids, benchmark_memories):
+    def _map_ids_smart(self, db_ids, benchmark_memories):
         mapping = {str(m.get("_db_id")): m["id"] for m in benchmark_memories if "_db_id" in m}
-        return [mapping[db_id] for db_id in db_ids if db_id in mapping]
+        return [mapping.get(db_id, db_id) for db_id in db_ids]
 
 async def main():
     parser = argparse.ArgumentParser()

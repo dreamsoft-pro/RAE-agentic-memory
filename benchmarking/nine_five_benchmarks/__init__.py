@@ -31,6 +31,14 @@ Usage:
     all_results = run_all_benchmarks()
 """
 
+import sys
+from pathlib import Path
+
+# Add rae-core to python path to resolve dependencies in benchmarks
+core_path = Path(__file__).parent.parent.parent / "rae-core"
+if str(core_path) not in sys.path:
+    sys.path.insert(0, str(core_path))
+
 from .grdt_benchmark import GRDTBenchmark
 from .lect_benchmark import LECTBenchmark
 from .mmit_benchmark import MMITBenchmark
