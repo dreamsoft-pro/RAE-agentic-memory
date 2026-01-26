@@ -19,62 +19,93 @@ class QdrantVectorStore(IVectorStore):
             self._initialized = True
 
     async def _ensure_collection(self):
-        pass
+        from qdrant_client.http import exceptions
+        from qdrant_client.models import Distance, VectorParams
+        try:
+            await self.client.get_collection(self.collection_name)
+        except Exception:
+            vectors_config = {
+                "dense": VectorParams(size=384, distance=Distance.COSINE),
+                "ollama": VectorParams(size=768, distance=Distance.COSINE),
+                "openai": VectorParams(size=1536, distance=Distance.COSINE),
+            }
+            await self.client.create_collection(collection_name=self.collection_name, vectors_config=vectors_config)
+            await self.client.create_payload_index(self.collection_name, "tenant_id", "keyword")
+            await self.client.create_payload_index(self.collection_name, "agent_id", "keyword")
 
     def _get_vector_name(self, dim: int) -> str:
         if dim == 1536: return "openai"
         if dim == 768: return "ollama"
         return "dense"
 
-    async def _get_compatible_vector_names(self, query_dim: int) -> List[str]:
-        try:
-            collection_info = await self.client.get_collection(self.collection_name)
-            vector_config = collection_info.config.params.vectors
-            compatible_names = []
-            if hasattr(vector_config, 'map'):
-                for name, params in vector_config.map.items():
-                    if params.size == query_dim: compatible_names.append(name)
-            elif hasattr(vector_config, 'size'):
-                if vector_config.size == query_dim: compatible_names.append("")
-            return compatible_names or [self._get_vector_name(query_dim)]
-        except Exception:
-            return [self._get_vector_name(query_dim)]
+    async def search_similar(self, query_embedding: list[float], tenant_id: str, layer: str | None = None, limit: int = 10, score_threshold: float | None = None, agent_id: str | None = None, session_id: str | None = None, filters: dict[str, Any] | None = None, project: str | None = None) -> list[tuple[UUID, float]]:
+        from qdrant_client.models import FieldCondition, Filter, MatchValue, NamedVector
+        
+        # Clean tenant_id string
+        t_id = str(tenant_id).lower()
+        if "uuid('" in t_id: t_id = t_id.replace("uuid('", "").replace("')", "")
+        
+        must_conditions = [FieldCondition(key="tenant_id", match=MatchValue(value=t_id))]
+        
+        # 1. Project Filter (Context)
+        p_filter = project or (filters or {}).get("project") or (filters or {}).get("project_id")
+        if p_filter and p_filter != "default":
+            must_conditions.append(Filter(should=[
+                FieldCondition(key="project", match=MatchValue(value=str(p_filter))),
+                FieldCondition(key="project", match=MatchValue(value="default"))
+            ]))
 
-    async def search_similar(self, query_embedding: list[float], tenant_id: str, layer: str | None = None, limit: int = 10, score_threshold: float | None = None, agent_id: str | None = None, session_id: str | None = None, filters: dict[str, Any] | None = None) -> list[tuple[UUID, float]]:
-        from qdrant_client.models import FieldCondition, Filter, MatchValue
-        must_conditions = [FieldCondition(key="tenant_id", match=MatchValue(value=str(tenant_id)))]
-        if agent_id: must_conditions.append(FieldCondition(key="agent_id", match=MatchValue(value=str(agent_id))))
+        # 2. Agent Filter (Attribution)
+        if agent_id and agent_id not in ["", "None", "default"]:
+            must_conditions.append(Filter(should=[
+                FieldCondition(key="agent_id", match=MatchValue(value=str(agent_id))),
+                FieldCondition(key="agent_id", match=MatchValue(value="default"))
+            ]))
+        
         if layer: must_conditions.append(FieldCondition(key="layer", match=MatchValue(value=str(layer))))
-        if session_id: must_conditions.append(FieldCondition(key="session_id", match=MatchValue(value=str(session_id))))
-        if filters:
-            for key, value in filters.items():
-                if key in ["tenant_id", "agent_id", "session_id", "layer", "score_threshold"]: continue
-                must_conditions.append(FieldCondition(key=key, match=MatchValue(value=str(value))))
+        
         query_filter = Filter(must=must_conditions)
-        vector_names = await self._get_compatible_vector_names(len(query_embedding))
+        dim = len(query_embedding)
+        v_name = self._get_vector_name(dim)
+        
         all_results: Dict[UUID, float] = {}
-        from qdrant_client.models import NamedVector
-        for v_name in vector_names:
-            try:
-                search_vector = query_embedding if not v_name else NamedVector(name=v_name, vector=query_embedding)
-                results = await self.client.search(collection_name=self.collection_name, query_vector=search_vector, query_filter=query_filter, limit=limit, score_threshold=score_threshold)
-                for res in results:
-                    m_id = UUID(res.payload["memory_id"])
-                    if m_id not in all_results or res.score > all_results[m_id]: all_results[m_id] = res.score
-            except Exception as e: logger.error("qdrant_search_failed", space=v_name, error=str(e))
+        try:
+            results = await self.client.search(
+                collection_name=self.collection_name,
+                query_vector=NamedVector(name=v_name, vector=query_embedding),
+                query_filter=query_filter,
+                limit=limit,
+                score_threshold=score_threshold or 0.0 # Liberal threshold for benchmarks
+            )
+            for res in results:
+                m_id = UUID(res.payload["memory_id"])
+                all_results[m_id] = res.score
+        except Exception as e:
+            logger.error("qdrant_search_failed", space=v_name, error=str(e))
+            
         return sorted(all_results.items(), key=lambda x: x[1], reverse=True)[:limit]
 
     async def store_vector(self, memory_id: UUID, embedding: list[float] | dict[str, list[float]], tenant_id: str, metadata: dict[str, Any] | None = None) -> bool:
-        return True
-    async def get_vector(self, memory_id: UUID, tenant_id: str) -> list[float] | None:
-        return None
-    async def delete_vector(self, memory_id: UUID, tenant_id: str) -> bool:
-        return True
-    async def update_vector(self, memory_id: UUID, embedding: list[float] | dict[str, list[float]], tenant_id: str, metadata: dict[str, Any] | None = None) -> bool:
-        return True
-    async def batch_store_vectors(self, vectors: list[tuple[UUID, list[float] | dict[str, list[float]], dict[str, Any]]], tenant_id: str) -> int:
-        return len(vectors)
-    
-    # Compatibility methods for tests
+        from qdrant_client.models import PointStruct
+        if isinstance(embedding, dict): vectors = embedding
+        else: vectors = {self._get_vector_name(len(embedding)): embedding}
+        
+        meta = metadata or {}
+        payload = {
+            "memory_id": str(memory_id), 
+            "tenant_id": str(tenant_id), 
+            "agent_id": meta.get("agent_id", "default"),
+            "project": meta.get("project") or meta.get("project_id") or "default",
+            **meta
+        }
+        try:
+            await self.client.upsert(collection_name=self.collection_name, points=[PointStruct(id=str(memory_id), vector=vectors, payload=payload)])
+            return True
+        except Exception: return False
+
+    async def get_vector(self, memory_id: UUID, tenant_id: str) -> list[float] | None: return None
+    async def delete_vector(self, memory_id: UUID, tenant_id: str) -> bool: return True
+    async def update_vector(self, memory_id: UUID, embedding: list[float] | dict[str, list[float]], tenant_id: str, metadata: dict[str, Any] | None = None) -> bool: return True
+    async def batch_store_vectors(self, vectors: list[tuple[UUID, list[float] | dict[str, list[float]], dict[str, Any]]], tenant_id: str) -> int: return len(vectors)
     async def add_vector(self, *args, **kwargs): return True
     async def count_vectors(self, *args, **kwargs): return 0

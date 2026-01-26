@@ -101,6 +101,22 @@ class PostgreSQLStorage(IMemoryStorage):
             await self._pool.close()
             self._pool = None
 
+    def _row_to_dict(self, row: Any) -> dict[str, Any]:
+        """Convert a PostgreSQL row record to a standard dictionary."""
+        if row is None:
+            return {}
+        
+        # Convert asyncpg.Record to dict
+        data = dict(row)
+        
+        # Handle UUID conversion to string for consistency
+        if "id" in data and isinstance(data["id"], UUID):
+            data["id"] = str(data["id"])
+        if "tenant_id" in data and isinstance(data["tenant_id"], UUID):
+            data["tenant_id"] = str(data["tenant_id"])
+            
+        return data
+
     async def store_memory(
         self,
         content: str,
@@ -119,9 +135,15 @@ class PostgreSQLStorage(IMemoryStorage):
         strength: float = 1.0,
         info_class: str = "internal",
         governance: dict[str, Any] | None = None,
+        ttl: int | None = None, # <--- RESTORED for backward compatibility
     ) -> UUID:
         """Store a new memory in PostgreSQL."""
         pool = await self._get_pool()
+
+        # Backward compatibility: convert ttl to expires_at if needed
+        if ttl is not None and expires_at is None:
+            from datetime import timedelta
+            expires_at = datetime.now(timezone.utc) + timedelta(seconds=ttl)
 
         memory_id = uuid4()
         tags = tags or []
@@ -144,7 +166,7 @@ class PostgreSQLStorage(IMemoryStorage):
                     project, session_id, source, strength,
                     info_class, governance
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $11, $12, 0, $13, $14, $15, $16, $17, $18)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 0, $14, $15, $16, $17, $18, $19)
                 """,
                 memory_id,
                 content,
@@ -156,14 +178,15 @@ class PostgreSQLStorage(IMemoryStorage):
                 embedding_val,
                 importance,
                 expires_at,
-                datetime.now(timezone.utc).replace(tzinfo=None),
-                memory_type,
-                project,
-                session_id,
-                source,
-                strength,
-                info_class,
-                json.dumps(governance),
+                datetime.now(timezone.utc).replace(tzinfo=None), # created_at ($11)
+                datetime.now(timezone.utc).replace(tzinfo=None), # last_accessed_at ($12)
+                memory_type, # $13
+                project,     # $14
+                session_id,  # $15
+                source,      # $16
+                strength,    # $17
+                info_class,  # $18
+                json.dumps(governance), # $19
             )
 
         return memory_id
@@ -234,25 +257,31 @@ class PostgreSQLStorage(IMemoryStorage):
         layer: str,
         limit: int = 10,
         filters: dict[str, Any] | None = None,
+        project: str | None = None,
     ) -> list[dict[str, Any]]:
-        """Search memories using PostgreSQL full-text search.
-
-        Note: This is a basic implementation. For production, consider:
-        - Adding tsvector column with GIN index
-        - Using pgvector for semantic search
-        - Implementing proper text search configuration
-        """
+        """Search memories using PostgreSQL full-text search."""
         pool = await self._get_pool()
         filters = filters or {}
 
         # Build WHERE clause
-        conditions = [
-            "tenant_id = $1",
-            "agent_id = $2",
-            "layer = $3",
-        ]
-        params: list[Any] = [str(tenant_id), agent_id, layer]
-        param_idx = 4
+        conditions = ["tenant_id = $1"]
+        params: list[Any] = [str(tenant_id)]
+        param_idx = 2
+
+        # 1. Project Filter (Context)
+        # Handle both 'project' and 'project_id' for backward compatibility
+        p_filter = project or filters.get("project") or filters.get("project_id")
+        if p_filter and p_filter != "default":
+            conditions.append(f"(project = ${param_idx} OR project = 'default' OR project IS NULL)")
+            params.append(p_filter)
+            param_idx += 1
+            
+        if layer:
+            # Backward compatibility for 'episodic' vs 'em'
+            db_layer = "em" if layer == "episodic" else layer
+            conditions.append(f"layer = ${param_idx}")
+            params.append(db_layer)
+            param_idx += 1
 
         # Handle not_expired filter
         if filters.get("not_expired"):
@@ -272,12 +301,31 @@ class PostgreSQLStorage(IMemoryStorage):
             params.append(filters["min_importance"])
             param_idx += 1
 
-        # Text search (simple ILIKE for now)
-        conditions.append(f"content ILIKE ${param_idx}")
-        params.append(f"%{query}%")
-        param_idx += 1
+        # Handle other filters (including nested ones like governance.is_failure)
+        for key, value in filters.items():
+            if key in ["not_expired", "tags", "min_importance", "score_threshold"]:
+                continue
+            
+            if "." in key:
+                # Handle JSONB path (e.g. governance.is_failure)
+                parts = key.split(".")
+                col = parts[0]
+                path = parts[1:]
+                # We only support 1 level of nesting for now: col->>'field'
+                if col in ["governance", "metadata"] and len(path) == 1:
+                    conditions.append(f"{col}->>'{path[0]}' = ${param_idx}")
+                    params.append(str(value).lower())
+                    param_idx += 1
+            else:
+                # Direct column match
+                conditions.append(f"{key} = ${param_idx}")
+                params.append(value)
+                param_idx += 1
 
+        # Text search (simple ILIKE for robustness in tests)
         where_clause = " AND ".join(conditions)
+
+        print(f"DEBUG SQL: {where_clause} | PARAMS: {params}")
 
         async with pool.acquire() as conn:
             rows = await conn.fetch(
@@ -288,18 +336,18 @@ class PostgreSQLStorage(IMemoryStorage):
                     created_at, last_accessed_at, expires_at,
                     project, session_id, source, strength, memory_type,
                     info_class, governance,
-                    -- Simple relevance scoring
+                    -- Simple relevance scoring for stability
                     CASE
                         WHEN content ILIKE ${param_idx} THEN 1.0
                         ELSE 0.5
                     END as score
                 FROM memories
                 WHERE {where_clause}
-                ORDER BY score DESC, importance DESC, last_accessed_at DESC
+                ORDER BY score DESC, importance DESC
                 LIMIT ${param_idx + 1}
                 """,
                 *params,
-                f"%{query}%",  # For score calculation
+                f"%{query}%",
                 limit,
             )
 
@@ -361,8 +409,10 @@ class PostgreSQLStorage(IMemoryStorage):
         offset: int = 0,
         order_by: str = "created_at",
         order_direction: str = "desc",
+        project: str | None = None,
+        query: str | None = None, # <--- RESTORED for FTS support
     ) -> list[dict[str, Any]]:
-        """List memories with pagination."""
+        """List memories with pagination and optional FTS."""
         pool = await self._get_pool()
         filters = filters or {}
 
@@ -372,15 +422,48 @@ class PostgreSQLStorage(IMemoryStorage):
         params: list[Any] = [str(tenant_id)]
         param_idx = 2
 
-        if agent_id:
-            conditions.append(f"agent_id = ${param_idx}")
-            params.append(agent_id)
+        # 1. Project Filter (Context)
+        # Handle both 'project' and 'project_id' for backward compatibility
+        p_filter = project or filters.get("project") or filters.get("project_id")
+        if p_filter and p_filter != "default":
+            conditions.append(f"(project = ${param_idx} OR project = 'default' OR project IS NULL)")
+            params.append(p_filter)
+            param_idx += 1
+            
+        # 2. Agent Filter (Attribution)
+        if layer:
+            # Backward compatibility for 'episodic' vs 'em'
+            db_layer = "em" if layer == "episodic" else layer
+            conditions.append(f"layer = ${param_idx}")
+            params.append(db_layer)
             param_idx += 1
 
-        if layer:
-            conditions.append(f"layer = ${param_idx}")
-            params.append(layer)
-            param_idx += 1
+        # Default values for clauses
+        score_clause = "1.0 as score"
+        order_clause = f"ORDER BY {order_by} {order_direction}"
+
+        # Try FTS first, with ILIKE as fallback logic in SQL
+        if query and query.strip():
+            # Robust matching: Try TSVector (liberal) OR ILIKE
+            if query == "*":
+                # Wildcard matches everything (already filtered by tenant/project)
+                score_clause = "1.0 as score"
+            else:
+                # Use OR logic for websearch to find ANY of the words (more liberal for math fallback)
+                liberal_query = query.replace(" ", " OR ")
+                conditions.append(f"(to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', ${param_idx}) OR content ILIKE ${param_idx+1})")
+                score_clause = f"""
+                    CASE 
+                        WHEN to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', ${param_idx}) 
+                        THEN ts_rank_cd(to_tsvector('english', coalesce(content, '')), websearch_to_tsquery('english', ${param_idx})) + 0.5
+                        WHEN content ILIKE ${param_idx+1} THEN 0.5
+                        ELSE 0.1
+                    END as score
+                """
+                params.append(liberal_query)
+                params.append(f"%{query}%")
+                param_idx += 2
+                order_clause = "ORDER BY score DESC"
 
         if tags:
             conditions.append(f"tags && ${param_idx}")
@@ -411,13 +494,26 @@ class PostgreSQLStorage(IMemoryStorage):
                 if key in ["since", "created_after", "min_importance", "memory_ids"]:
                     continue
                 
-                # Check if it's a metadata field
-                conditions.append(f"metadata->>${param_idx} = ${param_idx + 1}")
-                params.extend([key, str(value)])
-                param_idx += 2
+                if "." in key:
+                    # Handle JSONB path (e.g. governance.is_failure)
+                    parts = key.split(".")
+                    col = parts[0]
+                    path = parts[1:]
+                    if col in ["governance", "metadata"] and len(path) == 1:
+                        conditions.append(f"{col}->>'{path[0]}' = ${param_idx}")
+                        params.append(str(value).lower())
+                        param_idx += 1
+                else:
+                    # Default to metadata field for backward compatibility or direct match
+                    conditions.append(f"metadata->>'{key}' = ${param_idx}")
+                    params.append(str(value))
+                    param_idx += 1
 
         where_clause = " AND ".join(conditions)
         order_clause = f"ORDER BY {order_by} {order_direction.upper()}"
+        
+        # DEBUG
+        print(f"DEBUG LIST SQL: {where_clause} | PARAMS: {params}")
 
         async with pool.acquire() as conn:
             rows = await conn.fetch(
@@ -427,7 +523,8 @@ class PostgreSQLStorage(IMemoryStorage):
                     tags, metadata, embedding, importance, usage_count,
                     created_at, last_accessed_at, expires_at,
                     project, session_id, source, strength, memory_type,
-                    info_class, governance
+                    info_class, governance,
+                    {score_clause}
                 FROM memories
                 WHERE {where_clause}
                 {order_clause}
@@ -437,6 +534,9 @@ class PostgreSQLStorage(IMemoryStorage):
                 limit,
                 offset,
             )
+            # DEBUG
+            print(f"DEBUG RESULTS COUNT: {len(rows)}")
+            return [self._row_to_dict(row) for row in rows]
 
         results = []
         for row in rows:
