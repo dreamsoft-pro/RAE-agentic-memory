@@ -12,9 +12,11 @@ This service provides comprehensive budget management including:
 from datetime import datetime
 from typing import Any, Dict, Optional, Tuple
 
+from uuid import UUID
+
 import structlog
 from fastapi import HTTPException
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from apps.memory_api.services.rae_core_service import RAECoreService
 
@@ -24,9 +26,14 @@ logger = structlog.get_logger(__name__)
 class Budget(BaseModel):
     """Enhanced Budget model with token tracking"""
 
-    id: str
-    tenant_id: str
+    id: str | UUID
+    tenant_id: str | UUID
     project_id: str
+
+    @field_validator("id", "tenant_id", mode="before")
+    @classmethod
+    def convert_uuid_to_str(cls, v: Any) -> str:
+        return str(v)
 
     # USD Limits
     monthly_limit_usd: Optional[float] = Field(
