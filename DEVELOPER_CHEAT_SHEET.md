@@ -92,5 +92,7 @@ For **RAE-First** communication in `hotreload` mode:
 | **502 Bad Gateway / Connection Refused** | Docker Network/DNS corruption or Ghost Process. | 1. Check ports: `ss -lptn 'sport = :8001'`<br>2. Hard Reset: `docker compose down && docker network prune -f && docker compose up -d` |
 | **AttributeError: 'RAECoreService' object has no attribute 'tuning_service'** | Phase 4 Regression. | Ensure `self.tuning_service` is initialized in `rae_core_service.py` `__init__`. |
 | **AttributeError: 'dict' object has no attribute 'alpha'** | RAEEngine Weights mismatch. | `custom_weights` is a dict, but `score_memory` expects `ScoringWeights` object. Cast it. |
+| **Szubar Mode: 0 results on failures** | ID Mismatch or SQL parameters. | Ensure `tenant_id`, `project`, and `agent_id` are separate. Check positional SQL args ($1, $2...). |
+| **Slow Test Loop** | Coverage checks enabled by default. | Use `-x` (fail fast) and `--no-cov` to speed up iteration. |
 | **Lumina (Node 1) Unreachable** | Service crash or SSH timeout. | SSH in and restart: `ssh operator@100.68.166.117 "cd ~/rae-node-agent && docker compose restart rae-api-dev"` |
 

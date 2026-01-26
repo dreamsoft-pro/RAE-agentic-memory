@@ -119,6 +119,7 @@ class IMemoryStorage(Protocol):
         offset: int = 0,
         order_by: str = "created_at",
         order_direction: str = "desc",
+        project: str | None = None,
     ) -> list[dict[str, Any]]:
         """List memories with filtering and sorting.
 
@@ -132,6 +133,7 @@ class IMemoryStorage(Protocol):
             offset: Pagination offset
             order_by: Field to sort by
             order_direction: "asc" or "desc"
+            project: Optional project filter
 
         Returns:
             List of memory dictionaries
@@ -204,6 +206,7 @@ class IMemoryStorage(Protocol):
         layer: str,
         limit: int = 10,
         filters: dict[str, Any] | None = None,
+        project: str | None = None,
     ) -> list[dict[str, Any]]:
         """Search memories using full-text search.
 
@@ -214,6 +217,7 @@ class IMemoryStorage(Protocol):
             layer: Memory layer
             limit: Maximum number of results
             filters: Optional filters
+            project: Optional project identifier
 
         Returns:
             List of dictionaries containing 'memory' (dict) and 'score' (float)

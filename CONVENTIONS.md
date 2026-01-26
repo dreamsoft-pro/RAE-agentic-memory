@@ -524,6 +524,17 @@ async def get_resource(
 
 ## 🧪 Testing Conventions
 
+### Fail Fast Principle (CRITICAL)
+
+**All testing workflows MUST use the "Fail Fast" mode.**
+- If any test fails, the testing process MUST stop immediately.
+- The failure must be fixed before proceeding with other tests.
+- This ensures that technical debt and regressions are addressed instantly and don't cascade.
+
+**Implementation**:
+- In `pytest`, always use the `-x` (or `--exitfirst`) flag.
+- In `Makefiles`, ensures that commands stop on first error.
+
 ### Test File Naming
 
 ```

@@ -26,11 +26,8 @@ class EmbeddingService:
         if self._initialized:
             return
 
-        # Determine best default model based on env
-        if self.settings.RAE_LLM_BACKEND == "ollama":
-            self.litellm_model = "ollama/nomic-embed-text"
-        elif self.settings.OPENAI_API_KEY:
-            self.litellm_model = "text-embedding-3-small"
+        # Use the model defined in settings or fallback to standard defaults
+        self.litellm_model = self.settings.RAE_LLM_MODEL_DEFAULT or "text-embedding-3-small"
 
         print(f"Embedding service initialized with LiteLLM model: {self.litellm_model}")
         self._initialized = True

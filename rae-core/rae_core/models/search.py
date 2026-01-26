@@ -96,6 +96,9 @@ class SearchResponse(BaseModel):
     fusion_details: dict[str, Any] | None = Field(
         default=None, description="Details about fusion process"
     )
+    synthesized_context: str | None = Field(
+        default=None, description="Combined knowledge context (for GraphRAG)"
+    )
 
     model_config = ConfigDict(
         json_schema_extra={

@@ -1,28 +1,24 @@
-# RAE SESSION PLAN
+# Next Session Plan - 2026-01-27
 
-## 🚀 PRIORITY: 100k Memory Hard Frames Stress Test (CLUSTER)
+## 1. Final Core Stability (Priority 1)
+- [ ] Fix `test_szubar_strategy_failure_injection`:
+    - Analyze `search_memories_sql` debug logs from the previous session.
+    - Resolve the mismatch between stored governance JSONB and the search filter.
+    - Standardize `agent_id` vs `project` handling once and for all in the Postgres adapter.
+- [ ] Verify 36/36 green tests.
 
-**Context:** Local tests for "Hard Frames" passed (Physical/Protocol/Semantic containment). Now we must test **System Degradation** at scale (100k memories) on Node 1 (Lumina).
+## 2. Benchmark Optimization (Spectacular Results)
+- [ ] Re-run `Industrial Large` on **Node 1 (Lumina)**:
+    - Use a larger model (e.g., `nomic-embed-text` 768d or `text-embedding-3-small` 1536d).
+    - Aim for MRR > 0.90 using the new **ConfidenceWeightedFusion** (ORB 2.0).
+- [ ] Fix `Math-Only` precision:
+    - Investigate why `plainto_tsquery` is less effective than ILIKE for technical failures.
+    - Implement a more aggressive heuristic expansion for technical terms.
 
-### 📋 Checklist for Lumina Session:
-1.  **Sync Code:**
-    ```bash
-    rsync -avz --exclude '.git' --exclude '__pycache__' ./ operator@100.68.166.117:~/rae-node-agent/
-    ```
-2.  **Remote Startup (Lumina):**
-    *   SSH into Lumina.
-    *   Build the secure agent:
-        ```bash
-        docker compose -f docker-compose.secure.yml -p hard_frames up -d --build
-        ```
-3.  **Execute Stress Test:**
-    *   We need to verify if the Agent degrades safely when flooded with 100k memories.
-    *   Run the degradation test suite in a loop:
-        ```bash
-        .venv/bin/pytest tests/hard_frames/test_degradation_stability.py
-        ```
-    *   *Note:* Real 100k injection might require connecting the `rae-kernel` to the real Qdrant on Lumina (edit `docker-compose.secure.yml` on remote to point to `rae-qdrant`).
+## 3. Self-Tuning Intelligence (ORB 4.0)
+- [ ] Integrate entropy-based confidence analysis into `ConfidenceWeightedFusion`.
+- [ ] Activate `Graph Centrality Boost` using real edge data from benchmarks.
 
-## 🛠️ Pending Tasks
-- [ ] Refactor `rae-sdk` to be fully compliant with the new Thin Client protocol.
-- [ ] Merge "Hard Frames" into `develop` once 100k test passes.
+## 4. Documentation & Cleanup
+- [ ] Remove temporary diagnostic logs from `rae_adapters/postgres.py`.
+- [ ] Update `DEVELOPER_CHEAT_SHEET.md` with new fusion strategy commands.
