@@ -24,8 +24,9 @@ async def main():
     # Connect to DB
     dsn = settings.DATABASE_URL
     if not dsn:
-        logger.error("DATABASE_URL not set")
-        return
+        # Construct DSN from components
+        dsn = f"postgresql://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_HOST}/{settings.POSTGRES_DB}"
+        logger.info(f"Constructed DSN from settings: {dsn.split('@')[-1]}")
 
     try:
         pool = await asyncpg.create_pool(dsn)
