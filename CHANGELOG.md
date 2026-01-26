@@ -30,6 +30,28 @@
 
 
 
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2026-01-26 08:15 • Branch: main • Commit: aed35b5d*
+
+### ✨ Features
+
+- **middleware**: project-aware budgets and fix body consumption ([`0d1c5bd7`](../../commit/0d1c5bd7))
+- **core**: unblock budgets and backfill embeddings ([`4f047300`](../../commit/4f047300))
+
+### 🐛 Bug Fixes
+
+- **dashboard**: fix project fetching logic ([`d8c528a9`](../../commit/d8c528a9))
+- **dev**: allow script execution in container ([`527c9371`](../../commit/527c9371))
+
+### 🔧 Chore
+
+- update docs ([`654c53db`](../../commit/654c53db))
+- **release**: bump versions to v3.0.2 in manifests ([`48250f90`](../../commit/48250f90))
+
+---
+
 ## Recent Changes (Auto-generated)
 
 *Last updated: 2026-01-26 08:09 • Branch: main • Commit: dfa2e52e*
