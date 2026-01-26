@@ -67,11 +67,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: rae-api-dev
-    env_file:
-      - .env.docker
-    ports:
-      - "8001:8000" # Mapped to a different port to avoid conflicts
     volumes:
       - ./benchmarking:/app/benchmarking
       - ./apps:/app/apps
@@ -79,6 +74,7 @@ services:
       - ./alembic:/app/alembic
       - ./alembic.ini:/app/alembic.ini
       - ./rae_adapters:/app/rae_adapters
+      - ./scripts:/app/scripts
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=${POSTGRES_DB:-rae}
