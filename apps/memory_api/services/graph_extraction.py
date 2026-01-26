@@ -369,8 +369,8 @@ class GraphExtractionService:
             for triple in filtered_triples:
                 triple.metadata.update(
                     {
-                        "project_id": project_id,
-                        "tenant_id": tenant_id,
+                        "project_id": str(project_id),
+                        "tenant_id": str(tenant_id),
                         "extraction_method": "llm_structured",
                         "model": target_model,
                     }
@@ -394,7 +394,7 @@ class GraphExtractionService:
 
             # Update metrics
             metrics.reflection_event_counter.labels(
-                tenant_id=tenant_id, project=project_id
+                tenant_id=str(tenant_id), project=str(project_id)
             ).inc()
 
             return GraphExtractionResult(

@@ -20,6 +20,7 @@ from apps.memory_api.api.v1 import (
     memory,
     system,
 )
+from apps.memory_api.api.v2 import memory as memory_v2
 from apps.memory_api.config import settings
 from apps.memory_api.logging_config import setup_logging
 from apps.memory_api.middleware.budget_enforcer import BudgetEnforcementMiddleware
@@ -260,6 +261,9 @@ app.include_router(compliance.router, prefix="/v1", tags=["Compliance"])
 app.include_router(feedback.router, prefix="/v1", tags=["Feedback"])
 app.include_router(cache.router, prefix="/v1", tags=["Cache Management"])
 app.include_router(system.router, prefix="/v1", tags=["System Control"])
+
+# API V2
+app.include_router(memory_v2.router)  # Prefix is defined in router (/v2/memories)
 
 # New Routes
 app.include_router(dashboard.router, prefix="/v1", tags=["Dashboard"])

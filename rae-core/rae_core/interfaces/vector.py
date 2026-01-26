@@ -46,6 +46,7 @@ class IVectorStore(Protocol):
         agent_id: str | None = None,
         session_id: str | None = None,
         filters: dict[str, Any] | None = None,
+        project: str | None = None,
     ) -> list[tuple[UUID, float]]:
         """Search for similar vectors using cosine similarity.
 
@@ -58,6 +59,7 @@ class IVectorStore(Protocol):
             agent_id: Optional agent identifier for filtering
             session_id: Optional session identifier for filtering
             filters: Optional dictionary of generic metadata filters
+            project: Optional project identifier for filtering
 
         Returns:
             List of (memory_id, similarity_score) tuples, sorted by score descending

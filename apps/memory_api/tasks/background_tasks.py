@@ -338,6 +338,20 @@ def extract_graph_lazy(
                     model=model,
                 )
 
+                # STORE the extracted triples!
+                if result.triples:
+                    storage_stats = await service.store_graph_triples(
+                        triples=result.triples,
+                        project_id="default",
+                        tenant_id=tenant_id,
+                    )
+                    logger.info(
+                        "lazy_graph_triples_stored",
+                        tenant_id=tenant_id,
+                        nodes_created=storage_stats.get("nodes_created", 0),
+                        edges_created=storage_stats.get("edges_created", 0),
+                    )
+
                 logger.info(
                     "lazy_graph_extraction_complete",
                     tenant_id=tenant_id,

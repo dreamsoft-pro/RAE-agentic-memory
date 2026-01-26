@@ -401,7 +401,7 @@ class MemoryConsolidationService:
             )
 
             # Mark source memories as consolidated
-            await self._mark_as_consolidated(source_ids)
+            await self._mark_as_consolidated(source_ids, tenant_id)
 
             return ConsolidationResult(
                 success=True,
@@ -603,12 +603,13 @@ Consolidated Memory:"""
 
         return new_memory_id
 
-    async def _mark_as_consolidated(self, memory_ids: List[str]):
+    async def _mark_as_consolidated(self, memory_ids: List[str], tenant_id: UUID):
         """
         Mark source memories as consolidated
 
         Args:
             memory_ids: List of memory IDs to mark
+            tenant_id: Tenant UUID
         """
         if not self.rae_service:
             return
@@ -617,7 +618,7 @@ Consolidated Memory:"""
             try:
                 # Add metadata flag instead of deleting, to preserve provenance
                 await self.rae_service.adjust_importance(
-                    mid, -0.2, "default"
+                    memory_id=mid, delta=-0.2, tenant_id=str(tenant_id)
                 )  # Decrease importance of raw sources
                 # In a full implementation, we would use update_memory to set a 'consolidated' flag
             except Exception as e:

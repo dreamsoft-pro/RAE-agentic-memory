@@ -69,7 +69,7 @@ services:
       dockerfile: Dockerfile
     container_name: rae-api-dev
     env_file:
-      - .env.docker
+      - .env
     ports:
       - "8001:8000" # Mapped to a different port to avoid conflicts
     volumes:
@@ -80,6 +80,7 @@ services:
       - ./alembic.ini:/app/alembic.ini
       - ./rae_adapters:/app/rae_adapters
       - ./scripts:/app/scripts
+      - /home/grzegorz-lesniowski/.gemini:/root/.gemini
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=${POSTGRES_DB:-rae}
@@ -91,13 +92,6 @@ services:
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=${QDRANT_PORT:-6333}
       - RAE_VECTOR_BACKEND=${RAE_VECTOR_BACKEND:-qdrant}
-      - TENANCY_ENABLED=false
-      - ENABLE_API_KEY_AUTH=false
-      - ENABLE_COST_TRACKING=true
-      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-["*" ]}
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
-      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - RAE_LLM_MODEL_DEFAULT=local_deepseek_coder
       # Dev-specific settings from docker-compose.dev.yml
       - RAE_APP_LOG_LEVEL=DEBUG
@@ -108,8 +102,8 @@ services:
       - OTEL_SERVICE_VERSION=${OTEL_SERVICE_VERSION:-2.9.0-enterprise}
       - OTEL_EXPORTER_TYPE=${OTEL_EXPORTER_TYPE:-otlp}
       - RAE_LLM_BACKEND=${RAE_LLM_BACKEND:-ollama}
-      - OLLAMA_API_BASE=http://ollama-dev:11434
-      - OLLAMA_API_URL=http://ollama-dev:11434
+      - OLLAMA_API_BASE=http://host.docker.internal:11434
+      - OLLAMA_API_URL=http://host.docker.internal:11434
       - RAE_SIMILARITY_THRESHOLD=${RAE_SIMILARITY_THRESHOLD:-0.3}
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -126,7 +120,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    command: ["uvicorn", "apps.memory_api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "/app/apps", "--reload-dir", "/app/sdk"] # Hot-reload enabled
+    command: ["uvicorn", "apps.memory_api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "/app/apps", "--reload-dir", "/app/sdk", "--reload-dir", "/app/rae-core"] # Hot-reload enabled
     restart: unless-stopped
     networks:
       - rae-network
@@ -313,6 +307,7 @@ services:
       - ./sdk:/app/sdk:ro
       - ./rae-core:/app/rae-core:ro
       - ./rae_adapters:/app/rae_adapters:ro
+      - /home/grzegorz-lesniowski/.gemini:/root/.gemini
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=${POSTGRES_DB:-rae}
@@ -327,6 +322,9 @@ services:
       - RAE_APP_LOG_LEVEL=DEBUG
       - LOG_LEVEL=INFO
       - OTEL_TRACES_ENABLED=false
+      - RAE_LLM_BACKEND=${RAE_LLM_BACKEND:-ollama}
+      - OLLAMA_API_BASE=http://host.docker.internal:11434
+      - OLLAMA_API_URL=http://host.docker.internal:11434
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -405,6 +403,7 @@ services:
       - ./sdk:/app/sdk:ro
       - ./rae-core:/app/rae-core:ro
       - ./rae_adapters:/app/rae_adapters:ro
+      - /home/grzegorz-lesniowski/.gemini:/root/.gemini
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=${POSTGRES_DB:-rae}

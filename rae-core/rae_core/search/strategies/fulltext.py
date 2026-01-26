@@ -17,7 +17,7 @@ class FullTextStrategy(SearchStrategy):
     def __init__(
         self,
         memory_storage: IMemoryStorage,
-        default_weight: float = 0.2,
+        default_weight: float = 0.05,
     ):
         """Initialize full-text strategy.
 
@@ -86,6 +86,7 @@ class FullTextStrategy(SearchStrategy):
         tenant_id: str,
         filters: dict[str, Any] | None = None,
         limit: int = 10,
+        project: str | None = None,
     ) -> list[tuple[UUID, float]]:
         """Execute full-text search.
 
@@ -94,6 +95,7 @@ class FullTextStrategy(SearchStrategy):
             tenant_id: Tenant identifier
             filters: Optional filters (layer, agent_id, tags)
             limit: Maximum number of results
+            project: Optional project identifier
 
         Returns:
             List of (memory_id, match_score) tuples
@@ -101,16 +103,17 @@ class FullTextStrategy(SearchStrategy):
         # Extract filters
         layer = filters.get("layer") if filters else None
         agent_id = filters.get("agent_id") if filters else None
+        project = project or (filters.get("project") if filters else None)
         tag_filter = filters.get("tags") if filters else None
 
-        # Retrieve memories
+        # Execute search via storage adapter with FTS support
         memories = await self.memory_storage.list_memories(
             tenant_id=tenant_id,
             agent_id=agent_id,
             layer=layer,
-            tags=tag_filter,
-            filters=filters,  # Pass all filters for JSONB matching
-            limit=500,  # Limit corpus for performance
+            limit=limit,
+            project=project,
+            query=query # Pass query for FTS ranking
         )
 
         if not memories:
