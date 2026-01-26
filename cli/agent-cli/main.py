@@ -65,7 +65,8 @@ def store(
     headers = {
         "X-Tenant-Id": tenant,
         "X-API-Key": _get_api_key(),
-        "X-Session-Id": session_id
+        "X-Session-Id": session_id,
+        "X-Project-ID": project
     }
     payload = {
         "content": content,
@@ -87,6 +88,7 @@ def store(
 def query(
     query_text: str = typer.Argument(..., help="The search query."),
     tenant: str = typer.Option(..., "--tenant", "-t", help="The tenant ID."),
+    project: str = typer.Option("default", "--project", "-p", help="The project ID."),
     k: int = typer.Option(10, help="Number of results to return."),
 ):
     """Queries for memories in the RAE."""
@@ -94,7 +96,8 @@ def query(
     headers = {
         "X-Tenant-Id": tenant,
         "X-API-Key": _get_api_key(),
-        "X-Session-Id": session_id
+        "X-Session-Id": session_id,
+        "X-Project-ID": project
     }
     payload = {"query_text": query_text, "k": k}
     url = f"{_get_api_url()}/v1/memory/query"
@@ -117,7 +120,8 @@ def ask(
     headers = {
         "X-Tenant-Id": tenant,
         "X-API-Key": _get_api_key(),
-        "X-Session-Id": session_id
+        "X-Session-Id": session_id,
+        "X-Project-ID": project
     }
     payload = {
         "tenant_id": tenant,

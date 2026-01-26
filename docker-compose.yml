@@ -67,6 +67,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    container_name: rae-api-dev
+    env_file:
+      - .env.docker
+    ports:
+      - "8001:8000" # Mapped to a different port to avoid conflicts
     volumes:
       - ./benchmarking:/app/benchmarking
       - ./apps:/app/apps
@@ -88,6 +93,7 @@ services:
       - RAE_VECTOR_BACKEND=${RAE_VECTOR_BACKEND:-qdrant}
       - TENANCY_ENABLED=false
       - ENABLE_API_KEY_AUTH=false
+      - ENABLE_COST_TRACKING=true
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-["*" ]}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
