@@ -79,6 +79,7 @@ services:
       - ./alembic:/app/alembic
       - ./alembic.ini:/app/alembic.ini
       - ./rae_adapters:/app/rae_adapters
+      - ./scripts:/app/scripts
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=${POSTGRES_DB:-rae}
@@ -92,6 +93,7 @@ services:
       - RAE_VECTOR_BACKEND=${RAE_VECTOR_BACKEND:-qdrant}
       - TENANCY_ENABLED=false
       - ENABLE_API_KEY_AUTH=false
+      - ENABLE_COST_TRACKING=true
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-["*" ]}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}

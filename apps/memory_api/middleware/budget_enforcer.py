@@ -41,18 +41,29 @@ class BudgetEnforcementMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         # Check budget
-        # We need a database connection. The app state should have the pool.
-        if not hasattr(request.app.state, "pool"):
-            logger.error("cost_guard_no_db_pool")
+        # We need RAE Core Service. The app state should have it.
+        if (
+            not hasattr(request.app.state, "rae_core_service")
+            or not request.app.state.rae_core_service
+        ):
+            # If service not ready (e.g. startup), allow request
+            logger.debug("cost_guard_skipped_no_service")
             return await call_next(request)
 
         try:
-            pool = request.app.state.pool
-            budget_service = BudgetService(pool)
+            rae_service = request.app.state.rae_core_service
+            budget_service = BudgetService(rae_service)
+
+            # Try to get project_id from headers, then query params
+            project_id = (
+                request.headers.get("X-Project-ID")
+                or request.query_params.get("project")
+                or "default"
+            )
 
             # Check if budget is exceeded
             is_exceeded, remaining, limit = await budget_service.check_budget_exceeded(
-                tenant_id
+                tenant_id, project_id
             )
 
             if is_exceeded:
