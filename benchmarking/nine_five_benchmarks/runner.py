@@ -14,10 +14,15 @@ Research-grade implementation for academic evaluation of RAE memory systems.
 
 import json
 import time
+import sys
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
+
+# Add rae-core to python path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "rae-core"))
 
 from benchmarking.telemetry import BenchmarkTelemetry
 
