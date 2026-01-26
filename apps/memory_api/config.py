@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     # Ollama Configuration
     OLLAMA_HOSTS: list[str] = ["http://100.66.252.117:11434", "http://rae-ollama:11434"]
     RAE_LLM_BACKEND: str = "ollama"
-    RAE_LLM_MODEL_DEFAULT: str = "ollama/deepseek-coder:1.3b"
+    RAE_LLM_MODEL_DEFAULT: str = "ollama/all-minilm"
     EXTRACTION_MODEL: str = "gpt-4o-mini"
     SYNTHESIS_MODEL: str = "gpt-4o"
     RAE_VECTOR_BACKEND: str = "qdrant"

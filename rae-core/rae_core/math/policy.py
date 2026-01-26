@@ -32,7 +32,7 @@ Author: Grzegorz Leśniowski <lesniowskig@gmail.com>
 """
 
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, List, Optional
 
 from rae_core.math.dynamics import calculate_recency_score
 from rae_core.math.structure import DecayConfig, MemoryScoreResult, ScoringWeights
@@ -41,86 +41,33 @@ from rae_core.math.structure import DecayConfig, MemoryScoreResult, ScoringWeigh
 def compute_memory_score(
     similarity: float,
     importance: float,
-    last_accessed_at: datetime | None,
-    created_at: datetime,
+    last_accessed_at: Optional[datetime] = None,
+    created_at: Optional[datetime] = None,
     access_count: int = 0,
-    now: datetime | None = None,
-    weights: ScoringWeights | None = None,
-    decay_config: DecayConfig | None = None,
-    memory_id: str | None = None,
+    now: Optional[datetime] = None,
+    weights: Optional[ScoringWeights] = None,
+    decay_config: Optional[DecayConfig] = None, # <--- RESTORED
+    memory_id: str = "", # <--- RESTORED
 ) -> MemoryScoreResult:
     """
-    Compute unified memory score combining relevance, importance, and recency.
+    Compute a unified score for a memory item based on multiple factors.
 
-    This is the core scoring function implementing RAE's unified scoring formula:
-        score = alpha * similarity + beta * importance + gamma * recency_component
-
-    Where recency_component considers:
-    - Time since last access (or creation)
-    - Access count (more accessed = slower decay)
-    - Configurable decay rate
-
-    Args:
-        similarity: Relevance score from vector similarity (0.0-1.0)
-        importance: Importance score (0.0-1.0)
-        last_accessed_at: Last access timestamp (None = never accessed)
-        created_at: Creation timestamp
-        access_count: Number of times memory was accessed
-        now: Current time (defaults to UTC now)
-        weights: Custom scoring weights (defaults to ScoringWeights())
-        decay_config: Custom decay configuration (defaults to DecayConfig())
-        memory_id: Optional memory ID for logging/debugging
+    The formula combines semantic relevance, content importance, and
+    temporal recency:
+        Score = alpha * Similarity + beta * Importance + gamma * Recency
 
     Returns:
-        MemoryScoreResult with final score and component breakdown
-
-    Mathematical Properties:
-        - All component scores are in [0, 1]
-        - Final score is in [0, 1]
-        - Weights determine relative importance of components
-        - Default weights: α=0.5, β=0.3, γ=0.2
-
-    Example:
-        >>> from datetime import datetime, timedelta, timezone
-        >>> now = datetime.now(timezone.utc)
-        >>> created = now - timedelta(minutes=10)
-        >>>
-        >>> # High similarity, high importance, recent creation
-        >>> score = compute_memory_score(
-        ...     similarity=0.85,
-        ...     importance=0.7,
-        ...     last_accessed_at=None,
-        ...     created_at=created,
-        ...     access_count=5,
-        ...     now=now
-        ... )
-        >>> print(f"Final score: {score.final_score:.3f}")
-        Final score: 0.783
-        >>> print(f"Components: rel={score.relevance_score:.3f}, "
-        ...       f"imp={score.importance_score:.3f}, rec={score.recency_score:.3f}")
-        Components: rel=0.850, imp=0.700, rec=0.773
-
-    Implementation Notes:
-        - Similarity and importance are clamped to [0, 1]
-        - Recency uses exponential decay with access count adjustment
-        - Final score is weighted combination, clamped to [0, 1]
+        MemoryScoreResult containing the final score and component breakdown.
     """
-    # Initialize configs with defaults if not provided
-    if weights is None:
-        weights = ScoringWeights()
-    if decay_config is None:
-        decay_config = DecayConfig()
     if now is None:
         now = datetime.now(timezone.utc)
 
-    # 1. Relevance component (normalized similarity)
-    relevance_score = max(0.0, min(1.0, similarity))
+    if weights is None:
+        weights = ScoringWeights()
 
-    # 2. Importance component (already normalized)
-    importance_score = max(0.0, min(1.0, importance))
-
-    # 3. Recency component (exponential decay with access count adjustment)
-    recency_score, age_seconds, effective_decay = calculate_recency_score(
+    # Calculate individual components
+    # Recency score using exponential decay
+    recency, age_seconds, effective_decay = calculate_recency_score(
         last_accessed_at=last_accessed_at,
         created_at=created_at,
         access_count=access_count,
@@ -128,25 +75,23 @@ def compute_memory_score(
         decay_config=decay_config,
     )
 
-    # 4. Weighted combination
+    # Weighted combination (The original linear model)
     final_score = (
-        weights.alpha * relevance_score
-        + weights.beta * importance_score
-        + weights.gamma * recency_score
+        weights.alpha * similarity + weights.beta * importance + weights.gamma * recency
     )
 
-    # Ensure final score is in [0, 1]
+    # Clamp result to [0, 1]
     final_score = max(0.0, min(1.0, final_score))
 
     return MemoryScoreResult(
-        final_score=final_score,
-        relevance_score=relevance_score,
-        importance_score=importance_score,
-        recency_score=recency_score,
-        memory_id=memory_id or "unknown",
-        age_seconds=age_seconds,
+        final_score=float(final_score),
+        relevance_score=float(similarity),
+        importance_score=float(importance),
+        recency_score=float(recency),
+        memory_id=memory_id,
+        age_seconds=float(age_seconds),
         access_count=access_count,
-        effective_decay_rate=effective_decay,
+        effective_decay_rate=float(effective_decay),
     )
 
 

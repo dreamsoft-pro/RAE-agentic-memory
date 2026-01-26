@@ -15,6 +15,7 @@ class SearchStrategy(ABC):
         tenant_id: str,
         filters: dict[str, Any] | None = None,
         limit: int = 10,
+        project: str | None = None,
     ) -> list[tuple[UUID, float]]:
         """Execute search and return (memory_id, score) tuples.
 
@@ -23,6 +24,7 @@ class SearchStrategy(ABC):
             tenant_id: Tenant identifier
             filters: Optional filters (layer, agent_id, tags, etc.)
             limit: Maximum number of results
+            project: Optional project identifier
 
         Returns:
             List of (memory_id, score) tuples sorted by score descending

@@ -19,7 +19,7 @@ class VectorSearchStrategy(SearchStrategy):
         self,
         vector_store: IVectorStore,
         embedding_provider: IEmbeddingProvider,
-        default_weight: float = 0.4,
+        default_weight: float = 0.8,
     ):
         """Initialize vector search strategy.
 
@@ -38,6 +38,7 @@ class VectorSearchStrategy(SearchStrategy):
         tenant_id: str,
         filters: dict[str, Any] | None = None,
         limit: int = 10,
+        project: str | None = None,
     ) -> list[tuple[UUID, float]]:
         """Execute semantic search.
 
@@ -46,6 +47,7 @@ class VectorSearchStrategy(SearchStrategy):
             tenant_id: Tenant identifier
             filters: Optional filters (layer, agent_id, score_threshold, etc.)
             limit: Maximum number of results
+            project: Optional project identifier
 
         Returns:
             List of (memory_id, similarity_score) tuples
@@ -56,6 +58,7 @@ class VectorSearchStrategy(SearchStrategy):
         # Extract filters
         layer = filters.get("layer") if filters else None
         agent_id = filters.get("agent_id") if filters else None
+        project = project or (filters.get("project") if filters else None)
         session_id = filters.get("session_id") if filters else None
         score_threshold = filters.get("score_threshold", 0.0) if filters else 0.0
 
@@ -65,6 +68,7 @@ class VectorSearchStrategy(SearchStrategy):
             tenant_id=tenant_id,
             layer=layer,
             agent_id=agent_id,
+            project=project,
             session_id=session_id,
             limit=limit,
             score_threshold=score_threshold,

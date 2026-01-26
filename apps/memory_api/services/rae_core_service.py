@@ -132,6 +132,22 @@ class RAECoreService:
             working_max_size=100,
         )
 
+        # Initialize Hybrid Search Strategies with proper adapters
+        from rae_core.search.engine import HybridSearchEngine
+        from rae_core.search.strategies.fulltext import FullTextStrategy
+        from rae_core.search.strategies.vector import VectorSearchStrategy
+
+        search_strategies = {
+            "vector": VectorSearchStrategy(
+                vector_store=self.qdrant_adapter,
+                embedding_provider=self.embedding_provider
+            ),
+            "fulltext": FullTextStrategy(
+                memory_storage=self.postgres_adapter
+            )
+        }
+        search_engine = HybridSearchEngine(strategies=search_strategies)
+
         self.engine = RAEEngine(
             memory_storage=self.postgres_adapter,
             vector_store=self.qdrant_adapter,
@@ -139,6 +155,14 @@ class RAECoreService:
             llm_provider=cast(Any, self.llm_provider),
             settings=self.settings,
             cache_provider=self.redis_adapter,
+            search_engine=search_engine,
+        )
+
+        logger.info(
+            "rae_core_engine_components_ready",
+            storage=type(self.postgres_adapter).__name__,
+            vector_store=type(self.qdrant_adapter).__name__,
+            embedding=type(self.embedding_provider).__name__
         )
 
         # New: Reflection Engine
@@ -167,6 +191,7 @@ class RAECoreService:
         prompt: str,
         session_id: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
+        project: Optional[str] = None,
     ) -> AgentAction:
         """
         Execute an agent action through RAERuntime (RAE-First).
@@ -187,12 +212,15 @@ class RAECoreService:
                 builder = ContextBuilder(max_tokens=4000)
 
                 agent_id = rae_input.context.get("agent_id", "default")
+                project = rae_input.context.get("project", "default")
 
                 # Search for relevant memories in RAE across ALL layers
                 search_results = await self.service.engine.search_memories(
                     query=rae_input.content,
                     tenant_id=rae_input.tenant_id,
                     agent_id=agent_id,
+                    project=project,
+                    layer=None,
                     top_k=10,
                 )
 
@@ -204,53 +232,86 @@ class RAECoreService:
                 # RAE-SZUBAR PRESSURE: Inject failures
                 pressure_constraints = ""
                 if self.service.szubar_mode:
-                    # Search specifically for failures in the same context
+                    # 1. Search for failures in the current context
                     failures = await self.service.engine.search_memories(
                         query=rae_input.content,
                         tenant_id=rae_input.tenant_id,
-                        agent_id=agent_id,
+                        agent_id="default", # Failures are usually project-wide
+                        project=project,
+                        layer=None,
                         top_k=5,
-                        filters={"governance.is_failure": True},
+                        filters={"governance.is_failure": "true"},
                     )
+                    
+                    # 2. If nothing found, try project-wide wildcard search for failures
+                    if not failures:
+                        failures = await self.service.engine.search_memories(
+                            query="*", 
+                            tenant_id=rae_input.tenant_id,
+                            agent_id="default",
+                            project=project,
+                            layer=None,
+                            top_k=5,
+                            filters={"governance.is_failure": "true"},
+                        )
+
                     if failures:
                         pressure_constraints = (
                             "\nCRITICAL: DO NOT REPEAT THESE FAILURES:\n"
                         )
                         for f in failures:
-                            trace = f.get("governance", {}).get(
-                                "failure_trace", "Unknown failure"
-                            )
-                            pressure_constraints += (
-                                f"- {f['content']} (Reason: {trace})\n"
-                            )
+                            # Handle both dict and potentially other types from adapters
+                            if isinstance(f, dict):
+                                gov = f.get("governance") or {}
+                                # Handle case where governance might be stringified JSON
+                                if isinstance(gov, str):
+                                    try:
+                                        import json
+                                        gov = json.loads(gov)
+                                    except Exception:
+                                        gov = {}
+                                trace = gov.get("failure_trace", "Unknown failure")
+                                content = f.get("content", "Unknown error")
+                                pressure_constraints += f"- {content} (Reason: {trace})\n"
 
                 system_prompt = f"RELEVANT PROJECT CONTEXT:\n{context_text}\n{pressure_constraints}\n\nTask: {rae_input.content}"
 
-                # 2. Generate response using LLM with Strict Timeout
+                # 2. Generate response using LLM or DESIGNED MATH (Fallback)
                 try:
                     import asyncio
+                    
+                    # Check if LLM is actually available
+                    if not self.service.engine.llm_provider:
+                        raise RuntimeError("LLM Provider not available (RAE-Lite Mode)")
 
                     # RELAXED TIMEOUT for weak machines (120s)
                     llm_result = await asyncio.wait_for(
                         self.service.engine.generate_text(
                             prompt=rae_input.content, system_prompt=system_prompt
                         ),
-                        timeout=120.0,  # Wait max 120s
+                        timeout=120.0,
                     )
                 except (asyncio.TimeoutError, Exception) as e:
-                    # GRACEFUL DEGRADATION: Math-Only Fallback
+                    # GRACEFUL DEGRADATION: Math-Only Fallback (Designed Mathematics)
                     logger.warning("llm_fallback_triggered", reason=str(e))
 
                     # Formulate answer using PURE MATHEMATICS (top search results)
                     if search_results:
-                        top_facts = [r["content"] for r in search_results[:3]]
+                        # Extract core facts from the most mathematically relevant memories
+                        top_facts = []
+                        for r in search_results[:3]:
+                            if isinstance(r, dict):
+                                top_facts.append(r.get("content", ""))
+                            else:
+                                top_facts.append(str(r))
+                                
                         llm_result = (
                             "STABILITY MODE ACTIVE (Math Fallback). "
-                            "Based on my memory, here are the core facts: "
-                            + " | ".join(top_facts)
+                            "Based on my memory manifold, here are the core facts: "
+                            + " | ".join(filter(None, top_facts))
                         )
                     else:
-                        llm_result = "STABILITY MODE ACTIVE. No specific memories found to answer this."
+                        llm_result = "STABILITY MODE ACTIVE. No specific memories found to answer this query mathematically."
 
                 if not llm_result:
                     llm_result = "I couldn't generate a response."
@@ -285,7 +346,7 @@ class RAECoreService:
             tenant_id=str(tenant_id),
             content=prompt,
             context={
-                "project": agent_id,
+                "project": project or agent_id, # Fallback to agent_id if project not provided
                 "session_id": session_id,
                 "agent_id": agent_id,
             },
@@ -475,7 +536,8 @@ class RAECoreService:
         ttl: Optional[int] = None,
         info_class: str = "internal",
         governance: Optional[dict] = None,
-        metadata: Optional[dict] = None,  # <--- NEW
+        metadata: Optional[dict] = None,
+        agent_id: Optional[str] = None,
     ) -> str:
         """
         Store memory using RAEEngine.
@@ -489,8 +551,9 @@ class RAECoreService:
         if governance:
             tags = self._detect_agentic_patterns(governance, tags)
 
-        project_id = project or "default"
-        metadata = metadata or {}  # <--- NEW
+        project_canonical = project or "default"
+        agent_canonical = agent_id or "default"
+        metadata = metadata or {}
 
         # Store in RAEEngine
         if layer == "sensory" and ttl is None:
@@ -498,13 +561,13 @@ class RAECoreService:
 
         memory_id = await self.engine.store_memory(
             tenant_id=tenant_id,
-            agent_id=project_id,
+            agent_id=agent_canonical,
             content=content,
             layer=target_layer,
             importance=importance or 0.5,
             tags=tags,
-            metadata=metadata,  # <--- FIXED (passed real metadata instead of {})
-            project=project_id,
+            metadata=metadata,
+            project=project_canonical,
             session_id=session_id,
             memory_type=memory_type or "text",
             ttl=ttl,
@@ -517,7 +580,8 @@ class RAECoreService:
             "memory_stored_in_engine",
             memory_id=str(memory_id),
             tenant_id=tenant_id,
-            project=project_id,
+            project=project_canonical,
+            agent_id=agent_canonical,
             layer=target_layer,
             type=memory_type or "text",
         )
@@ -531,7 +595,7 @@ class RAECoreService:
                 asyncio.create_task(
                     self.websocket_service.broadcast_memory_created(
                         tenant_id=tenant_id,
-                        project_id=project_id,
+                        project_id=project_canonical,
                         memory_id=memory_id,
                         content=content,
                         importance=importance or 0.5,
@@ -732,13 +796,12 @@ class RAECoreService:
         raw_results = await self.engine.search_memories(
             query=query,
             tenant_id=str(tenant_id),
-            agent_id=project,
+            agent_id="default", # Broad attribution for general queries
+            project=project,    # Strict context
             layer=layers[0] if layers else None,
             top_k=k,
-            similarity_threshold=0.5,
-            use_reranker=True,
+            filters=filters,
             custom_weights=weights,
-            filters=filters,  # <--- FIXED
         )
 
         # 3. Map to SearchResponse model
@@ -1044,7 +1107,6 @@ class RAECoreService:
             SELECT DISTINCT tenant_id, ARRAY_AGG(id) as memory_ids
             FROM memories m
             WHERE layer = 'em'
-                AND created_at > NOW() - INTERVAL '1 hour'
                 AND NOT EXISTS (
                     SELECT 1 FROM knowledge_graph_edges ke
                     WHERE ke.tenant_id = m.tenant_id

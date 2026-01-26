@@ -101,6 +101,33 @@ async def store_memory(
             ttl=request.ttl,
         )
 
+        # Audit logging (ISO 42001 compliance)
+        try:
+            from uuid import uuid4
+            sql = """
+                INSERT INTO access_logs (
+                    id, tenant_id, user_id, action, resource, allowed, timestamp, metadata
+                ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7)
+            """
+            import json
+            await rae_service.db.execute(
+                sql,
+                uuid4(),
+                str(tenant_id),
+                "api_user", # TODO: Get actual user ID
+                "store_memory",
+                str(memory_id),
+                True,
+                json.dumps({
+                    "project": request.project,
+                    "layer": request.layer,
+                    "source": request.source,
+                    "importance": request.importance
+                })
+            )
+        except Exception as audit_err:
+            logger.warning("audit_log_failed", error=str(audit_err))
+
         return StoreMemoryResponseV2(memory_id=memory_id)
 
     except Exception as e:
@@ -138,20 +165,53 @@ async def query_memories(
 
         results = [
             MemoryResult(
-                id=(result := cast(Any, res)).id,
+                id=(result := cast(Any, res)).memory_id,
                 content=result.content,
                 score=result.score,
-                layer=result.layer,
-                importance=result.importance,
-                tags=result.tags or [],
+                layer="unknown",  # SearchResult doesn't currently return layer
+                importance=0.5,   # Default if not returned
+                tags=[],          # Default if not returned
             )
             for res in cast(Any, response).results
         ]
 
+        # Update access stats for found memories (Phase 1 logic)
+        if results:
+            await rae_service.update_memory_access_batch(
+                memory_ids=[r.id for r in results],
+                tenant_id=str(tenant_id)
+            )
+
+        # Audit logging (ISO 42001 compliance)
+        try:
+            from uuid import uuid4
+            sql = """
+                INSERT INTO access_logs (
+                    id, tenant_id, user_id, action, resource, allowed, timestamp, metadata
+                ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7)
+            """
+            import json
+            await rae_service.db.execute(
+                sql,
+                uuid4(),
+                str(tenant_id),
+                "api_user", # TODO: Get actual user ID from auth
+                "search_memories",
+                request.project,
+                True,
+                json.dumps({
+                    "query": request.query,
+                    "results_count": len(results),
+                    "layers": request.layers
+                })
+            )
+        except Exception as audit_err:
+            logger.warning("audit_log_failed", error=str(audit_err))
+
         return QueryMemoryResponseV2(
             results=results,
             total_count=len(results),
-            synthesized_context=cast(Any, response).synthesized_context,
+            synthesized_context=None,  # Not supported in base SearchResponse
         )
 
     except Exception as e:

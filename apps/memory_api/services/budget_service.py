@@ -60,11 +60,11 @@ class Budget(BaseModel):
     daily_tokens_used: int = Field(0, ge=0, description="Current daily tokens used")
 
     # Timestamps
-    created_at: datetime
-    last_usage_at: datetime
-    last_token_update_at: datetime
-    last_daily_reset: datetime
-    last_monthly_reset: datetime
+    created_at: Optional[datetime] = None
+    last_usage_at: Optional[datetime] = None
+    last_token_update_at: Optional[datetime] = None
+    last_daily_reset: Optional[datetime] = None
+    last_monthly_reset: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
