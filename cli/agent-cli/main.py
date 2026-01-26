@@ -1,5 +1,7 @@
 import json
 import os
+import uuid
+from pathlib import Path
 
 import requests
 import typer
@@ -13,6 +15,29 @@ def _get_api_url() -> str:
 
 def _get_api_key() -> str:
     return os.environ.get("RAE_API_KEY", "test-key")
+
+
+def _get_session_id() -> str:
+    """Gets or creates a session ID from .rae_session file."""
+    # Look in current dir and parent dirs
+    current = Path.cwd()
+    paths_to_check = [current] + list(current.parents)
+
+    session_file = None
+    for path in paths_to_check:
+        potential = path / ".rae_session"
+        if potential.exists():
+            session_file = potential
+            break
+
+    if session_file:
+        try:
+            return session_file.read_text().strip()
+        except Exception:
+            pass
+
+    # Fallback: Generate one but don't save (ephemeral CLI session)
+    return str(uuid.uuid4())
 
 
 @app.command()
@@ -36,12 +61,19 @@ def store(
     layer: str = typer.Option("ltm", help="The memory layer (e.g., 'em', 'sm', 'rm')."),
 ):
     """Stores a new memory in the RAE."""
-    headers = {"X-Tenant-Id": tenant, "X-API-Key": _get_api_key()}
+    session_id = _get_session_id()
+    headers = {
+        "X-Tenant-Id": tenant,
+        "X-API-Key": _get_api_key(),
+        "X-Session-Id": session_id,
+        "X-Project-ID": project
+    }
     payload = {
         "content": content,
         "source": source,
         "layer": layer,
         "project": project,
+        "session_id": session_id,
     }
     url = f"{_get_api_url()}/v1/memory/store"
     try:
@@ -56,10 +88,17 @@ def store(
 def query(
     query_text: str = typer.Argument(..., help="The search query."),
     tenant: str = typer.Option(..., "--tenant", "-t", help="The tenant ID."),
+    project: str = typer.Option("default", "--project", "-p", help="The project ID."),
     k: int = typer.Option(10, help="Number of results to return."),
 ):
     """Queries for memories in the RAE."""
-    headers = {"X-Tenant-Id": tenant, "X-API-Key": _get_api_key()}
+    session_id = _get_session_id()
+    headers = {
+        "X-Tenant-Id": tenant,
+        "X-API-Key": _get_api_key(),
+        "X-Session-Id": session_id,
+        "X-Project-ID": project
+    }
     payload = {"query_text": query_text, "k": k}
     url = f"{_get_api_url()}/v1/memory/query"
     try:
@@ -77,11 +116,18 @@ def ask(
     project: str = typer.Option(..., "--project", "-p", help="The project ID."),
 ):
     """Asks the RAE agent a question."""
-    headers = {"X-Tenant-Id": tenant, "X-API-Key": _get_api_key()}
+    session_id = _get_session_id()
+    headers = {
+        "X-Tenant-Id": tenant,
+        "X-API-Key": _get_api_key(),
+        "X-Session-Id": session_id,
+        "X-Project-ID": project
+    }
     payload = {
         "tenant_id": tenant,
         "project": project,
         "prompt": prompt,
+        "session_id": session_id,
     }
     url = f"{_get_api_url()}/v1/agent/execute"
     try:

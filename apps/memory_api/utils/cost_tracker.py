@@ -35,19 +35,22 @@ async def track_request_cost(
         )
         total_cost = cost_info["total_cost_usd"]
 
-        # Get DB pool
-        if not hasattr(request.app.state, "pool"):
-            logger.error("track_cost_no_pool")
+        # Get RAE Core Service
+        if not hasattr(request.app.state, "rae_core_service"):
+            logger.error("track_cost_no_rae_service")
             return
 
-        pool = request.app.state.pool
+        rae_service = request.app.state.rae_core_service
+        if not rae_service:
+            logger.error("track_cost_rae_service_is_none")
+            return
 
         # Increment usage
         usage = BudgetUsageIncrement(
             cost_usd=total_cost, input_tokens=input_tokens, output_tokens=output_tokens
         )
 
-        await BudgetService(pool).increment_usage(
+        await BudgetService(rae_service).increment_usage(
             tenant_id=tenant_id, project_id=project_id, usage=usage
         )
 
