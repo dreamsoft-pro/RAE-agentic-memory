@@ -1,41 +1,81 @@
 """
-Rank Reciprocal Fusion (RRF) Implementation.
+Fusion Strategies for Hybrid Search.
 
-This module provides mathematical functions for fusing ranked lists from multiple
-search strategies using the Reciprocal Rank Fusion algorithm.
+This module provides fusion strategies like RRF and Confidence-Weighted Fusion.
 """
 
+from typing import Dict, List, Tuple, Any
 from uuid import UUID
+import structlog
 
+logger = structlog.get_logger(__name__)
 
-def reciprocal_rank_fusion(
-    ranked_lists: list[list[tuple[UUID, float]]], k: int = 60
-) -> list[tuple[UUID, float]]:
+class RRFFusion:
     """
-    Combine multiple ranked lists using Reciprocal Rank Fusion.
-
-    RRF Score(d) = sum(1 / (k + rank(d)))
-
-    Args:
-        ranked_lists: A list of ranked lists. Each ranked list contains
-                      tuples of (item_id, original_score).
-                      The lists are assumed to be sorted by score descending.
-        k: The constant k in the RRF formula (default: 60).
-
-    Returns:
-        A combined list of (item_id, rrf_score), sorted by rrf_score descending.
+    Reciprocal Rank Fusion (RRF) Strategy.
+    Standard algorithm for combining ranked lists without needing score normalization.
     """
-    rrf_scores: dict[UUID, float] = {}
+    def __init__(self, k: int = 60):
+        self.k = k
 
-    for ranked_list in ranked_lists:
-        for rank, (item_id, _) in enumerate(ranked_list):
-            # rank is 0-based
-            score = 1.0 / (k + rank)
-            if item_id in rrf_scores:
-                rrf_scores[item_id] += score
+    def fuse(
+        self, 
+        strategy_results: Dict[str, List[Tuple[UUID, float]]],
+        weights: Dict[str, float]
+    ) -> List[Tuple[UUID, float]]:
+        
+        rrf_scores: Dict[UUID, float] = {}
+
+        for strategy_name, results in strategy_results.items():
+            weight = weights.get(strategy_name, 1.0)
+            
+            for rank, (item_id, _) in enumerate(results):
+                # RRF formula: 1 / (k + rank)
+                # Weighted RRF: weight / (k + rank)
+                score = weight / (self.k + rank)
+                
+                if item_id in rrf_scores:
+                    rrf_scores[item_id] += score
+                else:
+                    rrf_scores[item_id] = score
+
+        return sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)
+
+
+class ConfidenceWeightedFusion:
+    """
+    Confidence-Weighted Fusion (ORB 2.0).
+    Uses signal confidence (entropy/variance) to dynamically weight strategies.
+    """
+    def __init__(self, default_weights: Dict[str, float] = None):
+        self.default_weights = default_weights or {"vector": 1.0, "fulltext": 1.0}
+
+    def fuse(
+        self, 
+        strategy_results: Dict[str, List[Tuple[UUID, float]]],
+        manual_weights: Dict[str, float]
+    ) -> List[Tuple[UUID, float]]:
+        
+        # 1. Normalize Scores (Min-Max) per strategy
+        normalized_results = {}
+        for name, results in strategy_results.items():
+            if not results:
+                continue
+            scores = [s for _, s in results]
+            min_s, max_s = min(scores), max(scores)
+            if max_s == min_s:
+                norm_results = [(id, 1.0) for id, _ in results]
             else:
-                rrf_scores[item_id] = score
+                norm_results = [(id, (s - min_s) / (max_s - min_s)) for id, s in results]
+            normalized_results[name] = norm_results
 
-    # Sort by RRF score descending
-    sorted_items = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)
-    return sorted_items
+        # 2. Apply Weights (Manual > Default)
+        final_scores: Dict[UUID, float] = {}
+        for name, results in normalized_results.items():
+            weight = manual_weights.get(name, self.default_weights.get(name, 1.0))
+            
+            for item_id, score in results:
+                weighted_score = score * weight
+                final_scores[item_id] = final_scores.get(item_id, 0.0) + weighted_score
+
+        return sorted(final_scores.items(), key=lambda x: x[1], reverse=True)

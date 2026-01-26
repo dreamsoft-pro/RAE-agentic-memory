@@ -63,9 +63,21 @@ def make_request(url, method='GET', data=None, timeout=5):
 def get_active_url():
     """Finds the working RAE API URL."""
     print("🔍 Probing RAE Nodes...")
-    # Prioritize Stable Node 1 (Lumina) over potentially broken Local Dev
-    urls = [LUMINA_URL, DEFAULT_URL, LITE_URL]
     
+    # 1. Check Lumina (Node 1) first as it is the primary compute node
+    print(f"   Target: {LUMINA_URL} (Lumina) ... ", end="", flush=True)
+    code, _ = make_request(f"{LUMINA_URL}/health", timeout=2)
+    if code == 200:
+        print("ONLINE ✅")
+        return LUMINA_URL
+    else:
+        print("OFFLINE ❌")
+        print("\n[!] LUMINA IS DOWN. Execute manual wake procedure:")
+        print("    $ ./scripts/wake_lumina.sh")
+        print("    (Refer to scripts/wake_lumina.sh for passwords)")
+
+    # 2. Check Local Dev and Lite
+    urls = [DEFAULT_URL, LITE_URL]
     for url in urls:
         print(f"   Target: {url} ... ", end="", flush=True)
         code, _ = make_request(f"{url}/health", timeout=1)
@@ -73,6 +85,7 @@ def get_active_url():
             print("ONLINE ✅")
             return url
         print("OFFLINE ❌")
+    
     return None
 
 def fetch_black_box_context(base_url):
@@ -133,29 +146,43 @@ def log_session_start(base_url, session_id):
     # Fire and forget
     make_request(f"{base_url}/v1/memory/store", method='POST', data=payload)
 
+def setup_local_tunnel():
+    """Ensures Node 3 (Piotrek) is accessible."""
+    if os.path.exists("scripts/setup_tunnel.sh"):
+        print("🛠️  Configuring Node 3 Tunnel...")
+        os.system("./scripts/setup_tunnel.sh")
+
 def main():
     import argparse
     parser = argparse.ArgumentParser(description="RAE Bootstrap")
-    parser.add_argument("--node", type=str, choices=["local", "node1"], default="local", help="Node to connect to")
+    parser.add_argument("--node", type=str, choices=["local", "node1", "auto"], default="auto", help="Node to connect to")
     args = parser.parse_args()
 
     session_id = get_or_create_session_id()
-    print(f"🔌 RAE-First Bootstrap (Node: {args.node.upper()})...")
+    print(f"🔌 RAE-First Bootstrap (Mode: {args.node.upper()})...")
     print(f"🆔 SESSION_ID: {session_id}")
     
+    setup_local_tunnel()
+
     if args.node == "node1":
         active_url = LUMINA_URL
-    else:
-        # Check Local Dev first, then Lite
+        code, _ = make_request(f"{active_url}/health", timeout=2)
+        if code != 200:
+            print(f"\n❌ CRITICAL: Lumina ({LUMINA_URL}) is unreachable.")
+            print("   Run: ./scripts/wake_lumina.sh")
+            sys.exit(1)
+    elif args.node == "local":
         active_url = None
         for url in [DEFAULT_URL, LITE_URL]:
             code, _ = make_request(f"{url}/health", timeout=1)
             if code == 200:
                 active_url = url
                 break
+    else: # auto
+        active_url = get_active_url()
     
     if not active_url:
-        print("\n❌ CRITICAL: Selected RAE Node is unreachable.")
+        print("\n❌ CRITICAL: No RAE Nodes are reachable.")
         sys.exit(1)
     
     print(f"Connected to {active_url} ✅")

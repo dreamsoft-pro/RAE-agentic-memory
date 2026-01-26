@@ -325,8 +325,6 @@ class PostgreSQLStorage(IMemoryStorage):
         # Text search (simple ILIKE for robustness in tests)
         where_clause = " AND ".join(conditions)
 
-        print(f"DEBUG SQL: {where_clause} | PARAMS: {params}")
-
         async with pool.acquire() as conn:
             rows = await conn.fetch(
                 f"""
@@ -512,9 +510,6 @@ class PostgreSQLStorage(IMemoryStorage):
         where_clause = " AND ".join(conditions)
         order_clause = f"ORDER BY {order_by} {order_direction.upper()}"
         
-        # DEBUG
-        print(f"DEBUG LIST SQL: {where_clause} | PARAMS: {params}")
-
         async with pool.acquire() as conn:
             rows = await conn.fetch(
                 f"""
@@ -534,8 +529,6 @@ class PostgreSQLStorage(IMemoryStorage):
                 limit,
                 offset,
             )
-            # DEBUG
-            print(f"DEBUG RESULTS COUNT: {len(rows)}")
             return [self._row_to_dict(row) for row in rows]
 
         results = []
