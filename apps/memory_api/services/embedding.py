@@ -27,7 +27,13 @@ class EmbeddingService:
             return
 
         # Use the model defined in settings or fallback to standard defaults
-        self.litellm_model = self.settings.RAE_LLM_MODEL_DEFAULT or "text-embedding-3-small"
+        model_name = self.settings.RAE_LLM_MODEL_DEFAULT or "text-embedding-3-small"
+        
+        # Auto-fix prefix for local models if LLM_BACKEND is ollama
+        if self.settings.RAE_LLM_BACKEND == "ollama" and not model_name.startswith("ollama/") and "openai" not in model_name.lower():
+            model_name = f"ollama/{model_name}"
+            
+        self.litellm_model = model_name
 
         print(f"Embedding service initialized with LiteLLM model: {self.litellm_model}")
         self._initialized = True

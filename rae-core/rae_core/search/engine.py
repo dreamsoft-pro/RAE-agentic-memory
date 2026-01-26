@@ -4,7 +4,7 @@ from typing import Any, Dict, List, Tuple, Optional
 from uuid import UUID
 import structlog
 
-from rae_core.search.fusion import RRFFusion
+from rae_core.math.fusion import RRFFusion
 
 logger = structlog.get_logger(__name__)
 

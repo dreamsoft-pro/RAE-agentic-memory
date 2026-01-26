@@ -70,14 +70,18 @@ class QdrantVectorStore(IVectorStore):
         
         all_results: Dict[UUID, float] = {}
         try:
-            results = await self.client.search(
+            if not hasattr(self.client, "search"):
+                logger.error("qdrant_client_invalid_type", type=str(type(self.client)), has_search=hasattr(self.client, "search"))
+            
+            results = await self.client.query_points(
                 collection_name=self.collection_name,
-                query_vector=NamedVector(name=v_name, vector=query_embedding),
+                query=query_embedding, # For 1.10+ query can be vector directly
+                using=v_name,
                 query_filter=query_filter,
                 limit=limit,
                 score_threshold=score_threshold or 0.0 # Liberal threshold for benchmarks
             )
-            for res in results:
+            for res in results.points:
                 m_id = UUID(res.payload["memory_id"])
                 all_results[m_id] = res.score
         except Exception as e:

@@ -1,24 +1,15 @@
-# Next Session Plan - 2026-01-27
+# Next Session Plan - 2026-01-27 (Part 2)
 
-## 1. Final Core Stability (Priority 1)
-- [ ] Fix `test_szubar_strategy_failure_injection`:
-    - Analyze `search_memories_sql` debug logs from the previous session.
-    - Resolve the mismatch between stored governance JSONB and the search filter.
-    - Standardize `agent_id` vs `project` handling once and for all in the Postgres adapter.
-- [ ] Verify 36/36 green tests.
+## 1. Vector Layer Rescue (Priority 1)
+- [ ] Investigate "Double Prefixing" Hypothesis:
+    - Check if `LiteLLM` automatically adds prefixes for `nomic-embed-text`.
+    - Test `run_benchmark.py` WITHOUT manual prefixes.
+- [ ] Verify `embedding_dim` consistency (768 vs 384) in all configs.
+- [ ] Aim for Hybrid MRR > Math-Only MRR (currently Hybrid is 0.3 vs Math 0.7 on Academic, but 0.5 vs 0.3 on Industrial Large).
 
-## 2. Benchmark Optimization (Spectacular Results)
-- [ ] Re-run `Industrial Large` on **Node 1 (Lumina)**:
-    - Use a larger model (e.g., `nomic-embed-text` 768d or `text-embedding-3-small` 1536d).
-    - Aim for MRR > 0.90 using the new **ConfidenceWeightedFusion** (ORB 2.0).
-- [ ] Fix `Math-Only` precision:
-    - Investigate why `plainto_tsquery` is less effective than ILIKE for technical failures.
-    - Implement a more aggressive heuristic expansion for technical terms.
+## 2. Industrial Large Benchmark
+- [x] Run `Industrial Large` on Lumina (Result: Hybrid 0.51, Math 0.30).
+- [ ] Analyze why Hybrid is better here but worse elsewhere. (Hypothesis: FullText returns 0 results for semantic queries in Large dataset).
 
-## 3. Self-Tuning Intelligence (ORB 4.0)
-- [ ] Integrate entropy-based confidence analysis into `ConfidenceWeightedFusion`.
-- [ ] Activate `Graph Centrality Boost` using real edge data from benchmarks.
-
-## 4. Documentation & Cleanup
-- [ ] Remove temporary diagnostic logs from `rae_adapters/postgres.py`.
-- [ ] Update `DEVELOPER_CHEAT_SHEET.md` with new fusion strategy commands.
+## 3. Documentation
+- [ ] Update `BENCHMARK_RESULTS.md` with the "Math-Only Dominance" discovery and "Vector Safety Net" findings.

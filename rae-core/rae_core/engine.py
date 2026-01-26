@@ -3,7 +3,7 @@
 from typing import Any, Dict, List, Tuple, Optional
 from uuid import UUID
 import structlog
-from rae_core.search.fusion import RRFFusion
+from rae_core.math.fusion import RRFFusion
 
 logger = structlog.get_logger(__name__)
 
@@ -68,12 +68,14 @@ class RAEEngine:
         
         # Avoid in-place modification of kwargs
         strategy_weights = kwargs.get("custom_weights", {}).copy() if kwargs.get("custom_weights") else None
-        
+        active_strategies = kwargs.get("strategies")
+
         candidates = await self.search_engine.search(
             query=query, 
             tenant_id=tenant_id, 
             filters=search_filters,
             limit=top_k * 5, # Wide window for Math Layer
+            strategies=active_strategies,
             strategy_weights=strategy_weights,
         )
 
