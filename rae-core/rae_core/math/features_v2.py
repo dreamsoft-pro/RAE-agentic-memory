@@ -5,7 +5,6 @@ Adds derived features and quality tracking for data-driven decisions.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List
 
 from rae_core.math.features import Features
 from rae_core.math.types import TaskType
@@ -20,14 +19,14 @@ class FeaturesV2(Features):
     """
 
     # Historical performance
-    recent_quality_scores: List[float] = field(
+    recent_quality_scores: list[float] = field(
         default_factory=list
     )  # Last N quality scores
     quality_trend: float = 0.0  # MRR trend over last N queries
     error_rate_recent: float = 0.0  # Error rate in last N operations
 
     # Level history and stability
-    level_history: List[str] = field(default_factory=list)  # Last N levels used
+    level_history: list[str] = field(default_factory=list)  # Last N levels used
     consecutive_same_level: int = 0  # Stability indicator
 
     # Task complexity
@@ -40,7 +39,7 @@ class FeaturesV2(Features):
     # First turn indicator
     is_first_turn: bool = False
 
-    def compute_derived_features(self) -> Dict[str, float]:
+    def compute_derived_features(self) -> dict[str, float]:
         """
         Compute derived features for decision making.
 

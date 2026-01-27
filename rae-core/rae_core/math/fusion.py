@@ -4,8 +4,8 @@ Fusion Strategies for Hybrid Search.
 This module provides fusion strategies like RRF and Confidence-Weighted Fusion.
 """
 
-from typing import Dict, List, Tuple, Any
 from uuid import UUID
+
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -19,21 +19,21 @@ class RRFFusion:
         self.k = k
 
     def fuse(
-        self, 
-        strategy_results: Dict[str, List[Tuple[UUID, float]]],
-        weights: Dict[str, float]
-    ) -> List[Tuple[UUID, float]]:
-        
-        rrf_scores: Dict[UUID, float] = {}
+        self,
+        strategy_results: dict[str, list[tuple[UUID, float]]],
+        weights: dict[str, float]
+    ) -> list[tuple[UUID, float]]:
+
+        rrf_scores: dict[UUID, float] = {}
 
         for strategy_name, results in strategy_results.items():
             weight = weights.get(strategy_name, 1.0)
-            
+
             for rank, (item_id, _) in enumerate(results):
                 # RRF formula: 1 / (k + rank)
                 # Weighted RRF: weight / (k + rank)
                 score = weight / (self.k + rank)
-                
+
                 if item_id in rrf_scores:
                     rrf_scores[item_id] += score
                 else:
@@ -47,15 +47,15 @@ class ConfidenceWeightedFusion:
     Confidence-Weighted Fusion (ORB 2.0).
     Uses signal confidence (entropy/variance) to dynamically weight strategies.
     """
-    def __init__(self, default_weights: Dict[str, float] = None):
+    def __init__(self, default_weights: dict[str, float] = None):
         self.default_weights = default_weights or {"vector": 1.0, "fulltext": 1.0}
 
     def fuse(
-        self, 
-        strategy_results: Dict[str, List[Tuple[UUID, float]]],
-        manual_weights: Dict[str, float]
-    ) -> List[Tuple[UUID, float]]:
-        
+        self,
+        strategy_results: dict[str, list[tuple[UUID, float]]],
+        manual_weights: dict[str, float]
+    ) -> list[tuple[UUID, float]]:
+
         # 1. Normalize Scores (Min-Max) per strategy
         normalized_results = {}
         for name, results in strategy_results.items():
@@ -70,10 +70,10 @@ class ConfidenceWeightedFusion:
             normalized_results[name] = norm_results
 
         # 2. Apply Weights (Manual > Default)
-        final_scores: Dict[UUID, float] = {}
+        final_scores: dict[UUID, float] = {}
         for name, results in normalized_results.items():
             weight = manual_weights.get(name, self.default_weights.get(name, 1.0))
-            
+
             for item_id, score in results:
                 weighted_score = score * weight
                 final_scores[item_id] = final_scores.get(item_id, 0.0) + weighted_score

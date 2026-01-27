@@ -4,11 +4,10 @@ This provider runs embedding models locally using ONNX Runtime, ensuring
 consistent, high-performance vector generation across platforms (Linux, Windows, Mobile).
 """
 
-import os
 from pathlib import Path
-from typing import Any, List, Optional
 
 import numpy as np
+
 try:
     import onnxruntime as ort
     from tokenizers import Tokenizer
@@ -29,7 +28,7 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
         model_name: str = "nomic-embed-text-v1.5",
         max_length: int = 8192,
         normalize: bool = True,
-        matryoshka_dim: Optional[int] = None,
+        matryoshka_dim: int | None = None,
     ):
         """Initialize ONNX provider.
 
@@ -66,7 +65,7 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
         providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
         if "CUDAExecutionProvider" not in ort.get_available_providers():
             providers = ["CPUExecutionProvider"]
-            
+
         self.session = ort.InferenceSession(self.model_path, providers=providers)
         self.input_name = self.session.get_inputs()[0].name
         self.output_name = self.session.get_outputs()[0].name # Usually 'last_hidden_state'
@@ -84,17 +83,17 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
         """Perform Mean Pooling on last hidden state."""
         # last_hidden_state: (batch, seq, dim)
         # attention_mask: (batch, seq)
-        
+
         # Expand mask to (batch, seq, dim)
         mask_expanded = np.expand_dims(attention_mask, axis=-1).astype(last_hidden_state.dtype)
-        
+
         # Sum embeddings (ignoring padding)
         sum_embeddings = np.sum(last_hidden_state * mask_expanded, axis=1)
-        
+
         # Sum mask (count of tokens)
         sum_mask = np.sum(mask_expanded, axis=1)
         sum_mask = np.clip(sum_mask, a_min=1e-9, a_max=None) # Avoid div by zero
-        
+
         return sum_embeddings / sum_mask
 
     def _normalize_l2(self, vectors: np.ndarray) -> np.ndarray:
@@ -111,20 +110,20 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
         """Embed a batch of texts."""
         # 1. Tokenize
         encoded = self.tokenizer.encode_batch(texts)
-        
+
         # Prepare inputs for ONNX
         input_ids = np.array([e.ids for e in encoded], dtype=np.int64)
         attention_mask = np.array([e.attention_mask for e in encoded], dtype=np.int64)
-        
+
         # Some models require token_type_ids, Nomic usually doesn't or handles it.
         # If model expects it, we need to provide it.
         # Nomic ONNX usually takes: input_ids, attention_mask.
-        
+
         inputs = {
             "input_ids": input_ids,
             "attention_mask": attention_mask
         }
-        
+
         # Check if model needs token_type_ids
         input_names = [i.name for i in self.session.get_inputs()]
         if "token_type_ids" in input_names:
@@ -132,19 +131,19 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
 
         # 2. Run Inference
         outputs = self.session.run(None, inputs)
-        
+
         # Output is typically last_hidden_state (batch, seq, dim)
         last_hidden_state = outputs[0]
-        
+
         # 3. Pooling (Mean)
         embeddings = self._mean_pooling(last_hidden_state, attention_mask)
-        
+
         # 4. Matryoshka Truncation (Optional)
         if self.matryoshka_dim:
             embeddings = embeddings[:, :self.matryoshka_dim]
-            
+
         # 5. Normalization (L2)
         if self.normalize:
             embeddings = self._normalize_l2(embeddings)
-            
+
         return embeddings.tolist()

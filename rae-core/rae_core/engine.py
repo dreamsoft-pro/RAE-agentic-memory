@@ -1,15 +1,14 @@
 """RAE Engine - The Intelligent Memory Manifold."""
 
-from typing import Any, Dict, List, Tuple, Optional
-from uuid import UUID
+from typing import Any
+
 import structlog
-from rae_core.math.fusion import RRFFusion
 
 logger = structlog.get_logger(__name__)
 
 class RAEEngine:
     """
-    RAE Engine: A self-tuning memory manifold that uses designed math 
+    RAE Engine: A self-tuning memory manifold that uses designed math
     to navigate vector spaces more intelligently than standard RAG.
     """
     def __init__(
@@ -28,7 +27,7 @@ class RAEEngine:
         self.embedding_provider = embedding_provider
         self.llm_provider = llm_provider
         self.settings = settings
-        
+
         # Initialize Math Layer Controller (The Brain)
         from rae_core.math.controller import MathLayerController
         self.math_ctrl = math_controller or MathLayerController(config=settings)
@@ -69,7 +68,7 @@ class RAEEngine:
         """
         # 1. RETRIEVAL (Vector + Keyword)
         search_filters = {"agent_id": agent_id, "project": project, "layer": layer, **(filters or {})}
-        
+
         # Dynamic Weight Selection via Math Controller (Bandit)
         # If weights are provided in kwargs, they override the autonomous controller
         strategy_weights = kwargs.get("custom_weights")
@@ -77,12 +76,12 @@ class RAEEngine:
             # autonomous tuning
             strategy_weights = self.math_ctrl.get_retrieval_weights(query)
             logger.info("autonomous_tuning_applied", weights=strategy_weights)
-        
+
         active_strategies = kwargs.get("strategies")
 
         candidates = await self.search_engine.search(
-            query=query, 
-            tenant_id=tenant_id, 
+            query=query,
+            tenant_id=tenant_id,
             filters=search_filters,
             limit=top_k * 5, # Wide window for Math Layer
             strategies=active_strategies,
@@ -91,7 +90,7 @@ class RAEEngine:
 
         # 2. DESIGNED MATH SCORING (The Manifold)
         from rae_core.math.structure import ScoringWeights
-        
+
         raw_weights = kwargs.get("custom_weights")
         if isinstance(raw_weights, dict):
             # Extract only fields valid for ScoringWeights
@@ -99,14 +98,14 @@ class RAEEngine:
             scoring_weights = ScoringWeights(**valid_fields)
         else:
             scoring_weights = raw_weights
-        
+
         memories = []
         for m_id, sim_score in candidates:
             memory = await self.memory_storage.get_memory(m_id, tenant_id)
             if memory:
                 # Math Layer weighs similarity against system-wide importance and topology
                 math_score = self.math_ctrl.score_memory(
-                    memory, 
+                    memory,
                     query_similarity=sim_score,
                     weights=scoring_weights
                 )
@@ -121,7 +120,7 @@ class RAEEngine:
             for m in memories:
                 if m.get("layer") != "reflective":
                     # Synergy boost from reflections
-                    m["math_score"] *= 1.5 
+                    m["math_score"] *= 1.5
 
         memories.sort(key=lambda x: x.get("math_score", 0.0), reverse=True)
         return memories[:top_k]
@@ -129,7 +128,7 @@ class RAEEngine:
     async def generate_text(
         self,
         prompt: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
         max_tokens: int = 1000,
         temperature: float = 0.7,
     ) -> str:
@@ -139,7 +138,7 @@ class RAEEngine:
         """
         if not self.llm_provider:
             raise RuntimeError("LLM provider not configured in RAEEngine")
-        
+
         return await self.llm_provider.generate_text(
             prompt=prompt,
             system_prompt=system_prompt,
@@ -152,7 +151,7 @@ class RAEEngine:
         content = kwargs.get("content")
         tenant_id = kwargs.get("tenant_id")
         m_id = await self.memory_storage.store_memory(**kwargs)
-        
+
         # Automatic Vectorization (Manifold Entry)
         emb = await self.embedding_provider.embed_text(content)
         await self.vector_store.store_vector(m_id, emb, tenant_id, metadata=kwargs)

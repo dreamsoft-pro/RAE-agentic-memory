@@ -190,12 +190,12 @@ class SQLiteVectorStore(IVectorStore):
                 # Bulk cosine similarity calculation
                 dot_products = np.dot(matrix, query_vec)
                 norms = np.linalg.norm(matrix, axis=1)
-                
+
                 # Prevent division by zero
                 query_norm = np.linalg.norm(query_vec)
                 if query_norm == 0:
                     return []
-                
+
                 denom = query_norm * norms
                 denom[denom == 0] = 1e-9 # Prevent div zero
                 similarities = dot_products / denom

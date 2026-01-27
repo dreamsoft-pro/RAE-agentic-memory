@@ -11,7 +11,6 @@ This service provides comprehensive budget management including:
 
 from datetime import datetime
 from typing import Any, Dict, Optional, Tuple
-
 from uuid import UUID
 
 import structlog

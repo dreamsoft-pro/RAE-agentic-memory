@@ -1,20 +1,21 @@
-# Next Session Plan - RAE System 3.1 (Reflection-Aware)
+# Plan Następnej Sesji - Stabilizacja Core (2026-01-27)
 
-## 1. Benchmark Evolution (The "Meta-Metric")
-- [ ] **Refactor Benchmark Logic:**
-    - Current Flaw: Finding a "Reflection" memory counts as a MISS because its ID differs from the source document ID.
-    - New Logic: If the retrieved memory is a Reflection (`layer='reflective'`) and its content references the target document ID/Content, count it as an **Indirect HIT**.
-    - Goal: Prove that "Learning in the Loop" actually works (MRR should rise during the session as reflections are created).
+## Status Sesji
+Zakończono naprawę kilkunastu regresji po refaktoryzacji na Luminie. Wdrożono zasadę "Fail Fast".
 
-## 2. In-Session Learning Verification
-- [ ] **Run "Repeat Benchmark"**:
-    - Query Set A (Baseline) -> Failures generate Reflections.
-    - Query Set A (Repeat) -> Should hit Reflections -> 100% Success.
-    - This proves the "Self-Healing Memory" concept definitively.
+## Co zostało zrobione:
+1.  **AGENT_CORE_PROTOCOL.md**: Dodano zasadę przerywania testów na pierwszym błędzie.
+2.  **Fixy Importów/Klas**: Naprawiono `test_stability_fusion.py` oraz `MultiVectorSearchStrategy` (migracja na klasę `RRFFusion`).
+3.  **Cleanup**: Usunięto przestarzałe testy (`test_engine_extended.py`, `test_engine_extra.py`).
+4.  **Przywrócenie poprawek**: Re-aplikowano poprawki `agent_id` w Postgresie i `ttl` w InMemoryStorage, które zostały nadpisane przez rsync.
+5.  **Maki i Telemetria**: Naprawiono mocki w `test_background_tasks.py` (async) oraz `test_opentelemetry.py` (`AsyncQdrantClient`).
+6.  **Math & Logic**: Naprawiono błąd `timedelta` w `math/controller.py` oraz uwzględnianie wag strategii w `HybridSearchEngine`.
+7.  **RRF Logic**: Zaktualizowano testy hybrydowe do logiki rankingu 0-indexed.
 
-## 3. Productionize Native ONNX
-- [ ] Move `NativeEmbeddingProvider` from prototype to default production configuration for Windows/Mobile builds.
-- [ ] Ensure `rae-core` uses ONNX by default when available, falling back to API only if configured.
+## Do zrobienia w następnej sesji:
+1.  **Weryfikacja**: Kontynuacja uruchamiania pełnego suite: `.venv/bin/python -m pytest -x apps/memory_api/tests rae-core/tests`.
+2.  **Naprawa kolejnych błędów**: Systematyczne usuwanie przeszkód aż do osiągnięcia 100% PASS (obecnie około 1640/1736 testów przechodzi).
+3.  **Zero Drift**: Po przejściu testów, wykonanie `make pre-push` i commit dokumentacji.
 
-## 4. Final Polish
-- [ ] Integrate `Bandit` persistence into the main `RAEEngine` (not just the benchmark script) so the production app learns user preferences over time.
+## Komenda na start:
+`python3 scripts/bootstrap_session.py && .venv/bin/python -m pytest -x apps/memory_api/tests rae-core/tests`

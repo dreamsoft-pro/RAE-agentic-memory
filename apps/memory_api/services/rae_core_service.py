@@ -242,11 +242,11 @@ class RAECoreService:
                         top_k=5,
                         filters={"governance.is_failure": "true"},
                     )
-                    
+
                     # 2. If nothing found, try project-wide wildcard search for failures
                     if not failures:
                         failures = await self.service.engine.search_memories(
-                            query="*", 
+                            query="*",
                             tenant_id=rae_input.tenant_id,
                             agent_id="default",
                             project=project,
@@ -279,7 +279,7 @@ class RAECoreService:
                 # 2. Generate response using LLM or DESIGNED MATH (Fallback)
                 try:
                     import asyncio
-                    
+
                     # Check if LLM is actually available
                     if not self.service.engine.llm_provider:
                         raise RuntimeError("LLM Provider not available (RAE-Lite Mode)")
@@ -304,7 +304,7 @@ class RAECoreService:
                                 top_facts.append(r.get("content", ""))
                             else:
                                 top_facts.append(str(r))
-                                
+
                         llm_result = (
                             "STABILITY MODE ACTIVE (Math Fallback). "
                             "Based on my memory manifold, here are the core facts: "

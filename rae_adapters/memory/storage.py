@@ -91,11 +91,19 @@ class InMemoryStorage(IMemoryStorage):
         strength: float = 1.0,
         info_class: str = "internal",
         governance: dict[str, Any] | None = None,
+        ttl: int | None = None,
     ) -> UUID:
         """Store a new memory."""
         async with self._lock:
             memory_id = uuid4()
             now = datetime.now(timezone.utc)
+
+            # Calculate expiration from TTL if provided and not already set
+            expiration = expires_at
+            if ttl is not None and expiration is None:
+                from datetime import timedelta
+
+                expiration = now + timedelta(seconds=ttl)
 
             memory = {
                 "id": memory_id,
@@ -109,7 +117,7 @@ class InMemoryStorage(IMemoryStorage):
                 "importance": importance or 0.5,
                 "created_at": now,
                 "last_accessed_at": now,
-                "expires_at": expires_at,
+                "expires_at": expiration,
                 "usage_count": 0,
                 "memory_type": memory_type,
                 "project": project,

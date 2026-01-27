@@ -7,12 +7,12 @@ Dependency-free version (uses standard library only).
 Forces "RAE-First" by INJECTING active memory context directly into stdout.
 """
 
-import sys
 import json
 import os
-import urllib.request
-import urllib.error
 import socket
+import sys
+import urllib.error
+import urllib.request
 import uuid
 
 # --- Configuration ---
@@ -34,7 +34,7 @@ def get_or_create_session_id():
             sid = f.read().strip()
             if sid:
                 return sid
-    
+
     new_sid = str(uuid.uuid4())
     with open(SESSION_FILE, "w") as f:
         f.write(new_sid)
@@ -63,7 +63,7 @@ def make_request(url, method='GET', data=None, timeout=5):
 def get_active_url():
     """Finds the working RAE API URL."""
     print("🔍 Probing RAE Nodes...")
-    
+
     # 1. Check Lumina (Node 1) first as it is the primary compute node
     print(f"   Target: {LUMINA_URL} (Lumina) ... ", end="", flush=True)
     code, _ = make_request(f"{LUMINA_URL}/health", timeout=2)
@@ -85,22 +85,22 @@ def get_active_url():
             print("ONLINE ✅")
             return url
         print("OFFLINE ❌")
-    
+
     return None
 
 def fetch_black_box_context(base_url):
     """Pulls the latest mental state from RAE."""
     print(f"\n🧠 ACCESSING HIVE MIND via {base_url}...")
-    
+
     # 1. Fetch Working Memory (Immediate Context)
     query_payload = {
         "query_text": "Current session goals, active tasks, and recent critical fixes",
         "k": 5,
         "layers": ["working", "episodic"]
     }
-    
+
     code, data = make_request(f"{base_url}/v1/memory/query", method='POST', data=query_payload)
-    
+
     if code == 200:
         results = data.get("results", [])
         print("\n=== 📂 ACTIVE CONTEXT (FROM RAE) ===")
@@ -116,9 +116,9 @@ def fetch_black_box_context(base_url):
     # 2. Fetch Strategic Directives (Reflective)
     query_payload["layers"] = ["reflective", "semantic"]
     query_payload["query_text"] = "Strategic protocols, critical stability rules"
-    
+
     code, data = make_request(f"{base_url}/v1/memory/query", method='POST', data=query_payload)
-    
+
     if code == 200:
         results = data.get("results", [])
         print("\n=== 🛡️  PROTOCOL DIRECTIVES ===")
@@ -130,10 +130,10 @@ def log_session_start(base_url, session_id):
     """Automatically creates a memory trace that a new session has started."""
     import getpass
     import platform
-    
+
     user = getpass.getuser()
     node = platform.node()
-    
+
     payload = {
         "content": f"RAE-First Session Activated. User: {user} | Node: {node} | Protocol: HARD_FRAMES_V1",
         "layer": "working",
@@ -142,7 +142,7 @@ def log_session_start(base_url, session_id):
         "source": "bootstrap_script",
         "session_id": session_id
     }
-    
+
     # Fire and forget
     make_request(f"{base_url}/v1/memory/store", method='POST', data=payload)
 
@@ -161,7 +161,7 @@ def main():
     session_id = get_or_create_session_id()
     print(f"🔌 RAE-First Bootstrap (Mode: {args.node.upper()})...")
     print(f"🆔 SESSION_ID: {session_id}")
-    
+
     setup_local_tunnel()
 
     if args.node == "node1":
@@ -180,11 +180,11 @@ def main():
                 break
     else: # auto
         active_url = get_active_url()
-    
+
     if not active_url:
         print("\n❌ CRITICAL: No RAE Nodes are reachable.")
         sys.exit(1)
-    
+
     print(f"Connected to {active_url} ✅")
     log_session_start(active_url, session_id)
     fetch_black_box_context(active_url)

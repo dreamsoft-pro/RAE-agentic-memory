@@ -61,6 +61,7 @@ class TestExtractGraphLazy:
         mock_result.triples = [Mock(), Mock(), Mock()]  # 3 triples
         mock_result.extracted_entities = ["Entity1", "Entity2"]
         mock_service.extract_knowledge_graph = AsyncMock(return_value=mock_result)
+        mock_service.store_graph_triples = AsyncMock(return_value={"added": 3, "updated": 0})
         mock_service_class.return_value = mock_service
 
         # Execute task

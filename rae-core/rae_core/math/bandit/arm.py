@@ -6,7 +6,6 @@ An arm represents a specific (level, strategy) combination that the bandit can c
 
 import json
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
 
 from rae_core.math.types import MathLevel
 
@@ -46,11 +45,11 @@ class Arm:
     total_reward: float = 0.0
 
     # Context-specific statistics
-    context_pulls: Dict[int, int] = field(default_factory=dict)
-    context_rewards: Dict[int, float] = field(default_factory=dict)
+    context_pulls: dict[int, int] = field(default_factory=dict)
+    context_rewards: dict[int, float] = field(default_factory=dict)
 
     # Metadata
-    last_pulled: Optional[float] = None
+    last_pulled: float | None = None
     confidence: float = 0.0
 
     def __post_init__(self):
@@ -58,7 +57,7 @@ class Arm:
         if not self.arm_id:
             self.arm_id = f"{self.level.value}:{self.strategy}"
 
-    def mean_reward(self, context_id: Optional[int] = None) -> float:
+    def mean_reward(self, context_id: int | None = None) -> float:
         """
         Calculate mean reward for this arm.
 
@@ -85,7 +84,7 @@ class Arm:
         self,
         total_pulls: int,
         c: float = 1.0,
-        context_id: Optional[int] = None,
+        context_id: int | None = None,
         context_bonus: float = 0.0,
     ) -> float:
         """
@@ -123,8 +122,8 @@ class Arm:
     def update(
         self,
         reward: float,
-        context_id: Optional[int] = None,
-        timestamp: Optional[float] = None,
+        context_id: int | None = None,
+        timestamp: float | None = None,
     ):
         """
         Update arm statistics with a new reward observation.
@@ -153,7 +152,7 @@ class Arm:
         # Asymptotic confidence: 1 - 1/(1 + pulls)
         self.confidence = 1.0 - 1.0 / (1.0 + self.pulls)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Serialize to dictionary"""
         return {
             "arm_id": self.arm_id,
@@ -173,7 +172,7 @@ class Arm:
         return json.dumps(self.to_dict(), indent=2)
 
     @classmethod
-    def from_dict(cls, data: Dict) -> "Arm":
+    def from_dict(cls, data: dict) -> "Arm":
         """Deserialize from dictionary"""
         level = MathLevel(data["level"])
         return cls(
@@ -189,7 +188,7 @@ class Arm:
         )
 
 
-def create_default_arms() -> List[Arm]:
+def create_default_arms() -> list[Arm]:
     """
     Create the default set of arms for the bandit.
 

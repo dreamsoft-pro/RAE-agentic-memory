@@ -327,8 +327,8 @@ class TestTracedQdrantClient:
 
     @pytest.fixture
     def mock_qdrant_client(self):
-        """Mock QdrantClient."""
-        with patch("apps.memory_api.observability.traced_qdrant.QdrantClient") as mock:
+        """Mock AsyncQdrantClient."""
+        with patch("apps.memory_api.observability.traced_qdrant.AsyncQdrantClient") as mock:
             yield mock
 
     def test_traced_client_initialization(self, mock_qdrant_client):

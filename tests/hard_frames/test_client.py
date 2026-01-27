@@ -1,7 +1,10 @@
-import pytest
 from unittest.mock import MagicMock, patch
+
+import pytest
+
 from sdk.rae_secure.client import RAEClient
 from sdk.rae_secure.types import KernelResponse
+
 
 class TestRAESecureClient:
 
@@ -21,7 +24,7 @@ class TestRAESecureClient:
 
         # Init client
         client = RAEClient(kernel_url="http://mock-kernel", api_key="secret")
-        
+
         # Execute
         result = client.ask("summarize", text="hello")
 

@@ -1,7 +1,7 @@
-import httpx
-import os
 import logging
-from typing import Optional, Dict, List, Any
+from typing import Any, Dict, List
+
+import httpx
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -53,7 +53,7 @@ class RAEClient:
                         defaults = {"default", "default_agent"}
                         return list(set(data) | defaults)
                     return ["default", "default_agent"]
-                
+
                 logger.warning(f"Failed to fetch projects: {resp.status_code}")
                 return ["default", "default_agent"]
         except Exception as e:
@@ -97,10 +97,10 @@ class RAEClient:
                     "project": self.headers.get("X-Project-ID", "default"),
                     # We can use filters to sort by time if engine supports "sort_by" in filters,
                     # but typically engine returns most relevant (or recent if query is wildcard).
-                    "filters": {} 
+                    "filters": {}
                 }
                 resp = await client.post(f"{self.api_url}/v2/memories/query", json=payload)
-                
+
                 if resp.status_code == 200:
                     data = resp.json()
                     return data.get("results", [])
@@ -121,12 +121,12 @@ class RAEClient:
                 audit_headers = self.headers.copy()
                 audit_headers["X-Audit-Reason"] = reason
                 audit_headers["X-Audit-User"] = user
-                
+
                 del_resp = await client.delete(
                     f"{self.api_url}/v2/memories/{memory_id}",
                     headers=audit_headers
                 )
-                
+
                 if del_resp.status_code not in [200, 404]:
                     logger.error(f"Failed to delete old memory: {del_resp.text}")
                     # In strict ISO, we might want to abort here. But for usability, if 404, proceed.
@@ -139,7 +139,7 @@ class RAEClient:
                     "tags": new_tags,
                     "project": self.headers.get("X-Project-ID", "default"),
                     "source": "dashboard-iso-edit",
-                    "importance": 1.0, 
+                    "importance": 1.0,
                     "metadata": {
                         "previous_version_id": memory_id,
                         "modification_reason": reason,
@@ -148,13 +148,13 @@ class RAEClient:
                         "lineage_action": "update"
                     }
                 }
-                
+
                 create_resp = await client.post(
                     f"{self.api_url}/v2/memories/",
                     json=payload,
                     headers=audit_headers
                 )
-                
+
                 return create_resp.status_code == 200
         except Exception as e:
             logger.error(f"Update failed: {e}")
@@ -167,7 +167,7 @@ class RAEClient:
                 audit_headers = self.headers.copy()
                 audit_headers["X-Audit-Reason"] = reason
                 audit_headers["X-Audit-User"] = user
-                
+
                 resp = await client.delete(
                     f"{self.api_url}/memories/{memory_id}",
                     headers=audit_headers

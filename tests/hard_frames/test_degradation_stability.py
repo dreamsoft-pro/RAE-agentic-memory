@@ -1,6 +1,9 @@
+from unittest.mock import patch
+
 import pytest
+
 from sdk.rae_secure.client import RAEClient
-from unittest.mock import MagicMock, patch
+
 
 class TestDegradationStability:
     """
@@ -22,10 +25,10 @@ class TestDegradationStability:
             # Kernel responds with 403 Forbidden for unknown tools
             mock_post.return_value.status_code = 403
             mock_post.return_value.json.return_value = {"error": "Unknown intent"}
-            
+
             # Agent tries to call non-existent function
             response = confused_agent_client.ask("nuclear_launch", target="mars")
-            
+
             # The system must handle this gracefully, not crash the agent
             assert response.success is False
             # Client wraps error securely
@@ -38,7 +41,7 @@ class TestDegradationStability:
         with patch("sdk.rae_secure.client.requests.Session.post") as mock_post:
             # Mock network layer rejecting garbage
             mock_post.side_effect = Exception("Protocol Error: 400 Bad Request")
-            
+
             # Agent sends garbage (simulated by client method, though client forces typing)
             # We assume the hallucination happens BEFORE typing, i.e. LLM output -> Client call
             # So we test if Client handles weird inputs

@@ -276,9 +276,9 @@ class SQLiteGraphStore(IGraphStore):
             # We want edges where BOTH source and target are in our set
             params = node_ids + node_ids + [tenant_id]
             sql = f"""
-                SELECT source_id, target_id, weight 
-                FROM knowledge_graph_edges 
-                WHERE source_id IN ({placeholders}) 
+                SELECT source_id, target_id, weight
+                FROM knowledge_graph_edges
+                WHERE source_id IN ({placeholders})
                   AND target_id IN ({placeholders})
                   AND tenant_id = ?
             """

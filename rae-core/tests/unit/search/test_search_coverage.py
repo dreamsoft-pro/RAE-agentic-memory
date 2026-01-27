@@ -41,13 +41,6 @@ class TestSearchCoverage:
         assert res == []
 
     @pytest.mark.asyncio
-    async def test_engine_search_single_strategy_unknown(self):
-        """Test search_single_strategy with unknown name."""
-        engine = HybridSearchEngine(strategies={})
-        with pytest.raises(ValueError, match="Unknown strategy"):
-            await engine.search_single_strategy("unknown", "q", "t")
-
-    @pytest.mark.asyncio
     async def test_engine_search_weight_resolution(self):
         """Test how engine resolves weights from strategies if not provided."""
         mock_strat = MagicMock()
@@ -59,8 +52,8 @@ class TestSearchCoverage:
         results = await engine.search("q", "t")
 
         assert len(results) == 1
-        # RRF score should use weight 5.0
-        assert results[0][1] == 5.0 / (60 + 1)
+        # RRF score should use weight 5.0 and rank 0
+        assert results[0][1] == 5.0 / (60 + 0)
 
     @pytest.mark.asyncio
     async def test_search_cache_set(self):
@@ -91,14 +84,16 @@ class TestSearchCoverage:
         assert "s1" in mock_provider.clear.call_args[0][0]
 
     @pytest.mark.asyncio
-    async def test_engine_search_with_cache_hit_single(self, engine_with_cache):
-        """Test search_single_strategy with cache hit."""
+    async def test_engine_search_with_cache_hit(self, engine_with_cache):
+        """Test search with cache hit."""
         engine, mock_cache, mock_strat = engine_with_cache
         mid = uuid4()
         mock_cache.get.return_value = [(mid, 0.9)]
 
-        res = await engine.search_single_strategy("s1", "q", "t")
-        assert res == [(mid, 0.9)]
+        # Search with the strategy that is in cache
+        res = await engine.search("q", "t", strategies=["s1"])
+        assert len(res) > 0
+        assert res[0][0] == mid
         assert mock_strat.search.call_count == 0
 
     @pytest.fixture

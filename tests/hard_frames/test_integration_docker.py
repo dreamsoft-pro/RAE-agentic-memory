@@ -1,7 +1,8 @@
-import pytest
 import subprocess
-import requests
 import time
+
+import pytest
+
 
 @pytest.mark.integration
 class TestHardFramesIntegration:
@@ -14,7 +15,7 @@ class TestHardFramesIntegration:
         """Helper to get container ID more reliably."""
         try:
             # Look for the container in the 'hard_frames' project
-            cmd = ["docker", "ps", "--filter", f"label=com.docker.compose.project=hard_frames", "--filter", f"label=com.docker.compose.service={service_name}", "--filter", "status=running", "-q"]
+            cmd = ["docker", "ps", "--filter", "label=com.docker.compose.project=hard_frames", "--filter", f"label=com.docker.compose.service={service_name}", "--filter", "status=running", "-q"]
             output = subprocess.check_output(cmd, text=True).strip()
             if not output:
                 # Fallback to compose ps with project name
@@ -50,7 +51,7 @@ class TestHardFramesIntegration:
         """
         agent_id = self._get_container_id("rae-agent-secure")
         kernel_id = self._get_container_id("rae-kernel")
-        
+
         if not agent_id or not kernel_id:
             pytest.skip("Docker containers are not running")
 
