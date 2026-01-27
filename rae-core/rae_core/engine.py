@@ -6,11 +6,13 @@ import structlog
 
 logger = structlog.get_logger(__name__)
 
+
 class RAEEngine:
     """
     RAE Engine: A self-tuning memory manifold that uses designed math
     to navigate vector spaces more intelligently than standard RAG.
     """
+
     def __init__(
         self,
         memory_storage: Any,
@@ -30,6 +32,7 @@ class RAEEngine:
 
         # Initialize Math Layer Controller (The Brain)
         from rae_core.math.controller import MathLayerController
+
         self.math_ctrl = math_controller or MathLayerController(config=settings)
 
         # Modular Search Engine with ORB 4.0
@@ -37,19 +40,22 @@ class RAEEngine:
             self.search_engine = search_engine
         else:
             from rae_core.search.engine import HybridSearchEngine
+
             self.search_engine = HybridSearchEngine(
                 strategies={
                     "vector": self._init_vector_strategy(),
-                    "fulltext": self._init_fulltext_strategy()
+                    "fulltext": self._init_fulltext_strategy(),
                 }
             )
 
     def _init_vector_strategy(self):
         from rae_core.search.strategies.vector import VectorSearchStrategy
+
         return VectorSearchStrategy(self.vector_store, self.embedding_provider)
 
     def _init_fulltext_strategy(self):
         from rae_core.search.strategies.fulltext import FullTextStrategy
+
         return FullTextStrategy(self.memory_storage)
 
     async def search_memories(
@@ -67,17 +73,22 @@ class RAEEngine:
         RAE Reflective Search: Retrieval -> Math Scoring -> Manifold Adjustment.
         """
         # 1. RETRIEVAL (Vector + Keyword)
-        search_filters = {"agent_id": agent_id, "project": project, "layer": layer, **(filters or {})}
+        search_filters = {
+            "agent_id": agent_id,
+            "project": project,
+            "layer": layer,
+            **(filters or {}),
+        }
 
         # Dynamic Weight Selection via Math Controller (Bandit)
         # If weights are provided in kwargs, they override the autonomous controller
         custom_weights = kwargs.get("custom_weights")
-        
+
         # FIX: Distinguish between Retrieval Weights (dict) and Scoring Weights (object)
         strategy_weights = None
         if isinstance(custom_weights, dict):
             strategy_weights = custom_weights
-        
+
         if not strategy_weights:
             # autonomous tuning
             strategy_weights = self.math_ctrl.get_retrieval_weights(query)
@@ -89,7 +100,7 @@ class RAEEngine:
             query=query,
             tenant_id=tenant_id,
             filters=search_filters,
-            limit=top_k * 5, # Wide window for Math Layer
+            limit=top_k * 5,  # Wide window for Math Layer
             strategies=active_strategies,
             strategy_weights=strategy_weights,
         )
@@ -99,12 +110,16 @@ class RAEEngine:
 
         if isinstance(custom_weights, dict):
             # Extract only fields valid for ScoringWeights
-            valid_fields = {k: v for k, v in custom_weights.items() if k in ["alpha", "beta", "gamma"]}
+            valid_fields = {
+                k: v
+                for k, v in custom_weights.items()
+                if k in ["alpha", "beta", "gamma"]
+            }
             scoring_weights = ScoringWeights(**valid_fields)
         elif custom_weights:
             scoring_weights = custom_weights
         else:
-            scoring_weights = None # Will use default in score_memory if None
+            scoring_weights = None  # Will use default in score_memory if None
 
         memories = []
         for m_id, sim_score in candidates:
@@ -112,9 +127,7 @@ class RAEEngine:
             if memory:
                 # Math Layer weighs similarity against system-wide importance and topology
                 math_score = self.math_ctrl.score_memory(
-                    memory,
-                    query_similarity=sim_score,
-                    weights=scoring_weights
+                    memory, query_similarity=sim_score, weights=scoring_weights
                 )
                 memory["math_score"] = math_score
                 memory["search_score"] = sim_score
@@ -150,7 +163,7 @@ class RAEEngine:
             prompt=prompt,
             system_prompt=system_prompt,
             max_tokens=max_tokens,
-            temperature=temperature
+            temperature=temperature,
         )
 
     async def store_memory(self, **kwargs):
@@ -173,7 +186,7 @@ class RAEEngine:
                 "storage": type(self.memory_storage).__name__,
                 "vector_store": type(self.vector_store).__name__,
                 "embedding": type(self.embedding_provider).__name__,
-            }
+            },
         }
 
     async def run_reflection_cycle(self, **kwargs) -> dict[str, Any]:
@@ -183,5 +196,5 @@ class RAEEngine:
             "status": "completed",
             "reflections_created": 0,
             "memories_consolidated": 0,
-            "tokens_saved": 0
+            "tokens_saved": 0,
         }

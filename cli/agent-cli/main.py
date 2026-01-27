@@ -66,7 +66,7 @@ def store(
         "X-Tenant-Id": tenant,
         "X-API-Key": _get_api_key(),
         "X-Session-Id": session_id,
-        "X-Project-ID": project
+        "X-Project-ID": project,
     }
     payload = {
         "content": content,
@@ -97,7 +97,7 @@ def query(
         "X-Tenant-Id": tenant,
         "X-API-Key": _get_api_key(),
         "X-Session-Id": session_id,
-        "X-Project-ID": project
+        "X-Project-ID": project,
     }
     payload = {"query_text": query_text, "k": k}
     url = f"{_get_api_url()}/v1/memory/query"
@@ -121,7 +121,7 @@ def ask(
         "X-Tenant-Id": tenant,
         "X-API-Key": _get_api_key(),
         "X-Session-Id": session_id,
-        "X-Project-ID": project
+        "X-Project-ID": project,
     }
     payload = {
         "tenant_id": tenant,

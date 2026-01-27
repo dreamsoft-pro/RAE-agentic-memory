@@ -15,10 +15,7 @@ class TestStabilityFusion:
         list2 = [(id2, 0.9), (id3, 0.7)]
 
         fusion = RRFFusion(k=60)
-        strategy_results = {
-            "s1": list1,
-            "s2": list2
-        }
+        strategy_results = {"s1": list1, "s2": list2}
         fused = fusion.fuse(strategy_results, weights={"s1": 1.0, "s2": 1.0})
 
         # id2 is in both, should rank highest

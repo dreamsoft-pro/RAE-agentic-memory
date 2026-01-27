@@ -262,7 +262,9 @@ class SQLiteGraphStore(IGraphStore):
 
         return result
 
-    async def get_edges_between(self, node_ids: list[str], tenant_id: str) -> list[tuple[str, str, float]]:
+    async def get_edges_between(
+        self, node_ids: list[str], tenant_id: str
+    ) -> list[tuple[str, str, float]]:
         """
         Get all edges between a list of nodes.
         Used for Semantic Resonance scoring.
@@ -285,4 +287,3 @@ class SQLiteGraphStore(IGraphStore):
             async with db.execute(sql, params) as cursor:
                 rows = await cursor.fetchall()
                 return [(row[0], row[1], row[2]) for row in rows]
-

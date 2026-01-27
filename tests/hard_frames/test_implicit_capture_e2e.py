@@ -7,12 +7,14 @@ import requests
 BASE_URL = "http://localhost:8001"
 SESSION_FILE = ".rae_session"
 
+
 def get_session_id():
     if not os.path.exists(SESSION_FILE):
         print("❌ Error: .rae_session file not found. Run bootstrap_session.py first.")
         sys.exit(1)
     with open(SESSION_FILE, "r") as f:
         return f.read().strip()
+
 
 def verify_implicit_capture():
     session_id = get_session_id()
@@ -29,12 +31,16 @@ def verify_implicit_capture():
         "tenant_id": "default-tenant",
         "project": "verification-agent",
         "prompt": prompt,
-        "session_id": session_id
+        "session_id": session_id,
     }
 
     try:
         # Note: We use the /agent/execute endpoint which triggers the RAERuntime logic we modified
-        resp = requests.post(f"{BASE_URL}/v1/agent/execute", json=payload, headers={"X-Tenant-Id": "default-tenant"})
+        resp = requests.post(
+            f"{BASE_URL}/v1/agent/execute",
+            json=payload,
+            headers={"X-Tenant-Id": "default-tenant"},
+        )
         if resp.status_code != 200:
             print(f"❌ Agent Execution Failed: {resp.status_code} - {resp.text}")
             sys.exit(1)
@@ -54,11 +60,15 @@ def verify_implicit_capture():
     query_payload = {
         "query_text": session_id,  # Search for the session ID itself
         "project": "verification-agent",
-        "k": 5
+        "k": 5,
     }
 
     try:
-        audit_resp = requests.post(f"{BASE_URL}/v1/memory/query", json=query_payload, headers={"X-Tenant-Id": "default-tenant"})
+        audit_resp = requests.post(
+            f"{BASE_URL}/v1/memory/query",
+            json=query_payload,
+            headers={"X-Tenant-Id": "default-tenant"},
+        )
         memories = audit_resp.json().get("results", [])
 
         found = False
@@ -71,7 +81,9 @@ def verify_implicit_capture():
             # Note: The search logic matches content.
             # The implicitly stored memory should contain the answer or thought.
 
-            print(f"   - Found Memory: {mem.get('content')[:100]}... (Score: {mem.get('score')})")
+            print(
+                f"   - Found Memory: {mem.get('content')[:100]}... (Score: {mem.get('score')})"
+            )
 
             # Deep check via Get Memory if possible, but let's rely on content match for now
             if session_id in str(mem):
@@ -84,7 +96,7 @@ def verify_implicit_capture():
 
         list_resp = requests.get(
             f"{BASE_URL}/v1/memory/list?limit=5&project=verification-agent",
-            headers={"X-Tenant-Id": "default-tenant"}
+            headers={"X-Tenant-Id": "default-tenant"},
         )
         recent_memories = list_resp.json().get("results", [])
 
@@ -95,16 +107,21 @@ def verify_implicit_capture():
 
             if "rae-first" in tags and "final_answer" in tags:
                 found = True
-                print("   🎉 SUCCESS! Found 'rae-first' and 'final_answer' tags. Implicit Capture Verified.")
+                print(
+                    "   🎉 SUCCESS! Found 'rae-first' and 'final_answer' tags. Implicit Capture Verified."
+                )
                 break
 
         if not found:
-            print("\n❌ FAILURE: Could not find implicitly captured memory with 'rae-first' tag.")
+            print(
+                "\n❌ FAILURE: Could not find implicitly captured memory with 'rae-first' tag."
+            )
             sys.exit(1)
 
     except Exception as e:
         print(f"❌ Audit Failed: {e}")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     verify_implicit_capture()

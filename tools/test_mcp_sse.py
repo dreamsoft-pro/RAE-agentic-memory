@@ -22,7 +22,7 @@ async def main():
             # Read the first event to get the session endpoint (endpoint)
             endpoint_url = None
             async for line in response.content:
-                line = line.decode('utf-8').strip()
+                line = line.decode("utf-8").strip()
                 if line.startswith("event: endpoint"):
                     # The next line should be data: <url>
                     continue
@@ -45,8 +45,8 @@ async def main():
                 "params": {
                     "protocolVersion": "2024-11-05",
                     "capabilities": {},
-                    "clientInfo": {"name": "gemini-cli", "version": "1.0"}
-                }
+                    "clientInfo": {"name": "gemini-cli", "version": "1.0"},
+                },
             }
 
             print("Sending initialize...")
@@ -62,10 +62,8 @@ async def main():
                 "method": "tools/call",
                 "params": {
                     "name": "get_latest_telemetry",
-                    "arguments": {
-                        "machine_code": "TJ02"
-                    }
-                }
+                    "arguments": {"machine_code": "TJ02"},
+                },
             }
 
             print("Sending get_latest_telemetry for TJ02...")
@@ -76,7 +74,7 @@ async def main():
             print("Listening for responses (Ctrl+C to stop)...")
             try:
                 async for line in response.content:
-                    line = line.decode('utf-8').strip()
+                    line = line.decode("utf-8").strip()
                     if line.startswith("data:"):
                         data_str = line[5:].strip()
                         try:
@@ -91,6 +89,7 @@ async def main():
                             pass
             except KeyboardInterrupt:
                 pass
+
 
 if __name__ == "__main__":
     asyncio.run(main())

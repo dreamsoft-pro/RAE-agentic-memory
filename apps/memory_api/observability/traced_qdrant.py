@@ -71,11 +71,15 @@ class TracedQdrantClient:
     # ============================================================================
 
     async def create_collection(self, collection_name: str, *args, **kwargs):
-        async with self._trace_operation("create_collection", collection=collection_name):
+        async with self._trace_operation(
+            "create_collection", collection=collection_name
+        ):
             return await self.client.create_collection(collection_name, *args, **kwargs)
 
     async def delete_collection(self, collection_name: str, **kwargs):
-        async with self._trace_operation("delete_collection", collection=collection_name):
+        async with self._trace_operation(
+            "delete_collection", collection=collection_name
+        ):
             return await self.client.delete_collection(collection_name, **kwargs)
 
     async def get_collection(self, collection_name: str):
@@ -83,7 +87,9 @@ class TracedQdrantClient:
             return await self.client.get_collection(collection_name)
 
     async def collection_exists(self, collection_name: str) -> bool:
-        async with self._trace_operation("collection_exists", collection=collection_name):
+        async with self._trace_operation(
+            "collection_exists", collection=collection_name
+        ):
             return await self.client.collection_exists(collection_name)
 
     async def get_collections(self):
@@ -168,7 +174,9 @@ class TracedQdrantClient:
         wait: bool = True,
         **kwargs,
     ):
-        async with self._trace_operation("delete", collection=collection_name, wait=wait):
+        async with self._trace_operation(
+            "delete", collection=collection_name, wait=wait
+        ):
             return await self.client.delete(
                 collection_name=collection_name,
                 points_selector=points_selector,

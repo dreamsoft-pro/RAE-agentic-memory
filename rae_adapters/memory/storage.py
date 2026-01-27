@@ -228,7 +228,7 @@ class InMemoryStorage(IMemoryStorage):
             # Handle dot notation (e.g. governance.is_failure)
             parts = key.split(".")
             current = memory
-            
+
             try:
                 for part in parts:
                     if isinstance(current, dict):
@@ -236,13 +236,13 @@ class InMemoryStorage(IMemoryStorage):
                     else:
                         current = None
                         break
-                
+
                 # Check match (simple equality for now, string conversion for loose matching)
                 if str(current).lower() != str(value).lower():
                     return False
             except Exception:
                 return False
-                
+
         return True
 
     async def list_memories(
@@ -260,7 +260,7 @@ class InMemoryStorage(IMemoryStorage):
     ) -> list[dict[str, Any]]:
         """List memories with filtering."""
         project = kwargs.get("project")
-        
+
         async with self._lock:
             # Start with tenant memories
             candidate_ids = self._by_tenant[tenant_id].copy()
@@ -284,17 +284,17 @@ class InMemoryStorage(IMemoryStorage):
             for mid in candidate_ids:
                 if mid not in self._memories:
                     continue
-                
+
                 memory = self._memories[mid]
-                
+
                 # Apply generic filters
                 if filters and not self._matches_filters(memory, filters):
                     continue
-                
+
                 # Apply project filter
                 if project and memory.get("project") != project:
                     continue
-                    
+
                 memories.append(memory.copy())
 
             memories.sort(key=lambda m: m["created_at"], reverse=True)

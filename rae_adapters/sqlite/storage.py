@@ -506,7 +506,6 @@ class SQLiteStorage(IMemoryStorage):
 
         return memory
 
-
     async def delete_memories_with_metadata_filter(
         self,
         tenant_id: str,
@@ -909,7 +908,9 @@ class SQLiteStorage(IMemoryStorage):
             await db.commit()
             return cursor.rowcount
 
-    async def get_edges_between(self, node_ids: list[str], tenant_id: str) -> list[tuple[str, str, float]]:
+    async def get_edges_between(
+        self, node_ids: list[str], tenant_id: str
+    ) -> list[tuple[str, str, float]]:
         """
         Retrieve edges between nodes for resonance calculation.
         Note: In SQLite adapter, edges might be in a separate database file
@@ -938,7 +939,6 @@ class SQLiteStorage(IMemoryStorage):
         except Exception:
             # If table doesn't exist yet, return empty
             return []
-
 
     def _matches_metadata_filter(
         self, metadata: dict[str, Any], filter_dict: dict[str, Any]

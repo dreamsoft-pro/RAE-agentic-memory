@@ -29,6 +29,7 @@ def check_internet_leak():
         print(f"✅ SUCCESS: Access failed with {type(e).__name__}: {e}")
         return True
 
+
 def connect_to_kernel():
     kernel_url = os.getenv("RAE_KERNEL_URL", "http://rae-kernel:8000")
     print(f"🔌 CONNECTING: Attempting to contact RAE Kernel at {kernel_url}...")
@@ -44,7 +45,7 @@ def connect_to_kernel():
                 "tenant_id": "default-tenant",
                 "project": "secure-agent-boot",
                 "prompt": "Secure Container Boot Sequence Complete. Reporting for duty.",
-                "session_id": "secure-boot-session"
+                "session_id": "secure-boot-session",
             }
             try:
                 # We hit the Agent Pipeline. The Kernel should IMPLICITLY save this.
@@ -53,12 +54,16 @@ def connect_to_kernel():
                     f"{kernel_url}/v1/agent/execute",
                     json=payload,
                     headers={"X-Tenant-Id": "default-tenant"},
-                    timeout=10
+                    timeout=10,
                 )
                 if act_resp.status_code == 200:
-                    print(f"✅ SIGNAL RECEIVED by Kernel. Response: {act_resp.json().get('answer')}")
+                    print(
+                        f"✅ SIGNAL RECEIVED by Kernel. Response: {act_resp.json().get('answer')}"
+                    )
                 else:
-                    print(f"⚠️  SIGNAL REJECTED: {act_resp.status_code} - {act_resp.text}")
+                    print(
+                        f"⚠️  SIGNAL REJECTED: {act_resp.status_code} - {act_resp.text}"
+                    )
             except Exception as ex:
                 print(f"❌ SIGNAL FAILED: {ex}")
             # ---------------------------------------------
@@ -71,13 +76,16 @@ def connect_to_kernel():
         print(f"❌ FAIL: Could not connect to Kernel: {e}")
         return False
 
+
 def main():
     print("🤖 SECURE AGENT STARTING...")
     print(f"🔒 UID: {os.getuid()} (Should be non-root)")
 
     # Force application if not already done by import side-effect (paranoid check)
     if socket.socket != SecureSocket:
-        print("⚠️  Warning: Hard Frames were not applied at module level. Applying now (might be too late for some libs).")
+        print(
+            "⚠️  Warning: Hard Frames were not applied at module level. Applying now (might be too late for some libs)."
+        )
         apply_hard_frames()
 
     # 1. Verify Isolation
@@ -87,10 +95,14 @@ def main():
     # 2. Verify Tunnel to Kernel
     # In a real startup, we might retry loop here
     if not connect_to_kernel():
-        print("⚠️  Kernel not found (expected if not running in compose). Entering wait loop.")
+        print(
+            "⚠️  Kernel not found (expected if not running in compose). Entering wait loop."
+        )
 
     if len(sys.argv) > 1 and sys.argv[1] == "--soak-test":
-        print("🌊 SOAK TEST: Starting endurance simulation (Variable Load + Memory Monitoring)...")
+        print(
+            "🌊 SOAK TEST: Starting endurance simulation (Variable Load + Memory Monitoring)..."
+        )
         kernel_url = os.getenv("RAE_KERNEL_URL", "http://rae-kernel:8000")
 
         import random
@@ -111,12 +123,15 @@ def main():
             time.sleep(random.uniform(0.1, 1.5))
 
             # 2. Variable Payload (simulate small commands vs large memories)
-            payload_size = random.randint(100, 50000) # 100 bytes to 50KB
+            payload_size = random.randint(100, 50000)  # 100 bytes to 50KB
             data = "x" * payload_size
 
             try:
                 # 3. Request
-                resp = session.post(f"{kernel_url}/memory", json={"content": data, "confidence": random.random()})
+                resp = session.post(
+                    f"{kernel_url}/memory",
+                    json={"content": data, "confidence": random.random()},
+                )
                 if resp.status_code not in [200, 404]:
                     errors += 1
                     print(f"⚠️  Error: Status {resp.status_code}")
@@ -130,7 +145,9 @@ def main():
                 usage_kb = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
                 usage_mb = usage_kb / 1024
                 elapsed = time.time() - start_time
-                print(f"📊 Stats [Req: {counter} | Err: {errors} | Time: {elapsed:.0f}s]: RAM Usage: {usage_mb:.2f} MB")
+                print(
+                    f"📊 Stats [Req: {counter} | Err: {errors} | Time: {elapsed:.0f}s]: RAM Usage: {usage_mb:.2f} MB"
+                )
 
                 # Verify Leak Check Periodically
                 try:
@@ -143,6 +160,7 @@ def main():
     print("💤 Agent entering idle loop (waiting for tasks via Kernel)...")
     while True:
         time.sleep(10)
+
 
 if __name__ == "__main__":
     main()

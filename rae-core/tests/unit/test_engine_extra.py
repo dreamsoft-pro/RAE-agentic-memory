@@ -67,7 +67,9 @@ async def test_engine_init_with_cache(
 
 
 @pytest.mark.asyncio
-async def test_store_memory_basic(mock_storage, mock_vector_store, mock_embedding_provider):
+async def test_store_memory_basic(
+    mock_storage, mock_vector_store, mock_embedding_provider
+):
     mock_embedding_provider.embed_text = AsyncMock(return_value=[0.1] * 128)
     engine = RAEEngine(mock_storage, mock_vector_store, mock_embedding_provider)
 
@@ -88,7 +90,11 @@ async def test_search_memories_with_custom_weights(
     with patch.object(
         engine.search_engine, "search", AsyncMock(return_value=[(mem_id, 0.8)])
     ):
-        mock_storage.get_memory.return_value = {"id": mem_id, "content": "test", "importance": 0.5}
+        mock_storage.get_memory.return_value = {
+            "id": mem_id,
+            "content": "test",
+            "importance": 0.5,
+        }
 
         results = await engine.search_memories(
             "query", "t1", custom_weights={"alpha": 1.0, "beta": 0.0, "gamma": 0.0}
@@ -99,7 +105,9 @@ async def test_search_memories_with_custom_weights(
 
 
 @pytest.mark.asyncio
-async def test_get_status_detailed(mock_storage, mock_vector_store, mock_embedding_provider):
+async def test_get_status_detailed(
+    mock_storage, mock_vector_store, mock_embedding_provider
+):
     engine = RAEEngine(mock_storage, mock_vector_store, mock_embedding_provider)
     status = engine.get_status()
     assert status["engine"].startswith("RAE-Core")

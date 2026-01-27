@@ -1,4 +1,3 @@
-
 import asyncio
 from uuid import uuid4
 
@@ -14,6 +13,7 @@ async def test_szubar_mode_activation():
     service.enable_szubar_mode(True)
     assert service.szubar_mode is True
 
+
 @pytest.mark.asyncio
 async def test_szubar_weights_injection():
     service = RAECoreService()
@@ -23,6 +23,7 @@ async def test_szubar_weights_injection():
     class MockTuning:
         async def get_current_weights(self, tid):
             from rae_core.math.structure import ScoringWeights
+
             return ScoringWeights()
 
     service.tuning_service = MockTuning()
@@ -30,8 +31,11 @@ async def test_szubar_weights_injection():
     # Test query_memories uses szubar weights
     # We just want to see if it reaches the point of using weights
     # Since we use InMemoryStorage, it will return empty list but we check if it doesn't crash
-    response = await service.query_memories(tenant_id=str(uuid4()), project="test", query="hello")
+    response = await service.query_memories(
+        tenant_id=str(uuid4()), project="test", query="hello"
+    )
     assert response.total_found == 0
+
 
 @pytest.mark.asyncio
 async def test_szubar_failure_injection(mocker):
@@ -47,16 +51,17 @@ async def test_szubar_failure_injection(mocker):
         project=agent_id,
         content="Tried to use library X",
         source="llm",
-        governance={"is_failure": True, "failure_trace": "Library X is incompatible with Python 3.12"}
+        governance={
+            "is_failure": True,
+            "failure_trace": "Library X is incompatible with Python 3.12",
+        },
     )
 
     # Mock engine.generate_text to inspect the system_prompt
     mock_gen = mocker.patch.object(service.engine, "generate_text", return_value="OK")
 
     await service.execute_action(
-        tenant_id=tenant_id,
-        agent_id=agent_id,
-        prompt="How to install libraries?"
+        tenant_id=tenant_id, agent_id=agent_id, prompt="How to install libraries?"
     )
 
     # Inspect calls to generate_text
@@ -65,6 +70,7 @@ async def test_szubar_failure_injection(mocker):
 
     assert "DO NOT REPEAT THESE FAILURES" in system_prompt
     assert "Library X is incompatible with Python 3.12" in system_prompt
+
 
 if __name__ == "__main__":
     asyncio.run(test_szubar_mode_activation())

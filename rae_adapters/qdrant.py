@@ -7,8 +7,15 @@ from rae_core.interfaces.vector import IVectorStore
 
 logger = structlog.get_logger(__name__)
 
+
 class QdrantVectorStore(IVectorStore):
-    def __init__(self, client: Any, collection_name: str = "memories", embedding_dim: int = 768, distance: str = "Cosine"):
+    def __init__(
+        self,
+        client: Any,
+        collection_name: str = "memories",
+        embedding_dim: int = 768,
+        distance: str = "Cosine",
+    ):
         self.client = client
         self.collection_name = collection_name
         self.embedding_dim = embedding_dim
@@ -22,6 +29,7 @@ class QdrantVectorStore(IVectorStore):
 
     async def _ensure_collection(self):
         from qdrant_client.models import Distance, VectorParams
+
         try:
             await self.client.get_collection(self.collection_name)
         except Exception:
@@ -30,9 +38,15 @@ class QdrantVectorStore(IVectorStore):
                 "ollama": VectorParams(size=768, distance=Distance.COSINE),
                 "openai": VectorParams(size=1536, distance=Distance.COSINE),
             }
-            await self.client.create_collection(collection_name=self.collection_name, vectors_config=vectors_config)
-            await self.client.create_payload_index(self.collection_name, "tenant_id", "keyword")
-            await self.client.create_payload_index(self.collection_name, "agent_id", "keyword")
+            await self.client.create_collection(
+                collection_name=self.collection_name, vectors_config=vectors_config
+            )
+            await self.client.create_payload_index(
+                self.collection_name, "tenant_id", "keyword"
+            )
+            await self.client.create_payload_index(
+                self.collection_name, "agent_id", "keyword"
+            )
 
     def _get_vector_name(self, dim: int) -> str:
         if dim == 1536:
@@ -52,6 +66,7 @@ class QdrantVectorStore(IVectorStore):
         session_id: str | None = None,
         filters: dict[str, Any] | None = None,
         project: str | None = None,
+        **kwargs: Any,
     ) -> list[tuple[UUID, float]]:
         from qdrant_client.models import FieldCondition, Filter, MatchValue, NamedVector
 
@@ -60,7 +75,9 @@ class QdrantVectorStore(IVectorStore):
         if "uuid('" in t_id:
             t_id = t_id.replace("uuid('", "").replace("')", "")
 
-        must_conditions = [FieldCondition(key="tenant_id", match=MatchValue(value=t_id))]
+        must_conditions: list[Any] = [
+            FieldCondition(key="tenant_id", match=MatchValue(value=t_id))
+        ]
 
         # 1. Project Filter (Context)
         p_filter = (
@@ -72,8 +89,12 @@ class QdrantVectorStore(IVectorStore):
             must_conditions.append(
                 Filter(
                     should=[
-                        FieldCondition(key="project", match=MatchValue(value=str(p_filter))),
-                        FieldCondition(key="project", match=MatchValue(value="default")),
+                        FieldCondition(
+                            key="project", match=MatchValue(value=str(p_filter))
+                        ),
+                        FieldCondition(
+                            key="project", match=MatchValue(value="default")
+                        ),
                     ]
                 )
             )
@@ -86,7 +107,9 @@ class QdrantVectorStore(IVectorStore):
                         FieldCondition(
                             key="agent_id", match=MatchValue(value=str(agent_id))
                         ),
-                        FieldCondition(key="agent_id", match=MatchValue(value="default")),
+                        FieldCondition(
+                            key="agent_id", match=MatchValue(value="default")
+                        ),
                     ]
                 )
             )
@@ -175,7 +198,9 @@ class QdrantVectorStore(IVectorStore):
 
     async def batch_store_vectors(
         self,
-        vectors: list[tuple[UUID, list[float] | dict[str, list[float]], dict[str, Any]]],
+        vectors: list[
+            tuple[UUID, list[float] | dict[str, list[float]], dict[str, Any]]
+        ],
         tenant_id: str,
     ) -> int:
         return len(vectors)

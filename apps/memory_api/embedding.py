@@ -35,7 +35,11 @@ class EmbeddingService:
         )
 
         # Auto-fix prefix for local models if LLM_BACKEND is ollama
-        if self.settings.RAE_LLM_BACKEND == "ollama" and not model_name.startswith("ollama/") and "openai" not in model_name.lower():
+        if (
+            self.settings.RAE_LLM_BACKEND == "ollama"
+            and not model_name.startswith("ollama/")
+            and "openai" not in model_name.lower()
+        ):
             model_name = f"ollama/{model_name}"
 
         self.litellm_model = model_name

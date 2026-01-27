@@ -68,7 +68,9 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
 
         self.session = ort.InferenceSession(self.model_path, providers=providers)
         self.input_name = self.session.get_inputs()[0].name
-        self.output_name = self.session.get_outputs()[0].name # Usually 'last_hidden_state'
+        self.output_name = self.session.get_outputs()[
+            0
+        ].name  # Usually 'last_hidden_state'
 
     def get_dimension(self) -> int:
         """Return embedding dimension."""
@@ -79,20 +81,24 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
         # For nomic-embed-text v1.5 it is 768.
         return 768
 
-    def _mean_pooling(self, last_hidden_state: np.ndarray, attention_mask: np.ndarray) -> np.ndarray:
+    def _mean_pooling(
+        self, last_hidden_state: np.ndarray, attention_mask: np.ndarray
+    ) -> np.ndarray:
         """Perform Mean Pooling on last hidden state."""
         # last_hidden_state: (batch, seq, dim)
         # attention_mask: (batch, seq)
 
         # Expand mask to (batch, seq, dim)
-        mask_expanded = np.expand_dims(attention_mask, axis=-1).astype(last_hidden_state.dtype)
+        mask_expanded = np.expand_dims(attention_mask, axis=-1).astype(
+            last_hidden_state.dtype
+        )
 
         # Sum embeddings (ignoring padding)
         sum_embeddings = np.sum(last_hidden_state * mask_expanded, axis=1)
 
         # Sum mask (count of tokens)
         sum_mask = np.sum(mask_expanded, axis=1)
-        sum_mask = np.clip(sum_mask, a_min=1e-9, a_max=None) # Avoid div by zero
+        sum_mask = np.clip(sum_mask, a_min=1e-9, a_max=None)  # Avoid div by zero
 
         return sum_embeddings / sum_mask
 
@@ -119,15 +125,14 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
         # If model expects it, we need to provide it.
         # Nomic ONNX usually takes: input_ids, attention_mask.
 
-        inputs = {
-            "input_ids": input_ids,
-            "attention_mask": attention_mask
-        }
+        inputs = {"input_ids": input_ids, "attention_mask": attention_mask}
 
         # Check if model needs token_type_ids
         input_names = [i.name for i in self.session.get_inputs()]
         if "token_type_ids" in input_names:
-             inputs["token_type_ids"] = np.array([e.type_ids for e in encoded], dtype=np.int64)
+            inputs["token_type_ids"] = np.array(
+                [e.type_ids for e in encoded], dtype=np.int64
+            )
 
         # 2. Run Inference
         outputs = self.session.run(None, inputs)
@@ -140,7 +145,7 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
 
         # 4. Matryoshka Truncation (Optional)
         if self.matryoshka_dim:
-            embeddings = embeddings[:, :self.matryoshka_dim]
+            embeddings = embeddings[:, : self.matryoshka_dim]
 
         # 5. Normalization (L2)
         if self.normalize:

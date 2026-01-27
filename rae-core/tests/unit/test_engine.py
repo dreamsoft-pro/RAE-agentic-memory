@@ -51,7 +51,9 @@ def mock_search_engine():
 def mock_reflection_engine():
     # In RAEEngine, reflection logic might be handled differently now,
     # but we keep the mock for compatibility if needed or until fully refactored.
-    with patch("rae_core.engine.RAEEngine.run_reflection_cycle", new_callable=AsyncMock) as mock:
+    with patch(
+        "rae_core.engine.RAEEngine.run_reflection_cycle", new_callable=AsyncMock
+    ) as mock:
         yield mock
 
 
@@ -85,7 +87,9 @@ def rae_engine(
 
 
 @pytest.mark.asyncio
-async def test_store_memory(rae_engine, mock_memory_storage, mock_embedding_provider, mock_vector_store):
+async def test_store_memory(
+    rae_engine, mock_memory_storage, mock_embedding_provider, mock_vector_store
+):
     tenant_id = "test-tenant"
     agent_id = "test-agent"
     content = "test content"
@@ -133,7 +137,12 @@ async def test_search_memories(rae_engine, mock_search_engine, mock_memory_stora
 async def test_run_reflection_cycle(rae_engine, mock_reflection_engine):
     tenant_id = "test-tenant"
     agent_id = "test-agent"
-    expected_summary = {"status": "completed", "reflections_created": 0, "memories_consolidated": 0, "tokens_saved": 0}
+    expected_summary = {
+        "status": "completed",
+        "reflections_created": 0,
+        "memories_consolidated": 0,
+        "tokens_saved": 0,
+    }
 
     # Since we patched run_reflection_cycle on RAEEngine itself in fixture
     rae_engine.run_reflection_cycle.return_value = expected_summary

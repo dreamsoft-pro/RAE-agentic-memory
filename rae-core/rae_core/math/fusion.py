@@ -10,18 +10,20 @@ import structlog
 
 logger = structlog.get_logger(__name__)
 
+
 class RRFFusion:
     """
     Reciprocal Rank Fusion (RRF) Strategy.
     Standard algorithm for combining ranked lists without needing score normalization.
     """
+
     def __init__(self, k: int = 60):
         self.k = k
 
     def fuse(
         self,
         strategy_results: dict[str, list[tuple[UUID, float]]],
-        weights: dict[str, float]
+        weights: dict[str, float],
     ) -> list[tuple[UUID, float]]:
 
         rrf_scores: dict[UUID, float] = {}
@@ -47,13 +49,14 @@ class ConfidenceWeightedFusion:
     Confidence-Weighted Fusion (ORB 2.0).
     Uses signal confidence (entropy/variance) to dynamically weight strategies.
     """
-    def __init__(self, default_weights: dict[str, float] = None):
+
+    def __init__(self, default_weights: dict[str, float] | None = None):
         self.default_weights = default_weights or {"vector": 1.0, "fulltext": 1.0}
 
     def fuse(
         self,
         strategy_results: dict[str, list[tuple[UUID, float]]],
-        manual_weights: dict[str, float]
+        manual_weights: dict[str, float],
     ) -> list[tuple[UUID, float]]:
 
         # 1. Normalize Scores (Min-Max) per strategy
@@ -66,7 +69,9 @@ class ConfidenceWeightedFusion:
             if max_s == min_s:
                 norm_results = [(id, 1.0) for id, _ in results]
             else:
-                norm_results = [(id, (s - min_s) / (max_s - min_s)) for id, s in results]
+                norm_results = [
+                    (id, (s - min_s) / (max_s - min_s)) for id, s in results
+                ]
             normalized_results[name] = norm_results
 
         # 2. Apply Weights (Manual > Default)

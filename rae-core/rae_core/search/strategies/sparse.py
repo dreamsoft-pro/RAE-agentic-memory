@@ -91,6 +91,8 @@ class SparseVectorStrategy(SearchStrategy):
         tenant_id: str,
         filters: dict[str, Any] | None = None,
         limit: int = 10,
+        project: str | None = None,
+        **kwargs: Any,
     ) -> list[tuple[UUID, float]]:
         """Execute BM25 search.
 
@@ -99,6 +101,7 @@ class SparseVectorStrategy(SearchStrategy):
             tenant_id: Tenant identifier
             filters: Optional filters (layer, agent_id, etc.)
             limit: Maximum number of results
+            project: Optional project identifier
 
         Returns:
             List of (memory_id, bm25_score) tuples
@@ -106,12 +109,14 @@ class SparseVectorStrategy(SearchStrategy):
         # Extract filters
         layer = filters.get("layer") if filters else None
         agent_id = filters.get("agent_id") if filters else None
+        project = project or (filters.get("project") if filters else None)
 
         # Retrieve memories for scoring
         memories = await self.memory_storage.list_memories(
             tenant_id=tenant_id,
             agent_id=agent_id,
             layer=layer,
+            project=project,
             limit=1000,  # Fetch more for BM25 corpus
         )
 

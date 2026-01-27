@@ -112,8 +112,8 @@ class FullTextStrategy(SearchStrategy):
             layer=layer,
             limit=limit,
             project=project,
-            filters=filters, # Pass filters down
-            query=query # Pass query for FTS ranking
+            filters=filters,  # Pass filters down
+            query=query,  # Pass query for FTS ranking
         )
 
         if not memories:
