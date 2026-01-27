@@ -40,6 +40,21 @@
 
 
 
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2026-01-27 14:48 • Branch: main • Commit: bd0b4dff*
+
+### 🐛 Bug Fixes
+
+- **db**: change tenant_id to UUID in metrics_timeseries migration to match schema ([`e260c18d`](../../commit/e260c18d))
+
+### 🔧 Chore
+
+- merge develop into main (resolving migration and docs conflicts) ([`bd0b4dff`](../../commit/bd0b4dff))
+
+---
+
 ## Recent Changes (Auto-generated)
 
 *Last updated: 2026-01-27 14:29 • Branch: main • Commit: 0183021f*
