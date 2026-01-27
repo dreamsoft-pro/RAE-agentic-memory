@@ -354,15 +354,36 @@ class PostgreSQLStorage(IMemoryStorage):
             params.append(layer)
             param_idx += 1
 
+        # Default values for clauses
+        score_clause = "1.0 as score"
+        order_clause = f"ORDER BY {order_by} {order_direction.upper()}"
+
+        # FTS Query support
+        if query and query.strip():
+            if query == "*":
+                score_clause = "1.0 as score"
+            else:
+                # Use OR logic for websearch to find ANY of the words (more liberal for math fallback)
+                liberal_query = query.replace(" ", " OR ")
+                conditions.append(
+                    f"(to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', ${param_idx}) OR content ILIKE ${param_idx+1})"
+                )
+                score_clause = f"""
+                    CASE
+                        WHEN to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', ${param_idx})
+                        THEN ts_rank_cd(to_tsvector('english', coalesce(content, '')), websearch_to_tsquery('english', ${param_idx})) + 0.5
+                        WHEN content ILIKE ${param_idx+1} THEN 0.5
+                        ELSE 0.1
+                    END as score
+                """
+                params.append(liberal_query)
+                params.append(f"%{query}%")
+                param_idx += 2
+                order_clause = "ORDER BY score DESC"
+
         if tags:
             conditions.append(f"tags && ${param_idx}")
             params.append(tags)
-            param_idx += 1
-
-        # FTS Query support
-        if query:
-            conditions.append(f"content ILIKE ${param_idx}")
-            params.append(f"%{query}%")
             param_idx += 1
 
         # Apply additional filters
@@ -384,7 +405,6 @@ class PostgreSQLStorage(IMemoryStorage):
                 param_idx += 1
 
         where_clause = " AND ".join(conditions)
-        order_clause = f"ORDER BY {order_by} {order_direction.upper()}"
 
         async with pool.acquire() as conn:
             rows = await conn.fetch(
@@ -392,7 +412,8 @@ class PostgreSQLStorage(IMemoryStorage):
                 SELECT
                     id, content, layer, tenant_id, agent_id,
                     tags, metadata, embedding, importance, usage_count,
-                    created_at, last_accessed_at, expires_at
+                    created_at, last_accessed_at, expires_at,
+                    {score_clause}
                 FROM memories
                 WHERE {where_clause}
                 {order_clause}
