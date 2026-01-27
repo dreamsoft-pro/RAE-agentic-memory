@@ -39,6 +39,59 @@
 <<<<<<< HEAD
 
 
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2026-01-27 14:29 • Branch: main • Commit: 0183021f*
+
+### ✨ Features
+
+- **infra**: add node state verification script ([`8500aba8`](../../commit/8500aba8))
+- **math-core**: Integrate Bandit Auto-Tuning into MathLayerController ([`028333be`](../../commit/028333be))
+- **system-3.0**: Implement Autonomous Memory Core with Math-First and Szubar Learning ([`f6c29eec`](../../commit/f6c29eec))
+- **core**: stabilize RAE core, fix Szubar Mode, Math Fallback and Ghost Tables ([`b1607cfc`](../../commit/b1607cfc))
+- **middleware**: project-aware budgets and fix body consumption ([`0d1c5bd7`](../../commit/0d1c5bd7))
+- **core**: unblock budgets and backfill embeddings ([`4f047300`](../../commit/4f047300))
+
+### 🐛 Bug Fixes
+
+- **ci**: ensure benchmark results are saved to JSON and fix PostgreSQL sorting ([`02c11a3e`](../../commit/02c11a3e))
+- **ci**: fix PostgreSQL sorting bug causing benchmark failures ([`d4991558`](../../commit/d4991558))
+- **ci**: fix PostgreSQL sorting bug causing benchmark failures ([`447e91f8`](../../commit/447e91f8))
+- **ci**: comprehensive fix for benchmark smoke tests and type stability ([`07e290cf`](../../commit/07e290cf))
+- **core**: postgres generic filter collision and memory listing ([`a9769cd5`](../../commit/a9769cd5))
+- **lint**: resolve black/ruff errors and mypy interface mismatches ([`e0541025`](../../commit/e0541025))
+- **ci**: correct path to academic_lite.yaml benchmark ([`9887d85b`](../../commit/9887d85b))
+- **core**: szubar mode tests and in-memory filtering ([`1265e6d5`](../../commit/1265e6d5))
+- **infra**: resolve db init conflict, add healthchecks for lite, fix network names ([`2942941c`](../../commit/2942941c))
+- **infra**: automate lumina wake script with headless input ([`2c25f573`](../../commit/2c25f573))
+- **core**: allow uuid in budget model ([`d63b0535`](../../commit/d63b0535))
+- **dashboard**: fix project fetching logic ([`d8c528a9`](../../commit/d8c528a9))
+- **dev**: allow script execution in container ([`527c9371`](../../commit/527c9371))
+
+### ♻️ Refactoring
+
+- **core**: unify search logic and fix tests coverage ([`c34b8020`](../../commit/c34b8020))
+
+### 📚 Documentation
+
+- add Secure Agent Deployment guide and link from main docs ([`e0cb02ac`](../../commit/e0cb02ac))
+- update developer guide with combined profile instructions and verification script ([`6d287d6f`](../../commit/6d287d6f))
+
+### 🔧 Chore
+
+- merge develop into main (resolving auto-docs conflicts) ([`00cf5fca`](../../commit/00cf5fca))
+- merge develop into main (resolving auto-docs conflicts) ([`3737f5bc`](../../commit/3737f5bc))
+- merge develop into main (resolving auto-docs conflicts) ([`02026a6c`](../../commit/02026a6c))
+- update docs ([`654c53db`](../../commit/654c53db))
+- **release**: bump versions to v3.0.2 in manifests ([`48250f90`](../../commit/48250f90))
+
+### 📦 Other
+
+- Merge branch 'develop' ([`65446908`](../../commit/65446908))
+
+---
+
 ## Recent Changes (Auto-generated)
 
 *Last updated: 2026-01-27 14:24 • Branch: main • Commit: 00cf5fca*
