@@ -313,7 +313,7 @@ class PostgreSQLStorage(IMemoryStorage):
 
         # Handle other filters (including nested ones like governance.is_failure)
         for key, value in filters.items():
-            if key in ["not_expired", "tags", "min_importance", "score_threshold"]:
+            if key in ["not_expired", "tags", "min_importance", "score_threshold", "project", "project_id", "agent_id", "layer"]:
                 continue
 
             if "." in key:
@@ -510,7 +510,7 @@ class PostgreSQLStorage(IMemoryStorage):
             # Generic JSONB metadata filters
             for key, value in filters.items():
                 # Skip already handled keys
-                if key in ["since", "created_after", "min_importance", "memory_ids"]:
+                if key in ["since", "created_after", "min_importance", "memory_ids", "project", "project_id", "agent_id", "layer"]:
                     continue
 
                 if "." in key:
