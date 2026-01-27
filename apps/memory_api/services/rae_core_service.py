@@ -654,10 +654,16 @@ class RAECoreService:
         tenant_id: str,
         layer: str,
         project: str,
+        agent_id: str | None = None,
     ) -> int:
         """Count memories for a layer and project."""
-        return await self.postgres_adapter.count_memories(
-            tenant_id=tenant_id, agent_id=project, layer=layer
+        from typing import cast
+
+        return cast(
+            int,
+            await self.postgres_adapter.count_memories(
+                tenant_id=tenant_id, agent_id=agent_id, layer=layer
+            ),
         )
 
     async def get_metric_aggregate(
@@ -734,8 +740,13 @@ class RAECoreService:
         consider_access_stats: bool = False,
     ) -> int:
         """Apply importance decay to all memories for a tenant."""
-        return await self.engine.memory_storage.decay_importance(
-            tenant_id, decay_rate, consider_access_stats
+        from typing import cast
+
+        return cast(
+            int,
+            await self.engine.memory_storage.decay_importance(
+                tenant_id, decay_rate, consider_access_stats
+            ),
         )
 
     async def _get_tenant_weights(self, tenant_id: str) -> Optional[Any]:

@@ -24,7 +24,8 @@ class MockStrategy(SearchStrategy):
         tenant_id: str,
         filters: dict[str, Any] | None = None,
         limit: int = 10,
-        **kwargs,
+        project: str | None = None,
+        **kwargs: Any,
     ) -> list[tuple[UUID, float]]:
         # Call the mock to track usage
         return cast(

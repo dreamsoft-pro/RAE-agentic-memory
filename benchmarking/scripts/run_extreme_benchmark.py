@@ -23,6 +23,34 @@ from benchmarking.scripts.run_benchmark import RAEBenchmarkRunner
 
 
 class ExtremeBenchmarkRunner(RAEBenchmarkRunner):
+    def __init__(
+        self, benchmark_file: Path, output_dir: Path, use_direct_db: bool = False
+    ):
+        super().__init__(benchmark_file, output_dir, "")
+        self.benchmark_data: Dict | None = None
+        self.insert_times: List[float] = []
+        self.query_times: List[float] = []
+        self.results: List[Dict] = []
+        self.use_direct_db = use_direct_db
+
+    async def setup_database(self):
+        await self.setup()
+
+    async def load_benchmark(self):
+        import yaml
+
+        with open(self.benchmark_file, "r") as f:
+            self.benchmark_data = yaml.safe_load(f)
+
+    async def cleanup_test_data(self):
+        await self.cleanup()
+
+    def calculate_metrics(self) -> Dict:
+        return {"mrr": 0.0}  # Placeholder
+
+    def save_results(self, metrics: Dict):
+        pass  # Placeholder
+
     async def insert_memories(self):
         """Insert memories into RAE in large batches"""
         assert self.benchmark_data is not None

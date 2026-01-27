@@ -5,6 +5,7 @@ consistent, high-performance vector generation across platforms (Linux, Windows,
 """
 
 from pathlib import Path
+from typing import cast
 
 import numpy as np
 
@@ -100,12 +101,12 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
         sum_mask = np.sum(mask_expanded, axis=1)
         sum_mask = np.clip(sum_mask, a_min=1e-9, a_max=None)  # Avoid div by zero
 
-        return sum_embeddings / sum_mask
+        return cast(np.ndarray, sum_embeddings / sum_mask)
 
     def _normalize_l2(self, vectors: np.ndarray) -> np.ndarray:
         """Perform L2 normalization."""
         norms = np.linalg.norm(vectors, axis=1, keepdims=True)
-        return vectors / np.clip(norms, a_min=1e-9, a_max=None)
+        return cast(np.ndarray, vectors / np.clip(norms, a_min=1e-9, a_max=None))
 
     async def embed_text(self, text: str) -> list[float]:
         """Embed a single text string."""
@@ -151,4 +152,4 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
         if self.normalize:
             embeddings = self._normalize_l2(embeddings)
 
-        return embeddings.tolist()
+        return cast(list[list[float]], embeddings.tolist())

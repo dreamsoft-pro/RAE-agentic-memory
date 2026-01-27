@@ -227,7 +227,7 @@ class InMemoryStorage(IMemoryStorage):
         for key, value in filters.items():
             # Handle dot notation (e.g. governance.is_failure)
             parts = key.split(".")
-            current = memory
+            current: Any = memory
 
             try:
                 for part in parts:
@@ -256,6 +256,8 @@ class InMemoryStorage(IMemoryStorage):
         offset: int = 0,
         order_by: str = "created_at",
         order_direction: str = "desc",
+        project: str | None = None,
+        query: str | None = None,
         **kwargs: Any,
     ) -> list[dict[str, Any]]:
         """List memories with filtering."""
@@ -300,7 +302,7 @@ class InMemoryStorage(IMemoryStorage):
             memories.sort(key=lambda m: m["created_at"], reverse=True)
 
             # Apply pagination
-            return memories[offset : offset + limit]
+            return cast(list[dict[str, Any]], memories[offset : offset + limit])
 
     async def count_memories(
         self,
@@ -461,6 +463,7 @@ class InMemoryStorage(IMemoryStorage):
         layer: str,
         limit: int = 10,
         filters: dict[str, Any] | None = None,
+        project: str | None = None,
     ) -> list[dict[str, Any]]:
         """Search memories using simple substring matching."""
         async with self._lock:

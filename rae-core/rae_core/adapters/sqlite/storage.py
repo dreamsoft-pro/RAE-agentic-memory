@@ -329,6 +329,9 @@ class SQLiteStorage(IMemoryStorage):
         offset: int = 0,
         order_by: str = "created_at",
         order_direction: str = "desc",
+        project: str | None = None,
+        query: str | None = None,
+        **kwargs: Any,
     ) -> list[dict[str, Any]]:
         """List memories with filtering."""
         await self.initialize()
@@ -597,6 +600,7 @@ class SQLiteStorage(IMemoryStorage):
         layer: str,
         limit: int = 10,
         filters: dict[str, Any] | None = None,
+        project: str | None = None,
     ) -> list[dict[str, Any]]:
         """Search memories using FTS5 full-text search.
 

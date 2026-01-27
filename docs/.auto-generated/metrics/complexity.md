@@ -2,14 +2,14 @@
 
 **Auto-Generated** from static analysis tools
 
-**Last Updated:** 2026-01-26 08:14:25
+**Last Updated:** 2026-01-27 14:42:36
 
 ## Summary
 
 | Metric | Value |
 |--------|-------|
-| **Python Files** | 346 |
-| **Lines of Code** | 89045 |
+| **Python Files** | 347 |
+| **Lines of Code** | 89486 |
 | **Test Files** | 113 |
 | **Average Complexity** | To be implemented (radon) |
 
