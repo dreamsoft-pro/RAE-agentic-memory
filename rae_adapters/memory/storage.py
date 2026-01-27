@@ -222,6 +222,29 @@ class InMemoryStorage(IMemoryStorage):
 
             return True
 
+    def _matches_filters(self, memory: dict[str, Any], filters: dict[str, Any]) -> bool:
+        """Check if memory matches generic filters (supports dot notation)."""
+        for key, value in filters.items():
+            # Handle dot notation (e.g. governance.is_failure)
+            parts = key.split(".")
+            current = memory
+            
+            try:
+                for part in parts:
+                    if isinstance(current, dict):
+                        current = current.get(part)
+                    else:
+                        current = None
+                        break
+                
+                # Check match (simple equality for now, string conversion for loose matching)
+                if str(current).lower() != str(value).lower():
+                    return False
+            except Exception:
+                return False
+                
+        return True
+
     async def list_memories(
         self,
         tenant_id: str,
@@ -233,8 +256,11 @@ class InMemoryStorage(IMemoryStorage):
         offset: int = 0,
         order_by: str = "created_at",
         order_direction: str = "desc",
+        **kwargs: Any,
     ) -> list[dict[str, Any]]:
         """List memories with filtering."""
+        project = kwargs.get("project")
+        
         async with self._lock:
             # Start with tenant memories
             candidate_ids = self._by_tenant[tenant_id].copy()
@@ -254,11 +280,23 @@ class InMemoryStorage(IMemoryStorage):
                 candidate_ids &= tag_ids
 
             # Get memories and sort by created_at
-            memories = [
-                self._memories[mid].copy()
-                for mid in candidate_ids
-                if mid in self._memories
-            ]
+            memories = []
+            for mid in candidate_ids:
+                if mid not in self._memories:
+                    continue
+                
+                memory = self._memories[mid]
+                
+                # Apply generic filters
+                if filters and not self._matches_filters(memory, filters):
+                    continue
+                
+                # Apply project filter
+                if project and memory.get("project") != project:
+                    continue
+                    
+                memories.append(memory.copy())
+
             memories.sort(key=lambda m: m["created_at"], reverse=True)
 
             # Apply pagination

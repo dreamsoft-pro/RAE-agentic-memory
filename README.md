@@ -107,7 +107,9 @@ RAE is committed to **Full OpenScience Transparency**. We publish not only our b
 RAE introduces a radical shift in AI Agent security called **Hard Frames**.
 
 ### 1. The "Prisoner" Model (Hard Frames)
-Instead of trusting the Agent to "behave" via system prompts (Soft Alignment), RAE physically isolates the Agent in a "Hard Frame":
+Instead of trusting the Agent to "behave" via system prompts (Soft Alignment), RAE physically isolates the Agent in a "Hard Frame".
+**[👉 Read the full Secure Agent Deployment Guide](docs/guides/SECURE_AGENT_DEPLOYMENT.md)**
+
 -   **Network Isolation**: The Agent container has **NO internet access** (physically blocked at Docker network level).
 -   **Protocol Exclusivity**: The Agent can communicate **ONLY** with the RAE Kernel (API). It cannot reach OpenAI, Google, or any external tool directly.
 -   **Runtime Enforcement**: Custom Python `SecureSocket` prevents any unauthorized socket creation at the process level.

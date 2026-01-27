@@ -71,7 +71,13 @@ class RAEEngine:
 
         # Dynamic Weight Selection via Math Controller (Bandit)
         # If weights are provided in kwargs, they override the autonomous controller
-        strategy_weights = kwargs.get("custom_weights")
+        custom_weights = kwargs.get("custom_weights")
+        
+        # FIX: Distinguish between Retrieval Weights (dict) and Scoring Weights (object)
+        strategy_weights = None
+        if isinstance(custom_weights, dict):
+            strategy_weights = custom_weights
+        
         if not strategy_weights:
             # autonomous tuning
             strategy_weights = self.math_ctrl.get_retrieval_weights(query)
@@ -91,13 +97,14 @@ class RAEEngine:
         # 2. DESIGNED MATH SCORING (The Manifold)
         from rae_core.math.structure import ScoringWeights
 
-        raw_weights = kwargs.get("custom_weights")
-        if isinstance(raw_weights, dict):
+        if isinstance(custom_weights, dict):
             # Extract only fields valid for ScoringWeights
-            valid_fields = {k: v for k, v in raw_weights.items() if k in ["alpha", "beta", "gamma"]}
+            valid_fields = {k: v for k, v in custom_weights.items() if k in ["alpha", "beta", "gamma"]}
             scoring_weights = ScoringWeights(**valid_fields)
+        elif custom_weights:
+            scoring_weights = custom_weights
         else:
-            scoring_weights = raw_weights
+            scoring_weights = None # Will use default in score_memory if None
 
         memories = []
         for m_id, sim_score in candidates:
