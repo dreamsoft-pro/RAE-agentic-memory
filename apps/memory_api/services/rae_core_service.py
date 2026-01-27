@@ -140,11 +140,9 @@ class RAECoreService:
         search_strategies = {
             "vector": VectorSearchStrategy(
                 vector_store=self.qdrant_adapter,
-                embedding_provider=self.embedding_provider
+                embedding_provider=self.embedding_provider,
             ),
-            "fulltext": FullTextStrategy(
-                memory_storage=self.postgres_adapter
-            )
+            "fulltext": FullTextStrategy(memory_storage=self.postgres_adapter),
         }
         search_engine = HybridSearchEngine(strategies=search_strategies)
 
@@ -162,7 +160,7 @@ class RAECoreService:
             "rae_core_engine_components_ready",
             storage=type(self.postgres_adapter).__name__,
             vector_store=type(self.qdrant_adapter).__name__,
-            embedding=type(self.embedding_provider).__name__
+            embedding=type(self.embedding_provider).__name__,
         )
 
         # New: Reflection Engine
@@ -236,17 +234,17 @@ class RAECoreService:
                     failures = await self.service.engine.search_memories(
                         query=rae_input.content,
                         tenant_id=rae_input.tenant_id,
-                        agent_id="default", # Failures are usually project-wide
+                        agent_id="default",  # Failures are usually project-wide
                         project=project,
                         layer=None,
                         top_k=5,
                         filters={"governance.is_failure": "true"},
                     )
-                    
+
                     # 2. If nothing found, try project-wide wildcard search for failures
                     if not failures:
                         failures = await self.service.engine.search_memories(
-                            query="*", 
+                            query="*",
                             tenant_id=rae_input.tenant_id,
                             agent_id="default",
                             project=project,
@@ -267,19 +265,22 @@ class RAECoreService:
                                 if isinstance(gov, str):
                                     try:
                                         import json
+
                                         gov = json.loads(gov)
                                     except Exception:
                                         gov = {}
                                 trace = gov.get("failure_trace", "Unknown failure")
                                 content = f.get("content", "Unknown error")
-                                pressure_constraints += f"- {content} (Reason: {trace})\n"
+                                pressure_constraints += (
+                                    f"- {content} (Reason: {trace})\n"
+                                )
 
                 system_prompt = f"RELEVANT PROJECT CONTEXT:\n{context_text}\n{pressure_constraints}\n\nTask: {rae_input.content}"
 
                 # 2. Generate response using LLM or DESIGNED MATH (Fallback)
                 try:
                     import asyncio
-                    
+
                     # Check if LLM is actually available
                     if not self.service.engine.llm_provider:
                         raise RuntimeError("LLM Provider not available (RAE-Lite Mode)")
@@ -304,7 +305,7 @@ class RAECoreService:
                                 top_facts.append(r.get("content", ""))
                             else:
                                 top_facts.append(str(r))
-                                
+
                         llm_result = (
                             "STABILITY MODE ACTIVE (Math Fallback). "
                             "Based on my memory manifold, here are the core facts: "
@@ -346,7 +347,8 @@ class RAECoreService:
             tenant_id=str(tenant_id),
             content=prompt,
             context={
-                "project": project or agent_id, # Fallback to agent_id if project not provided
+                "project": project
+                or agent_id,  # Fallback to agent_id if project not provided
                 "session_id": session_id,
                 "agent_id": agent_id,
             },
@@ -652,10 +654,16 @@ class RAECoreService:
         tenant_id: str,
         layer: str,
         project: str,
+        agent_id: str | None = None,
     ) -> int:
         """Count memories for a layer and project."""
-        return await self.postgres_adapter.count_memories(
-            tenant_id=tenant_id, agent_id=project, layer=layer
+        from typing import cast
+
+        return cast(
+            int,
+            await self.postgres_adapter.count_memories(
+                tenant_id=tenant_id, agent_id=agent_id, layer=layer
+            ),
         )
 
     async def get_metric_aggregate(
@@ -732,8 +740,13 @@ class RAECoreService:
         consider_access_stats: bool = False,
     ) -> int:
         """Apply importance decay to all memories for a tenant."""
-        return await self.engine.memory_storage.decay_importance(
-            tenant_id, decay_rate, consider_access_stats
+        from typing import cast
+
+        return cast(
+            int,
+            await self.engine.memory_storage.decay_importance(
+                tenant_id, decay_rate, consider_access_stats
+            ),
         )
 
     async def _get_tenant_weights(self, tenant_id: str) -> Optional[Any]:
@@ -796,8 +809,8 @@ class RAECoreService:
         raw_results = await self.engine.search_memories(
             query=query,
             tenant_id=str(tenant_id),
-            agent_id="default", # Broad attribution for general queries
-            project=project,    # Strict context
+            agent_id="default",  # Broad attribution for general queries
+            project=project,  # Strict context
             layer=layers[0] if layers else None,
             top_k=k,
             filters=filters,

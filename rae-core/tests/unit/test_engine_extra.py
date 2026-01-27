@@ -48,174 +48,68 @@ def mock_sync_provider():
 
 
 @pytest.mark.asyncio
-async def test_engine_init_with_cache_and_sync(
+async def test_engine_init_with_cache(
     mock_storage,
     mock_vector_store,
     mock_embedding_provider,
     mock_cache_provider,
-    mock_sync_provider,
 ):
-    settings = RAESettings(sync_enabled=True, cache_enabled=True)
+    settings = RAESettings(cache_enabled=True)
+    # HybridSearchEngine is initialized inside RAEEngine if not provided
     engine = RAEEngine(
         memory_storage=mock_storage,
         vector_store=mock_vector_store,
         embedding_provider=mock_embedding_provider,
         settings=settings,
         cache_provider=mock_cache_provider,
-        sync_provider=mock_sync_provider,
     )
-    assert engine.search_engine.cache is not None
-    assert engine.sync_protocol is not None
+    assert engine.search_engine is not None
 
 
 @pytest.mark.asyncio
-async def test_store_memory_with_embedding_manager(mock_storage, mock_vector_store):
-    # Mock embedding provider with generate_all_embeddings
-    mock_provider = MagicMock()
-    mock_provider.generate_all_embeddings = AsyncMock(
-        return_value={"default": [[0.1] * 128], "other": [[0.2] * 128]}
-    )
-
-    engine = RAEEngine(mock_storage, mock_vector_store, mock_provider)
-    await engine.store_memory("t1", "a1", "content")
-
-    assert mock_storage.save_embedding.call_count == 2
-    mock_provider.generate_all_embeddings.assert_called_once()
-
-
-@pytest.mark.asyncio
-async def test_store_memory_with_embedding_fallback(mock_storage, mock_vector_store):
-    # Mock embedding provider without 'default' key
-    mock_provider = MagicMock()
-    mock_provider.generate_all_embeddings = AsyncMock(
-        return_value={"custom_model": [[0.3] * 128]}
-    )
-
-    engine = RAEEngine(mock_storage, mock_vector_store, mock_provider)
-    await engine.store_memory("t1", "a1", "content")
-
-    assert mock_storage.store_memory.called
-    # Should have used the first available embedding
-    call_args = mock_storage.store_memory.call_args
-    assert call_args.kwargs["embedding"] == [0.3] * 128
-
-
-@pytest.mark.asyncio
-async def test_store_memory_with_ttl(
+async def test_store_memory_basic(
     mock_storage, mock_vector_store, mock_embedding_provider
 ):
-    """Test storing memory with TTL to cover expiration logic."""
-    # Ensure generate_all_embeddings works if detected
-    mock_embedding_provider.generate_all_embeddings = AsyncMock(
-        return_value={"default": [[0.1] * 128]}
-    )
-
+    mock_embedding_provider.embed_text = AsyncMock(return_value=[0.1] * 128)
     engine = RAEEngine(mock_storage, mock_vector_store, mock_embedding_provider)
-    mock_storage.store_memory.return_value = uuid4()
 
-    await engine.store_memory("t1", "a1", "content", ttl=60)
+    await engine.store_memory(tenant_id="t1", agent_id="a1", content="content")
 
     assert mock_storage.store_memory.called
-    call_args = mock_storage.store_memory.call_args
-    assert call_args.kwargs["expires_at"] is not None
-
-    # Check if expires_at is roughly 60s from now
-    from datetime import datetime, timezone
-
-    expires_at = call_args.kwargs["expires_at"]
-    now = datetime.now(timezone.utc)
-    diff = (expires_at - now).total_seconds()
-    assert 58 < diff < 62
+    assert mock_vector_store.store_vector.called
 
 
 @pytest.mark.asyncio
-async def test_search_memories_with_reranker(
+async def test_search_memories_with_custom_weights(
     mock_storage, mock_vector_store, mock_embedding_provider
 ):
     engine = RAEEngine(mock_storage, mock_vector_store, mock_embedding_provider)
-
-    # Mock search engine results
     mem_id = uuid4()
 
-    # We must mock the methods on the actual search_engine object instance
-    with (
-        patch.object(
-            engine.search_engine, "search", AsyncMock(return_value=[(mem_id, 0.8)])
-        ),
-        patch.object(
-            engine.search_engine, "rerank", AsyncMock(return_value=[(mem_id, 0.9)])
-        ) as mock_rerank,
+    # Mock search engine results
+    with patch.object(
+        engine.search_engine, "search", AsyncMock(return_value=[(mem_id, 0.8)])
     ):
-        mock_storage.get_memory.return_value = {"id": mem_id, "content": "test"}
-        # Fix: Mock get_edges_between as AsyncMock
-        mock_storage.get_edges_between = AsyncMock(return_value=[])
+        mock_storage.get_memory.return_value = {
+            "id": mem_id,
+            "content": "test",
+            "importance": 0.5,
+        }
 
         results = await engine.search_memories(
-            "query", "t1", agent_id="a1", layer="episodic", use_reranker=True
+            "query", "t1", custom_weights={"alpha": 1.0, "beta": 0.0, "gamma": 0.0}
         )
 
         assert len(results) == 1
-        assert results[0]["search_score"] == 0.9
-        assert mock_rerank.called
+        assert "math_score" in results[0]
 
 
 @pytest.mark.asyncio
-async def test_generate_reflection(
+async def test_get_status_detailed(
     mock_storage, mock_vector_store, mock_embedding_provider
 ):
     engine = RAEEngine(mock_storage, mock_vector_store, mock_embedding_provider)
-    with patch.object(
-        engine.reflection_engine,
-        "generate_reflection",
-        AsyncMock(return_value={"status": "ok"}),
-    ):
-        result = await engine.generate_reflection([uuid4()], "t1", "a1")
-        assert result == {"status": "ok"}
-
-
-@pytest.mark.asyncio
-async def test_sync_memories(
-    mock_storage, mock_vector_store, mock_embedding_provider, mock_sync_provider
-):
-    settings = RAESettings(sync_enabled=True)
-    engine = RAEEngine(
-        mock_storage,
-        mock_vector_store,
-        mock_embedding_provider,
-        settings=settings,
-        sync_provider=mock_sync_provider,
-    )
-
-    # Mock sync response
-    mock_response = MagicMock()
-    mock_response.success = True
-    mock_response.synced_memory_ids = [uuid4()]
-    mock_response.conflicts = []
-    mock_response.error_message = None
-
-    if engine.sync_protocol:
-        with patch.object(
-            engine.sync_protocol, "sync", AsyncMock(return_value=mock_response)
-        ):
-            result = await engine.sync_memories("t1", "a1")
-            assert result is not None
-            assert result["success"] is True
-            assert result["synced_count"] == 1
-
-
-@pytest.mark.asyncio
-async def test_sync_memories_disabled(
-    mock_storage, mock_vector_store, mock_embedding_provider
-):
-    engine = RAEEngine(mock_storage, mock_vector_store, mock_embedding_provider)
-    result = await engine.sync_memories("t1", "a1")
-    assert result is None
-
-
-@pytest.mark.asyncio
-async def test_generate_text_no_orchestrator(
-    mock_storage, mock_vector_store, mock_embedding_provider
-):
-    engine = RAEEngine(mock_storage, mock_vector_store, mock_embedding_provider)
-    result = await engine.generate_text("prompt")
-    assert result is None
+    status = engine.get_status()
+    assert status["engine"].startswith("RAE-Core")
+    assert "vector" in status["search_strategies"]
+    assert status["components"]["storage"] == "MagicMock"

@@ -321,6 +321,9 @@ class SQLiteStorage(IMemoryStorage):
         offset: int = 0,
         order_by: str = "created_at",
         order_direction: str = "desc",
+        project: str | None = None,
+        query: str | None = None,
+        **kwargs: Any,
     ) -> list[dict[str, Any]]:
         """List memories with filtering."""
         await self.initialize()
@@ -506,7 +509,6 @@ class SQLiteStorage(IMemoryStorage):
 
         return memory
 
-
     async def delete_memories_with_metadata_filter(
         self,
         tenant_id: str,
@@ -598,6 +600,7 @@ class SQLiteStorage(IMemoryStorage):
         layer: str,
         limit: int = 10,
         filters: dict[str, Any] | None = None,
+        project: str | None = None,
     ) -> list[dict[str, Any]]:
         """Search memories using FTS5 full-text search.
 
@@ -909,7 +912,9 @@ class SQLiteStorage(IMemoryStorage):
             await db.commit()
             return cursor.rowcount
 
-    async def get_edges_between(self, node_ids: list[str], tenant_id: str) -> list[tuple[str, str, float]]:
+    async def get_edges_between(
+        self, node_ids: list[str], tenant_id: str
+    ) -> list[tuple[str, str, float]]:
         """
         Retrieve edges between nodes for resonance calculation.
         Note: In SQLite adapter, edges might be in a separate database file
@@ -919,16 +924,16 @@ class SQLiteStorage(IMemoryStorage):
         if not node_ids:
             return []
 
-        # We assume the table knowledge_graph_edges exists in the same DB 
+        # We assume the table knowledge_graph_edges exists in the same DB
         # or was attached. For RAE-Lite simplicity, we check if it exists.
         try:
             async with aiosqlite.connect(self.db_path) as db:
                 placeholders = ",".join(["?" for _ in node_ids])
                 params = node_ids + node_ids + [tenant_id]
                 sql = f"""
-                    SELECT source_id, target_id, weight 
-                    FROM knowledge_graph_edges 
-                    WHERE source_id IN ({placeholders}) 
+                    SELECT source_id, target_id, weight
+                    FROM knowledge_graph_edges
+                    WHERE source_id IN ({placeholders})
                       AND target_id IN ({placeholders})
                       AND tenant_id = ?
                 """
@@ -938,7 +943,6 @@ class SQLiteStorage(IMemoryStorage):
         except Exception:
             # If table doesn't exist yet, return empty
             return []
-
 
     def _matches_metadata_filter(
         self, metadata: dict[str, Any], filter_dict: dict[str, Any]

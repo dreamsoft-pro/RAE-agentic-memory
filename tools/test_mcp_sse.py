@@ -1,14 +1,15 @@
 import asyncio
-import aiohttp
 import json
-import sys
+
+import aiohttp
+
 
 async def main():
     base_url = "http://localhost:9001"
     sse_url = f"{base_url}/sse"
-    
+
     print(f"Connecting to SSE: {sse_url}")
-    
+
     async with aiohttp.ClientSession() as session:
         # 1. Connect to SSE stream
         async with session.get(sse_url) as response:
@@ -17,11 +18,11 @@ async def main():
                 return
 
             print("Connected to SSE stream.")
-            
+
             # Read the first event to get the session endpoint (endpoint)
             endpoint_url = None
             async for line in response.content:
-                line = line.decode('utf-8').strip()
+                line = line.decode("utf-8").strip()
                 if line.startswith("event: endpoint"):
                     # The next line should be data: <url>
                     continue
@@ -31,7 +32,7 @@ async def main():
                     endpoint_url = f"{base_url}{path}"
                     print(f"Session Endpoint found: {endpoint_url}")
                     break
-            
+
             if not endpoint_url:
                 print("Could not find session endpoint.")
                 return
@@ -44,16 +45,16 @@ async def main():
                 "params": {
                     "protocolVersion": "2024-11-05",
                     "capabilities": {},
-                    "clientInfo": {"name": "gemini-cli", "version": "1.0"}
-                }
+                    "clientInfo": {"name": "gemini-cli", "version": "1.0"},
+                },
             }
-            
+
             print("Sending initialize...")
             async with session.post(endpoint_url, json=init_payload) as post_resp:
                 print(f"Init response: {post_resp.status}")
-                # We expect response on SSE stream, but for now let's just assume it works 
+                # We expect response on SSE stream, but for now let's just assume it works
                 # and send tools/list immediately if 200/202.
-            
+
             # 3. Send 'get_latest_telemetry' for TJ02
             call_payload = {
                 "jsonrpc": "2.0",
@@ -61,12 +62,10 @@ async def main():
                 "method": "tools/call",
                 "params": {
                     "name": "get_latest_telemetry",
-                    "arguments": {
-                        "machine_code": "TJ02"
-                    }
-                }
+                    "arguments": {"machine_code": "TJ02"},
+                },
             }
-            
+
             print("Sending get_latest_telemetry for TJ02...")
             async with session.post(endpoint_url, json=call_payload) as post_resp:
                 print(f"Call response: {post_resp.status}")
@@ -75,14 +74,14 @@ async def main():
             print("Listening for responses (Ctrl+C to stop)...")
             try:
                 async for line in response.content:
-                    line = line.decode('utf-8').strip()
+                    line = line.decode("utf-8").strip()
                     if line.startswith("data:"):
                         data_str = line[5:].strip()
                         try:
                             data = json.loads(data_str)
                             print("\n=== MESSAGE RECEIVED ===")
                             print(json.dumps(data, indent=2))
-                            
+
                             # If we got the result for id 2 (tools/list), we are done
                             if data.get("id") == 2:
                                 break
@@ -90,6 +89,7 @@ async def main():
                             pass
             except KeyboardInterrupt:
                 pass
+
 
 if __name__ == "__main__":
     asyncio.run(main())

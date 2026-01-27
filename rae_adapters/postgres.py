@@ -105,16 +105,16 @@ class PostgreSQLStorage(IMemoryStorage):
         """Convert a PostgreSQL row record to a standard dictionary."""
         if row is None:
             return {}
-        
+
         # Convert asyncpg.Record to dict
         data = dict(row)
-        
+
         # Handle UUID conversion to string for consistency
         if "id" in data and isinstance(data["id"], UUID):
             data["id"] = str(data["id"])
         if "tenant_id" in data and isinstance(data["tenant_id"], UUID):
             data["tenant_id"] = str(data["tenant_id"])
-            
+
         return data
 
     async def store_memory(
@@ -135,7 +135,7 @@ class PostgreSQLStorage(IMemoryStorage):
         strength: float = 1.0,
         info_class: str = "internal",
         governance: dict[str, Any] | None = None,
-        ttl: int | None = None, # <--- RESTORED for backward compatibility
+        ttl: int | None = None,  # <--- RESTORED for backward compatibility
     ) -> UUID:
         """Store a new memory in PostgreSQL."""
         pool = await self._get_pool()
@@ -143,6 +143,7 @@ class PostgreSQLStorage(IMemoryStorage):
         # Backward compatibility: convert ttl to expires_at if needed
         if ttl is not None and expires_at is None:
             from datetime import timedelta
+
             expires_at = datetime.now(timezone.utc) + timedelta(seconds=ttl)
 
         memory_id = uuid4()
@@ -178,15 +179,17 @@ class PostgreSQLStorage(IMemoryStorage):
                 embedding_val,
                 importance,
                 expires_at,
-                datetime.now(timezone.utc).replace(tzinfo=None), # created_at ($11)
-                datetime.now(timezone.utc).replace(tzinfo=None), # last_accessed_at ($12)
-                memory_type, # $13
-                project,     # $14
+                datetime.now(timezone.utc).replace(tzinfo=None),  # created_at ($11)
+                datetime.now(timezone.utc).replace(
+                    tzinfo=None
+                ),  # last_accessed_at ($12)
+                memory_type,  # $13
+                project,  # $14
                 session_id,  # $15
-                source,      # $16
-                strength,    # $17
+                source,  # $16
+                strength,  # $17
                 info_class,  # $18
-                json.dumps(governance), # $19
+                json.dumps(governance),  # $19
             )
 
         return memory_id
@@ -272,15 +275,22 @@ class PostgreSQLStorage(IMemoryStorage):
         # Handle both 'project' and 'project_id' for backward compatibility
         p_filter = project or filters.get("project") or filters.get("project_id")
         if p_filter and p_filter != "default":
-            conditions.append(f"(project = ${param_idx} OR project = 'default' OR project IS NULL)")
+            conditions.append(
+                f"(project = ${param_idx} OR project = 'default' OR project IS NULL)"
+            )
             params.append(p_filter)
             param_idx += 1
-            
+
         if layer:
             # Backward compatibility for 'episodic' vs 'em'
             db_layer = "em" if layer == "episodic" else layer
             conditions.append(f"layer = ${param_idx}")
             params.append(db_layer)
+            param_idx += 1
+
+        if agent_id and agent_id != "default" and agent_id != "all":
+            conditions.append(f"agent_id = ${param_idx}")
+            params.append(agent_id)
             param_idx += 1
 
         # Handle not_expired filter
@@ -303,9 +313,9 @@ class PostgreSQLStorage(IMemoryStorage):
 
         # Handle other filters (including nested ones like governance.is_failure)
         for key, value in filters.items():
-            if key in ["not_expired", "tags", "min_importance", "score_threshold"]:
+            if key in ["not_expired", "tags", "min_importance", "score_threshold", "project", "project_id", "agent_id", "layer"]:
                 continue
-            
+
             if "." in key:
                 # Handle JSONB path (e.g. governance.is_failure)
                 parts = key.split(".")
@@ -370,10 +380,14 @@ class PostgreSQLStorage(IMemoryStorage):
                 "governance": row["governance"] if row["governance"] else {},
                 "tags": list(row["tags"]) if row["tags"] else [],
                 "metadata": (
-                    json.loads(row["metadata"])
-                    if isinstance(row["metadata"], str)
-                    else dict(row["metadata"])
-                ) if row["metadata"] else {},
+                    (
+                        json.loads(row["metadata"])
+                        if isinstance(row["metadata"], str)
+                        else dict(row["metadata"])
+                    )
+                    if row["metadata"]
+                    else {}
+                ),
                 "embedding": (
                     (
                         json.loads(row["embedding"])
@@ -410,7 +424,8 @@ class PostgreSQLStorage(IMemoryStorage):
         order_by: str = "created_at",
         order_direction: str = "desc",
         project: str | None = None,
-        query: str | None = None, # <--- RESTORED for FTS support
+        query: str | None = None,
+        **kwargs: Any,
     ) -> list[dict[str, Any]]:
         """List memories with pagination and optional FTS."""
         pool = await self._get_pool()
@@ -426,16 +441,23 @@ class PostgreSQLStorage(IMemoryStorage):
         # Handle both 'project' and 'project_id' for backward compatibility
         p_filter = project or filters.get("project") or filters.get("project_id")
         if p_filter and p_filter != "default":
-            conditions.append(f"(project = ${param_idx} OR project = 'default' OR project IS NULL)")
+            conditions.append(
+                f"(project = ${param_idx} OR project = 'default' OR project IS NULL)"
+            )
             params.append(p_filter)
             param_idx += 1
-            
+
         # 2. Agent Filter (Attribution)
         if layer:
             # Backward compatibility for 'episodic' vs 'em'
             db_layer = "em" if layer == "episodic" else layer
             conditions.append(f"layer = ${param_idx}")
             params.append(db_layer)
+            param_idx += 1
+
+        if agent_id and agent_id != "default" and agent_id != "all":
+            conditions.append(f"agent_id = ${param_idx}")
+            params.append(agent_id)
             param_idx += 1
 
         # Default values for clauses
@@ -451,10 +473,12 @@ class PostgreSQLStorage(IMemoryStorage):
             else:
                 # Use OR logic for websearch to find ANY of the words (more liberal for math fallback)
                 liberal_query = query.replace(" ", " OR ")
-                conditions.append(f"(to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', ${param_idx}) OR content ILIKE ${param_idx+1})")
+                conditions.append(
+                    f"(to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', ${param_idx}) OR content ILIKE ${param_idx+1})"
+                )
                 score_clause = f"""
-                    CASE 
-                        WHEN to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', ${param_idx}) 
+                    CASE
+                        WHEN to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', ${param_idx})
                         THEN ts_rank_cd(to_tsvector('english', coalesce(content, '')), websearch_to_tsquery('english', ${param_idx})) + 0.5
                         WHEN content ILIKE ${param_idx+1} THEN 0.5
                         ELSE 0.1
@@ -491,9 +515,9 @@ class PostgreSQLStorage(IMemoryStorage):
             # Generic JSONB metadata filters
             for key, value in filters.items():
                 # Skip already handled keys
-                if key in ["since", "created_after", "min_importance", "memory_ids"]:
+                if key in ["since", "created_after", "min_importance", "memory_ids", "project", "project_id", "agent_id", "layer"]:
                     continue
-                
+
                 if "." in key:
                     # Handle JSONB path (e.g. governance.is_failure)
                     parts = key.split(".")
@@ -511,7 +535,7 @@ class PostgreSQLStorage(IMemoryStorage):
 
         where_clause = " AND ".join(conditions)
         order_clause = f"ORDER BY {order_by} {order_direction.upper()}"
-        
+
         # DEBUG
         print(f"DEBUG LIST SQL: {where_clause} | PARAMS: {params}")
 

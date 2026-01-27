@@ -135,6 +135,8 @@ class SQLiteVectorStore(IVectorStore):
         agent_id: str | None = None,
         session_id: str | None = None,
         filters: dict[str, Any] | None = None,
+        project: str | None = None,
+        **kwargs: Any,
     ) -> list[tuple[UUID, float]]:
         """Search for similar vectors using cosine similarity."""
         await self.initialize()
@@ -185,21 +187,20 @@ class SQLiteVectorStore(IVectorStore):
 
                 # Convert to matrix for bulk calculation
                 matrix = np.stack(embeddings)
-                query_vec = query_vec.flatten() # Ensure it's 1D
+                query_vec = query_vec.flatten()  # Ensure it's 1D
 
                 # Bulk cosine similarity calculation
                 dot_products = np.dot(matrix, query_vec)
                 norms = np.linalg.norm(matrix, axis=1)
-                
+
                 # Prevent division by zero
                 query_norm = np.linalg.norm(query_vec)
                 if query_norm == 0:
                     return []
-                
-                denom = query_norm * norms
-                denom[denom == 0] = 1e-9 # Prevent div zero
-                similarities = dot_products / denom
 
+                denom = query_norm * norms
+                denom[denom == 0] = 1e-9  # Prevent div zero
+                similarities = dot_products / denom
 
                 # Filter and format results
                 results = []

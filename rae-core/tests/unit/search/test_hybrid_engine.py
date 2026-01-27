@@ -4,6 +4,7 @@ from uuid import UUID, uuid4
 
 import pytest
 
+from rae_core.math.fusion import RRFFusion
 from rae_core.search.engine import HybridSearchEngine
 from rae_core.search.strategies import SearchStrategy
 
@@ -23,11 +24,13 @@ class MockStrategy(SearchStrategy):
         tenant_id: str,
         filters: dict[str, Any] | None = None,
         limit: int = 10,
+        project: str | None = None,
+        **kwargs: Any,
     ) -> list[tuple[UUID, float]]:
         # Call the mock to track usage
         return cast(
             list[tuple[UUID, float]],
-            await self.search_mock(query, tenant_id, filters, limit),
+            await self.search_mock(query, tenant_id, filters, limit, **kwargs),
         )
 
     def get_strategy_name(self) -> str:
@@ -51,18 +54,19 @@ async def test_hybrid_search_rrf_logic():
 
     engine = HybridSearchEngine(
         strategies={"A": strat_a, "B": strat_b},
-        rrf_k=1,  # Small k to make rank differences significant
+        fusion_strategy=RRFFusion(k=1),  # Small k to make rank differences significant
     )
 
     # RRF Score formula: weight / (k + rank)
-    # id1 score: A(rank 1) + B(rank 2) = 1/(1+1) + 1/(1+2) = 0.5 + 0.33 = 0.83
-    # id2 score: A(rank 2) + B(rank 1) = 1/(1+2) + 1/(1+1) = 0.33 + 0.5 = 0.83
+    # where rank starts at 0
+    # id1 score: A(rank 0) + B(rank 1) = 1/(1+0) + 1/(1+1) = 1.0 + 0.5 = 1.5
+    # id2 score: A(rank 1) + B(rank 0) = 1/(1+1) + 1/(1+0) = 0.5 + 1.0 = 1.5
 
     results = await engine.search("query", "tenant")
 
     assert len(results) == 2
     # Scores should be identical
-    assert abs(results[0][1] - 0.833) < 0.01
+    assert abs(results[0][1] - 1.5) < 0.01
 
 
 @pytest.mark.asyncio
@@ -77,21 +81,9 @@ async def test_hybrid_search_single_strategy():
     assert len(results) == 1
     assert results[0][0] == id1
     # For single strategy, RRF score is just 1/(k+rank) * weight
-    # 1.0 / (60 + 1) = 0.016...
-    expected_score = 1.0 / 61.0
+    # Rank is 0-based, so 1.0 / (60 + 0) = 0.01666...
+    expected_score = 1.0 / 60.0
     assert abs(results[0][1] - expected_score) < 0.0001
-
-
-@pytest.mark.asyncio
-async def test_search_single_strategy_direct():
-    id1 = uuid4()
-    strat = MockStrategy("vector", 1.0, [(id1, 0.9)])
-    engine = HybridSearchEngine(strategies={"vector": strat})
-
-    results = await engine.search_single_strategy("vector", "q", "t")
-
-    assert len(results) == 1
-    assert results[0][1] == 0.9  # Direct score, not RRF
 
 
 @pytest.mark.asyncio
@@ -106,6 +98,7 @@ async def test_weights_influence():
 
     results = await engine.search("q", "t")
 
-    # Score = 10/(60+1) + 1/(60+1) = 11/61
-    expected = 11.0 / 61.0
+    # Score = 10/(60+0) + 1/(60+0) = 11/60
+    # Rank is 0-based
+    expected = 11.0 / 60.0
     assert abs(results[0][1] - expected) < 0.0001

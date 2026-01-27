@@ -1,17 +1,18 @@
 """RAE Engine - The Intelligent Memory Manifold."""
 
-from typing import Any, Dict, List, Tuple, Optional
-from uuid import UUID
+from typing import Any
+
 import structlog
-from rae_core.search.fusion import RRFFusion
 
 logger = structlog.get_logger(__name__)
 
+
 class RAEEngine:
     """
-    RAE Engine: A self-tuning memory manifold that uses designed math 
+    RAE Engine: A self-tuning memory manifold that uses designed math
     to navigate vector spaces more intelligently than standard RAG.
     """
+
     def __init__(
         self,
         memory_storage: Any,
@@ -21,31 +22,40 @@ class RAEEngine:
         settings: Any = None,
         cache_provider: Any = None,
         search_engine: Any = None,
+        math_controller: Any = None,
     ):
         self.memory_storage = memory_storage
         self.vector_store = vector_store
         self.embedding_provider = embedding_provider
         self.llm_provider = llm_provider
         self.settings = settings
-        
+
+        # Initialize Math Layer Controller (The Brain)
+        from rae_core.math.controller import MathLayerController
+
+        self.math_ctrl = math_controller or MathLayerController(config=settings)
+
         # Modular Search Engine with ORB 4.0
         if search_engine:
             self.search_engine = search_engine
         else:
             from rae_core.search.engine import HybridSearchEngine
+
             self.search_engine = HybridSearchEngine(
                 strategies={
                     "vector": self._init_vector_strategy(),
-                    "fulltext": self._init_fulltext_strategy()
+                    "fulltext": self._init_fulltext_strategy(),
                 }
             )
 
     def _init_vector_strategy(self):
         from rae_core.search.strategies.vector import VectorSearchStrategy
+
         return VectorSearchStrategy(self.vector_store, self.embedding_provider)
 
     def _init_fulltext_strategy(self):
         from rae_core.search.strategies.fulltext import FullTextStrategy
+
         return FullTextStrategy(self.memory_storage)
 
     async def search_memories(
@@ -63,42 +73,61 @@ class RAEEngine:
         RAE Reflective Search: Retrieval -> Math Scoring -> Manifold Adjustment.
         """
         # 1. RETRIEVAL (Vector + Keyword)
-        # The search_engine uses ORB to balance these signals
-        search_filters = {"agent_id": agent_id, "project": project, "layer": layer, **(filters or {})}
-        
-        # Avoid in-place modification of kwargs
-        strategy_weights = kwargs.get("custom_weights", {}).copy() if kwargs.get("custom_weights") else None
-        
+        search_filters = {
+            "agent_id": agent_id,
+            "project": project,
+            "layer": layer,
+            **(filters or {}),
+        }
+
+        # Dynamic Weight Selection via Math Controller (Bandit)
+        # If weights are provided in kwargs, they override the autonomous controller
+        custom_weights = kwargs.get("custom_weights")
+
+        # FIX: Distinguish between Retrieval Weights (dict) and Scoring Weights (object)
+        strategy_weights = None
+        if isinstance(custom_weights, dict):
+            strategy_weights = custom_weights
+
+        if not strategy_weights:
+            # autonomous tuning
+            strategy_weights = self.math_ctrl.get_retrieval_weights(query)
+            logger.info("autonomous_tuning_applied", weights=strategy_weights)
+
+        active_strategies = kwargs.get("strategies")
+
         candidates = await self.search_engine.search(
-            query=query, 
-            tenant_id=tenant_id, 
+            query=query,
+            tenant_id=tenant_id,
             filters=search_filters,
-            limit=top_k * 5, # Wide window for Math Layer
+            limit=top_k * 5,  # Wide window for Math Layer
+            strategies=active_strategies,
             strategy_weights=strategy_weights,
         )
 
         # 2. DESIGNED MATH SCORING (The Manifold)
-        from rae_core.math.controller import MathLayerController
         from rae_core.math.structure import ScoringWeights
-        math_ctrl = MathLayerController()
-        
-        raw_weights = kwargs.get("custom_weights")
-        if isinstance(raw_weights, dict):
+
+        if isinstance(custom_weights, dict):
             # Extract only fields valid for ScoringWeights
-            valid_fields = {k: v for k, v in raw_weights.items() if k in ["alpha", "beta", "gamma"]}
+            valid_fields = {
+                k: v
+                for k, v in custom_weights.items()
+                if k in ["alpha", "beta", "gamma"]
+            }
             scoring_weights = ScoringWeights(**valid_fields)
+        elif custom_weights:
+            scoring_weights = custom_weights
         else:
-            scoring_weights = raw_weights
-        
+            scoring_weights = None  # Will use default in score_memory if None
+
         memories = []
         for m_id, sim_score in candidates:
             memory = await self.memory_storage.get_memory(m_id, tenant_id)
             if memory:
                 # Math Layer weighs similarity against system-wide importance and topology
-                math_score = math_ctrl.score_memory(
-                    memory, 
-                    query_similarity=sim_score,
-                    weights=scoring_weights
+                math_score = self.math_ctrl.score_memory(
+                    memory, query_similarity=sim_score, weights=scoring_weights
                 )
                 memory["math_score"] = math_score
                 memory["search_score"] = sim_score
@@ -111,7 +140,7 @@ class RAEEngine:
             for m in memories:
                 if m.get("layer") != "reflective":
                     # Synergy boost from reflections
-                    m["math_score"] *= 1.5 
+                    m["math_score"] *= 1.5
 
         memories.sort(key=lambda x: x.get("math_score", 0.0), reverse=True)
         return memories[:top_k]
@@ -119,7 +148,7 @@ class RAEEngine:
     async def generate_text(
         self,
         prompt: str,
-        system_prompt: Optional[str] = None,
+        system_prompt: str | None = None,
         max_tokens: int = 1000,
         temperature: float = 0.7,
     ) -> str:
@@ -129,12 +158,17 @@ class RAEEngine:
         """
         if not self.llm_provider:
             raise RuntimeError("LLM provider not configured in RAEEngine")
-        
-        return await self.llm_provider.generate_text(
-            prompt=prompt,
-            system_prompt=system_prompt,
-            max_tokens=max_tokens,
-            temperature=temperature
+
+        from typing import cast
+
+        return cast(
+            str,
+            await self.llm_provider.generate_text(
+                prompt=prompt,
+                system_prompt=system_prompt,
+                max_tokens=max_tokens,
+                temperature=temperature,
+            ),
         )
 
     async def store_memory(self, **kwargs):
@@ -142,7 +176,7 @@ class RAEEngine:
         content = kwargs.get("content")
         tenant_id = kwargs.get("tenant_id")
         m_id = await self.memory_storage.store_memory(**kwargs)
-        
+
         # Automatic Vectorization (Manifold Entry)
         emb = await self.embedding_provider.embed_text(content)
         await self.vector_store.store_vector(m_id, emb, tenant_id, metadata=kwargs)
@@ -157,7 +191,7 @@ class RAEEngine:
                 "storage": type(self.memory_storage).__name__,
                 "vector_store": type(self.vector_store).__name__,
                 "embedding": type(self.embedding_provider).__name__,
-            }
+            },
         }
 
     async def run_reflection_cycle(self, **kwargs) -> dict[str, Any]:
@@ -167,5 +201,5 @@ class RAEEngine:
             "status": "completed",
             "reflections_created": 0,
             "memories_consolidated": 0,
-            "tokens_saved": 0
+            "tokens_saved": 0,
         }

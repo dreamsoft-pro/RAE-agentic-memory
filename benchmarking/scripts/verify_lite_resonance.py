@@ -38,10 +38,16 @@ async def test_lite_resonance():
 
     # 1. Store two memories
     id_a = await engine.store_memory(
-        "local", "user", "Cooling system failure", layer="episodic"
+        tenant_id="local",
+        agent_id="user",
+        content="Cooling system failure",
+        layer="episodic",
     )
     id_b = await engine.store_memory(
-        "local", "user", "Fluid leakage detected", layer="episodic"
+        tenant_id="local",
+        agent_id="user",
+        content="Fluid leakage detected",
+        layer="episodic",
     )
 
     # 2. Link them in the graph (Manually simulating agentic extraction)

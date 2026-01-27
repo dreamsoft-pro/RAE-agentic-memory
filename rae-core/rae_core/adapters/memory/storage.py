@@ -91,6 +91,7 @@ class InMemoryStorage(IMemoryStorage):
         strength: float = 1.0,
         info_class: str = "internal",
         governance: dict[str, Any] | None = None,
+        ttl: int | None = None,
     ) -> UUID:
         """Store a new memory."""
         async with self._lock:
@@ -109,6 +110,13 @@ class InMemoryStorage(IMemoryStorage):
             if governance:
                 meta["governance"] = governance
 
+            # Calculate expiration from TTL if provided and not already set
+            expiration = expires_at
+            if ttl is not None and expiration is None:
+                from datetime import timedelta
+
+                expiration = now + timedelta(seconds=ttl)
+
             memory = {
                 "id": memory_id,
                 "content": content,
@@ -121,7 +129,7 @@ class InMemoryStorage(IMemoryStorage):
                 "importance": importance or 0.5,
                 "created_at": now,
                 "last_accessed_at": now,
-                "expires_at": expires_at,
+                "expires_at": expiration,
                 "usage_count": 0,
                 "memory_type": memory_type,
                 "strength": strength,
@@ -232,6 +240,9 @@ class InMemoryStorage(IMemoryStorage):
         offset: int = 0,
         order_by: str = "created_at",
         order_direction: str = "desc",
+        project: str | None = None,
+        query: str | None = None,
+        **kwargs: Any,
     ) -> list[dict[str, Any]]:
         """List memories with filtering."""
         async with self._lock:
@@ -422,6 +433,7 @@ class InMemoryStorage(IMemoryStorage):
         layer: str,
         limit: int = 10,
         filters: dict[str, Any] | None = None,
+        project: str | None = None,
     ) -> list[dict[str, Any]]:
         """Search memories using simple substring matching."""
         async with self._lock:

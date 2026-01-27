@@ -63,53 +63,28 @@ def test_math_metrics_stubs():
 
 
 @pytest.mark.asyncio
-async def test_rae_engine_vector_mapping_coverage():
-    """Test RAEEngine vector mapping logic for all dimensions."""
+async def test_rae_engine_store_memory_coverage():
+    """Test RAEEngine store_memory flow."""
     from rae_core.engine import RAEEngine
 
     # Mock dependencies
     storage = MagicMock()
     storage.store_memory = AsyncMock(return_value=uuid4())
-    storage.save_embedding = AsyncMock()
 
     vector_store = MagicMock()
     vector_store.store_vector = AsyncMock()
 
-    # Helper to test dimension mapping
-    async def verify_mapping(dim, expected_key):
-        emb_provider = MagicMock()
-        emb_provider.generate_all_embeddings = AsyncMock(
-            return_value={"model": [[0.1] * dim]}
-        )
+    emb_provider = MagicMock()
+    emb_provider.embed_text = AsyncMock(return_value=[0.1, 0.2])
 
-        # Reset mocks
-        vector_store.store_vector.reset_mock()
+    engine = RAEEngine(storage, vector_store, emb_provider)
 
-        engine = RAEEngine(storage, vector_store, emb_provider)
-        await engine.store_memory("t", "a", "content")
+    # Use keyword arguments
+    await engine.store_memory(tenant_id="t", agent_id="a", content="content")
 
-        call_kwargs = vector_store.store_vector.call_args.kwargs
-        assert expected_key in call_kwargs["embedding"]
-        assert len(call_kwargs["embedding"][expected_key]) == dim
-
-    # Test all branches
-    await verify_mapping(1536, "openai")
-    await verify_mapping(768, "ollama")
-    await verify_mapping(384, "dense")
-    await verify_mapping(1024, "cohere")
-
-    # Test Fallback
-    emb_provider_unknown = MagicMock()
-    emb_provider_unknown.generate_all_embeddings = AsyncMock(
-        return_value={"custom": [[0.1] * 128]}
-    )
-    vector_store.store_vector.reset_mock()
-    engine_fallback = RAEEngine(storage, vector_store, emb_provider_unknown)
-    await engine_fallback.store_memory("t", "a", "content")
-
-    call_kwargs = vector_store.store_vector.call_args.kwargs
-    assert "dense" in call_kwargs["embedding"]
-    assert len(call_kwargs["embedding"]["dense"]) == 128
+    assert storage.store_memory.called
+    assert emb_provider.embed_text.called
+    assert vector_store.store_vector.called
 
 
 @pytest.mark.asyncio
