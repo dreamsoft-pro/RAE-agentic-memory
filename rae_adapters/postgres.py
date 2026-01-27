@@ -462,7 +462,7 @@ class PostgreSQLStorage(IMemoryStorage):
 
         # Default values for clauses
         score_clause = "1.0 as score"
-        order_clause = f"ORDER BY {order_by} {order_direction}"
+        order_clause = f"ORDER BY {order_by} {order_direction.upper()}"
 
         # Try FTS first, with ILIKE as fallback logic in SQL
         if query and query.strip():
@@ -534,7 +534,6 @@ class PostgreSQLStorage(IMemoryStorage):
                     param_idx += 1
 
         where_clause = " AND ".join(conditions)
-        order_clause = f"ORDER BY {order_by} {order_direction.upper()}"
 
         # DEBUG
         print(f"DEBUG LIST SQL: {where_clause} | PARAMS: {params}")
