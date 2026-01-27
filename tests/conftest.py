@@ -53,6 +53,13 @@ def mock_env_and_settings(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def mock_qdrant_factory():
+    """Globally mock Qdrant client factory to prevent connection attempts."""
+    with patch("rae_adapters.infra_factory.AsyncQdrantClient", new=MagicMock(return_value=AsyncMock())):
+        yield
+
+
+@pytest.fixture(autouse=True)
 def override_auth():
     app.dependency_overrides[auth.verify_api_key] = lambda: "test-api-key"
     app.dependency_overrides[auth.verify_token] = lambda: {
@@ -222,6 +229,10 @@ def client_with_overrides(
         patch(
             "rae_adapters.infra_factory.asyncpg.create_pool",
             new=AsyncMock(return_value=mock_pool),
+        ),
+        patch(
+            "rae_adapters.infra_factory.AsyncQdrantClient",
+            new=MagicMock(return_value=AsyncMock()),
         ),
         patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()),
         patch(

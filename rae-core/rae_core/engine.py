@@ -159,11 +159,16 @@ class RAEEngine:
         if not self.llm_provider:
             raise RuntimeError("LLM provider not configured in RAEEngine")
 
-        return await self.llm_provider.generate_text(
-            prompt=prompt,
-            system_prompt=system_prompt,
-            max_tokens=max_tokens,
-            temperature=temperature,
+        from typing import cast
+
+        return cast(
+            str,
+            await self.llm_provider.generate_text(
+                prompt=prompt,
+                system_prompt=system_prompt,
+                max_tokens=max_tokens,
+                temperature=temperature,
+            ),
         )
 
     async def store_memory(self, **kwargs):

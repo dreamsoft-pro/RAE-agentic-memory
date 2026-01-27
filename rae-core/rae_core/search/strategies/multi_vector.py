@@ -40,6 +40,7 @@ class MultiVectorSearchStrategy(SearchStrategy):
         tenant_id: str,
         filters: dict[str, Any] | None = None,
         limit: int = 10,
+        project: str | None = None,
     ) -> list[tuple[UUID, float]]:
         """
         Execute search across all vector stores and fuse results.

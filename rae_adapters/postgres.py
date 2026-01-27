@@ -455,6 +455,11 @@ class PostgreSQLStorage(IMemoryStorage):
             params.append(db_layer)
             param_idx += 1
 
+        if agent_id and agent_id != "default" and agent_id != "all":
+            conditions.append(f"agent_id = ${param_idx}")
+            params.append(agent_id)
+            param_idx += 1
+
         # Default values for clauses
         score_clause = "1.0 as score"
         order_clause = f"ORDER BY {order_by} {order_direction}"

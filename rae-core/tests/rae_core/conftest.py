@@ -120,6 +120,9 @@ class MockMemoryStorage(IMemoryStorage):
         offset: int = 0,
         order_by: str = "created_at",
         order_direction: str = "desc",
+        project: str | None = None,
+        query: str | None = None,
+        **kwargs: Any,
     ) -> list[dict[str, Any]]:
         async with self._lock:
             results = []
@@ -206,6 +209,7 @@ class MockMemoryStorage(IMemoryStorage):
         layer: str,
         limit: int = 10,
         filters: dict[str, Any] | None = None,
+        project: str | None = None,
     ) -> list[dict[str, Any]]:
         async with self._lock:
             results = []
@@ -402,6 +406,8 @@ class MockVectorStore(IVectorStore):
         agent_id: str | None = None,
         session_id: str | None = None,
         filters: dict[str, Any] | None = None,
+        project: str | None = None,
+        **kwargs: Any,
     ) -> list[tuple[UUID, float]]:
         async with self._lock:
             results: list[tuple[UUID, float]] = []

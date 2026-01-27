@@ -210,6 +210,7 @@ class PostgreSQLStorage(IMemoryStorage):
         layer: str,
         limit: int = 10,
         filters: dict[str, Any] | None = None,
+        project: str | None = None,
     ) -> list[dict[str, Any]]:
         """Search memories using PostgreSQL full-text search.
 
@@ -322,6 +323,9 @@ class PostgreSQLStorage(IMemoryStorage):
         offset: int = 0,
         order_by: str = "created_at",
         order_direction: str = "desc",
+        project: str | None = None,
+        query: str | None = None,
+        **kwargs: Any,
     ) -> list[dict[str, Any]]:
         """List memories with pagination."""
         pool = await self._get_pool()
@@ -332,6 +336,13 @@ class PostgreSQLStorage(IMemoryStorage):
         ]
         params: list[Any] = [tenant_id]
         param_idx = 2
+
+        # 1. Project Filter
+        p_filter = project or (filters or {}).get("project")
+        if p_filter and p_filter != "default":
+            conditions.append(f"project = ${param_idx}")
+            params.append(p_filter)
+            param_idx += 1
 
         if agent_id:
             conditions.append(f"agent_id = ${param_idx}")
@@ -346,6 +357,12 @@ class PostgreSQLStorage(IMemoryStorage):
         if tags:
             conditions.append(f"tags && ${param_idx}")
             params.append(tags)
+            param_idx += 1
+
+        # FTS Query support
+        if query:
+            conditions.append(f"content ILIKE ${param_idx}")
+            params.append(f"%{query}%")
             param_idx += 1
 
         # Apply additional filters

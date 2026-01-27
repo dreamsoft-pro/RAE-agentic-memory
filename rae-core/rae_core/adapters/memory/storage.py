@@ -240,6 +240,9 @@ class InMemoryStorage(IMemoryStorage):
         offset: int = 0,
         order_by: str = "created_at",
         order_direction: str = "desc",
+        project: str | None = None,
+        query: str | None = None,
+        **kwargs: Any,
     ) -> list[dict[str, Any]]:
         """List memories with filtering."""
         async with self._lock:
@@ -430,6 +433,7 @@ class InMemoryStorage(IMemoryStorage):
         layer: str,
         limit: int = 10,
         filters: dict[str, Any] | None = None,
+        project: str | None = None,
     ) -> list[dict[str, Any]]:
         """Search memories using simple substring matching."""
         async with self._lock:

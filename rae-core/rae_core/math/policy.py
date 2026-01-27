@@ -47,7 +47,7 @@ def compute_memory_score(
     now: datetime | None = None,
     weights: ScoringWeights | None = None,
     decay_config: DecayConfig | None = None,  # <--- RESTORED
-    memory_id: str = "",  # <--- RESTORED
+    memory_id: str | None = None,  # <--- RESTORED
 ) -> MemoryScoreResult:
     """
     Compute a unified score for a memory item based on multiple factors.

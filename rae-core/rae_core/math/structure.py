@@ -175,7 +175,7 @@ class MemoryScoreResult:
     recency_score: float
 
     # Metadata
-    memory_id: str
+    memory_id: str | None
     age_seconds: float
     access_count: int
     effective_decay_rate: float
