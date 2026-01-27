@@ -23,11 +23,10 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.create_table(
         "metrics_timeseries",
-        sa.Column(
-            "id", sa.UUID(), server_default=sa.text("gen_random_uuid()"), nullable=False
-        ),
-        sa.Column("tenant_id", sa.String(length=255), nullable=False),
-        sa.Column("project_id", sa.String(length=255), nullable=True),
+                sa.Column("id", sa.UUID(), server_default=sa.text("gen_random_uuid()"), nullable=False),
+                sa.Column("tenant_id", sa.UUID(), nullable=False),
+                sa.Column("project_id", sa.String(length=255), nullable=True),
+        
         sa.Column("metric_name", sa.String(length=255), nullable=False),
         sa.Column("metric_value", sa.Float(), nullable=False),
         sa.Column("metric_type", sa.String(length=50), nullable=False),
