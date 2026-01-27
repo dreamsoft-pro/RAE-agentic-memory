@@ -138,6 +138,14 @@ Route logs from containers to centralized log storage (ELK, Loki) or systemd jou
 - Restrict network access to database / vector / Redis to trusted hosts only (firewall).
 - Periodically review Audit Logs and Data Retention policies.
 
+### 5.1 Security Enforcement (Hard Frames)
+
+For high-security environments where Agents must be physically isolated from the internet (preventing data exfiltration or unmonitored access):
+
+- **Enable Secure Mode**: Deploy agents in hardened, network-isolated containers.
+- **Mechanism**: "Hard Frames" architecture ensures agents can only communicate with the RAE Kernel.
+- **Guide**: See [Secure Agent Deployment Guide](../guides/SECURE_AGENT_DEPLOYMENT.md).
+
 ---
 
 ## 6. When to move beyond single-node
