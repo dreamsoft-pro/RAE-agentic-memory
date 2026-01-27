@@ -84,8 +84,11 @@ class InMemoryVectorStore(IVectorStore):
         agent_id: str | None = None,
         session_id: str | None = None,
         filters: dict[str, Any] | None = None,
+        project: str | None = None,
+        **kwargs: Any,
     ) -> list[tuple[UUID, float]]:
         """Search for similar vectors using cosine similarity."""
+        project = kwargs.get("project")
         async with self._lock:
             # Get candidate vectors for tenant
             candidate_ids = self._by_tenant[tenant_id]
@@ -204,7 +207,9 @@ class InMemoryVectorStore(IVectorStore):
 
     async def batch_store_vectors(
         self,
-        vectors: list[tuple[UUID, list[float] | dict[str, list[float]], dict[str, Any]]],
+        vectors: list[
+            tuple[UUID, list[float] | dict[str, list[float]], dict[str, Any]]
+        ],
         tenant_id: str,
     ) -> int:  # type: ignore[override]
         """Store multiple vectors in a batch."""

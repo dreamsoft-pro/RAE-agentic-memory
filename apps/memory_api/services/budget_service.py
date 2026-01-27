@@ -11,7 +11,6 @@ This service provides comprehensive budget management including:
 
 from datetime import datetime
 from typing import Any, Dict, Optional, Tuple
-
 from uuid import UUID
 
 import structlog
@@ -190,13 +189,16 @@ class BudgetService:
         now = datetime.now()
 
         # Resets (Safety check, usually handled by DB triggers)
-        if budget.last_daily_reset.date() < now.date():
+        if budget.last_daily_reset and budget.last_daily_reset.date() < now.date():
             budget.daily_usage_usd = 0.0
             budget.daily_tokens_used = 0
 
-        if (budget.last_monthly_reset.year < now.year) or (
-            budget.last_monthly_reset.year == now.year
-            and budget.last_monthly_reset.month < now.month
+        if budget.last_monthly_reset and (
+            (budget.last_monthly_reset.year < now.year)
+            or (
+                budget.last_monthly_reset.year == now.year
+                and budget.last_monthly_reset.month < now.month
+            )
         ):
             budget.monthly_usage_usd = 0.0
             budget.monthly_tokens_used = 0
@@ -293,7 +295,9 @@ class BudgetService:
                     "limit": budget.monthly_tokens_limit,
                 },
             },
-            "last_usage_at": budget.last_usage_at.isoformat(),
+            "last_usage_at": (
+                budget.last_usage_at.isoformat() if budget.last_usage_at else None
+            ),
         }
 
     async def set_budget_limits(

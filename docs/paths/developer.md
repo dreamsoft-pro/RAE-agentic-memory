@@ -127,6 +127,12 @@ The port mapping is designed to allow you to run multiple environments at once. 
 
 All three environments can run side-by-side without interfering with each other.
 
+### 5. Secure Mode (Hard Frames)
+
+If you are developing security-critical agents that require physical network isolation:
+-   See the **[Secure Agent Deployment Guide](../guides/SECURE_AGENT_DEPLOYMENT.md)**.
+-   Use `docker compose -f docker-compose.secure.yml up -d`.
+
 3.  **Verify the services are running (for selected profile):**
     You can check the status of the containers:
     ```bash
@@ -212,12 +218,25 @@ You can also browse the interactive Swagger UI locally at `http://localhost:8000
 
 It's often useful to combine profiles for specific development or testing scenarios. For instance, you might want to run the full `dev` environment (with hot-reloading for API, ML, and Celery services) while still leveraging the lightweight `lite` database and vector store setup.
 
+**Important: Database Conflicts**
+When running multiple profiles that use databases (like `dev` and `lite`), ensure they do not try to initialize the same volume simultaneously with different schemas.
+-   The `dev` profile uses `postgres_data`.
+-   The `lite` profile (in sandbox) uses `postgres_lite_data`.
+-   If you encounter migration errors (`DuplicateColumn`), you may need to wipe the volumes: `docker volume rm rae-agentic-memory_postgres_data`.
+
 **How to Run (Combined Profiles):**
 ```bash
-docker compose --profile dev --profile lite up -d
+# Start Dev (Hot Reload) on 8001
+docker compose --profile dev up -d
 
-# To stop the combined profiles
-docker compose --profile dev --profile lite down
+# Start Lite (Sandbox) on 8008
+docker compose -f docker-compose.test-sandbox.yml up -d
+```
+
+**Verification:**
+Use the provided script to check the health of all nodes:
+```bash
+./scripts/verify_node_state.sh
 ```
 
 This will bring up:

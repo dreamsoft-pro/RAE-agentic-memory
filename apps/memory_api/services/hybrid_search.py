@@ -13,6 +13,7 @@ between entities in the knowledge graph.
 """
 
 from typing import Any, Dict, List, Optional, Tuple, cast
+from uuid import UUID
 
 import structlog
 from pydantic import BaseModel, Field
@@ -369,7 +370,9 @@ class HybridSearchService:
             List of scored memory records
         """
         from apps.memory_api.config import settings
-        from rae_core.math.fusion import reciprocal_rank_fusion
+        from rae_core.math.fusion import RRFFusion
+
+        self.fusion = RRFFusion()
 
         # Build filters
         query_filters = {
@@ -465,7 +468,16 @@ class HybridSearchService:
             return []
 
         # Fuse results
-        fused_ranked = reciprocal_rank_fusion(rrf_inputs)
+        # Assuming rrf_inputs is a list of results from multiple strategies
+        flat_results: list[tuple[UUID, float]] = []
+        if rrf_inputs and isinstance(rrf_inputs[0], list):
+            for sublist in rrf_inputs:
+                flat_results.extend(sublist)
+        else:
+            # Fallback if it's already flat or something else
+            flat_results = cast(list[tuple[UUID, float]], rrf_inputs)
+
+        fused_ranked = self.fusion.fuse({"hybrid": flat_results}, {"hybrid": 1.0})
 
         # Reconstruct ScoredMemoryRecords
         final_results = []

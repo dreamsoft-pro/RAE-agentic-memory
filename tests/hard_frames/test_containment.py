@@ -1,6 +1,7 @@
-import pytest
 import subprocess
-import time
+
+import pytest
+
 
 @pytest.mark.integration
 class TestAgentContainment:
@@ -11,7 +12,17 @@ class TestAgentContainment:
 
     def _get_agent_id(self):
         try:
-            cmd = ["docker", "ps", "--filter", "label=com.docker.compose.project=hard_frames", "--filter", "label=com.docker.compose.service=rae-agent-secure", "--filter", "status=running", "-q"]
+            cmd = [
+                "docker",
+                "ps",
+                "--filter",
+                "label=com.docker.compose.project=hard_frames",
+                "--filter",
+                "label=com.docker.compose.service=rae-agent-secure",
+                "--filter",
+                "status=running",
+                "-q",
+            ]
             return subprocess.check_output(cmd, text=True).strip()
         except:
             return None
@@ -20,7 +31,7 @@ class TestAgentContainment:
         container_id = self._get_agent_id()
         if not container_id:
             pytest.skip("Agent container not running")
-        
+
         cmd = ["docker", "exec", container_id, "python", "-c", python_code]
         return subprocess.run(cmd, capture_output=True, text=True)
 
@@ -45,7 +56,9 @@ except ImportError:
 """
         result = self._exec_in_agent(code)
         assert "OPENAI_FOUND" not in result.stdout, "SECURITY FAIL: openai SDK found!"
-        assert "ANTHROPIC_FOUND" not in result.stdout, "SECURITY FAIL: anthropic SDK found!"
+        assert (
+            "ANTHROPIC_FOUND" not in result.stdout
+        ), "SECURITY FAIL: anthropic SDK found!"
         assert result.returncode == 0
 
     def test_direct_socket_escape(self):
@@ -68,7 +81,10 @@ except Exception as e:
 """
         result = self._exec_in_agent(code)
         # We accept either our custom patch error OR the OS-level "Network is unreachable"
-        assert "PATCH_BLOCKED" in result.stdout or "Network is unreachable" in result.stdout
+        assert (
+            "PATCH_BLOCKED" in result.stdout
+            or "Network is unreachable" in result.stdout
+        )
         assert "CONNECTED" not in result.stdout
 
     def test_protocol_bypass_attempt(self):
@@ -90,5 +106,6 @@ for port in [22, 80, 443, 5432, 6379]:
         pass
 """
         result = self._exec_in_agent(code)
-        assert "OPEN:" not in result.stdout, "SECURITY WARN: Agent found open ports on localhost!"
-
+        assert (
+            "OPEN:" not in result.stdout
+        ), "SECURITY WARN: Agent found open ports on localhost!"

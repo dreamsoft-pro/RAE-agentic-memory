@@ -4,6 +4,7 @@ Backfill memory_embeddings table from legacy memories.embedding column.
 Usage:
     python3 scripts/maintenance/backfill_embeddings.py
 """
+
 import asyncio
 import os
 import sys
@@ -17,6 +18,7 @@ import structlog  # noqa: E402
 from apps.memory_api.config import settings  # noqa: E402
 
 logger = structlog.get_logger(__name__)
+
 
 async def main():
     logger.info("Starting embedding backfill...")
@@ -36,7 +38,9 @@ async def main():
 
     async with pool.acquire() as conn:
         # Get count
-        count = await conn.fetchval("SELECT COUNT(*) FROM memories WHERE embedding IS NOT NULL")
+        count = await conn.fetchval(
+            "SELECT COUNT(*) FROM memories WHERE embedding IS NOT NULL"
+        )
         logger.info(f"Found {count} memories with legacy embeddings")
 
         # Fetch in batches
@@ -54,15 +58,16 @@ async def main():
                 ORDER BY created_at DESC
                 LIMIT $1 OFFSET $2
                 """,
-                limit, offset
+                limit,
+                offset,
             )
 
             if not rows:
                 break
 
             for row in rows:
-                memory_id = row['id']
-                embedding_str = row['embedding']
+                memory_id = row["id"]
+                embedding_str = row["embedding"]
 
                 # Parse embedding
                 # asyncpg returns vector as string like "[0.1, 0.2, ...]" usually,
@@ -71,14 +76,18 @@ async def main():
                 embedding = []
                 if isinstance(embedding_str, str):
                     try:
-                        embedding = [float(x) for x in embedding_str.strip("[]").split(",")]
+                        embedding = [
+                            float(x) for x in embedding_str.strip("[]").split(",")
+                        ]
                     except ValueError:
                         logger.warning(f"Failed to parse embedding for {memory_id}")
                         continue
                 elif isinstance(embedding_str, list):
                     embedding = embedding_str
                 else:
-                    logger.warning(f"Unknown embedding format {type(embedding_str)} for {memory_id}")
+                    logger.warning(
+                        f"Unknown embedding format {type(embedding_str)} for {memory_id}"
+                    )
                     continue
 
                 # Determine model name by dimension
@@ -108,7 +117,7 @@ async def main():
                     if result == "INSERT 0 1":
                         total_migrated += 1
                     else:
-                        total_skipped += 1 # Conflict
+                        total_skipped += 1  # Conflict
 
                 except Exception as e:
                     logger.error(f"Failed to insert embedding for {memory_id}: {e}")
@@ -117,7 +126,10 @@ async def main():
             logger.info(f"Processed {offset}/{count}...")
 
     await pool.close()
-    logger.info(f"Backfill complete. Migrated: {total_migrated}, Skipped: {total_skipped}")
+    logger.info(
+        f"Backfill complete. Migrated: {total_migrated}, Skipped: {total_skipped}"
+    )
+
 
 if __name__ == "__main__":
     asyncio.run(main())

@@ -158,7 +158,7 @@ test:  ## Run tests using LITE profile (default)
 
 test-lite:  ## [PROFILE: LITE] Run unit tests (CI/CPU safe)
 	@echo "🧪 Running LITE tests (Unit + No-GPU)..."
-	@RAE_PROFILE=lite PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "not slow and not gpu and not integration" -v $(ARGS)
+	@RAE_PROFILE=lite PYTHONPATH=. $(VENV_PYTHON) -m pytest -m "not slow and not gpu and not integration and not llm" -v $(ARGS)
 
 test-core:  ## [PROFILE: CORE] Run rae-core unit tests with coverage
 	@echo "🧪 Running RAE-CORE tests..."

@@ -2,7 +2,7 @@
 
 from uuid import uuid4
 
-from rae_core.math.fusion import reciprocal_rank_fusion
+from rae_core.math.fusion import RRFFusion
 from rae_core.math.stability import PIDController, SimpleKalmanFilter
 
 
@@ -14,7 +14,9 @@ class TestStabilityFusion:
         list1 = [(id1, 0.9), (id2, 0.8)]
         list2 = [(id2, 0.9), (id3, 0.7)]
 
-        fused = reciprocal_rank_fusion([list1, list2], k=60)
+        fusion = RRFFusion(k=60)
+        strategy_results = {"s1": list1, "s2": list2}
+        fused = fusion.fuse(strategy_results, weights={"s1": 1.0, "s2": 1.0})
 
         # id2 is in both, should rank highest
         assert fused[0][0] == id2

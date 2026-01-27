@@ -120,6 +120,8 @@ class IMemoryStorage(Protocol):
         order_by: str = "created_at",
         order_direction: str = "desc",
         project: str | None = None,
+        query: str | None = None,
+        **kwargs: Any,
     ) -> list[dict[str, Any]]:
         """List memories with filtering and sorting.
 
@@ -134,6 +136,8 @@ class IMemoryStorage(Protocol):
             order_by: Field to sort by
             order_direction: "asc" or "desc"
             project: Optional project filter
+            query: Optional search query text
+            **kwargs: Additional backend-specific arguments
 
         Returns:
             List of memory dictionaries

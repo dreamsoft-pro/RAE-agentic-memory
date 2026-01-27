@@ -420,7 +420,7 @@ jobs:
           POSTGRES_PASSWORD: postgres
         run: |
           export PYTHONPATH=.
-          python benchmarking/scripts/run_benchmark.py --set academic_lite.yaml
+          python benchmarking/scripts/run_benchmark.py --set benchmarking/sets/academic_lite.yaml
 
       - name: Check benchmark results
         run: |

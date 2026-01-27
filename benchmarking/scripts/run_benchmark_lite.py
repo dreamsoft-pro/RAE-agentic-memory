@@ -51,7 +51,9 @@ async def run_lite_benchmark(set_name: str):
     # 1. Insert
     t0 = time.time()
     for m in data["memories"]:
-        await engine.store_memory("local", "user", m["text"], layer="episodic")
+        await engine.store_memory(
+            tenant_id="local", agent_id="user", content=m["text"], layer="episodic"
+        )
     insert_time = time.time() - t0
 
     # 2. Query

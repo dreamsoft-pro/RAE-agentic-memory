@@ -47,6 +47,7 @@ class IVectorStore(Protocol):
         session_id: str | None = None,
         filters: dict[str, Any] | None = None,
         project: str | None = None,
+        **kwargs: Any,
     ) -> list[tuple[UUID, float]]:
         """Search for similar vectors using cosine similarity.
 
@@ -60,6 +61,7 @@ class IVectorStore(Protocol):
             session_id: Optional session identifier for filtering
             filters: Optional dictionary of generic metadata filters
             project: Optional project identifier for filtering
+            **kwargs: Additional backend-specific arguments
 
         Returns:
             List of (memory_id, similarity_score) tuples, sorted by score descending

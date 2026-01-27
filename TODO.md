@@ -16,94 +16,60 @@
 
 
 ## Technical Debt (Auto-generated from code)
-*Last scan: 2026-01-26 08:15*
+*Last scan: 2026-01-27 14:42*
 
-- [ ] **CHANGELOG.md:2673** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:2715** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:2756** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:2797** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:2832** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:2867** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:2897** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:2927** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:2956** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:2984** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:3008** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:3032** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:3050** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:3068** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **CHANGELOG.md:3352** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:3415** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:3416** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:3913** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:3976** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:3977** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:4481** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:4544** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:4545** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:5041** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:5104** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:5105** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:5600** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:5663** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:5664** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:6150** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:6213** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:6214** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:6699** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:6762** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:6763** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:7247** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **CHANGELOG.md:7310** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **CHANGELOG.md:7311** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **CHANGELOG.md:7795** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
-- [ ] **CHANGELOG.md:7858** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:7859** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **CHANGELOG.md:8363** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
-- [ ] **CHANGELOG.md:8426** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **CHANGELOG.md:8427** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **INTEGRATION_CHECKLIST.md:51** - - [ ] Did NOT edit `TODO.md` (CI extracts from code comments)
-- [ ] **CONTRIBUTING.md:163** - Run the documentation automator to update status and TODOs:
+- [ ] **PROJECT_STRUCTURE.md:375** - 9. **Auto-generated docs** (DON'T EDIT): `CHANGELOG.md`, `STATUS.md`, `TODO.md`, `docs/.auto-generated/`
+- [ ] **CHANGELOG.md:3798** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:3840** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:3881** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:3922** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:3957** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:3992** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:4022** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:4052** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:4081** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:4109** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:4133** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:4157** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:4175** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:4193** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
+- [ ] **CHANGELOG.md:4477** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:4540** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:4541** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:5038** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:5101** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:5102** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:5606** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:5669** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:5670** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:6166** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:6229** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:6230** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:6725** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:6788** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:6789** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:7275** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:7338** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:7339** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:7824** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:7887** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:7888** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:8372** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
+- [ ] **CHANGELOG.md:8435** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
+- [ ] **CHANGELOG.md:8436** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
+- [ ] **CHANGELOG.md:8920** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
+- [ ] **CHANGELOG.md:8983** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:8984** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **CHANGELOG.md:9488** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
+- [ ] **CHANGELOG.md:9551** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **CHANGELOG.md:9552** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
 - [ ] **ONBOARDING_GUIDE.md:366** - - ❌ DON'T: Edit `CHANGELOG.md`, `STATUS.md`, `TODO.md`, `docs/.auto-generated/`
 - [ ] **ONBOARDING_GUIDE.md:375** - - `TODO.md` - Extracted TODOs/FIXMEs
-- [ ] **PROJECT_STRUCTURE.md:375** - 9. **Auto-generated docs** (DON'T EDIT): `CHANGELOG.md`, `STATUS.md`, `TODO.md`, `docs/.auto-generated/`
+- [ ] **AGENT_QUALITY_SYSTEM.md:275** - - ❌ `TODO.md` - Extracted TODOs/FIXMEs
+- [ ] **INTEGRATION_CHECKLIST.md:51** - - [ ] Did NOT edit `TODO.md` (CI extracts from code comments)
 - [ ] **AI_AGENT_MANIFEST.md:82** - | `TODO.md` | Extracted TODOs/FIXMEs | Push to develop/main | `.github/workflows/ci.yml` |
 - [ ] **AI_AGENT_MANIFEST.md:342** - | **Pending Work** | `TODO.md` | Extracted TODOs from code |
-- [ ] **AGENT_QUALITY_SYSTEM.md:275** - - ❌ `TODO.md` - Extracted TODOs/FIXMEs
-- [ ] **apps/memory_api/services/hybrid_search.py:319** - connected_components=1,   TODO: compute from graph
-- [ ] **apps/memory_api/services/context_builder.py:323** - In production, use vector search to get similarity scores
-- [ ] **apps/memory_api/services/context_builder.py:477** - Implement profile retrieval
-- [ ] **apps/memory_api/routes/event_triggers.py:175** - tenant_id = "default"   TODO: Get from auth context
-- [ ] **apps/memory_api/routes/event_triggers.py:202** - tenant_id = "default"   TODO: Get from auth context
-- [ ] **apps/memory_api/routes/event_triggers.py:376** - tenant_id = "default"   TODO: Get from auth context
-- [ ] **apps/memory_api/core/graph_operator.py:415** - Use embedding similarity for semantic matching with similarity_threshold
-- [ ] **apps/memory_api/core/reward.py:278** - Add relevance scoring when available
-- [ ] **apps/memory_api/core/action_executor.py:248** - Integrate with actual services
-- [ ] **apps/memory_api/core/action_executor.py:275** - Mock action implementations (TODO: Replace with real integrations)
-- [ ] **apps/memory_api/workers/memory_maintenance.py:629** - project_id="default",   TODO: Get actual projects
-- [ ] **rae_adapters/sqlite/vector.py:143** - Implement sqlite-vec specific search when extension is present
-- [ ] **scripts/validate_docs.py:44** - r"\[TODO:.*?\]",
-- [ ] **scripts/validate_docs.py:45** - r"\[FIXME:.*?\]",
-- [ ] **scripts/metrics_tracker.py:150** - metrics.record_file("TODO.md", "update_todo")
-- [ ] **scripts/docs_automator.py:4** - Generates/Updates CHANGELOG.md, TODO.md, STATUS.md, and TESTING_STATUS.md.
-- [ ] **scripts/docs_automator.py:26** - _FILE = "TODO.md"
-- [ ] **scripts/docs_automator.py:164** - print(f"Updating {TODO_FILE}...")
-- [ ] **scripts/docs_automator.py:165** - current_content = get_file_content(TODO_FILE)
-- [ ] **scripts/docs_automator.py:167** - Scan for TODOs in code
-- [ ] **scripts/docs_automator.py:175** - if file_path == os.path.join(PROJECT_ROOT, TODO_FILE):
-- [ ] **scripts/docs_automator.py:181** - if "TODO" in line or "FIXME" in line:
-- [ ] **scripts/docs_automator.py:185** - clean_line = re.sub(r"^(TODO|FIXME)[:\s]*", "", clean_line)
-- [ ] **scripts/docs_automator.py:201** - else "No TODOs found in code."
-- [ ] **scripts/docs_automator.py:204** - Inject into TODO.md
-- [ ] **scripts/docs_automator.py:215** - write_file_content(TODO_FILE, new_content)
-- [ ] **scripts/docs_automator.py:459** - metrics.record_file(TODO_FILE, "update_todo")
-- [ ] **scripts/docs_generators/api_docs.py:22** - Implement FastAPI OpenAPI export
-- [ ] **scripts/docs_generators/code_metrics.py:40** - Add radon for cyclomatic complexity
-- [ ] **scripts/docs_generators/code_metrics.py:41** - Add lizard for code analysis
-- [ ] **.github/workflows/ci.yml:744** - echo "  - TODO.md tracks code TODOs"
-- [ ] **.github/workflows/ci.yml:756** - echo "  - TODO.md (code TODOs)"
-- [ ] **.github/workflows/ci.yml:903** - git add CHANGELOG.md TODO.md STATUS.md docs/TESTING_STATUS.md || true
-- [ ] **.github/workflows/docs.yml:53** - file_pattern: 'CHANGELOG.md STATUS.md TODO.md docs/TESTING_STATUS.md docs/.auto-generated/**'
+- [ ] **CONTRIBUTING.md:163** - Run the documentation automator to update status and TODOs:
 - [ ] **orchestrator/main.py:178** - changed_files=[],   TODO: track changed files
 - [ ] **orchestrator/main.py:235** - task_complexity = TaskComplexity.MEDIUM   TODO: determine from task
 - [ ] **orchestrator/intelligence/performance_tracker.py:236** - Implement RAE integration once RAE core is ready.
@@ -113,22 +79,24 @@
 - [ ] **orchestrator/intelligence/rae_integration.py:121** - Implement RAE aggregation query
 - [ ] **orchestrator/intelligence/rae_integration.py:185** - Implement cross-deployment sync
 - [ ] **orchestrator/intelligence/rae_integration.py:213** - Load from config file
-- [ ] **rae-core/rae_core/search/strategies/multi_vector.py:103** - Add logging
-- [ ] **rae-core/rae_core/embedding/manager.py:46** - Add parallelism here using asyncio.gather if providers are async/remote
-- [ ] **rae-core/rae_core/adapters/sqlite/vector.py:143** - Implement sqlite-vec specific search when extension is present
-- [ ] **.orchestrator/tasks.yaml:90** - - If implemented mark as DONE, if not mark TODO
-- [ ] **tools/memory-dashboard-nicegui/main.py:186** - results = await state.client.get_recent_memories(limit=20)  TODO: Use real search with query
-- [ ] **benchmarking/scripts/generate_math_report.py:183** - Implement detailed comparative analysis
 - [ ] **benchmarking/math_metrics/controller/reward.py:167** - level_churn = 0.0   TODO: Calculate from decision history
+- [ ] **benchmarking/scripts/generate_math_report.py:183** - Implement detailed comparative analysis
+- [ ] **.github/workflows/ci.yml:744** - echo "  - TODO.md tracks code TODOs"
+- [ ] **.github/workflows/ci.yml:756** - echo "  - TODO.md (code TODOs)"
+- [ ] **.github/workflows/ci.yml:903** - git add CHANGELOG.md TODO.md STATUS.md docs/TESTING_STATUS.md || true
+- [ ] **.github/workflows/docs.yml:53** - file_pattern: 'CHANGELOG.md STATUS.md TODO.md docs/TESTING_STATUS.md docs/.auto-generated/**'
+- [ ] **rae-core/rae_core/embedding/manager.py:46** - Add parallelism here using asyncio.gather if providers are async/remote
+- [ ] **rae-core/rae_core/adapters/sqlite/vector.py:145** - Implement sqlite-vec specific search when extension is present
+- [ ] **rae-core/rae_core/search/strategies/multi_vector.py:108** - Add logging
 - [ ] **docs/RAE–Docs-vs-Code.md:396** - 11. Priorytetowa lista TODO (szczególnie pod RAE Lite)
-- [ ] **docs/RAE_DOCUMENTATION_OVERHAUL_IMPLEMENTATION_PLAN.md:608** - 3. **Set up tracking** in TODO.md or project management tool
-- [ ] **docs/RAE_CORE_REFACTOR_PLAN.md:332** - - **TODO list** w każdej iteracji (TodoWrite!)
 - [ ] **docs/CONTRIBUTING_DOCS.md:25** - - **reports/TODO.md** - Extracted TODOs from code
 - [ ] **docs/CONTRIBUTING_DOCS.md:300** - file_pattern: 'CHANGELOG.md STATUS.md TODO.md docs/.auto-generated/your-category/your-doc.md'
 - [ ] **docs/CONTRIBUTING_DOCS.md:351** - - **TODOs:** Documentation tasks in code
-- [ ] **docs/STYLE_GUIDE.md:482** - .md
-- [ ] **docs/Plan przebudowy głównego README dla RA.md:360** - wszystkie linki (docs/paths/...) były spójne z rzeczywistą strukturą repo lub jasno oznaczone jako TODO,
+- [ ] **docs/RAE_MATHEMATICAL_REFACTORING_GUIDE.md:2196** - Add relevance scoring when available
+- [ ] **docs/RAE_MATHEMATICAL_REFACTORING_GUIDE.md:3935** - Use embedding similarity for semantic matching
 - [ ] **docs/DOCUMENTATION_EXECUTIVE_SUMMARY.md:50** - | **Reports** | CHANGELOG.md, TODO.md | Every CI run |
+- [ ] **docs/RAE_CORE_REFACTOR_PLAN.md:332** - - **TODO list** w każdej iteracji (TodoWrite!)
+- [ ] **docs/RAE_DOCUMENTATION_OVERHAUL_IMPLEMENTATION_PLAN.md:608** - 3. **Set up tracking** in TODO.md or project management tool
 - [ ] **docs/Self-Documenting Codebase Blueprint.md:11** - 1. Warstwa Źródłowa: Kod, Komentarze TODO, Historia Gita (Commity).
 - [ ] **docs/Self-Documenting Codebase Blueprint.md:13** - 3. Warstwa Prezentacji: Pliki Markdown (STATUS.md, CHANGELOG.md, TODO.md).
 - [ ] **docs/Self-Documenting Codebase Blueprint.md:29** - B. Komentarze w Kodzie (TODO)
@@ -136,39 +104,23 @@
 - [ ] **docs/Self-Documenting Codebase Blueprint.md:46** - 2. Skaner Długu Technicznego (`TODO.md`):
 - [ ] **docs/Self-Documenting Codebase Blueprint.md:48** - * Wyciąga linie zawierające TODO.
 - [ ] **docs/Self-Documenting Codebase Blueprint.md:70** - * Transparentność: Klient/Manager widzi postępy (CHANGELOG) i problemy (TODO) w prostych plikach tekstowych.
+- [ ] **docs/STYLE_GUIDE.md:482** - .md
+- [ ] **docs/Plan przebudowy głównego README dla RA.md:360** - wszystkie linki (docs/paths/...) były spójne z rzeczywistą strukturą repo lub jasno oznaczone jako TODO,
 - [ ] **docs/orkiestrator-idea.md:270** - zapisuje efekty do projektu (pliki, TODO, testy),
-- [ ] **docs/RAE_MATHEMATICAL_REFACTORING_GUIDE.md:2196** - Add relevance scoring when available
-- [ ] **docs/RAE_MATHEMATICAL_REFACTORING_GUIDE.md:3935** - Use embedding similarity for semantic matching
-- [ ] **docs/paths/developer.md:236** - **(TODO: Extract detailed steps from `docs/PRODUCTION_PROXMOX_HA.md` and add them here.)**
 - [ ] **docs/paths/scientist.md:174** - -   **Retrieval Quality (Lines 258-283):** Quality is a function of the number of memories retrieved (with diminishing returns) and their average relevance. The code includes a `TODO` to incorporate relevance scores, indicating an area of active development.
-- [ ] **docs/autodoc/autodoc_checker.py:9** - - API endpoint consistency (TODO)
-- [ ] **docs/autodoc/autodoc_checker.py:83** - Implement fragment injection
-- [ ] **docs/.auto-generated/metrics/DASHBOARD.md:39** - | TODO.md | update_todo | 2025-12-06 11:57:03 |
-- [ ] **docs/.auto-generated/reports/CHANGELOG.md:40** - - update project status and TODO list after iteration 2 completion ([`49aff83c8`](../../commit/49aff83c8))
-- [ ] **docs/.auto-generated/reports/CHANGELOG.md:41** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a98a`](../../commit/934b3a98a))
-- [ ] **docs/.auto-generated/reports/CHANGELOG.md:109** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **docs/.auto-generated/reports/CHANGELOG.md:110** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **docs/.auto-generated/reports/CHANGELOG.md:179** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **docs/.auto-generated/reports/CHANGELOG.md:180** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **docs/.auto-generated/reports/CHANGELOG.md:252** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **docs/.auto-generated/reports/CHANGELOG.md:253** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **docs/.auto-generated/reports/CHANGELOG.md:528** - Added - Missing Functionalities from TODO.md Completed 🎯
-- [ ] **docs/.auto-generated/reports/CHANGELOG.md:530** - This release completes the implementation of critical functionalities identified in TODO.md that were either missing or partially implemented.
-- [ ] **docs/.auto-generated/reports/CHANGELOG.md:762** - - **TODO.md Items** - Completed 5 major categories of missing/incomplete functionalities:
-- [ ] **docs/.auto-generated/reports/CHANGELOG.md:771** - - Updated TODO.md to reflect all completed items with detailed completion notes
-- [ ] **docs/.auto-generated/reports/CHANGELOG.md:808** - - Technical debt reduction: 5 major TODO.md categories completed
-- [ ] **docs/.auto-generated/reports/CHANGELOG.md:1167** - - Resolved TODO comments with detailed implementation notes
-- [ ] **docs/.auto-generated/reports/CHANGELOG.md:1182** - - TODO comments resolved with implementation guidance
-- [ ] **docs/.auto-generated/status/STATUS.md:25** - All missing/incomplete functionalities from TODO.md have been successfully implemented:
-- [ ] **docs/.auto-generated/status/STATUS.md:187** - - [Technical Debt](TODO.md)
+- [ ] **docs/paths/developer.md:255** - **(TODO: Extract detailed steps from `docs/PRODUCTION_PROXMOX_HA.md` and add them here.)**
+- [ ] **docs/guides/rae-lite/RAE-lite.md:10** - Sam projekt deklaruje, że 80%+ coverage to wciąż cel, nie stan – w TODO.md jest to nadal HIGH priority.
+- [ ] **docs/guides/administracja/INDEX.md:411** - Zobacz [TODO.md](../../../TODO.md) dla pełnej roadmapy.
+- [ ] **docs/guides/developers/INDEX.md:403** - See [TODO.md](../../../TODO.md) for complete roadmap.
+- [ ] **docs/reference/deployment/observability.md:510** - Future Enhancements (TODO)
 - [ ] **docs/reference/llm/RAE–Multi-Model_LLM-Integration-Guide.md:17** - - ✅ Updated documentation (README.md, STATUS.md, TODO.md)
 - [ ] **docs/reference/llm/RAE–Multi-Model_LLM-Integration-Guide.md:232** - 8.1. DeepSeek Provider – TODO
 - [ ] **docs/reference/llm/RAE–Multi-Model_LLM-Integration-Guide.md:259** - 8.2. Qwen Provider – TODO
 - [ ] **docs/reference/llm/RAE–Multi-Model_LLM-Integration-Guide.md:284** - 8.3. Grok Provider – TODO
-- [ ] **docs/reference/deployment/observability.md:510** - Future Enhancements (TODO)
-- [ ] **docs/project-design/active/DOCUMENTATION_AUTOMATION_PLAN.md:14** - - **docs_automator.py**: Updates 4 files (CHANGELOG, STATUS, TODO, TESTING_STATUS)
-- [ ] **docs/project-design/active/DOCUMENTATION_AUTOMATION_PLAN.md:125** - │   │   └── TODO.md            Extracted TODOs
-- [ ] **docs/project-design/active/DOCUMENTATION_AUTOMATION_PLAN.md:183** - | `reports/TODO.md` | On push | Every commit | Code scan (TODO/FIXME) |
+- [ ] **docs/testing/AUTO_HEALING_GUIDE.md:617** - Implement cost tracking to database
+- [ ] **docs/project-design/research/RAE-improve_01.md:13** - Implement JWT token verification
+- [ ] **docs/project-design/research/RAE-improve_01.md:16** - Implement proper tenant access control
+- [ ] **docs/project-design/research/RAE_Code_vs_Docs_Feature_Gaps.md:9** - > - głównym `README.md`, `STATUS.md`, `TESTING_STATUS.md`, `TODO.md`,
 - [ ] **docs/project-design/completed/enterprise-roadmap/ENTERPRISE-FIX-STATUS.md:331** - - [ ] Remove TODO comments or implement them
 - [ ] **docs/project-design/completed/enterprise-roadmap/ENTERPRISE-FIX-STATUS.md:441** - - [ ] 100% of TODO comments resolved
 - [ ] **docs/project-design/completed/enterprise-roadmap/ENTERPRISE-FIX-PLAN.md:100** - 2. Implement TODO comments or remove them
@@ -186,329 +138,62 @@
 - [ ] **docs/project-design/completed/rae-4layer-design/RAE-–Reflective_Memory_v1-Implementati.md:382** - 
 - [ ] **docs/project-design/completed/rae-4layer-design/RAE-–Reflective_Memory_v1-Implementati.md:403** - 
 - [ ] **docs/project-design/completed/rae-4layer-design/RAE-–Reflective_Memory_v1-Implementati.md:455** - 
-- [ ] **docs/project-design/research/RAE-improve_01.md:13** - Implement JWT token verification
-- [ ] **docs/project-design/research/RAE-improve_01.md:16** - Implement proper tenant access control
-- [ ] **docs/project-design/research/RAE_Code_vs_Docs_Feature_Gaps.md:9** - > - głównym `README.md`, `STATUS.md`, `TESTING_STATUS.md`, `TODO.md`,
-- [ ] **docs/testing/AUTO_HEALING_GUIDE.md:617** - Implement cost tracking to database
-- [ ] **docs/rules/AGENT_CORE_PROTOCOL.md:109** - - **Auto-Generated (DO NOT EDIT MANUALLY)**: `CHANGELOG.md`, `STATUS.md`, `TODO.md`, `docs/.auto-generated/`.
-- [ ] **docs/guides/administracja/INDEX.md:411** - Zobacz [TODO.md](../../../TODO.md) dla pełnej roadmapy.
-- [ ] **docs/guides/developers/INDEX.md:403** - See [TODO.md](../../../TODO.md) for complete roadmap.
-- [ ] **docs/guides/rae-lite/RAE-lite.md:10** - Sam projekt deklaruje, że 80%+ coverage to wciąż cel, nie stan – w TODO.md jest to nadal HIGH priority.
+- [ ] **docs/project-design/active/DOCUMENTATION_AUTOMATION_PLAN.md:14** - - **docs_automator.py**: Updates 4 files (CHANGELOG, STATUS, TODO, TESTING_STATUS)
+- [ ] **docs/project-design/active/DOCUMENTATION_AUTOMATION_PLAN.md:125** - │   │   └── TODO.md            Extracted TODOs
+- [ ] **docs/project-design/active/DOCUMENTATION_AUTOMATION_PLAN.md:183** - | `reports/TODO.md` | On push | Every commit | Code scan (TODO/FIXME) |
+- [ ] **docs/.auto-generated/reports/CHANGELOG.md:40** - - update project status and TODO list after iteration 2 completion ([`49aff83c8`](../../commit/49aff83c8))
+- [ ] **docs/.auto-generated/reports/CHANGELOG.md:41** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a98a`](../../commit/934b3a98a))
+- [ ] **docs/.auto-generated/reports/CHANGELOG.md:109** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **docs/.auto-generated/reports/CHANGELOG.md:110** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **docs/.auto-generated/reports/CHANGELOG.md:179** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **docs/.auto-generated/reports/CHANGELOG.md:180** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **docs/.auto-generated/reports/CHANGELOG.md:252** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
+- [ ] **docs/.auto-generated/reports/CHANGELOG.md:253** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
+- [ ] **docs/.auto-generated/reports/CHANGELOG.md:528** - Added - Missing Functionalities from TODO.md Completed 🎯
+- [ ] **docs/.auto-generated/reports/CHANGELOG.md:530** - This release completes the implementation of critical functionalities identified in TODO.md that were either missing or partially implemented.
+- [ ] **docs/.auto-generated/reports/CHANGELOG.md:762** - - **TODO.md Items** - Completed 5 major categories of missing/incomplete functionalities:
+- [ ] **docs/.auto-generated/reports/CHANGELOG.md:771** - - Updated TODO.md to reflect all completed items with detailed completion notes
+- [ ] **docs/.auto-generated/reports/CHANGELOG.md:808** - - Technical debt reduction: 5 major TODO.md categories completed
+- [ ] **docs/.auto-generated/reports/CHANGELOG.md:1167** - - Resolved TODO comments with detailed implementation notes
+- [ ] **docs/.auto-generated/reports/CHANGELOG.md:1182** - - TODO comments resolved with implementation guidance
+- [ ] **docs/.auto-generated/status/STATUS.md:25** - All missing/incomplete functionalities from TODO.md have been successfully implemented:
+- [ ] **docs/.auto-generated/status/STATUS.md:187** - - [Technical Debt](TODO.md)
+- [ ] **docs/.auto-generated/metrics/DASHBOARD.md:39** - | TODO.md | update_todo | 2025-12-06 11:57:03 |
 - [ ] **docs/templates/README.md:209** - - `CHANGELOG.md`, `STATUS.md`, `TODO.md`
-- [ ] **tmp_node1_sync/CHANGELOG.md:2658** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/CHANGELOG.md:2700** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/CHANGELOG.md:2741** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/CHANGELOG.md:2782** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/CHANGELOG.md:2817** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/CHANGELOG.md:2852** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/CHANGELOG.md:2882** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/CHANGELOG.md:2912** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/CHANGELOG.md:2941** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/CHANGELOG.md:2969** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/CHANGELOG.md:2993** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/CHANGELOG.md:3017** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/CHANGELOG.md:3035** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/CHANGELOG.md:3053** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/CHANGELOG.md:3337** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **tmp_node1_sync/CHANGELOG.md:3400** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **tmp_node1_sync/CHANGELOG.md:3401** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **tmp_node1_sync/CHANGELOG.md:3898** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **tmp_node1_sync/CHANGELOG.md:3961** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **tmp_node1_sync/CHANGELOG.md:3962** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **tmp_node1_sync/CHANGELOG.md:4466** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **tmp_node1_sync/CHANGELOG.md:4529** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **tmp_node1_sync/CHANGELOG.md:4530** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **tmp_node1_sync/CHANGELOG.md:5026** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **tmp_node1_sync/CHANGELOG.md:5089** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **tmp_node1_sync/CHANGELOG.md:5090** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **tmp_node1_sync/CHANGELOG.md:5585** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **tmp_node1_sync/CHANGELOG.md:5648** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **tmp_node1_sync/CHANGELOG.md:5649** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **tmp_node1_sync/CHANGELOG.md:6135** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **tmp_node1_sync/CHANGELOG.md:6198** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **tmp_node1_sync/CHANGELOG.md:6199** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **tmp_node1_sync/CHANGELOG.md:6684** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **tmp_node1_sync/CHANGELOG.md:6747** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **tmp_node1_sync/CHANGELOG.md:6748** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **tmp_node1_sync/CHANGELOG.md:7232** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **tmp_node1_sync/CHANGELOG.md:7295** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **tmp_node1_sync/CHANGELOG.md:7296** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **tmp_node1_sync/CHANGELOG.md:7780** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
-- [ ] **tmp_node1_sync/CHANGELOG.md:7843** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **tmp_node1_sync/CHANGELOG.md:7844** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **tmp_node1_sync/CHANGELOG.md:8348** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
-- [ ] **tmp_node1_sync/CHANGELOG.md:8411** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **tmp_node1_sync/CHANGELOG.md:8412** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **tmp_node1_sync/INTEGRATION_CHECKLIST.md:51** - - [ ] Did NOT edit `TODO.md` (CI extracts from code comments)
-- [ ] **tmp_node1_sync/CONTRIBUTING.md:163** - Run the documentation automator to update status and TODOs:
-- [ ] **tmp_node1_sync/TODO.md:1** - RAE Agentic Memory - TODO
-- [ ] **tmp_node1_sync/TODO.md:21** - - [ ] **CHANGELOG.md:2544** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/TODO.md:22** - - [ ] **CHANGELOG.md:2586** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/TODO.md:23** - - [ ] **CHANGELOG.md:2627** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/TODO.md:24** - - [ ] **CHANGELOG.md:2668** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/TODO.md:25** - - [ ] **CHANGELOG.md:2703** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/TODO.md:26** - - [ ] **CHANGELOG.md:2738** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/TODO.md:27** - - [ ] **CHANGELOG.md:2768** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/TODO.md:28** - - [ ] **CHANGELOG.md:2798** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/TODO.md:29** - - [ ] **CHANGELOG.md:2827** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/TODO.md:30** - - [ ] **CHANGELOG.md:2855** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/TODO.md:31** - - [ ] **CHANGELOG.md:2879** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/TODO.md:32** - - [ ] **CHANGELOG.md:2903** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/TODO.md:33** - - [ ] **CHANGELOG.md:2921** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/TODO.md:34** - - [ ] **CHANGELOG.md:2939** - - resolve conflict in TODO.md ([`c3694b8`](../../commit/c3694b8))
-- [ ] **tmp_node1_sync/TODO.md:35** - - [ ] **CHANGELOG.md:3223** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **tmp_node1_sync/TODO.md:36** - - [ ] **CHANGELOG.md:3286** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **tmp_node1_sync/TODO.md:37** - - [ ] **CHANGELOG.md:3287** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **tmp_node1_sync/TODO.md:38** - - [ ] **CHANGELOG.md:3784** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **tmp_node1_sync/TODO.md:39** - - [ ] **CHANGELOG.md:3847** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **tmp_node1_sync/TODO.md:40** - - [ ] **CHANGELOG.md:3848** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **tmp_node1_sync/TODO.md:41** - - [ ] **CHANGELOG.md:4352** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **tmp_node1_sync/TODO.md:42** - - [ ] **CHANGELOG.md:4415** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **tmp_node1_sync/TODO.md:43** - - [ ] **CHANGELOG.md:4416** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **tmp_node1_sync/TODO.md:44** - - [ ] **CHANGELOG.md:4912** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **tmp_node1_sync/TODO.md:45** - - [ ] **CHANGELOG.md:4975** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **tmp_node1_sync/TODO.md:46** - - [ ] **CHANGELOG.md:4976** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **tmp_node1_sync/TODO.md:47** - - [ ] **CHANGELOG.md:5471** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **tmp_node1_sync/TODO.md:48** - - [ ] **CHANGELOG.md:5534** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **tmp_node1_sync/TODO.md:49** - - [ ] **CHANGELOG.md:5535** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **tmp_node1_sync/TODO.md:50** - - [ ] **CHANGELOG.md:6021** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **tmp_node1_sync/TODO.md:51** - - [ ] **CHANGELOG.md:6084** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **tmp_node1_sync/TODO.md:52** - - [ ] **CHANGELOG.md:6085** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **tmp_node1_sync/TODO.md:53** - - [ ] **CHANGELOG.md:6570** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **tmp_node1_sync/TODO.md:54** - - [ ] **CHANGELOG.md:6633** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **tmp_node1_sync/TODO.md:55** - - [ ] **CHANGELOG.md:6634** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **tmp_node1_sync/TODO.md:56** - - [ ] **CHANGELOG.md:7118** - - update TODO with DevOps & Infrastructure completion status ([`9c51694`](../../commit/9c51694))
-- [ ] **tmp_node1_sync/TODO.md:57** - - [ ] **CHANGELOG.md:7181** - - update project status and TODO list after iteration 2 completion ([`40bc5a8`](../../commit/40bc5a8))
-- [ ] **tmp_node1_sync/TODO.md:58** - - [ ] **CHANGELOG.md:7182** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`9af286a`](../../commit/9af286a))
-- [ ] **tmp_node1_sync/TODO.md:59** - - [ ] **CHANGELOG.md:7666** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
-- [ ] **tmp_node1_sync/TODO.md:60** - - [ ] **CHANGELOG.md:7729** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **tmp_node1_sync/TODO.md:61** - - [ ] **CHANGELOG.md:7730** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **tmp_node1_sync/TODO.md:62** - - [ ] **CHANGELOG.md:8234** - - update TODO with DevOps & Infrastructure completion status ([`5215c60`](../../commit/5215c60))
-- [ ] **tmp_node1_sync/TODO.md:63** - - [ ] **CHANGELOG.md:8297** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **tmp_node1_sync/TODO.md:64** - - [ ] **CHANGELOG.md:8298** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **tmp_node1_sync/TODO.md:65** - - [ ] **INTEGRATION_CHECKLIST.md:51** - - [ ] Did NOT edit `TODO.md` (CI extracts from code comments)
-- [ ] **tmp_node1_sync/TODO.md:66** - - [ ] **CONTRIBUTING.md:163** - Run the documentation automator to update status and TODOs:
-- [ ] **tmp_node1_sync/TODO.md:67** - - [ ] **ONBOARDING_GUIDE.md:366** - - ❌ DON'T: Edit `CHANGELOG.md`, `STATUS.md`, `TODO.md`, `docs/.auto-generated/`
-- [ ] **tmp_node1_sync/TODO.md:68** - - [ ] **ONBOARDING_GUIDE.md:375** - - `TODO.md` - Extracted TODOs/FIXMEs
-- [ ] **tmp_node1_sync/TODO.md:69** - - [ ] **PROJECT_STRUCTURE.md:375** - 9. **Auto-generated docs** (DON'T EDIT): `CHANGELOG.md`, `STATUS.md`, `TODO.md`, `docs/.auto-generated/`
-- [ ] **tmp_node1_sync/TODO.md:70** - - [ ] **AI_AGENT_MANIFEST.md:82** - | `TODO.md` | Extracted TODOs/FIXMEs | Push to develop/main | `.github/workflows/ci.yml` |
-- [ ] **tmp_node1_sync/TODO.md:71** - - [ ] **AI_AGENT_MANIFEST.md:342** - | **Pending Work** | `TODO.md` | Extracted TODOs from code |
-- [ ] **tmp_node1_sync/TODO.md:72** - - [ ] **AGENT_QUALITY_SYSTEM.md:275** - - ❌ `TODO.md` - Extracted TODOs/FIXMEs
-- [ ] **tmp_node1_sync/TODO.md:73** - - [ ] **apps/memory_api/services/hybrid_search.py:319** - connected_components=1,   TODO: compute from graph
-- [ ] **tmp_node1_sync/TODO.md:76** - - [ ] **apps/memory_api/routes/event_triggers.py:175** - tenant_id = "default"   TODO: Get from auth context
-- [ ] **tmp_node1_sync/TODO.md:77** - - [ ] **apps/memory_api/routes/event_triggers.py:202** - tenant_id = "default"   TODO: Get from auth context
-- [ ] **tmp_node1_sync/TODO.md:78** - - [ ] **apps/memory_api/routes/event_triggers.py:376** - tenant_id = "default"   TODO: Get from auth context
-- [ ] **tmp_node1_sync/TODO.md:82** - - [ ] **apps/memory_api/core/action_executor.py:275** - Mock action implementations (TODO: Replace with real integrations)
-- [ ] **tmp_node1_sync/TODO.md:83** - - [ ] **apps/memory_api/workers/memory_maintenance.py:629** - project_id="default",   TODO: Get actual projects
-- [ ] **tmp_node1_sync/TODO.md:85** - - [ ] **scripts/validate_docs.py:44** - r"\[TODO:.*?\]",
-- [ ] **tmp_node1_sync/TODO.md:86** - - [ ] **scripts/validate_docs.py:45** - r"\[FIXME:.*?\]",
-- [ ] **tmp_node1_sync/TODO.md:87** - - [ ] **scripts/metrics_tracker.py:150** - metrics.record_file("TODO.md", "update_todo")
-- [ ] **tmp_node1_sync/TODO.md:88** - - [ ] **scripts/docs_automator.py:4** - Generates/Updates CHANGELOG.md, TODO.md, STATUS.md, and TESTING_STATUS.md.
-- [ ] **tmp_node1_sync/TODO.md:89** - - [ ] **scripts/docs_automator.py:26** - _FILE = "TODO.md"
-- [ ] **tmp_node1_sync/TODO.md:90** - - [ ] **scripts/docs_automator.py:164** - print(f"Updating {TODO_FILE}...")
-- [ ] **tmp_node1_sync/TODO.md:91** - - [ ] **scripts/docs_automator.py:165** - current_content = get_file_content(TODO_FILE)
-- [ ] **tmp_node1_sync/TODO.md:92** - - [ ] **scripts/docs_automator.py:167** - Scan for TODOs in code
-- [ ] **tmp_node1_sync/TODO.md:93** - - [ ] **scripts/docs_automator.py:175** - if file_path == os.path.join(PROJECT_ROOT, TODO_FILE):
-- [ ] **tmp_node1_sync/TODO.md:94** - - [ ] **scripts/docs_automator.py:181** - if "TODO" in line or "FIXME" in line:
-- [ ] **tmp_node1_sync/TODO.md:95** - - [ ] **scripts/docs_automator.py:185** - clean_line = re.sub(r"^(TODO|FIXME)[:\s]*", "", clean_line)
-- [ ] **tmp_node1_sync/TODO.md:96** - - [ ] **scripts/docs_automator.py:201** - else "No TODOs found in code."
-- [ ] **tmp_node1_sync/TODO.md:97** - - [ ] **scripts/docs_automator.py:204** - Inject into TODO.md
-- [ ] **tmp_node1_sync/TODO.md:98** - - [ ] **scripts/docs_automator.py:215** - write_file_content(TODO_FILE, new_content)
-- [ ] **tmp_node1_sync/TODO.md:99** - - [ ] **scripts/docs_automator.py:459** - metrics.record_file(TODO_FILE, "update_todo")
-- [ ] **tmp_node1_sync/TODO.md:103** - - [ ] **.github/workflows/ci.yml:744** - echo "  - TODO.md tracks code TODOs"
-- [ ] **tmp_node1_sync/TODO.md:104** - - [ ] **.github/workflows/ci.yml:756** - echo "  - TODO.md (code TODOs)"
-- [ ] **tmp_node1_sync/TODO.md:105** - - [ ] **.github/workflows/ci.yml:903** - git add CHANGELOG.md TODO.md STATUS.md docs/TESTING_STATUS.md || true
-- [ ] **tmp_node1_sync/TODO.md:106** - - [ ] **.github/workflows/docs.yml:53** - file_pattern: 'CHANGELOG.md STATUS.md TODO.md docs/TESTING_STATUS.md docs/.auto-generated/**'
-- [ ] **tmp_node1_sync/TODO.md:107** - - [ ] **orchestrator/main.py:178** - changed_files=[],   TODO: track changed files
-- [ ] **tmp_node1_sync/TODO.md:108** - - [ ] **orchestrator/main.py:235** - task_complexity = TaskComplexity.MEDIUM   TODO: determine from task
-- [ ] **tmp_node1_sync/TODO.md:119** - - [ ] **.orchestrator/tasks.yaml:90** - - If implemented mark as DONE, if not mark TODO
-- [ ] **tmp_node1_sync/TODO.md:121** - - [ ] **benchmarking/math_metrics/controller/reward.py:167** - level_churn = 0.0   TODO: Calculate from decision history
-- [ ] **tmp_node1_sync/TODO.md:122** - - [ ] **docs/RAE–Docs-vs-Code.md:396** - 11. Priorytetowa lista TODO (szczególnie pod RAE Lite)
-- [ ] **tmp_node1_sync/TODO.md:123** - - [ ] **docs/RAE_DOCUMENTATION_OVERHAUL_IMPLEMENTATION_PLAN.md:608** - 3. **Set up tracking** in TODO.md or project management tool
-- [ ] **tmp_node1_sync/TODO.md:124** - - [ ] **docs/RAE_CORE_REFACTOR_PLAN.md:332** - - **TODO list** w każdej iteracji (TodoWrite!)
-- [ ] **tmp_node1_sync/TODO.md:125** - - [ ] **docs/CONTRIBUTING_DOCS.md:25** - - **reports/TODO.md** - Extracted TODOs from code
-- [ ] **tmp_node1_sync/TODO.md:126** - - [ ] **docs/CONTRIBUTING_DOCS.md:300** - file_pattern: 'CHANGELOG.md STATUS.md TODO.md docs/.auto-generated/your-category/your-doc.md'
-- [ ] **tmp_node1_sync/TODO.md:127** - - [ ] **docs/CONTRIBUTING_DOCS.md:351** - - **TODOs:** Documentation tasks in code
-- [ ] **tmp_node1_sync/TODO.md:129** - - [ ] **docs/Plan przebudowy głównego README dla RA.md:360** - wszystkie linki (docs/paths/...) były spójne z rzeczywistą strukturą repo lub jasno oznaczone jako TODO,
-- [ ] **tmp_node1_sync/TODO.md:130** - - [ ] **docs/DOCUMENTATION_EXECUTIVE_SUMMARY.md:50** - | **Reports** | CHANGELOG.md, TODO.md | Every CI run |
-- [ ] **tmp_node1_sync/TODO.md:131** - - [ ] **docs/Self-Documenting Codebase Blueprint.md:11** - 1. Warstwa Źródłowa: Kod, Komentarze TODO, Historia Gita (Commity).
-- [ ] **tmp_node1_sync/TODO.md:132** - - [ ] **docs/Self-Documenting Codebase Blueprint.md:13** - 3. Warstwa Prezentacji: Pliki Markdown (STATUS.md, CHANGELOG.md, TODO.md).
-- [ ] **tmp_node1_sync/TODO.md:133** - - [ ] **docs/Self-Documenting Codebase Blueprint.md:29** - B. Komentarze w Kodzie (TODO)
-- [ ] **tmp_node1_sync/TODO.md:134** - - [ ] **docs/Self-Documenting Codebase Blueprint.md:31** - Format:  TODO: opis zadania lub  TODO: opis zadania.
-- [ ] **tmp_node1_sync/TODO.md:135** - - [ ] **docs/Self-Documenting Codebase Blueprint.md:46** - 2. Skaner Długu Technicznego (`TODO.md`):
-- [ ] **tmp_node1_sync/TODO.md:136** - - [ ] **docs/Self-Documenting Codebase Blueprint.md:48** - * Wyciąga linie zawierające TODO.
-- [ ] **tmp_node1_sync/TODO.md:137** - - [ ] **docs/Self-Documenting Codebase Blueprint.md:70** - * Transparentność: Klient/Manager widzi postępy (CHANGELOG) i problemy (TODO) w prostych plikach tekstowych.
-- [ ] **tmp_node1_sync/TODO.md:138** - - [ ] **docs/orkiestrator-idea.md:270** - zapisuje efekty do projektu (pliki, TODO, testy),
-- [ ] **tmp_node1_sync/TODO.md:141** - - [ ] **docs/paths/developer.md:236** - **(TODO: Extract detailed steps from `docs/PRODUCTION_PROXMOX_HA.md` and add them here.)**
-- [ ] **tmp_node1_sync/TODO.md:142** - - [ ] **docs/paths/scientist.md:174** - -   **Retrieval Quality (Lines 258-283):** Quality is a function of the number of memories retrieved (with diminishing returns) and their average relevance. The code includes a `TODO` to incorporate relevance scores, indicating an area of active development.
-- [ ] **tmp_node1_sync/TODO.md:143** - - [ ] **docs/autodoc/autodoc_checker.py:9** - - API endpoint consistency (TODO)
-- [ ] **tmp_node1_sync/TODO.md:145** - - [ ] **docs/.auto-generated/metrics/DASHBOARD.md:39** - | TODO.md | update_todo | 2025-12-06 11:57:03 |
-- [ ] **tmp_node1_sync/TODO.md:146** - - [ ] **docs/.auto-generated/reports/CHANGELOG.md:40** - - update project status and TODO list after iteration 2 completion ([`49aff83c8`](../../commit/49aff83c8))
-- [ ] **tmp_node1_sync/TODO.md:147** - - [ ] **docs/.auto-generated/reports/CHANGELOG.md:41** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a98a`](../../commit/934b3a98a))
-- [ ] **tmp_node1_sync/TODO.md:148** - - [ ] **docs/.auto-generated/reports/CHANGELOG.md:109** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **tmp_node1_sync/TODO.md:149** - - [ ] **docs/.auto-generated/reports/CHANGELOG.md:110** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **tmp_node1_sync/TODO.md:150** - - [ ] **docs/.auto-generated/reports/CHANGELOG.md:179** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **tmp_node1_sync/TODO.md:151** - - [ ] **docs/.auto-generated/reports/CHANGELOG.md:180** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **tmp_node1_sync/TODO.md:152** - - [ ] **docs/.auto-generated/reports/CHANGELOG.md:252** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **tmp_node1_sync/TODO.md:153** - - [ ] **docs/.auto-generated/reports/CHANGELOG.md:253** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **tmp_node1_sync/TODO.md:154** - - [ ] **docs/.auto-generated/reports/CHANGELOG.md:528** - Added - Missing Functionalities from TODO.md Completed 🎯
-- [ ] **tmp_node1_sync/TODO.md:155** - - [ ] **docs/.auto-generated/reports/CHANGELOG.md:530** - This release completes the implementation of critical functionalities identified in TODO.md that were either missing or partially implemented.
-- [ ] **tmp_node1_sync/TODO.md:156** - - [ ] **docs/.auto-generated/reports/CHANGELOG.md:762** - - **TODO.md Items** - Completed 5 major categories of missing/incomplete functionalities:
-- [ ] **tmp_node1_sync/TODO.md:157** - - [ ] **docs/.auto-generated/reports/CHANGELOG.md:771** - - Updated TODO.md to reflect all completed items with detailed completion notes
-- [ ] **tmp_node1_sync/TODO.md:158** - - [ ] **docs/.auto-generated/reports/CHANGELOG.md:808** - - Technical debt reduction: 5 major TODO.md categories completed
-- [ ] **tmp_node1_sync/TODO.md:159** - - [ ] **docs/.auto-generated/reports/CHANGELOG.md:1167** - - Resolved TODO comments with detailed implementation notes
-- [ ] **tmp_node1_sync/TODO.md:160** - - [ ] **docs/.auto-generated/reports/CHANGELOG.md:1182** - - TODO comments resolved with implementation guidance
-- [ ] **tmp_node1_sync/TODO.md:161** - - [ ] **docs/.auto-generated/status/STATUS.md:25** - All missing/incomplete functionalities from TODO.md have been successfully implemented:
-- [ ] **tmp_node1_sync/TODO.md:162** - - [ ] **docs/.auto-generated/status/STATUS.md:187** - - [Technical Debt](TODO.md)
-- [ ] **tmp_node1_sync/TODO.md:163** - - [ ] **docs/reference/llm/RAE–Multi-Model_LLM-Integration-Guide.md:17** - - ✅ Updated documentation (README.md, STATUS.md, TODO.md)
-- [ ] **tmp_node1_sync/TODO.md:164** - - [ ] **docs/reference/llm/RAE–Multi-Model_LLM-Integration-Guide.md:232** - 8.1. DeepSeek Provider – TODO
-- [ ] **tmp_node1_sync/TODO.md:165** - - [ ] **docs/reference/llm/RAE–Multi-Model_LLM-Integration-Guide.md:259** - 8.2. Qwen Provider – TODO
-- [ ] **tmp_node1_sync/TODO.md:166** - - [ ] **docs/reference/llm/RAE–Multi-Model_LLM-Integration-Guide.md:284** - 8.3. Grok Provider – TODO
-- [ ] **tmp_node1_sync/TODO.md:167** - - [ ] **docs/reference/deployment/observability.md:510** - Future Enhancements (TODO)
-- [ ] **tmp_node1_sync/TODO.md:168** - - [ ] **docs/project-design/active/DOCUMENTATION_AUTOMATION_PLAN.md:14** - - **docs_automator.py**: Updates 4 files (CHANGELOG, STATUS, TODO, TESTING_STATUS)
-- [ ] **tmp_node1_sync/TODO.md:169** - - [ ] **docs/project-design/active/DOCUMENTATION_AUTOMATION_PLAN.md:125** - │   │   └── TODO.md            Extracted TODOs
-- [ ] **tmp_node1_sync/TODO.md:170** - - [ ] **docs/project-design/active/DOCUMENTATION_AUTOMATION_PLAN.md:183** - | `reports/TODO.md` | On push | Every commit | Code scan (TODO/FIXME) |
-- [ ] **tmp_node1_sync/TODO.md:171** - - [ ] **docs/project-design/completed/enterprise-roadmap/ENTERPRISE-FIX-STATUS.md:331** - - [ ] Remove TODO comments or implement them
-- [ ] **tmp_node1_sync/TODO.md:172** - - [ ] **docs/project-design/completed/enterprise-roadmap/ENTERPRISE-FIX-STATUS.md:441** - - [ ] 100% of TODO comments resolved
-- [ ] **tmp_node1_sync/TODO.md:173** - - [ ] **docs/project-design/completed/enterprise-roadmap/ENTERPRISE-FIX-PLAN.md:100** - 2. Implement TODO comments or remove them
-- [ ] **tmp_node1_sync/TODO.md:174** - - [ ] **docs/project-design/completed/enterprise-roadmap/ENTERPRISE-FIX-PLAN.md:281** - 2. ✅ Implement or remove TODO comments - COMPLETED
-- [ ] **tmp_node1_sync/TODO.md:175** - - [ ] **docs/project-design/completed/enterprise-roadmap/ENTERPRISE-FIX-PLAN.md:336** - - ✅ All TODO comments resolved
-- [ ] **tmp_node1_sync/TODO.md:176** - - [ ] **docs/project-design/completed/rae-4layer-design/RAE-–Reflective_Memory_v1-Implementati.md:108** - **TODO:**
-- [ ] **tmp_node1_sync/TODO.md:190** - - [ ] **docs/project-design/research/RAE_Code_vs_Docs_Feature_Gaps.md:9** - > - głównym `README.md`, `STATUS.md`, `TESTING_STATUS.md`, `TODO.md`,
-- [ ] **tmp_node1_sync/TODO.md:192** - - [ ] **docs/rules/AGENT_CORE_PROTOCOL.md:85** - - **Auto-Generated (DO NOT EDIT MANUALLY)**: `CHANGELOG.md`, `STATUS.md`, `TODO.md`, `docs/.auto-generated/`.
-- [ ] **tmp_node1_sync/TODO.md:193** - - [ ] **docs/guides/administracja/INDEX.md:411** - Zobacz [TODO.md](../../../TODO.md) dla pełnej roadmapy.
-- [ ] **tmp_node1_sync/TODO.md:194** - - [ ] **docs/guides/developers/INDEX.md:403** - See [TODO.md](../../../TODO.md) for complete roadmap.
-- [ ] **tmp_node1_sync/TODO.md:195** - - [ ] **docs/guides/rae-lite/RAE-lite.md:10** - Sam projekt deklaruje, że 80%+ coverage to wciąż cel, nie stan – w TODO.md jest to nadal HIGH priority.
-- [ ] **tmp_node1_sync/TODO.md:196** - - [ ] **docs/templates/README.md:209** - - `CHANGELOG.md`, `STATUS.md`, `TODO.md`
-- [ ] **tmp_node1_sync/ONBOARDING_GUIDE.md:366** - - ❌ DON'T: Edit `CHANGELOG.md`, `STATUS.md`, `TODO.md`, `docs/.auto-generated/`
-- [ ] **tmp_node1_sync/ONBOARDING_GUIDE.md:375** - - `TODO.md` - Extracted TODOs/FIXMEs
-- [ ] **tmp_node1_sync/PROJECT_STRUCTURE.md:375** - 9. **Auto-generated docs** (DON'T EDIT): `CHANGELOG.md`, `STATUS.md`, `TODO.md`, `docs/.auto-generated/`
-- [ ] **tmp_node1_sync/AI_AGENT_MANIFEST.md:82** - | `TODO.md` | Extracted TODOs/FIXMEs | Push to develop/main | `.github/workflows/ci.yml` |
-- [ ] **tmp_node1_sync/AI_AGENT_MANIFEST.md:342** - | **Pending Work** | `TODO.md` | Extracted TODOs from code |
-- [ ] **tmp_node1_sync/vector.py:141** - Implement sqlite-vec specific search when extension is present
-- [ ] **tmp_node1_sync/AGENT_QUALITY_SYSTEM.md:275** - - ❌ `TODO.md` - Extracted TODOs/FIXMEs
-- [ ] **tmp_node1_sync/apps/memory_api/services/hybrid_search.py:319** - connected_components=1,   TODO: compute from graph
-- [ ] **tmp_node1_sync/apps/memory_api/services/context_builder.py:323** - In production, use vector search to get similarity scores
-- [ ] **tmp_node1_sync/apps/memory_api/services/context_builder.py:477** - Implement profile retrieval
-- [ ] **tmp_node1_sync/apps/memory_api/routes/event_triggers.py:175** - tenant_id = "default"   TODO: Get from auth context
-- [ ] **tmp_node1_sync/apps/memory_api/routes/event_triggers.py:202** - tenant_id = "default"   TODO: Get from auth context
-- [ ] **tmp_node1_sync/apps/memory_api/routes/event_triggers.py:376** - tenant_id = "default"   TODO: Get from auth context
-- [ ] **tmp_node1_sync/apps/memory_api/core/graph_operator.py:415** - Use embedding similarity for semantic matching with similarity_threshold
-- [ ] **tmp_node1_sync/apps/memory_api/core/reward.py:278** - Add relevance scoring when available
-- [ ] **tmp_node1_sync/apps/memory_api/core/action_executor.py:248** - Integrate with actual services
-- [ ] **tmp_node1_sync/apps/memory_api/core/action_executor.py:275** - Mock action implementations (TODO: Replace with real integrations)
-- [ ] **tmp_node1_sync/apps/memory_api/workers/memory_maintenance.py:629** - project_id="default",   TODO: Get actual projects
-- [ ] **tmp_node1_sync/rae_adapters/sqlite/vector.py:141** - Implement sqlite-vec specific search when extension is present
-- [ ] **tmp_node1_sync/scripts/validate_docs.py:44** - r"\[TODO:.*?\]",
-- [ ] **tmp_node1_sync/scripts/validate_docs.py:45** - r"\[FIXME:.*?\]",
-- [ ] **tmp_node1_sync/scripts/metrics_tracker.py:150** - metrics.record_file("TODO.md", "update_todo")
-- [ ] **tmp_node1_sync/scripts/docs_automator.py:4** - Generates/Updates CHANGELOG.md, TODO.md, STATUS.md, and TESTING_STATUS.md.
-- [ ] **tmp_node1_sync/scripts/docs_automator.py:26** - _FILE = "TODO.md"
-- [ ] **tmp_node1_sync/scripts/docs_automator.py:164** - print(f"Updating {TODO_FILE}...")
-- [ ] **tmp_node1_sync/scripts/docs_automator.py:165** - current_content = get_file_content(TODO_FILE)
-- [ ] **tmp_node1_sync/scripts/docs_automator.py:167** - Scan for TODOs in code
-- [ ] **tmp_node1_sync/scripts/docs_automator.py:175** - if file_path == os.path.join(PROJECT_ROOT, TODO_FILE):
-- [ ] **tmp_node1_sync/scripts/docs_automator.py:181** - if "TODO" in line or "FIXME" in line:
-- [ ] **tmp_node1_sync/scripts/docs_automator.py:185** - clean_line = re.sub(r"^(TODO|FIXME)[:\s]*", "", clean_line)
-- [ ] **tmp_node1_sync/scripts/docs_automator.py:201** - else "No TODOs found in code."
-- [ ] **tmp_node1_sync/scripts/docs_automator.py:204** - Inject into TODO.md
-- [ ] **tmp_node1_sync/scripts/docs_automator.py:215** - write_file_content(TODO_FILE, new_content)
-- [ ] **tmp_node1_sync/scripts/docs_automator.py:459** - metrics.record_file(TODO_FILE, "update_todo")
-- [ ] **tmp_node1_sync/scripts/docs_generators/api_docs.py:22** - Implement FastAPI OpenAPI export
-- [ ] **tmp_node1_sync/scripts/docs_generators/code_metrics.py:40** - Add radon for cyclomatic complexity
-- [ ] **tmp_node1_sync/scripts/docs_generators/code_metrics.py:41** - Add lizard for code analysis
-- [ ] **tmp_node1_sync/.github/workflows/ci.yml:744** - echo "  - TODO.md tracks code TODOs"
-- [ ] **tmp_node1_sync/.github/workflows/ci.yml:756** - echo "  - TODO.md (code TODOs)"
-- [ ] **tmp_node1_sync/.github/workflows/ci.yml:903** - git add CHANGELOG.md TODO.md STATUS.md docs/TESTING_STATUS.md || true
-- [ ] **tmp_node1_sync/.github/workflows/docs.yml:53** - file_pattern: 'CHANGELOG.md STATUS.md TODO.md docs/TESTING_STATUS.md docs/.auto-generated/**'
-- [ ] **tmp_node1_sync/orchestrator/main.py:178** - changed_files=[],   TODO: track changed files
-- [ ] **tmp_node1_sync/orchestrator/main.py:235** - task_complexity = TaskComplexity.MEDIUM   TODO: determine from task
-- [ ] **tmp_node1_sync/orchestrator/intelligence/performance_tracker.py:236** - Implement RAE integration once RAE core is ready.
-- [ ] **tmp_node1_sync/orchestrator/intelligence/rae_integration.py:18** - Complete implementation once RAE core is stable.
-- [ ] **tmp_node1_sync/orchestrator/intelligence/rae_integration.py:58** - Implement RAE storage
-- [ ] **tmp_node1_sync/orchestrator/intelligence/rae_integration.py:91** - Implement RAE query
-- [ ] **tmp_node1_sync/orchestrator/intelligence/rae_integration.py:121** - Implement RAE aggregation query
-- [ ] **tmp_node1_sync/orchestrator/intelligence/rae_integration.py:185** - Implement cross-deployment sync
-- [ ] **tmp_node1_sync/orchestrator/intelligence/rae_integration.py:213** - Load from config file
-- [ ] **tmp_node1_sync/rae-core/rae_core/runtime.py:103** - Add more rules here (e.g., Tool Calls logging)
-- [ ] **tmp_node1_sync/rae-core/rae_core/search/strategies/multi_vector.py:103** - Add logging
-- [ ] **tmp_node1_sync/rae-core/rae_core/embedding/manager.py:46** - Add parallelism here using asyncio.gather if providers are async/remote
-- [ ] **tmp_node1_sync/rae-core/rae_core/adapters/sqlite/vector.py:130** - Implement sqlite-vec specific search when extension is present
-- [ ] **tmp_node1_sync/.orchestrator/tasks.yaml:90** - - If implemented mark as DONE, if not mark TODO
-- [ ] **tmp_node1_sync/benchmarking/scripts/generate_math_report.py:183** - Implement detailed comparative analysis
-- [ ] **tmp_node1_sync/benchmarking/math_metrics/controller/reward.py:167** - level_churn = 0.0   TODO: Calculate from decision history
-- [ ] **tmp_node1_sync/docs/RAE–Docs-vs-Code.md:396** - 11. Priorytetowa lista TODO (szczególnie pod RAE Lite)
-- [ ] **tmp_node1_sync/docs/RAE_DOCUMENTATION_OVERHAUL_IMPLEMENTATION_PLAN.md:608** - 3. **Set up tracking** in TODO.md or project management tool
-- [ ] **tmp_node1_sync/docs/RAE_CORE_REFACTOR_PLAN.md:332** - - **TODO list** w każdej iteracji (TodoWrite!)
-- [ ] **tmp_node1_sync/docs/CONTRIBUTING_DOCS.md:25** - - **reports/TODO.md** - Extracted TODOs from code
-- [ ] **tmp_node1_sync/docs/CONTRIBUTING_DOCS.md:300** - file_pattern: 'CHANGELOG.md STATUS.md TODO.md docs/.auto-generated/your-category/your-doc.md'
-- [ ] **tmp_node1_sync/docs/CONTRIBUTING_DOCS.md:351** - - **TODOs:** Documentation tasks in code
-- [ ] **tmp_node1_sync/docs/STYLE_GUIDE.md:482** - .md
-- [ ] **tmp_node1_sync/docs/Plan przebudowy głównego README dla RA.md:360** - wszystkie linki (docs/paths/...) były spójne z rzeczywistą strukturą repo lub jasno oznaczone jako TODO,
-- [ ] **tmp_node1_sync/docs/DOCUMENTATION_EXECUTIVE_SUMMARY.md:50** - | **Reports** | CHANGELOG.md, TODO.md | Every CI run |
-- [ ] **tmp_node1_sync/docs/Self-Documenting Codebase Blueprint.md:11** - 1. Warstwa Źródłowa: Kod, Komentarze TODO, Historia Gita (Commity).
-- [ ] **tmp_node1_sync/docs/Self-Documenting Codebase Blueprint.md:13** - 3. Warstwa Prezentacji: Pliki Markdown (STATUS.md, CHANGELOG.md, TODO.md).
-- [ ] **tmp_node1_sync/docs/Self-Documenting Codebase Blueprint.md:29** - B. Komentarze w Kodzie (TODO)
-- [ ] **tmp_node1_sync/docs/Self-Documenting Codebase Blueprint.md:31** - Format:  TODO: opis zadania lub  TODO: opis zadania.
-- [ ] **tmp_node1_sync/docs/Self-Documenting Codebase Blueprint.md:46** - 2. Skaner Długu Technicznego (`TODO.md`):
-- [ ] **tmp_node1_sync/docs/Self-Documenting Codebase Blueprint.md:48** - * Wyciąga linie zawierające TODO.
-- [ ] **tmp_node1_sync/docs/Self-Documenting Codebase Blueprint.md:70** - * Transparentność: Klient/Manager widzi postępy (CHANGELOG) i problemy (TODO) w prostych plikach tekstowych.
-- [ ] **tmp_node1_sync/docs/orkiestrator-idea.md:270** - zapisuje efekty do projektu (pliki, TODO, testy),
-- [ ] **tmp_node1_sync/docs/RAE_MATHEMATICAL_REFACTORING_GUIDE.md:2196** - Add relevance scoring when available
-- [ ] **tmp_node1_sync/docs/RAE_MATHEMATICAL_REFACTORING_GUIDE.md:3935** - Use embedding similarity for semantic matching
-- [ ] **tmp_node1_sync/docs/paths/developer.md:236** - **(TODO: Extract detailed steps from `docs/PRODUCTION_PROXMOX_HA.md` and add them here.)**
-- [ ] **tmp_node1_sync/docs/paths/scientist.md:174** - -   **Retrieval Quality (Lines 258-283):** Quality is a function of the number of memories retrieved (with diminishing returns) and their average relevance. The code includes a `TODO` to incorporate relevance scores, indicating an area of active development.
-- [ ] **tmp_node1_sync/docs/autodoc/autodoc_checker.py:9** - - API endpoint consistency (TODO)
-- [ ] **tmp_node1_sync/docs/autodoc/autodoc_checker.py:83** - Implement fragment injection
-- [ ] **tmp_node1_sync/docs/.auto-generated/metrics/DASHBOARD.md:39** - | TODO.md | update_todo | 2025-12-06 11:57:03 |
-- [ ] **tmp_node1_sync/docs/.auto-generated/reports/CHANGELOG.md:40** - - update project status and TODO list after iteration 2 completion ([`49aff83c8`](../../commit/49aff83c8))
-- [ ] **tmp_node1_sync/docs/.auto-generated/reports/CHANGELOG.md:41** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a98a`](../../commit/934b3a98a))
-- [ ] **tmp_node1_sync/docs/.auto-generated/reports/CHANGELOG.md:109** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **tmp_node1_sync/docs/.auto-generated/reports/CHANGELOG.md:110** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **tmp_node1_sync/docs/.auto-generated/reports/CHANGELOG.md:179** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **tmp_node1_sync/docs/.auto-generated/reports/CHANGELOG.md:180** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **tmp_node1_sync/docs/.auto-generated/reports/CHANGELOG.md:252** - - update project status and TODO list after iteration 2 completion ([`49aff83`](../../commit/49aff83))
-- [ ] **tmp_node1_sync/docs/.auto-generated/reports/CHANGELOG.md:253** - - Update TODO with Test Coverage Roadmap (Phase 3) ([`934b3a9`](../../commit/934b3a9))
-- [ ] **tmp_node1_sync/docs/.auto-generated/reports/CHANGELOG.md:528** - Added - Missing Functionalities from TODO.md Completed 🎯
-- [ ] **tmp_node1_sync/docs/.auto-generated/reports/CHANGELOG.md:530** - This release completes the implementation of critical functionalities identified in TODO.md that were either missing or partially implemented.
-- [ ] **tmp_node1_sync/docs/.auto-generated/reports/CHANGELOG.md:762** - - **TODO.md Items** - Completed 5 major categories of missing/incomplete functionalities:
-- [ ] **tmp_node1_sync/docs/.auto-generated/reports/CHANGELOG.md:771** - - Updated TODO.md to reflect all completed items with detailed completion notes
-- [ ] **tmp_node1_sync/docs/.auto-generated/reports/CHANGELOG.md:808** - - Technical debt reduction: 5 major TODO.md categories completed
-- [ ] **tmp_node1_sync/docs/.auto-generated/reports/CHANGELOG.md:1167** - - Resolved TODO comments with detailed implementation notes
-- [ ] **tmp_node1_sync/docs/.auto-generated/reports/CHANGELOG.md:1182** - - TODO comments resolved with implementation guidance
-- [ ] **tmp_node1_sync/docs/.auto-generated/status/STATUS.md:25** - All missing/incomplete functionalities from TODO.md have been successfully implemented:
-- [ ] **tmp_node1_sync/docs/.auto-generated/status/STATUS.md:187** - - [Technical Debt](TODO.md)
-- [ ] **tmp_node1_sync/docs/reference/llm/RAE–Multi-Model_LLM-Integration-Guide.md:17** - - ✅ Updated documentation (README.md, STATUS.md, TODO.md)
-- [ ] **tmp_node1_sync/docs/reference/llm/RAE–Multi-Model_LLM-Integration-Guide.md:232** - 8.1. DeepSeek Provider – TODO
-- [ ] **tmp_node1_sync/docs/reference/llm/RAE–Multi-Model_LLM-Integration-Guide.md:259** - 8.2. Qwen Provider – TODO
-- [ ] **tmp_node1_sync/docs/reference/llm/RAE–Multi-Model_LLM-Integration-Guide.md:284** - 8.3. Grok Provider – TODO
-- [ ] **tmp_node1_sync/docs/reference/deployment/observability.md:510** - Future Enhancements (TODO)
-- [ ] **tmp_node1_sync/docs/project-design/active/DOCUMENTATION_AUTOMATION_PLAN.md:14** - - **docs_automator.py**: Updates 4 files (CHANGELOG, STATUS, TODO, TESTING_STATUS)
-- [ ] **tmp_node1_sync/docs/project-design/active/DOCUMENTATION_AUTOMATION_PLAN.md:125** - │   │   └── TODO.md            Extracted TODOs
-- [ ] **tmp_node1_sync/docs/project-design/active/DOCUMENTATION_AUTOMATION_PLAN.md:183** - | `reports/TODO.md` | On push | Every commit | Code scan (TODO/FIXME) |
-- [ ] **tmp_node1_sync/docs/project-design/completed/enterprise-roadmap/ENTERPRISE-FIX-STATUS.md:331** - - [ ] Remove TODO comments or implement them
-- [ ] **tmp_node1_sync/docs/project-design/completed/enterprise-roadmap/ENTERPRISE-FIX-STATUS.md:441** - - [ ] 100% of TODO comments resolved
-- [ ] **tmp_node1_sync/docs/project-design/completed/enterprise-roadmap/ENTERPRISE-FIX-PLAN.md:100** - 2. Implement TODO comments or remove them
-- [ ] **tmp_node1_sync/docs/project-design/completed/enterprise-roadmap/ENTERPRISE-FIX-PLAN.md:281** - 2. ✅ Implement or remove TODO comments - COMPLETED
-- [ ] **tmp_node1_sync/docs/project-design/completed/enterprise-roadmap/ENTERPRISE-FIX-PLAN.md:336** - - ✅ All TODO comments resolved
-- [ ] **tmp_node1_sync/docs/project-design/completed/rae-4layer-design/RAE-–Reflective_Memory_v1-Implementati.md:108** - **TODO:**
-- [ ] **tmp_node1_sync/docs/project-design/completed/rae-4layer-design/RAE-–Reflective_Memory_v1-Implementati.md:146** - 
-- [ ] **tmp_node1_sync/docs/project-design/completed/rae-4layer-design/RAE-–Reflective_Memory_v1-Implementati.md:183** - 
-- [ ] **tmp_node1_sync/docs/project-design/completed/rae-4layer-design/RAE-–Reflective_Memory_v1-Implementati.md:221** - 
-- [ ] **tmp_node1_sync/docs/project-design/completed/rae-4layer-design/RAE-–Reflective_Memory_v1-Implementati.md:262** - 
-- [ ] **tmp_node1_sync/docs/project-design/completed/rae-4layer-design/RAE-–Reflective_Memory_v1-Implementati.md:286** - 
-- [ ] **tmp_node1_sync/docs/project-design/completed/rae-4layer-design/RAE-–Reflective_Memory_v1-Implementati.md:303** - 
-- [ ] **tmp_node1_sync/docs/project-design/completed/rae-4layer-design/RAE-–Reflective_Memory_v1-Implementati.md:330** - 
-- [ ] **tmp_node1_sync/docs/project-design/completed/rae-4layer-design/RAE-–Reflective_Memory_v1-Implementati.md:362** - 
-- [ ] **tmp_node1_sync/docs/project-design/completed/rae-4layer-design/RAE-–Reflective_Memory_v1-Implementati.md:382** - 
-- [ ] **tmp_node1_sync/docs/project-design/completed/rae-4layer-design/RAE-–Reflective_Memory_v1-Implementati.md:403** - 
-- [ ] **tmp_node1_sync/docs/project-design/completed/rae-4layer-design/RAE-–Reflective_Memory_v1-Implementati.md:455** - 
-- [ ] **tmp_node1_sync/docs/project-design/research/RAE-improve_01.md:13** - Implement JWT token verification
-- [ ] **tmp_node1_sync/docs/project-design/research/RAE-improve_01.md:16** - Implement proper tenant access control
-- [ ] **tmp_node1_sync/docs/project-design/research/RAE_Code_vs_Docs_Feature_Gaps.md:9** - > - głównym `README.md`, `STATUS.md`, `TESTING_STATUS.md`, `TODO.md`,
-- [ ] **tmp_node1_sync/docs/testing/AUTO_HEALING_GUIDE.md:617** - Implement cost tracking to database
-- [ ] **tmp_node1_sync/docs/rules/AGENT_CORE_PROTOCOL.md:85** - - **Auto-Generated (DO NOT EDIT MANUALLY)**: `CHANGELOG.md`, `STATUS.md`, `TODO.md`, `docs/.auto-generated/`.
-- [ ] **tmp_node1_sync/docs/guides/administracja/INDEX.md:411** - Zobacz [TODO.md](../../../TODO.md) dla pełnej roadmapy.
-- [ ] **tmp_node1_sync/docs/guides/developers/INDEX.md:403** - See [TODO.md](../../../TODO.md) for complete roadmap.
-- [ ] **tmp_node1_sync/docs/guides/rae-lite/RAE-lite.md:10** - Sam projekt deklaruje, że 80%+ coverage to wciąż cel, nie stan – w TODO.md jest to nadal HIGH priority.
-- [ ] **tmp_node1_sync/docs/templates/README.md:209** - - `CHANGELOG.md`, `STATUS.md`, `TODO.md`
+- [ ] **docs/rules/AGENT_CORE_PROTOCOL.md:110** - - **Auto-Generated (DO NOT EDIT MANUALLY)**: `CHANGELOG.md`, `STATUS.md`, `TODO.md`, `docs/.auto-generated/`.
+- [ ] **docs/autodoc/autodoc_checker.py:9** - - API endpoint consistency (TODO)
+- [ ] **docs/autodoc/autodoc_checker.py:83** - Implement fragment injection
+- [ ] **tools/memory-dashboard-nicegui/main.py:242** - )   TODO: Use real search with query
+- [ ] **rae_adapters/sqlite/vector.py:145** - Implement sqlite-vec specific search when extension is present
+- [ ] **.orchestrator/tasks.yaml:90** - - If implemented mark as DONE, if not mark TODO
+- [ ] **scripts/metrics_tracker.py:150** - metrics.record_file("TODO.md", "update_todo")
+- [ ] **scripts/docs_automator.py:4** - Generates/Updates CHANGELOG.md, TODO.md, STATUS.md, and TESTING_STATUS.md.
+- [ ] **scripts/docs_automator.py:26** - _FILE = "TODO.md"
+- [ ] **scripts/docs_automator.py:164** - print(f"Updating {TODO_FILE}...")
+- [ ] **scripts/docs_automator.py:165** - current_content = get_file_content(TODO_FILE)
+- [ ] **scripts/docs_automator.py:167** - Scan for TODOs in code
+- [ ] **scripts/docs_automator.py:175** - if file_path == os.path.join(PROJECT_ROOT, TODO_FILE):
+- [ ] **scripts/docs_automator.py:181** - if "TODO" in line or "FIXME" in line:
+- [ ] **scripts/docs_automator.py:185** - clean_line = re.sub(r"^(TODO|FIXME)[:\s]*", "", clean_line)
+- [ ] **scripts/docs_automator.py:201** - else "No TODOs found in code."
+- [ ] **scripts/docs_automator.py:204** - Inject into TODO.md
+- [ ] **scripts/docs_automator.py:215** - write_file_content(TODO_FILE, new_content)
+- [ ] **scripts/docs_automator.py:459** - metrics.record_file(TODO_FILE, "update_todo")
+- [ ] **scripts/validate_docs.py:44** - r"\[TODO:.*?\]",
+- [ ] **scripts/validate_docs.py:45** - r"\[FIXME:.*?\]",
+- [ ] **scripts/docs_generators/api_docs.py:22** - Implement FastAPI OpenAPI export
+- [ ] **scripts/docs_generators/code_metrics.py:40** - Add radon for cyclomatic complexity
+- [ ] **scripts/docs_generators/code_metrics.py:41** - Add lizard for code analysis
+- [ ] **apps/memory_api/core/graph_operator.py:415** - Use embedding similarity for semantic matching with similarity_threshold
+- [ ] **apps/memory_api/core/reward.py:278** - Add relevance scoring when available
+- [ ] **apps/memory_api/core/action_executor.py:248** - Integrate with actual services
+- [ ] **apps/memory_api/core/action_executor.py:275** - Mock action implementations (TODO: Replace with real integrations)
+- [ ] **apps/memory_api/services/context_builder.py:323** - In production, use vector search to get similarity scores
+- [ ] **apps/memory_api/services/context_builder.py:477** - Implement profile retrieval
+- [ ] **apps/memory_api/services/hybrid_search.py:320** - connected_components=1,   TODO: compute from graph
+- [ ] **apps/memory_api/api/v2/memory.py:119** - "api_user",   TODO: Get actual user ID
+- [ ] **apps/memory_api/api/v2/memory.py:203** - "api_user",   TODO: Get actual user ID from auth
+- [ ] **apps/memory_api/workers/memory_maintenance.py:629** - project_id="default",   TODO: Get actual projects
+- [ ] **apps/memory_api/routes/event_triggers.py:175** - tenant_id = "default"   TODO: Get from auth context
+- [ ] **apps/memory_api/routes/event_triggers.py:202** - tenant_id = "default"   TODO: Get from auth context
+- [ ] **apps/memory_api/routes/event_triggers.py:376** - tenant_id = "default"   TODO: Get from auth context

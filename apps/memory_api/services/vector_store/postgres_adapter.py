@@ -53,6 +53,8 @@ class PostgresVectorAdapter(IVectorStore):
         agent_id: str | None = None,
         session_id: str | None = None,
         filters: dict[str, Any] | None = None,
+        project: str | None = None,
+        **kwargs: Any,
     ) -> list[tuple[UUID, float]]:
         # Convert embedding to string format for pgvector
         emb_str = "[" + ",".join(map(str, query_embedding)) + "]"

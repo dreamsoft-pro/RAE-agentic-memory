@@ -1,24 +1,21 @@
-# Next Session Plan - 2026-01-27
+# Plan Następnej Sesji - Stabilizacja Core (2026-01-27)
 
-## 1. Final Core Stability (Priority 1)
-- [ ] Fix `test_szubar_strategy_failure_injection`:
-    - Analyze `search_memories_sql` debug logs from the previous session.
-    - Resolve the mismatch between stored governance JSONB and the search filter.
-    - Standardize `agent_id` vs `project` handling once and for all in the Postgres adapter.
-- [ ] Verify 36/36 green tests.
+## Status Sesji
+Zakończono naprawę kilkunastu regresji po refaktoryzacji na Luminie. Wdrożono zasadę "Fail Fast".
 
-## 2. Benchmark Optimization (Spectacular Results)
-- [ ] Re-run `Industrial Large` on **Node 1 (Lumina)**:
-    - Use a larger model (e.g., `nomic-embed-text` 768d or `text-embedding-3-small` 1536d).
-    - Aim for MRR > 0.90 using the new **ConfidenceWeightedFusion** (ORB 2.0).
-- [ ] Fix `Math-Only` precision:
-    - Investigate why `plainto_tsquery` is less effective than ILIKE for technical failures.
-    - Implement a more aggressive heuristic expansion for technical terms.
+## Co zostało zrobione:
+1.  **AGENT_CORE_PROTOCOL.md**: Dodano zasadę przerywania testów na pierwszym błędzie.
+2.  **Fixy Importów/Klas**: Naprawiono `test_stability_fusion.py` oraz `MultiVectorSearchStrategy` (migracja na klasę `RRFFusion`).
+3.  **Cleanup**: Usunięto przestarzałe testy (`test_engine_extended.py`, `test_engine_extra.py`).
+4.  **Przywrócenie poprawek**: Re-aplikowano poprawki `agent_id` w Postgresie i `ttl` w InMemoryStorage, które zostały nadpisane przez rsync.
+5.  **Maki i Telemetria**: Naprawiono mocki w `test_background_tasks.py` (async) oraz `test_opentelemetry.py` (`AsyncQdrantClient`).
+6.  **Math & Logic**: Naprawiono błąd `timedelta` w `math/controller.py` oraz uwzględnianie wag strategii w `HybridSearchEngine`.
+7.  **RRF Logic**: Zaktualizowano testy hybrydowe do logiki rankingu 0-indexed.
 
-## 3. Self-Tuning Intelligence (ORB 4.0)
-- [ ] Integrate entropy-based confidence analysis into `ConfidenceWeightedFusion`.
-- [ ] Activate `Graph Centrality Boost` using real edge data from benchmarks.
+## Do zrobienia w następnej sesji:
+1.  **Weryfikacja**: Kontynuacja uruchamiania pełnego suite: `.venv/bin/python -m pytest -x apps/memory_api/tests rae-core/tests`.
+2.  **Naprawa kolejnych błędów**: Systematyczne usuwanie przeszkód aż do osiągnięcia 100% PASS (obecnie około 1640/1736 testów przechodzi).
+3.  **Zero Drift**: Po przejściu testów, wykonanie `make pre-push` i commit dokumentacji.
 
-## 4. Documentation & Cleanup
-- [ ] Remove temporary diagnostic logs from `rae_adapters/postgres.py`.
-- [ ] Update `DEVELOPER_CHEAT_SHEET.md` with new fusion strategy commands.
+## Komenda na start:
+`python3 scripts/bootstrap_session.py && .venv/bin/python -m pytest -x apps/memory_api/tests rae-core/tests`

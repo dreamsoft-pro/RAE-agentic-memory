@@ -6,7 +6,7 @@ from uuid import UUID
 
 from rae_core.interfaces.embedding import IEmbeddingProvider
 from rae_core.interfaces.vector import IVectorStore
-from rae_core.math.fusion import reciprocal_rank_fusion
+from rae_core.math.fusion import RRFFusion
 from rae_core.search.strategies import SearchStrategy
 
 
@@ -40,6 +40,7 @@ class MultiVectorSearchStrategy(SearchStrategy):
         tenant_id: str,
         filters: dict[str, Any] | None = None,
         limit: int = 10,
+        project: str | None = None,
     ) -> list[tuple[UUID, float]]:
         """
         Execute search across all vector stores and fuse results.
@@ -70,7 +71,11 @@ class MultiVectorSearchStrategy(SearchStrategy):
         results_list = await asyncio.gather(*tasks)
 
         # Fuse results using RRF
-        fused_results = reciprocal_rank_fusion(results_list)
+        strategy_results = {f"v{i}": results for i, results in enumerate(results_list)}
+        weights = {f"v{i}": 1.0 for i in range(len(results_list))}
+
+        fusion = RRFFusion()
+        fused_results = fusion.fuse(strategy_results, weights)
 
         return fused_results[:limit]
 

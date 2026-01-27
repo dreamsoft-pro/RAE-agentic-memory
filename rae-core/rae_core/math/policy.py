@@ -32,7 +32,7 @@ Author: Grzegorz Leśniowski <lesniowskig@gmail.com>
 """
 
 from datetime import datetime, timezone
-from typing import Any, List, Optional
+from typing import Any
 
 from rae_core.math.dynamics import calculate_recency_score
 from rae_core.math.structure import DecayConfig, MemoryScoreResult, ScoringWeights
@@ -41,13 +41,13 @@ from rae_core.math.structure import DecayConfig, MemoryScoreResult, ScoringWeigh
 def compute_memory_score(
     similarity: float,
     importance: float,
-    last_accessed_at: Optional[datetime] = None,
-    created_at: Optional[datetime] = None,
+    last_accessed_at: datetime | None = None,
+    created_at: datetime | None = None,
     access_count: int = 0,
-    now: Optional[datetime] = None,
-    weights: Optional[ScoringWeights] = None,
-    decay_config: Optional[DecayConfig] = None, # <--- RESTORED
-    memory_id: str = "", # <--- RESTORED
+    now: datetime | None = None,
+    weights: ScoringWeights | None = None,
+    decay_config: DecayConfig | None = None,  # <--- RESTORED
+    memory_id: str | None = None,  # <--- RESTORED
 ) -> MemoryScoreResult:
     """
     Compute a unified score for a memory item based on multiple factors.
@@ -64,6 +64,9 @@ def compute_memory_score(
 
     if weights is None:
         weights = ScoringWeights()
+
+    if created_at is None:
+        created_at = now
 
     # Calculate individual components
     # Recency score using exponential decay

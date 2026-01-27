@@ -1,12 +1,14 @@
 """Hybrid search engine that orchestrates multiple search strategies."""
 
-from typing import Any, Dict, List, Tuple, Optional
+from typing import Any
 from uuid import UUID
+
 import structlog
 
-from rae_core.search.fusion import RRFFusion
+from rae_core.math.fusion import RRFFusion
 
 logger = structlog.get_logger(__name__)
+
 
 class HybridSearchEngine:
     """
@@ -16,7 +18,7 @@ class HybridSearchEngine:
     def __init__(
         self,
         strategies: dict[str, Any],
-        fusion_strategy: Optional[Any] = None,
+        fusion_strategy: Any | None = None,
         cache: Any = None,
     ):
         self.strategies = strategies
@@ -38,14 +40,17 @@ class HybridSearchEngine:
         Execute hybrid search across multiple strategies.
         """
         active_strategy_names = strategies or list(self.strategies.keys())
-        
+
         # Determine weights
         weights = strategy_weights or {}
         for name in active_strategy_names:
             if name not in weights:
                 strategy = self.strategies.get(name)
                 if strategy:
-                    # In RRF, weight is often just 1.0
+                    # Respect strategy's own weight if available
+                    weights[name] = strategy.get_strategy_weight()
+                else:
+                    # Fallback to 1.0
                     weights[name] = 1.0
 
         strategy_results: dict[str, list[tuple[UUID, float]]] = {}
@@ -55,10 +60,20 @@ class HybridSearchEngine:
             if not strategy:
                 continue
 
+            # Try cache first if enabled
+            if use_cache and self.cache:
+                cached_res = await self.cache.get(query, tenant_id, name)
+                if cached_res is not None:
+                    strategy_results[name] = cached_res
+                    logger.info(
+                        "strategy_cache_hit", strategy=name, count=len(cached_res)
+                    )
+                    continue
+
             try:
                 # Extract project from filters for explicit passing
                 p_id = (filters or {}).get("project")
-                
+
                 results = await strategy.search(
                     query=query,
                     tenant_id=tenant_id,
@@ -67,14 +82,21 @@ class HybridSearchEngine:
                     project=p_id,
                 )
                 strategy_results[name] = results or []
-                logger.info("strategy_success", strategy=name, count=len(strategy_results[name]))
+
+                # Update cache
+                if use_cache and self.cache:
+                    await self.cache.set(query, tenant_id, name, strategy_results[name])
+
+                logger.info(
+                    "strategy_success", strategy=name, count=len(strategy_results[name])
+                )
             except Exception as e:
                 logger.error("strategy_failed", strategy=name, error=str(e))
                 strategy_results[name] = []
 
         # Fuse results using the selected strategy (default RRF)
         fused_results = self.fusion_strategy.fuse(strategy_results, weights)
-        
+
         return fused_results[:limit]
 
     async def rerank(

@@ -1,13 +1,14 @@
-import pytest
-import sys
 import os
-from unittest.mock import patch, MagicMock
+import sys
+from unittest.mock import patch
+
 import requests
 
 # Allow importing from root directory
 sys.path.append(os.getcwd())
 
 from rae_agent.main import check_internet_leak, connect_to_kernel
+
 
 class TestAgentRuntime:
 
@@ -19,8 +20,10 @@ class TestAgentRuntime:
         It returns True (Safe) if the request FAILS.
         """
         # Simulate Network Error (Good!)
-        mock_get.side_effect = requests.exceptions.ConnectionError("Network unreachable")
-        
+        mock_get.side_effect = requests.exceptions.ConnectionError(
+            "Network unreachable"
+        )
+
         is_safe = check_internet_leak()
         assert is_safe is True
 
@@ -32,7 +35,7 @@ class TestAgentRuntime:
         """
         # Simulate Success (Bad!)
         mock_get.return_value.status_code = 200
-        
+
         is_safe = check_internet_leak()
         assert is_safe is False
 
