@@ -45,15 +45,16 @@ class MathLayerController:
             persist_path = Path("bandit_state.json")
 
         bandit_config = BanditConfig(
-            persistence_path=Path(persist_path),
-            exploration_rate=exploration_rate
+            persistence_path=Path(persist_path), exploration_rate=exploration_rate
         )
         self.bandit = MultiArmedBandit(config=bandit_config)
 
         # Internal state for tracking active decisions
         self._last_decision: dict[str, Any] = {}
 
-    def get_retrieval_weights(self, query: str, context: dict | None = None) -> dict[str, float]:
+    def get_retrieval_weights(
+        self, query: str, context: dict | None = None
+    ) -> dict[str, float]:
         """
         Determine optimal retrieval weights (FullText vs Vector) using Bandit.
 
@@ -76,16 +77,18 @@ class MathLayerController:
         # Implementation of System 3.0 logic
         strategy = arm.strategy
 
-        if strategy == "relevance_scoring": # Favour Vector
+        if strategy == "relevance_scoring":  # Favour Vector
             weights = {"fulltext": 1.0, "vector": 10.0}
-        elif strategy == "importance_scoring": # Favour Text
+        elif strategy == "importance_scoring":  # Favour Text
             weights = {"fulltext": 10.0, "vector": 1.0}
-        else: # Default/Balanced
+        else:  # Default/Balanced
             weights = {"fulltext": 1.0, "vector": 1.0}
 
         # Special Heuristic: Force Math-First for factual queries if not exploring
         if not was_explore:
-            is_factual = any(w in query.lower() for w in ["what", "who", "when", "id", "code", "err"])
+            is_factual = any(
+                w in query.lower() for w in ["what", "who", "when", "id", "code", "err"]
+            )
             if is_factual:
                 weights = {"fulltext": 10.0, "vector": 1.0}
 
@@ -93,7 +96,7 @@ class MathLayerController:
         self._last_decision = {
             "arm": arm,
             "features": features,
-            "timestamp": datetime.now(timezone.utc)
+            "timestamp": datetime.now(timezone.utc),
         }
 
         return weights
@@ -112,7 +115,7 @@ class MathLayerController:
         obs_reward = reward if success else 0.0
 
         self.bandit.update(arm, obs_reward, features)
-        self._last_decision = {} # Clear
+        self._last_decision = {}  # Clear
 
     def _build_features(self, query: str, context: dict | None = None) -> FeaturesV2:
         """Helper to build FeaturesV2 from raw data."""
@@ -122,7 +125,7 @@ class MathLayerController:
             memory_count=ctx.get("memory_count", 0),
             graph_density=ctx.get("graph_density", 0.0),
             memory_entropy=ctx.get("memory_entropy", 0.0),
-            query_complexity=len(query.split()) / 20.0 # Simple proxy
+            query_complexity=len(query.split()) / 20.0,  # Simple proxy
         )
 
     def score_memory(
@@ -156,6 +159,7 @@ class MathLayerController:
     def apply_decay(self, age_hours: float, usage_count: int = 0) -> float:
         """Apply time-based decay to importance."""
         from datetime import timedelta
+
         now = datetime.now(timezone.utc)
         created_at = now - timedelta(hours=age_hours)
 
@@ -175,6 +179,7 @@ class MathLayerController:
             return cosine_similarity(embedding1, embedding2)
         except Exception:
             import math
+
             dot = sum(a * b for a, b in zip(embedding1, embedding2))
             mag1 = math.sqrt(sum(a * a for a in embedding1))
             mag2 = math.sqrt(sum(b * b for b in embedding2))

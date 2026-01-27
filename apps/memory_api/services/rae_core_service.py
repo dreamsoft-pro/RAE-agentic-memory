@@ -140,11 +140,9 @@ class RAECoreService:
         search_strategies = {
             "vector": VectorSearchStrategy(
                 vector_store=self.qdrant_adapter,
-                embedding_provider=self.embedding_provider
+                embedding_provider=self.embedding_provider,
             ),
-            "fulltext": FullTextStrategy(
-                memory_storage=self.postgres_adapter
-            )
+            "fulltext": FullTextStrategy(memory_storage=self.postgres_adapter),
         }
         search_engine = HybridSearchEngine(strategies=search_strategies)
 
@@ -162,7 +160,7 @@ class RAECoreService:
             "rae_core_engine_components_ready",
             storage=type(self.postgres_adapter).__name__,
             vector_store=type(self.qdrant_adapter).__name__,
-            embedding=type(self.embedding_provider).__name__
+            embedding=type(self.embedding_provider).__name__,
         )
 
         # New: Reflection Engine
@@ -236,7 +234,7 @@ class RAECoreService:
                     failures = await self.service.engine.search_memories(
                         query=rae_input.content,
                         tenant_id=rae_input.tenant_id,
-                        agent_id="default", # Failures are usually project-wide
+                        agent_id="default",  # Failures are usually project-wide
                         project=project,
                         layer=None,
                         top_k=5,
@@ -267,12 +265,15 @@ class RAECoreService:
                                 if isinstance(gov, str):
                                     try:
                                         import json
+
                                         gov = json.loads(gov)
                                     except Exception:
                                         gov = {}
                                 trace = gov.get("failure_trace", "Unknown failure")
                                 content = f.get("content", "Unknown error")
-                                pressure_constraints += f"- {content} (Reason: {trace})\n"
+                                pressure_constraints += (
+                                    f"- {content} (Reason: {trace})\n"
+                                )
 
                 system_prompt = f"RELEVANT PROJECT CONTEXT:\n{context_text}\n{pressure_constraints}\n\nTask: {rae_input.content}"
 
@@ -346,7 +347,8 @@ class RAECoreService:
             tenant_id=str(tenant_id),
             content=prompt,
             context={
-                "project": project or agent_id, # Fallback to agent_id if project not provided
+                "project": project
+                or agent_id,  # Fallback to agent_id if project not provided
                 "session_id": session_id,
                 "agent_id": agent_id,
             },
@@ -796,8 +798,8 @@ class RAECoreService:
         raw_results = await self.engine.search_memories(
             query=query,
             tenant_id=str(tenant_id),
-            agent_id="default", # Broad attribution for general queries
-            project=project,    # Strict context
+            agent_id="default",  # Broad attribution for general queries
+            project=project,  # Strict context
             layer=layers[0] if layers else None,
             top_k=k,
             filters=filters,

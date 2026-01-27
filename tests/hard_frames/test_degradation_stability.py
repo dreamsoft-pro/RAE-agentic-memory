@@ -46,7 +46,9 @@ class TestDegradationStability:
             # We assume the hallucination happens BEFORE typing, i.e. LLM output -> Client call
             # So we test if Client handles weird inputs
             try:
-                response = confused_agent_client.ask("summarize", text=bytes(b'\x00\xFF')) # Binary garbage
+                response = confused_agent_client.ask(
+                    "summarize", text=bytes(b"\x00\xff")
+                )  # Binary garbage
             except Exception:
                 # Pydantic might catch this before sending, which is also valid containment
                 return
@@ -56,7 +58,7 @@ class TestDegradationStability:
     def test_infinite_loop_prevention(self):
         """
         Scenario: Agent gets stuck in a loop asking the same thing.
-        (This would technically be enforced by RateLimiter in Kernel, 
+        (This would technically be enforced by RateLimiter in Kernel,
         here we verify client doesn't lock up).
         """
-        pass # Placeholder for Rate Limit test if we implement client-side backoff
+        pass  # Placeholder for Rate Limit test if we implement client-side backoff

@@ -19,6 +19,7 @@ def test_confidence_analysis():
     conf = fusion._analyze_confidence(results)
     assert conf < 0.2
 
+
 def test_weighted_fusion_logic():
     fusion = ConfidenceWeightedFusion()
     m1, m2 = uuid4(), uuid4()
@@ -27,7 +28,7 @@ def test_weighted_fusion_logic():
     # Text found m2 with high confidence
     strategy_results = {
         "vector": [(m1, 0.95), (m2, 0.1)],
-        "fulltext": [(m2, 0.99), (m1, 0.05)]
+        "fulltext": [(m2, 0.99), (m1, 0.05)],
     }
     weights = {"vector": 1.0, "fulltext": 1.0}
 

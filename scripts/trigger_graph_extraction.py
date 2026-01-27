@@ -7,6 +7,7 @@ from apps.memory_api.tasks.background_tasks import rae_context
 # Configure logger to see what's happening
 structlog.configure()
 
+
 async def main():
     print("Manually triggering graph extraction queue...")
 
@@ -23,7 +24,9 @@ async def main():
             from apps.memory_api.services.graph_extraction import GraphExtractionService
 
             graph_repo = GraphRepository(rae_service.postgres_pool)
-            service = GraphExtractionService(rae_service=rae_service, graph_repo=graph_repo)
+            service = GraphExtractionService(
+                rae_service=rae_service, graph_repo=graph_repo
+            )
 
             try:
                 # Use a smaller limit for manual run
@@ -31,16 +34,21 @@ async def main():
                     project_id="default",
                     tenant_id=tenant_id,
                     min_confidence=0.5,
-                    limit=10
+                    limit=10,
                 )
 
                 if result.triples:
-                    stats = await service.store_graph_triples(result.triples, "default", tenant_id)
-                    print(f"Stored {stats['nodes_created']} nodes and {stats['edges_created']} edges.")
+                    stats = await service.store_graph_triples(
+                        result.triples, "default", tenant_id
+                    )
+                    print(
+                        f"Stored {stats['nodes_created']} nodes and {stats['edges_created']} edges."
+                    )
                 else:
                     print("No triples extracted.")
             except Exception as e:
                 print(f"Failed to process tenant {tenant_id}: {e}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())

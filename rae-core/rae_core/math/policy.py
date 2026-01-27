@@ -46,8 +46,8 @@ def compute_memory_score(
     access_count: int = 0,
     now: datetime | None = None,
     weights: ScoringWeights | None = None,
-    decay_config: DecayConfig | None = None, # <--- RESTORED
-    memory_id: str = "", # <--- RESTORED
+    decay_config: DecayConfig | None = None,  # <--- RESTORED
+    memory_id: str = "",  # <--- RESTORED
 ) -> MemoryScoreResult:
     """
     Compute a unified score for a memory item based on multiple factors.
@@ -64,6 +64,9 @@ def compute_memory_score(
 
     if weights is None:
         weights = ScoringWeights()
+
+    if created_at is None:
+        created_at = now
 
     # Calculate individual components
     # Recency score using exponential decay

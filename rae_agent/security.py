@@ -3,8 +3,9 @@ import socket
 
 # --- HARD FRAME: PROTOCOL EXCLUSIVITY (Phase 2.1) ---
 _real_socket = socket.socket
-_kernel_host = None # Lazy init
+_kernel_host = None  # Lazy init
 _allowed_ips = set()
+
 
 def _get_kernel_host():
     global _kernel_host
@@ -30,31 +31,36 @@ def _get_kernel_host():
 
     return _kernel_host
 
+
 class SecureSocket(_real_socket):
     """
     A Secure Wrapper around standard Python socket.
     Enforces Hard Frames protocol exclusivity at the application layer.
     """
+
     def connect(self, address):
-        host = address[0] # IP or Hostname
+        host = address[0]  # IP or Hostname
 
         # Ensure whitelist is populated
         allowed_hostname = _get_kernel_host()
 
         # Whitelist Logic
         is_allowed = (
-            host == allowed_hostname or
-            host in _allowed_ips or
-            host == "127.0.0.1" or
-            host == "localhost"
+            host == allowed_hostname
+            or host in _allowed_ips
+            or host == "127.0.0.1"
+            or host == "localhost"
         )
 
         if not is_allowed:
-             # Strict Enforcement
-             raise RuntimeError(f"🚨 HARD FRAME BREACH: Connection to {host} denied. Only {allowed_hostname} ({list(_allowed_ips)}) allowed.")
+            # Strict Enforcement
+            raise RuntimeError(
+                f"🚨 HARD FRAME BREACH: Connection to {host} denied. Only {allowed_hostname} ({list(_allowed_ips)}) allowed."
+            )
 
         # Proceed with connection
         return super().connect(address)
+
 
 def apply_hard_frames():
     """Enable process-level network restrictions. MUST BE CALLED BEFORE other imports."""

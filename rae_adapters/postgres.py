@@ -135,7 +135,7 @@ class PostgreSQLStorage(IMemoryStorage):
         strength: float = 1.0,
         info_class: str = "internal",
         governance: dict[str, Any] | None = None,
-        ttl: int | None = None, # <--- RESTORED for backward compatibility
+        ttl: int | None = None,  # <--- RESTORED for backward compatibility
     ) -> UUID:
         """Store a new memory in PostgreSQL."""
         pool = await self._get_pool()
@@ -143,6 +143,7 @@ class PostgreSQLStorage(IMemoryStorage):
         # Backward compatibility: convert ttl to expires_at if needed
         if ttl is not None and expires_at is None:
             from datetime import timedelta
+
             expires_at = datetime.now(timezone.utc) + timedelta(seconds=ttl)
 
         memory_id = uuid4()
@@ -178,15 +179,17 @@ class PostgreSQLStorage(IMemoryStorage):
                 embedding_val,
                 importance,
                 expires_at,
-                datetime.now(timezone.utc).replace(tzinfo=None), # created_at ($11)
-                datetime.now(timezone.utc).replace(tzinfo=None), # last_accessed_at ($12)
-                memory_type, # $13
-                project,     # $14
+                datetime.now(timezone.utc).replace(tzinfo=None),  # created_at ($11)
+                datetime.now(timezone.utc).replace(
+                    tzinfo=None
+                ),  # last_accessed_at ($12)
+                memory_type,  # $13
+                project,  # $14
                 session_id,  # $15
-                source,      # $16
-                strength,    # $17
+                source,  # $16
+                strength,  # $17
                 info_class,  # $18
-                json.dumps(governance), # $19
+                json.dumps(governance),  # $19
             )
 
         return memory_id
@@ -272,7 +275,9 @@ class PostgreSQLStorage(IMemoryStorage):
         # Handle both 'project' and 'project_id' for backward compatibility
         p_filter = project or filters.get("project") or filters.get("project_id")
         if p_filter and p_filter != "default":
-            conditions.append(f"(project = ${param_idx} OR project = 'default' OR project IS NULL)")
+            conditions.append(
+                f"(project = ${param_idx} OR project = 'default' OR project IS NULL)"
+            )
             params.append(p_filter)
             param_idx += 1
 
@@ -375,10 +380,14 @@ class PostgreSQLStorage(IMemoryStorage):
                 "governance": row["governance"] if row["governance"] else {},
                 "tags": list(row["tags"]) if row["tags"] else [],
                 "metadata": (
-                    json.loads(row["metadata"])
-                    if isinstance(row["metadata"], str)
-                    else dict(row["metadata"])
-                ) if row["metadata"] else {},
+                    (
+                        json.loads(row["metadata"])
+                        if isinstance(row["metadata"], str)
+                        else dict(row["metadata"])
+                    )
+                    if row["metadata"]
+                    else {}
+                ),
                 "embedding": (
                     (
                         json.loads(row["embedding"])
@@ -415,7 +424,8 @@ class PostgreSQLStorage(IMemoryStorage):
         order_by: str = "created_at",
         order_direction: str = "desc",
         project: str | None = None,
-        query: str | None = None, # <--- RESTORED for FTS support
+        query: str | None = None,
+        **kwargs: Any,
     ) -> list[dict[str, Any]]:
         """List memories with pagination and optional FTS."""
         pool = await self._get_pool()
@@ -431,7 +441,9 @@ class PostgreSQLStorage(IMemoryStorage):
         # Handle both 'project' and 'project_id' for backward compatibility
         p_filter = project or filters.get("project") or filters.get("project_id")
         if p_filter and p_filter != "default":
-            conditions.append(f"(project = ${param_idx} OR project = 'default' OR project IS NULL)")
+            conditions.append(
+                f"(project = ${param_idx} OR project = 'default' OR project IS NULL)"
+            )
             params.append(p_filter)
             param_idx += 1
 
@@ -456,7 +468,9 @@ class PostgreSQLStorage(IMemoryStorage):
             else:
                 # Use OR logic for websearch to find ANY of the words (more liberal for math fallback)
                 liberal_query = query.replace(" ", " OR ")
-                conditions.append(f"(to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', ${param_idx}) OR content ILIKE ${param_idx+1})")
+                conditions.append(
+                    f"(to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', ${param_idx}) OR content ILIKE ${param_idx+1})"
+                )
                 score_clause = f"""
                     CASE
                         WHEN to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', ${param_idx})

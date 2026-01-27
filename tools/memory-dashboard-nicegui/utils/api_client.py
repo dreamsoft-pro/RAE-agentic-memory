@@ -7,14 +7,21 @@ import httpx
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 class RAEClient:
-    def __init__(self, api_url: str, api_key: str, tenant_id: str = "default", project_id: str = "default"):
+    def __init__(
+        self,
+        api_url: str,
+        api_key: str,
+        tenant_id: str = "default",
+        project_id: str = "default",
+    ):
         self.api_url = api_url.rstrip("/")
         self.headers = {
             "Authorization": f"Bearer {api_key}",
             "X-Tenant-ID": tenant_id,
             "X-Project-ID": project_id,
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
         self.timeout = 10.0
 
@@ -31,7 +38,9 @@ class RAEClient:
     async def get_tenants(self) -> List[Dict[str, str]]:
         """Fetch available tenants from /v1/system/tenants."""
         try:
-            async with httpx.AsyncClient(headers=self.headers, timeout=self.timeout) as client:
+            async with httpx.AsyncClient(
+                headers=self.headers, timeout=self.timeout
+            ) as client:
                 resp = await client.get(f"{self.api_url}/v1/system/tenants")
                 if resp.status_code == 200:
                     return resp.json()
@@ -43,7 +52,9 @@ class RAEClient:
     async def get_projects(self) -> List[str]:
         """Fetch available projects from /v1/system/projects."""
         try:
-            async with httpx.AsyncClient(headers=self.headers, timeout=self.timeout) as client:
+            async with httpx.AsyncClient(
+                headers=self.headers, timeout=self.timeout
+            ) as client:
                 resp = await client.get(f"{self.api_url}/v1/system/projects")
                 if resp.status_code == 200:
                     data = resp.json()
@@ -70,8 +81,12 @@ class RAEClient:
         """Fetches memory statistics using v2 API (RAE-Core native)."""
         project = self.headers.get("X-Project-ID", "default")
         try:
-            async with httpx.AsyncClient(headers=self.headers, timeout=self.timeout) as client:
-                resp = await client.get(f"{self.api_url}/v2/memories/stats?project={project}")
+            async with httpx.AsyncClient(
+                headers=self.headers, timeout=self.timeout
+            ) as client:
+                resp = await client.get(
+                    f"{self.api_url}/v2/memories/stats?project={project}"
+                )
                 if resp.status_code == 200:
                     data = resp.json()
                     stats = data.get("statistics", {})
@@ -80,9 +95,15 @@ class RAEClient:
                         "episodic": stats.get("layers", {}).get("episodic", 0),
                         "working": stats.get("layers", {}).get("working", 0),
                         "semantic": stats.get("layers", {}).get("semantic", 0),
-                        "ltm": stats.get("layers", {}).get("ltm", 0)
+                        "ltm": stats.get("layers", {}).get("ltm", 0),
                     }
-                return {"total": 0, "episodic": 0, "working": 0, "semantic": 0, "ltm": 0}
+                return {
+                    "total": 0,
+                    "episodic": 0,
+                    "working": 0,
+                    "semantic": 0,
+                    "ltm": 0,
+                }
         except Exception as e:
             logger.error(f"Stats fetch failed: {e}")
             return {"total": 0, "episodic": 0, "working": 0, "semantic": 0, "ltm": 0}
@@ -90,16 +111,20 @@ class RAEClient:
     async def get_recent_memories(self, limit: int = 50) -> List[Dict]:
         """Fetches recent memories using v2 API."""
         try:
-            async with httpx.AsyncClient(headers=self.headers, timeout=self.timeout) as client:
+            async with httpx.AsyncClient(
+                headers=self.headers, timeout=self.timeout
+            ) as client:
                 payload = {
-                    "query": "*", # Wildcard for retrieval
+                    "query": "*",  # Wildcard for retrieval
                     "k": limit,
                     "project": self.headers.get("X-Project-ID", "default"),
                     # We can use filters to sort by time if engine supports "sort_by" in filters,
                     # but typically engine returns most relevant (or recent if query is wildcard).
-                    "filters": {}
+                    "filters": {},
                 }
-                resp = await client.post(f"{self.api_url}/v2/memories/query", json=payload)
+                resp = await client.post(
+                    f"{self.api_url}/v2/memories/query", json=payload
+                )
 
                 if resp.status_code == 200:
                     data = resp.json()
@@ -109,22 +134,30 @@ class RAEClient:
             logger.error(f"Failed to fetch memories: {e}")
             return []
 
-    async def update_memory(self, memory_id: str, new_content: str, new_tags: List[str], reason: str, user: str) -> bool:
+    async def update_memory(
+        self,
+        memory_id: str,
+        new_content: str,
+        new_tags: List[str],
+        reason: str,
+        user: str,
+    ) -> bool:
         """
         ISO 27001 Compliant Update (Append-Only) via v2 API.
         1. DELETE /v2/memories/{id}
         2. POST /v2/memories/
         """
         try:
-            async with httpx.AsyncClient(headers=self.headers, timeout=self.timeout) as client:
+            async with httpx.AsyncClient(
+                headers=self.headers, timeout=self.timeout
+            ) as client:
                 # 1. Delete Old
                 audit_headers = self.headers.copy()
                 audit_headers["X-Audit-Reason"] = reason
                 audit_headers["X-Audit-User"] = user
 
                 del_resp = await client.delete(
-                    f"{self.api_url}/v2/memories/{memory_id}",
-                    headers=audit_headers
+                    f"{self.api_url}/v2/memories/{memory_id}", headers=audit_headers
                 )
 
                 if del_resp.status_code not in [200, 404]:
@@ -145,14 +178,12 @@ class RAEClient:
                         "modification_reason": reason,
                         "modified_by": user,
                         "is_manual_correction": True,
-                        "lineage_action": "update"
-                    }
+                        "lineage_action": "update",
+                    },
                 }
 
                 create_resp = await client.post(
-                    f"{self.api_url}/v2/memories/",
-                    json=payload,
-                    headers=audit_headers
+                    f"{self.api_url}/v2/memories/", json=payload, headers=audit_headers
                 )
 
                 return create_resp.status_code == 200
@@ -163,14 +194,15 @@ class RAEClient:
     async def delete_memory(self, memory_id: str, reason: str, user: str) -> bool:
         """ISO 27001 Compliant Delete."""
         try:
-            async with httpx.AsyncClient(headers=self.headers, timeout=self.timeout) as client:
+            async with httpx.AsyncClient(
+                headers=self.headers, timeout=self.timeout
+            ) as client:
                 audit_headers = self.headers.copy()
                 audit_headers["X-Audit-Reason"] = reason
                 audit_headers["X-Audit-User"] = user
 
                 resp = await client.delete(
-                    f"{self.api_url}/memories/{memory_id}",
-                    headers=audit_headers
+                    f"{self.api_url}/memories/{memory_id}", headers=audit_headers
                 )
                 return resp.status_code == 200
         except Exception as e:

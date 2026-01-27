@@ -41,6 +41,8 @@ class GraphTraversalStrategy(SearchStrategy):
         tenant_id: str,
         filters: dict[str, Any] | None = None,
         limit: int = 10,
+        project: str | None = None,
+        **kwargs: Any,
     ) -> list[tuple[UUID, float]]:
         """Execute graph traversal search.
 
@@ -49,6 +51,7 @@ class GraphTraversalStrategy(SearchStrategy):
             tenant_id: Tenant identifier
             filters: Optional filters (seed_ids, edge_type, max_depth)
             limit: Maximum number of results
+            project: Optional project identifier
 
         Returns:
             List of (memory_id, relevance_score) tuples

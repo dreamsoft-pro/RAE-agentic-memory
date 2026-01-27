@@ -69,10 +69,12 @@ async def rae_service(db_pool):
     # MOCK EMBEDDING PROVIDER TO AVOID EXTERNAL CALLS (401 errors)
     from rae_core.embedding.manager import EmbeddingManager
     from rae_core.interfaces.embedding import IEmbeddingProvider
+
     mock_emb = MagicMock(spec=IEmbeddingProvider)
 
     async def mock_embed_batch(texts):
         import hashlib
+
         results = []
         for t in texts:
             # Create a semi-unique vector based on hash
@@ -106,8 +108,11 @@ async def rae_service(db_pool):
 
     # Ensure FullText strategy is also present for true hybrid synergy
     from rae_core.search.strategies.fulltext import FullTextStrategy
+
     if "fulltext" not in service.engine.search_engine.strategies:
-        service.engine.search_engine.strategies["fulltext"] = FullTextStrategy(service.postgres_adapter)
+        service.engine.search_engine.strategies["fulltext"] = FullTextStrategy(
+            service.postgres_adapter
+        )
 
     return service
     # Re-initialize engine with mocked provider to ensure search strategies use it
@@ -388,7 +393,7 @@ async def test_reflection_retrieval_in_context(
     # Use a configuration that definitely allows our reflection
     config = ContextConfig(
         min_reflection_importance=0.1,  # Lower threshold for test stability
-        max_reflection_items=10
+        max_reflection_items=10,
     )
     context_builder.config = config
 
@@ -431,7 +436,7 @@ async def test_reflection_retrieval_in_context(
 async def test_szubar_strategy_failure_injection(rae_service, tenant_id):
     """
     Test the Szubar Strategy (Evolutionary Pressure).
-    
+
     Scenario:
     1. Enable Szubar Mode
     2. Store a failure memory with governance.is_failure = True
@@ -448,15 +453,15 @@ async def test_szubar_strategy_failure_injection(rae_service, tenant_id):
     await rae_service.store_memory(
         tenant_id=tenant_id,
         project=project_id,
-        agent_id="default", # Common failure knowledge for the project
+        agent_id="default",  # Common failure knowledge for the project
         content=error_content,
         source="system",
         importance=0.9,
         layer="longterm",
         governance={
-            "is_failure": "true", # Use string "true" for easier JSONB matching
-            "failure_trace": "Port 5432 is restricted for this project"
-        }
+            "is_failure": "true",  # Use string "true" for easier JSONB matching
+            "failure_trace": "Port 5432 is restricted for this project",
+        },
     )
 
     # 3. Execute action through RAERuntime (which triggers Szubar logic)
@@ -465,15 +470,15 @@ async def test_szubar_strategy_failure_injection(rae_service, tenant_id):
     original_generate = rae_service.engine.generate_text
 
     async def mock_generate(prompt, system_prompt=None, **kwargs):
-        return system_prompt # Return system prompt so we can inspect it
+        return system_prompt  # Return system prompt so we can inspect it
 
     rae_service.engine.generate_text = AsyncMock(side_effect=mock_generate)
 
     action = await rae_service.execute_action(
         tenant_id=tenant_id,
         project=project_id,
-        agent_id="model-123", # Separate attribution for evaluation
-        prompt="Connect to the database"
+        agent_id="model-123",  # Separate attribution for evaluation
+        prompt="Connect to the database",
     )
 
     # 4. Verify injection
@@ -495,7 +500,7 @@ async def test_szubar_strategy_failure_injection(rae_service, tenant_id):
 async def test_math_fallback_no_llm(rae_service, tenant_id):
     """
     Test the Designed Mathematics fallback when LLM is unavailable.
-    
+
     Scenario:
     1. Store several important memories
     2. Disable LLM provider
@@ -506,7 +511,7 @@ async def test_math_fallback_no_llm(rae_service, tenant_id):
     memories = [
         "The capital of France is Paris",
         "RAE uses a 4-layer memory architecture",
-        "Designed Mathematics provide factual stability"
+        "Designed Mathematics provide factual stability",
     ]
 
     # 1. Store memories
@@ -514,11 +519,11 @@ async def test_math_fallback_no_llm(rae_service, tenant_id):
         await rae_service.store_memory(
             tenant_id=tenant_id,
             project=project_id,
-            agent_id="default", # Common knowledge
+            agent_id="default",  # Common knowledge
             content=content,
             source="manual",
             importance=0.9,
-            layer="semantic"
+            layer="semantic",
         )
 
     # 2. Simulate No LLM
@@ -530,7 +535,7 @@ async def test_math_fallback_no_llm(rae_service, tenant_id):
         tenant_id=tenant_id,
         project=project_id,
         agent_id="math-model-1",
-        prompt="Tell me about RAE and France"
+        prompt="Tell me about RAE and France",
     )
 
     # 4. Verify Math Fallback

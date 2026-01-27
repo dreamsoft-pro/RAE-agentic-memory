@@ -25,7 +25,9 @@ class TestSemanticIntegrity:
 
         assert exc.value.status_code == 400
         # Check if logger.critical was called
-        assert mock_logger.critical.called, "SECURITY FAIL: Injection attempt was silent (no critical log)!"
+        assert (
+            mock_logger.critical.called
+        ), "SECURITY FAIL: Injection attempt was silent (no critical log)!"
 
     def test_exfiltration_attempt_is_blocked(self):
         """

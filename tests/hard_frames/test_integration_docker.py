@@ -15,15 +15,35 @@ class TestHardFramesIntegration:
         """Helper to get container ID more reliably."""
         try:
             # Look for the container in the 'hard_frames' project
-            cmd = ["docker", "ps", "--filter", "label=com.docker.compose.project=hard_frames", "--filter", f"label=com.docker.compose.service={service_name}", "--filter", "status=running", "-q"]
+            cmd = [
+                "docker",
+                "ps",
+                "--filter",
+                "label=com.docker.compose.project=hard_frames",
+                "--filter",
+                f"label=com.docker.compose.service={service_name}",
+                "--filter",
+                "status=running",
+                "-q",
+            ]
             output = subprocess.check_output(cmd, text=True).strip()
             if not output:
                 # Fallback to compose ps with project name
                 output = subprocess.check_output(
-                    ["docker", "compose", "-f", "docker-compose.secure.yml", "-p", "hard_frames", "ps", "-q", service_name],
-                    text=True
+                    [
+                        "docker",
+                        "compose",
+                        "-f",
+                        "docker-compose.secure.yml",
+                        "-p",
+                        "hard_frames",
+                        "ps",
+                        "-q",
+                        service_name,
+                    ],
+                    text=True,
                 ).strip()
-            return output.split('\n')[0] if output else None
+            return output.split("\n")[0] if output else None
         except Exception:
             return None
 
@@ -37,13 +57,21 @@ class TestHardFramesIntegration:
 
         # Attempt to access Google from INSIDE the container
         cmd = [
-            "docker", "exec", container_id,
-            "python", "-c", "import requests; print(requests.get('https://google.com', timeout=2).status_code)"
+            "docker",
+            "exec",
+            container_id,
+            "python",
+            "-c",
+            "import requests; print(requests.get('https://google.com', timeout=2).status_code)",
         ]
 
         result = subprocess.run(cmd, capture_output=True, text=True)
         assert "200" not in result.stdout, "SECURITY BREACH: Agent accessed Google!"
-        assert result.returncode != 0 or "ConnectionError" in str(result.stderr) or "ConnectionError" in str(result.stdout)
+        assert (
+            result.returncode != 0
+            or "ConnectionError" in str(result.stderr)
+            or "ConnectionError" in str(result.stdout)
+        )
 
     def test_agent_can_reach_kernel(self):
         """
@@ -60,8 +88,14 @@ class TestHardFramesIntegration:
             # We specifically want the IP on the internal network to verify connectivity there
             # Note: The network name is prefixed with the project name 'hard_frames'
             kernel_ip = subprocess.check_output(
-                ["docker", "inspect", "-f", "{{.NetworkSettings.Networks.hard_frames_rae_internal.IPAddress}}", kernel_id],
-                text=True
+                [
+                    "docker",
+                    "inspect",
+                    "-f",
+                    "{{.NetworkSettings.Networks.hard_frames_rae_internal.IPAddress}}",
+                    kernel_id,
+                ],
+                text=True,
             ).strip()
         except Exception as e:
             pytest.fail(f"Could not inspect Kernel IP: {e}")
@@ -72,8 +106,12 @@ class TestHardFramesIntegration:
         last_error = ""
         for i in range(max_retries):
             cmd = [
-                "docker", "exec", agent_id,
-                "python", "-c", f"import requests; print(requests.get('http://{kernel_ip}:8000/health').status_code)"
+                "docker",
+                "exec",
+                agent_id,
+                "python",
+                "-c",
+                f"import requests; print(requests.get('http://{kernel_ip}:8000/health').status_code)",
             ]
             result = subprocess.run(cmd, capture_output=True, text=True)
             if "200" in result.stdout:
@@ -82,7 +120,9 @@ class TestHardFramesIntegration:
             last_error = result.stderr or result.stdout
             time.sleep(2)
 
-        assert success, f"Agent could not reach Kernel at {kernel_ip}! Last output: {last_error}"
+        assert (
+            success
+        ), f"Agent could not reach Kernel at {kernel_ip}! Last output: {last_error}"
 
     def test_agent_has_no_forbidden_tools(self):
         """

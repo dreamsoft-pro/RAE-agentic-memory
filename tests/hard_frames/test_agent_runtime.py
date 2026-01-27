@@ -20,7 +20,9 @@ class TestAgentRuntime:
         It returns True (Safe) if the request FAILS.
         """
         # Simulate Network Error (Good!)
-        mock_get.side_effect = requests.exceptions.ConnectionError("Network unreachable")
+        mock_get.side_effect = requests.exceptions.ConnectionError(
+            "Network unreachable"
+        )
 
         is_safe = check_internet_leak()
         assert is_safe is True

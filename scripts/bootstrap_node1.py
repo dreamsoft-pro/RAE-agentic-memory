@@ -8,9 +8,22 @@ PASS = "mwzmjsunp"
 CMD_START = "lumina"
 CMD_STOP = "lumina_stop"
 
+
 def run_ssh_cmd(cmd, timeout=None):
-    ssh_cmd = ["sshpass", "-p", PASS, "ssh", "-o", "StrictHostKeyChecking=no", f"{USER}@{HOST}", cmd]
-    return subprocess.Popen(ssh_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1)
+    ssh_cmd = [
+        "sshpass",
+        "-p",
+        PASS,
+        "ssh",
+        "-o",
+        "StrictHostKeyChecking=no",
+        f"{USER}@{HOST}",
+        cmd,
+    ]
+    return subprocess.Popen(
+        ssh_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1
+    )
+
 
 def monitor_process(proc):
     ok_count = 0
@@ -43,6 +56,7 @@ def monitor_process(proc):
 
     return False, ok_count
 
+
 def main():
     print(f"🚀 Attempting to bootstrap Node1 ({HOST})...")
 
@@ -71,6 +85,7 @@ def main():
 
     print("❌ Failed to bootstrap Node1 after retries.")
     sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

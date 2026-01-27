@@ -6,16 +6,19 @@ from uuid import UUID
 
 class FusionStrategy(ABC):
     """Base class for hybrid result fusion."""
+
     @abstractmethod
     def fuse(
         self,
         strategy_results: dict[str, list[tuple[UUID, float]]],
-        weights: dict[str, float]
+        weights: dict[str, float],
     ) -> list[tuple[UUID, float]]:
         pass
 
+
 class RRFFusion(FusionStrategy):
     """Reciprocal Rank Fusion (Standard RAG approach)."""
+
     def __init__(self, k: int = 60):
         self.k = k
 
@@ -27,12 +30,14 @@ class RRFFusion(FusionStrategy):
                 scores[m_id] = scores.get(m_id, 0.0) + (w / (self.k + rank))
         return sorted(scores.items(), key=lambda x: x[1], reverse=True)
 
+
 class ConfidenceWeightedFusion(FusionStrategy):
     """
     RAE-ORB: Advanced Fusion with Dynamic Confidence Adjustment.
 
     Analyzes the 'gap' and 'z-score' of results to trust confident strategies more.
     """
+
     def _analyze_confidence(self, results: list[tuple[UUID, float]]) -> float:
         if not results or len(results) < 2:
             return 0.0
@@ -47,7 +52,8 @@ class ConfidenceWeightedFusion(FusionStrategy):
     def fuse(self, strategy_results, weights):
         unified_scores: dict[UUID, float] = {}
         confidences = {
-            name: self._analyze_confidence(res) for name, res in strategy_results.items()
+            name: self._analyze_confidence(res)
+            for name, res in strategy_results.items()
         }
 
         for name, results in strategy_results.items():

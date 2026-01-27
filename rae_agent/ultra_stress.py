@@ -10,7 +10,7 @@ from rae_agent.security import apply_hard_frames
 def send_memory(session, url, i):
     payload = {
         "content": f"Ultra Stress Memory {i} - Resilience Test",
-        "metadata": {"batch": "100k", "iteration": i}
+        "metadata": {"batch": "100k", "iteration": i},
     }
     try:
         # We hit the real API endpoint
@@ -18,6 +18,7 @@ def send_memory(session, url, i):
         return resp.status_code
     except Exception as e:
         return str(e)
+
 
 def run_100k_test():
     print("🔥 STARTING ULTRA STRESS TEST: 100,000 REAL MEMORIES 🔥")
@@ -34,7 +35,7 @@ def run_100k_test():
 
     session = requests.Session()
     adapter = requests.adapters.HTTPAdapter(pool_connections=50, pool_maxsize=50)
-    session.mount('http://', adapter)
+    session.mount("http://", adapter)
 
     success = 0
     errors = 0
@@ -42,12 +43,20 @@ def run_100k_test():
     with ThreadPoolExecutor(max_workers=50) as executor:
         for i in range(0, total, batch_size):
             # Create a batch of tasks
-            futures = [executor.submit(send_memory, session, kernel_url, j) for j in range(i, min(i + batch_size, total))]
+            futures = [
+                executor.submit(send_memory, session, kernel_url, j)
+                for j in range(i, min(i + batch_size, total))
+            ]
 
             # Process results
             for f in futures:
                 res = f.result()
-                if res in [200, 201, 401, 404]: # 401/404 also count as successful connection
+                if res in [
+                    200,
+                    201,
+                    401,
+                    404,
+                ]:  # 401/404 also count as successful connection
                     success += 1
                 else:
                     errors += 1
@@ -55,10 +64,15 @@ def run_100k_test():
             if success % 1000 == 0:
                 elapsed = time.time() - start_time
                 rps = success / elapsed if elapsed > 0 else 0
-                print(f"📈 Progress: {success}/{total} | Errors: {errors} | Speed: {rps:.2f} req/s")
+                print(
+                    f"📈 Progress: {success}/{total} | Errors: {errors} | Speed: {rps:.2f} req/s"
+                )
 
     duration = time.time() - start_time
-    print(f"🏁 FINISHED! Total Time: {duration:.2f}s | Final Success: {success} | Final Errors: {errors}")
+    print(
+        f"🏁 FINISHED! Total Time: {duration:.2f}s | Final Success: {success} | Final Errors: {errors}"
+    )
+
 
 if __name__ == "__main__":
     run_100k_test()

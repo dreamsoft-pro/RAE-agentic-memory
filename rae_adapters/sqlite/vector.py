@@ -185,7 +185,7 @@ class SQLiteVectorStore(IVectorStore):
 
                 # Convert to matrix for bulk calculation
                 matrix = np.stack(embeddings)
-                query_vec = query_vec.flatten() # Ensure it's 1D
+                query_vec = query_vec.flatten()  # Ensure it's 1D
 
                 # Bulk cosine similarity calculation
                 dot_products = np.dot(matrix, query_vec)
@@ -197,9 +197,8 @@ class SQLiteVectorStore(IVectorStore):
                     return []
 
                 denom = query_norm * norms
-                denom[denom == 0] = 1e-9 # Prevent div zero
+                denom[denom == 0] = 1e-9  # Prevent div zero
                 similarities = dot_products / denom
-
 
                 # Filter and format results
                 results = []

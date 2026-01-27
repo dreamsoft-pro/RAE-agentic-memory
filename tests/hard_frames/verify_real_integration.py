@@ -43,7 +43,7 @@ def verify_real_integration():
         # 4. Perform Business Logic (Create Memory)
         payload = {
             "content": "Integration Test Memory from Secure Agent",
-            "metadata": {"source": "hard_frames_test", "verified": True}
+            "metadata": {"source": "hard_frames_test", "verified": True},
         }
 
         print("💾 Attempting to write memory...")
@@ -56,7 +56,7 @@ def verify_real_integration():
             print("✅ Network OK, Auth Required (Expected for unauthenticated client).")
             print("   This confirms we reached the real API.")
         elif resp.status_code == 404:
-             print("✅ Network OK, Endpoint Not Found (Check URL path).")
+            print("✅ Network OK, Endpoint Not Found (Check URL path).")
         else:
             print(f"❌ API Error: {resp.status_code} - {resp.text}")
 
@@ -65,6 +65,7 @@ def verify_real_integration():
         sys.exit(1)
 
     print("🏁 INTEGRATION TEST COMPLETED SUCCESSFULLY.")
+
 
 if __name__ == "__main__":
     verify_real_integration()

@@ -4,7 +4,7 @@ from rae_core.search.strategies import SearchStrategy
 
 
 class DummyStrategy(SearchStrategy):
-    async def search(self, query, tenant_id, filters=None, limit=10):
+    async def search(self, query, tenant_id, filters=None, limit=10, project=None):
         # Removed super() call to abstract method
         return []
 

@@ -9,6 +9,7 @@ from rae_core.math.fusion import RRFFusion
 
 logger = structlog.get_logger(__name__)
 
+
 class HybridSearchEngine:
     """
     Hybrid search engine using Reciprocal Rank Fusion (RRF).
@@ -64,7 +65,9 @@ class HybridSearchEngine:
                 cached_res = await self.cache.get(query, tenant_id, name)
                 if cached_res is not None:
                     strategy_results[name] = cached_res
-                    logger.info("strategy_cache_hit", strategy=name, count=len(cached_res))
+                    logger.info(
+                        "strategy_cache_hit", strategy=name, count=len(cached_res)
+                    )
                     continue
 
             try:
@@ -84,7 +87,9 @@ class HybridSearchEngine:
                 if use_cache and self.cache:
                     await self.cache.set(query, tenant_id, name, strategy_results[name])
 
-                logger.info("strategy_success", strategy=name, count=len(strategy_results[name]))
+                logger.info(
+                    "strategy_success", strategy=name, count=len(strategy_results[name])
+                )
             except Exception as e:
                 logger.error("strategy_failed", strategy=name, error=str(e))
                 strategy_results[name] = []
