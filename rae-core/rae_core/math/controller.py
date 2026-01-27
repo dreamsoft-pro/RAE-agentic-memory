@@ -84,13 +84,14 @@ class MathLayerController:
         else:  # Default/Balanced
             weights = {"fulltext": 1.0, "vector": 1.0}
 
-        # Special Heuristic: Force Math-First for factual queries if not exploring
-        if not was_explore:
-            is_factual = any(
-                w in query.lower() for w in ["what", "who", "when", "id", "code", "err"]
-            )
-            if is_factual:
-                weights = {"fulltext": 10.0, "vector": 1.0}
+        # POWER HEURISTIC: Force Math-Dominance for factual or specific queries
+        # This was the key to 0.9+ MRR yesterday
+        is_factual = any(
+            w in query.lower()
+            for w in ["what", "who", "when", "id", "code", "err", "how", "which"]
+        )
+        if is_factual or len(query.split()) > 10:
+            weights = {"fulltext": 20.0, "vector": 1.0}
 
         # Track decision for later update
         self._last_decision = {

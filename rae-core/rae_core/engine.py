@@ -32,8 +32,10 @@ class RAEEngine:
 
         # Initialize Math Layer Controller (The Brain)
         from rae_core.math.controller import MathLayerController
+        from rae_core.math.resonance import SemanticResonanceEngine
 
         self.math_ctrl = math_controller or MathLayerController(config=settings)
+        self.resonance_engine = SemanticResonanceEngine(resonance_factor=0.4)
 
         # Modular Search Engine with ORB 4.0
         if search_engine:
@@ -133,14 +135,22 @@ class RAEEngine:
                 memory["search_score"] = sim_score
                 memories.append(memory)
 
-        # 3. REFLECTIVE RE-RANKING
-        # If any Layer 4 (Reflective) memories are found, they boost their children
+        # 3. SEMANTIC RESONANCE (Manifold Wave Propagation)
+        # Using graph connectivity to boost non-obvious ideas
+        # If the storage supports graph retrieval, we use it for resonance
+        if hasattr(self.memory_storage, "get_neighbors_batch") and memories:
+            m_ids = [m["id"] for m in memories]
+            edges = await self.memory_storage.get_neighbors_batch(m_ids, tenant_id)
+            if edges:
+                memories = self.resonance_engine.compute_resonance(memories, edges)
+
+        # 4. SYNERGY BOOST (Legacy compatibility for reflective layer)
         reflections = [m for m in memories if m.get("layer") == "reflective"]
         if reflections:
             for m in memories:
                 if m.get("layer") != "reflective":
-                    # Synergy boost from reflections
-                    m["math_score"] *= 1.5
+                    # Synergy boost from reflections (augmented by resonance)
+                    m["math_score"] *= 1.2
 
         memories.sort(key=lambda x: x.get("math_score", 0.0), reverse=True)
         return memories[:top_k]
