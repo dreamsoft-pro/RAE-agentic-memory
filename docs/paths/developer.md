@@ -127,6 +127,12 @@ The port mapping is designed to allow you to run multiple environments at once. 
 
 All three environments can run side-by-side without interfering with each other.
 
+### 5. Secure Mode (Hard Frames)
+
+If you are developing security-critical agents that require physical network isolation:
+-   See the **[Secure Agent Deployment Guide](../guides/SECURE_AGENT_DEPLOYMENT.md)**.
+-   Use `docker compose -f docker-compose.secure.yml up -d`.
+
 3.  **Verify the services are running (for selected profile):**
     You can check the status of the containers:
     ```bash
