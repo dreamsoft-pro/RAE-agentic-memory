@@ -239,6 +239,46 @@ class RAEBenchmarkRunner:
             f"\n========================================\nINTEGRATED MRR: {mrr:.4f}\nReflection Hits: {reflection_hits}\n========================================"
         )
 
+        # Save results to JSON for CI check
+        from datetime import datetime
+
+        results_dir = Path("benchmarking/results")
+        results_dir.mkdir(parents=True, exist_ok=True)
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        set_name = self.benchmark_file.stem
+        result_file = results_dir / f"{set_name}_{timestamp}.json"
+
+        # Calculate hit rates for metrics compatibility
+        hits_at_1 = sum(
+            1
+            for res in hybrid_results
+            if any(r in res["expected"] for r in res["retrieved"][:1])
+        ) / len(data["queries"])
+        hits_at_5 = sum(
+            1
+            for res in hybrid_results
+            if any(r in res["expected"] for r in res["retrieved"][:5])
+        ) / len(data["queries"])
+
+        report = {
+            "name": data["name"],
+            "timestamp": timestamp,
+            "metrics": {
+                "mrr": mrr,
+                "hit_rate": {
+                    "@1": hits_at_1,
+                    "@5": hits_at_5,
+                },
+                "overall_quality_score": (mrr + hits_at_5) / 2,
+                "reflection_hits": reflection_hits,
+            },
+        }
+
+        with open(result_file, "w") as f:
+            json.dump(report, f, indent=2)
+        print(f"📊 Results saved to: {result_file}")
+
     def _map_ids_smart(self, db_ids, benchmark_memories):
         mapping = {
             str(m.get("_db_id")): m["id"] for m in benchmark_memories if "_db_id" in m
