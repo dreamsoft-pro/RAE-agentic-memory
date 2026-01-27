@@ -81,6 +81,7 @@ services:
       - ./rae_adapters:/app/rae_adapters
       - ./scripts:/app/scripts
       - /home/grzegorz-lesniowski/.gemini:/root/.gemini
+      - ${HF_CACHE_PATH:-./models}:/app/models/nomic-embed-text-v1.5:ro
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=${POSTGRES_DB:-rae}
@@ -93,6 +94,7 @@ services:
       - QDRANT_PORT=${QDRANT_PORT:-6333}
       - RAE_VECTOR_BACKEND=${RAE_VECTOR_BACKEND:-qdrant}
       - RAE_LLM_MODEL_DEFAULT=local_deepseek_coder
+      - RAE_EMBEDDING_MODEL=ollama/nomic-embed-text
       # Dev-specific settings from docker-compose.dev.yml
       - RAE_APP_LOG_LEVEL=DEBUG
       - LOG_LEVEL=INFO
@@ -102,8 +104,8 @@ services:
       - OTEL_SERVICE_VERSION=${OTEL_SERVICE_VERSION:-2.9.0-enterprise}
       - OTEL_EXPORTER_TYPE=${OTEL_EXPORTER_TYPE:-otlp}
       - RAE_LLM_BACKEND=${RAE_LLM_BACKEND:-ollama}
-      - OLLAMA_API_BASE=http://host.docker.internal:11434
-      - OLLAMA_API_URL=http://host.docker.internal:11434
+      - OLLAMA_API_BASE=http://ollama-dev:11434
+      - OLLAMA_API_URL=http://ollama-dev:11434
       - RAE_SIMILARITY_THRESHOLD=${RAE_SIMILARITY_THRESHOLD:-0.3}
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -482,6 +484,13 @@ services:
       - "11435:11434"
     volumes:
       - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     restart: unless-stopped
     networks:
       - rae-network

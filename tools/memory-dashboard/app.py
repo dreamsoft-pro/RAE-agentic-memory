@@ -16,7 +16,6 @@ import os
 import time
 
 import streamlit as st
-import streamlit.components.v1 as components
 from utils.api_client import RAEClient, get_cached_stats
 from utils.visualizations import (
     apply_custom_css,
@@ -248,15 +247,15 @@ with st.sidebar:
     # Auto-Refresh Logic (Prominent & Enabled by Default)
     st.sidebar.divider()
     st.sidebar.subheader("⏱️ Live Updates")
-    
+
     # Session state for auto-refresh to persist across reruns
     if "auto_refresh" not in st.session_state:
         st.session_state.auto_refresh = True
-    
+
     auto_refresh = st.sidebar.checkbox("Enable Auto-Refresh", value=st.session_state.auto_refresh)
     # Update session state
     st.session_state.auto_refresh = auto_refresh
-    
+
     if auto_refresh:
         refresh_rate = st.sidebar.slider("Interval (s)", 2, 60, 10, help="How often to poll for new data")
         st.sidebar.caption(f"Refreshing in {refresh_rate}s...")
@@ -374,7 +373,7 @@ if "connected" in st.session_state and st.session_state.connected:
         col_s1, col_s2 = st.columns([1, 4])
         with col_s1:
             top_k = st.number_input("Results", min_value=1, max_value=50, value=10)
-        
+
         if st.button("Search", type="primary"):
             if search_query:
                 with st.spinner("Searching vector database..."):

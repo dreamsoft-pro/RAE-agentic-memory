@@ -1,6 +1,5 @@
-import sys
-import socket
 import os
+import socket
 
 # --- HARD FRAME: PROTOCOL EXCLUSIVITY (Phase 2.1) ---
 _real_socket = socket.socket
@@ -18,7 +17,7 @@ def _get_kernel_host():
             host_part = url
         # Strip port and path
         _kernel_host = host_part.split(":")[0].split("/")[0]
-        
+
         # Resolve to IP to allow socket level whitelisting
         try:
             # Resolve both IPv4 and IPv6
@@ -28,7 +27,7 @@ def _get_kernel_host():
             print(f"🔒 HARD FRAMES: Whitelisted IPs for {_kernel_host}: {_allowed_ips}")
         except Exception as e:
             print(f"⚠️  HARD FRAMES WARNING: Could not resolve {_kernel_host}: {e}")
-            
+
     return _kernel_host
 
 class SecureSocket(_real_socket):
@@ -38,22 +37,22 @@ class SecureSocket(_real_socket):
     """
     def connect(self, address):
         host = address[0] # IP or Hostname
-        
+
         # Ensure whitelist is populated
         allowed_hostname = _get_kernel_host()
-        
+
         # Whitelist Logic
         is_allowed = (
-            host == allowed_hostname or 
+            host == allowed_hostname or
             host in _allowed_ips or
-            host == "127.0.0.1" or 
+            host == "127.0.0.1" or
             host == "localhost"
         )
-        
+
         if not is_allowed:
              # Strict Enforcement
              raise RuntimeError(f"🚨 HARD FRAME BREACH: Connection to {host} denied. Only {allowed_hostname} ({list(_allowed_ips)}) allowed.")
-             
+
         # Proceed with connection
         return super().connect(address)
 

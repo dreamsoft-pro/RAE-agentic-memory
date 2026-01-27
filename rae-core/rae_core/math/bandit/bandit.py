@@ -9,10 +9,10 @@ import json
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 from rae_core.math.features_v2 import FeaturesV2
 from rae_core.math.types import MathLevel
+
 from .arm import Arm, create_default_arms
 
 
@@ -39,7 +39,7 @@ class BanditConfig:
     degradation_threshold: float = 0.15
     min_pulls_for_confidence: int = 10
     save_frequency: int = 50
-    persistence_path: Optional[Path] = None
+    persistence_path: Path | None = None
 
     def __post_init__(self):
         """Validate configuration"""
@@ -77,7 +77,7 @@ class MultiArmedBandit:
     def __init__(
         self,
         config: BanditConfig,
-        arms: Optional[List[Arm]] = None,
+        arms: list[Arm] | None = None,
     ):
         """
         Initialize bandit.
@@ -90,7 +90,7 @@ class MultiArmedBandit:
         self.arms = arms if arms is not None else create_default_arms()
 
         # Create arm lookup by (level, strategy)
-        self.arm_map: Dict[Tuple[MathLevel, str], Arm] = {
+        self.arm_map: dict[tuple[MathLevel, str], Arm] = {
             (arm.level, arm.strategy): arm for arm in self.arms
         }
 
@@ -101,7 +101,7 @@ class MultiArmedBandit:
 
         # Safety tracking
         self.baseline_mean_reward = 0.0
-        self.last_100_rewards: List[float] = []
+        self.last_100_rewards: list[float] = []
 
         # Load persisted state if available
         if self.config.persistence_path and self.config.persistence_path.exists():
@@ -111,7 +111,7 @@ class MultiArmedBandit:
         self,
         features: FeaturesV2,
         force_exploration: bool = False,
-    ) -> Tuple[Arm, bool]:
+    ) -> tuple[Arm, bool]:
         """
         Select arm using UCB algorithm.
 
@@ -189,7 +189,7 @@ class MultiArmedBandit:
             self.save_state()
             self.decisions_since_save = 0
 
-    def check_degradation(self) -> Tuple[bool, float]:
+    def check_degradation(self) -> tuple[bool, float]:
         """
         Check if performance has degraded significantly.
 
@@ -316,7 +316,7 @@ class MultiArmedBandit:
         ):
             return
 
-        with open(self.config.persistence_path, "r") as f:
+        with open(self.config.persistence_path) as f:
             state = json.load(f)
 
         self.total_pulls = state.get("total_pulls", 0)
@@ -345,7 +345,7 @@ class MultiArmedBandit:
                     arm.confidence = arm_data.get("confidence", 0.0)
                     break
 
-    def get_statistics(self) -> Dict:
+    def get_statistics(self) -> dict:
         """Get bandit statistics for monitoring"""
         is_degraded, drop = self.check_degradation()
 
@@ -368,7 +368,7 @@ class MultiArmedBandit:
             ],
         }
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Serialize to dictionary"""
         return {
             "config": {

@@ -34,9 +34,9 @@ async def test_fulltext_extra_coverage(mock_storage):
     results = await strategy.search("xyz", "tenant")
     assert len(results) == 0
 
-    # Test strategy name and weight
+    # Coverage for basic methods
     assert strategy.get_strategy_name() == "fulltext"
-    assert strategy.get_strategy_weight() == 0.2
+    assert strategy.get_strategy_weight() == 0.05
 
     # Test empty memories
     mock_storage.list_memories = AsyncMock(return_value=[])

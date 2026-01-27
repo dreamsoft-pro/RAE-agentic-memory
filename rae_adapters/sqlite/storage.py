@@ -919,16 +919,16 @@ class SQLiteStorage(IMemoryStorage):
         if not node_ids:
             return []
 
-        # We assume the table knowledge_graph_edges exists in the same DB 
+        # We assume the table knowledge_graph_edges exists in the same DB
         # or was attached. For RAE-Lite simplicity, we check if it exists.
         try:
             async with aiosqlite.connect(self.db_path) as db:
                 placeholders = ",".join(["?" for _ in node_ids])
                 params = node_ids + node_ids + [tenant_id]
                 sql = f"""
-                    SELECT source_id, target_id, weight 
-                    FROM knowledge_graph_edges 
-                    WHERE source_id IN ({placeholders}) 
+                    SELECT source_id, target_id, weight
+                    FROM knowledge_graph_edges
+                    WHERE source_id IN ({placeholders})
                       AND target_id IN ({placeholders})
                       AND tenant_id = ?
                 """

@@ -7,7 +7,7 @@ In Iteration 2+: become state vector for learning algorithms
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
+from typing import Any
 
 from rae_core.math.types import MathLevel, TaskType
 
@@ -52,17 +52,17 @@ class Features:
     recent_scs: float = 0.0  # Semantic Coherence Score
 
     # Budget constraints
-    cost_budget: Optional[float] = None  # USD remaining
-    latency_budget_ms: Optional[int] = None  # ms
+    cost_budget: float | None = None  # USD remaining
+    latency_budget_ms: int | None = None  # ms
 
     # History (for stability)
-    previous_level: Optional[MathLevel] = None
-    previous_level_success: Optional[bool] = None
+    previous_level: MathLevel | None = None
+    previous_level_success: bool | None = None
 
     # Extensibility
-    custom: Dict[str, Any] = field(default_factory=dict)
+    custom: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize features for logging"""
         return {
             "task_type": self.task_type.value,

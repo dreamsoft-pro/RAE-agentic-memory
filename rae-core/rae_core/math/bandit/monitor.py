@@ -11,7 +11,6 @@ Monitors bandit performance and detects issues:
 import time
 from collections import deque
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
 
 from .bandit import MultiArmedBandit
 
@@ -33,9 +32,9 @@ class MonitorAlert:
     category: str
     message: str
     timestamp: float = field(default_factory=time.time)
-    metadata: Dict = field(default_factory=dict)
+    metadata: dict = field(default_factory=dict)
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Serialize to dictionary"""
         return {
             "severity": self.severity,
@@ -84,7 +83,7 @@ class BanditMonitor:
         self.reward_window: deque[float] = deque(maxlen=window_size)
         self.arm_selection_window: deque[str] = deque(maxlen=window_size)
 
-    def check_health(self) -> List[MonitorAlert]:
+    def check_health(self) -> list[MonitorAlert]:
         """
         Run all health checks.
 
@@ -125,7 +124,7 @@ class BanditMonitor:
         self.last_check_time = time.time()
         return new_alerts
 
-    def _check_degradation(self) -> Optional[MonitorAlert]:
+    def _check_degradation(self) -> MonitorAlert | None:
         """Check for performance degradation"""
         is_degraded, drop = self.bandit.check_degradation()
 
@@ -147,7 +146,7 @@ class BanditMonitor:
             )
         return None
 
-    def _check_excessive_exploration(self) -> Optional[MonitorAlert]:
+    def _check_excessive_exploration(self) -> MonitorAlert | None:
         """Check if exploration rate is too high"""
         exploration_rate = self.bandit.config.exploration_rate
         max_rate = self.bandit.config.max_exploration_rate
@@ -174,7 +173,7 @@ class BanditMonitor:
             )
         return None
 
-    def _check_arm_imbalance(self) -> Optional[MonitorAlert]:
+    def _check_arm_imbalance(self) -> MonitorAlert | None:
         """Check if one arm dominates selection"""
         if self.bandit.total_pulls < 50:
             return None  # Too early to judge
@@ -204,7 +203,7 @@ class BanditMonitor:
             )
         return None
 
-    def _check_reward_anomalies(self) -> Optional[MonitorAlert]:
+    def _check_reward_anomalies(self) -> MonitorAlert | None:
         """Check for anomalous rewards (outliers)"""
         if len(self.reward_window) < 20:
             return None
@@ -235,7 +234,7 @@ class BanditMonitor:
             )
         return None
 
-    def _check_staleness(self) -> Optional[MonitorAlert]:
+    def _check_staleness(self) -> MonitorAlert | None:
         """Check if bandit hasn't been updated recently"""
         # Find most recent pull across all arms
         recent_pulls = [
@@ -261,7 +260,7 @@ class BanditMonitor:
             )
         return None
 
-    def record_decision(self, arm_id: str, reward: Optional[float] = None):
+    def record_decision(self, arm_id: str, reward: float | None = None):
         """
         Record a decision for monitoring.
 
@@ -274,7 +273,7 @@ class BanditMonitor:
         if reward is not None:
             self.reward_window.append(reward)
 
-    def get_summary(self) -> Dict:
+    def get_summary(self) -> dict:
         """
         Get monitoring summary.
 
@@ -290,7 +289,7 @@ class BanditMonitor:
         }
 
         # Arm selection distribution (recent window)
-        arm_distribution: Dict[str, int] = {}
+        arm_distribution: dict[str, int] = {}
         for arm_id in self.arm_selection_window:
             arm_distribution[arm_id] = arm_distribution.get(arm_id, 0) + 1
 

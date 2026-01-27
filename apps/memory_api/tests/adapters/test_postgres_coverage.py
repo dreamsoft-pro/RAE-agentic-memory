@@ -73,15 +73,16 @@ class TestPostgreSQLStorageCoverage:
         with patch("rae_adapters.postgres.asyncpg", MagicMock()):
             storage = PostgreSQLStorage(pool=mock_pool)
             # search_memories requires agent_id and layer
+            # Use 'custom-agent' to ensure it's not skipped by 'default' check
             await storage.search_memories(
-                "query", tenant_id="t1", agent_id="a1", layer="l1"
+                "query", tenant_id="t1", agent_id="custom-agent", layer="l1"
             )
 
             query = conn.fetch.call_args[0][0]
             # When agent_id and layer are provided, tenant_id is $1
             assert "tenant_id = $1" in query
-            assert "agent_id = $2" in query
-            assert "layer = $3" in query
+            assert "layer = $2" in query
+            assert "agent_id = $3" in query
 
     @pytest.mark.asyncio
     async def test_update_memory_no_updates(self):

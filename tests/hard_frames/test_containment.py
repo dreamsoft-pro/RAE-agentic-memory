@@ -1,6 +1,7 @@
-import pytest
 import subprocess
-import time
+
+import pytest
+
 
 @pytest.mark.integration
 class TestAgentContainment:
@@ -20,7 +21,7 @@ class TestAgentContainment:
         container_id = self._get_agent_id()
         if not container_id:
             pytest.skip("Agent container not running")
-        
+
         cmd = ["docker", "exec", container_id, "python", "-c", python_code]
         return subprocess.run(cmd, capture_output=True, text=True)
 

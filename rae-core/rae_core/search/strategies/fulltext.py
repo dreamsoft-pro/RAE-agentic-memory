@@ -104,7 +104,6 @@ class FullTextStrategy(SearchStrategy):
         layer = filters.get("layer") if filters else None
         agent_id = filters.get("agent_id") if filters else None
         project = project or (filters.get("project") if filters else None)
-        tag_filter = filters.get("tags") if filters else None
 
         # Execute search via storage adapter with FTS support
         memories = await self.memory_storage.list_memories(

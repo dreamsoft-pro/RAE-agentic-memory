@@ -1,6 +1,7 @@
 import asyncio
-import httpx
 import time
+
+import httpx
 
 OLLAMA_URL = "http://localhost:11434/api"
 
@@ -37,13 +38,13 @@ async def check_ps():
 
 async def main():
     print("🧪 Running Concurrent Model Test on Node 3...")
-    
+
     # Run both simultaneously
     results = await asyncio.gather(
         test_generation(),
         test_embedding()
     )
-    
+
     # Check what is loaded in VRAM
     await check_ps()
 

@@ -8,7 +8,7 @@ adds custom spans for all vector database operations.
 
 import time
 from contextlib import asynccontextmanager
-from typing import Any, List, Optional, cast, Tuple
+from typing import Any, List, Optional, Tuple, cast
 
 import structlog
 from qdrant_client import AsyncQdrantClient

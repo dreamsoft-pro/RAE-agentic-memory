@@ -78,6 +78,7 @@ Different branches = Different testing levels.
 - **Command**: `make lint` and `make test-lite` (or `test-core`)
 - **CRITICAL RULE**: **MANDATORY** before **EVERY** push to `develop`. You **MUST** run both commands locally. 
 - **ENFORCEMENT**: Never push to `develop` if there are any linting errors or test failures. Fix ALL issues locally first.
+- **Fail Fast**: If any test fails, stop immediately and fix the issue before continuing. This applies to all testing workflows.
 
 ### Phase 3: Main/Release
 - **Goal**: Production Guarantee.

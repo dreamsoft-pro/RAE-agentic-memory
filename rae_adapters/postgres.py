@@ -105,16 +105,16 @@ class PostgreSQLStorage(IMemoryStorage):
         """Convert a PostgreSQL row record to a standard dictionary."""
         if row is None:
             return {}
-        
+
         # Convert asyncpg.Record to dict
         data = dict(row)
-        
+
         # Handle UUID conversion to string for consistency
         if "id" in data and isinstance(data["id"], UUID):
             data["id"] = str(data["id"])
         if "tenant_id" in data and isinstance(data["tenant_id"], UUID):
             data["tenant_id"] = str(data["tenant_id"])
-            
+
         return data
 
     async def store_memory(
@@ -275,12 +275,17 @@ class PostgreSQLStorage(IMemoryStorage):
             conditions.append(f"(project = ${param_idx} OR project = 'default' OR project IS NULL)")
             params.append(p_filter)
             param_idx += 1
-            
+
         if layer:
             # Backward compatibility for 'episodic' vs 'em'
             db_layer = "em" if layer == "episodic" else layer
             conditions.append(f"layer = ${param_idx}")
             params.append(db_layer)
+            param_idx += 1
+
+        if agent_id and agent_id != "default" and agent_id != "all":
+            conditions.append(f"agent_id = ${param_idx}")
+            params.append(agent_id)
             param_idx += 1
 
         # Handle not_expired filter
@@ -305,7 +310,7 @@ class PostgreSQLStorage(IMemoryStorage):
         for key, value in filters.items():
             if key in ["not_expired", "tags", "min_importance", "score_threshold"]:
                 continue
-            
+
             if "." in key:
                 # Handle JSONB path (e.g. governance.is_failure)
                 parts = key.split(".")
@@ -324,6 +329,8 @@ class PostgreSQLStorage(IMemoryStorage):
 
         # Text search (simple ILIKE for robustness in tests)
         where_clause = " AND ".join(conditions)
+
+        print(f"DEBUG SQL: {where_clause} | PARAMS: {params}")
 
         async with pool.acquire() as conn:
             rows = await conn.fetch(
@@ -427,7 +434,7 @@ class PostgreSQLStorage(IMemoryStorage):
             conditions.append(f"(project = ${param_idx} OR project = 'default' OR project IS NULL)")
             params.append(p_filter)
             param_idx += 1
-            
+
         # 2. Agent Filter (Attribution)
         if layer:
             # Backward compatibility for 'episodic' vs 'em'
@@ -451,8 +458,8 @@ class PostgreSQLStorage(IMemoryStorage):
                 liberal_query = query.replace(" ", " OR ")
                 conditions.append(f"(to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', ${param_idx}) OR content ILIKE ${param_idx+1})")
                 score_clause = f"""
-                    CASE 
-                        WHEN to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', ${param_idx}) 
+                    CASE
+                        WHEN to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', ${param_idx})
                         THEN ts_rank_cd(to_tsvector('english', coalesce(content, '')), websearch_to_tsquery('english', ${param_idx})) + 0.5
                         WHEN content ILIKE ${param_idx+1} THEN 0.5
                         ELSE 0.1
@@ -491,7 +498,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 # Skip already handled keys
                 if key in ["since", "created_after", "min_importance", "memory_ids"]:
                     continue
-                
+
                 if "." in key:
                     # Handle JSONB path (e.g. governance.is_failure)
                     parts = key.split(".")
@@ -509,7 +516,10 @@ class PostgreSQLStorage(IMemoryStorage):
 
         where_clause = " AND ".join(conditions)
         order_clause = f"ORDER BY {order_by} {order_direction.upper()}"
-        
+
+        # DEBUG
+        print(f"DEBUG LIST SQL: {where_clause} | PARAMS: {params}")
+
         async with pool.acquire() as conn:
             rows = await conn.fetch(
                 f"""
@@ -529,6 +539,8 @@ class PostgreSQLStorage(IMemoryStorage):
                 limit,
                 offset,
             )
+            # DEBUG
+            print(f"DEBUG RESULTS COUNT: {len(rows)}")
             return [self._row_to_dict(row) for row in rows]
 
         results = []
