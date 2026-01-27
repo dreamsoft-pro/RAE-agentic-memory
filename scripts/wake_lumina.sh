@@ -13,5 +13,5 @@ if [ "$ACTION" == "stop" ]; then
     echo "Shutdown command sent."
 else
     echo "Connecting to VAIO to wake Lumina..."
-    sshpass -p "mwzmjsunp" ssh -o StrictHostKeyChecking=no vaio@100.78.171.96 "lumina"
+    sshpass -p "mwzmjsunp" ssh -o StrictHostKeyChecking=no vaio@100.78.171.96 "echo 1 | lumina"
 fi
