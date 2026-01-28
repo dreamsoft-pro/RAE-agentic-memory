@@ -102,7 +102,12 @@ def upgrade():
     # 3. Tenants
     op.create_table(
         "tenants",
-        sa.Column("id", postgresql.UUID(as_uuid=True), server_default=sa.text("gen_random_uuid()"), nullable=False),
+        sa.Column(
+            "id",
+            postgresql.UUID(as_uuid=True),
+            server_default=sa.text("gen_random_uuid()"),
+            nullable=False,
+        ),
         sa.Column("name", sa.String(length=255), nullable=False),
         sa.Column("tier", sa.String(length=50), server_default="free", nullable=False),
         sa.Column("config", postgresql.JSONB(), server_default="{}", nullable=True),

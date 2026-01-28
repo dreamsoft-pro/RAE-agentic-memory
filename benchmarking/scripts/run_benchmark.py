@@ -46,14 +46,68 @@ class RAEBenchmarkRunner:
             host=os.getenv("QDRANT_HOST", "localhost"),
             port=int(os.getenv("QDRANT_PORT", 6333)),
         )
+
+        # Initialize Embedding Provider based on backend
+        from rae_core.interfaces.embedding import IEmbeddingProvider
+
+        self.provider: IEmbeddingProvider
+
+        if os.getenv("RAE_EMBEDDING_BACKEND") == "onnx":
+            from rae_core.embedding.native import NativeEmbeddingProvider
+
+            model_path = os.getenv(
+                "ONNX_EMBEDDER_PATH", "models/nomic-embed-text-v1.5/model.onnx"
+            )
+            tokenizer_path = os.path.join(os.path.dirname(model_path), "tokenizer.json")
+            print(f"🧠 Using Native ONNX Provider: {model_path}")
+
+            # Extract model name for normalization quirks if any
+            model_name = os.getenv("RAE_EMBEDDING_MODEL", "nomic-embed-text-v1.5")
+            self.provider = NativeEmbeddingProvider(
+                model_path=model_path,
+                tokenizer_path=tokenizer_path,
+                model_name=model_name,
+            )
+            self.emb_dim = self.provider.get_dimension()
+        else:
+            print("☁️ Using LiteLLM Provider (Adaptive)")
+            self.emb_service = get_embedding_service()
+            self.emb_service._initialize_model()
+
+            from rae_core.interfaces.embedding import IEmbeddingProvider
+
+            class AdaptiveEmbeddingProvider(IEmbeddingProvider):
+                def __init__(self, svc):
+                    self.svc = svc
+
+                async def embed_text(self, t):
+                    res = await self.svc.generate_embeddings_async([t])
+                    return res[0]
+
+                async def embed_batch(self, ts):
+                    return await self.svc.generate_embeddings_async(ts)
+
+                def get_dimension(self):
+                    model = self.svc.litellm_model
+                    return self.svc.get_dimension_for_model(model)
+
+            self.provider = AdaptiveEmbeddingProvider(self.emb_service)
+            self.emb_dim = self.provider.get_dimension()
+
+        print(f"📏 Detected Embedding Dimension: {self.emb_dim}")
+
+        # Recreate collection to ensure dimension match
         try:
-            await self.qdrant.get_collection("memories")
+            await self.qdrant.delete_collection("memories")
         except Exception:
+            pass
+
+        try:
             await self.qdrant.create_collection(
                 "memories",
                 vectors_config={
                     "dense": q_models.VectorParams(
-                        size=384, distance=q_models.Distance.COSINE
+                        size=self.emb_dim, distance=q_models.Distance.COSINE
                     ),
                     "ollama": q_models.VectorParams(
                         size=768, distance=q_models.Distance.COSINE
@@ -63,6 +117,8 @@ class RAEBenchmarkRunner:
                     ),
                 },
             )
+        except Exception as e:
+            print(f"⚠️ Collection creation failed (might exist): {e}")
 
         if os.path.exists("reflection_map.json"):
             with open("reflection_map.json", "r") as f:
@@ -70,12 +126,26 @@ class RAEBenchmarkRunner:
 
     async def cleanup(self):
         print("🧹 Cleaning data (preserving reflections)...")
+        if not hasattr(self, "pool") or not self.pool:
+            return
         async with self.pool.acquire() as conn:
+            # 1. Clean graph edges first due to foreign keys
+            await conn.execute(
+                "DELETE FROM knowledge_graph_edges WHERE tenant_id = $1",
+                self.tenant_id,
+            )
+            # 2. Clean graph nodes
+            await conn.execute(
+                "DELETE FROM knowledge_graph_nodes WHERE tenant_id = $1",
+                self.tenant_id,
+            )
+            # 3. Clean memories
             await conn.execute(
                 "DELETE FROM memories WHERE tenant_id = $1 AND layer != 'reflective'",
                 self.tenant_id,
             )
         try:
+            # Clean only points for this tenant to allow concurrent runs if needed (though we dropped collection in setup)
             await self.qdrant.delete(
                 collection_name="memories",
                 points_selector=q_models.FilterSelector(
@@ -107,30 +177,12 @@ class RAEBenchmarkRunner:
         from rae_adapters.qdrant import QdrantVectorStore
         from rae_core.embedding.manager import EmbeddingManager
         from rae_core.engine import RAEEngine
-        from rae_core.interfaces.embedding import IEmbeddingProvider
 
-        emb_service = get_embedding_service()
-        emb_service._initialize_model()
-
-        class AdaptiveEmbeddingProvider(IEmbeddingProvider):
-            def __init__(self, svc):
-                self.svc = svc
-
-            async def embed_text(self, t):
-                res = await self.svc.generate_embeddings_async([t])
-                return res[0]
-
-            async def embed_batch(self, ts):
-                return await self.svc.generate_embeddings_async(ts)
-
-            def get_dimension(self):
-                return 768
+        # Provider initialized in setup as self.provider
 
         storage = PostgreSQLStorage(pool=self.pool)
-        vector_store = QdrantVectorStore(client=self.qdrant, embedding_dim=768)
-        manager = EmbeddingManager(
-            default_provider=AdaptiveEmbeddingProvider(emb_service)
-        )
+        vector_store = QdrantVectorStore(client=self.qdrant, embedding_dim=self.emb_dim)
+        manager = EmbeddingManager(default_provider=self.provider)
 
         # CORE ENGINE WITH INTEGRATED MATH CONTROLLER
         engine = RAEEngine(

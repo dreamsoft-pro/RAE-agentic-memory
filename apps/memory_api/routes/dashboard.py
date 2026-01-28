@@ -65,7 +65,7 @@ from apps.memory_api.services.rae_core_service import RAECoreService
 
 logger = structlog.get_logger(__name__)
 
-router = APIRouter(prefix="/dashboard", tags=["Dashboard"])
+router = APIRouter(tags=["Dashboard"])
 
 # Global WebSocket service instance
 _websocket_service: Optional[DashboardWebSocketService] = None

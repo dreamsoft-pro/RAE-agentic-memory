@@ -24,7 +24,7 @@ class TestAgentContainment:
                 "-q",
             ]
             return subprocess.check_output(cmd, text=True).strip()
-        except:
+        except Exception:
             return None
 
     def _exec_in_agent(self, python_code):

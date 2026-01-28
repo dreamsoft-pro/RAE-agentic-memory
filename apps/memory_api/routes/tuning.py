@@ -9,7 +9,7 @@ from apps.memory_api.services.rae_core_service import RAECoreService
 from apps.memory_api.services.tuning_service import TuningService
 
 logger = structlog.get_logger(__name__)
-router = APIRouter(prefix="/tuning", tags=["Self-Improvement"])
+router = APIRouter(tags=["Self-Improvement"])
 
 
 @router.post("/run")

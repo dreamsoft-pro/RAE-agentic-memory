@@ -5,7 +5,7 @@ from fastapi import APIRouter
 # We would inject the service here
 # from apps.memory_api.services.sync_service import SyncService
 
-router = APIRouter(prefix="/system/sync", tags=["Sync"])
+router = APIRouter(tags=["Sync"])
 
 
 @router.get("/topology")

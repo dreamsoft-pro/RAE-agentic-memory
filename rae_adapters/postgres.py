@@ -4,6 +4,7 @@ Implements IMemoryStorage interface using asyncpg for async PostgreSQL access.
 """
 
 import json
+import logging
 from datetime import datetime, timezone
 from typing import Any, Optional, cast
 from uuid import UUID, uuid4
@@ -14,6 +15,8 @@ except ImportError:  # pragma: no cover
     asyncpg = None  # pragma: no cover
 
 from rae_core.interfaces.storage import IMemoryStorage
+
+logger = logging.getLogger(__name__)
 
 
 class PostgreSQLStorage(IMemoryStorage):
@@ -313,7 +316,16 @@ class PostgreSQLStorage(IMemoryStorage):
 
         # Handle other filters (including nested ones like governance.is_failure)
         for key, value in filters.items():
-            if key in ["not_expired", "tags", "min_importance", "score_threshold", "project", "project_id", "agent_id", "layer"]:
+            if key in [
+                "not_expired",
+                "tags",
+                "min_importance",
+                "score_threshold",
+                "project",
+                "project_id",
+                "agent_id",
+                "layer",
+            ]:
                 continue
 
             if "." in key:
@@ -515,7 +527,16 @@ class PostgreSQLStorage(IMemoryStorage):
             # Generic JSONB metadata filters
             for key, value in filters.items():
                 # Skip already handled keys
-                if key in ["since", "created_after", "min_importance", "memory_ids", "project", "project_id", "agent_id", "layer"]:
+                if key in [
+                    "since",
+                    "created_after",
+                    "min_importance",
+                    "memory_ids",
+                    "project",
+                    "project_id",
+                    "agent_id",
+                    "layer",
+                ]:
                     continue
 
                 if "." in key:
@@ -976,6 +997,46 @@ class PostgreSQLStorage(IMemoryStorage):
         # We consider it successful if the query executed, even if 0 rows updated
         # (though ideally we might want to check if count matches)
         return True
+
+    async def get_neighbors_batch(
+        self,
+        memory_ids: list[UUID],
+        tenant_id: str,
+    ) -> list[tuple[str, str, float]]:
+        """
+        Retrieve all graph edges connected to the given memory IDs.
+        Used by Semantic Resonance Engine.
+        """
+        pool = await self._get_pool()
+        mem_id_strs = [str(mid) for mid in memory_ids]
+
+        query = """
+            WITH target_nodes AS (
+                SELECT id as internal_id, node_id
+                FROM knowledge_graph_nodes
+                WHERE node_id = ANY($1) AND tenant_id = $2::uuid
+            )
+            SELECT
+                n1.node_id as source,
+                n2.node_id as target,
+                COALESCE((e.properties->>'weight')::float, 1.0) as weight
+            FROM knowledge_graph_edges e
+            JOIN knowledge_graph_nodes n1 ON e.source_node_id = n1.id
+            JOIN knowledge_graph_nodes n2 ON e.target_node_id = n2.id
+            WHERE (e.source_node_id IN (SELECT internal_id FROM target_nodes)
+               OR e.target_node_id IN (SELECT internal_id FROM target_nodes))
+              AND e.tenant_id = $2::uuid
+        """
+
+        try:
+            async with pool.acquire() as conn:
+                rows = await conn.fetch(query, mem_id_strs, str(tenant_id))
+                return [
+                    (row["source"], row["target"], float(row["weight"])) for row in rows
+                ]
+        except Exception as e:
+            logger.error(f"get_neighbors_batch_failed: {e}")
+            return []
 
     async def adjust_importance(
         self,

@@ -29,7 +29,7 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
         model_name: str = "nomic-embed-text-v1.5",
         max_length: int = 8192,
         normalize: bool = True,
-        matryoshka_dim: int | None = None,
+        vector_name: str = "dense",
     ):
         """Initialize ONNX provider.
 
@@ -39,7 +39,7 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
             model_name: Name of the model.
             max_length: Maximum sequence length.
             normalize: Whether to L2-normalize vectors.
-            matryoshka_dim: Optional dimension to truncate to (e.g. 256).
+            vector_name: Name of the vector space this provider serves.
         """
         if ort is None or Tokenizer is None:
             raise ImportError(
@@ -52,7 +52,7 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
         self.model_name = model_name
         self.max_length = max_length
         self.normalize = normalize
-        self.matryoshka_dim = matryoshka_dim
+        self.vector_name = vector_name
 
         # Load Tokenizer
         self.tokenizer = Tokenizer.from_file(self.tokenizer_path)
@@ -63,9 +63,9 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
 
         # Load ONNX Model
         # Use CUDA if available, else CPU
-        providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
-        if "CUDAExecutionProvider" not in ort.get_available_providers():
-            providers = ["CPUExecutionProvider"]
+        providers = ["CPUExecutionProvider"]
+        if "CUDAExecutionProvider" in ort.get_available_providers():
+            providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
 
         self.session = ort.InferenceSession(self.model_path, providers=providers)
         self.input_name = self.session.get_inputs()[0].name
@@ -73,14 +73,27 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
             0
         ].name  # Usually 'last_hidden_state'
 
+        # Determine dimension dynamically by running a dummy inference
+        try:
+            # Create a dummy input (batch_size=1, seq_len=1)
+            dummy_ids = np.array([[1]], dtype=np.int64)
+            dummy_mask = np.array([[1]], dtype=np.int64)
+            inputs = {"input_ids": dummy_ids, "attention_mask": dummy_mask}
+
+            # Check for token_type_ids
+            input_names = [i.name for i in self.session.get_inputs()]
+            if "token_type_ids" in input_names:
+                inputs["token_type_ids"] = np.array([[0]], dtype=np.int64)
+
+            outputs = self.session.run(None, inputs)
+            # outputs[0] is (batch, seq, dim)
+            self._dimension = outputs[0].shape[-1]
+        except Exception as e:
+            raise RuntimeError(f"Failed to inspect ONNX model dimension: {e}")
+
     def get_dimension(self) -> int:
         """Return embedding dimension."""
-        if self.matryoshka_dim:
-            return self.matryoshka_dim
-        # Infer from model output shape (batch, seq, dim) or (batch, dim)
-        # We can run a dummy inference or trust config.
-        # For nomic-embed-text v1.5 it is 768.
-        return 768
+        return int(self._dimension)
 
     def _mean_pooling(
         self, last_hidden_state: np.ndarray, attention_mask: np.ndarray
@@ -122,10 +135,6 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
         input_ids = np.array([e.ids for e in encoded], dtype=np.int64)
         attention_mask = np.array([e.attention_mask for e in encoded], dtype=np.int64)
 
-        # Some models require token_type_ids, Nomic usually doesn't or handles it.
-        # If model expects it, we need to provide it.
-        # Nomic ONNX usually takes: input_ids, attention_mask.
-
         inputs = {"input_ids": input_ids, "attention_mask": attention_mask}
 
         # Check if model needs token_type_ids
@@ -144,11 +153,7 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
         # 3. Pooling (Mean)
         embeddings = self._mean_pooling(last_hidden_state, attention_mask)
 
-        # 4. Matryoshka Truncation (Optional)
-        if self.matryoshka_dim:
-            embeddings = embeddings[:, : self.matryoshka_dim]
-
-        # 5. Normalization (L2)
+        # 4. Normalization (L2)
         if self.normalize:
             embeddings = self._normalize_l2(embeddings)
 

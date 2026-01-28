@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     OLLAMA_HOSTS: list[str] = ["http://100.66.252.117:11434", "http://rae-ollama:11434"]
     RAE_LLM_BACKEND: str = "ollama"
     RAE_LLM_MODEL_DEFAULT: str = "ollama/all-minilm"
+    RAE_EMBEDDING_BACKEND: str = "litellm"  # "litellm" or "onnx"
     RAE_EMBEDDING_MODEL: str | None = None
     EXTRACTION_MODEL: str = "gpt-4o-mini"
     SYNTHESIS_MODEL: str = "gpt-4o"

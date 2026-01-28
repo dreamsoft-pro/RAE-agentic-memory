@@ -58,7 +58,7 @@ def run_real_ingestion():
     print("🏭 STARTING STRUCTURED 100k INGESTION TEST (Agent -> API) 🏭")
 
     base_url = os.getenv("RAE_KERNEL_URL", "http://rae-api-dev:8000")
-    target_url = f"{base_url}/v1/memory/store"
+    target_url = f"{base_url}/v2/memories/"
     api_key = os.getenv("RAE_API_KEY", "dev-key")
     tenant_id = os.getenv("RAE_TENANT_ID", "00000000-0000-0000-0000-000000000000")
 
@@ -109,7 +109,7 @@ def run_real_ingestion():
                     f"📊 Stats: {success_count}/{TOTAL_MEMORIES} | Errors: {error_count} | Speed: {rps:.2f} mem/s"
                 )
 
-    duration = time.time() - start_time
+    _duration = time.time() - start_time
     print(f"🏁 FINISHED. Success: {success_count}, Errors: {error_count}")
 
 

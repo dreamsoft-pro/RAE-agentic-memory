@@ -88,7 +88,7 @@ class InMemoryVectorStore(IVectorStore):
         **kwargs: Any,
     ) -> list[tuple[UUID, float]]:
         """Search for similar vectors using cosine similarity."""
-        project = kwargs.get("project")
+        _project = kwargs.get("project")
         async with self._lock:
             # Get candidate vectors for tenant
             candidate_ids = self._by_tenant[tenant_id]

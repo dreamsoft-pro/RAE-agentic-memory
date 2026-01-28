@@ -52,6 +52,17 @@ class MathLayerController:
         # Internal state for tracking active decisions
         self._last_decision: dict[str, Any] = {}
 
+    def get_weights(self, query: str, active_strategies: list[str]) -> dict[str, float]:
+        """Alias for get_retrieval_weights with strategy awareness."""
+        base_weights = self.get_retrieval_weights(query)
+
+        # Ensure all active strategies have a weight
+        final_weights = {}
+        for name in active_strategies:
+            final_weights[name] = base_weights.get(name, 1.0)
+
+        return final_weights
+
     def get_retrieval_weights(
         self, query: str, context: dict | None = None
     ) -> dict[str, float]:
@@ -83,15 +94,6 @@ class MathLayerController:
             weights = {"fulltext": 10.0, "vector": 1.0}
         else:  # Default/Balanced
             weights = {"fulltext": 1.0, "vector": 1.0}
-
-        # POWER HEURISTIC: Force Math-Dominance for factual or specific queries
-        # This was the key to 0.9+ MRR yesterday
-        is_factual = any(
-            w in query.lower()
-            for w in ["what", "who", "when", "id", "code", "err", "how", "which"]
-        )
-        if is_factual or len(query.split()) > 10:
-            weights = {"fulltext": 20.0, "vector": 1.0}
 
         # Track decision for later update
         self._last_decision = {

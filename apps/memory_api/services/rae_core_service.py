@@ -94,6 +94,54 @@ class RAECoreService:
         base_provider: IEmbeddingProvider
         if getattr(settings, "RAE_PROFILE", "standard") == "distributed":
             base_provider = RemoteEmbeddingProvider(base_url=settings.ML_SERVICE_URL)
+        elif settings.RAE_EMBEDDING_BACKEND == "onnx":
+            try:
+                from rae_core.embedding.native import NativeEmbeddingProvider
+
+                # Determine paths
+                initial_model_path = (
+                    settings.ONNX_EMBEDDER_PATH or "models/all-MiniLM-L6-v2/model.onnx"
+                )
+                tokenizer_path = os.path.join(
+                    os.path.dirname(initial_model_path), "tokenizer.json"
+                )
+
+                active_model_path: str | None = initial_model_path
+
+                if not os.path.exists(initial_model_path):
+                    # Check for fallback to larger model if small one missing (optional)
+                    if os.path.exists("models/nomic-embed-text-v1.5/model.onnx"):
+                        active_model_path = "models/nomic-embed-text-v1.5/model.onnx"
+                        tokenizer_path = "models/nomic-embed-text-v1.5/tokenizer.json"
+                    else:
+                        logger.warning(
+                            "onnx_model_not_found",
+                            path=initial_model_path,
+                            fallback="litellm",
+                        )
+                        base_provider = LocalEmbeddingProvider()
+                        # Exit this block
+                        active_model_path = None
+
+                if active_model_path:
+                    logger.info(
+                        "using_native_onnx_embedding", model_path=active_model_path
+                    )
+                    base_provider = NativeEmbeddingProvider(
+                        model_path=active_model_path,
+                        tokenizer_path=tokenizer_path,
+                        model_name=(
+                            "all-MiniLM-L6-v2"
+                            if "MiniLM" in active_model_path
+                            else "nomic-embed-text-v1.5"
+                        ),
+                    )
+            except ImportError:
+                logger.error("onnx_deps_missing", fallback="litellm")
+                base_provider = LocalEmbeddingProvider()
+            except Exception as e:
+                logger.error("onnx_init_failed", error=str(e), fallback="litellm")
+                base_provider = LocalEmbeddingProvider()
         else:
             base_provider = LocalEmbeddingProvider()
 
@@ -796,7 +844,12 @@ class RAECoreService:
         start_time = time.time()
 
         # 1. Get dynamic weights from tuning service
-        weights = await self.tuning_service.get_current_weights(str(tenant_id))
+        weights = None
+        if self.tuning_service:
+            try:
+                weights = await self.tuning_service.get_current_weights(str(tenant_id))
+            except Exception as e:
+                logger.warning("failed_to_get_tuning_weights", error=str(e))
 
         # Override weights for Szubar Mode
         if self.szubar_mode:

@@ -204,7 +204,7 @@ def test_lite_profile_store_memory(lite_profile_services):
     }
 
     response = httpx.post(
-        f"http://127.0.0.1:{api_port}/v1/memory/store",
+        f"http://127.0.0.1:{api_port}/v2/memories/",
         json=payload,
         headers={
             "X-Tenant-Id": "00000000-0000-0000-0000-000000000000",
@@ -232,7 +232,7 @@ def test_lite_profile_query_memory(lite_profile_services):
     }
 
     store_response = httpx.post(
-        f"http://127.0.0.1:{api_port}/v1/memory/store",
+        f"http://127.0.0.1:{api_port}/v2/memories/",
         json=store_payload,
         headers={
             "X-Tenant-Id": "00000000-0000-0000-0000-000000000000",
@@ -249,7 +249,7 @@ def test_lite_profile_query_memory(lite_profile_services):
     query_payload = {"query_text": "test memory query", "k": 5}
 
     response = httpx.post(
-        f"http://127.0.0.1:{api_port}/v1/memory/query",
+        f"http://127.0.0.1:{api_port}/v2/memories/query",
         json=query_payload,
         headers={
             "X-Tenant-Id": "00000000-0000-0000-0000-000000000000",

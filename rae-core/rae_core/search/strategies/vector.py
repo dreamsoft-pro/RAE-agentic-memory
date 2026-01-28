@@ -56,24 +56,22 @@ class VectorSearchStrategy(SearchStrategy):
         query_embedding = await self.embedding_provider.embed_text(query)
 
         # Extract filters
-        layer = filters.get("layer") if filters else None
-        agent_id = filters.get("agent_id") if filters else None
+        _layer = filters.get("layer") if filters else None
+        _agent_id = filters.get("agent_id") if filters else None
         project = project or (filters.get("project") if filters else None)
-        session_id = filters.get("session_id") if filters else None
-        score_threshold = filters.get("score_threshold", 0.0) if filters else 0.0
+        _session_id = filters.get("session_id") if filters else None
+        _score_threshold = filters.get("score_threshold", 0.0) if filters else 0.0
 
-        # Search similar vectors
+        # Search similar vectors - FORCE MINIMAL ARGS
         results = await self.vector_store.search_similar(
-            query_embedding=query_embedding,
-            tenant_id=tenant_id,
-            layer=layer,
-            agent_id=agent_id,
-            project=project,
-            session_id=session_id,
-            limit=limit,
-            score_threshold=score_threshold,
-            filters=filters,  # Pass full filters dict for generic metadata
+            query_embedding=query_embedding, tenant_id=tenant_id, limit=limit
         )
+
+        # DEBUG:
+        if results:
+            print(f"✅ VECTOR STRATEGY FOUND {len(results)} RESULTS")
+        else:
+            print("❌ VECTOR STRATEGY FOUND 0 RESULTS")
 
         return results
 
