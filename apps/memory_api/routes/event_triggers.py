@@ -40,7 +40,7 @@ from apps.memory_api.services.rules_engine import RulesEngine
 
 logger = structlog.get_logger(__name__)
 
-router = APIRouter(prefix="/v1/triggers", tags=["Event Triggers"])
+router = APIRouter(tags=["Event Triggers"])
 
 
 # ============================================================================

@@ -13,9 +13,7 @@ from apps.memory_api.services.hybrid_search_service import HybridSearchService
 logger = structlog.get_logger(__name__)
 tracer = get_tracer(__name__)
 
-router = APIRouter(
-    prefix="/federation", tags=["Federation"], dependencies=[Depends(auth.verify_token)]
-)
+router = APIRouter(tags=["Federation"], dependencies=[Depends(auth.verify_token)])
 
 
 async def get_pool(request: Request):

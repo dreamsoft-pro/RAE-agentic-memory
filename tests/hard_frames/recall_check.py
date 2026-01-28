@@ -11,7 +11,7 @@ def get_ground_truth(url, api_key, tenant_id):
     headers = {"Authorization": f"Bearer {api_key}", "X-Tenant-Id": tenant_id}
     print("🔭 Fetching a real sample from memory for Ground Truth test...")
     resp = requests.get(
-        f"{url}/v1/memory/list?project=industrial_ultra_v3&limit=1&offset=100",
+        f"{url}/v2/memory/list?project=industrial_ultra_v3&limit=1&offset=100",
         headers=headers,
     )
     if resp.status_code == 200:
@@ -53,7 +53,7 @@ def verify_precision(session, url, sample, api_key, tenant_id):
 
     try:
         resp = session.post(
-            f"{url}/v1/memory/query", json=payload, headers=headers, timeout=10
+            f"{url}/v2/memories/query", json=payload, headers=headers, timeout=10
         )
         if resp.status_code == 200:
             results = resp.json().get("results", [])
@@ -62,7 +62,7 @@ def verify_precision(session, url, sample, api_key, tenant_id):
             found_target = False
             for i, res in enumerate(results):
                 res_id = res.get("id")
-                res_meta = res.get("metadata", {})
+                _res_meta = res.get("metadata", {})
                 is_exact_match = str(res_id) == str(sample["id"])
 
                 status_icon = "🟢" if is_exact_match else "🟡"

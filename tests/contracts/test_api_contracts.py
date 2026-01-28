@@ -84,7 +84,7 @@ def assert_fields_not_present(data: Dict[str, Any], forbidden_fields: List[str])
     not HAS_TEST_INFRASTRUCTURE, reason="Test infrastructure not available"
 )
 class TestMemoryStoreContract:
-    """Contract tests for /v1/memory/store endpoint"""
+    """Contract tests for /v2/memories/ endpoint"""
 
     @patch("apps.memory_api.services.pii_scrubber.scrub_text")
     def test_store_memory_response_schema(self, mock_scrub, client_with_overrides):
@@ -95,13 +95,13 @@ class TestMemoryStoreContract:
         payload = {
             "content": "Test memory content",
             "source": "test",
-            "layer": "em",
+            "layer": "working",
             "importance": 0.8,
             "project": "test-project",
         }
 
         response = client_with_overrides.post(
-            "/v1/memory/store", json=payload, headers={"X-Tenant-Id": "test-tenant"}
+            "/v2/memories/", json=payload, headers={"X-Tenant-Id": "test-tenant"}
         )
 
         assert response.status_code == 200
@@ -109,7 +109,7 @@ class TestMemoryStoreContract:
 
         # Current API returns only id and message (simplified response)
         expected_schema = {
-            "id": str,
+            "memory_id": str,
             "message": str,
         }
 
@@ -124,14 +124,14 @@ class TestMemoryStoreContract:
     not HAS_TEST_INFRASTRUCTURE, reason="Test infrastructure not available"
 )
 class TestMemoryQueryContract:
-    """Contract tests for /v1/memory/query endpoint"""
+    """Contract tests for /v2/memories/query endpoint"""
 
     def test_query_memory_response_schema(self, client_with_overrides):
         """Ensure query memory returns correct schema"""
-        payload = {"query_text": "test query", "k": 5}
+        payload = {"query": "test query", "project": "test-project", "k": 5}
 
         response = client_with_overrides.post(
-            "/v1/memory/query", json=payload, headers={"X-Tenant-Id": "test-tenant"}
+            "/v2/memories/query", json=payload, headers={"X-Tenant-Id": "test-tenant"}
         )
 
         assert response.status_code == 200
@@ -150,8 +150,6 @@ class TestMemoryQueryContract:
                 "score": (int, float),
                 "importance": (int, float),
                 "layer": str,
-                "source": str,
-                "project": str,
                 "tags": list,
             }
             assert_schema(result, expected_schema)
@@ -159,14 +157,14 @@ class TestMemoryQueryContract:
     def test_hybrid_search_response_schema(self, client_with_overrides):
         """Ensure hybrid search returns correct schema"""
         payload = {
-            "query_text": "test query",
+            "query": "test query",
             "k": 5,
             "use_graph": True,
             "project": "test-project",
         }
 
         response = client_with_overrides.post(
-            "/v1/memory/query", json=payload, headers={"X-Tenant-Id": "test-tenant"}
+            "/v2/memories/query", json=payload, headers={"X-Tenant-Id": "test-tenant"}
         )
 
         assert response.status_code == 200
@@ -183,12 +181,12 @@ class TestMemoryQueryContract:
     not HAS_TEST_INFRASTRUCTURE, reason="Test infrastructure not available"
 )
 class TestMemoryDeleteContract:
-    """Contract tests for /v1/memory/delete endpoint"""
+    """Contract tests for /v2/memory/delete endpoint"""
 
     def test_delete_memory_response_schema(self, client_with_overrides):
         """Ensure delete memory returns correct schema"""
         response = client_with_overrides.delete(
-            "/v1/memory/delete?memory_id=test-id",
+            "/v2/memory/delete?memory_id=test-id",
             headers={"X-Tenant-Id": "test-tenant"},
         )
 
@@ -211,7 +209,7 @@ class TestMemoryDeleteContract:
     not HAS_TEST_INFRASTRUCTURE, reason="Test infrastructure not available"
 )
 class TestAgentExecuteContract:
-    """Contract tests for /v1/agent/execute endpoint"""
+    """Contract tests for /v2/agent/execute endpoint"""
 
     def test_agent_execute_response_schema(self, client_with_overrides):
         """Ensure agent execute returns correct schema"""
@@ -222,7 +220,7 @@ class TestAgentExecuteContract:
         }
 
         response = client_with_overrides.post(
-            "/v1/agent/execute", json=payload, headers={"X-Tenant-Id": "test-tenant"}
+            "/v2/agent/execute", json=payload, headers={"X-Tenant-Id": "test-tenant"}
         )
 
         # Should return 200 or error
@@ -250,14 +248,14 @@ class TestAgentExecuteContract:
 class TestHealthContract:
     """Contract tests for /health endpoint"""
 
-    @patch("apps.memory_api.api.v1.health.check_database")
-    @patch("apps.memory_api.api.v1.health.check_redis")
-    @patch("apps.memory_api.api.v1.health.check_vector_store")
+    @patch("apps.memory_api.observability.health_checks.check_database")
+    @patch("apps.memory_api.observability.health_checks.check_redis")
+    @patch("apps.memory_api.observability.health_checks.check_vector_store")
     def test_health_response_schema(
         self, mock_vector, mock_redis, mock_db, client_with_overrides
     ):
         """Ensure health check returns correct schema"""
-        from apps.memory_api.api.v1.health import ComponentHealth
+        from apps.memory_api.observability.health_checks import ComponentHealth
 
         # Setup mocks with async side effects
         async def healthy_db():
@@ -320,7 +318,7 @@ class TestErrorResponseContract:
         payload = {"invalid": "data"}
 
         response = client_with_overrides.post(
-            "/v1/memory/store", json=payload, headers={"X-Tenant-Id": "test-tenant"}
+            "/v2/memories/", json=payload, headers={"X-Tenant-Id": "test-tenant"}
         )
 
         assert response.status_code in [400, 422]  # Validation error
@@ -336,7 +334,7 @@ class TestErrorResponseContract:
     def test_404_error_schema(self, client_with_overrides):
         """Ensure 404 errors have consistent schema"""
         response = client_with_overrides.get(
-            "/v1/nonexistent", headers={"X-Tenant-Id": "test-tenant"}
+            "/v2/nonexistent", headers={"X-Tenant-Id": "test-tenant"}
         )
 
         assert response.status_code == 404
@@ -385,14 +383,14 @@ class TestPaginationContract:
 class TestBackwardCompatibility:
     """Ensure we don't break backward compatibility"""
 
-    @patch("apps.memory_api.api.v1.health.check_database")
-    @patch("apps.memory_api.api.v1.health.check_redis")
-    @patch("apps.memory_api.api.v1.health.check_vector_store")
+    @patch("apps.memory_api.observability.health_checks.check_database")
+    @patch("apps.memory_api.observability.health_checks.check_redis")
+    @patch("apps.memory_api.observability.health_checks.check_vector_store")
     def test_no_removed_endpoints(
         self, mock_vector, mock_redis, mock_db, client_with_overrides
     ):
         """Ensure critical endpoints still exist"""
-        from apps.memory_api.api.v1.health import ComponentHealth
+        from apps.memory_api.observability.health_checks import ComponentHealth
 
         # Setup mocks with async side effects
         async def healthy():
@@ -404,9 +402,9 @@ class TestBackwardCompatibility:
 
         critical_endpoints = [
             ("/health", "GET"),
-            ("/v1/memory/store", "POST"),
-            ("/v1/memory/query", "POST"),
-            ("/v1/memory/delete", "DELETE"),
+            ("/v2/memories", "POST"),
+            ("/v2/memories/query", "POST"),
+            ("/v2/memories/test-id", "DELETE"),
         ]
 
         for endpoint, method in critical_endpoints:
@@ -420,7 +418,7 @@ class TestBackwardCompatibility:
                 )
             elif method == "DELETE":
                 response = client_with_overrides.delete(
-                    f"{endpoint}?memory_id=test",
+                    endpoint,
                     headers={"X-Tenant-Id": "test-tenant"},
                 )
 
@@ -429,14 +427,14 @@ class TestBackwardCompatibility:
                 response.status_code != 404
             ), f"Critical endpoint {method} {endpoint} not found!"
 
-    @patch("apps.memory_api.api.v1.health.check_database")
-    @patch("apps.memory_api.api.v1.health.check_redis")
-    @patch("apps.memory_api.api.v1.health.check_vector_store")
+    @patch("apps.memory_api.observability.health_checks.check_database")
+    @patch("apps.memory_api.observability.health_checks.check_redis")
+    @patch("apps.memory_api.observability.health_checks.check_vector_store")
     def test_api_version_in_header(
         self, mock_vector, mock_redis, mock_db, client_with_overrides
     ):
         """Ensure API version is returned in headers"""
-        from apps.memory_api.api.v1.health import ComponentHealth
+        from apps.memory_api.observability.health_checks import ComponentHealth
 
         # Setup mocks with async side effects
         async def healthy():

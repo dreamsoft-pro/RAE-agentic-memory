@@ -79,3 +79,5 @@ pass_*.tmp
 *co-zrobiono.txt
 *.txt#
 .env.benchmark
+models/
+models/

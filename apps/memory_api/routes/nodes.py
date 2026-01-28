@@ -17,7 +17,7 @@ from apps.memory_api.repositories.node_repository import NodeRepository
 from apps.memory_api.repositories.task_repository import TaskRepository
 from apps.memory_api.services.control_plane_service import ControlPlaneService
 
-router = APIRouter(prefix="/control", tags=["Control Plane"])
+router = APIRouter(tags=["Control Plane"])
 
 
 def get_control_plane_service(

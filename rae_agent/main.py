@@ -49,9 +49,9 @@ def connect_to_kernel():
             }
             try:
                 # We hit the Agent Pipeline. The Kernel should IMPLICITLY save this.
-                # Endpoint is /v1/agent/execute (without /api prefix in app.include_router)
+                # Endpoint is /v2/agent/execute (without /api prefix in app.include_router)
                 act_resp = requests.post(
-                    f"{kernel_url}/v1/agent/execute",
+                    f"{kernel_url}/v2/agent/execute",
                     json=payload,
                     headers={"X-Tenant-Id": "default-tenant"},
                     timeout=10,
@@ -129,8 +129,9 @@ def main():
             try:
                 # 3. Request
                 resp = session.post(
-                    f"{kernel_url}/memory",
-                    json={"content": data, "confidence": random.random()},
+                    f"{kernel_url}/v2/memories/",
+                    json={"content": data, "importance": random.random(), "project": "soak-test", "layer": "working", "source": "soak-agent"},
+                    headers={"X-Tenant-Id": "default-tenant"}
                 )
                 if resp.status_code not in [200, 404]:
                     errors += 1
@@ -154,7 +155,7 @@ def main():
                     requests.get("https://google.com", timeout=0.1)
                     print("❌ FATAL: LEAK DETECTED!")
                     sys.exit(1)
-                except:
+                except Exception:
                     pass
 
     print("💤 Agent entering idle loop (waiting for tasks via Kernel)...")

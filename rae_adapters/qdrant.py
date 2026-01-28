@@ -1,59 +1,244 @@
-from typing import Any
+"""Qdrant vector store adapter for RAE-core.
+
+Implements IVectorStore interface using Qdrant for similarity search.
+"""
+
+from typing import Any, cast
 from uuid import UUID
 
-import structlog
+try:
+    from qdrant_client import AsyncQdrantClient, QdrantClient
+    from qdrant_client.models import Distance, PointStruct, VectorParams
+except ImportError:  # pragma: no cover
+    QdrantClient = Any  # type: ignore # pragma: no cover
+    AsyncQdrantClient = Any  # type: ignore # pragma: no cover
 
 from rae_core.interfaces.vector import IVectorStore
 
-logger = structlog.get_logger(__name__)
-
 
 class QdrantVectorStore(IVectorStore):
+    """Qdrant implementation of IVectorStore.
+
+    Requires qdrant-client package and access to Qdrant server.
+
+    Collection schema:
+    - Vectors: embeddings (dimension configurable, default 1536 for OpenAI)
+    - Payload: {
+        memory_id: UUID,
+        tenant_id: str,
+        agent_id: str,
+        session_id: str,
+        layer: str,
+        content: str (optional, for debugging),
+        importance: float,
+        created_at: timestamp
+      }
+    """
+
     def __init__(
         self,
-        client: Any,
         collection_name: str = "memories",
-        embedding_dim: int = 768,
+        url: str | None = None,
+        api_key: str | None = None,
+        client: Any | None = None,
+        embedding_dim: int = 384,
         distance: str = "Cosine",
+        vector_name: str = "dense",
     ):
-        self.client = client
+        """Initialize Qdrant vector store.
+
+        Args:
+            collection_name: Name of Qdrant collection
+            url: Qdrant server URL
+            api_key: Optional API key
+            client: Existing client
+            embedding_dim: Dimension of embeddings
+            distance: Distance metric
+            vector_name: Name of the vector space (default: 'dense')
+        """
+        if QdrantClient is None:
+            raise ImportError(
+                "qdrant-client is required for QdrantVectorStore. "
+                "Install with: pip install qdrant-client"
+            )
+
         self.collection_name = collection_name
         self.embedding_dim = embedding_dim
-        self.distance = distance
+        self.vector_name = vector_name
+
+        # Distance metric mapping
+        distance_map = {
+            "Cosine": Distance.COSINE,
+            "Euclid": Distance.EUCLID,
+            "Dot": Distance.DOT,
+        }
+        self.distance = distance_map.get(distance, Distance.COSINE)
+
+        if client:
+            self.client = client
+        elif url:
+            # Default to Async client if not provided but url is?
+            # Original code used QdrantClient (sync).
+            # To support async by default for this adapter when used in async context:
+            # But here we stick to what was passed or default.
+            # If we want async, we should probably default to AsyncQdrantClient if we can?
+            # For now, let's keep it sync by default if no client passed, to avoid breaking other usages?
+            # But wait, RAE-Core might be used in sync context?
+            # The adapter methods are `async def`, so they imply async usage.
+            # So `self.client` SHOULD be async for `await` to work.
+
+            # If we initialize it ourselves, we should use AsyncQdrantClient.
+            self.client = AsyncQdrantClient(url=url, api_key=api_key)
+        else:
+            # Use in-memory mode for testing
+            self.client = AsyncQdrantClient(":memory:")
+
         self._initialized = False
 
-    async def ainit(self):
-        if not self._initialized:
-            await self._ensure_collection()
-            self._initialized = True
-
-    async def _ensure_collection(self):
-        from qdrant_client.models import Distance, VectorParams
+    async def _ensure_collection(self) -> None:
+        """Ensure collection exists with proper schema."""
+        if self._initialized:
+            return
 
         try:
             await self.client.get_collection(self.collection_name)
         except Exception:
-            vectors_config = {
-                "dense": VectorParams(size=384, distance=Distance.COSINE),
-                "ollama": VectorParams(size=768, distance=Distance.COSINE),
-                "openai": VectorParams(size=1536, distance=Distance.COSINE),
-            }
+            # Collection doesn't exist, create it
+            from qdrant_client.models import SparseVectorParams
+
             await self.client.create_collection(
-                collection_name=self.collection_name, vectors_config=vectors_config
-            )
-            await self.client.create_payload_index(
-                self.collection_name, "tenant_id", "keyword"
-            )
-            await self.client.create_payload_index(
-                self.collection_name, "agent_id", "keyword"
+                collection_name=self.collection_name,
+                vectors_config={
+                    "dense": VectorParams(
+                        size=self.embedding_dim,
+                        distance=self.distance,
+                    )
+                },
+                # Default configuration for hybrid search (dense + sparse)
+                sparse_vectors_config={"text": SparseVectorParams()},
             )
 
-    def _get_vector_name(self, dim: int) -> str:
-        if dim == 1536:
-            return "openai"
-        if dim == 768:
-            return "ollama"
-        return "dense"
+        self._initialized = True
+
+    async def add_vector(
+        self,
+        memory_id: UUID,
+        embedding: list[float] | dict[str, list[float]],
+        tenant_id: str,
+        agent_id: str,
+        layer: str,
+        metadata: dict[str, Any] | None = None,
+        session_id: str | None = None,
+    ) -> bool:
+        """Add a vector to Qdrant."""
+        await self._ensure_collection()
+
+        metadata = metadata or {}
+
+        payload = {
+            "memory_id": str(memory_id),
+            "tenant_id": tenant_id,
+            "agent_id": agent_id,
+            "session_id": session_id or metadata.get("session_id", "default"),
+            "layer": layer,
+            **metadata,
+        }
+
+        # Handle Named Vectors
+        vector_data: dict[str, list[float]] | list[float]
+        if isinstance(embedding, dict):
+            vector_data = embedding
+        else:
+            vector_data = {self.vector_name: embedding}
+
+        try:
+            await self.client.upsert(
+                collection_name=self.collection_name,
+                points=[
+                    PointStruct(
+                        id=str(memory_id),
+                        vector=vector_data,
+                        payload=payload,
+                    )
+                ],
+            )
+            return True
+        except Exception:
+            return False
+
+    async def store_vector(
+        self,
+        memory_id: UUID,
+        embedding: list[float] | dict[str, list[float]],
+        tenant_id: str,
+        metadata: dict[str, Any] | None = None,
+    ) -> bool:
+        """Store a vector embedding."""
+        metadata = metadata or {}
+        agent_id = str(metadata.get("agent_id", "default"))
+        session_id = str(metadata.get("session_id", "default"))
+        layer = str(metadata.get("layer", "episodic"))
+        return await self.add_vector(
+            memory_id, embedding, tenant_id, agent_id, layer, metadata, session_id
+        )
+
+    async def update_vector(
+        self,
+        memory_id: UUID,
+        embedding: list[float] | dict[str, list[float]],
+        tenant_id: str,
+        metadata: dict[str, Any] | None = None,
+    ) -> bool:
+        """Update a vector embedding."""
+        return await self.store_vector(memory_id, embedding, tenant_id, metadata)
+
+    async def batch_store_vectors(
+        self,
+        vectors: list[
+            tuple[UUID, list[float] | dict[str, list[float]], dict[str, Any]]
+        ],
+        tenant_id: str,
+    ) -> int:
+        """Store multiple vectors in a batch."""
+        await self._ensure_collection()
+
+        points = []
+        for memory_id, embedding, metadata in vectors:
+            meta = metadata or {}
+            agent_id = str(meta.get("agent_id", "default"))
+            session_id = str(meta.get("session_id", "default"))
+            layer = str(meta.get("layer", "episodic"))
+
+            payload = {
+                "memory_id": str(memory_id),
+                "tenant_id": tenant_id,
+                "agent_id": agent_id,
+                "session_id": session_id,
+                "layer": layer,
+                **meta,
+            }
+
+            # Handle Named Vectors
+            vector_data: dict[str, list[float]] | list[float]
+            if isinstance(embedding, dict):
+                vector_data = embedding
+            else:
+                vector_data = {"dense": embedding}
+
+            points.append(
+                PointStruct(id=str(memory_id), vector=vector_data, payload=payload)
+            )
+
+        if not points:
+            return 0
+
+        try:
+            await self.client.upsert(
+                collection_name=self.collection_name, points=points
+            )
+            return len(points)
+        except Exception:
+            return 0
 
     async def search_similar(
         self,
@@ -68,145 +253,321 @@ class QdrantVectorStore(IVectorStore):
         project: str | None = None,
         **kwargs: Any,
     ) -> list[tuple[UUID, float]]:
-        from qdrant_client.models import FieldCondition, Filter, MatchValue, NamedVector
+        """Search for similar vectors using cosine similarity.
 
-        # Clean tenant_id string
-        t_id = str(tenant_id).lower()
-        if "uuid('" in t_id:
-            t_id = t_id.replace("uuid('", "").replace("')", "")
+        Args:
+            query_embedding: Query vector
+            tenant_id: Tenant ID (mandatory for multi-tenancy)
+            layer: Optional memory layer filter
+            limit: Maximum results to return
+            score_threshold: Minimum similarity score
+            agent_id: Optional agent ID for namespace isolation
+            session_id: Optional session ID for namespace isolation
+            filters: Optional dictionary of generic metadata filters
+        """
+        await self._ensure_collection()
 
-        must_conditions: list[Any] = [
-            FieldCondition(key="tenant_id", match=MatchValue(value=t_id))
-        ]
+        # Build filter - mandatory tenant_id
+        must_conditions = [{"key": "tenant_id", "match": {"value": tenant_id}}]
 
-        # 1. Project Filter (Context)
-        p_filter = (
-            project
-            or (filters or {}).get("project")
-            or (filters or {}).get("project_id")
-        )
-        if p_filter and p_filter != "default":
+        # Add agent_id filter if provided (namespace isolation)
+        if agent_id:
+            must_conditions.append({"key": "agent_id", "match": {"value": agent_id}})
+
+        # Add session_id filter if provided (namespace isolation)
+        if session_id:
             must_conditions.append(
-                Filter(
-                    should=[
-                        FieldCondition(
-                            key="project", match=MatchValue(value=str(p_filter))
-                        ),
-                        FieldCondition(
-                            key="project", match=MatchValue(value="default")
-                        ),
-                    ]
-                )
-            )
-
-        # 2. Agent Filter (Attribution)
-        if agent_id and agent_id not in ["", "None", "default"]:
-            must_conditions.append(
-                Filter(
-                    should=[
-                        FieldCondition(
-                            key="agent_id", match=MatchValue(value=str(agent_id))
-                        ),
-                        FieldCondition(
-                            key="agent_id", match=MatchValue(value="default")
-                        ),
-                    ]
-                )
+                {"key": "session_id", "match": {"value": session_id}}
             )
 
         if layer:
-            must_conditions.append(
-                FieldCondition(key="layer", match=MatchValue(value=str(layer)))
-            )
+            must_conditions.append({"key": "layer", "match": {"value": layer}})
 
-        query_filter = Filter(must=must_conditions)
-        dim = len(query_embedding)
-        v_name = self._get_vector_name(dim)
+        # Apply generic metadata filters
+        if filters:
+            for key, value in filters.items():
+                # Skip reserved keys already handled
+                if key in [
+                    "tenant_id",
+                    "agent_id",
+                    "session_id",
+                    "layer",
+                    "score_threshold",
+                ]:
+                    continue
 
-        all_results: dict[UUID, float] = {}
+                # Handle list values (match any) vs scalar values
+                if isinstance(value, list):
+                    # Qdrant 'match' doesn't support list directly for 'any' in simple syntax
+                    # We need 'should' condition or multiple 'match' if checking for inclusion
+                    # Assuming basic scalar match for now to keep it safe,
+                    # or 'match': {'any': value} if qdrant client supports it (it usually does for keyword fields)
+                    must_conditions.append({"key": key, "match": {"any": value}})
+                else:
+                    must_conditions.append({"key": key, "match": {"value": value}})
+
+        query_filter = {"must": must_conditions} if must_conditions else None
+
         try:
-            if not hasattr(self.client, "search"):
-                logger.error(
-                    "qdrant_client_invalid_type",
-                    type=str(type(self.client)),
-                    has_search=hasattr(self.client, "search"),
-                )
+            from qdrant_client.models import NamedVector
 
             results = await self.client.search(
                 collection_name=self.collection_name,
-                query_vector=NamedVector(name=v_name, vector=query_embedding),
+                query_vector=NamedVector(name=self.vector_name, vector=query_embedding),
                 query_filter=query_filter,
                 limit=limit,
-                score_threshold=score_threshold
-                or 0.0,  # Liberal threshold for benchmarks
+                score_threshold=score_threshold,
             )
-            for res in results:
-                m_id = UUID(res.payload["memory_id"])
-                all_results[m_id] = res.score
-        except Exception as e:
-            logger.error("qdrant_search_failed", space=v_name, error=str(e))
 
-        return sorted(all_results.items(), key=lambda x: x[1], reverse=True)[:limit]
+            return [
+                (UUID(result.payload["memory_id"]), result.score)
+                for result in results
+                if result.payload and "memory_id" in result.payload
+            ]
+        except Exception:
+            return []
 
-    async def store_vector(
+    async def get_vector(
         self,
         memory_id: UUID,
-        embedding: list[float] | dict[str, list[float]],
         tenant_id: str,
-        metadata: dict[str, Any] | None = None,
-    ) -> bool:
-        from qdrant_client.models import PointStruct
+    ) -> list[float] | None:
+        """Get vector by memory ID."""
+        await self._ensure_collection()
 
-        if isinstance(embedding, dict):
-            vectors = embedding
-        else:
-            vectors = {self._get_vector_name(len(embedding)): embedding}
-
-        meta = metadata or {}
-        payload = {
-            "memory_id": str(memory_id),
-            "tenant_id": str(tenant_id),
-            "agent_id": meta.get("agent_id", "default"),
-            "project": meta.get("project") or meta.get("project_id") or "default",
-            **meta,
-        }
         try:
-            await self.client.upsert(
+            result = await self.client.retrieve(
                 collection_name=self.collection_name,
-                points=[
-                    PointStruct(id=str(memory_id), vector=vectors, payload=payload)
-                ],
+                ids=[str(memory_id)],
+            )
+
+            if result and len(result) > 0:
+                # Verify tenant_id matches
+                payload = result[0].payload
+                if payload and payload.get("tenant_id") == tenant_id:
+                    return cast(list[float], result[0].vector)
+        except Exception:
+            pass
+
+        return None
+
+    async def delete_vector(
+        self,
+        memory_id: UUID,
+        tenant_id: str,
+    ) -> bool:
+        """Delete a vector."""
+        await self._ensure_collection()
+
+        try:
+            # First verify it belongs to tenant
+            result = await self.client.retrieve(
+                collection_name=self.collection_name,
+                ids=[str(memory_id)],
+            )
+
+            if not result:
+                return False
+
+            payload = result[0].payload
+            if not payload or payload.get("tenant_id") != tenant_id:
+                return False
+
+            await self.client.delete(
+                collection_name=self.collection_name,
+                points_selector=[str(memory_id)],
             )
             return True
         except Exception:
             return False
 
-    async def get_vector(self, memory_id: UUID, tenant_id: str) -> list[float] | None:
-        return None
-
-    async def delete_vector(self, memory_id: UUID, tenant_id: str) -> bool:
-        return True
-
-    async def update_vector(
+    async def delete_by_layer(
         self,
-        memory_id: UUID,
-        embedding: list[float] | dict[str, list[float]],
         tenant_id: str,
-        metadata: dict[str, Any] | None = None,
-    ) -> bool:
-        return True
-
-    async def batch_store_vectors(
-        self,
-        vectors: list[
-            tuple[UUID, list[float] | dict[str, list[float]], dict[str, Any]]
-        ],
-        tenant_id: str,
+        agent_id: str,
+        layer: str,
     ) -> int:
-        return len(vectors)
+        """Delete all vectors in a layer."""
+        await self._ensure_collection()
 
-    async def add_vector(self, *args, **kwargs):
-        return True
+        try:
+            # Use filter to delete
+            delete_filter = {
+                "must": [
+                    {"key": "tenant_id", "match": {"value": tenant_id}},
+                    {"key": "agent_id", "match": {"value": agent_id}},
+                    {"key": "layer", "match": {"value": layer}},
+                ]
+            }
 
-    async def count_vectors(self, *args, **kwargs):
-        return 0
+            result = await self.client.delete(
+                collection_name=self.collection_name,
+                points_selector=delete_filter,
+            )
+
+            # Qdrant doesn't return count easily, return success indicator
+            return 1 if result else 0
+        except Exception:
+            return 0
+
+    async def count_vectors(
+        self,
+        tenant_id: str,
+        layer: str | None = None,
+    ) -> int:
+        """Count vectors matching criteria."""
+        await self._ensure_collection()
+
+        try:
+            count_filter = {
+                "must": [{"key": "tenant_id", "match": {"value": tenant_id}}]
+            }
+
+            if layer:
+                count_filter["must"].append({"key": "layer", "match": {"value": layer}})
+
+            result = await self.client.count(
+                collection_name=self.collection_name,
+                count_filter=count_filter,
+            )
+
+            return result.count if result else 0
+        except Exception:
+            return 0
+
+    async def search_with_contradiction_penalty(
+        self,
+        query_embedding: list[float],
+        tenant_id: str,
+        layer: str | None = None,
+        limit: int = 10,
+        score_threshold: float | None = None,
+        agent_id: str | None = None,
+        session_id: str | None = None,
+        penalty_factor: float = 0.5,
+        contradiction_threshold: float = 0.15,
+    ) -> list[tuple[UUID, float]]:
+        """Search with penalty for contradictory results.
+
+        This method:
+        1. Performs similarity search
+        2. Detects contradictory pairs in results
+        3. Penalizes both contradictory memories
+        4. Re-sorts by penalized scores
+
+        Contradictory detection:
+        - If cosine similarity < contradiction_threshold, memories contradict
+        - Low similarity in embedding space suggests opposite meanings
+
+        Args:
+            query_embedding: Query vector
+            tenant_id: Tenant ID (mandatory)
+            layer: Optional memory layer filter
+            limit: Maximum results (will fetch more for filtering)
+            score_threshold: Minimum similarity score
+            agent_id: Optional agent ID for namespace isolation
+            session_id: Optional session ID for namespace isolation
+            penalty_factor: Multiplier for contradictory scores (default: 0.5)
+            contradiction_threshold: Similarity below this = contradiction
+
+        Returns:
+            List of (memory_id, penalized_score) tuples sorted by score
+
+        Example:
+            >>> results = await store.search_with_contradiction_penalty(
+            ...     query_embedding=embedding,
+            ...     tenant_id="tenant1",
+            ...     penalty_factor=0.5,  # Halve contradictory scores
+            ...     contradiction_threshold=0.15,  # <0.15 similarity = contradiction
+            ... )
+        """
+        # Fetch more results for contradiction detection
+        initial_results = await self.search_similar(
+            query_embedding=query_embedding,
+            tenant_id=tenant_id,
+            layer=layer,
+            limit=limit * 2,  # Fetch extra for filtering
+            score_threshold=score_threshold,
+            agent_id=agent_id,
+            session_id=session_id,
+        )
+
+        if len(initial_results) < 2:
+            # Not enough results for contradiction detection
+            return initial_results[:limit]
+
+        # Retrieve vectors for all results
+        result_vectors: dict[UUID, list[float]] = {}
+        for memory_id, _ in initial_results:
+            vector = await self.get_vector(memory_id=memory_id, tenant_id=tenant_id)
+            if vector:
+                result_vectors[memory_id] = vector
+
+        # Detect contradictions and build penalty map
+        penalties: dict[UUID, int] = {}  # Count of contradictions per memory
+
+        for i, (mem_a_id, _) in enumerate(initial_results):
+            if mem_a_id not in result_vectors:
+                continue
+
+            for mem_b_id, _ in initial_results[i + 1 :]:
+                if mem_b_id not in result_vectors:
+                    continue
+
+                # Compute cosine similarity between the two vectors
+                vec_a = result_vectors[mem_a_id]
+                vec_b = result_vectors[mem_b_id]
+                similarity = self._cosine_similarity(vec_a, vec_b)
+
+                # If similarity is very low, they contradict
+                if similarity < contradiction_threshold:
+                    penalties[mem_a_id] = penalties.get(mem_a_id, 0) + 1
+                    penalties[mem_b_id] = penalties.get(mem_b_id, 0) + 1
+
+        # Apply penalties to scores
+        penalized_results = []
+        for memory_id, base_score in initial_results:
+            penalty_count = penalties.get(memory_id, 0)
+            if penalty_count > 0:
+                # Apply penalty: score *= penalty_factor^penalty_count
+                penalized_score = base_score * (penalty_factor**penalty_count)
+            else:
+                penalized_score = base_score
+
+            penalized_results.append((memory_id, penalized_score))
+
+        # Re-sort by penalized scores
+        penalized_results.sort(key=lambda x: x[1], reverse=True)
+
+        return penalized_results[:limit]
+
+    @staticmethod
+    def _cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
+        """Compute cosine similarity between two vectors.
+
+        Args:
+            vec_a: First vector
+            vec_b: Second vector
+
+        Returns:
+            Cosine similarity (-1 to 1, higher = more similar)
+        """
+        if len(vec_a) != len(vec_b):
+            return 0.0
+
+        # Dot product
+        dot_product = sum(a * b for a, b in zip(vec_a, vec_b))
+
+        # Magnitudes
+        mag_a = sum(a * a for a in vec_a) ** 0.5
+        mag_b = sum(b * b for b in vec_b) ** 0.5
+
+        if mag_a == 0.0 or mag_b == 0.0:
+            return 0.0
+
+        return float(dot_product / (mag_a * mag_b))
+
+    async def close(self) -> None:
+        """Close Qdrant client."""
+        if hasattr(self.client, "close"):
+            await self.client.close()

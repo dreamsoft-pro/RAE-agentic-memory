@@ -4,18 +4,22 @@ Memory API v2 - powered by RAE-Core.
 Uses RAEEngine with 4-layer architecture and hybrid search.
 """
 
+from typing import Any, Optional, cast
 from uuid import UUID
 
 import structlog
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 
 from apps.memory_api.dependencies import get_rae_core_service
+from apps.memory_api.observability.rae_tracing import get_tracer
 from apps.memory_api.security.dependencies import get_and_verify_tenant_id
+from apps.memory_api.services import pii_scrubber
 from apps.memory_api.services.rae_core_service import RAECoreService
 
 router = APIRouter(prefix="/v2/memories", tags=["Memory v2 (RAE-Core)"])
 logger = structlog.get_logger(__name__)
+tracer = get_tracer(__name__)
 
 
 # Request/Response models
@@ -34,6 +38,7 @@ class StoreMemoryRequestV2(BaseModel):
     session_id: str | None = Field(None, description="Session identifier")
     memory_type: str | None = Field(None, description="Memory type (text, code, etc.)")
     ttl: int | None = Field(None, gt=0, description="Time to live in seconds")
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class StoreMemoryResponseV2(BaseModel):
@@ -50,6 +55,7 @@ class QueryMemoryRequestV2(BaseModel):
     project: str = Field(..., min_length=1, max_length=255)
     k: int = Field(default=10, gt=0, le=100)
     layers: list[str] | None = Field(default=None)
+    filters: dict[str, Any] | None = Field(default=None)
 
 
 class MemoryResult(BaseModel):
@@ -61,6 +67,7 @@ class MemoryResult(BaseModel):
     layer: str
     importance: float
     tags: list[str] = Field(default_factory=list)
+    metadata: dict[str, Any] = Field(default_factory=dict)
 
 
 class QueryMemoryResponseV2(BaseModel):
@@ -71,74 +78,52 @@ class QueryMemoryResponseV2(BaseModel):
     synthesized_context: str | None = None
 
 
+class ListMemoryResponseV2(BaseModel):
+    """Paginated list of memories."""
+
+    results: list[MemoryResult]
+    total: int
+    limit: int
+    offset: int
+
+
 @router.post("/", response_model=StoreMemoryResponseV2)
 async def store_memory(
     request: StoreMemoryRequestV2,
+    http_request: Request,
     tenant_id: UUID = Depends(get_and_verify_tenant_id),
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
     Store memory using RAE-Core engine.
-
-    Stores memory in appropriate layer based on importance and parameters.
-    Memory flows through 4-layer architecture:
-    - Sensory: raw input buffer
-    - Working: active processing
-    - LongTerm: persistent storage
-    - Reflective: meta-learning and insights
     """
-    try:
-        memory_id = await rae_service.store_memory(
-            tenant_id=str(tenant_id),
-            project=request.project,
-            content=request.content,
-            source=request.source,
-            importance=request.importance,
-            tags=request.tags,
-            layer=request.layer,
-            session_id=request.session_id,
-            memory_type=request.memory_type,
-            ttl=request.ttl,
+    with tracer.start_as_current_span("rae.api.v2.memory.store") as span:
+        span.set_attribute("rae.tenant_id", str(tenant_id))
+        span.set_attribute("rae.project", request.project)
+
+        content = pii_scrubber.scrub_text(request.content)
+        session_id = request.session_id or getattr(
+            http_request.state, "session_id", None
         )
 
-        # Audit logging (ISO 42001 compliance)
         try:
-            from uuid import uuid4
-
-            sql = """
-                INSERT INTO access_logs (
-                    id, tenant_id, user_id, action, resource, allowed, timestamp, metadata
-                ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7)
-            """
-            import json
-
-            await rae_service.db.execute(
-                sql,
-                uuid4(),
-                str(tenant_id),
-                "api_user",  # TODO: Get actual user ID
-                "store_memory",
-                str(memory_id),
-                True,
-                json.dumps(
-                    {
-                        "project": request.project,
-                        "layer": request.layer,
-                        "source": request.source,
-                        "importance": request.importance,
-                    }
-                ),
+            memory_id = await rae_service.store_memory(
+                tenant_id=str(tenant_id),
+                project=request.project,
+                content=content,
+                source=request.source,
+                importance=request.importance,
+                tags=request.tags,
+                layer=request.layer,
+                session_id=session_id,
+                memory_type=request.memory_type,
+                ttl=request.ttl,
+                metadata=request.metadata,
             )
-        except Exception as audit_err:
-            logger.warning("audit_log_failed", error=str(audit_err))
-
-        return StoreMemoryResponseV2(memory_id=memory_id)
-
-    except Exception as e:
-        logger.error("store_memory_failed", error=str(e), tenant_id=tenant_id)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to store memory: {str(e)}"
-        ) from e
+            return StoreMemoryResponseV2(memory_id=memory_id)
+        except Exception as e:
+            logger.error("store_memory_failed", error=str(e), tenant_id=tenant_id)
+            raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/query", response_model=QueryMemoryResponseV2)
@@ -149,83 +134,122 @@ async def query_memories(
 ):
     """
     Query memories using RAE-Core hybrid search.
-
-    Searches across specified layers using:
-    - Keyword matching
-    - Importance scoring
-    - Recency decay
-    - Multi-strategy fusion (RRF, weighted sum)
     """
-    try:
-        from typing import Any, cast
+    with tracer.start_as_current_span("rae.api.v2.memory.query") as span:
+        span.set_attribute("rae.tenant_id", str(tenant_id))
+        span.set_attribute("rae.query", request.query)
 
-        response = await rae_service.query_memories(
+        try:
+            response = await rae_service.query_memories(
+                tenant_id=str(tenant_id),
+                project=request.project,
+                query=request.query,
+                k=request.k,
+                layers=request.layers,
+                filters=request.filters,
+            )
+
+            results = [
+                MemoryResult(
+                    id=res.memory_id,
+                    content=res.content,
+                    score=res.score,
+                    layer=getattr(res, "layer", "semantic"),
+                    importance=getattr(res, "importance", 0.5),
+                    tags=getattr(res, "tags", []),
+                    metadata=getattr(res, "metadata", {}),
+                )
+                for res in response.results
+            ]
+
+            if results:
+                await rae_service.update_memory_access_batch(
+                    memory_ids=[r.id for r in results], tenant_id=str(tenant_id)
+                )
+
+            return QueryMemoryResponseV2(results=results, total_count=len(results))
+        except Exception as e:
+            logger.error("query_memories_failed", error=str(e), tenant_id=tenant_id)
+            raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/", response_model=ListMemoryResponseV2)
+async def list_memories(
+    limit: int = Query(50, ge=1, le=1000),
+    offset: int = Query(0, ge=0),
+    project: Optional[str] = None,
+    layer: Optional[str] = None,
+    tenant_id: UUID = Depends(get_and_verify_tenant_id),
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
+    """List memories with pagination."""
+    try:
+        memories = await rae_service.list_memories(
             tenant_id=str(tenant_id),
-            project=request.project,
-            query=request.query,
-            k=request.k,
-            layers=request.layers,
+            limit=limit,
+            offset=offset,
+            project=project,
+            layer=layer,
         )
 
         results = [
             MemoryResult(
-                id=(result := cast(Any, res)).memory_id,
-                content=result.content,
-                score=result.score,
-                layer="unknown",  # SearchResult doesn't currently return layer
-                importance=0.5,  # Default if not returned
-                tags=[],  # Default if not returned
+                id=m.get("id") if isinstance(m.get("id"), str) else str(m.get("id")),
+                content=m.get("content", ""),
+                score=1.0,
+                layer=m.get("layer", "semantic"),
+                importance=m.get("importance", 0.5),
+                tags=m.get("tags", []),
+                metadata=m.get("metadata", {}),
             )
-            for res in cast(Any, response).results
+            for m in memories
         ]
 
-        # Update access stats for found memories (Phase 1 logic)
-        if results:
-            await rae_service.update_memory_access_batch(
-                memory_ids=[r.id for r in results], tenant_id=str(tenant_id)
-            )
-
-        # Audit logging (ISO 42001 compliance)
-        try:
-            from uuid import uuid4
-
-            sql = """
-                INSERT INTO access_logs (
-                    id, tenant_id, user_id, action, resource, allowed, timestamp, metadata
-                ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), $7)
-            """
-            import json
-
-            await rae_service.db.execute(
-                sql,
-                uuid4(),
-                str(tenant_id),
-                "api_user",  # TODO: Get actual user ID from auth
-                "search_memories",
-                request.project,
-                True,
-                json.dumps(
-                    {
-                        "query": request.query,
-                        "results_count": len(results),
-                        "layers": request.layers,
-                    }
-                ),
-            )
-        except Exception as audit_err:
-            logger.warning("audit_log_failed", error=str(audit_err))
-
-        return QueryMemoryResponseV2(
-            results=results,
-            total_count=len(results),
-            synthesized_context=None,  # Not supported in base SearchResponse
+        return ListMemoryResponseV2(
+            results=results, total=len(results), limit=limit, offset=offset
         )
-
     except Exception as e:
-        logger.error("query_memories_failed", error=str(e), tenant_id=tenant_id)
-        raise HTTPException(
-            status_code=500, detail=f"Failed to query memories: {str(e)}"
-        ) from e
+        logger.error("list_memories_failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/{memory_id}")
+async def delete_memory(
+    memory_id: str,
+    tenant_id: UUID = Depends(get_and_verify_tenant_id),
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
+    """Delete a memory."""
+    try:
+        deleted = await rae_service.delete_memory(memory_id, str(tenant_id))
+        if not deleted:
+            raise HTTPException(status_code=404, detail="Memory not found")
+        return {"message": "Memory deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("delete_memory_failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/sessions/{session_id}")
+async def get_session_context(
+    session_id: str,
+    limit: int = Query(50, ge=1, le=1000),
+    tenant_id: UUID = Depends(get_and_verify_tenant_id),
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
+    """Retrieves all memories associated with a specific session."""
+    try:
+        memories = await rae_service.get_session_context(
+            session_id=session_id,
+            tenant_id=str(tenant_id),
+            limit=limit,
+        )
+        return {"session_id": session_id, "memories": memories}
+    except Exception as e:
+        logger.error("get_session_context_failed", session_id=session_id, error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/consolidate")
@@ -236,11 +260,6 @@ async def consolidate_memories(
 ):
     """
     Trigger memory consolidation across layers.
-
-    Consolidates memories based on:
-    - Sensory → Working: importance threshold
-    - Working → LongTerm: usage + importance
-    - LongTerm → Reflective: pattern detection
     """
     try:
         results = await rae_service.consolidate_memories(
@@ -268,9 +287,6 @@ async def generate_reflections(
 ):
     """
     Generate reflections from memory patterns.
-
-    Analyzes patterns in long-term memory and creates
-    meta-learning insights stored in reflective layer.
     """
     try:
         reflections = await rae_service.generate_reflections(
@@ -278,17 +294,15 @@ async def generate_reflections(
             project=project,
         )
 
-        from typing import Any, cast
-
         return {
             "message": "Reflections generated",
             "count": len(reflections),
             "reflections": [
                 {
-                    "id": (ref := cast(Any, r)).id,
-                    "content": ref.content,
-                    "importance": ref.importance,
-                    "tags": ref.tags or [],
+                    "id": cast(Any, r).id,
+                    "content": cast(Any, r).content,
+                    "importance": cast(Any, r).importance,
+                    "tags": cast(Any, r).tags or [],
                 }
                 for r in reflections
             ],
@@ -309,12 +323,6 @@ async def get_statistics(
 ):
     """
     Get memory statistics across all layers.
-
-    Returns counts, averages, and metrics for:
-    - Sensory layer
-    - Working memory
-    - Long-term storage
-    - Reflective layer
     """
     try:
         stats = await rae_service.get_statistics(

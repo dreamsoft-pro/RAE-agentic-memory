@@ -51,7 +51,9 @@ class TestSemanticIntegrity:
         try:
             firewall.validate_intent("hack_nasa", {})
             # If we get here, it failed
-            assert False, "Execution continued past firewall!"
+            import pytest
+
+            pytest.fail("Execution continued past firewall!")
         except HTTPException:
             # Execution stopped here. Correct.
             pass
