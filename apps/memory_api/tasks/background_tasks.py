@@ -385,7 +385,7 @@ def process_graph_extraction_queue():
     Periodically checks for memories waiting for graph extraction.
 
     Finds memories that:
-    - Are episodic (layer='em')
+    - Are episodic (layer='episodic')
     - Don't have graph data yet
     - Were created recently
 

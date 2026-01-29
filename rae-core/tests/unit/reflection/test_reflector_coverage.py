@@ -48,7 +48,7 @@ class TestReflectorCoverage:
         ms.get_memory.return_value = {
             "content": "important content",
             "importance": 0.9,
-            "layer": "em",
+            "layer": "episodic",
         }
         r = Reflector(ms, llm_provider=llm)
         res = await r.generate_reflection(

@@ -4,6 +4,7 @@ Authentication and Authorization Module
 Provides API key authentication and optional JWT token verification.
 """
 
+import os
 from typing import Optional, cast
 from uuid import UUID
 
@@ -297,7 +298,11 @@ async def check_tenant_access(
         )
 
     # Get database pool from app state
-    if not hasattr(request.app.state, "pool"):
+    if not hasattr(request.app.state, "pool") or request.app.state.pool is None:
+        if settings.RAE_PROFILE == "lite" or os.getenv("RAE_DB_MODE") == "ignore":
+            logger.info("check_tenant_access_granted_lite_mode", tenant_id=tenant_id)
+            return True
+
         logger.error("check_tenant_access_no_pool", tenant_id=tenant_id)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -412,7 +417,11 @@ async def require_permission(
         )
 
     # Get database pool
-    if not hasattr(request.app.state, "pool"):
+    if not hasattr(request.app.state, "pool") or request.app.state.pool is None:
+        if settings.RAE_PROFILE == "lite" or os.getenv("RAE_DB_MODE") == "ignore":
+            logger.info("permission_granted_lite_mode", action=action)
+            return True
+
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Database not initialized",

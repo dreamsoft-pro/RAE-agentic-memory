@@ -193,21 +193,15 @@ async def websocket_endpoint(
 # ============================================================================
 
 
-@router.api_route(
-    "/metrics", methods=["GET", "POST"], response_model=GetDashboardMetricsResponse
-)
-async def get_dashboard_metrics(
+async def _get_dashboard_metrics_impl(
+    rae_service: RAECoreService,
     request_data: Optional[GetDashboardMetricsRequest] = None,
-    tenant_id: Optional[str] = Query(None),
-    project_id: Optional[str] = Query(None),
-    project: Optional[str] = Query(None),  # Alternative for Streamlit
-    period: MetricPeriod = Query(MetricPeriod.LAST_24H),
-    rae_service: RAECoreService = Depends(get_rae_core_service),
-):
-    """
-    Get dashboard metrics for a time period.
-    Supports both POST (JSON body) and GET (Query params).
-    """
+    tenant_id: Optional[str] = None,
+    project_id: Optional[str] = None,
+    project: Optional[str] = None,
+    period: MetricPeriod = MetricPeriod.LAST_24H,
+) -> GetDashboardMetricsResponse:
+    """Shared implementation for dashboard metrics."""
     try:
         # Handle parameters from multiple sources
         t_id = tenant_id
@@ -254,6 +248,36 @@ async def get_dashboard_metrics(
     except Exception as e:
         logger.error("get_dashboard_metrics_failed", error=str(e))
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.get("/metrics", response_model=GetDashboardMetricsResponse)
+async def get_dashboard_metrics_get(
+    tenant_id: Optional[str] = Query(None),
+    project_id: Optional[str] = Query(None),
+    project: Optional[str] = Query(None),
+    period: MetricPeriod = Query(MetricPeriod.LAST_24H),
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
+    """Get dashboard metrics (GET)."""
+    return await _get_dashboard_metrics_impl(
+        rae_service=rae_service,
+        tenant_id=tenant_id,
+        project_id=project_id,
+        project=project,
+        period=period,
+    )
+
+
+@router.post("/metrics", response_model=GetDashboardMetricsResponse)
+async def get_dashboard_metrics_post(
+    request_data: GetDashboardMetricsRequest,
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
+    """Get dashboard metrics (POST)."""
+    return await _get_dashboard_metrics_impl(
+        rae_service=rae_service,
+        request_data=request_data,
+    )
 
 
 @router.get("/metrics/timeseries/{metric_name}")

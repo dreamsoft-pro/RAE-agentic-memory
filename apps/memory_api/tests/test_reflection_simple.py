@@ -4,19 +4,13 @@ Simplified Reflection Engine Tests
 Tests the actual reflection pipeline API with proper mocks.
 """
 
+import random
 from datetime import datetime
 from typing import Any, cast
 from unittest.mock import AsyncMock
 from uuid import uuid4
 
-import numpy as np
 import pytest
-
-# Skip tests if sklearn is not installed (ML dependency)
-sklearn = pytest.importorskip(
-    "sklearn",
-    reason="Requires scikit-learn – heavy ML dependency",
-)
 
 from apps.memory_api.models.reflection_models import (  # noqa: E402
     GenerateReflectionRequest,
@@ -42,14 +36,14 @@ def sample_memories():
             "id": uuid4(),
             "content": "Machine learning is a subset of artificial intelligence",
             "importance": 0.8,
-            "embedding": np.random.rand(384).tolist(),
+            "embedding": [random.random() for _ in range(384)],
             "created_at": datetime.now(),
         },
         {
             "id": uuid4(),
             "content": "Deep learning uses neural networks with multiple layers",
             "importance": 0.85,
-            "embedding": np.random.rand(384).tolist(),
+            "embedding": [random.random() for _ in range(384)],
             "created_at": datetime.now(),
         },
     ]
@@ -95,7 +89,7 @@ async def test_generate_reflections_basic(mock_rae_service, sample_memories):
 
     # Mock ML client
     cast(Any, pipeline.ml_client).generate_embeddings = AsyncMock(
-        return_value={"embeddings": [np.random.rand(384).tolist()]}
+        return_value={"embeddings": [[random.random() for _ in range(384)]]}
     )
 
     request = GenerateReflectionRequest(

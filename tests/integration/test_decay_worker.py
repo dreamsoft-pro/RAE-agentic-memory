@@ -31,7 +31,7 @@ async def test_decay_worker_basic_cycle(mock_app_state_pool):
             memory_id = await conn.fetchval(
                 """
                 INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp, memory_type)
-                VALUES ($1, $2, $3, 'em', 'default', $4, $5, 'episodic')
+                VALUES ($1, $2, $3, 'episodic', 'default', $4, $5, 'text')
                 RETURNING id
                 """,
                 tenant_id,
@@ -82,7 +82,7 @@ async def test_decay_worker_with_access_stats(mock_app_state_pool):
             """
             INSERT INTO memories (tenant_id, content, importance, layer, project,
                                  created_at, timestamp, last_accessed_at, usage_count, memory_type)
-            VALUES ($1, $2, $3, 'em', 'default', $4, $5, $6, 10, 'episodic')
+            VALUES ($1, $2, $3, 'episodic', 'default', $4, $5, $6, 10, 'text')
             RETURNING id
             """,
             tenant_id,
@@ -98,7 +98,7 @@ async def test_decay_worker_with_access_stats(mock_app_state_pool):
             """
             INSERT INTO memories (tenant_id, content, importance, layer, project,
                                  created_at, timestamp, last_accessed_at, usage_count, memory_type)
-            VALUES ($1, $2, $3, 'em', 'default', $4, $5, $6, 1, 'episodic')
+            VALUES ($1, $2, $3, 'episodic', 'default', $4, $5, $6, 1, 'text')
             RETURNING id
             """,
             tenant_id,
@@ -149,7 +149,7 @@ async def test_decay_worker_multiple_tenants(mock_app_state_pool):
                 await conn.execute(
                     """
                     INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp, memory_type)
-                    VALUES ($1, $2, $3, 'em', 'default', $4, $5, 'episodic')
+                    VALUES ($1, $2, $3, 'episodic', 'default', $4, $5, 'text')
                     """,
                     tenant_id,
                     f"Memory {i}",
@@ -183,7 +183,7 @@ async def test_decay_worker_importance_floor(mock_app_state_pool):
         memory_id = await conn.fetchval(
             """
             INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp, memory_type)
-            VALUES ($1, $2, $3, 'em', 'default', $4, $5, 'episodic')
+            VALUES ($1, $2, $3, 'episodic', 'default', $4, $5, 'text')
             RETURNING id
             """,
             tenant_id,
@@ -224,7 +224,7 @@ async def test_decay_worker_error_handling(mock_app_state_pool):
         await conn.execute(
             """
             INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp, memory_type)
-            VALUES ($1, $2, $3, 'em', 'default', $4, $5, 'episodic')
+            VALUES ($1, $2, $3, 'episodic', 'default', $4, $5, 'text')
             """,
             valid_tenant,
             "Valid memory",
@@ -261,7 +261,7 @@ async def test_decay_worker_get_all_tenants(mock_app_state_pool):
             await conn.execute(
                 """
                 INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp, memory_type)
-                VALUES ($1, $2, $3, 'em', 'default', $4, $5, 'episodic')
+                VALUES ($1, $2, $3, 'episodic', 'default', $4, $5, 'text')
                 """,
                 tenant_id,
                 "Test memory",
@@ -319,7 +319,7 @@ async def test_decay_worker_preserves_metadata(mock_app_state_pool):
             """
             INSERT INTO memories (tenant_id, content, importance, layer, project,
                                  created_at, timestamp, tags, metadata, memory_type)
-            VALUES ($1, $2, $3, 'em', 'default', $4, $5, $6, $7::jsonb, 'episodic')
+            VALUES ($1, $2, $3, 'episodic', 'default', $4, $5, $6, $7::jsonb, 'text')
             RETURNING id
             """,
             tenant_id,

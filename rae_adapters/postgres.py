@@ -157,6 +157,9 @@ class PostgreSQLStorage(IMemoryStorage):
 
         import json
 
+        # Standardized layer names are used directly
+        db_layer = layer
+
         async with pool.acquire() as conn:
             # Convert embedding to string for pgvector compatibility if using asyncpg without codec
             embedding_val = str(embedding) if embedding is not None else None
@@ -174,7 +177,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 """,
                 memory_id,
                 content,
-                layer,
+                db_layer,
                 str(tenant_id),
                 agent_id,
                 tags,
@@ -282,13 +285,9 @@ class PostgreSQLStorage(IMemoryStorage):
                 f"(project = ${param_idx} OR project = 'default' OR project IS NULL)"
             )
             params.append(p_filter)
-            param_idx += 1
-
         if layer:
-            # Backward compatibility for 'episodic' vs 'em'
-            db_layer = "em" if layer == "episodic" else layer
             conditions.append(f"layer = ${param_idx}")
-            params.append(db_layer)
+            params.append(layer)
             param_idx += 1
 
         if agent_id and agent_id != "default" and agent_id != "all":
@@ -461,10 +460,8 @@ class PostgreSQLStorage(IMemoryStorage):
 
         # 2. Agent Filter (Attribution)
         if layer:
-            # Backward compatibility for 'episodic' vs 'em'
-            db_layer = "em" if layer == "episodic" else layer
             conditions.append(f"layer = ${param_idx}")
-            params.append(db_layer)
+            params.append(layer)
             param_idx += 1
 
         if agent_id and agent_id != "default" and agent_id != "all":

@@ -1,3 +1,4 @@
+import os
 from typing import Any, Optional
 
 import structlog
@@ -28,7 +29,9 @@ async def check_database(
     """Check Database connection."""
     from apps.memory_api.config import settings
 
-    if settings.RAE_PROFILE == "lite" and pool is None:
+    if (
+        settings.RAE_PROFILE == "lite" or os.getenv("RAE_DB_MODE") == "ignore"
+    ) and pool is None:
         return {"status": "UP (In-Memory)"}
 
     try:
@@ -50,7 +53,9 @@ async def check_redis(
     """Check Redis connection."""
     from apps.memory_api.config import settings
 
-    if settings.RAE_PROFILE == "lite" and redis_client is None:
+    if (
+        settings.RAE_PROFILE == "lite" or os.getenv("RAE_DB_MODE") == "ignore"
+    ) and redis_client is None:
         return {"status": "UP (In-Memory)"}
 
     try:
@@ -71,7 +76,9 @@ async def check_vector_store(
     """Check Vector Store connection."""
     from apps.memory_api.config import settings
 
-    if settings.RAE_PROFILE == "lite" and qdrant_client is None:
+    if (
+        settings.RAE_PROFILE == "lite" or os.getenv("RAE_DB_MODE") == "ignore"
+    ) and qdrant_client is None:
         return {"status": "UP (In-Memory)"}
 
     try:

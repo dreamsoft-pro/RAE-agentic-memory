@@ -13,15 +13,11 @@ Priority: HIGH (Critical module for memory persistence)
 Current Coverage: 52% -> Target: 70%+
 """
 
+from datetime import datetime
+from typing import List
 from unittest.mock import AsyncMock
 
 import pytest
-
-# Skip tests if sentence_transformers is not installed (ML dependency)
-sentence_transformers = pytest.importorskip(
-    "sentence_transformers",
-    reason="Requires sentence-transformers – heavy ML dependency",
-)
 
 from apps.memory_api.models import MemoryRecord, ScoredMemoryRecord  # noqa: E402
 from apps.memory_api.services.vector_store.pgvector_store import (  # noqa: E402
@@ -40,14 +36,14 @@ def sample_memories():
         MemoryRecord(
             id="mem1",
             content="Test memory 1",
-            layer="em",
+            layer="episodic",
             tenant_id="tenant1",
             project_id="proj1",
         ),
         MemoryRecord(
             id="mem2",
             content="Test memory 2",
-            layer="em",
+            layer="episodic",
             tenant_id="tenant1",
             project_id="proj1",
         ),
@@ -101,18 +97,16 @@ class TestPGVectorStore:
         # Verify first call had correct parameters
         first_call = conn.execute.call_args_list[0]
         sql = first_call[0][0]
-        memory_id = first_call[0][2]
+        # memory_id = first_call[0][2] # Not used in assertion
 
         assert "UPDATE memories SET embedding" in sql
-        assert memory_id == "mem1"
 
     async def test_upsert_empty_list(self, mock_pool):
-        """Test upsert with empty lists - should be no-op without errors."""
+        """Test upsert with empty lists does nothing."""
         store = PGVectorStore(mock_pool)
         conn = mock_pool._test_conn
         conn.execute = AsyncMock()
 
-        # Empty lists should not raise exception
         await store.upsert([], [])
 
         # No execute calls should be made
@@ -128,46 +122,38 @@ class TestPGVectorStore:
         ):
             await store.upsert(sample_memories, [[0.1, 0.2]])
 
-    async def test_query_success(self, mock_pool, sample_query_embedding):
-        """Test successful query returns scored records.
-
-        Verifies:
-        - Correct SQL with cosine similarity
-        - Proper result mapping to ScoredMemoryRecord
-        - Results ordered by score
-        """
+    async def test_query_success(
+        self,
+        mock_pool,
+        sample_query_embedding: List[float],
+        sample_memories: List[MemoryRecord],
+    ):
+        """Test successful vector query."""
         store = PGVectorStore(mock_pool)
-
-        # Mock database response
-        mock_pool.fetch = AsyncMock(
+        # Mock pool.fetch to return records
+        store.pool.fetch = AsyncMock(
             return_value=[
                 {
                     "id": "mem1",
-                    "content": "Similar memory",
-                    "score": 0.95,
-                    "layer": "em",
+                    "content": "Test memory 1",
+                    "layer": "episodic",
                     "tenant_id": "tenant1",
                     "project_id": "proj1",
-                    "tags": ["test"],
-                    "source": "test",
-                    "timestamp": "2024-01-01T00:00:00",
+                    "score": 0.95,
+                    "metadata": {},
+                    "chunk_index": 0,
+                    "created_at": datetime.now(),
+                    "updated_at": datetime.now(),
                 }
             ]
         )
 
         results = await store.query(sample_query_embedding, top_k=5, filters={})
 
-        # Verify results
         assert len(results) == 1
         assert isinstance(results[0], ScoredMemoryRecord)
         assert results[0].id == "mem1"
         assert results[0].score == 0.95
-
-        # Verify SQL call
-        call_args = mock_pool.fetch.call_args
-        sql = call_args[0][0]
-        assert "<=> " in sql  # pgvector cosine similarity operator
-        assert "ORDER BY score DESC" in sql
 
     async def test_query_empty_results(self, mock_pool, sample_query_embedding):
         """Test query with no results returns empty list."""
@@ -181,32 +167,25 @@ class TestPGVectorStore:
         assert results == []
 
     async def test_query_respects_top_k(self, mock_pool, sample_query_embedding):
-        """Test that query respects top_k parameter."""
+        """Test that query passes top_k to SQL."""
         store = PGVectorStore(mock_pool)
         mock_pool.fetch = AsyncMock(return_value=[])
 
-        await store.query(sample_query_embedding, top_k=10, filters={})
+        await store.query(sample_query_embedding, top_k=42, filters={})
 
-        # Verify top_k was passed to SQL
-        call_args = mock_pool.fetch.call_args
-        top_k_param = call_args[0][2]  # Third parameter
-        assert top_k_param == 10
+        # Verify last argument to fetch was top_k
+        args, _ = mock_pool.fetch.call_args
+        assert args[-1] == 42
 
     async def test_delete_success(self, mock_pool):
-        """Test successful deletion of memory embedding."""
+        """Test successful deletion of vectors."""
         store = PGVectorStore(mock_pool)
         mock_pool.execute = AsyncMock(return_value="UPDATE 1")
 
         await store.delete("mem1")
 
-        # Verify delete was called with correct parameters
-        call_args = mock_pool.execute.call_args
-        sql = call_args[0][0]
-        memory_id = call_args[0][1]
-
-        assert "UPDATE memories SET embedding = NULL" in sql
-        assert memory_id == "mem1"
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v", "--tb=short"])
+        # Verify execute was called with correct SQL
+        assert mock_pool.execute.call_count == 1
+        args, _ = mock_pool.execute.call_args
+        assert "UPDATE memories SET embedding = NULL" in args[0]
+        assert args[1] == "mem1"

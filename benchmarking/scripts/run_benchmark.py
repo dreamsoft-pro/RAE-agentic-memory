@@ -276,7 +276,9 @@ class RAEBenchmarkRunner:
 async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--synthetic-count", type=int, required=False)
-    parser.add_argument("--set", type=Path, required=False, help="Path to benchmark set YAML file")
+    parser.add_argument(
+        "--set", type=Path, required=False, help="Path to benchmark set YAML file"
+    )
     args = parser.parse_args()
 
     if not args.synthetic_count and not args.set:

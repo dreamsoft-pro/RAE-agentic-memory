@@ -48,7 +48,7 @@ async def test_build_context_basic(
             {
                 "id": "e1",
                 "content": "E1",
-                "layer": "em",
+                "layer": "episodic",
                 "created_at": datetime.now(timezone.utc),
                 "importance": 0.5,
                 "last_accessed_at": None,
@@ -59,7 +59,7 @@ async def test_build_context_basic(
             {
                 "id": "s1",
                 "content": "S1",
-                "layer": "sm",
+                "layer": "semantic",
                 "created_at": datetime.now(timezone.utc),
                 "importance": 0.5,
                 "last_accessed_at": None,
