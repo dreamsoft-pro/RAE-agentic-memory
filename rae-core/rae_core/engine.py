@@ -51,7 +51,9 @@ class RAEEngine:
                 strategies={
                     "vector": self._init_vector_strategy(),
                     "fulltext": self._init_fulltext_strategy(),
-                }
+                },
+                embedding_provider=self.embedding_provider,
+                memory_storage=self.memory_storage,
             )
 
     def _init_vector_strategy(self):
@@ -109,6 +111,7 @@ class RAEEngine:
             limit=top_k * 5,  # Wide window for Math Layer
             strategies=active_strategies,
             strategy_weights=strategy_weights,
+            enable_reranking=False,  # Math Core v3.3: Disable Reranking in favor of Auto-Tuned Szubar
         )
 
         # 2. DESIGNED MATH SCORING (The Manifold)
@@ -157,7 +160,11 @@ class RAEEngine:
                 # Threshold for induction (relative to top energy)
                 if energy_map:
                     max_e = max(energy_map.values())
-                    threshold = max_e * 0.4  # 40% of max energy
+                    # Math Core v3.3: Auto-Tuned Threshold
+                    # Factual queries -> High threshold (0.8) -> Less noise
+                    # Abstract queries -> Low threshold (0.4) -> More context
+                    dyn_threshold = self.math_ctrl.get_resonance_threshold(query)
+                    threshold = max_e * dyn_threshold
 
                     for node_id, energy in energy_map.items():
                         if node_id not in candidate_ids and energy > threshold:
