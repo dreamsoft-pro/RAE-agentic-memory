@@ -1,0 +1,1 @@
+models/nomic-embed-text-v1.5/model.onnx filter=lfs diff=lfs merge=lfs -text
