@@ -87,6 +87,7 @@ class FullTextStrategy(SearchStrategy):
         filters: dict[str, Any] | None = None,
         limit: int = 10,
         project: str | None = None,
+        **kwargs: Any,
     ) -> list[tuple[UUID, float]]:
         """Execute full-text search.
 

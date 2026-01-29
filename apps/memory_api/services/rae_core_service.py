@@ -76,11 +76,48 @@ class RAECoreService:
 
             self.tuning_service = TuningService(self)
 
-        # 1. Initialize embedding provider
+        # 1. Initialize embedding providers (Multi-Vector Support)
         import os
-
         from apps.memory_api.config import settings
+        
+        # Create the manager first
+        self.embedding_provider = EmbeddingManager(default_provider=LocalEmbeddingProvider())
 
+        # Register ONNX if available
+        if settings.RAE_EMBEDDING_BACKEND == "onnx" or os.getenv("ONNX_EMBEDDER_PATH"):
+            try:
+                from rae_core.embedding.native import NativeEmbeddingProvider
+                
+                model_path = settings.ONNX_EMBEDDER_PATH or "models/nomic-embed-text-v1.5/model.onnx"
+                if not os.path.exists(model_path):
+                    model_path = "models/all-MiniLM-L6-v2/model.onnx"
+                
+                if os.path.exists(model_path):
+                    tokenizer_path = os.path.join(os.path.dirname(model_path), "tokenizer.json")
+                    model_name = "nomic" if "nomic" in model_path.lower() else "mini-lm"
+                    
+                    onnx_provider = NativeEmbeddingProvider(
+                        model_path=model_path,
+                        tokenizer_path=tokenizer_path,
+                        model_name=model_name
+                    )
+                    # Register as a named provider
+                    self.embedding_provider.register_provider(model_name, onnx_provider)
+                    
+                    # If ONNX is preferred, set it as default
+                    if settings.RAE_EMBEDDING_BACKEND == "onnx":
+                        self.embedding_provider._default_provider = onnx_provider
+                        self.embedding_provider.default_model_name = model_name
+                    
+                    logger.info("registered_onnx_provider", name=model_name, path=model_path)
+            except Exception as e:
+                logger.error("onnx_initialization_failed", error=str(e))
+
+        # Register LiteLLM (Standard) as 'litellm' if not already default
+        if self.embedding_provider.default_model_name != "litellm":
+            self.embedding_provider.register_provider("litellm", LocalEmbeddingProvider())
+
+        # 2. Initialize adapters
         db_mode = os.getenv("RAE_DB_MODE") or settings.RAE_DB_MODE
         ignore_db = (
             postgres_pool is None
@@ -91,79 +128,23 @@ class RAECoreService:
         if postgres_pool is not None:
             ignore_db = False
 
-        base_provider: IEmbeddingProvider
-        if getattr(settings, "RAE_PROFILE", "standard") == "distributed":
-            base_provider = RemoteEmbeddingProvider(base_url=settings.ML_SERVICE_URL)
-        elif settings.RAE_EMBEDDING_BACKEND == "onnx":
-            try:
-                from rae_core.embedding.native import NativeEmbeddingProvider
-
-                # Determine paths
-                initial_model_path = (
-                    settings.ONNX_EMBEDDER_PATH or "models/all-MiniLM-L6-v2/model.onnx"
-                )
-                tokenizer_path = os.path.join(
-                    os.path.dirname(initial_model_path), "tokenizer.json"
-                )
-
-                active_model_path: str | None = initial_model_path
-
-                if not os.path.exists(initial_model_path):
-                    # Check for fallback to larger model if small one missing (optional)
-                    if os.path.exists("models/nomic-embed-text-v1.5/model.onnx"):
-                        active_model_path = "models/nomic-embed-text-v1.5/model.onnx"
-                        tokenizer_path = "models/nomic-embed-text-v1.5/tokenizer.json"
-                    else:
-                        logger.warning(
-                            "onnx_model_not_found",
-                            path=initial_model_path,
-                            fallback="litellm",
-                        )
-                        base_provider = LocalEmbeddingProvider()
-                        # Exit this block
-                        active_model_path = None
-
-                if active_model_path:
-                    logger.info(
-                        "using_native_onnx_embedding", model_path=active_model_path
-                    )
-                    base_provider = NativeEmbeddingProvider(
-                        model_path=active_model_path,
-                        tokenizer_path=tokenizer_path,
-                        model_name=(
-                            "all-MiniLM-L6-v2"
-                            if "MiniLM" in active_model_path
-                            else "nomic-embed-text-v1.5"
-                        ),
-                    )
-            except ImportError:
-                logger.error("onnx_deps_missing", fallback="litellm")
-                base_provider = LocalEmbeddingProvider()
-            except Exception as e:
-                logger.error("onnx_init_failed", error=str(e), fallback="litellm")
-                base_provider = LocalEmbeddingProvider()
-        else:
-            base_provider = LocalEmbeddingProvider()
-
-        self.embedding_provider = EmbeddingManager(default_provider=base_provider)
-
-        # 2. Initialize adapters
         if postgres_pool and not ignore_db:
             self.postgres_adapter = PostgreSQLStorage(pool=postgres_pool)
         else:
             from rae_adapters.memory import InMemoryStorage
-
             self.postgres_adapter = InMemoryStorage()
 
         if qdrant_client and not ignore_db:
             dim = self.embedding_provider.get_dimension()
             distance = getattr(settings, "RAE_VECTOR_DISTANCE", "Cosine")
             self.qdrant_adapter = QdrantVectorStore(
-                client=cast(Any, qdrant_client), embedding_dim=dim, distance=distance
+                client=cast(Any, qdrant_client), 
+                embedding_dim=dim, 
+                distance=distance,
+                vector_name=self.embedding_provider.default_model_name
             )
         else:
             from rae_adapters.memory import InMemoryVectorStore
-
             self.qdrant_adapter = InMemoryVectorStore()
 
         if redis_client and not ignore_db:

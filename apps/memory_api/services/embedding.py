@@ -194,12 +194,16 @@ class LocalEmbeddingProvider(IEmbeddingProvider):
     def __init__(self, embedding_service: Any = None):
         self.service = embedding_service or get_embedding_service()
 
-    async def embed_text(self, text: str) -> List[float]:
+    async def embed_text(
+        self, text: str, task_type: str = "search_document"
+    ) -> List[float]:
         """Generate embedding for text."""
         results = await self.service.generate_embeddings_async([text])
         return results[0] if results else []
 
-    async def embed_batch(self, texts: List[str]) -> List[List[float]]:
+    async def embed_batch(
+        self, texts: List[str], task_type: str = "search_document"
+    ) -> List[List[float]]:
         """Generate embeddings for multiple texts."""
         return await self.service.generate_embeddings_async(texts)
 
@@ -216,12 +220,16 @@ class RemoteEmbeddingProvider(IEmbeddingProvider):
         self.base_url = base_url
         self.dimension = dimension
 
-    async def embed_text(self, text: str) -> List[float]:
+    async def embed_text(
+        self, text: str, task_type: str = "search_document"
+    ) -> List[float]:
         """Generate embedding for text by calling remote service."""
-        results = await self.embed_batch([text])
+        results = await self.embed_batch([text], task_type=task_type)
         return results[0] if results else []
 
-    async def embed_batch(self, texts: List[str]) -> List[List[float]]:
+    async def embed_batch(
+        self, texts: List[str], task_type: str = "search_document"
+    ) -> List[List[float]]:
         """Generate embeddings for multiple texts by calling remote service."""
         from apps.memory_api.services.ml_service_client import MLServiceClient
 
@@ -245,11 +253,15 @@ class TaskQueueEmbeddingProvider(IEmbeddingProvider):
         self.dimension = dimension
         self.timeout_sec = timeout_sec
 
-    async def embed_text(self, text: str) -> List[float]:
-        results = await self.embed_batch([text])
+    async def embed_text(
+        self, text: str, task_type: str = "search_document"
+    ) -> List[float]:
+        results = await self.embed_batch([text], task_type=task_type)
         return results[0] if results else []
 
-    async def embed_batch(self, texts: List[str]) -> List[List[float]]:
+    async def embed_batch(
+        self, texts: List[str], task_type: str = "search_document"
+    ) -> List[List[float]]:
         """
         Offload embedding generation to a compute node via Task Queue.
         Waits for the task to be completed.
@@ -321,10 +333,14 @@ class MathOnlyEmbeddingProvider(IEmbeddingProvider):
     def __init__(self, dimension: int = 384):
         self.dimension = dimension
 
-    async def embed_text(self, text: str) -> List[float]:
+    async def embed_text(
+        self, text: str, task_type: str = "search_document"
+    ) -> List[float]:
         return [0.0] * self.dimension
 
-    async def embed_batch(self, texts: List[str]) -> List[List[float]]:
+    async def embed_batch(
+        self, texts: List[str], task_type: str = "search_document"
+    ) -> List[List[float]]:
         return [[0.0] * self.dimension for _ in texts]
 
     def get_dimension(self) -> int:
