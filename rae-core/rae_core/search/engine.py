@@ -59,7 +59,7 @@ class HybridSearchEngine:
         limit: int = 10,
         filters: dict[str, Any] | None = None,
         use_cache: bool = True,
-        enable_reranking: bool = True, # New flag
+        enable_reranking: bool = True,  # New flag
         **kwargs: Any,
     ) -> list[tuple[UUID, float]]:
         active_strategy_names = kwargs.get("strategies") or list(self.strategies.keys())

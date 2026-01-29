@@ -92,6 +92,7 @@ class MathLayerController:
             # Parse weights from name: w_txt10p0_vec1p0 -> txt=10.0, vec=1.0
             try:
                 import re
+
                 match = re.match(r"w_txt([\dp]+)_vec([\dp]+)", strategy)
                 if match:
                     txt_w = float(match.group(1).replace("p", "."))
@@ -122,7 +123,7 @@ class MathLayerController:
     def get_resonance_threshold(self, query: str) -> float:
         """
         Determine Szubar (Resonance) Threshold using Bandit context.
-        
+
         Logic:
         - Factual Query (High Text Weight) -> High Threshold (0.8-0.9) [Conservative]
         - Abstract Query (High Vector Weight) -> Low Threshold (0.3-0.4) [Aggressive]
@@ -132,15 +133,15 @@ class MathLayerController:
             weights = self._last_decision.get("weights", {})
             txt_w = weights.get("fulltext", 1.0)
             vec_w = weights.get("vector", 1.0)
-            
+
             # Simple heuristic mapping
-            if txt_w > vec_w * 2: # Strongly Factual
+            if txt_w > vec_w * 2:  # Strongly Factual
                 return 0.85
-            elif vec_w > txt_w * 2: # Strongly Abstract
+            elif vec_w > txt_w * 2:  # Strongly Abstract
                 return 0.35
             else:
-                return 0.6 # Balanced
-        
+                return 0.6  # Balanced
+
         # Fallback if no decision yet (shouldn't happen in standard flow)
         return 0.6
 
