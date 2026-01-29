@@ -25,10 +25,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "rae-core"))
 class RAEBenchmarkRunner:
     def __init__(
         self,
-        benchmark_file: Path,
+        benchmark_file: Path | None,
         output_dir: Path,
         api_url: str,
-        synthetic_count: int = None,
+        synthetic_count: int | None = None,
     ):
         self.benchmark_file = benchmark_file
         self.output_dir = output_dir
@@ -128,6 +128,10 @@ class RAEBenchmarkRunner:
         if self.synthetic_count:
             data = self.generate_synthetic_data(self.synthetic_count)
         else:
+            if not self.benchmark_file:
+                raise ValueError(
+                    "Benchmark file required if synthetic count not provided"
+                )
             with open(self.benchmark_file, "r") as f:
                 data = yaml.safe_load(f)
 
@@ -147,7 +151,7 @@ class RAEBenchmarkRunner:
 
         print(f"📥 Inserting {len(data['memories'])} memories...")
         batch_size = 10
-        comp_nodes = {}
+        comp_nodes: dict[str, list[int]] = {}
         for i in range(0, len(data["memories"]), batch_size):
             batch = data["memories"][i : i + batch_size]
             embeddings = await engine.embedding_provider.embed_batch(
@@ -271,10 +275,15 @@ class RAEBenchmarkRunner:
 
 async def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--synthetic-count", type=int, required=True)
+    parser.add_argument("--synthetic-count", type=int, required=False)
+    parser.add_argument("--set", type=Path, required=False, help="Path to benchmark set YAML file")
     args = parser.parse_args()
+
+    if not args.synthetic_count and not args.set:
+        parser.error("Either --synthetic-count or --set must be provided")
+
     runner = RAEBenchmarkRunner(
-        None, Path("."), "", synthetic_count=args.synthetic_count
+        args.set, Path("."), "", synthetic_count=args.synthetic_count
     )
     try:
         await runner.setup()
