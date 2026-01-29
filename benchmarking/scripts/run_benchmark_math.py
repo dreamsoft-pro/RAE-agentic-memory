@@ -202,6 +202,9 @@ class MathBenchmarkRunner(RAEBenchmarkRunner):
     async def load_benchmark(self):
         import yaml
 
+        if not self.benchmark_file:
+            raise ValueError("Benchmark file required")
+
         with open(self.benchmark_file, "r") as f:
             self.benchmark_data = yaml.safe_load(f)
 

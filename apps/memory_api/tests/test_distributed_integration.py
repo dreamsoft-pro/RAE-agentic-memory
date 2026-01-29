@@ -44,7 +44,6 @@ async def test_embedding_service_distributed_routing():
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip("Requires OPENAI_API_KEY for embedding generation or litellm mocking")
 async def test_embedding_service_local_fallback():
     """Test that EmbeddingService falls back to local when not in distributed mode."""
     # Setup
@@ -58,19 +57,22 @@ async def test_embedding_service_local_fallback():
         # Mock local generate_embeddings (sync)
         with patch.object(
             service, "generate_embeddings", return_value=[[0.4, 0.5, 0.6]]
-        ) as mock_sync:
-            # Execute
-            texts = ["local"]
-            result = await service.generate_embeddings_async(texts)
+        ):
+            # Mock litellm.aembedding to avoid real API calls
+            with patch("litellm.aembedding") as mock_litellm:
+                mock_litellm.return_value = {"data": [{"embedding": [0.4, 0.5, 0.6]}]}
 
-            # Verify
-            # When LiteLLM fallback is used, it returns zeros or actual embeddings
-            # We check if it returns a list of lists of floats
-            assert isinstance(result, list)
-            assert len(result) == 1
-            assert len(result[0]) > 0
-            assert isinstance(result[0][0], float)
-            mock_sync.assert_called_once_with(texts)
+                # Execute
+                texts = ["local"]
+                result = await service.generate_embeddings_async(texts)
+
+                # Verify
+                assert isinstance(result, list)
+                assert len(result) == 1
+                assert result[0] == [0.4, 0.5, 0.6]
+                # mock_sync is NOT called by generate_embeddings_async,
+                # it calls litellm.aembedding directly.
+                mock_litellm.assert_called_once()
 
     # Cleanup
     settings.RAE_PROFILE = original_profile

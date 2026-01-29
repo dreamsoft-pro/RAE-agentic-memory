@@ -17,13 +17,6 @@ from uuid import UUID
 
 import pytest
 
-# Skip tests if spacy is not installed (ML dependency)
-spacy = pytest.importorskip(
-    "spacy",
-    reason="Requires spacy – heavy ML dependency, not installed in lightweight CI",
-)
-
-# Use noqa: E402 because these imports MUST be after the importorskip check
 from apps.memory_api.repositories.graph_repository import GraphRepository  # noqa: E402
 from apps.memory_api.services.graph_extraction import (  # noqa: E402
     GraphExtractionService,

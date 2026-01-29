@@ -1157,7 +1157,7 @@ class RAECoreService:
         """Delete old episodic memories to manage data lifecycle."""
         interval = f"{days} days"
         result = await self.db.execute(
-            "DELETE FROM memories WHERE layer = 'em' AND created_at < NOW() - $1::interval",
+            "DELETE FROM memories WHERE layer = 'episodic' AND created_at < NOW() - $1::interval",
             interval,
         )
         if result and isinstance(result, str) and result.startswith("DELETE"):
@@ -1172,7 +1172,7 @@ class RAECoreService:
             """
             SELECT DISTINCT tenant_id, ARRAY_AGG(id) as memory_ids
             FROM memories m
-            WHERE layer = 'em'
+            WHERE layer = 'episodic'
                 AND NOT EXISTS (
                     SELECT 1 FROM knowledge_graph_edges ke
                     WHERE ke.tenant_id = m.tenant_id

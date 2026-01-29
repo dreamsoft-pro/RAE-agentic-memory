@@ -1,27 +1,19 @@
-# Next Session Plan: Cleanup & Stabilization (Post-ONNX)
+# Plan kontynuacji - Stabilizacja Testów
 
-## 🛑 Status (Session End)
-- **Native ONNX**: Implemented and working locally (Code committed).
-- **Linting**: 100% Green (Zero Warnings).
-- **Tests**: **FAILED**. `make pre-push` blocked by legacy V1 tests and Hard Frames V1 clients.
-- **Git**: Local commits ready (ahead of origin), push blocked by test failures.
+## Stan na 2026-01-29
+- **Testy:** 1079 passed, 0 failed, 7 skipped.
+- **Kluczowe poprawki:**
+    - `rae_adapters/postgres.py`: Mapowanie `episodic` <-> `em` we wszystkich metodach (store, query, count, delete).
+    - `apps/memory_api/security/auth.py`: Odporność na brak `app.state.pool` w trybie `ignore`.
+    - `apps/memory_api/observability/health_checks.py`: Naprawiony `NameError` (brak importu `os`).
+    - `tests/integration/test_dreaming_worker.py`: Synchronizacja manualnych insertów SQL z mapowaniem adaptera (`em`).
 
-## 📋 Immediate Tasks (Next Start)
-### 1. 🧹 Purge Legacy V1 Tests
-- **Objective**: Remove tests that target the deleted API V1.
-- **Action**: Delete `tests/api/v1/` directory (Verify functionality exists in `apps/memory_api/tests/` first).
-- **Action**: Update or archive `tests/contracts/` to target V2 schemas.
+## Do zrobienia w następnej sesji
+1. **Weryfikacja pominiętych testów (7):**
+    - Sprawdzić, czy testy wymagające `spacy`, `sentence-transformers` i `presidio` powinny zostać przeniesione do testów integracyjnych/benchmarków na klastrze, czy wymagają lżejszych mocków.
+    - Zweryfikować testy `hard_frames` (wymagają działającego kontenera `rae-agent-secure`).
+2. **Push i monitoring CI:**
+    - Wykonać `make pre-push` i wypchnąć zmiany na branch deweloperski.
 
-### 2. 🛠️ Fix Hard Frames Tests
-- **Objective**: Align Security/Hard Frames tests with API V2.
-- **Action**: Update `tests/hard_frames/test_client.py` to use `/v2/agent/execute` instead of `/v1/agent`.
-- **Action**: Ensure `test_api_e2e.py` points to correct local ports.
-
-### 3. ✅ Verify & Push
-- **Command**: `make test-lite` (Target: 100% Pass).
-- **Command**: `git push origin develop` (Only after tests pass).
-
-### 4. 🚀 Cluster Sync
-- **Objective**: Deploy validated ONNX code to Node 1.
-- **Action**: `rsync` code to Lumina.
-- **Action**: Run benchmarks on Node 1 to verify ONNX speedup.
+## Polecenie startowe
+`python3 scripts/bootstrap_session.py`
