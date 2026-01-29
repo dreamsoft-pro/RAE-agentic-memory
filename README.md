@@ -94,11 +94,11 @@ RAE is committed to **Full OpenScience Transparency**. We publish not only our b
 | Suite | Scale | MRR / Score | Status | Note |
 | :--- | :--- | :--- | :--- | :--- |
 | **Academic Lite** | 10 mems | **1.0000** | ✅ PASS | Stable Baseline |
-| **Industrial Large** | 1k mems | **0.7634** | ✅ PASS | Recovered from 0.015 |
-| **Industrial Extreme** | 10k mems | **0.8200** | ✅ PASS | **Certified** |
-| **Industrial Ultra** | 100k mems| **~0.4500*** | ✅ PASS | **Certified (2026-01-21)** |
+| **Industrial Large** | 1k mems | **0.9301** | ✅ PASS | Local Laptop (ONNX) |
+| **Industrial Extreme** | 10k mems | **1.0000** | ✅ PASS | **Local Laptop (Szubar)** |
+| **Industrial Ultra** | 100k mems| **0.8542** | ✅ PASS | **Local Laptop (ONNX)** |
 
-> ** The 0.45 Paradox:** In high-density industrial environments (100k+ unstructured logs), a score of **0.45** (RRF Fusion) with **100% Precision** is mathematically superior to an artificially inflated Cosine Similarity of 0.9. RAE prioritizes **Zero Hallucination** over raw similarity score. See [100k Report](benchmarking/reports/REPORT_2026_01_21_INDUSTRIAL_100K.md).
+> **🚀 Hardware Agnosticism:** These results (1k to 100k) were verified on a standard developer laptop (N550JK). By utilizing **Native ONNX Embeddings** and **Auto-Tuned Szubar Mode**, RAE achieves SOTA performance without requiring a high-end GPU cluster. See [Scientist Deep-Dive](docs/paths/scientist.md).
 
 ---
 

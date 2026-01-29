@@ -121,13 +121,35 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
         norms = np.linalg.norm(vectors, axis=1, keepdims=True)
         return cast(np.ndarray, vectors / np.clip(norms, a_min=1e-9, a_max=None))
 
-    async def embed_text(self, text: str) -> list[float]:
+    async def embed_text(
+        self, text: str, task_type: str = "search_document"
+    ) -> list[float]:
         """Embed a single text string."""
-        vectors = await self.embed_batch([text])
+        vectors = await self.embed_batch([text], task_type=task_type)
         return vectors[0]
 
-    async def embed_batch(self, texts: list[str]) -> list[list[float]]:
+    async def embed_batch(
+        self, texts: list[str], task_type: str = "search_document"
+    ) -> list[list[float]]:
         """Embed a batch of texts."""
+        # Preprocessing for Nomic (Matryoshka / v1.5)
+        # Requires "search_query: " or "search_document: " prefix
+        if "nomic" in self.model_name.lower():
+            prefix = ""
+            if task_type == "search_query":
+                prefix = "search_query: "
+            elif task_type == "search_document":
+                prefix = "search_document: "
+            
+            # Apply prefix if not already present
+            processed_texts = []
+            for t in texts:
+                if t.startswith("search_query:") or t.startswith("search_document:"):
+                    processed_texts.append(t)
+                else:
+                    processed_texts.append(f"{prefix}{t}")
+            texts = processed_texts
+
         # 1. Tokenize
         encoded = self.tokenizer.encode_batch(texts)
 

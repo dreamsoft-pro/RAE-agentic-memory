@@ -234,13 +234,23 @@ class RAEEngine:
         )
 
     async def store_memory(self, **kwargs):
-        """Store memory with automatic embedding."""
+        """Store memory with automatic embedding (supports Multi-Vector)."""
         content = kwargs.get("content")
         tenant_id = kwargs.get("tenant_id")
         m_id = await self.memory_storage.store_memory(**kwargs)
 
         # Automatic Vectorization (Manifold Entry)
-        emb = await self.embedding_provider.embed_text(content)
+        # Check if provider supports multi-vector generation (EmbeddingManager)
+        if hasattr(self.embedding_provider, "generate_all_embeddings"):
+            embs_dict = await self.embedding_provider.generate_all_embeddings(
+                [content], task_type="search_document"
+            )
+            # Convert dict[name, list[list[float]]] to dict[name, list[float]]
+            emb = {name: e[0] for name, e in embs_dict.items() if e}
+        else:
+            emb = await self.embedding_provider.embed_text(
+                content, task_type="search_document"
+            )
 
         # Clean metadata for vector storage (remove heavy content)
         vector_meta = kwargs.copy()

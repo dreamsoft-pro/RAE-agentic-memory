@@ -90,6 +90,7 @@ class HybridSearchEngine:
                     filters=filters,
                     limit=limit * 5,
                     project=p_id,
+                    **kwargs,
                 )
 
                 if results and len(results) > 1:
@@ -129,7 +130,9 @@ class HybridSearchEngine:
             return results
 
         try:
-            query_emb = await self.embedding_provider.embed_text(query)
+            query_emb = await self.embedding_provider.embed_text(
+                query, task_type="search_query"
+            )
             reranked: list[tuple[UUID, float]] = []
 
             for m_id, original_score in results:
@@ -140,7 +143,9 @@ class HybridSearchEngine:
                     continue
 
                 # Get or generate vector for the content
-                mem_emb = await self.embedding_provider.embed_text(memory["content"])
+                mem_emb = await self.embedding_provider.embed_text(
+                    memory["content"], task_type="search_document"
+                )
 
                 # Manual Cosine Similarity
                 dot = sum(a * b for a, b in zip(query_emb, mem_emb))

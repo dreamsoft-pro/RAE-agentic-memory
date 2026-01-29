@@ -55,16 +55,19 @@ class QdrantVectorStore(IVectorStore):
         self.embedding_dim = embedding_dim
         self.vector_name = vector_name
         self._initialized = False
+        self._known_vectors: set[str] = set()
 
     async def _ensure_collection(self) -> None:
-        """Ensure the collection exists with the correct schema."""
+        """Ensure the collection exists."""
         if self._initialized:
             return
 
         try:
             collections = await self.client.get_collections()
             collection_names = [c.name for c in collections.collections]
+            
             if self.collection_name not in collection_names:
+                # Create with default vector
                 await self.client.create_collection(
                     collection_name=self.collection_name,
                     vectors_config={
@@ -74,10 +77,50 @@ class QdrantVectorStore(IVectorStore):
                     },
                 )
                 logger.info(f"Created Qdrant collection: {self.collection_name}")
+                self._known_vectors.add(self.vector_name)
+            else:
+                # Load existing vectors
+                collection_info = await self.client.get_collection(self.collection_name)
+                if collection_info.config.params.vectors:
+                    if isinstance(collection_info.config.params.vectors, dict):
+                        self._known_vectors.update(collection_info.config.params.vectors.keys())
+                    else:
+                        # Single unnamed vector or legacy
+                        pass 
+
             self._initialized = True
         except Exception as e:
             logger.error(f"Failed to ensure Qdrant collection: {e}")
             # Do not set initialized to True if failed, so we retry
+
+    async def ensure_vector_config(self, vector_name: str, dim: int) -> None:
+        """Dynamically add a new named vector config if missing."""
+        await self._ensure_collection()
+        
+        if vector_name in self._known_vectors:
+            return
+
+        try:
+            # check again against API to be safe (race conditions)
+            collection_info = await self.client.get_collection(self.collection_name)
+            existing_vectors = {}
+            if isinstance(collection_info.config.params.vectors, dict):
+                existing_vectors = collection_info.config.params.vectors
+            
+            if vector_name not in existing_vectors:
+                logger.info(f"Adding new vector config: {vector_name} ({dim}d)")
+                await self.client.update_collection(
+                    collection_name=self.collection_name,
+                    vectors_config={
+                        vector_name: VectorParams(
+                            size=dim, distance=Distance.COSINE
+                        )
+                    }
+                )
+            
+            self._known_vectors.add(vector_name)
+        except Exception as e:
+            logger.error(f"Failed to update vector config for {vector_name}: {e}")
 
     def _build_filter(
         self,
@@ -151,9 +194,16 @@ class QdrantVectorStore(IVectorStore):
         for mem_id, emb, meta in vectors:
             # Handle named vectors vs list
             if isinstance(emb, dict):
-                vector_data = emb  # It's already a dictionary of named vectors
+                vector_data = emb
+                # Dynamically register any new vectors found
+                for v_name, v_vec in emb.items():
+                    if v_name not in self._known_vectors:
+                        await self.ensure_vector_config(v_name, len(v_vec))
             else:
                 vector_data = {self.vector_name: emb}
+                # Ensure default vector is registered (should be done in _ensure_collection but safe to check)
+                if self.vector_name not in self._known_vectors:
+                     await self.ensure_vector_config(self.vector_name, len(emb))
 
             # Prepare payload
             payload = {
@@ -179,8 +229,10 @@ class QdrantVectorStore(IVectorStore):
         self,
         memory_id: UUID,
         tenant_id: str,
+        vector_name: str | None = None
     ) -> list[float] | None:
         """Retrieve a vector embedding by ID."""
+        target_vector = vector_name or self.vector_name
         await self._ensure_collection()
         try:
             results = await self.client.retrieve(
@@ -200,7 +252,7 @@ class QdrantVectorStore(IVectorStore):
 
             if record.vector:
                 if isinstance(record.vector, dict):
-                    return cast(list[float] | None, record.vector.get(self.vector_name))
+                    return cast(list[float] | None, record.vector.get(target_vector))
                 return cast(list[float] | None, record.vector)
 
             return None
@@ -259,9 +311,11 @@ class QdrantVectorStore(IVectorStore):
         session_id: str | None = None,
         filters: dict[str, Any] | None = None,
         project: str | None = None,
+        vector_name: str | None = None,
         **kwargs: Any,
     ) -> list[tuple[UUID, float]]:
         """Search for similar vectors."""
+        target_vector = vector_name or self.vector_name
         await self._ensure_collection()
 
         search_filter = self._build_filter(
@@ -276,7 +330,7 @@ class QdrantVectorStore(IVectorStore):
         try:
             results = await self.client.search(
                 collection_name=self.collection_name,
-                query_vector=NamedVector(name=self.vector_name, vector=query_embedding),
+                query_vector=NamedVector(name=target_vector, vector=query_embedding),
                 query_filter=search_filter,
                 limit=limit,
                 score_threshold=score_threshold,
