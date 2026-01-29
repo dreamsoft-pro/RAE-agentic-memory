@@ -81,3 +81,4 @@ pass_*.tmp
 .env.benchmark
 models/
 models/
+.node1_access.md
