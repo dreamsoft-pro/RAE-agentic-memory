@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-RAE Benchmark Runner - System 3.2 FULLY INTEGRATED
-Now using MathLayerController from rae-core for dynamic weighting.
+RAE Benchmark Runner - System 3.2 PURE MATH (Fixed SQL v2)
+Deterministic Core without LLM/Reranking dependencies.
 """
 
 import argparse
@@ -10,6 +10,7 @@ import json
 import os
 import sys
 from pathlib import Path
+from datetime import datetime
 
 import asyncpg
 import yaml
@@ -24,17 +25,18 @@ from apps.memory_api.services.embedding import get_embedding_service
 
 
 class RAEBenchmarkRunner:
-    def __init__(self, benchmark_file: Path, output_dir: Path, api_url: str):
+    def __init__(self, benchmark_file: Path, output_dir: Path, api_url: str, synthetic_count: int = None):
         self.benchmark_file = benchmark_file
         self.output_dir = output_dir
         self.api_url = api_url
+        self.synthetic_count = synthetic_count
         self.tenant_id = "00000000-0000-0000-0000-000000000000"
         self.project_id = "RAE-agentic-memory"
         self.szubar_reflections = 0
         self.reflection_map: dict[str, list[str]] = {}
 
     async def setup(self):
-        print("🔌 Initializing System 3.2 (Integrated Core)...")
+        print("🔌 Initializing System 3.2 (Pure Math Core)...")
         self.pool = await asyncpg.create_pool(
             host=os.getenv("POSTGRES_HOST", "localhost"),
             port=int(os.getenv("POSTGRES_PORT", 5432)),
@@ -47,310 +49,151 @@ class RAEBenchmarkRunner:
             port=int(os.getenv("QDRANT_PORT", 6333)),
         )
 
-        # Initialize Embedding Provider based on backend
-        from rae_core.interfaces.embedding import IEmbeddingProvider
-
-        self.provider: IEmbeddingProvider
-
-        if os.getenv("RAE_EMBEDDING_BACKEND") == "onnx":
-            from rae_core.embedding.native import NativeEmbeddingProvider
-
-            model_path = os.getenv(
-                "ONNX_EMBEDDER_PATH", "models/nomic-embed-text-v1.5/model.onnx"
-            )
-            tokenizer_path = os.path.join(os.path.dirname(model_path), "tokenizer.json")
-            print(f"🧠 Using Native ONNX Provider: {model_path}")
-
-            # Extract model name for normalization quirks if any
-            model_name = os.getenv("RAE_EMBEDDING_MODEL", "nomic-embed-text-v1.5")
-            self.provider = NativeEmbeddingProvider(
-                model_path=model_path,
-                tokenizer_path=tokenizer_path,
-                model_name=model_name,
-            )
-            self.emb_dim = self.provider.get_dimension()
-        else:
-            print("☁️ Using LiteLLM Provider (Adaptive)")
-            self.emb_service = get_embedding_service()
-            self.emb_service._initialize_model()
-
-            from rae_core.interfaces.embedding import IEmbeddingProvider
-
-            class AdaptiveEmbeddingProvider(IEmbeddingProvider):
-                def __init__(self, svc):
-                    self.svc = svc
-
-                async def embed_text(self, t):
-                    res = await self.svc.generate_embeddings_async([t])
-                    return res[0]
-
-                async def embed_batch(self, ts):
-                    return await self.svc.generate_embeddings_async(ts)
-
-                def get_dimension(self):
-                    model = self.svc.litellm_model
-                    return self.svc.get_dimension_for_model(model)
-
-            self.provider = AdaptiveEmbeddingProvider(self.emb_service)
-            self.emb_dim = self.provider.get_dimension()
-
+        from rae_core.embedding.native import NativeEmbeddingProvider
+        model_path = os.getenv("ONNX_EMBEDDER_PATH", "models/all-MiniLM-L6-v2/model.onnx")
+        tokenizer_path = model_path.replace("model.onnx", "tokenizer.json")
+        
+        print(f"🧠 Using Native ONNX Provider: {model_path}")
+        self.provider = NativeEmbeddingProvider(model_path=model_path, tokenizer_path=tokenizer_path)
+        self.emb_dim = self.provider.get_dimension()
         print(f"📏 Detected Embedding Dimension: {self.emb_dim}")
 
-        # Recreate collection to ensure dimension match
-        try:
-            await self.qdrant.delete_collection("memories")
-        except Exception:
-            pass
+        try: await self.qdrant.delete_collection("memories")
+        except Exception: pass
 
-        try:
-            await self.qdrant.create_collection(
-                "memories",
-                vectors_config={
-                    "dense": q_models.VectorParams(
-                        size=self.emb_dim, distance=q_models.Distance.COSINE
-                    ),
-                    "ollama": q_models.VectorParams(
-                        size=768, distance=q_models.Distance.COSINE
-                    ),
-                    "openai": q_models.VectorParams(
-                        size=1536, distance=q_models.Distance.COSINE
-                    ),
-                },
-            )
-        except Exception as e:
-            print(f"⚠️ Collection creation failed (might exist): {e}")
-
-        if os.path.exists("reflection_map.json"):
-            with open("reflection_map.json", "r") as f:
-                self.reflection_map = json.load(f)
+        await self.qdrant.create_collection(
+            "memories",
+            vectors_config={"dense": q_models.VectorParams(size=self.emb_dim, distance=q_models.Distance.COSINE)},
+        )
 
     async def cleanup(self):
-        print("🧹 Cleaning data (preserving reflections)...")
-        if not hasattr(self, "pool") or not self.pool:
-            return
+        print("🧹 Cleaning data...")
         async with self.pool.acquire() as conn:
-            # 1. Clean graph edges first due to foreign keys
-            await conn.execute(
-                "DELETE FROM knowledge_graph_edges WHERE tenant_id = $1",
-                self.tenant_id,
-            )
-            # 2. Clean graph nodes
-            await conn.execute(
-                "DELETE FROM knowledge_graph_nodes WHERE tenant_id = $1",
-                self.tenant_id,
-            )
-            # 3. Clean memories
-            await conn.execute(
-                "DELETE FROM memories WHERE tenant_id = $1 AND layer != 'reflective'",
-                self.tenant_id,
-            )
-        try:
-            # Clean only points for this tenant to allow concurrent runs if needed (though we dropped collection in setup)
-            await self.qdrant.delete(
-                collection_name="memories",
-                points_selector=q_models.FilterSelector(
-                    filter=q_models.Filter(
-                        must=[
-                            q_models.FieldCondition(
-                                key="tenant_id",
-                                match=q_models.MatchValue(value=self.tenant_id),
-                            )
-                        ],
-                        must_not=[
-                            q_models.FieldCondition(
-                                key="layer",
-                                match=q_models.MatchValue(value="reflective"),
-                            )
-                        ],
-                    )
-                ),
-            )
-        except Exception:
-            pass
+            await conn.execute("DELETE FROM knowledge_graph_edges WHERE tenant_id = $1", self.tenant_id)
+            await conn.execute("DELETE FROM knowledge_graph_nodes WHERE tenant_id = $1", self.tenant_id)
+            await conn.execute("DELETE FROM memories WHERE tenant_id = $1 AND layer != 'reflective'", self.tenant_id)
+
+    def generate_synthetic_data(self, count: int):
+        print(f"🏭 Generating {count} synthetic memories...")
+        import random
+        memories = []
+        components = ["api", "auth", "db", "ui", "storage", "network"]
+        for i in range(count):
+            comp = random.choice(components)
+            memories.append({
+                "id": f"mem_{i:06d}", "text": f"[MES] {comp}: Event {i} occurred at {datetime.now().isoformat()}", 
+                "metadata": {"component": comp, "importance": 0.5}
+            })
+        queries = []
+        for _ in range(50):
+            target = random.choice(components)
+            queries.append({
+                "query": f"Find logs for {target}",
+                "expected_source_ids": [m["id"] for m in memories if target in m["text"]],
+                "difficulty": "medium"
+            })
+        return {"name": f"industrial_{count}", "memories": memories, "queries": queries}
 
     async def run(self):
-        with open(self.benchmark_file, "r") as f:
-            data = yaml.safe_load(f)
-        print(f"🚀 Running Integrated Benchmark: {data['name']}")
-
+        if self.synthetic_count: data = self.generate_synthetic_data(self.synthetic_count)
+        else:
+            with open(self.benchmark_file, "r") as f: data = yaml.safe_load(f)
+        
         from rae_adapters.postgres import PostgreSQLStorage
         from rae_adapters.qdrant import QdrantVectorStore
         from rae_core.embedding.manager import EmbeddingManager
         from rae_core.engine import RAEEngine
 
-        # Provider initialized in setup as self.provider
-
         storage = PostgreSQLStorage(pool=self.pool)
         vector_store = QdrantVectorStore(client=self.qdrant, embedding_dim=self.emb_dim)
         manager = EmbeddingManager(default_provider=self.provider)
+        engine = RAEEngine(memory_storage=storage, vector_store=vector_store, embedding_provider=manager)
 
-        # CORE ENGINE WITH INTEGRATED MATH CONTROLLER
-        engine = RAEEngine(
-            memory_storage=storage,
-            vector_store=vector_store,
-            embedding_provider=manager,
-            settings={"bandit_persistence_path": "bandit_state.json"},
-        )
+        print(f"📥 Inserting {len(data['memories'])} memories...")
+        batch_size = 10
+        comp_nodes = {}
+        for i in range(0, len(data["memories"]), batch_size):
+            batch = data["memories"][i:i+batch_size]
+            embeddings = await engine.embedding_provider.embed_batch([m["text"] for m in batch])
+            for j, mem in enumerate(batch):
+                m_id = await engine.memory_storage.store_memory(
+                    tenant_id=self.tenant_id, agent_id=self.project_id,
+                    content=mem["text"], layer="longterm", importance=0.5, metadata=mem["metadata"]
+                )
+                await engine.vector_store.store_vector(m_id, embeddings[j], self.tenant_id, metadata=mem["metadata"])
+                mem["_db_id"] = m_id
+                node_id = await self.pool.fetchval(
+                    "INSERT INTO knowledge_graph_nodes (node_id, tenant_id, project_id, label) VALUES ($1, $2, $3, $4) RETURNING id",
+                    str(m_id), self.tenant_id, self.project_id, "Memory"
+                )
+                mem["_node_id"] = node_id
+                comp = mem["metadata"]["component"]
+                if comp not in comp_nodes: comp_nodes[comp] = []
+                comp_nodes[comp].append(node_id)
+            if i % 1000 == 0: print(f"   ✅ {i}")
 
-        # 1. Insert
-        memory_lookup = {mem["id"]: mem["text"] for mem in data["memories"]}
-        for i, mem in enumerate(data["memories"], 1):
-            m_id = await engine.store_memory(
-                tenant_id=self.tenant_id,
-                agent_id=self.project_id,
-                content=mem["text"],
-                layer="longterm",
-                importance=0.5,
-            )
-            mem["_db_id"] = m_id
-            if i % 500 == 0:
-                print(f"   ✅ Inserted {i}")
+        print("🔗 Linking nodes...")
+        for comp, nodes in comp_nodes.items():
+            if len(nodes) > 1:
+                for k in range(len(nodes)-1, max(0, len(nodes)-5), -1):
+                    await self.pool.execute(
+                        "INSERT INTO knowledge_graph_edges (tenant_id, project_id, source_node_id, target_node_id, relation, properties) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING",
+                        self.tenant_id, self.project_id, nodes[k], nodes[k-1], "same_component", json.dumps({"weight": 0.7})
+                    )
 
-        # 2. Query Loop
+        print("🔍 Running Queries...")
         hybrid_results = []
         for i, q in enumerate(data["queries"], 1):
-            query_text = q["query"]
-
-            # CORE CALL (Autonomous Weights)
             raw_results = await engine.search_memories(
-                query=query_text,
-                tenant_id=self.tenant_id,
-                agent_id=self.project_id,
-                top_k=10,
+                query=q["query"], tenant_id=self.tenant_id, agent_id=self.project_id, top_k=10, enable_reranking=False
             )
-
-            retrieved_db_ids = [str(r["id"]) for r in raw_results]
-            retrieved_mixed_ids = self._map_ids_smart(
-                retrieved_db_ids, data["memories"]
-            )
-
-            # Evaluate Hit
-            is_hit = False
-            hit_type = "MISS"
-            for r_id in retrieved_mixed_ids[:5]:
-                if r_id in q["expected_source_ids"]:
-                    is_hit = True
-                    hit_type = "DIRECT"
-                    break
-                if r_id in self.reflection_map and any(
-                    t in q["expected_source_ids"] for t in self.reflection_map[r_id]
-                ):
-                    is_hit = True
-                    hit_type = "REFLECTION"
-                    break
-
-            hybrid_results.append(
-                {
-                    "expected": q["expected_source_ids"],
-                    "retrieved": retrieved_mixed_ids,
-                    "hit_type": hit_type,
-                }
-            )
-
-            # CORE FEEDBACK (Bandit update)
+            retrieved_ids = self._map_ids_smart([str(r["id"]) for r in raw_results], data["memories"])
+            is_hit = any(r_id in q["expected_source_ids"] for r_id in retrieved_ids[:5])
+            hybrid_results.append({"expected": q["expected_source_ids"], "retrieved": retrieved_ids, "is_hit": is_hit})
             engine.math_ctrl.update_policy(success=is_hit)
 
-            # Szubar self-healing
-            if not is_hit:
+            if not is_hit and q["expected_source_ids"]:
                 missed_id = q["expected_source_ids"][0]
-                if missed_id in memory_lookup:
-                    ref_content = f"search_document: [REFLECTION] Concept: '{query_text}' is related to: {memory_lookup[missed_id][:100]}..."
-                    ref_id = await engine.store_memory(
-                        tenant_id=self.tenant_id,
-                        agent_id=self.project_id,
-                        content=ref_content,
-                        layer="reflective",
-                        importance=1.0,
+                ref_id = await engine.store_memory(
+                    tenant_id=self.tenant_id, agent_id=self.project_id,
+                    content=f"search_document: [ALIAS] {q['query']}", layer="reflective", importance=1.0
+                )
+                missed_node_id = next((m["_node_id"] for m in data["memories"] if m["id"] == missed_id), None)
+                if missed_node_id:
+                    ref_node_id = await self.pool.fetchval(
+                        "INSERT INTO knowledge_graph_nodes (node_id, tenant_id, project_id, label) VALUES ($1, $2, $3, $4) RETURNING id",
+                        str(ref_id), self.tenant_id, self.project_id, "Reflection"
+                    )
+                    await self.pool.execute(
+                        "INSERT INTO knowledge_graph_edges (tenant_id, project_id, source_node_id, target_node_id, relation, properties) VALUES ($1, $2, $3, $4, $5, $6)",
+                        self.tenant_id, self.project_id, ref_node_id, missed_node_id, "alias_bridge", json.dumps({"weight": 1.0})
                     )
                     self.szubar_reflections += 1
-                    self.reflection_map[str(ref_id)] = q["expected_source_ids"]
+            if i % 10 == 0: print(f"   ✅ Q {i} | Reflections: {self.szubar_reflections}")
 
-            if i % 20 == 0:
-                print(f"   ✅ Q {i} | Reflections: {self.szubar_reflections}")
-
-        # 3. Final Report
-        rr_sum = 0.0
-        reflection_hits = 0
+        # Correct MRR calculation
+        total_rr = 0.0
         for res in hybrid_results:
             for rank, r_id in enumerate(res["retrieved"], 1):
-                is_match = (r_id in res["expected"]) or (
-                    r_id in self.reflection_map
-                    and any(t in res["expected"] for t in self.reflection_map[r_id])
-                )
-                if is_match:
-                    rr_sum += 1.0 / rank
-                    if res["hit_type"] == "REFLECTION":
-                        reflection_hits += 1
+                if r_id in res["expected"]:
+                    total_rr += 1.0 / rank
                     break
-        mrr = rr_sum / len(data["queries"])
+        final_mrr = total_rr / len(hybrid_results)
+        print(f"\n========================================\nFINAL MRR: {final_mrr:.4f}\nReflections: {self.szubar_reflections}\n========================================")
 
-        with open("reflection_map.json", "w") as f:
-            json.dump(self.reflection_map, f, indent=2)
-
-        print(
-            f"\n========================================\nINTEGRATED MRR: {mrr:.4f}\nReflection Hits: {reflection_hits}\n========================================"
-        )
-
-        # Save results to JSON for CI check
-        from datetime import datetime
-
-        results_dir = Path("benchmarking/results")
-        results_dir.mkdir(parents=True, exist_ok=True)
-
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        set_name = self.benchmark_file.stem
-        result_file = results_dir / f"{set_name}_{timestamp}.json"
-
-        # Calculate hit rates for metrics compatibility
-        hits_at_1 = sum(
-            1
-            for res in hybrid_results
-            if any(r in res["expected"] for r in res["retrieved"][:1])
-        ) / len(data["queries"])
-        hits_at_5 = sum(
-            1
-            for res in hybrid_results
-            if any(r in res["expected"] for r in res["retrieved"][:5])
-        ) / len(data["queries"])
-
-        report = {
-            "name": data["name"],
-            "timestamp": timestamp,
-            "metrics": {
-                "mrr": mrr,
-                "hit_rate": {
-                    "@1": hits_at_1,
-                    "@5": hits_at_5,
-                },
-                "overall_quality_score": (mrr + hits_at_5) / 2,
-                "reflection_hits": reflection_hits,
-            },
-        }
-
-        with open(result_file, "w") as f:
-            json.dump(report, f, indent=2)
-        print(f"📊 Results saved to: {result_file}")
-
-    def _map_ids_smart(self, db_ids, benchmark_memories):
-        mapping = {
-            str(m.get("_db_id")): m["id"] for m in benchmark_memories if "_db_id" in m
-        }
+    def _map_ids_smart(self, db_ids, memories):
+        mapping = {str(m.get("_db_id")): m["id"] for m in memories if "_db_id" in m}
         return [mapping.get(db_id, db_id) for db_id in db_ids]
-
 
 async def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--set", required=True)
+    parser.add_argument("--synthetic-count", type=int, required=True)
     args = parser.parse_args()
-    runner = RAEBenchmarkRunner(Path(args.set), Path("."), "")
+    runner = RAEBenchmarkRunner(None, Path("."), "", synthetic_count=args.synthetic_count)
     try:
         await runner.setup()
         await runner.cleanup()
         await runner.run()
-    finally:
-        if hasattr(runner, "pool"):
-            await runner.pool.close()
+    finally: await runner.pool.close()
 
-
-if __name__ == "__main__":
-    asyncio.run(main())
+if __name__ == "__main__": asyncio.run(main())

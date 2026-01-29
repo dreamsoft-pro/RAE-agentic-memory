@@ -204,6 +204,12 @@ services:
     command: ["uvicorn", "apps.ml_service.main:app", "--host", "0.0.0.0", "--port", "8001"]
     environment:
       - LOG_LEVEL=INFO
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DB=${POSTGRES_DB:-rae}
+      - POSTGRES_USER=${POSTGRES_USER:-rae}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-rae_password}
+    depends_on:
+      - postgres
     restart: unless-stopped
     networks:
       - rae-network
@@ -222,6 +228,12 @@ services:
       - ./apps/ml_service:/app/apps/ml_service
     environment:
       - LOG_LEVEL=DEBUG
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DB=${POSTGRES_DB:-rae}
+      - POSTGRES_USER=${POSTGRES_USER:-rae}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-rae_password}
+    depends_on:
+      - postgres
     command: ["uvicorn", "apps.ml_service.main:app", "--host", "0.0.0.0", "--port", "8001", "--reload", "--reload-dir", "/app/apps/ml_service"]
     restart: unless-stopped
     networks:
@@ -242,6 +254,12 @@ services:
     command: ["uvicorn", "apps.reranker_service.main:app", "--host", "0.0.0.0", "--port", "8001"]
     environment:
       - LOG_LEVEL=INFO
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DB=${POSTGRES_DB:-rae}
+      - POSTGRES_USER=${POSTGRES_USER:-rae}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-rae_password}
+    depends_on:
+      - postgres
     restart: unless-stopped
     networks:
       - rae-network

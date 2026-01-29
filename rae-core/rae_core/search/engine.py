@@ -59,6 +59,7 @@ class HybridSearchEngine:
         limit: int = 10,
         filters: dict[str, Any] | None = None,
         use_cache: bool = True,
+        enable_reranking: bool = True, # New flag
         **kwargs: Any,
     ) -> list[tuple[UUID, float]]:
         active_strategy_names = kwargs.get("strategies") or list(self.strategies.keys())
@@ -108,9 +109,10 @@ class HybridSearchEngine:
 
         fused_results = self.fusion_strategy.fuse(strategy_results, weights)
 
-        # ACTIVATE RERANKER if we have more than 1 result
+        # ACTIVATE RERANKER only if enabled and dependencies exist
         if (
-            len(fused_results) > 1
+            enable_reranking
+            and len(fused_results) > 1
             and self.embedding_provider is not None
             and self.memory_storage is not None
         ):

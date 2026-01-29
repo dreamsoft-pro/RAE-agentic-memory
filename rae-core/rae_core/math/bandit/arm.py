@@ -192,17 +192,31 @@ def create_default_arms() -> list[Arm]:
     """
     Create the default set of arms for the bandit.
 
-    Returns 9 arms:
-    - L1: default, relevance_scoring, importance_scoring
-    - L2: default, entropy_minimization, information_bottleneck, mutual_information
-    - L3: hybrid_default, weighted_combination
-
-    Returns:
-        List of Arm objects
+    Includes:
+    - 21 Granular L1 arms for Text:Vector ratios (from 10:1 to 1:10)
+    - 4 L2 arms for information-theoretic strategies
+    - 2 L3 arms for hybrid ensemble logic
     """
     arms = []
 
-    # L1 arms (3)
+    # L1: Granular Hybrid Ratios (21 arms)
+    # Ratios from 10.0:1.0 down to 1.0:10.0
+    ratios = [
+        (10.0, 1.0), (8.0, 1.0), (6.0, 1.0), (5.0, 1.0), (4.0, 1.0), (3.0, 1.0), (2.0, 1.0), (1.5, 1.0), (1.2, 1.0),
+        (1.0, 1.0),
+        (1.0, 1.2), (1.0, 1.5), (1.0, 2.0), (1.0, 3.0), (1.0, 4.0), (1.0, 5.0), (1.0, 6.0), (1.0, 8.0), (1.0, 10.0),
+        # Extreme cases for exploration
+        (25.0, 1.0), (1.0, 25.0)
+    ]
+    
+    for txt_w, vec_w in ratios:
+        # Using 'w_txt' and 'vec' prefixes to make parsing unambiguous
+        txt_str = str(txt_w).replace(".", "p")
+        vec_str = str(vec_w).replace(".", "p")
+        strategy_name = f"w_txt{txt_str}_vec{vec_str}"
+        arms.append(Arm(level=MathLevel.L1, strategy=strategy_name))
+
+    # Keep legacy L1 names for compatibility
     arms.append(Arm(level=MathLevel.L1, strategy="default"))
     arms.append(Arm(level=MathLevel.L1, strategy="relevance_scoring"))
     arms.append(Arm(level=MathLevel.L1, strategy="importance_scoring"))
