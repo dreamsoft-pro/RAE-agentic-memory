@@ -88,10 +88,24 @@ class MathLayerController:
         # Implementation of System 3.0 logic
         strategy = arm.strategy
 
-        if strategy == "relevance_scoring":  # Favour Vector
-            weights = {"fulltext": 1.0, "vector": 10.0}
+        if strategy.startswith("w_txt"):
+            # Parse weights from name: w_txt10p0_vec1p0 -> txt=10.0, vec=1.0
+            try:
+                import re
+                match = re.match(r"w_txt([\dp]+)_vec([\dp]+)", strategy)
+                if match:
+                    txt_w = float(match.group(1).replace("p", "."))
+                    vec_w = float(match.group(2).replace("p", "."))
+                    weights = {"fulltext": txt_w, "vector": vec_w}
+                else:
+                    weights = {"fulltext": 1.0, "vector": 1.0}
+            except Exception as e:
+                logger.error("weight_parsing_failed", strategy=strategy, error=str(e))
+                weights = {"fulltext": 1.0, "vector": 1.0}
+        elif strategy == "relevance_scoring":  # Favour Vector
+            weights = {"fulltext": 0.5, "vector": 2.0}
         elif strategy == "importance_scoring":  # Favour Text
-            weights = {"fulltext": 10.0, "vector": 1.0}
+            weights = {"fulltext": 2.0, "vector": 0.5}
         else:  # Default/Balanced
             weights = {"fulltext": 1.0, "vector": 1.0}
 
@@ -100,9 +114,35 @@ class MathLayerController:
             "arm": arm,
             "features": features,
             "timestamp": datetime.now(timezone.utc),
+            "weights": weights,
         }
 
         return weights
+
+    def get_resonance_threshold(self, query: str) -> float:
+        """
+        Determine Szubar (Resonance) Threshold using Bandit context.
+        
+        Logic:
+        - Factual Query (High Text Weight) -> High Threshold (0.8-0.9) [Conservative]
+        - Abstract Query (High Vector Weight) -> Low Threshold (0.3-0.4) [Aggressive]
+        """
+        # Reuse decision if available for this request cycle
+        if self._last_decision:
+            weights = self._last_decision.get("weights", {})
+            txt_w = weights.get("fulltext", 1.0)
+            vec_w = weights.get("vector", 1.0)
+            
+            # Simple heuristic mapping
+            if txt_w > vec_w * 2: # Strongly Factual
+                return 0.85
+            elif vec_w > txt_w * 2: # Strongly Abstract
+                return 0.35
+            else:
+                return 0.6 # Balanced
+        
+        # Fallback if no decision yet (shouldn't happen in standard flow)
+        return 0.6
 
     def update_policy(self, success: bool, reward: float = 1.0):
         """
