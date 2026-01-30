@@ -57,8 +57,19 @@ class RAEEngine:
             )
 
     def _init_vector_strategy(self):
+        from rae_core.embedding.manager import EmbeddingManager
+        
+        if isinstance(self.embedding_provider, EmbeddingManager):
+            from rae_core.search.strategies.multi_vector import MultiVectorSearchStrategy
+            
+            # Build list of (store, provider, name) for each model in manager
+            strategies = []
+            for name, provider in self.embedding_provider.providers.items():
+                strategies.append((self.vector_store, provider, name))
+            
+            return MultiVectorSearchStrategy(strategies=strategies)
+        
         from rae_core.search.strategies.vector import VectorSearchStrategy
-
         return VectorSearchStrategy(self.vector_store, self.embedding_provider)
 
     def _init_fulltext_strategy(self):
@@ -81,12 +92,13 @@ class RAEEngine:
         RAE Reflective Search: Retrieval -> Math Scoring -> Manifold Adjustment.
         """
         # 1. RETRIEVAL (Vector + Keyword)
-        search_filters = {
-            "agent_id": agent_id,
-            "project": project,
-            "layer": layer,
-            **(filters or {}),
-        }
+        search_filters = {**(filters or {})}
+        if agent_id:
+            search_filters["agent_id"] = agent_id
+        if project:
+            search_filters["project"] = project
+        if layer:
+            search_filters["layer"] = layer
 
         # Dynamic Weight Selection via Math Controller (Bandit)
         # If weights are provided in kwargs, they override the autonomous controller
@@ -108,10 +120,11 @@ class RAEEngine:
             query=query,
             tenant_id=tenant_id,
             filters=search_filters,
-            limit=top_k * 5,  # Wide window for Math Layer
+            limit=min(top_k * 2, 50),  # Tighter window to reduce noise at scale
             strategies=active_strategies,
             strategy_weights=strategy_weights,
             enable_reranking=False,  # Math Core v3.3: Disable Reranking in favor of Auto-Tuned Szubar
+            math_controller=self.math_ctrl # Passing controller for agnostic weights
         )
 
         # 2. DESIGNED MATH SCORING (The Manifold)
@@ -196,14 +209,15 @@ class RAEEngine:
                         except Exception:
                             continue
 
-        # 4. SYNERGY BOOST (Legacy compatibility for reflective layer)
-        reflections = [m for m in memories if m.get("layer") == "reflective"]
-        if reflections:
-            for m in memories:
-                if m.get("layer") != "reflective":
-                    # Synergy boost from reflections (augmented by resonance)
-                    m["math_score"] *= 1.2
-
+        # 4. SYNERGY RESTORATION (Scientist Path)
+        # We rely purely on Mathematical Resonance (Graph Energy Flow).
+        # No artificial hardcoded multipliers (*1.2).
+        # The energy map from compute_resonance is the ground truth.
+        
+        # If we induced memories via Reflection, they already have correct 'math_score'
+        # calculated from tanh(energy).
+        
+        # Final Sort based on the integrated Math Score (Similarity + Resonance + Importance)
         memories.sort(key=lambda x: x.get("math_score", 0.0), reverse=True)
         return memories[:top_k]
 

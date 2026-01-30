@@ -15,12 +15,51 @@ from pathlib import Path
 
 import asyncpg
 import yaml
+import litellm
 from qdrant_client import AsyncQdrantClient
 from qdrant_client import models as q_models
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "rae-core"))
+
+from rae_core.interfaces.embedding import IEmbeddingProvider
+
+class LiteLLMEmbeddingProvider(IEmbeddingProvider):
+    def __init__(self, model_name: str):
+        self.model_name = model_name
+        if "nomic" in model_name:
+            self.dim = 768
+        elif "openai" in model_name or "text-embedding-3" in model_name:
+            self.dim = 1536
+        else:
+            self.dim = 384
+        
+        # Configure Ollama base if needed
+        if model_name.startswith("ollama/"):
+             litellm.api_base = os.getenv("OLLAMA_API_URL", "http://localhost:11434")
+
+    def get_dimension(self) -> int:
+        return self.dim
+
+    async def embed_text(self, text: str, task_type: str = "search_document") -> list[float]:
+        # Nomic v1.5 requires specific prefixes
+        prefix = ""
+        if "nomic" in self.model_name.lower():
+            prefix = "search_query: " if task_type == "search_query" else "search_document: "
+        
+        response = await litellm.aembedding(model=self.model_name, input=[prefix + text])
+        return response["data"][0]["embedding"]
+
+    async def embed_batch(self, texts: list[str], task_type: str = "search_document") -> list[list[float]]:
+        # Nomic v1.5 requires specific prefixes
+        prefix = ""
+        if "nomic" in self.model_name.lower():
+            prefix = "search_query: " if task_type == "search_query" else "search_document: "
+            
+        processed_texts = [prefix + t for t in texts]
+        response = await litellm.aembedding(model=self.model_name, input=processed_texts)
+        return [d["embedding"] for d in response["data"]]
 
 
 class RAEBenchmarkRunner:
@@ -30,18 +69,20 @@ class RAEBenchmarkRunner:
         output_dir: Path,
         api_url: str,
         synthetic_count: int | None = None,
+        queries: int = 50,
     ):
         self.benchmark_file = benchmark_file
         self.output_dir = output_dir
         self.api_url = api_url
         self.synthetic_count = synthetic_count
+        self.query_count = queries
         self.tenant_id = "00000000-0000-0000-0000-000000000000"
         self.project_id = "RAE-agentic-memory"
         self.szubar_reflections = 0
         self.reflection_map: dict[str, list[str]] = {}
 
     async def setup(self):
-        print("🔌 Initializing System 3.3 (Optimized Math Core)...")
+        print("🔌 Initializing System 3.4 (Agnostic Hive Mind)...")
         self.pool = await asyncpg.create_pool(
             host=os.getenv("POSTGRES_HOST", "127.0.0.1"),
             port=int(os.getenv("POSTGRES_PORT", 5432)),
@@ -54,22 +95,40 @@ class RAEBenchmarkRunner:
             port=int(os.getenv("QDRANT_PORT", 6333)),
         )
 
+        # 1. Setup Multi-Model Embedding Manager (Pure Native ONNX)
+        from rae_core.embedding.manager import EmbeddingManager
         from rae_core.embedding.native import NativeEmbeddingProvider
-
-        default_model = "models/all-MiniLM-L6-v2/model.onnx"
-        if os.path.exists("models/nomic-embed-text-v1.5/model.onnx"):
-            default_model = "models/nomic-embed-text-v1.5/model.onnx"
-
-        model_path = os.getenv("ONNX_EMBEDDER_PATH", default_model)
-        tokenizer_path = model_path.replace("model.onnx", "tokenizer.json")
-
-        print(f"🧠 Using Native ONNX Provider: {model_path}")
-        self.provider = NativeEmbeddingProvider(
-            model_path=model_path, tokenizer_path=tokenizer_path
+        
+        # Primary Model (Nomic ONNX)
+        nomic_path = "models/nomic-embed-text-v1.5/model.onnx"
+        nomic_provider = NativeEmbeddingProvider(
+            model_path=nomic_path, 
+            tokenizer_path=nomic_path.replace("model.onnx", "tokenizer.json"),
+            model_name="nomic",
+            max_length=512
         )
-        self.emb_dim = self.provider.get_dimension()
-        print(f"📏 Detected Embedding Dimension: {self.emb_dim}")
+        
+        # Secondary Model (MiniLM ONNX - Dense)
+        dense_path = "models/all-MiniLM-L6-v2/model.onnx"
+        dense_provider = NativeEmbeddingProvider(
+            model_path=dense_path,
+            tokenizer_path=dense_path.replace("model.onnx", "tokenizer.json"),
+            model_name="dense",
+            max_length=512
+        )
+        
+        self.manager = EmbeddingManager(
+            default_provider=nomic_provider, 
+            default_model_name="nomic",
+        )
+        self.manager.register_provider("dense", dense_provider)
+        
+        self.provider = self.manager # Engine will use manager
+        self.emb_dim = nomic_provider.get_dimension()
+        self.vector_name = "nomic" # For reporting
+        print(f"🧠 Native ONNX Registered: nomic (768d)")
 
+        # 2. Setup Qdrant with Multi-Vector support
         try:
             await self.qdrant.delete_collection("memories")
         except Exception:
@@ -78,10 +137,23 @@ class RAEBenchmarkRunner:
         await self.qdrant.create_collection(
             "memories",
             vectors_config={
-                "dense": q_models.VectorParams(
-                    size=self.emb_dim, distance=q_models.Distance.COSINE
-                )
+                "nomic": q_models.VectorParams(size=768, distance=q_models.Distance.COSINE),
+                "dense": q_models.VectorParams(size=384, distance=q_models.Distance.COSINE)
             },
+        )
+
+        # 3. Initialize Engine
+        from rae_adapters.postgres import PostgreSQLStorage
+        from rae_core.adapters.qdrant import QdrantVectorStore
+        from rae_core.engine import RAEEngine
+
+        self.storage = PostgreSQLStorage(pool=self.pool)
+        self.vector_store = QdrantVectorStore(client=self.qdrant) # Standard agnostic store
+        
+        self.engine = RAEEngine(
+            memory_storage=self.storage,
+            vector_store=self.vector_store,
+            embedding_provider=self.manager,
         )
 
     async def cleanup(self):
@@ -94,12 +166,12 @@ class RAEBenchmarkRunner:
                 "DELETE FROM knowledge_graph_nodes WHERE project_id = $1", self.project_id
             )
             await conn.execute(
-                "DELETE FROM memories WHERE project = $1 AND tenant_id = $2",
+                "DELETE FROM memories WHERE (project = $1 OR agent_id = $1) AND tenant_id = $2",
                 self.project_id, self.tenant_id
             )
             print("   ✅ Cleanup completed")
 
-    def generate_synthetic_data(self, count: int):
+    def generate_synthetic_data(self, count: int, query_count: int = 50):
         print(f"🏭 Generating {count} synthetic memories (Industrial Pattern)...")
         import random
         memories = []
@@ -131,7 +203,7 @@ class RAEBenchmarkRunner:
             })
             
         queries = []
-        for _ in range(50):
+        for _ in range(query_count):
             target = random.choice(components)
             # Query matching logic
             q_text = f"Find logs for {target}"
@@ -147,7 +219,7 @@ class RAEBenchmarkRunner:
 
     async def run(self):
         if self.synthetic_count:
-            data = self.generate_synthetic_data(self.synthetic_count)
+            data = self.generate_synthetic_data(self.synthetic_count, self.query_count)
         else:
             if not self.benchmark_file:
                 raise ValueError("Benchmark file required if synthetic count not provided")
@@ -166,32 +238,25 @@ class RAEBenchmarkRunner:
         print(f"🎯 Project: {self.project_id}")
         await self.cleanup()
 
-        from rae_adapters.postgres import PostgreSQLStorage
-        from rae_adapters.qdrant import QdrantVectorStore
-        from rae_core.embedding.manager import EmbeddingManager
-        from rae_core.engine import RAEEngine
-
-        storage = PostgreSQLStorage(pool=self.pool)
-        vector_store = QdrantVectorStore(client=self.qdrant, embedding_dim=self.emb_dim)
-        manager = EmbeddingManager(default_provider=self.provider)
-        engine = RAEEngine(
-            memory_storage=storage,
-            vector_store=vector_store,
-            embedding_provider=manager,
-        )
-
-        print(f"📥 Inserting {len(data['memories'])} memories...")
-        batch_size = 500
+        print(f"📥 Inserting {len(data['memories'])} memories (Optimized Batch)...")
+        batch_size = 10
         comp_nodes: dict[str, list[int]] = {}
+        
         for i in range(0, len(data["memories"]), batch_size):
             batch = data["memories"][i : i + batch_size]
-            embeddings = await engine.embedding_provider.embed_batch(
-                [m.get("text", m.get("content", "")) for m in batch],
-                task_type="search_document"
-            )
+            texts = [m.get("text", m.get("content", "")) for m in batch]
+            
+            # 1. Batch Embedding (Fast ONNX)
+            # Use 'search_document' task type for ingestion
+            nomic_embs = await self.engine.embedding_provider.providers["nomic"].embed_batch(texts, task_type="search_document")
+            dense_embs = await self.engine.embedding_provider.providers["dense"].embed_batch(texts, task_type="search_document")
+            
+            # 2. Insert into Storage & Vector Store
             for j, mem in enumerate(batch):
-                content = mem.get("text", mem.get("content", ""))
-                m_id = await engine.memory_storage.store_memory(
+                content = texts[j]
+                
+                # Direct Storage Insert (Postgres)
+                m_id = await self.storage.store_memory(
                     tenant_id=self.tenant_id,
                     agent_id=self.project_id,
                     content=content,
@@ -199,10 +264,22 @@ class RAEBenchmarkRunner:
                     importance=mem.get("metadata", {}).get("importance", 0.5),
                     metadata=mem.get("metadata", {}),
                 )
-                await engine.vector_store.store_vector(
-                    m_id, embeddings[j], self.tenant_id, metadata=mem.get("metadata", {})
+                
+                # Direct Vector Insert (Qdrant) - Multi-Vector Support
+                vector_struct = {
+                    "nomic": nomic_embs[j],
+                    "dense": dense_embs[j]
+                }
+                await self.vector_store.store_vector(
+                    memory_id=m_id, 
+                    embedding=vector_struct, 
+                    tenant_id=self.tenant_id, 
+                    metadata=mem.get("metadata", {})
                 )
+                
                 mem["_db_id"] = m_id
+                
+                # Graph Node Insert
                 node_id = await self.pool.fetchval(
                     "INSERT INTO knowledge_graph_nodes (node_id, tenant_id, project_id, label) VALUES ($1, $2, $3, $4) RETURNING id",
                     str(m_id), self.tenant_id, self.project_id, "Memory",
@@ -212,8 +289,8 @@ class RAEBenchmarkRunner:
                 if comp not in comp_nodes:
                     comp_nodes[comp] = []
                 comp_nodes[comp].append(node_id)
-            if (i + batch_size) % 1000 == 0 or (i + batch_size) >= len(data['memories']):
-                print(f"   ✅ Processed {i + batch_size}/{len(data['memories'])}")
+            
+            print(f"   ✅ Processed {min(i + batch_size, len(data['memories']))}/{len(data['memories'])}")
 
         print("🔗 Linking nodes (building GraphRAG context)...")
         for comp, nodes in comp_nodes.items():
@@ -227,7 +304,7 @@ class RAEBenchmarkRunner:
         print("🔍 Running Queries (Testing Bandit Convergence)...")
         hybrid_results = []
         for i, q in enumerate(data["queries"], 1):
-            raw_results = await engine.search_memories(
+            raw_results = await self.engine.search_memories(
                 query=q["query"],
                 tenant_id=self.tenant_id,
                 agent_id=self.project_id,
@@ -235,15 +312,24 @@ class RAEBenchmarkRunner:
                 enable_reranking=False,
             )
             retrieved_ids = self._map_ids_smart([str(r["id"]) for r in raw_results], data["memories"])
+            
             is_hit = any(r_id in q["expected_source_ids"] for r_id in retrieved_ids[:5])
-            hybrid_results.append({"expected": q["expected_source_ids"], "retrieved": retrieved_ids, "is_hit": is_hit})
-            engine.math_ctrl.update_policy(success=is_hit)
+            
+            hybrid_results.append({
+                "query": q["query"],
+                "expected": q["expected_source_ids"],
+                "retrieved": retrieved_ids
+            })
+
+            # Method 3.4: Feedback Loop for Bandit
+            self.engine.math_ctrl.update_policy(success=is_hit)
 
             if not is_hit and q["expected_source_ids"]:
                 missed_id = q["expected_source_ids"][0]
-                ref_id = await engine.memory_storage.store_memory(
+                # Index reflection via engine to get multi-vector support
+                ref_id = await self.engine.store_memory(
                     tenant_id=self.tenant_id, agent_id=self.project_id,
-                    content=f"search_document: [ALIAS] {q['query']}",
+                    content=f"[ALIAS] {q['query']}", # Prefix handled by engine
                     layer="reflective", importance=1.0,
                 )
                 missed_node_id = next((m["_node_id"] for m in data["memories"] if m["id"] == missed_id), None)
@@ -278,12 +364,13 @@ async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--synthetic-count", type=int, required=False)
     parser.add_argument("--set", type=Path, required=False, help="Path to benchmark set YAML file")
+    parser.add_argument("--queries", type=int, default=50, help="Number of queries to run")
     args = parser.parse_args()
 
     if not args.synthetic_count and not args.set:
         parser.error("Either --synthetic-count or --set must be provided")
 
-    runner = RAEBenchmarkRunner(args.set, Path("."), "", synthetic_count=args.synthetic_count)
+    runner = RAEBenchmarkRunner(args.set, Path("."), "", synthetic_count=args.synthetic_count, queries=args.queries)
     try:
         await runner.setup()
         await runner.run()
