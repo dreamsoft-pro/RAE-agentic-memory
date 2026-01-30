@@ -481,22 +481,24 @@ class PostgreSQLStorage(IMemoryStorage):
                 score_clause = "1.0 as score"
             else:
                 # Use OR logic for websearch to find ANY of the words (more liberal for math fallback)
-                liberal_query = query.replace(" ", " OR ")
+                # SYSTEM 3.4 Adaptive Logic: Support both AND and OR by default for broad recall
+                liberal_query = query.strip().replace(" ", " OR ")
                 conditions.append(
                     f"(to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', ${param_idx}) OR content ILIKE ${param_idx+1})"
                 )
                 score_clause = f"""
                     CASE
                         WHEN to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', ${param_idx})
-                        THEN ts_rank_cd(to_tsvector('english', coalesce(content, '')), websearch_to_tsquery('english', ${param_idx})) + 0.5
-                        WHEN content ILIKE ${param_idx+1} THEN 0.5
+                        THEN ts_rank_cd(to_tsvector('english', coalesce(content, '')), websearch_to_tsquery('english', ${param_idx})) + 1.0
+                        WHEN content ILIKE ${param_idx+1} THEN 0.8
                         ELSE 0.1
                     END as score
                 """
+                # Use liberal query for websearch to allow Postgres to handle weights
                 params.append(liberal_query)
                 params.append(f"%{query}%")
                 param_idx += 2
-                order_clause = "ORDER BY score DESC"
+                order_clause = "ORDER BY score DESC, importance DESC"
 
         if tags:
             conditions.append(f"tags && ${param_idx}")
