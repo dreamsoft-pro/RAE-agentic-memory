@@ -120,11 +120,11 @@ class RAEEngine:
             query=query,
             tenant_id=tenant_id,
             filters=search_filters,
-            limit=min(top_k * 2, 50),  # Tighter window to reduce noise at scale
+            limit=100,  # SYSTEM 3.4: Wide window for Math Layer / Resonance processing
             strategies=active_strategies,
             strategy_weights=strategy_weights,
-            enable_reranking=False,  # Math Core v3.3: Disable Reranking in favor of Auto-Tuned Szubar
-            math_controller=self.math_ctrl # Passing controller for agnostic weights
+            enable_reranking=False,
+            math_controller=self.math_ctrl 
         )
 
         # 2. DESIGNED MATH SCORING (The Manifold)
