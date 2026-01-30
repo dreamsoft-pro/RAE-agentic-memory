@@ -39,6 +39,10 @@ class FeaturesV2(Features):
     # First turn indicator
     is_first_turn: bool = False
 
+    # Content-aware features (System 3.4 Revival)
+    term_density: float = 0.0 # Ratio of unique terms to total tokens
+    keyword_ratio: float = 0.0 # Ratio of capitalized/special tokens
+
     def compute_derived_features(self) -> dict[str, float]:
         """
         Compute derived features for decision making.
@@ -51,6 +55,9 @@ class FeaturesV2(Features):
             "session_scale": min(self.session_length / 50.0, 1.0),
             # Entropy normalization (assume max entropy ~4.0)
             "entropy_normalized": min(self.memory_entropy / 4.0, 1.0),
+            # Content-aware features for Industrial/Log detection
+            "term_density": self.term_density,
+            "keyword_ratio": self.keyword_ratio,
             # Quality indicators
             "quality_declining": 1.0 if self.quality_trend < -0.1 else 0.0,
             "quality_improving": 1.0 if self.quality_trend > 0.1 else 0.0,
