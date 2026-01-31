@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rae-core"
-version = "3.4.0"
-description = "Reflective Agentic Memory Core"
+version = "3.6.0"
+description = "RAE (Reflective Agentic Engine) - Core Reasoning and Memory System"
 readme = "README.md"
 authors = [
     {name = "Grzegorz Leśniowski", email = "contact@dreamsoft.pro"}

@@ -48,6 +48,10 @@ class FullTextStrategy(SearchStrategy):
         Returns:
             Match score (0.0-1.0)
         """
+        # Wildcard support
+        if query == "*":
+            return 1.0
+
         query_norm = self._normalize(query)
         content_norm = self._normalize(content)
         tags_norm = [self._normalize(tag) for tag in tags]
@@ -120,16 +124,27 @@ class FullTextStrategy(SearchStrategy):
         if not memories:
             return []
 
-        # Score each memory - Trust storage rank if available
+        # Score each memory - Trust storage rank if available, else compute locally
         results: list[tuple[UUID, float]] = []
         for memory in memories:
             memory_id = memory["id"]
             if isinstance(memory_id, str):
                 memory_id = UUID(memory_id)
 
-            # Use rank from storage if available, fallback to 1.0 or local score
-            score = float(memory.get("rank", memory.get("score", 1.0)))
-            results.append((memory_id, score))
+            # Use rank from storage if available
+            score = memory.get("rank") or memory.get("score")
+
+            if score is None:
+                # Compute local match score as fallback
+                score = self._compute_match_score(
+                    query=query,
+                    content=memory.get("content", ""),
+                    tags=memory.get("tags", []),
+                )
+
+            score = float(score)
+            if score > 0:
+                results.append((memory_id, score))
 
         return results
 

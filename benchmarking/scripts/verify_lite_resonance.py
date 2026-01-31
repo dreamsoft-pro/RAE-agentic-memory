@@ -15,10 +15,14 @@ class TinyEmbedder(IEmbeddingProvider):
     def get_dimension(self) -> int:
         return 16
 
-    async def embed_text(self, text: str):
+    async def embed_text(
+        self, text: str, task_type: str = "search_document"
+    ) -> list[float]:
         return [0.1] * 16
 
-    async def embed_batch(self, texts: list[str]):
+    async def embed_batch(
+        self, texts: list[str], task_type: str = "search_document"
+    ) -> list[list[float]]:
         return [[0.1] * 16 for _ in texts]
 
 

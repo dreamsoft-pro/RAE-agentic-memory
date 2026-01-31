@@ -107,7 +107,9 @@ async def test_store_memory(
 
     assert result == expected_uuid
     mock_memory_storage.store_memory.assert_called_once()
-    mock_embedding_provider.embed_text.assert_called_once_with(content)
+    mock_embedding_provider.embed_text.assert_called_once_with(
+        content, task_type="search_document"
+    )
     mock_vector_store.store_vector.assert_called_once()
 
 

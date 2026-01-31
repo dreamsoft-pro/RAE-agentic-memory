@@ -25,8 +25,8 @@ class TestQdrantVectorStore:
     @pytest.fixture
     def qdrant_store(self, mock_client):
         """Create QdrantVectorStore instance with mock client."""
-        # Patch QdrantClient to avoid import errors
-        with patch("rae_core.adapters.qdrant.QdrantClient") as mock_qdrant:
+        # Patch AsyncQdrantClient to avoid import errors
+        with patch("rae_core.adapters.qdrant.AsyncQdrantClient") as mock_qdrant:
             mock_qdrant.return_value = mock_client
 
             store = QdrantVectorStore(url="http://localhost:6333", client=mock_client)
@@ -204,7 +204,7 @@ class TestQdrantVectorStore:
 
         # 2. Mock vector retrieval for both memories
         # Opposite vectors to trigger contradiction (similarity = -1.0)
-        vec1 = [1.0, 0.0]
+        vec1 = [-1.0, 0.0]
         vec2 = [-1.0, 0.0]
 
         mock_ret1 = MagicMock()

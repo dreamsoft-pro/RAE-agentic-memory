@@ -183,7 +183,7 @@ class MultiArmedBandit:
         if self.total_pulls >= 20:
             if self.baseline_mean_reward == 0:
                 self.baseline_mean_reward = self.total_reward / self.total_pulls
-            
+
             # CHECK FOR DRIFT (System 3.4 Adaptive Determinism)
             # This will automatically reset all arms if significant degradation is found
             self.check_degradation()
@@ -214,22 +214,24 @@ class MultiArmedBandit:
         )
 
         is_degraded = drop > self.config.degradation_threshold
-        
+
         if is_degraded:
             # CHANGE POINT DETECTED!
-            # The world has changed (e.g. log -> commercial data). 
+            # The world has changed (e.g. log -> commercial data).
             # Old statistics are now misleading. Reset everything.
-            print(f"📉 DRIFT DETECTED! Drop: {drop:.2%} > {self.config.degradation_threshold:.2%}. Resetting Bandit Memory.")
-            
+            print(
+                f"📉 DRIFT DETECTED! Drop: {drop:.2%} > {self.config.degradation_threshold:.2%}. Resetting Bandit Memory."
+            )
+
             for arm in self.arms:
                 arm.reset_window()
-            
+
             # Reset global baselines
             self.last_100_rewards = []
             self.baseline_mean_reward = 0.0
-            # We don't reset total_pulls/total_reward purely for historical logging, 
+            # We don't reset total_pulls/total_reward purely for historical logging,
             # but the arms' decision making is now fresh.
-            
+
         return is_degraded, drop
 
     def get_best_arm(self, features: FeaturesV2) -> Arm:

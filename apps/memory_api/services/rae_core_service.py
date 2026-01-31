@@ -16,7 +16,6 @@ from qdrant_client import AsyncQdrantClient
 from apps.memory_api.services.dashboard_websocket import DashboardWebSocketService
 from apps.memory_api.services.embedding import (
     LocalEmbeddingProvider,
-    RemoteEmbeddingProvider,
 )
 from apps.memory_api.services.llm import get_llm_provider
 from apps.memory_api.services.token_savings_service import TokenSavingsService
@@ -29,7 +28,7 @@ from rae_core.engine import RAEEngine
 from rae_core.exceptions.base import SecurityPolicyViolationError
 from rae_core.interfaces.cache import ICacheProvider
 from rae_core.interfaces.database import IDatabaseProvider
-from rae_core.interfaces.embedding import IEmbeddingProvider
+from rae_core.interfaces.reranking import IReranker
 from rae_core.interfaces.storage import IMemoryStorage
 from rae_core.interfaces.vector import IVectorStore
 from rae_core.models.interaction import AgentAction, RAEInput
@@ -63,6 +62,7 @@ class RAECoreService:
         self.postgres_adapter: IMemoryStorage
         self.qdrant_adapter: IVectorStore
         self.redis_adapter: ICacheProvider
+        self.mcp_client: Optional[Any] = None
         self.savings_service: Optional[TokenSavingsService] = None
         self.websocket_service: Optional[DashboardWebSocketService] = None
         self.tuning_service: Any = None  # Phase 4
@@ -76,121 +76,16 @@ class RAECoreService:
 
             self.tuning_service = TuningService(self)
 
-        # 1. Initialize embedding providers (Multi-Vector Support)
-        import os
         from apps.memory_api.config import settings
-        
-        # Create the manager first
-        self.embedding_provider = EmbeddingManager(default_provider=LocalEmbeddingProvider())
 
-        # Register ONNX if available
-        if settings.RAE_EMBEDDING_BACKEND == "onnx" or os.getenv("ONNX_EMBEDDER_PATH"):
-            try:
-                from rae_core.embedding.native import NativeEmbeddingProvider
-                
-                model_path = settings.ONNX_EMBEDDER_PATH or "models/nomic-embed-text-v1.5/model.onnx"
-                if not os.path.exists(model_path):
-                    model_path = "models/all-MiniLM-L6-v2/model.onnx"
-                
-                if os.path.exists(model_path):
-                    tokenizer_path = os.path.join(os.path.dirname(model_path), "tokenizer.json")
-                    model_name = "nomic" if "nomic" in model_path.lower() else "mini-lm"
-                    
-                    onnx_provider = NativeEmbeddingProvider(
-                        model_path=model_path,
-                        tokenizer_path=tokenizer_path,
-                        model_name=model_name
-                    )
-                    # Register as a named provider
-                    self.embedding_provider.register_provider(model_name, onnx_provider)
-                    
-                    # If ONNX is preferred, set it as default
-                    if settings.RAE_EMBEDDING_BACKEND == "onnx":
-                        self.embedding_provider._default_provider = onnx_provider
-                        self.embedding_provider.default_model_name = model_name
-                    
-                    logger.info("registered_onnx_provider", name=model_name, path=model_path)
-            except Exception as e:
-                logger.error("onnx_initialization_failed", error=str(e))
-
-        # Register LiteLLM (Standard) as 'litellm' if not already default
-        if self.embedding_provider.default_model_name != "litellm":
-            self.embedding_provider.register_provider("litellm", LocalEmbeddingProvider())
+        # 1. Initialize embedding providers (Multi-Vector Support)
+        self._init_embedding_providers(settings)
 
         # 2. Initialize adapters
-        db_mode = os.getenv("RAE_DB_MODE") or settings.RAE_DB_MODE
-        ignore_db = (
-            postgres_pool is None
-            or (db_mode == "ignore" and postgres_pool is None)
-            or (settings.RAE_PROFILE == "lite" and os.getenv("RAE_FORCE_DB") != "1")
-        )
-
-        if postgres_pool is not None:
-            ignore_db = False
-
-        if postgres_pool and not ignore_db:
-            self.postgres_adapter = PostgreSQLStorage(pool=postgres_pool)
-        else:
-            from rae_adapters.memory import InMemoryStorage
-            self.postgres_adapter = InMemoryStorage()
-
-        if qdrant_client and not ignore_db:
-            dim = self.embedding_provider.get_dimension()
-            distance = getattr(settings, "RAE_VECTOR_DISTANCE", "Cosine")
-            self.qdrant_adapter = QdrantVectorStore(
-                client=cast(Any, qdrant_client), 
-                embedding_dim=dim, 
-                distance=distance,
-                vector_name=self.embedding_provider.default_model_name
-            )
-        else:
-            from rae_adapters.memory import InMemoryVectorStore
-            self.qdrant_adapter = InMemoryVectorStore()
-
-        if redis_client and not ignore_db:
-            self.redis_adapter = RedisCache(redis_client=redis_client)
-        else:
-            from rae_adapters.memory import InMemoryCache
-
-            self.redis_adapter = InMemoryCache()
+        self._init_adapters(settings, postgres_pool, qdrant_client, redis_client)
 
         # 3. Initialize Engine & Runtime
-        self.llm_provider = get_llm_provider(task_repo=postgres_pool)
-        self.settings = RAESettings(
-            sensory_max_size=100,
-            working_max_size=100,
-        )
-
-        # Initialize Hybrid Search Strategies with proper adapters
-        from rae_core.search.engine import HybridSearchEngine
-        from rae_core.search.strategies.fulltext import FullTextStrategy
-        from rae_core.search.strategies.vector import VectorSearchStrategy
-
-        search_strategies = {
-            "vector": VectorSearchStrategy(
-                vector_store=self.qdrant_adapter,
-                embedding_provider=self.embedding_provider,
-            ),
-            "fulltext": FullTextStrategy(memory_storage=self.postgres_adapter),
-        }
-        search_engine = HybridSearchEngine(strategies=search_strategies)
-
-        self.engine = RAEEngine(
-            memory_storage=self.postgres_adapter,
-            vector_store=self.qdrant_adapter,
-            embedding_provider=self.embedding_provider,
-            llm_provider=cast(Any, self.llm_provider),
-            settings=self.settings,
-            cache_provider=self.redis_adapter,
-            search_engine=search_engine,
-        )
-
-        logger.info(
-            "rae_core_engine_components_ready",
-            storage=type(self.postgres_adapter).__name__,
-            vector_store=type(self.qdrant_adapter).__name__,
-            embedding=type(self.embedding_provider).__name__,
-        )
+        self._init_engine(settings, postgres_pool)
 
         # New: Reflection Engine
         from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
@@ -210,6 +105,203 @@ class RAECoreService:
         """Enable or disable RAE-SZUBAR Mode (Evolutionary Pressure)."""
         self.szubar_mode = enabled
         logger.info("szubar_mode_changed", enabled=enabled)
+
+    def _init_embedding_providers(self, settings: Any) -> None:
+        """Initialize embedding providers (Multi-Vector Support)."""
+
+        self.embedding_provider = EmbeddingManager(
+            default_provider=LocalEmbeddingProvider()
+        )
+
+        # Register ONNX
+        import os
+
+        if settings.RAE_EMBEDDING_BACKEND == "onnx" or os.getenv("ONNX_EMBEDDER_PATH"):
+            self._register_onnx_provider(settings)
+
+        # Register API
+        if settings.RAE_EMBEDDING_BACKEND == "api":
+            api_provider = LocalEmbeddingProvider()
+            self.embedding_provider.register_provider("api", api_provider)
+            self.embedding_provider._default_provider = api_provider
+            self.embedding_provider.default_model_name = "api"
+            logger.info("registered_api_embedding_provider")
+
+        # Register MCP
+        if settings.RAE_EMBEDDING_BACKEND == "mcp":
+            self._register_mcp_provider(settings)
+
+        # Default fallback
+        if self.embedding_provider.default_model_name != "litellm":
+            self.embedding_provider.register_provider(
+                "litellm", LocalEmbeddingProvider()
+            )
+
+    def _register_onnx_provider(self, settings: Any) -> None:
+        """Helper to register ONNX provider."""
+        import os
+
+        try:
+            from rae_core.embedding.native import NativeEmbeddingProvider
+
+            model_path = (
+                settings.ONNX_EMBEDDER_PATH or "models/nomic-embed-text-v1.5/model.onnx"
+            )
+            if not os.path.exists(model_path):
+                model_path = "models/all-MiniLM-L6-v2/model.onnx"
+
+            if os.path.exists(model_path):
+                tokenizer_path = os.path.join(
+                    os.path.dirname(model_path), "tokenizer.json"
+                )
+                model_name = "nomic" if "nomic" in model_path.lower() else "mini-lm"
+                onnx_provider = NativeEmbeddingProvider(
+                    model_path=model_path,
+                    tokenizer_path=tokenizer_path,
+                    model_name=model_name,
+                    use_gpu=settings.RAE_USE_GPU,
+                )
+                self.embedding_provider.register_provider(model_name, onnx_provider)
+                if settings.RAE_EMBEDDING_BACKEND == "onnx":
+                    self.embedding_provider._default_provider = onnx_provider
+                    self.embedding_provider.default_model_name = model_name
+                logger.info("registered_onnx_provider", name=model_name)
+        except Exception as e:
+            logger.error("onnx_initialization_failed", error=str(e))
+
+    def _register_mcp_provider(self, settings: Any) -> None:
+        """Helper to register MCP provider."""
+        try:
+            from apps.memory_api.services.embedding import MCPEmbeddingProvider
+            from rae_core.utils.mcp_client import RAEMCPClient
+
+            mcp_client = RAEMCPClient(
+                command=settings.RAE_MCP_SERVER_COMMAND,
+                args=settings.RAE_MCP_SERVER_ARGS,
+            )
+            self.mcp_client = mcp_client
+            mcp_provider = MCPEmbeddingProvider(
+                tool_name=settings.RAE_MCP_EMBEDDING_TOOL, client=mcp_client
+            )
+            self.embedding_provider.register_provider("mcp", mcp_provider)
+            self.embedding_provider._default_provider = mcp_provider
+            self.embedding_provider.default_model_name = "mcp"
+            logger.info("registered_mcp_embedding_provider")
+        except Exception as e:
+            logger.error("mcp_initialization_failed", error=str(e))
+
+    def _init_adapters(
+        self,
+        settings: Any,
+        postgres_pool: Optional[asyncpg.Pool],
+        qdrant_client: Optional[AsyncQdrantClient],
+        redis_client: Optional[redis.Redis],
+    ) -> None:
+        """Initialize infrastructure adapters."""
+        import os
+
+        db_mode = os.getenv("RAE_DB_MODE") or settings.RAE_DB_MODE
+        ignore_db = (
+            postgres_pool is None
+            or (db_mode == "ignore" and postgres_pool is None)
+            or (settings.RAE_PROFILE == "lite" and os.getenv("RAE_FORCE_DB") != "1")
+        )
+        if postgres_pool is not None:
+            ignore_db = False
+
+        # Storage
+        if postgres_pool and not ignore_db:
+            self.postgres_adapter = PostgreSQLStorage(pool=postgres_pool)
+        else:
+            from rae_adapters.memory import InMemoryStorage
+
+            self.postgres_adapter = InMemoryStorage()
+
+        # Vector
+        if qdrant_client and not ignore_db:
+            dim = self.embedding_provider.get_dimension()
+            self.qdrant_adapter = QdrantVectorStore(
+                client=cast(Any, qdrant_client),
+                embedding_dim=dim,
+                distance=getattr(settings, "RAE_VECTOR_DISTANCE", "Cosine"),
+                vector_name=self.embedding_provider.default_model_name,
+            )
+        else:
+            from rae_adapters.memory import InMemoryVectorStore
+
+            self.qdrant_adapter = InMemoryVectorStore()
+
+        # Cache
+        if redis_client and not ignore_db:
+            self.redis_adapter = RedisCache(redis_client=redis_client)
+        else:
+            from rae_adapters.memory import InMemoryCache
+
+            self.redis_adapter = InMemoryCache()
+
+    def _init_engine(
+        self, settings: Any, postgres_pool: Optional[asyncpg.Pool]
+    ) -> None:
+        """Initialize Search Engine and RAE Core Engine."""
+        self.llm_provider = get_llm_provider(task_repo=postgres_pool)
+        self.settings = RAESettings(sensory_max_size=100, working_max_size=100)
+
+        # Reranker
+        reranker = self._create_reranker(settings)
+
+        # Search Engine
+        from rae_core.search.engine import HybridSearchEngine
+        from rae_core.search.strategies.fulltext import FullTextStrategy
+        from rae_core.search.strategies.vector import VectorSearchStrategy
+
+        search_strategies = {
+            "vector": VectorSearchStrategy(
+                vector_store=self.qdrant_adapter,
+                embedding_provider=self.embedding_provider,
+            ),
+            "fulltext": FullTextStrategy(memory_storage=self.postgres_adapter),
+        }
+        search_engine = HybridSearchEngine(
+            strategies=search_strategies, reranker=reranker
+        )
+
+        self.engine = RAEEngine(
+            memory_storage=self.postgres_adapter,
+            vector_store=self.qdrant_adapter,
+            embedding_provider=self.embedding_provider,
+            llm_provider=cast(Any, self.llm_provider),
+            settings=self.settings,
+            cache_provider=self.redis_adapter,
+            search_engine=search_engine,
+        )
+
+        logger.info(
+            "rae_core_engine_components_ready",
+            storage=type(self.postgres_adapter).__name__,
+            vector_store=type(self.qdrant_adapter).__name__,
+            embedding=type(self.embedding_provider).__name__,
+        )
+
+    def _create_reranker(self, settings: Any) -> Optional[IReranker]:
+        """Create configured reranker instance."""
+        from rae_core.search.engine import EmeraldReranker
+        from rae_core.search.rerankers.api import APIReranker
+        from rae_core.search.rerankers.mcp import MCPreranker
+
+        if settings.RAE_RERANKER_BACKEND == "emerald":
+            return EmeraldReranker(self.embedding_provider, self.postgres_adapter)
+        if settings.RAE_RERANKER_BACKEND == "api" and settings.RAE_RERANKER_API_URL:
+            return APIReranker(
+                api_url=settings.RAE_RERANKER_API_URL,
+                api_key=settings.RAE_RERANKER_API_KEY,
+            )
+        if settings.RAE_RERANKER_BACKEND == "mcp":
+            mcp_client = getattr(self, "mcp_client", None)
+            if mcp_client:
+                return MCPreranker(
+                    client=mcp_client, tool_name=settings.RAE_RERANKER_MCP_TOOL
+                )
+        return None
 
     async def execute_action(
         self,

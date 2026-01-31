@@ -52,12 +52,13 @@ services:
         condition: service_healthy
       qdrant:
         condition: service_started
-    healthcheck:
-      test: ["CMD-SHELL", "python3 -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8000/health\")' || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu, utility]
     restart: unless-stopped
     networks:
       - rae-network
@@ -98,6 +99,7 @@ services:
       - RAE_LLM_MODEL_DEFAULT=local_deepseek_coder
       - RAE_EMBEDDING_MODEL=ollama/nomic-embed-text
       - RAE_EMBEDDING_BACKEND=onnx
+      - RAE_USE_GPU=true
       # Dev-specific settings from docker-compose.dev.yml
       - RAE_APP_LOG_LEVEL=DEBUG
       - LOG_LEVEL=INFO
@@ -119,6 +121,13 @@ services:
         condition: service_healthy
       qdrant:
         condition: service_started
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu, utility]
     healthcheck:
       test: ["CMD-SHELL", "python3 -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8000/health\")' || exit 1"]
       interval: 10s

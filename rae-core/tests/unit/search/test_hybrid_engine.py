@@ -58,15 +58,15 @@ async def test_hybrid_search_rrf_logic():
     )
 
     # RRF Score formula: weight / (k + rank)
-    # where rank starts at 0
-    # id1 score: A(rank 0) + B(rank 1) = 1/(1+0) + 1/(1+1) = 1.0 + 0.5 = 1.5
-    # id2 score: A(rank 1) + B(rank 0) = 1/(1+1) + 1/(1+0) = 0.5 + 1.0 = 1.5
+    # where rank starts at 1
+    # id1 score: A(rank 1) + B(rank 2) = 1/(1+1) + 1/(1+2) = 0.5 + 0.333 = 0.833...
+    # id2 score: A(rank 2) + B(rank 1) = 1/(1+2) + 1/(1+1) = 0.333... + 0.5 = 0.833...
 
     results = await engine.search("query", "tenant")
 
     assert len(results) == 2
     # Scores should be identical
-    assert abs(results[0][1] - 1.5) < 0.01
+    assert abs(results[0][1] - 0.8333) < 0.01
 
 
 @pytest.mark.asyncio
@@ -81,8 +81,8 @@ async def test_hybrid_search_single_strategy():
     assert len(results) == 1
     assert results[0][0] == id1
     # For single strategy, RRF score is just 1/(k+rank) * weight
-    # Rank is 0-based, so 1.0 / (60 + 0) = 0.01666...
-    expected_score = 1.0 / 60.0
+    # Rank is 1-based, so 1.0 / (60 + 1) = 0.01639...
+    expected_score = 1.0 / 61.0
     assert abs(results[0][1] - expected_score) < 0.0001
 
 
@@ -98,7 +98,7 @@ async def test_weights_influence():
 
     results = await engine.search("q", "t")
 
-    # Score = 10/(60+0) + 1/(60+0) = 11/60
-    # Rank is 0-based
-    expected = 11.0 / 60.0
+    # Score = 10/(60+1) + 1/(60+1) = 11/61
+    # Rank is 1-based
+    expected = 11.0 / 61.0
     assert abs(results[0][1] - expected) < 0.0001

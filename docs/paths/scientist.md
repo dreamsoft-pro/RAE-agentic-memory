@@ -59,9 +59,11 @@ Testing the "Silicon Oracle" architecture at scale on a standard developer lapto
 | :--- | :--- | :--- | :--- |
 | **1k (Small)** | 1.0000 | 0 | Math-First |
 | **10k (Extreme)** | **1.0000** | 4 | **Native ONNX + Szubar** |
-| **100k (Ultra)** | **0.8542** | 42 | **Full Resonance** |
+### Core Research Areas
 
----
+- **Evolutionary Strategy Selection**: How the Math Controller converges on optimal weights using Thompson Sampling.
+- **Distributed Memory Manifolds**: Studying memory propagation and resonance across a decentralized Mesh of nodes.
+- **Emergent Knowledge Graphs**: Measuring the quality of graph extraction from unstructured episodic streams.
 
 ## 🔗 Related Resources
 - **[Benchmark Documentation](../benchmarking/README.md)** - Reproduce these results.

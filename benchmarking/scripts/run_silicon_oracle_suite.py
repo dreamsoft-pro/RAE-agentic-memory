@@ -23,13 +23,17 @@ class HeuristicEmbedder(IEmbeddingProvider):
     def get_dimension(self) -> int:
         return 384
 
-    async def embed_text(self, text: str):
+    async def embed_text(
+        self, text: str, task_type: str = "search_document"
+    ) -> list[float]:
         vec = [0.0] * 384
         for i, char in enumerate(text[:384]):
             vec[i] = ord(char) / 255.0
         return vec
 
-    async def embed_batch(self, texts):
+    async def embed_batch(
+        self, texts: list[str], task_type: str = "search_document"
+    ) -> list[list[float]]:
         return [await self.embed_text(t) for t in texts]
 
 

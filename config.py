@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     SYNTHESIS_MODEL: str = "gpt-4o"
     RAE_VECTOR_BACKEND: str = "qdrant"
     ONNX_EMBEDDER_PATH: str | None = None
+    RAE_USE_GPU: bool = False
 
     @model_validator(mode="after")
     def validate_vector_backend(self):

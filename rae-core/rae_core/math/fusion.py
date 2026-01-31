@@ -31,7 +31,7 @@ class RRFFusion:
         for strategy_name, results in strategy_results.items():
             weight = weights.get(strategy_name, 1.0)
 
-            for rank, (item_id, _) in enumerate(results):
+            for rank, (item_id, _) in enumerate(results, 1):
                 # RRF formula: 1 / (k + rank)
                 # Weighted RRF: weight / (k + rank)
                 score = weight / (self.k + rank)

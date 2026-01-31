@@ -23,17 +23,9 @@ RAE is an open-source cognitive memory system for AI agents. It addresses the fu
 
 ## 🧠 Core Architecture: 4 Layers / 3 Math Planes
 
-RAE models memory as four functionally distinct layers governed by a 3-layer mathematical control plane:
-
-1.  **Episodic Memory** – What happened (Immutable Logs)
-2.  **Semantic Memory** – What is known (Knowledge Graph)
-3.  **Working Memory** – What is currently relevant (Context Gate)
-4.  **Reflective Memory** – How to think about what I know (Meta-Knowledge)
-
-**Retrieval is optimized via:**
-- **L1 Heuristics**: Static signal-to-noise biasing.
-- **L2 Probabilistics**: Bayesian tool routing.
-- **L3 Evolutionary**: Multi-Armed Bandit (Thompson Sampling) for real-time weight adaptation.
+- **Multi-Layer Memory**: Episodic, Working, Semantic, and Reflective layers.
+- **Privacy-First Mesh**: Asynchronous memory synchronization between instances with explicit User Consent (Trust Handshake).
+- **Hybrid Search**: Combining vector similarity with keyword precision and graph resonance.
 
 ---
 
