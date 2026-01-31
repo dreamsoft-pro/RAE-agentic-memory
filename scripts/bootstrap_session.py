@@ -221,6 +221,11 @@ def main():
     print(
         f"\n✅ SESSION READY. All subsequent actions will be captured under {session_id}."
     )
+    print("---------------------------------------------------------------")
+    print("🚀 CLUSTER SYNC COMMANDS (Use these instead of scp):")
+    print("   To Node 1 (Push Code):   ./scripts/sync_to_node1.sh")
+    print("   From Node 1 (Pull Code): ./scripts/sync_from_node1.sh")
+    print("---------------------------------------------------------------")
 
 
 if __name__ == "__main__":

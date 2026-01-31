@@ -66,11 +66,11 @@ For **RAE-First** communication in `hotreload` mode:
     1. Ensure Dev API is running: `make dev` or `docker compose up rae-api-dev`
     2. Connection check: `curl http://localhost:8001/health`
 
-## 🖥️ Node 1 (Lumina) Management
-- **IP:** `100.68.166.117`
-- **SSH:** `ssh operator@100.68.166.117`
-- **Restart API:** `ssh operator@100.68.166.117 "cd ~/rae-node-agent && docker compose restart rae-api-dev"`
-- **Hard Reset:** `ssh operator@100.68.166.117 "cd ~/rae-node-agent && docker compose down && docker network prune -f && docker compose up -d"`
+### 🖥️ Cluster Management
+- **Sync Code to Node 1 (Safe):** `./scripts/sync_to_node1.sh` (Preserves .env/secrets)
+- **Sync Code from Node 1 (Safe):** `./scripts/sync_from_node1.sh` (Pull changes back)
+- **Check Cluster Status:** `python scripts/connect_cluster.py`
+- **Node 1 (Lumina):** `ssh operator@100.68.166.117`
 
 ## 🐳 Docker Profiles
 | Profile | Command | Ports | Description |
