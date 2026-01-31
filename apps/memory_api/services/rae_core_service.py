@@ -16,7 +16,6 @@ from qdrant_client import AsyncQdrantClient
 from apps.memory_api.services.dashboard_websocket import DashboardWebSocketService
 from apps.memory_api.services.embedding import (
     LocalEmbeddingProvider,
-    RemoteEmbeddingProvider,
 )
 from apps.memory_api.services.llm import get_llm_provider
 from apps.memory_api.services.token_savings_service import TokenSavingsService
@@ -29,7 +28,6 @@ from rae_core.engine import RAEEngine
 from rae_core.exceptions.base import SecurityPolicyViolationError
 from rae_core.interfaces.cache import ICacheProvider
 from rae_core.interfaces.database import IDatabaseProvider
-from rae_core.interfaces.embedding import IEmbeddingProvider
 from rae_core.interfaces.storage import IMemoryStorage
 from rae_core.interfaces.vector import IVectorStore
 from rae_core.models.interaction import AgentAction, RAEInput
@@ -78,44 +76,81 @@ class RAECoreService:
 
         # 1. Initialize embedding providers (Multi-Vector Support)
         import os
+
         from apps.memory_api.config import settings
-        
+
         # Create the manager first
-        self.embedding_provider = EmbeddingManager(default_provider=LocalEmbeddingProvider())
+        self.embedding_provider = EmbeddingManager(
+            default_provider=LocalEmbeddingProvider()
+        )
 
         # Register ONNX if available
         if settings.RAE_EMBEDDING_BACKEND == "onnx" or os.getenv("ONNX_EMBEDDER_PATH"):
             try:
                 from rae_core.embedding.native import NativeEmbeddingProvider
-                
-                model_path = settings.ONNX_EMBEDDER_PATH or "models/nomic-embed-text-v1.5/model.onnx"
+
+                model_path = (
+                    settings.ONNX_EMBEDDER_PATH
+                    or "models/nomic-embed-text-v1.5/model.onnx"
+                )
                 if not os.path.exists(model_path):
                     model_path = "models/all-MiniLM-L6-v2/model.onnx"
-                
+
                 if os.path.exists(model_path):
-                    tokenizer_path = os.path.join(os.path.dirname(model_path), "tokenizer.json")
+                    tokenizer_path = os.path.join(
+                        os.path.dirname(model_path), "tokenizer.json"
+                    )
                     model_name = "nomic" if "nomic" in model_path.lower() else "mini-lm"
-                    
+
                     onnx_provider = NativeEmbeddingProvider(
                         model_path=model_path,
                         tokenizer_path=tokenizer_path,
-                        model_name=model_name
+                        model_name=model_name,
+                        use_gpu=settings.RAE_USE_GPU,
                     )
                     # Register as a named provider
                     self.embedding_provider.register_provider(model_name, onnx_provider)
-                    
+
                     # If ONNX is preferred, set it as default
                     if settings.RAE_EMBEDDING_BACKEND == "onnx":
                         self.embedding_provider._default_provider = onnx_provider
                         self.embedding_provider.default_model_name = model_name
-                    
-                    logger.info("registered_onnx_provider", name=model_name, path=model_path)
+
+                    logger.info(
+                        "registered_onnx_provider", name=model_name, path=model_path
+                    )
             except Exception as e:
                 logger.error("onnx_initialization_failed", error=str(e))
 
+        # Handle API backend (LiteLLM / OpenAI)
+        if settings.RAE_EMBEDDING_BACKEND == "api":
+            api_provider = LocalEmbeddingProvider()
+            self.embedding_provider.register_provider("api", api_provider)
+            self.embedding_provider._default_provider = api_provider
+            self.embedding_provider.default_model_name = "api"
+            logger.info("registered_api_embedding_provider")
+
+        # Handle MCP backend (Delegated)
+        if settings.RAE_EMBEDDING_BACKEND == "mcp":
+            from apps.memory_api.services.embedding import MCPEmbeddingProvider
+
+            # TODO: Inject active MCP Client from context/orchestrator
+            mcp_provider = MCPEmbeddingProvider(
+                tool_name=settings.RAE_MCP_EMBEDDING_TOOL
+            )
+            self.embedding_provider.register_provider("mcp", mcp_provider)
+            self.embedding_provider._default_provider = mcp_provider
+            self.embedding_provider.default_model_name = "mcp"
+            logger.info(
+                "registered_mcp_embedding_provider",
+                tool=settings.RAE_MCP_EMBEDDING_TOOL,
+            )
+
         # Register LiteLLM (Standard) as 'litellm' if not already default
         if self.embedding_provider.default_model_name != "litellm":
-            self.embedding_provider.register_provider("litellm", LocalEmbeddingProvider())
+            self.embedding_provider.register_provider(
+                "litellm", LocalEmbeddingProvider()
+            )
 
         # 2. Initialize adapters
         db_mode = os.getenv("RAE_DB_MODE") or settings.RAE_DB_MODE
@@ -132,19 +167,21 @@ class RAECoreService:
             self.postgres_adapter = PostgreSQLStorage(pool=postgres_pool)
         else:
             from rae_adapters.memory import InMemoryStorage
+
             self.postgres_adapter = InMemoryStorage()
 
         if qdrant_client and not ignore_db:
             dim = self.embedding_provider.get_dimension()
             distance = getattr(settings, "RAE_VECTOR_DISTANCE", "Cosine")
             self.qdrant_adapter = QdrantVectorStore(
-                client=cast(Any, qdrant_client), 
-                embedding_dim=dim, 
+                client=cast(Any, qdrant_client),
+                embedding_dim=dim,
                 distance=distance,
-                vector_name=self.embedding_provider.default_model_name
+                vector_name=self.embedding_provider.default_model_name,
             )
         else:
             from rae_adapters.memory import InMemoryVectorStore
+
             self.qdrant_adapter = InMemoryVectorStore()
 
         if redis_client and not ignore_db:

@@ -34,7 +34,7 @@ class Arm:
         # Metadata
         last_pulled: Timestamp of last pull
         confidence: Confidence in this arm's estimates [0, 1]
-        
+
         # Sliding Window (System 3.4 Adaptive Determinism)
         history: list[float] = field(default_factory=list)
         window_size: int = 100
@@ -55,7 +55,7 @@ class Arm:
     # Metadata
     last_pulled: float | None = None
     confidence: float = 0.0
-    
+
     # Sliding Window
     history: list[float] = field(default_factory=list)
     window_size: int = 100
@@ -71,7 +71,7 @@ class Arm:
 
         Args:
             context_id: If provided, return context-specific mean (NOT WINDOWED YET)
-            
+
         Returns:
             Mean reward (0.0 if never pulled)
         """
@@ -116,7 +116,7 @@ class Arm:
             arm_pulls = self.context_pulls.get(context_id, 0)
         else:
             # For Sliding Window UCB, we use the effective window size (n)
-            # But strictly SW-UCB uses local count in window. 
+            # But strictly SW-UCB uses local count in window.
             # Approximating with len(history) as the effective 'n'
             arm_pulls = len(self.history)
 
@@ -126,7 +126,7 @@ class Arm:
 
         # Calculate UCB
         mean = self.mean_reward(context_id)
-        
+
         # For SW-UCB, N should effectively be min(total_pulls, window_size * num_arms)
         # or just total_pulls. Standard UCB uses total_pulls.
         exploration_bonus = c * math.sqrt(math.log(max(total_pulls, 1)) / arm_pulls)
@@ -164,7 +164,7 @@ class Arm:
 
         # Update confidence (more pulls = higher confidence)
         self.confidence = 1.0 - 1.0 / (1.0 + self.pulls)
-        
+
         # Update Sliding Window
         self.history.append(reward)
         if len(self.history) > self.window_size:

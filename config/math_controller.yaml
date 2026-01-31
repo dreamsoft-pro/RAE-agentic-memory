@@ -27,6 +27,17 @@ allowed_levels:
   - "information_theoretic"    # L2
   - "adaptive_hybrid"          # L3
 
+# Engine Parameters (Externalized from Code)
+engine_params:
+  # Candidate window size for Math Layer processing
+  limit: 100
+  
+  # Semantic Resonance (Graph Energy Flow)
+  resonance_factor: 0.4
+  
+  # Szubar Induction Energy (Threshold for pulling new memories)
+  szubar_induction_energy: 0.8
+
 # Level selection thresholds
 thresholds:
   # Structure thresholds (from MathematicalDecisionEngine)

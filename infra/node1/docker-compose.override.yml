@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  rae-api-dev:
+    # Node 1 (Arch Linux) Specific GPU Bind Mounts
+    # The NVIDIA Container Toolkit on this host fails to auto-inject these libraries
+    # due to path differences or version mismatches.
+    volumes:
+      # CUDA Driver
+      - /usr/lib/libcuda.so.1:/usr/lib/x86_64-linux-gnu/libcuda.so.1:ro
+      - /usr/lib/libcuda.so.1:/usr/lib/x86_64-linux-gnu/libcuda.so:ro
+      # NVIDIA Driver Utils (Required for JIT compilation)
+      - /usr/lib/libnvidia-ptxjitcompiler.so.1:/usr/lib/x86_64-linux-gnu/libnvidia-ptxjitcompiler.so.1:ro
+      - /usr/lib/libnvidia-nvvm.so.4:/usr/lib/x86_64-linux-gnu/libnvidia-nvvm.so.4:ro
+    
+    # Explicit Device Mapping
+    # Fixes 'CUDA failure 999: unknown error' by ensuring UVM devices are visible
+    devices:
+      - /dev/nvidia0:/dev/nvidia0
+      - /dev/nvidiactl:/dev/nvidiactl
+      - /dev/nvidia-uvm:/dev/nvidia-uvm
+      - /dev/nvidia-uvm-tools:/dev/nvidia-uvm-tools

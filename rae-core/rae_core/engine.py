@@ -37,8 +37,12 @@ class RAEEngine:
         from rae_core.math.resonance import SemanticResonanceEngine
 
         self.math_ctrl = math_controller or MathLayerController(config=settings)
+
+        # Load resonance factor from config
+        res_factor = self.math_ctrl.get_engine_param("resonance_factor", 0.4)
+
         self.resonance_engine = resonance_engine or SemanticResonanceEngine(
-            resonance_factor=0.4
+            resonance_factor=float(res_factor)
         )
 
         # Modular Search Engine with ORB 4.0
@@ -58,18 +62,21 @@ class RAEEngine:
 
     def _init_vector_strategy(self):
         from rae_core.embedding.manager import EmbeddingManager
-        
+
         if isinstance(self.embedding_provider, EmbeddingManager):
-            from rae_core.search.strategies.multi_vector import MultiVectorSearchStrategy
-            
+            from rae_core.search.strategies.multi_vector import (
+                MultiVectorSearchStrategy,
+            )
+
             # Build list of (store, provider, name) for each model in manager
             strategies = []
             for name, provider in self.embedding_provider.providers.items():
                 strategies.append((self.vector_store, provider, name))
-            
+
             return MultiVectorSearchStrategy(strategies=strategies)
-        
+
         from rae_core.search.strategies.vector import VectorSearchStrategy
+
         return VectorSearchStrategy(self.vector_store, self.embedding_provider)
 
     def _init_fulltext_strategy(self):
@@ -116,15 +123,20 @@ class RAEEngine:
 
         active_strategies = kwargs.get("strategies")
 
+        # Get limit from config
+        engine_limit = self.math_ctrl.get_engine_param("limit", 100)
+
         candidates = await self.search_engine.search(
             query=query,
             tenant_id=tenant_id,
             filters=search_filters,
-            limit=100,  # SYSTEM 3.4: Wide window for Math Layer / Resonance processing
+            limit=int(
+                engine_limit
+            ),  # SYSTEM 3.4: Wide window for Math Layer / Resonance processing
             strategies=active_strategies,
             strategy_weights=strategy_weights,
             enable_reranking=False,
-            math_controller=self.math_ctrl 
+            math_controller=self.math_ctrl,
         )
 
         # 2. DESIGNED MATH SCORING (The Manifold)
@@ -213,10 +225,10 @@ class RAEEngine:
         # We rely purely on Mathematical Resonance (Graph Energy Flow).
         # No artificial hardcoded multipliers (*1.2).
         # The energy map from compute_resonance is the ground truth.
-        
+
         # If we induced memories via Reflection, they already have correct 'math_score'
         # calculated from tanh(energy).
-        
+
         # Final Sort based on the integrated Math Score (Similarity + Resonance + Importance)
         memories.sort(key=lambda x: x.get("math_score", 0.0), reverse=True)
         return memories[:top_k]
