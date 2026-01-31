@@ -167,7 +167,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="RAE Memory API",
     description="Reflective Agentic Engine - Memory Control Plane API",
-    version="3.6.0",
+    version="3.6.1",
     docs_url="/docs",
 )
 
