@@ -27,13 +27,13 @@ class LocalEmbeddingProvider(IEmbeddingProvider):
     def __init__(self):
         self.dimension = 384
 
-    async def embed_text(self, text: str) -> list[float]:
+    async def embed_text(self, text: str, task_type: str = "search_document") -> list[float]:
         # Return deterministic mock vector based on text length
         val = (len(text) % 100) / 100.0
         return [val] * self.dimension
 
-    async def embed_batch(self, texts: list[str]) -> list[list[float]]:
-        return [await self.embed_text(t) for t in texts]
+    async def embed_batch(self, texts: list[str], task_type: str = "search_document") -> list[list[float]]:
+        return [await self.embed_text(t, task_type) for t in texts]
 
     def get_dimension(self) -> int:
         return self.dimension
