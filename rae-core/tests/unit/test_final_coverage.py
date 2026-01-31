@@ -76,14 +76,16 @@ async def test_rae_engine_store_memory_coverage():
 
     emb_provider = MagicMock()
     emb_provider.embed_text = AsyncMock(return_value=[0.1, 0.2])
+    emb_provider.generate_all_embeddings = AsyncMock(
+        return_value={"dense": [[0.1, 0.2]]}
+    )
 
     engine = RAEEngine(storage, vector_store, emb_provider)
-
     # Use keyword arguments
     await engine.store_memory(tenant_id="t", agent_id="a", content="content")
 
     assert storage.store_memory.called
-    assert emb_provider.embed_text.called
+    assert emb_provider.generate_all_embeddings.called
     assert vector_store.store_vector.called
 
 

@@ -28,10 +28,14 @@ from fastapi.testclient import TestClient
 def api_client():
     """
     Returns a client-like object.
-    If RAE_API_URL is set, returns an HTTPX client pointing to that URL.
+    If RAE_API_URL is set and reachable, returns an HTTPX client pointing to that URL.
     Otherwise, returns a FastAPI TestClient using the local app.
     """
     api_url = os.getenv("RAE_API_URL")
+
+    # If pointing to internal docker name while running outside, force local
+    if api_url == "http://rae-api:8000" and not os.path.exists("/.dockerenv"):
+        api_url = None
 
     if api_url:
         print(f"🌍 Running E2E tests against REMOTE: {api_url}")

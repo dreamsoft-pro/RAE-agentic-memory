@@ -33,7 +33,7 @@ async def test_vector_strategy_flow(mock_components):
     results = await strategy.search("test query", "tenant_1")
 
     # Verify flow
-    embedder.embed_text.assert_called_once_with("test query")
+    embedder.embed_text.assert_called_once_with("test query", task_type="search_query")
     store.search_similar.assert_called_once()
 
     # Verify args passed to store

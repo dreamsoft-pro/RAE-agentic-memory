@@ -11,6 +11,7 @@ import os
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 import asyncpg
 import litellm
@@ -55,7 +56,9 @@ class LiteLLMEmbeddingProvider(IEmbeddingProvider):
         response = await litellm.aembedding(
             model=self.model_name, input=[prefix + text]
         )
-        return response["data"][0]["embedding"]
+        # Cast to list[float] to satisfy mypy
+        embedding: list[float] = response["data"][0]["embedding"]
+        return embedding
 
     async def embed_batch(
         self, texts: list[str], task_type: str = "search_document"
@@ -71,7 +74,9 @@ class LiteLLMEmbeddingProvider(IEmbeddingProvider):
         response = await litellm.aembedding(
             model=self.model_name, input=processed_texts
         )
-        return [d["embedding"] for d in response["data"]]
+        # Cast to list[list[float]]
+        embeddings: list[list[float]] = [d["embedding"] for d in response["data"]]
+        return embeddings
 
 
 class RAEBenchmarkRunner:
@@ -196,7 +201,7 @@ class RAEBenchmarkRunner:
         print(f"🏭 Generating {count} synthetic memories (Industrial Pattern)...")
         import random
 
-        memories = []
+        memories: list[dict[str, Any]] = []
         components = ["api", "auth", "db", "ui", "storage", "network"]
 
         for i in range(count):
@@ -226,7 +231,7 @@ class RAEBenchmarkRunner:
                 }
             )
 
-        queries = []
+        queries: list[dict[str, Any]] = []
         for _ in range(query_count):
             target = random.choice(components)
             # Query matching logic
@@ -234,7 +239,7 @@ class RAEBenchmarkRunner:
             expected = [
                 m["id"]
                 for m in memories
-                if target in m["text"] and m["metadata"]["type"] == "log"
+                if target in str(m["text"]) and m["metadata"]["type"] == "log"
             ]
 
             if expected:
@@ -256,14 +261,14 @@ class RAEBenchmarkRunner:
                     "Benchmark file required if synthetic count not provided"
                 )
             try:
-                from yaml import CSafeLoader as Loader
+                from yaml import CSafeLoader as SafeLoader
             except ImportError:
-                from yaml import SafeLoader as Loader
+                from yaml import SafeLoader  # type: ignore
 
             print(f"📖 Reading {self.benchmark_file} (this may take a minute)...")
             start_read = time.time()
             with open(self.benchmark_file, "r") as f:
-                data = yaml.load(f, Loader=Loader)
+                data = yaml.load(f, Loader=SafeLoader)
             print(f"✅ Read completed in {time.time() - start_read:.2f}s")
 
         self.project_id = data.get("name", "RAE-agentic-memory")
@@ -372,7 +377,9 @@ class RAEBenchmarkRunner:
             self.engine.math_ctrl.update_policy(success=is_hit)
 
             if not is_hit and q["expected_source_ids"]:
-                missed_id = q["expected_source_ids"][0]
+                # Cast to list to satisfy mypy if it thinks it's a Collection
+                expected_ids = list(q["expected_source_ids"])
+                missed_id = expected_ids[0]
                 # Index reflection via engine to get multi-vector support
                 ref_id = await self.engine.store_memory(
                     tenant_id=self.tenant_id,
