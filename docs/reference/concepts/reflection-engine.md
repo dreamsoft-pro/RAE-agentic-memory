@@ -652,7 +652,7 @@ reflection = await client.generate_reflection(
 
 ## Further Reading
 
-- [Memory Layers](memory-layers.md) - Understanding memory architecture
+- [Memory Layers](FULL_SPEC.md#1-memory-hierarchy) - Understanding memory architecture
 - [Knowledge Graph](graphrag.md) - How reflections connect
 - [Scoring Heuristics](../advanced/scoring_heuristics.md) - Confidence calculation
 

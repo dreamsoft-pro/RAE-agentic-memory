@@ -210,11 +210,11 @@ Open http://localhost:8501 in your browser.
 
 Now that RAE is running, explore:
 
-1. **[Core Concepts](../concepts/memory-layers.md)** - Understanding memory layers
+1. **[Core Concepts](../concepts/FULL_SPEC.md#1-memory-hierarchy)** - Understanding memory layers
 2. **[API Reference](../api/rest-api.md)** - Complete API documentation
 3. **[IDE Integration](../guides/ide-integration.md)** - Connect RAE to Cursor/VSCode
 4. **[Examples](../examples/)** - Real-world use cases
-5. **[Production Deployment](../guides/production-deployment.md)** - Deploy to production
+5. **[Production Deployment](../guides/DEPLOYMENT.md)** - Deploy to production
 
 ## Troubleshooting
 
@@ -277,4 +277,4 @@ OPENAI_API_KEY="sk-..."
 
 ---
 
-**Next:** [Understanding Memory Layers →](../concepts/memory-layers.md)
+**Next:** [Understanding Memory Layers →](../concepts/FULL_SPEC.md#1-memory-hierarchy)

@@ -60,7 +60,7 @@
 | `reference/concepts/context-cache.md` | 14KB | 2025-11-24 |
 | `reference/concepts/cost-controller.md` | 13KB | 2025-11-24 |
 | `reference/concepts/graphrag.md` | 15KB | 2025-11-24 |
-| `reference/concepts/memory-layers.md` | 9KB | 2025-11-24 |
+| `reference/concepts/FULL_SPEC.md#1-memory-hierarchy` | 9KB | 2025-11-24 |
 | `reference/concepts/reflection-engine.md` | 16KB | 2025-11-24 |
 | `reference/deployment/CONFIG_REFLECTIVE_MEMORY.md` | 12KB | 2025-11-28 |
 | `reference/deployment/DEPLOY_K8S_HELM.md` | 9KB | 2025-12-01 |
@@ -123,7 +123,7 @@
 | `guides/ide-integration.md` | 1KB | 2025-11-29 |
 | `guides/performance-tuning.md` | 2KB | 2025-11-24 |
 | `guides/phase2-features.md` | 22KB | 2025-11-24 |
-| `guides/production-deployment.md` | 15KB | 2025-11-24 |
+| `guides/DEPLOYMENT.md` | 15KB | 2025-11-24 |
 | `guides/rae-enterprise/README.md` | 20KB | 2025-12-01 |
 | `guides/rae-lite/RAE-LITE-VERIFICATION.md` | 8KB | 2025-11-27 |
 | `guides/rae-lite/RAE-lite.md` | 3KB | 2025-11-27 |

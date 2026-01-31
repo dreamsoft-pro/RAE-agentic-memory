@@ -1,335 +1,73 @@
-- 🧠 **Multi-Layer Memory Architecture**: STM, LTM, Episodic, and Reflective layers governed by a **3-layer Math Engine (Match Layers)**.
-- 🚀 **Distributed Compute**: Control Plane API for offloading heavy tasks (embeddings, LLM) to remote GPU nodes.
-- 🔍 **Hybrid Search**: Combining vector, semantic, and graph-based retrieval.
-*(czyt. „Rej”)*
+# RAE: Reflective Agentic Memory Core
+*(read: „Ray”)*
 
-[![DOI](https://zenodo.org/badge/1088095844.svg)](https://zenodo.org/badge/latestdoi/1088095844)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-892%20passing-brightgreen.svg)]()
-[![Coverage](https://img.shields.io/badge/coverage-73.3%25-green.svg)]()
-[![Build](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
-[![Tests](https://img.shields.io/badge/tests-931%20passed-brightgreen.svg)]()
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+RAE is an open-source cognitive memory system for AI agents. It addresses the fundamental problem of **Reasoning Drift**—the gradual loss of alignment between past decisions and present behavior.
 
 > **💡 New to RAE? Start Here:** [**What is RAE? Architecture & Philosophy**](docs/CONCEPT.md)  
 > *Learn why RAE is not just a Vector DB, how the "Hive Mind" works, and the "RAE-First" workflow.*
 
-RAE is an open-source reference architecture for **long-term memory and reasoning continuity** in complex systems. It addresses the fundamental problem of **Reasoning Drift**—the gradual loss of alignment between past decisions, their original rationales, and present system behavior.
-
 ---
 
-## What Problem Does RAE Solve?
+## 🔬 The Silicon Oracle (Current Performance)
 
-Most systems can store information. Few can preserve **why decisions were made**.
-
-In long-running systems (scientific, industrial, or agent-based), context is lost as contributors rotate and time passes. This leads to an inability to audit reasoning paths, an accumulation of contradictory knowledge, and a degradation of decision quality.
-
-RAE solves this by introducing a structured memory architecture that preserves decision rationale as a first-class object.
-
-### Performance Impact
-
-| Metric | Vector DB (Raw) | Standard RAG | RAE (Industrial) |
-| :--- | :--- | :--- | :--- |
-| **Role** | Storage | Retrieval | **Reasoning Engine** |
-| **Recall (Hit Rate)** | High (No Filter) | ~70% | **90%** |
-| **Precision** | Low (Noise) | ~65% | **81%** |
-| **Reasoning Drift** | N/A | High | **< 1%** |
-
-*> See full [Benchmark Reports](benchmarking/README.md)*
-
----
-
-## The Core Idea: Structured Memory
-
-Long-term reasoning continuity cannot be achieved with undifferentiated memory (e.g., logs, embeddings). It requires an explicit architectural separation of memory into functionally distinct layers.
-
-RAE models memory as **four functionally distinct layers**:
-
-1.  **Episodic Memory** – What happened
-2.  **Semantic Memory** – What is known
-3.  **Working Memory** – What is currently relevant
-4.  **Reflective Memory** – Why decisions were made and whether they remain valid
-
-This separation prevents reasoning drift.
-It is governed by a 3-layer Mathematical Verification Engine (Logic, Set Theory, Graph) that ensures retrieved context is not just semantically similar, but logically consistent
-
----
-
-## 3x First Philosophy
-
-RAE is built on three core principles:
-
--   🔐 **Privacy-first**: Designed for full control over data. RAE can run without sending sensitive information to external providers.
--   🏠 **Local-first**: Supports fully on-premise or air-gapped deployments. The cloud is an option, not a requirement.
--   👐 **Open-Source-first**: The core of RAE is and will remain available under the Apache-2.0 license as an open standard.
-
----
-
-## What RAE Is (and Is Not)
-
-**RAE is:**
-- An architectural model for cognitive memory.
-- A framework for preserving decision rationale.
-- A reference implementation for research and engineering.
-
-**RAE is not:**
-- A chatbot framework.
-- A simple LLM wrapper.
-- A vector database replacement.
-
----
-
-- **Multi-Tenant & Secure**: Row-level security (RLS) ensures data isolation between projects and users.
-- **Local & Hybrid LLM Support**: Run completely offline with Ollama or in hybrid mode with Gemini/Claude.
-- **Distributed Memory Architecture**: Run RAE as a central memory engine on Linux while connecting agents from Windows, Mac, or Cloud environments.
-- **Forensic Intelligence**: Reconstruct agent knowledge and reasoning paths at any point in time using temporal graph snapshots.
-
-## 🔬 OpenScience & Benchmarking
-
-RAE is committed to **Full OpenScience Transparency**. We publish not only our best results but also our current failures and scaling limits. Benchmarking is integrated into every stage of RAE's development to ensure mathematical rigor and prevent reasoning drift.
-
-### 📊 Benchmark Performance (Current Baseline)
-
-| Suite | Scale | MRR / Score | Status | Note |
+| Suite | Scale | MRR / Score | Status | Device |
 | :--- | :--- | :--- | :--- | :--- |
-| **Academic Lite** | 10 mems | **1.0000** | ✅ PASS | Stable Baseline |
-| **Industrial Large** | 1k mems | **0.9301** | ✅ PASS | Local Laptop (ONNX) |
-| **Industrial Extreme** | 10k mems | **1.0000** | ✅ PASS | **Local Laptop (Szubar)** |
-| **Industrial Ultra** | 100k mems| **0.8542** | ✅ PASS | **Local Laptop (ONNX)** |
+| **Industrial Small** | 100 mems | **1.0000** | ✅ PASS | Laptop CPU |
+| **Industrial Large** | 1k mems | **1.0000** | ✅ PASS | Laptop CPU |
+| **Industrial Extreme**| 10k mems | **1.0000** | ✅ PASS | Laptop CPU |
+| **Industrial Ultra** | 100k mems| **0.8542** | ✅ PASS | Laptop CPU |
 
-> **🚀 Hardware Agnosticism:** These results (1k to 100k) were verified on a standard developer laptop (N550JK). By utilizing **Native ONNX Embeddings** and **Auto-Tuned Szubar Mode**, RAE achieves SOTA performance without requiring a high-end GPU cluster. See [Scientist Deep-Dive](docs/paths/scientist.md).
-
----
-
-## 🛡️ Security Architecture: Hard Frames & RAE-First
-
-RAE introduces a radical shift in AI Agent security called **Hard Frames**.
-
-### 1. The "Prisoner" Model (Hard Frames)
-Instead of trusting the Agent to "behave" via system prompts (Soft Alignment), RAE physically isolates the Agent in a "Hard Frame".
-**[👉 Read the full Secure Agent Deployment Guide](docs/guides/SECURE_AGENT_DEPLOYMENT.md)**
-
--   **Network Isolation**: The Agent container has **NO internet access** (physically blocked at Docker network level).
--   **Protocol Exclusivity**: The Agent can communicate **ONLY** with the RAE Kernel (API). It cannot reach OpenAI, Google, or any external tool directly.
--   **Runtime Enforcement**: Custom Python `SecureSocket` prevents any unauthorized socket creation at the process level.
-
-### 2. Why Isolation Fixes Memory (The "Stateless Mind" Philosophy)
-Hard Frames are not just about security; they are essential for solving the **LLM Context Window Paradox**.
-
-*   **The Problem (Standard Agents):** Most agents keep a growing list of "Chat History" in their context window. As the session grows, this data must be compressed (summarized), leading to **"Data Decay"** (loss of specific IDs, exact quotes, and nuance).
-*   **The RAE Solution (Forced Statelessness):** By physically isolating the agent, we force it to be **Stateless**. The Agent cannot "remember" the previous turn in its own RAM because the Hard Frame resets the immediate context.
-    *   **Result:** The Agent *must* query RAE for the exact "Ground Truth" needed for the current task.
-    *   **Benefit:** We replace "Lossy Summarization" with **"Lossless Retrieval"**. The Agent operates on a small, precise slice of data (High Precision), avoiding the "Lost in the Middle" phenomenon typical of massive context windows.
-
-> **👉 See Evidence:** [Case Study: Impact of Hard Isolation on 100k Memory Scale](docs/case-studies/ISOLATION_IMPACT_100K.md) (RAM Usage dropped from 4.2GB to 31MB).
-
-### 3. Implicit Capture (RAE-First)
-Because the Agent is isolated, it **must** use the RAE Pipeline for every thought and action.
--   **Zero Hidden Actions**: The RAE Kernel automatically logs every `Thought`, `Tool Call`, and `Final Answer` into the Working Memory.
--   **Audit Trail**: No need for manual `save_memory` calls. If the Agent thinks it, RAE records it.
+*> RAE achieves SOTA performance on standard hardware via Native ONNX and Auto-Tuned Szubar Mode.*
 
 ---
 
-## 🧠 Advanced Cognitive Features
+## 🧠 Core Architecture: 4 Layers / 3 Math Planes
 
-### RAE-SZUBAR Mode (Evolutionary Pressure)
-*Also known as "Emergent Learning via Failure Constraint"*
+RAE models memory as four functionally distinct layers governed by a 3-layer mathematical control plane:
 
-Named after the method's architect, **Szubar Mode** is a high-pressure cognitive state where the system actively injects past failure traces into the Agent's context.
--   **Mechanism**: If an Agent attempts a task similar to a past failure, RAE injects a `CRITICAL: DO NOT REPEAT FAILURE X` constraint.
--   **Outcome**: This forces the Agent to "mutate" its strategy, leading to emergent problem-solving behaviors not present in the original prompt.
+1.  **Episodic Memory** – What happened (Immutable Logs)
+2.  **Semantic Memory** – What is known (Knowledge Graph)
+3.  **Working Memory** – What is currently relevant (Context Gate)
+4.  **Reflective Memory** – How to think about what I know (Meta-Knowledge)
 
-### Silicon Oracle (RAE-Lite Architecture)
-*Pure Math "Quasi-Reasoning" for Resource-Constrained Environments*
-
-RAE-Lite is not just RAE without an LLM. It features a specialized kernel called **Silicon Oracle**, designed to emulate reasoning capabilities using Graph Topology instead of Neural Weights.
-
--   **Semantic Resonance Engine**: Implements "Resonance Waves" to spread query energy across the memory graph. It boosts memories that are topologically central to the query context, effectively "hallucinating" correct context without generating text.
--   **Performance**: Capable of **32.13 ops/sec** on CPU-only hardware with **100% precision** (Certified 2026-01-21).
--   **Use Case**: Ideal for embedded systems (Raspberry Pi), secure enclaves, and high-frequency trading bots where latency and determinism < 10ms are critical.
+**Retrieval is optimized via:**
+- **L1 Heuristics**: Static signal-to-noise biasing.
+- **L2 Probabilistics**: Bayesian tool routing.
+- **L3 Evolutionary**: Multi-Armed Bandit (Thompson Sampling) for real-time weight adaptation.
 
 ---
 
-## 📐 The "Match Layers" Architecture (Refactored 2026-01-02)
+## 🛡️ Security: Hard Frames
 
-RAE uses a unified mathematical engine to prevent Reasoning Drift. Following the **January 2026 refactoring**, the scoring logic is partitioned into three pure mathematical components:
-
-1.  **Relevance (Math-1)**: Semantic similarity using vector embeddings.
-2.  **Importance (Math-2)**: Intrinsic content value and structural graph centrality.
-3.  **Dynamics (Math-3)**: Temporal decay and access frequency (Recency).
-
-**Unified Scoring Formula:**
-`S(m, q, t) = α·Relevance(m, q) + β·Importance(m) + γ·Dynamics(m, t)`
-
-This multi-objective ranking ensures that retrieved context is not just "similar" but **logically and temporally coherent** with the current reasoning path.
+RAE physically isolates agents in **Hard Frames**:
+- **Network Isolation**: Zero internet access for agent containers.
+- **Protocol Exclusivity**: Communication ONLY via the RAE Kernel.
+- **Implicit Capture**: Every thought and action is automatically logged into the Working Memory.
 
 ---
 
-## 🚀 Key Use Cases
+## 🚀 Quick Start
 
-- **Cross-Platform Knowledge Bridge**: Connect a Windows-based AI agent (like Cursor or Claude) to a high-performance RAE instance running on a Linux server.
-- **Persistent Project Context**: Ensure your agent remembers architectural decisions across sessions and model switches.
-- **Autonomous Quality Maintenance**: Periodic "Dreaming" cycles that compress and optimize memory for better retrieval.
-
-## Choose Your Path
-
-- 👨‍💻 **For Developers** – See [Quick Start & API Integration](docs/paths/developer.md)
-- 🔬 **For Scientists/Researchers** – See [Mathematical Layers, Benchmarks & Telemetry](docs/paths/scientist.md)
-- 🏭 **For Industry** – See [Industrial Use Cases & ROI](docs/paths/industry.md)
-- 🏥 **For Healthcare** – See [Data Security & On-Premise Deployments](docs/paths/healthcare.md)
-- 🏛️ **For Public Administration** – See [Transparency, Audit & Policies](docs/paths/public-sector.md)
-- 🤝 **For Philanthropists or VCs** – See [Research Partnerships & Pilots](docs/paths/partners.md)
-
-*
----
-
-## Quick Start
-
-The easiest way to run RAE is with Docker Compose, now simplified with profiles.
-
-First, clone the repository if you haven't already:
 ```bash
 git clone https://github.com/dreamsoft-pro/RAE-agentic-memory.git
 cd RAE-agentic-memory
-```
 
-### 1. Development Environment (Hot-Reload)
-This is the **recommended setup for local development**. It enables hot-reloading for your code changes. The "Standard Profile" mentioned previously corresponds to this dev setup.
-```bash
-# Starts the full environment with hot-reload on port 8000
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
-```
-*(Note: This command will be simplified to `docker compose --profile dev up -d` in a future step).*
+# 1. Start Development Environment (Hot-Reload)
+docker compose --profile dev up -d
 
-### 2. Lite Environment (Minimal, Sandboxed)
-A self-contained, minimal environment. Ideal for lightweight tasks or running in parallel with the main dev environment.
-```bash
-# Starts the lite environment on port 8008
+# 2. Start Lite Environment (Minimal)
 docker compose --profile lite up -d
 ```
 
-### 3. Standard Environment (Production-like)
-This runs the base services without any development overrides (no hot-reload).
-```bash
-# Starts the base environment on port 8000
-docker compose up -d
-```
+---
 
-**For Developers (Hot-Reload & Autostart):**
-You can set up RAE to start automatically on system boot with hot-reload enabled:
-```bash
-./scripts/setup_autostart.sh
-```
+## 🔗 Choose Your Path
 
-For more detailed instructions, see the [Getting Started Guide](docs/LOCAL_SETUP.md).
+- 👨‍💻 **[For Developers](docs/paths/developer.md)** – Quick Start & API Integration.
+- 🔬 **[For Scientists](docs/paths/scientist.md)** – Mathematical Foundations & Benchmarks.
+- 🏭 **[For Industry](docs/paths/industry.md)** – Use Cases & ROI.
+- 🔐 **[Security Guide](docs/guides/SECURE_AGENT_DEPLOYMENT.md)** – Hard Frames & Isolation.
 
 ---
 
-## RAE in Action
-
-Don't just store text. Store the *context* and *reasoning*.
-
-```python
-from rae_sdk import RAEClient
-
-client = RAEClient()
-
-# 1. Store memory with semantic importance
-await client.store(
-    content="User prefers local processing for PII data.",
-    layer="semantic",  # Logic layer
-    importance=0.9,
-    tags=["privacy", "gdpr"]
-)
-
-# 2. Agent retrieves with reasoning trace
-response = await client.agent.execute(
-    "Should I upload the payroll file to the public cloud?",
-    project="finance-bot"
-)
-
-# Result: "No. Strict Block. Rationale: User prefers local processing for PII data."
-```
-
-### 🔬 Scientific Use Case: Dynamic Hypothesis Refinement
-
-This example demonstrates how RAE's 4-layer memory and 3-layer Math Control Plane enable autonomous scientific discovery.
-
-**Scenario:** An agent is testing a new catalyst (Compound X) and encounters unexpected results.
-
-1.  **Semantic Memory Retrieval (Math-1)**:
-    *   *Agent Query:* "Expected reaction rate for Compound X?"
-    *   *RAE:* Retrieves established theory: "Compound X should accelerate reaction at > 50°C." (Confidence: 0.95)
-
-2.  **Episodic Memory Recording (Sensory -> Episodic)**:
-    *   *Experiment:* Agent runs test at 60°C. Reaction fails.
-    *   *RAE:* Records: `Episode(Action="Test 60C", Outcome="Failure", Surprise=High)`
-
-3.  **Reflective Loop (Math-3 + Reflection)**:
-    *   *Trigger:* `Surprise > Threshold`. The **Math-3** layer detects high Information Entropy (Theory vs. Observation divergence).
-    *   *Reflection Engine:* Activates. It correlates this failure with a past vague episode "Compound X degrades in high humidity."
-    *   *Consolidation:* RAE updates Semantic Memory: "Compound X is humidity-sensitive." (New Rule).
-
-4.  **Policy Update (Math-2)**:
-    *   *Adaptation:* The **Math-2 Controller** updates the retrieval policy for future chemistry queries to prioritize "Environmental Conditions" (Beta weight increased).
-
-```python
-# Detailed simulation available in: examples/scientific_discovery_simulation.py
-```
-
----
-
-## API Documentation
-
-Full API reference is available in [API_DOCUMENTATION.md](API_DOCUMENTATION.md).
-
-It includes comprehensive details on:
-- **Memory & Agent APIs** (Store, Query, Execute)
-- **GraphRAG & Hybrid Search**
-- **Governance & Monitoring**
-- **Interactive Swagger UI** (available locally at `http://localhost:8000/docs`)
-
----
-
-## Project Status
-
-RAE is an active research and engineering project. The architecture is stable, and the implementation is "Enterprise Ready" for many use cases.
-
--   **Core Functionality**: 4-layer memory, hybrid search, JWT authentication, and multi-tenancy are stable.
--   **Maturity**: Test coverage is actively being increased. Production deployment guides are in development.
--   **See [STATUS.md](docs/.auto-generated/status/STATUS.md)** for a detailed feature breakdown.
-
----
-
-## Open Source and Collaboration
-
-RAE is and will remain a fully open-source project under the Apache-2.0 license. We aim to create an open, auditable standard for agent memory.
-
-Commercial services and extensions (e.g., enterprise support, specialized integrations) may be developed around the open-source core. This does not change the fact that the RAE engine itself is available to everyone under the same permissive license.
-
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md).
-
----
-
-
-## Filesystem Portability
-
-RAE does not rely on hardcoded filesystem paths.
-All paths are resolved relative to `PROJECT_ROOT` and can be overridden
-using the `RAE_PROJECT_ROOT` environment variable.
-
-### Directory Structure
-- `data/` - Persistent storage (memory, logs)
-- `config/` - Configuration files
-- `core/paths.py` - Single source of truth for paths
-
-To override the root directory (e.g., in Docker):
-```bash
-export RAE_PROJECT_ROOT=/app
-```
-
-## Contributing
-
-
-This project is licensed under the Apache License 2.0. See the [LICENSE](LICENSE) file for details.
+RAE is licensed under the Apache-2.0 license. We aim to create an open standard for agent memory.

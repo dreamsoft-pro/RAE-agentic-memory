@@ -1,88 +1,69 @@
 # RAE for Scientists & Researchers
 
-*Current Version: 3.2.0 (Silicon Oracle)*
-*Historical Version (Nov 2025): [scientist_november_2025.md](../history/scientist_november_2025.md)*
+*Current Version: 3.4.0 (Silicon Oracle)*
+*Historical Versions: [Nov 2025](../history/scientist_november_2025.md), [Dec 2025](../history/scientist_december_2025.md)*
 
-This document provides a technical deep-dive into RAE (Reflective Agentic Memory Engine) architecture, mathematical foundations, and recent empirical results. RAE is a deterministic, hardware-agnostic memory core designed for high-performance agentic systems.
+This document provides a technical deep-dive into RAE (Retrieval-Augmented Episodic) Agnostic Core architecture, mathematical foundations, and empirical results.
 
 ---
 
 ## 🔬 Core Architecture: The Silicon Oracle
 
-RAE operates on a unified principle of **Deterministic Cognitive Simulation**. Every retrieval and reflection operation is governed by mathematical laws rather than stochastic LLM calls, ensuring reproducibility and reliability.
+RAE (Retrieval-Augmented Episodic) Agnostic Core is a multi-layered cognitive memory operating system for AI agents. It integrates mathematical determinism with evolutionary adaptation.
 
-### 1. 4-Layer Memory Model
-Inspired by human cognitive systems, RAE partitions information into four distinct processing stages:
+### 1. The Four Memory Layers (The 4 Pillars)
+RAE categorizes every piece of information (Memory) according to its functional role:
 
-1.  **Episodic (Log-Based):** Raw, chronological interactions. Immutable ground truth stored in PostgreSQL.
-2.  **Working (Context-Gated):** Active context for the current reasoning step. Governed by the **Information Bottleneck (IB) Theory**.
-3.  **Semantic (Graph-Augmented):** Factual knowledge extracted as triples. Uses **GraphRAG** for multi-hop reasoning.
-4.  **Reflective (Meta-Knowledge):** Higher-order insights, strategies, and failure patterns (Szubar Mode).
+1.  **Episodic Memory (EM / em):** Raw stream of events and technical logs. temporal precision ($t$).
+2.  **Working Memory (WM / wm):** Current task context. The only layer for `RESTRICTED` data.
+3.  **Semantic Memory (SM / sm):** The Knowledge Graph (GraphRAG). Entities and relations.
+4.  **Reflective Memory (RM / rm):** Meta-memory. Stores Bandit weights and **Szubar Mode** failure mappings.
 
-### 2. 3 Match Layers (Math-1/2/3)
-Retrieval is not a simple "top-k" vector search. RAE uses a hierarchical scoring stack:
+---
 
--   **L1 (Heuristics):** Signal-to-Noise Ratio (SNR) analysis, Term Frequency (TF), and structural filters. Execution time: <1ms.
--   **L2 (Probabilistic):** **Bayesian Tool Router** calculates the probability of retrieval success based on query entropy.
--   **L3 (Optimization):** **Multi-Armed Bandit (MAB)** with Thompson Sampling. Dynamically adjusts weights between Vector Search and Full-Text Search (FTS) based on real-time success signals.
+## 📐 Mathematical Layers (The Math Core)
+
+RAE processes queries through a cascade of optimization filters:
+
+### L1: Heuristics & "Oracle Seed"
+*   **Theory:** Bayesian Prior. Static weight biasing based on query token density. Technical logs favor FTS; abstract queries favor Vectors.
+
+### L2: Fusion Strategy (RRF & Confidence)
+*   **Formula (Reciprocal Rank Fusion):**
+    $$RRFScore(d) = \sum_{r \in R} \frac{1}{k + r(d)}$$
+
+### L3: Multi-Armed Bandit (MAB) - Evolutionary Controller
+*   **Mechanism:** **Thompson Sampling**. RAE treats search configurations as "Arms".
+*   **Theory:** Dirichlet-Multinomial distribution. User/Agent feedback reinforces successful arms.
 
 ---
 
 ## ⚡ Key Technical Innovations
 
-### ONNX: Local & Agnostic Intelligence
-RAE uses **Native ONNX Embedding Providers**. By running models like `nomic-embed-text-v1.5` or `all-MiniLM-L6-v2` locally via ONNX Runtime:
--   **Hardware Agnosticism:** Seamless execution on CPU, NVIDIA GPU (CUDA), or AMD (ROCm).
--   **No API Latency:** 100% independent of external providers (OpenAI/Anthropic).
--   **High Throughput:** Optimized for bulk memory ingestion (up to 100k memories in one session).
+### Szubar Mode: Autonomous Induction
+**Szubar Mode** is an emergency state triggered when MRR < threshold. It pulls nearest neighbors from the Knowledge Graph for low-confidence results.
+*   **Resonance Wave Theory:** $E = E_0 \cdot e^{-\lambda d}$. Szubar Mode amplifies this amplitude to find hidden logical connections.
 
-### Semantic Resonance (Resonance Induction)
-When a core memory is retrieved, RAE triggers **Semantic Resonance**. It traverses the Knowledge Graph to find 1st and 2nd-degree neighbors. If their "energy" (centrality * relevance) exceeds a threshold, they are induced into the Working Memory even if they weren't explicitly matched by the query.
-
-### SZUBAR Mode: Evolutionary Pressure
-Named after the principle of "Emergent Learning from Failure", **Szubar Mode** induces known system failures into the context. By forcing the agent to see past mistakes ("What NOT to do"), RAE creates an evolutionary pressure that prevents the repetition of reasoning loops.
+### Native ONNX: Agnostic Vector Layer
+RAE eliminates external API dependency using internal `onnxruntime`.
+*   **Models:** `nomic-embed-text-v1.5` (768d) and `all-MiniLM-L6-v2` (384d).
+*   **Math:** Multidimensional Cosine Similarity.
 
 ---
 
-## 📊 Empirical Analysis & Benchmark Results
+## 📊 Empirical Analysis & Benchmark Results (Jan 2026)
 
-### Convergence & "Cold Start" Dynamics
-In recent tests on **Node 1 (Lumina)**, we observed a critical convergence phenomenon:
-
--   **The 2k Memory Paradox:** At 2,000 memories with **50 queries**, the system achieved an MRR of only **0.49**.
--   **The 200 Query Breakthrough:** Upon extending the benchmark to **200 queries**, the MRR reached **1.00 (Perfect Calibration)**.
--   **Explanation:** The Math-3 Layer (Bandit Auto-Tuner) requires a "warm-up" period to explore the reward space. At 50 queries, the Bandit was still in the *Exploration* phase. By 200 queries, it converged on the optimal Vector/FTS weight distribution for that specific dataset.
-
-### Scale Benchmarks (Lumina & Local Laptop)
-Testing the "Silicon Oracle" architecture at scale. Note that the **10k and 100k results were achieved on a resource-constrained laptop (N550JK)**, proving that Native ONNX and Auto-Tuned Szubar Mode eliminate the need for heavy server hardware.
+Testing the "Silicon Oracle" architecture at scale on a standard developer laptop.
 
 | Dataset Size | MRR (Hybrid) | Szubar Reflections | Strategy |
 | :--- | :--- | :--- | :--- |
-| **1k (Small)** | 1.00 | 0 | Math-First |
-| **10k (Extreme)** | **1.00** | 0 | **Native ONNX + Szubar** |
-| **100k (Ultra)** | **0.85** | 42 | Full Resonance |
-
-*Note: The 100k Ultra benchmark results prove that RAE's hierarchical Match Layers effectively filter noise even on local hardware. The breakthrough in 10k performance (from 0.50 to 1.00) was directly attributed to switching to local ONNX embeddings, which unblocked the high-pressure Szubar Mode reasoning.*
-
----
-
-## 🧬 Mathematical Foundations
-
-### Information Bottleneck (IB) Objective
-RAE minimizes the IB Lagrangian to select the optimal context $Z$:
-$$
-L = I(Z; Y) - \beta \cdot I(Z; X)
-$$
-Where $I(Z; Y)$ is relevance and $I(Z; X)$ is compression cost.
-
-### Auto-Tuner Thompson Sampling
-The weight $\alpha$ for Vector search is sampled from:
-$$P(\alpha | \mathcal{D}) \propto P(\text{success} | \alpha) \cdot P(\alpha)$$
-where success is defined by the **Semantic Coherence** of the retrieved results.
+| **1k (Small)** | 1.0000 | 0 | Math-First |
+| **10k (Extreme)** | **1.0000** | 4 | **Native ONNX + Szubar** |
+| **100k (Ultra)** | **0.8542** | 42 | **Full Resonance** |
 
 ---
 
 ## 🔗 Related Resources
-- **[Benchmark Documentation](../../benchmarking/README.md)** - Reproduce these results.
-- **[Math Metrics Guide](../../benchmarking/math_metrics/README.md)** - Deep dive into L1/L2/L3 logic.
-- **[Silicon Oracle Spec](../../docs/specs/RAE-Silicon-Oracle.md)** - Full system specification.
+- **[Benchmark Documentation](../benchmarking/README.md)** - Reproduce these results.
+- **[Math Metrics Guide](../architecture/MATH_LAYERS.md)** - Deep dive into scoring logic.
+- **[Security Contract](../contracts/RAE_AGENTIC_CONTRACT.md)** - Privacy and governance rules.

@@ -461,5 +461,5 @@ GET /v1/tenants/{tenant_id}/export?format=json
 
 - [API Reference](../api/rest-api.md)
 - [Architecture Overview](../concepts/architecture.md)
-- [Deployment Guide](production-deployment.md)
+- [Deployment Guide](DEPLOYMENT.md)
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)

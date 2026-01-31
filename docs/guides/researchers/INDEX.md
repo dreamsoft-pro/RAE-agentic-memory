@@ -32,7 +32,7 @@ This portal is designed for researchers, academics, and scientists exploring RAE
 
 | Topic | Description | Documentation |
 |-------|-------------|---------------|
-| **Multi-Layer Memory** | Episodic, Working, Semantic, LTM | [Memory Layers](../../reference/architecture/memory-layers.md) |
+| **Multi-Layer Memory** | Episodic, Working, Semantic, LTM | [Memory Layers](../../reference/architecture/FULL_SPEC.md#1-memory-hierarchy) |
 | **Memory Consolidation** | Autonomous reflection mechanisms | [Reflection Engine](../../REFLECTION_MODE.md) |
 | **Hybrid Search** | Vector + keyword + re-ranking | [Hybrid Search](../../reference/architecture/hybrid-search.md) |
 | **Embedding Models** | Sentence transformers, custom models | [Embeddings](../../reference/services/embedding-service.md) |
