@@ -1,5 +1,33 @@
 # RAE Release Notes
 
+## v3.6.0 - RAE Mesh (Federated Memory)
+
+**Release Date**: 2026-01-31
+**Status**: Stable
+**Code Name**: Neural Weave
+
+### 🕸️ Major Feature: RAE Mesh (Privacy-First Federation)
+
+RAE now supports **Federated Memory**, allowing independent instances to synchronize memories asynchronously while respecting user privacy.
+
+#### Core Capabilities:
+1.  **Trust Handshake Protocol**:
+    -   Secure exchange of Invite Codes (JWT) to establish peer-to-peer trust.
+    -   User Consent is mandatory: No instance connects without an explicit invitation.
+    -   Implemented in `MeshService` and `/v2/mesh` endpoints.
+
+2.  **Asynchronous Synchronization**:
+    -   Non-blocking `HttpSyncProvider` using `httpx` and `asyncio`.
+    -   Supports `push` and `pull` operations without stalling the reasoning core.
+    -   Conflict Resolution: Last Write Wins (CRDT-lite).
+
+3.  **Developer API**:
+    -   `POST /v2/mesh/invite`: Generate invite codes.
+    -   `POST /v2/mesh/join`: Connect to a host.
+    -   `POST /v2/mesh/sync`: Exchange data.
+
+---
+
 ## v3.5.0 - GPU Acceleration & External Reranking
 
 **Release Date**: 2026-01-31
