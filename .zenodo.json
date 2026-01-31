@@ -1,8 +1,8 @@
 {
   "title": "RAE – Reflective Agentic-Memory Engine",
-  "version": "3.0.2",
+  "version": "3.6.0",
   "upload_type": "software",
-  "description": "Provider-agnostic, privacy-first external memory engine for LLM agents.",
+  "description": "RAE is a provider-agnostic, privacy-first external memory engine for LLM agents. Features include a multi-layer memory architecture (Episodic, Working, Semantic, Reflective), GraphRAG capabilities, and a decentralized Mesh protocol for federated memory synchronization.",
   "creators": [
     {
       "name": "Leśniowski, Grzegorz",
@@ -11,5 +11,15 @@
     }
   ],
   "license": "Apache-2.0",
-  "keywords": ["LLM", "agents", "memory", "RAG", "MCP", "privacy-first", "local-first"]
+  "keywords": [
+    "LLM", 
+    "agents", 
+    "memory", 
+    "RAG", 
+    "MCP", 
+    "privacy-first", 
+    "local-first",
+    "distributed-systems",
+    "federated-learning"
+  ]
 }
