@@ -133,6 +133,15 @@ If you are developing security-critical agents that require physical network iso
 -   See the **[Secure Agent Deployment Guide](../guides/SECURE_AGENT_DEPLOYMENT.md)**.
 -   Use `docker compose -f docker-compose.secure.yml up -d`.
 
+### 6. RAE Mesh (Federated Memory)
+
+RAE allows multiple instances to synchronize memories asynchronously with explicit user consent.
+- **Protocol:** Trust Handshake via `/v2/mesh`.
+- **How to connect:** 
+  1. Generate an invite on Host: `POST /v2/mesh/invite`.
+  2. Join from another instance: `POST /v2/mesh/join`.
+- **Details:** See **[RAE Mesh Protocol](../specs/RAE-MESH-PROTOCOL.md)**.
+
 3.  **Verify the services are running (for selected profile):**
     You can check the status of the containers:
     ```bash
