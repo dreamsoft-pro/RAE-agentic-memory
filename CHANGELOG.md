@@ -1,5 +1,22 @@
 # Changelog
 
+## [3.4.0] - 2026-01-31
+### Added
+- **Silicon Oracle Architecture**: Implementation of the 4-layer memory model and 3-layer mathematical control plane.
+- **Multi-Armed Bandit (MAB)**: Evolutionary search weight adaptation using Thompson Sampling.
+- **Native ONNX Support**: Built-in local embedding generation for Nomic and MiniLM models.
+- **Szubar Mode**: Emergency consciousness recovery state via high-energy graph induction.
+- **Hard Frames**: Physical agent isolation at the network and process levels for secure deployments.
+- **Git LFS Migration**: Large models and state files moved to LFS for cross-node consistency.
+- **Comprehensive Documentation**: New specs for Architecture, Deployment, and ISO 42001 Compliance.
+
+### Fixed
+- **Mass Documentation Repair**: Fixed over 50 broken internal links and corrected relative path levels.
+- **Recall Regression**: Increased math window candidates to 100 to fix low recall on large datasets.
+- **Full-Text Search**: Fixed Technical Log matching by introducing liberal OR operators in PostgreSQL queries.
+
+---
+
 <<<<<<< HEAD
 
 

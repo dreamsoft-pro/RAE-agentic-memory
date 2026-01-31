@@ -95,7 +95,7 @@ docs/
 │   │       └── ide-integration.md
 │   ├── architecture/
 │   │   ├── system-overview.md
-│   │   ├── memory-layers.md
+│   │   ├── FULL_SPEC.md#1-memory-hierarchy
 │   │   ├── graph-rag.md
 │   │   ├── reflection-engine.md
 │   │   ├── multi-tenancy.md

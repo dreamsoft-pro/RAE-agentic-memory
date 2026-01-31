@@ -182,5 +182,5 @@ extract_graph_lazy.delay(
 ## See Also
 
 - [apps/reranker-service](../reranker-service/) - Dedicated ML service
-- [Docker Optimization Guide](../../docs/guides/production-deployment.md)
+- [Docker Optimization Guide](../../docs/guides/DEPLOYMENT.md)
 - [Phase 2 Features](../../docs/guides/phase2-features.md)

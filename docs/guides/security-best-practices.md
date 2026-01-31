@@ -690,6 +690,6 @@ Additional requirements for healthcare data:
 ---
 
 **Related Guides:**
-- [Production Deployment](production-deployment.md)
+- [Production Deployment](DEPLOYMENT.md)
 - [Monitoring & Observability](../observability.md)
 - [API Reference](../api/rest-api.md)

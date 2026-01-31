@@ -228,7 +228,7 @@ If your documentation should be auto-generated:
 
 - `docs/guides/developers/quickstart.md` - Clear, step-by-step guide
 - `docs/reference/architecture/hybrid-search.md` - Thorough architecture doc
-- `docs/compliance/ISO-42001.md` - Complete compliance mapping
+- `docs/compliance/ISO_42001_SPEC.md` - Complete compliance mapping
 
 ### Template Usage Examples
 

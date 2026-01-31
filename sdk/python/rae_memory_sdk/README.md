@@ -721,7 +721,7 @@ print(f"Used: {budget['budget_used_percent']:.1f}%")
 For complete API documentation, see:
 - [API Documentation](../../API_DOCUMENTATION.md)
 - [GraphRAG Guide](../../docs/graphrag_guide.md)
-- [Architecture Documentation](../../docs/architecture.md)
+- [Architecture Documentation](../../docs/architecture/FULL_SPEC.md)
 
 ## Support
 

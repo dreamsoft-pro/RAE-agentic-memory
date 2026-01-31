@@ -699,7 +699,7 @@ docker compose logs celery-worker | grep retention
 ### Dla Zespołów Compliance
 
 - [RODO/GDPR Compliance](../../compliance/GDPR.md)
-- [ISO 42001](../../compliance/ISO-42001.md)
+- [ISO 42001](../../compliance/ISO_42001_SPEC.md)
 - [Data Processing Agreement](../../compliance/DPA.md)
 - [Audit Trail Documentation](../../reference/services/audit-service.md)
 
