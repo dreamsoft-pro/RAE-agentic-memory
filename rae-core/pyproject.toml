@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rae-core"
-version = "3.6.0"
+version = "3.6.1"
 description = "RAE (Reflective Agentic Engine) - Core Reasoning and Memory System"
 readme = "README.md"
 authors = [
