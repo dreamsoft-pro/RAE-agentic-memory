@@ -28,6 +28,8 @@ Use it. That is your state. Do not ask "what should I do". The Black Box just to
 
 ## 🗺️ Cheat Sheet (Paths & Commands)
 Read **`DEVELOPER_CHEAT_SHEET.md`** only AFTER bootstrapping.
+- **Sync to Node 1:** `./scripts/sync_to_node1.sh`
+- **Sync from Node 1:** `./scripts/sync_from_node1.sh`
 
 ## 🤖 RAE-First Contract
 1. **No Guessing:** Query RAE before assuming project state.
