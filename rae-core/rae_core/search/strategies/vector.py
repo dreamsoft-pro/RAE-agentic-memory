@@ -39,6 +39,7 @@ class VectorSearchStrategy(SearchStrategy):
         filters: dict[str, Any] | None = None,
         limit: int = 10,
         project: str | None = None,
+        **kwargs: Any,
     ) -> list[tuple[UUID, float]]:
         """Execute semantic search.
 
@@ -53,27 +54,33 @@ class VectorSearchStrategy(SearchStrategy):
             List of (memory_id, similarity_score) tuples
         """
         # Generate query embedding
-        query_embedding = await self.embedding_provider.embed_text(query)
+        query_embedding = await self.embedding_provider.embed_text(
+            query, task_type="search_query"
+        )
 
         # Extract filters
-        layer = filters.get("layer") if filters else None
-        agent_id = filters.get("agent_id") if filters else None
+        _layer = filters.get("layer") if filters else None
+        _agent_id = filters.get("agent_id") if filters else None
         project = project or (filters.get("project") if filters else None)
-        session_id = filters.get("session_id") if filters else None
-        score_threshold = filters.get("score_threshold", 0.0) if filters else 0.0
+        _session_id = filters.get("session_id") if filters else None
+        _score_threshold = filters.get("score_threshold", 0.0) if filters else 0.0
+        
+        # System 3.4: Allow searching in specific vector space
+        vector_name = kwargs.get("vector_name") or (filters.get("vector_name") if filters else None)
 
-        # Search similar vectors
+        # Search similar vectors - FORCE MINIMAL ARGS
         results = await self.vector_store.search_similar(
-            query_embedding=query_embedding,
-            tenant_id=tenant_id,
-            layer=layer,
-            agent_id=agent_id,
-            project=project,
-            session_id=session_id,
+            query_embedding=query_embedding, 
+            tenant_id=tenant_id, 
             limit=limit,
-            score_threshold=score_threshold,
-            filters=filters,  # Pass full filters dict for generic metadata
+            vector_name=vector_name
         )
+
+        # DEBUG:
+        if results:
+            print(f"✅ VECTOR STRATEGY FOUND {len(results)} RESULTS")
+        else:
+            print("❌ VECTOR STRATEGY FOUND 0 RESULTS")
 
         return results
 

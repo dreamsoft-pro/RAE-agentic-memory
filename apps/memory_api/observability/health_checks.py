@@ -1,6 +1,10 @@
+import os
+from typing import Any, Optional
+
 import structlog
 from asyncpg.pool import Pool as AsyncpgPool
 from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel
 from qdrant_client import AsyncQdrantClient
 from redis.asyncio import Redis as AsyncRedis
 
@@ -10,25 +14,36 @@ router = APIRouter()
 logger = structlog.get_logger(__name__)
 
 
-async def check_postgres(
+class ComponentHealth(BaseModel):
+    """Health status of a single system component."""
+
+    status: str
+    message: Optional[str] = None
+    response_time_ms: Optional[float] = None
+    details: Optional[dict[str, Any]] = None
+
+
+async def check_database(
     pool: AsyncpgPool = Depends(deps.get_db_pool),
 ):
-    """Check PostgreSQL connection."""
+    """Check Database connection."""
     from apps.memory_api.config import settings
 
-    if settings.RAE_PROFILE == "lite" and pool is None:
+    if (
+        settings.RAE_PROFILE == "lite" or os.getenv("RAE_DB_MODE") == "ignore"
+    ) and pool is None:
         return {"status": "UP (In-Memory)"}
 
     try:
         if pool is None:
-            raise ValueError("Postgres pool is not initialized")
+            raise ValueError("Database pool is not initialized")
         await pool.fetchval("SELECT 1")
         return {"status": "UP"}
     except Exception as e:
-        logger.error("health_check_postgres_failed", error=str(e))
+        logger.error("health_check_db_failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"PostgreSQL DOWN: {e}",
+            detail=f"Database DOWN: {e}",
         ) from e
 
 
@@ -38,7 +53,9 @@ async def check_redis(
     """Check Redis connection."""
     from apps.memory_api.config import settings
 
-    if settings.RAE_PROFILE == "lite" and redis_client is None:
+    if (
+        settings.RAE_PROFILE == "lite" or os.getenv("RAE_DB_MODE") == "ignore"
+    ) and redis_client is None:
         return {"status": "UP (In-Memory)"}
 
     try:
@@ -53,25 +70,28 @@ async def check_redis(
         ) from e
 
 
-async def check_qdrant(
+async def check_vector_store(
     qdrant_client: AsyncQdrantClient = Depends(deps.get_qdrant_client),
 ):  # Used deps.get_qdrant_client
-    """Check Qdrant connection."""
+    """Check Vector Store connection."""
     from apps.memory_api.config import settings
 
-    if settings.RAE_PROFILE == "lite" and qdrant_client is None:
+    if (
+        settings.RAE_PROFILE == "lite" or os.getenv("RAE_DB_MODE") == "ignore"
+    ) and qdrant_client is None:
         return {"status": "UP (In-Memory)"}
 
     try:
         if qdrant_client is None:
-            raise ValueError("Qdrant client is not initialized")
+            raise ValueError("Vector store client is not initialized")
         # Try to get collections list as a simple health check
         collections = await qdrant_client.get_collections()
         return {"status": "UP", "collections_count": len(collections.collections)}
     except Exception as e:
-        logger.error("health_check_qdrant_failed", error=str(e))
+        logger.error("health_check_vector_store_failed", error=str(e))
         raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=f"Qdrant DOWN: {e}"
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Vector Store DOWN: {e}",
         ) from e
 
 
@@ -80,9 +100,9 @@ async def check_llm_provider(): ...
 
 @router.get("/health", response_model=dict, summary="Overall Health Check")
 async def get_overall_health(
-    pg_status: dict = Depends(check_postgres),
+    pg_status: dict = Depends(check_database),
     redis_status: dict = Depends(check_redis),
-    qdrant_status: dict = Depends(check_qdrant),
+    qdrant_status: dict = Depends(check_vector_store),
     llm_status: dict = Depends(check_llm_provider),
 ):
     """

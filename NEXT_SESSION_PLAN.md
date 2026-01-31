@@ -1,21 +1,19 @@
-# Plan Następnej Sesji - Stabilizacja Core (2026-01-27)
+# Plan kontynuacji - Stabilizacja Testów
 
-## Status Sesji
-Zakończono naprawę kilkunastu regresji po refaktoryzacji na Luminie. Wdrożono zasadę "Fail Fast".
+## Stan na 2026-01-29
+- **Testy:** 1079 passed, 0 failed, 7 skipped.
+- **Kluczowe poprawki:**
+    - `rae_adapters/postgres.py`: Mapowanie `episodic` <-> `em` we wszystkich metodach (store, query, count, delete).
+    - `apps/memory_api/security/auth.py`: Odporność na brak `app.state.pool` w trybie `ignore`.
+    - `apps/memory_api/observability/health_checks.py`: Naprawiony `NameError` (brak importu `os`).
+    - `tests/integration/test_dreaming_worker.py`: Synchronizacja manualnych insertów SQL z mapowaniem adaptera (`em`).
 
-## Co zostało zrobione:
-1.  **AGENT_CORE_PROTOCOL.md**: Dodano zasadę przerywania testów na pierwszym błędzie.
-2.  **Fixy Importów/Klas**: Naprawiono `test_stability_fusion.py` oraz `MultiVectorSearchStrategy` (migracja na klasę `RRFFusion`).
-3.  **Cleanup**: Usunięto przestarzałe testy (`test_engine_extended.py`, `test_engine_extra.py`).
-4.  **Przywrócenie poprawek**: Re-aplikowano poprawki `agent_id` w Postgresie i `ttl` w InMemoryStorage, które zostały nadpisane przez rsync.
-5.  **Maki i Telemetria**: Naprawiono mocki w `test_background_tasks.py` (async) oraz `test_opentelemetry.py` (`AsyncQdrantClient`).
-6.  **Math & Logic**: Naprawiono błąd `timedelta` w `math/controller.py` oraz uwzględnianie wag strategii w `HybridSearchEngine`.
-7.  **RRF Logic**: Zaktualizowano testy hybrydowe do logiki rankingu 0-indexed.
+## Do zrobienia w następnej sesji
+1. **Weryfikacja pominiętych testów (7):**
+    - Sprawdzić, czy testy wymagające `spacy`, `sentence-transformers` i `presidio` powinny zostać przeniesione do testów integracyjnych/benchmarków na klastrze, czy wymagają lżejszych mocków.
+    - Zweryfikować testy `hard_frames` (wymagają działającego kontenera `rae-agent-secure`).
+2. **Push i monitoring CI:**
+    - Wykonać `make pre-push` i wypchnąć zmiany na branch deweloperski.
 
-## Do zrobienia w następnej sesji:
-1.  **Weryfikacja**: Kontynuacja uruchamiania pełnego suite: `.venv/bin/python -m pytest -x apps/memory_api/tests rae-core/tests`.
-2.  **Naprawa kolejnych błędów**: Systematyczne usuwanie przeszkód aż do osiągnięcia 100% PASS (obecnie około 1640/1736 testów przechodzi).
-3.  **Zero Drift**: Po przejściu testów, wykonanie `make pre-push` i commit dokumentacji.
-
-## Komenda na start:
-`python3 scripts/bootstrap_session.py && .venv/bin/python -m pytest -x apps/memory_api/tests rae-core/tests`
+## Polecenie startowe
+`python3 scripts/bootstrap_session.py`

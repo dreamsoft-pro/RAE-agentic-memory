@@ -34,7 +34,7 @@ class TestChartCreation:
             {
                 "id": "mem1",
                 "content": "First memory content",
-                "layer": "em",
+                "layer": "episodic",
                 "timestamp": "2024-01-01T10:00:00",
                 "source": "test",
                 "tags": ["tag1", "tag2"],
@@ -42,7 +42,7 @@ class TestChartCreation:
             {
                 "id": "mem2",
                 "content": "Second memory content",
-                "layer": "wm",
+                "layer": "working",
                 "timestamp": "2024-01-02T11:00:00",
                 "source": "test",
                 "tags": ["tag2", "tag3"],
@@ -50,7 +50,7 @@ class TestChartCreation:
             {
                 "id": "mem3",
                 "content": "Third memory content",
-                "layer": "sm",
+                "layer": "semantic",
                 "timestamp": "2024-01-03T12:00:00",
                 "source": "test",
                 "tags": ["tag1", "tag3"],
@@ -216,13 +216,13 @@ class TestChartProperties:
             {
                 "id": "m1",
                 "content": "test",
-                "layer": "em",
+                "layer": "episodic",
                 "timestamp": "2024-01-01T10:00:00",
             },
             {
                 "id": "m2",
                 "content": "test",
-                "layer": "wm",
+                "layer": "working",
                 "timestamp": "2024-01-01T11:00:00",
             },
         ]
@@ -237,9 +237,9 @@ class TestChartProperties:
     def test_layer_distribution_chart_colors(self):
         """Test layer distribution uses color mapping"""
         memories = [
-            {"id": "m1", "content": "test", "layer": "em"},
-            {"id": "m2", "content": "test", "layer": "wm"},
-            {"id": "m3", "content": "test", "layer": "sm"},
+            {"id": "m1", "content": "test", "layer": "episodic"},
+            {"id": "m2", "content": "test", "layer": "working"},
+            {"id": "m3", "content": "test", "layer": "semantic"},
         ]
         fig = create_layer_distribution_chart(memories)
 
@@ -271,7 +271,7 @@ class TestEdgeCases:
 
     def test_memories_without_timestamps(self):
         """Test handling memories without timestamps"""
-        memories = [{"id": "m1", "content": "test", "layer": "em"}]
+        memories = [{"id": "m1", "content": "test", "layer": "episodic"}]
 
         # Should not raise exception
         fig = create_timeline_chart(memories)
@@ -282,7 +282,7 @@ class TestEdgeCases:
         memories = [
             {"id": "m1"},  # Minimal memory
             {"content": "test"},  # No ID
-            {"layer": "em"},  # No content
+            {"layer": "episodic"},  # No content
         ]
 
         # Should handle gracefully
@@ -295,7 +295,7 @@ class TestEdgeCases:
             {
                 "id": "m1",
                 "content": "Single memory",
-                "layer": "em",
+                "layer": "episodic",
                 "timestamp": "2024-01-01T10:00:00",
                 "tags": ["tag1"],
             }
@@ -315,7 +315,7 @@ class TestEdgeCases:
                 {
                     "id": f"m{i}",
                     "content": f"Memory {i}",
-                    "layer": ["em", "wm", "sm", "ltm"][i % 4],
+                    "layer": ["episodic", "working", "semantic", "semantic"][i % 4],
                     "timestamp": f"2024-01-01T{i % 24:02d}:00:00",
                     "tags": [f"tag{i % 10}"],
                 }

@@ -65,29 +65,36 @@ def make_request(url, method="GET", data=None, timeout=5):
 def get_active_url():
     """Finds the working RAE API URL."""
     print("🔍 Probing RAE Nodes...")
+    
+    import platform
+    hostname = platform.node()
+    is_local_machine = hostname == "grzegorz-lesniowski-N550JK"
 
-    # 1. Check Lumina (Node 1) first as it is the primary compute node
-    print(f"   Target: {LUMINA_URL} (Lumina) ... ", end="", flush=True)
-    code, _ = make_request(f"{LUMINA_URL}/health", timeout=2)
-    if code == 200:
-        print("ONLINE ✅")
-        return LUMINA_URL
-    else:
-        print("OFFLINE ❌")
-        print("\n[!] LUMINA IS DOWN. Execute manual wake procedure:")
-        print("    $ ./scripts/wake_lumina.sh")
-        print("    (Refer to scripts/wake_lumina.sh for passwords)")
-
-    # 2. Check Local Dev and Lite
-    urls = [DEFAULT_URL, LITE_URL]
-    for url in urls:
-        print(f"   Target: {url} ... ", end="", flush=True)
-        code, _ = make_request(f"{url}/health", timeout=1)
+    # Define nodes
+    nodes = [
+        ("Lumina (Node 1)", LUMINA_URL),
+        ("Local Dev", DEFAULT_URL),
+        ("Local Lite", LITE_URL),
+    ]
+    
+    # Reorder based on preference
+    if is_local_machine:
+        print(f"   Detected Local Machine ({hostname}). Prioritizing Local Nodes.")
+        # Move Local to front
+        nodes = [n for n in nodes if "Local" in n[0]] + [n for n in nodes if "Local" not in n[0]]
+    
+    for name, url in nodes:
+        print(f"   Target: {url} ({name}) ... ", end="", flush=True)
+        code, _ = make_request(f"{url}/health", timeout=2)
         if code == 200:
             print("ONLINE ✅")
             return url
         print("OFFLINE ❌")
 
+    print("\n[!] NO NODES AVAILABLE.")
+    if not is_local_machine: # Only suggest waking Lumina if we aren't prioritizing local
+        print("    Lumina seems down. Execute manual wake procedure:")
+        print("    $ ./scripts/wake_lumina.sh")
     return None
 
 
@@ -97,13 +104,14 @@ def fetch_black_box_context(base_url):
 
     # 1. Fetch Working Memory (Immediate Context)
     query_payload = {
-        "query_text": "Current session goals, active tasks, and recent critical fixes",
+        "query": "Current session goals, active tasks, and recent critical fixes",
+        "project": "rae-core",
         "k": 5,
         "layers": ["working", "episodic"],
     }
 
     code, data = make_request(
-        f"{base_url}/v1/memory/query", method="POST", data=query_payload
+        f"{base_url}/v2/memories/query", method="POST", data=query_payload
     )
 
     if code == 200:
@@ -120,14 +128,14 @@ def fetch_black_box_context(base_url):
                 else f"[{layer.upper()}] {content}"
             )
     else:
-        print(f"⚠️  Memory Query Failed: {code}")
+        print(f"⚠️  Memory Query Failed: {code} - {data}")
 
     # 2. Fetch Strategic Directives (Reflective)
     query_payload["layers"] = ["reflective", "semantic"]
-    query_payload["query_text"] = "Strategic protocols, critical stability rules"
+    query_payload["query"] = "Strategic protocols, critical stability rules"
 
     code, data = make_request(
-        f"{base_url}/v1/memory/query", method="POST", data=query_payload
+        f"{base_url}/v2/memories/query", method="POST", data=query_payload
     )
 
     if code == 200:
@@ -148,6 +156,7 @@ def log_session_start(base_url, session_id):
 
     payload = {
         "content": f"RAE-First Session Activated. User: {user} | Node: {node} | Protocol: HARD_FRAMES_V1",
+        "project": "rae-core",
         "layer": "working",
         "importance": 0.2,
         "tags": ["session-start", "rae-first", "implicit-capture"],
@@ -156,7 +165,7 @@ def log_session_start(base_url, session_id):
     }
 
     # Fire and forget
-    make_request(f"{base_url}/v1/memory/store", method="POST", data=payload)
+    make_request(f"{base_url}/v2/memories", method="POST", data=payload)
 
 
 def setup_local_tunnel():

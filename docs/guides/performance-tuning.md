@@ -130,4 +130,4 @@ async def get_memories_paginated(
 locust -f load_test.py --host=http://localhost:8000
 ```
 
-See [Production Deployment](production-deployment.md) for infrastructure scaling.
+See [Production Deployment](DEPLOYMENT.md) for infrastructure scaling.

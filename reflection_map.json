@@ -1,1 +1,61 @@
-{}
+{
+  "2f77d4f2-3720-4a59-9128-fcb2d7428040": [
+    "code_003",
+    "doc_004"
+  ],
+  "1a74c4d1-55a6-4d7b-aca4-ffd284fac5f6": [
+    "log_005",
+    "log_001"
+  ],
+  "6622518b-ee31-461d-b4d3-437fed221545": [
+    "incident_0197",
+    "incident_0254",
+    "incident_0563",
+    "incident_0711",
+    "incident_0749",
+    "incident_0827",
+    "incident_0918"
+  ],
+  "f13bfabb-988e-4edf-a498-2a54bdf66801": [
+    "metric_0030",
+    "metric_0077",
+    "metric_0103",
+    "metric_0106",
+    "metric_0107",
+    "metric_0125",
+    "metric_0135",
+    "metric_0185",
+    "metric_0200",
+    "metric_0205",
+    "metric_0209",
+    "metric_0249",
+    "metric_0281",
+    "metric_0306",
+    "metric_0373",
+    "metric_0379",
+    "metric_0429",
+    "metric_0434",
+    "metric_0446",
+    "metric_0478",
+    "metric_0520",
+    "metric_0542",
+    "metric_0574",
+    "metric_0592",
+    "metric_0610",
+    "metric_0698",
+    "metric_0718",
+    "metric_0722",
+    "metric_0735",
+    "metric_0742",
+    "metric_0746",
+    "metric_0772",
+    "metric_0785",
+    "metric_0787",
+    "metric_0855",
+    "metric_0877",
+    "metric_0882",
+    "metric_0907",
+    "metric_0950",
+    "metric_0990"
+  ]
+}

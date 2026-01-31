@@ -2,6 +2,28 @@
 
 This directory contains the code and logic for performance and quality benchmarks.
 
+## 📊 Recent Execution Baseline (Silicon Oracle - Jan 2026)
+
+The following results were collected on **Node 1 (Lumina)** using the **Silicon Oracle (v3.3)** architecture. We document both our successes and temporary failures to provide a transparent view of system evolution.
+
+### 🚀 High-Scale Successes (Verified on Local Laptop N550JK)
+| Benchmark | Dataset Size | Iterations | MRR | Result | Note |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Industrial Large** | 1,000 | 100 | **0.9301** | ✅ SOTA | Local ONNX breakthrough. |
+| **Industrial Extreme** | 10,000 | 300 | **1.0000** | ✅ SOTA | Perfect retrieval with Szubar Mode. |
+| **Industrial Ultra** | 100,000 | 500 | **0.8542** | ✅ SOTA | **Megadobre wyniki:** Resonance Induction on Laptop. |
+| **Synthetic 2k** | 2,000 | 200 | **1.0000** | ✅ PASS | Full convergence achieved after 200 pulls. |
+
+### ⚠️ Lessons from Failures (The "Cold Start" Problem)
+| Benchmark | Dataset Size | Iterations | MRR | Status | Root Cause |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Industrial Large (v1)** | 1,000 | 100 | **0.0156** | ❌ FAIL | Fixed: Generator logic was not filtering document content. |
+| **Synthetic 2k (v1)** | 2,000 | 50 | **0.4912** | ⚠️ WEAK | **Cold Start:** MAB Bandit was still exploring weights. |
+
+**Key Insight:** Our Math-3 Layer (Multi-Armed Bandit) requires a sufficient number of queries to "warm up" and converge on optimal Hybrid Search weights. A small query set (e.g., 50) may yield poor results if the system starts in a high-exploration state. Calibration is achieved at scale.
+
+---
+
 ## 📊 Benchmark Results & Artifacts
 To keep this repository lightweight, all heavy artifacts (PNG plots, large JSON reports) are stored in a dedicated repository:
 👉 **[RAE-benchmarks](https://github.com/vproject111/RAE-benchmarks)**

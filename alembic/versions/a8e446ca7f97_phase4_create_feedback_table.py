@@ -21,7 +21,7 @@ def upgrade():
     op.create_table(
         "memory_feedback",
         sa.Column("id", sa.UUID(), nullable=False),
-        sa.Column("tenant_id", sa.String(length=255), nullable=False),
+        sa.Column("tenant_id", sa.UUID(), nullable=False),
         sa.Column("query_text", sa.Text(), nullable=False),
         sa.Column("memory_id", sa.UUID(), nullable=False),
         sa.Column("score", sa.Float(), nullable=False),  # -1 to 1

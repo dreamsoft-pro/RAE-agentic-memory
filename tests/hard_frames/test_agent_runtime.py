@@ -39,10 +39,13 @@ class TestAgentRuntime:
         is_safe = check_internet_leak()
         assert is_safe is False
 
+    @patch("rae_agent.main.requests.post")
     @patch("rae_agent.main.requests.get")
-    def test_connect_to_kernel_success(self, mock_get):
+    def test_connect_to_kernel_success(self, mock_get, mock_post):
         """Verify handshake with RAE Kernel."""
         mock_get.return_value.status_code = 200
+        mock_post.return_value.status_code = 200
+        mock_post.return_value.json.return_value = {"answer": "Roger"}
         assert connect_to_kernel() is True
 
     @patch("rae_agent.main.requests.get")

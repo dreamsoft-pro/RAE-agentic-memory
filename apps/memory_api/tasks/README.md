@@ -163,7 +163,7 @@ print(task.status)  # PENDING, STARTED, SUCCESS, FAILURE
 ```sql
 SELECT DISTINCT project, tenant_id
 FROM memories
-WHERE layer = 'em'
+WHERE layer = 'episodic'
   AND created_at > NOW() - INTERVAL '1 hour'
 ```
 
@@ -210,7 +210,7 @@ Day 30: strength = 0.21  # Nearly forgotten
 **What it does:**
 1. Checks `settings.MEMORY_RETENTION_DAYS`
 2. If > 0, deletes memories older than retention period
-3. Only affects episodic layer (`layer = 'em'`)
+3. Only affects episodic layer (`layer = 'episodic'`)
 4. Preserves semantic and long-term memories
 
 **Configuration:**

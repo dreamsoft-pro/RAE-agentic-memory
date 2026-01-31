@@ -15,12 +15,6 @@ from uuid import uuid4
 
 import pytest
 
-# Skip tests if spacy is not installed (ML dependency)
-spacy = pytest.importorskip(
-    "spacy",
-    reason="Requires spacy – heavy ML dependency",
-)
-
 from apps.memory_api.services.semantic_extractor import SemanticExtractor  # noqa: E402
 from apps.memory_api.services.semantic_search import (  # noqa: E402
     SemanticSearchPipeline,

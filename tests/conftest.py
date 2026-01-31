@@ -55,7 +55,10 @@ def mock_env_and_settings(monkeypatch):
 @pytest.fixture(autouse=True)
 def mock_qdrant_factory():
     """Globally mock Qdrant client factory to prevent connection attempts."""
-    with patch("rae_adapters.infra_factory.AsyncQdrantClient", new=MagicMock(return_value=AsyncMock())):
+    with patch(
+        "rae_adapters.infra_factory.AsyncQdrantClient",
+        new=MagicMock(return_value=AsyncMock()),
+    ):
         yield
 
 
@@ -222,10 +225,6 @@ def client_with_overrides(
 
     # Patch services obtained via functions (not DI in older parts)
     with (
-        patch(
-            "apps.memory_api.api.v1.memory.get_vector_store",
-            return_value=mock_vector_store,
-        ),
         patch(
             "rae_adapters.infra_factory.asyncpg.create_pool",
             new=AsyncMock(return_value=mock_pool),

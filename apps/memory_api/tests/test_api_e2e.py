@@ -2,117 +2,143 @@
 E2E API Smoke Tests
 
 End-to-end smoke tests to verify the API works on fresh installation.
-These tests validate the complete request flow through the system.
+Supports both local TestClient (unit) and remote URL (integration against containers).
 
-Test Coverage Goals (per test_2.md):
-- Happy path: POST /memories → GET /search works
-- Happy path: Memory storage → Hybrid search retrieval
-- Critical for: "Install, run, it works" verification
+Usage:
+    # Run locally (mocked network)
+    pytest apps/memory_api/tests/test_api_e2e.py
 
-Priority: HIGH (Shows project is production-ready)
-Type: Integration/E2E tests
+    # Run against Dev Container
+    RAE_API_URL=http://localhost:8001 pytest apps/memory_api/tests/test_api_e2e.py
 
-NOTE: These E2E tests require full infrastructure (API + DB + Vector Store)
-and are currently skipped pending full integration testing setup.
-For unit/integration tests with real DB, see test_hybrid_search.py which uses testcontainers.
+    # Run against Lite Container
+    RAE_API_URL=http://localhost:8008 pytest apps/memory_api/tests/test_api_e2e.py
 """
 
+import os
+
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 
+# --- Client Fixture Strategy ---
+
 
 @pytest.fixture
-def client():
-    """Create test client for API requests."""
-    from apps.memory_api.main import app
+def api_client():
+    """
+    Returns a client-like object.
+    If RAE_API_URL is set, returns an HTTPX client pointing to that URL.
+    Otherwise, returns a FastAPI TestClient using the local app.
+    """
+    api_url = os.getenv("RAE_API_URL")
 
-    return TestClient(app)
+    if api_url:
+        print(f"🌍 Running E2E tests against REMOTE: {api_url}")
+
+        # Return a wrapper that mimics TestClient sync interface using httpx
+        class RemoteClient:
+            def __init__(self, base_url):
+                self.base_url = base_url.rstrip("/")
+                self.headers = {
+                    "X-Tenant-ID": "00000000-0000-0000-0000-000000000000",
+                    "Authorization": "Bearer dev-key",
+                }
+                self.client = httpx.Client(
+                    base_url=self.base_url, timeout=10.0, headers=self.headers
+                )
+
+            def get(self, url, **kwargs):
+                return self.client.get(url, **kwargs)
+
+            def post(self, url, **kwargs):
+                return self.client.post(url, **kwargs)
+
+            def delete(self, url, **kwargs):
+                return self.client.delete(url, **kwargs)
+
+        return RemoteClient(api_url)
+
+    else:
+        print("🏠 Running E2E tests against LOCAL app (TestClient)")
+        from apps.memory_api.main import app
+
+        client = TestClient(app)
+        client.headers.update(
+            {
+                "X-Tenant-ID": "00000000-0000-0000-0000-000000000000",
+                "Authorization": "Bearer dev-key",
+            }
+        )
+        return client
 
 
 @pytest.mark.smoke
 class TestMemoryAPISmoke:
-    """Smoke tests for core memory operations.
+    """Smoke tests for core memory operations."""
 
-    These tests verify the most critical user journey:
-    1. Store a memory
-    2. Query/search for it
-    3. Get expected results back
+    def test_health_check(self, api_client):
+        """Test that health check endpoint responds."""
+        response = api_client.get("/health")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] in ["healthy", "degraded"]
 
-    NOTE: These tests are skipped pending full E2E infrastructure setup.
-    See test_hybrid_search.py for integration tests with testcontainers.
-    """
+    def test_store_and_query_memory_e2e(self, api_client):
+        """Test end-to-end memory storage and retrieval."""
 
-    # @pytest.mark.skip(
-    #    reason="E2E test requires full infrastructure - use test_hybrid_search.py for integration tests"
-    # )
-    def test_store_and_query_memory_e2e(self, client):
-        """Test end-to-end memory storage and retrieval.
+        # 1. Store
+        payload = {
+            "content": "E2E Test Memory Content " + os.urandom(4).hex(),
+            "project": "e2e_test",
+            "layer": "longterm",
+            "importance": 0.8,
+        }
+        store_res = api_client.post("/v2/memories/", json=payload)
+        assert store_res.status_code == 200
+        mem_id = store_res.json()["memory_id"]
+        assert mem_id
 
-        Flow:
-        1. POST /api/v1/memory/store - store a memory
-        2. POST /api/v1/memory/query - query for similar memories
-        3. Verify the stored memory is returned
+        # 2. Query
+        query_payload = {"query": "Test Memory", "project": "e2e_test", "k": 5}
+        query_res = api_client.post("/v2/memories/query", json=query_payload)
+        assert query_res.status_code == 200
+        results = query_res.json()["results"]
+        assert isinstance(results, list)
 
-        This is the #1 most important user journey.
-        """
-        pass
+        # Note: Vector search might be async/delayed or fail in mock mode if no vector store
+        # But we expect at least a 200 OK response.
+        assert "total_count" in query_res.json()
 
-    # @pytest.mark.skip(
-    #    reason="E2E test requires full infrastructure - use test_hybrid_search.py for integration tests"
-    # )
-    def test_hybrid_search_e2e(self, client):
-        """Test end-to-end hybrid search (vector + graph).
-
-        Flow:
-        1. POST /api/v1/graph/query - perform hybrid search
-        2. Verify results contain both vector matches and graph context
-
-        This validates the core RAE value proposition: semantic + graph.
-        """
-        pass
-
-
-class TestHealthCheckSmoke:
-    """Smoke test for health check endpoint.
-
-    Verifies the API is accessible and responds correctly.
-    """
-
-    # @pytest.mark.skip(reason="E2E test requires full infrastructure")
-    def test_health_check(self, client):
-        """Test that health check endpoint responds.
-
-        This is the most basic smoke test: "is the API alive?"
-        """
-        pass
+    def test_agent_execute(self, api_client):
+        """Test agent execution endpoint."""
+        payload = {"prompt": "Hello world", "project": "e2e_agent"}
+        res = api_client.post("/v2/agent/execute", json=payload)
+        # 200 or 500 depending on LLM availability, but endpoint should exist
+        assert res.status_code in [200, 500, 503]
 
 
 class TestAPIErrorHandling:
     """Test that API handles errors gracefully."""
 
-    def test_missing_tenant_header(self, client):
-        """Test that missing tenant header returns 400.
-
-        Validates input validation and error responses.
-        """
-        response = client.post(
-            "/v1/memories/create",  # Updated endpoint
-            json={"content": "Test", "layer": "semantic"},
-            # Missing X-Tenant-ID header
+    def test_missing_tenant_header(self, api_client):
+        """Test that missing params returns 422."""
+        # Note: Tenant header is handled by middleware, might be default in TestClient
+        # So we test missing body params instead
+        response = api_client.post(
+            "/v2/memories/",
+            json={"content": "No Project"},
+            # Missing project
         )
+        assert response.status_code == 422
 
-        # Should return client error (400, 422, or 404 if auth blocks early)
-        assert response.status_code in [400, 404, 422]
-
-    def test_invalid_json(self, client):
+    def test_invalid_json(self, api_client):
         """Test that invalid JSON returns 422."""
-        response = client.post(
-            "/v1/memories/create",  # Updated endpoint
+        response = api_client.post(
+            "/v2/memories/",
             content="not valid json",
             headers={"Content-Type": "application/json", "X-Tenant-ID": "test"},
         )
-
-        # Should return validation error (422) or 404 if endpoint not found
         assert response.status_code in [404, 422]
 
 

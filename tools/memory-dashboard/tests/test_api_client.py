@@ -95,7 +95,7 @@ class TestRAEClient:
                 {
                     "id": "mem1",
                     "content": "Test memory",
-                    "layer": "em",
+                    "layer": "episodic",
                     "timestamp": "2024-01-01T00:00:00",
                 }
             ]
@@ -103,7 +103,7 @@ class TestRAEClient:
         mock_response.raise_for_status = Mock()
         mock_request.return_value = mock_response
 
-        memories = client.get_memories(layers=["em"], limit=10)
+        memories = client.get_memories(layers=["episodic"], limit=10)
 
         assert isinstance(memories, list)
         assert len(memories) > 0
@@ -117,7 +117,7 @@ class TestRAEClient:
                 {
                     "id": "mem1",
                     "content": "Test memory",
-                    "layer": "em",
+                    "layer": "episodic",
                     "timestamp": datetime.now().isoformat(),
                 }
             ]
@@ -126,7 +126,7 @@ class TestRAEClient:
         mock_request.return_value = mock_response
 
         since = datetime.now() - timedelta(days=7)
-        memories = client.get_memories(layers=["em"], since=since, limit=10)
+        memories = client.get_memories(layers=["episodic"], since=since, limit=10)
 
         assert isinstance(memories, list)
 
@@ -252,7 +252,7 @@ class TestCachingFunctions:
             "episodic": 30,
             "working": 25,
             "semantic": 25,
-            "ltm": 20,
+            "reflective": 20,
         }
         client.get_memories.return_value = [{"id": "mem1", "content": "Test"}]
         return client
@@ -267,7 +267,7 @@ class TestCachingFunctions:
 
     def test_get_cached_memories(self, mock_client):
         """Test cached memories function"""
-        memories = get_cached_memories(mock_client, layers=("em", "wm"), days_back=7)
+        memories = get_cached_memories(mock_client, layers=("episodic", "working"), days_back=7)
 
         assert isinstance(memories, list)
         mock_client.get_memories.assert_called_once()

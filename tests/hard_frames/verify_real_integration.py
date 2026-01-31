@@ -47,7 +47,7 @@ def verify_real_integration():
         }
 
         print("💾 Attempting to write memory...")
-        resp = requests.post(f"{kernel_url}/api/v1/memories/", json=payload, timeout=5)
+        resp = requests.post(f"{kernel_url}/api/v2/memories/", json=payload, timeout=5)
 
         if resp.status_code in [200, 201]:
             print("✅ Memory Write SUCCESS!")

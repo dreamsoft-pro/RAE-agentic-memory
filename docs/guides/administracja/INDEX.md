@@ -30,7 +30,7 @@ Ten portal został stworzony specjalnie dla jednostek administracji publicznej, 
 | Temat | Opis | Link |
 |-------|------|------|
 | **RODO/GDPR** | Zgodność z rozporządzeniem o ochronie danych | [RODO Guide](../../compliance/GDPR.md) |
-| **ISO 42001** | Zarządzanie systemami AI | [ISO 42001](../../compliance/ISO-42001.md) |
+| **ISO 42001** | Zarządzanie systemami AI | [ISO 42001](../../compliance/ISO_42001_SPEC.md) |
 | **Bezpieczeństwo danych** | Szyfrowanie, kopie zapasowe, disaster recovery | [Security Guide](../../reference/deployment/security.md) |
 | **Audyt i logi** | Śledzenie działań, compliance reporting | [Audit Logs](../../reference/services/audit-service.md) |
 
@@ -103,7 +103,7 @@ RAE implementuje wymagania ISO 42001:
 | **Human Oversight** | Human-in-the-loop dla krytycznych decyzji | ✅ Zaimplementowane |
 | **Data Governance** | Polityki retencji, access control | ✅ Zaimplementowane |
 
-**Więcej:** [ISO 42001 Compliance](../../compliance/ISO-42001.md)
+**Więcej:** [ISO 42001 Compliance](../../compliance/ISO_42001_SPEC.md)
 
 ### Inne Regulacje
 
@@ -394,7 +394,7 @@ docker compose logs celery-worker | grep cleanup
 ### Zgodność Prawna
 
 - [RODO/GDPR Compliance](../../compliance/GDPR.md) - Pełna zgodność z RODO
-- [ISO 42001](../../compliance/ISO-42001.md) - Zarządzanie systemami AI
+- [ISO 42001](../../compliance/ISO_42001_SPEC.md) - Zarządzanie systemami AI
 - [Data Processing Agreement](../../compliance/DPA.md) - Wzór umowy powierzenia
 
 ## 🗺️ Roadmapa
@@ -414,14 +414,14 @@ Zobacz [TODO.md](../../../TODO.md) dla pełnej roadmapy.
 
 ### Dokumentacja Podstawowa
 
-- [README.md](../../../README.md) - Przegląd projektu
+- [README.md](../../README.md) - Przegląd projektu
 - [Architektura Systemu](../../reference/architecture/README.md)
 - [API Reference](http://localhost:8000/docs)
 
 ### Compliance
 
 - [RODO/GDPR](../../compliance/GDPR.md)
-- [ISO 42001](../../compliance/ISO-42001.md)
+- [ISO 42001](../../compliance/ISO_42001_SPEC.md)
 - [Security Guidelines](../../reference/security/architecture.md)
 
 ### Deployment

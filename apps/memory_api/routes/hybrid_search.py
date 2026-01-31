@@ -25,7 +25,7 @@ from apps.memory_api.services.query_analyzer import QueryAnalyzer
 
 logger = structlog.get_logger(__name__)
 
-router = APIRouter(prefix="/search", tags=["Hybrid Search"])
+router = APIRouter(tags=["Hybrid Search"])
 
 
 # ============================================================================

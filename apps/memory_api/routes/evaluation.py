@@ -33,7 +33,7 @@ from apps.memory_api.services.evaluation_service import EvaluationService
 
 logger = structlog.get_logger(__name__)
 
-router = APIRouter(prefix="/v1/evaluation", tags=["Evaluation"])
+router = APIRouter(tags=["Evaluation"])
 
 
 # ============================================================================

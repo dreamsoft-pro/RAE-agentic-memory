@@ -58,7 +58,7 @@ def store(
     tenant: str = typer.Option(..., "--tenant", "-t", help="The tenant ID."),
     project: str = typer.Option(..., "--project", "-p", help="The project ID."),
     source: str = typer.Option("cli", help="The source of the memory."),
-    layer: str = typer.Option("ltm", help="The memory layer (e.g., 'em', 'sm', 'rm')."),
+    layer: str = typer.Option("semantic", help="The memory layer (e.g., 'episodic', 'semantic', 'reflective')."),
 ):
     """Stores a new memory in the RAE."""
     session_id = _get_session_id()

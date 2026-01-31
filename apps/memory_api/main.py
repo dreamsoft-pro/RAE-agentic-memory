@@ -10,16 +10,9 @@ from fastapi.responses import JSONResponse
 from prometheus_fastapi_instrumentator import Instrumentator
 from slowapi.errors import RateLimitExceeded
 
-from apps.memory_api.api.v1 import (
-    agent,
-    cache,
-    compliance,
-    feedback,
-    governance,
-    graph,
-    memory,
-    system,
-)
+from apps.memory_api.api.v2 import agent as agent_v2
+from apps.memory_api.api.v2 import compliance as compliance_v2
+from apps.memory_api.api.v2 import feedback as feedback_v2
 from apps.memory_api.api.v2 import memory as memory_v2
 from apps.memory_api.config import settings
 from apps.memory_api.logging_config import setup_logging
@@ -252,32 +245,26 @@ async def generic_exception_handler(request: Request, exc: Exception):
 # Health / Monitoring
 app.include_router(health_router.router, tags=["System"])
 
-# API V1
-app.include_router(memory.router, prefix="/v1", tags=["Memory Operations"])
-app.include_router(agent.router, prefix="/v1", tags=["Agent Integration"])
-app.include_router(graph.router, prefix="/v1", tags=["Knowledge Graph"])
-app.include_router(governance.router, prefix="/v1", tags=["Governance"])
-app.include_router(compliance.router, prefix="/v1", tags=["Compliance"])
-app.include_router(feedback.router, prefix="/v1", tags=["Feedback"])
-app.include_router(cache.router, prefix="/v1", tags=["Cache Management"])
-app.include_router(system.router, prefix="/v1", tags=["System Control"])
+# API V2 (Consolidated)
+app.include_router(memory_v2.router)  # /v2/memories
+app.include_router(agent_v2.router)  # /v2/agent
+app.include_router(feedback_v2.router)  # /v2/feedback
+app.include_router(compliance_v2.router)  # /v2/compliance
 
-# API V2
-app.include_router(memory_v2.router)  # Prefix is defined in router (/v2/memories)
-
-# New Routes
-app.include_router(dashboard.router, prefix="/v1", tags=["Dashboard"])
-app.include_router(evaluation.router, prefix="/v1", tags=["Evaluation"])
-app.include_router(event_triggers.router, tags=["Automation"])
-app.include_router(graph_enhanced.router, prefix="/v1", tags=["Knowledge Graph+"])
-app.include_router(hybrid_search.router, prefix="/v1", tags=["Search"])
-app.include_router(nodes.router, prefix="/v1", tags=["Knowledge Graph Nodes"])
-app.include_router(reflections.router, tags=["Reflections"])
-app.include_router(sync.router, prefix="/v1", tags=["Sync"])
-app.include_router(tuning.router, prefix="/v1", tags=["Self-Improvement"])
-app.include_router(token_savings.router, prefix="/v1", tags=["Token Savings"])
-
-app.include_router(federation.router, prefix="/v1", tags=["Federation"])
+# Helper Services (Migrated to V2 prefix)
+app.include_router(dashboard.router, prefix="/v2/dashboard", tags=["Dashboard"])
+app.include_router(evaluation.router, prefix="/v2/evaluation", tags=["Evaluation"])
+app.include_router(event_triggers.router, prefix="/v2/automation", tags=["Automation"])
+app.include_router(graph_enhanced.router, prefix="/v2/graph", tags=["Knowledge Graph+"])
+app.include_router(hybrid_search.router, prefix="/v2/search", tags=["Search"])
+app.include_router(nodes.router, prefix="/v2/nodes", tags=["Knowledge Graph Nodes"])
+app.include_router(reflections.router, prefix="/v2/reflections", tags=["Reflections"])
+app.include_router(sync.router, prefix="/v2/sync", tags=["Sync"])
+app.include_router(tuning.router, prefix="/v2/tuning", tags=["Self-Improvement"])
+app.include_router(
+    token_savings.router, prefix="/v2/token-savings", tags=["Token Savings"]
+)
+app.include_router(federation.router, prefix="/v2/federation", tags=["Federation"])
 
 
 # Custom OpenAPI Schema

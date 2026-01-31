@@ -9,12 +9,6 @@ from uuid import UUID, uuid4
 
 import pytest
 
-# Skip tests if sentence_transformers is not installed (ML dependency)
-sentence_transformers = pytest.importorskip(
-    "sentence_transformers",
-    reason="Requires sentence-transformers – heavy ML dependency",
-)
-
 from apps.memory_api.models import ScoredMemoryRecord  # noqa: E402
 from apps.memory_api.services.rae_core_service import RAECoreService  # noqa: E402
 
@@ -75,7 +69,7 @@ def sample_vector_results():
             id="mem1",
             content="Module A depends on Module B",
             score=0.95,
-            layer="em",
+            layer="episodic",
             tags=["dependency"],
             source="code_analysis",
             timestamp="2024-01-01T00:00:00",
@@ -84,7 +78,7 @@ def sample_vector_results():
             id="mem2",
             content="Module B uses PostgreSQL",
             score=0.85,
-            layer="em",
+            layer="episodic",
             tags=["database"],
             source="design_doc",
             timestamp="2024-01-02T00:00:00",
@@ -484,7 +478,7 @@ class TestHybridSearchIntegration:
                         id="m1",
                         content="User service handles authentication",
                         score=0.92,
-                        layer="em",
+                        layer="episodic",
                         tags=["service", "auth"],
                         source="code",
                         timestamp="2024-01-01T00:00:00",
@@ -954,7 +948,7 @@ class TestHybridSearchWithRealDatabase:
                         id="mem1",
                         content="UserService handles authentication",
                         score=0.95,
-                        layer="em",
+                        layer="episodic",
                         tags=["service"],
                         source="code",
                         timestamp="2024-01-01T00:00:00",
