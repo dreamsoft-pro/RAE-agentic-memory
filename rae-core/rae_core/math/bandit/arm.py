@@ -34,6 +34,10 @@ class Arm:
         # Metadata
         last_pulled: Timestamp of last pull
         confidence: Confidence in this arm's estimates [0, 1]
+        
+        # Sliding Window (System 3.4 Adaptive Determinism)
+        history: list[float] = field(default_factory=list)
+        window_size: int = 100
     """
 
     level: MathLevel
@@ -51,6 +55,10 @@ class Arm:
     # Metadata
     last_pulled: float | None = None
     confidence: float = 0.0
+    
+    # Sliding Window
+    history: list[float] = field(default_factory=list)
+    window_size: int = 100
 
     def __post_init__(self):
         """Generate arm_id if not provided"""
@@ -59,26 +67,26 @@ class Arm:
 
     def mean_reward(self, context_id: int | None = None) -> float:
         """
-        Calculate mean reward for this arm.
+        Calculate mean reward for this arm using Sliding Window.
 
         Args:
-            context_id: If provided, return context-specific mean
-
+            context_id: If provided, return context-specific mean (NOT WINDOWED YET)
+            
         Returns:
             Mean reward (0.0 if never pulled)
         """
         if context_id is not None:
-            # Context-specific mean
+            # Context-specific mean (Legacy/Global for now)
             pulls = self.context_pulls.get(context_id, 0)
             if pulls == 0:
                 return 0.0
             total = self.context_rewards.get(context_id, 0.0)
             return total / pulls
         else:
-            # Global mean
-            if self.pulls == 0:
+            # Sliding Window Mean (Adaptive)
+            if not self.history:
                 return 0.0
-            return self.total_reward / self.pulls
+            return sum(self.history) / len(self.history)
 
     def ucb_score(
         self,
@@ -107,7 +115,10 @@ class Arm:
         if context_id is not None:
             arm_pulls = self.context_pulls.get(context_id, 0)
         else:
-            arm_pulls = self.pulls
+            # For Sliding Window UCB, we use the effective window size (n)
+            # But strictly SW-UCB uses local count in window. 
+            # Approximating with len(history) as the effective 'n'
+            arm_pulls = len(self.history)
 
         # If never pulled, return infinity (explore first)
         if arm_pulls == 0:
@@ -115,6 +126,9 @@ class Arm:
 
         # Calculate UCB
         mean = self.mean_reward(context_id)
+        
+        # For SW-UCB, N should effectively be min(total_pulls, window_size * num_arms)
+        # or just total_pulls. Standard UCB uses total_pulls.
         exploration_bonus = c * math.sqrt(math.log(max(total_pulls, 1)) / arm_pulls)
 
         return mean + exploration_bonus + context_bonus
@@ -149,8 +163,16 @@ class Arm:
             self.last_pulled = timestamp
 
         # Update confidence (more pulls = higher confidence)
-        # Asymptotic confidence: 1 - 1/(1 + pulls)
         self.confidence = 1.0 - 1.0 / (1.0 + self.pulls)
+        
+        # Update Sliding Window
+        self.history.append(reward)
+        if len(self.history) > self.window_size:
+            self.history.pop(0)
+
+    def reset_window(self):
+        """Reset sliding window stats (Change Point Detection)."""
+        self.history = []
 
     def to_dict(self) -> dict:
         """Serialize to dictionary"""
@@ -192,17 +214,48 @@ def create_default_arms() -> list[Arm]:
     """
     Create the default set of arms for the bandit.
 
-    Returns 9 arms:
-    - L1: default, relevance_scoring, importance_scoring
-    - L2: default, entropy_minimization, information_bottleneck, mutual_information
-    - L3: hybrid_default, weighted_combination
-
-    Returns:
-        List of Arm objects
+    Includes:
+    - 21 Granular L1 arms for Text:Vector ratios (from 10:1 to 1:10)
+    - 4 L2 arms for information-theoretic strategies
+    - 2 L3 arms for hybrid ensemble logic
     """
     arms = []
 
-    # L1 arms (3)
+    # L1: Granular Hybrid Ratios (21 arms)
+    # Ratios from 10.0:1.0 down to 1.0:10.0
+    ratios = [
+        (10.0, 1.0),
+        (8.0, 1.0),
+        (6.0, 1.0),
+        (5.0, 1.0),
+        (4.0, 1.0),
+        (3.0, 1.0),
+        (2.0, 1.0),
+        (1.5, 1.0),
+        (1.2, 1.0),
+        (1.0, 1.0),
+        (1.0, 1.2),
+        (1.0, 1.5),
+        (1.0, 2.0),
+        (1.0, 3.0),
+        (1.0, 4.0),
+        (1.0, 5.0),
+        (1.0, 6.0),
+        (1.0, 8.0),
+        (1.0, 10.0),
+        # Extreme cases for exploration
+        (25.0, 1.0),
+        (1.0, 25.0),
+    ]
+
+    for txt_w, vec_w in ratios:
+        # Using 'w_txt' and 'vec' prefixes to make parsing unambiguous
+        txt_str = str(txt_w).replace(".", "p")
+        vec_str = str(vec_w).replace(".", "p")
+        strategy_name = f"w_txt{txt_str}_vec{vec_str}"
+        arms.append(Arm(level=MathLevel.L1, strategy=strategy_name))
+
+    # Keep legacy L1 names for compatibility
     arms.append(Arm(level=MathLevel.L1, strategy="default"))
     arms.append(Arm(level=MathLevel.L1, strategy="relevance_scoring"))
     arms.append(Arm(level=MathLevel.L1, strategy="importance_scoring"))

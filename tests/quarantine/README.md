@@ -66,7 +66,7 @@ pytest tests/quarantine/ -v
 find tests/quarantine -name "test_*.py"
 
 # Run specific quarantined test
-pytest tests/quarantine/api/v1/test_cache.py::test_flaky -v
+pytest tests/quarantine/api/v2/test_cache.py::test_flaky -v
 ```
 
 ## Current Status

@@ -233,7 +233,7 @@ Memory access stats feed into the enterprise governance system:
 - **Analytics**: Usage trends tracked per tenant/project
 - **Compliance**: Audit trail of memory access for regulatory requirements
 
-See `docs/configuration.md` for decay configuration parameters.
+See `docs/guides/DEPLOYMENT.md` for decay configuration parameters.
 
 ## Observability
 

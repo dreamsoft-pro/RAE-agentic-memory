@@ -703,8 +703,8 @@ memories_stored = Counter(
 
 ## Further Reading
 
-- [Memory Layers](memory-layers.md)
+- [Memory Layers](FULL_SPEC.md#1-memory-hierarchy)
 - [Reflection Engine](reflection-engine.md)
 - [GraphRAG](graphrag.md)
 - [API Reference](../api/rest-api.md)
-- [Deployment Guide](../guides/production-deployment.md)
+- [Deployment Guide](../guides/DEPLOYMENT.md)

@@ -37,7 +37,7 @@ def verify_implicit_capture():
     try:
         # Note: We use the /agent/execute endpoint which triggers the RAERuntime logic we modified
         resp = requests.post(
-            f"{BASE_URL}/v1/agent/execute",
+            f"{BASE_URL}/v2/agent/execute",
             json=payload,
             headers={"X-Tenant-Id": "default-tenant"},
         )
@@ -65,7 +65,7 @@ def verify_implicit_capture():
 
     try:
         audit_resp = requests.post(
-            f"{BASE_URL}/v1/memory/query",
+            f"{BASE_URL}/v2/memories/query",
             json=query_payload,
             headers={"X-Tenant-Id": "default-tenant"},
         )
@@ -95,7 +95,7 @@ def verify_implicit_capture():
         # Or better, list memories by project and look for recent ones.
 
         list_resp = requests.get(
-            f"{BASE_URL}/v1/memory/list?limit=5&project=verification-agent",
+            f"{BASE_URL}/v2/memory/list?limit=5&project=verification-agent",
             headers={"X-Tenant-Id": "default-tenant"},
         )
         recent_memories = list_resp.json().get("results", [])

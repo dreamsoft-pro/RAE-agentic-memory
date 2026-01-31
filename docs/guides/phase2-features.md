@@ -985,7 +985,7 @@ preview = await consolidation.preview_consolidation(tenant_id, memory_ids)
 
 ## Next Steps
 
-- [Production Deployment Guide](production-deployment.md)
+- [Production Deployment Guide](DEPLOYMENT.md)
 - [Performance Tuning](performance-tuning.md)
 - [Security Best Practices](security-best-practices.md)
 - [API Reference](../api/rest-api.md)

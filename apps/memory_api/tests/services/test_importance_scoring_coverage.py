@@ -55,7 +55,7 @@ async def test_calculate_importance_factors(scoring_service, sample_memory):
     old_memory = Memory(
         id=str(uuid4()),
         content="Old",
-        layer="em",
+        layer="episodic",
         tenant_id=uuid4(),
         created_at=datetime.now(timezone.utc) - timedelta(days=30),
         accessed_at=datetime.now(timezone.utc) - timedelta(days=30),
@@ -65,7 +65,7 @@ async def test_calculate_importance_factors(scoring_service, sample_memory):
     new_memory = Memory(
         id=str(uuid4()),
         content="New",
-        layer="em",
+        layer="episodic",
         tenant_id=uuid4(),
         created_at=datetime.now(timezone.utc),
         accessed_at=datetime.now(timezone.utc),

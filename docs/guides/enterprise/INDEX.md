@@ -8,7 +8,7 @@ This is your central hub for deploying RAE (Reflective Agentic-memory Engine) at
 
 **New to RAE Enterprise?** Start here:
 
-1. **[Production Deployment](../production-deployment.md)**
+1. **[Production Deployment](../DEPLOYMENT.md)**
    - Kubernetes deployment (recommended)
    - High-availability architecture
    - Auto-scaling configuration
@@ -656,7 +656,7 @@ export default function () {
 
 ### Enterprise Documentation
 
-- [Production Deployment Guide](../production-deployment.md)
+- [Production Deployment Guide](../DEPLOYMENT.md)
 - [Security Best Practices](../security-best-practices.md)
 - [Performance Tuning](../performance-tuning.md)
 - [Multi-Tenancy Guide](../security-and-multi-tenancy.md)

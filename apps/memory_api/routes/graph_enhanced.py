@@ -49,7 +49,7 @@ from apps.memory_api.services.rae_core_service import RAECoreService
 
 logger = structlog.get_logger(__name__)
 
-router = APIRouter(prefix="/v1/graph-management", tags=["Graph Management"])
+router = APIRouter(tags=["Graph Management"])
 
 
 # ============================================================================

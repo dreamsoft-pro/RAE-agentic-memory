@@ -78,8 +78,8 @@ These statistics power the **importance scoring system**, which calculates dynam
 - Stale memories (30+ days): Accelerated decay
 
 For configuration and implementation details, see:
-- [Configuration Guide](docs/configuration.md#memory-decay--importance-scoring)
-- [Architecture Documentation](docs/architecture.md#memory-lifecycle--governance)
+- [Configuration Guide](docs/guides/DEPLOYMENT.md#memory-decay--importance-scoring)
+- [Architecture Documentation](docs/architecture/FULL_SPEC.md#memory-lifecycle--governance)
 
 ---
 

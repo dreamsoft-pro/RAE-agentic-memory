@@ -87,6 +87,7 @@ class FullTextStrategy(SearchStrategy):
         filters: dict[str, Any] | None = None,
         limit: int = 10,
         project: str | None = None,
+        **kwargs: Any,
     ) -> list[tuple[UUID, float]]:
         """Execute full-text search.
 
@@ -119,29 +120,18 @@ class FullTextStrategy(SearchStrategy):
         if not memories:
             return []
 
-        # Score each memory
+        # Score each memory - Trust storage rank if available
         results: list[tuple[UUID, float]] = []
-        is_wildcard = query.strip() == "*"
-
         for memory in memories:
             memory_id = memory["id"]
             if isinstance(memory_id, str):
                 memory_id = UUID(memory_id)
 
-            content = memory.get("content", "")
-            tags = memory.get("tags", [])
+            # Use rank from storage if available, fallback to 1.0 or local score
+            score = float(memory.get("rank", memory.get("score", 1.0)))
+            results.append((memory_id, score))
 
-            if is_wildcard:
-                score = 1.0
-            else:
-                score = self._compute_match_score(query, content, tags)
-
-            if score > 0:
-                results.append((memory_id, score))
-
-        # Sort by score descending and limit
-        results.sort(key=lambda x: x[1], reverse=True)
-        return results[:limit]
+        return results
 
     def get_strategy_name(self) -> str:
         """Return strategy name."""

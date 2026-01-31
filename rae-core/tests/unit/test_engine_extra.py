@@ -95,6 +95,8 @@ async def test_search_memories_with_custom_weights(
             "content": "test",
             "importance": 0.5,
         }
+        # Add mock for new resonance call
+        mock_storage.get_neighbors_batch = AsyncMock(return_value=[])
 
         results = await engine.search_memories(
             "query", "t1", custom_weights={"alpha": 1.0, "beta": 0.0, "gamma": 0.0}

@@ -2,6 +2,7 @@
 
 from typing import Any
 
+import numpy as np
 import structlog
 
 logger = structlog.get_logger(__name__)
@@ -23,6 +24,7 @@ class RAEEngine:
         cache_provider: Any = None,
         search_engine: Any = None,
         math_controller: Any = None,
+        resonance_engine: Any = None,
     ):
         self.memory_storage = memory_storage
         self.vector_store = vector_store
@@ -32,8 +34,12 @@ class RAEEngine:
 
         # Initialize Math Layer Controller (The Brain)
         from rae_core.math.controller import MathLayerController
+        from rae_core.math.resonance import SemanticResonanceEngine
 
         self.math_ctrl = math_controller or MathLayerController(config=settings)
+        self.resonance_engine = resonance_engine or SemanticResonanceEngine(
+            resonance_factor=0.4
+        )
 
         # Modular Search Engine with ORB 4.0
         if search_engine:
@@ -45,12 +51,25 @@ class RAEEngine:
                 strategies={
                     "vector": self._init_vector_strategy(),
                     "fulltext": self._init_fulltext_strategy(),
-                }
+                },
+                embedding_provider=self.embedding_provider,
+                memory_storage=self.memory_storage,
             )
 
     def _init_vector_strategy(self):
+        from rae_core.embedding.manager import EmbeddingManager
+        
+        if isinstance(self.embedding_provider, EmbeddingManager):
+            from rae_core.search.strategies.multi_vector import MultiVectorSearchStrategy
+            
+            # Build list of (store, provider, name) for each model in manager
+            strategies = []
+            for name, provider in self.embedding_provider.providers.items():
+                strategies.append((self.vector_store, provider, name))
+            
+            return MultiVectorSearchStrategy(strategies=strategies)
+        
         from rae_core.search.strategies.vector import VectorSearchStrategy
-
         return VectorSearchStrategy(self.vector_store, self.embedding_provider)
 
     def _init_fulltext_strategy(self):
@@ -73,12 +92,13 @@ class RAEEngine:
         RAE Reflective Search: Retrieval -> Math Scoring -> Manifold Adjustment.
         """
         # 1. RETRIEVAL (Vector + Keyword)
-        search_filters = {
-            "agent_id": agent_id,
-            "project": project,
-            "layer": layer,
-            **(filters or {}),
-        }
+        search_filters = {**(filters or {})}
+        if agent_id:
+            search_filters["agent_id"] = agent_id
+        if project:
+            search_filters["project"] = project
+        if layer:
+            search_filters["layer"] = layer
 
         # Dynamic Weight Selection via Math Controller (Bandit)
         # If weights are provided in kwargs, they override the autonomous controller
@@ -100,9 +120,11 @@ class RAEEngine:
             query=query,
             tenant_id=tenant_id,
             filters=search_filters,
-            limit=top_k * 5,  # Wide window for Math Layer
+            limit=100,  # SYSTEM 3.4: Wide window for Math Layer / Resonance processing
             strategies=active_strategies,
             strategy_weights=strategy_weights,
+            enable_reranking=False,
+            math_controller=self.math_ctrl 
         )
 
         # 2. DESIGNED MATH SCORING (The Manifold)
@@ -133,15 +155,69 @@ class RAEEngine:
                 memory["search_score"] = sim_score
                 memories.append(memory)
 
-        # 3. REFLECTIVE RE-RANKING
-        # If any Layer 4 (Reflective) memories are found, they boost their children
-        reflections = [m for m in memories if m.get("layer") == "reflective"]
-        if reflections:
-            for m in memories:
-                if m.get("layer") != "reflective":
-                    # Synergy boost from reflections
-                    m["math_score"] *= 1.5
+        # 3. SEMANTIC RESONANCE (Manifold Wave Propagation)
+        # Using graph connectivity to boost non-obvious ideas
+        if hasattr(self.memory_storage, "get_neighbors_batch") and memories:
+            m_ids = [m["id"] for m in memories]
+            edges = await self.memory_storage.get_neighbors_batch(m_ids, tenant_id)
+            if edges:
+                candidate_ids = {str(m["id"]) for m in memories}
 
+                # Apply multi-hop resonance
+                memories, energy_map = self.resonance_engine.compute_resonance(
+                    memories, edges
+                )
+
+                # REFLECTION INDUCTION: Pull in new memories from the graph with high energy
+                induced_ids = []
+                # Threshold for induction (relative to top energy)
+                if energy_map:
+                    max_e = max(energy_map.values())
+                    # Math Core v3.3: Auto-Tuned Threshold
+                    # Factual queries -> High threshold (0.8) -> Less noise
+                    # Abstract queries -> Low threshold (0.4) -> More context
+                    dyn_threshold = self.math_ctrl.get_resonance_threshold(query)
+                    threshold = max_e * dyn_threshold
+
+                    for node_id, energy in energy_map.items():
+                        if node_id not in candidate_ids and energy > threshold:
+                            induced_ids.append(node_id)
+
+                # Fetch content for induced memories
+                if induced_ids:
+                    logger.info(
+                        "reflection_induction_triggered", count=len(induced_ids)
+                    )
+                    for mid_str in induced_ids[
+                        :5
+                    ]:  # Limit induction to top 5 to avoid explosion
+                        try:
+                            from uuid import UUID
+
+                            induced_mem = await self.memory_storage.get_memory(
+                                UUID(mid_str), tenant_id
+                            )
+                            if induced_mem:
+                                induced_mem["math_score"] = float(
+                                    np.tanh(energy_map[mid_str])
+                                )
+                                induced_mem["resonance_metadata"] = {
+                                    "induced": True,
+                                    "boost": float(energy_map[mid_str]),
+                                }
+                                memories.append(induced_mem)
+                        except Exception:
+                            continue
+
+        # 4. SYNERGY RESTORATION (Scientist Path)
+        # We rely purely on Mathematical Resonance (Graph Energy Flow).
+        # No artificial hardcoded multipliers (*1.2).
+        # The energy map from compute_resonance is the ground truth.
+        
+        # If we induced memories via Reflection, they already have correct 'math_score'
+        # calculated from tanh(energy).
+        
+        # Final Sort based on the integrated Math Score (Similarity + Resonance + Importance)
         memories.sort(key=lambda x: x.get("math_score", 0.0), reverse=True)
         return memories[:top_k]
 
@@ -172,14 +248,30 @@ class RAEEngine:
         )
 
     async def store_memory(self, **kwargs):
-        """Store memory with automatic embedding."""
+        """Store memory with automatic embedding (supports Multi-Vector)."""
         content = kwargs.get("content")
         tenant_id = kwargs.get("tenant_id")
         m_id = await self.memory_storage.store_memory(**kwargs)
 
         # Automatic Vectorization (Manifold Entry)
-        emb = await self.embedding_provider.embed_text(content)
-        await self.vector_store.store_vector(m_id, emb, tenant_id, metadata=kwargs)
+        # Check if provider supports multi-vector generation (EmbeddingManager)
+        if hasattr(self.embedding_provider, "generate_all_embeddings"):
+            embs_dict = await self.embedding_provider.generate_all_embeddings(
+                [content], task_type="search_document"
+            )
+            # Convert dict[name, list[list[float]]] to dict[name, list[float]]
+            emb = {name: e[0] for name, e in embs_dict.items() if e}
+        else:
+            emb = await self.embedding_provider.embed_text(
+                content, task_type="search_document"
+            )
+
+        # Clean metadata for vector storage (remove heavy content)
+        vector_meta = kwargs.copy()
+        if "content" in vector_meta:
+            del vector_meta["content"]
+
+        await self.vector_store.store_vector(m_id, emb, tenant_id, metadata=vector_meta)
         return m_id
 
     def get_status(self) -> dict[str, Any]:

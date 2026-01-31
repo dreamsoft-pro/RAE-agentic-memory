@@ -40,6 +40,7 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 COPY alembic.ini /app/alembic.ini
 COPY alembic /app/alembic
 COPY apps /app/apps
+COPY models /app/models
 
 # Create non-root user
 RUN useradd -m -u 1000 appuser && chown -R appuser:appuser /app

@@ -54,4 +54,8 @@ slowapi>=0.1.9  # Rate limiting
 instructor>=1.0.0  # Structured LLM outputs
 scipy>=1.11.0  # Statistical functions
 python-louvain>=0.16  # Community detection
-psycopg2-binary>=2.9.9
+psycopg2-binary>=2.9.0
+
+# Native ONNX Support (Lightweight Embeddings)
+onnxruntime>=1.17.0
+tokenizers>=0.15.0

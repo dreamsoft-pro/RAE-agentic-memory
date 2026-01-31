@@ -34,7 +34,7 @@ from apps.memory_api.services.reflection_pipeline import ReflectionPipeline
 
 logger = structlog.get_logger(__name__)
 
-router = APIRouter(prefix="/v1/reflections", tags=["Reflections"])
+router = APIRouter(tags=["Reflections"])
 
 
 # ============================================================================

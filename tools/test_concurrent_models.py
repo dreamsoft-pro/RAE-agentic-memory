@@ -50,7 +50,7 @@ async def main():
     print("🧪 Running Concurrent Model Test on Node 3...")
 
     # Run both simultaneously
-    results = await asyncio.gather(test_generation(), test_embedding())
+    _results = await asyncio.gather(test_generation(), test_embedding())
 
     # Check what is loaded in VRAM
     await check_ps()

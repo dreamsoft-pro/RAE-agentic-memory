@@ -668,7 +668,7 @@ if extraction.confidence < confidence_threshold:
 
 ## Further Reading
 
-- [Memory Layers](memory-layers.md) - Foundation for graph
+- [Memory Layers](FULL_SPEC.md#1-memory-hierarchy) - Foundation for graph
 - [Reflection Engine](reflection-engine.md) - Generates insights from graph
 - [Hybrid Search](../guides/hybrid-search.md) - Combining vector + graph
 

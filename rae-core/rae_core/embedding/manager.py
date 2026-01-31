@@ -24,18 +24,22 @@ class EmbeddingManager(IEmbeddingProvider):
         return self.providers.get(model_name)
 
     # IEmbeddingProvider implementation (delegates to default)
-    async def embed_text(self, text: str) -> list[float]:
-        return await self._default_provider.embed_text(text)
+    async def embed_text(
+        self, text: str, task_type: str = "search_document"
+    ) -> list[float]:
+        return await self._default_provider.embed_text(text, task_type=task_type)
 
-    async def embed_batch(self, texts: list[str]) -> list[list[float]]:
-        return await self._default_provider.embed_batch(texts)
+    async def embed_batch(
+        self, texts: list[str], task_type: str = "search_document"
+    ) -> list[list[float]]:
+        return await self._default_provider.embed_batch(texts, task_type=task_type)
 
     def get_dimension(self) -> int:
         return self._default_provider.get_dimension()
 
     # Manager methods
     async def generate_all_embeddings(
-        self, texts: list[str]
+        self, texts: list[str], task_type: str = "search_document"
     ) -> dict[str, list[list[float]]]:
         """
         Generate embeddings for all registered models.
@@ -46,7 +50,7 @@ class EmbeddingManager(IEmbeddingProvider):
             # TODO: Add parallelism here using asyncio.gather if providers are async/remote
             # For now, sequential to avoid complexity in initial implementation
             try:
-                embeddings = await provider.embed_batch(texts)
+                embeddings = await provider.embed_batch(texts, task_type=task_type)
                 results[model_name] = embeddings
             except Exception as e:
                 # Log error but continue with other models?

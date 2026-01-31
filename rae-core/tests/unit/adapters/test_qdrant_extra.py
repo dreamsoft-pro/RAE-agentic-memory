@@ -124,6 +124,7 @@ async def test_qdrant_init_with_url():
     # Mock AsyncQdrantClient
     with patch("rae_core.adapters.qdrant.AsyncQdrantClient") as mock_client_cls:
         QdrantVectorStore(url="http://localhost:6333", api_key="test-key")
+        # Ensure we called it with the right args
         mock_client_cls.assert_called_once_with(
             url="http://localhost:6333", api_key="test-key"
         )

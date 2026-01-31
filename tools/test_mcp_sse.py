@@ -85,7 +85,7 @@ async def main():
                             # If we got the result for id 2 (tools/list), we are done
                             if data.get("id") == 2:
                                 break
-                        except:
+                        except Exception:
                             pass
             except KeyboardInterrupt:
                 pass

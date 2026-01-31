@@ -12,5 +12,5 @@ def test_openapi_schema():
     assert schema["info"]["title"] == "RAE Memory API"
     # OpenAPI spec doesn't require top-level tags to list all tags used in paths
     # We verify the path exists and has the correct tag in operation
-    assert "/v1/memory/store" in schema["paths"]
-    assert "Memory Operations" in schema["paths"]["/v1/memory/store"]["post"]["tags"]
+    assert "/v2/memories/" in schema["paths"]
+    assert "Memory v2 (RAE-Core)" in schema["paths"]["/v2/memories/"]["post"]["tags"]

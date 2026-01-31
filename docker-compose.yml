@@ -13,6 +13,8 @@ services:
       - ./alembic:/app/alembic
       - ./alembic.ini:/app/alembic.ini
       - ./rae_adapters:/app/rae_adapters
+    ports:
+      - "8000:8000"
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=${POSTGRES_DB:-rae}
@@ -81,7 +83,7 @@ services:
       - ./rae_adapters:/app/rae_adapters
       - ./scripts:/app/scripts
       - /home/grzegorz-lesniowski/.gemini:/root/.gemini
-      - ${HF_CACHE_PATH:-./models}:/app/models/nomic-embed-text-v1.5:ro
+      - ./models:/app/models:ro
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=${POSTGRES_DB:-rae}
@@ -95,6 +97,7 @@ services:
       - RAE_VECTOR_BACKEND=${RAE_VECTOR_BACKEND:-qdrant}
       - RAE_LLM_MODEL_DEFAULT=local_deepseek_coder
       - RAE_EMBEDDING_MODEL=ollama/nomic-embed-text
+      - RAE_EMBEDDING_BACKEND=onnx
       # Dev-specific settings from docker-compose.dev.yml
       - RAE_APP_LOG_LEVEL=DEBUG
       - LOG_LEVEL=INFO
@@ -198,8 +201,15 @@ services:
       - "8002:8001"
     volumes:
       - ./apps/ml_service:/app/apps/ml_service
+    command: ["uvicorn", "apps.ml_service.main:app", "--host", "0.0.0.0", "--port", "8001"]
     environment:
       - LOG_LEVEL=INFO
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DB=${POSTGRES_DB:-rae}
+      - POSTGRES_USER=${POSTGRES_USER:-rae}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-rae_password}
+    depends_on:
+      - postgres
     restart: unless-stopped
     networks:
       - rae-network
@@ -218,6 +228,12 @@ services:
       - ./apps/ml_service:/app/apps/ml_service
     environment:
       - LOG_LEVEL=DEBUG
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DB=${POSTGRES_DB:-rae}
+      - POSTGRES_USER=${POSTGRES_USER:-rae}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-rae_password}
+    depends_on:
+      - postgres
     command: ["uvicorn", "apps.ml_service.main:app", "--host", "0.0.0.0", "--port", "8001", "--reload", "--reload-dir", "/app/apps/ml_service"]
     restart: unless-stopped
     networks:
@@ -235,8 +251,15 @@ services:
       - "8004:8001"
     volumes:
       - ./apps/reranker_service:/app/apps/reranker_service
+    command: ["uvicorn", "apps.reranker_service.main:app", "--host", "0.0.0.0", "--port", "8001"]
     environment:
       - LOG_LEVEL=INFO
+      - POSTGRES_HOST=postgres
+      - POSTGRES_DB=${POSTGRES_DB:-rae}
+      - POSTGRES_USER=${POSTGRES_USER:-rae}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-rae_password}
+    depends_on:
+      - postgres
     restart: unless-stopped
     networks:
       - rae-network

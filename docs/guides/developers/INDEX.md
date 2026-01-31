@@ -8,7 +8,7 @@ This is your central hub for building with RAE (Reflective Agentic-memory Engine
 
 **New to RAE?** Start here:
 
-1. **[Installation Guide](../../../README.md#installation)**
+1. **[Installation Guide](../../README.md#installation)**
    - Docker Compose setup (recommended)
    - Local development setup
    - Requirements: Docker, Python 3.11+
@@ -49,7 +49,7 @@ This is your central hub for building with RAE (Reflective Agentic-memory Engine
 | Topic | Description | Link |
 |-------|-------------|------|
 | **System Architecture** | High-level design overview | [Architecture Overview](../../reference/architecture/README.md) |
-| **Memory Layers** | Episodic, Working, Semantic, LTM | [Memory Layers](../../reference/architecture/memory-layers.md) |
+| **Memory Layers** | Episodic, Working, Semantic, LTM | [Memory Layers](../../reference/architecture/FULL_SPEC.md#1-memory-hierarchy) |
 | **Hybrid Search** | Vector + keyword search (v3) | [Hybrid Search](../../reference/architecture/hybrid-search.md) |
 | **LLM Orchestrator** | Multi-model flexibility (v2.1.1) | [LLM Orchestrator](../../../docs/project-design/active/LLM_orchestrator/LLM_ORCHESTRATOR.md) |
 | **Reflection Engine** | Autonomous memory consolidation | [Reflection Mode](../../../docs/REFLECTION_MODE.md) |
@@ -406,7 +406,7 @@ See [TODO.md](../../../TODO.md) for complete roadmap.
 
 ### Essential Documentation
 
-- [README.md](../../../README.md) - Project overview
+- [README.md](../../README.md) - Project overview
 - [ONBOARDING_GUIDE.md](../../../ONBOARDING_GUIDE.md) - New developer onboarding
 - [PROJECT_STRUCTURE.md](../../../PROJECT_STRUCTURE.md) - File organization
 - [CONVENTIONS.md](../../../CONVENTIONS.md) - Architecture patterns
@@ -421,7 +421,7 @@ See [TODO.md](../../../TODO.md) for complete roadmap.
 
 - [Architecture Overview](../../reference/architecture/README.md)
 - [Hybrid Search](../../reference/architecture/hybrid-search.md)
-- [Memory Layers](../../reference/architecture/memory-layers.md)
+- [Memory Layers](../../reference/architecture/FULL_SPEC.md#1-memory-hierarchy)
 - [LLM Orchestrator](../../../docs/project-design/active/LLM_orchestrator/LLM_ORCHESTRATOR.md)
 
 ### Testing & Quality
