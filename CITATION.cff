@@ -6,7 +6,7 @@ authors:
     orcid: "https://orcid.org/0009-0003-6672-671X"
     affiliation: "Printworks sp. z o.o."
 title: "RAE: Reflective Agentic-Memory Engine"
-version: 3.6.0
+version: 3.6.1
 doi: 10.5281/zenodo.12345678  # Placeholder until first Zenodo minting
 date-released: 2026-01-31
 url: "https://github.com/dreamsoft-pro/RAE-agentic-memory"
