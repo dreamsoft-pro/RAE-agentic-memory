@@ -64,16 +64,18 @@ class VectorSearchStrategy(SearchStrategy):
         project = project or (filters.get("project") if filters else None)
         _session_id = filters.get("session_id") if filters else None
         _score_threshold = filters.get("score_threshold", 0.0) if filters else 0.0
-        
+
         # System 3.4: Allow searching in specific vector space
-        vector_name = kwargs.get("vector_name") or (filters.get("vector_name") if filters else None)
+        vector_name = kwargs.get("vector_name") or (
+            filters.get("vector_name") if filters else None
+        )
 
         # Search similar vectors - FORCE MINIMAL ARGS
         results = await self.vector_store.search_similar(
-            query_embedding=query_embedding, 
-            tenant_id=tenant_id, 
+            query_embedding=query_embedding,
+            tenant_id=tenant_id,
             limit=limit,
-            vector_name=vector_name
+            vector_name=vector_name,
         )
 
         # DEBUG:

@@ -1,6 +1,6 @@
 # 🧠 RAE: Silicon Oracle Architecture Manifest
 
-RAE (Retrieval-Augmented Episodic) Agnostic Core is a multi-layered cognitive memory operating system for AI agents. It integrates mathematical determinism with evolutionary adaptation to provide what is known as the **"Silicon Oracle"** performance standard.
+RAE (Reflective Agentic-memory Engine) Agnostic Core is a multi-layered cognitive memory operating system for AI agents. It integrates mathematical determinism with evolutionary adaptation to provide what is known as the **"Silicon Oracle"** performance standard.
 
 ---
 

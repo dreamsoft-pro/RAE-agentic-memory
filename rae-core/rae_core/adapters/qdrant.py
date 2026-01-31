@@ -65,7 +65,7 @@ class QdrantVectorStore(IVectorStore):
         try:
             collections = await self.client.get_collections()
             collection_names = [c.name for c in collections.collections]
-            
+
             if self.collection_name not in collection_names:
                 # Create with default vector
                 await self.client.create_collection(
@@ -83,10 +83,12 @@ class QdrantVectorStore(IVectorStore):
                 collection_info = await self.client.get_collection(self.collection_name)
                 if collection_info.config.params.vectors:
                     if isinstance(collection_info.config.params.vectors, dict):
-                        self._known_vectors.update(collection_info.config.params.vectors.keys())
+                        self._known_vectors.update(
+                            collection_info.config.params.vectors.keys()
+                        )
                     else:
                         # Single unnamed vector or legacy
-                        pass 
+                        pass
 
             self._initialized = True
         except Exception as e:
@@ -96,7 +98,7 @@ class QdrantVectorStore(IVectorStore):
     async def ensure_vector_config(self, vector_name: str, dim: int) -> None:
         """Dynamically add a new named vector config if missing."""
         await self._ensure_collection()
-        
+
         if vector_name in self._known_vectors:
             return
 
@@ -106,18 +108,16 @@ class QdrantVectorStore(IVectorStore):
             existing_vectors = {}
             if isinstance(collection_info.config.params.vectors, dict):
                 existing_vectors = collection_info.config.params.vectors
-            
+
             if vector_name not in existing_vectors:
                 logger.info(f"Adding new vector config: {vector_name} ({dim}d)")
                 await self.client.update_collection(
                     collection_name=self.collection_name,
                     vectors_config={
-                        vector_name: VectorParams(
-                            size=dim, distance=Distance.COSINE
-                        )
-                    }
+                        vector_name: VectorParams(size=dim, distance=Distance.COSINE)
+                    },
                 )
-            
+
             self._known_vectors.add(vector_name)
         except Exception as e:
             logger.error(f"Failed to update vector config for {vector_name}: {e}")
@@ -203,7 +203,7 @@ class QdrantVectorStore(IVectorStore):
                 vector_data = {self.vector_name: emb}
                 # Ensure default vector is registered (should be done in _ensure_collection but safe to check)
                 if self.vector_name not in self._known_vectors:
-                     await self.ensure_vector_config(self.vector_name, len(emb))
+                    await self.ensure_vector_config(self.vector_name, len(emb))
 
             # Prepare payload
             payload = {
@@ -226,10 +226,7 @@ class QdrantVectorStore(IVectorStore):
             return 0
 
     async def get_vector(
-        self,
-        memory_id: UUID,
-        tenant_id: str,
-        vector_name: str | None = None
+        self, memory_id: UUID, tenant_id: str, vector_name: str | None = None
     ) -> list[float] | None:
         """Retrieve a vector embedding by ID."""
         target_vector = vector_name or self.vector_name

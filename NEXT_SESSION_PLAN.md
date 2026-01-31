@@ -1,19 +1,40 @@
-# Plan kontynuacji - Stabilizacja Testów
+# NEXT SESSION PLAN: GPU Acceleration & External Integration (v3.5.0-dev)
 
-## Stan na 2026-01-29
-- **Testy:** 1079 passed, 0 failed, 7 skipped.
-- **Kluczowe poprawki:**
-    - `rae_adapters/postgres.py`: Mapowanie `episodic` <-> `em` we wszystkich metodach (store, query, count, delete).
-    - `apps/memory_api/security/auth.py`: Odporność na brak `app.state.pool` w trybie `ignore`.
-    - `apps/memory_api/observability/health_checks.py`: Naprawiony `NameError` (brak importu `os`).
-    - `tests/integration/test_dreaming_worker.py`: Synchronizacja manualnych insertów SQL z mapowaniem adaptera (`em`).
+## 🎯 Strategic Goals
+1.  **Hardware Acceleration**: Enable CUDA support for Native ONNX in the `standard` (Full) profile.
+2.  **External Connectivity**: Implement API and MCP backends for Embeddings and Reranking.
+3.  **Config Consolidation**: Move all hardcoded engine parameters to `config/math_controller.yaml`.
 
-## Do zrobienia w następnej sesji
-1. **Weryfikacja pominiętych testów (7):**
-    - Sprawdzić, czy testy wymagające `spacy`, `sentence-transformers` i `presidio` powinny zostać przeniesione do testów integracyjnych/benchmarków na klastrze, czy wymagają lżejszych mocków.
-    - Zweryfikować testy `hard_frames` (wymagają działającego kontenera `rae-agent-secure`).
-2. **Push i monitoring CI:**
-    - Wykonać `make pre-push` i wypchnąć zmiany na branch deweloperski.
+---
 
-## Polecenie startowe
+## 🛠️ Task Breakdown
+
+### 1. CUDA & GPU Support (Standard Profile)
+- **Library Upgrade**: Switch from `onnxruntime` to `onnxruntime-gpu` in `requirements.txt` for the Full image.
+- **Provider Logic**: Update `NativeEmbeddingProvider` to detect CUDA and automatically select `CUDAExecutionProvider` if `RAE_USE_GPU=True`.
+- **Docker Integration**: Update `docker-compose.yml` to include `deploy.resources.reservations.devices` for NVIDIA GPU access.
+
+### 2. External Embedding & Reranking (API/MCP)
+- **Backend Expansion**: Extend `RAE_EMBEDDING_BACKEND` to support `api` (OpenAI/LiteLLM compatible) and `mcp` (Model Context Protocol tool calls).
+- **Reranking Plugability**: Refactor `HybridSearchEngine` to allow `external_reranker` via MCP tools or remote API endpoints.
+- **Protocol Discovery**: Implement automatic tool discovery for MCP-based embedding providers.
+
+### 3. Configuration Externalization
+- **Engine Parameters**: Move `limit=100` (candidate window), `resonance_threshold`, and `szubar_induction_energy` from `engine.py` to `config/math_controller.yaml`.
+- **Environment Toggles**: Add `.env` flags for:
+    - `RAE_USE_GPU`: (bool) Enable/disable CUDA.
+    - `RAE_RERANKER_BACKEND`: (`local`, `api`, `mcp`).
+    - `RAE_MCP_EMBEDDING_TOOL`: Tool name for MCP embeddings.
+
+---
+
+## 🚀 Initialization Commands
 `python3 scripts/bootstrap_session.py`
+`docker compose --profile dev up -d`
+
+---
+
+## 📝 Memory Snapshot (RAE-RM)
+- Current State: **System 3.4 (Silicon Oracle)** stable at 100k mems (MRR 0.85).
+- Constraint: Maintain **Zero Warning Policy** and **RAE-First** communication.
+- Focus: Transition from "Local-Only" to **"Hardware-Optimized & Mesh-Connected"**.

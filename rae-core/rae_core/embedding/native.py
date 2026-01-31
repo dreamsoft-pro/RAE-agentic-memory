@@ -30,6 +30,7 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
         max_length: int = 8192,
         normalize: bool = True,
         vector_name: str = "dense",
+        use_gpu: bool = False,
     ):
         """Initialize ONNX provider.
 
@@ -40,6 +41,7 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
             max_length: Maximum sequence length.
             normalize: Whether to L2-normalize vectors.
             vector_name: Name of the vector space this provider serves.
+            use_gpu: Whether to attempt using GPU (CUDA).
         """
         if ort is None or Tokenizer is None:
             raise ImportError(
@@ -62,9 +64,9 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
             self.tokenizer.enable_truncation(max_length=max_length)
 
         # Load ONNX Model
-        # Use CUDA if available, else CPU
+        # Use CUDA if requested and available, else CPU
         providers = ["CPUExecutionProvider"]
-        if "CUDAExecutionProvider" in ort.get_available_providers():
+        if use_gpu and "CUDAExecutionProvider" in ort.get_available_providers():
             providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
 
         self.session = ort.InferenceSession(self.model_path, providers=providers)
@@ -140,7 +142,7 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
                 prefix = "search_query: "
             elif task_type == "search_document":
                 prefix = "search_document: "
-            
+
             # Apply prefix if not already present
             processed_texts = []
             for t in texts:

@@ -347,6 +347,52 @@ class MathOnlyEmbeddingProvider(IEmbeddingProvider):
         return self.dimension
 
 
+class MCPEmbeddingProvider(IEmbeddingProvider):
+    """
+    Embedding provider that delegates to an MCP Tool (e.g. on a Compute Node).
+    """
+
+    def __init__(self, tool_name: str = "get_embedding", client: Any = None):
+        self.tool_name = tool_name
+        self.client = client
+        self.dimension = 768  # Default, should be dynamic
+
+    async def embed_text(
+        self, text: str, task_type: str = "search_document"
+    ) -> List[float]:
+        if not self.client:
+            raise RuntimeError("MCP Client not initialized for MCPEmbeddingProvider")
+
+        # Call tool via MCP Client
+        # Assumes client has call_tool(name, args) -> dict
+        try:
+            result = await self.client.call_tool(
+                self.tool_name, {"text": text, "task_type": task_type}
+            )
+            return cast(List[float], result.get("embedding", []))
+        except Exception as e:
+            print(f"MCP embedding failed: {e}")
+            return []
+
+    async def embed_batch(
+        self, texts: List[str], task_type: str = "search_document"
+    ) -> List[List[float]]:
+        if not self.client:
+            raise RuntimeError("MCP Client not initialized for MCPEmbeddingProvider")
+
+        try:
+            result = await self.client.call_tool(
+                self.tool_name, {"texts": texts, "task_type": task_type}
+            )
+            return cast(List[List[float]], result.get("embeddings", []))
+        except Exception as e:
+            print(f"MCP batch embedding failed: {e}")
+            return []
+
+    def get_dimension(self) -> int:
+        return self.dimension
+
+
 # Singleton instance
 embedding_service = EmbeddingService()
 

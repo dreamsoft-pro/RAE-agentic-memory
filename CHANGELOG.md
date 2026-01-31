@@ -1,5 +1,108 @@
 # Changelog
 
+
+## Recent Changes (Auto-generated)
+
+*Last updated: 2026-01-31 12:43 • Branch: develop • Commit: a2687cd3*
+
+### ✨ Features
+
+- **infra**: migrate models and bandit state to Git LFS for cross-node consistency ([`824ba880`](../../commit/824ba880))
+- **core**: implement RAE System 3.4 Adaptive Determinism and Multi-Vector support ([`a4f8e1f2`](../../commit/a4f8e1f2))
+- **core**: implement Math Core v3.3 (auto-tuned szubar, no reranking) ([`35515c80`](../../commit/35515c80))
+- **api**: complete V2 migration, purge legacy V1 tests and stabilize Hard Frames ([`54a90892`](../../commit/54a90892))
+- **infra**: add node state verification script ([`8500aba8`](../../commit/8500aba8))
+- **math-core**: Integrate Bandit Auto-Tuning into MathLayerController ([`028333be`](../../commit/028333be))
+- **system-3.0**: Implement Autonomous Memory Core with Math-First and Szubar Learning ([`f6c29eec`](../../commit/f6c29eec))
+- **core**: stabilize RAE core, fix Szubar Mode, Math Fallback and Ghost Tables ([`b1607cfc`](../../commit/b1607cfc))
+- **middleware**: project-aware budgets and fix body consumption ([`0d1c5bd7`](../../commit/0d1c5bd7))
+- **core**: unblock budgets and backfill embeddings ([`4f047300`](../../commit/4f047300))
+- **dashboard**: add search tab and enable auto-refresh by default ([`c1b63d6e`](../../commit/c1b63d6e))
+- **security**: implement Hard Frames (Phases 1-3) and Implicit Capture architecture ([`a1cb615b`](../../commit/a1cb615b))
+- **memory**: implement Multi-Vector Discovery and strict metadata filtering ([`4e79cd8b`](../../commit/4e79cd8b))
+- **security**: implement robust hard frames with SecureSocket and lazy IP resolution ([`fcd4d752`](../../commit/fcd4d752))
+- **testing**: add soak test mode with variable latency ([`48d6aea8`](../../commit/48d6aea8))
+- **security**: verified 100k stress test under hard frames isolation ([`d26aa3c8`](../../commit/d26aa3c8))
+- **security**: finalize hard frames implementation and fix test suite ([`539a9478`](../../commit/539a9478))
+- **security**: implement Hard Frames architecture (Phase 1-3) with full containment test suite [full-test] ([`7ffa6412`](../../commit/7ffa6412))
+
+### 🐛 Bug Fixes
+
+- **core**: increase math window to 100 to fix recall issue on Node 1 ([`be940007`](../../commit/be940007))
+- **core**: restore Silicon Oracle synergy (MRR 1.0) via Oracle Seed and FTS repair ([`92493c13`](../../commit/92493c13))
+- **core**: restore liberal query logic in FTS to resolve regression ([`372b9950`](../../commit/372b9950))
+- **core**: stabilize memory layer validation and fix integration tests ([`6b882c7e`](../../commit/6b882c7e))
+- **ci**: restore --set argument support in run_benchmark.py for smoke tests ([`c4cf1bfc`](../../commit/c4cf1bfc))
+- **db**: unify tenant_id type to UUID across baseline schema- Fixed type mismatch in tenants, budgets, access_logs, and knowledge_graph tables.- Ensures foreign key consistency and fixes CI database setup failures. ([`002dda58`](../../commit/002dda58))
+- **ci**: reconcile database schema drift and fix migration indentation errors- Aligned all tenant_id columns to UUID across migrations.- Fixed indentation in metrics_timeseries migration.- Synchronized Silicon Oracle core logic from Node 1. ([`8eb019fd`](../../commit/8eb019fd))
+- **db**: change tenant_id to UUID in metrics_timeseries migration to match schema ([`e260c18d`](../../commit/e260c18d))
+- **ci**: ensure benchmark results are saved to JSON and fix PostgreSQL sorting ([`02c11a3e`](../../commit/02c11a3e))
+- **ci**: fix PostgreSQL sorting bug causing benchmark failures ([`d4991558`](../../commit/d4991558))
+- **ci**: fix PostgreSQL sorting bug causing benchmark failures ([`447e91f8`](../../commit/447e91f8))
+- **ci**: comprehensive fix for benchmark smoke tests and type stability ([`07e290cf`](../../commit/07e290cf))
+- **core**: postgres generic filter collision and memory listing ([`a9769cd5`](../../commit/a9769cd5))
+- **lint**: resolve black/ruff errors and mypy interface mismatches ([`e0541025`](../../commit/e0541025))
+- **ci**: correct path to academic_lite.yaml benchmark ([`9887d85b`](../../commit/9887d85b))
+- **core**: szubar mode tests and in-memory filtering ([`1265e6d5`](../../commit/1265e6d5))
+- **infra**: resolve db init conflict, add healthchecks for lite, fix network names ([`2942941c`](../../commit/2942941c))
+- **infra**: automate lumina wake script with headless input ([`2c25f573`](../../commit/2c25f573))
+- **core**: allow uuid in budget model ([`d63b0535`](../../commit/d63b0535))
+- **dashboard**: fix project fetching logic ([`d8c528a9`](../../commit/d8c528a9))
+- **dev**: allow script execution in container ([`527c9371`](../../commit/527c9371))
+- **tests**: silence broken legacy qdrant multivector tests ([`525dd937`](../../commit/525dd937))
+- **core**: align VectorStore adapters with IVectorStore interface and fix Qdrant tests ([`96c895ee`](../../commit/96c895ee))
+
+### ♻️ Refactoring
+
+- **core**: unify search logic and fix tests coverage ([`c34b8020`](../../commit/c34b8020))
+- **memory**: align all vector store adapters with updated IVectorStore interface ([`3e6687a5`](../../commit/3e6687a5))
+
+### 📚 Documentation
+
+- complete benchmark table with 10k results and highlight 100k SOTA performance ([`facfb6c3`](../../commit/facfb6c3))
+- update scientist path to Silicon Oracle architecture and document recent benchmarks ([`fbf0057f`](../../commit/fbf0057f))
+- add Secure Agent Deployment guide and link from main docs ([`e0cb02ac`](../../commit/e0cb02ac))
+- update developer guide with combined profile instructions and verification script ([`6d287d6f`](../../commit/6d287d6f))
+- add 100k isolation case study and link in README ([`d5e5f794`](../../commit/d5e5f794))
+- describe Silicon Oracle and Semantic Resonance Engine for RAE-Lite ([`9acd9148`](../../commit/9acd9148))
+- update README with 100k benchmark success, Hard Frames, and Szubar Mode ([`8b83481c`](../../commit/8b83481c))
+- add user guide for secure agent and multi-agent scaling ([`6640c158`](../../commit/6640c158))
+- confirm verification of Hard Frames Phase 3 (Semantic Firewall) ([`706e56c4`](../../commit/706e56c4))
+- update hard frames plan with verification status (Phase 1-2 completed) ([`6e759c78`](../../commit/6e759c78))
+- **benchmarking**: add 100k industrial precision report and math-scaling fix ([`c8a53115`](../../commit/c8a53115))
+- update search quality findings (natural language improved precision) ([`57fa73f6`](../../commit/57fa73f6))
+- add search quality audit findings (poor precision in pure vector mode) ([`2d38b847`](../../commit/2d38b847))
+- certify 100k industrial ingestion success on Lumina ([`d7db69e4`](../../commit/d7db69e4))
+- clarify 100k test scope (network stress vs data ingestion) ([`ef58530f`](../../commit/ef58530f))
+- finalize 100k ultra stress test certification ([`d1d83c39`](../../commit/d1d83c39))
+- save final hard frames v3.0 test results from Lumina ([`76b03471`](../../commit/76b03471))
+- document ongoing soak test on Lumina ([`4e9b152e`](../../commit/4e9b152e))
+- update session summary with hard frames validation results ([`320e34f9`](../../commit/320e34f9))
+
+### 🧪 Tests
+
+- **fix**: update metadata expectations for sqlite storage test ([`421d0abb`](../../commit/421d0abb))
+
+### 🔧 Chore
+
+- **ci**: configure LFS for 130MB ONNX model and update Docker/CI configs ([`5b3b6f73`](../../commit/5b3b6f73))
+- **ci**: commit ONNX model (all-MiniLM-L6-v2) to allow native embedding in CI ([`c15011ba`](../../commit/c15011ba))
+- save local changes and benchmark configs before full run ([`97b2de81`](../../commit/97b2de81))
+- update docs ([`654c53db`](../../commit/654c53db))
+- **release**: bump versions to v3.0.2 in manifests ([`48250f90`](../../commit/48250f90))
+- fix linting and formatting issues to satisfy CI ([`5843a2e3`](../../commit/5843a2e3))
+- update test golden files and add dockerignore ([`44596fc6`](../../commit/44596fc6))
+
+### 💄 Style
+
+- auto-format code and update docs (pre-push) ([`58810aaa`](../../commit/58810aaa))
+
+### 📦 Other
+
+- Merge branch 'main' of github.com:dreamsoft-pro/RAE-agentic-memory ([`fd2efb04`](../../commit/fd2efb04))
+
+---
+
 ## [3.4.0] - 2026-01-31
 ### Added
 - **Silicon Oracle Architecture**: Implementation of the 4-layer memory model and 3-layer mathematical control plane.

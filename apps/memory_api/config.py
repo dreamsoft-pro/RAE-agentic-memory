@@ -34,12 +34,14 @@ class Settings(BaseSettings):
     OLLAMA_HOSTS: list[str] = ["http://100.66.252.117:11434", "http://rae-ollama:11434"]
     RAE_LLM_BACKEND: str = "ollama"
     RAE_LLM_MODEL_DEFAULT: str = "ollama/all-minilm"
-    RAE_EMBEDDING_BACKEND: str = "litellm"  # "litellm" or "onnx"
+    RAE_EMBEDDING_BACKEND: str = "litellm"  # "litellm", "onnx", "api", "mcp"
     RAE_EMBEDDING_MODEL: str | None = None
+    RAE_MCP_EMBEDDING_TOOL: str = "get_embedding"
     EXTRACTION_MODEL: str = "gpt-4o-mini"
     SYNTHESIS_MODEL: str = "gpt-4o"
     RAE_VECTOR_BACKEND: str = "qdrant"
     ONNX_EMBEDDER_PATH: str | None = None
+    RAE_USE_GPU: bool = False
 
     @model_validator(mode="after")
     def validate_vector_backend(self):

@@ -11,7 +11,7 @@ class IEmbeddingProvider(Protocol):
         self, text: str, task_type: str = "search_document"
     ) -> list[float]:
         """Generate embedding for text.
-        
+
         Args:
             text: The text to embed.
             task_type: Task type hint ("search_query" or "search_document").
@@ -22,7 +22,7 @@ class IEmbeddingProvider(Protocol):
         self, texts: list[str], task_type: str = "search_document"
     ) -> list[list[float]]:
         """Generate embeddings for multiple texts.
-        
+
         Args:
             texts: List of texts to embed.
             task_type: Task type hint ("search_query" or "search_document").

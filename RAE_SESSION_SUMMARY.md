@@ -1,32 +1,36 @@
-# RAE Session Summary
+# RAE Session Summary - 2026-01-31
 
-**Date:** 2026-01-28
-**Focus:** API V2 Finalization & Stabilization
+## 🎯 GPU Acceleration (v3.5.0-dev)
+- **Status:** ✅ **COMPLETED & VERIFIED (Node 1)**
+- **Achievement:** Successfully enabled GPU acceleration for Native ONNX embeddings (`onnxruntime-gpu`) inside the Docker container on Node 1 (Arch Linux + RTX 4080).
+- **Implementation Details:**
+    - **Base Image:** Switched to `nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04` to ensure full library availability.
+    - **Python:** Standardized on **Python 3.10** for maximum ML compatibility.
+    - **Library:** Used latest `onnxruntime-gpu` (PyPI) which supports CUDA 12 via `devel` image.
+    - **Infrastructure Fixes (Crucial):**
+        - Forced `runtime: nvidia` in `docker-compose.yml`.
+        - **Manual Bind Mounts:** Explicitly mounted host driver libraries (`libcuda.so.1`, `libnvidia-ptxjitcompiler.so.1`, `libnvidia-nvvm.so.4`) to `/usr/lib/x86_64-linux-gnu/` because the `nvidia-container-toolkit` hook failed to inject them automatically on this specific host configuration.
+        - **Device Mapping:** Manually mapped `/dev/nvidia-uvm` to fix `CUDA failure 999`.
+    - **Verification:** `scripts/verify_gpu.py` confirms `CUDAExecutionProvider` is active.
 
-## 🏆 Key Achievements
-1.  **API V2 Migration Complete**:
-    - Removed all legacy V1 endpoints and tests (`tests/api/v1/`).
-    - Updated `RAESecureClient` and `rae_agent` to use V2 endpoints (`/v2/memories`, `/v2/agent/execute`).
-    - Fixed 422 Validation errors in contract tests by enforcing `project` field.
+## 🔌 External Connectivity
+- **Status:** ✅ Implemented.
+- **Backends:**
+    - `api`: Uses `LocalEmbeddingProvider` (LiteLLM) via `RAE_EMBEDDING_BACKEND=api`.
+    - `mcp`: Uses `MCPEmbeddingProvider` via `RAE_EMBEDDING_BACKEND=mcp`.
+    - `onnx`: Native GPU-accelerated execution.
+- **Config:** Added `RAE_MCP_EMBEDDING_TOOL` setting.
 
-2.  **Hard Frames Stabilization**:
-    - Fixed `test_degradation_stability.py` by correctly mocking `requests.raise_for_status()`.
-    - Verified Agent Runtime and Semantic Firewall against V2 API.
-
-3.  **Quality & Compliance**:
-    - **Tests**: 1114 tests passed (100% success rate in `make test-fast`).
-    - **Linting**: Zero warnings (fixed unused imports and formatting in SDK).
-    - **Git**: Clean rebase on `origin/develop`, removed large ONNX binaries to comply with GitHub limits.
-
-4.  **Native ONNX Integration**:
-    - Code for `NativeEmbeddingProvider` is merged.
-    - Large model files (`.onnx`) excluded from git; need to be downloaded on deployment.
-
-## ⚠️ Known Issues / Blockers
-- **Cluster Sync**: `rsync` to Lumina failed on `models/` directory permissions. Code sync needs retrying without `models/` or fixing permissions on Node 1.
-- **Large Files**: Models must be managed via an external script or LFS, not raw git.
+## ⚙️ Config Consolidation
+- **Status:** ✅ Completed.
+- **Changes:**
+    - Moved hardcoded parameters to `config/math_controller.yaml`:
+        - `limit: 100`
+        - `resonance_factor: 0.4`
+        - `szubar_induction_energy: 0.8`
+    - Updated `RAEEngine` and `MathLayerController` to read from config.
 
 ## 📝 Next Steps
-1.  **Deploy to Lumina**: Fix `rsync` exclude patterns or permissions to update Node 1 code.
-2.  **Benchmark ONNX**: Run `test_native_onnx.py` on Lumina's hardware.
-3.  **Download Script**: Create a robust `download_models.py` for setting up the environment without git LFS.
+1.  **Metric Tuning:** Analyze performance impact of `156 Memcpy nodes` warning in ONNX Runtime (indicates some ops fallback to CPU or excessive copying).
+2.  **MCP Integration:** Inject the actual `MCPClient` instance into `RAECoreService` when `mcp` backend is selected.
+3.  **Cleanup:** Consider moving Node 1 specific bind-mounts to a `docker-compose.override.yml` or `infra/node1/` profile to keep the main compose file generic.
