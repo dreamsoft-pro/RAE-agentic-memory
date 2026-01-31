@@ -14,6 +14,7 @@ from apps.memory_api.api.v2 import agent as agent_v2
 from apps.memory_api.api.v2 import compliance as compliance_v2
 from apps.memory_api.api.v2 import feedback as feedback_v2
 from apps.memory_api.api.v2 import memory as memory_v2
+from apps.memory_api.api.v2 import mesh as mesh_v2  # Added Mesh API
 from apps.memory_api.config import settings
 from apps.memory_api.logging_config import setup_logging
 from apps.memory_api.middleware.budget_enforcer import BudgetEnforcementMiddleware
@@ -165,11 +166,9 @@ async def lifespan(app: FastAPI):
 # --- FastAPI App Initialization ---
 app = FastAPI(
     title="RAE Memory API",
-    description="Reflective Agentic Memory Engine - Enterprise API",
-    version="3.0.1",
-    lifespan=lifespan,
+    description="Reflective Agentic Engine - Memory Control Plane API",
+    version="3.6.0",
     docs_url="/docs",
-    redoc_url="/redoc",
 )
 
 # --- Middlewares ---
@@ -250,6 +249,7 @@ app.include_router(memory_v2.router)  # /v2/memories
 app.include_router(agent_v2.router)  # /v2/agent
 app.include_router(feedback_v2.router)  # /v2/feedback
 app.include_router(compliance_v2.router)  # /v2/compliance
+app.include_router(mesh_v2.router)  # /v2/mesh
 
 # Helper Services (Migrated to V2 prefix)
 app.include_router(dashboard.router, prefix="/v2/dashboard", tags=["Dashboard"])

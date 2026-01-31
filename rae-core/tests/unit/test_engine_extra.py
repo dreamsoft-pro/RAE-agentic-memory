@@ -27,6 +27,8 @@ def mock_vector_store():
 def mock_embedding_provider():
     provider = MagicMock()
     provider.embed_batch = AsyncMock(return_value=[[0.1] * 128])
+    provider.embed_text = AsyncMock(return_value=[0.1] * 128)
+    provider.generate_all_embeddings = AsyncMock(return_value={"dense": [[0.1] * 128]})
     return provider
 
 

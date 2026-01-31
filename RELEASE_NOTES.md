@@ -1,5 +1,78 @@
 # RAE Release Notes
 
+## v3.6.0 - RAE Mesh (Federated Memory)
+
+**Release Date**: 2026-01-31
+**Status**: Stable
+**Code Name**: Neural Weave
+
+### 🕸️ Major Feature: RAE Mesh (Privacy-First Federation)
+
+RAE now supports **Federated Memory**, allowing independent instances to synchronize memories asynchronously while respecting user privacy.
+
+#### Core Capabilities:
+1.  **Trust Handshake Protocol**:
+    -   Secure exchange of Invite Codes (JWT) to establish peer-to-peer trust.
+    -   User Consent is mandatory: No instance connects without an explicit invitation.
+    -   Implemented in `MeshService` and `/v2/mesh` endpoints.
+
+2.  **Asynchronous Synchronization**:
+    -   Non-blocking `HttpSyncProvider` using `httpx` and `asyncio`.
+    -   Supports `push` and `pull` operations without stalling the reasoning core.
+    -   Conflict Resolution: Last Write Wins (CRDT-lite).
+
+3.  **Developer API**:
+    -   `POST /v2/mesh/invite`: Generate invite codes.
+    -   `POST /v2/mesh/join`: Connect to a host.
+    -   `POST /v2/mesh/sync`: Exchange data.
+
+---
+
+## v3.5.0 - GPU Acceleration & External Reranking
+
+**Release Date**: 2026-01-31
+**Status**: Stable
+**Code Name**: Silicon Oracle Enhanced
+
+### 🚀 Highlights
+
+RAE v3.5.0 introduces **native GPU acceleration** for embedding generation, significantly boosting performance on supported hardware (Node 1/Lumina). It also decouples the system from heavy local dependencies by introducing **External Reranking** via API or MCP, and standardizes internal communication with a new **MCP Client**.
+
+---
+
+### ✨ Key Features
+
+#### 1. **Native GPU Acceleration (ONNX Runtime)**
+- **Feature**: Enabled `onnxruntime-gpu` with CUDA 12.4 support.
+- **Impact**: Massive speedup in embedding generation on NVIDIA GPUs (e.g., RTX 4080).
+- **Configuration**: controlled via `RAE_USE_GPU=True`.
+- **Infrastructure**: Specialized Docker configuration for Arch Linux (Node 1) with driver mapping.
+
+#### 2. **External Reranking Architecture**
+- **Feature**: Pluggable `IReranker` interface with `APIReranker` and `MCPreranker` implementations.
+- **Impact**: Allows offloading heavy cross-encoder reranking to external services or MCP tools, reducing local memory footprint.
+- **Settings**: `RAE_RERANKER_BACKEND`, `RAE_RERANKER_API_URL`.
+
+#### 3. **Standardized MCP Client**
+- **Feature**: New `RAEMCPClient` in `rae_core.utils`.
+- **Impact**: robust, type-safe communication with MCP servers using standard JSON-RPC over STDIO.
+- **Usage**: Used internally for MCP-based embedding and reranking.
+
+#### 4. **Quality & Stability**
+- **Zero Warning Policy**: Codebase is free of linting errors and warnings.
+- **Test Coverage**: 100% pass rate on `make test-core` and `make test-lite` (1100+ tests).
+- **Refactoring**: Modularized `RAECoreService` initialization for better maintainability.
+
+---
+
+### 🔧 Technical Details
+- **Core Version**: bumped to `3.5.0`.
+- **API Version**: bumped to `3.5.0`.
+- **MCP Integration Version**: bumped to `1.5.0`.
+- **Dependencies**: Optimized `docker-compose.override.yml` for hardware-specific setups.
+
+---
+
 ## v2.0.0-enterprise - Enterprise-Grade Production Release
 
 **Release Date**: 2025-01-XX

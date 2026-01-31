@@ -40,8 +40,8 @@ class FeaturesV2(Features):
     is_first_turn: bool = False
 
     # Content-aware features (System 3.4 Revival)
-    term_density: float = 0.0 # Ratio of unique terms to total tokens
-    keyword_ratio: float = 0.0 # Ratio of capitalized/special tokens
+    term_density: float = 0.0  # Ratio of unique terms to total tokens
+    keyword_ratio: float = 0.0  # Ratio of capitalized/special tokens
 
     def compute_derived_features(self) -> dict[str, float]:
         """
