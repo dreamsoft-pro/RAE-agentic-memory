@@ -1,10 +1,10 @@
 [project]
 name = "rae-lite"
-version = "0.1.0"
+version = "3.5.0"
 description = "RAE-Lite - Local-first AI Memory Desktop App"
 requires-python = ">=3.10"
 dependencies = [
-    "rae-core[sqlite]>=0.1.0",
+    "rae-core[sqlite]>=3.5.0",
     "fastapi>=0.100",
     "uvicorn>=0.23",
     "pystray>=0.19.0",
