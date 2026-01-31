@@ -1,5 +1,17 @@
 # RAE Release Notes
 
+## v3.6.1 - Metadata & Zenodo Compliance
+
+**Release Date**: 2026-01-31
+**Status**: Stable
+
+### 📝 Metadata Updates
+- Added `CITATION.cff` for standardized academic citation.
+- Updated `.zenodo.json` to reflect new Mesh capabilities and current versioning.
+- Ensured full compatibility with Zenodo archiving.
+
+---
+
 ## v3.6.0 - RAE Mesh (Federated Memory)
 
 **Release Date**: 2026-01-31
