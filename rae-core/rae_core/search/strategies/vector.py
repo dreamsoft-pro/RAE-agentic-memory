@@ -70,11 +70,16 @@ class VectorSearchStrategy(SearchStrategy):
             filters.get("vector_name") if filters else None
         )
 
-        # Search similar vectors - FORCE MINIMAL ARGS
+        # Search similar vectors - include extracted filters
         results = await self.vector_store.search_similar(
             query_embedding=query_embedding,
             tenant_id=tenant_id,
             limit=limit,
+            layer=_layer,
+            agent_id=_agent_id,
+            session_id=_session_id,
+            score_threshold=_score_threshold,
+            project=project,
             vector_name=vector_name,
         )
 

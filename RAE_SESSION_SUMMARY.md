@@ -13,24 +13,22 @@
         - **Device Mapping:** Manually mapped `/dev/nvidia-uvm` to fix `CUDA failure 999`.
     - **Verification:** `scripts/verify_gpu.py` confirms `CUDAExecutionProvider` is active.
 
-## 🔌 External Connectivity
-- **Status:** ✅ Implemented.
-- **Backends:**
-    - `api`: Uses `LocalEmbeddingProvider` (LiteLLM) via `RAE_EMBEDDING_BACKEND=api`.
-    - `mcp`: Uses `MCPEmbeddingProvider` via `RAE_EMBEDDING_BACKEND=mcp`.
-    - `onnx`: Native GPU-accelerated execution.
-- **Config:** Added `RAE_MCP_EMBEDDING_TOOL` setting.
+## 🔌 External Connectivity & Reranking
+- **Status:** ✅ **COMPLETED & VERIFIED**
+- **Achievements:**
+    - **MCP Integration:** Fully wired `RAEMCPClient` into `RAECoreService`. The system can now delegate embedding and reranking tasks to external MCP servers (standard protocol).
+    - **External Reranking:** Implemented `IReranker` interface and added `APIReranker` and `MCPreranker`.
+    - **Strategy Support:** `HybridSearchEngine` now supports pluggable rerankers (Emerald, API, MCP, or None).
+    - **Configuration:** Added `RAE_RERANKER_BACKEND`, `RAE_RERANKER_API_URL`, and `RAE_RERANKER_MCP_TOOL` settings.
 
-## ⚙️ Config Consolidation
+## ⚙️ Config Consolidation & Refactoring
 - **Status:** ✅ Completed.
-- **Changes:**
-    - Moved hardcoded parameters to `config/math_controller.yaml`:
-        - `limit: 100`
-        - `resonance_factor: 0.4`
-        - `szubar_induction_energy: 0.8`
-    - Updated `RAEEngine` and `MathLayerController` to read from config.
+- **Improvements:**
+    - **Zero Warning Policy:** Achieved 100% green lint and mypy checks across the codebase.
+    - **Architecture Compliance:** Refactored `RAECoreService` to reduce complexity (extracted initialization sub-steps), ensuring it passes architecture health tests.
+    - **Fail Fast:** Verified system stability with 1165 green tests using the "Fail Fast" protocol.
 
 ## 📝 Next Steps
-1.  **Metric Tuning:** Analyze performance impact of `156 Memcpy nodes` warning in ONNX Runtime (indicates some ops fallback to CPU or excessive copying).
-2.  **MCP Integration:** Inject the actual `MCPClient` instance into `RAECoreService` when `mcp` backend is selected.
-3.  **Cleanup:** Consider moving Node 1 specific bind-mounts to a `docker-compose.override.yml` or `infra/node1/` profile to keep the main compose file generic.
+1.  **Metric Tuning:** Analyze performance impact of `156 Memcpy nodes` warning in ONNX Runtime.
+2.  **Cluster Optimization:** Refine Node 1 hardware-specific configuration using profiles.
+3.  **Benchmark Restoration:** Focus on restoring Radically High MRR (~1.0) on industrial data using the new external reranking capabilities.

@@ -37,9 +37,15 @@ class Settings(BaseSettings):
     RAE_EMBEDDING_BACKEND: str = "litellm"  # "litellm", "onnx", "api", "mcp"
     RAE_EMBEDDING_MODEL: str | None = None
     RAE_MCP_EMBEDDING_TOOL: str = "get_embedding"
+    RAE_MCP_SERVER_COMMAND: str = "python"
+    RAE_MCP_SERVER_ARGS: list[str] = []
     EXTRACTION_MODEL: str = "gpt-4o-mini"
     SYNTHESIS_MODEL: str = "gpt-4o"
     RAE_VECTOR_BACKEND: str = "qdrant"
+    RAE_RERANKER_BACKEND: str = "emerald"  # "emerald", "api", "mcp", "none"
+    RAE_RERANKER_API_URL: str | None = None
+    RAE_RERANKER_API_KEY: str | None = None
+    RAE_RERANKER_MCP_TOOL: str = "rerank_memories"
     ONNX_EMBEDDER_PATH: str | None = None
     RAE_USE_GPU: bool = False
 

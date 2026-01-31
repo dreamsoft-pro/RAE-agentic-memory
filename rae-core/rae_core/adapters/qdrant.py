@@ -391,12 +391,17 @@ class QdrantVectorStore(IVectorStore):
             logger.error(f"Qdrant delete_by_layer failed: {e}")
             return 0
 
+    async def close(self) -> None:
+        """Close the Qdrant client."""
+        await self.client.close()
+
     async def search_with_contradiction_penalty(
         self,
         query_embedding: list[float],
         tenant_id: str,
         penalty_factor: float = 0.5,
         limit: int = 10,
+        contradiction_threshold: float = 0.15,
     ) -> list[tuple[UUID, float]]:
         """Experimental: Search and penalize results that contradict the query."""
         # 1. Standard search
@@ -404,34 +409,21 @@ class QdrantVectorStore(IVectorStore):
         if not results:
             return []
 
-        final_results = []
-        for m_id, score in results:
-            # 2. Fetch the vector
-            vec = await self.get_vector(m_id, tenant_id)
-            if not vec:
-                final_results.append((m_id, score))
-                continue
+        # 2. Re-score based on contradiction detection
+        penalized_results = []
+        for memory_id, score in results:
+            memory_vector = await self.get_vector(memory_id, tenant_id)
+            final_score = score
+            if memory_vector:
+                # Calculate cosine similarity
+                dot = sum(a * b for a, b in zip(query_embedding, memory_vector))
+                mag1 = math.sqrt(sum(a * a for a in query_embedding))
+                mag2 = math.sqrt(sum(b * b for b in memory_vector))
+                similarity = dot / (mag1 * mag2) if (mag1 * mag2) > 0 else 0.0
 
-            # 3. Calculate contradiction (Cosine Similarity)
-            # High cosine = similar, Low/Negative = contradictory
-            similarity = self._cosine_similarity(query_embedding, vec)
+                if similarity < contradiction_threshold:
+                    final_score = score * penalty_factor
 
-            # If vectors are contradictory (e.g. angle > 90 deg, sim < 0), penalize
-            if similarity < 0.15:  # Threshold from test
-                score *= penalty_factor
+            penalized_results.append((memory_id, final_score))
 
-            final_results.append((m_id, score))
-
-        # Re-sort
-        return sorted(final_results, key=lambda x: x[1], reverse=True)
-
-    def _cosine_similarity(self, v1: list[float], v2: list[float]) -> float:
-        """Calculate cosine similarity."""
-        if len(v1) != len(v2):
-            return 0.0
-        dot = sum(a * b for a, b in zip(v1, v2))
-        mag1 = math.sqrt(sum(a * a for a in v1))
-        mag2 = math.sqrt(sum(b * b for b in v2))
-        if mag1 == 0 or mag2 == 0:
-            return 0.0
-        return dot / (mag1 * mag2)
+        return sorted(penalized_results, key=lambda x: x[1], reverse=True)

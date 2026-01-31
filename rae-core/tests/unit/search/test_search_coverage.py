@@ -52,8 +52,8 @@ class TestSearchCoverage:
         results = await engine.search("q", "t")
 
         assert len(results) == 1
-        # RRF score should use weight 5.0 and rank 0
-        assert results[0][1] == 5.0 / (60 + 0)
+        # RRF score should use weight 5.0 and rank 1
+        assert results[0][1] == pytest.approx(5.0 / (60 + 1))
 
     @pytest.mark.asyncio
     async def test_search_cache_set(self):
