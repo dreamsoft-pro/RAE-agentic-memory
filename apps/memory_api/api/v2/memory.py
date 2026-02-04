@@ -4,6 +4,7 @@ Memory API v2 - powered by RAE-Core.
 Uses RAEEngine with 4-layer architecture and hybrid search.
 """
 
+import json
 from typing import Any, Optional, cast
 from uuid import UUID
 
@@ -200,7 +201,7 @@ async def list_memories(
                 layer=m.get("layer", "semantic"),
                 importance=m.get("importance", 0.5),
                 tags=m.get("tags", []),
-                metadata=m.get("metadata", {}),
+                metadata=json.loads(m.get("metadata")) if isinstance(m.get("metadata"), str) else m.get("metadata", {}),
             )
             for m in memories
         ]

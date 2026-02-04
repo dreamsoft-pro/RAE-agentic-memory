@@ -108,16 +108,35 @@ class RAECoreService:
 
     def _init_embedding_providers(self, settings: Any) -> None:
         """Initialize embedding providers (Multi-Vector Support)."""
-
-        self.embedding_provider = EmbeddingManager(
-            default_provider=LocalEmbeddingProvider()
-        )
-
-        # Register ONNX
         import os
+        
+        # Priority 1: ONNX (Native) - RAE 3.6.1 Standard
+        if settings.RAE_EMBEDDING_BACKEND == "onnx":
+            from rae_core.embedding.native import NativeEmbeddingProvider
+            
+            # Register Nomic (Super Results - 130MB)
+            nomic_path = "models/nomic-embed-text-v1.5/model.onnx"
+            if os.path.exists(nomic_path):
+                nomic_provider = NativeEmbeddingProvider(
+                    model_path=nomic_path, tokenizer_path=os.path.join(os.path.dirname(nomic_path), "tokenizer.json"),
+                    model_name="nomic-embed", use_gpu=settings.RAE_USE_GPU
+                )
+                self.embedding_provider = EmbeddingManager(default_provider=nomic_provider, default_model_name="dense")
+                
+                # Register BGE-Small (Fast - 23MB) as secondary
+                bge_path = "models/bge-small-en-v1.5/model.onnx"
+                if os.path.exists(bge_path):
+                    bge_provider = NativeEmbeddingProvider(
+                        model_path=bge_path, tokenizer_path=os.path.join(os.path.dirname(bge_path), "tokenizer.json"),
+                        model_name="fast-bge-small", use_gpu=settings.RAE_USE_GPU
+                    )
+                    self.embedding_provider.register_provider("fast-bge-small", bge_provider)
+                
+                logger.info("registered_onnx_3.6.1_models")
+                return
 
-        if settings.RAE_EMBEDDING_BACKEND == "onnx" or os.getenv("ONNX_EMBEDDER_PATH"):
-            self._register_onnx_provider(settings)
+        # Fallback
+        self.embedding_provider = EmbeddingManager(default_provider=LocalEmbeddingProvider())
 
         # Register API
         if settings.RAE_EMBEDDING_BACKEND == "api":
@@ -224,7 +243,7 @@ class RAECoreService:
                 client=cast(Any, qdrant_client),
                 embedding_dim=dim,
                 distance=getattr(settings, "RAE_VECTOR_DISTANCE", "Cosine"),
-                vector_name=self.embedding_provider.default_model_name,
+                vector_name="dense",
             )
         else:
             from rae_adapters.memory import InMemoryVectorStore

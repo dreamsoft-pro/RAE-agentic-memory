@@ -163,8 +163,9 @@ class QdrantVectorStore(IVectorStore):
                 ],
             )
             return True
-        except Exception:
-            return False
+        except Exception as e:
+            print(f"QDRANT ERROR in add_vector: {e}")
+            raise e
 
     async def store_vector(
         self,
@@ -237,8 +238,9 @@ class QdrantVectorStore(IVectorStore):
                 collection_name=self.collection_name, points=points
             )
             return len(points)
-        except Exception:
-            return 0
+        except Exception as e:
+            print(f"QDRANT ERROR in batch_store: {e}")
+            raise e
 
     async def search_similar(
         self,
@@ -378,8 +380,9 @@ class QdrantVectorStore(IVectorStore):
                 points_selector=[str(memory_id)],
             )
             return True
-        except Exception:
-            return False
+        except Exception as e:
+            print(f"QDRANT ERROR in add_vector: {e}")
+            raise e
 
     async def delete_by_layer(
         self,
@@ -407,8 +410,9 @@ class QdrantVectorStore(IVectorStore):
 
             # Qdrant doesn't return count easily, return success indicator
             return 1 if result else 0
-        except Exception:
-            return 0
+        except Exception as e:
+            print(f"QDRANT ERROR in batch_store: {e}")
+            raise e
 
     async def count_vectors(
         self,
@@ -432,8 +436,9 @@ class QdrantVectorStore(IVectorStore):
             )
 
             return result.count if result else 0
-        except Exception:
-            return 0
+        except Exception as e:
+            print(f"QDRANT ERROR in batch_store: {e}")
+            raise e
 
     async def search_with_contradiction_penalty(
         self,

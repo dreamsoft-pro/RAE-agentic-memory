@@ -6,10 +6,10 @@ from nicegui import ui
 from utils.api_client import RAEClient
 
 # --- Configuration ---
-DEFAULT_API_URL = os.getenv("RAE_API_URL", "http://localhost:8001")
+DEFAULT_API_URL = os.getenv("RAE_API_URL", "http://rae-api:8000")
 DEFAULT_API_KEY = os.getenv("RAE_API_KEY", "default-key")
-DEFAULT_TENANT = os.getenv("RAE_TENANT_ID", "default")
-DEFAULT_PROJECT = os.getenv("RAE_PROJECT_ID", "default")
+DEFAULT_TENANT = os.getenv("RAE_TENANT_ID", "00000000-0000-0000-0000-000000000000")
+DEFAULT_PROJECT = os.getenv("RAE_PROJECT_ID", "screenwatcher_project")
 
 
 # --- State ---
@@ -135,16 +135,12 @@ async def main_page():
 
         # Tenant/Project Selectors
         # Allow custom value (new=True) or start with None to avoid "Invalid value" error
-        tenant_select = ui.select(
-            options=[state.current_tenant], label="Tenant", value=state.current_tenant
-        ).classes("w-full")
+        tenant_select = ui.select(options=["00000000-0000-0000-0000-000000000000", "default"], label="Tenant", value="00000000-0000-0000-0000-000000000000").classes("w-full")
+        if state.current_tenant not in tenant_select.options:
+            tenant_select.value = tenant_select.options[0]
         # Removed bind_options due to AttributeError
 
-        project_select = ui.select(
-            options=[state.current_project],
-            label="Project",
-            value=state.current_project,
-        ).classes("w-full")
+        project_select = ui.select(options=["screenwatcher_project", "rae_dev", "default"], label="Project", value="screenwatcher_project").classes("w-full")
         # Removed bind_options due to AttributeError
 
         async def on_context_change():
@@ -308,6 +304,7 @@ async def main_page():
             # Update Stats
             new_stats = await state.client.get_stats()
             state.stats = new_stats
+            print(f"UI DEBUG: Received stats: {new_stats}")
             lbl_total.text = str(new_stats.get("total", 0))
             lbl_episodic.text = str(new_stats.get("episodic", 0))
             lbl_working.text = str(new_stats.get("working", 0))

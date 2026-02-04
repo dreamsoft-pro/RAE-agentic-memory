@@ -12,7 +12,7 @@ services:
     networks:
       - rae_default # Connect to the main RAE network to see rae-api-dev
     environment:
-      - RAE_KERNEL_URL=http://rae-api-dev:8000
+      - RAE_KERNEL_URL=http://rae-api:8000
       - RAE_AGENT_MODE=secure
       # Pass the SESSION_ID if needed, or let it bootstrap
     command: ["python", "-m", "rae_agent.main"]
@@ -21,4 +21,4 @@ services:
 networks:
   rae_default:
     external: true
-    name: rae-agentic-memory-agnostic-core_rae-network
+    name: rae-agentic-memory_rae-network

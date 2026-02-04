@@ -263,6 +263,7 @@ class RAEEngine:
         """Store memory with automatic embedding (supports Multi-Vector)."""
         content = kwargs.get("content")
         tenant_id = kwargs.get("tenant_id")
+        print(f"--- ENGINE DEBUG: STORING {content[:20]} ---")
         m_id = await self.memory_storage.store_memory(**kwargs)
 
         # Automatic Vectorization (Manifold Entry)
@@ -289,7 +290,7 @@ class RAEEngine:
     def get_status(self) -> dict[str, Any]:
         """Get engine status and statistics."""
         return {
-            "engine": "RAE-Core v2.9.0",
+            "engine": "RAE-Core v3.6.1",
             "search_strategies": list(self.search_engine.strategies.keys()),
             "components": {
                 "storage": type(self.memory_storage).__name__,
