@@ -379,7 +379,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 params.append(liberal_query)
                 params.append(f"%{query}%")
                 param_idx += 2
-                order_clause = "ORDER BY score DESC"
+                order_clause = "ORDER BY score DESC, importance DESC, created_at DESC"
 
         if tags:
             conditions.append(f"tags && ${param_idx}")

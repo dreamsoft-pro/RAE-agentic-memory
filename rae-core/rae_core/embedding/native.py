@@ -58,16 +58,22 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
 
         # Load Tokenizer
         self.tokenizer = Tokenizer.from_file(self.tokenizer_path)
-        if self.tokenizer.padding is None:
-            self.tokenizer.enable_padding(length=max_length)
-        if self.tokenizer.truncation is None:
-            self.tokenizer.enable_truncation(max_length=max_length)
+        # Enable truncation but NOT fixed-length padding
+        self.tokenizer.enable_truncation(max_length=max_length)
+        # Dynamic padding: pad to the longest sequence in the batch
+        self.tokenizer.enable_padding()
 
         # Load ONNX Model
         # Use CUDA if requested and available, else CPU
         providers = ["CPUExecutionProvider"]
         if use_gpu and "CUDAExecutionProvider" in ort.get_available_providers():
-            providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
+            # Only add CUDA if it actually works (check_device fails if driver is missing)
+            try:
+                temp_session = ort.InferenceSession(self.model_path, providers=["CUDAExecutionProvider"])
+                providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
+                del temp_session
+            except Exception:
+                pass
 
         self.session = ort.InferenceSession(self.model_path, providers=providers)
         self.input_name = self.session.get_inputs()[0].name
@@ -80,12 +86,13 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
             # Create a dummy input (batch_size=1, seq_len=1)
             dummy_ids = np.array([[1]], dtype=np.int64)
             dummy_mask = np.array([[1]], dtype=np.int64)
+            dummy_type = np.array([[0]], dtype=np.int64)
             inputs = {"input_ids": dummy_ids, "attention_mask": dummy_mask}
 
             # Check for token_type_ids
             input_names = [i.name for i in self.session.get_inputs()]
             if "token_type_ids" in input_names:
-                inputs["token_type_ids"] = np.array([[0]], dtype=np.int64)
+                inputs["token_type_ids"] = dummy_type
 
             outputs = self.session.run(None, inputs)
             # outputs[0] is (batch, seq, dim)
@@ -167,6 +174,10 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
             inputs["token_type_ids"] = np.array(
                 [e.type_ids for e in encoded], dtype=np.int64
             )
+        else:
+            # Fallback for models that might not have type_ids in encoded but need it in session
+            # (though tokenizers usually handle this)
+            pass
 
         # 2. Run Inference
         outputs = self.session.run(None, inputs)

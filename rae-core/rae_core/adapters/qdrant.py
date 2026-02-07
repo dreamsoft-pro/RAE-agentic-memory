@@ -365,16 +365,19 @@ class QdrantVectorStore(IVectorStore):
         )
 
         try:
-            results = await self.client.search(
+            # Use query_points instead of search (deprecated/removed in AsyncQdrantClient)
+            response = await self.client.query_points(
                 collection_name=self.collection_name,
-                query_vector=NamedVector(name=target_vector, vector=query_embedding),
+                query=query_embedding,
+                using=target_vector,
                 query_filter=search_filter,
                 limit=limit,
                 score_threshold=score_threshold,
+                with_payload=True,
             )
 
             output = []
-            for r in results:
+            for r in response.points:
                 if r.payload and "memory_id" in r.payload:
                     output.append((UUID(r.payload["memory_id"]), float(r.score)))
 

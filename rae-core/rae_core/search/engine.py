@@ -130,56 +130,72 @@ class HybridSearchEngine:
 
         active_strategy_names = kwargs.get("strategies") or list(self.strategies.keys())
 
-        weights = {}
-        if self.math_controller:
-            weights = self.math_controller.get_weights(query, active_strategy_names)
-        else:
-            for name in active_strategy_names:
-                strategy = self.strategies.get(name)
-                # Cast or strict check for typing
-                if strategy and hasattr(strategy, "get_strategy_weight"):
-                    weights[name] = strategy.get_strategy_weight()  # type: ignore
-                else:
-                    weights[name] = 1.0
+        # SYSTEM 6.0: PARALLEL DUAL-ENGINE (Math Unbound)
+        # For datasets < 10GB (MES, Logistics), Global FullText is fast enough and provides superior recall for technical data.
+        # We do NOT restrict FullText by Vector results (Cascade). We run them in parallel and FUSE them.
 
         strategy_results: dict[str, list[tuple[UUID, float]]] = {}
-
-        for name in active_strategy_names:
-            strategy = self.strategies.get(name)
-            if not strategy:
-                continue
+        
+        # 1. Vector Search (Parallel)
+        vector_strategy = self.strategies.get("vector")
+        tensor_ids: list[UUID] = []
+        if vector_strategy:
             try:
-                p_id = (filters or {}).get("project")
-                results = await strategy.search(
+                # Fetch semantic candidates
+                fetch_limit = 2000 
+                tensor_results = await vector_strategy.search(
                     query=query,
                     tenant_id=tenant_id,
                     filters=filters,
-                    limit=limit * 5,
+                    limit=fetch_limit,
+                    **kwargs,
+                )
+                tensor_ids = [id for id, _ in tensor_results]
+                strategy_results["vector"] = tensor_results[:500] # Pass top 500 to fusion
+            except Exception as e:
+                logger.error("vector_search_failed", error=str(e))
+                strategy_results["vector"] = []
+
+        # 2. Lexical/Math Search (Parallel - Global Scope)
+        weights = {}
+        if self.math_controller:
+            weights = self.math_controller.get_weights(query, active_strategy_names)
+
+        scoped_filters = (filters or {}).copy()
+        # CRITICAL CHANGE: We do NOT add 'memory_ids': tensor_ids to filters.
+        # FullText searches the ENTIRE index. This ensures 100% Recall for technical tokens.
+
+        for name in active_strategy_names:
+            if name == "vector": continue # Already done
+            
+            strategy = self.strategies.get(name)
+            if not strategy:
+                continue
+
+            try:
+                p_id = (filters or {}).get("project")
+                # Global Search Limit: 500 is safe for performance, but 1000 gives better Recall for noisy logs.
+                # Since we are fusion-based, getting more candidates is better.
+                global_limit = 1000 
+                
+                results = await strategy.search(
+                    query=query,
+                    tenant_id=tenant_id,
+                    filters=scoped_filters, # Global filters (tenant/agent), NO vector constraint
+                    limit=global_limit,
                     project=p_id,
                     **kwargs,
                 )
-
-                if results and len(results) > 1:
-                    scores = [float(r[1]) for r in results]
-                    min_s, max_s = min(scores), max(scores)
-                    diff = max_s - min_s
-                    if diff > 0.000001:
-                        results = [
-                            (r[0], (float(r[1]) - min_s) / diff) for r in results
-                        ]
-                    else:
-                        results = [(r[0], 1.0) for r in results]
                 strategy_results[name] = results or []
             except Exception as e:
                 logger.error("strategy_failed", strategy=name, error=str(e))
                 strategy_results[name] = []
 
-        # System 4.0: Pass query to fusion
+        # System 4.0: Fusion
         if hasattr(self.fusion_strategy, "fuse"):
             try:
                 fused_results = self.fusion_strategy.fuse(strategy_results, weights, query=query)
             except TypeError:
-                # Fallback for old strategies
                 fused_results = self.fusion_strategy.fuse(strategy_results, weights)
         else:
             fused_results = []
@@ -190,14 +206,13 @@ class HybridSearchEngine:
                 query, tenant_id, fused_results, filters=filters, **kwargs
             )
 
-        # ACTIVATE RERANKER only if enabled
+        # ACTIVATE RERANKER
         if enable_reranking and len(fused_results) > 1:
             reranker = self._reranker
             if reranker is None and self.embedding_provider and self.memory_storage:
                 reranker = EmeraldReranker(self.embedding_provider, self.memory_storage)
 
             if reranker:
-                logger.info("reranking_activated", count=len(fused_results[:20]))
                 return await reranker.rerank(
                     query, fused_results[:20], tenant_id, limit=limit
                 )

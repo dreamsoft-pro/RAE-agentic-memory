@@ -118,6 +118,14 @@ class PostgreSQLStorage(IMemoryStorage):
         if "tenant_id" in data and isinstance(data["tenant_id"], UUID):
             data["tenant_id"] = str(data["tenant_id"])
 
+        # Handle JSONB fields that might come as strings
+        for json_field in ["metadata", "governance"]:
+            if json_field in data and isinstance(data[json_field], str):
+                try:
+                    data[json_field] = json.loads(data[json_field])
+                except Exception:
+                    data[json_field] = {}
+
         return data
 
     async def store_memory(
