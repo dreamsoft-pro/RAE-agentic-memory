@@ -100,7 +100,11 @@ class HybridSearchEngine:
         reranker: IReranker | None = None,
     ):
         self.strategies = strategies
-        self.fusion_strategy = fusion_strategy or RRFFusion()
+        
+        # System 4.0: Logic-based stability
+        from rae_core.math.fusion import LogicFusion
+        self.fusion_strategy = fusion_strategy or LogicFusion()
+        
         self.cache = cache
         self.math_controller = math_controller
         self.embedding_provider = embedding_provider
@@ -170,7 +174,15 @@ class HybridSearchEngine:
                 logger.error("strategy_failed", strategy=name, error=str(e))
                 strategy_results[name] = []
 
-        fused_results = self.fusion_strategy.fuse(strategy_results, weights)
+        # System 4.0: Pass query to fusion
+        if hasattr(self.fusion_strategy, "fuse"):
+            try:
+                fused_results = self.fusion_strategy.fuse(strategy_results, weights, query=query)
+            except TypeError:
+                # Fallback for old strategies
+                fused_results = self.fusion_strategy.fuse(strategy_results, weights)
+        else:
+            fused_results = []
 
         # Update Cache
         if use_cache and self.cache:

@@ -84,3 +84,27 @@ class ConfidenceWeightedFusion:
                 final_scores[item_id] = final_scores.get(item_id, 0.0) + weighted_score
 
         return sorted(final_scores.items(), key=lambda x: x[1], reverse=True)
+
+
+class LogicFusion:
+    """
+    Deterministic Logic-based Fusion (System 4.0).
+    Wraps LogicGateway to provide profile-based retrieval.
+    """
+
+    def __init__(self):
+        from rae_core.math.logic_gateway import LogicGateway
+        self.gateway = LogicGateway()
+
+    def fuse(
+        self,
+        strategy_results: dict[str, list[tuple[UUID, float]]],
+        weights: dict[str, float],
+        query: str = "",
+    ) -> list[tuple[UUID, float]]:
+        
+        # 1. Route to profile
+        profile = self.gateway.route(query, strategy_results)
+        
+        # 2. Execute profile-based fusion
+        return self.gateway.fuse(profile, strategy_results)

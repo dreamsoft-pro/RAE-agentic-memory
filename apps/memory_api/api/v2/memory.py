@@ -192,24 +192,72 @@ async def list_memories(
             layer=layer,
         )
 
-        results = [
-            MemoryResult(
-                id=m.get("id") if isinstance(m.get("id"), str) else str(m.get("id")),
-                content=m.get("content", ""),
-                score=1.0,
-                layer=m.get("layer", "semantic"),
-                importance=m.get("importance", 0.5),
-                tags=m.get("tags", []),
-                metadata=m.get("metadata", {}),
+        results = []
+        for m in memories:
+            metadata_val = m.get("metadata", {})
+            if isinstance(metadata_val, str):
+                try:
+                    import json
+
+                    metadata_val = json.loads(metadata_val)
+                except Exception:
+                    metadata_val = {}
+
+            results.append(
+                MemoryResult(
+                    id=m.get("id") if isinstance(m.get("id"), str) else str(m.get("id")),
+                    content=m.get("content", ""),
+                    score=1.0,
+                    layer=m.get("layer", "semantic"),
+                    importance=m.get("importance", 0.5),
+                    tags=m.get("tags", []),
+                    metadata=metadata_val,
+                )
             )
-            for m in memories
-        ]
 
         return ListMemoryResponseV2(
             results=results, total=len(results), limit=limit, offset=offset
         )
     except Exception as e:
         logger.error("list_memories_failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{memory_id}", response_model=MemoryResult)
+async def get_memory(
+    memory_id: str,
+    tenant_id: UUID = Depends(get_and_verify_tenant_id),
+    rae_service: RAECoreService = Depends(get_rae_core_service),
+):
+    """Retrieve a single memory by ID."""
+    try:
+        memory = await rae_service.get_memory(memory_id, str(tenant_id))
+        if not memory:
+            raise HTTPException(status_code=404, detail="Memory not found")
+
+        # Handle stringified metadata from database
+        metadata_val = memory.get("metadata", {})
+        if isinstance(metadata_val, str):
+            try:
+                import json
+
+                metadata_val = json.loads(metadata_val)
+            except Exception:
+                metadata_val = {}
+
+        return MemoryResult(
+            id=str(memory.get("id")),
+            content=memory.get("content", ""),
+            score=1.0,
+            layer=memory.get("layer", "semantic"),
+            importance=memory.get("importance", 0.5),
+            tags=memory.get("tags", []),
+            metadata=metadata_val,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("get_memory_failed", memory_id=memory_id, error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
 
 
