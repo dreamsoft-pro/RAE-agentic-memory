@@ -475,29 +475,42 @@ class PostgreSQLStorage(IMemoryStorage):
 
         # Try FTS first, with ILIKE as fallback logic in SQL
         if query and query.strip():
-            # Robust matching: Try TSVector (liberal) OR ILIKE
+            # Robust matching: Use websearch_to_tsquery for natural AND/OR/Phrase support
             if query == "*":
                 # Wildcard matches everything (already filtered by tenant/project)
                 score_clause = "1.0 as score"
             else:
-                # Use OR logic for websearch to find ANY of the words (more liberal for math fallback)
-                # SYSTEM 3.4 Adaptive Logic: Support both AND and OR by default for broad recall
+                # SYSTEM 3.6.1 Industrial Precision Logic:
+                # 1. Try raw query (Precise AND logic)
+                # 2. Try liberal OR query (Fuzzy Recall)
+                # 3. Add ILIKE as a safety net
                 liberal_query = query.strip().replace(" ", " OR ")
+                
                 conditions.append(
-                    f"(to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', ${param_idx}) OR content ILIKE ${param_idx+1})"
+                    f"(to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', ${param_idx}) "
+                    f"OR to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', ${param_idx+1}) "
+                    f"OR content ILIKE ${param_idx+2})"
                 )
+                
                 score_clause = f"""
                     CASE
+                        -- PRECISE MATCH (Highest Priority)
                         WHEN to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', ${param_idx})
-                        THEN ts_rank_cd(to_tsvector('english', coalesce(content, '')), websearch_to_tsquery('english', ${param_idx})) + 1.0
-                        WHEN content ILIKE ${param_idx+1} THEN 0.8
+                        THEN ts_rank_cd(to_tsvector('english', coalesce(content, '')), websearch_to_tsquery('english', ${param_idx})) + 10.0
+                        
+                        -- LIBERAL MATCH (Recall Safety Net)
+                        WHEN to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', ${param_idx+1})
+                        THEN ts_rank_cd(to_tsvector('english', coalesce(content, '')), websearch_to_tsquery('english', ${param_idx+1})) + 2.0
+                        
+                        -- SUBSTRING MATCH
+                        WHEN content ILIKE ${param_idx+2} THEN 1.0
                         ELSE 0.1
                     END as score
                 """
-                # Use liberal query for websearch to allow Postgres to handle weights
-                params.append(liberal_query)
-                params.append(f"%{query}%")
-                param_idx += 2
+                params.append(query)          # Precise
+                params.append(liberal_query)  # Fuzzy
+                params.append(f"%{query}%")   # Substring
+                param_idx += 3
                 order_clause = "ORDER BY score DESC, importance DESC"
 
         if tags:

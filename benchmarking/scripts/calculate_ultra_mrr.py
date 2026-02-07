@@ -30,7 +30,7 @@ async def calculate_mrr():
                 # Use project='ultra_v2' filter if API supports it,
                 # or just query and look at 'source' field in results
                 resp = await client.post(
-                    f"{RAE_API_URL}/v1/memory/query",
+                    f"{RAE_API_URL}/v2/memory/query",
                     json={"query_text": query_text, "k": 10},
                     headers={"X-Tenant-Id": TENANT_ID},
                 )

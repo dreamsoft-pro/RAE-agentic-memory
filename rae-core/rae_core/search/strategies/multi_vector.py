@@ -45,15 +45,6 @@ class MultiVectorSearchStrategy(SearchStrategy):
     ) -> list[tuple[UUID, float]]:
         """
         Execute search across all vector stores and fuse results.
-
-        Args:
-            query: Search query text
-            tenant_id: Tenant identifier
-            filters: Optional filters
-            limit: Maximum number of results
-
-        Returns:
-            List of (memory_id, rrf_score) tuples
         """
         tasks = []
         for store, provider, layer in self.strategies:
@@ -65,13 +56,16 @@ class MultiVectorSearchStrategy(SearchStrategy):
                     tenant_id,
                     filters,
                     limit * 2,  # Fetch more for fusion
+                    vector_name=layer,
                 )
             )
 
         # Run searches in parallel
         results_list = await asyncio.gather(*tasks)
 
-        # Fuse results using RRF
+        # Fuse results using RRF (Reference Implementation)
+        from rae_core.math.fusion import RRFFusion
+
         strategy_results = {f"v{i}": results for i, results in enumerate(results_list)}
         weights = {f"v{i}": 1.0 for i in range(len(results_list))}
 
@@ -88,10 +82,12 @@ class MultiVectorSearchStrategy(SearchStrategy):
         tenant_id: str,
         filters: dict[str, Any] | None,
         limit: int,
+        vector_name: str | None = None,
     ) -> list[tuple[UUID, float]]:
         """Execute a single vector search."""
         try:
-            query_embedding = await provider.embed_text(query)
+            # Use search_query task type for optimal retrieval
+            query_embedding = await provider.embed_text(query, task_type="search_query")
 
             # Extract basic filters
             layer = filters.get("layer") if filters else None
@@ -103,6 +99,7 @@ class MultiVectorSearchStrategy(SearchStrategy):
                 layer=layer,
                 limit=limit,
                 score_threshold=score_threshold,
+                vector_name=vector_name,
             )
         except Exception as e:
             # Log error but don't fail the whole search

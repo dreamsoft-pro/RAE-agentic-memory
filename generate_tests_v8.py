@@ -132,7 +132,7 @@ async def test_store_memory_success(mock_app_state_pool, mock_vector_store, mock
     }
 
     response = client.post(
-        "/v1/memory/store",
+        "/v2/memory/store",
         json=payload,
         headers={"X-Tenant-Id": "test-tenant"}
     )
@@ -164,7 +164,7 @@ async def test_query_memory_success(mock_app_state_pool, mock_vector_store, mock
     payload = {"query_text": "test query", "k": 1}
 
     response = client.post(
-        "/v1/memory/query",
+        "/v2/memory/query",
         json=payload,
         headers={"X-Tenant-Id": "test-tenant"}
     )
@@ -178,7 +178,7 @@ async def test_delete_memory_success(mock_app_state_pool, mock_vector_store):
     mock_conn.execute.return_value = "DELETE 1"
 
     response = client.delete(
-        "/v1/memory/delete?memory_id=mem-1",
+        "/v2/memory/delete?memory_id=mem-1",
         headers={"X-Tenant-Id": "test-tenant"}
     )
 
@@ -297,7 +297,7 @@ client = TestClient(app)
 
 @patch("apps.memory_api.api.v1.cache.rebuild_cache.delay")
 def test_rebuild_cache(mock_task):
-    response = client.post("/v1/cache/rebuild", headers={"X-API-Key": "test-api-key"})
+    response = client.post("/v2/cache/rebuild", headers={"X-API-Key": "test-api-key"})
     assert response.status_code == 202
     mock_task.assert_called_once()
 """
@@ -409,9 +409,9 @@ def test_health():
 # --- GENEROWANIE ZIP ---
 file_structure = {
     "tests/conftest.py": CONFTEST_PY,
-    "tests/api/v1/test_memory.py": TEST_API_MEMORY_PY,
-    "tests/api/v1/test_agent.py": TEST_API_AGENT_PY,
-    "tests/api/v1/test_cache.py": TEST_API_CACHE_PY,
+    "tests/api/v2/test_memory.py": TEST_API_MEMORY_PY,
+    "tests/api/v2/test_agent.py": TEST_API_AGENT_PY,
+    "tests/api/v2/test_cache.py": TEST_API_CACHE_PY,
     "tests/services/llm/test_providers.py": TEST_SERVICES_LLM_PY,
     "tests/services/test_context_cache.py": TEST_SERVICES_REDIS_PY,
     "tests/services/test_reflection_engine.py": TEST_SERVICES_REFLECTION_PY,

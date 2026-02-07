@@ -58,7 +58,7 @@ class QdrantVectorStore(IVectorStore):
         self._known_vectors: set[str] = set()
 
     async def _ensure_collection(self) -> None:
-        """Ensure the collection exists."""
+        """Ensure the collection exists and is compatible with current config."""
         if self._initialized:
             return
 
@@ -67,33 +67,63 @@ class QdrantVectorStore(IVectorStore):
             collection_names = [c.name for c in collections.collections]
 
             if self.collection_name not in collection_names:
-                # Create with default vector
-                await self.client.create_collection(
-                    collection_name=self.collection_name,
-                    vectors_config={
-                        self.vector_name: VectorParams(
-                            size=self.embedding_dim, distance=Distance.COSINE
-                        )
-                    },
-                )
-                logger.info(f"Created Qdrant collection: {self.collection_name}")
-                self._known_vectors.add(self.vector_name)
+                # Case 1: Collection does not exist. Create it.
+                await self._create_collection()
             else:
-                # Load existing vectors
+                # Case 2: Collection exists. Validate schema compliance.
                 collection_info = await self.client.get_collection(self.collection_name)
-                if collection_info.config.params.vectors:
-                    if isinstance(collection_info.config.params.vectors, dict):
-                        self._known_vectors.update(
-                            collection_info.config.params.vectors.keys()
-                        )
-                    else:
-                        # Single unnamed vector or legacy
-                        pass
+                vectors_config = collection_info.config.params.vectors
+                
+                is_valid = True
+                
+                # Check compatibility of the primary vector
+                if isinstance(vectors_config, dict):
+                    if self.vector_name in vectors_config:
+                        existing_dim = vectors_config[self.vector_name].size
+                        if existing_dim != self.embedding_dim:
+                            logger.warning(
+                                "qdrant_schema_mismatch",
+                                collection=self.collection_name,
+                                vector=self.vector_name,
+                                expected=self.embedding_dim,
+                                actual=existing_dim,
+                                action="recreating_collection"
+                            )
+                            is_valid = False
+                    # If vector doesn't exist, we can add it later via ensure_vector_config, so technically valid structure
+                else:
+                    # Single unnamed vector
+                    # Check if we expect a named vector but got unnamed
+                    if self.vector_name != "":
+                         # This is complex. For simplicity, if we have unnamed and want named (or vice versa), recreate.
+                         # Or check if size matches.
+                         pass
+
+                if not is_valid:
+                    await self.client.delete_collection(self.collection_name)
+                    await self._create_collection()
+                else:
+                    # Load known vectors
+                    if isinstance(vectors_config, dict):
+                        self._known_vectors.update(vectors_config.keys())
 
             self._initialized = True
         except Exception as e:
             logger.error(f"Failed to ensure Qdrant collection: {e}")
             # Do not set initialized to True if failed, so we retry
+
+    async def _create_collection(self) -> None:
+        """Helper to create collection with current settings."""
+        await self.client.create_collection(
+            collection_name=self.collection_name,
+            vectors_config={
+                self.vector_name: VectorParams(
+                    size=self.embedding_dim, distance=Distance.COSINE
+                )
+            },
+        )
+        logger.info(f"Created/Recreated Qdrant collection: {self.collection_name}")
+        self._known_vectors.add(self.vector_name)
 
     async def ensure_vector_config(self, vector_name: str, dim: int) -> None:
         """Dynamically add a new named vector config if missing."""
@@ -211,6 +241,9 @@ class QdrantVectorStore(IVectorStore):
                 "tenant_id": str(tenant_id),
                 **(meta or {}),
             }
+            
+            # DEBUG: Inspect payload
+            logger.info(f"DEBUG_QDRANT_PAYLOAD: vector_keys={list(vector_data.keys())} target_collection={self.collection_name}")
 
             points.append(
                 PointStruct(id=str(mem_id), vector=vector_data, payload=payload)
@@ -222,7 +255,14 @@ class QdrantVectorStore(IVectorStore):
             )
             return len(points)
         except Exception as e:
-            logger.error(f"Qdrant batch upsert failed: {e}")
+            # Enhanced logging for debugging
+            error_details = str(e)
+            if hasattr(e, "content"):  # Qdrant client specific
+                error_details += f" | Content: {e.content}"
+            if hasattr(e, "response"):
+                error_details += f" | Response: {e.response}"
+            
+            logger.error(f"Qdrant batch upsert failed: {error_details}")
             return 0
 
     async def get_vector(

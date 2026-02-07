@@ -26,6 +26,8 @@ services:
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=${QDRANT_PORT:-6333}
       - RAE_VECTOR_BACKEND=${RAE_VECTOR_BACKEND:-qdrant}
+      - RAE_EMBEDDING_MODEL=ollama/nomic-embed-text
+      - RAE_EMBEDDING_BACKEND=onnx
       - TENANCY_ENABLED=true
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-["*" ]}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
@@ -52,13 +54,13 @@ services:
         condition: service_healthy
       qdrant:
         condition: service_started
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu, utility]
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu, utility]
     restart: unless-stopped
     networks:
       - rae-network
@@ -121,13 +123,13 @@ services:
         condition: service_healthy
       qdrant:
         condition: service_started
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu, utility]
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu, utility]
     healthcheck:
       test: ["CMD-SHELL", "python3 -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8000/health\")' || exit 1"]
       interval: 10s
@@ -299,6 +301,8 @@ services:
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=${QDRANT_PORT:-6333}
       - RAE_VECTOR_BACKEND=${RAE_VECTOR_BACKEND:-qdrant}
+      - RAE_EMBEDDING_MODEL=ollama/nomic-embed-text
+      - RAE_EMBEDDING_BACKEND=onnx
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       # Telemetry Layer 1 (Default): Disabled external OTel
@@ -353,6 +357,9 @@ services:
       - QDRANT_HOST=qdrant
       - QDRANT_PORT=${QDRANT_PORT:-6333}
       - RAE_VECTOR_BACKEND=${RAE_VECTOR_BACKEND:-qdrant}
+      - RAE_EMBEDDING_MODEL=ollama/nomic-embed-text
+      - RAE_EMBEDDING_BACKEND=onnx
+      - RAE_USE_GPU=true
       - RAE_APP_LOG_LEVEL=DEBUG
       - LOG_LEVEL=INFO
       - OTEL_TRACES_ENABLED=false
@@ -516,13 +523,13 @@ services:
       - "11435:11434"
     volumes:
       - ollama_data:/root/.ollama
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
     restart: unless-stopped
     networks:
       - rae-network

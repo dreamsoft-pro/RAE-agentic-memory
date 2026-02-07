@@ -528,7 +528,7 @@ class RAEMemoryClient:
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    f"{self.api_url}/v1/compliance/approvals",
+                    f"{self.api_url}/v2/compliance/approvals",
                     json=payload,
                     headers=self.headers,
                     timeout=30.0,
@@ -545,7 +545,7 @@ class RAEMemoryClient:
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
-                    f"{self.api_url}/v1/compliance/approvals/{request_id}",
+                    f"{self.api_url}/v2/compliance/approvals/{request_id}",
                     headers=self.headers,
                     timeout=30.0,
                 )
@@ -561,7 +561,7 @@ class RAEMemoryClient:
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
-                    f"{self.api_url}/v1/compliance/circuit-breakers",
+                    f"{self.api_url}/v2/compliance/circuit-breakers",
                     headers=self.headers,
                     timeout=30.0,
                 )
@@ -581,7 +581,7 @@ class RAEMemoryClient:
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(
-                    f"{self.api_url}/v1/compliance/policies",
+                    f"{self.api_url}/v2/compliance/policies",
                     params=params,
                     headers=self.headers,
                     timeout=30.0,

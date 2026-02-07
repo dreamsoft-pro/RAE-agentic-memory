@@ -437,7 +437,7 @@ elif st.session_state.editor_mode == "create":
                     # Create memory via store endpoint
                     response = client._request(
                         "POST",
-                        "/v1/memory/store",
+                        "/v2/memory/store",
                         json={
                             "content": content,
                             "layer": layer,

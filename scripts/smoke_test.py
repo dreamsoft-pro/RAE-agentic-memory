@@ -69,7 +69,7 @@ def main():
 
     try:
         response = requests.post(
-            f"{API_URL}/api/v1/memory", json=ingest_payload, timeout=10
+            f"{API_URL}/api/v2/memory", json=ingest_payload, timeout=10
         )
         if response.status_code in [200, 201, 202]:
             log_pass("Ingest Request Accepted")
@@ -101,7 +101,7 @@ def main():
         try:
             # Step 4: Verification (Hybrid Search)
             response = requests.post(
-                f"{API_URL}/api/v1/memory/search", json=search_payload, timeout=5
+                f"{API_URL}/api/v2/memory/search", json=search_payload, timeout=5
             )
 
             if response.status_code == 200:

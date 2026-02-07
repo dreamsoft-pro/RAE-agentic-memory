@@ -169,6 +169,7 @@ app = FastAPI(
     description="Reflective Agentic Engine - Memory Control Plane API",
     version="3.6.1",
     docs_url="/docs",
+    lifespan=lifespan,
 )
 
 # --- Middlewares ---

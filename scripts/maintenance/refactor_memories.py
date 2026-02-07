@@ -63,7 +63,7 @@ class MemoryRefactor:
         while True:
             try:
                 response = await self.client.get(
-                    f"{self.api_url}/v1/memory/list",
+                    f"{self.api_url}/v2/memory/list",
                     params={"limit": limit, "offset": offset},
                     headers={
                         "Content-Type": "application/json",
@@ -176,14 +176,14 @@ class MemoryRefactor:
         if not DRY_RUN:
             # CREATE
             resp = await self.client.post(
-                f"{self.api_url}/v1/memory/store",
+                f"{self.api_url}/v2/memory/store",
                 headers={"X-Tenant-Id": plan["target_tenant"]},
                 json=new_payload,
             )
             if resp.status_code in [200, 201]:
                 # DELETE OLD
                 del_resp = await self.client.delete(
-                    f"{self.api_url}/v1/memory/delete",
+                    f"{self.api_url}/v2/memory/delete",
                     params={"memory_id": plan["id"]},
                     headers={"X-Tenant-Id": plan["current_tenant"]},
                 )

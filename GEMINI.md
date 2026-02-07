@@ -35,3 +35,6 @@ Read **`DEVELOPER_CHEAT_SHEET.md`** only AFTER bootstrapping.
 1. **No Guessing:** Query RAE before assuming project state.
 2. **No Interactive Tools:** Use `sed`, `cat`, `grep`, `rsync`.
 3. **Cluster First:** Offload heavy tasks (benchmarks, training) to **Lumina (Node 1)** via `ssh operator@100.68.166.117`.
+4. **Wake Lumina:** If Node 1 is offline, run:
+   `sshpass -p 'mwzmjsunp' ssh -o StrictHostKeyChecking=no vaio@100.78.171.96 'lumina_grzegorz'`
+---

@@ -99,7 +99,17 @@ class RAEBenchmarkRunner:
         self.reflection_map: dict[str, list[str]] = {}
 
     async def setup(self):
-        print("🔌 Initializing System 3.4 (Agnostic Hive Mind)...")
+        print("🔌 Initializing System 3.6.1 (Agnostic Hive Mind)...")
+        # Load Math Controller Config
+        ctrl_config = {}
+        config_path = Path("config/math_controller.yaml")
+        if config_path.exists():
+            with open(config_path, "r") as f:
+                ctrl_config = yaml.safe_load(f)
+        
+        from rae_core.math.controller import MathLayerController
+        math_ctrl = MathLayerController(config=ctrl_config)
+
         self.pool = await asyncpg.create_pool(
             host=os.getenv("POSTGRES_HOST", "127.0.0.1"),
             port=int(os.getenv("POSTGRES_PORT", 5432)),
@@ -177,6 +187,7 @@ class RAEBenchmarkRunner:
             memory_storage=self.storage,
             vector_store=self.vector_store,
             embedding_provider=self.manager,
+            math_controller=math_ctrl,
         )
 
     async def cleanup(self):
@@ -275,21 +286,17 @@ class RAEBenchmarkRunner:
         print(f"🎯 Project: {self.project_id}")
         await self.cleanup()
 
-        print(f"📥 Inserting {len(data['memories'])} memories (Optimized Batch)...")
-        batch_size = 10
+        print(f"📥 Inserting {len(data['memories'])} memories (Industrial Batch Mode)...")
+        batch_size = 50
         comp_nodes: dict[str, list[int]] = {}
 
         for i in range(0, len(data["memories"]), batch_size):
             batch = data["memories"][i : i + batch_size]
             texts = [m.get("text", m.get("content", "")) for m in batch]
 
-            # 1. Batch Embedding (Fast ONNX)
-            # Use 'search_document' task type for ingestion
+            # 1. Batch Embedding (Fast ONNX - Nomic Only for speed)
             nomic_embs = await self.engine.embedding_provider.providers[
                 "nomic"
-            ].embed_batch(texts, task_type="search_document")
-            dense_embs = await self.engine.embedding_provider.providers[
-                "dense"
             ].embed_batch(texts, task_type="search_document")
 
             # 2. Insert into Storage & Vector Store
@@ -306,8 +313,8 @@ class RAEBenchmarkRunner:
                     metadata=mem.get("metadata", {}),
                 )
 
-                # Direct Vector Insert (Qdrant) - Multi-Vector Support
-                vector_struct = {"nomic": nomic_embs[j], "dense": dense_embs[j]}
+                # Direct Vector Insert (Qdrant)
+                vector_struct = {"nomic": nomic_embs[j]}
                 await self.vector_store.store_vector(
                     memory_id=m_id,
                     embedding=vector_struct,
@@ -317,7 +324,7 @@ class RAEBenchmarkRunner:
 
                 mem["_db_id"] = m_id
 
-                # Graph Node Insert
+                # Graph Node Insert (Simplified)
                 node_id = await self.pool.fetchval(
                     "INSERT INTO knowledge_graph_nodes (node_id, tenant_id, project_id, label) VALUES ($1, $2, $3, $4) RETURNING id",
                     str(m_id),
@@ -331,9 +338,10 @@ class RAEBenchmarkRunner:
                     comp_nodes[comp] = []
                 comp_nodes[comp].append(node_id)
 
-            print(
-                f"   ✅ Processed {min(i + batch_size, len(data['memories']))}/{len(data['memories'])}"
-            )
+            if (i + batch_size) % 500 == 0 or (i + batch_size) >= len(data["memories"]):
+                print(
+                    f"   ✅ Processed {min(i + batch_size, len(data['memories']))}/{len(data['memories'])}"
+                )
 
         print("🔗 Linking nodes (building GraphRAG context)...")
         for comp, nodes in comp_nodes.items():

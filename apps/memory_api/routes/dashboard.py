@@ -118,7 +118,7 @@ async def websocket_endpoint(
     """
     WebSocket endpoint for real-time dashboard updates.
 
-    **Connection:** ws://host/v1/dashboard/ws?tenant_id=X&project_id=Y
+    **Connection:** ws://host/v2/dashboard/ws?tenant_id=X&project_id=Y
 
     **Query Parameters:**
     - tenant_id: Tenant identifier (required)
@@ -1211,7 +1211,7 @@ async def get_dashboard_info():
             ],
         },
         "real_time_features": {
-            "websocket_endpoint": "/v1/dashboard/ws",
+            "websocket_endpoint": "/v2/dashboard/ws",
             "event_types": [e.value for e in DashboardEventType],
             "update_interval_seconds": 5,
         },
@@ -1222,11 +1222,11 @@ async def get_dashboard_info():
         "compliance": {
             "iso42001_enabled": True,
             "compliance_endpoints": [
-                "/v1/dashboard/compliance/report",
-                "/v1/dashboard/compliance/metrics",
-                "/v1/dashboard/compliance/risks",
-                "/v1/dashboard/compliance/audit-trail",
-                "/v1/dashboard/compliance/rls-status",
+                "/v2/dashboard/compliance/report",
+                "/v2/dashboard/compliance/metrics",
+                "/v2/dashboard/compliance/risks",
+                "/v2/dashboard/compliance/audit-trail",
+                "/v2/dashboard/compliance/rls-status",
             ],
         },
     }

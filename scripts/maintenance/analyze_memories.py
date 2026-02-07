@@ -33,7 +33,7 @@ class MemoryAnalyzer:
         while True:
             try:
                 resp = await self.client.get(
-                    f"{self.api_url}/v1/memory/list",
+                    f"{self.api_url}/v2/memory/list",
                     params={"limit": limit, "offset": offset},
                     headers={
                         "Content-Type": "application/json",

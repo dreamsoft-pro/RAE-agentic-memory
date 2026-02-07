@@ -935,7 +935,7 @@ class RAECoreService:
         raw_results = await self.engine.search_memories(
             query=query,
             tenant_id=str(tenant_id),
-            agent_id="default",  # Broad attribution for general queries
+            agent_id=project or "default",  # Use project as agent_id for context isolation
             project=project,  # Strict context
             layer=layers[0] if layers else None,
             top_k=k,

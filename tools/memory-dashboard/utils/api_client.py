@@ -104,7 +104,7 @@ class RAEClient:
             # Call the specialized dashboard metrics endpoint
             response = self._request(
                 "POST",
-                "/v1/dashboard/metrics",
+                "/v2/dashboard/metrics",
                 json={
                     "tenant_id": self.tenant_id,
                     "project_id": self.project_id,
@@ -150,7 +150,7 @@ class RAEClient:
             # Note: API V1 /list might not support multi-layer filter in one go unless updated.
             # Assuming it filters by project mostly.
 
-            response = self.client.get("/v1/memory/list", params=params)
+            response = self.client.get("/v2/memory/list", params=params)
             response.raise_for_status()
             data = response.json()
             memories = data.get("results", [])
@@ -198,8 +198,8 @@ class RAEClient:
                 raise ValueError("project_id is required for knowledge graph")
 
             # Fetch nodes and edges separately
-            nodes = self._request("GET", f"/v1/graph/nodes?project_id={project_id}")
-            edges = self._request("GET", f"/v1/graph/edges?project_id={project_id}")
+            nodes = self._request("GET", f"/v2/graph/nodes?project_id={project_id}")
+            edges = self._request("GET", f"/v2/graph/edges?project_id={project_id}")
 
             # Combine into expected format
             return {
@@ -228,7 +228,7 @@ class RAEClient:
         try:
             response = self._request(
                 "POST",
-                "/v1/memory/query",
+                "/v2/memory/query",
                 json={
                     "query_text": query,
                     "k": top_k,
@@ -291,7 +291,7 @@ class RAEClient:
             if content:
                 self._request(
                     "POST",
-                    "/v1/memory/store",
+                    "/v2/memory/store",
                     json={
                         "content": content,
                         "tags": tags or [],
@@ -317,7 +317,7 @@ class RAEClient:
             True if successful
         """
         try:
-            self._request("DELETE", f"/v1/memory/delete?memory_id={memory_id}")
+            self._request("DELETE", f"/v2/memory/delete?memory_id={memory_id}")
 
             st.success("Memory deleted successfully")
             return True
@@ -343,7 +343,7 @@ class RAEClient:
         try:
             response = self._request(
                 "POST",
-                "/v1/memory/query",
+                "/v2/memory/query",
                 json={"query_text": query, "k": top_k, "project": self.project_id},
             )
 
@@ -378,7 +378,7 @@ class RAEClient:
             # Checking service: currently assumes default sort.
 
             response = self.client.get(
-                "/v1/memory/list",
+                "/v2/memory/list",
                 params={
                     "project": proj,
                     "layer": "reflective",
@@ -408,7 +408,7 @@ class RAEClient:
             List of tenant IDs
         """
         try:
-            return self._request("GET", "/v1/system/tenants")
+            return self._request("GET", "/v2/system/tenants")
         except Exception as e:
             st.warning(f"Could not fetch tenants: {e}")
             return []
@@ -422,7 +422,7 @@ class RAEClient:
         """
         try:
             # Headers are already set with X-Tenant-Id in __init__
-            return self._request("GET", "/v1/system/projects")
+            return self._request("GET", "/v2/system/projects")
         except Exception as e:
             st.warning(f"Could not fetch projects: {e}")
             return []
@@ -441,9 +441,9 @@ class RAEClient:
         try:
             # We don't use _request here because system endpoints might have different auth requirements
             # but for now assuming same API key works if authorized.
-            # System endpoints are under /v1/system
+            # System endpoints are under /v2/system
             response = self.client.put(
-                f"/v1/system/tenants/{tenant_id}", json={"name": new_name}
+                f"/v2/system/tenants/{tenant_id}", json={"name": new_name}
             )
             response.raise_for_status()
             return response.json().get("success", False)
@@ -457,7 +457,7 @@ class RAEClient:
         """
         try:
             response = self.client.put(
-                f"/v1/system/projects/{old_project_id}", json={"name": new_project_id}
+                f"/v2/system/projects/{old_project_id}", json={"name": new_project_id}
             )
             response.raise_for_status()
             return response.json().get("success", False)

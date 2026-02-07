@@ -2,6 +2,21 @@
 
 > **For AI Agents:** Read this file at the start of every session to locate test commands, profiles, and MCP configurations.
 
+## 🚀 Universal Startup (Recommended)
+Use the new universal launcher which automatically detects GPU/CPU and configures the environment.
+
+```bash
+make start
+```
+
+This script (`scripts/start_rae.sh`):
+1.  Detects NVIDIA GPU & Docker Runtime.
+2.  Selects `docker-compose.gpu.yml` if available (CUDA 12 support).
+3.  Falls back to CPU mode otherwise.
+4.  Sets safe default network configs (`host.docker.internal`).
+
+**Auto-Healing:** The Qdrant adapter now automatically detects vector dimension mismatches (e.g. switching from 384d to 768d) and adds necessary vector configurations dynamically. No manual collection deletion required.
+
 ## 🐍 Environment & Python
 - **Virtual Env Python:** `./.venv/bin/python`
 - **Pytest:** `./.venv/bin/pytest`

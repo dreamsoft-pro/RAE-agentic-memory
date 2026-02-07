@@ -101,7 +101,27 @@ class QdrantVectorStore(IVectorStore):
             return
 
         try:
-            await self.client.get_collection(self.collection_name)
+            collection_info = await self.client.get_collection(self.collection_name)
+            # Auto-Healing: Check if our vector exists
+            vectors_config = collection_info.config.params.vectors
+            vector_exists = False
+            
+            if isinstance(vectors_config, dict):
+                if self.vector_name in vectors_config:
+                    vector_exists = True
+            
+            if not vector_exists:
+                # Add missing vector config
+                await self.client.update_collection(
+                    collection_name=self.collection_name,
+                    vectors_config={
+                        self.vector_name: VectorParams(
+                            size=self.embedding_dim,
+                            distance=self.distance,
+                        )
+                    }
+                )
+
         except Exception:
             # Collection doesn't exist, create it
             from qdrant_client.models import SparseVectorParams
@@ -109,7 +129,7 @@ class QdrantVectorStore(IVectorStore):
             await self.client.create_collection(
                 collection_name=self.collection_name,
                 vectors_config={
-                    "dense": VectorParams(
+                    self.vector_name: VectorParams(
                         size=self.embedding_dim,
                         distance=self.distance,
                     )

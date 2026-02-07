@@ -5,7 +5,7 @@ import time
 HOST = "100.78.171.96"
 USER = "vaio"
 PASS = "mwzmjsunp"
-CMD_START = "lumina"
+CMD_START = "lumina_grzegorz"
 CMD_STOP = "lumina_stop"
 
 

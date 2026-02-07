@@ -14,7 +14,7 @@ def send_memory(session, url, i):
     }
     try:
         # We hit the real API endpoint
-        resp = session.post(f"{url}/api/v1/memories/", json=payload, timeout=10)
+        resp = session.post(f"{url}/api/v2/memories/", json=payload, timeout=10)
         return resp.status_code
     except Exception as e:
         return str(e)

@@ -82,3 +82,5 @@ pass_*.tmp
 *.txt#
 .env.benchmark
 .node1_access.md
+scripts/wake_lumina.sh
+scripts/wake_lumina.sh
