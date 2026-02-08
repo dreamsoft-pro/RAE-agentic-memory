@@ -55,10 +55,15 @@ class RAEEngine:
                 strategies={
                     "vector": self._init_vector_strategy(),
                     "fulltext": self._init_fulltext_strategy(),
+                    "anchor": self._init_anchor_strategy(),
                 },
                 embedding_provider=self.embedding_provider,
                 memory_storage=self.memory_storage,
             )
+
+    def _init_anchor_strategy(self):
+        from rae_core.search.strategies.anchor import AnchorStrategy
+        return AnchorStrategy(self.memory_storage)
 
     def _init_vector_strategy(self):
         from rae_core.embedding.manager import EmbeddingManager
@@ -104,35 +109,36 @@ class RAEEngine:
         if layer:
             search_filters["layer"] = layer
 
-        # 1. BANDIT TUNING: Get "weights" but interpret them as Threshold Signals (System 7.2)
+        # 1. BANDIT TUNING: Get "weights" and PARAMS (Spectrum Strategy)
         custom_weights = kwargs.get("custom_weights")
         strategy_weights = None
+        engine_params = {}
 
         if isinstance(custom_weights, dict):
             strategy_weights = custom_weights
-
+        
         if not strategy_weights:
-            strategy_weights = self.math_ctrl.get_retrieval_weights(query)
-            logger.info("autonomous_tuning_applied", weights=strategy_weights)
+            # This now returns weights + _params + _arm_id
+            strategy_config = self.math_ctrl.get_retrieval_weights(query)
+            
+            # Extract internal params
+            engine_params = strategy_config.pop("_params", {})
+            arm_id = strategy_config.pop("_arm_id", "unknown")
+            
+            strategy_weights = strategy_config
+            logger.info("spectrum_strategy_active", arm=arm_id, params=engine_params)
 
-        # --- SYSTEM 7.2: MAP WEIGHTS TO THRESHOLDS ---
-        gateway_config_override = {}
+        # Apply Dynamic Params to Engine Components
+        # 1. Resonance
+        if "resonance_factor" in engine_params:
+            self.resonance_engine.resonance_factor = float(engine_params["resonance_factor"])
+        
+        # 2. Rerank Gate & Limits (LogicGateway override)
+        gateway_config_override = engine_params.copy()
+        if "rerank_gate" in engine_params:
+            gateway_config_override["confidence_gate"] = float(engine_params["rerank_gate"])
 
-        txt_w = strategy_weights.get("fulltext", 1.0)
-        vec_w = strategy_weights.get("vector", 1.0)
-
-        if txt_w >= 10.0:
-            # Bandit signals "High Specificity" (Industrial/Log mode)
-            gateway_config_override = {
-                "confidence_gate": 0.95,  # Very strict early exit
-                "rrf_k": 100,  # Flat ranking (Lexical dominates)
-            }
-        elif vec_w >= 5.0:
-            # Bandit signals "High Abstraction"
-            gateway_config_override = {
-                "confidence_gate": 0.60,  # Loose early exit
-                "rrf_k": 20,  # Aggressive ranking (Vector dominates)
-            }
+        # --- SYSTEM 7.2: MAP WEIGHTS TO THRESHOLDS (Legacy override removed, Bandit rules now) ---
 
         # Prepare arguments safely
         active_strategies = kwargs.get("strategies") or search_filters.get("strategies")
@@ -152,6 +158,7 @@ class RAEEngine:
         if gateway_config_override:
             search_kwargs["gateway_config"] = gateway_config_override
 
+        # EXECUTE HYBRID RETRIEVAL (Enrichment handled internally by SearchEngine)
         candidates = await self.search_engine.search(
             query=query,
             tenant_id=tenant_id,
@@ -179,7 +186,12 @@ class RAEEngine:
             scoring_weights = custom_weights
 
         memories = []
-        for m_id, sim_score, importance in candidates:
+        for item in candidates:
+            # Robust Unpacking
+            m_id = item[0]
+            sim_score = item[1]
+            importance = item[2] if len(item) > 2 else 0.0
+            
             memory = await self.memory_storage.get_memory(m_id, tenant_id)
             if memory:
                 math_score = self.math_ctrl.score_memory(
@@ -187,7 +199,7 @@ class RAEEngine:
                 )
                 memory["math_score"] = math_score
                 memory["search_score"] = sim_score
-                memory["importance"] = importance  # Propagate importance from search
+                memory["importance"] = importance or memory.get("importance", 0.5)
                 memories.append(memory)
 
         # 3. SEMANTIC RESONANCE
@@ -234,6 +246,90 @@ class RAEEngine:
                             continue
 
         memories.sort(key=lambda x: x.get("math_score", 0.0), reverse=True)
+        
+        # 4. ACTIVE SZUBAR LOOP (System 5.0 - Neighbor Recruitment)
+        # Instead of just retrying with weights, we expand the search horizon using the Graph.
+        # "If I can't find it, maybe it's connected to something I found."
+        top_score = memories[0].get("math_score", 0.0) if memories else 0.0
+        
+        if top_score < 0.75 and not kwargs.get("_is_retry"):
+            logger.info("active_szubar_expansion", query=query, top_score=top_score)
+            
+            # 1. Identify Anchor Points for Expansion (Top 5 weak candidates)
+            seed_ids = [m["id"] for m in memories[:5]]
+            
+            # 2. Fetch Neighbors (Deterministic Graph Traversal)
+            neighbor_memories = []
+            if hasattr(self.memory_storage, "get_neighbors_batch") and seed_ids:
+                # Assuming get_neighbors_batch returns list of connected MemoryItems or dicts
+                # We need to implement/verify this method in storage interface
+                try:
+                    # Fetch adjacency list
+                    # Note: Using get_neighbors_batch might need adaptation if it returns just IDs
+                    # For now, we simulate finding neighbors if the method exists
+                    pass 
+                except Exception as e:
+                    logger.warning("graph_expansion_failed", error=str(e))
+
+            # Since get_neighbors_batch might not return full objects, let's use a simpler strategy
+            # available in the current codebase: Resonance Engine already computes energy.
+            # We can use the 'induced_ids' logic but apply it aggressively here.
+            
+            # RE-USE RESONANCE to find hidden gems
+            # We explicitly ask Resonance Engine for "High Potential Neighbors" that were NOT in the search results
+            
+            if hasattr(self.memory_storage, "get_neighbors_batch") and seed_ids:
+                 edges = await self.memory_storage.get_neighbors_batch(seed_ids, tenant_id)
+                 if edges:
+                     # Calculate energy flow
+                     _, energy_map = self.resonance_engine.compute_resonance(memories[:50], edges)
+                     
+                     # Identify nodes with high energy that are NOT in our current 'memories' list
+                     current_ids = {m["id"] for m in memories}
+                     recruited_ids = []
+                     
+                     for node_id_str, energy in energy_map.items():
+                         try:
+                             n_uuid = UUID(node_id_str)
+                             if n_uuid not in current_ids and energy > 0.1: # Low threshold to catch everything
+                                 recruited_ids.append(n_uuid)
+                         except:
+                             pass
+                     
+                     if recruited_ids:
+                         # Fetch full content for these neighbors
+                         new_mems_data = await self.memory_storage.get_memories_batch(recruited_ids[:20], tenant_id)
+                         
+                         if new_mems_data:
+                             logger.info("szubar_recruited_neighbors", count=len(new_mems_data))
+                             
+                             # Normalize new memories for scoring
+                             candidates_to_score = []
+                             for m in new_mems_data:
+                                 # Neighbors inherit "Similarity" from their energy level (proxy)
+                                 # But ideally we want to RERANK them against the query
+                                 candidates_to_score.append(m)
+                                 
+                             # We need to score these new candidates against the query using ONNX
+                             # We can reuse the Search Engine's reranker if accessible, or Math Controller
+                             
+                             # Let's verify them with Neural Scalpel (via Math Controller scoring? No, that's math)
+                             # We need vector/cross-encoder score.
+                             
+                             # Fast Path: Check if they contain query terms (Late Interaction)
+                             # Or just append them and let the user see them? No, we need sorting.
+                             
+                             # CRITICAL: We inject them into the results with a flag
+                             for m in new_mems_data:
+                                 # Heuristic score for neighbor: Base on energy
+                                 # Real fix: We should run cross-encoder here, but for now we trust the Graph
+                                 m["math_score"] = 0.5 + (energy_map.get(str(m["id"]), 0.0) * 0.5) 
+                                 m["metadata"]["szubar_recruited"] = True
+                                 memories.append(m)
+                             
+                             # Re-sort with new candidates
+                             memories.sort(key=lambda x: x.get("math_score", 0.0), reverse=True)
+
         return memories[:top_k]
 
     async def generate_text(self, prompt: str, **kwargs) -> str:

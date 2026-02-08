@@ -5,6 +5,9 @@ Adds derived features and quality tracking for data-driven decisions.
 """
 
 from dataclasses import dataclass, field
+from typing import Any
+
+import numpy as np
 
 from rae_core.math.features import Features
 from rae_core.math.types import TaskType
@@ -42,6 +45,9 @@ class FeaturesV2(Features):
     # Content-aware features (System 3.4 Revival)
     term_density: float = 0.0  # Ratio of unique terms to total tokens
     keyword_ratio: float = 0.0  # Ratio of capitalized/special tokens
+    entropy: float = 0.0 # Shannon entropy of the query
+    is_industrial: bool = False # Flag for industrial context
+    is_quantitative: bool = False # Flag for quantitative queries
 
     def compute_derived_features(self) -> dict[str, float]:
         """
@@ -58,6 +64,7 @@ class FeaturesV2(Features):
             # Content-aware features for Industrial/Log detection
             "term_density": self.term_density,
             "keyword_ratio": self.keyword_ratio,
+            "is_quantitative": 1.0 if self.is_quantitative else 0.0,
             # Quality indicators
             "quality_declining": 1.0 if self.quality_trend < -0.1 else 0.0,
             "quality_improving": 1.0 if self.quality_trend > 0.1 else 0.0,
@@ -146,3 +153,58 @@ class FeaturesV2(Features):
         base_dict.update(kwargs)
 
         return cls(**base_dict)  # type: ignore[arg-type]
+
+
+class FeatureExtractorV2:
+    """
+    Extracts FeaturesV2 from queries and system state.
+    Calculates entropy, density, and detects industrial contexts.
+    """
+    
+    def extract(self, query: str) -> FeaturesV2:
+        """Extract features from a query string."""
+        if not query:
+            return FeaturesV2(task_type=TaskType.MEMORY_RETRIEVE)
+            
+        # 1. Basic Stats
+        tokens = query.split()
+        token_count = len(tokens)
+        unique_tokens = len(set(tokens))
+        
+        # 2. Term Density (Lexical Richness)
+        term_density = unique_tokens / max(token_count, 1)
+        
+        # 3. Entropy (Shannon)
+        # Prob of each token
+        from collections import Counter
+        counts = Counter(tokens)
+        probs = [c / token_count for c in counts.values()]
+        entropy = -sum(p * np.log2(p) for p in probs)
+        
+        # 4. Keyword Ratio (Industrial detection)
+        # Count words with digits, caps, or special chars
+        special_tokens = sum(1 for t in tokens if any(c.isdigit() for c in t) or not t.isalpha())
+        keyword_ratio = special_tokens / max(token_count, 1)
+        
+        # 5. Industrial Detection
+        industrial_keywords = [
+            "log", "error", "warn", "info", "uuid", "0x", "exception", 
+            "trace", "stack", "deploy", "server", "db", "sql", "http",
+            "status", "code", "latency", "ms", "sloo", "sla"
+        ]
+        has_industrial_kw = any(k in query.lower() for k in industrial_keywords)
+        is_industrial = (keyword_ratio > 0.2) or has_industrial_kw
+        
+        # 6. Quantitative Detection
+        quant_keywords = ["high", "low", "max", "min", "limit", "exceed", "percent", "%", ">", "<", "latency", "slow", "fast"]
+        is_quantitative = any(k in query.lower() for k in quant_keywords)
+        
+        return FeaturesV2(
+            task_type=TaskType.MEMORY_RETRIEVE,
+            term_density=term_density,
+            keyword_ratio=keyword_ratio,
+            entropy=entropy,
+            is_industrial=is_industrial,
+            is_quantitative=is_quantitative,
+            query_complexity=entropy / 4.0 # Normalized complexity
+        )

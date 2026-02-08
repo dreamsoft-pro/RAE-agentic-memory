@@ -33,7 +33,7 @@ engine_params:
   limit: 100
   
   # Semantic Resonance (Graph Energy Flow)
-  resonance_factor: 0.4
+  resonance_factor: 1.5
   
   # Szubar Induction Energy (Threshold for pulling new memories)
   szubar_induction_energy: 0.8
@@ -148,7 +148,7 @@ bandit:
   max_exploration_rate: 0.2
 
   # Degradation threshold (max acceptable reward drop before rollback)
-  degradation_threshold: 0.15
+  degradation_threshold: 0.5
 
   # Minimum pulls before arm is considered reliable
   min_pulls_for_confidence: 10

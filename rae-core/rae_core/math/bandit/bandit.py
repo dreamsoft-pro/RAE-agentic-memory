@@ -43,6 +43,12 @@ class BanditConfig:
 
     def __post_init__(self):
         """Validate configuration"""
+        if self.persistence_path and isinstance(self.persistence_path, str):
+            self.persistence_path = Path(self.persistence_path)
+
+        if self.exploration_rate is None:
+            self.exploration_rate = 0.1
+
         if self.exploration_rate > self.max_exploration_rate:
             raise ValueError(
                 f"exploration_rate ({self.exploration_rate}) exceeds "
@@ -263,19 +269,22 @@ class MultiArmedBandit:
     def _discretize_context(self, features: FeaturesV2) -> int:
         """
         Discretize context features into bucket ID.
-
-        Creates 81 buckets (3^4) from 4 key features:
-        - memory_count: [small, medium, large]
-        - graph_density: [sparse, medium, dense]
-        - memory_entropy: [low, medium, high]
-        - task_type affinity: [low, medium, high]
-
-        Args:
-            features: Task features
-
-        Returns:
-            Bucket ID in range [0, 80]
+        
+        Updated for System 4.0 Spectrum:
+        - Uses 'is_industrial' flag directly
+        - Uses entropy and density
         """
+        # If industrial, use special high-range buckets (100+)
+        if getattr(features, "is_industrial", False):
+            base = 100
+            if getattr(features, "is_quantitative", False):
+                base += 50 # 150+ for quantitative industrial
+            
+            if features.term_density > 0.8:
+                return base + 1 # 101 or 151 (High Density)
+            return base # 100 or 150 (Normal)
+
+        # Legacy discretization for general queries
         # Discretize memory_count into 3 bins
         if features.memory_count < 30:
             memory_bin = 0  # small

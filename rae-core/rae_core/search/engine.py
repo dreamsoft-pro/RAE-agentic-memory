@@ -10,6 +10,7 @@ from rae_core.interfaces.embedding import IEmbeddingProvider
 from rae_core.interfaces.reranking import IReranker
 from rae_core.interfaces.storage import IMemoryStorage
 from rae_core.math.fusion import FusionStrategy
+from rae_core.math.metadata_injector import MetadataInjector
 from rae_core.search.strategies import SearchStrategy
 
 logger = structlog.get_logger(__name__)
@@ -39,7 +40,9 @@ class EmeraldReranker(IReranker):
             )
             reranked: list[tuple[UUID, float, float]] = []
 
-            for m_id, original_score, importance in candidates:
+            for item in candidates:
+                m_id, original_score, importance = self._unpack_candidate(item)
+                
                 # Get full content for deep comparison
                 memory = await self.memory_storage.get_memory(m_id, tenant_id)
                 if not memory:
@@ -66,6 +69,15 @@ class EmeraldReranker(IReranker):
             logger.error("rerank_failed", error=str(e))
             return candidates[:limit]
 
+    def _unpack_candidate(self, item: tuple) -> tuple[UUID, float, float]:
+        """Safely unpack candidate tuple (handles 2 or 3 values)."""
+        if len(item) == 3:
+            return item[0], item[1], item[2]
+        elif len(item) == 2:
+            return item[0], item[1], 0.0
+        else:
+            raise ValueError(f"Invalid candidate tuple length: {len(item)}")
+
 
 class HybridSearchEngine:
     """
@@ -83,6 +95,7 @@ class HybridSearchEngine:
         self.embedding_provider = embedding_provider
         self.memory_storage = memory_storage
         self._reranker = reranker
+        self.injector = MetadataInjector()
 
         # Initialize Fusion Strategy (LogicGateway wrapper)
         self.fusion_strategy = FusionStrategy()
@@ -109,8 +122,12 @@ class HybridSearchEngine:
         # Extract Gateway Config Override (System 7.2)
         gateway_config = kwargs.get("gateway_config")
 
+        # Metadata Injection (System 23.0) - Always on for better candidate sets
+        enriched_query = self.injector.process_query(query)
+        if enriched_query != query:
+            logger.info("query_enriched", original=query, enriched=enriched_query)
+
         # 1. PARALLEL EXECUTION
-        # (Ideally asyncio.gather, but doing sequential for now)
         strategy_results: dict[str, list[tuple[UUID, float, float]]] = {}
 
         for name in active_strategies:
@@ -121,25 +138,54 @@ class HybridSearchEngine:
             try:
                 # Pass down kwargs (like vector_name)
                 results = await strategy.search(
-                    query=query,
+                    query=enriched_query,
                     tenant_id=tenant_id,
                     filters=filters,
                     limit=limit,
                     **kwargs,
                 )
-                strategy_results[name] = results
+                # Ensure results are 3-value tuples for robustness
+                strategy_results[name] = [
+                    (r[0], r[1], r[2] if len(r) > 2 else 0.0) for r in results
+                ]
             except Exception as e:
                 logger.error("strategy_failed", name=name, error=str(e))
                 strategy_results[name] = []
 
         # 2. FUSION (LogicGateway)
+        # Fetch contents for reranking
+        all_ids = set()
+        for results in strategy_results.values():
+            for r in results:
+                all_ids.add(r[0]) # m_id
+
+        memory_data = {}
+        if all_ids and hasattr(self.memory_storage, "get_memories_batch"):
+            try:
+                mems = await self.memory_storage.get_memories_batch(
+                    list(all_ids), tenant_id
+                )
+                for mem in mems:
+                    # Store full memory object instead of just content
+                    memory_data[mem["id"]] = mem
+            except Exception as e:
+                logger.warning("batch_fetch_failed", error=str(e))
+
         # Note: We pass 'gateway_config' to fuse if supported
         fused_results = self.fusion_strategy.fuse(
-            strategy_results, weights, query=query, config_override=gateway_config
+            strategy_results,
+            weights,
+            query=enriched_query,
+            config_override=gateway_config,
+            memory_contents=memory_data,
         )
 
         # 3. OPTIONAL RERANKING
         if enable_reranking and len(fused_results) > 1:
+            # Skip if LogicGateway already reranked (Neural Scalpel active)
+            if hasattr(self.fusion_strategy, "gateway") and self.fusion_strategy.gateway.reranker:
+                return fused_results[:limit]
+
             reranker = self._reranker
             if reranker is None and self.embedding_provider and self.memory_storage:
                 reranker = EmeraldReranker(self.embedding_provider, self.memory_storage)
@@ -147,7 +193,7 @@ class HybridSearchEngine:
             if reranker:
                 logger.info("reranking_activated", count=len(fused_results[:20]))
                 return await reranker.rerank(
-                    query, fused_results[:20], tenant_id, limit=limit
+                    enriched_query, fused_results[:20], tenant_id, limit=limit
                 )
 
         return fused_results[:limit]

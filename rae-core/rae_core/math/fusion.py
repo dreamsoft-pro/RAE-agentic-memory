@@ -18,6 +18,7 @@ class FusionStrategy:
         weights: dict[str, float] | None = None,
         query: str | None = None,
         config_override: dict[str, Any] | None = None,
+        memory_contents: dict[UUID, str] | None = None,
         **kwargs: Any,
     ) -> list[tuple[UUID, float, float]]:
         """
@@ -28,6 +29,7 @@ class FusionStrategy:
             weights: Optional strategy weight overrides
             query: The search query
             config_override: Optional runtime config for LogicGateway
+            memory_contents: Optional map of memory ID -> content text
             **kwargs: Additional arguments for LogicGateway (like profile)
 
         Returns:
@@ -55,6 +57,7 @@ class FusionStrategy:
             weights=weights,
             query=query or "",
             config_override=config_override,
+            memory_contents=memory_contents,
             **kwargs,
         )
 

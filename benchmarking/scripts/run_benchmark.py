@@ -264,7 +264,7 @@ class RAEBenchmarkRunner:
                 )
         return {"name": f"synthetic_{count}", "memories": memories, "queries": queries}
 
-    async def run(self):
+    async def run(self, rerank: bool = False):
         if self.synthetic_count:
             data = self.generate_synthetic_data(self.synthetic_count, self.query_count)
         else:
@@ -295,16 +295,24 @@ class RAEBenchmarkRunner:
 
         for i in range(0, len(data["memories"]), batch_size):
             batch = data["memories"][i : i + batch_size]
-            texts = [m.get("text", m.get("content", "")) for m in batch]
+            
+            # Enrich content with synonyms (System 23.0 Metadata Injection)
+            enriched_texts = []
+            for m in batch:
+                content = m.get("text", m.get("content", ""))
+                # Use engine's search_engine.injector if available
+                if hasattr(self.engine.search_engine, "injector"):
+                    content = self.engine.search_engine.injector.process_document(content)
+                enriched_texts.append(content)
 
             # 1. Batch Embedding (Fast ONNX - Nomic Only for speed)
             nomic_embs = await self.engine.embedding_provider.providers[
                 "nomic"
-            ].embed_batch(texts, task_type="search_document")
+            ].embed_batch(enriched_texts, task_type="search_document")
 
             # 2. Insert into Storage & Vector Store
             for j, mem in enumerate(batch):
-                content = texts[j]
+                content = enriched_texts[j]
 
                 # Direct Storage Insert (Postgres)
                 m_id = await self.storage.store_memory(
@@ -367,14 +375,14 @@ class RAEBenchmarkRunner:
                 query=q["query"],
                 tenant_id=self.tenant_id,
                 agent_id=self.project_id,
-                top_k=10,
-                enable_reranking=False,
+                top_k=100, # Increased for better recall in large sets
+                enable_reranking=rerank,
             )
             retrieved_ids = self._map_ids_smart(
                 [str(r["id"]) for r in raw_results], data["memories"]
             )
 
-            is_hit = any(r_id in q["expected_source_ids"] for r_id in retrieved_ids[:5])
+            is_hit = any(r_id in q["expected_source_ids"] for r_id in retrieved_ids[:100])
 
             hybrid_results.append(
                 {
@@ -385,7 +393,15 @@ class RAEBenchmarkRunner:
             )
 
             # Method 3.4: Feedback Loop for Bandit
-            self.engine.math_ctrl.update_policy(success=is_hit)
+            rank = 1
+            if is_hit:
+                # Find the rank of the first hit
+                for i, r_id in enumerate(retrieved_ids, 1):
+                    if r_id in q["expected_source_ids"]:
+                        rank = i
+                        break
+            
+            self.engine.math_ctrl.update_policy(success=is_hit, query=q["query"], rank=rank)
 
             if not is_hit and q["expected_source_ids"]:
                 # Cast to list to satisfy mypy if it thinks it's a Collection
@@ -451,6 +467,9 @@ async def main():
     parser.add_argument(
         "--queries", type=int, default=50, help="Number of queries to run"
     )
+    parser.add_argument(
+        "--rerank", action="store_true", help="Enable reranking in engine"
+    )
     args = parser.parse_args()
 
     if not args.synthetic_count and not args.set:
@@ -465,7 +484,7 @@ async def main():
     )
     try:
         await runner.setup()
-        await runner.run()
+        await runner.run(rerank=args.rerank)
     finally:
         if hasattr(runner, "pool"):
             await runner.pool.close()

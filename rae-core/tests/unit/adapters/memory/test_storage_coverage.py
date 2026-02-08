@@ -24,21 +24,21 @@ class TestInMemoryStorageCoverage:
     @pytest.mark.asyncio
     async def test_save_embedding_success(self, storage):
         """Test saving embedding for existing memory."""
-        mid = await storage.store_memory("content", "layer", "tenant", "agent")
+        mid = await storage.store_memory(content="content", layer="layer", tenant_id="tenant", agent_id="agent")
         success = await storage.save_embedding(mid, "model", [0.1, 0.2], "tenant")
         assert success is True
 
     @pytest.mark.asyncio
     async def test_save_embedding_access_denied(self, storage):
         """Test saving embedding with wrong tenant."""
-        mid = await storage.store_memory("content", "layer", "tenant1", "agent")
+        mid = await storage.store_memory(content="content", layer="layer", tenant_id="tenant1", agent_id="agent")
         with pytest.raises(ValueError, match="Access Denied"):
             await storage.save_embedding(mid, "model", [0.1, 0.2], "tenant2")
 
     @pytest.mark.asyncio
     async def test_delete_memory_not_found_or_wrong_tenant(self, storage):
         """Test deleting non-existent memory or with wrong tenant."""
-        mid = await storage.store_memory("content", "layer", "tenant1", "agent")
+        mid = await storage.store_memory(content="content", layer="layer", tenant_id="tenant1", agent_id="agent")
 
         # Wrong tenant
         success = await storage.delete_memory(mid, "tenant2")
@@ -51,9 +51,9 @@ class TestInMemoryStorageCoverage:
     @pytest.mark.asyncio
     async def test_clear_tenant_with_multiple_memories(self, storage):
         """Test clearing tenant with multiple memories to cover the loop."""
-        await storage.store_memory("c1", "l1", "t1", "a1")
-        await storage.store_memory("c2", "l2", "t1", "a1")
-        await storage.store_memory("c3", "l1", "t2", "a1")
+        await storage.store_memory(content="c1", layer="l1", tenant_id="t1", agent_id="a1")
+        await storage.store_memory(content="c2", layer="l2", tenant_id="t1", agent_id="a1")
+        await storage.store_memory(content="c3", layer="l1", tenant_id="t2", agent_id="a1")
 
         await storage.clear_tenant("t1")
         assert await storage.count_memories("t1") == 0
@@ -80,8 +80,8 @@ class TestInMemoryStorageCoverage:
     @pytest.mark.asyncio
     async def test_update_memory_access_batch(self, storage):
         """Test update_memory_access_batch."""
-        mid1 = await storage.store_memory("c1", "l1", "t1", "a1")
-        mid2 = await storage.store_memory("c2", "l1", "t1", "a1")
+        mid1 = await storage.store_memory(content="c1", layer="l1", tenant_id="t1", agent_id="a1")
+        mid2 = await storage.store_memory(content="c2", layer="l1", tenant_id="t1", agent_id="a1")
 
         success = await storage.update_memory_access_batch([mid1, mid2], "t1")
         assert success is True
@@ -100,7 +100,7 @@ class TestInMemoryStorageCoverage:
     @pytest.mark.asyncio
     async def test_adjust_importance_clamping(self, storage):
         """Test adjust_importance clamping logic."""
-        mid = await storage.store_memory("c", "l", "t", "a", importance=0.9)
+        mid = await storage.store_memory(content="c", layer="l", tenant_id="t", agent_id="a", importance=0.9)
 
         # Upward clamping
         new_val = await storage.adjust_importance(mid, 0.5, "t")
@@ -113,6 +113,5 @@ class TestInMemoryStorageCoverage:
     @pytest.mark.asyncio
     async def test_delete_memory_internal_none(self, storage):
         """Test internal delete helper with None (should not raise)."""
-        # This is harder to trigger via public API if not already covered
-        # but we can try to call it if we really need 100%
-        await storage._delete_memory_internal(uuid4())
+        # Call the actual private method to test it
+        storage._delete_memory_sync(uuid4())

@@ -18,11 +18,7 @@ class IMemoryStorage(Protocol):
     """
 
     async def store_memory(self, **kwargs: Any) -> UUID:
-        """Store a new memory.
-
-        Args:
-            **kwargs: Implementation-specific fields (content, layer, tenant_id, agent_id, etc.)
-        """
+        """Store a new memory."""
         ...
 
     async def get_memory(
@@ -30,15 +26,15 @@ class IMemoryStorage(Protocol):
         memory_id: UUID,
         tenant_id: str,
     ) -> dict[str, Any] | None:
-        """Retrieve a memory by ID.
+        """Retrieve a memory by ID."""
+        ...
 
-        Args:
-            memory_id: UUID of the memory
-            tenant_id: Tenant identifier
-
-        Returns:
-            Memory dictionary or None if not found
-        """
+    async def get_memories_batch(
+        self,
+        memory_ids: list[UUID],
+        tenant_id: str,
+    ) -> list[dict[str, Any]]:
+        """Retrieve multiple memories by IDs."""
         ...
 
     async def update_memory(
@@ -47,16 +43,7 @@ class IMemoryStorage(Protocol):
         tenant_id: str,
         updates: dict[str, Any],
     ) -> bool:
-        """Update a memory.
-
-        Args:
-            memory_id: UUID of the memory
-            tenant_id: Tenant identifier
-            updates: Dictionary of fields to update
-
-        Returns:
-            True if successful, False otherwise
-        """
+        """Update a memory."""
         ...
 
     async def delete_memory(
@@ -64,29 +51,17 @@ class IMemoryStorage(Protocol):
         memory_id: UUID,
         tenant_id: str,
     ) -> bool:
-        """Delete a memory.
-
-        Args:
-            memory_id: UUID of the memory
-            tenant_id: Tenant identifier
-
-        Returns:
-            True if successful, False otherwise
-        """
+        """Delete a memory."""
         ...
 
     async def list_memories(
-        self, tenant_id: str, **kwargs: Any
+        self, 
+        tenant_id: str, 
+        agent_id: str | None = None, 
+        layer: str | None = None, 
+        **kwargs: Any
     ) -> list[dict[str, Any]]:
-        """List memories with filtering and sorting.
-
-        Args:
-            tenant_id: Tenant identifier
-            **kwargs: Additional backend-specific arguments (agent_id, layer, filters, etc.)
-
-        Returns:
-            List of memory dictionaries
-        """
+        """List memories with filtering and sorting."""
         ...
 
     async def delete_memories_with_metadata_filter(
@@ -96,17 +71,7 @@ class IMemoryStorage(Protocol):
         layer: str | None = None,
         metadata_filter: dict[str, Any] | None = None,
     ) -> int:
-        """Delete memories matching metadata filter.
-
-        Args:
-            tenant_id: Tenant identifier
-            agent_id: Agent identifier
-            layer: Memory layer
-            metadata_filter: Filter criteria
-
-        Returns:
-            Number of memories deleted
-        """
+        """Delete memories matching metadata filter."""
         ...
 
     async def delete_memories_below_importance(
@@ -116,17 +81,7 @@ class IMemoryStorage(Protocol):
         layer: str,
         importance_threshold: float,
     ) -> int:
-        """Delete memories below importance threshold.
-
-        Args:
-            tenant_id: Tenant identifier
-            agent_id: Agent identifier
-            layer: Memory layer
-            importance_threshold: Minimum importance to keep
-
-        Returns:
-            Number of memories deleted
-        """
+        """Delete memories below importance threshold."""
         ...
 
     async def count_memories(
@@ -135,16 +90,7 @@ class IMemoryStorage(Protocol):
         agent_id: str | None = None,
         layer: str | None = None,
     ) -> int:
-        """Count memories matching filters.
-
-        Args:
-            tenant_id: Tenant identifier
-            agent_id: Optional agent filter
-            layer: Optional layer filter
-
-        Returns:
-            Count of matching memories
-        """
+        """Count memories matching filters."""
         ...
 
     async def search_memories(
@@ -152,23 +98,11 @@ class IMemoryStorage(Protocol):
         query: str,
         tenant_id: str,
         agent_id: str,
-        layer: str,
+        layer: str | None = None,
         limit: int = 10,
         **kwargs: Any,
     ) -> list[dict[str, Any]]:
-        """Search memories using full-text search.
-
-        Args:
-            query: Search query
-            tenant_id: Tenant identifier
-            agent_id: Agent identifier
-            layer: Memory layer
-            limit: Maximum number of results
-            **kwargs: Additional filters or project IDs
-
-        Returns:
-            List of dictionaries containing 'memory' (dict) and 'score' (float)
-        """
+        """Search memories."""
         ...
 
     async def delete_expired_memories(
@@ -177,16 +111,7 @@ class IMemoryStorage(Protocol):
         agent_id: str | None = None,
         layer: str | None = None,
     ) -> int:
-        """Delete expired memories.
-
-        Args:
-            tenant_id: Tenant identifier
-            agent_id: Agent identifier
-            layer: Memory layer
-
-        Returns:
-            Number of memories deleted
-        """
+        """Delete expired memories."""
         ...
 
     async def update_memory_access(
@@ -194,15 +119,11 @@ class IMemoryStorage(Protocol):
         memory_id: UUID,
         tenant_id: str,
     ) -> bool:
-        """Update last access time and increment usage count.
+        """Update last access time and increment usage count."""
+        ...
 
-        Args:
-            memory_id: UUID of the memory
-            tenant_id: Tenant identifier
-
-        Returns:
-            True if successful, False otherwise
-        """
+    async def increment_access_count(self, memory_id: UUID, tenant_id: str) -> bool:
+        """Alias for update_memory_access (Legacy test support)."""
         ...
 
     async def update_memory_expiration(
@@ -211,16 +132,7 @@ class IMemoryStorage(Protocol):
         tenant_id: str,
         expires_at: datetime | None,
     ) -> bool:
-        """Update memory expiration time.
-
-        Args:
-            memory_id: UUID of the memory
-            tenant_id: Tenant identifier
-            expires_at: New expiration timestamp
-
-        Returns:
-            True if successful, False otherwise
-        """
+        """Update memory expiration time."""
         ...
 
     async def get_metric_aggregate(
@@ -230,17 +142,7 @@ class IMemoryStorage(Protocol):
         func: str,
         filters: dict[str, Any] | None = None,
     ) -> float:
-        """Calculate aggregate metric for memories.
-
-        Args:
-            tenant_id: Tenant identifier
-            metric: Field to aggregate (e.g., 'importance', 'access_count')
-            func: Aggregation function ('avg', 'sum', 'min', 'max', 'count')
-            filters: Optional filters to apply before aggregation
-
-        Returns:
-            Aggregated value as float
-        """
+        """Calculate aggregate metric."""
         ...
 
     async def update_memory_access_batch(
@@ -248,15 +150,7 @@ class IMemoryStorage(Protocol):
         memory_ids: list[UUID],
         tenant_id: str,
     ) -> bool:
-        """Update last access time and increment usage count for multiple memories.
-
-        Args:
-            memory_ids: List of memory UUIDs
-            tenant_id: Tenant identifier
-
-        Returns:
-            True if all updates were successful
-        """
+        """Update access count for multiple memories."""
         ...
 
     async def adjust_importance(
@@ -265,16 +159,7 @@ class IMemoryStorage(Protocol):
         delta: float,
         tenant_id: str,
     ) -> float:
-        """Adjust memory importance by a delta value.
-
-        Args:
-            memory_id: UUID of the memory
-            delta: Value to add to current importance (can be negative)
-            tenant_id: Tenant identifier
-
-        Returns:
-            New importance value
-        """
+        """Adjust memory importance."""
         ...
 
     async def save_embedding(
@@ -283,18 +168,9 @@ class IMemoryStorage(Protocol):
         model_name: str,
         embedding: list[float],
         tenant_id: str,
+        **kwargs: Any,
     ) -> bool:
-        """Save a vector embedding for a memory.
-
-        Args:
-            memory_id: UUID of the memory
-            model_name: Name of the embedding model
-            embedding: Vector embedding list
-            tenant_id: Tenant identifier
-
-        Returns:
-            True if successful
-        """
+        """Save a vector embedding."""
         ...
 
     async def decay_importance(
@@ -302,15 +178,11 @@ class IMemoryStorage(Protocol):
         tenant_id: str,
         decay_factor: float,
     ) -> int:
-        """Apply importance decay to all memories for a tenant.
+        """Apply importance decay."""
+        ...
 
-        Args:
-            tenant_id: Tenant identifier
-            decay_factor: Rate of decay (0.0 to 1.0)
-
-        Returns:
-            Number of memories updated
-        """
+    async def clear_tenant(self, tenant_id: str) -> int:
+        """Delete all memories for a tenant."""
         ...
 
     async def close(self) -> None:

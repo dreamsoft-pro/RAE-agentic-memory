@@ -24,7 +24,8 @@ class FullTextStrategy(SearchStrategy):
         **kwargs: Any,
     ) -> list[tuple[UUID, float, float]]:
         agent_id = kwargs.get("agent_id") or (filters or {}).get("agent_id", "default")
-        layer = kwargs.get("layer") or (filters or {}).get("layer", "episodic")
+        # Default to None (search all layers) if not specified
+        layer = kwargs.get("layer") or (filters or {}).get("layer")
         project_id = project or (filters or {}).get("project")
 
         results = await self.storage.search_memories(

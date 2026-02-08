@@ -1,0 +1,59 @@
+﻿Co z tych 9 architektur warto „wziąć” do RAE (najbardziej kompatybilne)
+1) CRAG (Corrective RAG) = „weryfikacja roszczeń”
+W artykule: Generate → extract claims → retrieve evidence → verify & rewrite — rekomendowane w domenach, gdzie błąd jest kosztowny. 
+To jest niemal idealnie zgodne z filozofią RAE (anty-drift + audyt): RAE już ma warstwę Reflective i Working do logowania działań. 
+Jak to podpiąć w RAE praktycznie (bez grzebania w core):
+    • zrobić opcjonalny Verification Loop jako profil:
+        1. generator robi szkic odpowiedzi,
+        2. extractor wyciąga twierdzenia (reguły + NER + proste heurystyki),
+        3. retriever szuka dowodów na każde twierdzenie,
+        4. finalizer przepisuje odpowiedź, wymuszając cytaty i oznaczając brak dowodu jako “unknown/needs escalation”.
+    • Wyniki weryfikacji zapisujesz jako „lekcje” do Reflective (co było fałszywką / konflikt źródeł).
+To jest bardzo „korporacyjne” i dobrze spina się z Twoim use-case: instrukcje/rozliczenia/delegacje/erasmus.
+
+2) Adaptive RAG = routing po intencji/pewności
+Artykuł: router wybiera pipeline (fast path vs deep path) w zależności od intencji lub confidence. 
+RAE ma 3 „math planes” i Szubar Mode — to wygląda jak naturalne miejsce na policy-router: gdy SNR/pewność jest niska, przełączasz się na tryb głębszy (rezonans, graf, weryfikacja). 
+Minimalna implementacja zgodna z core-first:
+    • Fast path: keyword + wektor top-k, twardy budżet tokenów.
+    • Deep path: zwiększone k + graph resonance + CRAG loop + “ask for missing fields”.
+    • Guardrail: reguły audytowalne (żadnej czarnej skrzynki).
+
+3) Fusion RAG = wiele retrieverów + fuzja rankingów
+Artykuł: łączysz źródła (wektory + web + DB), normalizujesz provenance, rerankujesz i dopiero syntezujesz. 
+RAE już na poziomie repo deklaruje hybrid search: vector similarity + keyword precision + graph resonance. 
+Co warto dopiąć „z Fusion” do RAE:
+    • ujednolicone etykiety pochodzenia (provenance): doc_id, section, policy_version, timestamp, confidence,
+    • RRF/merge na rankingach (to jest bardzo “RAE-like”),
+    • opcjonalne adaptery (SQL/REST/SharePoint/Confluence) — ale jako integrations, nie core.
+
+4) GraphRAG = Twoje “graph resonance” w wersji „bardziej formalnej”
+Artykuł opisuje GraphRAG: retrieval → entity linking → traversal → synthesis + pokazanie ścieżki. 
+RAE już wprost mówi o graph resonance. 
+Co możesz podkraść z GraphRAG bez ciężkiej przebudowy:
+    • jawne „proof path”: dlaczego te fragmenty zadziałały razem (to wzmacnia zaufanie),
+    • entity linking jako wtyczka (nawet proste: regex/NER dla numerów rozdziałów, nazw formularzy, kodów).
+
+Co jest kuszące, ale wymaga ostrożności w RAE-core
+5) HyDE (Hypothetical Document Embeddings)
+Artykuł: generujesz hipotetyczne Q/A warianty i indeksujesz je, żeby podbić recall. 
+To potrafi działać świetnie na „parafrazach”, ale w systemie anty-drift ma ryzyko: syntetyczne treści mogą wprowadzać „fałszywy ślad”.
+Jak to robić po RAE-owemu:
+    • tylko jako offline preprocessing,
+    • zawsze z linkiem do źródłowego chunk’a,
+    • regeneracja przy zmianie dokumentów/modelu (artykuł też to sugeruje). 
+6) Self-RAG (LLM generuje rozszerzenia zapytań)
+Super do mętnego inputu, ale musi być “guarded” (artykuł wprost ostrzega o ograniczaniu/validacji wygenerowanych terminów). 
+W RAE to powinno iść przez Szubar/politykę: whitelist słowników domenowych + zakaz wprowadzania bytów nieobecnych w dokumentach.
+
+Co już w praktyce masz “w DNA RAE”
+    • „Start with Standard RAG baseline” — artykuł mówi: zacznij od Standard RAG i mierz, zanim dokręcisz śruby. 
+    • RAE repo jasno pokazuje, że to robisz metodycznie (benchmarki, wyniki, Szubar Mode, hybrid search, itd.). 
+
+Najlepsza, konkretna odpowiedź na Twoje pytanie
+Tak — najbardziej wartościowe do RAE są:
+    1. CRAG / verification loop jako opcjonalny profil jakości (idealny do instrukcji/rozliczeń). 
+    2. Adaptive routing (fast vs deep) sterowany “confidence/SNR” z math planes. 
+    3. Fusion jako formalizacja tego, co już robisz w hybrid search (i przygotowanie pod adaptery). 
+    4. GraphRAG patterns do lepszego “proof path” i wyjaśnialności rezonansu.
+

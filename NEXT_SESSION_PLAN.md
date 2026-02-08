@@ -1,21 +1,37 @@
-# Next Session Plan: Oracle Resilience (System 12.2)
+# Next Session Plan: System 23.0 - Neural Scalpel & Adaptive Intelligence
 
-## 🎯 Goal: Restore "Silicon Oracle" Peak (MRR 1.0000)
-Current System 12.1 achieved **MRR 0.7854** on Industrial Large (1k). We are ~22% below the historical peak reported on GitHub.
+## Overview
+Unify "Neural Scalpel" precision (System 22.1) with "Adaptive Intelligence" (CRAG/Routing) to achieve MRR 1.0 on Industrial Benchmarks. The goal is to close the semantic gap (e.g., iPhone != mobile) via metadata injection while handling failure cases gracefully via Corrective RAG.
 
-## 🔍 Findings from Session 2026-02-08
-1. **Fusion Bug Fixed:** `LogicGateway` was dropping vector results in `LEXICAL_FIRST` mode when FullText recall was 0.
-2. **Clipping Sensitivity:** Disabling clipping crashed MRR to 0.61. Aggressive clipping (0.7+) was also harmful. Lenient clipping (0.3-0.5) is the current sweet spot.
-3. **Synergy Boost:** Increasing Oracle Synergy to 3.0x and reducing `rrf_k` to 20 improved ranking sharpness.
-4. **Instability:** Bandit detects "Drift" frequently on the Industrial 1k set, leading to memory resets and lost convergence.
+## 1. Priority: Neural Scalpel + Metadata Injection (The "MRR 1.0" Fix)
+- **Problem:** TinyBERT reranker lacks domain knowledge (semantic gap).
+- **Goal:** Achieve MRR > 0.95 on Industrial sets by injecting context before reranking.
+- **Tasks:**
+    - **Metadata Injection:** Implement `MetadataInjector` to enrich query/doc context with synonyms and parent entities (e.g., "iPhone" -> "iPhone mobile phone smartphone") *before* embedding/reranking.
+    - **Tuning:** Calibrate the current 10,000x reranker weight against the new injected metadata.
+    - **Verify:** Run `industrial_small` benchmark to confirm the "iPhone/Mobile" fix.
 
-## 🛠️ Tasks for Next Session
-1. **[Precision Scalpel]** Implement a fixed `ORACLE` profile in `math_controller.yaml` that bypasses the Bandit for Industrial sets to verify if 1.0 is achievable with static weights (txt=100, vec=1).
-2. **[Bridge Alignment]** Compare bridge induction logic in `run_benchmark.py` (ALIAS induction) with `RAECoreService` reflection induction to ensure benchmark results are replicable in production.
-3. **[Multi-Vector Calibration]** Investigate if `MultiVectorSearchStrategy` RRF is diluting signal before it reaches the `LogicGateway`.
-4. **[Szubar Energy]** Test lowering `szubar_induction_energy` to 0.4 during the benchmark to trigger more aggressive graph recovery.
+## 2. Adaptive RAG (Policy & Routing)
+- **Goal:** Stop wasting compute on simple queries; use Deep Logic only when needed.
+- **Tasks:**
+    - Implement `PolicyRouter` in Math Layer.
+    - **Fast Path:** Math-Only (FullText) or simple Vector for high-confidence matches.
+    - **Deep Path:** Triggered when Fast Path score < Threshold. Activates Neural Scalpel (Reranker) + Graph Resonance.
+    - **Logging:** Audit all routing decisions in the **Working** layer.
 
-## 📉 Target Metrics
-- **Industrial Small (100):** 1.0000 MRR
-- **Industrial Large (1k):** > 0.9500 MRR
-- **Bandit Stability:** 0 resets per 100 queries.
+## 3. Corrective RAG (CRAG) - The Safety Net
+- **Goal:** Handle "Zero Result" or "Low Confidence" scenarios without hallucination.
+- **Tasks:**
+    - Implement `VerificationLoop`: If retrieved documents contradict or lack answer, trigger Web Search (if allowed) or "Szubar" Reflection.
+    - **Query Correction:** Automatically rewrite queries if initial retrieval fails (e.g., strip specific IDs, relax constraints).
+
+## 4. Housekeeping & Stabilization
+- **Tasks:**
+    - **Merge:** Push confirmed System 22.1 fixes to `develop` (Node 1 is synced).
+    - **Tests:** Review and fix the 7 skipped tests in `make test-core`.
+    - **Zero Drift:** Ensure all new logic is covered by tests before commit.
+
+## Success Metrics
+- **MRR:** > 0.95 on Industrial Small (fixing the semantic gap).
+- **Efficiency:** Fast Path used for >60% of trivial queries.
+- **Resilience:** 0 Hallucinations on missing data (Corrective fallback).
