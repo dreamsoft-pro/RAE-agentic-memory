@@ -105,11 +105,11 @@ class QdrantVectorStore(IVectorStore):
             # Auto-Healing: Check if our vector exists
             vectors_config = collection_info.config.params.vectors
             vector_exists = False
-            
+
             if isinstance(vectors_config, dict):
                 if self.vector_name in vectors_config:
                     vector_exists = True
-            
+
             if not vector_exists:
                 # Add missing vector config
                 await self.client.update_collection(

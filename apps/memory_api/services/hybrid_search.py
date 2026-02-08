@@ -13,7 +13,6 @@ between entities in the knowledge graph.
 """
 
 from typing import Any, Dict, List, Optional, Tuple, cast
-from uuid import UUID
 
 import structlog
 from pydantic import BaseModel, Field
@@ -458,7 +457,9 @@ class HybridSearchService:
             strategy_ranked_list = []
             for record in results:
                 # Assuming record is ScoredMemoryRecord
-                strategy_ranked_list.append((record.id, record.score))
+                strategy_ranked_list.append(
+                    (record.id, record.score, record.importance)
+                )
                 record_map[str(record.id)] = record
 
             rrf_inputs.append(strategy_ranked_list)
@@ -468,26 +469,16 @@ class HybridSearchService:
             return []
 
         # Fuse results
-        # Assuming rrf_inputs is a list of results from multiple strategies
-        flat_results: list[tuple[UUID, float]] = []
-        if rrf_inputs and isinstance(rrf_inputs[0], list):
-            for sublist in rrf_inputs:
-                flat_results.extend(sublist)
-        else:
-            # Fallback if it's already flat or something else
-            flat_results = cast(list[tuple[UUID, float]], rrf_inputs)
-
-        fused_ranked = self.fusion.fuse({"hybrid": flat_results}, {"hybrid": 1.0})
+        # Using the updated fuse signature which expects strategy map
+        strategy_map = {f"v_{i}": res for i, res in enumerate(rrf_inputs)}
+        fused_ranked = self.fusion.fuse(strategy_map)
 
         # Reconstruct ScoredMemoryRecords
         final_results = []
-        for uuid_id, rrf_score in fused_ranked[:top_k]:
+        for uuid_id, rrf_score, importance in fused_ranked[:top_k]:
             str_id = str(uuid_id)
             if str_id in record_map:
                 rec = record_map[str_id]
-                # Update score to RRF score (or keep original? RRF score is safer for ranking)
-                # But RRF score is small (0.02 range). We might want to normalize.
-                # For now, let's use the RRF score.
                 rec.score = rrf_score
                 rec.source = "multi_vector_fusion"
                 final_results.append(rec)

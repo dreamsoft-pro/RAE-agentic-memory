@@ -1,12 +1,10 @@
 """Qdrant vector store adapter."""
 
 import logging
-from typing import Any
 from uuid import UUID
 
 from qdrant_client import AsyncQdrantClient
-from qdrant_client.http import exceptions
-from qdrant_client.models import Distance, VectorParams, PointStruct, NamedVector
+from qdrant_client.models import Distance, NamedVector, PointStruct, VectorParams
 
 from rae_core.interfaces.vector import IVectorStore
 

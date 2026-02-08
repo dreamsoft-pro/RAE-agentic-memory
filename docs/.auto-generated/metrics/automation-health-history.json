@@ -182,5 +182,77 @@
     "status": "success",
     "files_count": 8,
     "errors_count": 0
+  },
+  {
+    "run_id": "20260208-161021",
+    "timestamp": "2026-02-08T16:10:21.755198",
+    "duration_seconds": 1.42,
+    "status": "success",
+    "files_count": 8,
+    "errors_count": 0
+  },
+  {
+    "run_id": "20260208-161519",
+    "timestamp": "2026-02-08T16:15:19.342841",
+    "duration_seconds": 1.2,
+    "status": "success",
+    "files_count": 8,
+    "errors_count": 0
+  },
+  {
+    "run_id": "20260208-161723",
+    "timestamp": "2026-02-08T16:17:23.374281",
+    "duration_seconds": 0.87,
+    "status": "success",
+    "files_count": 8,
+    "errors_count": 0
+  },
+  {
+    "run_id": "20260208-162020",
+    "timestamp": "2026-02-08T16:20:20.463856",
+    "duration_seconds": 0.88,
+    "status": "success",
+    "files_count": 8,
+    "errors_count": 0
+  },
+  {
+    "run_id": "20260208-162215",
+    "timestamp": "2026-02-08T16:22:15.890406",
+    "duration_seconds": 0.86,
+    "status": "success",
+    "files_count": 8,
+    "errors_count": 0
+  },
+  {
+    "run_id": "20260208-162239",
+    "timestamp": "2026-02-08T16:22:39.112442",
+    "duration_seconds": 0.87,
+    "status": "success",
+    "files_count": 8,
+    "errors_count": 0
+  },
+  {
+    "run_id": "20260208-162305",
+    "timestamp": "2026-02-08T16:23:05.013714",
+    "duration_seconds": 0.92,
+    "status": "success",
+    "files_count": 8,
+    "errors_count": 0
+  },
+  {
+    "run_id": "20260208-162530",
+    "timestamp": "2026-02-08T16:25:30.955623",
+    "duration_seconds": 0.86,
+    "status": "success",
+    "files_count": 8,
+    "errors_count": 0
+  },
+  {
+    "run_id": "20260208-162904",
+    "timestamp": "2026-02-08T16:29:04.254168",
+    "duration_seconds": 0.97,
+    "status": "success",
+    "files_count": 8,
+    "errors_count": 0
   }
 ]

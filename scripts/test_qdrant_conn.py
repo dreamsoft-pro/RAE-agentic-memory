@@ -1,5 +1,7 @@
 import asyncio
+
 from qdrant_client import AsyncQdrantClient
+
 
 async def test():
     try:

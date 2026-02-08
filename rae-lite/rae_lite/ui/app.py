@@ -3,11 +3,11 @@ RAE-Lite Desktop UI.
 Built with NiceGUI for a modern, reactive experience.
 """
 
-import os
-from datetime import datetime
-from nicegui import ui, app, events
-import httpx
 import asyncio
+import os
+
+import httpx
+from nicegui import events, ui
 
 # Configuration
 API_URL = "http://127.0.0.1:8765"
@@ -17,7 +17,7 @@ class RaeLiteUI:
         self.results = []
         self.status = "Idle"
         self.stats = {}
-        
+
     async def fetch_stats(self):
         try:
             async with httpx.AsyncClient() as client:
@@ -31,7 +31,7 @@ class RaeLiteUI:
     async def search(self, query: str):
         if not query:
             return
-        
+
         self.status = "Searching..."
         try:
             async with httpx.AsyncClient() as client:
@@ -54,7 +54,7 @@ class RaeLiteUI:
     async def handle_upload(self, e: events.UploadEventArguments):
         content = e.content.read().decode('utf-8')
         filename = e.name
-        
+
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
@@ -80,15 +80,15 @@ class RaeLiteUI:
             if not self.results:
                 ui.label("No results found or search not performed yet.").classes('text-gray-500 italic')
                 return
-            
+
             for r in self.results:
                 with ui.card().classes('w-full mb-4 shadow-sm hover:shadow-md transition-shadow'):
                     with ui.row().classes('w-full items-center justify-between'):
                         ui.label(f"Score: {r['score']:.4f}").classes('text-xs font-bold text-blue-600')
                         ui.label(r['layer']).classes('text-xs bg-gray-100 px-2 py-1 rounded')
-                    
+
                     ui.markdown(r['content']).classes('text-sm mt-2')
-                    
+
                     if r.get('tags'):
                         with ui.row().classes('mt-2 gap-1'):
                             for tag in r['tags']:
@@ -104,7 +104,7 @@ class RaeLiteUI:
         with ui.left_drawer(value=True).classes('bg-gray-50 border-r'):
             ui.label('Ingest Memories').classes('text-lg font-bold mb-4')
             ui.upload(on_upload=self.handle_upload, label='Drop files here', auto_upload=True).classes('w-full')
-            
+
             ui.separator().classes('my-6')
             ui.label('Statistics').classes('text-md font-bold mb-2')
             with ui.column().classes('gap-1'):
@@ -118,9 +118,9 @@ class RaeLiteUI:
             with ui.row().classes('w-full items-center gap-4'):
                 search_input = ui.input(label='Ask RAE anything...', placeholder='Type your query...').classes('flex-grow')
                 ui.button('Search', on_click=lambda: self.search(search_input.value)).props('elevated color=blue-9 rounded')
-            
+
             ui.separator().classes('my-8')
-            
+
             global results_container
             results_container = ui.column().classes('w-full')
             self.update_results_display()

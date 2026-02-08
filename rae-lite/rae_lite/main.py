@@ -7,7 +7,6 @@ Starts local HTTP server and system tray app.
 import sys
 import threading
 import time
-import os
 
 import structlog
 import uvicorn
@@ -68,6 +67,7 @@ class GUIThread(threading.Thread):
     def run(self):
         try:
             from nicegui import ui
+
             from rae_lite.ui.app import init
             init()
             # Port 8080 for UI, reload=False for production stability

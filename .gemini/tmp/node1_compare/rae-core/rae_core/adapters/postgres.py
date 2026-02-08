@@ -1013,9 +1013,9 @@ class PostgreSQLStorage(IMemoryStorage):
                 FROM knowledge_graph_nodes
                 WHERE node_id = ANY($1) AND tenant_id = $2::uuid
             )
-            SELECT 
-                n1.node_id as source, 
-                n2.node_id as target, 
+            SELECT
+                n1.node_id as source,
+                n2.node_id as target,
                 COALESCE((e.properties->>'weight')::float, 1.0) as weight
             FROM knowledge_graph_edges e
             JOIN knowledge_graph_nodes n1 ON e.source_node_id = n1.id

@@ -12,7 +12,6 @@ from qdrant_client.models import (
     FieldCondition,
     Filter,
     MatchValue,
-    NamedVector,
     PointStruct,
     VectorParams,
 )
@@ -73,9 +72,9 @@ class QdrantVectorStore(IVectorStore):
                 # Case 2: Collection exists. Validate schema compliance.
                 collection_info = await self.client.get_collection(self.collection_name)
                 vectors_config = collection_info.config.params.vectors
-                
+
                 is_valid = True
-                
+
                 # Check compatibility of the primary vector
                 if isinstance(vectors_config, dict):
                     if self.vector_name in vectors_config:
@@ -87,7 +86,7 @@ class QdrantVectorStore(IVectorStore):
                                 vector=self.vector_name,
                                 expected=self.embedding_dim,
                                 actual=existing_dim,
-                                action="recreating_collection"
+                                action="recreating_collection",
                             )
                             is_valid = False
                     # If vector doesn't exist, we can add it later via ensure_vector_config, so technically valid structure
@@ -95,9 +94,9 @@ class QdrantVectorStore(IVectorStore):
                     # Single unnamed vector
                     # Check if we expect a named vector but got unnamed
                     if self.vector_name != "":
-                         # This is complex. For simplicity, if we have unnamed and want named (or vice versa), recreate.
-                         # Or check if size matches.
-                         pass
+                        # This is complex. For simplicity, if we have unnamed and want named (or vice versa), recreate.
+                        # Or check if size matches.
+                        pass
 
                 if not is_valid:
                     await self.client.delete_collection(self.collection_name)
@@ -241,9 +240,11 @@ class QdrantVectorStore(IVectorStore):
                 "tenant_id": str(tenant_id),
                 **(meta or {}),
             }
-            
+
             # DEBUG: Inspect payload
-            logger.info(f"DEBUG_QDRANT_PAYLOAD: vector_keys={list(vector_data.keys())} target_collection={self.collection_name}")
+            logger.info(
+                f"DEBUG_QDRANT_PAYLOAD: vector_keys={list(vector_data.keys())} target_collection={self.collection_name}"
+            )
 
             points.append(
                 PointStruct(id=str(mem_id), vector=vector_data, payload=payload)
@@ -261,7 +262,7 @@ class QdrantVectorStore(IVectorStore):
                 error_details += f" | Content: {e.content}"
             if hasattr(e, "response"):
                 error_details += f" | Response: {e.response}"
-            
+
             logger.error(f"Qdrant batch upsert failed: {error_details}")
             return 0
 

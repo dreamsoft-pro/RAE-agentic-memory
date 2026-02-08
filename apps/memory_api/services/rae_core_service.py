@@ -211,11 +211,13 @@ class RAECoreService:
 
         # Storage
         if postgres_pool and not ignore_db:
-            self.postgres_adapter = PostgreSQLStorage(pool=postgres_pool)
+            self.postgres_adapter = cast(
+                IMemoryStorage, PostgreSQLStorage(pool=postgres_pool)
+            )
         else:
             from rae_adapters.memory import InMemoryStorage
 
-            self.postgres_adapter = InMemoryStorage()
+            self.postgres_adapter = cast(IMemoryStorage, InMemoryStorage())
 
         # Vector
         if qdrant_client and not ignore_db:
@@ -262,10 +264,10 @@ class RAECoreService:
             "fulltext": FullTextStrategy(memory_storage=self.postgres_adapter),
         }
         search_engine = HybridSearchEngine(
-            strategies=search_strategies, 
+            strategies=search_strategies,
             embedding_provider=self.embedding_provider,
             memory_storage=self.postgres_adapter,
-            reranker=reranker
+            reranker=reranker,
         )
 
         self.engine = RAEEngine(
@@ -288,22 +290,18 @@ class RAECoreService:
     def _create_reranker(self, settings: Any) -> Optional[IReranker]:
         """Create configured reranker instance."""
         from rae_core.search.engine import EmeraldReranker
-        from rae_core.search.rerankers.api import APIReranker
-        from rae_core.search.rerankers.mcp import MCPreranker
+        from rae_core.search.rerankers.api import ApiReranker
+        from rae_core.search.rerankers.mcp import McpReranker
 
         if settings.RAE_RERANKER_BACKEND == "emerald":
             return EmeraldReranker(self.embedding_provider, self.postgres_adapter)
         if settings.RAE_RERANKER_BACKEND == "api" and settings.RAE_RERANKER_API_URL:
-            return APIReranker(
+            return ApiReranker(
                 api_url=settings.RAE_RERANKER_API_URL,
                 api_key=settings.RAE_RERANKER_API_KEY,
             )
         if settings.RAE_RERANKER_BACKEND == "mcp":
-            mcp_client = getattr(self, "mcp_client", None)
-            if mcp_client:
-                return MCPreranker(
-                    client=mcp_client, tool_name=settings.RAE_RERANKER_MCP_TOOL
-                )
+            return McpReranker()
         return None
 
     async def execute_action(
@@ -938,7 +936,7 @@ class RAECoreService:
         raw_results = await self.engine.search_memories(
             query=query,
             tenant_id=str(tenant_id),
-            agent_id=None, # Allow all agents for this project
+            agent_id=None,  # Allow all agents for this project
             project=project,  # Strict context
             layer=layers[0] if layers else None,
             top_k=k,

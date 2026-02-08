@@ -205,7 +205,11 @@ async def list_memories(
 
             results.append(
                 MemoryResult(
-                    id=m.get("id") if isinstance(m.get("id"), str) else str(m.get("id")),
+                    id=(
+                        m.get("id")
+                        if isinstance(m.get("id"), str)
+                        else str(m.get("id"))
+                    ),
                     content=m.get("content", ""),
                     score=1.0,
                     layer=m.get("layer", "semantic"),

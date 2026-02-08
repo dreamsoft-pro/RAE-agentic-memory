@@ -139,7 +139,9 @@ class MathLayerController:
 
         # Refined Industrial Detection: High Density + Specific Tokens or High Keyword Ratio
         has_log_tokens = any(t in query.lower() for t in ["[err", "log_", "uuid", "0x"])
-        is_industrial = (features.term_density > 0.9 and features.keyword_ratio > 0.15) or has_log_tokens
+        is_industrial = (
+            features.term_density > 0.9 and features.keyword_ratio > 0.15
+        ) or has_log_tokens
 
         if strategy == "default" or strategy.startswith("hybrid_default"):
             if is_industrial:

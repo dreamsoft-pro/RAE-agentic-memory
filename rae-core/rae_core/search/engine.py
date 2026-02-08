@@ -1,14 +1,14 @@
 """Hybrid search engine implementation."""
 
 import math
-from typing import Any, Dict, List, Tuple
+from typing import Any
 from uuid import UUID
 
 import structlog
 
 from rae_core.interfaces.embedding import IEmbeddingProvider
-from rae_core.interfaces.storage import IMemoryStorage
 from rae_core.interfaces.reranking import IReranker
+from rae_core.interfaces.storage import IMemoryStorage
 from rae_core.math.fusion import FusionStrategy
 from rae_core.search.strategies import SearchStrategy
 
@@ -25,11 +25,11 @@ class EmeraldReranker(IReranker):
     async def rerank(
         self,
         query: str,
-        candidates: List[Tuple[UUID, float]],
+        candidates: list[tuple[UUID, float, float]],
         tenant_id: str,
         limit: int = 10,
         **kwargs: Any,
-    ) -> List[Tuple[UUID, float]]:
+    ) -> list[tuple[UUID, float, float]]:
         if self.embedding_provider is None or self.memory_storage is None:
             return candidates[:limit]
 
@@ -37,13 +37,13 @@ class EmeraldReranker(IReranker):
             query_emb = await self.embedding_provider.embed_text(
                 query, task_type="search_query"
             )
-            reranked: List[Tuple[UUID, float]] = []
+            reranked: list[tuple[UUID, float, float]] = []
 
-            for m_id, original_score in candidates:
+            for m_id, original_score, importance in candidates:
                 # Get full content for deep comparison
                 memory = await self.memory_storage.get_memory(m_id, tenant_id)
                 if not memory:
-                    reranked.append((m_id, original_score))
+                    reranked.append((m_id, original_score, importance))
                     continue
 
                 # Get or generate vector for the content
@@ -59,7 +59,7 @@ class EmeraldReranker(IReranker):
 
                 # Synergy Score: 70% Semantic, 30% Original Rank
                 final_score = (semantic_score * 0.7) + (original_score * 0.3)
-                reranked.append((m_id, final_score))
+                reranked.append((m_id, final_score, importance))
 
             return sorted(reranked, key=lambda x: x[1], reverse=True)[:limit]
         except Exception as e:
@@ -74,7 +74,7 @@ class HybridSearchEngine:
 
     def __init__(
         self,
-        strategies: Dict[str, SearchStrategy],
+        strategies: dict[str, SearchStrategy],
         embedding_provider: IEmbeddingProvider,
         memory_storage: IMemoryStorage,
         reranker: IReranker | None = None,
@@ -83,7 +83,7 @@ class HybridSearchEngine:
         self.embedding_provider = embedding_provider
         self.memory_storage = memory_storage
         self._reranker = reranker
-        
+
         # Initialize Fusion Strategy (LogicGateway wrapper)
         self.fusion_strategy = FusionStrategy()
 
@@ -91,32 +91,32 @@ class HybridSearchEngine:
         self,
         query: str,
         tenant_id: str,
-        filters: Dict[str, Any] | None = None,
+        filters: dict[str, Any] | None = None,
         limit: int = 10,
-        strategies: List[str] | None = None,
-        strategy_weights: Dict[str, float] | None = None,
+        strategies: list[str] | None = None,
+        strategy_weights: dict[str, float] | None = None,
         enable_reranking: bool = False,
         math_controller: Any = None,
         **kwargs: Any,
-    ) -> List[Tuple[UUID, float]]:
+    ) -> list[tuple[UUID, float, float]]:
         """
         Execute search across active strategies and fuse results.
         Supports System 7.2 gateway_config override.
         """
         active_strategies = strategies or list(self.strategies.keys())
         weights = strategy_weights or {}
-        
+
         # Extract Gateway Config Override (System 7.2)
         gateway_config = kwargs.get("gateway_config")
 
         # 1. PARALLEL EXECUTION
         # (Ideally asyncio.gather, but doing sequential for now)
-        strategy_results: Dict[str, List[Tuple[UUID, float]]] = {}
-        
+        strategy_results: dict[str, list[tuple[UUID, float, float]]] = {}
+
         for name in active_strategies:
             if name not in self.strategies:
                 continue
-                
+
             strategy = self.strategies[name]
             try:
                 # Pass down kwargs (like vector_name)
@@ -125,7 +125,7 @@ class HybridSearchEngine:
                     tenant_id=tenant_id,
                     filters=filters,
                     limit=limit,
-                    **kwargs
+                    **kwargs,
                 )
                 strategy_results[name] = results
             except Exception as e:
@@ -135,12 +135,9 @@ class HybridSearchEngine:
         # 2. FUSION (LogicGateway)
         # Note: We pass 'gateway_config' to fuse if supported
         fused_results = self.fusion_strategy.fuse(
-            strategy_results, 
-            weights, 
-            query=query, 
-            config_override=gateway_config
+            strategy_results, weights, query=query, config_override=gateway_config
         )
-        
+
         # 3. OPTIONAL RERANKING
         if enable_reranking and len(fused_results) > 1:
             reranker = self._reranker
@@ -152,5 +149,5 @@ class HybridSearchEngine:
                 return await reranker.rerank(
                     query, fused_results[:20], tenant_id, limit=limit
                 )
-            
+
         return fused_results[:limit]

@@ -69,7 +69,9 @@ class NativeEmbeddingProvider(IEmbeddingProvider):
         if use_gpu and "CUDAExecutionProvider" in ort.get_available_providers():
             # Only add CUDA if it actually works (check_device fails if driver is missing)
             try:
-                temp_session = ort.InferenceSession(self.model_path, providers=["CUDAExecutionProvider"])
+                temp_session = ort.InferenceSession(
+                    self.model_path, providers=["CUDAExecutionProvider"]
+                )
                 providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
                 del temp_session
             except Exception:

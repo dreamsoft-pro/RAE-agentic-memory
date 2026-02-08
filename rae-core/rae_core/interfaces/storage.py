@@ -17,44 +17,11 @@ class IMemoryStorage(Protocol):
     all memory layers (sensory, working, episodic, semantic, reflective).
     """
 
-    async def store_memory(
-        self,
-        content: str,
-        layer: str,
-        tenant_id: str,
-        agent_id: str,
-        tags: list[str] | None = None,
-        metadata: dict[str, Any] | None = None,
-        embedding: list[float] | None = None,
-        importance: float | None = None,
-        expires_at: datetime | None = None,
-        memory_type: str = "text",
-        project: str | None = None,
-        session_id: str | None = None,
-        source: str | None = None,
-        strength: float = 1.0,
-        info_class: str = "internal",
-        governance: dict[str, Any] | None = None,
-    ) -> UUID:
+    async def store_memory(self, **kwargs: Any) -> UUID:
         """Store a new memory.
 
         Args:
-            content: The memory content
-            layer: Memory layer (sensory, working, episodic, semantic, reflective)
-            tenant_id: Tenant identifier
-            agent_id: Agent identifier
-            tags: Optional list of tags
-            metadata: Optional metadata dictionary
-            embedding: Optional vector embedding
-            importance: Optional importance score (0.0-1.0)
-            expires_at: Optional expiration timestamp
-            memory_type: Type of memory (default: text)
-            project: Project identifier (primary source)
-            session_id: Session identifier
-            source: Source of the memory
-            strength: Memory strength (default 1.0)
-            info_class: Information classification (Smart Black Box Phase 2)
-            governance: Governance metadata (Smart Black Box Phase 2)
+            **kwargs: Implementation-specific fields (content, layer, tenant_id, agent_id, etc.)
         """
         ...
 
@@ -109,35 +76,13 @@ class IMemoryStorage(Protocol):
         ...
 
     async def list_memories(
-        self,
-        tenant_id: str,
-        agent_id: str | None = None,
-        layer: str | None = None,
-        tags: list[str] | None = None,
-        filters: dict[str, Any] | None = None,
-        limit: int = 100,
-        offset: int = 0,
-        order_by: str = "created_at",
-        order_direction: str = "desc",
-        project: str | None = None,
-        query: str | None = None,
-        **kwargs: Any,
+        self, tenant_id: str, **kwargs: Any
     ) -> list[dict[str, Any]]:
         """List memories with filtering and sorting.
 
         Args:
             tenant_id: Tenant identifier
-            agent_id: Optional agent filter
-            layer: Optional layer filter
-            tags: Optional tags filter (OR logic)
-            filters: Optional additional filters
-            limit: Maximum number of results
-            offset: Pagination offset
-            order_by: Field to sort by
-            order_direction: "asc" or "desc"
-            project: Optional project filter
-            query: Optional search query text
-            **kwargs: Additional backend-specific arguments
+            **kwargs: Additional backend-specific arguments (agent_id, layer, filters, etc.)
 
         Returns:
             List of memory dictionaries
@@ -146,10 +91,10 @@ class IMemoryStorage(Protocol):
 
     async def delete_memories_with_metadata_filter(
         self,
-        tenant_id: str,
-        agent_id: str,
-        layer: str,
-        metadata_filter: dict[str, Any],
+        tenant_id: str | None = None,
+        agent_id: str | None = None,
+        layer: str | None = None,
+        metadata_filter: dict[str, Any] | None = None,
     ) -> int:
         """Delete memories matching metadata filter.
 
@@ -186,7 +131,7 @@ class IMemoryStorage(Protocol):
 
     async def count_memories(
         self,
-        tenant_id: str,
+        tenant_id: str | None = None,
         agent_id: str | None = None,
         layer: str | None = None,
     ) -> int:
@@ -209,8 +154,7 @@ class IMemoryStorage(Protocol):
         agent_id: str,
         layer: str,
         limit: int = 10,
-        filters: dict[str, Any] | None = None,
-        project: str | None = None,
+        **kwargs: Any,
     ) -> list[dict[str, Any]]:
         """Search memories using full-text search.
 
@@ -220,8 +164,7 @@ class IMemoryStorage(Protocol):
             agent_id: Agent identifier
             layer: Memory layer
             limit: Maximum number of results
-            filters: Optional filters
-            project: Optional project identifier
+            **kwargs: Additional filters or project IDs
 
         Returns:
             List of dictionaries containing 'memory' (dict) and 'score' (float)
@@ -231,8 +174,8 @@ class IMemoryStorage(Protocol):
     async def delete_expired_memories(
         self,
         tenant_id: str,
-        agent_id: str,
-        layer: str,
+        agent_id: str | None = None,
+        layer: str | None = None,
     ) -> int:
         """Delete expired memories.
 
@@ -266,7 +209,7 @@ class IMemoryStorage(Protocol):
         self,
         memory_id: UUID,
         tenant_id: str,
-        expires_at: Any,
+        expires_at: datetime | None,
     ) -> bool:
         """Update memory expiration time.
 
@@ -340,7 +283,6 @@ class IMemoryStorage(Protocol):
         model_name: str,
         embedding: list[float],
         tenant_id: str,
-        metadata: dict[str, Any] | None = None,
     ) -> bool:
         """Save a vector embedding for a memory.
 
@@ -349,7 +291,6 @@ class IMemoryStorage(Protocol):
             model_name: Name of the embedding model
             embedding: Vector embedding list
             tenant_id: Tenant identifier
-            metadata: Optional metadata
 
         Returns:
             True if successful
@@ -359,17 +300,19 @@ class IMemoryStorage(Protocol):
     async def decay_importance(
         self,
         tenant_id: str,
-        decay_rate: float,
-        consider_access_stats: bool = False,
+        decay_factor: float,
     ) -> int:
         """Apply importance decay to all memories for a tenant.
 
         Args:
             tenant_id: Tenant identifier
-            decay_rate: Rate of decay (0.0 to 1.0)
-            consider_access_stats: If True, decay is slower for frequently accessed memories
+            decay_factor: Rate of decay (0.0 to 1.0)
 
         Returns:
             Number of memories updated
         """
+        ...
+
+    async def close(self) -> None:
+        """Close storage connection."""
         ...

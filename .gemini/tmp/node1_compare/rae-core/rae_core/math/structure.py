@@ -72,7 +72,7 @@ class ScoringWeights:
             warnings.warn(
                 f"ScoringWeights do not sum to 1.0: {total:.6f}. "
                 f"Consider normalizing: alpha={self.alpha}, beta={self.beta}, gamma={self.gamma}",
-                UserWarning,
+                UserWarning, stacklevel=2,
             )
 
     def to_dict(self) -> dict[str, float]:

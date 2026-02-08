@@ -1,6 +1,6 @@
-import requests
 import random
-import json
+
+import requests
 
 url = "http://localhost:6333/collections/memories/points?wait=true"
 vector = [random.random() for _ in range(768)]

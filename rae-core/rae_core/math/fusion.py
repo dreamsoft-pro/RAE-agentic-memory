@@ -1,56 +1,92 @@
-"""
-Fusion Strategy - Adapter for LogicGateway.
-"""
+"""Result fusion strategies for RAE retrieval."""
 
-from typing import Dict, List, Tuple, Any
+from typing import Any
 from uuid import UUID
 
-from rae_core.math.logic_gateway import LogicGateway
+from .logic_gateway import LogicGateway
+
 
 class FusionStrategy:
-    """
-    Wrapper around LogicGateway to handle fusion logic.
-    """
+    """Base class for result fusion using LogicGateway."""
 
-    def __init__(self):
-        self.gateway = LogicGateway()
+    def __init__(self, config: dict[str, Any] | None = None):
+        self.gateway = LogicGateway(config)
 
     def fuse(
-        self, 
-        strategy_results: Dict[str, List[Tuple[UUID, float]]], 
-        weights: Dict[str, float] | None = None,
-        query: str = "",
-        config_override: Dict[str, float] | None = None
-    ) -> List[Tuple[UUID, float]]:
+        self,
+        strategy_results: dict[str, list[tuple[UUID, float, float]]],
+        weights: dict[str, float] | None = None,
+        query: str | None = None,
+        config_override: dict[str, Any] | None = None,
+        **kwargs: Any,
+    ) -> list[tuple[UUID, float, float]]:
         """
-        Fuse results using LogicGateway routing.
-        Passes config_override for System 7.2 Dynamic Thresholds.
+        Fuse results from multiple strategies using LogicGateway.
+
+        Args:
+            strategy_results: Map of strategy name -> list of (id, score, importance)
+            weights: Optional strategy weight overrides
+            query: The search query
+            config_override: Optional runtime config for LogicGateway
+            **kwargs: Additional arguments for LogicGateway (like profile)
+
+        Returns:
+            Fused list of (id, score, importance)
         """
-        # Route query to profile
-        profile = self.gateway.route(query, strategy_results)
-        
-        # Execute fusion with optional config override
-        return self.gateway.fuse(
-            profile, 
-            strategy_results, 
+        # LogicGateway currently expects (id, score) in its input
+        # and returns (id, score). We need to handle importance.
+
+        # 1. Prepare input for gateway (strip importance for now)
+        gateway_input = {
+            name: [(r[0], r[1]) for r in results]
+            for name, results in strategy_results.items()
+        }
+
+        # 2. Extract importance map for propagation
+        importance_map: dict[UUID, float] = {}
+        for results in strategy_results.values():
+            for m_id, _, imp in results:
+                if m_id not in importance_map or imp > importance_map[m_id]:
+                    importance_map[m_id] = imp
+
+        # 3. Fuse scores
+        fused_scores = self.gateway.fuse(
+            strategy_results=gateway_input,
             weights=weights,
-            query=query, 
-            config_override=config_override
+            query=query or "",
+            config_override=config_override,
+            **kwargs,
         )
 
-# --- Legacy Support for MultiVectorStrategy ---
+        # 4. Attach importance back
+        return [
+            (m_id, score, importance_map.get(m_id, 0.0)) for m_id, score in fused_scores
+        ]
 
-class RRFFusion:
-    """Legacy RRF Fusion for internal MultiVector strategy usage."""
-    
-    def fuse(self, strategy_results: Dict[str, List[Tuple[UUID, float]]], weights: Dict[str, float] | None = None) -> List[Tuple[UUID, float]]:
-        # Simple RRF implementation for internal vector fusion
+
+class RRFFusion(FusionStrategy):
+    """Simple Reciprocal Rank Fusion."""
+
+    def fuse(
+        self,
+        strategy_results: dict[str, list[tuple[UUID, float, float]]],
+        weights: dict[str, float] | None = None,
+        query: str | None = None,
+        config_override: dict[str, Any] | None = None,
+        **kwargs: Any,
+    ) -> list[tuple[UUID, float, float]]:
+        # RRF logic: sum(1 / (k + rank))
         k = 60
-        fused: Dict[UUID, float] = {}
-        
-        for res_list in strategy_results.values():
-            for rank, (id, _) in enumerate(res_list):
-                score = 1.0 / (rank + k)
-                fused[id] = fused.get(id, 0.0) + score
-                
-        return sorted(fused.items(), key=lambda x: x[1], reverse=True)
+        scores: dict[UUID, float] = {}
+        importance_map: dict[UUID, float] = {}
+
+        for results in strategy_results.values():
+            for rank, (m_id, _, imp) in enumerate(results, 1):
+                scores[m_id] = scores.get(m_id, 0.0) + (1.0 / (k + rank))
+                if m_id not in importance_map or imp > importance_map[m_id]:
+                    importance_map[m_id] = imp
+
+        sorted_ids = sorted(scores.items(), key=lambda x: x[1], reverse=True)
+        return [
+            (m_id, score, importance_map.get(m_id, 0.0)) for m_id, score in sorted_ids
+        ]

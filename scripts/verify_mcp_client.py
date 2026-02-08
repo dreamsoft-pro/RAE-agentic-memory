@@ -1,6 +1,6 @@
 import asyncio
 import os
-import sys
+
 from rae_mcp.server import RAEMemoryClient
 
 # Konfiguracja środowiska (symulacja zmiennych z MCP)
@@ -11,14 +11,14 @@ os.environ["RAE_PROJECT_ID"] = "test-project"
 
 async def main():
     print("🚀 Starting MCP Client Verification...")
-    
+
     # Inicjalizacja klienta (użyje zaktualizowanego kodu z V2)
     client = RAEMemoryClient(
         api_url=os.environ["RAE_API_URL"],
         api_key=os.environ["RAE_API_KEY"],
         tenant_id=os.environ["RAE_TENANT_ID"]
     )
-    
+
     # 1. Zapis pamięci
     print("\n📝 Testing store_memory...")
     try:
@@ -45,7 +45,7 @@ async def main():
             top_k=5,
             project="test-project"
         )
-        
+
         if results:
             print(f"✅ Found {len(results)} memories.")
             for mem in results:
@@ -53,13 +53,13 @@ async def main():
                 content_snippet = mem.get('content', '')[:50]
                 mem_id = mem.get('id')
                 print(f"   - [{score:.2f}] {content_snippet}...")
-                
+
                 # Porównanie ID (uwaga: w wynikach search może być 'id' lub 'memory_id')
                 if mem_id == memory_id:
                     print("     (Confirmed: Found the just-created memory)")
         else:
             print("⚠️ No results found immediately (indexing lag?).")
-            
+
     except Exception as e:
         print(f"❌ search_memory failed: {e}")
 

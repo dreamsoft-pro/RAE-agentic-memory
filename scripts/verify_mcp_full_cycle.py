@@ -1,6 +1,6 @@
 import asyncio
 import os
-import sys
+
 from rae_mcp.server import RAEMemoryClient
 
 # Konfiguracja środowiska
@@ -11,19 +11,19 @@ os.environ["RAE_PROJECT_ID"] = "mcp-verification-project"
 
 async def main():
     print("🚀 Starting MCP Full Cycle Verification (Layers & Vectors)...")
-    
+
     client = RAEMemoryClient(
         api_url=os.environ["RAE_API_URL"],
         api_key=os.environ["RAE_API_KEY"],
         tenant_id=os.environ["RAE_TENANT_ID"]
     )
-    
+
     created_ids = []
-    
+
     # 1. ZAPIS DO RÓŻNYCH WARSTW
     layers_to_test = ["working", "episodic", "semantic"]
     print("\n📝 Step 1: Saving memories to multiple layers...")
-    
+
     for layer in layers_to_test:
         content = f"MCP_TEST_VECTOR_LAYER_{layer.upper()}: This is a specific test memory for the {layer} layer to verify hybrid search stability."
         try:
@@ -50,23 +50,23 @@ async def main():
 
     # 2. WYSZUKIWANIE (HYBRID SEARCH)
     print("\n🔍 Step 2: Testing Hybrid Search across layers...")
-    
+
     query = "MCP_TEST_VECTOR_LAYER verify stability"
-    
+
     try:
         results = await client.search_memory(
             query=query,
             top_k=10,
             project="mcp-verification-project"
         )
-        
+
         print(f"   Found {len(results)} results.")
-        
+
         found_layers = set()
         for mem in results:
             layer = mem.get("layer") or mem.get("metadata", {}).get("layer") or "unknown"
             found_layers.add(layer)
-            
+
             score = mem.get("score", 0.0)
             content_snippet = mem.get("content", "")[:60]
             print(f"   - [{score:.3f}] [{layer}] {content_snippet}...")
@@ -76,7 +76,7 @@ async def main():
             print("\n   ✅ SUCCESS: Found memories from ALL tested layers.")
         else:
             print(f"\n   ⚠️ WARNING: Missing results from layers: {missing_layers}")
-            
+
     except Exception as e:
         print(f"   ❌ Search failed (Vector Dimension Mismatch?): {e}")
 

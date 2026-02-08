@@ -4,8 +4,7 @@ Measures query entropy and abstraction level to guide routing decisions.
 """
 
 import math
-from collections import Counter
-from typing import List
+
 
 class SemanticResonance:
     """
@@ -25,28 +24,28 @@ class SemanticResonance:
 
         # 1. Shannon Entropy of characters
         entropy = self._shannon_entropy(query)
-        
+
         # 2. Token Diversity (Type-Token Ratio)
         tokens = query.lower().split()
         ttr = len(set(tokens)) / len(tokens) if tokens else 0.0
-        
+
         # 3. Special Character Density (Penalize resonance for IDs/Code)
         special_chars = sum(1 for c in query if not c.isalnum() and not c.isspace())
         special_density = special_chars / len(query) if len(query) > 0 else 0.0
-        
+
         # Formula:
         # Base is entropy (usually 2.0-5.0 for text). Normalize to 0-1 range roughly.
         # Penalize by special density (IDs have low resonance).
-        
+
         normalized_entropy = min(entropy / 5.0, 1.0)
-        
+
         # If density of special chars is high (e.g. > 10%), it's likely code/ID -> Low Resonance
         if special_density > 0.1:
             return 0.1
-            
+
         # Combine factors
         resonance = (normalized_entropy * 0.7) + (ttr * 0.3)
-        
+
         return min(max(resonance, 0.0), 1.0)
 
     def _shannon_entropy(self, text: str) -> float:

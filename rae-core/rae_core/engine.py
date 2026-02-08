@@ -67,16 +67,19 @@ class RAEEngine:
             from rae_core.search.strategies.multi_vector import (
                 MultiVectorSearchStrategy,
             )
+
             strategies = []
             for name, provider in self.embedding_provider.providers.items():
                 strategies.append((self.vector_store, provider, name))
             return MultiVectorSearchStrategy(strategies=strategies)
 
         from rae_core.search.strategies.vector import VectorSearchStrategy
+
         return VectorSearchStrategy(self.vector_store, self.embedding_provider)
 
     def _init_fulltext_strategy(self):
         from rae_core.search.strategies.fulltext import FullTextStrategy
+
         return FullTextStrategy(self.memory_storage)
 
     async def search_memories(
@@ -104,7 +107,7 @@ class RAEEngine:
         # 1. BANDIT TUNING: Get "weights" but interpret them as Threshold Signals (System 7.2)
         custom_weights = kwargs.get("custom_weights")
         strategy_weights = None
-        
+
         if isinstance(custom_weights, dict):
             strategy_weights = custom_weights
 
@@ -114,35 +117,40 @@ class RAEEngine:
 
         # --- SYSTEM 7.2: MAP WEIGHTS TO THRESHOLDS ---
         gateway_config_override = {}
-        
+
         txt_w = strategy_weights.get("fulltext", 1.0)
         vec_w = strategy_weights.get("vector", 1.0)
-        
+
         if txt_w >= 10.0:
             # Bandit signals "High Specificity" (Industrial/Log mode)
             gateway_config_override = {
                 "confidence_gate": 0.95,  # Very strict early exit
-                "rrf_k": 100              # Flat ranking (Lexical dominates)
+                "rrf_k": 100,  # Flat ranking (Lexical dominates)
             }
         elif vec_w >= 5.0:
-             # Bandit signals "High Abstraction"
+            # Bandit signals "High Abstraction"
             gateway_config_override = {
                 "confidence_gate": 0.60,  # Loose early exit
-                "rrf_k": 20               # Aggressive ranking (Vector dominates)
+                "rrf_k": 20,  # Aggressive ranking (Vector dominates)
             }
-        
+
         # Prepare arguments safely
         active_strategies = kwargs.get("strategies")
         engine_limit = self.math_ctrl.get_engine_param("limit", 100)
         enable_reranking = kwargs.get("enable_reranking", False)
-        
+
         # Clean kwargs to avoid duplicates in **search_kwargs
         search_kwargs = kwargs.copy()
-        for k in ["strategies", "strategy_weights", "enable_reranking", "custom_weights"]:
+        for k in [
+            "strategies",
+            "strategy_weights",
+            "enable_reranking",
+            "custom_weights",
+        ]:
             search_kwargs.pop(k, None)
-        
+
         if gateway_config_override:
-             search_kwargs["gateway_config"] = gateway_config_override
+            search_kwargs["gateway_config"] = gateway_config_override
 
         candidates = await self.search_engine.search(
             query=query,
@@ -150,23 +158,28 @@ class RAEEngine:
             filters=search_filters,
             limit=int(engine_limit),
             strategies=active_strategies,
-            strategy_weights=strategy_weights, 
+            strategy_weights=strategy_weights,
             enable_reranking=enable_reranking,
             math_controller=self.math_ctrl,
-            **search_kwargs
+            **search_kwargs,
         )
 
         # 2. DESIGNED MATH SCORING
         from rae_core.math.structure import ScoringWeights
+
         scoring_weights = None
         if isinstance(custom_weights, dict):
-            valid_fields = {k: v for k, v in custom_weights.items() if k in ["alpha", "beta", "gamma"]}
+            valid_fields = {
+                k: v
+                for k, v in custom_weights.items()
+                if k in ["alpha", "beta", "gamma"]
+            }
             scoring_weights = ScoringWeights(**valid_fields)
         elif custom_weights:
             scoring_weights = custom_weights
 
         memories = []
-        for m_id, sim_score in candidates:
+        for m_id, sim_score, importance in candidates:
             memory = await self.memory_storage.get_memory(m_id, tenant_id)
             if memory:
                 math_score = self.math_ctrl.score_memory(
@@ -174,6 +187,7 @@ class RAEEngine:
                 )
                 memory["math_score"] = math_score
                 memory["search_score"] = sim_score
+                memory["importance"] = importance  # Propagate importance from search
                 memories.append(memory)
 
         # 3. SEMANTIC RESONANCE
@@ -182,7 +196,9 @@ class RAEEngine:
             edges = await self.memory_storage.get_neighbors_batch(m_ids, tenant_id)
             if edges:
                 candidate_ids = {str(m["id"]) for m in memories}
-                memories, energy_map = self.resonance_engine.compute_resonance(memories, edges)
+                memories, energy_map = self.resonance_engine.compute_resonance(
+                    memories, edges
+                )
 
                 induced_ids = []
                 if energy_map:
@@ -195,13 +211,20 @@ class RAEEngine:
                             induced_ids.append(node_id)
 
                 if induced_ids:
-                    logger.info("reflection_induction_triggered", count=len(induced_ids))
+                    logger.info(
+                        "reflection_induction_triggered", count=len(induced_ids)
+                    )
                     for mid_str in induced_ids[:5]:
                         try:
                             from uuid import UUID
-                            induced_mem = await self.memory_storage.get_memory(UUID(mid_str), tenant_id)
+
+                            induced_mem = await self.memory_storage.get_memory(
+                                UUID(mid_str), tenant_id
+                            )
                             if induced_mem:
-                                induced_mem["math_score"] = float(np.tanh(energy_map[mid_str]))
+                                induced_mem["math_score"] = float(
+                                    np.tanh(energy_map[mid_str])
+                                )
                                 induced_mem["resonance_metadata"] = {
                                     "induced": True,
                                     "boost": float(energy_map[mid_str]),
@@ -217,6 +240,7 @@ class RAEEngine:
         if not self.llm_provider:
             raise RuntimeError("LLM provider not configured")
         from typing import cast
+
         return cast(str, await self.llm_provider.generate_text(prompt=prompt, **kwargs))
 
     async def store_memory(self, **kwargs):
@@ -230,7 +254,9 @@ class RAEEngine:
             )
             emb = {name: e[0] for name, e in embs_dict.items() if e}
         else:
-            emb = await self.embedding_provider.embed_text(content, task_type="search_document")
+            emb = await self.embedding_provider.embed_text(
+                content, task_type="search_document"
+            )
 
         vector_meta = kwargs.copy()
         if "content" in vector_meta:

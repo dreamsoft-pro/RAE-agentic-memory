@@ -65,7 +65,7 @@ def make_request(url, method="GET", data=None, timeout=5):
 def get_active_url():
     """Finds the working RAE API URL."""
     print("🔍 Probing RAE Nodes...")
-    
+
     import platform
     hostname = platform.node()
     is_local_machine = hostname == "grzegorz-lesniowski-N550JK"
@@ -76,13 +76,13 @@ def get_active_url():
         ("Local Dev", DEFAULT_URL),
         ("Local Lite", LITE_URL),
     ]
-    
+
     # Reorder based on preference
     if is_local_machine:
         print(f"   Detected Local Machine ({hostname}). Prioritizing Local Nodes.")
         # Move Local to front
         nodes = [n for n in nodes if "Local" in n[0]] + [n for n in nodes if "Local" not in n[0]]
-    
+
     for name, url in nodes:
         print(f"   Target: {url} ({name}) ... ", end="", flush=True)
         code, _ = make_request(f"{url}/health", timeout=2)

@@ -106,8 +106,9 @@ class RAEBenchmarkRunner:
         if config_path.exists():
             with open(config_path, "r") as f:
                 ctrl_config = yaml.safe_load(f)
-        
+
         from rae_core.math.controller import MathLayerController
+
         math_ctrl = MathLayerController(config=ctrl_config)
 
         self.pool = await asyncpg.create_pool(
@@ -286,7 +287,9 @@ class RAEBenchmarkRunner:
         print(f"🎯 Project: {self.project_id}")
         await self.cleanup()
 
-        print(f"📥 Inserting {len(data['memories'])} memories (Industrial Batch Mode)...")
+        print(
+            f"📥 Inserting {len(data['memories'])} memories (Industrial Batch Mode)..."
+        )
         batch_size = 50
         comp_nodes: dict[str, list[int]] = {}
 

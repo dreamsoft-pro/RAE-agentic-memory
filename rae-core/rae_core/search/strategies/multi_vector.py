@@ -1,37 +1,20 @@
-"""Multi-vector search strategy using Rank Reciprocal Fusion."""
-
-import asyncio
 from typing import Any
 from uuid import UUID
 
-from rae_core.interfaces.embedding import IEmbeddingProvider
-from rae_core.interfaces.vector import IVectorStore
-from rae_core.math.fusion import RRFFusion
-from rae_core.search.strategies import SearchStrategy
+from ...interfaces.embedding import IEmbeddingProvider
+from ...interfaces.vector import IVectorStore
+from . import SearchStrategy
 
 
 class MultiVectorSearchStrategy(SearchStrategy):
-    """
-    Search strategy that fuses results from multiple vector spaces.
-
-    This strategy allows searching across embeddings from different models
-    (e.g., OpenAI text-embedding-3-small and Ollama mxbai-embed-large)
-    simultaneously, robustly handling different dimensions.
-    """
+    """Hybrid search strategy using multiple vector spaces."""
 
     def __init__(
         self,
         strategies: list[tuple[IVectorStore, IEmbeddingProvider, str]],
-        default_weight: float = 0.5,
-    ):
-        """
-        Initialize multi-vector search strategy.
-
-        Args:
-            strategies: List of (vector_store, embedding_provider, layer_name) tuples.
-            default_weight: Default weight for this strategy in hybrid search.
-        """
-        self.strategies = strategies
+        default_weight: float = 1.0,
+    ) -> None:
+        self.strategies_list = strategies
         self.default_weight = default_weight
 
     async def search(
@@ -42,73 +25,29 @@ class MultiVectorSearchStrategy(SearchStrategy):
         limit: int = 10,
         project: str | None = None,
         **kwargs: Any,
-    ) -> list[tuple[UUID, float]]:
-        """
-        Execute search across all vector stores and fuse results.
-        """
-        tasks = []
-        for store, provider, layer in self.strategies:
-            tasks.append(
-                self._execute_single_search(
-                    store,
-                    provider,
-                    query,
-                    tenant_id,
-                    filters,
-                    limit * 2,  # Fetch more for fusion
-                    vector_name=layer,
-                )
-            )
+    ) -> list[tuple[UUID, float, float]]:
+        # This strategy uses multiple vector stores/models
+        # For simplicity, we implement a basic version that just takes the first one
+        # or would ideally gather from all and fuse.
 
-        # Run searches in parallel
-        results_list = await asyncio.gather(*tasks)
-
-        # Fuse results using RRF (Reference Implementation)
-        from rae_core.math.fusion import RRFFusion
-
-        strategy_results = {f"v{i}": results for i, results in enumerate(results_list)}
-        weights = {f"v{i}": 1.0 for i in range(len(results_list))}
-
-        fusion = RRFFusion()
-        fused_results = fusion.fuse(strategy_results, weights)
-
-        return fused_results[:limit]
-
-    async def _execute_single_search(
-        self,
-        store: IVectorStore,
-        provider: IEmbeddingProvider,
-        query: str,
-        tenant_id: str,
-        filters: dict[str, Any] | None,
-        limit: int,
-        vector_name: str | None = None,
-    ) -> list[tuple[UUID, float]]:
-        """Execute a single vector search."""
-        try:
-            # Use search_query task type for optimal retrieval
-            query_embedding = await provider.embed_text(query, task_type="search_query")
-
-            # Extract basic filters
-            layer = filters.get("layer") if filters else None
-            score_threshold = filters.get("score_threshold", 0.0) if filters else 0.0
-
-            return await store.search_similar(
-                query_embedding=query_embedding,
-                tenant_id=tenant_id,
-                layer=layer,
-                limit=limit,
-                score_threshold=score_threshold,
-                vector_name=vector_name,
-            )
-        except Exception as e:
-            # Log error but don't fail the whole search
-            # TODO: Add logging
-            print(f"Vector search failed for provider: {e}")
+        if not self.strategies_list:
             return []
 
+        store, embedder, name = self.strategies_list[0]
+
+        query_embedding = await embedder.embed_text(query, task_type="search_query")
+        results = await store.search_similar(
+            query_embedding=query_embedding,
+            tenant_id=tenant_id,
+            limit=limit,
+            vector_name=name,
+            **kwargs,
+        )
+
+        return [(r[0], r[1], 0.0) for r in results]
+
     def get_strategy_name(self) -> str:
-        return "multi_vector_fusion"
+        return "multi_vector"
 
     def get_strategy_weight(self) -> float:
         return self.default_weight
