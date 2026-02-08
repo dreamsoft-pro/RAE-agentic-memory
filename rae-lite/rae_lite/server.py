@@ -4,6 +4,8 @@ RAE-Lite Local HTTP Server.
 FastAPI server running locally for RAE-Lite.
 """
 
+import os
+from pathlib import Path
 import structlog
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,39 +19,49 @@ from rae_adapters.sqlite import (
 from rae_core.config.settings import RAESettings
 from rae_core.engine import RAEEngine
 from rae_core.interfaces.embedding import IEmbeddingProvider
+from rae_core.embedding.native import NativeEmbeddingProvider
 from rae_lite.config import settings
 
 logger = structlog.get_logger(__name__)
 
+# SYSTEM 22.3: Production-ready embedding logic for RAE-Lite
+project_root = Path(os.environ.get("PROJECT_ROOT", os.getcwd()))
+model_dir = project_root / "models" / "nomic-embed-text-v1.5"
+model_path = model_dir / "model.onnx"
+tokenizer_path = model_dir / "tokenizer.json"
 
-# Simple Mock Embedding Provider for RAE-Lite Smoke Test
-class LocalEmbeddingProvider(IEmbeddingProvider):
-    def __init__(self):
-        self.dimension = 384
-
-    async def embed_text(self, text: str, task_type: str = "search_document") -> list[float]:
-        # Return deterministic mock vector based on text length
-        val = (len(text) % 100) / 100.0
-        return [val] * self.dimension
-
-    async def embed_batch(self, texts: list[str], task_type: str = "search_document") -> list[list[float]]:
-        return [await self.embed_text(t, task_type) for t in texts]
-
-    def get_dimension(self) -> int:
-        return self.dimension
-
+if model_path.exists() and tokenizer_path.exists():
+    logger.info("using_native_embeddings", path=str(model_path))
+    embedding_provider = NativeEmbeddingProvider(
+        model_path=model_path,
+        tokenizer_path=tokenizer_path,
+        model_name="nomic-embed-text-v1.5"
+    )
+else:
+    logger.warning("native_models_missing_using_mock", path=str(model_path))
+    class LocalEmbeddingProvider(IEmbeddingProvider):
+        def __init__(self):
+            self.dimension = 384
+        async def embed_text(self, text: str, task_type: str = "search_document") -> list[float]:
+            val = (len(text) % 100) / 100.0
+            return [val] * self.dimension
+        async def embed_batch(self, texts: list[str], task_type: str = "search_document") -> list[list[float]]:
+            return [await self.embed_text(t, task_type) for t in texts]
+        def get_dimension(self) -> int:
+            return self.dimension
+    embedding_provider = LocalEmbeddingProvider()
 
 # Initialize SQLite adapters
 memory_storage = SQLiteStorage(str(settings.db_path))
 vector_store = SQLiteVectorStore(str(settings.vector_db_path))
 graph_store = SQLiteGraphStore(str(settings.graph_db_path))
-embedding_provider = LocalEmbeddingProvider()
 
 # Configure RAE Core Settings
 rae_settings = RAESettings()
 rae_settings.sensory_max_size = 50
 rae_settings.working_max_size = 50
-rae_settings.vector_backend = "sqlite"  # Important for RAE-Lite
+rae_settings.vector_backend = "sqlite"
+rae_settings.vector_dimension = embedding_provider.get_dimension()
 
 # Initialize RAE Engine
 engine = RAEEngine(

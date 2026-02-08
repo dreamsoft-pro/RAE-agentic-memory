@@ -32,10 +32,19 @@ class FullTextStrategy(SearchStrategy):
         output = []
         for r in results:
             try:
-                # Try common ID field names
-                m_id = r.get('id') or r.get('memory_id') or r.get('uuid')
+                # Handle SQLite style: {"memory": {...}, "score": ...}
+                if isinstance(r, dict) and "memory" in r:
+                    m_data = r["memory"]
+                    m_id = m_data.get('id') or m_data.get('memory_id') or m_data.get('uuid')
+                    score = r.get('score', 1.0)
+                else:
+                    # Flat style (Postgres)
+                    m_id = r.get('id') or r.get('memory_id') or r.get('uuid')
+                    score = r.get('score', 1.0)
+                
                 if m_id:
-                    output.append((UUID(str(m_id)), r.get('score', 1.0)))
-            except Exception:
+                    output.append((UUID(str(m_id)), float(score)))
+            except Exception as e:
+                logger.error("fulltext_result_parsing_failed", error=str(e), result=r)
                 continue
         return output
