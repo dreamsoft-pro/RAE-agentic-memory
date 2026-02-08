@@ -85,7 +85,24 @@ class SQLiteStorage(IMemoryStorage):
         return 0
 
     async def search_memories(self, query: str, tenant_id: str, agent_id: str, layer: str, limit: int = 10, **kwargs: Any) -> list[dict[str, Any]]:
-        return []
+        await self.initialize()
+        project = kwargs.get("project")
+        
+        where_clauses = ["tenant_id = ?", "agent_id = ?", "layer = ?", "content LIKE ?"]
+        params = [tenant_id, agent_id, layer, f"%{query}%"]
+        
+        if project:
+            where_clauses.append("project = ?")
+            params.append(project)
+            
+        params.append(limit)
+        sql = f"SELECT * FROM memories WHERE {' AND '.join(where_clauses)} LIMIT ?"
+        
+        async with aiosqlite.connect(self.db_path) as db:
+            db.row_factory = aiosqlite.Row
+            async with db.execute(sql, params) as cursor:
+                rows = await cursor.fetchall()
+                return [{"id": r["id"], "content": r["content"], "score": 1.0, "importance": r["importance"]} for r in rows]
 
     async def delete_expired_memories(self, tenant_id: str, agent_id: str | None = None, layer: str | None = None) -> int:
         return 0

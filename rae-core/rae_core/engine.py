@@ -135,7 +135,7 @@ class RAEEngine:
             }
 
         # Prepare arguments safely
-        active_strategies = kwargs.get("strategies")
+        active_strategies = kwargs.get("strategies") or search_filters.get("strategies")
         engine_limit = self.math_ctrl.get_engine_param("limit", 100)
         enable_reranking = kwargs.get("enable_reranking", False)
 

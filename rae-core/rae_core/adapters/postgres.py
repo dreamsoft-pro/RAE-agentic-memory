@@ -1,6 +1,6 @@
 import json
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Dict, List, Optional
 from uuid import UUID, uuid4
 
 import asyncpg
@@ -10,10 +10,7 @@ from ..interfaces.storage import IMemoryStorage
 
 class PostgreSQLStorage(IMemoryStorage):
     def __init__(
-        self,
-        dsn: str | None = None,
-        pool: asyncpg.Pool | None = None,
-        **pool_kwargs: Any,
+        self, dsn: str | None = None, pool: Optional[asyncpg.Pool] = None, **pool_kwargs: Any
     ) -> None:
         self.dsn = dsn
         self._pool = pool
@@ -45,9 +42,7 @@ class PostgreSQLStorage(IMemoryStorage):
             )
         return m_id
 
-    async def get_memory(
-        self, memory_id: UUID, tenant_id: str
-    ) -> dict[str, Any] | None:
+    async def get_memory(self, memory_id: UUID, tenant_id: str) -> dict[str, Any] | None:
         pool = await self._get_pool()
         async with pool.acquire() as conn:
             row = await conn.fetchrow(
@@ -57,9 +52,7 @@ class PostgreSQLStorage(IMemoryStorage):
             )
         return dict(row) if row else None
 
-    async def list_memories(
-        self, tenant_id: str, **kwargs: Any
-    ) -> list[dict[str, Any]]:
+    async def list_memories(self, tenant_id: str, **kwargs: Any) -> list[dict[str, Any]]:
         pool = await self._get_pool()
         limit = kwargs.get("limit", 100)
         async with pool.acquire() as conn:
@@ -81,11 +74,20 @@ class PostgreSQLStorage(IMemoryStorage):
         final_query = query
         if '"' not in query:
             final_query = query.replace(" ", " OR ")
-        sql = """SELECT *, ts_rank_cd(to_tsvector('english', coalesce(content, '')), websearch_to_tsquery('english', $1)) as score FROM memories WHERE tenant_id = $2 AND agent_id = $3 AND layer = $4 AND (to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', $1) OR content ILIKE $5) ORDER BY score DESC LIMIT $6"""
-        async with pool.acquire() as conn:
-            rows = await conn.fetch(
-                sql, final_query, tenant_id, agent_id, layer, f"%{query}%", limit
-            )
+
+        project = kwargs.get("project")
+        if project:
+            sql = """SELECT *, ts_rank_cd(to_tsvector('english', coalesce(content, '')), websearch_to_tsquery('english', $1)) as score FROM memories WHERE tenant_id = $2 AND agent_id = $3 AND layer = $4 AND project = $6 AND (to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', $1) OR content ILIKE $5) ORDER BY score DESC LIMIT $7"""
+            async with pool.acquire() as conn:
+                rows = await conn.fetch(
+                    sql, final_query, tenant_id, agent_id, layer, f"%{query}%", project, limit
+                )
+        else:
+            sql = """SELECT *, ts_rank_cd(to_tsvector('english', coalesce(content, '')), websearch_to_tsquery('english', $1)) as score FROM memories WHERE tenant_id = $2 AND agent_id = $3 AND layer = $4 AND (to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', $1) OR content ILIKE $5) ORDER BY score DESC LIMIT $6"""
+            async with pool.acquire() as conn:
+                rows = await conn.fetch(
+                    sql, final_query, tenant_id, agent_id, layer, f"%{query}%", limit
+                )
         return [dict(r) for r in rows]
 
     async def delete_memories_with_metadata_filter(
@@ -126,22 +128,16 @@ class PostgreSQLStorage(IMemoryStorage):
             await self._pool.close()
 
     async def get_metric_aggregate(
-        self,
-        tenant_id: str,
-        metric: str,
-        func: str,
-        filters: dict[str, Any] | None = None,
+        self, tenant_id: str, metric: str, func: str, filters: dict[str, Any] | None = None
     ) -> float:
         return 0.0
 
     async def update_memory_access_batch(
-        self, memory_ids: list[UUID], tenant_id: str
+        self, memory_ids: List[UUID], tenant_id: str
     ) -> bool:
         return True
 
-    async def adjust_importance(
-        self, memory_id: UUID, delta: float, tenant_id: str
-    ) -> float:
+    async def adjust_importance(self, memory_id: UUID, delta: float, tenant_id: str) -> float:
         return 0.5
 
     async def delete_memories_below_importance(
@@ -153,7 +149,7 @@ class PostgreSQLStorage(IMemoryStorage):
         return 0
 
     async def save_embedding(
-        self, memory_id: UUID, model_name: str, embedding: list[float], tenant_id: str
+        self, memory_id: UUID, model_name: str, embedding: List[float], tenant_id: str
     ) -> bool:
         return True
 

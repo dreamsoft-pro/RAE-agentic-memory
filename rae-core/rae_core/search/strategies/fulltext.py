@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, List, Tuple
 from uuid import UUID
 
 from ...interfaces.storage import IMemoryStorage
@@ -25,6 +25,7 @@ class FullTextStrategy(SearchStrategy):
     ) -> list[tuple[UUID, float, float]]:
         agent_id = kwargs.get("agent_id") or (filters or {}).get("agent_id", "default")
         layer = kwargs.get("layer") or (filters or {}).get("layer", "episodic")
+        project_id = project or (filters or {}).get("project")
 
         results = await self.storage.search_memories(
             query=query,
@@ -32,9 +33,10 @@ class FullTextStrategy(SearchStrategy):
             limit=limit,
             agent_id=agent_id,
             layer=layer,
+            project=project_id,
         )
 
-        output: list[tuple[UUID, float, float]] = []
+        output: List[Tuple[UUID, float, float]] = []
         for r in results:
             m_id_raw = r.get("id")
             if isinstance(m_id_raw, str):

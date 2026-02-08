@@ -933,12 +933,13 @@ class RAECoreService:
             logger.debug("using_szubar_weights_for_query")
 
         # 2. Execute Engine search
+        target_layer = (layers[0] if layers else None) or (filters or {}).get("layer")
         raw_results = await self.engine.search_memories(
             query=query,
             tenant_id=str(tenant_id),
-            agent_id=None,  # Allow all agents for this project
+            agent_id="default",  # Explicitly use default agent
             project=project,  # Strict context
-            layer=layers[0] if layers else None,
+            layer=target_layer,
             top_k=k,
             filters=filters,
             custom_weights=weights,
