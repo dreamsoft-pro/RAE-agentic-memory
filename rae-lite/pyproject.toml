@@ -11,6 +11,8 @@ dependencies = [
     "pillow>=10.0",
     "pydantic-settings>=2.0",
     "structlog>=23.0",
+    "nicegui>=1.4.0",
+    "httpx>=0.25.0",
 ]
 
 [project.scripts]

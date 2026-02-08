@@ -7,6 +7,7 @@ Starts local HTTP server and system tray app.
 import sys
 import threading
 import time
+import os
 
 import structlog
 import uvicorn
@@ -59,6 +60,22 @@ class ServerThread(threading.Thread):
             self.server.should_exit = True
 
 
+class GUIThread(threading.Thread):
+    """Thread to run NiceGUI server."""
+    def __init__(self):
+        super().__init__(daemon=True)
+
+    def run(self):
+        try:
+            from nicegui import ui
+            from rae_lite.ui.app import init
+            init()
+            # Port 8080 for UI, reload=False for production stability
+            ui.run(title="RAE-Lite Desktop", port=8080, reload=False, show=False)
+        except Exception as e:
+            logger.error("gui_start_failed", error=str(e))
+
+
 def main():
     """Main entry point for RAE-Lite."""
     logger.info(
@@ -74,12 +91,17 @@ def main():
     server_thread = ServerThread()
     server_thread.start()
 
-    # Give server time to start
+    # Start NiceGUI thread
+    gui_thread = GUIThread()
+    gui_thread.start()
+
+    # Give servers time to start
     time.sleep(2)
 
     logger.info(
         "server_started",
-        url=f"http://{settings.server_host}:{settings.server_port}",
+        api_url=f"http://{settings.server_host}:{settings.server_port}",
+        gui_url="http://127.0.0.1:8080"
     )
 
     # Run system tray (blocks until quit)
