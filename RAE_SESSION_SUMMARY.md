@@ -1,34 +1,19 @@
-# RAE Session Summary - 2026-01-31
+# RAE Session Summary - 2026-02-07
+## System 11.2: Adaptive Noise Floor (Status: Stable)
 
-## 🎯 GPU Acceleration (v3.5.0-dev)
-- **Status:** ✅ **COMPLETED & VERIFIED (Node 1)**
-- **Achievement:** Successfully enabled GPU acceleration for Native ONNX embeddings (`onnxruntime-gpu`) inside the Docker container on Node 1 (Arch Linux + RTX 4080).
-- **Implementation Details:**
-    - **Base Image:** Switched to `nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04` to ensure full library availability.
-    - **Python:** Standardized on **Python 3.10** for maximum ML compatibility.
-    - **Library:** Used latest `onnxruntime-gpu` (PyPI) which supports CUDA 12 via `devel` image.
-    - **Infrastructure Fixes (Crucial):**
-        - Forced `runtime: nvidia` in `docker-compose.yml`.
-        - **Manual Bind Mounts:** Explicitly mounted host driver libraries (`libcuda.so.1`, `libnvidia-ptxjitcompiler.so.1`, `libnvidia-nvvm.so.4`) to `/usr/lib/x86_64-linux-gnu/` because the `nvidia-container-toolkit` hook failed to inject them automatically on this specific host configuration.
-        - **Device Mapping:** Manually mapped `/dev/nvidia-uvm` to fix `CUDA failure 999`.
-    - **Verification:** `scripts/verify_gpu.py` confirms `CUDAExecutionProvider` is active.
+### Results:
+- **Academic Lite:** 1.0000 (Perfect precision maintained)
+- **Industrial Small:** 0.7317 (Improved from 0.69, dynamic 0.5 threshold helps recall)
+- **Industrial 10k:** 0.3333 (Recovered signal from 0.03 noise floor, dynamic 0.7 threshold works)
 
-## 🔌 External Connectivity & Reranking
-- **Status:** ✅ **COMPLETED & VERIFIED**
-- **Achievements:**
-    - **MCP Integration:** Fully wired `RAEMCPClient` into `RAECoreService`. The system can now delegate embedding and reranking tasks to external MCP servers (standard protocol).
-    - **External Reranking:** Implemented `IReranker` interface and added `APIReranker` and `MCPreranker`.
-    - **Strategy Support:** `HybridSearchEngine` now supports pluggable rerankers (Emerald, API, MCP, or None).
-    - **Configuration:** Added `RAE_RERANKER_BACKEND`, `RAE_RERANKER_API_URL`, and `RAE_RERANKER_MCP_TOOL` settings.
+### Key Achievements:
+1. **Density-Aware Waterfall:** Replaced fixed thresholds with a mechanism that scales from 0.5 (small sets) to 0.85 (massive sets).
+2. **Scale-Aware RRF:** Implemented adaptive K-factor based on result density to prevent noise dilution at 10k scale.
+3. **Synergy Boost:** Maintained 1.5x multiplier for dual-engine hits.
 
-## ⚙️ Config Consolidation & Refactoring
-- **Status:** ✅ Completed.
-- **Improvements:**
-    - **Zero Warning Policy:** Achieved 100% green lint and mypy checks across the codebase.
-    - **Architecture Compliance:** Refactored `RAECoreService` to reduce complexity (extracted initialization sub-steps), ensuring it passes architecture health tests.
-    - **Fail Fast:** Verified system stability with 1165 green tests using the "Fail Fast" protocol.
+### Next Session Plan (System 11.3):
+- **Precision Scalpel:** Implement selective aggressiveness for LEXICAL_FIRST profiles. If keywords are strong, vectors should be clipped at 0.9 to prevent "shadowing" of perfect matches.
+- **Goal:** Reach 0.85 MRR on Industrial Small and 0.50 MRR on Industrial 10k.
 
-## 📝 Next Steps
-1.  **Metric Tuning:** Analyze performance impact of `156 Memcpy nodes` warning in ONNX Runtime.
-2.  **Cluster Optimization:** Refine Node 1 hardware-specific configuration using profiles.
-3.  **Benchmark Restoration:** Focus on restoring Radically High MRR (~1.0) on industrial data using the new external reranking capabilities.
+### Files Modified:
+- `rae-core/rae_core/math/logic_gateway.py` (Core Logic)

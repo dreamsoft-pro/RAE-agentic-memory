@@ -133,11 +133,13 @@ class MathLayerController:
             strategy = arm.strategy
 
         # 3. Map Arm Strategy to Weights
-        # SYSTEM 3.4 INTELLIGENCE: Heuristic Seeding (Cold Start Fix)
+        # SYSTEM 12.0: Smarter Oracle Seeding
         weights = {"fulltext": 1.0}
         txt_w, vec_w = 1.0, 1.0
 
-        is_industrial = features.keyword_ratio > 0.1 or features.term_density > 0.8
+        # Refined Industrial Detection: High Density + Specific Tokens or High Keyword Ratio
+        has_log_tokens = any(t in query.lower() for t in ["[err", "log_", "uuid", "0x"])
+        is_industrial = (features.term_density > 0.9 and features.keyword_ratio > 0.15) or has_log_tokens
 
         if strategy == "default" or strategy.startswith("hybrid_default"):
             if is_industrial:

@@ -10,13 +10,13 @@
 #   - cheap: Always prefer L1, minimize cost
 
 # Active profile
-profile: "cheap"
+profile: "research"
 
 # Policy version (1 = rule-based, 2 = weighted scoring + reward)
 policy_version: 2
 
 # Enable Multi-Armed Bandit online learning (requires policy_version >= 2)
-bandit_enabled: false
+bandit_enabled: true
 
 # Default level when no rules match
 default_level: "deterministic_heuristic"  # L1

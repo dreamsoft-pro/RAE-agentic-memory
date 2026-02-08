@@ -262,7 +262,10 @@ class RAECoreService:
             "fulltext": FullTextStrategy(memory_storage=self.postgres_adapter),
         }
         search_engine = HybridSearchEngine(
-            strategies=search_strategies, reranker=reranker
+            strategies=search_strategies, 
+            embedding_provider=self.embedding_provider,
+            memory_storage=self.postgres_adapter,
+            reranker=reranker
         )
 
         self.engine = RAEEngine(
@@ -935,7 +938,7 @@ class RAECoreService:
         raw_results = await self.engine.search_memories(
             query=query,
             tenant_id=str(tenant_id),
-            agent_id=project or "default",  # Use project as agent_id for context isolation
+            agent_id=None, # Allow all agents for this project
             project=project,  # Strict context
             layer=layers[0] if layers else None,
             top_k=k,

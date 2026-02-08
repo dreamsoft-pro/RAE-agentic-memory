@@ -318,7 +318,7 @@ class RAEMemoryClient:
             "X-Tenant-Id": tenant_id,
             "Content-Type": "application/json",
         }
-        self.base_url = f"{api_url}/v1"
+        self.base_url = f"{api_url}/v2"
 
     async def store_memory(
         self,
@@ -350,7 +350,7 @@ class RAEMemoryClient:
             try:
                 async with httpx.AsyncClient() as client:
                     response = await client.post(
-                        f"{self.base_url}/memory/store",
+                        f"{self.base_url}/memories/",
                         json=payload,
                         headers=self.headers,
                         timeout=30.0,
@@ -358,7 +358,7 @@ class RAEMemoryClient:
                     response.raise_for_status()
                     result = response.json()
 
-                    memory_id = result.get("id")
+                    memory_id = result.get("memory_id")
                     span.set_attribute("memory.id", memory_id)
 
                     logger.info(
@@ -402,7 +402,7 @@ class RAEMemoryClient:
             span.set_attribute("search.project", project or RAE_PROJECT_ID)
 
             payload = {
-                "query_text": query,
+                "query": query,
                 "k": top_k,
                 "project": project or RAE_PROJECT_ID,
                 "filters": filters or {},
@@ -411,7 +411,7 @@ class RAEMemoryClient:
             try:
                 async with httpx.AsyncClient() as client:
                     response = await client.post(
-                        f"{self.base_url}/memory/query",
+                        f"{self.base_url}/memories/query",
                         json=payload,
                         headers=self.headers,
                         timeout=30.0,

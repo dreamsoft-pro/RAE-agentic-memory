@@ -1,110 +1,56 @@
 """
-Fusion Strategies for Hybrid Search.
-
-This module provides fusion strategies like RRF and Confidence-Weighted Fusion.
+Fusion Strategy - Adapter for LogicGateway.
 """
 
+from typing import Dict, List, Tuple, Any
 from uuid import UUID
 
-import structlog
+from rae_core.math.logic_gateway import LogicGateway
 
-logger = structlog.get_logger(__name__)
-
-
-class RRFFusion:
+class FusionStrategy:
     """
-    Reciprocal Rank Fusion (RRF) Strategy.
-    Standard algorithm for combining ranked lists without needing score normalization.
-    """
-
-    def __init__(self, k: int = 60):
-        self.k = k
-
-    def fuse(
-        self,
-        strategy_results: dict[str, list[tuple[UUID, float]]],
-        weights: dict[str, float],
-    ) -> list[tuple[UUID, float]]:
-
-        rrf_scores: dict[UUID, float] = {}
-
-        for strategy_name, results in strategy_results.items():
-            weight = weights.get(strategy_name, 1.0)
-
-            for rank, (item_id, _) in enumerate(results, 1):
-                # RRF formula: 1 / (k + rank)
-                # Weighted RRF: weight / (k + rank)
-                score = weight / (self.k + rank)
-
-                if item_id in rrf_scores:
-                    rrf_scores[item_id] += score
-                else:
-                    rrf_scores[item_id] = score
-
-        return sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)
-
-
-class ConfidenceWeightedFusion:
-    """
-    Confidence-Weighted Fusion (ORB 2.0).
-    Uses signal confidence (entropy/variance) to dynamically weight strategies.
-    """
-
-    def __init__(self, default_weights: dict[str, float] | None = None):
-        self.default_weights = default_weights or {"vector": 1.0, "fulltext": 1.0}
-
-    def fuse(
-        self,
-        strategy_results: dict[str, list[tuple[UUID, float]]],
-        manual_weights: dict[str, float],
-    ) -> list[tuple[UUID, float]]:
-
-        # 1. Normalize Scores (Min-Max) per strategy
-        normalized_results = {}
-        for name, results in strategy_results.items():
-            if not results:
-                continue
-            scores = [s for _, s in results]
-            min_s, max_s = min(scores), max(scores)
-            if max_s == min_s:
-                norm_results = [(id, 1.0) for id, _ in results]
-            else:
-                norm_results = [
-                    (id, (s - min_s) / (max_s - min_s)) for id, s in results
-                ]
-            normalized_results[name] = norm_results
-
-        # 2. Apply Weights (Manual > Default)
-        final_scores: dict[UUID, float] = {}
-        for name, results in normalized_results.items():
-            weight = manual_weights.get(name, self.default_weights.get(name, 1.0))
-
-            for item_id, score in results:
-                weighted_score = score * weight
-                final_scores[item_id] = final_scores.get(item_id, 0.0) + weighted_score
-
-        return sorted(final_scores.items(), key=lambda x: x[1], reverse=True)
-
-
-class LogicFusion:
-    """
-    Deterministic Logic-based Fusion (System 4.0).
-    Wraps LogicGateway to provide profile-based retrieval.
+    Wrapper around LogicGateway to handle fusion logic.
     """
 
     def __init__(self):
-        from rae_core.math.logic_gateway import LogicGateway
         self.gateway = LogicGateway()
 
     def fuse(
-        self,
-        strategy_results: dict[str, list[tuple[UUID, float]]],
-        weights: dict[str, float],
+        self, 
+        strategy_results: Dict[str, List[Tuple[UUID, float]]], 
+        weights: Dict[str, float] | None = None,
         query: str = "",
-    ) -> list[tuple[UUID, float]]:
-        
-        # 1. Route to profile
+        config_override: Dict[str, float] | None = None
+    ) -> List[Tuple[UUID, float]]:
+        """
+        Fuse results using LogicGateway routing.
+        Passes config_override for System 7.2 Dynamic Thresholds.
+        """
+        # Route query to profile
         profile = self.gateway.route(query, strategy_results)
         
-        # 2. Execute profile-based fusion
-        return self.gateway.fuse(profile, strategy_results)
+        # Execute fusion with optional config override
+        return self.gateway.fuse(
+            profile, 
+            strategy_results, 
+            weights=weights,
+            query=query, 
+            config_override=config_override
+        )
+
+# --- Legacy Support for MultiVectorStrategy ---
+
+class RRFFusion:
+    """Legacy RRF Fusion for internal MultiVector strategy usage."""
+    
+    def fuse(self, strategy_results: Dict[str, List[Tuple[UUID, float]]], weights: Dict[str, float] | None = None) -> List[Tuple[UUID, float]]:
+        # Simple RRF implementation for internal vector fusion
+        k = 60
+        fused: Dict[UUID, float] = {}
+        
+        for res_list in strategy_results.values():
+            for rank, (id, _) in enumerate(res_list):
+                score = 1.0 / (rank + k)
+                fused[id] = fused.get(id, 0.0) + score
+                
+        return sorted(fused.items(), key=lambda x: x[1], reverse=True)

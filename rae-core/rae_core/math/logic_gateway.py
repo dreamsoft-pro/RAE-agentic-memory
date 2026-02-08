@@ -1,15 +1,19 @@
 """
-Logic Gateway - Deterministic Math Core (System 6.4).
-Implements Resonance Cascade and Confidence Gates.
+Logic Gateway - Deterministic Math Core (System 11.2 - Adaptive Noise Floor).
+Implements dynamic waterfall thresholds based on result density to balance 
+Small-Scale Precision (0.5 threshold) vs Large-Scale Noise (0.8 threshold).
 """
 
 from enum import Enum
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Union
 from uuid import UUID
 import structlog
 from .semantic_resonance import SemanticResonance
 
 logger = structlog.get_logger(__name__)
+
+# Type for strategy results: List of (UUID, score, optional_importance)
+StrategyResult = List[Union[Tuple[UUID, float], Tuple[UUID, float, float]]]
 
 class SearchProfile(Enum):
     LEXICAL_FIRST = "lexical_first"
@@ -18,165 +22,230 @@ class SearchProfile(Enum):
 
 class LogicGateway:
     """
-    Deterministic controller for hybrid search fusion.
-    Uses Semantic Resonance and Confidence Gates (Early Exit).
+    Adaptive controller using Density-Aware Waterfall Clipping and Scale-Aware RRF.
     """
 
     def __init__(self, thresholds: Dict[str, float] | None = None):
-        self.thresholds = thresholds or {
+        self.default_thresholds = thresholds or {
             "v_high": 0.15,
             "t_high": 0.20,
-            "confidence_gate": 0.9, # Early exit threshold
-            "resonance_low": 0.35,  # Threshold for Specific/Lexical
-            "resonance_high": 0.70, # Threshold for Abstract/Vector
-            "rrf_k": 10             # Tighter ranking for Top-1 priority
+            "confidence_gate": 0.9, 
+            "resonance_low": 0.35,  
+            "resonance_high": 0.70, 
+            "rrf_k_base": 20             
         }
         self.resonance_calculator = SemanticResonance()
 
-    def route(self, query: str, strategy_results: Dict[str, List[Tuple[UUID, float]]]) -> SearchProfile:
-        """
-        Route query based on Semantic Resonance and Confidence Gates.
-        """
-        # 1. Calculate Resonance (System 6.4)
+    def route(self, query: str, strategy_results: Dict[str, StrategyResult]) -> SearchProfile:
         resonance = self.resonance_calculator.calculate(query)
-        
-        # 2. Check for Immediate Lexical Confidence (Gatekeeper)
-        # If we already have results (from a pre-check) and they are perfect, stay Lexical.
         t_results = strategy_results.get("fulltext", [])
-        if t_results and self._is_high_confidence(t_results[0][1]):
-            return SearchProfile.LEXICAL_FIRST
-
-        # 3. Resonance-based Routing
-        if resonance < self.thresholds["resonance_low"]:
-            # Low resonance = Specific (IDs, Errors, Code) -> Lexical Priority
-            return SearchProfile.LEXICAL_FIRST
         
-        if resonance > self.thresholds["resonance_high"]:
-             # High resonance = Abstract -> Vector Priority
+        if t_results and t_results[0][1] >= self.default_thresholds["confidence_gate"] and len(t_results) < 5:
+            return SearchProfile.LEXICAL_FIRST
+            
+        if resonance < self.default_thresholds["resonance_low"]:
+            return SearchProfile.LEXICAL_FIRST
+        if resonance > self.default_thresholds["resonance_high"]:
             return SearchProfile.VECTOR_FIRST
-
-        # Default to consensus
         return SearchProfile.CONSENSUS
 
-    def fuse(self, profile: SearchProfile, strategy_results: Dict[str, List[Tuple[UUID, float]]]) -> List[Tuple[UUID, float]]:
-        """
-        Apply the selected profile to fuse results with Early Exit logic.
-        """
+    def fuse(
+        self, 
+        profile: SearchProfile, 
+        strategy_results: Dict[str, StrategyResult], 
+        weights: Dict[str, float] | None = None,
+        query: str = "",
+        config_override: Dict[str, float] | None = None
+    ) -> List[Tuple[UUID, float]]:
+        active_config = self.default_thresholds.copy()
+        if config_override: active_config.update(config_override)
+
+        # 1. NORMALIZATION & CONFIDENCE-AWARE WATERFALL FILTERING (System 12.0)
+        normalized_results = self._normalize_and_clip_adaptive(strategy_results, weights)
+
+        # 2. CALCULATE ADAPTIVE K
+        total_count = sum(len(res) for res in normalized_results.values())
+        adaptive_k = max(active_config["rrf_k_base"], min(250.0, total_count / 10.0))
+        active_config["rrf_k"] = adaptive_k
+
         fused_results: List[Tuple[UUID, float]] = []
-        
         if profile == SearchProfile.LEXICAL_FIRST:
-            fused_results = self._fuse_lexical_first(strategy_results)
+            fused_results = self._fuse_lexical_first(normalized_results, active_config)
         elif profile == SearchProfile.VECTOR_FIRST:
-            fused_results = self._fuse_vector_first(strategy_results)
-        else: # CONSENSUS
-            fused_results = self._fuse_consensus(strategy_results)
+            fused_results = self._fuse_vector_first(normalized_results, active_config)
+        else:
+            fused_results = self._fuse_consensus(normalized_results, active_config)
             
-        return self._apply_resonance(fused_results, strategy_results)
+        return self._apply_resonance(fused_results, normalized_results, profile)
 
-    def _is_high_confidence(self, score: float) -> bool:
-        """Check if a score passes the Confidence Gate."""
-        # Assuming Postgres/Vector scores are somewhat normalized or distinct
-        # For Postgres, exact matches often have arbitrary high scores, but we assume 
-        # normalized behavior or distinct magnitude for this logic.
-        # In this implementation, we treat > 0.9 as 'Perfect'.
-        return score >= self.thresholds["confidence_gate"]
-
-    def _apply_resonance(self, fused_list: List[Tuple[UUID, float]], strategy_results: Dict[str, List[Tuple[UUID, float]]]) -> List[Tuple[UUID, float]]:
+    def _normalize_and_clip_adaptive(
+        self, 
+        strategy_results: Dict[str, StrategyResult],
+        weights: Dict[str, float] | None = None
+    ) -> Dict[str, List[Tuple[UUID, float, float]]]:
         """
-        Resonance: If a result appears in multiple independent strategies, boost it.
+        SYSTEM 12.1: Oracle Resilience (Lenient Clipping).
+        """
+        normalized = {}
+        weights = weights or {"fulltext": 1.0, "vector": 1.0}
+        
+        # Check for Lexical Confidence (The Oracle Gate)
+        t_results = strategy_results.get("fulltext", [])
+        has_high_lexical_confidence = (
+            t_results and 
+            t_results[0][1] >= self.default_thresholds["confidence_gate"]
+        )
+
+        for engine, res_list in strategy_results.items():
+            if not res_list:
+                normalized[engine] = []
+                continue
+                
+            std_list = []
+            for item in res_list:
+                if len(item) == 3: std_list.append(item)
+                else: std_list.append((item[0], item[1], 0.0))
+            
+            max_score = std_list[0][1]
+            raw_count = len(res_list)
+            
+            if engine == "fulltext":
+                # Text is sparse, baseline threshold 0.3
+                threshold_ratio = 0.3
+            else:
+                # Vector density: 0.3 (Small) -> 0.5 (Med) -> 0.7 (Large)
+                if raw_count < 50:
+                    threshold_ratio = 0.3
+                elif raw_count < 300:
+                    threshold_ratio = 0.5
+                else:
+                    threshold_ratio = 0.7
+                
+                # SYSTEM 12.1 V-CLIP:
+                # High-pressure pruning if lexical hit is confirmed.
+                if has_high_lexical_confidence:
+                    threshold_ratio = max(threshold_ratio, 0.85)
+                    logger.info("oracle_vclip_activated", engine=engine, new_ratio=threshold_ratio)
+
+            threshold = max_score * threshold_ratio
+            clipped = [r for r in std_list if r[1] >= threshold]
+            
+            # Safety: Keep at least Top-10
+            if len(clipped) < 10 and len(std_list) >= 10:
+                clipped = std_list[:10]
+            elif not clipped:
+                clipped = std_list[:1]
+                
+            normalized[engine] = clipped
+            
+        return normalized
+
+    def _apply_resonance(
+        self, 
+        fused_list: List[Tuple[UUID, float]], 
+        results: Dict[str, List[Tuple[UUID, float, float]]],
+        profile: SearchProfile = SearchProfile.CONSENSUS
+    ) -> List[Tuple[UUID, float]]:
+        """
+        Final stage processing with Oracle Synergy (System 12.1).
         """
         fused_map = dict(fused_list)
-        vector_ranks = {id: idx for idx, (id, _) in enumerate(strategy_results.get("vector", []))}
-        text_ranks = {id: idx for idx, (id, _) in enumerate(strategy_results.get("fulltext", []))}
+        v_ranks = {id: idx for idx, (id, _, _) in enumerate(results.get("vector", []))}
+        t_ranks = {id: idx for idx, (id, _, _) in enumerate(results.get("fulltext", []))}
         
+        importance_map = {}
+        for res_list in results.values():
+            for id, _, imp in res_list:
+                importance_map[id] = max(importance_map.get(id, 0.0), imp)
+
         final_scores = {}
         for id in fused_map:
-            v_rank = vector_ranks.get(id, 9999)
-            t_rank = text_ranks.get(id, 9999)
+            v_rank = v_ranks.get(id, 999)
+            t_rank = t_ranks.get(id, 999)
+            score = fused_map[id]
             
-            # Boost logic: If consistent across engines
+            # SYSTEM 12.1 ORACLE SYNERGY:
+            # Massive boost for cross-engine confirmation
             if v_rank < 50 and t_rank < 50:
-                final_scores[id] = fused_map[id] * 1.5 
-            else:
-                final_scores[id] = fused_map[id]
-
+                multiplier = 3.0 if profile == SearchProfile.LEXICAL_FIRST else 2.0
+                score *= multiplier
+                
+            # Content-Aware Bonus (Importance)
+            score += importance_map.get(id, 0.0) * 0.01 
+            final_scores[id] = score
+            
         return sorted(final_scores.items(), key=lambda x: x[1], reverse=True)
 
-    def _calculate_margins(self, strategy_results: Dict[str, List[Tuple[UUID, float]]]) -> Dict[str, float]:
-        margins = {}
-        for name, results in strategy_results.items():
-            if len(results) < 2:
-                margins[name] = 1.0 if results else 0.0
-                continue
-            margin = float(results[0][1]) - float(results[1][1])
-            margins[name] = margin
-        return margins
-
-    def _fuse_lexical_first(self, results: Dict[str, List[Tuple[UUID, float]]]) -> List[Tuple[UUID, float]]:
-        """LEXICAL-FIRST: Check for Early Exit, then RRF."""
+    def _fuse_lexical_first(self, results: Dict[str, List[Tuple[UUID, float, float]]], config: Dict[str, float]) -> List[Tuple[UUID, float]]:
         text_results = results.get("fulltext", [])
+        vector_results = results.get("vector", [])
+        v_ranks = {id: idx for idx, (id, _, _) in enumerate(vector_results)}
         
-        # EARLY EXIT CRITERIA (System 6.5 Hybrid Resilience):
-        # Only exit early if:
-        # 1. We have results.
-        # 2. The top result is high confidence.
-        # 3. AND the result set is small (specific). 
-        #    If we have > 5 results, it's likely a generic keyword match (e.g. "error") 
-        #    and we NEED vectors/RRF to rank the relevant specific entry to the top.
-        is_specific_enough = len(text_results) <= 5
-        
-        if text_results and self._is_high_confidence(text_results[0][1]) and is_specific_enough:
-            # Return just the lexical list (no pollution from vector)
-            return text_results
-
-        # Fallback to RRF with Lexical Priority
-        vector_results = {id: idx for idx, (id, _) in enumerate(results.get("vector", []))}
         merged = {}
-        k = self.thresholds["rrf_k"]
+        k = config["rrf_k"]
         
-        for idx, (id, score) in enumerate(text_results):
-            # Base score from rank (1/rank)
-            rrf_score = 1.0 / (idx + k)
+        # 1. Process Text (Primary)
+        for idx, (id, score, _) in enumerate(text_results):
+            # SYSTEM 12.0: Oracle Numerator (5.0x boost for lexical positioning)
+            rrf = 5.0 / (idx + k)
+            if id in v_ranks: 
+                rrf += 1.0 / (v_ranks[id] + k)
+            merged[id] = rrf + 10.0 # Base boost for being in text
             
-            # Vector bonus if present
-            if id in vector_results:
-                v_rank = vector_results[id]
-                rrf_score += 1.0 / (v_rank + k)
-            merged[id] = rrf_score + 10.0 # Maintain dominance
+        # 2. Process Vectors not in Text (Safety Fallback)
+        for idx, (id, score, _) in enumerate(vector_results):
+            if id not in merged:
+                # Lower boost (no +10.0) ensures text results always win if they exist
+                merged[id] = 1.0 / (idx + k)
                 
         return sorted(merged.items(), key=lambda x: x[1], reverse=True)
 
-    def _fuse_vector_first(self, results: Dict[str, List[Tuple[UUID, float]]]) -> List[Tuple[UUID, float]]:
-        """VECTOR-FIRST: Semantic priority."""
+    def _fuse_vector_first(self, results: Dict[str, List[Tuple[UUID, float, float]]], config: Dict[str, float]) -> List[Tuple[UUID, float]]:
         vector_results = results.get("vector", [])
+        text_results = results.get("fulltext", [])
+        t_ranks = {id: idx for idx, (id, _, _) in enumerate(text_results)}
         
-        # EARLY EXIT (Rare for vectors, but possible with high threshold)
-        if vector_results and vector_results[0][1] > 0.95: 
-             return vector_results
+        merged = {}
+        k = config["rrf_k"]
+        
+        # 1. Process Vectors (Primary)
+        for idx, (id, score, _) in enumerate(vector_results):
+            rrf = 1.0 / (idx + k)
+            if id in t_ranks: 
+                rrf += 5.0 / (t_ranks[id] + k) # Boost if also in text
+            merged[id] = rrf + 10.0
+            
+        # 2. Process Text not in Vectors
+        for idx, (id, score, _) in enumerate(text_results):
+            if id not in merged:
+                merged[id] = 5.0 / (idx + k) # Text is high signal even if vectors missed it
+                
+        return sorted(merged.items(), key=lambda x: x[1], reverse=True)
 
-        text_ranks = {id: idx for idx, (id, _) in enumerate(results.get("fulltext", []))}
+    def _fuse_consensus(self, results: Dict[str, List[Tuple[UUID, float, float]]], config: Dict[str, float]) -> List[Tuple[UUID, float]]:
+        """
+        Standard RRF with Oracle Synergy (System 12.1).
+        """
         fused = {}
-        k = self.thresholds["rrf_k"]
+        k = config["rrf_k"]
         
-        for idx, (id, score) in enumerate(vector_results):
-            rrf_score = 1.0 / (idx + k)
-            if id in text_ranks:
-                rrf_score += 1.0 / (text_ranks[id] + k)
-            fused[id] = rrf_score + 10.0
+        # Track engine appearance for synergy
+        appearance = {}
+
+        for engine, res_list in results.items():
+            for rank, (id, score, _) in enumerate(res_list):
+                # RRF calculation
+                weight = 5.0 if engine == "fulltext" else 1.0
+                val = weight / (rank + k)
+                
+                fused[id] = fused.get(id, 0.0) + val
+                appearance[id] = appearance.get(id, 0) + 1
+
+        # Apply Consensus Boost
+        for id in fused:
+            if appearance[id] > 1:
+                fused[id] *= 2.0 # Double score if both engines agree
                 
         return sorted(fused.items(), key=lambda x: x[1], reverse=True)
 
-    def _fuse_consensus(self, results: Dict[str, List[Tuple[UUID, float]]]) -> List[Tuple[UUID, float]]:
-        """CONSENSUS: Pure RRF Fusion (Tighter k)."""
-        fused: Dict[UUID, float] = {}
-        k = self.thresholds["rrf_k"]
-        
-        for strategy_name, res_list in results.items():
-            for rank, (id, _) in enumerate(res_list):
-                score = 1.0 / (rank + k)
-                if id in fused:
-                    fused[id] += score
-                else:
-                    fused[id] = score
-                    
-        return sorted(fused.items(), key=lambda x: x[1], reverse=True)
+    

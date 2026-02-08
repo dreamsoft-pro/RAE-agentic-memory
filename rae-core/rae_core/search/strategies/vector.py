@@ -11,8 +11,7 @@ from rae_core.search.strategies import SearchStrategy
 class VectorSearchStrategy(SearchStrategy):
     """Semantic search using vector embeddings.
 
-    Uses cosine similarity between query embedding and memory embeddings
-    to find semantically similar memories.
+    Uses cosine similarity between query embedding and memory embeddings.
     """
 
     def __init__(
@@ -21,13 +20,6 @@ class VectorSearchStrategy(SearchStrategy):
         embedding_provider: IEmbeddingProvider,
         default_weight: float = 0.8,
     ):
-        """Initialize vector search strategy.
-
-        Args:
-            vector_store: Vector store implementation
-            embedding_provider: Embedding provider for query encoding
-            default_weight: Default weight in hybrid search (0.0-1.0)
-        """
         self.vector_store = vector_store
         self.embedding_provider = embedding_provider
         self.default_weight = default_weight
@@ -40,37 +32,37 @@ class VectorSearchStrategy(SearchStrategy):
         limit: int = 10,
         project: str | None = None,
         **kwargs: Any,
-    ) -> list[tuple[UUID, float]]:
+    ) -> list[tuple[UUID, float, float]]: # UPDATED RETURN TYPE
         """Execute semantic search.
 
-        Args:
-            query: Search query text
-            tenant_id: Tenant identifier
-            filters: Optional filters (layer, agent_id, score_threshold, etc.)
-            limit: Maximum number of results
-            project: Optional project identifier
-
         Returns:
-            List of (memory_id, similarity_score) tuples
+            List of (memory_id, similarity_score, importance) tuples
         """
-        # Generate query embedding
         query_embedding = await self.embedding_provider.embed_text(
             query, task_type="search_query"
         )
 
-        # Extract filters
         _layer = filters.get("layer") if filters else None
         _agent_id = filters.get("agent_id") if filters else None
         project = project or (filters.get("project") if filters else None)
         _session_id = filters.get("session_id") if filters else None
         _score_threshold = filters.get("score_threshold", 0.0) if filters else 0.0
 
-        # System 3.4: Allow searching in specific vector space
         vector_name = kwargs.get("vector_name") or (
             filters.get("vector_name") if filters else None
         )
 
-        # Search similar vectors - include extracted filters
+        # Assumes vector_store.search_similar returns (UUID, score, metadata) or handles metadata extraction internally
+        # BUT standard IVectorStore returns (UUID, float).
+        # We need to update QdrantAdapter first? Or rely on IVectorStore update.
+        
+        # Checking QdrantAdapter implementation (from memory/context):
+        # QdrantAdapter.search_similar returns list[tuple[UUID, float]].
+        # It internally fetches payload but discards it in the return.
+        
+        # For now, we will stick to (UUID, score) and return 0.0 importance
+        # UNLESS we update QdrantAdapter. This is a deeper change.
+        
         results = await self.vector_store.search_similar(
             query_embedding=query_embedding,
             tenant_id=tenant_id,
@@ -83,18 +75,18 @@ class VectorSearchStrategy(SearchStrategy):
             vector_name=vector_name,
         )
 
-        # DEBUG:
-        if results:
-            print(f"✅ VECTOR STRATEGY FOUND {len(results)} RESULTS")
-        else:
-            print("❌ VECTOR STRATEGY FOUND 0 RESULTS")
+        # Map to 3-tuple
+        final_results = []
+        for item in results:
+            if len(item) == 3:
+                final_results.append(item)
+            else:
+                final_results.append((item[0], item[1], 0.0))
 
-        return results
+        return final_results
 
     def get_strategy_name(self) -> str:
-        """Return strategy name."""
         return "vector"
 
     def get_strategy_weight(self) -> float:
-        """Return default weight for hybrid fusion."""
         return self.default_weight

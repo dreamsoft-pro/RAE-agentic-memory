@@ -67,21 +67,16 @@ class RAEEngine:
             from rae_core.search.strategies.multi_vector import (
                 MultiVectorSearchStrategy,
             )
-
-            # Build list of (store, provider, name) for each model in manager
             strategies = []
             for name, provider in self.embedding_provider.providers.items():
                 strategies.append((self.vector_store, provider, name))
-
             return MultiVectorSearchStrategy(strategies=strategies)
 
         from rae_core.search.strategies.vector import VectorSearchStrategy
-
         return VectorSearchStrategy(self.vector_store, self.embedding_provider)
 
     def _init_fulltext_strategy(self):
         from rae_core.search.strategies.fulltext import FullTextStrategy
-
         return FullTextStrategy(self.memory_storage)
 
     async def search_memories(
@@ -98,7 +93,6 @@ class RAEEngine:
         """
         RAE Reflective Search: Retrieval -> Math Scoring -> Manifold Adjustment.
         """
-        # 1. RETRIEVAL (Vector + Keyword)
         search_filters = {**(filters or {})}
         if agent_id:
             search_filters["agent_id"] = agent_id
@@ -107,59 +101,74 @@ class RAEEngine:
         if layer:
             search_filters["layer"] = layer
 
-        # Dynamic Weight Selection via Math Controller (Bandit)
-        # If weights are provided in kwargs, they override the autonomous controller
+        # 1. BANDIT TUNING: Get "weights" but interpret them as Threshold Signals (System 7.2)
         custom_weights = kwargs.get("custom_weights")
-
-        # FIX: Distinguish between Retrieval Weights (dict) and Scoring Weights (object)
         strategy_weights = None
+        
         if isinstance(custom_weights, dict):
             strategy_weights = custom_weights
 
         if not strategy_weights:
-            # autonomous tuning
             strategy_weights = self.math_ctrl.get_retrieval_weights(query)
             logger.info("autonomous_tuning_applied", weights=strategy_weights)
 
+        # --- SYSTEM 7.2: MAP WEIGHTS TO THRESHOLDS ---
+        gateway_config_override = {}
+        
+        txt_w = strategy_weights.get("fulltext", 1.0)
+        vec_w = strategy_weights.get("vector", 1.0)
+        
+        if txt_w >= 10.0:
+            # Bandit signals "High Specificity" (Industrial/Log mode)
+            gateway_config_override = {
+                "confidence_gate": 0.95,  # Very strict early exit
+                "rrf_k": 100              # Flat ranking (Lexical dominates)
+            }
+        elif vec_w >= 5.0:
+             # Bandit signals "High Abstraction"
+            gateway_config_override = {
+                "confidence_gate": 0.60,  # Loose early exit
+                "rrf_k": 20               # Aggressive ranking (Vector dominates)
+            }
+        
+        # Prepare arguments safely
         active_strategies = kwargs.get("strategies")
-
-        # Get limit from config
         engine_limit = self.math_ctrl.get_engine_param("limit", 100)
+        enable_reranking = kwargs.get("enable_reranking", False)
+        
+        # Clean kwargs to avoid duplicates in **search_kwargs
+        search_kwargs = kwargs.copy()
+        for k in ["strategies", "strategy_weights", "enable_reranking", "custom_weights"]:
+            search_kwargs.pop(k, None)
+        
+        if gateway_config_override:
+             search_kwargs["gateway_config"] = gateway_config_override
 
         candidates = await self.search_engine.search(
             query=query,
             tenant_id=tenant_id,
             filters=search_filters,
-            limit=int(
-                engine_limit
-            ),  # SYSTEM 3.4: Wide window for Math Layer / Resonance processing
+            limit=int(engine_limit),
             strategies=active_strategies,
-            strategy_weights=strategy_weights,
-            enable_reranking=False,
+            strategy_weights=strategy_weights, 
+            enable_reranking=enable_reranking,
             math_controller=self.math_ctrl,
+            **search_kwargs
         )
 
-        # 2. DESIGNED MATH SCORING (The Manifold)
+        # 2. DESIGNED MATH SCORING
         from rae_core.math.structure import ScoringWeights
-
+        scoring_weights = None
         if isinstance(custom_weights, dict):
-            # Extract only fields valid for ScoringWeights
-            valid_fields = {
-                k: v
-                for k, v in custom_weights.items()
-                if k in ["alpha", "beta", "gamma"]
-            }
+            valid_fields = {k: v for k, v in custom_weights.items() if k in ["alpha", "beta", "gamma"]}
             scoring_weights = ScoringWeights(**valid_fields)
         elif custom_weights:
             scoring_weights = custom_weights
-        else:
-            scoring_weights = None  # Will use default in score_memory if None
 
         memories = []
         for m_id, sim_score in candidates:
             memory = await self.memory_storage.get_memory(m_id, tenant_id)
             if memory:
-                # Math Layer weighs similarity against system-wide importance and topology
                 math_score = self.math_ctrl.score_memory(
                     memory, query_similarity=sim_score, weights=scoring_weights
                 )
@@ -167,27 +176,17 @@ class RAEEngine:
                 memory["search_score"] = sim_score
                 memories.append(memory)
 
-        # 3. SEMANTIC RESONANCE (Manifold Wave Propagation)
-        # Using graph connectivity to boost non-obvious ideas
+        # 3. SEMANTIC RESONANCE
         if hasattr(self.memory_storage, "get_neighbors_batch") and memories:
             m_ids = [m["id"] for m in memories]
             edges = await self.memory_storage.get_neighbors_batch(m_ids, tenant_id)
             if edges:
                 candidate_ids = {str(m["id"]) for m in memories}
+                memories, energy_map = self.resonance_engine.compute_resonance(memories, edges)
 
-                # Apply multi-hop resonance
-                memories, energy_map = self.resonance_engine.compute_resonance(
-                    memories, edges
-                )
-
-                # REFLECTION INDUCTION: Pull in new memories from the graph with high energy
                 induced_ids = []
-                # Threshold for induction (relative to top energy)
                 if energy_map:
                     max_e = max(energy_map.values())
-                    # Math Core v3.3: Auto-Tuned Threshold
-                    # Factual queries -> High threshold (0.8) -> Less noise
-                    # Abstract queries -> Low threshold (0.4) -> More context
                     dyn_threshold = self.math_ctrl.get_resonance_threshold(query)
                     threshold = max_e * dyn_threshold
 
@@ -195,24 +194,14 @@ class RAEEngine:
                         if node_id not in candidate_ids and energy > threshold:
                             induced_ids.append(node_id)
 
-                # Fetch content for induced memories
                 if induced_ids:
-                    logger.info(
-                        "reflection_induction_triggered", count=len(induced_ids)
-                    )
-                    for mid_str in induced_ids[
-                        :5
-                    ]:  # Limit induction to top 5 to avoid explosion
+                    logger.info("reflection_induction_triggered", count=len(induced_ids))
+                    for mid_str in induced_ids[:5]:
                         try:
                             from uuid import UUID
-
-                            induced_mem = await self.memory_storage.get_memory(
-                                UUID(mid_str), tenant_id
-                            )
+                            induced_mem = await self.memory_storage.get_memory(UUID(mid_str), tenant_id)
                             if induced_mem:
-                                induced_mem["math_score"] = float(
-                                    np.tanh(energy_map[mid_str])
-                                )
+                                induced_mem["math_score"] = float(np.tanh(energy_map[mid_str]))
                                 induced_mem["resonance_metadata"] = {
                                     "induced": True,
                                     "boost": float(energy_map[mid_str]),
@@ -221,64 +210,28 @@ class RAEEngine:
                         except Exception:
                             continue
 
-        # 4. SYNERGY RESTORATION (Scientist Path)
-        # We rely purely on Mathematical Resonance (Graph Energy Flow).
-        # No artificial hardcoded multipliers (*1.2).
-        # The energy map from compute_resonance is the ground truth.
-
-        # If we induced memories via Reflection, they already have correct 'math_score'
-        # calculated from tanh(energy).
-
-        # Final Sort based on the integrated Math Score (Similarity + Resonance + Importance)
         memories.sort(key=lambda x: x.get("math_score", 0.0), reverse=True)
         return memories[:top_k]
 
-    async def generate_text(
-        self,
-        prompt: str,
-        system_prompt: str | None = None,
-        max_tokens: int = 1000,
-        temperature: float = 0.7,
-    ) -> str:
-        """
-        Generate text using the LLM provider.
-        Used by ReflectionEngine and higher-level agentic patterns.
-        """
+    async def generate_text(self, prompt: str, **kwargs) -> str:
         if not self.llm_provider:
-            raise RuntimeError("LLM provider not configured in RAEEngine")
-
+            raise RuntimeError("LLM provider not configured")
         from typing import cast
-
-        return cast(
-            str,
-            await self.llm_provider.generate_text(
-                prompt=prompt,
-                system_prompt=system_prompt,
-                max_tokens=max_tokens,
-                temperature=temperature,
-            ),
-        )
+        return cast(str, await self.llm_provider.generate_text(prompt=prompt, **kwargs))
 
     async def store_memory(self, **kwargs):
-        """Store memory with automatic embedding (supports Multi-Vector)."""
         content = kwargs.get("content")
         tenant_id = kwargs.get("tenant_id")
         m_id = await self.memory_storage.store_memory(**kwargs)
 
-        # Automatic Vectorization (Manifold Entry)
-        # Check if provider supports multi-vector generation (EmbeddingManager)
         if hasattr(self.embedding_provider, "generate_all_embeddings"):
             embs_dict = await self.embedding_provider.generate_all_embeddings(
                 [content], task_type="search_document"
             )
-            # Convert dict[name, list[list[float]]] to dict[name, list[float]]
             emb = {name: e[0] for name, e in embs_dict.items() if e}
         else:
-            emb = await self.embedding_provider.embed_text(
-                content, task_type="search_document"
-            )
+            emb = await self.embedding_provider.embed_text(content, task_type="search_document")
 
-        # Clean metadata for vector storage (remove heavy content)
         vector_meta = kwargs.copy()
         if "content" in vector_meta:
             del vector_meta["content"]
@@ -287,7 +240,6 @@ class RAEEngine:
         return m_id
 
     def get_status(self) -> dict[str, Any]:
-        """Get engine status and statistics."""
         return {
             "engine": "RAE-Core v2.9.0",
             "search_strategies": list(self.search_engine.strategies.keys()),
@@ -299,11 +251,4 @@ class RAEEngine:
         }
 
     async def run_reflection_cycle(self, **kwargs) -> dict[str, Any]:
-        """Run memory consolidation/reflection cycle."""
-        # Placeholder for reflection logic
-        return {
-            "status": "completed",
-            "reflections_created": 0,
-            "memories_consolidated": 0,
-            "tokens_saved": 0,
-        }
+        return {"status": "completed", "reflections_created": 0}

@@ -38,17 +38,7 @@ class FullTextStrategy(SearchStrategy):
         content: str,
         tags: list[str],
     ) -> float:
-        """Compute match score based on keyword presence.
-
-        Args:
-            query: Search query
-            content: Memory content
-            tags: Memory tags
-
-        Returns:
-            Match score (0.0-1.0)
-        """
-        # Wildcard support
+        """Compute match score based on keyword presence."""
         if query == "*":
             return 1.0
 
@@ -58,20 +48,15 @@ class FullTextStrategy(SearchStrategy):
 
         score = 0.0
 
-        # Exact phrase match (highest score)
         if query_norm in content_norm:
             score += 1.0
-
-        # Tag exact match
         if query_norm in tags_norm:
             score += 0.8
 
-        # Word-level matches
         query_words = set(query_norm.split())
         content_words = set(content_norm.split())
         tag_words = set(word for tag in tags_norm for word in tag.split())
 
-        # Calculate overlap
         content_overlap = (
             len(query_words & content_words) / len(query_words) if query_words else 0
         )
@@ -92,66 +77,70 @@ class FullTextStrategy(SearchStrategy):
         limit: int = 10,
         project: str | None = None,
         **kwargs: Any,
-    ) -> list[tuple[UUID, float]]:
+    ) -> list[tuple[UUID, float, float]]:
         """Execute full-text search.
 
-        Args:
-            query: Search query text
-            tenant_id: Tenant identifier
-            filters: Optional filters (layer, agent_id, tags)
-            limit: Maximum number of results
-            project: Optional project identifier
-
         Returns:
-            List of (memory_id, match_score) tuples
+            List of (memory_id, match_score, importance) tuples
         """
-        # Extract filters
         layer = filters.get("layer") if filters else None
         agent_id = filters.get("agent_id") if filters else None
         project = project or (filters.get("project") if filters else None)
 
-        # Execute search via storage adapter with FTS support
+        # SYSTEM 9.0: Check for strict mode in kwargs (passed from Controller/Engine)
+        gateway_config = kwargs.get("gateway_config", {})
+        is_strict = gateway_config.get("confidence_gate", 0.0) >= 0.95
+        
+        # We pass 'strict_mode' via filters or query modification?
+        # Ideally, IMemoryStorage.list_memories should support search_type.
+        # Since we can't change the interface easily, we append a signal to the query 
+        # OR we rely on the implementation of list_memories to handle complex queries.
+        
+        # HACK: If strict, we assume the user wants ALL terms.
+        # In 'websearch_to_tsquery', quoting terms forces AND.
+        # So we quote the query if strict mode is active.
+        search_query = query
+        if is_strict and '"' not in query:
+             search_query = f'"{query}"'
+
         memories = await self.memory_storage.list_memories(
             tenant_id=tenant_id,
             agent_id=agent_id,
             layer=layer,
             limit=limit,
             project=project,
-            filters=filters,  # Pass filters down
-            query=query,  # Pass query for FTS ranking
+            filters=filters,
+            query=search_query, # Modified query for strictness
         )
 
         if not memories:
             return []
 
-        # Score each memory - Trust storage rank if available, else compute locally
-        results: list[tuple[UUID, float]] = []
+        results: list[tuple[UUID, float, float]] = []
         for memory in memories:
             memory_id = memory["id"]
             if isinstance(memory_id, str):
                 memory_id = UUID(memory_id)
 
-            # Use rank from storage if available
             score = memory.get("rank") or memory.get("score")
 
             if score is None:
-                # Compute local match score as fallback
                 score = self._compute_match_score(
-                    query=query,
+                    query=query, # Score against original query
                     content=memory.get("content", ""),
                     tags=memory.get("tags", []),
                 )
 
             score = float(score)
+            importance = float(memory.get("importance", 0.0))
+
             if score > 0:
-                results.append((memory_id, score))
+                results.append((memory_id, score, importance))
 
         return results
 
     def get_strategy_name(self) -> str:
-        """Return strategy name."""
         return "fulltext"
 
     def get_strategy_weight(self) -> float:
-        """Return default weight for hybrid fusion."""
         return self.default_weight

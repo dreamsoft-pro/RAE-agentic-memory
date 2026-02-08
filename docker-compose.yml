@@ -101,7 +101,7 @@ services:
       - RAE_LLM_MODEL_DEFAULT=local_deepseek_coder
       - RAE_EMBEDDING_MODEL=ollama/nomic-embed-text
       - RAE_EMBEDDING_BACKEND=onnx
-      - RAE_USE_GPU=true
+      - RAE_USE_GPU=false
       # Dev-specific settings from docker-compose.dev.yml
       - RAE_APP_LOG_LEVEL=DEBUG
       - LOG_LEVEL=INFO
@@ -136,7 +136,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    command: ["uvicorn", "apps.memory_api.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-dir", "/app/apps", "--reload-dir", "/app/sdk", "--reload-dir", "/app/rae-core"] # Hot-reload enabled
+    command: ["uvicorn", "apps.memory_api.main:app", "--host", "0.0.0.0", "--port", "8000"]
     restart: unless-stopped
     networks:
       - rae-network
@@ -359,7 +359,7 @@ services:
       - RAE_VECTOR_BACKEND=${RAE_VECTOR_BACKEND:-qdrant}
       - RAE_EMBEDDING_MODEL=ollama/nomic-embed-text
       - RAE_EMBEDDING_BACKEND=onnx
-      - RAE_USE_GPU=true
+      - RAE_USE_GPU=false
       - RAE_APP_LOG_LEVEL=DEBUG
       - LOG_LEVEL=INFO
       - OTEL_TRACES_ENABLED=false
