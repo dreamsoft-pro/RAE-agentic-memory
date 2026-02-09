@@ -55,7 +55,7 @@ class MathLayerController:
             ratio = i / 10.0
             weights = {
                 "fulltext": round(1.0 - ratio, 2) * 10,
-                "vector": round(ratio, 2) * 10,
+                "vector": max(0.5, round(ratio, 2) * 10), # Floor at 0.5 to keep semantic search alive
                 "anchor": 1000.0,
             }
             params = {"resonance_factor": 0.2, "rerank_gate": 0.5, "rerank_limit": 300}

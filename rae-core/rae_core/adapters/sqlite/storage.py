@@ -56,10 +56,29 @@ class SQLiteStorage(IMemoryStorage):
                 )
             """
             )
-            # FTS5 virtual table
+            # FTS5 virtual table for lightning-fast keyword search
             await db.execute(
-                "CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(content, content=memories, content_rowid=rowid)"
+                "CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(content, content='memories')"
             )
+            
+            # Triggers to keep FTS index synced with main table
+            await db.execute("""
+                CREATE TRIGGER IF NOT EXISTS memories_ai AFTER INSERT ON memories BEGIN
+                    INSERT INTO memories_fts(rowid, content) VALUES (new.rowid, new.content);
+                END;
+            """)
+            await db.execute("""
+                CREATE TRIGGER IF NOT EXISTS memories_ad AFTER DELETE ON memories BEGIN
+                    INSERT INTO memories_fts(memories_fts, rowid, content) VALUES('delete', old.rowid, old.content);
+                END;
+            """)
+            await db.execute("""
+                CREATE TRIGGER IF NOT EXISTS memories_au AFTER UPDATE ON memories BEGIN
+                    INSERT INTO memories_fts(memories_fts, rowid, content) VALUES('delete', old.rowid, old.content);
+                    INSERT INTO memories_fts(rowid, content) VALUES (new.rowid, new.content);
+                END;
+            """)
+            
             await db.commit()
         self._initialized = True
 
@@ -206,12 +225,32 @@ class SQLiteStorage(IMemoryStorage):
 
     async def search_full_text(self, query: str, tenant_id: str, limit: int = 10) -> list[dict[str, Any]]:
         await self.initialize()
+        # Clean query for FTS5
+        search_term = query.strip('"').replace("'", "")
+        if not search_term:
+            return []
+
         async with aiosqlite.connect(self.db_path) as db:
             db.row_factory = aiosqlite.Row
-            search_term = query.strip('"')
-            async with db.execute("SELECT * FROM memories WHERE tenant_id = ? AND content LIKE ? LIMIT ?", (tenant_id, f"%{search_term}%", limit)) as cursor:
-                rows = await cursor.fetchall()
-                return [self._row_to_dict(r) for r in rows]
+            # Use FTS5 MATCH for high precision search
+            # We join with the main memories table to get the tenant_id filtering and full metadata
+            sql = """
+                SELECT m.* 
+                FROM memories m
+                JOIN memories_fts f ON m.rowid = f.rowid
+                WHERE m.tenant_id = ? AND memories_fts MATCH ?
+                LIMIT ?
+            """
+            try:
+                async with db.execute(sql, (tenant_id, search_term, limit)) as cursor:
+                    rows = await cursor.fetchall()
+                    return [self._row_to_dict(r) for r in rows]
+            except aiosqlite.OperationalError:
+                # Fallback to LIKE if MATCH fails (e.g. invalid syntax or FTS table missing)
+                sql_fallback = "SELECT * FROM memories WHERE tenant_id = ? AND content LIKE ? LIMIT ?"
+                async with db.execute(sql_fallback, (tenant_id, f"%{search_term}%", limit)) as cursor:
+                    rows = await cursor.fetchall()
+                    return [self._row_to_dict(r) for r in rows]
 
     async def count_memories(self, tenant_id: str | None = None, agent_id: str | None = None, layer: str | None = None) -> int:
         await self.initialize()
