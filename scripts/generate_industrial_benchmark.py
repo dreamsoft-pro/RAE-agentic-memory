@@ -15,8 +15,23 @@ def generate_benchmark(count, output_file):
     types = ["bug", "feature", "question", "improvement"]
     priorities = ["low", "medium", "high", "critical"]
     statuses = ["open", "in_progress", "resolved", "closed"]
-    components = ["api", "authentication", "database", "reporting", "dashboard", "deployment", "monitoring"]
-    services = ["auth-service", "api-gateway", "db-cluster", "ml-inference", "cache-layer", "payment-gateway"]
+    components = [
+        "api",
+        "authentication",
+        "database",
+        "reporting",
+        "dashboard",
+        "deployment",
+        "monitoring",
+    ]
+    services = [
+        "auth-service",
+        "api-gateway",
+        "db-cluster",
+        "ml-inference",
+        "cache-layer",
+        "payment-gateway",
+    ]
     levels = ["INFO", "DEBUG", "WARN", "ERROR", "CRITICAL"]
 
     start_date = datetime(2024, 1, 1)
@@ -28,7 +43,7 @@ def generate_benchmark(count, output_file):
 
     for i in range(count):
         m_type = random.choice(["ticket", "metric", "log", "incident", "doc"])
-        timestamp = (start_date + timedelta(minutes=i*5)).isoformat()
+        timestamp = (start_date + timedelta(minutes=i * 5)).isoformat()
 
         m_id = f"{m_type}_{i:06d}"
 
@@ -45,15 +60,23 @@ def generate_benchmark(count, output_file):
                 "tags": ["ticket", t_type, prio],
                 "metadata": {
                     "source": "Support System",
-                    "importance": 0.3 if prio == "low" else 0.5 if prio == "medium" else 0.8 if prio == "high" else 0.95,
+                    "importance": (
+                        0.3
+                        if prio == "low"
+                        else (
+                            0.5 if prio == "medium" else 0.8 if prio == "high" else 0.95
+                        )
+                    ),
                     "timestamp": timestamp,
                     "type": t_type,
                     "priority": prio,
-                    "component": comp
-                }
+                    "component": comp,
+                },
             }
         elif m_type == "metric":
-            metric_type = random.choice(["requests", "cpu_usage", "memory", "network", "disk_io"])
+            metric_type = random.choice(
+                ["requests", "cpu_usage", "memory", "network", "disk_io"]
+            )
             val = random.randint(10, 99)
             srv = f"srv-{random.randint(1, 99):02d}"
             text = f"Metric {metric_type} on {srv}: {val}% at {timestamp[11:16]}"
@@ -71,8 +94,8 @@ def generate_benchmark(count, output_file):
                     "timestamp": timestamp,
                     "server_id": srv,
                     "metric_type": metric_type,
-                    "value": val
-                }
+                    "value": val,
+                },
             }
         elif m_type == "log":
             svc = random.choice(services)
@@ -88,8 +111,8 @@ def generate_benchmark(count, output_file):
                     "importance": 0.3 if lvl == "INFO" else 0.9,
                     "timestamp": timestamp,
                     "service": svc,
-                    "level": lvl
-                }
+                    "level": lvl,
+                },
             }
         elif m_type == "incident":
             sev = random.choice(["sev1", "sev2", "sev3", "sev4"])
@@ -107,15 +130,21 @@ def generate_benchmark(count, output_file):
                 "tags": ["incident", sev, comp],
                 "metadata": {
                     "source": "Incident Management",
-                    "importance": 0.4 if sev == "sev4" else 0.6 if sev == "sev3" else 0.85 if sev == "sev2" else 0.99,
+                    "importance": (
+                        0.4
+                        if sev == "sev4"
+                        else 0.6 if sev == "sev3" else 0.85 if sev == "sev2" else 0.99
+                    ),
                     "timestamp": timestamp,
                     "severity": sev,
                     "duration_minutes": dur,
-                    "affected_users": users
-                }
+                    "affected_users": users,
+                },
             }
-        else: # doc
-            comp = random.choice(components + ["architecture", "deployment", "troubleshooting"])
+        else:  # doc
+            comp = random.choice(
+                components + ["architecture", "deployment", "troubleshooting"]
+            )
             method = random.choice(["GET", "POST", "PUT", "DELETE"])
             text = f"Documentation ({comp}): API endpoint /{random.choice(['auth', 'users', 'posts', 'comments', 'metrics', 'database'])} - {method} method"
 
@@ -128,8 +157,8 @@ def generate_benchmark(count, output_file):
                 "metadata": {
                     "source": "Technical Documentation",
                     "importance": 0.7,
-                    "type": comp
-                }
+                    "type": comp,
+                },
             }
 
         memories.append(memory)
@@ -138,22 +167,32 @@ def generate_benchmark(count, output_file):
     queries = [
         {
             "query": "Find all API documentation",
-            "expected_source_ids": random.sample(documentation_ids, min(50, len(documentation_ids))),
+            "expected_source_ids": random.sample(
+                documentation_ids, min(50, len(documentation_ids))
+            ),
             "difficulty": "hard",
-            "category": "documentation"
+            "category": "documentation",
         },
         {
             "query": "Show critical incidents",
-            "expected_source_ids": random.sample(critical_incidents, min(10, len(critical_incidents))) if critical_incidents else [],
+            "expected_source_ids": (
+                random.sample(critical_incidents, min(10, len(critical_incidents)))
+                if critical_incidents
+                else []
+            ),
             "difficulty": "medium",
-            "category": "incidents"
+            "category": "incidents",
         },
         {
             "query": "What servers have high disk_io?",
-            "expected_source_ids": random.sample(high_disk_io_metrics, min(40, len(high_disk_io_metrics))) if high_disk_io_metrics else [],
+            "expected_source_ids": (
+                random.sample(high_disk_io_metrics, min(40, len(high_disk_io_metrics)))
+                if high_disk_io_metrics
+                else []
+            ),
             "difficulty": "hard",
-            "category": "metrics"
-        }
+            "category": "metrics",
+        },
     ]
 
     config = {
@@ -163,7 +202,7 @@ def generate_benchmark(count, output_file):
         "enable_reflection": True,
         "enable_graph": True,
         "test_scale": True,
-        "test_performance": True
+        "test_performance": True,
     }
 
     benchmark = {
@@ -172,17 +211,22 @@ def generate_benchmark(count, output_file):
         "version": "1.0",
         "memories": memories,
         "queries": queries,
-        "config": config
+        "config": config,
     }
 
-    with open(output_file, 'w') as f:
+    with open(output_file, "w") as f:
         yaml.dump(benchmark, f, sort_keys=False)
 
     print(f"✅ Generated {count} memories to {output_file}")
 
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Generate large-scale industrial benchmark")
-    parser.add_argument("--count", type=int, required=True, help="Number of memories to generate")
+    parser = argparse.ArgumentParser(
+        description="Generate large-scale industrial benchmark"
+    )
+    parser.add_argument(
+        "--count", type=int, required=True, help="Number of memories to generate"
+    )
     parser.add_argument("--output", type=str, required=True, help="Output YAML file")
     args = parser.parse_args()
     generate_benchmark(args.count, args.output)

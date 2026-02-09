@@ -32,10 +32,12 @@ class MultiVectorSearchStrategy(SearchStrategy):
 
         # Gather results from all providers
         all_results: dict[str, list[tuple[UUID, float, float]]] = {}
-        
+
         for store, embedder, name in self.strategies_list:
             try:
-                query_embedding = await embedder.embed_text(query, task_type="search_query")
+                query_embedding = await embedder.embed_text(
+                    query, task_type="search_query"
+                )
                 results = await store.search_similar(
                     query_embedding=query_embedding,
                     tenant_id=tenant_id,

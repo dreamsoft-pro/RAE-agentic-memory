@@ -295,14 +295,16 @@ class RAEBenchmarkRunner:
 
         for i in range(0, len(data["memories"]), batch_size):
             batch = data["memories"][i : i + batch_size]
-            
+
             # Enrich content with synonyms (System 23.0 Metadata Injection)
             enriched_texts = []
             for m in batch:
                 content = m.get("text", m.get("content", ""))
                 # Use engine's search_engine.injector if available
                 if hasattr(self.engine.search_engine, "injector"):
-                    content = self.engine.search_engine.injector.process_document(content)
+                    content = self.engine.search_engine.injector.process_document(
+                        content
+                    )
                 enriched_texts.append(content)
 
             # 1. Batch Embedding (Fast ONNX - Nomic Only for speed)
@@ -375,14 +377,16 @@ class RAEBenchmarkRunner:
                 query=q["query"],
                 tenant_id=self.tenant_id,
                 agent_id=self.project_id,
-                top_k=100, # Increased for better recall in large sets
+                top_k=100,  # Increased for better recall in large sets
                 enable_reranking=rerank,
             )
             retrieved_ids = self._map_ids_smart(
                 [str(r["id"]) for r in raw_results], data["memories"]
             )
 
-            is_hit = any(r_id in q["expected_source_ids"] for r_id in retrieved_ids[:100])
+            is_hit = any(
+                r_id in q["expected_source_ids"] for r_id in retrieved_ids[:100]
+            )
 
             hybrid_results.append(
                 {
@@ -400,8 +404,10 @@ class RAEBenchmarkRunner:
                     if r_id in q["expected_source_ids"]:
                         rank = i
                         break
-            
-            self.engine.math_ctrl.update_policy(success=is_hit, query=q["query"], rank=rank)
+
+            self.engine.math_ctrl.update_policy(
+                success=is_hit, query=q["query"], rank=rank
+            )
 
             if not is_hit and q["expected_source_ids"]:
                 # Cast to list to satisfy mypy if it thinks it's a Collection

@@ -269,7 +269,7 @@ class MultiArmedBandit:
     def _discretize_context(self, features: FeaturesV2) -> int:
         """
         Discretize context features into bucket ID.
-        
+
         Updated for System 4.0 Spectrum:
         - Uses 'is_industrial' flag directly
         - Uses entropy and density
@@ -278,11 +278,11 @@ class MultiArmedBandit:
         if getattr(features, "is_industrial", False):
             base = 100
             if getattr(features, "is_quantitative", False):
-                base += 50 # 150+ for quantitative industrial
-            
+                base += 50  # 150+ for quantitative industrial
+
             if features.term_density > 0.8:
-                return base + 1 # 101 or 151 (High Density)
-            return base # 100 or 150 (Normal)
+                return base + 1  # 101 or 151 (High Density)
+            return base  # 100 or 150 (Normal)
 
         # Legacy discretization for general queries
         # Discretize memory_count into 3 bins

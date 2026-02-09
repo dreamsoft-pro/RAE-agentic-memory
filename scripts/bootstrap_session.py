@@ -67,6 +67,7 @@ def get_active_url():
     print("🔍 Probing RAE Nodes...")
 
     import platform
+
     hostname = platform.node()
     is_local_machine = hostname == "grzegorz-lesniowski-N550JK"
 
@@ -81,7 +82,9 @@ def get_active_url():
     if is_local_machine:
         print(f"   Detected Local Machine ({hostname}). Prioritizing Local Nodes.")
         # Move Local to front
-        nodes = [n for n in nodes if "Local" in n[0]] + [n for n in nodes if "Local" not in n[0]]
+        nodes = [n for n in nodes if "Local" in n[0]] + [
+            n for n in nodes if "Local" not in n[0]
+        ]
 
     for name, url in nodes:
         print(f"   Target: {url} ({name}) ... ", end="", flush=True)
@@ -92,7 +95,9 @@ def get_active_url():
         print("OFFLINE ❌")
 
     print("\n[!] NO NODES AVAILABLE.")
-    if not is_local_machine: # Only suggest waking Lumina if we aren't prioritizing local
+    if (
+        not is_local_machine
+    ):  # Only suggest waking Lumina if we aren't prioritizing local
         print("    Lumina seems down. Execute manual wake procedure:")
         print("    $ ./scripts/wake_lumina.sh")
     return None

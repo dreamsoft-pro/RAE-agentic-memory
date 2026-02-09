@@ -3,18 +3,15 @@ Math Layer Controller - The Brain of RAE.
 Manages the selection of mathematical strategies (L1/L2/L3) and weights using Multi-Armed Bandit.
 """
 
-import math
-import os
-from typing import Any, Dict, List, Optional
-from uuid import UUID
+from typing import Any
 
 import numpy as np
 import structlog
 
-from rae_core.math.bandit.bandit import MultiArmedBandit, BanditConfig
-from rae_core.math.features_v2 import FeatureExtractorV2
-from rae_core.math.structure import ScoringWeights
 from rae_core.math.bandit.arm import Arm
+from rae_core.math.bandit.bandit import BanditConfig, MultiArmedBandit
+from rae_core.math.features_v2 import FeatureExtractorV2
+from rae_core.math.structure import ScoringWeights, cosine_similarity
 from rae_core.math.types import MathLevel
 
 logger = structlog.get_logger(__name__)
@@ -36,7 +33,7 @@ class MathLayerController:
             self.config = self.config.dict()
             
         self.feature_extractor = FeatureExtractorV2()
-        
+
         # Initialize Bandit with 'Spectrum' Arms
         self.bandit = self._initialize_spectrum_bandit()
         self._last_selected_arm = None
@@ -44,7 +41,7 @@ class MathLayerController:
     def _initialize_spectrum_bandit(self) -> MultiArmedBandit:
         """Generates spectrum of arms."""
         arms = []
-        
+
         def create_arm(name, weights, params):
             arm = Arm(level=MathLevel.L1, strategy=name)
             arm.config = {"weights": weights, "params": params}
@@ -65,14 +62,22 @@ class MathLayerController:
         for i in range(1, 11):
             factor = round(i * 0.2, 2)
             weights = {"fulltext": 5.0, "vector": 5.0, "anchor": 1000.0}
-            params = {"resonance_factor": factor, "rerank_gate": 0.3, "rerank_limit": 300}
+            params = {
+                "resonance_factor": factor,
+                "rerank_gate": 0.3,
+                "rerank_limit": 300,
+            }
             arms.append(create_arm(f"resonance_{factor:.1f}", weights, params))
 
         # 3. Strict Arms
         for i in range(5):
             threshold = round(0.5 + (i * 0.1), 2)
             weights = {"fulltext": 20.0, "vector": 0.1, "anchor": 1000.0}
-            params = {"resonance_factor": 0.0, "rerank_gate": threshold, "rerank_limit": 300}
+            params = {
+                "resonance_factor": 0.0,
+                "rerank_gate": threshold,
+                "rerank_limit": 300,
+            }
             arms.append(create_arm(f"strict_{threshold:.1f}", weights, params))
 
         # 4. Abstract Arms
@@ -86,39 +91,60 @@ class MathLayerController:
         conf_obj = BanditConfig(**bandit_conf) if bandit_conf else BanditConfig()
         return MultiArmedBandit(config=conf_obj, arms=arms)
 
-    def get_retrieval_weights(self, query: str) -> Dict[str, Any]:
+    def compute_similarity(self, v1: list[float], v2: list[float]) -> float:
+        """Helper for legacy tests."""
+        from rae_core.math.structure import cosine_similarity
+        return cosine_similarity(v1, v2)
+
+    def apply_decay(self, age_hours: float, usage_count: int) -> float:
+        """Helper for legacy tests."""
+        from datetime import datetime, timezone, timedelta
+        from rae_core.math.dynamics import calculate_recency_score
+        now = datetime.now(timezone.utc)
+        created_at = now - timedelta(hours=age_hours)
+        score, _, _ = calculate_recency_score(
+            last_accessed_at=None,
+            created_at=created_at,
+            access_count=usage_count,
+            now=now
+        )
+        return score
+
+    def get_retrieval_weights(self, query: str) -> dict[str, Any]:
         """Selects weights based on query context."""
         features = self.feature_extractor.extract(query)
         selected_arm, _ = self.bandit.select_arm(features)
         self._last_selected_arm = selected_arm
-        
+
         # 3. Dynamic Rerank Limit (No Hardcoding)
         derived = features.compute_derived_features()
         m_scale = derived.get("memory_scale", 0.0)
         e_scale = derived.get("entropy_normalized", 0.0)
-        
+
         dynamic_limit = int(50 + (250 * m_scale) + (50 * e_scale))
-        
+
         # Update logger with REAL dynamic limit
-        logger.info("math_strategy_selected", 
-                    arm=selected_arm.arm_id, 
-                    industrial=features.is_industrial, 
-                    weights=selected_arm.config["weights"],
-                    dynamic_limit=dynamic_limit)
-        
+        logger.info(
+            "math_strategy_selected",
+            arm=selected_arm.arm_id,
+            industrial=features.is_industrial,
+            weights=selected_arm.config["weights"],
+            dynamic_limit=dynamic_limit,
+        )
+
         result = selected_arm.config["weights"].copy()
         result["_params"] = selected_arm.config["params"].copy()
-        
+
         # Use arm's limit or fallback to dynamic
         if "rerank_limit" not in result["_params"]:
             result["_params"]["rerank_limit"] = dynamic_limit
-            
+
         result["_arm_id"] = selected_arm.arm_id
         return result
 
     def score_memory(
         self,
-        memory: Dict[str, Any],
+        memory: dict[str, Any],
         query_similarity: float,
         weights: ScoringWeights | None = None,
     ) -> float:
@@ -152,7 +178,12 @@ class MathLayerController:
         if success:
             rank = kwargs.get("rank", 1)
             reward = 1.0 / float(rank)
-        logger.info("policy_update_received", success=success, reward=reward, rank=kwargs.get("rank"))
+        logger.info(
+            "policy_update_received",
+            success=success,
+            reward=reward,
+            rank=kwargs.get("rank"),
+        )
         features = self.feature_extractor.extract(query)
         if self._last_selected_arm:
             self.bandit.update(self._last_selected_arm, reward, features)

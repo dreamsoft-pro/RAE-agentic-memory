@@ -119,7 +119,7 @@ class QdrantVectorStore(IVectorStore):
                             size=self.embedding_dim,
                             distance=self.distance,
                         )
-                    }
+                    },
                 )
 
         except Exception:

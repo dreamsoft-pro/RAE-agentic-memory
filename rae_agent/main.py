@@ -130,8 +130,14 @@ def main():
                 # 3. Request
                 resp = session.post(
                     f"{kernel_url}/v2/memories/",
-                    json={"content": data, "importance": random.random(), "project": "soak-test", "layer": "working", "source": "soak-agent"},
-                    headers={"X-Tenant-Id": "default-tenant"}
+                    json={
+                        "content": data,
+                        "importance": random.random(),
+                        "project": "soak-test",
+                        "layer": "working",
+                        "source": "soak-agent",
+                    },
+                    headers={"X-Tenant-Id": "default-tenant"},
                 )
                 if resp.status_code not in [200, 404]:
                     errors += 1

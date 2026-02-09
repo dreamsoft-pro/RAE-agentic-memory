@@ -1,60 +1,61 @@
-"""
-RAE-Lite Desktop UI.
-Built with NiceGUI for a modern, reactive experience.
-"""
-
 import asyncio
-import os
 import io
-from typing import Optional
+import os
+from typing import Any
 
 import httpx
+import structlog
 from nicegui import events, ui
+
+# Try to import PDF processing library
 try:
     from pypdf import PdfReader
 except ImportError:
     PdfReader = None
 
-# Configuration
-API_URL = "http://127.0.0.1:8765"
+logger = structlog.get_logger(__name__)
+
+API_URL = os.getenv("RAE_API_URL", "http://localhost:8001")
+
 
 class RaeLiteUI:
     def __init__(self):
+        self.stats = {}
         self.results = []
         self.status = "Idle"
-        self.stats = {}
         self.results_container = None
 
     async def fetch_stats(self):
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.get(f"{API_URL}/statistics")
+                response = await client.get(f"{API_URL}/stats")
                 if response.status_code == 200:
                     self.stats = response.json()
-                    ui.notify("Stats updated", type='positive')
+                    ui.update()
         except Exception as e:
-            ui.notify(f"Connection failed: {e}", type='negative')
+            print(f"Stats fetch error: {e}")
 
     async def search(self, query: str):
         if not query:
             return
 
         self.status = "Searching..."
+        ui.notify(f"Searching for: {query}")
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"{API_URL}/memories/query",
-                    json={"query": query, "k": 10}
+                response = await client.get(
+                    f"{API_URL}/memories/search",
+                    params={"query": query, "limit": 10},
+                    timeout=30.0,
                 )
                 if response.status_code == 200:
-                    data = response.json()
-                    self.results = data.get("results", [])
-                    ui.notify(f"Found {len(self.results)} memories", type='positive')
+                    self.results = response.json()
+                    self.status = "Idle"
+                    self.update_results_display()
                 else:
-                    ui.notify(f"Error: {response.text}", type='negative')
+                    ui.notify(f"Search failed: {response.text}", type="negative")
         except Exception as e:
-            ui.notify(f"Search failed: {e}", type='negative')
-        finally:
+            ui.notify(f"Connection error: {e}", type="negative")
             self.status = "Idle"
             self.update_results_display()
 

@@ -9,10 +9,8 @@ payload = {
     "points": [
         {
             "id": "5f4e4346-6f4e-4b4e-8b4e-4b4e4b4e4b4e",
-            "vector": {
-                "dense": vector
-            },
-            "payload": {"test": "true"}
+            "vector": {"dense": vector},
+            "payload": {"test": "true"},
         }
     ]
 }

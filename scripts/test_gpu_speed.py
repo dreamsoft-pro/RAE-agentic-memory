@@ -13,14 +13,15 @@ from rae_core.embedding.native import NativeEmbeddingProvider
 
 
 async def test_speed():
-    model_path = os.getenv("ONNX_EMBEDDER_PATH", "models/nomic-embed-text-v1.5/model.onnx")
+    model_path = os.getenv(
+        "ONNX_EMBEDDER_PATH", "models/nomic-embed-text-v1.5/model.onnx"
+    )
     tokenizer_path = model_path.replace("model.onnx", "tokenizer.json")
 
     print(f"🧐 Initializing Provider with: {model_path}")
     try:
         provider = NativeEmbeddingProvider(
-            model_path=model_path,
-            tokenizer_path=tokenizer_path
+            model_path=model_path, tokenizer_path=tokenizer_path
         )
     except Exception as e:
         print(f"❌ Failed to init: {e}")
@@ -38,6 +39,7 @@ async def test_speed():
 
     print(f"⏱️ Total time for 100: {end - start:.4f}s")
     print(f"⏱️ Average per text: {(end - start)/100:.4f}s")
+
 
 if __name__ == "__main__":
     asyncio.run(test_speed())

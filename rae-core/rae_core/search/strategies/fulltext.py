@@ -1,4 +1,4 @@
-from typing import Any, List, Tuple
+from typing import Any
 from uuid import UUID
 
 from ...interfaces.storage import IMemoryStorage
@@ -37,7 +37,7 @@ class FullTextStrategy(SearchStrategy):
             project=project_id,
         )
 
-        output: List[Tuple[UUID, float, float]] = []
+        output: list[tuple[UUID, float, float]] = []
         for r in results:
             m_id_raw = r.get("id")
             if isinstance(m_id_raw, str):

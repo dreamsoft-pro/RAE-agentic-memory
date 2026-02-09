@@ -43,20 +43,29 @@ if model_path.exists() and tokenizer_path.exists():
     embedding_provider = NativeEmbeddingProvider(
         model_path=model_path,
         tokenizer_path=tokenizer_path,
-        model_name="nomic-embed-text-v1.5"
+        model_name="nomic-embed-text-v1.5",
     )
 else:
     logger.warning("native_models_missing_using_mock", path=str(model_path))
+
     class LocalEmbeddingProvider(IEmbeddingProvider):
         def __init__(self):
             self.dimension = 384
-        async def embed_text(self, text: str, task_type: str = "search_document") -> list[float]:
+
+        async def embed_text(
+            self, text: str, task_type: str = "search_document"
+        ) -> list[float]:
             val = (len(text) % 100) / 100.0
             return [val] * self.dimension
-        async def embed_batch(self, texts: list[str], task_type: str = "search_document") -> list[list[float]]:
+
+        async def embed_batch(
+            self, texts: list[str], task_type: str = "search_document"
+        ) -> list[list[float]]:
             return [await self.embed_text(t, task_type) for t in texts]
+
         def get_dimension(self) -> int:
             return self.dimension
+
     embedding_provider = LocalEmbeddingProvider()
 
 # Initialize SQLite adapters

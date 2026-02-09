@@ -63,6 +63,7 @@ class ServerThread(threading.Thread):
 
 class GUIThread(threading.Thread):
     """Thread to run NiceGUI server."""
+
     def __init__(self):
         super().__init__(daemon=True)
 
@@ -108,7 +109,7 @@ def main():
     logger.info(
         "server_started",
         api_url=f"http://{settings.server_host}:{settings.server_port}",
-        gui_url="http://127.0.0.1:8080"
+        gui_url="http://127.0.0.1:8080",
     )
 
     # Run system tray (blocks until quit)

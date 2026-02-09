@@ -25,16 +25,14 @@ async def verify():
         model_path = "models/all-MiniLM-L6-v2/model.onnx"
 
     if not os.path.exists(model_path):
-         print("❌ No ONNX model found. Cannot verify.")
-         return
+        print("❌ No ONNX model found. Cannot verify.")
+        return
 
     tokenizer_path = model_path.replace("model.onnx", "tokenizer.json")
 
     try:
         provider = NativeEmbeddingProvider(
-            model_path=model_path,
-            tokenizer_path=tokenizer_path,
-            use_gpu=use_gpu
+            model_path=model_path, tokenizer_path=tokenizer_path, use_gpu=use_gpu
         )
     except Exception as e:
         print(f"❌ Initialization failed: {e}")
@@ -53,6 +51,7 @@ async def verify():
             print("⚠️  CUDA requested but NOT active. (Missing libs?)")
     else:
         print("ℹ️  CPU Mode (Expected).")
+
 
 if __name__ == "__main__":
     asyncio.run(verify())

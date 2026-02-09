@@ -8,7 +8,7 @@ logger = structlog.get_logger(__name__)
 
 class MetadataInjector:
     """
-    Enriches query or document text with synonyms and parent entities 
+    Enriches query or document text with synonyms and parent entities
     to close the semantic gap in models like TinyBERT.
     """
 
@@ -17,20 +17,50 @@ class MetadataInjector:
         # Default industrial synonyms for benchmarking
         self.synonyms = {
             # MES / Production
-            "mes": ["manufacturing execution system", "production system", "factory control", "shop floor", "oee"],
-            "production": ["manufacturing", "line", "assembly", "output", "throughput", "mes"],
+            "mes": [
+                "manufacturing execution system",
+                "production system",
+                "factory control",
+                "shop floor",
+                "oee",
+            ],
+            "production": [
+                "manufacturing",
+                "line",
+                "assembly",
+                "output",
+                "throughput",
+                "mes",
+            ],
             "machine": ["equipment", "asset", "tool", "station", "automation"],
-            "scada": ["automation", "control", "plc", "monitoring", "industrial control"],
+            "scada": [
+                "automation",
+                "control",
+                "plc",
+                "monitoring",
+                "industrial control",
+            ],
             "downtime": ["stoppage", "stalled", "breakdown", "failure", "maintenance"],
-            
             # ERP / Logistics / Finance
-            "logistics": ["shipping", "transport", "warehouse", "delivery", "inventory", "supply chain"],
+            "logistics": [
+                "shipping",
+                "transport",
+                "warehouse",
+                "delivery",
+                "inventory",
+                "supply chain",
+            ],
             "inventory": ["stock", "warehouse", "sku", "parts", "availability"],
-            "payment": ["billing", "invoice", "transaction", "finance", "payment processor"],
+            "payment": [
+                "billing",
+                "invoice",
+                "transaction",
+                "finance",
+                "payment processor",
+            ],
             "invoice": ["billing", "payment", "erp", "accounting"],
             "customer": ["client", "account", "user", "tenant"],
             "pricing": ["cost", "contract", "billing", "subscription"],
-            
             # Infrastructure / Tech Stack
             "postgres": ["database", "sql", "rdbms", "db", "storage"],
             "db": ["database", "sql", "postgres", "rdbms", "data store"],
@@ -38,17 +68,23 @@ class MetadataInjector:
             "redis": ["cache", "kv-store", "nosql", "in-memory"],
             "disk": ["storage", "capacity", "space", "infrastructure", "hard drive"],
             "pool": ["resource", "exhausted", "limit", "capacity", "connections"],
-            
             # Auth / Security
             "sso": ["authentication", "auth", "login", "identity", "saml", "oidc"],
             "auth": ["authentication", "login", "sso", "identity"],
             "authentication": ["auth", "login", "sso", "identity"],
             "security": ["vulnerability", "patch", "protection", "firewall", "cve"],
             "vulnerability": ["security bug", "exploit", "cve", "patch", "flaw"],
-            
             # Incident / Operations
             "bug": ["issue", "error", "failure", "defect", "fault", "incident"],
-            "error": ["bug", "issue", "failure", "fault", "500", "timeout", "exception"],
+            "error": [
+                "bug",
+                "issue",
+                "failure",
+                "fault",
+                "500",
+                "timeout",
+                "exception",
+            ],
             "failure": ["bug", "issue", "error", "fault", "crash", "incident"],
             "crash": ["failure", "bug", "stopped", "down", "exception"],
             "performance": ["slow", "latency", "lag", "speed", "throughput"],
@@ -74,8 +110,10 @@ class MetadataInjector:
         # Optimization: split words to avoid heavy regex if text is large
         # but for small metadata injection regex is safer for boundaries
         for key, syns in self.synonyms.items():
-            if key in text_lower: # Fast pre-check
-                if re.search(rf"\b{re.escape(key)}s?\b", text_lower): # Match word and optional plural
+            if key in text_lower:  # Fast pre-check
+                if re.search(
+                    rf"\b{re.escape(key)}s?\b", text_lower
+                ):  # Match word and optional plural
                     found_synonyms.extend(syns)
 
         if not found_synonyms:

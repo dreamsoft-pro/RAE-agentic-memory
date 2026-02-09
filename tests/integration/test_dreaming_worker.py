@@ -114,9 +114,7 @@ async def test_dreaming_worker_disabled(mock_pool):
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_dreaming_worker_insufficient_memories(
-    mock_pool, mock_env_and_settings
-):
+async def test_dreaming_worker_insufficient_memories(mock_pool, mock_env_and_settings):
     """Test that dreaming skips when there are insufficient memories."""
     pool = mock_pool
     tenant_id = str(uuid.uuid4())
@@ -164,9 +162,7 @@ async def test_dreaming_worker_insufficient_memories(
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_dreaming_worker_lookback_window(
-    mock_pool, mock_env_and_settings
-):
+async def test_dreaming_worker_lookback_window(mock_pool, mock_env_and_settings):
     """Test that dreaming only considers memories within lookback window."""
     pool = mock_pool
     tenant_id = str(uuid.uuid4())
@@ -232,9 +228,7 @@ async def test_dreaming_worker_lookback_window(
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_dreaming_worker_importance_filter(
-    mock_pool, mock_env_and_settings
-):
+async def test_dreaming_worker_importance_filter(mock_pool, mock_env_and_settings):
     """Test that dreaming only considers high-importance memories."""
     pool = mock_pool
     tenant_id = str(uuid.uuid4())
@@ -303,9 +297,7 @@ async def test_dreaming_worker_importance_filter(
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_dreaming_worker_max_samples_limit(
-    mock_pool, mock_env_and_settings
-):
+async def test_dreaming_worker_max_samples_limit(mock_pool, mock_env_and_settings):
     """Test that dreaming respects max_samples limit."""
     pool = mock_pool
     tenant_id = str(uuid.uuid4())
@@ -371,9 +363,7 @@ async def test_dreaming_worker_max_samples_limit(
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_dreaming_worker_error_handling(
-    mock_pool, mock_env_and_settings
-):
+async def test_dreaming_worker_error_handling(mock_pool, mock_env_and_settings):
     """Test that dreaming worker handles reflection generation errors gracefully."""
     pool = mock_pool
     tenant_id = str(uuid.uuid4())
@@ -429,9 +419,7 @@ async def test_dreaming_worker_error_handling(
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_dreaming_worker_no_recent_memories(
-    mock_pool, mock_env_and_settings
-):
+async def test_dreaming_worker_no_recent_memories(mock_pool, mock_env_and_settings):
     """Test dreaming when there are no recent memories."""
     pool = mock_pool
     tenant_id = str(uuid.uuid4())

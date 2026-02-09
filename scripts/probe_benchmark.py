@@ -10,6 +10,7 @@ from qdrant_client import AsyncQdrantClient
 sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.path.insert(0, str(Path(__file__).parent.parent / "rae-core"))
 
+
 async def probe():
     print("🕵️  Probing active benchmark state (First 10k snapshot)...")
 
@@ -22,7 +23,7 @@ async def probe():
             from yaml import SafeLoader as Loader
         data = yaml.load(f, Loader=Loader)
 
-    queries = data.get("queries", [])[:20] # Test first 20 queries
+    queries = data.get("queries", [])[:20]  # Test first 20 queries
     # RUNNER USES 'name' from yaml as project_id, but passes it to 'agent_id' param in store_memory
     target_agent_id = "industrial_ultra_200q"
     tenant_id = "00000000-0000-0000-0000-000000000000"
@@ -42,14 +43,20 @@ async def probe():
     # Initialize Engine (Re-using active components)
     model_path = "models/all-MiniLM-L6-v2/model.onnx"
     tokenizer_path = "models/all-MiniLM-L6-v2/tokenizer.json"
-    provider = NativeEmbeddingProvider(model_path=model_path, tokenizer_path=tokenizer_path)
+    provider = NativeEmbeddingProvider(
+        model_path=model_path, tokenizer_path=tokenizer_path
+    )
 
     storage = PostgreSQLStorage(pool=pool)
     vector_store = QdrantVectorStore(client=qdrant, embedding_dim=384)
     manager = EmbeddingManager(default_provider=provider)
-    engine = RAEEngine(memory_storage=storage, vector_store=vector_store, embedding_provider=manager)
+    engine = RAEEngine(
+        memory_storage=storage, vector_store=vector_store, embedding_provider=manager
+    )
 
-    print(f"🔍 Running 20 Probe Queries against active DB (Agent: {target_agent_id})...")
+    print(
+        f"🔍 Running 20 Probe Queries against active DB (Agent: {target_agent_id})..."
+    )
 
     hits = 0
 
@@ -60,9 +67,9 @@ async def probe():
         results = await engine.search_memories(
             query=q["query"],
             tenant_id=tenant_id,
-            agent_id=target_agent_id, # Crucial Fix
+            agent_id=target_agent_id,  # Crucial Fix
             top_k=5,
-            enable_reranking=False
+            enable_reranking=False,
         )
 
         # Check if any result ID matches expected IDs
@@ -107,9 +114,12 @@ async def probe():
 
         print(f"   Q{i+1}: {q['query']} -> {'✅ HIT' if found else '❌ MISS'}")
 
-    print(f"\n📊 Interim Search Effectiveness (Content-Match Proxy): {hits}/{len(queries)} ({hits/len(queries)*100:.1f}%)")
+    print(
+        f"\n📊 Interim Search Effectiveness (Content-Match Proxy): {hits}/{len(queries)} ({hits/len(queries)*100:.1f}%)"
+    )
 
     await pool.close()
+
 
 if __name__ == "__main__":
     asyncio.run(probe())

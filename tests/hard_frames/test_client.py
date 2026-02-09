@@ -20,11 +20,16 @@ class TestRAESecureClient:
         response_mock = MagicMock()
         response_mock.status_code = 200
         # V2 returns {"answer": ..., "session_id": ...}
-        response_mock.json.return_value = {"answer": "test_response", "session_id": "123"}
+        response_mock.json.return_value = {
+            "answer": "test_response",
+            "session_id": "123",
+        }
         session_instance.post.return_value = response_mock
 
         # Init client
-        client = RAEClient(kernel_url="http://mock-kernel", api_key="secret", project="test-project")
+        client = RAEClient(
+            kernel_url="http://mock-kernel", api_key="secret", project="test-project"
+        )
 
         # Execute
         result = client.ask("summarize", text="hello")

@@ -55,11 +55,11 @@ class IMemoryStorage(Protocol):
         ...
 
     async def list_memories(
-        self, 
-        tenant_id: str, 
-        agent_id: str | None = None, 
-        layer: str | None = None, 
-        **kwargs: Any
+        self,
+        tenant_id: str,
+        agent_id: str | None = None,
+        layer: str | None = None,
+        **kwargs: Any,
     ) -> list[dict[str, Any]]:
         """List memories with filtering and sorting."""
         ...

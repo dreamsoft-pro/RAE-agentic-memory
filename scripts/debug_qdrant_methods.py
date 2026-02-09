@@ -10,5 +10,6 @@ async def main():
     print(f"Dir: {dir(client)}")
     await client.close()
 
+
 if __name__ == "__main__":
     asyncio.run(main())

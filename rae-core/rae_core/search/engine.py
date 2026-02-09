@@ -42,7 +42,7 @@ class EmeraldReranker(IReranker):
 
             for item in candidates:
                 m_id, original_score, importance = self._unpack_candidate(item)
-                
+
                 # Get full content for deep comparison
                 memory = await self.memory_storage.get_memory(m_id, tenant_id)
                 if not memory:
@@ -157,7 +157,7 @@ class HybridSearchEngine:
         all_ids = set()
         for results in strategy_results.values():
             for r in results:
-                all_ids.add(r[0]) # m_id
+                all_ids.add(r[0])  # m_id
 
         memory_data = {}
         if all_ids and hasattr(self.memory_storage, "get_memories_batch"):
@@ -183,7 +183,10 @@ class HybridSearchEngine:
         # 3. OPTIONAL RERANKING
         if enable_reranking and len(fused_results) > 1:
             # Skip if LogicGateway already reranked (Neural Scalpel active)
-            if hasattr(self.fusion_strategy, "gateway") and self.fusion_strategy.gateway.reranker:
+            if (
+                hasattr(self.fusion_strategy, "gateway")
+                and self.fusion_strategy.gateway.reranker
+            ):
                 return fused_results[:limit]
 
             reranker = self._reranker

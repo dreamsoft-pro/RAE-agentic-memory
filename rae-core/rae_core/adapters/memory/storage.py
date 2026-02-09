@@ -220,7 +220,9 @@ class InMemoryStorage(IMemoryStorage):
 
             return True
 
-    async def list_memories(self, tenant_id: str, **kwargs: Any) -> list[dict[str, Any]]:
+    async def list_memories(
+        self, tenant_id: str, **kwargs: Any
+    ) -> list[dict[str, Any]]:
         """List memories with filtering."""
         async with self._lock:
             agent_id = kwargs.get("agent_id")
@@ -395,7 +397,7 @@ class InMemoryStorage(IMemoryStorage):
                                 "content": memory["content"],
                                 "score": score,
                                 "importance": memory.get("importance", 0.5),
-                                "memory": memory.copy()
+                                "memory": memory.copy(),
                             }
                         )
 
@@ -483,7 +485,7 @@ class InMemoryStorage(IMemoryStorage):
             for memory in self._memories.values():
                 if memory["tenant_id"] != tenant_id:
                     continue
-                
+
                 # Apply filters
                 if filters:
                     match = True
@@ -491,18 +493,26 @@ class InMemoryStorage(IMemoryStorage):
                         if memory.get(k) != v:
                             match = False
                             break
-                    if not match: continue
-                
+                    if not match:
+                        continue
+
                 val = memory.get(metric)
                 if val is not None:
                     values.append(float(val))
-            
-            if not values: return 0.0
-            if func == "sum": return sum(values)
-            if func == "avg": return sum(values) / len(values)
-            if func == "max": return max(values)
-            if func == "min": return min(values)
-            if func == "count": return float(len(values))
+
+            if not values:
+                return 0.0
+
+            if func == "sum":
+                return sum(values)
+            if func == "avg":
+                return sum(values) / len(values)
+            if func == "max":
+                return max(values)
+            if func == "min":
+                return min(values)
+            if func == "count":
+                return float(len(values))
             return 0.0
 
     async def update_memory_access_batch(
