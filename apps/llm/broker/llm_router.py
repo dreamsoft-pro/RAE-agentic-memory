@@ -117,6 +117,10 @@ class LLMRouter:
                 # Initialize provider
                 endpoint = provider_config.get("endpoint")
 
+                # Override endpoint from env for Ollama
+                if provider_name == "ollama" and os.getenv("OLLAMA_API_URL"):
+                    endpoint = os.getenv("OLLAMA_API_URL")
+
                 if provider_name == "ollama":
                     self.providers[provider_name] = provider_class(api_url=endpoint)
                 elif provider_name in ["openai", "deepseek", "grok"]:
@@ -147,7 +151,13 @@ class LLMRouter:
             return self.providers.get("anthropic")
         elif "gemini" in model_lower:
             return self.providers.get("gemini")
-        elif "llama" in model_lower or "mistral" in model_lower:
+        elif (
+            "llama" in model_lower
+            or "mistral" in model_lower
+            or "local_deepseek" in model_lower
+            or "deepseek-r1" in model_lower
+            or "phi" in model_lower
+        ):
             return self.providers.get("ollama")
         elif "deepseek" in model_lower:
             return self.providers.get("deepseek")

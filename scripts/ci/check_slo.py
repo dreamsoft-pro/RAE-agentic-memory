@@ -5,6 +5,7 @@ Generates drift_report.md with results.
 
 Part of RAE CI Quality Implementation - Iteration 3: Zero Drift
 """
+
 import argparse
 import json
 import sys
@@ -117,10 +118,10 @@ def generate_report(results: dict, current: dict) -> str:
 
     report = f"""## {status_emoji} Drift Detection Report
 
-**Status:** {results['status']}
-**Timestamp:** {current.get('timestamp', 'N/A')}
-**Branch:** {current.get('git_branch', 'N/A')}
-**SHA:** {current.get('git_sha', 'N/A')[:8]}
+**Status:** {results["status"]}
+**Timestamp:** {current.get("timestamp", "N/A")}
+**Branch:** {current.get("git_branch", "N/A")}
+**SHA:** {current.get("git_sha", "N/A")[:8]}
 
 ### Metrics Summary
 

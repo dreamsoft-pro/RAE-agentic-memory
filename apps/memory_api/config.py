@@ -14,9 +14,11 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = "rae"
     POSTGRES_USER: str = "rae"
     POSTGRES_PASSWORD: str = "rae_password"
+    DATABASE_URL: str | None = None
 
     QDRANT_HOST: str = "localhost"
     QDRANT_PORT: int = 6333
+    QDRANT_URL: str | None = None
 
     RERANKER_API_URL: str = "http://localhost:8001"
     ML_SERVICE_URL: str = "http://localhost:8001"
@@ -26,13 +28,30 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str | None = None
     OPENAI_API_KEY: str | None = None
     ANTHROPIC_API_KEY: str | None = None
-    OLLAMA_API_URL: str = "http://localhost:11434"
+    OLLAMA_API_BASE: str = "http://host.docker.internal:11434"
+    OLLAMA_API_URL: str = "http://host.docker.internal:11434"
+    # Ollama Configuration
+    OLLAMA_HOSTS: list[str] = [
+        "http://100.66.252.117:11434",
+        "http://host.docker.internal:11434",
+        "http://ollama-dev:11434",
+    ]
     RAE_LLM_BACKEND: str = "ollama"
-    RAE_LLM_MODEL_DEFAULT: str = "llama3"
+    RAE_LLM_MODEL_DEFAULT: str = "ollama/all-minilm"
+    RAE_EMBEDDING_BACKEND: str = "litellm"  # "litellm", "onnx", "api", "mcp"
+    RAE_EMBEDDING_MODEL: str | None = None
+    RAE_MCP_EMBEDDING_TOOL: str = "get_embedding"
+    RAE_MCP_SERVER_COMMAND: str = "python"
+    RAE_MCP_SERVER_ARGS: list[str] = []
     EXTRACTION_MODEL: str = "gpt-4o-mini"
     SYNTHESIS_MODEL: str = "gpt-4o"
     RAE_VECTOR_BACKEND: str = "qdrant"
+    RAE_RERANKER_BACKEND: str = "emerald"  # "emerald", "api", "mcp", "none"
+    RAE_RERANKER_API_URL: str | None = None
+    RAE_RERANKER_API_KEY: str | None = None
+    RAE_RERANKER_MCP_TOOL: str = "rerank_memories"
     ONNX_EMBEDDER_PATH: str | None = None
+    RAE_USE_GPU: bool = False
 
     @model_validator(mode="after")
     def validate_vector_backend(self):
@@ -46,21 +65,21 @@ class Settings(BaseSettings):
     # validate: Check schema and fail fast on mismatch (safe for prod)
     # init: Initialize empty DB (same as migrate)
     # ignore: Skip validation
-    RAE_DB_MODE: str = os.getenv(
-        "RAE_DB_MODE", "ignore" if "PYTEST_CURRENT_TEST" in os.environ else "migrate"
-    )
+    RAE_DB_MODE: str = "migrate"
 
     # RAE Profile (standard, lite, research)
     # standard: Full infrastructure (DB, Redis, Qdrant)
     # lite: Minimal dependencies (Memory/Mock implementations where possible)
     # research: Specialized for experiments
-    RAE_PROFILE: str = os.getenv("RAE_PROFILE", "standard")
+    RAE_PROFILE: str = "standard"
 
     # --- Security Settings ---
     OAUTH_ENABLED: bool = True
     OAUTH_DOMAIN: str = ""  # e.g., "your-tenant.us.auth0.com"
     OAUTH_AUDIENCE: str = ""  # e.g., "https://yourapi.com"
     TENANCY_ENABLED: bool = True
+    DEFAULT_TENANT_ALIAS: str = "default-tenant"
+    DEFAULT_TENANT_UUID: str = "00000000-0000-0000-0000-000000000000"
     API_KEY: str = "secret"
 
     # Authentication
@@ -75,7 +94,12 @@ class Settings(BaseSettings):
     ENABLE_COST_TRACKING: bool = False  # Set to True to track request costs
 
     # CORS
-    ALLOWED_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:8501"]
+    ALLOWED_ORIGINS: list[str] = [
+        "*",
+        "http://localhost:3000",
+        "http://localhost:8501",
+        "http://localhost:8502",
+    ]
 
     # --- LLM Provider API Keys ---
     # These are loaded from environment variables automatically by pydantic-settings.
@@ -109,6 +133,7 @@ class Settings(BaseSettings):
     # Logging configuration
     LOG_LEVEL: str = "WARNING"  # For external libraries (uvicorn, asyncpg, etc.)
     RAE_APP_LOG_LEVEL: str = "INFO"  # For RAE application logs
+    OTEL_TRACES_ENABLED: bool = False  # For OpenTelemetry tracing
 
     # ============================================================================
     # Reflective Memory V1 Configuration (RAE Implementation Plan)
@@ -138,6 +163,8 @@ class Settings(BaseSettings):
 
     # Iteration 2: Smart Re-Ranker
     ENABLE_SMART_RERANKER: bool = False  # Enable ML-based re-ranking
+    # RAE_RERANKER_MODE: 'math' (default) or 'llm' (requires LLM service)
+    RAE_RERANKER_MODE: str = os.getenv("RAE_RERANKER_MODE", "math")
     RERANKER_MODEL_PATH: str | None = None
     RERANKER_TIMEOUT_MS: int = 10
     RERANKER_TOP_K_CANDIDATES: int = 50
@@ -171,6 +198,32 @@ class Settings(BaseSettings):
     SUMMARIZATION_EVENT_THRESHOLD: int = 100  # Threshold for long sessions
 
     # Mode-specific overrides
+    @model_validator(mode="after")
+    def validate_sandbox_mode(self):
+        """
+        Detect if RAE and RAE-Lite are co-existing on the same machine.
+        If port 8000 is occupied and we are in lite mode, force sandbox ports.
+        """
+        if self.RAE_PROFILE == "lite":
+            import socket
+
+            def is_port_in_use(port):
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    return s.connect_ex(("localhost", port)) == 0
+
+            # If standard RAE is detected, switch to sandbox defaults if not already set
+            if is_port_in_use(8000):
+                # We don't overwrite explicitly set env vars, but we can log it
+                # and adjust default URLs used by internal components
+                if self.MEMORY_API_URL == "http://localhost:8000":
+                    self.MEMORY_API_URL = "http://localhost:8010"
+
+                # Force sandbox ports for infrastructure if they are still at standard defaults
+                if self.POSTGRES_HOST == "localhost":
+                    self.POSTGRES_HOST = "localhost"  # Host stays same
+                # Ports are usually handled by docker-compose, but we ensure internal URLs are consistent
+        return self
+
     @model_validator(mode="after")
     def apply_mode_overrides(self):
         """Apply configuration based on lite/full mode"""

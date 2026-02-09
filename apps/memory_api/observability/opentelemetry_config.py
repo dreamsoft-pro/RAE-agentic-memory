@@ -34,6 +34,7 @@ try:  # pragma: no cover
     from opentelemetry.instrumentation.asyncpg import AsyncPGInstrumentor
     from opentelemetry.instrumentation.celery import CeleryInstrumentor
     from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+    from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
     from opentelemetry.instrumentation.logging import LoggingInstrumentor
     from opentelemetry.instrumentation.psycopg2 import Psycopg2Instrumentor
     from opentelemetry.instrumentation.redis import RedisInstrumentor
@@ -53,6 +54,7 @@ except ImportError:  # pragma: no cover
     Psycopg2Instrumentor = None  # type: ignore[assignment,misc]
     RedisInstrumentor = None  # type: ignore[assignment,misc]
     RequestsInstrumentor = None  # type: ignore[assignment,misc]
+    HTTPXClientInstrumentor = None  # type: ignore[assignment,misc]
     SERVICE_NAME = None  # type: ignore[assignment]
     SERVICE_VERSION = None  # type: ignore[assignment]
     Resource = None  # type: ignore[assignment,misc]
@@ -69,6 +71,9 @@ if TYPE_CHECKING:
     from opentelemetry.instrumentation.asyncpg import AsyncPGInstrumentor  # noqa: F401
     from opentelemetry.instrumentation.celery import CeleryInstrumentor  # noqa: F401
     from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor  # noqa: F401
+    from opentelemetry.instrumentation.httpx import (  # noqa: F401
+        HTTPXClientInstrumentor,
+    )
     from opentelemetry.instrumentation.logging import LoggingInstrumentor  # noqa: F401
     from opentelemetry.instrumentation.psycopg2 import (  # noqa: F401
         Psycopg2Instrumentor,
@@ -135,6 +140,14 @@ def setup_opentelemetry():
 
     if not OTEL_ENABLED:
         logger.info("opentelemetry_disabled", reason="OTEL_TRACES_ENABLED=false")
+        return None
+
+    # Check if we are in a container and trying to export to localhost
+    if os.path.exists("/.dockerenv") and "localhost" in OTEL_EXPORTER_ENDPOINT:
+        logger.info(
+            "opentelemetry_disabled",
+            reason="Inside container but endpoint points to localhost. Set correct OTEL_EXPORTER_OTLP_ENDPOINT if tracing is needed.",
+        )
         return None
 
     try:
@@ -238,6 +251,11 @@ def instrument_libraries():
         # Instrument requests library (for external HTTP calls)
         RequestsInstrumentor().instrument()  # type: ignore[misc]
         logger.info("opentelemetry_requests_instrumented")
+
+        # Instrument HTTPX (for async external HTTP calls)
+        if HTTPXClientInstrumentor is not None:
+            HTTPXClientInstrumentor().instrument()  # type: ignore[misc]
+            logger.info("opentelemetry_httpx_instrumented")
 
         # Instrument PostgreSQL (psycopg2)
         Psycopg2Instrumentor().instrument()  # type: ignore[misc]

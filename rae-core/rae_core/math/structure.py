@@ -55,7 +55,15 @@ class ScoringWeights:
     beta: float = 0.3  # Importance weight
     gamma: float = 0.2  # Recency weight
 
-    def __post_init__(self):
+    @classmethod
+    def szubar_profile(cls) -> "ScoringWeights":
+        """
+        Get weights for Szubar Mode.
+        Focuses on Importance (Pressure) and Usage over simple Similarity.
+        """
+        return cls(alpha=0.3, beta=0.5, gamma=0.2)
+
+    def __post_init__(self) -> None:
         """Validate that weights sum to 1.0 (with small tolerance for float precision)"""
         total = self.alpha + self.beta + self.gamma
         if not math.isclose(total, 1.0, rel_tol=1e-5):
@@ -167,7 +175,7 @@ class MemoryScoreResult:
     recency_score: float
 
     # Metadata
-    memory_id: str
+    memory_id: str | None
     age_seconds: float
     access_count: int
     effective_decay_rate: float

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rae-mcp-server"
-version = "1.3.0"
+version = "1.5.0"
 description = "MCP Server for RAE (Reflective Agentic Engine)"
 readme = "README.md"
 requires-python = ">=3.10"

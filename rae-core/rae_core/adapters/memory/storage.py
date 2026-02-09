@@ -24,7 +24,7 @@ class InMemoryStorage(IMemoryStorage):
     - Access count tracking
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize in-memory storage."""
         # Main storage: {memory_id: memory_dict}
         self._memories: dict[UUID, dict[str, Any]] = {}
@@ -41,25 +41,53 @@ class InMemoryStorage(IMemoryStorage):
             set
         )  # (tenant, tag)
 
+        # Multi-model embeddings storage: {memory_id: {model_name: {embedding: ..., metadata: ...}}}
+        self._embeddings: dict[UUID, dict[str, dict[str, Any]]] = defaultdict(dict)
+
         # Thread safety
         self._lock = asyncio.Lock()
 
-    async def store_memory(
+    async def save_embedding(
         self,
-        content: str,
-        layer: str,
+        memory_id: UUID,
+        model_name: str,
+        embedding: list[float],
         tenant_id: str,
-        agent_id: str,
-        tags: list[str] | None = None,
-        metadata: dict[str, Any] | None = None,
-        embedding: list[float] | None = None,
-        importance: float | None = None,
-        expires_at: Any | None = None,
-    ) -> UUID:
+    ) -> bool:
+        """Save a vector embedding for a memory."""
+        async with self._lock:
+            # Check existence and tenant ownership (SEC-02)
+            if memory_id not in self._memories:
+                return False
+
+            if self._memories[memory_id]["tenant_id"] != tenant_id:
+                raise ValueError(
+                    f"Access Denied: Memory {memory_id} not found for tenant {tenant_id}"
+                )
+
+            self._embeddings[memory_id][model_name] = {
+                "embedding": embedding,
+                "created_at": datetime.now(timezone.utc),
+            }
+            return True
+
+    async def store_memory(self, **kwargs: Any) -> UUID:
         """Store a new memory."""
         async with self._lock:
             memory_id = uuid4()
             now = datetime.now(timezone.utc)
+
+            content = kwargs.get("content", "")
+            layer = kwargs.get("layer", "episodic")
+            tenant_id = kwargs.get("tenant_id", "default")
+            agent_id = kwargs.get("agent_id", "default")
+            tags = kwargs.get("tags") or []
+            metadata = kwargs.get("metadata") or {}
+            embedding = kwargs.get("embedding")
+            importance = kwargs.get("importance", 0.5)
+            expires_at = kwargs.get("expires_at")
+            memory_type = kwargs.get("memory_type", "text")
+            strength = kwargs.get("strength", 1.0)
 
             memory = {
                 "id": memory_id,
@@ -67,14 +95,19 @@ class InMemoryStorage(IMemoryStorage):
                 "layer": layer,
                 "tenant_id": tenant_id,
                 "agent_id": agent_id,
-                "tags": tags or [],
-                "metadata": metadata or {},
+                "tags": tags,
+                "metadata": metadata,
                 "embedding": embedding,
-                "importance": importance or 0.5,
+                "importance": importance,
                 "created_at": now,
+                "modified_at": now,
                 "last_accessed_at": now,
                 "expires_at": expires_at,
+                "access_count": 0,
                 "usage_count": 0,
+                "memory_type": memory_type,
+                "strength": strength,
+                "version": 1,
             }
 
             # Store memory
@@ -105,6 +138,20 @@ class InMemoryStorage(IMemoryStorage):
 
             return None
 
+    async def get_memories_batch(
+        self,
+        memory_ids: list[UUID],
+        tenant_id: str,
+    ) -> list[dict[str, Any]]:
+        """Retrieve multiple memories by IDs."""
+        async with self._lock:
+            results = []
+            for mid in memory_ids:
+                memory = self._memories.get(mid)
+                if memory and memory["tenant_id"] == tenant_id:
+                    results.append(memory.copy())
+            return results
+
     async def update_memory(
         self,
         memory_id: UUID,
@@ -119,25 +166,27 @@ class InMemoryStorage(IMemoryStorage):
                 return False
 
             # Handle tag updates (update index)
-            old_tags = set(memory.get("tags", []))
-            new_tags = set(updates.get("tags", old_tags))
+            if "tags" in updates:
+                old_tags = set(memory.get("tags", []))
+                new_tags = set(updates.get("tags", []))
 
-            removed_tags = old_tags - new_tags
-            added_tags = new_tags - old_tags
+                removed_tags = old_tags - new_tags
+                added_tags = new_tags - old_tags
 
-            for tag in removed_tags:
-                self._by_tags[(tenant_id, tag)].discard(memory_id)
+                for tag in removed_tags:
+                    self._by_tags[(tenant_id, tag)].discard(memory_id)
 
-            for tag in added_tags:
-                self._by_tags[(tenant_id, tag)].add(memory_id)
+                for tag in added_tags:
+                    self._by_tags[(tenant_id, tag)].add(memory_id)
 
             # Handle layer updates (update index)
-            old_layer = memory.get("layer")
-            new_layer = updates.get("layer", old_layer)
+            if "layer" in updates:
+                old_layer = memory.get("layer")
+                new_layer = updates.get("layer")
 
-            if old_layer != new_layer:
-                self._by_layer[(tenant_id, cast(str, old_layer))].discard(memory_id)
-                self._by_layer[(tenant_id, cast(str, new_layer))].add(memory_id)
+                if old_layer != new_layer:
+                    self._by_layer[(tenant_id, cast(str, old_layer))].discard(memory_id)
+                    self._by_layer[(tenant_id, cast(str, new_layer))].add(memory_id)
 
             # Update memory
             memory.update(updates)
@@ -171,20 +220,15 @@ class InMemoryStorage(IMemoryStorage):
 
             return True
 
-    async def list_memories(
-        self,
-        tenant_id: str,
-        agent_id: str | None = None,
-        layer: str | None = None,
-        tags: list[str] | None = None,
-        filters: dict[str, Any] | None = None,
-        limit: int = 100,
-        offset: int = 0,
-        order_by: str = "created_at",
-        order_direction: str = "desc",
-    ) -> list[dict[str, Any]]:
+    async def list_memories(self, tenant_id: str, **kwargs: Any) -> list[dict[str, Any]]:
         """List memories with filtering."""
         async with self._lock:
+            agent_id = kwargs.get("agent_id")
+            layer = kwargs.get("layer")
+            tags = kwargs.get("tags")
+            limit = kwargs.get("limit", 100)
+            offset = kwargs.get("offset", 0)
+
             # Start with tenant memories
             candidate_ids = self._by_tenant[tenant_id].copy()
 
@@ -215,12 +259,15 @@ class InMemoryStorage(IMemoryStorage):
 
     async def count_memories(
         self,
-        tenant_id: str,
+        tenant_id: str | None = None,
         agent_id: str | None = None,
         layer: str | None = None,
     ) -> int:
         """Count memories matching filters."""
         async with self._lock:
+            if not tenant_id:
+                return len(self._memories)
+
             # Start with tenant memories
             candidate_ids = self._by_tenant[tenant_id].copy()
 
@@ -233,59 +280,8 @@ class InMemoryStorage(IMemoryStorage):
 
             return len(candidate_ids)
 
-    async def increment_access_count(
-        self,
-        memory_id: UUID,
-        tenant_id: str,
-    ) -> bool:
-        """Increment access count for a memory."""
-        async with self._lock:
-            memory = self._memories.get(memory_id)
-
-            if not memory or memory["tenant_id"] != tenant_id:
-                return False
-
-            memory["access_count"] = memory.get("access_count", 0) + 1
-            memory["last_accessed_at"] = datetime.now(timezone.utc)
-
-            return True
-
-    async def clear_tenant(self, tenant_id: str) -> int:
-        """Clear all memories for a tenant.
-
-        Args:
-            tenant_id: Tenant identifier
-
-        Returns:
-            Number of memories deleted
-        """
-        async with self._lock:
-            memory_ids = self._by_tenant[tenant_id].copy()
-
-            for memory_id in memory_ids:
-                memory = self._memories.get(memory_id)
-                if memory:
-                    # Remove from all indexes
-                    self._by_agent[(tenant_id, memory["agent_id"])].discard(memory_id)
-                    self._by_layer[(tenant_id, memory["layer"])].discard(memory_id)
-
-                    for tag in memory.get("tags", []):
-                        self._by_tags[(tenant_id, tag)].discard(memory_id)
-
-                    # Remove memory
-                    del self._memories[memory_id]
-
-            # Clear tenant index
-            del self._by_tenant[tenant_id]
-
-            return len(memory_ids)
-
     async def get_statistics(self) -> dict[str, Any]:
-        """Get storage statistics.
-
-        Returns:
-            Dictionary with storage statistics
-        """
+        """Get storage statistics."""
         async with self._lock:
             return {
                 "total_memories": len(self._memories),
@@ -296,11 +292,7 @@ class InMemoryStorage(IMemoryStorage):
             }
 
     async def clear_all(self) -> int:
-        """Clear all data (use with caution!).
-
-        Returns:
-            Number of memories deleted
-        """
+        """Clear all data."""
         async with self._lock:
             count = len(self._memories)
 
@@ -314,28 +306,31 @@ class InMemoryStorage(IMemoryStorage):
 
     async def delete_memories_with_metadata_filter(
         self,
-        tenant_id: str,
-        agent_id: str,
-        layer: str,
-        metadata_filter: dict[str, Any],
+        tenant_id: str | None = None,
+        agent_id: str | None = None,
+        layer: str | None = None,
+        metadata_filter: dict[str, Any] | None = None,
     ) -> int:
         """Delete memories matching metadata filter."""
         async with self._lock:
             matching_ids = []
             for memory_id, memory in self._memories.items():
-                if (
-                    memory["tenant_id"] == tenant_id
-                    and memory["agent_id"] == agent_id
-                    and memory["layer"] == layer
+                if tenant_id and memory["tenant_id"] != tenant_id:
+                    continue
+                if agent_id and memory["agent_id"] != agent_id:
+                    continue
+                if layer and memory["layer"] != layer:
+                    continue
+
+                if metadata_filter and not self._matches_metadata_filter(
+                    memory.get("metadata", {}), metadata_filter
                 ):
-                    # Check if metadata matches filter
-                    if self._matches_metadata_filter(
-                        memory.get("metadata", {}), metadata_filter
-                    ):
-                        matching_ids.append(memory_id)
+                    continue
+
+                matching_ids.append(memory_id)
 
             for memory_id in matching_ids:
-                await self._delete_memory_internal(memory_id)
+                self._delete_memory_sync(memory_id)
 
             return len(matching_ids)
 
@@ -360,7 +355,7 @@ class InMemoryStorage(IMemoryStorage):
             ]
 
             for memory_id in matching_ids:
-                await self._delete_memory_internal(memory_id)
+                self._delete_memory_sync(memory_id)
 
             return len(matching_ids)
 
@@ -369,9 +364,9 @@ class InMemoryStorage(IMemoryStorage):
         query: str,
         tenant_id: str,
         agent_id: str,
-        layer: str,
+        layer: str | None = None,
         limit: int = 10,
-        filters: dict[str, Any] | None = None,
+        **kwargs: Any,
     ) -> list[dict[str, Any]]:
         """Search memories using simple substring matching."""
         async with self._lock:
@@ -382,7 +377,7 @@ class InMemoryStorage(IMemoryStorage):
                 if (
                     memory["tenant_id"] == tenant_id
                     and memory["agent_id"] == agent_id
-                    and memory["layer"] == layer
+                    and (layer is None or memory["layer"] == layer)
                 ):
                     # Simple substring search in content
                     content_lower = memory["content"].lower()
@@ -391,7 +386,18 @@ class InMemoryStorage(IMemoryStorage):
                         score = 1.0 - (
                             content_lower.index(query_lower) / len(content_lower)
                         )
-                        results.append({"memory": memory.copy(), "score": score})
+                        # Format for legacy tests: {"memory": ..., "score": ...}
+                        # And for new engine: {"id": ..., "content": ..., "score": ...}
+                        # We include BOTH to be safe.
+                        results.append(
+                            {
+                                "id": memory["id"],
+                                "content": memory["content"],
+                                "score": score,
+                                "importance": memory.get("importance", 0.5),
+                                "memory": memory.copy()
+                            }
+                        )
 
             # Sort by score descending
             results.sort(key=lambda x: x["score"], reverse=True)
@@ -401,26 +407,26 @@ class InMemoryStorage(IMemoryStorage):
     async def delete_expired_memories(
         self,
         tenant_id: str,
-        agent_id: str,
-        layer: str,
+        agent_id: str | None = None,
+        layer: str | None = None,
     ) -> int:
         """Delete expired memories."""
         async with self._lock:
             now = datetime.now(timezone.utc)
-            matching_ids = [
-                memory_id
-                for memory_id, memory in self._memories.items()
-                if (
-                    memory["tenant_id"] == tenant_id
-                    and memory["agent_id"] == agent_id
-                    and memory["layer"] == layer
-                    and memory.get("expires_at")
-                    and memory["expires_at"] < now
-                )
-            ]
+            matching_ids = []
+            for memory_id, memory in self._memories.items():
+                if memory["tenant_id"] != tenant_id:
+                    continue
+                if agent_id and memory["agent_id"] != agent_id:
+                    continue
+                if layer and memory["layer"] != layer:
+                    continue
+
+                if memory.get("expires_at") and memory["expires_at"] < now:
+                    matching_ids.append(memory_id)
 
             for memory_id in matching_ids:
-                await self._delete_memory_internal(memory_id)
+                self._delete_memory_sync(memory_id)
 
             return len(matching_ids)
 
@@ -438,14 +444,19 @@ class InMemoryStorage(IMemoryStorage):
 
             memory["last_accessed_at"] = datetime.now(timezone.utc)
             memory["access_count"] = memory.get("access_count", 0) + 1
+            memory["usage_count"] = memory.get("usage_count", 0) + 1
 
             return True
+
+    async def increment_access_count(self, memory_id: UUID, tenant_id: str) -> bool:
+        """Alias for update_memory_access (Legacy test support)."""
+        return await self.update_memory_access(memory_id, tenant_id)
 
     async def update_memory_expiration(
         self,
         memory_id: UUID,
         tenant_id: str,
-        expires_at: Any,
+        expires_at: datetime | None,
     ) -> bool:
         """Update memory expiration time."""
         async with self._lock:
@@ -468,7 +479,30 @@ class InMemoryStorage(IMemoryStorage):
     ) -> float:
         """Calculate aggregate metric."""
         async with self._lock:
-            # Stub implementation
+            values = []
+            for memory in self._memories.values():
+                if memory["tenant_id"] != tenant_id:
+                    continue
+                
+                # Apply filters
+                if filters:
+                    match = True
+                    for k, v in filters.items():
+                        if memory.get(k) != v:
+                            match = False
+                            break
+                    if not match: continue
+                
+                val = memory.get(metric)
+                if val is not None:
+                    values.append(float(val))
+            
+            if not values: return 0.0
+            if func == "sum": return sum(values)
+            if func == "avg": return sum(values) / len(values)
+            if func == "max": return max(values)
+            if func == "min": return min(values)
+            if func == "count": return float(len(values))
             return 0.0
 
     async def update_memory_access_batch(
@@ -499,6 +533,37 @@ class InMemoryStorage(IMemoryStorage):
             memory["modified_at"] = datetime.now(timezone.utc)
             return new_imp
 
+    async def decay_importance(
+        self,
+        tenant_id: str,
+        decay_factor: float,
+    ) -> int:
+        """Apply importance decay to all memories for a tenant."""
+        async with self._lock:
+            count = 0
+            for memory_id in self._by_tenant[tenant_id]:
+                memory = self._memories.get(memory_id)
+                if not memory:
+                    continue
+
+                current = float(memory.get("importance", 0.5))
+                new_val = current * decay_factor
+                memory["importance"] = new_val
+                count += 1
+            return count
+
+    async def clear_tenant(self, tenant_id: str) -> int:
+        """Delete all memories for a tenant."""
+        async with self._lock:
+            mids = list(self._by_tenant[tenant_id])
+            for mid in mids:
+                self._delete_memory_sync(mid)
+            return len(mids)
+
+    async def close(self) -> None:
+        """Close storage connection."""
+        pass
+
     def _matches_metadata_filter(
         self, metadata: dict[str, Any], filter_dict: dict[str, Any]
     ) -> bool:
@@ -508,7 +573,7 @@ class InMemoryStorage(IMemoryStorage):
                 return False
         return True
 
-    async def _delete_memory_internal(self, memory_id: UUID):
+    def _delete_memory_sync(self, memory_id: UUID) -> None:
         """Internal delete helper (assumes lock is held)."""
         memory = self._memories.get(memory_id)
         if not memory:

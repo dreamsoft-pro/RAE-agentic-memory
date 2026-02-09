@@ -1,389 +1,199 @@
-"""Hybrid search engine that orchestrates multiple search strategies."""
+"""Hybrid search engine implementation."""
 
-from datetime import datetime, timezone
+import math
 from typing import Any
 from uuid import UUID
 
-from rae_core.search.cache import SearchCache
+import structlog
+
+from rae_core.interfaces.embedding import IEmbeddingProvider
+from rae_core.interfaces.reranking import IReranker
+from rae_core.interfaces.storage import IMemoryStorage
+from rae_core.math.fusion import FusionStrategy
+from rae_core.math.metadata_injector import MetadataInjector
 from rae_core.search.strategies import SearchStrategy
 
+logger = structlog.get_logger(__name__)
 
-class HybridSearchEngine:
-    """Hybrid search engine combining multiple strategies.
 
-    Implements Reciprocal Rank Fusion (RRF) to combine results
-    from multiple search strategies (vector, graph, sparse, fulltext).
-    """
+class EmeraldReranker(IReranker):
+    """Emerald Reranker v1 - Semantic Cross-Validation."""
 
-    def __init__(
-        self,
-        strategies: dict[str, SearchStrategy],
-        cache: SearchCache | None = None,
-        rrf_k: int = 60,
-    ):
-        """Initialize hybrid search engine.
-
-        Args:
-            strategies: Dictionary of strategy_name -> strategy instance
-            cache: Optional search cache
-            rrf_k: RRF constant (typically 60)
-        """
-        self.strategies = strategies
-        self.cache = cache
-        self.rrf_k = rrf_k
-
-    def _reciprocal_rank_fusion(
-        self,
-        strategy_results: dict[str, list[tuple[UUID, float]]],
-        strategy_weights: dict[str, float],
-    ) -> list[tuple[UUID, float]]:
-        """Combine multiple result sets using Reciprocal Rank Fusion.
-
-        RRF Formula: score(d) = Σ weight_s / (k + rank_s(d))
-        where k is a constant (typically 60) and rank_s(d) is the rank
-        of document d in strategy s.
-
-        Args:
-            strategy_results: Results from each strategy
-            strategy_weights: Weight for each strategy
-
-        Returns:
-            Fused results sorted by combined score
-        """
-        # Build unified score map
-        unified_scores: dict[UUID, float] = {}
-
-        for strategy_name, results in strategy_results.items():
-            weight = strategy_weights.get(strategy_name, 1.0)
-
-            for rank, (memory_id, _) in enumerate(results, start=1):
-                # RRF score contribution
-                rrf_score = weight / (self.rrf_k + rank)
-
-                if memory_id in unified_scores:
-                    unified_scores[memory_id] += rrf_score
-                else:
-                    unified_scores[memory_id] = rrf_score
-
-        # Convert to sorted list
-        fused_results = sorted(
-            unified_scores.items(),
-            key=lambda x: x[1],
-            reverse=True,
-        )
-
-        return fused_results
-
-    async def search(
-        self,
-        query: str,
-        tenant_id: str,
-        strategies: list[str] | None = None,
-        strategy_weights: dict[str, float] | None = None,
-        filters: dict[str, Any] | None = None,
-        limit: int = 10,
-        use_cache: bool = True,
-    ) -> list[tuple[UUID, float]]:
-        """Execute hybrid search across multiple strategies.
-
-        Args:
-            query: Search query text
-            tenant_id: Tenant identifier
-            strategies: List of strategy names to use (all if None)
-            strategy_weights: Custom weights for strategies (uses defaults if None)
-            filters: Optional filters passed to all strategies
-            limit: Maximum number of results
-            use_cache: Whether to use cache for results
-
-        Returns:
-            List of (memory_id, fused_score) tuples
-        """
-        # Determine which strategies to use
-        active_strategies = strategies or list(self.strategies.keys())
-
-        # Determine weights
-        weights = strategy_weights or {}
-        for strategy_name in active_strategies:
-            if strategy_name not in weights:
-                strategy = self.strategies.get(strategy_name)
-                if strategy:
-                    weights[strategy_name] = strategy.get_strategy_weight()
-
-        # Collect results from each strategy
-        strategy_results: dict[str, list[tuple[UUID, float]]] = {}
-
-        for strategy_name in active_strategies:
-            strategy = self.strategies.get(strategy_name)
-            if not strategy:
-                continue
-
-            # Check cache first
-            cached_result = None
-            if use_cache and self.cache:
-                cached_result = await self.cache.get(
-                    query=query,
-                    tenant_id=tenant_id,
-                    strategy=strategy_name,
-                    filters=filters,
-                )
-
-            if cached_result is not None:
-                strategy_results[strategy_name] = cached_result
-            else:
-                # Execute strategy
-                results = await strategy.search(
-                    query=query,
-                    tenant_id=tenant_id,
-                    filters=filters,
-                    limit=limit * 2,  # Fetch more for fusion
-                )
-                strategy_results[strategy_name] = results
-
-                # Cache results
-                if use_cache and self.cache:
-                    await self.cache.set(
-                        query=query,
-                        tenant_id=tenant_id,
-                        strategy=strategy_name,
-                        results=results,
-                        filters=filters,
-                    )
-
-        # Fuse results using RRF
-        fused_results = self._reciprocal_rank_fusion(
-            strategy_results=strategy_results,
-            strategy_weights=weights,
-        )
-
-        return fused_results[:limit]
-
-    async def search_single_strategy(
-        self,
-        strategy_name: str,
-        query: str,
-        tenant_id: str,
-        filters: dict[str, Any] | None = None,
-        limit: int = 10,
-        use_cache: bool = True,
-    ) -> list[tuple[UUID, float]]:
-        """Execute search using a single strategy.
-
-        Args:
-            strategy_name: Name of strategy to use
-            query: Search query text
-            tenant_id: Tenant identifier
-            filters: Optional filters
-            limit: Maximum number of results
-            use_cache: Whether to use cache
-
-        Returns:
-            List of (memory_id, score) tuples
-        """
-        strategy = self.strategies.get(strategy_name)
-        if not strategy:
-            raise ValueError(f"Unknown strategy: {strategy_name}")
-
-        # Check cache
-        if use_cache and self.cache:
-            cached_result = await self.cache.get(
-                query=query,
-                tenant_id=tenant_id,
-                strategy=strategy_name,
-                filters=filters,
-            )
-            if cached_result is not None:
-                return cached_result[:limit]
-
-        # Execute strategy
-        results = await strategy.search(
-            query=query,
-            tenant_id=tenant_id,
-            filters=filters,
-            limit=limit,
-        )
-
-        # Cache results
-        if use_cache and self.cache:
-            await self.cache.set(
-                query=query,
-                tenant_id=tenant_id,
-                strategy=strategy_name,
-                results=results,
-                filters=filters,
-            )
-
-        return results
-
-    def get_available_strategies(self) -> list[str]:
-        """Get list of available strategy names."""
-        return list(self.strategies.keys())
+    def __init__(self, embedding_provider: Any, memory_storage: Any):
+        self.embedding_provider = embedding_provider
+        self.memory_storage = memory_storage
 
     async def rerank(
         self,
         query: str,
-        results: list[tuple[UUID, float]],
-    ) -> list[tuple[UUID, float]]:
-        """Rerank search results.
+        candidates: list[tuple[UUID, float, float]],
+        tenant_id: str,
+        limit: int = 10,
+        **kwargs: Any,
+    ) -> list[tuple[UUID, float, float]]:
+        if self.embedding_provider is None or self.memory_storage is None:
+            return candidates[:limit]
 
-        Placeholder implementation that returns results as-is.
-        Should be overridden or extended to use a real reranker.
+        try:
+            query_emb = await self.embedding_provider.embed_text(
+                query, task_type="search_query"
+            )
+            reranked: list[tuple[UUID, float, float]] = []
 
-        Args:
-            query: Search query
-            results: Results to rerank
+            for item in candidates:
+                m_id, original_score, importance = self._unpack_candidate(item)
+                
+                # Get full content for deep comparison
+                memory = await self.memory_storage.get_memory(m_id, tenant_id)
+                if not memory:
+                    reranked.append((m_id, original_score, importance))
+                    continue
 
-        Returns:
-            Reranked results
-        """
-        return results
+                # Get or generate vector for the content
+                mem_emb = await self.embedding_provider.embed_text(
+                    memory["content"], task_type="search_document"
+                )
+
+                # Manual Cosine Similarity
+                dot = sum(a * b for a, b in zip(query_emb, mem_emb))
+                mag1 = math.sqrt(sum(a * a for a in query_emb))
+                mag2 = math.sqrt(sum(b * b for b in mem_emb))
+                semantic_score = dot / (mag1 * mag2) if (mag1 * mag2) > 0 else 0.0
+
+                # Synergy Score: 70% Semantic, 30% Original Rank
+                final_score = (semantic_score * 0.7) + (original_score * 0.3)
+                reranked.append((m_id, final_score, importance))
+
+            return sorted(reranked, key=lambda x: x[1], reverse=True)[:limit]
+        except Exception as e:
+            logger.error("rerank_failed", error=str(e))
+            return candidates[:limit]
+
+    def _unpack_candidate(self, item: tuple) -> tuple[UUID, float, float]:
+        """Safely unpack candidate tuple (handles 2 or 3 values)."""
+        if len(item) == 3:
+            return item[0], item[1], item[2]
+        elif len(item) == 2:
+            return item[0], item[1], 0.0
+        else:
+            raise ValueError(f"Invalid candidate tuple length: {len(item)}")
 
 
-class NoiseAwareSearchEngine(HybridSearchEngine):
-    """Noise-aware search engine that adjusts retrieval based on noise level.
-
-    Under high noise conditions (>0.5), this engine:
-    1. Boosts weight of recent memories (recency bias)
-    2. Boosts weight of high-confidence memories
-    3. Reduces influence of potentially corrupted older data
-
-    This improves RST (Retrieval under Stress Test) performance by
-    preferring verified, recent data when noise is high.
+class HybridSearchEngine:
+    """
+    Orchestrates multiple search strategies (Vector + FullText) and fuses them using LogicGateway.
     """
 
     def __init__(
         self,
         strategies: dict[str, SearchStrategy],
-        cache: SearchCache | None = None,
-        rrf_k: int = 60,
-        noise_threshold: float = 0.5,
-        recency_boost_factor: float = 1.5,
-        confidence_boost_factor: float = 1.3,
+        embedding_provider: IEmbeddingProvider,
+        memory_storage: IMemoryStorage,
+        reranker: IReranker | None = None,
     ):
-        """Initialize noise-aware search engine.
+        self.strategies = strategies
+        self.embedding_provider = embedding_provider
+        self.memory_storage = memory_storage
+        self._reranker = reranker
+        self.injector = MetadataInjector()
 
-        Args:
-            strategies: Dictionary of strategy_name -> strategy instance
-            cache: Optional search cache
-            rrf_k: RRF constant (typically 60)
-            noise_threshold: Noise level above which to activate boosting
-            recency_boost_factor: Multiplier for recent memory scores
-            confidence_boost_factor: Multiplier for high-confidence scores
-        """
-        super().__init__(strategies=strategies, cache=cache, rrf_k=rrf_k)
-        self.noise_threshold = noise_threshold
-        self.recency_boost_factor = recency_boost_factor
-        self.confidence_boost_factor = confidence_boost_factor
-
-    def _apply_noise_aware_boost(
-        self,
-        results: list[tuple[UUID, float]],
-        memory_metadata: dict[UUID, dict[str, Any]],
-        noise_level: float,
-    ) -> list[tuple[UUID, float]]:
-        """Apply noise-aware boosting to search results.
-
-        Args:
-            results: Original search results (memory_id, score)
-            memory_metadata: Metadata for each memory (timestamp, confidence, etc.)
-            noise_level: Current noise level (0.0-1.0)
-
-        Returns:
-            Boosted results sorted by new scores
-        """
-        if noise_level <= self.noise_threshold:
-            # No boosting needed under low noise
-            return results
-
-        now = datetime.now(timezone.utc)
-        boosted_results = []
-
-        for memory_id, base_score in results:
-            metadata = memory_metadata.get(memory_id, {})
-
-            # Calculate recency boost
-            created_at = metadata.get("created_at")
-            recency_boost = 0.0
-            if created_at:
-                age_days = (now - created_at).days
-                # Exponential decay: 1.0 for today, 0.5 for 7 days, ~0 for 30+ days
-                recency_boost = 1.0 / (1.0 + age_days / 7.0)
-
-            # Calculate confidence boost
-            confidence = metadata.get("confidence_score", 0.5)
-            confidence_boost = confidence  # Already 0-1
-
-            # Apply boosts (scaled by noise level)
-            noise_intensity = (noise_level - self.noise_threshold) / (
-                1.0 - self.noise_threshold
-            )
-
-            final_recency_boost = (
-                1.0
-                + (self.recency_boost_factor - 1.0) * recency_boost * noise_intensity
-            )
-            final_confidence_boost = (
-                1.0
-                + (self.confidence_boost_factor - 1.0)
-                * confidence_boost
-                * noise_intensity
-            )
-
-            # Combine boosts multiplicatively
-            boosted_score = base_score * final_recency_boost * final_confidence_boost
-
-            boosted_results.append((memory_id, boosted_score))
-
-        # Re-sort by boosted scores
-        boosted_results.sort(key=lambda x: x[1], reverse=True)
-
-        return boosted_results
+        # Initialize Fusion Strategy (LogicGateway wrapper)
+        self.fusion_strategy = FusionStrategy()
 
     async def search(
         self,
         query: str,
         tenant_id: str,
-        strategies: list[str] | None = None,
-        strategy_weights: dict[str, float] | None = None,
         filters: dict[str, Any] | None = None,
         limit: int = 10,
-        use_cache: bool = True,
-        noise_level: float = 0.0,
-        memory_metadata: dict[UUID, dict[str, Any]] | None = None,
-    ) -> list[tuple[UUID, float]]:
-        """Execute noise-aware hybrid search.
-
-        Args:
-            query: Search query text
-            tenant_id: Tenant identifier
-            strategies: List of strategy names to use
-            strategy_weights: Custom weights for strategies
-            filters: Optional filters
-            limit: Maximum number of results
-            use_cache: Whether to use cache
-            noise_level: Current noise level (0.0-1.0)
-            memory_metadata: Metadata for memories (for boosting)
-
-        Returns:
-            List of (memory_id, score) tuples with noise-aware adjustments
+        strategies: list[str] | None = None,
+        strategy_weights: dict[str, float] | None = None,
+        enable_reranking: bool = False,
+        math_controller: Any = None,
+        **kwargs: Any,
+    ) -> list[tuple[UUID, float, float]]:
         """
-        # Execute base hybrid search
-        base_results = await super().search(
-            query=query,
-            tenant_id=tenant_id,
-            strategies=strategies,
-            strategy_weights=strategy_weights,
-            filters=filters,
-            limit=limit * 2,  # Fetch more for post-processing
-            use_cache=use_cache,
+        Execute search across active strategies and fuse results.
+        Supports System 7.2 gateway_config override.
+        """
+        active_strategies = strategies or list(self.strategies.keys())
+        weights = strategy_weights or {}
+
+        # Extract Gateway Config Override (System 7.2)
+        gateway_config = kwargs.get("gateway_config")
+
+        # Metadata Injection (System 23.0) - Always on for better candidate sets
+        enriched_query = self.injector.process_query(query)
+        if enriched_query != query:
+            logger.info("query_enriched", original=query, enriched=enriched_query)
+
+        # 1. PARALLEL EXECUTION
+        strategy_results: dict[str, list[tuple[UUID, float, float]]] = {}
+
+        for name in active_strategies:
+            if name not in self.strategies:
+                continue
+
+            strategy = self.strategies[name]
+            try:
+                # Pass down kwargs (like vector_name)
+                results = await strategy.search(
+                    query=enriched_query,
+                    tenant_id=tenant_id,
+                    filters=filters,
+                    limit=limit,
+                    **kwargs,
+                )
+                # Ensure results are 3-value tuples for robustness
+                strategy_results[name] = [
+                    (r[0], r[1], r[2] if len(r) > 2 else 0.0) for r in results
+                ]
+            except Exception as e:
+                logger.error("strategy_failed", name=name, error=str(e))
+                strategy_results[name] = []
+
+        # 2. FUSION (LogicGateway)
+        # Fetch contents for reranking
+        all_ids = set()
+        for results in strategy_results.values():
+            for r in results:
+                all_ids.add(r[0]) # m_id
+
+        memory_data = {}
+        if all_ids and hasattr(self.memory_storage, "get_memories_batch"):
+            try:
+                mems = await self.memory_storage.get_memories_batch(
+                    list(all_ids), tenant_id
+                )
+                for mem in mems:
+                    # Store full memory object instead of just content
+                    memory_data[mem["id"]] = mem
+            except Exception as e:
+                logger.warning("batch_fetch_failed", error=str(e))
+
+        # Note: We pass 'gateway_config' to fuse if supported
+        fused_results = self.fusion_strategy.fuse(
+            strategy_results,
+            weights,
+            query=enriched_query,
+            config_override=gateway_config,
+            memory_contents=memory_data,
         )
 
-        # Apply noise-aware boosting if metadata provided
-        if memory_metadata and noise_level > 0.0:
-            boosted_results = self._apply_noise_aware_boost(
-                results=base_results,
-                memory_metadata=memory_metadata,
-                noise_level=noise_level,
-            )
-            return boosted_results[:limit]
+        # 3. OPTIONAL RERANKING
+        if enable_reranking and len(fused_results) > 1:
+            # Skip if LogicGateway already reranked (Neural Scalpel active)
+            if hasattr(self.fusion_strategy, "gateway") and self.fusion_strategy.gateway.reranker:
+                return fused_results[:limit]
 
-        return base_results[:limit]
+            reranker = self._reranker
+            if reranker is None and self.embedding_provider and self.memory_storage:
+                reranker = EmeraldReranker(self.embedding_provider, self.memory_storage)
+
+            if reranker:
+                logger.info("reranking_activated", count=len(fused_results[:20]))
+                return await reranker.rerank(
+                    enriched_query, fused_results[:20], tenant_id, limit=limit
+                )
+
+        return fused_results[:limit]

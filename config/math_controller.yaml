@@ -10,13 +10,13 @@
 #   - cheap: Always prefer L1, minimize cost
 
 # Active profile
-profile: "cheap"
+profile: "research"
 
 # Policy version (1 = rule-based, 2 = weighted scoring + reward)
 policy_version: 2
 
 # Enable Multi-Armed Bandit online learning (requires policy_version >= 2)
-bandit_enabled: false
+bandit_enabled: true
 
 # Default level when no rules match
 default_level: "deterministic_heuristic"  # L1
@@ -26,6 +26,17 @@ allowed_levels:
   - "deterministic_heuristic"  # L1
   - "information_theoretic"    # L2
   - "adaptive_hybrid"          # L3
+
+# Engine Parameters (Externalized from Code)
+engine_params:
+  # Candidate window size for Math Layer processing
+  limit: 100
+  
+  # Semantic Resonance (Graph Energy Flow)
+  resonance_factor: 1.5
+  
+  # Szubar Induction Energy (Threshold for pulling new memories)
+  szubar_induction_energy: 0.8
 
 # Level selection thresholds
 thresholds:
@@ -137,7 +148,7 @@ bandit:
   max_exploration_rate: 0.2
 
   # Degradation threshold (max acceptable reward drop before rollback)
-  degradation_threshold: 0.15
+  degradation_threshold: 0.5
 
   # Minimum pulls before arm is considered reliable
   min_pulls_for_confidence: 10

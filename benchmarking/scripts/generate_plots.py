@@ -18,11 +18,8 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List, cast
 
-import matplotlib
-
-matplotlib.use("Agg")  # Non-interactive backend
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
@@ -39,10 +36,11 @@ class BenchmarkPlotter:
             plt.style.use("default")
         sns.set_palette("husl")
 
-    def load_results(self, results_file: Path) -> Dict:
+    def load_results(self, results_file: Path) -> Dict[str, Any]:
         """Load benchmark results from JSON"""
         with open(results_file, "r") as f:
-            return json.load(f)
+            data = json.load(f)
+            return cast(Dict[str, Any], data)
 
     def plot_latency_distribution(self, results: Dict, output_file: Path):
         """
@@ -78,7 +76,7 @@ class BenchmarkPlotter:
         ax.set_xlabel("Query Latency (ms)", fontsize=12)
         ax.set_ylabel("Frequency", fontsize=12)
         ax.set_title(
-            f'Query Latency Distribution - {results["benchmark"]["name"]}',
+            f"Query Latency Distribution - {results['benchmark']['name']}",
             fontsize=14,
             fontweight="bold",
         )
@@ -102,7 +100,7 @@ class BenchmarkPlotter:
         detailed_results = results["detailed_results"]
 
         # Group by difficulty
-        difficulty_groups = {}
+        difficulty_groups: Dict[str, List[float]] = {}
         for r in detailed_results:
             diff = r.get("difficulty", "unknown")
             if diff not in difficulty_groups:
@@ -151,7 +149,7 @@ class BenchmarkPlotter:
         ax.set_xlabel("Query Difficulty", fontsize=12)
         ax.set_ylabel("MRR", fontsize=12)
         ax.set_title(
-            f'MRR by Query Difficulty - {results["benchmark"]["name"]}',
+            f"MRR by Query Difficulty - {results['benchmark']['name']}",
             fontsize=14,
             fontweight="bold",
         )
@@ -262,10 +260,27 @@ class BenchmarkPlotter:
         avg_latencies = []
 
         for results_file in sorted(results_files):
-            results = self.load_results(results_file)
-            timestamps.append(results["execution"]["timestamp"])
-            mrr_scores.append(results["metrics"]["mrr"])
-            avg_latencies.append(results["metrics"]["performance"]["avg_query_time_ms"])
+            try:
+                # results_file is a Path object here
+                with open(results_file, "r") as f:
+                    results = json.load(f)
+
+                # Verify it's a valid benchmark result
+                if "execution" not in results or "metrics" not in results:
+                    continue
+
+                timestamps.append(results["execution"]["timestamp"])
+                mrr_scores.append(results["metrics"]["mrr"])
+
+                # Handle inconsistent keys between different benchmark sets
+                perf = results["metrics"]["performance"]
+                if "average_query_time" in perf:
+                    avg_latencies.append(perf["average_query_time"] * 1000)
+                else:
+                    avg_latencies.append(perf.get("avg_query_time_ms", 0))
+            except Exception as e:
+                print(f"⚠️  Error processing {results_file}: {e}")
+                continue
 
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
 
@@ -367,7 +382,23 @@ def main():
                         plotter.plot_mrr_by_difficulty(results, output_path)
 
             else:
-                # Multiple results - trend analysis
+                # Multiple results - trend analysis AND individual plots
+                output_path.mkdir(parents=True, exist_ok=True)
+
+                # Individual plots for each file
+                for res_file in results_files:
+                    try:
+                        single_results = plotter.load_results(res_file)
+                        base_name = res_file.stem
+                        plotter.plot_latency_distribution(
+                            single_results, output_path / f"{base_name}_latency.png"
+                        )
+                        plotter.plot_mrr_by_difficulty(
+                            single_results, output_path / f"{base_name}_mrr.png"
+                        )
+                    except Exception as e:
+                        print(f"⚠️  Skipping {res_file.name}: {e}")
+
                 if output_path.is_dir():
                     output_file = output_path / "performance_trends.png"
                 else:

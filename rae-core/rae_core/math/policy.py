@@ -41,86 +41,36 @@ from rae_core.math.structure import DecayConfig, MemoryScoreResult, ScoringWeigh
 def compute_memory_score(
     similarity: float,
     importance: float,
-    last_accessed_at: datetime | None,
-    created_at: datetime,
+    last_accessed_at: datetime | None = None,
+    created_at: datetime | None = None,
     access_count: int = 0,
     now: datetime | None = None,
     weights: ScoringWeights | None = None,
-    decay_config: DecayConfig | None = None,
-    memory_id: str | None = None,
+    decay_config: DecayConfig | None = None,  # <--- RESTORED
+    memory_id: str | None = None,  # <--- RESTORED
 ) -> MemoryScoreResult:
     """
-    Compute unified memory score combining relevance, importance, and recency.
+    Compute a unified score for a memory item based on multiple factors.
 
-    This is the core scoring function implementing RAE's unified scoring formula:
-        score = alpha * similarity + beta * importance + gamma * recency_component
-
-    Where recency_component considers:
-    - Time since last access (or creation)
-    - Access count (more accessed = slower decay)
-    - Configurable decay rate
-
-    Args:
-        similarity: Relevance score from vector similarity (0.0-1.0)
-        importance: Importance score (0.0-1.0)
-        last_accessed_at: Last access timestamp (None = never accessed)
-        created_at: Creation timestamp
-        access_count: Number of times memory was accessed
-        now: Current time (defaults to UTC now)
-        weights: Custom scoring weights (defaults to ScoringWeights())
-        decay_config: Custom decay configuration (defaults to DecayConfig())
-        memory_id: Optional memory ID for logging/debugging
+    The formula combines semantic relevance, content importance, and
+    temporal recency:
+        Score = alpha * Similarity + beta * Importance + gamma * Recency
 
     Returns:
-        MemoryScoreResult with final score and component breakdown
-
-    Mathematical Properties:
-        - All component scores are in [0, 1]
-        - Final score is in [0, 1]
-        - Weights determine relative importance of components
-        - Default weights: α=0.5, β=0.3, γ=0.2
-
-    Example:
-        >>> from datetime import datetime, timedelta, timezone
-        >>> now = datetime.now(timezone.utc)
-        >>> created = now - timedelta(minutes=10)
-        >>>
-        >>> # High similarity, high importance, recent creation
-        >>> score = compute_memory_score(
-        ...     similarity=0.85,
-        ...     importance=0.7,
-        ...     last_accessed_at=None,
-        ...     created_at=created,
-        ...     access_count=5,
-        ...     now=now
-        ... )
-        >>> print(f"Final score: {score.final_score:.3f}")
-        Final score: 0.783
-        >>> print(f"Components: rel={score.relevance_score:.3f}, "
-        ...       f"imp={score.importance_score:.3f}, rec={score.recency_score:.3f}")
-        Components: rel=0.850, imp=0.700, rec=0.773
-
-    Implementation Notes:
-        - Similarity and importance are clamped to [0, 1]
-        - Recency uses exponential decay with access count adjustment
-        - Final score is weighted combination, clamped to [0, 1]
+        MemoryScoreResult containing the final score and component breakdown.
     """
-    # Initialize configs with defaults if not provided
-    if weights is None:
-        weights = ScoringWeights()
-    if decay_config is None:
-        decay_config = DecayConfig()
     if now is None:
         now = datetime.now(timezone.utc)
 
-    # 1. Relevance component (normalized similarity)
-    relevance_score = max(0.0, min(1.0, similarity))
+    if weights is None:
+        weights = ScoringWeights()
 
-    # 2. Importance component (already normalized)
-    importance_score = max(0.0, min(1.0, importance))
+    if created_at is None:
+        created_at = now
 
-    # 3. Recency component (exponential decay with access count adjustment)
-    recency_score, age_seconds, effective_decay = calculate_recency_score(
+    # Calculate individual components
+    # Recency score using exponential decay
+    recency, age_seconds, effective_decay = calculate_recency_score(
         last_accessed_at=last_accessed_at,
         created_at=created_at,
         access_count=access_count,
@@ -128,25 +78,23 @@ def compute_memory_score(
         decay_config=decay_config,
     )
 
-    # 4. Weighted combination
+    # Weighted combination (The original linear model)
     final_score = (
-        weights.alpha * relevance_score
-        + weights.beta * importance_score
-        + weights.gamma * recency_score
+        weights.alpha * similarity + weights.beta * importance + weights.gamma * recency
     )
 
-    # Ensure final score is in [0, 1]
-    final_score = max(0.0, min(1.0, final_score))
+    # NO CLAMPING (System 23.0) - Allow high-resolution reranker scores to propagate
+    # final_score = max(0.0, min(1.0, final_score))
 
     return MemoryScoreResult(
-        final_score=final_score,
-        relevance_score=relevance_score,
-        importance_score=importance_score,
-        recency_score=recency_score,
-        memory_id=memory_id or "unknown",
-        age_seconds=age_seconds,
+        final_score=float(final_score),
+        relevance_score=float(similarity),
+        importance_score=float(importance),
+        recency_score=float(recency),
+        memory_id=memory_id,
+        age_seconds=float(age_seconds),
         access_count=access_count,
-        effective_decay_rate=effective_decay,
+        effective_decay_rate=float(effective_decay),
     )
 
 
@@ -430,3 +378,32 @@ def compute_reasoning_score_with_coherence(
         1.0 - coherence_weight
     ) * base_score + coherence_weight * coherence_reward
     return max(0.0, min(1.0, combined))
+
+
+class PolicyRouter:
+    """
+    Adaptive RAG Router (System 23.0).
+    Decides between Fast Path (Math-Only) and Deep Path (Neural Scalpel).
+    """
+
+    def __init__(self, confidence_threshold: float = 0.85):
+        self.confidence_threshold = confidence_threshold
+
+    def should_use_deep_path(self, fast_path_results: list[Any]) -> bool:
+        """
+        Trigger Deep Path if Fast Path results are weak or non-existent.
+        """
+        if not fast_path_results:
+            return True
+
+        # Extract score from SearchResult or tuple
+        top_item = fast_path_results[0]
+        score = 0.0
+        if hasattr(top_item, "score"):
+            score = top_item.score
+        elif isinstance(top_item, tuple):
+            score = top_item[1]
+        elif isinstance(top_item, dict):
+            score = top_item.get("score") or top_item.get("final_score") or 0.0
+
+        return score < self.confidence_threshold

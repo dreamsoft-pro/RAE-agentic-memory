@@ -64,7 +64,7 @@ class TaskContext:
     @property
     def turn_number(self) -> int:
         """Current turn in session"""
-        return self.session_metadata.get("turn_number", 0)
+        return int(self.session_metadata.get("turn_number", 0))
 
     @property
     def is_first_turn(self) -> bool:

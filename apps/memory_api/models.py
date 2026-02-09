@@ -1,8 +1,9 @@
+import json
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
-from pydantic import BaseModel, Field, constr
+from pydantic import BaseModel, Field, field_validator
 
 # --- Core Memory Models ---
 
@@ -10,24 +11,8 @@ from pydantic import BaseModel, Field, constr
 class MemoryLayer(str, Enum):
     """
     Enum for memory layers, representing different levels of processing and retention.
-
-    Logicalwarstwa przetwarzania (STM/LTM/episodic/reflective).
-    See: docs/MEMORY_MODEL.md for complete layer mapping.
-
-    - stm/working: Short-term memory (Layer 1/2), volatile and immediate
-    - ltm/semantic: Long-term memory (Layer 3), consolidated and durable
-    - em/episodic: Episodic memory (Layer 2/3), time-sequenced events
-    - rm/reflective: Reflective memory (Layer 4), synthesized meta-learning
-    - sensory: Sensory buffer (Layer 0), immediate perception
     """
 
-    # Short codes (legacy)
-    stm = "stm"
-    ltm = "ltm"
-    rm = "rm"
-    em = "em"
-
-    # Full names (new standard from RAE-core)
     working = "working"
     semantic = "semantic"
     reflective = "reflective"
@@ -71,6 +56,15 @@ class OperationRiskLevel(str, Enum):
     none = "none"
 
 
+class InformationClass(str, Enum):
+    """Information classification per ISO 27000."""
+
+    public = "public"
+    internal = "internal"
+    confidential = "confidential"
+    restricted = "restricted"
+
+
 class MemoryRecord(BaseModel):
     """
     The standard, unified format for a memory record.
@@ -93,6 +87,7 @@ class MemoryRecord(BaseModel):
     content: str
     source: Optional[str] = None
     importance: float = 0.5
+    strength: float = 1.0
     layer: MemoryLayer = MemoryLayer.semantic  # See MEMORY_MODEL.md for layer mapping
     tags: Optional[List[str]] = None
     timestamp: datetime = Field(default_factory=datetime.now)
@@ -113,6 +108,44 @@ class MemoryRecord(BaseModel):
     verification_notes: Optional[str] = Field(
         None, max_length=1024, description="Notes from verification process"
     )
+
+    # ISO 27000/42001 - Smart Black Box Phase 2
+    info_class: InformationClass = Field(
+        InformationClass.internal, description="Information classification"
+    )
+    governance: Optional[Dict[str, Any]] = Field(
+        None, description="Governance metadata (rationale, confidence, risk)"
+    )
+
+    # Phase 2: Telemetry & Sync Fields
+    metadata: Optional[Dict[str, Any]] = Field(
+        default_factory=dict, description="Generic metadata for the memory"
+    )
+    provenance: Optional[Dict[str, Any]] = Field(
+        default_factory=dict,
+        description="Origin and lineage of the memory (e.g., source file, url, author)",
+    )
+    sync_metadata: Optional[Dict[str, Any]] = Field(
+        default_factory=dict,
+        description="Synchronization state metadata (e.g., vector_clock, version)",
+    )
+
+    @field_validator(
+        "metadata", "governance", "provenance", "sync_metadata", mode="before"
+    )
+    @classmethod
+    def parse_json_fields(cls, v: Any) -> Any:
+        """Parse JSON fields if they come as strings from DB."""
+        if isinstance(v, str):
+            try:
+                # Handle empty string or just brackets
+                if not v or v == "{}":
+                    return {}
+                return json.loads(v)
+            except json.JSONDecodeError:
+                # If it's not valid JSON, return as is (Pydantic might fail, which is correct)
+                return v
+        return v
 
 
 class ScoredMemoryRecord(MemoryRecord):
@@ -135,24 +168,69 @@ class StoreMemoryRequest(BaseModel):
     Supports source trust scoring and provenance tracking
     """
 
-    content: constr(min_length=1, max_length=65536)
-    source: Optional[constr(max_length=255)] = None
+    content: str = Field(min_length=1, max_length=65536)
+    source: Optional[str] = Field(None, max_length=255)
     importance: Optional[float] = Field(default=None, ge=0.0, le=1.0)
     layer: Optional[MemoryLayer] = None
     tags: Optional[List[str]] = None
     timestamp: Optional[datetime] = None
-    project: Optional[constr(max_length=255)] = None
+    project: Optional[str] = Field(None, max_length=255)
+
+    # Phase 1: Canonical fields for DB Refactor
+    session_id: Optional[str] = Field(
+        None, description="Session identifier for conversation grouping"
+    )
+    memory_type: Optional[str] = Field(
+        None, description="Functional type (text, code, image, etc.)"
+    )
+    ttl: Optional[int] = Field(None, gt=0, description="Time-to-live in seconds")
+    strength: Optional[float] = Field(
+        default=1.0, ge=0.0, le=1.0, description="Memory strength (for decay)"
+    )
 
     # ISO/IEC 42001 - Source Trust & Provenance
-    source_owner: Optional[constr(max_length=255)] = Field(
-        None, description="Owner/responsible party for this source"
+    source_owner: Optional[str] = Field(
+        None, max_length=255, description="Owner/responsible party for this source"
     )
     trust_level: Optional[SourceTrustLevel] = Field(
         None, description="Trust level of the source (high/medium/low/unverified)"
     )
-    verification_notes: Optional[constr(max_length=1024)] = Field(
-        None, description="Notes about source verification"
+    verification_notes: Optional[str] = Field(
+        None, max_length=1024, description="Notes about source verification"
     )
+
+    # ISO 27000/42001 - Smart Black Box Phase 2
+    info_class: Optional[InformationClass] = Field(
+        None,
+        description="Information classification (public, internal, confidential, restricted)",
+    )
+    governance: Optional[Dict[str, Any]] = Field(
+        None, description="Governance metadata (rationale, confidence, risk)"
+    )
+    metadata: Optional[Dict[str, Any]] = Field(
+        default_factory=dict, description="Generic metadata for the memory"
+    )
+
+    @field_validator("layer", mode="before")
+    @classmethod
+    def normalize_layer(cls, v: Any) -> Any:
+        """Normalize legacy short layer codes to full standard names."""
+        mapping = {
+            "em": "episodic",
+            "episodic": "episodic",
+            "stm": "working",
+            "wm": "working",
+            "working": "working",
+            "sm": "semantic",
+            "ltm": "semantic",
+            "semantic": "semantic",
+            "rm": "reflective",
+            "reflective": "reflective",
+            "sensory": "sensory",
+        }
+        if isinstance(v, str) and v.lower() in mapping:
+            return mapping[v.lower()]
+        return v
 
     model_config = {
         "json_schema_extra": {
@@ -179,8 +257,8 @@ class StoreMemoryResponse(BaseModel):
 
 
 class QueryMemoryRequest(BaseModel):
-    query_text: constr(min_length=1, max_length=1024)
-    k: int = Field(default=10, gt=0, le=100)
+    query_text: str = Field(min_length=1, max_length=1024)
+    k: int = Field(default=10, gt=0, le=10000)
     filters: Optional[Dict[str, Any]] = None
     # Hybrid search parameters
     use_graph: bool = Field(
@@ -189,8 +267,8 @@ class QueryMemoryRequest(BaseModel):
     graph_depth: int = Field(
         default=2, ge=1, le=5, description="Maximum graph traversal depth"
     )
-    project: Optional[constr(max_length=255)] = Field(
-        default=None, description="Project identifier for graph search"
+    project: Optional[str] = Field(
+        default=None, max_length=255, description="Project identifier for graph search"
     )
 
     model_config = {
@@ -225,6 +303,13 @@ class QueryMemoryResponse(BaseModel):
     )
 
 
+class ListMemoryResponse(BaseModel):
+    results: List[MemoryRecord]
+    total: int = 0
+    limit: int
+    offset: int
+
+
 class DeleteMemoryRequest(BaseModel):
     memory_id: str
 
@@ -234,17 +319,20 @@ class DeleteMemoryResponse(BaseModel):
 
 
 class RebuildReflectionsRequest(BaseModel):
-    project: constr(min_length=1, max_length=255)
-    tenant_id: constr(min_length=1, max_length=255)
+    project: str = Field(min_length=1, max_length=255)
+    tenant_id: str = Field(min_length=1, max_length=255)
 
 
 # --- Agent-related Models ---
 
 
 class AgentExecuteRequest(BaseModel):
-    tenant_id: constr(min_length=1, max_length=255)
-    project: constr(min_length=1, max_length=255)
-    prompt: constr(min_length=1, max_length=8192)
+    tenant_id: str = Field(min_length=1, max_length=255)
+    project: str = Field(min_length=1, max_length=255)
+    prompt: str = Field(min_length=1, max_length=8192)
+    session_id: Optional[str] = Field(
+        None, description="Session identifier for context management"
+    )
     tools_allowed: Optional[List[str]] = None
     budget_tokens: int = Field(default=20000, gt=0, le=100000)
 

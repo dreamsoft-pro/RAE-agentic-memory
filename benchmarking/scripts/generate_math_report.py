@@ -24,7 +24,7 @@ class MathReportGenerator:
     def __init__(self, results_files: List[Path], output_file: Path):
         self.results_files = results_files
         self.output_file = output_file
-        self.results_data = []
+        self.results_data: List[Dict[str, Any]] = []
 
     def load_results(self):
         """Load all result files"""

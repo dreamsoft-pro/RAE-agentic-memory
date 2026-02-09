@@ -61,12 +61,14 @@ class FeaturesV2(Features):
             # Graph connectivity indicator
             "has_graph": 1.0 if self.graph_connectivity > 0.1 else 0.0,
             # Budget pressure
-            "budget_tight": 1.0
-            if (self.cost_budget and self.cost_budget < 0.01)
-            else 0.0,
-            "latency_tight": 1.0
-            if (self.latency_budget_ms and self.latency_budget_ms < 100)
-            else 0.0,
+            "budget_tight": (
+                1.0 if (self.cost_budget and self.cost_budget < 0.01) else 0.0
+            ),
+            "latency_tight": (
+                1.0
+                if (self.latency_budget_ms and self.latency_budget_ms < 100)
+                else 0.0
+            ),
             # First turn flag
             "first_turn": 1.0 if self.is_first_turn else 0.0,
         }
@@ -137,4 +139,4 @@ class FeaturesV2(Features):
         # Merge with new fields from kwargs
         base_dict.update(kwargs)
 
-        return cls(**base_dict)
+        return cls(**base_dict)  # type: ignore[arg-type]

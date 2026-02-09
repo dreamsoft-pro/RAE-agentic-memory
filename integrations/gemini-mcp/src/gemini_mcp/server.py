@@ -90,7 +90,7 @@ class RAEMemoryClient:
                     layer=layer,
                 )
 
-                return result
+                return result  # type: ignore[no-any-return]
 
         except httpx.HTTPStatusError as e:
             logger.error(
@@ -168,7 +168,9 @@ async def handle_call_tool(
         raise ValueError(f"Unknown tool: {name}")
 
 
-async def _run_gemini(arguments: dict[str, Any]) -> list[types.TextContent]:
+async def _run_gemini(
+    arguments: dict[str, Any],
+) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
     """Execute Gemini CLI with given prompt.
 
     This function:
@@ -381,11 +383,11 @@ def _extract_output(response_data: dict) -> str:
     # Gemini CLI may return different structures
     # Try common fields
     if "text" in response_data:
-        return response_data["text"]
+        return str(response_data["text"])
     elif "content" in response_data:
-        return response_data["content"]
+        return str(response_data["content"])
     elif "response" in response_data:
-        return response_data["response"]
+        return str(response_data["response"])
     else:
         return json.dumps(response_data, indent=2)
 

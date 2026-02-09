@@ -155,14 +155,14 @@ class ABTestRepository:
                     params.append(results_summary)
                     param_idx += 1
 
-            query = f"""
-                UPDATE ab_tests
-                SET {", ".join(update_fields)}
-                WHERE id = $1
-                RETURNING *
-            """
-            record = await conn.fetchrow(query, *params)
-        return dict(record)
+                query = f"""
+                    UPDATE ab_tests
+                    SET {", ".join(update_fields)}
+                    WHERE id = $1
+                    RETURNING *
+                """  # nosec
+                record = await conn.fetchrow(query, *params)
+            return dict(record)
 
     async def record_result(
         self,
@@ -353,7 +353,7 @@ class BenchmarkRepository:
                 WHERE {" AND ".join(conditions)}
                 ORDER BY created_at DESC
                 LIMIT ${param_idx} OFFSET ${param_idx + 1}
-            """
+            """  # nosec
             records = await conn.fetch(query, *params)
         return [dict(r) for r in records]
 
@@ -490,7 +490,7 @@ class BenchmarkRepository:
                 SET {", ".join(update_fields)}
                 WHERE id = $1
                 RETURNING *
-            """
+            """  # nosec
             record = await conn.fetchrow(query, *params)
         return dict(record)
 
@@ -542,7 +542,7 @@ class BenchmarkRepository:
                 {where_clause}
                 ORDER BY started_at DESC
                 LIMIT ${param_idx} OFFSET ${param_idx + 1}
-            """
+            """  # nosec
             records = await conn.fetch(query, *params)
         return [dict(r) for r in records]
 

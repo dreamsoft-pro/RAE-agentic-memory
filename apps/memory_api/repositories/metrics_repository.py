@@ -10,7 +10,8 @@ from typing import Any, Dict, List, Optional, Tuple, cast
 
 import asyncpg
 import structlog
-from rae_core.adapters.postgres_db import PostgresDatabaseProvider
+
+from rae_adapters.postgres_db import PostgresDatabaseProvider
 from rae_core.interfaces.database import IDatabaseProvider
 
 logger = structlog.get_logger(__name__)
@@ -138,9 +139,36 @@ class MetricsRepository:
                 end_time,
                 aggregation_interval,
             )
+
+            # LIVE FALLBACK: If no data points, try to get current count from memories
+            if not records:
+                live_val = 0.0
+                if metric_name == "memory_count":
+                    live_val = await self.db.fetchval(
+                        "SELECT COUNT(*)::float FROM memories WHERE tenant_id = $1::uuid AND (project = $2 OR agent_id = $2)",
+                        tenant_id,
+                        project_id,
+                    )
+                elif metric_name == "reflection_count":
+                    live_val = await self.db.fetchval(
+                        "SELECT COUNT(*)::float FROM memories WHERE tenant_id = $1::uuid AND (project = $2 OR agent_id = $2) AND layer IN ('reflective', 'rm')",
+                        tenant_id,
+                        project_id,
+                    )
+
+                if live_val and live_val > 0:
+                    return [
+                        {
+                            "timestamp": datetime.now(timezone.utc),
+                            "metric_value": float(live_val),
+                            "data_points": 1,
+                        }
+                    ]
+
         except (
             Exception
-        ):  # Fallback to manual query if function doesn't exist or other error
+        ) as e:  # Fallback to manual query if function doesn't exist or other error
+            logger.warning("metrics_fetch_error", error=str(e))
             # Fallback to manual query
             records = await self.db.fetch(
                 """

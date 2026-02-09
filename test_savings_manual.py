@@ -1,4 +1,3 @@
-
 import asyncio
 
 import asyncpg
@@ -34,7 +33,7 @@ async def test_savings_write():
             predicted_tokens=2000,
             real_tokens=500,
             savings_type="rag",
-            request_id="test-req-123"
+            request_id="test-req-123",
         )
 
         # 4. Verify by reading summary
@@ -45,6 +44,7 @@ async def test_savings_write():
 
     finally:
         await pool.close()
+
 
 if __name__ == "__main__":
     asyncio.run(test_savings_write())

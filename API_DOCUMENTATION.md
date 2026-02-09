@@ -78,8 +78,8 @@ These statistics power the **importance scoring system**, which calculates dynam
 - Stale memories (30+ days): Accelerated decay
 
 For configuration and implementation details, see:
-- [Configuration Guide](docs/configuration.md#memory-decay--importance-scoring)
-- [Architecture Documentation](docs/architecture.md#memory-lifecycle--governance)
+- [Configuration Guide](docs/guides/DEPLOYMENT.md#memory-decay--importance-scoring)
+- [Architecture Documentation](docs/architecture/FULL_SPEC.md#memory-lifecycle--governance)
 
 ---
 
@@ -112,6 +112,43 @@ X-Tenant-Id: tenant-1
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+---
+
+### List Memories
+
+List memories with pagination support.
+
+```http
+GET /v1/memory/list?limit=50&offset=0
+X-Tenant-Id: tenant-1
+```
+
+**Query Parameters:**
+- `limit` (default: 50) - Number of records to return
+- `offset` (default: 0) - Pagination offset
+- `project` (optional) - Filter by project ID
+- `layer` (optional) - Filter by memory layer (e.g., `episodic`, `semantic`)
+
+**Response:**
+```json
+{
+  "results": [
+    {
+      "id": "uuid",
+      "content": "User prefers dark mode",
+      "source": "user_preference",
+      "importance": 0.8,
+      "layer": "episodic",
+      "project": "project-1",
+      "timestamp": "2025-11-22T10:00:00Z"
+    }
+  ],
+  "total": 50,
+  "limit": 50,
+  "offset": 0
 }
 ```
 

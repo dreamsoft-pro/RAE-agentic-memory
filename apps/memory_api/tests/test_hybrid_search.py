@@ -9,12 +9,6 @@ from uuid import UUID, uuid4
 
 import pytest
 
-# Skip tests if sentence_transformers is not installed (ML dependency)
-sentence_transformers = pytest.importorskip(
-    "sentence_transformers",
-    reason="Requires sentence-transformers – heavy ML dependency",
-)
-
 from apps.memory_api.models import ScoredMemoryRecord  # noqa: E402
 from apps.memory_api.services.rae_core_service import RAECoreService  # noqa: E402
 
@@ -38,7 +32,10 @@ from apps.memory_api.services.hybrid_search import HybridSearchService  # noqa: 
 def mock_embedding_service():
     """Mock embedding service."""
     service = Mock()
-    service.generate_embeddings = Mock(return_value=[[0.1, 0.2, 0.3]])
+    # Mock synchronous method
+    service.generate_embeddings = Mock(return_value=[[0.1] * 384])
+    # Mock asynchronous method
+    service.generate_embeddings_async = AsyncMock(return_value=[[0.1] * 384])
     return service
 
 
@@ -51,7 +48,13 @@ def hybrid_search(mock_pool, mock_graph_repo):
         "apps.memory_api.services.hybrid_search.get_embedding_service"
     ) as mock_get_emb:
         mock_emb = MagicMock()
+        # Mock synchronous method
         mock_emb.generate_embeddings.return_value = [[0.1] * 384]
+        # Mock asynchronous methods - IMPORTANT: Must be AsyncMock
+        mock_emb.generate_embeddings_async = AsyncMock(return_value=[[0.1] * 384])
+        # Mock the new method for Multi-Vector
+        mock_emb.generate_embeddings_for_model = AsyncMock(return_value=[[0.1] * 384])
+
         mock_get_emb.return_value = mock_emb
         yield HybridSearchService(
             rae_service=mock_rae_service, graph_repo=mock_graph_repo
@@ -66,7 +69,7 @@ def sample_vector_results():
             id="mem1",
             content="Module A depends on Module B",
             score=0.95,
-            layer="em",
+            layer="episodic",
             tags=["dependency"],
             source="code_analysis",
             timestamp="2024-01-01T00:00:00",
@@ -75,7 +78,7 @@ def sample_vector_results():
             id="mem2",
             content="Module B uses PostgreSQL",
             score=0.85,
-            layer="em",
+            layer="episodic",
             tags=["database"],
             source="design_doc",
             timestamp="2024-01-02T00:00:00",
@@ -475,7 +478,7 @@ class TestHybridSearchIntegration:
                         id="m1",
                         content="User service handles authentication",
                         score=0.92,
-                        layer="em",
+                        layer="episodic",
                         tags=["service", "auth"],
                         source="code",
                         timestamp="2024-01-01T00:00:00",
@@ -919,7 +922,12 @@ class TestHybridSearchWithRealDatabase:
         from apps.memory_api.models import ScoredMemoryRecord
 
         mock_embedding = Mock()
-        mock_embedding.generate_embeddings = Mock(return_value=[[0.1, 0.2, 0.3]])
+        mock_embedding.generate_embeddings = Mock(return_value=[[0.1] * 384])
+        mock_embedding.generate_embeddings_async = AsyncMock(return_value=[[0.1] * 384])
+        # Add generate_embeddings_for_model mock for Multi-Vector support
+        mock_embedding.generate_embeddings_for_model = AsyncMock(
+            return_value=[[0.1] * 384]
+        )
 
         # Create service with real db_pool
         from apps.memory_api.services.hybrid_search import HybridSearchService
@@ -940,7 +948,7 @@ class TestHybridSearchWithRealDatabase:
                         id="mem1",
                         content="UserService handles authentication",
                         score=0.95,
-                        layer="em",
+                        layer="episodic",
                         tags=["service"],
                         source="code",
                         timestamp="2024-01-01T00:00:00",

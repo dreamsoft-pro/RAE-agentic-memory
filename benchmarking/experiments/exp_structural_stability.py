@@ -73,7 +73,7 @@ class StructuralStabilityExperiment:
         print(f"   Inserting {num_memories} memories ({prefix})...")
 
         embedding_service = get_embedding_service()
-        memory_ids = []
+        memory_ids: List[str] = []
 
         for i in range(num_memories):
             content = f"{prefix} memory {i}: This is test content for structural stability analysis"
@@ -82,6 +82,7 @@ class StructuralStabilityExperiment:
             embedding_service.generate_embeddings([content])[0]
 
             # Insert into database
+            assert self.pool is not None
             async with self.pool.acquire() as conn:
                 row = await conn.fetchrow(
                     """
@@ -106,6 +107,7 @@ class StructuralStabilityExperiment:
     async def capture_snapshot(self) -> MemorySnapshot:
         """Capture current memory state"""
         # Fetch all memories
+        assert self.pool is not None
         async with self.pool.acquire() as conn:
             rows = await conn.fetch(
                 """
@@ -162,6 +164,7 @@ class StructuralStabilityExperiment:
 
         try:
             # Clean up any existing data
+            assert self.pool is not None
             async with self.pool.acquire() as conn:
                 await conn.execute(
                     "DELETE FROM memories WHERE tenant_id = $1", self.tenant_id

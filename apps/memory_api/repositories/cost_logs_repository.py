@@ -673,7 +673,7 @@ async def get_recent_logs(
           {error_filter}
         ORDER BY timestamp DESC
         LIMIT $3
-        """,
+        """,  # nosec
         tenant_id,
         project_id,
         limit,

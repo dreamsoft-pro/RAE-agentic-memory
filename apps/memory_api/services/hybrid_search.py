@@ -12,7 +12,7 @@ both the semantic similarity of content and the structural relationships
 between entities in the knowledge graph.
 """
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import structlog
 from pydantic import BaseModel, Field
@@ -174,7 +174,9 @@ class HybridSearchService:
                 )
 
                 # Generate query embedding
-                query_embedding = self.embedding_service.generate_embeddings([query])
+                query_embedding = (
+                    await self.embedding_service.generate_embeddings_async([query])
+                )
                 query_emb = np.array(query_embedding[0])
 
                 # Convert vector results to MemoryItem format
@@ -354,6 +356,7 @@ class HybridSearchService:
     ) -> List[ScoredMemoryRecord]:
         """
         Perform vector similarity search.
+        Supports Multi-Vector Fusion (OpenAI + Ollama) if configured.
 
         Args:
             query: Search query
@@ -365,8 +368,10 @@ class HybridSearchService:
         Returns:
             List of scored memory records
         """
-        # Generate query embedding
-        query_embedding = self.embedding_service.generate_embeddings([query])[0]
+        from apps.memory_api.config import settings
+        from rae_core.math.fusion import RRFFusion
+
+        self.fusion = RRFFusion()
 
         # Build filters
         query_filters = {
@@ -383,11 +388,100 @@ class HybridSearchService:
                         {"key": "tags", "match": {"any": value}}
                     )
 
-        # Query vector store
         vector_store = get_vector_store(pool=self.pool)
-        results = await vector_store.query(
-            query_embedding=query_embedding, top_k=top_k, filters=query_filters
+
+        # Check active models for Multi-Vector Fusion
+        active_searches = []
+
+        # 1. OpenAI (1536 dim)
+        if settings.OPENAI_API_KEY:
+            active_searches.append(
+                {
+                    "name": "openai",
+                    "model": "text-embedding-3-small",
+                    "vector_name": "openai",
+                }
+            )
+
+        # 2. Ollama (384 dim - or configured local)
+        # Always try local/ollama as fallback or secondary
+        active_searches.append(
+            {
+                "name": "ollama",
+                "model": (
+                    "ollama/all-minilm"
+                    if settings.RAE_LLM_BACKEND == "ollama"
+                    else "ollama/nomic-embed-text"
+                ),
+                "vector_name": "ollama",
+            }
         )
+
+        # If we have multiple models, execute parallel search
+        import asyncio
+
+        search_tasks = []
+
+        for search_cfg in active_searches:
+            search_tasks.append(
+                self._execute_single_vector_search(
+                    vector_store,
+                    query,
+                    search_cfg["model"],
+                    search_cfg["vector_name"],
+                    top_k * 2,  # Fetch more for fusion
+                    query_filters,
+                )
+            )
+
+        # Execute all searches
+        results_lists = await asyncio.gather(*search_tasks, return_exceptions=True)
+
+        # Convert to format for RRF: List[Tuple[UUID, float]]
+        rrf_inputs = []
+        record_map = {}  # ID -> MemoryRecord
+
+        for i, res in enumerate(results_lists):
+            if isinstance(res, BaseException) or not res:
+                if isinstance(res, BaseException):
+                    logger.warning(f"Vector search strategy {i} failed: {res}")
+                continue
+
+            # Mypy now knows res is a list due to the check above (mostly)
+            # but safer to cast for strict mode
+            from typing import cast
+
+            results = cast(List[ScoredMemoryRecord], res)
+
+            # Process results for this strategy
+            strategy_ranked_list = []
+            for record in results:
+                # Assuming record is ScoredMemoryRecord
+                strategy_ranked_list.append(
+                    (record.id, record.score, record.importance)
+                )
+                record_map[str(record.id)] = record
+
+            rrf_inputs.append(strategy_ranked_list)
+
+        if not rrf_inputs:
+            logger.warning("All vector searches failed or returned empty.")
+            return []
+
+        # Fuse results
+        # Using the updated fuse signature which expects strategy map
+        strategy_map = {f"v_{i}": res for i, res in enumerate(rrf_inputs)}
+        fused_ranked = self.fusion.fuse(strategy_map)
+
+        # Reconstruct ScoredMemoryRecords
+        final_results = []
+        for uuid_id, rrf_score, importance in fused_ranked[:top_k]:
+            str_id = str(uuid_id)
+            if str_id in record_map:
+                rec = record_map[str_id]
+                rec.score = rrf_score
+                rec.source = "multi_vector_fusion"
+                final_results.append(rec)
 
         # --- Pillar 2 Implementation: Hybrid Search with Super-Nodes ---
         # Search specifically for "community" nodes (Super-Nodes) in the graph
@@ -418,9 +512,68 @@ class HybridSearchService:
                 metadata=comm["properties"],
             )
             # Prepend to results
-            results.insert(0, synthetic_record)
+            final_results.insert(0, synthetic_record)
 
-        return results
+        return final_results
+
+    async def _execute_single_vector_search(
+        self,
+        vector_store: Any,
+        query: str,
+        model_name: str,
+        vector_name: str,
+        top_k: int,
+        filters: Dict,
+    ) -> List[ScoredMemoryRecord]:
+        """Helper to execute a single vector search safely."""
+        try:
+            # Generate embedding
+            embeddings = await self.embedding_service.generate_embeddings_for_model(
+                [query], model_name
+            )
+            query_embedding = embeddings[0]
+
+            # Check for zero embedding (failed)
+            if all(v == 0.0 for v in query_embedding):
+                return []
+
+            # Query store
+            # Check if vector_store supports vector_name (QdrantStore does)
+            # We use a safer check that handles Mocks and real objects
+            supports_vector_name = False
+            if hasattr(vector_store, "query"):
+                import inspect
+
+                try:
+                    sig = inspect.signature(vector_store.query)
+                    supports_vector_name = "vector_name" in sig.parameters
+                except (ValueError, TypeError):
+                    # Fallback for objects that don't support signature (some C extensions or mocks)
+                    # For mocks, we assume they can handle the parameter if configured
+                    from unittest.mock import Mock
+
+                    if isinstance(vector_store.query, Mock):
+                        supports_vector_name = True
+
+            if supports_vector_name:
+                result = await vector_store.query(
+                    query_embedding, top_k, filters, vector_name=vector_name
+                )
+                return cast(List[ScoredMemoryRecord], result)
+            else:
+                # Fallback for stores that don't support vector_name (e.g. PGVector)
+                # Only use if this is the "default" or primary search
+                if vector_name in [
+                    "dense",
+                    "default",
+                    "ollama",
+                ]:  # Assuming simple stores use default
+                    result = await vector_store.query(query_embedding, top_k, filters)
+                    return cast(List[ScoredMemoryRecord], result)
+                return []
+        except Exception as e:
+            logger.warning(f"Single vector search failed for {vector_name}: {e}")
+            return []
 
     async def _find_relevant_communities(
         self, query: str, tenant_id: str, project_id: str

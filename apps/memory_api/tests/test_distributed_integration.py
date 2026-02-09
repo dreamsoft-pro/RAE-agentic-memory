@@ -50,19 +50,29 @@ async def test_embedding_service_local_fallback():
     original_profile = settings.RAE_PROFILE
     settings.RAE_PROFILE = "standard"
 
-    service = EmbeddingService()
+    # Mock SentenceTransformer to avoid torch/cuda warnings during initialization
+    with patch("apps.memory_api.services.embedding.EmbeddingService._initialize_model"):
+        service = EmbeddingService()
 
-    # Mock local generate_embeddings (sync)
-    with patch.object(
-        service, "generate_embeddings", return_value=[[0.4, 0.5, 0.6]]
-    ) as mock_sync:
-        # Execute
-        texts = ["local"]
-        result = await service.generate_embeddings_async(texts)
+        # Mock local generate_embeddings (sync)
+        with patch.object(
+            service, "generate_embeddings", return_value=[[0.4, 0.5, 0.6]]
+        ):
+            # Mock litellm.aembedding to avoid real API calls
+            with patch("litellm.aembedding") as mock_litellm:
+                mock_litellm.return_value = {"data": [{"embedding": [0.4, 0.5, 0.6]}]}
 
-        # Verify
-        assert result == [[0.4, 0.5, 0.6]]
-        mock_sync.assert_called_once_with(texts)
+                # Execute
+                texts = ["local"]
+                result = await service.generate_embeddings_async(texts)
+
+                # Verify
+                assert isinstance(result, list)
+                assert len(result) == 1
+                assert result[0] == [0.4, 0.5, 0.6]
+                # mock_sync is NOT called by generate_embeddings_async,
+                # it calls litellm.aembedding directly.
+                mock_litellm.assert_called_once()
 
     # Cleanup
     settings.RAE_PROFILE = original_profile

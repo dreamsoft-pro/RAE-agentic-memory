@@ -16,11 +16,24 @@ Adapters follow dependency injection pattern for easy testing and swapping.
 from .memory.cache import InMemoryCache
 from .memory.storage import InMemoryStorage
 from .memory.vector import InMemoryVectorStore
-from .postgres import PostgreSQLStorage
-from .qdrant import QdrantVectorStore
-from .redis import RedisCache
 from .sqlite.storage import SQLiteStorage
 from .sqlite.vector import SQLiteVectorStore
+
+# Conditional imports for optional dependencies
+try:
+    from .postgres import PostgreSQLStorage
+except ImportError:
+    PostgreSQLStorage = None  # type: ignore
+
+try:
+    from .qdrant import QdrantVectorStore
+except ImportError:
+    QdrantVectorStore = None  # type: ignore
+
+try:
+    from .redis import RedisCache
+except ImportError:
+    RedisCache = None  # type: ignore
 
 # Aliases for backwards compatibility
 PostgresMemoryAdapter = PostgreSQLStorage

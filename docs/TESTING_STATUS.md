@@ -1,18 +1,18 @@
 # Testing Status
 
-**Last Run:** 2025-12-26 09:31:28
-**Commit:** fa1f186
+**Last Run:** 2026-02-08 16:29:04
+**Commit:** 382c2635
 
 ## Summary
-- **Total Tests:** 9
-- **Passed:** 9
-- **Failed:** 0
+- **Total Tests:** 1009
+- **Passed:** 1008
+- **Failed:** 1
 - **Errors:** 0
-- **Skipped:** 1
-- **Coverage:** 23.15%
+- **Skipped:** 10
+- **Coverage:** 70.81%
 
 ## Coverage Report
 See `htmlcov/index.html` for detailed report.
 
 ## Test Suite Health
-🟡 Good
+🔴 Failing

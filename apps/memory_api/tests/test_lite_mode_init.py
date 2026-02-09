@@ -1,10 +1,12 @@
 from unittest.mock import patch
 
+import pytest
 from fastapi.testclient import TestClient
 
 from apps.memory_api.main import app
 
 
+@pytest.mark.smoke
 def test_lite_mode_initialization():
     """Test that the app starts in Lite mode without failing."""
     with patch.dict("os.environ", {"RAE_PROFILE": "lite", "RAE_DB_MODE": "ignore"}):
@@ -21,7 +23,7 @@ def test_lite_mode_initialization():
                     assert app.state.rae_core_service is not None
 
                     # Verify it uses fallbacks
-                    from rae_core.adapters.memory.storage import InMemoryStorage
+                    from rae_adapters.memory.storage import InMemoryStorage
 
                     assert isinstance(
                         app.state.rae_core_service.postgres_adapter, InMemoryStorage

@@ -156,7 +156,7 @@ async def caching_example():
         print(f"Cache hit rate: {stats.get('cache_hit_rate', 0):.2%}")
 
         # Invalidate cache for specific request
-        client.invalidate_cache("GET", "/v1/memories/search")
+        client.invalidate_cache("GET", "/v2/memories/search")
 
         # Clear entire cache
         client.client.cache.clear()

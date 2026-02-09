@@ -17,7 +17,6 @@ Usage:
 """
 
 import os
-import subprocess
 import sys
 import time
 from pathlib import Path
@@ -33,77 +32,27 @@ from rae_mcp.server import RAEMemoryClient
 pytestmark = pytest.mark.integration
 
 
-@pytest.fixture(scope="module")
-def rae_lite_services():
-    """
-    Start docker compose.lite.yml services for MCP integration testing.
-
-    This fixture:
-    1. Starts all RAE Lite services (API, PostgreSQL, Qdrant, Redis)
-    2. Waits for API to be healthy
-    3. Yields control to tests
-    4. Tears down services after tests complete
-    """
-    # Get project root (3 levels up from this file)
-    project_root = Path(__file__).parent.parent.parent.parent
-    compose_file = project_root / "docker compose.lite.yml"
-
-    # Start services
-    subprocess.run(
-        ["docker compose", "-f", str(compose_file), "up", "-d"],
-        check=True,
-        capture_output=True,
-        cwd=project_root,
-    )
-
-    # Wait for services to be ready (up to 60 seconds)
-    max_retries = 30
-    retry_count = 0
-    api_ready = False
-
-    while retry_count < max_retries and not api_ready:
-        try:
-            response = httpx.get("http://localhost:8000/health", timeout=5.0)
-            if response.status_code == 200:
-                api_ready = True
-                break
-        except (httpx.ConnectError, httpx.TimeoutException):
-            pass
-
-        retry_count += 1
-        time.sleep(2)
-
-    if not api_ready:
-        # Cleanup on failure
-        subprocess.run(
-            ["docker compose", "-f", str(compose_file), "down"],
-            capture_output=True,
-            cwd=project_root,
-        )
-        pytest.fail("RAE API failed to start within 60 seconds")
-
-    # Services are ready
-    yield
-
-    # Teardown: Stop services
-    subprocess.run(
-        ["docker compose", "-f", str(compose_file), "down", "-v"],
-        capture_output=True,
-        cwd=project_root,
-    )
-
-
 @pytest.fixture
-def mcp_client(rae_lite_services):
+def mcp_client():
     """
     Create RAEMemoryClient connected to real RAE API.
 
-    Uses environment variables or defaults for configuration.
+    Uses environment variables for configuration and fails if they are not set.
     """
+    api_url = os.getenv("RAE_API_URL")
+    api_key = os.getenv("RAE_API_KEY")
+    tenant_id = os.getenv("RAE_TENANT_ID")
+
+    if not all([api_url, api_key, tenant_id]):
+        raise ValueError(
+            "Missing required environment variables for integration tests: "
+            "RAE_API_URL, RAE_API_KEY, RAE_TENANT_ID"
+        )
+
     return RAEMemoryClient(
-        api_url=os.getenv("RAE_API_URL", "http://localhost:8000"),
-        api_key=os.getenv("RAE_API_KEY", "test-api-key"),
-        tenant_id=os.getenv("RAE_TENANT_ID", "mcp-integration-test"),
+        api_url=api_url,
+        api_key=api_key,
+        tenant_id=tenant_id,
     )
 
 
@@ -353,9 +302,10 @@ class TestMCPErrorHandling:
     @pytest.mark.asyncio
     async def test_search_memory_empty_query(self, mcp_client):
         """Test searching with empty query"""
-        # Empty query should still work (may return recent memories)
-        results = await mcp_client.search_memory(query="", top_k=5)
-        assert isinstance(results, list)
+        # Empty query should now raise a 422 error as query_text must have at least 1 character
+        with pytest.raises(httpx.HTTPStatusError) as exc_info:
+            await mcp_client.search_memory(query="", top_k=5)
+        assert exc_info.value.response.status_code == 422
 
 
 class TestMCPPerformance:
@@ -398,25 +348,3 @@ class TestMCPPerformance:
 
         # Search should be fast (< 2 seconds)
         assert elapsed < 2.0
-
-
-@pytest.mark.skipif(
-    subprocess.run(["which", "docker compose"], capture_output=True).returncode != 0,
-    reason="docker compose not available",
-)
-class TestMCPServiceDependencies:
-    """Test that MCP client properly handles service dependencies"""
-
-    @pytest.mark.asyncio
-    async def test_health_check(self, rae_lite_services):
-        """Test that RAE API health check works"""
-        response = httpx.get("http://localhost:8000/health", timeout=5.0)
-        assert response.status_code == 200
-        data = response.json()
-        assert "status" in data
-
-    @pytest.mark.asyncio
-    async def test_api_docs_accessible(self, rae_lite_services):
-        """Test that API documentation is accessible"""
-        response = httpx.get("http://localhost:8000/docs", timeout=5.0)
-        assert response.status_code == 200

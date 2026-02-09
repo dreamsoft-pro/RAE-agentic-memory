@@ -111,7 +111,7 @@ def mock_pool():
     # Set up default connection behavior
     conn.fetch = AsyncMock(return_value=[])
     conn.fetchrow = AsyncMock(return_value=None)
-    conn.fetchval = AsyncMock(return_value=None)
+    conn.fetchval = AsyncMock(return_value=1)
     conn.execute = AsyncMock(return_value="INSERT 0 1")
     conn.executemany = AsyncMock(return_value="OK")
 
@@ -166,9 +166,9 @@ def postgres_container():
     # Start PostgreSQL container with pgvector
     container = PostgresContainer(
         image="ankane/pgvector:latest",
-        username="test_user",
-        password="test_password",
-        dbname="test_db",
+        username="rae",
+        password="rae_password",
+        dbname="rae",
     )
     container.start()
 
@@ -238,6 +238,7 @@ async def db_pool(postgres_container):
                     timestamp TIMESTAMP,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     last_accessed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    expires_at TIMESTAMP,
                     usage_count INTEGER DEFAULT 0,
                     strength FLOAT DEFAULT 0.5,
                     memory_type TEXT DEFAULT 'episodic',

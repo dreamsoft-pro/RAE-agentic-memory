@@ -8,10 +8,10 @@ Tests cover:
 - Error handling
 """
 
-
 # Mock problematic imports before importing run_benchmark
 import sys
 from pathlib import Path
+from typing import List, Tuple
 from unittest.mock import Mock
 
 import pytest
@@ -159,7 +159,7 @@ class TestBenchmarkMetrics:
 
     def test_empty_results(self):
         """Test all metrics with empty results"""
-        results = []
+        results: List[Tuple[List[str], List[str]]] = []
 
         mrr = BenchmarkMetrics.calculate_mrr(results)
         hit_rate = BenchmarkMetrics.calculate_hit_rate(results, k=5)

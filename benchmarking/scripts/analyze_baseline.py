@@ -2,6 +2,7 @@
 """
 Analyze baseline benchmark data for Iteration 2
 """
+
 import glob
 import json
 import statistics
@@ -78,18 +79,20 @@ def analyze_benchmarks(data: List[Dict[str, Any]]) -> Dict[str, Any]:
             "overall_quality": {
                 "mean": statistics.mean(quality_scores),
                 "median": statistics.median(quality_scores),
-                "stdev": statistics.stdev(quality_scores)
-                if len(quality_scores) > 1
-                else 0,
+                "stdev": (
+                    statistics.stdev(quality_scores) if len(quality_scores) > 1 else 0
+                ),
             },
         },
         "performance_metrics": {
             "query_time_ms": {
                 "mean": statistics.mean(query_times),
                 "median": statistics.median(query_times),
-                "p95": sorted(query_times)[int(len(query_times) * 0.95)]
-                if query_times
-                else 0,
+                "p95": (
+                    sorted(query_times)[int(len(query_times) * 0.95)]
+                    if query_times
+                    else 0
+                ),
             },
             "insert_time_ms": {
                 "mean": statistics.mean(insert_times),

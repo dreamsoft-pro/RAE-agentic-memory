@@ -13,7 +13,7 @@ def mock_rae_service():
     service.qdrant_client = AsyncMock()
 
     # Mock the 'db' property to return an actual provider wrapping our mock pool
-    from rae_core.adapters.postgres_db import PostgresDatabaseProvider
+    from rae_adapters.postgres_db import PostgresDatabaseProvider
 
     service.db = PostgresDatabaseProvider(service.postgres_pool)
 

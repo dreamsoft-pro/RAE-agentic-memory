@@ -35,9 +35,9 @@ logger = logging.getLogger(__name__)
 class DataClass(str, Enum):
     """Classification of data for retention policies"""
 
-    EPISODIC_MEMORY = "episodic_memory"  # Layer: em
-    LONG_TERM_MEMORY = "long_term_memory"  # Layer: ltm
-    REFLECTIVE_MEMORY = "reflective_memory"  # Layer: rm
+    EPISODIC_MEMORY = "episodic_memory"  # Layer: episodic
+    LONG_TERM_MEMORY = "long_term_memory"  # Layer: semantic
+    REFLECTIVE_MEMORY = "reflective_memory"  # Layer: reflective
     SEMANTIC_NODES = "semantic_nodes"  # Knowledge graph nodes
     GRAPH_TRIPLES = "graph_triples"  # Knowledge graph relationships
     AUDIT_LOGS = "audit_logs"  # System audit logs
@@ -246,7 +246,7 @@ class RetentionService:
             """
             DELETE FROM memories
             WHERE tenant_id = $1
-              AND layer = 'em'
+              AND layer = 'episodic'
               AND created_at < $2
               AND NOT EXISTS (
                   SELECT 1 FROM unnest($3::text[]) AS exception

@@ -10,10 +10,10 @@ pytest-json-report
 pytest-xdist
 pytest-testmon
 pytest-picked
-black
-isort
-ruff
-mypy
+black==25.12.0
+isort==7.0.0
+ruff==0.14.11
+mypy==1.19.1
 pre-commit
 safety
 bandit
@@ -24,5 +24,5 @@ types-setuptools
 watchdog[watchmedo]
 locust
 # ML dependencies for benchmarks and tests
-sentence-transformers
 pytest-benchmark
+asyncpg

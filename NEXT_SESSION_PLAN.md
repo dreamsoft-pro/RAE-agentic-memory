@@ -1,19 +1,37 @@
-# Next Session Plan: Distributed Compute Integration
+# Next Session Plan: System 23.0 - Neural Scalpel & Adaptive Intelligence
 
-**Status**: 
-- Iteration 1 (Abstraction): COMPLETED.
-- Iteration 2 (Infrastructure Decoupling): COMPLETED (InfrastructureFactory implemented, Lite mode verified).
+## Overview
+Unify "Neural Scalpel" precision (System 22.1) with "Adaptive Intelligence" (CRAG/Routing) to achieve MRR 1.0 on Industrial Benchmarks. The goal is to close the semantic gap (e.g., iPhone != mobile) via metadata injection while handling failure cases gracefully via Corrective RAG.
 
-## 🎯 Primary Goal: Iteration 3 - Distributed Compute (Node1 Integration)
-With `main.py` decoupled, we can now focus on offloading heavy computations (Embeddings, Graph Processing) to the GPU node (Kubus/Node1).
+## 1. Priority: Neural Scalpel + Metadata Injection (The "MRR 1.0" Fix)
+- **Problem:** TinyBERT reranker lacks domain knowledge (semantic gap).
+- **Goal:** Achieve MRR > 0.95 on Industrial sets by injecting context before reranking.
+- **Tasks:**
+    - **Metadata Injection:** Implement `MetadataInjector` to enrich query/doc context with synonyms and parent entities (e.g., "iPhone" -> "iPhone mobile phone smartphone") *before* embedding/reranking.
+    - **Tuning:** Calibrate the current 10,000x reranker weight against the new injected metadata.
+    - **Verify:** Run `industrial_small` benchmark to confirm the "iPhone/Mobile" fix.
 
-### Steps to Execute:
-1.  **Remote Provider Check**: Verify `apps/memory_api/repositories/enhanced_graph_repository.py` and `apps/memory_api/services/rae_core_service.py` support remote execution configuration.
-2.  **Node1 Configuration**: Ensure `RAE_PROFILE=standard` or a new `RAE_PROFILE=distributed` can point to Node1 for embeddings/reranking.
-3.  **Smoke Test Node1**: Verify connection to Node1 services from the local RAE instance.
+## 2. Adaptive RAG (Policy & Routing)
+- **Goal:** Stop wasting compute on simple queries; use Deep Logic only when needed.
+- **Tasks:**
+    - Implement `PolicyRouter` in Math Layer.
+    - **Fast Path:** Math-Only (FullText) or simple Vector for high-confidence matches.
+    - **Deep Path:** Triggered when Fast Path score < Threshold. Activates Neural Scalpel (Reranker) + Graph Resonance.
+    - **Logging:** Audit all routing decisions in the **Working** layer.
 
-### 🚀 Secondary Goal: RAE-Lite Refinement
-Ensure "Lite" mode is actually usable (e.g., provides meaningful mocks or in-memory fallbacks for critical services if they are None).
+## 3. Corrective RAG (CRAG) - The Safety Net
+- **Goal:** Handle "Zero Result" or "Low Confidence" scenarios without hallucination.
+- **Tasks:**
+    - Implement `VerificationLoop`: If retrieved documents contradict or lack answer, trigger Web Search (if allowed) or "Szubar" Reflection.
+    - **Query Correction:** Automatically rewrite queries if initial retrieval fails (e.g., strip specific IDs, relax constraints).
 
-## 💡 Start Command
-> `run-distributed-integration`
+## 4. Housekeeping & Stabilization
+- **Tasks:**
+    - **Merge:** Push confirmed System 22.1 fixes to `develop` (Node 1 is synced).
+    - **Tests:** Review and fix the 7 skipped tests in `make test-core`.
+    - **Zero Drift:** Ensure all new logic is covered by tests before commit.
+
+## Success Metrics
+- **MRR:** > 0.95 on Industrial Small (fixing the semantic gap).
+- **Efficiency:** Fast Path used for >60% of trivial queries.
+- **Resilience:** 0 Hallucinations on missing data (Corrective fallback).

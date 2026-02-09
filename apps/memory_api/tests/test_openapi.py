@@ -10,5 +10,7 @@ def test_openapi_schema():
     assert response.status_code == 200
     schema = response.json()
     assert schema["info"]["title"] == "RAE Memory API"
-    assert "Memory" in [tag["name"] for tag in schema["tags"]]
-    assert "/v1/memory/store" in schema["paths"]
+    # OpenAPI spec doesn't require top-level tags to list all tags used in paths
+    # We verify the path exists and has the correct tag in operation
+    assert "/v2/memories/" in schema["paths"]
+    assert "Memory v2 (RAE-Core)" in schema["paths"]["/v2/memories/"]["post"]["tags"]

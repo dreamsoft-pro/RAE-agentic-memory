@@ -1,5 +1,6 @@
 """RAE-core configuration using pydantic-settings."""
 
+from typing import Any
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -218,8 +219,13 @@ class RAESettings(BaseSettings):
         default="qdrant",
         description="Vector database backend (qdrant, pgvector)",
     )
+    vector_dimension: int = Field(
+        default=384,
+        ge=1,
+        description="Dimension of embedding vectors",
+    )
 
-    def get_layer_config(self, layer: str) -> dict:
+    def get_layer_config(self, layer: str) -> dict[str, Any]:
         """Get configuration for a specific memory layer.
 
         Args:
@@ -228,7 +234,7 @@ class RAESettings(BaseSettings):
         Returns:
             Dictionary with layer configuration
         """
-        layer_configs = {
+        layer_configs: dict[str, dict[str, Any]] = {
             "sensory": {
                 "max_size": self.sensory_max_size,
                 "decay_rate": self.decay_rate,
@@ -252,7 +258,7 @@ class RAESettings(BaseSettings):
         }
         return layer_configs.get(layer, {})
 
-    def get_llm_config(self) -> dict:
+    def get_llm_config(self) -> dict[str, Any]:
         """Get LLM configuration.
 
         Returns:
@@ -264,7 +270,7 @@ class RAESettings(BaseSettings):
             "timeout": self.llm_timeout,
         }
 
-    def get_search_config(self) -> dict:
+    def get_search_config(self) -> dict[str, Any]:
         """Get search configuration.
 
         Returns:
@@ -276,7 +282,7 @@ class RAESettings(BaseSettings):
             "rerank_top_k": self.rerank_top_k,
         }
 
-    def get_reflection_config(self) -> dict:
+    def get_reflection_config(self) -> dict[str, Any]:
         """Get reflection configuration.
 
         Returns:

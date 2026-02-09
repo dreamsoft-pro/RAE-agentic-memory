@@ -1,8 +1,47 @@
 # apps/memory-api/metrics.py
+import time
+
 from prometheus_client import Counter, Gauge, Histogram
 
 # --- Custom Metrics ---
 LABELS = ["tenant_id", "project"]
+
+# --- Operational Metrics (Layer 1) ---
+_START_TIME = time.time()
+rae_uptime_seconds = Gauge("rae_uptime_seconds", "Uptime of the RAE service in seconds")
+rae_uptime_seconds.set_function(lambda: time.time() - _START_TIME)
+
+rae_memory_count_total = Gauge(
+    "rae_memory_count_total",
+    "Total count of memories in the system",
+    ["tenant_id", "layer", "memory_type"],
+)
+rae_sync_last_success_timestamp = Gauge(
+    "rae_sync_last_success_timestamp",
+    "Timestamp of the last successful sync",
+    ["tenant_id", "target_node", "peer_id", "direction"],
+)
+rae_active_sessions = Gauge(
+    "rae_active_sessions", "Number of active user sessions", ["tenant_id"]
+)
+rae_reflection_processing_seconds = Histogram(
+    "rae_reflection_processing_seconds",
+    "Histogram of reflection processing duration in seconds",
+    ["tenant_id", "reflection_type"],
+    buckets=(0.1, 0.5, 1.0, 2.5, 5.0, 10.0, float("inf")),
+)
+
+rae_api_requests_total = Counter(
+    "rae_api_requests_total",
+    "Total number of API requests processed",
+    ["tenant_id", "method", "endpoint", "status"],
+)
+rae_errors_total = Counter(
+    "rae_errors_total",
+    "Total number of errors encountered",
+    ["tenant_id", "endpoint", "error_type", "http_status", "component"],
+)
+
 memory_store_counter = Counter(
     "memory_store_total", "Total number of memory store operations", ["tenant_id"]
 )

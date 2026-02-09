@@ -1,6 +1,7 @@
+import os
 import sys
 from pathlib import Path
-from typing import Any, cast
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -21,7 +22,9 @@ def mock_env_and_settings(monkeypatch):
         "QDRANT_HOST": "localhost",
         "REDIS_URL": "redis://localhost:6379/0",
         "RAE_LLM_BACKEND": "openai",
-        "OPENAI_API_KEY": "sk-test-key",
+        "OPENAI_API_KEY": os.getenv("OPENAI_API_KEY") or "sk-test-key",
+        "ANTHROPIC_API_KEY": os.getenv("ANTHROPIC_API_KEY") or "sk-ant-test-key",
+        "GEMINI_API_KEY": os.getenv("GEMINI_API_KEY") or "gemini-test-key",
         "API_KEY": "test-api-key",
         "OAUTH_ENABLED": "False",
         "LOG_LEVEL": "INFO",
@@ -29,6 +32,7 @@ def mock_env_and_settings(monkeypatch):
         "ENABLE_API_KEY_AUTH": "False",
         "ENABLE_JWT_AUTH": "False",
         "ENABLE_RATE_LIMITING": "False",
+        "RAE_DB_MODE": "migrate",
     }
     for k, v in envs.items():
         monkeypatch.setenv(k, v)
@@ -46,6 +50,16 @@ def mock_env_and_settings(monkeypatch):
     monkeypatch.setattr(config, "settings", config.Settings())
 
     yield config.settings
+
+
+@pytest.fixture(autouse=True)
+def mock_qdrant_factory():
+    """Globally mock Qdrant client factory to prevent connection attempts."""
+    with patch(
+        "rae_adapters.infra_factory.AsyncQdrantClient",
+        new=MagicMock(return_value=AsyncMock()),
+    ):
+        yield
 
 
 @pytest.fixture(autouse=True)
@@ -130,11 +144,12 @@ def mock_rae_service(mock_pool):
     from apps.memory_api.services.rae_core_service import RAECoreService
 
     service = AsyncMock(spec=RAECoreService)
-    
+
     # Mock the 'db' property to return an actual provider wrapping our mock pool
-    from rae_core.adapters.postgres_db import PostgresDatabaseProvider
+    from rae_adapters.postgres_db import PostgresDatabaseProvider
+
     service.db = PostgresDatabaseProvider(mock_pool)
-    
+
     # Mock enhanced_graph_repo property
     service.enhanced_graph_repo = AsyncMock()
 
@@ -164,6 +179,7 @@ def mock_embedding_service():
     """Mock for EmbeddingService."""
     service = MagicMock()
     service.generate_embeddings.return_value = [[0.1] * 384]
+    service.generate_embeddings_async = AsyncMock(return_value=[[0.1] * 384])
     return service
 
 
@@ -210,16 +226,12 @@ def client_with_overrides(
     # Patch services obtained via functions (not DI in older parts)
     with (
         patch(
-            "apps.memory_api.api.v1.memory.get_embedding_service",
-            return_value=mock_embedding_service,
-        ),
-        patch(
-            "apps.memory_api.api.v1.memory.get_vector_store",
-            return_value=mock_vector_store,
-        ),
-        patch(
-            "rae_core.factories.infra_factory.asyncpg.create_pool",
+            "rae_adapters.infra_factory.asyncpg.create_pool",
             new=AsyncMock(return_value=mock_pool),
+        ),
+        patch(
+            "rae_adapters.infra_factory.AsyncQdrantClient",
+            new=MagicMock(return_value=AsyncMock()),
         ),
         patch("apps.memory_api.main.rebuild_full_cache", new=AsyncMock()),
         patch(

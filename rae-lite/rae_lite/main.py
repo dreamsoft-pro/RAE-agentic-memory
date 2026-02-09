@@ -4,6 +4,7 @@ RAE-Lite Main Entry Point.
 Starts local HTTP server and system tray app.
 """
 
+import asyncio
 import sys
 import threading
 import time
@@ -48,6 +49,7 @@ class ServerThread(threading.Thread):
             host=settings.server_host,
             port=settings.server_port,
             log_level="info",
+            timeout_keep_alive=120,
         )
         self.server = uvicorn.Server(config)
         self.server.run()
@@ -57,6 +59,28 @@ class ServerThread(threading.Thread):
         if self.server:
             logger.info("stopping_server")
             self.server.should_exit = True
+
+
+class GUIThread(threading.Thread):
+    """Thread to run NiceGUI server."""
+    def __init__(self):
+        super().__init__(daemon=True)
+
+    def run(self):
+        # Create a new event loop for this thread
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        try:
+            from nicegui import ui
+
+            # Import app module to register routes via @ui.page
+            import rae_lite.ui.app
+            
+            # Port 8080 for UI, reload=False for production stability
+            ui.run(title="RAE-Lite Desktop", port=8080, reload=False, show=False)
+        except Exception as e:
+            logger.error("gui_start_failed", error=str(e))
 
 
 def main():
@@ -74,12 +98,17 @@ def main():
     server_thread = ServerThread()
     server_thread.start()
 
-    # Give server time to start
+    # Start NiceGUI thread
+    gui_thread = GUIThread()
+    gui_thread.start()
+
+    # Give servers time to start
     time.sleep(2)
 
     logger.info(
         "server_started",
-        url=f"http://{settings.server_host}:{settings.server_port}",
+        api_url=f"http://{settings.server_host}:{settings.server_port}",
+        gui_url="http://127.0.0.1:8080"
     )
 
     # Run system tray (blocks until quit)

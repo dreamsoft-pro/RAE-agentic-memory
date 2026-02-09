@@ -16,7 +16,10 @@ config = context.config
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-if config.config_file_name is not None and os.environ.get("ALEMBIC_SKIP_LOG_CONFIG") != "1":
+if (
+    config.config_file_name is not None
+    and os.environ.get("ALEMBIC_SKIP_LOG_CONFIG") != "1"
+):
     fileConfig(config.config_file_name)
 
 # add your model's MetaData object here
@@ -37,8 +40,20 @@ def get_db_url():
     """
     from apps.memory_api.config import settings
 
-    host = os.environ.get("POSTGRES_HOST", settings.POSTGRES_HOST)
-    return f"postgresql://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{host}/{settings.POSTGRES_DB}"
+    url = None
+    if settings.DATABASE_URL:
+        url = settings.DATABASE_URL
+    else:
+        host = os.environ.get("POSTGRES_HOST", settings.POSTGRES_HOST)
+        url = f"postgresql://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{host}/{settings.POSTGRES_DB}"
+
+    # Ensure SQLAlchemy uses psycopg2 for synchronous migrations
+    if url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+psycopg2://", 1)
+    elif url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql+psycopg2://", 1)
+
+    return url
 
 
 def run_migrations_offline() -> None:

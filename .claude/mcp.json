@@ -1,21 +1,59 @@
 {
   "mcpServers": {
-    "rae-memory": {
-      "command": ".venv/bin/rae-mcp-server",
+    "node1-rae-dev": {
+      "command": "/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/.venv/bin/rae-mcp-server",
       "env": {
-        "RAE_API_URL": "http://localhost:8000",
-        "RAE_API_KEY": "dev-key",
+        "RAE_API_URL": "http://100.68.166.117:8001",
         "RAE_PROJECT_ID": "RAE-agentic-memory",
-        "RAE_TENANT_ID": "default-tenant"
+        "RAE_TENANT_ID": "default-tenant",
+        "RAE_PROFILE": "dev"
       }
     },
-    "gemini": {
-      "command": ".venv/bin/gemini-mcp-server",
+    "node1-rae-lite": {
+      "command": "/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/.venv/bin/rae-mcp-server",
       "env": {
-        "RAE_API_URL": "http://localhost:8000",
-        "RAE_API_KEY": "dev-key",
+        "RAE_API_URL": "http://100.68.166.117:8008",
         "RAE_PROJECT_ID": "RAE-agentic-memory",
-        "RAE_TENANT_ID": "default-tenant"
+        "RAE_TENANT_ID": "default-tenant",
+        "RAE_PROFILE": "lite"
+      }
+    },
+    "local-rae-dev": {
+      "command": "/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/.venv/bin/rae-mcp-server",
+      "env": {
+        "RAE_API_URL": "http://localhost:8001",
+        "RAE_PROJECT_ID": "RAE-agentic-memory",
+        "RAE_TENANT_ID": "default-tenant",
+        "RAE_PROFILE": "dev"
+      }
+    },
+    "local-rae-lite": {
+      "command": "/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/.venv/bin/rae-mcp-server",
+      "env": {
+        "RAE_API_URL": "http://localhost:8008",
+        "RAE_PROJECT_ID": "RAE-agentic-memory",
+        "RAE_TENANT_ID": "default-tenant",
+        "RAE_PROFILE": "lite"
+      }
+    },
+    "node3-ollama": {
+      "command": "/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/.venv/bin/python",
+      "args": [
+        "/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/infra/node_agent/ollama_proxy_mcp.py"
+      ],
+      "env": {
+        "OLLAMA_URL": "http://172.30.15.11:11434",
+        "NODE_NAME": "Node3 (Piotrek)"
+      }
+    },
+    "local-ollama": {
+      "command": "/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/.venv/bin/python",
+      "args": [
+        "/home/grzegorz-lesniowski/cloud/RAE-agentic-memory-agnostic-core/infra/node_agent/ollama_proxy_mcp.py"
+      ],
+      "env": {
+        "OLLAMA_URL": "http://localhost:11434",
+        "NODE_NAME": "Localhost (Dev)"
       }
     }
   }

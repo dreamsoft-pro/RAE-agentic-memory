@@ -8,7 +8,7 @@ This is your central hub for building with RAE (Reflective Agentic-memory Engine
 
 **New to RAE?** Start here:
 
-1. **[Installation Guide](../../../README.md#installation)**
+1. **[Installation Guide](../../README.md#installation)**
    - Docker Compose setup (recommended)
    - Local development setup
    - Requirements: Docker, Python 3.11+
@@ -49,7 +49,7 @@ This is your central hub for building with RAE (Reflective Agentic-memory Engine
 | Topic | Description | Link |
 |-------|-------------|------|
 | **System Architecture** | High-level design overview | [Architecture Overview](../../reference/architecture/README.md) |
-| **Memory Layers** | Episodic, Working, Semantic, LTM | [Memory Layers](../../reference/architecture/memory-layers.md) |
+| **Memory Layers** | Episodic, Working, Semantic, LTM | [Memory Layers](../../reference/architecture/FULL_SPEC.md#1-memory-hierarchy) |
 | **Hybrid Search** | Vector + keyword search (v3) | [Hybrid Search](../../reference/architecture/hybrid-search.md) |
 | **LLM Orchestrator** | Multi-model flexibility (v2.1.1) | [LLM Orchestrator](../../../docs/project-design/active/LLM_orchestrator/LLM_ORCHESTRATOR.md) |
 | **Reflection Engine** | Autonomous memory consolidation | [Reflection Mode](../../../docs/REFLECTION_MODE.md) |
@@ -336,6 +336,59 @@ We welcome contributions! See [CONTRIBUTING.md](../../../CONTRIBUTING.md) for gu
 - [ ] Write tests (see [Test Policy](../../AGENTS_TEST_POLICY.md))
 - [ ] Follow [Branching Strategy](../../BRANCHING.md)
 
+## 🚑 Data Recovery & Maintenance
+
+### Recovering "Lost" Memories (Layer Normalization)
+
+If you have upgraded from an older version of RAE, you might find that some memories seem to be missing. This is often due to a change in memory layer naming conventions (e.g., `ltm` -> `semantic`, `em` -> `episodic`).
+
+We provide a utility script to normalize these layer names and restore access to your data.
+
+**How to run:**
+
+```bash
+# Run the recovery script
+python scripts/recover_memory_layers.py
+```
+
+**What it does:**
+1. Connects to the RAE database.
+2. Updates legacy layer names to the new standard:
+   - `em` -> `episodic`
+   - `ltm` / `sm` -> `semantic`
+   - `stm` / `wm` -> `working`
+   - `rm` -> `reflective`
+3. Reports the number of recovered records.
+
+### Database Health Check
+
+To verify which tables are actually storing data and check the overall health of your database structure, use the stats utility:
+
+```bash
+# Check database usage
+python scripts/db_stats.py
+```
+
+This will output a report showing row counts for all tables, helping you verify data persistence and identify unused features.
+
+### Graph Snapshots & Restore
+
+For enterprise users employing the Knowledge Graph, RAE supports full point-in-time recovery via snapshots.
+
+**Restore a snapshot:**
+
+```bash
+curl -X POST http://localhost:8000/v1/graph-management/snapshots/{snapshot_id}/restore \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your-key" \
+  -d '{
+    "restore_mode": "replace",
+    "create_backup": true
+  }'
+```
+
+See [Graph Enhanced Guide](../enterprise/GRAPH_ENHANCED_GUIDE.md) for full details.
+
 ## 🗺️ Roadmap
 
 **Current Version:** 1.0.0
@@ -353,7 +406,7 @@ See [TODO.md](../../../TODO.md) for complete roadmap.
 
 ### Essential Documentation
 
-- [README.md](../../../README.md) - Project overview
+- [README.md](../../README.md) - Project overview
 - [ONBOARDING_GUIDE.md](../../../ONBOARDING_GUIDE.md) - New developer onboarding
 - [PROJECT_STRUCTURE.md](../../../PROJECT_STRUCTURE.md) - File organization
 - [CONVENTIONS.md](../../../CONVENTIONS.md) - Architecture patterns
@@ -368,7 +421,7 @@ See [TODO.md](../../../TODO.md) for complete roadmap.
 
 - [Architecture Overview](../../reference/architecture/README.md)
 - [Hybrid Search](../../reference/architecture/hybrid-search.md)
-- [Memory Layers](../../reference/architecture/memory-layers.md)
+- [Memory Layers](../../reference/architecture/FULL_SPEC.md#1-memory-hierarchy)
 - [LLM Orchestrator](../../../docs/project-design/active/LLM_orchestrator/LLM_ORCHESTRATOR.md)
 
 ### Testing & Quality

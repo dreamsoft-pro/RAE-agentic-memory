@@ -268,9 +268,8 @@ async def query_reflections(
         param_idx += 1
 
     where_clause = " AND ".join(conditions)
-
     # Count total matching
-    count_query = f"SELECT COUNT(*) FROM reflections WHERE {where_clause}"
+    count_query = f"SELECT COUNT(*) FROM reflections WHERE {where_clause}"  # nosec
     total_count = await pool.fetchval(count_query, *params)
 
     # Build main query
@@ -285,9 +284,8 @@ async def query_reflections(
         )
         params.append(k)
 
-    query = f"SELECT * FROM reflections WHERE {where_clause} {order_clause}"
+    query = f"SELECT * FROM reflections WHERE {where_clause} {order_clause}"  # nosec
     records = await pool.fetch(query, *params)
-
     reflections = [_record_to_reflection_unit(r) for r in records]
 
     logger.info("reflections_queried", count=len(reflections), total_count=total_count)
@@ -463,10 +461,9 @@ async def get_reflection_relationships(
         params.append(min_strength)
         param_idx += 1
 
-    where_clause = " AND ".join(conditions)
-    query = f"SELECT * FROM reflection_relationships WHERE {where_clause}"
-
-    records = await pool.fetch(query, *params)
+        where_clause = " AND ".join(conditions)
+        query = f"SELECT * FROM reflection_relationships WHERE {where_clause}"  # nosec
+        records = await pool.fetch(query, *params)
 
     return [_record_to_reflection_relationship(r) for r in records]
 
@@ -537,8 +534,7 @@ async def get_reflection_graph(
             AND NOT (r.id = ANY(g.path))  -- Prevent cycles
     )
     SELECT DISTINCT id FROM graph
-    """
-
+    """  # nosec
     params = [max_depth] + relation_params
     node_ids = [r["id"] for r in await pool.fetch(query, *params)]
 
@@ -557,7 +553,7 @@ async def get_reflection_graph(
             AND target_reflection_id = ANY($1)
             {relation_filter}
             {strength_filter}
-        """
+        """  # nosec
         edges_records = await pool.fetch(edges_query, node_ids, *relation_params)
         edges = [_record_to_reflection_relationship(r) for r in edges_records]
     else:

@@ -28,19 +28,60 @@ class GeminiProvider:
     LLM provider for Google Gemini models.
     """
 
-    def __init__(self, api_key: str):
+    def __init__(self, api_key: str | None = None, credentials: Any = None):
         """
         Initialize the Gemini provider.
 
         Args:
             api_key: Google API key
+            credentials: Optional OAuth2 credentials
         """
         self.name = "gemini"
         self.max_context_tokens = 1000000  # Gemini 1.5 Pro has 1M context
         self.supports_streaming = True
         self.supports_tools = True
 
-        genai.configure(api_key=api_key)
+        if api_key:
+            genai.configure(api_key=api_key)
+        elif credentials:
+            genai.configure(credentials=credentials)
+        else:
+            # Try to load from ~/.gemini/oauth_creds.json (Gemini CLI token)
+            import json
+            import os
+
+            from google.oauth2.credentials import Credentials
+
+            oauth_path = os.path.expanduser("~/.gemini/oauth_creds.json")
+            if os.path.exists(oauth_path):
+                try:
+                    with open(oauth_path, "r") as f:
+                        creds_data = json.load(f)
+                        # Gemini CLI Client ID
+                        client_id = "681255809395-oo8ft2oprdnrp9e3aqf6av3hmdib135j.apps.googleusercontent.com"
+                        credentials = Credentials(
+                            token=creds_data.get("access_token"),
+                            refresh_token=creds_data.get("refresh_token"),
+                            token_uri="https://oauth2.googleapis.com/token",
+                            client_id=client_id,
+                            scopes=creds_data.get("scope", "").split(" "),
+                        )
+                        genai.configure(credentials=credentials)
+                        return
+                except Exception:
+                    # Ignore and try next fallback
+                    pass
+
+            # Fallback to Application Default Credentials (ADC)
+            try:
+                import google.auth
+
+                adc_credentials, _ = google.auth.default()
+                genai.configure(credentials=adc_credentials)
+            except Exception:
+                raise ValueError(
+                    "Either api_key, credentials must be provided, or ADC/Token must be available"
+                )
 
     def _convert_messages(self, request: LLMRequest) -> tuple[str, list[dict]]:
         """

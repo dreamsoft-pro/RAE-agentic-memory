@@ -14,6 +14,7 @@ from uuid import UUID
 import structlog
 from fastapi import APIRouter, Depends, HTTPException, Request
 
+from apps.memory_api.dependencies import get_rae_core_service
 from apps.memory_api.models.reflection_models import (
     CreateReflectionRelationshipRequest,
     CreateReflectionRelationshipResponse,
@@ -28,11 +29,12 @@ from apps.memory_api.models.reflection_models import (
 )
 from apps.memory_api.repositories import reflection_repository
 from apps.memory_api.services.ml_service_client import MLServiceClient
+from apps.memory_api.services.rae_core_service import RAECoreService
 from apps.memory_api.services.reflection_pipeline import ReflectionPipeline
 
 logger = structlog.get_logger(__name__)
 
-router = APIRouter(prefix="/v1/reflections", tags=["Reflections"])
+router = APIRouter(tags=["Reflections"])
 
 
 # ============================================================================
@@ -52,7 +54,9 @@ async def get_pool(request: Request):
 
 @router.post("/generate", response_model=GenerateReflectionResponse)
 async def generate_reflections(
-    request: GenerateReflectionRequest, pool=Depends(get_pool)
+    request: GenerateReflectionRequest,
+    pool=Depends(get_pool),
+    rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
     """
     Generate reflections from memories using clustering pipeline.
@@ -87,7 +91,7 @@ async def generate_reflections(
     )
 
     try:
-        pipeline = ReflectionPipeline(pool)
+        pipeline = ReflectionPipeline(rae_service)
         reflections, statistics = await pipeline.generate_reflections(request)
 
         # Return first reflection as primary (or empty if none)

@@ -396,14 +396,15 @@ class ORBBenchmark:
         if not optimal_points:
             optimal_points = pareto_points
 
-        recommendations = {
+        scenarios: Dict[str, Dict[str, Any]] = {}
+        recommendations: Dict[str, Any] = {
             "pareto_optimal_count": len(optimal_points),
-            "scenarios": {},
+            "scenarios": scenarios,
         }
 
         # Best for quality
         best_quality = max(optimal_points, key=lambda p: p.quality)
-        recommendations["scenarios"]["maximize_quality"] = {
+        scenarios["maximize_quality"] = {
             "config_id": best_quality.config_id,
             "quality": best_quality.quality,
             "cost": best_quality.cost,
@@ -413,7 +414,7 @@ class ORBBenchmark:
 
         # Best for cost
         best_cost = min(optimal_points, key=lambda p: p.cost)
-        recommendations["scenarios"]["minimize_cost"] = {
+        scenarios["minimize_cost"] = {
             "config_id": best_cost.config_id,
             "quality": best_cost.quality,
             "cost": best_cost.cost,
@@ -423,7 +424,7 @@ class ORBBenchmark:
 
         # Best for latency
         best_latency = min(optimal_points, key=lambda p: p.latency_ms)
-        recommendations["scenarios"]["minimize_latency"] = {
+        scenarios["minimize_latency"] = {
             "config_id": best_latency.config_id,
             "quality": best_latency.quality,
             "cost": best_latency.cost,
@@ -460,7 +461,7 @@ class ORBBenchmark:
                 best_balanced_score = score
                 best_balanced_point = point
 
-        recommendations["scenarios"]["balanced"] = {
+        scenarios["balanced"] = {
             "config_id": best_balanced_point.config_id,
             "quality": best_balanced_point.quality,
             "cost": best_balanced_point.cost,

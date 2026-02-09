@@ -11,10 +11,11 @@ This service provides comprehensive budget management including:
 
 from datetime import datetime
 from typing import Any, Dict, Optional, Tuple
+from uuid import UUID
 
 import structlog
 from fastapi import HTTPException
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from apps.memory_api.services.rae_core_service import RAECoreService
 
@@ -24,9 +25,14 @@ logger = structlog.get_logger(__name__)
 class Budget(BaseModel):
     """Enhanced Budget model with token tracking"""
 
-    id: str
-    tenant_id: str
+    id: str | UUID
+    tenant_id: str | UUID
     project_id: str
+
+    @field_validator("id", "tenant_id", mode="before")
+    @classmethod
+    def convert_uuid_to_str(cls, v: Any) -> str:
+        return str(v)
 
     # USD Limits
     monthly_limit_usd: Optional[float] = Field(
@@ -53,11 +59,11 @@ class Budget(BaseModel):
     daily_tokens_used: int = Field(0, ge=0, description="Current daily tokens used")
 
     # Timestamps
-    created_at: datetime
-    last_usage_at: datetime
-    last_token_update_at: datetime
-    last_daily_reset: datetime
-    last_monthly_reset: datetime
+    created_at: Optional[datetime] = None
+    last_usage_at: Optional[datetime] = None
+    last_token_update_at: Optional[datetime] = None
+    last_daily_reset: Optional[datetime] = None
+    last_monthly_reset: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -183,13 +189,16 @@ class BudgetService:
         now = datetime.now()
 
         # Resets (Safety check, usually handled by DB triggers)
-        if budget.last_daily_reset.date() < now.date():
+        if budget.last_daily_reset and budget.last_daily_reset.date() < now.date():
             budget.daily_usage_usd = 0.0
             budget.daily_tokens_used = 0
 
-        if (budget.last_monthly_reset.year < now.year) or (
-            budget.last_monthly_reset.year == now.year
-            and budget.last_monthly_reset.month < now.month
+        if budget.last_monthly_reset and (
+            (budget.last_monthly_reset.year < now.year)
+            or (
+                budget.last_monthly_reset.year == now.year
+                and budget.last_monthly_reset.month < now.month
+            )
         ):
             budget.monthly_usage_usd = 0.0
             budget.monthly_tokens_used = 0
@@ -286,7 +295,9 @@ class BudgetService:
                     "limit": budget.monthly_tokens_limit,
                 },
             },
-            "last_usage_at": budget.last_usage_at.isoformat(),
+            "last_usage_at": (
+                budget.last_usage_at.isoformat() if budget.last_usage_at else None
+            ),
         }
 
     async def set_budget_limits(

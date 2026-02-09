@@ -378,16 +378,19 @@ class HybridSearchService:
 
         try:
             # Generate query embedding
-            query_embedding = await self.ml_client.get_embedding(query)
+            query_embedding = await self.rae_service.embedding_provider.embed_text(
+                query
+            )
 
             # Build SQL query
             sql = """
                 SELECT
-                    id, content, tags, importance, metadata, created_at,
-                    1 - (embedding <=> $3) as similarity
-                FROM memories
-                WHERE tenant_id = $1 AND project = $2
-                    AND embedding IS NOT NULL
+                    m.id, m.content, m.tags, m.importance, m.metadata, m.created_at,
+                    1 - (me.embedding <=> $3) as similarity
+                FROM memories m
+                JOIN memory_embeddings me ON m.id = me.memory_id
+                WHERE m.tenant_id = $1 AND m.project = $2
+                    AND me.model_name = 'default'
             """
             params: List[Any] = [tenant_id, project_id, query_embedding]
             param_idx = 4

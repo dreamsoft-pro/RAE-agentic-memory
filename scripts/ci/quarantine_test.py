@@ -3,10 +3,11 @@
 Move flaky test to quarantine directory.
 
 Usage:
-  python quarantine_test.py tests/api/v1/test_cache.py::test_flaky_function
+  python quarantine_test.py tests/api/v2/test_cache.py::test_flaky_function
 
 Part of RAE CI Quality Implementation - Iteration 2: Zero Flake
 """
+
 import argparse
 import shutil
 from datetime import datetime
@@ -15,7 +16,7 @@ from pathlib import Path
 
 def quarantine_test(nodeid: str, reason: str = "flaky"):
     """Move test to quarantine based on nodeid."""
-    # Parse nodeid: tests/api/v1/test_cache.py::test_function
+    # Parse nodeid: tests/api/v2/test_cache.py::test_function
     parts = nodeid.split("::")
     file_path = Path(parts[0])
 

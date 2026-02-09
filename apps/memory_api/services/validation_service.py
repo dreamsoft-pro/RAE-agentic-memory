@@ -1,12 +1,12 @@
 import logging
 from typing import Any, Dict, List
 
-from apps.memory_api.adapters.base import MemoryAdapter
 from apps.memory_api.core.contract import (
     MemoryContract,
     ValidationResult,
     ValidationViolation,
 )
+from rae_adapters.base import MemoryAdapter
 
 logger = logging.getLogger(__name__)
 

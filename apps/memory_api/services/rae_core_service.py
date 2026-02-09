@@ -12,25 +12,29 @@ import asyncpg
 import redis.asyncio as redis
 import structlog
 from qdrant_client import AsyncQdrantClient
-from rae_core.adapters import (
-    PostgresMemoryAdapter,
-    QdrantVectorAdapter,
-    RedisCacheAdapter,
-)
-from rae_core.config import RAESettings
-from rae_core.engine import RAEEngine
-from rae_core.interfaces.cache import ICacheProvider
-from rae_core.interfaces.database import IDatabaseProvider
-from rae_core.interfaces.embedding import IEmbeddingProvider
-from rae_core.interfaces.storage import IMemoryStorage
-from rae_core.interfaces.vector import IVectorStore
-from rae_core.models.search import SearchResponse
 
+from apps.memory_api.services.dashboard_websocket import DashboardWebSocketService
 from apps.memory_api.services.embedding import (
     LocalEmbeddingProvider,
-    RemoteEmbeddingProvider,
 )
 from apps.memory_api.services.llm import get_llm_provider
+from apps.memory_api.services.token_savings_service import TokenSavingsService
+from rae_adapters.postgres import PostgreSQLStorage
+from rae_adapters.qdrant import QdrantVectorStore
+from rae_adapters.redis import RedisCache
+from rae_core.config import RAESettings
+from rae_core.embedding.manager import EmbeddingManager
+from rae_core.engine import RAEEngine
+from rae_core.exceptions.base import SecurityPolicyViolationError
+from rae_core.interfaces.cache import ICacheProvider
+from rae_core.interfaces.database import IDatabaseProvider
+from rae_core.interfaces.reranking import IReranker
+from rae_core.interfaces.storage import IMemoryStorage
+from rae_core.interfaces.vector import IVectorStore
+from rae_core.models.interaction import AgentAction, RAEInput
+from rae_core.models.search import SearchResponse
+from rae_core.runtime import RAERuntime
+from rae_core.types.enums import InformationClass, MemoryLayer
 
 logger = structlog.get_logger(__name__)
 
@@ -39,7 +43,7 @@ class RAECoreService:
     """
     Integration service for RAE-Core.
 
-    Manages RAEEngine lifecycle and provides high-level API.
+    Manages RAEEngine and RAERuntime lifecycles.
     """
 
     def __init__(
@@ -50,11 +54,6 @@ class RAECoreService:
     ):
         """
         Initialize service with infrastructure clients.
-
-        Args:
-            postgres_pool: PostgreSQL connection pool
-            qdrant_client: Qdrant async client
-            redis_client: Redis async client
         """
         self.postgres_pool = postgres_pool
         self.qdrant_client = qdrant_client
@@ -63,54 +62,214 @@ class RAECoreService:
         self.postgres_adapter: IMemoryStorage
         self.qdrant_adapter: IVectorStore
         self.redis_adapter: ICacheProvider
-        self.embedding_provider: IEmbeddingProvider
+        self.mcp_client: Optional[Any] = None
+        self.savings_service: Optional[TokenSavingsService] = None
+        self.websocket_service: Optional[DashboardWebSocketService] = None
+        self.tuning_service: Any = None  # Phase 4
 
-        # Initialize adapters with Lite mode support
         if postgres_pool:
-            self.postgres_adapter = PostgresMemoryAdapter(pool=postgres_pool)
-        else:
-            from rae_core.adapters import InMemoryStorage
+            self.savings_service = TokenSavingsService(postgres_pool)
+            self.websocket_service = DashboardWebSocketService(postgres_pool)
 
-            logger.warning("using_in_memory_storage_fallback")
-            self.postgres_adapter = InMemoryStorage()
+            # Phase 4: Self-improvement service
+            from apps.memory_api.services.tuning_service import TuningService
 
-        if qdrant_client:
-            self.qdrant_adapter = QdrantVectorAdapter(client=cast(Any, qdrant_client))
-        else:
-            from rae_core.adapters import InMemoryVectorStore
+            self.tuning_service = TuningService(self)
 
-            logger.warning("using_in_memory_vector_fallback")
-            self.qdrant_adapter = InMemoryVectorStore()
-
-        if redis_client:
-            self.redis_adapter = RedisCacheAdapter(redis_client=redis_client)
-        else:
-            from rae_core.adapters import InMemoryCache
-
-            logger.warning("using_in_memory_cache_fallback")
-            self.redis_adapter = InMemoryCache()
-
-        # Initialize embedding provider
         from apps.memory_api.config import settings
 
-        if getattr(settings, "RAE_PROFILE", "standard") == "distributed":
-            self.embedding_provider = RemoteEmbeddingProvider(
-                base_url=settings.ML_SERVICE_URL
-            )
-            logger.info("using_remote_embedding_provider", url=settings.ML_SERVICE_URL)
-        else:
-            self.embedding_provider = LocalEmbeddingProvider()
+        # 1. Initialize embedding providers (Multi-Vector Support)
+        self._init_embedding_providers(settings)
 
-        # Initialize LLM provider with delegation support
-        self.llm_provider = get_llm_provider(task_repo=postgres_pool)
+        # 2. Initialize adapters
+        self._init_adapters(settings, postgres_pool, qdrant_client, redis_client)
 
-        # Initialize Settings
-        self.settings = RAESettings(
-            sensory_max_size=100,
-            working_max_size=100,
+        # 3. Initialize Engine & Runtime
+        self._init_engine(settings, postgres_pool)
+
+        # New: Reflection Engine
+        from apps.memory_api.services.reflection_engine_v2 import ReflectionEngineV2
+
+        self.reflection_engine = ReflectionEngineV2(self)
+
+        # New: RAERuntime for RAE-First flow
+        self.runtime = RAERuntime(
+            self.postgres_adapter, None
+        )  # Agent set per execution
+
+        self.szubar_mode = False  # Tryb Szubartowskiego (Pressure/Emergent Learning)
+
+        logger.info("rae_core_service_initialized", profile=settings.RAE_PROFILE)
+
+    def enable_szubar_mode(self, enabled: bool = True) -> None:
+        """Enable or disable RAE-SZUBAR Mode (Evolutionary Pressure)."""
+        self.szubar_mode = enabled
+        logger.info("szubar_mode_changed", enabled=enabled)
+
+    def _init_embedding_providers(self, settings: Any) -> None:
+        """Initialize embedding providers (Multi-Vector Support)."""
+
+        self.embedding_provider = EmbeddingManager(
+            default_provider=LocalEmbeddingProvider()
         )
 
-        # Initialize RAEEngine
+        # Register ONNX
+        import os
+
+        if settings.RAE_EMBEDDING_BACKEND == "onnx" or os.getenv("ONNX_EMBEDDER_PATH"):
+            self._register_onnx_provider(settings)
+
+        # Register API
+        if settings.RAE_EMBEDDING_BACKEND == "api":
+            api_provider = LocalEmbeddingProvider()
+            self.embedding_provider.register_provider("api", api_provider)
+            self.embedding_provider._default_provider = api_provider
+            self.embedding_provider.default_model_name = "api"
+            logger.info("registered_api_embedding_provider")
+
+        # Register MCP
+        if settings.RAE_EMBEDDING_BACKEND == "mcp":
+            self._register_mcp_provider(settings)
+
+        # Default fallback
+        if self.embedding_provider.default_model_name != "litellm":
+            self.embedding_provider.register_provider(
+                "litellm", LocalEmbeddingProvider()
+            )
+
+    def _register_onnx_provider(self, settings: Any) -> None:
+        """Helper to register ONNX provider."""
+        import os
+
+        try:
+            from rae_core.embedding.native import NativeEmbeddingProvider
+
+            model_path = (
+                settings.ONNX_EMBEDDER_PATH or "models/nomic-embed-text-v1.5/model.onnx"
+            )
+            if not os.path.exists(model_path):
+                model_path = "models/all-MiniLM-L6-v2/model.onnx"
+
+            if os.path.exists(model_path):
+                tokenizer_path = os.path.join(
+                    os.path.dirname(model_path), "tokenizer.json"
+                )
+                model_name = "nomic" if "nomic" in model_path.lower() else "mini-lm"
+                onnx_provider = NativeEmbeddingProvider(
+                    model_path=model_path,
+                    tokenizer_path=tokenizer_path,
+                    model_name=model_name,
+                    use_gpu=settings.RAE_USE_GPU,
+                )
+                self.embedding_provider.register_provider(model_name, onnx_provider)
+                if settings.RAE_EMBEDDING_BACKEND == "onnx":
+                    self.embedding_provider._default_provider = onnx_provider
+                    self.embedding_provider.default_model_name = model_name
+                logger.info("registered_onnx_provider", name=model_name)
+        except Exception as e:
+            logger.error("onnx_initialization_failed", error=str(e))
+
+    def _register_mcp_provider(self, settings: Any) -> None:
+        """Helper to register MCP provider."""
+        try:
+            from apps.memory_api.services.embedding import MCPEmbeddingProvider
+            from rae_core.utils.mcp_client import RAEMCPClient
+
+            mcp_client = RAEMCPClient(
+                command=settings.RAE_MCP_SERVER_COMMAND,
+                args=settings.RAE_MCP_SERVER_ARGS,
+            )
+            self.mcp_client = mcp_client
+            mcp_provider = MCPEmbeddingProvider(
+                tool_name=settings.RAE_MCP_EMBEDDING_TOOL, client=mcp_client
+            )
+            self.embedding_provider.register_provider("mcp", mcp_provider)
+            self.embedding_provider._default_provider = mcp_provider
+            self.embedding_provider.default_model_name = "mcp"
+            logger.info("registered_mcp_embedding_provider")
+        except Exception as e:
+            logger.error("mcp_initialization_failed", error=str(e))
+
+    def _init_adapters(
+        self,
+        settings: Any,
+        postgres_pool: Optional[asyncpg.Pool],
+        qdrant_client: Optional[AsyncQdrantClient],
+        redis_client: Optional[redis.Redis],
+    ) -> None:
+        """Initialize infrastructure adapters."""
+        import os
+
+        db_mode = os.getenv("RAE_DB_MODE") or settings.RAE_DB_MODE
+        ignore_db = (
+            postgres_pool is None
+            or (db_mode == "ignore" and postgres_pool is None)
+            or (settings.RAE_PROFILE == "lite" and os.getenv("RAE_FORCE_DB") != "1")
+        )
+        if postgres_pool is not None:
+            ignore_db = False
+
+        # Storage
+        if postgres_pool and not ignore_db:
+            self.postgres_adapter = cast(
+                IMemoryStorage, PostgreSQLStorage(pool=postgres_pool)
+            )
+        else:
+            from rae_adapters.memory import InMemoryStorage
+
+            self.postgres_adapter = cast(IMemoryStorage, InMemoryStorage())
+
+        # Vector
+        if qdrant_client and not ignore_db:
+            dim = self.embedding_provider.get_dimension()
+            self.qdrant_adapter = QdrantVectorStore(
+                client=cast(Any, qdrant_client),
+                embedding_dim=dim,
+                distance=getattr(settings, "RAE_VECTOR_DISTANCE", "Cosine"),
+                vector_name=self.embedding_provider.default_model_name,
+            )
+        else:
+            from rae_adapters.memory import InMemoryVectorStore
+
+            self.qdrant_adapter = InMemoryVectorStore()
+
+        # Cache
+        if redis_client and not ignore_db:
+            self.redis_adapter = RedisCache(redis_client=redis_client)
+        else:
+            from rae_adapters.memory import InMemoryCache
+
+            self.redis_adapter = InMemoryCache()
+
+    def _init_engine(
+        self, settings: Any, postgres_pool: Optional[asyncpg.Pool]
+    ) -> None:
+        """Initialize Search Engine and RAE Core Engine."""
+        self.llm_provider = get_llm_provider(task_repo=postgres_pool)
+        self.settings = RAESettings(sensory_max_size=100, working_max_size=100)
+
+        # Reranker
+        reranker = self._create_reranker(settings)
+
+        # Search Engine
+        from rae_core.search.engine import HybridSearchEngine
+        from rae_core.search.strategies.fulltext import FullTextStrategy
+        from rae_core.search.strategies.vector import VectorSearchStrategy
+
+        search_strategies = {
+            "vector": VectorSearchStrategy(
+                vector_store=self.qdrant_adapter,
+                embedding_provider=self.embedding_provider,
+            ),
+            "fulltext": FullTextStrategy(memory_storage=self.postgres_adapter),
+        }
+        search_engine = HybridSearchEngine(
+            strategies=search_strategies,
+            embedding_provider=self.embedding_provider,
+            memory_storage=self.postgres_adapter,
+            reranker=reranker,
+        )
+
         self.engine = RAEEngine(
             memory_storage=self.postgres_adapter,
             vector_store=self.qdrant_adapter,
@@ -118,21 +277,263 @@ class RAECoreService:
             llm_provider=cast(Any, self.llm_provider),
             settings=self.settings,
             cache_provider=self.redis_adapter,
+            search_engine=search_engine,
         )
 
-        logger.info("rae_core_service_initialized")
+        logger.info(
+            "rae_core_engine_components_ready",
+            storage=type(self.postgres_adapter).__name__,
+            vector_store=type(self.qdrant_adapter).__name__,
+            embedding=type(self.embedding_provider).__name__,
+        )
+
+    def _create_reranker(self, settings: Any) -> Optional[IReranker]:
+        """Create configured reranker instance."""
+        from rae_core.search.engine import EmeraldReranker
+        from rae_core.search.rerankers.api import ApiReranker
+        from rae_core.search.rerankers.mcp import McpReranker
+
+        if settings.RAE_RERANKER_BACKEND == "emerald":
+            return EmeraldReranker(self.embedding_provider, self.postgres_adapter)
+        if settings.RAE_RERANKER_BACKEND == "api" and settings.RAE_RERANKER_API_URL:
+            return ApiReranker(
+                api_url=settings.RAE_RERANKER_API_URL,
+                api_key=settings.RAE_RERANKER_API_KEY,
+            )
+        if settings.RAE_RERANKER_BACKEND == "mcp":
+            return McpReranker()
+        return None
+
+    async def execute_action(
+        self,
+        tenant_id: str | UUID,
+        agent_id: str,
+        prompt: str,
+        session_id: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        project: Optional[str] = None,
+    ) -> AgentAction:
+        """
+        Execute an agent action through RAERuntime (RAE-First).
+        """
+        from uuid import uuid4
+
+        from rae_core.interfaces.agent import BaseAgent
+
+        # Create a transient agent wrapper for the LLM
+        class TransientAgent(BaseAgent):
+            def __init__(self, service: "RAECoreService"):
+                self.service = service
+
+            async def run(self, rae_input: RAEInput) -> AgentAction:
+                # 1. Build context using core ContextBuilder (Agnostic)
+                from rae_core.context.builder import ContextBuilder
+
+                builder = ContextBuilder(max_tokens=4000)
+
+                agent_id = rae_input.context.get("agent_id", "default")
+                project = rae_input.context.get("project", "default")
+
+                # Search for relevant memories in RAE across ALL layers
+                search_results = await self.service.engine.search_memories(
+                    query=rae_input.content,
+                    tenant_id=rae_input.tenant_id,
+                    agent_id=agent_id,
+                    project=project,
+                    layer=None,
+                    top_k=10,
+                )
+
+                # Use core builder to assemble LLM-ready context
+                context_text, _ = builder.build_context(
+                    memories=search_results, query=rae_input.content
+                )
+
+                # RAE-SZUBAR PRESSURE: Inject failures
+                pressure_constraints = ""
+                if self.service.szubar_mode:
+                    # 1. Search for failures in the current context
+                    failures = await self.service.engine.search_memories(
+                        query=rae_input.content,
+                        tenant_id=rae_input.tenant_id,
+                        agent_id="default",  # Failures are usually project-wide
+                        project=project,
+                        layer=None,
+                        top_k=5,
+                        filters={"governance.is_failure": "true"},
+                    )
+
+                    # 2. If nothing found, try project-wide wildcard search for failures
+                    if not failures:
+                        failures = await self.service.engine.search_memories(
+                            query="*",
+                            tenant_id=rae_input.tenant_id,
+                            agent_id="default",
+                            project=project,
+                            layer=None,
+                            top_k=5,
+                            filters={"governance.is_failure": "true"},
+                        )
+
+                    if failures:
+                        pressure_constraints = (
+                            "\nCRITICAL: DO NOT REPEAT THESE FAILURES:\n"
+                        )
+                        for f in failures:
+                            # Handle both dict and potentially other types from adapters
+                            if isinstance(f, dict):
+                                gov = f.get("governance") or {}
+                                # Handle case where governance might be stringified JSON
+                                if isinstance(gov, str):
+                                    try:
+                                        import json
+
+                                        gov = json.loads(gov)
+                                    except Exception:
+                                        gov = {}
+                                trace = gov.get("failure_trace", "Unknown failure")
+                                content = f.get("content", "Unknown error")
+                                pressure_constraints += (
+                                    f"- {content} (Reason: {trace})\n"
+                                )
+
+                system_prompt = f"RELEVANT PROJECT CONTEXT:\n{context_text}\n{pressure_constraints}\n\nTask: {rae_input.content}"
+
+                # 2. Generate response using LLM or DESIGNED MATH (Fallback)
+                try:
+                    import asyncio
+
+                    # Check if LLM is actually available
+                    if not self.service.engine.llm_provider:
+                        raise RuntimeError("LLM Provider not available (RAE-Lite Mode)")
+
+                    # RELAXED TIMEOUT for weak machines (120s)
+                    llm_result = await asyncio.wait_for(
+                        self.service.engine.generate_text(
+                            prompt=rae_input.content, system_prompt=system_prompt
+                        ),
+                        timeout=120.0,
+                    )
+                except (asyncio.TimeoutError, Exception) as e:
+                    # GRACEFUL DEGRADATION: Math-Only Fallback (Designed Mathematics)
+                    logger.warning("llm_fallback_triggered", reason=str(e))
+
+                    # Formulate answer using PURE MATHEMATICS (top search results)
+                    if search_results:
+                        # Extract core facts from the most mathematically relevant memories
+                        top_facts = []
+                        for r in search_results[:3]:
+                            if isinstance(r, dict):
+                                top_facts.append(r.get("content", ""))
+                            else:
+                                top_facts.append(str(r))
+
+                        llm_result = (
+                            "STABILITY MODE ACTIVE (Math Fallback). "
+                            "Based on my memory manifold, here are the core facts: "
+                            + " | ".join(filter(None, top_facts))
+                        )
+                    else:
+                        llm_result = "STABILITY MODE ACTIVE. No specific memories found to answer this query mathematically."
+
+                if not llm_result:
+                    llm_result = "I couldn't generate a response."
+
+                # Extract signals for importance
+                signals = []
+                if "stability" in llm_result.lower():
+                    signals.append("fallback")
+                if "decision" in llm_result.lower() or "rule" in llm_result.lower():
+                    signals.append("decision")
+
+                from rae_core.models.interaction import AgentActionType
+
+                return AgentAction(
+                    type=AgentActionType.FINAL_ANSWER,
+                    content=llm_result,
+                    confidence=0.5 if "FALLBACK" in llm_result else 0.9,
+                    reasoning=(
+                        "LLM with Math Fallback"
+                        if "FALLBACK" in llm_result
+                        else "LLM generation"
+                    ),
+                    signals=signals,
+                )
+
+        # Initialize Runtime with the transient agent
+        self.runtime.agent = TransientAgent(self)
+
+        # Create input with context
+        rae_input = RAEInput(
+            request_id=uuid4(),
+            tenant_id=str(tenant_id),
+            content=prompt,
+            context={
+                "project": project
+                or agent_id,  # Fallback to agent_id if project not provided
+                "session_id": session_id,
+                "agent_id": agent_id,
+            },
+        )
+
+        # Execute through runtime
+        action = await self.runtime.process(rae_input)
+
+        # 3. SIDE EFFECT: Automatic Reflection Cycle
+        # Trigger reflection if the action has important signals
+        if action.signals:
+            try:
+                from apps.memory_api.models.reflection_v2_models import (
+                    OutcomeType,
+                    ReflectionContext,
+                )
+
+                refl_ctx = ReflectionContext(
+                    tenant_id=str(tenant_id),
+                    project_id=agent_id,
+                    outcome=OutcomeType.SUCCESS,
+                    task_goal=prompt,
+                    events=[],  # interaction history would go here
+                    session_id=(
+                        UUID(session_id)
+                        if session_id and len(session_id) == 36
+                        else None
+                    ),
+                )
+                refl_result = await self.reflection_engine.generate_reflection(refl_ctx)
+                await self.reflection_engine.store_reflection(
+                    refl_result, str(tenant_id), agent_id
+                )
+                logger.info("automated_reflection_stored", project=agent_id)
+            except Exception as e:
+                logger.warning("automated_reflection_failed", error=str(e))
+
+        logger.info(
+            "action_executed_via_runtime",
+            tenant_id=str(tenant_id),
+            agent_id=agent_id,
+            action_type=action.type,
+        )
+
+        return action
+
+    async def ainit(self):
+        """Perform asynchronous initialization of adapters."""
+        if hasattr(self.qdrant_adapter, "ainit"):
+            await cast(Any, self.qdrant_adapter).ainit()
+
+        # Add other async inits here if needed
+        logger.info("rae_core_service_async_initialized")
 
     @property
     def db(self) -> IDatabaseProvider:
         """Get agnostic database provider."""
         if self.postgres_pool:
-            from rae_core.adapters.postgres_db import PostgresDatabaseProvider
+            from rae_adapters.postgres_db import PostgresDatabaseProvider
 
             return PostgresDatabaseProvider(self.postgres_pool)
 
-        # Fallback for Lite mode - if we have a generic IDatabaseProvider in rae-core
-        # that supports in-memory, we should return it here.
-        # For now, let's assume we might need a dummy or failing provider if not available.
+        # Fallback for Lite mode
         raise RuntimeError("Database provider not available (RAE-Lite mode with no DB)")
 
     @property
@@ -144,50 +545,188 @@ class RAECoreService:
 
         return EnhancedGraphRepository(self.db)
 
+    def _enforce_security_policy(
+        self, info_class: str, target_layer: str | MemoryLayer
+    ) -> None:
+        """Enforce ISO 27000 security policies."""
+        layer_value = (
+            target_layer.value
+            if isinstance(target_layer, MemoryLayer)
+            else target_layer
+        )
+        info_class = info_class.lower()
+
+        # 1. RESTRICTED: Only allowed in Working layer
+        if info_class == InformationClass.RESTRICTED:
+            if layer_value != MemoryLayer.WORKING:
+                logger.error(
+                    "security_policy_violation",
+                    reason="RESTRICTED data blocked outside Working layer",
+                    layer=layer_value,
+                    info_class=info_class,
+                )
+                raise SecurityPolicyViolationError(
+                    f"Security Policy Violation: RESTRICTED data cannot be stored in {layer_value} layer. "
+                    "Only 'working' layer is allowed for restricted information."
+                )
+
+        # 2. CONFIDENTIAL: Blocked from Semantic layer
+        elif info_class == InformationClass.CONFIDENTIAL:
+            if layer_value == MemoryLayer.SEMANTIC:
+                logger.error(
+                    "security_policy_violation",
+                    reason="CONFIDENTIAL data blocked from Semantic layer",
+                    layer=layer_value,
+                    info_class=info_class,
+                )
+                raise SecurityPolicyViolationError(
+                    f"Security Policy Violation: CONFIDENTIAL data cannot be promoted to {layer_value} layer."
+                )
+
+        # 3. INTERNAL: Promotion to Semantic requires HITL/Sanitization (Policy placeholder)
+        elif info_class == InformationClass.INTERNAL:
+            if layer_value == MemoryLayer.SEMANTIC:
+                # In future this could trigger a mandatory HITL/Sanitization flag check
+                pass
+
+    def _detect_agentic_patterns(self, governance: dict, tags: list[str]) -> list[str]:
+        """Detect agentic patterns and return updated tags."""
+        pattern_type = governance.get("pattern_type")
+        fields = governance.get("fields", {})
+
+        if pattern_type == "prompt_chaining":
+            chain_length = fields.get("chain_length", 0)
+            if chain_length > 5:
+                if "high_risk_sequence" not in tags:
+                    tags.append("high_risk_sequence")
+                    logger.warning(
+                        "high_risk_sequence_detected", chain_length=chain_length
+                    )
+
+        elif pattern_type == "routing_decision":
+            confidence = fields.get("decision_basis_confidence") or fields.get(
+                "confidence", 1.0
+            )
+            if confidence < 0.5:
+                if "hitl_review_required" not in tags:
+                    tags.append("hitl_review_required")
+                    logger.warning(
+                        "low_confidence_routing_detected", confidence=confidence
+                    )
+
+        elif pattern_type == "tool_invocation":
+            cost_metrics = fields.get("cost_metrics", {})
+            token_count = cost_metrics.get("token_count", 0)
+            if token_count > 10000:
+                if "heavy_tool_use" not in tags:
+                    tags.append("heavy_tool_use")
+                    logger.info("heavy_tool_use_detected", token_count=token_count)
+
+        elif pattern_type == "reflection":
+            conf_before = fields.get("confidence_before", 1.0)
+            conf_after = fields.get("confidence_after", 1.0)
+            if conf_after < conf_before:
+                if "deeper_reflection_needed" not in tags:
+                    tags.append("deeper_reflection_needed")
+                    logger.warning(
+                        "confidence_delta_negative",
+                        before=conf_before,
+                        after=conf_after,
+                    )
+
+        elif pattern_type == "multi_agent_interaction":
+            conflicts = fields.get("conflict_points", [])
+            if conflicts:
+                if "coordination_failure" not in tags:
+                    tags.append("coordination_failure")
+                    logger.warning(
+                        "agent_coordination_conflict_detected", conflicts=conflicts
+                    )
+
+        return tags
+
     async def store_memory(
         self,
         tenant_id: str,
-        project: str,
+        project: Optional[str],
         content: str,
         source: str,
         importance: Optional[float] = None,
         tags: Optional[list] = None,
         layer: Optional[str] = None,
+        # New fields
+        session_id: Optional[str] = None,
+        memory_type: Optional[str] = None,
+        ttl: Optional[int] = None,
+        info_class: str = "internal",
+        governance: Optional[dict] = None,
+        metadata: Optional[dict] = None,
+        agent_id: Optional[str] = None,
     ) -> str:
         """
         Store memory using RAEEngine.
-
-        Args:
-            tenant_id: Tenant identifier
-            project: Project identifier
-            content: Memory content
-            source: Memory source
-            importance: Importance score (0-1)
-            tags: Optional tags
-            layer: Target layer (auto if None)
-
-        Returns:
-            Memory ID
         """
+        # 1. Enforcement Logic (ISO 27000)
+        target_layer = layer or MemoryLayer.EPISODIC
+        self._enforce_security_policy(info_class, target_layer)
+
+        # 2. Agentic Pattern Detection (Governance logic)
+        tags = tags or []
+        if governance:
+            tags = self._detect_agentic_patterns(governance, tags)
+
+        project_canonical = project or "default"
+        agent_canonical = agent_id or "default"
+        metadata = metadata or {}
+
         # Store in RAEEngine
-        # Mapping project to agent_id for multi-tenancy within RAE-Core
+        if layer == "sensory" and ttl is None:
+            ttl = 86400  # 24 hours default for sensory layer
+
         memory_id = await self.engine.store_memory(
             tenant_id=tenant_id,
-            agent_id=project,  # Use project as agent_id
+            agent_id=agent_canonical,
             content=content,
-            layer=layer or "episodic",
+            layer=target_layer,
             importance=importance or 0.5,
             tags=tags,
-            metadata={"project": project, "source": source},
+            metadata=metadata,
+            project=project_canonical,
+            session_id=session_id,
+            memory_type=memory_type or "text",
+            ttl=ttl,
+            source=source,
+            info_class=info_class,
+            governance=governance,
         )
 
         logger.info(
-            "memory_stored",
-            memory_id=memory_id,
+            "memory_stored_in_engine",
+            memory_id=str(memory_id),
             tenant_id=tenant_id,
-            project=project,
-            layer=layer,
+            project=project_canonical,
+            agent_id=agent_canonical,
+            layer=target_layer,
+            type=memory_type or "text",
         )
+
+        # Broadcast update if WebSocket service is available
+        if self.websocket_service:
+            try:
+                # We use asyncio.create_task to not block the main flow
+                import asyncio
+
+                asyncio.create_task(
+                    self.websocket_service.broadcast_memory_created(
+                        tenant_id=tenant_id,
+                        project_id=project_canonical,
+                        memory_id=memory_id,
+                        content=content,
+                        importance=importance or 0.5,
+                    )
+                )
+            except Exception as e:
+                logger.warning("websocket_broadcast_failed", error=str(e))
 
         return str(memory_id)
 
@@ -237,10 +776,16 @@ class RAECoreService:
         tenant_id: str,
         layer: str,
         project: str,
+        agent_id: str | None = None,
     ) -> int:
         """Count memories for a layer and project."""
-        return await self.postgres_adapter.count_memories(
-            tenant_id=tenant_id, agent_id=project, layer=layer
+        from typing import cast
+
+        return cast(
+            int,
+            await self.postgres_adapter.count_memories(
+                tenant_id=tenant_id, agent_id=agent_id, layer=layer
+            ),
         )
 
     async def get_metric_aggregate(
@@ -290,35 +835,71 @@ class RAECoreService:
 
     async def adjust_importance(
         self,
-        memory_id: str,
+        memory_id: str | UUID,
         delta: float,
         tenant_id: str,
     ) -> Optional[float]:
         """Adjust memory importance."""
         try:
-            mem_uuid = UUID(memory_id)
+            if isinstance(memory_id, UUID):
+                mem_uuid = memory_id
+            else:
+                mem_uuid = UUID(str(memory_id))
+
             return await self.postgres_adapter.adjust_importance(
                 memory_id=mem_uuid, delta=delta, tenant_id=tenant_id
             )
         except (ValueError, Exception) as e:
-            logger.error("adjust_importance_failed", memory_id=memory_id, error=str(e))
+            logger.error(
+                "adjust_importance_failed", memory_id=str(memory_id), error=str(e)
+            )
             return None
 
     async def decay_importance(
         self,
         tenant_id: str,
         decay_rate: float,
-        consider_access_stats: bool = True,
+        consider_access_stats: bool = False,
     ) -> int:
-        """Apply time-based decay to all memories."""
+        """Apply importance decay to all memories for a tenant."""
+        from typing import cast
+
         return cast(
             int,
-            await cast(Any, self.postgres_adapter).decay_importance(
-                tenant_id=tenant_id,
-                decay_rate=decay_rate,
-                consider_access_stats=consider_access_stats,
+            await self.engine.memory_storage.decay_importance(
+                tenant_id, decay_rate, consider_access_stats
             ),
         )
+
+    async def _get_tenant_weights(self, tenant_id: str) -> Optional[Any]:
+        """Retrieve custom scoring weights for tenant from config."""
+        try:
+            sql = "SELECT config FROM tenants WHERE id = $1"
+            config_raw = await self.db.fetchval(sql, tenant_id)
+            if not config_raw:
+                return None
+
+            import json
+
+            config = (
+                json.loads(config_raw) if isinstance(config_raw, str) else config_raw
+            )
+
+            if config and "math_weights" in config:
+                from rae_core.math.structure import ScoringWeights
+
+                w = config["math_weights"]
+                return ScoringWeights(
+                    alpha=float(w.get("alpha", 0.5)),
+                    beta=float(w.get("beta", 0.3)),
+                    gamma=float(w.get("gamma", 0.2)),
+                )
+
+        except Exception as e:
+            logger.warning(
+                "failed_to_load_tenant_weights", tenant_id=tenant_id, error=str(e)
+            )
+        return None
 
     async def query_memories(
         self,
@@ -327,72 +908,89 @@ class RAECoreService:
         query: str,
         k: int = 10,
         layers: Optional[list] = None,
+        filters: Optional[dict] = None,  # <--- NEW
     ) -> SearchResponse:
         """
-        Query memories across layers.
-
-        Args:
-            tenant_id: Tenant identifier
-            project: Project identifier
-            query: Query text
-            k: Number of results
-            layers: Layers to search (default: all)
-
-        Returns:
-            Query response with results
+        Query memories across layers with dynamic weights.
         """
-        # Engine's search_memories returns List[Dict], not SearchResponse
-        results = await self.engine.search_memories(
+        import time
+
+        start_time = time.time()
+
+        # 1. Get dynamic weights from tuning service
+        weights = None
+        if self.tuning_service:
+            try:
+                weights = await self.tuning_service.get_current_weights(str(tenant_id))
+            except Exception as e:
+                logger.warning("failed_to_get_tuning_weights", error=str(e))
+
+        # Override weights for Szubar Mode
+        if self.szubar_mode:
+            from rae_core.math.structure import ScoringWeights
+
+            weights = ScoringWeights.szubar_profile()
+            logger.debug("using_szubar_weights_for_query")
+
+        # 2. Execute Engine search
+        target_layer = (layers[0] if layers else None) or (filters or {}).get("layer")
+        raw_results = await self.engine.search_memories(
             query=query,
-            tenant_id=tenant_id,
+            tenant_id=str(tenant_id),
+            agent_id="default",  # Explicitly use default agent
+            project=project,  # Strict context
+            layer=target_layer,
             top_k=k,
-            # filters={"project": project}, # Engine search_memories signature mismatch?
-            # engine.search_memories args: query, tenant_id, agent_id, memory_type, top_k, ...
-            # It doesn't seem to support arbitrary filters in the signature I read earlier.
-            # But search_engine.search might.
+            filters=filters,
+            custom_weights=weights,
         )
 
-        # We need to wrap results in SearchResponse
-        # SearchResponse is pydantic model.
-        # Assuming results is List[Dict] matching SearchResult?
+        # 3. Map to SearchResponse model
+        from rae_core.models.search import SearchResponse, SearchResult, SearchStrategy
 
-        # For now, let's try to map it roughly or assume compatibility if I modify this.
-        # But I should stick to fixing the *initialization* first.
-        # I will keep the method implementation close to original but using new engine methods.
+        results_list = []
+        for res in raw_results:
+            metadata_val = res.get("metadata", {})
+            # Fix for Pydantic validation error if DB/Qdrant returns stringified JSON
+            if isinstance(metadata_val, str):
+                try:
+                    import json
 
-        # Wait, the original code used self.engine.query_memory which returned SearchResponse.
-        # The NEW engine has search_memories returning List[Dict].
-        # So I need to adapt the response.
+                    metadata_val = json.loads(metadata_val)
+                except Exception:
+                    metadata_val = {}
 
-        from rae_core.models.search import SearchResult, SearchStrategy
-
-        search_results = []
-        for res in results:
-            # Map engine dict to SearchResult
-            search_results.append(
+            results_list.append(
                 SearchResult(
-                    memory_id=str(res["id"]),
-                    content=res["content"],
-                    score=res.get("search_score", 0.0),
+                    memory_id=str(res.get("id")),
+                    content=res.get("content", ""),
+                    # Use math_score if available (from MathLayer), fallback to search_score (RRF)
+                    score=(
+                        res.get("math_score")
+                        if res.get("math_score") is not None
+                        else res.get("search_score", 0.0)
+                    ),
                     strategy_used=SearchStrategy.HYBRID,
-                    metadata=res.get("metadata", {}),
+                    metadata=metadata_val,
                 )
             )
 
-        logger.info(
-            "memories_queried",
-            tenant_id=tenant_id,
-            project=project,
-            result_count=len(results),
-        )
-
-        return SearchResponse(
-            results=search_results,
-            total_found=len(results),
+        response = SearchResponse(
+            results=results_list,
             query=query,
             strategy=SearchStrategy.HYBRID,
-            execution_time_ms=0.0,  # Placeholder
+            total_found=len(results_list),
+            execution_time_ms=(time.time() - start_time) * 1000,
         )
+
+        # 4. AUDIT: Record this search in the Working Layer (DISABLED FOR PERFORMANCE/NOISE)
+        # try:
+        #     audit_content = f"Search Query: {query} | Results: {len(results_list)} | Weights: {weights}"
+        #     await self.engine.store_memory(...)
+        # except Exception as e:
+        #     logger.warning("search_audit_failed", error=str(e))
+
+        return response
 
     async def consolidate_memories(
         self,
@@ -401,15 +999,7 @@ class RAECoreService:
     ) -> dict:
         """
         Trigger memory consolidation.
-
-        Args:
-            tenant_id: Tenant identifier
-            project: Project identifier
-
-        Returns:
-            Consolidation statistics
         """
-        # Engine run_reflection_cycle might cover consolidation
         results = await self.engine.run_reflection_cycle(
             tenant_id=tenant_id,
             agent_id="default",
@@ -423,6 +1013,21 @@ class RAECoreService:
             results=results,
         )
 
+        if self.savings_service and results:
+            try:
+                tokens_saved = results.get("tokens_saved", 0)
+                if tokens_saved > 0:
+                    await self.savings_service.track_savings(
+                        tenant_id=tenant_id,
+                        project_id=project,
+                        model="gpt-4o",
+                        predicted_tokens=tokens_saved,
+                        real_tokens=0,
+                        savings_type="compression",
+                    )
+            except Exception as e:
+                logger.warning("failed_to_track_consolidation_savings", error=str(e))
+
         return results
 
     async def generate_reflections(
@@ -432,17 +1037,7 @@ class RAECoreService:
     ) -> list:
         """
         Generate reflections from patterns.
-
-        Args:
-            tenant_id: Tenant identifier
-            project: Project identifier
-
-        Returns:
-            List of generated reflections
         """
-        # This mapping is tricky without exact engine method.
-        # Assuming run_reflection_cycle does it.
-        # Or I leave it broken for now? No, I should try to keep it valid.
         return []
 
     async def get_statistics(
@@ -452,15 +1047,7 @@ class RAECoreService:
     ) -> dict:
         """
         Get memory statistics across all layers.
-
-        Args:
-            tenant_id: Tenant identifier
-            project: Project identifier
-
-        Returns:
-            Statistics dictionary
         """
-        # Engine get_status returns dict
         return self.engine.get_status()
 
     async def clear_memories(
@@ -469,34 +1056,123 @@ class RAECoreService:
     ) -> dict:
         """
         Clear all memories for tenant.
-
-        Args:
-            tenant_id: Tenant identifier
-
-        Returns:
-            Clear statistics
         """
-        # No clear_all in new engine?
-        # I'll return empty for now to pass init tests.
         return {"deleted": 0}
+
+    async def get_session_context(
+        self,
+        session_id: str,
+        tenant_id: str,
+        limit: int = 50,
+    ) -> List[Dict[str, Any]]:
+        """
+        Retrieve all memories associated with a specific session.
+        """
+        sql = """
+            SELECT *
+            FROM memories
+            WHERE tenant_id = $1
+                AND session_id = $2
+            ORDER BY timestamp ASC
+            LIMIT $3
+        """
+        records = await self.db.fetch(sql, tenant_id, session_id, limit)
+        return [dict(r) for r in records]
 
     async def list_unique_tenants(self) -> List[str]:
         """List all unique tenant IDs in the system."""
-        # This might be storage specific, but for now we assume Postgres
         if hasattr(self.postgres_adapter, "list_unique_tenants"):
             return cast(
                 List[str], await cast(Any, self.postgres_adapter).list_unique_tenants()
             )
 
-        # Fallback for PostgresMemoryAdapter
         records = await self.db.fetch(
             "SELECT DISTINCT tenant_id FROM memories WHERE tenant_id IS NOT NULL"
         )
         return [str(r["tenant_id"]) for r in records]
 
+    async def list_tenants_with_details(self) -> List[Dict[str, str]]:
+        """List all tenants with their names."""
+        try:
+            records = await self.db.fetch("SELECT id, name FROM tenants ORDER BY name")
+            return [
+                {"id": str(r["id"]), "name": r["name"] or "Unnamed"} for r in records
+            ]
+        except Exception as e:
+            logger.warning("failed_to_list_tenant_details", error=str(e))
+            # Fallback to IDs only
+            ids = await self.list_unique_tenants()
+            return [{"id": i, "name": f"Tenant {i[:8]}..."} for i in ids]
+
+    async def update_tenant_name(self, tenant_id: str, name: str) -> bool:
+        """Update tenant name."""
+        try:
+            # Check if tenant exists in tenants table
+            exists = await self.db.fetchval(
+                "SELECT EXISTS(SELECT 1 FROM tenants WHERE id = $1)", tenant_id
+            )
+
+            if exists:
+                await self.db.execute(
+                    "UPDATE tenants SET name = $1 WHERE id = $2", name, tenant_id
+                )
+            else:
+                # If not in tenants table but in memories (legacy), insert it
+                # Assuming 'enterprise' tier and empty config for now
+                await self.db.execute(
+                    """
+                    INSERT INTO tenants (id, name, tier, config)
+                    VALUES ($1, $2, 'enterprise', '{}')
+                    ON CONFLICT (id) DO UPDATE SET name = $2
+                    """,
+                    tenant_id,
+                    name,
+                )
+            return True
+        except Exception as e:
+            logger.error("update_tenant_name_failed", tenant_id=tenant_id, error=str(e))
+            return False
+
+    async def rename_project(
+        self, tenant_id: str, old_project_id: str, new_project_id: str
+    ) -> bool:
+        """
+        Rename a project (agent_id) by updating all references in the database.
+        This is a heavy operation affecting memories, metrics, etc.
+        """
+        try:
+            if not self.postgres_pool:
+                return False
+            async with self.postgres_pool.acquire() as conn:
+                async with conn.transaction():
+                    # Update memories
+                    await conn.execute(
+                        """
+                        UPDATE memories
+                        SET project = $1, agent_id = $1
+                        WHERE tenant_id = $2 AND (project = $3 OR agent_id = $3)
+                        """,
+                        new_project_id,
+                        tenant_id,
+                        old_project_id,
+                    )
+
+                    # Update metrics (if we had a project_id column, but metrics are timeseries so maybe skip or update)
+                    # For now, we only update memories as that's the source of truth for RAE
+
+                    logger.info(
+                        "project_renamed",
+                        tenant_id=tenant_id,
+                        old=old_project_id,
+                        new=new_project_id,
+                    )
+                    return True
+        except Exception as e:
+            logger.error("rename_project_failed", error=str(e))
+            return False
+
     async def list_unique_projects(self, tenant_id: str) -> List[str]:
         """List all unique project IDs for a tenant."""
-        # agent_id maps to project in RAE-Core
         records = await self.db.fetch(
             "SELECT DISTINCT agent_id as project FROM memories WHERE tenant_id = $1 AND agent_id IS NOT NULL",
             tenant_id,
@@ -507,7 +1183,6 @@ class RAECoreService:
         self, since: datetime
     ) -> List[Dict[str, str]]:
         """List unique (project, tenant_id) pairs with recent activity."""
-        # agent_id maps to project in RAE-Core
         records = await self.db.fetch(
             """
             SELECT DISTINCT agent_id as project, tenant_id
@@ -524,14 +1199,14 @@ class RAECoreService:
         """List sessions with event count above threshold."""
         sql = """
             SELECT
-                metadata->>'session_id' as session_id,
+                session_id,
                 COUNT(*) as event_count
             FROM memories
             WHERE tenant_id = $1
                 AND agent_id = $2
                 AND layer = 'episodic'
-                AND metadata->>'session_id' IS NOT NULL
-            GROUP BY metadata->>'session_id'
+                AND session_id IS NOT NULL
+            GROUP BY session_id
             HAVING COUNT(*) >= $3
             ORDER BY COUNT(*) DESC
         """
@@ -549,7 +1224,6 @@ class RAECoreService:
         result = await self.db.execute(
             "DELETE FROM memories WHERE expires_at IS NOT NULL AND expires_at < NOW()"
         )
-        # IDatabaseProvider.execute might return different things, but usually it's the result string or None
         if result and isinstance(result, str) and result.startswith("DELETE"):
             return int(result.split()[-1])
         return 0
@@ -558,7 +1232,7 @@ class RAECoreService:
         """Delete old episodic memories to manage data lifecycle."""
         interval = f"{days} days"
         result = await self.db.execute(
-            "DELETE FROM memories WHERE layer = 'em' AND created_at < NOW() - $1::interval",
+            "DELETE FROM memories WHERE layer = 'episodic' AND created_at < NOW() - $1::interval",
             interval,
         )
         if result and isinstance(result, str) and result.startswith("DELETE"):
@@ -573,8 +1247,7 @@ class RAECoreService:
             """
             SELECT DISTINCT tenant_id, ARRAY_AGG(id) as memory_ids
             FROM memories m
-            WHERE layer = 'em'
-                AND created_at > NOW() - INTERVAL '1 hour'
+            WHERE layer = 'episodic'
                 AND NOT EXISTS (
                     SELECT 1 FROM knowledge_graph_edges ke
                     WHERE ke.tenant_id = m.tenant_id

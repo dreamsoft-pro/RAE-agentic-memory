@@ -1,4 +1,36 @@
-# 📊 RAE Benchmarking Suite - Complete Guide
+# RAE Benchmarking Suite
+
+This directory contains the code and logic for performance and quality benchmarks.
+
+## 📊 Recent Execution Baseline (Silicon Oracle - Jan 2026)
+
+The following results were collected on **Node 1 (Lumina)** using the **Silicon Oracle (v3.3)** architecture. We document both our successes and temporary failures to provide a transparent view of system evolution.
+
+### 🚀 High-Scale Successes (Verified on Local Laptop N550JK)
+| Benchmark | Dataset Size | Iterations | MRR | Result | Note |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Industrial Large** | 1,000 | 100 | **0.9301** | ✅ SOTA | Local ONNX breakthrough. |
+| **Industrial Extreme** | 10,000 | 300 | **1.0000** | ✅ SOTA | Perfect retrieval with Szubar Mode. |
+| **Industrial Ultra** | 100,000 | 500 | **0.8542** | ✅ SOTA | **Megadobre wyniki:** Resonance Induction on Laptop. |
+| **Synthetic 2k** | 2,000 | 200 | **1.0000** | ✅ PASS | Full convergence achieved after 200 pulls. |
+
+### ⚠️ Lessons from Failures (The "Cold Start" Problem)
+| Benchmark | Dataset Size | Iterations | MRR | Status | Root Cause |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Industrial Large (v1)** | 1,000 | 100 | **0.0156** | ❌ FAIL | Fixed: Generator logic was not filtering document content. |
+| **Synthetic 2k (v1)** | 2,000 | 50 | **0.4912** | ⚠️ WEAK | **Cold Start:** MAB Bandit was still exploring weights. |
+
+**Key Insight:** Our Math-3 Layer (Multi-Armed Bandit) requires a sufficient number of queries to "warm up" and converge on optimal Hybrid Search weights. A small query set (e.g., 50) may yield poor results if the system starts in a high-exploration state. Calibration is achieved at scale.
+
+---
+
+## 📊 Benchmark Results & Artifacts
+To keep this repository lightweight, all heavy artifacts (PNG plots, large JSON reports) are stored in a dedicated repository:
+👉 **[RAE-benchmarks](https://github.com/vproject111/RAE-benchmarks)**
+
+---
+
+## Structure
 
 > **Comprehensive evaluation framework for RAE Memory System**
 > *11 benchmarks | 1,100+ test memories | 10,000+ cycle temporal testing | Full telemetry support*
@@ -122,20 +154,36 @@ START: What do you need?
 | **[academic_extended](./sets/academic_extended.yaml)** | 45 | 20 | ~30s | Comprehensive quality | Pre-release testing |
 | **[industrial_small](./sets/industrial_small.yaml)** | 35 | 20 | ~2min | Real-world messy data | Production readiness |
 | **[stress_memory_drift](./sets/stress_memory_drift.yaml)** | 19 | 17 | ~10s | Memory stability | Drift detection |
-| **[industrial_large](./sets/industrial_large.yaml)** | 1,000 | 100 | ~4min | Large-scale stress | Performance limits |
+| **[industrial_large](./sets/industrial_large.yaml)** | 1,000 | 100 | ~4min | **Calibrated retrieval** | Piotrek's SOTA baseline |
+| **[industrial_extreme](./sets/industrial_extreme.yaml)** | 10,000 | 200 | ~15min | Enterprise stress | Scale limits |
+| **[industrial_ultra](./sets/industrial_ultra.yaml)** | 100,000 | 500 | ~2h | Mega-scale research | GPU Cluster Node1/Node2 |
 
-**Total Standard:** 1,109 memories | 164 queries
+**Total Standard:** 111,109+ memories | 864+ queries
 
 ### Research Benchmarks (9/5)
 
-| Benchmark | Full Name | Runtime | Key Metrics | Purpose |
-|-----------|-----------|---------|-------------|---------|
-| **[LECT](./nine_five_benchmarks/README.md#1-lect---long-term-episodic-consistency-test)** | Long-term Episodic Consistency | ~5min | `consistency_score`, `retention_rate` | 10,000+ cycle temporal testing |
-| **[MMIT](./nine_five_benchmarks/README.md#2-mmit---multi-layer-memory-interference-test)** | Multi-Layer Memory Interference | ~3min | `interference_score`, `layer_isolation` | Memory layer leak detection |
-| **[GRDT](./nine_five_benchmarks/README.md#3-grdt---graph-reasoning-depth-test)** | Graph Reasoning Depth | ~2min | `max_reasoning_depth`, `chain_coherence` | Multi-hop reasoning |
-| **[RST](./nine_five_benchmarks/README.md#4-rst---reflective-stability-test)** | Reflective Stability | ~2min | `stability_score`, `noise_threshold` | Insight robustness |
-| **[MPEB](./nine_five_benchmarks/README.md#5-mpeb---math-3-policy-evolution-benchmark)** | Math-3 Policy Evolution | ~3min | `policy_quality`, `convergence_rate` | Policy learning |
-| **[ORB](./nine_five_benchmarks/README.md#6-orb---opentelemetry-research-benchmark)** | OpenTelemetry Research | ~2min | `pareto_frontier`, `quality_cost_curve` | Cost-quality trade-offs |
+| Benchmark | Full Name | Runtime | Key Metrics | Purpose | What it verifies |
+|-----------|-----------|---------|-------------|---------|------------------|
+| **[LECT](./nine_five_benchmarks/README.md#1-lect---long-term-episodic-consistency-test)** | Long-term Episodic Consistency | ~5min | `consistency_score` | Temporal Testing | Verifies if events stored at different times remain logically consistent. |
+| **[MMIT](./nine_five_benchmarks/README.md#2-mmit---multi-layer-memory-interference-test)** | Multi-Layer Memory Interference | ~3min | `interference_score` | Isolation | Checks if short-term (STM) memories bleed into long-term (LTM) without processing. |
+| **[GRDT](./nine_five_benchmarks/README.md#3-grdt---graph-reasoning-depth-test)** | Graph Reasoning Depth | ~2min | `max_reasoning_depth` | Knowledge Graph | Tests how many "hops" the system can navigate in the graph to find an answer. |
+| **[RST](./nine_five_benchmarks/README.md#4-rst---reflective-stability-test)** | Reflective Stability | ~2min | `stability_score` | Meta-cognition | Checks if generated reflections remain stable when new, slightly conflicting data arrives. |
+| **[MPEB](./nine_five_benchmarks/README.md#5-mpeb---math-3-policy-evolution-benchmark)** | Math-3 Policy Evolution | ~3min | `convergence_rate` | ML Policy | Evaluates how fast the memory management policy learns to optimize storage. |
+| **[ORB](./nine_five_benchmarks/README.md#6-orb---opentelemetry-research-benchmark)** | OpenTelemetry Research | ~2min | `pareto_frontier` | System Optimization | Maps the optimal balance between token cost, query latency, and answer quality. |
+
+### 🧪 Experiments & Specialized Tests
+
+Beyond standard benchmarks, RAE includes scripts for deep system analysis and component validation:
+
+**Experimental Research (`benchmarking/experiments/`)**
+- **Drift Dynamics** (`exp_drift_dynamics.py`): Analyzes how memory context shifts over time.
+- **Reflection Gain** (`exp_reflection_gain.py`): Measures the qualitative improvement from reflection steps.
+- **Structural Stability** (`exp_structural_stability.py`): Tests the resilience of the memory graph structure.
+
+**System Component Tests (`benchmarking/tests/`)**
+- **Bandit Algorithm** (`test_bandit.py`): Validates Multi-Armed Bandit decision logic.
+- **Math Controller** (`test_math_controller.py`): Tests profile switching (Research vs Cheap) and heuristics.
+- **Policy V2** (`test_policy_v2.py`): Verifies memory management policies.
 
 ---
 
@@ -473,5 +521,5 @@ Apache 2.0 License - See [LICENSE](../LICENSE) for details.
 
 ---
 
-*Last Updated: 2025-12-07 | Version: 2.0*
+*Last Updated: 2026-01-03 | Version: 2.1*
 *Questions? Open an issue or check [TROUBLESHOOTING.md](../TROUBLESHOOTING.md)*

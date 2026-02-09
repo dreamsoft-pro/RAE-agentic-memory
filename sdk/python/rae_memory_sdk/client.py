@@ -43,6 +43,7 @@ class MemoryClient:
         api_url: Optional[str] = None,
         api_key: Optional[str] = None,
         tenant_id: Optional[str] = None,
+        session_id: Optional[str] = None,
         config: Optional[RAEClientConfig] = None,
     ):
         if config:
@@ -54,6 +55,7 @@ class MemoryClient:
                 RAE_TENANT_ID=tenant_id or RAEClientConfig().RAE_TENANT_ID,
             )
 
+        self.session_id = session_id
         self._http_client = httpx.Client(base_url=self.config.RAE_API_URL)
         self._async_http_client = httpx.AsyncClient(base_url=self.config.RAE_API_URL)
         self._headers = {
@@ -61,6 +63,8 @@ class MemoryClient:
             "X-Tenant-Id": self.config.RAE_TENANT_ID,
             "Content-Type": "application/json",
         }
+        if self.session_id:
+            self._headers["X-Session-Id"] = self.session_id
 
     def _request(self, method: str, url: str, **kwargs) -> Any:
         """Synchronous HTTP request wrapper."""
@@ -106,8 +110,11 @@ class MemoryClient:
         """
         Stores a new memory record.
         """
+        if not memory.session_id and self.session_id:
+            memory.session_id = self.session_id
+
         response_data = self._request(
-            "POST", "/memory/store", json=memory.model_dump(exclude_none=True)
+            "POST", "/v2/memory/store", json=memory.model_dump(exclude_none=True)
         )
         return StoreMemoryResponse(**response_data)
 
@@ -119,7 +126,7 @@ class MemoryClient:
         """
         request_body = QueryMemoryRequest(query_text=query_text, k=k, filters=filters)
         response_data = self._request(
-            "POST", "/memory/query", json=request_body.model_dump(exclude_none=True)
+            "POST", "/v2/memory/query", json=request_body.model_dump(exclude_none=True)
         )
         return QueryMemoryResponse(**response_data)
 
@@ -127,7 +134,9 @@ class MemoryClient:
         """
         Deletes a memory record by its ID.
         """
-        response_data = self._request("DELETE", f"/memory/delete?memory_id={memory_id}")
+        response_data = self._request(
+            "DELETE", f"/v2/memory/delete?memory_id={memory_id}"
+        )
         return DeleteMemoryResponse(**response_data)
 
     # GraphRAG Methods
@@ -159,7 +168,7 @@ class MemoryClient:
         }
         return cast(
             Dict[str, Any],
-            self._request("POST", "/v1/graph/extract", json=request_body),
+            self._request("POST", "/v2/graph/extract", json=request_body),
         )
 
     def query_graph(
@@ -188,7 +197,7 @@ class MemoryClient:
             "similarity_threshold": similarity_threshold,
         }
         return cast(
-            Dict[str, Any], self._request("POST", "/v1/graph/query", json=request_body)
+            Dict[str, Any], self._request("POST", "/v2/graph/query", json=request_body)
         )
 
     def get_graph_stats(self, project_id: str) -> Dict[str, Any]:
@@ -203,7 +212,7 @@ class MemoryClient:
         """
         return cast(
             Dict[str, Any],
-            self._request("GET", f"/v1/graph/stats?project_id={project_id}"),
+            self._request("GET", f"/v2/graph/stats?project_id={project_id}"),
         )
 
     def get_graph_nodes(
@@ -232,7 +241,7 @@ class MemoryClient:
             "min_pagerank_score": min_pagerank_score,
         }
         return cast(
-            List[Dict[str, Any]], self._request("GET", "/v1/graph/nodes", params=params)
+            List[Dict[str, Any]], self._request("GET", "/v2/graph/nodes", params=params)
         )
 
     def get_graph_edges(
@@ -253,7 +262,7 @@ class MemoryClient:
         if relation:
             params["relation"] = relation
         return cast(
-            List[Dict[str, Any]], self._request("GET", "/v1/graph/edges", params=params)
+            List[Dict[str, Any]], self._request("GET", "/v2/graph/edges", params=params)
         )
 
     def get_subgraph(
@@ -274,7 +283,7 @@ class MemoryClient:
         return cast(
             Dict[str, Any],
             self._request(
-                "POST", f"/v1/graph/subgraph?project_id={project_id}", json=request_body
+                "POST", f"/v2/graph/subgraph?project_id={project_id}", json=request_body
             ),
         )
 
@@ -309,7 +318,7 @@ class MemoryClient:
         }
         return cast(
             Dict[str, Any],
-            self._request("POST", "/v1/agent/execute", json=request_body),
+            self._request("POST", "/v2/agent/execute", json=request_body),
         )
 
     # Governance Methods
@@ -325,7 +334,7 @@ class MemoryClient:
             Dict with cross-tenant governance metrics
         """
         return cast(
-            Dict[str, Any], self._request("GET", f"/v1/governance/overview?days={days}")
+            Dict[str, Any], self._request("GET", f"/v2/governance/overview?days={days}")
         )
 
     def get_tenant_governance(self, tenant_id: str, days: int = 30) -> Dict[str, Any]:
@@ -341,7 +350,7 @@ class MemoryClient:
         """
         return cast(
             Dict[str, Any],
-            self._request("GET", f"/v1/governance/tenant/{tenant_id}?days={days}"),
+            self._request("GET", f"/v2/governance/tenant/{tenant_id}?days={days}"),
         )
 
     def get_tenant_budget(self, tenant_id: str) -> Dict[str, Any]:
@@ -356,7 +365,7 @@ class MemoryClient:
         """
         return cast(
             Dict[str, Any],
-            self._request("GET", f"/v1/governance/tenant/{tenant_id}/budget"),
+            self._request("GET", f"/v2/governance/tenant/{tenant_id}/budget"),
         )
 
     # ISO/IEC 42001 Compliance Methods
@@ -409,7 +418,7 @@ class MemoryClient:
 
         return cast(
             Dict[str, Any],
-            self._request("POST", "/v1/compliance/approvals", json=request_body),
+            self._request("POST", "/v2/compliance/approvals", json=request_body),
         )
 
     def check_approval_status(self, request_id: str) -> Dict[str, Any]:
@@ -424,7 +433,7 @@ class MemoryClient:
         """
         return cast(
             Dict[str, Any],
-            self._request("GET", f"/v1/compliance/approvals/{request_id}"),
+            self._request("GET", f"/v2/compliance/approvals/{request_id}"),
         )
 
     def process_approval_decision(
@@ -457,7 +466,7 @@ class MemoryClient:
             Dict[str, Any],
             self._request(
                 "POST",
-                f"/v1/compliance/approvals/{request_id}/decide",
+                f"/v2/compliance/approvals/{request_id}/decide",
                 json=request_body,
             ),
         )
@@ -495,7 +504,7 @@ class MemoryClient:
         return cast(
             Dict[str, Any],
             self._request(
-                "POST", "/v1/compliance/provenance/context", json=request_body
+                "POST", "/v2/compliance/provenance/context", json=request_body
             ),
         )
 
@@ -545,7 +554,7 @@ class MemoryClient:
         return cast(
             Dict[str, Any],
             self._request(
-                "POST", "/v1/compliance/provenance/decision", json=request_body
+                "POST", "/v2/compliance/provenance/decision", json=request_body
             ),
         )
 
@@ -561,7 +570,7 @@ class MemoryClient:
         """
         return cast(
             Dict[str, Any],
-            self._request("GET", f"/v1/compliance/provenance/lineage/{decision_id}"),
+            self._request("GET", f"/v2/compliance/provenance/lineage/{decision_id}"),
         )
 
     def get_all_circuit_breakers(self) -> List[Dict[str, Any]]:
@@ -573,7 +582,7 @@ class MemoryClient:
         """
         return cast(
             List[Dict[str, Any]],
-            self._request("GET", "/v1/compliance/circuit-breakers"),
+            self._request("GET", "/v2/compliance/circuit-breakers"),
         )
 
     def get_circuit_breaker_state(self, name: str) -> Dict[str, Any]:
@@ -588,7 +597,7 @@ class MemoryClient:
         """
         return cast(
             Dict[str, Any],
-            self._request("GET", f"/v1/compliance/circuit-breakers/{name}"),
+            self._request("GET", f"/v2/compliance/circuit-breakers/{name}"),
         )
 
     def reset_circuit_breaker(self, name: str) -> Dict[str, Any]:
@@ -603,7 +612,7 @@ class MemoryClient:
         """
         return cast(
             Dict[str, Any],
-            self._request("POST", f"/v1/compliance/circuit-breakers/{name}/reset"),
+            self._request("POST", f"/v2/compliance/circuit-breakers/{name}/reset"),
         )
 
     def list_policies(
@@ -631,7 +640,7 @@ class MemoryClient:
 
         return cast(
             Dict[str, Any],
-            self._request("GET", "/v1/compliance/policies", params=params),
+            self._request("GET", "/v2/compliance/policies", params=params),
         )
 
     def create_policy(
@@ -673,7 +682,7 @@ class MemoryClient:
 
         return cast(
             Dict[str, Any],
-            self._request("POST", "/v1/compliance/policies", json=request_body),
+            self._request("POST", "/v2/compliance/policies", json=request_body),
         )
 
     def activate_policy(
@@ -698,7 +707,7 @@ class MemoryClient:
             Dict[str, Any],
             self._request(
                 "POST",
-                f"/v1/compliance/policies/{policy_id}/activate",
+                f"/v2/compliance/policies/{policy_id}/activate",
                 json=request_body,
             ),
         )
@@ -722,7 +731,7 @@ class MemoryClient:
             Dict[str, Any],
             self._request(
                 "POST",
-                f"/v1/compliance/policies/{policy_id}/enforce",
+                f"/v2/compliance/policies/{policy_id}/enforce",
                 json=request_body,
             ),
         )
@@ -743,7 +752,7 @@ class MemoryClient:
         request_body: Dict[str, Any] = {"tenant_id": tenant_id, "project": project}
         return cast(
             Dict[str, Any],
-            self._request("POST", "/v1/memory/rebuild-reflections", json=request_body),
+            self._request("POST", "/v2/memory/rebuild-reflections", json=request_body),
         )
 
     def get_reflection_stats(self, project: str) -> Dict[str, Any]:
@@ -758,7 +767,7 @@ class MemoryClient:
         """
         return cast(
             Dict[str, Any],
-            self._request("GET", f"/v1/memory/reflection-stats?project={project}"),
+            self._request("GET", f"/v2/memory/reflection-stats?project={project}"),
         )
 
     def generate_hierarchical_reflection(
@@ -780,7 +789,7 @@ class MemoryClient:
             params["max_episodes"] = max_episodes
         return cast(
             Dict[str, Any],
-            self._request("POST", "/v1/memory/reflection/hierarchical", params=params),
+            self._request("POST", "/v2/memory/reflection/hierarchical", params=params),
         )
 
     # Health & Cache Methods
@@ -791,7 +800,7 @@ class MemoryClient:
 
     def rebuild_cache(self) -> Dict[str, Any]:
         """Trigger background task to rebuild context cache."""
-        return cast(Dict[str, Any], self._request("POST", "/v1/cache/rebuild"))
+        return cast(Dict[str, Any], self._request("POST", "/v2/cache/rebuild"))
 
     # Async methods for non-blocking operations
 
@@ -815,8 +824,11 @@ class MemoryClient:
             response = await client.store_async(memory_request)
             ```
         """
+        if not memory.session_id and self.session_id:
+            memory.session_id = self.session_id
+
         response_data = await self._async_request(
-            "POST", "/memory/store", json=memory.model_dump(exclude_none=True)
+            "POST", "/v2/memory/store", json=memory.model_dump(exclude_none=True)
         )
         return StoreMemoryResponse(**response_data)
 
@@ -836,7 +848,7 @@ class MemoryClient:
         """
         request_body = QueryMemoryRequest(query_text=query_text, k=k, filters=filters)
         response_data = await self._async_request(
-            "POST", "/memory/query", json=request_body.model_dump(exclude_none=True)
+            "POST", "/v2/memory/query", json=request_body.model_dump(exclude_none=True)
         )
         return QueryMemoryResponse(**response_data)
 
@@ -851,7 +863,7 @@ class MemoryClient:
             DeleteMemoryResponse with confirmation
         """
         response_data = await self._async_request(
-            "DELETE", f"/memory/delete?memory_id={memory_id}"
+            "DELETE", f"/v2/memory/delete?memory_id={memory_id}"
         )
         return DeleteMemoryResponse(**response_data)
 
@@ -873,7 +885,7 @@ class MemoryClient:
         }
         return cast(
             Dict[str, Any],
-            await self._async_request("POST", "/v1/graph/extract", json=request_body),
+            await self._async_request("POST", "/v2/graph/extract", json=request_body),
         )
 
     async def query_graph_async(
@@ -894,7 +906,7 @@ class MemoryClient:
         }
         return cast(
             Dict[str, Any],
-            await self._async_request("POST", "/v1/graph/query", json=request_body),
+            await self._async_request("POST", "/v2/graph/query", json=request_body),
         )
 
     async def get_graph_stats_async(self, project_id: str) -> Dict[str, Any]:
@@ -902,7 +914,7 @@ class MemoryClient:
         return cast(
             Dict[str, Any],
             await self._async_request(
-                "GET", f"/v1/graph/stats?project_id={project_id}"
+                "GET", f"/v2/graph/stats?project_id={project_id}"
             ),
         )
 
@@ -917,7 +929,7 @@ class MemoryClient:
         }
         return cast(
             Dict[str, Any],
-            await self._async_request("POST", "/v1/agent/execute", json=request_body),
+            await self._async_request("POST", "/v2/agent/execute", json=request_body),
         )
 
     # Async ISO/IEC 42001 Compliance Methods
@@ -954,7 +966,7 @@ class MemoryClient:
         return cast(
             Dict[str, Any],
             await self._async_request(
-                "POST", "/v1/compliance/approvals", json=request_body
+                "POST", "/v2/compliance/approvals", json=request_body
             ),
         )
 
@@ -962,7 +974,7 @@ class MemoryClient:
         """Async version of check_approval_status."""
         return cast(
             Dict[str, Any],
-            await self._async_request("GET", f"/v1/compliance/approvals/{request_id}"),
+            await self._async_request("GET", f"/v2/compliance/approvals/{request_id}"),
         )
 
     async def process_approval_decision_async(
@@ -984,7 +996,7 @@ class MemoryClient:
             Dict[str, Any],
             await self._async_request(
                 "POST",
-                f"/v1/compliance/approvals/{request_id}/decide",
+                f"/v2/compliance/approvals/{request_id}/decide",
                 json=request_body,
             ),
         )
@@ -1010,7 +1022,7 @@ class MemoryClient:
         return cast(
             Dict[str, Any],
             await self._async_request(
-                "POST", "/v1/compliance/provenance/context", json=request_body
+                "POST", "/v2/compliance/provenance/context", json=request_body
             ),
         )
 
@@ -1044,7 +1056,7 @@ class MemoryClient:
         return cast(
             Dict[str, Any],
             await self._async_request(
-                "POST", "/v1/compliance/provenance/decision", json=request_body
+                "POST", "/v2/compliance/provenance/decision", json=request_body
             ),
         )
 
@@ -1053,7 +1065,7 @@ class MemoryClient:
         return cast(
             Dict[str, Any],
             await self._async_request(
-                "GET", f"/v1/compliance/provenance/lineage/{decision_id}"
+                "GET", f"/v2/compliance/provenance/lineage/{decision_id}"
             ),
         )
 
@@ -1061,14 +1073,14 @@ class MemoryClient:
         """Async version of get_all_circuit_breakers."""
         return cast(
             List[Dict[str, Any]],
-            await self._async_request("GET", "/v1/compliance/circuit-breakers"),
+            await self._async_request("GET", "/v2/compliance/circuit-breakers"),
         )
 
     async def get_circuit_breaker_state_async(self, name: str) -> Dict[str, Any]:
         """Async version of get_circuit_breaker_state."""
         return cast(
             Dict[str, Any],
-            await self._async_request("GET", f"/v1/compliance/circuit-breakers/{name}"),
+            await self._async_request("GET", f"/v2/compliance/circuit-breakers/{name}"),
         )
 
     async def reset_circuit_breaker_async(self, name: str) -> Dict[str, Any]:
@@ -1076,7 +1088,7 @@ class MemoryClient:
         return cast(
             Dict[str, Any],
             await self._async_request(
-                "POST", f"/v1/compliance/circuit-breakers/{name}/reset"
+                "POST", f"/v2/compliance/circuit-breakers/{name}/reset"
             ),
         )
 
@@ -1095,7 +1107,7 @@ class MemoryClient:
 
         return cast(
             Dict[str, Any],
-            await self._async_request("GET", "/v1/compliance/policies", params=params),
+            await self._async_request("GET", "/v2/compliance/policies", params=params),
         )
 
     async def create_policy_async(
@@ -1124,7 +1136,7 @@ class MemoryClient:
         return cast(
             Dict[str, Any],
             await self._async_request(
-                "POST", "/v1/compliance/policies", json=request_body
+                "POST", "/v2/compliance/policies", json=request_body
             ),
         )
 
@@ -1140,7 +1152,7 @@ class MemoryClient:
             Dict[str, Any],
             await self._async_request(
                 "POST",
-                f"/v1/compliance/policies/{policy_id}/activate",
+                f"/v2/compliance/policies/{policy_id}/activate",
                 json=request_body,
             ),
         )
@@ -1154,7 +1166,7 @@ class MemoryClient:
             Dict[str, Any],
             await self._async_request(
                 "POST",
-                f"/v1/compliance/policies/{policy_id}/enforce",
+                f"/v2/compliance/policies/{policy_id}/enforce",
                 json=request_body,
             ),
         )
@@ -1169,7 +1181,7 @@ class MemoryClient:
         return cast(
             Dict[str, Any],
             await self._async_request(
-                "POST", "/v1/memory/rebuild-reflections", json=request_body
+                "POST", "/v2/memory/rebuild-reflections", json=request_body
             ),
         )
 
@@ -1178,7 +1190,7 @@ class MemoryClient:
         return cast(
             Dict[str, Any],
             await self._async_request(
-                "GET", f"/v1/memory/reflection-stats?project={project}"
+                "GET", f"/v2/memory/reflection-stats?project={project}"
             ),
         )
 
@@ -1192,7 +1204,7 @@ class MemoryClient:
         return cast(
             Dict[str, Any],
             await self._async_request(
-                "POST", "/v1/memory/reflection/hierarchical", params=params
+                "POST", "/v2/memory/reflection/hierarchical", params=params
             ),
         )
 
@@ -1205,8 +1217,32 @@ class MemoryClient:
     async def rebuild_cache_async(self) -> Dict[str, Any]:
         """Async version of rebuild_cache."""
         return cast(
-            Dict[str, Any], await self._async_request("POST", "/v1/cache/rebuild")
+            Dict[str, Any], await self._async_request("POST", "/v2/cache/rebuild")
         )
+
+    # Contextual Helpers
+
+    async def store_interaction(
+        self,
+        content: str,
+        role: str,
+        project: Optional[str] = None,
+        session_id: Optional[str] = None,
+    ) -> StoreMemoryResponse:
+        """
+        Specialized method to store agent-user interaction in the sensory layer.
+        Automatically sets layer="sensory" and memory_type="interaction".
+        """
+        request = StoreMemoryRequest(
+            content=content,
+            layer="sensory",
+            memory_type="interaction",
+            project=project,
+            session_id=session_id or self.session_id,
+            source=role,
+            importance=0.4,  # Sensory info starts with lower importance
+        )
+        return await self.store_async(request)
 
     async def close(self):
         """Close async HTTP client connections."""

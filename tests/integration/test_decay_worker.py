@@ -8,7 +8,6 @@ memory importance decay works correctly across multiple scenarios.
 import json
 import uuid
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock
 
 import pytest
 
@@ -32,7 +31,7 @@ async def test_decay_worker_basic_cycle(mock_app_state_pool):
             memory_id = await conn.fetchval(
                 """
                 INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp, memory_type)
-                VALUES ($1, $2, $3, 'em', 'default', $4, $5, 'episodic')
+                VALUES ($1, $2, $3, 'episodic', 'default', $4, $5, 'text')
                 RETURNING id
                 """,
                 tenant_id,
@@ -44,9 +43,10 @@ async def test_decay_worker_basic_cycle(mock_app_state_pool):
             memory_ids.append(memory_id)
 
     # Create worker and run decay cycle
-    mock_rae_service = MagicMock(spec=RAECoreService)
-    mock_rae_service.postgres_pool = pool
-    worker = DecayWorker(rae_service=mock_rae_service)
+    from apps.memory_api.services.rae_core_service import RAECoreService
+
+    rae_service = RAECoreService(postgres_pool=pool)
+    worker = DecayWorker(rae_service=rae_service)
     stats = await worker.run_decay_cycle(
         tenant_ids=[tenant_id], decay_rate=0.05, consider_access_stats=False
     )
@@ -82,7 +82,7 @@ async def test_decay_worker_with_access_stats(mock_app_state_pool):
             """
             INSERT INTO memories (tenant_id, content, importance, layer, project,
                                  created_at, timestamp, last_accessed_at, usage_count, memory_type)
-            VALUES ($1, $2, $3, 'em', 'default', $4, $5, $6, 10, 'episodic')
+            VALUES ($1, $2, $3, 'episodic', 'default', $4, $5, $6, 10, 'text')
             RETURNING id
             """,
             tenant_id,
@@ -98,7 +98,7 @@ async def test_decay_worker_with_access_stats(mock_app_state_pool):
             """
             INSERT INTO memories (tenant_id, content, importance, layer, project,
                                  created_at, timestamp, last_accessed_at, usage_count, memory_type)
-            VALUES ($1, $2, $3, 'em', 'default', $4, $5, $6, 1, 'episodic')
+            VALUES ($1, $2, $3, 'episodic', 'default', $4, $5, $6, 1, 'text')
             RETURNING id
             """,
             tenant_id,
@@ -110,9 +110,9 @@ async def test_decay_worker_with_access_stats(mock_app_state_pool):
         )
 
     # Run decay cycle
-    mock_rae_service = MagicMock(spec=RAECoreService)
-    mock_rae_service.postgres_pool = pool
-    worker = DecayWorker(rae_service=mock_rae_service)
+    # Create real RAECoreService
+    rae_service = RAECoreService(postgres_pool=pool)
+    worker = DecayWorker(rae_service=rae_service)
     await worker.run_decay_cycle(
         tenant_ids=[tenant_id], decay_rate=0.02, consider_access_stats=True
     )
@@ -149,7 +149,7 @@ async def test_decay_worker_multiple_tenants(mock_app_state_pool):
                 await conn.execute(
                     """
                     INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp, memory_type)
-                    VALUES ($1, $2, $3, 'em', 'default', $4, $5, 'episodic')
+                    VALUES ($1, $2, $3, 'episodic', 'default', $4, $5, 'text')
                     """,
                     tenant_id,
                     f"Memory {i}",
@@ -160,9 +160,9 @@ async def test_decay_worker_multiple_tenants(mock_app_state_pool):
 
     # Run decay for all tenants
 
-    mock_rae_service = MagicMock(spec=RAECoreService)
-    mock_rae_service.postgres_pool = pool
-    worker = DecayWorker(rae_service=mock_rae_service)
+    # Create real RAECoreService
+    rae_service = RAECoreService(postgres_pool=pool)
+    worker = DecayWorker(rae_service=rae_service)
     stats = await worker.run_decay_cycle(tenant_ids=tenant_ids, decay_rate=0.03)
 
     # Verify all tenants processed
@@ -183,7 +183,7 @@ async def test_decay_worker_importance_floor(mock_app_state_pool):
         memory_id = await conn.fetchval(
             """
             INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp, memory_type)
-            VALUES ($1, $2, $3, 'em', 'default', $4, $5, 'episodic')
+            VALUES ($1, $2, $3, 'episodic', 'default', $4, $5, 'text')
             RETURNING id
             """,
             tenant_id,
@@ -195,9 +195,9 @@ async def test_decay_worker_importance_floor(mock_app_state_pool):
 
     # Run decay multiple times
 
-    mock_rae_service = MagicMock(spec=RAECoreService)
-    mock_rae_service.postgres_pool = pool
-    worker = DecayWorker(rae_service=mock_rae_service)
+    # Create real RAECoreService
+    rae_service = RAECoreService(postgres_pool=pool)
+    worker = DecayWorker(rae_service=rae_service)
     for _ in range(5):
         await worker.run_decay_cycle(tenant_ids=[tenant_id], decay_rate=0.05)
 
@@ -224,7 +224,7 @@ async def test_decay_worker_error_handling(mock_app_state_pool):
         await conn.execute(
             """
             INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp, memory_type)
-            VALUES ($1, $2, $3, 'em', 'default', $4, $5, 'episodic')
+            VALUES ($1, $2, $3, 'episodic', 'default', $4, $5, 'text')
             """,
             valid_tenant,
             "Valid memory",
@@ -235,9 +235,9 @@ async def test_decay_worker_error_handling(mock_app_state_pool):
 
     # Run decay with both valid and invalid tenant
 
-    mock_rae_service = MagicMock(spec=RAECoreService)
-    mock_rae_service.postgres_pool = pool
-    worker = DecayWorker(rae_service=mock_rae_service)
+    # Create real RAECoreService
+    rae_service = RAECoreService(postgres_pool=pool)
+    worker = DecayWorker(rae_service=rae_service)
     stats = await worker.run_decay_cycle(
         tenant_ids=[valid_tenant, invalid_tenant], decay_rate=0.02
     )
@@ -261,7 +261,7 @@ async def test_decay_worker_get_all_tenants(mock_app_state_pool):
             await conn.execute(
                 """
                 INSERT INTO memories (tenant_id, content, importance, layer, project, created_at, timestamp, memory_type)
-                VALUES ($1, $2, $3, 'em', 'default', $4, $5, 'episodic')
+                VALUES ($1, $2, $3, 'episodic', 'default', $4, $5, 'text')
                 """,
                 tenant_id,
                 "Test memory",
@@ -272,9 +272,9 @@ async def test_decay_worker_get_all_tenants(mock_app_state_pool):
 
     # Get all tenants
 
-    mock_rae_service = MagicMock(spec=RAECoreService)
-    mock_rae_service.postgres_pool = pool
-    worker = DecayWorker(rae_service=mock_rae_service)
+    # Create real RAECoreService
+    rae_service = RAECoreService(postgres_pool=pool)
+    worker = DecayWorker(rae_service=rae_service)
     retrieved_tenants = await worker._get_all_tenant_ids()
 
     # Verify all tenants retrieved
@@ -291,9 +291,9 @@ async def test_decay_worker_empty_database(mock_app_state_pool):
 
     # Run decay on empty database
 
-    mock_rae_service = MagicMock(spec=RAECoreService)
-    mock_rae_service.postgres_pool = pool
-    worker = DecayWorker(rae_service=mock_rae_service)
+    # Create real RAECoreService
+    rae_service = RAECoreService(postgres_pool=pool)
+    worker = DecayWorker(rae_service=rae_service)
     stats = await worker.run_decay_cycle(tenant_ids=[], decay_rate=0.02)
 
     # Should complete without errors
@@ -319,7 +319,7 @@ async def test_decay_worker_preserves_metadata(mock_app_state_pool):
             """
             INSERT INTO memories (tenant_id, content, importance, layer, project,
                                  created_at, timestamp, tags, metadata, memory_type)
-            VALUES ($1, $2, $3, 'em', 'default', $4, $5, $6, $7::jsonb, 'episodic')
+            VALUES ($1, $2, $3, 'episodic', 'default', $4, $5, $6, $7::jsonb, 'text')
             RETURNING id
             """,
             tenant_id,
@@ -333,9 +333,9 @@ async def test_decay_worker_preserves_metadata(mock_app_state_pool):
 
     # Run decay
 
-    mock_rae_service = MagicMock(spec=RAECoreService)
-    mock_rae_service.postgres_pool = pool
-    worker = DecayWorker(rae_service=mock_rae_service)
+    # Create real RAECoreService
+    rae_service = RAECoreService(postgres_pool=pool)
+    worker = DecayWorker(rae_service=rae_service)
     await worker.run_decay_cycle(tenant_ids=[tenant_id], decay_rate=0.05)
 
     # Verify tags and session_id preserved

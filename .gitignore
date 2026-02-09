@@ -43,6 +43,8 @@ soak_test_stats_stats_history.csv
 
 # venv/IDE
 .env
+.env.docker
+.env.lumina
 .mcp-test.env
 .vscode/
 .idea/
@@ -66,3 +68,19 @@ docs/*-claude-*.md
 junit.xml
 junit.xml
 docs/infra/kubus.md
+
+# RAE Cluster Configuration (Private)
+config/cluster.yaml
+config/cluster.local.yaml
+config/cluster.lumina.yaml
+**/*.pem
+**/*.key
+pass_*.tmp
+
+# Temporary and log files from agent sessions
+*co-zrobiono.txt
+*.txt#
+.env.benchmark
+.node1_access.md
+scripts/wake_lumina.sh
+scripts/wake_lumina.sh

@@ -1,82 +1,89 @@
 """
-Embedding Service - Local embedding generation using SentenceTransformers.
+Embedding Service - API-based embedding generation using LiteLLM.
 
 This service handles embedding generation for the ML microservice,
-keeping heavy dependencies isolated from the main API.
+now using external APIs via LiteLLM to eliminate heavy local dependencies.
 """
 
-from typing import List, cast
+from typing import List
 
+import litellm
 import structlog
-from sentence_transformers import SentenceTransformer
 
 logger = structlog.get_logger(__name__)
 
 
 class EmbeddingMLService:
     """
-    Service for generating embeddings using local SentenceTransformer models.
-
-    This is a singleton service that loads the model once and reuses it
-    for all embedding requests.
+    Service for generating embeddings using LiteLLM API.
     """
 
     _instance = None
-    _model = None
 
     def __new__(cls, *args, **kwargs):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
+    def __init__(self, model_name: str = "ollama/nomic-embed-text"):
         """
         Initialize embedding service with specified model.
 
         Args:
-            model_name: Name of the SentenceTransformer model to use
+            model_name: Name of the LiteLLM model to use
         """
-        if self._model is None:
-            logger.info("loading_embedding_model", model_name=model_name)
-            self._model = SentenceTransformer(model_name)
-            logger.info("embedding_model_loaded", model_name=model_name)
+        if not hasattr(self, "model_name"):
+            self.model_name = model_name
+            logger.info("embedding_service_initialized", model_name=model_name)
 
     def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
         """
-        Generate embeddings for a list of texts.
-
-        Args:
-            texts: List of text strings to embed
-
-        Returns:
-            List of embedding vectors (each vector is a list of floats)
+        Generate embeddings for a list of texts (synchronous).
         """
         if not texts:
             return []
 
-        logger.info("generating_embeddings", text_count=len(texts))
-
-        # Generate embeddings using SentenceTransformer
-        model = cast(SentenceTransformer, self._model)
-        embeddings = model.encode(texts, show_progress_bar=False)
-
-        # Convert numpy arrays to Python lists
-        result = [emb.tolist() for emb in embeddings]
-
         logger.info(
-            "embeddings_generated",
-            text_count=len(texts),
-            embedding_dim=len(result[0]) if result else 0,
+            "generating_embeddings", text_count=len(texts), model=self.model_name
         )
 
-        return result
+        try:
+            response = litellm.embedding(model=self.model_name, input=texts)
+            result = [d["embedding"] for d in response["data"]]
+
+            logger.info(
+                "embeddings_generated",
+                text_count=len(texts),
+                embedding_dim=len(result[0]) if result else 0,
+            )
+            return result
+        except Exception as e:
+            logger.error("embedding_generation_failed", error=str(e))
+            # Fallback to zeros if API fails
+            dim = self.get_embedding_dimension()
+            return [[0.0] * dim for _ in texts]
+
+    async def generate_embeddings_async(self, texts: List[str]) -> List[List[float]]:
+        """
+        Generate embeddings for a list of texts (asynchronous).
+        """
+        if not texts:
+            return []
+
+        try:
+            response = await litellm.aembedding(model=self.model_name, input=texts)
+            return [d["embedding"] for d in response["data"]]
+        except Exception as e:
+            logger.error("async_embedding_generation_failed", error=str(e))
+            dim = self.get_embedding_dimension()
+            return [[0.0] * dim for _ in texts]
 
     def get_embedding_dimension(self) -> int:
         """
         Get the dimension of embeddings produced by this model.
-
-        Returns:
-            Integer dimension of embedding vectors
         """
-        dim = cast(SentenceTransformer, self._model).get_sentence_embedding_dimension()
-        return int(dim or 0)
+        if "nomic" in self.model_name:
+            return 768
+        if "text-embedding-3-small" in self.model_name:
+            return 1536
+        return 1536

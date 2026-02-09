@@ -14,6 +14,7 @@ Exit codes:
     0 - Analysis complete (check output for can_auto_fix)
     1 - Error during analysis
 """
+
 import argparse
 import json
 import re

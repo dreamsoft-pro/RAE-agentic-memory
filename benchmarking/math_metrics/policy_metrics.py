@@ -158,11 +158,9 @@ class CostQualityFrontier(MathMetricBase):
         self._last_metadata = {
             "reflection_gain": reflection_gain,
             "tokens_used": tokens_used,
-            "cost_efficiency": "high"
-            if cqf > 0.01
-            else "medium"
-            if cqf > 0.005
-            else "low",
+            "cost_efficiency": (
+                "high" if cqf > 0.01 else "medium" if cqf > 0.005 else "low"
+            ),
         }
 
         return cqf

@@ -228,6 +228,8 @@ class TestControllerBanditIntegration:
         controller2 = MathLayerController(config=controller.config)
 
         # Check state was loaded
+        assert controller2.bandit is not None
+        assert controller.bandit is not None
         assert controller2.bandit.total_pulls == controller.bandit.total_pulls
         assert controller2.bandit.total_reward == controller.bandit.total_reward
 
@@ -266,6 +268,7 @@ class TestControllerBanditIntegration:
         config_with_bandit.bandit["max_exploration_rate"] = 0.3
 
         controller = MathLayerController(config=config_with_bandit)
+        assert controller.bandit is not None
         assert controller.bandit.config.exploration_rate == 0.3
 
         # Exceeding max should fail in BanditConfig
@@ -276,6 +279,7 @@ class TestControllerBanditIntegration:
     def test_safety_rollback_on_critical_alerts(self, controller, context):
         """Test that controller rolls back to baseline on critical alerts"""
         # Manually trigger a critical alert by setting exploration too high
+        assert controller.bandit is not None
         controller.bandit.config.exploration_rate = 0.5  # Exceeds max
         controller.bandit.config.max_exploration_rate = 0.3
 

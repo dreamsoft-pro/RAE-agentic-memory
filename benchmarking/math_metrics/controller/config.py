@@ -48,6 +48,8 @@ class MathControllerConfig:
     """
 
     profile: str = "research"
+    policy_version: int = 1
+    bandit_enabled: bool = False
     default_level: MathLevel = MathLevel.L1
     allowed_levels: List[MathLevel] = field(
         default_factory=lambda: [MathLevel.L1, MathLevel.L2, MathLevel.L3]
@@ -57,6 +59,7 @@ class MathControllerConfig:
     strategy_params: Dict[str, Dict[str, Any]] = field(default_factory=dict)
     logging: LoggingConfig = field(default_factory=LoggingConfig)
     safety: SafetyConfig = field(default_factory=SafetyConfig)
+    bandit: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
         """Apply defaults if not set"""

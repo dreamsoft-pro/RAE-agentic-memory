@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
+from uuid import UUID
 
 import pytest
 
@@ -47,7 +48,9 @@ async def test_context_builder_uses_v3_when_enabled(mock_rae_service):
 
     # Act
     ctx = await builder.build_context(
-        tenant_id="t1", project_id="p1", query="test query"
+        tenant_id=UUID("00000000-0000-0000-0000-000000000001"),
+        project_id="p1",
+        query="test query",
     )
 
     # Assert
@@ -91,6 +94,8 @@ async def test_context_builder_v3_integration_mock(mock_rae_service):
         mock_res.final_score = 0.9
         mock_v3.return_value = [mock_res]
 
-        await builder.build_context("t1", "p1", "q")
+        await builder.build_context(
+            UUID("00000000-0000-0000-0000-000000000001"), "p1", "q"
+        )
 
         mock_v3.assert_called_once()

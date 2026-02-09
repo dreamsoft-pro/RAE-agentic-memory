@@ -12,6 +12,8 @@ from apps.memory_api.models.dashboard_models import (
 )
 from apps.memory_api.services.compliance_service import ComplianceService
 
+pytestmark = pytest.mark.iso42001
+
 
 @pytest.fixture
 def mock_pool():
@@ -47,7 +49,7 @@ def mock_rae_service(mock_pool):
     service.postgres_pool = mock_pool
 
     # Mock the 'db' property to return an actual provider wrapping our mock pool
-    from rae_core.adapters.postgres_db import PostgresDatabaseProvider
+    from rae_adapters.postgres_db import PostgresDatabaseProvider
 
     service.db = PostgresDatabaseProvider(mock_pool)
 

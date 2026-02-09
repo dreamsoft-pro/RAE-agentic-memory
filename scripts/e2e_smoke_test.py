@@ -48,7 +48,7 @@ def run_test():
     log(f"Storing memory: '{memory_content}'")
     try:
         response = requests.post(
-            f"{API_URL}/v1/memory/store", headers=headers, json=store_payload
+            f"{API_URL}/v2/memory/store", headers=headers, json=store_payload
         )
         response.raise_for_status()
         memory_id = response.json().get("id")
@@ -75,7 +75,7 @@ def run_test():
     log(f"Querying: '{query_text}'")
     try:
         response = requests.post(
-            f"{API_URL}/v1/memory/query", headers=headers, json=query_payload
+            f"{API_URL}/v2/memory/query", headers=headers, json=query_payload
         )
         response.raise_for_status()
         results = response.json().get("results", [])

@@ -1,0 +1,134 @@
+﻿Poniżej masz konkretną, zamkniętą odpowiedź: czego użyć zamiast wag i jak dokładnie to działa w core — bez rerankingu, bez LLM, bez mocy obliczeniowej.
+
+Zamiast wag: progi, marginesy, profile i veto
+Wagi próbują odpowiedzieć na pytanie:
+„ile procent prawdy ma każde źródło?”
+To jest złe pytanie w Twojej architekturze.
+RAE potrzebuje odpowiedzi na inne pytanie:
+„któremu źródłu wolno dziś decydować?”
+To jest sterowanie logiczne, nie ciągłe.
+
+1️⃣ Marginesy (confidence gaps) zamiast wag
+Co to jest
+Nie interesuje Cię jak wysoki jest score, tylko jak bardzo wygrywa.
+Wektor
+vector_margin = score(top1) - score(top2)
+albo:
+vector_margin = score(top1) - avg(score(top2..topK))
+Tekst
+text_margin =
+  bm25(top1) - bm25(top2)
+lub:
+    • liczba dopasowanych tokenów kluczowych
+    • gęstość trafień
+Dlaczego to działa
+    • margines jest odporny na skalę
+    • jest porównywalny między zapytaniami
+    • dobrze koreluje z „pewnością”
+👉 Margines mówi: czy ranking jest stabilny, a nie czy jest wysoki.
+
+2️⃣ Progi decyzyjne zamiast wag
+Zamiast:
+0.6 * vector + 0.4 * text
+robisz:
+IF vector_margin >= V_HIGH:
+    vector decyduje
+ELIF text_margin >= T_HIGH:
+    text decyduje
+ELSE:
+    consensus
+To jest:
+    • deterministyczne
+    • czytelne
+    • testowalne
+    • niezależne od modelu
+I nie pływa przy zmianie danych.
+
+3️⃣ Profile retrievalu zamiast jednego algorytmu
+Zamiast jednego „idealnego” wzoru masz kilka trybów, np.:
+Profil A — LEXICAL-FIRST
+    • krótkie zapytania
+    • logi, ID, daty
+    • epizody operacyjne
+Reguła:
+prefer text
+vector = pomocniczy
+
+Profil B — VECTOR-FIRST
+    • „o sens”, „podobne do”
+    • semantyka
+    • refleksje
+Reguła:
+prefer vector
+text = kotwica
+
+Profil C — CONSENSUS-FIRST
+    • embeddingi się nie zgadzają
+    • marginesy niskie
+    • szubar zgłasza porażki
+Reguła:
+prefer overlap + rezonans
+👉 Profile są dyskretne, nie interpolowane.
+
+4️⃣ Router zamiast strojenia
+Router to kilkanaście ifów, nie ML.
+Przykładowe sygnały:
+    • długość zapytania
+    • udział cyfr / nazw własnych
+    • vector_margin
+    • text_margin
+    • disagreement między embeddingami
+    • flaga szubara (kontekst porażki)
+Router wybiera profil, a nie wagę.
+
+5️⃣ Rezonans zamiast dynamicznych wag
+Zamiast:
+„zwiększ wagę X”
+masz:
+„to się powtarza → wzmacniamy”
+Rezonans:
+    • działa w czasie
+    • jest stabilny
+    • wygładza szum
+    • NIE zmienia logiki decyzyjnej
+To jest bezpieczny dynamizm w core.
+
+6️⃣ Szubar jako veto, nie regulator
+Szubar NIE:
+    • ustawia wag
+    • optymalizuje
+Szubar:
+    • blokuje ścieżki, które zawiodły
+    • obniża zaufanie w konkretnym kontekście
+    • działa jak „pamięć porażki”
+To jest:
+kontrola ryzyka, nie tuning
+
+7️⃣ Minimalny „zamiennik wag” – w jednym bloku
+Jeśli chcesz to sobie wyobrazić całościowo:
+signals = {
+  vector_margin,
+  text_margin,
+  embedding_disagreement,
+  shubar_penalty,
+  query_shape
+}
+profile = route(signals)
+ranking = apply_profile(profile)
+ranking = apply_resonance(ranking)
+ranking = apply_shubar_veto(ranking)
+Zero wag.
+Zero optymalizacji ciągłej.
+Pełny determinizm.
+
+8️⃣ Dlaczego to jest „lepiej niż wystarczająco dobrze”
+Bo:
+    • system przestaje być kapryśny
+    • zmiany są lokalne (jedna reguła)
+    • zachowanie da się wytłumaczyć
+    • core jest stabilny na Windows / mobile / embedded
+    • eksperymenty można robić obok
+I co najważniejsze:
+jak coś nie działa, wiesz dlaczego, a nie „bo waga 0.37”
+
+

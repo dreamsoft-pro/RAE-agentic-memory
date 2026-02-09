@@ -12,7 +12,7 @@ class Settings(BaseSettings):
 
     # App info
     app_name: str = "RAE-Lite"
-    app_version: str = "0.1.0"
+    app_version: str = "3.6.1"
 
     # Server
     server_host: str = "127.0.0.1"

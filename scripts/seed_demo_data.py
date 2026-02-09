@@ -40,7 +40,7 @@ RAE_API_URL = "http://localhost:8000"
 # SCENARIO 1: PROJECT PHOENIX - Software Development
 # ============================================================================
 
-PHOENIX_TENANT_ID = "demo-tenant"
+PHOENIX_TENANT_ID = "00000000-0000-0000-0000-000000000100"
 PHOENIX_PROJECT_ID = "phoenix-project"
 
 PHOENIX_MEMORIES = [
@@ -195,7 +195,7 @@ PHOENIX_MEMORIES = [
         "importance": 0.8,
     },
     {
-        "content": "API versioning policy: Use URL path versioning (/v1/, /v2/). Maintain backward compatibility for at least 2 versions. Deprecation notice period: 6 months. Breaking changes require major version bump. Document all changes in CHANGELOG.md.",
+        "content": "API versioning policy: Use URL path versioning (/v2/, /v2/). Maintain backward compatibility for at least 2 versions. Deprecation notice period: 6 months. Breaking changes require major version bump. Document all changes in CHANGELOG.md.",
         "layer": "ltm",
         "tags": ["api", "versioning", "policy", "compatibility"],
         "source": "api-guidelines",
@@ -328,7 +328,7 @@ PHOENIX_MEMORIES = [
 # SCENARIO 2: CITY HALL CUSTOMER SERVICE - Public Administration
 # ============================================================================
 
-CITYHALL_TENANT_ID = "cityhall-tenant"
+CITYHALL_TENANT_ID = "00000000-0000-0000-0000-000000000200"
 CITYHALL_PROJECT_ID = "customer-service"
 
 CITYHALL_MEMORIES = [
@@ -674,10 +674,10 @@ def create_memory(
     """Create a single memory in RAE."""
     try:
         payload = {"project": project_id, **memory_data}
-        headers = {"X-Tenant-Id": tenant_id}
+        headers = {"X-Tenant-Id": tenant_id, "X-User-Id": "admin"}
 
         response = client.post(
-            f"{RAE_API_URL}/v1/memory/store",
+            f"{RAE_API_URL}/v2/memory/store",
             json=payload,
             headers=headers,
             timeout=10.0,
@@ -707,12 +707,12 @@ def seed_scenario(
 ) -> tuple[int, int]:
     """Seed a specific scenario and return (success_count, failed_count)."""
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"  SCENARIO: {scenario_name}")
     print(f"  Tenant: {tenant_id}")
     print(f"  Project: {project_id}")
     print(f"  Memories: {len(memories)}")
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
 
     success_count = 0
     failed_count = 0
@@ -767,9 +767,9 @@ def print_usage_tips(scenarios: List[str]):
     print("\n💡 Explore the data:")
     print("   1. Dashboard: http://localhost:8501")
     print("   2. API Docs: http://localhost:8000/docs")
-    print("   3. Query API: POST http://localhost:8000/v1/memory/query")
-    print("   4. Graph extraction: http://localhost:8000/v1/graph/extract")
-    print("   5. ISO/IEC 42001: http://localhost:8000/v1/compliance/...")
+    print("   3. Query API: POST http://localhost:8000/v2/memory/query")
+    print("   4. Graph extraction: http://localhost:8000/v2/graph/extract")
+    print("   5. ISO/IEC 42001: http://localhost:8000/v2/compliance/...")
     print()
 
 

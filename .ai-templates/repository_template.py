@@ -149,12 +149,12 @@ class EntityRepository:
         # Build dynamic INSERT query
         # WHY: Flexible for different field combinations
         columns = list(entity_data.keys())
-        placeholders = [f"${i+1}" for i in range(len(columns))]
+        placeholders = [f"${i + 1}" for i in range(len(columns))]
         values = [entity_data[col] for col in columns]
 
         query = f"""
-            INSERT INTO entities ({', '.join(columns)})
-            VALUES ({', '.join(placeholders)})
+            INSERT INTO entities ({", ".join(columns)})
+            VALUES ({", ".join(placeholders)})
             RETURNING *
         """
 
@@ -200,12 +200,12 @@ class EntityRepository:
             return await self.get_by_id(entity_id, tenant_id)
 
         # Build dynamic UPDATE query
-        set_clauses = [f"{col} = ${i+2}" for i, col in enumerate(updates.keys())]
+        set_clauses = [f"{col} = ${i + 2}" for i, col in enumerate(updates.keys())]
         values = [entity_id, tenant_id] + list(updates.values())
 
         query = f"""
             UPDATE entities
-            SET {', '.join(set_clauses)}, updated_at = NOW()
+            SET {", ".join(set_clauses)}, updated_at = NOW()
             WHERE id = $1 AND tenant_id = $2
             RETURNING *
         """

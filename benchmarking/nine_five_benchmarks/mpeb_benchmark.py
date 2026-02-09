@@ -154,6 +154,7 @@ class PolicyEnvironment:
         self.activity_level = 0.5
 
         # Optimal policy for each state (for benchmarking)
+        self.reward_structure: Dict[Tuple[EnvironmentState, PolicyAction], float] = {}
         self.optimal_policy: Dict[EnvironmentState, PolicyAction] = {
             EnvironmentState.LOW_MEMORY: PolicyAction.STORE,
             EnvironmentState.MEDIUM_MEMORY: PolicyAction.RETRIEVE,
@@ -162,12 +163,29 @@ class PolicyEnvironment:
             EnvironmentState.IDLE: PolicyAction.REFLECT,
             EnvironmentState.ACTIVE: PolicyAction.RETRIEVE,
         }
+        self._compute_optimal_policy()
+
+    def _compute_optimal_policy(self):
+        """Update optimal policy based on reward structure if it exists."""
+        if not self.reward_structure:
+            return
+
+        for state in EnvironmentState:
+            best_action = max(
+                PolicyAction,
+                key=lambda a: self.reward_structure.get((state, a), -100.0),
+            )
+            self.optimal_policy[state] = best_action
 
     def reset(self) -> EnvironmentState:
         """Reset environment to initial state."""
         self.memory_pressure = random.uniform(0.2, 0.4)
         self.activity_level = random.uniform(0.3, 0.6)
         self._update_state()
+        return self.current_state
+
+    def get_state(self) -> EnvironmentState:
+        """Get current environment state."""
         return self.current_state
 
     def _update_state(self):
@@ -313,10 +331,18 @@ class QLearningPolicy:
 
     def get_quality_score(self) -> float:
         """Get overall policy quality (mean Q-value)."""
-        all_q = []
+        all_q: List[float] = []
         for state_q in self.q_table.values():
             all_q.extend(state_q.values())
         return float(np.mean(all_q))
+
+    def get_mean_q_value(self) -> float:
+        """Alias for get_quality_score."""
+        return self.get_quality_score()
+
+    def reset_exploration(self, epsilon: float = 1.0):
+        """Reset exploration rate."""
+        self.epsilon = epsilon
 
 
 class MPEBBenchmark:
@@ -346,7 +372,7 @@ class MPEBBenchmark:
 
     def __init__(
         self,
-        learning_rate: float = 0.1,
+        learning_rate: float = 0.12,
         discount_factor: float = 0.95,
         snapshot_interval: int = 100,
         seed: Optional[int] = 42,
@@ -403,7 +429,7 @@ class MPEBBenchmark:
             return 0.0
 
         recent_actions = [ps.selected_action for ps in self.policy_states[-window:]]
-        action_counts = {}
+        action_counts: Dict[PolicyAction, int] = {}
         for action in recent_actions:
             action_counts[action] = action_counts.get(action, 0) + 1
 
@@ -414,7 +440,7 @@ class MPEBBenchmark:
 
         # Stability = 1 - normalized_entropy
         stability = 1.0 - (entropy / max_entropy)
-        return stability
+        return float(stability)
 
     def _take_snapshot(self, iteration: int) -> PolicySnapshot:
         """Take a policy snapshot."""
@@ -577,8 +603,8 @@ class MPEBBenchmark:
 
         # Adaptation score (based on how quickly policy improved)
         if len(quality_curve) >= 10:
-            early_quality = np.mean(quality_curve[:10])
-            late_quality = np.mean(quality_curve[-10:])
+            early_quality = float(np.mean(quality_curve[:10]))
+            late_quality = float(np.mean(quality_curve[-10:]))
             adaptation_score = (late_quality - early_quality) / max(
                 abs(late_quality), 1e-6
             )
@@ -697,7 +723,7 @@ class MPEBBenchmark:
                 for _ in range(episode_length):
                     state = self.env.get_state()
                     action = self.policy.select_action(state)
-                    next_state, reward = self.env.step(action)
+                    next_state, reward, _ = self.env.step(action)
                     self.policy.update(state, action, reward, next_state)
 
                 # Track convergence to new rule set
@@ -705,7 +731,7 @@ class MPEBBenchmark:
 
                 if verbose and (iter_num + 1) % 20 == 0:
                     print(
-                        f"  Iteration {iter_num+1}/{iterations_per_episode}: "
+                        f"  Iteration {iter_num + 1}/{iterations_per_episode}: "
                         f"Convergence={convergence:.3f}"
                     )
 
@@ -846,7 +872,7 @@ def main():
     parser.add_argument(
         "--learning-rate",
         type=float,
-        default=0.1,
+        default=0.12,
         help="Q-learning learning rate",
     )
     parser.add_argument(

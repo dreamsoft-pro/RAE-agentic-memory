@@ -292,7 +292,7 @@ RAE API provides automatic interactive documentation:
 ## Further Reading
 
 - [Architecture Overview](../concepts/architecture.md)
-- [Memory Layers](../concepts/memory-layers.md)
+- [Memory Layers](../concepts/FULL_SPEC.md#1-memory-hierarchy)
 - [GraphRAG Guide](../concepts/graphrag.md)
 - [Cost Controller](../concepts/cost-controller.md)
 - [Hybrid Search](../services/HYBRID_SEARCH.md)

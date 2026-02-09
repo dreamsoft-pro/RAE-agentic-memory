@@ -4,57 +4,79 @@ RAE-Lite Local HTTP Server.
 FastAPI server running locally for RAE-Lite.
 """
 
+import os
+import sys
+from pathlib import Path
+
 import structlog
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+
 from rae_core.adapters.sqlite import (
     SQLiteGraphStore,
     SQLiteStorage,
     SQLiteVectorStore,
 )
+from rae_core.config.settings import RAESettings
+from rae_core.embedding.native import NativeEmbeddingProvider
 from rae_core.engine import RAEEngine
 from rae_core.interfaces.embedding import IEmbeddingProvider
-from rae_core.config.settings import RAESettings
-
 from rae_lite.config import settings
 
 logger = structlog.get_logger(__name__)
 
-# Simple Mock Embedding Provider for RAE-Lite Smoke Test
-class LocalEmbeddingProvider(IEmbeddingProvider):
-    def __init__(self):
-        self.dimension = 384
-    
-    async def embed_text(self, text: str) -> list[float]:
-        # Return deterministic mock vector based on text length
-        val = (len(text) % 100) / 100.0
-        return [val] * self.dimension
-        
-    async def embed_batch(self, texts: list[str]) -> list[list[float]]:
-        return [await self.embed_text(t) for t in texts]
-        
-    def get_dimension(self) -> int:
-        return self.dimension
+# SYSTEM 22.3: Production-ready embedding logic for RAE-Lite
+if getattr(sys, 'frozen', False):
+    # Running in a PyInstaller bundle
+    project_root = Path(sys._MEIPASS)
+else:
+    # Running in a normal Python environment
+    project_root = Path(os.environ.get("PROJECT_ROOT", os.getcwd()))
+
+model_dir = project_root / "models" / "nomic-embed-text-v1.5"
+model_path = model_dir / "model.onnx"
+tokenizer_path = model_dir / "tokenizer.json"
+
+if model_path.exists() and tokenizer_path.exists():
+    logger.info("using_native_embeddings", path=str(model_path))
+    embedding_provider = NativeEmbeddingProvider(
+        model_path=model_path,
+        tokenizer_path=tokenizer_path,
+        model_name="nomic-embed-text-v1.5"
+    )
+else:
+    logger.warning("native_models_missing_using_mock", path=str(model_path))
+    class LocalEmbeddingProvider(IEmbeddingProvider):
+        def __init__(self):
+            self.dimension = 384
+        async def embed_text(self, text: str, task_type: str = "search_document") -> list[float]:
+            val = (len(text) % 100) / 100.0
+            return [val] * self.dimension
+        async def embed_batch(self, texts: list[str], task_type: str = "search_document") -> list[list[float]]:
+            return [await self.embed_text(t, task_type) for t in texts]
+        def get_dimension(self) -> int:
+            return self.dimension
+    embedding_provider = LocalEmbeddingProvider()
 
 # Initialize SQLite adapters
 memory_storage = SQLiteStorage(str(settings.db_path))
 vector_store = SQLiteVectorStore(str(settings.vector_db_path))
 graph_store = SQLiteGraphStore(str(settings.graph_db_path))
-embedding_provider = LocalEmbeddingProvider()
 
 # Configure RAE Core Settings
 rae_settings = RAESettings()
 rae_settings.sensory_max_size = 50
 rae_settings.working_max_size = 50
-rae_settings.vector_backend = "sqlite" # Important for RAE-Lite
+rae_settings.vector_backend = "sqlite"
+rae_settings.vector_dimension = embedding_provider.get_dimension()
 
 # Initialize RAE Engine
 engine = RAEEngine(
     memory_storage=memory_storage,
     vector_store=vector_store,
     embedding_provider=embedding_provider,
-    settings=rae_settings
+    settings=rae_settings,
 )
 
 # FastAPI app
@@ -116,6 +138,7 @@ async def store_memory(request: StoreMemoryRequest):
     """Store a memory."""
     try:
         # Store in engine (which handles both volatile and persistent layers)
+        # Explicitly set layer to 'episodic' for uploaded files
         memory_id = await engine.store_memory(
             content=request.content,
             source=request.source,
@@ -124,6 +147,7 @@ async def store_memory(request: StoreMemoryRequest):
             tenant_id="local",
             agent_id="rae-lite-user",
             project=request.project,
+            layer="episodic",
         )
 
         return {"memory_id": str(memory_id), "status": "stored"}
@@ -137,27 +161,28 @@ async def store_memory(request: StoreMemoryRequest):
 async def query_memories(request: QueryMemoryRequest):
     """Query memories."""
     try:
-        response = await engine.query_memory(
+        results = await engine.search_memories(
             query=request.query,
-            k=request.k,
-            filters={"project": request.project},
-            search_layers=request.layers,
+            tenant_id="local",
+            project=request.project,
+            top_k=request.k,
+            layer=request.layers[0] if request.layers else None,
         )
 
         return {
             "results": [
                 {
-                    "id": r.id,
-                    "content": r.content,
-                    "score": r.score,
-                    "layer": r.layer,
-                    "importance": r.importance,
-                    "tags": r.tags or [],
+                    "id": str(r.get("id")),
+                    "content": r.get("content"),
+                    "score": r.get("math_score", r.get("search_score", 0.0)),
+                    "layer": r.get("layer", "unknown"),
+                    "importance": r.get("importance", 0.0),
+                    "tags": r.get("tags") or [],
                 }
-                for r in response.results
+                for r in results
             ],
-            "total": len(response.results),
-            "synthesized_context": response.synthesized_context,
+            "total": len(results),
+            "synthesized_context": "",
         }
 
     except Exception as e:
