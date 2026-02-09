@@ -80,8 +80,15 @@ class RaeLiteUI:
                 print(f"Extracted {len(text)} chars from PDF")
                 return text
             else:
-                # Assume text-based, decode bytes directly
-                text = file_bytes.decode('utf-8', errors='ignore')
+                # Robust decoding for text files (especially Polish Windows-1250 vs UTF-8)
+                try:
+                    text = file_bytes.decode('utf-8-sig') # Handle UTF-8 with BOM
+                except UnicodeDecodeError:
+                    try:
+                        text = file_bytes.decode('windows-1250') # Polish legacy encoding
+                    except UnicodeDecodeError:
+                        text = file_bytes.decode('utf-8', errors='ignore')
+                
                 print(f"Read {len(text)} chars from text file")
                 return text
         except Exception as e:
