@@ -12,7 +12,7 @@ class FusionStrategy:
     def __init__(self, config: dict[str, Any] | None = None):
         self.gateway = LogicGateway(config)
 
-    def fuse(
+    async def fuse(
         self,
         strategy_results: dict[str, list[tuple[UUID, float, float]]],
         weights: dict[str, float] | None = None,
@@ -52,7 +52,7 @@ class FusionStrategy:
                     importance_map[m_id] = imp
 
         # 3. Fuse scores
-        fused_scores = self.gateway.fuse(
+        fused_scores = await self.gateway.fuse(
             strategy_results=gateway_input,
             weights=weights,
             query=query or "",
@@ -70,7 +70,7 @@ class FusionStrategy:
 class RRFFusion(FusionStrategy):
     """Simple Reciprocal Rank Fusion."""
 
-    def fuse(
+    async def fuse(
         self,
         strategy_results: dict[str, list[tuple[UUID, float, float]]],
         weights: dict[str, float] | None = None,

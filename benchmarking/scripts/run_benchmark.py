@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-RAE Benchmark Runner - System 3.3 (Auto-Tuned Szubar, No Reranking)
-Deterministic Core with Optimized Ingestion for Old Hardware.
+RAE Benchmark Runner - System 4.16 (Silicon Oracle)
+Deterministic Core with Symbolic Anchoring and Tie-Breaking.
 """
 
 import argparse

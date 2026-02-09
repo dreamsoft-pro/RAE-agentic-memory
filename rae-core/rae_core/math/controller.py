@@ -152,10 +152,17 @@ class MathLayerController:
         alpha, beta, gamma = 0.4, 0.3, 0.3
         if weights:
             alpha, beta, gamma = weights.alpha, weights.beta, weights.gamma
-        sim = float(np.clip(query_similarity, 0.0, 1.0))
-        imp = float(np.clip(memory.get("importance", 0.5), 0.0, 1.0))
+        
+        # SYSTEM 4.16: Anchor Protection
+        # If query_similarity is an Oracle score, let it dominate.
+        if query_similarity >= 100.0:
+            return float(query_similarity)
+
+        # NO CLIPPING (System 23.0) - Allow boosts to propagate
+        sim = float(query_similarity)
+        imp = float(memory.get("importance", 0.5))
         score = (alpha * sim) + (beta * imp) + (gamma * 1.0)
-        return float(np.clip(score, 0.0, 1.0))
+        return float(score)
 
     def get_engine_param(self, key: str, default: Any) -> Any:
         # Dynamic Scaling for Retrieval Limit

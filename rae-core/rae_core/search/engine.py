@@ -90,15 +90,19 @@ class HybridSearchEngine:
         embedding_provider: IEmbeddingProvider,
         memory_storage: IMemoryStorage,
         reranker: IReranker | None = None,
+        graph_store: Any | None = None,
     ):
         self.strategies = strategies
         self.embedding_provider = embedding_provider
         self.memory_storage = memory_storage
+        self.graph_store = graph_store
         self._reranker = reranker
         self.injector = MetadataInjector()
 
         # Initialize Fusion Strategy (LogicGateway wrapper)
         self.fusion_strategy = FusionStrategy()
+        self.fusion_strategy.gateway.storage = memory_storage
+        self.fusion_strategy.gateway.graph_store = graph_store
 
     async def search(
         self,
@@ -127,30 +131,56 @@ class HybridSearchEngine:
         if enriched_query != query:
             logger.info("query_enriched", original=query, enriched=enriched_query)
 
-        # 1. PARALLEL EXECUTION
+        # 1. PARALLEL EXECUTION with Fast Path Optimization (System 4.16)
         strategy_results: dict[str, list[tuple[UUID, float, float]]] = {}
+        
+        # Check for technical symbols to trigger Fast Path (bypass vector search)
+        features = None
+        if math_controller:
+            features = math_controller.feature_extractor.extract(query)
+        
+        should_skip_vector = False
+        if features and features.symbols and not kwargs.get("force_hybrid", False):
+            logger.info("fast_path_triggered", symbols=features.symbols)
+            should_skip_vector = True
 
+        tasks = []
+        task_names = []
+        
         for name in active_strategies:
             if name not in self.strategies:
                 continue
+            
+            # Fast Path: Skip vector strategy if we have strong anchors
+            if name == "vector" and should_skip_vector:
+                logger.debug("skipping_vector_strategy_fast_path")
+                continue
 
             strategy = self.strategies[name]
-            try:
-                # Pass down kwargs (like vector_name)
-                results = await strategy.search(
-                    query=enriched_query,
-                    tenant_id=tenant_id,
-                    filters=filters,
-                    limit=limit,
-                    **kwargs,
-                )
-                # Ensure results are 3-value tuples for robustness
-                strategy_results[name] = [
-                    (r[0], r[1], r[2] if len(r) > 2 else 0.0) for r in results
-                ]
-            except Exception as e:
-                logger.error("strategy_failed", name=name, error=str(e))
-                strategy_results[name] = []
+            task_names.append(name)
+            tasks.append(strategy.search(
+                query=enriched_query,
+                tenant_id=tenant_id,
+                filters=filters,
+                limit=limit,
+                **kwargs,
+            ))
+
+        if tasks:
+            import asyncio
+            all_results = await asyncio.gather(*tasks, return_exceptions=True)
+            
+            for name, results in zip(task_names, all_results):
+                if isinstance(results, Exception):
+                    logger.error("strategy_failed", name=name, error=str(results))
+                    strategy_results[name] = []
+                else:
+                    # Ensure results are 3-value tuples for robustness
+                    strategy_results[name] = [
+                        (r[0], r[1], r[2] if len(r) > 2 else 0.0) for r in results
+                    ]
+        else:
+            logger.warning("no_active_strategies_for_search")
 
         # 2. FUSION (LogicGateway)
         # Fetch contents for reranking
@@ -172,7 +202,7 @@ class HybridSearchEngine:
                 logger.warning("batch_fetch_failed", error=str(e))
 
         # Note: We pass 'gateway_config' to fuse if supported
-        fused_results = self.fusion_strategy.fuse(
+        fused_results = await self.fusion_strategy.fuse(
             strategy_results,
             weights,
             query=enriched_query,

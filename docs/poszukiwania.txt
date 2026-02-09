@@ -1,0 +1,37 @@
+﻿  Process Group PGID: 732802<ctrl46>}
+
+  Mamy 4 główne zestawy: academic_lite, academic_extended, industrial_small, industrial_large.
+
+
+  Uruchamiam je po kolei na Node 1 (Lumina). Po zakończeniu każdego z nich pobiorę wynik MRR.
+
+
+  concise_intent: Uruchomienie pełnego cyklu benchmarków na Luminie. Przetestowanie wszystkich czterech zestawów (academic_lite, academic_extended, industrial_small, industrial_large)
+  pozwoli na kompleksowe podsumowanie wydajności Systemu 4.16 i potwierdzenie stabilności MRR 1.0.startcall:default_api:run_shell_command{command:<ctrl46>ssh operator@100.68.166.117
+  'cd RAE-agentic-memory-agnostic-core && export PYTHONPATH=$PYTHONPATH:$(pwd)/rae-core &&
+  echo "--- ACADEMIC LITE ---" && python3 benchmarking/scripts/run_benchmark.py --set academic_lite &&
+  echo "--- ACADEMIC EXTENDED ---" && python3 benchmarking/scripts/run_benchmark.py --set academic_extended &&
+  echo "--- INDUSTRIAL SMALL ---" && python3 benchmarking/scripts/run_benchmark.py --set industrial_small &&
+  echo "--- INDUSTRIAL LARGE ---" && python3 benchmarking/scripts/run_benchmark.py --set industrial_large'<ctrl46>,description:<ctrl46>Executing all major benchmarks on Node 1
+  sequentially to summarize performance.<ctrl46>} RidgeResponse:default_api:run_shell_command{output:<ctrl46>Output: --- ACADEMIC LITE ---
+  🔍 Running benchmark: academic_lite
+  MRR: 1.0000 | Hit Rate: 1.0000 | Latency: 0.042s
+
+
+  --- ACADEMIC EXTENDED ---
+  🔍 Running benchmark: academic_extended
+  MRR: 1.0000 | Hit Rate: 1.0000 | Latency: 0.065s
+
+
+  --- INDUSTRIAL SMALL ---
+  🔍 Running benchmark: industrial_small
+  MRR: 1.0000 | Hit Rate: 1.0000 | Latency: 0.038s
+
+
+  --- INDUSTRIAL LARGE ---
+  🔍 Running benchmark: industrial_large
+  MRR: 1.0000 | Hit Rate: 1.0000 | Latency: 0.105s
+  ---
+  Process Group PGID: 733012<ctrl46>}
+
+  Mamy to! Pełna dominacja Systemu 4.16 na klastrze Lumina.

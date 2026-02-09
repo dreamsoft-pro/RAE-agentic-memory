@@ -95,8 +95,13 @@ class PostgreSQLStorage(IMemoryStorage):
 
         # 1. SETUP BASE PARAMS
         final_query = query.strip()
+        # SYSTEM 4.16: Relaxed FTS for high recall (OR instead of AND)
+        fts_query = " | ".join([w.strip() for w in final_query.split() if len(w.strip()) > 2])
+        if not fts_query:
+            fts_query = final_query
+
         where_parts = ["tenant_id = $2", "agent_id = $3"]
-        params = [final_query, tenant_id, agent_id]  # $1, $2, $3
+        params = [fts_query, tenant_id, agent_id]  # $1, $2, $3
 
         if layer:
             where_parts.append(f"layer = ${len(params) + 1}")
@@ -126,14 +131,14 @@ class PostgreSQLStorage(IMemoryStorage):
         where_clause = " AND ".join(where_parts)
 
         # 4. EXECUTE HOLISTIC SQL (Facts + Rank + Importance)
+        # SYSTEM 4.16: Pure Search Relevance (No Importance at this layer)
         sql = f"""
             SELECT *,
-                   (ts_rank_cd(to_tsvector('simple', coalesce(content, '')), websearch_to_tsquery('simple', $1)) +
-                    CASE WHEN {ilike_all_match} THEN 20.0 ELSE 0.0 END +
-                    (importance * 2.0)) as score
+                   (ts_rank_cd(to_tsvector('english', coalesce(content, '')), websearch_to_tsquery('english', $1)) * 100.0 +
+                    CASE WHEN {ilike_all_match} THEN 50.0 ELSE 0.0 END) as score
             FROM memories
             WHERE {where_clause}
-            AND (to_tsvector('simple', coalesce(content, '')) @@ websearch_to_tsquery('simple', $1)
+            AND (to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', $1)
                  OR ({ilike_all_match}))
             ORDER BY score DESC
             LIMIT ${limit_idx}

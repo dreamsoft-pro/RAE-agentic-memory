@@ -268,6 +268,7 @@ class RAECoreService:
             embedding_provider=self.embedding_provider,
             memory_storage=self.postgres_adapter,
             reranker=reranker,
+            graph_store=self.enhanced_graph_repo,
         )
 
         self.engine = RAEEngine(

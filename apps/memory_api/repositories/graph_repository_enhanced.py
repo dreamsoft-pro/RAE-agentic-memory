@@ -225,6 +225,26 @@ class EnhancedGraphRepository:
 
         return [(record["connected_node_id"], record["distance"]) for record in records]
 
+    async def get_neighbors(self, node_id: UUID) -> List[Tuple[UUID, float]]:
+        """
+        Get immediate neighbors of a node with weights.
+        Agnostic implementation for Szubar Mode.
+        """
+        sql = """
+            SELECT 
+                CASE 
+                    WHEN source_node_id = $1 THEN target_node_id 
+                    ELSE source_node_id 
+                END as neighbor_id,
+                edge_weight
+            FROM knowledge_graph_edges
+            WHERE (source_node_id = $1 OR target_node_id = $1)
+                AND is_active = TRUE
+        """
+        records = await self.db.fetch(sql, node_id)
+        # Convert neighbor_id from string to UUID if necessary
+        return [(UUID(str(r["neighbor_id"])), float(r["edge_weight"])) for r in records]
+
     # ========================================================================
     # Edge Operations
     # ========================================================================

@@ -6,6 +6,7 @@ from uuid import UUID
 import structlog
 
 from rae_core.embedding.onnx_cross_encoder import OnnxCrossEncoder
+from rae_core.math.features_v2 import FeatureExtractorV2
 from rae_core.math.metadata_injector import MetadataInjector
 from rae_core.math.policy import PolicyRouter
 
@@ -16,7 +17,10 @@ class LogicGateway:
     def __init__(self, config: dict[str, Any] | None = None):
         self.config = config or {}
         self.reranker = None
+        self.extractor = FeatureExtractorV2()
         self.injector = MetadataInjector(self.config.get("injector"))
+        self.graph_store = None
+        self.storage = None
         # FORCE Deep Path for high-recall benchmark (routing threshold = 1.0)
         self.router = PolicyRouter(
             confidence_threshold=self.config.get("confidence_threshold", 1.0)
@@ -110,7 +114,7 @@ class LogicGateway:
 
         return boost
 
-    def fuse(
+    async def fuse(
         self,
         strategy_results,
         weights=None,
@@ -119,7 +123,7 @@ class LogicGateway:
         memory_contents=None,
         profile=None,
     ) -> list[tuple[UUID, float]]:
-        k = 60
+        k = 1 # SYSTEM 4.16: High Sensitivity Fusion (Designed for precision)
         fused_scores: dict[UUID, float] = {}
         candidate_data: dict[UUID, dict[str, Any]] = {}
 
@@ -178,6 +182,30 @@ class LogicGateway:
             data["rrf_score"] = score
             candidates.append(data)
 
+        # SYSTEM 4.15: Symbolic Anchoring
+        features = self.extractor.extract(query)
+        anchor_weight = (weights or {}).get("anchor", 1000.0)
+        
+        if candidates:
+            for c in candidates:
+                # Apply Category Boost and Quantitative Logic to ALL candidates (System 4.16)
+                meta = c.get("metadata", {})
+                logic_boost = self._apply_mathematical_logic(
+                    query, c["content"], meta
+                )
+                c["rrf_score"] += logic_boost
+
+                content_lower = c["content"].lower()
+                if features.symbols and any(sym.lower() in content_lower for sym in features.symbols):
+                    # System 4.16: Add importance and recency factor to break ties deterministically
+                    importance = float(meta.get("importance", 0.5))
+                    # Recency boost
+                    recency = 0.01 if "timestamp" in meta or "created_at" in meta else 0.0
+                    
+                    # Massive boost for anchored symbols
+                    c["rrf_score"] += anchor_weight + (importance * 0.1) + recency
+                    c["anchored"] = True
+
         # SYSTEM 4.4: Dynamic Rerank Limit
         # We use the limit passed from Math Controller (no hardcoding)
         rerank_limit = (config_override or {}).get("rerank_limit", 50)
@@ -189,16 +217,38 @@ class LogicGateway:
             :rerank_limit
         ]
 
+        # SYSTEM 3.2+: Semantic Resonance
+        res_factor = (config_override or {}).get("resonance_factor", 0.0)
+        if res_factor > 0 and to_rerank and self.graph_store:
+            logger.info("applying_semantic_resonance", factor=res_factor, results_count=len(to_rerank))
+            try:
+                # Simple resonance: find neighbors of top results and boost them if they are in to_rerank
+                top_ids = [c["id"] for c in to_rerank[:5]]
+                all_neighbors = set()
+                for seed_id in top_ids:
+                    neighbors = await self.graph_store.get_neighbors(seed_id)
+                    all_neighbors.update(n_id for n_id, _ in neighbors)
+                
+                for c in to_rerank:
+                    if c["id"] in all_neighbors:
+                        c["rrf_score"] += (c["rrf_score"] * res_factor)
+                        logger.debug("resonance_boost_applied", id=c["id"])
+            except Exception as e:
+                logger.error("resonance_failed", error=str(e))
+
         # Check if we have contents
         content_count = sum(1 for c in to_rerank if c["content"])
 
-        # Adaptive RAG Routing (System 23.0)
-        should_rerank = self.reranker and query and content_count > 0
+        # SYSTEM 23.0 Adaptive RAG Routing (Neural Scalpel)
+        # ONLY trigger if explicitly enabled and results are weak (or forced)
+        enable_reranking = (config_override or {}).get("enable_reranking", False)
+        
+        should_rerank = enable_reranking and self.reranker and query and content_count > 0
         if should_rerank:
             # Only trigger Deep Path (Neural Scalpel) if Fast Path (RRF) is weak
-            if not self.router.should_use_deep_path(candidates):
+            if not self.router.should_use_deep_path(to_rerank):
                 logger.info(
-                    "fast_path_sufficient", top_score=candidates[0]["rrf_score"]
+                    "fast_path_sufficient", top_score=to_rerank[0]["rrf_score"]
                 )
                 should_rerank = False
 
@@ -315,6 +365,45 @@ class LogicGateway:
                 c["final_score"] = c["rrf_score"]
 
         final_results = sorted(candidates, key=lambda x: x["final_score"], reverse=True)
+
+        # SYSTEM 4.14: Szubar Mode - Inductive Recovery
+        top_score = final_results[0]["final_score"] if final_results else 0.0
+        gate = (config_override or {}).get("rerank_gate", 0.5)
+
+        if (top_score < gate or not final_results) and self.graph_store and self.storage:
+            logger.info("szubar_mode_triggered", top_score=top_score, gate=gate)
+            
+            # Identify seed IDs for induction
+            seed_ids = [c["id"] for c in final_results[:5]]
+            tenant_id = (config_override or {}).get("tenant_id")
+            
+            if seed_ids and tenant_id:
+                induced_results = []
+                for seed_id in seed_ids:
+                    try:
+                        neighbors = await self.graph_store.get_neighbors(seed_id)
+                        for n_id, weight in neighbors:
+                            if any(c["id"] == n_id for c in final_results):
+                                continue
+                            
+                            induced_mem = await self.storage.get_memory(n_id, tenant_id)
+                            if induced_mem:
+                                # Inject with recovery score
+                                recovery_score = top_score + (0.1 * weight)
+                                induced_results.append({
+                                    "id": n_id,
+                                    "content": induced_mem["content"],
+                                    "metadata": induced_mem.get("metadata", {}),
+                                    "final_score": min(recovery_score, gate - 0.01)
+                                })
+                    except Exception as e:
+                        logger.error("szubar_induction_failed", error=str(e))
+                
+                if induced_results:
+                    logger.info("szubar_recovery_success", count=len(induced_results))
+                    final_results.extend(induced_results)
+                    final_results.sort(key=lambda x: x["final_score"], reverse=True)
+
         return [(c["id"], c["final_score"]) for c in final_results]
 
     def process_query(self, query: str) -> str:

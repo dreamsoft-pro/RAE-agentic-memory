@@ -47,6 +47,7 @@ class FeaturesV2(Features):
     entropy: float = 0.0  # Shannon entropy of the query
     is_industrial: bool = False  # Flag for industrial context
     is_quantitative: bool = False  # Flag for quantitative queries
+    symbols: list[str] = field(default_factory=list)  # Technical symbols/IDs detected
 
     def compute_derived_features(self) -> dict[str, float]:
         """
@@ -232,6 +233,32 @@ class FeatureExtractorV2:
         ]
         is_quantitative = any(k in query.lower() for k in quant_keywords)
 
+        # 7. Symbol Extraction (System 4.15)
+        # Detect: UUIDs, Hex codes, technical IDs like #123, or specific industrial codes
+        import re
+
+        symbols = []
+        # UUID pattern
+        uuids = re.findall(
+            r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}",
+            query.lower(),
+        )
+        symbols.extend(uuids)
+
+        # Technical IDs: words with digits, hyphens or underscores
+        # e.g. incident_0001, srv-06, ticket_123, 0xABC
+        # We look for tokens that are not plain common words
+        for token in tokens:
+            token_clean = token.strip(".,!?()[]{}'\"")
+            # If token has digits and letters, or hyphens/underscores between chars
+            if (any(c.isdigit() for c in token_clean) and any(c.isalpha() for c in token_clean)) or \
+               (re.search(r"[a-z0-9]+[-_][a-z0-9]+", token_clean.lower())):
+                symbols.append(token_clean.lower())
+
+        # Hex codes
+        hex_codes = re.findall(r"0x[0-9a-f]+", query.lower())
+        symbols.extend(hex_codes)
+
         return FeaturesV2(
             task_type=TaskType.MEMORY_RETRIEVE,
             term_density=term_density,
@@ -240,4 +267,5 @@ class FeatureExtractorV2:
             is_industrial=is_industrial,
             is_quantitative=is_quantitative,
             query_complexity=entropy / 4.0,  # Normalized complexity
+            symbols=list(set(symbols)),  # De-duplicate
         )
