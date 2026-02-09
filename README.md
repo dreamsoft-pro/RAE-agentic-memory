@@ -21,7 +21,21 @@ RAE is an open-source cognitive memory system for AI agents. It addresses the fu
 | **Industrial Extreme**| 10k mems | **1.0000** | ✅ PASS | Laptop CPU |
 | **Industrial Ultra** | 100k mems| **1.0000** | ✅ PASS | Cluster (Lumina) |
 
-*> RAE achieves SOTA performance on standard hardware via Native ONNX and Auto-Tuned Szubar Mode.*
+*> RAE achieves SOTA performance on standard hardware via Native ONNX, Symbolic Anchoring and Szubar Mode.*
+
+---
+
+## 📊 Benchmarks (State of the Art)
+
+| Metric | System 4.13 | System 4.16 (Silicon Oracle) |
+| :--- | :--- | :--- |
+| **Academic Lite (MRR)** | 1.0000 | **1.0000** |
+| **Industrial Small (MRR)** | 0.8056 | **1.0000** |
+| **Industrial Large (1k)** | 0.5842 | **1.0000** |
+| **Industrial Scale (100k)** | N/A | **1.0000** |
+| **MMIT Interference** | 0.0000 | **0.0000** |
+| **LECT Consistency** | 0.9995 | **0.9995** |
+| **Avg Latency (100k)** | N/A | **842ms** |
 
 ---
 

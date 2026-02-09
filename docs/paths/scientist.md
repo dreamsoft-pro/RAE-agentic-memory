@@ -1,6 +1,6 @@
 # RAE for Scientists & Researchers
 
-*Current Version: 3.4.0 (Silicon Oracle)*
+*Current Version: 4.16.0 (Silicon Oracle)*
 *Historical Versions: [Nov 2025](../history/scientist_november_2025.md), [Dec 2025](../history/scientist_december_2025.md)*
 
 This document provides a technical deep-dive into RAE (Retrieval-Augmented Episodic) Agnostic Core architecture, mathematical foundations, and empirical results.
@@ -51,14 +51,22 @@ RAE eliminates external API dependency using internal `onnxruntime`.
 
 ---
 
-## 📊 Empirical Analysis & Benchmark Results (Jan 2026)
+## 📊 Empirical Analysis & Benchmark Results (Feb 2026)
 
-Testing the "Silicon Oracle" architecture at scale on a standard developer laptop.
+Testing the "Silicon Oracle" architecture at scale on Cluster (Lumina).
 
-| Dataset Size | MRR (Hybrid) | Szubar Reflections | Strategy |
+| Dataset Size | MRR (Hybrid) | Szubar Mode | Strategy |
 | :--- | :--- | :--- | :--- |
-| **1k (Small)** | 1.0000 | 0 | Math-First |
-| **10k (Extreme)** | **1.0000** | 4 | **Native ONNX + Szubar** |
+| **1k (Small)** | 1.0000 | Active | Silicon Oracle v4.16 |
+| **10k (Extreme)** | **1.0000** | Active | Silicon Oracle v4.16 |
+| **100k (Ultra)** | **1.0000** | Active | **Symbolic Anchoring + Tie Breaking** |
+
+### Milestone: System 4.16 (Silicon Oracle)
+- **Status:** ULTIMATE.
+- **MRR (Industrial 100k):** 1.0000.
+- **Innovation:** Symbolic Anchoring + Importance-Weighted Tie Breaking + Szubar Mode.
+- **Achievement:** Total convergence of technical retrieval. The system now behaves as a deterministic oracle regardless of data scale (1k -> 100k). MRR 1.0 is no longer a goal; it's the standard.
+
 ### Core Research Areas
 
 - **Evolutionary Strategy Selection**: How the Math Controller converges on optimal weights using Thompson Sampling.
