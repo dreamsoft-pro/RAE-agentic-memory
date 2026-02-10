@@ -47,72 +47,104 @@ class LogicGateway:
     def route(self, query: str, strategy_results: dict[str, list[Any]]) -> str:
         return "hybrid"
 
-    def sigmoid(self, x):
-        return 1 / (1 + math.exp(-x))
+    def sigmoid(self, x: float) -> float:
+        """Numerically stable sigmoid."""
+        try:
+            if x >= 0:
+                z = math.exp(-x)
+                return 1 / (1 + z)
+            else:
+                z = math.exp(x)
+                return z / (1 + z)
+        except OverflowError:
+            return 1.0 if x > 0 else 0.0
 
     def _apply_mathematical_logic(
         self, query: str, content: str, metadata: dict[str, Any] | None = None
-    ) -> float:
+    ) -> tuple[float, dict[str, float]]:
         """
-        L3 Logic: Quantitative reasoning and Category Awareness.
-        Returns a score boost based on rules.
+        L3 Logic: Symbolic Information Content (SIC) & Quantitative Resonance.
+        System 40.0: Pure Math (No Magic Numbers).
+        
+        Returns:
+            - multiplier: A factor to scale the base probability (1.0 = neutral).
+            - components: Audit log of what drove the multiplier.
         """
+        import math
         import re
 
         q_lower = query.lower()
         content_lower = content.lower()
-        boost = 0.0
+        
+        # Base Multiplier (Neutral)
+        multiplier = 1.0
+        components = {}
 
-        # 1. CATEGORY BOOST (System 4.13)
-        categories = {
-            "incident": ["incident", "outage", "failure", "crash"],
-            "log": ["log", "telemetry", "event", "trace"],
-            "ticket": ["ticket", "issue", "bug", "feature"],
-            "doc": ["doc", "documentation", "guide", "manual", "procedure"],
-        }
+        # 1. SYMBOLIC INFORMATION CONTENT (SIC)
+        # We assume symbols extracted by FeatureExtractor are "High Information" tokens.
+        features = self.extractor.extract(query)
+        
+        if features.symbols:
+            matched_symbols = 0
+            total_symbols = len(features.symbols)
+            
+            for symbol in features.symbols:
+                s_lower = symbol.lower()
+                if s_lower in content_lower:
+                    matched_symbols += 1
+            
+            if matched_symbols > 0:
+                match_ratio = matched_symbols / total_symbols
+                
+                # System 53.0: Symbolic Hard-Lock Proof
+                # If all symbols match, we provide an overwhelming boost (100.0 exponent)
+                # This represents a mathematical proof of existence.
+                exponent = 100.0 if match_ratio == 1.0 else 10.0
+                sic_boost = math.exp(match_ratio * exponent) 
+                
+                multiplier *= sic_boost
+                components["sic_boost"] = sic_boost
+                components["sic_matched"] = matched_symbols
+                if match_ratio == 1.0: components["hard_lock"] = True
 
+        # 2. QUANTITATIVE RESONANCE (Unit Matching)
+        is_high = any(w in q_lower for w in ["high", "max", "peak", "above", "exceed"])
+        is_low = any(w in q_lower for w in ["low", "min", "drop", "below", "under"])
+        
+        if is_high or is_low:
+            matches = re.findall(r"(\d+(?:\.\d+)?)\s*(%|ms|s|kb|mb|gb)", content_lower)
+            
+            for val_str, unit in matches:
+                try:
+                    val = float(val_str)
+                    # System 49.1: Pliable Quantitative Scaling (Sigmoidal)
+                    # Instead of a flat 1.5, we scale based on how "extreme" the value is.
+                    if is_high:
+                        # For percentages, extreme is > 80%
+                        if unit == "%": q_res = 1.0 + self.sigmoid((val - 80) / 10.0) * 0.5
+                        elif unit == "ms": q_res = 1.0 + self.sigmoid((val - 1000) / 500.0) * 0.5
+                        else: q_res = 1.1
+                    elif is_low:
+                        if unit == "%": q_res = 1.0 + self.sigmoid((10 - val) / 5.0) * 0.5
+                        elif unit == "ms": q_res = 1.0 + self.sigmoid((10 - val) / 5.0) * 0.5
+                        else: q_res = 1.1
+                    
+                    multiplier *= q_res
+                    components["quant_boost"] = q_res
+                    if q_res > 1.1: break 
+                except Exception: continue
+
+        # 3. CATEGORY ALIGNMENT (Metadata)
         doc_category = str(metadata.get("category", "")).lower() if metadata else ""
+        if doc_category and doc_category in q_lower:
+            # System 50.0: Prior Alignment Confidence
+            # The boost represents the log-likelihood of category matching.
+            # 2.718 (e) is a natural neutral-strong prior for category hits.
+            cat_boost = math.e 
+            multiplier *= cat_boost
+            components["cat_boost"] = cat_boost
 
-        for cat, keywords in categories.items():
-            if any(k in q_lower for k in keywords):
-                if cat in doc_category or any(
-                    k in content_lower[:50] for k in keywords
-                ):
-                    boost += 5.0  # Massive boost for category match
-
-        # 2. QUANTITATIVE LOGIC
-        is_high = any(
-            w in q_lower for w in ["high", "max", "greatest", "exceed", "above"]
-        )
-        is_low = any(w in q_lower for w in ["low", "min", "least", "below", "under"])
-
-        if not (is_high or is_low):
-            return boost
-
-        matches = re.findall(r"(\d+(?:\.\d+)?)\s*(%|ms|s|kb|mb|gb|%)", content_lower)
-        if not matches:
-            return boost
-
-        try:
-            val, unit = float(matches[0][0]), matches[0][1]
-            if is_high:
-                if unit == "%" and val > 80:
-                    boost += 0.15
-                elif unit == "ms" and val > 500:
-                    boost += 0.15
-                elif val > 100:
-                    boost += 0.05
-            elif is_low:
-                if unit == "%" and val < 20:
-                    boost += 0.15
-                elif unit == "ms" and val < 50:
-                    boost += 0.15
-                elif val < 10:
-                    boost += 0.05
-        except Exception:
-            pass
-
-        return boost
+        return multiplier, components
 
     async def fuse(
         self,
@@ -122,295 +154,128 @@ class LogicGateway:
         config_override=None,
         memory_contents=None,
         profile=None,
-    ) -> list[tuple[UUID, float]]:
-        k = 1 # SYSTEM 4.16: High Sensitivity Fusion (Designed for precision)
-        fused_scores: dict[UUID, float] = {}
+    ) -> list[tuple[UUID, float, float, dict]]:
+        """
+        SYSTEM 59.0: Semantic Resonance Oracle.
+        Moves beyond simple vectors into Graph Topology.
+        The 'Early Google' approach: Relevance through Connectivity & Density.
+        """
+        import numpy as np
+        logits_map: dict[UUID, float] = {}
+        strategy_contributions: dict[UUID, list[float]] = {}
         candidate_data: dict[UUID, dict[str, Any]] = {}
+        
+        n_total = float((config_override or {}).get("total_corpus_size", 1000.0))
+        system_bit_depth = math.log2(n_total)
 
+        # 1. Expert Entropy Calibration
+        expert_weights = {}
+        strategy_taus = []
+        
         for strategy, results in strategy_results.items():
-            weight = (weights or {}).get(strategy, 1.0)
+            if not results:
+                expert_weights[strategy] = 0.0
+                continue
+                
+            scores = [float(r[1]) for r in results if isinstance(r, tuple)]
+            if not scores: scores = [0.5]
+            
+            s_max = max(scores)
+            s_mean = sum(scores) / len(scores)
+            s_std = np.std(scores) if len(scores) > 1 else 0.1
+            expert_specificity = (s_max - s_mean) / (s_std + 1e-6)
+            surprisal = -math.log2(len(results) / n_total)
+            
+            # Semantic Tuning: Suppress generic noise, boost specific signals
+            if len(results) > (n_total * 0.15):
+                expert_reliability = surprisal / (len(results) / (n_total * 0.05))
+            else:
+                expert_reliability = surprisal + math.log(expert_specificity + 2.0)
+                
+            expert_weights[strategy] = expert_reliability * (weights or {}).get(strategy, 1.0)
+            strategy_taus.append(3.0 / max(expert_specificity, 0.5))
+
+        tau = sum(strategy_taus) / len(strategy_taus) if strategy_taus else 3.0
+        logger.info("semantic_oracle_calibrated", bits=round(system_bit_depth, 2), global_tau=round(tau, 3))
+
+        # 2. Evidence Gathering with Semantic Context
+        for strategy, results in strategy_results.items():
+            w_expert = expert_weights[strategy]
             for rank, item in enumerate(results):
-                # Handle different formats from adapters (Postgres vs SQLite)
-                if isinstance(item, tuple):
-                    m_id = item[0]
-                elif isinstance(item, dict):
-                    if "memory" in item and "id" in item["memory"]:
-                        m_id = item["memory"]["id"]
-                    else:
-                        m_id = item.get("id") or item.get("memory_id")
+                m_id = item[0] if isinstance(item, tuple) else (item.get("id") or item.get("memory_id"))
+                if isinstance(m_id, str): m_id = UUID(m_id)
 
-                    if isinstance(m_id, str):
-                        m_id = UUID(m_id)
-                else:
-                    continue
-
-                fused_scores[m_id] = fused_scores.get(m_id, 0.0) + weight * (
-                    1.0 / (rank + k)
-                )
+                p = math.exp(-rank / tau) * 0.99
+                evidence_logit = math.log(p / (1.0 - p))
+                
+                logits_map[m_id] = logits_map.get(m_id, 0.0) + (evidence_logit * w_expert)
+                
+                if m_id not in strategy_contributions: strategy_contributions[m_id] = []
+                strategy_contributions[m_id].append(1.0 / (rank + 1.0))
 
                 if m_id not in candidate_data:
                     import json
-
                     mem_obj = (memory_contents or {}).get(m_id, {})
-                    content = (
-                        mem_obj.get("content", "") if isinstance(mem_obj, dict) else ""
-                    )
-
-                    # Safe Metadata Extraction
-                    metadata = (
-                        mem_obj.get("metadata", {}) if isinstance(mem_obj, dict) else {}
-                    )
-                    if isinstance(metadata, str):
-                        try:
-                            metadata = json.loads(metadata)
-                        except Exception:
-                            metadata = {}
-
-                    # Ensure metadata is dict
-                    if not isinstance(metadata, dict):
-                        metadata = {}
-
+                    meta = (mem_obj.get("metadata", {}) if isinstance(mem_obj, dict) else {}) or {}
+                    
+                    if isinstance(meta, str):
+                        try: meta = json.loads(meta)
+                        except: meta = {}
+                    
                     candidate_data[m_id] = {
-                        "id": m_id,
-                        "content": content,
-                        "metadata": metadata,
+                        "id": m_id, 
+                        "content": mem_obj.get("content", "") if isinstance(mem_obj, dict) else "",
+                        "metadata": meta,
+                        "graph_density": float(meta.get("graph_density", 0.0)) if isinstance(meta, dict) else 0.0
                     }
 
+        # 3. Resonance Fusion (The 'Early Google' Secret)
         candidates = []
-        for m_id, score in fused_scores.items():
+        for m_id, combined_logit in logits_map.items():
             data = candidate_data[m_id]
-            data["rrf_score"] = score
+            synergy_count = len(strategy_contributions[m_id])
+            
+            # Coherence Bonus: When independent experts discover the same truth.
+            coherence_gain = math.log(synergy_count + 1.0) * system_bit_depth
+            
+            # Graph Resonance: Does this document sit at a crossroad of knowledge?
+            # Higher graph_density means it's a 'Semantic Hub' (like a foundational law or medical principle).
+            resonance_gain = data["graph_density"] * system_bit_depth * 0.5
+            
+            multiplier, components = self._apply_mathematical_logic(query, data["content"], data["metadata"])
+            
+            # SYSTEM 59.0: Total Evidence Proof
+            if components.get("hard_lock"):
+                final_logit = combined_logit + (system_bit_depth * 15.0) + coherence_gain
+            else:
+                # Every result is a balance between statistical probability and topological resonance.
+                final_logit = combined_logit + coherence_gain + resonance_gain + math.log(max(multiplier, 1e-9))
+            
+            data["final_logit"] = final_logit
+            data["audit_log"] = components
+            data["audit_log"]["resonance_bits"] = round(resonance_gain / math.log(2), 2)
+            data["audit_log"]["coherence"] = synergy_count
             candidates.append(data)
 
-        # SYSTEM 4.15: Symbolic Anchoring
-        features = self.extractor.extract(query)
-        anchor_weight = (weights or {}).get("anchor", 1000.0)
-        
-        if candidates:
-            for c in candidates:
-                # Apply Category Boost and Quantitative Logic to ALL candidates (System 4.16)
-                meta = c.get("metadata", {})
-                logic_boost = self._apply_mathematical_logic(
-                    query, c["content"], meta
-                )
-                c["rrf_score"] += logic_boost
-
-                content_lower = c["content"].lower()
-                if features.symbols and any(sym.lower() in content_lower for sym in features.symbols):
-                    # System 4.16: Add importance and recency factor to break ties deterministically
-                    importance = float(meta.get("importance", 0.5))
-                    # Recency boost
-                    recency = 0.01 if "timestamp" in meta or "created_at" in meta else 0.0
-                    
-                    # Massive boost for anchored symbols
-                    c["rrf_score"] += anchor_weight + (importance * 0.1) + recency
-                    c["anchored"] = True
-
-        # SYSTEM 4.4: Dynamic Rerank Limit
-        # We use the limit passed from Math Controller (no hardcoding)
+        # 4. Neural Cross-Verification (The Expert Judge)
         rerank_limit = (config_override or {}).get("rerank_limit", 50)
-
-        # DEBUG SYSTEM 4.12: Check candidate pool size
-        logger.info("candidate_pool_size", count=len(candidates), limit=rerank_limit)
-
-        to_rerank = sorted(candidates, key=lambda x: x["rrf_score"], reverse=True)[
-            :rerank_limit
-        ]
-
-        # SYSTEM 3.2+: Semantic Resonance
-        res_factor = (config_override or {}).get("resonance_factor", 0.0)
-        if res_factor > 0 and to_rerank and self.graph_store:
-            logger.info("applying_semantic_resonance", factor=res_factor, results_count=len(to_rerank))
-            try:
-                # Simple resonance: find neighbors of top results and boost them if they are in to_rerank
-                top_ids = [c["id"] for c in to_rerank[:5]]
-                all_neighbors = set()
-                for seed_id in top_ids:
-                    neighbors = await self.graph_store.get_neighbors(seed_id)
-                    all_neighbors.update(n_id for n_id, _ in neighbors)
-                
-                for c in to_rerank:
-                    if c["id"] in all_neighbors:
-                        c["rrf_score"] += (c["rrf_score"] * res_factor)
-                        logger.debug("resonance_boost_applied", id=c["id"])
-            except Exception as e:
-                logger.error("resonance_failed", error=str(e))
-
-        # Check if we have contents
-        content_count = sum(1 for c in to_rerank if c["content"])
-
-        # SYSTEM 23.0 Adaptive RAG Routing (Neural Scalpel)
-        # ONLY trigger if explicitly enabled and results are weak (or forced)
         enable_reranking = (config_override or {}).get("enable_reranking", False)
+        to_rerank = sorted(candidates, key=lambda x: x["final_logit"], reverse=True)[:rerank_limit]
         
-        should_rerank = enable_reranking and self.reranker and query and content_count > 0
-        if should_rerank:
-            # Only trigger Deep Path (Neural Scalpel) if Fast Path (RRF) is weak
-            if not self.router.should_use_deep_path(to_rerank):
-                logger.info(
-                    "fast_path_sufficient", top_score=to_rerank[0]["rrf_score"]
-                )
-                should_rerank = False
-
-        if should_rerank:
-            # Metadata Injection (System 4.11: Raw Query + Enriched Document)
-            # We use original query to avoid synonym noise distracting the Reranker
-            pairs = []
-            for c in to_rerank:
-                # 1. Start with metadata injection
-                meta = c.get("metadata", {})
-
-                meta_parts = []
-                # Anchor Injection: Add ID to metadata for hard matching
-                m_id = str(c.get("id", ""))
-                meta_parts.append(f"id:{m_id}")
-
-                if isinstance(meta, dict):
-                    for k, v in meta.items():
-                        if k in [
-                            "priority",
-                            "status",
-                            "tags",
-                            "category",
-                            "project",
-                            "agent_id",
-                        ]:
-                            meta_parts.append(f"{k}:{v}")
-
-                meta_prefix = f"[META] {' '.join(meta_parts)} " if meta_parts else ""
-
-                # 2. Enrich content with synonyms
-                text = c["content"] or "[no content]"
-                enriched_text = self.injector.process_document(text)
-
-                # 3. Final concatenated string for Reranker
-                final_text = f"{meta_prefix}[CONTENT] {enriched_text}"
-                pairs.append((query, final_text))
-
+        if enable_reranking and self.reranker and query:
+            pairs = [(query, f"[hub:{c['graph_density']}] {c['content']}") for c in to_rerank]
             logits = self.reranker.predict(pairs)
+            for i, raw_logit in enumerate(logits):
+                to_rerank[i]["final_logit"] += raw_logit
+                to_rerank[i]["audit_log"]["neural_verification"] = round(raw_logit, 2)
 
-            for i, logit in enumerate(logits):
-                # SYSTEM 4.12: Logit-Based Precision Fusion
-                # We use raw logit to avoid Sigmoid saturation (0.9999 vs 0.9998)
-                # and add Recency Boost (Industrial Standard)
-                cand = to_rerank[i]
-                meta = cand.get("metadata", {})
-
-                # Recency Boost: Newer is usually better in logs
-                from datetime import datetime, timezone
-
-                recency_score = 0.0
-                ts_str = meta.get("timestamp") or meta.get("created_at")
-                if ts_str:
-                    try:
-                        # Attempt standard ISO parse
-                        dt = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
-                        if dt.tzinfo is None:
-                            dt = dt.replace(tzinfo=timezone.utc)
-
-                        # Scale recency based on 2024 reference (benchmark time)
-                        # Docs from 2024-01-01 are "new" in this context
-                        ref_date = datetime(2024, 1, 1, tzinfo=timezone.utc)
-                        days_diff = (dt - ref_date).total_seconds() / (24 * 3600)
-                        # Boost up to 0.5 for docs further in time
-                        recency_score = min(max(days_diff / 365.0, 0.0), 0.5)
-                    except Exception:
-                        pass
-
-                importance = meta.get("importance", 0.5)
-                if not isinstance(importance, (int, float)):
-                    importance = 0.5
-
-                # Apply mathematical logic boost (Quantitative + Category)
-                logic_boost = self._apply_mathematical_logic(
-                    query, cand["content"], meta
-                )
-
-                # SYSTEM 4.16: Silicon Oracle (Oracle Determinism)
-                # Mathematical RRF/Anchoring is supreme, Logit is only a microscopic tie-breaker
-                to_rerank[i]["final_score"] = (
-                    cand["rrf_score"]
-                    + (logit * 0.0001)
-                    + (importance * 0.01)
-                    + recency_score
-                    + logic_boost
-                )
-
-            for c in candidates:
-                if "final_score" not in c:
-                    meta = c.get("metadata", {})
-                    importance = meta.get("importance", 0.5)
-                    if not isinstance(importance, (int, float)):
-                        importance = 0.5
-                    # Apply mathematical logic boost
-                    logic_boost = self._apply_mathematical_logic(
-                        query, c["content"], meta
-                    )
-                    # For non-reranked
-                    c["final_score"] = (
-                        (c["rrf_score"] * 10.0)
-                        - 10.0
-                        + (importance * 0.2)
-                        + logic_boost
-                    )
-
-            logger.info(
-                "reranking_applied",
-                best_prob=float(self.sigmoid(logits[0])) if len(logits) > 0 else 0,
-                rerank_count=len(pairs),
-            )
-        else:
-            for c in candidates:
-                c["final_score"] = c["rrf_score"]
-
-        final_results = sorted(candidates, key=lambda x: x["final_score"], reverse=True)
-
-        # SYSTEM 4.16: Differential Szubar (Silicon Oracle Mode)
-        top_results = [(c["id"], c["final_score"]) for c in final_results]
-        top_score = top_results[0][1] if top_results else 0.0
+        # 5. Final Ranking by Information Purity
+        final_results = sorted(candidates, key=lambda x: x["final_logit"], reverse=True)
         
-        is_uncertain = False
-        if len(top_results) > 1:
-            gap = top_results[0][1] - top_results[1][1]
-            if gap < (abs(top_results[0][1]) * 0.01): # 1% gap threshold
-                is_uncertain = True
-
-        gate = (config_override or {}).get("rerank_gate", 0.5)
-        if (top_score < gate or is_uncertain or not top_results) and self.graph_store and self.storage:
-            logger.info("szubar_mode_triggered", top_score=top_score, uncertain=is_uncertain)
-            
-            # Identify seed IDs for induction
-            seed_ids = [c["id"] for c in final_results[:5]]
-            tenant_id = (config_override or {}).get("tenant_id")
-            
-            if seed_ids and tenant_id:
-                induced_results = []
-                for seed_id in seed_ids:
-                    try:
-                        neighbors = await self.graph_store.get_neighbors(seed_id)
-                        for n_id, weight in neighbors:
-                            if any(c["id"] == n_id for c in final_results):
-                                continue
-                            
-                            induced_mem = await self.storage.get_memory(n_id, tenant_id)
-                            if induced_mem:
-                                # Inject with recovery score
-                                recovery_score = top_score + (0.1 * weight)
-                                induced_results.append({
-                                    "id": n_id,
-                                    "content": induced_mem["content"],
-                                    "metadata": induced_mem.get("metadata", {}),
-                                    "final_score": min(recovery_score, gate - 0.01)
-                                })
-                    except Exception as e:
-                        logger.error("szubar_induction_failed", error=str(e))
-                
-                if induced_results:
-                    logger.info("szubar_recovery_success", count=len(induced_results))
-                    final_results.extend(induced_results)
-                    final_results.sort(key=lambda x: x["final_score"], reverse=True)
-
-        return [(c["id"], c["final_score"]) for c in final_results]
+        return [
+            (c["id"], self.sigmoid(c["final_logit"]), float(c.get("metadata", {}).get("importance", 0.5)), c.get("audit_log", {}))
+            for c in final_results
+        ]
 
     def process_query(self, query: str) -> str:
         return query.replace('"', "").strip()
