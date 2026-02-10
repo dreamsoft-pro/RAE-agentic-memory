@@ -144,42 +144,56 @@ class HybridSearchEngine:
             logger.info("fast_path_triggered", symbols=features.symbols)
             should_skip_vector = True
 
-        tasks = []
-        task_names = []
-        
-        for name in active_strategies:
-            if name not in self.strategies:
-                continue
+        async def run_strategies(skip_vector: bool):
+            tasks = []
+            task_names = []
+            for name in active_strategies:
+                if name not in self.strategies:
+                    continue
+                if name == "vector" and skip_vector:
+                    logger.debug("skipping_vector_strategy_fast_path")
+                    continue
+
+                strategy = self.strategies[name]
+                task_names.append(name)
+                
+                # Split-Brain Querying: Vector gets enriched, FullText gets precise
+                target_query = enriched_query if name == "vector" else query
+                
+                tasks.append(strategy.search(
+                    query=target_query,
+                    tenant_id=tenant_id,
+                    filters=filters,
+                    limit=limit,
+                    **kwargs,
+                ))
             
-            # Fast Path: Skip vector strategy if we have strong anchors
-            if name == "vector" and should_skip_vector:
-                logger.debug("skipping_vector_strategy_fast_path")
-                continue
-
-            strategy = self.strategies[name]
-            task_names.append(name)
-            tasks.append(strategy.search(
-                query=enriched_query,
-                tenant_id=tenant_id,
-                filters=filters,
-                limit=limit,
-                **kwargs,
-            ))
-
-        if tasks:
+            if not tasks:
+                return {}
+                
             import asyncio
             all_results = await asyncio.gather(*tasks, return_exceptions=True)
             
+            results_dict = {}
             for name, results in zip(task_names, all_results):
                 if isinstance(results, Exception):
                     logger.error("strategy_failed", name=name, error=str(results))
-                    strategy_results[name] = []
+                    results_dict[name] = []
                 else:
-                    # Ensure results are 3-value tuples for robustness
-                    strategy_results[name] = [
+                    results_dict[name] = [
                         (r[0], r[1], r[2] if len(r) > 2 else 0.0) for r in results
                     ]
-        else:
+            return results_dict
+
+        # Attempt Fast Path
+        strategy_results = await run_strategies(skip_vector=should_skip_vector)
+        
+        # SYSTEM 4.16 Safety Net: If Fast Path returned NOTHING, retry with full Hybrid
+        has_results = any(len(res) > 0 for res in strategy_results.values())
+        if should_skip_vector and not has_results:
+            logger.info("fast_path_failed_empty_results_triggering_fallback")
+            strategy_results = await run_strategies(skip_vector=False)
+        elif not strategy_results and not should_skip_vector:
             logger.warning("no_active_strategies_for_search")
 
         # 2. FUSION (LogicGateway)

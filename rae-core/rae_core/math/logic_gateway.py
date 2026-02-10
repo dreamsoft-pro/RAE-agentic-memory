@@ -326,13 +326,12 @@ class LogicGateway:
                     query, cand["content"], meta
                 )
 
-                # SYSTEM 4.13: Balanced Oracle (Restored)
-                # Final Score = Rank (Weighted) + Raw Logit + Importance + Recency + Logic
-                fact_score = cand["rrf_score"] * 10.0
+                # SYSTEM 4.16: Silicon Oracle (Oracle Determinism)
+                # Mathematical RRF/Anchoring is supreme, Logit is only a microscopic tie-breaker
                 to_rerank[i]["final_score"] = (
-                    fact_score
-                    + logit
-                    + (importance * 0.2)
+                    cand["rrf_score"]
+                    + (logit * 0.0001)
+                    + (importance * 0.01)
                     + recency_score
                     + logic_boost
                 )
@@ -366,12 +365,19 @@ class LogicGateway:
 
         final_results = sorted(candidates, key=lambda x: x["final_score"], reverse=True)
 
-        # SYSTEM 4.14: Szubar Mode - Inductive Recovery
-        top_score = final_results[0]["final_score"] if final_results else 0.0
-        gate = (config_override or {}).get("rerank_gate", 0.5)
+        # SYSTEM 4.16: Differential Szubar (Silicon Oracle Mode)
+        top_results = [(c["id"], c["final_score"]) for c in final_results]
+        top_score = top_results[0][1] if top_results else 0.0
+        
+        is_uncertain = False
+        if len(top_results) > 1:
+            gap = top_results[0][1] - top_results[1][1]
+            if gap < (abs(top_results[0][1]) * 0.01): # 1% gap threshold
+                is_uncertain = True
 
-        if (top_score < gate or not final_results) and self.graph_store and self.storage:
-            logger.info("szubar_mode_triggered", top_score=top_score, gate=gate)
+        gate = (config_override or {}).get("rerank_gate", 0.5)
+        if (top_score < gate or is_uncertain or not top_results) and self.graph_store and self.storage:
+            logger.info("szubar_mode_triggered", top_score=top_score, uncertain=is_uncertain)
             
             # Identify seed IDs for induction
             seed_ids = [c["id"] for c in final_results[:5]]

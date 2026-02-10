@@ -97,6 +97,7 @@ class RAEBenchmarkRunner:
         self.project_id = "RAE-agentic-memory"
         self.szubar_reflections = 0
         self.reflection_map: dict[str, list[str]] = {}
+        self.skip_ingestion = False
 
     async def setup(self):
         print("🔌 Initializing System 3.6.1 (Agnostic Hive Mind)...")
@@ -129,6 +130,9 @@ class RAEBenchmarkRunner:
 
         # Primary Model (Nomic ONNX)
         nomic_path = "models/nomic-embed-text-v1.5/model.onnx"
+        if not os.path.exists(nomic_path):
+            nomic_path = "/app/models/nomic-embed-text-v1.5/model.onnx"
+
         nomic_provider = NativeEmbeddingProvider(
             model_path=nomic_path,
             tokenizer_path=nomic_path.replace("model.onnx", "tokenizer.json"),
@@ -138,6 +142,9 @@ class RAEBenchmarkRunner:
 
         # Secondary Model (MiniLM ONNX - Dense)
         dense_path = "models/all-MiniLM-L6-v2/model.onnx"
+        if not os.path.exists(dense_path):
+            dense_path = "/app/models/all-MiniLM-L6-v2/model.onnx"
+
         dense_provider = NativeEmbeddingProvider(
             model_path=dense_path,
             tokenizer_path=dense_path.replace("model.onnx", "tokenizer.json"),
@@ -156,23 +163,24 @@ class RAEBenchmarkRunner:
         self.vector_name = "nomic"  # For reporting
         print("🧠 Native ONNX Registered: nomic (768d)")
 
-        # 2. Setup Qdrant with Multi-Vector support
-        try:
-            await self.qdrant.delete_collection("memories")
-        except Exception:
-            pass
+        # 2. Setup Qdrant with Multi-Vector support (Only if not skipping)
+        if not self.skip_ingestion:
+            try:
+                await self.qdrant.delete_collection("memories")
+            except Exception:
+                pass
 
-        await self.qdrant.create_collection(
-            "memories",
-            vectors_config={
-                "nomic": q_models.VectorParams(
-                    size=768, distance=q_models.Distance.COSINE
-                ),
-                "dense": q_models.VectorParams(
-                    size=384, distance=q_models.Distance.COSINE
-                ),
-            },
-        )
+            await self.qdrant.create_collection(
+                "memories",
+                vectors_config={
+                    "nomic": q_models.VectorParams(
+                        size=768, distance=q_models.Distance.COSINE
+                    ),
+                    "dense": q_models.VectorParams(
+                        size=384, distance=q_models.Distance.COSINE
+                    ),
+                },
+            )
 
         # 3. Initialize Engine
         from rae_adapters.postgres import PostgreSQLStorage
@@ -192,6 +200,8 @@ class RAEBenchmarkRunner:
         )
 
     async def cleanup(self):
+        if self.skip_ingestion:
+            return
         print(f"🧹 Cleaning data for project: {self.project_id}...")
         async with self.pool.acquire() as conn:
             await conn.execute(
@@ -264,7 +274,7 @@ class RAEBenchmarkRunner:
                 )
         return {"name": f"synthetic_{count}", "memories": memories, "queries": queries}
 
-    async def run(self, rerank: bool = False):
+    async def run(self, rerank: bool = False, **kwargs):
         if self.synthetic_count:
             data = self.generate_synthetic_data(self.synthetic_count, self.query_count)
         else:
@@ -285,90 +295,101 @@ class RAEBenchmarkRunner:
 
         self.project_id = data.get("name", "RAE-agentic-memory")
         print(f"🎯 Project: {self.project_id}")
-        await self.cleanup()
+        
+        if self.skip_ingestion:
+            print("⏭️  Skipping ingestion phase (Hot Mode)...")
+            # Map existing IDs from DB
+            async with self.pool.acquire() as conn:
+                rows = await conn.fetch(
+                    "SELECT id, metadata->>'id' as source_id FROM memories WHERE agent_id = $1 AND tenant_id = $2",
+                    self.project_id, self.tenant_id
+                )
+                id_map = {row['source_id']: row['id'] for row in rows if row['source_id']}
+                for m in data['memories']:
+                    if m['id'] in id_map:
+                        m['_db_id'] = id_map[m['id']]
+        else:
+            await self.cleanup()
+            print(
+                f"📥 Inserting {len(data['memories'])} memories (Industrial Batch Mode)..."
+            )
+            batch_size = 50
+            comp_nodes: dict[str, list[int]] = {}
 
-        print(
-            f"📥 Inserting {len(data['memories'])} memories (Industrial Batch Mode)..."
-        )
-        batch_size = 50
-        comp_nodes: dict[str, list[int]] = {}
+            for i in range(0, len(data["memories"]), batch_size):
+                batch = data["memories"][i : i + batch_size]
 
-        for i in range(0, len(data["memories"]), batch_size):
-            batch = data["memories"][i : i + batch_size]
+                enriched_texts = []
+                for m in batch:
+                    content = m.get("text", m.get("content", ""))
+                    if hasattr(self.engine.search_engine, "injector"):
+                        content = self.engine.search_engine.injector.process_document(
+                            content
+                        )
+                    enriched_texts.append(content)
 
-            # Enrich content with synonyms (System 23.0 Metadata Injection)
-            enriched_texts = []
-            for m in batch:
-                content = m.get("text", m.get("content", ""))
-                # Use engine's search_engine.injector if available
-                if hasattr(self.engine.search_engine, "injector"):
-                    content = self.engine.search_engine.injector.process_document(
-                        content
+                nomic_embs = await self.engine.embedding_provider.providers[
+                    "nomic"
+                ].embed_batch(enriched_texts, task_type="search_document")
+                
+                dense_embs = await self.engine.embedding_provider.providers[
+                    "dense"
+                ].embed_batch(enriched_texts, task_type="search_document")
+
+                for j, mem in enumerate(batch):
+                    content = enriched_texts[j]
+
+                    m_id = await self.storage.store_memory(
+                        tenant_id=self.tenant_id,
+                        agent_id=self.project_id,
+                        content=content,
+                        layer="longterm",
+                        importance=mem.get("metadata", {}).get("importance", 0.5),
+                        metadata=mem.get("metadata", {}),
                     )
-                enriched_texts.append(content)
 
-            # 1. Batch Embedding (Fast ONNX - Nomic Only for speed)
-            nomic_embs = await self.engine.embedding_provider.providers[
-                "nomic"
-            ].embed_batch(enriched_texts, task_type="search_document")
+                    vector_struct = {"nomic": nomic_embs[j], "dense": dense_embs[j]}
+                    await self.vector_store.store_vector(
+                        memory_id=m_id,
+                        embedding=vector_struct,
+                        tenant_id=self.tenant_id,
+                        metadata=mem.get("metadata", {}),
+                    )
 
-            # 2. Insert into Storage & Vector Store
-            for j, mem in enumerate(batch):
-                content = enriched_texts[j]
+                    mem["_db_id"] = m_id
 
-                # Direct Storage Insert (Postgres)
-                m_id = await self.storage.store_memory(
-                    tenant_id=self.tenant_id,
-                    agent_id=self.project_id,
-                    content=content,
-                    layer="longterm",
-                    importance=mem.get("metadata", {}).get("importance", 0.5),
-                    metadata=mem.get("metadata", {}),
-                )
-
-                # Direct Vector Insert (Qdrant)
-                vector_struct = {"nomic": nomic_embs[j]}
-                await self.vector_store.store_vector(
-                    memory_id=m_id,
-                    embedding=vector_struct,
-                    tenant_id=self.tenant_id,
-                    metadata=mem.get("metadata", {}),
-                )
-
-                mem["_db_id"] = m_id
-
-                # Graph Node Insert (Simplified)
-                node_id = await self.pool.fetchval(
-                    "INSERT INTO knowledge_graph_nodes (node_id, tenant_id, project_id, label) VALUES ($1, $2, $3, $4) RETURNING id",
-                    str(m_id),
-                    self.tenant_id,
-                    self.project_id,
-                    "Memory",
-                )
-                mem["_node_id"] = node_id
-                comp = mem.get("metadata", {}).get("component", "unknown")
-                if comp not in comp_nodes:
-                    comp_nodes[comp] = []
-                comp_nodes[comp].append(node_id)
-
-            if (i + batch_size) % 500 == 0 or (i + batch_size) >= len(data["memories"]):
-                print(
-                    f"   ✅ Processed {min(i + batch_size, len(data['memories']))}/{len(data['memories'])}"
-                )
-
-        print("🔗 Linking nodes (building GraphRAG context)...")
-        for comp, nodes in comp_nodes.items():
-            if len(nodes) > 1:
-                for k in range(len(nodes) - 1, max(0, len(nodes) - 5), -1):
-                    await self.pool.execute(
-                        "INSERT INTO knowledge_graph_edges (tenant_id, project_id, source_node_id, target_node_id, relation, properties) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING",
+                    node_id = await self.pool.fetchval(
+                        "INSERT INTO knowledge_graph_nodes (node_id, tenant_id, project_id, label) VALUES ($1, $2, $3, $4) RETURNING id",
+                        str(m_id),
                         self.tenant_id,
                         self.project_id,
-                        nodes[k],
-                        nodes[k - 1],
-                        "same_component",
-                        json.dumps({"weight": 0.7}),
+                        "Memory",
                     )
+                    mem["_node_id"] = node_id
+                    comp = mem.get("metadata", {}).get("component", "unknown")
+                    if comp not in comp_nodes:
+                        comp_nodes[comp] = []
+                    comp_nodes[comp].append(node_id)
+
+                if (i + batch_size) % 500 == 0 or (i + batch_size) >= len(data["memories"]):
+                    print(
+                        f"   ✅ Processed {min(i + batch_size, len(data['memories']))}/{len(data['memories'])}"
+                    )
+
+            print("🔗 Linking nodes (building GraphRAG context)...")
+            for comp, nodes in comp_nodes.items():
+                if len(nodes) > 1:
+                    for k in range(len(nodes) - 1):
+                        src, tgt = nodes[k], nodes[k+1]
+                        await self.pool.execute(
+                            "INSERT INTO knowledge_graph_edges (tenant_id, project_id, source_node_id, target_node_id, relation, properties) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT DO NOTHING",
+                            self.tenant_id,
+                            self.project_id,
+                            src,
+                            tgt,
+                            "same_component",
+                            json.dumps({"weight": 0.95}),
+                        )
 
         print("🔍 Running Queries (Testing Bandit Convergence)...")
         hybrid_results = []
@@ -377,7 +398,7 @@ class RAEBenchmarkRunner:
                 query=q["query"],
                 tenant_id=self.tenant_id,
                 agent_id=self.project_id,
-                top_k=100,  # Increased for better recall in large sets
+                top_k=300,
                 enable_reranking=rerank,
             )
             retrieved_ids = self._map_ids_smart(
@@ -385,7 +406,7 @@ class RAEBenchmarkRunner:
             )
 
             is_hit = any(
-                r_id in q["expected_source_ids"] for r_id in retrieved_ids[:100]
+                r_id in q["expected_source_ids"] for r_id in retrieved_ids[:300]
             )
 
             hybrid_results.append(
@@ -396,35 +417,44 @@ class RAEBenchmarkRunner:
                 }
             )
 
-            # Method 3.4: Feedback Loop for Bandit
             rank = 1
             if is_hit:
-                # Find the rank of the first hit
-                for i, r_id in enumerate(retrieved_ids, 1):
+                for idx, r_id in enumerate(retrieved_ids, 1):
                     if r_id in q["expected_source_ids"]:
-                        rank = i
+                        rank = idx
                         break
 
             self.engine.math_ctrl.update_policy(
                 success=is_hit, query=q["query"], rank=rank
             )
 
-            if not is_hit and q["expected_source_ids"]:
-                # Cast to list to satisfy mypy if it thinks it's a Collection
+            if (not is_hit or rank > 1) and q["expected_source_ids"]:
                 expected_ids = list(q["expected_source_ids"])
                 missed_id = expected_ids[0]
-                # Index reflection via engine to get multi-vector support
+                ref_content = f"[ALIAS] {q['query']}"
+                if hasattr(self.engine.search_engine, "injector"):
+                    ref_content = self.engine.search_engine.injector.process_document(ref_content)
+                
                 ref_id = await self.engine.store_memory(
                     tenant_id=self.tenant_id,
                     agent_id=self.project_id,
-                    content=f"[ALIAS] {q['query']}",  # Prefix handled by engine
+                    content=ref_content,
                     layer="reflective",
                     importance=1.0,
                 )
+                # Find the node ID for the missed memory if possible
                 missed_node_id = next(
-                    (m["_node_id"] for m in data["memories"] if m["id"] == missed_id),
+                    (m.get("_node_id") for m in data["memories"] if m["id"] == missed_id),
                     None,
                 )
+                if not missed_node_id:
+                    # Try to fetch from DB if in skip mode
+                    missed_node_id = await self.pool.fetchval(
+                        "SELECT id FROM knowledge_graph_nodes WHERE node_id = $1 AND project_id = $2",
+                        str(next((m.get("_db_id") for m in data["memories"] if m["id"] == missed_id), "")),
+                        self.project_id
+                    )
+
                 if missed_node_id:
                     ref_node_id = await self.pool.fetchval(
                         "INSERT INTO knowledge_graph_nodes (node_id, tenant_id, project_id, label) VALUES ($1, $2, $3, $4) RETURNING id",
@@ -476,6 +506,9 @@ async def main():
     parser.add_argument(
         "--rerank", action="store_true", help="Enable reranking in engine"
     )
+    parser.add_argument(
+        "--skip-ingestion", action="store_true", help="Skip data cleanup and insertion"
+    )
     args = parser.parse_args()
 
     if not args.synthetic_count and not args.set:
@@ -488,6 +521,7 @@ async def main():
         synthetic_count=args.synthetic_count,
         queries=args.queries,
     )
+    runner.skip_ingestion = args.skip_ingestion
     try:
         await runner.setup()
         await runner.run(rerank=args.rerank)

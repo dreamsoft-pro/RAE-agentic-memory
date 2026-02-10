@@ -48,45 +48,40 @@ def main():
     
     # 1. Nomic Embed Text v1.5 (Quantized ~137MB)
     nomic_dir = models_dir / "nomic-embed-text-v1.5"
-    
-    # Try to find the quantized version url.
-    # Often named model_quantized.onnx in HF repo "onnx" folder.
-    # Or sometimes the main model.onnx IS quantized if it's a specific "onnx" branch/repo.
-    # Nomic AI official repo usually has both.
-    # Let's try explicit quantized filename first, but save as model.onnx for RAE compatibility.
-    
-    # Standard Nomic ONNX repo often has: model.onnx (full), model_quantized.onnx (int8)
     nomic_quantized_url = "https://huggingface.co/nomic-ai/nomic-embed-text-v1.5/resolve/main/onnx/model_quantized.onnx"
-    
     download_file(nomic_quantized_url, nomic_dir / "model.onnx")
     
-    # 2. All-MiniLM-L6-v2 (Should be ~23MB)
-    # Check if we have it
-    minilm_dir = models_dir / "all-MiniLM-L6-v2"
-    minilm_path = minilm_dir / "model.onnx"
+    # Nomic Tokenizer
+    nomic_tokenizer_url = "https://huggingface.co/nomic-ai/nomic-embed-text-v1.5/resolve/main/tokenizer.json"
+    download_file(nomic_tokenizer_url, nomic_dir / "tokenizer.json")
     
-    if not minilm_path.exists():
-         print("Downloading All-MiniLM-L6-v2...")
-         # Standard HF url for this model's ONNX
-         minilm_url = "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/onnx/model.onnx"
-         # Note: This might be the full one. Quantized is smaller.
-         # The user said 23MB. The standard pytorch model is ~90MB. 
-         # ONNX quantized is usually ~23MB.
-         minilm_quantized_url = "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/onnx/model_quantized.onnx"
-         
-         # Try quantized first to match size constraint
-         try:
-             download_file(minilm_quantized_url, minilm_path)
-         except:
-             print("Quantized MiniLM not found, trying standard...")
-             download_file(minilm_url, minilm_path)
-    else:
-         print(f"All-MiniLM-L6-v2 exists ({minilm_path.stat().st_size / 1024 / 1024:.2f} MB)")
+    # 2. All-MiniLM-L6-v2
+    minilm_dir = models_dir / "all-MiniLM-L6-v2"
+    minilm_url = "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/onnx/model.onnx"
+    minilm_quantized_url = "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/onnx/model_quantized.onnx"
+    
+    try:
+        download_file(minilm_quantized_url, minilm_dir / "model.onnx")
+    except:
+        download_file(minilm_url, minilm_dir / "model.onnx")
+        
+    # MiniLM Tokenizer
+    minilm_tokenizer_url = "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/tokenizer.json"
+    download_file(minilm_tokenizer_url, minilm_dir / "tokenizer.json")
 
-    # 3. Third model? User mentioned 18MB. 
-    # Could be `bge-micro`, `paraphrase-MiniLM-L3-v2` or similar small model.
-    # Or maybe tokenizer files?
-    # Without specific name, I'll stick to Nomic + MiniLM which covers the main requirements.
+    # 3. Cross-Encoder (Neural Scalpel)
+    # Model: ms-marco-MiniLM-L-6-v2
+    ce_dir = models_dir / "cross-encoder"
+    ce_model_url = "https://huggingface.co/Xenova/ms-marco-MiniLM-L-6-v2/resolve/main/onnx/model.onnx"
+    ce_quantized_url = "https://huggingface.co/Xenova/ms-marco-MiniLM-L-6-v2/resolve/main/onnx/model_quantized.onnx"
+    ce_tokenizer_url = "https://huggingface.co/Xenova/ms-marco-MiniLM-L-6-v2/resolve/main/tokenizer.json"
+
+    try:
+        download_file(ce_quantized_url, ce_dir / "model.onnx")
+    except:
+        download_file(ce_model_url, ce_dir / "model.onnx")
+        
+    download_file(ce_tokenizer_url, ce_dir / "tokenizer.json")
 
 if __name__ == "__main__":
     main()
