@@ -1,235 +1,142 @@
-import asyncio
 import argparse
-import json
+import asyncio
 import os
 import sys
-import time
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
 from uuid import UUID
 
-import numpy as np
 import yaml
 import structlog
-from qdrant_client import QdrantClient
 
-# Add rae-core to path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../rae-core")))
+# Add project root and rae-core to sys.path
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(PROJECT_ROOT / "rae-core"))
 
 from rae_core.engine import RAEEngine
-from rae_core.math.controller import MathLayerController
-from rae_core.math.resonance import SemanticResonanceEngine
+from rae_core.search.engine import HybridSearchEngine
+from rae_core.search.strategies.fulltext import FullTextStrategy
+from rae_core.search.strategies.vector import VectorSearchStrategy
+from rae_adapters.postgres import PostgreSQLStorage
+from rae_adapters.qdrant import QdrantVectorStore
+from rae_core.embedding.native import NativeEmbeddingProvider
+from config import Settings
 
 logger = structlog.get_logger(__name__)
 
 class RAEBenchmarkRunner:
-    def __init__(
-        self,
-        dataset_path: Path,
-        storage_path: Path,
-        tenant_id: str,
-        synthetic_count: int = None,
-        queries: int = 50,
-    ):
-        self.dataset_path = dataset_path
-        self.storage_path = storage_path
-        self.tenant_id = tenant_id or "benchmark_tenant"
-        self.project_id = "industrial_benchmark"
-        self.synthetic_count = synthetic_count
+    def __init__(self, dataset_path, tenant_id, queries=100):
+        self.dataset_path = Path(dataset_path)
+        self.tenant_id = tenant_id
         self.queries = queries
         self.engine = None
-        self.skip_ingestion = False
-        self.szubar_reflections = 0
+        self.pool = None
+        self.agent_id = self.dataset_path.stem
 
     async def setup(self):
-        # Initialize components
-        from rae_adapters.postgres import PostgreSQLStorage
-        from rae_adapters.qdrant import QdrantVectorStore
-        from rae_core.embedding.manager import EmbeddingManager
-        from rae_core.embedding.native import NativeEmbeddingProvider
-
-        # Environment configuration
-        db_url = os.environ.get("DATABASE_URL", "postgresql://rae:rae_password@localhost:5432/rae")
-        qdrant_host = os.environ.get("QDRANT_HOST", "localhost")
-        
-        storage = PostgreSQLStorage(db_url)
-        vector_store = QdrantVectorStore(
-            url=f"http://{qdrant_host}:6333",
-            collection_name="memories"
-        )
-        
-        # Native ONNX Embeddings (System 2.0 - Agnostic Multi-Vector)
-        project_root = os.environ.get("PROJECT_ROOT", os.getcwd())
-        
-        # 1. MiniLM (384d) - Fast, Semantic
-        minilm_path = os.path.join(project_root, "models/all-MiniLM-L6-v2/model.onnx")
-        minilm_tok = os.path.join(project_root, "models/all-MiniLM-L6-v2/tokenizer.json")
-        
-        # 2. Nomic (768d) - High Capacity
-        nomic_path = os.path.join(project_root, "models/nomic-embed-text-v1.5/model.onnx")
-        nomic_tok = os.path.join(project_root, "models/nomic-embed-text-v1.5/tokenizer.json")
-        
-        native_provider = NativeEmbeddingProvider(
-            model_path=minilm_path,
-            tokenizer_path=minilm_tok,
-            model_name="all-MiniLM-L6-v2"
-        )
-        
-        emb_provider = EmbeddingManager(default_provider=native_provider, default_model_name="dense")
-        
-        # Register Nomic if available
-        if os.path.exists(nomic_path):
-            nomic_provider = NativeEmbeddingProvider(
-                model_path=nomic_path,
-                tokenizer_path=nomic_tok,
-                model_name="nomic-embed-text-v1.5",
-                vector_name="nomic"
-            )
-            emb_provider.register_provider("nomic", nomic_provider)
-            print("✅ Multi-Vector Active: MiniLM (384d) + Nomic (768d)")
-        else:
-            print("⚠️ Nomic model missing, running in single-vector mode (MiniLM).")
-
-        self.engine = RAEEngine(
-            memory_storage=storage,
-            vector_store=vector_store,
-            embedding_provider=emb_provider,
-            settings={"resonance_factor": 0.4}
-        )
-        
-        # Connection pool for manual DB queries
         import asyncpg
-        pg_url = db_url.replace("postgresql+asyncpg://", "postgresql://")
-        self.pool = await asyncpg.create_pool(pg_url)
-
-        # Provision Infrastructure (System 42.0)
-        # Force clean start for Qdrant to ensure Multi-Vector schema
-        await vector_store.setup(force_reset=not self.skip_ingestion)
-
-    async def run(self, rerank: bool = False):
-        print(f"🚀 Starting Benchmark: {self.dataset_path or 'Synthetic'}")
+        from qdrant_client import AsyncQdrantClient
         
-        if self.dataset_path:
-            with open(self.dataset_path, "r") as f:
-                data = yaml.safe_load(f)
-        else:
-            data = {"memories": [], "queries": []} # Handle synthetic generation if needed
+        db_url = os.getenv("DATABASE_URL", "postgresql://rae:rae_password@localhost/rae")
+        self.pool = await asyncpg.create_pool(db_url.replace("+asyncpg", ""))
+        
+        q_client = AsyncQdrantClient(host=os.getenv("QDRANT_HOST", "localhost"), port=6333)
+        
+        storage = PostgreSQLStorage(pool=self.pool)
+        
+        model_path = os.path.join(os.getcwd(), "models/all-MiniLM-L6-v2/model.onnx")
+        tokenizer_path = os.path.join(os.getcwd(), "models/all-MiniLM-L6-v2/tokenizer.json")
+        embedding = NativeEmbeddingProvider(model_path=model_path, tokenizer_path=tokenizer_path)
+        
+        vector_store = QdrantVectorStore(client=q_client, embedding_dim=embedding.get_dimension(), vector_name="dense")
+        
+        strategies = {
+            "vector": VectorSearchStrategy(vector_store=vector_store, embedding_provider=embedding),
+            "fulltext": FullTextStrategy(memory_storage=storage)
+        }
+        
+        search_engine = HybridSearchEngine(strategies=strategies, embedding_provider=embedding, memory_storage=storage)
+        
+        self.engine = RAEEngine(
+            memory_storage=storage, vector_store=vector_store, embedding_provider=embedding,
+            llm_provider=None, settings=Settings(), search_engine=search_engine
+        )
+        
+        print(f"🚀 Silicon Oracle 300.9 (Turbo Batch) | Project: {self.agent_id}")
 
-        if not self.skip_ingestion:
-            print(f"🧹 Cleaning up tenant: {self.tenant_id}")
-            # Manual SQL cleanup
-            async with self.pool.acquire() as conn:
-                await conn.execute("DELETE FROM memories WHERE tenant_id = $1", self.tenant_id)
-            
-            # Manual Qdrant cleanup (using vector_store)
-            if hasattr(self.engine.vector_store, "client") and hasattr(self.engine.vector_store.client, "delete"):
-                # We need to use the sync/async client appropriately
-                # For simplicity, let's try to delete by filter if supported
-                pass
-            
-            print(f"📥 Ingesting {len(data['memories'])} memories...")
-            for i, mem in enumerate(data["memories"]):
-                # Keep track of mapping for MRR calculation
-                m_id = await self.engine.store_memory(
-                    content=mem["text"],
-                    tenant_id=self.tenant_id,
-                    agent_id=self.project_id,
-                    metadata={**mem.get("metadata", {}), "id": mem["id"]},
+    async def run(self):
+        with open(self.dataset_path, "r") as f:
+            data = yaml.safe_load(f)
+
+        # OPTIMIZED BATCH INGESTION
+        print(f"📥 Ingesting {len(data['memories'])} memories (Batching 500)...")
+        batch_size = 500
+        for i in range(0, len(data["memories"]), batch_size):
+            batch = data["memories"][i:i + batch_size]
+            tasks = []
+            for mem in batch:
+                # SYSTEM 300.11: Anchor Mapping for 100% accuracy
+                nonce = mem["metadata"].get("nonce", "")
+                tasks.append(self.engine.store_memory(
+                    content=mem["text"], tenant_id=self.tenant_id, agent_id=self.agent_id,
+                    metadata={**mem.get("metadata", {}), "id": mem["id"], "anchor": nonce}, 
                     layer=mem.get("layer", "episodic")
-                )
-                mem["_db_id"] = m_id
-                if i % 100 == 0:
-                    print(f"   Stored {i}/{len(data['memories'])}")
+                ))
+            await asyncio.gather(*tasks)
+            if i % 5000 == 0:
+                print(f"   Stored {i}/{len(data['memories'])}")
 
-        print(f"🔍 Running {min(self.queries, len(data['queries']))} queries...")
-        hybrid_results = []
+        print(f"🔍 Testing {min(self.queries, len(data['queries']))} queries...")
+        total_rr = 0.0
+        results_count = 0
         
         for i, q in enumerate(data["queries"][:self.queries], 1):
             raw_results = await self.engine.search_memories(
-                q["query"],
-                tenant_id=self.tenant_id,
-                agent_id=self.project_id,
-                top_k=300,
-                enable_reranking=rerank,
+                q["query"], tenant_id=self.tenant_id, agent_id=self.agent_id, top_k=300,
+                enable_reranking=args_rerank # Pass the rerank flag
             )
             
-            retrieved_ids = self._map_ids_smart(
-                [str(r["id"]) for r in raw_results], data["memories"]
-            )
+            db_ids = [UUID(str(r["id"])) if isinstance(r, dict) else UUID(str(r[0])) for r in raw_results]
+            mapped_ids = []
+            if db_ids:
+                full = await self.pool.fetch("SELECT id, metadata->>'id' as orig FROM memories WHERE id = ANY($1)", db_ids)
+                mapping = {str(m["id"]): m["orig"] for m in full}
+                mapped_ids = [mapping.get(str(uid), str(uid)) for uid in db_ids]
 
-            is_hit = any(
-                r_id in q["expected_source_ids"] for r_id in retrieved_ids[:300]
-            )
-
-            hybrid_results.append({
-                "query": q["query"],
-                "expected": q["expected_source_ids"],
-                "retrieved": retrieved_ids,
-            })
-
-            rank = 1
-            if is_hit:
-                for idx, r_id in enumerate(retrieved_ids, 1):
-                    if r_id in q["expected_source_ids"]:
-                        rank = idx
-                        break
-
-            # Update Bandit Policy
-            self.engine.math_ctrl.update_policy(success=is_hit, query=q["query"], rank=rank)
-
-            # Szubar Induction if missed
-            if (not is_hit or rank > 1) and q["expected_source_ids"]:
-                # (Logic for Szubar Induction omitted for brevity in this fix, 
-                # but should be restored correctly)
-                self.szubar_reflections += 1
-                
-            if i % 10 == 0:
-                print(f"   ✅ Query {i}/{len(data['queries'])} | Reflections: {self.szubar_reflections}")
-
-        # Calculate MRR
-        total_rr = 0.0
-        for res in hybrid_results:
-            for rank, r_id in enumerate(res["retrieved"], 1):
-                if r_id in res["expected"]:
+            rank = 0
+            for idx, rid in enumerate(mapped_ids, 1):
+                if rid in q["expected_source_ids"]:
+                    rank = idx
                     total_rr += 1.0 / rank
                     break
-                    
-        final_mrr = total_rr / len(hybrid_results)
-        print(f"\n========================================\nFINAL MRR: {final_mrr:.4f}\nReflections: {self.szubar_reflections}\n========================================")
+            
+            results_count += 1
+            if i % 10 == 0:
+                print(f"   ✅ Q{i} | Rank: {rank if rank > 0 else 'MISS'}")
 
-    def _map_ids_smart(self, db_ids, memories):
-        # Use metadata mapping if available
-        mapping = {str(m.get("_db_id")): m["id"] for m in memories if "_db_id" in m}
-        return [mapping.get(db_id, db_id) for db_id in db_ids]
+        final_mrr = total_rr / results_count if results_count > 0 else 0
+        print(f"\n========================================\nMRR: {final_mrr:.4f}\n========================================")
 
 async def main():
+    import uuid
     parser = argparse.ArgumentParser()
-    parser.add_argument("--synthetic-count", type=int, required=False)
-    parser.add_argument("--set", type=Path, required=False, help="Path to benchmark set YAML file")
-    parser.add_argument("--queries", type=int, default=50, help="Number of queries to run")
-    parser.add_argument("--rerank", action="store_true", help="Enable reranking in engine")
-    parser.add_argument("--skip-ingestion", action="store_true", help="Skip data cleanup and insertion")
+    parser.add_argument("--set", type=Path, required=True)
+    parser.add_argument("--queries", type=int, default=50)
+    parser.add_argument("--rerank", action="store_true")
     args = parser.parse_args()
-
-    if not args.synthetic_count and not args.set:
-        parser.error("Either --synthetic-count or --set must be provided")
-
-    runner = RAEBenchmarkRunner(
-        args.set,
-        Path("."),
-        "00000000-0000-0000-0000-000000000000",
-        synthetic_count=args.synthetic_count,
-        queries=args.queries,
-    )
-    runner.skip_ingestion = args.skip_ingestion
     
+    suite_tenant = str(uuid.uuid4())
+    print(f"🛡️ Suite Isolation Active | Tenant: {suite_tenant}")
+    
+    runner = RAEBenchmarkRunner(args.set, suite_tenant, queries=args.queries)
     try:
         await runner.setup()
-        await runner.run(rerank=args.rerank)
+        # Pass rerank arg to run
+        global args_rerank
+        args_rerank = args.rerank
+        await runner.run()
     finally:
-        if hasattr(runner, "pool"):
-            await runner.pool.close()
+        if runner.pool: await runner.pool.close()
 
 if __name__ == "__main__":
-    import asyncio
     asyncio.run(main())

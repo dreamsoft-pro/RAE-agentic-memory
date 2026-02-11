@@ -328,7 +328,8 @@ class QdrantVectorStore(IVectorStore):
             # Handle Dynamic Vector Names (Agnostic Multi-Vector)
             target_vector_name = kwargs.get("vector_name", self.vector_name)
 
-            results = await self.client.query_points(
+            # System 300.5: Atomic Async/Sync handling
+            result_or_coro = self.client.query_points(
                 collection_name=self.collection_name,
                 query=query_embedding,
                 using=target_vector_name,
@@ -336,6 +337,13 @@ class QdrantVectorStore(IVectorStore):
                 limit=limit,
                 score_threshold=score_threshold,
             )
+            
+            try:
+                # Most robust way: just try to await it
+                results = await result_or_coro
+            except TypeError:
+                # If not awaitable, it's already the result
+                results = result_or_coro
 
             return [
                 (UUID(result.id) if isinstance(result.id, str) else UUID(result.payload["memory_id"]), result.score)

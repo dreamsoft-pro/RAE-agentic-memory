@@ -27,23 +27,57 @@ class PostgreSQLStorage(IMemoryStorage):
         return self._pool
 
     async def store_memory(self, **kwargs: Any) -> UUID:
+        import hashlib
         pool = await self._get_pool()
-        m_id = uuid4()
+        
+        content = kwargs.get("content", "")
+        tenant_id = kwargs.get("tenant_id")
+        
+        # 1. Universal Fact ID (SHA-256)
+        content_hash = hashlib.sha256(content.encode('utf-8')).hexdigest()
+        
+        # 2. Prepare Lineage Data
+        # We track which instance/source provided this fact
+        instance_id = kwargs.get("metadata", {}).get("instance_id", "local-node")
+        source = kwargs.get("source", "api")
+        
+        new_metadata = kwargs.get("metadata", {})
+        new_metadata["last_sync_instance"] = instance_id
+        
         async with pool.acquire() as conn:
-            await conn.execute(
-                "INSERT INTO memories (id, content, layer, tenant_id, agent_id, tags, metadata, importance, created_at, project) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+            # 3. Federated UPSERT (Evidence Consolidation)
+            # We use jsonb_set to maintain a list of 'witnesses' (sources) in metadata
+            sql = """
+                INSERT INTO memories (
+                    id, content, content_hash, layer, tenant_id, agent_id, tags, metadata, importance, created_at, project, source
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                ON CONFLICT (tenant_id, content_hash) DO UPDATE SET
+                    importance = GREATEST(memories.importance, EXCLUDED.importance),
+                    usage_count = memories.usage_count + 1,
+                    last_accessed_at = now(),
+                    source = memories.source || ', ' || EXCLUDED.source,
+                    metadata = memories.metadata || EXCLUDED.metadata || 
+                               jsonb_build_object('witness_count', (COALESCE((memories.metadata->>'witness_count')::int, 1) + 1))
+                RETURNING id
+            """
+            
+            m_id = uuid4()
+            row = await conn.fetchrow(
+                sql,
                 m_id,
-                kwargs.get("content"),
+                content,
+                content_hash,
                 kwargs.get("layer"),
-                kwargs.get("tenant_id"),
+                tenant_id,
                 kwargs.get("agent_id"),
                 kwargs.get("tags", []),
-                json.dumps(kwargs.get("metadata", {})),
+                json.dumps(new_metadata),
                 kwargs.get("importance", 0.5),
                 datetime.now(timezone.utc).replace(tzinfo=None),
                 kwargs.get("project"),
+                source
             )
-        return m_id
+            return row["id"]
 
     async def get_memory(
         self, memory_id: UUID, tenant_id: str
