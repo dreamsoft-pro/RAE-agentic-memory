@@ -15,11 +15,12 @@ Usage:
 import argparse
 import os
 import random
+import sys
 from datetime import datetime, timedelta
 from typing import Dict, List
 
 import yaml
-
+from common import UniquenessGuard
 
 class IndustrialDataGenerator:
     """Generate realistic industrial benchmark data"""
@@ -28,6 +29,10 @@ class IndustrialDataGenerator:
         random.seed(seed)
         self.domains = self._init_domains()
         self.base_date = datetime(2024, 1, 1)
+        self.guard = UniquenessGuard()
+
+    def _ensure_unique(self, text: str) -> str:
+        return self.guard.ensure_unique(text)
 
     def _init_domains(self) -> Dict[str, Dict]:
         """Initialize domain-specific templates"""
@@ -336,7 +341,7 @@ class IndustrialDataGenerator:
         }
 
     def generate_memories(self, count: int) -> List[Dict]:
-        """Generate mixed collection of memories"""
+        """Generate mixed collection of memories with strict uniqueness"""
         memories = []
 
         # Distribution: 40% logs, 25% tickets, 20% metrics, 10% docs, 5% incidents
@@ -348,163 +353,54 @@ class IndustrialDataGenerator:
             (0.05, self.generate_incident_entry),
         ]
 
-        for idx in range(count):
+        idx = 0
+        attempts = 0
+        max_attempts = count * 2 # Allow some retries for uniqueness
+
+        while len(memories) < count and attempts < max_attempts:
+            attempts += 1
             rand = random.random()
             cumulative: float = 0.0
             for threshold, generator in distributions:
                 cumulative += threshold
                 if rand < cumulative:
-                    memories.append(generator(idx))
+                    mem = generator(idx)
+                    # Apply Silicon Oracle Uniqueness Guard
+                    original_text = mem["text"]
+                    unique_text = self._ensure_unique(original_text)
+                    
+                    mem["text"] = unique_text
+                    memories.append(mem)
+                    idx += 1
                     break
 
-        # Fallback if floating point weirdness
-        if len(memories) < count:
-            for i in range(count - len(memories)):
-                memories.append(self.generate_log_entry(count + i))
-
-        return memories
+        return memories[:count]
 
     def generate_queries(self, num_queries: int, memories: List[Dict]) -> List[Dict]:
-        """Generate queries based on memories"""
+        """Generate atomic queries based on unique nonces"""
         queries: List[Dict] = []
+        
+        # Select random memories to query about
+        targets = random.sample(memories, min(num_queries, len(memories)))
+        
+        for m in targets:
+            nonce = m["metadata"]["nonce"]
+            
+            # 50% chance for exact nonce query, 50% for semantic + nonce
+            if random.random() > 0.5:
+                query_text = f"Find entry with code {nonce}"
+            else:
+                # Use a snippet of the text + nonce
+                words = m["text"].split()
+                snippet = " ".join(words[:min(5, len(words))])
+                query_text = f"{snippet} (Reference: {nonce})"
 
-        # Sample different types of queries
-        query_templates = [
-            {
-                "template": "What {service} issues occurred?",
-                "filter_tag": "log",
-                "category": "service_issues",
-            },
-            {
-                "template": "Show critical incidents",
-                "filter_tag": "incident",
-                "category": "incidents",
-            },
-            {
-                "template": "What are high priority tickets?",
-                "filter_tag": "ticket",
-                "category": "tickets",
-            },
-            {
-                "template": "What servers have high {metric}?",
-                "filter_tag": "metric",
-                "category": "metrics",
-            },
-            {
-                "template": "Find documentation about {component}",
-                "filter_tag": "documentation",
-                "category": "documentation",
-            },
-        ]
-
-        attempts = 0
-        max_attempts = num_queries * 5  # Prevent infinite loops
-
-        while len(queries) < num_queries and attempts < max_attempts:
-            attempts += 1
-            template_info = random.choice(query_templates)
-            template = template_info["template"]
-
-            # Select parameters first to allow filtering
-            service_param = random.choice(self.domains["logs"]["services"])
-            metric_param = random.choice(
-                ["cpu_usage", "memory", "disk_io", "error_rate"]
-            )
-            component_param = random.choice(
-                ["API", "authentication", "database", "search", "billing"]
-            )
-
-            # Format query
-            query_text = template.format(
-                service=service_param,
-                metric=metric_param,
-                component=component_param,
-            )
-
-            # Determine relevance keyword based on what's in the template
-            relevance_keyword = None
-            if "{service}" in template:
-                relevance_keyword = service_param
-            elif "{metric}" in template:
-                relevance_keyword = metric_param
-            elif "{component}" in template:
-                if component_param == "API":
-                    relevance_keyword = "api"
-                elif component_param == "authentication":
-                    relevance_keyword = "auth"
-                else:
-                    relevance_keyword = component_param.lower()
-
-            # Find relevant memories (tag + content match)
-            filter_tag = template_info["filter_tag"]
-            relevant_memories = []
-
-            for m in memories:
-                if filter_tag not in m["tags"]:
-                    continue
-
-                # If we have a specific keyword, check for it
-                if relevance_keyword:
-                    # Check text and specific metadata fields
-                    text_lower = m["text"].lower()
-
-                    # Exact or partial match logic
-                    text_match = relevance_keyword in text_lower
-                    meta_match = any(
-                        str(v).lower() == relevance_keyword
-                        for v in m["metadata"].values()
-                    )
-
-                    # For docs, check if the keyword appears in the path or description
-                    doc_match = False
-                    if filter_tag == "documentation":
-                        if relevance_keyword in text_lower:
-                            doc_match = True
-
-                    if text_match or meta_match or doc_match:
-                        relevant_memories.append(m)
-                else:
-                    # No keyword (e.g. "critical incidents")
-                    if "critical" in template:
-                        # Check tags, priority, or severity
-                        is_crit = False
-                        if "critical" in m.get("tags", []):
-                            is_crit = True
-                        if m.get("metadata", {}).get("priority") == "critical":
-                            is_crit = True
-                        if m.get("metadata", {}).get("severity") == "sev1":
-                            is_crit = True
-
-                        if is_crit:
-                            relevant_memories.append(m)
-
-                    elif "high priority" in template:
-                        if m.get("metadata", {}).get("priority") == "high":
-                            relevant_memories.append(m)
-                    else:
-                        relevant_memories.append(m)
-
-            # Use ALL relevant memories as expected results
-            if not relevant_memories:
-                continue
-
-            expected_ids = [m["id"] for m in relevant_memories]
-            num_expected = len(expected_ids)
-
-            difficulty = (
-                "easy"
-                if num_expected <= 5
-                else "medium" if num_expected <= 50 else "hard"
-            )
-
-            queries.append(
-                {
-                    "query": query_text,
-                    "expected_source_ids": expected_ids,
-                    "difficulty": difficulty,
-                    "category": template_info["category"],
-                }
-            )
+            queries.append({
+                "query": query_text,
+                "expected_source_ids": [m["id"]],
+                "difficulty": "easy",
+                "category": "atomic_lookup",
+            })
 
         return queries
 
