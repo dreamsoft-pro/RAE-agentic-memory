@@ -1,37 +1,43 @@
 import asyncio
+from qdrant_client import AsyncQdrantClient
+from rae_core.embedding.native import NativeEmbeddingProvider
+import os
 
-import asyncpg
+async def audit():
+    client = AsyncQdrantClient(url="http://localhost:6333")
+    
+    # 1. Check points
+    points = await client.scroll("memories", limit=10, with_vectors=True)
+    if not points[0]:
+        print("❌ NO POINTS IN QDRANT!")
+        return
+        
+    for p in points[0]:
+        v_types = list(p.vector.keys()) if isinstance(p.vector, dict) else ["single"]
+        print(f"Point {p.id}: {v_types}")
+        if isinstance(p.vector, dict):
+            for name, vec in p.vector.items():
+                v_sum = sum(abs(x) for x in vec[:10])
+                print(f"  - {name}: dim {len(vec)}, abs_sum_top10 {v_sum}")
 
-
-async def deep_audit():
-    conn = await asyncpg.connect("postgresql://rae:rae_password@localhost:5432/rae")
-
-    print("\n=== DATA INTEGRITY AUDIT: BLIND COLUMNS ===")
-    columns = ["session_id", "project", "source", "ttl", "strength", "memory_type"]
-    for col in columns:
-        # Sprawdzamy ile rekordów ma NULL lub wartość domyślną w tych kolumnach
-        count_null = await conn.fetchval(
-            f"SELECT COUNT(*) FROM memories WHERE {col} IS NULL"
-        )
-        total = await conn.fetchval("SELECT COUNT(*) FROM memories")
-        print(
-            f"Column '{col:.<15}' | NULLs: {count_null:<6} | Fill Rate: {((total-count_null)/total)*100:>.1f}%"
-        )
-
-    print("\n=== DATA INTEGRITY AUDIT: ACTIVE WRITERS ===")
-    # Sprawdzamy czy tabele pomocnicze są w ogóle używane
-    tables = [
-        "access_logs",
-        "token_savings_log",
-        "knowledge_graph_nodes",
-        "memory_embeddings",
-    ]
-    for table in tables:
-        count = await conn.fetchval(f"SELECT COUNT(*) FROM {table}")
-        print(f"Table '{table:.<25}' | Row Count: {count}")
-
-    await conn.close()
-
+    # 2. Test Search
+    project_root = os.environ.get("PROJECT_ROOT", os.getcwd())
+    model_path = os.path.join(project_root, "models/all-MiniLM-L6-v2/model.onnx")
+    tok_path = os.path.join(project_root, "models/all-MiniLM-L6-v2/tokenizer.json")
+    
+    provider = NativeEmbeddingProvider(model_path, tok_path)
+    query = "disk error"
+    emb = await provider.embed_text(query)
+    
+    print(f"\nSearching for '{query}' in 'dense'...")
+    res = await client.search(
+        collection_name="memories",
+        query_vector=("dense", emb),
+        limit=5
+    )
+    print(f"Results in dense: {len(res)}")
+    for r in res:
+        print(f"  - {r.id} score {r.score}")
 
 if __name__ == "__main__":
-    asyncio.run(deep_audit())
+    asyncio.run(audit())

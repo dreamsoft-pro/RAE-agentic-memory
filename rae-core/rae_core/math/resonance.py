@@ -29,28 +29,41 @@ class SemanticResonanceEngine:
         """
         Adjust initial scores based on graph connectivity (Semantic Resonance).
         Returns (boosted_results, full_energy_map).
+
+        SYSTEM 40.0: Density-Aware Scaling.
         """
         if not initial_results:
             return initial_results, {}
 
-        # 1. Initialize energy state
-        energy = {str(r["id"]): r.get("search_score", 0.5) for r in initial_results}
-
-        if not graph_edges:
-            return initial_results, energy
-
-        # Track all unique nodes involved in edges
+        # 1. Calculate Graph Density for scaling
         all_nodes = set()
         for u, v, _ in graph_edges:
             all_nodes.add(str(u))
             all_nodes.add(str(v))
+        
+        v_count = len(all_nodes)
+        e_count = len(graph_edges)
+        
+        # Density D = 2|E| / (|V|(|V|-1))
+        density = (2 * e_count) / (v_count * (v_count - 1)) if v_count > 1 else 0.0
+        
+        # Dynamic resonance factor: dampen in high-density areas to prevent noise saturation
+        # Formula: factor = base_factor * exp(-density * 2.0)
+        # This keeps resonance high (base_factor) for sparse graphs and drops it for dense ones.
+        dynamic_factor = self.resonance_factor * np.exp(-density * 5.0)
+
+        # 2. Initialize energy state
+        energy = {str(r["id"]): r.get("search_score", 0.5) for r in initial_results}
+
+        if not graph_edges:
+            return initial_results, energy
 
         # Ensure all nodes have an entry in energy map
         for node_id in all_nodes:
             if node_id not in energy:
                 energy[node_id] = 0.0
 
-        # 2. Spread energy through waves (Multi-hop)
+        # 3. Spread energy through waves (Multi-hop)
         damping = 0.85
         for _ in range(self.iterations):
             new_energy = {node_id: 0.0 for node_id in energy}
@@ -59,8 +72,8 @@ class SemanticResonanceEngine:
                 u_str, v_str = str(u), str(v)
 
                 # Bi-directional flow
-                new_energy[u_str] += energy[v_str] * weight * self.resonance_factor
-                new_energy[v_str] += energy[u_str] * weight * self.resonance_factor
+                new_energy[u_str] += energy[v_str] * weight * dynamic_factor
+                new_energy[v_str] += energy[u_str] * weight * dynamic_factor
 
             # Apply damping and update state
             for node_id in energy:
@@ -68,7 +81,7 @@ class SemanticResonanceEngine:
                     new_energy[node_id] * damping
                 )
 
-        # 3. Update results with boosted scores
+        # 4. Update results with boosted scores
         for r in initial_results:
             r_id_str = str(r["id"])
             original_score = r.get("math_score") or r.get("search_score", 0.0)
@@ -81,9 +94,11 @@ class SemanticResonanceEngine:
             r["resonance_metadata"] = {
                 "boost": float(boost),
                 "wave_energy": float(np.tanh(boost)),
+                "graph_density": float(density),
+                "dynamic_resonance_factor": float(dynamic_factor),
             }
 
-        # 4. Final sort by the new 'Resonated' score
+        # 5. Final sort by the new 'Resonated' score
         initial_results.sort(key=lambda x: x.get("math_score", 0.0), reverse=True)
         return initial_results, energy
 

@@ -122,7 +122,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 f"(content ILIKE ${p_idx} OR metadata::text ILIKE ${p_idx})"
             )
 
-        ilike_all_match = " AND ".join(ilike_clauses) if ilike_clauses else "TRUE"
+        ilike_any_match = " OR ".join(ilike_clauses) if ilike_clauses else "TRUE"
 
         # 3. FINAL LIMIT
         limit_idx = len(params) + 1
@@ -131,15 +131,14 @@ class PostgreSQLStorage(IMemoryStorage):
         where_clause = " AND ".join(where_parts)
 
         # 4. EXECUTE HOLISTIC SQL (Facts + Rank + Importance)
-        # SYSTEM 4.16: Pure Search Relevance (No Importance at this layer)
+        # SYSTEM 40.5: Pure Mathematical Rank (No tricks)
         sql = f"""
             SELECT *,
-                   (ts_rank_cd(to_tsvector('english', coalesce(content, '')), websearch_to_tsquery('english', $1)) * 100.0 +
-                    CASE WHEN {ilike_all_match} THEN 50.0 ELSE 0.0 END) as score
+                   ts_rank_cd(to_tsvector('english', coalesce(content, '')), websearch_to_tsquery('english', $1)) as score
             FROM memories
             WHERE {where_clause}
             AND (to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', $1)
-                 OR ({ilike_all_match}))
+                 OR ({ilike_any_match}))
             ORDER BY score DESC
             LIMIT ${limit_idx}
         """

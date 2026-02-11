@@ -24,21 +24,21 @@ tracer = get_tracer(__name__)
 
 # Request/Response models
 class StoreMemoryRequestV2(BaseModel):
-    """Store memory request for v2 API."""
+    """Store memory request for v2 API - Extreme Compatibility Mode."""
 
-    content: str = Field(..., min_length=1, max_length=8192)
-    source: str = Field(default="api", max_length=255)
-    project: str = Field(..., min_length=1, max_length=255)
-    importance: float = Field(default=0.5, ge=0.0, le=1.0)
-    tags: list[str] = Field(default_factory=list)
-    layer: str | None = Field(
-        default=None, pattern="^(sensory|working|longterm|reflective)$"
-    )
-    # Phase 1: Canonical fields
-    session_id: str | None = Field(None, description="Session identifier")
-    memory_type: str | None = Field(None, description="Memory type (text, code, etc.)")
-    ttl: int | None = Field(None, gt=0, description="Time to live in seconds")
-    metadata: dict[str, Any] = Field(default_factory=dict)
+    content: str
+    source: str | None = "api"
+    project: str | None = "default"
+    importance: float | None = 0.5
+    tags: list[str] | None = None
+    layer: str | None = "episodic"
+    session_id: str | None = None
+    memory_type: str | None = "text"
+    ttl: int | None = None
+    metadata: dict[str, Any] | None = None
+    agent_id: str | None = "default"
+    info_class: str | None = "internal"
+    governance: dict[str, Any] | None = None
 
 
 class StoreMemoryResponseV2(BaseModel):

@@ -3,6 +3,7 @@
 Implements IVectorStore interface using Qdrant for similarity search.
 """
 
+import structlog
 from typing import Any, cast
 from uuid import UUID
 
@@ -14,6 +15,8 @@ except ImportError:  # pragma: no cover
     AsyncQdrantClient = Any  # type: ignore # pragma: no cover
 
 from rae_core.interfaces.vector import IVectorStore
+
+logger = structlog.get_logger(__name__)
 
 
 class QdrantVectorStore(IVectorStore):
@@ -95,6 +98,21 @@ class QdrantVectorStore(IVectorStore):
 
         self._initialized = False
 
+    async def setup(self, force_reset: bool = False) -> None:
+        """Provision Qdrant infrastructure.
+        
+        Args:
+            force_reset: If True, deletes and recreates the collection.
+        """
+        if force_reset:
+            try:
+                await self.client.delete_collection(self.collection_name)
+                logger.info("infrastructure_reset_success", collection=self.collection_name)
+            except Exception:
+                pass
+
+        await self._ensure_collection()
+
     async def _ensure_collection(self) -> None:
         """Ensure collection exists with proper schema."""
         if self._initialized:
@@ -102,41 +120,29 @@ class QdrantVectorStore(IVectorStore):
 
         try:
             collection_info = await self.client.get_collection(self.collection_name)
-            # Auto-Healing: Check if our vector exists
+            # Log current configuration
             vectors_config = collection_info.config.params.vectors
-            vector_exists = False
+            logger.info("collection_exists", collection=self.collection_name, vectors=list(vectors_config.keys()) if isinstance(vectors_config, dict) else "single")
+        except Exception:
+            # Collection doesn't exist, create it with System 41.0 Multi-Vector schema
+            from qdrant_client.models import VectorParams, SparseVectorParams
 
-            if isinstance(vectors_config, dict):
-                if self.vector_name in vectors_config:
-                    vector_exists = True
-
-            if not vector_exists:
-                # Add missing vector config
-                await self.client.update_collection(
+            try:
+                # We pre-provision both MiniLM (384) and Nomic (768) dimensions to be agnostic
+                await self.client.create_collection(
                     collection_name=self.collection_name,
                     vectors_config={
-                        self.vector_name: VectorParams(
-                            size=self.embedding_dim,
-                            distance=self.distance,
-                        )
+                        "dense": VectorParams(size=384, distance=self.distance),
+                        "nomic": VectorParams(size=768, distance=self.distance),
                     },
+                    sparse_vectors_config={"text": SparseVectorParams()},
                 )
-
-        except Exception:
-            # Collection doesn't exist, create it
-            from qdrant_client.models import SparseVectorParams
-
-            await self.client.create_collection(
-                collection_name=self.collection_name,
-                vectors_config={
-                    self.vector_name: VectorParams(
-                        size=self.embedding_dim,
-                        distance=self.distance,
-                    )
-                },
-                # Default configuration for hybrid search (dense + sparse)
-                sparse_vectors_config={"text": SparseVectorParams()},
-            )
+                logger.info("collection_created_multi_vector", collection=self.collection_name)
+            except Exception as e:
+                if "already exists" in str(e):
+                    logger.info("collection_created_parallel", collection=self.collection_name)
+                else:
+                    logger.error("collection_creation_failed", error=str(e))
 
         self._initialized = True
 
@@ -243,7 +249,7 @@ class QdrantVectorStore(IVectorStore):
             if isinstance(embedding, dict):
                 vector_data = embedding
             else:
-                vector_data = {"dense": embedding}
+                vector_data = {self.vector_name: embedding}
 
             points.append(
                 PointStruct(id=str(memory_id), vector=vector_data, payload=payload)
@@ -290,38 +296,26 @@ class QdrantVectorStore(IVectorStore):
         # Build filter - mandatory tenant_id
         must_conditions = [{"key": "tenant_id", "match": {"value": tenant_id}}]
 
-        # Add agent_id filter if provided (namespace isolation)
-        if agent_id:
-            must_conditions.append({"key": "agent_id", "match": {"value": agent_id}})
+        # Support extracting core filters from the filters dict if not provided directly
+        effective_agent_id = agent_id or (filters.get("agent_id") if filters else None)
+        effective_session_id = session_id or (filters.get("session_id") if filters else None)
+        effective_layer = layer or (filters.get("layer") if filters else None)
 
-        # Add session_id filter if provided (namespace isolation)
-        if session_id:
-            must_conditions.append(
-                {"key": "session_id", "match": {"value": session_id}}
-            )
+        if effective_agent_id:
+            must_conditions.append({"key": "agent_id", "match": {"value": effective_agent_id}})
 
-        if layer:
-            must_conditions.append({"key": "layer", "match": {"value": layer}})
+        if effective_session_id:
+            must_conditions.append({"key": "session_id", "match": {"value": effective_session_id}})
+
+        if effective_layer:
+            must_conditions.append({"key": "layer", "match": {"value": effective_layer}})
 
         # Apply generic metadata filters
         if filters:
             for key, value in filters.items():
-                # Skip reserved keys already handled
-                if key in [
-                    "tenant_id",
-                    "agent_id",
-                    "session_id",
-                    "layer",
-                    "score_threshold",
-                ]:
+                if key in ["tenant_id", "agent_id", "session_id", "layer", "score_threshold"]:
                     continue
-
-                # Handle list values (match any) vs scalar values
                 if isinstance(value, list):
-                    # Qdrant 'match' doesn't support list directly for 'any' in simple syntax
-                    # We need 'should' condition or multiple 'match' if checking for inclusion
-                    # Assuming basic scalar match for now to keep it safe,
-                    # or 'match': {'any': value} if qdrant client supports it (it usually does for keyword fields)
                     must_conditions.append({"key": key, "match": {"any": value}})
                 else:
                     must_conditions.append({"key": key, "match": {"value": value}})
@@ -331,20 +325,25 @@ class QdrantVectorStore(IVectorStore):
         try:
             from qdrant_client.models import NamedVector
 
-            results = await self.client.search(
+            # Handle Dynamic Vector Names (Agnostic Multi-Vector)
+            target_vector_name = kwargs.get("vector_name", self.vector_name)
+
+            results = await self.client.query_points(
                 collection_name=self.collection_name,
-                query_vector=NamedVector(name=self.vector_name, vector=query_embedding),
+                query=query_embedding,
+                using=target_vector_name,
                 query_filter=query_filter,
                 limit=limit,
                 score_threshold=score_threshold,
             )
 
             return [
-                (UUID(result.payload["memory_id"]), result.score)
-                for result in results
-                if result.payload and "memory_id" in result.payload
+                (UUID(result.id) if isinstance(result.id, str) else UUID(result.payload["memory_id"]), result.score)
+                for result in results.points
+                if (result.payload and "memory_id" in result.payload) or isinstance(result.id, str)
             ]
-        except Exception:
+        except Exception as e:
+            logger.error("qdrant_search_failed", error=str(e), vector_name=target_vector_name)
             return []
 
     async def get_vector(

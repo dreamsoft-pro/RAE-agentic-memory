@@ -127,8 +127,13 @@ class IndustrialDataGenerator:
         )
 
         timestamp = self.base_date + timedelta(
-            seconds=idx * 30
-        )  # More frequent for logs
+            seconds=idx * 30,
+            microseconds=random.randint(0, 999999) # Unique jitter
+        )
+
+        # Add unique operational nonce to ensure zero collisions
+        nonce = f" [SN-{idx:06d}]"
+        text += nonce
 
         return {
             "id": f"log_{idx:06d}",  # 6 digits for larger datasets
@@ -142,6 +147,7 @@ class IndustrialDataGenerator:
                 "timestamp": timestamp.isoformat(),
                 "service": service,
                 "level": level,
+                "nonce": nonce.strip()
             },
         }
 
@@ -175,7 +181,9 @@ class IndustrialDataGenerator:
 
         text = f"[{ticket_type.upper()}] {component}: {random.choice(descriptions)} - Priority: {priority}, Status: {status}"
 
-        timestamp = self.base_date + timedelta(hours=idx)
+        timestamp = self.base_date + timedelta(hours=idx, microseconds=random.randint(0, 999999))
+        nonce = f" [SN-{idx:06d}]"
+        text = f"[{ticket_type.upper()}] {component}: {random.choice(descriptions)} - Priority: {priority}, Status: {status}{nonce}"
 
         return {
             "id": f"ticket_{idx:06d}",
@@ -193,6 +201,7 @@ class IndustrialDataGenerator:
                 "type": ticket_type,
                 "priority": priority,
                 "component": component,
+                "nonce": nonce.strip()
             },
         }
 
@@ -204,17 +213,18 @@ class IndustrialDataGenerator:
         cluster_id = f"cls-{random.choice(['alpha', 'beta', 'prod'])}"
 
         value = random.randint(20, 95)
-        timestamp = self.base_date + timedelta(minutes=idx)
+        timestamp = self.base_date + timedelta(minutes=idx, microseconds=random.randint(0, 999999))
 
         template = random.choice(domain["templates"])
+        nonce = f" [SN-{idx:06d}]"
         text = template.format(
             metric_type=metric_type,
             server_id=server_id,
             value=value,
-            time=timestamp.strftime("%H:%M"),
+            time=timestamp.strftime("%H:%M:%S.%f"),
             threshold=random.choice([80, 90, 95]),
             cluster_id=cluster_id,
-        )
+        ) + nonce
 
         return {
             "id": f"metric_{idx:06d}",
@@ -227,6 +237,7 @@ class IndustrialDataGenerator:
                 "server_id": server_id,
                 "metric_type": metric_type,
                 "value": value,
+                "nonce": nonce.strip()
             },
         }
 
@@ -249,6 +260,7 @@ class IndustrialDataGenerator:
         components = ["API", "DB", "Cache", "Worker", "Frontend"]
 
         template = random.choice(domain["templates"])
+        nonce = f" [SN-{idx:06d}]"
         text = template.format(
             path=random.choice(paths),
             method=random.choice(methods),
@@ -260,13 +272,13 @@ class IndustrialDataGenerator:
             steps="1. Install 2. Configure 3. Run",
             problem="Service fails to start",
             solution="Check configuration file",
-        )
+        ) + nonce
 
         # Ensure 'database' is covered if selected
         if "database" in paths and "database" not in text:
             # Randomly inject specific database docs to ensure coverage for common queries
             if random.random() < 0.1:
-                text = f"Documentation ({doc_type}): Database schema and connection string configuration."
+                text = f"Documentation ({doc_type}): Database schema and connection string configuration.{nonce}"
 
         return {
             "id": f"doc_{idx:06d}",
@@ -276,6 +288,7 @@ class IndustrialDataGenerator:
                 "source": "Technical Documentation",
                 "importance": 0.7,
                 "type": doc_type,
+                "nonce": nonce.strip()
             },
         }
 
@@ -291,6 +304,7 @@ class IndustrialDataGenerator:
         affected_users = random.randint(10, 10000)
 
         template = random.choice(domain["templates"])
+        nonce = f" [SN-{idx:06d}]"
         text = template.format(
             id=idx,
             service=service,
@@ -300,9 +314,9 @@ class IndustrialDataGenerator:
             count=affected_users,
             incident_type="Database failover",
             root_cause="Configuration drift",
-        )
+        ) + nonce
 
-        timestamp = self.base_date + timedelta(days=idx // 20)
+        timestamp = self.base_date + timedelta(days=idx // 20, microseconds=random.randint(0, 999999))
 
         return {
             "id": f"incident_{idx:06d}",
@@ -317,6 +331,7 @@ class IndustrialDataGenerator:
                 "severity": severity,
                 "duration_minutes": duration,
                 "affected_users": affected_users,
+                "nonce": nonce.strip()
             },
         }
 

@@ -52,7 +52,7 @@ class FusionStrategy:
                     importance_map[m_id] = imp
 
         # 3. Fuse scores
-        fused_scores = await self.gateway.fuse(
+        fused_results = await self.gateway.fuse(
             strategy_results=gateway_input,
             weights=weights,
             query=query or "",
@@ -61,10 +61,8 @@ class FusionStrategy:
             **kwargs,
         )
 
-        # 4. Attach importance back
-        return [
-            (m_id, score, importance_map.get(m_id, 0.0)) for m_id, score in fused_scores
-        ]
+        # 4. Return the full tuples (id, score, importance, audit_log)
+        return fused_results
 
 
 class RRFFusion(FusionStrategy):

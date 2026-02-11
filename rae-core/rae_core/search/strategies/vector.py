@@ -14,10 +14,12 @@ class VectorSearchStrategy(SearchStrategy):
         vector_store: IVectorStore,
         embedding_provider: IEmbeddingProvider,
         default_weight: float = 1.0,
+        vector_name: str | None = None,
     ) -> None:
         self.vector_store = vector_store
         self.embedding_provider = embedding_provider
         self.default_weight = default_weight
+        self.vector_name = vector_name
 
     async def search(
         self,
@@ -28,17 +30,18 @@ class VectorSearchStrategy(SearchStrategy):
         project: str | None = None,
         **kwargs: Any,
     ) -> list[tuple[UUID, float, float]]:
+        # Prepare search kwargs
+        search_kwargs = kwargs.copy()
+        if self.vector_name:
+            search_kwargs["vector_name"] = self.vector_name
+
         # Generate embedding for the query
         query_embedding = await self.embedding_provider.embed_text(
             query, task_type="search_query"
         )
 
-        # Search in vector store
-        # Modern VectorSearchStrategy returns (id, score, importance)
-        # BUT underlying store might return (id, score)
-
         results = await self.vector_store.search_similar(
-            query_embedding=query_embedding, tenant_id=tenant_id, limit=limit, **kwargs
+            query_embedding=query_embedding, tenant_id=tenant_id, limit=limit, **search_kwargs
         )
 
         # Convert to 3-tuple (id, score, importance)

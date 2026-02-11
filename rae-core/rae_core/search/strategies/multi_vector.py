@@ -52,12 +52,13 @@ class MultiVectorSearchStrategy(SearchStrategy):
         if not all_results:
             return []
 
-        # Simple RRF Fusion for multi-vector
+        # Simple Exponential Rank Sharpening for multi-vector
+        import math
         fused_scores: dict[UUID, float] = {}
-        k = 60
         for strategy_res in all_results.values():
             for rank, (m_id, _, _) in enumerate(strategy_res):
-                fused_scores[m_id] = fused_scores.get(m_id, 0.0) + (1.0 / (rank + k))
+                # Using the same constant as System 37.0 for consistency
+                fused_scores[m_id] = fused_scores.get(m_id, 0.0) + math.exp(-rank / 3.0)
 
         # Sort and return
         final = sorted(fused_scores.items(), key=lambda x: x[1], reverse=True)[:limit]

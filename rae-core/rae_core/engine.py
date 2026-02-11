@@ -45,18 +45,36 @@ class RAEEngine:
             resonance_factor=float(res_factor)
         )
 
-        # Modular Search Engine with ORB 4.0
+        # Flattened Search Engine Strategies (System 43.0)
+        # We register all available vector spaces as independent strategies for global fusion
+        strategies = {
+            "fulltext": self._init_fulltext_strategy(),
+            "anchor": self._init_anchor_strategy(),
+        }
+        
+        # Dynamic Multi-Vector Registration
+        from rae_core.embedding.manager import EmbeddingManager
+        from rae_core.search.strategies.vector import VectorSearchStrategy
+
+        if isinstance(self.embedding_provider, EmbeddingManager):
+            for name, provider in self.embedding_provider.providers.items():
+                # Register each named vector space as a first-class strategy
+                strategy_key = f"vector_{name}"
+                strategies[strategy_key] = VectorSearchStrategy(
+                    self.vector_store, provider, vector_name=name
+                )
+        else:
+            strategies["vector"] = VectorSearchStrategy(
+                self.vector_store, self.embedding_provider
+            )
+
         if search_engine:
             self.search_engine = search_engine
         else:
             from rae_core.search.engine import HybridSearchEngine
 
             self.search_engine = HybridSearchEngine(
-                strategies={
-                    "vector": self._init_vector_strategy(),
-                    "fulltext": self._init_fulltext_strategy(),
-                    "anchor": self._init_anchor_strategy(),
-                },
+                strategies=strategies,
                 embedding_provider=self.embedding_provider,
                 memory_storage=self.memory_storage,
             )
@@ -192,19 +210,45 @@ class RAEEngine:
 
         memories = []
         for item in candidates:
-            # Robust Unpacking
+            # Robust Unpacking (System 40.0: Support ID, Score, Importance, AuditLog)
             m_id = item[0]
             sim_score = item[1]
             importance = item[2] if len(item) > 2 else 0.0
+            audit_log = item[3] if len(item) > 3 else {}
 
             memory = await self.memory_storage.get_memory(m_id, tenant_id)
             if memory:
+                # 2. DESIGNED MATH SCORING
+                # We calculate math score, but if we have a Symbolic Hard-Lock from Stage 1,
+                # we must ensure it remains the dominant factor.
                 math_score = self.math_ctrl.score_memory(
                     memory, query_similarity=sim_score, weights=scoring_weights
                 )
+                
+                # Silicon Oracle: If audit_log contains SIC (Symbolic Information Content), 
+                # we use the fused sim_score directly as it already contains the SIC multiplier.
+                if audit_log.get("sic_boost"):
+                    math_score = sim_score
+                
                 memory["math_score"] = math_score
                 memory["search_score"] = sim_score
                 memory["importance"] = importance or memory.get("importance", 0.5)
+                memory["audit_trail"] = audit_log
+                
+                # Explicitly log the winning feature for auditability
+                if math_score > 0.8:
+                    win_feature = "unknown"
+                    if audit_log.get("sic_boost"): win_feature = "symbolic_hard_lock"
+                    elif audit_log.get("anchor_hit"): win_feature = "anchor_match"
+                    elif audit_log.get("cat_boost"): win_feature = "category_match"
+                    elif audit_log.get("quant_boost"): win_feature = "quantitative_resonance"
+                    
+                    logger.info("memory_selection_proof", 
+                                 id=str(m_id), 
+                                 score=math_score, 
+                                 feature=win_feature,
+                                 audit=audit_log)
+                
                 memories.append(memory)
 
         # 3. SEMANTIC RESONANCE
@@ -252,102 +296,75 @@ class RAEEngine:
 
         memories.sort(key=lambda x: x.get("math_score", 0.0), reverse=True)
 
-        # 4. ACTIVE SZUBAR LOOP (System 5.0 - Neighbor Recruitment)
-        # Instead of just retrying with weights, we expand the search horizon using the Graph.
-        # "If I can't find it, maybe it's connected to something I found."
+        # 4. ACTIVE SZUBAR LOOP (System 52.0 - Neighbor Recruitment)
+        # "Success from Failure": If confidence is low, explore the graph for missing links.
         top_score = memories[0].get("math_score", 0.0) if memories else 0.0
 
-        if top_score < 0.75 and not kwargs.get("_is_retry"):
-            logger.info("active_szubar_expansion", query=query, top_score=top_score)
+        if top_score < 0.75 and not kwargs.get("_is_retry") and hasattr(self.memory_storage, "get_neighbors_batch"):
+            logger.info("active_szubar_expansion_triggered", query=query, top_score=top_score)
 
-            # 1. Identify Anchor Points for Expansion (Top 5 weak candidates)
-            seed_ids = [m["id"] for m in memories[:5]]
-
-            # 2. Fetch Neighbors (Deterministic Graph Traversal)
-            # neighbor_memories = []
-            if hasattr(self.memory_storage, "get_neighbors_batch") and seed_ids:
-                # Assuming get_neighbors_batch returns list of connected MemoryItems or dicts
-                # We need to implement/verify this method in storage interface
-                try:
-                    # Fetch adjacency list
-                    # Note: Using get_neighbors_batch might need adaptation if it returns just IDs
-                    # For now, we simulate finding neighbors if the method exists
-                    pass
-                except Exception as e:
-                    logger.warning("graph_expansion_failed", error=str(e))
-
-            # Since get_neighbors_batch might not return full objects, let's use a simpler strategy
-            # available in the current codebase: Resonance Engine already computes energy.
-            # We can use the 'induced_ids' logic but apply it aggressively here.
-
-            # RE-USE RESONANCE to find hidden gems
-            # We explicitly ask Resonance Engine for "High Potential Neighbors" that were NOT in the search results
-
-            if hasattr(self.memory_storage, "get_neighbors_batch") and seed_ids:
-                edges = await self.memory_storage.get_neighbors_batch(
-                    seed_ids, tenant_id
-                )
-                if edges:
-                    # Calculate energy flow
-                    _, energy_map = self.resonance_engine.compute_resonance(
-                        memories[:50], edges
+            # 1. Identify seed anchors (Top candidates that almost made it)
+            seed_ids = [m["id"] for m in memories[:10]]
+            
+            # 2. Fetch adjacency list from Knowledge Graph
+            edges = await self.memory_storage.get_neighbors_batch(seed_ids, tenant_id)
+            if edges:
+                # 3. Identify recruited candidates (Neighbors NOT in original results)
+                current_ids = {m["id"] for m in memories}
+                recruited_ids = []
+                for _, neighbors in edges.items():
+                    for n_id, _ in neighbors:
+                        if n_id not in current_ids: recruited_ids.append(n_id)
+                
+                if recruited_ids:
+                    # 4. Fetch full content for deep verification
+                    new_mems_data = await self.memory_storage.get_memories_batch(
+                        recruited_ids[:30], tenant_id
                     )
-
-                    # Identify nodes with high energy that are NOT in our current 'memories' list
-                    current_ids = {m["id"] for m in memories}
-                    recruited_ids = []
-
-                    for node_id_str, energy in energy_map.items():
-                        try:
-                            n_uuid = UUID(node_id_str)
-                            if (
-                                n_uuid not in current_ids and energy > 0.1
-                            ):  # Low threshold to catch everything
-                                recruited_ids.append(n_uuid)
-                        except Exception:
-                            pass
-
-                    if recruited_ids:
-                        # Fetch full content for these neighbors
-                        new_mems_data = await self.memory_storage.get_memories_batch(
-                            recruited_ids[:20], tenant_id
-                        )
-
-                        if new_mems_data:
-                            logger.info(
-                                "szubar_recruited_neighbors", count=len(new_mems_data)
+                    
+                    if new_mems_data:
+                        logger.info("szubar_neighbor_recruitment", count=len(new_mems_data))
+                        
+                        # 5. RE-SCORING: Run recruited neighbors through the same logic
+                        # We simulate a "mini-search" for these specific items
+                        recruited_results = []
+                        for m in new_mems_data:
+                            # Re-run Math + Neural logic for the new candidate
+                            # We use LogicGateway directly if available
+                            multiplier, audit = self.search_engine.fusion_strategy.gateway._apply_mathematical_logic(
+                                query, m["content"], m.get("metadata", {})
                             )
+                            
+                            # Probabilistic score for the newcomer
+                            # We treat it as if it was found at a baseline rank
+                            base_p = 0.5 # Neutral prior for recruited node
+                            final_logit = math.log(base_p / (1.0 - base_p)) + math.log(max(multiplier, 1e-9))
+                            
+                            # Neural Verification if enabled
+                            if kwargs.get("enable_reranking") and self.search_engine.fusion_strategy.gateway.reranker:
+                                pair = (query, f"[CONTENT] {m['content']}")
+                                logit = self.search_engine.fusion_strategy.gateway.reranker.predict([pair])[0]
+                                final_logit += logit
+                                audit["neural_logit"] = logit
 
-                            # Normalize new memories for scoring
-                            candidates_to_score = []
-                            for m in new_mems_data:
-                                # Neighbors inherit "Similarity" from their energy level (proxy)
-                                # But ideally we want to RERANK them against the query
-                                candidates_to_score.append(m)
+                            m["math_score"] = self.search_engine.fusion_strategy.gateway.sigmoid(final_logit)
+                            m["audit_trail"] = audit
+                            m["audit_trail"]["szubar_recruited"] = True
+                            recruited_results.append(m)
+                        
+                        # Inject and re-sort
+                        memories.extend(recruited_results)
+                        memories.sort(key=lambda x: x.get("math_score", 0.0), reverse=True)
+                        
+                        # Check if Szubar saved the day
+                        new_top_score = memories[0].get("math_score", 0.0)
+                        if new_top_score > top_score:
+                            logger.info("szubar_recovery_success", 
+                                        old_score=top_score, 
+                                        new_score=new_top_score,
+                                        recovered_id=str(memories[0]["id"]))
 
-                            # We need to score these new candidates against the query using ONNX
-                            # We can reuse the Search Engine's reranker if accessible, or Math Controller
-
-                            # Let's verify them with Neural Scalpel (via Math Controller scoring? No, that's math)
-                            # We need vector/cross-encoder score.
-
-                            # Fast Path: Check if they contain query terms (Late Interaction)
-                            # Or just append them and let the user see them? No, we need sorting.
-
-                            # CRITICAL: We inject them into the results with a flag
-                            for m in new_mems_data:
-                                # Heuristic score for neighbor: Base on energy
-                                # Real fix: We should run cross-encoder here, but for now we trust the Graph
-                                m["math_score"] = 0.5 + (
-                                    energy_map.get(str(m["id"]), 0.0) * 0.5
-                                )
-                                m["metadata"]["szubar_recruited"] = True
-                                memories.append(m)
-
-                            # Re-sort with new candidates
-                            memories.sort(
-                                key=lambda x: x.get("math_score", 0.0), reverse=True
-                            )
+        return memories[:top_k]
 
         return memories[:top_k]
 

@@ -646,6 +646,22 @@ class RAECoreService:
 
         return tags
 
+    def _resolve_project_context(self, project: Optional[str]) -> str:
+        """
+        Intelligently resolve project name from context.
+        Hierarchy: explicit > env(RAE_PROJECT) > env(PROJECT_NAME) > default.
+        """
+        import os
+
+        if project and project != "default":
+            return project
+
+        env_project = os.getenv("RAE_PROJECT") or os.getenv("PROJECT_NAME")
+        if env_project:
+            return env_project
+
+        return "default"
+
     async def store_memory(
         self,
         tenant_id: str,
@@ -676,7 +692,8 @@ class RAECoreService:
         if governance:
             tags = self._detect_agentic_patterns(governance, tags)
 
-        project_canonical = project or "default"
+        # 3. Context Resolution (Best Practice: Avoid 'default' pollution)
+        project_canonical = self._resolve_project_context(project)
         agent_canonical = agent_id or "default"
         metadata = metadata or {}
 
