@@ -132,10 +132,8 @@ class HybridSearchEngine:
         # Extract Gateway Config Override (System 7.2)
         gateway_config = kwargs.get("gateway_config")
 
-        # Metadata Injection (System 23.0) - Always on for better candidate sets
-        enriched_query = self.injector.process_query(query)
-        if enriched_query != query:
-            logger.info("query_enriched", original=query, enriched=enriched_query)
+        # SYSTEM 43.0: No Enrichment. Enrichment dilutes technical signal.
+        enriched_query = query 
 
         # 1. PARALLEL EXECUTION (Full Spectrum Synergy)
         strategy_results: dict[str, list[tuple[UUID, float, float]]] = {}
@@ -207,10 +205,11 @@ class HybridSearchEngine:
                 logger.warning("batch_fetch_failed", error=str(e))
 
         # Note: We pass 'gateway_config' to fuse if supported
+        # SYSTEM 41.1: We pass the ORIGINAL query to LogicGateway (Resonance/Neural)
         fused_results = await self.fusion_strategy.fuse(
             strategy_results,
             weights,
-            query=enriched_query,
+            query=query,
             config_override=gateway_config,
             memory_contents=memory_data,
         )
@@ -230,8 +229,9 @@ class HybridSearchEngine:
 
             if reranker:
                 logger.info("reranking_activated", count=len(fused_results[:20]))
+                # SYSTEM 41.1: Use original query for reranking
                 return await reranker.rerank(
-                    enriched_query, fused_results[:20], tenant_id, limit=limit
+                    query, fused_results[:20], tenant_id, limit=limit
                 )
 
         return fused_results[:limit]

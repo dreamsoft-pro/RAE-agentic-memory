@@ -10,12 +10,33 @@
 #   - cheap: Always prefer L1, minimize cost
 
 # Active profile
-profile: "research"
+profile: "production"
 
 # Policy version (1 = rule-based, 2 = weighted scoring + reward)
 policy_version: 2
 
-# Enable Multi-Armed Bandit online learning (requires policy_version >= 2)
+# Modular Fusion Strategy (System 40.6)
+# Options: legacy_416, silicon_oracle
+active_strategy: "legacy_416"
+
+# Strategy Specific Parameters (Fluid Weights)
+strategies_config:
+  legacy_416:
+    k_factor: 1.0
+    anchor_boost: 1000.0
+    partial_anchor_multiplier: 10.0
+  silicon_oracle:
+    sharpening_factor: 3.0
+    min_token_length: 3
+    signal_entropy_scale: 1.0
+  neural_scalpel:
+    enabled: true
+    window_multiplier: 10.0
+    min_window: 30
+    neural_weight: 10000.0
+    base_weight_reduction: 0.001
+
+# Enable Multi-Armed Bandit online learning
 bandit_enabled: true
 
 # Default level when no rules match
@@ -29,11 +50,11 @@ allowed_levels:
 
 # Engine Parameters (Externalized from Code)
 engine_params:
-  # Candidate window size for Math Layer processing
-  limit: 100
+  # Candidate window size for Math Layer processing (Silicon Oracle Scale)
+  limit: 500
   
   # Semantic Resonance (Graph Energy Flow)
-  resonance_factor: 1.5
+  resonance_factor: 0.5
   
   # Szubar Induction Energy (Threshold for pulling new memories)
   szubar_induction_energy: 0.8

@@ -1,43 +1,51 @@
 import asyncio
-from qdrant_client import AsyncQdrantClient
-from rae_core.embedding.native import NativeEmbeddingProvider
+import asyncpg
 import os
 
 async def audit():
-    client = AsyncQdrantClient(url="http://localhost:6333")
+    # Use environment variables if possible, or fallback to 'postgres' for docker
+    db_host = os.getenv("POSTGRES_HOST", "postgres")
+    conn = await asyncpg.connect(f"postgresql://rae:rae_password@{db_host}:5432/rae")
     
-    # 1. Check points
-    points = await client.scroll("memories", limit=10, with_vectors=True)
-    if not points[0]:
-        print("❌ NO POINTS IN QDRANT!")
-        return
+    # 1. Exact content duplicates
+    print("--- Exact Content Duplicates ---")
+    rows = await conn.fetch("""
+        SELECT content, COUNT(*) as count 
+        FROM memories 
+        GROUP BY content 
+        HAVING COUNT(*) > 1 
+        ORDER BY count DESC 
+        LIMIT 10
+    """)
+    for row in rows:
+        print(f"Count: {row['count']} | Content: {row['content'][:100]}...")
         
-    for p in points[0]:
-        v_types = list(p.vector.keys()) if isinstance(p.vector, dict) else ["single"]
-        print(f"Point {p.id}: {v_types}")
-        if isinstance(p.vector, dict):
-            for name, vec in p.vector.items():
-                v_sum = sum(abs(x) for x in vec[:10])
-                print(f"  - {name}: dim {len(vec)}, abs_sum_top10 {v_sum}")
+    # 2. Metadata quality
+    print("\n--- Metadata Quality ---")
+    rows = await conn.fetch("""
+        SELECT 
+            COUNT(*) FILTER (WHERE metadata IS NULL OR metadata = '{}') as empty_meta,
+            COUNT(*) FILTER (WHERE metadata->>'id' IS NULL) as missing_orig_id,
+            COUNT(*) as total
+        FROM memories
+    """)
+    row = rows[0]
+    print(f"Total memories: {row['total']}")
+    print(f"Empty metadata: {row['empty_meta']}")
+    print(f"Missing original ID in meta: {row['missing_orig_id']}")
 
-    # 2. Test Search
-    project_root = os.environ.get("PROJECT_ROOT", os.getcwd())
-    model_path = os.path.join(project_root, "models/all-MiniLM-L6-v2/model.onnx")
-    tok_path = os.path.join(project_root, "models/all-MiniLM-L6-v2/tokenizer.json")
-    
-    provider = NativeEmbeddingProvider(model_path, tok_path)
-    query = "disk error"
-    emb = await provider.embed_text(query)
-    
-    print(f"\nSearching for '{query}' in 'dense'...")
-    res = await client.search(
-        collection_name="memories",
-        query_vector=("dense", emb),
-        limit=5
-    )
-    print(f"Results in dense: {len(res)}")
-    for r in res:
-        print(f"  - {r.id} score {r.score}")
+    # 3. Check for short/low quality content
+    print("\n--- Low Quality Content (Short) ---")
+    rows = await conn.fetch("""
+        SELECT content, length(content) as len
+        FROM memories
+        WHERE length(content) < 20
+        LIMIT 5
+    """)
+    for row in rows:
+        print(f"Len: {row['len']} | Content: {row['content']}")
+
+    await conn.close()
 
 if __name__ == "__main__":
     asyncio.run(audit())

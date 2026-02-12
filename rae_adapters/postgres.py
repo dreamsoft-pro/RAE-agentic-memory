@@ -127,15 +127,12 @@ class PostgreSQLStorage(IMemoryStorage):
     ) -> list[dict[str, Any]]:
         pool = await self._get_pool()
 
-        # 1. SETUP BASE PARAMS
-        final_query = query.strip()
-        # SYSTEM 4.16: Relaxed FTS for high recall (OR instead of AND)
-        fts_query = " | ".join([w.strip() for w in final_query.split() if len(w.strip()) > 2])
-        if not fts_query:
-            fts_query = final_query
-
+        # SYSTEM 40.8: Universal Information Gravity (SQL Native)
+        # We use 'simple' config to avoid mangling technical IDs/codes.
+        raw_query = query.strip()
+        
         where_parts = ["tenant_id = $2", "agent_id = $3"]
-        params = [fts_query, tenant_id, agent_id]  # $1, $2, $3
+        params = [raw_query, tenant_id, agent_id]
 
         if layer:
             where_parts.append(f"layer = ${len(params) + 1}")
@@ -146,40 +143,42 @@ class PostgreSQLStorage(IMemoryStorage):
             where_parts.append(f"project = ${len(params) + 1}")
             params.append(project)
 
-        # 2. PREPARE ILIKE KEYWORDS (System 22.1 Restore)
-        words = [w.strip() for w in query.split() if len(w.strip()) > 2]
-        ilike_clauses = []
-        for word in words:
-            p_idx = len(params) + 1
-            params.append(f"%{word}%")
-            ilike_clauses.append(
-                f"(content ILIKE ${p_idx} OR metadata::text ILIKE ${p_idx})"
-            )
-
-        ilike_any_match = " OR ".join(ilike_clauses) if ilike_clauses else "TRUE"
-
-        # 3. FINAL LIMIT
+        # SYSTEM 46.0: Balanced Recall
+        limit = max(limit, 50)
         limit_idx = len(params) + 1
         params.append(limit)
 
         where_clause = " AND ".join(where_parts)
 
-        # 4. EXECUTE HOLISTIC SQL (Facts + Rank + Importance)
-        # SYSTEM 40.5: Pure Mathematical Rank (No tricks)
+        # The query uses:
+        # 1. websearch_to_tsquery: supports "quotes" and -exclusion
+        # 2. ts_rank_cd: covers structural density (proximity)
+        # 3. ILIKE: as a fallback for non-tokenized symbols
         sql = f"""
-            SELECT *,
-                   ts_rank_cd(to_tsvector('english', coalesce(content, '')), websearch_to_tsquery('english', $1)) as score
-            FROM memories
-            WHERE {where_clause}
-            AND (to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', $1)
-                 OR ({ilike_any_match}))
-            ORDER BY score DESC
+            WITH ranked_results AS (
+                SELECT *,
+                       ts_rank_cd(
+                           to_tsvector('simple', coalesce(content, '') || ' ' || coalesce(metadata::text, '')), 
+                           websearch_to_tsquery('simple', $1),
+                           32 /* Rank normalization: divide by document length */
+                       ) as fts_score
+                FROM memories
+                WHERE {where_clause}
+                AND (
+                    to_tsvector('simple', coalesce(content, '') || ' ' || coalesce(metadata::text, '')) @@ websearch_to_tsquery('simple', $1)
+                    OR content ILIKE '%' || $1 || '%'
+                )
+            )
+            SELECT *, fts_score as score
+            FROM ranked_results
+            ORDER BY fts_score DESC, created_at DESC
             LIMIT ${limit_idx}
         """
 
         async with pool.acquire() as conn:
             rows = await conn.fetch(sql, *params)
         return [dict(r) for r in rows]
+
 
     async def delete_memories_with_metadata_filter(self, *args, **kwargs) -> int:
         return 0

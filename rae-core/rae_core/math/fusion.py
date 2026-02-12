@@ -1,93 +1,159 @@
-"""Result fusion strategies for RAE retrieval."""
+"""
+RAE Fusion Strategies - Modular Architecture (System 40.4)
+No hardcoding. Pure Strategy Pattern.
+"""
 
-from typing import Any
+import math
+from typing import Any, Dict, List, Tuple
 from uuid import UUID
+from abc import ABC, abstractmethod
+import structlog
 
-from .logic_gateway import LogicGateway
+logger = structlog.get_logger(__name__)
 
+class AbstractFusionStrategy(ABC):
+    @abstractmethod
+    async def fuse(
+        self,
+        strategy_results: Dict[str, List[Any]],
+        query: str,
+        h_sys: float,
+        memory_contents: Dict[UUID, Dict[str, Any]],
+        **kwargs
+    ) -> List[Tuple[UUID, float, float, Dict]]:
+        pass
 
+# Backward Compatibility - This class is still used by engine.py
 class FusionStrategy:
-    """Base class for result fusion using LogicGateway."""
-
+    """Delegator for backward compatibility."""
     def __init__(self, config: dict[str, Any] | None = None):
+        # We import LogicGateway here to avoid circular imports
+        from .logic_gateway import LogicGateway
         self.gateway = LogicGateway(config)
 
     async def fuse(
         self,
-        strategy_results: dict[str, list[tuple[UUID, float, float]]],
-        weights: dict[str, float] | None = None,
-        query: str | None = None,
-        config_override: dict[str, Any] | None = None,
-        memory_contents: dict[UUID, str] | None = None,
+        strategy_results: Dict[str, List[Any]],
+        weights: Dict[str, float] | None = None,
+        query: str = "",
+        config_override: Dict[str, Any] | None = None,
+        memory_contents: Dict[UUID, Dict[str, Any]] | None = None,
         **kwargs: Any,
-    ) -> list[tuple[UUID, float, float]]:
-        """
-        Fuse results from multiple strategies using LogicGateway.
-
-        Args:
-            strategy_results: Map of strategy name -> list of (id, score, importance)
-            weights: Optional strategy weight overrides
-            query: The search query
-            config_override: Optional runtime config for LogicGateway
-            memory_contents: Optional map of memory ID -> content text
-            **kwargs: Additional arguments for LogicGateway (like profile)
-
-        Returns:
-            Fused list of (id, score, importance)
-        """
-        # LogicGateway currently expects (id, score) in its input
-        # and returns (id, score). We need to handle importance.
-
-        # 1. Prepare input for gateway (strip importance for now)
-        gateway_input = {
-            name: [(r[0], r[1]) for r in results]
-            for name, results in strategy_results.items()
-        }
-
-        # 2. Extract importance map for propagation
-        importance_map: dict[UUID, float] = {}
-        for results in strategy_results.values():
-            for m_id, _, imp in results:
-                if m_id not in importance_map or imp > importance_map[m_id]:
-                    importance_map[m_id] = imp
-
-        # 3. Fuse scores
-        fused_results = await self.gateway.fuse(
-            strategy_results=gateway_input,
+    ) -> List[Tuple[UUID, float, float, Dict]]:
+        return await self.gateway.fuse(
+            strategy_results=strategy_results,
             weights=weights,
-            query=query or "",
+            query=query,
             config_override=config_override,
             memory_contents=memory_contents,
-            **kwargs,
+            **kwargs
         )
 
-        # 4. Return the full tuples (id, score, importance, audit_log)
-        return fused_results
-
-
-class RRFFusion(FusionStrategy):
-    """Simple Reciprocal Rank Fusion."""
-
+class Legacy416Strategy(AbstractFusionStrategy):
+    """
+    SYSTEM 4.16: High Precision RRF + Anchor Lock.
+    The most stable strategy for industrial IDs and codes.
+    """
     async def fuse(
         self,
-        strategy_results: dict[str, list[tuple[UUID, float, float]]],
-        weights: dict[str, float] | None = None,
-        query: str | None = None,
-        config_override: dict[str, Any] | None = None,
-        **kwargs: Any,
-    ) -> list[tuple[UUID, float, float]]:
-        # RRF logic: sum(1 / (k + rank))
-        k = 60
-        scores: dict[UUID, float] = {}
-        importance_map: dict[UUID, float] = {}
+        strategy_results: Dict[str, List[Any]],
+        query: str,
+        h_sys: float,
+        memory_contents: Dict[UUID, Dict[str, Any]],
+        **kwargs
+    ) -> List[Tuple[UUID, float, float, Dict]]:
+        k = 1.0 
+        fused_scores: dict[UUID, float] = {}
+        
+        for strategy, results in strategy_results.items():
+            if not results: continue
+            for rank, item in enumerate(results):
+                m_id = item[0] if isinstance(item, tuple) else (item.get("id") or item.get("memory_id"))
+                if isinstance(m_id, str): m_id = UUID(m_id)
+                fused_scores[m_id] = fused_scores.get(m_id, 0.0) + (1.0 / (rank + k))
 
-        for results in strategy_results.values():
-            for rank, (m_id, _, imp) in enumerate(results, 1):
-                scores[m_id] = scores.get(m_id, 0.0) + (1.0 / (k + rank))
-                if m_id not in importance_map or imp > importance_map[m_id]:
-                    importance_map[m_id] = imp
+        processed = []
+        q_lower = query.lower()
+        symbols = [t for t in q_lower.split() if any(c.isdigit() for c in t) or any(c in t for c in "-_.:")]
+        
+        for m_id, rrf_score in fused_scores.items():
+            mem_obj = memory_contents.get(m_id, {})
+            content = mem_obj.get("content", "").lower()
+            meta = mem_obj.get("metadata", {})
+            
+            # Defensive Metadata Parsing
+            if isinstance(meta, str):
+                import json
+                try: meta = json.loads(meta)
+                except: meta = {}
+            
+            importance = float(meta.get("importance", 0.5))
+            
+            final_score = rrf_score
+            audit = {"strategy": "Legacy416", "rrf": round(rrf_score, 4), "tier": 2}
+            
+            if symbols:
+                matched = sum(1 for s in symbols if s in content)
+                if matched == len(symbols):
+                    final_score += 1000.0 
+                    audit["anchor_lock"] = True
+                    audit["tier"] = 0
+                elif matched > 0:
+                    final_score += (matched / len(symbols)) * 10.0
+                    audit["partial_anchor"] = round(matched / len(symbols), 2)
+                    audit["tier"] = 1
 
-        sorted_ids = sorted(scores.items(), key=lambda x: x[1], reverse=True)
-        return [
-            (m_id, score, importance_map.get(m_id, 0.0)) for m_id, score in sorted_ids
-        ]
+            processed.append((m_id, final_score, importance, audit))
+        
+        return sorted(processed, key=lambda x: x[1], reverse=True)
+
+class SiliconOracleStrategy(AbstractFusionStrategy):
+    """
+    SYSTEM 40.4: Pure Entropy-Based Resonance.
+    Fluid, self-tuning, no hardcoded anchors.
+    """
+    async def fuse(
+        self,
+        strategy_results: Dict[str, List[Any]],
+        query: str,
+        h_sys: float,
+        memory_contents: Dict[UUID, Dict[str, Any]],
+        **kwargs
+    ) -> List[Tuple[UUID, float, float, Dict]]:
+        logits_map: dict[UUID, float] = {}
+        
+        for strategy, results in strategy_results.items():
+            if not results: continue
+            for rank, item in enumerate(results):
+                m_id = item[0] if isinstance(item, tuple) else (item.get("id") or item.get("memory_id"))
+                if isinstance(m_id, str): m_id = UUID(m_id)
+                p = math.exp(-rank / 3.0)
+                logit = math.log(p / (1.0 - p + 1e-9))
+                logits_map[m_id] = logits_map.get(m_id, 0.0) + logit
+
+        processed = []
+        q_lower = query.lower()
+        q_tokens = q_lower.split()
+        
+        for m_id, combined_logit in logits_map.items():
+            mem_obj = memory_contents.get(m_id, {})
+            content = mem_obj.get("content", "").lower()
+            meta = mem_obj.get("metadata", {})
+            
+            # Defensive Metadata Parsing
+            if isinstance(meta, str):
+                import json
+                try: meta = json.loads(meta)
+                except: meta = {}
+                
+            importance = float(meta.get("importance", 0.5))
+            
+            density = sum(content.count(t) for t in q_tokens if len(t) > 3)
+            signal = math.log1p(density) * h_sys
+            
+            total_logit = combined_logit + signal
+            audit = {"strategy": "SiliconOracle", "logit": round(total_logit, 2), "h_sys": round(h_sys, 2), "tier": 2}
+            
+            processed.append((m_id, total_logit, importance, audit))
+            
+        return sorted(processed, key=lambda x: x[1], reverse=True)

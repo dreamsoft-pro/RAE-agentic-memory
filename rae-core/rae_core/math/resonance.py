@@ -1,113 +1,75 @@
-"""
-RAE Math - Semantic Resonance Engine
+import math
+import structlog
+from typing import List, Dict, Any, Tuple
+from uuid import UUID
 
-Implements graph-based contextual reinforcement for memory retrieval.
-This allows RAE-Lite to achieve 'quasi-reasoning' without an LLM by
-analyzing the connectivity and centrality of retrieved memory manifolds.
-"""
-
-from typing import Any
-
-import numpy as np
-
+logger = structlog.get_logger(__name__)
 
 class SemanticResonanceEngine:
     """
-    Orchestrates contextual reinforcement using memory graph topology.
-    Uses 'Resonance Waves' to spread query energy across the memory manifold.
+    SYSTEM 46.0: Silicon Oracle Extreme Precision.
+    Aggressive noise filtering with Strict Tiering.
     """
+    
+    def __init__(self, h_sys: float = 1.0, **kwargs):
+        self.h_sys = h_sys
 
-    def __init__(self, resonance_factor: float = 0.3, iterations: int = 2):
-        self.resonance_factor = resonance_factor
-        self.iterations = iterations
+    def boost_resonance(self, results: List[Tuple[UUID, float, float, Dict]], query: str) -> List[Tuple[UUID, float, float, Dict]]:
+        t_input = []
+        for m_id, score, importance, audit in results:
+            t_input.append({
+                "id": m_id, "score": score, "importance": importance, "audit": audit
+            })
+        sharpened = self.sharpen(query, t_input)
+        return [(r["id"], r["score"], r["importance"], r["audit"]) for r in sharpened]
 
-    def compute_resonance(
-        self,
-        initial_results: list[dict[str, Any]],
-        graph_edges: list[tuple[str, str, float]],
-    ) -> tuple[list[dict[str, Any]], dict[str, float]]:
-        """
-        Adjust initial scores based on graph connectivity (Semantic Resonance).
-        Returns (boosted_results, full_energy_map).
+    def sharpen(self, query: str, results: List[Dict[str, Any]], importance_weight: float = 2.0) -> List[Dict[str, Any]]:
+        if not results: return []
 
-        SYSTEM 40.0: Density-Aware Scaling.
-        """
-        if not initial_results:
-            return initial_results, {}
+        q_tokens = set(query.lower().split())
+        if not q_tokens: return results
 
-        # 1. Calculate Graph Density for scaling
-        all_nodes = set()
-        for u, v, _ in graph_edges:
-            all_nodes.add(str(u))
-            all_nodes.add(str(v))
-        
-        v_count = len(all_nodes)
-        e_count = len(graph_edges)
-        
-        # Density D = 2|E| / (|V|(|V|-1))
-        density = (2 * e_count) / (v_count * (v_count - 1)) if v_count > 1 else 0.0
-        
-        # Dynamic resonance factor: dampen in high-density areas to prevent noise saturation
-        # Formula: factor = base_factor * exp(-density * 2.0)
-        # This keeps resonance high (base_factor) for sparse graphs and drops it for dense ones.
-        dynamic_factor = self.resonance_factor * np.exp(-density * 5.0)
+        # Technical Anchors Weighting
+        anchors = [t for t in q_tokens if len(t) >= 8 or any(c.isdigit() for c in t)]
+        token_weights = {t: len(t) * (15.0 if t in anchors else 1.0) for t in q_tokens}
+        total_q_weight = sum(token_weights.values())
 
-        # 2. Initialize energy state
-        energy = {str(r["id"]): r.get("search_score", 0.5) for r in initial_results}
+        sharpened_results = []
+        for res in results:
+            content = res.get("content", "").lower()
+            base_score = float(res.get("score") or 0.0)
+            importance = float(res.get("importance") or 0.5)
+            audit = res.get("audit") or {}
+            
+            found_weight = sum(w for t, w in token_weights.items() if t in content)
+            coverage = found_weight / total_q_weight if total_q_weight > 0 else 0
+            
+            # SYSTEM 46.0: AGGRESSIVE TIERING
+            is_anchor_hit = len(anchors) > 0 and all(t in content for t in anchors)
+            
+            # High precision proofs only
+            if is_anchor_hit and coverage > 0.6:
+                audit["tier"] = 0
+                final_score = 1e15 * coverage
+            elif coverage > 0.9:
+                audit["tier"] = 1
+                final_score = 1e12 * coverage
+            else:
+                # Weak signals stay in Tier 2 for Neural Reranking
+                audit["tier"] = 2
+                final_score = base_score
+            
+            audit.update({
+                "res_v": 46.0,
+                "coverage": round(coverage, 2),
+                "fts_raw": base_score
+            })
+            
+            res["score"] = final_score
+            res["audit"] = audit
+            sharpened_results.append(res)
 
-        if not graph_edges:
-            return initial_results, energy
-
-        # Ensure all nodes have an entry in energy map
-        for node_id in all_nodes:
-            if node_id not in energy:
-                energy[node_id] = 0.0
-
-        # 3. Spread energy through waves (Multi-hop)
-        damping = 0.85
-        for _ in range(self.iterations):
-            new_energy = {node_id: 0.0 for node_id in energy}
-
-            for u, v, weight in graph_edges:
-                u_str, v_str = str(u), str(v)
-
-                # Bi-directional flow
-                new_energy[u_str] += energy[v_str] * weight * dynamic_factor
-                new_energy[v_str] += energy[u_str] * weight * dynamic_factor
-
-            # Apply damping and update state
-            for node_id in energy:
-                energy[node_id] = (energy[node_id] * (1 - damping)) + (
-                    new_energy[node_id] * damping
-                )
-
-        # 4. Update results with boosted scores
-        for r in initial_results:
-            r_id_str = str(r["id"])
-            original_score = r.get("math_score") or r.get("search_score", 0.0)
-            boost = energy.get(r_id_str, 0.0)
-
-            # Non-linear combining (soft saturation)
-            r["math_score"] = float(
-                original_score + (1.0 - original_score) * np.tanh(boost)
-            )
-            r["resonance_metadata"] = {
-                "boost": float(boost),
-                "wave_energy": float(np.tanh(boost)),
-                "graph_density": float(density),
-                "dynamic_resonance_factor": float(dynamic_factor),
-            }
-
-        # 5. Final sort by the new 'Resonated' score
-        initial_results.sort(key=lambda x: x.get("math_score", 0.0), reverse=True)
-        return initial_results, energy
-
-    def detect_conceptual_clusters(
-        self, memories: list[dict[str, Any]]
-    ) -> dict[str, list[str]]:
-        """
-        Groups memories into high-density conceptual manifolds.
-        Useful for synthesizing context without an LLM.
-        """
-        # Placeholder for future spectral clustering logic
-        return {"main_cluster": [m["id"] for m in memories]}
+        return sorted(
+            sharpened_results, 
+            key=lambda x: (x["audit"].get("tier", 2), -x["score"], -x["audit"].get("fts_raw", 0))
+        )
