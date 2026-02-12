@@ -382,11 +382,12 @@ class RAEEngine:
         if "layer" not in kwargs:
             kwargs["layer"] = "episodic"
 
-        # Chunking strategy
-        chunk_size = 1500
-        overlap = 200
+        # SYSTEM 40.10: Procedural Chunking
+        from rae_core.utils.chunking import ProceduralChunker
+        chunker = ProceduralChunker(chunk_size=1200, overlap=150)
+        chunks = chunker.chunk_text(content)
         
-        if len(content) <= chunk_size:
+        if len(chunks) <= 1:
             # Short content - store as single memory
             m_id = await self.memory_storage.store_memory(**kwargs)
             
@@ -403,29 +404,6 @@ class RAEEngine:
         # Long content - split into chunks
         import uuid
         parent_id = str(uuid.uuid4())
-        chunks = []
-        
-        # Simple splitting by paragraphs first
-        paragraphs = content.split("\n\n")
-        current_chunk = ""
-        
-        for p in paragraphs:
-            if len(current_chunk) + len(p) < chunk_size:
-                current_chunk += p + "\n\n"
-            else:
-                if current_chunk:
-                    chunks.append(current_chunk.strip())
-                current_chunk = p + "\n\n"
-                
-                # If a single paragraph is huge, split it by characters
-                while len(current_chunk) > chunk_size:
-                    split_point = current_chunk.rfind(" ", 0, chunk_size)
-                    if split_point == -1: split_point = chunk_size
-                    chunks.append(current_chunk[:split_point])
-                    current_chunk = current_chunk[split_point - overlap:] # overlap
-        
-        if current_chunk:
-            chunks.append(current_chunk.strip())
             
         # Store chunks
         memory_ids = []

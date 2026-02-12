@@ -53,6 +53,7 @@ a = Analysis(
         'nicegui',
         'pypdf',
         'onnxruntime',
+        'onnxruntime_genai',
         'tokenizers',
     ],
     hookspath=[],
