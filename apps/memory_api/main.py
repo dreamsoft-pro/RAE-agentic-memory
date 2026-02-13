@@ -48,10 +48,14 @@ setup_opentelemetry()
 instrument_libraries()
 
 
-# --- Lifespan Handler ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Manage application lifespan (startup and shutdown)."""
+    # SYSTEM 40.18: Pre-initialize state attributes to avoid AttributeError
+    app.state.pool = None
+    app.state.redis_client = None
+    app.state.qdrant_client = None
+
     # Setup structured logging within lifespan
     setup_logging()
     logger = structlog.get_logger("apps.memory_api.main")

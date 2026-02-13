@@ -69,7 +69,9 @@ class Legacy416Strategy(AbstractFusionStrategy):
             if not results: continue
             for rank, item in enumerate(results):
                 m_id = item[0] if isinstance(item, tuple) else (item.get("id") or item.get("memory_id"))
-                if isinstance(m_id, str): m_id = UUID(m_id)
+                if isinstance(m_id, str):
+                    try: m_id = UUID(m_id)
+                    except ValueError: pass # Keep as string if not a valid UUID
                 fused_scores[m_id] = fused_scores.get(m_id, 0.0) + (1.0 / (rank + k))
 
         processed = []
@@ -126,7 +128,9 @@ class SiliconOracleStrategy(AbstractFusionStrategy):
             if not results: continue
             for rank, item in enumerate(results):
                 m_id = item[0] if isinstance(item, tuple) else (item.get("id") or item.get("memory_id"))
-                if isinstance(m_id, str): m_id = UUID(m_id)
+                if isinstance(m_id, str):
+                    try: m_id = UUID(m_id)
+                    except ValueError: pass # Keep as string if not a valid UUID
                 p = math.exp(-rank / 3.0)
                 logit = math.log(p / (1.0 - p + 1e-9))
                 logits_map[m_id] = logits_map.get(m_id, 0.0) + logit

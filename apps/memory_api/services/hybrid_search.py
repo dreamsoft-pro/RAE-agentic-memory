@@ -369,9 +369,9 @@ class HybridSearchService:
             List of scored memory records
         """
         from apps.memory_api.config import settings
-        from rae_core.math.fusion import RRFFusion
+        from rae_core.math.fusion import FusionStrategy
 
-        self.fusion = RRFFusion()
+        self.fusion = FusionStrategy()
 
         # Build filters
         query_filters = {
@@ -471,11 +471,11 @@ class HybridSearchService:
         # Fuse results
         # Using the updated fuse signature which expects strategy map
         strategy_map = {f"v_{i}": res for i, res in enumerate(rrf_inputs)}
-        fused_ranked = self.fusion.fuse(strategy_map)
+        fused_ranked = await self.fusion.fuse(strategy_map, query=query)
 
         # Reconstruct ScoredMemoryRecords
         final_results = []
-        for uuid_id, rrf_score, importance in fused_ranked[:top_k]:
+        for uuid_id, rrf_score, importance, audit in fused_ranked[:top_k]:
             str_id = str(uuid_id)
             if str_id in record_map:
                 rec = record_map[str_id]

@@ -77,13 +77,14 @@ class LogicGateway:
         # 4. SYSTEM 40.9: Signal Sharpening (Hyper-Resolution)
         # Convert base results to list of dicts for tuner
         tuner_input = []
+        safe_contents = memory_contents or {}
         for m_id, score, importance, audit in base_results:
             tuner_input.append({
                 "id": m_id, 
                 "score": score, 
                 "importance": importance, 
                 "audit": audit,
-                "content": memory_contents.get(m_id, {}).get("content", "")
+                "content": safe_contents.get(m_id, {}).get("content", "")
             })
             
         tuner = SemanticResonanceEngine(h_sys=h_sys)
@@ -100,7 +101,7 @@ class LogicGateway:
             to_rerank_indices = [i for i, r in enumerate(results[:window_size]) if r[3].get("tier", 2) >= 2]
             
             if to_rerank_indices:
-                pairs = [(query, memory_contents.get(results[i][0], {}).get("content", "")) for i in to_rerank_indices]
+                pairs = [(query, safe_contents.get(results[i][0], {}).get("content", "")) for i in to_rerank_indices]
                 n_scores = self.reranker.predict(pairs)
                 
                 res_list = [list(r) for r in results]
