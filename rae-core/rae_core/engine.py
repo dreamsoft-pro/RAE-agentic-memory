@@ -382,60 +382,52 @@ class RAEEngine:
         if "layer" not in kwargs:
             kwargs["layer"] = "episodic"
 
-        # SYSTEM 40.10: Procedural Chunking
-        from rae_core.utils.chunking import ProceduralChunker
-        chunker = ProceduralChunker(chunk_size=1200, overlap=150)
-        chunks = chunker.chunk_text(content)
+        # SYSTEM 40.14: Universal Ingest Pipeline (UICTC)
+        from rae_core.ingestion.pipeline import UniversalIngestPipeline
+        pipeline = UniversalIngestPipeline()
         
-        if len(chunks) <= 1:
-            # Short content - store as single memory
-            m_id = await self.memory_storage.store_memory(**kwargs)
-            
-            # Prepare kwargs for embedding (remove duplicated args)
-            embed_kwargs = kwargs.copy()
-            if "content" in embed_kwargs:
-                del embed_kwargs["content"]
-            if "tenant_id" in embed_kwargs:
-                del embed_kwargs["tenant_id"]
-                
-            await self._embed_and_store_vector(m_id, content, tenant_id, **embed_kwargs)
-            return m_id
+        # Process text through the 5-stage pipeline
+        chunks, signature, audit_trail = await pipeline.process(
+            content, 
+            metadata=kwargs.get("metadata")
+        )
         
-        # Long content - split into chunks
+        if not chunks:
+            return None
+
         import uuid
         parent_id = str(uuid.uuid4())
-            
-        # Store chunks
         memory_ids = []
-        base_metadata = kwargs.get("metadata", {}).copy()
-        base_source = kwargs.get("source", "unknown")
         
-        for i, chunk_text in enumerate(chunks):
+        # Store chunks with full provenance
+        for i, chunk in enumerate(chunks):
             chunk_kwargs = kwargs.copy()
-            chunk_kwargs["content"] = chunk_text
-            chunk_kwargs["metadata"] = base_metadata.copy()
+            chunk_kwargs["content"] = chunk.content
+            chunk_kwargs["metadata"] = kwargs.get("metadata", {}).copy()
+            chunk_kwargs["metadata"].update(chunk.metadata)
             chunk_kwargs["metadata"].update({
                 "parent_id": parent_id,
                 "chunk_index": i,
                 "total_chunks": len(chunks),
-                "is_chunk": True
+                "is_chunk": True,
+                "ingest_audit": audit_trail
             })
-            # Append chunk index to source for clarity
-            chunk_kwargs["source"] = f"{base_source} [part {i+1}/{len(chunks)}]"
+            
+            # Use original source if provided, otherwise default to chunk index
+            base_source = kwargs.get("source", "universal_ingest")
+            chunk_kwargs["source"] = f"{base_source} [p{i+1}/{len(chunks)}]"
             
             m_id = await self.memory_storage.store_memory(**chunk_kwargs)
             
-            # Prepare kwargs for embedding (remove duplicated args)
+            # Embed and store vector
             embed_kwargs = chunk_kwargs.copy()
-            if "content" in embed_kwargs:
-                del embed_kwargs["content"]
-            if "tenant_id" in embed_kwargs:
-                del embed_kwargs["tenant_id"]
-                
-            await self._embed_and_store_vector(m_id, chunk_text, tenant_id, **embed_kwargs)
+            if "content" in embed_kwargs: del embed_kwargs["content"]
+            if "tenant_id" in embed_kwargs: del embed_kwargs["tenant_id"]
+            
+            await self._embed_and_store_vector(m_id, chunk.content, tenant_id, **embed_kwargs)
             memory_ids.append(m_id)
             
-        return memory_ids[0] # Return first ID for compatibility
+        return memory_ids[0]
 
     async def _embed_and_store_vector(self, m_id, content, tenant_id, **kwargs):
         if hasattr(self.embedding_provider, "generate_all_embeddings"):
