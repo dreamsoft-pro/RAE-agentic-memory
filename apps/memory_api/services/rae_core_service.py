@@ -263,12 +263,21 @@ class RAECoreService:
             ),
             "fulltext": FullTextStrategy(memory_storage=self.postgres_adapter),
         }
+        
+        # SYSTEM 40.15: Optional Graph Store for Lite Mode
+        graph_repo = None
+        if postgres_pool:
+            try:
+                graph_repo = self.enhanced_graph_repo
+            except Exception as e:
+                logger.warning("graph_repo_init_skipped", reason=str(e))
+
         search_engine = HybridSearchEngine(
             strategies=search_strategies,
             embedding_provider=self.embedding_provider,
             memory_storage=self.postgres_adapter,
             reranker=reranker,
-            graph_store=self.enhanced_graph_repo,
+            graph_store=graph_repo,
         )
 
         self.engine = RAEEngine(
@@ -978,16 +987,20 @@ class RAECoreService:
                 except Exception:
                     metadata_val = {}
 
+            # SYSTEM 40.16: Non-negative Score Enforcement
+            raw_score = (
+                res.get("math_score")
+                if res.get("math_score") is not None
+                else res.get("search_score", 0.0)
+            )
+            # Ensure score is at least 0.0 for Pydantic validation
+            safe_score = max(0.0, float(raw_score))
+
             results_list.append(
                 SearchResult(
                     memory_id=str(res.get("id")),
                     content=res.get("content", ""),
-                    # Use math_score if available (from MathLayer), fallback to search_score (RRF)
-                    score=(
-                        res.get("math_score")
-                        if res.get("math_score") is not None
-                        else res.get("search_score", 0.0)
-                    ),
+                    score=safe_score,
                     strategy_used=SearchStrategy.HYBRID,
                     metadata=metadata_val,
                 )
