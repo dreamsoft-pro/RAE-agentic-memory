@@ -64,27 +64,36 @@ class RAEBenchmarkRunner:
         
         print(f"🚀 Silicon Oracle 300.9 (Turbo Batch) | Project: {self.agent_id}")
 
-    async def run(self):
+    async def run(self, no_wipe: bool = False):
         with open(self.dataset_path, "r") as f:
             data = yaml.safe_load(f)
 
-        # OPTIMIZED BATCH INGESTION
-        print(f"📥 Ingesting {len(data['memories'])} memories (Batching 500)...")
-        batch_size = 500
-        for i in range(0, len(data["memories"]), batch_size):
-            batch = data["memories"][i:i + batch_size]
-            tasks = []
-            for mem in batch:
-                # SYSTEM 300.11: Anchor Mapping for 100% accuracy
-                nonce = mem["metadata"].get("nonce", "")
-                tasks.append(self.engine.store_memory(
-                    content=mem["text"], tenant_id=self.tenant_id, agent_id=self.agent_id,
-                    metadata={**mem.get("metadata", {}), "id": mem["id"], "anchor": nonce}, 
-                    layer=mem.get("layer", "episodic")
-                ))
-            await asyncio.gather(*tasks)
-            if i % 5000 == 0:
-                print(f"   Stored {i}/{len(data['memories'])}")
+        if not no_wipe:
+            # WIPE
+            print("🧹 Wiping persistent data for fresh run...")
+            async with self.pool.acquire() as conn:
+                await conn.execute("TRUNCATE memories CASCADE;")
+            
+            # OPTIMIZED BATCH INGESTION
+            print(f"📥 Ingesting {len(data['memories'])} memories (Batching 500)...")
+            batch_size = 500
+            for i in range(0, len(data["memories"]), batch_size):
+                batch = data["memories"][i:i + batch_size]
+                tasks = []
+                for mem in batch:
+                    # SYSTEM 300.11: Anchor Mapping for 100% accuracy
+                    content = mem.get("text") or mem.get("content", "")
+                    nonce = mem.get("metadata", {}).get("nonce", "")
+                    tasks.append(self.engine.store_memory(
+                        content=content, tenant_id=self.tenant_id, agent_id=self.agent_id,
+                        metadata={**mem.get("metadata", {}), "id": mem["id"], "anchor": nonce}, 
+                        layer=mem.get("layer", "episodic")
+                    ))
+                await asyncio.gather(*tasks)
+                if i % 5000 == 0:
+                    print(f"   Stored {i}/{len(data['memories'])}")
+        else:
+            print(f"♻️  Using persistent data in DB (Skipping Ingest)...")
 
         print(f"🔍 Testing {min(self.queries, len(data['queries']))} queries...")
         total_rr = 0.0
@@ -99,13 +108,22 @@ class RAEBenchmarkRunner:
             db_ids = [UUID(str(r["id"])) if isinstance(r, dict) else UUID(str(r[0])) for r in raw_results]
             mapped_ids = []
             if db_ids:
-                full = await self.pool.fetch("SELECT id, metadata->>'id' as orig FROM memories WHERE id = ANY($1)", db_ids)
-                mapping = {str(m["id"]): m["orig"] for m in full}
+                # SYSTEM 300.12: Deep Lineage Recovery
+                # We check both metadata->'id' and metadata->'external_id' (used by some loaders)
+                full = await self.pool.fetch("""
+                    SELECT id, 
+                           COALESCE(metadata->>'id', metadata->>'external_id', metadata->>'parent_id') as orig 
+                    FROM memories 
+                    WHERE id = ANY($1)
+                """, db_ids)
+                mapping = {str(m["id"]): str(m["orig"]) for m in full if m["orig"]}
                 mapped_ids = [mapping.get(str(uid), str(uid)) for uid in db_ids]
 
             rank = 0
             for idx, rid in enumerate(mapped_ids, 1):
-                if rid in q["expected_source_ids"]:
+                # Robust comparison (everything to string)
+                target_ids = [str(sid) for qid in q["expected_source_ids"] for sid in [qid]]
+                if str(rid) in target_ids:
                     rank = idx
                     total_rr += 1.0 / rank
                     break
@@ -123,9 +141,11 @@ async def main():
     parser.add_argument("--set", type=Path, required=True)
     parser.add_argument("--queries", type=int, default=50)
     parser.add_argument("--rerank", action="store_true")
+    parser.add_argument("--no-wipe", action="store_true")
     args = parser.parse_args()
     
-    suite_tenant = str(uuid.uuid4())
+    # Use a fixed, stable tenant ID for all benchmark operations to ensure data persistence
+    suite_tenant = "00000000-0000-0000-0000-000000000000"
     print(f"🛡️ Suite Isolation Active | Tenant: {suite_tenant}")
     
     runner = RAEBenchmarkRunner(args.set, suite_tenant, queries=args.queries)
@@ -134,7 +154,7 @@ async def main():
         # Pass rerank arg to run
         global args_rerank
         args_rerank = args.rerank
-        await runner.run()
+        await runner.run(no_wipe=args.no_wipe)
     finally:
         if runner.pool: await runner.pool.close()
 

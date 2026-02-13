@@ -45,6 +45,26 @@ class PostgreSQLStorage(IMemoryStorage):
             )
         return m_id
 
+    def _row_to_dict(self, row: asyncpg.Record | None) -> dict[str, Any] | None:
+        if row is None:
+            return None
+        d = dict(row)
+        
+        # Handle metadata potentially being a double-encoded string
+        meta = d.get("metadata")
+        while isinstance(meta, str):
+            try:
+                parsed = json.loads(meta)
+                if isinstance(parsed, (dict, list)):
+                    meta = parsed
+                else:
+                    break # Not a JSON object/list
+            except (json.JSONDecodeError, TypeError):
+                break
+        
+        d["metadata"] = meta if isinstance(meta, dict) else {}
+        return d
+
     async def get_memory(
         self, memory_id: UUID, tenant_id: str
     ) -> dict[str, Any] | None:
@@ -55,7 +75,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 memory_id,
                 tenant_id,
             )
-        return dict(row) if row else None
+        return self._row_to_dict(row)
 
     async def list_memories(
         self, tenant_id: str, **kwargs: Any
@@ -66,7 +86,7 @@ class PostgreSQLStorage(IMemoryStorage):
             rows = await conn.fetch(
                 "SELECT * FROM memories WHERE tenant_id = $1 LIMIT $2", tenant_id, limit
             )
-        return [dict(r) for r in rows]
+        return [self._row_to_dict(r) for r in rows if r]
 
     async def search_memories(
         self,
@@ -85,24 +105,26 @@ class PostgreSQLStorage(IMemoryStorage):
         project = kwargs.get("project")
         if project:
             sql = """SELECT *, ts_rank_cd(to_tsvector('english', coalesce(content, '')), websearch_to_tsquery('english', $1)) as score FROM memories WHERE tenant_id = $2 AND agent_id = $3 AND layer = $4 AND project = $6 AND (to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', $1) OR content ILIKE $5) ORDER BY score DESC LIMIT $7"""
-            async with pool.acquire() as conn:
-                rows = await conn.fetch(
-                    sql,
-                    final_query,
-                    tenant_id,
-                    agent_id,
-                    layer,
-                    f"%{query}%",
-                    project,
-                    limit,
-                )
-        else:
-            sql = """SELECT *, ts_rank_cd(to_tsvector('english', coalesce(content, '')), websearch_to_tsquery('english', $1)) as score FROM memories WHERE tenant_id = $2 AND agent_id = $3 AND layer = $4 AND (to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', $1) OR content ILIKE $5) ORDER BY score DESC LIMIT $6"""
-            async with pool.acquire() as conn:
-                rows = await conn.fetch(
-                    sql, final_query, tenant_id, agent_id, layer, f"%{query}%", limit
-                )
-        return [dict(r) for r in rows]
+                        async with pool.acquire() as conn:
+                            rows = await conn.fetch(
+                                sql,
+                                final_query,
+                                tenant_id,
+                                agent_id,
+                                layer,
+                                f"%{query}%",
+                                project,
+                                limit,
+                            )
+                    else:
+                        sql = """SELECT *, ts_rank_cd(to_tsvector('english', coalesce(content, '')), websearch_to_tsquery('english',             )) as score FROM memories WHERE tenant_id = $2 AND agent_id = $3 AND layer = $4 AND (to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english',             ) OR content ILIKE $5) ORDER BY score DESC LIMIT $6"""
+                        async with pool.acquire() as conn:
+                            rows = await conn.fetch(
+                                sql, final_query, tenant_id, agent_id, layer, f"%{query}%", limit
+                            )
+            
+                    return [self._row_to_dict(r) for r in rows if r]
+            
 
     async def delete_memories_with_metadata_filter(
         self,

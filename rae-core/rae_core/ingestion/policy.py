@@ -20,9 +20,9 @@ class IngestPolicySelector(IPolicySelector):
         # Dominance Rules
         if stab["conflict"]:
             policy = "POLICY_MIXED_SAFE"
-        elif struct["mode"] == "LINEAR_LOG_LIKE":
-            # If repeatability is high, use stream policy, else safe mixed
-            if dist["repeatability_score"] > 0.4:
+        elif struct["mode"] in ["LINEAR_LOG_LIKE", "MACHINE_TELEMETRY_LIKE"]:
+            # If repeatability is high or it's telemetry, use stream policy
+            if dist["repeatability_score"] > 0.4 or struct["mode"] == "MACHINE_TELEMETRY_LIKE":
                 policy = "POLICY_LOG_STREAM"
             else:
                 policy = "POLICY_MIXED_SAFE"

@@ -175,6 +175,7 @@ class RAEEngine:
             "strategy_weights",
             "enable_reranking",
             "custom_weights",
+            "limit",
         ]:
             search_kwargs.pop(k, None)
 
@@ -185,12 +186,12 @@ class RAEEngine:
         candidates = await self.search_engine.search(
             query=query,
             tenant_id=tenant_id,
+            agent_id=agent_id,
             filters=search_filters,
             limit=int(engine_limit),
             strategies=active_strategies,
             strategy_weights=strategy_weights,
             enable_reranking=enable_reranking,
-            math_controller=self.math_ctrl,
             **search_kwargs,
         )
 
@@ -208,14 +209,18 @@ class RAEEngine:
         elif custom_weights:
             scoring_weights = custom_weights
 
-        memories = []
+        # 1. RETRIEVAL & DEDUPLICATION
+        # We ensure each memory ID appears only once, with its best score
+        best_candidates = {}
         for item in candidates:
-            # Robust Unpacking (System 40.0: Support ID, Score, Importance, AuditLog)
             m_id = item[0]
             sim_score = item[1]
-            importance = item[2] if len(item) > 2 else 0.0
-            audit_log = item[3] if len(item) > 3 else {}
+            # Use tuple structure: (score, importance, audit_log)
+            if m_id not in best_candidates or sim_score > best_candidates[m_id][0]:
+                best_candidates[m_id] = item[1:]
 
+        memories = []
+        for m_id, (sim_score, importance, audit_log) in best_candidates.items():
             memory = await self.memory_storage.get_memory(m_id, tenant_id)
             if memory:
                 # 2. DESIGNED MATH SCORING
@@ -230,10 +235,18 @@ class RAEEngine:
                 if audit_log.get("sic_boost"):
                     math_score = sim_score
                 
-                memory["math_score"] = math_score
-                memory["search_score"] = sim_score
-                memory["importance"] = importance or memory.get("importance", 0.5)
-                memory["audit_trail"] = audit_log
+                if isinstance(memory, object) and hasattr(memory, "to_dict"):
+                    memory_dict = memory.to_dict()
+                elif not isinstance(memory, dict):
+                    # Fallback for unexpected types
+                    memory_dict = dict(memory)
+                else:
+                    memory_dict = memory
+
+                memory_dict["math_score"] = math_score
+                memory_dict["search_score"] = sim_score
+                memory_dict["importance"] = importance or memory_dict.get("importance", 0.5)
+                memory_dict["audit_trail"] = audit_log
                 
                 # Explicitly log the winning feature for auditability
                 if math_score > 0.8:
@@ -249,7 +262,7 @@ class RAEEngine:
                                  feature=win_feature,
                                  audit=audit_log)
                 
-                memories.append(memory)
+                memories.append(memory_dict)
 
         # 3. SEMANTIC RESONANCE
         if hasattr(self.memory_storage, "get_neighbors_batch") and memories:
@@ -283,14 +296,15 @@ class RAEEngine:
                                 UUID(mid_str), tenant_id
                             )
                             if induced_mem:
-                                induced_mem["math_score"] = float(
+                                induced_mem_dict = dict(induced_mem) if not isinstance(induced_mem, dict) else induced_mem
+                                induced_mem_dict["math_score"] = float(
                                     np.tanh(energy_map[mid_str])
                                 )
-                                induced_mem["resonance_metadata"] = {
+                                induced_mem_dict["resonance_metadata"] = {
                                     "induced": True,
                                     "boost": float(energy_map[mid_str]),
                                 }
-                                memories.append(induced_mem)
+                                memories.append(induced_mem_dict)
                         except Exception:
                             continue
 
@@ -347,10 +361,11 @@ class RAEEngine:
                                 final_logit += logit
                                 audit["neural_logit"] = logit
 
-                            m["math_score"] = self.search_engine.fusion_strategy.gateway.sigmoid(final_logit)
-                            m["audit_trail"] = audit
-                            m["audit_trail"]["szubar_recruited"] = True
-                            recruited_results.append(m)
+                            m_dict = dict(m) if not isinstance(m, dict) else m
+                            m_dict["math_score"] = self.search_engine.fusion_strategy.gateway.sigmoid(final_logit)
+                            m_dict["audit_trail"] = audit
+                            m_dict["audit_trail"]["szubar_recruited"] = True
+                            recruited_results.append(m_dict)
                         
                         # Inject and re-sort
                         memories.extend(recruited_results)
@@ -410,7 +425,7 @@ class RAEEngine:
                 "chunk_index": i,
                 "total_chunks": len(chunks),
                 "is_chunk": True,
-                "ingest_audit": audit_trail
+                "ingest_audit": [a.__dict__ for a in audit_trail] if audit_trail else []
             })
             
             # Use original source if provided, otherwise default to chunk index

@@ -97,23 +97,28 @@ class HybridSearchEngine:
         memory_storage: IMemoryStorage,
         reranker: IReranker | None = None,
         graph_store: Any | None = None,
+        math_controller: Any | None = None,
     ):
         self.strategies = strategies
         self.embedding_provider = embedding_provider
         self.memory_storage = memory_storage
         self.graph_store = graph_store
         self._reranker = reranker
+        self.math_controller = math_controller
         self.injector = MetadataInjector()
 
         # Initialize Fusion Strategy (LogicGateway wrapper)
-        self.fusion_strategy = FusionStrategy()
-        self.fusion_strategy.gateway.storage = memory_storage
-        self.fusion_strategy.gateway.graph_store = graph_store
+        config = self.math_controller.config if self.math_controller else {}
+        self.fusion_strategy = FusionStrategy(config)
+        if hasattr(self.fusion_strategy, "gateway"):
+            self.fusion_strategy.gateway.storage = memory_storage
+            self.fusion_strategy.gateway.graph_store = graph_store
 
     async def search(
         self,
         query: str,
         tenant_id: str,
+        agent_id: str | None = None,
         filters: dict[str, Any] | None = None,
         limit: int = 10,
         strategies: list[str] | None = None,

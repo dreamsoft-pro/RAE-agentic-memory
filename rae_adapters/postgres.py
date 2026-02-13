@@ -79,6 +79,26 @@ class PostgreSQLStorage(IMemoryStorage):
             )
             return row["id"]
 
+    def _row_to_dict(self, row: asyncpg.Record | None) -> dict[str, Any] | None:
+        if row is None:
+            return None
+        d = dict(row)
+        
+        # Aggressive JSON Parsing for metadata (Fixes Double-Encoding)
+        meta = d.get("metadata")
+        while isinstance(meta, str):
+            try:
+                parsed = json.loads(meta)
+                if isinstance(parsed, (dict, list)):
+                    meta = parsed
+                else:
+                    break
+            except (json.JSONDecodeError, TypeError):
+                break
+        
+        d["metadata"] = meta if isinstance(meta, dict) else {}
+        return d
+
     async def get_memory(
         self, memory_id: UUID, tenant_id: str
     ) -> dict[str, Any] | None:
@@ -89,7 +109,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 memory_id,
                 tenant_id,
             )
-        return dict(row) if row else None
+        return self._row_to_dict(row)
 
     async def get_memories_batch(
         self, memory_ids: List[UUID], tenant_id: str
@@ -103,7 +123,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 memory_ids,
                 tenant_id,
             )
-        return [dict(r) for r in rows]
+        return [self._row_to_dict(r) for r in rows if r]
 
     async def list_memories(
         self, tenant_id: str, **kwargs: Any
@@ -114,7 +134,7 @@ class PostgreSQLStorage(IMemoryStorage):
             rows = await conn.fetch(
                 "SELECT * FROM memories WHERE tenant_id = $1 LIMIT $2", tenant_id, limit
             )
-        return [dict(r) for r in rows]
+        return [self._row_to_dict(r) for r in rows if r]
 
     async def search_memories(
         self,
@@ -177,7 +197,7 @@ class PostgreSQLStorage(IMemoryStorage):
 
         async with pool.acquire() as conn:
             rows = await conn.fetch(sql, *params)
-        return [dict(r) for r in rows]
+        return [self._row_to_dict(r) for r in rows if r]
 
 
     async def delete_memories_with_metadata_filter(self, *args, **kwargs) -> int:
