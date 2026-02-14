@@ -130,10 +130,32 @@ class PostgreSQLStorage(IMemoryStorage):
     ) -> list[dict[str, Any]]:
         pool = await self._get_pool()
         limit = kwargs.get("limit", 100)
+        offset = kwargs.get("offset", 0)
+        
+        where_parts = ["tenant_id = $1"]
+        params = [tenant_id]
+        
+        if kwargs.get("layer"):
+            where_parts.append(f"layer = ${len(params) + 1}")
+            params.append(kwargs["layer"])
+            
+        if kwargs.get("agent_id"):
+            where_parts.append(f"agent_id = ${len(params) + 1}")
+            params.append(kwargs["agent_id"])
+            
+        if kwargs.get("project"):
+            where_parts.append(f"project = ${len(params) + 1}")
+            params.append(kwargs["project"])
+            
+        if kwargs.get("tags"):
+            where_parts.append(f"tags && ${len(params) + 1}")
+            params.append(kwargs["tags"])
+            
+        where_clause = " AND ".join(where_parts)
+        sql = f"SELECT * FROM memories WHERE {where_clause} ORDER BY created_at DESC LIMIT ${len(params) + 1} OFFSET ${len(params) + 2}"
+        
         async with pool.acquire() as conn:
-            rows = await conn.fetch(
-                "SELECT * FROM memories WHERE tenant_id = $1 LIMIT $2", tenant_id, limit
-            )
+            rows = await conn.fetch(sql, *params, limit, offset)
         return [self._row_to_dict(r) for r in rows if r]
 
     async def search_memories(

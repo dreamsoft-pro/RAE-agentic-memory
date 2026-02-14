@@ -786,11 +786,13 @@ class RAECoreService:
         filters: Optional[Dict[str, Any]] = None,
         limit: int = 100,
         offset: int = 0,
+        agent_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """List memories for a specific layer and project (agent)."""
         return await self.postgres_adapter.list_memories(
             tenant_id=tenant_id,
-            agent_id=project,
+            agent_id=agent_id,
+            project=project,
             layer=layer,
             tags=tags,
             filters=filters,
