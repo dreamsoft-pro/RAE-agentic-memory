@@ -16,10 +16,15 @@ Adapters follow dependency injection pattern for easy testing and swapping.
 from .memory.cache import InMemoryCache
 from .memory.storage import InMemoryStorage
 from .memory.vector import InMemoryVectorStore
-from .sqlite.storage import SQLiteStorage
-from .sqlite.vector import SQLiteVectorStore
 
 # Conditional imports for optional dependencies
+try:
+    from .sqlite.storage import SQLiteStorage
+    from .sqlite.vector import SQLiteVectorStore
+except ImportError:
+    SQLiteStorage = None  # type: ignore
+    SQLiteVectorStore = None  # type: ignore
+
 try:
     from .postgres import PostgreSQLStorage
 except ImportError:

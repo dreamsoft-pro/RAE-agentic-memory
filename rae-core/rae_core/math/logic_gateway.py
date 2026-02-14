@@ -86,12 +86,14 @@ class LogicGateway:
         tuner_input = []
         safe_contents = memory_contents or {}
         for m_id, score, importance, audit in base_results:
+            mem_data = safe_contents.get(m_id, {})
             tuner_input.append({
                 "id": m_id, 
                 "score": score, 
                 "importance": importance, 
                 "audit": audit,
-                "content": safe_contents.get(m_id, {}).get("content", "")
+                "content": mem_data.get("content", ""),
+                "metadata": mem_data.get("metadata", {})
             })
             
         tuner = SemanticResonanceEngine(h_sys=h_sys)
@@ -100,10 +102,11 @@ class LogicGateway:
         # Convert back to standard return format
         results = [(r["id"], r["score"], r["importance"], r["audit"]) for r in sharpened_results]
         
-        # 5. Neural Scalpel (Reranking Tier 2+)
+        # 5. Neural Scalpel (Reranking Tier 1+)
         if self.reranker and query and results:
-            # We only rerank results that aren't mathematically proven (Tier 2)
-            to_rerank_indices = [i for i, r in enumerate(results[:50]) if r[3].get("tier", 2) >= 2]
+            # SYSTEM 40.10: Deep Recall (top 300) to find hidden hits
+            # We rerank everything except Tier 0 (Hard Lock) to ensure semantic precision
+            to_rerank_indices = [i for i, r in enumerate(results[:300]) if r[3].get("tier", 2) >= 1]
             
             if to_rerank_indices:
                 pairs = [(query, safe_contents.get(results[i][0], {}).get("content", "")) for i in to_rerank_indices]
@@ -118,10 +121,19 @@ class LogicGateway:
                     for idx, ri in enumerate(to_rerank_indices[:len(n_scores)]):
                         n_val = float(n_scores[idx])
                         # Neural score becomes the primary signal for Tier 2
-                        res_list[ri][1] = (n_val * 1000.0) + (res_list[ri][1] * 0.001)
+                        # but we MUST scale it by mathematical certainty (e.g. type match)
+                        orig_audit = res_list[ri][3]
+                        cert_factor = float(orig_audit.get("certainty_factor", 1.0))
+                        
+                        # Apply neural score scaled by certainty
+                        # This ensures wrong entity types stay at the bottom regardless of neural score
+                        res_list[ri][1] = (n_val * cert_factor * 1000.0) + (res_list[ri][1] * 0.001)
                         res_list[ri][3]["neural_v"] = round(n_val, 3)
                     
                     # Re-sort within Tier 2, keeping Tier 0/1 on top
+                    # SYSTEM 40.11: Pure Tier Isolation. 
+                    # We sort by (tier, -score). Since Tier 0 < Tier 1 < Tier 2,
+                    # this guaranteed correct hits stay at the top.
                     results = [tuple(r) for r in sorted(res_list, key=lambda x: (x[3].get("tier", 2), -x[1]))]
 
         return results

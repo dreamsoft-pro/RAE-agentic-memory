@@ -252,6 +252,7 @@ class RAEEngine:
                 if math_score > 0.8:
                     win_feature = "unknown"
                     if audit_log.get("sic_boost"): win_feature = "symbolic_hard_lock"
+                    elif audit_log.get("hard_lock"): win_feature = "symbolic_hard_lock"
                     elif audit_log.get("anchor_hit"): win_feature = "anchor_match"
                     elif audit_log.get("cat_boost"): win_feature = "category_match"
                     elif audit_log.get("quant_boost"): win_feature = "quantitative_resonance"
@@ -308,7 +309,8 @@ class RAEEngine:
                         except Exception:
                             continue
 
-        memories.sort(key=lambda x: x.get("math_score", 0.0), reverse=True)
+        # SYSTEM 40.17: Guaranteed Tier Isolation
+        memories.sort(key=lambda x: (x.get("audit_trail", {}).get("tier", 2), -x.get("math_score", 0.0)))
 
         # 4. ACTIVE SZUBAR LOOP (System 52.0 - Neighbor Recruitment)
         # "Success from Failure": If confidence is low, explore the graph for missing links.
@@ -369,7 +371,7 @@ class RAEEngine:
                         
                         # Inject and re-sort
                         memories.extend(recruited_results)
-                        memories.sort(key=lambda x: x.get("math_score", 0.0), reverse=True)
+                        memories.sort(key=lambda x: (x.get("audit_trail", {}).get("tier", 2), -x.get("math_score", 0.0)))
                         
                         # Check if Szubar saved the day
                         new_top_score = memories[0].get("math_score", 0.0)
@@ -378,8 +380,6 @@ class RAEEngine:
                                         old_score=top_score, 
                                         new_score=new_top_score,
                                         recovered_id=str(memories[0]["id"]))
-
-        return memories[:top_k]
 
         return memories[:top_k]
 

@@ -1,7 +1,7 @@
-"""In-Memory storage adapter for RAE-core.
+"""In-Memory storage adapter for RAE-core (Deterministyczny, High-Performance).
 
-Fast, thread-safe implementation using Python dictionaries.
-Ideal for testing, development, and lightweight deployments.
+Implements both IMemoryStorage and IVectorStore using contiguous memory arenas
+and fixed-point arithmetic for absolute determinism (System 87.0).
 """
 
 import asyncio
@@ -11,41 +11,308 @@ from typing import Any, cast
 from uuid import UUID, uuid4
 
 from rae_core.interfaces.storage import IMemoryStorage
+from rae_core.interfaces.vector import IVectorStore
+from rae_core.utils.clock import IClock, SystemClock
+from rae_core.math.quantization_bytes import (
+    quantize_vector_bytes,
+    cosine_similarity_bytes,
+    dequantize_vector_bytes
+)
+from rae_core.utils.hashing import bloom_filter_fingerprint, stable_hash
 
 
-class InMemoryStorage(IMemoryStorage):
-    """In-memory implementation of IMemoryStorage.
+class InMemoryStorage(IMemoryStorage, IVectorStore):
+    """In-memory implementation of IMemoryStorage and IVectorStore.
 
-    Features:
-    - Fast dictionary-based storage
-    - Thread-safe operations with asyncio.Lock
-    - Automatic timestamps and versioning
-    - Filtering by layer, agent, and tags
-    - Access count tracking
+    Architecture (System 87.0):
+    - Contiguous Memory Arenas (bytearray) for vectors to ensure L1/L2 cache locality.
+    - Fixed-Point Quantization (int32) for deterministic arithmetic.
+    - Offset-based indexing instead of object references.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, clock: IClock | None = None) -> None:
         """Initialize in-memory storage."""
+        self._clock = clock or SystemClock()
+        
         # Main storage: {memory_id: memory_dict}
         self._memories: dict[UUID, dict[str, Any]] = {}
 
+        # Bloom Filters: {memory_id: 64-bit mask} (The "Scalpel" Phase 2)
+        self._bloom_filters: dict[UUID, int] = {}
+
         # Indexes for fast lookups
         self._by_tenant: dict[str, set[UUID]] = defaultdict(set)
-        self._by_agent: dict[tuple[str, str], set[UUID]] = defaultdict(
-            set
-        )  # (tenant, agent)
-        self._by_layer: dict[tuple[str, str], set[UUID]] = defaultdict(
-            set
-        )  # (tenant, layer)
-        self._by_tags: dict[tuple[str, str], set[UUID]] = defaultdict(
-            set
-        )  # (tenant, tag)
+        self._by_agent: dict[tuple[str, str], set[UUID]] = defaultdict(set)
+        self._by_layer: dict[tuple[str, str], set[UUID]] = defaultdict(set)
+        self._by_tags: dict[tuple[str, str], set[UUID]] = defaultdict(set)
 
-        # Multi-model embeddings storage: {memory_id: {model_name: {embedding: ..., metadata: ...}}}
-        self._embeddings: dict[UUID, dict[str, dict[str, Any]]] = defaultdict(dict)
+        # Vector Arenas: {model_name: bytearray}
+        # Stores packed int32 vectors contiguously.
+        self._vector_arenas: dict[str, bytearray] = defaultdict(bytearray)
+        
+        # Vector Index: {model_name: {memory_id: offset}}
+        # Maps memory ID to byte offset in the arena.
+        self._vector_indices: dict[str, dict[UUID, int]] = defaultdict(dict)
+        
+        # Vector Metadata: {model_name: {memory_id: metadata}}
+        # Stores metadata alongside vectors for filtering.
+        self._vector_metadata: dict[str, dict[UUID, dict[str, Any]]] = defaultdict(dict)
+        
+        # Vector Dimensions: {model_name: dimension_size}
+        # Used to validate vector sizes and calculate stride.
+        self._vector_dims: dict[str, int] = {}
 
         # Thread safety
         self._lock = asyncio.Lock()
+
+    # =========================================================================
+    # IVectorStore Implementation (The "Arena" & "Scalpel")
+    # =========================================================================
+
+    async def store_vector(
+        self,
+        memory_id: UUID,
+        embedding: list[float] | dict[str, list[float]],
+        tenant_id: str,
+        metadata: dict[str, Any] | None = None,
+    ) -> bool:
+        """Store a vector embedding in contiguous arena."""
+        async with self._lock:
+            # Normalize input to dict of vectors
+            vectors: dict[str, list[float]] = {}
+            if isinstance(embedding, list):
+                vectors["default"] = embedding
+            else:
+                vectors = embedding
+
+            for model_name, vector in vectors.items():
+                dim = len(vector)
+                
+                # Validate dimension consistency
+                if model_name not in self._vector_dims:
+                    self._vector_dims[model_name] = dim
+                elif self._vector_dims[model_name] != dim:
+                    raise ValueError(
+                        f"Dimension mismatch for model {model_name}: "
+                        f"expected {self._vector_dims[model_name]}, got {dim}"
+                    )
+
+                # Quantize to bytes (Fixed-Point)
+                vector_bytes = quantize_vector_bytes(vector)
+                vector_len = len(vector_bytes)
+
+                # Check if update or insert
+                if memory_id in self._vector_indices[model_name]:
+                    # Update in place (if same size) - simplified: append new, orphan old space
+                    # Real arena allocator would manage free list. Here we append-only for simplicity/speed in Python.
+                    # Or we overwrite if length matches (which it should for fixed dim).
+                    offset = self._vector_indices[model_name][memory_id]
+                    self._vector_arenas[model_name][offset : offset + vector_len] = vector_bytes
+                else:
+                    # Append new
+                    offset = len(self._vector_arenas[model_name])
+                    self._vector_arenas[model_name].extend(vector_bytes)
+                    self._vector_indices[model_name][memory_id] = offset
+
+                # Store metadata
+                meta = metadata or {}
+                # Ensure tenant_id is in metadata for security filtering
+                meta["tenant_id"] = tenant_id
+                self._vector_metadata[model_name][memory_id] = meta
+
+            return True
+
+    async def search_similar(
+        self,
+        query_embedding: list[float],
+        tenant_id: str,
+        layer: str | None = None,
+        limit: int = 10,
+        score_threshold: float | None = None,
+        agent_id: str | None = None,
+        session_id: str | None = None,
+        filters: dict[str, Any] | None = None,
+        project: str | None = None,
+        **kwargs: Any,
+    ) -> list[tuple[UUID, float]]:
+        """Search for similar vectors using deterministic fixed-point arithmetic."""
+        async with self._lock:
+            model_name = kwargs.get("model_name", "default")
+            
+            if model_name not in self._vector_arenas:
+                return []
+
+            # Prepare query
+            query_bytes = quantize_vector_bytes(query_embedding)
+            dim_bytes = len(query_bytes)
+            
+            if model_name in self._vector_dims:
+                 expected_dim = self._vector_dims[model_name] * 4
+                 if dim_bytes != expected_dim:
+                     # Fail silently or raise? Standard is usually empty result on mismatch
+                     return []
+
+            arena = self._vector_arenas[model_name]
+            indices = self._vector_indices[model_name]
+            metadatas = self._vector_metadata[model_name]
+
+            results: list[tuple[UUID, float]] = []
+
+            # Bloom Filter Setup (The Scalpel)
+            query_mask = 0
+            if filters and "tags" in filters:
+                tags_list = filters["tags"]
+                if isinstance(tags_list, list):
+                    query_mask = bloom_filter_fingerprint(tags_list)
+
+            # Linear Scan (Simulating low-level scan)
+            # In C++ this would be a SIMD loop. In Python, we iterate keys to look up offsets.
+            # Iterating keys is faster than slicing bytearray repeatedly in Python.
+            for mem_id, offset in indices.items():
+                # 0. Bloom Filter Check (O(1) Bitwise Rejection) - Phase 2
+                if query_mask:
+                     mem_mask = self._bloom_filters.get(mem_id, 0)
+                     # Check if memory has ALL required tag bits
+                     if (mem_mask & query_mask) != query_mask:
+                         continue
+
+                # 1. Security & Metadata Filtering (The "Scalpel")
+                meta = metadatas.get(mem_id, {})
+                if meta.get("tenant_id") != tenant_id:
+                    continue
+                
+                if layer and meta.get("layer") != layer:
+                    continue
+                if agent_id and meta.get("agent_id") != agent_id:
+                    continue
+                if session_id and meta.get("session_id") != session_id:
+                    continue
+                if project and meta.get("project") != project:
+                    continue
+                    
+                if filters:
+                    match = True
+                    for k, v in filters.items():
+                        # Special handling for tags (subset check)
+                        if k == "tags":
+                            # Bloom filter already did probabilistic check. Now verify strictly.
+                            # Query tags (v) must be subset of memory tags
+                            # Handle different types (list vs set)
+                            query_tags = set(v) if isinstance(v, (list, tuple)) else {v}
+                            mem_tags = set(meta.get("tags", []))
+                            if not query_tags.issubset(mem_tags):
+                                match = False
+                                break
+                            continue
+
+                        if meta.get(k) != v:
+                            match = False
+                            break
+                    if not match:
+                        continue
+
+                # 2. Extract Vector from Arena
+                # Slicing creates a copy, but it's needed for the math function
+                # (unless we rewrite math to take buffer + offset, which is better but strictly Python bytes are immutable/copy-heavy)
+                vec_bytes = arena[offset : offset + dim_bytes]
+
+                # 3. Compute Similarity (Deterministic)
+                score = cosine_similarity_bytes(query_bytes, vec_bytes)
+
+                if score_threshold is not None and score < score_threshold:
+                    continue
+
+                results.append((mem_id, score))
+
+            # Sort by score descending (Tie-Breaking by ID for determinism)
+            # Python's sort is stable.
+            results.sort(key=lambda x: (x[1], x[0].hex), reverse=True)
+
+            return results[:limit]
+
+    async def get_vector(
+        self,
+        memory_id: UUID,
+        tenant_id: str,
+    ) -> list[float] | None:
+        """Retrieve a vector embedding."""
+        async with self._lock:
+            # Default model strategy: Try "default", then fallback to any available
+            model_name = "default"
+            
+            # Check if default exists for this ID
+            if not (model_name in self._vector_indices and memory_id in self._vector_indices[model_name]):
+                # Fallback: Find first model containing this ID
+                found_model = None
+                for m_name, index in self._vector_indices.items():
+                    if memory_id in index:
+                        found_model = m_name
+                        break
+                
+                if not found_model:
+                    return None
+                model_name = found_model
+            
+            offset = self._vector_indices[model_name][memory_id]
+            dim = self._vector_dims[model_name]
+            byte_len = dim * 4
+            
+            vec_bytes = self._vector_arenas[model_name][offset : offset + byte_len]
+            
+            # Verify tenant
+            meta = self._vector_metadata[model_name].get(memory_id, {})
+            if meta.get("tenant_id") != tenant_id:
+                return None
+                
+            return dequantize_vector_bytes(bytes(vec_bytes))
+
+    async def delete_vector(
+        self,
+        memory_id: UUID,
+        tenant_id: str,
+    ) -> bool:
+        """Delete a vector."""
+        async with self._lock:
+            deleted = False
+            for model_name in list(self._vector_indices.keys()):
+                if memory_id in self._vector_indices[model_name]:
+                    # Check tenant
+                    meta = self._vector_metadata[model_name].get(memory_id, {})
+                    if meta.get("tenant_id") == tenant_id:
+                        del self._vector_indices[model_name][memory_id]
+                        del self._vector_metadata[model_name][memory_id]
+                        # We don't compact the arena immediately (expensive). 
+                        # Fragmentation is accepted in this simulated version.
+                        deleted = True
+            return deleted
+
+    async def update_vector(
+        self,
+        memory_id: UUID,
+        embedding: list[float] | dict[str, list[float]],
+        tenant_id: str,
+        metadata: dict[str, Any] | None = None,
+    ) -> bool:
+        """Update a vector embedding."""
+        return await self.store_vector(memory_id, embedding, tenant_id, metadata)
+
+    async def batch_store_vectors(
+        self,
+        vectors: list[
+            tuple[UUID, list[float] | dict[str, list[float]], dict[str, Any]]
+        ],
+        tenant_id: str,
+    ) -> int:
+        """Store multiple vectors."""
+        count = 0
+        for mid, emb, meta in vectors:
+            if await self.store_vector(mid, emb, tenant_id, meta):
+                count += 1
+        return count
+
+    # =========================================================================
+    # IMemoryStorage Implementation (Legacy + Core)
+    # =========================================================================
 
     async def save_embedding(
         self,
@@ -53,29 +320,22 @@ class InMemoryStorage(IMemoryStorage):
         model_name: str,
         embedding: list[float],
         tenant_id: str,
+        **kwargs: Any,
     ) -> bool:
-        """Save a vector embedding for a memory."""
-        async with self._lock:
-            # Check existence and tenant ownership (SEC-02)
-            if memory_id not in self._memories:
-                return False
-
-            if self._memories[memory_id]["tenant_id"] != tenant_id:
-                raise ValueError(
-                    f"Access Denied: Memory {memory_id} not found for tenant {tenant_id}"
-                )
-
-            self._embeddings[memory_id][model_name] = {
-                "embedding": embedding,
-                "created_at": datetime.now(timezone.utc),
-            }
-            return True
+        """Legacy alias for store_vector."""
+        # Wrap single vector as dict for store_vector
+        return await self.store_vector(
+            memory_id, 
+            {model_name: embedding}, 
+            tenant_id, 
+            kwargs.get("metadata")
+        )
 
     async def store_memory(self, **kwargs: Any) -> UUID:
         """Store a new memory."""
         async with self._lock:
             memory_id = uuid4()
-            now = datetime.now(timezone.utc)
+            now = self._clock.now()
 
             content = kwargs.get("content", "")
             layer = kwargs.get("layer", "episodic")
@@ -97,7 +357,11 @@ class InMemoryStorage(IMemoryStorage):
                 "agent_id": agent_id,
                 "tags": tags,
                 "metadata": metadata,
-                "embedding": embedding,
+                # embedding is stored separately in vector store usually, 
+                # but we keep a reference or copy if needed. 
+                # InMemoryStorage used to store it in _memories too? 
+                # The old code had: "embedding": embedding
+                "embedding": embedding, 
                 "importance": importance,
                 "created_at": now,
                 "modified_at": now,
@@ -120,6 +384,54 @@ class InMemoryStorage(IMemoryStorage):
 
             for tag in tags or []:
                 self._by_tags[(tenant_id, tag)].add(memory_id)
+                
+            # Bloom Filter (Phase 2: The Scalpel)
+            if tags:
+                mask = bloom_filter_fingerprint(tags)
+                self._bloom_filters[memory_id] = mask
+                
+            # If embedding provided, store in vector store part as well
+            if embedding:
+                # Need to release lock if calling self.store_vector which acquires lock?
+                # self.store_vector is async and uses lock.
+                # Re-entrant lock is not available in asyncio.Lock.
+                # We must manually invoke vector storage logic WITHOUT acquiring lock again.
+                # Refactoring: Extract logic to _store_vector_internal
+                
+                # For now, simplistic approach: duplicate logic or assume embedding handles it.
+                # Actually, self.store_vector is public API.
+                # Let's just inline the basic vector storage here since we have the lock.
+                
+                # Normalize
+                vectors = {}
+                if isinstance(embedding, list):
+                    vectors["default"] = embedding
+                elif isinstance(embedding, dict):
+                    vectors = embedding
+                
+                for m_name, vec in vectors.items():
+                    # Quantize
+                    v_bytes = quantize_vector_bytes(vec)
+                    dim = len(vec)
+                    if m_name not in self._vector_dims:
+                        self._vector_dims[m_name] = dim
+                    
+                    if m_name not in self._vector_arenas:
+                        self._vector_arenas[m_name] = bytearray()
+                        
+                    offset = len(self._vector_arenas[m_name])
+                    self._vector_arenas[m_name].extend(v_bytes)
+                    self._vector_indices[m_name][memory_id] = offset
+                    
+                    # Metadata for vector
+                    v_meta = metadata.copy()
+                    v_meta.update({
+                        "tenant_id": tenant_id,
+                        "layer": layer,
+                        "agent_id": agent_id,
+                        "tags": tags or []
+                    })
+                    self._vector_metadata[m_name][memory_id] = v_meta
 
             return memory_id
 
@@ -133,7 +445,6 @@ class InMemoryStorage(IMemoryStorage):
             memory = self._memories.get(memory_id)
 
             if memory and memory["tenant_id"] == tenant_id:
-                # Return a copy to prevent external modifications
                 return memory.copy()
 
             return None
@@ -190,7 +501,7 @@ class InMemoryStorage(IMemoryStorage):
 
             # Update memory
             memory.update(updates)
-            memory["modified_at"] = datetime.now(timezone.utc)
+            memory["modified_at"] = self._clock.now()
             memory["version"] = memory.get("version", 1) + 1
 
             return True
@@ -217,6 +528,13 @@ class InMemoryStorage(IMemoryStorage):
 
             # Remove memory
             del self._memories[memory_id]
+            
+            # Also remove vectors if present (naive approach without calling delete_vector to avoid deadlock)
+            # Just remove from indices, arena remains fragmented
+            for model_name in list(self._vector_indices.keys()):
+                if memory_id in self._vector_indices[model_name]:
+                    del self._vector_indices[model_name][memory_id]
+                    del self._vector_metadata[model_name][memory_id]
 
             return True
 
@@ -291,6 +609,8 @@ class InMemoryStorage(IMemoryStorage):
                 "agents": len(self._by_agent),
                 "layers": len(self._by_layer),
                 "unique_tags": len(self._by_tags),
+                "vector_models": list(self._vector_arenas.keys()),
+                "vector_arena_sizes_bytes": {k: len(v) for k, v in self._vector_arenas.items()}
             }
 
     async def clear_all(self) -> int:
@@ -303,6 +623,11 @@ class InMemoryStorage(IMemoryStorage):
             self._by_agent.clear()
             self._by_layer.clear()
             self._by_tags.clear()
+            
+            self._vector_arenas.clear()
+            self._vector_indices.clear()
+            self._vector_metadata.clear()
+            self._vector_dims.clear()
 
             return count
 
@@ -388,9 +713,6 @@ class InMemoryStorage(IMemoryStorage):
                         score = 1.0 - (
                             content_lower.index(query_lower) / len(content_lower)
                         )
-                        # Format for legacy tests: {"memory": ..., "score": ...}
-                        # And for new engine: {"id": ..., "content": ..., "score": ...}
-                        # We include BOTH to be safe.
                         results.append(
                             {
                                 "id": memory["id"],
@@ -414,7 +736,7 @@ class InMemoryStorage(IMemoryStorage):
     ) -> int:
         """Delete expired memories."""
         async with self._lock:
-            now = datetime.now(timezone.utc)
+            now = self._clock.now()
             matching_ids = []
             for memory_id, memory in self._memories.items():
                 if memory["tenant_id"] != tenant_id:
@@ -444,7 +766,7 @@ class InMemoryStorage(IMemoryStorage):
             if not memory or memory["tenant_id"] != tenant_id:
                 return False
 
-            memory["last_accessed_at"] = datetime.now(timezone.utc)
+            memory["last_accessed_at"] = self._clock.now()
             memory["access_count"] = memory.get("access_count", 0) + 1
             memory["usage_count"] = memory.get("usage_count", 0) + 1
 
@@ -468,7 +790,7 @@ class InMemoryStorage(IMemoryStorage):
                 return False
 
             memory["expires_at"] = expires_at
-            memory["modified_at"] = datetime.now(timezone.utc)
+            memory["modified_at"] = self._clock.now()
 
             return True
 
@@ -540,7 +862,7 @@ class InMemoryStorage(IMemoryStorage):
             new_imp = float(memory.get("importance", 0.5)) + delta
             new_imp = max(0.0, min(1.0, new_imp))
             memory["importance"] = new_imp
-            memory["modified_at"] = datetime.now(timezone.utc)
+            memory["modified_at"] = self._clock.now()
             return new_imp
 
     async def decay_importance(
@@ -603,3 +925,9 @@ class InMemoryStorage(IMemoryStorage):
 
         for tag in memory.get("tags", []):
             self._by_tags[(tenant_id, tag)].discard(memory_id)
+        
+        # Remove from vector index (fragmentation remains)
+        for model_name in list(self._vector_indices.keys()):
+             if memory_id in self._vector_indices[model_name]:
+                 del self._vector_indices[model_name][memory_id]
+                 del self._vector_metadata[model_name][memory_id]

@@ -128,6 +128,19 @@ class RAEBenchmarkRunner:
                     total_rr += 1.0 / rank
                     break
             
+            # DIAGNOSTIC: Why did we miss Rank 1?
+            if rank != 1 and raw_results:
+                top_hit = raw_results[0]
+                top_id = mapped_ids[0] if mapped_ids else "unknown"
+                top_content = top_hit.get("content", "N/A")[:100]
+                top_audit = top_hit.get("audit_trail", {})
+                logger.info("rank_1_diagnostic", 
+                            query=q["query"], 
+                            top_hit_id=top_id, 
+                            top_content=top_content,
+                            top_audit=top_audit,
+                            expected=q["expected_source_ids"][:3])
+
             results_count += 1
             if i % 10 == 0:
                 print(f"   ✅ Q{i} | Rank: {rank if rank > 0 else 'MISS'}")

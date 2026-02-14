@@ -164,16 +164,26 @@ class PostgreSQLStorage(IMemoryStorage):
             params.append(project)
 
         # SYSTEM 46.0: Balanced Recall
-        limit = max(limit, 50)
+        limit = max(limit, 100)
         limit_idx = len(params) + 1
         params.append(limit)
+
+        # SYSTEM 46.1: Word-level fallback for better technical recall
+        words = [w for w in raw_query.replace("?", "").split() if len(w) > 3]
+        word_conditions = []
+        for i, w in enumerate(words):
+            word_idx = len(params) + 1
+            word_conditions.append(f"content ILIKE ${word_idx}")
+            params.append(f"%{w}%")
+        
+        word_clause = " OR ".join(word_conditions) if word_conditions else "FALSE"
 
         where_clause = " AND ".join(where_parts)
 
         # The query uses:
         # 1. websearch_to_tsquery: supports "quotes" and -exclusion
         # 2. ts_rank_cd: covers structural density (proximity)
-        # 3. ILIKE: as a fallback for non-tokenized symbols
+        # 3. ILIKE: as a fallback for non-tokenized symbols and word fragments
         sql = f"""
             WITH ranked_results AS (
                 SELECT *,
@@ -187,6 +197,7 @@ class PostgreSQLStorage(IMemoryStorage):
                 AND (
                     to_tsvector('simple', coalesce(content, '') || ' ' || coalesce(metadata::text, '')) @@ websearch_to_tsquery('simple', $1)
                     OR content ILIKE '%' || $1 || '%'
+                    OR {word_clause}
                 )
             )
             SELECT *, fts_score as score

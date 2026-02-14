@@ -1,21 +1,19 @@
-# Next Session Plan: Silicon Oracle 40.0 (The Ascension)
+# Next Session Plan: Silicon Oracle 46.2 (The Scalpel)
 
 ## 🎯 Primary Goal
-Achieve **MRR 1.0 (Perfect Retrieval)** across all industrial scales (1k to 100k+) while ensuring 100% **determinism, auditability, and predictability**.
+Reach **MRR 1.0** on `industrial_small` and `industrial_1k` by fine-tuning semantic intent vs. technical metadata.
 
-## 🛑 Critical Context
-The real-world data RAE will face is massive. We cannot approach it with a tool that "guesses". The math must prove the hit. 
+## 🛠 Accomplished (Session 13.02.2026)
+- **Fixed Resonance Type-Gating:** `LogicGateway` now passes full metadata to `SemanticResonanceEngine`, allowing it to see IDs like `code_001` or `ticket_042`.
+- **Improved Linguistic Scalpel:** Added substring matching (stems) and plural handling (intent mapping) to `sharpen` logic.
+- **Upgraded Postgres Recall:** Implemented word-level `ILIKE` fallback in `PostgreSQLStorage.search_memories` for robust technical retrieval.
+- **Deep Neural Reranking:** Enabled Neural Scalpel for **Tier 1 (Mathematical Proof)** to differentiate between multiple technical matches.
+- **Current Baseline:** Industrial Small MRR: **0.7250** (Up from 0.57).
 
-## 🛠 Accomplished in Session 10.02.2026
-- **System 37.0 Deployed:** Exponential rank sharpening (`exp(-rank/3.0)`) and Sigmoid logit normalization.
-- **MRR Results:** Academic 1.0, Industrial 1k: **0.87**, Industrial 10k: **0.77** (clean, commission-mode tests).
-- **ID Sync:** Automated UUID <-> SourceID mapping via `run_benchmark.py` is fully functional.
-
-## 🚀 Immediate Priorities (System 40.0 - Silicon Oracle)
-1. **Deterministic Resonance:** Refactor `SemanticResonanceEngine` to use density-aware coefficients instead of learned bandits.
-2. **Symbolic Hard-Lock:** Strengthen the Multiplicative Symbol Boost to prevent any semantic "drift" in high-density environments.
-3. **Audit Trail:** Implement explicit logging of *why* a specific memory was selected (which feature triggered the win).
-4. **Benchmark Verification:** Run 1k, 10k, and 100k suites on Lumina to verify MRR 1.0.
+## 🚀 Immediate Priorities (Tomorrow)
+1. **Analyze Tier 1 Collisions:** Investigate why `meeting_005` (security) won over `meeting_001` (sprint) in the "sprint prioritization" query despite Tier 1 reranking.
+2. **Entity Injection Calibration:** Verify if `MetadataInjector` should pre-process industrial queries to sharpen the intent before it hits the strategies.
+3. **Silicon Oracle 100k:** Sync code to **Lumina (Node 1)** and run 100k scale test to verify that "Scalpel" logic doesn't introduce latency regressions.
 
 ## ⚖️ Mandate
-**No Guessing.** Every retrieval must be a mathematical proof of relevance.
+**Silicon Oracle must be absolute.** If a document contains the answer, the math must put it at Rank 1.

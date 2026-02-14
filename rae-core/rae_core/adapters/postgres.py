@@ -2,6 +2,7 @@ import json
 from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID, uuid4
+import re
 
 import asyncpg
 
@@ -46,156 +47,92 @@ class PostgreSQLStorage(IMemoryStorage):
         return m_id
 
     def _row_to_dict(self, row: asyncpg.Record | None) -> dict[str, Any] | None:
-        if row is None:
-            return None
+        if row is None: return None
         d = dict(row)
-        
-        # Handle metadata potentially being a double-encoded string
         meta = d.get("metadata")
         while isinstance(meta, str):
             try:
                 parsed = json.loads(meta)
-                if isinstance(parsed, (dict, list)):
-                    meta = parsed
-                else:
-                    break # Not a JSON object/list
-            except (json.JSONDecodeError, TypeError):
-                break
-        
+                if isinstance(parsed, (dict, list)): meta = parsed
+                else: break
+            except: break
         d["metadata"] = meta if isinstance(meta, dict) else {}
         return d
 
-    async def get_memory(
-        self, memory_id: UUID, tenant_id: str
-    ) -> dict[str, Any] | None:
+    def _get_stem(self, token: str) -> str:
+        t = token.lower()
+        if len(t) < 4: return t
+        if t.endswith("ies"): return t[:-3]
+        if t.endswith("s") and not t.endswith("ss"): return t[:-1]
+        return t
+
+    async def search_memories(
+        self, query: str, tenant_id: str, agent_id: str, layer: str, limit: int = 10, **kwargs: Any
+    ) -> list[dict[str, Any]]:
+        pool = await self._get_pool()
+        
+        ts_query = query.strip()
+        if '"' not in ts_query:
+            ts_query = re.sub(r'\s+', ' | ', ts_query)
+            
+        # System 40.16: SQL Linguistic Expansion
+        # We search for both original words AND their stems in content/metadata
+        words = [w for w in re.findall(r'\w+', query.lower()) if len(w) > 2]
+        stems = [self._get_stem(w) for w in words]
+        unique_patterns = list(set(words + stems))[:5] # Limit to avoid slow SQL
+        
+        project = kwargs.get("project")
+        
+        sql = f"""
+        WITH candidates AS (
+            SELECT *, 
+                   ts_rank_cd(to_tsvector('english', coalesce(content, '')), websearch_to_tsquery('english', $1)) as ts_rank
+            FROM memories
+            WHERE tenant_id = $2 AND agent_id = $3 AND layer = $4
+            {"AND project = $6" if project else ""}
+            AND (
+                to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', $1)
+                OR content ILIKE $5
+                { "".join([f"OR content ILIKE '%{p}%' OR metadata->>'id' ILIKE '%{p}%'" for p in unique_patterns]) }
+            )
+        )
+        SELECT * FROM candidates ORDER BY ts_rank DESC LIMIT $7
+        """
+        
+        async with pool.acquire() as conn:
+            if project:
+                rows = await conn.fetch(sql, ts_query, tenant_id, agent_id, layer, f"%{query}%", project, limit)
+            else:
+                rows = await conn.fetch(sql, ts_query, tenant_id, agent_id, layer, f"%{query}%", None, limit)
+                
+        return [self._row_to_dict(r) for r in rows if r]
+
+    async def get_memory(self, memory_id: UUID, tenant_id: str) -> dict[str, Any] | None:
         pool = await self._get_pool()
         async with pool.acquire() as conn:
-            row = await conn.fetchrow(
-                "SELECT * FROM memories WHERE id = $1 AND tenant_id = $2",
-                memory_id,
-                tenant_id,
-            )
+            row = await conn.fetchrow("SELECT * FROM memories WHERE id = $1 AND tenant_id = $2", memory_id, tenant_id)
         return self._row_to_dict(row)
 
-    async def list_memories(
-        self, tenant_id: str, **kwargs: Any
-    ) -> list[dict[str, Any]]:
+    async def list_memories(self, tenant_id: str, **kwargs: Any) -> list[dict[str, Any]]:
         pool = await self._get_pool()
         limit = kwargs.get("limit", 100)
         async with pool.acquire() as conn:
-            rows = await conn.fetch(
-                "SELECT * FROM memories WHERE tenant_id = $1 LIMIT $2", tenant_id, limit
-            )
+            rows = await conn.fetch("SELECT * FROM memories WHERE tenant_id = $1 LIMIT $2", tenant_id, limit)
         return [self._row_to_dict(r) for r in rows if r]
 
-    async def search_memories(
-        self,
-        query: str,
-        tenant_id: str,
-        agent_id: str,
-        layer: str,
-        limit: int = 10,
-        **kwargs: Any,
-    ) -> list[dict[str, Any]]:
-        pool = await self._get_pool()
-        final_query = query
-        if '"' not in query:
-            final_query = query.replace(" ", " OR ")
-
-        project = kwargs.get("project")
-        if project:
-            sql = """SELECT *, ts_rank_cd(to_tsvector('english', coalesce(content, '')), websearch_to_tsquery('english', $1)) as score FROM memories WHERE tenant_id = $2 AND agent_id = $3 AND layer = $4 AND project = $6 AND (to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english', $1) OR content ILIKE $5) ORDER BY score DESC LIMIT $7"""
-                        async with pool.acquire() as conn:
-                            rows = await conn.fetch(
-                                sql,
-                                final_query,
-                                tenant_id,
-                                agent_id,
-                                layer,
-                                f"%{query}%",
-                                project,
-                                limit,
-                            )
-                    else:
-                        sql = """SELECT *, ts_rank_cd(to_tsvector('english', coalesce(content, '')), websearch_to_tsquery('english',             )) as score FROM memories WHERE tenant_id = $2 AND agent_id = $3 AND layer = $4 AND (to_tsvector('english', coalesce(content, '')) @@ websearch_to_tsquery('english',             ) OR content ILIKE $5) ORDER BY score DESC LIMIT $6"""
-                        async with pool.acquire() as conn:
-                            rows = await conn.fetch(
-                                sql, final_query, tenant_id, agent_id, layer, f"%{query}%", limit
-                            )
-            
-                    return [self._row_to_dict(r) for r in rows if r]
-            
-
-    async def delete_memories_with_metadata_filter(
-        self,
-        tenant_id: str | None = None,
-        agent_id: str | None = None,
-        layer: str | None = None,
-        metadata_filter: dict[str, Any] | None = None,
-    ) -> int:
-        return 0
-
-    async def count_memories(
-        self,
-        tenant_id: str | None = None,
-        agent_id: str | None = None,
-        layer: str | None = None,
-    ) -> int:
-        return 0
-
-    async def update_memory_access(self, memory_id: UUID, tenant_id: str) -> bool:
-        return True
-
-    async def delete_expired_memories(
-        self, tenant_id: str, agent_id: str | None = None, layer: str | None = None
-    ) -> int:
-        return 0
-
-    async def update_memory(
-        self, memory_id: UUID, tenant_id: str, updates: dict[str, Any]
-    ) -> bool:
-        return True
-
-    async def delete_memory(self, memory_id: UUID, tenant_id: str) -> bool:
-        return True
-
     async def close(self) -> None:
-        if self._pool:
-            await self._pool.close()
+        if self._pool: await self._pool.close()
 
-    async def get_metric_aggregate(
-        self,
-        tenant_id: str,
-        metric: str,
-        func: str,
-        filters: dict[str, Any] | None = None,
-    ) -> float:
-        return 0.0
-
-    async def update_memory_access_batch(
-        self, memory_ids: list[UUID], tenant_id: str
-    ) -> bool:
-        return True
-
-    async def adjust_importance(
-        self, memory_id: UUID, delta: float, tenant_id: str
-    ) -> float:
-        return 0.5
-
-    async def delete_memories_below_importance(
-        self, tenant_id: str, agent_id: str, layer: str, importance_threshold: float
-    ) -> int:
-        return 0
-
-    async def decay_importance(self, tenant_id: str, decay_factor: float) -> int:
-        return 0
-
-    async def save_embedding(
-        self, memory_id: UUID, model_name: str, embedding: list[float], tenant_id: str
-    ) -> bool:
-        return True
-
-    async def update_memory_expiration(
-        self, memory_id: UUID, tenant_id: str, expires_at: datetime | None
-    ) -> bool:
-        return True
+    async def delete_memories_with_metadata_filter(self, tenant_id=None, agent_id=None, layer=None, metadata_filter=None) -> int: return 0
+    async def count_memories(self, tenant_id=None, agent_id=None, layer=None) -> int: return 0
+    async def update_memory_access(self, memory_id, tenant_id) -> bool: return True
+    async def delete_expired_memories(self, tenant_id, agent_id=None, layer=None) -> int: return 0
+    async def update_memory(self, memory_id, tenant_id, updates) -> bool: return True
+    async def delete_memory(self, memory_id, tenant_id) -> bool: return True
+    async def get_metric_aggregate(self, tenant_id, metric, func, filters=None) -> float: return 0.0
+    async def update_memory_access_batch(self, memory_ids, tenant_id) -> bool: return True
+    async def adjust_importance(self, memory_id, delta, tenant_id) -> float: return 0.5
+    async def delete_memories_below_importance(self, tenant_id, agent_id, layer, importance_threshold) -> int: return 0
+    async def decay_importance(self, tenant_id, decay_factor) -> int: return 0
+    async def save_embedding(self, memory_id, model_name, embedding, tenant_id) -> bool: return True
+    async def update_memory_expiration(self, memory_id, tenant_id, expires_at) -> bool: return True

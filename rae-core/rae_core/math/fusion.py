@@ -1,6 +1,5 @@
 """
-RAE Fusion Strategies (System 40.x).
-Modular, atomic logic for combining search results.
+RAE Fusion Strategies (System 40.12 - Unified Tier Alignment).
 """
 
 from abc import ABC, abstractmethod
@@ -12,139 +11,93 @@ import structlog
 logger = structlog.get_logger(__name__)
 
 class AbstractFusionStrategy(ABC):
-    """Base class for all fusion strategies."""
     def __init__(self, config: Optional[Dict[str, Any]] = None):
         self.config = config or {}
 
     @abstractmethod
-    async def fuse(
-        self,
-        strategy_results: Dict[str, List],
-        query: str,
-        h_sys: float = 13.0,
-        memory_contents: Optional[Dict[UUID, Dict]] = None,
-        weights: Optional[Dict[str, float]] = None,
-        **kwargs: Any,
-    ) -> List[Tuple[UUID, float, float, Dict]]:
+    async def fuse(self, strategy_results, query, h_sys=13.0, memory_contents=None, weights=None, **kwargs):
         pass
 
 class Legacy416Strategy(AbstractFusionStrategy):
-    """
-    SYSTEM 4.16: High Precision RRF + Anchor Lock.
-    """
-    async def fuse(
-        self,
-        strategy_results: Dict[str, List],
-        query: str,
-        h_sys: float = 13.0,
-        memory_contents: Optional[Dict[UUID, Dict]] = None,
-        weights: Optional[Dict[str, float]] = None,
-        **kwargs: Any,
-    ) -> List[Tuple[UUID, float, float, Dict]]:
-        cfg = self.config.get("strategies_config", {}).get("legacy_416", {})
-        k = cfg.get("k_factor", 1.0)
-        anchor_boost = cfg.get("anchor_lock_boost", 1000.0)
-        partial_multiplier = cfg.get("partial_anchor_multiplier", 10.0)
+    async def fuse(self, strategy_results, query, h_sys=13.0, memory_contents=None, weights=None, **kwargs):
+        k = self.config.get("strategies_config", {}).get("legacy_416", {}).get("k_factor", 1.0)
+        types = ["incident", "ticket", "metric", "log", "alert", "doc", "question", "bug"]
+        query_types = [t for t in types if t in query.lower() or (t + "s") in query.lower()]
         
-        fused_scores: dict[UUID, float] = {}
+        fused_scores = {}
         for strategy, results in strategy_results.items():
             if not results: continue
             for rank, item in enumerate(results):
                 m_id = item[0] if isinstance(item, tuple) else (item.get("id") or item.get("memory_id"))
                 if isinstance(m_id, str):
                     try: m_id = UUID(m_id)
-                    except ValueError: pass 
+                    except: pass
                 fused_scores[m_id] = fused_scores.get(m_id, 0.0) + (1.0 / (rank + k))
 
         processed = []
-        q_lower = query.lower()
-        symbols = [t for t in q_lower.split() if any(c.isdigit() for c in t) or any(c in t for c in "-_.:")]
-        
         for m_id, rrf_score in fused_scores.items():
             mem_obj = (memory_contents or {}).get(m_id, {})
             content = mem_obj.get("content", "").lower()
+            res_id = str(m_id).lower()
+            
+            type_multiplier = 1.0
+            tier = 2
+            if query_types:
+                matches_type = any(t in res_id for t in query_types) or any(t in content for t in query_types)
+                if not matches_type:
+                    type_multiplier = 0.001
+                    tier = 3 # Trash Tier
+                else:
+                    type_multiplier = 2.0 # Entity Boost
+            
             meta = mem_obj.get("metadata", {})
-            
-            if isinstance(meta, str):
-                import json
-                try: meta = json.loads(meta)
-                except: meta = {}
-            
-            importance = float(meta.get("importance", 0.5))
-            
-            final_score = rrf_score
-            audit = {"strategy": "Legacy416", "rrf": round(rrf_score, 4), "tier": 2}
-            
-            if symbols:
-                matched = sum(1 for s in symbols if s in content)
-                if matched == len(symbols):
-                    final_score += anchor_boost
-                    audit["anchor_lock"] = True
-                    audit["tier"] = 0
-                elif matched > 0:
-                    final_score += (matched / len(symbols)) * partial_multiplier
-                    audit["partial_anchor"] = round(matched / len(symbols), 2)
-                    audit["tier"] = 1
-
-            processed.append((m_id, final_score, importance, audit))
+            importance = float(meta.get("importance", 0.5) if isinstance(meta, dict) else 0.5)
+            processed.append((m_id, rrf_score * type_multiplier, importance, {"strategy": "Legacy416", "tier": tier, "type_penalty": tier == 3}))
         
-        return sorted(processed, key=lambda x: x[1], reverse=True)
+        return sorted(processed, key=lambda x: (x[3]["tier"], -x[1]))
 
 class SiliconOracleStrategy(AbstractFusionStrategy):
-    """
-    SYSTEM 40.4: Pure Entropy-Based Resonance.
-    """
-    async def fuse(
-        self,
-        strategy_results: Dict[str, List],
-        query: str,
-        h_sys: float = 13.0,
-        memory_contents: Optional[Dict[UUID, Dict]] = None,
-        weights: Optional[Dict[str, float]] = None,
-        **kwargs: Any,
-    ) -> List[Tuple[UUID, float, float, Dict]]:
-        cfg = self.config.get("strategies_config", {}).get("silicon_oracle", {})
-        divisor = cfg.get("rank_sharpening_divisor", 3.0)
+    async def fuse(self, strategy_results, query, h_sys=13.0, memory_contents=None, weights=None, **kwargs):
+        divisor = self.config.get("strategies_config", {}).get("silicon_oracle", {}).get("rank_sharpening_divisor", 3.0)
+        types = ["incident", "ticket", "metric", "log", "alert", "doc", "question", "bug"]
+        query_types = [t for t in types if t in query.lower() or (t + "s") in query.lower()]
         
-        fused_scores: dict[UUID, float] = {}
+        fused_scores = {}
         actual_weights = weights or {}
-        
         for strategy, results in strategy_results.items():
             w = actual_weights.get(strategy, 1.0)
             for rank, item in enumerate(results):
                 m_id = item[0] if isinstance(item, tuple) else (item.get("id") or item.get("memory_id"))
                 if isinstance(m_id, str):
                     try: m_id = UUID(m_id)
-                    except ValueError: pass
-                
-                score = w * math.exp(-rank / divisor)
-                fused_scores[m_id] = fused_scores.get(m_id, 0.0) + score
+                    except: pass
+                fused_scores[m_id] = fused_scores.get(m_id, 0.0) + w * math.exp(-rank / divisor)
 
         processed = []
         for m_id, score in fused_scores.items():
             mem_obj = (memory_contents or {}).get(m_id, {})
-            meta = mem_obj.get("metadata", {})
-            importance = float(meta.get("importance", 0.5))
-            audit = {"strategy": "SiliconOracle", "fused": round(score, 4)}
-            processed.append((m_id, score, importance, audit))
+            res_id = str(m_id).lower()
+            content = mem_obj.get("content", "").lower()
             
-        return sorted(processed, key=lambda x: x[1], reverse=True)
+            type_multiplier, tier = 1.0, 2
+            if query_types:
+                matches_type = any(t in res_id for t in query_types) or any(t in content for t in query_types)
+                if not matches_type:
+                    type_multiplier, tier = 0.001, 3 # Trash Tier
+                else:
+                    type_multiplier = 2.0 # Entity Boost
+            
+            meta = mem_obj.get("metadata", {})
+            importance = float(meta.get("importance", 0.5) if isinstance(meta, dict) else 0.5)
+            processed.append((m_id, score * type_multiplier, importance, {"strategy": "SiliconOracle", "tier": tier, "type_penalty": tier == 3}))
+            
+        return sorted(processed, key=lambda x: (x[3]["tier"], -x[1]))
 
 class FusionStrategy:
-    """
-    Gateway class for RAE fusion. 
-    Implements positional arguments for backward compatibility with HybridSearchEngine.
-    """
-    def __init__(self, config: Optional[Dict[str, Any]] = None):
+    def __init__(self, config=None):
         self.config = config or {}
         from rae_core.math.logic_gateway import LogicGateway
         self.gateway = LogicGateway(self.config)
 
     async def fuse(self, strategy_results=None, weights=None, query="", **kwargs):
-        # Handle positional or keyword arguments
-        return await self.gateway.fuse(
-            strategy_results=strategy_results,
-            weights=weights,
-            query=query,
-            **kwargs
-        )
+        return await self.gateway.fuse(strategy_results=strategy_results, weights=weights, query=query, **kwargs)
