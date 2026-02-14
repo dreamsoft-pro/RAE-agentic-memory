@@ -412,18 +412,24 @@ class InMemoryStorage(IMemoryStorage):
     ) -> int:
         """Delete memories matching metadata filter."""
         async with self._lock:
+            # Narrow down candidates using indexes (significant speed boost over full scan)
+            candidate_ids = (
+                self._by_tenant.get(tenant_id, set())
+                & self._by_agent.get((tenant_id, agent_id), set())
+                & self._by_layer.get((tenant_id, layer), set())
+            )
+
             matching_ids = []
-            for memory_id, memory in self._memories.items():
-                if (
-                    memory["tenant_id"] == tenant_id
-                    and memory["agent_id"] == agent_id
-                    and memory["layer"] == layer
+            for memory_id in candidate_ids:
+                memory = self._memories.get(memory_id)
+                if not memory:
+                    continue
+
+                # Check if metadata matches filter
+                if self._matches_metadata_filter(
+                    memory.get("metadata", {}), metadata_filter
                 ):
-                    # Check if metadata matches filter
-                    if self._matches_metadata_filter(
-                        memory.get("metadata", {}), metadata_filter
-                    ):
-                        matching_ids.append(memory_id)
+                    matching_ids.append(memory_id)
 
             for memory_id in matching_ids:
                 await self._delete_memory_internal(memory_id)
@@ -439,13 +445,17 @@ class InMemoryStorage(IMemoryStorage):
     ) -> int:
         """Delete memories below importance threshold."""
         async with self._lock:
+            candidate_ids = (
+                self._by_tenant.get(tenant_id, set())
+                & self._by_agent.get((tenant_id, agent_id), set())
+                & self._by_layer.get((tenant_id, layer), set())
+            )
+
             matching_ids = [
                 memory_id
-                for memory_id, memory in self._memories.items()
+                for memory_id in candidate_ids
                 if (
-                    memory["tenant_id"] == tenant_id
-                    and memory["agent_id"] == agent_id
-                    and memory["layer"] == layer
+                    (memory := self._memories.get(memory_id))
                     and memory.get("importance", 0) < importance_threshold
                 )
             ]
@@ -467,23 +477,28 @@ class InMemoryStorage(IMemoryStorage):
     ) -> list[dict[str, Any]]:
         """Search memories using simple substring matching."""
         async with self._lock:
+            candidate_ids = (
+                self._by_tenant.get(tenant_id, set())
+                & self._by_agent.get((tenant_id, agent_id), set())
+                & self._by_layer.get((tenant_id, layer), set())
+            )
+
             results = []
             query_lower = query.lower()
 
-            for memory in self._memories.values():
-                if (
-                    memory["tenant_id"] == tenant_id
-                    and memory["agent_id"] == agent_id
-                    and memory["layer"] == layer
-                ):
-                    # Simple substring search in content
-                    content_lower = memory["content"].lower()
-                    if query_lower in content_lower:
-                        # Calculate simple score based on position
-                        score = 1.0 - (
-                            content_lower.index(query_lower) / len(content_lower)
-                        )
-                        results.append({"memory": memory.copy(), "score": score})
+            for memory_id in candidate_ids:
+                memory = self._memories.get(memory_id)
+                if not memory:
+                    continue
+
+                # Simple substring search in content
+                content_lower = memory["content"].lower()
+                if query_lower in content_lower:
+                    # Calculate simple score based on position
+                    score = 1.0 - (
+                        content_lower.index(query_lower) / len(content_lower)
+                    )
+                    results.append({"memory": memory.copy(), "score": score})
 
             # Sort by score descending
             results.sort(key=lambda x: x["score"], reverse=True)
@@ -498,14 +513,18 @@ class InMemoryStorage(IMemoryStorage):
     ) -> int:
         """Delete expired memories."""
         async with self._lock:
+            candidate_ids = (
+                self._by_tenant.get(tenant_id, set())
+                & self._by_agent.get((tenant_id, agent_id), set())
+                & self._by_layer.get((tenant_id, layer), set())
+            )
+
             now = datetime.now(timezone.utc)
             matching_ids = [
                 memory_id
-                for memory_id, memory in self._memories.items()
+                for memory_id in candidate_ids
                 if (
-                    memory["tenant_id"] == tenant_id
-                    and memory["agent_id"] == agent_id
-                    and memory["layer"] == layer
+                    (memory := self._memories.get(memory_id))
                     and memory.get("expires_at")
                     and memory["expires_at"] < now
                 )
