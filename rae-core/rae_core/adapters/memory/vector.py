@@ -38,9 +38,19 @@ class InMemoryVectorStore(IVectorStore):
 
         # Indexes for fast lookups
         self._by_tenant: dict[str, set[UUID]] = defaultdict(set)
+        self._by_agent: dict[tuple[str, str], set[UUID]] = defaultdict(set)
+        self._by_layer: dict[tuple[str, str], set[UUID]] = defaultdict(set)
+        self._by_project: dict[tuple[str, str], set[UUID]] = defaultdict(set)
 
         # Thread safety
         self._lock = asyncio.Lock()
+
+    def _normalize(self, vec: np.ndarray) -> np.ndarray:
+        """Normalize vector for cosine similarity (dot product)."""
+        norm = np.linalg.norm(vec)
+        if norm > 0:
+            return vec / norm
+        return vec
 
     async def store_vector(
         self,
@@ -62,14 +72,23 @@ class InMemoryVectorStore(IVectorStore):
             else:
                 vec_list = embedding
 
+            meta = metadata or {}
             vector_data = {
-                "embedding": np.array(vec_list, dtype=np.float32),
+                "embedding": self._normalize(np.array(vec_list, dtype=np.float32)),
                 "tenant_id": tenant_id,
-                "metadata": metadata or {},
+                "metadata": meta,
             }
 
             self._vectors[memory_id] = vector_data
             self._by_tenant[tenant_id].add(memory_id)
+
+            # Update indexes
+            if "agent_id" in meta:
+                self._by_agent[(tenant_id, meta["agent_id"])].add(memory_id)
+            if "layer" in meta:
+                self._by_layer[(tenant_id, meta["layer"])].add(memory_id)
+            if "project" in meta:
+                self._by_project[(tenant_id, meta["project"])].add(memory_id)
 
             return True
 
@@ -88,56 +107,59 @@ class InMemoryVectorStore(IVectorStore):
     ) -> list[tuple[UUID, float]]:
         """Search for similar vectors using cosine similarity."""
         async with self._lock:
-            # Get candidate vectors for tenant
-            candidate_ids = self._by_tenant[tenant_id]
+            # Narrow down candidates using indexes
+            candidate_ids = self._by_tenant.get(tenant_id, set()).copy()
+
+            if layer:
+                candidate_ids &= self._by_layer.get((tenant_id, layer), set())
+            if agent_id:
+                candidate_ids &= self._by_agent.get((tenant_id, agent_id), set())
+            if project:
+                candidate_ids &= self._by_project.get((tenant_id, project), set())
 
             if not candidate_ids:
                 return []
 
-            # Convert query to numpy array and normalize
-            query_vec = np.array(query_embedding, dtype=np.float32)
-            query_norm = np.linalg.norm(query_vec)
+            # Normalize query vector
+            query_vec = self._normalize(np.array(query_embedding, dtype=np.float32))
 
-            if query_norm == 0:
+            # Calculate similarities (Vectorized using NumPy)
+            # 1. Filter out candidate IDs that might have been deleted but still in index
+            valid_ids = [mid for mid in candidate_ids if mid in self._vectors]
+            if not valid_ids:
                 return []
 
-            query_vec_normalized = query_vec / query_norm
+            # 2. Extract embeddings into a matrix
+            embeddings = np.stack(
+                [self._vectors[mid]["embedding"] for mid in valid_ids]
+            )
 
-            # Calculate similarities
+            # 3. Calculate dot products (since they are normalized, this is cosine similarity)
+            similarities = np.dot(embeddings, query_vec)
+
+            # 4. Filter and build results
             results = []
+            for i, mid in enumerate(valid_ids):
+                similarity = float(similarities[i])
 
-            for memory_id in candidate_ids:
-                vector_data = self._vectors.get(memory_id)
-                if not vector_data:  # pragma: no cover
-                    continue  # pragma: no cover
-
-                # Apply layer filter if specified
-                if layer:
-                    vector_layer = vector_data["metadata"].get("layer")
-                    if vector_layer != layer:
-                        continue
-
-                # Apply agent filter if specified
-                if agent_id:
-                    vector_agent = vector_data["metadata"].get("agent_id")
-                    if vector_agent and vector_agent != agent_id:
-                        continue
-
-                # Calculate cosine similarity
-                vec = vector_data["embedding"]
-                vec_norm = np.linalg.norm(vec)
-
-                if vec_norm == 0:
+                # Metadata filtering (session_id, generic filters)
+                metadata = self._vectors[mid]["metadata"]
+                if session_id and metadata.get("session_id") != session_id:
                     continue
 
-                vec_normalized = vec / vec_norm
-                similarity = float(np.dot(query_vec_normalized, vec_normalized))
+                if filters:
+                    match = True
+                    for k, v in filters.items():
+                        if metadata.get(k) != v:
+                            match = False
+                            break
+                    if not match:
+                        continue
 
-                # Apply threshold filter
                 if score_threshold is not None and similarity < score_threshold:
                     continue
 
-                results.append((memory_id, similarity))
+                results.append((mid, similarity))
 
             # Sort by similarity (descending) and limit
             results.sort(key=lambda x: x[1], reverse=True)
@@ -155,8 +177,16 @@ class InMemoryVectorStore(IVectorStore):
             if not vector_data or vector_data["tenant_id"] != tenant_id:
                 return False
 
+            metadata = vector_data.get("metadata", {})
+
             # Remove from indexes
             self._by_tenant[tenant_id].discard(memory_id)
+            if "agent_id" in metadata:
+                self._by_agent[(tenant_id, metadata["agent_id"])].discard(memory_id)
+            if "layer" in metadata:
+                self._by_layer[(tenant_id, metadata["layer"])].discard(memory_id)
+            if "project" in metadata:
+                self._by_project[(tenant_id, metadata["project"])].discard(memory_id)
 
             # Remove vector
             del self._vectors[memory_id]
@@ -177,6 +207,8 @@ class InMemoryVectorStore(IVectorStore):
             if not vector_data or vector_data["tenant_id"] != tenant_id:
                 return False
 
+            old_metadata = vector_data.get("metadata", {})
+
             # Handle multi-vector
             if isinstance(embedding, dict):
                 vec_list = (
@@ -188,10 +220,36 @@ class InMemoryVectorStore(IVectorStore):
                 vec_list = embedding
 
             # Update embedding
-            vector_data["embedding"] = np.array(vec_list, dtype=np.float32)
+            vector_data["embedding"] = self._normalize(
+                np.array(vec_list, dtype=np.float32)
+            )
 
-            # Update metadata if provided
+            # Update metadata and indexes if provided
             if metadata is not None:
+                # Update agent index
+                if "agent_id" in old_metadata:
+                    self._by_agent[(tenant_id, old_metadata["agent_id"])].discard(
+                        memory_id
+                    )
+                if "agent_id" in metadata:
+                    self._by_agent[(tenant_id, metadata["agent_id"])].add(memory_id)
+
+                # Update layer index
+                if "layer" in old_metadata:
+                    self._by_layer[(tenant_id, old_metadata["layer"])].discard(
+                        memory_id
+                    )
+                if "layer" in metadata:
+                    self._by_layer[(tenant_id, metadata["layer"])].add(memory_id)
+
+                # Update project index
+                if "project" in old_metadata:
+                    self._by_project[(tenant_id, old_metadata["project"])].discard(
+                        memory_id
+                    )
+                if "project" in metadata:
+                    self._by_project[(tenant_id, metadata["project"])].add(memory_id)
+
                 vector_data["metadata"] = metadata
 
             return True
@@ -234,14 +292,25 @@ class InMemoryVectorStore(IVectorStore):
                     else:
                         vec_list = embedding
 
+                    meta = metadata or {}
                     vector_data = {
-                        "embedding": np.array(vec_list, dtype=np.float32),
+                        "embedding": self._normalize(
+                            np.array(vec_list, dtype=np.float32)
+                        ),
                         "tenant_id": tenant_id,
-                        "metadata": metadata,
+                        "metadata": meta,
                     }
 
                     self._vectors[memory_id] = vector_data
                     self._by_tenant[tenant_id].add(memory_id)
+
+                    # Update indexes
+                    if "agent_id" in meta:
+                        self._by_agent[(tenant_id, meta["agent_id"])].add(memory_id)
+                    if "layer" in meta:
+                        self._by_layer[(tenant_id, meta["layer"])].add(memory_id)
+                    if "project" in meta:
+                        self._by_project[(tenant_id, meta["project"])].add(memory_id)
 
                     count += 1
                 except Exception:
@@ -298,6 +367,20 @@ class InMemoryVectorStore(IVectorStore):
 
             for memory_id in memory_ids:
                 if memory_id in self._vectors:
+                    metadata = self._vectors[memory_id].get("metadata", {})
+                    # Remove from all indexes
+                    if "agent_id" in metadata:
+                        self._by_agent[(tenant_id, metadata["agent_id"])].discard(
+                            memory_id
+                        )
+                    if "layer" in metadata:
+                        self._by_layer[(tenant_id, metadata["layer"])].discard(
+                            memory_id
+                        )
+                    if "project" in metadata:
+                        self._by_project[(tenant_id, metadata["project"])].discard(
+                            memory_id
+                        )
                     del self._vectors[memory_id]
 
             del self._by_tenant[tenant_id]
@@ -336,5 +419,8 @@ class InMemoryVectorStore(IVectorStore):
 
             self._vectors.clear()
             self._by_tenant.clear()
+            self._by_agent.clear()
+            self._by_layer.clear()
+            self._by_project.clear()
 
             return count

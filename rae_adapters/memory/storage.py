@@ -98,6 +98,18 @@ class InMemoryStorage(IMemoryStorage):
             memory_id = uuid4()
             now = datetime.now(timezone.utc)
 
+            # Store additional fields in metadata if not explicit columns in this simple adapter
+            meta = metadata or {}
+            if project:
+                meta["project"] = project
+            if session_id:
+                meta["session_id"] = session_id
+            if source:
+                meta["source"] = source
+            meta["info_class"] = info_class
+            if governance:
+                meta["governance"] = governance
+
             # Calculate expiration from TTL if provided and not already set
             expiration = expires_at
             if ttl is not None and expiration is None:
@@ -112,20 +124,15 @@ class InMemoryStorage(IMemoryStorage):
                 "tenant_id": tenant_id,
                 "agent_id": agent_id,
                 "tags": tags or [],
-                "metadata": metadata or {},
+                "metadata": meta,
                 "embedding": embedding,
                 "importance": importance or 0.5,
                 "created_at": now,
                 "last_accessed_at": now,
                 "expires_at": expiration,
-                "usage_count": 0,
+                "access_count": 0,
                 "memory_type": memory_type,
-                "project": project,
-                "session_id": session_id,
-                "source": source,
                 "strength": strength,
-                "info_class": info_class,
-                "governance": governance or {},
             }
 
             # Store memory
@@ -222,29 +229,6 @@ class InMemoryStorage(IMemoryStorage):
 
             return True
 
-    def _matches_filters(self, memory: dict[str, Any], filters: dict[str, Any]) -> bool:
-        """Check if memory matches generic filters (supports dot notation)."""
-        for key, value in filters.items():
-            # Handle dot notation (e.g. governance.is_failure)
-            parts = key.split(".")
-            current: Any = memory
-
-            try:
-                for part in parts:
-                    if isinstance(current, dict):
-                        current = current.get(part)
-                    else:
-                        current = None
-                        break
-
-                # Check match (simple equality for now, string conversion for loose matching)
-                if str(current).lower() != str(value).lower():
-                    return False
-            except Exception:
-                return False
-
-        return True
-
     async def list_memories(
         self,
         tenant_id: str,
@@ -261,8 +245,6 @@ class InMemoryStorage(IMemoryStorage):
         **kwargs: Any,
     ) -> list[dict[str, Any]]:
         """List memories with filtering."""
-        project = kwargs.get("project")
-
         async with self._lock:
             # Start with tenant memories
             candidate_ids = self._by_tenant[tenant_id].copy()
@@ -282,27 +264,15 @@ class InMemoryStorage(IMemoryStorage):
                 candidate_ids &= tag_ids
 
             # Get memories and sort by created_at
-            memories = []
-            for mid in candidate_ids:
-                if mid not in self._memories:
-                    continue
-
-                memory = self._memories[mid]
-
-                # Apply generic filters
-                if filters and not self._matches_filters(memory, filters):
-                    continue
-
-                # Apply project filter
-                if project and memory.get("project") != project:
-                    continue
-
-                memories.append(memory.copy())
-
+            memories = [
+                self._memories[mid].copy()
+                for mid in candidate_ids
+                if mid in self._memories
+            ]
             memories.sort(key=lambda m: m["created_at"], reverse=True)
 
             # Apply pagination
-            return cast(list[dict[str, Any]], memories[offset : offset + limit])
+            return memories[offset : offset + limit]
 
     async def count_memories(
         self,
@@ -336,7 +306,7 @@ class InMemoryStorage(IMemoryStorage):
             if not memory or memory["tenant_id"] != tenant_id:
                 return False
 
-            memory["usage_count"] = memory.get("usage_count", 0) + 1
+            memory["access_count"] = memory.get("access_count", 0) + 1
             memory["last_accessed_at"] = datetime.now(timezone.utc)
 
             return True
@@ -412,24 +382,18 @@ class InMemoryStorage(IMemoryStorage):
     ) -> int:
         """Delete memories matching metadata filter."""
         async with self._lock:
-            # Narrow down candidates using indexes (significant speed boost over full scan)
-            candidate_ids = (
-                self._by_tenant.get(tenant_id, set())
-                & self._by_agent.get((tenant_id, agent_id), set())
-                & self._by_layer.get((tenant_id, layer), set())
-            )
-
             matching_ids = []
-            for memory_id in candidate_ids:
-                memory = self._memories.get(memory_id)
-                if not memory:
-                    continue
-
-                # Check if metadata matches filter
-                if self._matches_metadata_filter(
-                    memory.get("metadata", {}), metadata_filter
+            for memory_id, memory in self._memories.items():
+                if (
+                    memory["tenant_id"] == tenant_id
+                    and memory["agent_id"] == agent_id
+                    and memory["layer"] == layer
                 ):
-                    matching_ids.append(memory_id)
+                    # Check if metadata matches filter
+                    if self._matches_metadata_filter(
+                        memory.get("metadata", {}), metadata_filter
+                    ):
+                        matching_ids.append(memory_id)
 
             for memory_id in matching_ids:
                 await self._delete_memory_internal(memory_id)
@@ -445,17 +409,13 @@ class InMemoryStorage(IMemoryStorage):
     ) -> int:
         """Delete memories below importance threshold."""
         async with self._lock:
-            candidate_ids = (
-                self._by_tenant.get(tenant_id, set())
-                & self._by_agent.get((tenant_id, agent_id), set())
-                & self._by_layer.get((tenant_id, layer), set())
-            )
-
             matching_ids = [
                 memory_id
-                for memory_id in candidate_ids
+                for memory_id, memory in self._memories.items()
                 if (
-                    (memory := self._memories.get(memory_id))
+                    memory["tenant_id"] == tenant_id
+                    and memory["agent_id"] == agent_id
+                    and memory["layer"] == layer
                     and memory.get("importance", 0) < importance_threshold
                 )
             ]
@@ -477,28 +437,23 @@ class InMemoryStorage(IMemoryStorage):
     ) -> list[dict[str, Any]]:
         """Search memories using simple substring matching."""
         async with self._lock:
-            candidate_ids = (
-                self._by_tenant.get(tenant_id, set())
-                & self._by_agent.get((tenant_id, agent_id), set())
-                & self._by_layer.get((tenant_id, layer), set())
-            )
-
             results = []
             query_lower = query.lower()
 
-            for memory_id in candidate_ids:
-                memory = self._memories.get(memory_id)
-                if not memory:
-                    continue
-
-                # Simple substring search in content
-                content_lower = memory["content"].lower()
-                if query_lower in content_lower:
-                    # Calculate simple score based on position
-                    score = 1.0 - (
-                        content_lower.index(query_lower) / len(content_lower)
-                    )
-                    results.append({"memory": memory.copy(), "score": score})
+            for memory in self._memories.values():
+                if (
+                    memory["tenant_id"] == tenant_id
+                    and memory["agent_id"] == agent_id
+                    and memory["layer"] == layer
+                ):
+                    # Simple substring search in content
+                    content_lower = memory["content"].lower()
+                    if query_lower in content_lower:
+                        # Calculate simple score based on position
+                        score = 1.0 - (
+                            content_lower.index(query_lower) / len(content_lower)
+                        )
+                        results.append({"memory": memory.copy(), "score": score})
 
             # Sort by score descending
             results.sort(key=lambda x: x["score"], reverse=True)
@@ -513,18 +468,14 @@ class InMemoryStorage(IMemoryStorage):
     ) -> int:
         """Delete expired memories."""
         async with self._lock:
-            candidate_ids = (
-                self._by_tenant.get(tenant_id, set())
-                & self._by_agent.get((tenant_id, agent_id), set())
-                & self._by_layer.get((tenant_id, layer), set())
-            )
-
             now = datetime.now(timezone.utc)
             matching_ids = [
                 memory_id
-                for memory_id in candidate_ids
+                for memory_id, memory in self._memories.items()
                 if (
-                    (memory := self._memories.get(memory_id))
+                    memory["tenant_id"] == tenant_id
+                    and memory["agent_id"] == agent_id
+                    and memory["layer"] == layer
                     and memory.get("expires_at")
                     and memory["expires_at"] < now
                 )
@@ -548,7 +499,7 @@ class InMemoryStorage(IMemoryStorage):
                 return False
 
             memory["last_accessed_at"] = datetime.now(timezone.utc)
-            memory["usage_count"] = memory.get("usage_count", 0) + 1
+            memory["access_count"] = memory.get("access_count", 0) + 1
 
             return True
 
@@ -619,35 +570,17 @@ class InMemoryStorage(IMemoryStorage):
         """Apply importance decay to all memories for a tenant."""
         async with self._lock:
             count = 0
-            memory_ids = self._by_tenant.get(tenant_id, set())
-
-            for mid in memory_ids:
-                memory = self._memories.get(mid)
+            for memory_id in self._by_tenant[tenant_id]:
+                memory = self._memories.get(memory_id)
                 if not memory:
                     continue
 
-                old_importance = float(memory.get("importance", 0.5))
-
-                # Simple linear decay
-                actual_decay = decay_rate
-
-                # Optional: boost based on access stats (slower decay)
-                if consider_access_stats:
-                    usage = int(memory.get("usage_count", 0))
-                    if usage > 0:
-                        # Logarithmic dampening of decay based on usage
-                        import math
-
-                        dampening = 1.0 / (1.0 + math.log1p(usage))
-                        actual_decay *= dampening
-
-                new_importance = max(0.0, old_importance - actual_decay)
-
-                if new_importance != old_importance:
-                    memory["importance"] = new_importance
-                    memory["modified_at"] = datetime.now(timezone.utc)
-                    count += 1
-
+                # Apply simple decay
+                current = float(memory.get("importance", 0.5))
+                # If consider_access_stats, we could check last_accessed_at, but keeping it simple for now
+                new_val = current * decay_rate
+                memory["importance"] = new_val
+                count += 1
             return count
 
     def _matches_metadata_filter(

@@ -130,7 +130,7 @@ class InMemoryStorage(IMemoryStorage):
                 "created_at": now,
                 "last_accessed_at": now,
                 "expires_at": expiration,
-                "usage_count": 0,
+                "access_count": 0,
                 "memory_type": memory_type,
                 "strength": strength,
             }
