@@ -1,0 +1,85 @@
+﻿Co dokładnie się dzieje
+Widzimy powtarzający się wzorzec:
+STABILITY MODE ACTIVE (Math Fallback).
+Based on my memory manifold, here are the core facts:
+STABILITY MODE ACTIVE.
+No specific memories found to answer this query mathematically.
+On jest:
+    • wielokrotnie konkatenowany
+    • bez deduplikacji
+    • zapisany jako episodic
+    • tagowany jako fallback + final_answer
+To oznacza:
+    1. Agent nie znalazł pamięci.
+    2. Wszedł w STABILITY MODE.
+    3. Wygenerował fallback.
+    4. Ten fallback został zapisany jako pamięć.
+    5. Kolejna iteracja zobaczyła tę pamięć.
+    6. System znów wszedł w fallback.
+    7. I zapisał to jeszcze raz.
+To jest klasyczny „feedback ingestion loop”.
+
+To jest ważne
+To nie jest błąd retrieval.
+To jest błąd polityki zapisu fallbacku.
+Fallback nie powinien być:
+    • traktowany jako merytoryczna pamięć,
+    • trafiać do Episodic,
+    • trafiać do indeksu retrievable,
+    • ani brać udziału w „manifold memory”.
+
+Jak to naprawić (czysto architektonicznie)
+1️⃣ Fallback musi mieć flagę: non_retrievable
+Jeśli:
+policy == fallback
+to:
+    • zapisuj w logu operacyjnym,
+    • ale nie indeksuj do retrievalu,
+    • nie wysyłaj do embeddera.
+
+2️⃣ Dodatkowo: filtr anty-echo
+Jeśli tekst zawiera:
+STABILITY MODE ACTIVE
+to:
+    • nie zapisuj jako wiedzy,
+    • albo nadaj importance = 0
+    • albo wrzuć do warstwy transient/working z TTL.
+
+3️⃣ Dedup hash
+Przed zapisem:
+    • oblicz hash tekstu
+    • jeśli istnieje identyczny hash w ostatnich N zapisach → skip
+To zatrzymuje spiralę.
+
+Dlaczego to się pojawiło?
+Bo masz system:
+    • agentic
+    • audytowalny
+    • zapisujący final_answer
+    • w trybie hard frames
+A fallback jest traktowany jak „normalna odpowiedź”.
+W systemach klasycznych to by się nie wydarzyło, bo fallback nie jest pamięcią.
+U Ciebie — wszystko jest pamięcią.
+To jest cena potężnej architektury.
+
+To NIE jest problem ogólności
+To jest brak rozdziału:
+    • „epistemiczna wiedza”
+vs
+    • „stan operacyjny systemu”
+Fallback to stan operacyjny.
+Nie wiedza.
+
+Dobra wiadomość
+To jest łatwe do naprawy.
+I paradoksalnie oznacza, że Twój system działa dokładnie tak, jak powinien — po prostu konsekwentnie.
+
+Jeśli chcesz, mogę zaproponować formalną klasyfikację:
+    • MEMORY_TYPE_EPISTEMIC
+    • MEMORY_TYPE_OPERATIONAL
+    • MEMORY_TYPE_META
+    • MEMORY_TYPE_FALLBACK
+I zasady, co może być indeksowane.
+Bo bez tego w agentic systemach zawsze pojawi się echo.
+
+

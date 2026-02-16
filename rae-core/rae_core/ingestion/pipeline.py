@@ -55,8 +55,12 @@ class UniversalIngestPipeline:
                 logger.error("config_load_failed", path=path, error=str(e))
         return {}
 
-    async def process(self, text: str, metadata: Optional[Dict[str, Any]] = None) -> tuple[List[IngestChunk], ContentSignature, List[IngestAudit]]:
+    async def process(self, text: str, metadata: Optional[Dict[str, Any]] = None) -> tuple[List[IngestChunk], ContentSignature, List[IngestAudit], str]:
         audit_trail = []
+        
+        # SYSTEM 92.2: Dedup Hash (Stop the spiral)
+        import hashlib
+        text_hash = hashlib.md5(text.encode()).hexdigest()
         
         # Stage 1: Normalize
         normalized_text, audit_1 = self.normalizer.normalize(text, metadata)
@@ -74,13 +78,28 @@ class UniversalIngestPipeline:
         chunks, audit_4 = self.segmenter.segment(normalized_text, policy, signature)
         audit_trail.append(audit_4)
         
+        # Attach hash to metadata for downstream dedup if needed
+        for chunk in chunks:
+            if not chunk.metadata: chunk.metadata = {}
+            chunk.metadata["content_hash"] = text_hash
+
         # Stage 5: Compression / Semantic Folding
         compressed_chunks, prov_map, audit_5 = self.compressor.compress(chunks, policy)
         audit_trail.append(audit_5)
         
+        # Attach provenance and policy to chunks
+        for i, chunk in enumerate(compressed_chunks):
+            if not chunk.metadata: chunk.metadata = {}
+            chunk.metadata.update({
+                "ingest_signature": signature.to_dict(),
+                "ingest_policy": policy,
+                "ingest_version": "1.0.0",
+                "compression_provenance": prov_map.get(i, [i])
+            })
+            
         logger.info("universal_ingest_complete", 
                     chunk_count=len(compressed_chunks),
                     mode=signature.struct.get("mode"),
                     policy=policy)
         
-        return compressed_chunks, signature, audit_trail
+        return compressed_chunks, signature, audit_trail, policy

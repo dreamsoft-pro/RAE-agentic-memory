@@ -49,8 +49,16 @@ PII_PATTERNS = {
         re.IGNORECASE,
     ),
     # Basic name patterns (capitalized words)
-    "name_pattern": re.compile(r"\b[A-Z][a-z]+\s+[A-Z][a-z]+\b"),
+    # SYSTEM 92.5: Refined to avoid technical term collision (e.g., Query Signature)
+    "name_pattern": re.compile(r"\b[A-Z][a-z]{2,}\s+[A-Z][a-z]{2,}\b"),
 }
+
+# Technical terms to EXEMPT from name_pattern (White list)
+TECHNICAL_EXEMPTIONS = [
+    "Core Objective", "Query Signature", "Detection Logic", "System 93",
+    "Math Fallback", "Stability Mode", "Episodic Log", "Timeline Indexing",
+    "Candidate Gating", "Vector Scoring", "Lexical Filtering"
+]
 
 
 # Replacement tokens
@@ -134,12 +142,22 @@ class PIIScrubber:
             if preserve_structure:
                 # Replace with token of similar length
                 def replacer(m: Any, r: str = replacement) -> str:
-                    return self._preserve_length(m.group(), r)
+                    match_str = m.group()
+                    # Skip if match is in technical exemptions
+                    if any(term.lower() in match_str.lower() for term in TECHNICAL_EXEMPTIONS):
+                        return match_str
+                    return self._preserve_length(match_str, r)
 
                 scrubbed = pattern.sub(replacer, scrubbed)
             else:
                 # Simple replacement
-                scrubbed = pattern.sub(replacement, scrubbed)
+                def simple_replacer(m: Any, r: str = replacement) -> str:
+                    match_str = m.group()
+                    if any(term.lower() in match_str.lower() for term in TECHNICAL_EXEMPTIONS):
+                        return match_str
+                    return r
+                
+                scrubbed = pattern.sub(simple_replacer, scrubbed)
 
         return scrubbed
 

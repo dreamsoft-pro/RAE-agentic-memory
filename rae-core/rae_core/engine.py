@@ -31,6 +31,7 @@ class RAEEngine:
         self.embedding_provider = embedding_provider
         self.llm_provider = llm_provider
         self.settings = settings
+        self.cache_provider = cache_provider
 
         # Initialize Math Layer Controller (The Brain)
         from rae_core.math.controller import MathLayerController
@@ -402,7 +403,7 @@ class RAEEngine:
         pipeline = UniversalIngestPipeline()
         
         # Process text through the 5-stage pipeline
-        chunks, signature, audit_trail = await pipeline.process(
+        chunks, signature, audit_trail, policy = await pipeline.process(
             content, 
             metadata=kwargs.get("metadata")
         )
@@ -410,6 +411,25 @@ class RAEEngine:
         if not chunks:
             return None
 
+        # SYSTEM 92.2: Dedup Hash Check (Stop the spiral)
+        if self.cache_provider and chunks:
+            agent_id = kwargs.get("agent_id", "default")
+            project = kwargs.get("project", "default")
+            text_hash = chunks[0].metadata.get("content_hash")
+            
+            cache_key = f"last_mem_hash:{project}:{agent_id}"
+            last_hash = await self.cache_provider.get(cache_key)
+            
+            if last_hash == text_hash:
+                logger.info("skipping_duplicate_memory_write", project=project, agent_id=agent_id)
+                return None
+            
+            await self.cache_provider.set(cache_key, text_hash, ttl=300) # 5 min protection
+
+        # SYSTEM 92.3: Operational State Isolation
+        # If it's a fallback, we don't want it to be highly retrievable or vectorized
+        is_operational = (policy == "POLICY_FALLBACK")
+        
         import uuid
         parent_id = str(uuid.uuid4())
         memory_ids = []
@@ -425,21 +445,32 @@ class RAEEngine:
                 "chunk_index": i,
                 "total_chunks": len(chunks),
                 "is_chunk": True,
-                "ingest_audit": [a.__dict__ for a in audit_trail] if audit_trail else []
+                "ingest_audit": [a.__dict__ for a in audit_trail] if audit_trail else [],
+                "is_operational": is_operational
             })
             
             # Use original source if provided, otherwise default to chunk index
             base_source = kwargs.get("source", "universal_ingest")
             chunk_kwargs["source"] = f"{base_source} [p{i+1}/{len(chunks)}]"
             
+            # Operational data has zero importance for semantic retrieval
+            if is_operational:
+                chunk_kwargs["importance"] = 0.0
+                chunk_kwargs["tags"] = chunk_kwargs.get("tags", []) + ["operational", "non_retrievable"]
+            
             m_id = await self.memory_storage.store_memory(**chunk_kwargs)
             
-            # Embed and store vector
-            embed_kwargs = chunk_kwargs.copy()
-            if "content" in embed_kwargs: del embed_kwargs["content"]
-            if "tenant_id" in embed_kwargs: del embed_kwargs["tenant_id"]
-            
-            await self._embed_and_store_vector(m_id, chunk.content, tenant_id, **embed_kwargs)
+            # Skip vector store for operational/fallback data (Anti-Echo)
+            if not is_operational:
+                # Embed and store vector
+                embed_kwargs = chunk_kwargs.copy()
+                if "content" in embed_kwargs: del embed_kwargs["content"]
+                if "tenant_id" in embed_kwargs: del embed_kwargs["tenant_id"]
+                
+                await self._embed_and_store_vector(m_id, chunk.content, tenant_id, **embed_kwargs)
+            else:
+                logger.info("skipping_vector_store_for_operational_data", memory_id=str(m_id))
+                
             memory_ids.append(m_id)
             
         return memory_ids[0]

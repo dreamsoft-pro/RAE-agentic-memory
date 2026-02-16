@@ -66,6 +66,7 @@ class MemoryResult(BaseModel):
     score: float
     layer: str
     importance: float
+    timestamp: Optional[str] = None
     tags: list[str] = Field(default_factory=list)
     metadata: dict[str, Any] = Field(default_factory=dict)
 
@@ -149,18 +150,28 @@ async def query_memories(
                 filters=request.filters,
             )
 
-            results = [
-                MemoryResult(
-                    id=res.memory_id,
-                    content=res.content,
-                    score=res.score,
-                    layer=getattr(res, "layer", "semantic"),
-                    importance=getattr(res, "importance", 0.5),
-                    tags=getattr(res, "tags", []),
-                    metadata=getattr(res, "metadata", {}),
+            results = []
+            for res in response.results:
+                # Handle timestamp from engine results
+                ts = res.metadata.get("created_at") if hasattr(res, "metadata") else None
+                if not ts and hasattr(res, "timestamp"):
+                    ts = res.timestamp
+                
+                if hasattr(ts, "isoformat"):
+                    ts = ts.isoformat()
+
+                results.append(
+                    MemoryResult(
+                        id=res.memory_id,
+                        content=res.content,
+                        score=res.score,
+                        layer=getattr(res, "layer", "semantic"),
+                        importance=getattr(res, "importance", 0.5),
+                        timestamp=ts,
+                        tags=getattr(res, "tags", []),
+                        metadata=getattr(res, "metadata", {}),
+                    )
                 )
-                for res in response.results
-            ]
 
             if results:
                 await rae_service.update_memory_access_batch(
@@ -179,6 +190,7 @@ async def list_memories(
     offset: int = Query(0, ge=0),
     project: Optional[str] = None,
     layer: Optional[str] = None,
+    sort: Optional[str] = Query(None, description="Sort field and direction, e.g. 'created_at:desc'"),
     tenant_id: UUID = Depends(get_and_verify_tenant_id),
     rae_service: RAECoreService = Depends(get_rae_core_service),
 ):
@@ -192,6 +204,19 @@ async def list_memories(
             layer=layer,
         )
 
+        # Apply manual sort if needed (since underlying storage might not support it yet)
+        if sort:
+            try:
+                field, direction = sort.split(":")
+                reverse = direction.lower() == "desc"
+                # Map 'created_at' to 'timestamp' or use the field as is
+                sort_field = "created_at" if field == "created_at" else field
+                memories.sort(
+                    key=lambda x: x.get(sort_field) or "", reverse=reverse
+                )
+            except Exception as e:
+                logger.warning("manual_sort_failed", error=str(e), sort=sort)
+
         results = []
         for m in memories:
             metadata_val = m.get("metadata", {})
@@ -202,6 +227,11 @@ async def list_memories(
                     metadata_val = json.loads(metadata_val)
                 except Exception:
                     metadata_val = {}
+
+            # Handle created_at formatting
+            ts = m.get("created_at")
+            if hasattr(ts, "isoformat"):
+                ts = ts.isoformat()
 
             results.append(
                 MemoryResult(
@@ -214,6 +244,7 @@ async def list_memories(
                     score=1.0,
                     layer=m.get("layer", "semantic"),
                     importance=m.get("importance", 0.5),
+                    timestamp=ts,
                     tags=m.get("tags", []),
                     metadata=metadata_val,
                 )
@@ -249,12 +280,18 @@ async def get_memory(
             except Exception:
                 metadata_val = {}
 
+        # Handle timestamp
+        ts = memory.get("created_at")
+        if hasattr(ts, "isoformat"):
+            ts = ts.isoformat()
+
         return MemoryResult(
             id=str(memory.get("id")),
             content=memory.get("content", ""),
             score=1.0,
             layer=memory.get("layer", "semantic"),
             importance=memory.get("importance", 0.5),
+            timestamp=ts,
             tags=memory.get("tags", []),
             metadata=metadata_val,
         )

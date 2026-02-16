@@ -70,15 +70,23 @@ class RAERuntime:
         }
 
         # Policy: Capture EVERYTHING significant (RAE-First Enforcement)
-        # 1. Final Answers -> Episodic
+        # 1. Final Answers -> Episodic (Knowledge) or Working (Operational)
         if action.type == AgentActionType.FINAL_ANSWER:
-            logger.info("memory_policy_triggered", rule="final_answer_store")
+            # SYSTEM 92.4: Fallback isolation in Runtime
+            is_fallback = "fallback" in action.signals
+            target_layer = "working" if is_fallback else "episodic"
+            
+            logger.info("memory_policy_triggered", 
+                        rule="final_answer_store", 
+                        is_fallback=is_fallback,
+                        layer=target_layer)
+                        
             await self.storage.store_memory(
                 content=str(action.content),
-                layer="episodic",
+                layer=target_layer,
                 tenant_id=input_payload.tenant_id,
                 agent_id=agent_id,
-                tags=base_tags + ["final_answer"],
+                tags=base_tags + (["final_answer"] if not is_fallback else ["operational_fallback"]),
                 metadata=base_metadata,
                 project=project,
                 session_id=session_id,

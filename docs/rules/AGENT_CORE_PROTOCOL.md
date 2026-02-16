@@ -233,3 +233,13 @@ When delegating tasks to external nodes (e.g., node1/KUBUS), follow the **Agenti
 - **Oscillation Detection**: If a weight change is reversed by the next tuning cycle (A -> B -> A), the system MUST halt automated tuning for that tenant and request HITL (Human-in-the-loop) review.
 - **Baseline Fallback**: Always maintain a "Golden Baseline" configuration. If performance (MRR/HitRate) drops by >15% after tuning, revert to baseline immediately.
 
+### 14.3 Agentic Loop Prevention (System 92.0)
+- **Memory Classification**:
+    - `MEMORY_TYPE_EPISTEMIC`: Persistent knowledge (Episodic/Semantic). Indexable & Vectorized.
+    - `MEMORY_TYPE_OPERATIONAL`: System state, thoughts, intermediate steps. Isolated to Working layer. **NON-RETRIEVABLE** via semantic search.
+    - `MEMORY_TYPE_FALLBACK`: Error messages, timeouts, "No specific memories found". Importance = 0.0. Skip vector indexing.
+- **Anti-Echo Enforcement**:
+    - `ContentSignatureDetector` must block patterns like `STABILITY MODE ACTIVE` from persistent layers.
+    - **Dedup Hash**: Every ingestion cycle MUST check the `content_hash` against the latest agent activity to prevent identical consecutive writes.
+- **Cleanup Mandate**: If a feedback loop is detected (e.g., 10+ similar operational memories in 5 mins), the Agent MUST purge the polluted project state and perform a "Hard Reset" of the agentic cycle.
+

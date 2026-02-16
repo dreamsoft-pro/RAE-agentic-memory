@@ -92,9 +92,9 @@ class RAECoreService:
 
         self.reflection_engine = ReflectionEngineV2(self)
 
-        # New: RAERuntime for RAE-First flow
+        # New: RAERuntime for RAE-First flow (Use Engine for implicit capture policy enforcement)
         self.runtime = RAERuntime(
-            self.postgres_adapter, None
+            cast(Any, self.engine), None
         )  # Agent set per execution
 
         self.szubar_mode = False  # Tryb Szubartowskiego (Pressure/Emergent Learning)
@@ -263,7 +263,7 @@ class RAECoreService:
             ),
             "fulltext": FullTextStrategy(memory_storage=self.postgres_adapter),
         }
-        
+
         # SYSTEM 40.15: Optional Graph Store for Lite Mode
         graph_repo = None
         if postgres_pool:
@@ -407,7 +407,15 @@ class RAECoreService:
                                     f"- {content} (Reason: {trace})\n"
                                 )
 
-                system_prompt = f"RELEVANT PROJECT CONTEXT:\n{context_text}\n{pressure_constraints}\n\nTask: {rae_input.content}"
+                system_prompt = (
+                    "YOU ARE A RAE HIVE AGENT. YOU OPERATE WITHIN AN AGNOSTIC, DETERMINISTIC ENGINE.\n"
+                    "CORE MANDATES:\n"
+                    "1. MODEL AGNOSTIC: Do not assume specific LLM or embedding library (e.g. use standard Python, avoid sklearn/torch unless specified).\n"
+                    "2. ARCHITECTURAL PURITY: Follow RABO ontology and System 93 specs.\n"
+                    "3. NO BLOAT: Favor algorithmic elegance (O(log n)) over heavy libraries.\n\n"
+                    f"RELEVANT PROJECT CONTEXT:\n{context_text}\n{pressure_constraints}\n\n"
+                    f"Task: {rae_input.content}"
+                )
 
                 # 2. Generate response using LLM or DESIGNED MATH (Fallback)
                 try:
@@ -473,59 +481,24 @@ class RAECoreService:
         # Initialize Runtime with the transient agent
         self.runtime.agent = TransientAgent(self)
 
-        # Create input with context
-        rae_input = RAEInput(
-            request_id=uuid4(),
-            tenant_id=str(tenant_id),
-            content=prompt,
-            context={
-                "project": project
-                or agent_id,  # Fallback to agent_id if project not provided
-                "session_id": session_id,
-                "agent_id": agent_id,
-            },
+        # 4. Context Resolution (ISO 27000 Isolation)
+        project_canonical = self._resolve_project_context(project)
+        agent_canonical = agent_id or "default"
+
+        # Execute through RAERuntime (Enforces Hard Frames & Implicit Capture)
+        return await self.runtime.process(
+            RAEInput(
+                content=prompt,
+                tenant_id=str(tenant_id),
+                request_id=uuid4(),
+                context={
+                    "agent_id": agent_canonical,
+                    "project": project_canonical,
+                    "session_id": session_id or "default-session",
+                    "metadata": metadata or {},
+                },
+            )
         )
-
-        # Execute through runtime
-        action = await self.runtime.process(rae_input)
-
-        # 3. SIDE EFFECT: Automatic Reflection Cycle
-        # Trigger reflection if the action has important signals
-        if action.signals:
-            try:
-                from apps.memory_api.models.reflection_v2_models import (
-                    OutcomeType,
-                    ReflectionContext,
-                )
-
-                refl_ctx = ReflectionContext(
-                    tenant_id=str(tenant_id),
-                    project_id=agent_id,
-                    outcome=OutcomeType.SUCCESS,
-                    task_goal=prompt,
-                    events=[],  # interaction history would go here
-                    session_id=(
-                        UUID(session_id)
-                        if session_id and len(session_id) == 36
-                        else None
-                    ),
-                )
-                refl_result = await self.reflection_engine.generate_reflection(refl_ctx)
-                await self.reflection_engine.store_reflection(
-                    refl_result, str(tenant_id), agent_id
-                )
-                logger.info("automated_reflection_stored", project=agent_id)
-            except Exception as e:
-                logger.warning("automated_reflection_failed", error=str(e))
-
-        logger.info(
-            "action_executed_via_runtime",
-            tenant_id=str(tenant_id),
-            agent_id=agent_id,
-            action_type=action.type,
-        )
-
-        return action
 
     async def ainit(self):
         """Perform asynchronous initialization of adapters."""

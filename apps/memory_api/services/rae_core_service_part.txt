@@ -1,0 +1,198 @@
+    async def execute_action(
+        self,
+        tenant_id: str | UUID,
+        agent_id: str,
+        prompt: str,
+        session_id: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        project: Optional[str] = None,
+    ) -> AgentAction:
+        """
+        Execute an agent action through RAERuntime (RAE-First).
+        """
+        from uuid import uuid4
+
+        from rae_core.interfaces.agent import BaseAgent
+
+        # Create a transient agent wrapper for the LLM
+        class TransientAgent(BaseAgent):
+            def __init__(self, service: "RAECoreService"):
+                self.service = service
+
+            async def run(self, rae_input: RAEInput) -> AgentAction:
+                # 1. Build context using core ContextBuilder (Agnostic)
+                from rae_core.context.builder import ContextBuilder
+
+                builder = ContextBuilder(max_tokens=4000)
+
+                agent_id = rae_input.context.get("agent_id", "default")
+                project = rae_input.context.get("project", "default")
+
+                # Search for relevant memories in RAE across ALL layers
+                search_results = await self.service.engine.search_memories(
+                    query=rae_input.content,
+                    tenant_id=rae_input.tenant_id,
+                    agent_id=agent_id,
+                    project=project,
+                    layer=None,
+                    top_k=10,
+                )
+
+                # Use core builder to assemble LLM-ready context
+                context_text, _ = builder.build_context(
+                    memories=search_results, query=rae_input.content
+                )
+
+                # RAE-SZUBAR PRESSURE: Inject failures
+                pressure_constraints = ""
+                if self.service.szubar_mode:
+                    # 1. Search for failures in the current context
+                    failures = await self.service.engine.search_memories(
+                        query=rae_input.content,
+                        tenant_id=rae_input.tenant_id,
+                        agent_id="default",  # Failures are usually project-wide
+                        project=project,
+                        layer=None,
+                        top_k=5,
+                        filters={"governance.is_failure": "true"},
+                    )
+
+                    # 2. If nothing found, try project-wide wildcard search for failures
+                    if not failures:
+                        failures = await self.service.engine.search_memories(
+                            query="*",
+                            tenant_id=rae_input.tenant_id,
+                            agent_id="default",
+                            project=project,
+                            layer=None,
+                            top_k=5,
+                            filters={"governance.is_failure": "true"},
+                        )
+
+                    if failures:
+                        pressure_constraints = (
+                            "
+CRITICAL: DO NOT REPEAT THESE FAILURES:
+"
+                        )
+                        for f in failures:
+                            # Handle both dict and potentially other types from adapters
+                            if isinstance(f, dict):
+                                gov = f.get("governance") or {}
+                                # Handle case where governance might be stringified JSON
+                                if isinstance(gov, str):
+                                    try:
+                                        import json
+
+                                        gov = json.loads(gov)
+                                    except Exception:
+                                        gov = {}
+                                trace = gov.get("failure_trace", "Unknown failure")
+                                content = f.get("content", "Unknown error")
+                                pressure_constraints += (
+                                    f"- {content} (Reason: {trace})
+"
+                                )
+
+                system_prompt = (
+                    "YOU ARE A RAE HIVE AGENT. YOU OPERATE WITHIN AN AGNOSTIC, DETERMINISTIC ENGINE.
+"
+                    "CORE MANDATES:
+"
+                    "1. MODEL AGNOSTIC: Do not assume specific LLM or embedding library (e.g. use standard Python, avoid sklearn/torch unless specified).
+"
+                    "2. ARCHITECTURAL PURITY: Follow RABO ontology and System 93 specs.
+"
+                    "3. NO BLOAT: Favor algorithmic elegance (O(log n)) over heavy libraries.
+
+"
+                    f"RELEVANT PROJECT CONTEXT:
+{context_text}
+{pressure_constraints}
+
+"
+                    f"Task: {rae_input.content}"
+                )
+
+                # 2. Generate response using LLM or DESIGNED MATH (Fallback)
+                try:
+                    import asyncio
+
+                    # Check if LLM is actually available
+                    if not self.service.engine.llm_provider:
+                        raise RuntimeError("LLM Provider not available (RAE-Lite Mode)")
+
+                    # RELAXED TIMEOUT for weak machines (120s)
+                    llm_result = await asyncio.wait_for(
+                        self.service.engine.generate_text(
+                            prompt=rae_input.content, system_prompt=system_prompt
+                        ),
+                        timeout=120.0,
+                    )
+                except (asyncio.TimeoutError, Exception) as e:
+                    # GRACEFUL DEGRADATION: Math-Only Fallback (Designed Mathematics)
+                    logger.warning("llm_fallback_triggered", reason=str(e))
+
+                    # Formulate answer using PURE MATHEMATICS (top search results)
+                    if search_results:
+                        # Extract core facts from the most mathematically relevant memories
+                        top_facts = []
+                        for r in search_results[:3]:
+                            if isinstance(r, dict):
+                                top_facts.append(r.get("content", ""))
+                            else:
+                                top_facts.append(str(r))
+
+                        llm_result = (
+                            "STABILITY MODE ACTIVE (Math Fallback). "
+                            "Based on my memory manifold, here are the core facts: "
+                            + " | ".join(filter(None, top_facts))
+                        )
+                    else:
+                        llm_result = "STABILITY MODE ACTIVE. No specific memories found to answer this query mathematically."
+
+                if not llm_result:
+                    llm_result = "I couldn't generate a response."
+
+                # Extract signals for importance
+                signals = []
+                if "stability" in llm_result.lower():
+                    signals.append("fallback")
+                if "decision" in llm_result.lower() or "rule" in llm_result.lower():
+                    signals.append("decision")
+
+                from rae_core.models.interaction import AgentActionType
+
+                return AgentAction(
+                    type=AgentActionType.FINAL_ANSWER,
+                    content=llm_result,
+                    confidence=0.5 if "FALLBACK" in llm_result else 0.9,
+                    reasoning=(
+                        "LLM with Math Fallback"
+                        if "FALLBACK" in llm_result
+                        else "LLM generation"
+                    ),
+                    signals=signals,
+                )
+
+        # Initialize Runtime with the transient agent
+        self.runtime.agent = TransientAgent(self)
+
+        # 4. Context Resolution (ISO 27000 Isolation)
+        project_canonical = self._resolve_project_context(project)
+        agent_canonical = agent_id or "default"
+
+        # Execute through RAERuntime (Enforces Hard Frames & Implicit Capture)
+        return await self.runtime.process_input(
+            RAEInput(
+                content=prompt,
+                tenant_id=str(tenant_id),
+                request_id=uuid4(),
+                context={
+                    "agent_id": agent_canonical,
+                    "project": project_canonical,
+                    "session_id": session_id or "default-session",
+                    "metadata": metadata or {},
+                },
+            )
+        )

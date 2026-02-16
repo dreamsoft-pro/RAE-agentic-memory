@@ -150,6 +150,20 @@ class EmbeddingService:
 
         self._initialize_model()
 
+        # Calibration: Apply Nomic prefixes if using nomic-embed-text
+        processed_texts = []
+        if "nomic" in self.litellm_model.lower():
+            for t in texts:
+                if not t.startswith("search_"):
+                    if len(t) < 100 and "?" in t:
+                        processed_texts.append(f"search_query: {t}")
+                    else:
+                        processed_texts.append(f"search_document: {t}")
+                else:
+                    processed_texts.append(t)
+        else:
+            processed_texts = texts
+
         # LiteLLM supports async via aembedding
         try:
             kwargs = {}
@@ -159,7 +173,7 @@ class EmbeddingService:
                 )
 
             response = await litellm.aembedding(
-                model=self.litellm_model, input=texts, **kwargs
+                model=self.litellm_model, input=processed_texts, **kwargs
             )
             return [d["embedding"] for d in response["data"]]
         except Exception as e:

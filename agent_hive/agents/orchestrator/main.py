@@ -22,11 +22,22 @@ async def orchestrator_loop():
         try:
             # 1. Check for high-level User Objectives in Semantic Layer
             # We look for memories tagged 'hive_objective' with status 'pending'
-            objectives = await connector.list_memories(
+            all_objectives = await connector.list_memories(
                 layer="semantic",
-                tags=["hive_objective", "pending"],
-                limit=5
+                tags=["hive_objective"],
+                limit=20
             )
+            
+            # Fetch processed markers
+            processed_markers = await connector.list_memories(
+                layer="semantic",
+                tags=["hive_objective_processed"],
+                limit=100
+            )
+            processed_ids = {m.get("metadata", {}).get("related_objective_id") for m in processed_markers}
+
+            # Filter for pending and NOT processed
+            objectives = [o for o in all_objectives if "pending" in o.get("tags", []) and o["id"] not in processed_ids]
 
             for objective in objectives:
                 obj_id = objective["id"]

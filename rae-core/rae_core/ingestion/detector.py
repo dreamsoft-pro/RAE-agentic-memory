@@ -59,6 +59,9 @@ class ContentSignatureDetector(ISignatureDetector):
         machine_markers = sum(1 for l in lines if re.search(r'\b(Speed|Size|Job\s*ID|Ink|Print\s*Area)\b', l, re.I))
         list_markers = sum(1 for l in lines if re.match(r'^(?:Krok|Step|Kolejno|\d+[\.)]|[-*•])', l, re.I))
         
+        # SYSTEM 92.1: Operational Fallback Detection (Anti-Echo)
+        is_fallback = "STABILITY MODE ACTIVE" in text or "Math Fallback" in text
+        
         # Adaptive Mode Selection (No fixed weights, based on marker dominance)
         modes = {
             "MACHINE_TELEMETRY_LIKE": machine_markers / line_count if line_count > 0 else 0,
@@ -67,13 +70,15 @@ class ContentSignatureDetector(ISignatureDetector):
         }
         
         best_mode = max(modes, key=modes.get)
-        if modes[best_mode] < 0.2: # Threshold for structural signal
+        if is_fallback:
+            best_mode = "OPERATIONAL_FALLBACK"
+        elif modes[best_mode] < 0.2: # Threshold for structural signal
             best_mode = "PROSE_PARAGRAPH_LIKE"
             
         return {
             "mode": best_mode,
             "line_count": line_count,
-            "confidence": round(modes.get(best_mode, 0), 2)
+            "confidence": 1.0 if is_fallback else round(modes.get(best_mode, 0), 2)
         }
 
     def _analyze_distribution(self, text: str) -> Dict[str, Any]:

@@ -5,7 +5,7 @@ Adapts the new LLM Orchestrator (apps.llm) to the old LLMProvider interface
 used by the memory API (apps.memory_api).
 """
 
-from typing import Type
+from typing import Any, Type
 
 import structlog
 from pydantic import BaseModel
@@ -74,7 +74,7 @@ class OrchestratorAdapter(LLMProvider):
         # Append instruction for JSON
         # (Many models need explicit instruction to output JSON)
         # We append it to the system message or prompt.
-        json_instruction = f"\nRespond strictly with valid JSON matching this schema: {response_model.model_json_schema()}"
+        json_instruction = f"\\nRespond strictly with valid JSON matching this schema: {response_model.model_json_schema()}"
 
         # Find system message and append
         if request.messages and request.messages[0].role == "system":
@@ -113,3 +113,13 @@ class OrchestratorAdapter(LLMProvider):
             messages=messages,
             temperature=0.0,  # Default to deterministic for structured/code
         )
+
+    async def generate_text(
+        self, prompt: str, system_prompt: str | None = None, **kwargs: Any
+    ) -> str:
+        """
+        RAE-Core Compatibility Method.
+        """
+        model = kwargs.get("model", "default")
+        result = await self.generate(system=system_prompt or "", prompt=prompt, model=model)
+        return result.text

@@ -37,7 +37,7 @@ class HiveMindConnector:
 
     async def list_memories(self, layer: str = None, tags: List[str] = None, limit: int = 50) -> List[Dict[str, Any]]:
         """List memories from a specific layer."""
-        params = {"limit": limit, "project": self.project_id}
+        params = {"limit": limit, "project": self.project_id, "sort": "created_at:desc"}
         if layer:
             params["layer"] = layer
             
@@ -107,18 +107,36 @@ class HiveMindConnector:
         )
 
     async def get_tasks(self, status: str = "pending") -> List[Dict[str, Any]]:
-        """Fetch tasks assigned to this role or general pending tasks."""
-        # Use list_memories from semantic layer
-        memories = await self.list_memories(layer="semantic", limit=100)
+        """Fetch tasks assigned to this role or general pending tasks, respecting latest updates."""
+        # Fetch all tasks and updates
+        memories = await self.list_memories(layer="semantic", limit=200)
         
-        tasks = []
+        # 1. Identify base tasks
+        tasks = {}
         for m in memories:
             meta = m.get("metadata", {})
-            # Match task_id and status, and assignee if not orchestrator
-            if "task_id" in meta and meta.get("status") == status:
-                if self.role == "orchestrator" or meta.get("assignee") == self.role:
-                    tasks.append(m)
-        return tasks
+            if "task_id" in meta and meta.get("assignee") in ["builder", "auditor", "orchestrator"]:
+                tasks[m["id"]] = m
+        
+        # 2. Identify updates and latest status
+        latest_status = {}
+        for m in memories:
+            meta = m.get("metadata", {})
+            if "related_task_id" in meta:
+                task_id = meta["related_task_id"]
+                # We assume descending order or we'd need timestamps
+                if task_id not in latest_status:
+                    latest_status[task_id] = meta.get("status")
+
+        # 3. Filter tasks that match the desired status
+        final_tasks = []
+        for tid, task in tasks.items():
+            current_status = latest_status.get(tid, task["metadata"].get("status"))
+            if current_status == status:
+                if self.role == "orchestrator" or task["metadata"].get("assignee") == self.role:
+                    final_tasks.append(task)
+                    
+        return final_tasks
 
     async def update_task(self, memory_id: str, status: str, result: str = ""):
         """Update a task's status (by adding a new update memory)."""
@@ -142,7 +160,7 @@ class HiveMindConnector:
             "project": self.project_id,
             "prompt": f"Acting as {self.role.upper()}. {prompt}"
         }
-        async with httpx.AsyncClient(timeout=120.0) as client:
+        async with httpx.AsyncClient(timeout=600.0) as client:
             # We use /v2/agent/execute which is the RAE High-Level Agent API
             response = await client.post(
                 f"{self.base_url}/v2/agent/execute",

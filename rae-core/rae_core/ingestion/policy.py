@@ -18,7 +18,9 @@ class IngestPolicySelector(IPolicySelector):
         stab = signature.stab
         
         # Dominance Rules
-        if stab["conflict"]:
+        if signature.struct.get("mode") == "OPERATIONAL_FALLBACK":
+            policy = "POLICY_FALLBACK"
+        elif stab["conflict"]:
             policy = "POLICY_MIXED_SAFE"
         elif struct["mode"] in ["LINEAR_LOG_LIKE", "MACHINE_TELEMETRY_LIKE"]:
             # If repeatability is high or it's telemetry, use stream policy
