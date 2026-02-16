@@ -13,6 +13,7 @@ services:
       - ./alembic:/app/alembic
       - ./alembic.ini:/app/alembic.ini
       - ./rae_adapters:/app/rae_adapters
+      - ./models:/app/models:ro
     ports:
       - "8000:8000"
     environment:
@@ -84,6 +85,7 @@ services:
       - ./alembic:/app/alembic
       - ./alembic.ini:/app/alembic.ini
       - ./rae_adapters:/app/rae_adapters
+      - ./models:/app/models:ro
       - ./scripts:/app/scripts
       - /home/grzegorz-lesniowski/.gemini:/root/.gemini
       - ./models:/app/models:ro
@@ -346,6 +348,7 @@ services:
       - ./rae-core:/app/rae-core:ro
       - ./rae_adapters:/app/rae_adapters:ro
       - /home/grzegorz-lesniowski/.gemini:/root/.gemini
+      - ./models:/app/models:ro
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=${POSTGRES_DB:-rae}
@@ -445,6 +448,7 @@ services:
       - ./rae-core:/app/rae-core:ro
       - ./rae_adapters:/app/rae_adapters:ro
       - /home/grzegorz-lesniowski/.gemini:/root/.gemini
+      - ./models:/app/models:ro
     environment:
       - POSTGRES_HOST=postgres
       - POSTGRES_DB=${POSTGRES_DB:-rae}
@@ -568,6 +572,7 @@ services:
       - ./alembic:/app/alembic
       - ./alembic.ini:/app/alembic.ini
       - ./rae_adapters:/app/rae_adapters
+      - ./models:/app/models:ro
     command: ["/bin/bash", "-c", "alembic upgrade head && uvicorn apps.memory_api.main:app --host 0.0.0.0 --port 8001"]
     environment:
       # Database - links to postgres-lite
